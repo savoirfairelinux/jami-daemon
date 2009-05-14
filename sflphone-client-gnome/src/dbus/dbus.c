@@ -237,6 +237,7 @@ dbus_connect ()
 
   DEBUG ("DBus connected to Instance");
   
+  
   callManagerProxy = dbus_g_proxy_new_for_name (connection,
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/CallManager",

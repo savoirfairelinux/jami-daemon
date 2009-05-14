@@ -100,9 +100,7 @@ class SflPhoneCtrlSimple(object):
 
         except dbus.DBusException, e:
             
-            raise SPdbusError("Unable to bind to sflphoned api, 
-                ask core-dev team to implement getVersion method and 
-                      start to pray.")
+            raise SPdbusError("Unable to bind to sflphoned api, ask core-dev team to implement getVersion method and start to pray.")
 
         try:
             self.instance.Register(os.getpid(), self.name)
@@ -137,374 +135,378 @@ class SflPhoneCtrlSimple(object):
     # Signal handling
     #
 
-	# On incoming call event, add the call to the list of active calls
-	def onIncomingCall(self, account, callid, to):
-		print "Incoming call: " + account + ", " + callid + ", " + to
-		self.activeCalls[callid] = {'Account': account, 'To': to, 'State': '' }
+    # On incoming call event, add the call to the list of active calls
+    def onIncomingCall(self, account, callid, to):
+        print "Incoming call: " + account + ", " + callid + ", " + to
+        self.activeCalls[callid] = {'Account': account, 'To': to, 'State': '' }
 
-	# On call state changed event, set the values for new calls, or delete the call from the list of active calls
-	def onCallStateChanged(self, callid, state):
-		print "Call state changed: " + callid + ", " + state
-		if state == "HUNGUP":
-			try:
-				del self.activeCalls[callid]
-			except KeyError:
-				print "Call " + callid + " didn't exist. Cannot delete."
-		elif state in [ "RINGING", "CURRENT", "INCOMING", "HOLD" ]:
-			try:
-				self.activeCalls[callid]['State'] = state 
-			except KeyError, e:
-				print "This call didn't exist!: " + callid + ". Adding it to the list."
-				callDetails = self.getCallDetails(callid)
-				self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 'To': callDetails['PEER_NUMBER'], 'State': state }
-		elif state in [ "BUSY", "FAILURE" ]:
-			try:
-				del self.activeCalls[callid]
-			except KeyError, e:
-				print "This call didn't exist!: " + callid
+    # On call state changed event, set the values for new calls, 
+    # or delete the call from the list of active calls
+    def onCallStateChanged(self, callid, state):
+        print "Call state changed: " + callid + ", " + state
+        if state == "HUNGUP":
+            try:
+                del self.activeCalls[callid]
+            except KeyError:
+                print "Call " + callid + " didn't exist. Cannot delete."
+
+        elif state in [ "RINGING", "CURRENT", "INCOMING", "HOLD" ]:
+            try:
+                self.activeCalls[callid]['State'] = state 
+            except KeyError, e:
+                print "This call didn't exist!: " + callid + ". Adding it to the list."
+                callDetails = self.getCallDetails(callid)
+                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 'To': callDetails['PEER_NUMBER'], 'State': state }
+        elif state in [ "BUSY", "FAILURE" ]:
+            try:
+                del self.activeCalls[callid]
+            except KeyError, e:
+                print "This call didn't exist!: " + callid
 
 #		elif state == "UNHOLD_CURRENT":
 #			self.activeCalls[callid]['State'] = "UNHOLD_CURRENT"
 
 
-	#
-	# Account management
-	#
-	def getAllAccounts(self):
-		""" Return a list with all accounts"""
-		return self.configurationmanager.getAccountList()
+    #
+    # Account management
+    #
+    def getAllAccounts(self):
+        """ Return a list with all accounts"""
+        return self.configurationmanager.getAccountList()
 
 
-	def getAllEnabledAccounts(self):
-		""" Return a list with all enabled accounts"""
-		accounts = self.getAllAccounts()
-		activeaccounts = []
-		for testedaccount in accounts:
-			if self.isAccountEnable(testedaccount):
-				activeaccounts.append(testedaccount)
-		return activeaccounts
+    def getAllEnabledAccounts(self):
+        """ Return a list with all enabled accounts"""
+        accounts = self.getAllAccounts()
+        activeaccounts = []
+        for testedaccount in accounts:
+            if self.isAccountEnable(testedaccount):
+                activeaccounts.append(testedaccount)
+        return activeaccounts
 
 
-	def getAccountDetails(self, account=None):
-		"""Return a list of string. If no account is provided, active account is used"""
+    def getAccountDetails(self, account=None):
+        """Return a list of string. If no account is provided, active account is used"""
 
-		if account is None:
-			if self.account is None:
-				raise SflPhoneError("No provided or current account !")
-			if checkAccountExists(self.account):
-				return self.configurationmanager.getAccountDetails(self.account)
-		else:
-			if self.checkAccountExists(account):
-				return self.configurationmanager.getAccountDetails(account)
+        if account is None:
+            if self.account is None:
+                raise SflPhoneError("No provided or current account !")
+                if checkAccountExists(self.account):
+                    return self.configurationmanager.getAccountDetails(self.account)
+        else:
+            if self.checkAccountExists(account):
 
-
-	def setAccountByAlias(self, alias):
-		"""Define as active the first account who match with the alias"""
-
-		for testedaccount in self.getAllAccounts():
-			details = self.getAccountDetails(testedaccount)
-			if ( details['Account.enable'] == "TRUE" and details['Account.alias'] == alias ):
-				self.account = testedaccount
-				return
-		raise SPaccountError("No enabled account matched with alias")
+                return self.configurationmanager.getAccountDetails(account)
 
 
-	def getAccountByAlias(self, alias):
-		"""Get account name having its alias"""
+    def setAccountByAlias(self, alias):
+        """Define as active the first account who match with the alias"""
 
-		for account in self.getAllAccounts():
-			details = self.getAccountDetails(account)
-			if details['Account.alias'] == alias:
-				return account
-		raise SPaccountError("No account matched with alias")
-
-	def setAccount(self, account):
-		"""Define the active account"""
-
-		if account in self.getAllAccounts():
-			self.account = account
-		else:
-			raise SflPhoneError("Not a valid account")
-
-	def setFirstRegisteredAccount(self):
-		"""Find the first enabled account and define it as active"""
-
-		rAccounts = self.getAllRegisteredAccounts()
-		if 0 == len(rAccounts):
-			raise SflPhoneError("No registered account !")
-		self.account = rAccounts[0]
-
-	def setFirstActiveAccount(self):
-		"""Find the first enabled account and define it as active"""
-
-		aAccounts = self.getAllEnabledAccounts()
-		if 0 == len(aAccounts):
-			raise SflPhoneError("No active account !")
-		self.account = aAccounts[0]
+        for testedaccount in self.getAllAccounts():
+            details = self.getAccountDetails(testedaccount)
+            if ( details['Account.enable'] == "TRUE" and 
+                              details['Account.alias'] == alias ):
+                self.account = testedaccount
+                return
+        raise SPaccountError("No enabled account matched with alias")
 
 
-	def getAccount(self):
-		"""Return the active account"""
+    def getAccountByAlias(self, alias):
+        """Get account name having its alias"""
 
-		return self.account
+        for account in self.getAllAccounts():
+            details = self.getAccountDetails(account)
+            if details['Account.alias'] == alias:
+                return account
+
+        raise SPaccountError("No account matched with alias")
+
+    def setAccount(self, account):
+        """Define the active account"""
+
+        if account in self.getAllAccounts():
+            self.account = account
+        else:
+            raise SflPhoneError("Not a valid account")
+
+    def setFirstRegisteredAccount(self):
+        """Find the first enabled account and define it as active"""
+
+        rAccounts = self.getAllRegisteredAccounts()
+        if 0 == len(rAccounts):
+            raise SflPhoneError("No registered account !")
+        self.account = rAccounts[0]
+
+    def setFirstActiveAccount(self):
+        """Find the first enabled account and define it as active"""
+
+        aAccounts = self.getAllEnabledAccounts()
+        if 0 == len(aAccounts):
+            raise SflPhoneError("No active account !")
+        self.account = aAccounts[0]
 
 
-	def isAccountRegistered(self, account=None):
-		"""Return True if the account is registered. If no account is provided, active account is used"""
+    def getAccount(self):
+        """Return the active account"""
 
-		if account is None:
-			if self.account is None:
-				raise SflPhoneError("No provided or current account !")
-			account = self.account
-		return self.getAccountDetails(account)['Status'] == "REGISTERED"
+        return self.account
 
 
-	def isAccountEnable(self, account=None):
-		"""Return True if the account is enabled. If no account is provided, active account is used"""
+    def isAccountRegistered(self, account=None):
+        """Return True if the account is registered. If no account is provided, active account is used"""
 
-		if account is None:
-			if self.account is None:
-				raise SflPhoneError("No provided or current account !")
-			account = self.account
-		return self.getAccountDetails(account)['Account.enable'] == "TRUE"
+        if account is None:
+                if self.account is None:
+                        raise SflPhoneError("No provided or current account !")
+                account = self.account
+        return self.getAccountDetails(account)['Status'] == "REGISTERED"
 
-	def setAccountEnable(self, account=None, enable=False):
-		"""Set account enabled"""
-		if account is None:
-			if self.account is None:
-				raise SflPhoneError("No provided or current account !")
-			account = self.account
 
-		if enable == True:
-			details = self.getAccountDetails(account)
-			details['Account.enable'] = "TRUE"
-			self.configurationmanager.setAccountDetails(account, details)
-		else:
-			details = self.getAccountDetails(account)
-			details['Account.enable'] = "FALSE"
-			self.configurationmanager.setAccountDetails(account, details)
+    def isAccountEnable(self, account=None):
+        """Return True if the account is enabled. If no account is provided, active account is used"""
 
-	def checkAccountExists(self, account=None):
-		""" Checks if the account exists """
-		if account is None:
-			raise SflPhoneError("No provided or current account !")
-		return account in self.getAllAccounts()
+        if account is None:
+	       	if self.account is None:
+		       	raise SflPhoneError("No provided or current account !")
+                account = self.account
+        return self.getAccountDetails(account)['Account.enable'] == "TRUE"
+
+    def setAccountEnable(self, account=None, enable=False):
+       	"""Set account enabled"""
+        if account is None:
+	       	if self.account is None:
+		       	raise SflPhoneError("No provided or current account !")
+                account = self.account
+
+       	if enable == True:
+	       	details = self.getAccountDetails(account)
+                details['Account.enable'] = "TRUE"
+                self.configurationmanager.setAccountDetails(account, details)
+        else:
+	       	details = self.getAccountDetails(account)
+                details['Account.enable'] = "FALSE"
+                self.configurationmanager.setAccountDetails(account, details)
+
+    def checkAccountExists(self, account=None):
+        """ Checks if the account exists """
+        if account is None:
+            raise SflPhoneError("No provided or current account !")
+        return account in self.getAllAccounts()
 			
-	def getAllRegisteredAccounts(self):
-		"""Return a list of registered accounts"""
+    def getAllRegisteredAccounts(self):
+        """Return a list of registered accounts"""
 
-		registeredAccountsList = []
-		for account in self.getAllAccounts():
-			if self.isAccountRegistered(account):
-				registeredAccountsList.append(account)
+        registeredAccountsList = []
+        for account in self.getAllAccounts():
+            if self.isAccountRegistered(account):
+                registeredAccountsList.append(account)
 
-		return registeredAccountsList
+        return registeredAccountsList
 
-	def getAllEnabledAccounts(self):
-		"""Return a list of enabled accounts"""
+    def getAllEnabledAccounts(self):
+        """Return a list of enabled accounts"""
 
-		enabledAccountsList = []
-		for accountName in self.getAllAccounts():
-			if  self.getAccountDetails(accountName)['Account.enable'] == "TRUE":
-				enabledAccountsList.append(accountName)
+        enabledAccountsList = []
+        for accountName in self.getAllAccounts():
+            if self.getAccountDetails(accountName)['Account.enable'] == "TRUE":
+                 enabledAccountsList.append(accountName)
 
-		return enabledAccountsList
+        return enabledAccountsList
 
-	def getAllSipAccounts(self):
-		"""Return a list of SIP accounts"""
+    def getAllSipAccounts(self):
+        """Return a list of SIP accounts"""
 
-		sipAccountsList = []
-		for accountName in self.getAllAccounts(): 
-			if  self.getAccountDetails(accountName)['Account.type'] == "SIP":
-				sipAccountsList.append(accountName)
+        sipAccountsList = []
+        for accountName in self.getAllAccounts(): 
+            if  self.getAccountDetails(accountName)['Account.type'] == "SIP":
+                sipAccountsList.append(accountName)
 
-		return sipAccountsList
+        return sipAccountsList
 
-	def getAllIaxAccounts(self):
-		"""Return a list of IAX accounts"""
+    def getAllIaxAccounts(self):
+        """Return a list of IAX accounts"""
 
-		iaxAccountsList = []
-		for accountName in self.getAllAccounts():
-			if  self.getAccountDetails(accountName)['Account.type'] == "IAX":
-				iaxAccountsList.append(accountName)
+        iaxAccountsList = []
+        for accountName in self.getAllAccounts():
+            if  self.getAccountDetails(accountName)['Account.type'] == "IAX":
+                iaxAccountsList.append(accountName)
 
-		return iaxAccountsList
+        return iaxAccountsList
 
-	def setAccountRegistered(self, account=None, register=False):
-		""" Tries to register the account """
+    def setAccountRegistered(self, account=None, register=False):
+       	""" Tries to register the account """
 
-		if account is None:
-			if self.account is None:
-				raise SflPhoneError("No provided or current account !")
-			account = self.account
+       	if account is None:
+       		if self.account is None:
+       			raise SflPhoneError("No provided or current account !")
+       		account = self.account
 
-		try:
-			if register:
-				self.configurationmanager.sendRegister(account, int(1))
-				#self.setAccount(account)
-			else:
-				self.configurationmanager.sendRegister(account, int(0))
-				#self.setFirstRegisteredAccount()
+       	try:
+       		if register:
+       			self.configurationmanager.sendRegister(account, int(1))
+       			#self.setAccount(account)
+       		else:
+       			self.configurationmanager.sendRegister(account, int(0))
+       			#self.setFirstRegisteredAccount()
+        except SflPhoneError, e:
+       		print e
 
-		except SflPhoneError, e:
-			print e
-
-        #
-        # Codec manager
-        #
+    #
+    # Codec manager
+    #
                         
-        def getCodecList(self):
-                """ Return the codec list """
-                return self.configurationmanager.getCodecList()
+    def getCodecList(self):
+        """ Return the codec list """
+        return self.configurationmanager.getCodecList()
 
-        def getActiveCodecList(self):
-                """ Return the active codec list """
-                return self.configurationmanager.getActiveCodecList()
-
-
-
-	#
-	# Call management
-	#
-
-	def getCurrentCallID(self):
-		"""Return the callID of the current call if any"""
-
-		return self.callmanager.getCurrentCallID()
+    def getActiveCodecList(self):
+        """ Return the active codec list """
+        return self.configurationmanager.getActiveCodecList()
 
 
-	def getCurrentCallDetails(self):
-		"""Return informations on the current call if any"""
 
-		return self.callmanager.getCallDetails(self.getCurrentCallID())
+    #
+    # Call management
+    #
 
-	def getCallDetails(self, callid):
-		"""Return informations on this call if exists"""
+    def getCurrentCallID(self):
+        """Return the callID of the current call if any"""
 
-		return self.callmanager.getCallDetails(callid)
-
-	def printClientCallList(self):
-		print "Client active call list:"
-		print "------------------------"
-		for call in self.activeCalls:
-			print "\t" + call
-
-	#
-	# Action
-	#
-	def Call(self, dest):
-		"""Start a call and return a CallID"""
-		if not self.account:
-			self.setFirstRegisteredAccount()
-
-		if not self.isAccountRegistered():
-			raise SflPhoneError("Can't place a call without a registered account")
-
-		if dest is None or dest == "":
-			raise SflPhoneError("Invalid call destination")
-
-#		callid = str(random.randrange(2**32-1))
-		t = long( time.time() * 1000 )
-		r = long( random.random()*100000000000000000L )
-		data = str(t) + str(r)
-		callid = md5.md5(data).hexdigest()
-
-		# Add the call to the list of active calls and set status to SENT
-		self.activeCalls[callid] = {'Account': self.account, 'To': dest, 'State': 'SENT' }
-		# Send the request to the CallManager
-		self.callmanager.placeCall(self.account, callid, dest)
-
-		return callid
+        return self.callmanager.getCurrentCallID()
 
 
-	def HangUp(self, callid):
-		"""End a call identified by a CallID"""
-		if not self.account:
-			self.setFirstRegisteredAccount()
+    def getCurrentCallDetails(self):
+        """Return informations on the current call if any"""
 
-		if not self.isAccountRegistered():
-			raise SflPhoneError("Can't hangup a call without a registered account")
+        return self.callmanager.getCallDetails(self.getCurrentCallID())
 
-		if callid is None or callid == "":
-			pass # just to see
-			#raise SflPhoneError("Invalid callID")
+    def getCallDetails(self, callid):
+        """Return informations on this call if exists"""
 
-		self.callmanager.hangUp(callid)
+        return self.callmanager.getCallDetails(callid)
 
+    def printClientCallList(self):
+        print "Client active call list:"
+        print "------------------------"
+        for call in self.activeCalls:
+            print "\t" + call
 
-	def Transfert(self, callid, to):
-		"""Transfert a call identified by a CallID"""
-		if not self.account:
-			self.setFirstRegisteredAccount()
+    #
+    # Action
+    #
+    def Call(self, dest):
+        """Start a call and return a CallID"""
+        if not self.account:
+            self.setFirstRegisteredAccount()
 
-		if not self.isAccountRegistered():
-			raise SflPhoneError("Can't transfert a call without a registered account")
+        if not self.isAccountRegistered():
+            raise SflPhoneError("Can't place a call without a registered account")
 
-		if callid is None or callid == "":
-			raise SflPhoneError("Invalid callID")
+        if dest is None or dest == "":
+            raise SflPhoneError("Invalid call destination")
 
-		self.callmanager.transfert(callid, to)
+        # callid = str(random.randrange(2**32-1))
+        t = long( time.time() * 1000 )
+        r = long( random.random()*100000000000000000L )
+        data = str(t) + str(r)
+        callid = md5.md5(data).hexdigest()
 
+        # Add the call to the list of active calls and set status to SENT
+        self.activeCalls[callid] = {'Account': self.account, 'To': dest, 'State': 'SENT' }
+        # Send the request to the CallManager
+        self.callmanager.placeCall(self.account, callid, dest)
 
-	def Refuse(self, callid):
-		"""Refuse an incoming call identified by a CallID"""
-		if not self.account:
-			self.setFirstRegisteredAccount()
-
-		if not self.isAccountRegistered():
-			raise SflPhoneError("Can't refuse a call without a registered account")
-
-		if callid is None or callid == "":
-			raise SflPhoneError("Invalid callID")
-
-		self.callmanager.refuse(callid)
-
-
-	def Accept(self, callid):
-		"""Accept an incoming call identified by a CallID"""
-		if not self.account:
-			self.setFirstRegisteredAccount()
-
-		if not self.isAccountRegistered():
-			raise SflPhoneError("Can't accept a call without a registered account")
-
-		if callid is None or callid == "":
-			raise SflPhoneError("Invalid callID")
-
-		self.callmanager.accept(callid)
+        return callid
 
 
-	def Hold(self, callid):
-		"""Hold a call identified by a CallID"""
-		if not self.account:
-			self.setFirstRegisteredAccount()
+    def HangUp(self, callid):
+        """End a call identified by a CallID"""
+        if not self.account:
+            self.setFirstRegisteredAccount()
 
-		if not self.isAccountRegistered():
-			raise SflPhoneError("Can't hold a call without a registered account")
+        if not self.isAccountRegistered():
+            raise SflPhoneError("Can't hangup a call without a registered account")
 
-		if callid is None or callid == "":
-			raise SflPhoneError("Invalid callID")
+        if callid is None or callid == "":
+            pass # just to see
+            #raise SflPhoneError("Invalid callID")
 
-		self.callmanager.hold(callid)
-
-
-	def UnHold(self, callid):
-		"""Unhold an incoming call identified by a CallID"""
-		if not self.account:
-			self.setFirstRegisteredAccount()
-
-		if not self.isAccountRegistered():
-			raise SflPhoneError("Can't unhold a call without a registered account")
-
-		if callid is None or callid == "":
-			raise SflPhoneError("Invalid callID")
-
-		self.callmanager.unhold(callid)
+            self.callmanager.hangUp(callid)
 
 
-	def Dtmf(self, key):
-		"""Send a DTMF"""
-		self.callmanager.playDTMF(key)
+    def Transfert(self, callid, to):
+        """Transfert a call identified by a CallID"""
+        if not self.account:
+            self.setFirstRegisteredAccount()
+
+        if not self.isAccountRegistered():
+            raise SflPhoneError("Can't transfert a call without a registered account")
+
+        if callid is None or callid == "":
+            raise SflPhoneError("Invalid callID")
+
+        self.callmanager.transfert(callid, to)
+
+
+    def Refuse(self, callid):
+        """Refuse an incoming call identified by a CallID"""
+        if not self.account:
+            self.setFirstRegisteredAccount()
+
+        if not self.isAccountRegistered():
+            raise SflPhoneError("Can't refuse a call without a registered account")
+
+        if callid is None or callid == "":
+            raise SflPhoneError("Invalid callID")
+
+        self.callmanager.refuse(callid)
+
+
+    def Accept(self, callid):
+        """Accept an incoming call identified by a CallID"""
+        if not self.account:
+            self.setFirstRegisteredAccount()
+
+       	if not self.isAccountRegistered():
+            raise SflPhoneError("Can't accept a call without a registered account")
+
+        if callid is None or callid == "":
+            raise SflPhoneError("Invalid callID")
+
+        self.callmanager.accept(callid)
+
+
+    def Hold(self, callid):
+        """Hold a call identified by a CallID"""
+        if not self.account:
+            self.setFirstRegisteredAccount()
+
+        if not self.isAccountRegistered():
+            raise SflPhoneError("Can't hold a call without a registered account")
+
+        if callid is None or callid == "":
+            raise SflPhoneError("Invalid callID")
+
+        self.callmanager.hold(callid)
+
+
+    def UnHold(self, callid):
+        """Unhold an incoming call identified by a CallID"""
+        if not self.account:
+            self.setFirstRegisteredAccount()
+
+        if not self.isAccountRegistered():
+            raise SflPhoneError("Can't unhold a call without a registered account")
+
+        if callid is None or callid == "":
+            raise SflPhoneError("Invalid callID")
+
+        self.callmanager.unhold(callid)
+
+
+    def Dtmf(self, key):
+        """Send a DTMF"""
+        self.callmanager.playDTMF(key)
 
 
 

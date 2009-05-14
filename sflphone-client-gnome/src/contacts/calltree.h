@@ -23,7 +23,7 @@
 #include <gtk/gtk.h>
 #include <calltab.h>
 #include <timestamp.h>
-
+#include <mainwindow.h>
 
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
