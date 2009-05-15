@@ -307,21 +307,25 @@ ManagerImpl::answerCall(const CallID& id)
   bool
 ManagerImpl::hangupCall(const CallID& id)
 {
-    _debug("ManagerImpl::hangupCall(): This function is called when user hangup \n");
+    _debug("ManagerImpl::hangupCall()\n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
+    AudioLayer *audiolayer;
 
     stopTone(false);
 
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
 
+    _debug("Stop audio stream\n");
+    audiolayer = getAudioDriver();
+    audiolayer->stopStream();
+
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
         returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (id);
     }
-
     /* Classic call, attached to an account */
     else {
         accountid = getAccountFromCall( id );
@@ -339,6 +343,8 @@ ManagerImpl::hangupCall(const CallID& id)
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
         if(pulselayer)  pulselayer->restorePulseAppsVolume();
     }
+
+    
 
     return returnValue;
 }
@@ -1045,6 +1051,7 @@ ManagerImpl::ringtone()
   AudioLoop*
 ManagerImpl::getTelephoneTone()
 {
+  _debug("ManagerImpl::getTelephoneTone()\n");
   if(_telephoneTone != 0) {
     ost::MutexLock m(_toneMutex);
     return _telephoneTone->getCurrentTone();
@@ -1057,6 +1064,7 @@ ManagerImpl::getTelephoneTone()
   AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
+  _debug("ManagerImpl::getTelephoneFile()\n");
   ost::MutexLock m(_toneMutex);
   if(_audiofile.isStarted()) {
     return &_audiofile;
