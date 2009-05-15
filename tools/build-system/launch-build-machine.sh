@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-14 17:57:35 -0400
+# Last Modified: 2009-05-15 10:50:55 -0400
 #####################################################
 
 #
@@ -89,20 +89,6 @@ echo "    | SFLPhone build system |"
 echo "    \\***********************/"
 echo
 
-cd ${SCRIPTS_DIR}
-
-if [ "$?" -ne "0" ]; then
-        echo " !! Cannot cd to working directory"
-        exit -1
-fi
-
-WHO=`whoami`
-
-if [ "${WHO}" != "${USER}" ]; then
-        echo "!! Please use user ${USER} to run this script"
-        exit -1;
-fi
-
 for PARAMETER in $*
 do
 	case ${PARAMETER} in
@@ -144,6 +130,26 @@ do
 		exit -1;;
 	esac
 done
+
+# if more than one VM will be launched, automatically stop running VMs
+if [ "${#MACHINES[@]}" -gt "1" ]; then
+	VBoxManage list runningvms | tail -n +5 | awk '{print $1}' | xargs -i VBoxManage controlvm {} poweroff
+fi
+
+# change to working directory
+cd ${SCRIPTS_DIR}
+
+if [ "$?" -ne "0" ]; then
+        echo " !! Cannot cd to working directory"
+        exit -1
+fi
+
+WHO=`whoami`
+
+if [ "${WHO}" != "${USER}" ]; then
+        echo "!! Please use user ${USER} to run this script"
+        exit -1;
+fi
 
 # logging
 mkdir ${PACKAGING_RESULT_DIR} 2>/dev/null
