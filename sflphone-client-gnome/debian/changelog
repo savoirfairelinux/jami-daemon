@@ -1,6 +1,6 @@
-sflphone-client-gnome (0.9.5-SYSVER~snapshot1242360110) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-SYSVER~snapshot1242399317) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1242360110 **
+    ** SNAPSHOT 1242399317 **
 
   * Changes for name based dbus connection
   * Clean changelogs
@@ -37,7 +37,7 @@ sflphone-client-gnome (0.9.5-SYSVER~snapshot1242360110) SYSTEM; urgency=low
   * Bug #1405: Fix strings as requested.
   * Bug #1404: Fix strings in preferences panel.
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 15 May 2009 00:02:15 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 15 May 2009 10:55:43 -0400
 
 sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
