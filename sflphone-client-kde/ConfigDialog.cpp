@@ -130,9 +130,9 @@ void ConfigurationDialog::loadOptions()
 	//
 	//alsa settings
 	comboBox1_alsaPlugin->clear();
-// 	QStringList pluginList = configurationManager.getOutputAudioPluginList();
-// 	comboBox1_alsaPlugin->addItems(pluginList);
-// 	comboBox1_alsaPlugin->setCurrentIndex(comboBox1_alsaPlugin->findText(configurationManager.getCurrentAudioOutputPlugin()));
+	QStringList pluginList = configurationManager.getOutputAudioPluginList();
+	comboBox1_alsaPlugin->addItems(pluginList);
+	comboBox1_alsaPlugin->setCurrentIndex(comboBox1_alsaPlugin->findText(configurationManager.getCurrentAudioOutputPlugin()));
 	
 	QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
 	

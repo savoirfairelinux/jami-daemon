@@ -140,10 +140,8 @@ void SFLPhone::on_trayIcon_messageClicked()
 
 void SFLPhone::changeEvent(QEvent * event)
 {
-	qDebug() << "changeEvent event->type() = " << event->type() << " , iconChanged = " << iconChanged << " , isActiveWindow() = " << isActiveWindow();
 	if (event->type() == QEvent::ActivationChange && iconChanged && isActiveWindow())
 	{
-		qDebug() << "changeEvent2";
 		trayIcon->setIcon(this->windowIcon());
 		iconChanged = false;
 	}

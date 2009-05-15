@@ -29,15 +29,15 @@ InstanceInterface * InstanceInterfaceSingleton::interface
 
 
 InstanceInterface & InstanceInterfaceSingleton::getInstance(){
-	/*if(!interface){
+	if(!interface){
 		interface = new InstanceInterface(
 		             "org.sflphone.SFLphone", 
 		             "/org/sflphone/SFLphone/Instance", 
 		             QDBusConnection::sessionBus());
-	}*/
+	}
 	if(!interface->isValid())
 	{
-		throw "Error : sflphoned not connected";
+		throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From instance interface.";
 		
 	}
 	return *interface;

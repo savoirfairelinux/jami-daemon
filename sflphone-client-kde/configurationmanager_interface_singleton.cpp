@@ -9,7 +9,7 @@ ConfigurationManagerInterface & ConfigurationManagerInterfaceSingleton::getInsta
 		interface = new ConfigurationManagerInterface("org.sflphone.SFLphone", "/org/sflphone/SFLphone/ConfigurationManager", QDBusConnection::sessionBus());
 	}
 	if(!interface->isValid())
-		throw "Error : sflphoned not connected";
+		throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From configuration manager interface.";
 	return *interface;
 }
 	
