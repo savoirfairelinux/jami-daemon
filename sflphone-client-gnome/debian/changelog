@@ -1,3 +1,44 @@
+sflphone-client-gnome (0.9.5-SYSVER~snapshot1242360110) SYSTEM; urgency=low
+
+    ** SNAPSHOT 1242360110 **
+
+  * Changes for name based dbus connection
+  * Clean changelogs
+  * [#1343] Gnome: Implement a callback system to handle focus on
+    different widgets
+  * Debus Session
+  * Refactoring Python code, PEP8
+  * [#1430] Get back dbus_g_proxy_new_for_name
+  * [#1430] Get back DBUS_BUS_SESSION type
+  * [#1430] Dbus fixed owner message binding
+  * Second test with DBUS owner
+  * [#1404] Gnome -> Preferences -> Hooks
+  * [#1404] Gnome -> Preferences -> Recordings
+  * [#1404] Call History
+  * [#1404] Gnome -> Preferences -> Address Book
+  * [#1404] IF the first notification option disable the second
+    notification
+  * Dbus with fixed owner does not automatically start the deamon
+  * Add codec debug tests in pysflphone
+  * [#1407] Some print info
+  * [#1407] Add a scenario to pick_up action
+  * Test client dbus connection to a fixed owner
+  * Add python dbus test suite
+  * [#1314] Test pulse audio and audio streams connect and disconnect
+  * [#1402] Add info message after configure
+  * [#1402] Build the daemon with the local pjsip library (vs the
+    installed one)
+  * [#1009] Fix Codec Sampling Rate set to zeros
+  * [#1314] Add mutex to pulse layer audio streams
+  * [#1314] Refactoring pulseaudio stream to test connect disconnect
+  * [#1314] Refactoring of pulselayer to test conect/disconnect
+  * Add debug messages in debus calls concerning account
+  * [#1314] Add some return values to audio init functions
+  * Bug #1405: Fix strings as requested.
+  * Bug #1404: Fix strings in preferences panel.
+
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 15 May 2009 00:02:15 -0400
+
 sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
   [ SFLphone Project ]
