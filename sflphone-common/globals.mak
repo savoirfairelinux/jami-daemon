@@ -7,11 +7,11 @@ sflplugindir=$(libdir)/sflphone/plugins
 export TARGET_NAME := @target@
 
 PJSIP_LIBS= \
-			-L$(src)/libs/pjproject-1.0.1/pjnath/lib \
-			-L$(src)/libs/pjproject-1.0.1/pjsip/lib \
-			-L$(src)/libs/pjproject-1.0.1/pjlib/lib \
-			-L$(src)/libs/pjproject-1.0.1/pjlib-util/lib \
-			-L$(src)/libs/pjproject-1.0.1/pjmedia/lib \
+			-L$(src)/libs/pjproject-1.0.1/pjnath/ \
+			-L$(src)/libs/pjproject-1.0.1/pjsip/ \
+			-L$(src)/libs/pjproject-1.0.1/pjlib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjlib-util/ \
+			-L$(src)/libs/pjproject-1.0.1/pjmedia/ \
 			-lpjnath-sfl-$(TARGET_NAME) -lpjsua-sfl-$(TARGET_NAME) -lpjsip-sfl-$(TARGET_NAME) -lpjmedia-sfl-$(TARGET_NAME) -lpjsip-simple-sfl-$(TARGET_NAME) -lpjsip-ua-sfl-$(TARGET_NAME) -lpjmedia-codec-sfl-$(TARGET_NAME) -lpjlib-util-sfl-$(TARGET_NAME) -lpj-sfl-$(TARGET_NAME)
 
 SIP_CFLAGS=-I$(src)/libs/pjproject-1.0.1/pjsip/include \
