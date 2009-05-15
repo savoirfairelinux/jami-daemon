@@ -28,6 +28,9 @@
  * @brief Contains the global variables for the client code
  */
 
+
+#define LOGO        ICONS_DIR "/sflphone1.svg"
+
 /** Locale */
 #define _(STRING)   gettext( STRING )
 

@@ -11,13 +11,13 @@ protected:
   std::string _codecName; // what we put inside sdp
   
   /** Clock rate or sample rate of the codec, in Hz */
-  unsigned int _clockRate;
+  int _clockRate;
 
   /** Number of channel 1 = mono, 2 = stereo */
-  unsigned int _channel;
+  int _channel;
 
-  /** codec frame size */
-  unsigned int _frameSize;
+  /** codec frame size in samples*/
+  int _frameSize;
 
   /** Bitrate */
   double _bitrate;
@@ -61,9 +61,9 @@ public:
   std::string getCodecName( void ) { return _codecName; }
   int getPayload( void ) { return _payload; }
   bool hasDynamicPayload( void ) { return _hasDynamicPayload; }
-  unsigned int getClockRate( void ) { return _clockRate; }
-  unsigned int getFrameSize( void ) { return _frameSize; }
-  unsigned int getChannel( void ) { return _channel; }
+  int getClockRate( void ) { return _clockRate; }
+  int getFrameSize( void ) { return _frameSize; }
+  int getChannel( void ) { return _channel; }
   bool getState( void ) { return _state; }
   void setState(bool b) { _state = b; }
   double getBitRate( void ) { return _bitrate; }

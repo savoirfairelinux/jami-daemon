@@ -112,11 +112,15 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Variables to process audio stream: sample rate for playing sound (typically 44100HZ) */
     int _layerSampleRate;  
 
-    /** Sample rate of te codec we use to encode and decode (most of time 8000HZ) */
-    int _codecSampleRate; 
+    /** Sample rate of the codec we use to encode and decode (most of time 8000HZ) */
+    int _codecSampleRate;
 
-    /** Length of the sound frame we capture in ms(typically 20ms) */
+    /** Length of the sound frame we capture in ms (typically 20ms) */
     int _layerFrameSize; 
+
+    /** Codecs frame size in samples (20 ms => 882 at 44.1kHz)
+        The exact value is stored in the codec */
+    int _codecFrameSize;
 
     /** Speaker buffer length in samples once the data are resampled
      *  (used for mixing and recording)

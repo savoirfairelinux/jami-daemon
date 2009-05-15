@@ -23,6 +23,9 @@
 #include <searchbar.h>
 #include <calltree.h>
 
+const GdkColor BLACK_COLOR = { 0, 0, 0, 0 };
+const GdkColor GRAY_COLOR = { 0, 30000, 30000, 30000 };
+
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED) {
 
     if (active_calltree == contacts) {
@@ -36,6 +39,7 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
 
 void searchbar_clear_entry_if_default (GtkWidget* widget, gpointer user_data UNUSED) {
 
+    gtk_widget_modify_text(widget, GTK_STATE_NORMAL, &BLACK_COLOR); 
     if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(widget)), _("Search"), 6) == 0)
         gtk_entry_set_text(GTK_ENTRY(widget), "");
 
@@ -68,16 +72,22 @@ GtkWidget* searchbar_new(gchar* searchbar_type) {
   sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(searchbox), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
   sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(searchbox) );
 #endif
-  gtk_entry_set_text(GTK_ENTRY(searchbox), _("Search"));
+
+    gtk_widget_modify_text(searchbox, GTK_STATE_NORMAL, &GRAY_COLOR); 
+
+  gtk_entry_set_text(GTK_ENTRY(searchbox), _("Search contact"));
   g_signal_connect(GTK_ENTRY(searchbox), "changed", G_CALLBACK(searchbar_entry_changed), NULL);
   g_signal_connect(GTK_ENTRY(searchbox), "grab-focus", G_CALLBACK(searchbar_clear_entry_if_default), NULL);
 
   gtk_box_pack_start(GTK_BOX(ret), searchbox, TRUE, TRUE, 0);
 
-  if(g_strcmp0(searchbar_type,"history") == 0)
-    history_set_searchbar_widget(searchbox);
-
-  return ret;
+    if(g_strcmp0(searchbar_type,"history") == 0)
+    {
+        gtk_entry_set_text(GTK_ENTRY(searchbox), _("Search history"));
+        history_set_searchbar_widget(searchbox);
+    }
+  
+    return ret;
 }
 
 void activateWaitingLayer() {

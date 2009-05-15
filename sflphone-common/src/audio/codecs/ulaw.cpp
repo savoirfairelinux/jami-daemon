@@ -30,7 +30,7 @@ public:
  	: AudioCodec(payload, "PCMU")
 	{
   		_clockRate = 8000;
-                _frameSize = 160; // 20 ms at 8kHz
+                _frameSize = 160; // samples, 20 ms at 8kHz
   		_channel   = 1;
 		_bitrate =  64; 
 		_bandwidth = 80;

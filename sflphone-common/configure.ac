@@ -317,8 +317,10 @@ AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspe
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
 
-
-
+dnl Check for celt. Compile it only if a recent enough version is found
+LIBCELT_MIN_VERSION=0.5.1
+PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, AM_CONDITIONAL(BUILD_CELT, test 1 = 1 ), AM_CONDITIONAL(BUILD_CELT, test 0 = 1 ))
+    
 dnl Check for ilbc support
 AC_ARG_WITH([ilbc],
   [AS_HELP_STRING([--without-ilbc],

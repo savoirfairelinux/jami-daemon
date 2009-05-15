@@ -181,7 +181,7 @@ void build_wizard( void ) {
 GtkWidget* build_intro() {
 	GtkWidget *label;
 
-	wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , "SFLphone 0.9.4" , _("Welcome to SFLphone!"));
+	wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , "SFLphone GNOME client" , _("Welcome to SFLphone!"));
 	label = gtk_label_new(_("This installation wizard will help you configure an account.")) ;
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
 	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
@@ -534,7 +534,7 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
 
 	gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), vbox, TRUE);
 
-	wiz->logo = gdk_pixbuf_new_from_file(ICONS_DIR "/sflphone.png", NULL);
+	wiz->logo = gdk_pixbuf_new_from_file(LOGO, NULL);
 	gtk_assistant_set_page_header_image(GTK_ASSISTANT(wiz->assistant),vbox, wiz->logo);
 	g_object_unref(wiz->logo);
 

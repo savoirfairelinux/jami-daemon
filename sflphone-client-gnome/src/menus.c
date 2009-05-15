@@ -354,7 +354,7 @@ create_call_menu()
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
 #if GTK_CHECK_VERSION(2,10,0)
-  menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account Assistant"));
+  menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account creation wizard"));
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect_swapped( G_OBJECT( menu_items ) , "activate" , G_CALLBACK( call_wizard  ) , NULL );
   gtk_widget_show (menu_items);
