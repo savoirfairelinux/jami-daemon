@@ -1051,7 +1051,7 @@ ManagerImpl::ringtone()
   AudioLoop*
 ManagerImpl::getTelephoneTone()
 {
-  _debug("ManagerImpl::getTelephoneTone()\n");
+  // _debug("ManagerImpl::getTelephoneTone()\n");
   if(_telephoneTone != 0) {
     ost::MutexLock m(_toneMutex);
     return _telephoneTone->getCurrentTone();
@@ -1064,7 +1064,7 @@ ManagerImpl::getTelephoneTone()
   AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
-  _debug("ManagerImpl::getTelephoneFile()\n");
+  // _debug("ManagerImpl::getTelephoneFile()\n");
   ost::MutexLock m(_toneMutex);
   if(_audiofile.isStarted()) {
     return &_audiofile;
