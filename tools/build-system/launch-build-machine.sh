@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-15 10:50:55 -0400
+# Last Modified: 2009-05-15 12:23:31 -0400
 #####################################################
 
 #
@@ -76,6 +76,8 @@ DO_SEND_EMAIL=1
 
 EDITOR=echo
 export EDITOR
+
+NON_FATAL_ERRORS=
 
 MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" )
 
@@ -316,7 +318,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Cannot deploy packaging system"
-	                exit -1
+			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
 	        fi
 
 		echo "Launch remote build"
@@ -324,7 +326,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Error during remote packaging process"
-	                # exit -1
+			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
 	        fi
 
 		echo "Retrieve dists and log files (current tag is ${TAG})"
@@ -333,7 +335,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Cannot retrieve remote files"
-	                exit -1
+	                NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
 	        fi
 
 		if [ "${VM_STATE}" = "running" ]; then
@@ -343,8 +345,8 @@ if [ ${DO_MAIN_LOOP} ]; then
 			${SSH_BASE} 'sudo shutdown -h now'
 			echo "Wait ${SHUTDOWN_WAIT} s"
 			sleep ${SHUTDOWN_WAIT}
-			echo "Hard shut down"
-			cd "${VBOX_USER_HOME}" && VBoxManage controlvm ${MACHINE} poweroff
+			# hard shut down (just to be sure)
+			cd "${VBOX_USER_HOME}" && VBoxManage controlvm ${MACHINE} poweroff >/dev/null 2>&1
 		fi
 	done
 fi
@@ -411,6 +413,12 @@ if [ ${DO_UPLOAD} ]; then
 		echo " !! Cannot update repository"
 		exit -1
 	fi
+fi
+
+if [ ${NON_FATAL_ERRORS} ]; then
+	echo "Non fatal errors :"
+	echo ${NON_FATAL_ERRORS}
+	exit -1
 fi
 
 # close file descriptor
