@@ -21,6 +21,7 @@ private:
 	static AccountList * accountList;
 	QErrorMessage * errorWindow;
 	MapStringString * codecPayloads;
+	bool accountsChangedEnableWarning;
 
 public:
 	ConfigurationDialog(sflphone_kdeView *parent = 0);

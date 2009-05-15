@@ -37,9 +37,8 @@ SFLPhone::SFLPhone(QWidget *parent)
 		QString str = QString(DATA_INSTALL_DIR) + "/sflphone-client-kde/sflphone-client-kdeui.rc";
 		qDebug() << "str = " << str ;
 		createGUI(str);
-		
-		connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
-             this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
+             
+      QMetaObject::connectSlotsByName(this);
 
 } 
 
@@ -95,7 +94,9 @@ void SFLPhone::setupActions()
 	trayIcon = new QSystemTrayIcon(this->windowIcon(), this);
 	trayIcon->setContextMenu(trayIconMenu);
 	trayIcon->show();
-	qDebug() << "trayicon = " << trayIcon->icon();
+	trayIcon->setObjectName("trayIcon");
+	
+	iconChanged = false;
 
 }
 
@@ -114,23 +115,55 @@ bool SFLPhone::queryClose()
 	return true;
 }
 
+void SFLPhone::sendNotif(QString caller)
+{
+	if(! isActiveWindow())
+	{
+		trayIcon->setIcon(QIcon(ICON_TRAY_NOTIF));
+		iconChanged = true;
+	}
+	trayIcon->showMessage(
+	    tr2i18n("Incoming call"), 
+	    tr2i18n("You have an incoming call from : ") + caller + ".\n" + tr2i18n("Click to accept or refuse it."), 
+	    QSystemTrayIcon::Warning, 
+	    20000);
+	
+}
 
-void SFLPhone::iconActivated(QSystemTrayIcon::ActivationReason reason)
+void SFLPhone::on_trayIcon_messageClicked()
+{
+	qDebug() << "on_trayIcon_messageClicked";
+	hide();
+	show();
+	activateWindow();
+}
+
+void SFLPhone::changeEvent(QEvent * event)
+{
+	qDebug() << "changeEvent event->type() = " << event->type() << " , iconChanged = " << iconChanged << " , isActiveWindow() = " << isActiveWindow();
+	if (event->type() == QEvent::ActivationChange && iconChanged && isActiveWindow())
+	{
+		qDebug() << "changeEvent2";
+		trayIcon->setIcon(this->windowIcon());
+		iconChanged = false;
+	}
+}
+
+void SFLPhone::on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason)
 {
 	qDebug() << "on_trayIcon_activated";
 	switch (reason) {
 		case QSystemTrayIcon::Trigger:
 		case QSystemTrayIcon::DoubleClick:
 			qDebug() << "Tray icon clicked.";
-			qDebug() << "windowState() = " << windowState();
 			if(isActiveWindow())
 			{
-				qDebug() << "isactive";
+				qDebug() << "isactive -> hide()";
 				hide();
 			}
 			else
 			{
-				qDebug() << "isnotactive";
+				qDebug() << "isnotactive -> show()";
 				hide();
 				show();
 				activateWindow();

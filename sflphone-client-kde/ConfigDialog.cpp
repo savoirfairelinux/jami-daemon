@@ -43,11 +43,11 @@ ConfigurationDialog::ConfigurationDialog(sflphone_kdeView *parent) : QDialog(par
 	//TODO ajouter les items de l'interface audio ici avec les constantes
 	
 
-	
+	accountsChangedEnableWarning = true;
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-// 	connect(&configurationManager, SIGNAL(accountsChanged()),
-// 	        this,                  SLOT(on1_accountsChanged()));
+	connect(&configurationManager, SIGNAL(accountsChanged()),
+	        this,                  SLOT(on1_accountsChanged()));
 	
 	loadOptions();
 	
@@ -691,13 +691,17 @@ void ConfigurationDialog::on_tableWidget_codecs_currentCellChanged(int currentRo
 void ConfigurationDialog::on1_accountsChanged()
 {
 	qDebug() << "on1_accountsChanged";
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	disconnect(&configurationManager, SIGNAL(accountsChanged()),
-	           this,                  SLOT(on1_accountsChanged()));
-	accountList->update();
-	loadAccountList();
-	connect(&configurationManager, SIGNAL(accountsChanged()),
-	        this,                  SLOT(on1_accountsChanged()));
+// 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+// 	disconnect(&configurationManager, SIGNAL(accountsChanged()),
+// 	           this,                  SLOT(on1_accountsChanged()));
+// 	accountList->update();
+// 	loadAccountList();
+// 	connect(&configurationManager, SIGNAL(accountsChanged()),
+// 	        this,                  SLOT(on1_accountsChanged()));
+	if(isVisible() && accountsChangedEnableWarning)
+	{
+		errorWindow->showMessage(tr2i18n("Accounts changed : another client may be changing accounts or an account is unstable. \nIf another client is changing the settings, you may cancel your changes to avoid overwriting one's changes."));
+	}
 }
 
 void ConfigurationDialog::on1_parametersChanged()

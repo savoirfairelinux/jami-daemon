@@ -52,7 +52,7 @@ class ConfigurationDialog;
  */
  
 
-class sflphone_kdeView : public QWidget, public Ui::SFLPhone
+class sflphone_kdeView : public QWidget, public Ui::SFLPhone_view
 {
     Q_OBJECT
     

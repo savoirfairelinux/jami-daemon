@@ -38,6 +38,7 @@
 #include "instance_interface_singleton.h"
 #include "ActionSetAccountFirst.h"
 #include "ContactItemWidget.h"
+#include "SFLPhone.h"
 
 #include <kabc/addressbook.h>
 #include <kabc/stdaddressbook.h>
@@ -991,18 +992,22 @@ void sflphone_kdeView::on_listWidget_addressBook_itemDoubleClicked(QListWidgetIt
 void sflphone_kdeView::on_stackedWidget_screen_currentChanged(int index)
 {
 	qDebug() << "on_stackedWidget_screen_currentChanged";
+	KXmlGuiWindow * window = (KXmlGuiWindow * ) this->parent();
 	switch(index)
 	{
 		case 0:
 			qDebug() << "Switched to call list screen.";
+			window->setWindowTitle("SFLPhone - Main screen");
 			break;
 		case 1:
 			qDebug() << "Switched to call history screen.";
 			updateCallHistory();
+			window->setWindowTitle("SFLPhone - Call history");
 			break;
 		case 2:
 			qDebug() << "Switched to address book screen.";
 			updateAddressBook();
+			window->setWindowTitle("SFLPhone - Address book");
 			break;
 		default:
 			qDebug() << "Error : reached an unknown index \"" << index << "\" with stackedWidget_screen.";
@@ -1330,6 +1335,8 @@ void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString 
 	Call * call = callList->addIncomingCall(callID);
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+	SFLPhone * window = (SFLPhone * ) this->parent();
+	window->sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
 }
 
 void sflphone_kdeView::on1_incomingMessage(const QString &accountID, const QString &message)

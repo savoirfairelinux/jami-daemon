@@ -28,20 +28,25 @@ Q_OBJECT
 
 private:
 	sflphone_kdeView * view;
-	QSystemTrayIcon *trayIcon;
 	QMenu *trayIconMenu;
-
+	bool iconChanged;
+	QSystemTrayIcon *trayIcon;
 
 protected:
 	virtual bool queryClose();
+	virtual void changeEvent(QEvent * event);
 
 public:
 	SFLPhone(QWidget *parent = 0);
 	~SFLPhone();
 	void setupActions();
+	void sendNotif(QString caller);
+	
 	
 private slots:
-	void iconActivated(QSystemTrayIcon::ActivationReason reason);
+	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
+	void on_trayIcon_messageClicked();
+
 
 };
 

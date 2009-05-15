@@ -98,8 +98,8 @@
 
 #define ICON_QUIT                         ":/images/icons/application-exit.png"
 
-#define ICON_SFLPHONE                     ":/images/icons/sflphone.png"
-
+#define ICON_SFLPHONE                     ":/images/icons/sflphone.svg"
+#define ICON_TRAY_NOTIF                   ":/images/icons/sflphone_notif.svg"
 
 #define RECORD_DEVICE                     "mic"
 #define SOUND_DEVICE                      "speaker"
