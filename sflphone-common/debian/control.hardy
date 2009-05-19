@@ -2,7 +2,7 @@ Source: sflphone-common
 Maintainer: SavoirFaireLinux Inc <emmanuel.milou@savoirfairelinux.com>
 Section: gnome
 Priority: optional
-Build-Depends: debhelper (>= 5), libgcc1, autoconf, automake, libpulse-dev, libsamplerate0-dev, libcommoncpp2-dev, libccrtp-dev, libcppunit-dev, libgsm1-dev, libspeex-dev, libtool, libdbus-1-dev, libasound2-dev, uuid-dev, libexpat1-dev
+Build-Depends: debhelper (>= 5), libgcc1, autoconf, automake, libpulse-dev, libsamplerate0-dev, libcommoncpp2-dev, libccrtp-dev, libgsm1-dev, libspeex-dev, libtool, libdbus-1-dev, libasound2-dev, uuid-dev, libexpat1-dev
 Standards-Version: 3.7.3
 
 Package: sflphone-common
