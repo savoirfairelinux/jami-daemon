@@ -7,8 +7,16 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified:
+# Last Modified: 2009-05-15 12:23:31 -0400
 #####################################################
+
+#
+# Not working with git 1.5.4.3
+#
+#
+#
+#
+
 
 TAG=`date +%Y-%m-%d`
 
@@ -69,6 +77,8 @@ DO_SEND_EMAIL=1
 EDITOR=echo
 export EDITOR
 
+NON_FATAL_ERRORS=
+
 MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" )
 
 #########################
@@ -80,20 +90,6 @@ echo "    /***********************\\"
 echo "    | SFLPhone build system |"
 echo "    \\***********************/"
 echo
-
-cd ${SCRIPTS_DIR}
-
-if [ "$?" -ne "0" ]; then
-        echo " !! Cannot cd to working directory"
-        exit -1
-fi
-
-WHO=`whoami`
-
-if [ "${WHO}" != "${USER}" ]; then
-        echo "!! Please use user ${USER} to run this script"
-        exit -1;
-fi
 
 for PARAMETER in $*
 do
@@ -136,6 +132,26 @@ do
 		exit -1;;
 	esac
 done
+
+# if more than one VM will be launched, automatically stop running VMs
+if [ "${#MACHINES[@]}" -gt "1" ]; then
+	VBoxManage list runningvms | tail -n +5 | awk '{print $1}' | xargs -i VBoxManage controlvm {} poweroff
+fi
+
+# change to working directory
+cd ${SCRIPTS_DIR}
+
+if [ "$?" -ne "0" ]; then
+        echo " !! Cannot cd to working directory"
+        exit -1
+fi
+
+WHO=`whoami`
+
+if [ "${WHO}" != "${USER}" ]; then
+        echo "!! Please use user ${USER} to run this script"
+        exit -1;
+fi
 
 # logging
 mkdir ${PACKAGING_RESULT_DIR} 2>/dev/null
@@ -200,13 +216,12 @@ if [ ${DO_PREPARE} ]; then
 	echo "Clone repository"
 	git clone ssh://repos-sflphone-git@sflphone.org/~/sflphone.git ${REPOSITORY_DIR} >/dev/null 2>&1
 
-
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot clone repository"
 		exit -1
 	fi
 
-	FULL_VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1-2`
+	FULL_VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1-2 | sed 's/\.rc.*//' | sed 's/\.beta.*//'`
 	
 	# change current branch if needed
         if [ ${RELEASE_MODE} ]; then
@@ -220,26 +235,12 @@ if [ ${DO_PREPARE} ]; then
 	# generate the changelog, according to the distribution and the git commit messages
 	echo "Update changelogs"
 
-	# use git to generate changelogs
-	# TODO : currently do symlink to workaround git-dch bug, check if better way is possible
-	if [ ${RELEASE_MODE} ]; then
-	        cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/ . && ${BIN_DIR}/git-dch -a -R -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian && \
-		# cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian . && ${BIN_DIR}/git-dch -a -R -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian && \
-		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian . && ${BIN_DIR}/git-dch -a -R -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian
-	else
-		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian . && ${BIN_DIR}/git-dch -a -S && rm debian && \
-		# cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian . && ${BIN_DIR}/git-dch -a -S && rm debian && \
-		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian . && ${BIN_DIR}/git-dch -a -S && rm debian
-	fi
+	${SCRIPTS_DIR}/sfl-git-dch.sh ${RELEASE_MODE}
 	
 	if [ "$?" -ne "0" ]; then
 		echo "!! Cannot update changelogs"
 		exit -1
 	fi
-
-	# change UNRELEASED flag to system as we alway do a build for each distribution
-	# and distribution is set by another script
-	find ${REPOSITORY_DIR} -name changelog -exec sed -i 's/UNRELEASED/SYSTEM/g' {} \;
 
 	cd ${REPOSITORY_DIR}	
 	echo "Update repository with new changelog"
@@ -255,7 +256,7 @@ if [ ${DO_PREPARE} ]; then
 	if [ ! ${RELEASE_MODE} ]; then
 		VERSION_COMMIT=${FULL_VER}" Snapshot ${TAG}"
 	fi
-	git-commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
+	git commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
 	echo " Pushing commit"
 	git push origin master >/dev/null
 
@@ -267,7 +268,7 @@ if [ ${DO_PREPARE} ]; then
 	fi
 	
 	echo "Archiving repository"
-	tar czf ${REPOSITORY_ARCHIVE} -C `dirname ${REPOSITORY_DIR}` sflphone 
+	tar czf ${REPOSITORY_ARCHIVE} --exclude .git -C `dirname ${REPOSITORY_DIR}` sflphone 
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot archive repository"
@@ -309,10 +310,6 @@ if [ ${DO_MAIN_LOOP} ]; then
 			sleep ${STARTUP_WAIT}
 		fi
 	
-		echo "Doing updates"
-		${SSH_BASE} 'sudo apt-get update >/dev/null'
-		${SSH_BASE} 'sudo apt-get upgrade -y >/dev/null'
-
 		echo "Clean remote directory"
 		${SSH_BASE} "rm -rf ${REMOTE_DEPLOY_DIR} 2>/dev/null"
 
@@ -321,7 +318,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Cannot deploy packaging system"
-	                exit -1
+			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
 	        fi
 
 		echo "Launch remote build"
@@ -329,7 +326,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Error during remote packaging process"
-	                # exit -1
+			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
 	        fi
 
 		echo "Retrieve dists and log files (current tag is ${TAG})"
@@ -338,7 +335,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Cannot retrieve remote files"
-	                exit -1
+	                NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
 	        fi
 
 		if [ "${VM_STATE}" = "running" ]; then
@@ -348,8 +345,8 @@ if [ ${DO_MAIN_LOOP} ]; then
 			${SSH_BASE} 'sudo shutdown -h now'
 			echo "Wait ${SHUTDOWN_WAIT} s"
 			sleep ${SHUTDOWN_WAIT}
-			echo "Hard shut down"
-			cd "${VBOX_USER_HOME}" && VBoxManage controlvm ${MACHINE} poweroff
+			# hard shut down (just to be sure)
+			cd "${VBOX_USER_HOME}" && VBoxManage controlvm ${MACHINE} poweroff >/dev/null 2>&1
 		fi
 	done
 fi
@@ -416,6 +413,12 @@ if [ ${DO_UPLOAD} ]; then
 		echo " !! Cannot update repository"
 		exit -1
 	fi
+fi
+
+if [ ${NON_FATAL_ERRORS} ]; then
+	echo "Non fatal errors :"
+	echo ${NON_FATAL_ERRORS}
+	exit -1
 fi
 
 # close file descriptor
