@@ -90,7 +90,7 @@
 #define PHONE_NUMBER_HOOK_ADD_PREFIX                      "Hooks.phone_number_add_prefix"
 
 #define EMPTY_FIELD		""			/** Default value for empty field */
-#define DFT_STUN_SERVER 	"stun.ekiga.net"	/** Default STUN server address */
+#define DFT_STUN_SERVER 	"stun.sflphone.org"	/** Default STUN server address */
 #define	YES_STR			"1"			/** Default YES value */
 #define	NO_STR			"0"			/** Default NO value */
 #define DFT_PULSE_LENGTH_STR	"250"			/** Default DTMF lenght */
