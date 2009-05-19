@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-05 17:03-0400\n"
+"POT-Creation-Date: 2009-05-05 17:43-0400\n"
 "PO-Revision-Date: 2008-08-11 11:53+0200\n"
 "Last-Translator: Maxime Chambreuil <maxime.chambreuil@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -435,8 +435,8 @@ msgid "_Show main window"
 msgstr "Mostrar ventana principal"
 
 #: ../../sflphone-client-gnome/src/statusicon.c:124
-#, c-format
-msgid "SFLphone - %i accounts registered"
+#, fuzzy, c-format
+msgid "SFLphone - %i accounts configured"
 msgstr "SFLphone - %i cuenta registrada"
 
 #: ../../sflphone-client-gnome/src/timestamp.c:46
