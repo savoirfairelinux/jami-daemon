@@ -1,7 +1,9 @@
-sflphone-common (0.9.5-SYSVER~snapshot1242399317) SYSTEM; urgency=low
+sflphone-common (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1242399317 **
+    ** 0.9.5 rc2 **
 
+  * [#1402] Fix pjsip build
+  * [#1404] Clear GTK-Critical Bug at client startup
   * Changes for name based dbus connection
   * Clean changelogs
   * [#1343] Gnome: Implement a callback system to handle focus on
@@ -37,7 +39,7 @@ sflphone-common (0.9.5-SYSVER~snapshot1242399317) SYSTEM; urgency=low
   * Bug #1405: Fix strings as requested.
   * Bug #1404: Fix strings in preferences panel.
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 15 May 2009 10:55:31 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 15 May 2009 16:56:52 -0400
 
 sflphone-common (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
