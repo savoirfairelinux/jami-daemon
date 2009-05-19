@@ -267,11 +267,9 @@ AC_ARG_WITH(build-libdbus-cxx,
 )
 AC_SUBST(BUILD_LIBDBUS_CXX_DIR)
 
-
-
 dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12
-PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION})
+PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
 AC_SUBST(CPPUNIT_LIBS)
 
 # check for libgsm1 (doesn't use pkg-config)
