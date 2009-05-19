@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-15 12:23:31 -0400
+# Last Modified: 2009-05-19 10:11:53 -0400
 #####################################################
 
 #
@@ -68,6 +68,7 @@ RELEASE_MODE=
 VERSION_APPEND=
 
 DO_PREPARE=1
+DO_PUSH=1
 DO_MAIN_LOOP=1
 DO_SIGNATURES=1
 DO_UPLOAD=1
@@ -98,6 +99,7 @@ do
 		echo
 		echo "Options :"
 		echo " --skip-prepare"
+		echo " --skip-push"
 		echo " --skip-main-loop"
 		echo " --skip-signatures"
 		echo " --skip-upload"
@@ -109,6 +111,8 @@ do
 		exit 0;;
 	--skip-prepare)
 		unset DO_PREPARE;;
+	--skip-push)
+		unset DO_PUSH;;
 	--skip-main-loop)
 		unset DO_MAIN_LOOP;;
 	--skip-signatures)
@@ -257,8 +261,11 @@ if [ ${DO_PREPARE} ]; then
 		VERSION_COMMIT=${FULL_VER}" Snapshot ${TAG}"
 	fi
 	git commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
-	echo " Pushing commit"
-	git push origin master >/dev/null
+
+	if [ ${DO_PUSH} ];then
+		echo " Pushing commit"
+		git push origin master >/dev/null
+	fi
 
 	# change back current branch if needed
 	if [ ${RELEASE_MODE} ]; then

@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-13
-# Last Modified: 2009-05-14 17:22:48 -0400
+# Last Modified: 2009-05-19 10:09:33 -0400
 #####################################################
 
 # set -x
@@ -36,27 +36,48 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # get last release tag
-LAST_RELEASE_TAG_NAME=`git describe --tag HEAD --match "debian/*" --abbrev=40 | cut -d "-" -f1-2`
+LAST_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta)?$" | tail -n 1`
 
 if [ "$?" -ne "0" ]; then
 	echo " !! Error when retrieving last tag"
 	exit -1
 fi
 
+# get last release tag
+PREVIOUS_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta)?$" | tail -n 2 | sed -n '1p;1q'`
+
+if [ "$?" -ne "0" ]; then
+	echo " !! Error when retrieving previous revision tag"
+	exit -1
+fi
+
+echo "Last release tag is : ${LAST_RELEASE_TAG_NAME}"
+
 # get last release commit hash
-LAST_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${LAST_RELEASE_TAG_NAME=} | tail -n 1`
+REF_COMMIT_HASH=
+if [ ${RELEASE_MODE} ]; then
+	echo "Reference tag is : ${PREVIOUS_RELEASE_TAG_NAME}"
+	REF_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
+else
+	echo "Reference tag is : ${LAST_RELEASE_TAG_NAME}"
+	REF_COMMIT_HASH=`git show --pretty=format:"%H" -s ${LAST_RELEASE_TAG_NAME} | tail -n 1`
+fi
 
 if [ "$?" -ne "0" ]; then
 	echo " !! Error when retrieving last release commit hash"
 	exit -1
 fi
 
-echo "Last release tag is : ${LAST_RELEASE_TAG_NAME} (commit ${LAST_RELEASE_COMMIT_HASH})"
+echo "Reference commit is : ${REF_COMMIT_HASH}"
 echo
 
-
 # use git log to retrieve changelog content
-CHANGELOG_CONTENT=`git log --no-merges --pretty=format:"%s" ${LAST_RELEASE_COMMIT_HASH}.. | grep -v "\[\#1262\]"`
+CHANGELOG_CONTENT=`git log --no-merges --pretty=format:"%s" ${REF_COMMIT_HASH}.. | grep -v "\[\#1262\]"`
+
+if [ "$?" -eq "1" ]; then
+        echo " !! No new commit since last release"
+        exit -1
+fi
 
 if [ "$?" -ne "0" ]; then
         echo " !! Error when retrieving changelog content"
