@@ -28,7 +28,7 @@ const GdkColor GRAY_COLOR = { 0, 30000, 30000, 30000 };
 
 GtkWidget * searchbox;
 
-void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED) {
+void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED){
     // gtk_widget_grab_focus (GTK_WIDGET(searchbox));
 
     if (active_calltree == contacts) {
