@@ -2,11 +2,14 @@
 #include "sflphone_const.h"
 #include "configurationmanager_interface_singleton.h"
 
+
+QString AccountList::firstAccount = QString();
+
 //Constructors
 
 AccountList::AccountList(QStringList & _accountIds)
 {
-	firstAccount = NULL;
+// 	firstAccount = QString();
 	accounts = new QVector<Account *>();
 	for (int i = 0; i < _accountIds.size(); ++i){
 		(*accounts) += Account::buildExistingAccountFromId(_accountIds[i]);
@@ -15,7 +18,7 @@ AccountList::AccountList(QStringList & _accountIds)
 
 AccountList::AccountList()
 {
-	firstAccount = NULL;
+// 	firstAccount = QString();
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	//ask for the list of accounts ids to the configurationManager
 	QStringList accountIds = configurationManager.getAccountList().value();
@@ -43,12 +46,14 @@ void AccountList::update()
 
 QVector<Account *> AccountList::registeredAccounts() const
 {
+	qDebug() << "registeredAccounts";
 	QVector<Account *> registeredAccounts;
 	Account * current;
 	for (int i = 0; i < accounts->count(); ++i){
 		current = (*accounts)[i];
 		if(current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
 		{
+			qDebug() << current->getAlias() << " : " << current;
 			registeredAccounts.append(current);
 		}
 	}
@@ -57,9 +62,10 @@ QVector<Account *> AccountList::registeredAccounts() const
 
 Account * AccountList::firstRegisteredAccount() const
 {
-	if(firstAccount != NULL)
+	Account * first = getAccountById(firstAccount);
+	if(first && (first->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED))
 	{
-		return firstAccount;
+		return first;
 	}
 	Account * current;
 	for (int i = 0; i < accounts->count(); ++i){
@@ -74,7 +80,7 @@ Account * AccountList::firstRegisteredAccount() const
 
 void AccountList::setAccountFirst(Account * account)
 {
-	firstAccount = account;
+	firstAccount = account->getAccountId();
 }
 
 AccountList::~AccountList()
@@ -88,7 +94,7 @@ QVector<Account *> & AccountList::getAccounts()
 	return *accounts;
 }
 
-Account * AccountList::getAccountById(QString & id)
+Account * AccountList::getAccountById(const QString & id) const
 {
 	for (int i = 0; i < accounts->size(); ++i)
 	{

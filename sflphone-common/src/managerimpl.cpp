@@ -1846,6 +1846,7 @@ ManagerImpl::getCurrentAudioOutputPlugin( void )
 
     alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
     if(alsalayer)   return alsalayer -> getAudioPlugin ();
+    else            return getConfigString( AUDIO , ALSA_PLUGIN );
 }
 
 int ManagerImpl::app_is_running( std::string process )

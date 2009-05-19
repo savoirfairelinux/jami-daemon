@@ -43,7 +43,7 @@ ConfigurationDialog::ConfigurationDialog(sflphone_kdeView *parent) : QDialog(par
 	//TODO ajouter les items de l'interface audio ici avec les constantes
 	
 
-	accountsChangedEnableWarning = true;
+// 	accountsChangedEnableWarning = true;
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	connect(&configurationManager, SIGNAL(accountsChanged()),
@@ -117,8 +117,9 @@ void ConfigurationDialog::loadOptions()
 	//////////////////////
 	
 	//Audio Interface settings
-	comboBox_interface->setCurrentIndex(configurationManager.getAudioManager());
-	stackedWidget_interfaceSpecificSettings->setCurrentIndex(configurationManager.getAudioManager());
+	int audioManager = configurationManager.getAudioManager();
+	comboBox_interface->setCurrentIndex(audioManager);
+	stackedWidget_interfaceSpecificSettings->setCurrentIndex(audioManager);
 	
 	//ringtones settings
 	checkBox_ringtones->setCheckState(configurationManager.isRingtoneEnabled() ? Qt::Checked : Qt::Unchecked);
@@ -134,19 +135,26 @@ void ConfigurationDialog::loadOptions()
 	comboBox1_alsaPlugin->addItems(pluginList);
 	comboBox1_alsaPlugin->setCurrentIndex(comboBox1_alsaPlugin->findText(configurationManager.getCurrentAudioOutputPlugin()));
 	
-	QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
 	
-	int inputDevice = devices[1].toInt();
 	comboBox2_in->clear();
-// 	QStringList inputDeviceList = configurationManager.getAudioInputDeviceList();
-// 	comboBox2_in->addItems(inputDeviceList);
-	comboBox2_in->setCurrentIndex(inputDevice);
-	
-	int outputDevice = devices[0].toInt();
 	comboBox3_out->clear();
-// 	QStringList outputDeviceList = configurationManager.getAudioOutputDeviceList();
-// 	comboBox3_out->addItems(outputDeviceList);
-// 	comboBox3_out->setCurrentIndex(outputDevice);
+	
+	if(audioManager == ALSA)
+	{
+		QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
+		
+		int inputDevice = devices[1].toInt();
+		qDebug() << "inputDevice = " << devices[1];
+		QStringList inputDeviceList = configurationManager.getAudioInputDeviceList();
+		comboBox2_in->addItems(inputDeviceList);
+		comboBox2_in->setCurrentIndex(inputDevice);
+		
+		int outputDevice = devices[0].toInt();
+		qDebug() << "outputDevice = " << devices[0];
+		QStringList outputDeviceList = configurationManager.getAudioOutputDeviceList();
+		comboBox3_out->addItems(outputDeviceList);
+		comboBox3_out->setCurrentIndex(outputDevice);
+	}
 	
 	//pulseaudio settings
 	checkBox_pulseAudioVolumeAlter->setCheckState(configurationManager.getPulseAppVolumeControl() ? Qt::Checked : Qt::Unchecked);
@@ -192,6 +200,7 @@ void ConfigurationDialog::saveOptions()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	
+	accountsChangedEnableWarning = false;
 	////////////////////////
 	////General settings////
 	////////////////////////
@@ -256,8 +265,16 @@ void ConfigurationDialog::saveOptions()
 	{
 		qDebug() << "setting alsa settings";
 		configurationManager.setOutputAudioPlugin(comboBox1_alsaPlugin->currentText());
-		configurationManager.setAudioInputDevice(comboBox2_in->currentIndex());
-		configurationManager.setAudioOutputDevice(comboBox3_out->currentIndex());
+		int audioInputDevice = comboBox2_in->currentIndex();
+		if( audioInputDevice != -1)
+		{
+			configurationManager.setAudioInputDevice(audioInputDevice);
+		}
+		int audioOutputDevice = comboBox3_out->currentIndex();
+		if( audioOutputDevice != -1)
+		{
+			configurationManager.setAudioOutputDevice(audioOutputDevice);
+		}
 	}
 	//pulseaudio settings
 	if(manager == PULSEAUDIO)
@@ -297,6 +314,7 @@ void ConfigurationDialog::saveOptions()
 	hooksSettings[HOOKS_COMMAND] = lineEdit_command->text();
 	configurationManager.setHookSettings(hooksSettings);
 	
+// 	accountsChangedEnableWarning = true;
 }
 
 
@@ -401,7 +419,7 @@ void ConfigurationDialog::saveAccount(QListWidgetItem * item)
 	if(! item)  { qDebug() << "Attempting to save details of an account from a NULL item"; return; }
 	
 	Account * account = accountList->getAccountByItem(item);
-	if(! account)  {  qDebug() << "Attempting to save details of an unexisting account : " << item->text(); return;  }
+	if(! account)  {  qDebug() << "Attempting to save details of an unexisting account : " << item->text() << " accounts are "<< accountList;  return;  }
 
 	account->setAccountDetail(ACCOUNT_ALIAS, edit1_alias->text());
 	QString protocolsTab[] = ACCOUNT_TYPES_TAB;
@@ -701,6 +719,10 @@ void ConfigurationDialog::on1_accountsChanged()
 	if(isVisible() && accountsChangedEnableWarning)
 	{
 		errorWindow->showMessage(tr2i18n("Accounts changed : another client may be changing accounts or an account is unstable. \nIf another client is changing the settings, you may cancel your changes to avoid overwriting one's changes."));
+	}
+	if(! isVisible())
+	{
+		loadAccountList();
 	}
 }
 

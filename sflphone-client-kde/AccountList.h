@@ -11,7 +11,7 @@ class AccountList{
 private:
 
 	QVector<Account *> * accounts;
-	Account * firstAccount;
+	static QString firstAccount;
 
 public:
 
@@ -22,7 +22,7 @@ public:
 	
 	//Getters
 	QVector<Account *> & getAccounts();
-	Account * getAccountById(QString & id);
+	Account * getAccountById(const QString & id) const;
 	QVector<Account *>  getAccountByState(QString & state);
 	Account * getAccountByItem(QListWidgetItem * item);
 	int size();

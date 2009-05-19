@@ -219,11 +219,12 @@ void Account::setAccountDetail(QString param, QString val)
 
 void Account::setAccountId(QString id)
 {
+	qDebug() << "accountId = " << accountId;
 	if (! isNew())
 	{
 		qDebug() << "Error : setting AccountId of an existing account.";
 	}
-	*accountId = id;
+	accountId = new QString(id);
 }
 
 //Operators
