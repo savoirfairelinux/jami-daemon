@@ -21,6 +21,7 @@
 #define __MAINWINDOW_H__
 
 #include <calllist.h>
+#include <calltree.h>
 
 /** @file mainwindow.h
   * @brief The main window of the client.
@@ -91,5 +92,13 @@ void statusbar_pop_message( guint id );
 
 void main_window_searchbar( gboolean *state );
 
+//static gboolean
+//on_key_released (GtkWidget *widget, GdkEventKey *event,
+//                 gpointer user_data);
 // void set_focus_on_mainwindow();
+
+gboolean focus_is_on_calltree;
+
+gboolean focus_is_on_searchbar;
+
 #endif

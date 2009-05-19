@@ -32,27 +32,52 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc, doubl
   channel_map.channels = 1; 
   pa_cvolume_set( &_volume , 1 , PA_VOLUME_NORM ) ; // * vol / 100 ;
   
-  _audiostream =  createStream( context );
+  _context = context;
+
+  // connectStream();
 } 
 
 AudioStream::~AudioStream()
 { 
+  disconnectStream();
+}
+
+bool
+AudioStream::connectStream()
+{
+  ost::MutexLock guard(_mutex);
+
+  if(!_audiostream)
+    _audiostream = createStream( _context );
+  else {
+    disconnectStream();
+    _audiostream = createStream( _context );
+  }
+
+  return true;
+}
+
+bool
+AudioStream::disconnectStream( void )
+{ 
+  ost::MutexLock guard(_mutex);
+
   _debug("Destroy audio streams\n");
-  pa_stream_disconnect( pulseStream() );
-  pa_stream_unref( pulseStream() );
+  pa_stream_disconnect( _audiostream );
+  pa_stream_unref( _audiostream );
+
+  _audiostream = NULL;
+
+  return true;
 } 
 
-void
-AudioStream::disconnect( void )
-{ 
-  _debug("Destroy audio streams\n");
-  pa_stream_disconnect( pulseStream() );
-  pa_stream_unref( pulseStream() );
-} 
+
 
 void 
 AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
 {
+  
+  
   _debug("AudioStream::stream_state_callback :: The state of the stream changed\n");
   assert(s);
   switch(pa_stream_get_state(s)){
@@ -79,12 +104,20 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
   }
 }
 
+pa_stream_state_t 
+AudioStream::getStreamState(void) {
+
+  ost::MutexLock guard(_mutex);
+  return pa_stream_get_state(_audiostream);
+}
 
 
 
   pa_stream*
 AudioStream::createStream( pa_context* c )
 {
+  ost::MutexLock guard(_mutex);
+
   pa_stream* s;
   //pa_cvolume cv;
 

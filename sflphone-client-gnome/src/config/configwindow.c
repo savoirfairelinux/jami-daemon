@@ -74,6 +74,10 @@ enum {
     COLUMN_ACCOUNT_COUNT
 };
 
+// Mail notification
+GtkWidget * widg;
+
+
 
 /**
  * Fills the treelist with accounts
@@ -161,6 +165,14 @@ set_popup_mode( void )
 set_notif_level(  )
 {
     dbus_set_notify();
+
+    if (dbus_get_notify())
+      gtk_widget_set_sensitive(widg, TRUE);
+    else {
+      gtk_widget_set_sensitive(widg, FALSE);
+      if (dbus_get_mail_notify())
+        gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), FALSE);
+    }
 }
 
     void
@@ -532,6 +544,7 @@ GtkWidget* create_stun_tab()
 
 
 
+
     GtkWidget*
 create_general_settings ()
 {
@@ -543,7 +556,9 @@ create_general_settings ()
 
     GtkWidget *notifBox;
     GtkWidget *notifAll;
-    GtkWidget *widg;
+    // GtkWidget *widg;
+
+    GtkWidget *mutewidget;
 
     GtkWidget *trayBox;
     GtkWidget *trayItem;
@@ -561,7 +576,7 @@ create_general_settings ()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Notifications Frame
-    gnome_main_section_new (_("Desktop Notification"), &frame);
+    gnome_main_section_new (_("Desktop Notifications"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     notifBox = gtk_vbox_new(FALSE, 10);
@@ -569,15 +584,22 @@ create_general_settings ()
     gtk_container_add( GTK_CONTAINER(frame) , notifBox);
     gtk_container_set_border_width(GTK_CONTAINER(notifBox), 2);
 
-    notifAll = gtk_check_button_new_with_mnemonic( _("_Enable"));
+    // Notification All
+    notifAll = gtk_check_button_new_with_mnemonic( _("_Enable notifications"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() );
     gtk_box_pack_start( GTK_BOX(notifBox) , notifAll , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
-
-    widg = gtk_check_button_new_with_mnemonic(  _("_Notify voice mails"));
+    
+    // Notification
+    widg = gtk_check_button_new_with_mnemonic(  _("Enable voicemail _notifications"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_mail_notify() );
     gtk_box_pack_start( GTK_BOX(notifBox) , widg , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
+
+    if (dbus_get_notify())
+       gtk_widget_set_sensitive(widg, TRUE);
+    else
+       gtk_widget_set_sensitive(widg, FALSE);
 
     // System Tray option frame
     gnome_main_section_new (_("System Tray Icon"), &frame);
@@ -597,7 +619,7 @@ create_general_settings ()
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), !dbus_popup_mode() );
     gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
 
-    trayItem = gtk_check_button_new_with_mnemonic(_("_Start hidden"));
+    trayItem = gtk_check_button_new_with_mnemonic(_("Hide SFLphone window on _startup"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), dbus_is_start_hidden() );
     gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
@@ -611,7 +633,8 @@ create_general_settings ()
     gtk_widget_show( hbox );
     gtk_container_add( GTK_CONTAINER(frame) , hbox);
 
-    label = gtk_label_new_with_mnemonic(_("_Maximum number of calls"));
+    label = gtk_label_new_with_mnemonic(_("_History size limit"));
+    gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
     gtk_box_pack_start( GTK_BOX(hbox) , label , TRUE , TRUE , 0);
 
     value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);
@@ -635,10 +658,10 @@ create_general_settings ()
     gtk_widget_show( vbox );
     gtk_container_add( GTK_CONTAINER(frame) , vbox);
 
-    widg = gtk_check_button_new_with_mnemonic(  _("_Control running applications volume"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_pulse_app_volume_control() );
-    gtk_box_pack_start( GTK_BOX(vbox) , widg , TRUE , TRUE , 1);
-    g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
+    mutewidget = gtk_check_button_new_with_mnemonic(  _("Mute other applications during a _call"));
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(mutewidget), dbus_get_pulse_app_volume_control() );
+    gtk_box_pack_start( GTK_BOX(vbox) , mutewidget , TRUE , TRUE , 1);
+    g_signal_connect(G_OBJECT( mutewidget ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
 
     n = account_list_get_sip_account_number();
     DEBUG("sip account number = %i", n);
@@ -662,7 +685,7 @@ create_general_settings ()
     //gtk_widget_set_sensitive( GTK_WIDGET(applyButton), (n==0)?FALSE:TRUE );
 
     label = gtk_label_new(_("Port:"));
-
+    gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
     entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
@@ -718,7 +741,7 @@ create_recording_settings ()
     // label
     label = gtk_label_new_with_mnemonic(_("_Recordings folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    gtk_misc_set_alignment(GTK_MISC(label), 0.08, 0.5);
 
 
     // folder chooser button
@@ -756,7 +779,7 @@ show_config_window ()
 
     // Set window properties
     gtk_dialog_set_has_separator(dialog, FALSE);
-    gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 600, 400);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
     // Create tabs container
@@ -823,10 +846,10 @@ show_accounts_window( void )
 
     // Set window properties
     gtk_dialog_set_has_separator(dialog, FALSE);
-    gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 500);
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 600, 500);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
-    gnome_main_section_new (_("Account previously setup"), &accountFrame);
+    gnome_main_section_new (_("Configured Accounts"), &accountFrame);
     gtk_box_pack_start( GTK_BOX( dialog->vbox ), accountFrame , TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(accountFrame), 10);
     gtk_widget_show(accountFrame);

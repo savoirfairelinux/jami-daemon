@@ -26,28 +26,39 @@
 #include <assert.h>
 
 // Application import
-#include "plug-in/pluginmanager.h"
-#include "plug-in/audiorecorder/audiorecord.h"
+#include "manager.h"
+
+#include "config/config.h"
+#include "user_cfg.h"
+
+#include "audio/audiolayer.h"
+#include "audio/alsalayer.h"
+#include "audio/pulselayer.h"
 
 /*
  * @file audiorecorderTest.cpp  
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
-#ifndef _AUDIORECORDER_TEST_
-#define _AUDIORECORDER_TEST_
+#ifndef _AUDIOLAYER_TEST_
+#define _AUDIOLAYER_TEST_
 
-class AudioRecorderTest : public CppUnit::TestCase {
+
+
+class AudioLayerTest : public CppUnit::TestCase {
 
     /*
      * Use cppunit library macros to add unit test the factory
      */
-    CPPUNIT_TEST_SUITE( AudioRecorderTest );
-        CPPUNIT_TEST( testRecordData );
+    CPPUNIT_TEST_SUITE( AudioLayerTest );
+        CPPUNIT_TEST( testAudioLayerConfig );
+        // CPPUNIT_TEST( testAudioLayerSwitch );
+        CPPUNIT_TEST( testPulseConnect );
+        // CPPUNIT_TEST( testAlsaConnect );
     CPPUNIT_TEST_SUITE_END();
 
     public:
-        AudioRecorderTest() : CppUnit::TestCase("Audio Recorder Tests") {}
+        AudioLayerTest() : CppUnit::TestCase("Audio Layer Tests") {}
         
         /*
          * Code factoring - Common resources can be initialized here.
@@ -61,13 +72,21 @@ class AudioRecorderTest : public CppUnit::TestCase {
          */
         inline void tearDown();
 
-        void testRecordData();
-        
+        void testAudioLayerConfig();
+        void testAudioLayerSwitch();
+        void testPulseConnect();
+        void testAlsaConnect();
+
     private:
-        AudioRecord *_ar;
+
+        ManagerImpl* manager;
+        
+        PulseLayer* _pulselayer;
+       
+        int layer;
 };
 
 /* Register our test module */
-CPPUNIT_TEST_SUITE_REGISTRATION( AudioRecorderTest );
+CPPUNIT_TEST_SUITE_REGISTRATION( AudioLayerTest );
 
 #endif

@@ -78,7 +78,7 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
-        msg = g_markup_printf_escaped(_("Connected to %s (%s)") ,
+        msg = g_markup_printf_escaped(_("Registered to %s (%s)") ,
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
     }
@@ -294,7 +294,7 @@ sflphone_hang_up()
     void
 sflphone_pick_up()
 {
-
+    DEBUG("sflphone_pick_up\n");
     call_t * selectedCall = calltab_get_selected_call(active_calltree);
     if(selectedCall)
     {
@@ -328,6 +328,10 @@ sflphone_pick_up()
                 break;
         }
     }
+    else {
+        sflphone_new_call();
+    }
+    
 }
 
     void
@@ -536,6 +540,8 @@ sflphone_new_call()
     call_t *c;
     gchar *from, *to;
 
+
+    DEBUG("sflphone_new_call\n");
     sflphone_on_hold();
 
     // Play a tone when creating a new call
@@ -557,6 +563,7 @@ sflphone_new_call()
     void
 sflphone_keypad( guint keyval, gchar * key)
 {
+    DEBUG("sflphone_keypad \n");
     call_t * c = calltab_get_selected_call(current_calls);
 
     if((active_calltree != current_calls) || (active_calltree == current_calls && !c))
@@ -581,6 +588,7 @@ sflphone_keypad( guint keyval, gchar * key)
         switch(c->state)
         {
             case CALL_STATE_DIALING: // Currently dialing => edit number
+                DEBUG("Writing a number\n");
                 process_dialing(c, keyval, key);
                 break;
             case CALL_STATE_RECORD:
@@ -670,6 +678,10 @@ sflphone_keypad( guint keyval, gchar * key)
             default:
                 break;
         }
+        
+    }
+    else {
+      sflphone_new_call();
     }
 }
 

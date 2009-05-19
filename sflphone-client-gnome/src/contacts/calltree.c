@@ -25,6 +25,12 @@
 #include <toolbar.h>
 #include <mainwindow.h>
 
+
+GtkWidget *sw;
+GtkCellRenderer *rend;
+GtkTreeViewColumn *col;
+GtkTreeSelection *sel;
+
 /**
  * Show popup menu
  */
@@ -141,12 +147,13 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     return FALSE;
 }
 
+
     static gboolean
 on_key_released (GtkWidget   *widget UNUSED,
         GdkEventKey *event,
         gpointer     user_data UNUSED)
 {
-
+        DEBUG("key-release-event signal cought by on_key_released callback \n");
         // If a modifier key is pressed, it's a shortcut, pass along
         if(event->state & GDK_CONTROL_MASK ||
                 event->state & GDK_MOD1_MASK    ||
@@ -175,13 +182,27 @@ calltree_reset (calltab_t* tab)
     gtk_list_store_clear (tab->store);
 }
 
+void
+focus_on_calltree_out(){
+  DEBUG("set_focus_on_calltree_out \n");
+  // gtk_widget_grab_focus(GTK_WIDGET(sw));
+  focus_is_on_calltree = FALSE;
+}
+
+void
+focus_on_calltree_in(){
+  DEBUG("set_focus_on_calltree_in \n");
+  // gtk_widget_grab_focus(GTK_WIDGET(sw));
+  focus_is_on_calltree = TRUE;
+}
+
     void
 calltree_create (calltab_t* tab, gchar* searchbar_type)
 {
-    GtkWidget *sw;
-    GtkCellRenderer *rend;
-    GtkTreeViewColumn *col;
-    GtkTreeSelection *sel;
+    // GtkWidget *sw;
+    // GtkCellRenderer *rend;
+    // GtkTreeViewColumn *col;
+    // GtkTreeSelection *sel;
 
     tab->tree = gtk_vbox_new(FALSE, 10);
 
@@ -207,7 +228,8 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
             G_CALLBACK (row_activated),
             NULL);
 
-    // GTK_WIDGET_SET_FLAGS (GTK_WIDGET(sw),GTK_CAN_FOCUS);
+    GTK_WIDGET_SET_FLAGS (GTK_WIDGET(sw),GTK_CAN_FOCUS);
+    gtk_widget_grab_focus (GTK_WIDGET(sw));
 
     // Connect the popup menu
     g_signal_connect (G_OBJECT (tab->view), "popup-menu",
@@ -217,9 +239,15 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
             G_CALLBACK (button_pressed),
             NULL);
 
-    g_signal_connect (G_OBJECT (sw), "key-release-event",
-                    G_CALLBACK (on_key_released), NULL);
+    // g_signal_connect (G_OBJECT (sw), "key-release-event",
+    //                   G_CALLBACK (on_key_released), NULL);
 
+    g_signal_connect_after (G_OBJECT (tab->view), "focus-in-event",
+                      G_CALLBACK (focus_on_calltree_in), NULL);
+    g_signal_connect_after (G_OBJECT (tab->view), "focus-out-event",
+                      G_CALLBACK (focus_on_calltree_out), NULL);
+
+    gtk_widget_grab_focus(GTK_WIDGET(tab->view));
 
     rend = gtk_cell_renderer_pixbuf_new();
     col = gtk_tree_view_column_new_with_attributes ("Icon",

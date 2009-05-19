@@ -32,14 +32,20 @@ static gboolean history_is_visible (GtkTreeModel*, GtkTreeIter*, gpointer);
 void
 history_search(GtkEntry* entry UNUSED){
 
-  gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(history_filter));
+  
+  if(history_filter != NULL) {
+    
+    gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(history_filter));
+  
+  }
 }
 
 void
 history_init(){
-
+  
   history_filter = history_create_filter(GTK_TREE_MODEL(history->store));
   gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(history_filter));
+  
 }
 
 void history_set_searchbar_widget(GtkWidget *searchbar){
@@ -51,7 +57,9 @@ static GtkTreeModel*
 history_create_filter (GtkTreeModel* child) {
 
   GtkTreeModel* ret;
+  GtkTreePath  *path; 
 
+  DEBUG("Create Filter\n");
   ret = gtk_tree_model_filter_new(child, NULL);
   gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(ret), history_is_visible, NULL, NULL);
   return GTK_TREE_MODEL(ret);
