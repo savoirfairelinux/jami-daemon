@@ -1,3 +1,14 @@
+sflphone-client-gnome (0.9.5-SYSVER~snapshot1242792109) SYSTEM; urgency=low
+
+    ** SNAPSHOT 1242792109 **
+
+  * [#1456] Add a flag to be replaced in the control files
+  * [#1454] Make cppunit optional; remove from build deps in control
+    files
+  * [#1401] Add libexpat1-dev dependency in control files
+
+ -- SFLphone Automatic Build System <team@sflphone.org>  Wed, 20 May 2009 00:01:51 -0400
+
 sflphone-client-gnome (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
     ** 0.9.5 rc2 **
