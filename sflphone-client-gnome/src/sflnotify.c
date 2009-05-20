@@ -34,7 +34,7 @@ void create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urg
         // Set struct fields
         _notif->notification = notify_notification_new (title, body, NULL, NULL);
         //_notif->icon = gdk_pixbuf_new_from_file_at_size (LOGO, 120, 120, NULL);
-        _notif->icon = gdk_pixbuf_new_from_file (LOGO, NULL);
+        _notif->icon = gdk_pixbuf_new_from_file (LOGO_SMALL, NULL);
 #if GTK_CHECK_VERSION(2,10,0)
         notify_notification_attach_to_status_icon (_notif->notification , get_status_icon() );
 #endif
@@ -157,17 +157,16 @@ notify_no_registered_accounts ()
     void
 stop_notification( void )
 {
-    if( _gnome_notification->notification != NULL )
+    if( _gnome_notification != NULL )
     {
-        if(notify_notification_show (_gnome_notification->notification, NULL))
+        if(_gnome_notification->notification != NULL)
         {
             notify_notification_close (_gnome_notification->notification, NULL);
             g_object_unref(_gnome_notification->notification );
             _gnome_notification->notification = NULL;
         }
-        _gnome_notification->notification = NULL;
+    free_notification (_gnome_notification);
     }
-    //free_notification (_gnome_notification);
 }
 
 /**
@@ -178,6 +177,5 @@ void free_notification (GnomeNotification *g)
   g_free(g->title);
   g_free(g->body);
   g_free(g->notification);
-  g_free(g->icon);
   g_free(g);
 }
