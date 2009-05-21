@@ -31,6 +31,8 @@ GtkCellRenderer *rend;
 GtkTreeViewColumn *col;
 GtkTreeSelection *sel;
 
+
+
 /**
  * Show popup menu
  */
@@ -450,6 +452,9 @@ calltree_add_call (calltab_t* tab, call_t * c)
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
     GtkTreeSelection* sel;
+    GtkTreeModel *model;
+    GtkTreePath *path;
+    
 
     // New call in the list
     gchar * description;
@@ -460,6 +465,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
 
     gtk_list_store_prepend (tab->store, &iter);
 
+    
     if( tab == current_calls )
     {
         switch(c->state)
@@ -506,7 +512,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
         WARN ("This widget doesn't exist - This is a bug in the application.");
     }
 
-
+    
     //Resize it
     if(pixbuf)
     {
@@ -521,12 +527,17 @@ calltree_add_call (calltab_t* tab, call_t * c)
             2, c,      // Pointer
             -1);
 
+    
     if (pixbuf != NULL)
         g_object_unref(G_OBJECT(pixbuf));
 
-    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
-    gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
+
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
+    
+    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
+
     toolbar_update_buttons();
+    
 }
 
 void calltree_display (calltab_t *tab) {
