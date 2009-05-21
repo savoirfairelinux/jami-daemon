@@ -11,7 +11,7 @@
 
 #include "sflphone_const.h"
 #include "instance_interface_singleton.h"
-
+#include "configurationmanager_interface_singleton.h"
 
 
 SFLPhone::SFLPhone(QWidget *parent)
@@ -34,9 +34,19 @@ SFLPhone::SFLPhone(QWidget *parent)
 		
 		setupActions();
 		
-		QString str = QString(DATA_INSTALL_DIR) + "/sflphone-client-kde/sflphone-client-kdeui.rc";
-		qDebug() << "str = " << str ;
-		createGUI(str);
+		qDebug() << "currentPath = " << QDir::currentPath() ;
+		
+		
+		
+		QString rcFilePath = QString(DATA_INSTALL_DIR) + "/sflphone-client-kde/sflphone-client-kdeui.rc";
+		if(! QFile::exists(rcFilePath))
+		{
+			QDir dir;
+			dir.cdUp();
+			rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
+		}
+		qDebug() << "rcFilePath = " << rcFilePath ;
+		createGUI(rcFilePath);
              
       QMetaObject::connectSlotsByName(this);
 
@@ -117,6 +127,7 @@ bool SFLPhone::queryClose()
 
 void SFLPhone::sendNotif(QString caller)
 {
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	if(! isActiveWindow())
 	{
 		trayIcon->setIcon(QIcon(ICON_TRAY_NOTIF));
@@ -127,15 +138,21 @@ void SFLPhone::sendNotif(QString caller)
 	    tr2i18n("You have an incoming call from : ") + caller + ".\n" + tr2i18n("Click to accept or refuse it."), 
 	    QSystemTrayIcon::Warning, 
 	    20000);
-	
+	if(configurationManager.popupMode())
+	{
+		qDebug() << "pop up";
+		activateWindow();
+		hide();
+		show();
+	}
 }
 
 void SFLPhone::on_trayIcon_messageClicked()
 {
 	qDebug() << "on_trayIcon_messageClicked";
+	activateWindow();
 	hide();
 	show();
-	activateWindow();
 }
 
 void SFLPhone::changeEvent(QEvent * event)
@@ -162,9 +179,9 @@ void SFLPhone::on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason)
 			else
 			{
 				qDebug() << "isnotactive -> show()";
+				activateWindow();
 				hide();
 				show();
-				activateWindow();
 			}
 			break;
 // 		case QSystemTrayIcon::DoubleClick:

@@ -151,8 +151,9 @@ private:
 	void unhold();
 	void switchRecord();
 	void setRecord();
-	
 	void start();
+	void startWeird();
+	void warning();
 
 public:
 	

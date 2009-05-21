@@ -7,6 +7,7 @@
 #include <kapplication.h>
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
+#include <klocale.h>
 
 #include "ConfigDialog.h"
 #include "SFLPhone.h"
@@ -38,6 +39,9 @@ int main(int argc, char **argv)
 
 	try
 	{
+		KLocale::setMainCatalog("sflphone-client-kde");
+		qDebug() << KLocale::defaultLanguage();
+		qDebug() << KLocale::defaultCountry();
 		
 		KAboutData about(
 		   "sflphone-client-kde", 
@@ -56,9 +60,14 @@ int main(int argc, char **argv)
 		KCmdLineOptions options;
 		//options.add("+[URL]", ki18n( "Document to open" ));
 		KCmdLineArgs::addCmdLineOptions(options);
+		
+		
+		
+		
 		KApplication app;
 		
-			
+		qDebug() << KGlobal::locale()->language();
+		qDebug() << KGlobal::locale()->country();	
 		//configuration dbus
 		registerCommTypes();
 		
@@ -73,16 +82,20 @@ int main(int argc, char **argv)
 		
 		SFLPhone * fenetre = new SFLPhone();
 		
-		QString locale = QLocale::system().name();
-	
-		QTranslator translator;
-		translator.load(QString("config_") + locale);
-		app.installTranslator(&translator);
+// 		QString locale = QLocale::system().name();
+// 		
+// 		QTranslator qtTranslator;
+// 		qtTranslator.load("qt_" + locale);
+// 		app.installTranslator(&qtTranslator);
+// 
+// 		QTranslator translator;
+// 		translator.load("sflphone-client-kde_" + locale, QString(), QString(), ".po" );
+// 		app.installTranslator(&translator);
 
 		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
 		fenetre->show();
 	
-		return app.exec();	
+		return app.exec();
 	}
 	catch(const char * msg)
 	{

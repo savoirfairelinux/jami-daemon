@@ -14,7 +14,8 @@
   <!-- chapters in separate docbook files -->
   <!ENTITY introduction SYSTEM "introduction.docbook">
   <!ENTITY getting-started SYSTEM "getting-started.docbook">
-  <!ENTITY normal-use SYSTEM "normal-use.docbook">
+  <!ENTITY basic-use SYSTEM "basic-use.docbook">
+  <!ENTITY common-use SYSTEM "common-use.docbook">
   <!ENTITY advanced-use SYSTEM "advanced-use.docbook">
 ]>
 
@@ -58,7 +59,8 @@
 
 &introduction;
 &getting-started; 
-&normal-use;
+&basic-use;
+&common-use;
 &advanced-use;
 
 <appendix id="app-bibliography">
