@@ -157,6 +157,7 @@ notify_no_registered_accounts ()
     void
 stop_notification( void )
 {
+    /*
     if( _gnome_notification != NULL )
     {
         if(_gnome_notification->notification != NULL)
@@ -166,7 +167,7 @@ stop_notification( void )
             _gnome_notification->notification = NULL;
         }
     free_notification (_gnome_notification);
-    }
+    }*/
 }
 
 /**
