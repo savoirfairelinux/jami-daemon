@@ -11,7 +11,6 @@
 
 #include "sflphone_const.h"
 #include "instance_interface_singleton.h"
-#include "configurationmanager_interface_singleton.h"
 
 
 SFLPhone::SFLPhone(QWidget *parent)
@@ -125,34 +124,37 @@ bool SFLPhone::queryClose()
 	return true;
 }
 
-void SFLPhone::sendNotif(QString caller)
+void SFLPhone::putForeground()
 {
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	activateWindow();
+	hide();
+	activateWindow();
+	show();
+	activateWindow();
+}
+
+void SFLPhone::trayIconSignal()
+{
 	if(! isActiveWindow())
 	{
 		trayIcon->setIcon(QIcon(ICON_TRAY_NOTIF));
 		iconChanged = true;
 	}
+}
+
+void SFLPhone::sendNotif(QString caller)
+{
 	trayIcon->showMessage(
 	    tr2i18n("Incoming call"), 
 	    tr2i18n("You have an incoming call from : ") + caller + ".\n" + tr2i18n("Click to accept or refuse it."), 
 	    QSystemTrayIcon::Warning, 
 	    20000);
-	if(configurationManager.popupMode())
-	{
-		qDebug() << "pop up";
-		activateWindow();
-		hide();
-		show();
-	}
 }
 
 void SFLPhone::on_trayIcon_messageClicked()
 {
 	qDebug() << "on_trayIcon_messageClicked";
-	activateWindow();
-	hide();
-	show();
+	putForeground();
 }
 
 void SFLPhone::changeEvent(QEvent * event)
@@ -179,18 +181,9 @@ void SFLPhone::on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason)
 			else
 			{
 				qDebug() << "isnotactive -> show()";
-				activateWindow();
-				hide();
-				show();
+				putForeground();
 			}
 			break;
-// 		case QSystemTrayIcon::DoubleClick:
-// 			iconComboBox->setCurrentIndex((iconComboBox->currentIndex() + 1)
-// 													% iconComboBox->count());
-// 			break;
-// 		case QSystemTrayIcon::MiddleClick:
-// 			showMessage();
-// 			break;
 		default:
 			qDebug() << "Tray icon activated with unknown reason.";
 			break;

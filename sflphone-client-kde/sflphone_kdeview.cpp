@@ -1332,11 +1332,20 @@ void sflphone_kdeView::on1_error(MapStringString details)
 void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString & callID)
 {
 	qDebug() << "Signal : Incoming Call !";
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Call * call = callList->addIncomingCall(callID);
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 	SFLPhone * window = (SFLPhone * ) this->parent();
-	window->sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
+	window->trayIconSignal();
+	if(configurationManager.popupMode())
+	{
+		window->putForeground();
+	}
+	if(configurationManager.getNotify())
+	{
+		window->sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
+	}
 }
 
 void sflphone_kdeView::on1_incomingMessage(const QString &accountID, const QString &message)

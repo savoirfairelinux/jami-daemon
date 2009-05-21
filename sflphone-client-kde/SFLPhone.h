@@ -41,6 +41,8 @@ public:
 	~SFLPhone();
 	void setupActions();
 	void sendNotif(QString caller);
+	void putForeground();
+	void trayIconSignal();
 	
 	
 private slots:
