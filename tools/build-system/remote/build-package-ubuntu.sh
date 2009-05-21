@@ -52,7 +52,7 @@ if [ "$?" -ne "0" ]; then
         exit -1
 fi
 
-# decompress reppository
+# decompress repository
 echo "Untar repository"
 cd ${BUILD_DIR} && tar xf ${REPOSITORY_ARCHIVE}
 
@@ -66,8 +66,9 @@ echo "Switch to internal logging"
 # get system parameters
 ARCH_FLAG=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 OS_VERSION=`lsb_release -d -s -c | sed -e '1d'`
-VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1`
-FULL_VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1-2`
+PACKAGE_SYSVER="0ubuntu1"
+VERSION=`cd ${REPOSITORY_DIR} && head -n 1 ./sflphone-client-gnome/debian/changelog | awk '{print $2}' | sed -e 's/(//g' -e 's/)//g' | cut -d "-" -f1` 
+FULL_VERSION=`cd ${REPOSITORY_DIR} && head -n 1 ./sflphone-client-gnome/debian/changelog | awk '{print $2}' | sed -e 's/(//g' -e 's/)//g' -e 's/SYSVER/'${PACKAGE_SYSVER}'/g'`
 
 # define log files
 GLOBAL_LOG=${ROOT_DIR}/sflphone-${OS_VERSION}-${ARCH_FLAG}.log
@@ -80,13 +81,20 @@ exec 3<>${GLOBAL_LOG}
 exec 1>&3
 exec 2>&3
 
-echo "SFLPhone version is ${VER}"
+echo "SFLPhone version is ${VERSION}"
 
-# generate the changelog, according to the distribution and the git commit messages
+echo "Do updates"
+sudo apt-get update >/dev/null
+sudo apt-get upgrade -y >/dev/null
+
+# generate the changelog, according to the distribution
 echo "Generate changelogs"
 sed -i 's/SYSTEM/'${OS_VERSION}'/g' ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/changelog && \
+sed -i 's/SYSVER/'${PACKAGE_SYSVER}'/g' ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/changelog && \
  # sed -i 's/SYSTEM/'${OS_VERSION}'/g' ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian/changelog && \
- sed -i 's/SYSTEM/'${OS_VERSION}'/g' ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/changelog
+ # sed -i 's/SYSVER/'${PACKAGE_SYSVER}'/g' ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian/changelog && \
+ sed -i 's/SYSTEM/'${OS_VERSION}'/g' ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/changelog && \
+ sed -i 's/SYSVER/'${PACKAGE_SYSVER}'/g' ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/changelog
 
 if [ "$?" -ne "0" ]; then
 	echo "!! Cannot generate changelogs"
@@ -107,16 +115,16 @@ fi
 # provide prerequisite directories used by debuild
 echo "Build sflphone packages on Ubuntu $OS_VERSION $ARCH_FLAG bit architecture...."
 cp -r ${REPOSITORY_SFLPHONE_COMMON_DIR} ${BUILD_DIR}/sflphone-common && \
-cp -r ${REPOSITORY_SFLPHONE_COMMON_DIR} ${BUILD_DIR}/sflphone-common-$VER.orig && \
- # cp -r ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR} ${BUILD_DIR}/sflphone-client-kde-$VER.orig && \
- cp -r ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR} ${BUILD_DIR}/sflphone-client-gnome-$VER.orig && \
+cp -r ${REPOSITORY_SFLPHONE_COMMON_DIR} ${BUILD_DIR}/sflphone-common-${FULL_VERSION}.orig && \
+ # cp -r ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR} ${BUILD_DIR}/sflphone-client-kde-${FULL_VERSION}.orig && \
+ cp -r ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR} ${BUILD_DIR}/sflphone-client-gnome-${FULL_VERSION}.orig && \
 # do a cp to because path must remain for client compilation
-mv ${REPOSITORY_SFLPHONE_COMMON_DIR} ${BUILD_DIR}/sflphone-common-$VER && \
- # mv ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR} ${BUILD_DIR}/sflphone-client-kde-$VER && \
- mv ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR} ${BUILD_DIR}/sflphone-client-gnome-$VER
+mv ${REPOSITORY_SFLPHONE_COMMON_DIR} ${BUILD_DIR}/sflphone-common-${FULL_VERSION} && \
+ # mv ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR} ${BUILD_DIR}/sflphone-client-kde-${FULL_VERSION} && \
+ mv ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR} ${BUILD_DIR}/sflphone-client-gnome-${FULL_VERSION}
 
 # build package sflphone-common
-cd ${BUILD_DIR}/sflphone-common-$VER/debian && \
+cd ${BUILD_DIR}/sflphone-common-${FULL_VERSION}/debian && \
 debuild -us -uc >${PACKAGING_LOG} 2>&1
 
 if [ "$?" -ne "0" ]; then
@@ -125,8 +133,8 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # build package sflphone-client-gnome
-cd ${BUILD_DIR}/sflphone-client-gnome-$VER/debian && \
-debuild -us -uc >${PACKAGING_LOG} 2>&1
+cd ${BUILD_DIR}/sflphone-client-gnome-${FULL_VERSION}/debian && \
+debuild -us -uc >>${PACKAGING_LOG} 2>&1
 
 if [ "$?" -ne "0" ]; then
         echo "!! Cannot generate package sflphone-client-gnome"
@@ -134,8 +142,8 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # build package sflphone-client-kde
-# cd ${BUILD_DIR}/sflphone-client-kde-$VER/debian && \
-# debuild -us -uc >${PACKAGING_LOG} 2>&1
+# cd ${BUILD_DIR}/sflphone-client-kde-${FULL_VERSION}/debian && \
+# debuild -us -uc >>${PACKAGING_LOG} 2>&1
 
 # if [ "$?" -ne "0" ]; then
 #         echo "!! Cannot generate package sflphone-client-kde"

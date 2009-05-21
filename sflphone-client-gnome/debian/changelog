@@ -1,7 +1,30 @@
-sflphone-client-gnome (0.9.5-SYSVER~snapshot1242399317) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-SYSVER~snapshot1242878510) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1242399317 **
+    ** SNAPSHOT 1242878510 **
 
+  * [#1403] Add smaller icon for gnome notifications
+  * [#1403] Prevent crash when hangup && no notification
+  * [#1403] Remove all actions on notifications; code refactoring
+  * [#1451] Use stun.sflphone.org as default STUN server
+  * [#1456] Add a flag to be replaced in the control files
+  * [#1454] Make cppunit optional; remove from build deps in control
+    files
+  * [#1401] Add libexpat1-dev dependency in control files
+
+ -- SFLphone Automatic Build System <team@sflphone.org>  Thu, 21 May 2009 00:01:56 -0400
+
+sflphone-client-gnome (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
+
+    ** 0.9.5 rc2 **
+
+  * [#1422] Improved error message
+  * [#1402] Fix pjsip build
+  * [#1404] Clear GTK-Critical Bug at client startup
+  * [#1422] Added automatic VM shutdown when building on more than one
+    VM
+  * [#1422] Fixed some issues with new changelog generation script
+  * [#1422] Moved distribution update to specific file
+  * [#1422] Dropped git-dch, replace by home made implementation
   * Changes for name based dbus connection
   * Clean changelogs
   * [#1343] Gnome: Implement a callback system to handle focus on
@@ -24,6 +47,7 @@ sflphone-client-gnome (0.9.5-SYSVER~snapshot1242399317) SYSTEM; urgency=low
   * [#1407] Add a scenario to pick_up action
   * Test client dbus connection to a fixed owner
   * Add python dbus test suite
+  * [#1161] Modified version handling in build system
   * [#1314] Test pulse audio and audio streams connect and disconnect
   * [#1402] Add info message after configure
   * [#1402] Build the daemon with the local pjsip library (vs the
@@ -34,10 +58,12 @@ sflphone-client-gnome (0.9.5-SYSVER~snapshot1242399317) SYSTEM; urgency=low
   * [#1314] Refactoring of pulselayer to test conect/disconnect
   * Add debug messages in debus calls concerning account
   * [#1314] Add some return values to audio init functions
+  * [#1406] add liblog4c-dev in build-depends
+  * [#1409] Restore .desktop icon
   * Bug #1405: Fix strings as requested.
   * Bug #1404: Fix strings in preferences panel.
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 15 May 2009 10:55:43 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 19 May 2009 12:08:18 -0400
 
 sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
