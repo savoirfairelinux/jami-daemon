@@ -1,13 +1,17 @@
-sflphone-common (0.9.5-SYSVER~snapshot1242792109) SYSTEM; urgency=low
+sflphone-common (0.9.5-SYSVER~snapshot1242878510) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1242792109 **
+    ** SNAPSHOT 1242878510 **
 
+  * [#1403] Add smaller icon for gnome notifications
+  * [#1403] Prevent crash when hangup && no notification
+  * [#1403] Remove all actions on notifications; code refactoring
+  * [#1451] Use stun.sflphone.org as default STUN server
   * [#1456] Add a flag to be replaced in the control files
   * [#1454] Make cppunit optional; remove from build deps in control
     files
   * [#1401] Add libexpat1-dev dependency in control files
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Wed, 20 May 2009 00:01:50 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Thu, 21 May 2009 00:01:54 -0400
 
 sflphone-common (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
