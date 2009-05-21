@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-19 15:18-0400\n"
+"POT-Creation-Date: 2009-05-21 10:45-0400\n"
 "PO-Revision-Date: 2009-01-08 10:46-0500\n"
 "Last-Translator: Sven Werlen <sven.werlen@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -71,9 +71,9 @@ msgid "%d voice mail"
 msgstr "%d Voice Nachricht"
 
 #: ../../sflphone-client-gnome/src/actions.c:81
-#, fuzzy, c-format
-msgid "Registered to %s (%s)"
-msgstr "registriert"
+#, c-format
+msgid "Using %s (%s)"
+msgstr ""
 
 #: ../../sflphone-client-gnome/src/actions.c:87
 #, fuzzy
@@ -95,8 +95,8 @@ msgstr ""
 
 #: ../../sflphone-client-gnome/src/actions.c:790
 #, c-format
-msgid "%s account- %s             %s"
-msgstr "%s Konto- %s             %s"
+msgid "Using %s (%s) - Codec: %s"
+msgstr ""
 
 #: ../../sflphone-client-gnome/src/actions.c:880
 #, c-format
@@ -809,6 +809,13 @@ msgstr "Liste der vorherigen Anrufen _leeren"
 #, fuzzy
 msgid "Search contact"
 msgstr "Adressbuch _Suche"
+
+#, fuzzy
+#~ msgid "Registered to %s (%s)"
+#~ msgstr "registriert"
+
+#~ msgid "%s account- %s             %s"
+#~ msgstr "%s Konto- %s             %s"
 
 #~ msgid "_Enable"
 #~ msgstr "_Einschalten"

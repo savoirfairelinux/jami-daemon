@@ -78,7 +78,7 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
-        msg = g_markup_printf_escaped(_("Registered to %s (%s)") ,
+        msg = g_markup_printf_escaped(_("Using %s (%s)") ,
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
     }
@@ -787,9 +787,9 @@ sflphone_display_selected_codec (const gchar* codecName)
                 msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
             }
             else {
-                msg = g_markup_printf_escaped(_("%s account- %s             %s") ,
-                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
+                msg = g_markup_printf_escaped(_("Using %s (%s) - Codec: %s") ,
                     (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
                     codecName);
             }
             statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);

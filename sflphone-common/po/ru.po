@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-19 15:18-0400\n"
+"POT-Creation-Date: 2009-05-21 10:45-0400\n"
 "PO-Revision-Date: 2009-01-08 15:19 GMT-5\n"
 "Last-Translator: HUSSEIN ABDALLAH <hussein.abdallah@savoirfairelinux.com>\n"
 "Language-Team:  Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -70,9 +70,9 @@ msgid "%d voice mail"
 msgstr "%d речевое сообщение"
 
 #: ../../sflphone-client-gnome/src/actions.c:81
-#, fuzzy, c-format
-msgid "Registered to %s (%s)"
-msgstr "Зарегистрирован"
+#, c-format
+msgid "Using %s (%s)"
+msgstr ""
 
 #: ../../sflphone-client-gnome/src/actions.c:87
 #, fuzzy
@@ -93,9 +93,9 @@ msgid "IP call - %s"
 msgstr ""
 
 #: ../../sflphone-client-gnome/src/actions.c:790
-#, fuzzy, c-format
-msgid "%s account- %s             %s"
-msgstr "%s аккаунт- %s"
+#, c-format
+msgid "Using %s (%s) - Codec: %s"
+msgstr ""
 
 #: ../../sflphone-client-gnome/src/actions.c:880
 #, c-format
@@ -808,6 +808,14 @@ msgstr "_Стереть журнал"
 #, fuzzy
 msgid "Search contact"
 msgstr "_Искать в журнале"
+
+#, fuzzy
+#~ msgid "Registered to %s (%s)"
+#~ msgstr "Зарегистрирован"
+
+#, fuzzy
+#~ msgid "%s account- %s             %s"
+#~ msgstr "%s аккаунт- %s"
 
 #, fuzzy
 #~ msgid "Books"

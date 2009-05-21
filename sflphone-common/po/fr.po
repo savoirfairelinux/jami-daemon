@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-19 15:18-0400\n"
+"POT-Creation-Date: 2009-05-21 10:45-0400\n"
 "PO-Revision-Date: 2008-03-31 14:15\n"
 "Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -72,8 +72,9 @@ msgid "%d voice mail"
 msgstr "%d message vocal"
 
 #: ../../sflphone-client-gnome/src/actions.c:81
-msgid "Registered to %s (%s)"
-msgstr "Connecté avec %s (%s)"
+#, c-format
+msgid "Using %s (%s)"
+msgstr "Utilise %s (%s)"
 
 #: ../../sflphone-client-gnome/src/actions.c:87
 msgid "No registered account"
@@ -94,8 +95,8 @@ msgstr "Appel IP - %s"
 
 #: ../../sflphone-client-gnome/src/actions.c:790
 #, c-format
-msgid "%s account- %s             %s"
-msgstr "compte %s- %s             %s"
+msgid "Using %s (%s) - Codec: %s"
+msgstr "Utilise %s (%s) - Codec: %s"
 
 #: ../../sflphone-client-gnome/src/actions.c:880
 #, c-format
@@ -431,6 +432,7 @@ msgid "_Show main window"
 msgstr "_Afficher la fenêtre principale"
 
 #: ../../sflphone-client-gnome/src/statusicon.c:124
+#, c-format
 msgid "SFLphone - %i accounts configured"
 msgstr "SFLphone - %i comptes configurés"
 
@@ -763,8 +765,8 @@ msgid ""
 "attached.\n"
 "In this case, %s will be replaced with the passed URL."
 msgstr ""
-"SFLphone peut exécuter des commandes lors d'appels entrants qui ont un "
-"URL associé.\n"
+"SFLphone peut exécuter des commandes lors d'appels entrants qui ont un URL "
+"associé.\n"
 "Dans ce cas, %s sera remplacé par l'URL en question."
 
 #: ../../sflphone-client-gnome/src/config/hooks-config.c:143
@@ -796,6 +798,12 @@ msgstr "Rechercher"
 #: ../../sflphone-client-gnome/src/contacts/searchbar.c:110
 msgid "Search contact"
 msgstr "Rechercher un contact"
+
+#~ msgid "Registered to %s (%s)"
+#~ msgstr "Connecté avec %s (%s)"
+
+#~ msgid "%s account- %s             %s"
+#~ msgstr "compte %s- %s             %s"
 
 #~ msgid "Books"
 #~ msgstr "Carnets d'adresse"
