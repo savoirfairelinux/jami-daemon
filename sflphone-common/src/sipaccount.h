@@ -76,6 +76,7 @@ class SIPAccount : public Account
 
         bool fullMatch(const std::string& username, const std::string& hostname);
         bool userMatch(const std::string& username);
+        bool hostnameMatch(const std::string& hostname);
 
         pjsip_regc* getRegistrationInfo( void ) { return _regc; }
         void setRegistrationInfo( pjsip_regc *regc ) { _regc = regc; }
