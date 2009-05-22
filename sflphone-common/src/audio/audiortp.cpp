@@ -81,7 +81,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 }
 
 
-void
+bool
 AudioRtp::closeRtpSession () {
 
     ost::MutexLock m(_threadMutex);
@@ -96,6 +96,8 @@ AudioRtp::closeRtpSession () {
     }
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     audiolayer->stopStream();
+
+    return true;
 }
 
 
