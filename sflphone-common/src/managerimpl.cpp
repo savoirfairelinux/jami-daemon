@@ -2515,11 +2515,11 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
     }
   }
 
-  // We failed! Then only match the username
+  // We failed! Then only match the hostname
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
     account = dynamic_cast<SIPAccount *>(iter->second);
     if ( account != NULL ) {
-    	if(account->userMatch(userName))
+    	if(account->hostnameMatch(server))
       		return iter->first;
     }
   }
