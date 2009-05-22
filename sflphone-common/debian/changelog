@@ -1,7 +1,9 @@
-sflphone-common (0.9.5-SYSVER~snapshot1242878510) SYSTEM; urgency=low
+sflphone-common (0.9.5-SYSVER~snapshot1242964922) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1242878510 **
+    ** SNAPSHOT 1242964922 **
 
+  * [#1403] Icon size: 60x60 px
+  * [#1403] Do not remove notification, improve icon quality
   * [#1403] Add smaller icon for gnome notifications
   * [#1403] Prevent crash when hangup && no notification
   * [#1403] Remove all actions on notifications; code refactoring
@@ -11,7 +13,7 @@ sflphone-common (0.9.5-SYSVER~snapshot1242878510) SYSTEM; urgency=low
     files
   * [#1401] Add libexpat1-dev dependency in control files
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Thu, 21 May 2009 00:01:54 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 22 May 2009 00:02:06 -0400
 
 sflphone-common (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
