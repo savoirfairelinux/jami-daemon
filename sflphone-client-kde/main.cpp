@@ -4,6 +4,7 @@
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include <QtGui/QAction>
+
 #include <kapplication.h>
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
@@ -39,6 +40,8 @@ int main(int argc, char **argv)
 
 	try
 	{
+
+		
 		KLocale::setMainCatalog("sflphone-client-kde");
 		qDebug() << KLocale::defaultLanguage();
 		qDebug() << KLocale::defaultCountry();

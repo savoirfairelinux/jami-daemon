@@ -17,6 +17,7 @@ SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent),
       view(new sflphone_kdeView(this))
 {
+
 	// accept dnd
 		setAcceptDrops(true);
 

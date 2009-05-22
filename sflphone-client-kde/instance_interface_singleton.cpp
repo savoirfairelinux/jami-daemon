@@ -18,6 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+ 
 #include "instance_interface_singleton.h"
 
 
@@ -27,15 +28,8 @@ InstanceInterface * InstanceInterfaceSingleton::interface
             "/org/sflphone/SFLphone/Instance", 
             QDBusConnection::sessionBus());
 
-
 InstanceInterface & InstanceInterfaceSingleton::getInstance(){
-	if(!interface){
-		interface = new InstanceInterface(
-		             "org.sflphone.SFLphone", 
-		             "/org/sflphone/SFLphone/Instance", 
-		             QDBusConnection::sessionBus());
-	}
-	if(!interface->isValid())
+	if(!interface->connection().isConnected())
 	{
 		throw "Error : sflphoned not connected. Service " + interface->service() + " not connected. From instance interface.";
 		
