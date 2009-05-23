@@ -1,19 +1,32 @@
-sflphone-common (0.9.5-SYSVER~snapshot1242964922) SYSTEM; urgency=low
+sflphone-common (0.9.5-SYSVER~snapshot1243051319) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1242964922 **
+    ** SNAPSHOT 1243051319 **
 
+  * [#1313] git add rtpTest.cpp rtpTest.h
+  * [#1313] Add init/close rtp tests
+  * [#1313] Basic instanciation of the rtp layer
+  * [#1449] Gtk-Critical concerning history filters and new calls
+  * [#1400] Make the match with the hostname instead of username
+  * [#1324] Change status bar label for "Using %s (%s)"
   * [#1403] Icon size: 60x60 px
   * [#1403] Do not remove notification, improve icon quality
   * [#1403] Add smaller icon for gnome notifications
   * [#1403] Prevent crash when hangup && no notification
   * [#1403] Remove all actions on notifications; code refactoring
   * [#1451] Use stun.sflphone.org as default STUN server
+  * [#1060] New po files - need to be translated
+  * [#1060] Update french translation - Rebuild template file
   * [#1456] Add a flag to be replaced in the control files
   * [#1454] Make cppunit optional; remove from build deps in control
     files
   * [#1401] Add libexpat1-dev dependency in control files
+  * [#1448] Take off these ugly debug messages
+  * [#1448] fixed getTelephoneTone and getTelephoneFile() called
+    repeatedly
+  * [#1406] add liblog4c-dev in build-depends
+  * [#1409] Restore .desktop icon
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 22 May 2009 00:02:06 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Sat, 23 May 2009 00:02:06 -0400
 
 sflphone-common (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
