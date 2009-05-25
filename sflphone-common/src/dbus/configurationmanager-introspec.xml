@@ -5,16 +5,20 @@
   <!-- Accounts-related methods -->  
     <method name="getAccountDetails">
       <arg type="s" name="accountID" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
       <arg type="a{ss}" name="details" direction="out"/>
     </method>
     
     <method name="setAccountDetails">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
       <arg type="s" name="accountID" direction="in"/>
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
     
     <method name="addAccount">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
       <arg type="a{ss}" name="details" direction="in"/>
+      <arg type="s" name="createdAccountId" direction="out"/>
     </method>
     
     <method name="setAccountsOrder">
@@ -26,6 +30,7 @@
     </method>
     
     <method name="getAccountList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
    
@@ -39,6 +44,7 @@
   <!-- Various audio-related methods   -->
  
     <method name="getToneLocaleList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
   
@@ -47,14 +53,17 @@
     </method>
     
     <method name="getRingtoneList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
    
-   <method name="getPlaybackDeviceList">
+    <method name="getPlaybackDeviceList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
     
     <method name="getRecordDeviceList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
     
@@ -77,37 +86,40 @@
       <arg type="i" name="api" direction="out"/>
     </method>
 
-     <method name="getRecordPath">
-      <arg type="s" name="rec" direction="out"/>
-    </method>
-
     <method name="setAudioManager">
       <arg type="i" name="api" direction="in"/>
+    </method>
+    
+    <method name="getRecordPath">
+      <arg type="s" name="rec" direction="out"/>
     </method>
 
     <method name="setRecordPath">
       <arg type="s" name="rec" direction="in"/>
     </method>
- 
 
    <!--      ///////////////////////               -->
    
    <!-- Codecs-related methods -->
  
     <method name="getCodecList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
    
    <method name="getCodecDetails">
      <arg type="i" name="payload" direction="in"/>
+     <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
      <arg type="as" name="details" direction="out"/>
    </method>
  
     <method name="getActiveCodecList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
 
     <method name="setActiveCodecList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
       <arg type="as" name="list" direction="in"/>
     </method>
 
@@ -115,32 +127,43 @@
 	<!-- Audio devices methods -->
 	
     <method name="getInputAudioPluginList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
+		
     <method name="getOutputAudioPluginList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
+    
     <method name="setInputAudioPlugin">
       <arg type="s" name="audioPlugin" direction="in"/>
     </method>
+    
     <method name="setOutputAudioPlugin">
       <arg type="s" name="audioPlugin" direction="in"/>
     </method>
     
     <method name="getAudioOutputDeviceList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
+    
     <method name="setAudioOutputDevice">
       <arg type="i" name="index" direction="in"/>
     </method>
+    
     <method name="getAudioInputDeviceList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
+    
     <method name="setAudioInputDevice">
       <arg type="i" name="index" direction="in"/>
     </method>
     
     <method name="getCurrentAudioDevicesIndex">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
 
@@ -248,36 +271,47 @@
 
     <!-- Addressbook configuration -->
     <method name="getAddressbookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>
       <arg type="a{si}" name="settings" direction="out"/>
     </method>
 
     <method name="setAddressbookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringInt"/>
       <arg type="a{si}" name="settings" direction="in"/>
     </method>
 
 	<!-- Addressbook list -->
     <method name="getAddressbookList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="settings" direction="out"/>
     </method>
 
     <method name="setAddressbookList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
       <arg type="as" name="settings" direction="in"/>
     </method>
 
     <!-- Hook configuration -->
     <method name="getHookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
       <arg type="a{ss}" name="settings" direction="out"/>
     </method>
 
     <method name="setHookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
       <arg type="a{ss}" name="settings" direction="in"/>
     </method>
 
   <!--        /////////////////////////////       -->
+
+<!--
     <signal name="parametersChanged">
-      <arg type="a{ss}" name="list" direction="out"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="details" direction="out"/>
     </signal>
-    
+-->    
+
     <signal name="accountsChanged">
     </signal>
 
