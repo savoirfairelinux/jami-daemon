@@ -29,14 +29,16 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
  : QWidget(parent)
 {
 	checkBox = new QCheckBox(this);
-	//checkbox->setObjectName(QString(ACCOUNT_ITEM_CHECKBOX));
 	led = new KLed(this);
-	//led->setObjectName(QString(ACCOUNT_ITEM_LED));
 	led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+	textLabel = new QLabel();
 	
+	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 	QHBoxLayout* hlayout = new QHBoxLayout();
 	hlayout->setContentsMargins(0,0,0,0);
 	hlayout->addWidget(checkBox);
+	hlayout->addWidget(textLabel);
+	hlayout->addItem(horizontalSpacer);
 	hlayout->addWidget(led);
 	this->setLayout(hlayout);
 	state = Unregistered;
@@ -94,6 +96,11 @@ void AccountItemWidget::setEnabled(bool enabled)
 	this->enabled = enabled;
 	updateEnabledDisplay();
 	//emit enabledChanged;
+}
+
+void AccountItemWidget::setAccountText(QString text)
+{
+	this->textLabel->setText(text);
 }
 	
 bool AccountItemWidget::getEnabled()

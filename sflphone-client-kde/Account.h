@@ -44,7 +44,6 @@ public:
 	QString getAlias();
 	
 	//Setters
-	void setItemText(QString text);
 	void initAccountItem();
 	void setAccountId(QString id);
 	void setAccountDetails(MapStringString m);

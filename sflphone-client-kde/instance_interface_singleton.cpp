@@ -21,7 +21,6 @@
  
 #include "instance_interface_singleton.h"
 
-
 InstanceInterface * InstanceInterfaceSingleton::interface 
     = new InstanceInterface(
             "org.sflphone.SFLphone",

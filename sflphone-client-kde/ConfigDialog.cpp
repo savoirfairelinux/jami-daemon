@@ -419,7 +419,7 @@ void ConfigurationDialog::saveAccount(QListWidgetItem * item)
 	if(! item)  { qDebug() << "Attempting to save details of an account from a NULL item"; return; }
 	
 	Account * account = accountList->getAccountByItem(item);
-	if(! account)  {  qDebug() << "Attempting to save details of an unexisting account : " << item->text() << " accounts are "<< accountList;  return;  }
+	if(! account)  {  qDebug() << "Attempting to save details of an unexisting account : " << item->text();  return;  }
 
 	account->setAccountDetail(ACCOUNT_ALIAS, edit1_alias->text());
 	QString protocolsTab[] = ACCOUNT_TYPES_TAB;
@@ -429,7 +429,6 @@ void ConfigurationDialog::saveAccount(QListWidgetItem * item)
 	account->setAccountDetail(ACCOUNT_PASSWORD, edit5_password->text());
 	account->setAccountDetail(ACCOUNT_MAILBOX, edit6_mailbox->text());
 	account->setAccountDetail(ACCOUNT_ENABLED, account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
-	account->setItemText(edit1_alias->text());
 }
 
 void ConfigurationDialog::addAccountToAccountList(Account * account)
@@ -557,8 +556,8 @@ void ConfigurationDialog::updateCodecListCommands()
 void ConfigurationDialog::on_edit1_alias_textChanged(const QString & text)
 {
 	qDebug() << "on_edit1_alias_textChanged";
-	Account * account = accountList->getAccountByItem(listWidget_accountList->currentItem());
-	account->setItemText(text);
+	AccountItemWidget * widget = (AccountItemWidget *) listWidget_accountList->itemWidget(listWidget_accountList->currentItem());
+	widget->setAccountText(text);
 }
 
 void ConfigurationDialog::on_spinBox_SIPPort_valueChanged ( int value )
@@ -667,8 +666,12 @@ void ConfigurationDialog::on_button_accountRemove_clicked()
 void ConfigurationDialog::on_toolButton_accountsApply_clicked()
 {
 	qDebug() << "on_toolButton_accountsApply_clicked";
+	toolButton_accountsApply->setEnabled(false);
 	saveAccountList();
 	loadAccountList();
+	qDebug() << "setEnabled1";
+	toolButton_accountsApply->setEnabled(true);
+	qDebug() << "setEnabled2";
 }
 
 

@@ -542,7 +542,7 @@
   <action name="action_configureSflPhone">
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/images/icons/sflphone.png</normaloff>:/images/icons/sflphone.png</iconset>
+     <normaloff>:/images/icons/sflphone.svg</normaloff>:/images/icons/sflphone.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Configure SFLPhone</string>

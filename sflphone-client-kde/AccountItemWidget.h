@@ -23,6 +23,7 @@
 
 #include <QWidget>
 #include <QCheckBox>
+#include <QLabel>
 #include <kled.h>
 
 /**
@@ -38,6 +39,7 @@ private:
 	bool enabled;
 	KLed * led;
 	QCheckBox * checkBox;
+	QLabel * textLabel;
 
 public:
 
@@ -50,6 +52,8 @@ public:
 	void setState(int state);
     
 	void setEnabled(bool enabled);
+	
+	void setAccountText(QString text);
 	
 	void updateStateDisplay();
 	

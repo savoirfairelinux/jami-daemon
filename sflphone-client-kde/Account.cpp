@@ -49,14 +49,6 @@ Account::Account(QString & _accountId, MapStringString & _accountDetails, accoun
 }
 */
 
-/**
- * Sets text of the item associated with some spaces to avoid writing under checkbox.
- * @param text the text to set in the item
- */
-void Account::setItemText(QString text)
-{
-	item->setText("       " + text);
-}
 
 void Account::initAccountItem()
 {
@@ -65,9 +57,9 @@ void Account::initAccountItem()
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
 	bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
-	setItemText(getAccountDetail(ACCOUNT_ALIAS));
 	itemWidget = new AccountItemWidget();
 	itemWidget->setEnabled(enabled);
+	itemWidget->setAccountText(getAccountDetail(ACCOUNT_ALIAS));
 	if(isNew() || !enabled)
 	{
 		itemWidget->setState(AccountItemWidget::Unregistered);
@@ -153,8 +145,10 @@ AccountItemWidget * Account::getItemWidget()
 {
 	delete itemWidget;
 	bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
-		itemWidget = new AccountItemWidget();
+	QString alias = getAccountDetail(ACCOUNT_ALIAS);
+	itemWidget = new AccountItemWidget();
 	itemWidget->setEnabled(enabled);
+	itemWidget->setAccountText(alias);
 	if(isNew() || !enabled)
 	{
 		itemWidget->setState(AccountItemWidget::Unregistered);
