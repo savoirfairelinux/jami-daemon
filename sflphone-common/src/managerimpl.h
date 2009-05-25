@@ -881,6 +881,11 @@ class ManagerImpl {
      */
     AccountMap getSipAccountMap( void );
 
+    /*
+     * Initialize audiodriver
+     */
+    bool initAudioDriver(void);
+
   private:
 
     /**
@@ -906,11 +911,7 @@ class ManagerImpl {
      */
     void initAudioCodec(void);
 
-    /*
-     * Initialize audiodriver
-     */
-    void initAudioDriver(void);
-
+    
     /*
      * Initialize zeroconf module and scanning
      */

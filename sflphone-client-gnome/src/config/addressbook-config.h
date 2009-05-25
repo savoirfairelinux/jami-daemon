@@ -24,9 +24,11 @@
 #include <glib/gtypes.h>
 
 #include "actions.h"
+#include <utils.h>
 
 G_BEGIN_DECLS
 
+#define ADDRESSBOOK_ENABLE                  "ADDRESSBOOK_ENABLE"
 #define ADDRESSBOOK_MAX_RESULTS             "ADDRESSBOOK_MAX_RESULTS"
 #define ADDRESSBOOK_DISPLAY_CONTACT_PHOTO   "ADDRESSBOOK_DISPLAY_CONTACT_PHOTO"
 #define ADDRESSBOOK_DISPLAY_PHONE_BUSINESS   "ADDRESSBOOK_DISPLAY_PHONE_BUSINESS"
@@ -35,11 +37,12 @@ G_BEGIN_DECLS
 
 typedef struct _AddressBook_Config
 {
-  guint max_results;
-  guint display_contact_photo;
-  guint search_phone_home;
-  guint search_phone_business;
-  guint search_phone_mobile;
+    guint enable;
+    guint max_results;
+    guint display_contact_photo;
+    guint search_phone_home;
+    guint search_phone_business;
+    guint search_phone_mobile;
 } AddressBook_Config;
 
 /**

@@ -36,6 +36,7 @@ const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/Configur
 	std::map< std::string, std::string >
 ConfigurationManager::getAccountDetails( const std::string& accountID )
 {
+        _debug("ConfigurationManager::getAccountDetails\n");
 	return Manager::instance().getAccountDetails(accountID);
 }
 
@@ -50,6 +51,7 @@ ConfigurationManager::setAccountDetails( const std::string& accountID,
 	void
 ConfigurationManager::sendRegister( const std::string& accountID, const int32_t& expire )
 {
+  _debug("ConfigurationManager::sendRegister received\n");
 	Manager::instance().sendRegister(accountID, expire);
 }
 
@@ -109,12 +111,14 @@ ConfigurationManager::getRingtoneList(  )
 	std::vector< std::string  >
 ConfigurationManager::getCodecList(  )
 {
+        _debug("ConfigurationManager::getRingtoneList received\n");
 	return Manager::instance().getCodecList();
 }
 
 	std::vector< std::string >
 ConfigurationManager::getCodecDetails( const int32_t& payload )
 {
+        _debug("ConfigurationManager::getRingtoneList received\n");
 	return Manager::instance().getCodecDetails( payload );
 }
 

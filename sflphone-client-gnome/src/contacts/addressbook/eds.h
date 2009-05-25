@@ -119,6 +119,12 @@ gboolean
 books_ready();
 
 /**
+ * Public way to know if we enabled an address book
+ */
+gboolean
+books_active();
+
+/**
  * Good method to retrieve books_data (handle async)
  */
 GSList *

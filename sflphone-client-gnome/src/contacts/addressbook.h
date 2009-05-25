@@ -36,6 +36,19 @@ gboolean
 addressbook_is_ready();
 
 /**
+ * Return addressbook state
+ */
+gboolean
+addressbook_is_enabled();
+
+/**
+ * Return if at least one addressbook is active
+ */
+gboolean
+addressbook_is_active();
+
+
+/**
  * Perform a search in addressbook
  */
 void

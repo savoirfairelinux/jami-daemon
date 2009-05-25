@@ -28,7 +28,7 @@
 G_BEGIN_DECLS
 
 #define DEFAULT_SIP_URL_FIELD       "X-sflphone-url"
-#define DEFAULT_URL_COMMAND         "x-www-browser"
+#define DEFAULT_URL_COMMAND         "xdg-open \"%s\""
 #define URLHOOK_COMMAND         "URLHOOK_COMMAND"
 #define URLHOOK_SIP_FIELD         "URLHOOK_SIP_FIELD"
 #define URLHOOK_SIP_ENABLED         "URLHOOK_SIP_ENABLED"

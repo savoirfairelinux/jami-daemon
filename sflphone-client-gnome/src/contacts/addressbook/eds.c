@@ -92,6 +92,27 @@ books_ready()
 }
 
 /**
+ * Public way to know if we enable at least one address book
+ */
+gboolean
+books_active()
+{
+  GSList *book_list_iterator;
+  book_data_t *book_data;
+
+  // Iterate throw the list
+  for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
+      = book_list_iterator->next)
+    {
+      book_data = (book_data_t *) book_list_iterator->data;
+      if (book_data->active)
+        return TRUE;
+    }
+
+  // If no result
+  return FALSE;
+}
+/**
  * Get a specific book data by UID
  */
 book_data_t *

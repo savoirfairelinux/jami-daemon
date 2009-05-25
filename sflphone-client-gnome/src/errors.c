@@ -25,13 +25,13 @@ sflphone_throw_exception( int err )
   gchar* markup=""; 
   switch( err ){
     case ALSA_PLAYBACK_DEVICE:
-      markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening playback device"));
+      markup = g_markup_printf_escaped(_("ALSA notification\n\nError while opening playback device"));
       break;
     case ALSA_CAPTURE_DEVICE:
-      markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening capture device"));
+      markup = g_markup_printf_escaped(_("ALSA notification\n\nError while opening capture device"));
       break;
     case PULSEAUDIO_NOT_RUNNING:
-      markup = g_markup_printf_escaped(_("<b>Pulseaudio notification</b>\n\nPulseaudio is not running"));
+      markup = g_markup_printf_escaped(_("Pulseaudio notification\n\nPulseaudio is not running"));
       break;
   }
   main_window_error_message( markup );  

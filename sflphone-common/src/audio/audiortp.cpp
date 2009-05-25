@@ -81,7 +81,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 }
 
 
-void
+bool
 AudioRtp::closeRtpSession () {
 
     ost::MutexLock m(_threadMutex);
@@ -96,6 +96,8 @@ AudioRtp::closeRtpSession () {
     }
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     audiolayer->stopStream();
+
+    return true;
 }
 
 
@@ -186,7 +188,6 @@ AudioRtpRTX::initBuffers()
     void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
-    _debug("************* initAudioRtpSession *******************\n");
 
     try {
         if (_ca == 0) { return; }
@@ -194,11 +195,8 @@ AudioRtpRTX::initAudioRtpSession (void)
 
         if (_audiocodec == NULL) { return; }
 
-        _debug("************* get codec info *******************\n");
         _codecSampleRate = _audiocodec->getClockRate();
         _codecFrameSize = _audiocodec->getFrameSize();
-        _debug("_codecFrameSize: %i\n", _codecFrameSize);
-        _debug("_codecSampleRate: %i\n", _codecSampleRate);
         
 
         ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
@@ -241,8 +239,6 @@ AudioRtpRTX::initAudioRtpSession (void)
             }
             _sessionSend->setMark(true);
         } else {
-
-            //_debug("AudioRTP Thread: Added session destination %s\n", remote_ip.getHostname() );
 
             if (!_session->addDestination (remote_ip, (unsigned short)_ca->getLocalSDP()->get_remote_audio_port() )) {
                 return;
@@ -416,7 +412,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     // encode divise by two
     // Send encoded audio sample over the network
-    if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
+    // if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
     if (!_sym) {
         _sessionSend->putData(timestamp, micDataEncoded, compSize);
     } else {
@@ -578,8 +574,13 @@ AudioRtpRTX::run () {
     step = _codecFrameSize;
 
     int countTime = 0; // for receive
- 
-    int threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
+    
+    int threadSleep = 0;
+    if (_codecSampleRate != 0)
+        threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
+    else
+      threadSleep = _layerFrameSize;
+
     TimerPort::setTimer(threadSleep);
 
     audiolayer->startStream();
@@ -610,11 +611,11 @@ AudioRtpRTX::run () {
 
       
       if(sessionWaiting == 1){
-        // _debug("Record TWO buffer \n");
-        _ca->recAudio.recData(spkrDataDecoded,micData,_nSamplesSpkr,_nSamplesMic);
+        // Record mic and speaker during conversation
+        _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
       }
       else {
-        // _debug("Record ONE buffer \n");
+        // Record mic only while leaving a message
         _ca->recAudio.recData(micData,_nSamplesMic);
       }
 

@@ -26,7 +26,7 @@
 
 #include "plug-in/audiorecorder/audiorecord.h"
 
-#define IP_TO_IP_PATTERN       "ip:"
+#define IP_TO_IP_PATTERN       "sip:"
 
 #define CallConfigNULL          NULL
 /* 
