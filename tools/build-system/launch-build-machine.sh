@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-15 12:23:31 -0400
+# Last Modified: 2009-05-19 17:49:40 -0400
 #####################################################
 
 #
@@ -248,7 +248,7 @@ if [ ${DO_PREPARE} ]; then
 	if [ ${RELEASE_MODE} ]; then
                 
                 echo "Switch to master branch for commit"
-                git checkout master
+                git checkout -f master
         fi
 
 	echo " Doing commit"
@@ -264,7 +264,7 @@ if [ ${DO_PREPARE} ]; then
 	if [ ${RELEASE_MODE} ]; then
 		echo "Switch back to release branch"
 		git checkout release
-		git merge master
+		# git merge master
 	fi
 	
 	echo "Archiving repository"
