@@ -153,6 +153,9 @@ PKG_PROG_PKG_CONFIG
 #fi
 #AC_SUBST(SIP_CFLAGS)
 
+TARGET_NAME=`ls libs/pjproject-1.0.1/pjmedia/lib/libpjmedia-codec-sfl-* | xargs -i basename {} | cut -d '-' -f4- | cut -d "." -f1`
+AC_SUBST(TARGET_NAME)
+
 dnl Check for uuid development package - name: uuid-dev 
 UUID_MIN_VERSION=1.0
 PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})

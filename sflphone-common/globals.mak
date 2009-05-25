@@ -4,8 +4,6 @@ sflcodecdir=$(libdir)/sflphone/codecs
 sflplugindir=$(libdir)/sflphone/plugins
 
 # for pjsip
-export TARGET_NAME := @target@
-
 PJSIP_LIBS= \
 			-L$(src)/libs/pjproject-1.0.1/pjnath/ \
 			-L$(src)/libs/pjproject-1.0.1/pjsip/ \
