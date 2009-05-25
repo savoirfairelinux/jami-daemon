@@ -49,6 +49,28 @@ ConfigurationDialog::ConfigurationDialog(sflphone_kdeView *parent) : QDialog(par
 	connect(&configurationManager, SIGNAL(accountsChanged()),
 	        this,                  SLOT(on1_accountsChanged()));
 	
+	connect(edit1_alias,           SIGNAL(textChanged(const QString &)),
+	        this,                  SLOT(changedAccountList()));
+	connect(edit2_protocol,        SIGNAL(currentIndexChanged(int)),
+	        this,                  SLOT(changedAccountList()));
+	connect(edit3_server,          SIGNAL(textChanged(const QString &)),
+	        this,                  SLOT(changedAccountList()));
+	connect(edit4_user,            SIGNAL(textChanged(const QString &)),
+	        this,                  SLOT(changedAccountList()));
+	connect(edit5_password,        SIGNAL(textChanged(const QString &)),
+	        this,                  SLOT(changedAccountList()));
+	connect(edit6_mailbox,         SIGNAL(textChanged(const QString &)),
+	        this,                  SLOT(changedAccountList()));
+	connect(button_accountUp,      SIGNAL(clicked()),
+	        this,                  SLOT(changedAccountList()));
+	connect(button_accountDown,    SIGNAL(clicked()),
+	        this,                  SLOT(changedAccountList()));
+	connect(button_accountAdd,     SIGNAL(clicked()),
+	        this,                  SLOT(changedAccountList()));
+	connect(button_accountRemove,  SIGNAL(clicked()),
+	        this,                  SLOT(changedAccountList()));
+	
+	
 	loadOptions();
 	
 }
@@ -58,6 +80,11 @@ ConfigurationDialog::~ConfigurationDialog()
 	delete accountList;
 	delete errorWindow;
 	delete codecPayloads;
+}
+
+void ConfigurationDialog::changedAccountList()
+{
+	toolButton_accountsApply->setEnabled(true);
 }
 
 AccountList * ConfigurationDialog::getAccountList()
@@ -80,12 +107,12 @@ void ConfigurationDialog::loadOptions()
 	int sipPort = configurationManager.getSipPort();
 	if(sipPort<1025){
 		spinBox_SIPPort->setMinimum(sipPort);
-		label_WarningSIP->setText("Attention : le port SIP doit être supérieur à 1024 !");
+		label_WarningSIP->setText(tr2i18n("Attention : SIP port must be over 1024 !"));
 		label_WarningSIP->setVisible(true);
 	}
 	if(sipPort>65535){
 		spinBox_SIPPort->setMaximum(sipPort);
-		label_WarningSIP->setText("Attention : le port SIP doit être inférieur à 65536 !");
+		label_WarningSIP->setText(tr2i18n("Attention : SIP port must be under 65536 !"));
 		label_WarningSIP->setVisible(true);
 	}
 	spinBox_SIPPort->setValue(configurationManager.getSipPort());
@@ -558,7 +585,9 @@ void ConfigurationDialog::on_edit1_alias_textChanged(const QString & text)
 	qDebug() << "on_edit1_alias_textChanged";
 	AccountItemWidget * widget = (AccountItemWidget *) listWidget_accountList->itemWidget(listWidget_accountList->currentItem());
 	widget->setAccountText(text);
+	changedAccountList();
 }
+
 
 void ConfigurationDialog::on_spinBox_SIPPort_valueChanged ( int value )
 {
@@ -624,8 +653,6 @@ void ConfigurationDialog::on_button_accountUp_clicked()
 	listWidget_accountList->insertItem(currentRow - 1 , item);
 	listWidget_accountList->setItemWidget(item, account->getItemWidget());
 	listWidget_accountList->setCurrentItem(item);
-	//qDebug() << "setItemWidget " << account->getAccountDetail(ACCOUNT_ALIAS) << " , " << account->getItemWidget();
-	
 }
 
 void ConfigurationDialog::on_button_accountDown_clicked()
@@ -669,9 +696,6 @@ void ConfigurationDialog::on_toolButton_accountsApply_clicked()
 	toolButton_accountsApply->setEnabled(false);
 	saveAccountList();
 	loadAccountList();
-	qDebug() << "setEnabled1";
-	toolButton_accountsApply->setEnabled(true);
-	qDebug() << "setEnabled2";
 }
 
 

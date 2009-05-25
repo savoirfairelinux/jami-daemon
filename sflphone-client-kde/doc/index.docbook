@@ -3,9 +3,15 @@
   <!ENTITY sflphone-client-kde "SFLPhone KDE Client">
   <!ENTITY kappname "&sflphone-client-kde;">
   <!ENTITY sflphonerelease "0.9.6">
-<!ENTITY current-w "Current calls window">
-<!ENTITY history-w "Call history window">
-<!ENTITY address-w "Address book window">
+  <!ENTITY current-w "Current calls window">
+  <!ENTITY history-w "Call history window">
+  <!ENTITY address-w "Address book window">
+  <!ENTITY actions-p "tool part">
+  <!ENTITY screen-p "screen">
+  <!ENTITY dialpad-p "dialpad">
+  <!ENTITY pt-home "home phone">
+  <!ENTITY pt-cell "cell phone">
+  <!ENTITY pt-work "work phone">
 
   <!ENTITY sflphone "SFLPhone">
   <!ENTITY % addindex "IGNORE">
@@ -17,6 +23,7 @@
   <!ENTITY basic-use SYSTEM "basic-use.docbook">
   <!ENTITY common-use SYSTEM "common-use.docbook">
   <!ENTITY advanced-use SYSTEM "advanced-use.docbook">
+  <!ENTITY credits SYSTEM "credits.docbook">
 ]>
 
 <book lang="&language;">
@@ -62,6 +69,7 @@
 &basic-use;
 &common-use;
 &advanced-use;
+&credits;
 
 <appendix id="app-bibliography">
 <title>Bibliography</title>
@@ -71,7 +79,7 @@
 <bibliography id="bibliography">
 
 <biblioentry>
-<title><ulink url="info://sflphone-client-kde/Top">&sflphonekde; Manual</ulink></title>
+<title><ulink url="info://sflphone-client-kde/Top">&sflphone-client-kde; Manual</ulink></title>
 <authorgroup>
 <author><firstname>J&eacute;r&eacute;my</firstname><surname>Quentin</surname></author>
 </authorgroup>

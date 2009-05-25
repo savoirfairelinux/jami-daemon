@@ -2,7 +2,10 @@
 
 <chapterinfo>
 <authorgroup>
-<author><firstname>J&eacute;r&eacute;my</firstname><surname>Quentin</surname></author>
+<author>
+<firstname>J&eacute;r&eacute;my</firstname>
+<surname>Quentin</surname>
+</author>
 <!-- TRANS:ROLES_OF_TRANSLATORS -->
 </authorgroup>
 </chapterinfo>
@@ -62,16 +65,16 @@
 <sect1 id="common-use-address">
 <title>Use the address book</title>
 
-<para>&sflphonekde; communicates with the KDE Address Book and gathers all the phone numbers matching your request and the options chosen. Here we will explain how to configure and use it.</para>
+<para>&sflphone-client-kde; communicates with the KDE Address Book and gathers all the phone numbers matching your request and the options chosen. Here we will explain how to configure and use it.</para>
 
 
 <sect2 id="common-use-address-kde">
 <title>Configuring KDE Address Book</title>
 
-<para> As it is fully designed for KDE, &sflphonekde; looks for your contacts in KDE Address Book. So you first have to configure it. In the K Menu of your KDE, go to Applications,then Bureautique (??), then choose Address Book. You are now in the main window of the KDE address book. You can add contacts and handle them from here. Type F1 to see this application's help page if you have some problems with it.
+<para> As it is fully designed for KDE, &sflphone-client-kde; looks for your contacts in KDE Address Book. So you first have to configure it. In the K Menu of your KDE, go to Applications,then Bureautique (??), then choose Address Book. You are now in the main window of the KDE address book. You can add contacts and handle them from here. Type F1 to see this application's help page if you have some problems with it.
 </para>
 
-<para> &sflphonekde; looks into the standard address book, that means it will look into the contacts displayed in the contact list on the left of the window. The selected address books in the bottom left of the window will be searched. If you add some contacts, you may have to restart &sflphonekde; before it can see them.
+<para> &sflphone-client-kde; looks into the standard address book, that means it will look into the contacts displayed in the contact list on the left of the window. The selected address books in the bottom left of the window will be searched. If you add some contacts, you may have to restart &sflphone-client-kde; before it can see them.
 </para>
 
 
@@ -79,14 +82,14 @@
 
 
 <sect2 id="common-use-address-config">
-<title>Configuring &sflphonekde;</title>
+<title>Configuring &sflphone-client-kde;</title>
 
 <para> You can now go to the Configuration Dialog to choose how &sflphone; will handle your searches in the address book. This step is optionnal though, because the default settings enable you to use the feature without more setup. 
 </para>
 
 <para> The maximum results setting enables you to choose how many phone numbers can be displayed when you look for a contact. KDE address book can contain lots of contacts, especially if connected to LDAP directories, and you don't want to see thousands of contacts displayed as soon as you type a letter to search for.</para>
 
-<para> KDE address book can contain a photo for your contacts. &sflphonekde; can display it in the result of your searches, but as it can take a little more time, you can choose to disable that feature.</para>
+<para> KDE address book can contain a photo for your contacts. &sflphone-client-kde; can display it in the result of your searches, but as it can take a little more time, you can choose to disable that feature.</para>
 
 <para> Each phone number in KDE address book is linked to a contact, and has a phone number type to differentiate work phones, home phones, and cell phones. You can choose to display only certain of those numbers. Check the types you are interested in and uncheck the other ones.</para>
 

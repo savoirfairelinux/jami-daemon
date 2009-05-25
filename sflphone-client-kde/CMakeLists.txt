@@ -162,14 +162,18 @@ TARGET_LINK_LIBRARIES(sflphone-client-kde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${
 
 # FILE(WRITE "${CMAKE_BINARY_DIR}/sflphone-client-kde.1")
                    
-execute_process(COMMAND pod2man --release=${VERSION} ${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod
-                OUTPUT_FILE sflphone-client-kde.1)
+# execute_process(COMMAND pod2man --release=${VERSION} ${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod
+#                 OUTPUT_FILE sflphone-client-kde.1)
 
 # execute_process(COMMAND "cp ${CMAKE_CURRENT_BUILD_DIR}/test2.txt ${CMAKE_CURRENT_BUILD_DIR}/test.txt")
 
+
+add_subdirectory(doc)
+add_subdirectory(man)
+
 ########### install files ###############
 
-SET ( HTML_INSTALL_DIR  ${CMAKE_INSTALL_PREFIX}/share/doc/kde/HTML )
+# SET ( HTML_INSTALL_DIR  ${CMAKE_INSTALL_PREFIX}/share/doc/kde/HTML )
 #SET ( MANPAGES_INSTALL_DIR  /usr/share/man )
 
 INSTALL(TARGETS sflphone-client-kde DESTINATION ${BIN_INSTALL_DIR})
@@ -179,12 +183,12 @@ INSTALL( FILES sflphone-client-kde.desktop  DESTINATION  ${XDG_APPS_INSTALL_DIR}
 INSTALL( FILES sflphone-client-kdeui.rc  DESTINATION  ${DATA_INSTALL_DIR}/sflphone-client-kde )
 #INSTALL ( CODE "FILE(MAKE_DIRECTORY ${HTML_INSTALL_DIR}/en/sflphone-client-kde)"  )
 #INSTALL( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/ DESTINATION ${HTML_INSTALL_DIR} )
-INSTALL( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/ DESTINATION ${HTML_INSTALL_DIR} )
+# INSTALL( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/ DESTINATION ${HTML_INSTALL_DIR} )
 #KDE4_CREATE_MANPAGE( ${CMAKE_CURRENT_SOURCE_DIR}/doc/en/sflphone-client-kde/index.docbook INSTALL_DESTINATION ${MAN_INSTALL_DIR} SUBDIR  )
 #INSTALL ( CODE "FILE(MAKE_DIRECTORY ${HTML_INSTALL_DIR}/en/sflphone-client-kde)"  )
 #INSTALL( FILES ${CMAKE_CURRENT_BUILD_DIR}/sflphone.1 ${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.1   DESTINATION  ${MANPAGES_INSTALL_DIR}/man1 )
-INSTALL( FILES ${CMAKE_BINARY_DIR}/sflphone-client-kde.1  DESTINATION  ${MAN_INSTALL_DIR}/man1 )
-#kde4_create_handbook(index.docbook INSTALL_DESTINATION ${HTML_INSTALL_DIR}/en)
+# INSTALL( FILES ${CMAKE_BINARY_DIR}/sflphone-client-kde.1  DESTINATION  ${MAN_INSTALL_DIR}/man1 )
+# kde4_create_handbook(${CMAKE_CURRENT_SOURCE_DIR}/doc/en/sflphone-client-kde/index.docbook INSTALL_DESTINATION ${HTML_INSTALL_DIR}/en)
 
 
 #INSTALL ( CODE "MESSAGE (\"ton pere\")" )

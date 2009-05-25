@@ -28,6 +28,15 @@ IF (UNIX)
    sflphone-client-kde.shell
    install_manifest.txt
    *.1
+   man/*.cmake
+   man/Makefile
+   man/CMakeFiles
+   man/*.html
+   man/*.1
+   doc/*.cmake
+   doc/Makefile
+   doc/CMakeFiles
+   doc/*.bz2
   )
   
   ADD_CUSTOM_COMMAND(

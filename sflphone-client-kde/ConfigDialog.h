@@ -22,6 +22,7 @@ private:
 	QErrorMessage * errorWindow;
 	MapStringString * codecPayloads;
 	bool accountsChangedEnableWarning;
+	
 
 public:
 	ConfigurationDialog(sflphone_kdeView *parent = 0);
@@ -48,6 +49,8 @@ public:
 	void updateAccountListCommands();
 
 private slots:
+	void changedAccountList();
+	
 	void on_toolButton_codecUp_clicked();
 	void on_toolButton_codecDown_clicked();
 	void on_button_accountUp_clicked();
