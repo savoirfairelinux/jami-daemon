@@ -1,7 +1,8 @@
-sflphone-client-gnome (0.9.5-SYSVER~snapshot1243051319) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-SYSVER) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1243051319 **
+    ** 0.9.5 release **
 
+  * [#1060] FIx bug in chinese translation
   * [#1313] git add rtpTest.cpp rtpTest.h
   * [#1313] Add init/close rtp tests
   * [#1313] Basic instanciation of the rtp layer
@@ -26,7 +27,7 @@ sflphone-client-gnome (0.9.5-SYSVER~snapshot1243051319) SYSTEM; urgency=low
   * [#1406] add liblog4c-dev in build-depends
   * [#1409] Restore .desktop icon
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Sat, 23 May 2009 00:02:13 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 25 May 2009 11:34:48 -0400
 
 sflphone-client-gnome (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
