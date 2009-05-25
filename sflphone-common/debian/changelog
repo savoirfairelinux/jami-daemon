@@ -1,83 +1,114 @@
-sflphone-common (0.9.5-0ubuntu1~3.gbp20b188) SYSTEM; urgency=low
+sflphone-common (0.9.5-SYSVER) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @20b188472f4e66c75b3f1dffe1f110b7070397ec **
+    ** 0.9.5 release **
 
-  [ Emmanuel Milou ]
-  * [#1220] Add Conflicts: sflphone in debian control files
-  * [#1179] Add liblog4c3 runtime dependency
-  * [#1212] FIx typo error in dependency list for itnrepid
-  * [#1212] FIx .desktop file to point on the right exec
-  * [#1212] Modify changelog replacing tag
+  * [#1060] FIx bug in chinese translation
+  * [#1313] git add rtpTest.cpp rtpTest.h
+  * [#1313] Add init/close rtp tests
+  * [#1313] Basic instanciation of the rtp layer
+  * [#1449] Gtk-Critical concerning history filters and new calls
+  * [#1400] Make the match with the hostname instead of username
+  * [#1324] Change status bar label for "Using %s (%s)"
+  * [#1403] Icon size: 60x60 px
+  * [#1403] Do not remove notification, improve icon quality
+  * [#1403] Add smaller icon for gnome notifications
+  * [#1403] Prevent crash when hangup && no notification
+  * [#1403] Remove all actions on notifications; code refactoring
+  * [#1451] Use stun.sflphone.org as default STUN server
+  * [#1060] New po files - need to be translated
+  * [#1060] Update french translation - Rebuild template file
+  * [#1456] Add a flag to be replaced in the control files
+  * [#1454] Make cppunit optional; remove from build deps in control
+    files
+  * [#1401] Add libexpat1-dev dependency in control files
+  * [#1448] Take off these ugly debug messages
+  * [#1448] fixed getTelephoneTone and getTelephoneFile() called
+    repeatedly
+  * [#1406] add liblog4c-dev in build-depends
+  * [#1409] Restore .desktop icon
 
-  [ Sflphone Project ]
-  * "[#1262] Updated changelogs for version 0.9.5-0ubuntu1~beta"
+ -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 25 May 2009 11:34:40 -0400
 
-  [ Emmanuel Milou ]
-  * [#1212] restore changelogs
+sflphone-common (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
-  [ Sflphone Project ]
-  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
-    04-27
+    ** 0.9.5 rc2 **
 
-  [ Emmanuel Milou ]
-  * [#1212] restore changelogs
+  * [#1422] Improved error message
+  * [#1402] Fix pjsip build
+  * [#1404] Clear GTK-Critical Bug at client startup
+  * [#1422] Added automatic VM shutdown when building on more than one
+    VM
+  * [#1422] Fixed some issues with new changelog generation script
+  * [#1422] Moved distribution update to specific file
+  * [#1422] Dropped git-dch, replace by home made implementation
+  * Changes for name based dbus connection
+  * Clean changelogs
+  * [#1343] Gnome: Implement a callback system to handle focus on
+    different widgets
+  * Debus Session
+  * Refactoring Python code, PEP8
+  * [#1430] Get back dbus_g_proxy_new_for_name
+  * [#1430] Get back DBUS_BUS_SESSION type
+  * [#1430] Dbus fixed owner message binding
+  * Second test with DBUS owner
+  * [#1404] Gnome -> Preferences -> Hooks
+  * [#1404] Gnome -> Preferences -> Recordings
+  * [#1404] Call History
+  * [#1404] Gnome -> Preferences -> Address Book
+  * [#1404] IF the first notification option disable the second
+    notification
+  * Dbus with fixed owner does not automatically start the deamon
+  * Add codec debug tests in pysflphone
+  * [#1407] Some print info
+  * [#1407] Add a scenario to pick_up action
+  * Test client dbus connection to a fixed owner
+  * Add python dbus test suite
+  * [#1161] Modified version handling in build system
+  * [#1314] Test pulse audio and audio streams connect and disconnect
+  * [#1402] Add info message after configure
+  * [#1402] Build the daemon with the local pjsip library (vs the
+    installed one)
+  * [#1009] Fix Codec Sampling Rate set to zeros
+  * [#1314] Add mutex to pulse layer audio streams
+  * [#1314] Refactoring pulseaudio stream to test connect disconnect
+  * [#1314] Refactoring of pulselayer to test conect/disconnect
+  * Add debug messages in debus calls concerning account
+  * [#1314] Add some return values to audio init functions
+  * [#1406] add liblog4c-dev in build-depends
+  * [#1409] Restore .desktop icon
+  * Bug #1405: Fix strings as requested.
+  * Bug #1404: Fix strings in preferences panel.
 
-  [ Sflphone Project ]
-  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~beta
+ -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 19 May 2009 12:08:03 -0400
 
-  [ Emmanuel Milou ]
-  * [#1212] restore changelogs
-
-  [ Sflphone Project ]
-  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~beta
-  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
-    04-28
-
-  [ Emmanuel Milou ]
-  * [#1212] Restore changelogs
-
-  [ Sflphone Project ]
-  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
-    04-28
-
-  [ Julien Bonjean ]
-  * [#1262]Introduced dynamic version setting
-
-  [ Sflphone Project ]
-
-  [ Alexandre Savard ]
-  * [#1143] Add celtcodec.cpp
-  * [#1143] add configure and make stuffs
-  * [#1143] add frame size into each codecs
-  * [#1143] Take timestamp's step size from codec
-  * [#1143] RTP thread at 11 ms
-  * [#1143] Dynamic RTP thread sleep parameter
-  * [#1143] Fix dynamic thread sleep time calculation
-
-  [ Emmanuel Milou ]
-  * [#1262] sflphone-client-gnome uses changelog version number
-
-  [ Alexandre Savard ]
-  * [#1143] Some cleanup
+sflphone-common (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
   [ SFLphone Project ]
   * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
-    04-29
+    05-05
 
   [ Emmanuel Milou ]
-  * [#1262] Update changelogs
-  * [#1262] Update rules
-  * [#1143] Build celt codec only if version >= 0.5.1 is detected
-  * [1143] Restore rules files - do not need to specify --without-celt
-  * [#1336] Change SFLphone logo
-  * [#1331] Fix searchbar problems
-  * [#1332] Fix unexplicit labels
-  * [#1334] Fix unexplicit label
-  * [#1329] Fix recordings config panel
+  * Add some python CLI client code; not really functional
+  * [#1108] Fix peerHungup method for IP to IP call
+
+  [ Alexandre Savard ]
+  * [#1108] Correct setting of SIP contact for direct IP call
+  * [#1108] SIP user agent handles incoming REFER
+
+  [ Emmanuel Milou ]
+  * Remove website from repository
+  * Update translation
+
+  [ Alexandre Savard ]
+  * Sflphone icon's tooltip changed for "configured" instead of
+    "registered"
+
+  [ Emmanuel Milou ]
+  * Update translation
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Thu, 30 Apr 2009 10:01:34 -0400
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 05 May 2009 19:16:09 -0400
 
 sflphone-common (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 

@@ -48,7 +48,7 @@ class AlsaLayer : public AudioLayer {
      */
     ~AlsaLayer(void);
 
-    void closeLayer( void );
+    bool closeLayer( void );
 
     /**
      * Check if no devices are opened, otherwise close them.

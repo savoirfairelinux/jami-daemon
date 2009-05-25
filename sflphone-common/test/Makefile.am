@@ -1,6 +1,6 @@
 include ../globals.mak
 
-bin_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester
+bin_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
@@ -65,6 +65,44 @@ hookmanagerTester_SOURCES = \
 		TestMain.cpp
 
 hookmanagerTester_LDADD = \
+		../src/libsflphone.la  \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@CPPUNIT_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@CCGNU2_LIBS@ \
+		@CCRTP_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
+		-luuid \
+		$(OBJECT_FILES)
+
+audiolayerTester_SOURCES = \
+		audiolayerTest.h \
+		audiolayerTest.cpp \
+		TestMain.cpp
+
+audiolayerTester_LDADD = \
+		../src/libsflphone.la  \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@CPPUNIT_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@CCGNU2_LIBS@ \
+		@CCRTP_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
+		-luuid \
+		$(OBJECT_FILES)
+
+rtpTester_SOURCES = \
+		rtpTest.h \
+		rtpTest.cpp \
+		TestMain.cpp
+
+rtpTester_LDADD = \
 		../src/libsflphone.la  \
 		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
 		@ALSA_LIBS@ \

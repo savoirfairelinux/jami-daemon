@@ -23,6 +23,15 @@
 #include <glib/gprintf.h>
 #include <calllist.h>
 #include <toolbar.h>
+#include <mainwindow.h>
+
+
+GtkWidget *sw;
+GtkCellRenderer *rend;
+GtkTreeViewColumn *col;
+GtkTreeSelection *sel;
+
+
 
 /**
  * Show popup menu
@@ -53,6 +62,8 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     g_value_unset(&val);
 
     toolbar_update_buttons();
+
+    // set_focus_on_mainwindow();
 }
 
 /* A row is activated when it is double clicked */
@@ -116,28 +127,6 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 }
 
     static gboolean
-on_key_released (GtkWidget   *widget UNUSED,
-        GdkEventKey *event,
-        gpointer     user_data UNUSED)
-{
-    // If a modifier key is pressed, it's a shortcut, pass along
-    if(event->state & GDK_CONTROL_MASK ||
-            event->state & GDK_MOD1_MASK    ||
-            event->keyval == 60             || // <
-            event->keyval == 62             || // >
-            event->keyval == 34             || // "
-            event->keyval == 65361          || // left arrow
-            event->keyval == 65363          || // right arrow
-            event->keyval >= 65470          || // F-keys
-            event->keyval == 32                // space
-      )
-        return FALSE;
-    else
-        sflphone_keypad(event->keyval, event->string);
-    return TRUE;
-}
-
-    static gboolean
 button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUSED)
 {
     if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
@@ -160,6 +149,32 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     return FALSE;
 }
 
+
+    static gboolean
+on_key_released (GtkWidget   *widget UNUSED,
+        GdkEventKey *event,
+        gpointer     user_data UNUSED)
+{
+        DEBUG("key-release-event signal cought by on_key_released callback \n");
+        // If a modifier key is pressed, it's a shortcut, pass along
+        if(event->state & GDK_CONTROL_MASK ||
+                event->state & GDK_MOD1_MASK    ||
+                event->keyval == 60             || // <
+                event->keyval == 62             || // >
+                event->keyval == 34             || // "
+                event->keyval == 65361          || // left arrow
+                event->keyval == 65363          || // right arrow
+                event->keyval >= 65470          || // F-keys
+                event->keyval == 32                // space
+                )
+            return FALSE;
+        else
+            sflphone_keypad(event->keyval, event->string);
+   
+   
+   return TRUE;
+}
+
 /**
  * Reset call tree
  */
@@ -169,13 +184,27 @@ calltree_reset (calltab_t* tab)
     gtk_list_store_clear (tab->store);
 }
 
+void
+focus_on_calltree_out(){
+  DEBUG("set_focus_on_calltree_out \n");
+  // gtk_widget_grab_focus(GTK_WIDGET(sw));
+  focus_is_on_calltree = FALSE;
+}
+
+void
+focus_on_calltree_in(){
+  DEBUG("set_focus_on_calltree_in \n");
+  // gtk_widget_grab_focus(GTK_WIDGET(sw));
+  focus_is_on_calltree = TRUE;
+}
+
     void
 calltree_create (calltab_t* tab, gchar* searchbar_type)
 {
-    GtkWidget *sw;
-    GtkCellRenderer *rend;
-    GtkTreeViewColumn *col;
-    GtkTreeSelection *sel;
+    // GtkWidget *sw;
+    // GtkCellRenderer *rend;
+    // GtkTreeViewColumn *col;
+    // GtkTreeSelection *sel;
 
     tab->tree = gtk_vbox_new(FALSE, 10);
 
@@ -187,7 +216,6 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
     sw = gtk_scrolled_window_new( NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
-    g_signal_connect (G_OBJECT ( sw ), "key-release-event",G_CALLBACK (on_key_released), NULL);
 
     tab->store = gtk_list_store_new (3,
             GDK_TYPE_PIXBUF,// Icon
@@ -202,6 +230,9 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
             G_CALLBACK (row_activated),
             NULL);
 
+    GTK_WIDGET_SET_FLAGS (GTK_WIDGET(sw),GTK_CAN_FOCUS);
+    gtk_widget_grab_focus (GTK_WIDGET(sw));
+
     // Connect the popup menu
     g_signal_connect (G_OBJECT (tab->view), "popup-menu",
             G_CALLBACK (popup_menu),
@@ -210,6 +241,15 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
             G_CALLBACK (button_pressed),
             NULL);
 
+    // g_signal_connect (G_OBJECT (sw), "key-release-event",
+    //                   G_CALLBACK (on_key_released), NULL);
+
+    g_signal_connect_after (G_OBJECT (tab->view), "focus-in-event",
+                      G_CALLBACK (focus_on_calltree_in), NULL);
+    g_signal_connect_after (G_OBJECT (tab->view), "focus-out-event",
+                      G_CALLBACK (focus_on_calltree_out), NULL);
+
+    gtk_widget_grab_focus(GTK_WIDGET(tab->view));
 
     rend = gtk_cell_renderer_pixbuf_new();
     col = gtk_tree_view_column_new_with_attributes ("Icon",
@@ -412,6 +452,9 @@ calltree_add_call (calltab_t* tab, call_t * c)
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
     GtkTreeSelection* sel;
+    GtkTreeModel *model;
+    GtkTreePath *path;
+    
 
     // New call in the list
     gchar * description;
@@ -422,6 +465,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
 
     gtk_list_store_prepend (tab->store, &iter);
 
+    
     if( tab == current_calls )
     {
         switch(c->state)
@@ -468,7 +512,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
         WARN ("This widget doesn't exist - This is a bug in the application.");
     }
 
-
+    
     //Resize it
     if(pixbuf)
     {
@@ -483,15 +527,21 @@ calltree_add_call (calltab_t* tab, call_t * c)
             2, c,      // Pointer
             -1);
 
+    
     if (pixbuf != NULL)
         g_object_unref(G_OBJECT(pixbuf));
 
-    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
-    gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
+
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
+    
+    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
+
     toolbar_update_buttons();
+    
 }
 
 void calltree_display (calltab_t *tab) {
+
 
     GtkTreeSelection *sel;
 

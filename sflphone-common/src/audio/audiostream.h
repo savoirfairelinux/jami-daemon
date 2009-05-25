@@ -27,6 +27,8 @@
 #include "ringbuffer.h"
 #include "audioloop.h"
 
+#include <cc++/thread.h>
+
 /**
  * This data structure contains the different king of audio streams available
  */
@@ -69,9 +71,14 @@ class AudioStream {
     int putUrgent( void* buffer , int toCopy );
 
     /**
+     * Connect the pulse audio stream
+     */
+    bool connectStream();
+
+    /**
      * Disconnect the pulseaudio stream
      */
-    void disconnect();
+    bool disconnectStream();
     
     /**
      * Accessor: Get the pulseaudio stream object
@@ -93,6 +100,14 @@ class AudioStream {
 
     void setVolume( double pc ) { _volume.values[0] *= pc/100; }
     pa_cvolume getVolume( void ) { return _volume; }
+
+    /**
+     * Accessor
+     * @return stream state
+     */
+    pa_stream_state_t getStreamState(void);
+
+    
 
   private:
   
@@ -125,6 +140,11 @@ class AudioStream {
     void write( void );
 
     /**
+     * The pulse audio context
+     */
+    pa_context* _context;
+
+    /**
      * The pulse audio object
      */
     pa_stream* _audiostream;
@@ -145,6 +165,8 @@ class AudioStream {
     pa_stream_flags_t flag;
     pa_sample_spec sample_spec ;
     pa_cvolume _volume;
+
+    ost::Mutex _mutex;
 
 };
 

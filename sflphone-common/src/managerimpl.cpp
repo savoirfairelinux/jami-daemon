@@ -307,21 +307,25 @@ ManagerImpl::answerCall(const CallID& id)
   bool
 ManagerImpl::hangupCall(const CallID& id)
 {
-    _debug("ManagerImpl::hangupCall(): This function is called when user hangup \n");
+    _debug("ManagerImpl::hangupCall()\n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
+    AudioLayer *audiolayer;
 
     stopTone(false);
 
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
 
+    _debug("Stop audio stream\n");
+    audiolayer = getAudioDriver();
+    audiolayer->stopStream();
+
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
         returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (id);
     }
-
     /* Classic call, attached to an account */
     else {
         accountid = getAccountFromCall( id );
@@ -339,6 +343,8 @@ ManagerImpl::hangupCall(const CallID& id)
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
         if(pulselayer)  pulselayer->restorePulseAppsVolume();
     }
+
+    
 
     return returnValue;
 }
@@ -810,10 +816,19 @@ ManagerImpl::peerHungupCall(const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    accountid = getAccountFromCall( id );
-    if (accountid == AccountNULL) {
-        _debug("peerHungupCall: Call doesn't exists\n");
-        return;
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        SIPVoIPLink::instance (AccountNULL)->hangup (id);
+    }
+
+    else
+    {
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("peerHungupCall: Call doesn't exists\n");
+            return;
+        }
+        returnValue = getAccountLink(accountid)->peerHungup(id);
     }
 
     /* Broadcast a signal over DBus */
@@ -823,8 +838,6 @@ ManagerImpl::peerHungupCall(const CallID& id)
         stopTone(true);
         switchCall("");
     }
-
-    returnValue = getAccountLink(accountid)->peerHungup(id);
 
     removeWaitingCall(id);
     removeCallAccount(id);
@@ -1040,6 +1053,7 @@ ManagerImpl::ringtone()
   AudioLoop*
 ManagerImpl::getTelephoneTone()
 {
+  // _debug("ManagerImpl::getTelephoneTone()\n");
   if(_telephoneTone != 0) {
     ost::MutexLock m(_toneMutex);
     return _telephoneTone->getCurrentTone();
@@ -1052,6 +1066,7 @@ ManagerImpl::getTelephoneTone()
   AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
+  // _debug("ManagerImpl::getTelephoneFile()\n");
   ost::MutexLock m(_toneMutex);
   if(_audiofile.isStarted()) {
     return &_audiofile;
@@ -1209,6 +1224,7 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_str(CONFIG_ACCOUNTS_ORDER, "");
 
   section = ADDRESSBOOK;
+  fill_config_int (ADDRESSBOOK_ENABLE, YES_STR);
   fill_config_int (ADDRESSBOOK_MAX_RESULTS, "25");
   fill_config_int (ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, NO_STR);
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, YES_STR);
@@ -1861,7 +1877,7 @@ int ManagerImpl::app_is_running( std::string process )
 /**
  * Initialization: Main Thread
  */
-  void
+bool
 ManagerImpl::initAudioDriver(void)
 {
 
@@ -1889,12 +1905,16 @@ ManagerImpl::initAudioDriver(void)
 
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
+    return false;
   } else {
     error = getAudioDriver()->getErrorMessage();
     if (error == -1) {
       _debug("Init audio driver: %i\n", error);
+      return false;
     }
   }
+
+  return true;
 
 }
 
@@ -1992,7 +2012,7 @@ void ManagerImpl::switchAudioManager (void)
 
     // need to stop audio streams if there is currently no call
     if( (type != PULSEAUDIO) && (!hasCurrentCall())) {
-        _debug("There is currently a call!!\n");
+      // _debug("There is currently a call!!\n");
         _audiodriver->stopStream();
 
     }
@@ -2522,11 +2542,11 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
     }
   }
 
-  // We failed! Then only match the username
+  // We failed! Then only match the hostname
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
     account = dynamic_cast<SIPAccount *>(iter->second);
     if ( account != NULL ) {
-    	if(account->userMatch(userName))
+    	if(account->hostnameMatch(server))
       		return iter->first;
     }
   }
@@ -2654,6 +2674,7 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 
     std::map<std::string, int32_t> settings;
 
+    settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_ENABLE", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_ENABLE)) );
     settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_MAX_RESULTS", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS)) );
     settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO)));
     settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS)));
@@ -2665,6 +2686,7 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 
 void ManagerImpl::setAddressbookSettings (const std::map<std::string, int32_t>& settings){
 
+    setConfig(ADDRESSBOOK, ADDRESSBOOK_ENABLE, (*settings.find("ADDRESSBOOK_ENABLE")).second);
     setConfig(ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS, (*settings.find("ADDRESSBOOK_MAX_RESULTS")).second);
     setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO , (*settings.find("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")).second);
     setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS , (*settings.find("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")).second);
@@ -2726,8 +2748,9 @@ void ManagerImpl::check_call_configuration (const CallID& id, const std::string 
     /* Check if the call is an IP-to-IP call */
     /* For an IP-to-IP call, we don't need any account */
     /* Pattern looked for : ip:xxx.xxx.xxx.xxx */
-    pattern = to.substr (0,3);
+    pattern = to.substr (0,4);
     if (pattern==IP_TO_IP_PATTERN) {
+        _debug("Sending Sip Call \n");
         config = Call::IPtoIP;
     } else {
         config = Call::Classic;

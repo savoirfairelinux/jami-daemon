@@ -76,7 +76,7 @@ class AudioLayer {
          */
         virtual ~AudioLayer(void) {} 
 
-        virtual void closeLayer( void ) = 0;
+        virtual bool closeLayer( void ) = 0;
 
         /**
          * Check if no devices are opened, otherwise close them.
