@@ -105,7 +105,8 @@ fi
 echo "Generate control files"
 cp ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/control.$OS_VERSION ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/control && \
  # cp ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian/control.$OS_VERSION ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian/control && \
- cp ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/control.$OS_VERSION ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/control
+ cp ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/control.$OS_VERSION ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/control && \
+ find ${REPOSITORY_DIR} -name "control" -exec sed -i "s/VERSION/${FULL_VERSION}/g" {} \;
 
 if [ "$?" -ne "0" ]; then
         echo "!! Cannot generate control files"

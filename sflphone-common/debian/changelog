@@ -41,6 +41,8 @@ sflphone-common (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
   * [#1422] Fixed some issues with new changelog generation script
   * [#1422] Moved distribution update to specific file
   * [#1422] Dropped git-dch, replace by home made implementation
+  * [#1402] Fix pjsip build
+  * [#1404] Clear GTK-Critical Bug at client startup
   * Changes for name based dbus connection
   * Clean changelogs
   * [#1343] Gnome: Implement a callback system to handle focus on
