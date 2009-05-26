@@ -44,6 +44,41 @@ void AccountList::update()
 	}
 }
 
+void AccountList::upAccount(int index)
+{
+	if(index <= 0 || index >= size())
+	{
+		qDebug() << "Error : index or future index out of range in upAccount.";
+		return;
+	}
+	Account & account = getAccount(index);
+	accounts->remove(index);
+	accounts->insert(index - 1, & account);
+}
+
+void AccountList::downAccount(int index)
+{
+	if(index < 0 || index >= size() - 1)
+	{
+		qDebug() << "Error : index or future index out of range in upAccount.";
+		return;
+	}
+	Account & account = getAccount(index);
+	accounts->remove(index);
+	accounts->insert(index + 1, & account);
+}
+
+
+QString AccountList::getOrderedList()
+{
+	QString order;
+	for( int i = 0 ; i < size() ; i++)
+	{
+		order += getAccount(i).getAccountId() + "/";
+	}
+	return order;
+}
+
 QVector<Account *> AccountList::registeredAccounts() const
 {
 	qDebug() << "registeredAccounts";
@@ -94,6 +129,16 @@ QVector<Account *> & AccountList::getAccounts()
 	return *accounts;
 }
 
+const Account & AccountList::getAccount (int i) const
+{
+	return *((*accounts)[i]);
+}
+
+Account & AccountList::getAccount (int i)
+{
+	return *((*accounts)[i]);
+}
+
 Account * AccountList::getAccountById(const QString & id) const
 {
 	for (int i = 0; i < accounts->size(); ++i)
@@ -114,7 +159,6 @@ QVector<Account *> AccountList::getAccountByState(QString & state)
 			v += (*accounts)[i];
 	}
 	return v;
-
 }
 /*
 Account AccountList::getAccountByRow(int row)

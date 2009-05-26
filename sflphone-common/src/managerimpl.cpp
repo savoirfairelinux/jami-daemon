@@ -2176,6 +2176,7 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
 
 void ManagerImpl::setAccountsOrder (const std::string& order) 
 {
+    _debug("Set accounts order : %s\n", order.c_str() );
     // Set the new config
     setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
 }

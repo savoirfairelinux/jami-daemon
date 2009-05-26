@@ -363,6 +363,7 @@ void ConfigurationDialog::loadAccountList()
 		frame2_editAccounts->setEnabled(false);
 }
 
+
 void ConfigurationDialog::saveAccountList()
 {
 	//get the configurationManager instance
@@ -408,6 +409,7 @@ void ConfigurationDialog::saveAccountList()
 			configurationManager.removeAccount(accountIds[i]);
 		}
 	}
+	configurationManager.setAccountsOrder(accountList->getOrderedList());
 }
 
 void ConfigurationDialog::loadAccount(QListWidgetItem * item)
@@ -649,6 +651,7 @@ void ConfigurationDialog::on_button_accountUp_clicked()
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
 	QListWidgetItem * item = account->renewItem();
+	accountList->upAccount(currentRow);
 	delete prevItem;
 	listWidget_accountList->insertItem(currentRow - 1 , item);
 	listWidget_accountList->setItemWidget(item, account->getItemWidget());
@@ -661,6 +664,7 @@ void ConfigurationDialog::on_button_accountDown_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	QListWidgetItem * item = account->renewItem();
+	accountList->downAccount(currentRow);
 	delete prevItem;
 	listWidget_accountList->insertItem(currentRow + 1 , item);
 	listWidget_accountList->setItemWidget(item, account->getItemWidget());

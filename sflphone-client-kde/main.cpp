@@ -16,6 +16,8 @@
 #include "instance_interface_singleton.h"
 #include "sflphone_const.h"
 
+
+
 static const char description[] = I18N_NOOP("A KDE 4 Client for SFLPhone");
 
 static const char version[] = "0.9.5";
