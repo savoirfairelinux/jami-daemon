@@ -87,11 +87,16 @@ void SIPAccount::loadConfig()
 
 bool SIPAccount::fullMatch(const std::string& username, const std::string& hostname)
 {
-  return (username == getUsername() && hostname == getHostname());
+  return (userMatch (username) && hostnameMatch (hostname));
 }
 
 bool SIPAccount::userMatch(const std::string& username)
 {
   return (username == getUsername());
+}
+
+bool SIPAccount::hostnameMatch(const std::string& hostname)
+{
+  return (hostname == getHostname());
 }
 

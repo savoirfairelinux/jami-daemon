@@ -17,9 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
-#ifndef __SFL_NOTIFY_H__
-#define __SFL_NOTIFY_H__
+#ifndef __GNOME_NOTIFICATION_H__
+#define __GNOME_NOTIFICATION_H__
 
 /** @file sflnotify.h
   * @brief Implements desktop notification for incoming events.
@@ -29,10 +28,21 @@
 #include <accountlist.h>
 #include <calllist.h>
 #include <dbus/dbus.h>
-#include <actions.h>
 #include <statusicon.h>
-#include <configwindow.h>
 #include <sflphone_const.h>
+
+G_BEGIN_DECLS
+
+typedef struct {
+    NotifyNotification *notification;
+    gchar *title;
+    gchar *body;
+    GdkPixbuf *icon;
+} GnomeNotification;
+
+void create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urgency, gint timeout, GnomeNotification **notif);
+
+void free_notification (GnomeNotification *g);
 
 /**
  * Notify an incoming call
@@ -66,40 +76,10 @@ void notify_no_accounts( );
 void notify_no_registered_accounts(  );
 
 /**
- * Callback when answer button is pressed.
- * Action associated: Pick up the incoming call
- * @param notification	The pointer on the notification structure
- * @param data	The data associated. Here: call_t*
- */
-void answer_call_cb( NotifyNotification *notification, gpointer data );
-
-/**
- * Callback when refuse button is pressed
- * Action associated: Hang up the incoming call
- * @param notification	The pointer on the notification structure
- * @param data	The data associated. Here: call_t*
- */
-void refuse_call_cb( NotifyNotification *notification, gpointer data );
-
-/**
- * Callback when ignore button is pressed
- * Action associated: Nothing - The call continues ringing
- * @param notification	The pointer on the notification structure
- * @param data	The data associated. Here: call_t*
- */
-void ignore_call_cb( NotifyNotification *notification, gpointer data );
-
-/**
- * Callback when you try to make a call without accounts setup and 'setup account' button is clicked.
- * Action associated: Open the account window
- * @param notification The pointer on the notification structure
- * @param data The data associated. Here: account_t*
- */
-void setup_accounts_cb(NotifyNotification *notification, gpointer data);
-
-/**
  * Stop and close the current notification if an action occured before the timeout
  */
 void stop_notification( void );
+
+G_END_DECLS
 
 #endif
