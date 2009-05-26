@@ -5,11 +5,11 @@ sflplugindir=$(libdir)/sflphone/plugins
 
 # for pjsip
 PJSIP_LIBS= \
-			-L$(src)/libs/pjproject-1.0.1/pjnath/ \
-			-L$(src)/libs/pjproject-1.0.1/pjsip/ \
-			-L$(src)/libs/pjproject-1.0.1/pjlib/ \
-			-L$(src)/libs/pjproject-1.0.1/pjlib-util/ \
-			-L$(src)/libs/pjproject-1.0.1/pjmedia/ \
+			-L$(src)/libs/pjproject-1.0.1/pjnath/lib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjsip/lib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjlib/lib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjlib-util/lib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjmedia/lib/ \
 			-lpjnath-sfl-$(target) \
 			-lpjsua-sfl-$(target) \
 			-lpjsip-sfl-$(target) \
