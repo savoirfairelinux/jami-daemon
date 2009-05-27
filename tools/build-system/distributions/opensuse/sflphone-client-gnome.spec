@@ -1,5 +1,16 @@
+#####################################################
+# File Name: sflphone-client-gnome.spec
+#
+# Purpose :
+#
+# Author: Julien Bonjean (julien@bonjean.info) 
+#
+# Creation Date: 2009-05-27
+# Last Modified: 2009-05-27 17:23:32 -0400
+#####################################################
+
 %define name sflphone-client-gnome
-%define version 0.9.8
+%define version VERSION
 %define release 1suse
 
 Name:           %name
@@ -21,12 +32,14 @@ Authors:
 --------
     Julien Bonjean <julien.bonjean@savoirfairelinux.com>
 
+%lang_package
+
 %prep
 %setup -q
 
 %build
 ./autogen.sh --prefix=%{_prefix}
-make
+make -j
 
 %install
 make prefix=%{buildroot}/%{_prefix} install
@@ -37,9 +50,6 @@ make clean
 %files
 %defattr(-, root, root)
 %{_prefix}/*
-%doc AUTHORS COPYING README TODO
+%doc AUTHORS COPYING README
 
 %changelog
-* Mon Dec 04 2006 - my@mail.de
-- initial package
-

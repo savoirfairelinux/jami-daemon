@@ -1,5 +1,16 @@
+#####################################################
+# File Name: sflphone-common.spec
+#
+# Purpose :
+#
+# Author: Julien Bonjean (julien@bonjean.info) 
+#
+# Creation Date: 2009-05-27
+# Last Modified: 2009-05-27 17:23:32 -0400
+#####################################################
+
 %define name sflphone-common
-%define version 0.9.8
+%define version VERSION
 %define release 1suse
 
 Name:           %name
@@ -10,7 +21,6 @@ Version:        %version
 Release:        %release
 URL:            http://www.sflphone.org/
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-#Source0:        %name-%{version}.tar.bz2
 Source0:        sflphone-common.tar.gz
 Requires:	commoncpp2 libccrtp1 libsamplerate pulseaudio libgsm1 libspeex  dbus-1-glib expat gtk2 glibc glib2 dbus-1 libsexy libnotify perl
 Prefix: %{_prefix}
@@ -33,7 +43,7 @@ make clean
 make
 cd -
 ./autogen.sh --prefix=%{_prefix}
-make
+make -j
 
 %install
 cd libs/pjproject-1.0.1
@@ -54,6 +64,3 @@ make clean
 %doc AUTHORS COPYING README TODO
 
 %changelog
-* Mon Dec 04 2006 - my@mail.de
-- initial package
-
