@@ -48,20 +48,20 @@ private:
 	void initItem(bool displayPhoto);
 
 public:
-    Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto);
 
-    ~Contact();
-    
-    QString getPhoneNumber() const;
-    QString getNickName() const;
-    QString getFirstName() const;
-    QString getSecondName() const;
-    const Picture * getPhoto() const;
-    PhoneNumber::Type getType() const;
-    
-    QListWidgetItem * getItem();
-    
-    QWidget * getItemWidget();
+	//Constructors & Destructors
+	Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto);
+	~Contact();
+	
+	//Getters
+	QString getPhoneNumber() const;
+	QString getNickName() const;
+	QString getFirstName() const;
+	QString getSecondName() const;
+	const Picture * getPhoto() const;
+	PhoneNumber::Type getType() const;
+	QListWidgetItem * getItem();
+	QWidget * getItemWidget();
 
 };
 

@@ -18,6 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+ 
 #include "AccountItemWidget.h"
 
 #include <QtGui/QHBoxLayout>
@@ -49,6 +50,9 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
 
 AccountItemWidget::~AccountItemWidget()
 {
+	delete led;
+	delete checkBox;
+	delete textLabel;
 }
 
 

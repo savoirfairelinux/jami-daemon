@@ -1,3 +1,24 @@
+/***************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                              *
+ *   Author : Jérémy Quentin                                               *
+ *   jeremy.quentin@savoirfairelinux.com                                   *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+ 
 #ifndef HEADER_CONFIGDIALOG
 #define HEADER_CONFIGDIALOG
 
@@ -25,26 +46,31 @@ private:
 	
 
 public:
+
+	//Constructors & Destructors
 	ConfigurationDialog(sflphone_kdeView *parent = 0);
 	~ConfigurationDialog();
+	
+	//Getters
 	static AccountList * getAccountList();
 
+	//Setters
+	void setPage(int page);
+	void addAccountToAccountList(Account * account);
+	
 	void loadAccount(QListWidgetItem * item);
 	void saveAccount(QListWidgetItem * item);
 
 	void loadAccountList();
 	void saveAccountList();
 	
-	void addAccountToAccountList(Account * account);
-
 	void loadCodecs();
 	void saveCodecs();
 
 	void loadOptions();
 	void saveOptions();
 	
-	void setPage(int page);
-	
+	//Updates
 	void updateCodecListCommands();
 	void updateAccountListCommands();
 
@@ -68,7 +94,6 @@ private slots:
 	void on1_parametersChanged();
 	void on1_errorAlert(int code);
 	
-
 };
 
 #endif 

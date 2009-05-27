@@ -88,6 +88,10 @@ ContactItemWidget::ContactItemWidget(const Contact * contact, bool displayPhoto,
 
 ContactItemWidget::~ContactItemWidget()
 {
+	delete contactName;
+	delete contactNumber;
+	delete contactPhoto;
+	delete contactType;
 }
 
 

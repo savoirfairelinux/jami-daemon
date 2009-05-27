@@ -39,10 +39,12 @@ private:
 	QLabel * contactType;
 	
 public:
-	ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent = 0);
 
+	//Constructors & Destructors
+	ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent = 0);
 	~ContactItemWidget();
 	
+	//Getters
 	QString getContactName();
 	QString getContactNumber();
 

@@ -185,8 +185,6 @@ public:
 	int nextId() const;
 
 private:
-	//QLabel * label_emailAddress;
-	//QLineEdit * lineEdit_emailAddress;
 };
 
 #endif

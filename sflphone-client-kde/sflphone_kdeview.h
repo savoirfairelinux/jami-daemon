@@ -1,10 +1,11 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Jérémy Quentin   *
- *   jeremy.quentin@gmail.com   *
+ *   Copyright (C) 2009 by Savoir-Faire Linux                              *
+ *   Author : Jérémy Quentin                                               *
+ *   jeremy.quentin@savoirfairelinux.com                                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
+ *   the Free Software Foundation; either version 3 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
  *   This program is distributed in the hope that it will be useful,       *
@@ -39,7 +40,6 @@
 
 #include "ui_sflphone_kdeview_base.h"
 
-class QPainter;
 class ConfigurationDialog;
 /**
  * This is the main view class for sflphone-client-kde.  Most of the non-menu,
@@ -64,21 +64,36 @@ private:
 	QErrorMessage * errorWindow;
 
 protected:
+	
+	/**
+	 * override context menu handling
+	 * @param event
+	 */
 	void contextMenuEvent(QContextMenuEvent *event);
 
 public:
+
+	//Constructors & Destructors
 	sflphone_kdeView(QWidget *parent);
 	virtual ~sflphone_kdeView();
-	
+	/**
+	 * 
+	 */
 	void loadWindow();
+	
+	//Getters
 	static QString firstAccountId();
 	static Account * firstRegisteredAccount();
 	static QVector<Account *> registeredAccounts();
 	static AccountList * getAccountList();
-	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
-	int phoneNumberTypesDisplayed();
 	QErrorMessage * getErrorWindow();
-
+	
+	//Daemon getters
+	int phoneNumberTypesDisplayed();
+	
+	//Updates
+	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
+	
 private slots:
 	void actionb(Call * call, call_action action);
 	void action(QListWidgetItem * item, call_action action);

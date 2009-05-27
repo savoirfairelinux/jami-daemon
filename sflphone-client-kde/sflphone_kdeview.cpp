@@ -1,10 +1,11 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Jérémy Quentin   *
- *   jeremy.quentin@gmail.com   *
+ *   Copyright (C) 2009 by Savoir-Faire Linux                              *
+ *   Author : Jérémy Quentin                                               *
+ *   jeremy.quentin@savoirfairelinux.com                                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
+ *   the Free Software Foundation; either version 3 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
  *   This program is distributed in the hope that it will be useful,       *
@@ -78,6 +79,8 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
 	setPalette(pal);
 	
+	stackedWidget_screen->setCurrentWidget(page_callList);
+	
 	loadWindow();
 	
 	
@@ -109,7 +112,6 @@ void sflphone_kdeView::loadWindow()
 	updateDialpad();
 	updateSearchHistory();
 	updateSearchAddressBook();
-	stackedWidget_screen->setCurrentWidget(page_callList);
 }
 
 QString sflphone_kdeView::firstAccountId()
@@ -447,6 +449,7 @@ void sflphone_kdeView::updateWindowCallState()
 					enabledActions[3] = false;
 					break;
 				case CALL_STATE_CURRENT:
+					qDebug() << "details = " << CallManagerInterfaceSingleton::getInstance().getCallDetails(call->getCallId()).value();
 					qDebug() << "Reached CALL_STATE_CURRENT with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					recordEnabled = true;
 					break;
@@ -689,6 +692,11 @@ QVector<Contact *> sflphone_kdeView::findContactsInKAddressBook(QString textSear
 	return results;
 }
 
+/**
+ * 
+ * @return the integer resulting to the flags of the types chosen to be displayed in SFLPhone configuration.
+ * useful to sort contacts according to their types.
+ */
 int sflphone_kdeView::phoneNumberTypesDisplayed()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -1331,7 +1339,7 @@ void sflphone_kdeView::on1_error(MapStringString details)
 
 void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString & callID)
 {
-	qDebug() << "Signal : Incoming Call !";
+	qDebug() << "Signal : Incoming Call ! ID = " << callID;
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Call * call = callList->addIncomingCall(callID);
 	addCallToCallList(call);

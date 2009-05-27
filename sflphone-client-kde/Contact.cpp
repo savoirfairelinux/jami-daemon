@@ -48,6 +48,9 @@ Contact::Contact(Addressee addressee, const PhoneNumber & number, bool displayPh
 
 Contact::~Contact()
 {
+	delete item;
+	delete itemWidget;
+	delete photo;
 }
 
 void Contact::initItem(bool displayPhoto)

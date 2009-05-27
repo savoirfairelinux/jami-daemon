@@ -1,3 +1,24 @@
+/***************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                              *
+ *   Author : Jérémy Quentin                                               *
+ *   jeremy.quentin@savoirfairelinux.com                                   *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
 #include "Account.h"
 
 #include <QtGui/QApplication>
@@ -31,28 +52,11 @@ const QString account_state_name(QString & s)
 
 //Constructors
 
-	Account::Account():accountId(NULL){}
-
-/*
-Account::Account(QListWidgetItem & _item, QString & alias)
-{
-	accountDetails = new MapStringString();
-	(*accountDetails)[ACCOUNT_ALIAS] = alias;
-	item = & _item;
-}
-
-Account::Account(QString & _accountId, MapStringString & _accountDetails, account_state_t & _state)
-{
-	*accountDetails = _accountDetails;
-	*accountId = _accountId;
-	*state = _state;
-}
-*/
+Account::Account():accountId(NULL){}
 
 
 void Account::initAccountItem()
 {
-	//ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);

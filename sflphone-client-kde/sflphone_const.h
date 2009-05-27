@@ -27,15 +27,17 @@
  * @brief Contains the global variables for the client code
  */
  
-#define APP_NAME                          "KDE Client"
+#define APP_NAME                          "SFLPhone KDE Client"
 
 /** Locale */
-#define _(STRING)                         gettext( STRING )   
+// #define _(STRING)                         gettext( STRING )   
 
 /** Warnings unused variables **/
-#define UNUSED_VAR(var)                   (void*)var
+// #define UNUSED_VAR(var)                   (void*)var
 
-#define UNUSED                            __attribute__((__unused__))
+// #define UNUSED                            __attribute__((__unused__))
+
+
 
 #define SIP                               0
 #define IAX                               1
@@ -105,6 +107,7 @@
 #define SOUND_DEVICE                      "speaker"
 
 
+/** Account details */
 #define ACCOUNT_TYPE                      "Account.type"
 #define ACCOUNT_ALIAS		               "Account.alias"
 #define ACCOUNT_ENABLED		               "Account.enable"
@@ -123,8 +126,10 @@
 #define ACCOUNT_TYPE_IAX                  "IAX"
 #define ACCOUNT_TYPES_TAB                 {QString(ACCOUNT_TYPE_SIP), QString(ACCOUNT_TYPE_IAX)}
 
+/** Constant variables */
 #define ACCOUNT_MAILBOX_DEFAULT_VALUE     "888"
 
+/** Account States */
 #define ACCOUNT_STATE_REGISTERED          "REGISTERED"
 #define ACCOUNT_STATE_UNREGISTERED        "UNREGISTERED"
 #define ACCOUNT_STATE_TRYING              "TRYING"
@@ -135,11 +140,12 @@
 #define ACCOUNT_STATE_ERROR_CONF_STUN     "ERROR_CONF_STUN"
 #define ACCOUNT_STATE_ERROR_EXIST_STUN    "ERROR_EXIST_STUN"
 
-
+/** Calls details */
 #define CALL_PEER_NAME                    "PEER_NAME"
 #define CALL_PEER_NUMBER                  "PEER_NUMBER"
 #define CALL_ACCOUNTID                    "ACCOUNTID"
 
+/** Call States */
 #define CALL_STATE_CHANGE_HUNG_UP         "HUNGUP"
 #define CALL_STATE_CHANGE_RINGING         "RINGING"
 #define CALL_STATE_CHANGE_CURRENT         "CURRENT"
@@ -149,12 +155,14 @@
 #define CALL_STATE_CHANGE_UNHOLD_CURRENT  "UNHOLD_CURRENT"
 #define CALL_STATE_CHANGE_UNHOLD_RECORD   "UNHOLD_RECORD"
 
+/** Address Book Settings */
 #define ADDRESSBOOK_MAX_RESULTS           "ADDRESSBOOK_MAX_RESULTS"
 #define ADDRESSBOOK_DISPLAY_CONTACT_PHOTO "ADDRESSBOOK_DISPLAY_CONTACT_PHOTO"
 #define ADDRESSBOOK_DISPLAY_BUSINESS      "ADDRESSBOOK_DISPLAY_PHONE_BUSINESS"
 #define ADDRESSBOOK_DISPLAY_HOME          "ADDRESSBOOK_DISPLAY_PHONE_HOME"
 #define ADDRESSBOOK_DISPLAY_MOBILE        "ADDRESSBOOK_DISPLAY_PHONE_MOBILE"
 
+/** Hooks settings */
 #define HOOKS_ADD_PREFIX                  "PHONE_NUMBER_HOOK_ADD_PREFIX"
 #define HOOKS_ENABLED                     "PHONE_NUMBER_HOOK_ENABLED"
 #define HOOKS_COMMAND                     "URLHOOK_COMMAND"
@@ -162,15 +170,20 @@
 #define HOOKS_SIP_ENABLED                 "URLHOOK_SIP_ENABLED"
 #define HOOKS_SIP_FIELD                   "URLHOOK_SIP_FIELD"
 
-
-
+/** Constant variables */
 #define MAX_HISTORY_CAPACITY              60
 
-
+/** Codecs details */
 #define CODEC_NAME                        0
 #define CODEC_SAMPLE_RATE                 1
 #define CODEC_BIT_RATE                    2
 #define CODEC_BANDWIDTH                   3
+
+/** Audio Managers */
+#define ALSA	                           0
+#define PULSEAUDIO                        1
+
+
 
 /** Error while opening capture device */
 #define ALSA_CAPTURE_DEVICE	            0x0001
@@ -179,28 +192,11 @@
 /** Error pulseaudio */
 #define PULSEAUDIO_NOT_RUNNING            0x0100
 
-
-
 /** Tone to play when no voice mails */
 #define TONE_WITHOUT_MESSAGE              0
 /** Tone to play when voice mails */
 #define TONE_WITH_MESSAGE                 1
-/** Tells if the main window is reduced to the system tray or not */
-#define MINIMIZED	                        TRUE
-/** Behaviour of the main window on incoming calls */
-#define __POPUP_WINDOW                    ( dbus_popup_mode() )
-/** Show/Hide the dialpad */
-#define SHOW_DIALPAD	                     ( dbus_get_dialpad() ) 
-/** Show/Hide the volume controls */
-#define SHOW_VOLUME	                     ( dbus_get_volume_controls() ) 
-/** Show/Hide the dialpad */
-#define SHOW_SEARCHBAR	                  ( dbus_get_searchbar() ) 
-/** Show/Hide the alsa configuration panel */
-#define SHOW_ALSA_CONF                    ( dbus_get_audio_manager() == ALSA )
 
-/** Audio Managers */
-#define ALSA	                           0
-#define PULSEAUDIO                        1
 
 /** Notification levels */
 #define __NOTIF_LEVEL_MIN                 0

@@ -18,6 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+ 
 #ifndef ACTION_SET_ACCOUNT_FIRST_H
 #define ACTION_SET_ACCOUNT_FIRST_H
 
@@ -33,10 +34,12 @@ class ActionSetAccountFirst : public QAction
 Q_OBJECT
 
 private:
+	
 	Account * account;
-public:
-	ActionSetAccountFirst(Account * account, QObject *parent = 0);
 
+public:
+
+	ActionSetAccountFirst(Account * account, QObject *parent = 0);
 	~ActionSetAccountFirst();
 
 private slots:

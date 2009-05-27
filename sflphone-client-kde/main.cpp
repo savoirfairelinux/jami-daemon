@@ -24,26 +24,8 @@ static const char version[] = "0.9.5";
 
 int main(int argc, char **argv)
 {
-
-	///home/jquentin/.kde/share/apps/kabc
-/*	FILE *fp;
-	int status;
-	char path[PATH_MAX];
-
-
-	fp = popen("ls *", "r");
-	if (fp == NULL)
-		qDebug() << "marche pas";
-	while (fgets(path, PATH_MAX, fp) != NULL)
-	printf("%s", path);
-
-	status = pclose(fp);
-*/
-
 	try
 	{
-
-		
 		KLocale::setMainCatalog("sflphone-client-kde");
 		qDebug() << KLocale::defaultLanguage();
 		qDebug() << KLocale::defaultCountry();
@@ -65,9 +47,6 @@ int main(int argc, char **argv)
 		KCmdLineOptions options;
 		//options.add("+[URL]", ki18n( "Document to open" ));
 		KCmdLineArgs::addCmdLineOptions(options);
-		
-		
-		
 		
 		KApplication app;
 		

@@ -1,3 +1,25 @@
+/***************************************************************************
+ *   Copyright (C) 2009 by Savoir-Faire Linux                              *
+ *   Author : Jérémy Quentin                                               *
+ *   jeremy.quentin@savoirfairelinux.com                                   *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
+
 #ifndef CALL_H
 #define CALL_H
 
@@ -157,13 +179,15 @@ private:
 
 public:
 	
+	//Constructors & Destructors
 	~Call();
 	void initCallItem();
 	static Call * buildDialingCall(QString callId, const QString & peerName);
 	static Call * buildIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
 	static Call * buildRingingCall(const QString & callId);
-	Contact * findContactForNumberInKAddressBook(QString number);
 	
+	
+	//Getters
 	QListWidgetItem * getItem();
 	QWidget * getItemWidget();
 	QListWidgetItem * getHistoryItem();
@@ -172,19 +196,26 @@ public:
 	QString getCallId() const;
 	QString getPeerPhoneNumber() const;
 	QString getPeerName() const;
-	
-	call_state stateChanged(const QString & newState);
-	call_state actionPerformed(call_action action);
 	call_state getCurrentState() const;
 	history_state getHistoryState() const;
 	bool getRecording() const;
+	
+	//Automate calls
+	call_state stateChanged(const QString & newState);
+	call_state actionPerformed(call_action action);
+	
+	//Setters
 	void appendItemText(QString text);
 	void backspaceItemText();
 	void setItemIcon(const QString pixmap);
 // 	void setPeerName(const QString peerName);
 	void changeCurrentState(call_state newState);
+	
+	//Updates
 	void updateItem();
 
+	//Utils
+	Contact * findContactForNumberInKAddressBook(QString number);
 
 };
 

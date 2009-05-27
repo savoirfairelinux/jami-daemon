@@ -148,7 +148,6 @@ rest_account get_rest_account(char *host,char *email) {
 AccountWizard::AccountWizard(QWidget * parent)
  : QWizard(parent)
 {
-	
 	setPage(Page_Intro, new WizardIntroPage);
 	setPage(Page_AutoMan, new WizardAccountAutoManualPage);
 	setPage(Page_Type, new WizardAccountTypePage);
@@ -159,10 +158,8 @@ AccountWizard::AccountWizard(QWidget * parent)
 	setPage(Page_Conclusion, new WizardAccountConclusionPage);
 	
 	setStartId(Page_Intro);
-	//setPixmap(QWizard::BannerPixmap, QPixmap(":/images/icons/dial.svg"));
 	setWindowTitle(tr2i18n("Account Wizard"));
 	setPixmap(QWizard::LogoPixmap, QPixmap(":/images/icons/sflphone.png"));
-
 }
 
 
@@ -554,7 +551,6 @@ WizardAccountConclusionPage::WizardAccountConclusionPage(QWidget *parent)
 
 WizardAccountConclusionPage::~WizardAccountConclusionPage()
 {
-	//delete label_emailAddress;
 }
 
 int WizardAccountConclusionPage::nextId() const

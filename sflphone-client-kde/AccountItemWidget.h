@@ -18,6 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+ 
 #ifndef ACCOUNTITEMWIDGET_H
 #define ACCOUNTITEMWIDGET_H
 
@@ -45,25 +46,24 @@ public:
 
 	enum State {Registered, Unregistered, NotWorking};
 
+	//Constructors & Destructors
 	AccountItemWidget(QWidget *parent = 0);
-
 	~AccountItemWidget();
-    
-	void setState(int state);
-    
-	void setEnabled(bool enabled);
+
+	//Getters
+	int getState();
+	bool getEnabled();
 	
+	//Setters
+	void setState(int state);
+	void setEnabled(bool enabled);
 	void setAccountText(QString text);
 	
+	//Updates
 	void updateStateDisplay();
-	
 	void updateEnabledDisplay();
-	
 	void updateDisplay();
 	
-	int getState();
-	
-	bool getEnabled();
 	
 
 };
