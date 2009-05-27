@@ -36,7 +36,7 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # get last release tag
-LAST_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta)?$" | tail -n 1`
+LAST_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta|\.stable)$" | tail -n 1`
 
 if [ "$?" -ne "0" ]; then
 	echo " !! Error when retrieving last tag"
@@ -44,7 +44,7 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # get last release tag
-PREVIOUS_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta)?$" | tail -n 2 | sed -n '1p;1q'`
+PREVIOUS_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta|\.stable)$" | tail -n 2 | sed -n '1p;1q'`
 
 if [ "$?" -ne "0" ]; then
 	echo " !! Error when retrieving previous revision tag"
