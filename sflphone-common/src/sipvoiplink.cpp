@@ -2204,7 +2204,6 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 			request.find ( method_name );
 		}
 		pjsip_endpt_respond_stateless ( _endpt, rdata, PJSIP_SC_OK, NULL, NULL, NULL );
-		_debug("return 1\n");
 		return true;
 	}
 
@@ -2212,7 +2211,6 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 	if ( rdata->msg_info.msg->line.req.method.id == PJSIP_OPTIONS_METHOD )
 	{
 		handle_incoming_options ( rdata );
-		_debug("return 2\n");
 		return true;
 	}
 
@@ -2224,7 +2222,6 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 			pj_strdup2 ( _pool, &reason, "user agent unable to handle this request " );
 			pjsip_endpt_respond_stateless ( _endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, &reason, NULL,
 			                                NULL );
-			_debug("return 3\n");
 			return true;
 		}
 	}
@@ -2236,7 +2233,6 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 		pj_strdup2 ( _pool, &reason, "user agent unable to handle this INVITE " );
 		pjsip_endpt_respond_stateless ( _endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, &reason, NULL,
 		                                NULL );
-		_debug("return 4\n");
 		return true;
 	}
 
@@ -2266,7 +2262,6 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 	if ( !call )
 	{
 		_debug ( "UserAgent: unable to create an incoming call" );
-		_debug("return 5\n");
 		return false;
 	}
 
@@ -2276,11 +2271,11 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 	// We retrieve the remote sdp offer in the rdata struct to begin the negociation
 	call->getLocalSDP()->set_ip_address ( link->getLocalIPAddress() );
 	get_remote_sdp_from_offer ( rdata, &r_sdp );
+// 	_debug("r_sdp = %s\n", r_sdp);
 	status = call->getLocalSDP()->receiving_initial_offer ( r_sdp );
 	if ( status!=PJ_SUCCESS )
 	{
 		delete call; call=0;
-		_debug("return 6\n");
 		return false;
 	}
 
@@ -2291,7 +2286,6 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 	call->initRecFileName();
 
 	// Notify UI there is an incoming call
-	_debug("send incoming call\n");
 	if ( Manager::instance().incomingCall ( call, account_id ) )
 	{
 		// Add this call to the callAccountMap in ManagerImpl

@@ -92,13 +92,11 @@ bool SIPAccount::fullMatch(const std::string& username, const std::string& hostn
 
 bool SIPAccount::userMatch(const std::string& username)
 {
-  _debug("username = %s , getUserName() = %s, == : %i\n", username.c_str(), getUsername().c_str() , username == getUsername());
   return (username == getUsername());
 }
 
 bool SIPAccount::hostnameMatch(const std::string& hostname)
 {
-  _debug("hostname = %s , getHostname() = %s, == : %i\n", hostname.c_str(), getHostname().c_str() , hostname == getHostname());
   return (hostname == getHostname());
 }
 
