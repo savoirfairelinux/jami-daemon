@@ -48,7 +48,8 @@ Connection::Private::Private(DBusBusType type)
 {
 	InternalError e;
 
-	conn = dbus_bus_get_private(type, e);
+	conn = dbus_bus_get(type, e);
+	// conn = dbus_bus_get_private(type, e);
 
 	if (e) throw Error(e);
 
@@ -79,7 +80,7 @@ Connection::Private::~Private()
 void Connection::Private::init()
 {
 	dbus_connection_ref(conn);
-	dbus_connection_ref(conn);	//todo: the library has to own another reference
+	// dbus_connection_ref(conn);	//todo: the library has to own another reference
 
 	disconn_filter = new Callback<Connection::Private, bool, const Message &>(
 		this, &Connection::Private::disconn_filter_function
@@ -190,10 +191,14 @@ Connection Connection::ActivationBus()
 Connection::Connection(const char *address, bool priv)
 {
 	InternalError e;
+
+	/*
 	DBusConnection *conn = priv 
 		? dbus_connection_open_private(address, e)
 		: dbus_connection_open(address, e);
-
+	*/
+	DBusConnection *conn = dbus_connection_open(address, e);
+		
 	if (e) throw Error(e);
 
 	_pvt = new Private(conn);
