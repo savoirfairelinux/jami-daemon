@@ -1,0 +1,120 @@
+<?xml version="1.0" ?>
+<node name="/org/sflphone/SFLphone">
+  <interface name="org.sflphone.SFLphone.CallManager">
+  
+    <method name="placeCall">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="to" direction="in"/>
+    </method>
+    
+    <method name="refuse">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="accept">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="hangUp">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="hold">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="unhold">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="transfert">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="to" direction="in"/>
+    </method>
+    
+    <method name="playDTMF">
+      <arg type="s" name="key" direction="in"/>
+    </method>
+    
+    <method name="startTone">
+      <arg type="i" name="start" direction="in"/>
+      <arg type="i" name="type" direction="in"/>
+    </method>
+
+    <method name="setVolume">
+      <arg type="s" name="device" direction="in"/>
+      <arg type="d" name="value" direction="in"/>
+    </method>
+    
+    <method name="getVolume">
+      <arg type="s" name="device" direction="in"/>
+      <arg type="d" name="value" direction="out"/>
+    </method>
+
+    <method name="setRecording">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+
+     <method name="getIsRecording">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="b" name="isRecording" direction="out"/>
+    </method>
+    
+    <method name="getCallDetails">
+      <arg type="s" name="callID" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="infos" direction="out"/>
+    </method>
+    
+    <method name="getCurrentCallID">
+      <arg type="s" name="callID" direction="out"/>
+    </method>
+
+    <method name="getCurrentCodecName">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="codecName" direction="out"/>
+    </method>
+
+    <signal name="currentSelectedCodec">
+      <arg type="s" name="callID"  direction="out" />
+      <arg type="s" name="codecName"  direction="out"/>
+    </signal>
+    
+    <signal name="incomingCall">
+      <arg type="s" name="accountID" />
+      <arg type="s" name="callID" />
+      <arg type="s" name="from" />
+    </signal>
+    
+    <signal name="incomingMessage">
+      <arg type="s" name="accountID"  direction="out" />
+      <arg type="s" name="message"  direction="out"/>
+    </signal>
+    
+    <signal name="callStateChanged">
+      <arg type="s" name="callID"  direction="out"/>
+      <arg type="s" name="state"  direction="out"/>
+    </signal>
+    
+    <signal name="voiceMailNotify">
+      <arg type="s" name="accountID"  direction="out"/>
+      <arg type="i" name="count"  direction="out"/>
+    </signal>
+    
+    
+    <signal name="volumeChanged">
+      <arg type="s" name="device"  direction="out"/>
+      <arg type="d" name="value"  direction="out"/>
+    </signal>
+ 
+<!--
+    <signal name="error">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="details"  direction="out"/>
+    </signal>
+-->
+
+  </interface>
+</node>
