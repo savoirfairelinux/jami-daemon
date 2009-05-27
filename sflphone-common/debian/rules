@@ -31,8 +31,8 @@ build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp 
 
     # Add here commands to compile the arch part of the package.
-	$(MAKE) 
-	cd libs/pjproject-1.0.1; $(MAKE) dep; $(MAKE)
+	cd libs/pjproject-1.0.1; $(MAKE) dep; $(MAKE) clean; $(MAKE)
+	cd -; $(MAKE) 
 	touch $@
 
 build-indep: build-indep-stamp
