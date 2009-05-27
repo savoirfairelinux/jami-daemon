@@ -67,9 +67,6 @@ AC_CONFIG_FILES([man/Makefile])
 AC_CONFIG_FILES([doc/Makefile \
   doc/doxygen/Makefile])
   
-AC_CONFIG_FILES([platform/suse.spec \
-  platform/fedora.spec]) 
-  
 dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
 dnl AM_CONFIG_HEADER(config.h)
 
