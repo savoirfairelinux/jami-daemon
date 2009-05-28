@@ -7,13 +7,18 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-27
-# Last Modified: 2009-05-27 17:23:32 -0400
+# Last Modified: 2009-05-28 15:35:07 -0400
 #####################################################
 
 BUILD_DIR=/tmp/sflphone
 SRC_DIR=${HOME}/sflphone-packaging/build/sflphone
 WORKING_DIR=${HOME}/sflphone-packaging
-VERSION=`cat ${SRC_DIR}/VERSION`
+VERSION=`cat ${SRC_DIR}/sflphone-common/VERSION`
+
+if [ ! ${VERSION} ]; then
+	echo "!! Cannot detect current version"
+	exit -1
+fi
 
 #PACKAGES=('sflphone-common' 'sflphone-client-gnome' 'sflphone-client-kde')
 PACKAGES=('sflphone-common sflphone-client-gnome')
