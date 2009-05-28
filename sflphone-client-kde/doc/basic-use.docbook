@@ -27,7 +27,7 @@ To switch between those windows, click on the history and address book buttons. 
 
 
 <sect1 id="basic-use-call">
-<title>Calling somebody</title>
+<title>Making a call</title>
 
 <sect2 id="basic-use-call-current">
 <title>Dialing one's number</title>
@@ -101,6 +101,16 @@ To switch between those windows, click on the history and address book buttons. 
 
 </sect1>
 
+
+
+<sect1 id="basic-use-config">
+<title>Configuration panel</title>
+
+<para>The configuration panel is built in accordance with KDE specifications. It is divided by options type. The panel at left shows the different option pages you can reach. Click on one of them to acceed to the corresponding page. The changes you make are not applied until you click OK or Apply. Clicking Cancel will cancel and forget every change you made since the last Apply or OK command. Be careful not to forget some changes you made in some other pages if you wanted to Cancel it. </para>
+
+<para>There is also a specific Apply button just for the account list which is useful to manage these accounts and valid your changes to see if the accounts are well registered. </para>
+
+</sect1>
 
 
 </chapter>
