@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-13
-# Last Modified: 2009-05-28 17:56:59 -0400
+# Last Modified: 2009-05-28 18:04:12 -0400
 #####################################################
 
 # set -x
@@ -141,7 +141,7 @@ do
 
 		if [ ${IS_FIRST} ]
 		then
-			yes | dch --changelog ${CHANGELOG_FILE}  -b --allow-lower-version --no-auto-nmu --distribution SYSTEM --newversion ${SOFTWARE_VERSION}-SYSVER${SOFTWARE_VERSION_APPEND} "$line" >/dev/null 2>&1
+			yes | dch --changelog ${CHANGELOG_FILE}  -b --allow-lower-version --no-auto-nmu --distribution SYSTEM --newversion ${SOFTWARE_VERSION}${SOFTWARE_VERSION_APPEND}-SYSVER "$line" >/dev/null 2>&1
 		
 			if [ "$?" -ne "0" ]; then
 				echo
