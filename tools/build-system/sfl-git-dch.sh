@@ -7,12 +7,12 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-13
-# Last Modified: 2009-05-28 18:04:12 -0400
+# Last Modified: 2009-05-28 18:24:53 -0400
 #####################################################
 
 # set -x
 
-SNAPSHOT_TAG=$1
+VERSION=$1
 RELEASE_MODE=$2
 
 ROOT_DIR="/home/projects/sflphone"
@@ -83,28 +83,6 @@ if [ "$?" -ne "0" ]; then
         exit -1
 fi
 
-# get version
-SOFTWARE_VERSION=`echo ${LAST_RELEASE_TAG_NAME} | cut -d "/" -f2- | cut -d "-" -f1`
-
-if [ "$?" -ne "0" ]; then
-        echo " !! Error when retrieving software version"
-        exit -1
-fi
-
-# add version info
-SOFTWARE_VERSION_APPEND=
-if [ ${RELEASE_MODE} ]
-then
-	if [ "${RELEASE_MODE}" != "release" ]; then
-		SOFTWARE_VERSION_APPEND="~${RELEASE_MODE}"
-	fi
-else
-	SOFTWARE_VERSION_APPEND="~snapshot${SNAPSHOT_TAG}"
-fi
-	
-	
-
-
 # iterate throw changelog files
 for CHANGELOG_FILE in ${CHANGELOG_FILES[@]}
 do
@@ -141,7 +119,7 @@ do
 
 		if [ ${IS_FIRST} ]
 		then
-			yes | dch --changelog ${CHANGELOG_FILE}  -b --allow-lower-version --no-auto-nmu --distribution SYSTEM --newversion ${SOFTWARE_VERSION}${SOFTWARE_VERSION_APPEND}-SYSVER "$line" >/dev/null 2>&1
+			yes | dch --changelog ${CHANGELOG_FILE}  -b --allow-lower-version --no-auto-nmu --distribution SYSTEM --newversion ${VERSION}-SYSVER "$line" >/dev/null 2>&1
 		
 			if [ "$?" -ne "0" ]; then
 				echo
@@ -164,13 +142,13 @@ do
 	# add snapshot or release flag if needed
 	echo
 	if [ ${RELEASE_MODE} ]; then
-		sed -i "3i\    ** ${SOFTWARE_VERSION} ${RELEASE_MODE} **\n" ${CHANGELOG_FILE}
+		sed -i "3i\    ** ${VERSION} **\n" ${CHANGELOG_FILE}
                 if [ "$?" -ne "0" ]; then
                         echo " !! Error when adding snapshot flag"
                         exit -1
                 fi
 	else
-		sed -i "3i\    ** SNAPSHOT ${SNAPSHOT_TAG} **\n" ${CHANGELOG_FILE}
+		sed -i "3i\    ** SNAPSHOT ${VERSION} **\n" ${CHANGELOG_FILE}
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Error when adding snapshot flag"
 			exit -1
