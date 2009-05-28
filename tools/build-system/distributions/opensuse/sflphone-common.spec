@@ -9,24 +9,45 @@
 # Last Modified: 2009-05-27 17:23:32 -0400
 #####################################################
 
-%define name sflphone-common
-%define version VERSION
-%define release 1suse
-
-Name:           %name
+Name:           sflphone-common
 License:        GNU General Public License (GPL)
 Group:          System Environment/Daemons
-Summary:        A VoIP daemon with SIP protocol and IAX protocol
-Version:        %version
-Release:        %release
+Summary:        SIP and IAX2 compatible softphone - Core
+Version:        VERSION
+Release:        opensuse
 URL:            http://www.sflphone.org/
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+Vendor:         Savoir-faire Linux
+Packager:	Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+
+BuildRoot:      %{_tmppath}/%{name}-%{version}
 Source0:        sflphone-common.tar.gz
-Requires:	commoncpp2 libccrtp1 libsamplerate pulseaudio libgsm1 libspeex  dbus-1-glib expat gtk2 glibc glib2 dbus-1 libsexy libnotify perl
-Prefix: %{_prefix}
+BuildRequires:	libpulse-devel
+BuildRequires:	commoncpp2-devel
+BuildRequires:	libccrtp-devel
+BuildRequires:	libsamplerate-devel
+BuildRequires:	dbus-1-devel
+BuildRequires:	libexpat-devel
+BuildRequires:	libgsm-devel
+BuildRequires:	speex-devel
+BuildRequires:	libcppunit-devel
+BuildRequires:	alsa-devel
+Requires:	libsamplerate
+Requires:	libexpat1
+Requires:	commoncpp2
+Requires:	libgsm1
+Requires:	libspeex
+Requires:	dbus-1
+Requires:	libasound2
+Requires:	libpulse0
+Requires:	libccrtp1
+Conflicts:      sflphone
+Prefix:		%{_prefix}
 
 %description
-SFLphoned is a VoIP daemon with SIP protocol and IAX protocol.
+SFLphone is meant to be a robust enterprise-class desktop phone.
+ SFLphone is released under the GNU General Public License.
+ SFLphone is being developed by the global community, and maintained by
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.
 
 Authors:
 --------

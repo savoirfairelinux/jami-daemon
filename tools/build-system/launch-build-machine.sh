@@ -7,16 +7,12 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-27 17:28:36 -0400
+# Last Modified: 2009-05-28 10:13:41 -0400
 #####################################################
 
 #
 # Not working with git 1.5.4.3
 #
-#
-#
-#
-
 
 TAG=`date +%Y-%m-%d`
 
@@ -226,28 +222,28 @@ if [ ${DO_PREPARE} ]; then
 		exit -1
 	fi
 
-	FULL_VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1-2 | sed 's/\.rc.*//' | sed 's/\.beta.*//'`
+	VERSION=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1`
 	
 	# if push is activated
 	if [ ${DO_PUSH} ];then
 
 		# first changelog generation for commit
-		echo "Update changelogs (1/2)"
+		echo "Update debian changelogs (1/2)"
 
 		${SCRIPTS_DIR}/sfl-git-dch.sh ${RELEASE_MODE}
 	
 		if [ "$?" -ne "0" ]; then
-			echo "!! Cannot update changelogs"
+			echo "!! Cannot update debian changelogs"
 			exit -1
 		fi
 
 		echo " Doing commit"
-		VERSION_COMMIT=${FULL_VER}${VERSION_APPEND}
+		VERSION_COMMIT=${VERSION}${VERSION_APPEND}
 		if [ ! ${RELEASE_MODE} ]; then
-			VERSION_COMMIT=${FULL_VER}" Snapshot ${TAG}"
+			VERSION_COMMIT="snapshot"
 		fi
         	cd ${REPOSITORY_DIR}
-		git commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
+		git commit -m "[#1262] Updated debian changelogs (${VERSION_COMMIT})" . >/dev/null
 
 		echo " Pushing commit"
 		git push origin master >/dev/null
@@ -262,14 +258,18 @@ if [ ${DO_PREPARE} ]; then
         fi
 
 	# generate the changelog, according to the distribution and the git commit messages
-	echo "Update changelogs (2/2)"
+	echo "Update debian changelogs (2/2)"
 	cd ${REPOSITORY_DIR}
 	${SCRIPTS_DIR}/sfl-git-dch.sh ${RELEASE_MODE}
 	
 	if [ "$?" -ne "0" ]; then
-		echo "!! Cannot update changelogs"
+		echo "!! Cannot update debian changelogs"
 		exit -1
 	fi
+
+	echo "Write version numbers for following processes"
+	echo "${VERSION}${VERSION_APPEND}" > ${REPOSITORY_DIR}/VERSION.opensuse
+	echo "${VERSION}-0ubuntu1${VERSION_APPEND}" > ${REPOSITORY_DIR}/VERSION.ubuntu
 
 	echo "Archiving repository"
 	tar czf ${REPOSITORY_ARCHIVE} --exclude .git -C `dirname ${REPOSITORY_DIR}` sflphone 

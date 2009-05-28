@@ -9,24 +9,42 @@
 # Last Modified: 2009-05-27 17:23:32 -0400
 #####################################################
 
-%define name sflphone-client-gnome
-%define version VERSION
-%define release 1suse
-
-Name:           %name
+Name:           sflphone-client-gnome
 License:        GNU General Public License (GPL)
-Group:          System Environment/Daemons
-Summary:        A VoIP daemon with SIP protocol and IAX protocol
-Version:        %version
-Release:        %release
+Group:          Productivity/Networking/System
+Summary:        GNOME client for SFLphone
+Version:        VERSION
+Release:        opensuse
 URL:            http://www.sflphone.org/
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+Vendor:		Savoir-faire Linux
+Packager:       Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+
+BuildRoot:      %{_tmppath}/%{name}-%{version}
 Source0:        sflphone-client-gnome.tar.gz
-Requires:	commoncpp2 libccrtp1 libsamplerate pulseaudio libgsm1 libspeex  dbus-1-glib expat gtk2 glibc glib2 dbus-1 libsexy libnotify perl
-Prefix: %{_prefix}
+BuildRequires:	liblog4c-devel
+BuildRequires:	gtk2-devel
+BuildRequires:	dbus-1-glib-devel
+BuildRequires:	libnotify-devel
+BuildRequires:	libsexy-devel
+BuildRequires:	evolution-data-server-devel
+Requires:	sflphone-common = %{version}
+Requires:	dbus-1-glib
+Requires:	gtk2
+Requires:	glib2
+Requires:	dbus-1-glib
+Requires:	libnotify
+Requires:	librsvg
+Requires:	liblog4c3
+Requires:	libsexy
+Conflicts:	sflphone
+Prefix:		%{_prefix}
 
 %description
-SFLphoned is a VoIP client with SIP protocol and IAX protocol.
+Provide a GNOME client for SFLphone.
+ SFLphone is meant to be a robust enterprise-class desktop phone.
+ SFLphone is released under the GNU General Public License.
+ SFLphone is being developed by the global community, and maintained by
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.
 
 Authors:
 --------
