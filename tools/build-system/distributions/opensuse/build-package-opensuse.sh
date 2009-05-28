@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-27
-# Last Modified: 2009-05-28 15:35:07 -0400
+# Last Modified: 2009-05-28 16:32:54 -0400
 #####################################################
 
 BUILD_DIR=/tmp/sflphone
@@ -19,9 +19,6 @@ if [ ! ${VERSION} ]; then
 	echo "!! Cannot detect current version"
 	exit -1
 fi
-
-#PACKAGES=('sflphone-common' 'sflphone-client-gnome' 'sflphone-client-kde')
-PACKAGES=('sflphone-common sflphone-client-gnome')
 
 echo "Create directories"
 mkdir -p ${BUILD_DIR}/BUILD

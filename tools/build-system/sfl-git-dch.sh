@@ -7,22 +7,21 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-13
-# Last Modified: 2009-05-19 10:09:33 -0400
+# Last Modified: 2009-05-28 17:56:59 -0400
 #####################################################
 
 # set -x
 
-RELEASE_MODE=$1
+SNAPSHOT_TAG=$1
+RELEASE_MODE=$2
 
 ROOT_DIR="/home/projects/sflphone"
 TODEPLOY_DIR="${ROOT_DIR}/sflphone-packaging"
 TODEPLOY_BUILD_DIR="${TODEPLOY_DIR}/build"
 REPOSITORY_DIR="${TODEPLOY_BUILD_DIR}/sflphone"
 SCRIPTS_DIR="${ROOT_DIR}/build-system"
-
-CHANGELOG_FILES=( "sflphone-common/debian/changelog" "sflphone-client-gnome/debian/changelog" )
-
-SNAPSHOT_TAG=`date +%s`
+DEBIAN_DIR="${SCRIPTS_DIR}/distributions/ubuntu"
+CHANGELOG_FILES=( "${DEBIAN_DIR}/debian-sflphone-common/changelog" "${DEBIAN_DIR}/debian-sflphone-client-gnome/changelog" "${DEBIAN_DIR}/debian-sflphone-client-kde/changelog")
 
 export DEBFULLNAME="SFLphone Automatic Build System"
 export DEBEMAIL="team@sflphone.org"
