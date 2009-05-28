@@ -4,8 +4,7 @@ AM_CONFIG_HEADER(config.h)
 LT_INIT
 
 PACKAGE=SFLphone
-#VERSION=0.9.5~beta
-VERSION=`head -n 1 debian/changelog | awk '{print $2}' | sed -e 's/(//g' | sed -e 's/)//g'`
+VERSION=`cat VERSION`
 
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AC_CONFIG_MACRO_DIR([m4])
