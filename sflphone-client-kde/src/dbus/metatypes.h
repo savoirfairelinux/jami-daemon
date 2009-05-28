@@ -1,7 +1,6 @@
 #ifndef METATYPES_H
 #define METATYPES_H
 
-#include <QtCore/QList>
 #include <QtCore/QMetaType>
 #include <QtCore/QMap>
 #include <QtCore/QString>

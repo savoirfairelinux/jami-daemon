@@ -26,8 +26,10 @@
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QColor>
 
-#include "metatypes.h"
+// #include "metatypes.h"
 #include "AccountItemWidget.h"
+
+typedef QMap<QString, QString> MapStringString;
 
 const QString account_state_name(QString & s);
 

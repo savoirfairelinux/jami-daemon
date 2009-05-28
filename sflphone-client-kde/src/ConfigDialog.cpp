@@ -30,9 +30,11 @@
 
 
 #include "sflphone_const.h"
-#include "metatypes.h"
+// #include "metatypes.h"
 #include "configurationmanager_interface_singleton.h"
 
+typedef QMap<QString, QString> MapStringString;
+typedef QMap<QString, int> MapStringInt;
 
 AccountList * ConfigurationDialog::accountList;
 

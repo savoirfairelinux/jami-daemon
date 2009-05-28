@@ -33,6 +33,10 @@
 #include <kactioncollection.h>
 #include <kaction.h>
 
+#include <kabc/addressbook.h>
+#include <kabc/stdaddressbook.h>
+#include <kabc/addresseelist.h>
+
 #include "sflphone_const.h"
 #include "configurationmanager_interface_singleton.h"
 #include "callmanager_interface_singleton.h"
@@ -40,10 +44,8 @@
 #include "ActionSetAccountFirst.h"
 #include "ContactItemWidget.h"
 #include "SFLPhone.h"
+#include "typedefs.h"
 
-#include <kabc/addressbook.h>
-#include <kabc/stdaddressbook.h>
-#include <kabc/addresseelist.h>
 
 using namespace KABC;
 

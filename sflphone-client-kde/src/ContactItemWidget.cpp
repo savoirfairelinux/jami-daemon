@@ -90,7 +90,7 @@ ContactItemWidget::~ContactItemWidget()
 {
 	delete contactName;
 	delete contactNumber;
-	delete contactPhoto;
+// 	delete contactPhoto;
 	delete contactType;
 }
 
