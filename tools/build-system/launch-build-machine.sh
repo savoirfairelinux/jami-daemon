@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-28 10:13:41 -0400
+# Last Modified: 2009-05-28 18:30:17 -0400
 #####################################################
 
 #
@@ -39,6 +39,7 @@ REMOTE_ROOT_DIR="/home/sflphone"
 # scripts
 SCRIPTS_DIR="${ROOT_DIR}/build-system"
 PACKAGING_SCRIPTS_DIR="${SCRIPTS_DIR}/remote"
+DISTRIBUTION_SCRIPTS_DIR="${SCRIPTS_DIR}/distributions"
 BIN_DIR="${SCRIPTS_DIR}/bin"
 
 # directory that will be deployed to remote machine
@@ -61,7 +62,8 @@ PACKAGING_RESULT_DIR=${ROOT_DIR}/packages-${TAG}
 USER="sflphone"
 
 RELEASE_MODE=
-VERSION_APPEND=
+
+SNAPSHOT_TAG=`date +%s`
 
 DO_PREPARE=1
 DO_PUSH=1
@@ -74,7 +76,7 @@ DO_SEND_EMAIL=1
 EDITOR=echo
 export EDITOR
 
-NON_FATAL_ERRORS=
+NON_FATAL_ERRORS=""
 
 MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" )
 
@@ -195,11 +197,8 @@ echo
 
 if [ ${RELEASE_MODE} ]; then
 	echo "Release mode : ${RELEASE_MODE}"
-	if [ "${RELEASE_MODE}" != "release" ];then
-		VERSION_APPEND="~${RELEASE_MODE}"
-	fi
 else
-	echo "Snapshot mode"
+	echo "Snapshot mode : ${SNAPSHOT_TAG}"
 fi
 
 #########################
@@ -223,27 +222,33 @@ if [ ${DO_PREPARE} ]; then
 	fi
 
 	VERSION=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1`
-	
+
+	if [ ${RELEASE_MODE} ]; then
+		if [ "${RELEASE_MODE}" != "release" ];then
+			VERSION="${VERSION}~${RELEASE_MODE}"
+		fi
+	else
+		VERSION="${VERSION}-snapshot-${SNAPSHOT_TAG}"
+	fi
+	echo "Version is : ${VERSION}"
+
 	# if push is activated
 	if [ ${DO_PUSH} ];then
 
 		# first changelog generation for commit
 		echo "Update debian changelogs (1/2)"
 
-		${SCRIPTS_DIR}/sfl-git-dch.sh ${RELEASE_MODE}
-	
+		${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
+
 		if [ "$?" -ne "0" ]; then
 			echo "!! Cannot update debian changelogs"
 			exit -1
 		fi
 
 		echo " Doing commit"
-		VERSION_COMMIT=${VERSION}${VERSION_APPEND}
-		if [ ! ${RELEASE_MODE} ]; then
-			VERSION_COMMIT="snapshot"
-		fi
+		
         	cd ${REPOSITORY_DIR}
-		git commit -m "[#1262] Updated debian changelogs (${VERSION_COMMIT})" . >/dev/null
+		git commit -m "[#1262] Updated debian changelogs (${VERSION})" . >/dev/null
 
 		echo " Pushing commit"
 		git push origin master >/dev/null
@@ -268,8 +273,10 @@ if [ ${DO_PREPARE} ]; then
 	fi
 
 	echo "Write version numbers for following processes"
-	echo "${VERSION}${VERSION_APPEND}" > ${REPOSITORY_DIR}/VERSION.opensuse
-	echo "${VERSION}-0ubuntu1${VERSION_APPEND}" > ${REPOSITORY_DIR}/VERSION.ubuntu
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-common/VERSION
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-client-gnome/VERSION
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-client-kde/VERSION
+	echo "${VERSION}" > ${TODEPLOY_BUILD_DIR}/VERSION
 
 	echo "Archiving repository"
 	tar czf ${REPOSITORY_ARCHIVE} --exclude .git -C `dirname ${REPOSITORY_DIR}` sflphone 
@@ -283,7 +290,7 @@ if [ ${DO_PREPARE} ]; then
 	rm -rf ${REPOSITORY_DIR}
 
 	echo "Finish preparing deploy directory"
-	cp -r ${PACKAGING_SCRIPTS_DIR}/* ${TODEPLOY_DIR}
+	cp -r ${DISTRIBUTION_SCRIPTS_DIR}/* ${TODEPLOY_DIR}
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot prepare scripts for deployment"
@@ -326,7 +333,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 	        fi
 
 		echo "Launch remote build"
-		${SSH_BASE} "${REMOTE_DEPLOY_DIR}/build-package-ubuntu.sh ${RELEASE_MODE}"
+		${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR}/ubuntu/ && ./build-package-ubuntu.sh ${RELEASE_MODE}"
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Error during remote packaging process"
@@ -419,7 +426,7 @@ if [ ${DO_UPLOAD} ]; then
 	fi
 fi
 
-if [ ${NON_FATAL_ERRORS} ]; then
+if [ "${NON_FATAL_ERRORS}" != "" ]; then
 	echo "Non fatal errors :"
 	echo ${NON_FATAL_ERRORS}
 	exit -1
