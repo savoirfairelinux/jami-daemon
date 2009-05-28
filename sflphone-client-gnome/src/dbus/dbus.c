@@ -182,6 +182,10 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
   DEBUG ("Accounts changed");
   sflphone_fill_account_list(TRUE);
   config_window_fill_account_list();
+
+  // Update the status bar in case something happened
+  // Should fix ticket #1215
+  status_bar_display_account();
 }
 
 static void
