@@ -884,10 +884,10 @@ ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, int nb_ms
   if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, nb_msg) ;
 }
 
-void ManagerImpl::connectionStatusNotification(  )
+void ManagerImpl::connectionStatusNotification( const AccountID& accountID )
 {
     if (_dbus)
-        _dbus->getConfigurationManager()->accountsChanged();
+        _dbus->getConfigurationManager()->accountsChanged(accountID);
 }
 
 /**
@@ -2288,7 +2288,7 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
         acc->unregisterVoIPLink();
 
     // Update account details to the client side
-    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+    if (_dbus) _dbus->getConfigurationManager()->accountsChanged(accountID);
 
 }
 
@@ -2355,7 +2355,7 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
 
     saveConfig();
 
-    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+    if (_dbus) _dbus->getConfigurationManager()->accountsChanged(newAccountID);
     return newAccountID;
 }
 
@@ -2376,7 +2376,7 @@ ManagerImpl::removeAccount(const AccountID& accountID)
   saveConfig();
 
   _debug("REMOVE ACCOUNT\n");
-  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+  if (_dbus) _dbus->getConfigurationManager()->accountsChanged(accountID);
 }
 
 // ACCOUNT handling

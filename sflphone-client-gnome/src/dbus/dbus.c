@@ -177,7 +177,8 @@ call_state_cb (DBusGProxy *proxy UNUSED,
 
 static void
 accounts_changed_cb (DBusGProxy *proxy UNUSED,
-                  void * foo  UNUSED )
+		     const gchar* accountID,
+                     void * foo  UNUSED )
 {
   DEBUG ("Accounts changed");
   sflphone_fill_account_list(TRUE);

@@ -53,6 +53,6 @@ void Account::setRegistrationState( RegistrationState state ) {
         _registrationState = state; 
 
 	// Notify the client
-	Manager::instance().connectionStatusNotification( );
+	Manager::instance().connectionStatusNotification( _accountID );
     }
 }
