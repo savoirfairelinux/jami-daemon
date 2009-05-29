@@ -1,15 +1,27 @@
-!!!!!ATTENTION!!!!!
+Welcome to SFLphone KDE Client!
 
-Before starting the build you may need to setup the KDE4 environment variables.
-To do this open Project->Project Options and then look at the "Run" and the "Make" 
-pages. Each of these two has an environment variables widget in which you have
-to fill in the right values for the variables already listed.
+For install instructions, read the INSTALL file, in this directory.
 
-After setting up the variables you'll also need to run cmake inside the build
-directory. This can not be done by kdevelop as a KDE4 environment is needed
-when running cmake to find KDE4. Open the integrated konsole and change to the build
-subdirectory. Then setup a KDE4 environment and run "cmake ../".
 
-More information how to setup a KDE4 development environment can be found on
-http://techbase.kde.org/Getting_Started/Increased_Productivity_in_KDE4_with_Scripts
+Copyright (c) Savoir-faire Linux, Inc 2004-2009
+  <sflphoneteam@savoirfairelinux.com>
 
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+Refer to the development site for further information: http://dev.savoirfairelinux.net/sflphone
+
+
+Thank you

@@ -2176,6 +2176,7 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
 
 void ManagerImpl::setAccountsOrder (const std::string& order) 
 {
+    _debug("Set accounts order : %s\n", order.c_str() );
     // Set the new config
     setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
 }
@@ -2532,13 +2533,18 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
 {
   AccountMap::iterator iter;
   SIPAccount *account;
-
+  _debug("getAccountIdFromNameAndServer : username = %s , server = %s\n", userName.c_str(), server.c_str());
   // Try to find the account id from username and server name by full match
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+    _debug("for : account = %s\n", iter->first.c_str());
     account = dynamic_cast<SIPAccount *>(iter->second);
+    _debug("account != NULL = %i\n", (account != NULL));
     if (account != NULL){
     	if(account->fullMatch(userName, server))
+    	{
+    			_debug("fullMatch\n");
       		return iter->first;
+      }
     }
   }
 
@@ -2547,7 +2553,22 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
     account = dynamic_cast<SIPAccount *>(iter->second);
     if ( account != NULL ) {
     	if(account->hostnameMatch(server))
+    	{
+    	      _debug("hostnameMatch\n");
       		return iter->first;
+      }
+    }
+  }
+  
+  // We failed! Then only match the username
+  for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+    account = dynamic_cast<SIPAccount *>(iter->second);
+    if ( account != NULL ) {
+    	if(account->userMatch(userName))
+    	{
+    	      _debug("userMatch\n");
+      		return iter->first;
+      }
     }
   }
 
@@ -2803,7 +2824,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
 
     // So first we fetch the account
     accountid = getAccountFromCall (callID);
- _debug("%s\n",callID.c_str());
+    _debug("%s\n",callID.c_str());
     // Then the VoIP link this account is linked with (IAX2 or SIP)
     if ( (account=getAccount (accountid)) != 0) {
         link = account->getVoIPLink ();

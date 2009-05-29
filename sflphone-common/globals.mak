@@ -1,7 +1,7 @@
 # Global variables
 src=$(top_srcdir)
-sflcodecdir=$(libdir)/sflphone/codecs
-sflplugindir=$(libdir)/sflphone/plugins
+sflcodecdir=$(DESTDIR)$(libdir)/sflphone/codecs
+sflplugindir=$(DESTDIR)$(libdir)/sflphone/plugins
 
 # for pjsip
 PJSIP_LIBS= \

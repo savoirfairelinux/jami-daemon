@@ -25,11 +25,24 @@
 
 #include <assert.h>
 
+#include <stdio.h>
+#include <sstream>
+#include <ccrtp/rtp.h>
+
+
+// pjsip import
+#include <pjsip.h>
+#include <pjlib.h>
+#include <pjsip_ua.h>
+#include <pjlib-util.h>
+#include <pjnath/stun_config.h>
+
 // Application import
 #include "manager.h"
 #include "audio/audiortp.h"
 #include "../src/call.h"
 #include "../src/sipcall.h"
+#include "../src/sipvoiplink.h"
 
 #include "config/config.h"
 #include "user_cfg.h"
@@ -44,7 +57,9 @@
 #ifndef _RTP_TEST_
 #define _RTP_TEST_
 
-
+class AudioRtp;
+class AudioRtpRTX;
+class SIPVoIPLink;
 
 class RtpTest : public CppUnit::TestCase {
 
@@ -52,8 +67,8 @@ class RtpTest : public CppUnit::TestCase {
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE( RtpTest );
-        CPPUNIT_TEST( testRtpInit );
-	CPPUNIT_TEST( testRtpClose );
+        CPPUNIT_TEST( testRtpInitClose );
+	CPPUNIT_TEST( testRtpThread );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -71,9 +86,12 @@ class RtpTest : public CppUnit::TestCase {
          */
         inline void tearDown();
 
-        void testRtpInit();
+	bool pjsipInit();
 
-	void testRtpClose();
+        void testRtpInitClose();
+
+	void testRtpThread();
+
 
     private:
 
@@ -83,7 +101,13 @@ class RtpTest : public CppUnit::TestCase {
 
         AudioRtp *audiortp;
 
+	AudioRtpRTX *rtpthread;
+
 	SIPCall *sipcall;
+
+	pj_caching_pool _cp;
+
+	pj_pool_t *_pool;
 
 };
 
