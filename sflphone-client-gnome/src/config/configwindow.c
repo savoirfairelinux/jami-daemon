@@ -758,7 +758,12 @@ create_recording_settings ()
     return ret;
 }
 
+void save_configuration_parameters (void) {
 
+    addressbook_config_save_parameters ();
+    hooks_save_parameters ();
+
+}
 
 /**
  * Show configuration window with tabs
@@ -890,9 +895,4 @@ void config_window_set_stun_visible()
     gtk_widget_set_sensitive( GTK_WIDGET(stunFrame), TRUE );
 }
 
-void save_configuration_parameters (void) {
 
-    addressbook_config_save_parameters ();
-    hooks_save_parameters ();
-
-}

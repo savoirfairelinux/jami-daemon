@@ -152,6 +152,8 @@ void sflphone_place_call ( call_t * c );
  */
 void sflphone_fill_account_list(gboolean toolbarInitialized);
 
+void sflphone_fill_call_list (void);
+
 /**
  * Set an account as current. The current account is to one used to place calls with by default
  * The current account is the first in the account list ( index 0 )

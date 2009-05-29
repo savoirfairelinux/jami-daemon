@@ -82,6 +82,32 @@ Call::getState()
   return _callState;
 }
 
+std::string
+Call::getStateStr (CallState state)
+{
+    std::string state_str;
+        
+    switch (state) {
+        case Active:
+            state_str = "CURRENT";
+            break;
+        case Hold:
+            state_str = "HOLD";
+            break;
+        case Busy:
+            state_str = "BUSY";
+            break;
+        case Refused:
+        case Error:
+        case Inactive:
+        default:
+            state_str = "FAILURE";
+            break;
+    }
+    return state_str;
+}
+
+
 const std::string& 
 Call::getLocalIp()
 {

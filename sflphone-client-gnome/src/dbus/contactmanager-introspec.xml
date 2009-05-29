@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<node name="/org/sflphone/SFLphone">
+  <interface name="org.sflphone.SFLphone.ContactManager">
+    
+  <!-- Contacts related methods -->
+  
+    <!-- Called by the client to get all saved contacts -->
+    <method name="getContacts">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
+    
+    <!-- Called by the client to save all local contacts -->
+    <method name="setContacts">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="a{ss}" name="details" direction="in"/>
+    </method>
+   
+  <!--      ///////////////////////               -->
+
+  <!-- Presence related methods -->
+ 
+    <!-- Called by the client to set its new presence status -->
+    <method name="setPresence">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="s" name="presence" direction="in"/>
+      <arg type="s" name="additionalInfo" direction="in"/>
+    </method>
+  
+    <!-- Called by the daemon when a contact presence changes -->
+    <method name="setContactPresence">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="s" name="presence" direction="in"/>
+      <arg type="s" name="additionalInfo" direction="in"/>
+    </method>
+
+  </interface>
+</node>

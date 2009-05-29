@@ -98,15 +98,29 @@ void create_new_call (gchar *to, gchar *from, call_state_t state, gchar *account
 
 void create_new_call_from_details (const gchar *call_id, GHashTable *details, call_t **call)
 {
-    gchar *from, *to, *accountID;
+    gchar *from, *to, *accountID, *state_str;
     call_t *new_call;
+    call_state_t state;
     // GHashTable *call_details;
 
     accountID = g_hash_table_lookup (details, "ACCOUNTID");
     to = g_hash_table_lookup (details, "PEER_NUMBER");
     from = g_markup_printf_escaped("\"\" <%s>",  to);
+    state_str = g_hash_table_lookup (details, "CALL_STATE");
 
-    create_new_call (from, from, CALL_STATE_DIALING, accountID, &new_call);
+    if (g_strcasecmp (state_str, "CURRENT") == 0)
+        state = CALL_STATE_CURRENT;
+
+    else if (g_strcasecmp (state_str, "HOLD") == 0)
+        state = CALL_STATE_HOLD;
+
+    else if (g_strcasecmp (state_str, "BUSY") == 0)
+        state = CALL_STATE_BUSY;
+
+    else
+        state = CALL_STATE_FAILURE;
+
+    create_new_call (from, from, state, accountID, &new_call);
     *call = new_call;
 }
 

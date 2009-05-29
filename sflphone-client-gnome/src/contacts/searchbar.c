@@ -87,8 +87,6 @@ searchbar_init(calltab_t *tab)
 
 GtkWidget* searchbar_new(gchar* searchbar_type) {
 
-  // GtkWidget * searchbox;
-  GtkWidget* image;
   GtkWidget* ret = gtk_hbox_new(FALSE, 0);
 
 #if GTK_CHECK_VERSION(2,16,0)

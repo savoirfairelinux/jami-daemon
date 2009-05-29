@@ -67,6 +67,10 @@
       <arg type="a{ss}" name="infos" direction="out"/>
     </method>
     
+    <method name="getCallList">
+        <arg type="as" name="list" direction="out"/>
+    </method>
+
     <method name="getCurrentCallID">
       <arg type="s" name="callID" direction="out"/>
     </method>

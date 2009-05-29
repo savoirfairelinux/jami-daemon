@@ -7,16 +7,12 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-19 17:49:40 -0400
+# Last Modified: 2009-05-29 14:23:45 -0400
 #####################################################
 
 #
 # Not working with git 1.5.4.3
 #
-#
-#
-#
-
 
 TAG=`date +%Y-%m-%d`
 
@@ -43,6 +39,7 @@ REMOTE_ROOT_DIR="/home/sflphone"
 # scripts
 SCRIPTS_DIR="${ROOT_DIR}/build-system"
 PACKAGING_SCRIPTS_DIR="${SCRIPTS_DIR}/remote"
+DISTRIBUTION_SCRIPTS_DIR="${SCRIPTS_DIR}/distributions"
 BIN_DIR="${SCRIPTS_DIR}/bin"
 
 # directory that will be deployed to remote machine
@@ -65,7 +62,8 @@ PACKAGING_RESULT_DIR=${ROOT_DIR}/packages-${TAG}
 USER="sflphone"
 
 RELEASE_MODE=
-VERSION_APPEND=
+
+SNAPSHOT_TAG=`date +%s`
 
 DO_PREPARE=1
 DO_PUSH=1
@@ -78,7 +76,7 @@ DO_SEND_EMAIL=1
 EDITOR=echo
 export EDITOR
 
-NON_FATAL_ERRORS=
+NON_FATAL_ERRORS=""
 
 MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" )
 
@@ -158,6 +156,7 @@ if [ "${WHO}" != "${USER}" ]; then
 fi
 
 # logging
+rm -rf ${PACKAGING_RESULT_DIR} 2>/dev/null
 mkdir ${PACKAGING_RESULT_DIR} 2>/dev/null
 if [ ${DO_LOGGING} ]; then
 
@@ -198,11 +197,8 @@ echo
 
 if [ ${RELEASE_MODE} ]; then
 	echo "Release mode : ${RELEASE_MODE}"
-	if [ "${RELEASE_MODE}" != "release" ];then
-		VERSION_APPEND="~${RELEASE_MODE}"
-	fi
 else
-	echo "Snapshot mode"
+	echo "Snapshot mode : ${SNAPSHOT_TAG}"
 fi
 
 #########################
@@ -225,55 +221,63 @@ if [ ${DO_PREPARE} ]; then
 		exit -1
 	fi
 
-	FULL_VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1-2 | sed 's/\.rc.*//' | sed 's/\.beta.*//'`
-	
+	VERSION=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1`
+
+	if [ ${RELEASE_MODE} ]; then
+		if [ "${RELEASE_MODE}" != "release" ];then
+			VERSION="${VERSION}~${RELEASE_MODE}"
+		fi
+	else
+		VERSION="${VERSION}~snapshot${SNAPSHOT_TAG}"
+	fi
+	echo "Version is : ${VERSION}"
+
+	# if push is activated
+	if [ ${DO_PUSH} ];then
+
+		# first changelog generation for commit
+		echo "Update debian changelogs (1/2)"
+
+		${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
+
+		if [ "$?" -ne "0" ]; then
+			echo "!! Cannot update debian changelogs"
+			exit -1
+		fi
+
+		echo " Doing commit"
+		
+        	cd ${REPOSITORY_DIR}
+		git commit -m "[#1262] Updated debian changelogs (${VERSION})" . >/dev/null
+
+		echo " Pushing commit"
+		git push origin master >/dev/null
+	fi
+
 	# change current branch if needed
         if [ ${RELEASE_MODE} ]; then
                 cd ${REPOSITORY_DIR}
-                echo "Using release branch"
                 git checkout origin/release -b release
         else
                 echo "Using master branch"
         fi
 
 	# generate the changelog, according to the distribution and the git commit messages
-	echo "Update changelogs"
-
-	${SCRIPTS_DIR}/sfl-git-dch.sh ${RELEASE_MODE}
+	echo "Update debian changelogs (2/2)"
+	cd ${REPOSITORY_DIR}
+	${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
 	
 	if [ "$?" -ne "0" ]; then
-		echo "!! Cannot update changelogs"
+		echo "!! Cannot update debian changelogs"
 		exit -1
 	fi
 
-	cd ${REPOSITORY_DIR}	
-	echo "Update repository with new changelog"
-	echo " Switch to master branch to commit"
-	if [ ${RELEASE_MODE} ]; then
-                
-                echo "Switch to master branch for commit"
-                git checkout -f master
-        fi
+	echo "Write version numbers for following processes"
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-common/VERSION
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-client-gnome/VERSION
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-client-kde/VERSION
+	echo "${VERSION}" > ${TODEPLOY_BUILD_DIR}/VERSION
 
-	echo " Doing commit"
-	VERSION_COMMIT=${FULL_VER}${VERSION_APPEND}
-	if [ ! ${RELEASE_MODE} ]; then
-		VERSION_COMMIT=${FULL_VER}" Snapshot ${TAG}"
-	fi
-	git commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
-
-	if [ ${DO_PUSH} ];then
-		echo " Pushing commit"
-		git push origin master >/dev/null
-	fi
-
-	# change back current branch if needed
-	if [ ${RELEASE_MODE} ]; then
-		echo "Switch back to release branch"
-		git checkout release
-		# git merge master
-	fi
-	
 	echo "Archiving repository"
 	tar czf ${REPOSITORY_ARCHIVE} --exclude .git -C `dirname ${REPOSITORY_DIR}` sflphone 
 
@@ -286,7 +290,7 @@ if [ ${DO_PREPARE} ]; then
 	rm -rf ${REPOSITORY_DIR}
 
 	echo "Finish preparing deploy directory"
-	cp -r ${PACKAGING_SCRIPTS_DIR}/* ${TODEPLOY_DIR}
+	cp -r ${DISTRIBUTION_SCRIPTS_DIR}/* ${TODEPLOY_DIR}
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot prepare scripts for deployment"
@@ -329,7 +333,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 	        fi
 
 		echo "Launch remote build"
-		${SSH_BASE} "${REMOTE_DEPLOY_DIR}/build-package-ubuntu.sh ${RELEASE_MODE}"
+		${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR} && ./build-packages.sh ${RELEASE_MODE}"
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Error during remote packaging process"
@@ -422,7 +426,7 @@ if [ ${DO_UPLOAD} ]; then
 	fi
 fi
 
-if [ ${NON_FATAL_ERRORS} ]; then
+if [ "${NON_FATAL_ERRORS}" != "" ]; then
 	echo "Non fatal errors :"
 	echo ${NON_FATAL_ERRORS}
 	exit -1

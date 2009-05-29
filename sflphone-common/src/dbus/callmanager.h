@@ -51,7 +51,10 @@ public:
     void setRecording( const std::string& callID );
     bool getIsRecording(const std::string& callID);
     std::string getCurrentCodecName(const std::string& callID);
+    
     std::map< std::string, std::string > getCallDetails( const std::string& callID );
+    std::vector< std::string > getCallList (void);
+
     std::string getCurrentCallID(  );
     void playDTMF( const std::string& key );
     void startTone( const int32_t& start, const int32_t& type );

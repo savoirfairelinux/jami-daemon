@@ -1,0 +1,50 @@
+#####################################################
+# File Name: globals
+#
+# Purpose :
+#
+# Author: Julien Bonjean (julien@bonjean.info) 
+#
+# Creation Date: 2009-05-28
+# Last Modified: 2009-05-28 15:55:14 -0400
+#####################################################
+
+# general
+RELEASE_MODE="$1"
+ROOT_DIR="/home/sflphone"
+PACKAGING_DIR="${ROOT_DIR}/sflphone-packaging"
+
+# distributions
+UBUNTU_DIR="${PACKAGING_DIR}/ubuntu"
+OPENSUSE_DIR="${PACKAGING_DIR}/opensuse"
+
+# where packaging will be donne
+BUILD_DIR="${PACKAGING_DIR}/build"
+REPOSITORY_ARCHIVE="${BUILD_DIR}/sflphone.tar.gz"
+REPOSITORY_DIR="${BUILD_DIR}/sflphone"
+
+# target directories
+DIST_DIR="${PACKAGING_DIR}/dists"
+
+# system information
+ARCH_FLAG=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
+OS_VERSION=`lsb_release -d -s -c | sed -e '1d'`
+DISTRIBUTION=`lsb_release -s -d | sed 's/"//g' | tr 'A-Z' 'a-z' | cut -d " " -f1`
+VERSION=`cat ${BUILD_DIR}/VERSION` 
+
+# other stuff
+EDITOR=echo
+export EDITOR
+RELEASE_MODE=$1
+USER="sflphone"
+WHOAMI=`whoami`
+
+# packages we will build
+PACKAGES=('sflphone-common sflphone-client-gnome' 'sflphone-client-kde')
+
+# log file
+LOG_ID="${OS_VERSION}"
+if [ "${LOG_ID}" = "" ]; then
+	LOG_ID="${DISTRIBUTION}"
+fi
+LOG_FILE=${PACKAGING_DIR}/sflphone-${LOG_ID}-${ARCH_FLAG}.log

@@ -884,6 +884,31 @@ sflphone_fill_codec_list()
     }
 }
 
+void sflphone_fill_call_list (void)
+{
+    
+    gchar** calls = (gchar**)dbus_get_call_list();
+    gchar** pl;
+    GHashTable *call_details;
+    call_t *c;
+    gchar *callID;
+
+    for(pl=calls; *calls; calls++)
+    {
+        c = g_new0(call_t, 1);
+        callID = (gchar*)(*calls);
+        call_details = dbus_get_call_details(callID);
+        create_new_call_from_details (callID, call_details, &c);
+        c->callID = g_strdup(callID);
+
+        // Add it to the list
+        DEBUG ("Add call retrieved from server side: %s\n", c->callID);
+        calllist_add (current_calls, c);
+        // Update the GUI
+        calltree_add_call (current_calls, c);
+    }
+}
+
 void format_phone_number (gchar **number) {
 
     gchar *_number;
