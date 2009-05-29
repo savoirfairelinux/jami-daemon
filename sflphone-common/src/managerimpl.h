@@ -263,7 +263,7 @@ class ManagerImpl {
     /**
      * Notify the client through DBus that registration state has been updated
      */
-    void connectionStatusNotification(const AccountID& accountID);
+    void connectionStatusNotification(void);
 
     /**
      * ConfigurationManager - Send registration request

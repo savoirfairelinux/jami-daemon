@@ -85,7 +85,7 @@ GtkWidget * widg;
     void
 config_window_fill_account_list()
 {
-    DEBUG("config_window_fill_account_list\n");
+    
     if(accDialogOpen)
     {
         GtkTreeIter iter;
@@ -95,7 +95,7 @@ config_window_fill_account_list()
         for(i = 0; i < account_list_get_size(); i++)
         {
             account_t * a = account_list_get_nth (i);
-	    // DEBUG("config_window_fill_account_list id %s\n",a->accountID);
+	    
             if (a)
             {
 

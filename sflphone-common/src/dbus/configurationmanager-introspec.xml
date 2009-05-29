@@ -313,7 +313,6 @@
 -->    
 
     <signal name="accountsChanged">
-      <arg type="s" name="accountID" direction="out" />
     </signal>  
 
     <signal name="errorAlert">
