@@ -9,58 +9,42 @@
 # Last Modified: 2009-05-28 15:55:14 -0400
 #####################################################
 
+# general
+RELEASE_MODE="$1"
 ROOT_DIR="/home/sflphone"
 PACKAGING_DIR="${ROOT_DIR}/sflphone-packaging"
 
+# distributions
 UBUNTU_DIR="${PACKAGING_DIR}/ubuntu"
-OPENSUSE="${PACKAGING_DIR}/opensuse"
+OPENSUSE_DIR="${PACKAGING_DIR}/opensuse"
 
+# where packaging will be donne
 BUILD_DIR="${PACKAGING_DIR}/build"
-DIST_DIR="${PACKAGING_DIR}/dists"
 REPOSITORY_ARCHIVE="${BUILD_DIR}/sflphone.tar.gz"
 REPOSITORY_DIR="${BUILD_DIR}/sflphone"
-REPOSITORY_SFLPHONE_COMMON_DIR="${REPOSITORY_DIR}/sflphone-common"
-REPOSITORY_SFLPHONE_CLIENT_KDE_DIR="${REPOSITORY_DIR}/sflphone-client-kde"
-REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR="${REPOSITORY_DIR}/sflphone-client-gnome"
 
+# target directories
+DIST_DIR="${PACKAGING_DIR}/dists"
+
+# system information
 ARCH_FLAG=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 OS_VERSION=`lsb_release -d -s -c | sed -e '1d'`
+DISTRIBUTION=`lsb_release -s -d | sed 's/"//g' | tr 'A-Z' 'a-z' | cut -d " " -f1`
 VERSION=`cat ${BUILD_DIR}/VERSION` 
 
-if [ ! ${VERSION} ]; then
-        echo "!! Cannot detect current version"
-        exit -1
-fi
-
+# other stuff
 EDITOR=echo
 export EDITOR
 RELEASE_MODE=$1
 USER="sflphone"
+WHOAMI=`whoami`
 
-#PACKAGES=('sflphone-common' 'sflphone-client-gnome' 'sflphone-client-kde')
-PACKAGES=('sflphone-common sflphone-client-gnome')
+# packages we will build
+PACKAGES=('sflphone-common sflphone-client-gnome' 'sflphone-client-kde')
 
-GLOBAL_LOG=${PACKAGING_DIR}/sflphone-${OS_VERSION}-${ARCH_FLAG}.log
-
-# open log file
-exec 3<>${GLOBAL_LOG}
-
-# redirect outputs (stdout & stderr)
-exec 1>&3
-exec 2>&3
-
-echo "SFLPhone version is ${VERSION}"
-
-WHO=`whoami`
-
-if [ "${WHO}" != "${USER}" ]; then
-        echo "!! Please use user ${USER} to run this script"
-        exit -1;
+# log file
+LOG_ID="${OS_VERSION}"
+if [ "${LOG_ID}" = "" ]; then
+	LOG_ID="${DISTRIBUTION}"
 fi
-
-if [ ${RELEASE_MODE} ]; then
-        echo "Release mode : ${RELEASE_MODE}"
-else
-        echo "Snapshot mode"
-fi
-
+LOG_FILE=${PACKAGING_DIR}/sflphone-${LOG_ID}-${ARCH_FLAG}.log
