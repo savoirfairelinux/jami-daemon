@@ -49,10 +49,11 @@ void Account::loadConfig()
 
 void Account::setRegistrationState( RegistrationState state ) { 
     
-    if (state != _registrationState) {
+  //if (state != _registrationState) {
+	_debug("Account::setRegistrationState\n");
         _registrationState = state; 
 
 	// Notify the client
 	Manager::instance().connectionStatusNotification( _accountID );
-    }
+	//}
 }
