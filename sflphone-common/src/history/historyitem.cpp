@@ -20,7 +20,7 @@
 
 #include <historyitem.h>
 
-HistoryItem::HistoryItem (int timestamp, CallType call_type, std::string peer, AccountID account_id)
+HistoryItem::HistoryItem (int timestamp, CallType call_type, std::string peer, std::string account_id)
 {
     // TODO
 }

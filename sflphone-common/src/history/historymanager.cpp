@@ -19,9 +19,19 @@
  */
 
 #include <historymanager.h>
+#include <errno.h>
+#include <cc++/file.h>
 
 HistoryManager::HistoryManager () {
-    // TODO
+
+    bool exist;
+
+    // Load the path to the file
+    if (create_history_path () ==1){
+        exist = _history_config.populateFromFile (_history_path);
+    }
+
+    _history_loaded = (exist == 2 ) ? false : true;
 }
 
 HistoryManager::~HistoryManager () {
@@ -30,7 +40,7 @@ HistoryManager::~HistoryManager () {
 
 int HistoryManager::load_history_from_file (void)
 {
-    // TODO
+    //  
     return 0;
 }
 
@@ -45,3 +55,21 @@ void HistoryManager::add_new_history_entry (HistoryItem new_item)
     // TODO
 }
 
+int HistoryManager::create_history_path (void) {
+    
+    std::string path;
+
+    path = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
+    
+    if (mkdir (path.data(), 0755) != 0) {
+        // If directory	creation failed
+        if (errno != EEXIST) {
+            _debug("Cannot create directory: %s\n", strerror(errno));
+            return -1;
+        }
+    }
+
+    // Load user's history
+    _history_path = path + DIR_SEPARATOR_STR + "history";
+    return 0;
+}

@@ -21,7 +21,9 @@
 #ifndef _HISTORY_ITEM
 #define _HISTORY_ITEM
 
-typedef struct {
+#include <string>
+
+typedef enum CallType {
     CALL_MISSED,
     CALL_INCOMING,
     CALL_OUTGOING
@@ -34,7 +36,7 @@ class HistoryItem {
         /*
          * Constructor
          */
-        HistoryItem (int, CallType, std::string, AccountID = "");
+        HistoryItem (int, CallType, std::string, std::string="");
         
         /*
          * Destructor
@@ -63,7 +65,7 @@ class HistoryItem {
         /*
          * The account the call was made with
          */ 
-        AccountID _account_id;
+        std::string _account_id;
 };
 
 

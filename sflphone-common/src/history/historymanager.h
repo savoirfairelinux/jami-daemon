@@ -21,7 +21,10 @@
 #ifndef _HISTORY_MANAGER
 #define _HISTORY_MANAGER
 
-#include <historyitem.h> 
+#include "historyitem.h" 
+#include <config/config.h>
+#include <global.h>
+#include <user_cfg.h>
 
 typedef std::map <std::string, HistoryItem*> HistoryItemMap; 
 
@@ -50,6 +53,10 @@ class HistoryManager {
 
     private:
         /*
+         * Set the path to the history file
+         */
+        int create_history_path (void);
+        /*
          * Add a new history item in the data structure
          */
         void add_new_history_entry (HistoryItem new_item);
@@ -59,6 +66,21 @@ class HistoryManager {
          */
         HistoryItemMap _history_items;
 
+        /*
+         * The path to the history file
+         */ 
+
+        std::string _history_path;
+
+        /*
+         * History has been loaded
+         */
+        bool _history_loaded;
+
+        /* 
+         * The history tree. It contains the call history 
+         */
+        Conf::ConfigTree _history_config;
 };
 
 #endif //_HISTORY_MANAGER
