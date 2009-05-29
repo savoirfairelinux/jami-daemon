@@ -2840,6 +2840,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr (call->getState())));
     }
     else 
     {
@@ -2847,7 +2848,24 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "FAILURE"));
     }
 
     return call_details;
+}
+
+  std::vector< std::string >
+ManagerImpl::getCallList (void)
+{
+    std::vector< std::string > v;
+    int i;
+
+    CallAccountMap::iterator iter = _callAccountMap.begin ();
+
+    while (iter != _callAccountMap.end ()) {
+        v.push_back(iter->first.data());
+        iter++;
+    }   
+   
+    return v;
 }

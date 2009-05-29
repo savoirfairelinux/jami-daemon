@@ -479,6 +479,18 @@ calltree_add_call (calltab_t* tab, call_t * c)
             case CALL_STATE_RINGING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
                 break;
+            case CALL_STATE_CURRENT:
+                // If the call has been initiated by a another client and, when we start, it is already current
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                break;
+            case CALL_STATE_HOLD:
+                // If the call has been initiated by a another client and, when we start, it is already current
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
+                break;
+            case CALL_STATE_FAILURE:
+                // If the call has been initiated by a another client and, when we start, it is already current
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
+                break;
             default:
                 WARN("Update calltree add - Should not happen!");
         }

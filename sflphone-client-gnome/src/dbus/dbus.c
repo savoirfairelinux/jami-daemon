@@ -1623,6 +1623,20 @@ GHashTable* dbus_get_call_details (const gchar *callID)
     return details;
 }
 
+gchar** dbus_get_call_list (void)
+{
+    GError *error = NULL;
+    gchar **list = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_call_list (callManagerProxy, &list, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_call_list");
+        g_error_free (error);
+    }
+
+    return list;
+}
+
 void dbus_set_accounts_order (const gchar* order) {
 
     GError *error = NULL;
