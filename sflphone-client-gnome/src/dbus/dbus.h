@@ -120,7 +120,7 @@ void dbus_send_register( gchar* accountID , const guint expire );
  * ConfigurationManager - Add an account to the list
  * @param a The account to add
  */
-guint dbus_add_account(account_t *a);
+gchar* dbus_add_account(account_t *a);
 
 /**
  * ConfigurationManager - Remove an account from the list

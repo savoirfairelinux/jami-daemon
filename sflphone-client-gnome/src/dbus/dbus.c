@@ -540,10 +540,10 @@ dbus_set_account_details(account_t *a)
   }
 }
 
-guint
+gchar*
 dbus_add_account(account_t *a)
 {
-  gint accountId;
+  gchar* accountId;
   GError *error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_add_account (
     configurationManagerProxy,
@@ -556,7 +556,7 @@ dbus_add_account(account_t *a)
                 error->message);
     g_error_free (error);
   }
-  return (guint) accountId;
+  return accountId;
 }
 
 void

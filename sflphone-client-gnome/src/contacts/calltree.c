@@ -149,32 +149,6 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     return FALSE;
 }
 
-
-    static gboolean
-on_key_released (GtkWidget   *widget UNUSED,
-        GdkEventKey *event,
-        gpointer     user_data UNUSED)
-{
-        DEBUG("key-release-event signal cought by on_key_released callback \n");
-        // If a modifier key is pressed, it's a shortcut, pass along
-        if(event->state & GDK_CONTROL_MASK ||
-                event->state & GDK_MOD1_MASK    ||
-                event->keyval == 60             || // <
-                event->keyval == 62             || // >
-                event->keyval == 34             || // "
-                event->keyval == 65361          || // left arrow
-                event->keyval == 65363          || // right arrow
-                event->keyval >= 65470          || // F-keys
-                event->keyval == 32                // space
-                )
-            return FALSE;
-        else
-            sflphone_keypad(event->keyval, event->string);
-   
-   
-   return TRUE;
-}
-
 /**
  * Reset call tree
  */
@@ -451,10 +425,6 @@ calltree_add_call (calltab_t* tab, call_t * c)
 
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
-    GtkTreeSelection* sel;
-    GtkTreeModel *model;
-    GtkTreePath *path;
-    
 
     // New call in the list
     gchar * description;

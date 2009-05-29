@@ -89,8 +89,6 @@ void create_new_call (gchar *to, gchar *from, call_state_t state, gchar *account
     call->_start = 0;
     call->_stop = 0;
 
-    DEBUG ()
-
     call_id = g_new0(gchar, 30);
     g_sprintf(call_id, "%d", rand());
     call->callID = g_strdup (call_id);

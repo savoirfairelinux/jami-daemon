@@ -57,7 +57,6 @@ static GtkTreeModel*
 history_create_filter (GtkTreeModel* child) {
 
   GtkTreeModel* ret;
-  GtkTreePath  *path; 
 
   DEBUG("Create Filter\n");
   ret = gtk_tree_model_filter_new(child, NULL);
