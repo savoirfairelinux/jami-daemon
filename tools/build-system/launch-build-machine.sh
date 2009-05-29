@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-28 18:30:17 -0400
+# Last Modified: 2009-05-29 12:29:27 -0400
 #####################################################
 
 #
@@ -228,7 +228,7 @@ if [ ${DO_PREPARE} ]; then
 			VERSION="${VERSION}~${RELEASE_MODE}"
 		fi
 	else
-		VERSION="${VERSION}-snapshot-${SNAPSHOT_TAG}"
+		VERSION="${VERSION}~snapshot${SNAPSHOT_TAG}"
 	fi
 	echo "Version is : ${VERSION}"
 
@@ -265,7 +265,7 @@ if [ ${DO_PREPARE} ]; then
 	# generate the changelog, according to the distribution and the git commit messages
 	echo "Update debian changelogs (2/2)"
 	cd ${REPOSITORY_DIR}
-	${SCRIPTS_DIR}/sfl-git-dch.sh ${RELEASE_MODE}
+	${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
 	
 	if [ "$?" -ne "0" ]; then
 		echo "!! Cannot update debian changelogs"
@@ -333,7 +333,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 	        fi
 
 		echo "Launch remote build"
-		${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR}/ubuntu/ && ./build-package-ubuntu.sh ${RELEASE_MODE}"
+		${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR} && ./build-packages.sh ${RELEASE_MODE}"
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Error during remote packaging process"

@@ -7,11 +7,6 @@
 
 . ../globals
 
-if [ ! ${PACKAGING_DIR} ];then
-	echo "!! Cannot source globals file"
-	exit -1
-fi
-
 cd ${UBUNTU_DIR}
 
 if [ "$?" -ne "0" ]; then
@@ -20,7 +15,7 @@ if [ "$?" -ne "0" ]; then
 fi
 
 PACKAGE_SYSVER="0ubuntu1"
-FULL_VERSION="${VERSION}-0ubuntu1"
+FULL_VERSION="${VERSION}-${PACKAGE_SYSVER}"
 
 #########################
 # BEGIN
@@ -39,21 +34,13 @@ echo "Do updates"
 sudo apt-get update >/dev/null
 sudo apt-get upgrade -y >/dev/null
 
-# decompress repository
-echo "Untar repository"
-cd ${BUILD_DIR} && tar xf ${REPOSITORY_ARCHIVE}
-
-if [ "$?" -ne "0" ]; then
-        echo " !! Cannot untar repository"
-        exit -1
-fi
 
 for PACKAGE in ${PACKAGES[@]}
 do
         echo "Process ${PACKAGE}"
 
 	echo " -> prepare debian directories"
-	mv ${UBUNTU_DIR}/debian-${PACKAGE} ${REPOSITORY_DIR}/${PACKAGE}/
+	mv ${UBUNTU_DIR}/debian-${PACKAGE} ${REPOSITORY_DIR}/${PACKAGE}/debian
 
 	# generate the changelog
 	echo " -> generate changelog"
@@ -113,11 +100,4 @@ if [ "$?" -ne "0" ]; then
         echo "!! Cannot copy dist files"
         exit -1
 fi
-
-echo "All done"
-
-# close file descriptor
-exec 3>&-
-
-exit 0
 
