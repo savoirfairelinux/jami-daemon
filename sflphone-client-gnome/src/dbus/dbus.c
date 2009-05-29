@@ -175,13 +175,27 @@ call_state_cb (DBusGProxy *proxy UNUSED,
   }
 }
 
+/*
 static void
 accounts_changed_cb (DBusGProxy *proxy UNUSED,
 		     const gchar* accountID,
                      void * foo  UNUSED )
 {
   DEBUG ("Accounts changed");
-  sflphone_fill_account_list(TRUE);
+  // sflphone_fill_account_list(TRUE);
+  sflphone_update_account_info(accountID, TRUE);
+  config_window_fill_account_list();
+}
+*/
+
+static void
+accounts_changed_cb(DBusGProxy *proxy UNUSED,
+		     const gchar* accountID,
+                     void * foo  UNUSED )
+{
+  DEBUG ("Accounts changed");
+  // sflphone_fill_account_list(TRUE);
+  sflphone_update_account_info(accountID, TRUE);
   config_window_fill_account_list();
 }
 
@@ -321,8 +335,10 @@ dbus_connect ()
     return FALSE;
   }
   DEBUG ("DBus connected to ConfigurationManager");
+  dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+    G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
   dbus_g_proxy_add_signal (configurationManagerProxy,
-    "accountsChanged", G_TYPE_INVALID);
+			   "accountsChanged", G_TYPE_STRING, G_TYPE_INVALID);
   dbus_g_proxy_connect_signal (configurationManagerProxy,
     "accountsChanged", G_CALLBACK(accounts_changed_cb), NULL, NULL);
 

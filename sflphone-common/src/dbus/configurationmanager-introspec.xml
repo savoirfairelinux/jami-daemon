@@ -312,10 +312,9 @@
     </signal>
 -->    
 
-    <method name="accountsChanged">
-      <arg type="s" name="accountID" direction="in"/>
+    <signal name="accountsChanged">
       <arg type="s" name="accountID" direction="out" />
-    </method>  
+    </signal>  
 
     <signal name="errorAlert">
       <arg type="i" name="code" direction="out"/>

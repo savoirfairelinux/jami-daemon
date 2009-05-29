@@ -2295,11 +2295,16 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 void
 ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire )
 {
+
+  _debug("ManagerImpl::sendRegister \n");
   // Update the active field
   setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
+  _debug("ManagerImpl::sendRegister set config done\n");
 
   Account* acc = getAccount(accountID);
   acc->loadConfig();
+  _debug("ManagerImpl::sendRegister acc->loadconfig done\n");
+
   // Test on the freshly updated value
   if ( acc->isEnabled() ) {
     // Verify we aren't already registered, then register
@@ -2310,6 +2315,7 @@ ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire 
       _debug("Send unregister for account %s\n" , accountID.c_str());
       acc->unregisterVoIPLink();
   }
+
 }
 
   std::string
