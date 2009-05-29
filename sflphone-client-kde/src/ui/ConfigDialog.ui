@@ -7,7 +7,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>708</width>
+    <width>747</width>
     <height>476</height>
    </rect>
   </property>
@@ -21,7 +21,7 @@
    <string>Configuration Dialog</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resources.qrc">
+   <iconset resource="../qrc/resources.qrc">
     <normaloff>:/images/icons/sflphone.svg</normaloff>:/images/icons/sflphone.svg</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -605,7 +605,7 @@
                      <string>Remove this account</string>
                     </property>
                     <property name="icon">
-                     <iconset resource="resources.qrc">
+                     <iconset resource="../qrc/resources.qrc">
                       <normaloff>:/images/icons/remove.png</normaloff>:/images/icons/remove.png</iconset>
                     </property>
                     <property name="shortcut">
@@ -631,7 +631,7 @@
                      <string>Add a new account</string>
                     </property>
                     <property name="icon">
-                     <iconset resource="resources.qrc">
+                     <iconset resource="../qrc/resources.qrc">
                       <normaloff>:/images/icons/add.png</normaloff>:/images/icons/add.png</iconset>
                     </property>
                    </widget>
@@ -787,7 +787,7 @@
                <item row="4" column="1">
                 <widget class="QLineEdit" name="edit5_password">
                  <property name="echoMode">
-                  <enum>QLineEdit::PasswordEchoOnEdit</enum>
+                  <enum>QLineEdit::Password</enum>
                  </property>
                 </widget>
                </item>
@@ -1525,7 +1525,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="resources.qrc"/>
+  <include location="../qrc/resources.qrc"/>
  </resources>
  <connections>
   <connection>

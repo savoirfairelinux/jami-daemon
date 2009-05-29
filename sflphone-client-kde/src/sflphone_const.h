@@ -98,6 +98,10 @@
 #define ICON_HISTORY_OUTGOING             ":/images/icons/outgoing.svg"
 #define ICON_HISTORY_MISSED               ":/images/icons/missed.svg"
 
+#define ICON_ACCOUNT_LED_RED              ":/images/icons/led-red.svg"
+#define ICON_ACCOUNT_LED_GREEN            ":/images/icons/led-green.svg"
+#define ICON_ACCOUNT_LED_GRAY             ":/images/icons/led-gray.svg"
+
 #define ICON_QUIT                         ":/images/icons/application-exit.png"
 
 #define ICON_SFLPHONE                     ":/images/icons/sflphone.svg"
