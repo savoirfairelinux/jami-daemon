@@ -175,9 +175,10 @@ call_state_cb (DBusGProxy *proxy UNUSED,
   }
 }
 
+
 static void
 accounts_changed_cb (DBusGProxy *proxy UNUSED,
-                  void * foo  UNUSED )
+                     void * foo  UNUSED )
 {
   DEBUG ("Accounts changed");
   sflphone_fill_account_list(TRUE);
@@ -325,7 +326,7 @@ dbus_connect ()
   }
   DEBUG ("DBus connected to ConfigurationManager");
   dbus_g_proxy_add_signal (configurationManagerProxy,
-    "accountsChanged", G_TYPE_INVALID);
+			   "accountsChanged", G_TYPE_INVALID);
   dbus_g_proxy_connect_signal (configurationManagerProxy,
     "accountsChanged", G_CALLBACK(accounts_changed_cb), NULL, NULL);
 

@@ -193,7 +193,7 @@ dnl DBus-C++ detection (used to be in library own build system)
 DBUS_REQUIRED_VERSION=0.60
 PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
 	AC_MSG_ERROR([You need the DBus libraries (version 0.6 or better)]
-	[http://www.freedesktop.org/wiki/Software_2fdbus])
+	[http://gitorious.org/dbus-cplusplus])
 )
 AC_SUBST(dbus_CFLAGS)
 AC_SUBST(dbus_LIBS)

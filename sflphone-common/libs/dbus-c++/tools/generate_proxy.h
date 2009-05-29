@@ -21,34 +21,11 @@
  *
  */
 
+#ifndef __DBUSXX_TOOLS_GENERATE_PROXY_H
+#define __DBUSXX_TOOLS_GENERATE_PROXY_H
 
-#ifndef __DBUSXX_PENDING_CALL_P_H
-#define __DBUSXX_PENDING_CALL_P_H
+#include "xml.h"
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+void generate_proxy(DBus::Xml::Document &doc, const char *filename);
 
-#include <dbus-c++/pendingcall.h>
-#include <dbus-c++/refptr_impl.h>
-
-#include <dbus/dbus.h>
-
-namespace DBus {
-
-struct DXXAPILOCAL PendingCall::Private
-{
-	DBusPendingCall *call;
-	int dataslot;
-	Slot<void, PendingCall &> slot;
-	
-	Private(DBusPendingCall *);
-
-	~Private();
-
-	static void notify_stub(DBusPendingCall *dpc, void *data);
-};
-
-} /* namespace DBus */
-
-#endif//__DBUSXX_PENDING_CALL_P_H
+#endif//__DBUSXX_TOOLS_GENERATE_PROXY_H

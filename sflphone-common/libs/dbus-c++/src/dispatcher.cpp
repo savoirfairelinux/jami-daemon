@@ -21,6 +21,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <dbus-c++/dispatcher.h>
 
@@ -66,7 +69,11 @@ Watch::Watch(Watch::Internal *i)
 
 int Watch::descriptor() const
 {
-	return dbus_watch_get_fd((DBusWatch *)_int);
+#if HAVE_WIN32
+	return dbus_watch_get_socket((DBusWatch*)_int);
+#else
+	return dbus_watch_get_unix_fd((DBusWatch*)_int);
+#endif
 }
 
 int Watch::flags() const
@@ -148,9 +155,28 @@ void Dispatcher::queue_connection(Connection::Private *cp)
 	_mutex_p.unlock();
 }
 
+
+bool Dispatcher::has_something_to_dispatch()
+{
+	_mutex_p.lock();
+	bool has_something = false;
+	for(Connection::PrivatePList::iterator it = _pending_queue.begin();
+		it != _pending_queue.end() && !has_something;
+		++it)
+	{
+		has_something = (*it)->has_something_to_dispatch();
+	}
+
+	_mutex_p.unlock();
+	return has_something;
+}
+
+
 void Dispatcher::dispatch_pending()
 {
 	_mutex_p.lock();
+
+	// SEEME: dbus-glib is dispatching only one message at a time to not starve the loop/other things...
 
 	while (_pending_queue.size() > 0)
 	{
@@ -173,13 +199,14 @@ void Dispatcher::dispatch_pending()
 	_mutex_p.unlock();
 }
 
-#undef DBUS_HAS_THREADS_INIT_DEFAULT
-#ifdef DBUS_HAS_THREADS_INIT_DEFAULT
 void DBus::_init_threading()
 {
+#ifdef DBUS_HAS_THREADS_INIT_DEFAULT
 	dbus_threads_init_default();
-}
+#else
+	debug_log("Thread support is not enabled! Your D-Bus version is too old!");
 #endif//DBUS_HAS_THREADS_INIT_DEFAULT
+}
 
 void DBus::_init_threading(
 	MutexNewFn m1,

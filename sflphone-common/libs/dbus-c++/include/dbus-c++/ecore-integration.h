@@ -22,73 +22,93 @@
  */
 
 
-#ifndef __DBUSXX_EVENTLOOP_INTEGRATION_H
-#define __DBUSXX_EVENTLOOP_INTEGRATION_H
+#ifndef __DBUSXX_ECORE_INTEGRATION_H
+#define __DBUSXX_ECORE_INTEGRATION_H
+
+#include <Ecore.h>
 
 #include "api.h"
 #include "dispatcher.h"
-#include "util.h"
-#include "eventloop.h"
+#include "Ecore.h"
 
 namespace DBus {
 
-/* 
- * Glue between the event loop and the DBus library
- */
+namespace Ecore {
 
 class BusDispatcher;
 
-class DXXAPI BusTimeout : public Timeout, public DefaultTimeout
+class DXXAPI BusTimeout : public Timeout
 {
-	BusTimeout(Timeout::Internal *, BusDispatcher *);
+private:
+
+	BusTimeout( Timeout::Internal*);
+
+	~BusTimeout();
 
 	void toggle();
+
+	static int timeout_handler( void* );
+
+	void _enable();
+
+	void _disable();
+
+private:
+  Ecore_Timer *_etimer;
 
 friend class BusDispatcher;
 };
 
-class DXXAPI BusWatch : public Watch, public DefaultWatch
+class DXXAPI BusWatch : public Watch
 {
-	BusWatch(Watch::Internal *, BusDispatcher *);
+private:
+
+	BusWatch( Watch::Internal*);
+
+	~BusWatch();
 
 	void toggle();
+
+	static int watch_handler_read ( void*, Ecore_Fd_Handler *fdh);
+    
+  static int watch_handler_error ( void*, Ecore_Fd_Handler *fdh);
+
+	void _enable();
+
+	void _disable();
+
+private:
+  Ecore_Fd_Handler *fd_handler_read;
+  Ecore_Fd_Handler *fd_handler_error;
 
 friend class BusDispatcher;
 };
 
-class DXXAPI BusDispatcher : public Dispatcher, public DefaultMainLoop
+class DXXAPI BusDispatcher : public Dispatcher
 {
 public:
+	BusDispatcher() {}
 
-	BusDispatcher() : _running(false)
-	{}
+	void attach();
 
-	~BusDispatcher()
-	{}
+	void enter() {}
 
-	virtual void enter();
+	void leave() {}
 
-	virtual void leave();
+	Timeout* add_timeout( Timeout::Internal* );
 
-	virtual void do_iteration();
+	void rem_timeout( Timeout* );
 
-	virtual Timeout *add_timeout(Timeout::Internal *);
+	Watch* add_watch( Watch::Internal* );
 
-	virtual void rem_timeout(Timeout *);
-
-	virtual Watch *add_watch(Watch::Internal *);
-
-	virtual void rem_watch(Watch *);
-
-	void watch_ready(DefaultWatch &);
-
-	void timeout_expired(DefaultTimeout &);
+	void rem_watch( Watch* );
 
 private:
 
-	bool _running;
 };
+
+} /* namespace Ecore */
 
 } /* namespace DBus */
 
-#endif//__DBUSXX_EVENTLOOP_INTEGRATION_H
+#endif//__DBUSXX_ECORE_INTEGRATION_H

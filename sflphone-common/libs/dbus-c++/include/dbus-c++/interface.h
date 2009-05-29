@@ -25,10 +25,6 @@
 #ifndef __DBUSXX_INTERFACE_H
 #define __DBUSXX_INTERFACE_H
 
-#ifdef DBUS_HAVE_CONFIG_H
-#include <dbus-c++/config.h>
-#endif
-
 #include <string>
 #include <map>
 #include "api.h"
@@ -99,6 +95,8 @@ protected:
 	{}
 
 	virtual Message _invoke_method(CallMessage &) = 0;
+	
+	virtual bool _invoke_method_noreply(CallMessage &call) = 0;
 
 	InterfaceProxyTable _interfaces;
 };
@@ -168,6 +166,8 @@ public:
 	InterfaceProxy(const std::string &name);
 
 	Message invoke_method(const CallMessage &);
+
+	bool invoke_method_noreply(const CallMessage &call);
 
 	bool dispatch_signal(const SignalMessage &);
 

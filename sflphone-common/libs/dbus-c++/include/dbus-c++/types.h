@@ -25,10 +25,6 @@
 #ifndef __DBUSXX_TYPES_H
 #define __DBUSXX_TYPES_H
 
-#ifdef _DBUS_HAVE_CONFIG_H
-#include <dbus-c++/config.h>
-#endif
-
 #include <stdint.h>
 #include <string>
 #include <vector>
