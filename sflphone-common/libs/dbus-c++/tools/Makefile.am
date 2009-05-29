@@ -1,19 +1,18 @@
 # hacky, but ...
 
-CXX = $(CXX_FOR_BUILD)
+# CXX = $(CXX_FOR_BUILD)
 
 AM_CPPFLAGS = \
 	$(dbus_CFLAGS) \
 	$(xml_CFLAGS) \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
-	-Wall
+	-I$(top_srcdir)/libs/dbus-c++/include \
+	-I$(top_builddir)/libs/dbus-c++/include
 
-if CROSS_COMPILING
-libdbus_cxx_la = $(BUILD_LIBDBUS_CXX_DIR)/src/libdbus-c++-1.la
-else
-libdbus_cxx_la = $(top_builddir)/src/libdbus-c++-1.la
-endif
+#if CROSS_COMPILING
+#libdbus_cxx_la = $(BUILD_LIBDBUS_CXX_DIR)/src/libdbus-c++-1.la
+#else
+libdbus_cxx_la = $(top_builddir)/libs/dbus-c++/src/libdbus-c++-1.la
+#endif
 
 bin_PROGRAMS = dbusxx-xml2cpp dbusxx-introspect
 
