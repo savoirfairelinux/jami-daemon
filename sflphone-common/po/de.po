@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-21 10:45-0400\n"
+"POT-Creation-Date: 2009-05-19 15:18-0400\n"
 "PO-Revision-Date: 2009-01-08 10:46-0500\n"
 "Last-Translator: Sven Werlen <sven.werlen@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -72,13 +72,12 @@ msgstr "%d Voice Nachricht"
 
 #: ../../sflphone-client-gnome/src/actions.c:81
 #, c-format
-msgid "Using %s (%s)"
-msgstr ""
+msgid "Registered to %s (%s)"
+msgstr "zu %s (%s) registriert"
 
 #: ../../sflphone-client-gnome/src/actions.c:87
-#, fuzzy
 msgid "No registered account"
-msgstr "Sie haben noch kein registriertes Konto"
+msgstr "Kein registriertes Konto"
 
 #: ../../sflphone-client-gnome/src/actions.c:229
 msgid ""
@@ -95,8 +94,8 @@ msgstr ""
 
 #: ../../sflphone-client-gnome/src/actions.c:790
 #, c-format
-msgid "Using %s (%s) - Codec: %s"
-msgstr ""
+msgid "%s account- %s             %s"
+msgstr "%s Konto- %s             %s"
 
 #: ../../sflphone-client-gnome/src/actions.c:880
 #, c-format
@@ -112,7 +111,7 @@ msgstr ""
 "Verzeichniss ( <i>%s</i> ) gespeichert werden."
 
 #: ../../sflphone-client-gnome/src/assistant.c:35
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "This assistant is now finished.\n"
 "You can at any time check your registration state or modify your accounts "
@@ -130,7 +129,6 @@ msgstr ""
 "Alias :    %s\n"
 "Server :   %s\n"
 "Benutzername : %s\n"
-"Passwort : %s"
 
 #: ../../sflphone-client-gnome/src/assistant.c:160
 msgid "SFLphone account configuration wizard"
@@ -205,9 +203,8 @@ msgstr "_Passwort"
 #: ../../sflphone-client-gnome/src/assistant.c:294
 #: ../../sflphone-client-gnome/src/assistant.c:387
 #: ../../sflphone-client-gnome/src/config/accountwindow.c:223
-#, fuzzy
 msgid "_Voicemail number"
-msgstr "_Voicemail Boxnummer"
+msgstr "_Voicemail Nummer"
 
 #: ../../sflphone-client-gnome/src/assistant.c:309
 msgid "Optional Email Address "
@@ -252,35 +249,32 @@ msgid "Congratulations!"
 msgstr "Gratulation!"
 
 #: ../../sflphone-client-gnome/src/errors.c:28
-#, fuzzy
 msgid ""
 "ALSA notification\n"
 "\n"
 "Error while opening playback device"
 msgstr ""
-"<b>ALSA Benachrichtigung</b>\n"
+"ALSA Benachrichtigung\n"
 "\n"
 "Fehler während Öffnen des \"playback device\""
 
 #: ../../sflphone-client-gnome/src/errors.c:31
-#, fuzzy
 msgid ""
 "ALSA notification\n"
 "\n"
 "Error while opening capture device"
 msgstr ""
-"<b>ALSA Benachrichtigung</b>\n"
+"ALSA Benachrichtigung\n"
 "\n"
 "Fehler während Öffnen des \"capture device\""
 
 #: ../../sflphone-client-gnome/src/errors.c:34
-#, fuzzy
 msgid ""
 "Pulseaudio notification\n"
 "\n"
 "Pulseaudio is not running"
 msgstr ""
-"<b>Pulseaudio Benachrichtigung</b>\n"
+"Pulseaudio Benachrichtigung\n"
 "\n"
 "Pulseaudio nicht gestartet"
 
@@ -297,9 +291,8 @@ msgid "Do you still want to quit?"
 msgstr ""
 
 #: ../../sflphone-client-gnome/src/mainwindow.c:296
-#, fuzzy
 msgid "SFLphone Error"
-msgstr "SFLphone 0.9.2"
+msgstr "SFLphone Fehler"
 
 #: ../../sflphone-client-gnome/src/menus.c:134
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -339,9 +332,8 @@ msgid "_Record"
 msgstr "_Gespräch aufzeichnen"
 
 #: ../../sflphone-client-gnome/src/menus.c:358
-#, fuzzy
 msgid "_Account creation wizard"
-msgstr "SFLphone Konto (Konfigurationsassistent)"
+msgstr "SFLphone _Konto (Konfigurationsassistent)"
 
 #: ../../sflphone-client-gnome/src/menus.c:388
 msgid "_Call"
@@ -438,9 +430,9 @@ msgid "_Show main window"
 msgstr "_Hauptfenster anzeigen"
 
 #: ../../sflphone-client-gnome/src/statusicon.c:124
-#, fuzzy, c-format
+#, c-format
 msgid "SFLphone - %i accounts configured"
-msgstr "SFLphone - %i Konten registriert"
+msgstr "SFLphone - %i Konten konfiguriert"
 
 #: ../../sflphone-client-gnome/src/timestamp.c:46
 msgid "<small>Missed call</small>"
@@ -510,7 +502,6 @@ msgid "Account settings"
 msgstr "Kontoeinstellungen"
 
 #: ../../sflphone-client-gnome/src/config/accountwindow.c:120
-#, fuzzy
 msgid "Account Parameters"
 msgstr "Kontoparameter"
 
@@ -577,9 +568,9 @@ msgid "Name"
 msgstr "Name"
 
 #: ../../sflphone-client-gnome/src/config/audioconf.c:155
-#, fuzzy, c-format
+#, c-format
 msgid "audio device index for output = %d"
-msgstr "\"Audio device index\" für Ausgabe = %d\n"
+msgstr "\"Audio device index\" für Ausgabe = %d"
 
 #: ../../sflphone-client-gnome/src/config/audioconf.c:579
 msgid "Frequency"
@@ -670,14 +661,12 @@ msgid "Format: name.server:port"
 msgstr "Format: Name.Server:Port"
 
 #: ../../sflphone-client-gnome/src/config/configwindow.c:579
-#, fuzzy
 msgid "Desktop Notifications"
-msgstr "Desktopbenachrichtigung"
+msgstr "Desktopbenachrichtigungen"
 
 #: ../../sflphone-client-gnome/src/config/configwindow.c:588
-#, fuzzy
 msgid "_Enable notifications"
-msgstr "Klingeltöne _einschalten"
+msgstr "Benachrichtigungen _einschalten"
 
 #: ../../sflphone-client-gnome/src/config/configwindow.c:594
 msgid "Enable voicemail _notifications"
@@ -704,9 +693,8 @@ msgid "Calls History"
 msgstr "Liste der vorherigen Anrufen"
 
 #: ../../sflphone-client-gnome/src/config/configwindow.c:636
-#, fuzzy
 msgid "_History size limit"
-msgstr "Liste der vorherigen Anrufen is leer"
+msgstr "Max. _Anzahl von vorherigen Anrufen"
 
 #: ../../sflphone-client-gnome/src/config/configwindow.c:653
 msgid "PulseAudio sound server"
@@ -745,9 +733,8 @@ msgid "Audio Settings"
 msgstr "Audio Einstellungen"
 
 #: ../../sflphone-client-gnome/src/config/configwindow.c:803
-#, fuzzy
 msgid "Recordings"
-msgstr "_Gespräch aufzeichnen"
+msgstr "Tonaufnahmen"
 
 #: ../../sflphone-client-gnome/src/config/configwindow.c:808
 msgid "Address Book"
@@ -762,9 +749,8 @@ msgid "Accounts"
 msgstr "Konten"
 
 #: ../../sflphone-client-gnome/src/config/configwindow.c:852
-#, fuzzy
 msgid "Configured Accounts"
-msgstr "Aktuelles Konto"
+msgstr "Konfigurierten Konten"
 
 #: ../../sflphone-client-gnome/src/config/hooks-config.c:130
 msgid "URL Passing"
@@ -800,22 +786,13 @@ msgstr ""
 
 #: ../../sflphone-client-gnome/src/contacts/history.c:83
 #: ../../sflphone-client-gnome/src/contacts/searchbar.c:123
-#, fuzzy
 msgid "Search history"
-msgstr "Liste der vorherigen Anrufen _leeren"
+msgstr "In vorherigen Anrufen suchen"
 
 #: ../../sflphone-client-gnome/src/contacts/history.c:83
 #: ../../sflphone-client-gnome/src/contacts/searchbar.c:110
-#, fuzzy
 msgid "Search contact"
-msgstr "Adressbuch _Suche"
-
-#, fuzzy
-#~ msgid "Registered to %s (%s)"
-#~ msgstr "registriert"
-
-#~ msgid "%s account- %s             %s"
-#~ msgstr "%s Konto- %s             %s"
+msgstr "Adressbuch Suche"
 
 #~ msgid "_Enable"
 #~ msgstr "_Einschalten"
@@ -832,7 +809,6 @@ msgstr "Adressbuch _Suche"
 #~ msgid "_Control running applications volume"
 #~ msgstr "Lautstärke für laufende Anwendungen _einstellen"
 
-#, fuzzy
 #~ msgid "Account previously setup"
 #~ msgstr "Zuvor eingestellte Konten"
 
