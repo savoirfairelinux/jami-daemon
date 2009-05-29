@@ -64,11 +64,12 @@ SFLPhone::SFLPhone(QWidget *parent)
 		{
 			QDir dir;
 			dir.cdUp();
+			dir.cd("data");
 			rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
 		}
 		qDebug() << "rcFilePath = " << rcFilePath ;
 		createGUI(rcFilePath);
-             
+
       QMetaObject::connectSlotsByName(this);
 
 } 
@@ -89,7 +90,9 @@ void SFLPhone::setupActions()
 	actionCollection()->addAction("action_history", view->action_history);
 	actionCollection()->addAction("action_addressBook", view->action_addressBook);
 	actionCollection()->addAction("action_mailBox", view->action_mailBox);
-	KAction * action_quit = KStandardAction::quit(qApp, SLOT(closeAllWindows()), 0);
+	KAction * action_close = KStandardAction::close(this, SLOT(close()), 0);
+	actionCollection()->addAction("action_close", action_close);
+	KAction * action_quit = KStandardAction::quit(this, SLOT(quitButton()), 0);
 	actionCollection()->addAction("action_quit", action_quit);
 	
 	
@@ -131,20 +134,26 @@ void SFLPhone::setupActions()
 
 }
 
-
 bool SFLPhone::queryClose()
 {
+	qDebug() << "queryClose";
+	hide();
+	return false;
+}
+
+void SFLPhone::quitButton()
+{
 	InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-	qDebug() << "queryClose : " << view->listWidget_callList->count() << " calls open.";
+	qDebug() << "quitButton : " << view->listWidget_callList->count() << " calls open.";
 	if(view->listWidget_callList->count() > 0 && instance.getRegistrationCount() <= 1)
 	{
 		qDebug() << "Attempting to quit when still having some calls open.";
 		view->getErrorWindow()->showMessage(tr2i18n("You still have some calls open. Please close all calls before quitting.", 0));
-		return false;
 	}
 	instance.Unregister(getpid());
-	return true;
+	qApp->quit();
 }
+
 
 void SFLPhone::putForeground()
 {

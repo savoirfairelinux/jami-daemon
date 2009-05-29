@@ -26,10 +26,8 @@
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QColor>
 
-// #include "metatypes.h"
+#include "typedefs.h"
 #include "AccountItemWidget.h"
-
-typedef QMap<QString, QString> MapStringString;
 
 const QString account_state_name(QString & s);
 
@@ -58,7 +56,6 @@ public:
 	QString & getAccountId();
 	MapStringString & getAccountDetails() const;
 	QListWidgetItem * getItem();
-	QListWidgetItem * renewItem();
 	AccountItemWidget * getItemWidget();
 	QString getStateName(QString & state);
 	QColor getStateColor();
@@ -67,10 +64,14 @@ public:
 	QString getAlias();
 	
 	//Setters
-	void initAccountItem();
 	void setAccountId(QString id);
 	void setAccountDetails(MapStringString m);
 	void setAccountDetail(QString param, QString val);
+	
+	//Updates
+	void initAccountItem();
+	void initAccountItemWidget();
+	void updateState();
 	
 	//Operators
 	bool operator==(const Account&)const;

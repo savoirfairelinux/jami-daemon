@@ -41,7 +41,6 @@
     <file>../icons/rec_call.svg</file>
     <file>../icons/refuse.svg</file>
     <file>../icons/ring.svg</file>
-    <file>../icons/sflphone.png</file>
     <file>../icons/speaker_25.svg</file>
     <file>../icons/speaker_50.svg</file>
     <file>../icons/speaker_75.svg</file>
@@ -80,7 +79,6 @@
     <file>../icons/rec_call.svg</file>
     <file>../icons/refuse.svg</file>
     <file>../icons/ring.svg</file>
-    <file>../icons/sflphone.png</file>
     <file>../icons/speaker_25.svg</file>
     <file>../icons/speaker_50.svg</file>
     <file>../icons/speaker_75.svg</file>
@@ -88,5 +86,9 @@
     <file>../icons/stock_person.svg</file>
     <file>../icons/transfert.svg</file>
     <file>../icons/unhold.svg</file>
+    <file>../icons/led-red.svg</file>
+    <file>../icons/led-green.svg</file>
+    <file>../icons/led-gray.svg</file>
+    <file>../icons/test.svg</file>
   </qresource>
 </RCC>

@@ -56,6 +56,7 @@ private:
 protected:
 	virtual bool queryClose();
 	virtual void changeEvent(QEvent * event);
+	
 
 public:
 	SFLPhone(QWidget *parent = 0);
@@ -70,6 +71,7 @@ private slots:
 	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
 	void on_trayIcon_messageClicked();
 
+	void quitButton();
 
 };
 

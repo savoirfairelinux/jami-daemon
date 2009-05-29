@@ -30,11 +30,9 @@
 
 
 #include "sflphone_const.h"
-// #include "metatypes.h"
+#include "typedefs.h"
 #include "configurationmanager_interface_singleton.h"
 
-typedef QMap<QString, QString> MapStringString;
-typedef QMap<QString, int> MapStringInt;
 
 AccountList * ConfigurationDialog::accountList;
 
@@ -462,7 +460,7 @@ void ConfigurationDialog::loadAccount(QListWidgetItem * item)
 	QString status = account->getAccountDetail(ACCOUNT_STATUS);
 	qDebug() << "Color : " << account->getStateColorName();
 	edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
-	//edit7_Etat->setTextColor( account->getStateColor );
+
 }
 
 
@@ -673,24 +671,28 @@ void ConfigurationDialog::on_button_accountUp_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
-	QListWidgetItem * item = account->renewItem();
+	account->initAccountItem();
+	QListWidgetItem * item = account->getItem();
+	AccountItemWidget * widget = account->getItemWidget();
 	accountList->upAccount(currentRow);
-	delete prevItem;
 	listWidget_accountList->insertItem(currentRow - 1 , item);
-	listWidget_accountList->setItemWidget(item, account->getItemWidget());
+	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
 }
 
 void ConfigurationDialog::on_button_accountDown_clicked()
 {
+	qDebug() << "on_button_accountDown_clicked";
 	int currentRow = listWidget_accountList->currentRow();
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
-	QListWidgetItem * item = account->renewItem();
+	//we need to build a new item to set the itemWidget back
+	account->initAccountItem();
+	QListWidgetItem * item = account->getItem();
+	AccountItemWidget * widget = account->getItemWidget();
 	accountList->downAccount(currentRow);
-	delete prevItem;
 	listWidget_accountList->insertItem(currentRow + 1 , item);
-	listWidget_accountList->setItemWidget(item, account->getItemWidget());
+	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
 }
 
@@ -760,9 +762,19 @@ void ConfigurationDialog::on_tableWidget_codecs_currentCellChanged(int currentRo
 	updateCodecListCommands();
 }
 
+void ConfigurationDialog::updateAccountStates()
+{
+	for (int i = 0; i < accountList->size(); i++)
+	{
+		Account & current = accountList->getAccount(i);
+		current.updateState();
+	}
+}
+
 void ConfigurationDialog::on1_accountsChanged()
 {
 	qDebug() << "on1_accountsChanged";
+	updateAccountStates();
 // 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 // 	disconnect(&configurationManager, SIGNAL(accountsChanged()),
 // 	           this,                  SLOT(on1_accountsChanged()));
