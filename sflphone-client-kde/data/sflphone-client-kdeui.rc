@@ -20,6 +20,8 @@
 			<Separator />
 			<Action name="action_mailBox" />
 			<Separator />
+			<Action name="action_close" />
+			<Separator />
 			<Action name="action_quit" />
 		</Menu>
 		<Menu name="Settings" >

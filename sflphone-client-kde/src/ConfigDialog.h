@@ -73,6 +73,7 @@ public:
 	//Updates
 	void updateCodecListCommands();
 	void updateAccountListCommands();
+	void updateAccountStates();
 
 private slots:
 	void changedAccountList();

@@ -38,7 +38,7 @@ private:
 
 	int state;
 	bool enabled;
-	KLed * led;
+	QLabel * led;
 	QCheckBox * checkBox;
 	QLabel * textLabel;
 

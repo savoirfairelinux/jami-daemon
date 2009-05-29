@@ -35,7 +35,7 @@ QT4_ADD_RESOURCES(QtApp_RCC_SRCS ${QtApp_RCCS})
 
 
 # Build dbus interfaces
-SET ( dbus_xml_introspecs_path ${CMAKE_CURRENT_SOURCE_DIR}/../../sflphone-common/src/dbus/)
+SET ( dbus_xml_introspecs_path ${CMAKE_CURRENT_SOURCE_DIR}/dbus/)
 
 # configuration manager interface
 SET ( configurationmanager_xml  ${dbus_xml_introspecs_path}/configurationmanager-introspec.xml )

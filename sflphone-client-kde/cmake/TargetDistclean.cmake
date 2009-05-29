@@ -59,6 +59,7 @@ IF (UNIX)
    src/*_automoc.cpp
    src/sflphone-client-kde
    src/sflphone-client-kde.shell
+   src/*.moc
   )
   
   SET(DISTCLEANED_REC

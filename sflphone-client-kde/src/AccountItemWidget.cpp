@@ -30,7 +30,7 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
  : QWidget(parent)
 {
 	checkBox = new QCheckBox(this);
-	led = new KLed(this);
+	led = new QLabel();
 	led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 	textLabel = new QLabel();
 	
@@ -61,16 +61,13 @@ void AccountItemWidget::updateStateDisplay()
 	switch(state)
 	{
 		case Registered:
-			led->setState(KLed::On);
-			led->setColor(QColor(0,255,0));
+			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_GREEN));
 			break;
 		case Unregistered:
-			led->setState(KLed::Off);
-			led->setColor(QColor(0,255,0));
+			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_GRAY));
 			break;
 		case NotWorking:
-			led->setState(KLed::On);
-			led->setColor(QColor(255,0,0));
+			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_RED));
 			break;
 		default:
 			qDebug() << "Calling AccountItemWidget::setState with value " << state << ", not part of enum AccountItemWidget::State.";
