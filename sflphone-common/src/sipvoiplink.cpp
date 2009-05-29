@@ -2726,6 +2726,8 @@ void xfer_func_cb ( pjsip_evsub *sub, pjsip_event *event )
 				_debug ( "UserAgent: NORESOURCE for transfer!\n" );
 				link->transferStep2();
 				pjsip_evsub_terminate ( sub, PJ_TRUE );
+
+				Manager::instance().transferFailed();
 				return;
 			}
 
@@ -2734,6 +2736,8 @@ void xfer_func_cb ( pjsip_evsub *sub, pjsip_event *event )
 				_debug ( "UserAgent: transfered call RINGING!\n" );
 				link->transferStep2();
 				pjsip_evsub_terminate ( sub, PJ_TRUE );
+
+				Manager::instance().transferSucceded();
 				return;
 			}
 		}

@@ -158,6 +158,16 @@ class ManagerImpl {
     bool transferCall(const CallID& id, const std::string& to);
 
     /**
+     * Notify the client the transfer is successful
+     */
+    void transferSucceded();
+
+    /**
+     * Notify the client that the transfer failed
+     */
+    void transferFailed();
+
+    /**
      * Functions which occur with a user's action
      * Refuse the call
      * @param id  The call identifier

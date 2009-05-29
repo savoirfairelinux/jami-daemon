@@ -111,10 +111,10 @@
       <arg type="d" name="value"  direction="out"/>
     </signal>
 
-    <signal name="transferSucceeded">
+    <signal name="transferSucceded">
     </signal>
 
-    <signal name="transferFailled">
+    <signal name="transferFailed">
     </signal>
  
 <!--
