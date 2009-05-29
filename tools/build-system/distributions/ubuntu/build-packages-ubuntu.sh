@@ -54,6 +54,10 @@ do
 
 	# copy the appropriate control file based on architecture
 	echo " -> generate control file"
+	if [ ! -e ${REPOSITORY_DIR}/${PACKAGE}/debian/control.$OS_VERSION ];then
+		echo " -> no control file, skipping"
+		continue
+	fi
 	cp ${REPOSITORY_DIR}/${PACKAGE}/debian/control.$OS_VERSION ${REPOSITORY_DIR}/${PACKAGE}/debian/control && \
  	sed -i "s/VERSION/${FULL_VERSION}/g" ${REPOSITORY_DIR}/${PACKAGE}/debian/control
 

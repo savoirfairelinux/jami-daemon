@@ -40,7 +40,7 @@ USER="sflphone"
 WHOAMI=`whoami`
 
 # packages we will build
-PACKAGES=('sflphone-common sflphone-client-gnome')
+PACKAGES=('sflphone-common sflphone-client-gnome' 'sflphone-client-kde')
 
 # log file
 LOG_ID="${OS_VERSION}"
