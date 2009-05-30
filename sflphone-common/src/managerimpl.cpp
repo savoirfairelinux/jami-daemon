@@ -307,21 +307,25 @@ ManagerImpl::answerCall(const CallID& id)
   bool
 ManagerImpl::hangupCall(const CallID& id)
 {
-    _debug("ManagerImpl::hangupCall(): This function is called when user hangup \n");
+    _debug("ManagerImpl::hangupCall()\n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
+    AudioLayer *audiolayer;
 
     stopTone(false);
 
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
 
+    _debug("Stop audio stream\n");
+    audiolayer = getAudioDriver();
+    audiolayer->stopStream();
+
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
         returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (id);
     }
-
     /* Classic call, attached to an account */
     else {
         accountid = getAccountFromCall( id );
@@ -339,6 +343,8 @@ ManagerImpl::hangupCall(const CallID& id)
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
         if(pulselayer)  pulselayer->restorePulseAppsVolume();
     }
+
+    
 
     return returnValue;
 }
@@ -448,11 +454,13 @@ ManagerImpl::offHoldCall(const CallID& id)
         returnValue = getAccountLink(accountid)->offhold(id);
     }
 
+
     if (_dbus){
         if (rec)
             _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_RECORD");
         else
             _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_CURRENT");
+
     }
 
     switchCall(id);
@@ -876,7 +884,7 @@ ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, int nb_ms
   if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, nb_msg) ;
 }
 
-void ManagerImpl::connectionStatusNotification(  )
+void ManagerImpl::connectionStatusNotification()
 {
     if (_dbus)
         _dbus->getConfigurationManager()->accountsChanged();
@@ -1045,6 +1053,7 @@ ManagerImpl::ringtone()
   AudioLoop*
 ManagerImpl::getTelephoneTone()
 {
+  // _debug("ManagerImpl::getTelephoneTone()\n");
   if(_telephoneTone != 0) {
     ost::MutexLock m(_toneMutex);
     return _telephoneTone->getCurrentTone();
@@ -1057,6 +1066,7 @@ ManagerImpl::getTelephoneTone()
   AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
+  // _debug("ManagerImpl::getTelephoneFile()\n");
   ost::MutexLock m(_toneMutex);
   if(_audiofile.isStarted()) {
     return &_audiofile;
@@ -1759,6 +1769,27 @@ ManagerImpl::setPulseAppVolumeControl( void )
 
 void ManagerImpl::setAudioManager( const int32_t& api )
 {
+
+    int type, samplerate, framesize, numCardIn, numCardOut;
+    std::string alsaPlugin;
+
+    _debug( "Setting audio manager \n");
+
+    if(!_audiodriver)
+        return;
+
+    type = _audiodriver->getLayerType();
+
+    if(type == api){
+        _debug( "Audio manager chosen already in use. No changes made. \n");
+        return;
+    }
+
+    setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
+    switchAudioManager();
+    return;
+
+/*
     int manager;
 
     _debug(" ManagerImpl::setAudioManager :: %i \n",api);
@@ -1780,6 +1811,8 @@ void ManagerImpl::setAudioManager( const int32_t& api )
         setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
         switchAudioManager();
     }
+*/
+
 }
 
 int32_t
@@ -1829,6 +1862,7 @@ ManagerImpl::getCurrentAudioOutputPlugin( void )
 
     alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
     if(alsalayer)   return alsalayer -> getAudioPlugin ();
+    else            return getConfigString( AUDIO , ALSA_PLUGIN );
 }
 
 int ManagerImpl::app_is_running( std::string process )
@@ -2142,6 +2176,7 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
 
 void ManagerImpl::setAccountsOrder (const std::string& order) 
 {
+    _debug("Set accounts order : %s\n", order.c_str() );
     // Set the new config
     setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
 }
@@ -2261,11 +2296,16 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 void
 ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire )
 {
+
+  _debug("ManagerImpl::sendRegister \n");
   // Update the active field
   setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
+  _debug("ManagerImpl::sendRegister set config done\n");
 
   Account* acc = getAccount(accountID);
   acc->loadConfig();
+  _debug("ManagerImpl::sendRegister acc->loadconfig done\n");
+
   // Test on the freshly updated value
   if ( acc->isEnabled() ) {
     // Verify we aren't already registered, then register
@@ -2276,9 +2316,10 @@ ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire 
       _debug("Send unregister for account %s\n" , accountID.c_str());
       acc->unregisterVoIPLink();
   }
+
 }
 
-  void
+  std::string
 ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
 {
 
@@ -2304,7 +2345,7 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
     }
     else {
         _debug("Unknown %s param when calling addAccount(): %s\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
-        return;
+        return "";
     }
     _accountMap[newAccountID] = newAccount;
     setAccountDetails(accountID.str(), details);
@@ -2322,6 +2363,7 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
     saveConfig();
 
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+    return newAccountID;
 }
 
   void
@@ -2497,22 +2539,42 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
 {
   AccountMap::iterator iter;
   SIPAccount *account;
-
+  _debug("getAccountIdFromNameAndServer : username = %s , server = %s\n", userName.c_str(), server.c_str());
   // Try to find the account id from username and server name by full match
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+    _debug("for : account = %s\n", iter->first.c_str());
     account = dynamic_cast<SIPAccount *>(iter->second);
+    _debug("account != NULL = %i\n", (account != NULL));
     if (account != NULL){
     	if(account->fullMatch(userName, server))
+    	{
+    			_debug("fullMatch\n");
       		return iter->first;
+      }
     }
   }
 
+  // We failed! Then only match the hostname
+  for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+    account = dynamic_cast<SIPAccount *>(iter->second);
+    if ( account != NULL ) {
+    	if(account->hostnameMatch(server))
+    	{
+    	      _debug("hostnameMatch\n");
+      		return iter->first;
+      }
+    }
+  }
+  
   // We failed! Then only match the username
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
     account = dynamic_cast<SIPAccount *>(iter->second);
     if ( account != NULL ) {
     	if(account->userMatch(userName))
+    	{
+    	      _debug("userMatch\n");
       		return iter->first;
+      }
     }
   }
 
@@ -2768,7 +2830,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
 
     // So first we fetch the account
     accountid = getAccountFromCall (callID);
-
+    _debug("%s\n",callID.c_str());
     // Then the VoIP link this account is linked with (IAX2 or SIP)
     if ( (account=getAccount (accountid)) != 0) {
         link = account->getVoIPLink ();
@@ -2784,6 +2846,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr (call->getState())));
     }
     else 
     {
@@ -2791,7 +2854,24 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "FAILURE"));
     }
 
     return call_details;
+}
+
+  std::vector< std::string >
+ManagerImpl::getCallList (void)
+{
+    std::vector< std::string > v;
+    int i;
+
+    CallAccountMap::iterator iter = _callAccountMap.begin ();
+
+    while (iter != _callAccountMap.end ()) {
+        v.push_back(iter->first.data());
+        iter++;
+    }   
+   
+    return v;
 }

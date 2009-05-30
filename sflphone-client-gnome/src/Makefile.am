@@ -37,7 +37,7 @@ sflphone_client_gnome_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(
 # add symbolic link	     
 install-exec-local:
 	echo $(prefix); echo $(bindir); echo $(datadir); echo $(libdir)
-	cd $(bindir); ln -sf sflphone-client-gnome sflphone 
+	cd $(DESTDIR)$(bindir); ln -sf sflphone-client-gnome sflphone 
 
 uninstall-local:
-	-test -h $(bindir)/sflphone && rm $(bindir)/sflphone
+	-test -h $(DESTDIR)$(bindir)/sflphone && rm $(DESTDIR)$(bindir)/sflphone

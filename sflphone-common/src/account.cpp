@@ -48,8 +48,12 @@ void Account::loadConfig()
 }
 
 void Account::setRegistrationState( RegistrationState state ) { 
-    _registrationState = state; 
+    
+    if (state != _registrationState) {
+	_debug("Account::setRegistrationState\n");
+        _registrationState = state; 
 
-    // Notify the client
-    Manager::instance().connectionStatusNotification( );
+	// Notify the client
+	Manager::instance().connectionStatusNotification();
+    }
 }

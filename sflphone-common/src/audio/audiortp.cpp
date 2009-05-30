@@ -56,6 +56,8 @@ AudioRtp::createNewSession (SIPCall *ca) {
 
     ost::MutexLock m(_threadMutex);
 
+    _debug("AudioRtp::Create new rtp session\n");
+
     // something should stop the thread before...
     if ( _RTXThread != 0 ) { 
         _debug("**********************************************************\n");
@@ -81,12 +83,12 @@ AudioRtp::createNewSession (SIPCall *ca) {
 }
 
 
-void
+bool
 AudioRtp::closeRtpSession () {
 
     ost::MutexLock m(_threadMutex);
     // This will make RTP threads finish.
-    _debug("Stopping AudioRTP\n");
+    _debug("AudioRtp::Stopping rtp session\n");
     try {
 
         delete _RTXThread; _RTXThread = 0;
@@ -96,6 +98,8 @@ AudioRtp::closeRtpSession () {
     }
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     audiolayer->stopStream();
+
+    return true;
 }
 
 

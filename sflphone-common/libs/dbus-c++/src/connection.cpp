@@ -21,6 +21,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <dbus-c++/debug.h>
 #include <dbus-c++/connection.h>
@@ -85,7 +88,7 @@ void Connection::Private::init()
 		this, &Connection::Private::disconn_filter_function
 	);
 
-	dbus_connection_add_filter(conn, message_filter_stub, &disconn_filter, NULL);
+	dbus_connection_add_filter(conn, message_filter_stub, &disconn_filter, NULL); // TODO: some assert at least
 
 	dbus_connection_set_dispatch_status_function(conn, dispatch_status_stub, this, 0);
 	dbus_connection_set_exit_on_disconnect(conn, false); //why was this set to true??
@@ -171,6 +174,17 @@ bool Connection::Private::disconn_filter_function(const Message &msg)
 	}
 	return false;
 }
+
+DBusDispatchStatus Connection::Private::dispatch_status()
+{
+	return dbus_connection_get_dispatch_status(conn);
+}
+
+bool Connection::Private::has_something_to_dispatch()
+{
+	return dispatch_status() == DBUS_DISPATCH_DATA_REMAINS;
+}
+
 
 Connection Connection::SystemBus()
 {
@@ -382,6 +396,17 @@ void Connection::request_name(const char *name, int flags)
 		std::string match = "destination='" + _pvt->names.back() + "'";
 		add_match(match.c_str());
 	}
+}
+
+unsigned long Connection::sender_unix_uid(const char *sender)
+{
+    InternalError e;
+    
+    unsigned long ul = dbus_bus_get_unix_user(_pvt->conn, sender, e);
+    
+    if (e) throw Error(e);
+    
+    return ul;
 }
 
 bool Connection::has_name(const char *name)

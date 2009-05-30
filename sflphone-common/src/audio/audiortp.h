@@ -74,6 +74,9 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** A SIP call */
     SIPCall* _ca;    
 
+    
+    friend class RtpTest;
+
   private:
 
     // copy constructor
@@ -200,7 +203,7 @@ class AudioRtp {
     /**
      * Close a RTP session and kills the remaining threads
      */
-    void closeRtpSession( void );
+    bool closeRtpSession( void );
 
     /**
      * Start recording

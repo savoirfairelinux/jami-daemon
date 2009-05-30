@@ -1,0 +1,39 @@
+=head1 NAME
+
+sflphone-client-kde - SIP and IAX2 compatible voice over IP softphone KDE client.
+
+=head1 SYNOPSIS
+
+sflphone-client-kde 
+
+=head1 DESCRIPTION
+
+SFLphone is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
+SFLphone audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
+B<sflphone-client-kde> is a KDE client for SFLphone; it communicates with the core side through DBus. SFLphone package comes with the core, B<sflphoned>.
+
+=head1 BUGS
+
+Please report bugs  at http://dev.savoirfairelinux.net/sflphone/newticket.
+
+=head1 AUTHORS
+
+B<sflphone-client-kde> is developed in Montreal by Savoir-Faire Linux Inc. The active developers are Jeremy Quentin <jeremy.quentin@savoirfairelinux.com> .
+
+This manual page was written by Jeremy Quentin <jeremy.quentin@savoirfairelinux.com>.
+
+=head1 SEE ALSO
+
+B<sflphoned>(1)
+
+=head1 COPYRIGHT
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as published by the
+Free Software Foundation.
+
+On Debian GNU/Linux systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.
+
+=cut
+

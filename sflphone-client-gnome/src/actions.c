@@ -78,7 +78,7 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
-        msg = g_markup_printf_escaped(_("Registered to %s (%s)") ,
+        msg = g_markup_printf_escaped(_("Using %s (%s)") ,
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
     }
@@ -787,9 +787,9 @@ sflphone_display_selected_codec (const gchar* codecName)
                 msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
             }
             else {
-                msg = g_markup_printf_escaped(_("%s account- %s             %s") ,
-                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
+                msg = g_markup_printf_escaped(_("Using %s (%s) - Codec: %s") ,
                     (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
                     codecName);
             }
             statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
@@ -881,6 +881,31 @@ sflphone_fill_codec_list()
         main_window_error_message( markup );
         dbus_unregister(getpid());
         exit(0);
+    }
+}
+
+void sflphone_fill_call_list (void)
+{
+    
+    gchar** calls = (gchar**)dbus_get_call_list();
+    gchar** pl;
+    GHashTable *call_details;
+    call_t *c;
+    gchar *callID;
+
+    for(pl=calls; *calls; calls++)
+    {
+        c = g_new0(call_t, 1);
+        callID = (gchar*)(*calls);
+        call_details = dbus_get_call_details(callID);
+        create_new_call_from_details (callID, call_details, &c);
+        c->callID = g_strdup(callID);
+
+        // Add it to the list
+        DEBUG ("Add call retrieved from server side: %s\n", c->callID);
+        calllist_add (current_calls, c);
+        // Update the GUI
+        calltree_add_call (current_calls, c);
     }
 }
 

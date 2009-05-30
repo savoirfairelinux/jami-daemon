@@ -1,0 +1,323 @@
+<?xml version="1.0" ?>
+<node name="/org/sflphone/SFLphone">
+  <interface name="org.sflphone.SFLphone.ConfigurationManager">
+    
+  <!-- Accounts-related methods -->  
+    <method name="getAccountDetails">
+      <arg type="s" name="accountID" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
+    
+    <method name="setAccountDetails">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="a{ss}" name="details" direction="in"/>
+    </method>
+    
+    <method name="addAccount">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+      <arg type="a{ss}" name="details" direction="in"/>
+      <arg type="s" name="createdAccountId" direction="out"/>
+    </method>
+    
+    <method name="setAccountsOrder">
+      <arg type="s" name="order" direction="in"/>
+    </method>
+    
+    <method name="removeAccount">
+      <arg type="s" name="accoundID" direction="in"/>
+    </method>
+    
+    <method name="getAccountList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+   
+    <method name="sendRegister">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="i" name="expire" direction="in"/>
+    </method>
+
+   <!--      ///////////////////////               -->
+
+  <!-- Various audio-related methods   -->
+ 
+    <method name="getToneLocaleList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+  
+    <method name="getVersion">
+      <arg type="s" name="version" direction="out"/>
+    </method>
+    
+    <method name="getRingtoneList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+   
+    <method name="getPlaybackDeviceList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    
+    <method name="getRecordDeviceList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    
+    <method name="isRingtoneEnabled">
+      <arg type="i" name="bool" direction="out"/>
+    </method>
+
+    <method name="ringtoneEnabled">
+    </method>
+
+    <method name="getRingtoneChoice">
+      <arg type="s" name="tone" direction="out"/>
+    </method>
+
+    <method name="setRingtoneChoice">
+      <arg type="s" name="tone" direction="in"/>
+    </method>
+
+    <method name="getAudioManager">
+      <arg type="i" name="api" direction="out"/>
+    </method>
+
+    <method name="setAudioManager">
+      <arg type="i" name="api" direction="in"/>
+    </method>
+    
+    <method name="getRecordPath">
+      <arg type="s" name="rec" direction="out"/>
+    </method>
+
+    <method name="setRecordPath">
+      <arg type="s" name="rec" direction="in"/>
+    </method>
+
+   <!--      ///////////////////////               -->
+   
+   <!-- Codecs-related methods -->
+ 
+    <method name="getCodecList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+   
+   <method name="getCodecDetails">
+     <arg type="i" name="payload" direction="in"/>
+     <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+     <arg type="as" name="details" direction="out"/>
+   </method>
+ 
+    <method name="getActiveCodecList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
+    <method name="setActiveCodecList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
+      <arg type="as" name="list" direction="in"/>
+    </method>
+
+
+	<!-- Audio devices methods -->
+	
+    <method name="getInputAudioPluginList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+		
+    <method name="getOutputAudioPluginList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    
+    <method name="setInputAudioPlugin">
+      <arg type="s" name="audioPlugin" direction="in"/>
+    </method>
+    
+    <method name="setOutputAudioPlugin">
+      <arg type="s" name="audioPlugin" direction="in"/>
+    </method>
+    
+    <method name="getAudioOutputDeviceList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    
+    <method name="setAudioOutputDevice">
+      <arg type="i" name="index" direction="in"/>
+    </method>
+    
+    <method name="getAudioInputDeviceList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    
+    <method name="setAudioInputDevice">
+      <arg type="i" name="index" direction="in"/>
+    </method>
+    
+    <method name="getCurrentAudioDevicesIndex">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
+    <method name="getAudioDeviceIndex">
+      <arg type="s" name="name" direction="in"/>
+      <arg type="i" name="index" direction="out"/>
+    </method>
+
+    <method name="getCurrentAudioOutputPlugin">
+      <arg type="s" name="plugin" direction="out"/>
+    </method>
+
+  <!--    General Settings Panel         -->
+ 
+    <method name="isIax2Enabled">
+      <arg type="i" name="res" direction="out"/>
+    </method>
+
+    <method name="setNotify">
+    </method>
+
+    <method name="getNotify">
+      <arg type="i" name="level" direction="out"/>
+    </method>
+
+    <method name="setMailNotify">
+    </method>
+
+    <method name="getMailNotify">
+      <arg type="i" name="level" direction="out"/>
+    </method>
+
+    <method name="getDialpad">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="setDialpad">
+    </method>
+
+    <method name="getSearchbar">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="setSearchbar">
+    </method>
+
+    <method name="getVolumeControls">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="setVolumeControls">
+    </method>
+
+    <method name="getMaxCalls">
+      <arg type="i" name="calls" direction="out"/>
+    </method>
+
+    <method name="setMaxCalls">
+      <arg type="i" name="calls" direction="in"/>
+    </method>
+
+    <method name="startHidden">
+    </method>
+
+    <method name="isStartHidden">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="popupMode">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="switchPopupMode">
+    </method>
+
+    <method name="setPulseAppVolumeControl">
+    </method>
+
+    <method name="getPulseAppVolumeControl">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="setSipPort">
+      <arg type="i" name="port" direction="in"/>
+    </method>
+
+    <method name="getSipPort">
+      <arg type="i" name="port" direction="out"/>
+    </method>
+
+    <method name="setStunServer">
+      <arg type="s" name="server" direction="in"/>
+    </method>
+
+    <method name="getStunServer">
+      <arg type="s" name="server" direction="out"/>
+    </method>
+
+    <method name="enableStun">
+    </method>
+
+    <method name="isStunEnabled">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <!-- Addressbook configuration -->
+    <method name="getAddressbookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>
+      <arg type="a{si}" name="settings" direction="out"/>
+    </method>
+
+    <method name="setAddressbookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringInt"/>
+      <arg type="a{si}" name="settings" direction="in"/>
+    </method>
+
+	<!-- Addressbook list -->
+    <method name="getAddressbookList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="settings" direction="out"/>
+    </method>
+
+    <method name="setAddressbookList">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
+      <arg type="as" name="settings" direction="in"/>
+    </method>
+
+    <!-- Hook configuration -->
+    <method name="getHookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="settings" direction="out"/>
+    </method>
+
+    <method name="setHookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+      <arg type="a{ss}" name="settings" direction="in"/>
+    </method>
+
+  <!--        /////////////////////////////       -->
+
+<!--
+    <signal name="parametersChanged">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="details" direction="out"/>
+    </signal>
+-->    
+
+    <signal name="accountsChanged">
+    </signal>
+
+    <signal name="errorAlert">
+      <arg type="i" name="code" direction="out"/>
+    </signal>
+
+  </interface>
+</node>

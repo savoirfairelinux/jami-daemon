@@ -27,7 +27,7 @@
  */
 
 /* Machine name, filled in by autoconf script */
-#define PJ_M_NAME "i686"
+#define PJ_M_NAME "x86_64"
 
 /* Endianness, as detected by autoconf */
 /* #undef WORDS_BIGENDIAN */

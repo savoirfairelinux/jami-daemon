@@ -25,10 +25,6 @@
 #ifndef __DBUSXX_OBJECT_H
 #define __DBUSXX_OBJECT_H
 
-#ifdef DUS_HAVE_CONFIG_H
-#include <dbus-c++/config.h>
-#endif
-
 #include <string>
 #include <list>
 
@@ -205,6 +201,8 @@ public:
 private:
 
 	Message _invoke_method(CallMessage &);
+    
+	bool _invoke_method_noreply(CallMessage &call);
 
 	bool handle_message(const Message &);
 

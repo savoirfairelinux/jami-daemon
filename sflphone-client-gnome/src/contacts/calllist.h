@@ -110,4 +110,10 @@ calllist_clean_history();
 void
 calllist_remove_from_history( call_t* c);
 
+/**
+ * Initialize a non-empty call list
+ */
+void
+calllist_set_list (calltab_t* tab, gchar **call_list);
+
 #endif

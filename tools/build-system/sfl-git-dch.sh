@@ -7,22 +7,21 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-13
-# Last Modified: 2009-05-14 17:22:48 -0400
+# Last Modified: 2009-05-29 14:23:50 -0400
 #####################################################
 
 # set -x
 
-RELEASE_MODE=$1
+VERSION=$1
+RELEASE_MODE=$2
 
 ROOT_DIR="/home/projects/sflphone"
 TODEPLOY_DIR="${ROOT_DIR}/sflphone-packaging"
 TODEPLOY_BUILD_DIR="${TODEPLOY_DIR}/build"
 REPOSITORY_DIR="${TODEPLOY_BUILD_DIR}/sflphone"
 SCRIPTS_DIR="${ROOT_DIR}/build-system"
-
-CHANGELOG_FILES=( "sflphone-common/debian/changelog" "sflphone-client-gnome/debian/changelog" )
-
-SNAPSHOT_TAG=`date +%s`
+DEBIAN_DIR="${SCRIPTS_DIR}/distributions/ubuntu"
+CHANGELOG_FILES=( "${DEBIAN_DIR}/debian-sflphone-common/changelog" "${DEBIAN_DIR}/debian-sflphone-client-gnome/changelog" "${DEBIAN_DIR}/debian-sflphone-client-kde/changelog")
 
 export DEBFULLNAME="SFLphone Automatic Build System"
 export DEBEMAIL="team@sflphone.org"
@@ -36,54 +35,53 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # get last release tag
-LAST_RELEASE_TAG_NAME=`git describe --tag HEAD --match "debian/*" --abbrev=40 | cut -d "-" -f1-2`
+LAST_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta|\.stable)$" | tail -n 1`
 
 if [ "$?" -ne "0" ]; then
 	echo " !! Error when retrieving last tag"
 	exit -1
 fi
 
+# get last release tag
+PREVIOUS_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta|\.stable)$" | tail -n 2 | sed -n '1p;1q'`
+
+if [ "$?" -ne "0" ]; then
+	echo " !! Error when retrieving previous revision tag"
+	exit -1
+fi
+
+echo "Last release tag is : ${LAST_RELEASE_TAG_NAME}"
+
 # get last release commit hash
-LAST_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${LAST_RELEASE_TAG_NAME=} | tail -n 1`
+REF_COMMIT_HASH=
+if [ ${RELEASE_MODE} ]; then
+	echo "Reference tag is : ${PREVIOUS_RELEASE_TAG_NAME}"
+	REF_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
+else
+	echo "Reference tag is : ${LAST_RELEASE_TAG_NAME}"
+	REF_COMMIT_HASH=`git show --pretty=format:"%H" -s ${LAST_RELEASE_TAG_NAME} | tail -n 1`
+fi
 
 if [ "$?" -ne "0" ]; then
 	echo " !! Error when retrieving last release commit hash"
 	exit -1
 fi
 
-echo "Last release tag is : ${LAST_RELEASE_TAG_NAME} (commit ${LAST_RELEASE_COMMIT_HASH})"
+echo "Reference commit is : ${REF_COMMIT_HASH}"
 echo
 
-
 # use git log to retrieve changelog content
-CHANGELOG_CONTENT=`git log --no-merges --pretty=format:"%s" ${LAST_RELEASE_COMMIT_HASH}.. | grep -v "\[\#1262\]"`
+CHANGELOG_CONTENT=`git log --no-merges --pretty=format:"%s" ${REF_COMMIT_HASH}.. | grep -v "\[\#1262\]"`
+
+if [ "$?" -eq "1" ]; then
+        echo " !! No new commit since last release"
+        exit -1
+fi
 
 if [ "$?" -ne "0" ]; then
         echo " !! Error when retrieving changelog content"
         exit -1
 fi
-
-# get version
-SOFTWARE_VERSION=`echo ${LAST_RELEASE_TAG_NAME} | cut -d "/" -f2- | cut -d "-" -f1`
-
-if [ "$?" -ne "0" ]; then
-        echo " !! Error when retrieving software version"
-        exit -1
-fi
-
-# add version info
-SOFTWARE_VERSION_APPEND=
-if [ ${RELEASE_MODE} ]
-then
-	if [ "${RELEASE_MODE}" != "release" ]; then
-		SOFTWARE_VERSION_APPEND="~${RELEASE_MODE}"
-	fi
-else
-	SOFTWARE_VERSION_APPEND="~snapshot${SNAPSHOT_TAG}"
-fi
-	
-	
-
 
 # iterate throw changelog files
 for CHANGELOG_FILE in ${CHANGELOG_FILES[@]}
@@ -121,7 +119,7 @@ do
 
 		if [ ${IS_FIRST} ]
 		then
-			yes | dch --changelog ${CHANGELOG_FILE}  -b --allow-lower-version --no-auto-nmu --distribution SYSTEM --newversion ${SOFTWARE_VERSION}-SYSVER${SOFTWARE_VERSION_APPEND} "$line" >/dev/null 2>&1
+			yes | dch --changelog ${CHANGELOG_FILE}  -b --allow-lower-version --no-auto-nmu --distribution SYSTEM --newversion ${VERSION}-SYSVER "$line" >/dev/null 2>&1
 		
 			if [ "$?" -ne "0" ]; then
 				echo
@@ -144,13 +142,13 @@ do
 	# add snapshot or release flag if needed
 	echo
 	if [ ${RELEASE_MODE} ]; then
-		sed -i "3i\    ** ${SOFTWARE_VERSION} ${RELEASE_MODE} **\n" ${CHANGELOG_FILE}
+		sed -i "3i\    ** ${VERSION} **\n" ${CHANGELOG_FILE}
                 if [ "$?" -ne "0" ]; then
                         echo " !! Error when adding snapshot flag"
                         exit -1
                 fi
 	else
-		sed -i "3i\    ** SNAPSHOT ${SNAPSHOT_TAG} **\n" ${CHANGELOG_FILE}
+		sed -i "3i\    ** SNAPSHOT ${VERSION} **\n" ${CHANGELOG_FILE}
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Error when adding snapshot flag"
 			exit -1

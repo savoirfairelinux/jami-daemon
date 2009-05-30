@@ -302,6 +302,12 @@ class ManagerImpl {
     std::map< std::string, std::string > getCallDetails(const CallID& callID);
 
     /**
+     * Get call list
+     * @return std::vector<std::string> A list of call IDs
+     */
+    std::vector< std::string >  getCallList (void);
+
+    /**
      * Save the details of an existing account, given the account ID
      * This will load the configuration map with the given data.
      * It will also register/unregister links where the 'Enabled' switched.
@@ -314,8 +320,9 @@ class ManagerImpl {
     /**
      * Add a new account, and give it a new account ID automatically
      * @param details The new account parameters
+     * @return The account Id given to the new account
      */
-    void addAccount(const std::map< ::std::string, ::std::string >& details);
+    std::string addAccount(const std::map< ::std::string, ::std::string >& details);
 
     /**
      * Delete an existing account, unregister VoIPLink associated, and

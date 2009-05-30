@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-05 17:43-0400\n"
+"POT-Creation-Date: 2009-05-21 10:45-0400\n"
 "PO-Revision-Date: 2008-10-28 14:15\n"
 "Last-Translator: Yun Liu <yun.liu@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -71,12 +71,11 @@ msgid "%d voice mail"
 msgstr "%d 个语音信息"
 
 #: ../../sflphone-client-gnome/src/actions.c:81
-#, fuzzy, c-format
-msgid "Connected to %s (%s)"
-msgstr "已注册"
+#, c-format
+msgid "Using %s (%s)"
+msgstr ""
 
 #: ../../sflphone-client-gnome/src/actions.c:87
-#, fuzzy
 msgid "No registered account"
 msgstr "未发现已注册帐户"
 
@@ -88,17 +87,17 @@ msgstr ""
 "连接SFLphone服务器失败.\n"
 "请检查daemon是否还在运行."
 
-#: ../../sflphone-client-gnome/src/actions.c:775
+#: ../../sflphone-client-gnome/src/actions.c:787
 #, c-format
 msgid "IP call - %s"
+msgstr "IP 电话 - %s"
+
+#: ../../sflphone-client-gnome/src/actions.c:790
+#, c-format
+msgid "Using %s (%s) - Codec: %s"
 msgstr ""
 
-#: ../../sflphone-client-gnome/src/actions.c:778
-#, c-format
-msgid "%s account- %s             %s"
-msgstr "%s 帐户- %s             %s"
-
-#: ../../sflphone-client-gnome/src/actions.c:868
+#: ../../sflphone-client-gnome/src/actions.c:880
 #, c-format
 msgid ""
 "<b>Error: No audio codecs found.\n"
@@ -112,7 +111,7 @@ msgstr ""
 "sflphone</b>目录下"
 
 #: ../../sflphone-client-gnome/src/assistant.c:35
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "This assistant is now finished.\n"
 "You can at any time check your registration state or modify your accounts "
@@ -128,7 +127,6 @@ msgstr ""
 "别名:     %s\n"
 "服务器:   %s\n"
 "用户名:   %s\n"
-"密码:     %s"
 
 #: ../../sflphone-client-gnome/src/assistant.c:160
 msgid "SFLphone account configuration wizard"
@@ -202,9 +200,8 @@ msgstr "密码(P)"
 #: ../../sflphone-client-gnome/src/assistant.c:294
 #: ../../sflphone-client-gnome/src/assistant.c:387
 #: ../../sflphone-client-gnome/src/config/accountwindow.c:223
-#, fuzzy
 msgid "_Voicemail number"
-msgstr "语音信箱(V)"
+msgstr "语音信箱号码(V)"
 
 #: ../../sflphone-client-gnome/src/assistant.c:309
 msgid "Optional Email Address "
@@ -223,7 +220,7 @@ msgid "IAX2 account configuration"
 msgstr "IAX2帐户配置"
 
 #: ../../sflphone-client-gnome/src/assistant.c:405
-#: ../../sflphone-client-gnome/src/config/configwindow.c:840
+#: ../../sflphone-client-gnome/src/config/configwindow.c:863
 msgid "Network Address Translation"
 msgstr "网络地址解析"
 
@@ -232,7 +229,7 @@ msgid "You should probably enable this if you are behind a firewall."
 msgstr "如果你使用网络使用防火墙，你很有可能需要设定此项."
 
 #: ../../sflphone-client-gnome/src/assistant.c:414
-#: ../../sflphone-client-gnome/src/config/configwindow.c:504
+#: ../../sflphone-client-gnome/src/config/configwindow.c:516
 msgid "E_nable STUN"
 msgstr "使用STUN(n)"
 
@@ -249,24 +246,22 @@ msgid "Congratulations!"
 msgstr "恭喜！"
 
 #: ../../sflphone-client-gnome/src/errors.c:28
-#, fuzzy
 msgid ""
 "ALSA notification\n"
 "\n"
 "Error while opening playback device"
 msgstr ""
-"<b>ALSA提示</b>\n"
+"ALSA提示\n"
 "\n"
 "打开回放设备时出错"
 
 #: ../../sflphone-client-gnome/src/errors.c:31
-#, fuzzy
 msgid ""
 "ALSA notification\n"
 "\n"
 "Error while opening capture device"
 msgstr ""
-"<b>ALSA提示</b>\n"
+"ALSA提示\n"
 "\n"
 "打开采集设备时出错"
 
@@ -276,6 +271,9 @@ msgid ""
 "\n"
 "Pulseaudio is not running"
 msgstr ""
+"Pulseaudio提示\n"
+"\n"
+"Pulseaudio未运行"
 
 #: ../../sflphone-client-gnome/src/mainwindow.c:70
 msgid "There is one call in progress."
@@ -289,10 +287,9 @@ msgstr "有电话正在处理中"
 msgid "Do you still want to quit?"
 msgstr "确认要退出?"
 
-#: ../../sflphone-client-gnome/src/mainwindow.c:293
-#, fuzzy
+#: ../../sflphone-client-gnome/src/mainwindow.c:296
 msgid "SFLphone Error"
-msgstr "SFLphone 0.9.2"
+msgstr "SFLphone出错"
 
 #: ../../sflphone-client-gnome/src/menus.c:134
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -332,9 +329,8 @@ msgid "_Record"
 msgstr "记录(R)"
 
 #: ../../sflphone-client-gnome/src/menus.c:358
-#, fuzzy
 msgid "_Account creation wizard"
-msgstr "SFLphone 帐户设置向导"
+msgstr "帐户创建向导"
 
 #: ../../sflphone-client-gnome/src/menus.c:388
 msgid "_Call"
@@ -369,13 +365,12 @@ msgid "_Call back"
 msgstr "回叫(C)"
 
 #: ../../sflphone-client-gnome/src/menus.c:1082
-#, fuzzy
 msgid "Edit phone"
-msgstr "移动电话(M)"
+msgstr "编辑电话"
 
 #: ../../sflphone-client-gnome/src/menus.c:1093
 msgid "Edit the phone number before making a call"
-msgstr ""
+msgstr "拨出电话前编辑电话号码"
 
 #: ../../sflphone-client-gnome/src/sflnotify.c:38
 #: ../../sflphone-client-gnome/src/sflnotify.c:105
@@ -432,9 +427,9 @@ msgid "_Show main window"
 msgstr "显示主窗口(S)"
 
 #: ../../sflphone-client-gnome/src/statusicon.c:124
-#, fuzzy, c-format
+#, c-format
 msgid "SFLphone - %i accounts configured"
-msgstr "SFLphone - %i 个帐户已注册"
+msgstr "SFLphone - %i 个帐户已配置"
 
 #: ../../sflphone-client-gnome/src/timestamp.c:46
 msgid "<small>Missed call</small>"
@@ -504,12 +499,12 @@ msgid "Account settings"
 msgstr "帐户设置"
 
 #: ../../sflphone-client-gnome/src/config/accountwindow.c:120
-msgid "Account parameters"
+msgid "Account Parameters"
 msgstr "帐户相关参数"
 
 #: ../../sflphone-client-gnome/src/config/accountwindow.c:142
 msgid "_Enable this account"
-msgstr ""
+msgstr "启用该账户(E)"
 
 #: ../../sflphone-client-gnome/src/config/accountwindow.c:156
 msgid "_Protocol"
@@ -520,52 +515,59 @@ msgid "Unknown"
 msgstr "未知"
 
 #: ../../sflphone-client-gnome/src/config/addressbook-config.c:265
-#: ../../sflphone-client-gnome/src/config/configwindow.c:709
+#: ../../sflphone-client-gnome/src/config/configwindow.c:732
 msgid "General"
 msgstr "常用配置"
 
 #: ../../sflphone-client-gnome/src/config/addressbook-config.c:276
-msgid "_Use Evolution address book"
-msgstr ""
+msgid "_Use Evolution address books"
+msgstr "使用Evolution地址薄(U)"
 
 #: ../../sflphone-client-gnome/src/config/addressbook-config.c:283
 msgid "Download limit:"
-msgstr ""
+msgstr "下载上限:"
 
 #: ../../sflphone-client-gnome/src/config/addressbook-config.c:294
 msgid "_Display contact photo if available"
 msgstr "如果可行则显示联系人照片(D)"
 
-#: ../../sflphone-client-gnome/src/config/addressbook-config.c:299
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:301
 msgid "Fields"
-msgstr ""
+msgstr "字段"
 
-#: ../../sflphone-client-gnome/src/config/addressbook-config.c:309
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:311
+msgid "Use the following fields from Evolution's address books:"
+msgstr "使用Evolution地址薄中的如下字段:"
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:316
 msgid "_Business phone"
 msgstr "商务电话(B)"
 
-#: ../../sflphone-client-gnome/src/config/addressbook-config.c:314
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:321
 msgid "_Home phone"
 msgstr "家庭电话(H)"
 
-#: ../../sflphone-client-gnome/src/config/addressbook-config.c:319
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:326
 msgid "_Mobile phone"
 msgstr "移动电话(M)"
 
-#: ../../sflphone-client-gnome/src/config/addressbook-config.c:324
-#, fuzzy
-msgid "Books"
-msgstr "钩键"
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:333
+msgid "Address Books"
+msgstr "地址簿"
 
-#: ../../sflphone-client-gnome/src/config/addressbook-config.c:356
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:343
+msgid "Select which Evolution address books to use:"
+msgstr "选择使用如下Evolution地址薄:"
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:377
 #: ../../sflphone-client-gnome/src/config/audioconf.c:574
 msgid "Name"
 msgstr "名称"
 
 #: ../../sflphone-client-gnome/src/config/audioconf.c:155
-#, fuzzy, c-format
+#, c-format
 msgid "audio device index for output = %d"
-msgstr "音频设备索引输出 ＝ %d\n"
+msgstr "音频设备输出索引 ＝ %d"
 
 #: ../../sflphone-client-gnome/src/config/audioconf.c:579
 msgid "Frequency"
@@ -603,196 +605,232 @@ msgstr "输入"
 msgid "_Enable ringtones"
 msgstr "启用铃声(E)"
 
-#: ../../sflphone-client-gnome/src/config/audioconf.c:763
+#: ../../sflphone-client-gnome/src/config/audioconf.c:764
 msgid "Choose a ringtone"
 msgstr "选择铃声"
 
-#: ../../sflphone-client-gnome/src/config/audioconf.c:768
+#: ../../sflphone-client-gnome/src/config/audioconf.c:769
 msgid "Audio Files"
 msgstr "音频文件"
 
-#: ../../sflphone-client-gnome/src/config/audioconf.c:787
-#, fuzzy
+#: ../../sflphone-client-gnome/src/config/audioconf.c:788
 msgid "_Voice Activity Detection"
-msgstr "启用静音检测(A)"
+msgstr "声音状态检测(V)"
 
-#: ../../sflphone-client-gnome/src/config/audioconf.c:797
+#: ../../sflphone-client-gnome/src/config/audioconf.c:798
 msgid "_Noise Reduction (Narrow-Band Companding)"
-msgstr ""
+msgstr "降噪处理-窄频压缩(N)"
 
-#: ../../sflphone-client-gnome/src/config/audioconf.c:825
+#: ../../sflphone-client-gnome/src/config/audioconf.c:826
 msgid "Sound Manager"
 msgstr "音频管理器"
 
-#: ../../sflphone-client-gnome/src/config/audioconf.c:832
+#: ../../sflphone-client-gnome/src/config/audioconf.c:833
 msgid "ALSA configuration"
 msgstr "ALSA 配置"
 
-#: ../../sflphone-client-gnome/src/config/audioconf.c:849
+#: ../../sflphone-client-gnome/src/config/audioconf.c:850
 msgid "Codecs"
 msgstr "Codecs编码"
 
-#: ../../sflphone-client-gnome/src/config/audioconf.c:872
+#: ../../sflphone-client-gnome/src/config/audioconf.c:873
 msgid "Ringtones"
 msgstr "铃声"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:390
+#: ../../sflphone-client-gnome/src/config/configwindow.c:402
 msgid "Protocol"
 msgstr "协议"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:397
+#: ../../sflphone-client-gnome/src/config/configwindow.c:409
 msgid "Status"
 msgstr "状态"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:500
+#: ../../sflphone-client-gnome/src/config/configwindow.c:512
 msgid "Stun parameters will apply to each SIP account created."
 msgstr "Stun参数将应用于每一个注册的SIP帐户"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:508
+#: ../../sflphone-client-gnome/src/config/configwindow.c:520
 msgid "Enable it if you are behind a firewall"
 msgstr "当使用防火墙时,启用该项"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:516
+#: ../../sflphone-client-gnome/src/config/configwindow.c:528
 msgid "Format: name.server:port"
 msgstr "格式：name.server:port"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:564
-msgid "Desktop Notification"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:579
+msgid "Desktop Notifications"
 msgstr "桌面提示"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:572
-msgid "_Enable"
-msgstr "启用(E)"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:588
+msgid "_Enable notifications"
+msgstr "启用提示(E)"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:577
-msgid "_Notify voice mails"
-msgstr "通知语音邮件(N)"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:594
+msgid "Enable voicemail _notifications"
+msgstr "启用语音邮箱提示(n)"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:583
+#: ../../sflphone-client-gnome/src/config/configwindow.c:605
 msgid "System Tray Icon"
 msgstr "系统托盘图标"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:591
+#: ../../sflphone-client-gnome/src/config/configwindow.c:613
 msgid "_Popup main window on incoming call"
 msgstr "来电时弹出主窗口(P)"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:596
+#: ../../sflphone-client-gnome/src/config/configwindow.c:618
 msgid "Ne_ver popup main window"
 msgstr "从不弹出主窗口(v)"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:600
-msgid "_Start hidden"
-msgstr "启动时隐藏(S)"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:622
+msgid "Hide SFLphone window on _startup"
+msgstr "在启动时隐藏SFLphone主窗口"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:606
+#: ../../sflphone-client-gnome/src/config/configwindow.c:628
 msgid "Calls History"
 msgstr "拨号历史"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:614
-msgid "_Maximum number of calls"
-msgstr "最大拨号数(M)"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:636
+msgid "_History size limit"
+msgstr "历史记录上限(H)"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:630
+#: ../../sflphone-client-gnome/src/config/configwindow.c:653
 msgid "PulseAudio sound server"
 msgstr "PulseAudio服务器"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:638
-msgid "_Control running applications volume"
-msgstr "控制正在运行的应用程序的音量(C)"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:661
+msgid "Mute other applications during a _call"
+msgstr "当有来电时静音其它应用程序(c)"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:651
+#: ../../sflphone-client-gnome/src/config/configwindow.c:674
 msgid "SIP Port"
 msgstr "SIP端口号"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:664
+#: ../../sflphone-client-gnome/src/config/configwindow.c:687
 msgid "Port:"
 msgstr "端口:"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:719
+#: ../../sflphone-client-gnome/src/config/configwindow.c:742
 msgid "_Recordings folder"
-msgstr ""
+msgstr "记录文件夹(R)"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:725
+#: ../../sflphone-client-gnome/src/config/configwindow.c:748
 msgid "Select a folder"
 msgstr "选择文件夹"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:750
+#: ../../sflphone-client-gnome/src/config/configwindow.c:773
 msgid "Preferences"
 msgstr "属性"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:770
+#: ../../sflphone-client-gnome/src/config/configwindow.c:793
 msgid "General Settings"
 msgstr "常用配置"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:775
+#: ../../sflphone-client-gnome/src/config/configwindow.c:798
 msgid "Audio Settings"
 msgstr "音频配置"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:780
-#, fuzzy
+#: ../../sflphone-client-gnome/src/config/configwindow.c:803
 msgid "Recordings"
 msgstr "记录"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:785
+#: ../../sflphone-client-gnome/src/config/configwindow.c:808
 msgid "Address Book"
 msgstr "地址簿"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:790
+#: ../../sflphone-client-gnome/src/config/configwindow.c:813
 msgid "Hooks"
 msgstr "钩键"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:817
+#: ../../sflphone-client-gnome/src/config/configwindow.c:840
 msgid "Accounts"
 msgstr "帐户"
 
-#: ../../sflphone-client-gnome/src/config/configwindow.c:829
-#, fuzzy
-msgid "Account previously setup"
-msgstr "以前帐户设置"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:852
+msgid "Configured Accounts"
+msgstr "已配置帐户"
 
 #: ../../sflphone-client-gnome/src/config/hooks-config.c:130
-msgid "URL argument"
-msgstr "URL参数"
+msgid "URL Passing"
+msgstr "传输URL"
 
 #: ../../sflphone-client-gnome/src/config/hooks-config.c:140
-msgid "_SIP protocol"
-msgstr "SIP 协议(S)"
-
-#: ../../sflphone-client-gnome/src/config/hooks-config.c:145
-msgid "_SIP Header: "
-msgstr "SIP消息头(S):"
-
-#: ../../sflphone-client-gnome/src/config/hooks-config.c:152
-msgid "_IAX2 protocol"
-msgstr "IAX2 协议(I)"
-
-#: ../../sflphone-client-gnome/src/config/hooks-config.c:157
-msgid "_Command: "
-msgstr "命令(C):"
-
-#: ../../sflphone-client-gnome/src/config/hooks-config.c:164
-msgid "Phone number formatting"
+#, c-format
+msgid ""
+"SFLphone can run custom commands if incoming calls come with an URL "
+"attached.\n"
+"In this case, %s will be replaced with the passed URL."
 msgstr ""
+"当来电有附加的URL时,SFLphone可运行客户命令.\n"
+"在此情况下,传输的URL会被替换成%s."
 
-#: ../../sflphone-client-gnome/src/config/hooks-config.c:174
-msgid "_Add phone number prefix"
-msgstr ""
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:143
+msgid "Trigger on specific _SIP header"
+msgstr "激活指定的SIP头(S)"
 
-#: ../../sflphone-client-gnome/src/config/hooks-config.c:179
-msgid "_Prepend: "
-msgstr ""
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:155
+msgid "Trigger on _IAX2 URL"
+msgstr "激活IAX2 URL(I)"
 
-#: ../../sflphone-client-gnome/src/contacts/history.c:75
-#: ../../sflphone-client-gnome/src/contacts/searchbar.c:94
-#, fuzzy
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:160
+msgid "_Command to run: "
+msgstr "运行命令(C):"
+
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:168
+msgid "Phone Number Rewriting"
+msgstr "重设电话号码"
+
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:178
+msgid "_Prefix dialed numbers with:"
+msgstr "号码前缀:"
+
+#: ../../sflphone-client-gnome/src/contacts/history.c:83
+#: ../../sflphone-client-gnome/src/contacts/searchbar.c:123
 msgid "Search history"
-msgstr "清空历史记录(C)"
+msgstr "查找历史记录"
 
-#: ../../sflphone-client-gnome/src/contacts/history.c:75
-#: ../../sflphone-client-gnome/src/contacts/searchbar.c:86
-#, fuzzy
+#: ../../sflphone-client-gnome/src/contacts/history.c:83
+#: ../../sflphone-client-gnome/src/contacts/searchbar.c:110
 msgid "Search contact"
-msgstr "查找历史(S)"
+msgstr "查找联系人(S)"
+
+#~ msgid "Registered to %s (%s)"
+#~ msgstr "注册到 %s (%s)"
+
+#~ msgid "%s account- %s             %s"
+#~ msgstr "%s 帐户- %s             %s"
+
+#~ msgid "Books"
+#~ msgstr "钩键"
+
+#~ msgid "_Enable"
+#~ msgstr "启用(E)"
+
+#~ msgid "_Notify voice mails"
+#~ msgstr "通知语音邮件(N)"
+
+#~ msgid "_Start hidden"
+#~ msgstr "启动时隐藏(S)"
+
+#~ msgid "_Maximum number of calls"
+#~ msgstr "最大拨号数(M)"
+
+#~ msgid "_Control running applications volume"
+#~ msgstr "控制正在运行的应用程序的音量(C)"
+
+#~ msgid "Account previously setup"
+#~ msgstr "帐户以前设置"
+
+#~ msgid "URL argument"
+#~ msgstr "URL参数"
+
+#~ msgid "_SIP protocol"
+#~ msgstr "SIP 协议(S)"
+
+#~ msgid "_SIP Header: "
+#~ msgstr "SIP消息头(S):"
+
+#~ msgid "_IAX2 protocol"
+#~ msgstr "IAX2 协议(I)"
 
 #~ msgid "Search"
 #~ msgstr "查找"
@@ -829,6 +867,3 @@ msgstr "查找历史(S)"
 
 #~ msgid "Apply"
 #~ msgstr "应用"
-
-#~ msgid "History empty"
-#~ msgstr "无历史记录"

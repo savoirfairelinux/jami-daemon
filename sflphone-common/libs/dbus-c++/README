@@ -1,0 +1,7 @@
+Debugging
+---------
+To compile debugging code configure the project with the --enable-debug option. Then at runtime you may set the environment variable "DBUSXX_VERBOSE=1" to activate debugging and to '0' to deactivate debugging.
+
+
+BUGS:
+-----

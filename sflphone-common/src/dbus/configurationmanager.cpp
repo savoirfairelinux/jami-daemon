@@ -33,6 +33,7 @@ const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/Configur
 {
 }
 
+      
 	std::map< std::string, std::string >
 ConfigurationManager::getAccountDetails( const std::string& accountID )
 {
@@ -55,11 +56,11 @@ ConfigurationManager::sendRegister( const std::string& accountID, const int32_t&
 	Manager::instance().sendRegister(accountID, expire);
 }
 
-	void
+	std::string
 ConfigurationManager::addAccount( const std::map< std::string, std::string >& details )
 {
 	_debug("ConfigurationManager::addAccount received\n");
-	Manager::instance().addAccount(details);
+	return Manager::instance().addAccount(details);
 }
 
 

@@ -139,6 +139,8 @@ class Call{
          * @return CallState  The call state
          */
         CallState getState();
+        
+        std::string getStateStr (CallState state);
 
         void setCallConfiguration (Call::CallConfiguration callConfig) { _callConfig = callConfig; }
         

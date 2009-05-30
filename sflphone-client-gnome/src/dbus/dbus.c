@@ -175,13 +175,18 @@ call_state_cb (DBusGProxy *proxy UNUSED,
   }
 }
 
+
 static void
 accounts_changed_cb (DBusGProxy *proxy UNUSED,
-                  void * foo  UNUSED )
+                     void * foo  UNUSED )
 {
   DEBUG ("Accounts changed");
   sflphone_fill_account_list(TRUE);
   config_window_fill_account_list();
+
+  // Update the status bar in case something happened
+  // Should fix ticket #1215
+  status_bar_display_account();
 }
 
 static void
@@ -189,7 +194,7 @@ error_alert(DBusGProxy *proxy UNUSED,
 		  int errCode,
                   void * foo  UNUSED )
 {
-  ERROR ("Error notifying : (%i)" , errCode);
+  ERROR ("Error notifying : (%i)", errCode);
   sflphone_throw_exception( errCode );
 }
 
@@ -321,7 +326,7 @@ dbus_connect ()
   }
   DEBUG ("DBus connected to ConfigurationManager");
   dbus_g_proxy_add_signal (configurationManagerProxy,
-    "accountsChanged", G_TYPE_INVALID);
+			   "accountsChanged", G_TYPE_INVALID);
   dbus_g_proxy_connect_signal (configurationManagerProxy,
     "accountsChanged", G_CALLBACK(accounts_changed_cb), NULL, NULL);
 
@@ -535,13 +540,15 @@ dbus_set_account_details(account_t *a)
   }
 }
 
-void
+gchar*
 dbus_add_account(account_t *a)
 {
+  gchar* accountId;
   GError *error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_add_account (
     configurationManagerProxy,
     a->properties,
+    &accountId,
     &error);
   if (error)
   {
@@ -549,6 +556,7 @@ dbus_add_account(account_t *a)
                 error->message);
     g_error_free (error);
   }
+  return accountId;
 }
 
 void
@@ -1614,6 +1622,20 @@ GHashTable* dbus_get_call_details (const gchar *callID)
     }
 
     return details;
+}
+
+gchar** dbus_get_call_list (void)
+{
+    GError *error = NULL;
+    gchar **list = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_call_list (callManagerProxy, &list, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_call_list");
+        g_error_free (error);
+    }
+
+    return list;
 }
 
 void dbus_set_accounts_order (const gchar* order) {

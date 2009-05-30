@@ -87,8 +87,6 @@ searchbar_init(calltab_t *tab)
 
 GtkWidget* searchbar_new(gchar* searchbar_type) {
 
-  // GtkWidget * searchbox;
-  GtkWidget* image;
   GtkWidget* ret = gtk_hbox_new(FALSE, 0);
 
 #if GTK_CHECK_VERSION(2,16,0)
@@ -102,12 +100,10 @@ GtkWidget* searchbar_new(gchar* searchbar_type) {
   sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(searchbox) );
 #endif
 
-  // GTK_WIDGET_SET_FLAGS (GTK_WIDGET(searchbox),GTK_CAN_FOCUS);
-  // gtk_widget_set_name (searchbox, "searchbar");
+
 
   gtk_widget_modify_text(searchbox, GTK_STATE_NORMAL, &GRAY_COLOR); 
 
-  gtk_entry_set_text(GTK_ENTRY(searchbox), _("Search contact"));
   g_signal_connect_after(GTK_ENTRY(searchbox), "changed", G_CALLBACK(searchbar_entry_changed), NULL);
   g_signal_connect_after(GTK_ENTRY(searchbox), "grab-focus", G_CALLBACK(searchbar_clear_entry_if_default), NULL);
 
@@ -118,13 +114,9 @@ GtkWidget* searchbar_new(gchar* searchbar_type) {
 
   gtk_box_pack_start(GTK_BOX(ret), searchbox, TRUE, TRUE, 0);
 
-    if(g_strcmp0(searchbar_type,"history") == 0)
-    {
-        gtk_entry_set_text(GTK_ENTRY(searchbox), _("Search history"));
-        history_set_searchbar_widget(searchbox);
-    }
+  history_set_searchbar_widget(searchbox);
   
-    return ret;
+  return ret;
 }
 
 void activateWaitingLayer() {
