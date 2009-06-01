@@ -159,23 +159,13 @@ void sflphone_kdeView::addCallToCallList(Call * call)
 
 void sflphone_kdeView::addCallToCallHistory(Call * call)
 {
-	qDebug() << "addCallToCallHistory1";
 	QListWidgetItem * item = call->getHistoryItem();
-	qDebug() << "addCallToCallHistory2";
 	QWidget * widget = call->getHistoryItemWidget();
-	qDebug() << "addCallToCallHistory3";
 	if(item && widget)
 	{
-		qDebug() << "addCallToCallHistory4";
 		listWidget_callHistory->addItem(item);
-		qDebug() << "addCallToCallHistory5";
-		qDebug() << "item = " << item;
-		qDebug() << "widget = " << widget;
-		qDebug() << "itemWidget(item) = " << listWidget_callHistory->itemWidget(item);
 		listWidget_callHistory->setItemWidget(item, widget);
-		qDebug() << "addCallToCallHistory6";
 	}
-	qDebug() << "addCallToCallHistory7";
 }
 
 void sflphone_kdeView::addContactToContactList(Contact * contact)
@@ -417,7 +407,7 @@ void sflphone_kdeView::updateWindowCallState()
 	bool recordActivated = false;
 	//tells whether the call can be recorded in the state it is right now
 	bool recordEnabled = false;
-	
+	enabledActions[5] = ! firstRegisteredAccount()->getAccountDetail(ACCOUNT_MAILBOX).isempty();
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
 		item = listWidget_callList->currentItem();
@@ -561,6 +551,7 @@ void sflphone_kdeView::updateWindowCallState()
 			enabledActions[1] = true;
 		}
 	}
+	
 	action_accept->setEnabled(enabledActions[0]);
 	action_refuse->setEnabled(enabledActions[1]);
 	action_hold->setEnabled(enabledActions[2]);

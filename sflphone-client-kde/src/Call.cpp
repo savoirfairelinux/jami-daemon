@@ -530,9 +530,10 @@ void Call::switchRecord()
 void Call::setRecord()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	qDebug() << "Setting record for call. callId : " << callId;
+	qDebug() << "Setting record " << !recording << " for call. callId : " << callId;
 	callManager.setRecording(callId);
 	recording = !recording;
+	updateItem();
 }
 
 void Call::start()
@@ -622,7 +623,7 @@ void Call::updateItem()
 		setItemIcon(ICON_CURRENT_REC);
 	else
 	{
-		QString str(callStateIcons[currentState]);
+		QString str = QString(callStateIcons[currentState]);
 		setItemIcon(str);
 	}
 	bool transfer = currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD;

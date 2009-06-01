@@ -678,6 +678,7 @@ void ConfigurationDialog::on_button_accountUp_clicked()
 	listWidget_accountList->insertItem(currentRow - 1 , item);
 	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
+	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountDown_clicked()
@@ -694,6 +695,7 @@ void ConfigurationDialog::on_button_accountDown_clicked()
 	listWidget_accountList->insertItem(currentRow + 1 , item);
 	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
+	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountAdd_clicked()
@@ -708,6 +710,7 @@ void ConfigurationDialog::on_button_accountAdd_clicked()
 		listWidget_accountList->setCurrentRow(r);
 		frame2_editAccounts->setEnabled(true);
 	}
+	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountRemove_clicked()
@@ -717,6 +720,7 @@ void ConfigurationDialog::on_button_accountRemove_clicked()
 	QListWidgetItem * item = listWidget_accountList->takeItem(r);
 	accountList->removeAccount(item);
 	listWidget_accountList->setCurrentRow( (r >= listWidget_accountList->count()) ? r-1 : r );
+	changedAccountList();
 }
 
 void ConfigurationDialog::on_toolButton_accountsApply_clicked()
