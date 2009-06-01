@@ -15,9 +15,16 @@ fi
 
 cd build
 
-autocmd cmake $@ ..
+# prefix=`echo $@ | grep -q "--prefix="`
+# 
+# if $prefix
+# then options=$@" -DCMAKE_INSTALL_PREFIX="$prefix_env
 
-echo $@
+options=`echo $@ | sed "s/--prefix=/-DCMAKE_INSTALL_PREFIX=/g"`
+
+autocmd cmake $options ..
+
+echo $options
 
 echo "**********************************************"
 echo "Configuration done!" 

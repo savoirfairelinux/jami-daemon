@@ -233,7 +233,7 @@ void AccountWizard::accept()
 	}
 	if(createAccount)
 	{
-		mailbox = ACCOUNT_MAILBOX_DEFAULT_VALUE;
+// 		mailbox = ACCOUNT_MAILBOX_DEFAULT_VALUE;
 		enabled = ACCOUNT_ENABLED_TRUE;
 		ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 		QString accountId = configurationManager.addAccount(accountDetails);
