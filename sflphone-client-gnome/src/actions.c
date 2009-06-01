@@ -448,6 +448,12 @@ sflphone_unset_transfert()
     toolbar_update_buttons();
 }
 
+void
+sflphone_display_transfer_status(const gchar* message)
+{
+    statusbar_push_message( message , __MSG_ACCOUNT_DEFAULT);
+}
+
     void
 sflphone_incoming_call (call_t * c)
 {
