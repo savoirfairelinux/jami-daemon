@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-06-01 09:58:11 -0400
+# Last Modified: 2009-06-01 19:11:22 -0400
 #####################################################
 
 #
@@ -77,7 +77,7 @@ export EDITOR
 
 NON_FATAL_ERRORS=""
 
-MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" "opensuse-11")
+MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" "opensuse-11" "opensuse-11-64" "mandriva-2009.1" )
 
 #########################
 # BEGIN
@@ -307,6 +307,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 	echo "Entering main loop"
 	echo
 
+	rm -f ${PACKAGING_RESULT_DIR}/stats.log
 	for MACHINE in ${MACHINES[*]}
 	do
 
@@ -317,7 +318,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 		else
 			cd ${VBOX_USER_HOME} && VBoxHeadless -startvm "${MACHINE}" -p 50000 &
 			if [[ ${MACHINE} =~ "opensuse" ]]; then
-				STARTUP_WAIT=120
+				STARTUP_WAIT=200
 			fi
 			echo "Wait ${STARTUP_WAIT} s"
 			sleep ${STARTUP_WAIT}
@@ -331,26 +332,30 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Cannot deploy packaging system"
-			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+			echo "${MACHINE} : Cannot deploy packaging system" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        else
 
-		echo "Launch remote build"
-		${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR} && ./build-packages.sh ${RELEASE_MODE}"
+			echo "Launch remote build"
+			${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR} && ./build-packages.sh ${RELEASE_MODE}"
 
-		if [ "$?" -ne "0" ]; then
-	                echo " !! Error during remote packaging process"
-			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+			if [ "$?" -ne "0" ]; then
+	                	echo " !! Error during remote packaging process"
+				echo "${MACHINE} : Error during remote packaging process" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        	else
 
-		echo "Retrieve dists and log files (current tag is ${TAG})"
-		${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/deb ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
-		${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/rpm ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
-		${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}"/*.log" ${PACKAGING_RESULT_DIR}/
+				echo "Retrieve dists and log files (current tag is ${TAG})"
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/deb ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/rpm ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}"/*.log" ${PACKAGING_RESULT_DIR}/
 
-		if [ "$?" -ne "0" ]; then
-	                echo " !! Cannot retrieve remote files"
-	                NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+				if [ "$?" -ne "0" ]; then
+	        		        echo " !! Cannot retrieve remote files"
+					echo "${MACHINE} : Cannot retrieve remote files" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        		else
+					echo "${MACHINE} : OK" >> ${PACKAGING_RESULT_DIR}/stats.log
+				fi
+			fi
+		fi
 
 		if [ "${VM_STATE}" = "running" ]; then
 			echo "Leave machine running"

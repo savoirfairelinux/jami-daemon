@@ -17,6 +17,8 @@ PACKAGING_DIR="${ROOT_DIR}/sflphone-packaging"
 # distributions
 UBUNTU_DIR="${PACKAGING_DIR}/ubuntu"
 OPENSUSE_DIR="${PACKAGING_DIR}/opensuse"
+MANDRIVA_DIR="${PACKAGING_DIR}/mandriva"
+FEDORA_DIR="${PACKAGING_DIR}/fedora"
 
 # where packaging will be donne
 BUILD_DIR="${PACKAGING_DIR}/build"

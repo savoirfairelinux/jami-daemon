@@ -14,20 +14,20 @@ License:        GNU General Public License (GPL)
 Group:          Productivity/Networking/System
 Summary:        GNOME client for SFLphone
 Version:        VERSION
-Release:        opensuse
+Release:        mandriva
 URL:            http://www.sflphone.org/
 Vendor:		Savoir-faire Linux
 Packager:       Julien Bonjean <julien.bonjean@savoirfairelinux.com>
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}
 Source0:        sflphone-client-gnome.tar.gz
-BuildRequires:	liblog4c-devel
 BuildRequires:	gtk2-devel
-BuildRequires:	dbus-1-glib-devel
 BuildRequires:	libnotify-devel
 BuildRequires:	libsexy-devel
 BuildRequires:	evolution-data-server-devel
 BuildRequires:	check-devel
+BuildRequires:	libdbus-glib-devel
+BuildRequires:	log4c-devel
 Requires:	sflphone-common = %{version}
 Requires:	dbus-1-glib
 Requires:	gtk2
@@ -35,7 +35,7 @@ Requires:	glib2
 Requires:	dbus-1-glib
 Requires:	libnotify
 Requires:	librsvg
-Requires:	liblog4c3
+Requires:	log4c
 Requires:	libsexy
 Conflicts:	sflphone
 Prefix:		%{_prefix}

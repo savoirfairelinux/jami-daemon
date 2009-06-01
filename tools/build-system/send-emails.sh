@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-29 18:09:44 -0400
+# Last Modified: 2009-06-01 18:11:20 -0400
 #####################################################
 
 TAG=`date +%Y-%m-%d`
@@ -34,7 +34,7 @@ else
 #		uuencode $i $(basename $i)
 #	done
 #	)
-	echo | mail -s "${MAIL_SUBJECT}" -c emmanuel.milou@savoirfairelinux.com julien.bonjean@savoirfairelinux.com 
+	cat ${PACKAGING_RESULT_DIR}/stats.log | mail -s "${MAIL_SUBJECT}" -c emmanuel.milou@savoirfairelinux.com julien.bonjean@savoirfairelinux.com 
 fi
 
 exit 0

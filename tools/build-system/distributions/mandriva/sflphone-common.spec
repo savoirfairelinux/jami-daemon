@@ -14,15 +14,14 @@ License:        GNU General Public License (GPL)
 Group:          System Environment/Daemons
 Summary:        SIP and IAX2 compatible softphone - Core
 Version:        VERSION
-Release:        opensuse
+Release:        mandriva
 URL:            http://www.sflphone.org/
 Vendor:         Savoir-faire Linux
 Packager:	Julien Bonjean <julien.bonjean@savoirfairelinux.com>
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}
 Source0:        sflphone-common.tar.gz
-BuildRequires:	libpulse-devel
-BuildRequires:	commoncpp2-devel
+BuildRequires:	glibc-devel
 BuildRequires:	libccrtp-devel
 BuildRequires:	libsamplerate-devel
 BuildRequires:	dbus-1-devel
@@ -30,8 +29,10 @@ BuildRequires:	libexpat-devel
 BuildRequires:	libgsm-devel
 BuildRequires:	speex-devel
 BuildRequires:	libcppunit-devel
-BuildRequires:	alsa-devel
-BuildRequires:	libuuid-devel
+BuildRequires:	libcommoncpp-devel
+BuildRequires:	libalsa2-devel
+BuildRequires:	libpulseaudio-devel
+BuildRequires:	libext2fs-devel
 Requires:	libsamplerate
 Requires:	libexpat1
 Requires:	commoncpp2
