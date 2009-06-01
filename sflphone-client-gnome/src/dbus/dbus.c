@@ -189,6 +189,25 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
   status_bar_display_account();
 }
 
+
+static void
+transfer_succeded_cb (DBusGProxy *proxy UNUSED,
+                     void * foo  UNUSED )
+{
+  DEBUG ("Accounts changed");
+  
+}
+
+
+static void
+transfer_failed_cb (DBusGProxy *proxy UNUSED,
+                     void * foo  UNUSED )
+{
+  DEBUG ("Accounts changed");
+  
+}
+
+
 static void
 error_alert(DBusGProxy *proxy UNUSED,
 		  int errCode,
@@ -329,6 +348,16 @@ dbus_connect ()
 			   "accountsChanged", G_TYPE_INVALID);
   dbus_g_proxy_connect_signal (configurationManagerProxy,
     "accountsChanged", G_CALLBACK(accounts_changed_cb), NULL, NULL);
+
+  dbus_g_proxy_add_signal (callManagerProxy,
+			   "transferSucceded", G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (callManagerProxy,
+    "transferSucceded", G_CALLBACK(transfer_succeded_cb), NULL, NULL);
+
+  dbus_g_proxy_add_signal (callManagerProxy,
+			   "transferFailed", G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (callManagerProxy,
+    "transferFailed", G_CALLBACK(transfer_failed_cb), NULL, NULL);
 
   dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__INT,
           G_TYPE_NONE, G_TYPE_INT , G_TYPE_INVALID);
