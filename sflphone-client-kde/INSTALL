@@ -50,6 +50,6 @@ Options
 
 You can change the prefix of the installation using:
 
-	.config.sh -DCMAKE_INSTALL_PREFIX="expected_prefix_directory"
+	.config.sh --prefix="expected_prefix_directory"
 
 By default, it is set to /usr.

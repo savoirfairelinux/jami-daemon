@@ -81,8 +81,8 @@
 #define ICON_ACCEPT                       ":/images/icons/accept.svg"
 #define ICON_REFUSE                       ":/images/icons/refuse.svg"
 #define ICON_EXEC_TRANSF                  ":/images/icons/call.svg"
-#define ICON_REC_DEL_OFF                  ":/images/icons/del_off.png"
-#define ICON_REC_DEL_ON                   ":/images/icons/del_on.png"
+#define ICON_REC_DEL_OFF                  ":/images/icons/record_disabled.svg"
+#define ICON_REC_DEL_ON                   ":/images/icons/record.svg"
 
 #define ICON_REC_VOL_0                    ":/images/icons/mic.svg"
 #define ICON_REC_VOL_1                    ":/images/icons/mic_25.svg"
