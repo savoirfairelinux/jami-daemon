@@ -407,7 +407,7 @@ void sflphone_kdeView::updateWindowCallState()
 	bool recordActivated = false;
 	//tells whether the call can be recorded in the state it is right now
 	bool recordEnabled = false;
-	enabledActions[5] = ! firstRegisteredAccount()->getAccountDetail(ACCOUNT_MAILBOX).isempty();
+	enabledActions[5] = ! firstRegisteredAccount()->getAccountDetail(ACCOUNT_MAILBOX).isEmpty();
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
 		item = listWidget_callList->currentItem();
