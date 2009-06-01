@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-29 17:21:22 -0400
+# Last Modified: 2009-06-01 09:58:11 -0400
 #####################################################
 
 #
@@ -316,6 +316,9 @@ if [ ${DO_MAIN_LOOP} ]; then
 			echo "Not needed, already running"
 		else
 			cd ${VBOX_USER_HOME} && VBoxHeadless -startvm "${MACHINE}" -p 50000 &
+			if [[ ${MACHINE} =~ "opensuse" ]]; then
+				STARTUP_WAIT=120
+			fi
 			echo "Wait ${STARTUP_WAIT} s"
 			sleep ${STARTUP_WAIT}
 		fi

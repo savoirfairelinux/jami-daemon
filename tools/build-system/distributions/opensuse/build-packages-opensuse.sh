@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-27
-# Last Modified: 2009-05-29 16:50:27 -0400
+# Last Modified: 2009-05-29 18:11:44 -0400
 #####################################################
 
 . ../globals
@@ -20,7 +20,7 @@ if [ "$?" -ne "0" ]; then
 fi
 
 echo "Do updates"
-#sudo /usr/bin/zypper -n update >/dev/null
+sudo /usr/bin/zypper -n update >/dev/null
 
 # create build directories
 echo "Create directories"
