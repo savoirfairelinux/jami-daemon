@@ -230,6 +230,7 @@ GtkWidget* build_sfl_or_account() {
 GtkWidget* build_sip_account_configuration( void ) {
 	GtkWidget* table;
 	GtkWidget* label;
+    GtkWidget *image;
 
 	wiz->sip_account = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("SIP account configuration") , _("Please fill the following information:"));
 	// table

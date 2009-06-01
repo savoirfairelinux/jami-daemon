@@ -94,6 +94,9 @@ GtkWidget* searchbar_new(gchar* searchbar_type) {
   gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
   gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
 #else
+    
+  GtkWidget *image;
+
   searchbox = sexy_icon_entry_new();
   image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
   sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(searchbox), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
