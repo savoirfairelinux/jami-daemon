@@ -326,6 +326,7 @@ GtkWidget* build_email_configuration( void ) {
 GtkWidget* build_iax_account_configuration( void ) {
 	GtkWidget* label;
 	GtkWidget*  table;
+    GtkWidget *image;
 
 	wiz->iax_account = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("IAX2 account configuration") , _("Please fill the following information:"));
 
