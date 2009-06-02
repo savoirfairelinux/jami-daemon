@@ -25,10 +25,6 @@
 #ifndef __DBUSXX_API_H
 #define __DBUSXX_API_H
 
-#ifdef DBUS_HAVE_CONFIG_H
-#include <dbus-c++/config.h>
-#endif
-
 #ifdef GCC_HASCLASSVISIBILITY
 # define DXXAPILOCAL __attribute__ ((visibility("hidden")))
 # define DXXAPIPUBLIC __attribute__ ((visibility("default")))

@@ -20,6 +20,13 @@
 #include <stdio.h>
 #include <sstream>
 #include <ccrtp/rtp.h>
+#include <assert.h>
+#include <string>
+#include <cstring>
+#include <math.h>
+#include <dlfcn.h>
+#include <iostream>
+#include <sstream>
 
 
 #include "rtpTest.h"
@@ -33,18 +40,44 @@ using std::endl;
 
 void RtpTest::setUp(){
 
+  _debug("------ Set up rtp test------\n");
+
     Manager::instance().initConfigFile();
     Manager::instance().init();
 
-    CallID cid = "123456";
-        
-    audiortp = new AudioRtp();
+    pjsipInit();
 
-    sipcall = new SIPCall(cid, Call::Incoming, NULL);
+    CallID cid = "123456";
+
+    sipcall = new SIPCall(cid, Call::Incoming, _pool);
+    
+    sipcall->setLocalIp("127.0.0.1");
+    sipcall->setLocalAudioPort(RANDOM_LOCAL_PORT);
+    sipcall->setLocalExternAudioPort(RANDOM_LOCAL_PORT);
+
+    
 }
 
-void RtpTest::testRtpInit()
+bool RtpTest::pjsipInit(){
+
+    // Create memory cache for pool
+    pj_caching_pool_init(&_cp, &pj_pool_factory_default_policy, 0);
+
+    // Create memory pool for application. 
+    _pool = pj_pool_create(&_cp.factory, "rtpTest", 4000, 4000, NULL);
+
+    if (!_pool) {
+        _debug("----- RtpTest: Could not initialize pjsip memory pool ------\n");
+        return PJ_ENOMEM;
+    }
+
+}
+
+
+void RtpTest::testRtpInitClose()
 {
+
+    audiortp = new AudioRtp();
 
     _debug("------ void RtpTest::testRtpInit() ------\n");
     try {
@@ -54,17 +87,16 @@ void RtpTest::testRtpInit()
 
     } catch(...) {
         
-        _debug("!!! Exception occured while Oppenning Rtp \n");
+        _debug("!!! Exception occured while Oppenning Rtp !!!\n");
 	
     }
 
-}
+    CPPUNIT_ASSERT(audiortp != NULL);
     
+    _debug("------ Finilize Rtp Initialization ------ \n");
 
-void RtpTest::testRtpClose()
-{
 
-  _debug("------ RtpTest::testRtpClose() ------");
+    _debug("------ RtpTest::testRtpClose() ------\n");
 
     try {
       _debug("------ Close Rtp Session -------\n");  
@@ -72,14 +104,46 @@ void RtpTest::testRtpClose()
 
     } catch(...) {
 
-        _debug("!!! Exception occured while closing Rtp \n");
+        _debug("!!! Exception occured while closing Rtp !!!\n");
 
     }
 
+    delete audiortp;  audiortp = NULL;
+
+}
+
+void RtpTest::testRtpThread()
+{
+
+    _debug("------ void RtpTest::testRtpThread ------\n");
+
+    
+
+    if(rtpthread != 0){
+        _debug("!!! Rtp Thread already exists..., stopping it\n"); 
+	delete rtpthread;  rtpthread = 0;
+    }
+
+    CPPUNIT_ASSERT(rtpthread == 0);
+    // CPPUNIT_ASSERT(rtpthread->_sym == NULL);
+
+    try {
+
+        rtpthread = new AudioRtpRTX(sipcall, true);
+	
+    } catch(...) {
+
+        _debug("!!! Exception occured while instanciating AudioRtpRTX !!!\n");
+
+    }
+
+    CPPUNIT_ASSERT(rtpthread == 0);
+
+    delete rtpthread;  rtpthread = 0;
 }
 
 
 void RtpTest::tearDown(){
 
-    delete audiortp;  audiortp = NULL;
+    delete sipcall;   sipcall = NULL;
 }

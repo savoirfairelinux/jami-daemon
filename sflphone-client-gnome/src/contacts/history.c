@@ -57,7 +57,6 @@ static GtkTreeModel*
 history_create_filter (GtkTreeModel* child) {
 
   GtkTreeModel* ret;
-  GtkTreePath  *path; 
 
   DEBUG("Create Filter\n");
   ret = gtk_tree_model_filter_new(child, NULL);
@@ -79,8 +78,7 @@ history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED
         if(G_VALUE_HOLDS_STRING(&val)){
             text = (gchar *)g_value_get_string(&val);
         }
-        if(text != NULL && 
-                ( g_ascii_strncasecmp(search, _("Search history"), 14) != 0 && g_ascii_strncasecmp(search, _("Search contact"), 14) != 0)){
+        if(text != NULL ){
             return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
         }
         g_value_unset (&val);

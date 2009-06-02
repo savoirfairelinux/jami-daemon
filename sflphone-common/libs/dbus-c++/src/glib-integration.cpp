@@ -21,7 +21,9 @@
  *
  */
 
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <dbus-c++/glib-integration.h>
 
 #include <dbus/dbus.h> // for DBUS_WATCH_*
@@ -29,9 +31,10 @@
 using namespace DBus;
 
 Glib::BusTimeout::BusTimeout(Timeout::Internal *ti, GMainContext *ctx, int priority)
-: Timeout(ti), _ctx(ctx), _priority(priority)
+: Timeout(ti), _ctx(ctx), _priority(priority), _source(NULL)
 {
-	_enable();
+	if (Timeout::enabled())
+		_enable();
 }
 
 Glib::BusTimeout::~BusTimeout()
@@ -58,6 +61,9 @@ gboolean Glib::BusTimeout::timeout_handler(gpointer data)
 
 void Glib::BusTimeout::_enable()
 {
+	if (_source)
+		_disable(); // be sane
+
 	_source = g_timeout_source_new(Timeout::interval());
 	g_source_set_priority(_source, _priority);
 	g_source_set_callback(_source, timeout_handler, this, NULL);
@@ -66,7 +72,11 @@ void Glib::BusTimeout::_enable()
 
 void Glib::BusTimeout::_disable()
 {
-	g_source_destroy(_source);
+	if (_source)
+	{
+		g_source_destroy(_source);
+		_source = NULL;
+	}
 }
 
 struct BusSource
@@ -77,7 +87,7 @@ struct BusSource
 
 static gboolean watch_prepare(GSource *source, gint *timeout)
 {
-//	debug_log("glib: watch_prepare");
+	//debug_log("glib: watch_prepare");
 
 	*timeout = -1;
 	return FALSE;
@@ -85,7 +95,7 @@ static gboolean watch_prepare(GSource *source, gint *timeout)
 
 static gboolean watch_check(GSource *source)
 {
-//	debug_log("glib: watch_check");
+	//debug_log("glib: watch_check");
 
 	BusSource *io = (BusSource *)source;
 	return io->poll.revents ? TRUE : FALSE;
@@ -96,7 +106,6 @@ static gboolean watch_dispatch(GSource *source, GSourceFunc callback, gpointer d
 	debug_log("glib: watch_dispatch");
 
 	gboolean cb = callback(data);
-	DBus::default_dispatcher->dispatch_pending(); //TODO: won't work in case of multiple dispatchers
 	return cb;
 }
 
@@ -108,9 +117,10 @@ static GSourceFuncs watch_funcs = {
 };
 
 Glib::BusWatch::BusWatch(Watch::Internal *wi, GMainContext *ctx, int priority)
-: Watch(wi), _ctx(ctx), _priority(priority)
+: Watch(wi), _ctx(ctx), _priority(priority), _source(NULL)
 {
-	_enable();
+	if (Watch::enabled())
+		_enable();
 }
 
 Glib::BusWatch::~BusWatch()
@@ -149,6 +159,8 @@ gboolean Glib::BusWatch::watch_handler(gpointer data)
 
 void Glib::BusWatch::_enable()
 {
+	if (_source)
+		_disable(); // be sane
 	_source = g_source_new(&watch_funcs, sizeof(BusSource));
 	g_source_set_priority(_source, _priority);
 	g_source_set_callback(_source, watch_handler, this, NULL);
@@ -158,8 +170,8 @@ void Glib::BusWatch::_enable()
 
 	if (flags &DBUS_WATCH_READABLE)
 		condition |= G_IO_IN;
-//	if (flags &DBUS_WATCH_WRITABLE)
-//		condition |= G_IO_OUT;
+	if (flags &DBUS_WATCH_WRITABLE)
+		condition |= G_IO_OUT;
 	if (flags &DBUS_WATCH_ERROR)
 		condition |= G_IO_ERR;
 	if (flags &DBUS_WATCH_HANGUP)
@@ -176,14 +188,91 @@ void Glib::BusWatch::_enable()
 
 void Glib::BusWatch::_disable()
 {
+	if (!_source)
+		return;
 	GPollFD *poll = &(((BusSource *)_source)->poll);
 	g_source_remove_poll(_source, poll);
 	g_source_destroy(_source);
+	_source = NULL;
+}
+
+/*
+ * We need this on top of the IO handlers, because sometimes
+ * there are messages to dispatch queued up but no IO pending.
+ * (fixes also a previous problem of code not working in case of multiple dispatchers)
+*/
+struct DispatcherSource
+{
+	GSource source;
+	Dispatcher *dispatcher;
+};
+
+
+static gboolean dispatcher_prepare(GSource *source, gint *timeout)
+{
+	Dispatcher *dispatcher = ((DispatcherSource*)source)->dispatcher;
+  
+  	*timeout = -1;
+
+  	return dispatcher->has_something_to_dispatch()? TRUE:FALSE;
+}
+
+static gboolean dispatcher_check(GSource *source)
+{
+  	return FALSE;
+}
+
+static gboolean
+dispatcher_dispatch(GSource *source,
+                    GSourceFunc callback,
+                    gpointer user_data)
+{
+  	Dispatcher *dispatcher = ((DispatcherSource*)source)->dispatcher;
+
+	dispatcher->dispatch_pending();
+  	return TRUE;
+}
+
+static const GSourceFuncs dispatcher_funcs = {
+	dispatcher_prepare,
+	dispatcher_check,
+	dispatcher_dispatch,
+	NULL
+};
+
+Glib::BusDispatcher::BusDispatcher()
+: _ctx(NULL), _priority(G_PRIORITY_DEFAULT), _source(NULL)
+{
+}
+
+Glib::BusDispatcher::~BusDispatcher()
+{
+	if (_source)
+	{
+		GSource *temp = _source;
+		_source = NULL;
+
+		g_source_destroy (temp);
+		g_source_unref (temp);
+	}
+
+	if (_ctx)
+		g_main_context_unref(_ctx);
 }
 
 void Glib::BusDispatcher::attach(GMainContext *ctx)
 {
+	g_assert(_ctx == NULL); // just to be sane
+
 	_ctx = ctx ? ctx : g_main_context_default();
+ 	g_main_context_ref(_ctx);
+	
+	// create the source for dispatching messages
+	_source = g_source_new((GSourceFuncs *) &dispatcher_funcs,
+	                       sizeof(DispatcherSource));
+
+	((DispatcherSource*)_source)->dispatcher = this;
+	g_source_attach (_source, _ctx);
 }
 
 Timeout *Glib::BusDispatcher::add_timeout(Timeout::Internal *wi)

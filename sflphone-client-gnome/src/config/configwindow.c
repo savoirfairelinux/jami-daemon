@@ -85,6 +85,7 @@ GtkWidget * widg;
     void
 config_window_fill_account_list()
 {
+    
     if(accDialogOpen)
     {
         GtkTreeIter iter;
@@ -94,9 +95,10 @@ config_window_fill_account_list()
         for(i = 0; i < account_list_get_size(); i++)
         {
             account_t * a = account_list_get_nth (i);
+	    
             if (a)
             {
-                DEBUG("fill account list : %s" , (gchar*)g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
+
                 gtk_list_store_append (accountStore, &iter);
                 gtk_list_store_set(accountStore, &iter,
                         COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
@@ -257,6 +259,7 @@ enable_account(GtkCellRendererToggle *rend UNUSED, gchar* path,  gpointer data )
 
     // Modify account state
     g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
+
     dbus_send_register( acc->accountID , enable );
 }
 
@@ -755,7 +758,12 @@ create_recording_settings ()
     return ret;
 }
 
+void save_configuration_parameters (void) {
 
+    addressbook_config_save_parameters ();
+    hooks_save_parameters ();
+
+}
 
 /**
  * Show configuration window with tabs
@@ -887,9 +895,4 @@ void config_window_set_stun_visible()
     gtk_widget_set_sensitive( GTK_WIDGET(stunFrame), TRUE );
 }
 
-void save_configuration_parameters (void) {
 
-    addressbook_config_save_parameters ();
-    hooks_save_parameters ();
-
-}

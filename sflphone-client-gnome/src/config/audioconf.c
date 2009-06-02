@@ -393,9 +393,9 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     // printf("%s, %s\n", name, srate);
 
     // codec_list_get_by_name(name);
-    if ((strcmp(name,"speex")==0) && (strcmp(srate,"8 kHz")==0))
+    if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"8 kHz")==0))
         codec = codec_list_get_by_payload(110);
-    else if ((strcmp(name,"speex")==0) && (strcmp(srate,"16 kHz")==0))
+    else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"16 kHz")==0))
         codec = codec_list_get_by_payload(111);
     else
         codec = codec_list_get_by_name(name);

@@ -25,10 +25,6 @@
 #ifndef __DBUSXX_SERVER_H
 #define __DBUSXX_SERVER_H
 
-#ifdef DBUS_HAVE_CONFIG_H
-#include <dbus-c++/config.h>
-#endif
-
 #include <list>
 
 #include "api.h"
@@ -63,7 +59,7 @@ public:
 
 protected:
 
-	Server(const Server & /* s */)
+	Server(const Server &s)
 	{}
 
 	virtual void on_new_connection(Connection &c) = 0;

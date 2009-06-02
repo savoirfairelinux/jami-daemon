@@ -146,6 +146,12 @@ CallManager::getCallDetails( const std::string& callID )
     return Manager::instance().getCallDetails (callID);
 }
 
+std::vector< std::string >
+CallManager::getCallList (void)
+{
+    return Manager::instance().getCallList();
+}
+        
 std::string 
 CallManager::getCurrentCallID(  )
 {

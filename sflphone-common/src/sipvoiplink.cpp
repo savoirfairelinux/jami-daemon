@@ -1590,8 +1590,8 @@ bool SIPVoIPLink::pjsip_init()
 	status = pjsip_xfer_init_module ( _endpt );
 	PJ_ASSERT_RETURN ( status == PJ_SUCCESS, 1 );
 
-	//status = enable_dns_srv_resolver (_endpt, &p_resv);
-	//PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+	status = enable_dns_srv_resolver (_endpt, &p_resv);
+	PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
 	// Init the callback for INVITE session:
 	pj_bzero ( &inv_cb, sizeof ( inv_cb ) );

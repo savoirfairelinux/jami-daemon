@@ -313,7 +313,7 @@
 -->    
 
     <signal name="accountsChanged">
-    </signal>
+    </signal>  
 
     <signal name="errorAlert">
       <arg type="i" name="code" direction="out"/>
