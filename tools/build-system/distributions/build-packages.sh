@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-29
-# Last Modified: 2009-05-29 15:18:56 -0400
+# Last Modified: 2009-06-01 17:27:25 -0400
 #####################################################
 
 . ./globals
@@ -53,7 +53,7 @@ fi
 
 # decompress repository
 echo "Untar repository"
-cd ${BUILD_DIR} && tar xf ${REPOSITORY_ARCHIVE}
+cd ${BUILD_DIR} && tar xf ${REPOSITORY_ARCHIVE} >/dev/null 2>&1
 
 if [ "$?" -ne "0" ]; then
         echo " !! Cannot untar repository"
@@ -68,6 +68,14 @@ if [ "${DISTRIBUTION}" = "ubuntu" ];then
 elif [ "${DISTRIBUTION}" = "opensuse" ]; then
 	echo "Launch packaging for openSUSE 11"
 	cd ${OPENSUSE_DIR} && ./build-packages-opensuse.sh $*
+
+elif [ "${DISTRIBUTION}" = "mandriva" ]; then
+	echo "Launch packaging for Mandriva 2009.1"
+	cd ${MANDRIVA_DIR} && ./build-packages-mandriva.sh $*
+
+elif [ "${DISTRIBUTION}" = "fedora" ]; then
+	echo "Launch packaging for Fedora 11"
+	cd ${FEDORA_DIR} && ./build-packages-fedora.sh $*
 
 else
 	echo "!! Cannot detect distribution"

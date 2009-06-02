@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-29 14:23:45 -0400
+# Last Modified: 2009-06-01 19:11:22 -0400
 #####################################################
 
 #
@@ -40,7 +40,6 @@ REMOTE_ROOT_DIR="/home/sflphone"
 SCRIPTS_DIR="${ROOT_DIR}/build-system"
 PACKAGING_SCRIPTS_DIR="${SCRIPTS_DIR}/remote"
 DISTRIBUTION_SCRIPTS_DIR="${SCRIPTS_DIR}/distributions"
-BIN_DIR="${SCRIPTS_DIR}/bin"
 
 # directory that will be deployed to remote machine
 TODEPLOY_DIR="${ROOT_DIR}/sflphone-packaging"
@@ -78,7 +77,7 @@ export EDITOR
 
 NON_FATAL_ERRORS=""
 
-MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" )
+MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" "opensuse-11" "opensuse-11-64" "mandriva-2009.1" )
 
 #########################
 # BEGIN
@@ -125,7 +124,7 @@ do
 		RELEASE_MODE=(${PARAMETER##*=});;
 	--list-machines)
 		echo "Available machines :"
-		for MACHINE in ${MACHINES}; do
+		for MACHINE in ${MACHINES[@]}; do
 			echo " "${MACHINE}
 		done
 		exit 0;;
@@ -308,6 +307,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 	echo "Entering main loop"
 	echo
 
+	rm -f ${PACKAGING_RESULT_DIR}/stats.log
 	for MACHINE in ${MACHINES[*]}
 	do
 
@@ -317,6 +317,9 @@ if [ ${DO_MAIN_LOOP} ]; then
 			echo "Not needed, already running"
 		else
 			cd ${VBOX_USER_HOME} && VBoxHeadless -startvm "${MACHINE}" -p 50000 &
+			if [[ ${MACHINE} =~ "opensuse" ]]; then
+				STARTUP_WAIT=200
+			fi
 			echo "Wait ${STARTUP_WAIT} s"
 			sleep ${STARTUP_WAIT}
 		fi
@@ -329,25 +332,30 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Cannot deploy packaging system"
-			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+			echo "${MACHINE} : Cannot deploy packaging system" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        else
 
-		echo "Launch remote build"
-		${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR} && ./build-packages.sh ${RELEASE_MODE}"
+			echo "Launch remote build"
+			${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR} && ./build-packages.sh ${RELEASE_MODE}"
 
-		if [ "$?" -ne "0" ]; then
-	                echo " !! Error during remote packaging process"
-			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+			if [ "$?" -ne "0" ]; then
+	                	echo " !! Error during remote packaging process"
+				echo "${MACHINE} : Error during remote packaging process" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        	else
 
-		echo "Retrieve dists and log files (current tag is ${TAG})"
-		${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/dists ${PACKAGING_RESULT_DIR}/
-		${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}"/*.log" ${PACKAGING_RESULT_DIR}/
+				echo "Retrieve dists and log files (current tag is ${TAG})"
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/deb ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/rpm ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}"/*.log" ${PACKAGING_RESULT_DIR}/
 
-		if [ "$?" -ne "0" ]; then
-	                echo " !! Cannot retrieve remote files"
-	                NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+				if [ "$?" -ne "0" ]; then
+	        		        echo " !! Cannot retrieve remote files"
+					echo "${MACHINE} : Cannot retrieve remote files" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        		else
+					echo "${MACHINE} : OK" >> ${PACKAGING_RESULT_DIR}/stats.log
+				fi
+			fi
+		fi
 
 		if [ "${VM_STATE}" = "running" ]; then
 			echo "Leave machine running"
@@ -387,8 +395,8 @@ if [ ${DO_SIGNATURES} ]; then
 	fi	
 
 	echo "Sign packages"
-	find ${PACKAGING_RESULT_DIR} -name "*.deb" -exec dpkg-sig -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {} \; >/dev/null 2>&1
-	find ${PACKAGING_RESULT_DIR} -name "*.changes" -printf "debsign -k'Savoir-Faire Linux Inc.' %p\n" | sh >/dev/null 2>&1
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.deb" -exec dpkg-sig -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {} \; >/dev/null 2>&1
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.changes" -printf "debsign -k'Savoir-Faire Linux Inc.' %p\n" | sh >/dev/null 2>&1
 fi
 
 #########################
@@ -410,7 +418,7 @@ if [ ${DO_UPLOAD} ]; then
 	
 	echo "Upload packages"
 	echo "Install dists files to repository"
-	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/dists ${SSH_REPOSITORY_HOST}:
+	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/deb/dists ${SSH_REPOSITORY_HOST}:
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot upload packages"
