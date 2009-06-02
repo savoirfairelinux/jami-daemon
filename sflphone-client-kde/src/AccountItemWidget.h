@@ -28,7 +28,7 @@
 #include <kled.h>
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class AccountItemWidget : public QWidget
 {

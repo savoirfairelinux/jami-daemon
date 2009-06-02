@@ -47,6 +47,8 @@
 #define PAGE_ACCOUNTS                     2
 #define PAGE_AUDIO                        3
 
+#define TOOLBAR_SIZE                      22
+
 #define CONTACT_ITEM_HEIGHT               40
 
 #define CONFIG_FILE_PATH                  "/.sflphone/sflphonedrc"
