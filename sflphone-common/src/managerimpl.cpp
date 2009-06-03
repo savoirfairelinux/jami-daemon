@@ -504,6 +504,18 @@ ManagerImpl::transferCall(const CallID& id, const std::string& to)
     return returnValue;
 }
 
+void ManagerImpl::transferFailed()
+{
+  if(_dbus) _dbus->getCallManager()->transferFailed();
+}
+
+void ManagerImpl::transferSucceded()
+{
+  if(_dbus) _dbus->getCallManager()->transferSucceded();
+
+}
+
+
 //THREAD=Main : Call:Incoming
   bool
 ManagerImpl::refuseCall (const CallID& id)

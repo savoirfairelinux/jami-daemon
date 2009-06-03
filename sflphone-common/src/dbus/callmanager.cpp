@@ -84,6 +84,8 @@ CallManager::transfert( const std::string& callID, const std::string& to )
     Manager::instance().transferCall(callID, to);
 }
 
+
+
 void
 CallManager::setVolume( const std::string& device, const double& value )
 {
