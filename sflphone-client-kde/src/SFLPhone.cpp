@@ -120,7 +120,7 @@ void SFLPhone::setupActions()
 	toolbar->addAction(view->action_addressBook);
 	toolbar->addSeparator();
 	toolbar->addAction(view->action_mailBox);
-	toolbar->setIconSize(QSize(24,24));
+	toolbar->setIconSize(QSize(TOOLBAR_SIZE,TOOLBAR_SIZE));
 	
 	
  	trayIconMenu = new QMenu(this);

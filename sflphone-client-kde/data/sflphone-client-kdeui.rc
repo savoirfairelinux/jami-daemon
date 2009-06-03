@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<gui name="tutorial3"
+<!--<gui name="tutorial3"
 	  version="1"
 	  xmlns="http://www.kde.org/standards/kxmlgui/1.0"
 	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:schemaLocation="http://www.kde.org/standards/kxmlgui/1.0
 	  http://www.kde.org/standards/kxmlgui/1.0/kxmlgui.xsd" >
+	-->
 	
+<gui name="sflphone-client-kde" version="1">
+		
 	<MenuBar>
 		<Menu name="Actions" >
 			<text>Actions</text>
@@ -37,4 +40,16 @@
 		</Menu>
 	</MenuBar>
 	
+	<!--<ToolBar name="mainToolBar" position="Top" noMerge="1" fullWidth="true" newline="true" >
+		<Action name="action_accept" />
+		<Action name="action_refuse" />
+		<Action name="action_hold" />
+		<Action name="action_transfer" />
+		<Action name="action_record" />
+		<Separator />
+		<Action name="action_history" />
+		<Action name="action_addressBook" />
+		<Separator />
+		<Action name="action_mailBox" />
+	</ToolBar>	-->
 </gui>

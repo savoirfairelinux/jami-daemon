@@ -68,17 +68,17 @@ const function Call::actionPerformedFunctionMap[11][5] =
 const call_state Call::stateChangedStateMap [11][6] = 
 {
 //                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE
-/*INCOMING     */  {CALL_STATE_INCOMING    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*RINGING      */  {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*CURRENT      */  {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*DIALING      */  {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*HOLD         */  {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*FAILURE      */  {CALL_STATE_FAILURE     , CALL_STATE_FAILURE  , CALL_STATE_BUSY   , CALL_STATE_FAILURE      ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*BUSY         */  {CALL_STATE_BUSY        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_BUSY         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*TRANSFER     */  {CALL_STATE_TRANSFER    , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*TRANSF_HOLD  */  {CALL_STATE_TRANSF_HOLD , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*OVER         */  {CALL_STATE_OVER        , CALL_STATE_OVER     , CALL_STATE_OVER   , CALL_STATE_OVER         ,  CALL_STATE_OVER  ,  CALL_STATE_OVER     },
-/*ERROR        */  {CALL_STATE_ERROR       , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    }
+/*INCOMING     */ {CALL_STATE_INCOMING    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*RINGING      */ {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*CURRENT      */ {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*DIALING      */ {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*HOLD         */ {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*FAILURE      */ {CALL_STATE_FAILURE     , CALL_STATE_FAILURE  , CALL_STATE_BUSY   , CALL_STATE_FAILURE      ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*BUSY         */ {CALL_STATE_BUSY        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_BUSY         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*TRANSFER     */ {CALL_STATE_TRANSFER    , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*TRANSF_HOLD  */ {CALL_STATE_TRANSF_HOLD , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*OVER         */ {CALL_STATE_OVER        , CALL_STATE_OVER     , CALL_STATE_OVER   , CALL_STATE_OVER         ,  CALL_STATE_OVER  ,  CALL_STATE_OVER     },
+/*ERROR        */ {CALL_STATE_ERROR       , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    }
 };
 
 const function Call::stateChangedFunctionMap[11][6] = 
@@ -139,15 +139,6 @@ void Call::initCallItem()
 	descr->addLayout(transfer);
 	mainLayout->addLayout(descr);
 	mainLayout->addItem(horizontalSpacer);
-	
-// 	QGridLayout * mainLayout = new QGridLayout(itemWidget);
-// 	mainLayout->setMargin(3);
-// 	mainLayout->setSpacing(3);
-// 	mainLayout->addWidget(labelIcon, 0, 0, 2, 1);
-// 	mainLayout->addWidget(labelCallNumber, 0, 1, 1, 2);
-// 	mainLayout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
-// 	mainLayout->addWidget(labelTransferNumber, 1, 2, 1, 2);
-// 	mainLayout->addItem(horizontalSpacer, 0, 3, 1, 3);
 
 	itemWidget->setLayout(mainLayout);
 }
@@ -157,13 +148,6 @@ void Call::setItemIcon(const QString pixmap)
 	labelIcon->setPixmap(QPixmap(pixmap));
 }
 
-// void Call::setPeerName(const QString peerName)
-// {
-// 	qDebug() << "setPeerName(" << peerName;
-// 	this->peerName = peerName;
-// 	if(!labelPeerName) labelPeerName = new QLabel(peerName + " : ");
-// 	labelPeerName->setText(peerName + " : ");
-// }
 
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
 {
@@ -619,17 +603,24 @@ void Call::changeCurrentState(call_state newState)
 
 void Call::updateItem()
 {
-	if(currentState == CALL_STATE_CURRENT && recording)
-		setItemIcon(ICON_CURRENT_REC);
+	if(currentState != CALL_STATE_OVER)
+	{
+		if(currentState == CALL_STATE_CURRENT && recording)
+			setItemIcon(ICON_CURRENT_REC);
+		else
+		{
+			QString str = QString(callStateIcons[currentState]);
+			setItemIcon(str);
+		}
+		bool transfer = currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD;
+		labelTransferPrefix->setVisible(transfer);
+		labelTransferNumber->setVisible(transfer);
+		if(!transfer)
+			labelTransferNumber->setText("");
+	}
 	else
 	{
-		QString str = QString(callStateIcons[currentState]);
-		setItemIcon(str);
+		qDebug() << "Updating item of call of state OVER. Doing nothing.";
 	}
-	bool transfer = currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD;
-	labelTransferPrefix->setVisible(transfer);
-	labelTransferNumber->setVisible(transfer);
-	if(!transfer)
-		labelTransferNumber->setText("");
 }
 

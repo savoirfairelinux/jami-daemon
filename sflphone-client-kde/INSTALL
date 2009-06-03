@@ -52,4 +52,11 @@ You can change the prefix of the installation using:
 
 	.config.sh --prefix="expected_prefix_directory"
 
-By default, it is set to /usr.
+By default, it is set to /usr/local.
+
+******************************************************
+
+You can enable debug messages using:
+
+	.config.sh --with-debug
+

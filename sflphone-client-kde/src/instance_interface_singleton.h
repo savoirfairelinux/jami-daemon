@@ -26,7 +26,7 @@
 #include "instance_dbus_interface.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class InstanceInterfaceSingleton
 {
