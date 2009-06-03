@@ -262,15 +262,15 @@ create_addressbook_settings()
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    gnome_main_section_new (_("General"), &result_frame);
+    gnome_main_section_new_with_table (_("General"), &result_frame, &table, 3, 3);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
     gtk_widget_show (result_frame);
 
-    table = gtk_table_new ( 3, 3, FALSE/* homogeneous */);
-    gtk_table_set_row_spacings( GTK_TABLE(table), 8);
-    gtk_table_set_col_spacings( GTK_TABLE(table), 8);
-    gtk_widget_show(table);
-    gtk_container_add( GTK_CONTAINER (result_frame) , table );
+    // table = gtk_table_new ( 3, 3, FALSE/* homogeneous */);
+    // gtk_table_set_row_spacings( GTK_TABLE(table), 8);
+    // gtk_table_set_col_spacings( GTK_TABLE(table), 8);
+    // gtk_widget_show(table);
+    // gtk_container_add( GTK_CONTAINER (result_frame) , table );
 
     // PHOTO DISPLAY
     item = gtk_check_button_new_with_mnemonic( _("_Use Evolution address books"));
@@ -298,15 +298,15 @@ create_addressbook_settings()
 
 
     // Fields
-    gnome_main_section_new (_("Fields"), &result_frame);
+    gnome_main_section_new_with_table (_("Fields"), &result_frame, &table, 5, 3);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
     gtk_widget_show (result_frame);
 
-    table = gtk_table_new ( 5, 3, FALSE);
-    gtk_table_set_row_spacings( GTK_TABLE(table), 8);
-    gtk_table_set_col_spacings( GTK_TABLE(table), 8);
-    gtk_widget_show(table);
-    gtk_container_add( GTK_CONTAINER (result_frame) , table );
+    // table = gtk_table_new ( 5, 3, FALSE);
+    // gtk_table_set_row_spacings( GTK_TABLE(table), 8);
+    // gtk_table_set_col_spacings( GTK_TABLE(table), 8);
+    // gtk_widget_show(table);
+    // gtk_container_add( GTK_CONTAINER (result_frame) , table );
 
     label = gtk_label_new (_("Use the following fields from Evolution's address books:"));
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
@@ -330,15 +330,15 @@ create_addressbook_settings()
 
 
     // Address Book
-    gnome_main_section_new (_("Address Books"), &result_frame);
+    gnome_main_section_new_with_table (_("Address Books"), &result_frame, &table, 2, 3);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, TRUE, TRUE, 0);
     gtk_widget_show (result_frame);
 
-    table = gtk_table_new ( 2, 3, FALSE/* homogeneous */);
-    gtk_table_set_row_spacings( GTK_TABLE(table), 8);
-    gtk_table_set_col_spacings( GTK_TABLE(table), 8);
-    gtk_widget_show(table);
-    gtk_container_add( GTK_CONTAINER (result_frame) , table );
+    // table = gtk_table_new ( 2, 3, FALSE/* homogeneous */);
+    // gtk_table_set_row_spacings( GTK_TABLE(table), 8);
+    // gtk_table_set_col_spacings( GTK_TABLE(table), 8);
+    // gtk_widget_show(table);
+    // gtk_container_add( GTK_CONTAINER (result_frame) , table );
 
     label = gtk_label_new (_("Select which Evolution address books to use:"));
     gtk_misc_set_alignment(GTK_MISC(label), 0.00, 0.1);

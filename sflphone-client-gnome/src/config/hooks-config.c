@@ -127,15 +127,15 @@ GtkWidget* create_hooks_settings (){
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    gnome_main_section_new (_("URL Passing"), &frame);
+    gnome_main_section_new_with_table (_("URL Passing"), &frame, &table, 6, 2);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show (frame);
 
-    table = gtk_table_new ( 6, 2,  FALSE/* homogeneous */);
-    gtk_table_set_row_spacings( GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-    gtk_widget_show(table);
-    gtk_container_add( GTK_CONTAINER (frame) , table );
+    // table = gtk_table_new ( 6, 2,  FALSE/* homogeneous */);
+    // gtk_table_set_row_spacings( GTK_TABLE(table), 10);
+    // gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+    // gtk_widget_show(table);
+    // gtk_container_add( GTK_CONTAINER (frame) , table );
 
     label = gtk_label_new(_("SFLphone can run custom commands if incoming calls come with an URL attached.\nIn this case, %s will be replaced with the passed URL."));
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -165,15 +165,15 @@ GtkWidget* create_hooks_settings (){
     gtk_entry_set_text(GTK_ENTRY(command), _urlhook_config->command);
     gtk_table_attach ( GTK_TABLE( table ), command, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
 
-    gnome_main_section_new (_("Phone Number Rewriting"), &frame);
+    gnome_main_section_new_with_table (_("Phone Number Rewriting"), &frame, &table, 4, 2);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show (frame);
 
-    table = gtk_table_new ( 4, 2,  FALSE/* homogeneous */);
-    gtk_table_set_row_spacings( GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-    gtk_widget_show(table);
-    gtk_container_add( GTK_CONTAINER (frame) , table );
+    // table = gtk_table_new ( 4, 2,  FALSE/* homogeneous */);
+    // gtk_table_set_row_spacings( GTK_TABLE(table), 10);
+    // gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+    // gtk_widget_show(table);
+    // gtk_container_add( GTK_CONTAINER (frame) , table );
 
     widg = gtk_check_button_new_with_mnemonic( _("_Prefix dialed numbers with:"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->phone_number_enabled, "1")==0)?TRUE:FALSE);
