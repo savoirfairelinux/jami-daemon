@@ -22,26 +22,60 @@
 #include <errno.h>
 #include <cc++/file.h>
 
-HistoryManager::HistoryManager () {
+HistoryManager::HistoryManager () : _history_loaded (false), _history_path (""){
 
-    bool exist;
-
-    // Load the path to the file
-    if (create_history_path () ==1){
-        exist = _history_config.populateFromFile (_history_path);
-    }
-
-    _history_loaded = (exist == 2 ) ? false : true;
 }
 
 HistoryManager::~HistoryManager () {
     // TODO
 }
 
-int HistoryManager::load_history_from_file (void)
+bool HistoryManager::init (void)
 {
-    //  
-    return 0;
+    create_history_path ();
+    load_history_from_file ();
+}
+
+bool HistoryManager::load_history_from_file (void)
+{
+    bool exist;
+    
+    exist = _history_list.populateFromFile (_history_path);
+    _history_loaded = (exist == 2 ) ? false : true;
+
+    return exist;
+}
+
+int HistoryManager::load_history_items_map (void)
+{
+
+    short nb_items = 0;
+    Conf::TokenList sections; 
+    HistoryItem *item;
+    Conf::TokenList::iterator iter;
+    std::string to, from, accountID;
+    int timestamp;
+    CallType type; 
+ 
+    sections = _history_list.getSections();
+    iter = sections.begin();
+
+    while(iter != sections.end()) {
+
+        type = (CallType) getConfigInt (*iter, "type");
+        timestamp = getConfigInt (*iter, "timestamp");
+        to = getConfigString (*iter, "to");
+        from = getConfigString (*iter, "from");
+
+        item = new HistoryItem (timestamp, type, to, from);
+        add_new_history_entry (item);
+        nb_items ++;
+
+        iter ++;
+
+    }
+
+    return nb_items;
 }
 
 int HistoryManager::save_history_to_file (void)
@@ -50,17 +84,18 @@ int HistoryManager::save_history_to_file (void)
     return 0;
 }
 
-void HistoryManager::add_new_history_entry (HistoryItem new_item)
+void HistoryManager::add_new_history_entry (HistoryItem *new_item)
 {
-    // TODO
+    // Add it in the map
+    _history_items [new_item->get_timestamp ()] = new_item;
 }
 
 int HistoryManager::create_history_path (void) {
-    
+
     std::string path;
 
     path = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
-    
+
     if (mkdir (path.data(), 0755) != 0) {
         // If directory	creation failed
         if (errno != EEXIST) {
@@ -73,3 +108,28 @@ int HistoryManager::create_history_path (void) {
     _history_path = path + DIR_SEPARATOR_STR + "history";
     return 0;
 }
+
+// throw an Conf::ConfigTreeItemException if not found
+  int
+HistoryManager::getConfigInt(const std::string& section, const std::string& name)
+{
+  try {
+    return _history_list.getConfigTreeItemIntValue(section, name);
+  } catch (Conf::ConfigTreeItemException& e) {
+    throw e;
+  }
+  return 0;
+}
+
+std::string
+HistoryManager::getConfigString(const std::string& section, const std::string&
+    name)
+{
+  try {
+    return _history_list.getConfigTreeItemValue(section, name);
+  } catch (Conf::ConfigTreeItemException& e) {
+    throw e;
+  }
+  return "";
+}
+

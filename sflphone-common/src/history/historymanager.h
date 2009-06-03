@@ -26,7 +26,7 @@
 #include <global.h>
 #include <user_cfg.h>
 
-typedef std::map <std::string, HistoryItem*> HistoryItemMap; 
+typedef std::map <int, HistoryItem*> HistoryItemMap; 
 
 class HistoryManager {
 
@@ -41,17 +41,41 @@ class HistoryManager {
          */
         ~HistoryManager ();
 
+        bool init (void);
+
         /*
          * Load the history from a file to the dedicated data structure
          */
-        int load_history_from_file (void);
+        bool load_history_from_file (void);
+
+        /*
+         * @return int The number of history items loaded
+         */
+        int load_history_items_map (void);
 
         /*
          * Inverse method, ie save a data structure containing the history into a file
          */
         int save_history_to_file (void);
 
+        inline bool is_loaded (void) {
+            return _history_loaded;
+        }
+
+        inline void set_history_path (std::string filename) {
+            _history_path = filename;
+        }
+    
+        inline int get_history_size (void) {
+            return _history_items.size ();
+        }
+
     private:
+
+        
+        int getConfigInt(const std::string& section, const std::string& name);
+        std::string getConfigString(const std::string& section, const std::string& name);
+
         /*
          * Set the path to the history file
          */
@@ -59,7 +83,7 @@ class HistoryManager {
         /*
          * Add a new history item in the data structure
          */
-        void add_new_history_entry (HistoryItem new_item);
+        void add_new_history_entry (HistoryItem *new_item);
 
         /*
          * Map containing the history items
@@ -80,7 +104,9 @@ class HistoryManager {
         /* 
          * The history tree. It contains the call history 
          */
-        Conf::ConfigTree _history_config;
+        Conf::ConfigTree _history_list;
+
+        friend class HistoryTest;
 };
 
 #endif //_HISTORY_MANAGER

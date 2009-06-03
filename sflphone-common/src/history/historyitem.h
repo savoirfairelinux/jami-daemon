@@ -36,13 +36,16 @@ class HistoryItem {
         /*
          * Constructor
          */
-        HistoryItem (int, CallType, std::string, std::string="");
+        HistoryItem (int, CallType, std::string, std::string, std::string="");
         
         /*
          * Destructor
          */
         ~HistoryItem ();
 
+        inline int get_timestamp () {
+            return _timestamp;
+        }
 
     private:
 
@@ -58,9 +61,10 @@ class HistoryItem {
         CallType _call_type;
 
         /*
-         * The information about the callee/caller, depending on the type of call
+         * The information about the callee/caller, depending on the type of call. One field may be empty.
          */
-        std::string _peer;
+        std::string _to;
+        std::string _from;
 
         /*
          * The account the call was made with
