@@ -51,7 +51,7 @@ Authors:
 
 %build
 cmake . -DCMAKE_INSTALL_PREFIX=%{buildroot}/%{_prefix}
-make -j
+make
 
 %install
 make install
