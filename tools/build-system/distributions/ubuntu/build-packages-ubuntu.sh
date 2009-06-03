@@ -21,7 +21,7 @@ FULL_VERSION="${VERSION}-${PACKAGE_SYSVER}"
 # BEGIN
 #########################
 
-DIST="dist"
+DIST="${OS_VERSION}"
 if [ ${RELEASE_MODE} ]; then
 	if [ "${RELEASE_MODE}" != "release" ]; then
 		DIST="${DIST}-testing"
