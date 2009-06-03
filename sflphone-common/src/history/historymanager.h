@@ -22,7 +22,6 @@
 #define _HISTORY_MANAGER
 
 #include "historyitem.h" 
-#include <config/config.h>
 #include <global.h>
 #include <user_cfg.h>
 
@@ -46,18 +45,26 @@ class HistoryManager {
         /*
          * Load the history from a file to the dedicated data structure
          */
-        bool load_history_from_file (void);
+        bool load_history_from_file (Conf::ConfigTree *history_list);
 
         /*
          * @return int The number of history items loaded
          */
-        int load_history_items_map (void);
+        int load_history_items_map (Conf::ConfigTree *history_list);
 
         /*
          * Inverse method, ie save a data structure containing the history into a file
          */
-        int save_history_to_file (void);
+        bool save_history_to_file (Conf::ConfigTree *history_list);
 
+        /**
+         * @return int The number of history entries successfully saved
+         */
+        int save_history_items_map (Conf::ConfigTree *history_list);
+
+        /**
+         *@return bool  True if the history file has been successfully read
+         */
         inline bool is_loaded (void) {
             return _history_loaded;
         }
@@ -66,6 +73,9 @@ class HistoryManager {
             _history_path = filename;
         }
     
+        /*
+         *@return int   The number of items found in the history file
+         */
         inline int get_history_size (void) {
             return _history_items.size ();
         }
@@ -73,8 +83,8 @@ class HistoryManager {
     private:
 
         
-        int getConfigInt(const std::string& section, const std::string& name);
-        std::string getConfigString(const std::string& section, const std::string& name);
+        int getConfigInt(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
+        std::string getConfigString(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
 
         /*
          * Set the path to the history file
@@ -100,11 +110,6 @@ class HistoryManager {
          * History has been loaded
          */
         bool _history_loaded;
-
-        /* 
-         * The history tree. It contains the call history 
-         */
-        Conf::ConfigTree _history_list;
 
         friend class HistoryTest;
 };

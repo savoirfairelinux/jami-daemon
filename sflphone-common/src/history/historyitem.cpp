@@ -19,9 +19,10 @@
  */
 
 #include <historyitem.h>
+#include <sstream>
 
-HistoryItem::HistoryItem (int timestamp, CallType call_type, std::string to, std::string from, std::string account_id)
-    : _timestamp (timestamp), _call_type (call_type), _to (to), _from (from), _account_id (account_id)
+HistoryItem::HistoryItem (int timestamp, CallType call_type, std::string to, std::string from, std::string caller_id, std::string account_id)
+    : _timestamp (timestamp), _call_type (call_type), _to (to), _from (from), _caller_id (caller_id), _account_id (account_id)
 {
 }
 
@@ -29,3 +30,45 @@ HistoryItem::~HistoryItem ()
 {
     // TODO
 }
+
+bool HistoryItem::save (Conf::ConfigTree **history){
+
+    std::stringstream section, call_type, timestamp;
+    bool res;
+
+    // The section is : "[" + timestamp = "]"
+    section << _timestamp ;
+    call_type << _call_type;
+    timestamp << _timestamp;
+     
+    res = ( (*history)->setConfigTreeItem(section.str(), "type", call_type.str())
+            && (*history)->setConfigTreeItem(section.str(), "timestamp", timestamp.str())
+            && (*history)->setConfigTreeItem(section.str(), "to", _to)
+            && (*history)->setConfigTreeItem(section.str(), "from", _from)
+            && (*history)->setConfigTreeItem(section.str(), "id", _caller_id) );
+
+    return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

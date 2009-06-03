@@ -22,6 +22,7 @@
 #define _HISTORY_ITEM
 
 #include <string>
+#include <config/config.h>
 
 typedef enum CallType {
     CALL_MISSED,
@@ -36,7 +37,7 @@ class HistoryItem {
         /*
          * Constructor
          */
-        HistoryItem (int, CallType, std::string, std::string, std::string="");
+        HistoryItem (int, CallType, std::string, std::string, std::string, std::string="");
         
         /*
          * Destructor
@@ -46,6 +47,8 @@ class HistoryItem {
         inline int get_timestamp () {
             return _timestamp;
         }
+
+        bool save (Conf::ConfigTree **history);
 
     private:
 
@@ -65,6 +68,7 @@ class HistoryItem {
          */
         std::string _to;
         std::string _from;
+        std::string _caller_id;
 
         /*
          * The account the call was made with

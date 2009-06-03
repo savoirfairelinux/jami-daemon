@@ -38,7 +38,7 @@ void HistoryTest::test_create_history_path () {
 
     int result;
     std::string path;
-    
+
     path = HOMEDIR;
     path += "/.sflphone/history";
     result = history->create_history_path ();
@@ -50,9 +50,10 @@ void HistoryTest::test_create_history_path () {
 void HistoryTest::test_load_history_from_file ()
 {
     bool res;
+    Conf::ConfigTree history_list;
 
     history->create_history_path ();
-    res = history->load_history_from_file ();
+    res = history->load_history_from_file (&history_list);
 
     CPPUNIT_ASSERT (history->is_loaded ());
     CPPUNIT_ASSERT (res == true);
@@ -62,13 +63,38 @@ void HistoryTest::test_load_history_items_map ()
 {
     std::string path;
     int nb_items;
-    
+    Conf::ConfigTree history_list;
+
     history->set_history_path (HISTORY_SAMPLE);
-    history->load_history_from_file ();
-    nb_items = history->load_history_items_map ();
-    std::cout << nb_items << std::endl; 
+    history->load_history_from_file (&history_list);
+    nb_items = history->load_history_items_map (&history_list);
     CPPUNIT_ASSERT (nb_items == HISTORY_SAMPLE_SIZE);
     CPPUNIT_ASSERT (history->get_history_size () == HISTORY_SAMPLE_SIZE);
+}
+
+void HistoryTest::test_save_history_items_map ()
+{
+    std::string path;
+    int nb_items_loaded, nb_items_saved;
+    Conf::ConfigTree history_list, history_list2;
+
+    history->set_history_path (HISTORY_SAMPLE);
+    history->load_history_from_file (&history_list);
+    nb_items_loaded = history->load_history_items_map (&history_list);
+    nb_items_saved = history->save_history_items_map (&history_list2);
+    CPPUNIT_ASSERT (nb_items_loaded == nb_items_saved);
+}
+
+void HistoryTest::test_save_history_to_file ()
+{
+    std::string path;
+    Conf::ConfigTree history_list, history_list2;
+
+    history->set_history_path (HISTORY_SAMPLE);
+    history->load_history_from_file (&history_list);
+    history->load_history_items_map (&history_list);
+    history->save_history_items_map (&history_list2);
+    CPPUNIT_ASSERT (history->save_history_to_file (&history_list2));
 }
 
 void HistoryTest::tearDown(){
