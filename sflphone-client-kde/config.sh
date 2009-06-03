@@ -20,14 +20,24 @@ cd build
 # if $prefix
 # then options=$@" -DCMAKE_INSTALL_PREFIX="$prefix_env
 
-options=`echo $@ | sed "s/--prefix=/-DCMAKE_INSTALL_PREFIX=/g"`
+# debug=`echo $@ | grep -q "debug"`
+
+options=`echo $@ | sed "s/--prefix=/-DCMAKE_INSTALL_PREFIX=/g" | sed "s/--with-debug//g"`
+
+if `echo $@ | grep -q "\--with-debug"`
+then echo "Enable debug messages"
+options="$options -DCMAKE_BUILD_TYPE=\"Debug\""
+else echo "Disable debug messages"
+options="$options -DCMAKE_BUILD_TYPE=\"Release\""
+fi
+
+echo "Passing argument  '$options'  to cmake"
 
 autocmd cmake $options ..
 
-echo $options
 
 echo "**********************************************"
 echo "Configuration done!" 
-echo "Run \`cd build\' to go to the build directory."
-echo "Then run \`make\'to build the software."
+echo "Run \`cd build' to go to the build directory."
+echo "Then run \`make'to build the software."
 echo "**********************************************"

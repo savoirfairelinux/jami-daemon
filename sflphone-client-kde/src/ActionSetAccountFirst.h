@@ -27,7 +27,7 @@
 #include "Account.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class ActionSetAccountFirst : public QAction
 {
