@@ -31,8 +31,8 @@
 #define TRUE 1
 #define FALSE 0
 
-static void block4_encode(g722_decode_state_t *s, int band, int d);
-static void block4_decode(g722_decode_state_t *s, int band, int d);
+// static void block4_encode(g722_decode_state_t *s, int band, int d);
+// static void block4_decode(g722_decode_state_t *s, int band, int d);
 
 class G722 : public AudioCodec {
 public:
@@ -81,7 +81,7 @@ public:
 	    return g722_size;
 	}
 
-        static __inline__ int16_t saturate(int32_t amp)
+        int16_t saturate(int32_t amp)
         {
             int16_t amp16;
 
@@ -95,7 +95,7 @@ public:
         }
 
 
-        static void block4_encode(g722_encode_state_t *s, int band, int d)
+        void block4_encode(g722_encode_state_t *s, int band, int d)
         {
             int wd1;
             int wd2;
@@ -184,7 +184,7 @@ public:
 
 	}
 
-        static void block4_decode(g722_decode_state_t *s, int band, int d)
+        void block4_decode(g722_decode_state_t *s, int band, int d)
         {
 	    int wd1;
 	    int wd2;
