@@ -47,7 +47,7 @@ class ConfigurationDialog;
  * here.
  *
  * @short Main view
- * @author Jérémy Quentin <jeremy.quentin@gmail.com>
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
  * @version 0.1
  */
  
@@ -80,6 +80,7 @@ public:
 	 * 
 	 */
 	void loadWindow();
+	void buildDialPad();
 	
 	//Getters
 	static QString firstAccountId();

@@ -85,7 +85,6 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	
 	loadWindow();
 	
-	
 } 
 
 sflphone_kdeView::~sflphone_kdeView()
@@ -97,7 +96,41 @@ sflphone_kdeView::~sflphone_kdeView()
 }
 
 
-
+void sflphone_kdeView::buildDialPad()
+{
+	QHBoxLayout * layout;
+	QLabel * number;
+	QLabel * text;
+	int spacing = 5;
+	int numberSize = 14;
+	int textSize = 8;
+	
+	QPushButton * buttons[12] = 
+	    {pushButton_1,      pushButton_2,   pushButton_3, 
+	     pushButton_4,      pushButton_5,   pushButton_6, 
+	     pushButton_7,      pushButton_8,   pushButton_9, 
+	     pushButton_etoile, pushButton_0,   pushButton_diese};
+	     
+	QString numbers[12] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"};
+	
+	QString texts[12] = {"", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz", "", "", ""};
+	
+	for(int i = 0 ; i < 12 ; i++)
+	{
+		layout = new QHBoxLayout();
+		layout->setSpacing(spacing);
+		number = new QLabel(numbers[i]);
+		number->setFont(QFont("", numberSize));
+		layout->addWidget(number);
+		number->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+		text = new QLabel(texts[i]);
+		text->setFont(QFont("", textSize));
+		layout->addWidget(text);
+		buttons[i]->setLayout(layout);
+		buttons[i]->setMinimumHeight(30);
+		buttons[i]->setText("");
+	}
+}
 
 void sflphone_kdeView::loadWindow()
 {
@@ -105,6 +138,7 @@ void sflphone_kdeView::loadWindow()
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	action_displayVolumeControls->setChecked(configurationManager.getVolumeControls());
 	action_displayDialpad->setChecked(configurationManager.getDialpad());
+	buildDialPad();
 	updateWindowCallState();
 	updateRecordButton();
 	updateVolumeButton();
@@ -159,23 +193,13 @@ void sflphone_kdeView::addCallToCallList(Call * call)
 
 void sflphone_kdeView::addCallToCallHistory(Call * call)
 {
-	qDebug() << "addCallToCallHistory1";
 	QListWidgetItem * item = call->getHistoryItem();
-	qDebug() << "addCallToCallHistory2";
 	QWidget * widget = call->getHistoryItemWidget();
-	qDebug() << "addCallToCallHistory3";
 	if(item && widget)
 	{
-		qDebug() << "addCallToCallHistory4";
 		listWidget_callHistory->addItem(item);
-		qDebug() << "addCallToCallHistory5";
-		qDebug() << "item = " << item;
-		qDebug() << "widget = " << widget;
-		qDebug() << "itemWidget(item) = " << listWidget_callHistory->itemWidget(item);
 		listWidget_callHistory->setItemWidget(item, widget);
-		qDebug() << "addCallToCallHistory6";
 	}
-	qDebug() << "addCallToCallHistory7";
 }
 
 void sflphone_kdeView::addContactToContactList(Contact * contact)
@@ -345,27 +369,44 @@ void sflphone_kdeView::enter()
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
 	{
 		qDebug() << "In call history.";
-		action_history->setChecked(false);
-		stackedWidget_screen->setCurrentWidget(page_callList);
-		
-		Call * pastCall = callList->findCallByHistoryItem(listWidget_callHistory->currentItem());
-		Call * call = callList->addDialingCall(pastCall->getPeerName());
-		call->appendItemText(pastCall->getPeerPhoneNumber());
-		addCallToCallList(call);
-		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
-		actionb(call, CALL_ACTION_ACCEPT);
+		QListWidgetItem * item = listWidget_callHistory->currentItem();
+		if(!item)
+		{
+			qDebug() << "Enter when no item is selected. Doing nothing.";
+		}
+		else
+		{
+			action_history->setChecked(false);
+			stackedWidget_screen->setCurrentWidget(page_callList);
+			
+			Call * pastCall = callList->findCallByHistoryItem(item);
+			if (!pastCall) qDebug() << "pastCall null";
+			Call * call = callList->addDialingCall(pastCall->getPeerName(), pastCall->getAccountId());
+			call->appendItemText(pastCall->getPeerPhoneNumber());
+			addCallToCallList(call);
+			listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+			actionb(call, CALL_ACTION_ACCEPT);
+		}
 	}
 	if(stackedWidget_screen->currentWidget() == page_addressBook)
 	{
 		qDebug() << "In address book.";
-		action_addressBook->setChecked(false);
-		stackedWidget_screen->setCurrentWidget(page_callList);
-		ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
-		Call * call = callList->addDialingCall(w->getContactName());
-		call->appendItemText(w->getContactNumber());
-		addCallToCallList(call);
-		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
-		actionb(call, CALL_ACTION_ACCEPT);
+		QListWidgetItem * item = listWidget_addressBook->currentItem();
+		if(!item)
+		{
+			qDebug() << "Enter when no item is selected. Doing nothing.";
+		}
+		else
+		{
+			action_addressBook->setChecked(false);
+			stackedWidget_screen->setCurrentWidget(page_callList);
+			ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(item));
+			Call * call = callList->addDialingCall(w->getContactName());
+			call->appendItemText(w->getContactNumber());
+			addCallToCallList(call);
+			listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+			actionb(call, CALL_ACTION_ACCEPT);
+		}
 	}
 }
 
@@ -417,7 +458,7 @@ void sflphone_kdeView::updateWindowCallState()
 	bool recordActivated = false;
 	//tells whether the call can be recorded in the state it is right now
 	bool recordEnabled = false;
-	
+	enabledActions[5] = ! firstRegisteredAccount()->getAccountDetail(ACCOUNT_MAILBOX).isEmpty();
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
 		item = listWidget_callList->currentItem();
@@ -561,6 +602,7 @@ void sflphone_kdeView::updateWindowCallState()
 			enabledActions[1] = true;
 		}
 	}
+	
 	action_accept->setEnabled(enabledActions[0]);
 	action_refuse->setEnabled(enabledActions[1]);
 	action_hold->setEnabled(enabledActions[2]);
@@ -604,7 +646,7 @@ void sflphone_kdeView::updateCallHistory()
 		qDebug() << "take item " << item->text() << " ; widget = " << callList->findCallByHistoryItem(item);
 	}
 	QString textSearched = lineEdit_searchHistory->text();
-	for(int i = 0 ; i < callList->size() ; i++)
+	for(int i = callList->size() - 1 ; i >= 0 ; i--)
 	{
 		Call * call = (*callList)[i];
 		qDebug() << "" << call->getCallId();
@@ -978,7 +1020,7 @@ void sflphone_kdeView::on_listWidget_callHistory_itemDoubleClicked(QListWidgetIt
 	action_history->setChecked(false);
 	stackedWidget_screen->setCurrentWidget(page_callList);
 	Call * pastCall = callList->findCallByHistoryItem(item);
-	Call * call = callList->addDialingCall(pastCall->getPeerName());
+	Call * call = callList->addDialingCall(pastCall->getPeerName(), pastCall->getAccountId());
 	call->appendItemText(pastCall->getPeerPhoneNumber());
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);

@@ -26,7 +26,7 @@
 #include "Contact.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class ContactItemWidget : public QWidget
 {

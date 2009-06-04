@@ -7,20 +7,20 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-27
-# Last Modified: 2009-05-29 18:11:44 -0400
+# Last Modified: 2009-06-01 17:24:52 -0400
 #####################################################
 
 . ../globals
 
-cd ${OPENSUSE_DIR}
+cd ${MANDRIVA_DIR}
 
 if [ "$?" -ne "0" ]; then
-        echo " !! Cannot cd to openSUSE directory"
+        echo " !! Cannot cd to Mandriva directory"
         exit -1
 fi
 
 echo "Do updates"
-sudo /usr/bin/zypper -n update >/dev/null
+sudo /usr/sbin/urpmi --auto-update --auto >/dev/null
 
 # create build directories
 echo "Create directories"

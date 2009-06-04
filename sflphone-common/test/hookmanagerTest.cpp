@@ -36,8 +36,14 @@ void HookManagerTest::testAddAction (){
 
     int status;
 
-    status = urlhook->addAction ("www.google.ca", "gnome-www-browser");
+    status = urlhook->addAction ("www.google.ca", "x-www-browser");
     CPPUNIT_ASSERT (status == 0); 
+}
+
+void HookManagerTest::testLargeUrl (){
+
+    std::string url;
+    std::cout << url.max_size() << std::endl;
 }
 
 void HookManagerTest::tearDown(){
