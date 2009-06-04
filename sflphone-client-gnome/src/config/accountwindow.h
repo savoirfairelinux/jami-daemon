@@ -24,6 +24,8 @@
   * @brief The window to edit account details.
   */
 
+#include "utils.h"
+#include "configwindow.h"
 
 /** 
  * Display the main account widget 

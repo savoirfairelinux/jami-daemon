@@ -448,6 +448,12 @@ sflphone_unset_transfert()
     toolbar_update_buttons();
 }
 
+void
+sflphone_display_transfer_status(const gchar* message)
+{
+    statusbar_push_message( message , __MSG_ACCOUNT_DEFAULT);
+}
+
     void
 sflphone_incoming_call (call_t * c)
 {
@@ -881,6 +887,31 @@ sflphone_fill_codec_list()
         main_window_error_message( markup );
         dbus_unregister(getpid());
         exit(0);
+    }
+}
+
+void sflphone_fill_call_list (void)
+{
+    
+    gchar** calls = (gchar**)dbus_get_call_list();
+    gchar** pl;
+    GHashTable *call_details;
+    call_t *c;
+    gchar *callID;
+
+    for(pl=calls; *calls; calls++)
+    {
+        c = g_new0(call_t, 1);
+        callID = (gchar*)(*calls);
+        call_details = dbus_get_call_details(callID);
+        create_new_call_from_details (callID, call_details, &c);
+        c->callID = g_strdup(callID);
+
+        // Add it to the list
+        DEBUG ("Add call retrieved from server side: %s\n", c->callID);
+        calllist_add (current_calls, c);
+        // Update the GUI
+        calltree_add_call (current_calls, c);
     }
 }
 

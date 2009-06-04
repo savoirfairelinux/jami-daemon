@@ -120,7 +120,7 @@ void dbus_send_register( gchar* accountID , const guint expire );
  * ConfigurationManager - Add an account to the list
  * @param a The account to add
  */
-guint dbus_add_account(account_t *a);
+gchar* dbus_add_account(account_t *a);
 
 /**
  * ConfigurationManager - Remove an account from the list
@@ -480,6 +480,8 @@ void dbus_set_hook_settings (GHashTable *);
 gboolean dbus_get_is_recording(const call_t *);
 
 GHashTable* dbus_get_call_details (const gchar* callID);
+
+gchar** dbus_get_call_list (void);
 
 void dbus_set_accounts_order (const gchar* order);
 

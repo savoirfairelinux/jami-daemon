@@ -26,7 +26,7 @@
 #define __DBUSXX_DISPATCHER_P_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
 #include <dbus-c++/dispatcher.h>

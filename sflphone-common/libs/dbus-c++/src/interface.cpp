@@ -21,6 +21,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <dbus-c++/debug.h>
 #include <dbus-c++/interface.h>
@@ -153,4 +156,14 @@ Message InterfaceProxy::invoke_method(const CallMessage &call)
 		call2.interface(name().c_str());
 
 	return _invoke_method(call2);
+}
+
+bool InterfaceProxy::invoke_method_noreply(const CallMessage &call)
+{
+	CallMessage &call2 = const_cast<CallMessage &>(call);
+
+	if (call.interface() == NULL)
+		call2.interface(name().c_str());
+
+	return _invoke_method_noreply(call2);
 }

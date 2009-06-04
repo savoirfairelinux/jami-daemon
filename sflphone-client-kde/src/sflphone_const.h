@@ -47,6 +47,8 @@
 #define PAGE_ACCOUNTS                     2
 #define PAGE_AUDIO                        3
 
+#define TOOLBAR_SIZE                      22
+
 #define CONTACT_ITEM_HEIGHT               40
 
 #define CONFIG_FILE_PATH                  "/.sflphone/sflphonedrc"
@@ -81,8 +83,8 @@
 #define ICON_ACCEPT                       ":/images/icons/accept.svg"
 #define ICON_REFUSE                       ":/images/icons/refuse.svg"
 #define ICON_EXEC_TRANSF                  ":/images/icons/call.svg"
-#define ICON_REC_DEL_OFF                  ":/images/icons/del_off.png"
-#define ICON_REC_DEL_ON                   ":/images/icons/del_on.png"
+#define ICON_REC_DEL_OFF                  ":/images/icons/record_disabled.svg"
+#define ICON_REC_DEL_ON                   ":/images/icons/record.svg"
 
 #define ICON_REC_VOL_0                    ":/images/icons/mic.svg"
 #define ICON_REC_VOL_1                    ":/images/icons/mic_25.svg"
@@ -97,6 +99,10 @@
 #define ICON_HISTORY_INCOMING             ":/images/icons/incoming.svg"
 #define ICON_HISTORY_OUTGOING             ":/images/icons/outgoing.svg"
 #define ICON_HISTORY_MISSED               ":/images/icons/missed.svg"
+
+#define ICON_ACCOUNT_LED_RED              ":/images/icons/led-red.svg"
+#define ICON_ACCOUNT_LED_GREEN            ":/images/icons/led-green.svg"
+#define ICON_ACCOUNT_LED_GRAY             ":/images/icons/led-gray.svg"
 
 #define ICON_QUIT                         ":/images/icons/application-exit.png"
 

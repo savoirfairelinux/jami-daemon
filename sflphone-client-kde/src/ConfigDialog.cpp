@@ -30,11 +30,9 @@
 
 
 #include "sflphone_const.h"
-// #include "metatypes.h"
+#include "typedefs.h"
 #include "configurationmanager_interface_singleton.h"
 
-typedef QMap<QString, QString> MapStringString;
-typedef QMap<QString, int> MapStringInt;
 
 AccountList * ConfigurationDialog::accountList;
 
@@ -460,9 +458,8 @@ void ConfigurationDialog::loadAccount(QListWidgetItem * item)
 	edit5_password->setText( account->getAccountDetail(ACCOUNT_PASSWORD));
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
 	QString status = account->getAccountDetail(ACCOUNT_STATUS);
-	qDebug() << "Color : " << account->getStateColorName();
 	edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
-	//edit7_Etat->setTextColor( account->getStateColor );
+
 }
 
 
@@ -515,11 +512,8 @@ void ConfigurationDialog::loadCodecs()
 			tableWidget_codecs->insertRow(i);
 			QTableWidgetItem * headerItem = new QTableWidgetItem("");
 			tableWidget_codecs->setVerticalHeaderItem (i, headerItem);
-			//headerItem->setVisible(false);
 			tableWidget_codecs->setItem(i,0,new QTableWidgetItem(""));
 			tableWidget_codecs->setItem(i,1,new QTableWidgetItem(details[CODEC_NAME]));
-			//qDebug() << "tableWidget_Codecs->itemAt(" << i << "," << 2 << ")->setText(" << details[CODEC_NAME] << ");";
-			//tableWidget_Codecs->item(i,2)->setText(details[CODEC_NAME]);
 			tableWidget_codecs->setItem(i,2,new QTableWidgetItem(details[CODEC_SAMPLE_RATE]));
 			tableWidget_codecs->setItem(i,3,new QTableWidgetItem(details[CODEC_BIT_RATE]));
 			tableWidget_codecs->setItem(i,4,new QTableWidgetItem(details[CODEC_BANDWIDTH]));
@@ -545,10 +539,8 @@ void ConfigurationDialog::saveCodecs()
 	QStringList activeCodecs;
 	for(int i = 0 ; i < tableWidget_codecs->rowCount() ; i++)
 	{
-		//qDebug() << "Checked if active : " << tableWidget_Codecs->item(i,1)->text();
 		if(tableWidget_codecs->item(i,0)->checkState() == Qt::Checked)
 		{
-			//qDebug() << "Added to activeCodecs : " << tableWidget_Codecs->item(i,1)->text();
 			activeCodecs << (*codecPayloads)[tableWidget_codecs->item(i,1)->text()];
 		}
 	}
@@ -673,25 +665,31 @@ void ConfigurationDialog::on_button_accountUp_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
-	QListWidgetItem * item = account->renewItem();
+	account->initAccountItem();
+	QListWidgetItem * item = account->getItem();
+	AccountItemWidget * widget = account->getItemWidget();
 	accountList->upAccount(currentRow);
-	delete prevItem;
 	listWidget_accountList->insertItem(currentRow - 1 , item);
-	listWidget_accountList->setItemWidget(item, account->getItemWidget());
+	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
+	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountDown_clicked()
 {
+	qDebug() << "on_button_accountDown_clicked";
 	int currentRow = listWidget_accountList->currentRow();
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
-	QListWidgetItem * item = account->renewItem();
+	//we need to build a new item to set the itemWidget back
+	account->initAccountItem();
+	QListWidgetItem * item = account->getItem();
+	AccountItemWidget * widget = account->getItemWidget();
 	accountList->downAccount(currentRow);
-	delete prevItem;
 	listWidget_accountList->insertItem(currentRow + 1 , item);
-	listWidget_accountList->setItemWidget(item, account->getItemWidget());
+	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
+	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountAdd_clicked()
@@ -706,6 +704,7 @@ void ConfigurationDialog::on_button_accountAdd_clicked()
 		listWidget_accountList->setCurrentRow(r);
 		frame2_editAccounts->setEnabled(true);
 	}
+	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountRemove_clicked()
@@ -715,6 +714,7 @@ void ConfigurationDialog::on_button_accountRemove_clicked()
 	QListWidgetItem * item = listWidget_accountList->takeItem(r);
 	accountList->removeAccount(item);
 	listWidget_accountList->setCurrentRow( (r >= listWidget_accountList->count()) ? r-1 : r );
+	changedAccountList();
 }
 
 void ConfigurationDialog::on_toolButton_accountsApply_clicked()
@@ -760,9 +760,19 @@ void ConfigurationDialog::on_tableWidget_codecs_currentCellChanged(int currentRo
 	updateCodecListCommands();
 }
 
+void ConfigurationDialog::updateAccountStates()
+{
+	for (int i = 0; i < accountList->size(); i++)
+	{
+		Account & current = accountList->getAccount(i);
+		current.updateState();
+	}
+}
+
 void ConfigurationDialog::on1_accountsChanged()
 {
 	qDebug() << "on1_accountsChanged";
+	updateAccountStates();
 // 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 // 	disconnect(&configurationManager, SIGNAL(accountsChanged()),
 // 	           this,                  SLOT(on1_accountsChanged()));

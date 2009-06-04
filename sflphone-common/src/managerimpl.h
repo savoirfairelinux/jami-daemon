@@ -159,6 +159,16 @@ class ManagerImpl {
     bool transferCall(const CallID& id, const std::string& to);
 
     /**
+     * Notify the client the transfer is successful
+     */
+    void transferSucceded();
+
+    /**
+     * Notify the client that the transfer failed
+     */
+    void transferFailed();
+
+    /**
      * Functions which occur with a user's action
      * Refuse the call
      * @param id  The call identifier
@@ -301,6 +311,12 @@ class ManagerImpl {
      * @return std::map< std::string, std::string > The call details
      */
     std::map< std::string, std::string > getCallDetails(const CallID& callID);
+
+    /**
+     * Get call list
+     * @return std::vector<std::string> A list of call IDs
+     */
+    std::vector< std::string >  getCallList (void);
 
     /**
      * Save the details of an existing account, given the account ID

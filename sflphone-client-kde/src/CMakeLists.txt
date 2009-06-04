@@ -1,11 +1,25 @@
 
+
 ADD_DEFINITIONS(${KDE4_DEFINITIONS} ${QT_DEFINITIONS} -fexceptions -DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\"" )
 
+# add_definitions ( -DKDE_DEFAULT_DEBUG_AREA=9000 )
+
+# kde4_set_debug_area( 1234 )
+
+# IF(DEFINED DEBUG_DISABLED)
+# MESSAGE("NO DEBUG OUTPUT")
+# ADD_DEFINITIONS( -DQT_NO_DEBUG_OUTPUT )
+# ENDIF(DEFINED DEBUG_DISABLED)
+
+
+MESSAGE("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
+
+IF(${CMAKE_BUILD_TYPE} MATCHES Release)
+MESSAGE("NO DEBUG OUTPUT")
+ADD_DEFINITIONS( -DQT_NO_DEBUG_OUTPUT )
+ENDIF(DEFINED DEBUG_DISABLED)
+
 SET ( KDE4_KABC_LIBS  -lkabc )
-
-
-
-
 
 SET(
 	sflphone_client_kde_SRCS
@@ -35,7 +49,7 @@ QT4_ADD_RESOURCES(QtApp_RCC_SRCS ${QtApp_RCCS})
 
 
 # Build dbus interfaces
-SET ( dbus_xml_introspecs_path ${CMAKE_CURRENT_SOURCE_DIR}/../../sflphone-common/src/dbus/)
+SET ( dbus_xml_introspecs_path ${CMAKE_CURRENT_SOURCE_DIR}/dbus/)
 
 # configuration manager interface
 SET ( configurationmanager_xml  ${dbus_xml_introspecs_path}/configurationmanager-introspec.xml )

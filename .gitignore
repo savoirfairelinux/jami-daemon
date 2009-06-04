@@ -116,7 +116,7 @@ sflphone-client-gnome/man/Makefile
 /sflphone-client-gnome/src/dbus/marshaller.h
 
 # Ignore sflphone_kde stuff
-/sflphone_kde/build
+/sflphone-client-kde/build
 
 # Ignore sub-modules stuff
 ## libiax2

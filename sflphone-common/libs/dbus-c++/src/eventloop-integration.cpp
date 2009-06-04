@@ -21,6 +21,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <dbus-c++/eventloop-integration.h>
 #include <dbus-c++/debug.h>

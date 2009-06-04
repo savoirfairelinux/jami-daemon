@@ -21,6 +21,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <dbus-c++/eventloop.h>
 #include <dbus-c++/debug.h>
@@ -150,8 +153,7 @@ void DefaultMainLoop::dispatch()
 	}
 	_mutex_w.unlock();
 
-	// int wait_min = 10000;
-        int wait_min = 500;
+	int wait_min = 10000;
 
 	DefaultTimeouts::iterator ti;
 

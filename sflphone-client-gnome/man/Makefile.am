@@ -5,7 +5,7 @@ TEMPLATES=\
 
 man_MANS = \
 			sflphone-client-gnome.1 \
-			sflphone.1 
+            sflphone.1
 
 POD2MAN=pod2man
 

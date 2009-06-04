@@ -194,7 +194,7 @@ dnl DBus-C++ detection (used to be in library own build system)
 DBUS_REQUIRED_VERSION=0.60
 PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
 	AC_MSG_ERROR([You need the DBus libraries (version 0.6 or better)]
-	[http://www.freedesktop.org/wiki/Software_2fdbus])
+	[http://gitorious.org/dbus-cplusplus])
 )
 AC_SUBST(dbus_CFLAGS)
 AC_SUBST(dbus_LIBS)
@@ -213,6 +213,21 @@ DBUS_RECURSIVE_MUTEX_VERSION=0.95
 PKG_CHECK_EXISTS([dbus-1 >= $DBUS_RECURSIVE_MUTEX_VERSION],
 	[AC_DEFINE(DBUS_HAS_RECURSIVE_MUTEX, , [DBus supports recursive mutexes (needs DBus >= 0.95)])]
 )
+
+AC_ARG_ENABLE(dbus-debug,
+	AS_HELP_STRING([--enable-dbus-debug],
+		[enable debugging support]),
+	[enable_debug=$enableval],
+	[enable_debug=no]
+)
+
+if test "$enable_debug" = "yes" ; then
+	CXXFLAGS="$CXXFLAGS -Wall -ggdb -O0"
+	AC_DEFINE(DEBUG, 1, [Define to enable debug build])
+else
+	CXXFLAGS="$CXXFLAGS -Wall -O3"
+fi
+
 
 if test "$enable_glib" = "yes" ; then
 PKG_CHECK_MODULES([glib], glib-2.0)

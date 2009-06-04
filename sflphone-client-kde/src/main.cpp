@@ -17,7 +17,6 @@
 #include "sflphone_const.h"
 
 
-
 static const char description[] = I18N_NOOP("A KDE 4 Client for SFLPhone");
 
 static const char version[] = "0.9.5";
@@ -37,12 +36,12 @@ int main(int argc, char **argv)
 		   version, 
 		   ki18n(description),
 		   KAboutData::License_GPL, 
-		   ki18n("(C) 2009 Jérémy Quentin"), 
+		   ki18n("(C) 2009 Savoir-faire Linux"), 
 		   KLocalizedString(), 
 		   0, 
 		   "jeremy.quentin@savoirfairelinux.com");
 		
-		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@gmail.com" );
+		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
 		KCmdLineArgs::init(argc, argv, &about);
 		KCmdLineOptions options;
 		//options.add("+[URL]", ki18n( "Document to open" ));

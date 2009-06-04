@@ -52,14 +52,27 @@ const QString account_state_name(QString & s)
 
 //Constructors
 
-Account::Account():accountId(NULL){}
+Account::Account():accountId(NULL), item(NULL), itemWidget(NULL){}
 
 
 void Account::initAccountItem()
 {
+	if(item != NULL)
+	{
+		delete item;
+	}
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
+	initAccountItemWidget();
+}
+
+void Account::initAccountItemWidget()
+{
+	if(itemWidget != NULL)
+	{
+		delete itemWidget;
+	}
 	bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
 	itemWidget = new AccountItemWidget();
 	itemWidget->setEnabled(enabled);
@@ -137,34 +150,10 @@ QListWidgetItem * Account::getItem()
 	return item;
 }
 
-QListWidgetItem * Account::renewItem()
-{
-	if(!item)
-		qDebug() << "null" ;
-	item = new QListWidgetItem(*item);
-	return item;
-}
-
 AccountItemWidget * Account::getItemWidget()
 {
-	delete itemWidget;
-	bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
-	QString alias = getAccountDetail(ACCOUNT_ALIAS);
-	itemWidget = new AccountItemWidget();
-	itemWidget->setEnabled(enabled);
-	itemWidget->setAccountText(alias);
-	if(isNew() || !enabled)
-	{
-		itemWidget->setState(AccountItemWidget::Unregistered);
-	}
-	else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
-	{
-		itemWidget->setState(AccountItemWidget::Registered);
-	}
-	else
-	{
-		itemWidget->setState(AccountItemWidget::NotWorking);
-	}
+	if(itemWidget == NULL)
+		qDebug() << "null";
 	return itemWidget;
 }
 
@@ -223,6 +212,34 @@ void Account::setAccountId(QString id)
 		qDebug() << "Error : setting AccountId of an existing account.";
 	}
 	accountId = new QString(id);
+}
+
+void Account::updateState()
+{
+	qDebug() << "updateState";
+	if(! isNew())
+	{
+		ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+		MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
+		AccountItemWidget * itemWidget = getItemWidget();
+		QString status = details[ACCOUNT_STATUS];
+		setAccountDetail(ACCOUNT_STATUS, status);
+		if(getAccountDetail(ACCOUNT_ENABLED) != ACCOUNT_ENABLED_TRUE )
+		{
+			qDebug() << "itemWidget->setState(AccountItemWidget::Unregistered);";
+			itemWidget->setState(AccountItemWidget::Unregistered);
+		}
+		else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
+		{
+			qDebug() << "itemWidget->setState(AccountItemWidget::Registered);";
+			itemWidget->setState(AccountItemWidget::Registered);
+		}
+		else
+		{
+			qDebug() << "itemWidget->setState(AccountItemWidget::NotWorking);";
+			itemWidget->setState(AccountItemWidget::NotWorking);
+		}
+	}
 }
 
 //Operators

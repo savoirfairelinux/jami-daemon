@@ -33,6 +33,7 @@ const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/Configur
 {
 }
 
+      
 	std::map< std::string, std::string >
 ConfigurationManager::getAccountDetails( const std::string& accountID )
 {
