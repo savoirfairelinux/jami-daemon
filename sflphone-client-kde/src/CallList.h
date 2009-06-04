@@ -51,7 +51,7 @@ public:
 	int size();
 
 	//Setters
-	Call * addDialingCall(const QString & peerName = "");
+	Call * addDialingCall(const QString & peerName = "", QString account = "");
 	Call * addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
 	Call * addRingingCall(const QString & callId);
 

@@ -485,6 +485,8 @@ void ConfigurationDialog::addAccountToAccountList(Account * account)
 	qDebug() << "addAccountToAccountList";
 	QListWidgetItem * item = account->getItem();
 	QWidget * widget = account->getItemWidget();
+	connect(widget, SIGNAL(checkStateChanged()),
+	        this,   SLOT(changedAccountList()));
 	listWidget_accountList->addItem(item);
 	listWidget_accountList->setItemWidget(item, widget);
 }

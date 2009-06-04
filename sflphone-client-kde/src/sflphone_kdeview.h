@@ -80,6 +80,7 @@ public:
 	 * 
 	 */
 	void loadWindow();
+	void buildDialPad();
 	
 	//Getters
 	static QString firstAccountId();

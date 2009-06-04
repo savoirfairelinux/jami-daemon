@@ -505,7 +505,7 @@ WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
      : QWizardPage(parent)
 {
 	setTitle(tr2i18n("Network Address Translation (NAT)"));
-	setSubTitle(tr2i18n("You should probably enable this option if you're placed under a firewall :"));
+	setSubTitle(tr2i18n("You should probably enable this option if you're placed under a firewall"));
 
 	checkBox_enableStun = new QCheckBox(tr2i18n("Enable STUN"));
 	label_StunServer = new QLabel(tr2i18n("Stun Server"));

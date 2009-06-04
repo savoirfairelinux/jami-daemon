@@ -64,7 +64,12 @@ public:
 	void updateEnabledDisplay();
 	void updateDisplay();
 	
+private slots:	
+	void on_checkBox_stateChanged();
 	
+	
+signals:
+	void checkStateChanged();
 
 };
 
