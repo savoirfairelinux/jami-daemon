@@ -41,8 +41,8 @@ public:
  	: AudioCodec(payload, "G722")
 	{
 	        // printf("Debug G722\n");
-  		_clockRate = 8000;
-                _frameSize = 160; // samples, 20 ms at 8kHz
+  		_clockRate = 16000;
+                _frameSize = 320; // samples, 20 ms at 8kHz
   		_channel   = 1;
 		_bitrate = 64; 
 		_bandwidth = 80;
@@ -78,7 +78,7 @@ public:
 	    printf("Codec encode g722_size: %i\n",g722_size);
 
 	    // return g722_size;
-	    return g722_size;
+	    return g722_size/2;
 	}
 
         int16_t saturate(int32_t amp)
