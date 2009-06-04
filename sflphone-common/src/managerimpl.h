@@ -1091,11 +1091,12 @@ class ManagerImpl {
      */
     bool accountExists(const AccountID& accountID);
 
+
+public:
+
     std::map<std::string, std::string> send_history_to_client (void); 
 
     void receive_history_from_client (std::map<std::string, std::string> history);
-
-public:
     /**
      * Get an account pointer
      * @param accountID account ID to get
