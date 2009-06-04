@@ -52,7 +52,7 @@ INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 SUBDIRS = ilbc
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(CELT_LIB) $(ILBC_LIB)
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(CELT_LIB) $(ILBC_LIB)
 
 
 noinst_HEADERS = audiocodec.h
@@ -67,8 +67,13 @@ libcodec_alaw_so_CFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_LDFLAGS = --shared -lc
 
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_CELT_RULE) $(INSTALL_ILBC_RULE) 
-uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_celt_so
+libcodec_g722_so_SOURCES = g722.cpp
+libcodec_g722_so_CFLAGS = -fPIC -g -Wall
+libcodec_g722_so_CXXFLAGS = -fPIC -g -Wall
+libcodec_g722_so_LDFLAGS = --shared -lc
+
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_CELT_RULE) $(INSTALL_ILBC_RULE) 
+uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_celt_so
 
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
@@ -76,6 +81,8 @@ install-libcodec_ulaw_so: libcodec_ulaw.so
 	$(INSTALL_PROGRAM)  libcodec_ulaw.so $(sflcodecdir)
 install-libcodec_alaw_so: libcodec_alaw.so
 	$(INSTALL_PROGRAM)  libcodec_alaw.so $(sflcodecdir)
+install-libcodec_g722_so: libcodec_g722.so
+	$(INSTALL_PROGRAM)  libcodec_g722.so $(sflcodecdir)
 install-libcodec_gsm_so: libcodec_gsm.so
 	$(INSTALL_PROGRAM)  libcodec_gsm.so $(sflcodecdir)
 install-libcodec_speex_nb_so: libcodec_speex_nb.so
@@ -92,6 +99,8 @@ uninstall-libcodec_ulaw_so:
 	rm -f $(sflcodecdir)/libcodec_ulaw.so
 uninstall-libcodec_alaw_so:
 	rm -f $(sflcodecdir)/libcodec_alaw.so
+uninstall-libcodec_g722_so:
+	rm -f $(sflcodecdir)/libcodec_g722.so
 uninstall-libcodec_gsm_so:
 	rm -f $(sflcodecdir)/libcodec_gsm.so
 uninstall-libcodec_speex_nb_so:

@@ -43,6 +43,7 @@ class HookManagerTest : public CppUnit::TestCase {
      */
     CPPUNIT_TEST_SUITE (HookManagerTest);
         CPPUNIT_TEST (testAddAction);
+        CPPUNIT_TEST (testLargeUrl);
     CPPUNIT_TEST_SUITE_END ();
 
     public:
@@ -56,6 +57,7 @@ class HookManagerTest : public CppUnit::TestCase {
 
         void testAddAction ();
 
+        void testLargeUrl ();
         /*
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test

@@ -111,6 +111,13 @@
       <arg type="s" name="device"  direction="out"/>
       <arg type="d" name="value"  direction="out"/>
     </signal>
+
+    <signal name="transferSucceded">
+    </signal>
+
+    <signal name="transferFailed">
+    </signal>
+
  
 <!--
     <signal name="error">

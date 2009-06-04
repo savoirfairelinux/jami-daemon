@@ -189,6 +189,25 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
   status_bar_display_account();
 }
 
+
+static void
+transfer_succeded_cb (DBusGProxy *proxy UNUSED,
+                     void * foo  UNUSED )
+{
+  DEBUG ("Transfer succeded\n");
+  sflphone_display_transfer_status("Transfer successfull\n");
+}
+
+
+static void
+transfer_failed_cb (DBusGProxy *proxy UNUSED,
+                     void * foo  UNUSED )
+{
+  DEBUG ("Transfer failed\n");
+  sflphone_display_transfer_status("Transfer failed\n");
+}
+
+
 static void
 error_alert(DBusGProxy *proxy UNUSED,
 		  int errCode,
@@ -304,6 +323,16 @@ dbus_connect ()
     "volumeChanged", G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_INVALID);
   dbus_g_proxy_connect_signal (callManagerProxy,
     "volumeChanged", G_CALLBACK(volume_changed_cb), NULL, NULL);
+
+  dbus_g_proxy_add_signal (callManagerProxy,
+			   "transferSucceded", G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (callManagerProxy,
+    "transferSucceded", G_CALLBACK(transfer_succeded_cb), NULL, NULL);
+
+  dbus_g_proxy_add_signal (callManagerProxy,
+			   "transferFailed", G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (callManagerProxy,
+    "transferFailed", G_CALLBACK(transfer_failed_cb), NULL, NULL);
 
   
   configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
