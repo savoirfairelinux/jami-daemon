@@ -21,11 +21,9 @@
 
 void gnome_main_section_new_with_table (gchar *title, GtkWidget **frame, GtkWidget **table, gint nb_col, gint nb_row)
 {
-    GtkWidget *_frame, *_table, *label;
+  GtkWidget *_frame, *_table, *label, *align;
     PangoAttrList *attrs = NULL;
     PangoAttribute *attr = NULL;
-
-    GtkWidget *align;
 
     attrs = pango_attr_list_new ();
     attr = pango_attr_weight_new (PANGO_WEIGHT_BOLD);
@@ -41,7 +39,7 @@ void gnome_main_section_new_with_table (gchar *title, GtkWidget **frame, GtkWidg
     gtk_label_set_attributes (GTK_LABEL (label), attrs);
     pango_attr_list_unref (attrs);
 
-    align = gtk_alignment_new( 0.08, 0.2, 0.2, 0.1 ); 
+    align = gtk_alignment_new( 0.08, 0.2, 0.1, 0.1 ); 
     gtk_container_add( GTK_CONTAINER(_frame), align );
 
     _table = gtk_table_new(nb_col, nb_row, FALSE);
@@ -53,7 +51,6 @@ void gnome_main_section_new_with_table (gchar *title, GtkWidget **frame, GtkWidg
     *table = _table;
     *frame = _frame;
 }
-
 
 
 void gnome_main_section_new (gchar *title, GtkWidget **frame)
