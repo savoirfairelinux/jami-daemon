@@ -47,6 +47,8 @@ class HistoryTest : public CppUnit::TestCase {
         CPPUNIT_TEST (test_load_history_items_map);
         CPPUNIT_TEST (test_save_history_items_map);
         CPPUNIT_TEST (test_save_history_to_file);
+        CPPUNIT_TEST (test_get_history_serialized);
+        CPPUNIT_TEST (test_set_serialized_history);
     CPPUNIT_TEST_SUITE_END ();
 
     public:
@@ -67,7 +69,11 @@ class HistoryTest : public CppUnit::TestCase {
         void test_save_history_items_map ();
 
         void test_save_history_to_file ();
+    
+        void test_get_history_serialized ();
 
+        void test_set_serialized_history ();
+            
         /*
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test

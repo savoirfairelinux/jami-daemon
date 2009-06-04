@@ -89,12 +89,72 @@ void HistoryTest::test_save_history_to_file ()
 {
     std::string path;
     Conf::ConfigTree history_list, history_list2;
+    std::map <std::string, std::string> res;
+    std::map <std::string, std::string>::iterator iter;
 
     history->set_history_path (HISTORY_SAMPLE);
     history->load_history_from_file (&history_list);
     history->load_history_items_map (&history_list);
     history->save_history_items_map (&history_list2);
     CPPUNIT_ASSERT (history->save_history_to_file (&history_list2));
+}
+
+void HistoryTest::test_get_history_serialized ()
+{
+    std::map <std::string, std::string> res;
+    std::map <std::string, std::string>::iterator iter;
+    std::string tmp;
+
+    CPPUNIT_ASSERT (history->load_history (HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
+    res = history->get_history_serialized ();
+    CPPUNIT_ASSERT (res.size()==HISTORY_SAMPLE_SIZE);
+
+    // Warning - If you change the history-sample file, you must change the following lines also so that the tests could work
+    // The reference here is the file history-sample in this test directory
+    // The serialized form is: calltype%to%from%callid
+    
+    // Check the first
+    tmp = "0||514-276-5468|Savoir-faire Linux";
+    CPPUNIT_ASSERT (tmp == res ["144562436"]);
+
+    tmp = "2|136||Emmanuel Milou";
+    CPPUNIT_ASSERT (tmp == res ["747638685"]);
+
+    tmp = "1||5143848557|Chez wam";
+    CPPUNIT_ASSERT (tmp == res ["775354456"]);
+}
+
+void HistoryTest::test_set_serialized_history ()
+{
+    // We build a map to have an efficient test
+    std::map <std::string, std::string> map_test;
+    std::string tmp;
+    Conf::ConfigTree history_list;
+
+    map_test["144562436"] = "0||514-276-5468|Savoir-faire Linux";
+    map_test["747638685"] = "2|136||Emmanuel Milou";
+    map_test["775354456"] = "1||5143848557|Chez wam";
+
+    CPPUNIT_ASSERT (history->load_history (HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT (history->set_serialized_history (map_test) == 3);
+    CPPUNIT_ASSERT (history->get_history_size () == 3);
+
+    map_test.clear ();
+    map_test = history->get_history_serialized ();
+    CPPUNIT_ASSERT (map_test.size()==HISTORY_SAMPLE_SIZE);
+
+    // Check the first
+    tmp = "0||514-276-5468|Savoir-faire Linux";
+    CPPUNIT_ASSERT (tmp == map_test ["144562436"]);
+
+    tmp = "2|136||Emmanuel Milou";
+    CPPUNIT_ASSERT (tmp == map_test ["747638685"]);
+
+    tmp = "1||5143848557|Chez wam";
+    CPPUNIT_ASSERT (tmp == map_test ["775354456"]);
+
+    history->save_history_items_map (&history_list);
+    CPPUNIT_ASSERT (history->save_history_to_file (&history_list));
 }
 
 void HistoryTest::tearDown(){

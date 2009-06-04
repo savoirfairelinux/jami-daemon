@@ -23,6 +23,7 @@
 
 #include <string>
 #include <config/config.h>
+#include <iostream>
 
 typedef enum CallType {
     CALL_MISSED,
@@ -37,25 +38,32 @@ class HistoryItem {
         /*
          * Constructor
          */
-        HistoryItem (int, CallType, std::string, std::string, std::string, std::string="");
+        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string="");
+
+        /*
+         * Constructor from a serialized form
+         */
+        HistoryItem (std::string, std::string="");
         
         /*
          * Destructor
          */
         ~HistoryItem ();
 
-        inline int get_timestamp () {
+        inline std::string get_timestamp () {
             return _timestamp;
         }
 
         bool save (Conf::ConfigTree **history);
+
+        std::string serialize (void);
 
     private:
 
         /*
          * Timestamp representing the date of the call
          */
-        int _timestamp;
+        std::string _timestamp;
 
         /* 
          * Represents the type of call

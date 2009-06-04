@@ -37,6 +37,7 @@
 #include "account.h"
 #include "call.h"
 #include "numbercleaner.h"
+#include <history/historymanager.h>
 
 #include "audio/tonelist.h" // for Tone::TONEID declaration
 #include "audio/audiofile.h"
@@ -1090,6 +1091,9 @@ class ManagerImpl {
      */
     bool accountExists(const AccountID& accountID);
 
+    std::map<std::string, std::string> send_history_to_client (void); 
+
+    void receive_history_from_client (std::map<std::string, std::string> history);
 
 public:
     /**
@@ -1135,6 +1139,11 @@ private:
     ManagerImpl& operator=( const ManagerImpl& rh);
 
     NumberCleaner *_cleaner;
+
+    /**
+      * To handle the persistent history
+      */
+    HistoryManager *_history;
 
     /**
      * Check if the call is a classic call or a direct IP-to-IP call

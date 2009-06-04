@@ -25,7 +25,7 @@
 #include <global.h>
 #include <user_cfg.h>
 
-typedef std::map <int, HistoryItem*> HistoryItemMap; 
+typedef std::map <std::string, HistoryItem*> HistoryItemMap; 
 
 class HistoryManager {
 
@@ -40,7 +40,17 @@ class HistoryManager {
          */
         ~HistoryManager ();
 
-        bool init (void);
+        /**
+         *@param path  A specific file to use; if empty, use the global one
+         *
+         *@return int The number of history items succesfully loaded
+         */
+        int load_history (std::string path="");
+
+        /**
+         *@return bool True if the history has been successfully saved in the file
+         */
+        bool save_history (void);
 
         /*
          * Load the history from a file to the dedicated data structure
@@ -80,6 +90,10 @@ class HistoryManager {
             return _history_items.size ();
         }
 
+        std::map <std::string, std::string> get_history_serialized (void);
+
+        int set_serialized_history (std::map <std::string, std::string> history);
+
     private:
 
         
@@ -88,8 +102,10 @@ class HistoryManager {
 
         /*
          * Set the path to the history file
+         *
+         * @param path  A specific file to use; if empty, use the global one
          */
-        int create_history_path (void);
+        int create_history_path (std::string path="");
         /*
          * Add a new history item in the data structure
          */

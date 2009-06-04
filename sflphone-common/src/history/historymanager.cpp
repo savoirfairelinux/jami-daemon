@@ -32,13 +32,21 @@ HistoryManager::~HistoryManager () {
     _history_items.clear ();
 }
 
-bool HistoryManager::init (void)
+int HistoryManager::load_history (std::string path)
 {
     Conf::ConfigTree history_list;
 
-    create_history_path ();
+    create_history_path (path);
     load_history_from_file (&history_list);
-    load_history_items_map (&history_list);
+    return load_history_items_map (&history_list);
+}
+
+bool HistoryManager::save_history (void)
+{
+    Conf::ConfigTree history_list;
+    
+    save_history_items_map (&history_list);
+    return save_history_to_file (&history_list);
 }
 
 bool HistoryManager::load_history_from_file (Conf::ConfigTree *history_list)
@@ -58,8 +66,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
     Conf::TokenList sections; 
     HistoryItem *item;
     Conf::TokenList::iterator iter;
-    std::string to, from, caller_id, accountID;
-    int timestamp;
+    std::string to, from, caller_id, accountID, timestamp;
     CallType type; 
 
     sections = history_list->getSections();
@@ -68,7 +75,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
     while(iter != sections.end()) {
 
         type = (CallType) getConfigInt (*iter, "type", history_list);
-        timestamp = getConfigInt (*iter, "timestamp", history_list);
+        timestamp = getConfigString (*iter, "timestamp", history_list);
         to = getConfigString (*iter, "to", history_list);
         from = getConfigString (*iter, "from", history_list);
         caller_id = getConfigString (*iter, "id", history_list);
@@ -86,7 +93,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
 
 bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list)
 {
-    return  history_list->saveConfigTree(_history_path.data());
+    return  history_list->saveConfigTree (_history_path.data());
 }
 
 
@@ -119,22 +126,29 @@ void HistoryManager::add_new_history_entry (HistoryItem *new_item)
     _history_items [new_item->get_timestamp ()] = new_item;
 }
 
-int HistoryManager::create_history_path (void) {
+int HistoryManager::create_history_path (std::string path) {
 
-    std::string path;
+    std::string filename;
 
-    path = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
+    if (path == "")
+    {
+        filename = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
 
-    if (mkdir (path.data(), 0755) != 0) {
-        // If directory	creation failed
-        if (errno != EEXIST) {
-            _debug("Cannot create directory: %s\n", strerror(errno));
-            return -1;
+        if (mkdir (filename.data(), 0755) != 0) {
+            // If directory	creation failed
+            if (errno != EEXIST) {
+                _debug("Cannot create directory: %s\n", strerror(errno));
+                return -1;
+            }
         }
-    }
 
-    // Load user's history
-    _history_path = path + DIR_SEPARATOR_STR + "history";
+        // Load user's history
+        _history_path = filename + DIR_SEPARATOR_STR + "history";
+    }
+    else
+       set_history_path (path); 
+    
+
     return 0;
 }
 
@@ -159,5 +173,51 @@ HistoryManager::getConfigString(const std::string& section, const std::string& n
         throw e;
     }
     return "";
+}
+
+
+std::map <std::string, std::string> HistoryManager::get_history_serialized (void)
+{
+    std::map <std::string, std::string> serialized;
+    HistoryItemMap::iterator iter;
+    HistoryItem *current;
+    std::string res, key; 
+
+    iter = _history_items.begin ();
+    while (iter != _history_items.end())
+    {   
+        current = iter->second;
+        if (current)
+        {
+            key = current->get_timestamp ();
+            res = current->serialize ();
+            serialized [key] = res;
+        } 
+        iter ++;
+    }
+
+    return serialized;
+}
+
+
+int HistoryManager::set_serialized_history (std::map <std::string, std::string> history)
+{
+    std::map <std::string, std::string>::iterator iter;
+    HistoryItem *new_item;
+    int items_added;
+
+    // Clear the existing history
+    _history_items.clear ();
+
+    iter = history.begin ();
+    while (iter != history.end ())
+    {
+        new_item = new HistoryItem (iter->first, iter->second);
+        add_new_history_entry (new_item);
+        items_added ++;
+        iter ++;
+    }
+    
+    return items_added;
 }
 
