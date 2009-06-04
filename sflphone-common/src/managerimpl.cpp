@@ -884,7 +884,7 @@ ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, int nb_ms
   if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, nb_msg) ;
 }
 
-void ManagerImpl::connectionStatusNotification(  )
+void ManagerImpl::connectionStatusNotification()
 {
     if (_dbus)
         _dbus->getConfigurationManager()->accountsChanged();
@@ -2296,11 +2296,16 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 void
 ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire )
 {
+
+  _debug("ManagerImpl::sendRegister \n");
   // Update the active field
   setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
+  _debug("ManagerImpl::sendRegister set config done\n");
 
   Account* acc = getAccount(accountID);
   acc->loadConfig();
+  _debug("ManagerImpl::sendRegister acc->loadconfig done\n");
+
   // Test on the freshly updated value
   if ( acc->isEnabled() ) {
     // Verify we aren't already registered, then register
@@ -2311,6 +2316,7 @@ ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire 
       _debug("Send unregister for account %s\n" , accountID.c_str());
       acc->unregisterVoIPLink();
   }
+
 }
 
   std::string
@@ -2840,6 +2846,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr (call->getState())));
     }
     else 
     {
@@ -2847,7 +2854,24 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "FAILURE"));
     }
 
     return call_details;
+}
+
+  std::vector< std::string >
+ManagerImpl::getCallList (void)
+{
+    std::vector< std::string > v;
+    int i;
+
+    CallAccountMap::iterator iter = _callAccountMap.begin ();
+
+    while (iter != _callAccountMap.end ()) {
+        v.push_back(iter->first.data());
+        iter++;
+    }   
+   
+    return v;
 }

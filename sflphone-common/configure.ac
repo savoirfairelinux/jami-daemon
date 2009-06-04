@@ -67,9 +67,6 @@ AC_CONFIG_FILES([man/Makefile])
 AC_CONFIG_FILES([doc/Makefile \
   doc/doxygen/Makefile])
   
-AC_CONFIG_FILES([platform/suse.spec \
-  platform/fedora.spec]) 
-  
 dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
 dnl AM_CONFIG_HEADER(config.h)
 
@@ -196,7 +193,7 @@ dnl DBus-C++ detection (used to be in library own build system)
 DBUS_REQUIRED_VERSION=0.60
 PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
 	AC_MSG_ERROR([You need the DBus libraries (version 0.6 or better)]
-	[http://www.freedesktop.org/wiki/Software_2fdbus])
+	[http://gitorious.org/dbus-cplusplus])
 )
 AC_SUBST(dbus_CFLAGS)
 AC_SUBST(dbus_LIBS)

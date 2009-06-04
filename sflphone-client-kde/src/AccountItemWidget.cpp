@@ -30,6 +30,7 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
  : QWidget(parent)
 {
 	checkBox = new QCheckBox(this);
+	checkBox->setObjectName("checkBox");
 	led = new QLabel();
 	led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 	textLabel = new QLabel();
@@ -45,6 +46,11 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
 	state = Unregistered;
 	enabled = false;
 	updateDisplay();
+	
+// 	connect(checkBox, SIGNAL(stateChanged(int)),
+// 	        this,      SLOT(on_checkBox_stateChanged()));
+	
+	QMetaObject::connectSlotsByName(this);
 }
 
 
@@ -89,14 +95,12 @@ void AccountItemWidget::setState(int state)
 {
 	this->state = state;
 	updateStateDisplay();
-	//emit stateChanged;
 }
 
 void AccountItemWidget::setEnabled(bool enabled)
 {
 	this->enabled = enabled;
 	updateEnabledDisplay();
-	//emit enabledChanged;
 }
 
 void AccountItemWidget::setAccountText(QString text)
@@ -107,4 +111,9 @@ void AccountItemWidget::setAccountText(QString text)
 bool AccountItemWidget::getEnabled()
 {
 	return checkBox->checkState();
+}
+
+void AccountItemWidget::on_checkBox_stateChanged()
+{
+	emit checkStateChanged();
 }

@@ -7,16 +7,12 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-19 17:49:40 -0400
+# Last Modified: 2009-06-01 19:11:22 -0400
 #####################################################
 
 #
 # Not working with git 1.5.4.3
 #
-#
-#
-#
-
 
 TAG=`date +%Y-%m-%d`
 
@@ -43,7 +39,7 @@ REMOTE_ROOT_DIR="/home/sflphone"
 # scripts
 SCRIPTS_DIR="${ROOT_DIR}/build-system"
 PACKAGING_SCRIPTS_DIR="${SCRIPTS_DIR}/remote"
-BIN_DIR="${SCRIPTS_DIR}/bin"
+DISTRIBUTION_SCRIPTS_DIR="${SCRIPTS_DIR}/distributions"
 
 # directory that will be deployed to remote machine
 TODEPLOY_DIR="${ROOT_DIR}/sflphone-packaging"
@@ -65,9 +61,11 @@ PACKAGING_RESULT_DIR=${ROOT_DIR}/packages-${TAG}
 USER="sflphone"
 
 RELEASE_MODE=
-VERSION_APPEND=
+
+SNAPSHOT_TAG=`date +%s`
 
 DO_PREPARE=1
+DO_PUSH=1
 DO_MAIN_LOOP=1
 DO_SIGNATURES=1
 DO_UPLOAD=1
@@ -77,9 +75,9 @@ DO_SEND_EMAIL=1
 EDITOR=echo
 export EDITOR
 
-NON_FATAL_ERRORS=
+NON_FATAL_ERRORS=""
 
-MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" )
+MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" "opensuse-11" "opensuse-11-64" "mandriva-2009.1" )
 
 #########################
 # BEGIN
@@ -98,6 +96,7 @@ do
 		echo
 		echo "Options :"
 		echo " --skip-prepare"
+		echo " --skip-push"
 		echo " --skip-main-loop"
 		echo " --skip-signatures"
 		echo " --skip-upload"
@@ -109,6 +108,8 @@ do
 		exit 0;;
 	--skip-prepare)
 		unset DO_PREPARE;;
+	--skip-push)
+		unset DO_PUSH;;
 	--skip-main-loop)
 		unset DO_MAIN_LOOP;;
 	--skip-signatures)
@@ -123,7 +124,7 @@ do
 		RELEASE_MODE=(${PARAMETER##*=});;
 	--list-machines)
 		echo "Available machines :"
-		for MACHINE in ${MACHINES}; do
+		for MACHINE in ${MACHINES[@]}; do
 			echo " "${MACHINE}
 		done
 		exit 0;;
@@ -154,6 +155,7 @@ if [ "${WHO}" != "${USER}" ]; then
 fi
 
 # logging
+rm -rf ${PACKAGING_RESULT_DIR} 2>/dev/null
 mkdir ${PACKAGING_RESULT_DIR} 2>/dev/null
 if [ ${DO_LOGGING} ]; then
 
@@ -194,11 +196,8 @@ echo
 
 if [ ${RELEASE_MODE} ]; then
 	echo "Release mode : ${RELEASE_MODE}"
-	if [ "${RELEASE_MODE}" != "release" ];then
-		VERSION_APPEND="~${RELEASE_MODE}"
-	fi
 else
-	echo "Snapshot mode"
+	echo "Snapshot mode : ${SNAPSHOT_TAG}"
 fi
 
 #########################
@@ -221,52 +220,63 @@ if [ ${DO_PREPARE} ]; then
 		exit -1
 	fi
 
-	FULL_VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1-2 | sed 's/\.rc.*//' | sed 's/\.beta.*//'`
-	
+	VERSION=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1`
+
+	if [ ${RELEASE_MODE} ]; then
+		if [ "${RELEASE_MODE}" != "release" ];then
+			VERSION="${VERSION}~${RELEASE_MODE}"
+		fi
+	else
+		VERSION="${VERSION}~snapshot${SNAPSHOT_TAG}"
+	fi
+	echo "Version is : ${VERSION}"
+
+	# if push is activated
+	if [ ${DO_PUSH} ];then
+
+		# first changelog generation for commit
+		echo "Update debian changelogs (1/2)"
+
+		${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
+
+		if [ "$?" -ne "0" ]; then
+			echo "!! Cannot update debian changelogs"
+			exit -1
+		fi
+
+		echo " Doing commit"
+		
+        	cd ${REPOSITORY_DIR}
+		git commit -m "[#1262] Updated debian changelogs (${VERSION})" . >/dev/null
+
+		echo " Pushing commit"
+		git push origin master >/dev/null
+	fi
+
 	# change current branch if needed
         if [ ${RELEASE_MODE} ]; then
                 cd ${REPOSITORY_DIR}
-                echo "Using release branch"
                 git checkout origin/release -b release
         else
                 echo "Using master branch"
         fi
 
 	# generate the changelog, according to the distribution and the git commit messages
-	echo "Update changelogs"
-
-	${SCRIPTS_DIR}/sfl-git-dch.sh ${RELEASE_MODE}
+	echo "Update debian changelogs (2/2)"
+	cd ${REPOSITORY_DIR}
+	${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
 	
 	if [ "$?" -ne "0" ]; then
-		echo "!! Cannot update changelogs"
+		echo "!! Cannot update debian changelogs"
 		exit -1
 	fi
 
-	cd ${REPOSITORY_DIR}	
-	echo "Update repository with new changelog"
-	echo " Switch to master branch to commit"
-	if [ ${RELEASE_MODE} ]; then
-                
-                echo "Switch to master branch for commit"
-                git checkout -f master
-        fi
+	echo "Write version numbers for following processes"
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-common/VERSION
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-client-gnome/VERSION
+	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-client-kde/VERSION
+	echo "${VERSION}" > ${TODEPLOY_BUILD_DIR}/VERSION
 
-	echo " Doing commit"
-	VERSION_COMMIT=${FULL_VER}${VERSION_APPEND}
-	if [ ! ${RELEASE_MODE} ]; then
-		VERSION_COMMIT=${FULL_VER}" Snapshot ${TAG}"
-	fi
-	git commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
-	echo " Pushing commit"
-	git push origin master >/dev/null
-
-	# change back current branch if needed
-	if [ ${RELEASE_MODE} ]; then
-		echo "Switch back to release branch"
-		git checkout release
-		# git merge master
-	fi
-	
 	echo "Archiving repository"
 	tar czf ${REPOSITORY_ARCHIVE} --exclude .git -C `dirname ${REPOSITORY_DIR}` sflphone 
 
@@ -279,7 +289,7 @@ if [ ${DO_PREPARE} ]; then
 	rm -rf ${REPOSITORY_DIR}
 
 	echo "Finish preparing deploy directory"
-	cp -r ${PACKAGING_SCRIPTS_DIR}/* ${TODEPLOY_DIR}
+	cp -r ${DISTRIBUTION_SCRIPTS_DIR}/* ${TODEPLOY_DIR}
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot prepare scripts for deployment"
@@ -297,6 +307,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 	echo "Entering main loop"
 	echo
 
+	rm -f ${PACKAGING_RESULT_DIR}/stats.log
 	for MACHINE in ${MACHINES[*]}
 	do
 
@@ -306,6 +317,9 @@ if [ ${DO_MAIN_LOOP} ]; then
 			echo "Not needed, already running"
 		else
 			cd ${VBOX_USER_HOME} && VBoxHeadless -startvm "${MACHINE}" -p 50000 &
+			if [[ ${MACHINE} =~ "opensuse" ]]; then
+				STARTUP_WAIT=200
+			fi
 			echo "Wait ${STARTUP_WAIT} s"
 			sleep ${STARTUP_WAIT}
 		fi
@@ -318,25 +332,30 @@ if [ ${DO_MAIN_LOOP} ]; then
 
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Cannot deploy packaging system"
-			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+			echo "${MACHINE} : Cannot deploy packaging system" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        else
 
-		echo "Launch remote build"
-		${SSH_BASE} "${REMOTE_DEPLOY_DIR}/build-package-ubuntu.sh ${RELEASE_MODE}"
+			echo "Launch remote build"
+			${SSH_BASE} "cd ${REMOTE_DEPLOY_DIR} && ./build-packages.sh ${RELEASE_MODE}"
 
-		if [ "$?" -ne "0" ]; then
-	                echo " !! Error during remote packaging process"
-			NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+			if [ "$?" -ne "0" ]; then
+	                	echo " !! Error during remote packaging process"
+				echo "${MACHINE} : Error during remote packaging process" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        	else
 
-		echo "Retrieve dists and log files (current tag is ${TAG})"
-		${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/dists ${PACKAGING_RESULT_DIR}/
-		${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}"/*.log" ${PACKAGING_RESULT_DIR}/
+				echo "Retrieve dists and log files (current tag is ${TAG})"
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/deb ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/rpm ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
+				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}"/*.log" ${PACKAGING_RESULT_DIR}/
 
-		if [ "$?" -ne "0" ]; then
-	                echo " !! Cannot retrieve remote files"
-	                NON_FATAL_ERRORS="${NON_FATAL_ERRORS} !! Error when packaging for ${MACHINE}\n"
-	        fi
+				if [ "$?" -ne "0" ]; then
+	        		        echo " !! Cannot retrieve remote files"
+					echo "${MACHINE} : Cannot retrieve remote files" >> ${PACKAGING_RESULT_DIR}/stats.log
+	        		else
+					echo "${MACHINE} : OK" >> ${PACKAGING_RESULT_DIR}/stats.log
+				fi
+			fi
+		fi
 
 		if [ "${VM_STATE}" = "running" ]; then
 			echo "Leave machine running"
@@ -376,8 +395,8 @@ if [ ${DO_SIGNATURES} ]; then
 	fi	
 
 	echo "Sign packages"
-	find ${PACKAGING_RESULT_DIR} -name "*.deb" -exec dpkg-sig -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {} \; >/dev/null 2>&1
-	find ${PACKAGING_RESULT_DIR} -name "*.changes" -printf "debsign -k'Savoir-Faire Linux Inc.' %p\n" | sh >/dev/null 2>&1
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.deb" -exec dpkg-sig -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {} \; >/dev/null 2>&1
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.changes" -printf "debsign -k'Savoir-Faire Linux Inc.' %p\n" | sh >/dev/null 2>&1
 fi
 
 #########################
@@ -399,7 +418,7 @@ if [ ${DO_UPLOAD} ]; then
 	
 	echo "Upload packages"
 	echo "Install dists files to repository"
-	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/dists ${SSH_REPOSITORY_HOST}:
+	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/deb/dists ${SSH_REPOSITORY_HOST}:
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot upload packages"
@@ -415,7 +434,7 @@ if [ ${DO_UPLOAD} ]; then
 	fi
 fi
 
-if [ ${NON_FATAL_ERRORS} ]; then
+if [ "${NON_FATAL_ERRORS}" != "" ]; then
 	echo "Non fatal errors :"
 	echo ${NON_FATAL_ERRORS}
 	exit -1

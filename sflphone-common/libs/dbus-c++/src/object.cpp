@@ -21,6 +21,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <dbus-c++/debug.h>
 #include <dbus-c++/object.h>
@@ -327,6 +330,17 @@ Message ObjectProxy::_invoke_method(CallMessage &call)
 		call.destination(service().c_str());
 
 	return conn().send_blocking(call);
+}
+
+bool ObjectProxy::_invoke_method_noreply(CallMessage &call)
+{
+	if (call.path() == NULL)
+		call.path(path().c_str());
+
+	if (call.destination() == NULL)
+		call.destination(service().c_str());
+
+	return conn().send(call);
 }
 
 bool ObjectProxy::handle_message(const Message &msg)

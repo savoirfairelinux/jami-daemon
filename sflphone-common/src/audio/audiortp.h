@@ -74,6 +74,9 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** A SIP call */
     SIPCall* _ca;    
 
+    
+    friend class RtpTest;
+
   private:
 
     // copy constructor

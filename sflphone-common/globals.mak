@@ -1,18 +1,24 @@
 # Global variables
 src=$(top_srcdir)
-sflcodecdir=$(libdir)/sflphone/codecs
-sflplugindir=$(libdir)/sflphone/plugins
+sflcodecdir=$(DESTDIR)$(libdir)/sflphone/codecs
+sflplugindir=$(DESTDIR)$(libdir)/sflphone/plugins
 
 # for pjsip
-export TARGET_NAME := @target@
-
 PJSIP_LIBS= \
-			-L$(src)/libs/pjproject-1.0.1/pjnath/ \
-			-L$(src)/libs/pjproject-1.0.1/pjsip/ \
-			-L$(src)/libs/pjproject-1.0.1/pjlib/ \
-			-L$(src)/libs/pjproject-1.0.1/pjlib-util/ \
-			-L$(src)/libs/pjproject-1.0.1/pjmedia/ \
-			-lpjnath-sfl-$(TARGET_NAME) -lpjsua-sfl-$(TARGET_NAME) -lpjsip-sfl-$(TARGET_NAME) -lpjmedia-sfl-$(TARGET_NAME) -lpjsip-simple-sfl-$(TARGET_NAME) -lpjsip-ua-sfl-$(TARGET_NAME) -lpjmedia-codec-sfl-$(TARGET_NAME) -lpjlib-util-sfl-$(TARGET_NAME) -lpj-sfl-$(TARGET_NAME)
+			-L$(src)/libs/pjproject-1.0.1/pjnath/lib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjsip/lib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjlib/lib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjlib-util/lib/ \
+			-L$(src)/libs/pjproject-1.0.1/pjmedia/lib/ \
+			-lpjnath-sfl-$(target) \
+			-lpjsua-sfl-$(target) \
+			-lpjsip-sfl-$(target) \
+			-lpjmedia-sfl-$(target) \
+			-lpjsip-simple-sfl-$(target) \
+			-lpjsip-ua-sfl-$(target) \
+			-lpjmedia-codec-sfl-$(target) \
+			-lpjlib-util-sfl-$(target) \
+			-lpj-sfl-$(target)
 
 SIP_CFLAGS=-I$(src)/libs/pjproject-1.0.1/pjsip/include \
 		   -I$(src)/libs/pjproject-1.0.1/pjlib/include \

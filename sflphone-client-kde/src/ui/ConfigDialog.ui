@@ -179,7 +179,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget_options">
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_general">
         <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -1047,7 +1047,7 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="page1_alsa">
             <layout class="QVBoxLayout" name="verticalLayout_20">
@@ -1136,7 +1136,7 @@
                 </sizepolicy>
                </property>
                <property name="title">
-                <string>Paramètres PulseAudio</string>
+                <string>PulseAudio settings</string>
                </property>
                <layout class="QFormLayout" name="formLayout_11">
                 <property name="fieldGrowthPolicy">
@@ -1145,7 +1145,7 @@
                 <item row="0" column="0">
                  <widget class="QCheckBox" name="checkBox_pulseAudioVolumeAlter">
                   <property name="text">
-                   <string>Autoriser à &amp;modifier le volume des autres applications</string>
+                   <string>Mute other applications during a call</string>
                   </property>
                  </widget>
                 </item>

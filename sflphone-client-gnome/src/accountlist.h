@@ -87,6 +87,13 @@ void account_list_clean ();
 void account_list_add (account_t * a);
 
 /** 
+ * This function append an account to list at a given position. 
+ * @param a The account you want to add
+ * @param pos THe position in the list to insert the account
+ */
+void account_list_add_at_nth (account_t * a, guint pos);
+
+/** 
  * This function remove an account from list. 
  * @param accountID The accountID of the account you want to remove
  */

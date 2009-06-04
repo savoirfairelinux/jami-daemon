@@ -174,9 +174,9 @@ Call::~Call()
 	//delete historyItemWidget;
 }
 	
-Call * Call::buildDialingCall(QString callId, const QString & peerName)
+Call * Call::buildDialingCall(QString callId, const QString & peerName, QString account)
 {
-	Call * call = new Call(CALL_STATE_DIALING, callId, peerName);
+	Call * call = new Call(CALL_STATE_DIALING, callId, peerName, "", account);
 	call->historyState = NONE;
 	return call;
 }
@@ -390,6 +390,11 @@ bool Call::getRecording() const
 	return recording;
 }
 
+QString Call::getAccountId() const
+{
+	return account;
+}
+
 /*
 void Call::putRecording()
 {
@@ -467,7 +472,12 @@ void Call::call()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	QString number = labelCallNumber->text();
-	this->account = sflphone_kdeView::firstAccountId();
+	qDebug() << "account = " << account;
+	if(account.isEmpty())
+	{
+		qDebug() << "account is empty"; 
+		this->account = sflphone_kdeView::firstAccountId();
+	}
 	if(!account.isEmpty())
 	{
 		qDebug() << "Calling " << number << " with account " << account << ". callId : " << callId;

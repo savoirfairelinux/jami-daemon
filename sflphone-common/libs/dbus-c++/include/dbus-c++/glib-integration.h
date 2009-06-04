@@ -25,10 +25,6 @@
 #ifndef __DBUSXX_GLIB_INTEGRATION_H
 #define __DBUSXX_GLIB_INTEGRATION_H
 
-#ifdef DBUS_HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <glib.h>
 
 #include "api.h"
@@ -94,7 +90,8 @@ class DXXAPI BusDispatcher : public Dispatcher
 {
 public:
 
-	BusDispatcher() : _ctx(NULL), _priority(G_PRIORITY_DEFAULT) {}
+	BusDispatcher();
+	~BusDispatcher();
 
 	void attach(GMainContext *);
 
@@ -116,6 +113,7 @@ private:
 
 	GMainContext *_ctx;
 	int _priority;
+	GSource *_source;
 };
 
 } /* namespace Glib */

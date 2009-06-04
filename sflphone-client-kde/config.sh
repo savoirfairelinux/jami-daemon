@@ -26,9 +26,9 @@ options=`echo $@ | sed "s/--prefix=/-DCMAKE_INSTALL_PREFIX=/g" | sed "s/--with-d
 
 if `echo $@ | grep -q "\--with-debug"`
 then echo "Enable debug messages"
-options="$options -DCMAKE_BUILD_TYPE=\"Debug\""
+options="$options -DCMAKE_BUILD_TYPE=Debug"
 else echo "Disable debug messages"
-options="$options -DCMAKE_BUILD_TYPE=\"Release\""
+options="$options -DCMAKE_BUILD_TYPE=Release"
 fi
 
 echo "Passing argument  '$options'  to cmake"

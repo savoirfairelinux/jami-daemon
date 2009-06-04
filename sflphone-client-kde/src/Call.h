@@ -182,7 +182,7 @@ public:
 	//Constructors & Destructors
 	~Call();
 	void initCallItem();
-	static Call * buildDialingCall(QString callId, const QString & peerName);
+	static Call * buildDialingCall(QString callId, const QString & peerName, QString account = "");
 	static Call * buildIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
 	static Call * buildRingingCall(const QString & callId);
 	
@@ -199,6 +199,7 @@ public:
 	call_state getCurrentState() const;
 	history_state getHistoryState() const;
 	bool getRecording() const;
+	QString getAccountId() const;
 	
 	//Automate calls
 	call_state stateChanged(const QString & newState);
