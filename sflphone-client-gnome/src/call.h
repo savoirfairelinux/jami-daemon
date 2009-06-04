@@ -146,6 +146,9 @@ create_new_call (gchar *, gchar *, call_state_t, gchar *, call_t **);
 void 
 create_new_call_from_details (const gchar *, GHashTable *, call_t **);
 
+void 
+create_new_call_from_serialized_form (gchar *, gchar *, call_t **);
+
 void
 attach_thumbnail (call_t *, GdkPixbuf *);
 

@@ -237,8 +237,15 @@ gboolean sflphone_init()
         history = calltab_init("history");
         account_list_init ();
         codec_list_init();
+        // Fetch the configured accounts
         sflphone_fill_account_list(FALSE);
+
+        // Fetch the audio codecs
         sflphone_fill_codec_list();
+
+        // Fetch the history list
+        // sflphone_fill_history ();
+
         return TRUE;
     }
 }
@@ -912,6 +919,28 @@ void sflphone_fill_call_list (void)
         calllist_add (current_calls, c);
         // Update the GUI
         calltree_add_call (current_calls, c);
+    }
+}
+
+void sflphone_fill_history (void)
+{
+    GHashTable *entries;
+    GHashTableIter iter;
+    gpointer key, value;
+    call_t *history_entry;
+
+    entries = dbus_get_history ();
+    if (entries)
+    {
+        // Init the iterator
+        g_hash_table_iter_init (&iter, entries);
+        while (g_hash_table_iter_next (&iter, &key, &value)) 
+        {
+            /* do something with key and value */
+            create_new_call_from_serialized_form ((gchar*)key, (gchar*)value, &history_entry);    
+            // Add it and update the GUI
+            calltree_add_call (history, history_entry);
+        }
     }
 }
 

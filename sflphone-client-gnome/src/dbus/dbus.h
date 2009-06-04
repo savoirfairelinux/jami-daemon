@@ -485,4 +485,8 @@ gchar** dbus_get_call_list (void);
 
 void dbus_set_accounts_order (const gchar* order);
 
+GHashTable* dbus_get_history (void);
+
+void dbus_set_history (GHashTable* entries);
+
 #endif

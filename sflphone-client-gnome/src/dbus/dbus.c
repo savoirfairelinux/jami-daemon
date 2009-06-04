@@ -1678,3 +1678,27 @@ void dbus_set_accounts_order (const gchar* order) {
     }
 }
 
+GHashTable* dbus_get_history (void)
+{
+    GError *error = NULL;
+    GHashTable *entries = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_history (configurationManagerProxy, &entries, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_history");
+        g_error_free (error);
+    }
+
+    return entries;
+}
+
+void dbus_set_history (GHashTable* entries)
+{
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_set_history (configurationManagerProxy, entries, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_set_history");
+        g_error_free (error);
+    }
+}

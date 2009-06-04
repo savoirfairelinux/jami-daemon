@@ -124,6 +124,23 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     *call = new_call;
 }
 
+void create_new_call_from_serialized_form (gchar *timestamp, gchar *details, call_t **call)
+{
+    gchar *from, *to, *accountID, *state_str;
+    call_t *new_call;
+    call_state_t state;
+
+    // details is in serialized form, i e: calltype%to%from%callid
+    state = CALL_STATE_DIALING;
+    to = g_strdup (details);
+    from = g_markup_printf_escaped("\"\" <%s>",  to);
+    create_new_call (from, from, state, "", &new_call);
+    new_call->history_state = MISSED;
+    *call = new_call;
+}
+
+
+
 
     void
 free_call_t (call_t *c)
