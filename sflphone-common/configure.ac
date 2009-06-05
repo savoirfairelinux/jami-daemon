@@ -53,7 +53,8 @@ AC_CONFIG_FILES([src/Makefile \
   src/plug-in/audiorecorder/Makefile \
   src/plug-in/Makefile \
   src/plug-in/test/Makefile \
-  src/hooks/Makefile]) 
+  src/hooks/Makefile \
+  src/history/Makefile]) 
   
   dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])

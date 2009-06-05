@@ -30,10 +30,11 @@
 #include <gtk/gtk.h>
 
 #include <calllist.h>
+#include <callable_obj.h>
 #include <sflphone_const.h>
 
 gchar* timestamp_get_call_date( void );
 
-gchar* process_call_duration( call_t* c );
+gchar* process_call_duration( callable_obj_t* c );
 
 #endif

@@ -23,6 +23,7 @@
 
 #include <libintl.h>
 #include <locale.h>
+
 #include <accountlist.h>
 #include <codeclist.h>
 #include <sflphone_const.h>
@@ -64,9 +65,9 @@ void sflphone_off_hold ();
 
 /**
  * Open a new call
- * @return call_t* A pointer on the call structure
+ * @return callable_obj_t* A pointer on the call structure
  */
-call_t * sflphone_new_call();
+callable_obj_t * sflphone_new_call();
 
 /**
  * Notify voice mails to the application
@@ -95,43 +96,43 @@ void sflphone_pick_up ();
  * Put the call on hold state
  * @param c The current call
  */
-void sflphone_hold ( call_t * c);
+void sflphone_hold ( callable_obj_t * c);
 
 /**
  * Put the call in Ringing state
  * @param c* The current call
  */
-void sflphone_ringing(call_t * c );
+void sflphone_ringing(callable_obj_t * c );
 
 /**
  * Put the call in Busy state
  * @param c* The current call
  */
-void sflphone_busy( call_t * c );
+void sflphone_busy( callable_obj_t * c );
 
 /**
  * Put the call in Failure state
  * @param c* The current call
  */
-void sflphone_fail( call_t * c );
+void sflphone_fail( callable_obj_t * c );
 
 /**
  * Put the call in Current state
  * @param c The current call
  */
-void sflphone_current ( call_t * c);
+void sflphone_current ( callable_obj_t * c);
 
 /**
  * The callee has hung up
  * @param c The current call
  */
-void sflphone_hung_up( call_t * c);
+void sflphone_hung_up( callable_obj_t * c);
 
 /**
  * Incoming call
  * @param c The incoming call
  */
-void sflphone_incoming_call ( call_t * c);
+void sflphone_incoming_call ( callable_obj_t * c);
 
 /**
  * Dial the number
@@ -142,10 +143,10 @@ void sflphone_incoming_call ( call_t * c);
 void sflphone_keypad ( guint keyval, gchar * key);
 
 /**
- * Place a call with a filled call_t.to
+ * Place a call with a filled callable_obj_t.to
  * @param c A call in CALL_STATE_DIALING state
  */
-void sflphone_place_call ( call_t * c );
+void sflphone_place_call ( callable_obj_t * c );
 
 /**
  * Initialize the accounts data structure
@@ -165,7 +166,7 @@ void sflphone_set_current_account();
  */
 void sflphone_fill_codec_list();
 
-void sflphone_record (call_t *c);
+void sflphone_record (callable_obj_t *c);
 
 void sflphone_rec_call (void);
 
@@ -175,4 +176,5 @@ void sflphone_display_selected_codec (const gchar* codecName);
 
 void status_bar_display_account ();
 
+void sflphone_fill_history (void);
 #endif

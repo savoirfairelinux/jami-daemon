@@ -302,6 +302,16 @@
       <arg type="a{ss}" name="settings" direction="in"/>
     </method>
 
+    <method name="getHistory">
+        <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+        <arg type="a{ss}" name="entries" direction="out"/>
+    </method>
+
+    <method name="setHistory">
+        <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+        <arg type="a{ss}" name="entries" direction="in"/>
+    </method>
+
   <!--        /////////////////////////////       -->
 
 <!--
