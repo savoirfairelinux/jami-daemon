@@ -58,21 +58,21 @@ void create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urg
 
 
     void
-notify_incoming_call (call_t* c)
+notify_incoming_call (callable_obj_t* c)
 {
 
         gchar* callerid;
         gchar* title;
 
-        if (g_strcasecmp (c->accountID,"") == 0) {
+        if (g_strcasecmp (c->_accountID,"") == 0) {
             title = g_markup_printf_escaped ("IP-to-IP call");
         }
         else {
             title = g_markup_printf_escaped(_("%s account: %s") ,
-                    (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) ,
-                    (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
+                    (gchar*)g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties , ACCOUNT_TYPE) ,
+                    (gchar*)g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties , ACCOUNT_ALIAS) ) ;
         }
-        callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->from);
+        callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , call_get_peer_number (c));
 
         create_new_gnome_notification (title,
                                         callerid, 

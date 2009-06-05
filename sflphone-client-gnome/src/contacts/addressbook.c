@@ -143,12 +143,12 @@ handler_async_search(GList *hits, gpointer user_data)
   GList *i;
   GdkPixbuf *photo = NULL;
   AddressBook_Config *addressbook_config;
-  call_t *j;
+  callable_obj_t *j;
 
   // freeing calls
-  while ((j = (call_t *) g_queue_pop_tail(contacts->callQueue)) != NULL)
+  while ((j = (callable_obj_t *) g_queue_pop_tail(_contacts->callQueue)) != NULL)
     {
-      free_call_t(j);
+      free_callable_obj_t(j);
     }
 
   // Retrieve the address book parameters

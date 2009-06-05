@@ -32,7 +32,6 @@ GtkTreeViewColumn *col;
 GtkTreeSelection *sel;
 
 
-
 /**
  * Show popup menu
  */
@@ -58,7 +57,7 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     val.g_type = 0;
     gtk_tree_model_get_value (model, &iter, 2, &val);
 
-    calltab_select_call(active_calltree, (call_t*) g_value_get_pointer(&val));
+    calltab_select_call(active_calltree, (callable_obj_t*) g_value_get_pointer(&val));
     g_value_unset(&val);
 
     toolbar_update_buttons();
@@ -72,8 +71,8 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         GtkTreeViewColumn *column UNUSED,
         void * data UNUSED)
 {
-    call_t* selectedCall;
-    call_t* new_call;
+    callable_obj_t* selectedCall;
+    callable_obj_t* new_call;
     gchar *to, *from, *account_id;
 
     DEBUG("double click action");
@@ -85,7 +84,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         // Get the right event from the right calltree
         if( active_calltree == current_calls )
         {
-            switch(selectedCall->state)
+            switch(selectedCall->_state)
             {
                 case CALL_STATE_INCOMING:
                     dbus_accept(selectedCall);
@@ -111,12 +110,12 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         // If history or contact: double click action places a new call
         else
         {
-            to = g_strdup(call_get_number(selectedCall));
-            from = g_strconcat("\"", call_get_name (selectedCall), "\" <", call_get_number(selectedCall), ">",NULL);
-            account_id = g_strdup (selectedCall->accountID);
+            to = g_strdup(call_get_peer_number(selectedCall));
+            from = g_strconcat("\"", call_get_peer_name (selectedCall), "\" <", call_get_peer_number(selectedCall), ">",NULL);
+            account_id = g_strdup (selectedCall->_accountID);
 
             // Create a new call
-            create_new_call (to, from, CALL_STATE_DIALING, account_id, &new_call);
+            create_new_call (CALL, CALL_STATE_DIALING, "", account_id, call_get_peer_number (selectedCall), call_get_peer_name (selectedCall), &new_call);
 
             calllist_add(current_calls, new_call);
             calltree_add_call(current_calls, new_call);
@@ -265,11 +264,11 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
 }
 
     void
-calltree_remove_call (calltab_t* tab, call_t * c)
+calltree_remove_call (calltab_t* tab, callable_obj_t * c)
 {
     GtkTreeIter iter;
     GValue val;
-    call_t * iterCall;
+    callable_obj_t * iterCall;
     GtkListStore* store = tab->store;
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
@@ -281,7 +280,7 @@ calltree_remove_call (calltab_t* tab, call_t * c)
             val.g_type = 0;
             gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
-            iterCall = (call_t*) g_value_get_pointer(&val);
+            iterCall = (callable_obj_t*) g_value_get_pointer(&val);
             g_value_unset(&val);
 
             if(iterCall == c)
@@ -290,19 +289,19 @@ calltree_remove_call (calltab_t* tab, call_t * c)
             }
         }
     }
-    call_t * selectedCall = calltab_get_selected_call(tab);
+    callable_obj_t * selectedCall = calltab_get_selected_call(tab);
     if(selectedCall == c)
         calltab_select_call(tab, NULL);
     toolbar_update_buttons();
 }
 
     void
-calltree_update_call (calltab_t* tab, call_t * c)
+calltree_update_call (calltab_t* tab, callable_obj_t * c)
 {
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
     GValue val;
-    call_t * iterCall;
+    callable_obj_t * iterCall;
     GtkListStore* store = tab->store;
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
@@ -314,7 +313,7 @@ calltree_update_call (calltab_t* tab, call_t * c)
             val.g_type = 0;
             gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
-            iterCall = (call_t*) g_value_get_pointer(&val);
+            iterCall = (callable_obj_t*) g_value_get_pointer(&val);
             g_value_unset(&val);
 
             if(iterCall == c)
@@ -323,23 +322,23 @@ calltree_update_call (calltab_t* tab, call_t * c)
                 gchar * description;
                 gchar * date="";
                 gchar * duration="";
-                if(c->state == CALL_STATE_TRANSFERT)
+                if(c->_state == CALL_STATE_TRANSFERT)
                 {
-                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> %s",
-                            call_get_number(c),
-                            call_get_name(c),
-                            c->to);
+                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> ",
+                            call_get_peer_number(c),
+                            call_get_peer_name(c)
+                            );
                 }
                 else
                 {
                     description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-                            call_get_number(c),
-                            call_get_name(c));
+                            call_get_peer_number(c),
+                            call_get_peer_name(c));
                 }
 
                 if( tab == current_calls )
                 {
-                    switch(c->state)
+                    switch(c->_state)
                     {
                         case CALL_STATE_HOLD:
                             pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
@@ -371,7 +370,7 @@ calltree_update_call (calltab_t* tab, call_t * c)
                 }
                 else
                 {
-                    switch(c->history_state)
+                    switch(c->_history_state)
                     {
                         case OUTGOING:
                             DEBUG("Outgoing state");
@@ -418,7 +417,7 @@ calltree_update_call (calltab_t* tab, call_t * c)
 }
 
     void
-calltree_add_call (calltab_t* tab, call_t * c)
+calltree_add_call (calltab_t* tab, callable_obj_t * c)
 {
     if( tab == history && ( calllist_get_size( tab ) > dbus_get_max_calls() ) )
         return;
@@ -430,15 +429,15 @@ calltree_add_call (calltab_t* tab, call_t * c)
     gchar * description;
     gchar * date="";
     description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-            call_get_number(c),
-            call_get_name(c));
+            call_get_peer_number(c),
+            call_get_peer_name(c));
 
     gtk_list_store_prepend (tab->store, &iter);
 
     
     if( tab == current_calls )
     {
-        switch(c->state)
+        switch(c->_state)
         {
             case CALL_STATE_INCOMING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
@@ -467,7 +466,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
     }
 
     else if (tab == history) {
-        switch(c->history_state)
+        switch(c->_history_state)
         {
             case INCOMING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
@@ -486,7 +485,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
     }
 
     else if (tab == contacts) {
-        pixbuf = c->contact_thumbnail;
+        pixbuf = c->_contact_thumbnail;
         description = g_strconcat( description , NULL);
     }
 

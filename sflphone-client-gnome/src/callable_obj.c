@@ -1,0 +1,158 @@
+/*
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#include <callable_obj.h>
+
+gint is_callID_callstruct ( gconstpointer a, gconstpointer b)
+{
+    callable_obj_t * c = (callable_obj_t*)a;
+    if(g_strcasecmp(c->_callID, (const gchar*) b) == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+gint get_state_callstruct ( gconstpointer a, gconstpointer b)
+{
+    callable_obj_t * c = (callable_obj_t*)a;
+    if( c->_state == *((call_state_t*)b))
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+gchar* call_get_peer_name (const callable_obj_t * c)
+{
+    return c->_peer_name;
+}
+
+gchar* call_get_peer_number (const callable_obj_t * c)
+{
+    return c->_peer_number;
+}
+
+
+void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
+{
+
+    callable_obj_t *obj;
+    gchar *call_id;
+
+    // Allocate memory
+    obj = g_new0 (callable_obj_t, 1);
+
+    // Set fields
+    obj->_type = type;
+    obj->_state = state;
+    obj->_accountID = g_strdup (accountID);
+    obj->_peer_name = g_strdup (peer_name);
+    obj->_peer_number = g_strdup (peer_number);
+    obj->_peer_info = g_strdup (get_peer_info (peer_name, peer_number));
+    obj->_duration = "NaN";
+
+    if (g_strcasecmp (callID, "") == 0)
+        call_id = generate_call_id ();
+    else
+        call_id = callID;
+    // Set the ID
+    obj->_callID = g_strdup (call_id);
+
+    *new_call = obj;
+}
+
+void create_new_call_from_details (const gchar *call_id, GHashTable *details, callable_obj_t **call)
+{
+    gchar *peer_name, *peer_number, *accountID, *state_str;
+    callable_obj_t *new_call;
+    call_state_t state;
+
+    accountID = g_hash_table_lookup (details, "ACCOUNTID");
+    peer_number = g_hash_table_lookup (details, "PEER_NUMBER");
+    peer_name = g_strdup ("");
+    state_str = g_hash_table_lookup (details, "CALL_STATE");
+
+    if (g_strcasecmp (state_str, "CURRENT") == 0)
+        state = CALL_STATE_CURRENT;
+
+    else if (g_strcasecmp (state_str, "HOLD") == 0)
+        state = CALL_STATE_HOLD;
+
+    else if (g_strcasecmp (state_str, "BUSY") == 0)
+        state = CALL_STATE_BUSY;
+
+    else
+        state = CALL_STATE_FAILURE;
+
+    create_new_call (CALL, state, call_id, accountID, peer_name, peer_number, &new_call);
+    *call = new_call;
+}
+
+void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details, callable_obj_t **call)
+{
+    gchar *peer_name, *peer_number, *accountID, *state_str;
+    callable_obj_t *new_call;
+
+    // details is in serialized form, i e: calltype%to%from%callid
+    peer_name = g_strdup (details);
+    peer_number = g_strdup (details);
+
+    create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", "", peer_name, peer_number, &new_call);
+    new_call->_history_state = MISSED;
+
+    *call = new_call;
+}
+
+void free_callable_obj_t (callable_obj_t *c)
+{
+    g_free (c->_callID);
+    g_free (c->_accountID);
+    g_free (c->_peer_name);
+    g_free (c->_peer_number);
+    g_free (c->_peer_info);
+    g_free (c);
+}
+
+void attach_thumbnail (callable_obj_t *call, GdkPixbuf *pixbuf) {
+    call->_contact_thumbnail = pixbuf;
+}
+
+gchar* generate_call_id (void)
+{
+    gchar *call_id;
+
+    call_id = g_new0(gchar, 30);
+    g_sprintf(call_id, "%d", rand());
+    return call_id;
+}
+
+gchar* get_peer_info (gchar* number, gchar* name)
+{
+    gchar *info;
+
+    info = g_strconcat("\"", name, "\" <", number, ">", NULL);
+    return info;
+}

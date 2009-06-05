@@ -39,7 +39,7 @@ rec_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
 {
     account_t* current;
-    call_t *mailbox_call;
+    callable_obj_t *mailbox_call;
     gchar *to, *from, *account_id;
 
     current = account_list_get_current ();
@@ -50,8 +50,8 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
     from = g_markup_printf_escaped(_("\"Voicemail\" <%s>"),  to);
     account_id = g_strdup (current->accountID);
 
-    create_new_call (to, from, CALL_STATE_DIALING, account_id, &mailbox_call);
-    DEBUG("TO : %s" , mailbox_call->to);
+    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, "Voicemail", to, &mailbox_call);
+    DEBUG("TO : %s" , mailbox_call->_peer_number);
     calllist_add( current_calls , mailbox_call );
     calltree_add_call( current_calls , mailbox_call );
     update_menus();
@@ -66,9 +66,8 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
 call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
     DEBUG("------ call_button -----");
-    call_t * selectedCall;
-    call_t* new_call;
-    gchar *to, *from;
+    callable_obj_t * selectedCall;
+    callable_obj_t* new_call;
 
     selectedCall = calltab_get_selected_call(active_calltree);
 
@@ -78,14 +77,7 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
     else if(calllist_get_size(active_calltree) > 0){
         if( selectedCall)
         {
-            DEBUG("Calling a called num");
-
-            to = g_strdup(call_get_number(selectedCall));
-            from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
-
-            create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
-
-            DEBUG("call : from : %s to %s", new_call->from, new_call->to);
+            create_new_call (CALL, CALL_STATE_DIALING, "", "", "", call_get_peer_number(selectedCall), &new_call);
 
             calllist_add(current_calls, new_call);
             calltree_add_call(current_calls, new_call);
@@ -316,10 +308,10 @@ toolbar_update_buttons ()
     gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), FALSE);
     gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 
-    call_t * selectedCall = calltab_get_selected_call(active_calltree);
+    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
     if (selectedCall)
     {
-        switch(selectedCall->state)
+        switch(selectedCall->_state)
         {
             case CALL_STATE_INCOMING:
                 gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);

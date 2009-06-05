@@ -41,7 +41,6 @@
 #include <addressbook.h>
 #include <history.h>
 
-
 GdkPixbuf *waitingPixOff;
 
 /**
@@ -53,7 +52,7 @@ GtkWidget* searchbar_new(gchar*);
 /**
  * Initialize a specific search bar
  */
-void searchbar_init(calltab_t *);
+void searchbar_init(treeview_t *);
 
 /**
  * Activate a waiting layer during search

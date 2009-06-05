@@ -37,8 +37,9 @@ timestamp_get_call_date( void )
 }
 
   gchar*
-process_call_duration( call_t* c )
+process_call_duration( callable_obj_t* c )
 {
+    /*
   gchar * res;
   DEBUG("Start = %i - Stop = %i  - Call duration = %i", (int)c->_start , (int)c->_stop , (int)(c->_stop - c->_start));
 
@@ -62,5 +63,7 @@ process_call_duration( call_t* c )
       res = g_markup_printf_escaped("%i:%i" , duration/60 , duration%60);
   }
   return g_markup_printf_escaped(_("<small>Duration:</small> %s"), res);
+    */
+    return "toto";
 }
 
