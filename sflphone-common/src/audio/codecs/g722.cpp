@@ -41,7 +41,7 @@ public:
  	: AudioCodec(payload, "G722")
 	{
 	        // printf("Debug G722\n");
-  		_clockRate = 16000;
+  		_clockRate = 8000;
                 _frameSize = 320; // samples, 20 ms at 8kHz
   		_channel   = 1;
 		_bitrate = 64; 
@@ -57,28 +57,68 @@ public:
 		// g722_decode_init(decode_s, 64000, G722_SAMPLE_RATE_8000);
 		// g722_encode_init(encode_s, 64000, G722_SAMPLE_RATE_8000 );
 
-		g722_decode_init(decode_s, 64000, NULL);
-		g722_encode_init(encode_s, 64000, NULL);
+		g722_decode_init(64000, 0);
+		g722_encode_init(64000, 0);
 
 	}
 
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
 
+	    int in_samples = size;
+
 	    int outlen;
-	    outlen = g722_decode(decode_s, (int16_t*) dst, (const uint8_t*) src, size);
-	    printf("Codec decode size: %i\n", size);
+            printf("Codec decode size: %i\n", size);
+	    printf("Codec decode options itu_test_mode: %i\n", decode_s->itu_test_mode);
+	    printf("Codec decode options eight_k: %i\n", decode_s->eight_k);
+	    printf("Codec decode options packed: %i\n", decode_s->packed);
+	    printf("Codec decode options bits_per_sample: %i\n", decode_s->bits_per_sample);
+	    printf("Decoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+	    outlen = g722_decode((int16_t*) dst, (const uint8_t*) src, in_samples);
 	    printf("Codec decode outlen: %i\n", outlen);
-            return outlen*2;
+
+            return outlen * 2;
 	}
 
 	virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
 
-	    int g722_size;
-	    g722_size = g722_encode(encode_s, (uint8_t*) dst, (const int16_t*) src, size);
-	    printf("Codec encode g722_size: %i\n",g722_size);
+	    // int in_samples = size / 2;
+	    int in_samples = size / 2;
+	    int outlen;
+
+	    printf("Codec encode in_sample: %i\n", in_samples);
+	    printf("Codec encode options itu_test_mode: %i\n", encode_s->itu_test_mode);
+	    printf("Codec encode options eight_k: %i\n", encode_s->eight_k);
+	    printf("Codec encode options packed: %i\n", encode_s->packed);
+	    printf("Codec encode options bits_per_sample: %i\n", encode_s->bits_per_sample);
+	    printf("Encoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+	    outlen = g722_encode((uint8_t*) dst, (const int16_t*) src, in_samples);
+	    printf("Codec encode outlen: %i\n", outlen);
 
 	    // return g722_size;
-	    return g722_size/2;
+	    return outlen;
+	}
+
+
+        void g722_encode_init(int rate, int options)
+        {
+	  
+	    encode_s->itu_test_mode = FALSE;
+            encode_s->bits_per_sample = 8;
+            encode_s->eight_k = FALSE;
+            encode_s->packed = FALSE;
+            encode_s->band[0].det = 32;
+	    encode_s->band[1].det = 8;
+	}
+
+        void g722_decode_init(int rate, int options)
+        {
+	   
+	    decode_s->itu_test_mode = FALSE;
+	    decode_s->bits_per_sample = 8;
+            decode_s->eight_k = FALSE;
+            decode_s->packed = FALSE;
+            decode_s->band[0].det = 32;
+	    decode_s->band[1].det = 8;
 	}
 
         int16_t saturate(int32_t amp)
@@ -95,7 +135,7 @@ public:
         }
 
 
-        void block4_encode(g722_encode_state_t *s, int band, int d)
+        void block4_encode(int band, int d)
         {
             int wd1;
             int wd2;
@@ -103,88 +143,88 @@ public:
             int i;
 
             /* Block 4, RECONS */
-            s->band[band].d[0] = d;
-            s->band[band].r[0] = saturate(s->band[band].s + d);
+            encode_s->band[band].d[0] = d;
+            encode_s->band[band].r[0] = saturate(encode_s->band[band].s + d);
 
             /* Block 4, PARREC */
-            s->band[band].p[0] = saturate(s->band[band].sz + d);
+            encode_s->band[band].p[0] = saturate(encode_s->band[band].sz + d);
 
             /* Block 4, UPPOL2 */
 	    for (i = 0;  i < 3;  i++)
-	        s->band[band].sg[i] = s->band[band].p[i] >> 15;
-	    wd1 = saturate(s->band[band].a[1] << 2);
+	        encode_s->band[band].sg[i] = encode_s->band[band].p[i] >> 15;
+	    wd1 = saturate(encode_s->band[band].a[1] << 2);
 
-	    wd2 = (s->band[band].sg[0] == s->band[band].sg[1])  ?  -wd1  :  wd1;
+	    wd2 = (encode_s->band[band].sg[0] == encode_s->band[band].sg[1])  ?  -wd1  :  wd1;
 	    if (wd2 > 32767)
 	        wd2 = 32767;
-	    wd3 = (wd2 >> 7) + ((s->band[band].sg[0] == s->band[band].sg[2])  ?  128  :  -128);
-	    wd3 += (s->band[band].a[2]*32512) >> 15;
+	    wd3 = (wd2 >> 7) + ((encode_s->band[band].sg[0] == encode_s->band[band].sg[2])  ?  128  :  -128);
+	    wd3 += (encode_s->band[band].a[2]*32512) >> 15;
 	    if (wd3 > 12288)
 	        wd3 = 12288;
 	    else if (wd3 < -12288)
 	        wd3 = -12288;
-	    s->band[band].ap[2] = wd3;
+	    encode_s->band[band].ap[2] = wd3;
 
 	    /* Block 4, UPPOL1 */
-	    s->band[band].sg[0] = s->band[band].p[0] >> 15;
-	    s->band[band].sg[1] = s->band[band].p[1] >> 15;
-	    wd1 = (s->band[band].sg[0] == s->band[band].sg[1])  ?  192  :  -192;
-	    wd2 = (s->band[band].a[1]*32640) >> 15;
+	    encode_s->band[band].sg[0] = encode_s->band[band].p[0] >> 15;
+	    encode_s->band[band].sg[1] = encode_s->band[band].p[1] >> 15;
+	    wd1 = (encode_s->band[band].sg[0] == encode_s->band[band].sg[1])  ?  192  :  -192;
+	    wd2 = (encode_s->band[band].a[1]*32640) >> 15;
 
-	    s->band[band].ap[1] = saturate(wd1 + wd2);
-	    wd3 = saturate(15360 - s->band[band].ap[2]);
-	    if (s->band[band].ap[1] > wd3)
-	        s->band[band].ap[1] = wd3;
-	    else if (s->band[band].ap[1] < -wd3)
-	        s->band[band].ap[1] = -wd3;
+	    encode_s->band[band].ap[1] = saturate(wd1 + wd2);
+	    wd3 = saturate(15360 - encode_s->band[band].ap[2]);
+	    if (encode_s->band[band].ap[1] > wd3)
+	        encode_s->band[band].ap[1] = wd3;
+	    else if (encode_s->band[band].ap[1] < -wd3)
+	        encode_s->band[band].ap[1] = -wd3;
 
 	    /* Block 4, UPZERO */
 	    wd1 = (d == 0)  ?  0  :  128;
-	    s->band[band].sg[0] = d >> 15;
+	    encode_s->band[band].sg[0] = d >> 15;
 	    for (i = 1;  i < 7;  i++)
 	    {
-	        s->band[band].sg[i] = s->band[band].d[i] >> 15;
-		wd2 = (s->band[band].sg[i] == s->band[band].sg[0])  ?  wd1  :  -wd1;
-		wd3 = (s->band[band].b[i]*32640) >> 15;
-		s->band[band].bp[i] = saturate(wd2 + wd3);
+	        encode_s->band[band].sg[i] = encode_s->band[band].d[i] >> 15;
+		wd2 = (encode_s->band[band].sg[i] == encode_s->band[band].sg[0])  ?  wd1  :  -wd1;
+		wd3 = (encode_s->band[band].b[i]*32640) >> 15;
+		encode_s->band[band].bp[i] = saturate(wd2 + wd3);
 	    }
 
 	    /* Block 4, DELAYA */
 	    for (i = 6;  i > 0;  i--)
 	    {
-	        s->band[band].d[i] = s->band[band].d[i - 1];
-		s->band[band].b[i] = s->band[band].bp[i];
+	        encode_s->band[band].d[i] = encode_s->band[band].d[i - 1];
+		encode_s->band[band].b[i] = encode_s->band[band].bp[i];
 	    }
     
 	    for (i = 2;  i > 0;  i--)
 	    {
-	        s->band[band].r[i] = s->band[band].r[i - 1];
-		s->band[band].p[i] = s->band[band].p[i - 1];
-		s->band[band].a[i] = s->band[band].ap[i];
+	        encode_s->band[band].r[i] = encode_s->band[band].r[i - 1];
+		encode_s->band[band].p[i] = encode_s->band[band].p[i - 1];
+		encode_s->band[band].a[i] = encode_s->band[band].ap[i];
 	    }
 
 	    /* Block 4, FILTEP */
-	    wd1 = saturate(s->band[band].r[1] + s->band[band].r[1]);
-	    wd1 = (s->band[band].a[1]*wd1) >> 15;
-	    wd2 = saturate(s->band[band].r[2] + s->band[band].r[2]);
-	    wd2 = (s->band[band].a[2]*wd2) >> 15;
-	    s->band[band].sp = saturate(wd1 + wd2);
+	    wd1 = saturate(encode_s->band[band].r[1] + encode_s->band[band].r[1]);
+	    wd1 = (encode_s->band[band].a[1]*wd1) >> 15;
+	    wd2 = saturate(encode_s->band[band].r[2] + encode_s->band[band].r[2]);
+	    wd2 = (encode_s->band[band].a[2]*wd2) >> 15;
+	    encode_s->band[band].sp = saturate(wd1 + wd2);
 
 	    /* Block 4, FILTEZ */
-	    s->band[band].sz = 0;
+	    encode_s->band[band].sz = 0;
 	    for (i = 6;  i > 0;  i--)
 	    {
-	        wd1 = saturate(s->band[band].d[i] + s->band[band].d[i]);
-		s->band[band].sz += (s->band[band].b[i]*wd1) >> 15;
+	        wd1 = saturate(encode_s->band[band].d[i] + encode_s->band[band].d[i]);
+		encode_s->band[band].sz += (encode_s->band[band].b[i]*wd1) >> 15;
 	    }
-	    s->band[band].sz = saturate(s->band[band].sz);
+	    encode_s->band[band].sz = saturate(encode_s->band[band].sz);
 
 	    /* Block 4, PREDIC */
-	    s->band[band].s = saturate(s->band[band].sp + s->band[band].sz);
+	    encode_s->band[band].s = saturate(encode_s->band[band].sp + encode_s->band[band].sz);
 
 	}
 
-        void block4_decode(g722_decode_state_t *s, int band, int d)
+        void block4_decode(int band, int d)
         {
 	    int wd1;
 	    int wd2;
@@ -192,160 +232,99 @@ public:
 	    int i;
 
 	    /* Block 4, RECONS */
-	    s->band[band].d[0] = d;
-	    s->band[band].r[0] = saturate(s->band[band].s + d);
+	    decode_s->band[band].d[0] = d;
+	    decode_s->band[band].r[0] = saturate(decode_s->band[band].s + d);
 
 	    /* Block 4, PARREC */
-	    s->band[band].p[0] = saturate(s->band[band].sz + d);
+	    decode_s->band[band].p[0] = saturate(decode_s->band[band].sz + d);
 
 	    /* Block 4, UPPOL2 */
 	    for (i = 0;  i < 3;  i++)
-	      s->band[band].sg[i] = s->band[band].p[i] >> 15;
-	    wd1 = saturate(s->band[band].a[1] << 2);
+	      decode_s->band[band].sg[i] = decode_s->band[band].p[i] >> 15;
+	    wd1 = saturate(decode_s->band[band].a[1] << 2);
 
-	    wd2 = (s->band[band].sg[0] == s->band[band].sg[1])  ?  -wd1  :  wd1;
+	    wd2 = (decode_s->band[band].sg[0] == decode_s->band[band].sg[1])  ?  -wd1  :  wd1;
 	    if (wd2 > 32767)
 	      wd2 = 32767;
-	    wd3 = (s->band[band].sg[0] == s->band[band].sg[2])  ?  128  :  -128;
+	    wd3 = (decode_s->band[band].sg[0] == decode_s->band[band].sg[2])  ?  128  :  -128;
 	    wd3 += (wd2 >> 7);
-	    wd3 += (s->band[band].a[2]*32512) >> 15;
+	    wd3 += (decode_s->band[band].a[2]*32512) >> 15;
 	    if (wd3 > 12288)
 	      wd3 = 12288;
 	    else if (wd3 < -12288)
 	      wd3 = -12288;
-	    s->band[band].ap[2] = wd3;
+	    decode_s->band[band].ap[2] = wd3;
 
 	    /* Block 4, UPPOL1 */
-	    s->band[band].sg[0] = s->band[band].p[0] >> 15;
-	    s->band[band].sg[1] = s->band[band].p[1] >> 15;
-	    wd1 = (s->band[band].sg[0] == s->band[band].sg[1])  ?  192  :  -192;
-	    wd2 = (s->band[band].a[1]*32640) >> 15;
+	    decode_s->band[band].sg[0] = decode_s->band[band].p[0] >> 15;
+	    decode_s->band[band].sg[1] = decode_s->band[band].p[1] >> 15;
+	    wd1 = (decode_s->band[band].sg[0] == decode_s->band[band].sg[1])  ?  192  :  -192;
+	    wd2 = (decode_s->band[band].a[1]*32640) >> 15;
 
-	    s->band[band].ap[1] = saturate(wd1 + wd2);
-	    wd3 = saturate(15360 - s->band[band].ap[2]);
-	    if (s->band[band].ap[1] > wd3)
-	      s->band[band].ap[1] = wd3;
-	    else if (s->band[band].ap[1] < -wd3)
-	      s->band[band].ap[1] = -wd3;
+	    decode_s->band[band].ap[1] = saturate(wd1 + wd2);
+	    wd3 = saturate(15360 - decode_s->band[band].ap[2]);
+	    if (decode_s->band[band].ap[1] > wd3)
+	      decode_s->band[band].ap[1] = wd3;
+	    else if (decode_s->band[band].ap[1] < -wd3)
+	      decode_s->band[band].ap[1] = -wd3;
 
 	    /* Block 4, UPZERO */
 	    wd1 = (d == 0)  ?  0  :  128;
-	    s->band[band].sg[0] = d >> 15;
+	    decode_s->band[band].sg[0] = d >> 15;
 	    for (i = 1;  i < 7;  i++)
 	    {
-	      s->band[band].sg[i] = s->band[band].d[i] >> 15;
-	      wd2 = (s->band[band].sg[i] == s->band[band].sg[0])  ?  wd1  :  -wd1;
-	      wd3 = (s->band[band].b[i]*32640) >> 15;
-	      s->band[band].bp[i] = saturate(wd2 + wd3);
+	      decode_s->band[band].sg[i] = decode_s->band[band].d[i] >> 15;
+	      wd2 = (decode_s->band[band].sg[i] == decode_s->band[band].sg[0])  ?  wd1  :  -wd1;
+	      wd3 = (decode_s->band[band].b[i]*32640) >> 15;
+	      decode_s->band[band].bp[i] = saturate(wd2 + wd3);
 	    }
 
 	    /* Block 4, DELAYA */
 	    for (i = 6;  i > 0;  i--)
 	    {
-	      s->band[band].d[i] = s->band[band].d[i - 1];
-	      s->band[band].b[i] = s->band[band].bp[i];
+	      decode_s->band[band].d[i] = decode_s->band[band].d[i - 1];
+	      decode_s->band[band].b[i] = decode_s->band[band].bp[i];
 	    }
     
 	    for (i = 2;  i > 0;  i--)
 	    {
-	      s->band[band].r[i] = s->band[band].r[i - 1];
-	      s->band[band].p[i] = s->band[band].p[i - 1];
-	      s->band[band].a[i] = s->band[band].ap[i];
+	      decode_s->band[band].r[i] = decode_s->band[band].r[i - 1];
+	      decode_s->band[band].p[i] = decode_s->band[band].p[i - 1];
+	      decode_s->band[band].a[i] = decode_s->band[band].ap[i];
 	    }
 
 	    /* Block 4, FILTEP */
-	    wd1 = saturate(s->band[band].r[1] + s->band[band].r[1]);
-	    wd1 = (s->band[band].a[1]*wd1) >> 15;
-	    wd2 = saturate(s->band[band].r[2] + s->band[band].r[2]);
-	    wd2 = (s->band[band].a[2]*wd2) >> 15;
-	    s->band[band].sp = saturate(wd1 + wd2);
+	    wd1 = saturate(decode_s->band[band].r[1] + decode_s->band[band].r[1]);
+	    wd1 = (decode_s->band[band].a[1]*wd1) >> 15;
+	    wd2 = saturate(decode_s->band[band].r[2] + decode_s->band[band].r[2]);
+	    wd2 = (decode_s->band[band].a[2]*wd2) >> 15;
+	    decode_s->band[band].sp = saturate(wd1 + wd2);
 
 	    /* Block 4, FILTEZ */
-	    s->band[band].sz = 0;
+	    decode_s->band[band].sz = 0;
 	    for (i = 6;  i > 0;  i--)
 	    {
-	      wd1 = saturate(s->band[band].d[i] + s->band[band].d[i]);
-	      s->band[band].sz += (s->band[band].b[i]*wd1) >> 15;
+	      wd1 = saturate(decode_s->band[band].d[i] + decode_s->band[band].d[i]);
+	      decode_s->band[band].sz += (decode_s->band[band].b[i]*wd1) >> 15;
 	    }
-	    s->band[band].sz = saturate(s->band[band].sz);
+	    decode_s->band[band].sz = saturate(decode_s->band[band].sz);
 
 	    /* Block 4, PREDIC */
-	    s->band[band].s = saturate(s->band[band].sp + s->band[band].sz);
+	    decode_s->band[band].s = saturate(decode_s->band[band].sp + decode_s->band[band].sz);
 	} 
 
-        g722_encode_state_t *g722_encode_init(g722_encode_state_t *s, int rate, int options)
+        int g722_encode_release()
         {
-	  /*
-	    if (s == NULL)
-	    {
-	        if ((s = (g722_encode_state_t *) malloc(sizeof(*s))) == NULL)
-		    return NULL;
-	    }
-	    memset(s, 0, sizeof(*s));
-	    */
-	    // printf("Seems good\n");
-	    if (rate == 48000)
-	        s->bits_per_sample = 6;
-	    else if (rate == 56000)
-	        s->bits_per_sample = 7;
-	    else
-	        s->bits_per_sample = 8;
-	    if ((options & G722_SAMPLE_RATE_8000))
-	        s->eight_k = TRUE;
-	    if ((options & G722_PACKED)  &&  s->bits_per_sample != 8)
-	        s->packed = TRUE;
-	    else
-	        s->packed = FALSE;
-	    s->band[0].det = 32;
-	    s->band[1].det = 8;
-	    return s;
-	}
-
-        g722_decode_state_t *g722_decode_init(g722_decode_state_t *s, int rate, int options)
-        {
-	    /*
-	    printf("decode init\n");					
-            if (s == NULL)
-	    {
-	        if ((s = (g722_decode_state_t *) malloc(sizeof(*s))) == NULL)
-		    return NULL;
-	    
-	    }
-	    */
-	    // printf("Seems good\n");
-	    // memset(s, 0, sizeof(*s));
-	    // printf("After memset\n");
-	    if (rate == 48000)
-	        s->bits_per_sample = 6;
-	    else if (rate == 56000)
-	        s->bits_per_sample = 7;
-	    else
-	        s->bits_per_sample = 8;
-	    if ((options & G722_SAMPLE_RATE_8000))
-	        s->eight_k = TRUE;
-	    if ((options & G722_PACKED)  &&  s->bits_per_sample != 8)
-	        s->packed = TRUE;
-	    else
-	        s->packed = FALSE;
-	    s->band[0].det = 32;
-	    s->band[1].det = 8;
-	    return s;
-	}
-
-        int g722_encode_release(g722_encode_state_t *s)
-        {
-            free(s);
-            return 0;
+	  delete decode_s;
         }
         
 
-        int g722_decode_release(g722_decode_state_t *s)
+        int g722_decode_release()
         {
-	    free(s);
-	    return 0;
+	  delete encode_s;
 	}
 
-        int g722_decode(g722_decode_state_t *s, int16_t amp[], const uint8_t g722_data[], int len)
+        int g722_decode(int16_t amp[], const uint8_t g722_data[], int len)
         {
 	    static const int wl[8] = {-60, -30, 58, 172, 334, 538, 1198, 3042 };
 	    static const int rl42[16] = {0, 7, 6, 5, 4, 3, 2, 1, 7, 6, 5, 4, 3,  2, 1, 0 };
@@ -421,24 +400,24 @@ public:
 	    rhigh = 0;
 	    for (j = 0;  j < len;  )
 	    {
-	        if (s->packed)
+	        if (decode_s->packed)
 		{
 		    /* Unpack the code bits */
-		    if (s->in_bits < s->bits_per_sample)
+		    if (decode_s->in_bits < decode_s->bits_per_sample)
 		    {
-		        s->in_buffer |= (g722_data[j++] << s->in_bits);
-			s->in_bits += 8;
+		        decode_s->in_buffer |= (g722_data[j++] << decode_s->in_bits);
+			decode_s->in_bits += 8;
 		    }
-		    code = s->in_buffer & ((1 << s->bits_per_sample) - 1);
-		    s->in_buffer >>= s->bits_per_sample;
-		    s->in_bits -= s->bits_per_sample;
+		    code = decode_s->in_buffer & ((1 << decode_s->bits_per_sample) - 1);
+		    decode_s->in_buffer >>= decode_s->bits_per_sample;
+		    decode_s->in_bits -= decode_s->bits_per_sample;
 		}
 		else
 		{
 		    code = g722_data[j++];
 		}
 
-		switch (s->bits_per_sample)
+		switch (decode_s->bits_per_sample)
 	        {
 		  default:
 		  case 8:
@@ -460,9 +439,9 @@ public:
 		    break;
 		}
 		/* Block 5L, LOW BAND INVQBL */
-		wd2 = (s->band[0].det*wd2) >> 15;
+		wd2 = (decode_s->band[0].det*wd2) >> 15;
 		/* Block 5L, RECONS */
-		rlow = s->band[0].s + wd2;
+		rlow = decode_s->band[0].s + wd2;
 		/* Block 6L, LIMIT */
 		if (rlow > 16383)
 		  rlow = 16383;
@@ -471,33 +450,33 @@ public:
 
 		/* Block 2L, INVQAL */
 		wd2 = qm4[wd1];
-		dlowt = (s->band[0].det*wd2) >> 15;
+		dlowt = (decode_s->band[0].det*wd2) >> 15;
 
 		/* Block 3L, LOGSCL */
 		wd2 = rl42[wd1];
-		wd1 = (s->band[0].nb*127) >> 7;
+		wd1 = (decode_s->band[0].nb*127) >> 7;
 		wd1 += wl[wd2];
 		if (wd1 < 0)
 		  wd1 = 0;
 		else if (wd1 > 18432)
 		  wd1 = 18432;
-		s->band[0].nb = wd1;
+		decode_s->band[0].nb = wd1;
             
 		/* Block 3L, SCALEL */
-		wd1 = (s->band[0].nb >> 6) & 31;
-		wd2 = 8 - (s->band[0].nb >> 11);
+		wd1 = (decode_s->band[0].nb >> 6) & 31;
+		wd2 = 8 - (decode_s->band[0].nb >> 11);
 		wd3 = (wd2 < 0)  ?  (ilb[wd1] << -wd2)  :  (ilb[wd1] >> wd2);
-		s->band[0].det = wd3 << 2;
+		decode_s->band[0].det = wd3 << 2;
 
-		block4_decode(s, 0, dlowt);
+		block4_decode(0, dlowt);
         
-		if (!s->eight_k)
+		if (!decode_s->eight_k)
 		{
 		  /* Block 2H, INVQAH */
 		  wd2 = qm2[ihigh];
-		  dhigh = (s->band[1].det*wd2) >> 15;
+		  dhigh = (decode_s->band[1].det*wd2) >> 15;
 		  /* Block 5H, RECONS */
-		  rhigh = dhigh + s->band[1].s;
+		  rhigh = dhigh + decode_s->band[1].s;
 		  /* Block 6H, LIMIT */
 		  if (rhigh > 16383)
 		      rhigh = 16383;
@@ -506,31 +485,31 @@ public:
 
 		  /* Block 2H, INVQAH */
 		  wd2 = rh2[ihigh];
-		  wd1 = (s->band[1].nb*127) >> 7;
+		  wd1 = (decode_s->band[1].nb*127) >> 7;
 		  wd1 += wh[wd2];
 		  if (wd1 < 0)
 		      wd1 = 0;
 		  else if (wd1 > 22528)
 		      wd1 = 22528;
-		  s->band[1].nb = wd1;
+		  decode_s->band[1].nb = wd1;
             
 		  /* Block 3H, SCALEH */
-		  wd1 = (s->band[1].nb >> 6) & 31;
-		  wd2 = 10 - (s->band[1].nb >> 11);
+		  wd1 = (decode_s->band[1].nb >> 6) & 31;
+		  wd2 = 10 - (decode_s->band[1].nb >> 11);
 		  wd3 = (wd2 < 0)  ?  (ilb[wd1] << -wd2)  :  (ilb[wd1] >> wd2);
-		  s->band[1].det = wd3 << 2;
+		  decode_s->band[1].det = wd3 << 2;
 
-		  block4_decode(s, 1, dhigh);
+		  block4_decode(1, dhigh);
 		}
 
-		if (s->itu_test_mode)
+		if (decode_s->itu_test_mode)
 		{
 		  amp[outlen++] = (int16_t) (rlow << 1);
 		  amp[outlen++] = (int16_t) (rhigh << 1);
 		}
 		else
 		{
-		  if (s->eight_k)
+		  if (decode_s->eight_k)
 		  {
 		    amp[outlen++] = (int16_t) rlow;
 		  }
@@ -538,16 +517,16 @@ public:
 		  {
 		    /* Apply the receive QMF */
 		    for (i = 0;  i < 22;  i++)
-                    s->x[i] = s->x[i + 2];
-		    s->x[22] = rlow + rhigh;
-		    s->x[23] = rlow - rhigh;
+                    decode_s->x[i] = decode_s->x[i + 2];
+		    decode_s->x[22] = rlow + rhigh;
+		    decode_s->x[23] = rlow - rhigh;
 
 		    xout1 = 0;
 		    xout2 = 0;
 		    for (i = 0;  i < 12;  i++)
 		    {
-		      xout2 += s->x[2*i]*qmf_coeffs[i];
-		      xout1 += s->x[2*i + 1]*qmf_coeffs[11 - i];
+		      xout2 += decode_s->x[2*i]*qmf_coeffs[i];
+		      xout1 += decode_s->x[2*i + 1]*qmf_coeffs[11 - i];
 		    }
 		    amp[outlen++] = (int16_t) (xout1 >> 12);
 		    amp[outlen++] = (int16_t) (xout2 >> 12);
@@ -557,7 +536,7 @@ public:
 	    return outlen;
 	}
 
-        int g722_encode(g722_encode_state_t *s, uint8_t g722_data[], const int16_t amp[], int len)
+        int g722_encode(uint8_t g722_data[], const int16_t amp[], int len)
         {
 	    static const int q6[32] =
 	    {
@@ -645,14 +624,14 @@ public:
 	    xhigh = 0;
 	    for (j = 0;  j < len;  )
 	    {
-	      if (s->itu_test_mode)
+	      if (encode_s->itu_test_mode)
 	      {
 		xlow =
 		xhigh = amp[j++] >> 1;
 	      }
 	      else
 	      {
-		if (s->eight_k)
+		if (encode_s->eight_k)
 		{
 		  xlow = amp[j++];
 		}
@@ -661,31 +640,32 @@ public:
 		  /* Apply the transmit QMF */
 		  /* Shuffle the buffer down */
 		  for (i = 0;  i < 22;  i++)
-                    s->x[i] = s->x[i + 2];
-		  s->x[22] = amp[j++];
-		  s->x[23] = amp[j++];
+                    encode_s->x[i] = encode_s->x[i + 2];
+		  printf("Codec encode j:%i\n", j);
+		  encode_s->x[22] = amp[j++];
+		  encode_s->x[23] = amp[j++];
     
 		  /* Discard every other QMF output */
 		  sumeven = 0;
 		  sumodd = 0;
 		  for (i = 0;  i < 12;  i++)
 		  {
-                    sumodd += s->x[2*i]*qmf_coeffs[i];
-                    sumeven += s->x[2*i + 1]*qmf_coeffs[11 - i];
+                    sumodd += encode_s->x[2*i]*qmf_coeffs[i];
+                    sumeven += encode_s->x[2*i + 1]*qmf_coeffs[11 - i];
 		  }
 		  xlow = (sumeven + sumodd) >> 13;
 		  xhigh = (sumeven - sumodd) >> 13;
 		}
 	      }
 	      /* Block 1L, SUBTRA */
-	      el = saturate(xlow - s->band[0].s);
+	      el = saturate(xlow - encode_s->band[0].s);
 
 	      /* Block 1L, QUANTL */
 	      wd = (el >= 0)  ?  el  :  -(el + 1);
 
 	      for (i = 1;  i < 30;  i++)
 	      {
-		wd1 = (q6[i]*s->band[0].det) >> 12;
+		wd1 = (q6[i]*encode_s->band[0].det) >> 12;
 		if (wd < wd1)
 		  break;
 	      }
@@ -694,78 +674,79 @@ public:
 	      /* Block 2L, INVQAL */
 	      ril = ilow >> 2;
 	      wd2 = qm4[ril];
-	      dlow = (s->band[0].det*wd2) >> 15;
+	      dlow = (encode_s->band[0].det*wd2) >> 15;
 
 	      /* Block 3L, LOGSCL */
 	      il4 = rl42[ril];
-	      wd = (s->band[0].nb*127) >> 7;
-	      s->band[0].nb = wd + wl[il4];
-	      if (s->band[0].nb < 0)
-		s->band[0].nb = 0;
-	      else if (s->band[0].nb > 18432)
-		s->band[0].nb = 18432;
+	      wd = (encode_s->band[0].nb*127) >> 7;
+	      encode_s->band[0].nb = wd + wl[il4];
+	      if (encode_s->band[0].nb < 0)
+		encode_s->band[0].nb = 0;
+	      else if (encode_s->band[0].nb > 18432)
+		encode_s->band[0].nb = 18432;
 
 	      /* Block 3L, SCALEL */
-	      wd1 = (s->band[0].nb >> 6) & 31;
-	      wd2 = 8 - (s->band[0].nb >> 11);
+	      wd1 = (encode_s->band[0].nb >> 6) & 31;
+	      wd2 = 8 - (encode_s->band[0].nb >> 11);
 	      wd3 = (wd2 < 0)  ?  (ilb[wd1] << -wd2)  :  (ilb[wd1] >> wd2);
-	      s->band[0].det = wd3 << 2;
+	      encode_s->band[0].det = wd3 << 2;
 
-	      block4_encode(s, 0, dlow);
+	      block4_encode(0, dlow);
         
-	      if (s->eight_k)
+	      if (encode_s->eight_k)
 	      {
 		/* Just leave the high bits as zero */
-		code = (0xC0 | ilow) >> (8 - s->bits_per_sample);
+		code = (0xC0 | ilow) >> (8 - encode_s->bits_per_sample);
 	      }
 	      else
 	      {
 		/* Block 1H, SUBTRA */
-		eh = saturate(xhigh - s->band[1].s);
+		eh = saturate(xhigh - encode_s->band[1].s);
 
 		/* Block 1H, QUANTH */
 		wd = (eh >= 0)  ?  eh  :  -(eh + 1);
-		wd1 = (564*s->band[1].det) >> 12;
+		wd1 = (564*encode_s->band[1].det) >> 12;
 		mih = (wd >= wd1)  ?  2  :  1;
 		ihigh = (eh < 0)  ?  ihn[mih]  :  ihp[mih];
 
 		/* Block 2H, INVQAH */
 		wd2 = qm2[ihigh];
-		dhigh = (s->band[1].det*wd2) >> 15;
+		dhigh = (encode_s->band[1].det*wd2) >> 15;
 
 		/* Block 3H, LOGSCH */
 		ih2 = rh2[ihigh];
-		wd = (s->band[1].nb*127) >> 7;
-		s->band[1].nb = wd + wh[ih2];
-		if (s->band[1].nb < 0)
-		  s->band[1].nb = 0;
-		else if (s->band[1].nb > 22528)
-		  s->band[1].nb = 22528;
+		wd = (encode_s->band[1].nb*127) >> 7;
+		encode_s->band[1].nb = wd + wh[ih2];
+		if (encode_s->band[1].nb < 0)
+		  encode_s->band[1].nb = 0;
+		else if (encode_s->band[1].nb > 22528)
+		  encode_s->band[1].nb = 22528;
 
 		/* Block 3H, SCALEH */
-		wd1 = (s->band[1].nb >> 6) & 31;
-		wd2 = 10 - (s->band[1].nb >> 11);
+		wd1 = (encode_s->band[1].nb >> 6) & 31;
+		wd2 = 10 - (encode_s->band[1].nb >> 11);
 		wd3 = (wd2 < 0)  ?  (ilb[wd1] << -wd2)  :  (ilb[wd1] >> wd2);
-		s->band[1].det = wd3 << 2;
+		encode_s->band[1].det = wd3 << 2;
 
-		block4_encode(s, 1, dhigh);
-		code = ((ihigh << 6) | ilow) >> (8 - s->bits_per_sample);
+		block4_encode(1, dhigh);
+		code = ((ihigh << 6) | ilow) >> (8 - encode_s->bits_per_sample);
 	      }
 
-	      if (s->packed)
+	      if (encode_s->packed)
 	      {
 		/* Pack the code bits */
-		s->out_buffer |= (code << s->out_bits);
-		s->out_bits += s->bits_per_sample;
-		if (s->out_bits >= 8)
+		encode_s->out_buffer |= (code << encode_s->out_bits);
+		encode_s->out_bits += encode_s->bits_per_sample;
+		if (encode_s->out_bits >= 8)
 		{
-		  g722_data[g722_bytes++] = (uint8_t) (s->out_buffer & 0xFF);
-		  s->out_bits -= 8;
-		  s->out_buffer >>= 8;
+		  g722_data[g722_bytes++] = (uint8_t) (encode_s->out_buffer & 0xFF);
+		  encode_s->out_bits -= 8;
+		  encode_s->out_buffer >>= 8;
 		}
 	      }
 	      else
 	      {
+		printf("G722 bytes: %i\n",g722_bytes);
 		g722_data[g722_bytes++] = (uint8_t) code;
 	      }
 	    }

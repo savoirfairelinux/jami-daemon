@@ -128,13 +128,13 @@ typedef struct
 extern "C" {
 #endif
 
-g722_encode_state_t *g722_encode_init(g722_encode_state_t *s, int rate, int options);
-int g722_encode_release(g722_encode_state_t *s);
-int g722_encode(g722_encode_state_t *s, uint8_t g722_data[], const int16_t amp[], int len);
+void g722_encode_init(int rate, int options);
+int g722_encode_release();
+int g722_encode(uint8_t g722_data[], const int16_t amp[], int len);
 
-g722_decode_state_t *g722_decode_init(g722_decode_state_t *s, int rate, int options);
-int g722_decode_release(g722_decode_state_t *s);
-int g722_decode(g722_decode_state_t *s, int16_t amp[], const uint8_t g722_data[], int len);
+void g722_decode_init(int rate, int options);
+int g722_decode_release();
+int g722_decode(int16_t amp[], const uint8_t g722_data[], int len);
 
 #ifdef __cplusplus
 }
