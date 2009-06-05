@@ -24,8 +24,8 @@
 
 #define ITEM_SEPARATOR      "|"
 
-HistoryItem::HistoryItem (std::string timestamp, CallType call_type, std::string to, std::string from, std::string caller_id, std::string account_id)
-    : _timestamp (timestamp), _call_type (call_type), _to (to), _from (from), _caller_id (caller_id), _account_id (account_id)
+HistoryItem::HistoryItem (std::string timestamp, CallType call_type, std::string name, std::string number, std::string account_id)
+    : _timestamp (timestamp), _call_type (call_type), _name (name), _number (number), _account_id (account_id)
 {
 }
 
@@ -34,7 +34,7 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
     : _timestamp (timestamp)
 {
     size_t pos;
-    std::string tmp, id, to, from, callerid;
+    std::string tmp, id, name, number;
     int indice=0;
 
     while (serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos)
@@ -47,14 +47,11 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
             case 0: // The call type
                 id = tmp;
                 break;
-            case 1: // The to field
-                to = tmp;
+            case 1: // The number field
+                number = tmp;
                 break;
-            case 2: // The from field
-                from = tmp;
-                break;
-            case 3: // The calller id information
-                callerid = tmp;
+            case 2: // The name field
+                name = tmp;
                 break;
             default: // error
                 std::cout <<"[ERROR] unserialized form not recognized."<<std::endl;
@@ -64,9 +61,8 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
     }
 
     _call_type = (CallType)atoi (id.c_str());
-    _to = to;
-    _from = from;
-    _caller_id = serialized_form;
+    _number = number;
+    _name = serialized_form;
 }
 
 HistoryItem::~HistoryItem ()
@@ -87,9 +83,8 @@ bool HistoryItem::save (Conf::ConfigTree **history){
 
     res = ( (*history)->setConfigTreeItem(section, "type", call_type.str())
             && (*history)->setConfigTreeItem(section, "timestamp", timestamp)
-            && (*history)->setConfigTreeItem(section, "to", _to)
-            && (*history)->setConfigTreeItem(section, "from", _from)
-            && (*history)->setConfigTreeItem(section, "id", _caller_id) );
+            && (*history)->setConfigTreeItem(section, "number", _number)
+            && (*history)->setConfigTreeItem(section, "name", _name) );
 
     return res;
 }
@@ -99,7 +94,7 @@ std::string HistoryItem::serialize (void)
     std::stringstream res;
     std::string separator = ITEM_SEPARATOR;
 
-    res << _call_type << separator << _to << separator << _from << separator << _caller_id;
+    res << _call_type << separator << _number << separator << _name;
     return res.str();
 }
 

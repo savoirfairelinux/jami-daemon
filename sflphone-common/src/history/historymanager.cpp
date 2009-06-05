@@ -66,7 +66,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
     Conf::TokenList sections; 
     HistoryItem *item;
     Conf::TokenList::iterator iter;
-    std::string to, from, caller_id, accountID, timestamp;
+    std::string number, name, caller_id, accountID, timestamp;
     CallType type; 
 
     sections = history_list->getSections();
@@ -76,11 +76,10 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
 
         type = (CallType) getConfigInt (*iter, "type", history_list);
         timestamp = getConfigString (*iter, "timestamp", history_list);
-        to = getConfigString (*iter, "to", history_list);
-        from = getConfigString (*iter, "from", history_list);
-        caller_id = getConfigString (*iter, "id", history_list);
+        name = getConfigString (*iter, "name", history_list);
+        number = getConfigString (*iter, "number", history_list);
 
-        item = new HistoryItem (timestamp, type, to, from, caller_id);
+        item = new HistoryItem (timestamp, type, name, number);
         add_new_history_entry (item);
         nb_items ++;
 
@@ -204,7 +203,7 @@ int HistoryManager::set_serialized_history (std::map <std::string, std::string> 
 {
     std::map <std::string, std::string>::iterator iter;
     HistoryItem *new_item;
-    int items_added;
+    int items_added = 0;
 
     // Clear the existing history
     _history_items.clear ();

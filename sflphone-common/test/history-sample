@@ -1,21 +1,18 @@
 [144562436]
-from=514-276-5468
-id=Savoir-faire Linux
+name=Savoir-faire Linux
+number=514-276-5468
 timestamp=144562436
-to=
 type=0
 
 [747638685]
-from=
-id=Emmanuel Milou
+name=Emmanuel Milou
+number=136
 timestamp=747638685
-to=136
 type=2
 
 [775354456]
-from=5143848557
-id=Chez wam
+name=Chez wam
+number=5143848557
 timestamp=775354456
-to=
 type=1
 

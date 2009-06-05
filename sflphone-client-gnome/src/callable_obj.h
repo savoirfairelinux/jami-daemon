@@ -154,4 +154,6 @@ gchar* generate_call_id (void);
 
 gchar* get_peer_info (gchar*, gchar*);
 
+history_state_t get_history_state_from_id (gchar *indice);
+
 #endif

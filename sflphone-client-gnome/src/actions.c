@@ -237,14 +237,12 @@ gboolean sflphone_init()
         history = calltab_init("history");
         account_list_init ();
         codec_list_init();
+
         // Fetch the configured accounts
         sflphone_fill_account_list(FALSE);
 
         // Fetch the audio codecs
         sflphone_fill_codec_list();
-
-        // Fetch the history list
-        // sflphone_fill_history ();
 
         return TRUE;
     }
@@ -939,6 +937,7 @@ void sflphone_fill_history (void)
         g_hash_table_iter_init (&iter, entries);
         while (g_hash_table_iter_next (&iter, &key, &value)) 
         {
+            DEBUG ("%s\n", (gchar*)value);
             /* do something with key and value */
             create_history_entry_from_serialized_form ((gchar*)key, (gchar*)value, &history_entry);    
             // Add it and update the GUI

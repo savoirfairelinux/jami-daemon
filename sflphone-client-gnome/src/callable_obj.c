@@ -126,13 +126,36 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 {
     gchar *peer_name, *peer_number, *accountID, *state_str;
     callable_obj_t *new_call;
+    history_state_t history_state;
+    char *ptr;
+    const char *delim="|";
+    int token=0;
 
     // details is in serialized form, i e: calltype%to%from%callid
-    peer_name = g_strdup (details);
-    peer_number = g_strdup (details);
+
+    if ((ptr = strtok(details, delim)) != NULL) {
+        do {
+            switch (token)
+            {
+                case 0:
+                    history_state = get_history_state_from_id (ptr);
+                    break;
+                case 1:
+                    peer_number = ptr;
+                    break;
+                case 2:
+                    peer_name = ptr;
+                    break;
+                default:
+                    break;
+            }
+            token ++;
+        } while ((ptr = strtok(NULL, delim)) != NULL);
+
+    }
 
     create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", "", peer_name, peer_number, &new_call);
-    new_call->_history_state = MISSED;
+    new_call->_history_state = history_state;
 
     *call = new_call;
 }
@@ -166,4 +189,20 @@ gchar* get_peer_info (gchar* number, gchar* name)
 
     info = g_strconcat("\"", name, "\" <", number, ">", NULL);
     return info;
+}
+
+history_state_t get_history_state_from_id (gchar *indice){
+
+    history_state_t state;
+
+    if (g_strcasecmp (indice, "0") ==0)
+        state = MISSED;
+    else if (g_strcasecmp (indice, "1") ==0)
+        state = INCOMING;
+    else if (g_strcasecmp (indice, "2") ==0)
+        state = OUTGOING;
+    else
+        state = MISSED;
+       
+    return state;
 }

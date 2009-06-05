@@ -38,7 +38,7 @@ class HistoryItem {
         /*
          * Constructor
          */
-        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string="");
+        HistoryItem (std::string, CallType, std::string, std::string, std::string="");
 
         /*
          * Constructor from a serialized form
@@ -72,11 +72,10 @@ class HistoryItem {
         CallType _call_type;
 
         /*
-         * The information about the callee/caller, depending on the type of call. One field may be empty.
+         * The information about the callee/caller, depending on the type of call.
          */
-        std::string _to;
-        std::string _from;
-        std::string _caller_id;
+        std::string _name;
+        std::string _number;
 
         /*
          * The account the call was made with
