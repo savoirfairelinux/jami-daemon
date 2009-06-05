@@ -31,8 +31,8 @@
 #define TRUE 1
 #define FALSE 0
 
-static void block4_encode(g722_decode_state_t *s, int band, int d);
-static void block4_decode(g722_decode_state_t *s, int band, int d);
+// static void block4_encode(g722_decode_state_t *s, int band, int d);
+// static void block4_decode(g722_decode_state_t *s, int band, int d);
 
 class G722 : public AudioCodec {
 public:
@@ -41,8 +41,8 @@ public:
  	: AudioCodec(payload, "G722")
 	{
 	        // printf("Debug G722\n");
-  		_clockRate = 8000;
-                _frameSize = 160; // samples, 20 ms at 8kHz
+  		_clockRate = 16000;
+                _frameSize = 320; // samples, 20 ms at 8kHz
   		_channel   = 1;
 		_bitrate = 64; 
 		_bandwidth = 80;
@@ -78,10 +78,10 @@ public:
 	    printf("Codec encode g722_size: %i\n",g722_size);
 
 	    // return g722_size;
-	    return g722_size;
+	    return g722_size/2;
 	}
 
-        static __inline__ int16_t saturate(int32_t amp)
+        int16_t saturate(int32_t amp)
         {
             int16_t amp16;
 
@@ -95,7 +95,7 @@ public:
         }
 
 
-        static void block4_encode(g722_encode_state_t *s, int band, int d)
+        void block4_encode(g722_encode_state_t *s, int band, int d)
         {
             int wd1;
             int wd2;
@@ -184,7 +184,7 @@ public:
 
 	}
 
-        static void block4_decode(g722_decode_state_t *s, int band, int d)
+        void block4_decode(g722_decode_state_t *s, int band, int d)
         {
 	    int wd1;
 	    int wd2;
