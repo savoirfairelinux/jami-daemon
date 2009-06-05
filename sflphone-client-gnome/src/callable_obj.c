@@ -83,7 +83,8 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
     obj->_peer_info = g_strdup (get_peer_info (peer_name, peer_number));
-    obj->_duration = "NaN";
+    obj->_time_start = "0";
+    obj->_time_stop = "0";
 
     if (g_strcasecmp (callID, "") == 0)
         call_id = generate_call_id ();
@@ -124,7 +125,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
 
 void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details, callable_obj_t **call)
 {
-    gchar *peer_name, *peer_number, *accountID, *state_str;
+    gchar *peer_name, *peer_number, *accountID, *duration;
     callable_obj_t *new_call;
     history_state_t history_state;
     char *ptr;
@@ -135,6 +136,7 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
     if ((ptr = strtok(details, delim)) != NULL) {
         do {
+            g_print ("%s\n", ptr);
             switch (token)
             {
                 case 0:
@@ -146,6 +148,9 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
                 case 2:
                     peer_name = ptr;
                     break;
+                case 3:
+                    duration = ptr;
+                    break;
                 default:
                     break;
             }
@@ -156,6 +161,8 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
     create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", "", peer_name, peer_number, &new_call);
     new_call->_history_state = history_state;
+    new_call->_time_start = timestamp;
+    new_call->_time_stop = duration;
 
     *call = new_call;
 }
@@ -203,6 +210,67 @@ history_state_t get_history_state_from_id (gchar *indice){
         state = OUTGOING;
     else
         state = MISSED;
-       
+
     return state;
+}
+
+gchar* calcul_call_duration (gchar *start, gchar *end)
+{
+    gchar *res;
+    int duration, istop, istart;
+
+    if( g_strcasecmp (start, end) == 0 )
+        return g_markup_printf_escaped("<small>Missed call</small>");
+
+    g_print ("%s\n", end);
+    istop = atoi (end);
+    istart = atoi (start);
+    g_print ("%i\n", istart);
+    duration = istop - istart;
+
+
+    if( duration / 60 == 0 )
+    {
+        if( duration < 10 )
+            res = g_markup_printf_escaped("00:0%i", duration);
+        else
+            res = g_markup_printf_escaped("00:%i", duration);
+    }
+    else
+    {
+        if( duration%60 < 10 )
+            res = g_markup_printf_escaped("%i:0%i" , duration/60 , duration%60);
+        else
+            res = g_markup_printf_escaped("%i:%i" , duration/60 , duration%60);
+    }
+    return g_markup_printf_escaped("<small>Duration:</small> %s", res);
+
+}
+
+gchar* serialize_history_entry (callable_obj_t *entry)
+{
+    gchar* result;
+    gchar* separator = "|";
+    gchar* history_state;
+
+    history_state = get_history_id_from_state (entry->_history_state);
+    // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
+    result = g_strconcat (history_state, "|", entry->_peer_number, "|", entry->_peer_name, "|", entry->_time_stop, NULL);
+
+    return result;
+}
+
+gchar* get_history_id_from_state (history_state_t state)
+{
+    switch (state)
+    {
+        case MISSED:
+            return "0";
+        case INCOMING:
+            return "1";
+        case OUTGOING:
+            return "2";
+        default:
+            return "0";
+    }
 }

@@ -84,10 +84,10 @@ typedef struct  {
 
     callable_type_t _type;          // CALL - HISTORY ENTRY - CONTACT
     call_state_t _state;             // The state of the call
-    gchar * _callID;                 // The call ID
-    gchar * _accountID;              // The account the call is made with
-    time_t _start_date;              // The timestamp the call was initiating
-    gchar *_duration;                // The duration of the call
+    gchar* _callID;                 // The call ID
+    gchar* _accountID;              // The account the call is made with
+    gchar* _time_start;              // The timestamp the call was initiating
+    gchar* _time_stop;              // The timestamp the call was over
     history_state_t _history_state;  // The history state if necessary
 
     /**
@@ -155,5 +155,11 @@ gchar* generate_call_id (void);
 gchar* get_peer_info (gchar*, gchar*);
 
 history_state_t get_history_state_from_id (gchar *indice);
+
+gchar* calcul_call_duration (gchar *start, gchar *end);
+
+gchar* serialize_history_entry (callable_obj_t *entry);
+
+gchar* get_history_id_from_state (history_state_t state);
 
 #endif

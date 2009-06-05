@@ -38,7 +38,7 @@ class HistoryItem {
         /*
          * Constructor
          */
-        HistoryItem (std::string, CallType, std::string, std::string, std::string="");
+        HistoryItem (std::string, CallType, std::string, std::string, std::string, std::string="");
 
         /*
          * Constructor from a serialized form
@@ -51,7 +51,7 @@ class HistoryItem {
         ~HistoryItem ();
 
         inline std::string get_timestamp () {
-            return _timestamp;
+            return _timestamp_start;
         }
 
         bool save (Conf::ConfigTree **history);
@@ -63,7 +63,8 @@ class HistoryItem {
         /*
          * Timestamp representing the date of the call
          */
-        std::string _timestamp;
+        std::string _timestamp_start;
+        std::string _timestamp_stop;
 
         /* 
          * Represents the type of call

@@ -114,14 +114,13 @@ void HistoryTest::test_get_history_serialized ()
     // The serialized form is: calltype%to%from%callid
     
     // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux";
+    tmp = "0|514-276-5468|Savoir-faire Linux|144562458";
     CPPUNIT_ASSERT (tmp == res ["144562436"]);
 
-    tmp = "2|136|Emmanuel Milou";
+    tmp = "2|136|Emmanuel Milou|747638765";
     CPPUNIT_ASSERT (tmp == res ["747638685"]);
 
-    tmp = "1|5143848557|Chez wam";
-    std::cout << res ["775354456"] << std::endl;
+    tmp = "1|5143848557|Chez wam|775354987";
     CPPUNIT_ASSERT (tmp == res ["775354456"]);
 }
 
@@ -132,9 +131,9 @@ void HistoryTest::test_set_serialized_history ()
     std::string tmp;
     Conf::ConfigTree history_list;
 
-    map_test["144562436"] = "0|514-276-5468|Savoir-faire Linux";
-    map_test["747638685"] = "2|136|Emmanuel Milou";
-    map_test["775354456"] = "1|5143848557|Chez wam";
+    map_test["144562436"] = "0|514-276-5468|Savoir-faire Linux|144562458";
+    map_test["747638685"] = "2|136|Emmanuel Milou|747638765";
+    map_test["775354456"] = "1|5143848557|Chez wam|775354987";
 
     CPPUNIT_ASSERT (history->load_history (HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     CPPUNIT_ASSERT (history->set_serialized_history (map_test) == 3);
@@ -145,13 +144,13 @@ void HistoryTest::test_set_serialized_history ()
     CPPUNIT_ASSERT (map_test.size()==HISTORY_SAMPLE_SIZE);
 
     // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux";
+    tmp = "0|514-276-5468|Savoir-faire Linux|144562458";
     CPPUNIT_ASSERT (tmp == map_test ["144562436"]);
 
-    tmp = "2|136|Emmanuel Milou";
+    tmp = "2|136|Emmanuel Milou|747638765";
     CPPUNIT_ASSERT (tmp == map_test ["747638685"]);
 
-    tmp = "1|5143848557|Chez wam";
+    tmp = "1|5143848557|Chez wam|775354987";
     CPPUNIT_ASSERT (tmp == map_test ["775354456"]);
 
     history->save_history_items_map (&history_list);

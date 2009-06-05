@@ -105,6 +105,9 @@ sflphone_quit ()
 
     if (quit)
     {
+        // Save the history 
+        sflphone_save_history ();
+
         dbus_unregister(getpid());
         dbus_clean ();
         //call_list_clean(); TODO
@@ -937,15 +940,48 @@ void sflphone_fill_history (void)
         g_hash_table_iter_init (&iter, entries);
         while (g_hash_table_iter_next (&iter, &key, &value)) 
         {
-            DEBUG ("%s\n", (gchar*)value);
             /* do something with key and value */
             create_history_entry_from_serialized_form ((gchar*)key, (gchar*)value, &history_entry);    
             // Add it and update the GUI
+            calllist_add (history, history_entry);
             calltree_add_call (history, history_entry);
         }
     }
 }
 
+void sflphone_save_history (void)
+{
+    GQueue *items;
+    gint size;
+    int i;
+    callable_obj_t *current;
+    GHashTable *result = NULL;
+    gchar *key, *value;
+
+    result = g_hash_table_new(NULL, g_str_equal);
+    items = history->callQueue;
+    size = calllist_get_size (history);
+    
+    for (i=0; i<size; i++)
+    {
+        
+        g_print ("svm;bndkbnzdbnlzdbndlz\n");
+
+        current = g_queue_peek_nth (items, i);
+        if (current)
+        {
+            value = serialize_history_entry (current);
+            key = current->_time_start;
+            g_hash_table_replace(result, (gpointer) key,
+                                        (gpointer) value);
+        }
+    }
+
+    dbus_set_history (result);
+    
+    // Decrement the reference count
+    g_hash_table_unref(result);
+}
 void format_phone_number (gchar **number) {
 
     gchar *_number;

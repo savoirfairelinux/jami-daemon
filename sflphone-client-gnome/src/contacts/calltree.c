@@ -388,7 +388,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
                             break;
                     }
                     date = timestamp_get_call_date();
-                    duration = process_call_duration(c);
+                    duration = calcul_call_duration (c->_time_start, c->_time_stop);
                     duration = g_strconcat( date , duration , NULL);
                     description = g_strconcat( description , duration, NULL);
                 }
@@ -427,6 +427,7 @@ calltree_add_call (calltab_t* tab, callable_obj_t * c)
     // New call in the list
     gchar * description;
     gchar * date="";
+    gchar *duration="";
     description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
             c->_peer_number,
             c->_peer_name);
@@ -480,7 +481,9 @@ calltree_add_call (calltab_t* tab, callable_obj_t * c)
                 WARN("History - Should not happen!");
         }
         date = timestamp_get_call_date();
-        description = g_strconcat( date , description , NULL);
+        duration = calcul_call_duration (c->_time_start, c->_time_stop);
+        duration = g_strconcat( date , duration , NULL);
+        description = g_strconcat( description , duration, NULL);
     }
 
     else if (tab == contacts) {
