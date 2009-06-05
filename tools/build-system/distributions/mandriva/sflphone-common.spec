@@ -24,7 +24,7 @@ Source0:        sflphone-common.tar.gz
 BuildRequires:	glibc-devel
 BuildRequires:	libccrtp-devel
 BuildRequires:	libsamplerate-devel
-BuildRequires:	dbus-1-devel
+BuildRequires:	libdbus-1-devel
 BuildRequires:	libexpat-devel
 BuildRequires:	libgsm-devel
 BuildRequires:	speex-devel
@@ -70,9 +70,9 @@ make -j
 
 %install
 cd libs/pjproject-1.0.1
-make prefix=%{buildroot}/%{_prefix} install
+make DESTDIR=%{buildroot} install
 cd -
-make prefix=%{buildroot}/%{_prefix} install
+make DESTDIR=%{buildroot} install
 
 %clean
 cd libs/pjproject-1.0.1

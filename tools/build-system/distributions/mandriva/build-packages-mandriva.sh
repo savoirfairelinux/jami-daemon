@@ -1,13 +1,13 @@
 #!/bin/bash
 #####################################################
-# File Name: build-packages-opensuse.sh
+# File Name: build-packages-mandriva.sh
 #
 # Purpose :
 #
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-27
-# Last Modified: 2009-06-01 17:24:52 -0400
+# Last Modified: 2009-06-04 16:29:34 -0400
 #####################################################
 
 . ../globals
@@ -75,7 +75,7 @@ do
 	cd ${PACKAGING_DIR}
 
 	echo " -> update spec file"
-	sed "s/VERSION/${VERSION}/g" opensuse/${PACKAGE}.spec > ${BUILD_DIR}/SPECS/${PACKAGE}.spec
+	sed "s/VERSION/${VERSION}/g" mandriva/${PACKAGE}.spec > ${BUILD_DIR}/SPECS/${PACKAGE}.spec
 
 	if [ "$?" -ne "0" ]; then
                 echo "!! Cannot update spec file"
