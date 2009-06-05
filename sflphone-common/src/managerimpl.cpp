@@ -83,12 +83,14 @@ ManagerImpl::ManagerImpl (void)
         , _callConfigMap()
         , _accountMap()
         , _cleaner (NULL)
+        , _history (NULL)
 {
 
     // initialize random generator for call id
     srand (time(NULL));
 
     _cleaner = new NumberCleaner ();
+    _history = new HistoryManager ();
 
 #ifdef TEST
   testAccountMap();
@@ -142,6 +144,10 @@ ManagerImpl::init()
 
     if (audiolayer == 0)
       audiolayer->stopStream();
+
+
+    // Load the history
+    _history->load_history ();
 }
 
 void ManagerImpl::terminate()
@@ -503,6 +509,18 @@ ManagerImpl::transferCall(const CallID& id, const std::string& to)
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
     return returnValue;
 }
+
+void ManagerImpl::transferFailed()
+{
+  if(_dbus) _dbus->getCallManager()->transferFailed();
+}
+
+void ManagerImpl::transferSucceded()
+{
+  if(_dbus) _dbus->getCallManager()->transferSucceded();
+
+}
+
 
 //THREAD=Main : Call:Incoming
   bool
@@ -2859,6 +2877,19 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
 
     return call_details;
 }
+
+
+std::map<std::string, std::string> ManagerImpl::send_history_to_client (void)
+{
+    return _history->get_history_serialized ();
+} 
+    
+void ManagerImpl::receive_history_from_client (std::map<std::string, std::string> history)
+{
+    _history->set_serialized_history (history);
+    _history->save_history ();
+}
+
 
   std::vector< std::string >
 ManagerImpl::getCallList (void)

@@ -86,6 +86,11 @@ show_account_window (account_t * a)
     /* TODO: add curProxy, and add boxes for Proxy support */
     gchar * curMailbox = "";
 
+#if GTK_CHECK_VERSION(2,16,0)
+#else
+    GtkWidget *image;
+#endif
+
     // Load from SIP/IAX/Unknown ?
     if(a)
     {

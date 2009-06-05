@@ -34,11 +34,11 @@ calltab_t* calltab_init(gchar* searchbar_type);
   * is the currently highlighted one in the list.
   * @param c The call */
 void
-calltab_select_call (calltab_t*, call_t *);
+calltab_select_call (calltab_t*, callable_obj_t *);
 
 /** Return the selected call.
   * @return The number of the caller */
-call_t *
+callable_obj_t *
 calltab_get_selected_call (calltab_t*);
 
 void

@@ -41,7 +41,6 @@
 #include <addressbook.h>
 #include <history.h>
 
-
 GdkPixbuf *waitingPixOff;
 
 /**

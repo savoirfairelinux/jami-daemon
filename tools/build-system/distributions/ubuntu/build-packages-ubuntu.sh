@@ -21,7 +21,7 @@ FULL_VERSION="${VERSION}-${PACKAGE_SYSVER}"
 # BEGIN
 #########################
 
-DIST="dist"
+DIST="${OS_VERSION}"
 if [ ${RELEASE_MODE} ]; then
 	if [ "${RELEASE_MODE}" != "release" ]; then
 		DIST="${DIST}-testing"
@@ -33,7 +33,6 @@ fi
 echo "Do updates"
 sudo apt-get update >/dev/null
 sudo apt-get upgrade -y >/dev/null
-
 
 for PACKAGE in ${PACKAGES[@]}
 do
@@ -90,15 +89,15 @@ else
 	BINARY_DIR="binary-amd64"
 fi
 
-mkdir -p ${DIST_DIR}/${DIST}/universe/source
-mkdir -p ${DIST_DIR}/${DIST}/universe/${BINARY_DIR}
+mkdir -p ${DEB_RESULT_DIR}/${DIST}/universe/source
+mkdir -p ${DEB_RESULT_DIR}/${DIST}/universe/${BINARY_DIR}
 
-mv ${REPOSITORY_DIR}/sflphone*.deb ${DIST_DIR}/${DIST}/universe/${BINARY_DIR} && \
-mv ${REPOSITORY_DIR}/sflphone*.dsc ${DIST_DIR}/${DIST}/universe/source/ && \
-mv ${REPOSITORY_DIR}/sflphone*.build ${DIST_DIR}/${DIST}/universe/source/ && \
-mv ${REPOSITORY_DIR}/sflphone*.changes ${DIST_DIR}/${DIST}/universe/source/ && \
-mv ${REPOSITORY_DIR}/sflphone*.orig.tar.gz ${DIST_DIR}/${DIST}/universe/source/ && \
-mv ${REPOSITORY_DIR}/sflphone*.diff.gz ${DIST_DIR}/${DIST}/universe/source/
+mv ${REPOSITORY_DIR}/sflphone*.deb ${DEB_RESULT_DIR}/${DIST}/universe/${BINARY_DIR} && \
+mv ${REPOSITORY_DIR}/sflphone*.dsc ${DEB_RESULT_DIR}/${DIST}/universe/source/ && \
+mv ${REPOSITORY_DIR}/sflphone*.build ${DEB_RESULT_DIR}/${DIST}/universe/source/ && \
+mv ${REPOSITORY_DIR}/sflphone*.changes ${DEB_RESULT_DIR}/${DIST}/universe/source/ && \
+mv ${REPOSITORY_DIR}/sflphone*.orig.tar.gz ${DEB_RESULT_DIR}/${DIST}/universe/source/ && \
+mv ${REPOSITORY_DIR}/sflphone*.diff.gz ${DEB_RESULT_DIR}/${DIST}/universe/source/
 
 if [ "$?" -ne "0" ]; then
         echo "!! Cannot copy dist files"

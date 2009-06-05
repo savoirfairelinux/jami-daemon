@@ -53,7 +53,8 @@ AC_CONFIG_FILES([src/Makefile \
   src/plug-in/audiorecorder/Makefile \
   src/plug-in/Makefile \
   src/plug-in/test/Makefile \
-  src/hooks/Makefile]) 
+  src/hooks/Makefile \
+  src/history/Makefile]) 
   
   dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])
@@ -212,6 +213,21 @@ DBUS_RECURSIVE_MUTEX_VERSION=0.95
 PKG_CHECK_EXISTS([dbus-1 >= $DBUS_RECURSIVE_MUTEX_VERSION],
 	[AC_DEFINE(DBUS_HAS_RECURSIVE_MUTEX, , [DBus supports recursive mutexes (needs DBus >= 0.95)])]
 )
+
+#AC_ARG_ENABLE(dbus-debug,
+#	AS_HELP_STRING([--enable-dbus-debug],
+#		[enable debugging support]),
+#	[enable_debug=$enableval],
+#	[enable_debug=no]
+#)
+
+#if test "$enable_debug" = "yes" ; then
+#	CXXFLAGS="$CXXFLAGS -Wall -ggdb -O0"
+#	AC_DEFINE(DEBUG, 1, [Define to enable debug build])
+#else
+#	CXXFLAGS="$CXXFLAGS -Wall -O3"
+#fi
+
 
 if test "$enable_glib" = "yes" ; then
 PKG_CHECK_MODULES([glib], glib-2.0)

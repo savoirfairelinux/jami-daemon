@@ -47,6 +47,7 @@ AM_CPPFLAGS = \
 	-I$(src)/libs/iax2 \
 	-I$(src)/libs/pjproject-1.0.1 \
 	-I$(src)/src \
+	-I$(src)/src/config \
 	-I$(src)/test \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/sflphone\" \

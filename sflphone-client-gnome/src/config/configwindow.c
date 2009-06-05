@@ -182,11 +182,16 @@ set_mail_notif( )
 {
     dbus_set_mail_notify( );
 }
-
+/*
     void
 update_max_value( GtkRange* scale )
 {
     dbus_set_max_calls(gtk_range_get_value( GTK_RANGE( scale )));
+}
+*/
+static void update_max_value( GtkSpinButton *button UNUSED, void *ptr )
+{
+    dbus_set_max_calls(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
 }
 
     void
@@ -557,7 +562,6 @@ create_general_settings ()
 
     GtkWidget *ret;
 
-    GtkWidget *notifBox;
     GtkWidget *notifAll;
     // GtkWidget *widg;
 
@@ -574,30 +578,28 @@ create_general_settings ()
     GtkWidget *cleanButton;
     GtkWidget *entryPort;
 
+    GtkWidget *table;
+
     // Main widget
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Notifications Frame
-    gnome_main_section_new (_("Desktop Notifications"), &frame);
+    gnome_main_section_new_with_table (_("Desktop Notifications"), &frame, &table, 2, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-
-    notifBox = gtk_vbox_new(FALSE, 10);
-    gtk_widget_show( notifBox );
-    gtk_container_add( GTK_CONTAINER(frame) , notifBox);
-    gtk_container_set_border_width(GTK_CONTAINER(notifBox), 2);
 
     // Notification All
     notifAll = gtk_check_button_new_with_mnemonic( _("_Enable notifications"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() );
-    gtk_box_pack_start( GTK_BOX(notifBox) , notifAll , TRUE , TRUE , 1);
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() ); 
     g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
-    
+    gtk_table_attach( GTK_TABLE(table), notifAll, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+
     // Notification
     widg = gtk_check_button_new_with_mnemonic(  _("Enable voicemail _notifications"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_mail_notify() );
-    gtk_box_pack_start( GTK_BOX(notifBox) , widg , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
+    gtk_table_attach( GTK_TABLE(table), widg, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    
 
     if (dbus_get_notify())
        gtk_widget_set_sensitive(widg, TRUE);
@@ -605,66 +607,46 @@ create_general_settings ()
        gtk_widget_set_sensitive(widg, FALSE);
 
     // System Tray option frame
-    gnome_main_section_new (_("System Tray Icon"), &frame);
+    gnome_main_section_new_with_table (_("System Tray Icon"), &frame, &table, 3, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-    gtk_widget_show (frame);
-
-    trayBox = gtk_vbox_new(FALSE, 10);
-    gtk_widget_show( trayBox );
-    gtk_container_add( GTK_CONTAINER(frame) , trayBox);
 
     GtkWidget* trayItem1 = gtk_radio_button_new_with_mnemonic(NULL,  _("_Popup main window on incoming call"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem1), dbus_popup_mode() );
-    gtk_box_pack_start( GTK_BOX(trayBox) , trayItem1 , TRUE , TRUE , 1);
-    g_signal_connect(G_OBJECT( trayItem1 ) , "clicked" , G_CALLBACK( set_popup_mode ) , NULL);
+    g_signal_connect(G_OBJECT( trayItem1 ), "clicked", G_CALLBACK( set_popup_mode ) , NULL);
+    gtk_table_attach( GTK_TABLE(table), trayItem1, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     trayItem = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(trayItem1), _("Ne_ver popup main window"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), !dbus_popup_mode() );
-    gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
+    gtk_table_attach( GTK_TABLE(table), trayItem, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     trayItem = gtk_check_button_new_with_mnemonic(_("Hide SFLphone window on _startup"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), dbus_is_start_hidden() );
-    gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
+    gtk_table_attach( GTK_TABLE(table), trayItem, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-    /** HISTORY CONFIGURATION */
-    gnome_main_section_new (_("Calls History"), &frame);
+    // HISTORY CONFIGURATION
+    gnome_main_section_new_with_table (_("Calls History"), &frame, &table, 1, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-    gtk_widget_show( frame );
 
-    hbox = gtk_hbox_new(FALSE, 10);
-    gtk_widget_show( hbox );
-    gtk_container_add( GTK_CONTAINER(frame) , hbox);
-
-    label = gtk_label_new_with_mnemonic(_("_History size limit"));
-    gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
-    gtk_box_pack_start( GTK_BOX(hbox) , label , TRUE , TRUE , 0);
-
-    value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);
+    label = gtk_label_new_with_mnemonic(_("_History size limit:"));
+    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    
+    value = gtk_spin_button_new_with_range(1, 50, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
-    gtk_scale_set_digits( GTK_SCALE(value) , 0);
-    gtk_scale_set_value_pos( GTK_SCALE(value) , GTK_POS_RIGHT);
-    gtk_range_set_value( GTK_RANGE( value ) , dbus_get_max_calls());
-    gtk_box_pack_start( GTK_BOX(hbox) , value , TRUE , TRUE , 0);
-    g_signal_connect( G_OBJECT( value) , "value-changed" , G_CALLBACK( update_max_value ) , NULL);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(value), dbus_get_max_calls());
+    g_signal_connect( G_OBJECT( value) , "value-changed" , G_CALLBACK( update_max_value ) , value);
+    gtk_table_attach( GTK_TABLE(table), value, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5); 
 
-    cleanButton = gtk_button_new_from_stock( GTK_STOCK_CLEAR );
-    gtk_box_pack_end( GTK_BOX(hbox) , cleanButton , FALSE , TRUE , 0);
-    g_signal_connect( G_OBJECT( cleanButton ) , "clicked" , G_CALLBACK( clean_history ) , NULL);
-
+    
     /** PULSEAUDIO CONFIGURATION */
-    gnome_main_section_new (_("PulseAudio sound server"), &frame);
+    gnome_main_section_new_with_table (_("PulseAudio sound server"), &frame, &table, 1, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-    gtk_widget_show( frame );
-
-    vbox = gtk_vbox_new(FALSE, 10);
-    gtk_widget_show( vbox );
-    gtk_container_add( GTK_CONTAINER(frame) , vbox);
 
     mutewidget = gtk_check_button_new_with_mnemonic(  _("Mute other applications during a _call"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(mutewidget), dbus_get_pulse_app_volume_control() );
-    gtk_box_pack_start( GTK_BOX(vbox) , mutewidget , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( mutewidget ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
+    gtk_table_attach( GTK_TABLE(table), mutewidget, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    
 
     n = account_list_get_sip_account_number();
     DEBUG("sip account number = %i", n);
@@ -674,30 +656,29 @@ create_general_settings ()
     if(curPort <= 0 || curPort > 65535)
         curPort = 5060;
 
-    gnome_main_section_new (_("SIP Port"), &frame);
+    gnome_main_section_new_with_table (_("SIP Port"), &frame, &table, 1, 3);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-    gtk_widget_show( frame );
+    // gtk_widget_show( frame );
     gtk_widget_set_sensitive( GTK_WIDGET(frame), (n==0)?FALSE:TRUE );
 
-    hbox = gtk_hbox_new(FALSE, 10);
-    gtk_widget_show( hbox );
-    gtk_container_add( GTK_CONTAINER(frame) , hbox);
+    // hbox = gtk_hbox_new(FALSE, 10);
+    // gtk_widget_show( hbox );
+    // gtk_container_add( GTK_CONTAINER(frame) , hbox);
 
     GtkWidget *applyButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
     //gtk_widget_set_size_request(applyButton, 100, 35);
     //gtk_widget_set_sensitive( GTK_WIDGET(applyButton), (n==0)?FALSE:TRUE );
 
     label = gtk_label_new(_("Port:"));
-    gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
+    // gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
     entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
-
-    gtk_box_pack_start( GTK_BOX(hbox) , label , TRUE , TRUE , 1);
-    gtk_box_pack_start( GTK_BOX(hbox) , entryPort , TRUE , TRUE , 1);
-    gtk_box_pack_start( GTK_BOX(hbox) , applyButton , FALSE , FALSE , 1);
-
     g_signal_connect( G_OBJECT( applyButton) , "clicked" , G_CALLBACK( update_port ) , entryPort);
+
+    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_table_attach( GTK_TABLE(table), entryPort, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_table_attach( GTK_TABLE(table), applyButton, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     gtk_widget_show_all(ret);
 
@@ -732,26 +713,20 @@ create_recording_settings ()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Recorded file saving path
-    gnome_main_section_new (_("General"), &savePathFrame);
+    gnome_main_section_new_with_table (_("General"), &savePathFrame, &table, 1, 2);
     gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
-
-    table = gtk_table_new(1, 2, FALSE);
-    gtk_table_set_row_spacings( GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-    gtk_widget_show(table);
-    gtk_container_add(GTK_CONTAINER(savePathFrame), table);
 
     // label
     label = gtk_label_new_with_mnemonic(_("_Recordings folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    gtk_misc_set_alignment(GTK_MISC(label), 0.08, 0.5);
+    // gtk_misc_set_alignment(GTK_MISC(label), 0.08, 0.5);
 
 
     // folder chooser button
     folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( folderChooser), dftPath);
-    gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     g_signal_connect( G_OBJECT( folderChooser ) , "selection_changed" , G_CALLBACK( record_path_changed ) , NULL );
+    gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     gtk_widget_show_all(ret);
 
@@ -842,6 +817,7 @@ show_accounts_window( void )
     GtkDialog * dialog;
     GtkWidget * accountFrame;
     GtkWidget * tab;
+    GtkWidget * table;
 
     accDialogOpen = TRUE;
 

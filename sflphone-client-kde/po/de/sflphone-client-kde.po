@@ -1,0 +1,674 @@
+#: ../src/AccountWizard.cpp:161
+msgid "Account Wizard"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:195
+msgid "Creation of account succeed with parameters :\n"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:206
+msgid "Creation of account has failed for the reason :\n"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:212
+msgid "Register of account succeed with parameters :\n"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:248
+msgid "Alias : "
+msgstr ""
+
+#: ../src/AccountWizard.cpp:249
+msgid "Server : "
+msgstr ""
+
+#: ../src/AccountWizard.cpp:250
+msgid "User : "
+msgstr ""
+
+#: ../src/AccountWizard.cpp:251
+msgid "Password : "
+msgstr ""
+
+#: ../src/AccountWizard.cpp:252
+msgid "Protocol : "
+msgstr ""
+
+#: ../src/AccountWizard.cpp:253
+msgid "Mailbox : "
+msgstr ""
+
+#: ../src/AccountWizard.cpp:270
+msgid "Account Creation Wizard"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:271
+msgid "Welcome to the Account creation wizard of SFLPhone"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:273
+msgid "This wizard will help you setting up an account."
+msgstr ""
+
+#: ../src/AccountWizard.cpp:301 ../build/src/ui_ConfigDialog.h:1259
+msgid "Accounts"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:302
+msgid "Please choose between those options :"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:304
+msgid "Create a free SIP/IAX2 account on sflphone.org"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:305
+msgid "Register an existing SIP/IAX2 account"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:344
+msgid "VoIP Protocols"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:345
+msgid "Choose the account type :"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:347
+msgid "Register a SIP (Session Initiation Protocol) account"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:348
+msgid "Register a IAX2 (InterAsterisk eXchange) account"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:387
+msgid "Optionnal Email Address"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:388
+msgid "This email address will be used to send your voicemail messages."
+msgstr ""
+
+#: ../src/AccountWizard.cpp:390
+msgid "Email address"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:424
+msgid "SIP Account Settings"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:428
+msgid "IAX2 Account Settings"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:430
+msgid "Please full these settings fields."
+msgstr ""
+
+#: ../src/AccountWizard.cpp:432
+msgid "Alias *"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:433
+msgid "Server *"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:434
+msgid "User *"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:435
+msgid "Password *"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:507
+msgid "Network Address Translation (NAT)"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:508
+msgid ""
+"You should probably enable this option if you're placed under a firewall"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:510
+msgid "Enable STUN"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:511
+msgid "Stun Server"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:545
+msgid "Account Definition Finished"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:546
+msgid ""
+"After checking the settings you chose, click \"Finish\" to create the "
+"account."
+msgstr ""
+
+#: ../src/Call.cpp:116
+msgid "Transfer to : "
+msgstr ""
+
+#: ../src/ConfigDialog.cpp:131
+msgid "Attention : SIP port must be over 1024 !"
+msgstr ""
+
+#: ../src/ConfigDialog.cpp:136
+msgid "Attention : SIP port must be under 65536 !"
+msgstr ""
+
+#: ../src/ConfigDialog.cpp:787
+msgid ""
+"Accounts changed : another client may be changing accounts or an account is "
+"unstable. \n"
+"If another client is changing the settings, you may cancel your changes to "
+"avoid overwriting one's changes."
+msgstr ""
+
+#: ../src/SFLPhone.cpp:54
+msgid "SFLPhone"
+msgstr ""
+
+#: ../src/SFLPhone.cpp:152
+msgid "You still have some calls open. Please close all calls before quitting."
+msgstr ""
+
+#: ../src/SFLPhone.cpp:180
+msgid "Incoming call"
+msgstr ""
+
+#: ../src/SFLPhone.cpp:181
+msgid "You have an incoming call from : "
+msgstr ""
+
+#: ../src/SFLPhone.cpp:181
+msgid "Click to accept or refuse it."
+msgstr ""
+
+#: ../src/sflphone_kdeview.cpp:1089 ../src/sflphone_kdeview.cpp:1145
+msgid "Edit before call"
+msgstr ""
+
+#: ../src/sflphone_const.h:56
+msgid "Call"
+msgstr ""
+
+#: ../src/sflphone_const.h:57
+msgid "Hang up"
+msgstr ""
+
+#: ../src/sflphone_const.h:58
+msgid "Hold"
+msgstr ""
+
+#: ../src/sflphone_const.h:59
+msgid "Transfer"
+msgstr ""
+
+#: ../src/sflphone_const.h:60 ../build/src/ui_ConfigDialog.h:1263
+msgid "Record"
+msgstr ""
+
+#: ../src/sflphone_const.h:61
+msgid "Accept"
+msgstr ""
+
+#: ../src/sflphone_const.h:62
+msgid "Refuse"
+msgstr ""
+
+#: ../src/sflphone_const.h:63
+msgid "Unhold"
+msgstr ""
+
+#: ../src/sflphone_const.h:64
+msgid "Give up transfer"
+msgstr ""
+
+#: ../src/sflphone_const.h:65
+msgid "Call back"
+msgstr ""
+
+#: ../src/sflphone_const.h:66
+msgid "Give up search"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1249
+msgid "Configuration Dialog"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1250
+msgid "about"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1255 ../build/src/ui_ConfigDialog.h:1337
+msgid "General"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1257
+msgid "Display"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1261
+msgid "Audio"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1265
+msgid "Address Book"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1267
+msgid "Hooks"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1270
+msgid "Configure general settings"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1271
+msgid "Call history"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1272
+msgid "&Capacity"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1273
+msgid "C&lear history"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1274
+msgid "Connection"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1275
+msgid "SIP &Port"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1276
+msgid "Attention "
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1277
+msgid "Configure display"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1278
+msgid "Enable notifications"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1279
+msgid "On incoming &calls"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1280
+msgid "On &messages"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1281
+msgid "Show main window"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1282
+msgid "On &start"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1283
+msgid "On &incoming calls"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1284
+msgid "Configure user accounts"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1286
+msgid "Remove this account"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1287
+msgid "+"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1288
+msgid "Add a new account"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1289
+msgid "Down"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1290
+msgid "Up"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1291
+msgid "Apply"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1292
+msgid "&Alias"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1293
+msgid "&Protocol"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1296
+msgid "SIP"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1297
+msgid "IAX"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1299
+msgid "&Server"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1300
+msgid "&User"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1301
+msgid "Pass&word"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1302
+#: ../build/src/ui_sflphone_kdeview_base.h:498
+msgid "&Mailbox"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1303
+msgid "State"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1306
+msgid "Stun settings will be applied on each account"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1307
+msgid "&Enable Stun"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1308
+msgid "Configure audio settings"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1310
+msgid "Audio &device"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1313
+msgid "ALSA"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1314
+msgid "PulseAudio"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1316
+msgid "&Enable ringtones"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1317
+msgid "&Codecs"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1321
+msgid "Active"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1323
+msgid "Name"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1325
+msgid "Frequency"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1327
+msgid "Bitrate"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1329
+msgid "Bandwidth"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1330
+msgid "ALSA settings"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1331
+msgid "&In"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1332
+msgid "&Out"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1333
+msgid "ALSA &plugin"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1334
+msgid "PulseAudio settings"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1335
+msgid "Mute other applications during a call"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1336
+msgid "Configure record settings"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1338
+msgid "Destination folder"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1339
+msgid "Configure address book settings"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1340
+msgid "Maximum &results"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1341
+msgid "Display &photo if available"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1342
+msgid "Display phone numbers of these &types :"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1343
+msgid "&Work"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1344
+msgid "&Mobile"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1345
+msgid "&Home"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1346
+msgid "Configure hooks settings"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1347
+msgid "URL Argument"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1348
+msgid "SIP Protocol"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1349
+msgid "IAX2 Protocol"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1350
+msgid "SIP Header"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1351
+msgid "Command"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1352
+msgid "Phone number formatting"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1353
+msgid "Add phone number prefix"
+msgstr ""
+
+#: ../build/src/ui_ConfigDialog.h:1354
+msgid "Prepend"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:492
+msgid "Form"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:493
+msgid "&Pick up"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:494
+msgid "&Hang up"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:495
+msgid "H&old"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:496
+msgid "&Transfer"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:497
+msgid "H&istory"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:499
+msgid "Configure &accounts"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:500
+msgid "Configure a&udio"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:501
+msgid "&Configure SFLPhone"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:502
+msgid "Display &volume bars"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:503
+msgid "&About"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:504
+msgid "Display &dialpad"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:505
+msgid "&Record"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:506
+msgid "Account creation &wizard"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:507
+msgid "Address book"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:508
+msgid "Attention:number of results exceeds max displayed."
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:509
+#: ../build/src/ui_sflphone_kdeview_base.h:532
+#: ../build/src/ui_sflphone_kdeview_base.h:533
+#: ../build/src/ui_sflphone_kdeview_base.h:534
+msgid "..."
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:510
+msgid "1"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:511
+msgid ""
+"2\n"
+"abc"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:513
+msgid "2"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:514
+msgid ""
+"3\n"
+"def"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:516
+msgid ""
+"4\n"
+"ghi"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:518
+msgid ""
+"5\n"
+"jkl"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:520
+msgid ""
+"6\n"
+"mno"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:522
+msgid ""
+"7\n"
+"pqrs"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:524
+msgid ""
+"8\n"
+"tuv"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:526
+msgid ""
+"9\n"
+"wxyz"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:528
+msgid "*"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:529
+msgid "0\n"
+msgstr ""
+
+#: ../build/src/ui_sflphone_kdeview_base.h:531
+msgid "#"
+msgstr ""

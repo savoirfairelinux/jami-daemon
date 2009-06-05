@@ -113,9 +113,9 @@ int CallList::size()
 	return calls->size();
 }
 
-Call * CallList::addDialingCall(const QString & peerName)
+Call * CallList::addDialingCall(const QString & peerName, QString account)
 {
-	Call * call = Call::buildDialingCall(getAndIncCallId(), peerName);
+	Call * call = Call::buildDialingCall(getAndIncCallId(), peerName, account);
 	calls->append(call);
 	return call;
 }

@@ -17,6 +17,8 @@ PACKAGING_DIR="${ROOT_DIR}/sflphone-packaging"
 # distributions
 UBUNTU_DIR="${PACKAGING_DIR}/ubuntu"
 OPENSUSE_DIR="${PACKAGING_DIR}/opensuse"
+MANDRIVA_DIR="${PACKAGING_DIR}/mandriva"
+FEDORA_DIR="${PACKAGING_DIR}/fedora"
 
 # where packaging will be donne
 BUILD_DIR="${PACKAGING_DIR}/build"
@@ -24,7 +26,8 @@ REPOSITORY_ARCHIVE="${BUILD_DIR}/sflphone.tar.gz"
 REPOSITORY_DIR="${BUILD_DIR}/sflphone"
 
 # target directories
-DIST_DIR="${PACKAGING_DIR}/dists"
+DEB_RESULT_DIR="${PACKAGING_DIR}/deb/dists"
+RPM_RESULT_DIR="${PACKAGING_DIR}/rpm"
 
 # system information
 ARCH_FLAG=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`

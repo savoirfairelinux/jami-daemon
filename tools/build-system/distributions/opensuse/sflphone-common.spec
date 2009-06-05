@@ -31,6 +31,7 @@ BuildRequires:	libgsm-devel
 BuildRequires:	speex-devel
 BuildRequires:	libcppunit-devel
 BuildRequires:	alsa-devel
+BuildRequires:	libuuid-devel
 Requires:	libsamplerate
 Requires:	libexpat1
 Requires:	commoncpp2
@@ -68,9 +69,9 @@ make -j
 
 %install
 cd libs/pjproject-1.0.1
-make prefix=%{buildroot}/%{_prefix} install
+make DESTDIR=%{buildroot} install
 cd -
-make prefix=%{buildroot}/%{_prefix} install
+make DESTDIR=%{buildroot} install
 
 %clean
 cd libs/pjproject-1.0.1

@@ -46,17 +46,20 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
                   const gchar* from,
                   void * foo  UNUSED )
 {
-  DEBUG ("Incoming call! %s",callID);
-  call_t * c = g_new0 (call_t, 1);
-  c->accountID = g_strdup(accountID);
-  c->callID = g_strdup(callID);
-  c->from = g_strdup(from);
-  c->state = CALL_STATE_INCOMING;
- #if GTK_CHECK_VERSION(2,10,0)
-  status_tray_icon_blink( TRUE );
- #endif
-  notify_incoming_call( c );
-  sflphone_incoming_call (c);
+    DEBUG ("Incoming call! %s",callID);
+    
+    callable_obj_t * c;
+    gchar *peer_name, *peer_number;
+    // We receive the from field under a formatted way. We want to extract the number and the name of the caller
+    peer_name = call_get_peer_name (from);
+    peer_number = call_get_peer_number (from);
+
+    create_new_call (CALL, CALL_STATE_INCOMING, g_strdup(callID), g_strdup(accountID), peer_name, peer_number, &c);
+#if GTK_CHECK_VERSION(2,10,0)
+    status_tray_icon_blink( TRUE );
+#endif
+    notify_incoming_call (c);
+    sflphone_incoming_call (c);
 }
 
 static void
@@ -106,16 +109,16 @@ call_state_cb (DBusGProxy *proxy UNUSED,
                   void * foo  UNUSED )
 {
   DEBUG ("Call %s state %s",callID, state);
-  call_t * c = calllist_get(current_calls, callID);
+  callable_obj_t * c = calllist_get(current_calls, callID);
   if(c)
   {
     if ( strcmp(state, "HUNGUP") == 0 )
     {
-      if(c->state==CALL_STATE_CURRENT)
+      if(c->_state==CALL_STATE_CURRENT)
       {
 	// peer hung up, the conversation was established, so _start has been initialized with the current time value
 	DEBUG("call state current");
-	(void) time(&c->_stop);
+	// TODO  (void) time(&c->_);
 	calltree_update_call( history, c );
       }
       stop_notification();
@@ -158,7 +161,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
     // It means that a new call has been initiated with an other client (cli for instance)
     if ( strcmp(state, "RINGING") == 0 )
     {
-        call_t *new_call;
+        callable_obj_t *new_call;
         GHashTable *call_details;
 
         DEBUG ("New ringing call! accountID: %s", callID);
@@ -168,7 +171,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
         create_new_call_from_details (callID, call_details, &new_call);
 
         // Restore the callID to be synchronous with the daemon
-        new_call->callID = g_strdup(callID);
+        new_call->_callID = g_strdup(callID);
 
         sflphone_incoming_call (new_call);
     }
@@ -188,6 +191,25 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
   // Should fix ticket #1215
   status_bar_display_account();
 }
+
+
+static void
+transfer_succeded_cb (DBusGProxy *proxy UNUSED,
+                     void * foo  UNUSED )
+{
+  DEBUG ("Transfer succeded\n");
+  sflphone_display_transfer_status("Transfer successfull\n");
+}
+
+
+static void
+transfer_failed_cb (DBusGProxy *proxy UNUSED,
+                     void * foo  UNUSED )
+{
+  DEBUG ("Transfer failed\n");
+  sflphone_display_transfer_status("Transfer failed\n");
+}
+
 
 static void
 error_alert(DBusGProxy *proxy UNUSED,
@@ -305,6 +327,16 @@ dbus_connect ()
   dbus_g_proxy_connect_signal (callManagerProxy,
     "volumeChanged", G_CALLBACK(volume_changed_cb), NULL, NULL);
 
+  dbus_g_proxy_add_signal (callManagerProxy,
+			   "transferSucceded", G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (callManagerProxy,
+    "transferSucceded", G_CALLBACK(transfer_succeded_cb), NULL, NULL);
+
+  dbus_g_proxy_add_signal (callManagerProxy,
+			   "transferFailed", G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (callManagerProxy,
+    "transferFailed", G_CALLBACK(transfer_failed_cb), NULL, NULL);
+
   
   configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
                                   "org.sflphone.SFLphone",
@@ -349,10 +381,10 @@ dbus_clean ()
 
 
 void
-dbus_hold (const call_t * c)
+dbus_hold (const callable_obj_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLphone_CallManager_hold ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_hold ( callManagerProxy, c->_callID, &error);
   if (error)
   {
     ERROR ("Failed to call hold() on CallManager: %s",
@@ -362,10 +394,10 @@ dbus_hold (const call_t * c)
 }
 
 void
-dbus_unhold (const call_t * c)
+dbus_unhold (const callable_obj_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLphone_CallManager_unhold ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_unhold ( callManagerProxy, c->_callID, &error);
   if (error)
   {
     ERROR ("Failed to call unhold() on CallManager: %s",
@@ -375,10 +407,10 @@ dbus_unhold (const call_t * c)
 }
 
 void
-dbus_hang_up (const call_t * c)
+dbus_hang_up (const callable_obj_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLphone_CallManager_hang_up ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_hang_up ( callManagerProxy, c->_callID, &error);
   if (error)
   {
     ERROR ("Failed to call hang_up() on CallManager: %s",
@@ -388,10 +420,10 @@ dbus_hang_up (const call_t * c)
 }
 
 void
-dbus_transfert (const call_t * c)
+dbus_transfert (const callable_obj_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLphone_CallManager_transfert ( callManagerProxy, c->callID, c->to, &error);
+  org_sflphone_SFLphone_CallManager_transfert ( callManagerProxy, c->_callID, c->_peer_number, &error);
   if (error)
   {
     ERROR ("Failed to call transfert() on CallManager: %s",
@@ -401,29 +433,29 @@ dbus_transfert (const call_t * c)
 }
 
 void
-dbus_accept (const call_t * c)
+dbus_accept (const callable_obj_t * c)
 {
 #if GTK_CHECK_VERSION(2,10,0)
   status_tray_icon_blink( FALSE );
 #endif
   GError *error = NULL;
-  org_sflphone_SFLphone_CallManager_accept ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_accept ( callManagerProxy, c->_callID, &error);
   if (error)
   {
-    ERROR ("Failed to call accept(%s) on CallManager: %s", c->callID,
+    ERROR ("Failed to call accept(%s) on CallManager: %s", c->_callID,
                 (error->message == NULL ? g_quark_to_string(error->domain): error->message));
     g_error_free (error);
   }
 }
 
 void
-dbus_refuse (const call_t * c)
+dbus_refuse (const callable_obj_t * c)
 {
 #if GTK_CHECK_VERSION(2,10,0)
   status_tray_icon_blink( FALSE );
 #endif
   GError *error = NULL;
-  org_sflphone_SFLphone_CallManager_refuse ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_refuse ( callManagerProxy, c->_callID, &error);
   if (error)
   {
     ERROR ("Failed to call refuse() on CallManager: %s",
@@ -434,10 +466,10 @@ dbus_refuse (const call_t * c)
 
 
 void
-dbus_place_call (const call_t * c)
+dbus_place_call (const callable_obj_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLphone_CallManager_place_call ( callManagerProxy, c->accountID, c->callID, c->to, &error);
+  org_sflphone_SFLphone_CallManager_place_call ( callManagerProxy, c->_accountID, c->_callID, c->_peer_number, &error);
   if (error)
   {
     ERROR ("Failed to call placeCall() on CallManager: %s",
@@ -716,17 +748,17 @@ dbus_codec_details( int payload )
 }
 
 gchar*
-dbus_get_current_codec_name(const call_t * c)
+dbus_get_current_codec_name(const callable_obj_t * c)
 {
 
-    DEBUG("dbus_get_current_codec_name : CallID : %s", c->callID);
+    DEBUG("dbus_get_current_codec_name : CallID : %s", c->_callID);
 
     gchar* codecName;
     GError* error = NULL;
 
     org_sflphone_SFLphone_CallManager_get_current_codec_name (
                        callManagerProxy,
-                       c->callID,
+                       c->_callID,
                        &codecName,
                        &error);
     if(error)
@@ -1165,14 +1197,14 @@ dbus_set_volume_controls(  )
 
 
 void
-dbus_set_record(const call_t * c)
+dbus_set_record(const callable_obj_t * c)
 {
        DEBUG("calling dbus_set_record on CallManager");
-       DEBUG("CallID : %s", c->callID);
+       DEBUG("CallID : %s", c->_callID);
        GError* error = NULL;
        org_sflphone_SFLphone_CallManager_set_recording (
                        callManagerProxy,
-                       c->callID,
+                       c->_callID,
                        &error);
 	    if(error)
 	    {
@@ -1181,14 +1213,14 @@ dbus_set_record(const call_t * c)
 }
 
 gboolean
-dbus_get_is_recording(const call_t * c)
+dbus_get_is_recording(const callable_obj_t * c)
 {
        DEBUG("calling dbus_get_is_recording on CallManager");
        GError* error = NULL;
        gboolean isRecording;
        org_sflphone_SFLphone_CallManager_get_is_recording (
                        callManagerProxy,
-                       c->callID,
+                       c->_callID,
                        &isRecording,
                        &error);
 	    if(error)
@@ -1649,3 +1681,27 @@ void dbus_set_accounts_order (const gchar* order) {
     }
 }
 
+GHashTable* dbus_get_history (void)
+{
+    GError *error = NULL;
+    GHashTable *entries = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_history (configurationManagerProxy, &entries, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_history");
+        g_error_free (error);
+    }
+
+    return entries;
+}
+
+void dbus_set_history (GHashTable* entries)
+{
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_set_history (configurationManagerProxy, entries, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_set_history");
+        g_error_free (error);
+    }
+}

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>655</width>
-    <height>487</height>
+    <width>337</width>
+    <height>411</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -174,6 +174,12 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="text">
             <string>1</string>
            </property>
@@ -187,8 +193,15 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="text">
-            <string>2</string>
+            <string>2
+abc</string>
            </property>
            <property name="shortcut">
             <string>2</string>
@@ -204,7 +217,8 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>3</string>
+            <string>3
+def</string>
            </property>
           </widget>
          </item>
@@ -217,7 +231,8 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>4</string>
+            <string>4
+ghi</string>
            </property>
           </widget>
          </item>
@@ -230,7 +245,8 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>5</string>
+            <string>5
+jkl</string>
            </property>
           </widget>
          </item>
@@ -243,7 +259,8 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>6</string>
+            <string>6
+mno</string>
            </property>
           </widget>
          </item>
@@ -256,7 +273,8 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>7</string>
+            <string>7
+pqrs</string>
            </property>
           </widget>
          </item>
@@ -269,7 +287,8 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>8</string>
+            <string>8
+tuv</string>
            </property>
           </widget>
          </item>
@@ -282,7 +301,8 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>9</string>
+            <string>9
+wxyz</string>
            </property>
           </widget>
          </item>
@@ -308,7 +328,8 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>0</string>
+            <string>0
+</string>
            </property>
           </widget>
          </item>
@@ -463,7 +484,7 @@
   </layout>
   <action name="action_accept">
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/call.svg</normaloff>:/images/icons/call.svg</iconset>
    </property>
    <property name="text">
@@ -472,7 +493,7 @@
   </action>
   <action name="action_refuse">
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/hang_up.svg</normaloff>:/images/icons/hang_up.svg</iconset>
    </property>
    <property name="text">
@@ -481,7 +502,7 @@
   </action>
   <action name="action_hold">
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/hold.svg</normaloff>:/images/icons/hold.svg</iconset>
    </property>
    <property name="text">
@@ -493,7 +514,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/transfert.svg</normaloff>:/images/icons/transfert.svg</iconset>
    </property>
    <property name="text">
@@ -505,7 +526,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/history2.svg</normaloff>:/images/icons/history2.svg</iconset>
    </property>
    <property name="text">
@@ -514,7 +535,7 @@
   </action>
   <action name="action_mailBox">
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/mailbox.svg</normaloff>:/images/icons/mailbox.svg</iconset>
    </property>
    <property name="text">
@@ -523,7 +544,7 @@
   </action>
   <action name="action_configureAccounts">
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/stock_person.svg</normaloff>:/images/icons/stock_person.svg</iconset>
    </property>
    <property name="text">
@@ -532,7 +553,7 @@
   </action>
   <action name="action_configureAudio">
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/icon_volume.svg</normaloff>:/images/icons/icon_volume.svg</iconset>
    </property>
    <property name="text">
@@ -541,7 +562,7 @@
   </action>
   <action name="action_configureSflPhone">
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/sflphone.svg</normaloff>:/images/icons/sflphone.svg</iconset>
    </property>
    <property name="text">
@@ -556,7 +577,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/icon_volume_off.svg</normaloff>:/images/icons/icon_volume_off.svg</iconset>
    </property>
    <property name="text">
@@ -576,7 +597,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/icon_dialpad.svg</normaloff>:/images/icons/icon_dialpad.svg</iconset>
    </property>
    <property name="text">
@@ -588,7 +609,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset>
      <normaloff>:/images/icons/del_off.png</normaloff>:/images/icons/del_off.png</iconset>
    </property>
    <property name="text">
@@ -605,7 +626,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
+    <iconset resource="../qrc/resources.qrc">
      <normaloff>:/images/icons/x-office-address-book.png</normaloff>:/images/icons/x-office-address-book.png</iconset>
    </property>
    <property name="text">
@@ -614,7 +635,7 @@
   </action>
  </widget>
  <resources>
-  <include location="resources.qrc"/>
+  <include location="../qrc/resources.qrc"/>
  </resources>
  <connections>
   <connection>

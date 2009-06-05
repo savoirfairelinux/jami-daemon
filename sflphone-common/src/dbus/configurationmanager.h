@@ -113,6 +113,9 @@ public:
 
     std::map<std::string, std::string> getHookSettings (void);
     void setHookSettings (const std::map<std::string, std::string>& settings);
+    
+    std::map <std::string, std::string> getHistory (void);
+    void setHistory (const std::map <std::string, std::string>& entries);
 
 };
 

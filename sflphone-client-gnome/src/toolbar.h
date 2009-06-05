@@ -20,7 +20,7 @@
 #ifndef __TOOLBAR_H__
 #define __TOOLBAR_H__
 
-#include <call.h>
+#include <callable_obj.h>
 #include <gtk/gtk.h>
 #include <menus.h>
 #include <sflphone_const.h>

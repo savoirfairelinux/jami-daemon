@@ -18,6 +18,7 @@
  */
 
 #include <errors.h>
+#include <sflphone_const.h>
 
   void
 sflphone_throw_exception( int err )

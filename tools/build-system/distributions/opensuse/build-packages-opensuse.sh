@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-27
-# Last Modified: 2009-05-29 15:18:14 -0400
+# Last Modified: 2009-05-29 18:11:44 -0400
 #####################################################
 
 . ../globals
@@ -19,13 +19,15 @@ if [ "$?" -ne "0" ]; then
         exit -1
 fi
 
+echo "Do updates"
+sudo /usr/bin/zypper -n update >/dev/null
+
 # create build directories
 echo "Create directories"
 mkdir -p ${BUILD_DIR}/BUILD
-mkdir -p ${BUILD_DIR}/RPMS
+mkdir -p ${RPM_RESULT_DIR}
 mkdir -p ${BUILD_DIR}/SOURCES
 mkdir -p ${BUILD_DIR}/SPECS
-mkdir -p ${BUILD_DIR}/SRPMS
 
 # create rpm macros
 echo "Create RPM macros"
@@ -39,10 +41,10 @@ cat > ~/.rpmmacros << STOP
 
 %_topdir                ${BUILD_DIR}
 %_builddir		%{_topdir}/BUILD
-%_rpmdir		%{_topdir}/RPMS
+%_rpmdir		${RPM_RESULT_DIR}
 %_sourcedir		%{_topdir}/SOURCES
 %_specdir		%{_topdir}/SPECS
-%_srcrpmdir		%{_topdir}/SRPMS
+%_srcrpmdir		${RPM_RESULT_DIR}
 STOP
 
 # create packages
@@ -54,7 +56,7 @@ do
 
 	echo " -> create source archive"
 	mv ${PACKAGE} ${PACKAGE}-${VERSION} 2>/dev/null && \
-	tar cf ${PACKAGE}.tar.gz ${PACKAGE}-${VERSION} && \
+	tar cf ${PACKAGE}.tar.gz ${PACKAGE}-${VERSION} >/dev/null && \
 	mv ${PACKAGE}-${VERSION} ${PACKAGE}
 	
 	if [ "$?" -ne "0" ]; then
@@ -73,7 +75,7 @@ do
 	cd ${PACKAGING_DIR}
 
 	echo " -> update spec file"
-	sed "s/VERSION/${VERSION}/g" ${PACKAGE}.spec > ${BUILD_DIR}/SPECS/${PACKAGE}.spec
+	sed "s/VERSION/${VERSION}/g" opensuse/${PACKAGE}.spec > ${BUILD_DIR}/SPECS/${PACKAGE}.spec
 
 	if [ "$?" -ne "0" ]; then
                 echo "!! Cannot update spec file"

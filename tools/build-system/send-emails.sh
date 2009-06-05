@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified:
+# Last Modified: 2009-06-01 18:11:20 -0400
 #####################################################
 
 TAG=`date +%Y-%m-%d`
@@ -28,12 +28,13 @@ MAIL_SUBJECT="[ ${TAG} ] SFLphone Automatic Build System : ${STATUS}"
 if [ "$1" -eq 0 ]; then
 	echo | mail -s "${MAIL_SUBJECT}" -c emmanuel.milou@savoirfairelinux.com julien.bonjean@savoirfairelinux.com
 else
-	(
-	for i in ${PACKAGING_RESULT_DIR}/*.log
-	do
-		uuencode $i $(basename $i)
-	done
-	) | mail -s "${MAIL_SUBJECT}" -c emmanuel.milou@savoirfairelinux.com julien.bonjean@savoirfairelinux.com 
+#	(
+#	for i in ${PACKAGING_RESULT_DIR}/*.log
+#	do
+#		uuencode $i $(basename $i)
+#	done
+#	)
+	cat ${PACKAGING_RESULT_DIR}/stats.log | mail -s "${MAIL_SUBJECT}" -c emmanuel.milou@savoirfairelinux.com julien.bonjean@savoirfairelinux.com 
 fi
 
 exit 0

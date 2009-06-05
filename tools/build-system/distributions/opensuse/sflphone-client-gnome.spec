@@ -27,6 +27,7 @@ BuildRequires:	dbus-1-glib-devel
 BuildRequires:	libnotify-devel
 BuildRequires:	libsexy-devel
 BuildRequires:	evolution-data-server-devel
+BuildRequires:	check-devel
 Requires:	sflphone-common = %{version}
 Requires:	dbus-1-glib
 Requires:	gtk2
@@ -60,7 +61,7 @@ Authors:
 make -j
 
 %install
-make prefix=%{buildroot}/%{_prefix} install
+make DESTDIR=%{buildroot} install
 
 %clean
 make clean
