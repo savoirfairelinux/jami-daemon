@@ -61,7 +61,7 @@ Authors:
 make -j
 
 %install
-make prefix=%{buildroot}/%{_prefix} install
+make DESTDIR=%{buildroot} install
 
 %clean
 make clean
