@@ -41,7 +41,7 @@ public:
  	: AudioCodec(payload, "G722")
 	{
 	        // printf("Debug G722\n");
-  		_clockRate = 8000;
+  		_clockRate = 16000;
                 _frameSize = 320; // samples, 20 ms at 8kHz
   		_channel   = 1;
 		_bitrate = 64; 
