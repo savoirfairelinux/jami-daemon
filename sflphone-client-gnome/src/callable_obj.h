@@ -129,14 +129,14 @@ gint get_state_callstruct ( gconstpointer, gconstpointer);
   * @param c The call
   * @return The full name of the caller or an empty string 
   */
-gchar* call_get_peer_name (const callable_obj_t *);
+gchar* call_get_peer_name (const gchar*);
 
 /**
  * This function parse the callable_obj_t.from field to return the number
  * @param c The call
  * @return The number of the caller
  */
-gchar* call_get_peer_number (const callable_obj_t *);
+gchar* call_get_peer_number (const gchar*);
 
 
 

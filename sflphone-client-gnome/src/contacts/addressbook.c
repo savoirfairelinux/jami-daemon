@@ -146,7 +146,7 @@ handler_async_search(GList *hits, gpointer user_data)
   callable_obj_t *j;
 
   // freeing calls
-  while ((j = (callable_obj_t *) g_queue_pop_tail(_contacts->callQueue)) != NULL)
+  while ((j = (callable_obj_t *) g_queue_pop_tail(contacts->callQueue)) != NULL)
     {
       free_callable_obj_t(j);
     }

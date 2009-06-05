@@ -72,7 +72,7 @@ notify_incoming_call (callable_obj_t* c)
                     (gchar*)g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties , ACCOUNT_TYPE) ,
                     (gchar*)g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties , ACCOUNT_ALIAS) ) ;
         }
-        callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , call_get_peer_number (c));
+        callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->_peer_number);
 
         create_new_gnome_notification (title,
                                         callerid, 

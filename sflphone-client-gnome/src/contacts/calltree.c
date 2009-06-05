@@ -110,12 +110,10 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         // If history or contact: double click action places a new call
         else
         {
-            to = g_strdup(call_get_peer_number(selectedCall));
-            from = g_strconcat("\"", call_get_peer_name (selectedCall), "\" <", call_get_peer_number(selectedCall), ">",NULL);
             account_id = g_strdup (selectedCall->_accountID);
 
             // Create a new call
-            create_new_call (CALL, CALL_STATE_DIALING, "", account_id, call_get_peer_number (selectedCall), call_get_peer_name (selectedCall), &new_call);
+            create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
 
             calllist_add(current_calls, new_call);
             calltree_add_call(current_calls, new_call);
@@ -325,15 +323,16 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
                 if(c->_state == CALL_STATE_TRANSFERT)
                 {
                     description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> ",
-                            call_get_peer_number(c),
-                            call_get_peer_name(c)
+                            c->_peer_number,
+                            c->_peer_name
                             );
                 }
                 else
                 {
                     description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-                            call_get_peer_number(c),
-                            call_get_peer_name(c));
+                            c->_peer_number,
+                            c->_peer_name );
+
                 }
 
                 if( tab == current_calls )
@@ -429,8 +428,8 @@ calltree_add_call (calltab_t* tab, callable_obj_t * c)
     gchar * description;
     gchar * date="";
     description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-            call_get_peer_number(c),
-            call_get_peer_name(c));
+            c->_peer_number,
+            c->_peer_name);
 
     gtk_list_store_prepend (tab->store, &iter);
 

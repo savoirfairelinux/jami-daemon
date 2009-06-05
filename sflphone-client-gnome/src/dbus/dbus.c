@@ -46,17 +46,20 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
                   const gchar* from,
                   void * foo  UNUSED )
 {
-  DEBUG ("Incoming call! %s",callID);
-  callable_obj_t * c = g_new0 (callable_obj_t, 1);
-  c->_accountID = g_strdup(accountID);
-  c->_callID = g_strdup(callID);
-  c->_peer_number = g_strdup(from);
-  c->_state = CALL_STATE_INCOMING;
- #if GTK_CHECK_VERSION(2,10,0)
-  status_tray_icon_blink( TRUE );
- #endif
-  notify_incoming_call (c);
-  sflphone_incoming_call (c);
+    DEBUG ("Incoming call! %s",callID);
+    
+    callable_obj_t * c;
+    gchar *peer_name, *peer_number;
+    // We receive the from field under a formatted way. We want to extract the number and the name of the caller
+    peer_name = call_get_peer_name (from);
+    peer_number = call_get_peer_number (from);
+
+    create_new_call (CALL, CALL_STATE_INCOMING, g_strdup(callID), g_strdup(accountID), peer_name, peer_number, &c);
+#if GTK_CHECK_VERSION(2,10,0)
+    status_tray_icon_blink( TRUE );
+#endif
+    notify_incoming_call (c);
+    sflphone_incoming_call (c);
 }
 
 static void

@@ -338,7 +338,7 @@ sflphone_pick_up()
     else {
         sflphone_new_call();
     }
-    
+
 }
 
     void
@@ -381,13 +381,13 @@ sflphone_off_hold ()
     }
 
     if(dbus_get_is_recording(selectedCall))
-      {
+    {
         DEBUG("Currently recording!");
-      }
+    }
     else
-      {
+    {
         DEBUG("Not recording currently");
-      }
+    }
 }
 
 
@@ -411,7 +411,7 @@ sflphone_busy( callable_obj_t * c )
 sflphone_current( callable_obj_t * c )
 {
     //if( c->_state != CALL_STATE_HOLD )
-        //(void) time(&c->_start);
+    //(void) time(&c->_start);
     c->_state = CALL_STATE_CURRENT;
     calltree_update_call(current_calls,c);
     update_menus();
@@ -421,7 +421,7 @@ sflphone_current( callable_obj_t * c )
 sflphone_record( callable_obj_t * c )
 {
     //if( c->_state != CALL_STATE_HOLD )
-      //  (void) time(&c->_start);
+    //  (void) time(&c->_start);
     c->_state = CALL_STATE_RECORD;
     calltree_update_call(current_calls,c);
     update_menus();
@@ -455,7 +455,7 @@ sflphone_unset_transfert()
     toolbar_update_buttons();
 }
 
-void
+    void
 sflphone_display_transfer_status(const gchar* message)
 {
     statusbar_push_message( message , __MSG_ACCOUNT_DEFAULT);
@@ -504,8 +504,8 @@ process_dialing(callable_obj_t * c, guint keyval, gchar * key)
 
                     if(c->_state == CALL_STATE_DIALING)
                     {
-                        g_free(c->_peer_name);
-                        c->_peer_name = g_strconcat("\"\" <", c->_peer_number, ">", NULL);
+                        //g_free(c->_peer_name);
+                        //c->_peer_name = g_strconcat("\"\" <", c->_peer_number, ">", NULL);
                     }
                     calltree_update_call(current_calls,c);
                 }
@@ -536,8 +536,8 @@ process_dialing(callable_obj_t * c, guint keyval, gchar * key)
 
                 if(c->_state == CALL_STATE_DIALING)
                 {
-                    g_free(c->_peer_name);
-                    c->_peer_name = g_strconcat("\"\" <", c->_peer_number, ">", NULL);
+                    //g_free(c->_peer_name);
+                    //c->_peer_name = g_strconcat("\"\" <", c->_peer_number, ">", NULL);
                 }
                 calltree_update_call(current_calls,c);
             }
@@ -690,10 +690,10 @@ sflphone_keypad( guint keyval, gchar * key)
             default:
                 break;
         }
-        
+
     }
     else {
-      sflphone_new_call();
+        sflphone_new_call();
     }
 }
 
@@ -707,78 +707,82 @@ sflphone_keypad( guint keyval, gchar * key)
 sflphone_place_call ( callable_obj_t * c )
 {
 
-    if (c->_state == CALL_STATE_DIALING && g_str_has_prefix (c->_peer_number, "sip:"))
+    if (c)
     {
-        dbus_place_call (c);
-    }
 
-    else {
-
-        if(c->_state == CALL_STATE_DIALING && strcmp(c->_peer_number, "") != 0)
+        if (c->_state == CALL_STATE_DIALING && g_str_has_prefix (c->_peer_number, "sip:"))
         {
+            dbus_place_call (c);
+        }
 
-            if( account_list_get_size() == 0 )
-            {
-                notify_no_accounts();
-                sflphone_fail(c);
-            }
+        else {
 
-            else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
-            {
-                notify_no_registered_accounts();
-                sflphone_fail(c);
-            }
-
-            else
+            if(c->_state == CALL_STATE_DIALING && strcmp(c->_peer_number, "") != 0)
             {
 
-                account_t * current;
-
-                if(g_strcasecmp(c->_accountID, "") != 0) {
-                    current = account_list_get_by_id(c->_accountID);
-                } else {
-                    current = account_list_get_current();
+                if( account_list_get_size() == 0 )
+                {
+                    notify_no_accounts();
+                    sflphone_fail(c);
                 }
-                // DEBUG("sflphone_place_call :: c->accountID : %i",c->accountID);
 
-                // account_t * current = c->accountID;
+                else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
+                {
+                    notify_no_registered_accounts();
+                    sflphone_fail(c);
+                }
 
-
-                if( current )
+                else
                 {
 
-                    if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
+                    account_t * current;
+
+                    if(g_strcasecmp(c->_accountID, "") != 0) {
+                        current = account_list_get_by_id(c->_accountID);
+                    } else {
+                        current = account_list_get_current();
+                    }
+                    // DEBUG("sflphone_place_call :: c->accountID : %i",c->accountID);
+
+                    // account_t * current = c->accountID;
+
+
+                    if( current )
                     {
-                        // OK, everything alright - the call is made with the current account
-                        c->_accountID = current -> accountID;
-                        dbus_place_call(c);
+
+                        if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
+                        {
+                            // OK, everything alright - the call is made with the current account
+                            c->_accountID = current -> accountID;
+                            dbus_place_call(c);
+                        }
+                        else
+                        {
+                            // Current account is not registered
+                            // So we place a call with the first registered account
+                            // And we switch the current account
+                            current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
+                            c->_accountID = current -> accountID;
+                            dbus_place_call(c);
+                            notify_current_account( current );
+                        }
                     }
                     else
                     {
-                        // Current account is not registered
+
+                        // No current accounts have been setup.
                         // So we place a call with the first registered account
-                        // And we switch the current account
+                        // and we change the current account
                         current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
                         c->_accountID = current -> accountID;
                         dbus_place_call(c);
                         notify_current_account( current );
                     }
                 }
-                else
-                {
-
-                    // No current accounts have been setup.
-                    // So we place a call with the first registered account
-                    // and we change the current account
-                    current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-                    c->_accountID = current -> accountID;
-                    dbus_place_call(c);
-                    notify_current_account( current );
-                }
+                // Update history
+                c->_history_state = OUTGOING;
+                calllist_add(history, c);
             }
-            // Update history
-            c->_history_state = OUTGOING;
-            calllist_add(history, c);
         }
     }
 }
@@ -800,9 +804,9 @@ sflphone_display_selected_codec (const gchar* codecName)
             }
             else {
                 msg = g_markup_printf_escaped(_("Using %s (%s) - Codec: %s") ,
-                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
-                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
-                    codecName);
+                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
+                        codecName);
             }
             statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
             g_free(msg);
@@ -898,7 +902,7 @@ sflphone_fill_codec_list()
 
 void sflphone_fill_call_list (void)
 {
-    
+
     gchar** calls = (gchar**)dbus_get_call_list();
     gchar** pl;
     GHashTable *call_details;

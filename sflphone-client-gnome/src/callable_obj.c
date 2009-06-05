@@ -45,14 +45,25 @@ gint get_state_callstruct ( gconstpointer a, gconstpointer b)
     }
 }
 
-gchar* call_get_peer_name (const callable_obj_t * c)
+gchar* call_get_peer_name (const gchar *format)
 {
-    return c->_peer_name;
+    gchar * end;
+
+    end = g_strrstr (format, "\"");
+    if (!end) {
+        return g_strndup (format, 0);
+    } else {
+        gchar * name = format +1;
+        return g_strndup(name, end - name);
+    }
 }
 
-gchar* call_get_peer_number (const callable_obj_t * c)
+gchar* call_get_peer_number (const gchar *format)
 {
-    return c->_peer_number;
+    gchar * number = g_strrstr(format, "<") + 1;
+    gchar * end = g_strrstr(format, ">");
+    number = g_strndup(number, end - number  );
+    return number;
 }
 
 

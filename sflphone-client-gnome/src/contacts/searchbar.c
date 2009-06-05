@@ -21,7 +21,7 @@
  */
 
 #include <searchbar.h>
-#include <treeview.h>
+#include <calltree.h>
 
 const GdkColor BLACK_COLOR = { 0, 0, 0, 0 };
 const GdkColor GRAY_COLOR = { 0, 30000, 30000, 30000 };
@@ -31,10 +31,10 @@ GtkWidget * searchbox;
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED){
     // gtk_widget_grab_focus (GTK_WIDGET(searchbox));
 
-    if (_active_tree == _contacts) {
+    if (active_calltree == contacts) {
         addressbook_search(entry);
     }
-    else if (_active_tree == _history) {
+    else if (active_calltree == history) {
         history_search(entry);
     }
 
@@ -75,12 +75,12 @@ focus_on_searchbar_in(){
 
 
     void
-searchbar_init(treeview_t *tab)
+searchbar_init(calltab_t *tab)
 {
-    if (tab == _contacts) {
+    if (tab == contacts) {
         addressbook_init();
     }
-    else if (tab == _history) {
+    else if (tab == history) {
         history_init();
     }
 }

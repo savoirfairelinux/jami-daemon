@@ -77,7 +77,7 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
     else if(calllist_get_size(active_calltree) > 0){
         if( selectedCall)
         {
-            create_new_call (CALL, CALL_STATE_DIALING, "", "", "", call_get_peer_number(selectedCall), &new_call);
+            create_new_call (CALL, CALL_STATE_DIALING, "", "", "", selectedCall->_peer_number, &new_call);
 
             calllist_add(current_calls, new_call);
             calltree_add_call(current_calls, new_call);

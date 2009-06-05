@@ -273,7 +273,7 @@ call_back( void * foo UNUSED)
 
     if( selected_call )
     {
-        create_new_call (CALL, CALL_STATE_DIALING, "", "", call_get_peer_number(selected_call), call_get_peer_name(selected_call), &new_call);
+        create_new_call (CALL, CALL_STATE_DIALING, "", "", selected_call->_peer_name, selected_call->_peer_number, &new_call);
 
         calllist_add(current_calls, new_call);
         calltree_add_call(current_calls, new_call);
@@ -423,7 +423,7 @@ edit_copy ( void * foo UNUSED)
             case CALL_STATE_FAILURE:
             case CALL_STATE_INCOMING:
             default:
-                no = call_get_peer_number(selectedCall);
+                no = selectedCall->_peer_number;
                 break;
         }
 
@@ -490,10 +490,8 @@ edit_paste ( void * foo UNUSED)
                         DEBUG("<%s>", oneNo);
                         dbus_play_dtmf(oneNo);
 
-                        gchar * temp = g_strconcat(call_get_peer_number(selectedCall), oneNo, NULL);
-                        gchar * before = selectedCall->_peer_info;
-                        selectedCall->_peer_info = g_strconcat("\"",call_get_peer_name(selectedCall) ,"\" <", temp, ">", NULL);
-                        g_free(before);
+                        gchar * temp = g_strconcat(selectedCall->_peer_number, oneNo, NULL);
+                        selectedCall->_peer_info = get_peer_info (temp, selectedCall->_peer_name);
                         g_free(temp);
                         calltree_update_call(current_calls, selectedCall);
 
@@ -1046,7 +1044,7 @@ static void ok_cb (GtkWidget *widget UNUSED, gpointer userdata) {
     original = (callable_obj_t*)userdata;
 
     // Create the new call
-    create_new_call (CALL, CALL_STATE_DIALING, "", g_strdup (original->_accountID), call_get_peer_name (original), g_strdup (new_number), &modified_call);
+    create_new_call (CALL, CALL_STATE_DIALING, "", g_strdup (original->_accountID), original->_peer_name, g_strdup (new_number), &modified_call);
 
     // Update the internal data structure and the GUI
     calllist_add(current_calls, modified_call);
@@ -1086,7 +1084,7 @@ void show_edit_number (callable_obj_t *call) {
     gtk_widget_set_tooltip_text(GTK_WIDGET(editable_num), _("Edit the phone number before making a call"));
 #endif
     if (call)
-        gtk_entry_set_text(GTK_ENTRY(editable_num), g_strdup (call_get_peer_number (call)));
+        gtk_entry_set_text(GTK_ENTRY(editable_num), g_strdup (call->_peer_number));
     else
         ERROR ("This a bug, the call should be defined. menus.c line 1051");
 

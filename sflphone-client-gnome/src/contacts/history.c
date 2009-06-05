@@ -20,7 +20,7 @@
 #include <history.h>
 #include <string.h>
 #include <searchbar.h>
-#include <treeview.h>
+#include <calltab.h>
 
 GtkTreeModel* history_filter;
 GtkWidget * history_searchbar_widget;
@@ -43,8 +43,8 @@ history_search(GtkEntry* entry UNUSED){
 void
 history_init(){
   
-  history_filter = history_create_filter(GTK_TREE_MODEL (_history->store));
-  gtk_tree_view_set_model(GTK_TREE_VIEW (_history->view), GTK_TREE_MODEL(history_filter));
+  history_filter = history_create_filter(GTK_TREE_MODEL (history->store));
+  gtk_tree_view_set_model(GTK_TREE_VIEW (history->view), GTK_TREE_MODEL(history_filter));
   
 }
 
