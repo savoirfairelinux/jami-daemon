@@ -78,27 +78,32 @@ calllist_reset (calltab_t* tab)
   tab->callQueue = g_queue_new();
 }
 
-void
-calllist_add (calltab_t* tab, callable_obj_t * c)
+void calllist_add_history_entry (callable_obj_t *obj)
 {
-  if( tab == history )
-  {
     // First case: can still add calls to the list
-    if( calllist_get_size(tab) < dbus_get_max_calls() )
+    if( calllist_get_size (history) < dbus_get_max_calls() )
     {
-      g_queue_push_tail (tab->callQueue, (gpointer *) c);
-      calltree_add_call( history , c );
+      g_queue_push_tail (history->callQueue, (gpointer *) obj);
+      calltree_add_call (history, obj);
     }
     // List full -> Remove the last call from history and preprend the new call to the list
     else
     {
-      calltree_remove_call( history , (callable_obj_t*)g_queue_pop_head( tab -> callQueue ) );
-      g_queue_push_tail (tab->callQueue, (gpointer *) c);
-      calltree_add_call( history , c );
+      calltree_remove_call( history , (callable_obj_t*)g_queue_pop_head (history->callQueue ) );
+      g_queue_push_tail (history->callQueue, (gpointer *) obj);
+      calltree_add_call (history, obj);
     }
-  }
-  else
-    g_queue_push_tail (tab->callQueue, (gpointer *) c);
+}
+
+void
+calllist_add (calltab_t* tab, callable_obj_t * c)
+{
+    if( tab == history )
+    {
+        calllist_add_history_entry (c);
+    }
+    else
+        g_queue_push_tail (tab->callQueue, (gpointer *) c);
 }
 
 // TODO : sflphoneGTK : try to do this more generic

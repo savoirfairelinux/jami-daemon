@@ -41,6 +41,8 @@ typedef struct {
 void
 calllist_add_contact (gchar *, gchar *, contact_type_t, GdkPixbuf *);
 
+void calllist_add_history_entry (callable_obj_t *obj);
+
 /** This function initialize a call list. */
 void
 calllist_init (calltab_t* tab);

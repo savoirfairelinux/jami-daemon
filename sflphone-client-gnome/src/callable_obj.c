@@ -136,7 +136,6 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
     if ((ptr = strtok(details, delim)) != NULL) {
         do {
-            g_print ("%s\n", ptr);
             switch (token)
             {
                 case 0:
@@ -224,8 +223,6 @@ gchar* get_call_duration (callable_obj_t *obj)
     start = obj->_time_start;
     end = obj->_time_stop;
     
-    g_print ("start = %i - end = %i\n", start, end);
-
     if (start == end)
         return g_markup_printf_escaped("<small>Duration:</small> none");
 
@@ -262,7 +259,10 @@ gchar* serialize_history_entry (callable_obj_t *entry)
     // and the timestamps
     timestamp = convert_timestamp_to_gchar (entry->_time_stop);
     
-    result = g_strconcat (history_state, "|", entry->_peer_number, "|", entry->_peer_name, "|", timestamp, NULL);
+    result = g_strconcat (history_state, separator, 
+                          entry->_peer_number, separator, 
+                          g_strcasecmp (entry->_peer_name,"") ==0 ? "empty": entry->_peer_name, 
+                           separator, timestamp, NULL);
 
     return result;
 }

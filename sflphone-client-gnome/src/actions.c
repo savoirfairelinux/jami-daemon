@@ -235,9 +235,11 @@ gboolean sflphone_init()
     else
     {
         dbus_register(getpid(), "Gtk+ Client");
+
         current_calls = calltab_init(NULL);
         contacts = calltab_init("contacts");
         history = calltab_init("history");
+
         account_list_init ();
         codec_list_init();
 
@@ -972,9 +974,7 @@ void sflphone_save_history (void)
         if (current)
         {
             value = serialize_history_entry (current);
-            g_print ("before  %i\n", current->_time_start);
             key = convert_timestamp_to_gchar (current->_time_start);
-            g_print ("after  %s\n", key);
             g_hash_table_replace(result, (gpointer) key,
                     (gpointer) value);
         }
