@@ -73,7 +73,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 {
     callable_obj_t* selectedCall;
     callable_obj_t* new_call;
-    gchar *to, *from, *account_id;
+    gchar *account_id;
 
     DEBUG("double click action");
 

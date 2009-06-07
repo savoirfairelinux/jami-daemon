@@ -488,4 +488,6 @@ GHashTable* dbus_get_history (void);
 
 void dbus_set_history (GHashTable* entries);
 
+void sflphone_display_transfer_status (const gchar* message);
+
 #endif

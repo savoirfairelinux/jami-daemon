@@ -177,4 +177,7 @@ void sflphone_display_selected_codec (const gchar* codecName);
 void status_bar_display_account ();
 
 void sflphone_fill_history (void);
+
+void sflphone_save_history (void);
+
 #endif
