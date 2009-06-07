@@ -947,7 +947,6 @@ void sflphone_fill_history (void)
             create_history_entry_from_serialized_form ((gchar*)key, (gchar*)value, &history_entry);    
             // Add it and update the GUI
             calllist_add (history, history_entry);
-            calltree_add_call (history, history_entry);
         }
     }
 }
