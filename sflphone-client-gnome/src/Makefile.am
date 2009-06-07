@@ -24,11 +24,10 @@ sflphone_client_gnome_SOURCES = \
   sliders.c \
   statusicon.c \
   codeclist.c \
-  timestamp.c \
   reqaccount.c
 
 noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
-                  assistant.h timestamp.h reqaccount.h errors.h sflphone_const.h \
+                  assistant.h reqaccount.h errors.h sflphone_const.h \
                   menus.h accountlist.h sliders.h statusicon.h callable_obj.h toolbar.h
 
 

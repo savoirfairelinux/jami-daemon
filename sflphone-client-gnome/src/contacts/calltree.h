@@ -22,7 +22,6 @@
 
 #include <gtk/gtk.h>
 #include <calltab.h>
-#include <timestamp.h>
 #include <mainwindow.h>
 
 /** @file calltree.h
