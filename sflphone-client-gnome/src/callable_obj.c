@@ -274,3 +274,18 @@ gchar* get_history_id_from_state (history_state_t state)
             return "0";
     }
 }
+
+gchar* get_formatted_start_timestamp (callable_obj_t *obj)
+{ 
+    struct tm* ptr;
+    time_t lt;
+    unsigned char str[100];
+
+    lt = (time_t) atoi (obj->_time_start);
+    ptr = gmtime(&lt);
+
+    // result function of the current locale
+    strftime((char *)str, 100, "%c",
+                               (const struct tm *)ptr);
+    return g_markup_printf_escaped("\n%s\n" , str);
+}

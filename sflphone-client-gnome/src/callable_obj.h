@@ -162,4 +162,6 @@ gchar* serialize_history_entry (callable_obj_t *entry);
 
 gchar* get_history_id_from_state (history_state_t state);
 
+gchar* get_formatted_start_timestamp (callable_obj_t *obj);
+
 #endif
