@@ -388,7 +388,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
                             break;
                     }
                     date = get_formatted_start_timestamp (c);
-                    duration = calcul_call_duration (c->_time_start, c->_time_stop);
+                    duration = get_call_duration (c);
                     duration = g_strconcat( date , duration , NULL);
                     description = g_strconcat( description , duration, NULL);
                 }
@@ -481,7 +481,7 @@ calltree_add_call (calltab_t* tab, callable_obj_t * c)
                 WARN("History - Should not happen!");
         }
         date = get_formatted_start_timestamp (c);
-        duration = calcul_call_duration (c->_time_start, c->_time_stop);
+        duration = get_call_duration (c);
         duration = g_strconcat( date , duration , NULL);
         description = g_strconcat( description , duration, NULL);
     }

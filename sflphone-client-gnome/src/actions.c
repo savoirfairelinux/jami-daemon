@@ -273,22 +273,20 @@ sflphone_hang_up()
             case CALL_STATE_RECORD:
                 dbus_hang_up (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
-                //(void) time(&selectedCall->_stop);
+                set_timestamp (&selectedCall->_time_stop);
                 break;
             case CALL_STATE_FAILURE:
                 dbus_hang_up (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
-                //selectedCall->_stop = 0;
                 break;
             case CALL_STATE_INCOMING:
                 dbus_refuse (selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
-                //selectedCall->_stop = 0;
                 DEBUG("from sflphone_hang_up : "); stop_notification();
                 break;
             case CALL_STATE_TRANSFERT:
                 dbus_hang_up (selectedCall);
-                //(void) time(&selectedCall->_stop);
+                set_timestamp (&selectedCall->_time_stop);
                 break;
             default:
                 WARN("Should not happen in sflphone_hang_up()!");
@@ -322,7 +320,7 @@ sflphone_pick_up()
                 break;
             case CALL_STATE_TRANSFERT:
                 dbus_transfert (selectedCall);
-                //(void) time(&selectedCall->_stop);
+                set_timestamp (&selectedCall->_time_stop);
                 break;
             case CALL_STATE_CURRENT:
             case CALL_STATE_RECORD:
@@ -411,8 +409,8 @@ sflphone_busy( callable_obj_t * c )
     void
 sflphone_current( callable_obj_t * c )
 {
-    //if( c->_state != CALL_STATE_HOLD )
-    //(void) time(&c->_start);
+    if( c->_state != CALL_STATE_HOLD )
+        set_timestamp (&c->_time_start);
     c->_state = CALL_STATE_CURRENT;
     calltree_update_call(current_calls,c);
     update_menus();
@@ -421,8 +419,8 @@ sflphone_current( callable_obj_t * c )
     void
 sflphone_record( callable_obj_t * c )
 {
-    //if( c->_state != CALL_STATE_HOLD )
-    //  (void) time(&c->_start);
+    if( c->_state != CALL_STATE_HOLD )
+        set_timestamp (&c->_time_start);
     c->_state = CALL_STATE_RECORD;
     calltree_update_call(current_calls,c);
     update_menus();
@@ -610,7 +608,7 @@ sflphone_keypad( guint keyval, gchar * key)
                 {
                     case 65307: /* ESCAPE */
                         dbus_hang_up(c);
-                        //(void) time(&c->_stop);
+                        set_timestamp (&c->_time_stop);
                         calltree_update_call( history , c );
                         break;
                     default:
@@ -650,7 +648,7 @@ sflphone_keypad( guint keyval, gchar * key)
                     case 65293: /* ENTER */
                     case 65421: /* ENTER numpad */
                         dbus_transfert(c);
-                        //(void) time(&c->_stop);
+                        set_timestamp (&c->_time_stop);
                         break;
                     case 65307: /* ESCAPE */
                         sflphone_unset_transfert(c);
@@ -936,6 +934,8 @@ void sflphone_fill_history (void)
     gpointer key, value;
     callable_obj_t *history_entry;
 
+    DEBUG ("Loading history ...");
+
     entries = dbus_get_history ();
     if (entries)
     {
@@ -961,18 +961,21 @@ void sflphone_save_history (void)
     GHashTable *result = NULL;
     gchar *key, *value;
 
+    DEBUG ("Saving history ...");
+
     result = g_hash_table_new(NULL, g_str_equal);
     items = history->callQueue;
     size = calllist_get_size (history);
 
     for (i=0; i<size; i++)
     {
-
         current = g_queue_peek_nth (items, i);
         if (current)
         {
             value = serialize_history_entry (current);
-            key = current->_time_start;
+            g_print ("before  %i\n", current->_time_start);
+            key = convert_timestamp_to_gchar (current->_time_start);
+            g_print ("after  %s\n", key);
             g_hash_table_replace(result, (gpointer) key,
                     (gpointer) value);
         }

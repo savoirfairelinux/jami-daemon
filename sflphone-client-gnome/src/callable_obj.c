@@ -83,8 +83,8 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
     obj->_peer_info = g_strdup (get_peer_info (peer_name, peer_number));
-    obj->_time_start = "0";
-    obj->_time_stop = "0";
+    set_timestamp (&(obj->_time_start));
+    set_timestamp (&(obj->_time_stop));
 
     if (g_strcasecmp (callID, "") == 0)
         call_id = generate_call_id ();
@@ -125,7 +125,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
 
 void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details, callable_obj_t **call)
 {
-    gchar *peer_name, *peer_number, *accountID, *duration;
+    gchar *peer_name, *peer_number, *accountID, *time_stop;
     callable_obj_t *new_call;
     history_state_t history_state;
     char *ptr;
@@ -149,7 +149,7 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
                     peer_name = ptr;
                     break;
                 case 3:
-                    duration = ptr;
+                    time_stop = ptr;
                     break;
                 default:
                     break;
@@ -161,8 +161,8 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
     create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", "", peer_name, peer_number, &new_call);
     new_call->_history_state = history_state;
-    new_call->_time_start = timestamp;
-    new_call->_time_stop = duration;
+    new_call->_time_start = convert_gchar_to_timestamp (timestamp);
+    new_call->_time_stop = convert_gchar_to_timestamp (time_stop);
 
     *call = new_call;
 }
@@ -214,20 +214,22 @@ history_state_t get_history_state_from_id (gchar *indice){
     return state;
 }
 
-gchar* calcul_call_duration (gchar *start, gchar *end)
+gchar* get_call_duration (callable_obj_t *obj)
 {
+
     gchar *res;
-    int duration, istop, istart;
+    int duration;
+    time_t start, end;
 
-    if( g_strcasecmp (start, end) == 0 )
-        return g_markup_printf_escaped("<small>Missed call</small>");
+    start = obj->_time_start;
+    end = obj->_time_stop;
+    
+    g_print ("start = %i - end = %i\n", start, end);
 
-    g_print ("%s\n", end);
-    istop = atoi (end);
-    istart = atoi (start);
-    g_print ("%i\n", istart);
-    duration = istop - istart;
+    if (start == end)
+        return g_markup_printf_escaped("<small>Duration:</small> none");
 
+    duration = (int)end - (int)start;
 
     if( duration / 60 == 0 )
     {
@@ -249,19 +251,25 @@ gchar* calcul_call_duration (gchar *start, gchar *end)
 
 gchar* serialize_history_entry (callable_obj_t *entry)
 {
+    // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
+    
     gchar* result;
     gchar* separator = "|";
-    gchar* history_state;
+    gchar* history_state, *timestamp;
 
+    // Need the string form for the history state
     history_state = get_history_id_from_state (entry->_history_state);
-    // "0|514-276-5468|Savoir-faire Linux|144562458" for instance
-    result = g_strconcat (history_state, "|", entry->_peer_number, "|", entry->_peer_name, "|", entry->_time_stop, NULL);
+    // and the timestamps
+    timestamp = convert_timestamp_to_gchar (entry->_time_stop);
+    
+    result = g_strconcat (history_state, "|", entry->_peer_number, "|", entry->_peer_name, "|", timestamp, NULL);
 
     return result;
 }
 
 gchar* get_history_id_from_state (history_state_t state)
 {
+    // Refer to history_state_t enum in callable_obj.h
     switch (state)
     {
         case MISSED:
@@ -281,11 +289,33 @@ gchar* get_formatted_start_timestamp (callable_obj_t *obj)
     time_t lt;
     unsigned char str[100];
 
-    lt = (time_t) atoi (obj->_time_start);
-    ptr = gmtime(&lt);
+    if (obj)
+    {
+        lt = obj->_time_start;
+        ptr = gmtime(&lt);
 
-    // result function of the current locale
-    strftime((char *)str, 100, "%c",
-                               (const struct tm *)ptr);
-    return g_markup_printf_escaped("\n%s\n" , str);
+        // result function of the current locale
+        strftime((char *)str, 100, "%c", (const struct tm *)ptr);
+        return g_markup_printf_escaped("\n%s\n" , str);
+    }
+    return "";
+}
+
+void set_timestamp (time_t *timestamp)
+{
+    time_t tmp;
+
+    // Set to the current value
+    (void) time(&tmp);
+    *timestamp=tmp;
+}
+
+gchar* convert_timestamp_to_gchar (time_t timestamp)
+{
+    return g_markup_printf_escaped ("%i", (int)timestamp);
+}
+
+time_t convert_gchar_to_timestamp (gchar *timestamp)
+{
+    return (time_t) atoi (timestamp);
 }

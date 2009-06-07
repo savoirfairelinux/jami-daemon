@@ -23,6 +23,7 @@
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>
 #include <stdlib.h>
+#include <time.h>
 
 /**
  * @enum history_state
@@ -86,8 +87,8 @@ typedef struct  {
     call_state_t _state;             // The state of the call
     gchar* _callID;                 // The call ID
     gchar* _accountID;              // The account the call is made with
-    gchar* _time_start;              // The timestamp the call was initiating
-    gchar* _time_stop;              // The timestamp the call was over
+    time_t _time_start;              // The timestamp the call was initiating
+    time_t _time_stop;              // The timestamp the call was over
     history_state_t _history_state;  // The history state if necessary
 
     /**
@@ -156,12 +157,19 @@ gchar* get_peer_info (gchar*, gchar*);
 
 history_state_t get_history_state_from_id (gchar *indice);
 
-gchar* calcul_call_duration (gchar *start, gchar *end);
+gchar* get_call_duration (callable_obj_t *obj);
 
 gchar* serialize_history_entry (callable_obj_t *entry);
 
 gchar* get_history_id_from_state (history_state_t state);
 
 gchar* get_formatted_start_timestamp (callable_obj_t *obj);
+
+void set_timestamp (time_t*);
+
+gchar* convert_timestamp_to_gchar (time_t);
+
+time_t convert_gchar_to_timestamp (gchar*);
+
 
 #endif
