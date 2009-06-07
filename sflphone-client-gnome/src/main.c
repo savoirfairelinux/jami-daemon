@@ -102,12 +102,12 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
 
     status_bar_display_account();
 
-    // Get the active calls at startup    
-    sflphone_fill_call_list ();
-        
     // Load the history
     sflphone_fill_history ();
 
+    // Get the active calls at startup    
+    sflphone_fill_call_list ();
+        
     /* start the main loop */
     gtk_main();
     }
