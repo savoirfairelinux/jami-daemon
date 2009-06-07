@@ -47,13 +47,13 @@ gint get_state_callstruct ( gconstpointer a, gconstpointer b)
 
 gchar* call_get_peer_name (const gchar *format)
 {
-    gchar * end;
+    gchar *end, *name;
 
     end = g_strrstr (format, "\"");
     if (!end) {
         return g_strndup (format, 0);
     } else {
-        gchar * name = format +1;
+        name = format +1;
         return g_strndup(name, end - name);
     }
 }
@@ -119,15 +119,16 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     else
         state = CALL_STATE_FAILURE;
 
-    create_new_call (CALL, state, call_id, accountID, peer_name, peer_number, &new_call);
+    create_new_call (CALL, state, (gchar*)call_id, accountID, peer_name, peer_number, &new_call);
     *call = new_call;
 }
 
 void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details, callable_obj_t **call)
 {
-    gchar *peer_name, *peer_number, *accountID, *time_stop;
+    gchar *peer_name="";
+    gchar *peer_number="", *accountID, *time_stop="";
     callable_obj_t *new_call;
-    history_state_t history_state;
+    history_state_t history_state = MISSED;
     char *ptr;
     const char *delim="|";
     int token=0;
