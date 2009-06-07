@@ -910,19 +910,22 @@ void sflphone_fill_call_list (void)
     callable_obj_t *c;
     gchar *callID;
 
-    for(pl=calls; *calls; calls++)
+    if(calls)
     {
-        c = g_new0(callable_obj_t, 1);
-        callID = (gchar*)(*calls);
-        call_details = dbus_get_call_details(callID);
-        create_new_call_from_details (callID, call_details, &c);
-        c->_callID = g_strdup(callID);
+        for(pl=calls; *calls; calls++)
+        {
+            c = g_new0(callable_obj_t, 1);
+            callID = (gchar*)(*calls);
+            call_details = dbus_get_call_details(callID);
+            create_new_call_from_details (callID, call_details, &c);
+            c->_callID = g_strdup(callID);
 
-        // Add it to the list
-        DEBUG ("Add call retrieved from server side: %s\n", c->_callID);
-        calllist_add (current_calls, c);
-        // Update the GUI
-        calltree_add_call (current_calls, c);
+            // Add it to the list
+            DEBUG ("Add call retrieved from server side: %s\n", c->_callID);
+            calllist_add (current_calls, c);
+            // Update the GUI
+            calltree_add_call (current_calls, c);
+        }
     }
 }
 
@@ -961,11 +964,9 @@ void sflphone_save_history (void)
     result = g_hash_table_new(NULL, g_str_equal);
     items = history->callQueue;
     size = calllist_get_size (history);
-    
+
     for (i=0; i<size; i++)
     {
-        
-        g_print ("svm;bndkbnzdbnlzdbndlz\n");
 
         current = g_queue_peek_nth (items, i);
         if (current)
@@ -973,20 +974,13 @@ void sflphone_save_history (void)
             value = serialize_history_entry (current);
             key = current->_time_start;
             g_hash_table_replace(result, (gpointer) key,
-                                        (gpointer) value);
+                    (gpointer) value);
         }
     }
 
     dbus_set_history (result);
-    
+
     // Decrement the reference count
     g_hash_table_unref(result);
 }
-void format_phone_number (gchar **number) {
 
-    gchar *_number;
-
-    _number = *number;
-
-    //strip_spaces (&_number);
-}
