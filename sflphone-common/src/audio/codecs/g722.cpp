@@ -641,7 +641,6 @@ public:
 		  /* Shuffle the buffer down */
 		  for (i = 0;  i < 22;  i++)
                     encode_s->x[i] = encode_s->x[i + 2];
-		  printf("Codec encode j:%i\n", j);
 		  encode_s->x[22] = amp[j++];
 		  encode_s->x[23] = amp[j++];
     
@@ -746,7 +745,6 @@ public:
 	      }
 	      else
 	      {
-		printf("G722 bytes: %i\n",g722_bytes);
 		g722_data[g722_bytes++] = (uint8_t) code;
 	      }
 	    }
