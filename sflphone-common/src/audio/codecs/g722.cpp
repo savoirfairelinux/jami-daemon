@@ -37,7 +37,7 @@
 class G722 : public AudioCodec {
 public:
     // 0 PCMU A 8000 1 [RFC3551]
-	G722(int payload=9)
+	G722(int payload=126)
  	: AudioCodec(payload, "G722")
 	{
 	        // printf("Debug G722\n");
