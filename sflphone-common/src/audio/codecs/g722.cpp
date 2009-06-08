@@ -95,7 +95,7 @@ public:
 	    printf("Codec encode outlen: %i\n", outlen);
 
 	    // return g722_size;
-	    return outlen;
+	    return outlen * 2;
 	}
 
 
