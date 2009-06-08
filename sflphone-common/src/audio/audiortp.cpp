@@ -388,6 +388,8 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
 
+    _debug("RTP: nbSample before resampling %i\n", nbSample); 
+
     // nb bytes to be sent over RTP
     int compSize = 0;
 
@@ -403,13 +405,18 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
         int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
         // _debug("_nbSamplesMax %i\n", nbSamplesMax);
 
-        nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
+        nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);
 
+	_debug("RTP: nbSample after resampling %i\n", nbSample);
+	/*
         if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
             // fill end with 0...
             memset( micDataConverted + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
             nbSample = nbSamplesMax;
         }
+	*/
+	_debug("RTP: nbSample after nbSampleMax %i\n", nbSample);
+	
 	_debug("---- RTP Codec encode called -----\n");
         compSize = _audiocodec->codecEncode( micDataEncoded, micDataConverted, nbSample*sizeof(int16));
 
