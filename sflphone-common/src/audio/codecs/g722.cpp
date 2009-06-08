@@ -31,31 +31,22 @@
 #define TRUE 1
 #define FALSE 0
 
-// static void block4_encode(g722_decode_state_t *s, int band, int d);
-// static void block4_decode(g722_decode_state_t *s, int band, int d);
 
 class G722 : public AudioCodec {
 public:
-    // 0 PCMU A 8000 1 [RFC3551]
+
 	G722(int payload=9)
  	: AudioCodec(payload, "G722")
 	{
-	        // printf("Debug G722\n");
   		_clockRate = 16000;
                 _frameSize = 320; // samples, 10 ms at 16kHz
   		_channel   = 1;
 		_bitrate = 64; 
 		_bandwidth = 80;
 
-		// decode_s = g722_decode_init(NULL, 64000, G722_SAMPLE_RATE_8000);
-		// encode_s = g722_encode_init(NULL, 64000, G722_SAMPLE_RATE_8000 );
-		// printf("Right here \n");
 
 		decode_s = new g722_decode_state_t;
 		encode_s = new g722_encode_state_t;
-
-		// g722_decode_init(decode_s, 64000, G722_SAMPLE_RATE_8000);
-		// g722_encode_init(encode_s, 64000, G722_SAMPLE_RATE_8000 );
 
 		g722_decode_init(64000, 0);
 		g722_encode_init(64000, 0);
@@ -67,34 +58,19 @@ public:
 	    int in_byte = size;
 	    int out_samples;
 
-            printf("Codec decode in_byte: %i\n", in_byte);
-	    printf("Codec decode options itu_test_mode: %i\n", decode_s->itu_test_mode);
-	    printf("Codec decode options eight_k: %i\n", decode_s->eight_k);
-	    printf("Codec decode options packed: %i\n", decode_s->packed);
-	    printf("Codec decode options bits_per_sample: %i\n", decode_s->bits_per_sample);
-	    printf("Decoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	    out_samples = g722_decode((int16_t*) dst, (const uint8_t*) src, in_byte);
-	    printf("Codec decode out_samples: %i\n", out_samples);
 
             return out_samples * 2;
 	}
 
 	virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
 
-	    // int in_samples = size / 2;
+	    // 2 bytes per sample (int16) 
 	    int in_samples = size / 2;
 	    int out_bytes;
 
-	    printf("Codec encode in_sample: %i\n", in_samples);
-	    printf("Codec encode options itu_test_mode: %i\n", encode_s->itu_test_mode);
-	    printf("Codec encode options eight_k: %i\n", encode_s->eight_k);
-	    printf("Codec encode options packed: %i\n", encode_s->packed);
-	    printf("Codec encode options bits_per_sample: %i\n", encode_s->bits_per_sample);
-	    printf("Encoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	    out_bytes = g722_encode((uint8_t*) dst, (const int16_t*) src, in_samples);
-	    printf("Codec encode outlen: %i\n", out_bytes);
 
-	    // return g722_size;
 	    return out_bytes;
 	}
 
@@ -103,8 +79,14 @@ public:
         {
 	  
 	    encode_s->itu_test_mode = FALSE;
+
+	    // 8 => 64 kbps;  7 => 56 kbps;  6 => 48 kbps
             encode_s->bits_per_sample = 8;
+
+	    // Enable 8khz mode, encode using lower subband only
             encode_s->eight_k = FALSE;
+
+	    // Never set packed TRUE when using 64 kbps
             encode_s->packed = FALSE;
             encode_s->band[0].det = 32;
 	    encode_s->band[1].det = 8;
@@ -114,8 +96,14 @@ public:
         {
 	   
 	    decode_s->itu_test_mode = FALSE;
+
+            // 8 => 64 kbps;  7 => 56 kbps;  6 => 48 kbps
 	    decode_s->bits_per_sample = 8;
+
+	    // Enable 8khz mode, encode using lower subband only
             decode_s->eight_k = FALSE;
+
+            // Never set packed TRUE when using 64 kbps
             decode_s->packed = FALSE;
             decode_s->band[0].det = 32;
 	    decode_s->band[1].det = 8;
