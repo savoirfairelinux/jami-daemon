@@ -368,12 +368,19 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     float fixed_codec_framesize = ((float)_audiocodec->getFrameSize() * 1000.0) / (float)_audiocodec->getClockRate();
     _debug("RTP: fixed_codec_framesize %f\n", fixed_codec_framesize);
 
-    int maxBytesToGet = (int)((float)_layerSampleRate * fixed_codec_framesize * (float)sizeof(SFLDataFormat) / 1000.0);
+    // int maxBytesToGet = (int)((float)_layerSampleRate * fixed_codec_framesize * (float)sizeof(SFLDataFormat) / 1000.0);
+    int maxBytesToGet = (int)(((float)_layerSampleRate * fixed_codec_framesize) / 1000.0);
+
+    _debug("RTP: maxBytesToGet %i\n", maxBytesToGet);
     
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
+
+    _debug("RTP: availBytesFromMic %i\n", availBytesFromMic);
     
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+
+    _debug("RTP: bytesAvail %i\n", bytesAvail);
 
     if (bytesAvail == 0)
       return;

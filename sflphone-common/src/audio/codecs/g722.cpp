@@ -42,7 +42,7 @@ public:
 	{
 	        // printf("Debug G722\n");
   		_clockRate = 16000;
-                _frameSize = 160; // samples, 20 ms at 8kHz
+                _frameSize = 160; // samples, 10 ms at 16kHz
   		_channel   = 1;
 		_bitrate = 64; 
 		_bandwidth = 80;
