@@ -433,9 +433,11 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     // Send encoded audio sample over the network
     // if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
     if (!_sym) {
-        _sessionSend->putData(timestamp, micDataEncoded, compSize);
+        // _sessionSend->putData(timestamp, micDataEncoded, compSize);
+        _sessionSend->sendImmediate(timestamp, micDataEncoded, compSize);
     } else {
-        _session->putData(timestamp, micDataEncoded, compSize);
+        // _session->putData(timestamp, micDataEncoded, compSize);
+        _session->sendImmediate(timestamp, micDataEncoded, compSize);
     }
     /*} catch(...) {
       _debugException("! ARTP: sending failed");
