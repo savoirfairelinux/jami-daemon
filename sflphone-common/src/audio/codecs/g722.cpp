@@ -761,7 +761,7 @@ public:
 
 // the class factories
 extern "C" AudioCodec* create() {
-    return new G722(9);
+    return new G722(126);
 }
 
 extern "C" void destroy(AudioCodec* a) {

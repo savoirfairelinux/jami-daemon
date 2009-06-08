@@ -366,6 +366,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     // compute codec framesize in ms
     float fixed_codec_framesize = ((float)_audiocodec->getFrameSize() * 1000.0) / (float)_audiocodec->getClockRate();
+    _debug("RTP: fixed_codec_framesize %f\n", fixed_codec_framesize);
 
     int maxBytesToGet = (int)((float)_layerSampleRate * fixed_codec_framesize * (float)sizeof(SFLDataFormat) / 1000.0);
     
@@ -402,6 +403,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
             memset( micDataConverted + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
             nbSample = nbSamplesMax;
         }
+	_debug("---- RTP Codec encode called -----\n");
         compSize = _audiocodec->codecEncode( micDataEncoded, micDataConverted, nbSample*sizeof(int16));
 
     } else {
@@ -471,7 +473,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     // test if resampling is required 
     if (_audiocodec != NULL) {
 
-
+        _debug("---- RTP Codec decode called -----\n");
         int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size );
         //buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
         int nbInt16 = expandedSize / sizeof(int16);
