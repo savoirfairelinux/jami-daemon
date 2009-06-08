@@ -37,12 +37,12 @@
 class G722 : public AudioCodec {
 public:
     // 0 PCMU A 8000 1 [RFC3551]
-	G722(int payload=126)
+	G722(int payload=9)
  	: AudioCodec(payload, "G722")
 	{
 	        // printf("Debug G722\n");
   		_clockRate = 16000;
-                _frameSize = 320; // samples, 20 ms at 8kHz
+                _frameSize = 160; // samples, 20 ms at 8kHz
   		_channel   = 1;
 		_bitrate = 64; 
 		_bandwidth = 80;
@@ -761,7 +761,7 @@ public:
 
 // the class factories
 extern "C" AudioCodec* create() {
-    return new G722(126);
+    return new G722(9);
 }
 
 extern "C" void destroy(AudioCodec* a) {
