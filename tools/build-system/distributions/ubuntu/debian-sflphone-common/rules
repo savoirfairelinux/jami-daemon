@@ -71,7 +71,7 @@ install-arch:
 	dh_installdirs -s
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
-	$(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	$(MAKE) DESTDIR=$(CURDIR)/debian/$(package) install
 	cd libs/pjproject-1.0.1; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
 	rm -rf $(CURDIR)/debian/$(package)/usr/include
 	dh_install -s

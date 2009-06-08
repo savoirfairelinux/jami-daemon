@@ -26,7 +26,6 @@
 
 #include <stdlib.h>
 
-#include <sflphone_const.h>
 #include <mainwindow.h>
 
 /**

@@ -28,7 +28,6 @@
 #include <accountlist.h>
 #include <calllist.h>
 #include <sflnotify.h>
-#include <calltree.h>
 
 /** @file dbus.h
   * @brief General DBus functions wrappers.
@@ -49,43 +48,43 @@ void dbus_clean ();
  * CallManager - Hold a call
  * @param c The call to hold
  */
-void dbus_hold (const call_t * c );
+void dbus_hold (const callable_obj_t * c );
 
 /**
  * CallManager - Unhold a call
  * @param c The call to unhold
  */
-void dbus_unhold (const call_t * c );
+void dbus_unhold (const callable_obj_t * c );
 
 /**
  * CallManager - Hang up a call
  * @param c The call to hang up
  */
-void dbus_hang_up (const call_t * c );
+void dbus_hang_up (const callable_obj_t * c );
 
 /**
  * CallManager - Transfer a call
  * @param c The call to transfer
  */
-void dbus_transfert (const call_t * c);
+void dbus_transfert (const callable_obj_t * c);
 
 /**
  * CallManager - Accept a call
  * @param c The call to accept
  */
-void dbus_accept (const call_t * c);
+void dbus_accept (const callable_obj_t * c);
 
 /**
  * CallManager - Refuse a call
  * @param c The call to refuse
  */
-void dbus_refuse (const call_t * c);
+void dbus_refuse (const callable_obj_t * c);
 
 /**
  * CallManager - Place a call
  * @param c The call to place
  */
-void dbus_place_call (const call_t * c);
+void dbus_place_call (const callable_obj_t * c);
 
 
 /**
@@ -181,9 +180,9 @@ void dbus_set_active_codec_list( const gchar** list );
 
 /**
  * CallManager - return the codec name
- * @param call_t* current call
+ * @param callable_obj_t* current call
  */
-gchar* dbus_get_current_codec_name(const call_t * c);
+gchar* dbus_get_current_codec_name(const callable_obj_t * c);
 
 /**
  * ConfigurationManager - Get the list of available input audio plugins
@@ -443,7 +442,7 @@ void dbus_set_stun_server( gchar* server);
 gint dbus_stun_is_enabled (void);
 void dbus_enable_stun (void);
 
-void dbus_set_record (const call_t * c);
+void dbus_set_record (const callable_obj_t * c);
 
 void dbus_set_record_path (const gchar *path);
 gchar* dbus_get_record_path (void);
@@ -477,12 +476,18 @@ GHashTable* dbus_get_hook_settings (void);
 void dbus_set_hook_settings (GHashTable *);
 
 
-gboolean dbus_get_is_recording(const call_t *);
+gboolean dbus_get_is_recording(const callable_obj_t *);
 
 GHashTable* dbus_get_call_details (const gchar* callID);
 
 gchar** dbus_get_call_list (void);
 
 void dbus_set_accounts_order (const gchar* order);
+
+GHashTable* dbus_get_history (void);
+
+void dbus_set_history (GHashTable* entries);
+
+void sflphone_display_transfer_status (const gchar* message);
 
 #endif

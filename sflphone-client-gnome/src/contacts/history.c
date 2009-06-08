@@ -43,8 +43,8 @@ history_search(GtkEntry* entry UNUSED){
 void
 history_init(){
   
-  history_filter = history_create_filter(GTK_TREE_MODEL(history->store));
-  gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(history_filter));
+  history_filter = history_create_filter(GTK_TREE_MODEL (history->store));
+  gtk_tree_view_set_model(GTK_TREE_VIEW (history->view), GTK_TREE_MODEL(history_filter));
   
 }
 

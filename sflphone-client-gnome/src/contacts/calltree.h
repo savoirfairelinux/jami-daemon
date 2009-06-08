@@ -22,7 +22,6 @@
 
 #include <gtk/gtk.h>
 #include <calltab.h>
-#include <timestamp.h>
 #include <mainwindow.h>
 
 /** @file calltree.h
@@ -41,21 +40,21 @@ calltree_create(calltab_t* tab, gchar* searchbar_type);
  * @param c The call to add
  */
 void
-calltree_add_call (calltab_t* ct, call_t * c);
+calltree_add_call (calltab_t* ct, callable_obj_t * c);
 
 /*
  * Update the call tree if the call state changes
  * @param c The call to update
  */
 void
-calltree_update_call (calltab_t* ct, call_t * c);
+calltree_update_call (calltab_t* ct, callable_obj_t * c);
 
 /**
  * Remove a call from the call tree
  * @param c The call to remove
  */
 void
-calltree_remove_call (calltab_t* ct, call_t * c);
+calltree_remove_call (calltab_t* ct, callable_obj_t * c);
 
 void
 calltree_reset (calltab_t* tab);

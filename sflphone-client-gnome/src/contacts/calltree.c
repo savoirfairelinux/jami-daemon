@@ -32,7 +32,6 @@ GtkTreeViewColumn *col;
 GtkTreeSelection *sel;
 
 
-
 /**
  * Show popup menu
  */
@@ -58,7 +57,7 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     val.g_type = 0;
     gtk_tree_model_get_value (model, &iter, 2, &val);
 
-    calltab_select_call(active_calltree, (call_t*) g_value_get_pointer(&val));
+    calltab_select_call(active_calltree, (callable_obj_t*) g_value_get_pointer(&val));
     g_value_unset(&val);
 
     toolbar_update_buttons();
@@ -72,9 +71,9 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         GtkTreeViewColumn *column UNUSED,
         void * data UNUSED)
 {
-    call_t* selectedCall;
-    call_t* new_call;
-    gchar *to, *from, *account_id;
+    callable_obj_t* selectedCall;
+    callable_obj_t* new_call;
+    gchar *account_id;
 
     DEBUG("double click action");
 
@@ -85,7 +84,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         // Get the right event from the right calltree
         if( active_calltree == current_calls )
         {
-            switch(selectedCall->state)
+            switch(selectedCall->_state)
             {
                 case CALL_STATE_INCOMING:
                     dbus_accept(selectedCall);
@@ -111,12 +110,10 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         // If history or contact: double click action places a new call
         else
         {
-            to = g_strdup(call_get_number(selectedCall));
-            from = g_strconcat("\"", call_get_name (selectedCall), "\" <", call_get_number(selectedCall), ">",NULL);
-            account_id = g_strdup (selectedCall->accountID);
+            account_id = g_strdup (selectedCall->_accountID);
 
             // Create a new call
-            create_new_call (to, from, CALL_STATE_DIALING, account_id, &new_call);
+            create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
 
             calllist_add(current_calls, new_call);
             calltree_add_call(current_calls, new_call);
@@ -160,16 +157,16 @@ calltree_reset (calltab_t* tab)
 
 void
 focus_on_calltree_out(){
-  DEBUG("set_focus_on_calltree_out \n");
-  // gtk_widget_grab_focus(GTK_WIDGET(sw));
-  focus_is_on_calltree = FALSE;
+    DEBUG("set_focus_on_calltree_out \n");
+    // gtk_widget_grab_focus(GTK_WIDGET(sw));
+    focus_is_on_calltree = FALSE;
 }
 
 void
 focus_on_calltree_in(){
-  DEBUG("set_focus_on_calltree_in \n");
-  // gtk_widget_grab_focus(GTK_WIDGET(sw));
-  focus_is_on_calltree = TRUE;
+    DEBUG("set_focus_on_calltree_in \n");
+    // gtk_widget_grab_focus(GTK_WIDGET(sw));
+    focus_is_on_calltree = TRUE;
 }
 
     void
@@ -219,9 +216,9 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
     //                   G_CALLBACK (on_key_released), NULL);
 
     g_signal_connect_after (G_OBJECT (tab->view), "focus-in-event",
-                      G_CALLBACK (focus_on_calltree_in), NULL);
+            G_CALLBACK (focus_on_calltree_in), NULL);
     g_signal_connect_after (G_OBJECT (tab->view), "focus-out-event",
-                      G_CALLBACK (focus_on_calltree_out), NULL);
+            G_CALLBACK (focus_on_calltree_out), NULL);
 
     gtk_widget_grab_focus(GTK_WIDGET(tab->view));
 
@@ -265,11 +262,11 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
 }
 
     void
-calltree_remove_call (calltab_t* tab, call_t * c)
+calltree_remove_call (calltab_t* tab, callable_obj_t * c)
 {
     GtkTreeIter iter;
     GValue val;
-    call_t * iterCall;
+    callable_obj_t * iterCall;
     GtkListStore* store = tab->store;
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
@@ -281,7 +278,7 @@ calltree_remove_call (calltab_t* tab, call_t * c)
             val.g_type = 0;
             gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
-            iterCall = (call_t*) g_value_get_pointer(&val);
+            iterCall = (callable_obj_t*) g_value_get_pointer(&val);
             g_value_unset(&val);
 
             if(iterCall == c)
@@ -290,19 +287,19 @@ calltree_remove_call (calltab_t* tab, call_t * c)
             }
         }
     }
-    call_t * selectedCall = calltab_get_selected_call(tab);
+    callable_obj_t * selectedCall = calltab_get_selected_call(tab);
     if(selectedCall == c)
         calltab_select_call(tab, NULL);
     toolbar_update_buttons();
 }
 
     void
-calltree_update_call (calltab_t* tab, call_t * c)
+calltree_update_call (calltab_t* tab, callable_obj_t * c)
 {
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
     GValue val;
-    call_t * iterCall;
+    callable_obj_t * iterCall;
     GtkListStore* store = tab->store;
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
@@ -314,7 +311,7 @@ calltree_update_call (calltab_t* tab, call_t * c)
             val.g_type = 0;
             gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
-            iterCall = (call_t*) g_value_get_pointer(&val);
+            iterCall = (callable_obj_t*) g_value_get_pointer(&val);
             g_value_unset(&val);
 
             if(iterCall == c)
@@ -323,23 +320,24 @@ calltree_update_call (calltab_t* tab, call_t * c)
                 gchar * description;
                 gchar * date="";
                 gchar * duration="";
-                if(c->state == CALL_STATE_TRANSFERT)
+                if(c->_state == CALL_STATE_TRANSFERT)
                 {
-                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> %s",
-                            call_get_number(c),
-                            call_get_name(c),
-                            c->to);
+                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> ",
+                            c->_peer_number,
+                            c->_peer_name
+                            );
                 }
                 else
                 {
                     description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-                            call_get_number(c),
-                            call_get_name(c));
+                            c->_peer_number,
+                            c->_peer_name );
+
                 }
 
                 if( tab == current_calls )
                 {
-                    switch(c->state)
+                    switch(c->_state)
                     {
                         case CALL_STATE_HOLD:
                             pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
@@ -371,7 +369,7 @@ calltree_update_call (calltab_t* tab, call_t * c)
                 }
                 else
                 {
-                    switch(c->history_state)
+                    switch(c->_history_state)
                     {
                         case OUTGOING:
                             DEBUG("Outgoing state");
@@ -389,8 +387,8 @@ calltree_update_call (calltab_t* tab, call_t * c)
                             DEBUG("No history state");
                             break;
                     }
-                    date = timestamp_get_call_date();
-                    duration = process_call_duration(c);
+                    date = get_formatted_start_timestamp (c);
+                    duration = get_call_duration (c);
                     duration = g_strconcat( date , duration , NULL);
                     description = g_strconcat( description , duration, NULL);
                 }
@@ -417,11 +415,70 @@ calltree_update_call (calltab_t* tab, call_t * c)
     toolbar_update_buttons();
 }
 
-    void
-calltree_add_call (calltab_t* tab, call_t * c)
+void calltree_add_history_entry (callable_obj_t * c)
 {
-    if( tab == history && ( calllist_get_size( tab ) > dbus_get_max_calls() ) )
+    if( calllist_get_size (history) > dbus_get_max_calls ())
         return;
+
+    GdkPixbuf *pixbuf=NULL;
+    GtkTreeIter iter;
+
+    // New call in the list
+    gchar * description, *date="", *duration="";
+    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
+            c->_peer_number,
+            c->_peer_name);
+
+    gtk_list_store_prepend (history->store, &iter);
+
+    switch(c->_history_state)
+    {
+        case INCOMING:
+            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
+            break;
+        case OUTGOING:
+            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
+            break;
+        case MISSED:
+            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
+            break;
+        default:
+            WARN("History - Should not happen!");
+    }
+
+    date = get_formatted_start_timestamp (c);
+    duration = get_call_duration (c);
+    duration = g_strconcat( date , duration , NULL);
+    description = g_strconcat( description , duration, NULL);
+
+    //Resize it
+    if(pixbuf)
+    {
+        if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
+        {
+            pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+        }
+    }
+    gtk_list_store_set(history->store, &iter,
+            0, pixbuf, // Icon
+            1, description, // Description
+            2, c,      // Pointer
+            -1);
+
+    if (pixbuf != NULL)
+        g_object_unref(G_OBJECT(pixbuf));
+
+    gtk_tree_view_set_model (GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(history->store));
+}
+
+void calltree_add_call (calltab_t* tab, callable_obj_t * c)
+{
+
+    if (tab == history)
+    {
+        calltree_add_history_entry (c);
+        return;
+    }
 
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
@@ -429,16 +486,17 @@ calltree_add_call (calltab_t* tab, call_t * c)
     // New call in the list
     gchar * description;
     gchar * date="";
+    gchar *duration="";
     description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-            call_get_number(c),
-            call_get_name(c));
+            c->_peer_number,
+            c->_peer_name);
 
     gtk_list_store_prepend (tab->store, &iter);
 
-    
+
     if( tab == current_calls )
     {
-        switch(c->state)
+        switch(c->_state)
         {
             case CALL_STATE_INCOMING:
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
@@ -466,27 +524,8 @@ calltree_add_call (calltab_t* tab, call_t * c)
         }
     }
 
-    else if (tab == history) {
-        switch(c->history_state)
-        {
-            case INCOMING:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
-                break;
-            case OUTGOING:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
-                break;
-            case MISSED:
-                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
-                break;
-            default:
-                WARN("History - Should not happen!");
-        }
-        date = timestamp_get_call_date();
-        description = g_strconcat( date , description , NULL);
-    }
-
     else if (tab == contacts) {
-        pixbuf = c->contact_thumbnail;
+        pixbuf = c->_contact_thumbnail;
         description = g_strconcat( description , NULL);
     }
 
@@ -494,7 +533,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
         WARN ("This widget doesn't exist - This is a bug in the application.");
     }
 
-    
+
     //Resize it
     if(pixbuf)
     {
@@ -509,17 +548,17 @@ calltree_add_call (calltab_t* tab, call_t * c)
             2, c,      // Pointer
             -1);
 
-    
+
     if (pixbuf != NULL)
         g_object_unref(G_OBJECT(pixbuf));
 
 
     gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
-    
+
     gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
 
     toolbar_update_buttons();
-    
+
 }
 
 void calltree_display (calltab_t *tab) {

@@ -458,3 +458,12 @@ void  ConfigurationManager::setAccountsOrder (const std::string& order) {
     Manager::instance().setAccountsOrder (order);
 }
 
+std::map <std::string, std::string> ConfigurationManager::getHistory (void)
+{
+    return Manager::instance().send_history_to_client ();
+}
+
+void ConfigurationManager::setHistory (const std::map <std::string, std::string>& entries)
+{
+    Manager::instance().receive_history_from_client (entries);
+}

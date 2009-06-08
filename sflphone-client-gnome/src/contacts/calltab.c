@@ -45,13 +45,13 @@ calltab_init(gchar* searchbar_type)
 }
 
 void
-calltab_select_call (calltab_t* tab, call_t * c )
+calltab_select_call (calltab_t* tab, callable_obj_t * c )
 {
   tab->selectedCall = c;
 }
 
 
-call_t *
+callable_obj_t *
 calltab_get_selected_call (calltab_t* tab)
 {
   return tab->selectedCall;

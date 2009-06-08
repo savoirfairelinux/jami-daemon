@@ -21,8 +21,8 @@
 #include <toolbar.h>
 #include <config.h>
 #include <actions.h>
-#include <calltab.h>
 #include <calltree.h>
+#include <calltab.h>
 #include <configwindow.h>
 #include <dialpad.h>
 #include <mainwindow.h>

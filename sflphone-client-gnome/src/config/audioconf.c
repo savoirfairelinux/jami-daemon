@@ -764,9 +764,7 @@ GtkWidget* create_audio_configuration()
     // Main widget
     GtkWidget *ret;
     // Main frames
-    GtkWidget *sound_conf;
     GtkWidget *codecs_conf;
-    GtkWidget *ringtones_conf;
     // Sub boxes
     GtkWidget *box;
     GtkWidget *frame;

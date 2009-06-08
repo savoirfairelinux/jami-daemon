@@ -20,7 +20,7 @@
 #ifndef __CALLLIST_H__
 #define __CALLLIST_H__
 
-#include <call.h>
+#include <callable_obj.h>
 #include <gtk/gtk.h>
 
 /** @file calllist.h
@@ -31,15 +31,17 @@ typedef struct {
 	GtkListStore* store;
 	GtkWidget* view;
 	GtkWidget* tree;
-  GtkWidget* searchbar;
+    GtkWidget* searchbar;
 
   // Calllist vars
 	GQueue* callQueue;
-	call_t* selectedCall;
+	callable_obj_t* selectedCall;
 } calltab_t;
 
 void
 calllist_add_contact (gchar *, gchar *, contact_type_t, GdkPixbuf *);
+
+void calllist_add_history_entry (callable_obj_t *obj);
 
 /** This function initialize a call list. */
 void
@@ -65,7 +67,7 @@ call_history_set_max_calls( const gdouble number );
   * @param c The call you want to add
   * */
 void
-calllist_add (calltab_t* tab, call_t * c);
+calllist_add (calltab_t* tab, callable_obj_t * c);
 
 /** This function remove a call from list.
   * @param callID The callID of the call you want to remove
@@ -77,7 +79,7 @@ calllist_remove (calltab_t* tab, const gchar * callID);
   * This is usefull for unique states as DIALING and CURRENT.
   * @param state The state
   * @return A call or NULL */
-call_t *
+callable_obj_t *
 calllist_get_by_state (calltab_t* tab, call_state_t state);
 
 /** Return the number of calls in the list
@@ -88,13 +90,13 @@ calllist_get_size (calltab_t* tab);
 /** Return the call at the nth position in the list
   * @param n The position of the call you want
   * @return A call or NULL */
-call_t *
+callable_obj_t *
 calllist_get_nth (calltab_t* tab, guint n );
 
 /** Return the call corresponding to the callID
   * @param n The callID of the call you want
   * @return A call or NULL */
-call_t *
+callable_obj_t *
 calllist_get (calltab_t* tab, const gchar * callID );
 
 /**
@@ -108,7 +110,7 @@ calllist_clean_history();
  * @param c The call to remove
  */
 void
-calllist_remove_from_history( call_t* c);
+calllist_remove_from_history( callable_obj_t* c);
 
 /**
  * Initialize a non-empty call list

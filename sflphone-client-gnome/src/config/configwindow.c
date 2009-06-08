@@ -566,18 +566,11 @@ create_general_settings ()
     // GtkWidget *widg;
 
     GtkWidget *mutewidget;
-
-    GtkWidget *trayBox;
     GtkWidget *trayItem;
-
     GtkWidget *frame;
-    GtkWidget *vbox;
-    GtkWidget *hbox;
     GtkWidget *value;
     GtkWidget *label;
-    GtkWidget *cleanButton;
     GtkWidget *entryPort;
-
     GtkWidget *table;
 
     // Main widget
@@ -817,7 +810,6 @@ show_accounts_window( void )
     GtkDialog * dialog;
     GtkWidget * accountFrame;
     GtkWidget * tab;
-    GtkWidget * table;
 
     accDialogOpen = TRUE;
 
