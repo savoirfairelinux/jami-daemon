@@ -64,26 +64,26 @@ public:
 
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
 
-	    int in_samples = size;
+	    int in_byte = size;
+	    int out_samples;
 
-	    int outlen;
-            printf("Codec decode size: %i\n", size);
+            printf("Codec decode in_byte: %i\n", in_byte);
 	    printf("Codec decode options itu_test_mode: %i\n", decode_s->itu_test_mode);
 	    printf("Codec decode options eight_k: %i\n", decode_s->eight_k);
 	    printf("Codec decode options packed: %i\n", decode_s->packed);
 	    printf("Codec decode options bits_per_sample: %i\n", decode_s->bits_per_sample);
 	    printf("Decoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-	    outlen = g722_decode((int16_t*) dst, (const uint8_t*) src, in_samples);
-	    printf("Codec decode outlen: %i\n", outlen);
+	    out_samples = g722_decode((int16_t*) dst, (const uint8_t*) src, in_byte);
+	    printf("Codec decode out_samples: %i\n", out_samples);
 
-            return outlen * 2;
+            return out_samples * 2;
 	}
 
 	virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
 
 	    // int in_samples = size / 2;
 	    int in_samples = size / 2;
-	    int outlen;
+	    int out_bytes;
 
 	    printf("Codec encode in_sample: %i\n", in_samples);
 	    printf("Codec encode options itu_test_mode: %i\n", encode_s->itu_test_mode);
@@ -91,11 +91,11 @@ public:
 	    printf("Codec encode options packed: %i\n", encode_s->packed);
 	    printf("Codec encode options bits_per_sample: %i\n", encode_s->bits_per_sample);
 	    printf("Encoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-	    outlen = g722_encode((uint8_t*) dst, (const int16_t*) src, in_samples);
-	    printf("Codec encode outlen: %i\n", outlen);
+	    out_bytes = g722_encode((uint8_t*) dst, (const int16_t*) src, in_samples);
+	    printf("Codec encode outlen: %i\n", out_bytes);
 
 	    // return g722_size;
-	    return outlen * 2;
+	    return out_bytes;
 	}
 
 
