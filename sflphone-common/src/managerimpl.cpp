@@ -147,7 +147,7 @@ ManagerImpl::init()
 
 
     // Load the history
-    _history->load_history ();
+    _history->load_history (getConfigInt (PREFERENCES, CONFIG_HISTORY_LIMIT));
 }
 
 void ManagerImpl::terminate()
@@ -2899,7 +2899,7 @@ std::map<std::string, std::string> ManagerImpl::send_history_to_client (void)
     
 void ManagerImpl::receive_history_from_client (std::map<std::string, std::string> history)
 {
-    _history->set_serialized_history (history);
+    _history->set_serialized_history (history, Manager::instance().getConfigInt (PREFERENCES, CONFIG_HISTORY_LIMIT));
     _history->save_history ();
 }
 

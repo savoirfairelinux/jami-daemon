@@ -49,6 +49,7 @@ class HistoryTest : public CppUnit::TestCase {
         CPPUNIT_TEST (test_save_history_to_file);
         CPPUNIT_TEST (test_get_history_serialized);
         CPPUNIT_TEST (test_set_serialized_history);
+        CPPUNIT_TEST (test_set_serialized_history_with_limit);
     CPPUNIT_TEST_SUITE_END ();
 
     public:
@@ -73,6 +74,8 @@ class HistoryTest : public CppUnit::TestCase {
         void test_get_history_serialized ();
 
         void test_set_serialized_history ();
+
+        void test_set_serialized_history_with_limit ();
             
         /*
          * Code factoring - Common resources can be released here.
