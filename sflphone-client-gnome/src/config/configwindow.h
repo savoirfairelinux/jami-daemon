@@ -118,4 +118,6 @@ void config_window_set_stun_visible();
 
 void save_configuration_parameters (void);
 
+void history_load_configuration (void);
+
 #endif 

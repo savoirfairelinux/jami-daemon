@@ -1234,7 +1234,8 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
   fill_config_int(CONFIG_NOTIFY , YES_STR);
   fill_config_int(CONFIG_MAIL_NOTIFY , NO_STR);
   fill_config_int(CONFIG_VOLUME , YES_STR);
-  fill_config_int(CONFIG_HISTORY , DFT_MAX_CALLS);
+  fill_config_int(CONFIG_HISTORY_LIMIT, DFT_HISTORY_LIMIT);
+  fill_config_int(CONFIG_HISTORY_ENABLED, YES_STR);
   fill_config_int(REGISTRATION_EXPIRE , DFT_EXPIRE_VALUE);
   fill_config_int(CONFIG_AUDIO , DFT_AUDIO_MANAGER);
   fill_config_int(CONFIG_PA_VOLUME_CTRL , YES_STR);
@@ -1729,17 +1730,24 @@ ManagerImpl::switchPopupMode( void )
   ( getConfigInt( PREFERENCES , CONFIG_POPUP ) ==  WINDOW_POPUP)? setConfig(PREFERENCES , CONFIG_POPUP , NO_STR ) : setConfig( PREFERENCES , CONFIG_POPUP , YES_STR );
 }
 
-void
-ManagerImpl::setMaxCalls( const int& calls )
+void ManagerImpl::setHistoryLimit (const int& days)
 {
-  setConfig( PREFERENCES , CONFIG_HISTORY , calls );
+    setConfig (PREFERENCES, CONFIG_HISTORY_LIMIT, days);
 }
 
-int
-ManagerImpl::getMaxCalls( void )
+int ManagerImpl::getHistoryLimit (void)
 {
-  _debug("Max calls =  %i\n" , getConfigInt( PREFERENCES , CONFIG_HISTORY ));
-  return getConfigInt( PREFERENCES , CONFIG_HISTORY );
+    return getConfigInt (PREFERENCES , CONFIG_HISTORY_LIMIT);
+}
+
+int ManagerImpl::getHistoryEnabled (void)
+{
+    return getConfigInt (PREFERENCES, CONFIG_HISTORY_ENABLED);
+}
+
+void ManagerImpl::setHistoryEnabled (void)
+{
+  ( getConfigInt (PREFERENCES, CONFIG_HISTORY_ENABLED) == 1) ? setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, NO_STR) : setConfig(PREFERENCES, CONFIG_HISTORY_ENABLED, YES_STR);
 }
 
 int

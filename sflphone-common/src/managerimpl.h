@@ -521,16 +521,21 @@ class ManagerImpl {
     bool isRecording(const CallID& id);
 
     /**
-     * Set the maximum number of calls to keep in the history
-     * @param calls The number of calls
+     * Set the maximum number of days to keep in the history
+     * @param calls The number of days
      */
-    void setMaxCalls( const int& calls );
+    void setHistoryLimit (const int& days);
 
     /**
-     * Get the maximum number of calls to keep in the history
-     * @return double The number of calls
+     * Get the maximum number of days to keep in the history
+     * @return double The number of days 
      */
-    int getMaxCalls( void );
+    int getHistoryLimit (void);
+
+    void setHistoryEnabled (void);
+
+    int getHistoryEnabled (void);
+
 
     /**
      * Configure the start-up option

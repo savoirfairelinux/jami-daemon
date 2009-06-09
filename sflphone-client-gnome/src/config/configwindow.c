@@ -59,8 +59,12 @@ GtkWidget * stunEnable;
 GtkWidget * stunFrame;
 GtkWidget * stunServer;
 GtkWidget * applyButton;
+GtkWidget *history_value;
 
 GtkWidget* status;
+
+static int history_limit;
+static gboolean history_enabled = TRUE;
 
 account_t *selectedAccount;
 
@@ -182,17 +186,18 @@ set_mail_notif( )
 {
     dbus_set_mail_notify( );
 }
-/*
-    void
-update_max_value( GtkRange* scale )
+
+static void history_limit_cb (GtkSpinButton *button, void *ptr)
 {
-    dbus_set_max_calls(gtk_range_get_value( GTK_RANGE( scale )));
+    history_limit = gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr));
 }
-*/
-static void update_max_value( GtkSpinButton *button UNUSED, void *ptr )
+
+static void history_enabled_cb (GtkWidget *widget)
 {
-    dbus_set_max_calls(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
+    history_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+    gtk_widget_set_sensitive (GTK_WIDGET (history_value), history_enabled);
 }
+
 
     void
 clean_history( void )
@@ -550,9 +555,6 @@ GtkWidget* create_stun_tab()
     return tableNat;
 }
 
-
-
-
     GtkWidget*
 create_general_settings ()
 {
@@ -568,10 +570,13 @@ create_general_settings ()
     GtkWidget *mutewidget;
     GtkWidget *trayItem;
     GtkWidget *frame;
-    GtkWidget *value;
+    GtkWidget *history_w;
     GtkWidget *label;
     GtkWidget *entryPort;
     GtkWidget *table;
+
+    // Load history configuration
+    history_load_configuration ();
 
     // Main widget
     ret = gtk_vbox_new(FALSE, 10);
@@ -618,18 +623,22 @@ create_general_settings ()
     gtk_table_attach( GTK_TABLE(table), trayItem, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     // HISTORY CONFIGURATION
-    gnome_main_section_new_with_table (_("Calls History"), &frame, &table, 1, 1);
+    gnome_main_section_new_with_table (_("Calls History"), &frame, &table, 3, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    label = gtk_label_new_with_mnemonic(_("_History size limit:"));
-    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    history_w = gtk_check_button_new_with_mnemonic(_("_Keep my history for at least"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (history_w), history_enabled);
+    g_signal_connect (G_OBJECT (history_w) , "clicked" , G_CALLBACK (history_enabled_cb) , NULL);
+    gtk_table_attach( GTK_TABLE(table), history_w, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     
-    value = gtk_spin_button_new_with_range(1, 50, 1);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(value), dbus_get_max_calls());
-    g_signal_connect( G_OBJECT( value) , "value-changed" , G_CALLBACK( update_max_value ) , value);
-    gtk_table_attach( GTK_TABLE(table), value, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5); 
+    history_value = gtk_spin_button_new_with_range(1, 99, 1);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON(history_value), history_limit);
+    g_signal_connect( G_OBJECT (history_value) , "value-changed" , G_CALLBACK (history_limit_cb) , history_value);
+    gtk_widget_set_sensitive (GTK_WIDGET (history_value), gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (history_w)));
+    gtk_table_attach( GTK_TABLE(table), history_value, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5); 
 
+    label = gtk_label_new(_(" days"));
+    gtk_table_attach( GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     
     /** PULSEAUDIO CONFIGURATION */
     gnome_main_section_new_with_table (_("PulseAudio sound server"), &frame, &table, 1, 1);
@@ -728,8 +737,14 @@ create_recording_settings ()
 
 void save_configuration_parameters (void) {
 
+    // Address book config
     addressbook_config_save_parameters ();
     hooks_save_parameters ();
+
+    // History config
+    dbus_set_history_limit (history_limit);
+    // Toggle it through D-Bus
+    dbus_set_history_enabled ();
 
 }
 
@@ -856,6 +871,14 @@ show_accounts_window( void )
 
     gtk_widget_destroy(GTK_WIDGET(dialog));
     toolbar_update_buttons();
+}
+
+void history_load_configuration ()
+{
+    history_limit = dbus_get_history_limit ();
+    history_enabled = TRUE;
+    if (dbus_get_history_enabled () == 0)
+        history_enabled = FALSE;
 }
 
 void config_window_set_stun_visible()

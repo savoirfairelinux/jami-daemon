@@ -229,7 +229,7 @@ gchar* get_call_duration (callable_obj_t *obj)
     end = obj->_time_stop;
     
     if (start == end)
-        return g_markup_printf_escaped("<small>Duration:</small> none");
+        return g_markup_printf_escaped("<small>Duration:</small> 0:00");
 
     duration = (int)end - (int)start;
 

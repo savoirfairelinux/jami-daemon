@@ -1263,13 +1263,12 @@ dbus_get_record_path(void)
     return path;
 }
 
-    void
-dbus_set_max_calls( const guint calls  )
+void dbus_set_history_limit (const guint days)
 {
     GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_max_calls(
+    org_sflphone_SFLphone_ConfigurationManager_set_history_limit(
             configurationManagerProxy,
-            calls,
+            days,
             &error);
     if(error)
     {
@@ -1277,20 +1276,48 @@ dbus_set_max_calls( const guint calls  )
     }
 }
 
-    guint
-dbus_get_max_calls( void )
+void dbus_set_history_enabled ()
 {
     GError* error = NULL;
-    gint calls;
-    org_sflphone_SFLphone_ConfigurationManager_get_max_calls(
+    org_sflphone_SFLphone_ConfigurationManager_set_history_enabled(
             configurationManagerProxy,
-            &calls,
             &error);
     if(error)
     {
         g_error_free(error);
     }
-    return (guint)calls;
+}
+
+int dbus_get_history_enabled ()
+{
+    int state; 
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_get_history_enabled(
+            configurationManagerProxy,
+            &state,
+            &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    return state;
+}
+
+
+
+guint dbus_get_history_limit (void)
+{
+    GError* error = NULL;
+    gint days=30;
+    org_sflphone_SFLphone_ConfigurationManager_get_history_limit(
+            configurationManagerProxy,
+            &days,
+            &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    return (guint)days;
 }
 
     void
