@@ -92,6 +92,11 @@ void RtpTest::testRtpInitClose()
     }
 
     CPPUNIT_ASSERT(audiortp != NULL);
+
+
+    audiortp->_RTXThread->computeCodecFrameSize(320,8000);
+
+      // computeNbByteAudioLayer
     
     _debug("------ Finilize Rtp Initialization ------ \n");
 
@@ -115,31 +120,97 @@ void RtpTest::testRtpInitClose()
 void RtpTest::testRtpThread()
 {
 
-    _debug("------ void RtpTest::testRtpThread ------\n");
+    audiortp = new AudioRtp();
 
-    
-
-    if(rtpthread != 0){
-        _debug("!!! Rtp Thread already exists..., stopping it\n"); 
-	delete rtpthread;  rtpthread = 0;
-    }
-
-    CPPUNIT_ASSERT(rtpthread == 0);
-    // CPPUNIT_ASSERT(rtpthread->_sym == NULL);
-
+    _debug("-------- Open Rtp Session ----------\n");
     try {
 
-        rtpthread = new AudioRtpRTX(sipcall, true);
+        CPPUNIT_ASSERT(audiortp->createNewSession(sipcall) == 0);
+
+    } catch(...) {
+        
+        _debug("!!! Exception occured while Oppenning Rtp !!!\n");
 	
+    }
+
+    _debug("------ void RtpTest::testRtpThread ------\n");  
+
+    CPPUNIT_ASSERT(audiortp->_RTXThread->computeCodecFrameSize(160,8000) == 20.0f);
+    CPPUNIT_ASSERT(audiortp->_RTXThread->computeCodecFrameSize(320,16000) == 20.0f);
+    CPPUNIT_ASSERT(audiortp->_RTXThread->computeCodecFrameSize(882,44100) == 20.0f);
+
+    // 20 ms at 44.1 khz corespond to 882 samples (1764 byte)
+    CPPUNIT_ASSERT(audiortp->_RTXThread->computeNbByteAudioLayer(20.f) == 1764);
+    
+    _debug("------ Close Rtp Session -------\n");
+    try {
+
+        CPPUNIT_ASSERT(audiortp->closeRtpSession());
+
     } catch(...) {
 
-        _debug("!!! Exception occured while instanciating AudioRtpRTX !!!\n");
+        _debug("!!! Exception occured while closing Rtp !!!\n");
 
     }
 
-    CPPUNIT_ASSERT(rtpthread == 0);
+    delete audiortp;  audiortp = NULL;
+}
 
-    delete rtpthread;  rtpthread = 0;
+
+
+void RtpTest::testRtpResampling()
+{
+
+    int nbSample = 50;
+    int rsmpl_nbSample = 0;
+
+    SFLDataFormat *data = new SFLDataFormat[1024];
+    SFLDataFormat *rsmpl_data = new SFLDataFormat[1024];
+
+    for (int i = 0; i < nbSample; i++)
+        data[i] = i;
+
+
+    audiortp = new AudioRtp();
+
+    _debug("-------- Open Rtp Session ----------\n");
+    try {
+
+        CPPUNIT_ASSERT(audiortp->createNewSession(sipcall) == 0);
+
+    } catch(...) {
+        
+        _debug("!!! Exception occured while Oppenning Rtp !!!\n");
+	
+    }
+
+    _debug("------ void RtpTest::testRtpResampling ------\n");  
+
+    CPPUNIT_ASSERT(0 == 0);
+    rsmpl_nbSample = audiortp->_RTXThread->reSampleData(data, rsmpl_data, 8000, nbSample, UP_SAMPLING);
+    _debug("ORIGINAL DATA SET\n");
+    for (int i = 0; i < nbSample; i++)
+        printf("  %i=>%i  ", i, data[i]);
+    
+    _debug("RESAMPLED DATA SET\n");
+    for (int i = 0; i < rsmpl_nbSample; i++ )
+        printf("  %i=>%i  ", i, rsmpl_data[i]);
+
+    printf("\n");
+    
+    
+    _debug("------ Close Rtp Session -------\n");
+    try {
+
+        CPPUNIT_ASSERT(audiortp->closeRtpSession());
+
+    } catch(...) {
+
+        _debug("!!! Exception occured while closing Rtp !!!\n");
+
+    }
+
+    delete audiortp;  audiortp = NULL;
 }
 
 
