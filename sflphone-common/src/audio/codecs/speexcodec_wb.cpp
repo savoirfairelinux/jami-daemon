@@ -113,8 +113,11 @@ class Speex : public AudioCodec{
         {   
             
             int ratio = 320 / _speex_frame_size;
+	    printf("Codec::codecDecode() ratio %i\n", ratio);
+	    printf("Codec::codecDecode() _speex_frame_size %i\n", _speex_frame_size);
             speex_bits_read_from(&_speex_dec_bits, (char*)src, size);
             speex_decode_int(_speex_dec_state, &_speex_dec_bits, dst);
+	    printf("Codec::codecEncode() _speex_frame_size * ratio %i\n", _speex_frame_size * ratio);
 
             return 2 * _speex_frame_size * ratio; 
         }
@@ -130,6 +133,7 @@ class Speex : public AudioCodec{
 
             speex_encode_int(_speex_enc_state, src, &_speex_enc_bits);
             int nbBytes = speex_bits_write(&_speex_enc_bits, (char*)dst, size);
+	    printf("Codec::codecDecode() nbBytes %i", nbBytes);
             return nbBytes;
         }
 
