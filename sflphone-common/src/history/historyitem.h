@@ -61,6 +61,11 @@ class HistoryItem {
     private:
 
         /*
+         * @return true if the account ID corresponds to a loaded account
+         */
+        bool non_valid_account (std::string);
+
+        /*
          * Timestamp representing the date of the call
          */
         std::string _timestamp_start;

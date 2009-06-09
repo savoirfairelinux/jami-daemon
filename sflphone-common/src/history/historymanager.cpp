@@ -78,9 +78,10 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
         timestamp_stop = getConfigString (*iter, "timestamp_stop", history_list);
         name = getConfigString (*iter, "name", history_list);
         number = getConfigString (*iter, "number", history_list);
+        accountID = getConfigString (*iter, "accountid", history_list);
         timestamp_start = *iter;
 
-        item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number);
+        item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, accountID);
         add_new_history_entry (item);
         nb_items ++;
 
@@ -219,4 +220,5 @@ int HistoryManager::set_serialized_history (std::map <std::string, std::string> 
     
     return items_added;
 }
+
 

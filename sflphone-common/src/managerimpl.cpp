@@ -1191,7 +1191,7 @@ ManagerImpl::createSettingsPath (void) {
  * Initialization: Main Thread
  */
   void
-ManagerImpl::initConfigFile ( bool load_user_value )
+ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 {
   std::string mes = gettext("Init config file\n");
   _debug("%s",mes.c_str());
@@ -1199,7 +1199,7 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   std::string type_str("string");
   std::string type_int("int");
 
-  std::string section;
+  std::string section, path;
 
   // Default values, that will be overwritten by the call to
   // 'populateFromFile' below.
@@ -1257,9 +1257,14 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_str (PHONE_NUMBER_HOOK_ENABLED, NO_STR);
   fill_config_str (PHONE_NUMBER_HOOK_ADD_PREFIX, "");
 
-  // Loads config from ~/.sflphone/sflphonedrc or so..
-  if (createSettingsPath() == 1 && load_user_value) {
-    _exist = _config.populateFromFile(_path);
+    // Loads config from ~/.sflphone/sflphonedrc or so..
+    if (createSettingsPath() == 1 && load_user_value) {
+      
+        (alternate == "")? path = _path : path = alternate;
+
+        std::cout << path << std::endl;
+        
+        _exist = _config.populateFromFile(path);
   }
 
   _setupLoaded = (_exist == 2 ) ? false : true;

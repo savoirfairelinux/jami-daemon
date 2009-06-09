@@ -21,8 +21,10 @@
 #include <historyitem.h>
 #include <sstream>
 #include "stdlib.h"
+#include <manager.h>
 
 #define ITEM_SEPARATOR      "|"
+#define EMPTY_STRING        "empty"
 
 HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string account_id)
     : _timestamp_start (timestamp_start), _call_type (call_type), _timestamp_stop (timestamp_stop), _name (name), _number (number), _account_id (account_id)
@@ -34,7 +36,7 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
     : _timestamp_start (timestamp)
 {
     size_t pos;
-    std::string tmp, id, name, number, stop;
+    std::string tmp, id, name, number, stop, account;
     int indice=0;
 
     while (serialized_form.find(ITEM_SEPARATOR, 0) != std::string::npos)
@@ -56,6 +58,9 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
             case 3: // The end timestamp
                 stop = tmp;
                 break;
+            case 4: // The account ID
+                account = tmp;
+                break;
             default: // error
                 std::cout <<"[ERROR] unserialized form not recognized."<<std::endl;
                 break;
@@ -65,8 +70,9 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
 
     _call_type = (CallType)atoi (id.c_str());
     _number = number;
-    _name = name;
-    _timestamp_stop = serialized_form;
+    (name == EMPTY_STRING) ? _name = "" : _name = name;
+    _timestamp_stop = stop;
+    (serialized_form == EMPTY_STRING) ? _account_id = "" : _account_id=serialized_form ;
 }
 
 HistoryItem::~HistoryItem ()
@@ -87,6 +93,7 @@ bool HistoryItem::save (Conf::ConfigTree **history){
     res = ( (*history)->setConfigTreeItem(section, "type", call_type.str())
             && (*history)->setConfigTreeItem(section, "timestamp_stop", _timestamp_stop)
             && (*history)->setConfigTreeItem(section, "number", _number)
+            && (*history)->setConfigTreeItem(section, "accountid", _account_id)
             && (*history)->setConfigTreeItem(section, "name", _name) );
 
     return res;
@@ -96,28 +103,22 @@ std::string HistoryItem::serialize (void)
 {
     std::stringstream res;
     std::string separator = ITEM_SEPARATOR;
+    std::string name, accountID;
 
-    res << _call_type << separator << _number << separator << _name << separator << _timestamp_stop ;
+    // Replace empty string with a valid standard string value
+    (_name == "")? name = EMPTY_STRING : name = _name;
+    // For the account ID, check also if the accountID corresponds to an existing account
+    // ie the account may have been removed
+    (_account_id == "" || non_valid_account (_account_id))? accountID = "empty" : accountID = _account_id;
+
+    // Serialize it
+    res << _call_type << separator << _number << separator << name << separator << _timestamp_stop << separator << accountID;
+
     return res.str();
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+bool HistoryItem::non_valid_account (std::string id)
+{
+    return !Manager::instance().accountExists (id);
+}

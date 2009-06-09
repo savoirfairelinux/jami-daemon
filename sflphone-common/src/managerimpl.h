@@ -854,7 +854,7 @@ class ManagerImpl {
      * Fills the local _config (Conf::ConfigTree) with the default contents.
      * Called in main.cpp, just before Manager::init().
      */
-    void initConfigFile ( bool load_user_value = true );
+    void initConfigFile ( bool load_user_value=true, std::string alternate="");
 
     /**
      * Tell if the setup was already loaded
@@ -1099,16 +1099,14 @@ class ManagerImpl {
      */
     void unloadAccountMap();
 
-    /**
+   public:
+     /**
      * Tell if an account exists
      * @param accountID account ID check
      * @return bool True if the account exists
      *		  false otherwise
      */
     bool accountExists(const AccountID& accountID);
-
-
-public:
 
     std::map<std::string, std::string> send_history_to_client (void); 
 
@@ -1173,6 +1171,7 @@ private:
 #endif
 
     friend class ConfigurationTest;
+    friend class HistoryTest;
 };
 
 #endif // __MANAGER_H__
