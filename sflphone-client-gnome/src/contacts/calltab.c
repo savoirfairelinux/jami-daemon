@@ -33,7 +33,7 @@ calltab_init(gchar* searchbar_type)
 	ret->store = NULL;
 	ret->view = NULL;
 	ret->tree = NULL;
-  ret->searchbar = NULL;
+        ret->searchbar = NULL;
 	ret->callQueue = NULL;
 	ret->selectedCall = NULL;
 

@@ -426,7 +426,7 @@ edit_copy ( void * foo UNUSED)
                 no = selectedCall->_peer_number;
                 break;
         }
-
+	DEBUG("Clipboard number: %s\n", no);
         gtk_clipboard_set_text (clip, no, strlen(no) );
     }
 
@@ -448,15 +448,14 @@ edit_paste ( void * foo UNUSED)
             case CALL_STATE_DIALING:
                 // Add the text to the number
                 {
-                    gchar * before = selectedCall->_peer_number;
-                    selectedCall->_peer_number = g_strconcat(selectedCall->_peer_number, no, NULL);
-                    g_free(before);
-                    DEBUG("TO: %s", selectedCall->_peer_number);
+		    gchar * before;
+		    before = selectedCall->_peer_number;
+		    DEBUG("TO: %s\n", before);
+                    selectedCall->_peer_number = g_strconcat(before, no, NULL);
 
                     if(selectedCall->_state == CALL_STATE_DIALING)
                     {
-                        g_free(selectedCall->_peer_number);
-                        selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);
+                        selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);	        		
                     }
                     calltree_update_call(current_calls, selectedCall);
                 }
@@ -471,10 +470,8 @@ edit_paste ( void * foo UNUSED)
 
                     gchar * before = selectedCall->_peer_number;
                     selectedCall->_peer_number = g_strconcat(selectedCall->_peer_number, no, NULL);
-                    g_free(before);
                     DEBUG("TO: %s", selectedCall->_peer_number);
 
-                    g_free(selectedCall->_peer_info);
                     selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);
 
                     calltree_update_call(current_calls, selectedCall);
@@ -492,7 +489,7 @@ edit_paste ( void * foo UNUSED)
 
                         gchar * temp = g_strconcat(selectedCall->_peer_number, oneNo, NULL);
                         selectedCall->_peer_info = get_peer_info (temp, selectedCall->_peer_name);
-                        g_free(temp);
+                        // g_free(temp);
                         calltree_update_call(current_calls, selectedCall);
 
                     }
