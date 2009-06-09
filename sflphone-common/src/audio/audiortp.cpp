@@ -172,7 +172,6 @@ AudioRtpRTX::~AudioRtpRTX () {
 }
 
 
-
     void
 AudioRtpRTX::initBuffers()
 {
@@ -265,6 +264,18 @@ AudioRtpRTX::initAudioRtpSession (void)
 
 }
 
+float 
+AudioRtpRTX::computeCodecFrameSize(int codecSamplePerFrame, int codecClockRate)
+{
+  return ( (float)codecSamplePerFrame * 1000.0 ) / (float)codecClockRate;
+}
+
+int
+AudioRtpRTX::computeNbByteAudioLayer(float codecFrameSize)
+{
+    return (int)((float)_layerSampleRate * codecFrameSize * (float)sizeof(SFLDataFormat) / 1000.0);
+}
+
     void
 AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
@@ -285,11 +296,10 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     if (!_audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
 
     // compute codec framesize in ms
-    float fixed_codec_framesize = ((float)_audiocodec->getFrameSize() * 1000.0) / (float)_audiocodec->getClockRate();
+    float fixed_codec_framesize = computeCodecFrameSize(_audiocodec->getFrameSize(), _audiocodec->getClockRate());
 
     // compute nb of byte to get coresponding to 20 ms at audio layer frame size (44.1 khz)
-    int maxBytesToGet = (int)((float)_layerSampleRate * fixed_codec_framesize * (float)sizeof(SFLDataFormat) / 1000.0);
-
+    int maxBytesToGet = computeNbByteAudioLayer(fixed_codec_framesize);
     
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
@@ -315,10 +325,9 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
         // Store the length of the mic buffer in samples for recording
         _nSamplesMic = nbSample;
 
-        
-        // int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
 
-        nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);
+        // int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000; 
+	 nbSample = reSampleData(micData , micDataConverted, _audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);
 
         compSize = _audiocodec->codecEncode( micDataEncoded, micDataConverted, nbSample*sizeof(int16));
 
@@ -348,13 +357,12 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
 
     if (_ca == 0) { return; }
-    //try {
+
 
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     if (!audiolayer) { return; }
 
     const ost::AppDataUnit* adu = NULL;
-    // Get audio data stream
 
 
     if (!_sym) {
@@ -363,46 +371,40 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
         adu = _session->getData(_session->getFirstTimestamp());
     }
     if (adu == NULL) {
-        //_debug("No RTP audio stream\n");
+        _debug("No RTP audio stream\n");
         return;
     }
 
-    
-
-    //int payload = adu->getType(); // codec type
     unsigned char* spkrData  = (unsigned char*)adu->getData(); // data in char
     unsigned int size = adu->getSize(); // size in char
 
-
-    // Decode data with relevant codec
-    unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
-
-
     if (_audiocodec != NULL) {
 
+        // Return the size of data in bytes 
         int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size );
 
         // buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
-        int nbInt16 = expandedSize / sizeof(int16);
-
-        // nbInt16 represents the number of samples we just decoded
-        int nbSample = nbInt16;
+        int nbSample = expandedSize / sizeof(SFLDataFormat);
 
         // test if resampling is required 
         if (_audiocodec->getClockRate() != _layerSampleRate) {
 
             // Do sample rate conversion
             int nb_sample_down = nbSample;
-            nbSample = reSampleData(_codecSampleRate , nb_sample_down, UP_SAMPLING);
+            nbSample = reSampleData(spkrDataDecoded , spkrDataConverted, _codecSampleRate , nb_sample_down, UP_SAMPLING);
 
             // Store the number of samples for recording
             _nSamplesSpkr = nbSample;
 
+	    // put data in audio layer, size in byte
             audiolayer->putMain (spkrDataConverted, nbSample * sizeof(SFLDataFormat));
+
         } else {
 
             // Stor the number of samples for recording
             _nSamplesSpkr = nbSample;
+
+	    // put data in audio layer, size in byte
             audiolayer->putMain (spkrDataDecoded, nbSample * sizeof(SFLDataFormat));
         }
 
@@ -424,10 +426,10 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 }
 
     int 
-AudioRtpRTX::reSampleData(int sampleRate_codec, int nbSamples, int status)
+    AudioRtpRTX::reSampleData(SFLDataFormat *input, SFLDataFormat *output, int sampleRate_codec, int nbSamples, int status)
 {
     if(status==UP_SAMPLING){
-        return converter->upsampleData( spkrDataDecoded , spkrDataConverted , sampleRate_codec , _layerSampleRate , nbSamples );
+        return converter->upsampleData( input, output, sampleRate_codec , _layerSampleRate , nbSamples );
     }
     else if(status==DOWN_SAMPLING){
         return converter->downsampleData( micData , micDataConverted , sampleRate_codec , _layerSampleRate , nbSamples );
