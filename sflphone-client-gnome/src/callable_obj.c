@@ -161,7 +161,8 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
         } while ((ptr = strtok(NULL, delim)) != NULL);
 
     }
-
+    if (g_strcasecmp (peer_name, "empty") == 0)
+        peer_name="";
     create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", accountID, peer_name, peer_number, &new_call);
     new_call->_history_state = history_state;
     new_call->_time_start = convert_gchar_to_timestamp (timestamp);
