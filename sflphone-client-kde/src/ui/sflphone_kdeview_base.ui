@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>337</width>
-    <height>411</height>
+    <height>416</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -147,7 +147,7 @@
          <item>
           <widget class="QToolButton" name="toolButton_recVol">
            <property name="text">
-            <string>...</string>
+            <string/>
            </property>
            <property name="icon">
             <iconset>
@@ -181,7 +181,7 @@
             </size>
            </property>
            <property name="text">
-            <string>1</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -200,11 +200,7 @@
             </size>
            </property>
            <property name="text">
-            <string>2
-abc</string>
-           </property>
-           <property name="shortcut">
-            <string>2</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -217,8 +213,7 @@ abc</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>3
-def</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -231,8 +226,7 @@ def</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>4
-ghi</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -245,8 +239,7 @@ ghi</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>5
-jkl</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -259,8 +252,7 @@ jkl</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>6
-mno</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -273,8 +265,7 @@ mno</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>7
-pqrs</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -287,8 +278,7 @@ pqrs</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>8
-tuv</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -301,8 +291,7 @@ tuv</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>9
-wxyz</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -315,7 +304,7 @@ wxyz</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>*</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -328,8 +317,7 @@ wxyz</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>0
-</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -342,7 +330,7 @@ wxyz</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>#</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -392,7 +380,7 @@ wxyz</string>
          <item>
           <widget class="QToolButton" name="toolButton_sndVol">
            <property name="text">
-            <string>...</string>
+            <string/>
            </property>
            <property name="icon">
             <iconset>
@@ -430,7 +418,7 @@ wxyz</string>
          <item>
           <widget class="QToolButton" name="toolButton_recVolAlone">
            <property name="text">
-            <string>...</string>
+            <string/>
            </property>
            <property name="icon">
             <iconset>
@@ -457,7 +445,7 @@ wxyz</string>
          <item>
           <widget class="QToolButton" name="toolButton_sndVolAlone">
            <property name="text">
-            <string>...</string>
+            <string/>
            </property>
            <property name="icon">
             <iconset>

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-06-04 11:08-0400\n"
+"POT-Creation-Date: 2009-06-09 19:00-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,152 +16,132 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../src/AccountWizard.cpp:161
-msgid "Account Wizard"
-msgstr ""
-
-#: ../src/AccountWizard.cpp:195
-msgid "Creation of account succeed with parameters :\n"
-msgstr ""
-
-#: ../src/AccountWizard.cpp:206
-msgid "Creation of account has failed for the reason :\n"
-msgstr ""
-
-#: ../src/AccountWizard.cpp:212
-msgid "Register of account succeed with parameters :\n"
-msgstr ""
-
-#: ../src/AccountWizard.cpp:248
-msgid "Alias : "
-msgstr ""
-
-#: ../src/AccountWizard.cpp:249
-msgid "Server : "
-msgstr ""
-
-#: ../src/AccountWizard.cpp:250
-msgid "User : "
-msgstr ""
-
-#: ../src/AccountWizard.cpp:251
-msgid "Password : "
-msgstr ""
-
-#: ../src/AccountWizard.cpp:252
-msgid "Protocol : "
-msgstr ""
-
-#: ../src/AccountWizard.cpp:253
-msgid "Mailbox : "
-msgstr ""
-
-#: ../src/AccountWizard.cpp:270
+#: ../src/AccountWizard.cpp:161 ../src/AccountWizard.cpp:275
 msgid "Account Creation Wizard"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:271
+#: ../src/AccountWizard.cpp:200
+msgid "Creation of account succeed with these parameters"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:211
+msgid "Creation of account has failed for the reason"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:217
+msgid "Register of account succeed with these parameters"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:253 ../src/AccountWizard.cpp:437
+msgid "Alias"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:254 ../src/AccountWizard.cpp:438
+msgid "Server"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:255 ../src/AccountWizard.cpp:439
+msgid "User"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:256 ../src/AccountWizard.cpp:440
+msgid "Password"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:257
+msgid "Protocol"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:258
+msgid "Mailbox"
+msgstr ""
+
+#: ../src/AccountWizard.cpp:276
 msgid "Welcome to the Account creation wizard of SFLPhone"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:273
+#: ../src/AccountWizard.cpp:278
 msgid "This wizard will help you setting up an account."
 msgstr ""
 
-#: ../src/AccountWizard.cpp:301 ../build/src/ui_ConfigDialog.h:1259
+#: ../src/AccountWizard.cpp:306 ../build/src/ui_ConfigDialog.h:1259
 msgid "Accounts"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:302
+#: ../src/AccountWizard.cpp:307
 msgid "Please choose between those options :"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:304
+#: ../src/AccountWizard.cpp:309
 msgid "Create a free SIP/IAX2 account on sflphone.org"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:305
+#: ../src/AccountWizard.cpp:310
 msgid "Register an existing SIP/IAX2 account"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:344
+#: ../src/AccountWizard.cpp:349
 msgid "VoIP Protocols"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:345
-msgid "Choose the account type :"
+#: ../src/AccountWizard.cpp:350
+msgid "Choose the account type"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:347
+#: ../src/AccountWizard.cpp:352
 msgid "Register a SIP (Session Initiation Protocol) account"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:348
+#: ../src/AccountWizard.cpp:353
 msgid "Register a IAX2 (InterAsterisk eXchange) account"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:387
+#: ../src/AccountWizard.cpp:392
 msgid "Optionnal Email Address"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:388
+#: ../src/AccountWizard.cpp:393
 msgid "This email address will be used to send your voicemail messages."
 msgstr ""
 
-#: ../src/AccountWizard.cpp:390
+#: ../src/AccountWizard.cpp:395
 msgid "Email address"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:424
+#: ../src/AccountWizard.cpp:429
 msgid "SIP Account Settings"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:428
+#: ../src/AccountWizard.cpp:433
 msgid "IAX2 Account Settings"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:430
+#: ../src/AccountWizard.cpp:435
 msgid "Please full these settings fields."
 msgstr ""
 
-#: ../src/AccountWizard.cpp:432
-msgid "Alias *"
-msgstr ""
-
-#: ../src/AccountWizard.cpp:433
-msgid "Server *"
-msgstr ""
-
-#: ../src/AccountWizard.cpp:434
-msgid "User *"
-msgstr ""
-
-#: ../src/AccountWizard.cpp:435
-msgid "Password *"
-msgstr ""
-
-#: ../src/AccountWizard.cpp:507
+#: ../src/AccountWizard.cpp:512
 msgid "Network Address Translation (NAT)"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:508
+#: ../src/AccountWizard.cpp:513
 msgid ""
 "You should probably enable this option if you're placed under a firewall"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:510
+#: ../src/AccountWizard.cpp:515
 msgid "Enable STUN"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:511
+#: ../src/AccountWizard.cpp:516
 msgid "Stun Server"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:545
+#: ../src/AccountWizard.cpp:550
 msgid "Account Definition Finished"
 msgstr ""
 
-#: ../src/AccountWizard.cpp:546
+#: ../src/AccountWizard.cpp:551
 msgid ""
 "After checking the settings you chose, click \"Finish\" to create the "
 "account."
@@ -179,15 +159,8 @@ msgstr ""
 msgid "Attention : SIP port must be under 65536 !"
 msgstr ""
 
-#: ../src/ConfigDialog.cpp:787
-msgid ""
-"Accounts changed : another client may be changing accounts or an account is "
-"unstable. \n"
-"If another client is changing the settings, you may cancel your changes to "
-"avoid overwriting one's changes."
-msgstr ""
-
-#: ../src/SFLPhone.cpp:54
+#: ../src/SFLPhone.cpp:54 ../src/sflphone_kdeview.cpp:1055
+#: ../src/sflphone_kdeview.cpp:1060 ../src/sflphone_kdeview.cpp:1065
 msgid "SFLPhone"
 msgstr ""
 
@@ -200,14 +173,28 @@ msgid "Incoming call"
 msgstr ""
 
 #: ../src/SFLPhone.cpp:181
-msgid "You have an incoming call from : "
+msgid "You have an incoming call from"
 msgstr ""
 
 #: ../src/SFLPhone.cpp:181
 msgid "Click to accept or refuse it."
 msgstr ""
 
-#: ../src/sflphone_kdeview.cpp:1089 ../src/sflphone_kdeview.cpp:1145
+#: ../src/sflphone_kdeview.cpp:1055
+msgid "Main screen"
+msgstr ""
+
+#: ../src/sflphone_kdeview.cpp:1060 ../build/src/ui_ConfigDialog.h:1271
+#: ../build/src/ui_dlggeneralbase.h:160
+msgid "Call history"
+msgstr ""
+
+#: ../src/sflphone_kdeview.cpp:1065
+#: ../build/src/ui_sflphone_kdeview_base.h:507
+msgid "Address book"
+msgstr ""
+
+#: ../src/sflphone_kdeview.cpp:1079 ../src/sflphone_kdeview.cpp:1135
 msgid "Edit before call"
 msgstr ""
 
@@ -287,27 +274,23 @@ msgstr ""
 msgid "Configure general settings"
 msgstr ""
 
-#: ../build/src/ui_ConfigDialog.h:1271
-msgid "Call history"
-msgstr ""
-
-#: ../build/src/ui_ConfigDialog.h:1272
+#: ../build/src/ui_ConfigDialog.h:1272 ../build/src/ui_dlggeneralbase.h:161
 msgid "&Capacity"
 msgstr ""
 
-#: ../build/src/ui_ConfigDialog.h:1273
+#: ../build/src/ui_ConfigDialog.h:1273 ../build/src/ui_dlggeneralbase.h:162
 msgid "C&lear history"
 msgstr ""
 
-#: ../build/src/ui_ConfigDialog.h:1274
+#: ../build/src/ui_ConfigDialog.h:1274 ../build/src/ui_dlggeneralbase.h:163
 msgid "Connection"
 msgstr ""
 
-#: ../build/src/ui_ConfigDialog.h:1275
+#: ../build/src/ui_ConfigDialog.h:1275 ../build/src/ui_dlggeneralbase.h:164
 msgid "SIP &Port"
 msgstr ""
 
-#: ../build/src/ui_ConfigDialog.h:1276
+#: ../build/src/ui_ConfigDialog.h:1276 ../build/src/ui_dlggeneralbase.h:165
 msgid "Attention "
 msgstr ""
 
@@ -348,7 +331,7 @@ msgid "Remove this account"
 msgstr ""
 
 #: ../build/src/ui_ConfigDialog.h:1287
-msgid "+"
+msgid "Backspace, Return"
 msgstr ""
 
 #: ../build/src/ui_ConfigDialog.h:1288
@@ -552,6 +535,7 @@ msgstr ""
 msgid "Prepend"
 msgstr ""
 
+#: ../build/src/ui_dlggeneralbase.h:159
 #: ../build/src/ui_sflphone_kdeview_base.h:492
 msgid "Form"
 msgstr ""
@@ -608,85 +592,6 @@ msgstr ""
 msgid "Account creation &wizard"
 msgstr ""
 
-#: ../build/src/ui_sflphone_kdeview_base.h:507
-msgid "Address book"
-msgstr ""
-
 #: ../build/src/ui_sflphone_kdeview_base.h:508
 msgid "Attention:number of results exceeds max displayed."
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:509
-#: ../build/src/ui_sflphone_kdeview_base.h:532
-#: ../build/src/ui_sflphone_kdeview_base.h:533
-#: ../build/src/ui_sflphone_kdeview_base.h:534
-msgid "..."
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:510
-msgid "1"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:511
-msgid ""
-"2\n"
-"abc"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:513
-msgid "2"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:514
-msgid ""
-"3\n"
-"def"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:516
-msgid ""
-"4\n"
-"ghi"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:518
-msgid ""
-"5\n"
-"jkl"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:520
-msgid ""
-"6\n"
-"mno"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:522
-msgid ""
-"7\n"
-"pqrs"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:524
-msgid ""
-"8\n"
-"tuv"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:526
-msgid ""
-"9\n"
-"wxyz"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:528
-msgid "*"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:529
-msgid "0\n"
-msgstr ""
-
-#: ../build/src/ui_sflphone_kdeview_base.h:531
-msgid "#"
 msgstr ""

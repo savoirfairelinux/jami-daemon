@@ -158,8 +158,13 @@ AccountWizard::AccountWizard(QWidget * parent)
 	setPage(Page_Conclusion, new WizardAccountConclusionPage);
 	
 	setStartId(Page_Intro);
-	setWindowTitle(tr2i18n("Account Wizard"));
-	setPixmap(QWizard::LogoPixmap, QPixmap(":/images/icons/sflphone.png"));
+	setWindowTitle(tr2i18n("Account Creation Wizard"));
+	setWindowIcon(QIcon(ICON_SFLPHONE));
+	setMinimumHeight(350);
+// 	setPixmap(QWizard::LogoPixmap, QPixmap(ICON_SFLPHONE));
+	setPixmap(QWizard::WatermarkPixmap, QPixmap(ICON_SFLPHONE));
+// 	setPixmap(QWizard::BannerPixmap, QPixmap(ICON_SFLPHONE));
+// 	setPixmap(QWizard::BackgroundPixmap, QPixmap(ICON_SFLPHONE));
 }
 
 
@@ -192,7 +197,7 @@ void AccountWizard::accept()
 		rest_account acc = get_rest_account(SFL_ACCOUNT_HOST, charEmailAddress);
 		if(acc.success)
 		{
-			ret += tr2i18n("Creation of account succeed with parameters :\n");
+			ret += tr2i18n("Creation of account succeed with these parameters") + " :\n";
 			alias = QString(acc.user) + "@" + SFL_ACCOUNT_HOST;
 			server = QString(SFL_ACCOUNT_HOST);
 			user = QString(acc.user);
@@ -203,13 +208,13 @@ void AccountWizard::accept()
 		}
 		else
 		{
-			ret += tr2i18n("Creation of account has failed for the reason :\n");
+			ret += tr2i18n("Creation of account has failed for the reason") + " :\n";
 			ret += acc.reason;
 		}
 	}
 	else
 	{
-		ret += tr2i18n("Register of account succeed with parameters :\n");
+		ret += tr2i18n("Register of account succeed with these parameters") + " :\n";
 		bool SIPAccount = field(FIELD_SIP_ACCOUNT).toBool();
 		if(SIPAccount)
 		{
@@ -245,12 +250,12 @@ void AccountWizard::accept()
 			if(enableStun != configurationManager.isStunEnabled()) configurationManager.enableStun();
 			if(enableStun) configurationManager.setStunServer(stunServer);
 		}
-		ret += tr2i18n("Alias : ") + alias + "\n";
-		ret += tr2i18n("Server : ") + server + "\n";
-		ret += tr2i18n("User : ") + user + "\n";
-		ret += tr2i18n("Password : ") + password + "\n";
-		ret += tr2i18n("Protocol : ") + protocol + "\n";
-		ret += tr2i18n("Mailbox : ") + mailbox + "\n";
+		ret += tr2i18n("Alias") + " : " + alias + "\n";
+		ret += tr2i18n("Server") + " : " + server + "\n";
+		ret += tr2i18n("User") + " : " + user + "\n";
+		ret += tr2i18n("Password") + " : " + password + "\n";
+		ret += tr2i18n("Protocol") + " : " + protocol + "\n";
+		ret += tr2i18n("Mailbox") + " : " + mailbox + "\n";
 	}
 	qDebug() << ret;
 	QDialog::accept();
@@ -342,7 +347,7 @@ WizardAccountTypePage::WizardAccountTypePage(QWidget *parent)
      : QWizardPage(parent)
 {
 	setTitle(tr2i18n("VoIP Protocols"));
-	setSubTitle(tr2i18n("Choose the account type :"));
+	setSubTitle(tr2i18n("Choose the account type") + " :");
 
 	radioButton_SIP = new QRadioButton(tr2i18n("Register a SIP (Session Initiation Protocol) account"));
 	radioButton_IAX = new QRadioButton(tr2i18n("Register a IAX2 (InterAsterisk eXchange) account"));
@@ -429,10 +434,10 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 	}
 	setSubTitle(tr2i18n("Please full these settings fields."));
 
-	label_alias = new QLabel(tr2i18n("Alias *"));
-	label_server = new QLabel(tr2i18n("Server *"));
-	label_user = new QLabel(tr2i18n("User *"));
-	label_password = new QLabel(tr2i18n("Password *"));
+	label_alias = new QLabel(tr2i18n("Alias") + " *");
+	label_server = new QLabel(tr2i18n("Server") + " *");
+	label_user = new QLabel(tr2i18n("User") + " *");
+	label_password = new QLabel(tr2i18n("Password") + " *");
 	
 	lineEdit_alias = new QLineEdit;
 	lineEdit_server = new QLineEdit;

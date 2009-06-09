@@ -6,7 +6,7 @@ If we need to update translations files, do the following steps:
 This command will update the template file with the current source files.
 To be able to add strings from the ui files, and other non-c++ files which generates some c++ source, you have to first build and make the project in build directory (see the INSTALL file in root directory sflphone-client-kde).
 
-	for fichier in `find  .  -name *.po `  ;  do  ;  msgmerge --update $fichier sflphone-client-kde.pot  ;  done
+	for fichier in `find  .  -name *.po `  ;  do  msgmerge --update $fichier sflphone-client-kde.pot  ;  done
 	
 This command will update the po files in every subdirectory with the new pot file.
 You will then be able to translate the new strings in each po file.

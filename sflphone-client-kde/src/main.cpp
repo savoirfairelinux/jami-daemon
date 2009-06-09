@@ -16,6 +16,8 @@
 #include "instance_interface_singleton.h"
 #include "sflphone_const.h"
 
+#include "conf/ConfigurationDialog.h"
+
 
 static const char description[] = I18N_NOOP("A KDE 4 Client for SFLPhone");
 
@@ -23,6 +25,7 @@ static const char version[] = "0.9.5";
 
 int main(int argc, char **argv)
 {
+	
 	try
 	{
 		KLocale::setMainCatalog("sflphone-client-kde");
@@ -63,18 +66,11 @@ int main(int argc, char **argv)
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
 		
+// 		ConfigurationDialogKDE * dlg = new ConfigurationDialogKDE();
+// 		dlg->show();
+		
 		SFLPhone * fenetre = new SFLPhone();
 		
-// 		QString locale = QLocale::system().name();
-// 		
-// 		QTranslator qtTranslator;
-// 		qtTranslator.load("qt_" + locale);
-// 		app.installTranslator(&qtTranslator);
-// 
-// 		QTranslator translator;
-// 		translator.load("sflphone-client-kde_" + locale, QString(), QString(), ".po" );
-// 		app.installTranslator(&translator);
-
 		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
 		fenetre->show();
 	
