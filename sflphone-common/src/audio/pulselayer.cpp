@@ -224,7 +224,12 @@ int PulseLayer::getMic(void *buffer, int toCopy)
 
 void PulseLayer::startStream (void) 
 {
-    flushMic();
+    // flushMic();
+
+    _urgentRingBuffer.flush();
+    _micRingBuffer.flush();
+    _voiceRingBuffer.flush();
+
     _debug("PulseLayer::Start stream\n");
     pa_threaded_mainloop_lock(m);
    
@@ -238,17 +243,17 @@ void PulseLayer::startStream (void)
     void 
 PulseLayer::stopStream (void) 
 {
-    _debug("PulseLayer::Stop stream\n");
-     //pa_stream_flush( playback->pulseStream(), NULL, NULL );
-     //pa_stream_flush( record->pulseStream(), NULL, NULL );
-    
+     _debug("PulseLayer::Stop stream\n");
+     pa_stream_flush( playback->pulseStream(), NULL, NULL );
+     pa_stream_flush( record->pulseStream(), NULL, NULL );
     
     flushMic();
     flushMain();
     flushUrgent();
 
     pa_stream_cork( playback->pulseStream(), 1, NULL, NULL);
-    pa_stream_cork( record->pulseStream(), 1, NULL, NULL); 
+    pa_stream_cork( record->pulseStream(), 1, NULL, NULL);
+
 }
 
 
