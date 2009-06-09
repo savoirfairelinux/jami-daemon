@@ -299,10 +299,10 @@ gchar* get_formatted_start_timestamp (callable_obj_t *obj)
     if (obj)
     {
         lt = obj->_time_start;
-        ptr = gmtime(&lt);
+        ptr = localtime(&lt);
 
         // result function of the current locale
-        strftime((char *)str, 100, "%c", (const struct tm *)ptr);
+        strftime((char *)str, 100, "%x %X", (const struct tm *)ptr);
         return g_markup_printf_escaped("\n%s\n" , str);
     }
     return "";
