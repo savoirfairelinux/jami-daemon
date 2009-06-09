@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE kcfg SYSTEM "http://www.kde.org/standards/kcfg/1.0/kcfg.dtd">
+<kcfg> 
+  <kcfgfile name="ConfigDialogKDE"/> 
+  <group name="kjots"> 
+    <!--
+    <entry name="SplitterSizes" type="IntList"> 
+      <label>How the main window is divided.</label> 
+    </entry> 
+    -->
+    <entry name="Width" type="Int"> 
+      <label>Width of the main window.</label> 
+      <default>600</default> 
+    </entry> 
+    <!--
+    <entry name="Height" type="Int"> 
+      <label>Height of the main window.</label> 
+      <default>400</default> 
+    </entry> 
+    <entry name="OpenBooks" type="StringList"> 
+      <label>All books that are opened.</label> 
+    </entry> 
+    <entry name="CurrentBook" type="String"> 
+      <label>The book currently opened.</label> 
+    </entry> 
+    <entry name="Font" type="Font"> 
+      <label>The font used to display the contents of books.</label> 
+      <default code="true">KGlobalSettings::generalFont()</default> 
+    </entry>
+    --> 
+  </group> 
+</kcfg>

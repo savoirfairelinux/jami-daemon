@@ -36,7 +36,7 @@
      <item>
       <widget class="QListWidget" name="list_options">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -49,7 +49,7 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>100</width>
+         <width>200</width>
          <height>16777215</height>
         </size>
        </property>
@@ -147,7 +147,7 @@
        </item>
        <item>
         <property name="text">
-         <string>Record</string>
+         <string comment="config page name">Record</string>
         </property>
        </item>
        <item>
@@ -179,7 +179,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget_options">
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_general">
         <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -609,7 +609,7 @@
                       <normaloff>:/images/icons/remove.png</normaloff>:/images/icons/remove.png</iconset>
                     </property>
                     <property name="shortcut">
-                     <string>+</string>
+                     <string>Backspace, Return</string>
                     </property>
                    </widget>
                   </item>

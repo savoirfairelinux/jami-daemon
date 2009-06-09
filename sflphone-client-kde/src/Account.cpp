@@ -145,15 +145,13 @@ MapStringString & Account::getAccountDetails() const
 
 QListWidgetItem * Account::getItem()
 {
-	if(!item)
-		qDebug() << "null" ;
+	if(!item)  {	qDebug() << "null" ;	}
 	return item;
 }
 
 AccountItemWidget * Account::getItemWidget()
 {
-	if(itemWidget == NULL)
-		qDebug() << "null";
+	if(itemWidget == NULL)  {	qDebug() << "null";	}
 	return itemWidget;
 }
 
@@ -165,9 +163,9 @@ QString Account::getStateName(QString & state)
 QColor Account::getStateColor()
 {
 	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
-		return Qt::black;
+	{	return Qt::black;	}
 	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
-		return Qt::darkGreen;
+	{	return Qt::darkGreen;	}
 	return Qt::red;
 }
 
@@ -175,9 +173,9 @@ QColor Account::getStateColor()
 QString Account::getStateColorName()
 {
 	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
-		return "black";
+	{	return "black";	}
 	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
-		return "darkGreen";
+	{	return "darkGreen";	}
 	return "red";
 }
 

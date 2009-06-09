@@ -178,7 +178,7 @@ void SFLPhone::sendNotif(QString caller)
 {
 	trayIcon->showMessage(
 	    tr2i18n("Incoming call"), 
-	    tr2i18n("You have an incoming call from : ") + caller + ".\n" + tr2i18n("Click to accept or refuse it."), 
+	    tr2i18n("You have an incoming call from") + " " + caller + ".\n" + tr2i18n("Click to accept or refuse it."), 
 	    QSystemTrayIcon::Warning, 
 	    20000);
 }
