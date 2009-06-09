@@ -73,6 +73,13 @@ focus_on_searchbar_in(){
     focus_is_on_searchbar = TRUE;
 }
 
+void
+clear_icon_released(GtkEntry *entry, GtkEntryIconPosition  position UNUSED, GdkEventButton *event UNUSED, gpointer data UNUSED)
+{
+    DEBUG("Clear Icon Released!\n");
+    gtk_entry_set_text(entry, "");
+}
+
 
     void
 searchbar_init(calltab_t *tab)
@@ -93,9 +100,11 @@ GtkWidget* searchbar_new(gchar* searchbar_type) {
     searchbox = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
+    g_signal_connect_after (G_OBJECT (searchbox), "icon-release",G_CALLBACK (clear_icon_released), NULL);
 #else
 
     GtkWidget *image;
+    printf("Create search bar\n");
 
     searchbox = sexy_icon_entry_new();
     image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
