@@ -126,7 +126,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
 void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details, callable_obj_t **call)
 {
     gchar *peer_name="";
-    gchar *peer_number="", *accountID, *time_stop="";
+    gchar *peer_number="", *accountID="", *time_stop="";
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
     char *ptr;
@@ -151,6 +151,9 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
                 case 3:
                     time_stop = ptr;
                     break;
+                case 4:
+                    accountID = ptr;
+                    break;
                 default:
                     break;
             }
@@ -159,7 +162,7 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
     }
 
-    create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", "", peer_name, peer_number, &new_call);
+    create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", accountID, peer_name, peer_number, &new_call);
     new_call->_history_state = history_state;
     new_call->_time_start = convert_gchar_to_timestamp (timestamp);
     new_call->_time_stop = convert_gchar_to_timestamp (time_stop);
@@ -262,8 +265,10 @@ gchar* serialize_history_entry (callable_obj_t *entry)
     
     result = g_strconcat (history_state, separator, 
                           entry->_peer_number, separator, 
-                          g_strcasecmp (entry->_peer_name,"") ==0 ? "empty": entry->_peer_name, 
-                           separator, timestamp, NULL);
+                          g_strcasecmp (entry->_peer_name,"") ==0 ? "empty": entry->_peer_name, separator, 
+                          timestamp, separator, 
+                          g_strcasecmp (entry->_accountID,"") ==0 ? "empty": entry->_accountID, 
+                          NULL);
 
     return result;
 }

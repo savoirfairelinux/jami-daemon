@@ -21,6 +21,7 @@
 #include <sstream>
 
 #include "historyTest.h"
+#include "manager.h"
 
 using std::cout;
 using std::endl;
@@ -28,6 +29,7 @@ using std::endl;
 #define HOMEDIR (getenv ("HOME"))
 #define HISTORY_SAMPLE  "history-sample"
 #define HISTORY_SAMPLE_SIZE     3
+#define CONFIG_SAMPLE   "sflphonedrc-sample"
 
 void HistoryTest::setUp(){
     // Instanciate the cleaner singleton
@@ -105,6 +107,10 @@ void HistoryTest::test_get_history_serialized ()
     std::map <std::string, std::string>::iterator iter;
     std::string tmp;
 
+    // Load the sample user config 
+    Manager::instance().initConfigFile(true, CONFIG_SAMPLE);
+    Manager::instance().loadAccountMap ();
+
     CPPUNIT_ASSERT (history->load_history (HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     res = history->get_history_serialized ();
     CPPUNIT_ASSERT (res.size()==HISTORY_SAMPLE_SIZE);
@@ -114,13 +120,14 @@ void HistoryTest::test_get_history_serialized ()
     // The serialized form is: calltype%to%from%callid
     
     // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux|144562458";
+    tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
     CPPUNIT_ASSERT (tmp == res ["144562436"]);
 
-    tmp = "2|136|Emmanuel Milou|747638765";
+    tmp = "2|136|Emmanuel Milou|747638765|Account:1239059899";
     CPPUNIT_ASSERT (tmp == res ["747638685"]);
 
-    tmp = "1|5143848557|Chez wam|775354987";
+    // the account ID does not correspond to a loaded account
+    tmp = "1|5143848557|empty|775354987|empty";
     CPPUNIT_ASSERT (tmp == res ["775354456"]);
 }
 
@@ -131,9 +138,9 @@ void HistoryTest::test_set_serialized_history ()
     std::string tmp;
     Conf::ConfigTree history_list;
 
-    map_test["144562436"] = "0|514-276-5468|Savoir-faire Linux|144562458";
-    map_test["747638685"] = "2|136|Emmanuel Milou|747638765";
-    map_test["775354456"] = "1|5143848557|Chez wam|775354987";
+    map_test["144562436"] = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
+    map_test["747638685"] = "2|136|Emmanuel Milou|747638765|Account:1239059899";
+    map_test["775354456"] = "1|5143848557|empty|775354987|Account:43789459478";
 
     CPPUNIT_ASSERT (history->load_history (HISTORY_SAMPLE) == HISTORY_SAMPLE_SIZE);
     CPPUNIT_ASSERT (history->set_serialized_history (map_test) == 3);
@@ -141,16 +148,17 @@ void HistoryTest::test_set_serialized_history ()
 
     map_test.clear ();
     map_test = history->get_history_serialized ();
-    CPPUNIT_ASSERT (map_test.size()==HISTORY_SAMPLE_SIZE);
+    CPPUNIT_ASSERT (map_test.size()==3);
 
     // Check the first
-    tmp = "0|514-276-5468|Savoir-faire Linux|144562458";
+    tmp = "0|514-276-5468|Savoir-faire Linux|144562458|empty";
     CPPUNIT_ASSERT (tmp == map_test ["144562436"]);
 
-    tmp = "2|136|Emmanuel Milou|747638765";
+    tmp = "2|136|Emmanuel Milou|747638765|Account:1239059899";
     CPPUNIT_ASSERT (tmp == map_test ["747638685"]);
 
-    tmp = "1|5143848557|Chez wam|775354987";
+    // the account ID does not correspond to a loaded account
+    tmp = "1|5143848557|empty|775354987|empty";
     CPPUNIT_ASSERT (tmp == map_test ["775354456"]);
 
     history->save_history_items_map (&history_list);
