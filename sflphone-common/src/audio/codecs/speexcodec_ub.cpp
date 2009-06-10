@@ -36,7 +36,7 @@ class Speex : public AudioCodec{
             _preprocess_state()
     {
         _clockRate = 32000;
-        _frameSize = 640; // 20 ms at 16 kHz
+        _frameSize = 320; // 20 ms at 32 kHz
         _channel = 1;
         _bitrate = 0;
         _bandwidth = 0; 
@@ -113,12 +113,13 @@ class Speex : public AudioCodec{
         {   
             
 	    // int ratio = 320 / _speex_frame_size;
+	    printf("Codec::codecDecode() size %i\n", size);
 	    // printf("Codec::codecDecode() ratio %i\n", ratio);
-	    // printf("Codec::codecDecode() _speex_frame_size %i\n", _speex_frame_size);
+	    printf("Codec::codecDecode() _speex_frame_size %i\n", _speex_frame_size);
             speex_bits_read_from(&_speex_dec_bits, (char*)src, size);
             speex_decode_int(_speex_dec_state, &_speex_dec_bits, dst);
 	    // printf("Codec::codecEncode() _speex_frame_size * ratio %i\n", _speex_frame_size * ratio);
-            return 1280; 
+            return 640; 
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
@@ -129,7 +130,8 @@ class Speex : public AudioCodec{
             
             speex_preprocess_run(_preprocess_state, src);
 #endif 
-	    printf("Codec::codecEncode() nbBytes: %i \n",size);
+
+	    printf("Codec::codecEncode() size: %i \n",size);
             speex_encode_int(_speex_enc_state, src, &_speex_enc_bits);
             int nbBytes = speex_bits_write(&_speex_enc_bits, (char*)dst, size);
             printf("Codec::codecEncode() nbBytes: %i \n",nbBytes);
