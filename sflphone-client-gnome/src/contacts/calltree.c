@@ -547,9 +547,12 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
         g_object_unref(G_OBJECT(pixbuf));
 
 
-    gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
+    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
+    gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
 
-    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
+    // gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
+
+    // gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
 
     toolbar_update_buttons();
 
