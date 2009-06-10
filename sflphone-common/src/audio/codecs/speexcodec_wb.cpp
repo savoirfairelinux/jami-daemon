@@ -111,14 +111,11 @@ class Speex : public AudioCodec{
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
         {   
-            
+
             int ratio = 320 / _speex_frame_size;
-	    printf("Codec::codecDecode() size %i\n", size);
-	    printf("Codec::codecDecode() ratio %i\n", ratio);
-	    printf("Codec::codecDecode() _speex_frame_size %i\n", _speex_frame_size);
+
             speex_bits_read_from(&_speex_dec_bits, (char*)src, size);
             speex_decode_int(_speex_dec_state, &_speex_dec_bits, dst);
-	    printf("Codec::codecDecode() _speex_frame_size * ratio %i\n", _speex_frame_size * ratio);
 
             return 2 * _speex_frame_size * ratio; 
         }
