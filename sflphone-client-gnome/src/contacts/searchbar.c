@@ -73,13 +73,14 @@ focus_on_searchbar_in(){
     focus_is_on_searchbar = TRUE;
 }
 
+#if GTK_CHECK_VERSION(2,16,0)
 void
 clear_icon_released(GtkEntry *entry, GtkEntryIconPosition  position UNUSED, GdkEventButton *event UNUSED, gpointer data UNUSED)
 {
     DEBUG("Clear Icon Released!\n");
     gtk_entry_set_text(entry, "");
 }
-
+#endif
 
     void
 searchbar_init(calltab_t *tab)
