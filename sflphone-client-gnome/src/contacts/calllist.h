@@ -36,6 +36,7 @@ typedef struct {
   // Calllist vars
 	GQueue* callQueue;
 	callable_obj_t* selectedCall;
+    gchar *_name;
 } calltab_t;
 
 void

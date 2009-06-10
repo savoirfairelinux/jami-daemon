@@ -28,7 +28,7 @@ calltab_t* current_calls;
 calltab_t* history;
 calltab_t* contacts;
 
-calltab_t* calltab_init(gchar* searchbar_type);
+calltab_t* calltab_init (gboolean searchbar_type, gchar *name);
 
 /** Mark a call as selected.  There can be only one selected call.  This call
   * is the currently highlighted one in the list.
@@ -42,6 +42,6 @@ callable_obj_t *
 calltab_get_selected_call (calltab_t*);
 
 void
-calltab_create_searchbar(calltab_t *, gchar *);
+calltab_create_searchbar (calltab_t *);
 
 #endif
