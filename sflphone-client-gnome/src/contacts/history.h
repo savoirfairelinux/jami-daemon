@@ -27,11 +27,17 @@
 #include <gtk/gtk.h>
 #include <sflphone_const.h>
 
+typedef enum {
+    SEARCH_ALL,
+    SEARCH_MISSED,
+    SEARCH_INCOMING,
+    SEARCH_OUTGOING
+} SearchType;
+
 /**
  * Execute a search in history
  */
-void
-history_search(GtkEntry* entry UNUSED);
+void history_search (SearchType search_type);
 
 /**
  * Initialize history

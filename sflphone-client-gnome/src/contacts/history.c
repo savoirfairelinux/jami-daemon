@@ -28,7 +28,7 @@ GtkWidget * history_searchbar_widget;
 static GtkTreeModel* history_create_filter (GtkTreeModel*);
 static gboolean history_is_visible (GtkTreeModel*, GtkTreeIter*, gpointer);
 
-void history_search (GtkEntry* entry UNUSED)
+void history_search (SearchType search_type)
 {
     if(history_filter != NULL) {
         gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (history_filter));
@@ -60,20 +60,47 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
 {
     if (SHOW_SEARCHBAR)
     {
-        GValue val;
+        GValue val, obj;
 
+        callable_obj_t *history_entry = NULL;
         gchar* text = NULL;
         gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(history_searchbar_widget));
         memset (&val, 0, sizeof(val));
+        memset (&obj, 0, sizeof(obj));
         
+        // Fetch the call description
         gtk_tree_model_get_value (GTK_TREE_MODEL(model), iter, 1, &val);
         if(G_VALUE_HOLDS_STRING(&val)){
             text = (gchar *)g_value_get_string(&val);
         }
-        if(text != NULL ){
-            return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
+        
+        // Fetch the call type
+        gtk_tree_model_get_value (GTK_TREE_MODEL(model), iter, 2, &obj);
+        if (G_VALUE_HOLDS_POINTER (&obj)){
+            history_entry = (gpointer) g_value_get_pointer (&obj);
         }
+
+        if(text != NULL)
+        {
+            if (history_entry)
+            {
+                // Filter according to the type of call
+                // MISSED, INCOMING, OUTGOING, ALL
+                if ((int)get_current_history_search_type () == SEARCH_ALL)
+                    return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
+                else
+                {
+                    // We need a match on the history_state_t and the current search type
+                    if ( (history_entry->_history_state + 1) == (int)get_current_history_search_type ())
+                        return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
+                }
+            }
+        }
+
+        // Clean up 
         g_value_unset (&val);
+        g_value_unset (&obj);
+
         return TRUE;
     }
     return TRUE;
