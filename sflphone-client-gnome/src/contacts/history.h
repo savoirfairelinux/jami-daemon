@@ -39,6 +39,9 @@ history_search(GtkEntry* entry UNUSED);
 void
 history_init();
 
+
+void history_reinit (calltab_t* history);
+
 /**
  * Set history search bar widget (needed for is_visible)
  */
