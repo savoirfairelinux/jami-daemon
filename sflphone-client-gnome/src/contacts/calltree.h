@@ -33,7 +33,7 @@
  * @return GtkWidget* A new widget
  */
 void
-calltree_create(calltab_t* tab, gchar* searchbar_type);
+calltree_create(calltab_t* tab, gboolean searchbar_type);
 
 /**
  * Add a call in the calltree

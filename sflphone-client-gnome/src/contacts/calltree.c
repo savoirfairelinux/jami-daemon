@@ -170,7 +170,7 @@ focus_on_calltree_in(){
 }
 
     void
-calltree_create (calltab_t* tab, gchar* searchbar_type)
+calltree_create (calltab_t* tab, gboolean searchbar_type)
 {
     // GtkWidget *sw;
     // GtkCellRenderer *rend;
@@ -246,19 +246,13 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
 
     gtk_box_pack_start(GTK_BOX(tab->tree), sw, TRUE, TRUE, 0);
 
-    // no search bar if tab is either "history" or "addressbook"
+    // search bar if tab is either "history" or "addressbook"
     if(searchbar_type){
-        calltab_create_searchbar(tab,searchbar_type);
+        calltab_create_searchbar (tab);
         gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
     }
 
     gtk_widget_show(tab->tree);
-
-
-    // gtk_widget_show(tab->searchbar);
-
-    //toolbar_update_buttons();
-
 }
 
     void

@@ -23,8 +23,7 @@
 #include <calltree.h>
 #include <contacts/searchbar.h>
 
-calltab_t*
-calltab_init(gchar* searchbar_type)
+calltab_t* calltab_init (gboolean searchbar_type, gchar *name)
 {
 	calltab_t* ret;
 
@@ -33,11 +32,12 @@ calltab_init(gchar* searchbar_type)
 	ret->store = NULL;
 	ret->view = NULL;
 	ret->tree = NULL;
-        ret->searchbar = NULL;
+    ret->searchbar = NULL;
 	ret->callQueue = NULL;
 	ret->selectedCall = NULL;
+    ret->_name = g_strdup (name);
 
-	calltree_create(ret, searchbar_type);
+	calltree_create (ret, searchbar_type);
 	calllist_init(ret);
 
 
@@ -58,7 +58,12 @@ calltab_get_selected_call (calltab_t* tab)
 }
 
 void
-calltab_create_searchbar(calltab_t* tab, gchar* searchbar_type)
+calltab_create_searchbar (calltab_t* tab)
 {
-  tab->searchbar = searchbar_new(searchbar_type);
+    if (g_strcasecmp (tab->_name, HISTORY) == 0)
+        tab->searchbar = history_searchbar_new ();
+    else if (g_strcasecmp (tab->_name, CONTACTS) == 0)
+        tab->searchbar = contacts_searchbar_new ();
+    else
+        ERROR ("Current calls tab does not need a searchbar\n");
 }

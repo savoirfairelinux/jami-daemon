@@ -28,53 +28,45 @@ GtkWidget * history_searchbar_widget;
 static GtkTreeModel* history_create_filter (GtkTreeModel*);
 static gboolean history_is_visible (GtkTreeModel*, GtkTreeIter*, gpointer);
 
-
-void
-history_search(GtkEntry* entry UNUSED){
-
-  
-  if(history_filter != NULL) {
-    
-    gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(history_filter));
-  
-  }
+void history_search (GtkEntry* entry UNUSED)
+{
+    if(history_filter != NULL) {
+        gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (history_filter));
+    }
 }
 
-void
-history_init(){
-  
-  history_filter = history_create_filter(GTK_TREE_MODEL (history->store));
-  gtk_tree_view_set_model(GTK_TREE_VIEW (history->view), GTK_TREE_MODEL(history_filter));
-  
+void history_init (void)
+{
+    history_filter = history_create_filter (GTK_TREE_MODEL (history->store));
+    gtk_tree_view_set_model (GTK_TREE_VIEW (history->view), GTK_TREE_MODEL (history_filter));
 }
 
-void history_set_searchbar_widget(GtkWidget *searchbar){
-
-  history_searchbar_widget = searchbar;
+void history_set_searchbar_widget (GtkWidget *searchbar)
+{
+    history_searchbar_widget = searchbar;
 }
 
-static GtkTreeModel*
-history_create_filter (GtkTreeModel* child) {
+static GtkTreeModel* history_create_filter (GtkTreeModel* child) 
+{
+    GtkTreeModel* ret;
 
-  GtkTreeModel* ret;
-
-  DEBUG("Create Filter\n");
-  ret = gtk_tree_model_filter_new(child, NULL);
-  gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(ret), history_is_visible, NULL, NULL);
-  return GTK_TREE_MODEL(ret);
+    DEBUG("Create Filter\n");
+    ret = gtk_tree_model_filter_new (child, NULL);
+    gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (ret), history_is_visible, NULL, NULL);
+    return GTK_TREE_MODEL (ret);
 }
 
-static gboolean
-history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED) {
-
-    if( SHOW_SEARCHBAR )
+static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED) 
+{
+    if (SHOW_SEARCHBAR)
     {
         GValue val;
 
         gchar* text = NULL;
         gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(history_searchbar_widget));
         memset (&val, 0, sizeof(val));
-        gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 1, &val);
+        
+        gtk_tree_model_get_value (GTK_TREE_MODEL(model), iter, 1, &val);
         if(G_VALUE_HOLDS_STRING(&val)){
             text = (gchar *)g_value_get_string(&val);
         }
@@ -84,6 +76,5 @@ history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED
         g_value_unset (&val);
         return TRUE;
     }
-
     return TRUE;
 }

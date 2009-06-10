@@ -236,9 +236,9 @@ gboolean sflphone_init()
     {
         dbus_register(getpid(), "Gtk+ Client");
 
-        current_calls = calltab_init(NULL);
-        contacts = calltab_init("contacts");
-        history = calltab_init("history");
+        current_calls = calltab_init(FALSE, CURRENT_CALLS);
+        contacts = calltab_init(TRUE, CONTACTS);
+        history = calltab_init(TRUE, HISTORY);
 
         account_list_init ();
         codec_list_init();
