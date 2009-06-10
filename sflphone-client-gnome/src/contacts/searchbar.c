@@ -28,6 +28,7 @@ const GdkColor GRAY_COLOR = { 0, 30000, 30000, 30000 };
 
 GtkWidget * searchbox;
 
+
 static GtkWidget *menu = NULL;
 
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED)
@@ -36,12 +37,14 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
         addressbook_search (entry);
     }
     else if (active_calltree == history) {
-        history_search (entry);
+        history_search (HistorySearchType);
     }
 }
 
 static void search_all (GtkWidget *item, GtkEntry  *entry)
 {
+    HistorySearchType = SEARCH_ALL;
+
     gtk_entry_set_icon_from_stock (entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
             "Search all\n"
@@ -50,6 +53,8 @@ static void search_all (GtkWidget *item, GtkEntry  *entry)
 
 static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
 {
+    HistorySearchType = SEARCH_MISSED;
+
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/missed.svg", NULL);
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
@@ -59,6 +64,8 @@ static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
 
 static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
 {
+    HistorySearchType = SEARCH_INCOMING;
+
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/incoming.svg", NULL);
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
@@ -68,6 +75,8 @@ static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
 
 static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
 {
+    HistorySearchType = SEARCH_OUTGOING;
+
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/outgoing.svg", NULL);
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
@@ -77,16 +86,19 @@ static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
 
 static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event, gpointer data)
 {
-    if (position == GTK_ENTRY_ICON_PRIMARY)
+    if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree == history)
         gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 
                 event->button, event->time);
     else 
         gtk_entry_set_text (entry, "");
 }
 
-static void activate_cb (GtkEntry  *entry, GtkButton *button)
+static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec)
 {
-    history_search (entry);
+    gboolean has_text;
+
+    has_text = gtk_entry_get_text_length (entry) > 0;
+    gtk_entry_set_icon_sensitive (entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 }
 
 void
@@ -103,17 +115,6 @@ focus_on_searchbar_in(){
     focus_is_on_searchbar = TRUE;
 }
 
-
-#if GTK_CHECK_VERSION(2,16,0)
-void
-clear_icon_released(GtkEntry *entry, GtkEntryIconPosition  position UNUSED, GdkEventButton *event UNUSED, gpointer data UNUSED)
-{
-    DEBUG("Clear Icon Released!\n");
-    gtk_entry_set_text(entry, "");
-}
-#endif
-
-    
 void searchbar_init(calltab_t *tab)
 {
     if (g_strcasecmp (tab->_name, CONTACTS) == 0) 
@@ -139,7 +140,12 @@ GtkWidget* history_searchbar_new (void)
 
     searchbox = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
+
+    // Set the clean insensitive
+    text_changed_cb (GTK_ENTRY (searchbox), NULL);
+
     g_signal_connect (searchbox, "icon-press", G_CALLBACK (icon_press_cb), NULL);
+    g_signal_connect (searchbox, "notify::text", G_CALLBACK (text_changed_cb), NULL);
     //g_signal_connect (searchbox, "activate", G_CALLBACK (activate_cb), NULL);
 
     // Set up the search icon
@@ -184,7 +190,7 @@ GtkWidget* history_searchbar_new (void)
     sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(searchbox), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
     sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(searchbox) );
 #endif
-   
+
     g_signal_connect_after(GTK_ENTRY(searchbox), "changed", G_CALLBACK(searchbar_entry_changed), NULL);
     g_signal_connect_after (G_OBJECT (searchbox), "focus-in-event",
             G_CALLBACK (focus_on_searchbar_in), NULL);
@@ -205,9 +211,21 @@ GtkWidget* contacts_searchbar_new () {
 
 #if GTK_CHECK_VERSION(2,16,0)
 
+    GdkPixbuf *pixbuf; 
+
     searchbox = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
-    gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
+    pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL);
+    gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY, pixbuf);
+    gtk_entry_set_icon_tooltip_text (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY,
+            "Search contacts\n"
+            "GNOME evolution backend");
+
+
+    // Set the clean insensitive
+    text_changed_cb (GTK_ENTRY (searchbox), NULL);
+
+    g_signal_connect (searchbox, "notify::text", G_CALLBACK (text_changed_cb), NULL);
     g_signal_connect (searchbox, "icon-press", G_CALLBACK (icon_press_cb), NULL);
 
 #else
@@ -220,8 +238,6 @@ GtkWidget* contacts_searchbar_new () {
     sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(searchbox) );
 #endif
 
-    gtk_widget_modify_text(searchbox, GTK_STATE_NORMAL, &GRAY_COLOR); 
-
     g_signal_connect_after(GTK_ENTRY(searchbox), "changed", G_CALLBACK(searchbar_entry_changed), NULL);
 
     g_signal_connect_after (G_OBJECT (searchbox), "focus-in-event",
@@ -230,8 +246,6 @@ GtkWidget* contacts_searchbar_new () {
             G_CALLBACK (focus_on_searchbar_out), NULL);
 
     gtk_box_pack_start(GTK_BOX(ret), searchbox, TRUE, TRUE, 0);
-
-    //history_set_searchbar_widget(searchbox);
 
     return ret;
 }
@@ -242,4 +256,9 @@ void activateWaitingLayer() {
 
 void deactivateWaitingLayer() {
     gtk_widget_hide(waitingLayer);
+}
+
+SearchType get_current_history_search_type (void)
+{
+    return HistorySearchType;
 }

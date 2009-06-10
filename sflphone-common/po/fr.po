@@ -351,7 +351,7 @@ msgstr "Co_mptes"
 
 #: ../../sflphone-client-gnome/src/menus.c:588
 msgid "_Edit"
-msgstr "_Options"
+msgstr "_Editer"
 
 #: ../../sflphone-client-gnome/src/menus.c:649
 msgid "_Dialpad"
