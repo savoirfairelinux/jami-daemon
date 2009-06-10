@@ -196,6 +196,9 @@ static void history_enabled_cb (GtkWidget *widget)
 {
     history_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
     gtk_widget_set_sensitive (GTK_WIDGET (history_value), history_enabled);
+        
+    // Toggle it through D-Bus
+    dbus_set_history_enabled ();
 }
 
 
@@ -743,8 +746,6 @@ void save_configuration_parameters (void) {
 
     // History config
     dbus_set_history_limit (history_limit);
-    // Toggle it through D-Bus
-    dbus_set_history_enabled ();
 
 }
 
