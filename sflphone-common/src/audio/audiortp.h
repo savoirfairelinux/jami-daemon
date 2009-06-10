@@ -157,6 +157,12 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     int computeNbByteAudioLayer(float codecFrameSize);
 
 
+    int processDataEncode(AudioLayer* audiolayer);
+
+
+    void processDataDecode(AudioLayer* audiolayer, unsigned char* spkrData, unsigned int size, int& countTime);
+
+
     /**
      * Get the data from the mic, encode it and send it through the RTP session
      * @param timestamp	To manage time and synchronizing
