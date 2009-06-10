@@ -54,7 +54,7 @@ static void search_all (GtkWidget *item, GtkEntry  *entry)
 static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
 {
     HistorySearchType = SEARCH_MISSED;
-    
+
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/missed.svg", NULL);
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
@@ -65,7 +65,7 @@ static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
 static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
 {
     HistorySearchType = SEARCH_INCOMING;
-    
+
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/incoming.svg", NULL);
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
@@ -76,7 +76,7 @@ static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
 static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
 {
     HistorySearchType = SEARCH_OUTGOING;
-    
+
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/outgoing.svg", NULL);
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
@@ -140,10 +140,10 @@ GtkWidget* history_searchbar_new (void)
 
     searchbox = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
-    
+
     // Set the clean insensitive
     text_changed_cb (GTK_ENTRY (searchbox), NULL);
-    
+
     g_signal_connect (searchbox, "icon-press", G_CALLBACK (icon_press_cb), NULL);
     g_signal_connect (searchbox, "notify::text", G_CALLBACK (text_changed_cb), NULL);
     //g_signal_connect (searchbox, "activate", G_CALLBACK (activate_cb), NULL);
@@ -210,7 +210,7 @@ GtkWidget* contacts_searchbar_new () {
     ret = gtk_hbox_new(FALSE, 0);
 
 #if GTK_CHECK_VERSION(2,16,0)
-    
+
     GdkPixbuf *pixbuf; 
 
     searchbox = gtk_entry_new();
@@ -218,13 +218,13 @@ GtkWidget* contacts_searchbar_new () {
     pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL);
     gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY, pixbuf);
     gtk_entry_set_icon_tooltip_text (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY,
-                                "Search contacts\n"
-                                "GNOME evolution backend");
+            "Search contacts\n"
+            "GNOME evolution backend");
 
-    
+
     // Set the clean insensitive
     text_changed_cb (GTK_ENTRY (searchbox), NULL);
-    
+
     g_signal_connect (searchbox, "notify::text", G_CALLBACK (text_changed_cb), NULL);
     g_signal_connect (searchbox, "icon-press", G_CALLBACK (icon_press_cb), NULL);
 
