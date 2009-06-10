@@ -25,7 +25,7 @@
 AddressBook_Config *addressbook_config;
 GtkWidget *book_tree_view;
 
-GtkWidget *photo, *scale_label, *scrolled_label, *scrolled_window, *scale_button, *business, *mobile, *home;
+GtkWidget *photo, *cards_label, *scale_label, *scrolled_label, *scrolled_window, *scale_button, *business, *mobile, *home;
 
 enum
 {
@@ -107,6 +107,7 @@ enable_options(){
         DEBUG("Disable addressbook options\n");
         gtk_widget_set_sensitive(photo, FALSE);
 	gtk_widget_set_sensitive(scrolled_label, FALSE);
+	gtk_widget_set_sensitive(cards_label, FALSE);
         gtk_widget_set_sensitive(scrolled_window, FALSE);
         gtk_widget_set_sensitive(scale_button, FALSE);
         gtk_widget_set_sensitive(scale_label, FALSE);
@@ -122,6 +123,7 @@ enable_options(){
       DEBUG("Enable addressbook options\n");
 	gtk_widget_set_sensitive(photo, TRUE);
 	gtk_widget_set_sensitive(scrolled_label, TRUE);
+	gtk_widget_set_sensitive(cards_label, TRUE);
         gtk_widget_set_sensitive(scrolled_window, TRUE);
         gtk_widget_set_sensitive(scale_button, TRUE);
 	gtk_widget_set_sensitive(scale_label, TRUE);
@@ -321,7 +323,9 @@ create_addressbook_settings()
     gtk_spin_button_set_value (GTK_SPIN_BUTTON( value ) , addressbook_config->max_results);
     g_signal_connect (G_OBJECT (value) , "value-changed" , G_CALLBACK(max_results_cb), NULL );
     gtk_box_pack_start(GTK_BOX(scale_button),value,TRUE,TRUE,10);
-    gtk_table_attach ( GTK_TABLE( table ), scale_button, 1, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND |GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), scale_button, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND |GTK_FILL, 0, 0);
+    cards_label = gtk_label_new(_("cards"));
+    gtk_table_attach( GTK_TABLE(table), cards_label, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_show_all(scale_button);
     
 
