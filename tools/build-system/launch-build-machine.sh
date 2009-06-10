@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-06-02 09:19:56 -0400
+# Last Modified: 2009-06-09 17:51:40 -0400
 #####################################################
 
 #
@@ -360,7 +360,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 			echo "Leave machine running"
 		else
 			echo "Shut down machine ${MACHINE}"
-			${SSH_BASE} 'sudo shutdown -h now'
+			${SSH_BASE} 'sudo /sbin/shutdown -h now'
 			echo "Wait ${SHUTDOWN_WAIT} s"
 			sleep ${SHUTDOWN_WAIT}
 			# hard shut down (just to be sure)
@@ -409,7 +409,7 @@ if [ ${DO_UPLOAD} ]; then
 	echo
 
 	echo "Prepare packages upload"
-	scp ${SSH_OPTIONS} ${PACKAGING_SCRIPTS_DIR}/update-repository.sh ${SSH_REPOSITORY_HOST}: 
+	scp ${SSH_OPTIONS} ${PACKAGING_SCRIPTS_DIR}/update-repository.sh ${SSH_REPOSITORY_HOST}:debian/ 
 
 	if [ "$?" -ne "0" ]; then
                 echo " !! Cannot deploy repository scripts"
@@ -417,7 +417,8 @@ if [ ${DO_UPLOAD} ]; then
 	
 	echo "Upload packages"
 	echo "Install dists files to repository"
-	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/deb/dists ${SSH_REPOSITORY_HOST}:
+	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/rpm/* ${SSH_REPOSITORY_HOST}:rpm/
+	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/deb/dists ${SSH_REPOSITORY_HOST}:debian/
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot upload packages"
@@ -425,7 +426,7 @@ if [ ${DO_UPLOAD} ]; then
 	fi
 
 	echo "Update repository"
-	ssh ${SSH_OPTIONS} ${SSH_REPOSITORY_HOST} "./update-repository.sh"
+	ssh ${SSH_OPTIONS} ${SSH_REPOSITORY_HOST} "cd debian && ./update-repository.sh"
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot update repository"
