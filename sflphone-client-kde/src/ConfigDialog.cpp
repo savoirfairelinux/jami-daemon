@@ -496,18 +496,27 @@ void ConfigurationDialog::loadCodecs()
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList codecList = configurationManager.getCodecList();
 	QStringList activeCodecList = configurationManager.getActiveCodecList();
-	qDebug() << codecList;
-	qDebug() << activeCodecList;
+	QStringList codecListToDisplay = configurationManager.getActiveCodecList();
+	for (int i=0 ; i<codecList.size() ; i++)
+	{
+		if(! activeCodecList.contains(codecList[i]))
+		{
+			codecListToDisplay << codecList[i];
+		}
+	}
+	qDebug() << "codecList = " << codecList;
+	qDebug() << "activeCodecList" << activeCodecList;
+	qDebug() << "codecListToDisplay" << codecListToDisplay;
 	tableWidget_codecs->setRowCount(0);
 	codecPayloads->clear();
-	for(int i=0 ; i<codecList.size() ; i++)
+	for(int i=0 ; i<codecListToDisplay.size() ; i++)
 	{
 		bool ok;
-		qDebug() << codecList[i];
-		QString payloadStr = QString(codecList[i]);
+		qDebug() << codecListToDisplay[i];
+		QString payloadStr = QString(codecListToDisplay[i]);
 		int payload = payloadStr.toInt(&ok);
 		if(!ok)	
-			qDebug() << "The codec's payload sent by the configurationManager is not a number : " << codecList[i];
+			qDebug() << "The codec's payload sent by the configurationManager is not a number : " << codecListToDisplay[i];
 		else
 		{
 			QStringList details = configurationManager.getCodecDetails(payload);
@@ -782,10 +791,10 @@ void ConfigurationDialog::on1_accountsChanged()
 // 	loadAccountList();
 // 	connect(&configurationManager, SIGNAL(accountsChanged()),
 // 	        this,                  SLOT(on1_accountsChanged()));
-	if(isVisible() && accountsChangedEnableWarning)
-	{
-		errorWindow->showMessage(tr2i18n("Accounts changed : another client may be changing accounts or an account is unstable. \nIf another client is changing the settings, you may cancel your changes to avoid overwriting one's changes."));
-	}
+// 	if(isVisible() && accountsChangedEnableWarning)
+// 	{
+// 		errorWindow->showMessage(tr2i18n("Accounts changed : another client may be changing accounts or an account is unstable. \nIf another client is changing the settings, you may cancel your changes to avoid overwriting one's changes."));
+// 	}
 	if(! isVisible())
 	{
 		loadAccountList();

@@ -40,6 +40,9 @@ SET(
 	ActionSetAccountFirst.cpp
 	Contact.cpp
 	ContactItemWidget.cpp
+	conf/ConfigurationDialog.cpp
+	conf/dlggeneral.cpp
+	conf/ConfigurationSkeleton.cpp
 )
  
 
@@ -96,7 +99,11 @@ QT4_ADD_DBUS_INTERFACE(
 
 # kde4_automoc(${sflphone_client_kde_SRCS})
 
-KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/sflphone_kdeview_base.ui ui/ConfigDialog.ui)
+KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/sflphone_kdeview_base.ui ui/ConfigDialog.ui conf/dlggeneralbase.ui)
+
+KDE4_ADD_KCFG_FILES(sflphone_client_kde_SRCS kcfg/settings.kcfgc)
+INSTALL(FILES kcfg/sflphone-client-kde.kcfg DESTINATION ${KCFG_INSTALL_DIR})
+
 
 KDE4_ADD_EXECUTABLE(sflphone-client-kde ${sflphone_client_kde_SRCS} ${QtApp_RCC_SRCS})
 

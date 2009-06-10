@@ -21,6 +21,7 @@
 #include <historymanager.h>
 #include <errno.h>
 #include <cc++/file.h>
+#include <time.h>
 
 HistoryManager::HistoryManager () : _history_loaded (false), _history_path (""){
 
@@ -32,13 +33,13 @@ HistoryManager::~HistoryManager () {
     _history_items.clear ();
 }
 
-int HistoryManager::load_history (std::string path)
+int HistoryManager::load_history (int limit, std::string path)
 {
     Conf::ConfigTree history_list;
 
     create_history_path (path);
     load_history_from_file (&history_list);
-    return load_history_items_map (&history_list);
+    return load_history_items_map (&history_list, limit);
 }
 
 bool HistoryManager::save_history (void)
@@ -59,7 +60,7 @@ bool HistoryManager::load_history_from_file (Conf::ConfigTree *history_list)
     return exist;
 }
 
-int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
+int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int limit)
 {
 
     short nb_items = 0;
@@ -68,6 +69,13 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
     Conf::TokenList::iterator iter;
     std::string number, name, accountID, timestamp_start, timestamp_stop;
     CallType type; 
+    int history_limit;
+    time_t current_timestamp;
+    
+    // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
+    // Get the current timestamp
+    (void) time (&current_timestamp);
+    history_limit = get_unix_timestamp_equivalent (limit);
 
     sections = history_list->getSections();
     iter = sections.begin();
@@ -81,12 +89,15 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list)
         accountID = getConfigString (*iter, "accountid", history_list);
         timestamp_start = *iter;
 
-        item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, accountID);
-        add_new_history_entry (item);
-        nb_items ++;
+        // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
+        if ( atoi (timestamp_start.c_str ()) >= ((int) current_timestamp - history_limit))
+        {
+            item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, accountID);
+            add_new_history_entry (item);
+            nb_items ++;
+        }
 
         iter ++;
-
     }
 
     return nb_items;
@@ -200,21 +211,30 @@ std::map <std::string, std::string> HistoryManager::get_history_serialized (void
 }
 
 
-int HistoryManager::set_serialized_history (std::map <std::string, std::string> history)
+int HistoryManager::set_serialized_history (std::map <std::string, std::string> history, int limit)
 {
     std::map <std::string, std::string>::iterator iter;
     HistoryItem *new_item;
     int items_added = 0;
+    int history_limit; 
+    time_t current_timestamp;
 
     // Clear the existing history
     _history_items.clear ();
 
+    // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
+    // Get the current timestamp
+    (void) time (&current_timestamp);
+    history_limit = get_unix_timestamp_equivalent (limit);
     iter = history.begin ();
     while (iter != history.end ())
     {
-        new_item = new HistoryItem (iter->first, iter->second);
-        add_new_history_entry (new_item);
-        items_added ++;
+        if (atoi (iter->first.c_str ()) >= ((int) current_timestamp - history_limit))
+        {
+            new_item = new HistoryItem (iter->first, iter->second);
+            add_new_history_entry (new_item);
+            items_added ++;
+        }
         iter ++;
     }
     

@@ -25,6 +25,8 @@
 #include <global.h>
 #include <user_cfg.h>
 
+#define DAY_UNIX_TIMESTAMP      86400   // Number of seconds in one day: 60 x 60 x 24
+
 typedef std::map <std::string, HistoryItem*> HistoryItemMap; 
 
 class HistoryManager {
@@ -45,7 +47,7 @@ class HistoryManager {
          *
          *@return int The number of history items succesfully loaded
          */
-        int load_history (std::string path="");
+        int load_history (int limit, std::string path="");
 
         /**
          *@return bool True if the history has been successfully saved in the file
@@ -60,7 +62,7 @@ class HistoryManager {
         /*
          * @return int The number of history items loaded
          */
-        int load_history_items_map (Conf::ConfigTree *history_list);
+        int load_history_items_map (Conf::ConfigTree *history_list, int limit);
 
         /*
          * Inverse method, ie save a data structure containing the history into a file
@@ -92,10 +94,13 @@ class HistoryManager {
 
         std::map <std::string, std::string> get_history_serialized (void);
 
-        int set_serialized_history (std::map <std::string, std::string> history);
+        int set_serialized_history (std::map <std::string, std::string> history, int limit);
 
     private:
-
+        inline int get_unix_timestamp_equivalent (int days)
+        {
+            return days * DAY_UNIX_TIMESTAMP;
+        }
         
         int getConfigInt(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);
         std::string getConfigString(const std::string& section, const std::string& name, Conf::ConfigTree *history_list);

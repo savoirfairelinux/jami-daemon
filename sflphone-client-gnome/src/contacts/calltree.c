@@ -417,7 +417,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
 
 void calltree_add_history_entry (callable_obj_t * c)
 {
-    if( calllist_get_size (history) > dbus_get_max_calls ())
+    if (dbus_get_history_enabled () == 0)
         return;
 
     GdkPixbuf *pixbuf=NULL;

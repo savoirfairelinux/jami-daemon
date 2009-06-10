@@ -80,18 +80,11 @@ calllist_reset (calltab_t* tab)
 
 void calllist_add_history_entry (callable_obj_t *obj)
 {
-    // First case: can still add calls to the list
-    if( calllist_get_size (history) < dbus_get_max_calls() )
+    int state = dbus_get_history_enabled ();
+    if (state == 1)
     {
-      g_queue_push_tail (history->callQueue, (gpointer *) obj);
-      calltree_add_call (history, obj);
-    }
-    // List full -> Remove the last call from history and preprend the new call to the list
-    else
-    {
-      calltree_remove_call( history , (callable_obj_t*)g_queue_pop_head (history->callQueue ) );
-      g_queue_push_tail (history->callQueue, (gpointer *) obj);
-      calltree_add_call (history, obj);
+        g_queue_push_tail (history->callQueue, (gpointer *) obj);
+        calltree_add_call (history, obj);
     }
 }
 
