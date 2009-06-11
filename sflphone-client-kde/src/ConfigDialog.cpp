@@ -70,17 +70,17 @@ ConfigurationDialog::ConfigurationDialog(sflphone_kdeView *parent) : QDialog(par
 	connect(&configurationManager, SIGNAL(accountsChanged()),
 	        this,                  SLOT(on1_accountsChanged()));
 	
-	connect(edit1_alias,           SIGNAL(textChanged(const QString &)),
+	connect(edit1_alias,           SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
 	connect(edit2_protocol,        SIGNAL(currentIndexChanged(int)),
 	        this,                  SLOT(changedAccountList()));
-	connect(edit3_server,          SIGNAL(textChanged(const QString &)),
+	connect(edit3_server,          SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
-	connect(edit4_user,            SIGNAL(textChanged(const QString &)),
+	connect(edit4_user,            SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
-	connect(edit5_password,        SIGNAL(textChanged(const QString &)),
+	connect(edit5_password,        SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
-	connect(edit6_mailbox,         SIGNAL(textChanged(const QString &)),
+	connect(edit6_mailbox,         SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
 	connect(button_accountUp,      SIGNAL(clicked()),
 	        this,                  SLOT(changedAccountList()));
@@ -683,7 +683,7 @@ void ConfigurationDialog::on_button_accountUp_clicked()
 	listWidget_accountList->insertItem(currentRow - 1 , item);
 	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
-	changedAccountList();
+// 	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountDown_clicked()
@@ -700,7 +700,7 @@ void ConfigurationDialog::on_button_accountDown_clicked()
 	listWidget_accountList->insertItem(currentRow + 1 , item);
 	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
-	changedAccountList();
+// 	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountAdd_clicked()
@@ -715,7 +715,7 @@ void ConfigurationDialog::on_button_accountAdd_clicked()
 		listWidget_accountList->setCurrentRow(r);
 		frame2_editAccounts->setEnabled(true);
 	}
-	changedAccountList();
+// 	changedAccountList();
 }
 
 void ConfigurationDialog::on_button_accountRemove_clicked()
@@ -725,7 +725,7 @@ void ConfigurationDialog::on_button_accountRemove_clicked()
 	QListWidgetItem * item = listWidget_accountList->takeItem(r);
 	accountList->removeAccount(item);
 	listWidget_accountList->setCurrentRow( (r >= listWidget_accountList->count()) ? r-1 : r );
-	changedAccountList();
+// 	changedAccountList();
 }
 
 void ConfigurationDialog::on_toolButton_accountsApply_clicked()
