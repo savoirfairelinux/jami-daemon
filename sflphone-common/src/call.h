@@ -81,6 +81,11 @@ class Call{
          */
         CallID& getCallId() {return _id; }
 
+        inline CallType getCallType (void)
+        {
+            return _type;
+        }
+
         /** 
          * Set the peer number (destination on outgoing)
          * not protected by mutex (when created)

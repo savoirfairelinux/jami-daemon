@@ -2854,6 +2854,8 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
     Account *account;
     VoIPLink *link;
     Call *call;
+    std::stringstream type;
+
 
     // We need here to retrieve the call information attached to the call ID
     // To achieve that, we need to get the voip link attached to the call
@@ -2874,10 +2876,13 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
 
     if (call) 
     {
+        type << call->getCallType () << std::endl;
+
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
         call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr (call->getState())));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", type.str ()));
     }
     else 
     {
@@ -2886,6 +2891,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "FAILURE"));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", "0"));
     }
 
     return call_details;

@@ -165,6 +165,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
         {
             callable_obj_t *new_call;
             GHashTable *call_details;
+            gchar *type;
 
             DEBUG ("New ringing call! accountID: %s", callID);
 
@@ -174,8 +175,26 @@ call_state_cb (DBusGProxy *proxy UNUSED,
 
             // Restore the callID to be synchronous with the daemon
             new_call->_callID = g_strdup(callID);
+            type = g_hash_table_lookup (call_details, "CALL_TYPE");
 
-            sflphone_incoming_call (new_call);
+            if (g_strcasecmp (type, "0") == 0)
+            {
+                g_print ("incoming\n");
+                new_call->_history_state = INCOMING;
+            }
+            else
+            {
+                g_print ("outgoing\n");
+                new_call->_history_state = OUTGOING;
+            }
+
+            calllist_add (current_calls, new_call);
+            calllist_add (history, new_call);
+            calltree_add_call (current_calls, new_call);
+            update_menus ();
+            calltree_display (current_calls);
+
+            //sflphone_incoming_call (new_call);
         }
     }
 }
