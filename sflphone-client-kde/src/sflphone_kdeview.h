@@ -117,7 +117,6 @@ private slots:
 	void updateCallItem(Call * call);
 	void updateWindowCallState();
 	void updateSearchHistory();
-	void updateSearchAddressBook();
 	void updateCallHistory();
 	void updateAddressBook();
 	void updateRecordButton();
