@@ -8,7 +8,7 @@ Standards-Version: 3.7.3
 Package: sflphone-client-kde
 Priority: optional
 Architecture: any
-Depends: sflphone-common (>=0.9.5), libcommoncpp2-1.6-0, kdepimlibs5 (>=4.1.4), libqt4-dbus (>=4.4.3), libqt4-svg (>=4.4.3), libqtgui4 (>=4.4.3)
+Depends: sflphone-common (=VERSION), libcommoncpp2-1.6-0, kdepimlibs5 (>=4.1.4), libqt4-dbus (>=4.4.3), libqt4-svg (>=4.4.3), libqtgui4 (>=4.4.3)
 Replaces: sflphone
 Conflicts: sflphone
 Homepage: http://www.sflphone.org
