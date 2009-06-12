@@ -49,10 +49,6 @@ AudioStream::connectStream()
 
   if(!_audiostream)
     _audiostream = createStream( _context );
-  else {
-    disconnectStream();
-    _audiostream = createStream( _context );
-  }
 
   return true;
 }

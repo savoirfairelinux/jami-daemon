@@ -166,12 +166,15 @@ bool PulseLayer::createStreams( pa_context* c )
 
     pa_threaded_mainloop_signal(m , 0);
 
+    isCorked = true;
+
     return true;
 }
 
 
 bool PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED) 
 {
+
     _debug("PulseLayer::openDevice \n");
     _sampleRate = sampleRate;
     _frameSize = frameSize;	
@@ -225,35 +228,46 @@ int PulseLayer::getMic(void *buffer, int toCopy)
 void PulseLayer::startStream (void) 
 {
     // flushMic();
+    if (isCorked) {
 
-    _urgentRingBuffer.flush();
-    _micRingBuffer.flush();
-    _voiceRingBuffer.flush();
+        _urgentRingBuffer.flush();
+        _micRingBuffer.flush();
+        _voiceRingBuffer.flush();
 
-    _debug("PulseLayer::Start stream\n");
-    pa_threaded_mainloop_lock(m);
+        _debug("PulseLayer::Start stream\n");
+        pa_threaded_mainloop_lock(m);
    
-    pa_stream_cork( playback->pulseStream(), 0, NULL, NULL);
-    pa_stream_cork( record->pulseStream(), 0, NULL, NULL);
+        pa_stream_cork( playback->pulseStream(), 0, NULL, NULL);
+        pa_stream_cork( record->pulseStream(), 0, NULL, NULL);
   
-    pa_threaded_mainloop_unlock(m);
+        pa_threaded_mainloop_unlock(m);
+
+	isCorked = false;
+    }
 
 }
 
     void 
 PulseLayer::stopStream (void) 
 {
-     _debug("PulseLayer::Stop stream\n");
-     pa_stream_flush( playback->pulseStream(), NULL, NULL );
-     pa_stream_flush( record->pulseStream(), NULL, NULL );
+
+    if (!isCorked) {
+
+        _debug("PulseLayer::Stop stream\n");
+        pa_stream_flush( playback->pulseStream(), NULL, NULL );
+	pa_stream_flush( record->pulseStream(), NULL, NULL );
     
-    flushMic();
-    flushMain();
-    flushUrgent();
+	flushMic();
+	flushMain();
+	flushUrgent();
 
-    pa_stream_cork( playback->pulseStream(), 1, NULL, NULL);
-    pa_stream_cork( record->pulseStream(), 1, NULL, NULL);
+	pa_stream_cork( playback->pulseStream(), 1, NULL, NULL);
+	pa_stream_cork( record->pulseStream(), 1, NULL, NULL);
 
+	isCorked = true;
+
+    }
+	
 }
 
 

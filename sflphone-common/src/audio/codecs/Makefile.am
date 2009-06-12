@@ -31,6 +31,14 @@ libcodec_speex_wb_so_LDFLAGS = --shared -lc -lspeex $(SPEEX_NIMP)
 INSTALL_SPEEX_WB_RULE = install-libcodec_speex_wb_so
 endif
 
+if BUILD_SPEEX
+SPEEX_UB_LIB = libcodec_speex_ub.so
+libcodec_speex_ub_so_SOURCES = speexcodec_ub.cpp
+libcodec_speex_ub_so_CFLAGS = -fPIC -g -Wall
+libcodec_speex_ub_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
+libcodec_speex_ub_so_LDFLAGS = --shared -lc -lspeex $(SPEEX_NIMP)
+INSTALL_SPEEX_UB_RULE = install-libcodec_speex_ub_so
+endif
 
 if BUILD_CELT
 CELT_LIB = libcodec_celt.so
@@ -52,7 +60,7 @@ INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 SUBDIRS = ilbc
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(CELT_LIB) $(ILBC_LIB)
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(CELT_LIB) $(ILBC_LIB)
 
 
 noinst_HEADERS = audiocodec.h
@@ -72,8 +80,8 @@ libcodec_g722_so_CFLAGS = -fPIC -g -Wall
 libcodec_g722_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_g722_so_LDFLAGS = --shared -lc
 
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_CELT_RULE) $(INSTALL_ILBC_RULE) 
-uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_celt_so
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_g722_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_SPEEX_UB_RULE) $(INSTALL_CELT_RULE) $(INSTALL_ILBC_RULE) 
+uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_g722_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_speex_ub_so uninstall-libcodec_celt_so
 
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
@@ -89,6 +97,8 @@ install-libcodec_speex_nb_so: libcodec_speex_nb.so
 	$(INSTALL_PROGRAM)  libcodec_speex_nb.so $(sflcodecdir)
 install-libcodec_speex_wb_so: libcodec_speex_wb.so
 	$(INSTALL_PROGRAM)  libcodec_speex_wb.so $(sflcodecdir)
+install-libcodec_speex_ub_so: libcodec_speex_ub.so
+	$(INSTALL_PROGRAM)  libcodec_speex_ub.so $(sflcodecdir)
 install-libcodec_celt_so: libcodec_celt.so
 	$(INSTALL_PROGRAM)  libcodec_celt.so $(sflcodecdir)
 install-libcodec_ilbc_so: libcodec_ilbc.so
@@ -107,6 +117,8 @@ uninstall-libcodec_speex_nb_so:
 	rm -f $(sflcodecdir)/libcodec_speex_nb.so
 uninstall-libcodec_speex_wb_so:
 	rm -f $(sflcodecdir)/libcodec_speex_wb.so
+uninstall-libcodec_speex_ub_so:
+	rm -f $(sflcodecdir)/libcodec_speex_ub.so
 	rm -rf $(sflcodecdir)
 uninstall-libcodec_celt_so: libcodec_celt.so
 	$(INSTALL_PROGRAM)  libcodec_celt.so $(sflcodecdir)

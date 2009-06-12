@@ -412,8 +412,6 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
 void calltree_add_history_entry (callable_obj_t * c)
 {
 
-    printf("calltree_add_history_entry\n");
-
     if (dbus_get_history_enabled () == 0)
         return;
 
@@ -472,8 +470,6 @@ void calltree_add_history_entry (callable_obj_t * c)
 
 void calltree_add_call (calltab_t* tab, callable_obj_t * c)
 {
-
-    printf("calltree_add_call\n");
 
     if (tab == history)
     {

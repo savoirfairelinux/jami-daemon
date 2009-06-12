@@ -35,8 +35,8 @@ class Speex : public AudioCodec{
             _speex_frame_size(),
             _preprocess_state()
     {
-        _clockRate = 8000;
-        _frameSize = 160; // samples, 20 ms at 8kHz
+        _clockRate = 32000;
+        _frameSize = 320; // 10 ms at 32 kHz
         _channel = 1;
         _bitrate = 0;
         _bandwidth = 0; 
@@ -48,11 +48,11 @@ class Speex : public AudioCodec{
 
         void initSpeex() { 
 
-            int _samplingRate = 8000; 
+	    // int _samplingRate = 32000; 
 
             // 8000 HZ --> Narrow-band mode
             // TODO Manage the other modes
-            _speexModePtr = &speex_nb_mode; 
+            _speexModePtr = &speex_wb_mode; 
             // _speexModePtr = &speex_wb_mode; 
 
             // Init the decoder struct
@@ -76,7 +76,7 @@ class Speex : public AudioCodec{
 
             speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VAD, &enable);
             speex_encoder_ctl(_speex_enc_state, SPEEX_SET_DTX, &enable);
-            speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VBR_QUALITY, &quality);
+            // speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VBR_QUALITY, &quality);
             speex_encoder_ctl(_speex_enc_state, SPEEX_SET_COMPLEXITY, &complex);
 
             // Init the decoder struct
@@ -112,11 +112,12 @@ class Speex : public AudioCodec{
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
         {   
             
-            int ratio = 320 / _speex_frame_size;
+	    // int ratio = 320 / _speex_frame_size;
             speex_bits_read_from(&_speex_dec_bits, (char*)src, size);
             speex_decode_int(_speex_dec_state, &_speex_dec_bits, dst);
 
-            return _speex_frame_size * ratio; 
+	    // return the nuber of byte, not the number of sample
+            return _speex_frame_size * 2;
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
@@ -127,9 +128,10 @@ class Speex : public AudioCodec{
             
             speex_preprocess_run(_preprocess_state, src);
 #endif 
-	    
 
+	    
             speex_encode_int(_speex_enc_state, src, &_speex_enc_bits);
+	    speex_bits_nbytes(&_speex_enc_bits);
             int nbBytes = speex_bits_write(&_speex_enc_bits, (char*)dst, size);
 
             return nbBytes;
@@ -147,7 +149,7 @@ class Speex : public AudioCodec{
 
 // the class factories
 extern "C" AudioCodec* create() {
-    return new Speex(110);
+    return new Speex(112);
 }
 
 extern "C" void destroy(AudioCodec* a) {

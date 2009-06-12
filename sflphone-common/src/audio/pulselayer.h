@@ -189,6 +189,8 @@ class PulseLayer : public AudioLayer {
      */
     AudioStream* record;
 
+    bool isCorked;
+
     int spkrVolume;
     int micVolume;
 
