@@ -143,7 +143,7 @@ ManagerImpl::init()
     }
 
     if (audiolayer == 0)
-      audiolayer->stopStream();
+        audiolayer->stopStream();
 
 
     // Load the history
@@ -326,7 +326,14 @@ ManagerImpl::hangupCall(const CallID& id)
 
     _debug("Stop audio stream\n");
     audiolayer = getAudioDriver();
-    audiolayer->stopStream();
+
+    int nbCalls = getCallList().size();
+
+    _debug("nbCalls %i \n", nbCalls);
+
+    // stop stream 
+    if (!(nbCalls > 1))
+        audiolayer->stopStream();
 
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -952,11 +959,12 @@ void ManagerImpl::stopTone (bool stopAudio=true)
     hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
     if (!hasToPlayTone)
         return;
-
+    
     if (stopAudio) {
         audiolayer = getAudioDriver();
         if (audiolayer) audiolayer->stopStream();
     }
+    
 
     _toneMutex.enterMutex();
     if (_telephoneTone != 0) {
