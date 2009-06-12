@@ -51,6 +51,8 @@ static void search_all (GtkWidget *item, GtkEntry  *entry)
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
             "Search all\n"
             "Click here to change the search type");
+
+    history_search (HistorySearchType);
 } 
 
 static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
@@ -62,6 +64,8 @@ static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
             "Search by missed call\n"
             "Click here to change the search type");
+
+    history_search (HistorySearchType);
 } 
 
 static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
@@ -73,6 +77,8 @@ static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
             "Search by incoming call\n"
             "Click here to change the search type");
+
+    history_search (HistorySearchType);
 } 
 
 static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
@@ -84,6 +90,8 @@ static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
             "Search by outgoing call\n"
             "Click here to change the search type");
+
+    history_search (HistorySearchType);
 } 
 
 static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event, gpointer data)

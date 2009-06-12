@@ -98,8 +98,8 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
                 else
                 {
                     // We need a match on the history_state_t and the current search type
-                    if ( (history_entry->_history_state + 1) == (int)get_current_history_search_type ())
-                        return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
+                    return (history_entry->_history_state + 1) == (int)get_current_history_search_type () &&  
+                        g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
                 }
             }
         }
