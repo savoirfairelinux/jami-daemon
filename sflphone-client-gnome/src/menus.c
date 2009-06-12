@@ -549,7 +549,7 @@ create_edit_menu()
     menu_items = gtk_separator_menu_item_new ();
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
-    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Clear history"));
+    menu_items = gtk_image_menu_item_new_with_mnemonic(_("Clear _history"));
     image = gtk_image_new_from_stock( GTK_STOCK_CLEAR , GTK_ICON_SIZE_MENU );
     gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( menu_items ), image );
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
@@ -568,7 +568,7 @@ create_edit_menu()
             NULL);
     gtk_widget_show (menu_items);
 
-    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PREFERENCES, get_accel_group());
+    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PREFERENCES, NULL);
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
             G_CALLBACK (edit_preferences),

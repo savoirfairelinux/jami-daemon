@@ -780,12 +780,12 @@ GtkWidget* create_audio_configuration()
     gnome_main_section_new_with_table (_("Sound Manager"), &frame, &table, 1, 2);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    pulse = gtk_radio_button_new_with_mnemonic( NULL , _("Pulseaudio"));
+    pulse = gtk_radio_button_new_with_mnemonic( NULL , _("_Pulseaudio"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pulse), !SHOW_ALSA_CONF  );
     gtk_table_attach ( GTK_TABLE( table ), pulse, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
  
 
-    alsa = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse),  _("ALSA"));
+    alsa = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse),  _("_ALSA"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(alsa), SHOW_ALSA_CONF );
     g_signal_connect(G_OBJECT(alsa), "clicked", G_CALLBACK(select_audio_manager), NULL);
     gtk_table_attach ( GTK_TABLE( table ), alsa, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);

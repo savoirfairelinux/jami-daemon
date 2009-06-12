@@ -647,7 +647,7 @@ create_general_settings ()
     gnome_main_section_new_with_table (_("PulseAudio sound server"), &frame, &table, 1, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    mutewidget = gtk_check_button_new_with_mnemonic(  _("Mute other applications during a _call"));
+    mutewidget = gtk_check_button_new_with_mnemonic(  _("_Mute other applications during a call"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(mutewidget), dbus_get_pulse_app_volume_control() );
     g_signal_connect(G_OBJECT( mutewidget ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
     gtk_table_attach( GTK_TABLE(table), mutewidget, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
@@ -722,7 +722,7 @@ create_recording_settings ()
     gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
 
     // label
-    label = gtk_label_new_with_mnemonic(_("_Recordings folder"));
+    label = gtk_label_new(_("Recordings folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     // gtk_misc_set_alignment(GTK_MISC(label), 0.08, 0.5);
 

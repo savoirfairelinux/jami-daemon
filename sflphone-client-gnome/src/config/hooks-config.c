@@ -152,7 +152,7 @@ GtkWidget* create_hooks_settings (){
     g_signal_connect (G_OBJECT(widg) , "clicked" , G_CALLBACK (iax2_enabled_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), widg, 0, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    label = gtk_label_new_with_mnemonic (_("_Command to run: "));
+    label = gtk_label_new_with_mnemonic (_("Command to _run: "));
     gtk_misc_set_alignment(GTK_MISC(label), 0.05, 0.5);
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     command = gtk_entry_new ();
