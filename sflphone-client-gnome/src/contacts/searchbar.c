@@ -41,6 +41,8 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
     }
 }
 
+#if GTK_CHECK_VERSION(2,16,0)
+
 static void search_all (GtkWidget *item, GtkEntry  *entry)
 {
     HistorySearchType = SEARCH_ALL;
@@ -100,6 +102,8 @@ static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec)
     has_text = gtk_entry_get_text_length (entry) > 0;
     gtk_entry_set_icon_sensitive (entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 }
+
+#endif
 
 void
 focus_on_searchbar_out(){
@@ -182,8 +186,6 @@ GtkWidget* history_searchbar_new (void)
     gtk_widget_show_all (menu);
 
 #else
-
-    GtkWidget *image;
 
     searchbox = sexy_icon_entry_new();
     image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
