@@ -23,13 +23,16 @@
 #include <searchbar.h>
 #include <calltree.h>
 
-const GdkColor BLACK_COLOR = { 0, 0, 0, 0 };
-const GdkColor GRAY_COLOR = { 0, 30000, 30000, 30000 };
-
 GtkWidget * searchbox;
 
-
 static GtkWidget *menu = NULL;
+
+/**
+ * Searchbar icons
+ */
+GdkPixbuf *incoming_pixbuf = NULL;
+GdkPixbuf *outgoing_pixbuf = NULL;
+GdkPixbuf *missed_pixbuf = NULL;
 
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
@@ -49,8 +52,8 @@ static void search_all (GtkWidget *item, GtkEntry  *entry)
 
     gtk_entry_set_icon_from_stock (entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            "Search all\n"
-            "Click here to change the search type");
+            _("Search all\n"
+            "Click here to change the search type"));
 
     history_search (HistorySearchType);
 } 
@@ -59,11 +62,10 @@ static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
 {
     HistorySearchType = SEARCH_MISSED;
 
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/missed.svg", NULL);
-    gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
+    gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, missed_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            "Search by missed call\n"
-            "Click here to change the search type");
+            _("Search by missed call\n"
+            "Click here to change the search type"));
 
     history_search (HistorySearchType);
 } 
@@ -72,11 +74,10 @@ static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
 {
     HistorySearchType = SEARCH_INCOMING;
 
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/incoming.svg", NULL);
-    gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
+    gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, incoming_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            "Search by incoming call\n"
-            "Click here to change the search type");
+            _("Search by incoming call\n"
+            "Click here to change the search type"));
 
     history_search (HistorySearchType);
 } 
@@ -85,11 +86,10 @@ static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
 {
     HistorySearchType = SEARCH_OUTGOING;
 
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/outgoing.svg", NULL);
-    gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, pixbuf);
+    gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, outgoing_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            "Search by outgoing call\n"
-            "Click here to change the search type");
+            _("Search by outgoing call\n"
+            "Click here to change the search type"));
 
     history_search (HistorySearchType);
 } 
@@ -152,6 +152,10 @@ GtkWidget* history_searchbar_new (void)
 
     searchbox = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
+
+    missed_pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/missed.svg", NULL);
+    incoming_pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/incoming.svg", NULL);
+    outgoing_pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/outgoing.svg", NULL);
 
     // Set the clean insensitive
     text_changed_cb (GTK_ENTRY (searchbox), NULL);
