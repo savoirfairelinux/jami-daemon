@@ -147,7 +147,6 @@ void sflphone_kdeView::loadWindow()
 	updateVolumeControls();
 	updateDialpad();
 	updateSearchHistory();
-	updateSearchAddressBook();
 }
 
 QString sflphone_kdeView::firstAccountId()
@@ -461,7 +460,7 @@ void sflphone_kdeView::updateWindowCallState()
 	bool recordActivated = false;
 	//tells whether the call can be recorded in the state it is right now
 	bool recordEnabled = false;
-	enabledActions[5] = ! firstRegisteredAccount()->getAccountDetail(ACCOUNT_MAILBOX).isEmpty();
+	enabledActions[5] = firstRegisteredAccount() && ! firstRegisteredAccount()->getAccountDetail(ACCOUNT_MAILBOX).isEmpty();
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
 		item = listWidget_callList->currentItem();
@@ -634,11 +633,6 @@ void sflphone_kdeView::updateSearchHistory()
 	lineEdit_searchHistory->setVisible(!lineEdit_searchHistory->text().isEmpty());
 }
 
-void sflphone_kdeView::updateSearchAddressBook()
-{
-	qDebug() << "updateAddressBookSearch";
-	lineEdit_addressBook->setVisible(!lineEdit_addressBook->text().isEmpty());
-}
 
 void sflphone_kdeView::updateCallHistory()
 {
@@ -912,7 +906,6 @@ void sflphone_kdeView::on_lineEdit_searchHistory_textChanged()
 void sflphone_kdeView::on_lineEdit_addressBook_textChanged()
 {
 	qDebug() << "on_lineEdit_addressBook_textEdited";
-	updateSearchAddressBook();
 	updateAddressBook();
 	updateWindowCallState();
 }
@@ -1331,9 +1324,10 @@ void sflphone_kdeView::on_action_addressBook_triggered(bool checked)
 {
 	if(checked == true)
 	{
-	
 		action_history->setChecked(false);
 		stackedWidget_screen->setCurrentWidget(page_addressBook);
+		if(lineEdit_addressBook->text().isEmpty())
+		{	lineEdit_addressBook->setFocus(Qt::OtherFocusReason);	}
 	}
 	else
 	{
