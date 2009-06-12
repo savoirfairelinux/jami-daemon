@@ -219,7 +219,7 @@ transfer_succeded_cb (DBusGProxy *proxy UNUSED,
         void * foo  UNUSED )
 {
     DEBUG ("Transfer succeded\n");
-    sflphone_display_transfer_status("Transfer successfull\n");
+    sflphone_display_transfer_status("Transfer successfull");
 }
 
 
@@ -228,7 +228,7 @@ transfer_failed_cb (DBusGProxy *proxy UNUSED,
         void * foo  UNUSED )
 {
     DEBUG ("Transfer failed\n");
-    sflphone_display_transfer_status("Transfer failed\n");
+    sflphone_display_transfer_status("Transfer failed");
 }
 
 
@@ -444,7 +444,7 @@ dbus_hang_up (const callable_obj_t * c)
 dbus_transfert (const callable_obj_t * c)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_CallManager_transfert ( callManagerProxy, c->_callID, c->_peer_number, &error);
+    org_sflphone_SFLphone_CallManager_transfert ( callManagerProxy, c->_callID, c->_trsft_to, &error);
     if (error)
     {
         ERROR ("Failed to call transfert() on CallManager: %s",

@@ -435,7 +435,7 @@ sflphone_set_transfert()
     if(c)
     {
         c->_state = CALL_STATE_TRANSFERT;
-        c->_peer_number = g_strdup("");
+        c->_trsft_to = g_strdup("");
         calltree_update_call(current_calls,c);
         update_menus();
     }
@@ -449,7 +449,7 @@ sflphone_unset_transfert()
     if(c)
     {
         c->_state = CALL_STATE_CURRENT;
-        c->_peer_number = g_strdup("");
+        c->_trsft_to = g_strdup("");
         calltree_update_call(current_calls,c);
         update_menus();
     }
@@ -528,12 +528,15 @@ process_dialing(callable_obj_t * c, guint keyval, gchar * key)
             if (keyval < 127 || (keyval > 65400 && keyval < 65466))
             {
 
-                if(c->_state != CALL_STATE_TRANSFERT)
+                if (c->_state == CALL_STATE_TRANSFERT)
+                {
+                    c->_trsft_to = g_strconcat(c->_trsft_to, key, NULL);
+                }
+                else
+                {
                     dbus_play_dtmf( key );
-                gchar * before = c->_peer_number;
-                c->_peer_number = g_strconcat(c->_peer_number, key, NULL);
-                g_free(before);
-                DEBUG("TO:default %s", c->_peer_number);
+                    c->_peer_number = g_strconcat(c->_peer_number, key, NULL);
+                }
 
                 if(c->_state == CALL_STATE_DIALING)
                 {

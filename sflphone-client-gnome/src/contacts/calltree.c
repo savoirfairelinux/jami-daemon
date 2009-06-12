@@ -316,9 +316,10 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
                 gchar * duration="";
                 if(c->_state == CALL_STATE_TRANSFERT)
                 {
-                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> ",
+                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:%s</i> ",
                             c->_peer_number,
-                            c->_peer_name
+                            c->_peer_name,
+                            c->_trsft_to
                             );
                 }
                 else

@@ -98,6 +98,11 @@ typedef struct  {
     gchar *_peer_number;
 
     /**
+     * Used to contain the transfer information
+     */
+    gchar *_trsft_to;
+
+    /**
       * A well-formatted phone information
       */
     gchar *_peer_info;
