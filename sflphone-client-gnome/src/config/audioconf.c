@@ -397,6 +397,8 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
         codec = codec_list_get_by_payload(110);
     else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"16 kHz")==0))
         codec = codec_list_get_by_payload(111);
+    else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"32 kHz")==0))
+        codec = codec_list_get_by_payload(112);
     else
         codec = codec_list_get_by_name(name);
 
