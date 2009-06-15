@@ -227,12 +227,11 @@ int PulseLayer::getMic(void *buffer, int toCopy)
 
 void PulseLayer::startStream (void) 
 {
-    
+        _debug("PulseLayer::Start stream\n");
         _urgentRingBuffer.flush();
         _micRingBuffer.flush();
         _voiceRingBuffer.flush();
 
-        _debug("PulseLayer::Start stream\n");
         pa_threaded_mainloop_lock(m);
    
         pa_stream_cork( playback->pulseStream(), 0, NULL, NULL);
@@ -285,8 +284,6 @@ void PulseLayer::stream_suspended_callback(pa_stream *s, void *userdata UNUSED )
 
 void PulseLayer::processData( void )
 {
-        _debug("processData");
-  
 
         // Handle the mic
         // We check if the stream is ready

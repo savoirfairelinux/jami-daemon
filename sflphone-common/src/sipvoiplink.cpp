@@ -1852,11 +1852,13 @@ void set_voicemail_info ( AccountID account, pjsip_msg_body *body )
 
 void SIPVoIPLink::handle_reinvite ( SIPCall *call )
 {
+        _debug("handle_reinvite\n");
 
 	// Close the previous RTP session
 	_audiortp->closeRtpSession ();
 	call->setAudioStart ( false );
 
+	_debug("create new rtp session from handle_reinvite \n");
 	// Create a new one with new info
 	if ( _audiortp->createNewSession ( call ) >= 0 )
 	{

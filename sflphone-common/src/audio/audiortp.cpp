@@ -429,7 +429,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
         adu = _session->getData(_session->getFirstTimestamp());
     }
     if (adu == NULL) {
-        _debug("No RTP audio stream\n");
+        // _debug("No RTP audio stream\n");
         return;
     }
 
