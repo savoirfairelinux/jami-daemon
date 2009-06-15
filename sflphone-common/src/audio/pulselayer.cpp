@@ -227,9 +227,7 @@ int PulseLayer::getMic(void *buffer, int toCopy)
 
 void PulseLayer::startStream (void) 
 {
-    // flushMic();
-    if (isCorked) {
-
+    
         _urgentRingBuffer.flush();
         _micRingBuffer.flush();
         _voiceRingBuffer.flush();
@@ -243,15 +241,12 @@ void PulseLayer::startStream (void)
         pa_threaded_mainloop_unlock(m);
 
 	isCorked = false;
-    }
 
 }
 
     void 
 PulseLayer::stopStream (void) 
 {
-
-    if (!isCorked) {
 
         _debug("PulseLayer::Stop stream\n");
         pa_stream_flush( playback->pulseStream(), NULL, NULL );
@@ -265,8 +260,6 @@ PulseLayer::stopStream (void)
 	pa_stream_cork( record->pulseStream(), 1, NULL, NULL);
 
 	isCorked = true;
-
-    }
 	
 }
 
@@ -292,6 +285,7 @@ void PulseLayer::stream_suspended_callback(pa_stream *s, void *userdata UNUSED )
 
 void PulseLayer::processData( void )
 {
+        _debug("processData");
   
 
         // Handle the mic
