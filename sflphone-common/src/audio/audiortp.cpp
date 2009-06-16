@@ -90,8 +90,9 @@ AudioRtp::closeRtpSession () {
     ost::MutexLock m(_threadMutex);
     // This will make RTP threads finish.
     _debug("AudioRtp::Stopping rtp session\n");
-    try {
+    
 
+    try {
         delete _RTXThread; _RTXThread = 0;
     } catch(...) {
         _debugException("! ARTP Exception: when stopping audiortp\n");
@@ -100,6 +101,7 @@ AudioRtp::closeRtpSession () {
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     // audiolayer->stopStream();
 
+    _debug("AudioRtp::Audio rtp stopped\n");
     return true;
 }
 
@@ -141,7 +143,10 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
+
+    _debug("Delete AudioRtpRTX instance\n");
     _start.wait();
+    _debug("Just passed AudioRtpRTX semaphore wait\n");
 
     try {
         this->terminate();
@@ -154,9 +159,11 @@ AudioRtpRTX::~AudioRtpRTX () {
         delete _sessionRecv; _sessionRecv = NULL;
         delete _sessionSend; _sessionSend = NULL;
     } else {
+        _debug("Delete ost::RTPSession in AudioRtpRTX\n");
         delete _session;     _session = NULL;
     }
 
+    _debug("Just killed AudioRtpRTX rtp sessions\n");
 
     delete [] micData;  micData = NULL;
     delete [] micDataConverted;  micDataConverted = NULL;
@@ -169,6 +176,7 @@ AudioRtpRTX::~AudioRtpRTX () {
 
     delete converter; converter = NULL;
 
+    _debug("AudioRtpRTX instance deleted with all ring buffers, and converters\n");
 }
 
 
