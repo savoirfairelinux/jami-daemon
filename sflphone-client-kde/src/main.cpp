@@ -41,8 +41,8 @@ int main(int argc, char **argv)
 		   KAboutData::License_GPL_V3, 
 		   ki18n("(C) 2009 Savoir-faire Linux"), 
 		   KLocalizedString(), 
-		   0, 
-		   "jeremy.quentin@savoirfairelinux.com");
+		   "http://www.sflphone.org.", 
+		   "http://www.sflphone.org");
 		
 		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
 		KCmdLineArgs::init(argc, argv, &about);
