@@ -2861,7 +2861,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
     AccountID accountid;
     Account *account;
     VoIPLink *link;
-    Call *call;
+    Call *call = NULL;
     std::stringstream type;
 
 
@@ -2875,17 +2875,13 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
     // Then the VoIP link this account is linked with (IAX2 or SIP)
     if ( (account=getAccount (accountid)) != 0) {
         link = account->getVoIPLink ();
-
         if (link) {
             call = link->getCall (callID);
         }
-
     }
-
     if (call) 
     {
         type << call->getCallType () << std::endl;
-
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
@@ -2898,10 +2894,9 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
-        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "FAILURE"));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "UNKNOWN"));
         call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", "0"));
     }
-
     return call_details;
 }
 
