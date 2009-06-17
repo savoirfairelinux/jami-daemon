@@ -36,7 +36,7 @@ VoIPLink::~VoIPLink (void)
 bool VoIPLink::addCall(Call* call)
 {
     if (call) {
-        if (getCall(call->getCallId()) == 0) {
+        if (getCall(call->getCallId()) == NULL) {
             ost::MutexLock m(_callMapMutex);
             _callMap[call->getCallId()] = call;
         }
@@ -60,7 +60,7 @@ Call* VoIPLink::getCall(const CallID& id)
   if ( iter != _callMap.end() ) {
     return iter->second;
   }
-  return 0;
+  return NULL;
 }
 
 bool VoIPLink::clearCallMap()
