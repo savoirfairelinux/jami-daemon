@@ -1,6 +1,6 @@
 include ../globals.mak
 
-bin_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester historyTester
+noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester historyTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
