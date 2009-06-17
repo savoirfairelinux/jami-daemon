@@ -85,6 +85,8 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	
 	loadWindow();
 	
+	emit statusMessageChanged("youhou");
+	
 } 
 
 sflphone_kdeView::~sflphone_kdeView()

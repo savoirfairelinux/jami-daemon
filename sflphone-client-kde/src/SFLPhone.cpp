@@ -27,6 +27,7 @@
 #include <KMenu>
 #include <KAction>
 #include <KToolBar>
+#include <KStatusBar>
 #include <QtGui/QStatusBar>
 #include <KActionCollection>
 
@@ -71,6 +72,7 @@ SFLPhone::SFLPhone(QWidget *parent)
 		createGUI(rcFilePath);
 
       QMetaObject::connectSlotsByName(this);
+      
 
 } 
 
@@ -223,4 +225,9 @@ void SFLPhone::on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason)
 }
 
 
+void SFLPhone::on_view_statusMessageChanged(QString message)
+{
+	qDebug() << "on_view_statusMessageChanged";
+	statusBar()->showMessage(message);
+}
 

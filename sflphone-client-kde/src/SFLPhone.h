@@ -70,6 +70,7 @@ public:
 private slots:
 	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
 	void on_trayIcon_messageClicked();
+	void on_view_statusMessageChanged(QString message);
 
 	void quitButton();
 
