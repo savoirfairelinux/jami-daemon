@@ -563,12 +563,13 @@ void Call::appendItemText(QString text)
 			break;
 		case CALL_STATE_CURRENT:
 			//TODO replace account string by an Account instance and handle damn pointers to avoid detruction of Accounts
-			//if(peer == account->getAccountDetail(ACCOUNT_MAILBOX))
-			if(peerPhoneNumber == configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX])
-			{
-				text = QString(QChar(0x9A));
-			}
+// 			if(peerPhoneNumber == configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX])
+// 			{
+// 				text = QString(QChar(0x9A));
+// 			}
+			text = QString();
 			editNumber = labelCallNumber;
+			
 			break;		
 		default:
 			qDebug() << "Type key on call not editable. Doing nothing.";
