@@ -122,7 +122,7 @@ void ConfigurationDialog::loadOptions()
 	////////////////////////
 	
 	//Call history settings
-	spinBox_historyCapacity->setValue(configurationManager.getMaxCalls());
+	spinBox_historyCapacity->setValue(configurationManager.getHistoryLimit());
 	
 	//SIP port settings
 	int sipPort = configurationManager.getSipPort();
@@ -254,16 +254,16 @@ void ConfigurationDialog::saveOptions()
 	////////////////////////
 	
 	//Call history settings
-	configurationManager.setMaxCalls(spinBox_historyCapacity->value());
+	configurationManager.setHistoryLimit(spinBox_historyCapacity->value());
 	
 	//SIP port settings
 	int sipPort = spinBox_SIPPort->value();
 	
 	if(sipPort<1025){
-		errorWindow->showMessage("Attention : le port SIP doit être supérieur à 1024 !");
+		errorWindow->showMessage(tr2i18n("Attention : SIP port must be over 1024 !"));
 	}
 	if(sipPort>65535){
-		errorWindow->showMessage("Attention : le port SIP doit être inférieur à 65536 !");
+		errorWindow->showMessage(tr2i18n("Attention : SIP port must be under 65536 !"));
 	}
 	configurationManager.setSipPort(sipPort);
 	

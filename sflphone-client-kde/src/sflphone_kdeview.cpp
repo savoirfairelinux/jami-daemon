@@ -496,6 +496,7 @@ void sflphone_kdeView::updateWindowCallState()
 					enabledActions[3] = false;
 					break;
 				case CALL_STATE_CURRENT:
+					qDebug() << "Calling getCallDetails3";
 					qDebug() << "details = " << CallManagerInterfaceSingleton::getInstance().getCallDetails(call->getCallId()).value();
 					qDebug() << "Reached CALL_STATE_CURRENT with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					recordEnabled = true;
@@ -1401,7 +1402,7 @@ void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString 
 
 void sflphone_kdeView::on1_incomingMessage(const QString &accountID, const QString &message)
 {
-	qDebug() << "Signal : Incoming Message ! ";
+	qDebug() << "Signal : Incoming Message ! \nMessage : " << message;
 }
 
 void sflphone_kdeView::on1_voiceMailNotify(const QString &accountID, int count)

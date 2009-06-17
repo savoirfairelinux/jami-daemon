@@ -1,7 +1,14 @@
- 
-If we need to update translations files, do the following steps:
+If you need to update translations files, just execute:
 
-	xgettext --c++ --kde -ktr2i18n -o sflphone-client-kde.pot ../src/*.cpp ../src/*.h ../build/src/*.h ../build/src/*.cpp
+	./update.sh
+	
+in the current directory.
+
+
+
+If you want to do it yourself, do the following steps:
+
+	xgettext --c++ --kde -ktr2i18n -kki18nc:2c,1 -kki18n -o sflphone-client-kde.pot ../src/*.cpp ../src/*.h ../build/src/*.h ../build/src/*.cpp
 
 This command will update the template file with the current source files.
 To be able to add strings from the ui files, and other non-c++ files which generates some c++ source, you have to first build and make the project in build directory (see the INSTALL file in root directory sflphone-client-kde).

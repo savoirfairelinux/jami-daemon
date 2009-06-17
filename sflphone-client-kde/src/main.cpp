@@ -19,7 +19,7 @@
 #include "conf/ConfigurationDialog.h"
 
 
-static const char description[] = I18N_NOOP("A KDE 4 Client for SFLPhone");
+static const char description[] = I18N_NOOP("A KDE 4 Client for SFLphone");
 
 static const char version[] = "0.9.5";
 
@@ -35,16 +35,19 @@ int main(int argc, char **argv)
 		KAboutData about(
 		   "sflphone-client-kde", 
 		   0, 
-		   ki18n("SFLPhone KDE Client"), 
+		   ki18n("SFLphone KDE Client"), 
 		   version, 
 		   ki18n(description),
 		   KAboutData::License_GPL_V3, 
 		   ki18n("(C) 2009 Savoir-faire Linux"), 
 		   KLocalizedString(), 
 		   "http://www.sflphone.org.", 
-		   "http://www.sflphone.org");
+		   "sflphone@lists.savoirfairelinux.net");
 		
 		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
+		about.setProgramIconName(ICON_SFLPHONE);
+		about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
+		
 		KCmdLineArgs::init(argc, argv, &about);
 		KCmdLineOptions options;
 		//options.add("+[URL]", ki18n( "Document to open" ));
