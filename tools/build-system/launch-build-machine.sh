@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-06-01 19:11:22 -0400
+# Last Modified: 2009-06-09 17:51:40 -0400
 #####################################################
 
 #
@@ -75,7 +75,7 @@ DO_SEND_EMAIL=1
 EDITOR=echo
 export EDITOR
 
-NON_FATAL_ERRORS=""
+NON_FATAL_ERRORS=0
 
 MACHINES=( "ubuntu-8.04" "ubuntu-8.04-64" "ubuntu-8.10" "ubuntu-8.10-64" "ubuntu-9.04" "ubuntu-9.04-64" "opensuse-11" "opensuse-11-64" "mandriva-2009.1" )
 
@@ -333,6 +333,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 		if [ "$?" -ne "0" ]; then
 	                echo " !! Cannot deploy packaging system"
 			echo "${MACHINE} : Cannot deploy packaging system" >> ${PACKAGING_RESULT_DIR}/stats.log
+			NON_FATAL_ERRORS=1
 	        else
 
 			echo "Launch remote build"
@@ -341,27 +342,25 @@ if [ ${DO_MAIN_LOOP} ]; then
 			if [ "$?" -ne "0" ]; then
 	                	echo " !! Error during remote packaging process"
 				echo "${MACHINE} : Error during remote packaging process" >> ${PACKAGING_RESULT_DIR}/stats.log
+				NON_FATAL_ERRORS=1
 	        	else
 
-				echo "Retrieve dists and log files (current tag is ${TAG})"
+				echo "Retrieve dists files"
 				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/deb ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
 				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}/rpm ${PACKAGING_RESULT_DIR}/ >/dev/null 2>&1
-				${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}"/*.log" ${PACKAGING_RESULT_DIR}/
-
-				if [ "$?" -ne "0" ]; then
-	        		        echo " !! Cannot retrieve remote files"
-					echo "${MACHINE} : Cannot retrieve remote files" >> ${PACKAGING_RESULT_DIR}/stats.log
-	        		else
-					echo "${MACHINE} : OK" >> ${PACKAGING_RESULT_DIR}/stats.log
-				fi
+				
+				echo "${MACHINE} : OK" >> ${PACKAGING_RESULT_DIR}/stats.log
 			fi
+
+			echo "Retrieve log files"
+			${SCP_BASE} ${SSH_HOST}:${REMOTE_DEPLOY_DIR}"/*.log" ${PACKAGING_RESULT_DIR}/
 		fi
 
 		if [ "${VM_STATE}" = "running" ]; then
 			echo "Leave machine running"
 		else
 			echo "Shut down machine ${MACHINE}"
-			${SSH_BASE} 'sudo shutdown -h now'
+			${SSH_BASE} 'sudo /sbin/shutdown -h now'
 			echo "Wait ${SHUTDOWN_WAIT} s"
 			sleep ${SHUTDOWN_WAIT}
 			# hard shut down (just to be sure)
@@ -410,7 +409,7 @@ if [ ${DO_UPLOAD} ]; then
 	echo
 
 	echo "Prepare packages upload"
-	scp ${SSH_OPTIONS} ${PACKAGING_SCRIPTS_DIR}/update-repository.sh ${SSH_REPOSITORY_HOST}: 
+	scp ${SSH_OPTIONS} ${PACKAGING_SCRIPTS_DIR}/update-repository.sh ${SSH_REPOSITORY_HOST}:debian/ 
 
 	if [ "$?" -ne "0" ]; then
                 echo " !! Cannot deploy repository scripts"
@@ -418,7 +417,8 @@ if [ ${DO_UPLOAD} ]; then
 	
 	echo "Upload packages"
 	echo "Install dists files to repository"
-	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/deb/dists ${SSH_REPOSITORY_HOST}:
+	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/rpm/* ${SSH_REPOSITORY_HOST}:rpm/
+	scp -r ${SSH_OPTIONS} ${PACKAGING_RESULT_DIR}/deb/dists ${SSH_REPOSITORY_HOST}:debian/
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot upload packages"
@@ -426,7 +426,7 @@ if [ ${DO_UPLOAD} ]; then
 	fi
 
 	echo "Update repository"
-	ssh ${SSH_OPTIONS} ${SSH_REPOSITORY_HOST} "./update-repository.sh"
+	ssh ${SSH_OPTIONS} ${SSH_REPOSITORY_HOST} "cd debian && ./update-repository.sh"
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot update repository"
@@ -434,9 +434,7 @@ if [ ${DO_UPLOAD} ]; then
 	fi
 fi
 
-if [ "${NON_FATAL_ERRORS}" != "" ]; then
-	echo "Non fatal errors :"
-	echo ${NON_FATAL_ERRORS}
+if [ "${NON_FATAL_ERRORS}" -eq "1" ]; then
 	exit -1
 fi
 

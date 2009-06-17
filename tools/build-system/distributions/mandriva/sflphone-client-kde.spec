@@ -50,11 +50,11 @@ Authors:
 %setup -q
 
 %build
-cmake . -DCMAKE_INSTALL_PREFIX=%{buildroot}/%{_prefix}
-make -j
+cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
+make
 
 %install
-make install
+make DESTDIR=%{buildroot} install
 
 %clean
 make clean

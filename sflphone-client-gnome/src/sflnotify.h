@@ -49,7 +49,7 @@ void free_notification (GnomeNotification *g);
  * A dialog box is attached to the status icon
  * @param c The incoming call
  */
-void notify_incoming_call( call_t* c);
+void notify_incoming_call( callable_obj_t* c);
 
 /**
  * Notify voice mails count

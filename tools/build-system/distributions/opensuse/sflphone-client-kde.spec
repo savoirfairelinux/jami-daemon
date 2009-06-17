@@ -30,6 +30,7 @@ Requires:	libqt4-x11
 BuildRequires:  cmake
 BuildRequires:  libkdepimlibs4-devel
 BuildRequires:  commoncpp2-devel
+BuildRequires:	gettext-tools
 Conflicts:	sflphone
 Prefix:		%{_prefix}
 
@@ -50,11 +51,11 @@ Authors:
 %setup -q
 
 %build
-cmake . -DCMAKE_INSTALL_PREFIX=%{buildroot}/%{_prefix}
-make -j
+cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
+make
 
 %install
-make install
+make DESTDIR=%{buildroot} install
 
 %clean
 make clean

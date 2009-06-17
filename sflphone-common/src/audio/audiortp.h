@@ -72,7 +72,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     // AudioRecord recAudio;
 
     /** A SIP call */
-    SIPCall* _ca;    
+    SIPCall* _ca;
 
     
     friend class RtpTest;
@@ -147,6 +147,23 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     void initAudioRtpSession(void);
     
     /**
+     * Return the lenth the codec frame in ms 
+     */
+    float computeCodecFrameSize(int codecSamplePerFrame, int codecClockRate);
+
+    /**
+     * Compute nb of byte to get coresponding to X ms at audio layer frame size (44.1 khz) 
+     */
+    int computeNbByteAudioLayer(float codecFrameSize);
+
+
+    int processDataEncode(AudioLayer* audiolayer);
+
+
+    void processDataDecode(AudioLayer* audiolayer, unsigned char* spkrData, unsigned int size, int& countTime);
+
+
+    /**
      * Get the data from the mic, encode it and send it through the RTP session
      * @param timestamp	To manage time and synchronizing
      */ 		 	
@@ -172,7 +189,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
      *		      DOWNSAMPLING
      * @return int The number of samples after process
      */ 
-    int reSampleData(int sampleRate_codec, int nbSamples, int status);
+    int reSampleData(SFLDataFormat *input, SFLDataFormat *output,int sampleRate_codec, int nbSamples, int status);
     
     /** The audio codec used during the session */
     AudioCodec* _audiocodec;
@@ -210,6 +227,7 @@ class AudioRtp {
      */
     void setRecording ();
 
+    friend class RtpTest; 
 
   private:
     // copy constructor

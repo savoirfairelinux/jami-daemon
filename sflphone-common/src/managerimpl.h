@@ -37,6 +37,7 @@
 #include "account.h"
 #include "call.h"
 #include "numbercleaner.h"
+#include <history/historymanager.h>
 
 #include "audio/tonelist.h" // for Tone::TONEID declaration
 #include "audio/audiofile.h"
@@ -156,6 +157,16 @@ class ManagerImpl {
      * @param to  The recipient of the transfer
      */
     bool transferCall(const CallID& id, const std::string& to);
+
+    /**
+     * Notify the client the transfer is successful
+     */
+    void transferSucceded();
+
+    /**
+     * Notify the client that the transfer failed
+     */
+    void transferFailed();
 
     /**
      * Functions which occur with a user's action
@@ -510,16 +521,21 @@ class ManagerImpl {
     bool isRecording(const CallID& id);
 
     /**
-     * Set the maximum number of calls to keep in the history
-     * @param calls The number of calls
+     * Set the maximum number of days to keep in the history
+     * @param calls The number of days
      */
-    void setMaxCalls( const int& calls );
+    void setHistoryLimit (const int& days);
 
     /**
-     * Get the maximum number of calls to keep in the history
-     * @return double The number of calls
+     * Get the maximum number of days to keep in the history
+     * @return double The number of days 
      */
-    int getMaxCalls( void );
+    int getHistoryLimit (void);
+
+    void setHistoryEnabled (void);
+
+    int getHistoryEnabled (void);
+
 
     /**
      * Configure the start-up option
@@ -843,7 +859,7 @@ class ManagerImpl {
      * Fills the local _config (Conf::ConfigTree) with the default contents.
      * Called in main.cpp, just before Manager::init().
      */
-    void initConfigFile ( bool load_user_value = true );
+    void initConfigFile ( bool load_user_value=true, std::string alternate="");
 
     /**
      * Tell if the setup was already loaded
@@ -1088,7 +1104,8 @@ class ManagerImpl {
      */
     void unloadAccountMap();
 
-    /**
+   public:
+     /**
      * Tell if an account exists
      * @param accountID account ID check
      * @return bool True if the account exists
@@ -1096,8 +1113,9 @@ class ManagerImpl {
      */
     bool accountExists(const AccountID& accountID);
 
+    std::map<std::string, std::string> send_history_to_client (void); 
 
-public:
+    void receive_history_from_client (std::map<std::string, std::string> history);
     /**
      * Get an account pointer
      * @param accountID account ID to get
@@ -1143,6 +1161,11 @@ private:
     NumberCleaner *_cleaner;
 
     /**
+      * To handle the persistent history
+      */
+    HistoryManager *_history;
+
+    /**
      * Check if the call is a classic call or a direct IP-to-IP call
      */
     void check_call_configuration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
@@ -1153,6 +1176,7 @@ private:
 #endif
 
     friend class ConfigurationTest;
+    friend class HistoryTest;
 };
 
 #endif // __MANAGER_H__

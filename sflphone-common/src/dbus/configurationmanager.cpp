@@ -307,18 +307,29 @@ ConfigurationManager::setVolumeControls( void )
 }
 
 int32_t
-ConfigurationManager::getMaxCalls( void )
+ConfigurationManager::getHistoryLimit( void )
 {
-  return Manager::instance().getMaxCalls(  );
+  return Manager::instance().getHistoryLimit();
 }
 
 void
-ConfigurationManager::setMaxCalls( const int32_t& calls )
+ConfigurationManager::setHistoryLimit (const int32_t& days)
 {
-  Manager::instance().setMaxCalls( calls );
+  Manager::instance().setHistoryLimit (days);
 }
 
-void
+
+void ConfigurationManager::setHistoryEnabled (void)
+{
+    Manager::instance ().setHistoryEnabled ();
+}
+    
+int32_t ConfigurationManager::getHistoryEnabled (void)
+{
+    return Manager::instance ().getHistoryEnabled ();
+}
+
+    void
 ConfigurationManager::startHidden( void )
 {
   Manager::instance().startHidden(  );
@@ -458,3 +469,12 @@ void  ConfigurationManager::setAccountsOrder (const std::string& order) {
     Manager::instance().setAccountsOrder (order);
 }
 
+std::map <std::string, std::string> ConfigurationManager::getHistory (void)
+{
+    return Manager::instance().send_history_to_client ();
+}
+
+void ConfigurationManager::setHistory (const std::map <std::string, std::string>& entries)
+{
+    Manager::instance().receive_history_from_client (entries);
+}

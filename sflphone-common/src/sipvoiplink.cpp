@@ -1852,11 +1852,13 @@ void set_voicemail_info ( AccountID account, pjsip_msg_body *body )
 
 void SIPVoIPLink::handle_reinvite ( SIPCall *call )
 {
+        _debug("handle_reinvite\n");
 
 	// Close the previous RTP session
 	_audiortp->closeRtpSession ();
 	call->setAudioStart ( false );
 
+	_debug("create new rtp session from handle_reinvite \n");
 	// Create a new one with new info
 	if ( _audiortp->createNewSession ( call ) >= 0 )
 	{
@@ -2245,12 +2247,18 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 
 		header_value = fetch_header_value ( rdata->msg_info.msg, Manager::instance().getConfigString ( HOOKS, URLHOOK_SIP_FIELD ) );
 
-		if ( header_value!="" )
-		{
-			urlhook->addAction ( header_value,
+        if (header_value.size () < header_value.max_size())
+        {
+		    if ( header_value!="" )
+		    {
+			    urlhook->addAction ( header_value,
 			                     Manager::instance().getConfigString ( HOOKS, URLHOOK_COMMAND ) );
-		}
-	}
+		    }
+	    }
+        else
+            throw length_error ("Url exceeds std::string max_size\n");
+
+    }
 
 	/************************************************************************************************/
 
@@ -2726,6 +2734,8 @@ void xfer_func_cb ( pjsip_evsub *sub, pjsip_event *event )
 				_debug ( "UserAgent: NORESOURCE for transfer!\n" );
 				link->transferStep2();
 				pjsip_evsub_terminate ( sub, PJ_TRUE );
+
+				Manager::instance().transferFailed();
 				return;
 			}
 
@@ -2734,6 +2744,8 @@ void xfer_func_cb ( pjsip_evsub *sub, pjsip_event *event )
 				_debug ( "UserAgent: transfered call RINGING!\n" );
 				link->transferStep2();
 				pjsip_evsub_terminate ( sub, PJ_TRUE );
+
+				Manager::instance().transferSucceded();
 				return;
 			}
 		}

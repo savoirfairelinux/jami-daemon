@@ -31,6 +31,10 @@
 #define LOGO                ICONS_DIR "/sflphone.svg"
 #define LOGO_SMALL          ICONS_DIR "/sflphone_small.svg"
 
+#define CURRENT_CALLS       "current_calls"
+#define HISTORY             "history"
+#define CONTACTS            "contacts"
+
 /** Locale */
 #define _(STRING)   gettext( STRING )
 

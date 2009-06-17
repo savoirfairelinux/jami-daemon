@@ -69,9 +69,11 @@ class RtpTest : public CppUnit::TestCase {
     CPPUNIT_TEST_SUITE( RtpTest );
         CPPUNIT_TEST( testRtpInitClose );
 	CPPUNIT_TEST( testRtpThread );
+	CPPUNIT_TEST( testRtpResampling );
     CPPUNIT_TEST_SUITE_END();
 
     public:
+
         RtpTest() : CppUnit::TestCase("Audio Layer Tests") {}
         
         /*
@@ -91,6 +93,8 @@ class RtpTest : public CppUnit::TestCase {
         void testRtpInitClose();
 
 	void testRtpThread();
+
+	void testRtpResampling();
 
 
     private:
