@@ -150,6 +150,8 @@
 #define CALL_PEER_NAME                    "PEER_NAME"
 #define CALL_PEER_NUMBER                  "PEER_NUMBER"
 #define CALL_ACCOUNTID                    "ACCOUNTID"
+#define CALL_STATE                        "CALL_STATE"
+#define CALL_TYPE                         "CALL_TYPE"
 
 /** Call States */
 #define CALL_STATE_CHANGE_HUNG_UP         "HUNGUP"
@@ -161,6 +163,18 @@
 #define CALL_STATE_CHANGE_UNHOLD_CURRENT  "UNHOLD_CURRENT"
 #define CALL_STATE_CHANGE_UNHOLD_RECORD   "UNHOLD_RECORD"
 #define CALL_STATE_CHANGE_UNKNOWN         "UNKNOWN"
+
+#define DAEMON_CALL_STATE_INIT_CURRENT    "CURRENT"
+#define DAEMON_CALL_STATE_INIT_HOLD       "HOLD"
+#define DAEMON_CALL_STATE_INIT_BUSY       "BUSY"
+#define DAEMON_CALL_STATE_INIT_INACTIVE   "INACTIVE"
+
+#define DAEMON_CALL_TYPE_INCOMING         "0"
+#define DAEMON_CALL_TYPE_OUTGOING         "1"
+
+#define DAEMON_HISTORY_TYPE_MISSED        "0"
+#define DAEMON_HISTORY_TYPE_OUTGOING      "1"
+#define DAEMON_HISTORY_TYPE_INCOMING      "2"
 
 /** Address Book Settings */
 #define ADDRESSBOOK_MAX_RESULTS           "ADDRESSBOOK_MAX_RESULTS"

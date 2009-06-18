@@ -164,6 +164,26 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	this->stopTime = NULL;
 }
 
+Call::Call(QString callId)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	MapStringString details = callManager.getCallDetails(callId).value();
+	qDebug() << "Constructing existing call with details : " << details;
+	this->callId = callId;
+	this->peerPhoneNumber = details[CALL_PEER_NUMBER];
+	this->peerName = details[CALL_PEER_NAME];
+	initCallItem();
+	call_state startState = getStartStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
+	changeCurrentState(startState);
+	this->historyState = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
+	this->account = details[CALL_ACCOUNTID];
+	this->recording = false;
+	this->startTime = new QDateTime(QDateTime::currentDateTime());
+	this->stopTime = NULL;
+	this->historyItem = NULL;
+	this->historyItemWidget = NULL;
+}
+
 Call::~Call()
 {
 	delete startTime;
@@ -204,6 +224,89 @@ Call * Call::buildRingingCall(const QString & callId)
 	Call * call = new Call(CALL_STATE_RINGING, callId, peerName, from, account);
 	call->historyState = OUTGOING;
 	return call;
+}
+
+Call * Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type)
+{
+	if(name == "empty") name = "";
+	Call * call = new Call(CALL_STATE_OVER, callId, name, number, account);
+	call->startTime = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
+	call->stopTime = new QDateTime(QDateTime::fromTime_t(stopTimeStamp));
+	call->historyState = getHistoryStateFromType(type);
+	return call;
+}
+
+
+history_state Call::getHistoryStateFromType(QString type)
+{
+	if(type == DAEMON_HISTORY_TYPE_MISSED)
+	{
+		return MISSED;
+	}
+	else if(type == DAEMON_HISTORY_TYPE_OUTGOING)
+	{
+		return OUTGOING;
+	}
+	else if(type == DAEMON_HISTORY_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+}
+
+call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
+{
+	if(daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT)
+	{
+		return CALL_STATE_CURRENT;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_HOLD)
+	{
+		return CALL_STATE_HOLD;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_BUSY)
+	{
+		return CALL_STATE_BUSY;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return CALL_STATE_INCOMING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return CALL_STATE_RINGING;
+	}
+	else
+	{
+		return CALL_STATE_FAILURE;
+	}
+}
+
+history_state Call::getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
+{
+	if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+	else if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return OUTGOING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_BUSY)
+	{
+		return OUTGOING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return MISSED;
+	}
+	else
+	{
+		return NONE;
+	}
 }
 
 daemon_call_state Call::toDaemonCallState(const QString & stateName)
@@ -307,7 +410,6 @@ QWidget * Call::getHistoryItemWidget()
 		descr->setMargin(0);
 		descr->setSpacing(1);
 		mainLayout->addWidget(labelHistoryIcon);
-		qDebug() << "descr->addWidget(labelPeerName);";
 		if(! peerName.isEmpty())
 		{
 			labelHistoryPeerName = new QLabel(peerName);
