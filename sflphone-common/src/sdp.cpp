@@ -296,6 +296,7 @@ void Sdp::set_negociated_offer( const pjmedia_sdp_session *sdp ){
         // Retrieve the payload
         nb_codecs = current->desc.fmt_count;  // Must be one
         for( j=0 ; j<nb_codecs ; j++ ){
+	  _debug("================== set_negociated_offer ===================== %i\n", atoi(current->desc.fmt[j].ptr));
             iter = codecs_list.find((AudioCodecType)atoi(current->desc.fmt[j].ptr));  
             if (iter==codecs_list.end())
                 return;
@@ -417,6 +418,7 @@ void Sdp::fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp) {
     std::string remote_ip;
 
     remote_ip = r_sdp->conn->addr.ptr;
+    _debug("            Remote IP from fetching SDP: %s\n", remote_ip.c_str());
     this->set_remote_ip(remote_ip);
 }
 
@@ -425,11 +427,13 @@ void Sdp::fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media){
     int remote_port;
     
     remote_port = r_media->desc.port;
-    _debug("            Remote Audio Port: %d\n", remote_port);
+    _debug("            Remote Audio Port from fetching SDP: %d\n", remote_port);
     this->set_remote_audio_port(remote_port);
 }
 
 void Sdp::fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remote_sdp) {
+
+    _debug("Fetching media from sdp\n");
 
     pjmedia_sdp_media *r_media;
 

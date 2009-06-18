@@ -106,6 +106,13 @@ AudioRtp::closeRtpSession () {
 }
 
 
+AudioRtpRTX*
+AudioRtp::getRTX()
+{
+    return _RTXThread;
+}
+
+
 void
 AudioRtp::setRecording() {
 
@@ -113,6 +120,8 @@ AudioRtp::setRecording() {
     _RTXThread->_ca->setRecording();
 
 }
+
+
 
 
 
@@ -195,11 +204,16 @@ AudioRtpRTX::initBuffers()
     spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 }
 
+
     void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
 
     try {
+
+        setRtpSessionMedia();
+
+        /*
         if (_ca == 0) { return; }
         _audiocodec = _ca->getLocalSDP()->get_session_media ();
 
@@ -207,7 +221,6 @@ AudioRtpRTX::initAudioRtpSession (void)
 
         _codecSampleRate = _audiocodec->getClockRate();
         _codecFrameSize = _audiocodec->getFrameSize();
-        
 
         ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
         _debug("Init audio RTP session %s\n", _ca->getLocalSDP()->get_remote_ip().data());
@@ -215,7 +228,7 @@ AudioRtpRTX::initAudioRtpSession (void)
             _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getLocalSDP()->get_remote_ip().data());
             return;
         }
-
+      
 
         if (!_sym) {
             _sessionRecv->setSchedulingTimeout (10000);
@@ -227,9 +240,13 @@ AudioRtpRTX::initAudioRtpSession (void)
             _session->setSchedulingTimeout(10000);
             _session->setExpireTimeout(1000000);
         }
+	*/
 
+	setRtpSessionRemoteIp();
+
+        /*
         if (!_sym) {
-            if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) _ca->getLocalSDP()->get_remote_audio_port()) ) {
+	    if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) _ca->getLocalSDP()->get_remote_audio_port()) ) {
                 _debug("AudioRTP Thread Error: could not connect to port %d\n",  _ca->getLocalSDP()->get_remote_audio_port());
                 return;
             }
@@ -263,6 +280,7 @@ AudioRtpRTX::initAudioRtpSession (void)
                 }
             }
         }
+	*/
 
 
     } catch(...) {
@@ -272,10 +290,88 @@ AudioRtpRTX::initAudioRtpSession (void)
 
 }
 
+void
+AudioRtpRTX::setRtpSessionMedia(void)
+{
+
+    _debug("setRtpSessionMedia()\n");
+
+    if (_ca == 0) { return; }
+
+    
+    _audiocodec = _ca->getLocalSDP()->get_session_media ();
+
+    if (_audiocodec == NULL) { return; }
+
+    _codecSampleRate = _audiocodec->getClockRate();
+    _codecFrameSize = _audiocodec->getFrameSize();
+
+    if (!_sym) {
+
+        bool payloadIsSet = false;
+        if (_audiocodec) {
+            if (_audiocodec->hasDynamicPayload()) {
+                payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
+            } else {
+                payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
+                payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
+            }
+        }
+        _sessionSend->setMark(true);
+    } else {
+
+        bool payloadIsSet = false;
+        if (_audiocodec) {
+            if (_audiocodec->hasDynamicPayload()) {
+                payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
+            } else {
+                payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
+            }
+        }
+    }
+
+}
+
+void
+AudioRtpRTX::setRtpSessionRemoteIp(void)
+{
+    if (_ca == 0) { return; }
+
+    ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
+    _debug("Init audio RTP session %s\n", _ca->getLocalSDP()->get_remote_ip().data());
+    if (!remote_ip) {
+        _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getLocalSDP()->get_remote_ip().data());
+        return;
+    }
+    
+    if (!_sym) {
+
+	if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) _ca->getLocalSDP()->get_remote_audio_port()) ) {
+            _debug("AudioRTP Thread Error: could not connect to port %d\n",  _ca->getLocalSDP()->get_remote_audio_port());
+            return;
+        }
+        if (!_sessionSend->addDestination (remote_ip, (unsigned short) _ca->getLocalSDP()->get_remote_audio_port())) {
+            _debug("! ARTP Thread Error: could not connect to port %d\n", _ca->getLocalSDP()->get_remote_audio_port());
+            return;
+        }
+
+        _sessionSend->setMark(true);
+    } else {
+
+        if (!_session->addDestination (remote_ip, (unsigned short)_ca->getLocalSDP()->get_remote_audio_port() )) {
+            return;
+        }
+
+    }
+
+}
+
+
+
 float 
 AudioRtpRTX::computeCodecFrameSize(int codecSamplePerFrame, int codecClockRate)
 {
-  return ( (float)codecSamplePerFrame * 1000.0 ) / (float)codecClockRate;
+    return ( (float)codecSamplePerFrame * 1000.0 ) / (float)codecClockRate;
 }
 
 int

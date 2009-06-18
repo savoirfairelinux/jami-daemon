@@ -74,6 +74,16 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** A SIP call */
     SIPCall* _ca;
 
+   /**
+     * Update RTP session media info as received from SDP negociation 
+     */
+    void setRtpSessionMedia(void);
+
+    /**
+     * Update RTP session remote ip destination as received from sip transaction 
+     */
+    void setRtpSessionRemoteIp(void); 
+
     
     friend class RtpTest;
 
@@ -221,6 +231,11 @@ class AudioRtp {
      * Close a RTP session and kills the remaining threads
      */
     bool closeRtpSession( void );
+
+    /**
+     * Return a pointer to the RTP thead
+     */
+    AudioRtpRTX* getRTX();
 
     /**
      * Start recording
