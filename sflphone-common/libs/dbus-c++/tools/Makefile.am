@@ -14,7 +14,7 @@ AM_CPPFLAGS = \
 libdbus_cxx_la = $(top_builddir)/libs/dbus-c++/src/libdbus-c++-1.la
 #endif
 
-bin_PROGRAMS = dbusxx-xml2cpp dbusxx-introspect
+noinst_PROGRAMS = dbusxx-xml2cpp dbusxx-introspect
 
 dbusxx_xml2cpp_SOURCES = xml.h xml.cpp xml2cpp.h xml2cpp.cpp \
 	generate_adaptor.cpp  generate_adaptor.h  generate_proxy.cpp\

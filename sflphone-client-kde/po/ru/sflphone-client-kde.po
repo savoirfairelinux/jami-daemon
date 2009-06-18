@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-06-09 19:00-0400\n"
+"POT-Creation-Date: 2009-06-17 15:48-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -151,50 +151,60 @@ msgstr ""
 msgid "Transfer to : "
 msgstr ""
 
-#: ../src/ConfigDialog.cpp:131
+#: ../src/ConfigDialog.cpp:131 ../src/ConfigDialog.cpp:263
 msgid "Attention : SIP port must be over 1024 !"
 msgstr ""
 
-#: ../src/ConfigDialog.cpp:136
+#: ../src/ConfigDialog.cpp:136 ../src/ConfigDialog.cpp:266
 msgid "Attention : SIP port must be under 65536 !"
 msgstr ""
 
-#: ../src/SFLPhone.cpp:54 ../src/sflphone_kdeview.cpp:1055
-#: ../src/sflphone_kdeview.cpp:1060 ../src/sflphone_kdeview.cpp:1065
+#: ../src/main.cpp:49 ../src/main.cpp:50
+msgctxt "Your names"
+msgid "NAME OF TRANSLATORS"
+msgstr ""
+
+#: ../src/main.cpp:50 ../src/main.cpp:51
+msgctxt "Your emails"
+msgid "EMAIL OF TRANSLATORS"
+msgstr ""
+
+#: ../src/SFLPhone.cpp:55 ../src/sflphone_kdeview.cpp:1051
+#: ../src/sflphone_kdeview.cpp:1056 ../src/sflphone_kdeview.cpp:1061
 msgid "SFLPhone"
 msgstr ""
 
-#: ../src/SFLPhone.cpp:152
+#: ../src/SFLPhone.cpp:154
 msgid "You still have some calls open. Please close all calls before quitting."
 msgstr ""
 
-#: ../src/SFLPhone.cpp:180
+#: ../src/SFLPhone.cpp:182
 msgid "Incoming call"
 msgstr ""
 
-#: ../src/SFLPhone.cpp:181
+#: ../src/SFLPhone.cpp:183
 msgid "You have an incoming call from"
 msgstr ""
 
-#: ../src/SFLPhone.cpp:181
+#: ../src/SFLPhone.cpp:183
 msgid "Click to accept or refuse it."
 msgstr ""
 
-#: ../src/sflphone_kdeview.cpp:1055
+#: ../src/sflphone_kdeview.cpp:1051
 msgid "Main screen"
 msgstr ""
 
-#: ../src/sflphone_kdeview.cpp:1060 ../build/src/ui_ConfigDialog.h:1271
+#: ../src/sflphone_kdeview.cpp:1056 ../build/src/ui_ConfigDialog.h:1271
 #: ../build/src/ui_dlggeneralbase.h:160
 msgid "Call history"
 msgstr ""
 
-#: ../src/sflphone_kdeview.cpp:1065
+#: ../src/sflphone_kdeview.cpp:1061
 #: ../build/src/ui_sflphone_kdeview_base.h:507
 msgid "Address book"
 msgstr ""
 
-#: ../src/sflphone_kdeview.cpp:1079 ../src/sflphone_kdeview.cpp:1135
+#: ../src/sflphone_kdeview.cpp:1075 ../src/sflphone_kdeview.cpp:1131
 msgid "Edit before call"
 msgstr ""
 

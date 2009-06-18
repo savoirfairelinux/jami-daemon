@@ -200,6 +200,8 @@ private slots:
 	void on1_voiceMailNotify(const QString &accountID, int count);
 	void on1_volumeChanged(const QString &device, double value);
 	
+signals:
+	void statusMessageChanged(QString message);
 
 };
 
