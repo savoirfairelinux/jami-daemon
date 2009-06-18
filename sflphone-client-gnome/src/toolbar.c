@@ -164,7 +164,7 @@ GtkWidget *create_toolbar ()
     gtk_toolbar_set_orientation(GTK_TOOLBAR(ret), GTK_ORIENTATION_HORIZONTAL);
     gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
 
-    image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
+    image = gtk_image_new_from_file( ICONS_DIR "/dial.svg");
     callButton = gtk_tool_button_new (image, _("Place a call"));
 #if GTK_CHECK_VERSION(2,12,0)
     gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
