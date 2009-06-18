@@ -52,7 +52,7 @@ AudioRtp::~AudioRtp (void) {
     delete _RTXThread; _RTXThread = 0;
 }
 
-int 
+void 
 AudioRtp::createNewSession (SIPCall *ca) {
 
     ost::MutexLock m(_threadMutex);
@@ -70,6 +70,17 @@ AudioRtp::createNewSession (SIPCall *ca) {
     // Start RTP Send/Receive threads
     _symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
     _RTXThread = new AudioRtpRTX (ca, _symmetric);
+
+}
+
+int
+AudioRtp::start(void)
+{
+    if(_RTXThread == 0) {
+        _debug("! ARTP Failure: Cannot start audiortp thread since not yet created\n");
+        throw AudioRtpException();
+    }
+
     try {
         if (_RTXThread->start() != 0) {
             _debug("! ARTP Failure: unable to start RTX Thread\n");
@@ -211,7 +222,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 
     try {
 
-        setRtpSessionMedia();
+        // setRtpSessionMedia();
 
         /*
         if (_ca == 0) { return; }
@@ -228,7 +239,7 @@ AudioRtpRTX::initAudioRtpSession (void)
             _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getLocalSDP()->get_remote_ip().data());
             return;
         }
-      
+        */
 
         if (!_sym) {
             _sessionRecv->setSchedulingTimeout (10000);
@@ -240,9 +251,9 @@ AudioRtpRTX::initAudioRtpSession (void)
             _session->setSchedulingTimeout(10000);
             _session->setExpireTimeout(1000000);
         }
-	*/
+	
 
-	setRtpSessionRemoteIp();
+	// setRtpSessionRemoteIp();
 
         /*
         if (!_sym) {
