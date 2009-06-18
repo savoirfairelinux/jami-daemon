@@ -198,13 +198,10 @@ Call * Call::buildRingingCall(const QString & callId)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	MapStringString details = callManager.getCallDetails(callId).value();
-// 	qDebug() << "Details : " << details.keys();
 	QString from = details[CALL_PEER_NUMBER];
 	QString account = details[CALL_ACCOUNTID];
 	QString peerName = details[CALL_PEER_NAME];
-	//QString from = details[CALL_ACCOUNT];
 	Call * call = new Call(CALL_STATE_RINGING, callId, peerName, from, account);
-// 	call->setPeerName(details[CALL_PEER_NAME]);
 	call->historyState = OUTGOING;
 	return call;
 }

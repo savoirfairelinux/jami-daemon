@@ -52,6 +52,10 @@ private:
 	QMenu *trayIconMenu;
 	bool iconChanged;
 	QSystemTrayIcon *trayIcon;
+	QLabel * statusBarWidget;
+	
+private:
+	void setObjectNames();
 
 protected:
 	virtual bool queryClose();
@@ -70,7 +74,7 @@ public:
 private slots:
 	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
 	void on_trayIcon_messageClicked();
-	void on_view_statusMessageChanged(QString message);
+	void on_view_statusMessageChanged(const QString & message);
 
 	void quitButton();
 

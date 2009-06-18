@@ -72,7 +72,6 @@ protected:
 	void contextMenuEvent(QContextMenuEvent *event);
 
 public:
-
 	//Constructors & Destructors
 	sflphone_kdeView(QWidget *parent);
 	virtual ~sflphone_kdeView();
@@ -125,6 +124,9 @@ private slots:
 	void updateVolumeBar();
 	void updateVolumeControls();
 	void updateDialpad();
+	
+public slots:
+	void updateStatusMessage();
 	
 	
 	virtual void keyPressEvent(QKeyEvent *event)
@@ -201,7 +203,7 @@ private slots:
 	void on1_volumeChanged(const QString &device, double value);
 	
 signals:
-	void statusMessageChanged(QString message);
+	void statusMessageChanged(const QString & message);
 
 };
 
