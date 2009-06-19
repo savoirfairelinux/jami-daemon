@@ -312,6 +312,8 @@ AudioRtpRTX::setRtpSessionMedia(void)
     
     _audiocodec = _ca->getLocalSDP()->get_session_media ();
 
+    _debug("AudioRtp: _audiocodec->getPayload() %i\n", _audiocodec->getPayload());
+
     if (_audiocodec == NULL) { return; }
 
     _codecSampleRate = _audiocodec->getClockRate();
@@ -346,7 +348,12 @@ AudioRtpRTX::setRtpSessionMedia(void)
 void
 AudioRtpRTX::setRtpSessionRemoteIp(void)
 {
-    if (_ca == 0) { return; }
+    _debug("setRtpSessionRemoteIp()\n");
+
+    if (_ca == 0) { 
+      _debug("Return no call \n");
+      return; 
+    }
 
     ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
     _debug("Init audio RTP session %s\n", _ca->getLocalSDP()->get_remote_ip().data());
@@ -369,6 +376,7 @@ AudioRtpRTX::setRtpSessionRemoteIp(void)
         _sessionSend->setMark(true);
     } else {
 
+      _debug("AudioRtp: _ca->getLocalSDP()->get_remote_audio_port() %i\n", (unsigned short)_ca->getLocalSDP()->get_remote_audio_port());
         if (!_session->addDestination (remote_ip, (unsigned short)_ca->getLocalSDP()->get_remote_audio_port() )) {
             return;
         }
@@ -511,6 +519,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     if (!_audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
 
+    
     int compSize = processDataEncode(audiolayer);
 
     // putData put the data on RTP queue, sendImmediate bypass this queue

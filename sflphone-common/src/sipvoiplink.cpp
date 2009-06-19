@@ -722,6 +722,7 @@ SIPVoIPLink::onhold ( const CallID& id )
 	// Stop sound
 	call->setAudioStart ( false );
 	call->setState ( Call::Hold );
+
 	_debug ( "* SIP Info: Stopping AudioRTP for onhold action\n" );
 	_audiortp->closeRtpSession();
 
@@ -804,6 +805,7 @@ SIPVoIPLink::offhold ( const CallID& id )
 	call->setState ( Call::Active );
 	// it's sure that this is the current call id...
 
+	_audiortp->getRTX()->setRtpSessionRemoteIp();
 	
 	// if ( _audiortp->createNewSession ( call ) < 0 )
         if ( _audiortp->start() < 0 )
@@ -1248,7 +1250,7 @@ SIPVoIPLink::SIPCallAnswered ( SIPCall *call, pjsip_rx_data *rdata )
 		_debug ( "Get remote media information from offer\n" );
 		call->getLocalSDP()->fetch_media_transport_info_from_remote_sdp ( r_sdp );
 
-		_audiortp->getRTX()->setRtpSessionRemoteIp();
+ 		_audiortp->getRTX()->setRtpSessionRemoteIp();
 
 		_debug ( "Update call state , id = %s\n", call->getCallId().c_str() );
 		call->setConnectionState ( Call::Connected );
@@ -2091,7 +2093,13 @@ void call_on_media_update ( pjsip_inv_session *inv, pj_status_t status )
         accId = Manager::instance().getAccountFromCall ( call->getCallId() );
 	link = dynamic_cast<SIPVoIPLink *> ( Manager::instance().getAccountLink ( accId ) );
 
-	link->_audiortp->getRTX()->setRtpSessionMedia();
+	_debug("call->getState() %i\n", call->getState());
+
+	if (call->getState() != Call::Hold)
+	{
+	    link->_audiortp->getRTX()->setRtpSessionMedia();
+	    link->_audiortp->getRTX()->setRtpSessionRemoteIp();
+	}
 
 }
 
