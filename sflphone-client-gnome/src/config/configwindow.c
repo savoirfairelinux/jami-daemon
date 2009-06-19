@@ -780,14 +780,14 @@ show_config_window ()
     gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
     gtk_widget_show(notebook);
 
-    // General settings tab
-    tab = create_general_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General Settings")));
-    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-
     // Audio tab
     tab = create_audio_configuration();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio Settings")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+
+    // General settings tab
+    tab = create_general_settings();
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General Settings")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Recording tab
