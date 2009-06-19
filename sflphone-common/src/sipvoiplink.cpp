@@ -2097,8 +2097,12 @@ void call_on_media_update ( pjsip_inv_session *inv, pj_status_t status )
 
 	if (call->getState() != Call::Hold)
 	{
+	    _debug("Set parameters in RTP session\n");
 	    link->_audiortp->getRTX()->setRtpSessionMedia();
 	    link->_audiortp->getRTX()->setRtpSessionRemoteIp();
+	}
+	else {
+	    _debug("Didn't set RTP parameters since call is on hold\n");
 	}
 
 }

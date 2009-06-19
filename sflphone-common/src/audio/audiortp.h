@@ -133,6 +133,9 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Sample rate converter object */
     SamplerateConverter* converter;
 
+    /** audio layer */
+    AudioLayer *_audiolayer;
+
     /** Variables to process audio stream: sample rate for playing sound (typically 44100HZ) */
     int _layerSampleRate;  
 
@@ -178,10 +181,10 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     int computeNbByteAudioLayer(float codecFrameSize);
 
 
-    int processDataEncode(AudioLayer* audiolayer);
+    int processDataEncode();
 
 
-    void processDataDecode(AudioLayer* audiolayer, unsigned char* spkrData, unsigned int size, int& countTime);
+    void processDataDecode(unsigned char* spkrData, unsigned int size, int& countTime);
 
 
     /**
