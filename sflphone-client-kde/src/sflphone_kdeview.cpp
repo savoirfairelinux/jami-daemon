@@ -58,6 +58,18 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	
 	errorWindow = new QErrorMessage(this);
 	callList = new CallList();
+	for(int i = 0 ; i < callList->size() ; i++)
+	{
+		Call * call = (*callList)[i];
+		if(call->getState() == CALL_STATE_OVER)
+		{
+			addCallToCallHistory(call);
+		}
+		else
+		{
+			addCallToCallList(call);
+		}
+	}
 	
 	configDialog = new ConfigurationDialog(this);
 	configDialog->setModal(true);
@@ -77,6 +89,10 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	connect(&callManager, SIGNAL(volumeChanged(const QString &, double)),
 	        this,         SLOT(on1_volumeChanged(const QString &, double)));
 	        
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	connect(&configurationManager, SIGNAL(accountsChanged()),
+	        this,                  SLOT(updateStatusMessage()));
+	        
 	QPalette pal = QPalette(palette());
 	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
 	setPalette(pal);
@@ -88,6 +104,8 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	emit statusMessageChanged("youhou");
 	
 } 
+
+
 
 sflphone_kdeView::~sflphone_kdeView()
 {
@@ -496,7 +514,6 @@ void sflphone_kdeView::updateWindowCallState()
 					enabledActions[3] = false;
 					break;
 				case CALL_STATE_CURRENT:
-					qDebug() << "Calling getCallDetails3";
 					qDebug() << "details = " << CallManagerInterfaceSingleton::getInstance().getCallDetails(call->getCallId()).value();
 					qDebug() << "Reached CALL_STATE_CURRENT with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					recordEnabled = true;
@@ -865,6 +882,20 @@ void sflphone_kdeView::updateDialpad()
 }
 
 
+void sflphone_kdeView::updateStatusMessage()
+{
+	qDebug() << "updateStatusMessage";
+	Account * account = firstRegisteredAccount();
+	if(account == NULL)
+	{
+		emit statusMessageChanged(tr2i18n("No account registered"));
+	}
+	else
+	{
+		emit statusMessageChanged(tr2i18n("Using account") + " \'" + account->getAlias() + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
+	}
+}
+
 
 /************************************************************
 ************            Autoconnect             *************
@@ -1144,6 +1175,7 @@ void sflphone_kdeView::setAccountFirst(Account * account)
 {
 	qDebug() << "setAccountFirst : " << account->getAlias();
 	getAccountList()->setAccountFirst(account);
+	updateStatusMessage();
 }
 
 void sflphone_kdeView::on_listWidget_callHistory_currentItemChanged()

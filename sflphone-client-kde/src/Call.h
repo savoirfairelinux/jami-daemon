@@ -180,12 +180,16 @@ private:
 public:
 	
 	//Constructors & Destructors
+	Call(QString callId);
 	~Call();
 	void initCallItem();
 	static Call * buildDialingCall(QString callId, const QString & peerName, QString account = "");
 	static Call * buildIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
 	static Call * buildRingingCall(const QString & callId);
-	
+	static Call * buildHistoryCall(const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type);
+	static history_state getHistoryStateFromType(QString type);
+	static call_state getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
+	static history_state getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
 	
 	//Getters
 	QListWidgetItem * getItem();

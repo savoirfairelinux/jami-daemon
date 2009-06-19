@@ -21,10 +21,36 @@
 
 #include "CallList.h"
 
+
+#include "callmanager_interface_singleton.h"
+#include "configurationmanager_interface_singleton.h"
+
 CallList::CallList()
 {
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	QStringList callList = callManager.getCallList();
+	qDebug() << "Call List = " << callList;
 	callIdCpt = 0;
 	calls = new QVector<Call *>();
+	for(int i = 0 ; i < callList.size() ; i++)
+	{
+		calls->append(new Call(callList[i]));
+	}
+	MapStringString historyMap = configurationManager.getHistory().value();
+	qDebug() << "Call History = " << historyMap;
+	QMapIterator<QString, QString> i(historyMap);
+	while (i.hasNext()) {
+		i.next();
+		uint startTimeStamp = i.key().toUInt();
+		QStringList param = i.value().split("|");
+		QString type = param[0];
+		QString number = param[1];
+		QString name = param[2];
+		uint stopTimeStamp = param[3].toUInt();
+		QString account = param[4];
+		calls->append(Call::buildHistoryCall(getAndIncCallId(), startTimeStamp, stopTimeStamp, account, name, number, type));
+	}
 }
 
 CallList::~CallList()

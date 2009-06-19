@@ -83,8 +83,10 @@ Call::getState()
 }
 
 std::string
-Call::getStateStr (CallState state)
+Call::getStateStr ()
 {
+    CallState state = getState();
+    _debug("getStateStr , state = %d\n", state);
     std::string state_str;
         
     switch (state) {
@@ -97,9 +99,11 @@ Call::getStateStr (CallState state)
         case Busy:
             state_str = "BUSY";
             break;
+        case Inactive:
+            state_str = "INACTIVE";
+            break;
         case Refused:
         case Error:
-        case Inactive:
         default:
             state_str = "FAILURE";
             break;

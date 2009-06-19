@@ -44,7 +44,6 @@ ConfigurationDialog::ConfigurationDialog(sflphone_kdeView *parent) : QDialog(par
 	//configuration complémentaire
 	QStyle * style = QApplication::style();
 	errorWindow = new QErrorMessage(this);
-	codecPayloads = new MapStringString();
 	horizontalSlider_historyCapacity->setMaximum(MAX_HISTORY_CAPACITY);
 	label_WarningSIP->setVisible(false);
 	for(int i = 0 ; i < list_options->count() ; i++)
@@ -100,7 +99,20 @@ ConfigurationDialog::~ConfigurationDialog()
 {
 	delete accountList;
 	delete errorWindow;
-	delete codecPayloads;
+}
+
+void ConfigurationDialog::connectAccountsChangedSignal()
+{
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	connect(&configurationManager, SIGNAL(accountsChanged()),
+	        this,                  SLOT(on1_accountsChanged()));
+}
+
+void ConfigurationDialog::disconnectAccountsChangedSignal()
+{
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	disconnect(&configurationManager, SIGNAL(accountsChanged()),
+	        this,                  SLOT(on1_accountsChanged()));
 }
 
 void ConfigurationDialog::changedAccountList()
@@ -190,15 +202,17 @@ void ConfigurationDialog::loadOptions()
 	if(audioManager == ALSA)
 	{
 		QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
-		
-		int inputDevice = devices[1].toInt();
+		bool ok;
 		qDebug() << "inputDevice = " << devices[1];
+		int inputDevice = devices[1].toInt(& ok);
+		if(!ok) qDebug() << "inputDevice is not a number";
 		QStringList inputDeviceList = configurationManager.getAudioInputDeviceList();
 		comboBox2_in->addItems(inputDeviceList);
 		comboBox2_in->setCurrentIndex(inputDevice);
 		
-		int outputDevice = devices[0].toInt();
 		qDebug() << "outputDevice = " << devices[0];
+		int outputDevice = devices[0].toInt(& ok);
+		if(!ok) qDebug() << "outputDevice is not a number";
 		QStringList outputDeviceList = configurationManager.getAudioOutputDeviceList();
 		comboBox3_out->addItems(outputDeviceList);
 		comboBox3_out->setCurrentIndex(outputDevice);
@@ -389,6 +403,7 @@ void ConfigurationDialog::saveAccountList()
 {
 	//get the configurationManager instance
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	disconnectAccountsChangedSignal();
 	//save the account being edited
 	if(listWidget_accountList->currentItem())
 		saveAccount(listWidget_accountList->currentItem());
@@ -431,6 +446,7 @@ void ConfigurationDialog::saveAccountList()
 		}
 	}
 	configurationManager.setAccountsOrder(accountList->getOrderedList());
+	connectAccountsChangedSignal();
 }
 
 void ConfigurationDialog::loadAccount(QListWidgetItem * item)
@@ -493,10 +509,19 @@ void ConfigurationDialog::addAccountToAccountList(Account * account)
 
 void ConfigurationDialog::loadCodecs()
 {
+	qDebug() << "loadCodecs";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList codecList = configurationManager.getCodecList();
 	QStringList activeCodecList = configurationManager.getActiveCodecList();
-	QStringList codecListToDisplay = configurationManager.getActiveCodecList();
+	activeCodecList.removeDuplicates();
+	for (int i=0 ; i<activeCodecList.size() ; i++)
+	{
+		if(! codecList.contains(activeCodecList[i]))
+		{
+			activeCodecList.removeAt(i);
+		}
+	}
+	QStringList codecListToDisplay = activeCodecList;
 	for (int i=0 ; i<codecList.size() ; i++)
 	{
 		if(! activeCodecList.contains(codecList[i]))
@@ -508,7 +533,6 @@ void ConfigurationDialog::loadCodecs()
 	qDebug() << "activeCodecList" << activeCodecList;
 	qDebug() << "codecListToDisplay" << codecListToDisplay;
 	tableWidget_codecs->setRowCount(0);
-	codecPayloads->clear();
 	for(int i=0 ; i<codecListToDisplay.size() ; i++)
 	{
 		bool ok;
@@ -521,21 +545,20 @@ void ConfigurationDialog::loadCodecs()
 		{
 			QStringList details = configurationManager.getCodecDetails(payload);
 			tableWidget_codecs->insertRow(i);
-			QTableWidgetItem * headerItem = new QTableWidgetItem("");
-			tableWidget_codecs->setVerticalHeaderItem (i, headerItem);
+			tableWidget_codecs->setVerticalHeaderItem (i, new QTableWidgetItem());
+			tableWidget_codecs->verticalHeaderItem (i)->setText(payloadStr);
 			tableWidget_codecs->setItem(i,0,new QTableWidgetItem(""));
 			tableWidget_codecs->setItem(i,1,new QTableWidgetItem(details[CODEC_NAME]));
 			tableWidget_codecs->setItem(i,2,new QTableWidgetItem(details[CODEC_SAMPLE_RATE]));
 			tableWidget_codecs->setItem(i,3,new QTableWidgetItem(details[CODEC_BIT_RATE]));
 			tableWidget_codecs->setItem(i,4,new QTableWidgetItem(details[CODEC_BANDWIDTH]));
 			tableWidget_codecs->item(i,0)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
-			tableWidget_codecs->item(i,0)->setCheckState(activeCodecList.contains(codecList[i]) ? Qt::Checked : Qt::Unchecked);
+			tableWidget_codecs->item(i,0)->setCheckState(activeCodecList.contains(codecListToDisplay[i]) ? Qt::Checked : Qt::Unchecked);
 			tableWidget_codecs->item(i,1)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 			tableWidget_codecs->item(i,2)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 			tableWidget_codecs->item(i,3)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 			tableWidget_codecs->item(i,4)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 
-			(*codecPayloads)[details[CODEC_NAME]] = payloadStr;
 			qDebug() << "Added to codecs : " << payloadStr << " , " << details[CODEC_NAME];
 		}
 	}
@@ -546,13 +569,14 @@ void ConfigurationDialog::loadCodecs()
 
 void ConfigurationDialog::saveCodecs()
 {
+	qDebug() << "saveCodecs";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList activeCodecs;
 	for(int i = 0 ; i < tableWidget_codecs->rowCount() ; i++)
 	{
 		if(tableWidget_codecs->item(i,0)->checkState() == Qt::Checked)
 		{
-			activeCodecs << (*codecPayloads)[tableWidget_codecs->item(i,1)->text()];
+			activeCodecs << tableWidget_codecs->verticalHeaderItem(i)->text();
 		}
 	}
 	qDebug() << "Calling setActiveCodecList with list : " << activeCodecs ;

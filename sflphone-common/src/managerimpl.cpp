@@ -1430,7 +1430,7 @@ ManagerImpl::getCurrentCodecName(const CallID& id)
 ManagerImpl::getInputAudioPluginList(void)
 {
   std::vector<std::string> v;
-  _debug("Get input audio plugin list");
+  _debug("Get input audio plugin list\n");
 
   v.push_back("default");
   v.push_back("surround40");
@@ -1446,7 +1446,7 @@ ManagerImpl::getInputAudioPluginList(void)
 ManagerImpl::getOutputAudioPluginList(void)
 {
   std::vector<std::string> v;
-  _debug("Get output audio plugin list");
+  _debug("Get output audio plugin list\n");
 
   v.push_back( PCM_DEFAULT );
   v.push_back( PCM_DMIX );
@@ -2881,11 +2881,11 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
     }
     if (call) 
     {
-        type << call->getCallType () << std::endl;
+        type << call->getCallType ();
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
-        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr (call->getState())));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr ()));
         call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", type.str ()));
     }
     else 

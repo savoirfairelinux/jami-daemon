@@ -292,7 +292,7 @@ create_call_menu()
 
     menu      = gtk_menu_new ();
 
-    image = gtk_image_new_from_file( ICONS_DIR "/icon_call.svg");
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_dialpad.svg");
     newCallMenu = gtk_image_menu_item_new_with_mnemonic(_("_New call"));
     gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( newCallMenu ), image );
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), newCallMenu);

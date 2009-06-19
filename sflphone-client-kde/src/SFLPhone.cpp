@@ -35,10 +35,15 @@
 #include "instance_interface_singleton.h"
 
 
+/**
+ * 
+ * @param parent 
+ */
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent),
       view(new sflphone_kdeView(this))
 {
+	
 
 	// accept dnd
 		setAcceptDrops(true);
@@ -70,14 +75,20 @@ SFLPhone::SFLPhone(QWidget *parent)
 		}
 		qDebug() << "rcFilePath = " << rcFilePath ;
 		createGUI(rcFilePath);
-
+		setObjectNames();
       QMetaObject::connectSlotsByName(this);
-      
-
+	   view->updateStatusMessage();
 } 
 
 SFLPhone::~SFLPhone()
 {
+}
+
+void SFLPhone::setObjectNames()
+{
+	view->setObjectName("view");
+	statusBar()->setObjectName("statusBar");
+	trayIcon->setObjectName("trayIcon");
 }
 
 void SFLPhone::setupActions()
@@ -105,10 +116,8 @@ void SFLPhone::setupActions()
 	actionCollection()->addAction("action_configureAudio", view->action_configureAudio);
 	actionCollection()->addAction("action_accountCreationWizard", view->action_accountCreationWizard);
 	
-	
-	QStatusBar * statusbar = new QStatusBar(this);
-	statusbar->setObjectName(QString::fromUtf8("statusbar"));
-	this->setStatusBar(statusbar);
+	statusBarWidget = new QLabel();
+	statusBar()->addWidget(statusBarWidget);
 	
 	QToolBar * toolbar = new QToolBar(this);
 	this->addToolBar(Qt::TopToolBarArea, toolbar);
@@ -131,7 +140,6 @@ void SFLPhone::setupActions()
 	trayIcon = new QSystemTrayIcon(this->windowIcon(), this);
 	trayIcon->setContextMenu(trayIconMenu);
 	trayIcon->show();
-	trayIcon->setObjectName("trayIcon");
 	
 	iconChanged = false;
 
@@ -225,9 +233,9 @@ void SFLPhone::on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason)
 }
 
 
-void SFLPhone::on_view_statusMessageChanged(QString message)
+void SFLPhone::on_view_statusMessageChanged(const QString & message)
 {
-	qDebug() << "on_view_statusMessageChanged";
-	statusBar()->showMessage(message);
+	qDebug() << "on_view_statusMessageChanged : " + message;
+	statusBarWidget->setText(message);
 }
 
