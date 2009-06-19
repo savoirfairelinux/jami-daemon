@@ -116,7 +116,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     ost::SymmetricRTPSession *_session;
 
     /** Semaphore */
-    ost::Semaphore _start;
+    // ost::Semaphore _start;
 
     /** Is the session symmetric or not */
     bool _sym;

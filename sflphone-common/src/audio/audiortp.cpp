@@ -175,7 +175,7 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
 AudioRtpRTX::~AudioRtpRTX () {
 
     _debug("Delete AudioRtpRTX instance\n");
-    _start.wait();
+    // _start.wait();
     _debug("Just passed AudioRtpRTX semaphore wait\n");
 
     try {
@@ -185,10 +185,6 @@ AudioRtpRTX::~AudioRtpRTX () {
         throw;
     }
     _ca = 0;
-    
-    _debug("Delete ost::RTPSession in AudioRtpRTX\n");
-    delete _session;     _session = NULL;
-    
 
     _debug("Just killed AudioRtpRTX rtp sessions\n");
 
@@ -202,6 +198,10 @@ AudioRtpRTX::~AudioRtpRTX () {
     delete time; time = NULL;
 
     delete converter; converter = NULL;
+
+    _debug("Delete ost::RTPSession in AudioRtpRTX\n");
+    delete _session;     _session = NULL;
+    
 
     _debug("AudioRtpRTX instance deleted with all ring buffers, and converters\n");
 }
@@ -589,7 +589,7 @@ AudioRtpRTX::run () {
     TimerPort::setTimer(threadSleep);
 
     _audiolayer->startStream();
-    _start.post();
+    // _start.post();
     _debug("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
     while (!testCancel()) {
 
@@ -630,7 +630,7 @@ AudioRtpRTX::run () {
       
     }
     
-    //_audiolayer->stopStream();
+    // _audiolayer->stopStream();
     _debug("- ARTP Action: Stop call %s\n",_ca->getCallId().c_str());
   //} catch(std::exception &e) {
     //_start.post();
