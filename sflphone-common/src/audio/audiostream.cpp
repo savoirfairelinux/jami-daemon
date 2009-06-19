@@ -127,17 +127,24 @@ AudioStream::createStream( pa_context* c )
   assert( s );
 
   if( _streamType == PLAYBACK_STREAM ){
-    attributes->maxlength = 66500;
-    attributes->tlength = 10000;
-    attributes->prebuf = 10000;
+    attributes->maxlength = 20000;
+    attributes->tlength = 4096;
+    attributes->prebuf = 4096;
     attributes->minreq = 940;
+    attributes->fragsize = 4096;
     // pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
     pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
   }
   else if( _streamType == CAPTURE_STREAM ){
     
-    attributes->maxlength = 66500;
-    attributes->fragsize = (uint32_t)-1;   
+    // attributes->maxlength = 66500;
+    // attributes->fragsize = (uint32_t)-1;
+
+    attributes->maxlength = 20000;
+    attributes->tlength = 4096;
+    attributes->prebuf = 4096;
+    attributes->minreq = 940;
+    attributes->fragsize = 4096;
  
     pa_stream_connect_record( s , NULL , attributes , PA_STREAM_START_CORKED );
     // pa_stream_connect_record( s , NULL , attributes , PA_STREAM_INTERPOLATE_TIMING );

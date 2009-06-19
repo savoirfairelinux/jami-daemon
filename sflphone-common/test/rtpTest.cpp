@@ -83,7 +83,7 @@ void RtpTest::testRtpInitClose()
     try {
 
         _debug("-------- Open Rtp Session ----------\n");
-        CPPUNIT_ASSERT(audiortp->createNewSession(sipcall) == 0);
+        audiortp->createNewSession(sipcall);
 
     } catch(...) {
         
@@ -125,7 +125,7 @@ void RtpTest::testRtpThread()
     _debug("-------- Open Rtp Session ----------\n");
     try {
 
-        CPPUNIT_ASSERT(audiortp->createNewSession(sipcall) == 0);
+        audiortp->createNewSession(sipcall);
 
     } catch(...) {
         
@@ -176,7 +176,7 @@ void RtpTest::testRtpResampling()
     _debug("-------- Open Rtp Session ----------\n");
     try {
 
-        CPPUNIT_ASSERT(audiortp->createNewSession(sipcall) == 0);
+        audiortp->createNewSession(sipcall);
 
     } catch(...) {
         
