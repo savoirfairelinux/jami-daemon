@@ -162,7 +162,12 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /**
      * Maximum number of sample for audio buffers (mic and spkr)
      */
-    int nbSamplesMax; 
+    int nbSamplesMax;
+
+
+    
+    bool _payloadIsSet;
+    bool _remoteIpIsSet;
     
     /**
      * Init the RTP session. Create either symmetric or double sessions to manage data transport
@@ -261,7 +266,7 @@ class AudioRtp {
      */
     void setRecording ();
 
-    friend class RtpTest; 
+    friend class RtpTest;
 
   private:
     // copy constructor
@@ -272,7 +277,7 @@ class AudioRtp {
 
     /** The RTP thread */
     AudioRtpRTX* _RTXThread;
-    
+
     /** Symmetric session or not */
     bool _symmetric;
 

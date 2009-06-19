@@ -580,8 +580,10 @@ SIPVoIPLink::answer ( const CallID& id )
 		PJ_ASSERT_RETURN ( status == PJ_SUCCESS, 1 );
 
 		// Start the RTP sessions
-		_debug ( "SIPVoIPLink::answer: Starting AudioRTP when answering : call %s \n", call->getCallId().c_str() );
+		// _debug ( "SIPVoIPLink::answer: Starting AudioRTP when answering : call %s \n", call->getCallId().c_str() );
 		// if ( _audiortp->createNewSession ( call ) >= 0 )
+		/*
+		_debug("!!!!!!!!!!!!!!!!!!!!!!! Start audio rtp from OFFHOLD !!!!!!!!!!!!!!!!!!\n");
 		if ( _audiortp->start() >= 0 )
 		{
 			call->setAudioStart ( true );
@@ -593,6 +595,7 @@ SIPVoIPLink::answer ( const CallID& id )
 		{
 			_debug ( "SIPVoIPLink::answer: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__ );
 		}
+		*/
 	}
 	else
 	{
@@ -805,14 +808,17 @@ SIPVoIPLink::offhold ( const CallID& id )
 	call->setState ( Call::Active );
 	// it's sure that this is the current call id...
 
-	_audiortp->getRTX()->setRtpSessionRemoteIp();
+	// _audiortp->getRTX()->setRtpSessionRemoteIp();
 	
 	// if ( _audiortp->createNewSession ( call ) < 0 )
+	/*
+	_debug("!!!!!!!!!!!!!!!!!!!!!!! Start audio rtp from OFFHOLD !!!!!!!!!!!!!!!!!!\n");
         if ( _audiortp->start() < 0 )
 	{
-		_debug ( "! SIP Failure: Unable to start sound (%s:%d)\n", __FILE__, __LINE__ );
+		_debug ( "! SIP Failure: Unable to start rtp thread (%s:%d)\n", __FILE__, __LINE__ );
 		return false;
 	}
+	*/
 	
 
 	return true;
@@ -1259,8 +1265,11 @@ SIPVoIPLink::SIPCallAnswered ( SIPCall *call, pjsip_rx_data *rdata )
 		Manager::instance().peerAnsweredCall ( call->getCallId() );
 		if ( Manager::instance().isCurrentCall ( call->getCallId() ) )
 		{
-			_debug ( "* SIP Info: Starting AudioRTP when answering\n" );
+		  // _debug ( "* SIP Info: Starting AudioRTP when answering\n" );
 			// if ( _audiortp->createNewSession ( call ) < 0 )
+
+		        /*
+		        _debug("!!!!!!!!!!!!!!!!!!!!!!! Start audio rtp from SIPCallAnswered !!!!!!!!!!!!!!!!!!\n");
 			if ( _audiortp->start() < 0 )
 			{
 				_debug ( "RTP Failure: unable to create new session\n" );
@@ -1269,6 +1278,7 @@ SIPVoIPLink::SIPCallAnswered ( SIPCall *call, pjsip_rx_data *rdata )
 			{
 				call->setAudioStart ( true );
 			}
+			*/
 		}
 	}
 	else
@@ -1340,7 +1350,13 @@ bool SIPVoIPLink::new_ip_to_ip_call ( const CallID& id, const std::string& to )
 
 		// Building the local SDP offer
 		call->getLocalSDP()->set_ip_address ( getLocalIP() );
-		call->getLocalSDP()->create_initial_offer();
+                call->getLocalSDP()->create_initial_offer();
+
+                try {
+                    _audiortp->createNewSession (call);
+                } catch (...) {
+	    	    _debug ( "! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)\n", __FILE__, __LINE__ );
+                }
 
 		// Generate the contact URI
 		// uri_contact << "<" << uri_from << ":" << call->getLocalSDP()->get_local_extern_audio_port() << ">";
@@ -1881,7 +1897,7 @@ void set_voicemail_info ( AccountID account, pjsip_msg_body *body )
 
 void SIPVoIPLink::handle_reinvite ( SIPCall *call )
 {
-  /*
+  
         _debug("handle_reinvite\n");
 	
 	// Close the previous RTP session
@@ -1896,14 +1912,17 @@ void SIPVoIPLink::handle_reinvite ( SIPCall *call )
 	} catch (...) {
 	    _debug ( "! SIP Failure: Unable to create RTP Session (%s:%d)\n", __FILE__, __LINE__ );
 	}
+
+	_audiortp->getRTX()->setRtpSessionRemoteIp();
+	_audiortp->getRTX()->setRtpSessionMedia();
+
+	/*
+        _debug("!!!!!!!!!!!!!!!!!!!!!!! Start audio rtp from handle_reinvite !!!!!!!!!!!!!!!!!!\n");
 	if ( _audiortp->start() >= 0 )
 	{
 		call->setAudioStart ( true );
 	}
-  */
-
-	_audiortp->getRTX()->setRtpSessionRemoteIp();
-	_audiortp->getRTX()->setRtpSessionMedia();
+	*/
 }
 
 
@@ -1919,7 +1938,7 @@ void call_on_state_changed ( pjsip_inv_session *inv, pjsip_event *e )
 	SIPVoIPLink *link;
 	pjsip_rx_data *rdata;
 
-	_debug("---------------------- call_on_state_changed --------------------------\n");
+	_debug("---------------------- call_on_state_changed -------------------------- %i\n", inv->state);
 
 	/* Retrieve the call information */
 	call = reinterpret_cast<SIPCall*> ( inv->mod_data[_mod_ua.id] );
@@ -2100,10 +2119,13 @@ void call_on_media_update ( pjsip_inv_session *inv, pj_status_t status )
 	    _debug("Set parameters in RTP session\n");
 	    link->_audiortp->getRTX()->setRtpSessionMedia();
 	    link->_audiortp->getRTX()->setRtpSessionRemoteIp();
+            link->_audiortp->start();
 	}
 	else {
 	    _debug("Didn't set RTP parameters since call is on hold\n");
 	}
+
+        // link->_audiortp->start();
 
 }
 
@@ -2113,6 +2135,8 @@ void call_on_forked ( pjsip_inv_session *inv, pjsip_event *e )
 
 void call_on_tsx_changed ( pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e )
 {
+
+        _debug("---------------------- call_on_tsx_changed -------------------------- %i\n", tsx->state);
 
 	if ( tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
 	        pjsip_method_cmp ( &tsx->method, &pjsip_refer_method ) ==0 )
@@ -2124,7 +2148,7 @@ void call_on_tsx_changed ( pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip
 
 void regc_cb ( struct pjsip_regc_cbparam *param )
 {
-
+        _debug("---------------------- regc_cb --------------------------\n");
 
 	//AccountID *id = static_cast<AccountID *> (param->token);
 	SIPAccount *account;
@@ -2186,6 +2210,8 @@ void regc_cb ( struct pjsip_regc_cbparam *param )
 pj_bool_t
 mod_on_rx_request ( pjsip_rx_data *rdata )
 {
+
+        _debug("---------------------- mod_on_rx_request --------------------------\n");
 
 	pj_status_t status;
 	pj_str_t reason;
@@ -2407,11 +2433,15 @@ mod_on_rx_request ( pjsip_rx_data *rdata )
 
 pj_bool_t mod_on_rx_response ( pjsip_rx_data *rdata UNUSED )
 {
+
+        _debug("---------------------- mod_on_rx_response --------------------------\n");
 	return PJ_SUCCESS;
 }
 
 void onCallTransfered ( pjsip_inv_session *inv, pjsip_rx_data *rdata )
 {
+        _debug("---------------------- onCallTransfered --------------------------\n");
+
 
 	pj_status_t status;
 	pjsip_tx_data *tdata;
@@ -2638,7 +2668,7 @@ void onCallTransfered ( pjsip_inv_session *inv, pjsip_rx_data *rdata )
 
 void xfer_func_cb ( pjsip_evsub *sub, pjsip_event *event )
 {
-
+        
 
 	PJ_UNUSED_ARG ( event );
 
@@ -2862,6 +2892,8 @@ void xfer_func_cb ( pjsip_evsub *sub, pjsip_event *event )
 void xfer_svr_cb ( pjsip_evsub *sub, pjsip_event *event )
 {
 
+        _debug("---------------------- xfer_svr_cb --------------------------\n");
+
 	PJ_UNUSED_ARG ( event );
 
 	/*
@@ -2885,6 +2917,8 @@ void xfer_svr_cb ( pjsip_evsub *sub, pjsip_event *event )
 
 void on_rx_offer ( pjsip_inv_session *inv, const pjmedia_sdp_session *offer )
 {
+
+       _debug("---------------------- on_rx_offer --------------------------\n");
 
 #ifdef CAN_REINVITE
 	_debug ( "reinvite                                                  SIP\n" );
@@ -2911,6 +2945,8 @@ void on_rx_offer ( pjsip_inv_session *inv, const pjmedia_sdp_session *offer )
 
 void handle_incoming_options ( pjsip_rx_data *rdata )
 {
+
+        _debug("---------------------- handle_incoming_options --------------------------\n");
 
 	pjsip_tx_data *tdata;
 	pjsip_response_addr res_addr;
@@ -2964,6 +3000,9 @@ void handle_incoming_options ( pjsip_rx_data *rdata )
 
 bool setCallAudioLocal ( SIPCall* call, std::string localIP, bool stun, std::string server )
 {
+
+        _debug("---------------------- setCallAudioLocal --------------------------\n");
+
 	// Setting Audio
 	unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
 	unsigned int callLocalExternAudioPort = callLocalAudioPort;
@@ -2990,6 +3029,8 @@ bool setCallAudioLocal ( SIPCall* call, std::string localIP, bool stun, std::str
 
 std::string fetch_header_value ( pjsip_msg *msg, std::string field )
 {
+
+        _debug("---------------------- fetch_header_value --------------------------\n");
 
 	pj_str_t name;
 	pjsip_generic_string_hdr * hdr;
