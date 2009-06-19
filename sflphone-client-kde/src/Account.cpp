@@ -96,6 +96,7 @@ Account * Account::buildExistingAccountFromId(QString _accountId)
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Account * a = new Account();
 	a->accountId = new QString(_accountId);
+	qDebug() << "getAccountDetails 1 sent";
 	a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
 	a->initAccountItem();
 	return a;

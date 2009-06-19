@@ -41,7 +41,6 @@ class ConfigurationDialog : public QDialog, private Ui::ConfigurationDialog
 private:
 	static AccountList * accountList;
 	QErrorMessage * errorWindow;
-	MapStringString * codecPayloads;
 	bool accountsChangedEnableWarning;
 	
 
@@ -77,6 +76,8 @@ public:
 
 private slots:
 	void changedAccountList();
+	void connectAccountsChangedSignal();
+	void disconnectAccountsChangedSignal();
 	
 	void on_toolButton_codecUp_clicked();
 	void on_toolButton_codecDown_clicked();

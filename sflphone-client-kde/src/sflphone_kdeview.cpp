@@ -58,6 +58,18 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	
 	errorWindow = new QErrorMessage(this);
 	callList = new CallList();
+	for(int i = 0 ; i < callList->size() ; i++)
+	{
+		Call * call = (*callList)[i];
+		if(call->getState() == CALL_STATE_OVER)
+		{
+			addCallToCallHistory(call);
+		}
+		else
+		{
+			addCallToCallList(call);
+		}
+	}
 	
 	configDialog = new ConfigurationDialog(this);
 	configDialog->setModal(true);
@@ -502,7 +514,6 @@ void sflphone_kdeView::updateWindowCallState()
 					enabledActions[3] = false;
 					break;
 				case CALL_STATE_CURRENT:
-					qDebug() << "Calling getCallDetails3";
 					qDebug() << "details = " << CallManagerInterfaceSingleton::getInstance().getCallDetails(call->getCallId()).value();
 					qDebug() << "Reached CALL_STATE_CURRENT with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					recordEnabled = true;
@@ -875,7 +886,14 @@ void sflphone_kdeView::updateStatusMessage()
 {
 	qDebug() << "updateStatusMessage";
 	Account * account = firstRegisteredAccount();
-	emit statusMessageChanged(tr2i18n("Using account") + " \'" + account->getAlias() + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
+	if(account == NULL)
+	{
+		emit statusMessageChanged(tr2i18n("No account registered"));
+	}
+	else
+	{
+		emit statusMessageChanged(tr2i18n("Using account") + " \'" + account->getAlias() + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
+	}
 }
 
 
