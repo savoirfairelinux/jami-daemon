@@ -47,7 +47,7 @@ private:
 public:
 
 	//Constructors & Destructors
-	ConfigurationDialog(sflphone_kdeView *parent);
+	ConfigurationDialog(sflphone_kdeView * parent);
 	~ConfigurationDialog();
 	
 	//Getters
