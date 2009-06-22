@@ -56,7 +56,6 @@ ConfigurationDialog::ConfigurationDialog(sflphone_kdeView *parent) : QDialog(par
 	toolButton_codecDown->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
 	tableWidget_codecs->verticalHeader()->hide();
 	tableWidget_codecs->setSelectionBehavior(QAbstractItemView::SelectRows);
-	//tableWidget_codecs->setStyleSheet("border-style: hidden;");
 
 
 
@@ -513,12 +512,25 @@ void ConfigurationDialog::loadCodecs()
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList codecList = configurationManager.getCodecList();
 	QStringList activeCodecList = configurationManager.getActiveCodecList();
-	activeCodecList.removeDuplicates();
+	#if QT_VERSION >= 0x040500
+        activeCodecList.removeDuplicates();
+	#else
+   	for (int i = 0 ; i < activeCodecList.size() ; i++)
+		{
+			if(activeCodecList.lastIndexOf(activeCodecList[i]) != i)
+			{
+				activeCodecList.removeAt(i);
+				i--;
+			}
+		}
+	#endif
+
 	for (int i=0 ; i<activeCodecList.size() ; i++)
 	{
 		if(! codecList.contains(activeCodecList[i]))
 		{
 			activeCodecList.removeAt(i);
+			i--;
 		}
 	}
 	QStringList codecListToDisplay = activeCodecList;
@@ -664,6 +676,10 @@ void ConfigurationDialog::on_toolButton_codecUp_clicked()
 		tableWidget_codecs->setItem(currentRow - 1, i , item1);
 		tableWidget_codecs->setItem(currentRow, i , item2);
 	}
+	QTableWidgetItem * item1 = tableWidget_codecs->takeVerticalHeaderItem(currentRow);
+	QTableWidgetItem * item2 = tableWidget_codecs->takeVerticalHeaderItem(currentRow - 1);
+	tableWidget_codecs->setVerticalHeaderItem(currentRow - 1, item1);
+	tableWidget_codecs->setVerticalHeaderItem(currentRow, item2);
 	tableWidget_codecs->setCurrentCell(currentRow - 1, currentCol);
 }
 
@@ -680,6 +696,10 @@ void ConfigurationDialog::on_toolButton_codecDown_clicked()
 		tableWidget_codecs->setItem(currentRow + 1, i , item1);
 		tableWidget_codecs->setItem(currentRow, i , item2);
 	}
+	QTableWidgetItem * item1 = tableWidget_codecs->takeVerticalHeaderItem(currentRow);
+	QTableWidgetItem * item2 = tableWidget_codecs->takeVerticalHeaderItem(currentRow + 1);
+	tableWidget_codecs->setVerticalHeaderItem(currentRow + 1, item1);
+	tableWidget_codecs->setVerticalHeaderItem(currentRow, item2);
 	tableWidget_codecs->setCurrentCell(currentRow + 1, currentCol);
 }
 
