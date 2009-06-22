@@ -30,6 +30,7 @@ Requires:	libqt4-x11
 BuildRequires:  cmake
 BuildRequires:  libkdepimlibs4-devel
 BuildRequires:  commoncpp2-devel
+BuildRequires:  libqt4-devel >= 4.3
 BuildRequires:	gettext-tools
 Conflicts:	sflphone
 Prefix:		%{_prefix}
