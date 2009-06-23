@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-06-09 17:51:40 -0400
+# Last Modified: 2009-06-23 10:31:34 -0400
 #####################################################
 
 #
@@ -220,7 +220,7 @@ if [ ${DO_PREPARE} ]; then
 		exit -1
 	fi
 
-	VERSION=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1`
+	VERSION=`cd ${REPOSITORY_DIR} && git describe --tag HEAD | cut -d "." -f1-3`
 
 	if [ ${RELEASE_MODE} ]; then
 		if [ "${RELEASE_MODE}" != "release" ];then
@@ -247,10 +247,10 @@ if [ ${DO_PREPARE} ]; then
 		echo " Doing commit"
 		
         	cd ${REPOSITORY_DIR}
-		git commit -m "[#1262] Updated debian changelogs (${VERSION})" . >/dev/null
+		git commit -m "[#1262] Updated debian changelogs (${VERSION})" .
 
 		echo " Pushing commit"
-		git push origin master >/dev/null
+		git push origin master
 	fi
 
 	# change current branch if needed
@@ -317,7 +317,7 @@ if [ ${DO_MAIN_LOOP} ]; then
 			echo "Not needed, already running"
 		else
 			cd ${VBOX_USER_HOME} && VBoxHeadless -startvm "${MACHINE}" -p 50000 &
-			if [[ ${MACHINE} =~ "opensuse" ]]; then
+			if [[ ${MACHINE} =~ "opensuse" || ${MACHINE} =~ "mandriva" ]]; then
 				STARTUP_WAIT=200
 			fi
 			echo "Wait ${STARTUP_WAIT} s"
