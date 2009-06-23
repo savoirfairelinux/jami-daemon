@@ -220,7 +220,7 @@ if [ ${DO_PREPARE} ]; then
 		exit -1
 	fi
 
-	VERSION=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1`
+	VERSION=`cd ${REPOSITORY_DIR} && git describe --tag HEAD | cut -d "." -f1-3`
 
 	if [ ${RELEASE_MODE} ]; then
 		if [ "${RELEASE_MODE}" != "release" ];then

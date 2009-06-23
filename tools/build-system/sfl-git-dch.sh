@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-13
-# Last Modified: 2009-05-29 14:23:50 -0400
+# Last Modified: 2009-06-22 14:40:21 -0400
 #####################################################
 
 # set -x
@@ -35,7 +35,7 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # get last release tag
-LAST_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta|\.stable)$" | tail -n 1`
+LAST_RELEASE_TAG_NAME=`git tag -l "[0-9]\.[0-9]\.[0-9]\.*" | tail -n 1`
 
 if [ "$?" -ne "0" ]; then
 	echo " !! Error when retrieving last tag"
@@ -43,7 +43,7 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # get last release tag
-PREVIOUS_RELEASE_TAG_NAME=`git tag -l "debian/*ubuntu*" | grep -E "ubuntu[1-9](\.rc[1-9]|\.beta|\.stable)$" | tail -n 2 | sed -n '1p;1q'`
+PREVIOUS_RELEASE_TAG_NAME=`git tag -l "[0-9]\.[0-9]\.[0-9]\.*" | tail -n 2 | sed -n '1p;1q'`
 
 if [ "$?" -ne "0" ]; then
 	echo " !! Error when retrieving previous revision tag"
