@@ -332,24 +332,28 @@ int32_t ConfigurationManager::getHistoryEnabled (void)
     void
 ConfigurationManager::startHidden( void )
 {
+  _debug("Manager received startHidden\n");
   Manager::instance().startHidden(  );
 }
 
 int32_t
 ConfigurationManager::isStartHidden( void )
 {
+  _debug("Manager received isStartHidden\n");
   return Manager::instance().isStartHidden(  );
 }
 
 void
 ConfigurationManager::switchPopupMode( void )
 {
+  _debug("Manager received switchPopupMode\n");
   Manager::instance().switchPopupMode(  );
 }
 
 int32_t
 ConfigurationManager::popupMode( void )
 {
+  _debug("Manager received popupMode\n");
   return Manager::instance().popupMode(  );
 }
 
@@ -422,21 +426,25 @@ ConfigurationManager::setSipPort( const int32_t& portNum )
 
 std::string ConfigurationManager::getStunServer( void )
 {
+  _debug("Manager received getStunServer\n") ;
     return Manager::instance().getStunServer();
 }
 
 void ConfigurationManager::setStunServer( const std::string& server )
 {
+  _debug("Manager received setStunServer\n") ;
     Manager::instance().setStunServer( server );
 }
 
 void ConfigurationManager::enableStun (void)
 {
+  _debug("Manager received enableStun\n") ;
     Manager::instance().enableStun();
 }
 
 int32_t ConfigurationManager::isStunEnabled (void)
 {
+  _debug("Manager received isStunEnabled\n") ;
     return Manager::instance().isStunEnabled();
 }
 
@@ -453,7 +461,7 @@ std::vector< std::string > ConfigurationManager::getAddressbookList ( void ) {
 }
 
 void ConfigurationManager::setAddressbookList( const std::vector< std::string >& list ) {
-  _debug("Manager received setAddressbookList") ;
+  _debug("Manager received setAddressbookList\n") ;
     Manager::instance().setAddressbookList(list);
 }
 

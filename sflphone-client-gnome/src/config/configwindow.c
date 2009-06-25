@@ -696,6 +696,7 @@ record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
     gchar* path;
 
     path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
+    path = g_strndup (path + 7, strlen(path) - 7);
     dbus_set_record_path( path );
 }
 
