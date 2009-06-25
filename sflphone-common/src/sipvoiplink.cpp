@@ -381,6 +381,7 @@ int SIPVoIPLink::sendRegister ( AccountID id )
 	tmp = "<sip:" + username + "@" + hostname + ">";
 	pj_strdup2 ( _pool, &aor, tmp.data() );
 
+	_debug("<sip:%s@%s:%d>\n", username.data(), _localExternAddress.data(), _localExternPort );
 	sprintf ( contactTmp, "<sip:%s@%s:%d>", username.data(), _localExternAddress.data(), _localExternPort );
 	pj_strdup2 ( _pool, &contact, contactTmp );
 	account->setContact ( contactTmp );
@@ -1068,6 +1069,7 @@ SIPVoIPLink::SIPStartCall ( SIPCall* call, const std::string& subject UNUSED )
 
 	// Generate the from URI
 	strFrom = "sip:" + account->getUsername() + "@" + account->getHostname();
+	_debug( "              From: %s\n", strFrom.c_str());
 
 	// pjsip need the from and to information in pj_str_t format
 	pj_strdup2 ( _pool, &from, strFrom.data() );
@@ -2057,6 +2059,9 @@ void call_on_media_update ( pjsip_inv_session *inv, pj_status_t status )
 	pjmedia_sdp_neg_get_active_local ( inv->neg, &r_sdp );
 
 	call = reinterpret_cast<SIPCall *> ( inv->mod_data[getModId() ] );
+
+        if(!call){_debug("Call declined by peer, SDP negociation stopped\n"); return;}
+
 	// Clean the resulting sdp offer to create a new one (in case of a reinvite)
 	call->getLocalSDP()->clean_session_media();
 	// Set the fresh negociated one
@@ -2067,6 +2072,8 @@ void call_on_media_update ( pjsip_inv_session *inv, pj_status_t status )
 
         accId = Manager::instance().getAccountFromCall ( call->getCallId() );
 	link = dynamic_cast<SIPVoIPLink *> ( Manager::instance().getAccountLink ( accId ) );
+
+	if(!link){_debug("No Voip Account Link, impossible to init RTP session with SDP info"); return;}
 
 	if (call->getState() != Call::Hold)
 	{
@@ -2092,7 +2099,7 @@ void call_on_forked ( pjsip_inv_session *inv, pjsip_event *e )
 void call_on_tsx_changed ( pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e )
 {
 
-        _debug("--------------------- call_on_state_changed --------------------- %i\n", tsx->state); 
+        _debug("--------------------- call_on_tsx_changed --------------------- %i\n", tsx->state); 
 
 	if ( tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
 	        pjsip_method_cmp ( &tsx->method, &pjsip_refer_method ) ==0 )
