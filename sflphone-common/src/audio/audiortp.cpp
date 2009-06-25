@@ -256,6 +256,7 @@ AudioRtpRTX::setRtpSessionMedia(void)
     if (_audiocodec->hasDynamicPayload()) {
         _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
     } 
+    // else if (_audiocodec->)
     else 
     {
         _payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
@@ -429,8 +430,8 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    // _session->putData(timestamp, micDataEncoded, compSize);
-    _session->sendImmediate(timestamp, micDataEncoded, compSize);
+    _session->putData(timestamp, micDataEncoded, compSize);
+    // _session->sendImmediate(timestamp, micDataEncoded, compSize);
     
     
 }
