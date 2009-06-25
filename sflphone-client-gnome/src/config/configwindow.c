@@ -695,7 +695,12 @@ record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
 {
     gchar* path;
 
-    path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
+    // path = gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( chooser ) );
+    // g_filename_from_uri ()
+    path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ) );
+    // DEBUG("Problem with the path: %s", g_filename_to_utf8(path, -1, NULL, NULL, NULL));
+    DEBUG("Problem with the path: %s", path);
+    // dbus_set_record_path( g_filename_to_utf8(path, -1, NULL, NULL, NULL) );
     dbus_set_record_path( path );
 }
 
