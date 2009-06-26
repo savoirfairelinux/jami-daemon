@@ -253,12 +253,14 @@ AudioRtpRTX::setRtpSessionMedia(void)
     _codecFrameSize = _audiocodec->getFrameSize();
 
     
-    if (_audiocodec->hasDynamicPayload()) {
+    if (_audiocodec->getPayload() == 9){
+         _debug("WE ARE G722\n");
+	 _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload(), 8000));
+    }
+    else if ( _audiocodec->hasDynamicPayload() ) {
         _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
-    } 
-    // else if (_audiocodec->)
-    else 
-    {
+    }
+    else if ( !_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
         _payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
     }
     
