@@ -507,13 +507,17 @@ SIPVoIPLink::newOutgoingCall ( const CallID& id, const std::string& toUrl )
 
 		call->setPeerNumber ( getSipTo ( toUrl, account->getHostname() ) );
 		setCallAudioLocal ( call, getLocalIPAddress(), useStun(), getStunServer() );
-
+		
+		/*
 		try {
+		    _debug("CREATE NEW RTP SESSION FROM NEWOUTGOINGCALL\n");
 		    _audiortp->createNewSession (call);
 		} catch (...) {
 		    _debug("Failed to create rtp thread from newOutGoingCall\n");
 		}
-
+		*/
+		
+		
 		call->initRecFileName();
 
 		_debug ( "Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data() );
@@ -528,9 +532,16 @@ SIPVoIPLink::newOutgoingCall ( const CallID& id, const std::string& toUrl )
 
 		if ( SIPOutgoingInvite ( call ) )
 		{
+
 			call->setConnectionState ( Call::Progressing );
 			call->setState ( Call::Active );
 			addCall ( call );
+
+                        // _audiortp->start();
+
+	                call->setAudioStart ( true );
+		        
+			
 		}
 		else
 		{
@@ -584,6 +595,10 @@ SIPVoIPLink::answer ( const CallID& id )
 
      	        call->setConnectionState ( Call::Connected );
 	        call->setState ( Call::Active ); 
+
+		_audiortp->start();
+
+	        call->setAudioStart ( true );
 
 		return true;
 	}
@@ -797,6 +812,10 @@ SIPVoIPLink::offhold ( const CallID& id )
 	_debug ( "* SIP Info: Starting AudioRTP when offhold\n" );
 	call->setState ( Call::Active );
 	// it's sure that this is the current call id...
+
+	_audiortp->start();
+
+	call->setAudioStart ( true );
 
 	return true;
 }
@@ -1234,13 +1253,27 @@ SIPVoIPLink::SIPCallAnswered ( SIPCall *call, pjsip_rx_data *rdata )
 		_debug ( "Get remote media information from offer\n" );
 		call->getLocalSDP()->fetch_media_transport_info_from_remote_sdp ( r_sdp );
 
- 		_audiortp->getRTX()->setRtpSessionRemoteIp();
+ 		// _audiortp->getRTX()->setRtpSessionRemoteIp();
 
 		_debug ( "Update call state , id = %s\n", call->getCallId().c_str() );
 		call->setConnectionState ( Call::Connected );
 		call->setState ( Call::Active );
 
 		Manager::instance().peerAnsweredCall ( call->getCallId() );
+		
+		
+		_debug("CREATE NEW RTP SESSION FROM SIPCALLANSWERED\n");
+		try {
+		    _audiortp->createNewSession (call);
+		    call->setAudioStart(true);
+		} catch (...) {
+		    _debug("Failed to create rtp thread from answer\n");
+		}
+		
+		
+	        call->setAudioStart(true);	
+
+		_audiortp->start();
 
 	}
 	else
@@ -1313,12 +1346,13 @@ bool SIPVoIPLink::new_ip_to_ip_call ( const CallID& id, const std::string& to )
 		// Building the local SDP offer
 		call->getLocalSDP()->set_ip_address ( getLocalIP() );
                 call->getLocalSDP()->create_initial_offer();
-
+                /*
                 try {
                     _audiortp->createNewSession (call);
                 } catch (...) {
 	    	    _debug ( "! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)\n", __FILE__, __LINE__ );
                 }
+		*/
 
 		// Generate the contact URI
 		// uri_contact << "<" << uri_from << ":" << call->getLocalSDP()->get_local_extern_audio_port() << ">";
@@ -1356,6 +1390,10 @@ bool SIPVoIPLink::new_ip_to_ip_call ( const CallID& id, const std::string& to )
 		call->setConnectionState ( Call::Progressing );
 		call->setState ( Call::Active );
 		addCall ( call );
+
+		_audiortp->start();
+
+		call->setAudioStart ( true );
 
 		return true;
 	}
@@ -1871,8 +1909,11 @@ void SIPVoIPLink::handle_reinvite ( SIPCall *call )
 	    _debug ( "! SIP Failure: Unable to create RTP Session (%s:%d)\n", __FILE__, __LINE__ );
 	}
 
-	_audiortp->getRTX()->setRtpSessionRemoteIp();
-	_audiortp->getRTX()->setRtpSessionMedia();
+	_audiortp->start();
+
+	call->setAudioStart ( true );
+	// _audiortp->getRTX()->setRtpSessionRemoteIp();
+	// _audiortp->getRTX()->setRtpSessionMedia();
 
 }
 
@@ -2078,12 +2119,13 @@ void call_on_media_update ( pjsip_inv_session *inv, pj_status_t status )
 	if (call->getState() != Call::Hold)
 	{
 	    _debug("Set media parameters in RTP session\n");
-	    link->_audiortp->getRTX()->setRtpSessionMedia();
-	    link->_audiortp->getRTX()->setRtpSessionRemoteIp();
+	    // link->_audiortp->getRTX()->setRtpSessionMedia();
+	    // link->_audiortp->getRTX()->setRtpSessionRemoteIp();
 
-            link->_audiortp->start();
+            // link->_audiortp->start();
 
-	    call->setAudioStart ( true );
+	    // call->setAudioStart ( true );
+            // link->_audiortp->start();
 	}
 	else {
 	    _debug("Didn't set RTP parameters since call is on hold\n");
