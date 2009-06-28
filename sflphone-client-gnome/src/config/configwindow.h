@@ -91,7 +91,7 @@ GtkWidget * create_codec_table();
  * Create the main account window in a new window
  * @return GtkWidget* The widget created
  */
-GtkWidget * create_accounts_tab();
+GtkWidget * create_accounts_tab(GtkDialog * dialog);
 
 /**
  * Create the audio configuration tab and add it to the main configuration window
