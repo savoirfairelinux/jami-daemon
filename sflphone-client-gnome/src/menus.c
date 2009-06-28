@@ -117,6 +117,7 @@ help_about ( void * foo UNUSED)
     "Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
     "Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
+    "Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
     "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
     "Yun Liu <yun.liu@savoirfairelinux.com>",
     "Alexandre Savard <alexandre.savard@savoirfairelinux.com>",
@@ -581,38 +582,6 @@ create_edit_menu()
 
     return root_menu;
 }
-/* ----------------------------------------------------------------- */
-    static void
-view_dialpad  (GtkImageMenuItem *imagemenuitem UNUSED,
-        void* foo UNUSED)
-{
-    gboolean state;
-    main_window_dialpad( &state );
-    if( state )
-        gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( dialpadMenu ),
-                gtk_image_new_from_file( ICONS_DIR "/icon_dialpad_off.svg"));
-    else
-        gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( dialpadMenu ),
-                gtk_image_new_from_file( ICONS_DIR "/icon_dialpad.svg"));
-    dbus_set_dialpad( state );
-
-
-}
-
-    static void
-view_volume_controls  (GtkImageMenuItem *imagemenuitem UNUSED,
-        void* foo UNUSED)
-{
-    gboolean state;
-    main_window_volume_controls( &state );
-    if( state )
-        gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( volumeMenu ),
-                gtk_image_new_from_file( ICONS_DIR "/icon_volume_off.svg"));
-    else
-        gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( volumeMenu ),
-                gtk_image_new_from_file( ICONS_DIR "/icon_volume.svg"));
-    dbus_set_volume_controls( state );
-}
 
 /*
    static void
@@ -624,39 +593,45 @@ view_volume_controls  (GtkImageMenuItem *imagemenuitem UNUSED,
    dbus_set_searchbar( state );
    }
    */
+   
+   
+static void volume_bar_cb (GtkCheckMenuItem *checkmenuitem, gpointer user_data)
+{
+    gboolean toggled = gtk_check_menu_item_get_active(checkmenuitem);
+    main_window_volume_controls(toggled);
+    dbus_set_volume_controls(toggled);
+}
+
+static void dialpad_bar_cb (GtkCheckMenuItem *checkmenuitem, gpointer user_data)
+{
+    gboolean toggled = gtk_check_menu_item_get_active(checkmenuitem);
+    main_window_dialpad(toggled);
+    dbus_set_dialpad(toggled);
+}
+
     GtkWidget *
 create_view_menu()
 {
     GtkWidget * menu;
     GtkWidget * root_menu;
-    GtkWidget * image;
+    GtkWidget * volumeBar;
+    GtkWidget * dialpadBar;
+    
+    menu = gtk_menu_new ();
 
-    menu      = gtk_menu_new ();
+    dialpadBar = gtk_check_menu_item_new_with_mnemonic(_("_Dialpad"));
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), dialpadBar);
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(dialpadBar), (gboolean) SHOW_DIALPAD); 
+    g_signal_connect(G_OBJECT (dialpadBar), "toggled", G_CALLBACK (dialpad_bar_cb), NULL);      
+    gtk_widget_show (dialpadBar);            
 
-    if( SHOW_DIALPAD )
-        image = gtk_image_new_from_file( ICONS_DIR "/icon_dialpad_off.svg");
-    else
-        image = gtk_image_new_from_file( ICONS_DIR "/icon_dialpad.svg");
-    dialpadMenu = gtk_image_menu_item_new_with_mnemonic (_("_Dialpad"));
-    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( dialpadMenu ), image );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), dialpadMenu);
-    g_signal_connect(G_OBJECT ( dialpadMenu ), "activate",
-            G_CALLBACK (view_dialpad),
-            NULL);
-    gtk_widget_show (dialpadMenu);
 
-    if( SHOW_VOLUME )
-        image = gtk_image_new_from_file( ICONS_DIR "/icon_volume.svg");
-    else
-        image = gtk_image_new_from_file( ICONS_DIR "/icon_volume.svg");
-    volumeMenu = gtk_image_menu_item_new_with_mnemonic (_("_Volume controls"));
-    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( volumeMenu ), image );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), volumeMenu);
-    g_signal_connect(G_OBJECT (volumeMenu), "activate",
-            G_CALLBACK (view_volume_controls),
-            NULL);
-    gtk_widget_show (volumeMenu);
-
+    volumeBar = gtk_check_menu_item_new_with_mnemonic(_("_Volume Controls"));
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), volumeBar);
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(volumeBar), (gboolean) SHOW_VOLUME);
+    g_signal_connect(G_OBJECT (volumeBar), "toggled", G_CALLBACK (volume_bar_cb), NULL); 
+    gtk_widget_show (volumeBar);
+            
     /*image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_MENU );
       searchbarMenu = gtk_image_menu_item_new_with_mnemonic (_("_Search bar"));
       gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( searchbarMenu ), image );
@@ -669,7 +644,6 @@ create_view_menu()
 
     root_menu = gtk_menu_item_new_with_mnemonic (_("_View"));
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
-
     return root_menu;
 }
 /* ----------------------------------------------------------------- */

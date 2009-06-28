@@ -315,38 +315,28 @@ main_window_info_message(gchar * markup){
 }
 
 void
-main_window_dialpad( gboolean *state ){
-  if( !SHOW_DIALPAD )
-  {
+main_window_dialpad( gboolean state ){
+  if(state) {
     dialpad = create_dialpad();
     gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (dialpad);
-    *state = TRUE;
-  }
-  else
-  {
+  } else {
     gtk_container_remove(GTK_CONTAINER (subvbox), dialpad);
-    *state = FALSE;
   }
 }
 
 void
-main_window_volume_controls( gboolean *state ){
-  if( !SHOW_VOLUME )
-  {
+main_window_volume_controls( gboolean state ){
+  if(state){
     speaker_control = create_slider("speaker");
     gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (speaker_control);
     mic_control = create_slider("mic");
     gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (mic_control);
-    *state = TRUE;
-  }
-  else
-  {
+  } else {
     gtk_container_remove( GTK_CONTAINER(subvbox) , speaker_control );
     gtk_container_remove( GTK_CONTAINER(subvbox) , mic_control );
-    *state = FALSE;
   }
 }
 
