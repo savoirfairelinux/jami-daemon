@@ -184,7 +184,6 @@ create_main_window ()
 
   vbox = gtk_vbox_new ( FALSE /*homogeneous*/, 0 /*spacing*/);
   subvbox = gtk_vbox_new ( FALSE /*homogeneous*/, 5 /*spacing*/);
-  gtk_container_set_border_width (GTK_CONTAINER(subvbox), 5);
 
   widget = create_menus();
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);

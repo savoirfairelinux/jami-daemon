@@ -59,6 +59,7 @@ create_dialpad()
   table = gtk_table_new ( 4, 3, TRUE /* homogeneous */);
   gtk_table_set_row_spacings( GTK_TABLE(table), 5);
   gtk_table_set_col_spacings( GTK_TABLE(table), 5);
+  gtk_container_set_border_width (GTK_CONTAINER(table), 5);
   
   button = get_numpad_button("1", TRUE, "");
   gtk_table_attach ( GTK_TABLE( table ), button, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
