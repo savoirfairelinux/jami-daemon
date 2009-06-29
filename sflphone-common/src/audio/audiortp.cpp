@@ -163,9 +163,9 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
     _layerFrameSize = _audiolayer->getFrameSize(); // in ms
     _layerSampleRate = _audiolayer->getSampleRate();
 
-    initBuffers();
+    // initBuffers();
 
-    initAudioRtpSession();
+    // initAudioRtpSession();
 
     _payloadIsSet = false;
     _remoteIpIsSet = false;
@@ -253,11 +253,14 @@ AudioRtpRTX::setRtpSessionMedia(void)
     _codecFrameSize = _audiocodec->getFrameSize();
 
     
-    if (_audiocodec->hasDynamicPayload()) {
+    if (_audiocodec->getPayload() == 9){
+         _debug("WE ARE G722\n");
+	 _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload(), 16000));
+    }
+    else if ( _audiocodec->hasDynamicPayload() ) {
         _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
-    } 
-    else 
-    {
+    }
+    else if ( !_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
         _payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
     }
     
@@ -271,6 +274,8 @@ AudioRtpRTX::setRtpSessionRemoteIp(void)
 
     if (!_remoteIpIsSet){
 
+        _debug("++++++++++++++++++++++++++ SET IP ADDRESS ++++++++++++++++++++++++++++\n");
+
         if (_ca == 0) { _debug(" !ARTP: No call, can't init RTP media \n"); return; }
 
         ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
@@ -281,12 +286,19 @@ AudioRtpRTX::setRtpSessionRemoteIp(void)
             return;
         }
 
+	_debug("++++Address: %s, audioport: %d\n", _ca->getLocalSDP()->get_remote_ip().c_str(), (int)_ca->getLocalSDP()->get_remote_audio_port());
+	_debug("++++Audioport: %d\n", (int)_ca->getLocalSDP()->get_remote_audio_port());
+
         if (!_session->addDestination (remote_ip, (unsigned short)_ca->getLocalSDP()->get_remote_audio_port() )) 
         {
             _debug(" !ARTP Thread Error: can't add destination to session!\n");
             return;
         }
         _remoteIpIsSet = true;
+    }
+    else
+    {
+        _debug("+++++++++++++++++++++++ IP ADDRESS ALREADY SET ++++++++++++++++++++++++\n");
     }
 
 }
@@ -375,7 +387,7 @@ AudioRtpRTX::processDataDecode(unsigned char* spkrData, unsigned int size, int& 
 
             // Do sample rate conversion
             int nb_sample_down = nbSample;
-            nbSample = reSampleData(spkrDataDecoded , spkrDataConverted, _codecSampleRate , nb_sample_down, UP_SAMPLING);
+            nbSample = reSampleData(spkrDataDecoded, spkrDataConverted, _codecSampleRate, nb_sample_down, UP_SAMPLING);
 
             // Store the number of samples for recording
             _nSamplesSpkr = nbSample;
@@ -429,8 +441,8 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    // _session->putData(timestamp, micDataEncoded, compSize);
-    _session->sendImmediate(timestamp, micDataEncoded, compSize);
+    _session->putData(timestamp, micDataEncoded, compSize);
+    // _session->sendImmediate(timestamp, micDataEncoded, compSize);
     
     
 }
@@ -488,6 +500,11 @@ AudioRtpRTX::run () {
     int sessionWaiting;
     
     _session->startRunning();
+
+    initBuffers();
+    initAudioRtpSession();
+    setRtpSessionRemoteIp();
+    setRtpSessionMedia();
 
     int timestep = _codecFrameSize; 
 

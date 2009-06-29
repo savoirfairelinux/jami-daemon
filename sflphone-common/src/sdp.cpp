@@ -31,6 +31,8 @@ static const pj_str_t STR_IP6 = { (char*)"IP6", 3};
 static const pj_str_t STR_RTP_AVP = { (char*)"RTP/AVP", 7 };
 static const pj_str_t STR_SDP_NAME = { (char*)"sflphone", 8 };
 static const pj_str_t STR_SENDRECV = { (char*)"sendrecv", 8 };
+static const pj_str_t STR_RTPMAP = { (char*)"rtpmap", 6 };
+
 
 Sdp::Sdp( pj_pool_t *pool ) 
     : _local_media_cap(), _session_media(0),  _ip_addr( "" ), _local_offer( NULL ), _negociated_offer(NULL), _negociator(NULL), _pool(NULL), _local_extern_audio_port(0) 
@@ -278,6 +280,8 @@ void Sdp::set_negociated_offer( const pjmedia_sdp_session *sdp ){
     CodecsMap codecs_list;
     CodecsMap::iterator iter;
     AudioCodec *codec_to_add;
+    pjmedia_sdp_attr *attribute; 
+    pjmedia_sdp_rtpmap *rtpmap;
 
     _negociated_offer = (pjmedia_sdp_session*)sdp;
 
@@ -296,8 +300,14 @@ void Sdp::set_negociated_offer( const pjmedia_sdp_session *sdp ){
         // Retrieve the payload
         nb_codecs = current->desc.fmt_count;  // Must be one
         for( j=0 ; j<nb_codecs ; j++ ){
-	  _debug("================== set_negociated_offer ===================== %i\n", atoi(current->desc.fmt[j].ptr));
-            iter = codecs_list.find((AudioCodecType)atoi(current->desc.fmt[j].ptr));  
+	    attribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, NULL);
+	    // pj_strtoul(attribute->pt)
+	    pjmedia_sdp_attr_to_rtpmap(_pool, attribute, &rtpmap);
+ 
+	    // _debug("================== set_negociated_offer ===================== %i\n", pj_strtoul(&rtpmap->pt));
+            // _debug("================== set_negociated_offer ===================== %s\n", current->desc.fmt[j].ptr);
+	    // _debug("================== set_negociated_offer ===================== %i\n", atoi(current->desc.fmt[j].ptr));
+            iter = codecs_list.find((AudioCodecType)pj_strtoul(&rtpmap->pt));  
             if (iter==codecs_list.end())
                 return;
             media->add_codec(iter->second);
