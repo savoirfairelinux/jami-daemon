@@ -27,7 +27,9 @@
 
 #include "Account.h"
 
-class AccountList{
+class AccountList : public QObject{
+
+	Q_OBJECT
 	
 private:
 
@@ -64,7 +66,19 @@ public:
 	Account & operator[] (int i);
 	const Account & operator[] (int i) const;
 	QVector<Account *> registeredAccounts() const;
+	
+public slots:	
+	/**
+	 *   updates the list of accounts (removed, added, order...) with the configurationManager's list
+	 */
 	void update();
+	/**
+	 *   updates the list and the details of accounts with the configurationManager's list
+	 */
+	void updateAccounts();
+	
+signals:
+	void accountListUpdated();
 };
 
 

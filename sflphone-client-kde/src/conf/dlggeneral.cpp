@@ -20,7 +20,6 @@
  ***************************************************************************/
 #include "dlggeneral.h"
 
-
 DlgGeneral::DlgGeneral(QWidget *parent)
  : QWidget(parent)
 {

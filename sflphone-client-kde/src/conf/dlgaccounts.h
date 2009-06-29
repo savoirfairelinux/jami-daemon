@@ -18,68 +18,48 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#ifndef DLGACCOUNTS_H
+#define DLGACCOUNTS_H
 
-#ifndef SFLPHONE_H
-#define SFLPHONE_H
+#include <QWidget>
 
-#include <QtCore/QString>
-#include <QtCore/QVector>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QKeyEvent>
-#include <QErrorMessage>
-#include <QSystemTrayIcon>
+#include "ui_dlgaccountsbase.h"
+#include "Account.h"
 
-#include <KXmlGuiWindow>
-
-#include "ui_sflphone_kdeview_base.h"
-#include "ConfigDialog.h"
-#include "CallList.h"
-#include "AccountWizard.h"
-#include "Contact.h"
-#include "sflphone_kdeview.h"
-
-
-class ConfigurationDialog;
-class sflphone_kdeView;
-
-class SFLPhone : public KXmlGuiWindow
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class DlgAccounts : public QWidget, public Ui_DlgAccountsBase
 {
-
 Q_OBJECT
-
-private:
-	sflphone_kdeView * view;
-	QMenu *trayIconMenu;
-	bool iconChanged;
-	QSystemTrayIcon *trayIcon;
-	QLabel * statusBarWidget;
-	
-private:
-	void setObjectNames();
-
-protected:
-	virtual bool queryClose();
-	virtual void changeEvent(QEvent * event);
-	
-
 public:
-	SFLPhone(QWidget *parent = 0);
-	~SFLPhone();
-	void setupActions();
-	void sendNotif(QString caller);
-	void putForeground();
-	void trayIconSignal();
-	sflphone_kdeView * getView();
+	DlgAccounts(QWidget *parent = 0);
+
+	~DlgAccounts();
+	void saveAccount(QListWidgetItem * item);
+	void loadAccount(QListWidgetItem * item);
 	
+private:
+
+public slots:
+	void saveAccountList();
+	void loadAccountList();
 	
 private slots:
-	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
-	void on_trayIcon_messageClicked();
-	void on_view_statusMessageChanged(const QString & message);
-
-	void quitButton();
+	void changedAccountList();
+	void connectAccountsChangedSignal();
+	void disconnectAccountsChangedSignal();
+	void on_button_accountUp_clicked();
+	void on_button_accountDown_clicked();
+	void on_button_accountAdd_clicked();
+	void on_button_accountRemove_clicked();
+	void on_edit1_alias_textChanged(const QString & text);
+	void on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous );
+	void on_toolButton_accountsApply_clicked();
+	void updateAccountStates();
+	void addAccountToAccountList(Account * account);
+	void updateAccountListCommands();
 
 };
 
 #endif
- 

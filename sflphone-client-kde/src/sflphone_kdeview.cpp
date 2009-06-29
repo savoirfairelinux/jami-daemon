@@ -50,11 +50,15 @@
 using namespace KABC;
 
 ConfigurationDialog * sflphone_kdeView::configDialog;
+AccountList * sflphone_kdeView::accountList;
 
 sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	: QWidget(parent)
 {
 	setupUi(this);
+	
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	
 	errorWindow = new QErrorMessage(this);
 	callList = new CallList();
@@ -71,13 +75,14 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 		}
 	}
 	
+	accountList = new AccountList();
+	
 	configDialog = new ConfigurationDialog(this);
 	configDialog->setModal(true);
 	
 	wizard = new AccountWizard(this);
 	wizard->setModal(false);
 	
-	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
 	        this,         SLOT(on1_callStateChanged(const QString &, const QString &)));
 	connect(&callManager, SIGNAL(incomingCall(const QString &, const QString &, const QString &)),
@@ -89,9 +94,8 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	connect(&callManager, SIGNAL(volumeChanged(const QString &, double)),
 	        this,         SLOT(on1_volumeChanged(const QString &, double)));
 	        
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	connect(&configurationManager, SIGNAL(accountsChanged()),
-	        this,                  SLOT(updateStatusMessage()));
+	        accountList,           SLOT(updateAccounts()));
 	        
 	QPalette pal = QPalette(palette());
 	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
@@ -191,7 +195,7 @@ Account * sflphone_kdeView::firstRegisteredAccount()
 
 AccountList * sflphone_kdeView::getAccountList()
 {
-	return configDialog->getAccountList();
+	return accountList;
 }
 
 QErrorMessage * sflphone_kdeView::getErrorWindow()
@@ -888,13 +892,14 @@ void sflphone_kdeView::updateStatusMessage()
 	Account * account = firstRegisteredAccount();
 	if(account == NULL)
 	{
-		emit statusMessageChanged(tr2i18n("No account registered"));
+		emit statusMessageChanged(i18n("No account registered"));
 	}
 	else
 	{
-		emit statusMessageChanged(tr2i18n("Using account") + " \'" + account->getAlias() + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
+		emit statusMessageChanged(i18n("Using account") + " \'" + account->getAlias() + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
 	}
 }
+
 
 
 /************************************************************
@@ -1079,17 +1084,17 @@ void sflphone_kdeView::on_stackedWidget_screen_currentChanged(int index)
 	{
 		case 0:
 			qDebug() << "Switched to call list screen.";
-			window->setWindowTitle(tr2i18n("SFLPhone") + " - " + tr2i18n("Main screen"));
+			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Main screen"));
 			break;
 		case 1:
 			qDebug() << "Switched to call history screen.";
 			updateCallHistory();
-			window->setWindowTitle(tr2i18n("SFLPhone") + " - " + tr2i18n("Call history"));
+			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Call history"));
 			break;
 		case 2:
 			qDebug() << "Switched to address book screen.";
 			updateAddressBook();
-			window->setWindowTitle(tr2i18n("SFLPhone") + " - " + tr2i18n("Address book"));
+			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Address book"));
 			break;
 		default:
 			qDebug() << "Error : reached an unknown index \"" << index << "\" with stackedWidget_screen.";
@@ -1103,7 +1108,7 @@ void sflphone_kdeView::contextMenuEvent(QContextMenuEvent *event)
 	if(stackedWidget_screen->currentWidget() == page_callHistory || stackedWidget_screen->currentWidget() == page_addressBook)
 	{
 		QAction * action_edit = new QAction(&menu);
-		action_edit->setText(tr2i18n("Edit before call"));
+		action_edit->setText(i18n("Edit before call"));
 		connect(action_edit, SIGNAL(triggered()),
 		        this  , SLOT(editBeforeCall()));
 		menu.addAction(action_edit);
@@ -1159,7 +1164,7 @@ void sflphone_kdeView::editBeforeCall()
 			number = w->getContactNumber();
 		}
 	}
-	QString newNumber = QInputDialog::getText(this, tr2i18n("Edit before call"), QString(), QLineEdit::Normal, number);
+	QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number);
 	
 	action_history->setChecked(false);
 	action_addressBook->setChecked(false);

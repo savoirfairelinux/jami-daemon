@@ -18,68 +18,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#ifndef DLGRECORD_H
+#define DLGRECORD_H
 
-#ifndef SFLPHONE_H
-#define SFLPHONE_H
+#include <QWidget>
 
-#include <QtCore/QString>
-#include <QtCore/QVector>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QKeyEvent>
-#include <QErrorMessage>
-#include <QSystemTrayIcon>
+#include "ui_dlgrecordbase.h"
 
-#include <KXmlGuiWindow>
-
-#include "ui_sflphone_kdeview_base.h"
-#include "ConfigDialog.h"
-#include "CallList.h"
-#include "AccountWizard.h"
-#include "Contact.h"
-#include "sflphone_kdeview.h"
-
-
-class ConfigurationDialog;
-class sflphone_kdeView;
-
-class SFLPhone : public KXmlGuiWindow
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class DlgRecord : public QWidget, public Ui_DlgRecordBase
 {
-
 Q_OBJECT
-
-private:
-	sflphone_kdeView * view;
-	QMenu *trayIconMenu;
-	bool iconChanged;
-	QSystemTrayIcon *trayIcon;
-	QLabel * statusBarWidget;
-	
-private:
-	void setObjectNames();
-
-protected:
-	virtual bool queryClose();
-	virtual void changeEvent(QEvent * event);
-	
-
 public:
-	SFLPhone(QWidget *parent = 0);
-	~SFLPhone();
-	void setupActions();
-	void sendNotif(QString caller);
-	void putForeground();
-	void trayIconSignal();
-	sflphone_kdeView * getView();
-	
-	
-private slots:
-	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
-	void on_trayIcon_messageClicked();
-	void on_view_statusMessageChanged(const QString & message);
+    DlgRecord(QWidget *parent = 0);
 
-	void quitButton();
+    ~DlgRecord();
 
 };
 
 #endif
- 

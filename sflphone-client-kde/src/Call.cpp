@@ -113,7 +113,7 @@ void Call::initCallItem()
 	labelIcon = new QLabel();
 	qDebug() << "labelIcon : " << labelIcon;
 	labelCallNumber = new QLabel(peerPhoneNumber);
-	labelTransferPrefix = new QLabel(tr2i18n("Transfer to : "));
+	labelTransferPrefix = new QLabel(i18n("Transfer to : "));
 	labelTransferNumber = new QLabel();
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 	

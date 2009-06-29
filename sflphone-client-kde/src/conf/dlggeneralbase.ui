@@ -35,7 +35,7 @@
             <string>&amp;Capacity</string>
            </property>
            <property name="buddy">
-            <cstring>horizontalSlider_historyCapacity</cstring>
+            <cstring>horizontalSlider_historyCapacity_2</cstring>
            </property>
           </widget>
          </item>
@@ -50,7 +50,11 @@
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="spinBox_historyCapacity_2"/>
+          <widget class="KIntSpinBox" name="kcfg_historyMax">
+           <property name="minimum">
+            <number>-8</number>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -86,7 +90,7 @@
          <string>SIP &amp;Port</string>
         </property>
         <property name="buddy">
-         <cstring>spinBox_SIPPort</cstring>
+         <cstring>kcfg_SIPPort</cstring>
         </property>
        </widget>
       </item>
@@ -103,20 +107,7 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QSpinBox" name="spinBox_SIPPort_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimum">
-            <number>1025</number>
-           </property>
-           <property name="maximum">
-            <number>65536</number>
-           </property>
-          </widget>
+          <widget class="KIntSpinBox" name="kcfg_SIPPort"/>
          </item>
          <item>
           <widget class="QLabel" name="label_WarningSIP_2">
@@ -149,8 +140,48 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KIntSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>knuminput.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../qrc/resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>horizontalSlider_historyCapacity_2</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>kcfg_historyMax</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>393</x>
+     <y>57</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>469</x>
+     <y>54</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>kcfg_historyMax</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>horizontalSlider_historyCapacity_2</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>464</x>
+     <y>52</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>393</x>
+     <y>61</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

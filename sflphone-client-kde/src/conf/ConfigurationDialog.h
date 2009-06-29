@@ -25,10 +25,18 @@
 
 
 #include "settings.h"
+#include "sflphone_kdeview.h"
+
 
 #define SETTINGS_NAME "settings"
 
 class DlgGeneral;
+class DlgDisplay;
+class DlgAccounts;
+class DlgAudio;
+class DlgAddressBook;
+class DlgRecord;
+class DlgHooks;
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -36,10 +44,32 @@ class DlgGeneral;
 class ConfigurationDialogKDE : public KConfigDialog
 {
 Q_OBJECT
-public:
-    ConfigurationDialogKDE(QWidget *parent = 0);
+private:
 
-    ~ConfigurationDialogKDE();
+	
+	DlgGeneral     * dlgGeneral;
+	DlgDisplay     * dlgDisplay;
+	DlgAccounts    * dlgAccounts;
+	DlgAudio       * dlgAudio;
+	DlgAddressBook * dlgAddressBook;
+	DlgRecord      * dlgRecord;
+	DlgHooks       * dlgHooks;
+
+public:
+	ConfigurationDialogKDE(sflphone_kdeView *parent = 0);
+
+	~ConfigurationDialogKDE();
+	
+    
+public slots:
+	void slot();
+	void updateWidgets();
+	void updateSettings();
+	void updateButtons();
+	bool hasChanged();
+	
+private slots:
+	void applyCustomSettings();
 
 };
 

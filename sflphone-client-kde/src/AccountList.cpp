@@ -39,6 +39,7 @@ AccountList::AccountList(QStringList & _accountIds)
 
 AccountList::AccountList()
 {
+	qDebug() << "AccountList()";
 // 	firstAccount = QString();
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	//ask for the list of accounts ids to the configurationManager
@@ -63,6 +64,18 @@ void AccountList::update()
 	for (int i = 0; i < accountIds.size(); ++i){
 		accounts->insert(i, Account::buildExistingAccountFromId(accountIds[i]));
 	}
+}
+
+void AccountList::updateAccounts()
+{
+	qDebug() << "updateAccounts";
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	QStringList accountIds = configurationManager.getAccountList().value();
+	accounts = new QVector<Account *>();
+	for (int i = 0; i < accountIds.size(); ++i){
+		(*accounts) += Account::buildExistingAccountFromId(accountIds[i]);
+	}
+	emit accountListUpdated();
 }
 
 void AccountList::upAccount(int index)
@@ -181,12 +194,8 @@ QVector<Account *> AccountList::getAccountByState(QString & state)
 	}
 	return v;
 }
-/*
-Account AccountList::getAccountByRow(int row)
-{
-	
-}
-*/
+
+
 Account * AccountList::getAccountByItem(QListWidgetItem * item)
 {
 	for (int i = 0; i < accounts->size(); ++i){
@@ -202,12 +211,6 @@ int AccountList::size()
 }
 
 //Setters
-/*
-void AccountList::addAccount(Account & account)
-{
-	accounts->add(account);
-}
-*/
 Account * AccountList::addAccount(QString & alias)
 {
 	Account * a = Account::buildNewAccountFromAlias(alias);

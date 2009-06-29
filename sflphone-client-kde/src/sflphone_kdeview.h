@@ -54,11 +54,12 @@ class ConfigurationDialog;
 
 class sflphone_kdeView : public QWidget, public Ui::SFLPhone_view
 {
-    Q_OBJECT
+	Q_OBJECT
     
 private:
 
 	static ConfigurationDialog * configDialog;
+	static AccountList * accountList;
 	AccountWizard * wizard;
 	CallList * callList;
 	QErrorMessage * errorWindow;

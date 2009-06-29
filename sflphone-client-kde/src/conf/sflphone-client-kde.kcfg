@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE kcfg SYSTEM "http://www.kde.org/standards/kcfg/1.0/kcfg.dtd">
+<kcfg> 
+  <kcfgfile name="ConfigDialogKDE" /> 
+  <group name="kjots"> 
+    <!--
+    <entry name="SplitterSizes" type="IntList"> 
+      <label>How the main window is divided.</label> 
+    </entry> 
+    -->
+    <entry name="SIPPort" type="Int"> 
+      <label>Defines the port that will be used for SIP communication.</label> 
+      <min> 1025 </min>
+      <max> 65536 </max>
+      <default> 1025 </default> 
+    </entry>
+    <entry name="historyMax" type="Int"> 
+      <label>Defines the number of days the history has to be kept.</label> 
+      <min> 1 </min>
+      <max> 99 </max>
+      <default> 30 </default> 
+    </entry> 
+    <entry name="notifOnCalls" type="Bool">
+    	<label>Defines whether user should be notified when receiving a call.</label>
+    </entry>
+    <entry name="notifOnMessages" type="Bool">
+    	<label>Defines whether user should be notified when receiving a message.</label>
+    </entry>
+    <entry name="displayOnStart" type="Bool">
+    	<label>Defines whether the main window should be displayed on start.</label>
+    </entry>
+    <entry name="displayOnCalls" type="Bool">
+    	<label>Defines whether the main window should be displayed when receiving a message.</label>
+    </entry>
+    <!--
+    <entry name="accountList" type="StringList">
+    	<label>Defines the list of accounts to register, in order of preference (first registered used by default).</label>
+    </entry> 
+    -->
+    <entry name="enableStun" type="Bool">
+    	<label>Defines the SIP accounts must use Stun.</label>
+    </entry> 
+    <entry name="stunServer" type="String">
+    	<label>Defines the Stun server to use.</label>
+    </entry> 
+    <entry name="interface" type="Enum">
+    	<label>Defines the Stun server to use.</label>
+    	<choices>
+    		<choice name="ALSA" />
+    		<choice name="PulseAudio" />
+    	</choices>
+    </entry>
+    <entry name="enableRingtones" type="Bool">
+    	<label>Defines whether ringtones are enabled.</label>
+    </entry>
+    <entry name="ringtone" type="Path">
+    	<label>Defines which ringtone is used.</label>
+    </entry>
+    <entry name="alsaPlugin" type="String">
+    	<label>Defines which ALSA plugin to use.</label>
+    </entry>
+    <entry name="alsaInputDevice" type="Int">
+    	<label>Defines which ALSA Input device to use.</label>
+    </entry>
+    <entry name="alsaOutputDevice" type="Int">
+    	<label>Defines which ALSA Output device to use.</label>
+    </entry>
+    <entry name="pulseAudioVolumeAlter" type="Bool">
+    	<label>Defines whether pulse audio can mute other applications during a call.</label>
+    </entry>
+    <entry name="maxResults" type="Int">
+    	<label>Defines the max number of contacts to display during a search in address book.</label>
+    </entry>
+    <entry name="displayPhoto" type="Bool">
+    	<label>Defines whether to display contacts photos.</label>
+    </entry>
+    <entry name="business" type="Bool">
+    	<label>Defines whether to display professionnal phone numbers.</label>
+    </entry>
+    <entry name="mobile" type="Bool">
+    	<label>Defines whether to display mobile phone numbers.</label>
+    </entry>
+    <entry name="home" type="Bool">
+    	<label>Defines whether to display personnal phone numbers.</label>
+    </entry>
+    <entry name="destinationFolder" type="Path">
+    	<label>Defines the destination directory for call recordings.</label>
+    </entry>
+    <entry name="enableHooksSIP" type="Bool">
+    	<label>Defines whether to enable hooks for SIP accounts.</label>
+    </entry>
+    <entry name="enableHooksIAX" type="Bool">
+    	<label>Defines whether to enable hooks for IAX accounts.</label>
+    </entry>
+    <entry name="hooksSIPHeader" type="String">
+    	<label>Defines which header to catch for SIP accounts hooks.</label>
+    </entry>
+    <entry name="hooksCommand" type="String">
+    	<label>Defines which command to execute.</label>
+    </entry>
+    <entry name="addPrefix" type="Bool">
+    	<label>Defines whether to add a prefix for outgoing calls.</label>
+    </entry>
+    <entry name="prepend" type="String">
+    	<label>Defines the prefix to add.</label>
+    </entry>
+    
+    
+    <!--
+    <entry name="Height" type="Int"> 
+      <label>Height of the main window.</label> 
+      <default>400</default> 
+    </entry> 
+    <entry name="OpenBooks" type="StringList"> 
+      <label>All books that are opened.</label> 
+    </entry> 
+    <entry name="CurrentBook" type="String"> 
+      <label>The book currently opened.</label> 
+    </entry> 
+    <entry name="Font" type="Font"> 
+      <label>The font used to display the contents of books.</label> 
+      <default code="true">KGlobalSettings::generalFont()</default> 
+    </entry>
+    --> 
+  </group> 
+</kcfg>

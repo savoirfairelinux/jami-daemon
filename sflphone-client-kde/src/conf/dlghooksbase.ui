@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DlgHooksBase</class>
+ <widget class="QWidget" name="DlgHooksBase">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>520</width>
+    <height>407</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="groupBox_urlArgument">
+     <property name="title">
+      <string>URL Argument</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_12">
+      <item>
+       <widget class="QWidget" name="widget_protocols" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <property name="margin">
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="QCheckBox" name="kcfg_enableHooksSIP">
+           <property name="text">
+            <string>SIP Protocol</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="kcfg_enableHooksIAX">
+           <property name="text">
+            <string>IAX2 Protocol</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_urlArgumentForm" native="true">
+        <layout class="QFormLayout" name="formLayout_6">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_SIPHeader">
+           <property name="text">
+            <string>SIP Header</string>
+           </property>
+           <property name="buddy">
+            <cstring>kcfg_hooksSIPHeader</cstring>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_command">
+           <property name="text">
+            <string>Command</string>
+           </property>
+           <property name="buddy">
+            <cstring>kcfg_hooksCommand</cstring>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="KLineEdit" name="kcfg_hooksSIPHeader"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="KLineEdit" name="kcfg_hooksCommand"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_phoneNumberFormatting">
+     <property name="title">
+      <string>Phone number formatting</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_13">
+      <item>
+       <widget class="QCheckBox" name="kcfg_addPrefix">
+        <property name="text">
+         <string>Add phone number prefix</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_phoneNumberFormattingForm" native="true">
+        <layout class="QFormLayout" name="formLayout_7">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_prepend">
+           <property name="text">
+            <string>Prepend</string>
+           </property>
+           <property name="buddy">
+            <cstring>kcfg_prepend</cstring>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="KLineEdit" name="kcfg_prepend"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer_configHooks">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>499</width>
+       <height>96</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

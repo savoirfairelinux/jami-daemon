@@ -1,6 +1,12 @@
 
 
-ADD_DEFINITIONS(${KDE4_DEFINITIONS} ${QT_DEFINITIONS} -fexceptions -DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\"" )
+ADD_DEFINITIONS(
+	${KDE4_DEFINITIONS} 
+	${QT_DEFINITIONS} 
+	-fexceptions 
+	-DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\"" 
+	-DSHARE_INSTALL_PREFIX="\\\"${SHARE_INSTALL_PREFIX}\\\""  
+)
 
 # add_definitions ( -DKDE_DEFAULT_DEBUG_AREA=9000 )
 
@@ -21,8 +27,7 @@ ENDIF(${CMAKE_BUILD_TYPE} MATCHES Release)
 
 SET ( KDE4_KABC_LIBS  -lkabc )
 
-SET(
-	sflphone_client_kde_SRCS
+SET(	   sflphone_client_kde_SRCS
 	sflphone_kdeview.cpp
 	SFLPhone.cpp
 	ConfigDialog.cpp
@@ -42,6 +47,12 @@ SET(
 	ContactItemWidget.cpp
 	conf/ConfigurationDialog.cpp
 	conf/dlggeneral.cpp
+	conf/dlgdisplay.cpp
+	conf/dlgaccounts.cpp
+	conf/dlgaudio.cpp
+	conf/dlgrecord.cpp
+	conf/dlgaddressbook.cpp
+	conf/dlghooks.cpp
 	conf/ConfigurationSkeleton.cpp
 )
  
@@ -98,11 +109,20 @@ QT4_ADD_DBUS_INTERFACE(
 
 
 # kde4_automoc(${sflphone_client_kde_SRCS})
+SET(    config_ui_files
+	conf/dlggeneralbase.ui
+	conf/dlgdisplaybase.ui
+	conf/dlgaccountsbase.ui
+	conf/dlgaudiobase.ui
+	conf/dlgrecordbase.ui
+	conf/dlgaddressbookbase.ui
+	conf/dlghooksbase.ui
+)
 
-KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/sflphone_kdeview_base.ui ui/ConfigDialog.ui conf/dlggeneralbase.ui)
+KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/sflphone_kdeview_base.ui ui/ConfigDialog.ui   ${config_ui_files}  )
 
-KDE4_ADD_KCFG_FILES(sflphone_client_kde_SRCS kcfg/settings.kcfgc)
-INSTALL(FILES kcfg/sflphone-client-kde.kcfg DESTINATION ${KCFG_INSTALL_DIR})
+KDE4_ADD_KCFG_FILES(sflphone_client_kde_SRCS conf/settings.kcfgc)
+INSTALL(FILES conf/sflphone-client-kde.kcfg DESTINATION ${KCFG_INSTALL_DIR})
 
 
 KDE4_ADD_EXECUTABLE(sflphone-client-kde ${sflphone_client_kde_SRCS} ${QtApp_RCC_SRCS})

@@ -139,12 +139,12 @@ void ConfigurationDialog::loadOptions()
 	int sipPort = configurationManager.getSipPort();
 	if(sipPort<1025){
 		spinBox_SIPPort->setMinimum(sipPort);
-		label_WarningSIP->setText(tr2i18n("Attention : SIP port must be over 1024 !"));
+		label_WarningSIP->setText(i18n("Attention : SIP port must be over 1024 !"));
 		label_WarningSIP->setVisible(true);
 	}
 	if(sipPort>65535){
 		spinBox_SIPPort->setMaximum(sipPort);
-		label_WarningSIP->setText(tr2i18n("Attention : SIP port must be under 65536 !"));
+		label_WarningSIP->setText(i18n("Attention : SIP port must be under 65536 !"));
 		label_WarningSIP->setVisible(true);
 	}
 	spinBox_SIPPort->setValue(configurationManager.getSipPort());
@@ -198,7 +198,7 @@ void ConfigurationDialog::loadOptions()
 	comboBox2_in->clear();
 	comboBox3_out->clear();
 	
-	if(audioManager == ALSA)
+	if(audioManager == CONST_ALSA)
 	{
 		QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
 		bool ok;
@@ -273,10 +273,10 @@ void ConfigurationDialog::saveOptions()
 	int sipPort = spinBox_SIPPort->value();
 	
 	if(sipPort<1025){
-		errorWindow->showMessage(tr2i18n("Attention : SIP port must be over 1024 !"));
+		errorWindow->showMessage(i18n("Attention : SIP port must be over 1024 !"));
 	}
 	if(sipPort>65535){
-		errorWindow->showMessage(tr2i18n("Attention : SIP port must be under 65536 !"));
+		errorWindow->showMessage(i18n("Attention : SIP port must be under 65536 !"));
 	}
 	configurationManager.setSipPort(sipPort);
 	
@@ -322,7 +322,7 @@ void ConfigurationDialog::saveOptions()
 	saveCodecs();
 
 	//alsa settings
-	if(manager == ALSA)
+	if(manager == CONST_ALSA)
 	{
 		qDebug() << "setting alsa settings";
 		configurationManager.setOutputAudioPlugin(comboBox1_alsaPlugin->currentText());
@@ -338,7 +338,7 @@ void ConfigurationDialog::saveOptions()
 		}
 	}
 	//pulseaudio settings
-	if(manager == PULSEAUDIO)
+	if(manager == CONST_PULSEAUDIO)
 	{
 		qDebug() << "setting pulseaudio settings";
 		if(checkBox_pulseAudioVolumeAlter->checkState() != (configurationManager.getPulseAppVolumeControl() ? Qt::Checked : Qt::Unchecked)) configurationManager.setPulseAppVolumeControl();
@@ -513,7 +513,7 @@ void ConfigurationDialog::loadCodecs()
 	QStringList codecList = configurationManager.getCodecList();
 	QStringList activeCodecList = configurationManager.getActiveCodecList();
 	#if QT_VERSION >= 0x040500
-        activeCodecList.removeDuplicates();
+		activeCodecList.removeDuplicates();
 	#else
    	for (int i = 0 ; i < activeCodecList.size() ; i++)
 		{
@@ -837,7 +837,7 @@ void ConfigurationDialog::on1_accountsChanged()
 // 	        this,                  SLOT(on1_accountsChanged()));
 // 	if(isVisible() && accountsChangedEnableWarning)
 // 	{
-// 		errorWindow->showMessage(tr2i18n("Accounts changed : another client may be changing accounts or an account is unstable. \nIf another client is changing the settings, you may cancel your changes to avoid overwriting one's changes."));
+// 		errorWindow->showMessage(i18n("Accounts changed : another client may be changing accounts or an account is unstable. \nIf another client is changing the settings, you may cancel your changes to avoid overwriting one's changes."));
 // 	}
 	if(! isVisible())
 	{

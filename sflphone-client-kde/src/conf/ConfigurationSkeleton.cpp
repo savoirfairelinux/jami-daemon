@@ -20,15 +20,266 @@
  ***************************************************************************/
 #include "ConfigurationSkeleton.h"
 
+#include "configurationmanager_interface_singleton.h"
+#include "sflphone_const.h"
+
 ConfigurationSkeleton::ConfigurationSkeleton()
  : ConfigurationSkeletonBase()
 {
 	qDebug() << "Yoooooooouuuuupppppppiiiiii";
+	readConfig();
+	isImmutable( QString::fromLatin1 ( "alsaPlugin" ) );
+}
+
+ConfigurationSkeleton * ConfigurationSkeleton::instance = NULL;
+
+ConfigurationSkeleton * ConfigurationSkeleton::self()
+{
+	if(instance == NULL)
+	{	instance = new ConfigurationSkeleton();	}
+	return instance; 
 }
 
 
 ConfigurationSkeleton::~ConfigurationSkeleton()
 {
+}
+
+void ConfigurationSkeleton::readConfig()
+{
+	qDebug() << "\nReading config";
+	
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	
+// 	qDebug() << "configurationManager.getAudioManager4() = " << configurationManager.getAudioManager();
+	////////////////////////
+	////General settings////
+	////////////////////////
+	
+	//Call history settings
+	setHistoryMax(configurationManager.getHistoryLimit());
+
+	//SIP port settings
+	setSIPPort(configurationManager.getSipPort());
+ 	
+	////////////////////////
+	////Display settings////
+	////////////////////////
+
+	//Notification settings
+	setNotifOnCalls(configurationManager.getNotify());
+	setNotifOnMessages(configurationManager.getMailNotify());
+ 	
+	//Window display settings
+	setDisplayOnStart(! configurationManager.isStartHidden());
+	setDisplayOnCalls(configurationManager.popupMode());
+ 	
+	/////////////////////////
+	////Accounts settings////
+	/////////////////////////
+	
+// 	loadAccountList();
+
+
+	//Stun settings
+	setEnableStun(configurationManager.isStunEnabled());
+	setStunServer(configurationManager.getStunServer());
+
+	
+	//////////////////////
+	////Audio settings////
+	//////////////////////
+	
+	//Audio Interface settings
+	int audioManager = configurationManager.getAudioManager();
+	qDebug() << "audioManager = " << audioManager;
+	setInterface(audioManager);
+
+	//ringtones settings
+	setEnableRingtones(configurationManager.isRingtoneEnabled());
+	QString ringtone = configurationManager.getRingtoneChoice();
+	if(ringtone.isEmpty())
+	{
+		setRingtone(QString(SHARE_INSTALL_PREFIX) + "sflphone/ringtones/konga.ul");
+	}
+	else
+	{
+		setRingtone(ringtone);
+	}
+
+	//codecs settings
+// // 	loadCodecs();
+
+	qDebug() << "configurationManager.getCurrentAudioOutputPlugin() = " << configurationManager.getCurrentAudioOutputPlugin();
+	setAlsaPlugin(configurationManager.getCurrentAudioOutputPlugin());
+	bool ok;
+	QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
+	qDebug() << "inputDevice = " << devices[1];
+	int inputDevice = devices[1].toInt(& ok);
+	if(!ok) qDebug() << "inputDevice is not a number";
+	setAlsaInputDevice(inputDevice);
+	
+	qDebug() << "outputDevice = " << devices[0];
+	int outputDevice = devices[0].toInt(& ok);
+	if(!ok) qDebug() << "outputDevice is not a number";
+	setAlsaOutputDevice(outputDevice);
+	
+	
+	//pulseaudio settings
+	setPulseAudioVolumeAlter(configurationManager.getPulseAppVolumeControl());
+	
+	///////////////////////
+	////Record settings////
+	///////////////////////
+	
+	QString recordPath = configurationManager.getRecordPath();
+	if(! recordPath.isEmpty())
+	{
+		setDestinationFolder(recordPath);
+	}
+	else
+	{
+		setDestinationFolder(QDir::home().path());
+	}
+		
+	
+	
+	/////////////////////////////
+	////Address book settings////
+	/////////////////////////////
+	
+	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
+	qDebug() << "getAddressbookSettings() : " << addressBookSettings;
+	setMaxResults(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
+	setDisplayPhoto(addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO]);
+	setBusiness(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
+	setMobile(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]);
+	setHome(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]);
+	
+	/////////////////////////////
+	///////Hooks settings////////
+	/////////////////////////////
+	
+	MapStringString hooksSettings = configurationManager.getHookSettings().value();
+	qDebug() << "getHooksSettings() : " << hooksSettings;
+	setAddPrefix(hooksSettings[HOOKS_ENABLED]=="1");
+	setPrepend(hooksSettings[HOOKS_ADD_PREFIX]);
+	setEnableHooksSIP(hooksSettings[HOOKS_SIP_ENABLED]=="1");
+	setEnableHooksIAX(hooksSettings[HOOKS_IAX2_ENABLED]=="1");
+	setHooksSIPHeader(hooksSettings[HOOKS_SIP_FIELD]);
+	setHooksCommand(hooksSettings[HOOKS_COMMAND]);
+}
+
+void ConfigurationSkeleton::writeConfig()
+{
+	qDebug() << "\nWriting config";
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	
+	
+	////////////////////////
+	////General settings////
+	////////////////////////
+	
+	//Call history settings
+	configurationManager.setHistoryLimit(historyMax());
+	//SIP port settings
+	configurationManager.setSipPort(sIPPort());
+
+
+	////////////////////////
+	////Display settings////
+	////////////////////////
+	
+	//Notification settings
+	if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
+	if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
+	
+	//Window display settings
+	//WARNING états inversés
+	if(displayOnStart() == configurationManager.isStartHidden()) configurationManager.startHidden();
+	if(displayOnCalls() != configurationManager.popupMode()) configurationManager.switchPopupMode();
+	
+	/////////////////////////
+	////Accounts settings////
+	/////////////////////////
+	
+// 	saveAccountList();
+
+
+	//Stun settings
+	if(enableStun() != configurationManager.isStunEnabled()) configurationManager.enableStun();
+	configurationManager.setStunServer(stunServer());
+
+	//////////////////////
+	////Audio settings////
+	//////////////////////
+	
+	//Audio Interface settings
+	int prevManager = configurationManager.getAudioManager();
+	int newManager = interface();
+	if(prevManager != newManager)
+	{
+		configurationManager.setAudioManager(newManager);
+	}
+	
+	//ringtones settings
+	if(enableRingtones() != configurationManager.isRingtoneEnabled()) configurationManager.ringtoneEnabled();
+	configurationManager.setRingtoneChoice(ringtone());
+
+	//codecs settings
+// // 	saveCodecs();
+
+	//alsa settings
+	if(prevManager == CONST_ALSA && newManager == EnumInterface::ALSA)
+	{
+		qDebug() << "setting alsa settings";
+		configurationManager.setOutputAudioPlugin(alsaPlugin());
+		configurationManager.setAudioInputDevice(alsaInputDevice());
+		configurationManager.setAudioOutputDevice(alsaOutputDevice());
+	}
+	//pulseaudio settings
+	if(newManager == EnumInterface::PulseAudio)
+	{
+		qDebug() << "setting pulseaudio settings";
+		if(pulseAudioVolumeAlter() != configurationManager.getPulseAppVolumeControl()) configurationManager.setPulseAppVolumeControl();
+	}
+	
+	
+	///////////////////////
+	////Record settings////
+	///////////////////////
+	
+	QString destination = destinationFolder();
+	qDebug() << destination ;
+	configurationManager.setRecordPath(destination);
+	
+	
+	/////////////////////////////
+	////Address Book settings////
+	/////////////////////////////
+	
+	MapStringInt addressBookSettings = MapStringInt();
+	addressBookSettings[ADDRESSBOOK_MAX_RESULTS] = maxResults();
+	addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO] = displayPhoto();
+	addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS] = business();
+	addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE] = mobile();
+	addressBookSettings[ADDRESSBOOK_DISPLAY_HOME] = home();
+	configurationManager.setAddressbookSettings(addressBookSettings);
+	
+	/////////////////////////////
+	///////Hooks settings////////
+	/////////////////////////////
+	
+	MapStringString hooksSettings = MapStringString();
+	hooksSettings[HOOKS_ENABLED] = addPrefix() ? "1" : "0";
+	hooksSettings[HOOKS_ADD_PREFIX] = prepend();
+	hooksSettings[HOOKS_SIP_ENABLED] = enableHooksSIP() ? "1" : "0";
+	hooksSettings[HOOKS_IAX2_ENABLED] = enableHooksIAX() ? "1" : "0";
+	hooksSettings[HOOKS_SIP_FIELD] = hooksSIPHeader();
+	hooksSettings[HOOKS_COMMAND] = hooksCommand();
+	configurationManager.setHookSettings(hooksSettings);
+	
+	readConfig();
 }
 
 
