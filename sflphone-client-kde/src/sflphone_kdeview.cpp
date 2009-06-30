@@ -80,6 +80,7 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	accountList = new AccountList();
 	
 	configDialog = new ConfigurationDialogKDE(this);
+	configDialog->setObjectName("configDialog");
 	configDialog->setModal(true);
 	
 	wizard = new AccountWizard(this);
@@ -95,9 +96,12 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	        this,         SLOT(on1_voiceMailNotify(const QString &, int)));
 	connect(&callManager, SIGNAL(volumeChanged(const QString &, double)),
 	        this,         SLOT(on1_volumeChanged(const QString &, double)));
-	        
+	
 	connect(&configurationManager, SIGNAL(accountsChanged()),
 	        accountList,           SLOT(updateAccounts()));
+	        
+	connect(configDialog, SIGNAL(clearCallHistoryAsked()),
+	        callList,     SLOT(clearHistory()));
 	        
 	QPalette pal = QPalette(palette());
 	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
@@ -1406,7 +1410,6 @@ void sflphone_kdeView::on1_volumeChanged(const QString &device, double value)
 	if(! (toolButton_sndVol->isChecked() && value == 0.0))
 		updateVolumeBar();
 }
-
 
 
 

@@ -74,22 +74,6 @@ Dialpad::Dialpad(QWidget *parent)
 }
 
 
-// Dialpad::~Dialpad()
-// {
-// 	delete pushButton_0;
-// 	delete pushButton_1;
-// 	delete pushButton_2;
-// 	delete pushButton_3;
-// 	delete pushButton_4;
-// 	delete pushButton_5;
-// 	delete pushButton_6;
-// 	delete pushButton_7;
-// 	delete pushButton_8;
-// 	delete pushButton_9;
-// 	delete pushButton_diese;
-// 	delete pushButton_etoile;
-// }
-
 void Dialpad::fillButtons()
 {
 	QHBoxLayout * layout;
@@ -105,9 +89,17 @@ void Dialpad::fillButtons()
 	     pushButton_7,      pushButton_8,   pushButton_9, 
 	     pushButton_etoile, pushButton_0,   pushButton_diese};
 	     
-	QString numbers[12] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"};
+	QString numbers[12] = 
+	    {"1", "2", "3", 
+	     "4", "5", "6", 
+	     "7", "8", "9", 
+	     "*", "0", "#"};
 	
-	QString texts[12] = {"", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz", "", "", ""};
+	QString texts[12] = 
+	    {  ""  ,  "abc",  "def" , 
+	     "ghi" ,  "jkl",  "mno" , 
+	     "pqrs",  "tuv",  "wxyz", 
+	       ""  ,   ""  ,   ""   };
 	
 	for(int i = 0 ; i < 12 ; i++)
 	{

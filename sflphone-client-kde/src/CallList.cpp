@@ -159,3 +159,16 @@ Call * CallList::addRingingCall(const QString & callId)
 	calls->append(call);
 	return call;
 }
+
+void CallList::clearHistory()
+{
+	qDebug() << "clearHistory";
+	Call * call;
+	QMutableVectorIterator<Call *> i(*calls);
+	while (i.hasNext()) 
+	{
+		call = i.next();
+		if (call->isHistory()) 
+		{	i.remove();	}
+	}
+}

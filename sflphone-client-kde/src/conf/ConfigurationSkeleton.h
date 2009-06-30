@@ -23,7 +23,7 @@
 
 #include <QWidget>
 
-#include "settings.h"
+#include "kcfg_settings.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>

@@ -36,6 +36,9 @@ public:
 
     ~DlgGeneral();
 
+signals:
+	void clearCallHistoryAsked();
+
 };
 
 #endif

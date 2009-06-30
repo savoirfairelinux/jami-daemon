@@ -60,7 +60,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="toolButton_historyClear_2">
+       <widget class="QToolButton" name="toolButton_historyClear">
         <property name="text">
          <string>C&amp;lear history</string>
         </property>

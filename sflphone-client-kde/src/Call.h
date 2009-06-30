@@ -204,6 +204,7 @@ public:
 	history_state getHistoryState() const;
 	bool getRecording() const;
 	QString getAccountId() const;
+	bool isHistory() const;
 	
 	//Automate calls
 	call_state stateChanged(const QString & newState);

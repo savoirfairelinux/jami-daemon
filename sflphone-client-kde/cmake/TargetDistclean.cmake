@@ -60,6 +60,8 @@ IF (UNIX)
    src/sflphone-client-kde
    src/sflphone-client-kde.shell
    src/*.moc
+   src/kcfg_*.cpp
+   src/kcfg_*.h
    po/*.cmake
    po/Makefile
    po/CMakeFiles

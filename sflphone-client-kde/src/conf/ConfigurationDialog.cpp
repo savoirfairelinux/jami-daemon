@@ -53,9 +53,11 @@ ConfigurationDialogKDE::ConfigurationDialogKDE(sflphone_kdeView *parent)
 	addPage( dlgRecord       , i18n("Record")       , "media-record" ); 
 	addPage( dlgHooks        , i18n("Hooks")        , "insert-link" ); 
 	connect(this, SIGNAL(applyClicked()), dlgAudio, SLOT(updateAlsaSettings()));
-	connect(this, SIGNAL(okClicked()), dlgAudio, SLOT(updateAlsaSettings()));
-	connect(this, SIGNAL(applyClicked()), this, SLOT(applyCustomSettings()));
-	connect(this, SIGNAL(okClicked()), this, SLOT(applyCustomSettings()));
+	connect(this, SIGNAL(okClicked()),    dlgAudio, SLOT(updateAlsaSettings()));
+	connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
+	connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));
+	
+	connect(dlgGeneral, SIGNAL(clearCallHistoryAsked()), this, SIGNAL(clearCallHistoryAsked()));
 // 	connect(this, SIGNAL(settingsChanged(const QString&)), this, SLOT(slot()));
 // 	connect(this, SIGNAL(widgetModified()), this, SLOT(slot()));
 }

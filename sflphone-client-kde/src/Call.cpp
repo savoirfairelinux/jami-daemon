@@ -424,13 +424,6 @@ QWidget * Call::getHistoryItemWidget()
 	return historyItemWidget;
 }
 
-/*
-layout->addWidget(labelIcon, 0, 0, 2, 1);
-	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
-	layout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
-	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
-	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
-*/
 call_state Call::getState() const
 {
 	return currentState;
@@ -439,6 +432,11 @@ call_state Call::getState() const
 history_state Call::getHistoryState() const
 {
 	return historyState;
+}
+
+bool Call::isHistory() const
+{
+	return (getState() == CALL_STATE_OVER);
 }
 
 call_state Call::stateChanged(const QString & newStateName)

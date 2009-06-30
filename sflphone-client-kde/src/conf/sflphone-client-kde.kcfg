@@ -2,7 +2,7 @@
 <!DOCTYPE kcfg SYSTEM "http://www.kde.org/standards/kcfg/1.0/kcfg.dtd">
 <kcfg> 
   <kcfgfile name="ConfigDialogKDE" /> 
-  <group name="kjots"> 
+  <group name="main"> 
     <!--
     <entry name="SplitterSizes" type="IntList"> 
       <label>How the main window is divided.</label> 

@@ -24,7 +24,7 @@
 #include <kconfigdialog.h>
 
 
-#include "settings.h"
+#include "kcfg_settings.h"
 #include "sflphone_kdeview.h"
 
 
@@ -100,6 +100,10 @@ private slots:
 	 */
 	void applyCustomSettings();
 
+
+signals:
+	void clearCallHistoryAsked();
+	
 };
 
 #endif
