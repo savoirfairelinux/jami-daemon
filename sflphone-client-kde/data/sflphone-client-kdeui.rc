@@ -32,8 +32,8 @@
 			<Action name="action_displayVolumeControls" />
 			<Action name="action_displayDialpad" />
 			<Separator />
-			<Action name="action_configureAccounts" />
-			<Action name="action_configureAudio" />
+<!-- 			<Action name="action_configureAccounts" /> -->
+<!-- 			<Action name="action_configureAudio" /> -->
 			<Action name="action_configureSflPhone" />
 			<Separator />
 			<Action name="action_accountCreationWizard" />

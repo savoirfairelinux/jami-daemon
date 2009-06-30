@@ -49,12 +49,17 @@
 
 using namespace KABC;
 
-ConfigurationDialog * sflphone_kdeView::configDialog;
+ConfigurationDialogKDE * sflphone_kdeView::configDialog;
+AccountList * sflphone_kdeView::accountList;
+QString sflphone_kdeView::priorAccountId;
 
 sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	: QWidget(parent)
 {
 	setupUi(this);
+	
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	
 	errorWindow = new QErrorMessage(this);
 	callList = new CallList();
@@ -71,13 +76,14 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 		}
 	}
 	
-	configDialog = new ConfigurationDialog(this);
+	accountList = new AccountList();
+	
+	configDialog = new ConfigurationDialogKDE(this);
 	configDialog->setModal(true);
 	
 	wizard = new AccountWizard(this);
 	wizard->setModal(false);
 	
-	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
 	        this,         SLOT(on1_callStateChanged(const QString &, const QString &)));
 	connect(&callManager, SIGNAL(incomingCall(const QString &, const QString &, const QString &)),
@@ -89,9 +95,8 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	connect(&callManager, SIGNAL(volumeChanged(const QString &, double)),
 	        this,         SLOT(on1_volumeChanged(const QString &, double)));
 	        
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	connect(&configurationManager, SIGNAL(accountsChanged()),
-	        this,                  SLOT(updateStatusMessage()));
+	        accountList,           SLOT(updateAccounts()));
 	        
 	QPalette pal = QPalette(palette());
 	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
@@ -169,29 +174,28 @@ void sflphone_kdeView::loadWindow()
 	updateSearchHistory();
 }
 
-QString sflphone_kdeView::firstAccountId()
-{
-	Account * firstAccount = getAccountList()->firstRegisteredAccount();
-	if(firstAccount == NULL)
-	{
-		return QString();
-	}
-	return firstAccount->getAccountId();
-}
 
 QVector<Account *> sflphone_kdeView::registeredAccounts()
 {
-	return getAccountList()->registeredAccounts();
+	return accountList->registeredAccounts();
 }
 
 Account * sflphone_kdeView::firstRegisteredAccount()
 {
-	return getAccountList()->firstRegisteredAccount();
+	Account * priorAccount = accountList->getAccountById(priorAccountId);
+	if(priorAccount && priorAccount->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED )
+	{
+		return priorAccount;
+	}
+	else
+	{
+		return accountList->firstRegisteredAccount();
+	}
 }
 
 AccountList * sflphone_kdeView::getAccountList()
 {
-	return configDialog->getAccountList();
+	return accountList;
 }
 
 QErrorMessage * sflphone_kdeView::getErrorWindow()
@@ -888,13 +892,14 @@ void sflphone_kdeView::updateStatusMessage()
 	Account * account = firstRegisteredAccount();
 	if(account == NULL)
 	{
-		emit statusMessageChanged(tr2i18n("No account registered"));
+		emit statusMessageChanged(i18n("No account registered"));
 	}
 	else
 	{
-		emit statusMessageChanged(tr2i18n("Using account") + " \'" + account->getAlias() + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
+		emit statusMessageChanged(i18n("Using account") + " \'" + account->getAlias() + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
 	}
 }
+
 
 
 /************************************************************
@@ -1079,17 +1084,17 @@ void sflphone_kdeView::on_stackedWidget_screen_currentChanged(int index)
 	{
 		case 0:
 			qDebug() << "Switched to call list screen.";
-			window->setWindowTitle(tr2i18n("SFLPhone") + " - " + tr2i18n("Main screen"));
+			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Main screen"));
 			break;
 		case 1:
 			qDebug() << "Switched to call history screen.";
 			updateCallHistory();
-			window->setWindowTitle(tr2i18n("SFLPhone") + " - " + tr2i18n("Call history"));
+			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Call history"));
 			break;
 		case 2:
 			qDebug() << "Switched to address book screen.";
 			updateAddressBook();
-			window->setWindowTitle(tr2i18n("SFLPhone") + " - " + tr2i18n("Address book"));
+			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Address book"));
 			break;
 		default:
 			qDebug() << "Error : reached an unknown index \"" << index << "\" with stackedWidget_screen.";
@@ -1103,7 +1108,7 @@ void sflphone_kdeView::contextMenuEvent(QContextMenuEvent *event)
 	if(stackedWidget_screen->currentWidget() == page_callHistory || stackedWidget_screen->currentWidget() == page_addressBook)
 	{
 		QAction * action_edit = new QAction(&menu);
-		action_edit->setText(tr2i18n("Edit before call"));
+		action_edit->setText(i18n("Edit before call"));
 		connect(action_edit, SIGNAL(triggered()),
 		        this  , SLOT(editBeforeCall()));
 		menu.addAction(action_edit);
@@ -1118,6 +1123,7 @@ void sflphone_kdeView::contextMenuEvent(QContextMenuEvent *event)
 	QVector<Account *> accounts = registeredAccounts();
 	for (int i = 0 ; i < accounts.size() ; i++)
 	{
+		qDebug() << i;
 		Account * account = accounts.at(i);
 		QAction * action = new ActionSetAccountFirst(account, &menu);
 		action->setCheckable(true);
@@ -1159,7 +1165,7 @@ void sflphone_kdeView::editBeforeCall()
 			number = w->getContactNumber();
 		}
 	}
-	QString newNumber = QInputDialog::getText(this, tr2i18n("Edit before call"), QString(), QLineEdit::Normal, number);
+	QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number);
 	
 	action_history->setChecked(false);
 	action_addressBook->setChecked(false);
@@ -1174,7 +1180,8 @@ void sflphone_kdeView::editBeforeCall()
 void sflphone_kdeView::setAccountFirst(Account * account)
 {
 	qDebug() << "setAccountFirst : " << account->getAlias();
-	getAccountList()->setAccountFirst(account);
+// 	getAccountList()->setAccountFirst(account);
+	priorAccountId = account->getAccountId();
 	updateStatusMessage();
 }
 
@@ -1190,24 +1197,23 @@ void sflphone_kdeView::on_listWidget_addressBook_currentItemChanged()
 	updateWindowCallState();
 }
 
-void sflphone_kdeView::on_action_configureAccounts_triggered()
-{
-	configDialog->loadOptions();
-	configDialog->setPage(PAGE_ACCOUNTS);
-	configDialog->show();
-}
+// void sflphone_kdeView::on_action_configureAccounts_triggered()
+// {
+// 	configDialog->readSettings();
+// 	configDialog->setPage(PAGE_ACCOUNTS);
+// 	configDialog->show();
+// }
 
-void sflphone_kdeView::on_action_configureAudio_triggered()
-{
-	configDialog->loadOptions();
-	configDialog->setPage(PAGE_AUDIO);
-	configDialog->show();
-}
+// void sflphone_kdeView::on_action_configureAudio_triggered()
+// {
+// 	configDialog->readSettings();
+// 	configDialog->setPage(PAGE_AUDIO);
+// 	configDialog->show();
+// }
 
 void sflphone_kdeView::on_action_configureSflPhone_triggered()
 {
-	sflphone_kdeView::configDialog->loadOptions();
-	configDialog->setPage(PAGE_GENERAL);
+	configDialog->reload();
 	configDialog->show();
 }
 
@@ -1374,13 +1380,13 @@ void sflphone_kdeView::on_action_addressBook_triggered(bool checked)
 void sflphone_kdeView::on_action_mailBox_triggered()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	QString account = firstAccountId();
-		QString mailBoxNumber = configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX];
-		Call * call = callList->addDialingCall();
-		call->appendItemText(mailBoxNumber);
-		addCallToCallList(call);
-		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
-		actionb(call, CALL_ACTION_ACCEPT);
+	Account * account = firstRegisteredAccount();
+	QString mailBoxNumber = account->getAccountDetail(ACCOUNT_MAILBOX);
+	Call * call = callList->addDialingCall();
+	call->appendItemText(mailBoxNumber);
+	addCallToCallList(call);
+	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+	actionb(call, CALL_ACTION_ACCEPT);
 }
 
 void sflphone_kdeView::on1_callStateChanged(const QString &callID, const QString &state)

@@ -18,72 +18,23 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CONFIGURATIONDIALOG_H
-#define CONFIGURATIONDIALOG_H
+#ifndef DLGRECORD_H
+#define DLGRECORD_H
 
-#include <kconfigdialog.h>
+#include <QWidget>
 
-
-#include "settings.h"
-#include "sflphone_kdeview.h"
-
-
-#define SETTINGS_NAME "settings"
-
-class DlgGeneral;
-class DlgDisplay;
-class DlgAccounts;
-class DlgAudio;
-class DlgAddressBook;
-class DlgRecord;
-class DlgHooks;
-
-class sflphone_kdeView;
+#include "ui_dlgrecordbase.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
-class ConfigurationDialogKDE : public KConfigDialog
+class DlgRecord : public QWidget, public Ui_DlgRecordBase
 {
 Q_OBJECT
-private:
-
-	
-	DlgGeneral     * dlgGeneral;
-	DlgDisplay     * dlgDisplay;
-	DlgAccounts    * dlgAccounts;
-	DlgAudio       * dlgAudio;
-	DlgAddressBook * dlgAddressBook;
-	DlgRecord      * dlgRecord;
-	DlgHooks       * dlgHooks;
-
 public:
-	ConfigurationDialogKDE(sflphone_kdeView *parent = 0);
+    DlgRecord(QWidget *parent = 0);
 
-	~ConfigurationDialogKDE();
-	
-    
-public slots:
-	void slot();
-	void updateWidgets();
-	void updateSettings();
-	/**
-	 *   Should be implemented in KConfigDialog but for no reason, is not.
-	 *   For the moment it is here but has to be removed if implemented in KConfigDialog
-	 *   because causes problems for a few cases (item managed by kconfig switched, item not managed
-	 *   switched and then switched back, apply becomes disabled).
-	 *   Can't be resolved without a method to know if items managed by kconfig have changed.
-	 */
-	void updateButtons();
-	bool hasChanged();
-	
-	/**
-	 * reloads the informations before showing it.
-	 */
-	void reload();
-	
-private slots:
-	void applyCustomSettings();
+    ~DlgRecord();
 
 };
 

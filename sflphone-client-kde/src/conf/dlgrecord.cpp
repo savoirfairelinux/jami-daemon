@@ -18,73 +18,22 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CONFIGURATIONDIALOG_H
-#define CONFIGURATIONDIALOG_H
+#include "dlgrecord.h"
 
-#include <kconfigdialog.h>
+#include <KLineEdit>
 
-
-#include "settings.h"
-#include "sflphone_kdeview.h"
-
-
-#define SETTINGS_NAME "settings"
-
-class DlgGeneral;
-class DlgDisplay;
-class DlgAccounts;
-class DlgAudio;
-class DlgAddressBook;
-class DlgRecord;
-class DlgHooks;
-
-class sflphone_kdeView;
-
-/**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
-*/
-class ConfigurationDialogKDE : public KConfigDialog
+DlgRecord::DlgRecord(QWidget *parent)
+ : QWidget(parent)
 {
-Q_OBJECT
-private:
+	setupUi(this);
+	KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
+	KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
+	KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
+}
 
-	
-	DlgGeneral     * dlgGeneral;
-	DlgDisplay     * dlgDisplay;
-	DlgAccounts    * dlgAccounts;
-	DlgAudio       * dlgAudio;
-	DlgAddressBook * dlgAddressBook;
-	DlgRecord      * dlgRecord;
-	DlgHooks       * dlgHooks;
 
-public:
-	ConfigurationDialogKDE(sflphone_kdeView *parent = 0);
+DlgRecord::~DlgRecord()
+{
+}
 
-	~ConfigurationDialogKDE();
-	
-    
-public slots:
-	void slot();
-	void updateWidgets();
-	void updateSettings();
-	/**
-	 *   Should be implemented in KConfigDialog but for no reason, is not.
-	 *   For the moment it is here but has to be removed if implemented in KConfigDialog
-	 *   because causes problems for a few cases (item managed by kconfig switched, item not managed
-	 *   switched and then switched back, apply becomes disabled).
-	 *   Can't be resolved without a method to know if items managed by kconfig have changed.
-	 */
-	void updateButtons();
-	bool hasChanged();
-	
-	/**
-	 * reloads the informations before showing it.
-	 */
-	void reload();
-	
-private slots:
-	void applyCustomSettings();
 
-};
-
-#endif

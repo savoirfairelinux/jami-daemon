@@ -53,17 +53,17 @@
 
 #define CONFIG_FILE_PATH                  "/.sflphone/sflphonedrc"
 
-#define ACTION_LABEL_CALL                 tr2i18n("Call")
-#define ACTION_LABEL_HANG_UP              tr2i18n("Hang up")
-#define ACTION_LABEL_HOLD                 tr2i18n("Hold")
-#define ACTION_LABEL_TRANSFER             tr2i18n("Transfer")
-#define ACTION_LABEL_RECORD               tr2i18n("Record")
-#define ACTION_LABEL_ACCEPT               tr2i18n("Accept")
-#define ACTION_LABEL_REFUSE               tr2i18n("Refuse")
-#define ACTION_LABEL_UNHOLD               tr2i18n("Unhold")
-#define ACTION_LABEL_GIVE_UP_TRANSF       tr2i18n("Give up transfer")
-#define ACTION_LABEL_CALL_BACK            tr2i18n("Call back")
-#define ACTION_LABEL_GIVE_UP_SEARCH       tr2i18n("Give up search")
+#define ACTION_LABEL_CALL                 i18n("Call")
+#define ACTION_LABEL_HANG_UP              i18n("Hang up")
+#define ACTION_LABEL_HOLD                 i18n("Hold")
+#define ACTION_LABEL_TRANSFER             i18n("Transfer")
+#define ACTION_LABEL_RECORD               i18n("Record")
+#define ACTION_LABEL_ACCEPT               i18n("Accept")
+#define ACTION_LABEL_REFUSE               i18n("Refuse")
+#define ACTION_LABEL_UNHOLD               i18n("Unhold")
+#define ACTION_LABEL_GIVE_UP_TRANSF       i18n("Give up transfer")
+#define ACTION_LABEL_CALL_BACK            i18n("Call back")
+#define ACTION_LABEL_GIVE_UP_SEARCH       i18n("Give up search")
 
 
 #define ICON_INCOMING                     ":/images/icons/ring.svg"
@@ -201,8 +201,8 @@
 #define CODEC_BANDWIDTH                   3
 
 /** Audio Managers */
-#define ALSA	                           0
-#define PULSEAUDIO                        1
+#define CONST_ALSA                        0
+#define CONST_PULSEAUDIO                  1
 
 
 

@@ -25,7 +25,6 @@
 
 #include "ui_dlggeneralbase.h"
 
-
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
