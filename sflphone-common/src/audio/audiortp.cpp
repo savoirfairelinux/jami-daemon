@@ -255,10 +255,13 @@ AudioRtpRTX::setRtpSessionMedia(void)
     _codecSampleRate = _audiocodec->getClockRate();
     _codecFrameSize = _audiocodec->getFrameSize();
 
-    if ( _audiocodec->hasDynamicPayload() ) {
+    if( _audiocodec->getPayload() == 9 ) {
         _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
     }
-    else if ( !_audiocodec->hasDynamicPayload() ) {
+    else if ( _audiocodec->hasDynamicPayload() ) {
+        _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
+    }
+    else if ( !_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
         _payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
     }
     
