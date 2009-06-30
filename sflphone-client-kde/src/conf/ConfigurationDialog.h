@@ -38,6 +38,8 @@ class DlgAddressBook;
 class DlgRecord;
 class DlgHooks;
 
+class sflphone_kdeView;
+
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
@@ -65,8 +67,20 @@ public slots:
 	void slot();
 	void updateWidgets();
 	void updateSettings();
+	/**
+	 *   Should be implemented in KConfigDialog but for no reason, is not.
+	 *   For the moment it is here but has to be removed if implemented in KConfigDialog
+	 *   because causes problems for a few cases (item managed by kconfig switched, item not managed
+	 *   switched and then switched back, apply becomes disabled).
+	 *   Can't be resolved without a method to know if items managed by kconfig have changed.
+	 */
 	void updateButtons();
 	bool hasChanged();
+	
+	/**
+	 * reloads the informations before showing it.
+	 */
+	void reload();
 	
 private slots:
 	void applyCustomSettings();

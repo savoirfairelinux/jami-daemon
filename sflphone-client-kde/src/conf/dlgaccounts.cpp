@@ -23,20 +23,22 @@
 #include <QtGui/QInputDialog>
 
 #include "configurationmanager_interface_singleton.h"
-#include "AccountList.h"
 #include "sflphone_kdeview.h"
 #include "sflphone_const.h"
+#include "conf/ConfigurationDialog.h"
 
-DlgAccounts::DlgAccounts(QWidget *parent)
+DlgAccounts::DlgAccounts(KConfigDialog *parent)
  : QWidget(parent)
 {
 	setupUi(this);
 	
-	AccountList * accountList = sflphone_kdeView::getAccountList();
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStyle * style = QApplication::style();
 	button_accountUp->setIcon(style->standardIcon(QStyle::SP_ArrowUp));
 	button_accountDown->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
 	loadAccountList();
+	accountListHasChanged = false;
+	toolButton_accountsApply->setEnabled(false);
 	
 	connect(edit1_alias,           SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
@@ -59,8 +61,11 @@ DlgAccounts::DlgAccounts(QWidget *parent)
 	connect(button_accountRemove,  SIGNAL(clicked()),
 	        this,                  SLOT(changedAccountList()));
 	        
-	connect(accountList,           SIGNAL(accountListUpdated()),
+	connect(&configurationManager, SIGNAL(accountsChanged()),
 	        this,                  SLOT(updateAccountStates()));
+	        
+	
+	connect(this,     SIGNAL(updateButtons()), parent, SLOT(updateButtons()));
 }
 
 
@@ -71,7 +76,6 @@ DlgAccounts::~DlgAccounts()
 void DlgAccounts::saveAccountList()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	AccountList * accountList = sflphone_kdeView::getAccountList();
 	disconnectAccountsChangedSignal();
 	//save the account being edited
 	if(listWidget_accountList->currentItem())
@@ -134,7 +138,6 @@ void DlgAccounts::disconnectAccountsChangedSignal()
 
 void DlgAccounts::saveAccount(QListWidgetItem * item)
 {
-	AccountList * accountList = sflphone_kdeView::getAccountList();
 	if(! item)  { qDebug() << "Attempting to save details of an account from a NULL item"; return; }
 	
 	Account * account = accountList->getAccountByItem(item);
@@ -152,7 +155,6 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
 {
-	AccountList * accountList = sflphone_kdeView::getAccountList();
 	if(! item )  {  qDebug() << "Attempting to load details of an account from a NULL item";  return;  }
 
 	Account * account = accountList->getAccountByItem(item);
@@ -183,8 +185,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 void DlgAccounts::loadAccountList()
 {
 	qDebug() << "loadAccountList";
-	AccountList * accountList = sflphone_kdeView::getAccountList();
-	accountList->updateAccounts();
+	accountList = new AccountList();
 	//initialize the QListWidget object with the AccountList
 	listWidget_accountList->clear();
 	for (int i = 0; i < accountList->size(); ++i){
@@ -211,15 +212,17 @@ void DlgAccounts::addAccountToAccountList(Account * account)
 
 void DlgAccounts::changedAccountList()
 {
-	toolButton_accountsApply->setEnabled(true);
+	accountListHasChanged = true;
+// 	((ConfigurationDialogKDE *)parent())->updateButtons();
+	emit updateButtons();
+	toolButton_accountsApply->setEnabled(hasChanged());
 }
 
 
 
 void DlgAccounts::on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous )
 {
-	qDebug() << "on_listWidget_accountList_currentItemChanged";
-	AccountList * accountList = sflphone_kdeView::getAccountList(); 
+	qDebug() << "on_listWidget_accountList_currentItemChanged"; 
 	if(previous)
 		saveAccount(previous);
 	if(current)
@@ -230,7 +233,6 @@ void DlgAccounts::on_listWidget_accountList_currentItemChanged ( QListWidgetItem
 void DlgAccounts::on_button_accountUp_clicked()
 {
 	qDebug() << "on_button_accountUp_clicked";
-	AccountList * accountList = sflphone_kdeView::getAccountList();
 	int currentRow = listWidget_accountList->currentRow();
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
@@ -248,7 +250,6 @@ void DlgAccounts::on_button_accountUp_clicked()
 void DlgAccounts::on_button_accountDown_clicked()
 {
 	qDebug() << "on_button_accountDown_clicked";
-	AccountList * accountList = sflphone_kdeView::getAccountList();
 	int currentRow = listWidget_accountList->currentRow();
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
@@ -265,7 +266,6 @@ void DlgAccounts::on_button_accountDown_clicked()
 
 void DlgAccounts::on_button_accountAdd_clicked()
 {
-	AccountList * accountList = sflphone_kdeView::getAccountList();
 	qDebug() << "on_button_accountAdd_clicked";
 	QString itemName = QInputDialog::getText(this, "New account", "Enter new account's alias");
 	itemName = itemName.simplified();
@@ -282,7 +282,6 @@ void DlgAccounts::on_button_accountAdd_clicked()
 void DlgAccounts::on_button_accountRemove_clicked()
 {
 	qDebug() << "on_button_accountRemove_clicked";
-	AccountList * accountList = sflphone_kdeView::getAccountList();
 	int r = listWidget_accountList->currentRow();
 	QListWidgetItem * item = listWidget_accountList->takeItem(r);
 	accountList->removeAccount(item);
@@ -293,9 +292,19 @@ void DlgAccounts::on_button_accountRemove_clicked()
 void DlgAccounts::on_toolButton_accountsApply_clicked()
 {
 	qDebug() << "on_toolButton_accountsApply_clicked";
-	toolButton_accountsApply->setEnabled(false);
-	saveAccountList();
-	loadAccountList();
+	applyCustomSettings();
+}
+
+void DlgAccounts::applyCustomSettings()
+{
+	qDebug() << "applyCustomSettings";
+	if(hasChanged())
+	{
+		toolButton_accountsApply->setEnabled(false);
+		saveAccountList();
+		loadAccountList();
+		accountListHasChanged = false;
+	}
 }
 
 void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
@@ -303,7 +312,6 @@ void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
 	qDebug() << "on_edit1_alias_textChanged";
 	AccountItemWidget * widget = (AccountItemWidget *) listWidget_accountList->itemWidget(listWidget_accountList->currentItem());
 	widget->setAccountText(text);
-	changedAccountList();
 }
 
 void DlgAccounts::updateAccountListCommands()
@@ -332,7 +340,6 @@ void DlgAccounts::updateAccountListCommands()
 void DlgAccounts::updateAccountStates()
 {
 	qDebug() << "updateAccountStates";
-	AccountList * accountList = sflphone_kdeView::getAccountList();
 	qDebug() << accountList->size();
 	for (int i = 0; i < accountList->size(); i++)
 	{
@@ -340,5 +347,12 @@ void DlgAccounts::updateAccountStates()
 		current.updateState();
 	}
 	qDebug() << accountList->size();
+}
+
+
+bool DlgAccounts::hasChanged()
+{
+// 	qDebug() << "DlgAudio::hasChanged";
+	return accountListHasChanged;
 }
 

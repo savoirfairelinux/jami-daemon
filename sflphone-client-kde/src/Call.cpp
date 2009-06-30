@@ -575,7 +575,7 @@ void Call::call()
 	if(account.isEmpty())
 	{
 		qDebug() << "account is empty"; 
-		this->account = sflphone_kdeView::firstAccountId();
+		this->account = sflphone_kdeView::firstRegisteredAccount()->getAccountId();
 	}
 	if(!account.isEmpty())
 	{

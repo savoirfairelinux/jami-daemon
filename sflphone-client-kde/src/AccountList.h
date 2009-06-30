@@ -34,7 +34,6 @@ class AccountList : public QObject{
 private:
 
 	QVector<Account *> * accounts;
-	static QString firstAccount;
 
 public:
 
@@ -58,7 +57,6 @@ public:
 	Account * addAccount(QString & alias);
 	void removeAccount(Account * account);
 	void removeAccount(QListWidgetItem * item);
-	void setAccountFirst(Account * account);
 	void upAccount(int index);
 	void downAccount(int index);
 

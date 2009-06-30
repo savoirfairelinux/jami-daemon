@@ -32,15 +32,18 @@
 #include <KXmlGuiWindow>
 
 #include "ui_sflphone_kdeview_base.h"
-#include "ConfigDialog.h"
+#include "conf/ConfigurationDialog.h"
 #include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
 #include "sflphone_kdeview.h"
+#include "AccountList.h"
 
 #include "ui_sflphone_kdeview_base.h"
 
-class ConfigurationDialog;
+class ConfigurationDialogKDE;
+
+
 /**
  * This is the main view class for sflphone-client-kde.  Most of the non-menu,
  * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go
@@ -50,19 +53,19 @@ class ConfigurationDialog;
  * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
  * @version 0.1
  */
- 
-
 class sflphone_kdeView : public QWidget, public Ui::SFLPhone_view
 {
 	Q_OBJECT
     
 private:
 
-	static ConfigurationDialog * configDialog;
+	static ConfigurationDialogKDE * configDialog;
 	static AccountList * accountList;
 	AccountWizard * wizard;
 	CallList * callList;
 	QErrorMessage * errorWindow;
+	//Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
+	static QString priorAccountId;
 
 protected:
 	
@@ -83,7 +86,6 @@ public:
 	void buildDialPad();
 	
 	//Getters
-	static QString firstAccountId();
 	static Account * firstRegisteredAccount();
 	static QVector<Account *> registeredAccounts();
 	static AccountList * getAccountList();
@@ -151,8 +153,8 @@ public slots:
 
 	void on_action_displayVolumeControls_triggered();
 	void on_action_displayDialpad_triggered();
-	void on_action_configureAccounts_triggered();
-	void on_action_configureAudio_triggered();
+// 	void on_action_configureAccounts_triggered();
+// 	void on_action_configureAudio_triggered();
 	void on_action_configureSflPhone_triggered();
 	void on_action_accountCreationWizard_triggered();
 	void on_action_accept_triggered();

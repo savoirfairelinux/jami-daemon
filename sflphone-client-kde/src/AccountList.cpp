@@ -24,7 +24,6 @@
 #include "configurationmanager_interface_singleton.h"
 
 
-QString AccountList::firstAccount = QString();
 
 //Constructors
 
@@ -131,11 +130,6 @@ QVector<Account *> AccountList::registeredAccounts() const
 
 Account * AccountList::firstRegisteredAccount() const
 {
-	Account * first = getAccountById(firstAccount);
-	if(first && (first->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED))
-	{
-		return first;
-	}
 	Account * current;
 	for (int i = 0; i < accounts->count(); ++i){
 		current = (*accounts)[i];
@@ -147,10 +141,6 @@ Account * AccountList::firstRegisteredAccount() const
 	return NULL;
 }
 
-void AccountList::setAccountFirst(Account * account)
-{
-	firstAccount = account->getAccountId();
-}
 
 AccountList::~AccountList()
 {
@@ -175,6 +165,8 @@ Account & AccountList::getAccount (int i)
 
 Account * AccountList::getAccountById(const QString & id) const
 {
+	if(id.isEmpty())
+	{	return NULL;	}
 	for (int i = 0; i < accounts->size(); ++i)
 	{
 		if (!(*accounts)[i]->isNew() && (*accounts)[i]->getAccountId() == id)

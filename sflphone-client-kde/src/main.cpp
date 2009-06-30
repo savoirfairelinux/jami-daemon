@@ -67,11 +67,11 @@ int main(int argc, char **argv)
 
 		
 		SFLPhone * fenetre = new SFLPhone();
-// 		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
-// 		fenetre->show();
+		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
+		fenetre->show();
 
-		ConfigurationDialogKDE * dlg = new ConfigurationDialogKDE(fenetre->getView());
-		dlg->show();
+// 		ConfigurationDialogKDE * dlg = new ConfigurationDialogKDE(fenetre->getView());
+// 		dlg->show();
 	
 		return app.exec();
 	}

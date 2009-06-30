@@ -70,8 +70,6 @@ void ConfigurationDialogKDE::slot()
 	qDebug() << "slot";
 }
 
-
-
 void ConfigurationDialogKDE::updateWidgets()
 {
 	qDebug() << "updateWidgets";
@@ -87,9 +85,8 @@ void ConfigurationDialogKDE::updateSettings()
 
 bool ConfigurationDialogKDE::hasChanged()
 {
-	qDebug() << "hasChanged = " << dlgAudio->hasChanged();
-	return dlgAudio->hasChanged();
-	
+	qDebug() << "hasChanged";
+	return dlgAudio->hasChanged() || dlgAccounts->hasChanged();
 }
 
 void ConfigurationDialogKDE::updateButtons()
@@ -100,10 +97,18 @@ void ConfigurationDialogKDE::updateButtons()
 
 void ConfigurationDialogKDE::applyCustomSettings()
 {
-	qDebug() << "updateButtons";
+	qDebug() << "applyCustomSettings";
+	dlgAccounts->applyCustomSettings();
 // 	if(hasChanged())
 // 	{
 		ConfigurationSkeleton::self()->writeConfig();
 // 	}
+	updateButtons();
 }
 
+void ConfigurationDialogKDE::reload()
+{
+	qDebug() << "reload";
+	ConfigurationSkeleton::self()->readConfig();
+	updateWidgets();
+}

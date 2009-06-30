@@ -22,9 +22,11 @@
 #define DLGACCOUNTS_H
 
 #include <QWidget>
+#include <kconfigdialog.h>
 
 #include "ui_dlgaccountsbase.h"
 #include "Account.h"
+#include "AccountList.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -33,17 +35,22 @@ class DlgAccounts : public QWidget, public Ui_DlgAccountsBase
 {
 Q_OBJECT
 public:
-	DlgAccounts(QWidget *parent = 0);
+	DlgAccounts(KConfigDialog *parent = 0);
 
 	~DlgAccounts();
 	void saveAccount(QListWidgetItem * item);
 	void loadAccount(QListWidgetItem * item);
 	
 private:
+	AccountList * accountList;
+	bool accountListHasChanged;
 
 public slots:
 	void saveAccountList();
 	void loadAccountList();
+	void applyCustomSettings();
+	
+	bool hasChanged();
 	
 private slots:
 	void changedAccountList();
@@ -59,6 +66,10 @@ private slots:
 	void updateAccountStates();
 	void addAccountToAccountList(Account * account);
 	void updateAccountListCommands();
+	
+	
+signals:
+	void updateButtons();
 
 };
 
