@@ -65,7 +65,13 @@ public:
     
 public slots:
 	void slot();
+	/**
+	 *   Reimplements KConfigDialog
+	 */
 	void updateWidgets();
+	/**
+	 *   Reimplements KConfigDialog
+	 */
 	void updateSettings();
 	/**
 	 *   Should be implemented in KConfigDialog but for no reason, is not.
@@ -73,8 +79,13 @@ public slots:
 	 *   because causes problems for a few cases (item managed by kconfig switched, item not managed
 	 *   switched and then switched back, apply becomes disabled).
 	 *   Can't be resolved without a method to know if items managed by kconfig have changed.
+	 *   Disable/Enable Apply Button according to hasChanged() result
 	 */
 	void updateButtons();
+	/**
+	 * Same as updateButtons, should be implemented in KConfigDialog.
+	 * @return whether any custom widget has changed in the dialog.
+	 */
 	bool hasChanged();
 	
 	/**
@@ -83,6 +94,10 @@ public slots:
 	void reload();
 	
 private slots:
+	/**
+	 *   Apply settings not managed by kconfig (accounts)
+	 *   Should be removed when accounts are managed by kconfig.
+	 */
 	void applyCustomSettings();
 
 };

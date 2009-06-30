@@ -62,7 +62,6 @@ int main(int argc, char **argv)
 		
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
-		
 
 		
 		SFLPhone * fenetre = new SFLPhone();

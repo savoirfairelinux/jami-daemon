@@ -45,6 +45,7 @@
 #include "ContactItemWidget.h"
 #include "SFLPhone.h"
 #include "typedefs.h"
+#include "Dialpad.h"
 
 
 using namespace KABC;
@@ -120,50 +121,12 @@ sflphone_kdeView::~sflphone_kdeView()
 	delete errorWindow;
 }
 
-
-void sflphone_kdeView::buildDialPad()
-{
-	QHBoxLayout * layout;
-	QLabel * number;
-	QLabel * text;
-	int spacing = 5;
-	int numberSize = 14;
-	int textSize = 8;
-	
-	QPushButton * buttons[12] = 
-	    {pushButton_1,      pushButton_2,   pushButton_3, 
-	     pushButton_4,      pushButton_5,   pushButton_6, 
-	     pushButton_7,      pushButton_8,   pushButton_9, 
-	     pushButton_etoile, pushButton_0,   pushButton_diese};
-	     
-	QString numbers[12] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"};
-	
-	QString texts[12] = {"", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz", "", "", ""};
-	
-	for(int i = 0 ; i < 12 ; i++)
-	{
-		layout = new QHBoxLayout();
-		layout->setSpacing(spacing);
-		number = new QLabel(numbers[i]);
-		number->setFont(QFont("", numberSize));
-		layout->addWidget(number);
-		number->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-		text = new QLabel(texts[i]);
-		text->setFont(QFont("", textSize));
-		layout->addWidget(text);
-		buttons[i]->setLayout(layout);
-		buttons[i]->setMinimumHeight(30);
-		buttons[i]->setText("");
-	}
-}
-
 void sflphone_kdeView::loadWindow()
 {
 	qDebug() << "loadWindow";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	action_displayVolumeControls->setChecked(configurationManager.getVolumeControls());
 	action_displayDialpad->setChecked(configurationManager.getDialpad());
-	buildDialPad();
 	updateWindowCallState();
 	updateRecordButton();
 	updateVolumeButton();
@@ -757,11 +720,7 @@ QVector<Contact *> sflphone_kdeView::findContactsInKAddressBook(QString textSear
 	return results;
 }
 
-/**
- * 
- * @return the integer resulting to the flags of the types chosen to be displayed in SFLPhone configuration.
- * useful to sort contacts according to their types.
- */
+
 int sflphone_kdeView::phoneNumberTypesDisplayed()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -921,18 +880,9 @@ void sflphone_kdeView::on_action_displayDialpad_triggered()
 	updateVolumeControls();
 }
 
-void sflphone_kdeView::on_pushButton_1_clicked()      { typeString("1"); }
-void sflphone_kdeView::on_pushButton_2_clicked()      { typeString("2"); }
-void sflphone_kdeView::on_pushButton_3_clicked()      { typeString("3"); }
-void sflphone_kdeView::on_pushButton_4_clicked()      { typeString("4"); }
-void sflphone_kdeView::on_pushButton_5_clicked()      { typeString("5"); }
-void sflphone_kdeView::on_pushButton_6_clicked()      { typeString("6"); }
-void sflphone_kdeView::on_pushButton_7_clicked()      { typeString("7"); }
-void sflphone_kdeView::on_pushButton_8_clicked()      { typeString("8"); }
-void sflphone_kdeView::on_pushButton_9_clicked()      { typeString("9"); }
-void sflphone_kdeView::on_pushButton_0_clicked()      { typeString("0"); }
-void sflphone_kdeView::on_pushButton_diese_clicked()  { typeString("#"); }
-void sflphone_kdeView::on_pushButton_etoile_clicked() { typeString("*"); }
+
+void sflphone_kdeView::on_widget_dialpad_typed(QString text)      { typeString(text); }
+
 
 void sflphone_kdeView::on_lineEdit_searchHistory_textChanged()
 {

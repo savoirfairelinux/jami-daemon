@@ -62,6 +62,8 @@ private:
 	static ConfigurationDialogKDE * configDialog;
 	static AccountList * accountList;
 	AccountWizard * wizard;
+	//List of calls in the window, and past ones.
+	//Handles both current calls (dialing, ringing...) and history.
 	CallList * callList;
 	QErrorMessage * errorWindow;
 	//Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
@@ -80,18 +82,35 @@ public:
 	sflphone_kdeView(QWidget *parent);
 	virtual ~sflphone_kdeView();
 	/**
-	 * 
+	 * Called at construction. Updates all the display
+	 * according to the settings.
 	 */
 	void loadWindow();
-	void buildDialPad();
 	
 	//Getters
+	/**
+	 *   Seeks the account to use.
+	 *   If priorAccountId is defined and the corresponding
+	 *   account exists and is registered, uses this one, else,
+	 *   asks the first registered of accountList.
+	 *   If there is no account registered, returns NULL.
+	 * @return the account to use if an outgoing call is placed.
+	 */
 	static Account * firstRegisteredAccount();
+	/**
+	 * 
+	 * @return the list of registered accounts in accountList
+	 */
 	static QVector<Account *> registeredAccounts();
 	static AccountList * getAccountList();
 	QErrorMessage * getErrorWindow();
 	
 	//Daemon getters
+	/**
+	* Useful to sort contacts according to their types with Kabc.
+	* @return the integer resulting to the flags of the types 
+	* chosen to be displayed in SFLPhone configuration.
+	*/
 	int phoneNumberTypesDisplayed();
 	
 	//Updates
@@ -166,18 +185,7 @@ public slots:
 	void on_action_addressBook_triggered(bool checked);
 	void on_action_mailBox_triggered();
 	
-	void on_pushButton_1_clicked();
-	void on_pushButton_2_clicked();
-	void on_pushButton_3_clicked();
-	void on_pushButton_4_clicked();
-	void on_pushButton_5_clicked();
-	void on_pushButton_6_clicked();
-	void on_pushButton_7_clicked();
-	void on_pushButton_8_clicked();
-	void on_pushButton_9_clicked();
-	void on_pushButton_0_clicked();
-	void on_pushButton_diese_clicked();
-	void on_pushButton_etoile_clicked();
+	void on_widget_dialpad_typed(QString text);
 	
 	void on_lineEdit_searchHistory_textChanged();
 	void on_lineEdit_addressBook_textChanged();
