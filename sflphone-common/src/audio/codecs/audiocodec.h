@@ -34,6 +34,13 @@ public:
         : _codecName(codecName), _clockRate(8000), _channel(1),  _bitrate(0.0),_bandwidth(0),_payload(payload), _hasDynamicPayload(false),_state(true) {
   	
 	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
+
+	// If g722 (payload 9), we need to init libccrtp symetric sessions with using
+	// dynamic payload format. This way we get control on rtp clockrate.
+	if(_payload = 9)
+	{
+	    _hasDynamicPayload = true;
+	}
 }
 
     AudioCodec( const AudioCodec& codec )
