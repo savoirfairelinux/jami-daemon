@@ -37,16 +37,27 @@ public:
 
 	// If g722 (payload 9), we need to init libccrtp symetric sessions with using
 	// dynamic payload format. This way we get control on rtp clockrate.
-	if(_payload = 9)
+	
+	if(_payload == 9)
 	{
 	    _hasDynamicPayload = true;
 	}
+	
 }
 
     AudioCodec( const AudioCodec& codec )
         : _codecName(codec._codecName), _clockRate(codec._clockRate), _channel(codec._channel),  _bitrate(codec._bitrate),_bandwidth(codec._bandwidth),_payload(codec._payload), _hasDynamicPayload(false),_state(true) {
   	
 	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
+
+	// If g722 (payload 9), we need to init libccrtp symetric sessions with using
+	// dynamic payload format. This way we get control on rtp clockrate.
+	
+	if(_payload == 9)
+	{
+	    _hasDynamicPayload = true;
+	}
+	
 }
 
     virtual ~AudioCodec() {
