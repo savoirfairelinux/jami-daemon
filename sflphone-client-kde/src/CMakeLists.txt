@@ -53,6 +53,7 @@ SET(	   sflphone_client_kde_SRCS
 	conf/dlgaddressbook.cpp
 	conf/dlghooks.cpp
 	conf/ConfigurationSkeleton.cpp
+	Dialpad.cpp
 )
  
 
@@ -118,7 +119,7 @@ SET(    config_ui_files
 	conf/dlghooksbase.ui
 )
 
-KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/sflphone_kdeview_base.ui ui/ConfigDialog.ui   ${config_ui_files}  )
+KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/sflphone_kdeview_base.ui  ${config_ui_files}  )
 
 KDE4_ADD_KCFG_FILES(sflphone_client_kde_SRCS conf/settings.kcfgc)
 INSTALL(FILES conf/sflphone-client-kde.kcfg DESTINATION ${KCFG_INSTALL_DIR})
