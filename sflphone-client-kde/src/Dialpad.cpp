@@ -21,6 +21,7 @@
 #include "Dialpad.h"
 
 #include <QLabel>
+#include <QDebug>
 
 Dialpad::Dialpad(QWidget *parent)
  : QWidget(parent)
@@ -68,6 +69,8 @@ Dialpad::Dialpad(QWidget *parent)
 	gridLayout->addWidget(pushButton_etoile, 3, 2);
 	
 	fillButtons();
+	
+	QMetaObject::connectSlotsByName(this);
 }
 
 
