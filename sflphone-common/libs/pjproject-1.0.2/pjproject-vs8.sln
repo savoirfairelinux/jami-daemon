@@ -113,8 +113,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libspeex", "third_party\bui
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libresample_dll", "third_party\build\resample\libresample_dll.vcproj", "{C48EAAF5-F69E-410B-9CE4-23AB41B00E2A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmilenage", "third_party\build\milenage\libmilenage.vcproj", "{4BF51C21-5A30-423B-82FE-1ED410E5769D}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsrtp", "third_party\build\srtp\libsrtp.vcproj", "{F0DBAA03-1BA3-4E3B-A2CA-727E3D3AB858}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pjnath_test", "pjnath\build\pjnath_test.vcproj", "{553C094C-F581-4A80-9540-D5D7B398A2C6}"
