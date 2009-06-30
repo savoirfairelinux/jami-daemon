@@ -46,8 +46,7 @@ AC_CONFIG_FILES([libs/Makefile \
   
 AC_CONFIG_FILES([src/Makefile \
   src/audio/Makefile \
-  src/audio/codecs/Makefile
-  src/audio/codecs/ilbc/Makefile \
+  src/audio/codecs/Makefile \
   src/config/Makefile \
   src/dbus/Makefile \
   src/plug-in/audiorecorder/Makefile \
