@@ -56,6 +56,9 @@
     <entry name="ringtone" type="Path">
     	<label>Defines which ringtone is used.</label>
     </entry>
+    <entry name="activeCodecList" type="StringList">
+    	<label>Defines which ALSA plugin to use.</label>
+    </entry>
     <entry name="alsaPlugin" type="String">
     	<label>Defines which ALSA plugin to use.</label>
     </entry>

@@ -32,14 +32,12 @@
 #include <KXmlGuiWindow>
 
 #include "ui_sflphone_kdeview_base.h"
-#include "ConfigDialog.h"
 #include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
 #include "sflphone_kdeview.h"
 
 
-class ConfigurationDialog;
 class sflphone_kdeView;
 
 class SFLPhone : public KXmlGuiWindow

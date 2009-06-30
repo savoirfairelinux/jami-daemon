@@ -108,7 +108,7 @@ void ConfigurationSkeleton::readConfig()
 	}
 
 	//codecs settings
-// // 	loadCodecs();
+	setActiveCodecList(configurationManager.getActiveCodecList());
 
 	qDebug() << "configurationManager.getCurrentAudioOutputPlugin() = " << configurationManager.getCurrentAudioOutputPlugin();
 	setAlsaPlugin(configurationManager.getCurrentAudioOutputPlugin());
@@ -227,7 +227,8 @@ void ConfigurationSkeleton::writeConfig()
 	configurationManager.setRingtoneChoice(ringtone());
 
 	//codecs settings
-// // 	saveCodecs();
+	configurationManager.setActiveCodecList(activeCodecList());
+	
 
 	//alsa settings
 	if(prevManager == CONST_ALSA && newManager == EnumInterface::ALSA)

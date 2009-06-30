@@ -38,11 +38,24 @@ public:
 
     ~DlgAudio();
 
+private:
+	bool codecTableHasChanged;
+
 public slots:
 	void updateWidgets();
 	void updateSettings();
 	bool hasChanged();
 	void updateAlsaSettings();
+	
+private slots:
+	void updateCodecListCommands();
+	void on_tableWidget_codecs_currentCellChanged(int currentRow);
+	void on_toolButton_codecUp_clicked();
+	void on_toolButton_codecDown_clicked();
+	void codecTableChanged();
+	
+signals:
+	void updateButtons();
 };
 
 #endif

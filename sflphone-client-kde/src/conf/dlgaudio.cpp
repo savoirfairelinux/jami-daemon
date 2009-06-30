@@ -25,20 +25,34 @@
 #include "conf/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
 
+#include "sflphone_const.h"
+
 DlgAudio::DlgAudio(KConfigDialog *parent)
  : QWidget(parent)
 {
 	setupUi(this);
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	QStyle * style = QApplication::style();
 	
 	KUrl url = KUrl(SHARE_INSTALL_PREFIX);
 	url.cd("sflphone/ringtones");
 	KUrlRequester_ringtone->setUrl(url);
 	KUrlRequester_ringtone->lineEdit()->setObjectName("kcfg_ringtone"); 
 	
+	codecTableHasChanged = false;
+	toolButton_codecUp->setIcon(style->standardIcon(QStyle::SP_ArrowUp));
+	toolButton_codecDown->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
+	tableWidget_codecs->verticalHeader()->hide();
+	tableWidget_codecs->setSelectionBehavior(QAbstractItemView::SelectRows);
+	
 	updateAlsaSettings();
-	connect(box_alsaPlugin, SIGNAL(currentIndexChanged(int)), parent, SLOT(updateButtons()));
+	connect(box_alsaPlugin,        SIGNAL(currentIndexChanged(int)),        parent, SLOT(updateButtons()));
+	connect(tableWidget_codecs,    SIGNAL(itemChanged(QTableWidgetItem *)), this,   SLOT(codecTableChanged()));
+	connect(toolButton_codecUp,    SIGNAL(clicked()),                       this,   SLOT(codecTableChanged()));
+	connect(toolButton_codecDown,  SIGNAL(clicked()),                       this,   SLOT(codecTableChanged()));
+	
+	connect(this,                  SIGNAL(updateButtons()),                 parent, SLOT(updateButtons()));
 }
 
 
@@ -49,16 +63,102 @@ DlgAudio::~DlgAudio()
 void DlgAudio::updateWidgets()
 {
 // 	qDebug() << "DlgAudio::updateWidgets";
+	//alsa Plugin
 	ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
 	box_alsaPlugin->setCurrentIndex(box_alsaPlugin->findText(skeleton->alsaPlugin()));
+	
+	//codecList
+	qDebug() << "loadCodecs";
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	QStringList codecList = configurationManager.getCodecList();
+	QStringList activeCodecList = skeleton->activeCodecList();
+	#if QT_VERSION >= 0x040500
+		activeCodecList.removeDuplicates();
+	#else
+   	for (int i = 0 ; i < activeCodecList.size() ; i++)
+		{
+			if(activeCodecList.lastIndexOf(activeCodecList[i]) != i)
+			{
+				activeCodecList.removeAt(i);
+				i--;
+			}
+		}
+	#endif
+
+	for (int i=0 ; i<activeCodecList.size() ; i++)
+	{
+		if(! codecList.contains(activeCodecList[i]))
+		{
+			activeCodecList.removeAt(i);
+			i--;
+		}
+	}
+	QStringList codecListToDisplay = activeCodecList;
+	for (int i=0 ; i<codecList.size() ; i++)
+	{
+		if(! activeCodecList.contains(codecList[i]))
+		{
+			codecListToDisplay << codecList[i];
+		}
+	}
+	qDebug() << "codecList = " << codecList;
+	qDebug() << "activeCodecList" << activeCodecList;
+	qDebug() << "codecListToDisplay" << codecListToDisplay;
+	tableWidget_codecs->setRowCount(0);
+	for(int i=0 ; i<codecListToDisplay.size() ; i++)
+	{
+		bool ok;
+		qDebug() << codecListToDisplay[i];
+		QString payloadStr = QString(codecListToDisplay[i]);
+		int payload = payloadStr.toInt(&ok);
+		if(!ok)	
+			qDebug() << "The codec's payload sent by the configurationManager is not a number : " << codecListToDisplay[i];
+		else
+		{
+			QStringList details = configurationManager.getCodecDetails(payload);
+			tableWidget_codecs->insertRow(i);
+			tableWidget_codecs->setVerticalHeaderItem (i, new QTableWidgetItem());
+			tableWidget_codecs->verticalHeaderItem (i)->setText(payloadStr);
+			tableWidget_codecs->setItem(i,0,new QTableWidgetItem(""));
+			tableWidget_codecs->setItem(i,1,new QTableWidgetItem(details[CODEC_NAME]));
+			tableWidget_codecs->setItem(i,2,new QTableWidgetItem(details[CODEC_SAMPLE_RATE]));
+			tableWidget_codecs->setItem(i,3,new QTableWidgetItem(details[CODEC_BIT_RATE]));
+			tableWidget_codecs->setItem(i,4,new QTableWidgetItem(details[CODEC_BANDWIDTH]));
+			tableWidget_codecs->item(i,0)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
+			tableWidget_codecs->item(i,0)->setCheckState(activeCodecList.contains(codecListToDisplay[i]) ? Qt::Checked : Qt::Unchecked);
+			tableWidget_codecs->item(i,1)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+			tableWidget_codecs->item(i,2)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+			tableWidget_codecs->item(i,3)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+			tableWidget_codecs->item(i,4)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+
+			qDebug() << "Added to codecs : " << payloadStr << " , " << details[CODEC_NAME];
+		}
+	}
+	tableWidget_codecs->resizeColumnsToContents();
+	tableWidget_codecs->resizeRowsToContents();
+	codecTableHasChanged = false;
 }
 
 
 void DlgAudio::updateSettings()
 {
 // 	qDebug() << "DlgAudio::updateSettings";
+	//alsaPlugin
 	ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
 	skeleton->setAlsaPlugin(box_alsaPlugin->currentText());
+	
+	//codecList
+	QStringList activeCodecs;
+	for(int i = 0 ; i < tableWidget_codecs->rowCount() ; i++)
+	{
+		if(tableWidget_codecs->item(i,0)->checkState() == Qt::Checked)
+		{
+			activeCodecs << tableWidget_codecs->verticalHeaderItem(i)->text();
+		}
+	}
+	qDebug() << "Calling setActiveCodecList with list : " << activeCodecs ;
+	skeleton->setActiveCodecList(activeCodecs);
+	codecTableHasChanged = false;
 }
 
 bool DlgAudio::hasChanged()
@@ -67,7 +167,10 @@ bool DlgAudio::hasChanged()
 	ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
 	qDebug() << "skeleton->alsaPlugin() = " << skeleton->alsaPlugin();
 	qDebug() << "box_alsaPlugin->currentText() = " << box_alsaPlugin->currentText();
-	return (skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA && skeleton->alsaPlugin() != box_alsaPlugin->currentText());
+	bool alsaPluginHasChanged = 
+	           skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA 
+	       &&  skeleton->alsaPlugin() != box_alsaPlugin->currentText();
+	return alsaPluginHasChanged || codecTableHasChanged;
 }
 
 void DlgAudio::updateAlsaSettings()
@@ -105,4 +208,80 @@ void DlgAudio::updateAlsaSettings()
 	}
 }
 
+void DlgAudio::updateCodecListCommands()
+{
+	bool buttonsEnabled[2] = {true,true};
+	if(! tableWidget_codecs->currentItem())
+	{
+		buttonsEnabled[0] = false;
+		buttonsEnabled[1] = false;
+	}
+	else if(tableWidget_codecs->currentRow() == 0)
+	{
+		buttonsEnabled[0] = false;
+	}
+	else if(tableWidget_codecs->currentRow() == tableWidget_codecs->rowCount() - 1)
+	{
+		buttonsEnabled[1] = false;
+	}
+	toolButton_codecUp->setEnabled(buttonsEnabled[0]);
+	toolButton_codecDown->setEnabled(buttonsEnabled[1]);
+}
 
+void DlgAudio::on_tableWidget_codecs_currentCellChanged(int currentRow)
+{
+	qDebug() << "on_tableWidget_codecs_currentCellChanged";
+	int nbCol = tableWidget_codecs->columnCount();
+	for(int i = 0 ; i < nbCol ; i++)
+	{
+		tableWidget_codecs->setRangeSelected(QTableWidgetSelectionRange(currentRow, 0, currentRow, nbCol - 1), true);
+	}
+	updateCodecListCommands();
+}
+
+void DlgAudio::on_toolButton_codecUp_clicked()
+{
+	qDebug() << "on_toolButton_codecUp_clicked";
+	int currentCol = tableWidget_codecs->currentColumn();
+	int currentRow = tableWidget_codecs->currentRow();
+	int nbCol = tableWidget_codecs->columnCount();
+	for(int i = 0 ; i < nbCol ; i++)
+	{
+		QTableWidgetItem * item1 = tableWidget_codecs->takeItem(currentRow, i);
+		QTableWidgetItem * item2 = tableWidget_codecs->takeItem(currentRow - 1, i);
+		tableWidget_codecs->setItem(currentRow - 1, i , item1);
+		tableWidget_codecs->setItem(currentRow, i , item2);
+	}
+	QTableWidgetItem * item1 = tableWidget_codecs->takeVerticalHeaderItem(currentRow);
+	QTableWidgetItem * item2 = tableWidget_codecs->takeVerticalHeaderItem(currentRow - 1);
+	tableWidget_codecs->setVerticalHeaderItem(currentRow - 1, item1);
+	tableWidget_codecs->setVerticalHeaderItem(currentRow, item2);
+	tableWidget_codecs->setCurrentCell(currentRow - 1, currentCol);
+}
+
+void DlgAudio::on_toolButton_codecDown_clicked()
+{
+	qDebug() << "on_toolButton_codecDown_clicked";
+	int currentCol = tableWidget_codecs->currentColumn();
+	int currentRow = tableWidget_codecs->currentRow();
+	int nbCol = tableWidget_codecs->columnCount();
+	for(int i = 0 ; i < nbCol ; i++)
+	{
+		QTableWidgetItem * item1 = tableWidget_codecs->takeItem(currentRow, i);
+		QTableWidgetItem * item2 = tableWidget_codecs->takeItem(currentRow + 1, i);
+		tableWidget_codecs->setItem(currentRow + 1, i , item1);
+		tableWidget_codecs->setItem(currentRow, i , item2);
+	}
+	QTableWidgetItem * item1 = tableWidget_codecs->takeVerticalHeaderItem(currentRow);
+	QTableWidgetItem * item2 = tableWidget_codecs->takeVerticalHeaderItem(currentRow + 1);
+	tableWidget_codecs->setVerticalHeaderItem(currentRow + 1, item1);
+	tableWidget_codecs->setVerticalHeaderItem(currentRow, item2);
+	tableWidget_codecs->setCurrentCell(currentRow + 1, currentCol);
+}
+
+
+void DlgAudio::codecTableChanged()
+{
+	codecTableHasChanged = true;
+	emit updateButtons();
+}

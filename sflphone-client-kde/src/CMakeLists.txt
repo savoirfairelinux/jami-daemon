@@ -30,7 +30,6 @@ SET ( KDE4_KABC_LIBS  -lkabc )
 SET(	   sflphone_client_kde_SRCS
 	sflphone_kdeview.cpp
 	SFLPhone.cpp
-	ConfigDialog.cpp
 	main.cpp
 	sflphone_const.h
 	Account.cpp

@@ -10,7 +10,6 @@
 #include <kaboutdata.h>
 #include <klocale.h>
 
-#include "ConfigDialog.h"
 #include "SFLPhone.h"
 #include "AccountWizard.h"
 #include "instance_interface_singleton.h"
