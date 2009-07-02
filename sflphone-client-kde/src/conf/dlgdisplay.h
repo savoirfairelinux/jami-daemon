@@ -17,53 +17,25 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/ 
+ ***************************************************************************/
+#ifndef DLGDISPLAY_H
+#define DLGDISPLAY_H
 
-#ifndef CALL_LIST_H
-#define CALL_LIST_H
+#include <QWidget>
 
-#include <QtCore/QVector>
-#include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
+#include "ui_dlgdisplaybase.h"
 
-#include "Call.h"
-
-class CallList : public QObject
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class DlgDisplay : public QWidget, public Ui_DlgDisplayBase
 {
 Q_OBJECT
-
-private:
-
-	QVector<Call *> * calls;
-	int callIdCpt;
-
 public:
+    DlgDisplay(QWidget *parent = 0);
 
-	//Constructors & Destructors
-	CallList();
-	~CallList();
-
-	//Getters
-	Call * findCallByItem(const QListWidgetItem * item);
-	Call * findCallByHistoryItem(const QListWidgetItem * item);
-	Call * findCallByCallId(const QString & callId);
-	Call * operator[](const QListWidgetItem * item);
-	Call * operator[](const QString & callId);
-	Call * operator[](int ind);
-	int size();
-
-	//Setters
-	Call * addDialingCall(const QString & peerName = "", QString account = "");
-	Call * addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
-	Call * addRingingCall(const QString & callId);
-
-	//GSetter
-	QString getAndIncCallId();
-	
-public slots:
-	void clearHistory();
+    ~DlgDisplay();
 
 };
-
 
 #endif

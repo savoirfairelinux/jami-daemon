@@ -27,12 +27,13 @@
 
 #include "Account.h"
 
-class AccountList{
+class AccountList : public QObject{
+
+	Q_OBJECT
 	
 private:
 
 	QVector<Account *> * accounts;
-	static QString firstAccount;
 
 public:
 
@@ -56,7 +57,6 @@ public:
 	Account * addAccount(QString & alias);
 	void removeAccount(Account * account);
 	void removeAccount(QListWidgetItem * item);
-	void setAccountFirst(Account * account);
 	void upAccount(int index);
 	void downAccount(int index);
 
@@ -64,7 +64,19 @@ public:
 	Account & operator[] (int i);
 	const Account & operator[] (int i) const;
 	QVector<Account *> registeredAccounts() const;
+	
+public slots:	
+	/**
+	 *   updates the list of accounts (removed, added, order...) with the configurationManager's list
+	 */
 	void update();
+	/**
+	 *   updates the list and the details of accounts with the configurationManager's list
+	 */
+	void updateAccounts();
+	
+signals:
+	void accountListUpdated();
 };
 
 

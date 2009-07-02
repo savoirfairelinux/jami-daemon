@@ -25,7 +25,6 @@
 
 #include "ui_dlggeneralbase.h"
 
-
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
@@ -36,6 +35,9 @@ public:
     DlgGeneral(QWidget *parent = 0);
 
     ~DlgGeneral();
+
+signals:
+	void clearCallHistoryAsked();
 
 };
 

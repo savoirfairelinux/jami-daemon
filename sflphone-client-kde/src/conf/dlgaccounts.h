@@ -18,84 +18,59 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
- 
-#ifndef HEADER_CONFIGDIALOG
-#define HEADER_CONFIGDIALOG
+#ifndef DLGACCOUNTS_H
+#define DLGACCOUNTS_H
 
-#include <QtGui/QTableWidgetItem>
-#include <QtGui/QListWidgetItem>
-#include <QtCore/QString>
-#include <QtGui/QAbstractButton>
-#include <QErrorMessage>
+#include <QWidget>
+#include <kconfigdialog.h>
 
-#include "ui_ConfigDialog.h"
+#include "ui_dlgaccountsbase.h"
+#include "Account.h"
 #include "AccountList.h"
-#include "sflphone_kdeview.h"
 
-class sflphone_kdeView;
-
-class ConfigurationDialog : public QDialog, private Ui::ConfigurationDialog
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class DlgAccounts : public QWidget, public Ui_DlgAccountsBase
 {
-	Q_OBJECT
-
-private:
-	static AccountList * accountList;
-	QErrorMessage * errorWindow;
-	bool accountsChangedEnableWarning;
-	
-
+Q_OBJECT
 public:
+	DlgAccounts(KConfigDialog *parent = 0);
 
-	//Constructors & Destructors
-	ConfigurationDialog(sflphone_kdeView * parent);
-	~ConfigurationDialog();
-	
-	//Getters
-	static AccountList * getAccountList();
-
-	//Setters
-	void setPage(int page);
-	void addAccountToAccountList(Account * account);
-	
-	void loadAccount(QListWidgetItem * item);
+	~DlgAccounts();
 	void saveAccount(QListWidgetItem * item);
+	void loadAccount(QListWidgetItem * item);
+	
+private:
+	AccountList * accountList;
+	bool accountListHasChanged;
 
-	void loadAccountList();
+public slots:
 	void saveAccountList();
+	void loadAccountList();
+	void applyCustomSettings();
 	
-	void loadCodecs();
-	void saveCodecs();
-
-	void loadOptions();
-	void saveOptions();
+	bool hasChanged();
 	
-	//Updates
-	void updateCodecListCommands();
-	void updateAccountListCommands();
-	void updateAccountStates();
-
 private slots:
 	void changedAccountList();
 	void connectAccountsChangedSignal();
 	void disconnectAccountsChangedSignal();
-	
-	void on_toolButton_codecUp_clicked();
-	void on_toolButton_codecDown_clicked();
 	void on_button_accountUp_clicked();
 	void on_button_accountDown_clicked();
 	void on_button_accountAdd_clicked();
 	void on_button_accountRemove_clicked();
 	void on_edit1_alias_textChanged(const QString & text);
 	void on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous );
-	void on_spinBox_SIPPort_valueChanged ( int value );
-	void on_buttonBoxDialog_clicked(QAbstractButton * button);
-	void on_tableWidget_codecs_currentCellChanged(int currentRow);
 	void on_toolButton_accountsApply_clicked();
+	void updateAccountStates();
+	void addAccountToAccountList(Account * account);
+	void updateAccountListCommands();
 	
-	void on1_accountsChanged();
-	void on1_parametersChanged();
-	void on1_errorAlert(int code);
 	
+signals:
+	void updateButtons();
+
 };
 
-#endif 
+#endif

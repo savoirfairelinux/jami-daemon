@@ -18,92 +18,44 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CONFIGURATIONDIALOG_H
-#define CONFIGURATIONDIALOG_H
+#ifndef DLGAUDIO_H
+#define DLGAUDIO_H
 
+#include <QWidget>
 #include <kconfigdialog.h>
 
-
-#include "kcfg_settings.h"
-#include "sflphone_kdeview.h"
-
-
-#define SETTINGS_NAME "settings"
-
-class DlgGeneral;
-class DlgDisplay;
-class DlgAccounts;
-class DlgAudio;
-class DlgAddressBook;
-class DlgRecord;
-class DlgHooks;
-
-class sflphone_kdeView;
+#include "ui_dlgaudiobase.h"
+#include "conf/ConfigurationSkeleton.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
-class ConfigurationDialogKDE : public KConfigDialog
+class DlgAudio : public QWidget, public Ui_DlgAudioBase
 {
 Q_OBJECT
-private:
-
-	
-	DlgGeneral     * dlgGeneral;
-	DlgDisplay     * dlgDisplay;
-	DlgAccounts    * dlgAccounts;
-	DlgAudio       * dlgAudio;
-	DlgAddressBook * dlgAddressBook;
-	DlgRecord      * dlgRecord;
-	DlgHooks       * dlgHooks;
-
 public:
-	ConfigurationDialogKDE(sflphone_kdeView *parent = 0);
+    DlgAudio(KConfigDialog *parent = 0);
 
-	~ConfigurationDialogKDE();
-	
-    
+    ~DlgAudio();
+
+private:
+	bool codecTableHasChanged;
+
 public slots:
-	void slot();
-	/**
-	 *   Reimplements KConfigDialog
-	 */
 	void updateWidgets();
-	/**
-	 *   Reimplements KConfigDialog
-	 */
 	void updateSettings();
-	/**
-	 *   Should be implemented in KConfigDialog but for no reason, is not.
-	 *   For the moment it is here but has to be removed if implemented in KConfigDialog
-	 *   because causes problems for a few cases (item managed by kconfig switched, item not managed
-	 *   switched and then switched back, apply becomes disabled).
-	 *   Can't be resolved without a method to know if items managed by kconfig have changed.
-	 *   Disable/Enable Apply Button according to hasChanged() result
-	 */
-	void updateButtons();
-	/**
-	 * Same as updateButtons, should be implemented in KConfigDialog.
-	 * @return whether any custom widget has changed in the dialog.
-	 */
 	bool hasChanged();
-	
-	/**
-	 * reloads the informations before showing it.
-	 */
-	void reload();
+	void updateAlsaSettings();
 	
 private slots:
-	/**
-	 *   Apply settings not managed by kconfig (accounts)
-	 *   Should be removed when accounts are managed by kconfig.
-	 */
-	void applyCustomSettings();
-
-
-signals:
-	void clearCallHistoryAsked();
+	void updateCodecListCommands();
+	void on_tableWidget_codecs_currentCellChanged(int currentRow);
+	void on_toolButton_codecUp_clicked();
+	void on_toolButton_codecDown_clicked();
+	void codecTableChanged();
 	
+signals:
+	void updateButtons();
 };
 
 #endif

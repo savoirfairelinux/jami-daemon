@@ -57,7 +57,7 @@ SFLPhone::SFLPhone(QWidget *parent)
 
 
 		setWindowIcon(QIcon(ICON_SFLPHONE));
-		setWindowTitle(tr2i18n("SFLPhone"));
+		setWindowTitle(i18n("SFLPhone"));
 		
 		setupActions();
 		
@@ -145,6 +145,11 @@ void SFLPhone::setupActions()
 
 }
 
+sflphone_kdeView * SFLPhone::getView()
+{
+	return view;
+}
+
 bool SFLPhone::queryClose()
 {
 	qDebug() << "queryClose";
@@ -159,7 +164,7 @@ void SFLPhone::quitButton()
 	if(view->listWidget_callList->count() > 0 && instance.getRegistrationCount() <= 1)
 	{
 		qDebug() << "Attempting to quit when still having some calls open.";
-		view->getErrorWindow()->showMessage(tr2i18n("You still have some calls open. Please close all calls before quitting.", 0));
+		view->getErrorWindow()->showMessage(i18n("You still have some calls open. Please close all calls before quitting."));
 	}
 	instance.Unregister(getpid());
 	qApp->quit();
@@ -187,8 +192,8 @@ void SFLPhone::trayIconSignal()
 void SFLPhone::sendNotif(QString caller)
 {
 	trayIcon->showMessage(
-	    tr2i18n("Incoming call"), 
-	    tr2i18n("You have an incoming call from") + " " + caller + ".\n" + tr2i18n("Click to accept or refuse it."), 
+	    i18n("Incoming call"), 
+	    i18n("You have an incoming call from") + " " + caller + ".\n" + i18n("Click to accept or refuse it."), 
 	    QSystemTrayIcon::Warning, 
 	    20000);
 }

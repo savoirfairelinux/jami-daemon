@@ -113,7 +113,7 @@ void Call::initCallItem()
 	labelIcon = new QLabel();
 	qDebug() << "labelIcon : " << labelIcon;
 	labelCallNumber = new QLabel(peerPhoneNumber);
-	labelTransferPrefix = new QLabel(tr2i18n("Transfer to : "));
+	labelTransferPrefix = new QLabel(i18n("Transfer to : "));
 	labelTransferNumber = new QLabel();
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 	
@@ -424,13 +424,6 @@ QWidget * Call::getHistoryItemWidget()
 	return historyItemWidget;
 }
 
-/*
-layout->addWidget(labelIcon, 0, 0, 2, 1);
-	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
-	layout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
-	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
-	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
-*/
 call_state Call::getState() const
 {
 	return currentState;
@@ -439,6 +432,11 @@ call_state Call::getState() const
 history_state Call::getHistoryState() const
 {
 	return historyState;
+}
+
+bool Call::isHistory() const
+{
+	return (getState() == CALL_STATE_OVER);
 }
 
 call_state Call::stateChanged(const QString & newStateName)
@@ -575,7 +573,7 @@ void Call::call()
 	if(account.isEmpty())
 	{
 		qDebug() << "account is empty"; 
-		this->account = sflphone_kdeView::firstAccountId();
+		this->account = sflphone_kdeView::firstRegisteredAccount()->getAccountId();
 	}
 	if(!account.isEmpty())
 	{

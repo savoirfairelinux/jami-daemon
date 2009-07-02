@@ -17,53 +17,18 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/ 
+ ***************************************************************************/
+#include "dlgdisplay.h"
 
-#ifndef CALL_LIST_H
-#define CALL_LIST_H
-
-#include <QtCore/QVector>
-#include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
-
-#include "Call.h"
-
-class CallList : public QObject
+DlgDisplay::DlgDisplay(QWidget *parent)
+ : QWidget(parent)
 {
-Q_OBJECT
-
-private:
-
-	QVector<Call *> * calls;
-	int callIdCpt;
-
-public:
-
-	//Constructors & Destructors
-	CallList();
-	~CallList();
-
-	//Getters
-	Call * findCallByItem(const QListWidgetItem * item);
-	Call * findCallByHistoryItem(const QListWidgetItem * item);
-	Call * findCallByCallId(const QString & callId);
-	Call * operator[](const QListWidgetItem * item);
-	Call * operator[](const QString & callId);
-	Call * operator[](int ind);
-	int size();
-
-	//Setters
-	Call * addDialingCall(const QString & peerName = "", QString account = "");
-	Call * addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
-	Call * addRingingCall(const QString & callId);
-
-	//GSetter
-	QString getAndIncCallId();
-	
-public slots:
-	void clearHistory();
-
-};
+	setupUi(this);
+}
 
 
-#endif
+DlgDisplay::~DlgDisplay()
+{
+}
+
+

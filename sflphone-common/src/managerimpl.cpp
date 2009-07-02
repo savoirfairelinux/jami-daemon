@@ -1650,7 +1650,8 @@ ManagerImpl::getRecordPath( void )
 void
 ManagerImpl::setRecordPath( const std::string& recPath)
 {
-  setConfig( AUDIO, RECORD_PATH, recPath.substr(7));
+  _debug("ManagerImpl::setRecordPath(%s)! \n", recPath.c_str());
+  setConfig( AUDIO, RECORD_PATH, recPath);
 }
 
 int
