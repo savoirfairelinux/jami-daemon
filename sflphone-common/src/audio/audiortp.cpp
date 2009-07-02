@@ -256,12 +256,15 @@ AudioRtpRTX::setRtpSessionMedia(void)
     _codecFrameSize = _audiocodec->getFrameSize();
 
     if( _audiocodec->getPayload() == 9 ) {
+        _debug("We Are G722\n");
         _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
     }
     else if ( _audiocodec->hasDynamicPayload() ) {
+        _debug("We Are Dynamic\n");
         _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
     }
     else if ( !_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
+        _debug("We Are Static\n");
         _payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
     }
     
@@ -287,7 +290,7 @@ AudioRtpRTX::setRtpSessionRemoteIp(void)
             return;
         }
 
-	_debug("++++Address: %s, audioport: %d\n", _ca->getLocalSDP()->get_remote_ip().c_str(), (int)_ca->getLocalSDP()->get_remote_audio_port());
+	_debug("++++Address: %s, audioport: %d\n", _ca->getLocalSDP()->get_remote_ip().c_str(), _ca->getLocalSDP()->get_remote_audio_port());
 	_debug("++++Audioport: %d\n", (int)_ca->getLocalSDP()->get_remote_audio_port());
 
         if (!_session->addDestination (remote_ip, (unsigned short)_ca->getLocalSDP()->get_remote_audio_port() )) 
@@ -323,8 +326,6 @@ int
 AudioRtpRTX::processDataEncode()
 {
 
-    _debug("processDataEncode\n");
-
     // compute codec framesize in ms
     float fixed_codec_framesize = computeCodecFrameSize(_audiocodec->getFrameSize(), _audiocodec->getClockRate());
 
@@ -359,7 +360,7 @@ AudioRtpRTX::processDataEncode()
         // int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000; 
 	 nbSample = reSampleData(micData , micDataConverted, _audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);
 
-        compSize = _audiocodec->codecEncode( micDataEncoded, micDataConverted, nbSample*sizeof(int16));
+	compSize = _audiocodec->codecEncode( micDataEncoded, micDataConverted, nbSample*sizeof(int16));
 
     } else {
         // no resampling required
@@ -376,11 +377,10 @@ AudioRtpRTX::processDataEncode()
 void
 AudioRtpRTX::processDataDecode(unsigned char* spkrData, unsigned int size, int& countTime)
 {
-    _debug("processDataDecode\n");
     if (_audiocodec != NULL) {
 
         // Return the size of data in bytes 
-        int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size );
+        int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size);
 
         // buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
         int nbSample = expandedSize / sizeof(SFLDataFormat);
@@ -429,8 +429,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     //   2. convert it to int16 - good sample, good rate
     //   3. encode it
     //   4. send it
-    
-    _debug("sendSessionForSpeaker\n");
+
     timestamp += time->getSecond();
     // no call, so we do nothing
     if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; }
@@ -442,7 +441,8 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     
     int compSize = processDataEncode();
-    _debug("compSize: %i\n", compSize);
+
+    _debug("compSize: %i ", compSize);
     // putData put the data on RTP queue, sendImmediate bypass this queue
     _session->putData(timestamp, micDataEncoded, compSize);
     // _session->sendImmediate(timestamp, micDataEncoded, compSize);
@@ -454,8 +454,6 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 void
 AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 {
-    
-    _debug("receiveSessionForSpkr\n");
 
     if (_ca == 0) { return; }
 
@@ -467,6 +465,8 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
     
     adu = _session->getData(_session->getFirstTimestamp());
+
+    // _debug("payloadType: %i\n", adu->getType());
     
     if (adu == NULL) {
         // _debug("No RTP audio stream\n");
@@ -509,7 +509,7 @@ AudioRtpRTX::run () {
 
     int timestep = _codecFrameSize; 
 
-    int timestamp = 0; // for mic
+    int timestamp = _session->getCurrentTimestamp(); // for mic
 
     int countTime = 0; // for receive
     
@@ -532,8 +532,8 @@ AudioRtpRTX::run () {
         sessionWaiting = _session->isWaiting();
 
         sendSessionFromMic(timestamp); 
-        // timestamp += timestep;
-	timestamp = _session->getCurrentTimestamp();
+        timestamp += timestep;
+	// timestamp = _session->getCurrentTimestamp();
 
         // Recv session
         receiveSessionForSpkr(countTime);
