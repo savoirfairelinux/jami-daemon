@@ -1,6 +1,5 @@
 #include <QApplication>
 #include <QtCore/QString>
-#include <QtGui/QCursor>
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include <QtGui/QAction>
@@ -65,8 +64,6 @@ int main(int argc, char **argv)
 
 		
 		SFLPhone * fenetre = new SFLPhone();
-		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
-		fenetre->show();
 
 // 		ConfigurationDialogKDE * dlg = new ConfigurationDialogKDE(fenetre->getView());
 // 		dlg->show();

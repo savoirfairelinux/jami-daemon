@@ -21,6 +21,16 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_12">
       <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Custom commands with URL %s will be replaced with the passed URL.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QWidget" name="widget_protocols" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -35,53 +45,64 @@
          </size>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_8">
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
           <number>4</number>
          </property>
          <item>
           <widget class="QCheckBox" name="kcfg_enableHooksSIP">
            <property name="text">
-            <string>SIP Protocol</string>
+            <string>Trigger on specific SIP header</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="kcfg_enableHooksIAX">
-           <property name="text">
-            <string>IAX2 Protocol</string>
-           </property>
-          </widget>
+          <widget class="QLineEdit" name="kcfg_hooksSIPHeader"/>
          </item>
         </layout>
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="kcfg_enableHooksIAX">
+        <property name="text">
+         <string>Trigger on IAX2 URL</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QWidget" name="widget_urlArgumentForm" native="true">
-        <layout class="QFormLayout" name="formLayout_6">
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_SIPHeader">
-           <property name="text">
-            <string>SIP Header</string>
-           </property>
-           <property name="buddy">
-            <cstring>kcfg_hooksSIPHeader</cstring>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
+         <item>
           <widget class="QLabel" name="label_command">
            <property name="text">
-            <string>Command</string>
+            <string>Command to run</string>
            </property>
            <property name="buddy">
             <cstring>kcfg_hooksCommand</cstring>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="KLineEdit" name="kcfg_hooksSIPHeader"/>
-         </item>
-         <item row="3" column="1">
+         <item>
           <widget class="KLineEdit" name="kcfg_hooksCommand"/>
          </item>
         </layout>
@@ -97,26 +118,28 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_13">
       <item>
-       <widget class="QCheckBox" name="kcfg_addPrefix">
-        <property name="text">
-         <string>Add phone number prefix</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QWidget" name="widget_phoneNumberFormattingForm" native="true">
-        <layout class="QFormLayout" name="formLayout_7">
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_prepend">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="QCheckBox" name="kcfg_addPrefix">
            <property name="text">
-            <string>Prepend</string>
-           </property>
-           <property name="buddy">
-            <cstring>kcfg_prepend</cstring>
+            <string>Add phone number prefix</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item>
           <widget class="KLineEdit" name="kcfg_prepend"/>
          </item>
         </layout>

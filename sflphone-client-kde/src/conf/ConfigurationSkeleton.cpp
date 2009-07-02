@@ -57,6 +57,7 @@ void ConfigurationSkeleton::readConfig()
 	////////////////////////
 	
 	//Call history settings
+	setEnableHistory(configurationManager.getHistoryEnabled());
 	setHistoryMax(configurationManager.getHistoryLimit());
 
 	//SIP port settings
@@ -181,6 +182,7 @@ void ConfigurationSkeleton::writeConfig()
 	////////////////////////
 	
 	//Call history settings
+	if(enableHistory() != configurationManager.getHistoryEnabled()) configurationManager.setHistoryEnabled();
 	configurationManager.setHistoryLimit(historyMax());
 	//SIP port settings
 	configurationManager.setSipPort(sIPPort());

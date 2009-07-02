@@ -29,10 +29,12 @@
 #include <KToolBar>
 #include <KStatusBar>
 #include <QtGui/QStatusBar>
+#include <QtGui/QCursor>
 #include <KActionCollection>
 
 #include "sflphone_const.h"
 #include "instance_interface_singleton.h"
+#include "configurationmanager_interface_singleton.h"
 
 
 /**
@@ -44,7 +46,7 @@ SFLPhone::SFLPhone(QWidget *parent)
       view(new sflphone_kdeView(this))
 {
 	
-
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	// accept dnd
 		setAcceptDrops(true);
 
@@ -78,6 +80,13 @@ SFLPhone::SFLPhone(QWidget *parent)
 		setObjectNames();
       QMetaObject::connectSlotsByName(this);
 	   view->updateStatusMessage();
+	   
+		move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
+	   if( ! configurationManager.isStartHidden())
+	   {
+	   	show();
+	   }
+	   
 } 
 
 SFLPhone::~SFLPhone()

@@ -77,7 +77,7 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 		}
 	}
 	
-	accountList = new AccountList();
+	accountList = new AccountList(false);
 	
 	configDialog = new ConfigurationDialogKDE(this);
 	configDialog->setObjectName("configDialog");
@@ -102,6 +102,11 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	        
 	connect(configDialog, SIGNAL(clearCallHistoryAsked()),
 	        callList,     SLOT(clearHistory()));
+	        
+	connect(accountList, SIGNAL(accountListUpdated()),
+	        this,     SLOT(updateStatusMessage()));
+	        
+	accountList->updateAccounts();
 	        
 	QPalette pal = QPalette(palette());
 	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
