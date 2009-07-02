@@ -3,6 +3,9 @@ src=$(top_srcdir)
 sflcodecdir=$(DESTDIR)$(libdir)/sflphone/codecs
 sflplugindir=$(DESTDIR)$(libdir)/sflphone/plugins
 
+ASTYLERC="../astylerc"
+indent="/usr/bin/astyle"
+
 PJSIP_VERSION="1.0.2"
 
 # for pjsip
