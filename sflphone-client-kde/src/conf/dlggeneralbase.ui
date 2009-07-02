@@ -81,7 +81,7 @@
       <item>
        <widget class="QToolButton" name="toolButton_historyClear">
         <property name="text">
-         <string>C&amp;lear history</string>
+         <string>Clear history</string>
         </property>
        </widget>
       </item>
@@ -106,7 +106,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_SIPPort_2">
         <property name="text">
-         <string>SIP &amp;Port</string>
+         <string>SIP Port</string>
         </property>
         <property name="buddy">
          <cstring>kcfg_SIPPort</cstring>

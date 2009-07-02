@@ -89,7 +89,7 @@ void ConfigurationDialogKDE::updateSettings()
 
 bool ConfigurationDialogKDE::hasChanged()
 {
-	qDebug() << "hasChanged";
+	qDebug() << "hasChanged" << dlgAudio->hasChanged() << dlgAccounts->hasChanged();
 	return dlgAudio->hasChanged() || dlgAccounts->hasChanged();
 }
 
@@ -115,4 +115,5 @@ void ConfigurationDialogKDE::reload()
 	qDebug() << "reload";
 	ConfigurationSkeleton::self()->readConfig();
 	updateWidgets();
+	updateButtons();
 }

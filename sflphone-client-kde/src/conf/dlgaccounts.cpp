@@ -182,7 +182,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
 	QString status = account->getAccountDetail(ACCOUNT_STATUS);
 	edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
-
+	frame2_editAccounts->setEnabled(true);
 }
 
 void DlgAccounts::loadAccountList()
@@ -216,7 +216,6 @@ void DlgAccounts::addAccountToAccountList(Account * account)
 void DlgAccounts::changedAccountList()
 {
 	accountListHasChanged = true;
-// 	((ConfigurationDialogKDE *)parent())->updateButtons();
 	emit updateButtons();
 	toolButton_accountsApply->setEnabled(hasChanged());
 }
@@ -225,11 +224,9 @@ void DlgAccounts::changedAccountList()
 
 void DlgAccounts::on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous )
 {
-	qDebug() << "on_listWidget_accountList_currentItemChanged"; 
-	if(previous)
-		saveAccount(previous);
-	if(current)
-		loadAccount(current);
+	qDebug() << "on_listWidget_accountList_currentItemChanged";
+	saveAccount(previous);
+	loadAccount(current);
 	updateAccountListCommands();
 }
 
@@ -319,6 +316,7 @@ void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
 
 void DlgAccounts::updateAccountListCommands()
 {
+	qDebug() << "updateAccountListCommands";
 	bool buttonsEnabled[4] = {true,true,true,true};
 	if(! listWidget_accountList->currentItem())
 	{
@@ -330,7 +328,7 @@ void DlgAccounts::updateAccountListCommands()
 	{
 		buttonsEnabled[0] = false;
 	}
-	else if(listWidget_accountList->currentRow() == listWidget_accountList->count() - 1)
+	if(listWidget_accountList->currentRow() == listWidget_accountList->count() - 1)
 	{
 		buttonsEnabled[1] = false;
 	}
@@ -367,5 +365,6 @@ void DlgAccounts::updateSettings()
 void DlgAccounts::updateWidgets()
 {
 	loadAccountList();
+	accountListHasChanged = false;
 }
 

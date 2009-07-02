@@ -40,10 +40,12 @@
 #define FIELD_SIP_SERVER         "SIP_SERVER"
 #define FIELD_SIP_USER           "SIP_USER"
 #define FIELD_SIP_PASSWORD       "SIP_PASSWORD"
+#define FIELD_SIP_VOICEMAIL      "SIP_VOICEMAIL"
 #define FIELD_IAX_ALIAS          "IAX_ALIAS"
 #define FIELD_IAX_SERVER         "IAX_SERVER"
 #define FIELD_IAX_USER           "IAX_USER"
 #define FIELD_IAX_PASSWORD       "IAX_PASSWORD"
+#define FIELD_IAX_VOICEMAIL      "IAX_VOICEMAIL"
 
 
 #define SFL_ACCOUNT_HOST         "sip.sflphone.org"
@@ -161,10 +163,7 @@ AccountWizard::AccountWizard(QWidget * parent)
 	setWindowTitle(i18n("Account Creation Wizard"));
 	setWindowIcon(QIcon(ICON_SFLPHONE));
 	setMinimumHeight(350);
-// 	setPixmap(QWizard::LogoPixmap, QPixmap(ICON_SFLPHONE));
 	setPixmap(QWizard::WatermarkPixmap, QPixmap(ICON_SFLPHONE));
-// 	setPixmap(QWizard::BannerPixmap, QPixmap(ICON_SFLPHONE));
-// 	setPixmap(QWizard::BackgroundPixmap, QPixmap(ICON_SFLPHONE));
 }
 
 
@@ -202,6 +201,7 @@ void AccountWizard::accept()
 			server = QString(SFL_ACCOUNT_HOST);
 			user = QString(acc.user);
 			password = QString(acc.passwd);
+			mailbox = QString();
 			protocol = QString(ACCOUNT_TYPE_SIP);
 			createAccount = true;
 			sip = true;
@@ -222,6 +222,7 @@ void AccountWizard::accept()
 			server = field(FIELD_SIP_SERVER).toString();
 			user = field(FIELD_SIP_USER).toString();
 			password = field(FIELD_SIP_PASSWORD).toString();
+			mailbox = field(FIELD_SIP_VOICEMAIL).toString();
 			protocol = QString(ACCOUNT_TYPE_SIP);
 			sip = true;
 			
@@ -232,6 +233,7 @@ void AccountWizard::accept()
 			server = field(FIELD_IAX_SERVER).toString();
 			user = field(FIELD_IAX_USER).toString();
 			password = field(FIELD_IAX_PASSWORD).toString();
+			mailbox = field(FIELD_IAX_VOICEMAIL).toString();
 			protocol = QString(ACCOUNT_TYPE_IAX);
 		}
 		createAccount = true;
@@ -259,6 +261,7 @@ void AccountWizard::accept()
 	}
 	qDebug() << ret;
 	QDialog::accept();
+	restart();
 }
  
 
@@ -438,11 +441,13 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 	label_server = new QLabel(i18n("Server") + " *");
 	label_user = new QLabel(i18n("User") + " *");
 	label_password = new QLabel(i18n("Password") + " *");
+	label_voicemail = new QLabel(i18n("Voicemail number"));
 	
 	lineEdit_alias = new QLineEdit;
 	lineEdit_server = new QLineEdit;
 	lineEdit_user = new QLineEdit;
 	lineEdit_password = new QLineEdit;
+	lineEdit_voicemail = new QLineEdit;
 
 	lineEdit_password->setEchoMode(QLineEdit::Password);
 	
@@ -452,6 +457,7 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 		registerField(QString(FIELD_SIP_SERVER) + "*", lineEdit_server);
 		registerField(QString(FIELD_SIP_USER) + "*", lineEdit_user);
 		registerField(QString(FIELD_SIP_PASSWORD) + "*", lineEdit_password);
+		registerField(QString(FIELD_SIP_VOICEMAIL), lineEdit_voicemail);
 	}
 	else
 	{
@@ -459,6 +465,7 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 		registerField(QString(FIELD_IAX_SERVER) + "*", lineEdit_server);
 		registerField(QString(FIELD_IAX_USER) + "*", lineEdit_user);
 		registerField(QString(FIELD_IAX_PASSWORD) + "*", lineEdit_password);
+		registerField(QString(FIELD_IAX_VOICEMAIL), lineEdit_voicemail);
 	}
 	
 	QFormLayout *layout = new QFormLayout;
@@ -472,6 +479,8 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 	layout->setWidget(2, QFormLayout::FieldRole, lineEdit_user);
    layout->setWidget(3, QFormLayout::LabelRole, label_password);
 	layout->setWidget(3, QFormLayout::FieldRole, lineEdit_password);
+   layout->setWidget(4, QFormLayout::LabelRole, label_voicemail);
+	layout->setWidget(4, QFormLayout::FieldRole, lineEdit_voicemail);
 	
 	setLayout(layout);
 }
@@ -483,10 +492,12 @@ WizardAccountFormPage::~WizardAccountFormPage()
 	delete label_server;
 	delete label_user;
 	delete label_password;
+	delete label_voicemail;
 	delete lineEdit_alias;
 	delete lineEdit_server;
 	delete lineEdit_user;
 	delete lineEdit_password;
+	delete lineEdit_voicemail;
 }
 
 int WizardAccountFormPage::nextId() const

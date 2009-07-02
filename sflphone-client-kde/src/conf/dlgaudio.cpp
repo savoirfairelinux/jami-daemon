@@ -170,6 +170,7 @@ bool DlgAudio::hasChanged()
 	bool alsaPluginHasChanged = 
 	           skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA 
 	       &&  skeleton->alsaPlugin() != box_alsaPlugin->currentText();
+	qDebug() << alsaPluginHasChanged << codecTableHasChanged;
 	return alsaPluginHasChanged || codecTableHasChanged;
 }
 
