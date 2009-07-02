@@ -87,6 +87,11 @@ SFLPhone::SFLPhone(QWidget *parent)
 	   	show();
 	   }
 	   
+	   if(configurationManager.getAccountList().value().isEmpty())
+		{
+			(new AccountWizard())->show();
+		}
+	   
 } 
 
 SFLPhone::~SFLPhone()

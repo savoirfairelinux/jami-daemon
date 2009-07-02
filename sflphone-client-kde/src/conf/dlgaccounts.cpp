@@ -38,6 +38,7 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	button_accountDown->setIcon(KIcon("go-down"));
 	button_accountAdd->setIcon(KIcon("list-add"));
 	button_accountRemove->setIcon(KIcon("list-remove"));
+	accountList = new AccountList(false);
 	loadAccountList();
 	accountListHasChanged = false;
 	toolButton_accountsApply->setEnabled(false);
@@ -187,7 +188,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 void DlgAccounts::loadAccountList()
 {
 	qDebug() << "loadAccountList";
-	accountList = new AccountList();
+	accountList->updateAccounts();
 	//initialize the QListWidget object with the AccountList
 	listWidget_accountList->clear();
 	for (int i = 0; i < accountList->size(); ++i){
@@ -356,5 +357,15 @@ bool DlgAccounts::hasChanged()
 {
 // 	qDebug() << "DlgAudio::hasChanged";
 	return accountListHasChanged;
+}
+
+
+void DlgAccounts::updateSettings()
+{
+
+}
+void DlgAccounts::updateWidgets()
+{
+	loadAccountList();
 }
 

@@ -53,20 +53,10 @@ int main(int argc, char **argv)
 		//configuration dbus
 		registerCommTypes();
 		
-		
-		if(!QFile(QDir::homePath() + CONFIG_FILE_PATH).exists())
-		{
-			(new AccountWizard())->show();
-		}
-		
-		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-		instance.Register(getpid(), APP_NAME);
-
-		
 		SFLPhone * fenetre = new SFLPhone();
 
-// 		ConfigurationDialogKDE * dlg = new ConfigurationDialogKDE(fenetre->getView());
-// 		dlg->show();
+		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
+		instance.Register(getpid(), APP_NAME);
 	
 		return app.exec();
 	}

@@ -76,12 +76,14 @@ void ConfigurationDialogKDE::updateWidgets()
 {
 	qDebug() << "updateWidgets";
 	dlgAudio->updateWidgets();
+	dlgAccounts->updateWidgets();
 }
 
 void ConfigurationDialogKDE::updateSettings()
 {
 	qDebug() << "updateSettings";
 	dlgAudio->updateSettings();
+	dlgAccounts->updateSettings();
 	qDebug() << "yo  " << ConfigurationSkeleton::self()->alsaPlugin();
 }
 

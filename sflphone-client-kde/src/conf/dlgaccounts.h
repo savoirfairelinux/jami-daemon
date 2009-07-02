@@ -51,6 +51,8 @@ public slots:
 	void applyCustomSettings();
 	
 	bool hasChanged();
+	void updateSettings();
+	void updateWidgets();
 	
 private slots:
 	void changedAccountList();
