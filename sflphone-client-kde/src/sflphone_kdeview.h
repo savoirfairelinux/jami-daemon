@@ -97,17 +97,13 @@ public:
 	 * @return the account to use if an outgoing call is placed.
 	 */
 	static Account * firstRegisteredAccount();
-	/**
-	 * 
-	 * @return the list of registered accounts in accountList
-	 */
-	static QVector<Account *> registeredAccounts();
+	
 	static AccountList * getAccountList();
 	QErrorMessage * getErrorWindow();
 	
 	//Daemon getters
 	/**
-	* Useful to sort contacts according to their types with Kabc.
+	* Used to sort contacts according to their types with Kabc.
 	* @return the integer resulting to the flags of the types 
 	* chosen to be displayed in SFLPhone configuration.
 	*/
@@ -117,26 +113,100 @@ public:
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
 	
 private slots:
-	void actionb(Call * call, call_action action);
-	void action(QListWidgetItem * item, call_action action);
+	/**
+	 *   Performs the action action on the call call, then updates window.
+	 *   The call object will handle the action with its "actionPerformed" method.
+	 *   See the documentation for more details.
+	 * @param call the call on which to perform the action
+	 * @param action the code of the action to perform
+	 */
+	void action(Call * call, call_action action);
 	
+	/**
+	 *   Sets the account account to be the prior account.
+	 *   That means it's gonna be used when the user places a call
+	 *   if it's defined and registered, else the first registered of 
+	 *   accountList will be used.
+	 * @param account the account to use prior
+	 */
 	void setAccountFirst(Account * account);
 	
-	//void typeChar(QChar c);
+	/**
+	 *   Handles the behaviour when the user types something with
+	 *   the dialpad widget or his keyboard (normally it's a one char
+	 *   string but we use a string just in case).
+	 *   Adds str to the selected item if in the main window
+	 *   and creates a new item if no item is selected.
+	 *   Send DTMF if appropriate according to current item's state.
+	 *   Adds str to the search bar if in history or address book.
+	 * @param str the string sent by the user
+	 */
 	void typeString(QString str);
+	/**
+	 *   Handles the behaviour when the user types a backspace
+	 *   according to the current state (window, item selected...)
+	 */
 	void backspace();
+	/**
+	 *   Handles the behaviour when the user types escape
+	 *   according to the current state (window, item selected...)
+	 */
 	void escape();
+	/**
+	 *   Handles the behaviour when the user types enter
+	 *   according to the current state (window, item selected...)
+	 */
 	void enter();
+	/**
+	 *   Displays a message window with editable text of the selected
+	 *   phone number in history or address book.
+	 *   Once the user accepts, place a call with the chosen phone number.
+	 *   Keeps the peer name of the contact or past call.
+	 */
 	void editBeforeCall();
 	
+	/**
+	 *   Alternates colors of the list widget with the application's palettes's
+	 *   base and alternateBase colors.
+	 * @param listWidget the list widget to which we alternate colors
+	 */
 	void alternateColors(QListWidget * listWidget);
 	
+	/**
+	 *   Adds the call's item to the call-list's listwidget.
+	 *   This function doesn't add anything to the callList object.
+	 * @param call the call to add to the call-list's listwidget
+	 */
 	void addCallToCallList(Call * call);
+	/**
+	 * Adds the call's history-item to the call-history's listwidget.
+	 * This function doesn't add anything to the callList object.
+	 * @param call the past call to add to the call-history's listwidget
+	 */
 	void addCallToCallHistory(Call * call);
+	/**
+	 * Adds the contact's item to the addressbook's listwidget.
+	 * @param contact the contact to add to the addressbook's listwidget
+	 */
 	void addContactToContactList(Contact * contact);
 	
+	/**
+	 *   Updates call's item according to its state.
+	 *   (Actually it only deletes the item from the main window's
+	 *   list widget once the call is OVER.)
+	 * @param call the call to which update the item
+	 */
 	void updateCallItem(Call * call);
+	/**
+	 *   Updates the toolbar's actions' display according to the selected 
+	 *   item's state.
+	 */
 	void updateWindowCallState();
+	/**
+	 * Updates the history's search bar's display according to the current
+	 * text searched. 
+	 * If empty, hide the search bar.
+	 */
 	void updateSearchHistory();
 	void updateCallHistory();
 	void updateAddressBook();

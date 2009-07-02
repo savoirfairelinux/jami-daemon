@@ -34,8 +34,10 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStyle * style = QApplication::style();
-	button_accountUp->setIcon(style->standardIcon(QStyle::SP_ArrowUp));
-	button_accountDown->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
+	button_accountUp->setIcon(KIcon("go-up"));
+	button_accountDown->setIcon(KIcon("go-down"));
+	button_accountAdd->setIcon(KIcon("list-add"));
+	button_accountRemove->setIcon(KIcon("list-remove"));
 	loadAccountList();
 	accountListHasChanged = false;
 	toolButton_accountsApply->setEnabled(false);

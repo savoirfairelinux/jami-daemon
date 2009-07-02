@@ -51,7 +51,11 @@
         <widget class="QListWidget" name="listWidget_callHistory"/>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_searchHistory"/>
+        <widget class="KLineEdit" name="lineEdit_searchHistory">
+         <property name="showClearButton" stdset="0">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -61,7 +65,11 @@
         <widget class="QListWidget" name="listWidget_addressBook"/>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_addressBook"/>
+        <widget class="KLineEdit" name="lineEdit_addressBook">
+         <property name="showClearButton" stdset="0">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QLabel" name="label_addressBookFull">
@@ -386,10 +394,6 @@
    </property>
   </action>
   <action name="action_configureSflPhone">
-   <property name="icon">
-    <iconset resource="../qrc/resources.qrc">
-     <normaloff>:/images/icons/sflphone.svg</normaloff>:/images/icons/sflphone.svg</iconset>
-   </property>
    <property name="text">
     <string>&amp;Configure SFLPhone</string>
    </property>
@@ -460,6 +464,11 @@
   </action>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
+  </customwidget>
   <customwidget>
    <class>Dialpad</class>
    <extends>QWidget</extends>
