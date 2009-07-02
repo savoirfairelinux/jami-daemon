@@ -154,6 +154,7 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
     
     _debug ("%i\n", _ca->getLocalAudioPort());
     _session = new ost::SymmetricRTPSession (local_ip, _ca->getLocalAudioPort());
+    // _session = new ost::RTPSessionBase(local_ip, _ca->getLocalAudioPort());
     _sessionRecv = NULL;
     _sessionSend = NULL;
 
@@ -195,6 +196,8 @@ AudioRtpRTX::~AudioRtpRTX () {
 
     delete converter; converter = NULL;
 
+    // _session->terminate();
+
     delete _session;     _session = NULL;
 
     _debug("AudioRtpRTX instance deleted\n");
@@ -222,9 +225,9 @@ AudioRtpRTX::initBuffers()
 AudioRtpRTX::initAudioRtpSession (void) 
 {
 
-  try {
+    try {
         
-        _session->setSchedulingTimeout(10000);
+        _session->setSchedulingTimeout(100000);
         _session->setExpireTimeout(1000000);
 
 
@@ -252,10 +255,8 @@ AudioRtpRTX::setRtpSessionMedia(void)
     _codecSampleRate = _audiocodec->getClockRate();
     _codecFrameSize = _audiocodec->getFrameSize();
 
-    
-    if (_audiocodec->getPayload() == 9){
-         _debug("WE ARE G722\n");
-	 _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload(), 16000));
+    if( _audiocodec->getPayload() == 9 ) {
+        _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
     }
     else if ( _audiocodec->hasDynamicPayload() ) {
         _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
@@ -322,6 +323,8 @@ int
 AudioRtpRTX::processDataEncode()
 {
 
+    _debug("processDataEncode\n");
+
     // compute codec framesize in ms
     float fixed_codec_framesize = computeCodecFrameSize(_audiocodec->getFrameSize(), _audiocodec->getClockRate());
 
@@ -373,7 +376,7 @@ AudioRtpRTX::processDataEncode()
 void
 AudioRtpRTX::processDataDecode(unsigned char* spkrData, unsigned int size, int& countTime)
 {
-
+    _debug("processDataDecode\n");
     if (_audiocodec != NULL) {
 
         // Return the size of data in bytes 
@@ -427,7 +430,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     //   3. encode it
     //   4. send it
     
-
+    _debug("sendSessionForSpeaker\n");
     timestamp += time->getSecond();
     // no call, so we do nothing
     if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; }
@@ -439,7 +442,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     
     int compSize = processDataEncode();
-
+    _debug("compSize: %i\n", compSize);
     // putData put the data on RTP queue, sendImmediate bypass this queue
     _session->putData(timestamp, micDataEncoded, compSize);
     // _session->sendImmediate(timestamp, micDataEncoded, compSize);
@@ -451,6 +454,8 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 void
 AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 {
+    
+    _debug("receiveSessionForSpkr\n");
 
     if (_ca == 0) { return; }
 
@@ -460,11 +465,9 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
     const ost::AppDataUnit* adu = NULL;
 
-    if (!_sym) {
-        adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
-    } else {
-        adu = _session->getData(_session->getFirstTimestamp());
-    }
+    
+    adu = _session->getData(_session->getFirstTimestamp());
+    
     if (adu == NULL) {
         // _debug("No RTP audio stream\n");
         return;
@@ -498,8 +501,6 @@ void
 AudioRtpRTX::run () {
       
     int sessionWaiting;
-    
-    _session->startRunning();
 
     initBuffers();
     initAudioRtpSession();
@@ -522,6 +523,8 @@ AudioRtpRTX::run () {
 
     _audiolayer->startStream();
 
+    _session->startRunning();
+
     _debug("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
     while (!testCancel()) {
 
@@ -529,8 +532,8 @@ AudioRtpRTX::run () {
         sessionWaiting = _session->isWaiting();
 
         sendSessionFromMic(timestamp); 
-        timestamp += timestep;
-      
+        // timestamp += timestep;
+	timestamp = _session->getCurrentTimestamp();
 
         // Recv session
         receiveSessionForSpkr(countTime);
