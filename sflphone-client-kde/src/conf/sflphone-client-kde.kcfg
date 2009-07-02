@@ -3,17 +3,15 @@
 <kcfg> 
   <kcfgfile name="ConfigDialogKDE" /> 
   <group name="main"> 
-    <!--
-    <entry name="SplitterSizes" type="IntList"> 
-      <label>How the main window is divided.</label> 
-    </entry> 
-    -->
     <entry name="SIPPort" type="Int"> 
       <label>Defines the port that will be used for SIP communication.</label> 
       <min> 1025 </min>
       <max> 65536 </max>
       <default> 1025 </default> 
     </entry>
+    <entry name="enableHistory" type="Bool"> 
+      <label>Defines whether sflphone should keep a history of calls.</label> 
+    </entry> 
     <entry name="historyMax" type="Int"> 
       <label>Defines the number of days the history has to be kept.</label> 
       <min> 1 </min>
@@ -107,23 +105,5 @@
     <entry name="prepend" type="String">
     	<label>Defines the prefix to add.</label>
     </entry>
-    
-    
-    <!--
-    <entry name="Height" type="Int"> 
-      <label>Height of the main window.</label> 
-      <default>400</default> 
-    </entry> 
-    <entry name="OpenBooks" type="StringList"> 
-      <label>All books that are opened.</label> 
-    </entry> 
-    <entry name="CurrentBook" type="String"> 
-      <label>The book currently opened.</label> 
-    </entry> 
-    <entry name="Font" type="Font"> 
-      <label>The font used to display the contents of books.</label> 
-      <default code="true">KGlobalSettings::generalFont()</default> 
-    </entry>
-    --> 
   </group> 
 </kcfg>

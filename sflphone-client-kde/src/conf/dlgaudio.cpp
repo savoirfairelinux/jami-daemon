@@ -41,8 +41,8 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
 	KUrlRequester_ringtone->lineEdit()->setObjectName("kcfg_ringtone"); 
 	
 	codecTableHasChanged = false;
-	toolButton_codecUp->setIcon(style->standardIcon(QStyle::SP_ArrowUp));
-	toolButton_codecDown->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
+	toolButton_codecUp->setIcon(KIcon("go-up"));
+	toolButton_codecDown->setIcon(KIcon("go-down"));
 	tableWidget_codecs->verticalHeader()->hide();
 	tableWidget_codecs->setSelectionBehavior(QAbstractItemView::SelectRows);
 	

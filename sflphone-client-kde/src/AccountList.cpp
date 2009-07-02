@@ -36,17 +36,11 @@ AccountList::AccountList(QStringList & _accountIds)
 	}
 }
 
-AccountList::AccountList()
+AccountList::AccountList(bool fill)
 {
 	qDebug() << "AccountList()";
-// 	firstAccount = QString();
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	//ask for the list of accounts ids to the configurationManager
-	QStringList accountIds = configurationManager.getAccountList().value();
 	accounts = new QVector<Account *>();
-	for (int i = 0; i < accountIds.size(); ++i){
-		(*accounts) += Account::buildExistingAccountFromId(accountIds[i]);
-	}
+	updateAccounts();
 }
 
 void AccountList::update()
@@ -70,7 +64,7 @@ void AccountList::updateAccounts()
 	qDebug() << "updateAccounts";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList accountIds = configurationManager.getAccountList().value();
-	accounts = new QVector<Account *>();
+	accounts->clear();
 	for (int i = 0; i < accountIds.size(); ++i){
 		(*accounts) += Account::buildExistingAccountFromId(accountIds[i]);
 	}

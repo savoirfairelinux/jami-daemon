@@ -20,10 +20,12 @@
  ***************************************************************************/
   
 #include "ActionSetAccountFirst.h"
+#include <klocale.h>
 
 ActionSetAccountFirst::ActionSetAccountFirst(Account * account, QObject *parent)
- : QAction(account->getAlias(), parent)
+ : QAction((account == NULL) ? i18n("Default account") : account->getAlias(), parent)
 {
+	setCheckable(true);
 	this->account = account;
 	connect(this,    SIGNAL(triggered()),
 	        this,    SLOT(emitSetFirst()));

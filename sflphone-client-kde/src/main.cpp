@@ -1,6 +1,5 @@
 #include <QApplication>
 #include <QtCore/QString>
-#include <QtGui/QCursor>
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include <QtGui/QAction>
@@ -54,22 +53,10 @@ int main(int argc, char **argv)
 		//configuration dbus
 		registerCommTypes();
 		
-		
-		if(!QFile(QDir::homePath() + CONFIG_FILE_PATH).exists())
-		{
-			(new AccountWizard())->show();
-		}
-		
+		SFLPhone * fenetre = new SFLPhone();
+
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
-
-		
-		SFLPhone * fenetre = new SFLPhone();
-		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
-		fenetre->show();
-
-// 		ConfigurationDialogKDE * dlg = new ConfigurationDialogKDE(fenetre->getView());
-// 		dlg->show();
 	
 		return app.exec();
 	}

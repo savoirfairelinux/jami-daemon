@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>307</height>
+    <height>314</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -119,12 +119,17 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
-              <property name="text">
-               <string>Remove this account</string>
+              <property name="toolTip">
+               <string>This button will remove the selected account in the list below. Be sure you really don't need it anymore. If you think you might use it again later, just uncheck it.</string>
               </property>
-              <property name="icon">
-               <iconset resource="../qrc/resources.qrc">
-                <normaloff>:/images/icons/remove.png</normaloff>:/images/icons/remove.png</iconset>
+              <property name="whatsThis">
+               <string>Remove the selected account</string>
+              </property>
+              <property name="accessibleDescription">
+               <string/>
+              </property>
+              <property name="text">
+               <string>Remove</string>
               </property>
               <property name="shortcut">
                <string>Backspace, Return</string>
@@ -145,17 +150,25 @@
                 <height>0</height>
                </size>
               </property>
-              <property name="text">
+              <property name="toolTip">
+               <string>This button enables you to initialize a new account. You will then be able to edit it using the form on the right.</string>
+              </property>
+              <property name="whatsThis">
                <string>Add a new account</string>
               </property>
-              <property name="icon">
-               <iconset resource="../qrc/resources.qrc">
-                <normaloff>:/images/icons/add.png</normaloff>:/images/icons/add.png</iconset>
+              <property name="text">
+               <string>Add</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QToolButton" name="button_accountDown">
+              <property name="toolTip">
+               <string>Get this account down</string>
+              </property>
+              <property name="whatsThis">
+               <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
+              </property>
               <property name="text">
                <string>Down</string>
               </property>
@@ -163,6 +176,12 @@
             </item>
             <item>
              <widget class="QToolButton" name="button_accountUp">
+              <property name="toolTip">
+               <string>Get this account up</string>
+              </property>
+              <property name="whatsThis">
+               <string>By default, when you place a call, sflphone will use the first account in this list which is &quot;registered&quot;. Change the order of the accounts using the &quot;Up&quot; and &quot;Down&quot; arrows.</string>
+              </property>
               <property name="text">
                <string>Up</string>
               </property>
@@ -227,6 +246,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QLineEdit" name="edit1_alias">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -368,8 +393,17 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="kcfg_stunServer">
+         <widget class="KLineEdit" name="kcfg_stunServer">
           <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="squeezedTextEnabled">
+           <bool>false</bool>
+          </property>
+          <property name="clickMessage">
+           <string>choose Stun server (example : stunserver.org)</string>
+          </property>
+          <property name="showClearButton" stdset="0">
            <bool>false</bool>
           </property>
          </widget>
@@ -381,23 +415,30 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../qrc/resources.qrc"/>
  </resources>
  <connections>
   <connection>
    <sender>kcfg_enableStun</sender>
-   <signal>toggled(bool)</signal>
+   <signal>clicked(bool)</signal>
    <receiver>kcfg_stunServer</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>75</x>
-     <y>274</y>
+     <x>71</x>
+     <y>273</y>
     </hint>
     <hint type="destinationlabel">
-     <x>145</x>
-     <y>274</y>
+     <x>167</x>
+     <y>278</y>
     </hint>
    </hints>
   </connection>

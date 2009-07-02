@@ -39,7 +39,12 @@ public:
 
 	//Constructors & Destructors
 	AccountList(QStringList & _accountIds);
-	AccountList();
+	/**
+	 *   Constructs a new accountList, empty if fill = false
+	 *   filled with accounts from configurationManager.getAccountList() if true
+	 * @param fill Whether to fill the list with accounts from configurationManager or not.
+	 */
+	AccountList(bool fill = true);
 	~AccountList();
 	
 	//Getters

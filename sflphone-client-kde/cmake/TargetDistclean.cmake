@@ -46,6 +46,10 @@ IF (UNIX)
    data/*.cmake
    data/Makefile
    data/CMakeFiles
+   data/icons/*.cmake
+   data/icons/*.make
+   data/icons/Makefile
+   data/icons/CMakeFiles
    src/*.cmake
    src/Makefile
    src/CMakeFiles
