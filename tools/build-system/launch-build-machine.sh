@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-07-03 16:47:28 -0400
+# Last Modified: 2009-07-03 17:02:33 -0400
 #####################################################
 
 #
@@ -254,7 +254,7 @@ if [ ${DO_PREPARE} ]; then
 	fi
 
 	# if push is activated
-	if [ ${DO_PUSH} && ${RELEASE_MODE} ];then
+	if [[ ${DO_PUSH} && ${RELEASE_MODE} ]];then
 
 		echo " Doing commit"
 		
