@@ -64,7 +64,7 @@ make dep
 make clean
 make
 cd -
-./autogen.sh --prefix=%{_prefix} CXXFLAGS=-O2
+./autogen.sh --prefix=%{_prefix} 
 make -j
 
 %install
