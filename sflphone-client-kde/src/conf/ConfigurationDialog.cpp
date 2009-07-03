@@ -50,7 +50,7 @@ ConfigurationDialogKDE::ConfigurationDialogKDE(sflphone_kdeView *parent)
 	addPage( dlgAccounts     , i18n("Accounts")     , "personal" ); 
 	addPage( dlgAudio        , i18n("Audio")        , "voicecall" ); 
 	addPage( dlgAddressBook  , i18n("Address Book") , "x-office-address-book" ); 
-	addPage( dlgRecord       , i18n("Record")       , "media-record" ); 
+	addPage( dlgRecord       , i18nc("Config section","Record")       , "media-record" ); 
 	addPage( dlgHooks        , i18n("Hooks")        , "insert-link" ); 
 	connect(this, SIGNAL(applyClicked()), dlgAudio, SLOT(updateAlsaSettings()));
 	connect(this, SIGNAL(okClicked()),    dlgAudio, SLOT(updateAlsaSettings()));

@@ -19,7 +19,7 @@
 
 static const char description[] = "A KDE 4 Client for SFLphone";
 
-static const char version[] = "0.9.5";
+static const char version[] = "0.9.6";
 
 int main(int argc, char **argv)
 {
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 		
 		KAboutData about(
 		   "sflphone-client-kde", 
-		   0, 
+		   "sflphone-client-kde", 
 		   ki18n("SFLphone KDE Client"), 
 		   version, 
 		   ki18n(description),
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 		   KLocalizedString(), 
 		   "http://www.sflphone.org.", 
 		   "sflphone@lists.savoirfairelinux.net");
-		
+		about.setProgramLogo(QVariant(QImage(ICON_SFLPHONE)));
 		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
 		about.setProgramIconName(ICON_SFLPHONE);
 		about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );

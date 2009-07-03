@@ -321,7 +321,7 @@
      <normaloff>:/images/icons/call.svg</normaloff>:/images/icons/call.svg</iconset>
    </property>
    <property name="text">
-    <string>&amp;Pick up</string>
+    <string>Pick up</string>
    </property>
   </action>
   <action name="action_refuse">
@@ -330,7 +330,7 @@
      <normaloff>:/images/icons/hang_up.svg</normaloff>:/images/icons/hang_up.svg</iconset>
    </property>
    <property name="text">
-    <string>&amp;Hang up</string>
+    <string>Hang up</string>
    </property>
   </action>
   <action name="action_hold">
@@ -339,7 +339,7 @@
      <normaloff>:/images/icons/hold.svg</normaloff>:/images/icons/hold.svg</iconset>
    </property>
    <property name="text">
-    <string>H&amp;old</string>
+    <string>Hold</string>
    </property>
   </action>
   <action name="action_transfer">
@@ -351,7 +351,7 @@
      <normaloff>:/images/icons/transfert.svg</normaloff>:/images/icons/transfert.svg</iconset>
    </property>
    <property name="text">
-    <string>&amp;Transfer</string>
+    <string>Transfer</string>
    </property>
   </action>
   <action name="action_history">
@@ -363,7 +363,7 @@
      <normaloff>:/images/icons/history2.svg</normaloff>:/images/icons/history2.svg</iconset>
    </property>
    <property name="text">
-    <string>H&amp;istory</string>
+    <string>History</string>
    </property>
   </action>
   <action name="action_mailBox">
@@ -372,7 +372,7 @@
      <normaloff>:/images/icons/mailbox.svg</normaloff>:/images/icons/mailbox.svg</iconset>
    </property>
    <property name="text">
-    <string>&amp;Mailbox</string>
+    <string>Mailbox</string>
    </property>
   </action>
   <action name="action_configureAccounts">
@@ -381,7 +381,7 @@
      <normaloff>:/images/icons/stock_person.svg</normaloff>:/images/icons/stock_person.svg</iconset>
    </property>
    <property name="text">
-    <string>Configure &amp;accounts</string>
+    <string>Configure accounts</string>
    </property>
   </action>
   <action name="action_configureAudio">
@@ -390,12 +390,12 @@
      <normaloff>:/images/icons/icon_volume.svg</normaloff>:/images/icons/icon_volume.svg</iconset>
    </property>
    <property name="text">
-    <string>Configure a&amp;udio</string>
+    <string>Configure audio</string>
    </property>
   </action>
   <action name="action_configureSflPhone">
    <property name="text">
-    <string>&amp;Configure SFLphone</string>
+    <string>Configure SFLphone</string>
    </property>
    <property name="toolTip">
     <string>Configure SFLphone</string>
@@ -413,12 +413,7 @@
      <normaloff>:/images/icons/icon_volume_off.svg</normaloff>:/images/icons/icon_volume_off.svg</iconset>
    </property>
    <property name="text">
-    <string>Display &amp;volume bars</string>
-   </property>
-  </action>
-  <action name="action_About">
-   <property name="text">
-    <string>&amp;About</string>
+    <string>Display volume bars</string>
    </property>
   </action>
   <action name="action_displayDialpad">
@@ -433,7 +428,7 @@
      <normaloff>:/images/icons/icon_dialpad.svg</normaloff>:/images/icons/icon_dialpad.svg</iconset>
    </property>
    <property name="text">
-    <string>Display &amp;dialpad</string>
+    <string>Display dialpad</string>
    </property>
   </action>
   <action name="action_record">
@@ -445,12 +440,12 @@
      <normaloff>:/images/icons/del_off.png</normaloff>:/images/icons/del_off.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Record</string>
+    <string comment="Action record a call">Record</string>
    </property>
   </action>
   <action name="action_accountCreationWizard">
    <property name="text">
-    <string>Account creation &amp;wizard</string>
+    <string>Account creation wizard</string>
    </property>
   </action>
   <action name="action_addressBook">
