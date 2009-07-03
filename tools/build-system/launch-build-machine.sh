@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-06-23 10:31:34 -0400
+# Last Modified: 2009-07-03 17:02:33 -0400
 #####################################################
 
 #
@@ -29,6 +29,12 @@ SCP_BASE="scp ${SSH_OPTIONS} -r -P 50001"
 
 # home directory
 ROOT_DIR="/home/projects/sflphone"
+
+# local hidden repository (only for changelog commit)
+LOCAL_REPOSITORY=${ROOT_DIR}/.sflphone-repository
+
+# gpg passphrase file
+GPG_FILE="${ROOT_DIR}/.gpg-sflphone"
 
 # vbox config directory
 export VBOX_USER_HOME="${ROOT_DIR}/vbox"
@@ -62,8 +68,9 @@ USER="sflphone"
 
 RELEASE_MODE=
 
-SNAPSHOT_TAG=`date +%s`
+SNAPSHOT_TAG=`date +%Y%m%d`
 
+DO_CLEAN=1
 DO_PREPARE=1
 DO_PUSH=1
 DO_MAIN_LOOP=1
@@ -95,6 +102,7 @@ do
 	--help)
 		echo
 		echo "Options :"
+		echo " --skip-clean"
 		echo " --skip-prepare"
 		echo " --skip-push"
 		echo " --skip-main-loop"
@@ -106,6 +114,8 @@ do
 		echo " --list-machines"
 		echo
 		exit 0;;
+	--skip-clean)
+		unset DO_CLEAN;;
 	--skip-prepare)
 		unset DO_PREPARE;;
 	--skip-push)
@@ -155,7 +165,9 @@ if [ "${WHO}" != "${USER}" ]; then
 fi
 
 # logging
-rm -rf ${PACKAGING_RESULT_DIR} 2>/dev/null
+if [ ${DO_CLEAN} ]; then
+	rm -rf ${PACKAGING_RESULT_DIR} 2>/dev/null
+fi
 mkdir ${PACKAGING_RESULT_DIR} 2>/dev/null
 if [ ${DO_LOGGING} ]; then
 
@@ -231,26 +243,28 @@ if [ ${DO_PREPARE} ]; then
 	fi
 	echo "Version is : ${VERSION}"
 
+	# generate the changelog, according to the distribution and the git commit messages
+	echo "Update debian changelogs"
+	cd ${REPOSITORY_DIR}
+	${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
+	
+	if [ "$?" -ne "0" ]; then
+		echo "!! Cannot update debian changelogs"
+		exit -1
+	fi
+
 	# if push is activated
-	if [ ${DO_PUSH} ];then
-
-		# first changelog generation for commit
-		echo "Update debian changelogs (1/2)"
-
-		${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
-
-		if [ "$?" -ne "0" ]; then
-			echo "!! Cannot update debian changelogs"
-			exit -1
-		fi
+	if [[ ${DO_PUSH} && ${RELEASE_MODE} ]];then
 
 		echo " Doing commit"
 		
-        	cd ${REPOSITORY_DIR}
+        	cd ${LOCAL_REPOSITORY}
 		git commit -m "[#1262] Updated debian changelogs (${VERSION})" .
 
 		echo " Pushing commit"
 		git push origin master
+
+		cd -
 	fi
 
 	# change current branch if needed
@@ -260,17 +274,7 @@ if [ ${DO_PREPARE} ]; then
         else
                 echo "Using master branch"
         fi
-
-	# generate the changelog, according to the distribution and the git commit messages
-	echo "Update debian changelogs (2/2)"
-	cd ${REPOSITORY_DIR}
-	${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
 	
-	if [ "$?" -ne "0" ]; then
-		echo "!! Cannot update debian changelogs"
-		exit -1
-	fi
-
 	echo "Write version numbers for following processes"
 	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-common/VERSION
 	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-client-gnome/VERSION
@@ -375,27 +379,9 @@ fi
 
 if [ ${DO_SIGNATURES} ]; then
 	
-	echo
 	echo "Sign packages"
-	echo
-
-	echo  "Check GPG agent"
-	pgrep -u "sflphone" gpg-agent > /dev/null
-	if [ "$?" -ne "0" ]; then
-	        echo "!! GPG agent is not running"
-		exit -1
-	fi
-	GPG_AGENT_INFO=`cat $HOME/.gpg-agent-info 2> /dev/null`
-	export ${GPG_AGENT_INFO}
-
-	if [ "${GPG_AGENT_INFO}" == "" ]; then
-        	echo "!! Cannot get GPG agent info"
-	        exit -1
-	fi	
-
-	echo "Sign packages"
-	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.deb" -exec dpkg-sig -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {} \; >/dev/null 2>&1
-	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.changes" -printf "debsign -k'Savoir-Faire Linux Inc.' %p\n" | sh >/dev/null 2>&1
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.deb" -exec dpkg-sig -g '-q --passphrase `cat '${GPG_FILE}'`' -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {}  \;
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.changes" -exec gpg --local-user 'Savoir-Faire Linux Inc.' --passphrase `cat ${GPG_FILE}` --clearsign --list-options no-show-policy-urls --armor --textmode --output {}.asc {} \;
 fi
 
 #########################
