@@ -108,8 +108,15 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     peer_name = g_strdup ("");
     state_str = g_hash_table_lookup (details, "CALL_STATE");
 
+
     if (g_strcasecmp (state_str, "CURRENT") == 0)
         state = CALL_STATE_CURRENT;
+
+	else if (g_strcasecmp (state_str, "RINGING") == 0)
+		state = CALL_STATE_RINGING;
+
+	else if (g_strcasecmp (state_str, "INCOMING") == 0)
+		state = CALL_STATE_INCOMING;
 
     else if (g_strcasecmp (state_str, "HOLD") == 0)
         state = CALL_STATE_HOLD;

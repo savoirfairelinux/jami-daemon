@@ -42,53 +42,59 @@
 #include "../sipcall.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-// AudioRtp                                                          
+// AudioRtp
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtp::AudioRtp() :_RTXThread(0), _symmetric(), _threadMutex()
+AudioRtp::AudioRtp() :_RTXThread (0), _symmetric(), _threadMutex()
 {
 }
 
-AudioRtp::~AudioRtp (void) {
-    delete _RTXThread; _RTXThread = 0;
+AudioRtp::~AudioRtp (void)
+{
+    delete _RTXThread;
+    _RTXThread = 0;
 }
 
-void 
-AudioRtp::createNewSession (SIPCall *ca) {
+void
+AudioRtp::createNewSession (SIPCall *ca)
+{
 
-    ost::MutexLock m(_threadMutex);
+    ost::MutexLock m (_threadMutex);
 
-    _debug("AudioRtp::Create new rtp session\n");
+    _debug ("AudioRtp::Create new rtp session\n");
 
     // something should stop the thread before...
-    if ( _RTXThread != 0 ) { 
-        _debug("**********************************************************\n");
-        _debug("! ARTP Failure: Thread already exists..., stopping it\n");
-        _debug("**********************************************************\n");
-        delete _RTXThread; _RTXThread = 0;
+
+    if (_RTXThread != 0) {
+        _debug ("**********************************************************\n");
+        _debug ("! ARTP Failure: Thread already exists..., stopping it\n");
+        _debug ("**********************************************************\n");
+        delete _RTXThread;
+        _RTXThread = 0;
     }
 
     // Start RTP Send/Receive threads
-    _symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
+    _symmetric = Manager::instance().getConfigInt (SIGNALISATION,SYMMETRIC) ? true : false;
+
     _RTXThread = new AudioRtpRTX (ca, _symmetric);
 
 }
 
 int
-AudioRtp::start(void)
+AudioRtp::start (void)
 {
-    if(_RTXThread == 0) {
-        _debug("! ARTP Failure: Cannot start audiortp thread since not yet created\n");
+    if (_RTXThread == 0) {
+        _debug ("! ARTP Failure: Cannot start audiortp thread since not yet created\n");
         throw AudioRtpException();
     }
 
 
     try {
         if (_RTXThread->start() != 0) {
-            _debug("! ARTP Failure: unable to start RTX Thread\n");
+            _debug ("! ARTP Failure: unable to start RTX Thread\n");
             return -1;
         }
-    } catch(...) {
-        _debugException("! ARTP Failure: when trying to start a thread");
+    } catch (...) {
+        _debugException ("! ARTP Failure: when trying to start a thread");
         throw;
     }
 
@@ -97,23 +103,27 @@ AudioRtp::start(void)
 
 
 bool
-AudioRtp::closeRtpSession () {
+AudioRtp::closeRtpSession ()
+{
 
-    ost::MutexLock m(_threadMutex);
+    ost::MutexLock m (_threadMutex);
     // This will make RTP threads finish.
-    _debug("AudioRtp::Stopping rtp session\n");
-    
+    _debug ("AudioRtp::Stopping rtp session\n");
+
 
     try {
-        delete _RTXThread; _RTXThread = 0;
-    } catch(...) {
-        _debugException("! ARTP Exception: when stopping audiortp\n");
+        delete _RTXThread;
+        _RTXThread = 0;
+    } catch (...) {
+        _debugException ("! ARTP Exception: when stopping audiortp\n");
         throw;
     }
+
     // AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     // audiolayer->stopStream();
 
-    _debug("AudioRtp::Audio rtp stopped\n");
+    _debug ("AudioRtp::Audio rtp stopped\n");
+
     return true;
 }
 
@@ -126,9 +136,10 @@ AudioRtp::getRTX()
 
 
 void
-AudioRtp::setRecording() {
+AudioRtp::setRecording()
+{
 
-    _debug("AudioRtp::setRecording\n");
+    _debug ("AudioRtp::setRecording\n");
     _RTXThread->_ca->setRecording();
 
 }
@@ -140,20 +151,21 @@ AudioRtp::setRecording() {
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _ca(sipcall), _sessionSend(NULL), _sessionRecv(NULL), _session(NULL), 
-    _sym(sym), micData(NULL), micDataConverted(NULL), micDataEncoded(NULL), spkrDataDecoded(NULL), spkrDataConverted(NULL), 
-    converter(NULL), _layerSampleRate(),_codecSampleRate(), _layerFrameSize(), _audiocodec(NULL)
+AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time (new ost::Time()), _ca (sipcall), _sessionSend (NULL), _sessionRecv (NULL), _session (NULL),
+        _sym (sym), micData (NULL), micDataConverted (NULL), micDataEncoded (NULL), spkrDataDecoded (NULL), spkrDataConverted (NULL),
+        converter (NULL), _layerSampleRate(),_codecSampleRate(), _layerFrameSize(), _audiocodec (NULL)
 {
 
-    setCancel(cancelDefault);
+    setCancel (cancelDefault);
     // AudioRtpRTX should be close if we change sample rate
     // TODO: Change bind address according to user settings.
     // TODO: this should be the local ip not the external (router) IP
     std::string localipConfig = _ca->getLocalIp(); // _ca->getLocalIp();
-    ost::InetHostAddress local_ip(localipConfig.c_str());
-    
+    ost::InetHostAddress local_ip (localipConfig.c_str());
+
     _debug ("%i\n", _ca->getLocalAudioPort());
     _session = new ost::SymmetricRTPSession (local_ip, _ca->getLocalAudioPort());
+    // _session = new ost::RTPSessionBase(local_ip, _ca->getLocalAudioPort());
     _sessionRecv = NULL;
     _sessionSend = NULL;
 
@@ -169,43 +181,55 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
 
     _payloadIsSet = false;
     _remoteIpIsSet = false;
-    
+
 }
 
-AudioRtpRTX::~AudioRtpRTX () {
+AudioRtpRTX::~AudioRtpRTX ()
+{
 
-    _debug("Delete AudioRtpRTX instance\n");
+    _debug ("Delete AudioRtpRTX instance\n");
 
     try {
         this->terminate();
-    } catch(...) {
-        _debugException("! ARTP: Thread destructor didn't terminate correctly");
+    } catch (...) {
+        _debugException ("! ARTP: Thread destructor didn't terminate correctly");
         throw;
     }
+
     _ca = 0;
 
-    delete [] micData;  micData = NULL;
-    delete [] micDataConverted;  micDataConverted = NULL;
-    delete [] micDataEncoded;  micDataEncoded = NULL;
+    delete [] micData;
+    micData = NULL;
+    delete [] micDataConverted;
+    micDataConverted = NULL;
+    delete [] micDataEncoded;
+    micDataEncoded = NULL;
 
-    delete [] spkrDataDecoded; spkrDataDecoded = NULL;
-    delete [] spkrDataConverted; spkrDataConverted = NULL;
+    delete [] spkrDataDecoded;
+    spkrDataDecoded = NULL;
+    delete [] spkrDataConverted;
+    spkrDataConverted = NULL;
 
-    delete time; time = NULL;
+    delete time;
+    time = NULL;
 
-    delete converter; converter = NULL;
+    delete converter;
+    converter = NULL;
 
-    delete _session;     _session = NULL;
+    // _session->terminate();
 
-    _debug("AudioRtpRTX instance deleted\n");
+    delete _session;
+    _session = NULL;
+
+    _debug ("AudioRtpRTX instance deleted\n");
 
 }
 
 
-    void
+void
 AudioRtpRTX::initBuffers()
 {
-    converter = new SamplerateConverter( _layerSampleRate , _layerFrameSize );
+    converter = new SamplerateConverter (_layerSampleRate , _layerFrameSize);
 
     int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
 
@@ -218,103 +242,114 @@ AudioRtpRTX::initBuffers()
 }
 
 
-    void
-AudioRtpRTX::initAudioRtpSession (void) 
+void
+AudioRtpRTX::initAudioRtpSession (void)
 {
 
-  try {
-        
-        _session->setSchedulingTimeout(10000);
-        _session->setExpireTimeout(1000000);
+    try {
+
+        _session->setSchedulingTimeout (100000);
+        _session->setExpireTimeout (1000000);
 
 
-    } catch(...) {
-        _debugException("! ARTP Failure: initialisation failed");
+    } catch (...) {
+        _debugException ("! ARTP Failure: initialisation failed");
         throw;
-    }    
+    }
 
 }
 
 void
-AudioRtpRTX::setRtpSessionMedia(void)
+AudioRtpRTX::setRtpSessionMedia (void)
 {
 
-    if (_ca == 0) { _debug(" !ARTP: No call, can't init RTP media\n"); return; }
+    if (_ca == 0) {
+        _debug (" !ARTP: No call, can't init RTP media\n");
+        return;
+    }
 
     _audiocodec = _ca->getLocalSDP()->get_session_media ();
 
-    if (_audiocodec == NULL) { _debug(" !ARTP: No audiocodec, can't init RTP media\n"); return; }
+    if (_audiocodec == NULL) {
+        _debug (" !ARTP: No audiocodec, can't init RTP media\n");
+        return;
+    }
 
-    _debug("Init audio RTP session: codec payload %i\n", _audiocodec->getPayload());
+    _debug ("Init audio RTP session: codec payload %i\n", _audiocodec->getPayload());
 
-    if (_audiocodec == NULL) { return; }
+    if (_audiocodec == NULL) {
+        return;
+    }
 
     _codecSampleRate = _audiocodec->getClockRate();
+
     _codecFrameSize = _audiocodec->getFrameSize();
 
-    
-    if (_audiocodec->getPayload() == 9){
-         _debug("WE ARE G722\n");
-	 _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload(), 16000));
+    if (_audiocodec->getPayload() == 9) {
+        _debug ("We Are G722\n");
+        _payloadIsSet = _session->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
+    } else if (_audiocodec->hasDynamicPayload()) {
+        _debug ("We Are Dynamic\n");
+        _payloadIsSet = _session->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
+    } else if (!_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
+        _debug ("We Are Static\n");
+        _payloadIsSet = _session->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
     }
-    else if ( _audiocodec->hasDynamicPayload() ) {
-        _payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
-    }
-    else if ( !_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
-        _payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
-    }
-    
-    
+
+
 
 }
 
 void
-AudioRtpRTX::setRtpSessionRemoteIp(void)
+AudioRtpRTX::setRtpSessionRemoteIp (void)
 {
 
-    if (!_remoteIpIsSet){
+    if (!_remoteIpIsSet) {
 
-        _debug("++++++++++++++++++++++++++ SET IP ADDRESS ++++++++++++++++++++++++++++\n");
+        _debug ("++++++++++++++++++++++++++ SET IP ADDRESS ++++++++++++++++++++++++++++\n");
 
-        if (_ca == 0) { _debug(" !ARTP: No call, can't init RTP media \n"); return; }
-
-        ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
-        _debug("Init audio RTP session: remote ip %s\n", _ca->getLocalSDP()->get_remote_ip().data());
-        if (!remote_ip) 
-        {
-            _debug(" !ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getLocalSDP()->get_remote_ip().data());
+        if (_ca == 0) {
+            _debug (" !ARTP: No call, can't init RTP media \n");
             return;
         }
 
-	_debug("++++Address: %s, audioport: %d\n", _ca->getLocalSDP()->get_remote_ip().c_str(), (int)_ca->getLocalSDP()->get_remote_audio_port());
-	_debug("++++Audioport: %d\n", (int)_ca->getLocalSDP()->get_remote_audio_port());
+        ost::InetHostAddress remote_ip (_ca->getLocalSDP()->get_remote_ip().c_str());
 
-        if (!_session->addDestination (remote_ip, (unsigned short)_ca->getLocalSDP()->get_remote_audio_port() )) 
-        {
-            _debug(" !ARTP Thread Error: can't add destination to session!\n");
+        _debug ("Init audio RTP session: remote ip %s\n", _ca->getLocalSDP()->get_remote_ip().data());
+
+        if (!remote_ip) {
+            _debug (" !ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getLocalSDP()->get_remote_ip().data());
             return;
         }
+
+        _debug ("++++Address: %s, audioport: %d\n", _ca->getLocalSDP()->get_remote_ip().c_str(), _ca->getLocalSDP()->get_remote_audio_port());
+
+        _debug ("++++Audioport: %d\n", (int) _ca->getLocalSDP()->get_remote_audio_port());
+
+        if (!_session->addDestination (remote_ip, (unsigned short) _ca->getLocalSDP()->get_remote_audio_port())) {
+            _debug (" !ARTP Thread Error: can't add destination to session!\n");
+            return;
+        }
+
         _remoteIpIsSet = true;
-    }
-    else
-    {
-        _debug("+++++++++++++++++++++++ IP ADDRESS ALREADY SET ++++++++++++++++++++++++\n");
+    } else {
+        _debug ("+++++++++++++++++++++++ IP ADDRESS ALREADY SET ++++++++++++++++++++++++\n");
     }
 
 }
 
 
 
-float 
-AudioRtpRTX::computeCodecFrameSize(int codecSamplePerFrame, int codecClockRate)
+float
+AudioRtpRTX::computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate)
 {
-    return ( (float)codecSamplePerFrame * 1000.0 ) / (float)codecClockRate;
+    return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
 }
 
 int
-AudioRtpRTX::computeNbByteAudioLayer(float codecFrameSize)
+AudioRtpRTX::computeNbByteAudioLayer (float codecFrameSize)
 {
-    return (int)((float)_layerSampleRate * codecFrameSize * (float)sizeof(SFLDataFormat) / 1000.0);
+    return (int) ( (float) _layerSampleRate * codecFrameSize * (float) sizeof (SFLDataFormat) / 1000.0);
 }
 
 
@@ -323,11 +358,11 @@ AudioRtpRTX::processDataEncode()
 {
 
     // compute codec framesize in ms
-    float fixed_codec_framesize = computeCodecFrameSize(_audiocodec->getFrameSize(), _audiocodec->getClockRate());
+    float fixed_codec_framesize = computeCodecFrameSize (_audiocodec->getFrameSize(), _audiocodec->getClockRate());
 
     // compute nb of byte to get coresponding to 20 ms at audio layer frame size (44.1 khz)
-    int maxBytesToGet = computeNbByteAudioLayer(fixed_codec_framesize);
-    
+    int maxBytesToGet = computeNbByteAudioLayer (fixed_codec_framesize);
+
     // available bytes inside ringbuffer
     int availBytesFromMic = _audiolayer->canGetMic();
 
@@ -335,10 +370,10 @@ AudioRtpRTX::processDataEncode()
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
 
     if (bytesAvail == 0)
-      return 0;
+        return 0;
 
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = _audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
+    int nbSample = _audiolayer->getMic (micData , bytesAvail) / sizeof (SFLDataFormat);
 
     // nb bytes to be sent over RTP
     int compSize = 0;
@@ -348,21 +383,21 @@ AudioRtpRTX::processDataEncode()
 
         int nb_sample_up = nbSample;
         // _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
-    
+
         // Store the length of the mic buffer in samples for recording
         _nSamplesMic = nbSample;
 
 
-        // int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000; 
-	 nbSample = reSampleData(micData , micDataConverted, _audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);
+        // int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
+        nbSample = reSampleData (micData , micDataConverted, _audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);
 
-        compSize = _audiocodec->codecEncode( micDataEncoded, micDataConverted, nbSample*sizeof(int16));
+        compSize = _audiocodec->codecEncode (micDataEncoded, micDataConverted, nbSample*sizeof (int16));
 
     } else {
         // no resampling required
 
         // int nbSamplesMax = _codecFrameSize;
-        compSize = _audiocodec->codecEncode( micDataEncoded, micData, nbSample*sizeof(int16));
+        compSize = _audiocodec->codecEncode (micDataEncoded, micData, nbSample*sizeof (int16));
 
     }
 
@@ -371,43 +406,45 @@ AudioRtpRTX::processDataEncode()
 
 
 void
-AudioRtpRTX::processDataDecode(unsigned char* spkrData, unsigned int size, int& countTime)
+AudioRtpRTX::processDataDecode (unsigned char* spkrData, unsigned int size, int& countTime)
 {
-
     if (_audiocodec != NULL) {
 
-        // Return the size of data in bytes 
-        int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size );
+        // Return the size of data in bytes
+        int expandedSize = _audiocodec->codecDecode (spkrDataDecoded , spkrData , size);
 
         // buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
-        int nbSample = expandedSize / sizeof(SFLDataFormat);
+        int nbSample = expandedSize / sizeof (SFLDataFormat);
 
-        // test if resampling is required 
+        // test if resampling is required
+
         if (_audiocodec->getClockRate() != _layerSampleRate) {
 
             // Do sample rate conversion
             int nb_sample_down = nbSample;
-            nbSample = reSampleData(spkrDataDecoded, spkrDataConverted, _codecSampleRate, nb_sample_down, UP_SAMPLING);
+            nbSample = reSampleData (spkrDataDecoded, spkrDataConverted, _codecSampleRate, nb_sample_down, UP_SAMPLING);
 
             // Store the number of samples for recording
             _nSamplesSpkr = nbSample;
 
-	    // put data in audio layer, size in byte
-            _audiolayer->putMain (spkrDataConverted, nbSample * sizeof(SFLDataFormat));
+            // put data in audio layer, size in byte
+            _audiolayer->putMain (spkrDataConverted, nbSample * sizeof (SFLDataFormat));
 
         } else {
 
             // Stor the number of samples for recording
             _nSamplesSpkr = nbSample;
 
-	    // put data in audio layer, size in byte
-            _audiolayer->putMain (spkrDataDecoded, nbSample * sizeof(SFLDataFormat));
+            // put data in audio layer, size in byte
+            _audiolayer->putMain (spkrDataDecoded, nbSample * sizeof (SFLDataFormat));
         }
 
-        // Notify (with a beep) an incoming call when there is already a call 
+        // Notify (with a beep) an incoming call when there is already a call
         countTime += time->getSecond();
+
         if (Manager::instance().incomingCallWaiting() > 0) {
             countTime = countTime % 500; // more often...
+
             if (countTime == 0) {
                 Manager::instance().notificationIncomingCall();
             }
@@ -418,33 +455,42 @@ AudioRtpRTX::processDataDecode(unsigned char* spkrData, unsigned int size, int& 
     }
 }
 
-    void
-AudioRtpRTX::sendSessionFromMic(int timestamp)
+void
+AudioRtpRTX::sendSessionFromMic (int timestamp)
 {
     // STEP:
     //   1. get data from mic
     //   2. convert it to int16 - good sample, good rate
     //   3. encode it
     //   4. send it
-    
 
     timestamp += time->getSecond();
     // no call, so we do nothing
-    if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; }
+
+    if (_ca==0) {
+        _debug (" !ARTP: No call associated (mic)\n");
+        return;
+    }
 
     // AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-    if (!_audiolayer) { _debug(" !ARTP: No audiolayer available for MIC\n"); return; }
+    if (!_audiolayer) {
+        _debug (" !ARTP: No audiolayer available for MIC\n");
+        return;
+    }
 
-    if (!_audiocodec) { _debug(" !ARTP: No audiocodec available for MIC\n"); return; }
+    if (!_audiocodec) {
+        _debug (" !ARTP: No audiocodec available for MIC\n");
+        return;
+    }
 
-    
+
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    _session->putData(timestamp, micDataEncoded, compSize);
+    _session->putData (timestamp, micDataEncoded, compSize);
     // _session->sendImmediate(timestamp, micDataEncoded, compSize);
-    
-    
+
+
 }
 
 
@@ -452,109 +498,120 @@ void
 AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 {
 
-    if (_ca == 0) { return; }
+    if (_ca == 0) {
+        return;
+    }
 
-    if (!_audiolayer) { _debug(" !ARTP: No audiolayer available for SPEAKER\n"); return; }
+    if (!_audiolayer) {
+        _debug (" !ARTP: No audiolayer available for SPEAKER\n");
+        return;
+    }
 
-    if (!_audiocodec) { _debug(" !ARTP: No audiocodec available for SPEAKER\n"); return; }
+    if (!_audiocodec) {
+        _debug (" !ARTP: No audiocodec available for SPEAKER\n");
+        return;
+    }
 
     const ost::AppDataUnit* adu = NULL;
 
-    if (!_sym) {
-        adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
-    } else {
-        adu = _session->getData(_session->getFirstTimestamp());
-    }
+
+    adu = _session->getData (_session->getFirstTimestamp());
+
+    // _debug("payloadType: %i\n", adu->getType());
+
     if (adu == NULL) {
         // _debug("No RTP audio stream\n");
         return;
     }
 
-    unsigned char* spkrData  = (unsigned char*)adu->getData(); // data in char
+    unsigned char* spkrData  = (unsigned char*) adu->getData(); // data in char
+
     unsigned int size = adu->getSize(); // size in char
 
-    processDataDecode(spkrData, size, countTime);
-    
+    processDataDecode (spkrData, size, countTime);
+
 }
 
 
-int 
-AudioRtpRTX::reSampleData(SFLDataFormat *input, SFLDataFormat *output, int sampleRate_codec, int nbSamples, int status)
+int
+AudioRtpRTX::reSampleData (SFLDataFormat *input, SFLDataFormat *output, int sampleRate_codec, int nbSamples, int status)
 {
-    if(status==UP_SAMPLING){
-        return converter->upsampleData( input, output, sampleRate_codec , _layerSampleRate , nbSamples );
-    }
-    else if(status==DOWN_SAMPLING){
-        return converter->downsampleData( micData , micDataConverted , sampleRate_codec , _layerSampleRate , nbSamples );
-    }
-    else
+    if (status==UP_SAMPLING) {
+        return converter->upsampleData (input, output, sampleRate_codec , _layerSampleRate , nbSamples);
+    } else if (status==DOWN_SAMPLING) {
+        return converter->downsampleData (micData , micDataConverted , sampleRate_codec , _layerSampleRate , nbSamples);
+    } else
 
-    return 0;
+        return 0;
 }
 
 
 
 void
-AudioRtpRTX::run () {
-      
+AudioRtpRTX::run ()
+{
+
     int sessionWaiting;
-    
-    _session->startRunning();
 
     initBuffers();
     initAudioRtpSession();
     setRtpSessionRemoteIp();
     setRtpSessionMedia();
 
-    int timestep = _codecFrameSize; 
+    int timestep = _codecFrameSize;
 
-    int timestamp = 0; // for mic
+    int timestamp = _session->getCurrentTimestamp(); // for mic
 
     int countTime = 0; // for receive
-    
+
     int threadSleep = 0;
+
     if (_codecSampleRate != 0)
         threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
     else
         threadSleep = _layerFrameSize;
 
-    TimerPort::setTimer(threadSleep);
+    TimerPort::setTimer (threadSleep);
 
     _audiolayer->startStream();
 
-    _debug("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
+    _session->startRunning();
+
+    _debug ("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
+
     while (!testCancel()) {
 
         // Send session
         sessionWaiting = _session->isWaiting();
 
-        sendSessionFromMic(timestamp); 
+        sendSessionFromMic (timestamp);
         timestamp += timestep;
-      
+        // timestamp = _session->getCurrentTimestamp();
 
         // Recv session
-        receiveSessionForSpkr(countTime);
-      
+        receiveSessionForSpkr (countTime);
+
         // Let's wait for the next transmit cycle
-        if(sessionWaiting == 1){
+
+        if (sessionWaiting == 1) {
             // Record mic and speaker during conversation
-            _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
-        }
-        else {
+            _ca->recAudio.recData (spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
+        } else {
             // Record mic only while leaving a message
-            _ca->recAudio.recData(micData,_nSamplesMic);
+            _ca->recAudio.recData (micData,_nSamplesMic);
         }
 
         // Let's wait for the next transmit cycle
-        Thread::sleep(TimerPort::getTimer());
+        Thread::sleep (TimerPort::getTimer());
+
         // TimerPort::incTimer(20); // 'frameSize' ms
-        TimerPort::incTimer(threadSleep);      
+        TimerPort::incTimer (threadSleep);
     }
-    
+
     // _audiolayer->stopStream();
-    _debug("- ARTP Action: Stop call %s\n",_ca->getCallId().c_str());
-  
-    
+    _debug ("- ARTP Action: Stop call %s\n",_ca->getCallId().c_str());
+
+
 }
 
 

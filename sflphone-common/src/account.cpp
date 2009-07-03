@@ -22,10 +22,10 @@
 #include "account.h"
 #include "manager.h"
 
-Account::Account(const AccountID& accountID, std::string type) : 
-    _accountID(accountID), _link(NULL), _enabled(false), _type(type)
+Account::Account (const AccountID& accountID, std::string type) :
+        _accountID (accountID), _link (NULL), _enabled (false), _type (type)
 {
-    setRegistrationState(Unregistered);
+    setRegistrationState (Unregistered);
 }
 
 Account::~Account()
@@ -36,24 +36,27 @@ void Account::loadConfig()
 {
     std::string p;
 
-    p =  Manager::instance().getConfigString( _accountID , CONFIG_ACCOUNT_TYPE );
-#ifdef USE_IAX	
-    _enabled = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
+    p =  Manager::instance().getConfigString (_accountID , CONFIG_ACCOUNT_TYPE);
+#ifdef USE_IAX
+    _enabled = Manager::instance().getConfigInt (_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
 #else
-    if( p.c_str() == "IAX" )
+
+    if (p.c_str() == "IAX")
         _enabled = false;
     else
-        _enabled = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
+        _enabled = Manager::instance().getConfigInt (_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
+
 #endif
 }
 
-void Account::setRegistrationState( RegistrationState state ) { 
-    
-    if (state != _registrationState) {
-	_debug("Account::setRegistrationState\n");
-        _registrationState = state; 
+void Account::setRegistrationState (RegistrationState state)
+{
 
-	// Notify the client
-	Manager::instance().connectionStatusNotification();
+    if (state != _registrationState) {
+        _debug ("Account::setRegistrationState\n");
+        _registrationState = state;
+
+        // Notify the client
+        Manager::instance().connectionStatusNotification();
     }
 }

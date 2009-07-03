@@ -37,15 +37,16 @@
 #include "generate_proxy.h"
 
 using namespace std;
+
 using namespace DBus;
 
 //typedef map<string,string> TypeCache;
 
-void usage(const char *argv0)
+void usage (const char *argv0)
 {
-	cerr << endl << "Usage: " << argv0 << " <xmlfile> [ --proxy=<outfile.h> ] [ --adaptor=<outfile.h> ]"
-	     << endl << endl;
-	exit(-1);
+    cerr << endl << "Usage: " << argv0 << " <xmlfile> [ --proxy=<outfile.h> ] [ --adaptor=<outfile.h> ]"
+         << endl << endl;
+    exit (-1);
 }
 
 /*int char_to_atomic_type(char t)
@@ -61,68 +62,60 @@ bool is_atomic_type(const string &type)
 	return type.length() == 1 && char_to_atomic_type(type[0]) != DBUS_TYPE_INVALID;
 }*/
 
-int main(int argc, char ** argv)
+int main (int argc, char ** argv)
 {
-	if (argc < 2)
-	{
-		usage(argv[0]);
-	}
+    if (argc < 2) {
+        usage (argv[0]);
+    }
 
-	bool proxy_mode, adaptor_mode;
-	char *proxy, *adaptor;
+    bool proxy_mode, adaptor_mode;
 
-	proxy_mode = false;
-	proxy = 0;
+    char *proxy, *adaptor;
 
-	adaptor_mode = false;
-	adaptor = 0;
-	
-	for (int a = 1; a < argc; ++a)
-	{
-		if (!strncmp(argv[a], "--proxy=", 8))
-		{
-			proxy_mode = true;
-			proxy = argv[a] +8;
-		}
-		else
-		if (!strncmp(argv[a], "--adaptor=", 10))
-		{
-			adaptor_mode = true;
-			adaptor = argv[a] +10;
-		}
-	}
+    proxy_mode = false;
+    proxy = 0;
 
-	if (!proxy_mode && !adaptor_mode) usage(argv[0]);
+    adaptor_mode = false;
+    adaptor = 0;
 
-	ifstream xmlfile(argv[1]);
+    for (int a = 1; a < argc; ++a) {
+        if (!strncmp (argv[a], "--proxy=", 8)) {
+            proxy_mode = true;
+            proxy = argv[a] +8;
+        } else
+            if (!strncmp (argv[a], "--adaptor=", 10)) {
+                adaptor_mode = true;
+                adaptor = argv[a] +10;
+            }
+    }
 
-	if (xmlfile.bad())
-	{
-		cerr << "unable to open file " << argv[1] << endl;
-		return -1;
-	}
+    if (!proxy_mode && !adaptor_mode) usage (argv[0]);
 
-	Xml::Document doc;
+    ifstream xmlfile (argv[1]);
 
-	try
-	{
-		xmlfile >> doc;
-		//cout << doc.to_xml();
-	}
-	catch(Xml::Error &e)
-	{
-		cerr << "error parsing " << argv[1] << ": " << e.what() << endl;
-		return -1;
-	}
+    if (xmlfile.bad()) {
+        cerr << "unable to open file " << argv[1] << endl;
+        return -1;
+    }
 
-	if (!doc.root)
-	{
-		cerr << "empty document" << endl;
-		return -1;
-	}
+    Xml::Document doc;
 
-	if (proxy_mode)   generate_proxy(doc, proxy);
-	if (adaptor_mode) generate_adaptor(doc, adaptor);
+    try {
+        xmlfile >> doc;
+        //cout << doc.to_xml();
+    } catch (Xml::Error &e) {
+        cerr << "error parsing " << argv[1] << ": " << e.what() << endl;
+        return -1;
+    }
 
-	return 0;
+    if (!doc.root) {
+        cerr << "empty document" << endl;
+        return -1;
+    }
+
+    if (proxy_mode)   generate_proxy (doc, proxy);
+
+    if (adaptor_mode) generate_adaptor (doc, adaptor);
+
+    return 0;
 }

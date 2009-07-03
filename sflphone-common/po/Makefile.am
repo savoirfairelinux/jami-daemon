@@ -1,5 +1,5 @@
 # location of installation directories
-locale_installdir=$(datadir)/locale
+locale_installdir=$(DESTDIR)$(datadir)/locale
 DOMAIN=sflphone
 
 POTFILE=sflphone.pot

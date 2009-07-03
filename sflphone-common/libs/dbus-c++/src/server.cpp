@@ -35,8 +35,8 @@
 
 using namespace DBus;
 
-Server::Private::Private(DBusServer *s)
-: server(s)
+Server::Private::Private (DBusServer *s)
+        : server (s)
 {
 }
 
@@ -44,34 +44,35 @@ Server::Private::~Private()
 {
 }
 
-void Server::Private::on_new_conn_cb(DBusServer *server, DBusConnection *conn, void *data)
+void Server::Private::on_new_conn_cb (DBusServer *server, DBusConnection *conn, void *data)
 {
-	Server *s = static_cast<Server *>(data);
+    Server *s = static_cast<Server *> (data);
 
-	Connection nc (new Connection::Private(conn, s->_pvt.get()));
+    Connection nc (new Connection::Private (conn, s->_pvt.get()));
 
-	s->_pvt->connections.push_back(nc);
+    s->_pvt->connections.push_back (nc);
 
-	s->on_new_connection(nc);
+    s->on_new_connection (nc);
 
-	debug_log("incoming connection 0x%08x", conn);
+    debug_log ("incoming connection 0x%08x", conn);
 }
 
-Server::Server(const char *address)
+Server::Server (const char *address)
 {
-	InternalError e;
-	DBusServer *server = dbus_server_listen(address, e);
+    InternalError e;
+    DBusServer *server = dbus_server_listen (address, e);
 
-	if (e) throw Error(e);
+    if (e) throw Error (e);
 
-	debug_log("server 0x%08x listening on %s", server, address);
+    debug_log ("server 0x%08x listening on %s", server, address);
 
-	_pvt = new Private(server);
+    _pvt = new Private (server);
 
-	dbus_server_set_new_connection_function(_pvt->server, Private::on_new_conn_cb, this, NULL);
+    dbus_server_set_new_connection_function (_pvt->server, Private::on_new_conn_cb, this, NULL);
 
-	setup(default_dispatcher);
+    setup (default_dispatcher);
 }
+
 /*
 Server::Server(const Server &s)
 : _pvt(s._pvt)
@@ -81,49 +82,50 @@ Server::Server(const Server &s)
 */
 Server::~Server()
 {
-	dbus_server_unref(_pvt->server);
+    dbus_server_unref (_pvt->server);
 }
 
-Dispatcher *Server::setup(Dispatcher *dispatcher)
+Dispatcher *Server::setup (Dispatcher *dispatcher)
 {
-	debug_log("registering stubs for server %p", _pvt->server);
+    debug_log ("registering stubs for server %p", _pvt->server);
 
-	Dispatcher *prev = _pvt->dispatcher;
+    Dispatcher *prev = _pvt->dispatcher;
 
-	dbus_server_set_watch_functions(
-		_pvt->server,
-		Dispatcher::Private::on_add_watch,
-		Dispatcher::Private::on_rem_watch,
-		Dispatcher::Private::on_toggle_watch,
-		dispatcher,
-		0
-	);
+    dbus_server_set_watch_functions (
+        _pvt->server,
+        Dispatcher::Private::on_add_watch,
+        Dispatcher::Private::on_rem_watch,
+        Dispatcher::Private::on_toggle_watch,
+        dispatcher,
+        0
+    );
 
-	dbus_server_set_timeout_functions(
-		_pvt->server,
-		Dispatcher::Private::on_add_timeout,
-		Dispatcher::Private::on_rem_timeout,
-		Dispatcher::Private::on_toggle_timeout,
-		dispatcher,
-		0
-	);
+    dbus_server_set_timeout_functions (
+        _pvt->server,
+        Dispatcher::Private::on_add_timeout,
+        Dispatcher::Private::on_rem_timeout,
+        Dispatcher::Private::on_toggle_timeout,
+        dispatcher,
+        0
+    );
 
-	_pvt->dispatcher = dispatcher;
+    _pvt->dispatcher = dispatcher;
 
-	return prev;
+    return prev;
 }
 
 bool Server::operator == (const Server &s) const
 {
-	return _pvt->server == s._pvt->server;
+    return _pvt->server == s._pvt->server;
 }
 
 bool Server::listening() const
 {
-	return dbus_server_get_is_connected(_pvt->server);
+    return dbus_server_get_is_connected (_pvt->server);
 }
+
 void Server::disconnect()
 {
-	dbus_server_disconnect(_pvt->server);
+    dbus_server_disconnect (_pvt->server);
 }
 

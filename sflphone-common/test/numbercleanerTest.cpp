@@ -42,70 +42,85 @@ using std::cout;
 using std::endl;
 
 
-void NumberCleanerTest::setUp(){
+void NumberCleanerTest::setUp()
+{
     // Instanciate the cleaner singleton
     cleaner = new NumberCleaner ();
 }
 
-void NumberCleanerTest::test_format_1 (void) {
+void NumberCleanerTest::test_format_1 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_1) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_2 (void) {
+void NumberCleanerTest::test_format_2 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_2) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_3 (void) {
+void NumberCleanerTest::test_format_3 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_3) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_4 (void) {
+void NumberCleanerTest::test_format_4 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_4) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_5 (void) {
+void NumberCleanerTest::test_format_5 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_5) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_6 (void) {
+void NumberCleanerTest::test_format_6 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_6) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_7 (void) {
+void NumberCleanerTest::test_format_7 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_7) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_8 (void) {
+void NumberCleanerTest::test_format_8 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_8) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_9 (void) {
+void NumberCleanerTest::test_format_9 (void)
+{
 
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_9) == VALID_NUMBER);
 }
 
-void NumberCleanerTest::test_format_10 (void) {
+void NumberCleanerTest::test_format_10 (void)
+{
 
     cleaner->set_phone_number_prefix ("9");
     CPPUNIT_ASSERT (cleaner->get_phone_number_prefix () == "9");
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_1) == VALID_PREPENDED_NUMBER);
 }
 
-void NumberCleanerTest::test_format_11 (void) {
+void NumberCleanerTest::test_format_11 (void)
+{
 
     cleaner->set_phone_number_prefix ("9");
     CPPUNIT_ASSERT (cleaner->get_phone_number_prefix () == "9");
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_10) == VALID_EXTENSION);
 }
-void NumberCleanerTest::tearDown(){
+
+void NumberCleanerTest::tearDown()
+{
     // Delete the cleaner object
-    delete cleaner; cleaner=0;
+    delete cleaner;
+    cleaner=0;
 }

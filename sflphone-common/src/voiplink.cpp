@@ -24,63 +24,72 @@
 #include "voiplink.h"
 #include "manager.h"
 
-VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0),  _initDone(false) 
+VoIPLink::VoIPLink (const AccountID& accountID) : _accountID (accountID), _localIPAddress ("127.0.0.1"), _localPort (0),  _initDone (false)
 {
 }
 
-VoIPLink::~VoIPLink (void) 
+VoIPLink::~VoIPLink (void)
 {
     clearCallMap();
 }
 
-bool VoIPLink::addCall(Call* call)
+bool VoIPLink::addCall (Call* call)
 {
     if (call) {
-        if (getCall(call->getCallId()) == NULL) {
-            ost::MutexLock m(_callMapMutex);
-            _callMap[call->getCallId()] = call;
+        if (getCall (call->getCallId()) == NULL) {
+            ost::MutexLock m (_callMapMutex);
+            _callMap[call->getCallId() ] = call;
         }
-    }  
+    }
+
     return false;
 }
 
-bool VoIPLink::removeCall(const CallID& id)
+bool VoIPLink::removeCall (const CallID& id)
 {
-    ost::MutexLock m(_callMapMutex);
-    if (_callMap.erase(id)) {
+    ost::MutexLock m (_callMapMutex);
+
+    if (_callMap.erase (id)) {
         return true;
-    }  
+    }
+
     return false;
 }
 
-Call* VoIPLink::getCall(const CallID& id)
+Call* VoIPLink::getCall (const CallID& id)
 {
-  ost::MutexLock m(_callMapMutex);
-  CallMap::iterator iter = _callMap.find(id);
-  if ( iter != _callMap.end() ) {
-    return iter->second;
-  }
-  return NULL;
+    ost::MutexLock m (_callMapMutex);
+    CallMap::iterator iter = _callMap.find (id);
+
+    if (iter != _callMap.end()) {
+        return iter->second;
+    }
+
+    return NULL;
 }
 
 bool VoIPLink::clearCallMap()
 {
-  ost::MutexLock m(_callMapMutex);
-  CallMap::iterator iter = _callMap.begin();
-  while( iter != _callMap.end() ) {
-    // if (iter) ?
-    delete iter->second; iter->second = 0;
-    iter++;
-  }
-  _callMap.clear();
-  return true;
+    ost::MutexLock m (_callMapMutex);
+    CallMap::iterator iter = _callMap.begin();
+
+    while (iter != _callMap.end()) {
+        // if (iter) ?
+        delete iter->second;
+        iter->second = 0;
+        iter++;
+    }
+
+    _callMap.clear();
+
+    return true;
 }
 
-Account* VoIPLink::getAccountPtr(void)
+Account* VoIPLink::getAccountPtr (void)
 {
     Account* account;
     AccountID id;
 
     id = getAccountID();
-    return Manager::instance().getAccount(id);
+    return Manager::instance().getAccount (id);
 }

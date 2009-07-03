@@ -1,5 +1,5 @@
 /* $Id: config.h 2394 2008-12-23 17:27:53Z bennylp $ */
-/* 
+/*
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #ifndef __PJMEDIA_CODEC_CONFIG_H__
 #define __PJMEDIA_CODEC_CONFIG_H__
@@ -118,7 +118,7 @@
 
 /**
  * Enable Intel IPP AMR codec. This also needs to be enabled when AMR WB
- * codec is enabled. This option is only used when PJMEDIA_HAS_INTEL_IPP 
+ * codec is enabled. This option is only used when PJMEDIA_HAS_INTEL_IPP
  * is enabled.
  *
  * Default: 1
@@ -130,7 +130,7 @@
 
 /**
  * Enable Intel IPP AMR wideband codec. The PJMEDIA_HAS_INTEL_IPP_CODEC_AMR
- * option must also be enabled to use this codec. This option is only used 
+ * option must also be enabled to use this codec. This option is only used
  * when PJMEDIA_HAS_INTEL_IPP is enabled.
  *
  * Default: 1
