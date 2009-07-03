@@ -1,15 +1,213 @@
-sflphone-common (0.9.5-SYSVER~snapshot1243483310) SYSTEM; urgency=low
+sflphone-common (0.9.6~beta-SYSVER) SYSTEM; urgency=low
 
-    ** SNAPSHOT 1243483310 **
+    ** 0.9.6~beta **
 
+  * spec files for mandriva and opensuse updated with buildrequires
+    libqt4-dev >=4.3
+  * [#1700] Cannot build on ubuntu 8.10 and a few other distribs
+  * [#1502] Update version number where applicable
+  * [#1642] Update client icons
+  * [#1450] Clean up useless debug and comments in sipvoiplink and
+    audiortp
+  * [#1450] Remove Semaphore object in AudioRtp thread deletion
+  * [#1450] Audio RTP init now synchronized with Sip/SDP
+  * [#1693] kde client crashes when changing codecs order/activation
+  * [#1450] Deep refactoring of audiortp
+  * [#1450] setRtpSessionRemoteIp
+  * [#1689] getCallList at start
+  * [#1224] Change path in package files
+  * [#1450] Audio RTP initialized only once, payload and remote ip set
+    at runtime
+  * [#1450] Add setRtpSessionMedia and setRtpSessionRemoteIp address
+  * [#1642] Make GNOME GUI fresher and younger ;)
+  * [#1686] Status bar displaying used account
+  * added sflphone-kde icon so that it compiles
+  * [#1659] Ending a call causes the daemon to crash
+  * corrected introspection XMLs, po files...
+  * [#1211] g722 media descriptor in codecDescriptor
+  * [#1310] Install sflphoned in $(prefix)/lib/sflphone
+  * [#1502] Do not install test binaries and dbus utilitaries
+  * [#1224] hack for pjsip build system!
+  * [#1224] Remove pjsip binaries from repo
+  * [#1224] Upgrade to pjsip 1.0.2
+  * [#1658] About SFLphone (bugs)
+  * [#1658] About SFLphone
+  * [#1660] Displaying all dialed numbers in a call
+  * Tested status bar.
+  * [#790] Optimize pulse audio streams parameters
+  * [#1678] Some usefull debug messages for mutex/semaphore deadlock
+    problem
+  * [#1669] Add/remove some usefull/unusefull debug
+  * [#1665] Fix latency related to pulse audio stream openning/closing
+  * [#1457] Make the menus and panels accessible in french
+  * [#1457] Improve broken keyboard accessibility in menus and conf
+    panels
+  * [#961] Instanciate only once the searchbar icons
+  * [#961] Restore transfer fonction
+  * [#961] Filter on the history type OK
+  * [#961] Fix compilation problems on hardy/intrepid
+  * [#1157] Commit missing files
+  * [#790] Reduce number of start/stop streams call on pulse audio
+  * [#1639] kde client crashes when no account registered
+  * [#1620] Fix the searchbar
+  * [#1620] Get back caltree as it was during gtkcritical area
+  * [#1620] Add history filter reinit function
+  * [#1335] Add a missing label in address book preferences
+  * [#1561] Update russian translation - Hussein Abdallah
+  * [#1605] Fix edit menu french translation
+  * [#961] Enable to search in the history according to the call type
+  * [#1449] Searchbar does not work anymore
+  * [#961] Add popup menu on the entry primary icon for history
+  * [#1317] Fixed KDE client package dependency
+  * [#936] speex 32 khz integration completed
+  * [#936] Use 320 frame size
+  * [#936] Test using a frame size at 320 smpls
+  * [#1214] Enable / Disable history
+  * [#1607] Fix compilation problem for ubuntu 8.10 (libsexy)
+  * [#1313] Implement processDataEncode processDataDecode in audiortp
+  * [#1613] codec list order can't be set
+  * Better handling of localisation + added languages + corrected
+    warnings + begginning of new config dialog with kconfig + 14px
+    account leds
+  * [#1214] Save and load history according to the limit timestamp +
+    unit tests
+  * [1609] Fix call number copy/paste feature
+  * [1607] Restore clear action icon in searchbar
+  * [#936] Try to decode using 1280 samples
+  * [#936] Add some debug
+  * [#936] Add .cpp file
+  * [#936] Oops Forgot speex 32 khz
+  * [#1214] Add configuration panel for history + D-Bus calls
+  * [#1313] Test rtp thread function, frame size, nbbytes, resampling
+  * [#790] Flush audio data before closing audio streams
+  * [#1214] History displays local time
+  * [#1214] Skip empty field on display
+  * [#1214] Associate an account to an history entry
+  * [#1342] Get addressbook options sensitive/non-sensitive
+  * [#1211] Clean up and comments
+  * [#1211] Get back to 20 ms framesize
+  * [#1211] Use sendImmediate instead of putData in RTP
+  * [#1211] Fix nb byte available in RTP
+  * [#1211] Clear condition on maxNbSamples in RTP
+  * [#1211] Fix max byte available in RTP session
+  * [#1211] G722: Use 160 samples per frame instead of 320
+  * [#1211] Test using a dynamic payload
+  * [#1211] Test using a dynamic payload type
+  * [#1211] Rename size variable (nb_samples, nb_bytes)
+  * [#1211] Test g722 ip-to-ip sending twice the data lenth
+  * [#1211] Test g722 ip-to-ip
+  * [#1214] Do not select an history item by default at startup
+  * [#1214] Remove some compilation warnings
+  * [#1214] Handle empty field - remove g_print
+  * [#1214] Add each history item only once
+  * [#1214] Handle call timestamps properlier
+  * [#1214] Do not need timestamp files anymore
+  * [#1214] Use the saved date for history entry
+  * Clean up
+  * [#1214] Client doesn't crash if the D-Bus call fails
+  * [#1214] Client is able to save its history - still some glitches
+  * [#1211] Forgot 16000 for g722
+  * [#1211] G722 initialization
+  * [#1214] Save name/number, successfully load the history if no fields
+    are empty
+  * [#1499] Fixed destination directory bug
+  * [#1214] Restore all the functionalities; peer name/number way more
+    easy to handle !!
+  * [#1214] Add callable_object instead of call_t, refactoring
+  * [#1211] Test with polycom soundstation 16000
+  * [#1211] Remove C like inline function in g722 codec
+  * [#1342] Finalize gnome client preference window formating
+  * [#1214] Retrieve the history when the gnome client startsup
+  * [#1306] Implement localization for KDE client
+  * [#1593] enable accounts apply button when account checked/unchecked
+  * [#1214] Implement the dbus calls on server side
+  * [#1214] Add serialized/unserialized functions to pass data on DBUS
+  * [#1342] Formating gnome client configuration windows
+  * [#1214] Save sucessfully a map of history items
+  * [#1499] Removed multiple jobs compilation for KDE client (2)
+  * [#1214] Load history from file into memory, add unit tests
+  * [#1534] Throws a length_error exception in case URL exceeds
+    std::string max_size
+  * [#1499] Removed multiple jobs compilation for KDE client
+  * [#1565] make account leds smaller
+  * [1430] Fix dbus debug
+  * [#1562] crashes when trying to change item of a call of state "OVER"
+  * [#1116] Fix compilation bug
+  * [#1317] Added mandriva and opensuse-11 64 bits
+  * [#1108] Add messges in main window concerning transfer success
+    failure
+  * [#1116] Fix compilation problems
+  * [#1211] g722 Makefile
+  * [#1108] Client side transferFailed/trasferSucceded signals handling
+  * [#1211] G722 mostly completed,
+  * [#1555] make bigger toolbar (24x24)
+  * [#1551] remove default mailbox number in wizard and disable mailbox
+    button when first account doesn't have mailbox number
+  * [#1342] Re-add sflphone manpages
+  * [#1116] Fix compilation on non-jaunty distros
+  * [#1317] Fixed opensuse startup sleep
+  * [#1108] Add a signal in the client to notify successful or failed
+    transfer
+  * [#1108] Dbus signals concerning call transfer success/failure
+  * [#1317] Added opensuse to automatic build system
+  * [#1223] Fix manpages bug
+  * [#1060] german translation glitch
+  * Clean up some gnome client warnings
+  * [#1547] replace ugly account leds by beautiful icons
+  * [#1548] add close button that hides windowand just hide on clicking
+    the cross
+  * [#1549] put introspec XMLs in the client's source
+  * [#1312] Implement getCallList D-BUS method
+  * [#1116] Clear text in history and contacts
+  * [#1499] KDE integration
+  * [#1469] Modify header linkers in dbus-c++'s Makefile.am's
+  * [#1469] Remove examples folder from dbus-c++
+  * [#1214] History integration in build system; unit test squeleton
+  * [#1317] Cleaning
+  * [#1469] Remove configure stuff in dbus-c++
+  * [#1469] Add unofficial mainline dbus-c++
+  * [#1469] Remove dbus-c++ from freedesktop
+  * [#1430] Bring account changed signal/callback back to normal
+  * [#1060] Update german translation - Sven Werlen
+  * [#1430] Add marshaller one string define
+  * [#1430] Send account change signal broadcast using account id
+  * [#1430] Remove condition on setRegistrationState, cause stun to
+    crash
+  * [#1317] Centralized version handling
+  * [#1317] Fixed version number on sfl-git-dch
+  * [#1317] Refactoring for new distributions
+  * [#1215] Fix account order at startup if latency
+  * [#1088] Restore sip dns srv
+  * [#1214] Add squeleton for history manager
+  * [#1430] Add accout id to accout changed method
+  * [#1430] No connectionStatusNotification (account changed) if no
+    changes
+  * [#1538] Add COPYING file
+  * [#1430] Add audio rtp thread tests
+  * [#1317] Changed version detection
+  * [#1538] Document license in libs/stund
+  * [#1317] Added version files
+  * [#1538] Apply François patches - debian packages
+  * [#1317] Updated spec files
+  * add files
+  * [#1538] Apply François patches - debian packages
+  * [#1535] Change program file structure (directory src...)
+  * [#1317] Updated build system scripts
+  * [#1317] Cleaning
+  * [#1317] Copied introspect files to gnome client
+  * [#1317] Added opensuse to build-system : first-shot
   * [#1317] Remove spec files from configure
   * [#1317] Added missing prefix
+  * removed debug for daemon account fix
   * [#1430] Add a connection reference which most likely belong to
     libdbus
   * [#1430] Use shared connection instead of private
+  * make daemon find the account, added userMatch
+  * Clean code, add comments...
   * [#1317] Fixed packaging rules
   * [#1317] Updated autogen
   * Updated autogen.sh for pjsip
+  * [#1526] Set accounts order
   * [#1317] Fixed pjsip lib dirs
   * [#1317] Updated debian packaging for new pjsip configuration script
   * [#1317] Switch to autogenerated guess and sub files
@@ -27,6 +225,7 @@ sflphone-common (0.9.5-SYSVER~snapshot1243483310) SYSTEM; urgency=low
     call.
   * [#1443] Client should not crash when receive an unexpected
     stateChanged signal
+  * [#1403] Do not stop the notification anymore
   * [#1456] Added version dependancy handling
   * [#1426] Daemon crashes when get alsa plugin
   * [#1422] Improved error messages
@@ -92,7 +291,7 @@ sflphone-common (0.9.5-SYSVER~snapshot1243483310) SYSTEM; urgency=low
   * Config Dialog almost finished.
   * Base of QT client
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Thu, 28 May 2009 00:02:20 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 23 Jun 2009 11:12:06 -0400
 
 sflphone-common (0.9.5-SYSVER) SYSTEM; urgency=low
 
