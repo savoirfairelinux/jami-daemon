@@ -86,14 +86,25 @@ std::string
 Call::getStateStr ()
 {
     CallState state = getState();
-    _debug ("getStateStr , state = %d\n", state);
+	ConnectionState connection = getConnectionState ();
+	CallType type = _type;
     std::string state_str;
 
     switch (state) {
 
         case Active:
-            state_str = "CURRENT";
-            break;
+			switch (connection) {
+				case Ringing:
+					(type == Incoming)? state_str = "INCOMING":state_str = "RINGING";
+					break;
+				case Connected:
+					state_str = "CURRENT";
+					break;
+				default:
+					state_str = "CURRENT";
+					break;
+			}
+			break;
 
         case Hold:
             state_str = "HOLD";
@@ -104,7 +115,17 @@ Call::getStateStr ()
             break;
 
         case Inactive:
-            state_str = "INACTIVE";
+			switch (connection) {
+				case Ringing:
+					(type == Incoming)? state_str = "INCOMING":state_str = "RINGING";
+					break;
+				case Connected:
+					state_str = "CURRENT";
+					break;
+				default:
+					state_str = "INACTIVE";
+					break;
+			}
             break;
 
         case Refused:

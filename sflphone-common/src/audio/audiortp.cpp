@@ -486,7 +486,6 @@ AudioRtpRTX::sendSessionFromMic (int timestamp)
 
     int compSize = processDataEncode();
 
-    _debug ("compSize: %i ", compSize);
     // putData put the data on RTP queue, sendImmediate bypass this queue
     _session->putData (timestamp, micDataEncoded, compSize);
     // _session->sendImmediate(timestamp, micDataEncoded, compSize);
