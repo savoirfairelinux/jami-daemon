@@ -21,34 +21,46 @@
 #include "iaxcall.h"
 #include "global.h" // for _debug
 
-IAXCall::IAXCall(const CallID& id, Call::CallType type) : Call(id, type), _session(NULL) 
+IAXCall::IAXCall (const CallID& id, Call::CallType type) : Call (id, type), _session (NULL)
 {
 }
 
-IAXCall::~IAXCall() 
+IAXCall::~IAXCall()
 {
-  _session = NULL; // just to be sure to don't have unknown pointer, do not delete it!
+    _session = NULL; // just to be sure to don't have unknown pointer, do not delete it!
 }
 
 void
-IAXCall::setFormat(int format)
+IAXCall::setFormat (int format)
 {
-  _format = format;
-  switch(format) {
-  case AST_FORMAT_ULAW:
-    setAudioCodec(PAYLOAD_CODEC_ULAW); break;
-  case AST_FORMAT_GSM:
-    setAudioCodec(PAYLOAD_CODEC_GSM); break;
-  case AST_FORMAT_ALAW:
-    setAudioCodec(PAYLOAD_CODEC_ALAW); break;
-  case AST_FORMAT_ILBC:
-    setAudioCodec(PAYLOAD_CODEC_ILBC_20); break;
-  case AST_FORMAT_SPEEX:
-    setAudioCodec(PAYLOAD_CODEC_SPEEX_8000); break;
-  default:
-    setAudioCodec((AudioCodecType) -1);
-    break;
-  }
+    _format = format;
+
+    switch (format) {
+
+        case AST_FORMAT_ULAW:
+            setAudioCodec (PAYLOAD_CODEC_ULAW);
+            break;
+
+        case AST_FORMAT_GSM:
+            setAudioCodec (PAYLOAD_CODEC_GSM);
+            break;
+
+        case AST_FORMAT_ALAW:
+            setAudioCodec (PAYLOAD_CODEC_ALAW);
+            break;
+
+        case AST_FORMAT_ILBC:
+            setAudioCodec (PAYLOAD_CODEC_ILBC_20);
+            break;
+
+        case AST_FORMAT_SPEEX:
+            setAudioCodec (PAYLOAD_CODEC_SPEEX_8000);
+            break;
+
+        default:
+            setAudioCodec ( (AudioCodecType) -1);
+            break;
+    }
 }
 
 
@@ -61,66 +73,89 @@ IAXCall::getSupportedFormat()
 
     map = getCodecMap().getActiveCodecs();
 
-  for(iter=0 ; iter < map.size() ; iter++){
-    switch(map[iter]) {
-    case PAYLOAD_CODEC_ULAW:
-      format |= AST_FORMAT_ULAW;  break;
-    case PAYLOAD_CODEC_GSM:
-      format |= AST_FORMAT_GSM;   break;
-    case PAYLOAD_CODEC_ALAW:
-      format |= AST_FORMAT_ALAW;  break;
-    case PAYLOAD_CODEC_ILBC_20:
-      format |= AST_FORMAT_ILBC;  break;
-    case PAYLOAD_CODEC_SPEEX_8000:
-      format |= AST_FORMAT_SPEEX; 
-      break;
-    default:
-      break;
+    for (iter=0 ; iter < map.size() ; iter++) {
+        switch (map[iter]) {
+
+            case PAYLOAD_CODEC_ULAW:
+                format |= AST_FORMAT_ULAW;
+                break;
+
+            case PAYLOAD_CODEC_GSM:
+                format |= AST_FORMAT_GSM;
+                break;
+
+            case PAYLOAD_CODEC_ALAW:
+                format |= AST_FORMAT_ALAW;
+                break;
+
+            case PAYLOAD_CODEC_ILBC_20:
+                format |= AST_FORMAT_ILBC;
+                break;
+
+            case PAYLOAD_CODEC_SPEEX_8000:
+                format |= AST_FORMAT_SPEEX;
+                break;
+
+            default:
+                break;
+        }
     }
-  }
-  return format;
+
+    return format;
 
 }
 
 int
-IAXCall::getFirstMatchingFormat(int needles)
+IAXCall::getFirstMatchingFormat (int needles)
 {
-  CodecOrder map = getCodecMap().getActiveCodecs();
-  int format = 0;
-  unsigned int iter;
+    CodecOrder map = getCodecMap().getActiveCodecs();
+    int format = 0;
+    unsigned int iter;
 
-  for(iter=0 ; iter < map.size() ; iter++) { 
-  switch(map[iter]) {
-    case PAYLOAD_CODEC_ULAW:
-      format = AST_FORMAT_ULAW;  break;
-    case PAYLOAD_CODEC_GSM:
-      format = AST_FORMAT_GSM;   break;
-    case PAYLOAD_CODEC_ALAW:
-      format = AST_FORMAT_ALAW;  
-      break;
-    case PAYLOAD_CODEC_ILBC_20:
-      format = AST_FORMAT_ILBC;  break;
-    case PAYLOAD_CODEC_SPEEX_8000:
-      format = AST_FORMAT_SPEEX; break;
-    default:
-      break;
+    for (iter=0 ; iter < map.size() ; iter++) {
+        switch (map[iter]) {
+
+            case PAYLOAD_CODEC_ULAW:
+                format = AST_FORMAT_ULAW;
+                break;
+
+            case PAYLOAD_CODEC_GSM:
+                format = AST_FORMAT_GSM;
+                break;
+
+            case PAYLOAD_CODEC_ALAW:
+                format = AST_FORMAT_ALAW;
+                break;
+
+            case PAYLOAD_CODEC_ILBC_20:
+                format = AST_FORMAT_ILBC;
+                break;
+
+            case PAYLOAD_CODEC_SPEEX_8000:
+                format = AST_FORMAT_SPEEX;
+                break;
+
+            default:
+                break;
+        }
+
+        // Return the first that matches
+        if (format & needles)
+            return format;
+
     }
-    // Return the first that matches
-    if (format & needles)
-      return format;
-    
-  }
-  return 0;
+
+    return 0;
 }
 
 CodecDescriptor& IAXCall::getCodecMap()
 {
-  return _codecMap;
+    return _codecMap;
 }
 
 AudioCodecType IAXCall::getAudioCodec()
 {
-  return _audioCodec;  
+    return _audioCodec;
 }
 
 

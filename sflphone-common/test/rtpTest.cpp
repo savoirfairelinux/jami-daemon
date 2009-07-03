@@ -38,9 +38,10 @@ using std::cout;
 using std::endl;
 
 
-void RtpTest::setUp(){
+void RtpTest::setUp()
+{
 
-  _debug("------ Set up rtp test------\n");
+    _debug ("------ Set up rtp test------\n");
 
     Manager::instance().initConfigFile();
     Manager::instance().init();
@@ -49,25 +50,26 @@ void RtpTest::setUp(){
 
     CallID cid = "123456";
 
-    sipcall = new SIPCall(cid, Call::Incoming, _pool);
-    
-    sipcall->setLocalIp("127.0.0.1");
-    sipcall->setLocalAudioPort(RANDOM_LOCAL_PORT);
-    sipcall->setLocalExternAudioPort(RANDOM_LOCAL_PORT);
+    sipcall = new SIPCall (cid, Call::Incoming, _pool);
 
-    
+    sipcall->setLocalIp ("127.0.0.1");
+    sipcall->setLocalAudioPort (RANDOM_LOCAL_PORT);
+    sipcall->setLocalExternAudioPort (RANDOM_LOCAL_PORT);
+
+
 }
 
-bool RtpTest::pjsipInit(){
+bool RtpTest::pjsipInit()
+{
 
     // Create memory cache for pool
-    pj_caching_pool_init(&_cp, &pj_pool_factory_default_policy, 0);
+    pj_caching_pool_init (&_cp, &pj_pool_factory_default_policy, 0);
 
-    // Create memory pool for application. 
-    _pool = pj_pool_create(&_cp.factory, "rtpTest", 4000, 4000, NULL);
+    // Create memory pool for application.
+    _pool = pj_pool_create (&_cp.factory, "rtpTest", 4000, 4000, NULL);
 
     if (!_pool) {
-        _debug("----- RtpTest: Could not initialize pjsip memory pool ------\n");
+        _debug ("----- RtpTest: Could not initialize pjsip memory pool ------\n");
         return PJ_ENOMEM;
     }
 
@@ -79,41 +81,44 @@ void RtpTest::testRtpInitClose()
 
     audiortp = new AudioRtp();
 
-    _debug("------ void RtpTest::testRtpInit() ------\n");
-    try {
-
-        _debug("-------- Open Rtp Session ----------\n");
-        audiortp->createNewSession(sipcall);
-
-    } catch(...) {
-        
-        _debug("!!! Exception occured while Oppenning Rtp !!!\n");
-	
-    }
-
-    CPPUNIT_ASSERT(audiortp != NULL);
-
-
-    audiortp->_RTXThread->computeCodecFrameSize(320,8000);
-
-      // computeNbByteAudioLayer
-    
-    _debug("------ Finilize Rtp Initialization ------ \n");
-
-
-    _debug("------ RtpTest::testRtpClose() ------\n");
+    _debug ("------ void RtpTest::testRtpInit() ------\n");
 
     try {
-      _debug("------ Close Rtp Session -------\n");  
-        CPPUNIT_ASSERT(audiortp->closeRtpSession());
 
-    } catch(...) {
+        _debug ("-------- Open Rtp Session ----------\n");
+        audiortp->createNewSession (sipcall);
 
-        _debug("!!! Exception occured while closing Rtp !!!\n");
+    } catch (...) {
+
+        _debug ("!!! Exception occured while Oppenning Rtp !!!\n");
 
     }
 
-    delete audiortp;  audiortp = NULL;
+    CPPUNIT_ASSERT (audiortp != NULL);
+
+
+    audiortp->_RTXThread->computeCodecFrameSize (320,8000);
+
+    // computeNbByteAudioLayer
+
+    _debug ("------ Finilize Rtp Initialization ------ \n");
+
+
+    _debug ("------ RtpTest::testRtpClose() ------\n");
+
+    try {
+        _debug ("------ Close Rtp Session -------\n");
+        CPPUNIT_ASSERT (audiortp->closeRtpSession());
+
+    } catch (...) {
+
+        _debug ("!!! Exception occured while closing Rtp !!!\n");
+
+    }
+
+    delete audiortp;
+
+    audiortp = NULL;
 
 }
 
@@ -122,38 +127,42 @@ void RtpTest::testRtpThread()
 
     audiortp = new AudioRtp();
 
-    _debug("-------- Open Rtp Session ----------\n");
+    _debug ("-------- Open Rtp Session ----------\n");
+
     try {
 
-        audiortp->createNewSession(sipcall);
+        audiortp->createNewSession (sipcall);
 
-    } catch(...) {
-        
-        _debug("!!! Exception occured while Oppenning Rtp !!!\n");
-	
+    } catch (...) {
+
+        _debug ("!!! Exception occured while Oppenning Rtp !!!\n");
+
     }
 
-    _debug("------ void RtpTest::testRtpThread ------\n");  
+    _debug ("------ void RtpTest::testRtpThread ------\n");
 
-    CPPUNIT_ASSERT(audiortp->_RTXThread->computeCodecFrameSize(160,8000) == 20.0f);
-    CPPUNIT_ASSERT(audiortp->_RTXThread->computeCodecFrameSize(320,16000) == 20.0f);
-    CPPUNIT_ASSERT(audiortp->_RTXThread->computeCodecFrameSize(882,44100) == 20.0f);
+    CPPUNIT_ASSERT (audiortp->_RTXThread->computeCodecFrameSize (160,8000) == 20.0f);
+    CPPUNIT_ASSERT (audiortp->_RTXThread->computeCodecFrameSize (320,16000) == 20.0f);
+    CPPUNIT_ASSERT (audiortp->_RTXThread->computeCodecFrameSize (882,44100) == 20.0f);
 
     // 20 ms at 44.1 khz corespond to 882 samples (1764 byte)
-    CPPUNIT_ASSERT(audiortp->_RTXThread->computeNbByteAudioLayer(20.f) == 1764);
-    
-    _debug("------ Close Rtp Session -------\n");
+    CPPUNIT_ASSERT (audiortp->_RTXThread->computeNbByteAudioLayer (20.f) == 1764);
+
+    _debug ("------ Close Rtp Session -------\n");
+
     try {
 
-        CPPUNIT_ASSERT(audiortp->closeRtpSession());
+        CPPUNIT_ASSERT (audiortp->closeRtpSession());
 
-    } catch(...) {
+    } catch (...) {
 
-        _debug("!!! Exception occured while closing Rtp !!!\n");
+        _debug ("!!! Exception occured while closing Rtp !!!\n");
 
     }
 
-    delete audiortp;  audiortp = NULL;
+    delete audiortp;
+
+    audiortp = NULL;
 }
 
 
@@ -173,48 +182,56 @@ void RtpTest::testRtpResampling()
 
     audiortp = new AudioRtp();
 
-    _debug("-------- Open Rtp Session ----------\n");
+    _debug ("-------- Open Rtp Session ----------\n");
+
     try {
 
-        audiortp->createNewSession(sipcall);
+        audiortp->createNewSession (sipcall);
 
-    } catch(...) {
-        
-        _debug("!!! Exception occured while Oppenning Rtp !!!\n");
-	
+    } catch (...) {
+
+        _debug ("!!! Exception occured while Oppenning Rtp !!!\n");
+
     }
 
-    _debug("------ void RtpTest::testRtpResampling ------\n");  
+    _debug ("------ void RtpTest::testRtpResampling ------\n");
 
-    CPPUNIT_ASSERT(0 == 0);
-    rsmpl_nbSample = audiortp->_RTXThread->reSampleData(data, rsmpl_data, 8000, nbSample, UP_SAMPLING);
-    _debug("ORIGINAL DATA SET\n");
+    CPPUNIT_ASSERT (0 == 0);
+    rsmpl_nbSample = audiortp->_RTXThread->reSampleData (data, rsmpl_data, 8000, nbSample, UP_SAMPLING);
+    _debug ("ORIGINAL DATA SET\n");
+
     for (int i = 0; i < nbSample; i++)
-        printf("  %i=>%i  ", i, data[i]);
-    
-    _debug("RESAMPLED DATA SET\n");
-    for (int i = 0; i < rsmpl_nbSample; i++ )
-        printf("  %i=>%i  ", i, rsmpl_data[i]);
+        printf ("  %i=>%i  ", i, data[i]);
 
-    printf("\n");
-    
-    
-    _debug("------ Close Rtp Session -------\n");
+    _debug ("RESAMPLED DATA SET\n");
+
+    for (int i = 0; i < rsmpl_nbSample; i++)
+        printf ("  %i=>%i  ", i, rsmpl_data[i]);
+
+    printf ("\n");
+
+
+    _debug ("------ Close Rtp Session -------\n");
+
     try {
 
-        CPPUNIT_ASSERT(audiortp->closeRtpSession());
+        CPPUNIT_ASSERT (audiortp->closeRtpSession());
 
-    } catch(...) {
+    } catch (...) {
 
-        _debug("!!! Exception occured while closing Rtp !!!\n");
+        _debug ("!!! Exception occured while closing Rtp !!!\n");
 
     }
 
-    delete audiortp;  audiortp = NULL;
+    delete audiortp;
+
+    audiortp = NULL;
 }
 
 
-void RtpTest::tearDown(){
+void RtpTest::tearDown()
+{
 
-    delete sipcall;   sipcall = NULL;
+    delete sipcall;
+    sipcall = NULL;
 }

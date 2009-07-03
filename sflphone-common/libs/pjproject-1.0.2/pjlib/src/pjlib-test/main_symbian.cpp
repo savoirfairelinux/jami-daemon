@@ -25,8 +25,10 @@ int main()
     //err = test_main();
 
     if (err)
-	return err;
+        return err;
+
     return exp;
+
     //return 0;
 }
 
@@ -53,7 +55,7 @@ LOCAL_C void MainL()
     //
     test_main();
 
-    console->Printf(_L(" [press any key]\n"));
+    console->Printf (_L (" [press any key]\n"));
     console->Getch();
 
     CActiveScheduler::Stop();
@@ -61,60 +63,61 @@ LOCAL_C void MainL()
 
 class MyScheduler : public CActiveScheduler
 {
-public:
-    MyScheduler()
-    {}
 
-    void Error(TInt aError) const;
+    public:
+        MyScheduler() {}
+
+        void Error (TInt aError) const;
 };
 
-void MyScheduler::Error(TInt aError) const
+void MyScheduler::Error (TInt aError) const
 {
-    PJ_UNUSED_ARG(aError);
+    PJ_UNUSED_ARG (aError);
 }
 
 class ProgramStarter : public CActive
 {
-public:
-    static ProgramStarter *NewL();
-    void Start();
 
-protected:
-    ProgramStarter();
-    void ConstructL();
-    virtual void RunL();
-    virtual void DoCancel();
-    TInt RunError(TInt aError);
+    public:
+        static ProgramStarter *NewL();
+        void Start();
 
-private:
-    RTimer timer_;
+    protected:
+        ProgramStarter();
+        void ConstructL();
+        virtual void RunL();
+        virtual void DoCancel();
+        TInt RunError (TInt aError);
+
+    private:
+        RTimer timer_;
 };
 
 ProgramStarter::ProgramStarter()
-: CActive(EPriorityNormal)
+        : CActive (EPriorityNormal)
 {
 }
 
 void ProgramStarter::ConstructL()
 {
     timer_.CreateLocal();
-    CActiveScheduler::Add(this);
+    CActiveScheduler::Add (this);
 }
 
 ProgramStarter *ProgramStarter::NewL()
 {
     ProgramStarter *self = new (ELeave) ProgramStarter;
-    CleanupStack::PushL(self);
+    CleanupStack::PushL (self);
 
     self->ConstructL();
 
-    CleanupStack::Pop(self);
+    CleanupStack::Pop (self);
     return self;
 }
 
 void ProgramStarter::Start()
 {
-    timer_.After(iStatus, 0);
+    timer_.After (iStatus, 0);
     SetActive();
 }
 
@@ -127,67 +130,74 @@ void ProgramStarter::DoCancel()
 {
 }
 
-TInt ProgramStarter::RunError(TInt aError)
+TInt ProgramStarter::RunError (TInt aError)
 {
-    PJ_UNUSED_ARG(aError);
+    PJ_UNUSED_ARG (aError);
     return KErrNone;
 }
 
 
 LOCAL_C void DoStartL()
-    {
+{
     // Create active scheduler (to run active objects)
     CActiveScheduler* scheduler = new (ELeave) MyScheduler;
-    CleanupStack::PushL(scheduler);
-    CActiveScheduler::Install(scheduler);
+    CleanupStack::PushL (scheduler);
+    CActiveScheduler::Install (scheduler);
 
     ProgramStarter *starter = ProgramStarter::NewL();
     starter->Start();
 
     CActiveScheduler::Start();
-    }
+}
 
 
 //  Global Functions
 
-static void log_writer(int level, const char *buf, int len)
+static void log_writer (int level, const char *buf, int len)
 {
     wchar_t buf16[PJ_LOG_MAX_SIZE];
 
-    PJ_UNUSED_ARG(level);
-    
-    pj_ansi_to_unicode(buf, len, buf16, PJ_ARRAY_SIZE(buf16));
+    PJ_UNUSED_ARG (level);
 
-    TPtrC16 aBuf((const TUint16*)buf16, (TInt)len);
-    console->Write(aBuf);
+    pj_ansi_to_unicode (buf, len, buf16, PJ_ARRAY_SIZE (buf16));
+
+    TPtrC16 aBuf ( (const TUint16*) buf16, (TInt) len);
+    console->Write (aBuf);
 }
 
 
 GLDEF_C TInt E32Main()
-    {
+{
     // Create cleanup stack
     __UHEAP_MARK;
     CTrapCleanup* cleanup = CTrapCleanup::New();
 
     // Create output console
-    TRAPD(createError, console = Console::NewL(_L("Console"), TSize(KConsFullScreen,KConsFullScreen)));
+    TRAPD (createError, console = Console::NewL (_L ("Console"), TSize (KConsFullScreen,KConsFullScreen)));
+
     if (createError)
         return createError;
 
-    pj_log_set_log_func(&log_writer);
+    pj_log_set_log_func (&log_writer);
 
     // Run application code inside TRAP harness, wait keypress when terminated
-    TRAPD(mainError, DoStartL());
+    TRAPD (mainError, DoStartL());
+
     if (mainError)
-        console->Printf(_L(" failed, leave code = %d"), mainError);
-    console->Printf(_L(" [press any key]\n"));
+        console->Printf (_L (" failed, leave code = %d"), mainError);
+
+    console->Printf (_L (" [press any key]\n"));
+
     console->Getch();
-    
+
     delete console;
+
     delete cleanup;
+
     __UHEAP_MARKEND;
+
     return KErrNone;
-    }
+}
 
 #endif	/* if 0 */
 

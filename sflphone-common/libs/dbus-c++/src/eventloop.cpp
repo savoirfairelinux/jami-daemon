@@ -35,64 +35,64 @@
 
 using namespace DBus;
 
-static double millis(timeval tv)
+static double millis (timeval tv)
 {
-	return (tv.tv_sec *1000.0 + tv.tv_usec/1000.0);
+    return (tv.tv_sec *1000.0 + tv.tv_usec/1000.0);
 }
-	
-DefaultTimeout::DefaultTimeout(int interval, bool repeat, DefaultMainLoop *ed)
-: _enabled(true), _interval(interval), _repeat(repeat), _expiration(0), _data(0), _disp(ed)
+
+DefaultTimeout::DefaultTimeout (int interval, bool repeat, DefaultMainLoop *ed)
+        : _enabled (true), _interval (interval), _repeat (repeat), _expiration (0), _data (0), _disp (ed)
 {
-	timeval now;
-	gettimeofday(&now, NULL);
+    timeval now;
+    gettimeofday (&now, NULL);
 
-	_expiration = millis(now) + interval;
+    _expiration = millis (now) + interval;
 
-	_disp->_mutex_t.lock();
-	_disp->_timeouts.push_back(this);
-	_disp->_mutex_t.unlock();
+    _disp->_mutex_t.lock();
+    _disp->_timeouts.push_back (this);
+    _disp->_mutex_t.unlock();
 }
 
 DefaultTimeout::~DefaultTimeout()
 {
-	_disp->_mutex_t.lock();
-	_disp->_timeouts.remove(this);
-	_disp->_mutex_t.unlock();
+    _disp->_mutex_t.lock();
+    _disp->_timeouts.remove (this);
+    _disp->_mutex_t.unlock();
 }
 
-DefaultWatch::DefaultWatch(int fd, int flags, DefaultMainLoop *ed)
-: _enabled(true), _fd(fd), _flags(flags), _state(0), _data(0), _disp(ed)
+DefaultWatch::DefaultWatch (int fd, int flags, DefaultMainLoop *ed)
+        : _enabled (true), _fd (fd), _flags (flags), _state (0), _data (0), _disp (ed)
 {
-	_disp->_mutex_w.lock();
-	_disp->_watches.push_back(this);
-	_disp->_mutex_w.unlock();
+    _disp->_mutex_w.lock();
+    _disp->_watches.push_back (this);
+    _disp->_mutex_w.unlock();
 }
 
 DefaultWatch::~DefaultWatch()
 {
-	_disp->_mutex_w.lock();
-	_disp->_watches.remove(this);
-	_disp->_mutex_w.unlock();
+    _disp->_mutex_w.lock();
+    _disp->_watches.remove (this);
+    _disp->_mutex_w.unlock();
 }
 
 DefaultMutex::DefaultMutex()
 {
-	pthread_mutex_init(&_mutex, NULL);
+    pthread_mutex_init (&_mutex, NULL);
 }
 
 DefaultMutex::~DefaultMutex()
 {
-	pthread_mutex_destroy(&_mutex);
+    pthread_mutex_destroy (&_mutex);
 }
 
 void DefaultMutex::lock()
 {
-	pthread_mutex_lock(&_mutex);
+    pthread_mutex_lock (&_mutex);
 }
 
 void DefaultMutex::unlock()
 {
-	pthread_mutex_unlock(&_mutex);
+    pthread_mutex_unlock (&_mutex);
 }
 
 DefaultMainLoop::DefaultMainLoop()
@@ -101,130 +101,124 @@ DefaultMainLoop::DefaultMainLoop()
 
 DefaultMainLoop::~DefaultMainLoop()
 {
-	_mutex_w.lock();
+    _mutex_w.lock();
 
-	DefaultWatches::iterator wi = _watches.begin();
-	while (wi != _watches.end())
-	{
-		DefaultWatches::iterator wmp = wi;
-		++wmp;
-		_mutex_w.unlock();
-		delete (*wi);
-		_mutex_w.lock();
-		wi = wmp;
-	}
-	_mutex_w.unlock();
+    DefaultWatches::iterator wi = _watches.begin();
 
-	_mutex_t.lock();
+    while (wi != _watches.end()) {
+        DefaultWatches::iterator wmp = wi;
+        ++wmp;
+        _mutex_w.unlock();
+        delete (*wi);
+        _mutex_w.lock();
+        wi = wmp;
+    }
 
-	DefaultTimeouts::iterator ti = _timeouts.begin();
-	while (ti != _timeouts.end())
-	{
-		DefaultTimeouts::iterator tmp = ti;
-		++tmp;
-		_mutex_t.unlock();
-		delete (*ti);
-		_mutex_t.lock();
-		ti = tmp;
-	}
-	_mutex_t.unlock();
+    _mutex_w.unlock();
+
+    _mutex_t.lock();
+
+    DefaultTimeouts::iterator ti = _timeouts.begin();
+
+    while (ti != _timeouts.end()) {
+        DefaultTimeouts::iterator tmp = ti;
+        ++tmp;
+        _mutex_t.unlock();
+        delete (*ti);
+        _mutex_t.lock();
+        ti = tmp;
+    }
+
+    _mutex_t.unlock();
 }
 
 void DefaultMainLoop::dispatch()
 {
-	_mutex_w.lock();
+    _mutex_w.lock();
 
-	int nfd = _watches.size();
+    int nfd = _watches.size();
 
-	pollfd fds[nfd];
+    pollfd fds[nfd];
 
-	DefaultWatches::iterator wi = _watches.begin();
+    DefaultWatches::iterator wi = _watches.begin();
 
-	for (nfd = 0; wi != _watches.end(); ++wi)
-	{
-		if ((*wi)->enabled())
-		{
-			fds[nfd].fd = (*wi)->descriptor();
-			fds[nfd].events = (*wi)->flags();
-			fds[nfd].revents = 0;
+    for (nfd = 0; wi != _watches.end(); ++wi) {
+        if ( (*wi)->enabled()) {
+            fds[nfd].fd = (*wi)->descriptor();
+            fds[nfd].events = (*wi)->flags();
+            fds[nfd].revents = 0;
 
-			++nfd;
-		}
-	}
-	_mutex_w.unlock();
+            ++nfd;
+        }
+    }
 
-	int wait_min = 10000;
+    _mutex_w.unlock();
 
-	DefaultTimeouts::iterator ti;
+    int wait_min = 10000;
 
-	_mutex_t.lock();
+    DefaultTimeouts::iterator ti;
 
-	for (ti = _timeouts.begin(); ti != _timeouts.end(); ++ti)
-	{
-		if ((*ti)->enabled() && (*ti)->interval() < wait_min)
-			wait_min = (*ti)->interval();
-	}
+    _mutex_t.lock();
 
-	_mutex_t.unlock();
+    for (ti = _timeouts.begin(); ti != _timeouts.end(); ++ti) {
+        if ( (*ti)->enabled() && (*ti)->interval() < wait_min)
+            wait_min = (*ti)->interval();
+    }
 
-	poll(fds, nfd, wait_min);
+    _mutex_t.unlock();
 
-	timeval now;
-	gettimeofday(&now, NULL);
+    poll (fds, nfd, wait_min);
 
-	double now_millis = millis(now);
+    timeval now;
+    gettimeofday (&now, NULL);
 
-	_mutex_t.lock();
+    double now_millis = millis (now);
 
-	ti = _timeouts.begin();
+    _mutex_t.lock();
 
-	while (ti != _timeouts.end())
-	{
-		DefaultTimeouts::iterator tmp = ti;
-		++tmp;
+    ti = _timeouts.begin();
 
-		if ((*ti)->enabled() && now_millis >= (*ti)->_expiration)
-		{
-			(*ti)->expired(*(*ti));
+    while (ti != _timeouts.end()) {
+        DefaultTimeouts::iterator tmp = ti;
+        ++tmp;
 
-			if ((*ti)->_repeat)
-			{
-				(*ti)->_expiration = now_millis + (*ti)->_interval;
-			}
+        if ( (*ti)->enabled() && now_millis >= (*ti)->_expiration) {
+            (*ti)->expired (* (*ti));
 
-		}
+            if ( (*ti)->_repeat) {
+                (*ti)->_expiration = now_millis + (*ti)->_interval;
+            }
 
-		ti = tmp;
-	}
+        }
 
-	_mutex_t.unlock();
+        ti = tmp;
+    }
 
-	_mutex_w.lock();
+    _mutex_t.unlock();
 
-	for (int j = 0; j < nfd; ++j)
-	{
-		DefaultWatches::iterator wi;
+    _mutex_w.lock();
 
-		for (wi = _watches.begin(); wi != _watches.end();)
-		{
-			DefaultWatches::iterator tmp = wi;
-			++tmp;
+    for (int j = 0; j < nfd; ++j) {
+        DefaultWatches::iterator wi;
 
-			if ((*wi)->enabled() && (*wi)->_fd == fds[j].fd)
-			{
-				if (fds[j].revents)
-				{
-					(*wi)->_state = fds[j].revents;
+        for (wi = _watches.begin(); wi != _watches.end();) {
+            DefaultWatches::iterator tmp = wi;
+            ++tmp;
 
-					(*wi)->ready(*(*wi));
+            if ( (*wi)->enabled() && (*wi)->_fd == fds[j].fd) {
+                if (fds[j].revents) {
+                    (*wi)->_state = fds[j].revents;
 
-					fds[j].revents = 0;
-				}
-			}
+                    (*wi)->ready (* (*wi));
 
-			wi = tmp;
-		}
-	}
-	_mutex_w.unlock();
+                    fds[j].revents = 0;
+                }
+            }
+
+            wi = tmp;
+        }
+    }
+
+    _mutex_w.unlock();
 }
 

@@ -22,31 +22,31 @@
 #include <celt/celt.h>
 
 
-class Celt : public AudioCodec{
-    public:
-        Celt(int payload=0)
-            : AudioCodec(payload, "celt")
-    {
-        _clockRate = 44100;
-        _frameSize = 512; // fixed frameSize, TODO: support variable size from 64 to 512
-        _channel = 1;
-        _bitrate = 0;
-        _bandwidth = 0;
-        initCelt();
-    }
+class Celt : public AudioCodec
+{
 
-        Celt( const Celt& );
-        Celt& operator=(const Celt&);
+    public:
+        Celt (int payload=0)
+                : AudioCodec (payload, "celt") {
+            _clockRate = 44100;
+            _frameSize = 512; // fixed frameSize, TODO: support variable size from 64 to 512
+            _channel = 1;
+            _bitrate = 0;
+            _bandwidth = 0;
+            initCelt();
+        }
+
+        Celt (const Celt&);
+        Celt& operator= (const Celt&);
 
         void initCelt() {
-            printf("init celt");
-            
-            mode = celt_mode_create(_clockRate, _channel, _frameSize, NULL);
+            printf ("init celt");
+
+            mode = celt_mode_create (_clockRate, _channel, _frameSize, NULL);
             // celt_mode_info(mode, CELT_GET_LOOKAHEAD, &skip);
 
-            if (mode == NULL)
-            {
-                printf("failed to create a mode\n");
+            if (mode == NULL) {
+                printf ("failed to create a mode\n");
             }
 
             // bytes_per_packet = 1024;
@@ -58,35 +58,33 @@ class Celt : public AudioCodec{
             // celt_mode_info(mode, CELT_GET_FRAME_SIZE, &frame_size);
             // celt_mode_info(mode, CELT_GET_NB_CHANNELS, &_channel);
 
-            enc = celt_encoder_create(mode);
-            dec = celt_decoder_create(mode);
+            enc = celt_encoder_create (mode);
 
-            celt_encoder_ctl(enc,CELT_SET_COMPLEXITY(10));
- 
+            dec = celt_decoder_create (mode);
+
+            celt_encoder_ctl (enc,CELT_SET_COMPLEXITY (10));
+
         }
 
-        ~Celt() 
-        {
+        ~Celt() {
             terminateCelt();
         }
 
         void terminateCelt() {
-           
-            celt_encoder_destroy(enc);
-            celt_decoder_destroy(dec);
+
+            celt_encoder_destroy (enc);
+            celt_decoder_destroy (dec);
         }
 
-        virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
-        {
+        virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
             int err = 0;
-            err = celt_decode(dec, src, size, (celt_int16_t*)dst);
-            return _frameSize * sizeof(celt_int16_t);
+            err = celt_decode (dec, src, size, (celt_int16_t*) dst);
+            return _frameSize * sizeof (celt_int16_t);
         }
 
-        virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
-        {
+        virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
             int len = 0;
-            len = celt_encode(enc, (celt_int16_t *)src, (celt_int16_t *)src, dst, 512);
+            len = celt_encode (enc, (celt_int16_t *) src, (celt_int16_t *) src, dst, 512);
             // returns the number of bytes writen
             return len;
         }
@@ -94,20 +92,22 @@ class Celt : public AudioCodec{
     private:
 
         CELTMode *mode;
-        
+
         CELTEncoder *enc;
         CELTDecoder *dec;
 
         celt_int32_t _celt_frame_size;
         celt_int32_t skip;
-       
+
 };
 
 // the class factories
-extern "C" AudioCodec* create() {
-    return new Celt(115);
+extern "C" AudioCodec* create()
+{
+    return new Celt (115);
 }
 
-extern "C" void destroy(AudioCodec* a) {
+extern "C" void destroy (AudioCodec* a)
+{
     delete a;
 }

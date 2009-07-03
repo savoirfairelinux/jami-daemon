@@ -20,63 +20,72 @@
 
 
 #include "audiocodec.h"
-extern "C"{
+extern "C"
+{
 #include <gsm/gsm.h>
 }
 
 /**
  * GSM audio codec C++ class (over gsm/gsm.h)
  */
-class Gsm : public AudioCodec {
-public:
-  // _payload should be 3
-  Gsm (int payload=3): AudioCodec(payload, "GSM"), _decode_gsmhandle(NULL), _encode_gsmhandle(NULL){
-    _clockRate = 8000;
-    _frameSize = 160; // samples, 20 ms at 8kHz
-    _channel = 1;
-    _bitrate = 13.3;
-    _bandwidth = 29.2;
-    
-    if (!(_decode_gsmhandle = gsm_create() ))
-    printf("ERROR: decode_gsm_create\n");
-    if (!(_encode_gsmhandle = gsm_create() ))
-    printf("AudioCodec: ERROR: encode_gsm_create\n");
-  }
-  
-  Gsm( const Gsm& ); 
 
-  Gsm& operator=( const Gsm& ); 
+class Gsm : public AudioCodec
+{
 
-  virtual ~Gsm (void){
-    gsm_destroy(_decode_gsmhandle);
-    gsm_destroy(_encode_gsmhandle);
-  }
+    public:
+        // _payload should be 3
+        Gsm (int payload=3) : AudioCodec (payload, "GSM"), _decode_gsmhandle (NULL), _encode_gsmhandle (NULL) {
+            _clockRate = 8000;
+            _frameSize = 160; // samples, 20 ms at 8kHz
+            _channel = 1;
+            _bitrate = 13.3;
+            _bandwidth = 29.2;
 
-  virtual int	codecDecode	(short * dst, unsigned char * src, unsigned int size){
-    // _debug("Decoded by gsm \n");
-    (void)size;
-    if(gsm_decode(_decode_gsmhandle, (gsm_byte*)src, (gsm_signal*)dst) < 0)
-      printf("ERROR: gsm_decode\n");
-    return 320;
-  }
-  
-  virtual int	codecEncode	(unsigned char * dst, short * src, unsigned int size){
-        
-    // _debug("Encoded by gsm \n");
-	(void)size;
-	gsm_encode(_encode_gsmhandle, (gsm_signal*)src, (gsm_byte*) dst);
-    	return 33;
-  }
+            if (! (_decode_gsmhandle = gsm_create()))
+                printf ("ERROR: decode_gsm_create\n");
 
-private:
-  gsm _decode_gsmhandle;
-  gsm _encode_gsmhandle;
+            if (! (_encode_gsmhandle = gsm_create()))
+                printf ("AudioCodec: ERROR: encode_gsm_create\n");
+        }
+
+        Gsm (const Gsm&);
+
+        Gsm& operator= (const Gsm&);
+
+        virtual ~Gsm (void) {
+            gsm_destroy (_decode_gsmhandle);
+            gsm_destroy (_encode_gsmhandle);
+        }
+
+        virtual int	codecDecode	(short * dst, unsigned char * src, unsigned int size) {
+            // _debug("Decoded by gsm \n");
+            (void) size;
+
+            if (gsm_decode (_decode_gsmhandle, (gsm_byte*) src, (gsm_signal*) dst) < 0)
+                printf ("ERROR: gsm_decode\n");
+
+            return 320;
+        }
+
+        virtual int	codecEncode	(unsigned char * dst, short * src, unsigned int size) {
+
+            // _debug("Encoded by gsm \n");
+            (void) size;
+            gsm_encode (_encode_gsmhandle, (gsm_signal*) src, (gsm_byte*) dst);
+            return 33;
+        }
+
+    private:
+        gsm _decode_gsmhandle;
+        gsm _encode_gsmhandle;
 };
 
-extern "C" AudioCodec* create(){
-  return new Gsm(3);
+extern "C" AudioCodec* create()
+{
+    return new Gsm (3);
 }
 
-extern "C" void destroy(AudioCodec* a){
-  delete a;
+extern "C" void destroy (AudioCodec* a)
+{
+    delete a;
 }

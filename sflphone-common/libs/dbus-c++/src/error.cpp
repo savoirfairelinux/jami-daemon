@@ -39,23 +39,23 @@ using namespace DBus;
 */
 
 Error::Error()
-: _int(new InternalError)
+        : _int (new InternalError)
 {}
 
-Error::Error(InternalError &i)
-: _int(new InternalError(i))
+Error::Error (InternalError &i)
+        : _int (new InternalError (i))
 {}
 
-Error::Error(const char *name, const char *message)
-: _int(new InternalError)
+Error::Error (const char *name, const char *message)
+        : _int (new InternalError)
 {
-	set(name, message);
+    set (name, message);
 }
 
-Error::Error(Message &m)
-: _int(new InternalError)
+Error::Error (Message &m)
+        : _int (new InternalError)
 {
-	dbus_set_error_from_message(&(_int->error), m._pvt->msg);
+    dbus_set_error_from_message (& (_int->error), m._pvt->msg);
 }
 
 Error::~Error() throw()
@@ -64,26 +64,26 @@ Error::~Error() throw()
 
 const char *Error::name() const
 {
-	return _int->error.name;
+    return _int->error.name;
 }
 
 const char *Error::message() const
 {
-	return _int->error.message;
+    return _int->error.message;
 }
 
 bool Error::is_set() const
 {
-	return *(_int);
+    return * (_int);
 }
 
-void Error::set(const char *name, const char *message)
+void Error::set (const char *name, const char *message)
 {
-	dbus_set_error_const(&(_int->error), name, message);
+    dbus_set_error_const (& (_int->error), name, message);
 }
 
 const char *Error::what() const throw()
 {
-	return _int->error.message;
+    return _int->error.message;
 }
 

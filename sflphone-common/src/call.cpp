@@ -20,146 +20,155 @@
 #include "call.h"
 #include "manager.h"
 
-Call::Call(const CallID& id, Call::CallType type)
-           : _callMutex()
-           , _audioStarted(false)    
-           , _localIPAddress("") 
-           , _localAudioPort(0)
-           , _localExternalAudioPort(0)
-           , _id(id) 
-           , _type(type) 
-           , _connectionState(Call::Disconnected)
-           , _callState(Call::Inactive)
-           , _callConfig (Call::Classic)
-           , _peerName()
-           , _peerNumber()
+Call::Call (const CallID& id, Call::CallType type)
+        : _callMutex()
+        , _audioStarted (false)
+        , _localIPAddress ("")
+        , _localAudioPort (0)
+        , _localExternalAudioPort (0)
+        , _id (id)
+        , _type (type)
+        , _connectionState (Call::Disconnected)
+        , _callState (Call::Inactive)
+        , _callConfig (Call::Classic)
+        , _peerName()
+        , _peerNumber()
 {
- 
+
     FILE_TYPE fileType = FILE_WAV;
     SOUND_FORMAT soundFormat = INT16;
 
-    recAudio.setRecordingOption(fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH),id);
-    // _debug("CALL::Constructor for this clss is called \n");    
+    recAudio.setRecordingOption (fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH),id);
+    // _debug("CALL::Constructor for this clss is called \n");
 }
 
 
 Call::~Call()
 {
-   // _debug("CALL::~Call(): Destructor for this clss is called \n");
-   
-   if(recAudio.isOpenFile()) {
-     // _debug("CALL::~Call(): A recording file is open, close it \n");
-     recAudio.closeFile();
-   }
+    // _debug("CALL::~Call(): Destructor for this clss is called \n");
+
+    if (recAudio.isOpenFile()) {
+        // _debug("CALL::~Call(): A recording file is open, close it \n");
+        recAudio.closeFile();
+    }
 }
 
-void 
-Call::setConnectionState(ConnectionState state) 
+void
+Call::setConnectionState (ConnectionState state)
 {
-  ost::MutexLock m(_callMutex);
-  _connectionState = state;
+    ost::MutexLock m (_callMutex);
+    _connectionState = state;
 }
 
 Call::ConnectionState
-Call::getConnectionState() 
+Call::getConnectionState()
 {
-  ost::MutexLock m(_callMutex);
-  return _connectionState;
+    ost::MutexLock m (_callMutex);
+    return _connectionState;
 }
 
 
-void 
-Call::setState(CallState state) 
+void
+Call::setState (CallState state)
 {
-  ost::MutexLock m(_callMutex);
-  _callState = state;
+    ost::MutexLock m (_callMutex);
+    _callState = state;
 }
 
 Call::CallState
-Call::getState() 
+Call::getState()
 {
-  ost::MutexLock m(_callMutex);
-  return _callState;
+    ost::MutexLock m (_callMutex);
+    return _callState;
 }
 
 std::string
 Call::getStateStr ()
 {
     CallState state = getState();
-    _debug("getStateStr , state = %d\n", state);
+    _debug ("getStateStr , state = %d\n", state);
     std::string state_str;
-        
+
     switch (state) {
+
         case Active:
             state_str = "CURRENT";
             break;
+
         case Hold:
             state_str = "HOLD";
             break;
+
         case Busy:
             state_str = "BUSY";
             break;
+
         case Inactive:
             state_str = "INACTIVE";
             break;
+
         case Refused:
+
         case Error:
+
         default:
             state_str = "FAILURE";
             break;
     }
+
     return state_str;
 }
 
 
-const std::string& 
+const std::string&
 Call::getLocalIp()
 {
-  ost::MutexLock m(_callMutex);  
-  return _localIPAddress;
+    ost::MutexLock m (_callMutex);
+    return _localIPAddress;
 }
 
-unsigned int 
+unsigned int
 Call::getLocalAudioPort()
 {
-  ost::MutexLock m(_callMutex);  
-  return _localAudioPort;
+    ost::MutexLock m (_callMutex);
+    return _localAudioPort;
 }
 
-void 
-Call::setAudioStart(bool start)
+void
+Call::setAudioStart (bool start)
 {
-  ost::MutexLock m(_callMutex);  
-  _audioStarted = start;  
+    ost::MutexLock m (_callMutex);
+    _audioStarted = start;
 }
 
-bool 
+bool
 Call::isAudioStarted()
 {
-  ost::MutexLock m(_callMutex);  
-  return _audioStarted;
+    ost::MutexLock m (_callMutex);
+    return _audioStarted;
 }
 
 void
 Call::setRecording()
 {
-  recAudio.setRecording();
+    recAudio.setRecording();
 }
 
-void 
-Call::initRecFileName() {
-  recAudio.initFileName(_peerNumber);
+void
+Call::initRecFileName()
+{
+    recAudio.initFileName (_peerNumber);
 }
 
 void
 Call::stopRecording()
 {
-  recAudio.stopRecording();
+    recAudio.stopRecording();
 }
 
 bool
 Call::isRecording()
 {
-  return recAudio.isRecording();
+    return recAudio.isRecording();
 }
 
