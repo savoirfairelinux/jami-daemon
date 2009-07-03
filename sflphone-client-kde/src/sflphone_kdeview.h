@@ -105,7 +105,7 @@ public:
 	/**
 	* Used to sort contacts according to their types with Kabc.
 	* @return the integer resulting to the flags of the types 
-	* chosen to be displayed in SFLPhone configuration.
+	* chosen to be displayed in SFLphone configuration.
 	*/
 	int phoneNumberTypesDisplayed();
 	

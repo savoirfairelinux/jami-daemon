@@ -58,7 +58,11 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="KUrlRequester" name="KUrlRequester_ringtone"/>
+       <widget class="KUrlRequester" name="KUrlRequester_ringtone">
+        <property name="filter">
+         <string>*.ul *.au *.wav</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -207,21 +211,30 @@
           <item row="3" column="0">
            <widget class="QLabel" name="label2_in">
             <property name="text">
-             <string>&amp;In</string>
+             <string>In</string>
+            </property>
+            <property name="buddy">
+             <cstring>kcfg_alsaInputDevice</cstring>
             </property>
            </widget>
           </item>
           <item row="5" column="0">
            <widget class="QLabel" name="label3_out">
             <property name="text">
-             <string>&amp;Out</string>
+             <string>Out</string>
+            </property>
+            <property name="buddy">
+             <cstring>kcfg_alsaOutputDevice</cstring>
             </property>
            </widget>
           </item>
           <item row="0" column="0">
            <widget class="QLabel" name="label1_alsaPugin">
             <property name="text">
-             <string>ALSA &amp;plugin</string>
+             <string>ALSA plugin</string>
+            </property>
+            <property name="buddy">
+             <cstring>box_alsaPlugin</cstring>
             </property>
            </widget>
           </item>

@@ -34,11 +34,9 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStyle * style = QApplication::style();
-	
-	KUrl url = KUrl(SHARE_INSTALL_PREFIX);
-	url.cd("sflphone/ringtones");
-	KUrlRequester_ringtone->setUrl(url);
+	KUrlRequester_ringtone->setMode(KFile::File | KFile::ExistingOnly);
 	KUrlRequester_ringtone->lineEdit()->setObjectName("kcfg_ringtone"); 
+	KUrlRequester_ringtone->lineEdit()->setReadOnly(true); 
 	
 	codecTableHasChanged = false;
 	toolButton_codecUp->setIcon(KIcon("go-up"));
@@ -170,6 +168,7 @@ bool DlgAudio::hasChanged()
 	bool alsaPluginHasChanged = 
 	           skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA 
 	       &&  skeleton->alsaPlugin() != box_alsaPlugin->currentText();
+	qDebug() << alsaPluginHasChanged << codecTableHasChanged;
 	return alsaPluginHasChanged || codecTableHasChanged;
 }
 
