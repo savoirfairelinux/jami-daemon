@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-07-03 16:35:11 -0400
+# Last Modified: 2009-07-03 16:47:28 -0400
 #####################################################
 
 #
@@ -29,6 +29,9 @@ SCP_BASE="scp ${SSH_OPTIONS} -r -P 50001"
 
 # home directory
 ROOT_DIR="/home/projects/sflphone"
+
+# local hidden repository (only for changelog commit)
+LOCAL_REPOSITORY=${ROOT_DIR}/.sflphone-repository
 
 # gpg passphrase file
 GPG_FILE="${ROOT_DIR}/.gpg-sflphone"
@@ -240,26 +243,28 @@ if [ ${DO_PREPARE} ]; then
 	fi
 	echo "Version is : ${VERSION}"
 
+	# generate the changelog, according to the distribution and the git commit messages
+	echo "Update debian changelogs"
+	cd ${REPOSITORY_DIR}
+	${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
+	
+	if [ "$?" -ne "0" ]; then
+		echo "!! Cannot update debian changelogs"
+		exit -1
+	fi
+
 	# if push is activated
-	if [ ${DO_PUSH} ];then
-
-		# first changelog generation for commit
-		echo "Update debian changelogs (1/2)"
-
-		${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
-
-		if [ "$?" -ne "0" ]; then
-			echo "!! Cannot update debian changelogs"
-			exit -1
-		fi
+	if [ ${DO_PUSH} && ${RELEASE_MODE} ];then
 
 		echo " Doing commit"
 		
-        	cd ${REPOSITORY_DIR}
+        	cd ${LOCAL_REPOSITORY}
 		git commit -m "[#1262] Updated debian changelogs (${VERSION})" .
 
 		echo " Pushing commit"
 		git push origin master
+
+		cd -
 	fi
 
 	# change current branch if needed
@@ -269,17 +274,7 @@ if [ ${DO_PREPARE} ]; then
         else
                 echo "Using master branch"
         fi
-
-	# generate the changelog, according to the distribution and the git commit messages
-	echo "Update debian changelogs (2/2)"
-	cd ${REPOSITORY_DIR}
-	${SCRIPTS_DIR}/sfl-git-dch.sh ${VERSION} ${RELEASE_MODE}
 	
-	if [ "$?" -ne "0" ]; then
-		echo "!! Cannot update debian changelogs"
-		exit -1
-	fi
-
 	echo "Write version numbers for following processes"
 	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-common/VERSION
 	echo "${VERSION}" > ${REPOSITORY_DIR}/sflphone-client-gnome/VERSION
