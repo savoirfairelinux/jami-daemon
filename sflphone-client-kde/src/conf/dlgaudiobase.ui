@@ -58,7 +58,11 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="KUrlRequester" name="KUrlRequester_ringtone"/>
+       <widget class="KUrlRequester" name="KUrlRequester_ringtone">
+        <property name="filter">
+         <string>*.ul *.au *.wav</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
