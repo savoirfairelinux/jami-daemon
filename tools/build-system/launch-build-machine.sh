@@ -30,6 +30,9 @@ SCP_BASE="scp ${SSH_OPTIONS} -r -P 50001"
 # home directory
 ROOT_DIR="/home/projects/sflphone"
 
+# gpg passphrase file
+GPG_FILE="${ROOT_DIR}/.gpg-sflphone"
+
 # vbox config directory
 export VBOX_USER_HOME="${ROOT_DIR}/vbox"
 
@@ -64,6 +67,7 @@ RELEASE_MODE=
 
 SNAPSHOT_TAG=`date +%s`
 
+DO_CLEAN=1
 DO_PREPARE=1
 DO_PUSH=1
 DO_MAIN_LOOP=1
@@ -95,6 +99,7 @@ do
 	--help)
 		echo
 		echo "Options :"
+		echo " --skip-clean"
 		echo " --skip-prepare"
 		echo " --skip-push"
 		echo " --skip-main-loop"
@@ -106,6 +111,8 @@ do
 		echo " --list-machines"
 		echo
 		exit 0;;
+	--skip-clean)
+		unset DO_CLEAN;;
 	--skip-prepare)
 		unset DO_PREPARE;;
 	--skip-push)
@@ -155,7 +162,9 @@ if [ "${WHO}" != "${USER}" ]; then
 fi
 
 # logging
-rm -rf ${PACKAGING_RESULT_DIR} 2>/dev/null
+if [ ${DO_CLEAN} ]; then
+	rm -rf ${PACKAGING_RESULT_DIR} 2>/dev/null
+fi
 mkdir ${PACKAGING_RESULT_DIR} 2>/dev/null
 if [ ${DO_LOGGING} ]; then
 
@@ -375,27 +384,9 @@ fi
 
 if [ ${DO_SIGNATURES} ]; then
 	
-	echo
 	echo "Sign packages"
-	echo
-
-	echo  "Check GPG agent"
-	pgrep -u "sflphone" gpg-agent > /dev/null
-	if [ "$?" -ne "0" ]; then
-	        echo "!! GPG agent is not running"
-		exit -1
-	fi
-	GPG_AGENT_INFO=`cat $HOME/.gpg-agent-info 2> /dev/null`
-	export ${GPG_AGENT_INFO}
-
-	if [ "${GPG_AGENT_INFO}" == "" ]; then
-        	echo "!! Cannot get GPG agent info"
-	        exit -1
-	fi	
-
-	echo "Sign packages"
-	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.deb" -exec dpkg-sig -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {} \; >/dev/null 2>&1
-	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.changes" -printf "debsign -k'Savoir-Faire Linux Inc.' %p\n" | sh >/dev/null 2>&1
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.deb" -exec dpkg-sig -g '-q --passphrase `cat '${GPG_FILE}'`' -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {}  \;
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.changes" -exec gpg --local-user 'Savoir-Faire Linux Inc.' --passphrase `cat ${GPG_FILE}` --clearsign --list-options no-show-policy-urls --armor --textmode --output {}.asc {} \;
 fi
 
 #########################
