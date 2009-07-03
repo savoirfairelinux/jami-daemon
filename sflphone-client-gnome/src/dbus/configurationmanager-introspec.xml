@@ -210,6 +210,13 @@
     <method name="setSearchbar">
     </method>
 
+    <method name="setHistoryEnabled">
+    </method>
+
+    <method name="getHistoryEnabled">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
     <method name="getVolumeControls">
       <arg type="i" name="state" direction="out"/>
     </method>
@@ -217,12 +224,12 @@
     <method name="setVolumeControls">
     </method>
 
-    <method name="getMaxCalls">
-      <arg type="i" name="calls" direction="out"/>
+    <method name="getHistoryLimit">
+      <arg type="i" name="days" direction="out"/>
     </method>
 
-    <method name="setMaxCalls">
-      <arg type="i" name="calls" direction="in"/>
+    <method name="setHistoryLimit">
+      <arg type="i" name="days" direction="in"/>
     </method>
 
     <method name="startHidden">
@@ -302,6 +309,16 @@
       <arg type="a{ss}" name="settings" direction="in"/>
     </method>
 
+    <method name="getHistory">
+        <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+        <arg type="a{ss}" name="entries" direction="out"/>
+    </method>
+
+    <method name="setHistory">
+        <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+        <arg type="a{ss}" name="entries" direction="in"/>
+    </method>
+
   <!--        /////////////////////////////       -->
 
 <!--
@@ -313,7 +330,7 @@
 -->    
 
     <signal name="accountsChanged">
-    </signal>
+    </signal>  
 
     <signal name="errorAlert">
       <arg type="i" name="code" direction="out"/>

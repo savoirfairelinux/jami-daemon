@@ -1,17 +1,35 @@
 
-ADD_DEFINITIONS(${KDE4_DEFINITIONS} ${QT_DEFINITIONS} -fexceptions -DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\"" )
+
+ADD_DEFINITIONS(
+	${KDE4_DEFINITIONS} 
+	${QT_DEFINITIONS} 
+	-fexceptions 
+	-DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\"" 
+	-DSHARE_INSTALL_PREFIX="\\\"${SHARE_INSTALL_PREFIX}\\\""  
+)
+
+# add_definitions ( -DKDE_DEFAULT_DEBUG_AREA=9000 )
+
+# kde4_set_debug_area( 1234 )
+
+# IF(DEFINED DEBUG_DISABLED)
+# MESSAGE("NO DEBUG OUTPUT")
+# ADD_DEFINITIONS( -DQT_NO_DEBUG_OUTPUT )
+# ENDIF(DEFINED DEBUG_DISABLED)
+
+
+MESSAGE("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
+
+IF(${CMAKE_BUILD_TYPE} MATCHES Release)
+	MESSAGE("NO DEBUG OUTPUT")
+	ADD_DEFINITIONS( -DQT_NO_DEBUG_OUTPUT )
+ENDIF(${CMAKE_BUILD_TYPE} MATCHES Release)
 
 SET ( KDE4_KABC_LIBS  -lkabc )
 
-
-
-
-
-SET(
-	sflphone_client_kde_SRCS
+SET(	   sflphone_client_kde_SRCS
 	sflphone_kdeview.cpp
 	SFLPhone.cpp
-	ConfigDialog.cpp
 	main.cpp
 	sflphone_const.h
 	Account.cpp
@@ -26,6 +44,16 @@ SET(
 	ActionSetAccountFirst.cpp
 	Contact.cpp
 	ContactItemWidget.cpp
+	conf/ConfigurationDialog.cpp
+	conf/dlggeneral.cpp
+	conf/dlgdisplay.cpp
+	conf/dlgaccounts.cpp
+	conf/dlgaudio.cpp
+	conf/dlgrecord.cpp
+	conf/dlgaddressbook.cpp
+	conf/dlghooks.cpp
+	conf/ConfigurationSkeleton.cpp
+	Dialpad.cpp
 )
  
 
@@ -35,7 +63,7 @@ QT4_ADD_RESOURCES(QtApp_RCC_SRCS ${QtApp_RCCS})
 
 
 # Build dbus interfaces
-SET ( dbus_xml_introspecs_path ${CMAKE_CURRENT_SOURCE_DIR}/../../sflphone-common/src/dbus/)
+SET ( dbus_xml_introspecs_path ${CMAKE_CURRENT_SOURCE_DIR}/dbus/)
 
 # configuration manager interface
 SET ( configurationmanager_xml  ${dbus_xml_introspecs_path}/configurationmanager-introspec.xml )
@@ -81,8 +109,21 @@ QT4_ADD_DBUS_INTERFACE(
 
 
 # kde4_automoc(${sflphone_client_kde_SRCS})
+SET(    config_ui_files
+	conf/dlggeneralbase.ui
+	conf/dlgdisplaybase.ui
+	conf/dlgaccountsbase.ui
+	conf/dlgaudiobase.ui
+	conf/dlgrecordbase.ui
+	conf/dlgaddressbookbase.ui
+	conf/dlghooksbase.ui
+)
 
-KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/sflphone_kdeview_base.ui ui/ConfigDialog.ui)
+KDE4_ADD_UI_FILES(sflphone_client_kde_SRCS ui/sflphone_kdeview_base.ui  ${config_ui_files}  )
+
+KDE4_ADD_KCFG_FILES(sflphone_client_kde_SRCS conf/kcfg_settings.kcfgc)
+INSTALL(FILES conf/sflphone-client-kde.kcfg DESTINATION ${KCFG_INSTALL_DIR})
+
 
 KDE4_ADD_EXECUTABLE(sflphone-client-kde ${sflphone_client_kde_SRCS} ${QtApp_RCC_SRCS})
 

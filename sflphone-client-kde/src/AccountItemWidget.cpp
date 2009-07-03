@@ -30,7 +30,8 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
  : QWidget(parent)
 {
 	checkBox = new QCheckBox(this);
-	led = new KLed(this);
+	checkBox->setObjectName("checkBox");
+	led = new QLabel();
 	led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 	textLabel = new QLabel();
 	
@@ -45,6 +46,11 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
 	state = Unregistered;
 	enabled = false;
 	updateDisplay();
+	
+// 	connect(checkBox, SIGNAL(stateChanged(int)),
+// 	        this,      SLOT(on_checkBox_stateChanged()));
+	
+	QMetaObject::connectSlotsByName(this);
 }
 
 
@@ -61,16 +67,13 @@ void AccountItemWidget::updateStateDisplay()
 	switch(state)
 	{
 		case Registered:
-			led->setState(KLed::On);
-			led->setColor(QColor(0,255,0));
+			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_GREEN));
 			break;
 		case Unregistered:
-			led->setState(KLed::Off);
-			led->setColor(QColor(0,255,0));
+			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_GRAY));
 			break;
 		case NotWorking:
-			led->setState(KLed::On);
-			led->setColor(QColor(255,0,0));
+			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_RED));
 			break;
 		default:
 			qDebug() << "Calling AccountItemWidget::setState with value " << state << ", not part of enum AccountItemWidget::State.";
@@ -92,14 +95,12 @@ void AccountItemWidget::setState(int state)
 {
 	this->state = state;
 	updateStateDisplay();
-	//emit stateChanged;
 }
 
 void AccountItemWidget::setEnabled(bool enabled)
 {
 	this->enabled = enabled;
 	updateEnabledDisplay();
-	//emit enabledChanged;
 }
 
 void AccountItemWidget::setAccountText(QString text)
@@ -110,4 +111,9 @@ void AccountItemWidget::setAccountText(QString text)
 bool AccountItemWidget::getEnabled()
 {
 	return checkBox->checkState();
+}
+
+void AccountItemWidget::on_checkBox_stateChanged()
+{
+	emit checkStateChanged();
 }

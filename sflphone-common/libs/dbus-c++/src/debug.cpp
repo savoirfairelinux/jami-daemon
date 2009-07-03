@@ -21,6 +21,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <dbus-c++/debug.h>
 
@@ -28,23 +31,22 @@
 #include <cstdio>
 #include <stdlib.h>
 
-static void _debug_log_default(const char *format, ...)
+static void _debug_log_default (const char *format, ...)
 {
 #ifdef DEBUG
 
-	static int debug_env = getenv("DBUSXX_VERBOSE") ? 1 : 0;
+    static int debug_env = getenv ("DBUSXX_VERBOSE") ? 1 : 0;
 
-	if (debug_env)
-	{
-	        va_list args;
-	        va_start(args, format);
+    if (debug_env) {
+        va_list args;
+        va_start (args, format);
 
-	        fprintf(stderr, "dbus-c++: ");
-	        vfprintf(stderr, format, args);
-	        fprintf(stderr, "\n");
+        fprintf (stderr, "dbus-c++: ");
+        vfprintf (stderr, format, args);
+        fprintf (stderr, "\n");
 
-	        va_end(args);
-	}
+        va_end (args);
+    }
 
 #endif//DEBUG
 }

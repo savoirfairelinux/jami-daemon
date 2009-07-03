@@ -27,18 +27,26 @@
 #include <KMenu>
 #include <KAction>
 #include <KToolBar>
+#include <KStatusBar>
 #include <QtGui/QStatusBar>
+#include <QtGui/QCursor>
 #include <KActionCollection>
 
 #include "sflphone_const.h"
 #include "instance_interface_singleton.h"
+#include "configurationmanager_interface_singleton.h"
 
 
+/**
+ * 
+ * @param parent 
+ */
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent),
       view(new sflphone_kdeView(this))
 {
-
+	
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	// accept dnd
 		setAcceptDrops(true);
 
@@ -51,7 +59,7 @@ SFLPhone::SFLPhone(QWidget *parent)
 
 
 		setWindowIcon(QIcon(ICON_SFLPHONE));
-		setWindowTitle(tr2i18n("SFLPhone"));
+		setWindowTitle(i18n("SFLPhone"));
 		
 		setupActions();
 		
@@ -64,17 +72,37 @@ SFLPhone::SFLPhone(QWidget *parent)
 		{
 			QDir dir;
 			dir.cdUp();
+			dir.cd("data");
 			rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
 		}
 		qDebug() << "rcFilePath = " << rcFilePath ;
 		createGUI(rcFilePath);
-             
+		setObjectNames();
       QMetaObject::connectSlotsByName(this);
-
+	   view->updateStatusMessage();
+	   
+		move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
+	   if( ! configurationManager.isStartHidden())
+	   {
+	   	show();
+	   }
+	   
+	   if(configurationManager.getAccountList().value().isEmpty())
+		{
+			(new AccountWizard())->show();
+		}
+	   
 } 
 
 SFLPhone::~SFLPhone()
 {
+}
+
+void SFLPhone::setObjectNames()
+{
+	view->setObjectName("view");
+	statusBar()->setObjectName("statusBar");
+	trayIcon->setObjectName("trayIcon");
 }
 
 void SFLPhone::setupActions()
@@ -89,7 +117,9 @@ void SFLPhone::setupActions()
 	actionCollection()->addAction("action_history", view->action_history);
 	actionCollection()->addAction("action_addressBook", view->action_addressBook);
 	actionCollection()->addAction("action_mailBox", view->action_mailBox);
-	KAction * action_quit = KStandardAction::quit(qApp, SLOT(closeAllWindows()), 0);
+	KAction * action_close = KStandardAction::close(this, SLOT(close()), 0);
+	actionCollection()->addAction("action_close", action_close);
+	KAction * action_quit = KStandardAction::quit(this, SLOT(quitButton()), 0);
 	actionCollection()->addAction("action_quit", action_quit);
 	
 	
@@ -100,10 +130,8 @@ void SFLPhone::setupActions()
 	actionCollection()->addAction("action_configureAudio", view->action_configureAudio);
 	actionCollection()->addAction("action_accountCreationWizard", view->action_accountCreationWizard);
 	
-	
-	QStatusBar * statusbar = new QStatusBar(this);
-	statusbar->setObjectName(QString::fromUtf8("statusbar"));
-	this->setStatusBar(statusbar);
+	statusBarWidget = new QLabel();
+	statusBar()->addWidget(statusBarWidget);
 	
 	QToolBar * toolbar = new QToolBar(this);
 	this->addToolBar(Qt::TopToolBarArea, toolbar);
@@ -117,6 +145,7 @@ void SFLPhone::setupActions()
 	toolbar->addAction(view->action_addressBook);
 	toolbar->addSeparator();
 	toolbar->addAction(view->action_mailBox);
+	toolbar->setIconSize(QSize(TOOLBAR_SIZE,TOOLBAR_SIZE));
 	
 	
  	trayIconMenu = new QMenu(this);
@@ -125,26 +154,36 @@ void SFLPhone::setupActions()
 	trayIcon = new QSystemTrayIcon(this->windowIcon(), this);
 	trayIcon->setContextMenu(trayIconMenu);
 	trayIcon->show();
-	trayIcon->setObjectName("trayIcon");
 	
 	iconChanged = false;
 
 }
 
+sflphone_kdeView * SFLPhone::getView()
+{
+	return view;
+}
 
 bool SFLPhone::queryClose()
 {
+	qDebug() << "queryClose";
+	hide();
+	return false;
+}
+
+void SFLPhone::quitButton()
+{
 	InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-	qDebug() << "queryClose : " << view->listWidget_callList->count() << " calls open.";
+	qDebug() << "quitButton : " << view->listWidget_callList->count() << " calls open.";
 	if(view->listWidget_callList->count() > 0 && instance.getRegistrationCount() <= 1)
 	{
 		qDebug() << "Attempting to quit when still having some calls open.";
-		view->getErrorWindow()->showMessage(tr2i18n("You still have some calls open. Please close all calls before quitting.", 0));
-		return false;
+		view->getErrorWindow()->showMessage(i18n("You still have some calls open. Please close all calls before quitting."));
 	}
 	instance.Unregister(getpid());
-	return true;
+	qApp->quit();
 }
+
 
 void SFLPhone::putForeground()
 {
@@ -167,8 +206,8 @@ void SFLPhone::trayIconSignal()
 void SFLPhone::sendNotif(QString caller)
 {
 	trayIcon->showMessage(
-	    tr2i18n("Incoming call"), 
-	    tr2i18n("You have an incoming call from : ") + caller + ".\n" + tr2i18n("Click to accept or refuse it."), 
+	    i18n("Incoming call"), 
+	    i18n("You have an incoming call from") + " " + caller + ".\n" + i18n("Click to accept or refuse it."), 
 	    QSystemTrayIcon::Warning, 
 	    20000);
 }
@@ -213,4 +252,9 @@ void SFLPhone::on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason)
 }
 
 
+void SFLPhone::on_view_statusMessageChanged(const QString & message)
+{
+	qDebug() << "on_view_statusMessageChanged : " + message;
+	statusBarWidget->setText(message);
+}
 

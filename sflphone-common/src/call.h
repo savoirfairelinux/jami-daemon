@@ -81,6 +81,11 @@ class Call{
          */
         CallID& getCallId() {return _id; }
 
+        inline CallType getCallType (void)
+        {
+            return _type;
+        }
+
         /** 
          * Set the peer number (destination on outgoing)
          * not protected by mutex (when created)
@@ -139,6 +144,8 @@ class Call{
          * @return CallState  The call state
          */
         CallState getState();
+        
+        std::string getStateStr ();
 
         void setCallConfiguration (Call::CallConfiguration callConfig) { _callConfig = callConfig; }
         

@@ -26,7 +26,7 @@
 #define __DBUSXX_CONNECTION_P_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
 #include <dbus-c++/connection.h>
@@ -62,6 +62,9 @@ struct DXXAPILOCAL Connection::Private
 	~Private();
 
 	void init();
+
+	DBusDispatchStatus dispatch_status();
+	bool has_something_to_dispatch();
 
 	static void dispatch_status_stub(DBusConnection *, DBusDispatchStatus, void *);
 

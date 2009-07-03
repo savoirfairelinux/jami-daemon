@@ -25,10 +25,6 @@
 #ifndef __DBUSXX_EVENTLOOP_INTEGRATION_H
 #define __DBUSXX_EVENTLOOP_INTEGRATION_H
 
-#ifdef DBUS_HAVE_CONFIG_H
-#include <dbus-c++/config.h>
-#endif
-
 #include "api.h"
 #include "dispatcher.h"
 #include "util.h"

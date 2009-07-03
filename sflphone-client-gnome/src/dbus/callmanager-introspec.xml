@@ -67,6 +67,10 @@
       <arg type="a{ss}" name="infos" direction="out"/>
     </method>
     
+    <method name="getCallList">
+        <arg type="as" name="list" direction="out"/>
+    </method>
+
     <method name="getCurrentCallID">
       <arg type="s" name="callID" direction="out"/>
     </method>
@@ -107,6 +111,13 @@
       <arg type="s" name="device"  direction="out"/>
       <arg type="d" name="value"  direction="out"/>
     </signal>
+
+    <signal name="transferSucceded">
+    </signal>
+
+    <signal name="transferFailed">
+    </signal>
+
  
 <!--
     <signal name="error">

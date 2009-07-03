@@ -1,6 +1,6 @@
 include ../globals.mak
 
-bin_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester
+noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester historyTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
@@ -20,7 +20,8 @@ OBJECT_FILES= \
 	../src/sflphoned-samplerateconverter.o \
 	../src/sflphoned-sdp.o \
 	../src/sflphoned-sdpmedia.o \
-	../src/sflphoned-numbercleaner.o
+	../src/sflphoned-numbercleaner.o \
+    ../src/history/historymanager.o
 
 numbercleanerTester_SOURCES = \
 		numbercleanerTest.h \
@@ -103,6 +104,25 @@ rtpTester_SOURCES = \
 		TestMain.cpp
 
 rtpTester_LDADD = \
+		../src/libsflphone.la  \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@CPPUNIT_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@CCGNU2_LIBS@ \
+		@CCRTP_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
+		-luuid \
+		$(OBJECT_FILES)
+
+historyTester_SOURCES = \
+		historyTest.h \
+		historyTest.cpp \
+		TestMain.cpp
+
+historyTester_LDADD = \
 		../src/libsflphone.la  \
 		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
 		@ALSA_LIBS@ \

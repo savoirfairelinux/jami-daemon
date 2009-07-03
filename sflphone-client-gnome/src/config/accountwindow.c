@@ -21,6 +21,7 @@
 #include <actions.h>
 #include <mainwindow.h>
 #include <accountlist.h>
+#include <accountwindow.h>
 
 // From version 2.16, gtk provides the functionalities libsexy used to provide
 #if GTK_CHECK_VERSION(2,16,0)
@@ -71,7 +72,6 @@ is_iax_enabled(void)
 show_account_window (account_t * a)
 {
     gint response;
-    GtkWidget *image;
 
     currentAccount = a;
 
@@ -85,6 +85,11 @@ show_account_window (account_t * a)
     gchar * curPassword = "";
     /* TODO: add curProxy, and add boxes for Proxy support */
     gchar * curMailbox = "";
+
+#if GTK_CHECK_VERSION(2,16,0)
+#else
+    GtkWidget *image;
+#endif
 
     // Load from SIP/IAX/Unknown ?
     if(a)

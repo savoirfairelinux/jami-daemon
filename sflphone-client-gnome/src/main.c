@@ -100,10 +100,16 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
         }
 #endif
 
-      status_bar_display_account();
+    status_bar_display_account();
 
-      /* start the main loop */
-      gtk_main();
+    // Load the history
+    sflphone_fill_history ();
+
+    // Get the active calls at startup    
+    sflphone_fill_call_list ();
+        
+    /* start the main loop */
+    gtk_main();
     }
 
   // Cleanly stop logging

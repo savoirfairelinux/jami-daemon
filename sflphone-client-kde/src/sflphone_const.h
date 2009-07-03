@@ -47,21 +47,23 @@
 #define PAGE_ACCOUNTS                     2
 #define PAGE_AUDIO                        3
 
+#define TOOLBAR_SIZE                      22
+
 #define CONTACT_ITEM_HEIGHT               40
 
 #define CONFIG_FILE_PATH                  "/.sflphone/sflphonedrc"
 
-#define ACTION_LABEL_CALL                 tr2i18n("Call")
-#define ACTION_LABEL_HANG_UP              tr2i18n("Hang up")
-#define ACTION_LABEL_HOLD                 tr2i18n("Hold")
-#define ACTION_LABEL_TRANSFER             tr2i18n("Transfer")
-#define ACTION_LABEL_RECORD               tr2i18n("Record")
-#define ACTION_LABEL_ACCEPT               tr2i18n("Accept")
-#define ACTION_LABEL_REFUSE               tr2i18n("Refuse")
-#define ACTION_LABEL_UNHOLD               tr2i18n("Unhold")
-#define ACTION_LABEL_GIVE_UP_TRANSF       tr2i18n("Give up transfer")
-#define ACTION_LABEL_CALL_BACK            tr2i18n("Call back")
-#define ACTION_LABEL_GIVE_UP_SEARCH       tr2i18n("Give up search")
+#define ACTION_LABEL_CALL                 i18n("Call")
+#define ACTION_LABEL_HANG_UP              i18n("Hang up")
+#define ACTION_LABEL_HOLD                 i18n("Hold")
+#define ACTION_LABEL_TRANSFER             i18n("Transfer")
+#define ACTION_LABEL_RECORD               i18n("Record")
+#define ACTION_LABEL_ACCEPT               i18n("Accept")
+#define ACTION_LABEL_REFUSE               i18n("Refuse")
+#define ACTION_LABEL_UNHOLD               i18n("Unhold")
+#define ACTION_LABEL_GIVE_UP_TRANSF       i18n("Give up transfer")
+#define ACTION_LABEL_CALL_BACK            i18n("Call back")
+#define ACTION_LABEL_GIVE_UP_SEARCH       i18n("Give up search")
 
 
 #define ICON_INCOMING                     ":/images/icons/ring.svg"
@@ -81,8 +83,8 @@
 #define ICON_ACCEPT                       ":/images/icons/accept.svg"
 #define ICON_REFUSE                       ":/images/icons/refuse.svg"
 #define ICON_EXEC_TRANSF                  ":/images/icons/call.svg"
-#define ICON_REC_DEL_OFF                  ":/images/icons/del_off.png"
-#define ICON_REC_DEL_ON                   ":/images/icons/del_on.png"
+#define ICON_REC_DEL_OFF                  ":/images/icons/record_disabled.svg"
+#define ICON_REC_DEL_ON                   ":/images/icons/record.svg"
 
 #define ICON_REC_VOL_0                    ":/images/icons/mic.svg"
 #define ICON_REC_VOL_1                    ":/images/icons/mic_25.svg"
@@ -97,6 +99,10 @@
 #define ICON_HISTORY_INCOMING             ":/images/icons/incoming.svg"
 #define ICON_HISTORY_OUTGOING             ":/images/icons/outgoing.svg"
 #define ICON_HISTORY_MISSED               ":/images/icons/missed.svg"
+
+#define ICON_ACCOUNT_LED_RED              ":/images/icons/led-red.svg"
+#define ICON_ACCOUNT_LED_GREEN            ":/images/icons/led-green.svg"
+#define ICON_ACCOUNT_LED_GRAY             ":/images/icons/led-gray.svg"
 
 #define ICON_QUIT                         ":/images/icons/application-exit.png"
 
@@ -144,6 +150,8 @@
 #define CALL_PEER_NAME                    "PEER_NAME"
 #define CALL_PEER_NUMBER                  "PEER_NUMBER"
 #define CALL_ACCOUNTID                    "ACCOUNTID"
+#define CALL_STATE                        "CALL_STATE"
+#define CALL_TYPE                         "CALL_TYPE"
 
 /** Call States */
 #define CALL_STATE_CHANGE_HUNG_UP         "HUNGUP"
@@ -154,6 +162,19 @@
 #define CALL_STATE_CHANGE_FAILURE         "FAILURE"
 #define CALL_STATE_CHANGE_UNHOLD_CURRENT  "UNHOLD_CURRENT"
 #define CALL_STATE_CHANGE_UNHOLD_RECORD   "UNHOLD_RECORD"
+#define CALL_STATE_CHANGE_UNKNOWN         "UNKNOWN"
+
+#define DAEMON_CALL_STATE_INIT_CURRENT    "CURRENT"
+#define DAEMON_CALL_STATE_INIT_HOLD       "HOLD"
+#define DAEMON_CALL_STATE_INIT_BUSY       "BUSY"
+#define DAEMON_CALL_STATE_INIT_INACTIVE   "INACTIVE"
+
+#define DAEMON_CALL_TYPE_INCOMING         "0"
+#define DAEMON_CALL_TYPE_OUTGOING         "1"
+
+#define DAEMON_HISTORY_TYPE_MISSED        "0"
+#define DAEMON_HISTORY_TYPE_OUTGOING      "1"
+#define DAEMON_HISTORY_TYPE_INCOMING      "2"
 
 /** Address Book Settings */
 #define ADDRESSBOOK_MAX_RESULTS           "ADDRESSBOOK_MAX_RESULTS"
@@ -180,8 +201,8 @@
 #define CODEC_BANDWIDTH                   3
 
 /** Audio Managers */
-#define ALSA	                           0
-#define PULSEAUDIO                        1
+#define CONST_ALSA                        0
+#define CONST_PULSEAUDIO                  1
 
 
 

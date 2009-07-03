@@ -25,10 +25,6 @@
 #ifndef __DBUSXX_DEBUG_H
 #define __DBUSXX_DEBUG_H
 
-#ifdef DBUS_HAVE_CONFIG_H
-#include <dbus-c++/config.h>
-#endif
-
 #include "api.h"
 
 namespace DBus {

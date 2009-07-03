@@ -46,6 +46,10 @@ IF (UNIX)
    data/*.cmake
    data/Makefile
    data/CMakeFiles
+   data/icons/*.cmake
+   data/icons/*.make
+   data/icons/Makefile
+   data/icons/CMakeFiles
    src/*.cmake
    src/Makefile
    src/CMakeFiles
@@ -59,6 +63,12 @@ IF (UNIX)
    src/*_automoc.cpp
    src/sflphone-client-kde
    src/sflphone-client-kde.shell
+   src/*.moc
+   src/kcfg_*.cpp
+   src/kcfg_*.h
+   po/*.cmake
+   po/Makefile
+   po/CMakeFiles
   )
   
   SET(DISTCLEANED_REC
@@ -71,7 +81,17 @@ IF (UNIX)
     DEPENDS clean
     COMMENT "distribution clean"
     COMMAND rm
-    ARGS    -Rf CMakeTmp CMakeFiles ${DISTCLEANED}
+    ARGS    -Rf CMakeTmp CMakeFiles ${DISTCLEANED} `find ./po  -maxdepth 2  -name 'Makefile'` `find ./po  -maxdepth 2  -name 'CMakeFiles'` `find ./po  -maxdepth 2  -name '*.gmo'` `find ./po  -maxdepth 2  -name '*.cmake'`
+#     COMMAND find
+#     ARGS "./po ( -name 'Makefile' -o -name 'CMakeFiles' -o -name '*.gmo' -o -name '*.cmake' ) -maxdepth 2 -exec rm -rf {} \;"
+#     COMMAND rm 
+#     ARGS -Rf `find ./po  -maxdepth 2  -name 'Makefile'`
+#     COMMAND find
+#     ARGS ./po  -maxdepth 2  -name 'CMakeFiles' -exec rm -rf {} \;
+#     COMMAND find
+#     ARGS ./po  -maxdepth 2  -name '*.gmo'      -exec rm -rf {} \;
+#     COMMAND find
+#     ARGS ./po  -maxdepth 2  -name '*.cmake'    -exec rm -rf {} \;
 #     COMMAND find
 #     ARGS ". \( -name 'Makefile' -o -name 'CMakeFiles' \) -exec rm -rf {} \;"
     TARGET  distclean

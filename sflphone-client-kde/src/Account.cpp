@@ -22,6 +22,7 @@
 #include "Account.h"
 
 #include <QtGui/QApplication>
+#include <klocale.h>
 
 #include "sflphone_const.h"
 #include "configurationmanager_interface_singleton.h"
@@ -30,36 +31,49 @@
 const QString account_state_name(QString & s)
 {
 	if(s == QString(ACCOUNT_STATE_REGISTERED))
-		return QApplication::translate("ConfigurationDialog", "Registered", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Registered" );
 	if(s == QString(ACCOUNT_STATE_UNREGISTERED))
-		return QApplication::translate("ConfigurationDialog", "Not Registered", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Not Registered");
 	if(s == QString(ACCOUNT_STATE_TRYING))
-		return QApplication::translate("ConfigurationDialog", "Trying...", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Trying...");
 	if(s == QString(ACCOUNT_STATE_ERROR))
-		return QApplication::translate("ConfigurationDialog", "Error", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Error");
 	if(s == QString(ACCOUNT_STATE_ERROR_AUTH))
-		return QApplication::translate("ConfigurationDialog", "Bad authentification", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Bad authentification");
 	if(s == QString(ACCOUNT_STATE_ERROR_NETWORK))
-		return QApplication::translate("ConfigurationDialog", "Network unreachable", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Network unreachable");
 	if(s == QString(ACCOUNT_STATE_ERROR_HOST))
-		return QApplication::translate("ConfigurationDialog", "Host unreachable", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Host unreachable");
 	if(s == QString(ACCOUNT_STATE_ERROR_CONF_STUN))
-		return QApplication::translate("ConfigurationDialog", "Stun configuration error", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Stun configuration error");
 	if(s == QString(ACCOUNT_STATE_ERROR_EXIST_STUN))
-		return QApplication::translate("ConfigurationDialog", "Stun server invalid", 0, QApplication::UnicodeUTF8);
-	return QApplication::translate("ConfigurationDialog", "Invalid", 0, QApplication::UnicodeUTF8);
+		return i18nc("account state", "Stun server invalid");
+	return i18nc("account state", "Invalid");
 }
 
 //Constructors
 
-Account::Account():accountId(NULL){}
+Account::Account():accountId(NULL), item(NULL), itemWidget(NULL){}
 
 
 void Account::initAccountItem()
 {
+	if(item != NULL)
+	{
+		delete item;
+	}
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
+	initAccountItemWidget();
+}
+
+void Account::initAccountItemWidget()
+{
+	if(itemWidget != NULL)
+	{
+		delete itemWidget;
+	}
 	bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
 	itemWidget = new AccountItemWidget();
 	itemWidget->setEnabled(enabled);
@@ -83,6 +97,7 @@ Account * Account::buildExistingAccountFromId(QString _accountId)
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Account * a = new Account();
 	a->accountId = new QString(_accountId);
+	qDebug() << "getAccountDetails 1 sent";
 	a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
 	a->initAccountItem();
 	return a;
@@ -132,39 +147,13 @@ MapStringString & Account::getAccountDetails() const
 
 QListWidgetItem * Account::getItem()
 {
-	if(!item)
-		qDebug() << "null" ;
-	return item;
-}
-
-QListWidgetItem * Account::renewItem()
-{
-	if(!item)
-		qDebug() << "null" ;
-	item = new QListWidgetItem(*item);
+	if(!item)  {	qDebug() << "null" ;	}
 	return item;
 }
 
 AccountItemWidget * Account::getItemWidget()
 {
-	delete itemWidget;
-	bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
-	QString alias = getAccountDetail(ACCOUNT_ALIAS);
-	itemWidget = new AccountItemWidget();
-	itemWidget->setEnabled(enabled);
-	itemWidget->setAccountText(alias);
-	if(isNew() || !enabled)
-	{
-		itemWidget->setState(AccountItemWidget::Unregistered);
-	}
-	else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
-	{
-		itemWidget->setState(AccountItemWidget::Registered);
-	}
-	else
-	{
-		itemWidget->setState(AccountItemWidget::NotWorking);
-	}
+	if(itemWidget == NULL)  {	qDebug() << "null";	}
 	return itemWidget;
 }
 
@@ -176,9 +165,9 @@ QString Account::getStateName(QString & state)
 QColor Account::getStateColor()
 {
 	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
-		return Qt::black;
+	{	return Qt::black;	}
 	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
-		return Qt::darkGreen;
+	{	return Qt::darkGreen;	}
 	return Qt::red;
 }
 
@@ -186,9 +175,9 @@ QColor Account::getStateColor()
 QString Account::getStateColorName()
 {
 	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
-		return "black";
+	{	return "black";	}
 	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
-		return "darkGreen";
+	{	return "darkGreen";	}
 	return "red";
 }
 
@@ -223,6 +212,34 @@ void Account::setAccountId(QString id)
 		qDebug() << "Error : setting AccountId of an existing account.";
 	}
 	accountId = new QString(id);
+}
+
+void Account::updateState()
+{
+	qDebug() << "updateState";
+	if(! isNew())
+	{
+		ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+		MapStringString details = configurationManager.getAccountDetails(getAccountId()).value();
+		AccountItemWidget * itemWidget = getItemWidget();
+		QString status = details[ACCOUNT_STATUS];
+		setAccountDetail(ACCOUNT_STATUS, status);
+		if(getAccountDetail(ACCOUNT_ENABLED) != ACCOUNT_ENABLED_TRUE )
+		{
+			qDebug() << "itemWidget->setState(AccountItemWidget::Unregistered);";
+			itemWidget->setState(AccountItemWidget::Unregistered);
+		}
+		else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
+		{
+			qDebug() << "itemWidget->setState(AccountItemWidget::Registered);";
+			itemWidget->setState(AccountItemWidget::Registered);
+		}
+		else
+		{
+			qDebug() << "itemWidget->setState(AccountItemWidget::NotWorking);";
+			itemWidget->setState(AccountItemWidget::NotWorking);
+		}
+	}
 }
 
 //Operators

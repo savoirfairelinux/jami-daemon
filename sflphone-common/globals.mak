@@ -3,13 +3,18 @@ src=$(top_srcdir)
 sflcodecdir=$(DESTDIR)$(libdir)/sflphone/codecs
 sflplugindir=$(DESTDIR)$(libdir)/sflphone/plugins
 
+ASTYLERC="../astylerc"
+indent="/usr/bin/astyle"
+
+PJSIP_VERSION="1.0.2"
+
 # for pjsip
 PJSIP_LIBS= \
-			-L$(src)/libs/pjproject-1.0.1/pjnath/lib/ \
-			-L$(src)/libs/pjproject-1.0.1/pjsip/lib/ \
-			-L$(src)/libs/pjproject-1.0.1/pjlib/lib/ \
-			-L$(src)/libs/pjproject-1.0.1/pjlib-util/lib/ \
-			-L$(src)/libs/pjproject-1.0.1/pjmedia/lib/ \
+			-L$(src)/libs/pjproject-$(PJSIP_VERSION)/pjnath/lib/ \
+			-L$(src)/libs/pjproject-$(PJSIP_VERSION)/pjsip/lib/ \
+			-L$(src)/libs/pjproject-$(PJSIP_VERSION)/pjlib/lib/ \
+			-L$(src)/libs/pjproject-$(PJSIP_VERSION)/pjlib-util/lib/ \
+			-L$(src)/libs/pjproject-$(PJSIP_VERSION)/pjmedia/lib/ \
 			-lpjnath-sfl-$(target) \
 			-lpjsua-sfl-$(target) \
 			-lpjsip-sfl-$(target) \
@@ -20,11 +25,11 @@ PJSIP_LIBS= \
 			-lpjlib-util-sfl-$(target) \
 			-lpj-sfl-$(target)
 
-SIP_CFLAGS=-I$(src)/libs/pjproject-1.0.1/pjsip/include \
-		   -I$(src)/libs/pjproject-1.0.1/pjlib/include \
-		   -I$(src)/libs/pjproject-1.0.1/pjlib-util/include \
-		   -I$(src)/libs/pjproject-1.0.1/pjmedia/include \
-		   -I$(src)/libs/pjproject-1.0.1/pjnath/include
+SIP_CFLAGS=-I$(src)/libs/pjproject-$(PJSIP_VERSION)/pjsip/include \
+		   -I$(src)/libs/pjproject-$(PJSIP_VERSION)/pjlib/include \
+		   -I$(src)/libs/pjproject-$(PJSIP_VERSION)/pjlib-util/include \
+		   -I$(src)/libs/pjproject-$(PJSIP_VERSION)/pjmedia/include \
+		   -I$(src)/libs/pjproject-$(PJSIP_VERSION)/pjnath/include
 
 DBUSCPP_CFLAGS=$(top_srcdir)/libs/dbus-c++/include/dbus-c++
 
@@ -45,8 +50,9 @@ AM_CPPFLAGS = \
 	-I$(src)/libs \
 	-I$(src)/libs/dbus-c++/include \
 	-I$(src)/libs/iax2 \
-	-I$(src)/libs/pjproject-1.0.1 \
+	-I$(src)/libs/pjproject-$(PJSIP_VERSION) \
 	-I$(src)/src \
+	-I$(src)/src/config \
 	-I$(src)/test \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/sflphone\" \

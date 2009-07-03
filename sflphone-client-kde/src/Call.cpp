@@ -68,17 +68,17 @@ const function Call::actionPerformedFunctionMap[11][5] =
 const call_state Call::stateChangedStateMap [11][6] = 
 {
 //                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE
-/*INCOMING     */  {CALL_STATE_INCOMING    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*RINGING      */  {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*CURRENT      */  {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*DIALING      */  {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*HOLD         */  {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*FAILURE      */  {CALL_STATE_FAILURE     , CALL_STATE_FAILURE  , CALL_STATE_BUSY   , CALL_STATE_FAILURE      ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*BUSY         */  {CALL_STATE_BUSY        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_BUSY         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*TRANSFER     */  {CALL_STATE_TRANSFER    , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*TRANSF_HOLD  */  {CALL_STATE_TRANSF_HOLD , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*OVER         */  {CALL_STATE_OVER        , CALL_STATE_OVER     , CALL_STATE_OVER   , CALL_STATE_OVER         ,  CALL_STATE_OVER  ,  CALL_STATE_OVER     },
-/*ERROR        */  {CALL_STATE_ERROR       , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    }
+/*INCOMING     */ {CALL_STATE_INCOMING    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*RINGING      */ {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*CURRENT      */ {CALL_STATE_CURRENT     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*DIALING      */ {CALL_STATE_RINGING     , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*HOLD         */ {CALL_STATE_HOLD        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*FAILURE      */ {CALL_STATE_FAILURE     , CALL_STATE_FAILURE  , CALL_STATE_BUSY   , CALL_STATE_FAILURE      ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*BUSY         */ {CALL_STATE_BUSY        , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_BUSY         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*TRANSFER     */ {CALL_STATE_TRANSFER    , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*TRANSF_HOLD  */ {CALL_STATE_TRANSF_HOLD , CALL_STATE_TRANSFER , CALL_STATE_BUSY   , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*OVER         */ {CALL_STATE_OVER        , CALL_STATE_OVER     , CALL_STATE_OVER   , CALL_STATE_OVER         ,  CALL_STATE_OVER  ,  CALL_STATE_OVER     },
+/*ERROR        */ {CALL_STATE_ERROR       , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    }
 };
 
 const function Call::stateChangedFunctionMap[11][6] = 
@@ -113,7 +113,7 @@ void Call::initCallItem()
 	labelIcon = new QLabel();
 	qDebug() << "labelIcon : " << labelIcon;
 	labelCallNumber = new QLabel(peerPhoneNumber);
-	labelTransferPrefix = new QLabel(tr2i18n("Transfer to : "));
+	labelTransferPrefix = new QLabel(i18n("Transfer to : "));
 	labelTransferNumber = new QLabel();
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 	
@@ -139,15 +139,6 @@ void Call::initCallItem()
 	descr->addLayout(transfer);
 	mainLayout->addLayout(descr);
 	mainLayout->addItem(horizontalSpacer);
-	
-// 	QGridLayout * mainLayout = new QGridLayout(itemWidget);
-// 	mainLayout->setMargin(3);
-// 	mainLayout->setSpacing(3);
-// 	mainLayout->addWidget(labelIcon, 0, 0, 2, 1);
-// 	mainLayout->addWidget(labelCallNumber, 0, 1, 1, 2);
-// 	mainLayout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
-// 	mainLayout->addWidget(labelTransferNumber, 1, 2, 1, 2);
-// 	mainLayout->addItem(horizontalSpacer, 0, 3, 1, 3);
 
 	itemWidget->setLayout(mainLayout);
 }
@@ -157,13 +148,6 @@ void Call::setItemIcon(const QString pixmap)
 	labelIcon->setPixmap(QPixmap(pixmap));
 }
 
-// void Call::setPeerName(const QString peerName)
-// {
-// 	qDebug() << "setPeerName(" << peerName;
-// 	this->peerName = peerName;
-// 	if(!labelPeerName) labelPeerName = new QLabel(peerName + " : ");
-// 	labelPeerName->setText(peerName + " : ");
-// }
 
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
 {
@@ -180,6 +164,26 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	this->stopTime = NULL;
 }
 
+Call::Call(QString callId)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	MapStringString details = callManager.getCallDetails(callId).value();
+	qDebug() << "Constructing existing call with details : " << details;
+	this->callId = callId;
+	this->peerPhoneNumber = details[CALL_PEER_NUMBER];
+	this->peerName = details[CALL_PEER_NAME];
+	initCallItem();
+	call_state startState = getStartStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
+	changeCurrentState(startState);
+	this->historyState = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
+	this->account = details[CALL_ACCOUNTID];
+	this->recording = false;
+	this->startTime = new QDateTime(QDateTime::currentDateTime());
+	this->stopTime = NULL;
+	this->historyItem = NULL;
+	this->historyItemWidget = NULL;
+}
+
 Call::~Call()
 {
 	delete startTime;
@@ -190,9 +194,9 @@ Call::~Call()
 	//delete historyItemWidget;
 }
 	
-Call * Call::buildDialingCall(QString callId, const QString & peerName)
+Call * Call::buildDialingCall(QString callId, const QString & peerName, QString account)
 {
-	Call * call = new Call(CALL_STATE_DIALING, callId, peerName);
+	Call * call = new Call(CALL_STATE_DIALING, callId, peerName, "", account);
 	call->historyState = NONE;
 	return call;
 }
@@ -214,15 +218,95 @@ Call * Call::buildRingingCall(const QString & callId)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	MapStringString details = callManager.getCallDetails(callId).value();
-// 	qDebug() << "Details : " << details.keys();
 	QString from = details[CALL_PEER_NUMBER];
 	QString account = details[CALL_ACCOUNTID];
 	QString peerName = details[CALL_PEER_NAME];
-	//QString from = details[CALL_ACCOUNT];
 	Call * call = new Call(CALL_STATE_RINGING, callId, peerName, from, account);
-// 	call->setPeerName(details[CALL_PEER_NAME]);
 	call->historyState = OUTGOING;
 	return call;
+}
+
+Call * Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type)
+{
+	if(name == "empty") name = "";
+	Call * call = new Call(CALL_STATE_OVER, callId, name, number, account);
+	call->startTime = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
+	call->stopTime = new QDateTime(QDateTime::fromTime_t(stopTimeStamp));
+	call->historyState = getHistoryStateFromType(type);
+	return call;
+}
+
+
+history_state Call::getHistoryStateFromType(QString type)
+{
+	if(type == DAEMON_HISTORY_TYPE_MISSED)
+	{
+		return MISSED;
+	}
+	else if(type == DAEMON_HISTORY_TYPE_OUTGOING)
+	{
+		return OUTGOING;
+	}
+	else if(type == DAEMON_HISTORY_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+}
+
+call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
+{
+	if(daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT)
+	{
+		return CALL_STATE_CURRENT;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_HOLD)
+	{
+		return CALL_STATE_HOLD;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_BUSY)
+	{
+		return CALL_STATE_BUSY;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return CALL_STATE_INCOMING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return CALL_STATE_RINGING;
+	}
+	else
+	{
+		return CALL_STATE_FAILURE;
+	}
+}
+
+history_state Call::getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
+{
+	if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+	else if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return OUTGOING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_BUSY)
+	{
+		return OUTGOING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return MISSED;
+	}
+	else
+	{
+		return NONE;
+	}
 }
 
 daemon_call_state Call::toDaemonCallState(const QString & stateName)
@@ -326,7 +410,6 @@ QWidget * Call::getHistoryItemWidget()
 		descr->setMargin(0);
 		descr->setSpacing(1);
 		mainLayout->addWidget(labelHistoryIcon);
-		qDebug() << "descr->addWidget(labelPeerName);";
 		if(! peerName.isEmpty())
 		{
 			labelHistoryPeerName = new QLabel(peerName);
@@ -341,13 +424,6 @@ QWidget * Call::getHistoryItemWidget()
 	return historyItemWidget;
 }
 
-/*
-layout->addWidget(labelIcon, 0, 0, 2, 1);
-	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
-	layout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
-	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
-	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
-*/
 call_state Call::getState() const
 {
 	return currentState;
@@ -356,6 +432,11 @@ call_state Call::getState() const
 history_state Call::getHistoryState() const
 {
 	return historyState;
+}
+
+bool Call::isHistory() const
+{
+	return (getState() == CALL_STATE_OVER);
 }
 
 call_state Call::stateChanged(const QString & newStateName)
@@ -404,6 +485,11 @@ call_state Call::getCurrentState() const
 bool Call::getRecording() const
 {
 	return recording;
+}
+
+QString Call::getAccountId() const
+{
+	return account;
 }
 
 /*
@@ -483,7 +569,12 @@ void Call::call()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	QString number = labelCallNumber->text();
-	this->account = sflphone_kdeView::firstAccountId();
+	qDebug() << "account = " << account;
+	if(account.isEmpty())
+	{
+		qDebug() << "account is empty"; 
+		this->account = sflphone_kdeView::firstRegisteredAccount()->getAccountId();
+	}
 	if(!account.isEmpty())
 	{
 		qDebug() << "Calling " << number << " with account " << account << ". callId : " << callId;
@@ -530,9 +621,10 @@ void Call::switchRecord()
 void Call::setRecord()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	qDebug() << "Setting record for call. callId : " << callId;
+	qDebug() << "Setting record " << !recording << " for call. callId : " << callId;
 	callManager.setRecording(callId);
 	recording = !recording;
+	updateItem();
 }
 
 void Call::start()
@@ -568,12 +660,13 @@ void Call::appendItemText(QString text)
 			break;
 		case CALL_STATE_CURRENT:
 			//TODO replace account string by an Account instance and handle damn pointers to avoid detruction of Accounts
-			//if(peer == account->getAccountDetail(ACCOUNT_MAILBOX))
-			if(peerPhoneNumber == configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX])
-			{
-				text = QString(QChar(0x9A));
-			}
+// 			if(peerPhoneNumber == configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX])
+// 			{
+// 				text = QString(QChar(0x9A));
+// 			}
+			text = QString();
 			editNumber = labelCallNumber;
+			
 			break;		
 		default:
 			qDebug() << "Type key on call not editable. Doing nothing.";
@@ -618,17 +711,24 @@ void Call::changeCurrentState(call_state newState)
 
 void Call::updateItem()
 {
-	if(currentState == CALL_STATE_CURRENT && recording)
-		setItemIcon(ICON_CURRENT_REC);
+	if(currentState != CALL_STATE_OVER)
+	{
+		if(currentState == CALL_STATE_CURRENT && recording)
+			setItemIcon(ICON_CURRENT_REC);
+		else
+		{
+			QString str = QString(callStateIcons[currentState]);
+			setItemIcon(str);
+		}
+		bool transfer = currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD;
+		labelTransferPrefix->setVisible(transfer);
+		labelTransferNumber->setVisible(transfer);
+		if(!transfer)
+			labelTransferNumber->setText("");
+	}
 	else
 	{
-		QString str(callStateIcons[currentState]);
-		setItemIcon(str);
+		qDebug() << "Updating item of call of state OVER. Doing nothing.";
 	}
-	bool transfer = currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD;
-	labelTransferPrefix->setVisible(transfer);
-	labelTransferNumber->setVisible(transfer);
-	if(!transfer)
-		labelTransferNumber->setText("");
 }
 

@@ -17,7 +17,7 @@ INCLUDE ( KDE4Defaults )
 
 MESSAGE("cmake install prefix is : ${CMAKE_INSTALL_PREFIX}")
 
-INCLUDE_DIRECTORIES ( ${KDE4_INCLUDES} ${QT_INCLUDES} )
+INCLUDE_DIRECTORIES ( ${KDE4_INCLUDES} ${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 
 INCLUDE (  ${CMAKE_ROOT}/Modules/CheckIncludeFiles.cmake  )
 INCLUDE(   ${QT_USE_FILE}   )
@@ -27,5 +27,6 @@ add_subdirectory(src)
 add_subdirectory(doc)
 add_subdirectory(man)
 add_subdirectory(data)
+add_subdirectory(po)
 
 

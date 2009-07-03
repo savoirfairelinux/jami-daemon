@@ -25,6 +25,7 @@
 G_BEGIN_DECLS
 
 void gnome_main_section_new (gchar *title, GtkWidget**);
+void gnome_main_section_new_with_table (gchar *title, GtkWidget**, GtkWidget**, gint nb_col, gint nb_row);
 
 G_END_DECLS
 

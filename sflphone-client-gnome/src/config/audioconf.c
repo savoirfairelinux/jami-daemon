@@ -393,10 +393,12 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     // printf("%s, %s\n", name, srate);
 
     // codec_list_get_by_name(name);
-    if ((strcmp(name,"speex")==0) && (strcmp(srate,"8 kHz")==0))
+    if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"8 kHz")==0))
         codec = codec_list_get_by_payload(110);
-    else if ((strcmp(name,"speex")==0) && (strcmp(srate,"16 kHz")==0))
+    else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"16 kHz")==0))
         codec = codec_list_get_by_payload(111);
+    else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"32 kHz")==0))
+        codec = codec_list_get_by_payload(112);
     else
         codec = codec_list_get_by_name(name);
 
@@ -641,27 +643,6 @@ select_audio_manager( void )
     //gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) )? dbus_set_audio_manager( PULSEAUDIO ):dbus_set_audio_manager( ALSA );
 }
 
-GtkWidget* api_box()
-{
-    GtkWidget *ret;
-    GtkWidget *alsa;
-
-    ret = gtk_hbox_new(FALSE, 10);
-    gtk_widget_show( ret );
-
-    pulse = gtk_radio_button_new_with_mnemonic( NULL , _("Pulseaudio"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pulse), !SHOW_ALSA_CONF  );
-    gtk_box_pack_start( GTK_BOX(ret) , pulse , TRUE , TRUE , 1);
-    alsa = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse),  _("ALSA"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(alsa), SHOW_ALSA_CONF );
-    gtk_box_pack_end( GTK_BOX(ret) , alsa , TRUE , TRUE , 1);
-    g_signal_connect(G_OBJECT(alsa), "clicked", G_CALLBACK(select_audio_manager), NULL);
-    // gtk_misc_set_alignment(GTK_MISC(alsa), 0.2, 0.4);
-    gtk_widget_show_all(ret);
-
-    return ret;
-}
-
 GtkWidget* alsa_box()
 {
     GtkWidget *ret;
@@ -726,6 +707,7 @@ GtkWidget* alsa_box()
     gtk_misc_set_alignment(GTK_MISC(item), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), item, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(item);
+
     // Set choices of output devices
     inputlist = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
     config_window_fill_input_audio_device_list();
@@ -744,35 +726,6 @@ GtkWidget* alsa_box()
     gtk_widget_show_all(ret);
 
     DEBUG("done");
-    return ret;
-}
-
-GtkWidget* ringtones_box()
-{
-    GtkWidget *ret;
-    GtkWidget *enableTone;
-    GtkWidget *fileChooser;
-
-    // check button to enable ringtones
-    ret = gtk_hbox_new( TRUE , 1);
-    enableTone = gtk_check_button_new_with_mnemonic( _("_Enable ringtones"));
-    // gtk_misc_set_alignment(GTK_MISC(enableTone), 0.2, 0.5);
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
-    gtk_box_pack_start( GTK_BOX(ret) , enableTone , TRUE , TRUE , 1);
-    g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
-    // file chooser button
-    fileChooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());
-    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , get_ringtone_choice());
-    g_signal_connect( G_OBJECT( fileChooser ) , "selection_changed" , G_CALLBACK( ringtone_changed ) , NULL );
-    GtkFileFilter *filter = gtk_file_filter_new();
-    gtk_file_filter_set_name( filter , _("Audio Files") );
-    gtk_file_filter_add_pattern(filter , "*.wav" );
-    gtk_file_filter_add_pattern(filter , "*.ul" );
-    gtk_file_filter_add_pattern(filter , "*.au" );
-    gtk_file_chooser_add_filter( GTK_FILE_CHOOSER( fileChooser ) , filter);
-    gtk_box_pack_start( GTK_BOX(ret) , fileChooser , TRUE , TRUE , 1);
-
     return ret;
 }
 
@@ -813,21 +766,30 @@ GtkWidget* create_audio_configuration()
     // Main widget
     GtkWidget *ret;
     // Main frames
-    GtkWidget *sound_conf;
     GtkWidget *codecs_conf;
-    GtkWidget *ringtones_conf;
     // Sub boxes
     GtkWidget *box;
+    GtkWidget *frame;
 
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    // Box for the audio manager selection
-    gnome_main_section_new (_("Sound Manager"), &sound_conf);
-    gtk_box_pack_start(GTK_BOX(ret), sound_conf, FALSE, FALSE, 0);
-    gtk_widget_show( sound_conf );
-    box = api_box();
-    gtk_container_add( GTK_CONTAINER(sound_conf) , box );
+    GtkWidget *alsa;
+    GtkWidget *table;
+
+    gnome_main_section_new_with_table (_("Sound Manager"), &frame, &table, 1, 2);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+
+    pulse = gtk_radio_button_new_with_mnemonic( NULL , _("_Pulseaudio"));
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pulse), !SHOW_ALSA_CONF  );
+    gtk_table_attach ( GTK_TABLE( table ), pulse, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+ 
+
+    alsa = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse),  _("_ALSA"));
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(alsa), SHOW_ALSA_CONF );
+    g_signal_connect(G_OBJECT(alsa), "clicked", G_CALLBACK(select_audio_manager), NULL);
+    gtk_table_attach ( GTK_TABLE( table ), alsa, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+ 
 
     // Box for the ALSA configuration
     gnome_main_section_new (_("ALSA configuration"), &alsa_conf);
@@ -870,11 +832,30 @@ GtkWidget* create_audio_configuration()
     */
 
     // Box for the ringtones
-    gnome_main_section_new (_("Ringtones"), &ringtones_conf);
-    gtk_box_pack_start(GTK_BOX(ret), ringtones_conf, FALSE, FALSE, 0);
-    gtk_widget_show( ringtones_conf );
-    box = ringtones_box();
-    gtk_container_add( GTK_CONTAINER(ringtones_conf) , box );
+    gnome_main_section_new_with_table (_("Ringtones"), &frame, &table, 1, 2);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0); 
+
+    GtkWidget *enableTone;
+    GtkWidget *fileChooser;
+
+    enableTone = gtk_check_button_new_with_mnemonic( _("_Enable ringtones"));
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
+    g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
+    gtk_table_attach ( GTK_TABLE( table ), enableTone, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    // file chooser button
+    fileChooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());
+    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , get_ringtone_choice());
+    g_signal_connect( G_OBJECT( fileChooser ) , "selection_changed" , G_CALLBACK( ringtone_changed ) , NULL );
+
+    GtkFileFilter *filter = gtk_file_filter_new();
+    gtk_file_filter_set_name( filter , _("Audio Files") );
+    gtk_file_filter_add_pattern(filter , "*.wav" );
+    gtk_file_filter_add_pattern(filter , "*.ul" );
+    gtk_file_filter_add_pattern(filter , "*.au" );
+    gtk_file_chooser_add_filter( GTK_FILE_CHOOSER( fileChooser ) , filter);
+    gtk_table_attach ( GTK_TABLE( table ), fileChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     gtk_widget_show_all(ret);
 

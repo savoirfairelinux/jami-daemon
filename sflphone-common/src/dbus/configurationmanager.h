@@ -82,9 +82,15 @@ public:
     int32_t getDialpad( void );
     void setDialpad( void );
     int32_t getSearchbar( void );
+    
     void setSearchbar( void );
-    void setMaxCalls( const int32_t& calls);
-    int32_t getMaxCalls( void );
+    
+    void setHistoryLimit( const int32_t& days);
+    int32_t getHistoryLimit (void);
+    
+    void setHistoryEnabled (void);
+    int32_t getHistoryEnabled (void);
+
     int32_t getVolumeControls( void );
     void setVolumeControls( void );
     int32_t isStartHidden( void );
@@ -113,6 +119,9 @@ public:
 
     std::map<std::string, std::string> getHookSettings (void);
     void setHookSettings (const std::map<std::string, std::string>& settings);
+    
+    std::map <std::string, std::string> getHistory (void);
+    void setHistory (const std::map <std::string, std::string>& entries);
 
 };
 

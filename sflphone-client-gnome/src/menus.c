@@ -58,11 +58,11 @@ void update_menus()
     gtk_widget_set_sensitive( GTK_WIDGET(recordMenu), FALSE);
     gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
 
-    call_t * selectedCall = calltab_get_selected_call(active_calltree);
+    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
     if (selectedCall)
     {
         gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   TRUE);
-        switch(selectedCall->state)
+        switch(selectedCall->_state)
         {
             case CALL_STATE_INCOMING:
                 gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
@@ -211,11 +211,11 @@ switch_account(  GtkWidget* item , gpointer data UNUSED)
     static void
 call_hold  (void* foo UNUSED)
 {
-    call_t * selectedCall = calltab_get_selected_call(current_calls);
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
 
     if(selectedCall)
     {
-        if(selectedCall->state == CALL_STATE_HOLD)
+        if(selectedCall->_state == CALL_STATE_HOLD)
         {
             gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_unhold.svg"));
             sflphone_off_hold();
@@ -257,7 +257,7 @@ call_wizard ( void * foo UNUSED)
     static void
 remove_from_history( void * foo UNUSED)
 {
-    call_t* c = calltab_get_selected_call( history );
+    callable_obj_t* c = calltab_get_selected_call( history );
     if(c){
         DEBUG("Remove the call from the history");
         calllist_remove_from_history( c );
@@ -267,17 +267,13 @@ remove_from_history( void * foo UNUSED)
     static void
 call_back( void * foo UNUSED)
 {
-    call_t *selected_call, *new_call;
-    gchar *to, *from;
-
+    callable_obj_t *selected_call, *new_call;
+    
     selected_call = calltab_get_selected_call( active_calltree );
 
     if( selected_call )
     {
-        to = g_strdup(call_get_number(selected_call));
-        from = g_strconcat("\"\" <", call_get_number(selected_call), ">",NULL);
-
-        create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
+        create_new_call (CALL, CALL_STATE_DIALING, "", "", selected_call->_peer_name, selected_call->_peer_number, &new_call);
 
         calllist_add(current_calls, new_call);
         calltree_add_call(current_calls, new_call);
@@ -296,7 +292,7 @@ create_call_menu()
 
     menu      = gtk_menu_new ();
 
-    image = gtk_image_new_from_file( ICONS_DIR "/icon_call.svg");
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_dialpad.svg");
     newCallMenu = gtk_image_menu_item_new_with_mnemonic(_("_New call"));
     gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( newCallMenu ), image );
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), newCallMenu);
@@ -409,17 +405,17 @@ edit_accounts ( void * foo UNUSED)
 edit_copy ( void * foo UNUSED)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-    call_t * selectedCall = calltab_get_selected_call(current_calls);
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
     gchar * no = NULL;
 
     if(selectedCall)
     {
-        switch(selectedCall->state)
+        switch(selectedCall->_state)
         {
             case CALL_STATE_TRANSFERT:
             case CALL_STATE_DIALING:
             case CALL_STATE_RINGING:
-                no = selectedCall->to;
+                no = selectedCall->_peer_number;
                 break;
             case CALL_STATE_CURRENT:
             case CALL_STATE_HOLD:
@@ -427,10 +423,10 @@ edit_copy ( void * foo UNUSED)
             case CALL_STATE_FAILURE:
             case CALL_STATE_INCOMING:
             default:
-                no = call_get_number(selectedCall);
+                no = selectedCall->_peer_number;
                 break;
         }
-
+	DEBUG("Clipboard number: %s\n", no);
         gtk_clipboard_set_text (clip, no, strlen(no) );
     }
 
@@ -441,26 +437,25 @@ edit_copy ( void * foo UNUSED)
 edit_paste ( void * foo UNUSED)
 {
     GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-    call_t * selectedCall = calltab_get_selected_call(current_calls);
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
     gchar * no = gtk_clipboard_wait_for_text (clip);
 
     if(no && selectedCall)
     {
-        switch(selectedCall->state)
+        switch(selectedCall->_state)
         {
             case CALL_STATE_TRANSFERT:
             case CALL_STATE_DIALING:
                 // Add the text to the number
                 {
-                    gchar * before = selectedCall->to;
-                    selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
-                    g_free(before);
-                    DEBUG("TO: %s", selectedCall->to);
+		    gchar * before;
+		    before = selectedCall->_peer_number;
+		    DEBUG("TO: %s\n", before);
+                    selectedCall->_peer_number = g_strconcat(before, no, NULL);
 
-                    if(selectedCall->state == CALL_STATE_DIALING)
+                    if(selectedCall->_state == CALL_STATE_DIALING)
                     {
-                        g_free(selectedCall->from);
-                        selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
+                        selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);	        		
                     }
                     calltree_update_call(current_calls, selectedCall);
                 }
@@ -473,13 +468,11 @@ edit_paste ( void * foo UNUSED)
                 { // Create a new call to hold the new text
                     selectedCall = sflphone_new_call();
 
-                    gchar * before = selectedCall->to;
-                    selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
-                    g_free(before);
-                    DEBUG("TO: %s", selectedCall->to);
+                    gchar * before = selectedCall->_peer_number;
+                    selectedCall->_peer_number = g_strconcat(selectedCall->_peer_number, no, NULL);
+                    DEBUG("TO: %s", selectedCall->_peer_number);
 
-                    g_free(selectedCall->from);
-                    selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
+                    selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);
 
                     calltree_update_call(current_calls, selectedCall);
                 }
@@ -494,11 +487,9 @@ edit_paste ( void * foo UNUSED)
                         DEBUG("<%s>", oneNo);
                         dbus_play_dtmf(oneNo);
 
-                        gchar * temp = g_strconcat(call_get_number(selectedCall), oneNo, NULL);
-                        gchar * before = selectedCall->from;
-                        selectedCall->from = g_strconcat("\"",call_get_name(selectedCall) ,"\" <", temp, ">", NULL);
-                        g_free(before);
-                        g_free(temp);
+                        gchar * temp = g_strconcat(selectedCall->_peer_number, oneNo, NULL);
+                        selectedCall->_peer_info = get_peer_info (temp, selectedCall->_peer_name);
+                        // g_free(temp);
                         calltree_update_call(current_calls, selectedCall);
 
                     }
@@ -511,13 +502,13 @@ edit_paste ( void * foo UNUSED)
     {
         selectedCall = sflphone_new_call();
 
-        gchar * before = selectedCall->to;
-        selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
+        gchar * before = selectedCall->_peer_number;
+        selectedCall->_peer_number = g_strconcat(selectedCall->_peer_number, no, NULL);
         g_free(before);
-        DEBUG("TO: %s", selectedCall->to);
+        DEBUG("TO: %s", selectedCall->_peer_number);
 
-        g_free(selectedCall->from);
-        selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
+        g_free(selectedCall->_peer_info);
+        selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);
         calltree_update_call(current_calls,selectedCall);
     }
 
@@ -558,7 +549,7 @@ create_edit_menu()
     menu_items = gtk_separator_menu_item_new ();
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
-    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Clear history"));
+    menu_items = gtk_image_menu_item_new_with_mnemonic(_("Clear _history"));
     image = gtk_image_new_from_stock( GTK_STOCK_CLEAR , GTK_ICON_SIZE_MENU );
     gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( menu_items ), image );
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
@@ -577,7 +568,7 @@ create_edit_menu()
             NULL);
     gtk_widget_show (menu_items);
 
-    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PREFERENCES, get_accel_group());
+    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PREFERENCES, NULL);
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
             G_CALLBACK (edit_preferences),
@@ -714,7 +705,7 @@ create_menus ( )
 
 static void edit_number_cb (GtkWidget *widget UNUSED, gpointer user_data) {
 
-    show_edit_number ((call_t*)user_data);
+    show_edit_number ((callable_obj_t*)user_data);
 }
 
 
@@ -726,11 +717,11 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE;
     gboolean accounts = FALSE;
 
-    call_t * selectedCall = calltab_get_selected_call(current_calls);
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
     if (selectedCall)
     {
         copy = TRUE;
-        switch(selectedCall->state)
+        switch(selectedCall->_state)
         {
             case CALL_STATE_INCOMING:
                 pickup = TRUE;
@@ -827,7 +818,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
         menu_items = gtk_check_menu_item_new_with_mnemonic (_("On _Hold"));
         gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
         gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
-                (selectedCall->state == CALL_STATE_HOLD ? TRUE : FALSE));
+                (selectedCall->_state == CALL_STATE_HOLD ? TRUE : FALSE));
         g_signal_connect(G_OBJECT (menu_items), "activate",
                 G_CALLBACK (call_hold),
                 NULL);
@@ -876,7 +867,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
     gboolean remove = FALSE;
     gboolean edit = FALSE;
 
-    call_t * selectedCall = calltab_get_selected_call( history );
+    callable_obj_t * selectedCall = calltab_get_selected_call( history );
     if (selectedCall)
     {
         remove = TRUE;
@@ -948,7 +939,7 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
     gboolean accounts = FALSE;
     gboolean edit = FALSE;
 
-    call_t * selectedCall = calltab_get_selected_call( contacts );
+    callable_obj_t * selectedCall = calltab_get_selected_call( contacts );
     if (selectedCall)
     {
         pickup = TRUE;
@@ -1020,7 +1011,7 @@ void add_registered_accounts_to_menu (GtkWidget *menu) {
     for( i = 0 ; i < account_list_get_size() ; i++ ){
         acc = account_list_get_nth(i);
         // Display only the registered accounts
-        if( g_strcasecmp( account_state_name(acc -> state) , account_state_name(ACCOUNT_STATE_REGISTERED) ) == 0 ){
+        if( g_strcasecmp( account_state_name(acc->state) , account_state_name(ACCOUNT_STATE_REGISTERED) ) == 0 ){
             alias = g_strconcat( g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) , " - ",g_hash_table_lookup(acc->properties , ACCOUNT_TYPE), NULL);
             menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
             gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
@@ -1042,18 +1033,15 @@ void add_registered_accounts_to_menu (GtkWidget *menu) {
 
 static void ok_cb (GtkWidget *widget UNUSED, gpointer userdata) {
 
-    gchar *new_number, *from;
-    call_t *modified_call, *original;
+    gchar *new_number;
+    callable_obj_t *modified_call, *original;
 
     // Change the number of the selected call before calling
     new_number = (gchar*) gtk_entry_get_text (GTK_ENTRY (editable_num));
-    original = (call_t*)userdata;
-
-    // Edit the from field with the updated phone number value
-    from = g_strconcat("\"", call_get_name (original), "\" <", new_number, ">",NULL);
+    original = (callable_obj_t*)userdata;
 
     // Create the new call
-    create_new_call (g_strdup (new_number), from,  CALL_STATE_DIALING, g_strdup (original->accountID), &modified_call);
+    create_new_call (CALL, CALL_STATE_DIALING, "", g_strdup (original->_accountID), original->_peer_name, g_strdup (new_number), &modified_call);
 
     // Update the internal data structure and the GUI
     calllist_add(current_calls, modified_call);
@@ -1070,7 +1058,7 @@ static void on_delete (GtkWidget * widget)
     gtk_widget_destroy (widget);
 }
 
-void show_edit_number (call_t *call) {
+void show_edit_number (callable_obj_t *call) {
 
     GtkWidget *ok, *hbox, *image;
     GdkPixbuf *pixbuf;
@@ -1093,7 +1081,7 @@ void show_edit_number (call_t *call) {
     gtk_widget_set_tooltip_text(GTK_WIDGET(editable_num), _("Edit the phone number before making a call"));
 #endif
     if (call)
-        gtk_entry_set_text(GTK_ENTRY(editable_num), g_strdup (call_get_number (call)));
+        gtk_entry_set_text(GTK_ENTRY(editable_num), g_strdup (call->_peer_number));
     else
         ERROR ("This a bug, the call should be defined. menus.c line 1051");
 

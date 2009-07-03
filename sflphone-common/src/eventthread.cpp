@@ -6,12 +6,12 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                              
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -22,39 +22,39 @@
 #include "audio/alsalayer.h"
 
 /********************************** Voiplink thread *************************************/
-EventThread::EventThread( VoIPLink *link ) 
-    : Thread(), _linkthread(link)
+EventThread::EventThread (VoIPLink *link)
+        : Thread(), _linkthread (link)
 {
-    setCancel( cancelDeferred );
+    setCancel (cancelDeferred);
 }
 
 
 /**
- * Reimplementation of run() 
+ * Reimplementation of run()
  */
-void EventThread::run (void) 
+void EventThread::run (void)
 {
-  while(!testCancel()) {
-    _linkthread->getEvent();
-  }
-}	
+    while (!testCancel()) {
+        _linkthread->getEvent();
+    }
+}
 
 /********************************************************************************************/
 
 AudioThread::AudioThread (AlsaLayer *alsa)
-    : Thread(), _alsa(alsa)
+        : Thread(), _alsa (alsa)
 {
     setCancel (cancelDeferred);
 }
 
 /**
- * Reimplementation of run() 
+ * Reimplementation of run()
  */
-void AudioThread::run (void) 
+void AudioThread::run (void)
 {
-    while(!testCancel()) {
+    while (!testCancel()) {
         _alsa->audioCallback();
-        Thread::sleep(3);
+        Thread::sleep (3);
     }
 }
 
