@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-06-23 10:31:34 -0400
+# Last Modified: 2009-07-03 16:35:11 -0400
 #####################################################
 
 #
@@ -65,7 +65,7 @@ USER="sflphone"
 
 RELEASE_MODE=
 
-SNAPSHOT_TAG=`date +%s`
+SNAPSHOT_TAG=`date +%Y%m%d`
 
 DO_CLEAN=1
 DO_PREPARE=1
