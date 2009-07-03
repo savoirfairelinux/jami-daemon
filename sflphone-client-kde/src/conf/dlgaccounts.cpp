@@ -99,7 +99,7 @@ void DlgAccounts::saveAccountList()
 		else{
 			if(! accountIds.contains(current.getAccountId()))
 			{
-				qDebug() << "The account with id " << current.getAccountId() << " doesn't exist. It might have been removed by another SFLPhone client.";
+				qDebug() << "The account with id " << current.getAccountId() << " doesn't exist. It might have been removed by another SFLphone client.";
 				currentId = QString();
 			}
 			else

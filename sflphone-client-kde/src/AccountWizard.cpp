@@ -276,7 +276,7 @@ WizardIntroPage::WizardIntroPage(QWidget *parent)
      : QWizardPage(parent)
 {
 	setTitle(i18n("Account Creation Wizard"));
-	setSubTitle(i18n("Welcome to the Account creation wizard of SFLPhone"));
+	setSubTitle(i18n("Welcome to the Account creation wizard of SFLphone"));
 
 	introLabel = new QLabel(i18n("This wizard will help you setting up an account."));
 	introLabel->setWordWrap(true);

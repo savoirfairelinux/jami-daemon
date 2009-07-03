@@ -13,7 +13,7 @@
   <!ENTITY pt-cell "cell phone">
   <!ENTITY pt-work "work phone">
 
-  <!ENTITY sflphone "SFLPhone">
+  <!ENTITY sflphone "SFLphone">
   <!ENTITY % addindex "IGNORE">
   <!ENTITY % English "INCLUDE" >
   

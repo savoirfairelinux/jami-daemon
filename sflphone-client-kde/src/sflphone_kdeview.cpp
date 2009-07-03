@@ -1044,17 +1044,17 @@ void sflphone_kdeView::on_stackedWidget_screen_currentChanged(int index)
 	{
 		case 0:
 			qDebug() << "Switched to call list screen.";
-			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Main screen"));
+			window->setWindowTitle(i18n("SFLphone") + " - " + i18n("Main screen"));
 			break;
 		case 1:
 			qDebug() << "Switched to call history screen.";
 			updateCallHistory();
-			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Call history"));
+			window->setWindowTitle(i18n("SFLphone") + " - " + i18n("Call history"));
 			break;
 		case 2:
 			qDebug() << "Switched to address book screen.";
 			updateAddressBook();
-			window->setWindowTitle(i18n("SFLPhone") + " - " + i18n("Address book"));
+			window->setWindowTitle(i18n("SFLphone") + " - " + i18n("Address book"));
 			break;
 		default:
 			qDebug() << "Error : reached an unknown index \"" << index << "\" with stackedWidget_screen.";

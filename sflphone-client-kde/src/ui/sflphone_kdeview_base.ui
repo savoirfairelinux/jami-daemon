@@ -395,7 +395,10 @@
   </action>
   <action name="action_configureSflPhone">
    <property name="text">
-    <string>&amp;Configure SFLPhone</string>
+    <string>&amp;Configure SFLphone</string>
+   </property>
+   <property name="toolTip">
+    <string>Configure SFLphone</string>
    </property>
   </action>
   <action name="action_displayVolumeControls">

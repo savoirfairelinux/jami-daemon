@@ -27,7 +27,7 @@
  * @brief Contains the global variables for the client code
  */
  
-#define APP_NAME                          "SFLPhone KDE Client"
+#define APP_NAME                          "SFLphone KDE Client"
 
 /** Locale */
 // #define _(STRING)                         gettext( STRING )   
