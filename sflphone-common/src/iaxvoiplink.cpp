@@ -842,7 +842,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         default:
-            _debug ("Unknown event type (in call event): %d\n", event->etype);
+            _debug ("iaxHandleCallEvent: Unknown event type (in call event): %d\n", event->etype);
 
     }
 }
@@ -1084,7 +1084,7 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             break;
 
         default:
-            _debug ("Unknown event type (in precall): %d\n", event->etype);
+            _debug ("IAXVoIPLink::iaxHandlePrecallEvent: Unknown event type (in precall): %d\n", event->etype);
     }
 
 }

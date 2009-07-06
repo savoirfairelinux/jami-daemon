@@ -1,5 +1,5 @@
 /* $Id: main_symbian.cpp 2394 2008-12-23 17:27:53Z bennylp $ */
-/* 
+/*
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "ua.h"
 
@@ -29,7 +29,7 @@
 CConsoleBase* console;
 
 // Needed by APS
-TPtrC APP_UID = _L("A000000D");
+TPtrC APP_UID = _L ("A000000D");
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -37,13 +37,13 @@ TPtrC APP_UID = _L("A000000D");
 LOCAL_C void DoStartL()
 {
     CActiveScheduler *scheduler = new (ELeave) CActiveScheduler;
-    CleanupStack::PushL(scheduler);
-    CActiveScheduler::Install(scheduler);
+    CleanupStack::PushL (scheduler);
+    CActiveScheduler::Install (scheduler);
 
     ua_main();
-    
-    CActiveScheduler::Install(NULL);
-    CleanupStack::Pop(scheduler);
+
+    CActiveScheduler::Install (NULL);
+    CleanupStack::Pop (scheduler);
     delete scheduler;
 }
 
@@ -60,22 +60,26 @@ GLDEF_C TInt E32Main()
     CTrapCleanup* cleanup = CTrapCleanup::New();
 
     // Create output console
-    TRAPD(createError, console = Console::NewL(_L("Console"), TSize(KConsFullScreen,KConsFullScreen)));
+    TRAPD (createError, console = Console::NewL (_L ("Console"), TSize (KConsFullScreen,KConsFullScreen)));
+
     if (createError)
         return createError;
 
-    TRAPD(startError, DoStartL());
+    TRAPD (startError, DoStartL());
 
-    console->Printf(_L("[press any key to close]\n"));
+    console->Printf (_L ("[press any key to close]\n"));
+
     console->Getch();
-    
+
     delete console;
+
     delete cleanup;
 
-    CloseSTDLIB(); 
+    CloseSTDLIB();
 
     // Mark end of heap usage, detect memory leaks
     __UHEAP_MARKEND;
+
     return KErrNone;
 }
 
