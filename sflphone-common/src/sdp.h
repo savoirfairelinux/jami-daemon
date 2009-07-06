@@ -179,7 +179,7 @@ class Sdp {
          */
         unsigned int get_remote_audio_port() { return _remote_audio_port; }
 
-        void fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remote_sdp);
+        void set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *remote_sdp);
 
         std::vector<sdpMedia*> get_session_media_list (void) { return _session_media; }
 
@@ -298,11 +298,11 @@ class Sdp {
 
         std::string convert_int_to_string (int value);
 
-        void fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp);
+        void set_remote_ip_from_sdp (const pjmedia_sdp_session *r_sdp);
         
-        void fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media);
+        void set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media);
 
-        void get_remote_sdp_media_from_offer (pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
+        void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
 //////////////////////////////////////////////////////////////////3
 ////////////////////////////////////////////////////////////////////

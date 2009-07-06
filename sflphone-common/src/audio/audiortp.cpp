@@ -127,14 +127,6 @@ AudioRtp::closeRtpSession ()
     return true;
 }
 
-
-AudioRtpRTX*
-AudioRtp::getRTX()
-{
-    return _RTXThread;
-}
-
-
 void
 AudioRtp::setRecording()
 {
@@ -143,10 +135,6 @@ AudioRtp::setRecording()
     _RTXThread->_ca->setRecording();
 
 }
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //

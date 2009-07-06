@@ -195,7 +195,7 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
     }
 
     // Retrieve some useful remote information
-    this->fetch_media_transport_info_from_remote_sdp (remote);
+    this->set_media_transport_info_from_remote_sdp (remote);
 
     status = pjmedia_sdp_neg_create_w_remote_offer (_pool,
              get_local_sdp_session(), remote, &_negociator);
@@ -314,8 +314,6 @@ void Sdp::set_negociated_offer (const pjmedia_sdp_session *sdp)
 
     _negociated_offer = (pjmedia_sdp_session*) sdp;
 
-    //this->fetch_remote_ip_from_sdp ((pjmedia_sdp_session*)sdp);
-
     codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
 
     // retrieve the media information
@@ -358,7 +356,7 @@ AudioCodec* Sdp::get_session_media (void)
     AudioCodec *codec = NULL;
     std::vector<sdpMedia*> media_list;
 
-    _debug ("sdp line 314 - get_session_media ()\n");
+    _debug ("sdp line %d - get_session_media ()\n", __LINE__);
 
     media_list = get_session_media_list ();
     nb_media = media_list.size();
@@ -470,17 +468,15 @@ std::string Sdp::convert_int_to_string (int value)
     return result.str();
 }
 
-void Sdp::fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp)
+void Sdp::set_remote_ip_from_sdp (const pjmedia_sdp_session *r_sdp)
 {
 
-    std::string remote_ip;
-
-    remote_ip = r_sdp->conn->addr.ptr;
+    std::string remote_ip(r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
     _debug ("            Remote IP from fetching SDP: %s\n", remote_ip.c_str());
     this->set_remote_ip (remote_ip);
 }
 
-void Sdp::fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media)
+void Sdp::set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media)
 {
 
     int remote_port;
@@ -490,7 +486,7 @@ void Sdp::fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media)
     this->set_remote_audio_port (remote_port);
 }
 
-void Sdp::fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remote_sdp)
+void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *remote_sdp)
 {
 
     _debug ("Fetching media from sdp\n");
@@ -504,12 +500,12 @@ void Sdp::fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remot
         return;
     }
 
-    this->fetch_remote_audio_port_from_sdp (r_media);
+    this->set_remote_audio_port_from_sdp (r_media);
 
-    this->fetch_remote_ip_from_sdp (remote_sdp);
+    this->set_remote_ip_from_sdp (remote_sdp);
 }
 
-void Sdp::get_remote_sdp_media_from_offer (pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)
+void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)
 {
     int count, i;
 
