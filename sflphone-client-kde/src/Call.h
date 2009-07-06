@@ -167,6 +167,7 @@ private:
 	void acceptTransf();
 	void acceptHold();
 	void hangUp();
+	void cancel();
 	void hold();
 	void call();
 	void transfer();

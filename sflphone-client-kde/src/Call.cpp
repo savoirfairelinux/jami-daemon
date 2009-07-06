@@ -54,7 +54,7 @@ const function Call::actionPerformedFunctionMap[11][5] =
 /*INCOMING       */  {&Call::accept     , &Call::refuse   , &Call::acceptTransf   , &Call::acceptHold  ,  &Call::setRecord     },
 /*RINGING        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::setRecord     },
 /*CURRENT        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },
-/*DIALING        */  {&Call::call       , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
+/*DIALING        */  {&Call::call       , &Call::cancel  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
 /*HOLD           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     },
 /*FAILURE        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
 /*BUSY           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
@@ -563,6 +563,13 @@ void Call::hangUp()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Hanging up call. callId : " << callId;
+	callManager.hangUp(callId);
+}
+
+void Call::cancel()
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Canceling call. callId : " << callId;
 	callManager.hangUp(callId);
 }
 
