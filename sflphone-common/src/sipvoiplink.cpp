@@ -2099,8 +2099,8 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     }
     
     try {    
-        link->getAudioRtp()->start();
         call->setAudioStart (true);
+        link->getAudioRtp()->start();
     } catch(exception& rtpException) {
         _debug("%s\n", rtpException.what());
     }

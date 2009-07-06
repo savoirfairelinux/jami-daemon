@@ -370,23 +370,18 @@ AudioRtpRTX::processDataEncode()
     if (_audiocodec->getClockRate() != _layerSampleRate) {
 
         int nb_sample_up = nbSample;
-        // _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
+         //_debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
 
         // Store the length of the mic buffer in samples for recording
         _nSamplesMic = nbSample;
 
-
-        // int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
         nbSample = reSampleData (micData , micDataConverted, _audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);
 
         compSize = _audiocodec->codecEncode (micDataEncoded, micDataConverted, nbSample*sizeof (int16));
 
     } else {
         // no resampling required
-
-        // int nbSamplesMax = _codecFrameSize;
         compSize = _audiocodec->codecEncode (micDataEncoded, micData, nbSample*sizeof (int16));
-
     }
 
     return compSize;
