@@ -21,7 +21,7 @@ configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
 	./autogen.sh --prefix=/usr
-	cd libs/pjproject-1.0.2; ./autogen.sh --prefix=/usr
+	cd libs/pjproject-1.0.3; ./autogen.sh --prefix=/usr
 	touch configure-stamp
 
 #Architecture 
@@ -31,7 +31,7 @@ build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp 
 
     # Add here commands to compile the arch part of the package.
-	cd libs/pjproject-1.0.2; $(MAKE) dep; $(MAKE) clean; $(MAKE)
+	cd libs/pjproject-1.0.3; $(MAKE) dep; $(MAKE) clean; $(MAKE)
 	cd -; $(MAKE) 
 	touch $@
 
@@ -72,7 +72,7 @@ install-arch:
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
 	$(MAKE) DESTDIR=$(CURDIR)/debian/$(package) install
-	cd libs/pjproject-1.0.2; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	cd libs/pjproject-1.0.3; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
 	rm -rf $(CURDIR)/debian/$(package)/usr/include
 	dh_install -s
 # Must not depend on anything. This is to be called by
