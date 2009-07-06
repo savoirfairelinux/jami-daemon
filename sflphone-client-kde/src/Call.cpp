@@ -275,6 +275,14 @@ call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QStri
 	{
 		return CALL_STATE_RINGING;
 	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INCOMING)
+	{
+		return CALL_STATE_INCOMING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_RINGING)
+	{
+		return CALL_STATE_RINGING;
+	}
 	else
 	{
 		return CALL_STATE_FAILURE;
