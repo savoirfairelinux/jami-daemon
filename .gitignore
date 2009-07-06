@@ -49,18 +49,18 @@ sflphone-client-gnome/stamp-h1
 # PJSIP files
 *.depend
 *i686-pc-linux-gnu
-/libs/pjproject-1.0.1/pjlib-util/build/os-auto.mak
-/libs/pjproject-1.0.1/pjlib/build/os-auto.mak
-/libs/pjproject-1.0.1/pjlib/include/pj/compat/m_auto.h
-/libs/pjproject-1.0.1/pjlib/include/pj/compat/os_auto.h
-/libs/pjproject-1.0.1/pjlib/include/pj/config_site.h
-/libs/pjproject-1.0.1/pjmedia/build/os-auto.mak
-/libs/pjproject-1.0.1/pjmedia/include/pjmedia-codec/config_auto.h
-/libs/pjproject-1.0.1/pjmedia/include/pjmedia/config_auto.h
-/libs/pjproject-1.0.1/pjsip/build/os-auto.mak
-/libs/pjproject-1.0.1/pjsip/include/pjsip/sip_autoconf.h
-/libs/pjproject-1.0.1/third_party/build/os-auto.mak
-/libs/pjproject-1.0.1/third_party/build/portaudio/os-auto.mak
+/libs/pjproject-1.0.3/pjlib-util/build/os-auto.mak
+/libs/pjproject-1.0.3/pjlib/build/os-auto.mak
+/libs/pjproject-1.0.3/pjlib/include/pj/compat/m_auto.h
+/libs/pjproject-1.0.3/pjlib/include/pj/compat/os_auto.h
+/libs/pjproject-1.0.3/pjlib/include/pj/config_site.h
+/libs/pjproject-1.0.3/pjmedia/build/os-auto.mak
+/libs/pjproject-1.0.3/pjmedia/include/pjmedia-codec/config_auto.h
+/libs/pjproject-1.0.3/pjmedia/include/pjmedia/config_auto.h
+/libs/pjproject-1.0.3/pjsip/build/os-auto.mak
+/libs/pjproject-1.0.3/pjsip/include/pjsip/sip_autoconf.h
+/libs/pjproject-1.0.3/third_party/build/os-auto.mak
+/libs/pjproject-1.0.3/third_party/build/portaudio/os-auto.mak
 
 # Makefile
 sflphone-common/src/Makefile

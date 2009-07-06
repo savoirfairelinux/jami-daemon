@@ -6,7 +6,7 @@ sflplugindir=$(DESTDIR)$(libdir)/sflphone/plugins
 ASTYLERC="../astylerc"
 indent="/usr/bin/astyle"
 
-PJSIP_VERSION="1.0.2"
+PJSIP_VERSION="1.0.3"
 
 # for pjsip
 PJSIP_LIBS= \
