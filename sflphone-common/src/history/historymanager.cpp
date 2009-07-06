@@ -144,10 +144,13 @@ void HistoryManager::add_new_history_entry (HistoryItem *new_item)
 int HistoryManager::create_history_path (std::string path)
 {
 
-    std::string filename;
+    std::string filename, userdata;
 
     if (path == "") {
-        filename = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
+        // TODO Should use $XDG_DATA_HOME (which default to .local/share) instead of HOMEDIR
+
+        (XDG_DATA_HOME != NULL) ? userdata = std::string (XDG_DATA_HOME) : userdata = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".local/share";
+        filename = userdata + DIR_SEPARATOR_STR + PROGDIR;
 
         if (mkdir (filename.data(), 0755) != 0) {
             // If directory	creation failed

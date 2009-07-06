@@ -1291,7 +1291,11 @@ ManagerImpl::behindNat (const std::string& svr, int port)
 int
 ManagerImpl::createSettingsPath (void)
 {
-    _path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
+
+    //_path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
+    (XDG_CONFIG_HOME != NULL) ? _path = std::string (XDG_CONFIG_HOME)
+                                        :	_path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR + PROGDIR;
+
 
     if (mkdir (_path.data(), 0755) != 0) {
         // If directory	creation failed

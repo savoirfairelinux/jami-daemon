@@ -61,6 +61,7 @@ main (int argc, char **argv)
         char cPid[64], cOldPid[64];
         sprintf (cPid,"%d", iPid);
 
+        // TODO Use $XDG_CACHE_HOME instead of $HOME
         sprintf (homepid, "%s/.%s/%s", HOMEDIR, PROGDIR, PIDFILE);
         sprintf (sfldir, "%s/.%s", HOMEDIR, PROGDIR);
 
@@ -117,7 +118,7 @@ main (int argc, char **argv)
         bool initOK = false;
 
         try {
-            _debug ("Initialize manager in main \n");
+            // TODO Use $XDG_CONFIG_HOME to save the config file (which default to $HOME/.config)
             Manager::instance().initConfigFile();
             Manager::instance().init();
             initOK = true;
