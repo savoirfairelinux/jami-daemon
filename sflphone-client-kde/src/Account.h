@@ -31,8 +31,8 @@
 
 const QString account_state_name(QString & s);
 
-class Account{
-	
+class Account : public QObject{
+Q_OBJECT
 private:
 
 	QString * accountId;
@@ -75,6 +75,10 @@ public:
 	
 	//Operators
 	bool operator==(const Account&)const;
+	
+private slots:
+	void setEnabled(bool checked);
+	
 	
 	
 };
