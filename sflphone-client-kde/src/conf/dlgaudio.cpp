@@ -24,6 +24,7 @@
 #include "configurationmanager_interface_singleton.h"
 #include "conf/ConfigurationSkeleton.h"
 #include "conf/ConfigurationDialog.h"
+#include <QtGui/QHeaderView>
 
 #include "sflphone_const.h"
 
