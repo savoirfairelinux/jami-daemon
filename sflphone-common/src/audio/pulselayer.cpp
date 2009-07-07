@@ -48,9 +48,6 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 PulseLayer::~PulseLayer (void)
 {
     closeLayer ();
-
-    // pa_context_disconnect( context );
-    // pa_context_unref( context );
 }
 
 bool
@@ -61,17 +58,16 @@ PulseLayer::closeLayer (void)
     playback->disconnectStream();
     record->disconnectStream();
 
-    while (PulseLayer::streamState != 2);
-
-    PulseLayer::streamState = 0;
-
-    //TODO  Remove this ugly hack
-    sleep (2);
-
-    pa_context_disconnect (context);
-
-    pa_context_unref (context);
-
+    pa_threaded_mainloop_lock (m);
+    pa_threaded_mainloop_wait(m);
+    if(m) {
+        pa_context_disconnect (context);
+        pa_context_unref (context);
+    }
+    pa_threaded_mainloop_unlock (m);
+    
+    pa_threaded_mainloop_free (m);
+    
     return true;
 }
 
@@ -167,18 +163,29 @@ bool PulseLayer::createStreams (pa_context* c)
 {
     _debug ("PulseLayer::createStreams \n");
 
-    playback = new AudioStream (c, PLAYBACK_STREAM, PLAYBACK_STREAM_NAME, _manager->getSpkrVolume());
+    PulseLayerType * playbackParam = new PulseLayerType();
+    playbackParam->context = c;
+    playbackParam->type = PLAYBACK_STREAM;
+    playbackParam->description = PLAYBACK_STREAM_NAME;
+    playbackParam->volume = _manager->getSpkrVolume();
+    playbackParam->mainloop = m;
+    
+    playback = new AudioStream (playbackParam);
     playback->connectStream();
     pa_stream_set_write_callback (playback->pulseStream(), audioCallback, this);
-    // pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
-    // pa_stream_set_suspended_callback( playback->pulseStream(), stream_suspended_callback, this);
+    delete playbackParam;
 
-    record = new AudioStream (c, CAPTURE_STREAM, CAPTURE_STREAM_NAME , _manager->getMicVolume());
+    PulseLayerType * recordParam = new PulseLayerType();
+    recordParam->context = c;
+    recordParam->type = CAPTURE_STREAM;
+    recordParam->description = CAPTURE_STREAM_NAME;
+    recordParam->volume = _manager->getMicVolume();
+    recordParam->mainloop = m;
+    
+    record = new AudioStream (recordParam);
     record->connectStream();
     pa_stream_set_read_callback (record->pulseStream() , audioCallback, this);
-    // pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
-    // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
-
+    delete recordParam;
 
     pa_threaded_mainloop_signal (m , 0);
 

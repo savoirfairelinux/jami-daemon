@@ -27,6 +27,7 @@
 #include "ringbuffer.h"
 #include "audioloop.h"
 
+
 #include <cc++/thread.h>
 
 /**
@@ -38,16 +39,23 @@ enum STREAM_TYPE {
   UPLOAD_STREAM
 };
 
+struct PulseLayerType {
+    pa_context * context;
+    pa_threaded_mainloop * mainloop;
+    
+    std::string description;
+    
+    int type;
+    double volume;
+};
 
 class AudioStream {
   public:
     /**
      * Constructor
-     * @param context The pulseaudio context
-     * @param type    The type of audio stream
-     * @param desc    The stream name
+     * @param context The PulseLayerType structure containing various information.
      */ 
-    AudioStream(pa_context* context , int type, std::string desc, double vol);
+    AudioStream(PulseLayerType * driver);
     
     /**
      * Destructor
@@ -166,6 +174,8 @@ class AudioStream {
     pa_sample_spec sample_spec ;
     pa_cvolume _volume;
 
+    pa_threaded_mainloop * _mainloop;
+    
     ost::Mutex _mutex;
 
 };
