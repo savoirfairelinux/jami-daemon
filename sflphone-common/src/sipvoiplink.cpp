@@ -2091,8 +2091,8 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     // Set remote ip / port  
     call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp); 
-                
-    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getSIPAccountLink());
+    
+    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(AccountNULL));
     if(link == NULL) {
         _debug ("Failed to get sip link\n");
         return;
