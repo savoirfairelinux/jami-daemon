@@ -257,17 +257,16 @@ class AudioRtp {
     bool closeRtpSession( void );
 
     /**
-     * Return a pointer to the RTP thead
-     */
-    AudioRtpRTX* getRTX();
-
-    /**
      * Start recording
      */
     void setRecording ();
 
     friend class RtpTest;
 
+    /**
+     * 
+     */ 
+    inline AudioRtpRTX * getAudioRtpRtxThread(void) { return _RTXThread; }
   private:
     // copy constructor
     AudioRtp(const AudioRtp& rh);
