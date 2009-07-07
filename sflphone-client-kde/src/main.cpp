@@ -39,9 +39,7 @@ int main(int argc, char **argv)
 		   KLocalizedString(), 
 		   "http://www.sflphone.org.", 
 		   "sflphone@lists.savoirfairelinux.net");
-		about.setProgramLogo(QVariant(QImage(ICON_SFLPHONE)));
 		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
-		about.setProgramIconName(ICON_SFLPHONE);
 		about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
 		KCmdLineArgs::init(argc, argv, &about);
 		KCmdLineOptions options;

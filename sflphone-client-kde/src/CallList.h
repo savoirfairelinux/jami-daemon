@@ -35,7 +35,6 @@ Q_OBJECT
 private:
 
 	QVector<Call *> * calls;
-	int callIdCpt;
 
 public:
 
@@ -58,7 +57,7 @@ public:
 	Call * addRingingCall(const QString & callId);
 
 	//GSetter
-	QString getAndIncCallId();
+	QString generateCallId();
 	
 public slots:
 	void clearHistory();

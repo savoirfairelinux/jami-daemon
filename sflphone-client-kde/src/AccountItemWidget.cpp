@@ -113,7 +113,8 @@ bool AccountItemWidget::getEnabled()
 	return checkBox->checkState();
 }
 
-void AccountItemWidget::on_checkBox_stateChanged()
+void AccountItemWidget::on_checkBox_stateChanged(int state)
 {
-	emit checkStateChanged();
+	qDebug() << "on_checkBox_stateChanged";
+	emit checkStateChanged(state == Qt::Checked);
 }

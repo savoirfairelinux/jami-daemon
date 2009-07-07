@@ -109,7 +109,6 @@ void DlgAccounts::saveAccountList()
 			}
 		}
 		qDebug() << currentId << " : " << current.isChecked();
-		configurationManager.sendRegister(currentId, current.isChecked() ? 1 : 0 );
 	}
 	//remove accounts that are in the configurationManager but not in the client
 	for (int i = 0; i < accountIds.size(); i++)
@@ -205,7 +204,7 @@ void DlgAccounts::addAccountToAccountList(Account * account)
 	qDebug() << "addAccountToAccountList";
 	QListWidgetItem * item = account->getItem();
 	QWidget * widget = account->getItemWidget();
-	connect(widget, SIGNAL(checkStateChanged()),
+	connect(widget, SIGNAL(checkStateChanged(bool)),
 	        this,   SLOT(changedAccountList()));
 	qDebug() << "item->isHidden()" << item->isHidden();
 	listWidget_accountList->addItem(item);
@@ -215,6 +214,7 @@ void DlgAccounts::addAccountToAccountList(Account * account)
 
 void DlgAccounts::changedAccountList()
 {
+	qDebug() << "changedAccountList";
 	accountListHasChanged = true;
 	emit updateButtons();
 	toolButton_accountsApply->setEnabled(hasChanged());
