@@ -58,7 +58,7 @@ Authors:
 %setup -q
 
 %build
-cd libs/pjproject-1.0.2
+cd libs/pjproject-1.0.3
 ./autogen.sh --prefix=%{_prefix}
 make dep
 make clean
@@ -68,13 +68,13 @@ cd -
 make -j
 
 %install
-cd libs/pjproject-1.0.2
+cd libs/pjproject-1.0.3
 make DESTDIR=%{buildroot} install
 cd -
 make DESTDIR=%{buildroot} install
 
 %clean
-cd libs/pjproject-1.0.2
+cd libs/pjproject-1.0.3
 make clean
 cd -
 make clean
