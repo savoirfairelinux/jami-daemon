@@ -31,7 +31,6 @@ CallList::CallList()
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList callList = callManager.getCallList();
 	qDebug() << "Call List = " << callList;
-	callIdCpt = 0;
 	calls = new QVector<Call *>();
 	for(int i = 0 ; i < callList.size() ; i++)
 	{
@@ -49,7 +48,7 @@ CallList::CallList()
 		QString name = param[2];
 		uint stopTimeStamp = param[3].toUInt();
 		QString account = param[4];
-		calls->append(Call::buildHistoryCall(getAndIncCallId(), startTimeStamp, stopTimeStamp, account, name, number, type));
+		calls->append(Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type));
 	}
 }
 
@@ -127,10 +126,11 @@ Call * CallList::operator[](int ind)
 	return (*calls)[ind];
 }
 
-QString CallList::getAndIncCallId()
+
+QString CallList::generateCallId()
 {
-	QString res = QString::number(callIdCpt++);
-	
+	int id = qrand();
+	QString res = QString::number(id);
 	return res;
 }
 
@@ -141,7 +141,7 @@ int CallList::size()
 
 Call * CallList::addDialingCall(const QString & peerName, QString account)
 {
-	Call * call = Call::buildDialingCall(getAndIncCallId(), peerName, account);
+	Call * call = Call::buildDialingCall(generateCallId(), peerName, account);
 	calls->append(call);
 	return call;
 }
