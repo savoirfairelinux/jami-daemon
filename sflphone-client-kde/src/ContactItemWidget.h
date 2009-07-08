@@ -25,6 +25,8 @@
 #include <QtGui/QLabel>
 #include "Contact.h"
 
+class Contact;
+
 /**
 	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
