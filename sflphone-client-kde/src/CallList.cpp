@@ -34,7 +34,7 @@ CallList::CallList()
 	calls = new QVector<Call *>();
 	for(int i = 0 ; i < callList.size() ; i++)
 	{
-		calls->append(new Call(callList[i]));
+		calls->append(Call::buildExistingCall(callList[i]));
 	}
 	MapStringString historyMap = configurationManager.getHistory().value();
 	qDebug() << "Call History = " << historyMap;

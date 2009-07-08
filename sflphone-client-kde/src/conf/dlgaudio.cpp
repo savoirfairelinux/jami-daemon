@@ -33,8 +33,6 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
 {
 	setupUi(this);
 	
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	QStyle * style = QApplication::style();
 	KUrlRequester_ringtone->setMode(KFile::File | KFile::ExistingOnly);
 	KUrlRequester_ringtone->lineEdit()->setObjectName("kcfg_ringtone"); 
 	KUrlRequester_ringtone->lineEdit()->setReadOnly(true); 
@@ -46,12 +44,19 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
 	tableWidget_codecs->setSelectionBehavior(QAbstractItemView::SelectRows);
 	
 	updateAlsaSettings();
-	connect(box_alsaPlugin,        SIGNAL(currentIndexChanged(int)),        parent, SLOT(updateButtons()));
-	connect(tableWidget_codecs,    SIGNAL(itemChanged(QTableWidgetItem *)), this,   SLOT(codecTableChanged()));
-	connect(toolButton_codecUp,    SIGNAL(clicked()),                       this,   SLOT(codecTableChanged()));
-	connect(toolButton_codecDown,  SIGNAL(clicked()),                       this,   SLOT(codecTableChanged()));
+	connect(box_alsaPlugin,        SIGNAL(currentIndexChanged(int)),   
+	        parent,                SLOT(updateButtons()));
+	connect(tableWidget_codecs,    SIGNAL(itemChanged(QTableWidgetItem *)),
+	        this,                  SLOT(codecTableChanged()));
+	connect(tableWidget_codecs,    SIGNAL(currentCellChanged(int, int, int, int)),
+	        this,                  SLOT(updateCodecListCommands()));
+	connect(toolButton_codecUp,    SIGNAL(clicked()),
+	        this,                  SLOT(codecTableChanged()));
+	connect(toolButton_codecDown,  SIGNAL(clicked()),
+	        this,                  SLOT(codecTableChanged()));
 	
-	connect(this,                  SIGNAL(updateButtons()),                 parent, SLOT(updateButtons()));
+	connect(this,                  SIGNAL(updateButtons()),
+	        parent,                SLOT(updateButtons()));
 }
 
 
@@ -76,7 +81,7 @@ void DlgAudio::updateWidgets()
 	#else
    	for (int i = 0 ; i < activeCodecList.size() ; i++)
 		{
-			if(activeCodecList.lastIndexOf(activeCodecList[i]) != i)
+			if(activeCodecList.lastIndexOf(activeCodecList[i]) != i || ! codecList.contains(activeCodecList[i]))
 			{
 				activeCodecList.removeAt(i);
 				i--;
@@ -84,14 +89,6 @@ void DlgAudio::updateWidgets()
 		}
 	#endif
 
-	for (int i=0 ; i<activeCodecList.size() ; i++)
-	{
-		if(! codecList.contains(activeCodecList[i]))
-		{
-			activeCodecList.removeAt(i);
-			i--;
-		}
-	}
 	QStringList codecListToDisplay = activeCodecList;
 	for (int i=0 ; i<codecList.size() ; i++)
 	{
@@ -210,34 +207,28 @@ void DlgAudio::updateAlsaSettings()
 
 void DlgAudio::updateCodecListCommands()
 {
+	qDebug() << "updateCodecListCommands";
 	bool buttonsEnabled[2] = {true,true};
 	if(! tableWidget_codecs->currentItem())
 	{
 		buttonsEnabled[0] = false;
 		buttonsEnabled[1] = false;
 	}
-	else if(tableWidget_codecs->currentRow() == 0)
+	else
 	{
-		buttonsEnabled[0] = false;
-	}
-	else if(tableWidget_codecs->currentRow() == tableWidget_codecs->rowCount() - 1)
-	{
-		buttonsEnabled[1] = false;
+		if(tableWidget_codecs->currentRow() == 0)
+		{
+			buttonsEnabled[0] = false;
+		}
+		if(tableWidget_codecs->currentRow() == tableWidget_codecs->rowCount() - 1)
+		{
+			buttonsEnabled[1] = false;
+		}
 	}
 	toolButton_codecUp->setEnabled(buttonsEnabled[0]);
 	toolButton_codecDown->setEnabled(buttonsEnabled[1]);
 }
 
-void DlgAudio::on_tableWidget_codecs_currentCellChanged(int currentRow)
-{
-	qDebug() << "on_tableWidget_codecs_currentCellChanged";
-	int nbCol = tableWidget_codecs->columnCount();
-	for(int i = 0 ; i < nbCol ; i++)
-	{
-		tableWidget_codecs->setRangeSelected(QTableWidgetSelectionRange(currentRow, 0, currentRow, nbCol - 1), true);
-	}
-	updateCodecListCommands();
-}
 
 void DlgAudio::on_toolButton_codecUp_clicked()
 {

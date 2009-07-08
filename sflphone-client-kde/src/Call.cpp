@@ -164,24 +164,20 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	this->stopTime = NULL;
 }
 
-Call::Call(QString callId)
+Call * Call::buildExistingCall(QString callId)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	MapStringString details = callManager.getCallDetails(callId).value();
 	qDebug() << "Constructing existing call with details : " << details;
-	this->callId = callId;
-	this->peerPhoneNumber = details[CALL_PEER_NUMBER];
-	this->peerName = details[CALL_PEER_NAME];
-	initCallItem();
+	QString peerNumber = details[CALL_PEER_NUMBER];
+	QString peerName = details[CALL_PEER_NAME];
 	call_state startState = getStartStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
-	changeCurrentState(startState);
-	this->historyState = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
-	this->account = details[CALL_ACCOUNTID];
-	this->recording = false;
-	this->startTime = new QDateTime(QDateTime::currentDateTime());
-	this->stopTime = NULL;
-	this->historyItem = NULL;
-	this->historyItemWidget = NULL;
+	QString account = details[CALL_ACCOUNTID];
+	Call * call = new Call(startState, callId, peerName, peerNumber, account);
+	call->startTime = new QDateTime(QDateTime::currentDateTime());
+	call->recording = callManager.getIsRecording(callId);
+	call->historyState = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
+	return call;
 }
 
 Call::~Call()
@@ -251,6 +247,7 @@ history_state Call::getHistoryStateFromType(QString type)
 	{
 		return INCOMING;
 	}
+	return NONE;
 }
 
 call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
@@ -587,8 +584,8 @@ void Call::call()
 	qDebug() << "account = " << account;
 	if(account.isEmpty())
 	{
-		qDebug() << "account is empty"; 
-		this->account = sflphone_kdeView::firstRegisteredAccount()->getAccountId();
+		qDebug() << "account is empty, taking the first registered.";
+		this->account = sflphone_kdeView::firstRegisteredAccountId();
 	}
 	if(!account.isEmpty())
 	{
@@ -662,7 +659,6 @@ void Call::warning()
 
 void Call::appendItemText(QString text)
 {
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QLabel * editNumber;
 	switch(currentState)
 	{
