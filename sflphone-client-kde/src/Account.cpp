@@ -53,12 +53,12 @@ const QString account_state_name(QString & s)
 
 //Constructors
 
-Account::Account():accountId(NULL), item(NULL), itemWidget(NULL)
+Account::Account():accountId(NULL)
 {
 }
 
 
-void Account::initAccountItem()
+void Account::initItem()
 {
 	if(item != NULL)
 	{
@@ -67,10 +67,10 @@ void Account::initAccountItem()
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
-	initAccountItemWidget();
+	initItemWidget();
 }
 
-void Account::initAccountItemWidget()
+void Account::initItemWidget()
 {
 	if(itemWidget != NULL)
 	{
@@ -102,7 +102,7 @@ Account * Account::buildExistingAccountFromId(QString _accountId)
 	a->accountId = new QString(_accountId);
 	qDebug() << "getAccountDetails 1 sent";
 	a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
-	a->initAccountItem();
+	a->initItem();
 	return a;
 }
 
@@ -111,7 +111,7 @@ Account * Account::buildNewAccountFromAlias(QString alias)
 	Account * a = new Account();
 	a->accountDetails = new MapStringString();
 	a->setAccountDetail(ACCOUNT_ALIAS,alias);
-	a->initAccountItem();
+	a->initItem();
 	return a;
 }
 

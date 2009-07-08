@@ -54,6 +54,10 @@ SET(	   sflphone_client_kde_SRCS
 	conf/dlghooks.cpp
 	conf/ConfigurationSkeleton.cpp
 	Dialpad.cpp
+# 	Codec.cpp
+# 	CodecListModel.cpp
+# 	SortableCodecListWidget.cpp
+	Item.cpp
 )
  
 

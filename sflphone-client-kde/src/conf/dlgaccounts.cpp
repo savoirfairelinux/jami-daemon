@@ -33,7 +33,6 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	setupUi(this);
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	QStyle * style = QApplication::style();
 	button_accountUp->setIcon(KIcon("go-up"));
 	button_accountDown->setIcon(KIcon("go-down"));
 	button_accountAdd->setIcon(KIcon("list-add"));
@@ -237,7 +236,7 @@ void DlgAccounts::on_button_accountUp_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
-	account->initAccountItem();
+	account->initItem();
 	QListWidgetItem * item = account->getItem();
 	AccountItemWidget * widget = account->getItemWidget();
 	accountList->upAccount(currentRow);
@@ -254,7 +253,7 @@ void DlgAccounts::on_button_accountDown_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
-	account->initAccountItem();
+	account->initItem();
 	QListWidgetItem * item = account->getItem();
 	AccountItemWidget * widget = account->getItemWidget();
 	accountList->downAccount(currentRow);

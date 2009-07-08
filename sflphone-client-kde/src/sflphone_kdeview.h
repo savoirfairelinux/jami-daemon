@@ -97,6 +97,15 @@ public:
 	 * @return the account to use if an outgoing call is placed.
 	 */
 	static Account * firstRegisteredAccount();
+	/**
+	 *   Seeks the ID of the account to use.
+	 *   If priorAccountId is defined and the corresponding
+	 *   account exists and is registered, uses this one, else,
+	 *   asks the first registered of accountList.
+	 *   If there is no account registered, returns an empty string.
+	 * @return the ID of the account to use if an outgoing call is placed.
+	 */
+	static QString firstRegisteredAccountId();
 	
 	static AccountList * getAccountList();
 	QErrorMessage * getErrorWindow();

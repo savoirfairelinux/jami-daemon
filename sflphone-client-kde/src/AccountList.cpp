@@ -40,7 +40,10 @@ AccountList::AccountList(bool fill)
 {
 	qDebug() << "AccountList()";
 	accounts = new QVector<Account *>();
-	updateAccounts();
+	if(fill)
+	{
+		updateAccounts();
+	}
 }
 
 void AccountList::update()

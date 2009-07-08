@@ -113,6 +113,31 @@ class Call;
 
 typedef  void (Call::*function)();
 
+
+/**
+ *  This class represents a call either actual (in the call list
+ *  displayed in main window), either past (in the call history).
+ *  A call is represented by an automate, with a list of states
+ *  (enum call_state) and 2 lists of transition signals
+ *  (call_action when the user performs an action on the UI and 
+ *  daemon_call_state when the daemon sends a stateChanged signal)
+ *  When a transition signal is received, the automate calls a
+ *  function then go to a new state according to the previous state
+ *  of the call and the signal received.
+ *  The functions to call and the new states to go to are placed in
+ *  the maps actionPerformedStateMap, actionPerformedFunctionMap, 
+ *  stateChangedStateMap and stateChangedFunctionMap.
+ *  Those maps are used by actionPerformed and stateChanged functions
+ *  to handle the behavior of the automate.
+ *  When an actual call goes to the state OVER, it becomes part of
+ *  the call history.
+ *
+ *  It may be better to handle call list and call history separately,
+ *  and to use the class Item to handle their display, or a model/view
+ *  way. For this it needs to handle the becoming of a call to a past call
+ *  keeping the information gathered by the call and needed by the history
+ *  call (history state, start time...).
+**/
 class Call
 {
 private:
@@ -144,9 +169,34 @@ private:
 	
 	
 	//Automate attributes
+	/**
+	 *  actionPerformedStateMap[orig_state][action]
+	 *  Map of the states to go to when the action action is 
+	 *  performed on a call in state orig_state.
+	**/
 	static const call_state actionPerformedStateMap [11][5];
+	
+	/**
+	 *  actionPerformedFunctionMap[orig_state][action]
+	 *  Map of the functions to call when the action action is 
+	 *  performed on a call in state orig_state.
+	**/
 	static const function actionPerformedFunctionMap [11][5];
+	
+	/**
+	 *  stateChangedStateMap[orig_state][daemon_new_state]
+	 *  Map of the states to go to when the daemon sends the signal 
+	 *  callStateChanged with arg daemon_new_state
+	 *  on a call in state orig_state.
+	**/
 	static const call_state stateChangedStateMap [11][6];
+	
+	/**
+	 *  stateChangedFunctionMap[orig_state][daemon_new_state]
+	 *  Map of the functions to call when the daemon sends the signal 
+	 *  callStateChanged with arg daemon_new_state
+	 *  on a call in state orig_state.
+	**/
 	static const function stateChangedFunctionMap [11][6];
 	
 	static const char * historyIcons[3];
@@ -161,6 +211,8 @@ private:
 	static daemon_call_state toDaemonCallState(const QString & stateName);
 	
 	//Automate functions
+	// See actionPerformedFunctionMap and stateChangedFunctionMap
+	// to know when it is called.
 	void nothing();
 	void accept();
 	void refuse();
@@ -181,13 +233,14 @@ private:
 public:
 	
 	//Constructors & Destructors
-	Call(QString callId);
 	~Call();
 	void initCallItem();
 	static Call * buildDialingCall(QString callId, const QString & peerName, QString account = "");
-	static Call * buildIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
+	static Call * buildIncomingCall(const QString & callId);
 	static Call * buildRingingCall(const QString & callId);
 	static Call * buildHistoryCall(const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type);
+	static Call * buildExistingCall(QString callId);
+	
 	static history_state getHistoryStateFromType(QString type);
 	static call_state getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
 	static history_state getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
