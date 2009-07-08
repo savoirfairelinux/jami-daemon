@@ -107,6 +107,8 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	        
 	connect(accountList, SIGNAL(accountListUpdated()),
 	        this,     SLOT(updateStatusMessage()));
+	connect(accountList, SIGNAL(accountListUpdated()),
+	        this,     SLOT(updateWindowCallState()));
 	        
 	accountList->updateAccounts();
 	        
@@ -160,6 +162,19 @@ Account * sflphone_kdeView::firstRegisteredAccount()
 	else
 	{
 		return accountList->firstRegisteredAccount();
+	}
+}
+
+QString sflphone_kdeView::firstRegisteredAccountId()
+{
+	Account * firstRegistered = firstRegisteredAccount();
+	if(firstRegistered == NULL)
+	{
+		return QString();
+	}
+	else
+	{
+		return firstRegistered->getAccountId();
 	}
 }
 
@@ -463,7 +478,7 @@ void sflphone_kdeView::updateWindowCallState()
 		item = listWidget_callList->currentItem();
 		if (!item)
 		{
-			qDebug() << "No item selected. Updating window.";
+			qDebug() << "No item selected.";
 			enabledActions[1] = false;
 			enabledActions[2] = false;
 			enabledActions[3] = false;
@@ -479,57 +494,57 @@ void sflphone_kdeView::updateWindowCallState()
 			switch (state)
 			{
 				case CALL_STATE_INCOMING:
-					qDebug() << "Reached CALL_STATE_INCOMING with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_INCOMING with call " << (*callList)[item]->getCallId();
 					buttonIconFiles[0] = ICON_ACCEPT;
 					buttonIconFiles[1] = ICON_REFUSE;
 					actionTexts[0] = ACTION_LABEL_ACCEPT;
 					actionTexts[0] = ACTION_LABEL_REFUSE;
 					break;
 				case CALL_STATE_RINGING:
-					qDebug() << "Reached CALL_STATE_RINGING with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_RINGING with call " << (*callList)[item]->getCallId();
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					break;
 				case CALL_STATE_CURRENT:
 					qDebug() << "details = " << CallManagerInterfaceSingleton::getInstance().getCallDetails(call->getCallId()).value();
-					qDebug() << "Reached CALL_STATE_CURRENT with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_CURRENT with call " << (*callList)[item]->getCallId();
 					recordEnabled = true;
 					break;
 				case CALL_STATE_DIALING:
-					qDebug() << "Reached CALL_STATE_DIALING with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_DIALING with call " << (*callList)[item]->getCallId();
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					enabledActions[4] = false;
 					buttonIconFiles[0] = ICON_ACCEPT;
 					break;
 				case CALL_STATE_HOLD:
-					qDebug() << "Reached CALL_STATE_HOLD with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_HOLD with call " << (*callList)[item]->getCallId();
 					buttonIconFiles[2] = ICON_UNHOLD;
 					actionTexts[2] = ACTION_LABEL_UNHOLD;
 					break;		
 				case CALL_STATE_FAILURE:
-					qDebug() << "Reached CALL_STATE_FAILURE with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_FAILURE with call " << (*callList)[item]->getCallId();
 					enabledActions[0] = false;
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					enabledActions[4] = false;
 					break;
 				case CALL_STATE_BUSY:
-					qDebug() << "Reached CALL_STATE_BUSY with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_BUSY with call " << (*callList)[item]->getCallId();
 					enabledActions[0] = false;
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					enabledActions[4] = false;
 				break;
 				case CALL_STATE_TRANSFER:
-					qDebug() << "Reached CALL_STATE_TRANSFER with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_TRANSFER with call " << (*callList)[item]->getCallId();
 					buttonIconFiles[0] = ICON_EXEC_TRANSF;
 					actionTexts[3] = ACTION_LABEL_GIVE_UP_TRANSF;
 					transfer = true;
 					recordEnabled = true;
 					break;
 				case CALL_STATE_TRANSF_HOLD:
-					qDebug() << "Reached CALL_STATE_TRANSF_HOLD with call " << (*callList)[item]->getCallId() << ". Updating window.";
+					qDebug() << "Reached CALL_STATE_TRANSF_HOLD with call " << (*callList)[item]->getCallId();
 					buttonIconFiles[0] = ICON_EXEC_TRANSF;
 					buttonIconFiles[2] = ICON_UNHOLD;
 					actionTexts[3] = ACTION_LABEL_GIVE_UP_TRANSF;
@@ -553,10 +568,10 @@ void sflphone_kdeView::updateWindowCallState()
 		item = listWidget_callHistory->currentItem();
 		buttonIconFiles[0] = ICON_ACCEPT;
 		actionTexts[0] = ACTION_LABEL_CALL_BACK;
-		actionTexts[1] = ACTION_LABEL_GIVE_UP_SEARCH;
+// 		actionTexts[1] = ACTION_LABEL_GIVE_UP_SEARCH;
 		if (!item)
 		{
-			qDebug() << "No item selected. Updating window.";
+			qDebug() << "No item selected.";
 			enabledActions[0] = false;
 			enabledActions[1] = false;
 			enabledActions[2] = false;
@@ -570,19 +585,19 @@ void sflphone_kdeView::updateWindowCallState()
 			enabledActions[3] = false;
 			enabledActions[4] = false;
 		}
-		if(!lineEdit_searchHistory->text().isEmpty())
-		{
-			enabledActions[1] = true;
-		}
+// 		if(!lineEdit_searchHistory->text().isEmpty())
+// 		{
+// 			enabledActions[1] = true;
+// 		}
 	}
 	if(stackedWidget_screen->currentWidget() == page_addressBook)
 	{
 		item = listWidget_addressBook->currentItem();
 		buttonIconFiles[0] = ICON_ACCEPT;
-		actionTexts[1] = ACTION_LABEL_GIVE_UP_SEARCH;
+// 		actionTexts[1] = ACTION_LABEL_GIVE_UP_SEARCH;
 		if (!item)
 		{
-			qDebug() << "No item selected. Updating window.";
+			qDebug() << "No item selected.";
 			enabledActions[0] = false;
 			enabledActions[1] = false;
 			enabledActions[2] = false;
@@ -596,11 +611,13 @@ void sflphone_kdeView::updateWindowCallState()
 			enabledActions[3] = false;
 			enabledActions[4] = false;
 		}
-		if(!lineEdit_addressBook->text().isEmpty())
-		{
-			enabledActions[1] = true;
-		}
+// 		if(!lineEdit_addressBook->text().isEmpty())
+// 		{
+// 			enabledActions[1] = true;
+// 		}
 	}
+	
+	qDebug() << "Updating Window.";
 	
 	action_accept->setEnabled(enabledActions[0]);
 	action_refuse->setEnabled(enabledActions[1]);
@@ -622,6 +639,8 @@ void sflphone_kdeView::updateWindowCallState()
 	
 	action_transfer->setChecked(transfer);
 	action_record->setChecked(recordActivated);
+
+	qDebug() << "Window updated.";
 }
 
 void sflphone_kdeView::updateSearchHistory()
@@ -1337,7 +1356,6 @@ void sflphone_kdeView::on_action_addressBook_triggered(bool checked)
 
 void sflphone_kdeView::on_action_mailBox_triggered()
 {
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Account * account = firstRegisteredAccount();
 	QString mailBoxNumber = account->getAccountDetail(ACCOUNT_MAILBOX);
 	Call * call = callList->addDialingCall();
