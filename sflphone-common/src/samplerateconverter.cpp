@@ -82,6 +82,20 @@ void SamplerateConverter::init (void)
     _floatBufferUpSpkr = new float32[nbSamplesMax];
 }
 
+void
+SamplerateConverter::Short2FloatArray (const short *in, float *out, int len)
+{
+    // factor is 1/(2^15), used to rescale the short int range to the
+    // [-1.0 - 1.0] float range.
+#define S2F_FACTOR .000030517578125f;
+
+    while (len) {
+        len--;
+        out[len] = (float) in[len] * S2F_FACTOR;
+    }
+}
+
+
 //TODO Add ifdef for int16 or float32 type
 int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut, int samplerate1 , int samplerate2 , int nbSamples)
 {
@@ -99,7 +113,9 @@ int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* da
         src_data.src_ratio = upsampleFactor;
         src_data.end_of_input = 0; // More data will come
         //_debug("upsample %d %d %f %d\n" , src_data.input_frames , src_data.output_frames, src_data.src_ratio , nbSamples);
-        src_short_to_float_array (dataIn , _floatBufferDownSpkr, nbSamples);
+        // Override libsamplerate conversion function
+        Short2FloatArray (dataIn , _floatBufferDownSpkr, nbSamples);
+        //src_short_to_float_array (dataIn , _floatBufferDownSpkr, nbSamples);
         //_debug("upsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
         src_process (_src_state_spkr, &src_data);
         //_debug("upsample %d %d %d\n" , samplerate1, samplerate2 , nbSamples);
@@ -128,7 +144,9 @@ int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* 
         src_data.src_ratio = downsampleFactor;
         src_data.end_of_input = 0; // More data will come
         //_debug("downsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
-        src_short_to_float_array (dataIn, _floatBufferUpMic, nbSamples);
+        // Override libsamplerate conversion function
+        Short2FloatArray (dataIn , _floatBufferUpMic, nbSamples);
+        //src_short_to_float_array (dataIn, _floatBufferUpMic, nbSamples);
         //_debug("downsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
         src_process (_src_state_mic, &src_data);
         //_debug("downsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);

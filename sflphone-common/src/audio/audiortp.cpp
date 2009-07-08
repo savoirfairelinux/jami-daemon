@@ -110,7 +110,6 @@ AudioRtp::closeRtpSession ()
     // This will make RTP threads finish.
     _debug ("AudioRtp::Stopping rtp session\n");
 
-
     try {
         delete _RTXThread;
         _RTXThread = 0;
@@ -119,21 +118,10 @@ AudioRtp::closeRtpSession ()
         throw;
     }
 
-    // AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-    // audiolayer->stopStream();
-
     _debug ("AudioRtp::Audio rtp stopped\n");
 
     return true;
 }
-
-
-AudioRtpRTX*
-AudioRtp::getRTX()
-{
-    return _RTXThread;
-}
-
 
 void
 AudioRtp::setRecording()
@@ -143,10 +131,6 @@ AudioRtp::setRecording()
     _RTXThread->_ca->setRecording();
 
 }
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
@@ -382,23 +366,18 @@ AudioRtpRTX::processDataEncode()
     if (_audiocodec->getClockRate() != _layerSampleRate) {
 
         int nb_sample_up = nbSample;
-        // _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
+         //_debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
 
         // Store the length of the mic buffer in samples for recording
         _nSamplesMic = nbSample;
 
-
-        // int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
         nbSample = reSampleData (micData , micDataConverted, _audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);
 
         compSize = _audiocodec->codecEncode (micDataEncoded, micDataConverted, nbSample*sizeof (int16));
 
     } else {
         // no resampling required
-
-        // int nbSamplesMax = _codecFrameSize;
         compSize = _audiocodec->codecEncode (micDataEncoded, micData, nbSample*sizeof (int16));
-
     }
 
     return compSize;
