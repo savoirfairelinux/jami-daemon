@@ -197,7 +197,6 @@ class PulseLayer : public AudioLayer {
     // private:
 
 public: 
-    static int streamState;
 
     friend class AudioLayerTest;
 };

@@ -23,18 +23,21 @@
 static pa_channel_map channel_map ;
 
 
-AudioStream::AudioStream (pa_context* context, int type, std::string desc, double vol UNUSED)
-        : _audiostream (NULL), _streamType (type), _streamDescription (desc), flag (PA_STREAM_AUTO_TIMING_UPDATE), sample_spec(), _volume()
+AudioStream::AudioStream (PulseLayerType * driver)
+        : _audiostream (NULL),
+         _context (driver->context),
+         _streamType (driver->type), 
+         _streamDescription (driver->description), 
+         _volume(),
+         _mainloop(driver->mainloop),
+         flag (PA_STREAM_AUTO_TIMING_UPDATE), 
+         sample_spec()
 {
     sample_spec.format = PA_SAMPLE_S16LE;
     sample_spec.rate = 44100;
     sample_spec.channels = 1;
     channel_map.channels = 1;
     pa_cvolume_set (&_volume , 1 , PA_VOLUME_NORM) ;  // * vol / 100 ;
-
-    _context = context;
-
-    // connectStream();
 }
 
 AudioStream::~AudioStream()
@@ -59,10 +62,14 @@ AudioStream::disconnectStream (void)
     ost::MutexLock guard (_mutex);
 
     _debug ("Destroy audio streams\n");
-    pa_stream_disconnect (_audiostream);
-    pa_stream_unref (_audiostream);
-
-    _audiostream = NULL;
+    
+    pa_threaded_mainloop_lock(_mainloop);
+    if(_audiostream) {
+        pa_stream_disconnect (_audiostream);
+        pa_stream_unref (_audiostream);
+        _audiostream = NULL;
+    }
+    pa_threaded_mainloop_unlock(_mainloop);
 
     return true;
 }
@@ -70,12 +77,15 @@ AudioStream::disconnectStream (void)
 
 
 void
-AudioStream::stream_state_callback (pa_stream* s, void* user_data UNUSED)
+AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 {
-
-
+    pa_threaded_mainloop *m;
+    
     _debug ("AudioStream::stream_state_callback :: The state of the stream changed\n");
     assert (s);
+
+    m = (pa_threaded_mainloop*) user_data;
+    assert(m);
 
     switch (pa_stream_get_state (s)) {
 
@@ -85,7 +95,7 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data UNUSED)
 
         case PA_STREAM_TERMINATED:
             _debug ("Stream is terminating...\n");
-            PulseLayer::streamState++;
+             pa_threaded_mainloop_signal(m, 0);
             break;
 
         case PA_STREAM_READY:
@@ -162,7 +172,7 @@ AudioStream::createStream (pa_context* c)
         _debug ("Stream type unknown \n");
     }
 
-    pa_stream_set_state_callback (s , stream_state_callback, NULL);
+    pa_stream_set_state_callback (s , stream_state_callback, _mainloop);
 
     free (attributes);
 

@@ -601,8 +601,6 @@ SIPVoIPLink::answer (const CallID& id)
         call->setConnectionState (Call::Connected);
         call->setState (Call::Active);
 
-        ;
-
         return true;
     } else {
         // Create and send a 488/Not acceptable here
@@ -617,6 +615,7 @@ SIPVoIPLink::answer (const CallID& id)
         _debug ("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
         terminateOneCall (call->getCallId());
         removeCall (call->getCallId());
+        _audiortp->closeRtpSession ();
         return false;
     }
 }
@@ -1195,38 +1194,24 @@ SIPVoIPLink::SIPCheckUrl (const std::string& url UNUSED)
 void
 SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
 {
-    //if (!event->response) { return; }
-    //switch(event->response->status_code) {
-    //case SIP_SERVICE_UNAVAILABLE: // 500
-    //case SIP_BUSY_EVRYWHERE:     // 600
-    //case SIP_DECLINE:             // 603
-    //SIPCall* call = findSIPCallWithCid(event->cid);
     if (call != 0) {
         _debug ("Server error!\n");
         CallID id = call->getCallId();
         Manager::instance().callFailure (id);
         terminateOneCall (id);
         removeCall (id);
+        _audiortp->closeRtpSession();
     }
-
-    //break;
-    //}
 }
 
 void
 SIPVoIPLink::SIPCallClosed (SIPCall *call)
 {
-
-
-    // it was without did before
-    //SIPCall* call = findSIPCallWithCid(event->cid);
     if (!call) {
         return;
     }
 
     CallID id = call->getCallId();
-
-    //call->setDid(event->did);
 
     if (Manager::instance().isCurrentCall (id)) {
         call->setAudioStart (false);
@@ -1245,9 +1230,6 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
 void
 SIPVoIPLink::SIPCallReleased (SIPCall *call)
 {
-    // do cleanup if exists
-    // only cid because did is always 0 in these case..
-    //SIPCall* call = findSIPCallWithCid(event->cid);
     if (!call) {
         return;
     }
@@ -2050,7 +2032,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
                     break;
 
                 default:
-                    _debug ("sipvoiplink.cpp - line 1635 : Unhandled call state. This is probably a bug.\n");
+                    _debug ("sipvoiplink.cpp - line %d : Unhandled call state. This is probably a bug.\n", __LINE__);
                     break;
             }
         }
