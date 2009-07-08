@@ -26,9 +26,10 @@
 ConfigurationSkeleton::ConfigurationSkeleton()
  : ConfigurationSkeletonBase()
 {
-	qDebug() << "Yoooooooouuuuupppppppiiiiii";
+	qDebug() << "Building ConfigurationSkeleton";
+	codecList = new CodecListModel();
 	readConfig();
-	isImmutable( QString::fromLatin1 ( "alsaPlugin" ) );
+	
 }
 
 ConfigurationSkeleton * ConfigurationSkeleton::instance = NULL;
@@ -285,4 +286,12 @@ void ConfigurationSkeleton::writeConfig()
 	readConfig();
 }
 
+QStringList ConfigurationSkeleton::activeCodecList() const
+{
+	codecList->getActiveCodecList();
+}
 
+void ConfigurationSkeleton::setActiveCodecList(const QStringList & v)
+{
+	codecList->setActiveCodecList(v);
+}

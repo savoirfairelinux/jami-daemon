@@ -18,47 +18,49 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CONFIGURATIONSKELETON_H
-#define CONFIGURATIONSKELETON_H
+#ifndef CODEC_H
+#define CODEC_H
 
-#include <QWidget>
-
-#include "kcfg_settings.h"
-#include "CodecListModel.h"
+#include <QObject>
+#include <QtCore/QString>
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
-class ConfigurationSkeleton : public ConfigurationSkeletonBase
+class Codec : public QObject
 {
 Q_OBJECT
-
 private:
-	static ConfigurationSkeleton * instance;
-	
-	CodecListModel * codecList;
+	QString payload;
+	QString name;
+	QString frequency;
+	QString bitrate;
+	QString bandwidth;
+	bool enabled;
 
 public:
-	ConfigurationSkeleton();
+	Codec(int payload, bool enabled);
+// 	Codec(const Codec & codec);
 
-	~ConfigurationSkeleton();
+// 	~Codec();
     
-	virtual void readConfig();
-    
-	virtual void writeConfig();
+	QString getPayload() const;
+	QString getName() const;
+	QString getFrequency() const;
+	QString getBitrate() const;
+	QString getBandwidth() const;
+	bool isEnabled() const;
 	
+	void setPayload(QString payload);
+	void setName(QString name);
+	void setFrequency(QString frequency);
+	void setBitrate(QString bitrate);
+	void setBandwidth(QString bandwidth);
+	void setEnabled(bool enabled);
 	
-	static ConfigurationSkeleton * self();
+	Codec & operator=(const Codec&);
+
 	
-	QStringList activeCodecList() const;
-	void setActiveCodecList(const QStringList & v);
-	
-// protected:
-
-// 	virtual void usrReadConfig();
-
-
-
 };
 
 #endif

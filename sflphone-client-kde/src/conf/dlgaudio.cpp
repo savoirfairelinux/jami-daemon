@@ -76,9 +76,16 @@ void DlgAudio::updateWidgets()
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList codecList = configurationManager.getCodecList();
 	QStringList activeCodecList = skeleton->activeCodecList();
+	
+	qDebug() << "loadCodecs1";
 	#if QT_VERSION >= 0x040500
+	qDebug() << "loadCodecs1b";
 		activeCodecList.removeDuplicates();
+		
+	qDebug() << "loadCodecs1c";
 	#else
+	
+	qDebug() << "loadCodecs1d";
    	for (int i = 0 ; i < activeCodecList.size() ; i++)
 		{
 			if(activeCodecList.lastIndexOf(activeCodecList[i]) != i || ! codecList.contains(activeCodecList[i]))
@@ -87,16 +94,29 @@ void DlgAudio::updateWidgets()
 				i--;
 			}
 		}
+		
+	qDebug() << "loadCodecs1e";
 	#endif
-
+	
+	qDebug() << "loadCodecs2";
 	QStringList codecListToDisplay = activeCodecList;
+	qDebug() << "loadCodecs2b";
+	codecList.size();
+	
+	qDebug() << "loadCodecs2c";
 	for (int i=0 ; i<codecList.size() ; i++)
 	{
+		
+	qDebug() << "loadCodecs3";
 		if(! activeCodecList.contains(codecList[i]))
 		{
+			
+	qDebug() << "loadCodecs4";
 			codecListToDisplay << codecList[i];
 		}
 	}
+	
+	qDebug() << "loadCodecs5";
 	qDebug() << "codecList = " << codecList;
 	qDebug() << "activeCodecList" << activeCodecList;
 	qDebug() << "codecListToDisplay" << codecListToDisplay;

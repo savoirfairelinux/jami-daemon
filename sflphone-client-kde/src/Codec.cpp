@@ -18,47 +18,47 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CONFIGURATIONSKELETON_H
-#define CONFIGURATIONSKELETON_H
+#include "Codec.h"
 
-#include <QWidget>
+#include "configurationmanager_interface_singleton.h"
+#include "sflphone_const.h"
 
-#include "kcfg_settings.h"
-#include "CodecListModel.h"
-
-/**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
-*/
-class ConfigurationSkeleton : public ConfigurationSkeletonBase
+Codec::Codec(int payload, bool enabled)
 {
-Q_OBJECT
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	QStringList details = configurationManager.getCodecDetails(payload);
+	this->payload = payload;
+	this->enabled = enabled;
+	this->name = details[CODEC_NAME];
+	this->frequency = details[CODEC_SAMPLE_RATE];
+	this->bitrate = details[CODEC_BIT_RATE];
+	this->bandwidth = details[CODEC_BANDWIDTH];
+}
 
-private:
-	static ConfigurationSkeleton * instance;
-	
-	CodecListModel * codecList;
+QString Codec::getPayload() const
+{	return payload;	}
+QString Codec::getName() const
+{	return name;	}
+QString Codec::getFrequency() const
+{	return frequency;	}
+QString Codec::getBitrate() const
+{	return bitrate;	}
+QString Codec::getBandwidth() const
+{	return bandwidth;	}
+bool Codec::isEnabled() const
+{	return enabled;	}
 
-public:
-	ConfigurationSkeleton();
-
-	~ConfigurationSkeleton();
-    
-	virtual void readConfig();
-    
-	virtual void writeConfig();
-	
-	
-	static ConfigurationSkeleton * self();
-	
-	QStringList activeCodecList() const;
-	void setActiveCodecList(const QStringList & v);
-	
-// protected:
-
-// 	virtual void usrReadConfig();
+void Codec::setPayload(QString payload)
+{	this->payload = payload;	}
+void Codec::setName(QString name)
+{	this->name = name;	}
+void Codec::setFrequency(QString frequency)
+{	this->frequency = frequency;	}
+void Codec::setBitrate(QString bitrate)
+{	this->bitrate = bitrate;	}
+void Codec::setBandwidth(QString bandwidth)
+{	this->bandwidth = bandwidth;	}
+void Codec::setEnabled(bool enabled)
+{	this->enabled = enabled;	}
 
 
-
-};
-
-#endif

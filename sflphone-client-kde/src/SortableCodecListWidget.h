@@ -18,46 +18,40 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CONFIGURATIONSKELETON_H
-#define CONFIGURATIONSKELETON_H
+#ifndef SORTABLECODECLISTWIDGET_H
+#define SORTABLECODECLISTWIDGET_H
 
 #include <QWidget>
-
-#include "kcfg_settings.h"
-#include "CodecListModel.h"
+#include <KPushButton>
+#include <QTableView>
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
-class ConfigurationSkeleton : public ConfigurationSkeletonBase
+class SortableCodecListWidget : public QWidget
 {
 Q_OBJECT
-
 private:
-	static ConfigurationSkeleton * instance;
-	
-	CodecListModel * codecList;
+	KPushButton * codecUpButton;
+	KPushButton * codecDownButton;
+	QTableView * codecTable;
 
 public:
-	ConfigurationSkeleton();
-
-	~ConfigurationSkeleton();
-    
-	virtual void readConfig();
-    
-	virtual void writeConfig();
+	SortableCodecListWidget(QWidget *parent = 0);
 	
+private slots:
+	void on_codecTable_currentCellChanged(int currentRow);
+	void on_codecUpButton_clicked();
+	void on_codecDownButton_clicked();
 	
-	static ConfigurationSkeleton * self();
+public slots:
+	void updateCommands();
 	
-	QStringList activeCodecList() const;
-	void setActiveCodecList(const QStringList & v);
-	
-// protected:
+private:
+	QModelIndex selectedIndex();
+	int selectedRow();
 
-// 	virtual void usrReadConfig();
-
-
+	void setSelectedRow(int row);
 
 };
 

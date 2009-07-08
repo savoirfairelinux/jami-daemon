@@ -18,47 +18,40 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CONFIGURATIONSKELETON_H
-#define CONFIGURATIONSKELETON_H
+#ifndef CODECLISTMODEL_H
+#define CODECLISTMODEL_H
 
-#include <QWidget>
-
-#include "kcfg_settings.h"
-#include "CodecListModel.h"
+#include <QAbstractItemModel>
+#include "Codec.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
-class ConfigurationSkeleton : public ConfigurationSkeletonBase
+class CodecListModel : public QAbstractTableModel
 {
 Q_OBJECT
-
 private:
-	static ConfigurationSkeleton * instance;
-	
-	CodecListModel * codecList;
+	QList<Codec *> codecs;
 
 public:
-	ConfigurationSkeleton();
+	CodecListModel(QObject *parent = 0);
 
-	~ConfigurationSkeleton();
-    
-	virtual void readConfig();
-    
-	virtual void writeConfig();
+	~CodecListModel();
+	void setCodecs(QList<Codec *> codecs);
+
+	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
+	int rowCount(const QModelIndex & parent = QModelIndex()) const;
+	int columnCount(const QModelIndex & parent = QModelIndex()) const;
+// 	bool insertRows(int position, int rows, const QModelIndex &parent);
+	QVariant headerData(int section , Qt::Orientation orientation, int role) const;
+	Qt::ItemFlags flags(const QModelIndex & index) const;
+	virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
 	
+	bool codecUp( int index );
+	bool codecDown( int index );
+	QStringList getActiveCodecList() const ;
+	void setActiveCodecList(const QStringList & activeCodecListToSet);
 	
-	static ConfigurationSkeleton * self();
-	
-	QStringList activeCodecList() const;
-	void setActiveCodecList(const QStringList & v);
-	
-// protected:
-
-// 	virtual void usrReadConfig();
-
-
-
 };
 
 #endif
