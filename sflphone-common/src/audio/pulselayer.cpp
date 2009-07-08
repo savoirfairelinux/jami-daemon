@@ -21,8 +21,6 @@
 
 int framesPerBuffer = 2048;
 
-int PulseLayer::streamState;
-
 static  void audioCallback (pa_stream* s, size_t bytes, void* userdata)
 {
     assert (s && bytes);
@@ -39,7 +37,6 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         , playback()
         , record()
 {
-    PulseLayer::streamState = 0;
     _debug ("PulseLayer::Pulse audio constructor: Create context\n");
 
 }

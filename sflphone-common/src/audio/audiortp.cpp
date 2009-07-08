@@ -110,7 +110,6 @@ AudioRtp::closeRtpSession ()
     // This will make RTP threads finish.
     _debug ("AudioRtp::Stopping rtp session\n");
 
-
     try {
         delete _RTXThread;
         _RTXThread = 0;
@@ -118,9 +117,6 @@ AudioRtp::closeRtpSession ()
         _debugException ("! ARTP Exception: when stopping audiortp\n");
         throw;
     }
-
-    // AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-    // audiolayer->stopStream();
 
     _debug ("AudioRtp::Audio rtp stopped\n");
 
