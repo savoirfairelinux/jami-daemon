@@ -29,56 +29,14 @@ CodecListModel::CodecListModel(QObject *parent)
 {
 	this->codecs = QList<Codec *>();
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-// 	QStringList codecList = configurationManager.getCodecList();
 	QStringList activeCodecList = configurationManager.getActiveCodecList();
 	setActiveCodecList(activeCodecList);
-// 	#if QT_VERSION >= 0x040500
-// 		activeCodecList.removeDuplicates();
-// 	#else
-//    	for (int i = 0 ; i < activeCodecList.size() ; i++)
-// 		{
-// 			if(activeCodecList.lastIndexOf(activeCodecList[i]) != i || ! codecList.contains(activeCodecList[i]))
-// 			{
-// 				activeCodecList.removeAt(i);
-// 				i--;
-// 			}
-// 		}
-// 	#endif
-// 
-// 	QStringList codecListToDisplay = activeCodecList;
-// 	for (int i=0 ; i<codecList.size() ; i++)
-// 	{
-// 		if(! activeCodecList.contains(codecList[i]))
-// 		{
-// 			codecListToDisplay << codecList[i];
-// 		}
-// 	}
-// 	for(int i=0 ; i<codecListToDisplay.size() ; i++)
-// 	{
-// 		bool ok;
-// 		qDebug() << codecListToDisplay[i];
-// 		QString payloadStr = QString(codecListToDisplay[i]);
-// 		int payload = payloadStr.toInt(&ok);
-// 		if(!ok)	
-// 			qDebug() << "The codec's payload sent by the configurationManager is not a number : " << codecListToDisplay[i];
-// 		else
-// 		{
-// 			codecs << new Codec(payload, activeCodecList.contains(codecListToDisplay[i]));
-// 		}
-// 	}
-
 }
 
 
 CodecListModel::~CodecListModel()
 {
 }
-
-// void CodecListModel::setCodecs(QList<Codec *> codecs)
-// {
-// 	this->codecs = QList<Codec *>();
-// 	this->codecs.append(new Codec(8,false));
-// }
 
 
 QVariant CodecListModel::data ( const QModelIndex & index, int role) const
@@ -122,17 +80,6 @@ int CodecListModel::columnCount(const QModelIndex & parent) const
 	return 4;
 }
 
-// bool CodecListModel::insertRows(int position, int rows, const QModelIndex &parent)
-// {
-// 	beginInsertRows(QModelIndex(), position, position+rows-1);
-// 
-// 	for (int row = 0; row < rows; ++row) {
-// 		codecs.insert(position, new Codec("payload"));
-// 	}
-// 
-// 	endInsertRows();
-// 	return true;
-// }
 
 QVariant CodecListModel::headerData(int section , Qt::Orientation orientation, int role) const
 {
@@ -177,10 +124,13 @@ bool CodecListModel::setData ( const QModelIndex & index, const QVariant &value,
 
 bool CodecListModel::codecUp( int index )
 {
+		qDebug() << getActiveCodecList();
 	if(index > 0 && index <= rowCount())
 	{
 		codecs.swap(index - 1, index);
+		qDebug() << getActiveCodecList();
 		emit dataChanged(this->index(index - 1, 0, QModelIndex()), this->index(index, columnCount(), QModelIndex()));
+		qDebug() << getActiveCodecList();
 		return true;
 	}
 	return false;
@@ -201,16 +151,15 @@ QStringList CodecListModel::getActiveCodecList() const
 {
 	QStringList codecList;
 	for(int i = 0 ; i < rowCount() ; i++)
+	{
 		if(codecs[i]->isEnabled())
 			codecList.append(codecs[i]->getPayload());
+	}
 	return codecList;
 }
 
 void CodecListModel::setActiveCodecList(const QStringList & activeCodecListToSet)
 {
-// 	for(int i = 0 ; i < rowCount() ; i++)
-// 		codecs[i]->setEnabled(activeCodecList.contains(codecs[i]->getPayload()));
-		
 	this->codecs = QList<Codec *>();
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList codecList = configurationManager.getCodecList();
@@ -249,9 +198,6 @@ void CodecListModel::setActiveCodecList(const QStringList & activeCodecListToSet
 			codecs << new Codec(payload, activeCodecList.contains(codecListToDisplay[i]));
 		}
 	}
-		
-		
-		
-		
+	
 	emit dataChanged(this->index(0, 0, QModelIndex()), this->index(rowCount(), columnCount(), QModelIndex()));
 }

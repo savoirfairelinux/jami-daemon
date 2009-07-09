@@ -103,6 +103,7 @@ private slots:
 
 signals:
 	void clearCallHistoryAsked();
+	void changesApplied();
 	
 };
 

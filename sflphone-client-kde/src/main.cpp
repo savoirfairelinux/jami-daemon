@@ -55,21 +55,11 @@ int main(int argc, char **argv)
 		
 		//configuration dbus
 		registerCommTypes();
-		
 		SFLPhone * fenetre = new SFLPhone();
 
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
 		
-// 		QTableView * table = new QTableView();
-// 		QListView * table = new QListView();
-// 		CodecListModel * model = new CodecListModel();
-// 		model->setCodecs(QList<Codec * >());
-// 		table->setModel(model);
-// 		table->resizeColumnsToContents();
-// 		table->resizeRowsToContents();
-// 		table->show();
-// 		model->setActiveCodecList(QStringList("8"));
 // 		SortableCodecListWidget * cl = new SortableCodecListWidget();
 // 		cl->show();
 	

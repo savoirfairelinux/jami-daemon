@@ -81,11 +81,6 @@ public:
 	//Constructors & Destructors
 	sflphone_kdeView(QWidget *parent);
 	virtual ~sflphone_kdeView();
-	/**
-	 * Called at construction. Updates all the display
-	 * according to the settings.
-	 */
-	void loadWindow();
 	
 	//Getters
 	/**
@@ -117,6 +112,12 @@ public:
 	* chosen to be displayed in SFLphone configuration.
 	*/
 	int phoneNumberTypesDisplayed();
+	
+	/**
+	 * 
+	 * @return true if the address book is enabled in config
+	 */
+	bool isAddressBookEnabled();
 	
 	//Updates
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
@@ -227,7 +228,32 @@ private slots:
 	void updateDialpad();
 	
 public slots:
+	/**
+	 * Updates all the display
+	 * according to the settings.
+	 */
+	void loadWindow();
+	
+	
 	void updateStatusMessage();
+	/**
+	 *   Enable the address book search line edit.
+	 *   To be called once the address book loading has finished.
+	 */
+	void enableAddressBook();
+	/**
+	 *   Loads the address book asynchronously.
+	 *   Calls enableAddressBook() once the address book
+	 *   loading has finished if it is not allready loaded.
+	 * @return true if address book has finished loading
+	 */
+	bool loadAddressBook();
+	
+	/**
+	 *   choose to enable/disable the address book button
+	 *   according to the configuration's setting.
+	 */
+	void updateAddressBookButton();
 	
 	
 	virtual void keyPressEvent(QKeyEvent *event)

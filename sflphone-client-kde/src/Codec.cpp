@@ -27,7 +27,7 @@ Codec::Codec(int payload, bool enabled)
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QStringList details = configurationManager.getCodecDetails(payload);
-	this->payload = payload;
+	this->payload = QString::number(payload);
 	this->enabled = enabled;
 	this->name = details[CODEC_NAME];
 	this->frequency = details[CODEC_SAMPLE_RATE];

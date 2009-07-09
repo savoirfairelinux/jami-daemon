@@ -20,7 +20,6 @@
  ***************************************************************************/
 #include "SortableCodecListWidget.h"
 
-#include "CodecListModel.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QDebug>
@@ -30,10 +29,10 @@ SortableCodecListWidget::SortableCodecListWidget(QWidget *parent)
 {
 	codecTable = new QTableView(this);
 	codecTable->setObjectName("codecTable");
-	CodecListModel * model = new CodecListModel();
-	codecTable->setModel(model);
-	codecTable->resizeColumnsToContents();
-	codecTable->resizeRowsToContents();
+// 	CodecListModel * model = new CodecListModel();
+// 	codecTable->setModel(model);
+// 	codecTable->resizeColumnsToContents();
+// 	codecTable->resizeRowsToContents();
 	codecTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 	
 	codecUpButton = new KPushButton(this);
@@ -45,7 +44,7 @@ SortableCodecListWidget::SortableCodecListWidget(QWidget *parent)
 	codecDownButton->setIcon(KIcon("go-down"));
 	
 	QHBoxLayout * mainLayout = new QHBoxLayout(this);
-	QVBoxLayout * buttonsLayout = new QVBoxLayout(this);
+	QVBoxLayout * buttonsLayout = new QVBoxLayout();
 	
 	buttonsLayout->addWidget(codecUpButton);
 	buttonsLayout->addWidget(codecDownButton);
@@ -53,20 +52,23 @@ SortableCodecListWidget::SortableCodecListWidget(QWidget *parent)
 	mainLayout->addWidget(codecTable);
 	mainLayout->addLayout(buttonsLayout);
 	
-	this->setLayout(mainLayout);
-	
 	QMetaObject::connectSlotsByName(this);
 }
 
-void SortableCodecListWidget::on_codecTable_currentCellChanged(int currentRow)
+void SortableCodecListWidget::setModel(CodecListModel * model)
 {
-	qDebug() << "on_codecTable_currentCellChanged";
-// 	int nbCol = codecTable->model()->columnCount();
-// 	for(int i = 0 ; i < nbCol ; i++)
-// 	{
-// 		codecTable->setRangeSelected(QTableWidgetSelectionRange(currentRow, 0, currentRow, nbCol - 1), true);
-// 	}
-	updateCommands();
+	codecTable->setModel(model);
+	codecTable->resizeColumnsToContents();
+	codecTable->resizeRowsToContents();	
+	connect(codecTable->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
+	        this,                         SLOT(updateCommands()));
+	connect(codecTable->model(),          SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)),
+	        this,                         SIGNAL(dataChanged()));
+}
+
+CodecListModel * SortableCodecListWidget::model()
+{
+	return (CodecListModel *) codecTable->model();
 }
 
 void SortableCodecListWidget::on_codecUpButton_clicked()
@@ -76,22 +78,6 @@ void SortableCodecListWidget::on_codecUpButton_clicked()
 	int currentRow = selectedRow();
 	model->codecUp(currentRow);
 	setSelectedRow(currentRow - 1);
-	
-// 	int currentCol = codecTable->currentColumn();
-// 	int currentRow = codecTable->currentRow();
-// 	int nbCol = codecTable->columnCount();
-// 	for(int i = 0 ; i < nbCol ; i++)
-// 	{
-// 		QTableWidgetItem * item1 = tableWidget_codecs->takeItem(currentRow, i);
-// 		QTableWidgetItem * item2 = tableWidget_codecs->takeItem(currentRow - 1, i);
-// 		tableWidget_codecs->setItem(currentRow - 1, i , item1);
-// 		tableWidget_codecs->setItem(currentRow, i , item2);
-// 	}
-// 	QTableWidgetItem * item1 = tableWidget_codecs->takeVerticalHeaderItem(currentRow);
-// 	QTableWidgetItem * item2 = tableWidget_codecs->takeVerticalHeaderItem(currentRow - 1);
-// 	tableWidget_codecs->setVerticalHeaderItem(currentRow - 1, item1);
-// 	tableWidget_codecs->setVerticalHeaderItem(currentRow, item2);
-// 	tableWidget_codecs->setCurrentCell(currentRow - 1, currentCol);
 }
 
 void SortableCodecListWidget::on_codecDownButton_clicked()
@@ -101,22 +87,6 @@ void SortableCodecListWidget::on_codecDownButton_clicked()
 	int currentRow = selectedRow();
 	model->codecDown(currentRow);
 	setSelectedRow(currentRow + 1);
-	
-// 	int currentCol = tableWidget_codecs->currentColumn();
-// 	int currentRow = tableWidget_codecs->currentRow();
-// 	int nbCol = tableWidget_codecs->columnCount();
-// 	for(int i = 0 ; i < nbCol ; i++)
-// 	{
-// 		QTableWidgetItem * item1 = tableWidget_codecs->takeItem(currentRow, i);
-// 		QTableWidgetItem * item2 = tableWidget_codecs->takeItem(currentRow + 1, i);
-// 		tableWidget_codecs->setItem(currentRow + 1, i , item1);
-// 		tableWidget_codecs->setItem(currentRow, i , item2);
-// 	}
-// 	QTableWidgetItem * item1 = tableWidget_codecs->takeVerticalHeaderItem(currentRow);
-// 	QTableWidgetItem * item2 = tableWidget_codecs->takeVerticalHeaderItem(currentRow + 1);
-// 	tableWidget_codecs->setVerticalHeaderItem(currentRow + 1, item1);
-// 	tableWidget_codecs->setVerticalHeaderItem(currentRow, item2);
-// 	tableWidget_codecs->setCurrentCell(currentRow + 1, currentCol);
 }
 
 void SortableCodecListWidget::updateCommands()
@@ -166,9 +136,10 @@ void SortableCodecListWidget::setSelectedRow(int row)
 {
 	QItemSelectionModel * selection = codecTable->selectionModel();
 	QAbstractItemModel * model = codecTable->model();
-	QItemSelection newSelection = QItemSelection(model->index(row, 0, QModelIndex()), model->index(row, model->columnCount(), QModelIndex()));
+	QItemSelection newSelection = QItemSelection(model->index(row, 0, QModelIndex()), model->index(row +1 , model->columnCount(), QModelIndex()));
 	selection->clear();
-// 	selection->select(newSelection , QItemSelectionModel::Select);
-	selection->select(model->index(row, model->columnCount()-1, QModelIndex()) , QItemSelectionModel::Select);
-// 	listView->selectionModel()->select(belowIndex, QItemSelectionModel::Select);
+	for(int i = 0 ; i < model->columnCount() ; i++)
+	{
+		selection->select(model->index(row, i, QModelIndex()) , QItemSelectionModel::Select);
+	}
 } 

@@ -24,6 +24,7 @@
 #include <QWidget>
 #include <KPushButton>
 #include <QTableView>
+#include "CodecListModel.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -39,8 +40,10 @@ private:
 public:
 	SortableCodecListWidget(QWidget *parent = 0);
 	
+	virtual void setModel(CodecListModel * model);
+	virtual CodecListModel * model();
+	
 private slots:
-	void on_codecTable_currentCellChanged(int currentRow);
 	void on_codecUpButton_clicked();
 	void on_codecDownButton_clicked();
 	
@@ -52,6 +55,9 @@ private:
 	int selectedRow();
 
 	void setSelectedRow(int row);
+	
+signals:
+	void dataChanged();
 
 };
 

@@ -36,7 +36,7 @@ Q_OBJECT
 private:
 	static ConfigurationSkeleton * instance;
 	
-	CodecListModel * codecList;
+	CodecListModel * codecListModel;
 
 public:
 	ConfigurationSkeleton();
@@ -52,6 +52,8 @@ public:
 	
 	QStringList activeCodecList() const;
 	void setActiveCodecList(const QStringList & v);
+	
+	CodecListModel * getCodecListModel();
 	
 // protected:
 

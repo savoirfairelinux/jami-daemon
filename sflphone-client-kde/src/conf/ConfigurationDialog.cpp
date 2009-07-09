@@ -102,12 +102,14 @@ void ConfigurationDialogKDE::updateButtons()
 void ConfigurationDialogKDE::applyCustomSettings()
 {
 	qDebug() << "applyCustomSettings";
-	dlgAccounts->applyCustomSettings();
 // 	if(hasChanged())
 // 	{
 		ConfigurationSkeleton::self()->writeConfig();
 // 	}
+	dlgAccounts->applyCustomSettings();
+	dlgAudio->applyCustomSettings();
 	updateButtons();
+	emit changesApplied();
 }
 
 void ConfigurationDialogKDE::reload()
@@ -115,5 +117,6 @@ void ConfigurationDialogKDE::reload()
 	qDebug() << "reload";
 	ConfigurationSkeleton::self()->readConfig();
 	updateWidgets();
+	applyCustomSettings();
 	updateButtons();
 }

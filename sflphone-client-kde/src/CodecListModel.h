@@ -51,7 +51,9 @@ public:
 	bool codecDown( int index );
 	QStringList getActiveCodecList() const ;
 	void setActiveCodecList(const QStringList & activeCodecListToSet);
-	
+
+signals:
+	void dataChanged(const QModelIndex &, const QModelIndex &);
 };
 
 #endif

@@ -1,17 +1,16 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
-#, fuzzy
+# Russian Translation.
+# Copyright (C) 2009 Savoir-Faire Linux Inc.
+# This file is distributed under the same license as the sflphone package.
+# Hussein Abdallah <hussein.abdallah@savoirfairelinux.com>, 2009
+# 
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: SFLphone 0.9.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-03 13:49-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2009-07-08 15:18-0400\n"
+"PO-Revision-Date: 2009-06-08 10:19 GMT-5\n"
+"Last-Translator: HUSSEIN ABDALLAH <hussein.abdallah@savoirfairelinux.com>\n"
+"Language-Team:  Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -19,340 +18,345 @@ msgstr ""
 #: ../src/Account.cpp:34
 msgctxt "account state"
 msgid "Registered"
-msgstr ""
+msgstr "Зарегестрирован"
 
 #: ../src/Account.cpp:36
 msgctxt "account state"
 msgid "Not Registered"
-msgstr ""
+msgstr "Не зарегестрирован"
 
 #: ../src/Account.cpp:38
 msgctxt "account state"
 msgid "Trying..."
-msgstr ""
+msgstr "попытка подключения..."
 
 #: ../src/Account.cpp:40
 msgctxt "account state"
 msgid "Error"
-msgstr ""
+msgstr "Ошибка"
 
 #: ../src/Account.cpp:42
 msgctxt "account state"
 msgid "Bad authentification"
-msgstr ""
+msgstr "Включить предупреждения"
 
 #: ../src/Account.cpp:44
 msgctxt "account state"
 msgid "Network unreachable"
-msgstr ""
+msgstr "Сеть недоступна"
 
 #: ../src/Account.cpp:46
 msgctxt "account state"
 msgid "Host unreachable"
-msgstr ""
+msgstr "Сервер недоступен"
 
 #: ../src/Account.cpp:48
 msgctxt "account state"
 msgid "Stun configuration error"
-msgstr ""
+msgstr "Окно настроек"
 
 #: ../src/Account.cpp:50
 msgctxt "account state"
 msgid "Stun server invalid"
-msgstr ""
+msgstr "STUN-сервер недействителен"
 
 #: ../src/Account.cpp:51
 msgctxt "account state"
 msgid "Invalid"
-msgstr ""
+msgstr "Недействителен"
 
 #: ../src/AccountWizard.cpp:163 ../src/AccountWizard.cpp:278
 msgid "Account Creation Wizard"
-msgstr ""
+msgstr "Мастер настройки SFLphone"
 
 #: ../src/AccountWizard.cpp:199
 msgid "Creation of account succeed with these parameters"
-msgstr ""
+msgstr "Успешное создание аккаунта с этими настройками"
 
 #: ../src/AccountWizard.cpp:211
 msgid "Creation of account has failed for the reason"
-msgstr ""
+msgstr "Создание аккаунта не получилось по этим причинам"
 
 #: ../src/AccountWizard.cpp:217
 msgid "Register of account succeed with these parameters"
-msgstr ""
+msgstr "Успешное регистрация аккаунта с этими настройками"
 
 #: ../src/AccountWizard.cpp:255 ../src/AccountWizard.cpp:440
 #: ../build/src/ui_dlgaccountsbase.h:359
 msgid "Alias"
-msgstr ""
+msgstr "Псевдоним"
 
 #: ../src/AccountWizard.cpp:256 ../src/AccountWizard.cpp:441
 #: ../build/src/ui_dlgaccountsbase.h:366
 msgid "Server"
-msgstr ""
+msgstr "Сервер"
 
 #: ../src/AccountWizard.cpp:257 ../src/AccountWizard.cpp:442
 #: ../build/src/ui_dlgaccountsbase.h:367
 msgid "User"
-msgstr ""
+msgstr "Пользователь"
 
 #: ../src/AccountWizard.cpp:258 ../src/AccountWizard.cpp:443
 #: ../build/src/ui_dlgaccountsbase.h:368
 msgid "Password"
-msgstr ""
+msgstr "Пароль"
 
 #: ../src/AccountWizard.cpp:259 ../build/src/ui_dlgaccountsbase.h:360
 msgid "Protocol"
-msgstr ""
+msgstr "Протокол"
 
 #: ../src/AccountWizard.cpp:260 ../build/src/ui_dlgaccountsbase.h:369
 #: ../build/src/ui_sflphone_kdeview_base.h:396
 msgid "Mailbox"
-msgstr ""
+msgstr "Автоответчик"
 
 #: ../src/AccountWizard.cpp:279
 msgid "Welcome to the Account creation wizard of SFLphone"
-msgstr ""
+msgstr "Добро пожаловать в мастер настройки SFLphone"
 
 #: ../src/AccountWizard.cpp:281
 msgid "This wizard will help you setting up an account."
-msgstr ""
+msgstr "Этот мастер установки поможет вам настроить ваш аккаунт."
 
 #: ../src/AccountWizard.cpp:309 ../src/conf/ConfigurationDialog.cpp:50
 msgid "Accounts"
-msgstr ""
+msgstr "Аккаунты"
 
 #: ../src/AccountWizard.cpp:310
 msgid "Please choose between those options :"
-msgstr ""
+msgstr "Выберите пожалуйста тип аккаунта :"
 
 #: ../src/AccountWizard.cpp:312
 msgid "Create a free SIP/IAX2 account on sflphone.org"
-msgstr ""
+msgstr "Создать бесплатный SIP/IAX2-аккаунт на sflphone.org"
 
 #: ../src/AccountWizard.cpp:313
 msgid "Register an existing SIP/IAX2 account"
-msgstr ""
+msgstr "Зарегистрировать существующий SIP или IAX2 аккаунт"
 
 #: ../src/AccountWizard.cpp:352
 msgid "VoIP Protocols"
-msgstr ""
+msgstr "VoIP-протоколы"
 
 #: ../src/AccountWizard.cpp:353
 msgid "Choose the account type"
-msgstr ""
+msgstr "Выберите тип аккаунта:"
 
 #: ../src/AccountWizard.cpp:355
 msgid "Register a SIP (Session Initiation Protocol) account"
-msgstr ""
+msgstr "Зарегистрировать существующий SIP-аккаунт"
 
 #: ../src/AccountWizard.cpp:356
 msgid "Register a IAX2 (InterAsterisk eXchange) account"
-msgstr ""
+msgstr "Зарегистрировать существующий IAX2-аккаунт"
 
 #: ../src/AccountWizard.cpp:395
 msgid "Optionnal Email Address"
-msgstr ""
+msgstr "Электронный адрес (необязательный) "
 
 #: ../src/AccountWizard.cpp:396
 msgid "This email address will be used to send your voicemail messages."
-msgstr ""
+msgstr "Этот электронный адрес будет использоваться для речевых сообщений"
 
 #: ../src/AccountWizard.cpp:398
 msgid "Email address"
-msgstr ""
+msgstr "Адрес эл. почты"
 
 #: ../src/AccountWizard.cpp:432
 msgid "SIP Account Settings"
-msgstr ""
+msgstr "Настройки SIP-аккаунта"
 
 #: ../src/AccountWizard.cpp:436
 msgid "IAX2 Account Settings"
-msgstr ""
+msgstr "Настройки IAX2-аккаунта"
 
 #: ../src/AccountWizard.cpp:438
 msgid "Please full these settings fields."
-msgstr ""
+msgstr "Заполните пожалуйста эти поля."
 
 #: ../src/AccountWizard.cpp:444
 msgid "Voicemail number"
-msgstr ""
+msgstr "Номер автоответчика"
 
 #: ../src/AccountWizard.cpp:523
 msgid "Network Address Translation (NAT)"
-msgstr ""
+msgstr "Network Address Translation (NAT)"
 
 #: ../src/AccountWizard.cpp:524
 msgid ""
 "You should probably enable this option if you're placed under a firewall"
 msgstr ""
+"Вы наверное должны это включить если вы находитесь за сетевым экраном."
 
 #: ../src/AccountWizard.cpp:526
 msgid "Enable STUN"
-msgstr ""
+msgstr "Включить STUN"
 
 #: ../src/AccountWizard.cpp:527
 msgid "Stun Server"
-msgstr ""
+msgstr "STUN-сервер"
 
 #: ../src/AccountWizard.cpp:561
 msgid "Account Definition Finished"
-msgstr ""
+msgstr "Настройка аккаунта закончена."
 
 #: ../src/AccountWizard.cpp:562
 msgid ""
 "After checking the settings you chose, click \"Finish\" to create the "
 "account."
 msgstr ""
+"После просмотра выбранных настроек, нажмите на \"Закончить\" чтобы создать "
+"аккаунт. "
 
 #: ../src/ActionSetAccountFirst.cpp:26
 msgid "Default account"
-msgstr ""
+msgstr "Аккаунт по умолчанию"
 
 #: ../src/Call.cpp:116
 msgid "Transfer to : "
-msgstr ""
+msgstr "Переслать звонок на другой номер :"
 
 #: ../src/main.cpp:34
 msgid "SFLphone KDE Client"
-msgstr ""
+msgstr "SFLphone - версия для KDE "
 
 #: ../src/main.cpp:38
 msgid "(C) 2009 Savoir-faire Linux"
-msgstr ""
+msgstr "(C) 2009 Savoir-faire Linux"
+
+#: ../src/main.cpp:42
+msgid "Jérémy Quentin"
+msgstr "Jérémy Quentin"
 
 #: ../src/main.cpp:43
-msgid "Jérémy Quentin"
-msgstr ""
-
-#: ../src/main.cpp:45
 msgctxt "NAME OF TRANSLATORS"
 msgid "Your names"
-msgstr ""
+msgstr "Hussein Abdallah"
 
-#: ../src/main.cpp:45
+#: ../src/main.cpp:43
 msgctxt "EMAIL OF TRANSLATORS"
 msgid "Your emails"
-msgstr ""
+msgstr "hussein.abdallah@savoirfairelinux.com"
 
-#: ../src/SFLPhone.cpp:62 ../src/sflphone_kdeview.cpp:1047
-#: ../src/sflphone_kdeview.cpp:1052 ../src/sflphone_kdeview.cpp:1057
+#: ../src/SFLPhone.cpp:62 ../src/sflphone_kdeview.cpp:1066
+#: ../src/sflphone_kdeview.cpp:1071 ../src/sflphone_kdeview.cpp:1076
 msgid "SFLphone"
-msgstr ""
+msgstr "SFLphone"
 
 #: ../src/SFLPhone.cpp:181
 msgid "You still have some calls open. Please close all calls before quitting."
 msgstr ""
+"У вас ещё есть неоконченные звонки. Пожалуйста проверьте что все звонки "
+"окончены перед тем как выйти."
 
 #: ../src/SFLPhone.cpp:209
 msgid "Incoming call"
-msgstr ""
+msgstr "Входящий звонок"
 
 #: ../src/SFLPhone.cpp:210
 msgid "You have an incoming call from"
-msgstr ""
+msgstr "Входящей звонок от "
 
 #: ../src/SFLPhone.cpp:210
 msgid "Click to accept or refuse it."
-msgstr ""
+msgstr "Нажмите чтобы принять или отклонить."
 
-#: ../src/sflphone_kdeview.cpp:864
+#: ../src/sflphone_kdeview.cpp:883
 msgid "No account registered"
-msgstr ""
+msgstr "Нет зарегистрированных аккаунтов"
 
-#: ../src/sflphone_kdeview.cpp:868
+#: ../src/sflphone_kdeview.cpp:887
 msgid "Using account"
-msgstr ""
+msgstr "Используется аккаунт"
 
-#: ../src/sflphone_kdeview.cpp:1047
+#: ../src/sflphone_kdeview.cpp:1066
 msgid "Main screen"
-msgstr ""
+msgstr "Главный экран"
 
-#: ../src/sflphone_kdeview.cpp:1052 ../build/src/ui_dlggeneralbase.h:165
+#: ../src/sflphone_kdeview.cpp:1071 ../build/src/ui_dlggeneralbase.h:165
 msgid "Call history"
-msgstr ""
+msgstr "Журнал звонков"
 
-#: ../src/sflphone_kdeview.cpp:1057
+#: ../src/sflphone_kdeview.cpp:1076
 #: ../build/src/ui_sflphone_kdeview_base.h:407
 msgid "Address book"
-msgstr ""
+msgstr "Адресная книга"
 
-#: ../src/sflphone_kdeview.cpp:1071 ../src/sflphone_kdeview.cpp:1132
+#: ../src/sflphone_kdeview.cpp:1090 ../src/sflphone_kdeview.cpp:1151
 msgid "Edit before call"
-msgstr ""
+msgstr "Изменить перед звонком"
 
 #: ../src/sflphone_const.h:56
 msgid "Call"
-msgstr ""
+msgstr "Звонок"
 
 #: ../src/sflphone_const.h:57 ../build/src/ui_sflphone_kdeview_base.h:392
 msgid "Hang up"
-msgstr ""
+msgstr "Положить трубку"
 
 #: ../src/sflphone_const.h:58 ../build/src/ui_sflphone_kdeview_base.h:393
 msgid "Hold"
-msgstr ""
+msgstr "Удержать звонок"
 
 #: ../src/sflphone_const.h:59 ../build/src/ui_sflphone_kdeview_base.h:394
 msgid "Transfer"
-msgstr ""
+msgstr "Переслать звонок на другой номер"
 
 #: ../src/sflphone_const.h:60
 msgid "Record"
-msgstr ""
+msgstr "Записать"
 
 #: ../src/sflphone_const.h:61
 msgid "Accept"
-msgstr ""
+msgstr "Принять"
 
 #: ../src/sflphone_const.h:62
 msgid "Refuse"
-msgstr ""
+msgstr "Отклонить"
 
 #: ../src/sflphone_const.h:63
 msgid "Unhold"
-msgstr ""
+msgstr "Снова взять"
 
 #: ../src/sflphone_const.h:64
 msgid "Give up transfer"
-msgstr ""
+msgstr "Отменить пересылку звонка"
 
 #: ../src/sflphone_const.h:65
 msgid "Call back"
-msgstr ""
+msgstr "Перезвонить"
 
 #: ../src/sflphone_const.h:66
 msgid "Give up search"
-msgstr ""
+msgstr "Отменить поиск"
 
 #: ../src/conf/ConfigurationDialog.cpp:48 ../build/src/ui_dlgrecordbase.h:91
 msgid "General"
-msgstr ""
+msgstr "Общие настройки"
 
 #: ../src/conf/ConfigurationDialog.cpp:49
 msgid "Display"
-msgstr ""
+msgstr "Экран"
 
 #: ../src/conf/ConfigurationDialog.cpp:51
 msgid "Audio"
-msgstr ""
+msgstr "Звук"
 
 #: ../src/conf/ConfigurationDialog.cpp:52
 msgid "Address Book"
-msgstr ""
+msgstr "Адресная книга"
 
 #: ../src/conf/ConfigurationDialog.cpp:53
 msgctxt "Config section"
 msgid "Record"
-msgstr ""
+msgstr "Запись переговоров"
 
 #: ../src/conf/ConfigurationDialog.cpp:54
 msgid "Hooks"
-msgstr ""
+msgstr "перехватчики (hooks)"
 
 #: ../build/src/ui_dlgaccountsbase.h:321
-#: ../build/src/ui_dlgaddressbookbase.h:142 ../build/src/ui_dlgaudiobase.h:262
+#: ../build/src/ui_dlgaddressbookbase.h:142 ../build/src/ui_dlgaudiobase.h:263
 #: ../build/src/ui_dlgdisplaybase.h:120 ../build/src/ui_dlggeneralbase.h:164
 #: ../build/src/ui_dlghooksbase.h:173 ../build/src/ui_dlgrecordbase.h:90
 #: ../build/src/ui_sflphone_kdeview_base.h:390
@@ -367,10 +371,14 @@ msgid ""
 "them on the left of the item. Add or remove some with \"Plus\" and \"Sub\" "
 "buttons. Edit the selected account with the form on the right."
 msgstr ""
+"По умолчанию, SFLPhone будет использовать первый аккаунт в списке "
+"зарегистрированных аккаунтов. Последовательность использования "
+"аккаунтов можно изменить при помощи стрелок \"Вверх\" и \"Вниз\"."
+
 
 #: ../build/src/ui_dlgaccountsbase.h:327
 msgid "Remove the selected account"
-msgstr ""
+msgstr "Убрать этот аккаунт"
 
 #: ../build/src/ui_dlgaccountsbase.h:330
 msgid ""
@@ -378,32 +386,36 @@ msgid ""
 "really don't need it anymore. If you think you might use it again later, "
 "just uncheck it."
 msgstr ""
+"Это кнопка уберëт аккаунт. Если вы думаете его использовать позже, "
+"то достаточно его отменить "
 
 #: ../build/src/ui_dlgaccountsbase.h:335
 msgid "Remove"
-msgstr ""
+msgstr "Убрать"
 
 #: ../build/src/ui_dlgaccountsbase.h:336
 msgid "Backspace, Return"
-msgstr ""
+msgstr "Backspace, Return"
 
 #: ../build/src/ui_dlgaccountsbase.h:338
 msgid "Add a new account"
-msgstr ""
+msgstr "Добавить новый аккаунт"
 
 #: ../build/src/ui_dlgaccountsbase.h:341
 msgid ""
 "This button enables you to initialize a new account. You will then be able "
 "to edit it using the form on the right."
 msgstr ""
+"Это кнопка позволит вам добавить новый аккаунт. После этого вы сможете "
+"его изменить при помощи экрана справа." 
 
 #: ../build/src/ui_dlgaccountsbase.h:343
 msgid "Add"
-msgstr ""
+msgstr "Добавить"
 
 #: ../build/src/ui_dlgaccountsbase.h:345
 msgid "Get this account down"
-msgstr ""
+msgstr "Убрать этот аккаунт"
 
 #: ../build/src/ui_dlgaccountsbase.h:348 ../build/src/ui_dlgaccountsbase.h:355
 msgid ""
@@ -411,254 +423,340 @@ msgid ""
 "this list which is \"registered\". Change the order of the accounts using "
 "the \"Up\" and \"Down\" arrows."
 msgstr ""
+"По умолчанию, SFLPhone будет использовать первый аккаунт в списке "
+"зарегистрированных аккаунтов. Последовательность использования "
+"аккаунтов можно изменить при помощи стрелок \"Вверх\" и \"Вниз\"."
+
 
 #: ../build/src/ui_dlgaccountsbase.h:350
 msgid "Down"
-msgstr ""
+msgstr "Вниз"
 
 #: ../build/src/ui_dlgaccountsbase.h:352
 msgid "Get this account up"
-msgstr ""
+msgstr "Убрать этот аккаунт"
 
 #: ../build/src/ui_dlgaccountsbase.h:357
 msgid "Up"
-msgstr ""
+msgstr "Вверх"
 
 #: ../build/src/ui_dlgaccountsbase.h:358
 msgid "Apply"
-msgstr ""
+msgstr "Применить"
 
 #: ../build/src/ui_dlgaccountsbase.h:363
 msgid "SIP"
-msgstr ""
+msgstr "SIP"
 
 #: ../build/src/ui_dlgaccountsbase.h:364
 msgid "IAX"
-msgstr ""
+msgstr "IAX"
 
 #: ../build/src/ui_dlgaccountsbase.h:370
 msgid "State"
-msgstr ""
+msgstr "Статус"
 
 #: ../build/src/ui_dlgaccountsbase.h:373
 msgid "Stun settings will be applied on each account"
-msgstr ""
+msgstr "Stun-настройки будут использоваться для всех аккаунтов"
 
 #: ../build/src/ui_dlgaccountsbase.h:374
 msgid "Enable Stun"
-msgstr ""
+msgstr "&Включить STUN"
 
 #: ../build/src/ui_dlgaccountsbase.h:375
 msgid "choose Stun server (example : stunserver.org)"
-msgstr ""
+msgstr "Выберите STUN-сервер (например : stunserver.org )"
 
 #: ../build/src/ui_dlgaddressbookbase.h:143
 msgid "Maximum &results"
-msgstr ""
+msgstr "Максимальное &количество результатов"
 
 #: ../build/src/ui_dlgaddressbookbase.h:144
 msgid "Display &photo if available"
-msgstr ""
+msgstr "Показать &фотографию контакта (если имеется)"
 
 #: ../build/src/ui_dlgaddressbookbase.h:145
 msgid "Display phone numbers of these &types :"
-msgstr ""
+msgstr "Если контакт имеет несколько номеров, показать &только :"
 
 #: ../build/src/ui_dlgaddressbookbase.h:146
 msgid "&Work"
-msgstr ""
+msgstr "&Рабочий номер"
 
 #: ../build/src/ui_dlgaddressbookbase.h:147
 msgid "&Mobile"
-msgstr ""
+msgstr "Номер &мобильника"
 
 #: ../build/src/ui_dlgaddressbookbase.h:148
 msgid "&Home"
-msgstr ""
+msgstr "&Домашний номер"
 
-#: ../build/src/ui_dlgaudiobase.h:264
+#: ../build/src/ui_dlgaudiobase.h:265
 msgid "Audio device"
-msgstr ""
-
-#: ../build/src/ui_dlgaudiobase.h:267
-msgid "ALSA"
-msgstr ""
+msgstr "Звуковое устройство"
 
 #: ../build/src/ui_dlgaudiobase.h:268
-msgid "PulseAudio"
-msgstr ""
+msgid "ALSA"
+msgstr "ALSA"
 
-#: ../build/src/ui_dlgaudiobase.h:270
-msgid "Enable ringtones"
-msgstr ""
+#: ../build/src/ui_dlgaudiobase.h:269
+msgid "PulseAudio"
+msgstr "PulseAudio"
 
 #: ../build/src/ui_dlgaudiobase.h:271
-msgid "&Codecs"
-msgstr ""
+msgid "Enable ringtones"
+msgstr "Включить звонок"
+
+#: ../build/src/ui_dlgaudiobase.h:272
+msgid "*.ul *.au *.wav"
+msgstr "*.ul *.au *.wav"
 
 #: ../build/src/ui_dlgaudiobase.h:273
-msgid "Active"
-msgstr ""
+msgid "&Codecs"
+msgstr "&Кодеки"
 
 #: ../build/src/ui_dlgaudiobase.h:275
-msgid "Name"
-msgstr ""
+msgid "Active"
+msgstr "Вкл."
 
 #: ../build/src/ui_dlgaudiobase.h:277
-msgid "Frequency"
-msgstr ""
+msgid "Name"
+msgstr "Имя"
 
 #: ../build/src/ui_dlgaudiobase.h:279
-msgid "Bitrate"
-msgstr ""
+msgid "Frequency"
+msgstr "Частота"
 
 #: ../build/src/ui_dlgaudiobase.h:281
+msgid "Bitrate"
+msgstr "Битрейт"
+
+#: ../build/src/ui_dlgaudiobase.h:283
 msgid "Bandwidth"
-msgstr ""
-
-#: ../build/src/ui_dlgaudiobase.h:284
-msgid "ALSA settings"
-msgstr ""
-
-#: ../build/src/ui_dlgaudiobase.h:285
-msgid "In"
-msgstr ""
+msgstr "Пропускная способность"
 
 #: ../build/src/ui_dlgaudiobase.h:286
-msgid "Out"
-msgstr ""
+msgid "ALSA settings"
+msgstr "Настройка ALSA"
 
 #: ../build/src/ui_dlgaudiobase.h:287
 msgid "ALSA plugin"
-msgstr ""
+msgstr "ALSA-плагин"
 
 #: ../build/src/ui_dlgaudiobase.h:288
-msgid "PulseAudio settings"
-msgstr ""
+msgid "In"
+msgstr "Вход"
 
 #: ../build/src/ui_dlgaudiobase.h:289
+msgid "Out"
+msgstr "Выход"
+
+#: ../build/src/ui_dlgaudiobase.h:290
+msgid "PulseAudio settings"
+msgstr "Настройка PulseAudio"
+
+#: ../build/src/ui_dlgaudiobase.h:291
 msgid "Mute other applications during a call"
-msgstr ""
+msgstr "Приглушить звук других програм во время звонка"
 
 #: ../build/src/ui_dlgdisplaybase.h:121
 msgid "Enable notifications"
-msgstr ""
+msgstr "Включить предупреждения"
 
 #: ../build/src/ui_dlgdisplaybase.h:122
 msgid "On incoming &calls"
-msgstr ""
+msgstr "При входящих звонках"
 
 #: ../build/src/ui_dlgdisplaybase.h:123
 msgid "On &messages"
-msgstr ""
+msgstr "При звуковых &сообщениях"
 
 #: ../build/src/ui_dlgdisplaybase.h:124
 msgid "Show main window"
-msgstr ""
+msgstr "Показать главное окно"
 
 #: ../build/src/ui_dlgdisplaybase.h:125
 msgid "On &start"
-msgstr ""
+msgstr "При &запуске"
 
 #: ../build/src/ui_dlgdisplaybase.h:126
 msgid "On &incoming calls"
-msgstr ""
+msgstr "При входящих звонках"
 
 #: ../build/src/ui_dlggeneralbase.h:166
 msgid "Keep my history for at least"
-msgstr ""
+msgstr "Сохранить журнал звонков как минимум "
 
 #: ../build/src/ui_dlggeneralbase.h:167
 msgid "days"
-msgstr ""
+msgstr "дней"
 
 #: ../build/src/ui_dlggeneralbase.h:168
 msgid "Clear history"
-msgstr ""
+msgstr "Стереть журнал"
 
 #: ../build/src/ui_dlggeneralbase.h:169
 msgid "Connection"
-msgstr ""
+msgstr "Подключение"
 
 #: ../build/src/ui_dlggeneralbase.h:170
 msgid "SIP Port"
-msgstr ""
+msgstr "SIP-порт"
 
 #: ../build/src/ui_dlggeneralbase.h:171
 msgid "Attention "
-msgstr ""
+msgstr "Внимание"
 
 #: ../build/src/ui_dlghooksbase.h:174
 msgid "URL Argument"
-msgstr ""
+msgstr "Аргумент переданный в URL"
 
 #: ../build/src/ui_dlghooksbase.h:175
 #, c-format
 msgid "Custom commands with URL %s will be replaced with the passed URL."
-msgstr ""
+msgstr "Команды с URL %s будут заменены на переданный URL"
 
 #: ../build/src/ui_dlghooksbase.h:176
 msgid "Trigger on specific SIP header"
-msgstr ""
+msgstr "Запустить при определëнном SIP-заголовке"
 
 #: ../build/src/ui_dlghooksbase.h:177
 msgid "Trigger on IAX2 URL"
-msgstr ""
+msgstr "Запустить при URL IAX2 "
 
 #: ../build/src/ui_dlghooksbase.h:178
 msgid "Command to run"
-msgstr ""
+msgstr "Команда"
 
 #: ../build/src/ui_dlghooksbase.h:179
 msgid "Phone number formatting"
-msgstr ""
+msgstr "Формат номера телефона"
 
 #: ../build/src/ui_dlghooksbase.h:180
 msgid "Add phone number prefix"
-msgstr ""
+msgstr "Добавить перед на набранными номерами"
 
 #: ../build/src/ui_dlgrecordbase.h:92
 msgid "Destination folder"
-msgstr ""
+msgstr "Папка для записи"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:391
 msgid "Pick up"
-msgstr ""
+msgstr "&Взять трубку"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:395
 msgid "History"
-msgstr ""
+msgstr "Журнал"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:397
 msgid "Configure accounts"
-msgstr ""
+msgstr "Настроить &аккаунты"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:398
 msgid "Configure audio"
-msgstr ""
+msgstr "Настроить &звук"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:399
 #: ../build/src/ui_sflphone_kdeview_base.h:401
 msgid "Configure SFLphone"
-msgstr ""
+msgstr "&Настроить SFLPhone"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:403
 msgid "Display volume bars"
-msgstr ""
+msgstr "Показать уровень &громкости"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:404
 msgid "Display dialpad"
-msgstr ""
+msgstr "Показать &клавиатуру"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:405
-msgctxt "Action record a calld"
+msgctxt "Action record a call"
 msgid "Record"
-msgstr ""
+msgstr "Записать"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:406
 msgid "Account creation wizard"
-msgstr ""
+msgstr "&Мастер настройки SFLphone"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:408
 msgid "Attention:number of results exceeds max displayed."
-msgstr ""
+msgstr "Внимание: Количество результатов превышает настроенный максимум результатов"
+
+#~ msgid "Attention : SIP port must be over 1024 !"
+#~ msgstr "Внимание : SIP-порт должен быть больше чем 1024 !"
+
+#~ msgid "Attention : SIP port must be under 65536 !"
+#~ msgstr "Внимание : SIP-порт должен быть меньше чем 65536 !"
+
+#~ msgid "about"
+#~ msgstr "О"
+
+#~ msgid "Configure general settings"
+#~ msgstr "Общие настройки"
+
+#~ msgid "&Capacity"
+#~ msgstr "Вместимость"
+
+#~ msgid "Configure display"
+#~ msgstr "Настроить экран"
+
+#~ msgid "Configure user accounts"
+#~ msgstr "Настройка аккаунтов пользователей"
+
+#~ msgid "&Alias"
+#~ msgstr "Псевдоним"
+
+#~ msgid "&Protocol"
+#~ msgstr "Протокол"
+
+#~ msgid "&Server"
+#~ msgstr "&Сервер"
+
+#~ msgid "&User"
+#~ msgstr "&Пользователь"
+
+#~ msgid "Pass&word"
+#~ msgstr "Па&роль"
+
+#~ msgid "&Mailbox"
+#~ msgstr "&Звуковые сообщения"
+
+#~ msgid "Configure audio settings"
+#~ msgstr "Настройки звука"
+
+#~ msgid "Configure record settings"
+#~ msgstr "Настроить запись звонков"
+
+#~ msgid "Configure address book settings"
+#~ msgstr "Настроить адресную книгу"
+
+#~ msgid "Configure hooks settings"
+#~ msgstr "Настроить перехватчики"
+
+#~ msgid "SIP Protocol"
+#~ msgstr "SIP-Протокол"
+
+#~ msgid "IAX2 Protocol"
+#~ msgstr "IAX2-Протокол"
+
+#~ msgid "SIP Header"
+#~ msgstr "SIP Заголовок"
+
+#~ msgid "Prepend"
+#~ msgstr "Добавить в начало"
+
+#~ msgid "&Hang up"
+#~ msgstr "&Положить трубку"
+
+#~ msgid "H&old"
+#~ msgstr "&Удержать звонок"
+
+#~ msgid "&Transfer"
+#~ msgstr "Пе&реслать звонок на другой номер"
+
+#~ msgid "&About"
+#~ msgstr "&О SFLphone"
+
+#~ msgid "&Record"
+#~ msgstr "Записать"
