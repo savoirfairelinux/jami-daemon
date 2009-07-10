@@ -108,7 +108,7 @@ class Sdp {
          * @param rdata     The remote data
          */
         
-        pj_status_t check_incoming_sdp(pjsip_inv_session *inv, pjsip_rx_data *rdata);
+        pj_status_t check_sdp_answer(pjsip_inv_session *inv, pjsip_rx_data *rdata);
         
         /*
          * Remove all media in the session media vector.

@@ -1954,7 +1954,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     } 
     // After 2xx is sent/received.
     else if (inv->state == PJSIP_INV_STATE_CONNECTING) {
-        status = call->getLocalSDP()->check_incoming_sdp (inv, rdata);    
+        status = call->getLocalSDP()->check_sdp_answer (inv, rdata);    
         if (status != PJ_SUCCESS) {
             _debug("Failed to check_incoming_sdp in call_on_state_changed\n");
             return;
@@ -2015,31 +2015,6 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
   
 }
 
-int terminate_call_bad_sdp_answer(SIPCall * call, SIPVoIPLink * link)
-{
-    pj_status_t status;
-    pjsip_tx_data *tdata = NULL;
-    
-    status = pjsip_inv_end_session(call->getInvSession(), 488, NULL, &tdata);
-
-    if (status != PJ_SUCCESS)
-        return false;
-
-    if (tdata == NULL)
-        return true;
-
-    status = pjsip_inv_send_msg (call->getInvSession(), tdata);
-
-    if (status != PJ_SUCCESS)
-        return false;
-
-    call->getInvSession()->mod_data[getModId() ] = NULL;
-
-    link->terminateOneCall (call->getCallId());
-
-    link->removeCall (call->getCallId());
-}
-
 // This callback is called after SDP offer/answer session has completed.
 void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 {
@@ -2066,8 +2041,8 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     
     if (status != PJ_SUCCESS) {
         _debug ("Error while negotiating the offer\n");
-        //terminate_call_bad_sdp_answer(call, link);
         link->hangup(call->getCallId());
+        Manager::instance().callFailure(call->getCallId());
         return;
     }
 
