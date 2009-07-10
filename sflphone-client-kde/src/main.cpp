@@ -16,6 +16,11 @@
 
 #include "conf/ConfigurationDialog.h"
 
+#include <QTableView>
+#include <QListView>
+#include "CodecListModel.h"
+#include "SortableCodecListWidget.h"
+
 
 static const char description[] = "A KDE 4 Client for SFLphone";
 
@@ -50,11 +55,13 @@ int main(int argc, char **argv)
 		
 		//configuration dbus
 		registerCommTypes();
-		
 		SFLPhone * fenetre = new SFLPhone();
 
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
+		
+// 		SortableCodecListWidget * cl = new SortableCodecListWidget();
+// 		cl->show();
 	
 		return app.exec();
 	}

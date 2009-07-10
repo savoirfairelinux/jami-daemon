@@ -46,11 +46,12 @@ public slots:
 	void updateSettings();
 	bool hasChanged();
 	void updateAlsaSettings();
+	void applyCustomSettings();
 	
 private slots:
-	void updateCodecListCommands();
-	void on_toolButton_codecUp_clicked();
-	void on_toolButton_codecDown_clicked();
+// 	void updateCodecListCommands();
+// 	void on_toolButton_codecUp_clicked();
+// 	void on_toolButton_codecDown_clicked();
 	void codecTableChanged();
 	
 signals:

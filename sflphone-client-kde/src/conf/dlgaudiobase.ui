@@ -95,87 +95,7 @@
        <number>2</number>
       </property>
       <item>
-       <widget class="QTableWidget" name="tableWidget_codecs">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>100</height>
-         </size>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
-        </property>
-        <property name="verticalScrollBarPolicy">
-         <enum>Qt::ScrollBarAsNeeded</enum>
-        </property>
-        <property name="textElideMode">
-         <enum>Qt::ElideRight</enum>
-        </property>
-        <property name="verticalScrollMode">
-         <enum>QAbstractItemView::ScrollPerPixel</enum>
-        </property>
-        <property name="horizontalScrollMode">
-         <enum>QAbstractItemView::ScrollPerPixel</enum>
-        </property>
-        <column>
-         <property name="text">
-          <string>Active</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Name</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Frequency</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Bitrate</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Bandwidth</string>
-         </property>
-        </column>
-       </widget>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_codecsOrder">
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QToolButton" name="toolButton_codecUp">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="toolButton_codecDown">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="SortableCodecListWidget" name="sortableCodecList" native="true"/>
       </item>
      </layout>
     </widget>
@@ -310,6 +230,12 @@
    <class>KUrlRequester</class>
    <extends>QFrame</extends>
    <header>kurlrequester.h</header>
+  </customwidget>
+  <customwidget>
+   <class>SortableCodecListWidget</class>
+   <extends>QWidget</extends>
+   <header>SortableCodecListWidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

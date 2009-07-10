@@ -358,7 +358,7 @@ Contact * Call::findContactForNumberInKAddressBook(QString number)
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
 	bool displayPhoto = addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO];
-	AddressBook * ab = KABC::StdAddressBook::self();
+	AddressBook * ab = KABC::StdAddressBook::self(true);
 	QVector<Contact *> results = QVector<Contact *>();
 	AddressBook::Iterator it;
 	for ( it = ab->begin(); it != ab->end(); ++it ) {	
@@ -593,8 +593,8 @@ void Call::call()
 		callManager.placeCall(account, callId, number);
 		this->account = account;
 		this->peerPhoneNumber = number;
-		Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber);
-		if(contact) this->peerName = contact->getNickName();
+// 		Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber);
+// 		if(contact) this->peerName = contact->getNickName();
 		this->startTime = new QDateTime(QDateTime::currentDateTime());
 		this->historyState = OUTGOING;
 	}

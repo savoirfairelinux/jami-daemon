@@ -296,7 +296,7 @@ void DlgAccounts::on_toolButton_accountsApply_clicked()
 
 void DlgAccounts::applyCustomSettings()
 {
-	qDebug() << "applyCustomSettings";
+	qDebug() << "DlgAccounts::applyCustomSettings";
 	if(hasChanged())
 	{
 		toolButton_accountsApply->setEnabled(false);
