@@ -155,7 +155,7 @@ class ConfigTree
          * List of sections. Each sections has an ItemList as child
          */
         SectionMap _sections;
-
+        
         friend class ConfigTreeIterator;
 
     public:

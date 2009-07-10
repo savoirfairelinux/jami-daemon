@@ -22,6 +22,9 @@
 #include "../global.h"
 #include <fstream>
 #include <cstdlib>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 namespace Conf
 {
@@ -255,7 +258,11 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     }
 
     file.close();
-
+    
+    if(chmod(fileName.c_str(), S_IRUSR | S_IWUSR)) {
+        _debug("Failed to set permission on configuration file because: %s\n",strerror(errno));
+    }
+    
     return true;
 }
 
@@ -267,7 +274,7 @@ int
 ConfigTree::populateFromFile (const std::string& fileName)
 {
     bool out = false;
-
+    
     if (fileName.empty()) {
         return 0;
     }
@@ -332,7 +339,11 @@ ConfigTree::populateFromFile (const std::string& fileName)
     }
 
     file.close();
-
+    
+    if(chmod(fileName.c_str(), S_IRUSR | S_IWUSR)) {
+        _debug("Failed to set permission on configuration file because: %s\n",strerror(errno));
+    }
+    
     return 1;
 }
 
