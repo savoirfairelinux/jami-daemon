@@ -151,9 +151,8 @@ void sflphone_kdeView::loadWindow()
 	updateVolumeControls();
 	updateDialpad();
 	updateSearchHistory();
-	updateAddressBookButton();
+	updateAddressBookEnabled();
 	updateAddressBook();
-	if(! isAddressBookEnabled() && stackedWidget_screen->currentWidget() == page_addressBook) stackedWidget_screen->setCurrentWidget(page_callList);
 }
 
 
@@ -689,14 +688,9 @@ void sflphone_kdeView::updateAddressBook()
 	{
 		QListWidgetItem * item = listWidget_addressBook->takeItem(0);
 		qDebug() << "take item " << item->text();
+		delete item;
 	}
-	if(!isAddressBookEnabled())
-	{
-		lineEdit_addressBook->setText(i18n("Address book has been disabled"));
-		lineEdit_addressBook->setEnabled(false);
-		label_addressBookFull->setVisible(false);
-	}
-	else
+	if(isAddressBookEnabled())
 	{
 		if(loadAddressBook())
 		{
@@ -1481,11 +1475,15 @@ bool sflphone_kdeView::loadAddressBook()
 }
 
 
-void sflphone_kdeView::updateAddressBookButton()
+void sflphone_kdeView::updateAddressBookEnabled()
 {
 	action_addressBook->setVisible(isAddressBookEnabled());
+	if(! isAddressBookEnabled() && stackedWidget_screen->currentWidget() == page_addressBook)
+	{
+		stackedWidget_screen->setCurrentWidget(page_callList);	
+		action_history->setChecked(false);
+	}
 }
-
 
 
 bool sflphone_kdeView::isAddressBookEnabled()

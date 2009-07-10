@@ -250,10 +250,12 @@ public slots:
 	bool loadAddressBook();
 	
 	/**
-	 *   choose to enable/disable the address book button
-	 *   according to the configuration's setting.
+	 *   Chooses to enable/disable (show/hide) the address book 
+	 *   button according to the configuration's setting, and 
+	 *   returns to the main window if is in address book
+	 *   whereas it is disabled.
 	 */
-	void updateAddressBookButton();
+	void updateAddressBookEnabled();
 	
 	
 	virtual void keyPressEvent(QKeyEvent *event)
