@@ -105,13 +105,16 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	connect(configDialog, SIGNAL(clearCallHistoryAsked()),
 	        callList,     SLOT(clearHistory()));
 	        
+	connect(configDialog, SIGNAL(changesApplied()),
+	        this,         SLOT(loadWindow()));
+	        
 	connect(accountList, SIGNAL(accountListUpdated()),
-	        this,     SLOT(updateStatusMessage()));
+	        this,        SLOT(updateStatusMessage()));
 	connect(accountList, SIGNAL(accountListUpdated()),
-	        this,     SLOT(updateWindowCallState()));
+	        this,        SLOT(updateWindowCallState()));
 	        
 	accountList->updateAccounts();
-	        
+	
 	QPalette pal = QPalette(palette());
 	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
 	setPalette(pal);
@@ -148,6 +151,8 @@ void sflphone_kdeView::loadWindow()
 	updateVolumeControls();
 	updateDialpad();
 	updateSearchHistory();
+	updateAddressBookEnabled();
+	updateAddressBook();
 }
 
 
@@ -498,7 +503,7 @@ void sflphone_kdeView::updateWindowCallState()
 					buttonIconFiles[0] = ICON_ACCEPT;
 					buttonIconFiles[1] = ICON_REFUSE;
 					actionTexts[0] = ACTION_LABEL_ACCEPT;
-					actionTexts[0] = ACTION_LABEL_REFUSE;
+					actionTexts[1] = ACTION_LABEL_REFUSE;
 					break;
 				case CALL_STATE_RINGING:
 					qDebug() << "Reached CALL_STATE_RINGING with call " << (*callList)[item]->getCallId();
@@ -683,23 +688,37 @@ void sflphone_kdeView::updateAddressBook()
 	{
 		QListWidgetItem * item = listWidget_addressBook->takeItem(0);
 		qDebug() << "take item " << item->text();
+		delete item;
 	}
-	QString textSearched = lineEdit_addressBook->text();
-	if(textSearched.isEmpty())
+	if(isAddressBookEnabled())
 	{
-		label_addressBookFull->setVisible(false);
-		return;
+		if(loadAddressBook())
+		{
+			QString textSearched = lineEdit_addressBook->text();
+			if(textSearched.isEmpty())
+			{
+				label_addressBookFull->setVisible(false);
+				return;
+			}
+			bool full = false;
+			QVector<Contact *> contactsFound = findContactsInKAddressBook(textSearched, full);
+			qDebug() << "Full : " << full;
+			label_addressBookFull->setVisible(full);
+			for(int i = 0 ; i < contactsFound.size() ; i++)
+			{
+				Contact * contact = contactsFound[i];
+				addContactToContactList(contact);
+			}
+			alternateColors(listWidget_addressBook);
+		}
+		else
+		{
+			lineEdit_addressBook->setText(i18n("Address book loading..."));
+			lineEdit_addressBook->setEnabled(false);
+			label_addressBookFull->setVisible(false);
+		}
 	}
-	bool full = false;
-	QVector<Contact *> contactsFound = findContactsInKAddressBook(textSearched, full);
-	qDebug() << "Full : " << full;
-	label_addressBookFull->setVisible(full);
-	for(int i = 0 ; i < contactsFound.size() ; i++)
-	{
-		Contact * contact = contactsFound[i];
-		addContactToContactList(contact);
-	}
-	alternateColors(listWidget_addressBook);
+	
 }
 
 void sflphone_kdeView::alternateColors(QListWidget * listWidget)
@@ -722,8 +741,7 @@ QVector<Contact *> sflphone_kdeView::findContactsInKAddressBook(QString textSear
 	int maxResults = addressBookSettings[ADDRESSBOOK_MAX_RESULTS];
 	int typesDisplayed = phoneNumberTypesDisplayed();
 	bool displayPhoto = addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO];
-	
-	AddressBook * ab = KABC::StdAddressBook::self();
+	AddressBook * ab = KABC::StdAddressBook::self(true);
 	QVector<Contact *> results = QVector<Contact *>();
 	AddressBook::Iterator it;
 	full = false;
@@ -1433,6 +1451,46 @@ void sflphone_kdeView::on1_volumeChanged(const QString &device, double value)
 		updateVolumeBar();
 }
 
+void sflphone_kdeView::enableAddressBook()
+{
+	qDebug() << "\nenableAddressBook\n";
+	lineEdit_addressBook->clear();
+	lineEdit_addressBook->setEnabled(true);
+}
 
+bool sflphone_kdeView::loadAddressBook()
+{
+	qDebug() << "loadAddressBook";
+	AddressBook * ab = StdAddressBook::self(true);
+	if(ab->loadingHasFinished())
+	{
+		return true;
+	}
+	else
+	{
+		connect(ab,         SIGNAL(addressBookChanged(AddressBook *)),
+		        this,       SLOT(enableAddressBook()));
+		return false;
+	}
+}
+
+
+void sflphone_kdeView::updateAddressBookEnabled()
+{
+	action_addressBook->setVisible(isAddressBookEnabled());
+	if(! isAddressBookEnabled() && stackedWidget_screen->currentWidget() == page_addressBook)
+	{
+		stackedWidget_screen->setCurrentWidget(page_callList);	
+		action_history->setChecked(false);
+	}
+}
+
+
+bool sflphone_kdeView::isAddressBookEnabled()
+{
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
+	return addressBookSettings[ADDRESSBOOK_ENABLE];
+}
 
 #include "sflphone_kdeview.moc"
