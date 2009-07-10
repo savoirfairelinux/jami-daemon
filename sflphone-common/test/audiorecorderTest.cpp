@@ -25,33 +25,37 @@
 using std::cout;
 using std::endl;
 
-void AudioRecorderTest::setUp(){
+void AudioRecorderTest::setUp()
+{
     // Instanciate the object
     _ar = new AudioRecord();
 }
 
-void AudioRecorderTest::testRecordData(){
-  
-/*
-  FILE_TYPE ft = FILE_WAV;
-  SOUND_FORMAT sf = INT16;
-  _ar->setSndSamplingRate(44100);
-  _ar->openFile("theWavFile.wav",ft,sf);
+void AudioRecorderTest::testRecordData()
+{
 
-  cout << "file opened!\n";
+    /*
+      FILE_TYPE ft = FILE_WAV;
+      SOUND_FORMAT sf = INT16;
+      _ar->setSndSamplingRate(44100);
+      _ar->openFile("theWavFile.wav",ft,sf);
 
-  SFLDataFormat buf [2];
-  for (SFLDataFormat i = -32768; i < 32767; i++ ){
-    buf[0] = i;
-    buf[1] = i;
-    _ar->recData(buf,2);
-  }
+      cout << "file opened!\n";
 
-  _ar->closeFile();
-*/
+      SFLDataFormat buf [2];
+      for (SFLDataFormat i = -32768; i < 32767; i++ ){
+        buf[0] = i;
+        buf[1] = i;
+        _ar->recData(buf,2);
+      }
+
+      _ar->closeFile();
+    */
 }
 
-void AudioRecorderTest::tearDown(){
+void AudioRecorderTest::tearDown()
+{
     // Delete the audio recorder module
-    delete _ar; _ar = NULL;
+    delete _ar;
+    _ar = NULL;
 }

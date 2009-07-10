@@ -27,26 +27,31 @@ using std::cout;
 using std::endl;
 
 
-void HookManagerTest::setUp(){
+void HookManagerTest::setUp()
+{
     // Instanciate the hook manager singleton
     urlhook = new UrlHook ();
 }
 
-void HookManagerTest::testAddAction (){
+void HookManagerTest::testAddAction ()
+{
 
     int status;
 
     status = urlhook->addAction ("www.google.ca", "x-www-browser");
-    CPPUNIT_ASSERT (status == 0); 
+    CPPUNIT_ASSERT (status == 0);
 }
 
-void HookManagerTest::testLargeUrl (){
+void HookManagerTest::testLargeUrl ()
+{
 
     std::string url;
     std::cout << url.max_size() << std::endl;
 }
 
-void HookManagerTest::tearDown(){
+void HookManagerTest::tearDown()
+{
     // Delete the hook manager object
-    delete urlhook; urlhook=0;
+    delete urlhook;
+    urlhook=0;
 }

@@ -24,23 +24,24 @@
 #include "global.h" // for _debug
 
 
-SIPCall::SIPCall(const CallID& id, Call::CallType type, pj_pool_t *pool) : Call(id, type)
-            , _cid(0)
-            , _did(0)
-            , _tid(0)
-            , _xferSub(NULL)
-            , _invSession(NULL)
-            , _local_sdp(0)
+SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call (id, type)
+        , _cid (0)
+        , _did (0)
+        , _tid (0)
+        , _xferSub (NULL)
+        , _invSession (NULL)
+        , _local_sdp (0)
 {
     _local_sdp = new Sdp (pool);
-  _debug("SIPCALL::Constructor for this clss is called \n");
+    _debug ("SIPCALL::Constructor for this clss is called \n");
 }
 
-SIPCall::~SIPCall() 
+SIPCall::~SIPCall()
 {
 
-    delete _local_sdp; _local_sdp = 0;
-    _debug("SIPCALL::Destructor for this clss is called \n");
+    delete _local_sdp;
+    _local_sdp = 0;
+    _debug ("SIPCALL::Destructor for this clss is called \n");
 }
 
 

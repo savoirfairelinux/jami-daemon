@@ -1,6 +1,7 @@
 <RCC>
   <qresource prefix="images" >
     <file>../icons/sflphone.svg</file>
+    <file>../icons/sflphone-kde3.svg</file>
     <file>../icons/sflphone_notif.svg</file>
     <file>../icons/x-office-address-book.png</file>
     <file>../icons/add.png</file>

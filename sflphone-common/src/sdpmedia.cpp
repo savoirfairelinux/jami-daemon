@@ -23,16 +23,14 @@
 #include <sstream>
 #include <iostream>
 
-static const char* streamDirectionStr[] =
-{
+static const char* streamDirectionStr[] = {
     "sendrecv",
     "sendonly",
     "recvonly",
     "inactive"
 };
 
-static const char* mediaTypeStr[] =
-{
+static const char* mediaTypeStr[] = {
     "audio",
     "video",
     "application",
@@ -41,30 +39,34 @@ static const char* mediaTypeStr[] =
     "message"
 };
 
-sdpMedia::sdpMedia( int type )
-    : _media_type( (mediaType)type ), _codec_list(0), _port( 0 ), _stream_type( SEND_RECEIVE ){}
+sdpMedia::sdpMedia (int type)
+        : _media_type ( (mediaType) type), _codec_list (0), _port (0), _stream_type (SEND_RECEIVE) {}
 
 
-sdpMedia::sdpMedia( std::string type, int port, std::string dir)
-    : _media_type( (mediaType)-1), _codec_list(0), _port(port),
-    _stream_type((streamDirection)-1){
+sdpMedia::sdpMedia (std::string type, int port, std::string dir)
+        : _media_type ( (mediaType)-1), _codec_list (0), _port (port),
+        _stream_type ( (streamDirection)-1)
+{
     unsigned int i;
     const char* tmp;
 
-    for( i=0 ; i<MEDIA_COUNT ; i++){
+    for (i=0 ; i<MEDIA_COUNT ; i++) {
         tmp = mediaTypeStr[i];
-        if( strcmp(type.c_str(), tmp) == 0 ){
-            _media_type = (mediaType)i;
+
+        if (strcmp (type.c_str(), tmp) == 0) {
+            _media_type = (mediaType) i;
             break;
         }
     }
 
-    if( strcmp( dir.c_str(), "default") == 0 )
+    if (strcmp (dir.c_str(), "default") == 0)
         dir = DEFAULT_STREAM_DIRECTION;
-    for( i=0; i<DIR_COUNT; i++ ){
+
+    for (i=0; i<DIR_COUNT; i++) {
         tmp = streamDirectionStr[i];
-        if( strcmp(dir.c_str(), tmp) == 0){
-            _stream_type = (streamDirection)i;
+
+        if (strcmp (dir.c_str(), tmp) == 0) {
+            _stream_type = (streamDirection) i;
             break;
         }
     }
@@ -74,29 +76,34 @@ sdpMedia::sdpMedia( std::string type, int port, std::string dir)
 sdpMedia::~sdpMedia()
 {
     int i;
-    for(i=0; i<(int)_codec_list.size(); i++)
+
+    for (i=0; i< (int) _codec_list.size(); i++)
         delete _codec_list[i];
 }
 
 
-std::string sdpMedia::get_media_type_str( void ){
+std::string sdpMedia::get_media_type_str (void)
+{
     std::string value;
 
     // Test the range to be sure we know the media
-    if( _media_type >= 0 && _media_type < MEDIA_COUNT )
+
+    if (_media_type >= 0 && _media_type < MEDIA_COUNT)
         value = mediaTypeStr[ _media_type ];
     else
         value = "unknown";
+
     return value;
 }
 
 
-void sdpMedia::add_codec( AudioCodec* codec ){
-    
+void sdpMedia::add_codec (AudioCodec* codec)
+{
+
     _codec_list.push_back (codec);
 }
 
-void sdpMedia::remove_codec( std::string codecName )
+void sdpMedia::remove_codec (std::string codecName)
 {
     // Look for the codec by its encoding name
     int i;
@@ -107,37 +114,43 @@ void sdpMedia::remove_codec( std::string codecName )
     size = _codec_list.size();
     std::cout << "vector size: " << size << std::endl;
 
-    for( i=0 ; i<size ; i++ ){
+    for (i=0 ; i<size ; i++) {
         std::cout << _codec_list[i]->getCodecName().c_str() << std::endl;
-        if( strcmp(_codec_list[i]->getCodecName().c_str(), codecName.c_str()) == 0 ){
+
+        if (strcmp (_codec_list[i]->getCodecName().c_str(), codecName.c_str()) == 0) {
             std::cout << "erase " <<_codec_list[i]->getCodecName() << std::endl;
-            iter = _codec_list.begin()+i;
-            _codec_list.erase(iter);
+            iter = _codec_list.begin() +i;
+            _codec_list.erase (iter);
             break;
         }
     }
 }
 
 
-void sdpMedia::clear_codec_list( void ) {
+void sdpMedia::clear_codec_list (void)
+{
     // Erase every codecs from the list
     _codec_list.clear();
 }
 
 
-std::string sdpMedia::get_stream_direction_str( void ) {
+std::string sdpMedia::get_stream_direction_str (void)
+{
     std::string value;
 
     // Test the range of the value
-    if( _stream_type >= 0 && _stream_type < DIR_COUNT )
+
+    if (_stream_type >= 0 && _stream_type < DIR_COUNT)
         value = streamDirectionStr[ _stream_type ];
     else
         value = "unknown";
+
     return value;
 }
 
 
-std::string sdpMedia::to_string( void ){
+std::string sdpMedia::to_string (void)
+{
     std::ostringstream display;
     int size, i;
 
@@ -146,7 +159,8 @@ std::string sdpMedia::to_string( void ){
     display << get_media_type_str();
     display << ":" << get_port();
     display << ":";
-    for(i=0; i<size; i++){
+
+    for (i=0; i<size; i++) {
         display << _codec_list[i]->getCodecName() << "/";
     }
 

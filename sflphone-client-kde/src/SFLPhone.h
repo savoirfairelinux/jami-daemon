@@ -32,14 +32,12 @@
 #include <KXmlGuiWindow>
 
 #include "ui_sflphone_kdeview_base.h"
-#include "ConfigDialog.h"
 #include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
 #include "sflphone_kdeview.h"
 
 
-class ConfigurationDialog;
 class sflphone_kdeView;
 
 class SFLPhone : public KXmlGuiWindow
@@ -52,6 +50,10 @@ private:
 	QMenu *trayIconMenu;
 	bool iconChanged;
 	QSystemTrayIcon *trayIcon;
+	QLabel * statusBarWidget;
+	
+private:
+	void setObjectNames();
 
 protected:
 	virtual bool queryClose();
@@ -65,11 +67,13 @@ public:
 	void sendNotif(QString caller);
 	void putForeground();
 	void trayIconSignal();
+	sflphone_kdeView * getView();
 	
 	
 private slots:
 	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
 	void on_trayIcon_messageClicked();
+	void on_view_statusMessageChanged(const QString & message);
 
 	void quitButton();
 

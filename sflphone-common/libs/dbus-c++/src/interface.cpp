@@ -32,138 +32,135 @@
 
 using namespace DBus;
 
-Interface::Interface(const std::string &name)
-: _name(name)
+Interface::Interface (const std::string &name)
+        : _name (name)
 {}
 
 Interface::~Interface()
 {}
 
-InterfaceAdaptor *AdaptorBase::find_interface(const std::string &name)
+InterfaceAdaptor *AdaptorBase::find_interface (const std::string &name)
 {
-	InterfaceAdaptorTable::const_iterator ii = _interfaces.find(name);
+    InterfaceAdaptorTable::const_iterator ii = _interfaces.find (name);
 
-	return ii != _interfaces.end() ? ii->second : NULL;
+    return ii != _interfaces.end() ? ii->second : NULL;
 }
 
-InterfaceAdaptor::InterfaceAdaptor(const std::string &name)
-: Interface(name)
+InterfaceAdaptor::InterfaceAdaptor (const std::string &name)
+        : Interface (name)
 {
-	debug_log("adding interface %s", name.c_str());
+    debug_log ("adding interface %s", name.c_str());
 
-	_interfaces[name] = this;
+    _interfaces[name] = this;
 }
 
-Message InterfaceAdaptor::dispatch_method(const CallMessage &msg)
+Message InterfaceAdaptor::dispatch_method (const CallMessage &msg)
 {
-	const char *name = msg.member();
+    const char *name = msg.member();
 
-	MethodTable::iterator mi = _methods.find(name);
-	if (mi != _methods.end())
-	{
-		return mi->second.call(msg);
-	}
-	else
-	{
-		return ErrorMessage(msg, DBUS_ERROR_UNKNOWN_METHOD, name);
-	}
+    MethodTable::iterator mi = _methods.find (name);
+
+    if (mi != _methods.end()) {
+        return mi->second.call (msg);
+    } else {
+        return ErrorMessage (msg, DBUS_ERROR_UNKNOWN_METHOD, name);
+    }
 }
 
-void InterfaceAdaptor::emit_signal(const SignalMessage &sig)
+void InterfaceAdaptor::emit_signal (const SignalMessage &sig)
 {
-	SignalMessage &sig2 = const_cast<SignalMessage &>(sig);
+    SignalMessage &sig2 = const_cast<SignalMessage &> (sig);
 
-	if (sig2.interface() == NULL)
-		sig2.interface(name().c_str());
+    if (sig2.interface() == NULL)
+        sig2.interface (name().c_str());
 
-	_emit_signal(sig2);
+    _emit_signal (sig2);
 }
 
-Variant *InterfaceAdaptor::get_property(const std::string &name)
+Variant *InterfaceAdaptor::get_property (const std::string &name)
 {
-	PropertyTable::iterator pti = _properties.find(name);
+    PropertyTable::iterator pti = _properties.find (name);
 
-	if (pti != _properties.end())
-	{
-		if (!pti->second.read)
-			throw ErrorAccessDenied("property is not readable");
+    if (pti != _properties.end()) {
+        if (!pti->second.read)
+            throw ErrorAccessDenied ("property is not readable");
 
-		return &(pti->second.value);
-	}
-	return NULL;
+        return & (pti->second.value);
+    }
+
+    return NULL;
 }
 
-void InterfaceAdaptor::set_property(const std::string &name, Variant &value)
+void InterfaceAdaptor::set_property (const std::string &name, Variant &value)
 {
-	PropertyTable::iterator pti = _properties.find(name);
+    PropertyTable::iterator pti = _properties.find (name);
 
-	if (pti != _properties.end())
-	{
-		if (!pti->second.write)
-			throw ErrorAccessDenied("property is not writeable");
+    if (pti != _properties.end()) {
+        if (!pti->second.write)
+            throw ErrorAccessDenied ("property is not writeable");
 
-		Signature sig = value.signature();
+        Signature sig = value.signature();
 
-		if (pti->second.sig != sig)
-			throw ErrorInvalidSignature("property expects a different type");
+        if (pti->second.sig != sig)
+            throw ErrorInvalidSignature ("property expects a different type");
 
-		pti->second.value = value;
-		return;
-	}
-	throw ErrorFailed("requested property not found");
+        pti->second.value = value;
+
+        return;
+    }
+
+    throw ErrorFailed ("requested property not found");
 }
 
-InterfaceProxy *ProxyBase::find_interface(const std::string &name)
+InterfaceProxy *ProxyBase::find_interface (const std::string &name)
 {
-	InterfaceProxyTable::const_iterator ii = _interfaces.find(name);
+    InterfaceProxyTable::const_iterator ii = _interfaces.find (name);
 
-	return ii != _interfaces.end() ? ii->second : NULL;
+    return ii != _interfaces.end() ? ii->second : NULL;
 }
 
-InterfaceProxy::InterfaceProxy(const std::string &name)
-: Interface(name)
+InterfaceProxy::InterfaceProxy (const std::string &name)
+        : Interface (name)
 {
-	debug_log("adding interface %s", name.c_str());
+    debug_log ("adding interface %s", name.c_str());
 
-	_interfaces[name] = this;
+    _interfaces[name] = this;
 }
 
-bool InterfaceProxy::dispatch_signal(const SignalMessage &msg)
+bool InterfaceProxy::dispatch_signal (const SignalMessage &msg)
 {
-	const char *name = msg.member();
+    const char *name = msg.member();
 
-	SignalTable::iterator si = _signals.find(name);
-	if (si != _signals.end())
-	{
-		si->second.call(msg);
-		// Here we always return false because there might be
-		// another InterfaceProxy listening for the same signal.
-		// This way we instruct libdbus-1 to go on dispatching
-		// the signal.
-		return false;
-	}
-	else	
-	{
-		return false;
-	}
+    SignalTable::iterator si = _signals.find (name);
+
+    if (si != _signals.end()) {
+        si->second.call (msg);
+        // Here we always return false because there might be
+        // another InterfaceProxy listening for the same signal.
+        // This way we instruct libdbus-1 to go on dispatching
+        // the signal.
+        return false;
+    } else {
+        return false;
+    }
 }
 
-Message InterfaceProxy::invoke_method(const CallMessage &call)
+Message InterfaceProxy::invoke_method (const CallMessage &call)
 {
-	CallMessage &call2 = const_cast<CallMessage &>(call);
+    CallMessage &call2 = const_cast<CallMessage &> (call);
 
-	if (call.interface() == NULL)
-		call2.interface(name().c_str());
+    if (call.interface() == NULL)
+        call2.interface (name().c_str());
 
-	return _invoke_method(call2);
+    return _invoke_method (call2);
 }
 
-bool InterfaceProxy::invoke_method_noreply(const CallMessage &call)
+bool InterfaceProxy::invoke_method_noreply (const CallMessage &call)
 {
-	CallMessage &call2 = const_cast<CallMessage &>(call);
+    CallMessage &call2 = const_cast<CallMessage &> (call);
 
-	if (call.interface() == NULL)
-		call2.interface(name().c_str());
+    if (call.interface() == NULL)
+        call2.interface (name().c_str());
 
-	return _invoke_method_noreply(call2);
+    return _invoke_method_noreply (call2);
 }

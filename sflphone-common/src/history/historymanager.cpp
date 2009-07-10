@@ -23,11 +23,13 @@
 #include <cc++/file.h>
 #include <time.h>
 
-HistoryManager::HistoryManager () : _history_loaded (false), _history_path (""){
+HistoryManager::HistoryManager () : _history_loaded (false), _history_path ("")
+{
 
 }
 
-HistoryManager::~HistoryManager () {
+HistoryManager::~HistoryManager ()
+{
 
     // Clear the history map
     _history_items.clear ();
@@ -45,7 +47,7 @@ int HistoryManager::load_history (int limit, std::string path)
 bool HistoryManager::save_history (void)
 {
     Conf::ConfigTree history_list;
-    
+
     save_history_items_map (&history_list);
     return save_history_to_file (&history_list);
 }
@@ -55,7 +57,7 @@ bool HistoryManager::load_history_from_file (Conf::ConfigTree *history_list)
     bool exist;
 
     exist = history_list->populateFromFile (_history_path);
-    _history_loaded = (exist == 2 ) ? false : true;
+    _history_loaded = (exist == 2) ? false : true;
 
     return exist;
 }
@@ -64,14 +66,14 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
 {
 
     short nb_items = 0;
-    Conf::TokenList sections; 
+    Conf::TokenList sections;
     HistoryItem *item;
     Conf::TokenList::iterator iter;
     std::string number, name, accountID, timestamp_start, timestamp_stop;
-    CallType type; 
+    CallType type;
     int history_limit;
     time_t current_timestamp;
-    
+
     // We want to save only the items recent enough (ie compared to CONFIG_HISTORY_LIMIT)
     // Get the current timestamp
     (void) time (&current_timestamp);
@@ -80,7 +82,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
     sections = history_list->getSections();
     iter = sections.begin();
 
-    while(iter != sections.end()) {
+    while (iter != sections.end()) {
 
         type = (CallType) getConfigInt (*iter, "type", history_list);
         timestamp_stop = getConfigString (*iter, "timestamp_stop", history_list);
@@ -90,8 +92,8 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
         timestamp_start = *iter;
 
         // Make a check on the start timestamp to know it is loadable according to CONFIG_HISTORY_LIMIT
-        if ( atoi (timestamp_start.c_str ()) >= ((int) current_timestamp - history_limit))
-        {
+
+        if (atoi (timestamp_start.c_str ()) >= ( (int) current_timestamp - history_limit)) {
             item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, accountID);
             add_new_history_entry (item);
             nb_items ++;
@@ -112,20 +114,21 @@ bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list)
 int HistoryManager::save_history_items_map (Conf::ConfigTree *history_list)
 {
     HistoryItemMap::iterator iter;
-    HistoryItem *item;    
+    HistoryItem *item;
     int items_saved = 0;
 
     iter = _history_items.begin ();
 
-    while (iter != _history_items.end ())
-    {
-        item = iter->second;  
+    while (iter != _history_items.end ()) {
+        item = iter->second;
+
         if (item) {
             if (item->save (&history_list))
                 items_saved ++;
         } else {
             std::cout << "[DEBUG]: can't save NULL history item." << std::endl;
         }
+
         iter ++;
     }
 
@@ -135,55 +138,56 @@ int HistoryManager::save_history_items_map (Conf::ConfigTree *history_list)
 void HistoryManager::add_new_history_entry (HistoryItem *new_item)
 {
     // Add it in the map
-    _history_items [new_item->get_timestamp ()] = new_item;
+    _history_items [new_item->get_timestamp () ] = new_item;
 }
 
-int HistoryManager::create_history_path (std::string path) {
+int HistoryManager::create_history_path (std::string path)
+{
 
     std::string filename;
 
-    if (path == "")
-    {
-        filename = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
+    if (path == "") {
+        filename = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
 
         if (mkdir (filename.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                _debug("Cannot create directory: %s\n", strerror(errno));
+                _debug ("Cannot create directory: %s\n", strerror (errno));
                 return -1;
             }
         }
 
         // Load user's history
         _history_path = filename + DIR_SEPARATOR_STR + "history";
-    }
-    else
-       set_history_path (path); 
-    
+    } else
+        set_history_path (path);
+
 
     return 0;
 }
 
 // throw an Conf::ConfigTreeItemException if not found
-    int
-HistoryManager::getConfigInt(const std::string& section, const std::string& name, Conf::ConfigTree *history_list)
+int
+HistoryManager::getConfigInt (const std::string& section, const std::string& name, Conf::ConfigTree *history_list)
 {
     try {
-        return history_list->getConfigTreeItemIntValue(section, name);
+        return history_list->getConfigTreeItemIntValue (section, name);
     } catch (Conf::ConfigTreeItemException& e) {
         throw e;
     }
+
     return 0;
 }
 
-    std::string
-HistoryManager::getConfigString(const std::string& section, const std::string& name, Conf::ConfigTree *history_list)
+std::string
+HistoryManager::getConfigString (const std::string& section, const std::string& name, Conf::ConfigTree *history_list)
 {
     try {
-        return history_list->getConfigTreeItemValue(section, name);
+        return history_list->getConfigTreeItemValue (section, name);
     } catch (Conf::ConfigTreeItemException& e) {
         throw e;
     }
+
     return "";
 }
 
@@ -192,18 +196,19 @@ std::map <std::string, std::string> HistoryManager::get_history_serialized (void
     std::map <std::string, std::string> serialized;
     HistoryItemMap::iterator iter;
     HistoryItem *current;
-    std::string res, key; 
+    std::string res, key;
 
     iter = _history_items.begin ();
-    while (iter != _history_items.end())
-    {   
+
+    while (iter != _history_items.end()) {
         current = iter->second;
-        if (current)
-        {
+
+        if (current) {
             key = current->get_timestamp ();
             res = current->serialize ();
             serialized [key] = res;
-        } 
+        }
+
         iter ++;
     }
 
@@ -216,7 +221,7 @@ int HistoryManager::set_serialized_history (std::map <std::string, std::string> 
     std::map <std::string, std::string>::iterator iter;
     HistoryItem *new_item;
     int items_added = 0;
-    int history_limit; 
+    int history_limit;
     time_t current_timestamp;
 
     // Clear the existing history
@@ -227,17 +232,17 @@ int HistoryManager::set_serialized_history (std::map <std::string, std::string> 
     (void) time (&current_timestamp);
     history_limit = get_unix_timestamp_equivalent (limit);
     iter = history.begin ();
-    while (iter != history.end ())
-    {
-        if (atoi (iter->first.c_str ()) >= ((int) current_timestamp - history_limit))
-        {
+
+    while (iter != history.end ()) {
+        if (atoi (iter->first.c_str ()) >= ( (int) current_timestamp - history_limit)) {
             new_item = new HistoryItem (iter->first, iter->second);
             add_new_history_entry (new_item);
             items_added ++;
         }
+
         iter ++;
     }
-    
+
     return items_added;
 }
 

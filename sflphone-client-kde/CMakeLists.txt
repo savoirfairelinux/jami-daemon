@@ -23,10 +23,10 @@ INCLUDE (  ${CMAKE_ROOT}/Modules/CheckIncludeFiles.cmake  )
 INCLUDE(   ${QT_USE_FILE}   )
 
 
+add_subdirectory(data)
 add_subdirectory(src)
 add_subdirectory(doc)
 add_subdirectory(man)
-add_subdirectory(data)
 add_subdirectory(po)
 
 

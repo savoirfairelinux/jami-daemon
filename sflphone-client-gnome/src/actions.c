@@ -862,37 +862,41 @@ sflphone_fill_codec_list()
     gchar** details;
     gchar** pl;
 
-    for(pl=order; *order; order++)
+    if (codecs)
     {
-        codec_t * c = g_new0(codec_t, 1);
-        c->_payload = atoi(*order);
-        details = (gchar **)dbus_codec_details(c->_payload);
 
-        //DEBUG("Codec details: %s / %s / %s / %s",details[0],details[1],details[2],details[3]);
+        for(pl=order; *order; order++)
+        {
+            codec_t * c = g_new0(codec_t, 1);
+            c->_payload = atoi(*order);
+            details = (gchar **)dbus_codec_details(c->_payload);
 
-        c->name = details[0];
-        c->is_active = TRUE;
-        c->sample_rate = atoi(details[1]);
-        c->_bitrate = atof(details[2]);
-        c->_bandwidth = atof(details[3]);
-        codec_list_add(c);
-    }
+            //DEBUG("Codec details: %s / %s / %s / %s",details[0],details[1],details[2],details[3]);
 
-    for(pl=codecs; *codecs; codecs++)
-    {
-        details = (gchar **)dbus_codec_details(atoi(*codecs));
-        if(codec_list_get_by_payload(atoi(*codecs))!=NULL){
-            // does nothing - the codec is already in the list, so is active.
-        }
-        else{
-            codec_t* c = g_new0(codec_t, 1);
-            c->_payload = atoi(*codecs);
             c->name = details[0];
-            c->is_active = FALSE;
+            c->is_active = TRUE;
             c->sample_rate = atoi(details[1]);
             c->_bitrate = atof(details[2]);
             c->_bandwidth = atof(details[3]);
             codec_list_add(c);
+        }
+
+        for(pl=codecs; *codecs; codecs++)
+        {
+            details = (gchar **)dbus_codec_details(atoi(*codecs));
+            if(codec_list_get_by_payload(atoi(*codecs))!=NULL){
+                // does nothing - the codec is already in the list, so is active.
+            }
+            else{
+                codec_t* c = g_new0(codec_t, 1);
+                c->_payload = atoi(*codecs);
+                c->name = details[0];
+                c->is_active = FALSE;
+                c->sample_rate = atoi(details[1]);
+                c->_bitrate = atof(details[2]);
+                c->_bandwidth = atof(details[3]);
+                codec_list_add(c);
+            }
         }
     }
     if( codec_list_get_size() == 0) {

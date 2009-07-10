@@ -721,6 +721,7 @@ record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
     gchar* path;
 
     path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
+    path = g_strndup (path + 7, strlen(path) - 7);
     dbus_set_record_path( path );
 }
 
@@ -813,6 +814,11 @@ show_config_window ()
     // Audio tab
     tab = create_audio_configuration();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+
+    // General settings tab
+    tab = create_general_settings();
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General Settings")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Recording tab

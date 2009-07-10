@@ -35,6 +35,17 @@
 #define UP_SAMPLING 0
 #define DOWN_SAMPLING 1
 
+
+
+class AudioRtpException: public std::exception
+{
+  virtual const char* what() const throw()
+  {
+    return "AudioRtpException occured";
+  }
+};
+
+
 /**
  * @file audiortp.h
  * @brief Manage the real-time data transport in a SIP call
@@ -53,7 +64,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
      * @param sipcall The pointer on the SIP call
      * @param sym     Tells whether or not the voip links are symmetric
      */
-  AudioRtpRTX (SIPCall* sipcall, bool sym);
+    AudioRtpRTX (SIPCall* sipcall, bool sym);
 
     /**
      * Destructor
@@ -73,6 +84,16 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 
     /** A SIP call */
     SIPCall* _ca;
+
+   /**
+     * Update RTP session media info as received from SDP negociation 
+     */
+    void setRtpSessionMedia(void);
+
+    /**
+     * Update RTP session remote ip destination as received from sip transaction 
+     */
+    void setRtpSessionRemoteIp(void); 
 
     
     friend class RtpTest;
@@ -95,7 +116,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     ost::SymmetricRTPSession *_session;
 
     /** Semaphore */
-    ost::Semaphore _start;
+    // ost::Semaphore _start;
 
     /** Is the session symmetric or not */
     bool _sym;
@@ -111,6 +132,9 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 
     /** Sample rate converter object */
     SamplerateConverter* converter;
+
+    /** audio layer */
+    AudioLayer *_audiolayer;
 
     /** Variables to process audio stream: sample rate for playing sound (typically 44100HZ) */
     int _layerSampleRate;  
@@ -138,7 +162,12 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /**
      * Maximum number of sample for audio buffers (mic and spkr)
      */
-    int nbSamplesMax; 
+    int nbSamplesMax;
+
+
+    
+    bool _payloadIsSet;
+    bool _remoteIpIsSet;
     
     /**
      * Init the RTP session. Create either symmetric or double sessions to manage data transport
@@ -157,10 +186,10 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     int computeNbByteAudioLayer(float codecFrameSize);
 
 
-    int processDataEncode(AudioLayer* audiolayer);
+    int processDataEncode();
 
 
-    void processDataDecode(AudioLayer* audiolayer, unsigned char* spkrData, unsigned int size, int& countTime);
+    void processDataDecode(unsigned char* spkrData, unsigned int size, int& countTime);
 
 
     /**
@@ -215,7 +244,12 @@ class AudioRtp {
      * Create a brand new RTP session by calling the AudioRtpRTX constructor
      * @param ca A pointer on a SIP call
      */
-    int createNewSession (SIPCall *ca);
+    void createNewSession (SIPCall *ca);
+    
+    /**
+     * Start the AudioRtpRTX thread created with createNewSession
+     */
+    int start(void);
     
     /**
      * Close a RTP session and kills the remaining threads
@@ -227,8 +261,12 @@ class AudioRtp {
      */
     void setRecording ();
 
-    friend class RtpTest; 
+    friend class RtpTest;
 
+    /**
+     * 
+     */ 
+    inline AudioRtpRTX * getAudioRtpRtxThread(void) { return _RTXThread; }
   private:
     // copy constructor
     AudioRtp(const AudioRtp& rh);
@@ -238,7 +276,7 @@ class AudioRtp {
 
     /** The RTP thread */
     AudioRtpRTX* _RTXThread;
-    
+
     /** Symmetric session or not */
     bool _symmetric;
 

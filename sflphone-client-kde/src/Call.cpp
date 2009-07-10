@@ -113,7 +113,7 @@ void Call::initCallItem()
 	labelIcon = new QLabel();
 	qDebug() << "labelIcon : " << labelIcon;
 	labelCallNumber = new QLabel(peerPhoneNumber);
-	labelTransferPrefix = new QLabel(tr2i18n("Transfer to : "));
+	labelTransferPrefix = new QLabel(i18n("Transfer to : "));
 	labelTransferNumber = new QLabel();
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 	
@@ -164,6 +164,26 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	this->stopTime = NULL;
 }
 
+Call::Call(QString callId)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	MapStringString details = callManager.getCallDetails(callId).value();
+	qDebug() << "Constructing existing call with details : " << details;
+	this->callId = callId;
+	this->peerPhoneNumber = details[CALL_PEER_NUMBER];
+	this->peerName = details[CALL_PEER_NAME];
+	initCallItem();
+	call_state startState = getStartStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
+	changeCurrentState(startState);
+	this->historyState = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
+	this->account = details[CALL_ACCOUNTID];
+	this->recording = false;
+	this->startTime = new QDateTime(QDateTime::currentDateTime());
+	this->stopTime = NULL;
+	this->historyItem = NULL;
+	this->historyItemWidget = NULL;
+}
+
 Call::~Call()
 {
 	delete startTime;
@@ -198,15 +218,95 @@ Call * Call::buildRingingCall(const QString & callId)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	MapStringString details = callManager.getCallDetails(callId).value();
-// 	qDebug() << "Details : " << details.keys();
 	QString from = details[CALL_PEER_NUMBER];
 	QString account = details[CALL_ACCOUNTID];
 	QString peerName = details[CALL_PEER_NAME];
-	//QString from = details[CALL_ACCOUNT];
 	Call * call = new Call(CALL_STATE_RINGING, callId, peerName, from, account);
-// 	call->setPeerName(details[CALL_PEER_NAME]);
 	call->historyState = OUTGOING;
 	return call;
+}
+
+Call * Call::buildHistoryCall(const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type)
+{
+	if(name == "empty") name = "";
+	Call * call = new Call(CALL_STATE_OVER, callId, name, number, account);
+	call->startTime = new QDateTime(QDateTime::fromTime_t(startTimeStamp));
+	call->stopTime = new QDateTime(QDateTime::fromTime_t(stopTimeStamp));
+	call->historyState = getHistoryStateFromType(type);
+	return call;
+}
+
+
+history_state Call::getHistoryStateFromType(QString type)
+{
+	if(type == DAEMON_HISTORY_TYPE_MISSED)
+	{
+		return MISSED;
+	}
+	else if(type == DAEMON_HISTORY_TYPE_OUTGOING)
+	{
+		return OUTGOING;
+	}
+	else if(type == DAEMON_HISTORY_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+}
+
+call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
+{
+	if(daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT)
+	{
+		return CALL_STATE_CURRENT;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_HOLD)
+	{
+		return CALL_STATE_HOLD;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_BUSY)
+	{
+		return CALL_STATE_BUSY;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return CALL_STATE_INCOMING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return CALL_STATE_RINGING;
+	}
+	else
+	{
+		return CALL_STATE_FAILURE;
+	}
+}
+
+history_state Call::getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
+{
+	if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+	else if((daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT || daemonCallState == DAEMON_CALL_STATE_INIT_HOLD) && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return OUTGOING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_BUSY)
+	{
+		return OUTGOING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_INCOMING)
+	{
+		return INCOMING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return MISSED;
+	}
+	else
+	{
+		return NONE;
+	}
 }
 
 daemon_call_state Call::toDaemonCallState(const QString & stateName)
@@ -310,7 +410,6 @@ QWidget * Call::getHistoryItemWidget()
 		descr->setMargin(0);
 		descr->setSpacing(1);
 		mainLayout->addWidget(labelHistoryIcon);
-		qDebug() << "descr->addWidget(labelPeerName);";
 		if(! peerName.isEmpty())
 		{
 			labelHistoryPeerName = new QLabel(peerName);
@@ -325,13 +424,6 @@ QWidget * Call::getHistoryItemWidget()
 	return historyItemWidget;
 }
 
-/*
-layout->addWidget(labelIcon, 0, 0, 2, 1);
-	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
-	layout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
-	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
-	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
-*/
 call_state Call::getState() const
 {
 	return currentState;
@@ -340,6 +432,11 @@ call_state Call::getState() const
 history_state Call::getHistoryState() const
 {
 	return historyState;
+}
+
+bool Call::isHistory() const
+{
+	return (getState() == CALL_STATE_OVER);
 }
 
 call_state Call::stateChanged(const QString & newStateName)
@@ -476,7 +573,7 @@ void Call::call()
 	if(account.isEmpty())
 	{
 		qDebug() << "account is empty"; 
-		this->account = sflphone_kdeView::firstAccountId();
+		this->account = sflphone_kdeView::firstRegisteredAccount()->getAccountId();
 	}
 	if(!account.isEmpty())
 	{
@@ -563,12 +660,13 @@ void Call::appendItemText(QString text)
 			break;
 		case CALL_STATE_CURRENT:
 			//TODO replace account string by an Account instance and handle damn pointers to avoid detruction of Accounts
-			//if(peer == account->getAccountDetail(ACCOUNT_MAILBOX))
-			if(peerPhoneNumber == configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX])
-			{
-				text = QString(QChar(0x9A));
-			}
+// 			if(peerPhoneNumber == configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX])
+// 			{
+// 				text = QString(QChar(0x9A));
+// 			}
+			text = QString();
 			editNumber = labelCallNumber;
+			
 			break;		
 		default:
 			qDebug() << "Type key on call not editable. Doing nothing.";

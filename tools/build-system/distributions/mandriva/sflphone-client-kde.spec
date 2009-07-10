@@ -30,6 +30,7 @@ Requires:	libqt4-x11
 BuildRequires:  cmake
 BuildRequires:  libcommoncpp-devel
 BuildRequires:  kdepimlibs4-devel
+BuildRequires:  libqt4-devel >= 4.3
 Conflicts:	sflphone
 Prefix:		%{_prefix}
 

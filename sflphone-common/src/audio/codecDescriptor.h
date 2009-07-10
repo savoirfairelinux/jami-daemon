@@ -40,6 +40,8 @@ typedef enum {
   PAYLOAD_CODEC_GSM = 3,
   // 8 PCMA A 8000 1 [RFC3551]
   PAYLOAD_CODEC_ALAW = 8,
+  // 9 G722 A 8000 1 [RFC3551]
+  PAYLOAD_CODEC_G722 = 9,
   // http://www.ietf.org/rfc/rfc3952.txt
   // 97 iLBC/8000
   PAYLOAD_CODEC_ILBC_20 = 97,

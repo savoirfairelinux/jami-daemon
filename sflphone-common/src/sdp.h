@@ -25,6 +25,8 @@
 #include <pjmedia/sdp_neg.h>
 #include <pjsip/sip_transport.h>
 #include <pjlib.h>
+#include <pjsip_ua.h>
+#include <pjmedia/errno.h>
 #include <pj/pool.h>
 #include <pj/assert.h>
 
@@ -98,6 +100,17 @@ class Sdp {
         int receiving_initial_offer( pjmedia_sdp_session* remote );
         
         /*
+         * On receiving a message, check if it contains SDP and negotiate. Should be used for
+         * SDP answer and offer but currently is only used for answer.
+         * SDP negociator instance with the remote offer.
+         *
+         * @param inv       The  the invitation
+         * @param rdata     The remote data
+         */
+        
+        pj_status_t check_sdp_answer(pjsip_inv_session *inv, pjsip_rx_data *rdata);
+        
+        /*
          * Remove all media in the session media vector.
          */
         void clean_session_media();
@@ -138,7 +151,7 @@ class Sdp {
          *
          * @param sdp   the negociated offer
          */
-        void set_negociated_offer( const pjmedia_sdp_session *sdp );
+        void set_negotiated_sdp ( const pjmedia_sdp_session *sdp );
 
         /*
          * Attribute the specified port to every medias provided
@@ -179,7 +192,7 @@ class Sdp {
          */
         unsigned int get_remote_audio_port() { return _remote_audio_port; }
 
-        void fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remote_sdp);
+        void set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *remote_sdp);
 
         std::vector<sdpMedia*> get_session_media_list (void) { return _session_media; }
 
@@ -298,11 +311,11 @@ class Sdp {
 
         std::string convert_int_to_string (int value);
 
-        void fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp);
+        void set_remote_ip_from_sdp (const pjmedia_sdp_session *r_sdp);
         
-        void fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media);
+        void set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media);
 
-        void get_remote_sdp_media_from_offer (pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
+        void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
 //////////////////////////////////////////////////////////////////3
 ////////////////////////////////////////////////////////////////////

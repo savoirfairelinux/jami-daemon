@@ -143,11 +143,13 @@ private:
 	QLabel * label_server;
 	QLabel * label_user;
 	QLabel * label_password;
+	QLabel * label_voicemail;
 	
 	QLineEdit * lineEdit_alias;
 	QLineEdit * lineEdit_server;
 	QLineEdit * lineEdit_user;
 	QLineEdit * lineEdit_password;
+	QLineEdit * lineEdit_voicemail;
 };
 
 /***************************************************************************

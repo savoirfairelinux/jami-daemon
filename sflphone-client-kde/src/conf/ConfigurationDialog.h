@@ -24,11 +24,21 @@
 #include <kconfigdialog.h>
 
 
-#include "settings.h"
+#include "kcfg_settings.h"
+#include "sflphone_kdeview.h"
+
 
 #define SETTINGS_NAME "settings"
 
 class DlgGeneral;
+class DlgDisplay;
+class DlgAccounts;
+class DlgAudio;
+class DlgAddressBook;
+class DlgRecord;
+class DlgHooks;
+
+class sflphone_kdeView;
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -36,11 +46,64 @@ class DlgGeneral;
 class ConfigurationDialogKDE : public KConfigDialog
 {
 Q_OBJECT
+private:
+
+	
+	DlgGeneral     * dlgGeneral;
+	DlgDisplay     * dlgDisplay;
+	DlgAccounts    * dlgAccounts;
+	DlgAudio       * dlgAudio;
+	DlgAddressBook * dlgAddressBook;
+	DlgRecord      * dlgRecord;
+	DlgHooks       * dlgHooks;
+
 public:
-    ConfigurationDialogKDE(QWidget *parent = 0);
+	ConfigurationDialogKDE(sflphone_kdeView *parent = 0);
 
-    ~ConfigurationDialogKDE();
+	~ConfigurationDialogKDE();
+	
+    
+public slots:
+	void slot();
+	/**
+	 *   Reimplements KConfigDialog
+	 */
+	void updateWidgets();
+	/**
+	 *   Reimplements KConfigDialog
+	 */
+	void updateSettings();
+	/**
+	 *   Should be implemented in KConfigDialog but for no reason, is not.
+	 *   For the moment it is here but has to be removed if implemented in KConfigDialog
+	 *   because causes problems for a few cases (item managed by kconfig switched, item not managed
+	 *   switched and then switched back, apply becomes disabled).
+	 *   Can't be resolved without a method to know if items managed by kconfig have changed.
+	 *   Disable/Enable Apply Button according to hasChanged() result
+	 */
+	void updateButtons();
+	/**
+	 * Same as updateButtons, should be implemented in KConfigDialog.
+	 * @return whether any custom widget has changed in the dialog.
+	 */
+	bool hasChanged();
+	
+	/**
+	 * reloads the informations before showing it.
+	 */
+	void reload();
+	
+private slots:
+	/**
+	 *   Apply settings not managed by kconfig (accounts)
+	 *   Should be removed when accounts are managed by kconfig.
+	 */
+	void applyCustomSettings();
 
+
+signals:
+	void clearCallHistoryAsked();
+	
 };
 
 #endif

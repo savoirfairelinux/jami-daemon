@@ -26,63 +26,72 @@
 #include "manager.h"
 
 class SamplerateConverter {
-  public:
-    /** Constructor */
-    SamplerateConverter( void );
-    SamplerateConverter( int freq , int fs );
-    /** Destructor */
-    ~SamplerateConverter( void );
+	public:
+		/** Constructor */
+		SamplerateConverter( void );
+		SamplerateConverter( int freq , int fs );
+		/** Destructor */
+		~SamplerateConverter( void );
 
-    /** 
-     * Upsample from the samplerate1 to the samplerate2
-     * @param data  The data buffer
-     * @param SamplerateConverter1 The lower sample rate
-     * @param SamplerateConverter2 The higher sample rate
-     * @param nbSamples	  The number of samples to process
-     * @return int The number of samples after the operation
-     */
-    int upsampleData( SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples );
+		/** 
+		 * Upsample from the samplerate1 to the samplerate2
+		 * @param data  The data buffer
+		 * @param SamplerateConverter1 The lower sample rate
+		 * @param SamplerateConverter2 The higher sample rate
+		 * @param nbSamples	  The number of samples to process
+		 * @return int The number of samples after the operation
+		 */
+		int upsampleData( SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples );
 
-    /**
-     * Downsample from the samplerate1 to the samplerate2
-     * @param data  The data buffer
-     * @param SamplerateConverter1 The lower sample rate
-     * @param SamplerateConverter2 The higher sample rate
-     * @param nbSamples	  The number of samples to process
-     * @return int The number of samples after the operation
-     */
-    int downsampleData( SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples );
+		/**
+		 * Downsample from the samplerate1 to the samplerate2
+		 * @param data  The data buffer
+		 * @param SamplerateConverter1 The lower sample rate
+		 * @param SamplerateConverter2 The higher sample rate
+		 * @param nbSamples	  The number of samples to process
+		 * @return int The number of samples after the operation
+		 */
+		int downsampleData( SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples );
 
-    int getFrequence( void ) { return _frequence; }
+		int getFrequence( void ) { return _frequence; }
 
-    int getFramesize( void ) { return _framesize; } 
+		int getFramesize( void ) { return _framesize; } 
 
-  private:
-    // Copy Constructor
-    SamplerateConverter(const SamplerateConverter& rh);
+		/**
+		 * Convert short table to floats for audio processing
+		 * @param in the input (short) array
+		 * @param out The resulting (float) array
+		 * @param len The number of elements in both tables
+		 */
+		void Short2FloatArray (const short *in, float *out, int len);
 
-    // Assignment Operator
-    SamplerateConverter& operator=( const SamplerateConverter& rh);
-    
-    void init( void );
 
-    /** Audio layer caracteristics */
-    int _frequence;
-    int _framesize;
+	private:
+		// Copy Constructor
+		SamplerateConverter(const SamplerateConverter& rh);
 
-    /** Downsampled/Upsampled float buffers for the mic data processing */
-    float32* _floatBufferDownMic;
-    float32* _floatBufferUpMic;
-    /** libSamplerateConverter converter for outgoing voice */
-    SRC_STATE*    _src_state_mic;
+		// Assignment Operator
+		SamplerateConverter& operator=( const SamplerateConverter& rh);
 
-    /** Downsampled/Upsampled float buffers for the speaker data processing */
-    float32* _floatBufferDownSpkr;
-    float32* _floatBufferUpSpkr;
-    /** libSamplerateConverter converter for incoming voice */
-    SRC_STATE*    _src_state_spkr;
-    /** libSamplerateConverter error */
-    int _src_err;
+		void init( void );
+
+		/** Audio layer caracteristics */
+		int _frequence;
+		int _framesize;
+
+		/** Downsampled/Upsampled float buffers for the mic data processing */
+		float32* _floatBufferDownMic;
+		float32* _floatBufferUpMic;
+		/** libSamplerateConverter converter for outgoing voice */
+		SRC_STATE*    _src_state_mic;
+
+		/** Downsampled/Upsampled float buffers for the speaker data processing */
+		float32* _floatBufferDownSpkr;
+		float32* _floatBufferUpSpkr;
+		/** libSamplerateConverter converter for incoming voice */
+		SRC_STATE*    _src_state_spkr;
+		/** libSamplerateConverter error */
+		int _src_err;
 };
 
 #endif //_SAMPLE_RATE_H

@@ -19,35 +19,40 @@
 
 #include "observer.h"
 #include <algorithm>
-namespace Pattern {
 
-void 
-Subject::attach(Observer& observer) 
+namespace Pattern
 {
-  if (std::find(_observers.begin(), _observers.end(), &observer) == _observers.end()) {
-    _observers.push_back(&observer);
-  } 
+
+void
+Subject::attach (Observer& observer)
+{
+    if (std::find (_observers.begin(), _observers.end(), &observer) == _observers.end()) {
+        _observers.push_back (&observer);
+    }
 }
 
-void 
-Subject::detach(Observer& observer) 
+void
+Subject::detach (Observer& observer)
 {
-  std::list<Observer*>::iterator iter = std::find(_observers.begin(), _observers.end(), &observer);
-  if ( iter != _observers.end()) {
-    _observers.erase(iter);
-  } 
+    std::list<Observer*>::iterator iter = std::find (_observers.begin(), _observers.end(), &observer);
+
+    if (iter != _observers.end()) {
+        _observers.erase (iter);
+    }
 }
 
-void 
+void
 Subject::notify()
 {
-  std::list<Observer*>::iterator iter = _observers.begin();
-  while( iter != _observers.end()) {
-    if (*iter) {
-      (*iter)->update();
+    std::list<Observer*>::iterator iter = _observers.begin();
+
+    while (iter != _observers.end()) {
+        if (*iter) {
+            (*iter)->update();
+        }
+
+        iter++;
     }
-    iter++;
-  }
 }
 
 } // end of namespace

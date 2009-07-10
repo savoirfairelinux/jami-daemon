@@ -22,47 +22,48 @@
 AudioDSP::AudioDSP()
 {
 
-  bufPointer_ = 0;
-  bufferLength_ = 1024;
-  circBuffer_ = new float[bufferLength_];
+    bufPointer_ = 0;
+    bufferLength_ = 1024;
+    circBuffer_ = new float[bufferLength_];
 
 }
 
 
 AudioDSP::~AudioDSP()
 {
-  
-  delete[] circBuffer_;
+
+    delete[] circBuffer_;
 
 }
 
 
-float AudioDSP::getRMS(int data)
+float AudioDSP::getRMS (int data)
 {
-  // printf("AudioDSP::getRMS() : bufPointer_ %i \n ", bufPointer_);
-  printf("AudioDSP::getRMS() : %i \n", data);
-  circBuffer_[bufPointer_++] = (float)data;
-  
-  if(bufPointer_ >= bufferLength_)
-    bufPointer_ = 0;
+    // printf("AudioDSP::getRMS() : bufPointer_ %i \n ", bufPointer_);
+    printf ("AudioDSP::getRMS() : %i \n", data);
+    circBuffer_[bufPointer_++] = (float) data;
 
-  return computeRMS(); 
-} 
+    if (bufPointer_ >= bufferLength_)
+        bufPointer_ = 0;
+
+    return computeRMS();
+}
 
 
 float AudioDSP::computeRMS()
 {
 
-  rms = 0.0;
+    rms = 0.0;
 
-  
-  for(int i = 0; i < bufferLength_; i++){
-    // printf("AudioDSP::computeRMS() : i_ %i \n ", i);
-    rms += (float)(circBuffer_[i]*circBuffer_[i]);
-  }
-  rms = sqrt(rms / (float)bufferLength_);
 
-  // printf("AudioDSP::computeRMS() : RMS VALUE: %f \n", rms);
-  return rms;
- 
+    for (int i = 0; i < bufferLength_; i++) {
+        // printf("AudioDSP::computeRMS() : i_ %i \n ", i);
+        rms += (float) (circBuffer_[i]*circBuffer_[i]);
+    }
+
+    rms = sqrt (rms / (float) bufferLength_);
+
+    // printf("AudioDSP::computeRMS() : RMS VALUE: %f \n", rms);
+    return rms;
+
 }

@@ -28,8 +28,10 @@
 
 #include "Call.h"
 
-class CallList
+class CallList : public QObject
 {
+Q_OBJECT
+
 private:
 
 	QVector<Call *> * calls;
@@ -58,7 +60,8 @@ public:
 	//GSetter
 	QString getAndIncCallId();
 	
-
+public slots:
+	void clearHistory();
 
 };
 

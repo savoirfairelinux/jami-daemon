@@ -37,70 +37,71 @@
 using namespace DBus;
 
 Variant::Variant()
-: _msg(CallMessage()) // dummy message used as temporary storage for variant data
+        : _msg (CallMessage()) // dummy message used as temporary storage for variant data
 {
 }
 
-Variant::Variant(MessageIter &it)
-: _msg(CallMessage())
+Variant::Variant (MessageIter &it)
+        : _msg (CallMessage())
 {
-	MessageIter vi = it.recurse();
-	MessageIter mi = _msg.writer();
-	vi.copy_data(mi);
+    MessageIter vi = it.recurse();
+    MessageIter mi = _msg.writer();
+    vi.copy_data (mi);
 }
 
 Variant &Variant::operator = (const Variant &v)
 {
-	if (&v != this)
-	{
-		_msg = v._msg;
-	}
-	return *this;
+    if (&v != this) {
+        _msg = v._msg;
+    }
+
+    return *this;
 }
 
 void Variant::clear()
 {
-	CallMessage empty;
-	_msg = empty;
+    CallMessage empty;
+    _msg = empty;
 }
 
 const Signature Variant::signature() const
 {
-	char *sigbuf = reader().signature();
+    char *sigbuf = reader().signature();
 
-	Signature signature = sigbuf;
+    Signature signature = sigbuf;
 
-	free(sigbuf);
+    free (sigbuf);
 
-	return signature;
+    return signature;
 }
 
 MessageIter &operator << (MessageIter &iter, const Variant &val)
 {
-	const Signature sig = val.signature();
+    const Signature sig = val.signature();
 
-	MessageIter rit = val.reader();
-	MessageIter wit = iter.new_variant(sig.c_str());
+    MessageIter rit = val.reader();
+    MessageIter wit = iter.new_variant (sig.c_str());
 
-	rit.copy_data(wit);
+    rit.copy_data (wit);
 
-	iter.close_container(wit);
+    iter.close_container (wit);
 
-	return iter;
+    return iter;
 }
 
 MessageIter &operator >> (MessageIter &iter, Variant &val)
 {
-	if (iter.type() != DBUS_TYPE_VARIANT)
-		throw ErrorInvalidArgs("variant type expected");
+    if (iter.type() != DBUS_TYPE_VARIANT)
+        throw ErrorInvalidArgs ("variant type expected");
 
-	val.clear();
+    val.clear();
 
-	MessageIter vit = iter.recurse();
-	MessageIter mit = val.writer();
+    MessageIter vit = iter.recurse();
 
-	vit.copy_data(mit);
+    MessageIter mit = val.writer();
 
-	return ++iter;
+    vit.copy_data (mit);
+
+    return ++iter;
 }
 

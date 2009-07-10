@@ -46,6 +46,10 @@ IF (UNIX)
    data/*.cmake
    data/Makefile
    data/CMakeFiles
+   data/icons/*.cmake
+   data/icons/*.make
+   data/icons/Makefile
+   data/icons/CMakeFiles
    src/*.cmake
    src/Makefile
    src/CMakeFiles
@@ -60,6 +64,8 @@ IF (UNIX)
    src/sflphone-client-kde
    src/sflphone-client-kde.shell
    src/*.moc
+   src/kcfg_*.cpp
+   src/kcfg_*.h
    po/*.cmake
    po/Makefile
    po/CMakeFiles

@@ -1,6 +1,8 @@
 include ../globals.mak
 
-bin_PROGRAMS = sflphoned
+libexecdir=$(libdir)/sflphone
+libexec_PROGRAMS = sflphoned
+
 
 if USE_IAX
 # Use the global instead of locally built

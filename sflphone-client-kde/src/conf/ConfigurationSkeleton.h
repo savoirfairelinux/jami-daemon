@@ -23,7 +23,7 @@
 
 #include <QWidget>
 
-#include "settings.h"
+#include "kcfg_settings.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -31,10 +31,28 @@
 class ConfigurationSkeleton : public ConfigurationSkeletonBase
 {
 Q_OBJECT
-public:
-    ConfigurationSkeleton();
 
-    ~ConfigurationSkeleton();
+private:
+	static ConfigurationSkeleton * instance;
+
+public:
+	ConfigurationSkeleton();
+
+	~ConfigurationSkeleton();
+    
+	virtual void readConfig();
+    
+	virtual void writeConfig();
+	
+	
+	static ConfigurationSkeleton * self();
+	
+	
+// protected:
+
+// 	virtual void usrReadConfig();
+
+
 
 };
 

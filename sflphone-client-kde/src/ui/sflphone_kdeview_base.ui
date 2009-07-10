@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>337</width>
-    <height>416</height>
+    <height>420</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -51,7 +51,11 @@
         <widget class="QListWidget" name="listWidget_callHistory"/>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_searchHistory"/>
+        <widget class="KLineEdit" name="lineEdit_searchHistory">
+         <property name="showClearButton" stdset="0">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -61,12 +65,19 @@
         <widget class="QListWidget" name="listWidget_addressBook"/>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_addressBook"/>
+        <widget class="KLineEdit" name="lineEdit_addressBook">
+         <property name="showClearButton" stdset="0">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QLabel" name="label_addressBookFull">
          <property name="text">
           <string>Attention:number of results exceeds max displayed.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -88,9 +99,9 @@
        <height>160</height>
       </size>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="horizontalLayout_dialpadAndControls">
       <property name="spacing">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="margin">
        <number>0</number>
@@ -159,182 +170,16 @@
           </widget>
          </item>
         </layout>
-        <zorder>toolButton_recVol</zorder>
-        <zorder>slider_recVol</zorder>
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="widget_dialpad" native="true">
-        <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="1">
-          <widget class="QPushButton" name="pushButton_1">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QPushButton" name="pushButton_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QPushButton" name="pushButton_3">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QPushButton" name="pushButton_4">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QPushButton" name="pushButton_5">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="3">
-          <widget class="QPushButton" name="pushButton_6">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QPushButton" name="pushButton_7">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="2">
-          <widget class="QPushButton" name="pushButton_8">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="3">
-          <widget class="QPushButton" name="pushButton_9">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QPushButton" name="pushButton_etoile">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="2">
-          <widget class="QPushButton" name="pushButton_0">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="3">
-          <widget class="QPushButton" name="pushButton_diese">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-        </layout>
+       <widget class="Dialpad" name="widget_dialpad" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
        </widget>
       </item>
       <item>
@@ -476,7 +321,7 @@
      <normaloff>:/images/icons/call.svg</normaloff>:/images/icons/call.svg</iconset>
    </property>
    <property name="text">
-    <string>&amp;Pick up</string>
+    <string>Pick up</string>
    </property>
   </action>
   <action name="action_refuse">
@@ -485,7 +330,7 @@
      <normaloff>:/images/icons/hang_up.svg</normaloff>:/images/icons/hang_up.svg</iconset>
    </property>
    <property name="text">
-    <string>&amp;Hang up</string>
+    <string>Hang up</string>
    </property>
   </action>
   <action name="action_hold">
@@ -494,7 +339,7 @@
      <normaloff>:/images/icons/hold.svg</normaloff>:/images/icons/hold.svg</iconset>
    </property>
    <property name="text">
-    <string>H&amp;old</string>
+    <string>Hold</string>
    </property>
   </action>
   <action name="action_transfer">
@@ -506,7 +351,7 @@
      <normaloff>:/images/icons/transfert.svg</normaloff>:/images/icons/transfert.svg</iconset>
    </property>
    <property name="text">
-    <string>&amp;Transfer</string>
+    <string>Transfer</string>
    </property>
   </action>
   <action name="action_history">
@@ -518,7 +363,7 @@
      <normaloff>:/images/icons/history2.svg</normaloff>:/images/icons/history2.svg</iconset>
    </property>
    <property name="text">
-    <string>H&amp;istory</string>
+    <string>History</string>
    </property>
   </action>
   <action name="action_mailBox">
@@ -527,7 +372,7 @@
      <normaloff>:/images/icons/mailbox.svg</normaloff>:/images/icons/mailbox.svg</iconset>
    </property>
    <property name="text">
-    <string>&amp;Mailbox</string>
+    <string>Mailbox</string>
    </property>
   </action>
   <action name="action_configureAccounts">
@@ -536,7 +381,7 @@
      <normaloff>:/images/icons/stock_person.svg</normaloff>:/images/icons/stock_person.svg</iconset>
    </property>
    <property name="text">
-    <string>Configure &amp;accounts</string>
+    <string>Configure accounts</string>
    </property>
   </action>
   <action name="action_configureAudio">
@@ -545,16 +390,15 @@
      <normaloff>:/images/icons/icon_volume.svg</normaloff>:/images/icons/icon_volume.svg</iconset>
    </property>
    <property name="text">
-    <string>Configure a&amp;udio</string>
+    <string>Configure audio</string>
    </property>
   </action>
   <action name="action_configureSflPhone">
-   <property name="icon">
-    <iconset resource="../qrc/resources.qrc">
-     <normaloff>:/images/icons/sflphone.svg</normaloff>:/images/icons/sflphone.svg</iconset>
-   </property>
    <property name="text">
-    <string>&amp;Configure SFLPhone</string>
+    <string>Configure SFLphone</string>
+   </property>
+   <property name="toolTip">
+    <string>Configure SFLphone</string>
    </property>
   </action>
   <action name="action_displayVolumeControls">
@@ -569,12 +413,7 @@
      <normaloff>:/images/icons/icon_volume_off.svg</normaloff>:/images/icons/icon_volume_off.svg</iconset>
    </property>
    <property name="text">
-    <string>Display &amp;volume bars</string>
-   </property>
-  </action>
-  <action name="action_About">
-   <property name="text">
-    <string>&amp;About</string>
+    <string>Display volume bars</string>
    </property>
   </action>
   <action name="action_displayDialpad">
@@ -589,7 +428,7 @@
      <normaloff>:/images/icons/icon_dialpad.svg</normaloff>:/images/icons/icon_dialpad.svg</iconset>
    </property>
    <property name="text">
-    <string>Display &amp;dialpad</string>
+    <string>Display dialpad</string>
    </property>
   </action>
   <action name="action_record">
@@ -601,12 +440,12 @@
      <normaloff>:/images/icons/del_off.png</normaloff>:/images/icons/del_off.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Record</string>
+    <string comment="Action record a call">Record</string>
    </property>
   </action>
   <action name="action_accountCreationWizard">
    <property name="text">
-    <string>Account creation &amp;wizard</string>
+    <string>Account creation wizard</string>
    </property>
   </action>
   <action name="action_addressBook">
@@ -622,6 +461,19 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Dialpad</class>
+   <extends>QWidget</extends>
+   <header>Dialpad.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../qrc/resources.qrc"/>
  </resources>
