@@ -36,7 +36,7 @@ msgid "Error"
 msgstr "Fehler"
 
 #: ../../sflphone-client-gnome/src/accountlist.c:187
-msgid "Bad authentification"
+msgid "Authentication Failed"
 msgstr "Falsche Authentifizierung"
 
 #: ../../sflphone-client-gnome/src/accountlist.c:190
