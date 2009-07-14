@@ -134,7 +134,6 @@ sflphone_kdeView::~sflphone_kdeView()
 	delete configDialog;
 	delete wizard;
 	delete callList;
-	delete errorWindow;
 }
 
 void sflphone_kdeView::loadWindow()
@@ -1456,6 +1455,9 @@ void sflphone_kdeView::enableAddressBook()
 	qDebug() << "\nenableAddressBook\n";
 	lineEdit_addressBook->clear();
 	lineEdit_addressBook->setEnabled(true);
+	AddressBook * ab = StdAddressBook::self(true);
+	disconnect(ab,         SIGNAL(addressBookChanged(AddressBook *)),
+	           this,       SLOT(enableAddressBook()));
 }
 
 bool sflphone_kdeView::loadAddressBook()

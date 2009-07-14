@@ -29,7 +29,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="page_callList">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -67,10 +67,10 @@
        <item>
         <widget class="KLineEdit" name="lineEdit_addressBook">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
-          <string>Address book loading...</string>
+          <string/>
          </property>
          <property name="showClearButton" stdset="0">
           <bool>true</bool>
