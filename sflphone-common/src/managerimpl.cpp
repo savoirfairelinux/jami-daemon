@@ -1293,7 +1293,7 @@ ManagerImpl::createSettingsPath (void)
 {
     _path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
 
-    if (mkdir (_path.data(), 0755) != 0) {
+    if (mkdir (_path.data(), 0600) != 0) {
         // If directory	creation failed
         if (errno != EEXIST) {
             _debug ("Cannot create directory: %s\n", strerror (errno));
@@ -1952,31 +1952,7 @@ void ManagerImpl::setAudioManager (const int32_t& api)
 
     switchAudioManager();
     return;
-
-    /*
-        int manager;
-
-        _debug(" ManagerImpl::setAudioManager :: %i \n",api);
-
-        manager = api;
-        if( manager == PULSEAUDIO )
-        {
-            if(app_is_running("pulseaudio") != 0)
-            {
-                // The pulseaudio daemon is not running
-                manager = ALSA;
-                notifyErrClient(PULSEAUDIO_NOT_RUNNING);
-            }
-        }
-
-        if(manager == api)
-        {
-            // it means that we can change the audio manager
-            setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
-            switchAudioManager();
-        }
-    */
-
+    
 }
 
 int32_t

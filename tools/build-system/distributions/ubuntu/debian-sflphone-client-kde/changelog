@@ -1,3 +1,111 @@
+sflphone-client-kde (0.9.6~rc1-SYSVER) SYSTEM; urgency=low
+
+    ** 0.9.6~rc1 **
+
+  * Update some version number
+  * [#1792] Creates .sflphone directory with permission 600. Also,
+    "chmod 600" after
+  * [#1810] GUI is now notified that the call failed. Also, a segfault
+    was
+  * [#1816] Address book search disabled when disabled address book and
+    enabled it back plus button stays triggered
+  * codeclistmodel + asynchronous loading of address book +
+    enable/disable address book
+  * [#1810] Now checking SDP answer after 200 OK. Still need to
+    implement full
+  * [#1794] Can't use the interface during a call
+  * Updated translation files
+  * Russian translation integrated
+  * Codec list model/view started.
+  * [#1807] Add configure.ac in pjproject-1.0.3
+  * [#1787] closeRtpSession added in some places where it should have
+    been
+  * Use Item class for contacts and accounts
+  * Comments + clean code
+  * [#1794] Improved debug messages
+  * [#1805] Replaced the old and unreliable mecanism that was was
+    waiting for
+  * [#1794] Can't use the interface during a call
+  * [#1787]  For those cases where no registered SIP account is
+    configured
+  * [#1797] Make pjsip compile
+  * [#1787] Minor changes. Removed useless commented line. Changed order
+    of
+  * [#1777] Code indentation
+  * [#1797] Update package generation with new pjsip version
+  * [#1798] Does not hang up when the call is building up
+  * [#1797] Update .gitignore with new pjsip version
+  * [#1797] Remove generated files from repo
+  * [#1797] Main build system now uses pjproject-1.0.3
+  * [#1797] Add pjproject-1.0.3
+  * [#1797] Remove pjproject-1.0.2
+  * [#1796] Computing time optimization (samplerate conversion)
+  * [#1787] _audiortp->start() moved away from offhold(),
+    SIPCallAnswered()
+  * [#1312] Added new states for calls initialized by other clients
+  * [#1795] Crashes when adding a new account, checking it and applying
+  * [#1782] Missing icons
+  * [#1793] KDE client compilation problem
+  * Fake ringtone files can no longer be set.
+  * indentation
+  * [#1312] Able to fetch to differentiate incoming/ringing call state
+  * [#1784] Use DESTDIR variable in po Makefile - fix language file
+    installation
+  * [#1785] Fixed typo
+  * [#1785] Fixed changelog update
+  * [#1759] ./autogen.sh --prefix=/usr --with-debug to use optimization
+    level 0
+  * [#1773] Changed snapshot naming convention
+  * [#1773] Removed gpg agent use, added repository cache cleaning
+  * [#1759] Use optimization level 0 for repository, 2 for packages
+  * [#1777] Code indentation/formatting
+  * Translated new features in french
+  * [#1785] Added missing changelog entry
+  * [#1781] Window title is SFLPhone
+  * [#1777] Add code indentation/formatting in the buil system
+  * [#1774] Can't set voicemail number in KDE account creation wizard
+  * [#1775] Can't modify account information for account created with
+    the wizard
+  * [#1771] Add a "Default" button in context menu to disable chosen
+    prior account
+  * [#1705]
+  * [#1224] Remove generated file from the repo
+  * [#1224] Remove generated file from the repo
+  * [#1762] distclean target should remove kconfig generated files
+    (settings.h, settings.cpp). Rename them?
+  * [#1761] clear history button should really clear history
+  * Dialpad works.
+  * Implemented Dialpad widget instead of building it in main view.
+  * Removed last occurence of the old config dialog, that made the build
+    crash.
+  * [#1755] Do not consider G722 as a dynamic payload elsewhere than in
+    RTP layer
+  * [#1753] Remove ilbc Makefile generation
+  * [#1756] Implement a kde configuration dialog with kconfig xt and
+    kconfigdialog class
+  * [#1755] fix audiocodec folder parsing problem
+  * [#1450] Reinit timestamp comparison in RTP, create session in
+    newOutgoingCall
+  * [#1753] Remove milenage third party code from pjsip
+  * New Config Dialog integrated in GUI.(without codecs)
+  * [#1753] Remove ILBC codec
+  * kconfig started, tr2i18n -> i18n, icons folder, accountList changed
+  * [#1705] Fixed Audio RTP thread creation/start
+  * [#1714] Fix codec negociation result handling
+  * [#1678] Fix audiortp payload setting
+  * [#1678] Put bac putData method in rtp
+  * [#1669] gtk_file_chooser_get_filename() support UTF-8 by default
+  * [#1735] Add conditions to sdp update call if call declined
+  * [#1737] substr of recordings destination folder to remove "file://"
+    should be done in client rather than in daemon
+  * [#1731] Enlarge audio stream buffer size
+  * [#1714] Missing true
+  * [#1317] Fixed Mandriva timeout
+  * [#1317] Changed tag convention
+  * [#1317] Cleaned git-dch
+
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 10 Jul 2009 15:50:55 -0400
+
 sflphone-client-kde (0.9.6~beta-SYSVER) SYSTEM; urgency=low
 
     ** 0.9.6~beta **
