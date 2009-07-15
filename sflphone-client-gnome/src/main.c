@@ -82,8 +82,8 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
   srand(time(NULL));
 
   // Internationalization
-  bindtextdomain("sflphone", "/usr/share/locale");
-  textdomain("sflphone");
+  bindtextdomain("sflphone-client-gnome", "/usr/share/locale");
+  textdomain("sflphone-client-gnome");
 
   if (sflphone_init())
     {

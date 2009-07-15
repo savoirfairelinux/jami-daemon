@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string notr="true">Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -29,7 +29,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_interface">
         <property name="text">
-         <string>Audio device</string>
+         <string>Sound manager</string>
         </property>
         <property name="buddy">
          <cstring>kcfg_interface</cstring>
@@ -60,7 +60,7 @@
       <item row="2" column="1">
        <widget class="KUrlRequester" name="KUrlRequester_ringtone">
         <property name="filter">
-         <string>*.ul *.au *.wav</string>
+         <string notr="true">*.ul *.au *.wav</string>
         </property>
        </widget>
       </item>
@@ -76,7 +76,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>&amp;Codecs</string>
+      <string>Codecs</string>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="spacing">
@@ -151,7 +151,7 @@
           <item row="2" column="0">
            <widget class="QLabel" name="label2_in">
             <property name="text">
-             <string>In</string>
+             <string>Input</string>
             </property>
             <property name="buddy">
              <cstring>kcfg_alsaInputDevice</cstring>
@@ -168,7 +168,7 @@
           <item row="4" column="0">
            <widget class="QLabel" name="label3_out">
             <property name="text">
-             <string>Out</string>
+             <string>Output</string>
             </property>
             <property name="buddy">
              <cstring>kcfg_alsaOutputDevice</cstring>

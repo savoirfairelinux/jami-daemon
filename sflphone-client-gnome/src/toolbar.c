@@ -47,10 +47,9 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
         return;
 
     to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
-    from = g_markup_printf_escaped(_("\"Voicemail\" <%s>"),  to);
     account_id = g_strdup (current->accountID);
 
-    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, "Voicemail", to, &mailbox_call);
+    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _("Voicemail"), to, &mailbox_call);
     DEBUG("TO : %s" , mailbox_call->_peer_number);
     calllist_add( current_calls , mailbox_call );
     calltree_add_call( current_calls , mailbox_call );
@@ -165,9 +164,9 @@ GtkWidget *create_toolbar ()
     gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
 
     image = gtk_image_new_from_file( ICONS_DIR "/dial.svg");
-    callButton = gtk_tool_button_new (image, _("Place a call"));
+    callButton = gtk_tool_button_new (image, _("New call"));
 #if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
+    gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("New call"));
 #endif
     g_signal_connect (G_OBJECT (callButton), "clicked",
             G_CALLBACK (call_button), NULL);
@@ -194,9 +193,9 @@ GtkWidget *create_toolbar ()
     gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(hangupButton), -1);
 
     image = gtk_image_new_from_file( ICONS_DIR "/unhold.svg");
-    unholdButton = gtk_tool_button_new (image, _("Off Hold"));
+    unholdButton = gtk_tool_button_new (image, _("Hold off"));
 #if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), _("Off Hold"));
+    gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), _("Hold off"));
 #endif
     gtk_widget_set_state( GTK_WIDGET(unholdButton), GTK_STATE_INSENSITIVE);
     g_signal_connect (G_OBJECT (unholdButton), "clicked",
@@ -205,9 +204,9 @@ GtkWidget *create_toolbar ()
     gtk_widget_show_all(GTK_WIDGET(unholdButton));
 
     image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
-    holdButton =  gtk_tool_button_new (image, _("On Hold"));
+    holdButton =  gtk_tool_button_new (image, _("Hold on"));
 #if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), _("On Hold"));
+    gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), _("Hold on"));
 #endif
     gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
     g_signal_connect (G_OBJECT (holdButton), "clicked",
@@ -261,7 +260,7 @@ GtkWidget *create_toolbar ()
 
     recButton = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
 #if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text(GTK_WIDGET(recButton), _("Record a call"));
+    gtk_widget_set_tooltip_text(GTK_WIDGET(recButton), _("Record"));
 #endif
     gtk_widget_set_state( GTK_WIDGET(recButton), GTK_STATE_INSENSITIVE);
     g_signal_connect (G_OBJECT (recButton), "clicked",

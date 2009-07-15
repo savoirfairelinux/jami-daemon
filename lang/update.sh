@@ -1,5 +1,5 @@
 xgettext --from-code=utf-8 --language=C --language=C++ --kde \
-     -k_ -ktr2i18n -ktr2i18n:2c,1 -kki18nc:1c,2 -kki18n -ki18n -ki18nc:1c,2 \
+     -k_  -kc_:1c,2  -kn_:1,2    -ktr2i18n -ktr2i18n:2c,1 -kki18nc:1c,2 -kki18n -ki18n -ki18nc:1c,2 \
      -o sflphone.pot \
      ../sflphone-client-kde/src/*.cpp        ../sflphone-client-kde/src/*.h \
      ../sflphone-client-kde/src/conf/*.h     ../sflphone-client-kde/src/conf/*.cpp \

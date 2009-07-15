@@ -53,17 +53,17 @@
 
 #define CONFIG_FILE_PATH                  "/.sflphone/sflphonedrc"
 
-#define ACTION_LABEL_CALL                 i18n("Call")
+#define ACTION_LABEL_CALL                 i18n("New call")
 #define ACTION_LABEL_HANG_UP              i18n("Hang up")
-#define ACTION_LABEL_HOLD                 i18n("Hold")
+#define ACTION_LABEL_HOLD                 i18n("Hold on")
 #define ACTION_LABEL_TRANSFER             i18n("Transfer")
 #define ACTION_LABEL_RECORD               i18n("Record")
-#define ACTION_LABEL_ACCEPT               i18n("Accept")
-#define ACTION_LABEL_REFUSE               i18n("Refuse")
-#define ACTION_LABEL_UNHOLD               i18n("Unhold")
+#define ACTION_LABEL_ACCEPT               i18n("Pick up")
+#define ACTION_LABEL_REFUSE               i18n("Hang up")
+#define ACTION_LABEL_UNHOLD               i18n("Hold off")
 #define ACTION_LABEL_GIVE_UP_TRANSF       i18n("Give up transfer")
 #define ACTION_LABEL_CALL_BACK            i18n("Call back")
-#define ACTION_LABEL_GIVE_UP_SEARCH       i18n("Give up search")
+// #define ACTION_LABEL_GIVE_UP_SEARCH       i18n("Give up search")
 
 
 #define ICON_INCOMING                     ":/images/icons/ring.svg"
