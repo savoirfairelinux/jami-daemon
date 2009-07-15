@@ -1150,11 +1150,14 @@ void sflphone_kdeView::editBeforeCall()
 		if(item)
 		{
 			Call * call = callList->findCallByHistoryItem(item);
-			name = call->getPeerName();
-			number = call->getPeerPhoneNumber();
+			if(call)
+			{
+				name = call->getPeerName();
+				number = call->getPeerPhoneNumber();
+			}
 		}
 	}
-	if(stackedWidget_screen->currentWidget() == page_addressBook)
+	else if(stackedWidget_screen->currentWidget() == page_addressBook)
 	{
 		QListWidgetItem * item = listWidget_addressBook->currentItem();
 		if(item)
@@ -1166,16 +1169,19 @@ void sflphone_kdeView::editBeforeCall()
 	}
 	else
 	{	return;	}
-	QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number);
-	
-	action_history->setChecked(false);
-	action_addressBook->setChecked(false);
-	stackedWidget_screen->setCurrentWidget(page_callList);
-	Call * call = callList->addDialingCall(name);
-	call->appendItemText(newNumber);
-	addCallToCallList(call);
-	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
-	action(call, CALL_ACTION_ACCEPT);
+	bool ok;
+	QString newNumber = QInputDialog::getText(this, i18n("Edit before call"), QString(), QLineEdit::Normal, number, &ok);
+	if(ok)
+	{
+		action_history->setChecked(false);
+		action_addressBook->setChecked(false);
+		stackedWidget_screen->setCurrentWidget(page_callList);
+		Call * call = callList->addDialingCall(name);
+		call->appendItemText(newNumber);
+		addCallToCallList(call);
+		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+		action(call, CALL_ACTION_ACCEPT);
+	}
 }
 
 void sflphone_kdeView::setAccountFirst(Account * account)
