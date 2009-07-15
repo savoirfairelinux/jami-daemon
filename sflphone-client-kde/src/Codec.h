@@ -18,72 +18,49 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#ifndef CODEC_H
+#define CODEC_H
 
-#ifndef ACCOUNT_H
-#define ACCOUNT_H
-
+#include <QObject>
 #include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QColor>
 
-#include "typedefs.h"
-#include "AccountItemWidget.h"
-#include "Item.h"
-
-const QString account_state_name(QString & s);
-
-class Account : public QObject, public Item<AccountItemWidget>{
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class Codec : public QObject
+{
 Q_OBJECT
 private:
-
-	QString * accountId;
-	MapStringString * accountDetails;
-// 	QListWidgetItem * item;
-// 	AccountItemWidget * itemWidget;
-
-	Account();
+	QString payload;
+	QString name;
+	QString frequency;
+	QString bitrate;
+	QString bandwidth;
+	bool enabled;
 
 public:
+	Codec(int payload, bool enabled);
+// 	Codec(const Codec & codec);
+
+// 	~Codec();
+    
+	QString getPayload() const;
+	QString getName() const;
+	QString getFrequency() const;
+	QString getBitrate() const;
+	QString getBandwidth() const;
+	bool isEnabled() const;
 	
-	~Account();
+	void setPayload(QString payload);
+	void setName(QString name);
+	void setFrequency(QString frequency);
+	void setBitrate(QString bitrate);
+	void setBandwidth(QString bandwidth);
+	void setEnabled(bool enabled);
 	
-	//Constructors
-	static Account * buildExistingAccountFromId(QString _accountId);
-	static Account * buildNewAccountFromAlias(QString alias);
-	
-	//Getters
-	bool isNew() const;
-	bool isChecked() const;
-	QString & getAccountId();
-	MapStringString & getAccountDetails() const;
-	QListWidgetItem * getItem();
-	AccountItemWidget * getItemWidget();
-	QString getStateName(QString & state);
-	QColor getStateColor();
-	QString getStateColorName();
-	QString getAccountDetail(QString param) const;
-	QString getAlias();
-	
-	//Setters
-	void setAccountId(QString id);
-	void setAccountDetails(MapStringString m);
-	void setAccountDetail(QString param, QString val);
-	
-	//Updates
-	void initItem();
-	void initItemWidget();
-	void updateState();
-	
-	//Operators
-	bool operator==(const Account&)const;
-	
-private slots:
-	void setEnabled(bool checked);
-	
-	
+	Codec & operator=(const Codec&);
+
 	
 };
-
-
 
 #endif

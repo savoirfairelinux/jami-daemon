@@ -33,6 +33,7 @@ Contact::Contact(Addressee addressee, const PhoneNumber & number, bool displayPh
 	this->nickName = addressee.nickName();
 	this->phoneNumber = number.number();
 	this->type = number.type();
+	this->displayPhoto = displayPhoto;
 	if(displayPhoto)
 	{
 		this->photo = new Picture(addressee.photo());
@@ -42,7 +43,7 @@ Contact::Contact(Addressee addressee, const PhoneNumber & number, bool displayPh
 		this->photo = NULL;
 	}
 	
-	initItem(displayPhoto);
+	initItem();
 }
 
 
@@ -53,10 +54,15 @@ Contact::~Contact()
 	delete photo;
 }
 
-void Contact::initItem(bool displayPhoto)
+void Contact::initItem()
 {
 	this->item = new QListWidgetItem();
 	this->item->setSizeHint(QSize(140,CONTACT_ITEM_HEIGHT));
+	initItemWidget();
+}
+
+void Contact::initItemWidget()
+{
 	this->itemWidget = new ContactItemWidget(this, displayPhoto);
 }
 
@@ -90,13 +96,4 @@ PhoneNumber::Type Contact::getType() const
 	return type;
 }
 
-QListWidgetItem * Contact::getItem()
-{
-	return item;
-}
-    
-QWidget * Contact::getItemWidget()
-{
-	return itemWidget;
-}
 

@@ -18,72 +18,47 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#include "Codec.h"
 
-#ifndef ACCOUNT_H
-#define ACCOUNT_H
+#include "configurationmanager_interface_singleton.h"
+#include "sflphone_const.h"
 
-#include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QColor>
+Codec::Codec(int payload, bool enabled)
+{
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	QStringList details = configurationManager.getCodecDetails(payload);
+	this->payload = QString::number(payload);
+	this->enabled = enabled;
+	this->name = details[CODEC_NAME];
+	this->frequency = details[CODEC_SAMPLE_RATE];
+	this->bitrate = details[CODEC_BIT_RATE];
+	this->bandwidth = details[CODEC_BANDWIDTH];
+}
 
-#include "typedefs.h"
-#include "AccountItemWidget.h"
-#include "Item.h"
+QString Codec::getPayload() const
+{	return payload;	}
+QString Codec::getName() const
+{	return name;	}
+QString Codec::getFrequency() const
+{	return frequency;	}
+QString Codec::getBitrate() const
+{	return bitrate;	}
+QString Codec::getBandwidth() const
+{	return bandwidth;	}
+bool Codec::isEnabled() const
+{	return enabled;	}
 
-const QString account_state_name(QString & s);
-
-class Account : public QObject, public Item<AccountItemWidget>{
-Q_OBJECT
-private:
-
-	QString * accountId;
-	MapStringString * accountDetails;
-// 	QListWidgetItem * item;
-// 	AccountItemWidget * itemWidget;
-
-	Account();
-
-public:
-	
-	~Account();
-	
-	//Constructors
-	static Account * buildExistingAccountFromId(QString _accountId);
-	static Account * buildNewAccountFromAlias(QString alias);
-	
-	//Getters
-	bool isNew() const;
-	bool isChecked() const;
-	QString & getAccountId();
-	MapStringString & getAccountDetails() const;
-	QListWidgetItem * getItem();
-	AccountItemWidget * getItemWidget();
-	QString getStateName(QString & state);
-	QColor getStateColor();
-	QString getStateColorName();
-	QString getAccountDetail(QString param) const;
-	QString getAlias();
-	
-	//Setters
-	void setAccountId(QString id);
-	void setAccountDetails(MapStringString m);
-	void setAccountDetail(QString param, QString val);
-	
-	//Updates
-	void initItem();
-	void initItemWidget();
-	void updateState();
-	
-	//Operators
-	bool operator==(const Account&)const;
-	
-private slots:
-	void setEnabled(bool checked);
-	
-	
-	
-};
+void Codec::setPayload(QString payload)
+{	this->payload = payload;	}
+void Codec::setName(QString name)
+{	this->name = name;	}
+void Codec::setFrequency(QString frequency)
+{	this->frequency = frequency;	}
+void Codec::setBitrate(QString bitrate)
+{	this->bitrate = bitrate;	}
+void Codec::setBandwidth(QString bandwidth)
+{	this->bandwidth = bandwidth;	}
+void Codec::setEnabled(bool enabled)
+{	this->enabled = enabled;	}
 
 
-
-#endif

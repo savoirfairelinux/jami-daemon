@@ -18,72 +18,75 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#ifndef ITEM_H
+#define ITEM_H
 
-#ifndef ACCOUNT_H
-#define ACCOUNT_H
+#include <QObject>
+#include <QListWidgetItem>
+#include <QWidget>
 
-#include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QColor>
-
-#include "typedefs.h"
-#include "AccountItemWidget.h"
-#include "Item.h"
-
-const QString account_state_name(QString & s);
-
-class Account : public QObject, public Item<AccountItemWidget>{
-Q_OBJECT
-private:
-
-	QString * accountId;
-	MapStringString * accountDetails;
-// 	QListWidgetItem * item;
-// 	AccountItemWidget * itemWidget;
-
-	Account();
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	Represents an item of a list, that is displayed
+	by an QListWidgetItem with a QWidget inside.
+	The two objects are contained in this class, but their
+	initializations are pure virtual.
+	The template class WIDGET_TYPE should be derived from
+	QWidget.
+	The implementation of initItem should call initItemWidget
+*/
+template<class WIDGET_TYPE>class Item
+{
+protected:
+	QListWidgetItem * item;
+	WIDGET_TYPE * itemWidget;
+	
 
 public:
+	Item(QListWidget *list=0)
+	{
+		item = NULL;
+		itemWidget = NULL;
+	}
 	
-	~Account();
+	/**
+	 *   Be careful that it is not already deleted by QObject
+	 *   Commented for safety reasons...
+	 */
+	virtual ~Item()
+	{
+// 		delete item;
+// 		delete itemWidget;
+	}
 	
-	//Constructors
-	static Account * buildExistingAccountFromId(QString _accountId);
-	static Account * buildNewAccountFromAlias(QString alias);
+	QListWidgetItem * getItem()
+	{
+		return item;
+	}
+	WIDGET_TYPE * getItemWidget()
+	{
+		return itemWidget;
+	}
 	
-	//Getters
-	bool isNew() const;
-	bool isChecked() const;
-	QString & getAccountId();
-	MapStringString & getAccountDetails() const;
-	QListWidgetItem * getItem();
-	AccountItemWidget * getItemWidget();
-	QString getStateName(QString & state);
-	QColor getStateColor();
-	QString getStateColorName();
-	QString getAccountDetail(QString param) const;
-	QString getAlias();
+	const QListWidgetItem * getItem() const
+	{
+		return item;
+	}
+	const WIDGET_TYPE * getItemWidget() const
+	{
+		return itemWidget;
+	}
 	
-	//Setters
-	void setAccountId(QString id);
-	void setAccountDetails(MapStringString m);
-	void setAccountDetail(QString param, QString val);
+	/**
+	 *   Initializes the item and widget
+	 *   Implementation should call initItemWidget!
+	 */
+	virtual void initItem() = 0;
 	
-	//Updates
-	void initItem();
-	void initItemWidget();
-	void updateState();
-	
-	//Operators
-	bool operator==(const Account&)const;
-	
-private slots:
-	void setEnabled(bool checked);
-	
+protected:
+	virtual void initItemWidget() = 0;
 	
 	
 };
-
-
 
 #endif

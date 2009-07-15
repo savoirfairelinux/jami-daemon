@@ -16,6 +16,11 @@
 
 #include "conf/ConfigurationDialog.h"
 
+#include <QTableView>
+#include <QListView>
+#include "CodecListModel.h"
+#include "SortableCodecListWidget.h"
+
 
 static const char description[] = "A KDE 4 Client for SFLphone";
 
@@ -39,9 +44,7 @@ int main(int argc, char **argv)
 		   KLocalizedString(), 
 		   "http://www.sflphone.org.", 
 		   "sflphone@lists.savoirfairelinux.net");
-		about.setProgramLogo(QVariant(QImage(ICON_SFLPHONE)));
 		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
-		about.setProgramIconName(ICON_SFLPHONE);
 		about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
 		KCmdLineArgs::init(argc, argv, &about);
 		KCmdLineOptions options;
@@ -52,11 +55,13 @@ int main(int argc, char **argv)
 		
 		//configuration dbus
 		registerCommTypes();
-		
 		SFLPhone * fenetre = new SFLPhone();
 
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
+		
+// 		SortableCodecListWidget * cl = new SortableCodecListWidget();
+// 		cl->show();
 	
 		return app.exec();
 	}

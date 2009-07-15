@@ -65,11 +65,11 @@ public:
 	void updateDisplay();
 	
 private slots:	
-	void on_checkBox_stateChanged();
+	void on_checkBox_stateChanged(int state);
 	
 	
 signals:
-	void checkStateChanged();
+	void checkStateChanged(bool checked);
 
 };
 

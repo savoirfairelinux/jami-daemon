@@ -18,72 +18,42 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#ifndef CODECLISTMODEL_H
+#define CODECLISTMODEL_H
 
-#ifndef ACCOUNT_H
-#define ACCOUNT_H
+#include <QAbstractItemModel>
+#include "Codec.h"
 
-#include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QColor>
-
-#include "typedefs.h"
-#include "AccountItemWidget.h"
-#include "Item.h"
-
-const QString account_state_name(QString & s);
-
-class Account : public QObject, public Item<AccountItemWidget>{
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class CodecListModel : public QAbstractTableModel
+{
 Q_OBJECT
 private:
-
-	QString * accountId;
-	MapStringString * accountDetails;
-// 	QListWidgetItem * item;
-// 	AccountItemWidget * itemWidget;
-
-	Account();
+	QList<Codec *> codecs;
 
 public:
+	CodecListModel(QObject *parent = 0);
+
+	~CodecListModel();
+	void setCodecs(QList<Codec *> codecs);
+
+	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
+	int rowCount(const QModelIndex & parent = QModelIndex()) const;
+	int columnCount(const QModelIndex & parent = QModelIndex()) const;
+// 	bool insertRows(int position, int rows, const QModelIndex &parent);
+	QVariant headerData(int section , Qt::Orientation orientation, int role) const;
+	Qt::ItemFlags flags(const QModelIndex & index) const;
+	virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
 	
-	~Account();
-	
-	//Constructors
-	static Account * buildExistingAccountFromId(QString _accountId);
-	static Account * buildNewAccountFromAlias(QString alias);
-	
-	//Getters
-	bool isNew() const;
-	bool isChecked() const;
-	QString & getAccountId();
-	MapStringString & getAccountDetails() const;
-	QListWidgetItem * getItem();
-	AccountItemWidget * getItemWidget();
-	QString getStateName(QString & state);
-	QColor getStateColor();
-	QString getStateColorName();
-	QString getAccountDetail(QString param) const;
-	QString getAlias();
-	
-	//Setters
-	void setAccountId(QString id);
-	void setAccountDetails(MapStringString m);
-	void setAccountDetail(QString param, QString val);
-	
-	//Updates
-	void initItem();
-	void initItemWidget();
-	void updateState();
-	
-	//Operators
-	bool operator==(const Account&)const;
-	
-private slots:
-	void setEnabled(bool checked);
-	
-	
-	
+	bool codecUp( int index );
+	bool codecDown( int index );
+	QStringList getActiveCodecList() const ;
+	void setActiveCodecList(const QStringList & activeCodecListToSet);
+
+signals:
+	void dataChanged(const QModelIndex &, const QModelIndex &);
 };
-
-
 
 #endif

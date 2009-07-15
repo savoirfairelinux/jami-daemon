@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-03 13:49-0400\n"
+"POT-Creation-Date: 2009-07-08 15:18-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -224,22 +224,22 @@ msgstr "SFLphone Client KDE"
 msgid "(C) 2009 Savoir-faire Linux"
 msgstr "(C) 2009 Savoir-faire Linux"
 
-#: ../src/main.cpp:43
+#: ../src/main.cpp:42
 msgid "Jérémy Quentin"
 msgstr "Jérémy Quentin"
 
-#: ../src/main.cpp:45
+#: ../src/main.cpp:43
 msgctxt "NAME OF TRANSLATORS"
 msgid "Your names"
 msgstr "Jérémy Quentin"
 
-#: ../src/main.cpp:45
+#: ../src/main.cpp:43
 msgctxt "EMAIL OF TRANSLATORS"
 msgid "Your emails"
 msgstr "jeremy.quentin@savoirfairelinux.com"
 
-#: ../src/SFLPhone.cpp:62 ../src/sflphone_kdeview.cpp:1047
-#: ../src/sflphone_kdeview.cpp:1052 ../src/sflphone_kdeview.cpp:1057
+#: ../src/SFLPhone.cpp:62 ../src/sflphone_kdeview.cpp:1066
+#: ../src/sflphone_kdeview.cpp:1071 ../src/sflphone_kdeview.cpp:1076
 msgid "SFLphone"
 msgstr "SFLphone"
 
@@ -261,28 +261,28 @@ msgstr "Vous avez un appel entrant de"
 msgid "Click to accept or refuse it."
 msgstr "Cliquez sur ce message pour accepter ou refuser"
 
-#: ../src/sflphone_kdeview.cpp:864
+#: ../src/sflphone_kdeview.cpp:883
 msgid "No account registered"
 msgstr "Aucun compte enregistré"
 
-#: ../src/sflphone_kdeview.cpp:868
+#: ../src/sflphone_kdeview.cpp:887
 msgid "Using account"
 msgstr "Utilise le compte"
 
-#: ../src/sflphone_kdeview.cpp:1047
+#: ../src/sflphone_kdeview.cpp:1066
 msgid "Main screen"
 msgstr "Écran principal"
 
-#: ../src/sflphone_kdeview.cpp:1052 ../build/src/ui_dlggeneralbase.h:165
+#: ../src/sflphone_kdeview.cpp:1071 ../build/src/ui_dlggeneralbase.h:165
 msgid "Call history"
 msgstr "Historique d'appel"
 
-#: ../src/sflphone_kdeview.cpp:1057
+#: ../src/sflphone_kdeview.cpp:1076
 #: ../build/src/ui_sflphone_kdeview_base.h:407
 msgid "Address book"
 msgstr "Carnet d'adresse"
 
-#: ../src/sflphone_kdeview.cpp:1071 ../src/sflphone_kdeview.cpp:1132
+#: ../src/sflphone_kdeview.cpp:1090 ../src/sflphone_kdeview.cpp:1151
 msgid "Edit before call"
 msgstr "Éditer avant d'appeler"
 
@@ -356,7 +356,7 @@ msgid "Hooks"
 msgstr "Ancrage"
 
 #: ../build/src/ui_dlgaccountsbase.h:321
-#: ../build/src/ui_dlgaddressbookbase.h:142 ../build/src/ui_dlgaudiobase.h:262
+#: ../build/src/ui_dlgaddressbookbase.h:142 ../build/src/ui_dlgaudiobase.h:263
 #: ../build/src/ui_dlgdisplaybase.h:120 ../build/src/ui_dlggeneralbase.h:164
 #: ../build/src/ui_dlghooksbase.h:173 ../build/src/ui_dlgrecordbase.h:90
 #: ../build/src/ui_sflphone_kdeview_base.h:390
@@ -493,67 +493,71 @@ msgstr "&Mobiles"
 msgid "&Home"
 msgstr "P&ersonnels"
 
-#: ../build/src/ui_dlgaudiobase.h:264
+#: ../build/src/ui_dlgaudiobase.h:265
 msgid "Audio device"
 msgstr "Interface audio"
 
-#: ../build/src/ui_dlgaudiobase.h:267
+#: ../build/src/ui_dlgaudiobase.h:268
 msgid "ALSA"
 msgstr "ALSA"
 
-#: ../build/src/ui_dlgaudiobase.h:268
+#: ../build/src/ui_dlgaudiobase.h:269
 msgid "PulseAudio"
 msgstr "PulseAudio"
 
-#: ../build/src/ui_dlgaudiobase.h:270
+#: ../build/src/ui_dlgaudiobase.h:271
 msgid "Enable ringtones"
 msgstr "Activer les sonneries"
 
-#: ../build/src/ui_dlgaudiobase.h:271
+#: ../build/src/ui_dlgaudiobase.h:272
+msgid "*.ul *.au *.wav"
+msgstr ""
+
+#: ../build/src/ui_dlgaudiobase.h:273
 msgid "&Codecs"
 msgstr "&Codecs"
 
-#: ../build/src/ui_dlgaudiobase.h:273
+#: ../build/src/ui_dlgaudiobase.h:275
 msgid "Active"
 msgstr "Activé"
 
-#: ../build/src/ui_dlgaudiobase.h:275
+#: ../build/src/ui_dlgaudiobase.h:277
 msgid "Name"
 msgstr "Nom"
 
-#: ../build/src/ui_dlgaudiobase.h:277
+#: ../build/src/ui_dlgaudiobase.h:279
 msgid "Frequency"
 msgstr "Fréquence"
 
-#: ../build/src/ui_dlgaudiobase.h:279
+#: ../build/src/ui_dlgaudiobase.h:281
 msgid "Bitrate"
 msgstr "Bitrate"
 
-#: ../build/src/ui_dlgaudiobase.h:281
+#: ../build/src/ui_dlgaudiobase.h:283
 msgid "Bandwidth"
 msgstr "Bande passante"
 
-#: ../build/src/ui_dlgaudiobase.h:284
+#: ../build/src/ui_dlgaudiobase.h:286
 msgid "ALSA settings"
 msgstr "Paramètre ALSA"
-
-#: ../build/src/ui_dlgaudiobase.h:285
-msgid "In"
-msgstr "Entrée"
-
-#: ../build/src/ui_dlgaudiobase.h:286
-msgid "Out"
-msgstr "Sortie"
 
 #: ../build/src/ui_dlgaudiobase.h:287
 msgid "ALSA plugin"
 msgstr "Greffon ALSA"
 
 #: ../build/src/ui_dlgaudiobase.h:288
+msgid "In"
+msgstr "Entrée"
+
+#: ../build/src/ui_dlgaudiobase.h:289
+msgid "Out"
+msgstr "Sortie"
+
+#: ../build/src/ui_dlgaudiobase.h:290
 msgid "PulseAudio settings"
 msgstr "Paramètres PulseAudio"
 
-#: ../build/src/ui_dlgaudiobase.h:289
+#: ../build/src/ui_dlgaudiobase.h:291
 msgid "Mute other applications during a call"
 msgstr "Couper le son des autres applications pendant un appel"
 
@@ -670,9 +674,10 @@ msgid "Display dialpad"
 msgstr "Afficher le clavier"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:405
-msgctxt "Action record a calld"
+#, fuzzy
+msgctxt "Action record a call"
 msgid "Record"
-msgstr "Enregistrer"
+msgstr "Enregistrement"
 
 #: ../build/src/ui_sflphone_kdeview_base.h:406
 msgid "Account creation wizard"
@@ -681,6 +686,10 @@ msgstr "Assistant de création de compte"
 #: ../build/src/ui_sflphone_kdeview_base.h:408
 msgid "Attention:number of results exceeds max displayed."
 msgstr "Attention:tous les résultats ne sont pas affichés."
+
+#~ msgctxt "Action record a calld"
+#~ msgid "Record"
+#~ msgstr "Enregistrer"
 
 #~ msgid "Attention : SIP port must be over 1024 !"
 #~ msgstr "Attention : le port SIP doit être supérieur à 1024 !"

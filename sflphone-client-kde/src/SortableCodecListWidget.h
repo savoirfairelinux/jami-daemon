@@ -18,72 +18,47 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#ifndef SORTABLECODECLISTWIDGET_H
+#define SORTABLECODECLISTWIDGET_H
 
-#ifndef ACCOUNT_H
-#define ACCOUNT_H
+#include <QWidget>
+#include <KPushButton>
+#include <QTableView>
+#include "CodecListModel.h"
 
-#include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QColor>
-
-#include "typedefs.h"
-#include "AccountItemWidget.h"
-#include "Item.h"
-
-const QString account_state_name(QString & s);
-
-class Account : public QObject, public Item<AccountItemWidget>{
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class SortableCodecListWidget : public QWidget
+{
 Q_OBJECT
 private:
-
-	QString * accountId;
-	MapStringString * accountDetails;
-// 	QListWidgetItem * item;
-// 	AccountItemWidget * itemWidget;
-
-	Account();
+	KPushButton * codecUpButton;
+	KPushButton * codecDownButton;
+	QTableView * codecTable;
 
 public:
+	SortableCodecListWidget(QWidget *parent = 0);
 	
-	~Account();
-	
-	//Constructors
-	static Account * buildExistingAccountFromId(QString _accountId);
-	static Account * buildNewAccountFromAlias(QString alias);
-	
-	//Getters
-	bool isNew() const;
-	bool isChecked() const;
-	QString & getAccountId();
-	MapStringString & getAccountDetails() const;
-	QListWidgetItem * getItem();
-	AccountItemWidget * getItemWidget();
-	QString getStateName(QString & state);
-	QColor getStateColor();
-	QString getStateColorName();
-	QString getAccountDetail(QString param) const;
-	QString getAlias();
-	
-	//Setters
-	void setAccountId(QString id);
-	void setAccountDetails(MapStringString m);
-	void setAccountDetail(QString param, QString val);
-	
-	//Updates
-	void initItem();
-	void initItemWidget();
-	void updateState();
-	
-	//Operators
-	bool operator==(const Account&)const;
+	virtual void setModel(CodecListModel * model);
+	virtual CodecListModel * model();
 	
 private slots:
-	void setEnabled(bool checked);
+	void on_codecUpButton_clicked();
+	void on_codecDownButton_clicked();
 	
+public slots:
+	void updateCommands();
 	
+private:
+	QModelIndex selectedIndex();
+	int selectedRow();
+
+	void setSelectedRow(int row);
 	
+signals:
+	void dataChanged();
+
 };
-
-
 
 #endif

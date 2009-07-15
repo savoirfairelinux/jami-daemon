@@ -81,11 +81,6 @@ public:
 	//Constructors & Destructors
 	sflphone_kdeView(QWidget *parent);
 	virtual ~sflphone_kdeView();
-	/**
-	 * Called at construction. Updates all the display
-	 * according to the settings.
-	 */
-	void loadWindow();
 	
 	//Getters
 	/**
@@ -97,6 +92,15 @@ public:
 	 * @return the account to use if an outgoing call is placed.
 	 */
 	static Account * firstRegisteredAccount();
+	/**
+	 *   Seeks the ID of the account to use.
+	 *   If priorAccountId is defined and the corresponding
+	 *   account exists and is registered, uses this one, else,
+	 *   asks the first registered of accountList.
+	 *   If there is no account registered, returns an empty string.
+	 * @return the ID of the account to use if an outgoing call is placed.
+	 */
+	static QString firstRegisteredAccountId();
 	
 	static AccountList * getAccountList();
 	QErrorMessage * getErrorWindow();
@@ -108,6 +112,12 @@ public:
 	* chosen to be displayed in SFLphone configuration.
 	*/
 	int phoneNumberTypesDisplayed();
+	
+	/**
+	 * 
+	 * @return true if the address book is enabled in config
+	 */
+	bool isAddressBookEnabled();
 	
 	//Updates
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
@@ -218,7 +228,34 @@ private slots:
 	void updateDialpad();
 	
 public slots:
+	/**
+	 * Updates all the display
+	 * according to the settings.
+	 */
+	void loadWindow();
+	
+	
 	void updateStatusMessage();
+	/**
+	 *   Enable the address book search line edit.
+	 *   To be called once the address book loading has finished.
+	 */
+	void enableAddressBook();
+	/**
+	 *   Loads the address book asynchronously.
+	 *   Calls enableAddressBook() once the address book
+	 *   loading has finished if it is not allready loaded.
+	 * @return true if address book has finished loading
+	 */
+	bool loadAddressBook();
+	
+	/**
+	 *   Chooses to enable/disable (show/hide) the address book 
+	 *   button according to the configuration's setting, and 
+	 *   returns to the main window if is in address book
+	 *   whereas it is disabled.
+	 */
+	void updateAddressBookEnabled();
 	
 	
 	virtual void keyPressEvent(QKeyEvent *event)

@@ -33,7 +33,6 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	setupUi(this);
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	QStyle * style = QApplication::style();
 	button_accountUp->setIcon(KIcon("go-up"));
 	button_accountDown->setIcon(KIcon("go-down"));
 	button_accountAdd->setIcon(KIcon("list-add"));
@@ -109,7 +108,6 @@ void DlgAccounts::saveAccountList()
 			}
 		}
 		qDebug() << currentId << " : " << current.isChecked();
-		configurationManager.sendRegister(currentId, current.isChecked() ? 1 : 0 );
 	}
 	//remove accounts that are in the configurationManager but not in the client
 	for (int i = 0; i < accountIds.size(); i++)
@@ -205,7 +203,7 @@ void DlgAccounts::addAccountToAccountList(Account * account)
 	qDebug() << "addAccountToAccountList";
 	QListWidgetItem * item = account->getItem();
 	QWidget * widget = account->getItemWidget();
-	connect(widget, SIGNAL(checkStateChanged()),
+	connect(widget, SIGNAL(checkStateChanged(bool)),
 	        this,   SLOT(changedAccountList()));
 	qDebug() << "item->isHidden()" << item->isHidden();
 	listWidget_accountList->addItem(item);
@@ -215,6 +213,7 @@ void DlgAccounts::addAccountToAccountList(Account * account)
 
 void DlgAccounts::changedAccountList()
 {
+	qDebug() << "changedAccountList";
 	accountListHasChanged = true;
 	emit updateButtons();
 	toolButton_accountsApply->setEnabled(hasChanged());
@@ -237,7 +236,7 @@ void DlgAccounts::on_button_accountUp_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
-	account->initAccountItem();
+	account->initItem();
 	QListWidgetItem * item = account->getItem();
 	AccountItemWidget * widget = account->getItemWidget();
 	accountList->upAccount(currentRow);
@@ -254,7 +253,7 @@ void DlgAccounts::on_button_accountDown_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
-	account->initAccountItem();
+	account->initItem();
 	QListWidgetItem * item = account->getItem();
 	AccountItemWidget * widget = account->getItemWidget();
 	accountList->downAccount(currentRow);
@@ -297,7 +296,7 @@ void DlgAccounts::on_toolButton_accountsApply_clicked()
 
 void DlgAccounts::applyCustomSettings()
 {
-	qDebug() << "applyCustomSettings";
+	qDebug() << "DlgAccounts::applyCustomSettings";
 	if(hasChanged())
 	{
 		toolButton_accountsApply->setEnabled(false);

@@ -167,6 +167,8 @@
 #define DAEMON_CALL_STATE_INIT_CURRENT    "CURRENT"
 #define DAEMON_CALL_STATE_INIT_HOLD       "HOLD"
 #define DAEMON_CALL_STATE_INIT_BUSY       "BUSY"
+#define DAEMON_CALL_STATE_INIT_INCOMING       "INCOMING"
+#define DAEMON_CALL_STATE_INIT_RINGING       "RINGING"
 #define DAEMON_CALL_STATE_INIT_INACTIVE   "INACTIVE"
 
 #define DAEMON_CALL_TYPE_INCOMING         "0"
@@ -182,6 +184,7 @@
 #define ADDRESSBOOK_DISPLAY_BUSINESS      "ADDRESSBOOK_DISPLAY_PHONE_BUSINESS"
 #define ADDRESSBOOK_DISPLAY_HOME          "ADDRESSBOOK_DISPLAY_PHONE_HOME"
 #define ADDRESSBOOK_DISPLAY_MOBILE        "ADDRESSBOOK_DISPLAY_PHONE_MOBILE"
+#define ADDRESSBOOK_ENABLE                "ADDRESSBOOK_ENABLE"
 
 /** Hooks settings */
 #define HOOKS_ADD_PREFIX                  "PHONE_NUMBER_HOOK_ADD_PREFIX"
@@ -203,40 +206,6 @@
 /** Audio Managers */
 #define CONST_ALSA                        0
 #define CONST_PULSEAUDIO                  1
-
-
-
-/** Error while opening capture device */
-#define ALSA_CAPTURE_DEVICE	            0x0001
-/** Error while opening playback device */
-#define ALSA_PLAYBACK_DEVICE	            0x0010
-/** Error pulseaudio */
-#define PULSEAUDIO_NOT_RUNNING            0x0100
-
-/** Tone to play when no voice mails */
-#define TONE_WITHOUT_MESSAGE              0
-/** Tone to play when voice mails */
-#define TONE_WITH_MESSAGE                 1
-
-
-/** Notification levels */
-#define __NOTIF_LEVEL_MIN                 0
-#define __NOTIF_LEVEL_MED                 1
-#define __NOTIF_LEVEL_HIGH                2
-
-/** Messages ID for the status bar - Incoming calls */
-#define __MSG_INCOMING_CALL               0
-/** Messages ID for the status bar - Calling */
-#define __MSG_CALLING	                  1
-/** Messages ID for the status bar - Voice mails  notification */
-#define __MSG_VOICE_MAILS                 2
-/** Messages ID for the status bar - Current account */
-#define __MSG_ACCOUNT_DEFAULT             3
-
-/** Desktop notifications - Time before to close the notification*/
-#define __TIMEOUT_MODE                    "default"
-/** Desktop notifications - Time before to close the notification*/
-#define __TIMEOUT_TIME                    18000       // 30 secondes
 
 
 

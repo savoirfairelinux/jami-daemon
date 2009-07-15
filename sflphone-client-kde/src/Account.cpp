@@ -53,10 +53,12 @@ const QString account_state_name(QString & s)
 
 //Constructors
 
-Account::Account():accountId(NULL), item(NULL), itemWidget(NULL){}
+Account::Account():accountId(NULL)
+{
+}
 
 
-void Account::initAccountItem()
+void Account::initItem()
 {
 	if(item != NULL)
 	{
@@ -65,10 +67,10 @@ void Account::initAccountItem()
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
-	initAccountItemWidget();
+	initItemWidget();
 }
 
-void Account::initAccountItemWidget()
+void Account::initItemWidget()
 {
 	if(itemWidget != NULL)
 	{
@@ -90,6 +92,7 @@ void Account::initAccountItemWidget()
 	{
 		itemWidget->setState(AccountItemWidget::NotWorking);
 	}
+	connect(itemWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
 }
 
 Account * Account::buildExistingAccountFromId(QString _accountId)
@@ -99,7 +102,7 @@ Account * Account::buildExistingAccountFromId(QString _accountId)
 	a->accountId = new QString(_accountId);
 	qDebug() << "getAccountDetails 1 sent";
 	a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
-	a->initAccountItem();
+	a->initItem();
 	return a;
 }
 
@@ -108,7 +111,7 @@ Account * Account::buildNewAccountFromAlias(QString alias)
 	Account * a = new Account();
 	a->accountDetails = new MapStringString();
 	a->setAccountDetail(ACCOUNT_ALIAS,alias);
-	a->initAccountItem();
+	a->initItem();
 	return a;
 }
 
@@ -147,13 +150,11 @@ MapStringString & Account::getAccountDetails() const
 
 QListWidgetItem * Account::getItem()
 {
-	if(!item)  {	qDebug() << "null" ;	}
 	return item;
 }
 
 AccountItemWidget * Account::getItemWidget()
 {
-	if(itemWidget == NULL)  {	qDebug() << "null";	}
 	return itemWidget;
 }
 
@@ -212,6 +213,12 @@ void Account::setAccountId(QString id)
 		qDebug() << "Error : setting AccountId of an existing account.";
 	}
 	accountId = new QString(id);
+}
+
+void Account::setEnabled(bool checked)
+{
+	qDebug() << "setEnabled = " << checked;
+	setAccountDetail(ACCOUNT_ENABLED, checked ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
 }
 
 void Account::updateState()
