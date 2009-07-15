@@ -36,7 +36,9 @@
 #define CONTACTS            "contacts"
 
 /** Locale */
-#define _(STRING)   gettext( STRING )
+#define _(STRING)             gettext( STRING )
+#define c_(COMMENT,STRING)    gettext(STRING) 
+#define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
 /** Warnings unused variables **/
 #define UNUSED_VAR(var)      (void*)var

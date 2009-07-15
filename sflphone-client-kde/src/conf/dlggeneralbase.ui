@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string notr="true">Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -32,7 +32,7 @@
          <item>
           <widget class="QCheckBox" name="kcfg_enableHistory">
            <property name="text">
-            <string extracomment="beginning of &quot;..for at least n days.&quot;">Keep my history for at least</string>
+            <string comment="Beginning of 'Keep my history for at least n days.'">Keep my history for at least</string>
            </property>
           </widget>
          </item>
@@ -58,7 +58,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string extracomment="End of &quot;Keep my history for at least n days&quot;">days</string>
+            <string comment="End of 'Keep my history for at least n days.'">days</string>
            </property>
           </widget>
          </item>
@@ -129,12 +129,12 @@
           <widget class="KIntSpinBox" name="kcfg_SIPPort"/>
          </item>
          <item>
-          <widget class="QLabel" name="label_WarningSIP_2">
+          <widget class="QLabel" name="label_WarningSIPPort">
            <property name="enabled">
             <bool>false</bool>
            </property>
            <property name="text">
-            <string>Attention </string>
+            <string/>
            </property>
           </widget>
          </item>

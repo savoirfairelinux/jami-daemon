@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string notr="true">Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -29,7 +29,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="page_callList">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -138,6 +138,9 @@
              <height>50</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Mic volume</string>
+           </property>
            <property name="layoutDirection">
             <enum>Qt::RightToLeft</enum>
            </property>
@@ -210,6 +213,9 @@
              <width>0</width>
              <height>50</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>Speakers volume</string>
            </property>
            <property name="layoutDirection">
             <enum>Qt::LeftToRight</enum>
@@ -345,7 +351,7 @@
      <normaloff>:/images/icons/hold.svg</normaloff>:/images/icons/hold.svg</iconset>
    </property>
    <property name="text">
-    <string>Hold</string>
+    <string>Hold on</string>
    </property>
   </action>
   <action name="action_transfer">
@@ -378,25 +384,7 @@
      <normaloff>:/images/icons/mailbox.svg</normaloff>:/images/icons/mailbox.svg</iconset>
    </property>
    <property name="text">
-    <string>Mailbox</string>
-   </property>
-  </action>
-  <action name="action_configureAccounts">
-   <property name="icon">
-    <iconset resource="../qrc/resources.qrc">
-     <normaloff>:/images/icons/stock_person.svg</normaloff>:/images/icons/stock_person.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Configure accounts</string>
-   </property>
-  </action>
-  <action name="action_configureAudio">
-   <property name="icon">
-    <iconset resource="../qrc/resources.qrc">
-     <normaloff>:/images/icons/icon_volume.svg</normaloff>:/images/icons/icon_volume.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Configure audio</string>
+    <string>Voicemail</string>
    </property>
   </action>
   <action name="action_configureSflPhone">
@@ -419,7 +407,7 @@
      <normaloff>:/images/icons/icon_volume_off.svg</normaloff>:/images/icons/icon_volume_off.svg</iconset>
    </property>
    <property name="text">
-    <string>Display volume bars</string>
+    <string>Display volume controls</string>
    </property>
   </action>
   <action name="action_displayDialpad">

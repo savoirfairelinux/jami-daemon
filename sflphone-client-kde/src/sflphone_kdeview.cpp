@@ -519,6 +519,7 @@ void sflphone_kdeView::updateWindowCallState()
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					enabledActions[4] = false;
+					actionTexts[0] = ACTION_LABEL_ACCEPT;
 					buttonIconFiles[0] = ICON_ACCEPT;
 					break;
 				case CALL_STATE_HOLD:
@@ -897,7 +898,7 @@ void sflphone_kdeView::updateStatusMessage()
 	Account * account = firstRegisteredAccount();
 	if(account == NULL)
 	{
-		emit statusMessageChanged(i18n("No account registered"));
+		emit statusMessageChanged(i18n("No registered accounts"));
 	}
 	else
 	{

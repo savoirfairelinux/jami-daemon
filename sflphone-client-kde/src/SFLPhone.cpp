@@ -126,8 +126,8 @@ void SFLPhone::setupActions()
 	actionCollection()->addAction("action_displayVolumeControls", view->action_displayVolumeControls);
 	actionCollection()->addAction("action_displayDialpad", view->action_displayDialpad);
 	actionCollection()->addAction("action_configureSflPhone", view->action_configureSflPhone);
-	actionCollection()->addAction("action_configureAccounts", view->action_configureAccounts);
-	actionCollection()->addAction("action_configureAudio", view->action_configureAudio);
+// 	actionCollection()->addAction("action_configureAccounts", view->action_configureAccounts);
+// 	actionCollection()->addAction("action_configureAudio", view->action_configureAudio);
 	actionCollection()->addAction("action_accountCreationWizard", view->action_accountCreationWizard);
 	
 	statusBarWidget = new QLabel();
