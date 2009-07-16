@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-15 15:25-0400\n"
+"POT-Creation-Date: 2009-07-16 15:14-0400\n"
 "PO-Revision-Date: 2008-08-11 11:53+0200\n"
 "Last-Translator: Carlos Galisteo <cgalisteo AT k-rolus.net>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -43,9 +43,8 @@ msgid "Error"
 msgstr "Error"
 
 #: ../sflphone-client-kde/src/Account.cpp:42
-#: ../sflphone-client-gnome/src/accountlist.c:187
 msgctxt "account state"
-msgid "Bad authentification"
+msgid "Authentication Failed"
 msgstr "Autenticación erronea"
 
 #: ../sflphone-client-kde/src/Account.cpp:44
@@ -80,7 +79,7 @@ msgstr "Inválido"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:163
 #: ../sflphone-client-kde/src/AccountWizard.cpp:278
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:393
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:406
 msgid "Account creation wizard"
 msgstr "Asistente de configuración de cuentas"
 
@@ -98,40 +97,40 @@ msgstr ""
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:255
 #: ../sflphone-client-kde/src/AccountWizard.cpp:440
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:363
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:359
 #: ../sflphone-client-gnome/src/assistant.c:72
 msgid "Alias"
 msgstr "Alias"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:256
 #: ../sflphone-client-kde/src/AccountWizard.cpp:441
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:370
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:366
 #: ../sflphone-client-gnome/src/assistant.c:75
 msgid "Server"
 msgstr "Servidor"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:257
 #: ../sflphone-client-kde/src/AccountWizard.cpp:442
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:371
-msgid "User"
+#: ../sflphone-client-gnome/src/assistant.c:78
+msgid "Username"
 msgstr "Usuario"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:258
 #: ../sflphone-client-kde/src/AccountWizard.cpp:443
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:372
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:368
 msgid "Password"
 msgstr "Contraseña"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:259
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:364
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:360
 #: ../sflphone-client-gnome/src/config/configwindow.c:418
 msgid "Protocol"
 msgstr "Protocolo"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:260
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:373
-msgid "Mailbox"
-msgstr "Mensaje de voz"
+#: ../sflphone-client-kde/src/AccountWizard.cpp:444
+msgid "Voicemail number"
+msgstr "Número de buzón de voz"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:279
 #: ../sflphone-client-gnome/src/assistant.c:216
@@ -213,10 +212,6 @@ msgstr "Configuración de cuenta IAX2"
 msgid "Please fill the following information"
 msgstr "Por favor, rellene la siguiente información"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:444
-msgid "Voicemail number"
-msgstr "Número de buzón de voz"
-
 #: ../sflphone-client-kde/src/AccountWizard.cpp:523
 #: ../sflphone-client-gnome/src/assistant.c:435
 #: ../sflphone-client-gnome/src/config/configwindow.c:856
@@ -258,16 +253,19 @@ msgid "Codec"
 msgstr "Códec"
 
 #: ../sflphone-client-kde/src/CodecListModel.cpp:93
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:279
 #: ../sflphone-client-gnome/src/config/audioconf.c:581
 msgid "Frequency"
 msgstr "Frecuencia"
 
 #: ../sflphone-client-kde/src/CodecListModel.cpp:97
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:281
 #: ../sflphone-client-gnome/src/config/audioconf.c:586
 msgid "Bitrate"
 msgstr "Tasa de transferencia"
 
 #: ../sflphone-client-kde/src/CodecListModel.cpp:101
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:283
 #: ../sflphone-client-gnome/src/config/audioconf.c:591
 msgid "Bandwidth"
 msgstr "Ancho de banda"
@@ -339,14 +337,14 @@ msgid "Call history"
 msgstr "Historia de Llamada"
 
 #: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1094
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:394
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:407
 #: ../sflphone-client-gnome/src/toolbar.c:243
 #: ../sflphone-client-gnome/src/toolbar.c:245
 msgid "Address book"
 msgstr "Libreta de contactos"
 
 #: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1108
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1169
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1173
 msgid "Edit before call"
 msgstr ""
 
@@ -358,21 +356,20 @@ msgstr "Nueva llamada"
 
 #: ../sflphone-client-kde/src/sflphone_const.h:57
 #: ../sflphone-client-kde/src/sflphone_const.h:62
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:381
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:392
 #: ../sflphone-client-gnome/src/toolbar.c:186
 #: ../sflphone-client-gnome/src/toolbar.c:188
 msgid "Hang up"
 msgstr "Colgar"
 
 #: ../sflphone-client-kde/src/sflphone_const.h:58
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:382
 #: ../sflphone-client-gnome/src/toolbar.c:207
 #: ../sflphone-client-gnome/src/toolbar.c:209
 msgid "Hold on"
 msgstr ""
 
 #: ../sflphone-client-kde/src/sflphone_const.h:59
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:383
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:394
 #: ../sflphone-client-gnome/src/toolbar.c:220
 #: ../sflphone-client-gnome/src/toolbar.c:222
 msgid "Transfer"
@@ -384,7 +381,7 @@ msgid "Record"
 msgstr "Recordar"
 
 #: ../sflphone-client-kde/src/sflphone_const.h:61
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:380
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:391
 #: ../sflphone-client-gnome/src/toolbar.c:176
 #: ../sflphone-client-gnome/src/toolbar.c:178
 msgid "Pick up"
@@ -405,7 +402,6 @@ msgid "Call back"
 msgstr "Llamar"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:48
-#: ../sflphone-client-kde/build/src/ui_dlgrecordbase.h:91
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:306
 #: ../sflphone-client-gnome/src/config/configwindow.c:722
 #: ../sflphone-client-gnome/src/config/configwindow.c:791
@@ -448,7 +444,18 @@ msgctxt "Config section"
 msgid "Hooks"
 msgstr "Disparadores"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:328
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:321
+#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:142
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:263
+#: ../sflphone-client-kde/build/src/ui_dlgdisplaybase.h:120
+#: ../sflphone-client-kde/build/src/ui_dlggeneralbase.h:164
+#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:173
+#: ../sflphone-client-kde/build/src/ui_dlgrecordbase.h:90
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:390
+msgid "Form"
+msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:323
 msgid ""
 "By default, when you place a call, sflphone will use the first account in "
 "this list which is \"registered\". Change the order of the accounts using "
@@ -457,168 +464,181 @@ msgid ""
 "buttons. Edit the selected account with the form on the right."
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:332
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:327
 msgid "Remove the selected account"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:335
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:330
 msgid ""
 "This button will remove the selected account in the list below. Be sure you "
 "really don't need it anymore. If you think you might use it again later, "
 "just uncheck it."
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:340
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:335
 msgid "Remove"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:342
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:336
+msgid "Backspace, Return"
+msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:338
 msgid "Add a new account"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:345
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:341
 msgid ""
 "This button enables you to initialize a new account. You will then be able "
 "to edit it using the form on the right."
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:347
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:343
 msgid "Add"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:349
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:345
 msgid "Get this account down"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:352
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:359
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:348
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:355
 msgid ""
 "By default, when you place a call, sflphone will use the first account in "
 "this list which is \"registered\". Change the order of the accounts using "
 "the \"Up\" and \"Down\" arrows."
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:354
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:350
 msgid "Down"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:356
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:352
 msgid "Get this account up"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:361
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:357
 msgid "Up"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:362
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:358
 msgid "Apply"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:367
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:363
 msgid "SIP"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:368
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:364
 msgid "IAX"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:374
-#: ../sflphone-client-gnome/src/config/configwindow.c:425
-msgid "Status"
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:367
+msgid "User"
+msgstr "Usuario"
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:369
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:396
+msgid "Mailbox"
+msgstr "Mensaje de voz"
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:370
+msgid "State"
 msgstr "Estado"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:377
-#: ../sflphone-client-gnome/src/config/configwindow.c:528
-msgid "Stun parameters will be applied on each SIP account created."
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:373
+msgid "Stun settings will be applied on each account"
 msgstr "Parámetros de stun se aplicarán a cada cuenta SIP creada."
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:378
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:374
 msgid "Enable Stun"
 msgstr "Activar STUN"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:380
-#: ../sflphone-client-gnome/src/config/configwindow.c:544
-msgid "Format : name.server:port"
-msgstr "Formato : nombre.servidor:puerto"
-
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:382
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:375
 msgid "choose Stun server (example : stunserver.org)"
 msgstr "Elija un servidor Stun (ejemplo : stunserver.org)"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:154
-msgid "Enable address book"
-msgstr "Activar la libreta de contactos"
-
-#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:155
-msgid "Maximum results"
+#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:143
+msgid "Maximum &results"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:156
-msgid "Display photo if available"
+#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:144
+msgid "Display &photo if available"
 msgstr "Mostrar fotos de contactos, si está disponible"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:157
-msgid "Display phone numbers of these types :"
+#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:145
+msgid "Display phone numbers of these &types :"
 msgstr "Usar los siguientes campos de la libreta de direcciones"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:158
-msgid "Work"
+#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:146
+msgid "&Work"
 msgstr "Profesional"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:159
-msgid "Mobile"
+#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:147
+msgid "&Mobile"
 msgstr "Movil"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:160
-msgid "Home"
+#: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:148
+msgid "&Home"
 msgstr "Personal"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:225
-msgid "Sound manager"
-msgstr "Gestor de audio"
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:265
+msgid "Audio device"
+msgstr "Archivos de Audio"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:228
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:268
 msgid "ALSA"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:229
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:269
 msgid "PulseAudio"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:231
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:271
 msgid "Enable ringtones"
 msgstr "Habilitar tonos de llamada"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:232
-#: ../sflphone-client-gnome/src/config/audioconf.c:812
-msgid "Codecs"
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:272
+msgid "*.ul *.au *.wav"
+msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:273
+msgid "&Codecs"
 msgstr "Códecs"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:233
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:275
+msgid "Active"
+msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:277
+#: ../sflphone-client-gnome/src/config/addressbook-config.c:404
+#: ../sflphone-client-gnome/src/config/audioconf.c:576
+msgid "Name"
+msgstr "Nombre"
+
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:286
 #: ../sflphone-client-gnome/src/config/audioconf.c:795
 msgid "ALSA settings"
 msgstr "Configuración de ALSA"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:234
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:287
 #: ../sflphone-client-gnome/src/config/audioconf.c:662
 msgid "ALSA plugin"
 msgstr "Plugin ALSA"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:235
-#: ../sflphone-client-gnome/src/config/audioconf.c:706
-msgid "Input"
-msgstr "Entrada"
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:288
+msgid "In"
+msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:236
-#: ../sflphone-client-gnome/src/config/audioconf.c:684
-msgid "Output"
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:289
+msgid "Out"
 msgstr "Salida"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:237
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:290
 msgid "PulseAudio settings"
 msgstr "Configuración de PulseAudio"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:238
+#: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:291
 msgid "Mute other applications during a call"
 msgstr "Silenciar el resto de aplicaciones durante una llamada"
 
@@ -627,12 +647,11 @@ msgid "Enable notifications"
 msgstr "Habilitar notificaciones"
 
 #: ../sflphone-client-kde/build/src/ui_dlgdisplaybase.h:122
-#: ../sflphone-client-kde/build/src/ui_dlgdisplaybase.h:126
-msgid "On incoming calls"
+msgid "On incoming &calls"
 msgstr "Al recibir llamadas"
 
 #: ../sflphone-client-kde/build/src/ui_dlgdisplaybase.h:123
-msgid "On messages"
+msgid "On &messages"
 msgstr "Al recibir mensajes"
 
 #: ../sflphone-client-kde/build/src/ui_dlgdisplaybase.h:124
@@ -640,17 +659,18 @@ msgid "Show main window"
 msgstr "Mostrar ventana principal"
 
 #: ../sflphone-client-kde/build/src/ui_dlgdisplaybase.h:125
-msgid "On start"
+msgid "On &start"
 msgstr "En el arranque"
 
+#: ../sflphone-client-kde/build/src/ui_dlgdisplaybase.h:126
+msgid "On &incoming calls"
+msgstr "Al recibir llamadas"
+
 #: ../sflphone-client-kde/build/src/ui_dlggeneralbase.h:166
-msgctxt "Beginning of 'Keep my history for at least n days.'"
 msgid "Keep my history for at least"
 msgstr ""
 
 #: ../sflphone-client-kde/build/src/ui_dlggeneralbase.h:167
-#: ../sflphone-client-gnome/src/config/configwindow.c:643
-msgctxt "End of 'Keep my history for at least n days.'"
 msgid "days"
 msgstr ""
 
@@ -667,92 +687,91 @@ msgstr ""
 msgid "SIP Port"
 msgstr "Puerto SIP"
 
-#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:180
+#: ../sflphone-client-kde/build/src/ui_dlggeneralbase.h:171
+msgid "Attention "
+msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:174
 #: ../sflphone-client-gnome/src/config/hooks-config.c:130
 msgid "URL Argument"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:181
-#: ../sflphone-client-gnome/src/config/hooks-config.c:135
-msgid "Custom commands on incoming calls with URL"
-msgstr ""
+#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:175
+msgid "Custom commands with URL %s will be replaced with the passed URL."
+msgstr "%s se remplazará por la URL."
 
-#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:182
+#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:176
 msgid "Trigger on specific SIP header"
 msgstr "Evento desencadenado con una cabecera SIP específica"
 
-#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:183
+#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:177
 msgid "Trigger on IAX2 URL"
 msgstr "Evento desencadenado con una URL IAX2"
 
-#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:184
+#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:178
 msgid "Command to run"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:185
-#: ../sflphone-client-gnome/src/config/hooks-config.c:138
-#, c-format
-msgid "%s will be replaced with the passed URL."
-msgstr "%s se remplazará por la URL."
-
-#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:186
-#: ../sflphone-client-gnome/src/config/hooks-config.c:165
-msgid "Phone number rewriting"
+#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:179
+msgid "Phone number formatting"
 msgstr "Reescritura de número de teléfono"
 
-#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:187
-msgid "Prefix dialed numbers with"
-msgstr "Prefijar los números marcados con"
+#: ../sflphone-client-kde/build/src/ui_dlghooksbase.h:180
+msgid "Add phone number prefix"
+msgstr "Reescritura de número de teléfono"
+
+#: ../sflphone-client-kde/build/src/ui_dlgrecordbase.h:91
+msgid "General"
+msgstr "General"
 
 #: ../sflphone-client-kde/build/src/ui_dlgrecordbase.h:92
 #: ../sflphone-client-gnome/src/config/configwindow.c:726
 msgid "Destination folder"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:384
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:393
+msgid "Hold"
+msgstr "Retener"
+
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:395
 #: ../sflphone-client-gnome/src/toolbar.c:232
 #: ../sflphone-client-gnome/src/toolbar.c:234
 msgid "History"
 msgstr "Historia de Llamada"
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:385
-#: ../sflphone-client-gnome/src/toolbar.c:52
-#: ../sflphone-client-gnome/src/toolbar.c:251
-#: ../sflphone-client-gnome/src/toolbar.c:255
-msgid "Voicemail"
-msgstr "Mensaje de voz"
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:397
+msgid "Configure accounts"
+msgstr "Cuentas Configuradas"
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:386
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:388
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:398
+msgid "Configure audio"
+msgstr "Cuentas Configuradas"
+
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:399
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:401
 msgid "Configure SFLphone"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:390
-msgid "Display volume controls"
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:403
+msgid "Display volume bars"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:391
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:404
 msgid "Display dialpad"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:392
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:405
 msgctxt "Action record a call"
 msgid "Record"
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:396
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:408
 msgid "Attention:number of results exceeds max displayed."
 msgstr ""
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:398
-#: ../sflphone-client-gnome/src/sliders.c:163
-msgid "Mic volume"
-msgstr "Volumen del micrófono"
-
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:402
-#: ../sflphone-client-gnome/src/sliders.c:161
-msgid "Speakers volume"
-msgstr "Volumen de altavoces"
+#: ../sflphone-client-gnome/src/accountlist.c:187
+msgid "accounr state"
+msgstr "Configuración de cuentas"
 
 #: ../sflphone-client-gnome/src/actions.c:54
 #: ../sflphone-client-gnome/src/sflnotify.c:94
@@ -792,12 +811,9 @@ msgstr ""
 msgid ""
 "You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
-msgstr "Puede comprobar en cualquier momento su estado de registro o modificar la "
+msgstr ""
+"Puede comprobar en cualquier momento su estado de registro o modificar la "
 "configuración de sus cuentas en la ventana de Opciones/Cuentas."
-
-#: ../sflphone-client-gnome/src/assistant.c:78
-msgid "Username"
-msgstr "Usuario"
 
 #: ../sflphone-client-gnome/src/assistant.c:190
 msgid "SFLphone account creation wizard"
@@ -896,7 +912,7 @@ msgstr "Hay llamadas en curso."
 msgid "Do you still want to quit?"
 msgstr "Sin embargo quiere parar ?"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:296
+#: ../sflphone-client-gnome/src/mainwindow.c:284
 msgid "SFLphone Error"
 msgstr "SFLphone Error"
 
@@ -914,27 +930,27 @@ msgid "_Help"
 msgstr "_Ayuda"
 
 #: ../sflphone-client-gnome/src/menus.c:296
-#: ../sflphone-client-gnome/src/menus.c:962
+#: ../sflphone-client-gnome/src/menus.c:953
 msgid "_New call"
 msgstr "_Nueva llamada"
 
 #: ../sflphone-client-gnome/src/menus.c:308
-#: ../sflphone-client-gnome/src/menus.c:794
+#: ../sflphone-client-gnome/src/menus.c:785
 msgid "_Pick up"
 msgstr "_Descolgar"
 
 #: ../sflphone-client-gnome/src/menus.c:318
-#: ../sflphone-client-gnome/src/menus.c:806
+#: ../sflphone-client-gnome/src/menus.c:797
 msgid "_Hang up"
 msgstr "_Colgar"
 
 #: ../sflphone-client-gnome/src/menus.c:328
-#: ../sflphone-client-gnome/src/menus.c:818
+#: ../sflphone-client-gnome/src/menus.c:809
 msgid "On _Hold"
 msgstr "En _Espera"
 
 #: ../sflphone-client-gnome/src/menus.c:340
-#: ../sflphone-client-gnome/src/menus.c:830
+#: ../sflphone-client-gnome/src/menus.c:821
 msgid "_Record"
 msgstr "_Recordar"
 
@@ -947,7 +963,6 @@ msgid "_Call"
 msgstr "_Llamar"
 
 #: ../sflphone-client-gnome/src/menus.c:552
-#, fuzzy
 msgid "Clear _history"
 msgstr "_Limpiar historial"
 
@@ -959,27 +974,27 @@ msgstr "_Cuentas"
 msgid "_Edit"
 msgstr "_Editar"
 
-#: ../sflphone-client-gnome/src/menus.c:640
+#: ../sflphone-client-gnome/src/menus.c:631
 msgid "_Dialpad"
 msgstr "_Teclado numérico"
 
-#: ../sflphone-client-gnome/src/menus.c:652
+#: ../sflphone-client-gnome/src/menus.c:643
 msgid "_Volume controls"
 msgstr "_Controles de volumen"
 
-#: ../sflphone-client-gnome/src/menus.c:670
+#: ../sflphone-client-gnome/src/menus.c:661
 msgid "_View"
 msgstr "_Ver"
 
-#: ../sflphone-client-gnome/src/menus.c:890
+#: ../sflphone-client-gnome/src/menus.c:881
 msgid "_Call back"
 msgstr "_Llamar"
 
-#: ../sflphone-client-gnome/src/menus.c:1070
+#: ../sflphone-client-gnome/src/menus.c:1061
 msgid "Edit phone number"
 msgstr ""
 
-#: ../sflphone-client-gnome/src/menus.c:1081
+#: ../sflphone-client-gnome/src/menus.c:1072
 msgid "Edit the phone number before making a call"
 msgstr "Editar el número de teléfono antes de llamar"
 
@@ -1016,14 +1031,17 @@ msgstr "Error"
 msgid "You have no registered accounts"
 msgstr "No tiene ninguna cuenta registrada"
 
+#: ../sflphone-client-gnome/src/sliders.c:161
+msgid "Speakers volume"
+msgstr "Volumen de altavoces"
+
+#: ../sflphone-client-gnome/src/sliders.c:163
+msgid "Mic volume"
+msgstr "Volumen del micrófono"
+
 #: ../sflphone-client-gnome/src/statusicon.c:91
 msgid "_Show main window"
 msgstr "Mostrar ventana principal"
-
-#: ../sflphone-client-gnome/src/statusicon.c:125
-#, c-format
-msgid "%s - %s"
-msgstr "%s - %s"
 
 #: ../sflphone-client-gnome/src/statusicon.c:127
 #, c-format
@@ -1031,6 +1049,12 @@ msgid "%i account configured"
 msgid_plural "%i accounts configured"
 msgstr[0] ""
 msgstr[1] ""
+
+#: ../sflphone-client-gnome/src/toolbar.c:52
+#: ../sflphone-client-gnome/src/toolbar.c:251
+#: ../sflphone-client-gnome/src/toolbar.c:255
+msgid "Voicemail"
+msgstr "Mensaje de voz"
 
 #: ../sflphone-client-gnome/src/config/accountwindow.c:113
 msgid "Account settings"
@@ -1065,7 +1089,6 @@ msgid "_Display contact photo if available"
 msgstr "_Mostrar fotos de contactos, si está disponible"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:341
-#, fuzzy
 msgid "Fields from Evolution's address books"
 msgstr "Usar los siguientes campos de la libreta de direcciones de Evolution:"
 
@@ -1089,10 +1112,13 @@ msgstr "Libreta de direcciones"
 msgid "Select which Evolution address books to use"
 msgstr "Seleccione las libretas de direcciones de Evolution a usar"
 
-#: ../sflphone-client-gnome/src/config/addressbook-config.c:404
-#: ../sflphone-client-gnome/src/config/audioconf.c:576
-msgid "Name"
-msgstr "Nombre"
+#: ../sflphone-client-gnome/src/config/audioconf.c:684
+msgid "Output"
+msgstr "Salida"
+
+#: ../sflphone-client-gnome/src/config/audioconf.c:706
+msgid "Input"
+msgstr "Entrada"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:741
 msgid "_Voice Activity Detection"
@@ -1107,14 +1133,16 @@ msgid "Sound Manager"
 msgstr "Gestor de audio"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:783
-#, fuzzy
 msgid "_Pulseaudio"
 msgstr "Pulseaudio"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:788
-#, fuzzy
 msgid "_ALSA"
 msgstr "ALSA"
+
+#: ../sflphone-client-gnome/src/config/audioconf.c:812
+msgid "Codecs"
+msgstr "Códecs"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:835
 msgid "Ringtones"
@@ -1131,6 +1159,18 @@ msgstr "Elija un tono de llmada"
 #: ../sflphone-client-gnome/src/config/audioconf.c:853
 msgid "Audio Files"
 msgstr "Archivos de Audio"
+
+#: ../sflphone-client-gnome/src/config/configwindow.c:425
+msgid "Status"
+msgstr "Estado"
+
+#: ../sflphone-client-gnome/src/config/configwindow.c:528
+msgid "Stun parameters will be applied on each SIP account created."
+msgstr "Parámetros de stun se aplicarán a cada cuenta SIP creada."
+
+#: ../sflphone-client-gnome/src/config/configwindow.c:544
+msgid "Format : name.server:port"
+msgstr "Formato : nombre.servidor:puerto"
 
 #: ../sflphone-client-gnome/src/config/configwindow.c:589
 msgid "Desktop Notifications"
@@ -1169,12 +1209,16 @@ msgctxt "Beginning of 'Keep my history for at least n days.'"
 msgid "_Keep my history for at least"
 msgstr ""
 
+#: ../sflphone-client-gnome/src/config/configwindow.c:643
+msgctxt "End of 'Keep my history for at least n days.'"
+msgid "days"
+msgstr ""
+
 #: ../sflphone-client-gnome/src/config/configwindow.c:647
 msgid "PulseAudio sound server"
 msgstr "Servidor de sonido Pulseaudio"
 
 #: ../sflphone-client-gnome/src/config/configwindow.c:650
-#, fuzzy
 msgid "_Mute other applications during a call"
 msgstr "Silenciar el resto de aplicaciones durante una llamada"
 
@@ -1194,6 +1238,15 @@ msgstr "Preferencias"
 msgid "Configured Accounts"
 msgstr "Cuentas Configuradas"
 
+#: ../sflphone-client-gnome/src/config/hooks-config.c:135
+msgid "Custom commands on incoming calls with URL"
+msgstr ""
+
+#: ../sflphone-client-gnome/src/config/hooks-config.c:138
+#, c-format
+msgid "%s will be replaced with the passed URL."
+msgstr "%s se remplazará por la URL."
+
 #: ../sflphone-client-gnome/src/config/hooks-config.c:141
 msgid "Trigger on specific _SIP header"
 msgstr "Evento desencadenado con una cabecera _SIP específica"
@@ -1205,6 +1258,10 @@ msgstr "Evento desencadenado con una URL _IAX2"
 #: ../sflphone-client-gnome/src/config/hooks-config.c:155
 msgid "Command to _run"
 msgstr "_Orden a ejecutar"
+
+#: ../sflphone-client-gnome/src/config/hooks-config.c:165
+msgid "Phone number rewriting"
+msgstr "Reescritura de número de teléfono"
 
 #: ../sflphone-client-gnome/src/config/hooks-config.c:169
 msgid "_Prefix dialed numbers with"
@@ -1232,6 +1289,18 @@ msgstr ""
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:93
 msgid "Search by outgoing call"
 msgstr ""
+
+#~ msgid "Enable address book"
+#~ msgstr "Activar la libreta de contactos"
+
+#~ msgid "Sound manager"
+#~ msgstr "Gestor de audio"
+
+#~ msgid "Prefix dialed numbers with"
+#~ msgstr "Prefijar los números marcados con"
+
+#~ msgid "%s - %s"
+#~ msgstr "%s - %s"
 
 #~ msgid "Registered"
 #~ msgstr "Registrado"
@@ -1340,17 +1409,11 @@ msgstr ""
 #~ msgid "Off Hold"
 #~ msgstr "Seguir"
 
-#~ msgid "On Hold"
-#~ msgstr "Retener"
-
 #~ msgid "Record a call"
 #~ msgstr "Grabar una llamada"
 
 #~ msgid "Account Parameters"
 #~ msgstr "Parámetros de cuenta"
-
-#~ msgid "General"
-#~ msgstr "General"
 
 #~ msgid "Download limit:"
 #~ msgstr "Límite de descarga"
@@ -1385,32 +1448,6 @@ msgstr ""
 #~ msgid "Port:"
 #~ msgstr "Puerto:"
 
-#, fuzzy
-#~ msgid "Recordings folder"
-#~ msgstr "Directorio de Grabaciones"
-
-#~ msgid "General Settings"
-#~ msgstr "Configuración general"
-
-#~ msgid "Audio Settings"
-#~ msgstr "Configuración de audio"
-
-#~ msgid "Recordings"
-#~ msgstr "Grabaciones"
-
-#~ msgid "Address Book"
-#~ msgstr "Libreta de direcciones"
-
-#~ msgid "Hooks"
-#~ msgstr "Disparadores"
-
-#~ msgid "Accounts"
-#~ msgstr "Cuentas"
-
-#~ msgid "URL Passing"
-#~ msgstr "Paso de URL"
-
-#, fuzzy
 #~ msgid "Command to _run: "
 #~ msgstr "_Orden a ejecutar: "
 

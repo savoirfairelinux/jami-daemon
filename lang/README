@@ -1,4 +1,4 @@
-If you need to update translations files, just execute:
+If you need to update the translations files, just execute:
 
 	./update.sh
 	
