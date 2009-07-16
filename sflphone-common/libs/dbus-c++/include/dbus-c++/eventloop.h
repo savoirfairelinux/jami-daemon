@@ -30,6 +30,7 @@
 
 #include "api.h"
 #include "util.h"
+#include "error.h"
 
 namespace DBus {
 
@@ -149,6 +150,8 @@ public:
 
 	virtual void dispatch();
 
+    virtual void terminate();
+    
 private:
 
 	DefaultMutex _mutex_t;
@@ -156,6 +159,8 @@ private:
 
 	DefaultMutex _mutex_w;
 	DefaultWatches _watches;
+	
+	int _terminateFd[2];
 
 friend class DefaultTimeout;
 friend class DefaultWatch;
