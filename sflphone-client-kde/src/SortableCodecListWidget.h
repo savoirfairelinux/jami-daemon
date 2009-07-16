@@ -18,23 +18,47 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "dlgrecord.h"
+#ifndef SORTABLECODECLISTWIDGET_H
+#define SORTABLECODECLISTWIDGET_H
 
-#include <KLineEdit>
+#include <QWidget>
+#include <KPushButton>
+#include <QTableView>
+#include "CodecListModel.h"
 
-DlgRecord::DlgRecord(QWidget *parent)
- : QWidget(parent)
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class SortableCodecListWidget : public QWidget
 {
-	setupUi(this);
-	KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
-	KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
-	KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
-	KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
-}
+Q_OBJECT
+private:
+	KPushButton * codecUpButton;
+	KPushButton * codecDownButton;
+	QTableView * codecTable;
 
+public:
+	SortableCodecListWidget(QWidget *parent = 0);
+	
+	virtual void setModel(CodecListModel * model);
+	virtual CodecListModel * model();
+	
+private slots:
+	void on_codecUpButton_clicked();
+	void on_codecDownButton_clicked();
+	
+public slots:
+	void updateCommands();
+	
+private:
+	QModelIndex selectedIndex();
+	int selectedRow();
 
-DlgRecord::~DlgRecord()
-{
-}
+	void setSelectedRow(int row);
+	
+signals:
+	void dataChanged();
 
+};
 
+#endif

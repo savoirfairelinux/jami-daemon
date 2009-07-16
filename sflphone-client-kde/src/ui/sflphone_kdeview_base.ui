@@ -66,6 +66,12 @@
        </item>
        <item>
         <widget class="KLineEdit" name="lineEdit_addressBook">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Address book loading...</string>
+         </property>
          <property name="showClearButton" stdset="0">
           <bool>true</bool>
          </property>

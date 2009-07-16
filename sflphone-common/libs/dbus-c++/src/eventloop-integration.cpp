@@ -86,6 +86,7 @@ void BusDispatcher::enter()
 void BusDispatcher::leave()
 {
     _running = false;
+    terminate();
 }
 
 void BusDispatcher::do_iteration()

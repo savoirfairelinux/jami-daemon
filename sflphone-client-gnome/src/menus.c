@@ -614,16 +614,7 @@ view_volume_controls  (GtkImageMenuItem *imagemenuitem UNUSED,
     dbus_set_volume_controls( state );
 }
 
-/*
-   static void
-   view_searchbar  (GtkImageMenuItem *imagemenuitem UNUSED,
-   void* foo UNUSED)
-   {
-   gboolean state;
-   main_window_searchbar( &state );
-   dbus_set_searchbar( state );
-   }
-   */
+
     GtkWidget *
 create_view_menu()
 {

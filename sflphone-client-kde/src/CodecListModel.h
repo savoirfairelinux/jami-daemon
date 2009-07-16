@@ -18,23 +18,42 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "dlgrecord.h"
+#ifndef CODECLISTMODEL_H
+#define CODECLISTMODEL_H
 
-#include <KLineEdit>
+#include <QAbstractItemModel>
+#include "Codec.h"
 
-DlgRecord::DlgRecord(QWidget *parent)
- : QWidget(parent)
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class CodecListModel : public QAbstractTableModel
 {
-	setupUi(this);
-	KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
-	KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
-	KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
-	KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
-}
+Q_OBJECT
+private:
+	QList<Codec *> codecs;
 
+public:
+	CodecListModel(QObject *parent = 0);
 
-DlgRecord::~DlgRecord()
-{
-}
+	~CodecListModel();
+	void setCodecs(QList<Codec *> codecs);
 
+	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
+	int rowCount(const QModelIndex & parent = QModelIndex()) const;
+	int columnCount(const QModelIndex & parent = QModelIndex()) const;
+// 	bool insertRows(int position, int rows, const QModelIndex &parent);
+	QVariant headerData(int section , Qt::Orientation orientation, int role) const;
+	Qt::ItemFlags flags(const QModelIndex & index) const;
+	virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
+	
+	bool codecUp( int index );
+	bool codecDown( int index );
+	QStringList getActiveCodecList() const ;
+	void setActiveCodecList(const QStringList & activeCodecListToSet);
 
+signals:
+	void dataChanged(const QModelIndex &, const QModelIndex &);
+};
+
+#endif

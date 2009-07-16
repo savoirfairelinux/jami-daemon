@@ -184,7 +184,7 @@ const gchar * account_state_name(account_state_t s)
     state = _("Error");
     break;
   case ACCOUNT_STATE_ERROR_AUTH:
-    state = _("Bad authentification");
+    state = _("Authentication Failed");
     break;
   case ACCOUNT_STATE_ERROR_NETWORK:
     state = _("Network unreachable");

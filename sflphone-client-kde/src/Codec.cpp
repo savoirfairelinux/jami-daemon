@@ -18,23 +18,47 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "dlgrecord.h"
+#include "Codec.h"
 
-#include <KLineEdit>
+#include "configurationmanager_interface_singleton.h"
+#include "sflphone_const.h"
 
-DlgRecord::DlgRecord(QWidget *parent)
- : QWidget(parent)
+Codec::Codec(int payload, bool enabled)
 {
-	setupUi(this);
-	KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
-	KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
-	KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
-	KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	QStringList details = configurationManager.getCodecDetails(payload);
+	this->payload = QString::number(payload);
+	this->enabled = enabled;
+	this->name = details[CODEC_NAME];
+	this->frequency = details[CODEC_SAMPLE_RATE];
+	this->bitrate = details[CODEC_BIT_RATE];
+	this->bandwidth = details[CODEC_BANDWIDTH];
 }
 
+QString Codec::getPayload() const
+{	return payload;	}
+QString Codec::getName() const
+{	return name;	}
+QString Codec::getFrequency() const
+{	return frequency;	}
+QString Codec::getBitrate() const
+{	return bitrate;	}
+QString Codec::getBandwidth() const
+{	return bandwidth;	}
+bool Codec::isEnabled() const
+{	return enabled;	}
 
-DlgRecord::~DlgRecord()
-{
-}
+void Codec::setPayload(QString payload)
+{	this->payload = payload;	}
+void Codec::setName(QString name)
+{	this->name = name;	}
+void Codec::setFrequency(QString frequency)
+{	this->frequency = frequency;	}
+void Codec::setBitrate(QString bitrate)
+{	this->bitrate = bitrate;	}
+void Codec::setBandwidth(QString bandwidth)
+{	this->bandwidth = bandwidth;	}
+void Codec::setEnabled(bool enabled)
+{	this->enabled = enabled;	}
 
 
