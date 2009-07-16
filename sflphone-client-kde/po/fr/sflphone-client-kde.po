@@ -37,7 +37,7 @@ msgstr "Erreur"
 
 #: ../src/Account.cpp:42
 msgctxt "account state"
-msgid "Bad authentification"
+msgid "Authentication Failed"
 msgstr "Mauvaise authentification"
 
 #: ../src/Account.cpp:44

@@ -77,8 +77,6 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define SHOW_DIALPAD	( dbus_get_dialpad() )
 /** Show/Hide the volume controls */
 #define SHOW_VOLUME	( dbus_get_volume_controls() )
-/** Show/Hide the dialpad */
-#define SHOW_SEARCHBAR	( dbus_get_searchbar() )
 /** Show/Hide the alsa configuration panel */
 #define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
 

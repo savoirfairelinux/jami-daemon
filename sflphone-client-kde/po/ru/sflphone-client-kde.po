@@ -1531,3 +1531,4 @@ msgstr "Внимание: Количество результатов превы
 
 #~ msgid "&Record"
 #~ msgstr "Записать"
+>>>>>>> rc1:sflphone-client-kde/po/ru/sflphone-client-kde.po
