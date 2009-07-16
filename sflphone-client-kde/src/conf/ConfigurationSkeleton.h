@@ -28,6 +28,14 @@
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	This class represents the config skeleton for the config dialog.
+	It inherits the KConfigSkeleton "ConfigurationSkeletonBase"generated 
+	by sflphone-client-kde.kcfg which handles most of the settings.
+	This class handles the codec list. 
+	A few complicated settings are handled directly by the config dialog 
+	and its pages (accounts, sound managers).
+	This class reimplements the writeConfig and readConfig functions to ask the
+	daemon instead of the normal behavior (read and write in a kconfig file).
 */
 class ConfigurationSkeleton : public ConfigurationSkeletonBase
 {
@@ -54,12 +62,6 @@ public:
 	void setActiveCodecList(const QStringList & v);
 	
 	CodecListModel * getCodecListModel();
-	
-// protected:
-
-// 	virtual void usrReadConfig();
-
-
 
 };
 

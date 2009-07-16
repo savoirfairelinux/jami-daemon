@@ -42,6 +42,14 @@ class sflphone_kdeView;
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	This class represents the config dialog for sflphone.
+	It uses the ConfigurationSkeleton class to handle most of the settings.
+	It inherits KConfigDialog with the pages defined in dlg... files.
+	A few complicated settings are handled directly by its pages.
+	Some custom behaviors have been added to handle specific cases,
+	as this config dialog is not the usual kind.
+	A few things might be done a cleaner way by passing the handling 
+	to the skeleton like it has been done with codecs.
 */
 class ConfigurationDialogKDE : public KConfigDialog
 {
