@@ -76,6 +76,7 @@ pixmaps/Makefile
 sflphone.desktop
 tests/Makefile
 man/Makefile
+po/Makefile
 ])
 
 

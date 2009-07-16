@@ -39,7 +39,7 @@ const QString account_state_name(QString & s)
 	if(s == QString(ACCOUNT_STATE_ERROR))
 		return i18nc("account state", "Error");
 	if(s == QString(ACCOUNT_STATE_ERROR_AUTH))
-		return i18nc("account state", "Bad authentification");
+		return i18nc("account state", "Authentication Failed");
 	if(s == QString(ACCOUNT_STATE_ERROR_NETWORK))
 		return i18nc("account state", "Network unreachable");
 	if(s == QString(ACCOUNT_STATE_ERROR_HOST))

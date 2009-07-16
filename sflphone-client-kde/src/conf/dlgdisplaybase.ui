@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string notr="true">Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -39,14 +39,14 @@
       <item>
        <widget class="QCheckBox" name="kcfg_notifOnCalls">
         <property name="text">
-         <string>On incoming &amp;calls</string>
+         <string>On incoming calls</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="kcfg_notifOnMessages">
         <property name="text">
-         <string>On &amp;messages</string>
+         <string>On messages</string>
         </property>
        </widget>
       </item>
@@ -78,14 +78,14 @@
       <item>
        <widget class="QCheckBox" name="kcfg_displayOnStart">
         <property name="text">
-         <string>On &amp;start</string>
+         <string>On start</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="kcfg_displayOnCalls">
         <property name="text">
-         <string>On &amp;incoming calls</string>
+         <string>On incoming calls</string>
         </property>
        </widget>
       </item>

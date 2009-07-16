@@ -126,8 +126,8 @@ void SFLPhone::setupActions()
 	actionCollection()->addAction("action_displayVolumeControls", view->action_displayVolumeControls);
 	actionCollection()->addAction("action_displayDialpad", view->action_displayDialpad);
 	actionCollection()->addAction("action_configureSflPhone", view->action_configureSflPhone);
-	actionCollection()->addAction("action_configureAccounts", view->action_configureAccounts);
-	actionCollection()->addAction("action_configureAudio", view->action_configureAudio);
+// 	actionCollection()->addAction("action_configureAccounts", view->action_configureAccounts);
+// 	actionCollection()->addAction("action_configureAudio", view->action_configureAudio);
 	actionCollection()->addAction("action_accountCreationWizard", view->action_accountCreationWizard);
 	
 	statusBarWidget = new QLabel();
@@ -178,7 +178,7 @@ void SFLPhone::quitButton()
 	if(view->listWidget_callList->count() > 0 && instance.getRegistrationCount() <= 1)
 	{
 		qDebug() << "Attempting to quit when still having some calls open.";
-		view->getErrorWindow()->showMessage(i18n("You still have some calls open. Please close all calls before quitting."));
+// 		view->getErrorWindow()->showMessage(i18n("You still have some calls open. Please close all calls before quitting."));
 	}
 	instance.Unregister(getpid());
 	qApp->quit();

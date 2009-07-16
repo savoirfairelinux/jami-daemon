@@ -160,7 +160,7 @@ AccountWizard::AccountWizard(QWidget * parent)
 	setPage(Page_Conclusion, new WizardAccountConclusionPage);
 	
 	setStartId(Page_Intro);
-	setWindowTitle(i18n("Account Creation Wizard"));
+	setWindowTitle(i18n("Account creation wizard"));
 	setWindowIcon(QIcon(ICON_SFLPHONE));
 	setMinimumHeight(350);
 	setPixmap(QWizard::WatermarkPixmap, QPixmap(ICON_SFLPHONE));
@@ -196,7 +196,7 @@ void AccountWizard::accept()
 		rest_account acc = get_rest_account(SFL_ACCOUNT_HOST, charEmailAddress);
 		if(acc.success)
 		{
-			ret += i18n("Creation of account succeed with these parameters") + " :\n";
+			ret += i18n("This assistant is now finished.") + "\n";
 			alias = QString(acc.user) + "@" + SFL_ACCOUNT_HOST;
 			server = QString(SFL_ACCOUNT_HOST);
 			user = QString(acc.user);
@@ -214,7 +214,7 @@ void AccountWizard::accept()
 	}
 	else
 	{
-		ret += i18n("Register of account succeed with these parameters") + " :\n";
+		ret += i18n("This assistant is now finished.") + "\n";
 		bool SIPAccount = field(FIELD_SIP_ACCOUNT).toBool();
 		if(SIPAccount)
 		{
@@ -254,10 +254,10 @@ void AccountWizard::accept()
 		}
 		ret += i18n("Alias") + " : " + alias + "\n";
 		ret += i18n("Server") + " : " + server + "\n";
-		ret += i18n("User") + " : " + user + "\n";
+		ret += i18n("Username") + " : " + user + "\n";
 		ret += i18n("Password") + " : " + password + "\n";
 		ret += i18n("Protocol") + " : " + protocol + "\n";
-		ret += i18n("Mailbox") + " : " + mailbox + "\n";
+		ret += i18n("Voicemail number") + " : " + mailbox + "\n";
 	}
 	qDebug() << ret;
 	QDialog::accept();
@@ -275,10 +275,10 @@ void AccountWizard::accept()
 WizardIntroPage::WizardIntroPage(QWidget *parent)
      : QWizardPage(parent)
 {
-	setTitle(i18n("Account Creation Wizard"));
-	setSubTitle(i18n("Welcome to the Account creation wizard of SFLphone"));
+	setTitle(i18n("Account creation wizard"));
+	setSubTitle(i18n("Welcome to the Account creation wizard of SFLphone!"));
 
-	introLabel = new QLabel(i18n("This wizard will help you setting up an account."));
+	introLabel = new QLabel(i18n("This installation wizard will help you configure an account."));
 	introLabel->setWordWrap(true);
 
 	QVBoxLayout *layout = new QVBoxLayout;
@@ -306,11 +306,11 @@ int WizardIntroPage::nextId() const
 WizardAccountAutoManualPage::WizardAccountAutoManualPage(QWidget *parent)
      : QWizardPage(parent)
 {
-	setTitle(i18n("Accounts"));
-	setSubTitle(i18n("Please choose between those options :"));
+	setTitle(i18n("Account"));
+	setSubTitle(i18n("Please select one of the following options"));
 
 	radioButton_SFL = new QRadioButton(i18n("Create a free SIP/IAX2 account on sflphone.org"));
-	radioButton_manual = new QRadioButton(i18n("Register an existing SIP/IAX2 account"));
+	radioButton_manual = new QRadioButton(i18n("Register an existing SIP or IAX2 account"));
 	radioButton_SFL->setChecked(true);
 
 	registerField(FIELD_SFL_ACCOUNT, radioButton_SFL);
@@ -350,10 +350,10 @@ WizardAccountTypePage::WizardAccountTypePage(QWidget *parent)
      : QWizardPage(parent)
 {
 	setTitle(i18n("VoIP Protocols"));
-	setSubTitle(i18n("Choose the account type") + " :");
+	setSubTitle(i18n("Select an account type"));
 
-	radioButton_SIP = new QRadioButton(i18n("Register a SIP (Session Initiation Protocol) account"));
-	radioButton_IAX = new QRadioButton(i18n("Register a IAX2 (InterAsterisk eXchange) account"));
+	radioButton_SIP = new QRadioButton(i18n("SIP (Session Initiation Protocol)"));
+	radioButton_IAX = new QRadioButton(i18n("IAX2 (InterAsterix Exchange)"));
 	radioButton_SIP->setChecked(true);
 	
 	registerField(FIELD_SIP_ACCOUNT, radioButton_SIP);
@@ -392,7 +392,7 @@ int WizardAccountTypePage::nextId() const
 WizardAccountEmailAddressPage::WizardAccountEmailAddressPage(QWidget *parent)
      : QWizardPage(parent)
 {
-	setTitle(i18n("Optionnal Email Address"));
+	setTitle(i18n("Optional email address"));
 	setSubTitle(i18n("This email address will be used to send your voicemail messages."));
 
 	label_emailAddress = new QLabel(i18n("Email address"));
@@ -429,17 +429,17 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 	this->type = type;
 	if(type == SIP)
 	{
-		setTitle(i18n("SIP Account Settings"));
+		setTitle(i18n("SIP account settings"));
 	}
 	else
 	{
-		setTitle(i18n("IAX2 Account Settings"));
+		setTitle(i18n("IAX2 account settings"));
 	}
-	setSubTitle(i18n("Please full these settings fields."));
+	setSubTitle(i18n("Please fill the following information"));
 
 	label_alias = new QLabel(i18n("Alias") + " *");
 	label_server = new QLabel(i18n("Server") + " *");
-	label_user = new QLabel(i18n("User") + " *");
+	label_user = new QLabel(i18n("Username") + " *");
 	label_password = new QLabel(i18n("Password") + " *");
 	label_voicemail = new QLabel(i18n("Voicemail number"));
 	
@@ -521,7 +521,7 @@ WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
      : QWizardPage(parent)
 {
 	setTitle(i18n("Network Address Translation (NAT)"));
-	setSubTitle(i18n("You should probably enable this option if you're placed under a firewall"));
+	setSubTitle(i18n("You should probably enable this if you are behind a firewall."));
 
 	checkBox_enableStun = new QCheckBox(i18n("Enable STUN"));
 	label_StunServer = new QLabel(i18n("Stun Server"));
@@ -558,7 +558,7 @@ int WizardAccountStunPage::nextId() const
 WizardAccountConclusionPage::WizardAccountConclusionPage(QWidget *parent)
      : QWizardPage(parent)
 {
-	setTitle(i18n("Account Definition Finished"));
+	setTitle(i18n("This assistant is now finished."));
 	setSubTitle(i18n("After checking the settings you chose, click \"Finish\" to create the account."));
 
 	QVBoxLayout *layout = new QVBoxLayout;

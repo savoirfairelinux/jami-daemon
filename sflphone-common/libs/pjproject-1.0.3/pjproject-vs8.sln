@@ -103,8 +103,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pjnath", "pjnath\build\pjna
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgsmcodec", "third_party\build\gsm\libgsmcodec.vcproj", "{E53AA5FF-B737-40AA-BD13-387EFA99023D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libilbccodec", "third_party\build\ilbc\libilbccodec.vcproj", "{B5FE16F8-3EDB-4110-BD80-B4238CC01E8D}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libportaudio", "third_party\build\portaudio\libportaudio.vcproj", "{3CF9FFA9-8387-4635-9D1B-E7944CBEFEAA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libresample", "third_party\build\resample\libresample.vcproj", "{6794B975-4E84-4F49-B2DC-C31F2224E03E}"

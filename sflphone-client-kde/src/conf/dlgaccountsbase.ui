@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string notr="true">Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -135,7 +135,7 @@
                <string>Remove</string>
               </property>
               <property name="shortcut">
-               <string>Backspace, Return</string>
+               <string notr="true">-, Del, Backspace</string>
               </property>
              </widget>
             </item>
@@ -162,6 +162,9 @@
               <property name="text">
                <string>Add</string>
               </property>
+              <property name="shortcut">
+               <string notr="true">+</string>
+              </property>
              </widget>
             </item>
             <item>
@@ -175,6 +178,9 @@
               <property name="text">
                <string>Down</string>
               </property>
+              <property name="shortcut">
+               <string notr="true">Down, PgDown</string>
+              </property>
              </widget>
             </item>
             <item>
@@ -187,6 +193,9 @@
               </property>
               <property name="text">
                <string>Up</string>
+              </property>
+              <property name="shortcut">
+               <string notr="true">Up, PgUp</string>
               </property>
              </widget>
             </item>
@@ -310,7 +319,7 @@
          <item row="3" column="0">
           <widget class="QLabel" name="label4_user">
            <property name="text">
-            <string>User</string>
+            <string>Username</string>
            </property>
            <property name="buddy">
             <cstring>edit4_user</cstring>
@@ -340,7 +349,7 @@
          <item row="5" column="0">
           <widget class="QLabel" name="label6_mailbox">
            <property name="text">
-            <string>Mailbox</string>
+            <string>Voicemail</string>
            </property>
            <property name="buddy">
             <cstring>edit6_mailbox</cstring>
@@ -353,7 +362,7 @@
          <item row="6" column="0">
           <widget class="QLabel" name="label7_state">
            <property name="text">
-            <string>State</string>
+            <string>Status</string>
            </property>
           </widget>
          </item>
@@ -379,7 +388,10 @@
       <item>
        <widget class="QLabel" name="label_commonSettings">
         <property name="text">
-         <string>Stun settings will be applied on each account</string>
+         <string>Stun parameters will be applied on each SIP account created.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -399,6 +411,9 @@
          <widget class="KLineEdit" name="kcfg_stunServer">
           <property name="enabled">
            <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>Format : name.server:port</string>
           </property>
           <property name="squeezedTextEnabled">
            <bool>false</bool>

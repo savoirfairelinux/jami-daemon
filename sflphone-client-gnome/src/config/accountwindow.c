@@ -122,7 +122,7 @@ show_account_window (account_t * a)
     gtk_dialog_set_has_separator(dialog, TRUE);
     gtk_container_set_border_width (GTK_CONTAINER(dialog), 0);
 
-    gnome_main_section_new (_("Account Parameters"), &frame);
+    gnome_main_section_new ("", &frame);
     gtk_box_pack_start(GTK_BOX(dialog->vbox), frame, FALSE, FALSE, 0);
     gtk_widget_show(frame);
 

@@ -152,7 +152,7 @@ select_active_output_audio_device()
         // Select active output device on server
         devices = dbus_get_current_audio_devices_index();
         currentDeviceIndex = atoi(devices[0]);
-        DEBUG(_("audio device index for output = %d"), currentDeviceIndex);
+        DEBUG("audio device index for output = %d", currentDeviceIndex);
         model = gtk_combo_box_get_model(GTK_COMBO_BOX(output));
 
         // Find the currently set output device
@@ -792,7 +792,7 @@ GtkWidget* create_audio_configuration()
  
 
     // Box for the ALSA configuration
-    gnome_main_section_new (_("ALSA configuration"), &alsa_conf);
+    gnome_main_section_new (_("ALSA settings"), &alsa_conf);
     gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
     // gtk_widget_hide( GTK_CONTAINER(alsa_conf) );
     gtk_widget_show( alsa_conf );

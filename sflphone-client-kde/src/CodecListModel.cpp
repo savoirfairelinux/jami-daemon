@@ -22,6 +22,7 @@
 
 #include <QtCore/QSize>
 #include <QtCore/QDebug>
+#include <KLocale>
 #include "configurationmanager_interface_singleton.h"
 
 CodecListModel::CodecListModel(QObject *parent)
@@ -85,19 +86,19 @@ QVariant CodecListModel::headerData(int section , Qt::Orientation orientation, i
 {
 	if (section == 0 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
 	{
-		return QVariant("Codec");
+		return QVariant(i18n("Codec"));
 	}
 	else if (section == 1 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
 	{
-		return QVariant("Frequency");
+		return QVariant(i18n("Frequency"));
 	}
 	else if (section == 2 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
 	{
-		return QVariant("Bitrate");
+		return QVariant(i18n("Bitrate"));
 	}
 	else if (section == 3 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
 	{
-		return QVariant("Bandwidth");
+		return QVariant(i18n("Bandwidth"));
 	}
 	return QVariant();
 }

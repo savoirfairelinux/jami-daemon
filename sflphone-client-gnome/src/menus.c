@@ -614,16 +614,7 @@ view_volume_controls  (GtkImageMenuItem *imagemenuitem UNUSED,
     dbus_set_volume_controls( state );
 }
 
-/*
-   static void
-   view_searchbar  (GtkImageMenuItem *imagemenuitem UNUSED,
-   void* foo UNUSED)
-   {
-   gboolean state;
-   main_window_searchbar( &state );
-   dbus_set_searchbar( state );
-   }
-   */
+
     GtkWidget *
 create_view_menu()
 {
@@ -1067,7 +1058,7 @@ void show_edit_number (callable_obj_t *call) {
 
     // Set window properties
     gtk_window_set_default_size(GTK_WINDOW(edit_dialog), 300, 20);
-    gtk_window_set_title(GTK_WINDOW(edit_dialog), _("Edit phone"));
+    gtk_window_set_title(GTK_WINDOW(edit_dialog), _("Edit phone number"));
     gtk_window_set_resizable (GTK_WINDOW (edit_dialog), FALSE);
 
     g_signal_connect (G_OBJECT (edit_dialog), "delete-event", G_CALLBACK (on_delete), NULL);

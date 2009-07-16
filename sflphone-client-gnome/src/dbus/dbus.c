@@ -34,6 +34,8 @@
 #include <actions.h>
 #include <string.h>
 
+#define DEFAULT_DBUS_TIMEOUT 30000
+
 DBusGConnection * connection;
 DBusGProxy * callManagerProxy;
 DBusGProxy * configurationManagerProxy;
@@ -389,6 +391,12 @@ dbus_connect ()
             "errorAlert", G_TYPE_INT , G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (configurationManagerProxy,
             "errorAlert", G_CALLBACK(error_alert), NULL, NULL);
+            
+    /* Defines a default timeout for the proxies */
+    dbus_g_proxy_set_default_timeout(callManagerProxy, DEFAULT_DBUS_TIMEOUT);
+    dbus_g_proxy_set_default_timeout(instanceProxy, DEFAULT_DBUS_TIMEOUT);
+    dbus_g_proxy_set_default_timeout(configurationManagerProxy, DEFAULT_DBUS_TIMEOUT);
+    
     return TRUE;
 }
 

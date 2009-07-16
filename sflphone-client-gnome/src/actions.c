@@ -51,10 +51,11 @@ sflphone_notify_voice_mail ( const gchar* accountID , guint count )
     if(count > 0)
     {
         gchar * message = g_new0(gchar, 50);
-        if( count > 1)
-            g_sprintf(message, _("%d voice mails"), count);
-        else
-            g_sprintf(message, _("%d voice mail"), count);
+        g_sprintf(message, n_("%d voice mail", "%d voice mails", count), count);
+//         if( count > 1)
+//             g_sprintf(message, _("%d voice mails"), count);
+//         else
+//             g_sprintf(message, _("%d voice mail"), count);
         statusbar_push_message(message,  __MSG_VOICE_MAILS);
         g_free(message);
     }
@@ -78,13 +79,14 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
-        msg = g_markup_printf_escaped(_("Using %s (%s)") ,
+        msg = g_markup_printf_escaped("%s %s (%s)" ,
+                _("Using account"),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
     }
     else
     {
-        msg = g_markup_printf_escaped(_("No registered account"));
+        msg = g_markup_printf_escaped(_("No registered accounts"));
     }
     statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
     g_free(msg);
@@ -807,9 +809,11 @@ sflphone_display_selected_codec (const gchar* codecName)
                 msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
             }
             else {
-                msg = g_markup_printf_escaped(_("Using %s (%s) - Codec: %s") ,
+                msg = g_markup_printf_escaped("%s %s (%s) - %s %s" ,
+                        _("Using account"),
                         (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                         (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
+                        _("Codec"),
                         codecName);
             }
             statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);

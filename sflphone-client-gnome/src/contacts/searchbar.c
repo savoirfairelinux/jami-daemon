@@ -52,8 +52,9 @@ static void search_all (GtkWidget *item, GtkEntry  *entry)
 
     gtk_entry_set_icon_from_stock (entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            _("Search all\n"
-            "Click here to change the search type"));
+            g_markup_printf_escaped("%s\n%s", 
+                  _("Search all"),
+                  _("Click here to change the search type")));
 
     history_search (HistorySearchType);
 } 
@@ -64,9 +65,9 @@ static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
 
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, missed_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            _("Search by missed call\n"
-            "Click here to change the search type"));
-
+            g_markup_printf_escaped("%s\n%s", 
+                  _("Search by missed call"),
+                  _("Click here to change the search type")));
     history_search (HistorySearchType);
 } 
 
@@ -76,9 +77,9 @@ static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
 
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, incoming_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            _("Search by incoming call\n"
-            "Click here to change the search type"));
-
+            g_markup_printf_escaped("%s\n%s", 
+                  _("Search by incoming call"),
+                  _("Click here to change the search type")));
     history_search (HistorySearchType);
 } 
 
@@ -88,9 +89,9 @@ static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
 
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, outgoing_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            _("Search by outgoing call\n"
-            "Click here to change the search type"));
-
+            g_markup_printf_escaped("%s\n%s", 
+                  _("Search by outgoing call"),
+                  _("Click here to change the search type")));
     history_search (HistorySearchType);
 } 
 
