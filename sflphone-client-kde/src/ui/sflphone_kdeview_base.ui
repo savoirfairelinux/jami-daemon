@@ -434,7 +434,7 @@
      <normaloff>:/images/icons/del_off.png</normaloff>:/images/icons/del_off.png</iconset>
    </property>
    <property name="text">
-    <string comment="Action record a call">Record</string>
+    <string>Record</string>
    </property>
   </action>
   <action name="action_accountCreationWizard">
