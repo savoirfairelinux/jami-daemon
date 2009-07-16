@@ -59,7 +59,7 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([test/Makefile])
 
 
-	AC_CONFIG_FILES([po/Makefile \
+	AC_CONFIG_FILES([ \
 			ringtones/Makefile])
 
 AC_CONFIG_FILES([man/Makefile])
