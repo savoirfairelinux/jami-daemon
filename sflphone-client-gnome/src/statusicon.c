@@ -122,7 +122,7 @@ show_status_icon()
 
   // Add a tooltip to the system tray icon
   int count = account_list_get_size();
-  gchar *tip =  g_markup_printf_escaped (_("%s - %s") , 
+  gchar *tip =  g_markup_printf_escaped ("%s - %s" , 
                        _("SFLphone"), 
                        g_markup_printf_escaped(n_("%i account configured", "%i accounts configured", count),count));
   gtk_status_icon_set_tooltip( status , tip );

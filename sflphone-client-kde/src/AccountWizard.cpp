@@ -254,10 +254,10 @@ void AccountWizard::accept()
 		}
 		ret += i18n("Alias") + " : " + alias + "\n";
 		ret += i18n("Server") + " : " + server + "\n";
-		ret += i18n("User") + " : " + user + "\n";
+		ret += i18n("Username") + " : " + user + "\n";
 		ret += i18n("Password") + " : " + password + "\n";
 		ret += i18n("Protocol") + " : " + protocol + "\n";
-		ret += i18n("Mailbox") + " : " + mailbox + "\n";
+		ret += i18n("Voicemail number") + " : " + mailbox + "\n";
 	}
 	qDebug() << ret;
 	QDialog::accept();
@@ -439,7 +439,7 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 
 	label_alias = new QLabel(i18n("Alias") + " *");
 	label_server = new QLabel(i18n("Server") + " *");
-	label_user = new QLabel(i18n("User") + " *");
+	label_user = new QLabel(i18n("Username") + " *");
 	label_password = new QLabel(i18n("Password") + " *");
 	label_voicemail = new QLabel(i18n("Voicemail number"));
 	
