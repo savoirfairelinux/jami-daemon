@@ -124,13 +124,10 @@ bool CodecListModel::setData ( const QModelIndex & index, const QVariant &value,
 
 bool CodecListModel::codecUp( int index )
 {
-		qDebug() << getActiveCodecList();
 	if(index > 0 && index <= rowCount())
 	{
 		codecs.swap(index - 1, index);
-		qDebug() << getActiveCodecList();
 		emit dataChanged(this->index(index - 1, 0, QModelIndex()), this->index(index, columnCount(), QModelIndex()));
-		qDebug() << getActiveCodecList();
 		return true;
 	}
 	return false;

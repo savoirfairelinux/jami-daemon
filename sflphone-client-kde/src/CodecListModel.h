@@ -37,12 +37,10 @@ public:
 	CodecListModel(QObject *parent = 0);
 
 	~CodecListModel();
-	void setCodecs(QList<Codec *> codecs);
 
 	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
 	int rowCount(const QModelIndex & parent = QModelIndex()) const;
 	int columnCount(const QModelIndex & parent = QModelIndex()) const;
-// 	bool insertRows(int position, int rows, const QModelIndex &parent);
 	QVariant headerData(int section , Qt::Orientation orientation, int role) const;
 	Qt::ItemFlags flags(const QModelIndex & index) const;
 	virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
@@ -53,7 +51,7 @@ public:
 	void setActiveCodecList(const QStringList & activeCodecListToSet);
 
 signals:
-	void dataChanged(const QModelIndex &, const QModelIndex &);
+// 	void dataChanged(const QModelIndex &, const QModelIndex &);
 };
 
 #endif

@@ -29,23 +29,8 @@
  
 #define APP_NAME                          "SFLphone KDE Client"
 
-/** Locale */
-// #define _(STRING)                         gettext( STRING )   
-
-/** Warnings unused variables **/
-// #define UNUSED_VAR(var)                   (void*)var
-
-// #define UNUSED                            __attribute__((__unused__))
-
-
-
 #define SIP                               0
 #define IAX                               1
-
-#define PAGE_GENERAL                      0
-#define PAGE_DISPLAY                      1
-#define PAGE_ACCOUNTS                     2
-#define PAGE_AUDIO                        3
 
 #define TOOLBAR_SIZE                      22
 

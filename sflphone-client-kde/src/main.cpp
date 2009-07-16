@@ -18,8 +18,7 @@
 
 #include <QTableView>
 #include <QListView>
-#include "CodecListModel.h"
-#include "SortableCodecListWidget.h"
+#include "AccountListModel.h"
 
 
 static const char description[] = "A KDE 4 Client for SFLphone";
@@ -62,6 +61,11 @@ int main(int argc, char **argv)
 		
 // 		SortableCodecListWidget * cl = new SortableCodecListWidget();
 // 		cl->show();
+
+		QListView * v = new QListView();
+		v->setFlow(QListView::TopToBottom);
+		v->setModel(new AccountListModel());
+		v->show();
 	
 		return app.exec();
 	}

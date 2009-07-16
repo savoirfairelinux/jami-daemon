@@ -18,53 +18,42 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CONFIGURATIONSKELETON_H
-#define CONFIGURATIONSKELETON_H
+#ifndef ACCOUNTLISTMODEL_H
+#define ACCOUNTLISTMODEL_H
 
-#include <QWidget>
+#include <QAbstractListModel>
 
-#include "kcfg_settings.h"
-#include "CodecListModel.h"
-#include "AccountListModel.h"
+#include "AccountList.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
-	This class represents the config skeleton for the config dialog.
-	It inherits the KConfigSkeleton "ConfigurationSkeletonBase"generated 
-	by sflphone-client-kde.kcfg which handles most of the settings.
-	This class handles the codec list. 
-	A few complicated settings are handled directly by the config dialog 
-	and its pages (accounts, sound managers).
-	This class reimplements the writeConfig and readConfig functions to ask the
-	daemon instead of the normal behavior (read and write in a kconfig file).
 */
-class ConfigurationSkeleton : public ConfigurationSkeletonBase
+class AccountListModel : public QAbstractListModel
 {
 Q_OBJECT
-
 private:
-	static ConfigurationSkeleton * instance;
-	
-	CodecListModel * codecListModel;
-	
-	AccountListModel * accountListModel;
+	AccountList * accounts;
 
 public:
-	ConfigurationSkeleton();
+	AccountListModel(QObject *parent = 0);
 
-	~ConfigurationSkeleton();
-    
-	virtual void readConfig();
-    
-	virtual void writeConfig();
+	~AccountListModel();
 	
+	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
+	int rowCount(const QModelIndex & parent = QModelIndex()) const;
+// 	int columnCount(const QModelIndex & parent = QModelIndex()) const;
+// 	QVariant headerData(int section , Qt::Orientation orientation, int role) const;
+	Qt::ItemFlags flags(const QModelIndex & index) const;
+	virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
 	
-	static ConfigurationSkeleton * self();
+	bool accountUp( int index );
+	bool accountDown( int index );
+	bool removeAccount( int index );
+	bool addAccount( QString alias );
 	
-	QStringList activeCodecList() const;
-	void setActiveCodecList(const QStringList & v);
-	
-	CodecListModel * getCodecListModel();
+	QString getOrderedList() const;
+// 	QStringList getActiveCodecList() const ;
+// 	void setActiveCodecList(const QStringList & activeCodecListToSet);
 
 };
 
