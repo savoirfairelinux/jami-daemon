@@ -134,7 +134,6 @@ sflphone_kdeView::~sflphone_kdeView()
 	delete configDialog;
 	delete wizard;
 	delete callList;
-	delete errorWindow;
 }
 
 void sflphone_kdeView::loadWindow()
@@ -520,6 +519,7 @@ void sflphone_kdeView::updateWindowCallState()
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					enabledActions[4] = false;
+					actionTexts[0] = ACTION_LABEL_ACCEPT;
 					buttonIconFiles[0] = ICON_ACCEPT;
 					break;
 				case CALL_STATE_HOLD:
@@ -898,7 +898,7 @@ void sflphone_kdeView::updateStatusMessage()
 	Account * account = firstRegisteredAccount();
 	if(account == NULL)
 	{
-		emit statusMessageChanged(i18n("No account registered"));
+		emit statusMessageChanged(i18n("No registered accounts"));
 	}
 	else
 	{
@@ -1462,6 +1462,9 @@ void sflphone_kdeView::enableAddressBook()
 	qDebug() << "\nenableAddressBook\n";
 	lineEdit_addressBook->clear();
 	lineEdit_addressBook->setEnabled(true);
+	AddressBook * ab = StdAddressBook::self(true);
+	disconnect(ab,         SIGNAL(addressBookChanged(AddressBook *)),
+	           this,       SLOT(enableAddressBook()));
 }
 
 bool sflphone_kdeView::loadAddressBook()

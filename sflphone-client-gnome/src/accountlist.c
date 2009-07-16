@@ -172,34 +172,34 @@ const gchar * account_state_name(account_state_t s)
   switch(s)
   {
   case ACCOUNT_STATE_REGISTERED:
-    state = _("Registered");
+    state = c_("account state", "Registered");
     break;
   case ACCOUNT_STATE_UNREGISTERED:
-    state = _("Not Registered");
+    state = c_("account state", "Not Registered");
     break;
   case ACCOUNT_STATE_TRYING:
-    state = _("Trying...");
+    state = c_("account state", "Trying...");
     break;
   case ACCOUNT_STATE_ERROR:
-    state = _("Error");
+    state = c_("account state", "Error");
     break;
   case ACCOUNT_STATE_ERROR_AUTH:
-    state = _("Authentication Failed");
+    state = _("accounr state", "Authentication Failed");
     break;
   case ACCOUNT_STATE_ERROR_NETWORK:
-    state = _("Network unreachable");
+    state = c_("account state", "Network unreachable");
     break;
   case ACCOUNT_STATE_ERROR_HOST:
-    state = _("Host unreachable");
+    state = c_("account state", "Host unreachable");
     break;
   case ACCOUNT_STATE_ERROR_CONF_STUN:
-    state = _("Stun configuration error");
+    state = c_("account state", "Stun configuration error");
     break;
   case ACCOUNT_STATE_ERROR_EXIST_STUN:
-    state = _("Stun server invalid");
+    state = c_("account state", "Stun server invalid");
     break;
   default:
-    state = _("Invalid");
+    state = c_("account state", "Invalid");
     break;
   }
   return state;
