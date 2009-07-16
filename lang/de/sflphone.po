@@ -89,11 +89,11 @@ msgstr "SFLphone Konto (Konfigurationsassistent)"
 #: ../sflphone-client-gnome/src/assistant.c:68
 #, c-format
 msgid "This assistant is now finished."
-msgstr "Assistent vollendet."
+msgstr "Assistent beendet."
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:211
 msgid "Creation of account has failed for the reason"
-msgstr ""
+msgstr "Konfigurationsassistent mit Fehler beendet"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:255
 #: ../sflphone-client-kde/src/AccountWizard.cpp:440
@@ -130,7 +130,7 @@ msgstr "Protokoll"
 #: ../sflphone-client-kde/src/AccountWizard.cpp:260
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:373
 msgid "Mailbox"
-msgstr ""
+msgstr "Mailbox"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:279
 #: ../sflphone-client-gnome/src/assistant.c:216
@@ -155,12 +155,12 @@ msgstr "Bitte eine Option auswählen"
 #: ../sflphone-client-kde/src/AccountWizard.cpp:312
 #: ../sflphone-client-gnome/src/assistant.c:251
 msgid "Create a free SIP/IAX2 account on sflphone.org"
-msgstr ""
+msgstr "SIP/IAX2 Konto bei sflphone.org erstellen lassen"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:313
 #: ../sflphone-client-gnome/src/assistant.c:253
 msgid "Register an existing SIP or IAX2 account"
-msgstr ""
+msgstr "Existierendes SIP/IAX2 Konto registrieren"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:352
 #: ../sflphone-client-gnome/src/assistant.c:231
@@ -185,16 +185,16 @@ msgstr "IAX2 (InterAsterisk Exchange)"
 #: ../sflphone-client-kde/src/AccountWizard.cpp:395
 #: ../sflphone-client-gnome/src/assistant.c:339
 msgid "Optional email address"
-msgstr ""
+msgstr "Fakultative E-mail-Adresse"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:396
 #: ../sflphone-client-gnome/src/assistant.c:339
 msgid "This email address will be used to send your voicemail messages."
-msgstr ""
+msgstr "Diese E-mail-Adresse wird benutzt, um Ihnen voicemail Meldungen zu schicken."
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:398
 msgid "Email address"
-msgstr "Email"
+msgstr "E-mail-Adresse"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:432
 #: ../sflphone-client-gnome/src/assistant.c:266
@@ -240,7 +240,7 @@ msgstr "Stun Server"
 msgid ""
 "After checking the settings you chose, click \"Finish\" to create the "
 "account."
-msgstr ""
+msgstr "Einstellungen prüfen, dann \"Finish\" drücken."
 
 #: ../sflphone-client-kde/src/ActionSetAccountFirst.cpp:26
 msgid "Default account"
@@ -291,7 +291,7 @@ msgstr "Ihre Namen"
 #: ../sflphone-client-kde/src/main.cpp:48
 msgctxt "EMAIL OF TRANSLATORS"
 msgid "Your emails"
-msgstr "Ihre E-Mails"
+msgstr "Ihre E-Mail-Adressen"
 
 #: ../sflphone-client-kde/src/SFLPhone.cpp:62
 #: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1084
@@ -303,7 +303,7 @@ msgstr "SFLphone"
 
 #: ../sflphone-client-kde/src/SFLPhone.cpp:209
 msgid "Incoming call"
-msgstr "eingehende Anrufe"
+msgstr "Eingehende Anrufe"
 
 #: ../sflphone-client-kde/src/SFLPhone.cpp:210
 msgid "You have an incoming call from"
@@ -311,7 +311,7 @@ msgstr "Sie haben einen Anruf aus"
 
 #: ../sflphone-client-kde/src/SFLPhone.cpp:210
 msgid "Click to accept or refuse it."
-msgstr "Klicken Sie, um zu akzeptieren oder abzulehnen."
+msgstr "Klicken, um zu akzeptieren oder abzulehnen."
 
 #: ../sflphone-client-kde/src/sflphone_kdeview.cpp:716
 msgid "Address book loading..."
@@ -326,7 +326,7 @@ msgstr "Kein registriertes Konto"
 #: ../sflphone-client-gnome/src/actions.c:83
 #: ../sflphone-client-gnome/src/actions.c:813
 msgid "Using account"
-msgstr "mit Konto"
+msgstr "Mit Konto"
 
 #: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1084
 msgid "Main screen"
@@ -347,7 +347,7 @@ msgstr "Adressbuch"
 #: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1108
 #: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1169
 msgid "Edit before call"
-msgstr "Bearbeiten vor Aufruf"
+msgstr "Vor Aufruf bearbeiten"
 
 #: ../sflphone-client-kde/src/sflphone_const.h:56
 #: ../sflphone-client-gnome/src/toolbar.c:167
@@ -397,11 +397,11 @@ msgstr "Aus Warteschleife"
 
 #: ../sflphone-client-kde/src/sflphone_const.h:64
 msgid "Give up transfer"
-msgstr ""
+msgstr "Transfer aufgeben"
 
 #: ../sflphone-client-kde/src/sflphone_const.h:65
 msgid "Call back"
-msgstr "zurückrufen"
+msgstr "Zurückrufen"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:48
 #: ../sflphone-client-kde/build/src/ui_dlgrecordbase.h:91
@@ -415,7 +415,7 @@ msgstr "Allgemein"
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:49
 msgctxt "Config section"
 msgid "Display"
-msgstr ""
+msgstr "Display"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:50
 #: ../sflphone-client-gnome/src/config/configwindow.c:833
@@ -445,7 +445,7 @@ msgstr "Tonaufnahmen"
 #: ../sflphone-client-gnome/src/config/configwindow.c:806
 msgctxt "Config section"
 msgid "Hooks"
-msgstr ""
+msgstr "Hooks"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:328
 msgid ""
@@ -454,7 +454,10 @@ msgid ""
 "the \"Up\" and \"Down\" arrows. Enable/disable them by checking/unchecking "
 "them on the left of the item. Add or remove some with \"Plus\" and \"Sub\" "
 "buttons. Edit the selected account with the form on the right."
-msgstr ""
+msgstr "Sflphone verwendet das erste \"registrierte\" Konto in der Liste, "
+"wenn Sie anrufen. Benutzen Sie die Pfeile, um die Anordnung der Kontos "
+"zu ändern. Mit \"Plus\" und \"Minus\" können Sie ein Konto anlegen bzgl. "
+"entfernen. Mit \"Editieren\" können Sie ein Konto bearbeiten. "
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:332
 msgid "Remove the selected account"
@@ -466,6 +469,8 @@ msgid ""
 "really don't need it anymore. If you think you might use it again later, "
 "just uncheck it."
 msgstr ""
+"Diese Aktion entfernt das ausgewählte Konto aus der Liste. Stellen Sie "
+"sicher, dass Sie es wirklich nicht mehr brauchen."
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:340
 msgid "Remove"
@@ -473,7 +478,7 @@ msgstr "Entfernen"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:342
 msgid "Add a new account"
-msgstr "Fügen Sie ein neues Konto"
+msgstr "Neues Konto anlegen"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:345
 msgid ""
@@ -483,11 +488,11 @@ msgstr ""
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:347
 msgid "Add"
-msgstr ""
+msgstr "Hinzufügen"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:349
 msgid "Get this account down"
-msgstr ""
+msgstr "Konto nach unten"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:352
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:359
@@ -495,19 +500,21 @@ msgid ""
 "By default, when you place a call, sflphone will use the first account in "
 "this list which is \"registered\". Change the order of the accounts using "
 "the \"Up\" and \"Down\" arrows."
-msgstr ""
+msgstr "Sflphone verwendet das erste \"registrierte\" Konto in der Liste, "
+"wenn Sie anrufen. Benutzen Sie die Pfeile, um die Anordnung der Kontos "
+"zu ändern."
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:354
 msgid "Down"
-msgstr ""
+msgstr "Unten"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:356
 msgid "Get this account up"
-msgstr ""
+msgstr "Nach oben"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:361
 msgid "Up"
-msgstr ""
+msgstr "Oben"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:362
 msgid "Apply"
@@ -529,11 +536,11 @@ msgstr "Status"
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:377
 #: ../sflphone-client-gnome/src/config/configwindow.c:528
 msgid "Stun parameters will be applied on each SIP account created."
-msgstr ""
+msgstr "Alle SIP Kontos werden mit Stun Einstellungen angepasst."
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:378
 msgid "Enable Stun"
-msgstr "Aktivieren Stun"
+msgstr "Stun aktivieren"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:380
 #: ../sflphone-client-gnome/src/config/configwindow.c:544
@@ -542,7 +549,7 @@ msgstr "Format: Name.Server:Port"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:382
 msgid "choose Stun server (example : stunserver.org)"
-msgstr ""
+msgstr "Stun Server auswählen (Bsp: stunserver.org)"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:154
 msgid "Enable address book"
@@ -550,7 +557,7 @@ msgstr "Aktivieren Adressbuch"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:155
 msgid "Maximum results"
-msgstr ""
+msgstr "Maximale Anzahl Resultaten"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:156
 msgid "Display photo if available"
@@ -558,7 +565,7 @@ msgstr "Foto anzeigen"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:157
 msgid "Display phone numbers of these types :"
-msgstr "Anzeige Telefonnummer :"
+msgstr "Nummer anzeigen für Typen :"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:158
 msgid "Work"
@@ -570,7 +577,7 @@ msgstr "Handy"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaddressbookbase.h:160
 msgid "Home"
-msgstr "Home phone"
+msgstr "Heim"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:225
 msgid "Sound manager"
@@ -586,7 +593,7 @@ msgstr "Pulseaudio"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:231
 msgid "Enable ringtones"
-msgstr "Aktivieren Klingeltöne"
+msgstr "Klingeltöne aktivieren"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaudiobase.h:232
 #: ../sflphone-client-gnome/src/config/audioconf.c:812
