@@ -54,7 +54,7 @@ public:
 	//Getters
 	bool isNew() const;
 	bool isChecked() const;
-	QString & getAccountId();
+	const QString & getAccountId() const;
 	MapStringString & getAccountDetails() const;
 	QListWidgetItem * getItem();
 	AccountItemWidget * getItemWidget();
@@ -62,7 +62,9 @@ public:
 	QColor getStateColor();
 	QString getStateColorName();
 	QString getAccountDetail(QString param) const;
-	QString getAlias();
+	QString getAlias() const;
+	bool isEnabled() const;
+	bool isRegistered() const;
 	
 	//Setters
 	void setAccountId(QString id);
@@ -77,7 +79,7 @@ public:
 	//Operators
 	bool operator==(const Account&)const;
 	
-private slots:
+public slots:
 	void setEnabled(bool checked);
 	
 	

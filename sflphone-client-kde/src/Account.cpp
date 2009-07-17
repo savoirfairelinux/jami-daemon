@@ -134,7 +134,7 @@ bool Account::isChecked() const
 	return itemWidget->getEnabled();
 }
 
-QString & Account::getAccountId()
+const QString & Account::getAccountId() const
 {
 	if (isNew())
 	{
@@ -187,7 +187,7 @@ QString Account::getAccountDetail(QString param) const
 	return (*accountDetails)[param];
 }
 
-QString Account::getAlias()
+QString Account::getAlias() const
 {
 	return getAccountDetail(ACCOUNT_ALIAS);
 }
@@ -219,6 +219,16 @@ void Account::setEnabled(bool checked)
 {
 	qDebug() << "setEnabled = " << checked;
 	setAccountDetail(ACCOUNT_ENABLED, checked ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
+}
+
+bool Account::isEnabled() const
+{
+	return (getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE);
+}
+
+bool Account::isRegistered() const
+{
+	return (getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
 void Account::updateState()

@@ -85,29 +85,29 @@ void DlgAccounts::saveAccountList()
 	QStringList accountIds= QStringList(configurationManager.getAccountList().value());
 	//create or update each account from accountList
 	for (int i = 0; i < accountList->size(); i++){
-		Account & current = (*accountList)[i];
+		Account * current = (*accountList)[i];
 		QString currentId;
 		//if the account has no instanciated id, it has just been created in the client
-		if(current.isNew())
+		if(current->isNew())
 		{
-			MapStringString details = current.getAccountDetails();
+			MapStringString details = current->getAccountDetails();
 			currentId = configurationManager.addAccount(details);
-			current.setAccountId(currentId);
+			current->setAccountId(currentId);
 		}
 		//if the account has an instanciated id but it's not in configurationManager
 		else{
-			if(! accountIds.contains(current.getAccountId()))
+			if(! accountIds.contains(current->getAccountId()))
 			{
-				qDebug() << "The account with id " << current.getAccountId() << " doesn't exist. It might have been removed by another SFLphone client.";
+				qDebug() << "The account with id " << current->getAccountId() << " doesn't exist. It might have been removed by another SFLphone client.";
 				currentId = QString();
 			}
 			else
 			{
-				configurationManager.setAccountDetails(current.getAccountId(), current.getAccountDetails());
-				currentId = QString(current.getAccountId());
+				configurationManager.setAccountDetails(current->getAccountId(), current->getAccountDetails());
+				currentId = QString(current->getAccountId());
 			}
 		}
-		qDebug() << currentId << " : " << current.isChecked();
+		qDebug() << currentId << " : " << current->isChecked();
 	}
 	//remove accounts that are in the configurationManager but not in the client
 	for (int i = 0; i < accountIds.size(); i++)
@@ -190,7 +190,7 @@ void DlgAccounts::loadAccountList()
 	//initialize the QListWidget object with the AccountList
 	listWidget_accountList->clear();
 	for (int i = 0; i < accountList->size(); ++i){
-		addAccountToAccountList(&(*accountList)[i]);
+		addAccountToAccountList((*accountList)[i]);
 	}
 	if (listWidget_accountList->count() > 0 && listWidget_accountList->currentItem() == NULL) 
 		listWidget_accountList->setCurrentRow(0);
@@ -343,8 +343,8 @@ void DlgAccounts::updateAccountStates()
 	qDebug() << accountList->size();
 	for (int i = 0; i < accountList->size(); i++)
 	{
-		Account & current = accountList->getAccount(i);
-		current.updateState();
+		Account * current = accountList->getAccountAt(i);
+		current->updateState();
 	}
 	qDebug() << accountList->size();
 }

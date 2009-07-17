@@ -58,6 +58,7 @@ SET(	   sflphone_client_kde_SRCS
 	CodecListModel.cpp
 	SortableCodecListWidget.cpp
 	Item.cpp
+	AccountListModel.cpp
 )
  
 

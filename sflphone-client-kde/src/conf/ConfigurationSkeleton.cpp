@@ -28,8 +28,8 @@ ConfigurationSkeleton::ConfigurationSkeleton()
 {
 	qDebug() << "Building ConfigurationSkeleton";
 	codecListModel = new CodecListModel();
+	accountListModel = new AccountListModel();
 	readConfig();
-	
 }
 
 ConfigurationSkeleton * ConfigurationSkeleton::instance = NULL;
