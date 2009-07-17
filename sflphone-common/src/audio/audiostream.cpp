@@ -56,11 +56,43 @@ AudioStream::connectStream()
     return true;
 }
 
+static void success_cb(pa_stream *s, int success, void *userdata) {
+
+    assert(s);
+    
+    pa_threaded_mainloop * mainloop = (pa_threaded_mainloop *) userdata;
+             
+    pa_threaded_mainloop_signal(mainloop, 0);
+}
+
+
+bool
+AudioStream::drainStream(void) {    
+    if (_audiostream) {
+        _debug("Draining stream\n");
+        pa_operation * operation;
+        
+        pa_threaded_mainloop_lock(_mainloop);
+        
+        if ((operation = pa_stream_drain(_audiostream, success_cb, _mainloop))) {    
+            while (pa_operation_get_state(operation) != PA_OPERATION_DONE) {
+                if (!_context || pa_context_get_state(_context) != PA_CONTEXT_READY || !_audiostream || pa_stream_get_state(_audiostream) != PA_STREAM_READY) {
+                    _debug("Connection died: %s\n", _context ? pa_strerror(pa_context_errno(_context)) : "NULL");
+                    pa_operation_unref(operation);
+                    break;
+                } else {
+                    pa_threaded_mainloop_wait(_mainloop);
+                }
+            }
+        }
+        
+        pa_threaded_mainloop_unlock(_mainloop);
+    }
+}
+
 bool
 AudioStream::disconnectStream (void)
 {
-    ost::MutexLock guard (_mutex);
-
     _debug ("Destroy audio streams\n");
     
     pa_threaded_mainloop_lock(_mainloop);
@@ -95,7 +127,6 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 
         case PA_STREAM_TERMINATED:
             _debug ("Stream is terminating...\n");
-             pa_threaded_mainloop_signal(m, 0);
             break;
 
         case PA_STREAM_READY:
