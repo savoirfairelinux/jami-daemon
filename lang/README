@@ -1,19 +1,22 @@
-If you need to update the translations files, just execute:
+If you need to update the translations files :
+
+First, compile the KDE client in order to update generated c++ files (from ui files, etc).
+For more details about how to compile KDE client, see the README file in sflphone-client-kde folder.
+Then just execute:
 
 	./update.sh
 	
 in the current directory.
 
 
+Now that the global po files are updated, you can copy them in both Gnome and KDE clients using :
 
-If you want to do it yourself, do the following steps:
+	./copy-in-gnome.sh
 
-	xgettext --from-code=utf-8 --c++ --kde -ktr2i18n -ktr2i18n:2c,1 -kki18nc:1c,2 -kki18n -ki18n -ki18nc:1c,2 -o sflphone-client-kde.pot ../src/*.cpp ../src/*.h ../src/conf/*.h ../src/conf/*.cpp ../build/src/*.h ../build/src/*.cpp 
+and
 
-This command will update the template file with the current source files.
-To be able to add strings from the ui files, and other non-c++ files which generates some c++ source, you have to first build and make the project in build directory (see the INSTALL file in root directory sflphone-client-kde).
+	./copy-in-kde.sh
 
-	for fichier in `find  .  -name *.po `  ;  do  msgmerge --update $fichier sflphone-client-kde.pot  ;  done
-	
-This command will update the po files in every subdirectory with the new pot file.
-You will then be able to translate the new strings in each po file.
+This will replace the po files in clients with those in lang folder.
+
+ALL CHANGES MADE DIRECTLY IN PO FILES IN THE CLIENTS FOLDERS WILL BE LOST!
