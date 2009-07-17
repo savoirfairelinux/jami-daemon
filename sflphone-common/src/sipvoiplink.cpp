@@ -217,6 +217,8 @@ bool SIPVoIPLink::init()
     if (initDone())
         return false;
 
+    _regPort = Manager::instance().getSipPort();
+    
     /* Instanciate the C++ thread */
     _evThread = new EventThread (this);
 
@@ -890,7 +892,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
      */
     pjsip_evsub_set_mod_data (sub, getModId(), this);
 
-    _debug ("SIP port listener = %i ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", _localExternPort);
+    _debug ("SIP port listener = %i", _localExternPort);
 
     /*
      * Create REFER request.
