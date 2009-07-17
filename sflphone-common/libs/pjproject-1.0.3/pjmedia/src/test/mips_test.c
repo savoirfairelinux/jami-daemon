@@ -2278,7 +2278,7 @@ int mips_test(void)
 	{ "codec encode/decode - G.711", OP_PUT, K8, &g711_encode_decode},
 	{ "codec encode/decode - G.722", OP_PUT, K16, &g722_encode_decode},
 	{ "codec encode/decode - GSM", OP_PUT, K8, &gsm_encode_decode},
-	{ "codec encode/decode - iLBC", OP_PUT, K8, &ilbc_encode_decode},
+	//{ "codec encode/decode - iLBC", OP_PUT, K8, &ilbc_encode_decode},
 	{ "codec encode/decode - Speex 8Khz", OP_PUT, K8, &speex8_encode_decode},
 	{ "codec encode/decode - Speex 16Khz", OP_PUT, K16, &speex16_encode_decode},
 #if defined(PJMEDIA_HAS_L16_CODEC) && PJMEDIA_HAS_L16_CODEC!=0
