@@ -724,6 +724,7 @@ msgid "Configure SFLphone"
 msgstr ""
 
 #: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:390
+msgid "Display volume controls"
 msgstr "_Настройки громкости"
 
 #: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:391
