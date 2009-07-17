@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-17 15:41-0400\n"
+"POT-Creation-Date: 2009-07-17 16:14-0400\n"
 "PO-Revision-Date: 2008-08-11 11:53+0200\n"
 "Last-Translator: Carlos Galisteo <cgalisteo AT k-rolus.net>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -80,7 +80,6 @@ msgstr "Inválido"
 
 #: ../sflphone-client-kde/src/AccountWizard.cpp:163
 #: ../sflphone-client-kde/src/AccountWizard.cpp:278
-#: ../sflphone-client-kde/src/SFLPhone.cpp:121
 #: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:393
 msgid "Account creation wizard"
 msgstr "Asistente de configuración de cuentas"
@@ -294,78 +293,59 @@ msgctxt "EMAIL OF TRANSLATORS"
 msgid "Your emails"
 msgstr "maxime.chambreuil@savoirfairelinux.com"
 
-#: ../sflphone-client-kde/src/SFLPhone.cpp:57
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1036
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1041
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1046
+#: ../sflphone-client-kde/src/SFLPhone.cpp:62
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1084
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1089
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1094
 #: ../sflphone-client-gnome/src/statusicon.c:126
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../sflphone-client-kde/src/SFLPhone.cpp:102
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1036
+#: ../sflphone-client-kde/src/SFLPhone.cpp:209
+msgid "Incoming call"
+msgstr "Llamada entrante"
+
+#: ../sflphone-client-kde/src/SFLPhone.cpp:210
+msgid "You have an incoming call from"
+msgstr "Tienes una llamada de"
+
+#: ../sflphone-client-kde/src/SFLPhone.cpp:210
+msgid "Click to accept or refuse it."
+msgstr "Haz clic para aceptar o rechazarlo"
+
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:716
+msgid "Address book loading..."
+msgstr "Cargando el directorio..."
+
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:901
+#: ../sflphone-client-gnome/src/actions.c:89
+msgid "No registered accounts"
+msgstr "Ninguna cuenta registrada"
+
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:905
+#: ../sflphone-client-gnome/src/actions.c:83
+#: ../sflphone-client-gnome/src/actions.c:813
+msgid "Using account"
+msgstr "Usando la cuenta"
+
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1084
 msgid "Main screen"
 msgstr "Pantalla principal"
 
-#: ../sflphone-client-kde/src/SFLPhone.cpp:103
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1041
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1089
 #: ../sflphone-client-kde/build/src/ui_dlggeneralbase.h:165
 msgid "Call history"
 msgstr "Historia de Llamada"
 
-#: ../sflphone-client-kde/src/SFLPhone.cpp:104
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1046
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1094
 #: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:394
 #: ../sflphone-client-gnome/src/toolbar.c:243
 #: ../sflphone-client-gnome/src/toolbar.c:245
 msgid "Address book"
 msgstr "Libreta de contactos"
 
-#: ../sflphone-client-kde/src/SFLPhone.cpp:117
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:386
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:388
-msgid "Configure SFLphone"
-msgstr "Configurar SFLphone"
-
-#: ../sflphone-client-kde/src/SFLPhone.cpp:119
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:390
-msgid "Display volume controls"
-msgstr "Mostrar controles de volumen"
-
-#: ../sflphone-client-kde/src/SFLPhone.cpp:120
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:391
-msgid "Display dialpad"
-msgstr "Mostrar dialpad"
-
-#: ../sflphone-client-kde/src/SFLPhone.cpp:227
-msgid "Incoming call"
-msgstr "Llamada entrante"
-
-#: ../sflphone-client-kde/src/SFLPhone.cpp:228
-msgid "You have an incoming call from"
-msgstr "Tienes una llamada de"
-
-#: ../sflphone-client-kde/src/SFLPhone.cpp:228
-msgid "Click to accept or refuse it."
-msgstr "Haz clic para aceptar o rechazarlo"
-
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:669
-msgid "Address book loading..."
-msgstr "Cargando el directorio..."
-
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:854
-#: ../sflphone-client-gnome/src/actions.c:89
-msgid "No registered accounts"
-msgstr "Ninguna cuenta registrada"
-
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:858
-#: ../sflphone-client-gnome/src/actions.c:83
-#: ../sflphone-client-gnome/src/actions.c:813
-msgid "Using account"
-msgstr "Usando la cuenta"
-
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1060
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1125
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1108
+#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1173
 msgid "Edit before call"
 msgstr "Editar antes de llamar"
 
@@ -423,15 +403,6 @@ msgstr "Abandonar transferencia"
 #: ../sflphone-client-kde/src/sflphone_const.h:50
 msgid "Call back"
 msgstr "Llamar"
-
-#: ../sflphone-client-kde/src/sflphone_const.h:51
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:373
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:385
-#: ../sflphone-client-gnome/src/toolbar.c:52
-#: ../sflphone-client-gnome/src/toolbar.c:251
-#: ../sflphone-client-gnome/src/toolbar.c:255
-msgid "Voicemail"
-msgstr "Mensaje de voz"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:48
 #: ../sflphone-client-kde/build/src/ui_dlgrecordbase.h:91
@@ -563,6 +534,14 @@ msgstr ""
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:368
 msgid "IAX"
 msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:373
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:385
+#: ../sflphone-client-gnome/src/toolbar.c:52
+#: ../sflphone-client-gnome/src/toolbar.c:251
+#: ../sflphone-client-gnome/src/toolbar.c:255
+msgid "Voicemail"
+msgstr "Mensaje de voz"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:374
 #: ../sflphone-client-gnome/src/config/configwindow.c:425
@@ -756,6 +735,19 @@ msgstr "Carpeta de destino"
 #: ../sflphone-client-gnome/src/toolbar.c:234
 msgid "History"
 msgstr "Historia de Llamada"
+
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:386
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:388
+msgid "Configure SFLphone"
+msgstr "Configurar SFLphone"
+
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:390
+msgid "Display volume controls"
+msgstr "Mostrar controles de volumen"
+
+#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:391
+msgid "Display dialpad"
+msgstr "Mostrar dialpad"
 
 #: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:396
 msgid "Attention:number of results exceeds max displayed."
