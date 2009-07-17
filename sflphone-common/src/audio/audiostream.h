@@ -84,6 +84,11 @@ class AudioStream {
     bool connectStream();
 
     /**
+     * Drain the given stream. 
+     */
+    bool drainStream(void);
+    
+    /**
      * Disconnect the pulseaudio stream
      */
     bool disconnectStream();
