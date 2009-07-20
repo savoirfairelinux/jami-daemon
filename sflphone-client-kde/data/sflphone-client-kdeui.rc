@@ -17,11 +17,11 @@
 			<Action name="action_hold" />
 			<Action name="action_transfer" />
 			<Action name="action_record" />
+			<Action name="action_mailBox" />
 			<Separator />
+			<Action name="action_main" />
 			<Action name="action_history" />
 			<Action name="action_addressBook" />
-			<Separator />
-			<Action name="action_mailBox" />
 			<Separator />
 			<Action name="action_close" />
 			<Separator />
@@ -32,24 +32,24 @@
 			<Action name="action_displayVolumeControls" />
 			<Action name="action_displayDialpad" />
 			<Separator />
-<!-- 			<Action name="action_configureAccounts" /> -->
-<!-- 			<Action name="action_configureAudio" /> -->
 			<Action name="action_configureSflPhone" />
 			<Separator />
 			<Action name="action_accountCreationWizard" />
 		</Menu>
 	</MenuBar>
 	
-	<!--<ToolBar name="mainToolBar" position="Top" noMerge="1" fullWidth="true" newline="true" >
+	<ToolBar name="callsToolBar" iconText="icononly" position="Top" noMerge="1" fullWidth="true" newline="true" >
 		<Action name="action_accept" />
 		<Action name="action_refuse" />
 		<Action name="action_hold" />
 		<Action name="action_transfer" />
 		<Action name="action_record" />
-		<Separator />
+		<Action name="action_mailBox" />
+	</ToolBar>
+	
+	<ToolBar name="screenToolBar" iconText="icononly" position="Top" noMerge="1" fullWidth="true" newline="true" >
+		<Action name="action_main" />
 		<Action name="action_history" />
 		<Action name="action_addressBook" />
-		<Separator />
-		<Action name="action_mailBox" />
-	</ToolBar>	-->
+	</ToolBar>	
 </gui>

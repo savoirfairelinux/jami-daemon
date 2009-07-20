@@ -52,34 +52,17 @@ SFLPhone::SFLPhone(QWidget *parent)
 
     // tell the KXmlGuiWindow that this is indeed the main widget
 		setCentralWidget(view);
-   
-
-    // add a status bar
-//    statusBar()->show();
-
 
 		setWindowIcon(QIcon(ICON_SFLPHONE));
 		setWindowTitle(i18n("SFLphone"));
 		
 		setupActions();
 		
-		qDebug() << "currentPath = " << QDir::currentPath() ;
-		
-		
-		
-		QString rcFilePath = QString(DATA_INSTALL_DIR) + "/sflphone-client-kde/sflphone-client-kdeui.rc";
-		if(! QFile::exists(rcFilePath))
-		{
-			QDir dir;
-			dir.cdUp();
-			dir.cd("data");
-			rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
-		}
-		qDebug() << "rcFilePath = " << rcFilePath ;
-		createGUI(rcFilePath);
 		setObjectNames();
-      QMetaObject::connectSlotsByName(this);
-	   view->updateStatusMessage();
+		QMetaObject::connectSlotsByName(this);
+	   view->on_stackedWidget_screen_currentChanged(SCREEN_MAIN);
+	   view->loadWindow();
+	   
 	   
 		move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
 	   if( ! configurationManager.isStartHidden())
@@ -90,8 +73,7 @@ SFLPhone::SFLPhone(QWidget *parent)
 	   if(configurationManager.getAccountList().value().isEmpty())
 		{
 			(new AccountWizard())->show();
-		}
-	   
+		}   
 } 
 
 SFLPhone::~SFLPhone()
@@ -108,45 +90,74 @@ void SFLPhone::setObjectNames()
 void SFLPhone::setupActions()
 {
 	qDebug() << "setupActions";
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	
-	actionCollection()->addAction("action_accept", view->action_accept);
-	actionCollection()->addAction("action_refuse", view->action_refuse);
-	actionCollection()->addAction("action_hold", view->action_hold);
-	actionCollection()->addAction("action_transfer", view->action_transfer);
-	actionCollection()->addAction("action_record", view->action_record);
-	actionCollection()->addAction("action_history", view->action_history);
-	actionCollection()->addAction("action_addressBook", view->action_addressBook);
-	actionCollection()->addAction("action_mailBox", view->action_mailBox);
-	KAction * action_close = KStandardAction::close(this, SLOT(close()), 0);
+	action_accept = new KAction(this);
+	action_refuse = new KAction(this);
+	action_hold = new KAction(this);
+	action_transfer = new KAction(this);
+	action_record = new KAction(this);
+	action_mailBox = new KAction(this);
+	
+	action_screen = new QActionGroup(this);
+	action_screen->setExclusive(true);
+	action_main = new KAction(KIcon(QIcon(ICON_SCREEN_MAIN)), i18n("Main screen"), action_screen);
+	action_history = new KAction(KIcon(QIcon(ICON_SCREEN_HISTORY)), i18n("Call history"), action_screen);
+	action_addressBook = new KAction(KIcon(QIcon(ICON_SCREEN_ADDRESS)), i18n("Address book"), action_screen);
+	action_main->setCheckable(true);
+	action_history->setCheckable(true);
+	action_addressBook->setCheckable(true);
+	action_main->setChecked(true);
+	action_screen->addAction(action_main);
+	action_screen->addAction(action_history);
+	action_screen->addAction(action_addressBook);
+	
+	action_close = KStandardAction::close(this, SLOT(close()), this);
+	action_quit = KStandardAction::quit(this, SLOT(quitButton()), this);
+	
+	action_configureSflPhone = KStandardAction::preferences(view, SLOT(configureSflPhone()), this);
+	action_configureSflPhone->setText(i18n("Configure SFLphone"));
+	
+	action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);
+	action_displayDialpad = new KAction(KIcon(QIcon(ICON_DISPLAY_DIALPAD)), i18n("Display dialpad"), this);
+	action_displayVolumeControls->setChecked(configurationManager.getVolumeControls());
+	action_displayDialpad->setChecked(configurationManager.getDialpad());
+	action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
+	
+	connect(action_accept,                SIGNAL(triggered()),          view, SLOT(accept()));
+	connect(action_refuse,                SIGNAL(triggered()),          view, SLOT(refuse()));
+	connect(action_hold,                  SIGNAL(triggered()),          view, SLOT(hold()));
+	connect(action_transfer,              SIGNAL(triggered()),          view, SLOT(transfer()));
+	connect(action_record,                SIGNAL(triggered()),          view, SLOT(record()));
+	connect(action_screen,                SIGNAL(triggered(QAction *)), this, SLOT(updateScreen(QAction *)));
+	connect(action_mailBox,               SIGNAL(triggered()),          view, SLOT(mailBox()));
+	connect(action_displayVolumeControls, SIGNAL(triggered()),          view, SLOT(displayVolumeControls()));
+	connect(action_displayDialpad,        SIGNAL(triggered()),          view, SLOT(displayDialpad()));
+	connect(action_accountCreationWizard, SIGNAL(triggered()),          view, SLOT(accountCreationWizard()));
+	
+	action_screen->addAction(action_main);
+	action_screen->addAction(action_history);
+	action_screen->addAction(action_addressBook);
+	
+	actionCollection()->addAction("action_accept", action_accept);
+	actionCollection()->addAction("action_refuse", action_refuse);
+	actionCollection()->addAction("action_hold", action_hold);
+	actionCollection()->addAction("action_transfer", action_transfer);
+	actionCollection()->addAction("action_record", action_record);
+	actionCollection()->addAction("action_main", action_main);
+	actionCollection()->addAction("action_history", action_history);
+	actionCollection()->addAction("action_addressBook", action_addressBook);
+	actionCollection()->addAction("action_mailBox", action_mailBox);
 	actionCollection()->addAction("action_close", action_close);
-	KAction * action_quit = KStandardAction::quit(this, SLOT(quitButton()), 0);
 	actionCollection()->addAction("action_quit", action_quit);
 	
-	
-	actionCollection()->addAction("action_displayVolumeControls", view->action_displayVolumeControls);
-	actionCollection()->addAction("action_displayDialpad", view->action_displayDialpad);
-	actionCollection()->addAction("action_configureSflPhone", view->action_configureSflPhone);
-// 	actionCollection()->addAction("action_configureAccounts", view->action_configureAccounts);
-// 	actionCollection()->addAction("action_configureAudio", view->action_configureAudio);
-	actionCollection()->addAction("action_accountCreationWizard", view->action_accountCreationWizard);
+	actionCollection()->addAction("action_displayVolumeControls", action_displayVolumeControls);
+	actionCollection()->addAction("action_displayDialpad", action_displayDialpad);
+	actionCollection()->addAction("action_configureSflPhone", action_configureSflPhone);
+	actionCollection()->addAction("action_accountCreationWizard", action_accountCreationWizard);
 	
 	statusBarWidget = new QLabel();
 	statusBar()->addWidget(statusBarWidget);
-	
-	QToolBar * toolbar = new QToolBar(this);
-	this->addToolBar(Qt::TopToolBarArea, toolbar);
-	toolbar->addAction(view->action_accept);
-	toolbar->addAction(view->action_refuse);
-	toolbar->addAction(view->action_hold);
-	toolbar->addAction(view->action_transfer);
-	toolbar->addAction(view->action_record);
-	toolbar->addSeparator();
-	toolbar->addAction(view->action_history);
-	toolbar->addAction(view->action_addressBook);
-	toolbar->addSeparator();
-	toolbar->addAction(view->action_mailBox);
-	toolbar->setIconSize(QSize(TOOLBAR_SIZE,TOOLBAR_SIZE));
-	
 	
  	trayIconMenu = new QMenu(this);
  	trayIconMenu->addAction(action_quit);
@@ -156,6 +167,17 @@ void SFLPhone::setupActions()
 	trayIcon->show();
 	
 	iconChanged = false;
+	
+	QString rcFilePath = QString(DATA_INSTALL_DIR) + "/sflphone-client-kde/sflphone-client-kdeui.rc";
+	if(! QFile::exists(rcFilePath))
+	{
+		QDir dir;
+		dir.cdUp();
+		dir.cd("data");
+		rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
+	}
+	qDebug() << "rcFilePath = " << rcFilePath ;
+	createGUI(rcFilePath);
 
 }
 
@@ -252,9 +274,102 @@ void SFLPhone::on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason)
 }
 
 
-void SFLPhone::on_view_statusMessageChanged(const QString & message)
+void SFLPhone::on_view_statusMessageChangeAsked(const QString & message)
 {
-	qDebug() << "on_view_statusMessageChanged : " + message;
+	qDebug() << "on_view_statusMessageChangeAsked : " + message;
 	statusBarWidget->setText(message);
+}
+
+void SFLPhone::on_view_windowTitleChangeAsked(const QString & message)
+{
+	qDebug() << "on_view_windowTitleChangeAsked : " + message;
+	setWindowTitle(message);
+}
+
+void SFLPhone::on_view_enabledActionsChangeAsked(const bool * enabledActions)
+{
+	qDebug() << "on_view_enabledActionsChangeAsked";
+	action_accept->setEnabled(enabledActions[SFLPhone::Accept]);
+	action_refuse->setEnabled(enabledActions[SFLPhone::Refuse]);
+	action_hold->setEnabled(enabledActions[SFLPhone::Hold]);
+	action_transfer->setEnabled(enabledActions[SFLPhone::Transfer]);
+	action_record->setEnabled(enabledActions[SFLPhone::Record]);
+	action_mailBox->setEnabled(enabledActions[SFLPhone::Mailbox]);
+}
+
+void SFLPhone::on_view_actionIconsChangeAsked(const QString * actionIcons)
+{
+	qDebug() << "on_view_actionIconsChangeAsked";
+	action_accept->setIcon(QIcon(actionIcons[SFLPhone::Accept]));
+	action_refuse->setIcon(QIcon(actionIcons[SFLPhone::Refuse]));
+	action_hold->setIcon(QIcon(actionIcons[SFLPhone::Hold]));
+	action_transfer->setIcon(QIcon(actionIcons[SFLPhone::Transfer]));
+	action_record->setIcon(QIcon(actionIcons[SFLPhone::Record]));
+	action_mailBox->setIcon(QIcon(actionIcons[SFLPhone::Mailbox]));
+}
+
+void SFLPhone::on_view_actionTextsChangeAsked(const QString * actionTexts)
+{
+	qDebug() << "on_view_actionTextsChangeAsked";
+	action_accept->setText(actionTexts[SFLPhone::Accept]);
+	action_refuse->setText(actionTexts[SFLPhone::Refuse]);
+	action_hold->setText(actionTexts[SFLPhone::Hold]);
+	action_transfer->setText(actionTexts[SFLPhone::Transfer]);
+	action_record->setText(actionTexts[SFLPhone::Record]);
+	action_mailBox->setText(actionTexts[SFLPhone::Mailbox]);
+}
+
+
+void SFLPhone::on_view_transferCheckStateChangeAsked(bool transferCheckState)
+{
+	qDebug() << "Changing transfer action checkState";
+	action_transfer->setChecked(transferCheckState);
+}
+
+void SFLPhone::on_view_recordCheckStateChangeAsked(bool recordCheckState)
+{
+	qDebug() << "Changing record action checkState";
+	action_record->setChecked(recordCheckState);
+}
+
+void SFLPhone::updateScreen(QAction * action)
+{
+	if(action == action_main)	view->changeScreen(SCREEN_MAIN);
+	else if(action == action_history)	view->changeScreen(SCREEN_HISTORY);
+	else if(action == action_addressBook)	view->changeScreen(SCREEN_ADDRESS);
+}
+
+void SFLPhone::on_view_screenChanged(int screen)
+{
+	qDebug() << "on_view_screenChanged";
+	if(screen == SCREEN_MAIN)	action_main->setChecked(true);
+	else if(screen == SCREEN_HISTORY)	action_history->setChecked(true);
+	else if(screen == SCREEN_ADDRESS)	action_addressBook->setChecked(true);
+}
+
+QList <QAction *> SFLPhone::getCallActions()
+{
+	QList<QAction *> callActions = QList<QAction *>();
+	callActions.insert((int) Accept, action_accept);
+	callActions.insert((int) Refuse, action_refuse);
+	callActions.insert((int) Hold, action_hold);
+	callActions.insert((int)Transfer, action_transfer);
+	callActions.insert((int) Record, action_record);
+	callActions.insert((int) Mailbox, action_mailBox);
+	return callActions;
+}
+
+void SFLPhone::on_view_incomingCall(const Call * call)
+{
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	trayIconSignal();
+	if(configurationManager.popupMode())
+	{
+		putForeground();
+	}
+	if(configurationManager.getNotify())
+	{
+		sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
+	}
 }
 

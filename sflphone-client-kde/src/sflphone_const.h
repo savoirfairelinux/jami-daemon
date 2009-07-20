@@ -48,8 +48,11 @@
 #define ACTION_LABEL_UNHOLD               i18n("Hold off")
 #define ACTION_LABEL_GIVE_UP_TRANSF       i18n("Give up transfer")
 #define ACTION_LABEL_CALL_BACK            i18n("Call back")
-// #define ACTION_LABEL_GIVE_UP_SEARCH       i18n("Give up search")
+#define ACTION_LABEL_MAILBOX              i18n("Voicemail")
 
+#define SCREEN_MAIN                       0
+#define SCREEN_HISTORY                    1
+#define SCREEN_ADDRESS                    2
 
 #define ICON_INCOMING                     ":/images/icons/ring.svg"
 #define ICON_RINGING                      ":/images/icons/ring.svg"
@@ -70,6 +73,7 @@
 #define ICON_EXEC_TRANSF                  ":/images/icons/call.svg"
 #define ICON_REC_DEL_OFF                  ":/images/icons/record_disabled.svg"
 #define ICON_REC_DEL_ON                   ":/images/icons/record.svg"
+#define ICON_MAILBOX                      ":/images/icons/mailbox.svg"
 
 #define ICON_REC_VOL_0                    ":/images/icons/mic.svg"
 #define ICON_REC_VOL_1                    ":/images/icons/mic_25.svg"
@@ -80,6 +84,13 @@
 #define ICON_SND_VOL_1                    ":/images/icons/speaker_25.svg"
 #define ICON_SND_VOL_2                    ":/images/icons/speaker_50.svg"
 #define ICON_SND_VOL_3                    ":/images/icons/speaker_75.svg"
+
+#define ICON_SCREEN_MAIN                  ":/images/icons/sflphone.svg"
+#define ICON_SCREEN_HISTORY               ":/images/icons/history2.svg"
+#define ICON_SCREEN_ADDRESS               ":/images/icons/x-office-address-book.png"
+
+#define ICON_DISPLAY_VOLUME_CONSTROLS     ":/images/icons/icon_volume_off.svg"
+#define ICON_DISPLAY_DIALPAD              ":/images/icons/icon_dialpad.svg"
 
 #define ICON_HISTORY_INCOMING             ":/images/icons/incoming.svg"
 #define ICON_HISTORY_OUTGOING             ":/images/icons/outgoing.svg"
