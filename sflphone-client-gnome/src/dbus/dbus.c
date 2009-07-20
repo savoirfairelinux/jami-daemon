@@ -18,6 +18,7 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <config.h>
 
 #include <calltab.h>
 #include <callmanager-glue.h>
@@ -393,9 +394,11 @@ dbus_connect ()
             "errorAlert", G_CALLBACK(error_alert), NULL, NULL);
             
     /* Defines a default timeout for the proxies */
+#if HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT
     dbus_g_proxy_set_default_timeout(callManagerProxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(instanceProxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(configurationManagerProxy, DEFAULT_DBUS_TIMEOUT);
+#endif
     
     return TRUE;
 }

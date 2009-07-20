@@ -31,7 +31,6 @@
 #include <sys/poll.h>
 #include <sys/time.h>
 #include <unistd.h> 
-#include <cstdio>
 
 #include <dbus/dbus.h>
 
