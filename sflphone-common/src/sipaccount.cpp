@@ -25,8 +25,9 @@
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
         , _cred (NULL)
-        , _contact ("")
         , _bRegister (false)
+        , _contact ("")
+        , _resolveOnce (false)
         , _regc()
 {
     /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
@@ -59,7 +60,8 @@ int SIPAccount::registerVoIPLink()
     setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
-
+    _resolveOnce = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? true : false;
+    
     /* Start registration */
     status = _link->sendRegister (_accountID);
     ASSERT (status , SUCCESS);
