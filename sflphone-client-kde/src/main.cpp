@@ -62,10 +62,10 @@ int main(int argc, char **argv)
 // 		SortableCodecListWidget * cl = new SortableCodecListWidget();
 // 		cl->show();
 
-		QListView * v = new QListView();
-		v->setFlow(QListView::TopToBottom);
-		v->setModel(new AccountListModel());
-		v->show();
+// 		QListView * v = new QListView();
+// 		v->setFlow(QListView::TopToBottom);
+// 		v->setModel(new AccountListModel());
+// 		v->show();
 	
 		return app.exec();
 	}
