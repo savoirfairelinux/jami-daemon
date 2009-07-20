@@ -30,6 +30,8 @@
 #include <QSystemTrayIcon>
 
 #include <KXmlGuiWindow>
+#include <KAction>
+#include <QActionGroup>
 
 #include "ui_sflphone_kdeview_base.h"
 #include "CallList.h"
@@ -42,10 +44,36 @@ class sflphone_kdeView;
 
 class SFLPhone : public KXmlGuiWindow
 {
-
 Q_OBJECT
 
+public:
+enum CallAction {
+        Accept,
+        Refuse,
+        Hold,
+        Transfer,
+        Record,
+        Mailbox,
+        NumberOfCallActions};
+
 private:
+	KAction * action_accept;
+	KAction * action_refuse;
+	KAction * action_hold;
+	KAction * action_transfer;
+	KAction * action_record;
+	QActionGroup * action_screen;
+	KAction * action_main;
+	KAction * action_history;
+	KAction * action_addressBook;
+	KAction * action_mailBox;
+	KAction * action_close;
+	KAction * action_quit;
+	KAction * action_displayVolumeControls;
+	KAction * action_displayDialpad;
+	KAction * action_configureSflPhone;
+	KAction * action_accountCreationWizard;
+
 	sflphone_kdeView * view;
 	QMenu *trayIconMenu;
 	bool iconChanged;
@@ -68,12 +96,22 @@ public:
 	void putForeground();
 	void trayIconSignal();
 	sflphone_kdeView * getView();
+	QList<QAction *> getCallActions();
 	
 	
 private slots:
 	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
 	void on_trayIcon_messageClicked();
-	void on_view_statusMessageChanged(const QString & message);
+	void on_view_statusMessageChangeAsked(const QString & message);
+	void on_view_windowTitleChangeAsked(const QString & message);
+	void on_view_enabledActionsChangeAsked(const bool * enabledActions);
+	void on_view_actionIconsChangeAsked(const QString * actionIcons);
+	void on_view_actionTextsChangeAsked(const QString * actionTexts);
+	void on_view_transferCheckStateChangeAsked(bool transferCheckState);
+	void on_view_recordCheckStateChangeAsked(bool recordCheckState);
+	void updateScreen(QAction * action);
+	void on_view_screenChanged(int screen);
+	void on_view_incomingCall(const Call * call);
 
 	void quitButton();
 
