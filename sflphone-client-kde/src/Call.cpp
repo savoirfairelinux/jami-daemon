@@ -108,7 +108,11 @@ void Call::initCallItem()
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,45));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
-	
+	initCallItemWidget();
+}
+
+void Call::initCallItemWidget()
+{
 	itemWidget = new QWidget();
 	labelIcon = new QLabel();
 	labelCallNumber = new QLabel(peerPhoneNumber);
@@ -393,34 +397,33 @@ QListWidgetItem * Call::getHistoryItem()
 
 QWidget * Call::getHistoryItemWidget()
 {
-		historyItemWidget = new QWidget();
-		labelHistoryIcon = new QLabel();
-		labelHistoryIcon->setPixmap(QPixmap(historyIcons[historyState]));
-		labelHistoryCallNumber = new QLabel(peerPhoneNumber);
-		labelHistoryTime = new QLabel(startTime->toString(Qt::LocaleDate));
-		
-		QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+	historyItemWidget = new QWidget();
+	labelHistoryIcon = new QLabel();
+	labelHistoryIcon->setPixmap(QPixmap(historyIcons[historyState]));
+	labelHistoryCallNumber = new QLabel(peerPhoneNumber);
+	labelHistoryTime = new QLabel(startTime->toString(Qt::LocaleDate));
 	
-		QHBoxLayout * mainLayout = new QHBoxLayout();
-		mainLayout->setContentsMargins ( 3, 1, 2, 1);
-		mainLayout->setSpacing(4);
-		QVBoxLayout * descr = new QVBoxLayout();
-		descr->setMargin(1);
-		descr->setSpacing(1);
-		descr->setMargin(0);
-		descr->setSpacing(1);
-		mainLayout->addWidget(labelHistoryIcon);
-		if(! peerName.isEmpty())
-		{
-			labelHistoryPeerName = new QLabel(peerName);
-			descr->addWidget(labelHistoryPeerName);
-		}
-		descr->addWidget(labelHistoryCallNumber);
-		descr->addWidget(labelHistoryTime);
-		mainLayout->addLayout(descr);
-		mainLayout->addItem(horizontalSpacer);
-		historyItemWidget->setLayout(mainLayout);
-// 	}
+	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+
+	QHBoxLayout * mainLayout = new QHBoxLayout();
+	mainLayout->setContentsMargins ( 3, 1, 2, 1);
+	mainLayout->setSpacing(4);
+	QVBoxLayout * descr = new QVBoxLayout();
+	descr->setMargin(1);
+	descr->setSpacing(1);
+	descr->setMargin(0);
+	descr->setSpacing(1);
+	mainLayout->addWidget(labelHistoryIcon);
+	if(! peerName.isEmpty())
+	{
+		labelHistoryPeerName = new QLabel(peerName);
+		descr->addWidget(labelHistoryPeerName);
+	}
+	descr->addWidget(labelHistoryCallNumber);
+	descr->addWidget(labelHistoryTime);
+	mainLayout->addLayout(descr);
+	mainLayout->addItem(horizontalSpacer);
+	historyItemWidget->setLayout(mainLayout);
 	return historyItemWidget;
 }
 
