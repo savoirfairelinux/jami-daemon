@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-07-03 17:02:33 -0400
+# Last Modified: 2009-07-21 14:12:07 -0400
 #####################################################
 
 #
@@ -380,8 +380,8 @@ fi
 if [ ${DO_SIGNATURES} ]; then
 	
 	echo "Sign packages"
-	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.deb" -exec dpkg-sig -g '-q --passphrase `cat '${GPG_FILE}'`' -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {}  \;
-	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.changes" -exec gpg --local-user 'Savoir-Faire Linux Inc.' --passphrase `cat ${GPG_FILE}` --clearsign --list-options no-show-policy-urls --armor --textmode --output {}.asc {} \;
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.deb" -exec dpkg-sig -g '--yes --batch --no-tty -q --passphrase `cat '${GPG_FILE}'`' -k 'Savoir-Faire Linux Inc.' --sign builder --sign-changes full {}  \;
+	find ${PACKAGING_RESULT_DIR}/deb/dists -name "*.changes" -exec gpg --yes --batch --no-tty --local-user 'Savoir-Faire Linux Inc.' --passphrase `cat ${GPG_FILE}` --clearsign --list-options no-show-policy-urls --armor --textmode --output {}.asc {} \;
 fi
 
 #########################
