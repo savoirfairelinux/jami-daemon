@@ -57,7 +57,7 @@ static GtkTreeModel* history_create_filter (GtkTreeModel* child)
 {
     GtkTreeModel* ret;
 
-    DEBUG("Create Filter\n");
+    DEBUG("Create Filter");
     ret = gtk_tree_model_filter_new (child, NULL);
     gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (ret), history_is_visible, NULL, NULL);
     return GTK_TREE_MODEL (ret);
