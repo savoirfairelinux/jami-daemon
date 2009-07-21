@@ -23,7 +23,7 @@
 #include <QtGui/QInputDialog>
 
 #include "configurationmanager_interface_singleton.h"
-#include "sflphone_kdeview.h"
+#include "SFLPhoneView.h"
 #include "sflphone_const.h"
 #include "conf/ConfigurationDialog.h"
 

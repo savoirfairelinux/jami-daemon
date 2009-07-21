@@ -19,8 +19,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef sflphone_kdeVIEW_H
-#define sflphone_kdeVIEW_H
+#ifndef SFLPHONEVIEW_H
+#define SFLPHONEVIEW_H
 
 #include <QtGui/QWidget>
 #include <QtCore/QString>
@@ -31,17 +31,14 @@
 #include <QErrorMessage>
 #include <KXmlGuiWindow>
 
-#include "ui_sflphone_kdeview_base.h"
+#include "ui_SFLPhoneView_base.h"
 #include "conf/ConfigurationDialog.h"
 #include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
-#include "sflphone_kdeview.h"
 #include "AccountList.h"
 
-#include "ui_sflphone_kdeview_base.h"
-
-class ConfigurationDialogKDE;
+class ConfigurationDialog;
 
 
 /**
@@ -56,13 +53,13 @@ class ConfigurationDialogKDE;
  * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
  * @version 0.9.6
  */
-class sflphone_kdeView : public QWidget, public Ui::SFLPhone_view
+class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
 {
 	Q_OBJECT
     
 private:
 
-	static ConfigurationDialogKDE * configDialog;
+	static ConfigurationDialog * configDialog;
 	static AccountList * accountList;
 	AccountWizard * wizard;
 	//List of calls in the window, and past ones.
@@ -91,8 +88,8 @@ public:
 	 *   expected signals.
 	 * @param parent 
 	 */
-	sflphone_kdeView(QWidget *parent);
-	virtual ~sflphone_kdeView();
+	SFLPhoneView(QWidget *parent);
+	virtual ~SFLPhoneView();
 	
 	//Getters
 	/**
@@ -346,4 +343,4 @@ signals:
 
 };
 
-#endif // sflphone_kdeVIEW_H
+#endif // SFLPHONEVIEW_H

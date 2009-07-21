@@ -32,7 +32,7 @@
 
 #include "sflphone_const.h"
 
-ConfigurationDialogKDE::ConfigurationDialogKDE(sflphone_kdeView *parent)
+ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
  :KConfigDialog(parent, SETTINGS_NAME, ConfigurationSkeleton::self())
 {
 	this->setWindowIcon(QIcon(ICON_SFLPHONE));
@@ -60,19 +60,18 @@ ConfigurationDialogKDE::ConfigurationDialogKDE(sflphone_kdeView *parent)
 }
 
 
-ConfigurationDialogKDE::~ConfigurationDialogKDE()
+ConfigurationDialog::~ConfigurationDialog()
 {
 }
 
-
-void ConfigurationDialogKDE::updateWidgets()
+void ConfigurationDialog::updateWidgets()
 {
 	qDebug() << "updateWidgets";
 	dlgAudio->updateWidgets();
 	dlgAccounts->updateWidgets();
 }
 
-void ConfigurationDialogKDE::updateSettings()
+void ConfigurationDialog::updateSettings()
 {
 	qDebug() << "updateSettings";
 	dlgAudio->updateSettings();
@@ -80,19 +79,19 @@ void ConfigurationDialogKDE::updateSettings()
 	qDebug() << "alsaPlugin = " << ConfigurationSkeleton::self()->alsaPlugin();
 }
 
-bool ConfigurationDialogKDE::hasChanged()
+bool ConfigurationDialog::hasChanged()
 {
 	qDebug() << "hasChanged" << dlgAudio->hasChanged() << dlgAccounts->hasChanged();
 	return dlgAudio->hasChanged() || dlgAccounts->hasChanged();
 }
 
-void ConfigurationDialogKDE::updateButtons()
+void ConfigurationDialog::updateButtons()
 {
 	qDebug() << "updateButtons";
 	enableButtonApply( hasChanged() );
 }
 
-void ConfigurationDialogKDE::applyCustomSettings()
+void ConfigurationDialog::applyCustomSettings()
 {
 	qDebug() << "applyCustomSettings";
 // 	if(hasChanged())
@@ -105,7 +104,7 @@ void ConfigurationDialogKDE::applyCustomSettings()
 	emit changesApplied();
 }
 
-void ConfigurationDialogKDE::reload()
+void ConfigurationDialog::reload()
 {
 	qDebug() << "reload";
 	ConfigurationSkeleton::self()->readConfig();

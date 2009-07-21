@@ -33,14 +33,14 @@
 #include <KAction>
 #include <QActionGroup>
 
-#include "ui_sflphone_kdeview_base.h"
+// #include "ui_SFLPhoneView_base.h"
 #include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
-#include "sflphone_kdeview.h"
+#include "SFLPhoneView.h"
 
+class SFLPhoneView;
 
-class sflphone_kdeView;
 /**
  * This class represents the SFLphone main window
  * It implements the methods relative to windowing
@@ -87,7 +87,7 @@ private:
 	KAction * action_configureSflPhone;
 	KAction * action_accountCreationWizard;
 
-	sflphone_kdeView * view;
+	SFLPhoneView * view;
 	QMenu *trayIconMenu;
 	bool iconChanged;
 	QSystemTrayIcon *trayIcon;
@@ -108,7 +108,7 @@ public:
 	void sendNotif(QString caller);
 	void putForeground();
 	void trayIconSignal();
-	sflphone_kdeView * getView();
+	SFLPhoneView * getView();
 	QList<QAction *> getCallActions();
 	
 	

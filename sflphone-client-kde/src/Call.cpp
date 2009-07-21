@@ -580,7 +580,7 @@ void Call::call()
 	if(account.isEmpty())
 	{
 		qDebug() << "account is not set, taking the first registered.";
-		this->account = sflphone_kdeView::accountInUseId();
+		this->account = SFLPhoneView::accountInUseId();
 	}
 	if(!account.isEmpty())
 	{
