@@ -57,6 +57,10 @@ int SIPAccount::registerVoIPLink()
 
     /* Retrieve the account information */
     /* Stuff needed for SIP registration */
+    if (Manager::instance().getConfigString (_accountID, HOSTNAME).length() >= PJ_MAX_HOSTNAME) {
+        return !SUCCESS;
+    } 
+    
     setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
