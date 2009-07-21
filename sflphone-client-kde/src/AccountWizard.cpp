@@ -56,13 +56,13 @@
  ***************************************************************************/
 
 typedef struct {
-	char success;
-	char reason[200];
-	char user[200];
-	char passwd[200];
+	bool success;
+	QString reason;
+	QString user;
+	QString passwd;
 } rest_account;
 
-int req(char *host, int port, char *req, char *ret) {
+int sendRequest(QString host, int port, QString req, QString & ret) {
 
 	int s;
 	struct sockaddr_in servSockAddr;
@@ -74,9 +74,9 @@ int req(char *host, int port, char *req, char *ret) {
 	char buf[1024];
 	
 	bzero(&servSockAddr, sizeof(servSockAddr));
-	servHostEnt = gethostbyname(host);
+	servHostEnt = gethostbyname(host.toLatin1());
 	if (servHostEnt == NULL) {
-		strcpy(ret, "gethostbyname");
+		ret = "gethostbyname";
 		return -1;
 	}
 	bcopy((char *)servHostEnt->h_addr, (char *)&servSockAddr.sin_addr, servHostEnt->h_length);
@@ -84,20 +84,22 @@ int req(char *host, int port, char *req, char *ret) {
 	servSockAddr.sin_family = AF_INET;
   
 	if ((s = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-		strcpy(ret, "socket");
+		ret = "socket";
 		return -1;
 	}
   
 	if(connect(s, (const struct sockaddr *) &servSockAddr, (socklen_t) sizeof(servSockAddr)) < 0 ) {
-		perror("foo");
-		strcpy(ret, "connect");
+		perror(NULL);
+		ret = "connect";
 		return -1;
 	}
   
 	f = fdopen(s, "r+");
 	
-	fprintf(f, "%s HTTP/1.1\r\n", req);
-	fprintf(f, "Host: %s\r\n", host);
+	const char * req2 = req.toLatin1();
+	const char * host2 = host.toLatin1();
+	fprintf(f, "%s HTTP/1.1\r\n", req2);
+	fprintf(f, "Host: %s\r\n", host2);
 	fputs("User-Agent: SFLphone\r\n", f);
 	fputs("\r\n", f);
 
@@ -113,7 +115,8 @@ int req(char *host, int port, char *req, char *ret) {
 		ret[i] = fgetc(f);
 	
 	if (status != 200) {
-		sprintf(ret, "http error: %ld", status);
+		ret = "http error: " + status;
+// 		sprintf(ret, "http error: %ld", status);
 		return -1;
 	}
 
@@ -123,22 +126,22 @@ int req(char *host, int port, char *req, char *ret) {
 	return 0;
 }
 
-rest_account get_rest_account(char *host,char *email) {
-	char ret[4096];
+rest_account get_rest_account(QString host, QString email) {
+	QString req = "GET /rest/accountcreator?email=" + email;
+	QString ret;
 	rest_account ra;
-	bzero(ret, sizeof(ret));
-	printf("HOST: %s\n", host);
-	strcpy(ret,"GET /rest/accountcreator?email=");
-	strcat(ret, email);
-	if (req(host, 80, ret, ret) != -1) {
-		strcpy(ra.user, strtok(ret, "\n"));
-		strcpy(ra.passwd, strtok(NULL, "\n"));\
-		ra.success = 1;
+	qDebug() << "HOST: " << host;
+	int res = sendRequest(host, 80, req, ret);
+	if (res != -1) {
+		QStringList list = ret.split("\n");
+		ra.user = list[0];
+		ra.passwd = list[1];\
+		ra.success = true;
 	} else {
-		ra.success = 0;
-		strcpy(ra.reason, ret);
+		ra.success = false;
+		ra.reason = ret;
 	}
-	puts(ret);
+	qDebug() << ret;
 	return ra;
 } 
 

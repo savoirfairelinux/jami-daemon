@@ -1343,10 +1343,9 @@ void sflphone_kdeView::on1_error(MapStringString details)
 	qDebug() << "Signal : Daemon error : " << details;
 }
 
-void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString & callID)
+void sflphone_kdeView::on1_incomingCall(const QString & /*accountID*/, const QString & callID)
 {
 	qDebug() << "Signal : Incoming Call ! ID = " << callID;
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Call * call = callList->addIncomingCall(callID);
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
@@ -1355,7 +1354,7 @@ void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString 
 
 void sflphone_kdeView::on1_incomingMessage(const QString &accountID, const QString &message)
 {
-	qDebug() << "Signal : Incoming Message ! \nMessage : " << message;
+	qDebug() << "Signal : Incoming Message for account " << accountID << " ! \nMessage : " << message;
 }
 
 void sflphone_kdeView::on1_voiceMailNotify(const QString &accountID, int count)
@@ -1363,7 +1362,7 @@ void sflphone_kdeView::on1_voiceMailNotify(const QString &accountID, int count)
 	qDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;
 }
 
-void sflphone_kdeView::on1_volumeChanged(const QString &device, double value)
+void sflphone_kdeView::on1_volumeChanged(const QString & /*device*/, double value)
 {
 	qDebug() << "Signal : Volume Changed !";
 	if(! (toolButton_recVol->isChecked() && value == 0.0))

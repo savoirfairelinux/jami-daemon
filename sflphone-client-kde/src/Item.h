@@ -43,7 +43,12 @@ protected:
 	
 
 public:
-	Item(QListWidget *list=0)
+	/**
+	 *  Would be great to take the QListWidget as attribute
+	 *  to be able to add the itemWidget to the item in the list.
+	 *  For the moment, we have to do it from outside.
+	 */
+	Item(/*QListWidget *list=0*/)
 	{
 		item = NULL;
 		itemWidget = NULL;
@@ -63,6 +68,7 @@ public:
 	{
 		return item;
 	}
+	
 	WIDGET_TYPE * getItemWidget()
 	{
 		return itemWidget;

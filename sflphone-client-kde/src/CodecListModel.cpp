@@ -71,12 +71,12 @@ QVariant CodecListModel::data ( const QModelIndex & index, int role) const
 }
 
 
-int CodecListModel::rowCount(const QModelIndex & parent) const
+int CodecListModel::rowCount(const QModelIndex & /*parent*/) const
 {
 	return codecs.count();
 }
 
-int CodecListModel::columnCount(const QModelIndex & parent) const
+int CodecListModel::columnCount(const QModelIndex & /*parent*/) const
 {
 	return 4;
 }
