@@ -19,8 +19,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef sflphone_kdeVIEW_H
-#define sflphone_kdeVIEW_H
+#ifndef SFLPHONEVIEW_H
+#define SFLPHONEVIEW_H
 
 #include <QtGui/QWidget>
 #include <QtCore/QString>
@@ -31,35 +31,35 @@
 #include <QErrorMessage>
 #include <KXmlGuiWindow>
 
-#include "ui_sflphone_kdeview_base.h"
+#include "ui_SFLPhoneView_base.h"
 #include "conf/ConfigurationDialog.h"
 #include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
-#include "sflphone_kdeview.h"
 #include "AccountList.h"
 
-#include "ui_sflphone_kdeview_base.h"
-
-class ConfigurationDialogKDE;
+class ConfigurationDialog;
 
 
 /**
  * This is the main view class for sflphone-client-kde.  Most of the non-menu,
  * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go
  * here.
+ * As the state of the view has effects on the window,
+ * it emits some signals to ask for changes that the window has
+ * to treat.
  *
  * @short Main view
  * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
- * @version 0.1
+ * @version 0.9.6
  */
-class sflphone_kdeView : public QWidget, public Ui::SFLPhone_view
+class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
 {
 	Q_OBJECT
     
 private:
 
-	static ConfigurationDialogKDE * configDialog;
+	static ConfigurationDialog * configDialog;
 	static AccountList * accountList;
 	AccountWizard * wizard;
 	//List of calls in the window, and past ones.
@@ -88,8 +88,8 @@ public:
 	 *   expected signals.
 	 * @param parent 
 	 */
-	sflphone_kdeView(QWidget *parent);
-	virtual ~sflphone_kdeView();
+	SFLPhoneView(QWidget *parent);
+	virtual ~SFLPhoneView();
 	
 	//Getters
 	/**
@@ -100,7 +100,7 @@ public:
 	 *   If there is no account registered, returns NULL.
 	 * @return the account to use if an outgoing call is placed.
 	 */
-	static Account * firstRegisteredAccount();
+	static Account * accountInUse();
 	/**
 	 *   Seeks the ID of the account to use.
 	 *   If priorAccountId is defined and the corresponding
@@ -109,7 +109,7 @@ public:
 	 *   If there is no account registered, returns an empty string.
 	 * @return the ID of the account to use if an outgoing call is placed.
 	 */
-	static QString firstRegisteredAccountId();
+	static QString accountInUseId();
 	
 	static AccountList * getAccountList();
 	QErrorMessage * getErrorWindow();
@@ -128,7 +128,6 @@ public:
 	 */
 	bool isAddressBookEnabled();
 	
-	//Updates
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
 	
 private slots:
@@ -255,7 +254,7 @@ public slots:
 	/**
 	 *   Loads the address book asynchronously.
 	 *   Calls enableAddressBook() once the address book
-	 *   loading has finished if it is not allready loaded.
+	 *   loading has finished if it is not already loaded.
 	 * @return true if address book has finished loading
 	 */
 	bool loadAddressBook();
@@ -344,4 +343,4 @@ signals:
 
 };
 
-#endif // sflphone_kdeVIEW_H
+#endif // SFLPHONEVIEW_H

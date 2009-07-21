@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>603</width>
-    <height>314</height>
+    <height>455</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -231,7 +231,7 @@
       <item>
        <widget class="QFrame" name="frame2_editAccounts">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>1</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -243,9 +243,6 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QFormLayout" name="formLayout_2">
-         <property name="fieldGrowthPolicy">
-          <enum>QFormLayout::ExpandingFieldsGrow</enum>
-         </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label1_alias">
            <property name="text">
@@ -368,6 +365,12 @@
          </item>
          <item row="6" column="1">
           <widget class="QLabel" name="edit7_state">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -452,11 +455,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>71</x>
-     <y>273</y>
+     <y>414</y>
     </hint>
     <hint type="destinationlabel">
      <x>167</x>
-     <y>278</y>
+     <y>419</y>
     </hint>
    </hints>
   </connection>

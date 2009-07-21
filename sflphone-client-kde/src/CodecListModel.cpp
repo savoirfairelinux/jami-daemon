@@ -71,12 +71,12 @@ QVariant CodecListModel::data ( const QModelIndex & index, int role) const
 }
 
 
-int CodecListModel::rowCount(const QModelIndex & parent) const
+int CodecListModel::rowCount(const QModelIndex & /*parent*/) const
 {
 	return codecs.count();
 }
 
-int CodecListModel::columnCount(const QModelIndex & parent) const
+int CodecListModel::columnCount(const QModelIndex & /*parent*/) const
 {
 	return 4;
 }
@@ -186,7 +186,6 @@ void CodecListModel::setActiveCodecList(const QStringList & activeCodecListToSet
 	for(int i=0 ; i<codecListToDisplay.size() ; i++)
 	{
 		bool ok;
-		qDebug() << codecListToDisplay[i];
 		QString payloadStr = QString(codecListToDisplay[i]);
 		int payload = payloadStr.toInt(&ok);
 		if(!ok)	

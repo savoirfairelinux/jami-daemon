@@ -127,7 +127,7 @@ bool AccountListModel::addAccount( QString alias )
 	return true;
 }
 
-int AccountListModel::rowCount(const QModelIndex & parent) const
+int AccountListModel::rowCount(const QModelIndex & /*parent*/) const
 {
 	return accounts->size();
 }

@@ -33,15 +33,28 @@
 #include <KAction>
 #include <QActionGroup>
 
-#include "ui_sflphone_kdeview_base.h"
+// #include "ui_SFLPhoneView_base.h"
 #include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
-#include "sflphone_kdeview.h"
+#include "SFLPhoneView.h"
 
+class SFLPhoneView;
 
-class sflphone_kdeView;
-
+/**
+ * This class represents the SFLphone main window
+ * It implements the methods relative to windowing
+ * (status, menus, toolbars, notifications...).
+ * It uses a view which implements the real functionning
+ * and features of the phone.
+ * The display of the window is according to the state of the view,
+ * so the view sends some signals to ask for changes on the window
+ * that the window has to take into account.
+ *
+ * @short Main window
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+ * @version 0.9.6
+**/
 class SFLPhone : public KXmlGuiWindow
 {
 Q_OBJECT
@@ -74,7 +87,7 @@ private:
 	KAction * action_configureSflPhone;
 	KAction * action_accountCreationWizard;
 
-	sflphone_kdeView * view;
+	SFLPhoneView * view;
 	QMenu *trayIconMenu;
 	bool iconChanged;
 	QSystemTrayIcon *trayIcon;
@@ -95,7 +108,7 @@ public:
 	void sendNotif(QString caller);
 	void putForeground();
 	void trayIconSignal();
-	sflphone_kdeView * getView();
+	SFLPhoneView * getView();
 	QList<QAction *> getCallActions();
 	
 	

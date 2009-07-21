@@ -176,6 +176,8 @@ void ConfigurationSkeleton::readConfig()
 	setEnableHooksIAX(hooksSettings[HOOKS_IAX2_ENABLED]=="1");
 	setHooksSIPHeader(hooksSettings[HOOKS_SIP_FIELD]);
 	setHooksCommand(hooksSettings[HOOKS_COMMAND]);
+	
+	qDebug() << "Finished to read config\n";
 }
 
 void ConfigurationSkeleton::writeConfig()
@@ -271,7 +273,6 @@ void ConfigurationSkeleton::writeConfig()
 	qDebug() << "Writing Record settings";
 	
 	QString destination = destinationFolder();
-	qDebug() << destination ;
 	configurationManager.setRecordPath(destination);
 	
 	
@@ -304,6 +305,8 @@ void ConfigurationSkeleton::writeConfig()
 	hooksSettings[HOOKS_SIP_FIELD] = hooksSIPHeader();
 	hooksSettings[HOOKS_COMMAND] = hooksCommand();
 	configurationManager.setHookSettings(hooksSettings);
+	
+	qDebug() << "Finished to write config\n";
 	
 	readConfig();
 }

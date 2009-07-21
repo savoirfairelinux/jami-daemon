@@ -25,7 +25,8 @@
 #include "callmanager_interface_singleton.h"
 #include "configurationmanager_interface_singleton.h"
 
-CallList::CallList()
+CallList::CallList(QObject * parent)
+ : QObject(parent)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();

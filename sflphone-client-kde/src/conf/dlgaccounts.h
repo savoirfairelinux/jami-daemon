@@ -37,7 +37,6 @@ Q_OBJECT
 public:
 	DlgAccounts(KConfigDialog *parent = 0);
 
-	~DlgAccounts();
 	void saveAccount(QListWidgetItem * item);
 	void loadAccount(QListWidgetItem * item);
 	
@@ -48,7 +47,6 @@ private:
 public slots:
 	void saveAccountList();
 	void loadAccountList();
-	void applyCustomSettings();
 	
 	bool hasChanged();
 	void updateSettings();

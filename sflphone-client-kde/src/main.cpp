@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 		
 		//configuration dbus
 		registerCommTypes();
-		SFLPhone * fenetre = new SFLPhone();
+		new SFLPhone();
 
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);

@@ -47,9 +47,6 @@ AccountItemWidget::AccountItemWidget(QWidget *parent)
 	enabled = false;
 	updateDisplay();
 	
-// 	connect(checkBox, SIGNAL(stateChanged(int)),
-// 	        this,      SLOT(on_checkBox_stateChanged()));
-	
 	QMetaObject::connectSlotsByName(this);
 }
 
@@ -115,6 +112,5 @@ bool AccountItemWidget::getEnabled()
 
 void AccountItemWidget::on_checkBox_stateChanged(int state)
 {
-	qDebug() << "on_checkBox_stateChanged";
 	emit checkStateChanged(state == Qt::Checked);
 }

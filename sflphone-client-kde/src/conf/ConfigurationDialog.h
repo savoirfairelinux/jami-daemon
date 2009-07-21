@@ -25,7 +25,7 @@
 
 
 #include "kcfg_settings.h"
-#include "sflphone_kdeview.h"
+#include "SFLPhoneView.h"
 
 
 #define SETTINGS_NAME "settings"
@@ -38,7 +38,7 @@ class DlgAddressBook;
 class DlgRecord;
 class DlgHooks;
 
-class sflphone_kdeView;
+class SFLPhoneView;
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -51,7 +51,7 @@ class sflphone_kdeView;
 	A few things might be done a cleaner way by passing the handling 
 	to the skeleton like it has been done with codecs.
 */
-class ConfigurationDialogKDE : public KConfigDialog
+class ConfigurationDialog : public KConfigDialog
 {
 Q_OBJECT
 private:
@@ -66,13 +66,12 @@ private:
 	DlgHooks       * dlgHooks;
 
 public:
-	ConfigurationDialogKDE(sflphone_kdeView *parent = 0);
+	ConfigurationDialog(SFLPhoneView *parent = 0);
 
-	~ConfigurationDialogKDE();
+	~ConfigurationDialog();
 	
     
 public slots:
-	void slot();
 	/**
 	 *   Reimplements KConfigDialog
 	 */

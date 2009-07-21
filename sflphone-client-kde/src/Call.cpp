@@ -111,7 +111,6 @@ void Call::initCallItem()
 	
 	itemWidget = new QWidget();
 	labelIcon = new QLabel();
-	qDebug() << "labelIcon : " << labelIcon;
 	labelCallNumber = new QLabel(peerPhoneNumber);
 	labelTransferPrefix = new QLabel(i18n("Transfer to : "));
 	labelTransferNumber = new QLabel();
@@ -127,7 +126,6 @@ void Call::initCallItem()
 	transfer->setMargin(0);
 	transfer->setSpacing(0);
 	mainLayout->addWidget(labelIcon);
-	qDebug() << "descr->addWidget(labelPeerName);";
 	if(! peerName.isEmpty())
 	{
 		labelPeerName = new QLabel(peerName);
@@ -389,15 +387,12 @@ QListWidgetItem * Call::getHistoryItem()
 	{
 		historyItem = new QListWidgetItem();
 		historyItem->setSizeHint(QSize(140,45));
-		qDebug() << "historystate = " << historyState;
 	}
 	return historyItem;
 }
 
 QWidget * Call::getHistoryItemWidget()
 {
-// 	if(historyItemWidget == NULL && historyState != NONE)
-// 	{
 		historyItemWidget = new QWidget();
 		labelHistoryIcon = new QLabel();
 		labelHistoryIcon->setPixmap(QPixmap(historyIcons[historyState]));
@@ -584,8 +579,8 @@ void Call::call()
 	qDebug() << "account = " << account;
 	if(account.isEmpty())
 	{
-		qDebug() << "account is empty, taking the first registered.";
-		this->account = sflphone_kdeView::firstRegisteredAccountId();
+		qDebug() << "account is not set, taking the first registered.";
+		this->account = SFLPhoneView::accountInUseId();
 	}
 	if(!account.isEmpty())
 	{
@@ -670,14 +665,8 @@ void Call::appendItemText(QString text)
 			editNumber = labelCallNumber;
 			break;
 		case CALL_STATE_CURRENT:
-			//TODO replace account string by an Account instance and handle damn pointers to avoid detruction of Accounts
-// 			if(peerPhoneNumber == configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX])
-// 			{
-// 				text = QString(QChar(0x9A));
-// 			}
 			text = QString();
 			editNumber = labelCallNumber;
-			
 			break;		
 		default:
 			qDebug() << "Type key on call not editable. Doing nothing.";

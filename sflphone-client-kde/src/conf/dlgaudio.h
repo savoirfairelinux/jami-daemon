@@ -45,13 +45,17 @@ public slots:
 	void updateWidgets();
 	void updateSettings();
 	bool hasChanged();
-	void updateAlsaSettings();
-	void applyCustomSettings();
+	/**
+	 *   Loads the ALSA settings to fill the combo boxes
+	 *   of the ALSA settings.
+	 *   ALSA choices for input, output... can be load only
+	 *   when the daemon has set ALSA as sound manager.
+	 *   So we have to load these settings once the user choses
+	 *   ALSA.
+	 */
+	void loadAlsaSettings();
 	
 private slots:
-// 	void updateCodecListCommands();
-// 	void on_toolButton_codecUp_clicked();
-// 	void on_toolButton_codecDown_clicked();
 	void codecTableChanged();
 	
 signals:
