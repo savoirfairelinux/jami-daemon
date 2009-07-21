@@ -157,14 +157,14 @@ calltree_reset (calltab_t* tab)
 
 void
 focus_on_calltree_out(){
-    DEBUG("set_focus_on_calltree_out \n");
+    DEBUG("set_focus_on_calltree_out");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = FALSE;
 }
 
 void
 focus_on_calltree_in(){
-    DEBUG("set_focus_on_calltree_in \n");
+    DEBUG("set_focus_on_calltree_in");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = TRUE;
 }
@@ -614,7 +614,7 @@ void calltree_display (calltab_t *tab) {
     }
 
     else
-        ERROR ("calltree.c line 1050 . This is probably a bug in the application");
+        ERROR ("calltree.c line %d . This is probably a bug in the application", __LINE__);
 
 
     gtk_widget_hide (active_calltree->tree);
