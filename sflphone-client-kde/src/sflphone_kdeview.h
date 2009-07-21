@@ -48,10 +48,13 @@ class ConfigurationDialogKDE;
  * This is the main view class for sflphone-client-kde.  Most of the non-menu,
  * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go
  * here.
+ * As the state of the view has effects on the window,
+ * it emits some signals to ask for changes that the window has
+ * to treat.
  *
  * @short Main view
  * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
- * @version 0.1
+ * @version 0.9.6
  */
 class sflphone_kdeView : public QWidget, public Ui::SFLPhone_view
 {

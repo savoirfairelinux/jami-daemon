@@ -37,10 +37,6 @@
 #include "configurationmanager_interface_singleton.h"
 
 
-/**
- * 
- * @param parent 
- */
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent),
       view(new sflphone_kdeView(this))

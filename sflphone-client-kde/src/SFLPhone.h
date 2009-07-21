@@ -41,7 +41,20 @@
 
 
 class sflphone_kdeView;
-
+/**
+ * This class represents the SFLphone main window
+ * It implements the methods relative to windowing
+ * (status, menus, toolbars, notifications...).
+ * It uses a view which implements the real functionning
+ * and features of the phone.
+ * The display of the window is according to the state of the view,
+ * so the view sends some signals to ask for changes on the window
+ * that the window has to take into account.
+ *
+ * @short Main window
+ * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+ * @version 0.9.6
+**/
 class SFLPhone : public KXmlGuiWindow
 {
 Q_OBJECT
