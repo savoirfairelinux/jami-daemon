@@ -33,7 +33,6 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	setupUi(this);
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	QStyle * style = QApplication::style();
 	button_accountUp->setIcon(KIcon("go-up"));
 	button_accountDown->setIcon(KIcon("go-down"));
 	button_accountAdd->setIcon(KIcon("list-add"));
@@ -86,30 +85,29 @@ void DlgAccounts::saveAccountList()
 	QStringList accountIds= QStringList(configurationManager.getAccountList().value());
 	//create or update each account from accountList
 	for (int i = 0; i < accountList->size(); i++){
-		Account & current = (*accountList)[i];
+		Account * current = (*accountList)[i];
 		QString currentId;
 		//if the account has no instanciated id, it has just been created in the client
-		if(current.isNew())
+		if(current->isNew())
 		{
-			MapStringString details = current.getAccountDetails();
+			MapStringString details = current->getAccountDetails();
 			currentId = configurationManager.addAccount(details);
-			current.setAccountId(currentId);
+			current->setAccountId(currentId);
 		}
 		//if the account has an instanciated id but it's not in configurationManager
 		else{
-			if(! accountIds.contains(current.getAccountId()))
+			if(! accountIds.contains(current->getAccountId()))
 			{
-				qDebug() << "The account with id " << current.getAccountId() << " doesn't exist. It might have been removed by another SFLPhone client.";
+				qDebug() << "The account with id " << current->getAccountId() << " doesn't exist. It might have been removed by another SFLphone client.";
 				currentId = QString();
 			}
 			else
 			{
-				configurationManager.setAccountDetails(current.getAccountId(), current.getAccountDetails());
-				currentId = QString(current.getAccountId());
+				configurationManager.setAccountDetails(current->getAccountId(), current->getAccountDetails());
+				currentId = QString(current->getAccountId());
 			}
 		}
-		qDebug() << currentId << " : " << current.isChecked();
-		configurationManager.sendRegister(currentId, current.isChecked() ? 1 : 0 );
+		qDebug() << currentId << " : " << current->isChecked();
 	}
 	//remove accounts that are in the configurationManager but not in the client
 	for (int i = 0; i < accountIds.size(); i++)
@@ -182,7 +180,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
 	QString status = account->getAccountDetail(ACCOUNT_STATUS);
 	edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
-
+	frame2_editAccounts->setEnabled(true);
 }
 
 void DlgAccounts::loadAccountList()
@@ -192,7 +190,7 @@ void DlgAccounts::loadAccountList()
 	//initialize the QListWidget object with the AccountList
 	listWidget_accountList->clear();
 	for (int i = 0; i < accountList->size(); ++i){
-		addAccountToAccountList(&(*accountList)[i]);
+		addAccountToAccountList((*accountList)[i]);
 	}
 	if (listWidget_accountList->count() > 0 && listWidget_accountList->currentItem() == NULL) 
 		listWidget_accountList->setCurrentRow(0);
@@ -205,7 +203,7 @@ void DlgAccounts::addAccountToAccountList(Account * account)
 	qDebug() << "addAccountToAccountList";
 	QListWidgetItem * item = account->getItem();
 	QWidget * widget = account->getItemWidget();
-	connect(widget, SIGNAL(checkStateChanged()),
+	connect(widget, SIGNAL(checkStateChanged(bool)),
 	        this,   SLOT(changedAccountList()));
 	qDebug() << "item->isHidden()" << item->isHidden();
 	listWidget_accountList->addItem(item);
@@ -215,8 +213,8 @@ void DlgAccounts::addAccountToAccountList(Account * account)
 
 void DlgAccounts::changedAccountList()
 {
+	qDebug() << "changedAccountList";
 	accountListHasChanged = true;
-// 	((ConfigurationDialogKDE *)parent())->updateButtons();
 	emit updateButtons();
 	toolButton_accountsApply->setEnabled(hasChanged());
 }
@@ -225,11 +223,9 @@ void DlgAccounts::changedAccountList()
 
 void DlgAccounts::on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous )
 {
-	qDebug() << "on_listWidget_accountList_currentItemChanged"; 
-	if(previous)
-		saveAccount(previous);
-	if(current)
-		loadAccount(current);
+	qDebug() << "on_listWidget_accountList_currentItemChanged";
+	saveAccount(previous);
+	loadAccount(current);
 	updateAccountListCommands();
 }
 
@@ -240,7 +236,7 @@ void DlgAccounts::on_button_accountUp_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
-	account->initAccountItem();
+	account->initItem();
 	QListWidgetItem * item = account->getItem();
 	AccountItemWidget * widget = account->getItemWidget();
 	accountList->upAccount(currentRow);
@@ -257,7 +253,7 @@ void DlgAccounts::on_button_accountDown_clicked()
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
 	Account * account = accountList->getAccountByItem(prevItem);
 	//we need to build a new item to set the itemWidget back
-	account->initAccountItem();
+	account->initItem();
 	QListWidgetItem * item = account->getItem();
 	AccountItemWidget * widget = account->getItemWidget();
 	accountList->downAccount(currentRow);
@@ -300,7 +296,7 @@ void DlgAccounts::on_toolButton_accountsApply_clicked()
 
 void DlgAccounts::applyCustomSettings()
 {
-	qDebug() << "applyCustomSettings";
+	qDebug() << "DlgAccounts::applyCustomSettings";
 	if(hasChanged())
 	{
 		toolButton_accountsApply->setEnabled(false);
@@ -319,6 +315,7 @@ void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
 
 void DlgAccounts::updateAccountListCommands()
 {
+	qDebug() << "updateAccountListCommands";
 	bool buttonsEnabled[4] = {true,true,true,true};
 	if(! listWidget_accountList->currentItem())
 	{
@@ -330,7 +327,7 @@ void DlgAccounts::updateAccountListCommands()
 	{
 		buttonsEnabled[0] = false;
 	}
-	else if(listWidget_accountList->currentRow() == listWidget_accountList->count() - 1)
+	if(listWidget_accountList->currentRow() == listWidget_accountList->count() - 1)
 	{
 		buttonsEnabled[1] = false;
 	}
@@ -346,8 +343,8 @@ void DlgAccounts::updateAccountStates()
 	qDebug() << accountList->size();
 	for (int i = 0; i < accountList->size(); i++)
 	{
-		Account & current = accountList->getAccount(i);
-		current.updateState();
+		Account * current = accountList->getAccountAt(i);
+		current->updateState();
 	}
 	qDebug() << accountList->size();
 }
@@ -367,5 +364,6 @@ void DlgAccounts::updateSettings()
 void DlgAccounts::updateWidgets()
 {
 	loadAccountList();
+	accountListHasChanged = false;
 }
 

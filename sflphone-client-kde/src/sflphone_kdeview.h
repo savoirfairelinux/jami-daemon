@@ -79,13 +79,17 @@ protected:
 
 public:
 	//Constructors & Destructors
+	/**
+	 *   This constructor does not load the window as it would
+	 *   better wait for the parent window to connect to the signals
+	 *   for updating it (statusMessageChangeAsked...).
+	 *   You should call the loadWindow() method once
+	 *   you have constructed the object and connected the
+	 *   expected signals.
+	 * @param parent 
+	 */
 	sflphone_kdeView(QWidget *parent);
 	virtual ~sflphone_kdeView();
-	/**
-	 * Called at construction. Updates all the display
-	 * according to the settings.
-	 */
-	void loadWindow();
 	
 	//Getters
 	/**
@@ -97,6 +101,15 @@ public:
 	 * @return the account to use if an outgoing call is placed.
 	 */
 	static Account * firstRegisteredAccount();
+	/**
+	 *   Seeks the ID of the account to use.
+	 *   If priorAccountId is defined and the corresponding
+	 *   account exists and is registered, uses this one, else,
+	 *   asks the first registered of accountList.
+	 *   If there is no account registered, returns an empty string.
+	 * @return the ID of the account to use if an outgoing call is placed.
+	 */
+	static QString firstRegisteredAccountId();
 	
 	static AccountList * getAccountList();
 	QErrorMessage * getErrorWindow();
@@ -105,9 +118,15 @@ public:
 	/**
 	* Used to sort contacts according to their types with Kabc.
 	* @return the integer resulting to the flags of the types 
-	* chosen to be displayed in SFLPhone configuration.
+	* chosen to be displayed in SFLphone configuration.
 	*/
 	int phoneNumberTypesDisplayed();
+	
+	/**
+	 * 
+	 * @return true if the address book is enabled in config
+	 */
+	bool isAddressBookEnabled();
 	
 	//Updates
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
@@ -218,7 +237,36 @@ private slots:
 	void updateDialpad();
 	
 public slots:
+	/**
+	 * Updates all the display
+	 * according to the settings.
+	 */
+	void loadWindow();
+	
+	
 	void updateStatusMessage();
+	
+	/**
+	 *   Enable the address book search line edit.
+	 *   To be called once the address book loading has finished.
+	 */
+	void enableAddressBook();
+	
+	/**
+	 *   Loads the address book asynchronously.
+	 *   Calls enableAddressBook() once the address book
+	 *   loading has finished if it is not allready loaded.
+	 * @return true if address book has finished loading
+	 */
+	bool loadAddressBook();
+	
+	/**
+	 *   Chooses to enable/disable (show/hide) the address book 
+	 *   button according to the configuration's setting, and 
+	 *   returns to the main window if is in address book
+	 *   whereas it is disabled.
+	 */
+	void updateAddressBookEnabled();
 	
 	
 	virtual void keyPressEvent(QKeyEvent *event)
@@ -240,20 +288,16 @@ public slots:
 		}
 	}
 
-	void on_action_displayVolumeControls_triggered();
-	void on_action_displayDialpad_triggered();
-// 	void on_action_configureAccounts_triggered();
-// 	void on_action_configureAudio_triggered();
-	void on_action_configureSflPhone_triggered();
-	void on_action_accountCreationWizard_triggered();
-	void on_action_accept_triggered();
-	void on_action_refuse_triggered();
-	void on_action_hold_triggered();
-	void on_action_transfer_triggered();
-	void on_action_record_triggered();
-	void on_action_history_triggered(bool checked);
-	void on_action_addressBook_triggered(bool checked);
-	void on_action_mailBox_triggered();
+	void displayVolumeControls();
+	void displayDialpad();
+	void configureSflPhone();
+	void accountCreationWizard();
+	void accept();
+	void refuse();
+	void hold();
+	void transfer();
+	void record();
+	void mailBox();
 	
 	void on_widget_dialpad_typed(QString text);
 	
@@ -283,8 +327,20 @@ public slots:
 	void on1_voiceMailNotify(const QString &accountID, int count);
 	void on1_volumeChanged(const QString &device, double value);
 	
+	void changeScreen(int screen);
+	
 signals:
-	void statusMessageChanged(const QString & message);
+	void statusMessageChangeAsked(const QString & message);
+	void windowTitleChangeAsked(const QString & title);
+	void enabledActionsChangeAsked(const bool * enabledActions);
+	void actionIconsChangeAsked(const QString * actionIcons);
+	void actionTextsChangeAsked(const QString * actionTexts);
+	void transferCheckStateChangeAsked(bool transferCheckState);
+	void recordCheckStateChangeAsked(bool recordCheckState);
+	void addressBookEnableAsked(bool enableAddressBook);
+	void screenChanged(int screen);
+	void incomingCall(const Call * call);
+	
 
 };
 

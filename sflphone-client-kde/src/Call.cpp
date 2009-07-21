@@ -54,7 +54,7 @@ const function Call::actionPerformedFunctionMap[11][5] =
 /*INCOMING       */  {&Call::accept     , &Call::refuse   , &Call::acceptTransf   , &Call::acceptHold  ,  &Call::setRecord     },
 /*RINGING        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::setRecord     },
 /*CURRENT        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },
-/*DIALING        */  {&Call::call       , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
+/*DIALING        */  {&Call::call       , &Call::cancel  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
 /*HOLD           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     },
 /*FAILURE        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
 /*BUSY           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
@@ -164,24 +164,20 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	this->stopTime = NULL;
 }
 
-Call::Call(QString callId)
+Call * Call::buildExistingCall(QString callId)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	MapStringString details = callManager.getCallDetails(callId).value();
 	qDebug() << "Constructing existing call with details : " << details;
-	this->callId = callId;
-	this->peerPhoneNumber = details[CALL_PEER_NUMBER];
-	this->peerName = details[CALL_PEER_NAME];
-	initCallItem();
+	QString peerNumber = details[CALL_PEER_NUMBER];
+	QString peerName = details[CALL_PEER_NAME];
 	call_state startState = getStartStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
-	changeCurrentState(startState);
-	this->historyState = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
-	this->account = details[CALL_ACCOUNTID];
-	this->recording = false;
-	this->startTime = new QDateTime(QDateTime::currentDateTime());
-	this->stopTime = NULL;
-	this->historyItem = NULL;
-	this->historyItemWidget = NULL;
+	QString account = details[CALL_ACCOUNTID];
+	Call * call = new Call(startState, callId, peerName, peerNumber, account);
+	call->startTime = new QDateTime(QDateTime::currentDateTime());
+	call->recording = callManager.getIsRecording(callId);
+	call->historyState = getHistoryStateFromDaemonCallState(details[CALL_STATE], details[CALL_TYPE]);
+	return call;
 }
 
 Call::~Call()
@@ -251,6 +247,7 @@ history_state Call::getHistoryStateFromType(QString type)
 	{
 		return INCOMING;
 	}
+	return NONE;
 }
 
 call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
@@ -272,6 +269,14 @@ call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QStri
 		return CALL_STATE_INCOMING;
 	}
 	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INACTIVE && daemonCallType == DAEMON_CALL_TYPE_OUTGOING)
+	{
+		return CALL_STATE_RINGING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_INCOMING)
+	{
+		return CALL_STATE_INCOMING;
+	}
+	else if(daemonCallState == DAEMON_CALL_STATE_INIT_RINGING)
 	{
 		return CALL_STATE_RINGING;
 	}
@@ -353,7 +358,7 @@ Contact * Call::findContactForNumberInKAddressBook(QString number)
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
 	bool displayPhoto = addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO];
-	AddressBook * ab = KABC::StdAddressBook::self();
+	AddressBook * ab = KABC::StdAddressBook::self(true);
 	QVector<Contact *> results = QVector<Contact *>();
 	AddressBook::Iterator it;
 	for ( it = ab->begin(); it != ab->end(); ++it ) {	
@@ -558,6 +563,13 @@ void Call::hangUp()
 	callManager.hangUp(callId);
 }
 
+void Call::cancel()
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Canceling call. callId : " << callId;
+	callManager.hangUp(callId);
+}
+
 void Call::hold()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
@@ -572,8 +584,8 @@ void Call::call()
 	qDebug() << "account = " << account;
 	if(account.isEmpty())
 	{
-		qDebug() << "account is empty"; 
-		this->account = sflphone_kdeView::firstRegisteredAccount()->getAccountId();
+		qDebug() << "account is empty, taking the first registered.";
+		this->account = sflphone_kdeView::firstRegisteredAccountId();
 	}
 	if(!account.isEmpty())
 	{
@@ -581,8 +593,8 @@ void Call::call()
 		callManager.placeCall(account, callId, number);
 		this->account = account;
 		this->peerPhoneNumber = number;
-		Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber);
-		if(contact) this->peerName = contact->getNickName();
+// 		Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber);
+// 		if(contact) this->peerName = contact->getNickName();
 		this->startTime = new QDateTime(QDateTime::currentDateTime());
 		this->historyState = OUTGOING;
 	}
@@ -647,7 +659,6 @@ void Call::warning()
 
 void Call::appendItemText(QString text)
 {
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QLabel * editNumber;
 	switch(currentState)
 	{

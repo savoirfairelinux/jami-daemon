@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string notr="true">Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -23,7 +23,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>General</string>
+      <string comment="Config section">General</string>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>

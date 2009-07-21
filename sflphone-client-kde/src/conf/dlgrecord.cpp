@@ -29,6 +29,7 @@ DlgRecord::DlgRecord(QWidget *parent)
 	KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
 	KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
 	KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
+	KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
 }
 
 

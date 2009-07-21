@@ -18,9 +18,9 @@ AC_ARG_WITH(debug,
 		[with_debug=no]
 	)
 if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
-	CFLAGS="$CFLAGS -g -O2 -DDEBUG -Wall -Wextra"
+	CFLAGS="-g -O0 -DDEBUG -Wall -Wextra"
 else
-	CFLAGS="$CFLAGS -g -Wall -O2"
+	CFLAGS="$CFLAGS"
 fi
 
 AC_PROG_CC
@@ -45,6 +45,8 @@ if  $need_libsexy; then
 fi
 AC_SUBST(LIBSEXY_CFLAGS)
 AC_SUBST(LIBSEXY_LIBS)
+
+PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1 >= 0.75, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=true, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=false);
 
 PKG_CHECK_MODULES(DEPS,     \
     dbus-glib-1 >= 0.35     \
@@ -76,6 +78,7 @@ pixmaps/Makefile
 sflphone.desktop
 tests/Makefile
 man/Makefile
+po/Makefile
 ])
 
 

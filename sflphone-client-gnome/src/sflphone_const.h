@@ -36,7 +36,9 @@
 #define CONTACTS            "contacts"
 
 /** Locale */
-#define _(STRING)   gettext( STRING )
+#define _(STRING)             gettext( STRING )
+#define c_(COMMENT,STRING)    gettext(STRING) 
+#define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
 /** Warnings unused variables **/
 #define UNUSED_VAR(var)      (void*)var
@@ -77,8 +79,6 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define SHOW_DIALPAD	( dbus_get_dialpad() )
 /** Show/Hide the volume controls */
 #define SHOW_VOLUME	( dbus_get_volume_controls() )
-/** Show/Hide the dialpad */
-#define SHOW_SEARCHBAR	( dbus_get_searchbar() )
 /** Show/Hide the alsa configuration panel */
 #define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
 

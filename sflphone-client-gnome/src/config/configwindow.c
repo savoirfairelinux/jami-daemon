@@ -525,7 +525,7 @@ GtkWidget* create_stun_tab()
     tableNat = gtk_table_new ( 3, 2  , FALSE/* homogeneous */);
 
     // NAT detection code section
-    label = gtk_label_new(_("Stun parameters will apply to each SIP account created."));
+    label = gtk_label_new(_("Stun parameters will be applied on each SIP account created."));
     gtk_table_attach( GTK_TABLE( tableNat ), label, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC (label), 0.5, 0.5);
 
@@ -533,7 +533,7 @@ GtkWidget* create_stun_tab()
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"TRUE") == 0 ? TRUE: FALSE);
     g_signal_connect( G_OBJECT (GTK_TOGGLE_BUTTON(stunEnable)) , "toggled" , G_CALLBACK( stun_state ), NULL);
 #if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("Enable it if you are behind a firewall"));
+    gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("You should probably enable this if you are behind a firewall."));
 #endif
     gtk_table_attach ( GTK_TABLE( tableNat ), stunEnable, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -541,7 +541,7 @@ GtkWidget* create_stun_tab()
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), stunServer);
     gtk_entry_set_text(GTK_ENTRY(stunServer), stun_server);
 #if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET( stunServer ) , _("Format: name.server:port"));
+    gtk_widget_set_tooltip_text( GTK_WIDGET( stunServer ) , _("Format : name.server:port"));
 #endif
     gtk_table_attach ( GTK_TABLE( tableNat ), stunServer, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive( GTK_WIDGET( stunServer ), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stunEnable)));
@@ -629,7 +629,7 @@ create_general_settings ()
     gnome_main_section_new_with_table (_("Calls History"), &frame, &table, 3, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    history_w = gtk_check_button_new_with_mnemonic(_("_Keep my history for at least"));
+    history_w = gtk_check_button_new_with_mnemonic(c_("Beginning of 'Keep my history for at least n days.'", "_Keep my history for at least"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (history_w), history_enabled);
     g_signal_connect (G_OBJECT (history_w) , "clicked" , G_CALLBACK (history_enabled_cb) , NULL);
     gtk_table_attach( GTK_TABLE(table), history_w, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
@@ -640,7 +640,7 @@ create_general_settings ()
     gtk_widget_set_sensitive (GTK_WIDGET (history_value), gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (history_w)));
     gtk_table_attach( GTK_TABLE(table), history_value, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5); 
 
-    label = gtk_label_new(_(" days"));
+    label = gtk_label_new(c_("End of 'Keep my history for at least n days.'", "days"));
     gtk_table_attach( GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     
     /** PULSEAUDIO CONFIGURATION */
@@ -674,7 +674,7 @@ create_general_settings ()
     //gtk_widget_set_size_request(applyButton, 100, 35);
     //gtk_widget_set_sensitive( GTK_WIDGET(applyButton), (n==0)?FALSE:TRUE );
 
-    label = gtk_label_new(_("Port:"));
+    label = gtk_label_new(_("Port"));
     // gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
     entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
@@ -719,11 +719,11 @@ create_recording_settings ()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Recorded file saving path
-    gnome_main_section_new_with_table (_("General"), &savePathFrame, &table, 1, 2);
+    gnome_main_section_new_with_table (c_("Config section", "General"), &savePathFrame, &table, 1, 2);
     gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
 
     // label
-    label = gtk_label_new(_("Recordings folder"));
+    label = gtk_label_new(_("Destination folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     // gtk_misc_set_alignment(GTK_MISC(label), 0.08, 0.5);
 
@@ -783,27 +783,27 @@ show_config_window ()
 
     // Audio tab
     tab = create_audio_configuration();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio Settings")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // General settings tab
     tab = create_general_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General Settings")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "General")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Recording tab
     tab = create_recording_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Recordings")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "Recordings")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Addressbook tab
     tab = create_addressbook_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "Address Book")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // HookS tab
     tab = create_hooks_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "Hooks")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
@@ -830,7 +830,7 @@ show_accounts_window( void )
 
     accDialogOpen = TRUE;
 
-    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Accounts"),
+    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (c_("Config section", "Accounts"),
                 GTK_WINDOW(get_main_window()),
                 GTK_DIALOG_DESTROY_WITH_PARENT,
                 GTK_STOCK_CLOSE,
@@ -853,7 +853,7 @@ show_accounts_window( void )
     gtk_container_add(GTK_CONTAINER(accountFrame) , tab);
 
     // Stun Frame, displayed only if at least 1 SIP account is configured
-    gnome_main_section_new (_("Network Address Translation"), &stunFrame);
+    gnome_main_section_new (_("Network Address Translation (NAT)"), &stunFrame);
     gtk_box_pack_start( GTK_BOX( dialog->vbox ), stunFrame , TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(stunFrame), 10);
     gtk_widget_show(stunFrame);
