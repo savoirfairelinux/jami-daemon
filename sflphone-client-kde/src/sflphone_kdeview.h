@@ -103,7 +103,7 @@ public:
 	 *   If there is no account registered, returns NULL.
 	 * @return the account to use if an outgoing call is placed.
 	 */
-	static Account * firstRegisteredAccount();
+	static Account * accountInUse();
 	/**
 	 *   Seeks the ID of the account to use.
 	 *   If priorAccountId is defined and the corresponding
@@ -112,7 +112,7 @@ public:
 	 *   If there is no account registered, returns an empty string.
 	 * @return the ID of the account to use if an outgoing call is placed.
 	 */
-	static QString firstRegisteredAccountId();
+	static QString accountInUseId();
 	
 	static AccountList * getAccountList();
 	QErrorMessage * getErrorWindow();
@@ -131,7 +131,6 @@ public:
 	 */
 	bool isAddressBookEnabled();
 	
-	//Updates
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
 	
 private slots:
@@ -258,7 +257,7 @@ public slots:
 	/**
 	 *   Loads the address book asynchronously.
 	 *   Calls enableAddressBook() once the address book
-	 *   loading has finished if it is not allready loaded.
+	 *   loading has finished if it is not already loaded.
 	 * @return true if address book has finished loading
 	 */
 	bool loadAddressBook();

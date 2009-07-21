@@ -39,7 +39,7 @@ private:
 public:
 
 	//Constructors & Destructors
-	CallList();
+	CallList(QObject * parent = 0);
 	~CallList();
 
 	//Getters

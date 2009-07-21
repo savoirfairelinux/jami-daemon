@@ -29,10 +29,6 @@ SortableCodecListWidget::SortableCodecListWidget(QWidget *parent)
 {
 	codecTable = new QTableView(this);
 	codecTable->setObjectName("codecTable");
-// 	CodecListModel * model = new CodecListModel();
-// 	codecTable->setModel(model);
-// 	codecTable->resizeColumnsToContents();
-// 	codecTable->resizeRowsToContents();
 	codecTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 	
 	codecUpButton = new KPushButton(this);

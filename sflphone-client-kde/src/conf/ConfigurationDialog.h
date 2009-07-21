@@ -72,7 +72,6 @@ public:
 	
     
 public slots:
-	void slot();
 	/**
 	 *   Reimplements KConfigDialog
 	 */

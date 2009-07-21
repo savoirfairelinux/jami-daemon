@@ -186,7 +186,6 @@ void CodecListModel::setActiveCodecList(const QStringList & activeCodecListToSet
 	for(int i=0 ; i<codecListToDisplay.size() ; i++)
 	{
 		bool ok;
-		qDebug() << codecListToDisplay[i];
 		QString payloadStr = QString(codecListToDisplay[i]);
 		int payload = payloadStr.toInt(&ok);
 		if(!ok)	

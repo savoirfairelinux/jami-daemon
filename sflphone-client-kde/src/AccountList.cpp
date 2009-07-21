@@ -38,7 +38,6 @@ AccountList::AccountList(QStringList & _accountIds)
 
 AccountList::AccountList(bool fill)
 {
-	qDebug() << "AccountList()";
 	accounts = new QVector<Account *>();
 	if(fill)
 	{

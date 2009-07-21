@@ -70,11 +70,6 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	connect(this,     SIGNAL(updateButtons()), parent, SLOT(updateButtons()));
 }
 
-
-DlgAccounts::~DlgAccounts()
-{
-}
-
 void DlgAccounts::saveAccountList()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -200,14 +195,11 @@ void DlgAccounts::loadAccountList()
 
 void DlgAccounts::addAccountToAccountList(Account * account)
 {
-	qDebug() << "addAccountToAccountList";
 	QListWidgetItem * item = account->getItem();
 	QWidget * widget = account->getItemWidget();
 	connect(widget, SIGNAL(checkStateChanged(bool)),
 	        this,   SLOT(changedAccountList()));
-	qDebug() << "item->isHidden()" << item->isHidden();
 	listWidget_accountList->addItem(item);
-	qDebug() << "addAccountToAccountList2";
 	listWidget_accountList->setItemWidget(item, widget);
 }
 
@@ -243,7 +235,6 @@ void DlgAccounts::on_button_accountUp_clicked()
 	listWidget_accountList->insertItem(currentRow - 1 , item);
 	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
-// 	changedAccountList();
 }
 
 void DlgAccounts::on_button_accountDown_clicked()
@@ -260,7 +251,6 @@ void DlgAccounts::on_button_accountDown_clicked()
 	listWidget_accountList->insertItem(currentRow + 1 , item);
 	listWidget_accountList->setItemWidget(item, widget);
 	listWidget_accountList->setCurrentItem(item);
-// 	changedAccountList();
 }
 
 void DlgAccounts::on_button_accountAdd_clicked()
@@ -275,7 +265,6 @@ void DlgAccounts::on_button_accountAdd_clicked()
 		listWidget_accountList->setCurrentRow(r);
 		frame2_editAccounts->setEnabled(true);
 	}
-// 	changedAccountList();
 }
 
 void DlgAccounts::on_button_accountRemove_clicked()
@@ -285,25 +274,13 @@ void DlgAccounts::on_button_accountRemove_clicked()
 	QListWidgetItem * item = listWidget_accountList->takeItem(r);
 	accountList->removeAccount(item);
 	listWidget_accountList->setCurrentRow( (r >= listWidget_accountList->count()) ? r-1 : r );
-// 	changedAccountList();
 }
 
 void DlgAccounts::on_toolButton_accountsApply_clicked()
 {
 	qDebug() << "on_toolButton_accountsApply_clicked";
-	applyCustomSettings();
-}
-
-void DlgAccounts::applyCustomSettings()
-{
-	qDebug() << "DlgAccounts::applyCustomSettings";
-	if(hasChanged())
-	{
-		toolButton_accountsApply->setEnabled(false);
-		saveAccountList();
-		loadAccountList();
-		accountListHasChanged = false;
-	}
+	updateSettings();
+	updateWidgets();
 }
 
 void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
@@ -359,11 +336,15 @@ bool DlgAccounts::hasChanged()
 
 void DlgAccounts::updateSettings()
 {
-
+	saveAccountList();
+	toolButton_accountsApply->setEnabled(false);
+	accountListHasChanged = false;
 }
+
 void DlgAccounts::updateWidgets()
 {
 	loadAccountList();
+	toolButton_accountsApply->setEnabled(false);
 	accountListHasChanged = false;
 }
 

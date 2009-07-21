@@ -51,15 +51,12 @@ ConfigurationDialogKDE::ConfigurationDialogKDE(sflphone_kdeView *parent)
 	addPage( dlgAudio        , i18nc("Config section", "Audio")        , "voicecall" ); 
 	addPage( dlgAddressBook  , i18nc("Config section", "Address Book") , "x-office-address-book" ); 
 	addPage( dlgRecord       , i18nc("Config section", "Recordings")       , "media-record" ); 
-	addPage( dlgHooks        , i18nc("Config section", "Hooks")        , "insert-link" ); 
-	connect(this, SIGNAL(applyClicked()), dlgAudio, SLOT(updateAlsaSettings()));
-	connect(this, SIGNAL(okClicked()),    dlgAudio, SLOT(updateAlsaSettings()));
+	addPage( dlgHooks        , i18nc("Config section", "Hooks")        , "insert-link" );
+	
 	connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
 	connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));
 	
 	connect(dlgGeneral, SIGNAL(clearCallHistoryAsked()), this, SIGNAL(clearCallHistoryAsked()));
-// 	connect(this, SIGNAL(settingsChanged(const QString&)), this, SLOT(slot()));
-// 	connect(this, SIGNAL(widgetModified()), this, SLOT(slot()));
 }
 
 
@@ -67,10 +64,6 @@ ConfigurationDialogKDE::~ConfigurationDialogKDE()
 {
 }
 
-void ConfigurationDialogKDE::slot()
-{
-	qDebug() << "slot";
-}
 
 void ConfigurationDialogKDE::updateWidgets()
 {
@@ -84,7 +77,7 @@ void ConfigurationDialogKDE::updateSettings()
 	qDebug() << "updateSettings";
 	dlgAudio->updateSettings();
 	dlgAccounts->updateSettings();
-	qDebug() << "yo  " << ConfigurationSkeleton::self()->alsaPlugin();
+	qDebug() << "alsaPlugin = " << ConfigurationSkeleton::self()->alsaPlugin();
 }
 
 bool ConfigurationDialogKDE::hasChanged()
@@ -106,8 +99,8 @@ void ConfigurationDialogKDE::applyCustomSettings()
 // 	{
 		ConfigurationSkeleton::self()->writeConfig();
 // 	}
-	dlgAccounts->applyCustomSettings();
-	dlgAudio->applyCustomSettings();
+	updateSettings();
+	updateWidgets();
 	updateButtons();
 	emit changesApplied();
 }
@@ -117,6 +110,5 @@ void ConfigurationDialogKDE::reload()
 	qDebug() << "reload";
 	ConfigurationSkeleton::self()->readConfig();
 	updateWidgets();
-	applyCustomSettings();
 	updateButtons();
 }
