@@ -21,7 +21,6 @@
 
 #include "SFLPhoneView.h"
 
-#include <klocale.h>
 #include <QtGui/QLabel>
 #include <QtGui/QContextMenuEvent>
 #include <QtGui/QMenu>
@@ -29,6 +28,7 @@
 #include <QtGui/QPalette>
 #include <QtGui/QInputDialog>
 
+#include <klocale.h>
 #include <kstandardaction.h>
 #include <kactioncollection.h>
 #include <kaction.h>
@@ -602,7 +602,6 @@ void SFLPhoneView::updateCallHistory()
 	while(listWidget_callHistory->count() > 0)
 	{
 		QListWidgetItem * item = listWidget_callHistory->takeItem(0);
-		qDebug() << "take item " << item->text() << " ; widget = " << callList->findCallByHistoryItem(item);
 	}
 	QString textSearched = lineEdit_searchHistory->text();
 	for(int i = callList->size() - 1 ; i >= 0 ; i--)
@@ -628,7 +627,6 @@ void SFLPhoneView::updateAddressBook()
 	while(listWidget_addressBook->count() > 0)
 	{
 		QListWidgetItem * item = listWidget_addressBook->takeItem(0);
-		qDebug() << "take item " << item->text();
 		delete item;
 	}
 	if(isAddressBookEnabled())
@@ -1040,7 +1038,8 @@ void SFLPhoneView::on_stackedWidget_screen_currentChanged(int index)
 void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
 {
 	QMenu menu(this);
-	if(stackedWidget_screen->currentWidget() == page_callHistory || stackedWidget_screen->currentWidget() == page_addressBook)
+	if( ( stackedWidget_screen->currentWidget() == page_callHistory && listWidget_callHistory->currentItem() ) || 
+	    ( stackedWidget_screen->currentWidget() == page_addressBook && listWidget_addressBook->currentItem() ) )
 	{
 		QAction * action_edit = new QAction(&menu);
 		action_edit->setText(i18n("Edit before call"));
