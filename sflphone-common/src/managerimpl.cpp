@@ -350,7 +350,7 @@ ManagerImpl::hangupCall (const CallID& id)
 
     int nbCalls = getCallList().size();
 
-    _debug ("nbCalls %i \n", nbCalls);
+    _debug ("hangupCall: callList is of size %i call(s)\n", nbCalls);
 
     // stop stream
     if (! (nbCalls > 1))
@@ -1422,7 +1422,7 @@ ManagerImpl::setActiveCodecList (const std::vector<  std::string >& list)
     _codecDescriptorMap.saveActiveCodecs (list);
     // setConfig
     std::string s = serialize (list);
-    printf ("%s\n", s.c_str());
+    _debug ("Setting codec with payload number %s to the active list\n", s.c_str());
     setConfig ("Audio", "ActiveCodecs", s);
 }
 
@@ -1467,7 +1467,7 @@ ManagerImpl::serialize (std::vector<std::string> v)
 std::vector <std::string>
 ManagerImpl::getActiveCodecList (void)
 {
-    _debug ("Get Active codecs list\n");
+    _debug ("ManagerImpl::getActiveCodecList\n");
     std::vector< std::string > v;
     CodecOrder active = _codecDescriptorMap.getActiveCodecs();
     unsigned int i=0;
@@ -1477,7 +1477,7 @@ ManagerImpl::getActiveCodecList (void)
         std::stringstream ss;
         ss << active[i];
         v.push_back ( (ss.str()).data());
-        _debug ("%s\n", ss.str().data());
+        _debug ("Codec with payload number %s is active\n", ss.str().data());
         i++;
     }
 
@@ -2709,7 +2709,7 @@ ManagerImpl::loadAccountMap()
         }
 
         if (tmpAccount != NULL) {
-            _debug (" %s \n", iter->c_str());
+            _debug ("Loading account %s \n", iter->c_str());
             _accountMap[iter->c_str() ] = tmpAccount;
             nbAccount++;
         }
@@ -2775,7 +2775,6 @@ ManagerImpl::getAccountIdFromNameAndServer (const std::string& userName, const s
     for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         _debug ("for : account = %s\n", iter->first.c_str());
         account = dynamic_cast<SIPAccount *> (iter->second);
-        _debug ("account != NULL = %i\n", (account != NULL));
 
         if (account != NULL) {
             if (account->fullMatch (userName, server)) {
