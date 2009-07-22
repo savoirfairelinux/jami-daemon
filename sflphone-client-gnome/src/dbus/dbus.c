@@ -18,6 +18,7 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <config.h>
 
 #include <calltab.h>
 #include <callmanager-glue.h>
@@ -120,9 +121,9 @@ call_state_cb (DBusGProxy *proxy UNUSED,
         {
             if(c->_state==CALL_STATE_CURRENT)
             {
-                // peer hung up, the conversation was established, so _start has been initialized with the current time value
+                // peer hung up, the conversation was established, so _stop has been initialized with the current time value
                 DEBUG("call state current");
-                set_timestamp (&c->_time_start);
+                set_timestamp (&c->_time_stop);
                 calltree_update_call( history, c );
             }
             stop_notification();
@@ -393,9 +394,11 @@ dbus_connect ()
             "errorAlert", G_CALLBACK(error_alert), NULL, NULL);
             
     /* Defines a default timeout for the proxies */
+#if HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT
     dbus_g_proxy_set_default_timeout(callManagerProxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(instanceProxy, DEFAULT_DBUS_TIMEOUT);
     dbus_g_proxy_set_default_timeout(configurationManagerProxy, DEFAULT_DBUS_TIMEOUT);
+#endif
     
     return TRUE;
 }

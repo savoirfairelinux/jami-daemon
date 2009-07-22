@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-05-13
-# Last Modified: 2009-06-22 14:40:21 -0400
+# Last Modified: 2009-07-20 23:03:24 -0400
 #####################################################
 
 # set -x
@@ -75,7 +75,7 @@ CHANGELOG_CONTENT=`git log --no-merges --pretty=format:"%s" ${REF_COMMIT_HASH}..
 
 if [ "$?" -eq "1" ]; then
         echo " !! No new commit since last release"
-        exit -1
+	CHANGELOG_CONTENT="No new commit"
 fi
 
 if [ "$?" -ne "0" ]; then

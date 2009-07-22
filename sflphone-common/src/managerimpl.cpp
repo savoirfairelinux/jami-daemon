@@ -2210,11 +2210,15 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 
 void ManagerImpl::setSipPort (int port)
 {
+    _debug("Setting to new port %d\n", port);
+    setConfig(PREFERENCES, CONFIG_SIP_PORT, port);
+    
+    this->restartPJSIP ();
 }
 
 int ManagerImpl::getSipPort (void)
 {
-    return 5060;
+    return getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
 }
 
 
@@ -2445,6 +2449,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
 
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, getConfigString (accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"));
+    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_RESOLVE_ONCE, getConfigString (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? "TRUE": "FALSE"));
     a.insert (std::pair<std::string, std::string> (
                   "Status",
                   (state == Registered ? "REGISTERED":
@@ -2479,6 +2484,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     setConfig (accountID, CONFIG_ACCOUNT_ALIAS, (*details.find (CONFIG_ACCOUNT_ALIAS)).second);
     setConfig (accountID, CONFIG_ACCOUNT_ENABLE, (*details.find (CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0");
+    setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, (*details.find (CONFIG_ACCOUNT_RESOLVE_ONCE)).second == "TRUE" ? "1": "0");
     setConfig (accountID, CONFIG_ACCOUNT_TYPE, accountType);
     setConfig (accountID, USERNAME, (*details.find (USERNAME)).second);
     setConfig (accountID, PASSWORD, (*details.find (PASSWORD)).second);

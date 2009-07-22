@@ -24,6 +24,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "audio/audiortp.h"
+#include "pjsip/sip_endpoint.h"
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -31,6 +32,11 @@
 
 #define CAN_REINVITE        1
 
+struct result
+{
+    pj_status_t             status;
+    pjsip_server_addresses  servers;
+};
 
 const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
 
@@ -142,6 +148,11 @@ void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
 void regc_cb (struct pjsip_regc_cbparam *param);
 
 /*
+ * DNS Callback used in workaround for bug #1852
+ */
+static void dns_cb(pj_status_t status, void *token, const struct pjsip_server_addresses *addr);
+
+/*
  * Called to handle incoming requests outside dialogs
  * @param   rdata
  * @return  pj_bool_t
@@ -217,6 +228,8 @@ bool SIPVoIPLink::init()
     if (initDone())
         return false;
 
+    _regPort = Manager::instance().getSipPort();
+    
     /* Instanciate the C++ thread */
     _evThread = new EventThread (this);
 
@@ -327,18 +340,59 @@ SIPVoIPLink::getEvent()
 
 int SIPVoIPLink::sendRegister (AccountID id)
 {
-    pj_status_t status;
     int expire_value;
     char contactTmp[256];
+    
+    pj_status_t status;
     pj_str_t svr, aor, contact, useragent;
     pjsip_tx_data *tdata;
+    pjsip_host_info destination;
+    
     std::string tmp, hostname, username, password;
-    SIPAccount *account;
+    SIPAccount *account = NULL;
     pjsip_regc *regc;
     pjsip_generic_string_hdr *h;
     pjsip_hdr hdr_list;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
+    if(account == NULL) {
+        _debug("In sendRegister: account is null");
+        return false; 
+    }
+    
+    if(account->isResolveOnce()) {
+        struct result result;
+        destination.type = PJSIP_TRANSPORT_UNSPECIFIED;
+        destination.flag = pjsip_transport_get_flag_from_type(PJSIP_TRANSPORT_UNSPECIFIED);    
+        destination.addr.host = pj_str(const_cast<char*> ((account->getHostname()).c_str()));
+        destination.addr.port = 0;
+        
+        result.status = 0x12345678;
+        
+        pjsip_endpt_resolve(_endpt, _pool, &destination, &result, &dns_cb);
+        
+        /* The following magic number and construct are inspired from dns_test.c
+         * in test-pjsip directory.
+         */
+        while (result.status == 0x12345678) {
+            pj_time_val timeout = { 1, 0 };
+            pjsip_endpt_handle_events(_endpt, &timeout);
+            _debug("status : %d\n", result.status);	
+        }
+        
+        if(result.status != PJ_SUCCESS) {
+            _debug("Failed to resolve hostname only once."
+                   " Default resolver will be used on"
+                   " hostname for all requests.\n");
+        } else {
+            _debug("%d servers where obtained from name resolution.\n", result.servers.count);
+            char addr_buf[80];
+            
+            pj_sockaddr_print((pj_sockaddr_t*) &result.servers.entry[0].addr, addr_buf, sizeof(addr_buf), 3);
+            account->setHostname(addr_buf);
+        }
+    } 
+    
     hostname = account->getHostname();
     username = account->getUsername();
     password = account->getPassword(); 
@@ -890,7 +944,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
      */
     pjsip_evsub_set_mod_data (sub, getModId(), this);
 
-    _debug ("SIP port listener = %i ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", _localExternPort);
+    _debug ("SIP port listener = %i", _localExternPort);
 
     /*
      * Create REFER request.
@@ -1809,6 +1863,16 @@ bool SIPVoIPLink::pjsip_shutdown (void)
 int getModId()
 {
     return _mod_ua.id;
+}
+
+static void dns_cb(pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
+{
+    struct result * result = (struct result*) token;
+
+    result->status = status;
+    if (status == PJ_SUCCESS) {
+        pj_memcpy(&result->servers, addr, sizeof(*addr));
+    }
 }
 
 void set_voicemail_info (AccountID account, pjsip_msg_body *body)

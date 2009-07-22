@@ -19,6 +19,7 @@
  */
 #include <pjlib-util/srv_resolver.h>
 #include <pjlib-util/errno.h>
+#include <pj/addr_resolv.h>
 #include <pj/array.h>
 #include <pj/assert.h>
 #include <pj/log.h>
@@ -71,7 +72,7 @@ struct pj_dns_srv_async_query
     pj_str_t		     full_name;
     pj_str_t		     domain_part;
     pj_uint16_t		     def_port;
-
+    
     /* SRV records and their resolved IP addresses: */
     unsigned		     srv_cnt;
     struct srv_target	     srv[PJ_DNS_SRV_MAX_ADDR];
@@ -134,7 +135,7 @@ PJ_DEF(pj_status_t) pj_dns_srv_resolve( const pj_str_t *domain_name,
     query_job->domain_part.ptr = target_name.ptr + len;
     query_job->domain_part.slen = target_name.slen - len;
     query_job->def_port = (pj_uint16_t)def_port;
-
+    
     /* Start the asynchronous query_job */
 
     query_job->dns_state = PJ_DNS_TYPE_SRV;
@@ -582,14 +583,54 @@ static void dns_callback(void *user_data,
 
 	} else if (status != PJ_SUCCESS) {
 	    char errmsg[PJ_ERR_MSG_SIZE];
+    		   
+	    if ((query_job->option & 
+	     (PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV4 | PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV6)))
+	    {
+	        pj_strerror(status, errmsg, sizeof(errmsg));
+            PJ_LOG(4,(query_job->objname, 
+                      "DNS A record resolution failed: %s,"
+                      " trying getaddrinfo()", 
+        	           errmsg));
+        	           
+            pj_addrinfo ai;
+    	    unsigned count;
+        	int af;
+        	
+        	if ((query_job->option & PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV6)) {
+        	    af = pj_AF_INET6();
+        	} else {
+	            af = pj_AF_INET();
+        	}   
+        	
+        	count = 1;   
+            status = pj_getaddrinfo(af, &query_job->domain_part, &count, &ai);
+            if (status != PJ_SUCCESS) {     
+                query_job->last_error = status;
+                pj_strerror(status, errmsg, sizeof(errmsg));
+                PJ_LOG(4,(query_job->objname, "DNS resolution failed with getaddrinfo(): %s", 
+            	          errmsg));
+            } else {
 
-	    /* Update last error */
-	    query_job->last_error = status;
-
-	    /* Log error */
-	    pj_strerror(status, errmsg, sizeof(errmsg));
-	    PJ_LOG(4,(query_job->objname, "DNS A record resolution failed: %s", 
-		      errmsg));
+                if (srv->addr_cnt < ADDR_MAX_COUNT) {
+                    srv->addr[srv->addr_cnt++].s_addr = ai.ai_addr.ipv4.sin_addr.s_addr;
+                }
+                
+            	PJ_LOG(5,(query_job->objname, 
+                          "DNS getaddrinfo() for %.*s: %s",
+                          (int)srv->target_name.slen, 
+                          srv->target_name.ptr,
+                          pj_inet_ntoa(srv->addr[srv->addr_cnt])));
+            }
+	    } else {
+             /* Update last error */
+            query_job->last_error = status;
+            
+            /* Log error */
+            pj_strerror(status, errmsg, sizeof(errmsg));
+            PJ_LOG(4,(query_job->objname, "DNS A record resolution failed: %s", 
+                      errmsg));
+	    }
 	}
 
 	++query_job->host_resolved;

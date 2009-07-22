@@ -104,7 +104,6 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
 {
   DEBUG("On key released from Main Window : %s\n", gtk_widget_get_name(widget));
 
-
   if (focus_is_on_searchbar == FALSE) {
         // If a modifier key is pressed, it's a shortcut, pass along
         if(event->state & GDK_CONTROL_MASK ||
@@ -119,8 +118,7 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
                 )
             return FALSE;
         else
-            sflphone_keypad(event->keyval, event->string);
-        
+            sflphone_keypad(event->keyval, event->string);        
    }
 
    return TRUE;

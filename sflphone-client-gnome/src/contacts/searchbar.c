@@ -116,14 +116,14 @@ static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec)
 
 void
 focus_on_searchbar_out(){
-    DEBUG("set_focus_on_searchbar_out \n");
+    DEBUG("set_focus_on_searchbar_out");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_searchbar = FALSE;
 }
 
 void
 focus_on_searchbar_in(){
-    DEBUG("set_focus_on_searchbar_in \n");
+    DEBUG("set_focus_on_searchbar_in");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_searchbar = TRUE;
 }
@@ -199,7 +199,6 @@ GtkWidget* history_searchbar_new (void)
     gtk_widget_show_all (menu);
 
 #else
-
     searchbox = sexy_icon_entry_new();
     image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
     sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(searchbox), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
