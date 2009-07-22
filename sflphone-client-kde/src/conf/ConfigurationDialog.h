@@ -81,16 +81,16 @@ public slots:
 	 */
 	void updateSettings();
 	/**
-	 *   Should be implemented in KConfigDialog but for no reason, is not.
-	 *   For the moment it is here but has to be removed if implemented in KConfigDialog
-	 *   because causes problems for a few cases (item managed by kconfig switched, item not managed
+	 *   Is implemented in KConfigDialog only from KDE4.3
+	 *   It it implemented here for KDE4.2 users.
+	 *   I didn't test with KDE4.3 so I leave it even for 4.3 users.
+	 *   Causes problems for a few cases (item managed by kconfig switched, item not managed
 	 *   switched and then switched back, apply becomes disabled).
 	 *   Can't be resolved without a method to know if items managed by kconfig have changed.
 	 *   Disable/Enable Apply Button according to hasChanged() result
 	 */
 	void updateButtons();
 	/**
-	 * Same as updateButtons, should be implemented in KConfigDialog.
 	 * @return whether any custom widget has changed in the dialog.
 	 */
 	bool hasChanged();

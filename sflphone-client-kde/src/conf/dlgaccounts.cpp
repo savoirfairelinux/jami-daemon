@@ -54,6 +54,8 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	        this,                  SLOT(changedAccountList()));
 	connect(edit6_mailbox,         SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
+	connect(checkBox_conformRFC,   SIGNAL(stateChanged(int)),
+	        this,                  SLOT(changedAccountList()));
 	connect(button_accountUp,      SIGNAL(clicked()),
 	        this,                  SLOT(changedAccountList()));
 	connect(button_accountDown,    SIGNAL(clicked()),
@@ -72,6 +74,7 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 
 void DlgAccounts::saveAccountList()
 {
+	qDebug() << "saveAccountList";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	disconnectAccountsChangedSignal();
 	//save the account being edited
@@ -119,16 +122,18 @@ void DlgAccounts::saveAccountList()
 
 void DlgAccounts::connectAccountsChangedSignal()
 {
+	qDebug() << "connectAccountsChangedSignal";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	connect(&configurationManager, SIGNAL(accountsChanged()),
-	        this,                  SLOT(on1_accountsChanged()));
+	        this,                  SLOT(updateAccountStates()));
 }
 
 void DlgAccounts::disconnectAccountsChangedSignal()
 {
+	qDebug() << "disconnectAccountsChangedSignal";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	disconnect(&configurationManager, SIGNAL(accountsChanged()),
-	        this,                  SLOT(on1_accountsChanged()));
+	        this,                  SLOT(updateAccountStates()));
 }
 
 
@@ -146,6 +151,8 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
 	account->setAccountDetail(ACCOUNT_USERNAME, edit4_user->text());
 	account->setAccountDetail(ACCOUNT_PASSWORD, edit5_password->text());
 	account->setAccountDetail(ACCOUNT_MAILBOX, edit6_mailbox->text());
+	account->setAccountDetail(ACCOUNT_RESOLVE_ONCE, checkBox_conformRFC->isChecked() ? "FALSE" : "TRUE");
+	account->setAccountDetail(ACCOUNT_EXPIRE, QString::number(spinbox_regExpire->value()));
 	account->setAccountDetail(ACCOUNT_ENABLED, account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
 }
 
@@ -173,8 +180,10 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit4_user->setText( account->getAccountDetail(ACCOUNT_USERNAME));
 	edit5_password->setText( account->getAccountDetail(ACCOUNT_PASSWORD));
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
-	QString status = account->getAccountDetail(ACCOUNT_STATUS);
-	edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
+	checkBox_conformRFC->setChecked( account->getAccountDetail(ACCOUNT_RESOLVE_ONCE) != "TRUE" );
+	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt();
+	spinbox_regExpire->setValue(val);
+	updateStatusLabel(account);
 	frame2_editAccounts->setEnabled(true);
 }
 
@@ -208,7 +217,7 @@ void DlgAccounts::changedAccountList()
 	qDebug() << "changedAccountList";
 	accountListHasChanged = true;
 	emit updateButtons();
-	toolButton_accountsApply->setEnabled(hasChanged());
+	toolButton_accountsApply->setEnabled(true);
 }
 
 
@@ -317,34 +326,54 @@ void DlgAccounts::updateAccountListCommands()
 void DlgAccounts::updateAccountStates()
 {
 	qDebug() << "updateAccountStates";
-	qDebug() << accountList->size();
 	for (int i = 0; i < accountList->size(); i++)
 	{
 		Account * current = accountList->getAccountAt(i);
 		current->updateState();
 	}
-	qDebug() << accountList->size();
+	updateStatusLabel(listWidget_accountList->currentItem());
 }
 
+void DlgAccounts::updateStatusLabel(QListWidgetItem * item)
+{
+	if(! item )  {  return;  }
+	Account * account = accountList->getAccountByItem(item);
+	updateStatusLabel(account);
+}
+
+void DlgAccounts::updateStatusLabel(Account * account)
+{
+	if(! account )  {  return;  }
+	QString status = account->getAccountDetail(ACCOUNT_STATUS);
+	edit7_state->setText( "<FONT COLOR=\"" + account->getStateColorName() + "\">" + status + "</FONT>" );
+}
 
 bool DlgAccounts::hasChanged()
 {
-// 	qDebug() << "DlgAudio::hasChanged";
-	return accountListHasChanged;
+	bool res = accountListHasChanged;
+	qDebug() << "DlgAccounts::hasChanged " << res;
+	return res;
 }
 
 
 void DlgAccounts::updateSettings()
 {
-	saveAccountList();
-	toolButton_accountsApply->setEnabled(false);
-	accountListHasChanged = false;
+	if(accountListHasChanged)
+	{
+		saveAccountList();
+		toolButton_accountsApply->setEnabled(false);
+		accountListHasChanged = false;
+	}
 }
 
 void DlgAccounts::updateWidgets()
 {
-	loadAccountList();
-	toolButton_accountsApply->setEnabled(false);
-	accountListHasChanged = false;
+	qDebug() << "DlgAccounts::updateWidgets";
+	if(accountListHasChanged)
+	{
+		loadAccountList();
+		toolButton_accountsApply->setEnabled(false);
+		accountListHasChanged = false;
+	}
 }
 

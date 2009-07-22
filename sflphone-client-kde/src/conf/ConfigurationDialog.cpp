@@ -66,34 +66,37 @@ ConfigurationDialog::~ConfigurationDialog()
 
 void ConfigurationDialog::updateWidgets()
 {
-	qDebug() << "updateWidgets";
+	qDebug() << "\nupdateWidgets";
 	dlgAudio->updateWidgets();
 	dlgAccounts->updateWidgets();
 }
 
 void ConfigurationDialog::updateSettings()
 {
-	qDebug() << "updateSettings";
+	qDebug() << "\nupdateSettings";
 	dlgAudio->updateSettings();
 	dlgAccounts->updateSettings();
-	qDebug() << "alsaPlugin = " << ConfigurationSkeleton::self()->alsaPlugin();
 }
 
 bool ConfigurationDialog::hasChanged()
 {
-	qDebug() << "hasChanged" << dlgAudio->hasChanged() << dlgAccounts->hasChanged();
-	return dlgAudio->hasChanged() || dlgAccounts->hasChanged();
+	bool res = dlgAudio->hasChanged() || dlgAccounts->hasChanged();
+	qDebug() << "hasChanged" << res;
+	return res;
 }
 
 void ConfigurationDialog::updateButtons()
 {
-	qDebug() << "updateButtons";
-	enableButtonApply( hasChanged() );
+	bool changed = hasChanged();
+	qDebug() << "updateButtons , hasChanged = " << changed;
+// 	if(hasChanged())
+// 		enableButtonApply( true );
+	enableButtonApply( changed );
 }
 
 void ConfigurationDialog::applyCustomSettings()
 {
-	qDebug() << "applyCustomSettings";
+	qDebug() << "\napplyCustomSettings";
 // 	if(hasChanged())
 // 	{
 		ConfigurationSkeleton::self()->writeConfig();

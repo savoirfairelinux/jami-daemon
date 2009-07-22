@@ -20,7 +20,6 @@
 #ifndef __SFLPHONE_CONST_H
 #define __SFLPHONE_CONST_H
 
-#include <libintl.h>
 #include <QtCore/QString>
 
 /* @file sflphone_const.h
@@ -115,6 +114,8 @@
 #define ACCOUNT_ENABLED		               "Account.enable"
 #define ACCOUNT_MAILBOX		               "Account.mailbox"
 #define ACCOUNT_HOSTNAME                  "hostname"
+#define ACCOUNT_RESOLVE_ONCE              "Account.resolveOnce"
+#define ACCOUNT_EXPIRE                    "Account.expire"
 #define ACCOUNT_USERNAME                  "username"
 #define ACCOUNT_PASSWORD                  "password"
 #define ACCOUNT_STATUS                    "Status"

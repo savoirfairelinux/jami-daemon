@@ -66,6 +66,8 @@ private slots:
 	void updateAccountStates();
 	void addAccountToAccountList(Account * account);
 	void updateAccountListCommands();
+	void updateStatusLabel(QListWidgetItem * item);
+	void updateStatusLabel(Account * account);
 	
 	
 signals:

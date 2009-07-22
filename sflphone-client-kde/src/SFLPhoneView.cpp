@@ -79,6 +79,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	}
 	
 	accountList = new AccountList(false);
+	accountList->updateAccounts();
 	
 	configDialog = new ConfigurationDialog(this);
 	configDialog->setObjectName("configDialog");
@@ -86,6 +87,12 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	
 	wizard = new AccountWizard(this);
 	wizard->setModal(false);
+	
+	QPalette pal = QPalette(palette());
+	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
+	setPalette(pal);
+	
+	stackedWidget_screen->setCurrentWidget(page_callList);
 	
 	connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
 	        this,         SLOT(on1_callStateChanged(const QString &, const QString &)));
@@ -112,14 +119,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	connect(accountList, SIGNAL(accountListUpdated()),
 	        this,        SLOT(updateWindowCallState()));
 	        
-	accountList->updateAccounts();
-	
-	QPalette pal = QPalette(palette());
-	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
-	setPalette(pal);
-	
-	stackedWidget_screen->setCurrentWidget(page_callList);
-	
 } 
 
 
@@ -130,7 +129,7 @@ SFLPhoneView::~SFLPhoneView()
 
 void SFLPhoneView::loadWindow()
 {
-	qDebug() << "loadWindow";
+	qDebug() << "\nloadWindow";
 	updateWindowCallState();
 	updateRecordButton();
 	updateVolumeButton();
@@ -142,6 +141,7 @@ void SFLPhoneView::loadWindow()
 	updateAddressBookEnabled();
 	updateAddressBook();
 	updateStatusMessage();
+	qDebug() << "Finished loadWindow\n";
 }
 
 Account * SFLPhoneView::accountInUse()
@@ -633,6 +633,7 @@ void SFLPhoneView::updateAddressBook()
 	{
 		if(loadAddressBook())
 		{
+			qDebug() << "add loaded";
 			QString textSearched = lineEdit_addressBook->text();
 			if(textSearched.isEmpty())
 			{
@@ -652,7 +653,7 @@ void SFLPhoneView::updateAddressBook()
 		}
 		else
 		{
-			lineEdit_addressBook->setText(i18n("Address book loading..."));
+			lineEdit_addressBook->setClickMessage(i18n("Address book loading..."));
 			lineEdit_addressBook->setEnabled(false);
 			label_addressBookFull->setVisible(false);
 		}
@@ -662,7 +663,6 @@ void SFLPhoneView::updateAddressBook()
 
 void SFLPhoneView::alternateColors(QListWidget * listWidget)
 {
-	qDebug() << "alternateColors";
 	for(int i = 0 ; i < listWidget->count(); i++)
 	{
 		QListWidgetItem* item = listWidget->item(i);
@@ -1350,7 +1350,7 @@ void SFLPhoneView::on1_volumeChanged(const QString & /*device*/, double value)
 void SFLPhoneView::enableAddressBook()
 {
 	qDebug() << "\nenableAddressBook\n";
-	lineEdit_addressBook->clear();
+	lineEdit_addressBook->setClickMessage(QString());
 	lineEdit_addressBook->setEnabled(true);
 	AddressBook * ab = StdAddressBook::self(true);
 	disconnect(ab,         SIGNAL(addressBookChanged(AddressBook *)),
@@ -1376,8 +1376,10 @@ bool SFLPhoneView::loadAddressBook()
 
 void SFLPhoneView::updateAddressBookEnabled()
 {
-	emit addressBookEnableAsked(isAddressBookEnabled());
-	if(! isAddressBookEnabled() && stackedWidget_screen->currentWidget() == page_addressBook)
+	qDebug() << "updateAddressBookEnabled";
+	bool enabled = isAddressBookEnabled();
+	emit addressBookEnableAsked(enabled);
+	if(! enabled && stackedWidget_screen->currentWidget() == page_addressBook)
 	{
 		changeScreen(SCREEN_MAIN);
 	}
@@ -1393,6 +1395,7 @@ bool SFLPhoneView::isAddressBookEnabled()
 
 void SFLPhoneView::changeScreen(int screen)
 {
+	qDebug() << "changeScreen";
 	switch(screen)
 	{
 		case SCREEN_MAIN:
