@@ -87,6 +87,7 @@ class SIPAccount : public Account
 
         inline bool isResolveOnce(void) { return _resolveOnce; }
 
+        inline std::string& getRegistrationExpire(void) { return _registrationExpire; }
     private:
 
         /**
@@ -110,6 +111,8 @@ class SIPAccount : public Account
         std::string _contact;
         
         bool _resolveOnce;
+        
+        std::string _registrationExpire;
 };
 
 #endif

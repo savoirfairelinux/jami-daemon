@@ -433,7 +433,11 @@ int SIPVoIPLink::sendRegister (AccountID id)
     account->setRegister (true);
 
     /* Set the expire value of the message from the config file */
-    expire_value = Manager::instance().getRegistrationExpireValue();
+    istringstream stream(account->getRegistrationExpire());
+    stream >> expire_value;
+    if(!expire_value) {
+        expire_value = PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
+    }
 
     /* Update the state of the voip link */
     account->setRegistrationState (Trying);
@@ -467,7 +471,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pj_strdup2 (_pool, &contact, contactTmp);
     account->setContact (contactTmp);
 
-    status = pjsip_regc_init (regc, &svr, &aor, &aor, 1, &contact, 600);   //timeout);
+    status = pjsip_regc_init (regc, &svr, &aor, &aor, 1, &contact, expire_value);   //timeout);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to initialize regc. %d\n", status);   //, regc->str_srv_url.ptr);

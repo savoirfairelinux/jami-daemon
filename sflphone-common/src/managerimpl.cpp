@@ -1356,7 +1356,6 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     fill_config_int (CONFIG_VOLUME , YES_STR);
     fill_config_int (CONFIG_HISTORY_LIMIT, DFT_HISTORY_LIMIT);
     fill_config_int (CONFIG_HISTORY_ENABLED, YES_STR);
-    fill_config_int (REGISTRATION_EXPIRE , DFT_EXPIRE_VALUE);
     fill_config_int (CONFIG_AUDIO , DFT_AUDIO_MANAGER);
     fill_config_int (CONFIG_PA_VOLUME_CTRL , YES_STR);
     fill_config_int (CONFIG_SIP_PORT, DFT_SIP_PORT);
@@ -1961,12 +1960,6 @@ ManagerImpl::getAudioManager (void)
     return getConfigInt (PREFERENCES , CONFIG_AUDIO);
 }
 
-int
-ManagerImpl::getRegistrationExpireValue (void)
-{
-    return getConfigInt (PREFERENCES , REGISTRATION_EXPIRE);
-}
-
 void
 ManagerImpl::setMailNotify (void)
 {
@@ -2469,7 +2462,12 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (PASSWORD, getConfigString (accountID, PASSWORD)));
     a.insert (std::pair<std::string, std::string> (HOSTNAME, getConfigString (accountID, HOSTNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
-
+    
+    if (getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
+        a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE));
+    } else {
+        a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
+    }
     return a;
 }
 
@@ -2490,6 +2488,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig (accountID, PASSWORD, (*details.find (PASSWORD)).second);
     setConfig (accountID, HOSTNAME, (*details.find (HOSTNAME)).second);
     setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, (*details.find (CONFIG_ACCOUNT_MAILBOX)).second);
+    setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, (*details.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)).second);
 
     saveConfig();
 

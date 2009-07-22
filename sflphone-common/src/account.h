@@ -59,6 +59,7 @@ typedef enum RegistrationState {
 #define CONFIG_ACCOUNT_MAILBOX	"Account.mailbox"
 #define CONFIG_ACCOUNT_ENABLE	"Account.enable"
 #define CONFIG_ACCOUNT_RESOLVE_ONCE "Account.resolveOnce"
+#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
 
 #define HOSTNAME        "hostname"
 #define USERNAME        "username"

@@ -43,16 +43,17 @@
 
 #define UNUSED  __attribute__((__unused__))
 
-#define ACCOUNT_TYPE               "Account.type"
-#define ACCOUNT_ALIAS		       "Account.alias"
-#define ACCOUNT_ENABLED		       "Account.enable"
-#define ACCOUNT_MAILBOX		       "Account.mailbox"
-#define ACCOUNT_HOSTNAME           "hostname"
-#define ACCOUNT_USERNAME           "username"
-#define ACCOUNT_PASSWORD           "password"
-#define ACCOUNT_SIP_STUN_SERVER	   "STUN.server"
-#define ACCOUNT_SIP_STUN_ENABLED   "STUN.enable"
-#define ACCOUNT_RESOLVE_ONCE       "Account.resolveOnce"
+#define ACCOUNT_TYPE                "Account.type"
+#define ACCOUNT_ALIAS		        "Account.alias"
+#define ACCOUNT_ENABLED		        "Account.enable"
+#define ACCOUNT_MAILBOX		        "Account.mailbox"
+#define ACCOUNT_RESOLVE_ONCE        "Account.resolveOnce"
+#define ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
+#define ACCOUNT_SIP_STUN_SERVER	    "STUN.server"
+#define ACCOUNT_SIP_STUN_ENABLED    "STUN.enable"
+#define ACCOUNT_HOSTNAME            "hostname"
+#define ACCOUNT_USERNAME            "username"
+#define ACCOUNT_PASSWORD            "password"
 
 /**
  * Global logger
