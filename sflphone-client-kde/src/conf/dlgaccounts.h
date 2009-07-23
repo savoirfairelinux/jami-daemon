@@ -30,6 +30,8 @@
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	
+	\note see ticket #1309 for advices about how to improve this class.
 */
 class DlgAccounts : public QWidget, public Ui_DlgAccountsBase
 {
@@ -38,6 +40,7 @@ public:
 	DlgAccounts(KConfigDialog *parent = 0);
 
 	void saveAccount(QListWidgetItem * item);
+	
 	/**
 	 *   Fills the settings form in the right side with the
 	 *   settings of @p item.
@@ -49,7 +52,7 @@ public:
 	 *   is filled with the right default settings if blank (as 600 for
 	 *   registration expire).
 	 *
-	 * @param item 
+	 * @param item the item with which to fill the settings form
 	 */
 	void loadAccount(QListWidgetItem * item);
 	

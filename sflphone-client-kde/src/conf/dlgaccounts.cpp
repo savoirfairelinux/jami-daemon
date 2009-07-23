@@ -182,7 +182,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
 	checkBox_conformRFC->setChecked( account->getAccountDetail(ACCOUNT_RESOLVE_ONCE) != "TRUE" );
 	bool ok;
-	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(ok);
+	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(&ok);
 	spinbox_regExpire->setValue(ok ? val : ACCOUNT_EXPIRE_DEFAULT);
 	updateStatusLabel(account);
 	frame2_editAccounts->setEnabled(true);
