@@ -122,15 +122,15 @@ class HistoryManager {
         HistoryItemMap _history_items;
 
         /*
+         * History has been loaded
+         */
+        bool _history_loaded;
+
+        /*
          * The path to the history file
          */ 
 
         std::string _history_path;
-
-        /*
-         * History has been loaded
-         */
-        bool _history_loaded;
 
         friend class HistoryTest;
 };
