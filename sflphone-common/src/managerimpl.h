@@ -647,11 +647,6 @@ class ManagerImpl {
     int32_t getMailNotify( void );
 
     /**
-     * Get the expire value for SIP registration, set in the user configuration file
-     */
-    int getRegistrationExpireValue( void );
-
-    /**
      * Retrieve the formatted list of codecs payload in the user config file and
      * load in the active list of codecs
      * @return std::vector<std::string>	  The vector containing the active codecs

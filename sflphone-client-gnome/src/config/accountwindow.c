@@ -35,12 +35,8 @@
 #include <gtk/gtk.h>
 
 /** Local variables */
-account_t * currentAccount;
-
 GtkDialog * dialog;
 GtkWidget * hbox;
-GtkWidget * frame;
-GtkWidget * table;
 GtkWidget * label;
 GtkWidget * entryID;
 GtkWidget * entryAlias;
@@ -51,6 +47,7 @@ GtkWidget * entryHostname;
 GtkWidget * entryPassword;
 GtkWidget * entryMailbox;
 GtkWidget * entryResolveNameOnlyOnce;
+GtkWidget * entryExpire;
 
 /* Signal to entryProtocol 'changed' */
     void
@@ -69,12 +66,14 @@ is_iax_enabled(void)
         return FALSE;
 }
 
-    void
-show_account_window (account_t * a)
+static GtkWidget * createAccountTab(account_t * a) 
 {
-    gint response;
-
-    currentAccount = a;
+    GtkWidget * frame;
+    GtkWidget * table;
+#if GTK_CHECK_VERSION(2,16,0)
+#else
+    GtkWidget *image;
+#endif
 
     // Default settings
     gchar * curAccountID = "";
@@ -87,11 +86,8 @@ show_account_window (account_t * a)
     gchar * curPassword = "";
     /* TODO: add curProxy, and add boxes for Proxy support */
     gchar * curMailbox = "";
-
-#if GTK_CHECK_VERSION(2,16,0)
-#else
-    GtkWidget *image;
-#endif
+        
+    account_t * currentAccount = a;
 
     // Load from SIP/IAX/Unknown ?
     if(a)
@@ -112,29 +108,15 @@ show_account_window (account_t * a)
         currentAccount->properties = g_hash_table_new(NULL, g_str_equal);
         curAccountID = "new";
     }
-
-    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
-                GTK_WINDOW(get_main_window()),
-                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                GTK_STOCK_APPLY,
-                GTK_RESPONSE_ACCEPT,
-                GTK_STOCK_CANCEL,
-                GTK_RESPONSE_CANCEL,
-                NULL));
-
-    gtk_dialog_set_has_separator(dialog, TRUE);
-    gtk_container_set_border_width (GTK_CONTAINER(dialog), 0);
-
-    gnome_main_section_new ("", &frame);
-    gtk_box_pack_start(GTK_BOX(dialog->vbox), frame, FALSE, FALSE, 0);
+    
+    gnome_main_section_new (_("Account Parameters"), &frame);
     gtk_widget_show(frame);
 
-    table = gtk_table_new (10, 2  ,  FALSE/* homogeneous */);
+    table = gtk_table_new (9, 2  ,  FALSE/* homogeneous */);
     gtk_table_set_row_spacings( GTK_TABLE(table), 10);
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
     gtk_widget_show(table);
     gtk_container_add( GTK_CONTAINER( frame) , table );
-
 
 #ifdef DEBUG
     label = gtk_label_new_with_mnemonic ("ID:");
@@ -197,14 +179,8 @@ show_account_window (account_t * a)
     gtk_entry_set_text(GTK_ENTRY(entryHostname), curHostname);
     gtk_table_attach ( GTK_TABLE( table ), entryHostname, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Resolve host name only once for the session"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),
-            g_strcasecmp(curAccountResolveOnce,"TRUE") == 0 ? TRUE: FALSE);
-    gtk_table_attach ( GTK_TABLE( table ), entryResolveNameOnlyOnce, 0, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_widget_set_sensitive( GTK_WIDGET( entryResolveNameOnlyOnce ) , TRUE );
-    
     label = gtk_label_new_with_mnemonic (_("_User name"));
-    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
 	entryUsername = gtk_entry_new();
@@ -216,10 +192,10 @@ show_account_window (account_t * a)
 #endif
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
     gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
-    gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     label = gtk_label_new_with_mnemonic (_("_Password"));
-    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
 	entryPassword = gtk_entry_new();
@@ -232,19 +208,107 @@ show_account_window (account_t * a)
     gtk_entry_set_visibility(GTK_ENTRY(entryPassword), FALSE);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
     gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
-    gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     label = gtk_label_new_with_mnemonic (_("_Voicemail number"));
-    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 9, 10, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
     entryMailbox = gtk_entry_new();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryMailbox);
     gtk_entry_set_text(GTK_ENTRY(entryMailbox), curMailbox);
-    gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 9, 10, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     gtk_widget_show_all( table );
     gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 
+    return frame;
+}
+
+GtkWidget * createAdvancedTab(account_t * a)
+{
+    GtkWidget * frame;
+    GtkWidget * table;
+
+    // Default settings
+    gchar * curAccountResolveOnce = "FALSE"; 
+    gchar * curAccountExpire = "600"; 
+     
+    account_t * currentAccount = a;
+
+    // Load from SIP/IAX/Unknown ?
+    if(currentAccount) {
+        curAccountResolveOnce = g_hash_table_lookup(currentAccount->properties, ACCOUNT_RESOLVE_ONCE);
+        curAccountExpire = g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTRATION_EXPIRE);
+    } 
+    
+    gnome_main_section_new (_("Advanced Settings"), &frame);
+    gtk_widget_show(frame);
+
+    table = gtk_table_new (2, 2,  FALSE/* homogeneous */);
+    gtk_table_set_row_spacings( GTK_TABLE(table), 10);
+    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+    gtk_widget_show(table);
+    gtk_container_add( GTK_CONTAINER( frame) , table );
+
+    label = gtk_label_new_with_mnemonic (_("Registration _expire"));
+    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
+    gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+    entryExpire = gtk_entry_new();
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryExpire);
+    gtk_entry_set_text(GTK_ENTRY(entryExpire), curAccountExpire);
+    gtk_table_attach ( GTK_TABLE( table ), entryExpire, 1, 2, 0, 1, GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
+    
+    entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Conform to RFC 3263"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),
+            g_strcasecmp(curAccountResolveOnce,"FALSE") == 0 ? TRUE: FALSE);
+    gtk_table_attach ( GTK_TABLE( table ), entryResolveNameOnlyOnce, 0, 2, 1, 2, GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
+    gtk_widget_set_sensitive( GTK_WIDGET( entryResolveNameOnlyOnce ) , TRUE );
+    
+    gtk_widget_show_all( table );
+    gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+
+    return frame;
+}
+
+    void
+show_account_window (account_t * a)
+{
+
+    GtkWidget * notebook;
+    GtkWidget * tab; 
+    gint response;
+     
+    account_t * currentAccount = a;
+       
+    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
+                GTK_WINDOW(get_main_window()),
+                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                GTK_STOCK_APPLY,
+                GTK_RESPONSE_ACCEPT,
+                GTK_STOCK_CANCEL,
+                GTK_RESPONSE_CANCEL,
+                NULL));
+
+    gtk_dialog_set_has_separator(dialog, TRUE);
+    gtk_container_set_border_width (GTK_CONTAINER(dialog), 0);
+
+    notebook = gtk_notebook_new();
+    gtk_box_pack_start(GTK_BOX (dialog->vbox), notebook, TRUE, TRUE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
+    gtk_widget_show(notebook);
+    
+    /* General Settings */
+    tab = createAccountTab(a);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+    
+    /* Advanced */
+    tab = createAdvancedTab(a);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Advanced")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+    
+    gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
+        
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     if(response == GTK_RESPONSE_ACCEPT)
     {
@@ -255,7 +319,7 @@ show_account_window (account_t * a)
                 g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "TRUE": "FALSE"));
         g_hash_table_replace(currentAccount->properties,
                 g_strdup(ACCOUNT_RESOLVE_ONCE),
-                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "TRUE": "FALSE"));
+                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "FALSE": "TRUE"));
         g_hash_table_replace(currentAccount->properties,
                 g_strdup(ACCOUNT_ALIAS),
                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryAlias))));
@@ -274,6 +338,9 @@ show_account_window (account_t * a)
         g_hash_table_replace(currentAccount->properties,
                 g_strdup(ACCOUNT_MAILBOX),
                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
+        g_hash_table_replace(currentAccount->properties,
+                g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
+                g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryExpire))));
 
         if (strcmp(proto, "SIP") == 0) {
             guint i, size;
@@ -299,7 +366,7 @@ show_account_window (account_t * a)
                 }
             }
 
-            // Otherelse set a default value
+            // Otherwise set a default value
             if(!flag)
             {
                 g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), (gchar*)"");

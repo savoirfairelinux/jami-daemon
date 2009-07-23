@@ -32,6 +32,28 @@
 
 #define CAN_REINVITE        1
 
+static char * invitationStateMap[] = { 
+"PJSIP_INV_STATE_NULL", 
+"PJSIP_INV_STATE_CALLING", 
+"PJSIP_INV_STATE_INCOMING", 
+"PJSIP_INV_STATE_EARLY", 
+"PJSIP_INV_STATE_CONNECTING", 
+"PJSIP_INV_STATE_CONFIRMED", 
+"PJSIP_INV_STATE_DISCONNECTED" 
+};
+                                       
+static char * transactionStateMap[] = {
+"PJSIP_TSX_STATE_NULL" ,	
+"PJSIP_TSX_STATE_CALLING", 	
+"PJSIP_TSX_STATE_TRYING", 	
+"PJSIP_TSX_STATE_PROCEEDING", 	
+"PJSIP_TSX_STATE_COMPLETED", 	
+"PJSIP_TSX_STATE_CONFIRMED", 	
+"PJSIP_TSX_STATE_TERMINATED", 	
+"PJSIP_TSX_STATE_DESTROYED", 	
+"PJSIP_TSX_STATE_MAX" 
+};
+
 struct result
 {
     pj_status_t             status;
@@ -411,7 +433,11 @@ int SIPVoIPLink::sendRegister (AccountID id)
     account->setRegister (true);
 
     /* Set the expire value of the message from the config file */
-    expire_value = Manager::instance().getRegistrationExpireValue();
+    istringstream stream(account->getRegistrationExpire());
+    stream >> expire_value;
+    if(!expire_value) {
+        expire_value = PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
+    }
 
     /* Update the state of the voip link */
     account->setRegistrationState (Trying);
@@ -445,7 +471,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pj_strdup2 (_pool, &contact, contactTmp);
     account->setContact (contactTmp);
 
-    status = pjsip_regc_init (regc, &svr, &aor, &aor, 1, &contact, 600);   //timeout);
+    status = pjsip_regc_init (regc, &svr, &aor, &aor, 1, &contact, expire_value);   //timeout);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to initialize regc. %d\n", status);   //, regc->str_srv_url.ptr);
@@ -574,7 +600,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         setCallAudioLocal (call, getLocalIPAddress(), useStun(), getStunServer());
 
         try {
-            _debug ("CREATE NEW RTP SESSION FROM NEWOUTGOINGCALL\n");
+            _debug ("Creating new rtp session in newOutgoingCall\n");
             _audiortp->createNewSession (call);
         } catch (...) {
             _debug ("Failed to create rtp thread from newOutGoingCall\n");
@@ -1154,12 +1180,10 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     strTo = getSipTo (call->getPeerNumber(), account->getHostname());
 
-    _debug ("            To: %s\n", strTo.data());
-
     // Generate the from URI
     strFrom = "sip:" + account->getUsername() + "@" + account->getHostname();
 
-    _debug ("              From: %s\n", strFrom.c_str());
+    _debug ("Placing new call: \nTo: %s\nFrom: %s\n", strTo.data(), strFrom.c_str());
 
     // pjsip need the from and to information in pj_str_t format
     pj_strdup2 (_pool, &from, strFrom.data());
@@ -1929,7 +1953,7 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
 // This callback is called when the invite session state has changed
 void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 {
-    _debug ("--------------------- call_on_state_changed --------------------- %i\n", inv->state);
+    _debug ("call_on_state_changed to state %s\n", invitationStateMap[inv->state]);
 
     SIPCall *call;
     AccountID accId;
@@ -2039,7 +2063,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             link->SIPCallAnswered (call, rdata);
     }
     else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
-        _debug ("------------------- Call disconnected ---------------------\n");
+        _debug ("Invitation falled in state \"disconnected\".\n");
         _debug ("State: %i, Disconnection cause: %i\n", inv->state, inv->cause);
 
         switch (inv->cause) {
@@ -2082,7 +2106,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 // This callback is called after SDP offer/answer session has completed.
 void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 {
-    _debug ("--------------------- call_on_media_update --------------------- \n");
+    _debug ("call_on_media_update\n");
     
     const pjmedia_sdp_session *local_sdp;
     const pjmedia_sdp_session *remote_sdp;
@@ -2140,8 +2164,7 @@ void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
 
 void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
 {
-
-    _debug ("--------------------- call_on_tsx_changed --------------------- %i\n", tsx->state);
+    _debug ("call_on_tsx_changed to state %s\n", transactionStateMap[tsx->state]);
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
             pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
@@ -2244,7 +2267,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     userName = std::string (sip_uri->user.ptr, sip_uri->user.slen);
     server = std::string (sip_uri->host.ptr, sip_uri->host.slen);
 
-    std::cout << userName << " ------------------ " << server << std::endl;
+    _debug("mod_on_rx_request: %s@%s\n", userName.c_str(), server.c_str());
 
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
@@ -2433,7 +2456,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata UNUSED)
 {
-
+    _debug("Mod on rx response");
     return PJ_SUCCESS;
 }
 

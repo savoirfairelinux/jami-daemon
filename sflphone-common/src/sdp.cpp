@@ -477,7 +477,7 @@ void Sdp::set_local_media_capabilities ()
     // Clean it first
     _local_media_cap.clear();
 
-    _debug ("Fetch local media capabilities .......... %i\n" , get_local_extern_audio_port());
+    _debug ("Fetch local media capabilities. Local extern audio port: %i\n" , get_local_extern_audio_port());
 
     /* Only one audio media used right now */
     audio = new sdpMedia (MIME_TYPE_AUDIO);
