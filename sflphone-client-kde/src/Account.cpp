@@ -31,24 +31,24 @@
 const QString account_state_name(QString & s)
 {
 	if(s == QString(ACCOUNT_STATE_REGISTERED))
-		return i18nc("account state", "Registered" );
+		return i18n("Registered" );
 	if(s == QString(ACCOUNT_STATE_UNREGISTERED))
-		return i18nc("account state", "Not Registered");
+		return i18n("Not Registered");
 	if(s == QString(ACCOUNT_STATE_TRYING))
-		return i18nc("account state", "Trying...");
+		return i18n("Trying...");
 	if(s == QString(ACCOUNT_STATE_ERROR))
-		return i18nc("account state", "Error");
+		return i18n("Error");
 	if(s == QString(ACCOUNT_STATE_ERROR_AUTH))
-		return i18nc("account state", "Authentication Failed");
+		return i18n("Authentication Failed");
 	if(s == QString(ACCOUNT_STATE_ERROR_NETWORK))
-		return i18nc("account state", "Network unreachable");
+		return i18n("Network unreachable");
 	if(s == QString(ACCOUNT_STATE_ERROR_HOST))
-		return i18nc("account state", "Host unreachable");
+		return i18n("Host unreachable");
 	if(s == QString(ACCOUNT_STATE_ERROR_CONF_STUN))
-		return i18nc("account state", "Stun configuration error");
+		return i18n("Stun configuration error");
 	if(s == QString(ACCOUNT_STATE_ERROR_EXIST_STUN))
-		return i18nc("account state", "Stun server invalid");
-	return i18nc("account state", "Invalid");
+		return i18n("Stun server invalid");
+	return i18n("Invalid");
 }
 
 //Constructors

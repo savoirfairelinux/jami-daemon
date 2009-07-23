@@ -32,7 +32,7 @@
          <item>
           <widget class="QCheckBox" name="kcfg_enableHistory">
            <property name="text">
-            <string comment="Beginning of 'Keep my history for at least n days.'">Keep my history for at least</string>
+            <string>Keep my history for at least</string>
            </property>
           </widget>
          </item>
@@ -58,7 +58,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string comment="End of 'Keep my history for at least n days.'">days</string>
+            <string>days</string>
            </property>
           </widget>
          </item>

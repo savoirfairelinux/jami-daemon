@@ -23,7 +23,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string comment="Config section">General</string>
+      <string>General</string>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>

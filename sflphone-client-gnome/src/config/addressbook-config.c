@@ -303,7 +303,7 @@ create_addressbook_settings()
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    gnome_main_section_new_with_table (c_("Config section", "General"), &result_frame, &table, 3, 3);
+    gnome_main_section_new_with_table (_("General"), &result_frame, &table, 3, 3);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
     // gtk_widget_show (result_frame);
 

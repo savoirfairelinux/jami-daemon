@@ -45,13 +45,13 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 	dlgRecord      = new DlgRecord(this);
 	dlgHooks       = new DlgHooks(this);
 	
-	addPage( dlgGeneral      , i18nc("Config section", "General")      , "sflphone-client-kde" ); 
-	addPage( dlgDisplay      , i18nc("Config section", "Display")      , "applications-graphics" ); 
-	addPage( dlgAccounts     , i18nc("Config section", "Accounts")     , "personal" ); 
-	addPage( dlgAudio        , i18nc("Config section", "Audio")        , "voicecall" ); 
-	addPage( dlgAddressBook  , i18nc("Config section", "Address Book") , "x-office-address-book" ); 
-	addPage( dlgRecord       , i18nc("Config section", "Recordings")       , "media-record" ); 
-	addPage( dlgHooks        , i18nc("Config section", "Hooks")        , "insert-link" );
+	addPage( dlgGeneral      , i18n("General")      , "sflphone-client-kde" ); 
+	addPage( dlgDisplay      , i18n("Display")      , "applications-graphics" ); 
+	addPage( dlgAccounts     , i18n("Accounts")     , "personal" ); 
+	addPage( dlgAudio        , i18n("Audio")        , "voicecall" ); 
+	addPage( dlgAddressBook  , i18n("Address Book") , "x-office-address-book" ); 
+	addPage( dlgRecord       , i18n("Recordings")   , "media-record" ); 
+	addPage( dlgHooks        , i18n("Hooks")        , "insert-link" );
 	
 	connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
 	connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));

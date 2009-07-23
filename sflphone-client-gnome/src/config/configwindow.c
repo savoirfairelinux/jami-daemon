@@ -629,7 +629,7 @@ create_general_settings ()
     gnome_main_section_new_with_table (_("Calls History"), &frame, &table, 3, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    history_w = gtk_check_button_new_with_mnemonic(c_("Beginning of 'Keep my history for at least n days.'", "_Keep my history for at least"));
+    history_w = gtk_check_button_new_with_mnemonic(_("_Keep my history for at least"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (history_w), history_enabled);
     g_signal_connect (G_OBJECT (history_w) , "clicked" , G_CALLBACK (history_enabled_cb) , NULL);
     gtk_table_attach( GTK_TABLE(table), history_w, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
@@ -640,14 +640,14 @@ create_general_settings ()
     gtk_widget_set_sensitive (GTK_WIDGET (history_value), gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (history_w)));
     gtk_table_attach( GTK_TABLE(table), history_value, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5); 
 
-    label = gtk_label_new(c_("End of 'Keep my history for at least n days.'", "days"));
+    label = gtk_label_new(_("days"));
     gtk_table_attach( GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     
     /** PULSEAUDIO CONFIGURATION */
     gnome_main_section_new_with_table (_("PulseAudio sound server"), &frame, &table, 1, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    mutewidget = gtk_check_button_new_with_mnemonic(  _("_Mute other applications during a call"));
+    mutewidget = gtk_check_button_new_with_mnemonic(_("_Mute other applications during a call"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(mutewidget), dbus_get_pulse_app_volume_control() );
     g_signal_connect(G_OBJECT( mutewidget ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
     gtk_table_attach( GTK_TABLE(table), mutewidget, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
@@ -719,7 +719,7 @@ create_recording_settings ()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Recorded file saving path
-    gnome_main_section_new_with_table (c_("Config section", "General"), &savePathFrame, &table, 1, 2);
+    gnome_main_section_new_with_table (_("General"), &savePathFrame, &table, 1, 2);
     gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
 
     // label
@@ -783,27 +783,27 @@ show_config_window ()
 
     // Audio tab
     tab = create_audio_configuration();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "Audio")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // General settings tab
     tab = create_general_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "General")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Recording tab
     tab = create_recording_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "Recordings")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Recordings")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Addressbook tab
     tab = create_addressbook_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "Address Book")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // HookS tab
     tab = create_hooks_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(c_("Config section", "Hooks")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
@@ -830,7 +830,7 @@ show_accounts_window( void )
 
     accDialogOpen = TRUE;
 
-    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (c_("Config section", "Accounts"),
+    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Accounts"),
                 GTK_WINDOW(get_main_window()),
                 GTK_DIALOG_DESTROY_WITH_PARENT,
                 GTK_STOCK_CLOSE,
