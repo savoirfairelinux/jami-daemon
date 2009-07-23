@@ -229,6 +229,7 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
 
     _debug ("Connection Done!! \n");
 
+	return true;
 }
 
 void PulseLayer::closeCaptureStream (void)

@@ -29,9 +29,9 @@ AudioStream::AudioStream (PulseLayerType * driver)
          _streamType (driver->type), 
          _streamDescription (driver->description), 
          _volume(),
-         _mainloop(driver->mainloop),
          flag (PA_STREAM_AUTO_TIMING_UPDATE), 
-         sample_spec()
+         sample_spec(),
+         _mainloop(driver->mainloop)
 {
     sample_spec.format = PA_SAMPLE_S16LE;
     sample_spec.rate = 44100;

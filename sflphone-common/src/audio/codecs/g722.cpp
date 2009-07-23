@@ -335,11 +335,13 @@ class G722 : public AudioCodec
 
         int g722_encode_release() {
             delete decode_s;
+			return 0;
         }
 
 
         int g722_decode_release() {
             delete encode_s;
+			return 0;
         }
 
         int g722_decode (int16_t amp[], const uint8_t g722_data[], int len) {
