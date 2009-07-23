@@ -78,7 +78,7 @@ ConfigurationManager::getAccountList()
     return Manager::instance().getAccountList();
 }
 
-
+//TODO
 std::vector< std::string >
 ConfigurationManager::getToneLocaleList()
 {
@@ -87,18 +87,16 @@ ConfigurationManager::getToneLocaleList()
     return ret;
 }
 
-
-
+//TODO
 std::string
 ConfigurationManager::getVersion()
 {
     std::string ret ("");
     _debug ("ConfigurationManager::getVersion received\n");
     return ret;
-
 }
 
-
+//TODO
 std::vector< std::string >
 ConfigurationManager::getRingtoneList()
 {
@@ -112,14 +110,14 @@ ConfigurationManager::getRingtoneList()
 std::vector< std::string  >
 ConfigurationManager::getCodecList()
 {
-    _debug ("ConfigurationManager::getRingtoneList received\n");
+    _debug ("ConfigurationManager::getCodecList received\n");
     return Manager::instance().getCodecList();
 }
 
 std::vector< std::string >
 ConfigurationManager::getCodecDetails (const int32_t& payload)
 {
-    _debug ("ConfigurationManager::getRingtoneList received\n");
+    _debug ("ConfigurationManager::getCodecDetails received\n");
     return Manager::instance().getCodecDetails (payload);
 }
 

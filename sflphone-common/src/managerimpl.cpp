@@ -2204,9 +2204,11 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 void ManagerImpl::setSipPort (int port)
 {
     _debug("Setting to new port %d\n", port);
-    setConfig(PREFERENCES, CONFIG_SIP_PORT, port);
-    
-    this->restartPJSIP ();
+    int prevPort = getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
+    if(prevPort != port){
+        setConfig(PREFERENCES, CONFIG_SIP_PORT, port);
+        this->restartPJSIP ();
+    }
 }
 
 int ManagerImpl::getSipPort (void)
