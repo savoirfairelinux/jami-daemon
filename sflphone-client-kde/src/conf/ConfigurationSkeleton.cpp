@@ -28,7 +28,6 @@ ConfigurationSkeleton::ConfigurationSkeleton()
 {
 	qDebug() << "Building ConfigurationSkeleton";
 	codecListModel = new CodecListModel();
-	accountListModel = new AccountListModel();
 	readConfig();
 }
 
@@ -57,7 +56,6 @@ void ConfigurationSkeleton::readConfig()
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	
-// 	qDebug() << "configurationManager.getAudioManager4() = " << configurationManager.getAudioManager();
 	////////////////////////
 	////General settings////
 	////////////////////////
@@ -206,13 +204,13 @@ void ConfigurationSkeleton::writeConfig()
 	qDebug() << "Writing Display settings";
 	
 	//Notification settings
-// 	if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
-// 	if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
+	if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
+	if(notifOnMessages() != configurationManager.getMailNotify()) configurationManager.setMailNotify();
 	
 	//Window display settings
 	//WARNING états inversés
-// 	if(displayOnStart() == configurationManager.isStartHidden()) configurationManager.startHidden();
-// 	if(displayOnCalls() != configurationManager.popupMode()) configurationManager.switchPopupMode();
+	if(displayOnStart() == configurationManager.isStartHidden()) configurationManager.startHidden();
+	if(displayOnCalls() != configurationManager.popupMode()) configurationManager.switchPopupMode();
 	
 	/////////////////////////
 	////Accounts settings////
@@ -224,8 +222,8 @@ void ConfigurationSkeleton::writeConfig()
 
 
 	//Stun settings
-// 	if(enableStun() != configurationManager.isStunEnabled()) configurationManager.enableStun();
-// 	configurationManager.setStunServer(stunServer());
+	if(enableStun() != configurationManager.isStunEnabled()) configurationManager.enableStun();
+	configurationManager.setStunServer(stunServer());
 
 	//////////////////////
 	////Audio settings////

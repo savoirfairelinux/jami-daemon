@@ -2205,10 +2205,12 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 
 void ManagerImpl::setSipPort (int port)
 {
-    _debug ("Setting to new port %d\n", port);
-    setConfig (PREFERENCES, CONFIG_SIP_PORT, port);
-
-    this->restartPJSIP ();
+    _debug("Setting to new port %d\n", port);
+    int prevPort = getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
+    if(prevPort != port){
+        setConfig(PREFERENCES, CONFIG_SIP_PORT, port);
+        this->restartPJSIP ();
+    }
 }
 
 int ManagerImpl::getSipPort (void)
@@ -2439,7 +2441,12 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     std::string accountType;
     RegistrationState state;
 
-    state = _accountMap[accountID]->getRegistrationState();
+    Account * account = _accountMap[accountID];
+    if(!account){
+        _debug("getAccountDetails on unexisting account");
+        return a;
+    }
+    state = account->getRegistrationState();
     accountType = getConfigString (accountID, CONFIG_ACCOUNT_TYPE);
 
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));

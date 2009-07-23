@@ -496,7 +496,7 @@
  <connections>
   <connection>
    <sender>kcfg_enableStun</sender>
-   <signal>clicked(bool)</signal>
+   <signal>toggled(bool)</signal>
    <receiver>kcfg_stunServer</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
