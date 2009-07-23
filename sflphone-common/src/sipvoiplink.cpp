@@ -33,25 +33,25 @@
 #define CAN_REINVITE        1
 
 static char * invitationStateMap[] = { 
-"PJSIP_INV_STATE_NULL", 
-"PJSIP_INV_STATE_CALLING", 
-"PJSIP_INV_STATE_INCOMING", 
-"PJSIP_INV_STATE_EARLY", 
-"PJSIP_INV_STATE_CONNECTING", 
-"PJSIP_INV_STATE_CONFIRMED", 
-"PJSIP_INV_STATE_DISCONNECTED" 
+(char*) "PJSIP_INV_STATE_NULL", 
+(char*) "PJSIP_INV_STATE_CALLING", 
+(char*) "PJSIP_INV_STATE_INCOMING", 
+(char*) "PJSIP_INV_STATE_EARLY", 
+(char*) "PJSIP_INV_STATE_CONNECTING", 
+(char*) "PJSIP_INV_STATE_CONFIRMED", 
+(char*) "PJSIP_INV_STATE_DISCONNECTED" 
 };
                                        
 static char * transactionStateMap[] = {
-"PJSIP_TSX_STATE_NULL" ,	
-"PJSIP_TSX_STATE_CALLING", 	
-"PJSIP_TSX_STATE_TRYING", 	
-"PJSIP_TSX_STATE_PROCEEDING", 	
-"PJSIP_TSX_STATE_COMPLETED", 	
-"PJSIP_TSX_STATE_CONFIRMED", 	
-"PJSIP_TSX_STATE_TERMINATED", 	
-"PJSIP_TSX_STATE_DESTROYED", 	
-"PJSIP_TSX_STATE_MAX" 
+(char*) "PJSIP_TSX_STATE_NULL" ,	
+(char*) "PJSIP_TSX_STATE_CALLING", 	
+(char*) "PJSIP_TSX_STATE_TRYING", 	
+(char*) "PJSIP_TSX_STATE_PROCEEDING", 	
+(char*) "PJSIP_TSX_STATE_COMPLETED", 	
+(char*) "PJSIP_TSX_STATE_CONFIRMED", 	
+(char*) "PJSIP_TSX_STATE_TERMINATED", 	
+(char*) "PJSIP_TSX_STATE_DESTROYED", 	
+(char*) "PJSIP_TSX_STATE_MAX" 
 };
 
 struct result
@@ -1882,6 +1882,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
     pj_shutdown();
 
     /* Done. */
+	return true;
 }
 
 int getModId()
@@ -1902,7 +1903,7 @@ static void dns_cb(pj_status_t status, void *token, const struct pjsip_server_ad
 void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 {
 
-    int voicemail, pos_begin, pos_end;
+    int voicemail = 0, pos_begin, pos_end;
     std::string voice_str = "Voice-Message: ";
     std::string delimiter = "/";
     std::string msg_body, voicemail_str;
@@ -2655,7 +2656,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         return;
     }
 
-    SIPCall* newCall;
+    SIPCall* newCall = 0;
 
     SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
 
@@ -2791,7 +2792,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         if (event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
             request = event->body.rx_msg.rdata->msg_info.msg_buf;
 
-            if (request.find (noresource) != -1) {
+            if ((int) request.find (noresource) != -1) {
                 _debug ("UserAgent: NORESOURCE for transfer!\n");
                 link->transferStep2();
                 pjsip_evsub_terminate (sub, PJ_TRUE);
@@ -2800,7 +2801,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
                 return;
             }
 
-            if (request.find (ringing) != -1) {
+            if ((int) request.find (ringing) != -1) {
                 _debug ("UserAgent: transfered call RINGING!\n");
                 link->transferStep2();
                 pjsip_evsub_terminate (sub, PJ_TRUE);

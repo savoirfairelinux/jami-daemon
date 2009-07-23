@@ -35,7 +35,14 @@ static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
 
 
 Sdp::Sdp (pj_pool_t *pool)
-        : _local_media_cap(), _session_media (0),  _ip_addr (""), _local_offer (NULL), _negociated_offer (NULL), _negociator (NULL), _pool (NULL), _local_extern_audio_port (0)
+		: _local_media_cap()
+		, _session_media (0)
+		, _negociator (NULL)
+		, _ip_addr ("")
+		, _local_offer (NULL)
+		, _negociated_offer (NULL)
+		, _pool (NULL)
+		, _local_extern_audio_port (0)
 {
     _pool = pool;
 }
@@ -206,8 +213,8 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
 
 pj_status_t Sdp::check_sdp_answer(pjsip_inv_session *inv, pjsip_rx_data *rdata) 
 {
-    static const pj_str_t str_application = { "application", 11 };
-    static const pj_str_t str_sdp = { "sdp", 3 };
+    static const pj_str_t str_application = { (char*) "application", 11 };
+    static const pj_str_t str_sdp = { (char*) "sdp", 3 };
     pj_status_t status;
     pjsip_msg * message = NULL;
     pjmedia_sdp_session * remote_sdp = NULL;
@@ -469,7 +476,7 @@ void Sdp::set_local_media_capabilities ()
 {
 
     CodecOrder selected_codecs;
-    int i;
+    unsigned int i;
     sdpMedia *audio;
     CodecsMap codecs_list;
     CodecsMap::iterator iter;

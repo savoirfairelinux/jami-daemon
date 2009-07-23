@@ -920,7 +920,6 @@ void
 IAXVoIPLink::iaxHandleRegReply (iax_event* event)
 {
 
-    int new_voicemails;
     std::string account_id;
     IAXAccount *account;
 

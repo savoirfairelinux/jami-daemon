@@ -220,14 +220,14 @@ class Sdp {
         // negociation, with the compatible media from each part 
         pjmedia_sdp_session *_negociated_offer;
 
+        // The pool to allocate memory
+        pj_pool_t *_pool;
+
         /** Local audio port */
         int _local_extern_audio_port;
 
         /** Remote's audio port */
         unsigned int _remote_audio_port;
-
-        // The pool to allocate memory
-        pj_pool_t *_pool;
 
         Sdp(const Sdp&); //No Copy Constructor
         Sdp& operator=(const Sdp&); //No Assignment Operator

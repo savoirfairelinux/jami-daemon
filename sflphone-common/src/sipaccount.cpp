@@ -25,10 +25,10 @@
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
         , _cred (NULL)
+        , _regc()
         , _bRegister (false)
         , _contact ("")
         , _resolveOnce (false)
-        , _regc()
 {
     /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
     /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */

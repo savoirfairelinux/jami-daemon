@@ -88,6 +88,8 @@ AudioStream::drainStream(void) {
         
         pa_threaded_mainloop_unlock(_mainloop);
     }
+
+	return true;
 }
 
 bool

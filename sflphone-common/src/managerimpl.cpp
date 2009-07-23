@@ -286,7 +286,6 @@ ManagerImpl::answerCall (const CallID& id)
 
     AccountID currentaccountid = getAccountFromCall (id);
     Call* currentcall = getAccountLink (currentaccountid)->getCall (getCurrentCallId());
-    _debug ("ManagerImpl::answerCall :: current call->getState %i \n",currentcall->getState());
 
     if (currentcall->getState() == 1)
         isActive = true;
@@ -1050,18 +1049,11 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 void ManagerImpl::stopTone (bool stopAudio=true)
 {
     int hasToPlayTone;
-    AudioLayer *audiolayer;
 
     hasToPlayTone = getConfigInt (SIGNALISATION, PLAY_TONES);
 
     if (!hasToPlayTone)
         return;
-
-    // if (stopAudio) {
-    //    audiolayer = getAudioDriver();
-    //    if (audiolayer) audiolayer->stopStream();
-    // }
-
 
     _toneMutex.enterMutex();
 
@@ -1628,10 +1620,14 @@ ManagerImpl::getAudioOutputDeviceList (void)
 {
     _debug ("Get audio output device list\n");
     AlsaLayer *layer;
+	std::vector <std::string> devices;
 
     layer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
 
-    if (layer)    return layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+    if (layer)
+		devices = layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+
+	return devices;
 }
 
 /**
@@ -1664,12 +1660,15 @@ ManagerImpl::setAudioOutputDevice (const int index)
 std::vector<std::string>
 ManagerImpl::getAudioInputDeviceList (void)
 {
-    _debug ("Get audio input device list\n");
     AlsaLayer *audiolayer;
+	std::vector <std::string> devices;
 
     audiolayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
-    if (audiolayer)    return audiolayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+    if (audiolayer)
+		devices = audiolayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+
+	return devices;
 }
 
 /**
@@ -1932,7 +1931,7 @@ ManagerImpl::setPulseAppVolumeControl (void)
 void ManagerImpl::setAudioManager (const int32_t& api)
 {
 
-    int type, samplerate, framesize, numCardIn, numCardOut;
+    int type;
     std::string alsaPlugin;
 
     _debug ("Setting audio manager \n");
@@ -1984,7 +1983,10 @@ ManagerImpl::getAudioDeviceIndex (const std::string name)
 
     alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
-    if (alsalayer)   return alsalayer -> soundCardGetIndex (name);
+    if (alsalayer)   
+		return alsalayer -> soundCardGetIndex (name);
+	else
+		return 0;
 }
 
 std::string
@@ -2390,7 +2392,7 @@ ManagerImpl::getAccountList()
 {
     std::vector< std::string > v;
     std::vector< std::string > account_order;
-    int i;
+    unsigned int i;
 
     account_order = loadAccountOrder ();
     AccountMap::iterator iter;
@@ -2476,7 +2478,6 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     std::string accountType;
     Account *acc;
-    VoIPLink *link;
 
     accountType = (*details.find (CONFIG_ACCOUNT_TYPE)).second;
 
@@ -2681,7 +2682,7 @@ ManagerImpl::loadAccountMap()
     short nbAccount = 0;
     TokenList sections = _config.getSections();
     std::string accountType;
-    Account* tmpAccount;
+	Account *tmpAccount = 0;
     std::vector <std::string> account_order;
 
     TokenList::iterator iter = sections.begin();
@@ -2809,25 +2810,6 @@ ManagerImpl::getAccountIdFromNameAndServer (const std::string& userName, const s
 
     // Failed again! return AccountNULL
     return AccountNULL;
-}
-
-AccountMap ManagerImpl::getSipAccountMap (void)
-{
-
-    AccountMap::iterator iter;
-    AccountMap sipaccounts;
-    AccountID id;
-    Account *account;
-
-    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
-        if (iter->second->getType() == "sip") {
-            //id = iter->first;
-            //account = iter->second;
-            //sipaccounts.insert( std::pair<id, account> );
-        }
-    }
-
-    return sipaccounts;
 }
 
 void ManagerImpl::restartPJSIP (void)
@@ -3133,7 +3115,6 @@ std::vector< std::string >
 ManagerImpl::getCallList (void)
 {
     std::vector< std::string > v;
-    int i;
 
     CallAccountMap::iterator iter = _callAccountMap.begin ();
 

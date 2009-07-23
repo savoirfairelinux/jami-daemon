@@ -893,11 +893,6 @@ class ManagerImpl {
 
     void registerCurSIPAccounts(VoIPLink *link);
 
-    /**
-     * Returns a map with only the existing SIP accounts
-     */
-    AccountMap getSipAccountMap( void );
-
     /*
      * Initialize audiodriver
      */

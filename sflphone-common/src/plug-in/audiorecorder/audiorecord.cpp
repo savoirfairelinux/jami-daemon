@@ -207,6 +207,9 @@ bool AudioRecord::setRecording()
         recordingEnabled_ = true; // once opend file, start recording
     }
 
+	// WARNING: Unused return value
+	return true;
+
 }
 
 void AudioRecord::stopRecording()
@@ -344,6 +347,8 @@ bool AudioRecord::openExistingRawFile()
         _debug ("AudioRecord::openExistingRawFile() : could not create RAW file!\n");
         return false;
     }
+
+	return true;
 }
 
 
@@ -385,6 +390,8 @@ bool AudioRecord::openExistingWavFile()
 
     if (fseek (fp, 4 , SEEK_END) != 0)
         _debug ("AudioRecors::OpenExistingWavFile : 2.Couldn't seek at the en of the file \n");
+
+	return true;
 
 }
 
