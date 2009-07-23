@@ -235,6 +235,7 @@ public:
 	//Constructors & Destructors
 	~Call();
 	void initCallItem();
+	void initCallItemWidget();
 	static Call * buildDialingCall(QString callId, const QString & peerName, QString account = "");
 	static Call * buildIncomingCall(const QString & callId);
 	static Call * buildRingingCall(const QString & callId);

@@ -44,7 +44,7 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
 	sortableCodecList->setModel(model);
 	
 // 	loadAlsaSettings();
-	connect(box_alsaPlugin,        SIGNAL(currentIndexChanged(int)),   
+	connect(box_alsaPlugin,        SIGNAL(activated(int)),   
 	        parent,                SLOT(updateButtons()));
 	        
 	connect(this,                  SIGNAL(updateButtons()),
@@ -63,7 +63,7 @@ DlgAudio::~DlgAudio()
 void DlgAudio::updateWidgets()
 {
 	ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
-	box_alsaPlugin->setCurrentIndex(box_alsaPlugin->findText(skeleton->alsaPlugin()));
+// 	box_alsaPlugin->setCurrentIndex(box_alsaPlugin->findText(skeleton->alsaPlugin()));
 	loadAlsaSettings();
 	
 	codecTableHasChanged = false;
@@ -89,7 +89,7 @@ bool DlgAudio::hasChanged()
 	bool alsaPluginHasChanged = 
 	           skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA 
 	       &&  skeleton->alsaPlugin() != box_alsaPlugin->currentText();
-	qDebug() << alsaPluginHasChanged << codecTableHasChanged;
+	qDebug() << "DlgAudio::hasChanged" << alsaPluginHasChanged << codecTableHasChanged;
 	return alsaPluginHasChanged || codecTableHasChanged;
 }
 
@@ -127,6 +127,7 @@ void DlgAudio::loadAlsaSettings()
 
 void DlgAudio::codecTableChanged()
 {
+	qDebug() << "codecTableChanged";
 	codecTableHasChanged = true;
 	emit updateButtons();
 }
