@@ -181,8 +181,9 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit5_password->setText( account->getAccountDetail(ACCOUNT_PASSWORD));
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
 	checkBox_conformRFC->setChecked( account->getAccountDetail(ACCOUNT_RESOLVE_ONCE) != "TRUE" );
-	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt();
-	spinbox_regExpire->setValue(val);
+	bool ok;
+	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(ok);
+	spinbox_regExpire->setValue(ok ? val : ACCOUNT_EXPIRE_DEFAULT);
 	updateStatusLabel(account);
 	frame2_editAccounts->setEnabled(true);
 }
@@ -358,6 +359,7 @@ bool DlgAccounts::hasChanged()
 
 void DlgAccounts::updateSettings()
 {
+	qDebug() << "DlgAccounts::updateSettings";
 	if(accountListHasChanged)
 	{
 		saveAccountList();
@@ -369,11 +371,8 @@ void DlgAccounts::updateSettings()
 void DlgAccounts::updateWidgets()
 {
 	qDebug() << "DlgAccounts::updateWidgets";
-	if(accountListHasChanged)
-	{
-		loadAccountList();
-		toolButton_accountsApply->setEnabled(false);
-		accountListHasChanged = false;
-	}
+	loadAccountList();
+	toolButton_accountsApply->setEnabled(false);
+	accountListHasChanged = false;
 }
 

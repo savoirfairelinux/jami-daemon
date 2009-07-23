@@ -121,6 +121,7 @@
 #define ACCOUNT_STATUS                    "Status"
 #define ACCOUNT_SIP_STUN_SERVER	         "STUN.server"
 #define ACCOUNT_SIP_STUN_ENABLED          "STUN.enable"
+#define ACCOUNT_EXPIRE_DEFAULT            600
 
 #define ACCOUNT_ENABLED_TRUE              "TRUE"
 #define ACCOUNT_ENABLED_FALSE             "FALSE"

@@ -62,8 +62,6 @@ DlgAudio::~DlgAudio()
 
 void DlgAudio::updateWidgets()
 {
-	ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
-// 	box_alsaPlugin->setCurrentIndex(box_alsaPlugin->findText(skeleton->alsaPlugin()));
 	loadAlsaSettings();
 	
 	codecTableHasChanged = false;
@@ -84,12 +82,9 @@ bool DlgAudio::hasChanged()
 {
 	qDebug() << "DlgAudio::hasChanged";
 	ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
-	qDebug() << "skeleton->alsaPlugin() = " << skeleton->alsaPlugin();
-	qDebug() << "box_alsaPlugin->currentText() = " << box_alsaPlugin->currentText();
 	bool alsaPluginHasChanged = 
 	           skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA 
 	       &&  skeleton->alsaPlugin() != box_alsaPlugin->currentText();
-	qDebug() << "DlgAudio::hasChanged" << alsaPluginHasChanged << codecTableHasChanged;
 	return alsaPluginHasChanged || codecTableHasChanged;
 }
 
