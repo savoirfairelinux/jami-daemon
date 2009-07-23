@@ -28,7 +28,6 @@ ConfigurationSkeleton::ConfigurationSkeleton()
 {
 	qDebug() << "Building ConfigurationSkeleton";
 	codecListModel = new CodecListModel();
-	accountListModel = new AccountListModel();
 	readConfig();
 }
 

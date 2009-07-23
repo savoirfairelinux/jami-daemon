@@ -46,16 +46,20 @@ private:
 	static ConfigurationSkeleton * instance;
 	
 	CodecListModel * codecListModel;
-	
-	AccountListModel * accountListModel;
 
 public:
 	ConfigurationSkeleton();
 
 	~ConfigurationSkeleton();
     
+	/**
+	 *   @copydoc KCoreConfigSkeleton::readConfig()
+	 */
 	virtual void readConfig();
     
+	/**
+	 * @copydoc KCoreConfigSkeleton::writeConfig()
+	 */
 	virtual void writeConfig();
 	
 	
