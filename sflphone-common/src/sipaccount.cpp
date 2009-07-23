@@ -57,22 +57,26 @@ int SIPAccount::registerVoIPLink()
 
     /* Retrieve the account information */
     /* Stuff needed for SIP registration */
+
     if (Manager::instance().getConfigString (_accountID, HOSTNAME).length() >= PJ_MAX_HOSTNAME) {
         return !SUCCESS;
-    } 
-    
+    }
+
     setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
+
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
     _resolveOnce = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? true : false;
+
     if (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
         _registrationExpire = DFT_EXPIRE_VALUE;
     } else {
         _registrationExpire = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
     }
-    
+
     /* Start registration */
     status = _link->sendRegister (_accountID);
+
     ASSERT (status , SUCCESS);
 
     return SUCCESS;

@@ -1620,14 +1620,14 @@ ManagerImpl::getAudioOutputDeviceList (void)
 {
     _debug ("Get audio output device list\n");
     AlsaLayer *layer;
-	std::vector <std::string> devices;
+    std::vector <std::string> devices;
 
     layer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
 
     if (layer)
-		devices = layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+        devices = layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
 
-	return devices;
+    return devices;
 }
 
 /**
@@ -1661,14 +1661,14 @@ std::vector<std::string>
 ManagerImpl::getAudioInputDeviceList (void)
 {
     AlsaLayer *audiolayer;
-	std::vector <std::string> devices;
+    std::vector <std::string> devices;
 
     audiolayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
     if (audiolayer)
-		devices = audiolayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+        devices = audiolayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
 
-	return devices;
+    return devices;
 }
 
 /**
@@ -1950,7 +1950,7 @@ void ManagerImpl::setAudioManager (const int32_t& api)
 
     switchAudioManager();
     return;
-    
+
 }
 
 int32_t
@@ -1983,10 +1983,10 @@ ManagerImpl::getAudioDeviceIndex (const std::string name)
 
     alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
-    if (alsalayer)   
-		return alsalayer -> soundCardGetIndex (name);
-	else
-		return 0;
+    if (alsalayer)
+        return alsalayer -> soundCardGetIndex (name);
+    else
+        return 0;
 }
 
 std::string
@@ -2205,9 +2205,9 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 
 void ManagerImpl::setSipPort (int port)
 {
-    _debug("Setting to new port %d\n", port);
-    setConfig(PREFERENCES, CONFIG_SIP_PORT, port);
-    
+    _debug ("Setting to new port %d\n", port);
+    setConfig (PREFERENCES, CONFIG_SIP_PORT, port);
+
     this->restartPJSIP ();
 }
 
@@ -2464,12 +2464,13 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (PASSWORD, getConfigString (accountID, PASSWORD)));
     a.insert (std::pair<std::string, std::string> (HOSTNAME, getConfigString (accountID, HOSTNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
-    
+
     if (getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
         a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE));
     } else {
         a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
     }
+
     return a;
 }
 
@@ -2682,7 +2683,7 @@ ManagerImpl::loadAccountMap()
     short nbAccount = 0;
     TokenList sections = _config.getSections();
     std::string accountType;
-	Account *tmpAccount = 0;
+    Account *tmpAccount = 0;
     std::vector <std::string> account_order;
 
     TokenList::iterator iter = sections.begin();

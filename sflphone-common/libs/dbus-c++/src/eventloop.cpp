@@ -30,7 +30,7 @@
 
 #include <sys/poll.h>
 #include <sys/time.h>
-#include <unistd.h> 
+#include <unistd.h>
 
 #include <dbus/dbus.h>
 
@@ -98,9 +98,9 @@ void DefaultMutex::unlock()
 
 DefaultMainLoop::DefaultMainLoop()
 {
-    if(pipe(_terminateFd) < 0) {
+    if (pipe (_terminateFd) < 0) {
         throw ErrorFailed ("unable to create unamed pipe");
-    }  
+    }
 }
 
 DefaultMainLoop::~DefaultMainLoop()
@@ -133,23 +133,24 @@ DefaultMainLoop::~DefaultMainLoop()
         ti = tmp;
     }
 
-    close(_terminateFd[0]);
-    close(_terminateFd[1]);
-    
+    close (_terminateFd[0]);
+
+    close (_terminateFd[1]);
+
     _mutex_t.unlock();
 }
 
-void DefaultMainLoop::terminate() 
+void DefaultMainLoop::terminate()
 {
-    write(_terminateFd[1], " ", 1);
+    write (_terminateFd[1], " ", 1);
 }
 
 void DefaultMainLoop::dispatch()
-{    
+{
     _mutex_w.lock();
 
     int nfd = _watches.size() + 1;
-    
+
     pollfd fds[nfd];
 
     DefaultWatches::iterator wi = _watches.begin();
@@ -165,9 +166,10 @@ void DefaultMainLoop::dispatch()
     }
 
     fds[nfd].fd = _terminateFd[0];
+
     fds[nfd].events = POLLIN;
     fds[nfd].revents = 0;
-        
+
     _mutex_w.unlock();
 
     int wait_min = 10000;
