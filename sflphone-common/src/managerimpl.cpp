@@ -2439,7 +2439,12 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     std::string accountType;
     RegistrationState state;
 
-    state = _accountMap[accountID]->getRegistrationState();
+    Account * account = _accountMap[accountID];
+    if(!account){
+        _debug("getAccountDetails on unexisting account");
+        return a;
+    }
+    state = account->getRegistrationState();
     accountType = getConfigString (accountID, CONFIG_ACCOUNT_TYPE);
 
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
