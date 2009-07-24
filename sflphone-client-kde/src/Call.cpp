@@ -431,8 +431,10 @@ QWidget * Call::getHistoryItemWidget()
 	labelHistoryIcon = new QLabel();
 	labelHistoryIcon->setPixmap(QPixmap(historyIcons[historyState]));
 	labelHistoryCallNumber = new QLabel(peerPhoneNumber);
-	labelHistoryTime = new QLabel(startTime->toString(Qt::LocaleDate));
-	
+	if(startTime)
+		labelHistoryTime = new QLabel(startTime->toString(Qt::LocaleDate));
+	else
+		labelHistoryTime = new QLabel();
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 
 	QHBoxLayout * mainLayout = new QHBoxLayout();

@@ -428,13 +428,17 @@ void SFLPhoneView::action(Call * call, call_action action)
 
 void SFLPhoneView::updateCallItem(Call * call)
 {
+	if(!call) return;
 	call_state state = call->getState();
 	if(state == CALL_STATE_OVER)
 	{
 		QListWidgetItem * item = call->getItem();
 		qDebug() << "Updating call with CALL_STATE_OVER. Deleting item " << (*callList)[item]->getCallId();
 		listWidget_callList->takeItem(listWidget_callList->row(item));
-		addCallToCallHistory(call);
+		if(call->getHistoryState() != NONE)
+		{
+			addCallToCallHistory(call);
+		}
 	}
 }
 
