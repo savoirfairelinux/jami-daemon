@@ -550,11 +550,11 @@ msgstr ""
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:417
 msgid "Registration expire"
-msgstr "Enregistré"
+msgstr "Expiration d'enregistrement"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:418
 msgid "Conform to RFC 3263"
-msgstr ""
+msgstr "Respecter RFC 3263"
 
 #: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:419
 msgid "Advanced"

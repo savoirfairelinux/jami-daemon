@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-17 16:14-0400\n"
+"POT-Creation-Date: 2009-07-23 10:14-0400\n"
 "PO-Revision-Date: 2008-10-28 14:15\n"
 "Last-Translator: Yun Liu <yun.liu@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -19,221 +19,214 @@ msgstr ""
 
 #: ../sflphone-client-kde/src/Account.cpp:34
 #: ../sflphone-client-gnome/src/accountlist.c:175
-msgctxt "account state"
 msgid "Registered"
 msgstr "已注册"
 
 #: ../sflphone-client-kde/src/Account.cpp:36
 #: ../sflphone-client-gnome/src/accountlist.c:178
-msgctxt "account state"
 msgid "Not Registered"
 msgstr "未注册"
 
 #: ../sflphone-client-kde/src/Account.cpp:38
 #: ../sflphone-client-gnome/src/accountlist.c:181
-msgctxt "account state"
 msgid "Trying..."
 msgstr "正在连接..."
 
 #: ../sflphone-client-kde/src/Account.cpp:40
 #: ../sflphone-client-gnome/src/accountlist.c:184
-msgctxt "account state"
+#: ../sflphone-client-gnome/src/sflnotify.c:131
+#: ../sflphone-client-gnome/src/sflnotify.c:148
 msgid "Error"
 msgstr "注册失败"
 
 #: ../sflphone-client-kde/src/Account.cpp:42
 #: ../sflphone-client-gnome/src/accountlist.c:187
-msgctxt "account state"
+#, fuzzy
 msgid "Authentication Failed"
 msgstr "认证错误"
 
 #: ../sflphone-client-kde/src/Account.cpp:44
 #: ../sflphone-client-gnome/src/accountlist.c:190
-msgctxt "account state"
 msgid "Network unreachable"
 msgstr "网络连接失败"
 
 #: ../sflphone-client-kde/src/Account.cpp:46
 #: ../sflphone-client-gnome/src/accountlist.c:193
-msgctxt "account state"
 msgid "Host unreachable"
 msgstr "服务器连接失败"
 
 #: ../sflphone-client-kde/src/Account.cpp:48
 #: ../sflphone-client-gnome/src/accountlist.c:196
-msgctxt "account state"
 msgid "Stun configuration error"
-msgstr "STUN配置有误"
+msgstr "Stun配置有误"
 
 #: ../sflphone-client-kde/src/Account.cpp:50
 #: ../sflphone-client-gnome/src/accountlist.c:199
-msgctxt "account state"
 msgid "Stun server invalid"
-msgstr "STUN服务器无效"
+msgstr "Stun服务器无效"
 
 #: ../sflphone-client-kde/src/Account.cpp:51
 #: ../sflphone-client-gnome/src/accountlist.c:202
-msgctxt "account state"
 msgid "Invalid"
 msgstr "无效"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:163
-#: ../sflphone-client-kde/src/AccountWizard.cpp:278
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:393
+#: ../sflphone-client-kde/src/AccountWizard.cpp:166
+#: ../sflphone-client-kde/src/AccountWizard.cpp:281
+#: ../sflphone-client-kde/src/SFLPhone.cpp:121
 msgid "Account creation wizard"
 msgstr "帐户创建向导"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:199
-#: ../sflphone-client-kde/src/AccountWizard.cpp:217
-#: ../sflphone-client-kde/src/AccountWizard.cpp:561
+#: ../sflphone-client-kde/src/AccountWizard.cpp:202
+#: ../sflphone-client-kde/src/AccountWizard.cpp:220
+#: ../sflphone-client-kde/src/AccountWizard.cpp:564
 #: ../sflphone-client-gnome/src/assistant.c:68
 #, c-format
 msgid "This assistant is now finished."
 msgstr "配置完成."
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:211
+#: ../sflphone-client-kde/src/AccountWizard.cpp:214
 msgid "Creation of account has failed for the reason"
 msgstr ""
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:255
-#: ../sflphone-client-kde/src/AccountWizard.cpp:440
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:363
+#: ../sflphone-client-kde/src/AccountWizard.cpp:258
+#: ../sflphone-client-kde/src/AccountWizard.cpp:443
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:403
 #: ../sflphone-client-gnome/src/assistant.c:72
 msgid "Alias"
 msgstr "别名"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:256
-#: ../sflphone-client-kde/src/AccountWizard.cpp:441
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:370
+#: ../sflphone-client-kde/src/AccountWizard.cpp:259
+#: ../sflphone-client-kde/src/AccountWizard.cpp:444
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:410
 #: ../sflphone-client-gnome/src/assistant.c:75
 msgid "Server"
 msgstr "服务器"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:257
-#: ../sflphone-client-kde/src/AccountWizard.cpp:442
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:371
+#: ../sflphone-client-kde/src/AccountWizard.cpp:260
+#: ../sflphone-client-kde/src/AccountWizard.cpp:445
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:411
 #: ../sflphone-client-gnome/src/assistant.c:78
 msgid "Username"
 msgstr "用户名"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:258
-#: ../sflphone-client-kde/src/AccountWizard.cpp:443
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:372
+#: ../sflphone-client-kde/src/AccountWizard.cpp:261
+#: ../sflphone-client-kde/src/AccountWizard.cpp:446
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:412
 msgid "Password"
 msgstr "密码"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:259
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:364
+#: ../sflphone-client-kde/src/AccountWizard.cpp:262
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:404
 #: ../sflphone-client-gnome/src/config/configwindow.c:418
 msgid "Protocol"
 msgstr "协议"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:260
-#: ../sflphone-client-kde/src/AccountWizard.cpp:444
+#: ../sflphone-client-kde/src/AccountWizard.cpp:263
+#: ../sflphone-client-kde/src/AccountWizard.cpp:447
 msgid "Voicemail number"
 msgstr "语音信箱号码"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:279
+#: ../sflphone-client-kde/src/AccountWizard.cpp:282
 #: ../sflphone-client-gnome/src/assistant.c:216
 msgid "Welcome to the Account creation wizard of SFLphone!"
 msgstr "欢迎使用SFLphone帐户创建向导!"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:281
+#: ../sflphone-client-kde/src/AccountWizard.cpp:284
 #: ../sflphone-client-gnome/src/assistant.c:217
 msgid "This installation wizard will help you configure an account."
 msgstr "安装向导将帮助您配置帐户"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:309
+#: ../sflphone-client-kde/src/AccountWizard.cpp:312
 #: ../sflphone-client-gnome/src/assistant.c:249
 msgid "Account"
 msgstr "帐户"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:310
+#: ../sflphone-client-kde/src/AccountWizard.cpp:313
 #: ../sflphone-client-gnome/src/assistant.c:249
 msgid "Please select one of the following options"
 msgstr "请选择以下选项中的一个"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:312
+#: ../sflphone-client-kde/src/AccountWizard.cpp:315
 #: ../sflphone-client-gnome/src/assistant.c:251
 msgid "Create a free SIP/IAX2 account on sflphone.org"
 msgstr "在sflphone.org上创建免费的SIP/IAX2帐户"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:313
+#: ../sflphone-client-kde/src/AccountWizard.cpp:316
 #: ../sflphone-client-gnome/src/assistant.c:253
 msgid "Register an existing SIP or IAX2 account"
 msgstr "注册已存在的SIP或IAX2帐户"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:352
+#: ../sflphone-client-kde/src/AccountWizard.cpp:355
 #: ../sflphone-client-gnome/src/assistant.c:231
 msgid "VoIP Protocols"
 msgstr "VoIP协议"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:353
+#: ../sflphone-client-kde/src/AccountWizard.cpp:356
 #: ../sflphone-client-gnome/src/assistant.c:231
 msgid "Select an account type"
 msgstr "选择帐户类型"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:355
+#: ../sflphone-client-kde/src/AccountWizard.cpp:358
 #: ../sflphone-client-gnome/src/assistant.c:233
 msgid "SIP (Session Initiation Protocol)"
 msgstr "SIP(会话初始化协议)"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:356
+#: ../sflphone-client-kde/src/AccountWizard.cpp:359
 #: ../sflphone-client-gnome/src/assistant.c:235
 msgid "IAX2 (InterAsterix Exchange)"
 msgstr "IAX2(Asterisk内部交换协议)"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:395
+#: ../sflphone-client-kde/src/AccountWizard.cpp:398
 #: ../sflphone-client-gnome/src/assistant.c:339
 msgid "Optional email address"
 msgstr "可选邮件地址"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:396
+#: ../sflphone-client-kde/src/AccountWizard.cpp:399
 #: ../sflphone-client-gnome/src/assistant.c:339
 msgid "This email address will be used to send your voicemail messages."
 msgstr "这个邮件地址将被用来发送您的语音邮箱消息"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:398
+#: ../sflphone-client-kde/src/AccountWizard.cpp:401
 msgid "Email address"
 msgstr "邮件地址"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:432
+#: ../sflphone-client-kde/src/AccountWizard.cpp:435
 #: ../sflphone-client-gnome/src/assistant.c:266
 msgid "SIP account settings"
 msgstr "SIP帐户设置"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:436
+#: ../sflphone-client-kde/src/AccountWizard.cpp:439
 #: ../sflphone-client-gnome/src/assistant.c:362
 msgid "IAX2 account settings"
 msgstr "IAX2帐户设置"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:438
+#: ../sflphone-client-kde/src/AccountWizard.cpp:441
 #: ../sflphone-client-gnome/src/assistant.c:266
 #: ../sflphone-client-gnome/src/assistant.c:362
 msgid "Please fill the following information"
 msgstr "请填写以下信息"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:523
+#: ../sflphone-client-kde/src/AccountWizard.cpp:526
 #: ../sflphone-client-gnome/src/assistant.c:435
 #: ../sflphone-client-gnome/src/config/configwindow.c:856
 msgid "Network Address Translation (NAT)"
 msgstr "网络地址解析(NAT)"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:524
+#: ../sflphone-client-kde/src/AccountWizard.cpp:527
 #: ../sflphone-client-gnome/src/assistant.c:435
 #: ../sflphone-client-gnome/src/config/configwindow.c:536
 msgid "You should probably enable this if you are behind a firewall."
 msgstr "如果你使用网络使用防火墙，你很有可能需要设定此项."
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:526
+#: ../sflphone-client-kde/src/AccountWizard.cpp:529
 msgid "Enable STUN"
 msgstr "使用STUN"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:527
+#: ../sflphone-client-kde/src/AccountWizard.cpp:530
 msgid "Stun Server"
 msgstr "STUN服务器"
 
-#: ../sflphone-client-kde/src/AccountWizard.cpp:562
+#: ../sflphone-client-kde/src/AccountWizard.cpp:565
 msgid ""
 "After checking the settings you chose, click \"Finish\" to create the "
 "account."
@@ -243,7 +236,7 @@ msgstr "当您检查完选定的设置, 请点击\"结束\"来创建帐户"
 msgid "Default account"
 msgstr "默认帐户"
 
-#: ../sflphone-client-kde/src/Call.cpp:116
+#: ../sflphone-client-kde/src/Call.cpp:119
 #: ../sflphone-client-gnome/src/contacts/calltree.c:322
 msgid "Transfer to : "
 msgstr "转给:"
@@ -290,162 +283,174 @@ msgctxt "EMAIL OF TRANSLATORS"
 msgid "Your emails"
 msgstr "yunliu2000@gmail.com"
 
-#: ../sflphone-client-kde/src/SFLPhone.cpp:62
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1084
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1089
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1094
+#: ../sflphone-client-kde/src/SFLPhone.cpp:53
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:1020
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:1025
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:1030
 #: ../sflphone-client-gnome/src/statusicon.c:126
 msgid "SFLphone"
 msgstr "SFLphone"
 
-#: ../sflphone-client-kde/src/SFLPhone.cpp:209
-msgid "Incoming call"
-msgstr "来电"
-
-#: ../sflphone-client-kde/src/SFLPhone.cpp:210
-msgid "You have an incoming call from"
-msgstr "您有一个电话,来自于"
-
-#: ../sflphone-client-kde/src/SFLPhone.cpp:210
-msgid "Click to accept or refuse it."
-msgstr "请点击接听或拒绝"
-
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:716
-msgid "Address book loading..."
-msgstr "载入地址簿......"
-
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:901
-#: ../sflphone-client-gnome/src/actions.c:89
-msgid "No registered accounts"
-msgstr "没有已注册帐户"
-
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:905
-#: ../sflphone-client-gnome/src/actions.c:83
-#: ../sflphone-client-gnome/src/actions.c:813
-msgid "Using account"
-msgstr "使用账户"
-
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1084
+#: ../sflphone-client-kde/src/SFLPhone.cpp:100
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:1020
 msgid "Main screen"
 msgstr "主屏幕"
 
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1089
+#: ../sflphone-client-kde/src/SFLPhone.cpp:101
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:1025
 #: ../sflphone-client-kde/build/src/ui_dlggeneralbase.h:165
 msgid "Call history"
 msgstr "呼叫记录"
 
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1094
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:394
+#: ../sflphone-client-kde/src/SFLPhone.cpp:102
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:1030
 #: ../sflphone-client-gnome/src/toolbar.c:243
 #: ../sflphone-client-gnome/src/toolbar.c:245
 msgid "Address book"
 msgstr "地址簿"
 
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1108
-#: ../sflphone-client-kde/src/sflphone_kdeview.cpp:1173
+#: ../sflphone-client-kde/src/SFLPhone.cpp:115
+msgid "Configure SFLphone"
+msgstr "配置SFLphone"
+
+#: ../sflphone-client-kde/src/SFLPhone.cpp:117
+msgid "Display volume controls"
+msgstr "显示音量控制"
+
+#: ../sflphone-client-kde/src/SFLPhone.cpp:118
+msgid "Display dialpad"
+msgstr "显示拨号键盘"
+
+#: ../sflphone-client-kde/src/SFLPhone.cpp:227
+msgid "Incoming call"
+msgstr "来电"
+
+#: ../sflphone-client-kde/src/SFLPhone.cpp:228
+msgid "You have an incoming call from"
+msgstr "您有一个电话,来自于"
+
+#: ../sflphone-client-kde/src/SFLPhone.cpp:228
+msgid "Click to accept or refuse it."
+msgstr "请点击接听或拒绝"
+
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:656
+msgid "Address book loading..."
+msgstr "载入地址簿......"
+
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:840
+#: ../sflphone-client-gnome/src/actions.c:89
+msgid "No registered accounts"
+msgstr "没有已注册帐户"
+
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:844
+#: ../sflphone-client-gnome/src/actions.c:83
+#: ../sflphone-client-gnome/src/actions.c:813
+msgid "Using account"
+msgstr "使用账户"
+
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:1045
+#: ../sflphone-client-kde/src/SFLPhoneView.cpp:1109
 msgid "Edit before call"
 msgstr "呼叫前进行编辑"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:41
+#: ../sflphone-client-kde/src/sflphone_const.h:40
 #: ../sflphone-client-gnome/src/toolbar.c:167
 #: ../sflphone-client-gnome/src/toolbar.c:169
 msgid "New call"
 msgstr "新电话"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:42
-#: ../sflphone-client-kde/src/sflphone_const.h:47
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:381
+#: ../sflphone-client-kde/src/sflphone_const.h:41
+#: ../sflphone-client-kde/src/sflphone_const.h:46
 #: ../sflphone-client-gnome/src/toolbar.c:186
 #: ../sflphone-client-gnome/src/toolbar.c:188
 msgid "Hang up"
 msgstr "放电话"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:43
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:382
+#: ../sflphone-client-kde/src/sflphone_const.h:42
 #: ../sflphone-client-gnome/src/toolbar.c:207
 #: ../sflphone-client-gnome/src/toolbar.c:209
 msgid "Hold on"
 msgstr "呼叫保持"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:44
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:383
+#: ../sflphone-client-kde/src/sflphone_const.h:43
 #: ../sflphone-client-gnome/src/toolbar.c:220
 #: ../sflphone-client-gnome/src/toolbar.c:222
 msgid "Transfer"
 msgstr "转接"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:45
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:392
+#: ../sflphone-client-kde/src/sflphone_const.h:44
 #: ../sflphone-client-gnome/src/toolbar.c:263
 msgid "Record"
 msgstr "记录"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:46
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:380
+#: ../sflphone-client-kde/src/sflphone_const.h:45
 #: ../sflphone-client-gnome/src/toolbar.c:176
 #: ../sflphone-client-gnome/src/toolbar.c:178
 msgid "Pick up"
 msgstr "接电话"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:48
+#: ../sflphone-client-kde/src/sflphone_const.h:47
 #: ../sflphone-client-gnome/src/toolbar.c:196
 #: ../sflphone-client-gnome/src/toolbar.c:198
 msgid "Hold off"
 msgstr "恢复通话"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:49
+#: ../sflphone-client-kde/src/sflphone_const.h:48
 msgid "Give up transfer"
 msgstr "取消转接"
 
-#: ../sflphone-client-kde/src/sflphone_const.h:50
+#: ../sflphone-client-kde/src/sflphone_const.h:49
 msgid "Call back"
 msgstr "回叫"
+
+#: ../sflphone-client-kde/src/sflphone_const.h:50
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:413
+#: ../sflphone-client-gnome/src/toolbar.c:52
+#: ../sflphone-client-gnome/src/toolbar.c:251
+#: ../sflphone-client-gnome/src/toolbar.c:255
+msgid "Voicemail"
+msgstr "语音信箱"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:48
 #: ../sflphone-client-kde/build/src/ui_dlgrecordbase.h:91
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:306
 #: ../sflphone-client-gnome/src/config/configwindow.c:722
 #: ../sflphone-client-gnome/src/config/configwindow.c:791
-msgctxt "Config section"
 msgid "General"
 msgstr "常用配置"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:49
-msgctxt "Config section"
+#, fuzzy
 msgid "Display"
 msgstr "显示"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:50
 #: ../sflphone-client-gnome/src/config/configwindow.c:833
-msgctxt "Config section"
 msgid "Accounts"
 msgstr "帐户"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:51
 #: ../sflphone-client-gnome/src/config/configwindow.c:786
-msgctxt "Config section"
+#, fuzzy
 msgid "Audio"
 msgstr "音频"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:52
 #: ../sflphone-client-gnome/src/config/configwindow.c:801
-msgctxt "Config section"
 msgid "Address Book"
 msgstr "地址簿"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:53
 #: ../sflphone-client-gnome/src/config/configwindow.c:796
-msgctxt "Config section"
 msgid "Recordings"
 msgstr "记录"
 
 #: ../sflphone-client-kde/src/conf/ConfigurationDialog.cpp:54
 #: ../sflphone-client-gnome/src/config/configwindow.c:806
-msgctxt "Config section"
 msgid "Hooks"
 msgstr "钩键"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:328
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:368
 msgid ""
 "By default, when you place a call, sflphone will use the first account in "
 "this list which is \"registered\". Change the order of the accounts using "
@@ -458,11 +463,11 @@ msgstr ""
 "选择则会禁用该账户。通过\"加\"\"减\"按钮可以添加或删除账户。点击\"编辑\"按钮"
 "可以改变账户的设置。"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:332
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:372
 msgid "Remove the selected account"
 msgstr "删除所选账户"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:335
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:375
 msgid ""
 "This button will remove the selected account in the list below. Be sure you "
 "really don't need it anymore. If you think you might use it again later, "
@@ -471,31 +476,31 @@ msgstr ""
 "该按钮会删除列表中被选定的账户。请确认你的操作。如果你希望继续使用某个账户，"
 "请取消对该账户的选择"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:340
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:380
 msgid "Remove"
 msgstr "删除"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:342
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:382
 msgid "Add a new account"
 msgstr "增加新帐户"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:345
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:385
 msgid ""
 "This button enables you to initialize a new account. You will then be able "
 "to edit it using the form on the right."
 msgstr ""
 "通过该按钮可以创建一个新账户。添加该账户之后你还可以通过编辑按钮来修改设置。"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:347
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:387
 msgid "Add"
 msgstr "添加"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:349
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:389
 msgid "Get this account down"
 msgstr "将该账户向下移动"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:352
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:359
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:392
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:399
 msgid ""
 "By default, when you place a call, sflphone will use the first account in "
 "this list which is \"registered\". Change the order of the accounts using "
@@ -505,58 +510,67 @@ msgstr ""
 "头\"上\"和\"下\"可以改变账户的顺序。选择账户名称左边的方框可以启用帐户，取消"
 "选择则会禁用该账户。通过\"加\"\"减\"按钮可以添加或删除账户。"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:354
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:394
 msgid "Down"
 msgstr "下"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:356
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:396
 msgid "Get this account up"
 msgstr "把该账户向上移动"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:361
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:401
 msgid "Up"
 msgstr "上"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:362
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:402
 msgid "Apply"
 msgstr "应用"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:367
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:407
 msgid "SIP"
 msgstr "SIP"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:368
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:408
 msgid "IAX"
 msgstr "IAX"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:373
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:385
-#: ../sflphone-client-gnome/src/toolbar.c:52
-#: ../sflphone-client-gnome/src/toolbar.c:251
-#: ../sflphone-client-gnome/src/toolbar.c:255
-msgid "Voicemail"
-msgstr "语音信箱"
-
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:374
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:414
 #: ../sflphone-client-gnome/src/config/configwindow.c:425
 msgid "Status"
 msgstr "状态"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:377
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:416
+msgid "Basic"
+msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:417
+#, fuzzy
+msgid "Registration expire"
+msgstr "已注册"
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:418
+msgid "Conform to RFC 3263"
+msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:419
+msgid "Advanced"
+msgstr ""
+
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:421
 #: ../sflphone-client-gnome/src/config/configwindow.c:528
 msgid "Stun parameters will be applied on each SIP account created."
 msgstr "STUN参数将应用于每一个注册的SIP帐户"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:378
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:422
 msgid "Enable Stun"
 msgstr "使用STUN"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:380
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:424
 #: ../sflphone-client-gnome/src/config/configwindow.c:544
 msgid "Format : name.server:port"
 msgstr "格式：名称.服务器:端口"
 
-#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:382
+#: ../sflphone-client-kde/build/src/ui_dlgaccountsbase.h:426
 msgid "choose Stun server (example : stunserver.org)"
 msgstr "选择STUN服务器(例如:stunserver.org)"
 
@@ -659,13 +673,13 @@ msgid "On start"
 msgstr "正在启动"
 
 #: ../sflphone-client-kde/build/src/ui_dlggeneralbase.h:166
-msgctxt "Beginning of 'Keep my history for at least n days.'"
+#, fuzzy
 msgid "Keep my history for at least"
 msgstr "保存呼叫记录至少"
 
 #: ../sflphone-client-kde/build/src/ui_dlggeneralbase.h:167
 #: ../sflphone-client-gnome/src/config/configwindow.c:643
-msgctxt "End of 'Keep my history for at least n days.'"
+#, fuzzy
 msgid "days"
 msgstr "天"
 
@@ -724,41 +738,23 @@ msgstr "号码前缀"
 msgid "Destination folder"
 msgstr "目标文件夹"
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:384
-#: ../sflphone-client-gnome/src/toolbar.c:232
-#: ../sflphone-client-gnome/src/toolbar.c:234
-msgid "History"
-msgstr "历史"
-
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:386
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:388
-msgid "Configure SFLphone"
-msgstr "配置SFLphone"
-
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:390
-msgid "Display volume controls"
-msgstr "显示音量控制"
-
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:391
-msgid "Display dialpad"
-msgstr "显示拨号键盘"
-
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:396
+#: ../sflphone-client-kde/build/src/ui_SFLPhoneView_base.h:307
 msgid "Attention:number of results exceeds max displayed."
 msgstr "注意:结果超过可显示的最大值"
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:398
+#: ../sflphone-client-kde/build/src/ui_SFLPhoneView_base.h:309
 #: ../sflphone-client-gnome/src/sliders.c:163
 msgid "Mic volume"
 msgstr "话筒音量"
 
-#: ../sflphone-client-kde/build/src/ui_sflphone_kdeview_base.h:402
+#: ../sflphone-client-kde/build/src/ui_SFLPhoneView_base.h:313
 #: ../sflphone-client-gnome/src/sliders.c:161
 msgid "Speakers volume"
 msgstr "扬声器音量"
 
 #: ../sflphone-client-gnome/src/actions.c:54
 #: ../sflphone-client-gnome/src/sflnotify.c:94
+#, c-format
 msgid "%d voice mail"
 msgid_plural "%d voice mails"
 msgstr[0] "%d 个语音信息"
@@ -802,31 +798,31 @@ msgstr "SFLphone账户创建向导"
 
 #: ../sflphone-client-gnome/src/assistant.c:274
 #: ../sflphone-client-gnome/src/assistant.c:370
-#: ../sflphone-client-gnome/src/config/accountwindow.c:153
+#: ../sflphone-client-gnome/src/config/accountwindow.c:156
 msgid "_Alias"
 msgstr "别名(A)"
 
 #: ../sflphone-client-gnome/src/assistant.c:282
 #: ../sflphone-client-gnome/src/assistant.c:378
-#: ../sflphone-client-gnome/src/config/accountwindow.c:189
+#: ../sflphone-client-gnome/src/config/accountwindow.c:192
 msgid "_Host name"
 msgstr "主机名(H)"
 
 #: ../sflphone-client-gnome/src/assistant.c:290
 #: ../sflphone-client-gnome/src/assistant.c:386
-#: ../sflphone-client-gnome/src/config/accountwindow.c:197
+#: ../sflphone-client-gnome/src/config/accountwindow.c:206
 msgid "_User name"
 msgstr "用户名(U)"
 
 #: ../sflphone-client-gnome/src/assistant.c:306
 #: ../sflphone-client-gnome/src/assistant.c:401
-#: ../sflphone-client-gnome/src/config/accountwindow.c:212
+#: ../sflphone-client-gnome/src/config/accountwindow.c:221
 msgid "_Password"
 msgstr "密码(P)"
 
 #: ../sflphone-client-gnome/src/assistant.c:324
 #: ../sflphone-client-gnome/src/assistant.c:417
-#: ../sflphone-client-gnome/src/config/accountwindow.c:228
+#: ../sflphone-client-gnome/src/config/accountwindow.c:237
 msgid "_Voicemail number"
 msgstr "语音信箱号码(V)"
 
@@ -893,7 +889,7 @@ msgstr "有电话正在处理中"
 msgid "Do you still want to quit?"
 msgstr "确认要退出?"
 
-#: ../sflphone-client-gnome/src/mainwindow.c:284
+#: ../sflphone-client-gnome/src/mainwindow.c:282
 msgid "SFLphone Error"
 msgstr "SFLphone出错"
 
@@ -1002,11 +998,6 @@ msgstr "当前帐户"
 msgid "You have no accounts set up"
 msgstr "你没有设置任何账户"
 
-#: ../sflphone-client-gnome/src/sflnotify.c:131
-#: ../sflphone-client-gnome/src/sflnotify.c:148
-msgid "Error"
-msgstr "注册失败"
-
 #: ../sflphone-client-gnome/src/sflnotify.c:147
 msgid "You have no registered accounts"
 msgstr "未发现已注册帐户"
@@ -1022,21 +1013,30 @@ msgid_plural "%i accounts configured"
 msgstr[0] "已配置了%i个账户"
 msgstr[1] "已配置了%i个账户"
 
-#: ../sflphone-client-gnome/src/config/accountwindow.c:113
+#: ../sflphone-client-gnome/src/toolbar.c:232
+#: ../sflphone-client-gnome/src/toolbar.c:234
+msgid "History"
+msgstr "历史"
+
+#: ../sflphone-client-gnome/src/config/accountwindow.c:116
 msgid "Account settings"
 msgstr "帐户设置"
 
-#: ../sflphone-client-gnome/src/config/accountwindow.c:147
+#: ../sflphone-client-gnome/src/config/accountwindow.c:150
 msgid "_Enable this account"
 msgstr "启用该账户(E)"
 
-#: ../sflphone-client-gnome/src/config/accountwindow.c:161
+#: ../sflphone-client-gnome/src/config/accountwindow.c:164
 msgid "_Protocol"
 msgstr "协议(P)"
 
-#: ../sflphone-client-gnome/src/config/accountwindow.c:179
+#: ../sflphone-client-gnome/src/config/accountwindow.c:182
 msgid "Unknown"
 msgstr "未知"
+
+#: ../sflphone-client-gnome/src/config/accountwindow.c:200
+msgid "_Resolve host name only once for the session"
+msgstr ""
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:312
 msgid "_Use Evolution address books"
@@ -1152,7 +1152,7 @@ msgid "Calls History"
 msgstr "拨号历史"
 
 #: ../sflphone-client-gnome/src/config/configwindow.c:632
-msgctxt "Beginning of 'Keep my history for at least n days.'"
+#, fuzzy
 msgid "_Keep my history for at least"
 msgstr "保留历史记录至少(K)"
 
@@ -1219,6 +1219,62 @@ msgstr "从来电中查询"
 msgid "Search by outgoing call"
 msgstr "从拨出电话中查询"
 
+#~ msgctxt "Config section"
+#~ msgid "Accounts"
+#~ msgstr "帐户"
+
+#~ msgctxt "account state"
+#~ msgid "Registered"
+#~ msgstr "已注册"
+
+#~ msgctxt "account state"
+#~ msgid "Not Registered"
+#~ msgstr "未注册"
+
+#~ msgctxt "account state"
+#~ msgid "Trying..."
+#~ msgstr "正在连接..."
+
+#~ msgctxt "account state"
+#~ msgid "Error"
+#~ msgstr "注册失败"
+
+#~ msgctxt "account state"
+#~ msgid "Network unreachable"
+#~ msgstr "网络连接失败"
+
+#~ msgctxt "account state"
+#~ msgid "Host unreachable"
+#~ msgstr "服务器连接失败"
+
+#~ msgctxt "account state"
+#~ msgid "Stun configuration error"
+#~ msgstr "STUN配置有误"
+
+#~ msgctxt "account state"
+#~ msgid "Stun server invalid"
+#~ msgstr "STUN服务器无效"
+
+#~ msgctxt "account state"
+#~ msgid "Invalid"
+#~ msgstr "无效"
+
+#~ msgctxt "Config section"
+#~ msgid "General"
+#~ msgstr "常用配置"
+
+#~ msgctxt "Config section"
+#~ msgid "Address Book"
+#~ msgstr "地址簿"
+
+#~ msgctxt "Config section"
+#~ msgid "Recordings"
+#~ msgstr "记录"
+
+#~ msgctxt "Config section"
+#~ msgid "Hooks"
+#~ msgstr "钩键"
+
 #~ msgid "User"
 #~ msgstr "用户名"
 
@@ -1232,32 +1288,8 @@ msgstr "从拨出电话中查询"
 #~ msgid "%s - %s"
 #~ msgstr "%s - %s"
 
-#~ msgid "Registered"
-#~ msgstr "已注册"
-
-#~ msgid "Not Registered"
-#~ msgstr "未注册"
-
-#~ msgid "Trying..."
-#~ msgstr "正在连接..."
-
 #~ msgid "Bad authentification"
 #~ msgstr "认证错误"
-
-#~ msgid "Network unreachable"
-#~ msgstr "网络连接失败"
-
-#~ msgid "Host unreachable"
-#~ msgstr "服务器连接失败"
-
-#~ msgid "Stun configuration error"
-#~ msgstr "Stun配置有误"
-
-#~ msgid "Stun server invalid"
-#~ msgstr "Stun服务器无效"
-
-#~ msgid "Invalid"
-#~ msgstr "无效"
 
 #~ msgid "%d voice mails"
 #~ msgstr "%d 个语音信息"
@@ -1347,9 +1379,6 @@ msgstr "从拨出电话中查询"
 #~ msgid "Account Parameters"
 #~ msgstr "帐户相关参数"
 
-#~ msgid "General"
-#~ msgstr "常用配置"
-
 #~ msgid "Download limit:"
 #~ msgstr "下载上限:"
 
@@ -1392,21 +1421,8 @@ msgstr "从拨出电话中查询"
 #~ msgid "Audio Settings"
 #~ msgstr "音频配置"
 
-#~ msgid "Recordings"
-#~ msgstr "记录"
-
-#~ msgid "Address Book"
-#~ msgstr "地址簿"
-
-#~ msgid "Hooks"
-#~ msgstr "钩键"
-
-#~ msgid "Accounts"
-#~ msgstr "帐户"
-
 #~ msgid "URL Passing"
 #~ msgstr "传输URL"
-
 
 #~ msgid "Phone Number Rewriting"
 #~ msgstr "重设电话号码"
