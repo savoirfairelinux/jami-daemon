@@ -299,12 +299,12 @@ show_account_window (account_t * a)
     
     /* General Settings */
     tab = createAccountTab(a);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new_with_mnemonic(_("_Basic")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
     
     /* Advanced */
     tab = createAdvancedTab(a);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Advanced")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new_with_mnemonic(_("_Advanced")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
     
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
