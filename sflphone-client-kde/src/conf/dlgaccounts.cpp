@@ -44,7 +44,7 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	
 	connect(edit1_alias,           SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
-	connect(edit2_protocol,        SIGNAL(currentIndexChanged(int)),
+	connect(edit2_protocol,        SIGNAL(activated(int)),
 	        this,                  SLOT(changedAccountList()));
 	connect(edit3_server,          SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
@@ -54,7 +54,9 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	        this,                  SLOT(changedAccountList()));
 	connect(edit6_mailbox,         SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
-	connect(checkBox_conformRFC,   SIGNAL(stateChanged(int)),
+	connect(spinbox_regExpire,     SIGNAL(editingFinished()),
+	        this,                  SLOT(changedAccountList()));
+	connect(checkBox_conformRFC,   SIGNAL(clicked(bool)),
 	        this,                  SLOT(changedAccountList()));
 	connect(button_accountUp,      SIGNAL(clicked()),
 	        this,                  SLOT(changedAccountList()));

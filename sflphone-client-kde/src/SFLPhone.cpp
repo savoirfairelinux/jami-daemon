@@ -369,3 +369,7 @@ void SFLPhone::on_view_incomingCall(const Call * call)
 	}
 }
 
+void SFLPhone::on_view_addressBookEnableAsked(bool enabled)
+{
+	action_addressBook->setVisible(enabled);
+}
