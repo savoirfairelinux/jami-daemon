@@ -323,7 +323,10 @@ ManagerImpl::answerCall (const CallID& id)
 
     // if it was waiting, it's waiting no more
     if (_dbus) _dbus->getCallManager()->callStateChanged (id, "CURRENT");
-
+        
+    std::string codecName = Manager::instance().getCurrentCodecName (id);
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
+        
     removeWaitingCall (id);
 
     switchCall (id);
