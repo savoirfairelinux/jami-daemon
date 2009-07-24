@@ -392,4 +392,5 @@ show_account_window (account_t * a)
 		}
 	}
 	gtk_widget_destroy (GTK_WIDGET(dialog));
+
 }

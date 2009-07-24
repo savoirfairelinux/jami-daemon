@@ -284,30 +284,38 @@ ManagerImpl::answerCall (const CallID& id)
 
     stopTone (true);
 
-    AccountID currentaccountid = getAccountFromCall (id);
-    Call* currentcall = getAccountLink (currentaccountid)->getCall (getCurrentCallId());
+    AccountID currentAccountId;
+    currentAccountId = getAccountFromCall (id);
+    if(currentAccountId == AccountNULL) {
+        _debug("ManagerImpl::answerCall : AccountId is null\n");
+        return false;
+    }
+    
+    Call* currentCall = NULL;
+    currentCall = getAccountLink (currentAccountId)->getCall (id);
+    if (currentCall == NULL) {
+        _debug("ManagerImpl::answerCall : currentCall is null\n");
+    }
+    
+    Call* lastCall = NULL;
+    if (!getCurrentCallId().empty()) {
+        lastCall = getAccountLink (currentAccountId)->getCall (getCurrentCallId());
+        if (lastCall == NULL) {
+            _debug("ManagerImpl::answerCall : lastCall is null\n");
+        }
+    }
 
-    if (currentcall->getState() == 1)
-        isActive = true;
-
-    // stopTone(false);
+    _debug ("ManagerImpl::answerCall :: current call->getState %i \n", currentCall->getState());
     _debug ("Try to answer call: %s\n", id.data());
 
-    AccountID accountid = getAccountFromCall (id);
-
-    if (accountid == AccountNULL) {
-        _debug ("Answering Call: Call doesn't exists\n");
-        //return false;
+    if (lastCall != NULL) {
+        if (lastCall->getState() == Call::Active) {
+            _debug ("* Manager Info: there is currently a call, try to hold it\n");
+            onHoldCall (getCurrentCallId());
+        }
     }
 
-    //  if (id != getCurrentCallId()) {
-    if (isActive) {
-        _debug ("* Manager Info: there is currently a call, try to hold it\n");
-
-        onHoldCall (getCurrentCallId());
-    }
-
-    if (!getAccountLink (accountid)->answer (id)) {
+    if (!getAccountLink (currentAccountId)->answer (id)) {
         // error when receiving...
         removeCallAccount (id);
         return false;
@@ -315,14 +323,13 @@ ManagerImpl::answerCall (const CallID& id)
 
     // if it was waiting, it's waiting no more
     if (_dbus) _dbus->getCallManager()->callStateChanged (id, "CURRENT");
-
+        
+    std::string codecName = Manager::instance().getCurrentCodecName (id);
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
+        
     removeWaitingCall (id);
 
     switchCall (id);
-
-    // std::string codecName = getCurrentCodecName(id);
-    // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
     return true;
 }
