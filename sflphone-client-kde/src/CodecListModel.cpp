@@ -46,7 +46,7 @@ QVariant CodecListModel::data ( const QModelIndex & index, int role) const
 		return QVariant();
 
 	const Codec * codec = codecs[index.row()];
-	if(index.column() == 0 && role == Qt::DisplayRole)
+	if(index.column() == 1 && role == Qt::DisplayRole)
 	{
 		return QVariant(codec->getName());
 	}
@@ -54,15 +54,15 @@ QVariant CodecListModel::data ( const QModelIndex & index, int role) const
 	{
 		return QVariant(codec->isEnabled() ? Qt::Checked : Qt::Unchecked);
 	}
-	else if(index.column() == 1 && role == Qt::DisplayRole)
+	else if(index.column() == 2 && role == Qt::DisplayRole)
 	{
 		return QVariant(codec->getFrequency());
 	}
-	else if(index.column() == 2 && role == Qt::DisplayRole)
+	else if(index.column() == 3 && role == Qt::DisplayRole)
 	{
 		return QVariant(codec->getBitrate());
 	}
-	else if(index.column() == 3 && role == Qt::DisplayRole)
+	else if(index.column() == 4 && role == Qt::DisplayRole)
 	{
 		return QVariant(codec->getBandwidth());
 	}
@@ -78,7 +78,7 @@ int CodecListModel::rowCount(const QModelIndex & /*parent*/) const
 
 int CodecListModel::columnCount(const QModelIndex & /*parent*/) const
 {
-	return 4;
+	return 5;
 }
 
 
@@ -86,17 +86,21 @@ QVariant CodecListModel::headerData(int section , Qt::Orientation orientation, i
 {
 	if (section == 0 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
 	{
-		return QVariant(i18n("Codec"));
+		return QVariant(i18n(""));
 	}
 	else if (section == 1 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
 	{
-		return QVariant(i18n("Frequency"));
+		return QVariant(i18n("Codec"));
 	}
 	else if (section == 2 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
 	{
-		return QVariant(i18n("Bitrate"));
+		return QVariant(i18n("Frequency"));
 	}
 	else if (section == 3 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
+	{
+		return QVariant(i18n("Bitrate"));
+	}
+	else if (section == 4 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
 	{
 		return QVariant(i18n("Bandwidth"));
 	}
