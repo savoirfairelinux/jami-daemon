@@ -186,6 +186,8 @@ void AccountWizard::accept()
 	QString & protocol = accountDetails[QString(ACCOUNT_TYPE)];
 	QString & mailbox = accountDetails[QString(ACCOUNT_MAILBOX)];
 	QString & enabled = accountDetails[QString(ACCOUNT_ENABLED)];
+	QString & resolveOnce = accountDetails[QString(ACCOUNT_RESOLVE_ONCE)];
+	QString & regExpire = accountDetails[QString(ACCOUNT_EXPIRE)];
 	
 	bool createAccount = false;
 	bool sip = false;
@@ -243,8 +245,9 @@ void AccountWizard::accept()
 	}
 	if(createAccount)
 	{
-// 		mailbox = ACCOUNT_MAILBOX_DEFAULT_VALUE;
 		enabled = ACCOUNT_ENABLED_TRUE;
+		resolveOnce = "FALSE";
+		regExpire = QString::number(ACCOUNT_EXPIRE_DEFAULT);
 		ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 		QString accountId = configurationManager.addAccount(accountDetails);
 		//configurationManager.sendRegister(accountId, 1);
