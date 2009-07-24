@@ -227,6 +227,8 @@ private:
 	void switchRecord();
 	void setRecord();
 	void start();
+	void startStop();
+	void stop();
 	void startWeird();
 	void warning();
 
@@ -243,6 +245,7 @@ public:
 	static Call * buildExistingCall(QString callId);
 	
 	static history_state getHistoryStateFromType(QString type);
+	static QString getTypeFromHistoryState(history_state historyState);
 	static call_state getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
 	static history_state getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
 	
@@ -260,6 +263,8 @@ public:
 	bool getRecording() const;
 	QString getAccountId() const;
 	bool isHistory() const;
+	QString getStopTimeStamp() const;
+	QString getStartTimeStamp() const;
 	
 	//Automate calls
 	call_state stateChanged(const QString & newState);

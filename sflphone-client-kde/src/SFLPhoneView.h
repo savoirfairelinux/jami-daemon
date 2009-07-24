@@ -68,6 +68,7 @@ private:
 	QErrorMessage * errorWindow;
 	//Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
 	static QString priorAccountId;
+	bool historyLoaded;
 
 protected:
 	
@@ -129,6 +130,11 @@ public:
 	bool isAddressBookEnabled();
 	
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
+	
+	/**
+	 *   Save the settings to save in the daemon before exit
+	 */
+	void saveState();
 	
 private slots:
 	/**

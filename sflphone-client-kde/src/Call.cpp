@@ -84,17 +84,17 @@ const call_state Call::stateChangedStateMap [11][6] =
 const function Call::stateChangedFunctionMap[11][6] = 
 { 
 //                      RINGING                  CURRENT             BUSY              HOLD                    HUNGUP           FAILURE
-/*INCOMING       */  {&Call::nothing    , &Call::start     , &Call::startWeird     , &Call::startWeird   ,  &Call::start        , &Call::start  },
-/*RINGING        */  {&Call::nothing    , &Call::start     , &Call::start          , &Call::start        ,  &Call::start        , &Call::start  },
-/*CURRENT        */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
-/*DIALING        */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::warning      , &Call::warning },
-/*HOLD           */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
-/*FAILURE        */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::nothing      , &Call::nothing },
-/*BUSY           */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::warning      ,  &Call::nothing      , &Call::nothing },
-/*TRANSFERT      */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
-/*TRANSFERT_HOLD */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
-/*OVER           */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::nothing      , &Call::warning },
-/*ERROR          */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing }
+/*INCOMING       */  {&Call::nothing    , &Call::start     , &Call::startWeird     , &Call::startWeird   ,  &Call::startStop    , &Call::start  },
+/*RINGING        */  {&Call::nothing    , &Call::start     , &Call::start          , &Call::start        ,  &Call::startStop    , &Call::start  },
+/*CURRENT        */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },
+/*DIALING        */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::stop         , &Call::warning },
+/*HOLD           */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },
+/*FAILURE        */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::stop         , &Call::nothing },
+/*BUSY           */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::warning      ,  &Call::stop         , &Call::nothing },
+/*TRANSFERT      */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },
+/*TRANSFERT_HOLD */  {&Call::nothing    , &Call::nothing   , &Call::warning        , &Call::nothing      ,  &Call::stop         , &Call::nothing },
+/*OVER           */  {&Call::nothing    , &Call::warning   , &Call::warning        , &Call::warning      ,  &Call::stop         , &Call::warning },
+/*ERROR          */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::stop         , &Call::nothing }
 };
 
 
@@ -252,6 +252,23 @@ history_state Call::getHistoryStateFromType(QString type)
 	return NONE;
 }
 
+QString Call::getTypeFromHistoryState(history_state historyState)
+{
+	if(historyState == MISSED)
+	{
+		return DAEMON_HISTORY_TYPE_MISSED;
+	}
+	else if(historyState == OUTGOING)
+	{
+		return DAEMON_HISTORY_TYPE_OUTGOING;
+	}
+	else if(historyState == INCOMING)
+	{
+		return DAEMON_HISTORY_TYPE_INCOMING;
+	}
+	return QString();
+}
+
 call_state Call::getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType)
 {
 	if(daemonCallState == DAEMON_CALL_STATE_INIT_CURRENT)
@@ -393,6 +410,20 @@ QListWidgetItem * Call::getHistoryItem()
 		historyItem->setSizeHint(QSize(140,45));
 	}
 	return historyItem;
+}
+
+QString Call::getStopTimeStamp() const
+{
+	if (stopTime == NULL)
+	{	return QString();	}
+	return QString::number(stopTime->toTime_t());
+}
+
+QString Call::getStartTimeStamp() const
+{
+	if (startTime == NULL)
+	{	return QString();	}
+	return QString::number(startTime->toTime_t());
 }
 
 QWidget * Call::getHistoryItemWidget()
@@ -557,6 +588,7 @@ void Call::acceptHold()
 void Call::hangUp()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	this->stopTime = new QDateTime(QDateTime::currentDateTime());
 	qDebug() << "Hanging up call. callId : " << callId;
 	callManager.hangUp(callId);
 }
@@ -641,6 +673,19 @@ void Call::start()
 {
 	qDebug() << "Starting call. callId : " << callId;
 	this->startTime = new QDateTime(QDateTime::currentDateTime());
+}
+
+void Call::startStop()
+{
+	qDebug() << "Starting and stoping call. callId : " << callId;
+	this->startTime = new QDateTime(QDateTime::currentDateTime());
+	this->stopTime = new QDateTime(QDateTime::currentDateTime());
+}
+
+void Call::stop()
+{
+	qDebug() << "Stoping call. callId : " << callId;
+	this->stopTime = new QDateTime(QDateTime::currentDateTime());
 }
 
 void Call::startWeird()
