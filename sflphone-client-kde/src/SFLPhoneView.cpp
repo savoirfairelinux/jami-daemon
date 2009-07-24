@@ -626,7 +626,7 @@ void SFLPhoneView::updateCallHistory()
 			addCallToCallHistory(call);
 		}
 	}
-	alternateColors(listWidget_callHistory);
+// 	alternateColors(listWidget_callHistory);
 }
 
 void SFLPhoneView::updateAddressBook()
@@ -1034,6 +1034,7 @@ void SFLPhoneView::on_stackedWidget_screen_currentChanged(int index)
 				updateCallHistory();
 				historyLoaded = true;
 			}
+			alternateColors(listWidget_callHistory);
 			emit windowTitleChangeAsked(i18n("SFLphone") + " - " + i18n("Call history"));
 			break;
 		case SCREEN_ADDRESS:
