@@ -36,7 +36,6 @@
 
 class EventThread;
 class SIPCall;
-class AudioRtp;
 
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
@@ -284,9 +283,6 @@ class SIPVoIPLink : public VoIPLink
         /** when we init the listener, how many times we try to bind a port? */
         int _nbTryListenAddr;
 
-        /** Returns a pointer to the AudioRtp object */
-        inline AudioRtp * getAudioRtp(void) { return _audiortp; }
-
         /** Increment the number of SIP account connected to this link */
         void incrementClients (void) { _clients++; }
 
@@ -363,8 +359,6 @@ class SIPVoIPLink : public VoIPLink
 
         std::string getLocalIP() {return _localExternAddress;}
 
-        /** Starting sound */
-        AudioRtp* _audiortp;
         
         /** For registration use only */
         int _regPort;

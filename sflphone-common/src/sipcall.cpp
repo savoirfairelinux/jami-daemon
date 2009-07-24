@@ -33,6 +33,7 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call
         , _local_sdp (0)
 {
     _local_sdp = new Sdp (pool);
+    _audiortp = new AudioRtp();
     _debug ("SIPCALL::Constructor for this class is called \n");
 }
 

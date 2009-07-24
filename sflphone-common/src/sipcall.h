@@ -24,8 +24,10 @@
 #include "call.h"
 #include "sipvoiplink.h"
 #include "sdp.h"
+#include "audio/audiortp.h"
 
 class AudioCodec;
+class AudioRtp;
 
 /**
  * @file sipcall.h
@@ -95,6 +97,13 @@ class SIPCall : public Call
 
     void setLocalSDP (Sdp *local_sdp) { _local_sdp = local_sdp; }
 
+    /** Returns a pointer to the AudioRtp object */
+    inline AudioRtp * getAudioRtp(void) { return _audiortp; }
+
+    /** Returns a pointer to the AudioRtp object specific to this call */
+    inline AudioRtp * setAudioRtp(AudioRtp* audiortp) { _audiortp = audiortp; }
+
+
   private:
 
     Sdp *_local_sdp;
@@ -109,6 +118,8 @@ class SIPCall : public Call
     // Assignment Operator
     SIPCall& operator=( const SIPCall& rh);
     
+    /** Starting sound */
+    AudioRtp* _audiortp;
     
     pjsip_evsub *_xferSub;
     pjsip_inv_session *_invSession;
