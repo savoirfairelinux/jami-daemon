@@ -2486,18 +2486,42 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     std::string accountType;
     Account *acc;
+	std::map <std::string, std::string> map_cpy;
+	std::map<std::string, std::string>::iterator iter;
 
-    accountType = (*details.find (CONFIG_ACCOUNT_TYPE)).second;
+	// Work on a copy
+	map_cpy = details;
 
-    setConfig (accountID, CONFIG_ACCOUNT_ALIAS, (*details.find (CONFIG_ACCOUNT_ALIAS)).second);
-    setConfig (accountID, CONFIG_ACCOUNT_ENABLE, (*details.find (CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0");
-    setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, (*details.find (CONFIG_ACCOUNT_RESOLVE_ONCE)).second == "TRUE" ? "1": "0");
+	// We check if every fields are available in the map before making any processing on it
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_TYPE)) == map_cpy.end ()) ? accountType = DEFAULT_ACCOUNT_TYPE 
+																	: accountType = iter->second;
     setConfig (accountID, CONFIG_ACCOUNT_TYPE, accountType);
-    setConfig (accountID, USERNAME, (*details.find (USERNAME)).second);
-    setConfig (accountID, PASSWORD, (*details.find (PASSWORD)).second);
-    setConfig (accountID, HOSTNAME, (*details.find (HOSTNAME)).second);
-    setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, (*details.find (CONFIG_ACCOUNT_MAILBOX)).second);
-    setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, (*details.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)).second);
+
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_ALIAS)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_ALIAS, EMPTY_FIELD) 
+																	: setConfig (accountID, CONFIG_ACCOUNT_ALIAS, iter->second); 
+
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_ENABLE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_ENABLE, "0") 
+																	: setConfig (accountID, CONFIG_ACCOUNT_ENABLE, iter->second == "TRUE" ? "1"
+																																: "0");
+
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_RESOLVE_ONCE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, DFT_RESOLVE_ONCE)
+																			: setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, iter->second == "TRUE" ? "1"
+																																			: "0");
+
+	( (iter = map_cpy.find (USERNAME)) == map_cpy.end ()) ? setConfig (accountID, USERNAME, EMPTY_FIELD)
+														: setConfig (accountID, USERNAME, iter->second);
+    
+	( (iter = map_cpy.find (PASSWORD)) == map_cpy.end ()) ? setConfig (accountID, PASSWORD, EMPTY_FIELD)
+														: setConfig (accountID, PASSWORD, iter->second);
+
+	( (iter = map_cpy.find (HOSTNAME)) == map_cpy.end ()) ? setConfig (accountID, HOSTNAME, EMPTY_FIELD)
+														: setConfig (accountID, HOSTNAME, iter->second);
+
+	( (iter = map_cpy.find (CONFIG_ACCOUNT_MAILBOX)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, EMPTY_FIELD)
+																		: setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, iter->second);
+
+	( (iter = map_cpy.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE)
+																					: setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, iter->second);
 
     saveConfig();
 
@@ -2557,6 +2581,8 @@ ManagerImpl::addAccount (const std::map< std::string, std::string >& details)
 
     // Get the type
     accountType = (*details.find (CONFIG_ACCOUNT_TYPE)).second;
+
+	_debug ("%s\n", newAccountID.c_str());
 
     /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
