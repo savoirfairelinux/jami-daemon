@@ -104,7 +104,6 @@ const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOI
 
 void Call::initCallItem()
 {
-	qDebug() << "initCallItem";
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,45));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
@@ -776,7 +775,7 @@ void Call::updateItem()
 	}
 	else
 	{
-		qDebug() << "Updating item of call of state OVER. Doing nothing.";
+// 		qDebug() << "Updating item of call of state OVER. Doing nothing.";
 	}
 }
 
