@@ -122,6 +122,7 @@ help_about ( void * foo UNUSED)
     "Alexandre Savard <alexandre.savard@savoirfairelinux.com>",
     "Jean-Philippe Barrette-LaPierre",
     "Laurielle Lea",
+    "Pierre-Luc Bacon <pierre-luc.bacon@savoifairelinux.com>",
     NULL};
   gchar *artists[] = {
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
