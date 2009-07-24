@@ -351,9 +351,6 @@ class SIPVoIPLink : public VoIPLink
          */
         bool pjsip_shutdown(void);
 
-        /** Do we use stun? */
-        bool _useStun;
-
         pj_status_t stunServerResolve();
 
         /** Create SIP UDP Listener */
@@ -362,12 +359,6 @@ class SIPVoIPLink : public VoIPLink
         bool loadSIPLocalIP();
 
         std::string getLocalIP() {return _localExternAddress;}
-
-        /** Starting sound */
-        AudioRtp* _audiortp;
-        
-        /** For registration use only */
-        int _regPort;
 
         /* Flag to check if the STUN server is valid or not */
         bool validStunServer;
@@ -380,6 +371,15 @@ class SIPVoIPLink : public VoIPLink
 
         /** Local Extern Port is the port seen by peers for SIP listener */
         unsigned int _localExternPort;
+
+        /** Starting sound */
+        AudioRtp* _audiortp;
+        
+        /** For registration use only */
+        int _regPort;
+
+        /** Do we use stun? */
+        bool _useStun;
 
         /** Threading object */
         EventThread* _evThread;

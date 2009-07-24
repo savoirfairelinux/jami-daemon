@@ -32,9 +32,7 @@ int UrlHook::addAction (std::string field_value, std::string command)
     /* Execute the command in the background to not block the application */
     command_bg = command + " " + field_value + "&" ;
     /* Execute a system call */
-    RUN_COMMAND (command_bg.c_str());
-
-    return 0;
+    return RUN_COMMAND (command_bg.c_str());
 
 }
 

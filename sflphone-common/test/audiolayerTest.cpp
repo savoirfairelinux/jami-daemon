@@ -66,8 +66,8 @@ void AudioLayerTest::testAudioLayerConfig()
     int sampling_rate = Manager::instance().getConfigInt (AUDIO, ALSA_SAMPLE_RATE);
     int frame_size = Manager::instance().getConfigInt (AUDIO, ALSA_FRAME_SIZE);
 
-    CPPUNIT_ASSERT (Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);
-    CPPUNIT_ASSERT (Manager::instance().getAudioDriver()->getFrameSize() == frame_size);
+    CPPUNIT_ASSERT ((int)Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);
+    CPPUNIT_ASSERT ((int)Manager::instance().getAudioDriver()->getFrameSize() == frame_size);
 }
 
 void AudioLayerTest::testAudioLayerSwitch()
@@ -180,7 +180,6 @@ void AudioLayerTest::testAlsaConnect()
 
     int layer = Manager::instance().getAudioDriver()->getLayerType();
 
-    int type, samplerate, framesize, numCardIn, numCardOut;
     std::string alsaPlugin;
 
     if (layer != ALSA) {

@@ -284,31 +284,38 @@ ManagerImpl::answerCall (const CallID& id)
 
     stopTone (true);
 
-    AccountID currentaccountid = getAccountFromCall (id);
-    Call* currentcall = getAccountLink (currentaccountid)->getCall (getCurrentCallId());
-    _debug ("ManagerImpl::answerCall :: current call->getState %i \n",currentcall->getState());
+    AccountID currentAccountId;
+    currentAccountId = getAccountFromCall (id);
+    if(currentAccountId == AccountNULL) {
+        _debug("ManagerImpl::answerCall : AccountId is null\n");
+        return false;
+    }
+    
+    Call* currentCall = NULL;
+    currentCall = getAccountLink (currentAccountId)->getCall (id);
+    if (currentCall == NULL) {
+        _debug("ManagerImpl::answerCall : currentCall is null\n");
+    }
+    
+    Call* lastCall = NULL;
+    if (!getCurrentCallId().empty()) {
+        lastCall = getAccountLink (currentAccountId)->getCall (getCurrentCallId());
+        if (lastCall == NULL) {
+            _debug("ManagerImpl::answerCall : lastCall is null\n");
+        }
+    }
 
-    if (currentcall->getState() == 1)
-        isActive = true;
-
-    // stopTone(false);
+    _debug ("ManagerImpl::answerCall :: current call->getState %i \n", currentCall->getState());
     _debug ("Try to answer call: %s\n", id.data());
 
-    AccountID accountid = getAccountFromCall (id);
-
-    if (accountid == AccountNULL) {
-        _debug ("Answering Call: Call doesn't exists\n");
-        //return false;
+    if (lastCall != NULL) {
+        if (lastCall->getState() == Call::Active) {
+            _debug ("* Manager Info: there is currently a call, try to hold it\n");
+            onHoldCall (getCurrentCallId());
+        }
     }
 
-    //  if (id != getCurrentCallId()) {
-    if (isActive) {
-        _debug ("* Manager Info: there is currently a call, try to hold it\n");
-
-        onHoldCall (getCurrentCallId());
-    }
-
-    if (!getAccountLink (accountid)->answer (id)) {
+    if (!getAccountLink (currentAccountId)->answer (id)) {
         // error when receiving...
         removeCallAccount (id);
         return false;
@@ -316,14 +323,13 @@ ManagerImpl::answerCall (const CallID& id)
 
     // if it was waiting, it's waiting no more
     if (_dbus) _dbus->getCallManager()->callStateChanged (id, "CURRENT");
-
+        
+    std::string codecName = Manager::instance().getCurrentCodecName (id);
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
+        
     removeWaitingCall (id);
 
     switchCall (id);
-
-    // std::string codecName = getCurrentCodecName(id);
-    // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
     return true;
 }
@@ -1050,18 +1056,11 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 void ManagerImpl::stopTone (bool stopAudio=true)
 {
     int hasToPlayTone;
-    AudioLayer *audiolayer;
 
     hasToPlayTone = getConfigInt (SIGNALISATION, PLAY_TONES);
 
     if (!hasToPlayTone)
         return;
-
-    // if (stopAudio) {
-    //    audiolayer = getAudioDriver();
-    //    if (audiolayer) audiolayer->stopStream();
-    // }
-
 
     _toneMutex.enterMutex();
 
@@ -1628,10 +1627,14 @@ ManagerImpl::getAudioOutputDeviceList (void)
 {
     _debug ("Get audio output device list\n");
     AlsaLayer *layer;
+    std::vector <std::string> devices;
 
     layer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
 
-    if (layer)    return layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+    if (layer)
+        devices = layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+
+    return devices;
 }
 
 /**
@@ -1664,12 +1667,15 @@ ManagerImpl::setAudioOutputDevice (const int index)
 std::vector<std::string>
 ManagerImpl::getAudioInputDeviceList (void)
 {
-    _debug ("Get audio input device list\n");
     AlsaLayer *audiolayer;
+    std::vector <std::string> devices;
 
     audiolayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
-    if (audiolayer)    return audiolayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+    if (audiolayer)
+        devices = audiolayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
+
+    return devices;
 }
 
 /**
@@ -1932,7 +1938,7 @@ ManagerImpl::setPulseAppVolumeControl (void)
 void ManagerImpl::setAudioManager (const int32_t& api)
 {
 
-    int type, samplerate, framesize, numCardIn, numCardOut;
+    int type;
     std::string alsaPlugin;
 
     _debug ("Setting audio manager \n");
@@ -1951,7 +1957,7 @@ void ManagerImpl::setAudioManager (const int32_t& api)
 
     switchAudioManager();
     return;
-    
+
 }
 
 int32_t
@@ -1984,7 +1990,10 @@ ManagerImpl::getAudioDeviceIndex (const std::string name)
 
     alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
-    if (alsalayer)   return alsalayer -> soundCardGetIndex (name);
+    if (alsalayer)
+        return alsalayer -> soundCardGetIndex (name);
+    else
+        return 0;
 }
 
 std::string
@@ -2392,7 +2401,7 @@ ManagerImpl::getAccountList()
 {
     std::vector< std::string > v;
     std::vector< std::string > account_order;
-    int i;
+    unsigned int i;
 
     account_order = loadAccountOrder ();
     AccountMap::iterator iter;
@@ -2469,12 +2478,13 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (PASSWORD, getConfigString (accountID, PASSWORD)));
     a.insert (std::pair<std::string, std::string> (HOSTNAME, getConfigString (accountID, HOSTNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
-    
+
     if (getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
         a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE));
     } else {
         a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
     }
+
     return a;
 }
 
@@ -2483,19 +2493,42 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     std::string accountType;
     Account *acc;
-    VoIPLink *link;
+	std::map <std::string, std::string> map_cpy;
+	std::map<std::string, std::string>::iterator iter;
 
-    accountType = (*details.find (CONFIG_ACCOUNT_TYPE)).second;
+	// Work on a copy
+	map_cpy = details;
 
-    setConfig (accountID, CONFIG_ACCOUNT_ALIAS, (*details.find (CONFIG_ACCOUNT_ALIAS)).second);
-    setConfig (accountID, CONFIG_ACCOUNT_ENABLE, (*details.find (CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0");
-    setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, (*details.find (CONFIG_ACCOUNT_RESOLVE_ONCE)).second == "TRUE" ? "1": "0");
+	// We check if every fields are available in the map before making any processing on it
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_TYPE)) == map_cpy.end ()) ? accountType = DEFAULT_ACCOUNT_TYPE 
+																	: accountType = iter->second;
     setConfig (accountID, CONFIG_ACCOUNT_TYPE, accountType);
-    setConfig (accountID, USERNAME, (*details.find (USERNAME)).second);
-    setConfig (accountID, PASSWORD, (*details.find (PASSWORD)).second);
-    setConfig (accountID, HOSTNAME, (*details.find (HOSTNAME)).second);
-    setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, (*details.find (CONFIG_ACCOUNT_MAILBOX)).second);
-    setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, (*details.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)).second);
+
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_ALIAS)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_ALIAS, EMPTY_FIELD) 
+																	: setConfig (accountID, CONFIG_ACCOUNT_ALIAS, iter->second); 
+
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_ENABLE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_ENABLE, "0") 
+																	: setConfig (accountID, CONFIG_ACCOUNT_ENABLE, iter->second == "TRUE" ? "1"
+																																: "0");
+
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_RESOLVE_ONCE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, DFT_RESOLVE_ONCE)
+																			: setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, iter->second == "TRUE" ? "1"
+																																			: "0");
+
+	( (iter = map_cpy.find (USERNAME)) == map_cpy.end ()) ? setConfig (accountID, USERNAME, EMPTY_FIELD)
+														: setConfig (accountID, USERNAME, iter->second);
+    
+	( (iter = map_cpy.find (PASSWORD)) == map_cpy.end ()) ? setConfig (accountID, PASSWORD, EMPTY_FIELD)
+														: setConfig (accountID, PASSWORD, iter->second);
+
+	( (iter = map_cpy.find (HOSTNAME)) == map_cpy.end ()) ? setConfig (accountID, HOSTNAME, EMPTY_FIELD)
+														: setConfig (accountID, HOSTNAME, iter->second);
+
+	( (iter = map_cpy.find (CONFIG_ACCOUNT_MAILBOX)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, EMPTY_FIELD)
+																		: setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, iter->second);
+
+	( (iter = map_cpy.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE)
+																					: setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, iter->second);
 
     saveConfig();
 
@@ -2555,6 +2588,8 @@ ManagerImpl::addAccount (const std::map< std::string, std::string >& details)
 
     // Get the type
     accountType = (*details.find (CONFIG_ACCOUNT_TYPE)).second;
+
+	_debug ("%s\n", newAccountID.c_str());
 
     /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
@@ -2688,7 +2723,7 @@ ManagerImpl::loadAccountMap()
     short nbAccount = 0;
     TokenList sections = _config.getSections();
     std::string accountType;
-    Account* tmpAccount;
+    Account *tmpAccount = 0;
     std::vector <std::string> account_order;
 
     TokenList::iterator iter = sections.begin();
@@ -2816,25 +2851,6 @@ ManagerImpl::getAccountIdFromNameAndServer (const std::string& userName, const s
 
     // Failed again! return AccountNULL
     return AccountNULL;
-}
-
-AccountMap ManagerImpl::getSipAccountMap (void)
-{
-
-    AccountMap::iterator iter;
-    AccountMap sipaccounts;
-    AccountID id;
-    Account *account;
-
-    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
-        if (iter->second->getType() == "sip") {
-            //id = iter->first;
-            //account = iter->second;
-            //sipaccounts.insert( std::pair<id, account> );
-        }
-    }
-
-    return sipaccounts;
 }
 
 void ManagerImpl::restartPJSIP (void)
@@ -3140,7 +3156,6 @@ std::vector< std::string >
 ManagerImpl::getCallList (void)
 {
     std::vector< std::string > v;
-    int i;
 
     CallAccountMap::iterator iter = _callAccountMap.begin ();
 

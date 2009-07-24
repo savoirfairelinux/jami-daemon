@@ -243,7 +243,6 @@ gchar* get_call_duration (callable_obj_t *obj)
 
     duration = (int) difftime(end, start);
 
-    DEBUG("END: %d START: %d DURATION: %d", end, start, duration);
     if( duration / 60 == 0 )
     {
         if( duration < 10 )

@@ -49,8 +49,6 @@ class Speex : public AudioCodec
 
         void initSpeex() {
 
-            int _samplingRate = 16000;
-
             // 8000 HZ --> Narrow-band mode
             // TODO Manage the other modes
             _speexModePtr = &speex_wb_mode;
