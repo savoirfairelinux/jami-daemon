@@ -2079,9 +2079,6 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
                 /* The call terminates normally - BYE / CANCEL */
 
             case PJSIP_SC_OK:
-
-            case PJSIP_SC_DECLINE:
-
             case PJSIP_SC_REQUEST_TERMINATED:
                 accId = Manager::instance().getAccountFromCall (call->getCallId());
                 link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
@@ -2095,17 +2092,12 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
                 /* The call connection failed */
 
             case PJSIP_SC_NOT_FOUND:            /* peer not found */
-
+            case PJSIP_SC_DECLINE:
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
-
             case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
-
             case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
-
             case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
-
             case PJSIP_SC_UNAUTHORIZED:
-
             case PJSIP_SC_REQUEST_PENDING:
                 accId = Manager::instance().getAccountFromCall (call->getCallId());
                 link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
