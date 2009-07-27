@@ -52,12 +52,12 @@ gboolean main_window_ask_quit() ;
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_dialpad( gboolean* state );
+void main_window_dialpad( gboolean state );
 
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_volume_controls( gboolean* state );
+void main_window_volume_controls( gboolean state );
 
 /**
  * Display an error message
