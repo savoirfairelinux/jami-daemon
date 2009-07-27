@@ -51,10 +51,11 @@ sflphone_notify_voice_mail ( const gchar* accountID , guint count )
     if(count > 0)
     {
         gchar * message = g_new0(gchar, 50);
-        if( count > 1)
-            g_sprintf(message, _("%d voice mails"), count);
-        else
-            g_sprintf(message, _("%d voice mail"), count);
+        g_sprintf(message, n_("%d voice mail", "%d voice mails", count), count);
+//         if( count > 1)
+//             g_sprintf(message, _("%d voice mails"), count);
+//         else
+//             g_sprintf(message, _("%d voice mail"), count);
         statusbar_push_message(message,  __MSG_VOICE_MAILS);
         g_free(message);
     }
@@ -78,13 +79,14 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
-        msg = g_markup_printf_escaped(_("Using %s (%s)") ,
+        msg = g_markup_printf_escaped("%s %s (%s)" ,
+                _("Using account"),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
     }
     else
     {
-        msg = g_markup_printf_escaped(_("No registered account"));
+        msg = g_markup_printf_escaped(_("No registered accounts"));
     }
     statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
     g_free(msg);
@@ -303,7 +305,9 @@ sflphone_hang_up()
 sflphone_pick_up()
 {
     DEBUG("sflphone_pick_up\n");
-    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
+    callable_obj_t * selectedCall = NULL;
+    selectedCall = calltab_get_selected_call(active_calltree);
+    
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -499,14 +503,15 @@ process_dialing(callable_obj_t * c, guint keyval, gchar * key)
                 gchar * before = c->_peer_number;
                 if(strlen(c->_peer_number) >= 1){
 
-                    c->_peer_number = g_strndup(c->_peer_number, strlen(c->_peer_number) -1);
-                    g_free(before);
-                    DEBUG("TO: backspace %s", c->_peer_number);
-
-                    if(c->_state == CALL_STATE_DIALING)
-                    {
-                        //g_free(c->_peer_name);
-                        //c->_peer_name = g_strconcat("\"\" <", c->_peer_number, ">", NULL);
+					if (c->_state == CALL_STATE_TRANSFERT)
+					{
+						c->_trsft_to = g_strndup (c->_trsft_to, strlen(c->_trsft_to) - 1);
+					}
+					else
+					{
+						c->_peer_number = g_strndup(c->_peer_number, strlen(c->_peer_number) -1);
+						g_free(before);
+						DEBUG("TO: backspace %s", c->_peer_number);
                     }
                     calltree_update_call(current_calls,c);
                 }
@@ -579,7 +584,6 @@ sflphone_new_call()
     void
 sflphone_keypad( guint keyval, gchar * key)
 {
-    DEBUG("sflphone_keypad \n");
     callable_obj_t * c = calltab_get_selected_call(current_calls);
 
     if((active_calltree != current_calls) || (active_calltree == current_calls && !c))
@@ -802,14 +806,17 @@ sflphone_display_selected_codec (const gchar* codecName)
     selectedCall =  calltab_get_selected_call(current_calls);
     if (selectedCall) {
         if(selectedCall->_accountID != NULL){
+            statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
             acc = account_list_get_by_id(selectedCall->_accountID);
             if (!acc) {
                 msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
             }
             else {
-                msg = g_markup_printf_escaped(_("Using %s (%s) - Codec: %s") ,
+                msg = g_markup_printf_escaped("%s %s (%s) - %s %s" ,
+                        _("Using account"),
                         (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                         (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
+                        _("Codec"),
                         codecName);
             }
             statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);

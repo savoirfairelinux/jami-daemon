@@ -52,19 +52,31 @@ PulseLayer::closeLayer (void)
 {
     _debug ("PulseLayer::closeLayer :: Destroy pulselayer\n");
 
+    // Commenting the line below will make the
+    // PulseLayer to close immediately, not
+    // waiting for the playback buffer to be
+    // emptied. It should not hurt.
+    playback->drainStream();
+
+    if (m) {
+        pa_threaded_mainloop_stop (m);
+    }
+
     playback->disconnectStream();
+
     record->disconnectStream();
 
-    pa_threaded_mainloop_lock (m);
-    pa_threaded_mainloop_wait(m);
-    if(m) {
+    if (context) {
         pa_context_disconnect (context);
         pa_context_unref (context);
+        context = NULL;
     }
-    pa_threaded_mainloop_unlock (m);
-    
-    pa_threaded_mainloop_free (m);
-    
+
+    if (m) {
+        pa_threaded_mainloop_free (m);
+        m = NULL;
+    }
+
     return true;
 }
 
@@ -166,7 +178,7 @@ bool PulseLayer::createStreams (pa_context* c)
     playbackParam->description = PLAYBACK_STREAM_NAME;
     playbackParam->volume = _manager->getSpkrVolume();
     playbackParam->mainloop = m;
-    
+
     playback = new AudioStream (playbackParam);
     playback->connectStream();
     pa_stream_set_write_callback (playback->pulseStream(), audioCallback, this);
@@ -178,7 +190,7 @@ bool PulseLayer::createStreams (pa_context* c)
     recordParam->description = CAPTURE_STREAM_NAME;
     recordParam->volume = _manager->getMicVolume();
     recordParam->mainloop = m;
-    
+
     record = new AudioStream (recordParam);
     record->connectStream();
     pa_stream_set_read_callback (record->pulseStream() , audioCallback, this);
@@ -218,6 +230,7 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
 
     _debug ("Connection Done!! \n");
 
+    return true;
 }
 
 void PulseLayer::closeCaptureStream (void)

@@ -68,11 +68,11 @@ notify_incoming_call (callable_obj_t* c)
             title = g_markup_printf_escaped ("IP-to-IP call");
         }
         else {
-            title = g_markup_printf_escaped(_("%s account: %s") ,
+            title = g_markup_printf_escaped(_("%s account : %s") ,
                     (gchar*)g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties , ACCOUNT_TYPE) ,
                     (gchar*)g_hash_table_lookup(account_list_get_by_id(c->_accountID)->properties , ACCOUNT_ALIAS) ) ;
         }
-        callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->_peer_number);
+        callerid = g_markup_printf_escaped(_("<i>From</i> %s"), c->_peer_number);
 
         create_new_gnome_notification (title,
                                         callerid, 
@@ -88,10 +88,10 @@ notify_voice_mails (guint count, account_t* acc)
         gchar* title;
         gchar* body;
 
-        title = g_markup_printf_escaped(_("%s account: %s") ,
+        title = g_markup_printf_escaped(_("%s account : %s") ,
                 (gchar*)g_hash_table_lookup(acc->properties , ACCOUNT_TYPE) ,
                 (gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) ) ;
-        body = g_markup_printf_escaped(_("%d voice mails"), count);
+        body = g_markup_printf_escaped(n_("%d voice mail", "%d voice mails", count), count);
 
         create_new_gnome_notification (title,
                                         body, 
@@ -127,7 +127,7 @@ notify_no_accounts ()
     gchar* title;
     gchar* body="";
 
-    body = g_markup_printf_escaped(_("You haven't setup any accounts"));
+    body = g_markup_printf_escaped(_("You have no accounts set up"));
     title = g_markup_printf_escaped(_("Error"));
 
     create_new_gnome_notification (title,

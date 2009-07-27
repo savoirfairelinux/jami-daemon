@@ -18,6 +18,8 @@
  */
 
 #include <callable_obj.h>
+#include <sflphone_const.h>
+#include <time.h>
 
 gint is_callID_callstruct ( gconstpointer a, gconstpointer b)
 {
@@ -239,7 +241,7 @@ gchar* get_call_duration (callable_obj_t *obj)
     if (start == end)
         return g_markup_printf_escaped("<small>Duration:</small> 0:00");
 
-    duration = (int)end - (int)start;
+    duration = (int) difftime(end, start);
 
     if( duration / 60 == 0 )
     {

@@ -15,18 +15,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "libilbccodec"=.\THIRD_PARTY\BUILD\ILBC\libilbccodec.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "libportaudio"=.\THIRD_PARTY\BUILD\PORTAUDIO\libportaudio.dsp - Package Owner=<4>
 
 Package=<5>
@@ -180,9 +168,6 @@ Package=<4>
     Project_Dep_Name libgsmcodec
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libilbccodec
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name libportaudio
     End Project Dependency
     Begin Project Dependency
@@ -321,9 +306,6 @@ Package=<4>
     Project_Dep_Name libgsmcodec
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libilbccodec
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name libportaudio
     End Project Dependency
     Begin Project Dependency
@@ -429,9 +411,6 @@ Package=<4>
     Project_Dep_Name libgsmcodec
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libilbccodec
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name libportaudio
     End Project Dependency
     Begin Project Dependency
@@ -484,9 +463,6 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libgsmcodec
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libilbccodec
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libportaudio

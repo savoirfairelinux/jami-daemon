@@ -28,25 +28,26 @@
 #include <kabc/picture.h>
 #include <kabc/phonenumber.h>
 
+#include "Item.h"
+#include "ContactItemWidget.h"
+
 using namespace KABC;
+
+class ContactItemWidget;
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
-class Contact{
+class Contact : public QObject, public Item<ContactItemWidget>{
 private:
-	QListWidgetItem * item;
-	QWidget * itemWidget;
 	QString firstName;
 	QString secondName;
 	QString nickName;
 	QString phoneNumber;
 	Picture * photo;
 	PhoneNumber::Type type;
+	bool displayPhoto;
 	
-private:
-	void initItem(bool displayPhoto);
-
 public:
 
 	//Constructors & Destructors
@@ -60,8 +61,10 @@ public:
 	QString getSecondName() const;
 	const Picture * getPhoto() const;
 	PhoneNumber::Type getType() const;
-	QListWidgetItem * getItem();
-	QWidget * getItemWidget();
+	void initItem();
+	
+protected:
+	void initItemWidget();
 
 };
 

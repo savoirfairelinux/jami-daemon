@@ -38,9 +38,11 @@ AccountList::AccountList(QStringList & _accountIds)
 
 AccountList::AccountList(bool fill)
 {
-	qDebug() << "AccountList()";
 	accounts = new QVector<Account *>();
-	updateAccounts();
+	if(fill)
+	{
+		updateAccounts();
+	}
 }
 
 void AccountList::update()
@@ -78,9 +80,9 @@ void AccountList::upAccount(int index)
 		qDebug() << "Error : index or future index out of range in upAccount.";
 		return;
 	}
-	Account & account = getAccount(index);
+	Account * account = getAccountAt(index);
 	accounts->remove(index);
-	accounts->insert(index - 1, & account);
+	accounts->insert(index - 1, account);
 }
 
 void AccountList::downAccount(int index)
@@ -90,18 +92,18 @@ void AccountList::downAccount(int index)
 		qDebug() << "Error : index or future index out of range in upAccount.";
 		return;
 	}
-	Account & account = getAccount(index);
+	Account * account = getAccountAt(index);
 	accounts->remove(index);
-	accounts->insert(index + 1, & account);
+	accounts->insert(index + 1, account);
 }
 
 
-QString AccountList::getOrderedList()
+QString AccountList::getOrderedList() const
 {
 	QString order;
 	for( int i = 0 ; i < size() ; i++)
 	{
-		order += getAccount(i).getAccountId() + "/";
+		order += getAccountAt(i)->getAccountId() + "/";
 	}
 	return order;
 }
@@ -147,14 +149,14 @@ QVector<Account *> & AccountList::getAccounts()
 	return *accounts;
 }
 
-const Account & AccountList::getAccount (int i) const
+const Account * AccountList::getAccountAt (int i) const
 {
-	return *((*accounts)[i]);
+	return (*accounts)[i];
 }
 
-Account & AccountList::getAccount (int i)
+Account * AccountList::getAccountAt (int i)
 {
-	return *((*accounts)[i]);
+	return (*accounts)[i];
 }
 
 Account * AccountList::getAccountById(const QString & id) const
@@ -191,7 +193,7 @@ Account * AccountList::getAccountByItem(QListWidgetItem * item)
 	return NULL;
 }
 
-int AccountList::size()
+int AccountList::size() const
 {
 	return accounts->size();
 }
@@ -219,12 +221,12 @@ void AccountList::removeAccount(Account * account)
 	accounts->remove(accounts->indexOf(account));
 }
 
-const Account & AccountList::operator[] (int i) const
+const Account * AccountList::operator[] (int i) const
 {
-	return *((*accounts)[i]);
+	return (*accounts)[i];
 }
 
-Account & AccountList::operator[] (int i)
+Account * AccountList::operator[] (int i)
 {
-	return *((*accounts)[i]);
+	return (*accounts)[i];
 }

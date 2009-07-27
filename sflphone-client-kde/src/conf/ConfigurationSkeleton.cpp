@@ -26,9 +26,9 @@
 ConfigurationSkeleton::ConfigurationSkeleton()
  : ConfigurationSkeletonBase()
 {
-	qDebug() << "Yoooooooouuuuupppppppiiiiii";
+	qDebug() << "Building ConfigurationSkeleton";
+	codecListModel = new CodecListModel();
 	readConfig();
-	isImmutable( QString::fromLatin1 ( "alsaPlugin" ) );
 }
 
 ConfigurationSkeleton * ConfigurationSkeleton::instance = NULL;
@@ -45,13 +45,17 @@ ConfigurationSkeleton::~ConfigurationSkeleton()
 {
 }
 
+CodecListModel * ConfigurationSkeleton::getCodecListModel()
+{
+	return codecListModel;
+}
+
 void ConfigurationSkeleton::readConfig()
 {
 	qDebug() << "\nReading config";
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	
-// 	qDebug() << "configurationManager.getAudioManager4() = " << configurationManager.getAudioManager();
 	////////////////////////
 	////General settings////
 	////////////////////////
@@ -151,6 +155,7 @@ void ConfigurationSkeleton::readConfig()
 	
 	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
 	qDebug() << "getAddressbookSettings() : " << addressBookSettings;
+	setEnableAddressBook(addressBookSettings[ADDRESSBOOK_ENABLE]);
 	setMaxResults(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
 	setDisplayPhoto(addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO]);
 	setBusiness(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
@@ -169,6 +174,8 @@ void ConfigurationSkeleton::readConfig()
 	setEnableHooksIAX(hooksSettings[HOOKS_IAX2_ENABLED]=="1");
 	setHooksSIPHeader(hooksSettings[HOOKS_SIP_FIELD]);
 	setHooksCommand(hooksSettings[HOOKS_COMMAND]);
+	
+	qDebug() << "Finished to read config\n";
 }
 
 void ConfigurationSkeleton::writeConfig()
@@ -181,6 +188,8 @@ void ConfigurationSkeleton::writeConfig()
 	////General settings////
 	////////////////////////
 	
+	qDebug() << "Writing General settings";
+	
 	//Call history settings
 	if(enableHistory() != configurationManager.getHistoryEnabled()) configurationManager.setHistoryEnabled();
 	configurationManager.setHistoryLimit(historyMax());
@@ -191,6 +200,8 @@ void ConfigurationSkeleton::writeConfig()
 	////////////////////////
 	////Display settings////
 	////////////////////////
+	
+	qDebug() << "Writing Display settings";
 	
 	//Notification settings
 	if(notifOnCalls() != configurationManager.getNotify()) configurationManager.setNotify();
@@ -205,6 +216,8 @@ void ConfigurationSkeleton::writeConfig()
 	////Accounts settings////
 	/////////////////////////
 	
+	qDebug() << "Writing Accounts settings";
+	
 // 	saveAccountList();
 
 
@@ -215,6 +228,8 @@ void ConfigurationSkeleton::writeConfig()
 	//////////////////////
 	////Audio settings////
 	//////////////////////
+	
+	qDebug() << "Writing Audio settings";
 	
 	//Audio Interface settings
 	int prevManager = configurationManager.getAudioManager();
@@ -229,6 +244,7 @@ void ConfigurationSkeleton::writeConfig()
 	configurationManager.setRingtoneChoice(ringtone());
 
 	//codecs settings
+	qDebug() << "activeCodecList = " << activeCodecList();
 	configurationManager.setActiveCodecList(activeCodecList());
 	
 
@@ -252,8 +268,9 @@ void ConfigurationSkeleton::writeConfig()
 	////Record settings////
 	///////////////////////
 	
+	qDebug() << "Writing Record settings";
+	
 	QString destination = destinationFolder();
-	qDebug() << destination ;
 	configurationManager.setRecordPath(destination);
 	
 	
@@ -261,7 +278,10 @@ void ConfigurationSkeleton::writeConfig()
 	////Address Book settings////
 	/////////////////////////////
 	
+	qDebug() << "Writing Address Book settings";
+	
 	MapStringInt addressBookSettings = MapStringInt();
+	addressBookSettings[ADDRESSBOOK_ENABLE] = enableAddressBook();
 	addressBookSettings[ADDRESSBOOK_MAX_RESULTS] = maxResults();
 	addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO] = displayPhoto();
 	addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS] = business();
@@ -273,6 +293,8 @@ void ConfigurationSkeleton::writeConfig()
 	///////Hooks settings////////
 	/////////////////////////////
 	
+	qDebug() << "Writing Hooks settings";
+	
 	MapStringString hooksSettings = MapStringString();
 	hooksSettings[HOOKS_ENABLED] = addPrefix() ? "1" : "0";
 	hooksSettings[HOOKS_ADD_PREFIX] = prepend();
@@ -282,7 +304,17 @@ void ConfigurationSkeleton::writeConfig()
 	hooksSettings[HOOKS_COMMAND] = hooksCommand();
 	configurationManager.setHookSettings(hooksSettings);
 	
+	qDebug() << "Finished to write config\n";
+	
 	readConfig();
 }
 
+QStringList ConfigurationSkeleton::activeCodecList() const
+{
+	return codecListModel->getActiveCodecList();
+}
 
+void ConfigurationSkeleton::setActiveCodecList(const QStringList & v)
+{
+	codecListModel->setActiveCodecList(v);
+}

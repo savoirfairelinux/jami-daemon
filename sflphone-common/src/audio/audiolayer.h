@@ -53,12 +53,12 @@ class AudioLayer {
          * @param manager An instance of managerimpl
          */
         AudioLayer( ManagerImpl* manager , int type )
-            : _layerType( type )
+            : _defaultVolume(100)
+			  , _layerType( type )
               , _manager(manager)
               , _voiceRingBuffer( SIZEBUF )
               , _urgentRingBuffer( SIZEBUF)
               , _micRingBuffer( SIZEBUF )
-              , _defaultVolume(100)
               , _indexIn ( 0 )
               , _indexOut ( 0 )
               , _sampleRate ( 0 )
@@ -218,8 +218,8 @@ class AudioLayer {
         /**
          * Urgent ring buffer used for ringtones
          */
-        RingBuffer _urgentRingBuffer;
         RingBuffer _voiceRingBuffer;
+        RingBuffer _urgentRingBuffer;
         RingBuffer _micRingBuffer;
 
         /**

@@ -97,8 +97,6 @@ class SIPCall : public Call
 
   private:
 
-    Sdp *_local_sdp;
-
     int _cid;
     int _did;
     int _tid;
@@ -111,7 +109,11 @@ class SIPCall : public Call
     
     
     pjsip_evsub *_xferSub;
-    pjsip_inv_session *_invSession;
+    
+	pjsip_inv_session *_invSession;
+    
+	Sdp *_local_sdp;
+
 };
 
 #endif

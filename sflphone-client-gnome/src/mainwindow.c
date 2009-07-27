@@ -104,7 +104,6 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
 {
   DEBUG("On key released from Main Window : %s\n", gtk_widget_get_name(widget));
 
-
   if (focus_is_on_searchbar == FALSE) {
         // If a modifier key is pressed, it's a shortcut, pass along
         if(event->state & GDK_CONTROL_MASK ||
@@ -119,8 +118,7 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
                 )
             return FALSE;
         else
-            sflphone_keypad(event->keyval, event->string);
-        
+            sflphone_keypad(event->keyval, event->string);        
    }
 
    return TRUE;
@@ -196,21 +194,9 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), contacts->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
 
-  // gtk_box_pack_start (GTK_BOX (vbox), current_calls->searchbar, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
-  // gtk_box_pack_start (GTK_BOX (vbox), history->searchbar, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
-  // gtk_box_pack_start (GTK_BOX (vbox), contacts ->searchbar, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
-
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
 
-
-  // if( SHOW_SEARCHBAR ){
-  //   filterEntry = create_filter_entry();
-  //   gtk_box_pack_start (GTK_BOX (subvbox), filterEntry, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
-  //   gtk_widget_show_all ( filterEntry );
-  // }
-
-
- if( SHOW_VOLUME ){
+  if( SHOW_VOLUME ){
     speaker_control = create_slider("speaker");
     gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (speaker_control);
@@ -336,22 +322,6 @@ main_window_volume_controls( gboolean state ){
   } else {
     gtk_container_remove( GTK_CONTAINER(subvbox) , speaker_control );
     gtk_container_remove( GTK_CONTAINER(subvbox) , mic_control );
-  }
-}
-
-void
-main_window_searchbar( gboolean *state UNUSED){
-  if( !SHOW_SEARCHBAR )
-  {
-    // filterEntry = create_filter_entry();
-    // gtk_box_pack_start (GTK_BOX (subvbox), filterEntry, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    // gtk_widget_show_all (filterEntry);
-    // *state = TRUE;
-  }
-  else
-  {
-    // gtk_container_remove( GTK_CONTAINER(subvbox) , filterEntry );
-    // *state = FALSE;
   }
 }
 

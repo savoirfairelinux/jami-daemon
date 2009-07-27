@@ -316,7 +316,7 @@ create_addressbook_settings()
 
     // SCALE BUTTON - NUMBER OF RESULTS
     scale_button = gtk_hbox_new(FALSE, 0);
-    scale_label = gtk_label_new (_("Download limit:"));
+    scale_label = gtk_label_new (_("Download limit :"));
     gtk_box_pack_start(GTK_BOX(scale_button),scale_label,FALSE,FALSE,0);
     value = gtk_spin_button_new_with_range(1, 500, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (scale_label), value);
@@ -342,19 +342,19 @@ create_addressbook_settings()
     gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
     // gtk_widget_show (result_frame);
 
-    business = gtk_check_button_new_with_mnemonic( _("_Business phone"));
+    business = gtk_check_button_new_with_mnemonic( _("_Work"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(business), addressbook_config->search_phone_business);
     g_signal_connect (G_OBJECT(business) , "clicked" , G_CALLBACK (search_phone_business_cb) , NULL);
     gtk_table_attach ( GTK_TABLE( table ), business, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive(business, FALSE);
 
-    home = gtk_check_button_new_with_mnemonic( _("_Home phone"));
+    home = gtk_check_button_new_with_mnemonic( _("_Home"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(home), addressbook_config->search_phone_home);
     g_signal_connect (G_OBJECT(home) , "clicked" , G_CALLBACK (search_phone_home_cb) , NULL);
     gtk_table_attach ( GTK_TABLE( table ), home, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive(home, FALSE);
 
-    mobile = gtk_check_button_new_with_mnemonic( _("_Mobile phone"));
+    mobile = gtk_check_button_new_with_mnemonic( _("_Mobile"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(mobile), addressbook_config->search_phone_mobile);
     g_signal_connect (G_OBJECT(mobile) , "clicked" , G_CALLBACK (search_phone_mobile_cb) , NULL);
     gtk_table_attach ( GTK_TABLE( table ), mobile, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -365,7 +365,7 @@ create_addressbook_settings()
     gtk_box_pack_start(GTK_BOX(ret), result_frame, TRUE, TRUE, 0);
     gtk_widget_show (result_frame);
 
-    scrolled_label = gtk_label_new (_("Select which Evolution address books to use:"));
+    scrolled_label = gtk_label_new (_("Select which Evolution address books to use"));
     gtk_misc_set_alignment(GTK_MISC(scrolled_label), 0.00, 0.2);
     
     gtk_table_attach ( GTK_TABLE( table ), scrolled_label, 1, 4, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);

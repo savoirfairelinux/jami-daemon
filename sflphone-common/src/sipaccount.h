@@ -85,7 +85,9 @@ class SIPAccount : public Account
         bool isRegister() {return _bRegister;}
         void setRegister(bool result) {_bRegister = result;}
 
+        inline bool isResolveOnce(void) { return _resolveOnce; }
 
+        inline std::string& getRegistrationExpire(void) { return _registrationExpire; }
     private:
 
         /**
@@ -107,6 +109,10 @@ class SIPAccount : public Account
          * SIP address
          */
         std::string _contact;
+        
+        bool _resolveOnce;
+        
+        std::string _registrationExpire;
 };
 
 #endif

@@ -25,7 +25,6 @@
 #include <cstdlib>
 #include <ccrtp/rtp.h>
 #include <assert.h>
-#include <string>
 #include <cstring>
 #include <math.h>
 #include <dlfcn.h>
@@ -366,7 +365,7 @@ AudioRtpRTX::processDataEncode()
     if (_audiocodec->getClockRate() != _layerSampleRate) {
 
         int nb_sample_up = nbSample;
-         //_debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
+        //_debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
 
         // Store the length of the mic buffer in samples for recording
         _nSamplesMic = nbSample;

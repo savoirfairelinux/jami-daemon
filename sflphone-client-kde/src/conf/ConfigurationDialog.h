@@ -25,7 +25,7 @@
 
 
 #include "kcfg_settings.h"
-#include "sflphone_kdeview.h"
+#include "SFLPhoneView.h"
 
 
 #define SETTINGS_NAME "settings"
@@ -38,12 +38,20 @@ class DlgAddressBook;
 class DlgRecord;
 class DlgHooks;
 
-class sflphone_kdeView;
+class SFLPhoneView;
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	This class represents the config dialog for sflphone.
+	It uses the ConfigurationSkeleton class to handle most of the settings.
+	It inherits KConfigDialog with the pages defined in dlg... files.
+	A few complicated settings are handled directly by its pages.
+	Some custom behaviors have been added to handle specific cases,
+	as this config dialog is not the usual kind.
+	A few things might be done a cleaner way by passing the handling 
+	to the skeleton like it has been done with codecs.
 */
-class ConfigurationDialogKDE : public KConfigDialog
+class ConfigurationDialog : public KConfigDialog
 {
 Q_OBJECT
 private:
@@ -58,13 +66,12 @@ private:
 	DlgHooks       * dlgHooks;
 
 public:
-	ConfigurationDialogKDE(sflphone_kdeView *parent = 0);
+	ConfigurationDialog(SFLPhoneView *parent = 0);
 
-	~ConfigurationDialogKDE();
+	~ConfigurationDialog();
 	
     
 public slots:
-	void slot();
 	/**
 	 *   Reimplements KConfigDialog
 	 */
@@ -74,16 +81,16 @@ public slots:
 	 */
 	void updateSettings();
 	/**
-	 *   Should be implemented in KConfigDialog but for no reason, is not.
-	 *   For the moment it is here but has to be removed if implemented in KConfigDialog
-	 *   because causes problems for a few cases (item managed by kconfig switched, item not managed
+	 *   Is implemented in KConfigDialog only from KDE4.3
+	 *   It it implemented here for KDE4.2 users.
+	 *   I didn't test with KDE4.3 so I leave it even for 4.3 users.
+	 *   Causes problems for a few cases (item managed by kconfig switched, item not managed
 	 *   switched and then switched back, apply becomes disabled).
 	 *   Can't be resolved without a method to know if items managed by kconfig have changed.
 	 *   Disable/Enable Apply Button according to hasChanged() result
 	 */
 	void updateButtons();
 	/**
-	 * Same as updateButtons, should be implemented in KConfigDialog.
 	 * @return whether any custom widget has changed in the dialog.
 	 */
 	bool hasChanged();
@@ -103,6 +110,7 @@ private slots:
 
 signals:
 	void clearCallHistoryAsked();
+	void changesApplied();
 	
 };
 

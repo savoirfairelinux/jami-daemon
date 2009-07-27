@@ -86,21 +86,27 @@ main (int argc, char **argv)
             }
         } else {
             // PID file exists. Check the former process still alive or not. If alive, give user a hint.
-            fgets (cOldPid, 64, fp);
-            fclose (fp);
+            char *res;
+            res = fgets (cOldPid, 64, fp);
 
-            if (kill (atoi (cOldPid), 0) == SUCCESS) {
-                fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.\n");
-                exit (-1);
-            } else {
-                if ( (fp = fopen (homepid,"w")) == NULL) {
-                    fprintf (stderr, "Writing to PID file %s failed. Exited.\n", homepid);
+            if (res == NULL)	perror ("Error getting string from stream");
+
+            else {
+                fclose (fp);
+
+                if (kill (atoi (cOldPid), 0) == SUCCESS) {
+                    fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.\n");
                     exit (-1);
                 } else {
-                    fputs (cPid , fp);
-                    fclose (fp);
-                }
+                    if ( (fp = fopen (homepid,"w")) == NULL) {
+                        fprintf (stderr, "Writing to PID file %s failed. Exited.\n", homepid);
+                        exit (-1);
+                    } else {
+                        fputs (cPid , fp);
+                        fclose (fp);
+                    }
 
+                }
             }
         }
 

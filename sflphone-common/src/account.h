@@ -58,6 +58,9 @@ typedef enum RegistrationState {
 #define CONFIG_ACCOUNT_ALIAS  "Account.alias"
 #define CONFIG_ACCOUNT_MAILBOX	"Account.mailbox"
 #define CONFIG_ACCOUNT_ENABLE	"Account.enable"
+#define CONFIG_ACCOUNT_RESOLVE_ONCE "Account.resolveOnce"
+#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
+
 #define HOSTNAME        "hostname"
 #define USERNAME        "username"
 #define PASSWORD        "password"
@@ -175,12 +178,6 @@ class Account{
          */
         std::string _alias;
 
-        /*
-         * The account type
-         * IAX2 or SIP
-         */
-        std::string _type;
-
         /**
          * Voice over IP Link contains a listener thread and calls
          */
@@ -192,6 +189,12 @@ class Account{
          * Modified by the configuration (key: ENABLED)
          */
         bool _enabled;
+
+        /*
+         * The account type
+         * IAX2 or SIP
+         */
+        std::string _type;
 
         /*
          * The registration state of the account

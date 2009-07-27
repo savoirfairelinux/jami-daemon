@@ -30,10 +30,10 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
         , _audioPlugin()
         , IDSoundCards()
         , _is_prepared_playback (false)
-        , _is_running_playback (false)
-        , _is_open_playback (false)
         , _is_prepared_capture (false)
+        , _is_running_playback (false)
         , _is_running_capture (false)
+        , _is_open_playback (false)
         , _is_open_capture (false)
         , _trigger_request (false)
 
@@ -702,12 +702,11 @@ AlsaLayer::soundCardGetIndex (std::string description)
 void AlsaLayer::audioCallback (void)
 {
 
-    int toGet, toPut, urgentAvail, normalAvail, micAvailAlsa, micAvailPut, maxBytes;
+    int toGet, urgentAvail, normalAvail, maxBytes;
     unsigned short spkrVolume, micVolume;
     AudioLoop *tone;
 
     SFLDataFormat *out;
-    SFLDataFormat *in;
 
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();

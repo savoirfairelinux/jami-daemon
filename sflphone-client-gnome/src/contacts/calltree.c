@@ -157,14 +157,14 @@ calltree_reset (calltab_t* tab)
 
 void
 focus_on_calltree_out(){
-    DEBUG("set_focus_on_calltree_out \n");
+    DEBUG("set_focus_on_calltree_out");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = FALSE;
 }
 
 void
 focus_on_calltree_in(){
-    DEBUG("set_focus_on_calltree_in \n");
+    DEBUG("set_focus_on_calltree_in");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = TRUE;
 }
@@ -316,9 +316,10 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
                 gchar * duration="";
                 if(c->_state == CALL_STATE_TRANSFERT)
                 {
-                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:%s</i> ",
+                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>%s%s</i> ",
                             c->_peer_number,
                             c->_peer_name,
+                            _("Transfer to : "),
                             c->_trsft_to
                             );
                 }
@@ -614,7 +615,7 @@ void calltree_display (calltab_t *tab) {
     }
 
     else
-        ERROR ("calltree.c line 1050 . This is probably a bug in the application");
+        ERROR ("calltree.c line %d . This is probably a bug in the application", __LINE__);
 
 
     gtk_widget_hide (active_calltree->tree);

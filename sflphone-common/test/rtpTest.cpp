@@ -73,6 +73,8 @@ bool RtpTest::pjsipInit()
         return PJ_ENOMEM;
     }
 
+	return true;
+
 }
 
 

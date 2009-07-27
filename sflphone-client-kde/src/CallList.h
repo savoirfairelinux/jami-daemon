@@ -27,6 +27,7 @@
 #include <QtGui/QListWidgetItem>
 
 #include "Call.h"
+#include "dbus/metatypes.h"
 
 class CallList : public QObject
 {
@@ -35,12 +36,11 @@ Q_OBJECT
 private:
 
 	QVector<Call *> * calls;
-	int callIdCpt;
 
 public:
 
 	//Constructors & Destructors
-	CallList();
+	CallList(QObject * parent = 0);
 	~CallList();
 
 	//Getters
@@ -51,6 +51,7 @@ public:
 	Call * operator[](const QString & callId);
 	Call * operator[](int ind);
 	int size();
+	MapStringString getHistoryMap();
 
 	//Setters
 	Call * addDialingCall(const QString & peerName = "", QString account = "");
@@ -58,7 +59,7 @@ public:
 	Call * addRingingCall(const QString & callId);
 
 	//GSetter
-	QString getAndIncCallId();
+	QString generateCallId();
 	
 public slots:
 	void clearHistory();

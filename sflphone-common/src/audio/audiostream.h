@@ -84,6 +84,11 @@ class AudioStream {
     bool connectStream();
 
     /**
+     * Drain the given stream. 
+     */
+    bool drainStream(void);
+    
+    /**
      * Disconnect the pulseaudio stream
      */
     bool disconnectStream();
@@ -148,15 +153,15 @@ class AudioStream {
     void write( void );
 
     /**
-     * The pulse audio context
-     */
-    pa_context* _context;
-
-    /**
      * The pulse audio object
      */
     pa_stream* _audiostream;
     
+    /**
+     * The pulse audio context
+     */
+    pa_context* _context;
+
     /**
      * The type of the stream
      */
@@ -170,9 +175,9 @@ class AudioStream {
     /**
      * Streams parameters
      */
+    pa_cvolume _volume;
     pa_stream_flags_t flag;
     pa_sample_spec sample_spec ;
-    pa_cvolume _volume;
 
     pa_threaded_mainloop * _mainloop;
     

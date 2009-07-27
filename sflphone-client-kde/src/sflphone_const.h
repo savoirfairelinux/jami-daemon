@@ -20,7 +20,6 @@
 #ifndef __SFLPHONE_CONST_H
 #define __SFLPHONE_CONST_H
 
-#include <libintl.h>
 #include <QtCore/QString>
 
 /* @file sflphone_const.h
@@ -29,23 +28,8 @@
  
 #define APP_NAME                          "SFLphone KDE Client"
 
-/** Locale */
-// #define _(STRING)                         gettext( STRING )   
-
-/** Warnings unused variables **/
-// #define UNUSED_VAR(var)                   (void*)var
-
-// #define UNUSED                            __attribute__((__unused__))
-
-
-
 #define SIP                               0
 #define IAX                               1
-
-#define PAGE_GENERAL                      0
-#define PAGE_DISPLAY                      1
-#define PAGE_ACCOUNTS                     2
-#define PAGE_AUDIO                        3
 
 #define TOOLBAR_SIZE                      22
 
@@ -53,18 +37,21 @@
 
 #define CONFIG_FILE_PATH                  "/.sflphone/sflphonedrc"
 
-#define ACTION_LABEL_CALL                 i18n("Call")
+#define ACTION_LABEL_CALL                 i18n("New call")
 #define ACTION_LABEL_HANG_UP              i18n("Hang up")
-#define ACTION_LABEL_HOLD                 i18n("Hold")
+#define ACTION_LABEL_HOLD                 i18n("Hold on")
 #define ACTION_LABEL_TRANSFER             i18n("Transfer")
 #define ACTION_LABEL_RECORD               i18n("Record")
-#define ACTION_LABEL_ACCEPT               i18n("Accept")
-#define ACTION_LABEL_REFUSE               i18n("Refuse")
-#define ACTION_LABEL_UNHOLD               i18n("Unhold")
+#define ACTION_LABEL_ACCEPT               i18n("Pick up")
+#define ACTION_LABEL_REFUSE               i18n("Hang up")
+#define ACTION_LABEL_UNHOLD               i18n("Hold off")
 #define ACTION_LABEL_GIVE_UP_TRANSF       i18n("Give up transfer")
 #define ACTION_LABEL_CALL_BACK            i18n("Call back")
-#define ACTION_LABEL_GIVE_UP_SEARCH       i18n("Give up search")
+#define ACTION_LABEL_MAILBOX              i18n("Voicemail")
 
+#define SCREEN_MAIN                       0
+#define SCREEN_HISTORY                    1
+#define SCREEN_ADDRESS                    2
 
 #define ICON_INCOMING                     ":/images/icons/ring.svg"
 #define ICON_RINGING                      ":/images/icons/ring.svg"
@@ -85,6 +72,7 @@
 #define ICON_EXEC_TRANSF                  ":/images/icons/call.svg"
 #define ICON_REC_DEL_OFF                  ":/images/icons/record_disabled.svg"
 #define ICON_REC_DEL_ON                   ":/images/icons/record.svg"
+#define ICON_MAILBOX                      ":/images/icons/mailbox.svg"
 
 #define ICON_REC_VOL_0                    ":/images/icons/mic.svg"
 #define ICON_REC_VOL_1                    ":/images/icons/mic_25.svg"
@@ -95,6 +83,13 @@
 #define ICON_SND_VOL_1                    ":/images/icons/speaker_25.svg"
 #define ICON_SND_VOL_2                    ":/images/icons/speaker_50.svg"
 #define ICON_SND_VOL_3                    ":/images/icons/speaker_75.svg"
+
+#define ICON_SCREEN_MAIN                  ":/images/icons/sflphone.svg"
+#define ICON_SCREEN_HISTORY               ":/images/icons/history2.svg"
+#define ICON_SCREEN_ADDRESS               ":/images/icons/x-office-address-book.png"
+
+#define ICON_DISPLAY_VOLUME_CONSTROLS     ":/images/icons/icon_volume_off.svg"
+#define ICON_DISPLAY_DIALPAD              ":/images/icons/icon_dialpad.svg"
 
 #define ICON_HISTORY_INCOMING             ":/images/icons/incoming.svg"
 #define ICON_HISTORY_OUTGOING             ":/images/icons/outgoing.svg"
@@ -119,11 +114,14 @@
 #define ACCOUNT_ENABLED		               "Account.enable"
 #define ACCOUNT_MAILBOX		               "Account.mailbox"
 #define ACCOUNT_HOSTNAME                  "hostname"
+#define ACCOUNT_RESOLVE_ONCE              "Account.resolveOnce"
+#define ACCOUNT_EXPIRE                    "Account.expire"
 #define ACCOUNT_USERNAME                  "username"
 #define ACCOUNT_PASSWORD                  "password"
 #define ACCOUNT_STATUS                    "Status"
 #define ACCOUNT_SIP_STUN_SERVER	         "STUN.server"
 #define ACCOUNT_SIP_STUN_ENABLED          "STUN.enable"
+#define ACCOUNT_EXPIRE_DEFAULT            600
 
 #define ACCOUNT_ENABLED_TRUE              "TRUE"
 #define ACCOUNT_ENABLED_FALSE             "FALSE"
@@ -167,6 +165,8 @@
 #define DAEMON_CALL_STATE_INIT_CURRENT    "CURRENT"
 #define DAEMON_CALL_STATE_INIT_HOLD       "HOLD"
 #define DAEMON_CALL_STATE_INIT_BUSY       "BUSY"
+#define DAEMON_CALL_STATE_INIT_INCOMING       "INCOMING"
+#define DAEMON_CALL_STATE_INIT_RINGING       "RINGING"
 #define DAEMON_CALL_STATE_INIT_INACTIVE   "INACTIVE"
 
 #define DAEMON_CALL_TYPE_INCOMING         "0"
@@ -182,6 +182,7 @@
 #define ADDRESSBOOK_DISPLAY_BUSINESS      "ADDRESSBOOK_DISPLAY_PHONE_BUSINESS"
 #define ADDRESSBOOK_DISPLAY_HOME          "ADDRESSBOOK_DISPLAY_PHONE_HOME"
 #define ADDRESSBOOK_DISPLAY_MOBILE        "ADDRESSBOOK_DISPLAY_PHONE_MOBILE"
+#define ADDRESSBOOK_ENABLE                "ADDRESSBOOK_ENABLE"
 
 /** Hooks settings */
 #define HOOKS_ADD_PREFIX                  "PHONE_NUMBER_HOOK_ADD_PREFIX"
@@ -203,40 +204,6 @@
 /** Audio Managers */
 #define CONST_ALSA                        0
 #define CONST_PULSEAUDIO                  1
-
-
-
-/** Error while opening capture device */
-#define ALSA_CAPTURE_DEVICE	            0x0001
-/** Error while opening playback device */
-#define ALSA_PLAYBACK_DEVICE	            0x0010
-/** Error pulseaudio */
-#define PULSEAUDIO_NOT_RUNNING            0x0100
-
-/** Tone to play when no voice mails */
-#define TONE_WITHOUT_MESSAGE              0
-/** Tone to play when voice mails */
-#define TONE_WITH_MESSAGE                 1
-
-
-/** Notification levels */
-#define __NOTIF_LEVEL_MIN                 0
-#define __NOTIF_LEVEL_MED                 1
-#define __NOTIF_LEVEL_HIGH                2
-
-/** Messages ID for the status bar - Incoming calls */
-#define __MSG_INCOMING_CALL               0
-/** Messages ID for the status bar - Calling */
-#define __MSG_CALLING	                  1
-/** Messages ID for the status bar - Voice mails  notification */
-#define __MSG_VOICE_MAILS                 2
-/** Messages ID for the status bar - Current account */
-#define __MSG_ACCOUNT_DEFAULT             3
-
-/** Desktop notifications - Time before to close the notification*/
-#define __TIMEOUT_MODE                    "default"
-/** Desktop notifications - Time before to close the notification*/
-#define __TIMEOUT_TIME                    18000       // 30 secondes
 
 
 

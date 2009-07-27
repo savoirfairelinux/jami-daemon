@@ -2,7 +2,7 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
-	AC_INIT([SFLphone],[0.9.6~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
+	AC_INIT([SFLphone],[0.9.6~rc1],[sflphoneteam@savoirfairelinux.com],[sflphone])
 	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
@@ -59,8 +59,7 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([test/Makefile])
 
 
-	AC_CONFIG_FILES([po/Makefile \
-			ringtones/Makefile])
+AC_CONFIG_FILES([ringtones/Makefile])
 
 AC_CONFIG_FILES([man/Makefile])
 

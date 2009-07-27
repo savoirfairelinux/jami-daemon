@@ -127,16 +127,16 @@ GtkWidget* create_hooks_settings (){
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    gnome_main_section_new_with_table (_("URL Passing"), &frame, &table, 5, 2);
+    gnome_main_section_new_with_table (_("URL Argument"), &frame, &table, 5, 2);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show (frame);
 
 
-    label = gtk_label_new(_("Custom commands on incoming calls with URL,"));
-    gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    label = gtk_label_new(_("Custom commands on incoming calls with URL"));
+    gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 0, 1, GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     label = gtk_label_new(_("%s will be replaced with the passed URL."));
-    gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 1, 2, GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     widg = gtk_check_button_new_with_mnemonic( _("Trigger on specific _SIP header"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->sip_enabled, "1")==0)?TRUE:FALSE);
@@ -152,7 +152,7 @@ GtkWidget* create_hooks_settings (){
     g_signal_connect (G_OBJECT(widg) , "clicked" , G_CALLBACK (iax2_enabled_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), widg, 0, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    label = gtk_label_new_with_mnemonic (_("Command to _run: "));
+    label = gtk_label_new_with_mnemonic (_("Command to _run"));
     gtk_misc_set_alignment(GTK_MISC(label), 0.05, 0.5);
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     command = gtk_entry_new ();
@@ -162,11 +162,11 @@ GtkWidget* create_hooks_settings (){
 
 
 
-    gnome_main_section_new_with_table (_("Phone Number Rewriting"), &frame, &table, 4, 2);
+    gnome_main_section_new_with_table (_("Phone number rewriting"), &frame, &table, 4, 2);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show (frame);
 
-    widg = gtk_check_button_new_with_mnemonic( _("_Prefix dialed numbers with:"));
+    widg = gtk_check_button_new_with_mnemonic( _("_Prefix dialed numbers with"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->phone_number_enabled, "1")==0)?TRUE:FALSE);
     g_signal_connect (G_OBJECT(widg) , "clicked" , G_CALLBACK (phone_number_enabled_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), widg, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);

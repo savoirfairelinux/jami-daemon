@@ -7,4 +7,9 @@ MESSAGE(FATAL_ERROR "Please install msgmerge binary")
 endif (NOT GETTEXT_MSGFMT_EXECUTABLE)
 
 add_subdirectory(fr)
+add_subdirectory(es)
+add_subdirectory(de)
+add_subdirectory(ru)
+add_subdirectory(zh_CN)
+add_subdirectory(zh_HK)
 

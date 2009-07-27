@@ -53,7 +53,6 @@ GtkWidget *deleteButton;
 GtkWidget *restoreButton;
 GtkWidget *accountMoveDownButton;
 GtkWidget *accountMoveUpButton;
-GtkWidget *closeButton;
 
 /* STUN configuration part */
 GtkWidget * stunEnable;
@@ -91,20 +90,17 @@ GtkWidget * widg;
 config_window_fill_account_list()
 {
     
-    if(accDialogOpen)
-    {
+    if(accDialogOpen) {
         GtkTreeIter iter;
 
         gtk_list_store_clear(accountStore);
         unsigned int i;
-        for(i = 0; i < account_list_get_size(); i++)
-        {
+        for(i = 0; i < account_list_get_size(); i++) {
             account_t * a = account_list_get_nth (i);
 	    
-            if (a)
-            {
-
+            if (a) {
                 gtk_list_store_append (accountStore, &iter);
+
                 gtk_list_store_set(accountStore, &iter,
                         COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
                         COLUMN_ACCOUNT_TYPE, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
@@ -367,13 +363,6 @@ static void update_port( GtkSpinButton *button UNUSED, void *ptr )
     dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
 }
 
-static void
-close_accounts_cb(GtkButton * button UNUSED, GtkDialog * dialog)
-{
-    DEBUG("Closing");
-    gtk_widget_destroy(GTK_WIDGET(dialog));
-}
-
 /**
  * Account settings tab
  */
@@ -414,6 +403,11 @@ create_accounts_tab(GtkDialog * dialog)
             G_CALLBACK (select_account),
             accountStore);
 
+    renderer = gtk_cell_renderer_toggle_new();
+    treeViewColumn = gtk_tree_view_column_new_with_attributes("Enabled", renderer, "active", COLUMN_ACCOUNT_ACTIVE , NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), treeViewColumn);
+    g_signal_connect( G_OBJECT(renderer) , "toggled" , G_CALLBACK(enable_account), (gpointer)treeView );
+
     renderer = gtk_cell_renderer_text_new();
     treeViewColumn = gtk_tree_view_column_new_with_attributes ("Alias",
             renderer,
@@ -437,11 +431,6 @@ create_accounts_tab(GtkDialog * dialog)
             "markup", COLUMN_ACCOUNT_STATUS,
             NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
-
-    renderer = gtk_cell_renderer_toggle_new();
-    treeViewColumn = gtk_tree_view_column_new_with_attributes("", renderer, "active", COLUMN_ACCOUNT_ACTIVE , NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), treeViewColumn);
-    g_signal_connect( G_OBJECT(renderer) , "toggled" , G_CALLBACK(enable_account), (gpointer)treeView );
 
     g_object_unref(G_OBJECT(accountStore));
     
@@ -481,18 +470,13 @@ create_accounts_tab(GtkDialog * dialog)
             G_CALLBACK(delete_account), stunFrame);
     gtk_box_pack_start(GTK_BOX(buttonBox), deleteButton, FALSE, FALSE, 0);
     gtk_widget_show(deleteButton);
-    
-    closeButton = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
-    g_signal_connect(G_OBJECT(closeButton), "clicked", G_CALLBACK(close_accounts_cb), GTK_DIALOG(dialog));
-    gtk_box_pack_start(GTK_BOX(buttonBox), closeButton, FALSE, FALSE, 0);
-    gtk_widget_show(closeButton);
-    
-    gtk_widget_show_all(table);
-
+        
     config_window_fill_account_list();
 
     gtk_widget_size_request(GTK_WIDGET(treeView), &requisition);
     gtk_widget_set_size_request(GTK_WIDGET(scrolledWindow), requisition.width, requisition.height);
+    
+    gtk_widget_show_all(table);
     
     return table;
 }
@@ -527,37 +511,39 @@ void update_registration( void )
 
 GtkWidget* create_stun_tab()
 {
-    GtkWidget * vbox;
     GtkWidget * frame;
     GtkWidget * table;
     GtkWidget * label;
+    GtkWidget * ret;
     gchar * description;
     gchar * stun_server= "stun.sflphone.org:3478";
     gchar * stun_enabled = "FALSE";
 
+    ret = gtk_vbox_new(FALSE, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
+
+    gnome_main_section_new_with_table (_("NAT Traversal"), &frame, &table, 3, 2);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+    gtk_widget_show (frame);
+    
     /* Retrieve the STUN configuration */
     stun_enabled = (dbus_stun_is_enabled()==1)?"TRUE":"FALSE";
     stun_server = dbus_get_stun_server();
+    
+    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+    gtk_container_set_border_width(GTK_CONTAINER (table), 10);
 
-    vbox = gtk_vbox_new(FALSE, 10);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-
-    gnome_main_section_new_with_table (_("STUN Settings"), &stunFrame, &table, 2, 3);
-    gtk_table_set_row_spacings( GTK_TABLE(table), 10);
-    gtk_box_pack_start(GTK_BOX(vbox), stunFrame, FALSE, FALSE, 0);
-    gtk_widget_show (stunFrame);
-
+    // NAT detection code section
     description = g_markup_printf_escaped(_("STUN will apply to each SIP account created.\nIt will be effective only after pressing \"apply\", closing all sessions."));
     label = gtk_label_new(NULL);
     gtk_label_set_markup(label, description);
-                             
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     stunEnable = gtk_check_button_new_with_mnemonic( _("E_nable STUN"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"TRUE") == 0 ? TRUE: FALSE);
     g_signal_connect( G_OBJECT (GTK_TOGGLE_BUTTON(stunEnable)) , "toggled" , G_CALLBACK( stun_state ), NULL);
 #if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("Enable it if you are behind a firewall"));
+    gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("You should probably enable this if you are behind a firewall."));
 #endif
     gtk_table_attach ( GTK_TABLE( table ), stunEnable, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -565,7 +551,7 @@ GtkWidget* create_stun_tab()
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), stunServer);
     gtk_entry_set_text(GTK_ENTRY(stunServer), stun_server);
 #if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET( stunServer ) , _("Format: name.server:port"));
+    gtk_widget_set_tooltip_text( GTK_WIDGET( stunServer ) , _("Format : name.server:port"));
 #endif
     gtk_widget_set_sensitive( GTK_WIDGET( stunServer ), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stunEnable)));
     gtk_table_attach ( GTK_TABLE( table ), stunServer, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -578,9 +564,9 @@ GtkWidget* create_stun_tab()
     g_signal_connect( G_OBJECT( applyButton) , "clicked" , update_registration , NULL);
     gtk_table_attach ( GTK_TABLE( table ), applyButton, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
         
-    gtk_widget_show_all(vbox);
+    gtk_widget_show_all(ret);
 
-    return vbox;
+    return ret;
 }
 
     GtkWidget*
@@ -665,14 +651,14 @@ create_general_settings ()
     gtk_widget_set_sensitive (GTK_WIDGET (history_value), gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (history_w)));
     gtk_table_attach( GTK_TABLE(table), history_value, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5); 
 
-    label = gtk_label_new(_(" days"));
+    label = gtk_label_new(_("days"));
     gtk_table_attach( GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     
     /** PULSEAUDIO CONFIGURATION */
     gnome_main_section_new_with_table (_("PulseAudio sound server"), &frame, &table, 1, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    mutewidget = gtk_check_button_new_with_mnemonic(  _("_Mute other applications during a call"));
+    mutewidget = gtk_check_button_new_with_mnemonic(_("_Mute other applications during a call"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(mutewidget), dbus_get_pulse_app_volume_control() );
     g_signal_connect(G_OBJECT( mutewidget ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
     gtk_table_attach( GTK_TABLE(table), mutewidget, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
@@ -699,7 +685,7 @@ create_general_settings ()
     //gtk_widget_set_size_request(applyButton, 100, 35);
     //gtk_widget_set_sensitive( GTK_WIDGET(applyButton), (n==0)?FALSE:TRUE );
 
-    label = gtk_label_new(_("Port:"));
+    label = gtk_label_new(_("Port"));
     // gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
     entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
@@ -748,7 +734,7 @@ create_recording_settings ()
     gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
 
     // label
-    label = gtk_label_new(_("Recordings folder"));
+    label = gtk_label_new(_("Destination folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     // gtk_misc_set_alignment(GTK_MISC(label), 0.08, 0.5);
 
@@ -816,11 +802,6 @@ show_config_window ()
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
-    // General settings tab
-    tab = create_general_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General Settings")));
-    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-
     // Recording tab
     tab = create_recording_settings();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Recordings")));
@@ -868,6 +849,8 @@ show_accounts_window( void )
     dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Accounts"),
                 GTK_WINDOW(get_main_window()),
                 GTK_DIALOG_DESTROY_WITH_PARENT,
+                GTK_STOCK_HELP, GTK_RESPONSE_HELP,
+                GTK_STOCK_CLOSE, GTK_RESPONSE_ACCEPT,
                 NULL));
 
     // Set window properties

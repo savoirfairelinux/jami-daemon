@@ -25,9 +25,10 @@
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
         , _cred (NULL)
-        , _contact ("")
-        , _bRegister (false)
         , _regc()
+        , _bRegister (false)
+        , _contact ("")
+        , _resolveOnce (false)
 {
     /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
     /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
@@ -56,12 +57,26 @@ int SIPAccount::registerVoIPLink()
 
     /* Retrieve the account information */
     /* Stuff needed for SIP registration */
+
+    if (Manager::instance().getConfigString (_accountID, HOSTNAME).length() >= PJ_MAX_HOSTNAME) {
+        return !SUCCESS;
+    }
+
     setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
+
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
+    _resolveOnce = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? true : false;
+
+    if (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
+        _registrationExpire = DFT_EXPIRE_VALUE;
+    } else {
+        _registrationExpire = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
+    }
 
     /* Start registration */
     status = _link->sendRegister (_accountID);
+
     ASSERT (status , SUCCESS);
 
     return SUCCESS;

@@ -56,13 +56,13 @@
  ***************************************************************************/
 
 typedef struct {
-	char success;
-	char reason[200];
-	char user[200];
-	char passwd[200];
+	bool success;
+	QString reason;
+	QString user;
+	QString passwd;
 } rest_account;
 
-int req(char *host, int port, char *req, char *ret) {
+int sendRequest(QString host, int port, QString req, QString & ret) {
 
 	int s;
 	struct sockaddr_in servSockAddr;
@@ -74,9 +74,9 @@ int req(char *host, int port, char *req, char *ret) {
 	char buf[1024];
 	
 	bzero(&servSockAddr, sizeof(servSockAddr));
-	servHostEnt = gethostbyname(host);
+	servHostEnt = gethostbyname(host.toLatin1());
 	if (servHostEnt == NULL) {
-		strcpy(ret, "gethostbyname");
+		ret = "gethostbyname";
 		return -1;
 	}
 	bcopy((char *)servHostEnt->h_addr, (char *)&servSockAddr.sin_addr, servHostEnt->h_length);
@@ -84,20 +84,22 @@ int req(char *host, int port, char *req, char *ret) {
 	servSockAddr.sin_family = AF_INET;
   
 	if ((s = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-		strcpy(ret, "socket");
+		ret = "socket";
 		return -1;
 	}
   
 	if(connect(s, (const struct sockaddr *) &servSockAddr, (socklen_t) sizeof(servSockAddr)) < 0 ) {
-		perror("foo");
-		strcpy(ret, "connect");
+		perror(NULL);
+		ret = "connect";
 		return -1;
 	}
   
 	f = fdopen(s, "r+");
 	
-	fprintf(f, "%s HTTP/1.1\r\n", req);
-	fprintf(f, "Host: %s\r\n", host);
+	const char * req2 = req.toLatin1();
+	const char * host2 = host.toLatin1();
+	fprintf(f, "%s HTTP/1.1\r\n", req2);
+	fprintf(f, "Host: %s\r\n", host2);
 	fputs("User-Agent: SFLphone\r\n", f);
 	fputs("\r\n", f);
 
@@ -113,7 +115,8 @@ int req(char *host, int port, char *req, char *ret) {
 		ret[i] = fgetc(f);
 	
 	if (status != 200) {
-		sprintf(ret, "http error: %ld", status);
+		ret = "http error: " + status;
+// 		sprintf(ret, "http error: %ld", status);
 		return -1;
 	}
 
@@ -123,22 +126,22 @@ int req(char *host, int port, char *req, char *ret) {
 	return 0;
 }
 
-rest_account get_rest_account(char *host,char *email) {
-	char ret[4096];
+rest_account get_rest_account(QString host, QString email) {
+	QString req = "GET /rest/accountcreator?email=" + email;
+	QString ret;
 	rest_account ra;
-	bzero(ret, sizeof(ret));
-	printf("HOST: %s\n", host);
-	strcpy(ret,"GET /rest/accountcreator?email=");
-	strcat(ret, email);
-	if (req(host, 80, ret, ret) != -1) {
-		strcpy(ra.user, strtok(ret, "\n"));
-		strcpy(ra.passwd, strtok(NULL, "\n"));\
-		ra.success = 1;
+	qDebug() << "HOST: " << host;
+	int res = sendRequest(host, 80, req, ret);
+	if (res != -1) {
+		QStringList list = ret.split("\n");
+		ra.user = list[0];
+		ra.passwd = list[1];\
+		ra.success = true;
 	} else {
-		ra.success = 0;
-		strcpy(ra.reason, ret);
+		ra.success = false;
+		ra.reason = ret;
 	}
-	puts(ret);
+	qDebug() << ret;
 	return ra;
 } 
 
@@ -160,7 +163,7 @@ AccountWizard::AccountWizard(QWidget * parent)
 	setPage(Page_Conclusion, new WizardAccountConclusionPage);
 	
 	setStartId(Page_Intro);
-	setWindowTitle(i18n("Account Creation Wizard"));
+	setWindowTitle(i18n("Account creation wizard"));
 	setWindowIcon(QIcon(ICON_SFLPHONE));
 	setMinimumHeight(350);
 	setPixmap(QWizard::WatermarkPixmap, QPixmap(ICON_SFLPHONE));
@@ -183,6 +186,8 @@ void AccountWizard::accept()
 	QString & protocol = accountDetails[QString(ACCOUNT_TYPE)];
 	QString & mailbox = accountDetails[QString(ACCOUNT_MAILBOX)];
 	QString & enabled = accountDetails[QString(ACCOUNT_ENABLED)];
+	QString & resolveOnce = accountDetails[QString(ACCOUNT_RESOLVE_ONCE)];
+	QString & regExpire = accountDetails[QString(ACCOUNT_EXPIRE)];
 	
 	bool createAccount = false;
 	bool sip = false;
@@ -196,7 +201,7 @@ void AccountWizard::accept()
 		rest_account acc = get_rest_account(SFL_ACCOUNT_HOST, charEmailAddress);
 		if(acc.success)
 		{
-			ret += i18n("Creation of account succeed with these parameters") + " :\n";
+			ret += i18n("This assistant is now finished.") + "\n";
 			alias = QString(acc.user) + "@" + SFL_ACCOUNT_HOST;
 			server = QString(SFL_ACCOUNT_HOST);
 			user = QString(acc.user);
@@ -214,7 +219,7 @@ void AccountWizard::accept()
 	}
 	else
 	{
-		ret += i18n("Register of account succeed with these parameters") + " :\n";
+		ret += i18n("This assistant is now finished.") + "\n";
 		bool SIPAccount = field(FIELD_SIP_ACCOUNT).toBool();
 		if(SIPAccount)
 		{
@@ -240,8 +245,9 @@ void AccountWizard::accept()
 	}
 	if(createAccount)
 	{
-// 		mailbox = ACCOUNT_MAILBOX_DEFAULT_VALUE;
 		enabled = ACCOUNT_ENABLED_TRUE;
+		resolveOnce = "FALSE";
+		regExpire = QString::number(ACCOUNT_EXPIRE_DEFAULT);
 		ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 		QString accountId = configurationManager.addAccount(accountDetails);
 		//configurationManager.sendRegister(accountId, 1);
@@ -254,10 +260,10 @@ void AccountWizard::accept()
 		}
 		ret += i18n("Alias") + " : " + alias + "\n";
 		ret += i18n("Server") + " : " + server + "\n";
-		ret += i18n("User") + " : " + user + "\n";
+		ret += i18n("Username") + " : " + user + "\n";
 		ret += i18n("Password") + " : " + password + "\n";
 		ret += i18n("Protocol") + " : " + protocol + "\n";
-		ret += i18n("Mailbox") + " : " + mailbox + "\n";
+		ret += i18n("Voicemail number") + " : " + mailbox + "\n";
 	}
 	qDebug() << ret;
 	QDialog::accept();
@@ -275,10 +281,10 @@ void AccountWizard::accept()
 WizardIntroPage::WizardIntroPage(QWidget *parent)
      : QWizardPage(parent)
 {
-	setTitle(i18n("Account Creation Wizard"));
-	setSubTitle(i18n("Welcome to the Account creation wizard of SFLphone"));
+	setTitle(i18n("Account creation wizard"));
+	setSubTitle(i18n("Welcome to the Account creation wizard of SFLphone!"));
 
-	introLabel = new QLabel(i18n("This wizard will help you setting up an account."));
+	introLabel = new QLabel(i18n("This installation wizard will help you configure an account."));
 	introLabel->setWordWrap(true);
 
 	QVBoxLayout *layout = new QVBoxLayout;
@@ -306,11 +312,11 @@ int WizardIntroPage::nextId() const
 WizardAccountAutoManualPage::WizardAccountAutoManualPage(QWidget *parent)
      : QWizardPage(parent)
 {
-	setTitle(i18n("Accounts"));
-	setSubTitle(i18n("Please choose between those options :"));
+	setTitle(i18n("Account"));
+	setSubTitle(i18n("Please select one of the following options"));
 
 	radioButton_SFL = new QRadioButton(i18n("Create a free SIP/IAX2 account on sflphone.org"));
-	radioButton_manual = new QRadioButton(i18n("Register an existing SIP/IAX2 account"));
+	radioButton_manual = new QRadioButton(i18n("Register an existing SIP or IAX2 account"));
 	radioButton_SFL->setChecked(true);
 
 	registerField(FIELD_SFL_ACCOUNT, radioButton_SFL);
@@ -350,10 +356,10 @@ WizardAccountTypePage::WizardAccountTypePage(QWidget *parent)
      : QWizardPage(parent)
 {
 	setTitle(i18n("VoIP Protocols"));
-	setSubTitle(i18n("Choose the account type") + " :");
+	setSubTitle(i18n("Select an account type"));
 
-	radioButton_SIP = new QRadioButton(i18n("Register a SIP (Session Initiation Protocol) account"));
-	radioButton_IAX = new QRadioButton(i18n("Register a IAX2 (InterAsterisk eXchange) account"));
+	radioButton_SIP = new QRadioButton(i18n("SIP (Session Initiation Protocol)"));
+	radioButton_IAX = new QRadioButton(i18n("IAX2 (InterAsterix Exchange)"));
 	radioButton_SIP->setChecked(true);
 	
 	registerField(FIELD_SIP_ACCOUNT, radioButton_SIP);
@@ -392,7 +398,7 @@ int WizardAccountTypePage::nextId() const
 WizardAccountEmailAddressPage::WizardAccountEmailAddressPage(QWidget *parent)
      : QWizardPage(parent)
 {
-	setTitle(i18n("Optionnal Email Address"));
+	setTitle(i18n("Optional email address"));
 	setSubTitle(i18n("This email address will be used to send your voicemail messages."));
 
 	label_emailAddress = new QLabel(i18n("Email address"));
@@ -429,17 +435,17 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 	this->type = type;
 	if(type == SIP)
 	{
-		setTitle(i18n("SIP Account Settings"));
+		setTitle(i18n("SIP account settings"));
 	}
 	else
 	{
-		setTitle(i18n("IAX2 Account Settings"));
+		setTitle(i18n("IAX2 account settings"));
 	}
-	setSubTitle(i18n("Please full these settings fields."));
+	setSubTitle(i18n("Please fill the following information"));
 
 	label_alias = new QLabel(i18n("Alias") + " *");
 	label_server = new QLabel(i18n("Server") + " *");
-	label_user = new QLabel(i18n("User") + " *");
+	label_user = new QLabel(i18n("Username") + " *");
 	label_password = new QLabel(i18n("Password") + " *");
 	label_voicemail = new QLabel(i18n("Voicemail number"));
 	
@@ -521,7 +527,7 @@ WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
      : QWizardPage(parent)
 {
 	setTitle(i18n("Network Address Translation (NAT)"));
-	setSubTitle(i18n("You should probably enable this option if you're placed under a firewall"));
+	setSubTitle(i18n("You should probably enable this if you are behind a firewall."));
 
 	checkBox_enableStun = new QCheckBox(i18n("Enable STUN"));
 	label_StunServer = new QLabel(i18n("Stun Server"));
@@ -558,7 +564,7 @@ int WizardAccountStunPage::nextId() const
 WizardAccountConclusionPage::WizardAccountConclusionPage(QWidget *parent)
      : QWizardPage(parent)
 {
-	setTitle(i18n("Account Definition Finished"));
+	setTitle(i18n("This assistant is now finished."));
 	setSubTitle(i18n("After checking the settings you chose, click \"Finish\" to create the account."));
 
 	QVBoxLayout *layout = new QVBoxLayout;
