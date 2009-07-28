@@ -1,6 +1,6 @@
 include ../globals.mak
 
-noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester historyTester
+noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester historyTester mainbufferTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
@@ -136,3 +136,22 @@ historyTester_LDADD = \
 		-luuid \
 		$(OBJECT_FILES)
 
+
+mainbufferTester_SOURCES = \
+		mainbufferTest.h \
+		mainbufferTest.cpp \
+		TestMain.cpp
+
+mainbufferTester_LDADD = \
+		../src/libsflphone.la  \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@CPPUNIT_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@CCGNU2_LIBS@ \
+		@CCRTP_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
+		-luuid \
+		$(OBJECT_FILES)

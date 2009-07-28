@@ -27,6 +27,7 @@ libaudio_la_SOURCES = \
 		codecDescriptor.cpp \
 		audioloop.cpp \
 		ringbuffer.cpp \
+		mainbuffer.cpp \
 		$(SPEEX_SOURCES_CPP)
 
 noinst_HEADERS = \
@@ -45,5 +46,6 @@ noinst_HEADERS = \
 		tonegenerator.h \
  		codecDescriptor.h \
 		dtmf.h \
+		mainbuffer.h \
 		tone.h 
 
