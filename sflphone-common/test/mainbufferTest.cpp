@@ -169,4 +169,6 @@ void MainBufferTest::testGetPutData()
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, test_id) == sizeof(int));
     CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, test_id) == sizeof(int));
     CPPUNIT_ASSERT(test_input2 == test_output);
+
+    _mainbuffer.removeRingBuffer(test_id);
 }

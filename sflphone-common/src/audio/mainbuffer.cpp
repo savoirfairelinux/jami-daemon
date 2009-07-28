@@ -28,7 +28,7 @@ MainBuffer::MainBuffer()
 
 MainBuffer::~MainBuffer()
 {
-
+    removeRingBuffer(default_id);
 }
 
 
@@ -56,7 +56,11 @@ RingBuffer* MainBuffer::createRingBuffer(CallID call_id)
 
 bool MainBuffer::removeRingBuffer(CallID call_id)
 {
-    RingBufferMap::iterator iter = _ringBufferMap.find(call_id);
+
+    RingBuffer* ring_buffer = getRingBuffer(call_id);
+    delete ring_buffer;
+    ring_buffer = NULL;
+
     if (_ringBufferMap.erase(call_id) != 0)
         return true;
     else
