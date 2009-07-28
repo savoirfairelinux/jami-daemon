@@ -149,3 +149,24 @@ void MainBufferTest::testTwoPointer()
 
     _mainbuffer.removeRingBuffer(test_id);
 }
+
+
+void MainBufferTest::testGetPutData()
+{
+    
+    CallID test_id = "getData putData";
+    CallID false_id = "false id";
+    _mainbuffer.createRingBuffer(test_id);
+
+    int test_input1 = 12;
+    int test_input2 = 13;
+    int test_output;
+
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_input1 == test_output);
+
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_input2 == test_output);
+}

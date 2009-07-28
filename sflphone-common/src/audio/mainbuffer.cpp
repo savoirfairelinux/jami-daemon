@@ -22,7 +22,7 @@
 
 MainBuffer::MainBuffer()
 {
-
+    createRingBuffer(default_id);
 }
 
 
@@ -61,4 +61,48 @@ bool MainBuffer::removeRingBuffer(CallID call_id)
         return true;
     else
 	return false;
+}
+
+
+int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID call_id)
+{
+
+    RingBuffer* ring_buffer = getRingBuffer(call_id);
+
+    int a;
+
+    ost::MutexLock guard (_mutex);
+    a = ring_buffer->AvailForPut();
+
+    if (a >= toCopy) {
+        return ring_buffer->Put (buffer, toCopy, volume);
+    } else {
+        _debug ("Chopping sound, Ouch! RingBuffer full ?\n");
+        return ring_buffer->Put (buffer, a, volume);
+    }
+
+    return 0;
+
+}
+
+
+int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID call_id)
+{
+
+    RingBuffer* ring_buffer = getRingBuffer(call_id);
+
+    int a;
+
+    ost::MutexLock guard (_mutex);
+    a = ring_buffer->AvailForGet();
+
+    if (a >= toCopy) {
+        return ring_buffer->Get (buffer, toCopy, volume);
+    } else {
+        _debug ("RingBuffer is quite empty\n");
+        return ring_buffer->Get (buffer, a, volume);
+    }
+
+    return 0;
+
 }

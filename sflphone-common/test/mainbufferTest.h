@@ -67,6 +67,7 @@ class MainBufferTest : public CppUnit::TestCase {
        CPPUNIT_TEST( testRingbufferInt );
        CPPUNIT_TEST( testRingbufferFloat );
        CPPUNIT_TEST( testTwoPointer );
+       CPPUNIT_TEST( testGetPutData );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -92,6 +93,8 @@ class MainBufferTest : public CppUnit::TestCase {
 	void testRingbufferFloat();
 
 	void testTwoPointer();
+
+	void testGetPutData();
 
 
     private:
