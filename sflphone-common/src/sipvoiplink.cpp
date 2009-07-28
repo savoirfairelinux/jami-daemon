@@ -815,7 +815,6 @@ SIPVoIPLink::onhold (const CallID& id)
         return false;
     }
 
-
     // Stop sound
     call->setAudioStart (false);
 
@@ -824,6 +823,7 @@ SIPVoIPLink::onhold (const CallID& id)
     _debug ("* SIP Info: Stopping AudioRTP for onhold action\n");
 
     call->getAudioRtp()->closeRtpSession();
+    
 
     /* Create re-INVITE with new offer */
     status = inv_session_reinvite (call, "sendonly");
@@ -894,7 +894,7 @@ SIPVoIPLink::offhold (const CallID& id)
     }
 
     try {
-        call->getAudioRtp()->createNewSession (call);
+        call->getAudioRtp()->createNewSession(call);
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)\n", __FILE__, __LINE__);
     }
@@ -992,9 +992,9 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     return true;
 }
 
-bool SIPVoIPLink::transferStep2()
+bool SIPVoIPLink::transferStep2(SIPCall* call)
 {
-    // call->getAudioRtp()->closeRtpSession();
+    call->getAudioRtp()->closeRtpSession();
     return true;
 }
 
@@ -2786,13 +2786,20 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
             status_line.reason = *pjsip_get_status_text (500);
         }
 
+	// Get current call
+        SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (Manager::instance().getCurrentCallId()));
+
+        if (!call) {
+            _debug ("UserAgent: Call doesn't exit!\n");
+            return;
+        }
 
         if (event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
             request = event->body.rx_msg.rdata->msg_info.msg_buf;
 
             if (request.find (noresource) != -1) {
                 _debug ("UserAgent: NORESOURCE for transfer!\n");
-                link->transferStep2();
+                link->transferStep2(call);
                 pjsip_evsub_terminate (sub, PJ_TRUE);
 
                 Manager::instance().transferFailed();
@@ -2801,21 +2808,12 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 
             if (request.find (ringing) != -1) {
                 _debug ("UserAgent: transfered call RINGING!\n");
-                link->transferStep2();
+                link->transferStep2(call);
                 pjsip_evsub_terminate (sub, PJ_TRUE);
 
                 Manager::instance().transferSucceded();
                 return;
             }
-        }
-
-
-        // Get current call
-        SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (Manager::instance().getCurrentCallId()));
-
-        if (!call) {
-            _debug ("UserAgent: Call doesn't exit!\n");
-            return;
         }
 
 
@@ -2840,7 +2838,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
                     _debug ("UserAgent: Fail to send end session msg!\n");
             }
 
-            link->transferStep2();
+            link->transferStep2(call);
 
             cont = PJ_FALSE;
         }

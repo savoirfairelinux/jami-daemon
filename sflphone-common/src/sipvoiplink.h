@@ -160,7 +160,7 @@ class SIPVoIPLink : public VoIPLink
         bool transfer(const CallID& id, const std::string& to);
 
         /** Handle the incoming refer msg, not finished yet */
-        bool transferStep2();
+        bool transferStep2(SIPCall* call);
 
         /**
          * Refuse the call

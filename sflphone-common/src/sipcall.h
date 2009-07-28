@@ -101,7 +101,7 @@ class SIPCall : public Call
     inline AudioRtp * getAudioRtp(void) { return _audiortp; }
 
     /** Returns a pointer to the AudioRtp object specific to this call */
-    inline AudioRtp * setAudioRtp(AudioRtp* audiortp) { _audiortp = audiortp; }
+    inline void setAudioRtp(AudioRtp* audiortp) { _audiortp = audiortp; }
 
 
   private:
