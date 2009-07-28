@@ -73,6 +73,12 @@ int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID 
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
 
+    if (ring_buffer == NULL)
+    {
+	_debug("Input RingBuffer ID: \"%s\" does not exist!\n", call_id.c_str());
+	return 0;
+    }
+
     int a;
 
     ost::MutexLock guard (_mutex);
@@ -94,6 +100,12 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 {
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
+
+    if (ring_buffer == NULL)
+    {
+	_debug("Output RingBuffer ID: \"%s\" does not exist!\n", call_id.c_str());
+	return 0;
+    }
 
     int a;
 

@@ -22,6 +22,7 @@
 #define __MAIN_BUFFER__
 
 #include <map>
+#include <set>
 #include <cc++/thread.h> // for ost::Mutex
 
 #include "../global.h"
@@ -29,6 +30,8 @@
 #include "ringbuffer.h"
 
 typedef std::map<CallID, RingBuffer*> RingBufferMap;
+
+typedef std::set<CallID> RingBufferIDSet;
 
 #define default_id "default_id"
 
