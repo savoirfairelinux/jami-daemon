@@ -64,3 +64,88 @@ void MainBufferTest::testRingBufferCreation()
     CPPUNIT_ASSERT(_mainbuffer.removeRingBuffer(test_id) == true);
 
 }
+
+
+void MainBufferTest::testRingbufferInt()
+{
+
+    CallID test_id = "test_int";
+    RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(test_id);
+    
+    int testint1 = 12;
+    int testint2 = 13;
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testint1, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == sizeof(int));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testint2, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == 2*sizeof(int));
+
+    int testget;
+
+    CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == sizeof(int));
+    CPPUNIT_ASSERT(testget == testint1);
+
+    CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(testget == testint2);
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == 0);
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testint1, sizeof(int)) == sizeof(int));
+    test_ring_buffer->flush();
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == 0);
+
+    _mainbuffer.removeRingBuffer(test_id);
+}
+
+
+void MainBufferTest::testRingbufferFloat()
+{
+
+    CallID test_id = "test_float";
+    RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(test_id);
+
+    float testfloat1 = 12.5;
+    float testfloat2 = 13.4;
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testfloat1, sizeof(float)) == sizeof(float));
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == sizeof(float));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testfloat2, sizeof(float)) == sizeof(float));
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == 2*sizeof(float));
+
+    float testget;
+
+    CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(float)) == sizeof(float));
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == sizeof(float));
+    CPPUNIT_ASSERT(testget == testfloat1);
+
+    CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(float)) == sizeof(float));
+    CPPUNIT_ASSERT(testget == testfloat2);
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == 0);
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testfloat1, sizeof(float)) == sizeof(float));
+    test_ring_buffer->flush();
+    CPPUNIT_ASSERT(test_ring_buffer->Len() == 0);
+
+    _mainbuffer.removeRingBuffer(test_id);
+}
+
+
+void MainBufferTest::testTwoPointer()
+{
+
+
+    CallID test_id = "two pointer";
+    RingBuffer* input_buffer = _mainbuffer.createRingBuffer(test_id);
+    RingBuffer* output_buffer = _mainbuffer.getRingBuffer(test_id);
+
+    int test_input = 12;
+    int test_output;
+
+    CPPUNIT_ASSERT(input_buffer->Put(&test_input, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(output_buffer->Get(&test_output, sizeof(float)) == sizeof(float));
+    CPPUNIT_ASSERT(test_input == test_output);
+
+    _mainbuffer.removeRingBuffer(test_id);
+}

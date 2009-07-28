@@ -64,8 +64,9 @@ class MainBufferTest : public CppUnit::TestCase {
      */
     CPPUNIT_TEST_SUITE( MainBufferTest );
        CPPUNIT_TEST( testRingBufferCreation );
-    // CPPUNIT_TEST( testRtpThread );
-    // CPPUNIT_TEST( testRtpResampling );
+       CPPUNIT_TEST( testRingbufferInt );
+       CPPUNIT_TEST( testRingbufferFloat );
+       CPPUNIT_TEST( testTwoPointer );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -86,9 +87,11 @@ class MainBufferTest : public CppUnit::TestCase {
 
         void testRingBufferCreation();
 
-	// void testRtpThread();
+	void testRingbufferInt();
 
-	// void testRtpResampling();
+	void testRingbufferFloat();
+
+	void testTwoPointer();
 
 
     private:
