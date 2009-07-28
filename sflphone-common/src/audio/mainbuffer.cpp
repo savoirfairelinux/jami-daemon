@@ -45,6 +45,8 @@ RingBuffer* MainBuffer::getRingBuffer(CallID call_id)
 
 RingBuffer* MainBuffer::createRingBuffer(CallID call_id)
 {
+    _callIDMap[default_id] = call_id;
+    _callIDMap[call_id] = default_id;
 
     RingBuffer* newRingBuffer = new RingBuffer(SIZEBUF);
 
@@ -56,6 +58,9 @@ RingBuffer* MainBuffer::createRingBuffer(CallID call_id)
 
 bool MainBuffer::removeRingBuffer(CallID call_id)
 {
+
+    _callIDMap.erase(default_id);
+    _callIDMap.erase(call_id);
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
     delete ring_buffer;
@@ -97,6 +102,20 @@ int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID 
 
 
 int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID call_id)
+{
+
+    CallIDMap::iterator iter = _callIDMap.find(call_id);
+    if (iter == _callIDMap.end())
+    {
+	_debug("Output CallID: \"%s\" does not have any coresponding RingBuffer ID!\n", call_id);
+	return 0;
+    }
+    else
+	return getDataByID(buffer, toCopy, volume, iter->second);
+}
+
+
+int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);

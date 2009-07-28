@@ -31,7 +31,7 @@
 
 typedef std::map<CallID, RingBuffer*> RingBufferMap;
 
-typedef std::set<CallID> RingBufferIDSet;
+typedef std::map<CallID, CallID> CallIDMap;
 
 #define default_id "default_id"
 
@@ -47,6 +47,8 @@ class MainBuffer {
 
 	int getData(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 
+	int getDataByID(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
+
 
     private:
 
@@ -57,6 +59,8 @@ class MainBuffer {
 	bool removeRingBuffer(CallID call_id);
 
 	RingBufferMap _ringBufferMap;
+
+	CallIDMap _callIDMap;
 
 	ost::Mutex _mutex;
 

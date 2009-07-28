@@ -163,15 +163,38 @@ void MainBufferTest::testGetPutData()
     int test_output;
 
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int)) == sizeof(int));
-    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_output, sizeof(int)) == sizeof(int));
     CPPUNIT_ASSERT(test_input1 == test_output);
 
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, test_id) == sizeof(int));
-    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_output, sizeof(int), 100, test_id) == sizeof(int));
     CPPUNIT_ASSERT(test_input2 == test_output);
 
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, false_id) == 0);
-    CPPUNIT_ASSERT(_mainbuffer.getData(&test_input2, sizeof(int), 100, false_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_input2, sizeof(int), 100, false_id) == 0);
+
+    _mainbuffer.removeRingBuffer(test_id);
+}
+
+
+
+void MainBufferTest::testGetDataAndCallID()
+{
+    
+    CallID test_id = "incoming rtp session";
+    _mainbuffer.createRingBuffer(test_id);
+
+    int test_input1 = 12;
+    int test_input2 = 13;
+    int test_output;
+
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_input1 == test_output);
+
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, default_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_input2 == test_output);
 
     _mainbuffer.removeRingBuffer(test_id);
 }
