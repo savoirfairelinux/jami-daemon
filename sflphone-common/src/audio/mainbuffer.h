@@ -43,6 +43,10 @@ class MainBuffer {
 
         ~MainBuffer();
 
+	RingBuffer* createRingBuffer(CallID call_id);
+
+	bool removeRingBuffer(CallID call_id);
+
 	int putData(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 
 	int getData(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
@@ -55,13 +59,11 @@ class MainBuffer {
 
 	void flush(CallID call_id = default_id);
 
+	void flushDefault();
+
     private:
 
-	RingBuffer* createRingBuffer(CallID call_id);
-
 	RingBuffer* getRingBuffer(CallID call_id);
-
-	bool removeRingBuffer(CallID call_id);
 
 	int getDataByID(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 

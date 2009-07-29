@@ -26,6 +26,7 @@
 #include "audiodevice.h"
 #include "ringbuffer.h"
 #include "manager.h"
+#include "mainbuffer.h"
 
 #include <cc++/thread.h> // for ost::Mutex
 
@@ -56,9 +57,7 @@ class AudioLayer {
             : _defaultVolume(100)
 			  , _layerType( type )
               , _manager(manager)
-              , _voiceRingBuffer( SIZEBUF )
-              , _urgentRingBuffer( SIZEBUF)
-              , _micRingBuffer( SIZEBUF )
+              , _urgentRingBuffer( SIZEBUF )
               , _indexIn ( 0 )
               , _indexOut ( 0 )
               , _sampleRate ( 0 )
@@ -136,7 +135,7 @@ class AudioLayer {
          * @param toCopy    The size of the buffer
          * @return int      The number of bytes copied
          */
-        int putMain(void* buffer, int toCopy);
+        int putMain(void* buffer, int toCopy, CallID call_id = default_id);
 
         void flushMain (void);
 
@@ -193,6 +192,8 @@ class AudioLayer {
 
         int getLayerType( void ) { return _layerType; }
 
+	MainBuffer* getMainBuffer( void ) { return &_mainBuffer; }
+
         /**
          * Default volume for incoming RTP and Urgent sounds.
          */
@@ -218,9 +219,11 @@ class AudioLayer {
         /**
          * Urgent ring buffer used for ringtones
          */
-        RingBuffer _voiceRingBuffer;
+        // RingBuffer _voiceRingBuffer;
         RingBuffer _urgentRingBuffer;
-        RingBuffer _micRingBuffer;
+        // RingBuffer _micRingBuffer;
+
+	MainBuffer _mainBuffer;
 
         /**
          * Number of audio cards on which capture stream has been opened 

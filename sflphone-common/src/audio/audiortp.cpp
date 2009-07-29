@@ -179,6 +179,8 @@ AudioRtpRTX::~AudioRtpRTX ()
         throw;
     }
 
+    _audiolayer->getMainBuffer()->createRingBuffer(_ca->getCallId());
+
     _ca = 0;
 
     delete [] micData;
@@ -222,6 +224,8 @@ AudioRtpRTX::initBuffers()
 
     spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
+
+    _audiolayer->getMainBuffer()->createRingBuffer(_ca->getCallId());
 }
 
 
@@ -347,7 +351,7 @@ AudioRtpRTX::processDataEncode()
     int maxBytesToGet = computeNbByteAudioLayer (fixed_codec_framesize);
 
     // available bytes inside ringbuffer
-    int availBytesFromMic = _audiolayer->canGetMic();
+    int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
 
     // set available byte to maxByteToGet
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
@@ -356,7 +360,7 @@ AudioRtpRTX::processDataEncode()
         return 0;
 
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = _audiolayer->getMic (micData , bytesAvail) / sizeof (SFLDataFormat);
+    int nbSample = _audiolayer->getMainBuffer()->getData (micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
     // nb bytes to be sent over RTP
     int compSize = 0;
@@ -406,7 +410,7 @@ AudioRtpRTX::processDataDecode (unsigned char* spkrData, unsigned int size, int&
             _nSamplesSpkr = nbSample;
 
             // put data in audio layer, size in byte
-            _audiolayer->putMain (spkrDataConverted, nbSample * sizeof (SFLDataFormat));
+            _audiolayer->getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
         } else {
 
@@ -414,7 +418,7 @@ AudioRtpRTX::processDataDecode (unsigned char* spkrData, unsigned int size, int&
             _nSamplesSpkr = nbSample;
 
             // put data in audio layer, size in byte
-            _audiolayer->putMain (spkrDataDecoded, nbSample * sizeof (SFLDataFormat));
+            _audiolayer->getMainBuffer()->putData (spkrDataDecoded, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
         }
 
         // Notify (with a beep) an incoming call when there is already a call

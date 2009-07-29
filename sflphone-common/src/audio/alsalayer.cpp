@@ -144,6 +144,7 @@ AlsaLayer::stopStream (void)
 int
 AlsaLayer::canGetMic()
 {
+    /*
     int avail;
 
     if (!_CaptureHandle)
@@ -156,6 +157,8 @@ AlsaLayer::canGetMic()
         return 0;
     } else
         return ( (avail<0) ?0:avail);
+    */
+    return 0;
 
     /*
     if(_CaptureHandle)
@@ -174,14 +177,16 @@ AlsaLayer::getMic (void *buffer, int toCopy)
     }
     else
         return 0;*/
+    /*
     int res = 0;
 
     if (_CaptureHandle) {
         res = read (buffer, toCopy);
         adjustVolume (buffer, toCopy, SFL_PCM_CAPTURE);
     }
-
-    return res;
+    */
+    // return res;
+    return 0;
 }
 
 bool AlsaLayer::isCaptureActive (void)
@@ -725,7 +730,7 @@ void AlsaLayer::audioCallback (void)
         free (out);
         out=0;
         // Consume the regular one as well (same amount of bytes)
-        _voiceRingBuffer.Discard (toGet);
+        _mainBuffer.discard (toGet);
     } else {
         tone = _manager->getTelephoneTone();
         toGet = 940  ;
@@ -741,12 +746,12 @@ void AlsaLayer::audioCallback (void)
             write (out , maxBytes);
         } else {
             // If nothing urgent, play the regular sound samples
-            normalAvail = _voiceRingBuffer.AvailForGet();
+            normalAvail = _mainBuffer.availForGet();
             toGet = (normalAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? normalAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
             out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
             if (toGet) {
-                _voiceRingBuffer.Get (out, toGet, spkrVolume);
+                _mainBuffer.getData (out, toGet, spkrVolume);
                 write (out, toGet);
             } else {
                 bzero (out, framesPerBufferAlsa * sizeof (SFLDataFormat));
@@ -759,19 +764,27 @@ void AlsaLayer::audioCallback (void)
     }
 
     // Additionally handle the mic's audio stream
-    //if(is_capture_running()){
-    /*micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
-    if(micAvailAlsa > 0) {
-        micAvailPut = _micRingBuffer.AvailForPut();
-        toPut = (micAvailAlsa <= micAvailPut) ? micAvailAlsa : micAvailPut;
-        in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
-        toPut = read (in, toPut);
-        if (in != 0)
-        {
-            _micRingBuffer.Put(in, toPut, 100);
+    int micAvailAlsa;
+    int micAvailPut;
+    int toPut;
+    SFLDataFormat* in;
+
+    if(is_capture_running())
+    {
+        micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
+	if(micAvailAlsa > 0) 
+	{
+            micAvailPut = _mainBuffer.availForPut();
+            toPut = (micAvailAlsa <= micAvailPut) ? micAvailAlsa : micAvailPut;
+            in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
+            toPut = read (in, toPut);
+            if (in != 0)
+            {
+                _mainBuffer.putData(in, toPut, 100);
+            }
+            free(in); in=0;
         }
-        free(in); in=0;
-    }*/
+    }
 }
 
 void* AlsaLayer::adjustVolume (void* buffer , int len, int stream)

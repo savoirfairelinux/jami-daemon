@@ -210,6 +210,13 @@ void MainBuffer::flush(CallID call_id)
 
 }
 
+void MainBuffer::flushDefault()
+{
+
+    flushByID(default_id);
+
+}
+
 
 void MainBuffer::flushByID(CallID call_id)
 {
