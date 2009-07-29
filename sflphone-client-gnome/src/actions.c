@@ -147,6 +147,11 @@ sflphone_hung_up( callable_obj_t * c)
 #endif
 }
 
+static hashtable_free(gpointer key, gpointer value, gpointer user_data)
+{
+    g_free(value);
+}
+
 /** Internal to actions: Fill account list */
     void
 sflphone_fill_account_list(gboolean toolbarInitialized)
@@ -165,6 +170,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         {
             account_t * a = g_new0(account_t,1);
             a->accountID = g_strdup(*accountID);
+            a->credential_information = NULL;
             account_list_add(a);
         }
         g_strfreev (array);
@@ -177,6 +183,32 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         if( details == NULL )
             break;
         a->properties = details;
+        
+        /* As this function might be called numberous time, we should free the 
+         * previously allocated space to avoid memory leaks.
+         */
+        int credential_index;        
+        if(a->credential_information != NULL) {
+            for(credential_index = 0; credential_index < a->credential_information->len; credential_index++) {
+                GHashTable * element = g_array_index(a->credential_information, GHashTable*, credential_index);               
+                g_hash_table_foreach(element, hashtable_free, NULL);
+                g_hash_table_destroy(element);
+                g_free(element);
+            }
+            
+            g_array_free(a->credential_information, TRUE);
+            a->credential_information = NULL;
+        }
+        
+        /* Fill the actual array of credentials */
+        a->credential_information = g_array_new (FALSE, TRUE, sizeof(GHashTable*));
+        int number_of_credential = dbus_get_number_of_credential(a->accountID);
+
+        for(credential_index = 0; credential_index < number_of_credential; credential_index++) {
+            GHashTable * credential_information = dbus_get_credential(a->accountID, credential_index);
+            g_array_append_val(a->credential_information, credential_information);
+            
+        }
 
         gchar * status = g_hash_table_lookup(details, "Status");
         if(strcmp(status, "REGISTERED") == 0)

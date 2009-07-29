@@ -107,6 +107,37 @@ GHashTable * dbus_account_details(gchar * accountID);
 void dbus_set_account_details(account_t *a);
 
 /**
+ * ConfigurationManager - Set the additional credential information 
+ * of a specific account, for a specific credential index.
+ * This function will add the new section on the server side
+ * if it cannot be found.
+ * @param a The account to update
+ * @param index The index for the credential to update
+ */
+void dbus_set_credential(account_t *a, int index);
+
+/**
+ * ConfigurationManager - Set the additional credential information 
+ * of a specific account, for a specific credential index.
+ * This function will add the new section on the server side
+ * if it cannot be found.
+ * @param a The account to update
+ * @return int The number of credentials specified
+ */
+int dbus_get_number_of_credential(gchar * accountID);
+
+/**
+ * ConfigurationManager - Set the additional credential information 
+ * of a specific account, for a specific credential index.
+ * This function will add the new section on the server side
+ * if it cannot be found.
+ * @param a The account to update
+ * @param index The credential index
+ * @return GHashTable* The credential at index "index" for the given account
+ */
+GHashTable* dbus_get_credential(gchar * accountID, int index);
+
+/**
  * ConfigurationManager - Send registration request
  * @param accountID The account to register/unregister
  * @param expire The flag for the type of registration
