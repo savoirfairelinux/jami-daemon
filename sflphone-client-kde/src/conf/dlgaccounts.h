@@ -30,6 +30,8 @@
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+	
+	\note see ticket #1309 for advices about how to improve this class.
 */
 class DlgAccounts : public QWidget, public Ui_DlgAccountsBase
 {
@@ -38,6 +40,20 @@ public:
 	DlgAccounts(KConfigDialog *parent = 0);
 
 	void saveAccount(QListWidgetItem * item);
+	
+	/**
+	 *   Fills the settings form in the right side with the
+	 *   settings of @p item.
+	 *
+	 *   \note When the user creates a new account, its accountDetails
+	 *   map is empty, so the form is filled with blank strings,
+	 *   zeros... And when the user clicks \e Apply , these settings are
+	 *   saved just after the account is created. So be careful the form
+	 *   is filled with the right default settings if blank (as 600 for
+	 *   registration expire).
+	 *
+	 * @param item the item with which to fill the settings form
+	 */
 	void loadAccount(QListWidgetItem * item);
 	
 private:

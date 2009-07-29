@@ -129,6 +129,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
             stop_notification();
             sflphone_hung_up (c);
             calltree_update_call( history, c );
+            status_bar_display_account();
         }
         else if ( strcmp(state, "UNHOLD_CURRENT") == 0 )
         {

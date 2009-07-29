@@ -35,7 +35,14 @@ static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
 
 
 Sdp::Sdp (pj_pool_t *pool)
-        : _local_media_cap(), _session_media (0),  _ip_addr (""), _local_offer (NULL), _negociated_offer (NULL), _negociator (NULL), _pool (NULL), _local_extern_audio_port (0)
+        : _local_media_cap()
+        , _session_media (0)
+        , _negociator (NULL)
+        , _ip_addr ("")
+        , _local_offer (NULL)
+        , _negociated_offer (NULL)
+        , _pool (NULL)
+        , _local_extern_audio_port (0)
 {
     _pool = pool;
 }
@@ -204,60 +211,63 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
     return PJ_SUCCESS;
 }
 
-pj_status_t Sdp::check_sdp_answer(pjsip_inv_session *inv, pjsip_rx_data *rdata) 
+pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 {
-    static const pj_str_t str_application = { "application", 11 };
-    static const pj_str_t str_sdp = { "sdp", 3 };
+    static const pj_str_t str_application = { (char*) "application", 11 };
+    static const pj_str_t str_sdp = { (char*) "sdp", 3 };
     pj_status_t status;
     pjsip_msg * message = NULL;
     pjmedia_sdp_session * remote_sdp = NULL;
-    
-    if (pjmedia_sdp_neg_get_state(inv->neg) == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER) {
-    
+
+    if (pjmedia_sdp_neg_get_state (inv->neg) == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER) {
+
         message = rdata->msg_info.msg;
-    
-        if(message == NULL) {
-            _debug("No message");
+
+        if (message == NULL) {
+            _debug ("No message");
             return PJMEDIA_SDP_EINSDP;
         }
 
         if (message->body == NULL) {
-            _debug("Empty message body\n");
+            _debug ("Empty message body\n");
             return PJMEDIA_SDP_EINSDP;
         }
 
-        if (pj_stricmp(&message->body->content_type.type, &str_application) || pj_stricmp(&message->body->content_type.subtype, &str_sdp)) {
-            _debug("Incoming Message does not contain SDP\n");
+        if (pj_stricmp (&message->body->content_type.type, &str_application) || pj_stricmp (&message->body->content_type.subtype, &str_sdp)) {
+            _debug ("Incoming Message does not contain SDP\n");
             return PJMEDIA_SDP_EINSDP;
         }
 
         // Parse the SDP body.
-        status = pjmedia_sdp_parse(rdata->tp_info.pool, (char*)message->body->data, message->body->len, &remote_sdp);
+        status = pjmedia_sdp_parse (rdata->tp_info.pool, (char*) message->body->data, message->body->len, &remote_sdp);
+
         if (status == PJ_SUCCESS) {
-            status = pjmedia_sdp_validate(remote_sdp);
+            status = pjmedia_sdp_validate (remote_sdp);
         }
 
         if (status != PJ_SUCCESS) {
-            _debug("SDP cannot be validated\n");
+            _debug ("SDP cannot be validated\n");
             return PJMEDIA_SDP_EINSDP;
         }
-    
+
         // This is an answer
-        _debug("Got SDP answer %s\n", pjsip_rx_data_get_info(rdata));
-        status = pjmedia_sdp_neg_set_remote_answer(inv->pool, inv->neg, remote_sdp);
-        
+        _debug ("Got SDP answer %s\n", pjsip_rx_data_get_info (rdata));
+
+        status = pjmedia_sdp_neg_set_remote_answer (inv->pool, inv->neg, remote_sdp);
+
         if (status != PJ_SUCCESS) {
-            _debug("An error occured while processing remote answer %s\n", pjsip_rx_data_get_info(rdata));
+            _debug ("An error occured while processing remote answer %s\n", pjsip_rx_data_get_info (rdata));
             return PJMEDIA_SDP_EINSDP;
         }
-        
+
         // Prefer our codecs to remote when possible
-        pjmedia_sdp_neg_set_prefer_remote_codec_order(inv->neg, 0);
-        
-        status = pjmedia_sdp_neg_negotiate(inv->pool, inv->neg, 0);
-        _debug("Negotiation returned with status %d PJ_SUCCESS being %d\n", status, PJ_SUCCESS); 
+        pjmedia_sdp_neg_set_prefer_remote_codec_order (inv->neg, 0);
+
+        status = pjmedia_sdp_neg_negotiate (inv->pool, inv->neg, 0);
+
+        _debug ("Negotiation returned with status %d PJ_SUCCESS being %d\n", status, PJ_SUCCESS);
     }
-    
+
     return status;
 }
 
@@ -469,7 +479,7 @@ void Sdp::set_local_media_capabilities ()
 {
 
     CodecOrder selected_codecs;
-    int i;
+    unsigned int i;
     sdpMedia *audio;
     CodecsMap codecs_list;
     CodecsMap::iterator iter;
@@ -524,7 +534,7 @@ std::string Sdp::convert_int_to_string (int value)
 void Sdp::set_remote_ip_from_sdp (const pjmedia_sdp_session *r_sdp)
 {
 
-    std::string remote_ip(r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
+    std::string remote_ip (r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
     _debug ("            Remote IP from fetching SDP: %s\n", remote_ip.c_str());
     this->set_remote_ip (remote_ip);
 }

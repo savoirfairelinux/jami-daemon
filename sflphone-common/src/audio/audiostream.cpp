@@ -25,13 +25,13 @@ static pa_channel_map channel_map ;
 
 AudioStream::AudioStream (PulseLayerType * driver)
         : _audiostream (NULL),
-         _context (driver->context),
-         _streamType (driver->type), 
-         _streamDescription (driver->description), 
-         _volume(),
-         _mainloop(driver->mainloop),
-         flag (PA_STREAM_AUTO_TIMING_UPDATE), 
-         sample_spec()
+        _context (driver->context),
+        _streamType (driver->type),
+        _streamDescription (driver->description),
+        _volume(),
+        flag (PA_STREAM_AUTO_TIMING_UPDATE),
+        sample_spec(),
+        _mainloop (driver->mainloop)
 {
     sample_spec.format = PA_SAMPLE_S16LE;
     sample_spec.rate = 44100;
@@ -56,52 +56,58 @@ AudioStream::connectStream()
     return true;
 }
 
-static void success_cb(pa_stream *s, int success, void *userdata) {
+static void success_cb (pa_stream *s, int success, void *userdata)
+{
 
-    assert(s);
-    
+    assert (s);
+
     pa_threaded_mainloop * mainloop = (pa_threaded_mainloop *) userdata;
-             
-    pa_threaded_mainloop_signal(mainloop, 0);
+
+    pa_threaded_mainloop_signal (mainloop, 0);
 }
 
 
 bool
-AudioStream::drainStream(void) {    
+AudioStream::drainStream (void)
+{
     if (_audiostream) {
-        _debug("Draining stream\n");
+        _debug ("Draining stream\n");
         pa_operation * operation;
-        
-        pa_threaded_mainloop_lock(_mainloop);
-        
-        if ((operation = pa_stream_drain(_audiostream, success_cb, _mainloop))) {    
-            while (pa_operation_get_state(operation) != PA_OPERATION_DONE) {
-                if (!_context || pa_context_get_state(_context) != PA_CONTEXT_READY || !_audiostream || pa_stream_get_state(_audiostream) != PA_STREAM_READY) {
-                    _debug("Connection died: %s\n", _context ? pa_strerror(pa_context_errno(_context)) : "NULL");
-                    pa_operation_unref(operation);
+
+        pa_threaded_mainloop_lock (_mainloop);
+
+        if ( (operation = pa_stream_drain (_audiostream, success_cb, _mainloop))) {
+            while (pa_operation_get_state (operation) != PA_OPERATION_DONE) {
+                if (!_context || pa_context_get_state (_context) != PA_CONTEXT_READY || !_audiostream || pa_stream_get_state (_audiostream) != PA_STREAM_READY) {
+                    _debug ("Connection died: %s\n", _context ? pa_strerror (pa_context_errno (_context)) : "NULL");
+                    pa_operation_unref (operation);
                     break;
                 } else {
-                    pa_threaded_mainloop_wait(_mainloop);
+                    pa_threaded_mainloop_wait (_mainloop);
                 }
             }
         }
-        
-        pa_threaded_mainloop_unlock(_mainloop);
+
+        pa_threaded_mainloop_unlock (_mainloop);
     }
+
+    return true;
 }
 
 bool
 AudioStream::disconnectStream (void)
 {
     _debug ("Destroy audio streams\n");
-    
-    pa_threaded_mainloop_lock(_mainloop);
-    if(_audiostream) {
+
+    pa_threaded_mainloop_lock (_mainloop);
+
+    if (_audiostream) {
         pa_stream_disconnect (_audiostream);
         pa_stream_unref (_audiostream);
         _audiostream = NULL;
     }
-    pa_threaded_mainloop_unlock(_mainloop);
+
+    pa_threaded_mainloop_unlock (_mainloop);
 
     return true;
 }
@@ -112,12 +118,12 @@ void
 AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 {
     pa_threaded_mainloop *m;
-    
+
     _debug ("AudioStream::stream_state_callback :: The state of the stream changed\n");
     assert (s);
 
     m = (pa_threaded_mainloop*) user_data;
-    assert(m);
+    assert (m);
 
     switch (pa_stream_get_state (s)) {
 

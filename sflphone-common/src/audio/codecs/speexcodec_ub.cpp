@@ -71,7 +71,6 @@ class Speex : public AudioCodec
 #ifdef HAVE_SPEEXDSP_LIB
 
             int enable = 1;
-            int quality = 10;
             int complex = 10;
             int attenuation = -10;
 

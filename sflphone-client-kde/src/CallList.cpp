@@ -49,8 +49,28 @@ CallList::CallList(QObject * parent)
 		QString name = param[2];
 		uint stopTimeStamp = param[3].toUInt();
 		QString account = param[4];
-		calls->append(Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type));
+		calls->insert(0, Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type));
 	}
+}
+
+MapStringString CallList::getHistoryMap()
+{
+	MapStringString res;
+	for(int i = 0 ; i < size() ; i++)
+	{
+		Call * call = (*calls)[i];
+		if(
+		     call->getState() == CALL_STATE_OVER && 
+		     call->getHistoryState() != NONE
+		  )
+		{
+			QString key = call->getStartTimeStamp();
+			QString val = Call::getTypeFromHistoryState(call->getHistoryState()) + "|" + call->getPeerPhoneNumber() + "|" + call->getPeerName() + "|" + call->getStopTimeStamp() + "|" + call->getAccountId();
+			res[key] = val;
+		}
+	}
+	qDebug() << res;
+	return res;
 }
 
 CallList::~CallList()
@@ -143,21 +163,21 @@ int CallList::size()
 Call * CallList::addDialingCall(const QString & peerName, QString account)
 {
 	Call * call = Call::buildDialingCall(generateCallId(), peerName, account);
-	calls->append(call);
+	calls->insert(0, call);
 	return call;
 }
 
 Call * CallList::addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/)
 {
 	Call * call = Call::buildIncomingCall(callId/*, from, account*/);
-	calls->append(call);
+	calls->insert(0, call);
 	return call;
 }
 
 Call * CallList::addRingingCall(const QString & callId)
 {
 	Call * call = Call::buildRingingCall(callId);
-	calls->append(call);
+	calls->insert(0, call);
 	return call;
 }
 

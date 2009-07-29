@@ -1,3 +1,70 @@
+sflphone-client-kde (0.9.6-SYSVER) SYSTEM; urgency=low
+
+    ** 0.9.6 **
+
+  * Documentation on echo test
+  * [redmine_down] codec names not displayed in total
+  * [redmine_down] crash when hanging up a dialing call because tries to
+    add it to history whereas no starttime
+  * [#1927] alternate every time screen changed to call history
+  * [#1886] clean code
+  * [#1886] debug messages when loading history removed
+  * [redmine_down] sflphone-kde icons
+  * [#1855] Update language files
+  * [#1502] Update version number
+  * [redmine_down] setHistory at close
+  * [#redmine_down] Handle PJ_DECLINE_SC as failure
+  * [#1923] Fix segmentation fault when adding a new account
+  * [#1923] Check on iterator before setting the config
+  * [#1904] Added mnemonic to tabs in sflphone-client-gnome.
+  * [#1905] The daemon was not sending the currentSelectedCodec signal
+    on dbus when answering a call.
+  * [#1922] Default values set to all account details
+  * [#1886] Spinbox reg expire enables apply, and address book is not
+    visible when disabled
+  * [#1905] Bug fix for segmentation fault caused by an empty string,
+  * [#1910] Warnings in test directory
+  * [#1919] Error fixed
+  * [#1855] Update russian translation - Hussein Abdallah
+  * [#1910] Remove files
+  * [#1919] fixed
+  * [#1777] Code indentation
+  * [#1918] fixed
+  * [#1917] fixed
+  * [#1910] Remove warnings compilation in src
+  * [#1886] removed AccountListModel in configskeleton
+  * [#1914]
+  * [#1911] check previous and new port
+  * [#1910] Remove compilation warnings in src/dbus and src/history
+  * [#1910] Remove compilation warnings in src/audio
+  * [1855] Update german translation - Sven Werlen
+  * [#1909] removed
+  * [#1906] Done
+  * [#1904] The registration expire value is now configurable from the
+  * Cleaned up debug messages.
+  * [#1886] separated initCallItem in two functions
+  * [#1886] reversed error in commit
+  * [#1886] clean debug
+  * [#1886] changed Name of classes and files
+  * [#1886] clean
+  * [#1870] In call_state_cb (dbus.c:126), _time_stop was overridden by
+    the actual time.
+  * [#1884] Added some new gpg flags to prevent tty warnings
+  * [#1886] Clean audio config dialog
+  * [#1886] No more compile warnings. + 1 comm
+  * [#1872] Check if the user input is smaller than PJ_MAX_HOSTNAME.
+  * [#1886]
+  * [#1785] Fixed build when no new commit
+  * [#1852] If chosen by the user, the hostname can now be solved and
+    used
+  * [#1871] * and # inverted back
+  * [#1869] Conditional compilation that checks if
+  * [#1309] removed test in main
+  * [#1425] Put actions in SFLPhone window class instead of ui view,
+    made a separate toolbar for screens.
+
+ -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 27 Jul 2009 09:53:37 -0400
+
 sflphone-client-kde (0.9.6~rc2-SYSVER) SYSTEM; urgency=low
 
     ** 0.9.6~rc2 **

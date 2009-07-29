@@ -23,6 +23,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QDebug>
+#include <QHeaderView>
 
 SortableCodecListWidget::SortableCodecListWidget(QWidget *parent)
  : QWidget(parent)
@@ -30,6 +31,7 @@ SortableCodecListWidget::SortableCodecListWidget(QWidget *parent)
 	codecTable = new QTableView(this);
 	codecTable->setObjectName("codecTable");
 	codecTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+	codecTable->verticalHeader()->hide();
 	
 	codecUpButton = new KPushButton(this);
 	codecUpButton->setObjectName("codecUpButton");

@@ -122,9 +122,11 @@ private slots:
 	void on_view_actionTextsChangeAsked(const QString * actionTexts);
 	void on_view_transferCheckStateChangeAsked(bool transferCheckState);
 	void on_view_recordCheckStateChangeAsked(bool recordCheckState);
-	void updateScreen(QAction * action);
+	void on_view_addressBookEnableAsked(bool enabled);
 	void on_view_screenChanged(int screen);
 	void on_view_incomingCall(const Call * call);
+	
+	void updateScreen(QAction * action);
 
 	void quitButton();
 

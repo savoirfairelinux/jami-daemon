@@ -87,7 +87,6 @@ bool VoIPLink::clearCallMap()
 
 Account* VoIPLink::getAccountPtr (void)
 {
-    Account* account;
     AccountID id;
 
     id = getAccountID();

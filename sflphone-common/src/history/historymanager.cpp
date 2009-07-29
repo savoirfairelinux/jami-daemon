@@ -23,7 +23,9 @@
 #include <cc++/file.h>
 #include <time.h>
 
-HistoryManager::HistoryManager () : _history_loaded (false), _history_path ("")
+HistoryManager::HistoryManager ()
+        :	_history_loaded (false),
+        _history_path ("")
 {
 
 }

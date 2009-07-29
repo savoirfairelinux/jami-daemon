@@ -305,7 +305,9 @@ sflphone_hang_up()
 sflphone_pick_up()
 {
     DEBUG("sflphone_pick_up\n");
-    callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
+    callable_obj_t * selectedCall = NULL;
+    selectedCall = calltab_get_selected_call(active_calltree);
+    
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -804,6 +806,7 @@ sflphone_display_selected_codec (const gchar* codecName)
     selectedCall =  calltab_get_selected_call(current_calls);
     if (selectedCall) {
         if(selectedCall->_accountID != NULL){
+            statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
             acc = account_list_get_by_id(selectedCall->_accountID);
             if (!acc) {
                 msg = g_markup_printf_escaped (_("IP call - %s"), codecName);

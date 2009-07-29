@@ -32,30 +32,29 @@
 
 #define CAN_REINVITE        1
 
-static char * invitationStateMap[] = { 
-"PJSIP_INV_STATE_NULL", 
-"PJSIP_INV_STATE_CALLING", 
-"PJSIP_INV_STATE_INCOMING", 
-"PJSIP_INV_STATE_EARLY", 
-"PJSIP_INV_STATE_CONNECTING", 
-"PJSIP_INV_STATE_CONFIRMED", 
-"PJSIP_INV_STATE_DISCONNECTED" 
-};
-                                       
-static char * transactionStateMap[] = {
-"PJSIP_TSX_STATE_NULL" ,	
-"PJSIP_TSX_STATE_CALLING", 	
-"PJSIP_TSX_STATE_TRYING", 	
-"PJSIP_TSX_STATE_PROCEEDING", 	
-"PJSIP_TSX_STATE_COMPLETED", 	
-"PJSIP_TSX_STATE_CONFIRMED", 	
-"PJSIP_TSX_STATE_TERMINATED", 	
-"PJSIP_TSX_STATE_DESTROYED", 	
-"PJSIP_TSX_STATE_MAX" 
+static char * invitationStateMap[] = {
+    (char*) "PJSIP_INV_STATE_NULL",
+    (char*) "PJSIP_INV_STATE_CALLING",
+    (char*) "PJSIP_INV_STATE_INCOMING",
+    (char*) "PJSIP_INV_STATE_EARLY",
+    (char*) "PJSIP_INV_STATE_CONNECTING",
+    (char*) "PJSIP_INV_STATE_CONFIRMED",
+    (char*) "PJSIP_INV_STATE_DISCONNECTED"
 };
 
-struct result
-{
+static char * transactionStateMap[] = {
+    (char*) "PJSIP_TSX_STATE_NULL" ,
+    (char*) "PJSIP_TSX_STATE_CALLING",
+    (char*) "PJSIP_TSX_STATE_TRYING",
+    (char*) "PJSIP_TSX_STATE_PROCEEDING",
+    (char*) "PJSIP_TSX_STATE_COMPLETED",
+    (char*) "PJSIP_TSX_STATE_CONFIRMED",
+    (char*) "PJSIP_TSX_STATE_TERMINATED",
+    (char*) "PJSIP_TSX_STATE_DESTROYED",
+    (char*) "PJSIP_TSX_STATE_MAX"
+};
+
+struct result {
     pj_status_t             status;
     pjsip_server_addresses  servers;
 };
@@ -172,7 +171,7 @@ void regc_cb (struct pjsip_regc_cbparam *param);
 /*
  * DNS Callback used in workaround for bug #1852
  */
-static void dns_cb(pj_status_t status, void *token, const struct pjsip_server_addresses *addr);
+static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr);
 
 /*
  * Called to handle incoming requests outside dialogs
@@ -250,7 +249,7 @@ bool SIPVoIPLink::init()
         return false;
 
     _regPort = Manager::instance().getSipPort();
-    
+
     /* Instanciate the C++ thread */
     _evThread = new EventThread (this);
 
@@ -363,12 +362,12 @@ int SIPVoIPLink::sendRegister (AccountID id)
 {
     int expire_value;
     char contactTmp[256];
-    
+
     pj_status_t status;
     pj_str_t svr, aor, contact, useragent;
     pjsip_tx_data *tdata;
     pjsip_host_info destination;
-    
+
     std::string tmp, hostname, username, password;
     SIPAccount *account = NULL;
     pjsip_regc *regc;
@@ -376,48 +375,52 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pjsip_hdr hdr_list;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
-    if(account == NULL) {
-        _debug("In sendRegister: account is null");
-        return false; 
+
+    if (account == NULL) {
+        _debug ("In sendRegister: account is null");
+        return false;
     }
-    
-    if(account->isResolveOnce()) {
+
+    if (account->isResolveOnce()) {
+
         struct result result;
         destination.type = PJSIP_TRANSPORT_UNSPECIFIED;
-        destination.flag = pjsip_transport_get_flag_from_type(PJSIP_TRANSPORT_UNSPECIFIED);    
-        destination.addr.host = pj_str(const_cast<char*> ((account->getHostname()).c_str()));
+        destination.flag = pjsip_transport_get_flag_from_type (PJSIP_TRANSPORT_UNSPECIFIED);
+        destination.addr.host = pj_str (const_cast<char*> ( (account->getHostname()).c_str()));
         destination.addr.port = 0;
-        
+
         result.status = 0x12345678;
-        
-        pjsip_endpt_resolve(_endpt, _pool, &destination, &result, &dns_cb);
-        
+
+        pjsip_endpt_resolve (_endpt, _pool, &destination, &result, &dns_cb);
+
         /* The following magic number and construct are inspired from dns_test.c
          * in test-pjsip directory.
          */
+
         while (result.status == 0x12345678) {
             pj_time_val timeout = { 1, 0 };
-            pjsip_endpt_handle_events(_endpt, &timeout);
-            _debug("status : %d\n", result.status);	
+            pjsip_endpt_handle_events (_endpt, &timeout);
+            _debug ("status : %d\n", result.status);
         }
-        
-        if(result.status != PJ_SUCCESS) {
-            _debug("Failed to resolve hostname only once."
-                   " Default resolver will be used on"
-                   " hostname for all requests.\n");
+
+        if (result.status != PJ_SUCCESS) {
+            _debug ("Failed to resolve hostname only once."
+                    " Default resolver will be used on"
+                    " hostname for all requests.\n");
         } else {
-            _debug("%d servers where obtained from name resolution.\n", result.servers.count);
+            _debug ("%d servers where obtained from name resolution.\n", result.servers.count);
             char addr_buf[80];
-            
-            pj_sockaddr_print((pj_sockaddr_t*) &result.servers.entry[0].addr, addr_buf, sizeof(addr_buf), 3);
-            account->setHostname(addr_buf);
+
+            pj_sockaddr_print ( (pj_sockaddr_t*) &result.servers.entry[0].addr, addr_buf, sizeof (addr_buf), 3);
+            account->setHostname (addr_buf);
         }
-    } 
-    
+    }
+
     hostname = account->getHostname();
+
     username = account->getUsername();
-    password = account->getPassword(); 
-    
+    password = account->getPassword();
+
     _mutexSIP.enterMutex();
 
     /* Get the client registration information for this particular account */
@@ -432,9 +435,10 @@ int SIPVoIPLink::sendRegister (AccountID id)
     account->setRegister (true);
 
     /* Set the expire value of the message from the config file */
-    istringstream stream(account->getRegistrationExpire());
+    istringstream stream (account->getRegistrationExpire());
     stream >> expire_value;
-    if(!expire_value) {
+
+    if (!expire_value) {
         expire_value = PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
     }
 
@@ -1881,6 +1885,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
     pj_shutdown();
 
     /* Done. */
+    return true;
 }
 
 int getModId()
@@ -1888,20 +1893,22 @@ int getModId()
     return _mod_ua.id;
 }
 
-static void dns_cb(pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
+static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
 {
+
     struct result * result = (struct result*) token;
 
     result->status = status;
+
     if (status == PJ_SUCCESS) {
-        pj_memcpy(&result->servers, addr, sizeof(*addr));
+        pj_memcpy (&result->servers, addr, sizeof (*addr));
     }
 }
 
 void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 {
 
-    int voicemail, pos_begin, pos_end;
+    int voicemail = 0, pos_begin, pos_end;
     std::string voice_str = "Voice-Message: ";
     std::string delimiter = "/";
     std::string msg_body, voicemail_str;
@@ -1959,7 +1966,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     SIPVoIPLink *link;
     pjsip_rx_data *rdata;
     pj_status_t status;
-    
+
     /* Retrieve the call information */
     call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
 
@@ -1969,7 +1976,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     //Retrieve the body message
     rdata = e->body.tsx_state.src.rdata;
 
-    
+
     /* If this is an outgoing INVITE that was created because of
      * REFER/transfer, send NOTIFY to transferer.
      */
@@ -2030,23 +2037,26 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
                 }
             }
         }
-        
+
         return;
     }
-    
+
     // The call is ringing - We need to handle this case only on outgoing call
     if (inv->state == PJSIP_INV_STATE_EARLY && e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
         call->setConnectionState (Call::Ringing);
         Manager::instance().peerRingingCall (call->getCallId());
-    } 
+    }
+
     // After 2xx is sent/received.
     else if (inv->state == PJSIP_INV_STATE_CONNECTING) {
-        status = call->getLocalSDP()->check_sdp_answer (inv, rdata);    
+        status = call->getLocalSDP()->check_sdp_answer (inv, rdata);
+
         if (status != PJ_SUCCESS) {
-            _debug("Failed to check_incoming_sdp in call_on_state_changed\n");
+            _debug ("Failed to check_incoming_sdp in call_on_state_changed\n");
             return;
         }
     }
+
     // After we sent or received a ACK - The connection is established
     else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
 
@@ -2060,15 +2070,14 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
         if (link)
             link->SIPCallAnswered (call, rdata);
-    }
-    else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
+    } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
         _debug ("Invitation falled in state \"disconnected\".\n");
         _debug ("State: %i, Disconnection cause: %i\n", inv->state, inv->cause);
 
         switch (inv->cause) {
                 /* The call terminates normally - BYE / CANCEL */
+
             case PJSIP_SC_OK:
-            case PJSIP_SC_DECLINE:
             case PJSIP_SC_REQUEST_TERMINATED:
                 accId = Manager::instance().getAccountFromCall (call->getCallId());
                 link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
@@ -2078,8 +2087,11 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
                 }
 
                 break;
-             /* The call connection failed */
+
+                /* The call connection failed */
+
             case PJSIP_SC_NOT_FOUND:            /* peer not found */
+            case PJSIP_SC_DECLINE:
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
             case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
             case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
@@ -2094,25 +2106,26 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
                 }
 
                 break;
+
             default:
                 _debug ("sipvoiplink.cpp - line %d : Unhandled call state. This is probably a bug.\n", __LINE__);
                 break;
         }
     }
-  
+
 }
 
 // This callback is called after SDP offer/answer session has completed.
 void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 {
     _debug ("call_on_media_update\n");
-    
+
     const pjmedia_sdp_session *local_sdp;
     const pjmedia_sdp_session *remote_sdp;
-    
+
     SIPVoIPLink * link = NULL;
     SIPCall * call;
-    
+
     call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
 
     if (!call) {
@@ -2120,35 +2133,37 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         return;
     }
 
-    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(AccountNULL));
-    if(link == NULL) {
+    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
+
+    if (link == NULL) {
         _debug ("Failed to get sip link\n");
         return;
     }
-    
+
     if (status != PJ_SUCCESS) {
         _debug ("Error while negotiating the offer\n");
-        link->hangup(call->getCallId());
-        Manager::instance().callFailure(call->getCallId());
+        link->hangup (call->getCallId());
+        Manager::instance().callFailure (call->getCallId());
         return;
     }
 
     // Get the new sdp, result of the negotiation
-    pjmedia_sdp_neg_get_active_local  (inv->neg, &local_sdp);
+    pjmedia_sdp_neg_get_active_local (inv->neg, &local_sdp);
+
     pjmedia_sdp_neg_get_active_remote (inv->neg, &remote_sdp);
-        
+
     // Clean the resulting sdp offer to create a new one (in case of a reinvite)
     call->getLocalSDP()->clean_session_media();
-    
+
     // Set the fresh negotiated one, no matter if that was an offer or answer.
-    // The local sdp is updated in case of an answer, even if the remote sdp 
+    // The local sdp is updated in case of an answer, even if the remote sdp
     // is kept internally.
     call->getLocalSDP()->set_negotiated_sdp (local_sdp);
 
-    // Set remote ip / port  
-    call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp); 
-        
-    try {    
+    // Set remote ip / port
+    call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
+
+    try {
         call->setAudioStart (true);
         call->getAudioRtp()->start();
     } catch(exception& rtpException) {
@@ -2266,7 +2281,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     userName = std::string (sip_uri->user.ptr, sip_uri->user.slen);
     server = std::string (sip_uri->host.ptr, sip_uri->host.slen);
 
-    _debug("mod_on_rx_request: %s@%s\n", userName.c_str(), server.c_str());
+    _debug ("mod_on_rx_request: %s@%s\n", userName.c_str(), server.c_str());
 
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
@@ -2455,7 +2470,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata UNUSED)
 {
-    _debug("Mod on rx response");
+    _debug ("Mod on rx response");
     return PJ_SUCCESS;
 }
 
@@ -2654,7 +2669,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         return;
     }
 
-    SIPCall* newCall;
+    SIPCall* newCall = 0;
 
     SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
 
@@ -2797,7 +2812,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         if (event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
             request = event->body.rx_msg.rdata->msg_info.msg_buf;
 
-            if (request.find (noresource) != -1) {
+            if ( (int) request.find (noresource) != -1) {
                 _debug ("UserAgent: NORESOURCE for transfer!\n");
                 link->transferStep2(call);
                 pjsip_evsub_terminate (sub, PJ_TRUE);
@@ -2806,7 +2821,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
                 return;
             }
 
-            if (request.find (ringing) != -1) {
+            if ( (int) request.find (ringing) != -1) {
                 _debug ("UserAgent: transfered call RINGING!\n");
                 link->transferStep2(call);
                 pjsip_evsub_terminate (sub, PJ_TRUE);

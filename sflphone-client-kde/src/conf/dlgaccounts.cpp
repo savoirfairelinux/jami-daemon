@@ -44,7 +44,7 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	
 	connect(edit1_alias,           SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
-	connect(edit2_protocol,        SIGNAL(currentIndexChanged(int)),
+	connect(edit2_protocol,        SIGNAL(activated(int)),
 	        this,                  SLOT(changedAccountList()));
 	connect(edit3_server,          SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
@@ -54,7 +54,9 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	        this,                  SLOT(changedAccountList()));
 	connect(edit6_mailbox,         SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
-	connect(checkBox_conformRFC,   SIGNAL(stateChanged(int)),
+	connect(spinbox_regExpire,     SIGNAL(editingFinished()),
+	        this,                  SLOT(changedAccountList()));
+	connect(checkBox_conformRFC,   SIGNAL(clicked(bool)),
 	        this,                  SLOT(changedAccountList()));
 	connect(button_accountUp,      SIGNAL(clicked()),
 	        this,                  SLOT(changedAccountList()));
@@ -181,8 +183,9 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit5_password->setText( account->getAccountDetail(ACCOUNT_PASSWORD));
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
 	checkBox_conformRFC->setChecked( account->getAccountDetail(ACCOUNT_RESOLVE_ONCE) != "TRUE" );
-	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt();
-	spinbox_regExpire->setValue(val);
+	bool ok;
+	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(&ok);
+	spinbox_regExpire->setValue(ok ? val : ACCOUNT_EXPIRE_DEFAULT);
 	updateStatusLabel(account);
 	frame2_editAccounts->setEnabled(true);
 }
@@ -358,6 +361,7 @@ bool DlgAccounts::hasChanged()
 
 void DlgAccounts::updateSettings()
 {
+	qDebug() << "DlgAccounts::updateSettings";
 	if(accountListHasChanged)
 	{
 		saveAccountList();
@@ -369,11 +373,8 @@ void DlgAccounts::updateSettings()
 void DlgAccounts::updateWidgets()
 {
 	qDebug() << "DlgAccounts::updateWidgets";
-	if(accountListHasChanged)
-	{
-		loadAccountList();
-		toolButton_accountsApply->setEnabled(false);
-		accountListHasChanged = false;
-	}
+	loadAccountList();
+	toolButton_accountsApply->setEnabled(false);
+	accountListHasChanged = false;
 }
 

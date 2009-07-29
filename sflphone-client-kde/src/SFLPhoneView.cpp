@@ -65,6 +65,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	
 	errorWindow = new QErrorMessage(this);
 	callList = new CallList(this);
+	historyLoaded = false;
 	for(int i = 0 ; i < callList->size() ; i++)
 	{
 		Call * call = (*callList)[i];
@@ -125,6 +126,12 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 
 SFLPhoneView::~SFLPhoneView()
 {
+}
+
+void SFLPhoneView::saveState()
+{
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	configurationManager.setHistory(callList->getHistoryMap());
 }
 
 void SFLPhoneView::loadWindow()
@@ -197,7 +204,7 @@ void SFLPhoneView::addCallToCallHistory(Call * call)
 	QWidget * widget = call->getHistoryItemWidget();
 	if(item && widget)
 	{
-		listWidget_callHistory->addItem(item);
+		listWidget_callHistory->insertItem(0, item);
 		listWidget_callHistory->setItemWidget(item, widget);
 	}
 }
@@ -421,12 +428,17 @@ void SFLPhoneView::action(Call * call, call_action action)
 
 void SFLPhoneView::updateCallItem(Call * call)
 {
+	if(!call) return;
 	call_state state = call->getState();
 	if(state == CALL_STATE_OVER)
 	{
 		QListWidgetItem * item = call->getItem();
 		qDebug() << "Updating call with CALL_STATE_OVER. Deleting item " << (*callList)[item]->getCallId();
 		listWidget_callList->takeItem(listWidget_callList->row(item));
+		if(call->getHistoryState() != NONE)
+		{
+			addCallToCallHistory(call);
+		}
 	}
 }
 
@@ -601,7 +613,7 @@ void SFLPhoneView::updateCallHistory()
 	qDebug() << "updateCallHistory";
 	while(listWidget_callHistory->count() > 0)
 	{
-		QListWidgetItem * item = listWidget_callHistory->takeItem(0);
+		listWidget_callHistory->takeItem(0);
 	}
 	QString textSearched = lineEdit_searchHistory->text();
 	for(int i = callList->size() - 1 ; i >= 0 ; i--)
@@ -618,7 +630,7 @@ void SFLPhoneView::updateCallHistory()
 			addCallToCallHistory(call);
 		}
 	}
-	alternateColors(listWidget_callHistory);
+// 	alternateColors(listWidget_callHistory);
 }
 
 void SFLPhoneView::updateAddressBook()
@@ -1021,7 +1033,12 @@ void SFLPhoneView::on_stackedWidget_screen_currentChanged(int index)
 			break;
 		case SCREEN_HISTORY:
 			qDebug() << "Switched to call history screen.";
-			updateCallHistory();
+			if(!historyLoaded)
+			{
+				updateCallHistory();
+				historyLoaded = true;
+			}
+			alternateColors(listWidget_callHistory);
 			emit windowTitleChangeAsked(i18n("SFLphone") + " - " + i18n("Call history"));
 			break;
 		case SCREEN_ADDRESS:

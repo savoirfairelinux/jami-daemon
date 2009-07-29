@@ -157,6 +157,9 @@ static void iax_apply_callback( void ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_username))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_server))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
+		//g_hash_table_insert(current->properties, g_strdup(ACCOUNT_RESOLVE_ONCE), g_strdup("FALSE"));
+		//g_hash_table_insert(current->properties, g_strdup(ACCOUNT_REGISTRATION_EXPIRE), g_strdup("600"));
+
 		dbus_add_account( current );
 		getMessageSummary(message, 
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),

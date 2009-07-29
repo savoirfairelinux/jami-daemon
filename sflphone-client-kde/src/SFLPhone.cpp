@@ -198,6 +198,7 @@ void SFLPhone::quitButton()
 		qDebug() << "Attempting to quit when still having some calls open.";
 // 		view->getErrorWindow()->showMessage(i18n("You still have some calls open. Please close all calls before quitting."));
 	}
+	view->saveState();
 	instance.Unregister(getpid());
 	qApp->quit();
 }
@@ -369,3 +370,7 @@ void SFLPhone::on_view_incomingCall(const Call * call)
 	}
 }
 
+void SFLPhone::on_view_addressBookEnableAsked(bool enabled)
+{
+	action_addressBook->setVisible(enabled);
+}
