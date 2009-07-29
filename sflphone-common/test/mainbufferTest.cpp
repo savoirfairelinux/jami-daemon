@@ -213,22 +213,46 @@ void MainBufferTest::testAvailForGetPut()
     init_size = _mainbuffer.availForPut(test_id);
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
     test_output_size = _mainbuffer.availForPut(test_id);
-    CPPUNIT_ASSERT(test_output_size == (init_size - sizeof(int)));
+    CPPUNIT_ASSERT(test_output_size == (init_size - (int)sizeof(int)));
 
     init_size = _mainbuffer.availForGetByID(test_id);
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
     test_output_size = _mainbuffer.availForGetByID(test_id);
-    CPPUNIT_ASSERT(test_output_size == (init_size + sizeof(int)));
+    CPPUNIT_ASSERT(test_output_size == (init_size + (int)sizeof(int)));
 
     init_size = _mainbuffer.availForGet();
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
     test_output_size = _mainbuffer.availForGet();
-    CPPUNIT_ASSERT(test_output_size == (init_size + sizeof(int)));
+    CPPUNIT_ASSERT(test_output_size == (init_size + (int)sizeof(int)));
 
     init_size = _mainbuffer.availForGet(test_id);
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100) == sizeof(int));
     test_output_size = _mainbuffer.availForGet(test_id);
-    CPPUNIT_ASSERT(test_output_size == (init_size + sizeof(int)));
+    CPPUNIT_ASSERT(test_output_size == (init_size + (int)sizeof(int)));
+
+    _mainbuffer.removeRingBuffer(test_id);
+
+}
+
+
+void MainBufferTest::testDiscardFlush()
+{
+
+    CallID test_id = "flush discard";
+    _mainbuffer.createRingBuffer(test_id);
+
+    int test_input1 = 12;
+    int test_output_size;
+    int init_size;
+
+    init_size = _mainbuffer.availForGet(test_id);
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100) == sizeof(int));
+    test_output_size = _mainbuffer.availForGet(test_id);
+    CPPUNIT_ASSERT(test_output_size == (init_size + (int)sizeof(int)));
+
+    _mainbuffer.discard(sizeof(int), test_id);
+    test_output_size = _mainbuffer.availForGet(test_id);
+    CPPUNIT_ASSERT(test_output_size == init_size);
 
     _mainbuffer.removeRingBuffer(test_id);
 
