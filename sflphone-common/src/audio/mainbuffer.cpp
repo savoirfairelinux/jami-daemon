@@ -103,9 +103,7 @@ int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID 
 int MainBuffer::availForPut(CallID call_id)
 {
 
-    RingBuffer* ring_buffer = getRingBuffer(call_id);
-
-    return ring_buffer->AvailForPut();
+    return getRingBuffer(call_id)->AvailForPut();
 
 }
 
@@ -116,7 +114,7 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
     CallIDMap::iterator iter = _callIDMap.find(call_id);
     if (iter == _callIDMap.end())
     {
-	_debug("Output CallID: \"%s\" does not have any coresponding RingBuffer ID!\n", call_id);
+	_debug("Output CallID: \"%s\" does not have any coresponding RingBuffer ID!\n", call_id.c_str());
 	return 0;
     }
     else
@@ -158,7 +156,7 @@ int MainBuffer::availForGet(CallID call_id)
     CallIDMap::iterator iter = _callIDMap.find(call_id);
     if (iter == _callIDMap.end())
     {
-	_debug("Output CallID: \"%s\" does not have any coresponding RingBuffer ID!\n", call_id);
+	_debug("Output CallID: \"%s\" does not have any coresponding RingBuffer ID!\n", call_id.c_str());
 	return 0;
     }
     else
@@ -170,8 +168,51 @@ int MainBuffer::availForGet(CallID call_id)
 int MainBuffer::availForGetByID(CallID call_id)
 {
 
-    RingBuffer* ring_buffer = getRingBuffer(call_id);
+    return getRingBuffer(call_id)->AvailForGet();
 
-    return ring_buffer->AvailForGet();
+}
 
+
+int MainBuffer::discard(int toDiscard, CallID call_id)
+{
+
+    CallIDMap::iterator iter = _callIDMap.find(call_id);
+    if (iter == _callIDMap.end())
+    {
+	_debug("Output CallID: \"%s\" does not have any coresponding RingBuffer ID!\n", call_id.c_str());
+	return 0;
+    }
+    else
+	return discardByID(toDiscard, iter->second);
+
+}
+
+
+int MainBuffer::discardByID(int toDiscard, CallID call_id)
+{
+
+    return getRingBuffer(call_id)->Discard(toDiscard);
+
+}
+
+
+
+void MainBuffer::flush(CallID call_id)
+{
+
+    CallIDMap::iterator iter = _callIDMap.find(call_id);
+    if (iter == _callIDMap.end())
+    {
+	_debug("Output CallID: \"%s\" does not have any coresponding RingBuffer ID!\n ", call_id.c_str());
+    }
+    else
+	flushByID(call_id);
+
+}
+
+
+void MainBuffer::flushByID(CallID call_id)
+{
+
+    getRingBuffer(call_id)->flush();
 }

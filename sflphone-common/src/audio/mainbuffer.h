@@ -51,9 +51,9 @@ class MainBuffer {
 
 	int availForGet(CallID call_id = default_id);
 
-	// int discard(int toDiscard, CallID call_id = default_id);
+	int discard(int toDiscard, CallID call_id = default_id);
 
-	// void flush(CallID call_id = default_id);
+	void flush(CallID call_id = default_id);
 
     private:
 
@@ -66,6 +66,10 @@ class MainBuffer {
 	int getDataByID(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 
 	int availForGetByID(CallID call_id = default_id);
+
+	int discardByID(int toDiscard, CallID call_id = default_id);
+
+	void flushByID(CallID call_id = default_id);
 
 	RingBufferMap _ringBufferMap;
 
