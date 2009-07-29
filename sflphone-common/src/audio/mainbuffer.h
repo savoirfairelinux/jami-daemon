@@ -47,11 +47,9 @@ class MainBuffer {
 
 	int getData(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 
-	int getDataByID(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
-
 	int availForPut(CallID call_id = default_id);
 
-	// int availForGet(CallID call_id = default_id);
+	int availForGet(CallID call_id = default_id);
 
 	// int discard(int toDiscard, CallID call_id = default_id);
 
@@ -64,6 +62,10 @@ class MainBuffer {
 	RingBuffer* getRingBuffer(CallID call_id);
 
 	bool removeRingBuffer(CallID call_id);
+
+	int getDataByID(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
+
+	int availForGetByID(CallID call_id = default_id);
 
 	RingBufferMap _ringBufferMap;
 

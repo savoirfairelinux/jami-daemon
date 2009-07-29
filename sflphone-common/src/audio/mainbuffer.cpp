@@ -150,3 +150,28 @@ int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, Cal
     return 0;
 
 }
+
+
+int MainBuffer::availForGet(CallID call_id)
+{
+
+    CallIDMap::iterator iter = _callIDMap.find(call_id);
+    if (iter == _callIDMap.end())
+    {
+	_debug("Output CallID: \"%s\" does not have any coresponding RingBuffer ID!\n", call_id);
+	return 0;
+    }
+    else
+	return availForGetByID(iter->second);
+
+}
+
+
+int MainBuffer::availForGetByID(CallID call_id)
+{
+
+    RingBuffer* ring_buffer = getRingBuffer(call_id);
+
+    return ring_buffer->AvailForGet();
+
+}

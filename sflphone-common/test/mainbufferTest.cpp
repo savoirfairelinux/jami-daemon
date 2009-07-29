@@ -215,6 +215,21 @@ void MainBufferTest::testAvailForGetPut()
     test_output_size = _mainbuffer.availForPut(test_id);
     CPPUNIT_ASSERT(test_output_size == (init_size - sizeof(int)));
 
+    init_size = _mainbuffer.availForGetByID(test_id);
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
+    test_output_size = _mainbuffer.availForGetByID(test_id);
+    CPPUNIT_ASSERT(test_output_size == (init_size + sizeof(int)));
 
+    init_size = _mainbuffer.availForGet();
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
+    test_output_size = _mainbuffer.availForGet();
+    CPPUNIT_ASSERT(test_output_size == (init_size + sizeof(int)));
+
+    init_size = _mainbuffer.availForGet(test_id);
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100) == sizeof(int));
+    test_output_size = _mainbuffer.availForGet(test_id);
+    CPPUNIT_ASSERT(test_output_size == (init_size + sizeof(int)));
+
+    _mainbuffer.removeRingBuffer(test_id);
 
 }
