@@ -369,7 +369,7 @@ class SIPVoIPLink : public VoIPLink
         unsigned int _localExternPort;
 
         /** Starting sound */
-        AudioRtp* _audiortp;
+        // AudioRtp* _audiortp;
         
         /** For registration use only */
         int _regPort;
