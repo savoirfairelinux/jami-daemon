@@ -69,6 +69,7 @@ class MainBufferTest : public CppUnit::TestCase {
        CPPUNIT_TEST( testTwoPointer );
        CPPUNIT_TEST( testGetPutData );
        CPPUNIT_TEST( testGetDataAndCallID );
+       CPPUNIT_TEST( testAvailForGetPut );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -99,6 +100,7 @@ class MainBufferTest : public CppUnit::TestCase {
 
 	void testGetDataAndCallID();
 
+	void testAvailForGetPut();
 
     private:
 

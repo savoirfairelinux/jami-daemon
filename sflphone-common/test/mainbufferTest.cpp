@@ -198,3 +198,23 @@ void MainBufferTest::testGetDataAndCallID()
 
     _mainbuffer.removeRingBuffer(test_id);
 }
+
+
+void MainBufferTest::testAvailForGetPut()
+{
+
+    CallID test_id = "avail for get";
+    _mainbuffer.createRingBuffer(test_id);
+
+    int test_input1 = 12;
+    int test_output_size;
+    int init_size;
+
+    init_size = _mainbuffer.availForPut(test_id);
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
+    test_output_size = _mainbuffer.availForPut(test_id);
+    CPPUNIT_ASSERT(test_output_size == (init_size - sizeof(int)));
+
+
+
+}

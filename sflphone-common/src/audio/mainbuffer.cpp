@@ -100,6 +100,15 @@ int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID 
 
 }
 
+int MainBuffer::availForPut(CallID call_id)
+{
+
+    RingBuffer* ring_buffer = getRingBuffer(call_id);
+
+    return ring_buffer->AvailForPut();
+
+}
+
 
 int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
