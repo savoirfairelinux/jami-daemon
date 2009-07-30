@@ -128,6 +128,13 @@ AlsaLayer::startStream (void)
     startCaptureStream ();
     startPlaybackStream ();
 
+    _urgentRingBuffer.flush();
+    // _micRingBuffer.flush();
+    // _voiceRingBuffer.flush();
+
+    _mainBuffer.flush();
+    _mainBuffer.flushDefault();
+
 }
 
 void
