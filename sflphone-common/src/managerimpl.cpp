@@ -1291,10 +1291,21 @@ int
 ManagerImpl::createSettingsPath (void)
 {
 
-    //_path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
-    (XDG_CONFIG_HOME != NULL) ? _path = std::string (XDG_CONFIG_HOME)
-                                        :	_path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR + PROGDIR;
+	std::string xdg_config, xdg_env;
 
+	_debug ("XDG_CONFIG_HOME: %s\n", XDG_CONFIG_HOME);
+
+	xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR + PROGDIR;
+
+    //_path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
+    if (XDG_CONFIG_HOME != NULL) 
+	{
+		xdg_env = std::string (XDG_CONFIG_HOME);
+		(xdg_env.length() > 0) ? _path = xdg_env
+							:	 _path = xdg_config;
+	}
+	else
+		_path = xdg_config;
 
     if (mkdir (_path.data(), 0700) != 0) {
         // If directory	creation failed
