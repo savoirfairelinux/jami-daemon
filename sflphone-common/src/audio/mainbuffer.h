@@ -29,9 +29,13 @@
 #include "../call.h"
 #include "ringbuffer.h"
 
+
+
 typedef std::map<CallID, RingBuffer*> RingBufferMap;
 
-typedef std::map<CallID, CallID> CallIDMap;
+typedef std::set<CallID> CallIDSet;
+
+typedef std::map<CallID, CallIDSet*> CallIDMap;
 
 #define default_id "default_id"
 
@@ -43,9 +47,23 @@ class MainBuffer {
 
         ~MainBuffer();
 
+	CallIDSet* getCallIDSet(CallID call_id);
+
+	bool createCallIDSet(CallID set_id);
+
+	bool removeCallIDSet(CallID set_id);
+
+	void addCallIDtoSet(CallID set_id, CallID call_id);
+
+	void removeCallIDfromSet(CallID set_id, CallID call_id);
+
 	RingBuffer* createRingBuffer(CallID call_id);
 
 	bool removeRingBuffer(CallID call_id);
+
+	void bindCallID(CallID call_id1, CallID call_id2 = default_id);
+
+	void unBindCallID(CallID call_id1, CallID call_id2 = default_id);
 
 	int putData(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 

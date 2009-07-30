@@ -64,13 +64,14 @@ class MainBufferTest : public CppUnit::TestCase {
      */
     CPPUNIT_TEST_SUITE( MainBufferTest );
        CPPUNIT_TEST( testRingBufferCreation );
-       CPPUNIT_TEST( testRingbufferInt );
-       CPPUNIT_TEST( testRingbufferFloat );
+       CPPUNIT_TEST( testCallIDSetCreation );
+       CPPUNIT_TEST( testRingBufferInt );
+       CPPUNIT_TEST( testRingBufferFloat );
        CPPUNIT_TEST( testTwoPointer );
        CPPUNIT_TEST( testGetPutData );
        CPPUNIT_TEST( testGetDataAndCallID );
        CPPUNIT_TEST( testAvailForGetPut );
-       CPPUNIT_TEST( testDiscardFlush );
+       // CPPUNIT_TEST( testDiscardFlush );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -91,9 +92,11 @@ class MainBufferTest : public CppUnit::TestCase {
 
         void testRingBufferCreation();
 
-	void testRingbufferInt();
+	void testCallIDSetCreation();
 
-	void testRingbufferFloat();
+	void testRingBufferInt();
+
+	void testRingBufferFloat();
 
 	void testTwoPointer();
 

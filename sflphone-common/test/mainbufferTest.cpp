@@ -53,6 +53,8 @@ void MainBufferTest::tearDown()
 
 void MainBufferTest::testRingBufferCreation()
 {
+    _debug("MainBufferTest::testRingBufferCreation()\n");
+
     CallID test_id = "1234";
     RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(test_id);
 
@@ -66,8 +68,29 @@ void MainBufferTest::testRingBufferCreation()
 }
 
 
-void MainBufferTest::testRingbufferInt()
+void MainBufferTest::testCallIDSetCreation()
 {
+    _debug("MainBufferTest::testCallIDSetCreation()\n");
+
+    CallID test_id = "1234";
+    CallID false_id = "false id";
+    CallIDSet* callid_set = 0;
+
+    CPPUNIT_ASSERT(_mainbuffer.createCallIDSet(test_id) == true);
+    callid_set = _mainbuffer.getCallIDSet(false_id);
+    CPPUNIT_ASSERT(callid_set == NULL);
+    callid_set = _mainbuffer.getCallIDSet(test_id);
+    CPPUNIT_ASSERT(callid_set != NULL);
+
+    CPPUNIT_ASSERT(_mainbuffer.removeCallIDSet(false_id) == false);
+    CPPUNIT_ASSERT(_mainbuffer.removeCallIDSet(test_id) == true);
+}
+
+
+void MainBufferTest::testRingBufferInt()
+{
+
+    _debug("MainBufferTest::testRingbufferInt()\n");
 
     CallID test_id = "test_int";
     RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(test_id);
@@ -99,8 +122,10 @@ void MainBufferTest::testRingbufferInt()
 }
 
 
-void MainBufferTest::testRingbufferFloat()
+void MainBufferTest::testRingBufferFloat()
 {
+
+    _debug("MainBufferTest::testRingBufferFloat()\n");
 
     CallID test_id = "test_float";
     RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(test_id);
@@ -135,6 +160,7 @@ void MainBufferTest::testRingbufferFloat()
 void MainBufferTest::testTwoPointer()
 {
 
+    _debug("MainBufferTest::testTwoPointer()\n");
 
     CallID test_id = "two pointer";
     RingBuffer* input_buffer = _mainbuffer.createRingBuffer(test_id);
@@ -153,6 +179,8 @@ void MainBufferTest::testTwoPointer()
 
 void MainBufferTest::testGetPutData()
 {
+
+    _debug("MainBufferTest::testGetPutData()\n");
     
     CallID test_id = "getData putData";
     CallID false_id = "false id";
@@ -180,9 +208,12 @@ void MainBufferTest::testGetPutData()
 
 void MainBufferTest::testGetDataAndCallID()
 {
+
+    _debug("MainBufferTest::testGetDataAndCallID()\n");
     
     CallID test_id = "incoming rtp session";
     _mainbuffer.createRingBuffer(test_id);
+    _mainbuffer.bindCallID(test_id);
 
     int test_input1 = 12;
     int test_input2 = 13;
@@ -197,14 +228,18 @@ void MainBufferTest::testGetDataAndCallID()
     CPPUNIT_ASSERT(test_input2 == test_output);
 
     _mainbuffer.removeRingBuffer(test_id);
+    _mainbuffer.unBindCallID(test_id);
 }
 
 
 void MainBufferTest::testAvailForGetPut()
 {
 
+    _debug("MainBufferTest::testAvailForGetPut()\n");
+
     CallID test_id = "avail for get";
     _mainbuffer.createRingBuffer(test_id);
+    _mainbuffer.bindCallID(test_id);
 
     int test_input1 = 12;
     int test_output_size;
@@ -231,6 +266,7 @@ void MainBufferTest::testAvailForGetPut()
     CPPUNIT_ASSERT(test_output_size == (init_size + (int)sizeof(int)));
 
     _mainbuffer.removeRingBuffer(test_id);
+    _mainbuffer.unBindCallID(test_id);
 
 }
 
@@ -238,8 +274,11 @@ void MainBufferTest::testAvailForGetPut()
 void MainBufferTest::testDiscardFlush()
 {
 
+    _debug("MainBufferTest::testDiscardFlush()\n");
+
     CallID test_id = "flush discard";
     _mainbuffer.createRingBuffer(test_id);
+    _mainbuffer.removeRingBuffer(test_id);
 
     int test_input1 = 12;
     int test_output_size;
@@ -255,5 +294,6 @@ void MainBufferTest::testDiscardFlush()
     CPPUNIT_ASSERT(test_output_size == init_size);
 
     _mainbuffer.removeRingBuffer(test_id);
+    _mainbuffer.unBindCallID(test_id);
 
 }
