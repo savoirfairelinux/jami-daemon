@@ -2477,6 +2477,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (USERNAME, getConfigString (accountID, USERNAME)));
     a.insert (std::pair<std::string, std::string> (PASSWORD, getConfigString (accountID, PASSWORD)));
     a.insert (std::pair<std::string, std::string> (HOSTNAME, getConfigString (accountID, HOSTNAME)));
+    a.insert (std::pair<std::string, std::string> (REALM, getConfigString (accountID, REALM)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
 
     if (getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
@@ -2523,6 +2524,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
 	( (iter = map_cpy.find (HOSTNAME)) == map_cpy.end ()) ? setConfig (accountID, HOSTNAME, EMPTY_FIELD)
 														: setConfig (accountID, HOSTNAME, iter->second);
+														
+    ( (iter = map_cpy.find (REALM)) == map_cpy.end ()) ? setConfig (accountID, REALM, std::string("*"))
+														: setConfig (accountID, REALM, iter->second);
 
 	( (iter = map_cpy.find (CONFIG_ACCOUNT_MAILBOX)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, EMPTY_FIELD)
 																		: setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, iter->second);
@@ -2730,7 +2734,7 @@ ManagerImpl::loadAccountMap()
 
     while (iter != sections.end()) {
         // Check if it starts with "Account:" (SIP and IAX pour le moment)
-        if ( (int) (iter->find ("Account:")) == -1) {
+        if ( (int) (iter->find ("Account:")) != 0) {
             iter++;
             continue;
         }
@@ -2771,7 +2775,7 @@ ManagerImpl::unloadAccountMap()
 
     while (iter != _accountMap.end()) {
 
-        _debug ("-> Deleting account %s\n", iter->first.c_str());
+        _debug ("-> Unloading account %s\n", iter->first.c_str());
         delete iter->second;
         iter->second = 0;
 

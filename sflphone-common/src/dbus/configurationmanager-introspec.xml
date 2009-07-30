@@ -15,6 +15,23 @@
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
     
+    <method name="setCredential">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="i" name="index" direction="in"/>
+      <arg type="a{ss}" name="credentialInformation" direction="in"/>
+    </method>
+    
+    <method name="getCredential">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="i" name="index" direction="in"/>
+      <arg type="a{ss}" name="credentialInformation" direction="out"/>
+    </method>
+    
+    <method name="getNumberOfCredential">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="i" name="numberOfCredential" direction="out"/>
+    </method>
+        
     <method name="addAccount">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
       <arg type="a{ss}" name="details" direction="in"/>

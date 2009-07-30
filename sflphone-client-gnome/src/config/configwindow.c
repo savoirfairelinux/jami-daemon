@@ -236,7 +236,7 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), TRUE);
     }
-    DEBUG("select");
+    DEBUG("Selecting account in account window");
 }
 
     static void
