@@ -148,21 +148,20 @@ int HistoryManager::create_history_path (std::string path)
 
     std::string filename, userdata, xdg_env, xdg_data;
 
-	xdg_data = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".local/share";
+	xdg_data = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
 
     if (path == "") {
-        // TODO Should use $XDG_DATA_HOME (which default to .local/share) instead of HOMEDIR
 
+		// If the environment variable is set (not null and not empty), we'll use it to save the history
+		// Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
         if (XDG_DATA_HOME != NULL)
 		{
 			xdg_env = std::string (XDG_DATA_HOME);
-			(xdg_env.length() > 0) ?  userdata = xdg_env 
-									: userdata = xdg_data;
+			(xdg_env.length() > 0) ?	userdata = xdg_env 
+										: userdata = xdg_data;
 		}
 		else
 			userdata = xdg_data;
-
-		filename = userdata + DIR_SEPARATOR_STR + PROGDIR;
 
         if (mkdir (filename.data(), 0755) != 0) {
             // If directory	creation failed
