@@ -41,6 +41,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     _debug (" Constructor of AlsaLayer called\n");
     /* Instanciate the audio thread */
     _audioThread = new AudioThread (this);
+
 }
 
 // Destructor
@@ -48,6 +49,7 @@ AlsaLayer::~AlsaLayer (void)
 {
     _debug ("Destructor of AlsaLayer called\n");
     closeLayer();
+
 }
 
 bool
@@ -388,10 +390,11 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
 
     /* Set the start threshold */
 
-    if ( (err = snd_pcm_sw_params_set_start_threshold (pcm_handle, swparams, 2700 /*periodsize*2*/)) < 0) {
-        _debugAlsa (" Cannot set start threshold (%s)\n", snd_strerror (err));
-        return false;
-    }
+    
+    // if ( (err = snd_pcm_sw_params_set_start_threshold (pcm_handle, swparams, 2700 /*periodsize*2*/)) < 0) {
+    //     _debugAlsa (" Cannot set start threshold (%s)\n", snd_strerror (err));
+    //     return false;
+    //}
 
     if ( (err = snd_pcm_sw_params (pcm_handle, swparams)) < 0) {
         _debugAlsa (" Cannot set sw parameters (%s)\n", snd_strerror (err));
@@ -769,6 +772,9 @@ void AlsaLayer::audioCallback (void)
     int toPut;
     SFLDataFormat* in;
 
+
+    // snd_pcm_sframes_t micAvailAlsa;
+    in = 0;
     if(is_capture_running())
     {
         micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
@@ -777,11 +783,11 @@ void AlsaLayer::audioCallback (void)
             micAvailPut = _mainBuffer.availForPut();
             toPut = (micAvailAlsa <= micAvailPut) ? micAvailAlsa : micAvailPut;
             in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
-            toPut = read (in, toPut);
+            toPut = read (in, toPut* sizeof(SFLDataFormat));
             if (in != 0)
             {
                 _mainBuffer.putData(in, toPut, 100);
-            }
+	    }
             free(in); in=0;
         }
     }
