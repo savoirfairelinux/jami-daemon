@@ -20,6 +20,15 @@
       <arg type="i" name="index" direction="in"/>
       <arg type="a{ss}" name="credentialInformation" direction="in"/>
     </method>
+
+    <method name="setNumberOfCredential">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="i" name="number" direction="in"/>
+    </method>
+       
+     <method name="deleteAllCredential">
+      <arg type="s" name="accountID" direction="in"/>
+    </method>
     
     <method name="getCredential">
       <arg type="s" name="accountID" direction="in"/>

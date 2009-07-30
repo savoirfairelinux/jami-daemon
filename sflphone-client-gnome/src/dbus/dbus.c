@@ -583,6 +583,34 @@ dbus_set_credential(account_t *a, int index)
         g_error_free (error);
     }
 }
+    void 
+dbus_set_number_of_credential(account_t *a, int number) 
+{
+    DEBUG("Sending number of credential %d to server", number);
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_set_number_of_credential( configurationManagerProxy, a->accountID, number, &error);
+            
+    if (error) {
+        ERROR ("Failed to call set_account_details() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    } 
+}
+    void
+dbus_delete_all_credential(account_t *a)
+{
+    DEBUG("Deleting all credentials\n");
+    GError *error = NULL;
+    
+    org_sflphone_SFLphone_ConfigurationManager_delete_all_credential(configurationManagerProxy, a->accountID, &error);
+        
+    if (error) {
+        ERROR ("Failed to call deleteAllCredential on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    } 
+}
 
     int
 dbus_get_number_of_credential(gchar * accountID)

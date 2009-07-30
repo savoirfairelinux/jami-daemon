@@ -73,6 +73,12 @@ ConfigurationManager::getNumberOfCredential (const std::string& accountID)
 }
 
 void
+ConfigurationManager::setNumberOfCredential (const std::string& accountID, const int32_t& number)
+{
+    Manager::instance().setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, number);
+}
+        
+void
 ConfigurationManager::setCredential (const std::string& accountID, const int32_t& index,
         const std::map< std::string, std::string >& details)
 {
@@ -117,6 +123,13 @@ ConfigurationManager::setCredential (const std::string& accountID, const int32_t
     
     _debug("Realm: %s\n", it->second.c_str());
 
+}
+
+void
+ConfigurationManager::deleteAllCredential (const std::string& accountID)
+{
+    _debug ("ConfigurationManager::deleteAllCredential received\n");
+    Manager::instance().deleteAllCredential (accountID);
 }
 
 void

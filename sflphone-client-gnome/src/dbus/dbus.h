@@ -127,6 +127,20 @@ void dbus_set_credential(account_t *a, int index);
 int dbus_get_number_of_credential(gchar * accountID);
 
 /**
+ * ConfigurationManager - Delete all credentials defined for
+ * a given account.
+ * @param a The account id
+ */
+void dbus_delete_all_credential(account_t *a);
+
+/**
+ * ConfigurationManager - Set the number of credential that
+ * is being used.
+ * @param a The account id
+ */
+void dbus_set_number_of_credential(account_t *a, int number);
+
+/**
  * ConfigurationManager - Set the additional credential information 
  * of a specific account, for a specific credential index.
  * This function will add the new section on the server side

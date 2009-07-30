@@ -2533,7 +2533,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
 	( (iter = map_cpy.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE)
 																					: setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, iter->second);
-
+																					
+    ( (iter = map_cpy.find (CONFIG_ACCOUNT_AUTHENTICATION_USERNAME)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_AUTHENTICATION_USERNAME, EMPTY_FIELD)
+																					: setConfig (accountID, CONFIG_ACCOUNT_AUTHENTICATION_USERNAME, iter->second);
     saveConfig();
 
     acc = getAccount (accountID);
@@ -2625,6 +2627,25 @@ ManagerImpl::addAccount (const std::map< std::string, std::string >& details)
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 
     return newAccountID;
+}
+
+void
+ManagerImpl::deleteAllCredential(const AccountID& accountID) 
+{
+    int numberOfCredential = getConfigInt (accountID, CONFIG_CREDENTIAL_NUMBER);
+     
+    int i;
+    for(i = 0; i < numberOfCredential; i++) {   
+        std::string credentialIndex;
+        std::stringstream streamOut;
+        streamOut << i;
+        credentialIndex = streamOut.str();
+        std::string section = "Credential" + std::string(":") + accountID + std::string(":") + credentialIndex;
+        
+        _config.removeSection (section);
+    }
+    
+    setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, 0);
 }
 
 void

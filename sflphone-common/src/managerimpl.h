@@ -342,6 +342,13 @@ class ManagerImpl {
      */
     void removeAccount(const AccountID& accountID);
 
+
+    /**
+     * Deletes all credentials defined for an account
+     * @param accountID The account unique ID
+     */
+    void deleteAllCredential(const AccountID& accountID);
+    
     /**
      * Get the list of codecs we supports, not ordered
      * @return The list of the codecs
@@ -897,7 +904,7 @@ class ManagerImpl {
      * Initialize audiodriver
      */
     bool initAudioDriver(void);
-
+    
   private:
 
     /**
