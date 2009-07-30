@@ -562,13 +562,21 @@ GHashTable* dbus_account_details(gchar * accountID)
     void
 dbus_set_credential(account_t *a, int index)
 {
+    DEBUG("Sending credential %d to server", index);
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_credential (
-            configurationManagerProxy,
-            a->accountID,
-            index,
-            g_array_index(a->credential_information, GHashTable*, index),
-            &error);
+    GHashTable * credential = g_ptr_array_index(a->credential_information, index);
+    
+    if(credential == NULL) {
+        DEBUG("Credential %d was deleted", index);
+    } else {
+        org_sflphone_SFLphone_ConfigurationManager_set_credential (
+                configurationManagerProxy,
+                a->accountID,
+                index,
+                credential,
+                &error);
+    }
+            
     if (error) {
         ERROR ("Failed to call set_account_details() on ConfigurationManager: %s",
                 error->message);

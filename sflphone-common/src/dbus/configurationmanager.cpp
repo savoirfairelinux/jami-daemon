@@ -88,6 +88,8 @@ ConfigurationManager::setCredential (const std::string& accountID, const int32_t
     
     std::string section = "Credential" + std::string(":") + accountID + std::string(":") + credentialIndex;
     
+    _debug("Setting credential in section %s\n", section.c_str());
+    
     it = credentialInformation.find(USERNAME);
     if(it == credentialInformation.end()) {
         Manager::instance().setConfig (section, USERNAME, EMPTY_FIELD);    
@@ -95,19 +97,25 @@ ConfigurationManager::setCredential (const std::string& accountID, const int32_t
         Manager::instance().setConfig (section, USERNAME, it->second);
     }
     
+    _debug("Username: %s\n", it->second.c_str());
+    
     it = credentialInformation.find(PASSWORD);
     if(it == credentialInformation.end()) {
         Manager::instance().setConfig (section, PASSWORD, EMPTY_FIELD);            
     } else {
         Manager::instance().setConfig (section, PASSWORD, it->second);
     }
-    
+ 
+    _debug("Password: %s\n", it->second.c_str());
+        
     it = credentialInformation.find(REALM);
     if(it == credentialInformation.end()) {
         Manager::instance().setConfig (section, REALM, EMPTY_FIELD);    
     } else {
         Manager::instance().setConfig (section, REALM, it->second);
     }
+    
+    _debug("Realm: %s\n", it->second.c_str());
 
 }
 

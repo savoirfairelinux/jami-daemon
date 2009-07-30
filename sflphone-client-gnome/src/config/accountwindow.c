@@ -2,6 +2,7 @@
  *  Copyright (C) 2007-2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,7 +51,7 @@ GtkWidget * entryResolveNameOnlyOnce;
 GtkWidget * entryExpire;
 GtkListStore * credentialStore;
 GtkWidget * deleteCredButton;
-GArray * credential_information;
+GPtrArray * credential_information = NULL;
 
 // Credentials
 enum {
@@ -252,6 +253,14 @@ static GtkWidget * createAccountTab(account_t **a)
 	return frame;
 }
 
+static hash_table_free(gpointer key, gpointer value, gpointer user_data)
+{
+    if(key != NULL || value != NULL) {
+        g_free(key);
+        g_free(value);
+    }
+}
+
 static void fill_treeview_with_credential(GtkListStore * credentialStore, account_t * account) 
 {
         GtkTreeIter iter;
@@ -268,13 +277,14 @@ static void fill_treeview_with_credential(GtkListStore * credentialStore, accoun
         
         if(account->credential_information == NULL) {
             DEBUG("No credential defined");
+            credential_information = NULL;
             return;
         }
         
         unsigned int i;
         for(i = 0; i < account->credential_information->len; i++)
         {	                    
-            GHashTable * element = g_array_index(account->credential_information, GHashTable*, i);               
+            GHashTable * element = g_ptr_array_index(account->credential_information, i);               
             gtk_list_store_append (credentialStore, &iter);
             gtk_list_store_set(credentialStore, &iter,
                     COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(element, ACCOUNT_REALM), 
@@ -288,11 +298,11 @@ static void fill_treeview_with_credential(GtkListStore * credentialStore, accoun
              * on whether the user pressed "apply" or "close"
              */
             GHashTable * temporary;
-            temporary = g_hash_table_new(NULL, g_str_equal);
-            g_hash_table_insert(temporary, ACCOUNT_REALM, g_hash_table_lookup(element, ACCOUNT_REALM));
-            g_hash_table_insert(temporary, ACCOUNT_USERNAME, g_hash_table_lookup(element, ACCOUNT_USERNAME));
-            g_hash_table_insert(temporary, ACCOUNT_PASSWORD, g_hash_table_lookup(element, ACCOUNT_PASSWORD)); 
-            g_array_append_val(credential_information, temporary);
+            temporary = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+            g_hash_table_insert(temporary, g_strdup(ACCOUNT_REALM), g_strdup(g_hash_table_lookup(element, ACCOUNT_REALM)));
+            g_hash_table_insert(temporary, g_strdup(ACCOUNT_USERNAME), g_strdup(g_hash_table_lookup(element, ACCOUNT_USERNAME)));
+            g_hash_table_insert(temporary, g_strdup(ACCOUNT_PASSWORD), g_strdup(g_hash_table_lookup(element, ACCOUNT_PASSWORD))); 
+            g_ptr_array_add(credential_information, temporary);
         }
 }
 
@@ -325,11 +335,11 @@ static void add_credential_cb (GtkWidget *button, gpointer data)
                         -1);
   
     GHashTable * new_credential;                    
-    new_credential = g_hash_table_new(NULL, g_str_equal);
-    g_hash_table_insert(new_credential, COLUMN_CREDENTIAL_REALM, "*");
-    g_hash_table_insert(new_credential, COLUMN_CREDENTIAL_USERNAME, _("Authentication"));
-    g_hash_table_insert(new_credential, COLUMN_CREDENTIAL_PASSWORD, _("Secret"));
-    g_array_append_val(credential_information, new_credential);
+    new_credential = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+    g_hash_table_insert(new_credential, g_strdup((gchar *) COLUMN_CREDENTIAL_REALM), g_strdup((gchar *)"*"));
+    g_hash_table_insert(new_credential, g_strdup((gchar *) COLUMN_CREDENTIAL_USERNAME), g_strdup((gchar *)_("Authentication")));
+    g_hash_table_insert(new_credential, g_strdup((gchar*) COLUMN_CREDENTIAL_PASSWORD), g_strdup((gchar *)_("Secret")));
+    g_ptr_array_add(credential_information, new_credential);
 }
 
 static void delete_credential_cb(GtkWidget *button, gpointer data)
@@ -339,25 +349,38 @@ static void delete_credential_cb(GtkWidget *button, gpointer data)
     GtkTreeView *treeview = (GtkTreeView *)data;
     GtkTreeModel *model = gtk_tree_view_get_model (treeview);
     GtkTreeSelection *selection = gtk_tree_view_get_selection (treeview);
-
+    
     if (gtk_tree_selection_get_selected (selection, NULL, &iter))
     {
         GtkTreePath *path;
         path = gtk_tree_model_get_path (model, &iter);
         gtk_list_store_remove (GTK_LIST_STORE (model), &iter);
         
-        gint credential_index = gtk_tree_path_get_indices (path)[0];
-        GHashTable * element = g_array_index(credential_information, GHashTable*, credential_index);               
-        g_hash_table_foreach(element, hashtable_free, NULL);
-        g_hash_table_destroy(element);
-        g_free(element);
-        
+        gint credential_index = gtk_tree_path_get_indices (path)[0] - 1;
+        GHashTable * element = NULL;
+        element = g_ptr_array_index(credential_information, credential_index);
+        if(element != NULL) {
+            g_hash_table_remove_all(element);
+            g_hash_table_unref(element);
+            *element = NULL;
+            //g_ptr_array_remove_index(credential_information, credential_index);
+        } else {
+            DEBUG("Hash table is null");
+        }
+                
         gtk_tree_path_free (path);
     }
 }
 
 static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gchar *text, gpointer data)
 {
+    if(g_strcasecmp(path_desc, "0") == 0) {
+        if(g_strcasecmp(text, gtk_entry_get_text(GTK_ENTRY(entryUsername))) != 0) {
+            g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
+        }
+        return;
+    }   
+
     GtkTreeModel *model = (GtkTreeModel *)data;
     GtkTreePath *path = gtk_tree_path_new_from_string (path_desc);
     GtkTreeIter iter;
@@ -366,28 +389,32 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
     gtk_tree_model_get_iter (model, &iter, path);
 
     gtk_list_store_set (GTK_LIST_STORE (model), &iter, column, text, -1);
-    gint credential_index = gtk_tree_path_get_indices (path)[0];
-    
-    GHashTable * element = g_array_index(credential_information, GHashTable*, credential_index);                                           
-    switch(column) {
-        case COLUMN_CREDENTIAL_REALM:
-            g_hash_table_replace(element, ACCOUNT_REALM, g_strdup(text));
-            break;
-        case COLUMN_CREDENTIAL_USERNAME:
-            g_hash_table_replace(element, ACCOUNT_USERNAME, g_strdup(text));
-            break;
-        case COLUMN_CREDENTIAL_PASSWORD:
-            g_hash_table_replace(element, ACCOUNT_PASSWORD, g_strdup(text));
-            break;            
-    }
-
-    gtk_tree_path_free (path);
-    
-    if(g_strcasecmp(path_desc, "0") == 0) {
-        if(g_strcasecmp(text, gtk_entry_get_text(GTK_ENTRY(entryUsername))) != 0) {
-            g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
+    gint credential_index = gtk_tree_path_get_indices (path)[0] - 1;
+ 
+    GHashTable * element = NULL;
+    element = g_ptr_array_index(credential_information, credential_index);
+    if(element != NULL) {
+        DEBUG("Replacing credential %d column %d", credential_index, column);                                           
+        switch(column) {
+            case COLUMN_CREDENTIAL_REALM:
+                g_hash_table_insert(element, g_strdup(ACCOUNT_REALM), g_strdup(text));
+                DEBUG("Setting realm");
+                break;
+            case COLUMN_CREDENTIAL_USERNAME:
+                g_hash_table_insert(element, g_strdup(ACCOUNT_USERNAME), g_strdup(text));
+                                DEBUG("Setting uname");
+                break;
+            case COLUMN_CREDENTIAL_PASSWORD:
+                g_hash_table_insert(element, g_strdup(ACCOUNT_PASSWORD), g_strdup(text));
+                                DEBUG("Setting passwd");
+                break;            
         }
+    } else {
+        DEBUG("Hash table is null\n");
     }
+    
+    gtk_tree_path_free (path);
+
 }
 
 static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editable, const gchar * path, gpointer data)
@@ -453,7 +480,7 @@ GtkWidget * createAdvancedTab(account_t **a)
     gtk_widget_size_request(GTK_WIDGET(table), &requisitionTable);
     	
     /* Credentials tree view */
-    credential_information = g_array_new(FALSE, FALSE, sizeof(GHashTable*));
+    credential_information = g_ptr_array_new();
     
     gnome_main_section_new_with_table (_("Credential informations"), &frame, &table, 1, 1);
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
@@ -604,7 +631,7 @@ show_account_window (account_t * a)
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
 				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryExpire))));
-
+        
 		if (strcmp(proto, "SIP") == 0) {
 			guint i, size;
 			account_t * account;
@@ -647,6 +674,24 @@ show_account_window (account_t * a)
 		else {
 			dbus_set_account_details(currentAccount);
 		}
+		
+	    /* Set new credentials if any */
+	    if(credential_information != NULL) {
+	        DEBUG("Setting credentials");
+            currentAccount->credential_information = credential_information;
+            credential_information = NULL;
+            int i;
+            for(i = 0; i < currentAccount->credential_information->len; i++) {
+                dbus_set_credential(currentAccount, i);
+            }
+        }
+        
+	} else {
+	    /* Destroy the credential information array if we built one */
+	    int credential_index;        
+        if(credential_information != NULL) {
+
+        }
 	}
 	gtk_widget_destroy (GTK_WIDGET(dialog));
 
