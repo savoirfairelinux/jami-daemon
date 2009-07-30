@@ -39,16 +39,12 @@ Call::Call (const CallID& id, Call::CallType type)
     SOUND_FORMAT soundFormat = INT16;
 
     recAudio.setRecordingOption (fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH),id);
-    // _debug("CALL::Constructor for this clss is called \n");
 }
 
 
 Call::~Call()
 {
-    // _debug("CALL::~Call(): Destructor for this clss is called \n");
-
     if (recAudio.isOpenFile()) {
-        // _debug("CALL::~Call(): A recording file is open, close it \n");
         recAudio.closeFile();
     }
 }

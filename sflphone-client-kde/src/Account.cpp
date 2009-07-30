@@ -31,32 +31,34 @@
 const QString account_state_name(QString & s)
 {
 	if(s == QString(ACCOUNT_STATE_REGISTERED))
-		return i18nc("account state", "Registered" );
+		return i18n("Registered" );
 	if(s == QString(ACCOUNT_STATE_UNREGISTERED))
-		return i18nc("account state", "Not Registered");
+		return i18n("Not Registered");
 	if(s == QString(ACCOUNT_STATE_TRYING))
-		return i18nc("account state", "Trying...");
+		return i18n("Trying...");
 	if(s == QString(ACCOUNT_STATE_ERROR))
-		return i18nc("account state", "Error");
+		return i18n("Error");
 	if(s == QString(ACCOUNT_STATE_ERROR_AUTH))
-		return i18nc("account state", "Bad authentification");
+		return i18n("Authentication Failed");
 	if(s == QString(ACCOUNT_STATE_ERROR_NETWORK))
-		return i18nc("account state", "Network unreachable");
+		return i18n("Network unreachable");
 	if(s == QString(ACCOUNT_STATE_ERROR_HOST))
-		return i18nc("account state", "Host unreachable");
+		return i18n("Host unreachable");
 	if(s == QString(ACCOUNT_STATE_ERROR_CONF_STUN))
-		return i18nc("account state", "Stun configuration error");
+		return i18n("Stun configuration error");
 	if(s == QString(ACCOUNT_STATE_ERROR_EXIST_STUN))
-		return i18nc("account state", "Stun server invalid");
-	return i18nc("account state", "Invalid");
+		return i18n("Stun server invalid");
+	return i18n("Invalid");
 }
 
 //Constructors
 
-Account::Account():accountId(NULL), item(NULL), itemWidget(NULL){}
+Account::Account():accountId(NULL)
+{
+}
 
 
-void Account::initAccountItem()
+void Account::initItem()
 {
 	if(item != NULL)
 	{
@@ -65,10 +67,10 @@ void Account::initAccountItem()
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
-	initAccountItemWidget();
+	initItemWidget();
 }
 
-void Account::initAccountItemWidget()
+void Account::initItemWidget()
 {
 	if(itemWidget != NULL)
 	{
@@ -90,6 +92,7 @@ void Account::initAccountItemWidget()
 	{
 		itemWidget->setState(AccountItemWidget::NotWorking);
 	}
+	connect(itemWidget, SIGNAL(checkStateChanged(bool)), this, SLOT(setEnabled(bool)));
 }
 
 Account * Account::buildExistingAccountFromId(QString _accountId)
@@ -97,9 +100,8 @@ Account * Account::buildExistingAccountFromId(QString _accountId)
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Account * a = new Account();
 	a->accountId = new QString(_accountId);
-	qDebug() << "getAccountDetails 1 sent";
 	a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
-	a->initAccountItem();
+	a->initItem();
 	return a;
 }
 
@@ -108,7 +110,7 @@ Account * Account::buildNewAccountFromAlias(QString alias)
 	Account * a = new Account();
 	a->accountDetails = new MapStringString();
 	a->setAccountDetail(ACCOUNT_ALIAS,alias);
-	a->initAccountItem();
+	a->initItem();
 	return a;
 }
 
@@ -131,7 +133,7 @@ bool Account::isChecked() const
 	return itemWidget->getEnabled();
 }
 
-QString & Account::getAccountId()
+const QString & Account::getAccountId() const
 {
 	if (isNew())
 	{
@@ -147,13 +149,11 @@ MapStringString & Account::getAccountDetails() const
 
 QListWidgetItem * Account::getItem()
 {
-	if(!item)  {	qDebug() << "null" ;	}
 	return item;
 }
 
 AccountItemWidget * Account::getItemWidget()
 {
-	if(itemWidget == NULL)  {	qDebug() << "null";	}
 	return itemWidget;
 }
 
@@ -186,7 +186,7 @@ QString Account::getAccountDetail(QString param) const
 	return (*accountDetails)[param];
 }
 
-QString Account::getAlias()
+QString Account::getAlias() const
 {
 	return getAccountDetail(ACCOUNT_ALIAS);
 }
@@ -212,6 +212,22 @@ void Account::setAccountId(QString id)
 		qDebug() << "Error : setting AccountId of an existing account.";
 	}
 	accountId = new QString(id);
+}
+
+void Account::setEnabled(bool checked)
+{
+	qDebug() << "setEnabled = " << checked;
+	setAccountDetail(ACCOUNT_ENABLED, checked ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
+}
+
+bool Account::isEnabled() const
+{
+	return (getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE);
+}
+
+bool Account::isRegistered() const
+{
+	return (getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
 void Account::updateState()

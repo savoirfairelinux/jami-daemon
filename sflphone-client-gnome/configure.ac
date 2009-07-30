@@ -46,6 +46,8 @@ fi
 AC_SUBST(LIBSEXY_CFLAGS)
 AC_SUBST(LIBSEXY_LIBS)
 
+PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1 >= 0.75, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=true, HAVE_DBUS_G_PROXY_SET_DEFAULT_TIMEOUT=false);
+
 PKG_CHECK_MODULES(DEPS,     \
     dbus-glib-1 >= 0.35     \
     libnotify >= 0.4        \
@@ -76,6 +78,7 @@ pixmaps/Makefile
 sflphone.desktop
 tests/Makefile
 man/Makefile
+po/Makefile
 ])
 
 

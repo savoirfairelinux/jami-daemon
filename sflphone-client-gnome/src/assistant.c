@@ -32,7 +32,7 @@
 
 #define SFLPHONE_ORG_SERVER "sip.sflphone.org"
 #define SFLPHONE_ORG_ALIAS "sflphone.org"
-#define MESSAGE_SUMMARY _("This assistant is now finished.\nYou can at any time check your registration state or modify your accounts parameters in the Options/Accounts window.\n\nAlias :    %s\nServer :   %s\nUsername : %s\n")
+
 
 
 struct _wizard *wiz;
@@ -57,6 +57,27 @@ void set_account_type( GtkWidget* widget , gpointer data UNUSED ) {
 	}else{
 		account_type = _IAX ;
 	}
+}
+
+/**
+ * Fills string message with the final message of account registration
+ * with alias, server and username specified.
+ */
+void getMessageSummary( char * message , const gchar * alias, const gchar * server, const gchar * username) {
+	char var[64];
+	sprintf( message, _("This assistant is now finished."));
+	strcat( message, "\n" );
+	strcat( message, _("You can at any time check your registration state or modify your accounts parameters in the Options/Accounts window."));
+	strcat( message, "\n\n");
+	strcat( message, _("Alias"));
+	sprintf( var, " :   %s\n", alias);
+	strcat( message, var);
+	strcat( message, _("Server"));
+	sprintf( var, " :   %s\n", server);
+	strcat( message, var);
+	strcat( message, _("Username"));
+	sprintf( var, " :   %s\n", username);
+	strcat( message, var);
 }
 
 void set_sflphone_org( GtkWidget* widget , gpointer data UNUSED ) {
@@ -108,12 +129,17 @@ static void sip_apply_callback( void ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->addr))));
 
 		dbus_add_account( current );
-        	sprintf(message, MESSAGE_SUMMARY,
+		getMessageSummary(message, 
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username))
+		) ;
+//         	sprintf(message, MESSAGE_SUMMARY,
+// 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
+// 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
+// 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username))
                        	// gtk_entry_get_text (GTK_ENTRY(wiz->sip_password))
-				) ;
+// 				) ;
 	gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}
 }
@@ -131,12 +157,20 @@ static void iax_apply_callback( void ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_username))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_server))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
+		//g_hash_table_insert(current->properties, g_strdup(ACCOUNT_RESOLVE_ONCE), g_strdup("FALSE"));
+		//g_hash_table_insert(current->properties, g_strdup(ACCOUNT_REGISTRATION_EXPIRE), g_strdup("600"));
+
 		dbus_add_account( current );
-        	sprintf(message, MESSAGE_SUMMARY,
+		getMessageSummary(message, 
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username))
-			) ;
+		) ;
+//         	sprintf(message, MESSAGE_SUMMARY,
+// 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
+// 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),
+// 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username))
+// 			) ;
 		gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}
 }
@@ -156,7 +190,7 @@ void build_wizard( void ) {
 
 	wiz->assistant = gtk_assistant_new( );
 
-	gtk_window_set_title( GTK_WINDOW(wiz->assistant), _("SFLphone account configuration wizard") );
+	gtk_window_set_title( GTK_WINDOW(wiz->assistant), _("SFLphone account creation wizard") );
 	gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
 	gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200 , 200);
 
@@ -182,7 +216,7 @@ void build_wizard( void ) {
 GtkWidget* build_intro() {
 	GtkWidget *label;
 
-	wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , "SFLphone GNOME client" , _("Welcome to SFLphone!"));
+	wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , "SFLphone GNOME client" , _("Welcome to the Account creation wizard of SFLphone!"));
 	label = gtk_label_new(_("This installation wizard will help you configure an account.")) ;
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
 	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
@@ -197,11 +231,11 @@ GtkWidget* build_select_account() {
 	GtkWidget* sip;
 	GtkWidget* iax;
 
-	wiz->protocols = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("VoIP Protocols") , _("Select an account type:"));
+	wiz->protocols = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("VoIP Protocols") , _("Select an account type"));
 
-	sip = gtk_radio_button_new_with_label(NULL,"SIP (Session Initiation Protocol)");
+	sip = gtk_radio_button_new_with_label(NULL, _("SIP (Session Initiation Protocol)"));
 	gtk_box_pack_start( GTK_BOX(wiz->protocols) , sip , TRUE, TRUE, 0);
-	iax = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sip), "IAX2 (InterAsterix Exchange)");
+	iax = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sip), _("IAX2 (InterAsterix Exchange)"));
 	gtk_box_pack_start( GTK_BOX(wiz->protocols) , iax , TRUE, TRUE, 0);
 
 	g_signal_connect(G_OBJECT( sip ) , "clicked" , G_CALLBACK( set_account_type ) , NULL );
@@ -215,7 +249,7 @@ GtkWidget* build_sfl_or_account() {
 	GtkWidget* sfl;
 	GtkWidget* cus;
 
-	wiz->sflphone_org = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Please select one of the following option:"));
+	wiz->sflphone_org = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Please select one of the following options"));
 
 	sfl = gtk_radio_button_new_with_label( NULL, _("Create a free SIP/IAX2 account on sflphone.org"));
 	gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , sfl , TRUE, TRUE, 0);
@@ -232,7 +266,7 @@ GtkWidget* build_sip_account_configuration( void ) {
 	GtkWidget* label;
     GtkWidget *image;
 
-	wiz->sip_account = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("SIP account configuration") , _("Please fill the following information:"));
+	wiz->sip_account = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("SIP account settings") , _("Please fill the following information"));
 	// table
 	table = gtk_table_new ( 5, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
@@ -305,7 +339,7 @@ GtkWidget* build_email_configuration( void ) {
 	GtkWidget* label;
 	GtkWidget*  table;
 
-	wiz->email = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Optional Email Address ") , _("This email address will be use to send your voicemail messages"));
+	wiz->email = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Optional email address") , _("This email address will be used to send your voicemail messages."));
 
 	table = gtk_table_new ( 4, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
@@ -313,7 +347,7 @@ GtkWidget* build_email_configuration( void ) {
 	gtk_box_pack_start( GTK_BOX(wiz->email) , table , TRUE, TRUE, 0);
 
 	// email field
-	label = gtk_label_new_with_mnemonic (_("_Email"));
+	label = gtk_label_new_with_mnemonic (_("_Email address"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	wiz->mailbox = gtk_entry_new();
@@ -328,7 +362,7 @@ GtkWidget* build_iax_account_configuration( void ) {
 	GtkWidget*  table;
     GtkWidget *image;
 
-	wiz->iax_account = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("IAX2 account configuration") , _("Please fill the following information:"));
+	wiz->iax_account = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("IAX2 account settings") , _("Please fill the following information"));
 
 	table = gtk_table_new ( 5, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
@@ -401,7 +435,7 @@ GtkWidget* build_nat_settings( void ) {
 	GtkWidget* label;
 	GtkWidget* table;
 
-	wiz->nat = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("Network Address Translation") , _("You should probably enable this if you are behind a firewall."));
+	wiz->nat = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("Network Address Translation (NAT)") , _("You should probably enable this if you are behind a firewall."));
 
 	// table
 	table = gtk_table_new ( 2, 2  ,  FALSE/* homogeneous */);

@@ -30,6 +30,7 @@
 
 #include <sys/poll.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include <dbus/dbus.h>
 
@@ -97,6 +98,9 @@ void DefaultMutex::unlock()
 
 DefaultMainLoop::DefaultMainLoop()
 {
+    if (pipe (_terminateFd) < 0) {
+        throw ErrorFailed ("unable to create unamed pipe");
+    }
 }
 
 DefaultMainLoop::~DefaultMainLoop()
@@ -129,14 +133,23 @@ DefaultMainLoop::~DefaultMainLoop()
         ti = tmp;
     }
 
+    close (_terminateFd[0]);
+
+    close (_terminateFd[1]);
+
     _mutex_t.unlock();
+}
+
+void DefaultMainLoop::terminate()
+{
+    write (_terminateFd[1], " ", 1);
 }
 
 void DefaultMainLoop::dispatch()
 {
     _mutex_w.lock();
 
-    int nfd = _watches.size();
+    int nfd = _watches.size() + 1;
 
     pollfd fds[nfd];
 
@@ -151,6 +164,11 @@ void DefaultMainLoop::dispatch()
             ++nfd;
         }
     }
+
+    fds[nfd].fd = _terminateFd[0];
+
+    fds[nfd].events = POLLIN;
+    fds[nfd].revents = 0;
 
     _mutex_w.unlock();
 
@@ -167,7 +185,7 @@ void DefaultMainLoop::dispatch()
 
     _mutex_t.unlock();
 
-    poll (fds, nfd, wait_min);
+    poll (fds, nfd+1, wait_min);
 
     timeval now;
     gettimeofday (&now, NULL);

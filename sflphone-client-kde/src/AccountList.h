@@ -49,14 +49,14 @@ public:
 	
 	//Getters
 	QVector<Account *> & getAccounts();
-	Account & getAccount (int i);
-	const Account & getAccount (int i) const;
+	Account * getAccountAt (int i);
+	const Account * getAccountAt (int i) const;
 	Account * getAccountById(const QString & id) const;
 	QVector<Account *>  getAccountByState(QString & state);
 	Account * getAccountByItem(QListWidgetItem * item);
-	int size();
+	int size() const;
 	Account * firstRegisteredAccount() const;
-	QString getOrderedList();
+	QString getOrderedList() const;
 	
 	//Setters
 	Account * addAccount(QString & alias);
@@ -66,8 +66,8 @@ public:
 	void downAccount(int index);
 
 	//Operators
-	Account & operator[] (int i);
-	const Account & operator[] (int i) const;
+	Account * operator[] (int i);
+	const Account * operator[] (int i) const;
 	QVector<Account *> registeredAccounts() const;
 	
 public slots:	

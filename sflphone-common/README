@@ -1,4 +1,4 @@
-This is SFLphone, release 0.9.3
+This is SFLphone, release 0.9.6
 
 Copyright (c) Savoir-faire Linux, Inc 2004-2009
   <sflphoneteam@savoirfairelinux.com>
@@ -65,8 +65,8 @@ How to compile
 --------------
 
 # First compile the SIP library
-cd libs/pjproject-1.0.1
-./configure 
+cd libs/pjproject-1.0.3
+./autogen.sh
 make dep && make
 sudo make install
 
@@ -76,20 +76,34 @@ cd ../..
 make
 sudo make install
 
-# And the GTK client
-cd sflphone-gtk
+# And the GNOME client
+cd sflphone-client-gnome
 ./autogen.sh --prefix=/usr --with-debug
 make
 sudo make install
 
  Done !
 
+Free SIP/IAx2 accounts
+---------------------
+
+You may create a free SIP/IAX2 account through the account creation wizard in the both client (KDE and GNOME).
+By doing this, you will be able to call other account registered to the same server.
+Registered to this kind of account, you will be able to test your headset by dialing *100
+
+ECHO test
+--------
+Dial *100, on sip.sflphone.org
+
+
+
+
 Contributing to SFLPhone
 ------------------------
 
 Of course we love patches. And contributions. And spring rolls.
 
-Development website: http://dev.savoirfairelinux.net/sflphone
+Development website: http://projects.savoirfairelinux.net/wiki/sflphone
 
 Do not hesitate to join us and post comments, suggestions, questions
 and general feedback on the forge.novell mailing-list.

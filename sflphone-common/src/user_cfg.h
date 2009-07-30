@@ -58,7 +58,6 @@
 #define CONFIG_POPUP		"Window.popup"		  /** SFLphone pops up on incoming calls or not */
 #define CONFIG_VOLUME		"Volume.display"	  /** Display the mic and speaker volume controls */
 #define CONFIG_ZEROCONF		"Zeroconf.enable"	  /** Zero configuration networking module */
-#define REGISTRATION_EXPIRE	"Registration.expire"	  /** Registration expire value */
 #define CONFIG_AUDIO		"Audio.api"		  /** Audio manager (ALSA or pulseaudio) */
 #define CONFIG_PA_VOLUME_CTRL	"Pulseaudio.volumeCtrl"	  /** Whether or not PA should modify volume of other applications on the same sink */
 #define CONFIG_SIP_PORT         "SIP.portNum"
@@ -90,7 +89,8 @@
 #define PHONE_NUMBER_HOOK_ENABLED               "Hooks.phone_number_enabled"    
 #define PHONE_NUMBER_HOOK_ADD_PREFIX                      "Hooks.phone_number_add_prefix"
 
-#define EMPTY_FIELD		""			/** Default value for empty field */
+#define EMPTY_FIELD		""					/** Default value for empty field */
+#define DEFAULT_ACCOUNT_TYPE	"SIP"		
 #define DFT_STUN_SERVER 	"stun.sflphone.org"	/** Default STUN server address */
 #define	YES_STR			"1"			/** Default YES value */
 #define	NO_STR			"0"			/** Default NO value */
@@ -106,7 +106,8 @@
 #define DFT_SAMPLE_RATE		"44100"			/** Default sample rate in HZ */
 #define DFT_NOTIF_LEVEL		"2"			/** Default desktop notification level : maximum */
 #define DFT_HISTORY_LIMIT		"30"			/** Default maximum days in history */
-#define DFT_EXPIRE_VALUE	"180"			/** Default expire value for registration */
+#define DFT_EXPIRE_VALUE	"600"			/** Default expire value for registration */
+#define DFT_RESOLVE_ONCE	"0"
 #define DFT_AUDIO_MANAGER	"1"			/** Default audio manager */
 #define DFT_SIP_PORT            "5060"
 #define DFT_STUN_ENABLE         "0"

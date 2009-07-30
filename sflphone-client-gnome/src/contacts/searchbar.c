@@ -52,8 +52,9 @@ static void search_all (GtkWidget *item, GtkEntry  *entry)
 
     gtk_entry_set_icon_from_stock (entry, GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            _("Search all\n"
-            "Click here to change the search type"));
+            g_markup_printf_escaped("%s\n%s", 
+                  _("Search all"),
+                  _("Click here to change the search type")));
 
     history_search (HistorySearchType);
 } 
@@ -64,9 +65,9 @@ static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
 
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, missed_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            _("Search by missed call\n"
-            "Click here to change the search type"));
-
+            g_markup_printf_escaped("%s\n%s", 
+                  _("Search by missed call"),
+                  _("Click here to change the search type")));
     history_search (HistorySearchType);
 } 
 
@@ -76,9 +77,9 @@ static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
 
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, incoming_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            _("Search by incoming call\n"
-            "Click here to change the search type"));
-
+            g_markup_printf_escaped("%s\n%s", 
+                  _("Search by incoming call"),
+                  _("Click here to change the search type")));
     history_search (HistorySearchType);
 } 
 
@@ -88,9 +89,9 @@ static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
 
     gtk_entry_set_icon_from_pixbuf (entry, GTK_ENTRY_ICON_PRIMARY, outgoing_pixbuf);
     gtk_entry_set_icon_tooltip_text (entry, GTK_ENTRY_ICON_PRIMARY,
-            _("Search by outgoing call\n"
-            "Click here to change the search type"));
-
+            g_markup_printf_escaped("%s\n%s", 
+                  _("Search by outgoing call"),
+                  _("Click here to change the search type")));
     history_search (HistorySearchType);
 } 
 
@@ -115,14 +116,14 @@ static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec)
 
 void
 focus_on_searchbar_out(){
-    DEBUG("set_focus_on_searchbar_out \n");
+    DEBUG("set_focus_on_searchbar_out");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_searchbar = FALSE;
 }
 
 void
 focus_on_searchbar_in(){
-    DEBUG("set_focus_on_searchbar_in \n");
+    DEBUG("set_focus_on_searchbar_in");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_searchbar = TRUE;
 }
@@ -198,7 +199,6 @@ GtkWidget* history_searchbar_new (void)
     gtk_widget_show_all (menu);
 
 #else
-
     searchbox = sexy_icon_entry_new();
     image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
     sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(searchbox), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );

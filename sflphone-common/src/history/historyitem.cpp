@@ -27,7 +27,12 @@
 #define EMPTY_STRING        "empty"
 
 HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::string timestamp_stop, std::string name, std::string number, std::string account_id)
-        : _timestamp_start (timestamp_start), _call_type (call_type), _timestamp_stop (timestamp_stop), _name (name), _number (number), _account_id (account_id)
+        :	_timestamp_start (timestamp_start),
+        _timestamp_stop (timestamp_stop),
+        _call_type (call_type),
+        _name (name),
+        _number (number),
+        _account_id (account_id)
 {
 }
 

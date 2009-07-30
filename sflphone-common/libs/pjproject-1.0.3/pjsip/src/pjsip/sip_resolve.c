@@ -360,11 +360,17 @@ PJ_DEF(void) pjsip_resolve( pjsip_resolver_t *resolver,
 	       target->addr.port));
 
     if (query->query_type == PJ_DNS_TYPE_SRV) {
+        unsigned option = PJ_TRUE;
+        if (type & PJSIP_TRANSPORT_IPV6) {
+            option |= PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV6;
+        } else {
+            option |= PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV4;
+        }
 
-	status = pj_dns_srv_resolve(&query->naptr[0].name,
-				    &query->naptr[0].res_type,
-				    query->req.def_port, pool, resolver->res,
-				    PJ_TRUE, query, &srv_resolver_cb, NULL);
+        status = pj_dns_srv_resolve(&query->naptr[0].name,
+        			    &query->naptr[0].res_type,
+        			    query->req.def_port, pool, resolver->res,
+        			    option, query, &srv_resolver_cb, NULL);
 
     } else if (query->query_type == PJ_DNS_TYPE_A) {
 

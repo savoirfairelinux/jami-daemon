@@ -284,8 +284,8 @@ class SIPVoIPLink : public VoIPLink
         /** when we init the listener, how many times we try to bind a port? */
         int _nbTryListenAddr;
 
-        /** Starting sound */
-        AudioRtp* _audiortp;
+        /** Returns a pointer to the AudioRtp object */
+        inline AudioRtp * getAudioRtp(void) { return _audiortp; }
 
         /** Increment the number of SIP account connected to this link */
         void incrementClients (void) { _clients++; }
@@ -351,9 +351,6 @@ class SIPVoIPLink : public VoIPLink
          */
         bool pjsip_shutdown(void);
 
-        /** Do we use stun? */
-        bool _useStun;
-
         pj_status_t stunServerResolve();
 
         /** Create SIP UDP Listener */
@@ -362,9 +359,6 @@ class SIPVoIPLink : public VoIPLink
         bool loadSIPLocalIP();
 
         std::string getLocalIP() {return _localExternAddress;}
-
-        /** For registration use only */
-        int _regPort;
 
         /* Flag to check if the STUN server is valid or not */
         bool validStunServer;
@@ -377,6 +371,15 @@ class SIPVoIPLink : public VoIPLink
 
         /** Local Extern Port is the port seen by peers for SIP listener */
         unsigned int _localExternPort;
+
+        /** Starting sound */
+        AudioRtp* _audiortp;
+        
+        /** For registration use only */
+        int _regPort;
+
+        /** Do we use stun? */
+        bool _useStun;
 
         /** Threading object */
         EventThread* _evThread;

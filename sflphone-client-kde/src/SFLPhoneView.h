@@ -19,8 +19,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef sflphone_kdeVIEW_H
-#define sflphone_kdeVIEW_H
+#ifndef SFLPHONEVIEW_H
+#define SFLPHONEVIEW_H
 
 #include <QtGui/QWidget>
 #include <QtCore/QString>
@@ -31,35 +31,35 @@
 #include <QErrorMessage>
 #include <KXmlGuiWindow>
 
-#include "ui_sflphone_kdeview_base.h"
+#include "ui_SFLPhoneView_base.h"
 #include "conf/ConfigurationDialog.h"
 #include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
-#include "sflphone_kdeview.h"
 #include "AccountList.h"
 
-#include "ui_sflphone_kdeview_base.h"
-
-class ConfigurationDialogKDE;
+class ConfigurationDialog;
 
 
 /**
  * This is the main view class for sflphone-client-kde.  Most of the non-menu,
  * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go
  * here.
+ * As the state of the view has effects on the window,
+ * it emits some signals to ask for changes that the window has
+ * to treat.
  *
  * @short Main view
  * @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
- * @version 0.1
+ * @version 0.9.6
  */
-class sflphone_kdeView : public QWidget, public Ui::SFLPhone_view
+class SFLPhoneView : public QWidget, public Ui::SFLPhone_view
 {
 	Q_OBJECT
     
 private:
 
-	static ConfigurationDialogKDE * configDialog;
+	static ConfigurationDialog * configDialog;
 	static AccountList * accountList;
 	AccountWizard * wizard;
 	//List of calls in the window, and past ones.
@@ -68,6 +68,7 @@ private:
 	QErrorMessage * errorWindow;
 	//Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
 	static QString priorAccountId;
+	bool historyLoaded;
 
 protected:
 	
@@ -79,13 +80,17 @@ protected:
 
 public:
 	//Constructors & Destructors
-	sflphone_kdeView(QWidget *parent);
-	virtual ~sflphone_kdeView();
 	/**
-	 * Called at construction. Updates all the display
-	 * according to the settings.
+	 *   This constructor does not load the window as it would
+	 *   better wait for the parent window to connect to the signals
+	 *   for updating it (statusMessageChangeAsked...).
+	 *   You should call the loadWindow() method once
+	 *   you have constructed the object and connected the
+	 *   expected signals.
+	 * @param parent 
 	 */
-	void loadWindow();
+	SFLPhoneView(QWidget *parent);
+	virtual ~SFLPhoneView();
 	
 	//Getters
 	/**
@@ -96,7 +101,16 @@ public:
 	 *   If there is no account registered, returns NULL.
 	 * @return the account to use if an outgoing call is placed.
 	 */
-	static Account * firstRegisteredAccount();
+	static Account * accountInUse();
+	/**
+	 *   Seeks the ID of the account to use.
+	 *   If priorAccountId is defined and the corresponding
+	 *   account exists and is registered, uses this one, else,
+	 *   asks the first registered of accountList.
+	 *   If there is no account registered, returns an empty string.
+	 * @return the ID of the account to use if an outgoing call is placed.
+	 */
+	static QString accountInUseId();
 	
 	static AccountList * getAccountList();
 	QErrorMessage * getErrorWindow();
@@ -109,8 +123,18 @@ public:
 	*/
 	int phoneNumberTypesDisplayed();
 	
-	//Updates
+	/**
+	 * 
+	 * @return true if the address book is enabled in config
+	 */
+	bool isAddressBookEnabled();
+	
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
+	
+	/**
+	 *   Save the settings to save in the daemon before exit
+	 */
+	void saveState();
 	
 private slots:
 	/**
@@ -218,7 +242,36 @@ private slots:
 	void updateDialpad();
 	
 public slots:
+	/**
+	 * Updates all the display
+	 * according to the settings.
+	 */
+	void loadWindow();
+	
+	
 	void updateStatusMessage();
+	
+	/**
+	 *   Enable the address book search line edit.
+	 *   To be called once the address book loading has finished.
+	 */
+	void enableAddressBook();
+	
+	/**
+	 *   Loads the address book asynchronously.
+	 *   Calls enableAddressBook() once the address book
+	 *   loading has finished if it is not already loaded.
+	 * @return true if address book has finished loading
+	 */
+	bool loadAddressBook();
+	
+	/**
+	 *   Chooses to enable/disable (show/hide) the address book 
+	 *   button according to the configuration's setting, and 
+	 *   returns to the main window if is in address book
+	 *   whereas it is disabled.
+	 */
+	void updateAddressBookEnabled();
 	
 	
 	virtual void keyPressEvent(QKeyEvent *event)
@@ -240,20 +293,16 @@ public slots:
 		}
 	}
 
-	void on_action_displayVolumeControls_triggered();
-	void on_action_displayDialpad_triggered();
-// 	void on_action_configureAccounts_triggered();
-// 	void on_action_configureAudio_triggered();
-	void on_action_configureSflPhone_triggered();
-	void on_action_accountCreationWizard_triggered();
-	void on_action_accept_triggered();
-	void on_action_refuse_triggered();
-	void on_action_hold_triggered();
-	void on_action_transfer_triggered();
-	void on_action_record_triggered();
-	void on_action_history_triggered(bool checked);
-	void on_action_addressBook_triggered(bool checked);
-	void on_action_mailBox_triggered();
+	void displayVolumeControls();
+	void displayDialpad();
+	void configureSflPhone();
+	void accountCreationWizard();
+	void accept();
+	void refuse();
+	void hold();
+	void transfer();
+	void record();
+	void mailBox();
 	
 	void on_widget_dialpad_typed(QString text);
 	
@@ -283,9 +332,21 @@ public slots:
 	void on1_voiceMailNotify(const QString &accountID, int count);
 	void on1_volumeChanged(const QString &device, double value);
 	
+	void changeScreen(int screen);
+	
 signals:
-	void statusMessageChanged(const QString & message);
+	void statusMessageChangeAsked(const QString & message);
+	void windowTitleChangeAsked(const QString & title);
+	void enabledActionsChangeAsked(const bool * enabledActions);
+	void actionIconsChangeAsked(const QString * actionIcons);
+	void actionTextsChangeAsked(const QString * actionTexts);
+	void transferCheckStateChangeAsked(bool transferCheckState);
+	void recordCheckStateChangeAsked(bool recordCheckState);
+	void addressBookEnableAsked(bool enableAddressBook);
+	void screenChanged(int screen);
+	void incomingCall(const Call * call);
+	
 
 };
 
-#endif // sflphone_kdeVIEW_H
+#endif // SFLPHONEVIEW_H

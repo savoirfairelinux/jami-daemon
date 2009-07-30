@@ -52,12 +52,12 @@ gboolean main_window_ask_quit() ;
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_dialpad( gboolean* state );
+void main_window_dialpad( gboolean state );
 
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_volume_controls( gboolean* state );
+void main_window_volume_controls( gboolean state );
 
 /**
  * Display an error message
@@ -89,8 +89,6 @@ void statusbar_push_message( const gchar* message , guint id );
  * @param id  The identifier of the message
  */
 void statusbar_pop_message( guint id );
-
-void main_window_searchbar( gboolean *state );
 
 //static gboolean
 //on_key_released (GtkWidget *widget, GdkEventKey *event,

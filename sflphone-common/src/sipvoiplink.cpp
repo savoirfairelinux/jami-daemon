@@ -24,6 +24,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "audio/audiortp.h"
+#include "pjsip/sip_endpoint.h"
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -31,6 +32,32 @@
 
 #define CAN_REINVITE        1
 
+static char * invitationStateMap[] = {
+    (char*) "PJSIP_INV_STATE_NULL",
+    (char*) "PJSIP_INV_STATE_CALLING",
+    (char*) "PJSIP_INV_STATE_INCOMING",
+    (char*) "PJSIP_INV_STATE_EARLY",
+    (char*) "PJSIP_INV_STATE_CONNECTING",
+    (char*) "PJSIP_INV_STATE_CONFIRMED",
+    (char*) "PJSIP_INV_STATE_DISCONNECTED"
+};
+
+static char * transactionStateMap[] = {
+    (char*) "PJSIP_TSX_STATE_NULL" ,
+    (char*) "PJSIP_TSX_STATE_CALLING",
+    (char*) "PJSIP_TSX_STATE_TRYING",
+    (char*) "PJSIP_TSX_STATE_PROCEEDING",
+    (char*) "PJSIP_TSX_STATE_COMPLETED",
+    (char*) "PJSIP_TSX_STATE_CONFIRMED",
+    (char*) "PJSIP_TSX_STATE_TERMINATED",
+    (char*) "PJSIP_TSX_STATE_DESTROYED",
+    (char*) "PJSIP_TSX_STATE_MAX"
+};
+
+struct result {
+    pj_status_t             status;
+    pjsip_server_addresses  servers;
+};
 
 const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
 
@@ -142,6 +169,11 @@ void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
 void regc_cb (struct pjsip_regc_cbparam *param);
 
 /*
+ * DNS Callback used in workaround for bug #1852
+ */
+static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr);
+
+/*
  * Called to handle incoming requests outside dialogs
  * @param   rdata
  * @return  pj_bool_t
@@ -216,6 +248,8 @@ bool SIPVoIPLink::init()
 {
     if (initDone())
         return false;
+
+    _regPort = Manager::instance().getSipPort();
 
     /* Instanciate the C++ thread */
     _evThread = new EventThread (this);
@@ -327,19 +361,64 @@ SIPVoIPLink::getEvent()
 
 int SIPVoIPLink::sendRegister (AccountID id)
 {
-    pj_status_t status;
     int expire_value;
     char contactTmp[256];
+
+    pj_status_t status;
     pj_str_t svr, aor, contact, useragent;
     pjsip_tx_data *tdata;
+    pjsip_host_info destination;
+
     std::string tmp, hostname, username, password;
-    SIPAccount *account;
+    SIPAccount *account = NULL;
     pjsip_regc *regc;
     pjsip_generic_string_hdr *h;
     pjsip_hdr hdr_list;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
+
+    if (account == NULL) {
+        _debug ("In sendRegister: account is null");
+        return false;
+    }
+
+    if (account->isResolveOnce()) {
+
+        struct result result;
+        destination.type = PJSIP_TRANSPORT_UNSPECIFIED;
+        destination.flag = pjsip_transport_get_flag_from_type (PJSIP_TRANSPORT_UNSPECIFIED);
+        destination.addr.host = pj_str (const_cast<char*> ( (account->getHostname()).c_str()));
+        destination.addr.port = 0;
+
+        result.status = 0x12345678;
+
+        pjsip_endpt_resolve (_endpt, _pool, &destination, &result, &dns_cb);
+
+        /* The following magic number and construct are inspired from dns_test.c
+         * in test-pjsip directory.
+         */
+
+        while (result.status == 0x12345678) {
+            pj_time_val timeout = { 1, 0 };
+            pjsip_endpt_handle_events (_endpt, &timeout);
+            _debug ("status : %d\n", result.status);
+        }
+
+        if (result.status != PJ_SUCCESS) {
+            _debug ("Failed to resolve hostname only once."
+                    " Default resolver will be used on"
+                    " hostname for all requests.\n");
+        } else {
+            _debug ("%d servers where obtained from name resolution.\n", result.servers.count);
+            char addr_buf[80];
+
+            pj_sockaddr_print ( (pj_sockaddr_t*) &result.servers.entry[0].addr, addr_buf, sizeof (addr_buf), 3);
+            account->setHostname (addr_buf);
+        }
+    }
+
     hostname = account->getHostname();
+
     username = account->getUsername();
     password = account->getPassword();
 
@@ -357,7 +436,12 @@ int SIPVoIPLink::sendRegister (AccountID id)
     account->setRegister (true);
 
     /* Set the expire value of the message from the config file */
-    expire_value = Manager::instance().getRegistrationExpireValue();
+    istringstream stream (account->getRegistrationExpire());
+    stream >> expire_value;
+
+    if (!expire_value) {
+        expire_value = PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
+    }
 
     /* Update the state of the voip link */
     account->setRegistrationState (Trying);
@@ -391,7 +475,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pj_strdup2 (_pool, &contact, contactTmp);
     account->setContact (contactTmp);
 
-    status = pjsip_regc_init (regc, &svr, &aor, &aor, 1, &contact, 600);   //timeout);
+    status = pjsip_regc_init (regc, &svr, &aor, &aor, 1, &contact, expire_value);   //timeout);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to initialize regc. %d\n", status);   //, regc->str_srv_url.ptr);
@@ -503,7 +587,6 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
     SIPCall* call = new SIPCall (id, Call::Outgoing, _pool);
 
-
     if (call) {
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
 
@@ -520,16 +603,12 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
         setCallAudioLocal (call, getLocalIPAddress(), useStun(), getStunServer());
 
-
         try {
-            _debug ("CREATE NEW RTP SESSION FROM NEWOUTGOINGCALL\n");
+            _debug ("Creating new rtp session in newOutgoingCall\n");
             _audiortp->createNewSession (call);
         } catch (...) {
             _debug ("Failed to create rtp thread from newOutGoingCall\n");
         }
-
-
-
 
         call->initRecFileName();
 
@@ -545,16 +624,9 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         }
 
         if (SIPOutgoingInvite (call)) {
-
             call->setConnectionState (Call::Progressing);
             call->setState (Call::Active);
             addCall (call);
-
-            // _audiortp->start();
-
-            // call->setAudioStart ( true );
-
-
         } else {
             delete call;
             call = 0;
@@ -567,8 +639,6 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 bool
 SIPVoIPLink::answer (const CallID& id)
 {
-
-    int i;
     SIPCall *call;
     pj_status_t status;
     pjsip_tx_data *tdata;
@@ -608,8 +678,6 @@ SIPVoIPLink::answer (const CallID& id)
         call->setConnectionState (Call::Connected);
         call->setState (Call::Active);
 
-        ;
-
         return true;
     } else {
         // Create and send a 488/Not acceptable here
@@ -624,6 +692,7 @@ SIPVoIPLink::answer (const CallID& id)
         _debug ("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
         terminateOneCall (call->getCallId());
         removeCall (call->getCallId());
+        _audiortp->closeRtpSession ();
         return false;
     }
 }
@@ -841,16 +910,7 @@ SIPVoIPLink::offhold (const CallID& id)
     if (status != PJ_SUCCESS)
         return false;
 
-    // Enable audio
-    _debug ("* SIP Info: Starting AudioRTP when offhold\n");
-
     call->setState (Call::Active);
-
-    // it's sure that this is the current call id...
-
-    _audiortp->start();
-
-    call->setAudioStart (true);
 
     return true;
 }
@@ -914,7 +974,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
      */
     pjsip_evsub_set_mod_data (sub, getModId(), this);
 
-    _debug ("SIP port listener = %i ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", _localExternPort);
+    _debug ("SIP port listener = %i", _localExternPort);
 
     /*
      * Create REFER request.
@@ -1124,12 +1184,10 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     strTo = getSipTo (call->getPeerNumber(), account->getHostname());
 
-    _debug ("            To: %s\n", strTo.data());
-
     // Generate the from URI
     strFrom = "sip:" + account->getUsername() + "@" + account->getHostname();
 
-    _debug ("              From: %s\n", strFrom.c_str());
+    _debug ("Placing new call: \nTo: %s\nFrom: %s\n", strTo.data(), strFrom.c_str());
 
     // pjsip need the from and to information in pj_str_t format
     pj_strdup2 (_pool, &from, strFrom.data());
@@ -1211,38 +1269,24 @@ SIPVoIPLink::SIPCheckUrl (const std::string& url UNUSED)
 void
 SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
 {
-    //if (!event->response) { return; }
-    //switch(event->response->status_code) {
-    //case SIP_SERVICE_UNAVAILABLE: // 500
-    //case SIP_BUSY_EVRYWHERE:     // 600
-    //case SIP_DECLINE:             // 603
-    //SIPCall* call = findSIPCallWithCid(event->cid);
     if (call != 0) {
         _debug ("Server error!\n");
         CallID id = call->getCallId();
         Manager::instance().callFailure (id);
         terminateOneCall (id);
         removeCall (id);
+        _audiortp->closeRtpSession();
     }
-
-    //break;
-    //}
 }
 
 void
 SIPVoIPLink::SIPCallClosed (SIPCall *call)
 {
-
-
-    // it was without did before
-    //SIPCall* call = findSIPCallWithCid(event->cid);
     if (!call) {
         return;
     }
 
     CallID id = call->getCallId();
-
-    //call->setDid(event->did);
 
     if (Manager::instance().isCurrentCall (id)) {
         call->setAudioStart (false);
@@ -1261,9 +1305,6 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
 void
 SIPVoIPLink::SIPCallReleased (SIPCall *call)
 {
-    // do cleanup if exists
-    // only cid because did is always 0 in these case..
-    //SIPCall* call = findSIPCallWithCid(event->cid);
     if (!call) {
         return;
     }
@@ -1287,51 +1328,16 @@ SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata)
 
     _debug ("SIPCallAnswered\n");
 
-    pjmedia_sdp_session *r_sdp;
-
     if (!call) {
         _debug ("! SIP Failure: unknown call\n");
         return;
     }
 
     if (call->getConnectionState() != Call::Connected) {
-        _debug ("Get remote SDP from offer\n");
-        get_remote_sdp_from_offer (rdata, &r_sdp);
-
-        if (r_sdp==NULL) {
-            _debug ("SIP Failure: no remote sdp session\n");
-            return;
-        }
-
-        _debug ("Get remote media information from offer\n");
-
-        call->getLocalSDP()->fetch_media_transport_info_from_remote_sdp (r_sdp);
-
-        // _audiortp->getRTX()->setRtpSessionRemoteIp();
-
         _debug ("Update call state , id = %s\n", call->getCallId().c_str());
         call->setConnectionState (Call::Connected);
         call->setState (Call::Active);
-
         Manager::instance().peerAnsweredCall (call->getCallId());
-
-        if (Manager::instance().isCurrentCall (call->getCallId())) {
-            /*
-            _debug("CREATE NEW RTP SESSION FROM SIPCALLANSWERED\n");
-            try {
-                _audiortp->createNewSession (call);
-                call->setAudioStart(true);
-            } catch (...) {
-                _debug("Failed to create rtp thread from answer\n");
-            }
-            */
-
-            call->setAudioStart (true);
-
-            _audiortp->start();
-
-        }
-
     } else {
         _debug ("* SIP Info: Answering call (on/off hold to send ACK)\n");
     }
@@ -1405,7 +1411,6 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
             _debug ("! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)\n", __FILE__, __LINE__);
         }
 
-
         // Generate the contact URI
         // uri_contact << "<" << uri_from << ":" << call->getLocalSDP()->get_local_extern_audio_port() << ">";
         uri_contact << "<" << uri_from << ":" << _localExternPort << ">";
@@ -1450,10 +1455,6 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->setState (Call::Active);
         addCall (call);
 
-        // _audiortp->start();
-
-        // call->setAudioStart ( true );
-
         return true;
     } else
         return false;
@@ -1489,7 +1490,6 @@ bool get_dns_server_addresses (std::vector<std::string> *servers)
         nameservers.push_back (inet_ntoa (address));
     }
 
-    //nameservers.push_back ("192.168.50.3");
     *servers = nameservers;
 
     return true;
@@ -1501,8 +1501,6 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
     pj_status_t status;
     pj_dns_resolver *resv;
     std::vector <std::string> dns_servers;
-    pj_uint16_t port = 5353;
-    pjsip_resolver_t *res;
     int scount, i;
 
     // Create the DNS resolver instance
@@ -1780,12 +1778,9 @@ int SIPVoIPLink::createUDPServer (void)
     pj_sockaddr_in bound_addr;
     pjsip_host_port a_name;
     char tmpIP[32];
-    pj_sock_t sock;
-
 
     // Init bound address to ANY
     pj_memset (&bound_addr, 0, sizeof (bound_addr));
-
 
     bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
     bound_addr.sin_port = pj_htons ( (pj_uint16_t) _localPort);
@@ -1812,10 +1807,6 @@ int SIPVoIPLink::createUDPServer (void)
 
     return PJ_SUCCESS;
 }
-
-
-
-
 
 bool SIPVoIPLink::loadSIPLocalIP()
 {
@@ -1895,6 +1886,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
     pj_shutdown();
 
     /* Done. */
+    return true;
 }
 
 int getModId()
@@ -1902,10 +1894,22 @@ int getModId()
     return _mod_ua.id;
 }
 
+static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
+{
+
+    struct result * result = (struct result*) token;
+
+    result->status = status;
+
+    if (status == PJ_SUCCESS) {
+        pj_memcpy (&result->servers, addr, sizeof (*addr));
+    }
+}
+
 void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 {
 
-    int voicemail, pos_begin, pos_end;
+    int voicemail = 0, pos_begin, pos_end;
     std::string voice_str = "Voice-Message: ";
     std::string delimiter = "/";
     std::string msg_body, voicemail_str;
@@ -1940,7 +1944,6 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 
 void SIPVoIPLink::handle_reinvite (SIPCall *call)
 {
-
     // Close the previous RTP session
     _audiortp->closeRtpSession ();
     call->setAudioStart (false);
@@ -1952,29 +1955,18 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)\n", __FILE__, __LINE__);
     }
-
-    _audiortp->start();
-
-    call->setAudioStart (true);
-
-
 }
 
-
-/*******************************/
-/*   CALLBACKS IMPLEMENTATION  */
-/*******************************/
-
+// This callback is called when the invite session state has changed
 void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 {
-
-    _debug ("--------------------- call_on_state_changed --------------------- %i\n", inv->state);
+    _debug ("call_on_state_changed to state %s\n", invitationStateMap[inv->state]);
 
     SIPCall *call;
     AccountID accId;
     SIPVoIPLink *link;
     pjsip_rx_data *rdata;
-
+    pj_status_t status;
 
     /* Retrieve the call information */
     call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
@@ -2046,104 +2038,94 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
                 }
             }
         }
-    } else {
 
-        // The call is ringing - We need to handle this case only on outgoing call
-        if (inv->state == PJSIP_INV_STATE_EARLY && e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
-            call->setConnectionState (Call::Ringing);
-            Manager::instance().peerRingingCall (call->getCallId());
-        }
-
-        // We receive a ACK - The connection is established
-        else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
-
-            /* If the call is a direct IP-to-IP call */
-            if (call->getCallConfiguration () == Call::IPtoIP) {
-                link = SIPVoIPLink::instance ("");
-            } else {
-                accId = Manager::instance().getAccountFromCall (call->getCallId());
-                link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-            }
-
-            if (link)
-                link->SIPCallAnswered (call, rdata);
-        }
-
-        else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
-            int count = 0;
-            _debug ("------------------- Call disconnected ---------------------\n");
-            _debug ("State: %i, Disconnection cause: %i\n", inv->state, inv->cause);
-
-            switch (inv->cause) {
-                    /* The call terminates normally - BYE / CANCEL */
-
-                case PJSIP_SC_OK:
-
-                case PJSIP_SC_DECLINE:
-
-                case PJSIP_SC_REQUEST_TERMINATED:
-
-                    accId = Manager::instance().getAccountFromCall (call->getCallId());
-                    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-
-                    if (link) {
-                        link->SIPCallClosed (call);
-                    }
-
-                    break;
-
-                    /* The call connection failed */
-
-                case PJSIP_SC_NOT_FOUND:            /* peer not found */
-
-                case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
-
-                case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
-
-                case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
-
-                case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
-
-                case PJSIP_SC_UNAUTHORIZED:
-
-                case PJSIP_SC_REQUEST_PENDING:
-                    accId = Manager::instance().getAccountFromCall (call->getCallId());
-                    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-
-                    if (link) {
-                        link->SIPCallServerFailure (call);
-                    }
-
-                    break;
-
-                default:
-                    _debug ("sipvoiplink.cpp - line 1635 : Unhandled call state. This is probably a bug.\n");
-                    break;
-            }
-        }
-
-
-    }
-}
-
-void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
-{
-
-    _debug ("--------------------- call_on_media_update --------------------- \n");
-
-    AccountID accId;
-    SIPVoIPLink *link;
-
-    const pjmedia_sdp_session *r_sdp;
-    SIPCall *call;
-
-    if (status != PJ_SUCCESS) {
-        _debug ("Error while negociating the offer\n");
         return;
     }
 
-    // Get the new sdp, result of the negociation
-    pjmedia_sdp_neg_get_active_local (inv->neg, &r_sdp);
+    // The call is ringing - We need to handle this case only on outgoing call
+    if (inv->state == PJSIP_INV_STATE_EARLY && e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
+        call->setConnectionState (Call::Ringing);
+        Manager::instance().peerRingingCall (call->getCallId());
+    }
+
+    // After 2xx is sent/received.
+    else if (inv->state == PJSIP_INV_STATE_CONNECTING) {
+        status = call->getLocalSDP()->check_sdp_answer (inv, rdata);
+
+        if (status != PJ_SUCCESS) {
+            _debug ("Failed to check_incoming_sdp in call_on_state_changed\n");
+            return;
+        }
+    }
+
+    // After we sent or received a ACK - The connection is established
+    else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
+
+        /* If the call is a direct IP-to-IP call */
+        if (call->getCallConfiguration () == Call::IPtoIP) {
+            link = SIPVoIPLink::instance ("");
+        } else {
+            accId = Manager::instance().getAccountFromCall (call->getCallId());
+            link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
+        }
+
+        if (link)
+            link->SIPCallAnswered (call, rdata);
+    } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
+        _debug ("Invitation falled in state \"disconnected\".\n");
+        _debug ("State: %i, Disconnection cause: %i\n", inv->state, inv->cause);
+
+        switch (inv->cause) {
+                /* The call terminates normally - BYE / CANCEL */
+
+            case PJSIP_SC_OK:
+            case PJSIP_SC_REQUEST_TERMINATED:
+                accId = Manager::instance().getAccountFromCall (call->getCallId());
+                link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
+
+                if (link) {
+                    link->SIPCallClosed (call);
+                }
+
+                break;
+
+                /* The call connection failed */
+
+            case PJSIP_SC_NOT_FOUND:            /* peer not found */
+            case PJSIP_SC_DECLINE:
+            case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
+            case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
+            case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
+            case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
+            case PJSIP_SC_UNAUTHORIZED:
+            case PJSIP_SC_REQUEST_PENDING:
+                accId = Manager::instance().getAccountFromCall (call->getCallId());
+                link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
+
+                if (link) {
+                    link->SIPCallServerFailure (call);
+                }
+
+                break;
+
+            default:
+                _debug ("sipvoiplink.cpp - line %d : Unhandled call state. This is probably a bug.\n", __LINE__);
+                break;
+        }
+    }
+
+}
+
+// This callback is called after SDP offer/answer session has completed.
+void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
+{
+    _debug ("call_on_media_update\n");
+
+    const pjmedia_sdp_session *local_sdp;
+    const pjmedia_sdp_session *remote_sdp;
+
+    SIPVoIPLink * link = NULL;
+    SIPCall * call;
 
     call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
 
@@ -2152,38 +2134,42 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         return;
     }
 
-    // Clean the resulting sdp offer to create a new one (in case of a reinvite)
-    call->getLocalSDP()->clean_session_media();
+    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
 
-    // Set the fresh negociated one
-    call->getLocalSDP()->set_negociated_offer (r_sdp);
-
-    // call->getLocalSDP()->fetch_media_transport_info_from_remote_sdp( r_sdp );
-    // call->getLocalSDP()->fetch_remote_ip_from_sdp( r_sdp );
-    // call->getLocalSDP()->fetch_remote_audio_port_from_sdp( r_sdp );
-
-    accId = Manager::instance().getAccountFromCall (call->getCallId());
-
-    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-
-    if (!link) {
-        _debug ("No Voip Account Link, impossible to init RTP session with SDP info");
+    if (link == NULL) {
+        _debug ("Failed to get sip link\n");
         return;
     }
 
-    if (call->getState() != Call::Hold) {
-        _debug ("Set media parameters in RTP session\n");
-        // link->_audiortp->getRTX()->setRtpSessionMedia();
-        // link->_audiortp->getRTX()->setRtpSessionRemoteIp();
-
-        // link->_audiortp->start();
-
-        // call->setAudioStart ( true );
-        // link->_audiortp->start();
-    } else {
-        _debug ("Didn't set RTP parameters since call is on hold\n");
+    if (status != PJ_SUCCESS) {
+        _debug ("Error while negotiating the offer\n");
+        link->hangup (call->getCallId());
+        Manager::instance().callFailure (call->getCallId());
+        return;
     }
 
+    // Get the new sdp, result of the negotiation
+    pjmedia_sdp_neg_get_active_local (inv->neg, &local_sdp);
+
+    pjmedia_sdp_neg_get_active_remote (inv->neg, &remote_sdp);
+
+    // Clean the resulting sdp offer to create a new one (in case of a reinvite)
+    call->getLocalSDP()->clean_session_media();
+
+    // Set the fresh negotiated one, no matter if that was an offer or answer.
+    // The local sdp is updated in case of an answer, even if the remote sdp
+    // is kept internally.
+    call->getLocalSDP()->set_negotiated_sdp (local_sdp);
+
+    // Set remote ip / port
+    call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
+
+    try {
+        call->setAudioStart (true);
+        link->getAudioRtp()->start();        
+    } catch(exception& rtpException) {
+        _debug("%s\n", rtpException.what());
+    }
 
 }
 
@@ -2193,8 +2179,7 @@ void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
 
 void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
 {
-
-    _debug ("--------------------- call_on_tsx_changed --------------------- %i\n", tsx->state);
+    _debug ("call_on_tsx_changed to state %s\n", transactionStateMap[tsx->state]);
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
             pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
@@ -2205,11 +2190,8 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
 void regc_cb (struct pjsip_regc_cbparam *param)
 {
-
-    //AccountID *id = static_cast<AccountID *> (param->token);
     SIPAccount *account;
 
-    //_debug("UserAgent: Account ID is %s, Register result: %d, Status: %d\n", id->data(), param->status, param->code);
     account = static_cast<SIPAccount *> (param->token);
 
     if (!account)
@@ -2265,11 +2247,10 @@ void regc_cb (struct pjsip_regc_cbparam *param)
 
 }
 
+// Optional function to be called to process incoming request message.
 pj_bool_t
 mod_on_rx_request (pjsip_rx_data *rdata)
 {
-
-
     pj_status_t status;
     pj_str_t reason;
     unsigned options = 0;
@@ -2301,7 +2282,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     userName = std::string (sip_uri->user.ptr, sip_uri->user.slen);
     server = std::string (sip_uri->host.ptr, sip_uri->host.slen);
 
-    std::cout << userName << " ------------------ " << server << std::endl;
+    _debug ("mod_on_rx_request: %s@%s\n", userName.c_str(), server.c_str());
 
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
@@ -2423,7 +2404,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     get_remote_sdp_from_offer (rdata, &r_sdp);
 
-// 	_debug("r_sdp = %s\n", r_sdp);
     status = call->getLocalSDP()->receiving_initial_offer (r_sdp);
 
     if (status!=PJ_SUCCESS) {
@@ -2431,7 +2411,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         call=0;
         return false;
     }
-
 
     call->setConnectionState (Call::Progressing);
 
@@ -2461,7 +2440,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
                                        NULL);
         return true;
     }
-
 
     // Specify media capability during invite session creation
     status = pjsip_inv_create_uas (dialog, rdata, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
@@ -2493,7 +2471,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata UNUSED)
 {
-
+    _debug ("Mod on rx response");
     return PJ_SUCCESS;
 }
 
@@ -2692,7 +2670,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         return;
     }
 
-    SIPCall* newCall;
+    SIPCall* newCall = 0;
 
     SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
 
@@ -2828,7 +2806,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         if (event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
             request = event->body.rx_msg.rdata->msg_info.msg_buf;
 
-            if (request.find (noresource) != -1) {
+            if ( (int) request.find (noresource) != -1) {
                 _debug ("UserAgent: NORESOURCE for transfer!\n");
                 link->transferStep2();
                 pjsip_evsub_terminate (sub, PJ_TRUE);
@@ -2837,7 +2815,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
                 return;
             }
 
-            if (request.find (ringing) != -1) {
+            if ( (int) request.find (ringing) != -1) {
                 _debug ("UserAgent: transfered call RINGING!\n");
                 link->transferStep2();
                 pjsip_evsub_terminate (sub, PJ_TRUE);
@@ -2924,7 +2902,7 @@ void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
 
 
 #ifdef CAN_REINVITE
-    _debug ("reinvite                                                  SIP\n");
+    _debug ("%s (%d): on_rx_offer REINVITE\n", __FILE__, __LINE__);
 
     SIPCall *call;
     pj_status_t status;

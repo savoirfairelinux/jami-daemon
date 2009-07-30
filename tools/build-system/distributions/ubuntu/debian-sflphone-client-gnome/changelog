@@ -1,3 +1,233 @@
+sflphone-client-gnome (0.9.6-SYSVER) SYSTEM; urgency=low
+
+    ** 0.9.6 **
+
+  * Documentation on echo test
+  * [redmine_down] codec names not displayed in total
+  * [redmine_down] crash when hanging up a dialing call because tries to
+    add it to history whereas no starttime
+  * [#1927] alternate every time screen changed to call history
+  * [#1886] clean code
+  * [#1886] debug messages when loading history removed
+  * [redmine_down] sflphone-kde icons
+  * [#1855] Update language files
+  * [#1502] Update version number
+  * [redmine_down] setHistory at close
+  * [#redmine_down] Handle PJ_DECLINE_SC as failure
+  * [#1923] Fix segmentation fault when adding a new account
+  * [#1923] Check on iterator before setting the config
+  * [#1904] Added mnemonic to tabs in sflphone-client-gnome.
+  * [#1905] The daemon was not sending the currentSelectedCodec signal
+    on dbus when answering a call.
+  * [#1922] Default values set to all account details
+  * [#1886] Spinbox reg expire enables apply, and address book is not
+    visible when disabled
+  * [#1905] Bug fix for segmentation fault caused by an empty string,
+  * [#1910] Warnings in test directory
+  * [#1919] Error fixed
+  * [#1855] Update russian translation - Hussein Abdallah
+  * [#1910] Remove files
+  * [#1919] fixed
+  * [#1777] Code indentation
+  * [#1918] fixed
+  * [#1917] fixed
+  * [#1910] Remove warnings compilation in src
+  * [#1886] removed AccountListModel in configskeleton
+  * [#1914]
+  * [#1911] check previous and new port
+  * [#1910] Remove compilation warnings in src/dbus and src/history
+  * [#1910] Remove compilation warnings in src/audio
+  * [1855] Update german translation - Sven Werlen
+  * [#1909] removed
+  * [#1906] Done
+  * [#1904] The registration expire value is now configurable from the
+  * Cleaned up debug messages.
+  * [#1886] separated initCallItem in two functions
+  * [#1886] reversed error in commit
+  * [#1886] clean debug
+  * [#1886] changed Name of classes and files
+  * [#1886] clean
+  * [#1870] In call_state_cb (dbus.c:126), _time_stop was overridden by
+    the actual time.
+  * [#1884] Added some new gpg flags to prevent tty warnings
+  * [#1886] Clean audio config dialog
+  * [#1886] No more compile warnings. + 1 comm
+  * [#1872] Check if the user input is smaller than PJ_MAX_HOSTNAME.
+  * [#1886]
+  * [#1785] Fixed build when no new commit
+  * [#1852] If chosen by the user, the hostname can now be solved and
+    used
+  * [#1871] * and # inverted back
+  * [#1869] Conditional compilation that checks if
+  * [#1309] removed test in main
+  * [#1425] Put actions in SFLPhone window class instead of ui view,
+    made a separate toolbar for screens.
+
+ -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 27 Jul 2009 09:53:19 -0400
+
+sflphone-client-gnome (0.9.6~rc2-SYSVER) SYSTEM; urgency=low
+
+    ** 0.9.6~rc2 **
+
+  * [#1755] Remove generated file
+  * [#1753] restore ilbc ...
+  * [#1866] Methods getSipPort and setSipPort now have an effect on the
+  * [#1753] make pjsip compile without ilbc. Use ./autogen.sh --disable-
+    ilbc-codec
+  * [#1855] Fix error in russian translation
+  * [#1805] Remove the old flawed signal mechanism which was failing in
+  * [#1855] Refresh translation
+  * Spanish translation finished + po README files updated + echo's in
+    copy-in-clients
+  * [#1850] Yun made the chinese HK-CN translation
+  * [#1848] Fix transfer interface bug
+  * [#1862] At install, kde client installs only french translation file
+  * [#1841] A new fallback mechanism was added to the internal resolver
+    in PJSIP.
+  * Started AccountList model/view
+  * [#1855] Remove po subdir in Makefile.am
+  * [#1855] Fix typo error in sflphone-client-gnome
+  * [#1855] Do not generate Makefile in sflphone-common/po
+  * [#1855] Copy translation files into both clients dirs
+  * [#1855] Remove po dir from sflphone-common
+  * Comments added
+  * [#1860] mailbox->voicemail...
+  * make scripts executable
+  * [#1855] French translation
+  * [#1855] Chinese zh_HK partially filled...
+  * [#1859] An unnamed pipe monitored by poll() was added. When we want
+    to
+  * [#1855] Sven completed the first part of the german translation
+  * [#1855] Cantonese manually filled for already translated, almost
+    equal strings
+  * [#1855] Merge russian translation
+  * [#1855] Spanish manually filled for already translated, almost equal
+    strings
+  * [#1855] Update german translation in ./lang/de
+  * [#1858] This problem was fixed by removing a useless line in
+  * [#1855] merged existing translations in lang/ sflphone.po's
+  * [#1842] [#1843] An attempt at improving the expected behaviour that
+    can't
+  * [#1855] added po folder in gnome client and scripts for copying from
+    common lang folder to clients
+  * [#1853] Edit before call does nothing on call history
+  * Put most language entries possible in common. From 300 to 250
+    entries. Stays underscores problem. Scripts for copy in clients.
+  * commit to merge master
+  * [#1825] Changed "Bad authentification" to "Authentication Failed".
+  * common po files
+  * [#1753] Remove ILBC from pjproject
+
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 17 Jul 2009 19:12:58 -0400
+
+sflphone-client-gnome (0.9.6~rc1-SYSVER) SYSTEM; urgency=low
+
+    ** 0.9.6~rc1 **
+
+  * Update some version number
+  * [#1792] Creates .sflphone directory with permission 600. Also,
+    "chmod 600" after
+  * [#1810] GUI is now notified that the call failed. Also, a segfault
+    was
+  * [#1816] Address book search disabled when disabled address book and
+    enabled it back plus button stays triggered
+  * codeclistmodel + asynchronous loading of address book +
+    enable/disable address book
+  * [#1810] Now checking SDP answer after 200 OK. Still need to
+    implement full
+  * [#1794] Can't use the interface during a call
+  * Updated translation files
+  * Russian translation integrated
+  * Codec list model/view started.
+  * [#1807] Add configure.ac in pjproject-1.0.3
+  * [#1787] closeRtpSession added in some places where it should have
+    been
+  * Use Item class for contacts and accounts
+  * Comments + clean code
+  * [#1794] Improved debug messages
+  * [#1805] Replaced the old and unreliable mecanism that was was
+    waiting for
+  * [#1794] Can't use the interface during a call
+  * [#1787]  For those cases where no registered SIP account is
+    configured
+  * [#1797] Make pjsip compile
+  * [#1787] Minor changes. Removed useless commented line. Changed order
+    of
+  * [#1777] Code indentation
+  * [#1797] Update package generation with new pjsip version
+  * [#1798] Does not hang up when the call is building up
+  * [#1797] Update .gitignore with new pjsip version
+  * [#1797] Remove generated files from repo
+  * [#1797] Main build system now uses pjproject-1.0.3
+  * [#1797] Add pjproject-1.0.3
+  * [#1797] Remove pjproject-1.0.2
+  * [#1796] Computing time optimization (samplerate conversion)
+  * [#1787] _audiortp->start() moved away from offhold(),
+    SIPCallAnswered()
+  * [#1312] Added new states for calls initialized by other clients
+  * [#1795] Crashes when adding a new account, checking it and applying
+  * [#1782] Missing icons
+  * [#1793] KDE client compilation problem
+  * Fake ringtone files can no longer be set.
+  * indentation
+  * [#1312] Able to fetch to differentiate incoming/ringing call state
+  * [#1784] Use DESTDIR variable in po Makefile - fix language file
+    installation
+  * [#1785] Fixed typo
+  * [#1785] Fixed changelog update
+  * [#1759] ./autogen.sh --prefix=/usr --with-debug to use optimization
+    level 0
+  * [#1773] Changed snapshot naming convention
+  * [#1773] Removed gpg agent use, added repository cache cleaning
+  * [#1759] Use optimization level 0 for repository, 2 for packages
+  * [#1777] Code indentation/formatting
+  * Translated new features in french
+  * [#1785] Added missing changelog entry
+  * [#1781] Window title is SFLPhone
+  * [#1777] Add code indentation/formatting in the buil system
+  * [#1774] Can't set voicemail number in KDE account creation wizard
+  * [#1775] Can't modify account information for account created with
+    the wizard
+  * [#1771] Add a "Default" button in context menu to disable chosen
+    prior account
+  * [#1705]
+  * [#1224] Remove generated file from the repo
+  * [#1224] Remove generated file from the repo
+  * [#1762] distclean target should remove kconfig generated files
+    (settings.h, settings.cpp). Rename them?
+  * [#1761] clear history button should really clear history
+  * Dialpad works.
+  * Implemented Dialpad widget instead of building it in main view.
+  * Removed last occurence of the old config dialog, that made the build
+    crash.
+  * [#1755] Do not consider G722 as a dynamic payload elsewhere than in
+    RTP layer
+  * [#1753] Remove ilbc Makefile generation
+  * [#1756] Implement a kde configuration dialog with kconfig xt and
+    kconfigdialog class
+  * [#1755] fix audiocodec folder parsing problem
+  * [#1450] Reinit timestamp comparison in RTP, create session in
+    newOutgoingCall
+  * [#1753] Remove milenage third party code from pjsip
+  * New Config Dialog integrated in GUI.(without codecs)
+  * [#1753] Remove ILBC codec
+  * kconfig started, tr2i18n -> i18n, icons folder, accountList changed
+  * [#1705] Fixed Audio RTP thread creation/start
+  * [#1714] Fix codec negociation result handling
+  * [#1678] Fix audiortp payload setting
+  * [#1678] Put bac putData method in rtp
+  * [#1669] gtk_file_chooser_get_filename() support UTF-8 by default
+  * [#1735] Add conditions to sdp update call if call declined
+  * [#1737] substr of recordings destination folder to remove "file://"
+    should be done in client rather than in daemon
+  * [#1731] Enlarge audio stream buffer size
+  * [#1714] Missing true
+  * [#1317] Fixed Mandriva timeout
+  * [#1317] Changed tag convention
+  * [#1317] Cleaned git-dch
+
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 10 Jul 2009 15:50:26 -0400
+
 sflphone-client-gnome (0.9.6~beta-SYSVER) SYSTEM; urgency=low
 
     ** 0.9.6~beta **

@@ -28,17 +28,18 @@
 
 #include "typedefs.h"
 #include "AccountItemWidget.h"
+#include "Item.h"
 
 const QString account_state_name(QString & s);
 
-class Account{
-	
+class Account : public QObject, public Item<AccountItemWidget>{
+Q_OBJECT
 private:
 
 	QString * accountId;
 	MapStringString * accountDetails;
-	QListWidgetItem * item;
-	AccountItemWidget * itemWidget;
+// 	QListWidgetItem * item;
+// 	AccountItemWidget * itemWidget;
 
 	Account();
 
@@ -53,7 +54,7 @@ public:
 	//Getters
 	bool isNew() const;
 	bool isChecked() const;
-	QString & getAccountId();
+	const QString & getAccountId() const;
 	MapStringString & getAccountDetails() const;
 	QListWidgetItem * getItem();
 	AccountItemWidget * getItemWidget();
@@ -61,7 +62,9 @@ public:
 	QColor getStateColor();
 	QString getStateColorName();
 	QString getAccountDetail(QString param) const;
-	QString getAlias();
+	QString getAlias() const;
+	bool isEnabled() const;
+	bool isRegistered() const;
 	
 	//Setters
 	void setAccountId(QString id);
@@ -69,12 +72,16 @@ public:
 	void setAccountDetail(QString param, QString val);
 	
 	//Updates
-	void initAccountItem();
-	void initAccountItemWidget();
+	void initItem();
+	void initItemWidget();
 	void updateState();
 	
 	//Operators
 	bool operator==(const Account&)const;
+	
+public slots:
+	void setEnabled(bool checked);
+	
 	
 	
 };

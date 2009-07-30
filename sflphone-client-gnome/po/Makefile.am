@@ -1,27 +1,25 @@
 # location of installation directories
 locale_installdir=$(DESTDIR)$(datadir)/locale
-DOMAIN=sflphone
+DOMAIN=sflphone-client-gnome
 
-POTFILE=sflphone.pot
 
 POFILES=\
-	 fr.po \
-	 es.po \
-	 de.po \
-     zh_CN.po \
-     zh_HK.po \
-	 ru.po
+	 fr/sflphone-client-gnome.po \
+	 es/sflphone-client-gnome.po \
+	 de/sflphone-client-gnome.po \
+     zh_CN/sflphone-client-gnome.po \
+     zh_HK/sflphone-client-gnome.po \
+	 ru/sflphone-client-gnome.po
 
 MOFILES=\
-	 fr.mo \
-	 es.mo \
-	 de.mo \
-     zh_CN.mo \
-     zh_HK.mo \
-	 ru.mo
+	 fr/sflphone-client-gnome.mo \
+	 es/sflphone-client-gnome.mo \
+	 de/sflphone-client-gnome.mo \
+     zh_CN/sflphone-client-gnome.mo \
+     zh_HK/sflphone-client-gnome.mo \
+	 ru/sflphone-client-gnome.mo
 
 MSGFMT=msgfmt
-MSGMERGE=msgmerge
 
 # necessary files
 EXTRA_DIST= $(POFILES)
@@ -32,14 +30,13 @@ all:	$(MOFILES)
 SUFFIXES=.po .mo
 
 .po.mo:
-	$(MSGMERGE) --update $< $(POTFILE) 
 	$(MSGFMT) -o $@ $<
 
 install-data-local:
 	@catalogs='$(MOFILES)'; \
 	for i in $$catalogs; do \
 		destdir=$(locale_installdir); \
-		lang=`echo $$i | sed 's/\.mo//'`; \
+		lang=`echo $$i | cut -d / -f1`; \
 		$(mkinstalldirs) $(locale_installdir)/$$lang/LC_MESSAGES; \
 		$(INSTALL_DATA) $$i $(locale_installdir)/$$lang/LC_MESSAGES/$(DOMAIN).mo; \
 		echo "installing $$i as $(locale_installdir)/$$lang/LC_MESSAGES/$(DOMAIN).mo"; \

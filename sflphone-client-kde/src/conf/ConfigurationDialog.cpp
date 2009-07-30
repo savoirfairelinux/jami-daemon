@@ -32,7 +32,7 @@
 
 #include "sflphone_const.h"
 
-ConfigurationDialogKDE::ConfigurationDialogKDE(sflphone_kdeView *parent)
+ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
  :KConfigDialog(parent, SETTINGS_NAME, ConfigurationSkeleton::self())
 {
 	this->setWindowIcon(QIcon(ICON_SFLPHONE));
@@ -50,67 +50,64 @@ ConfigurationDialogKDE::ConfigurationDialogKDE(sflphone_kdeView *parent)
 	addPage( dlgAccounts     , i18n("Accounts")     , "personal" ); 
 	addPage( dlgAudio        , i18n("Audio")        , "voicecall" ); 
 	addPage( dlgAddressBook  , i18n("Address Book") , "x-office-address-book" ); 
-	addPage( dlgRecord       , i18nc("Config section","Record")       , "media-record" ); 
-	addPage( dlgHooks        , i18n("Hooks")        , "insert-link" ); 
-	connect(this, SIGNAL(applyClicked()), dlgAudio, SLOT(updateAlsaSettings()));
-	connect(this, SIGNAL(okClicked()),    dlgAudio, SLOT(updateAlsaSettings()));
+	addPage( dlgRecord       , i18n("Recordings")   , "media-record" ); 
+	addPage( dlgHooks        , i18n("Hooks")        , "insert-link" );
+	
 	connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
 	connect(this, SIGNAL(okClicked()),    this,     SLOT(applyCustomSettings()));
 	
 	connect(dlgGeneral, SIGNAL(clearCallHistoryAsked()), this, SIGNAL(clearCallHistoryAsked()));
-// 	connect(this, SIGNAL(settingsChanged(const QString&)), this, SLOT(slot()));
-// 	connect(this, SIGNAL(widgetModified()), this, SLOT(slot()));
 }
 
 
-ConfigurationDialogKDE::~ConfigurationDialogKDE()
+ConfigurationDialog::~ConfigurationDialog()
 {
 }
 
-void ConfigurationDialogKDE::slot()
+void ConfigurationDialog::updateWidgets()
 {
-	qDebug() << "slot";
-}
-
-void ConfigurationDialogKDE::updateWidgets()
-{
-	qDebug() << "updateWidgets";
+	qDebug() << "\nupdateWidgets";
 	dlgAudio->updateWidgets();
 	dlgAccounts->updateWidgets();
 }
 
-void ConfigurationDialogKDE::updateSettings()
+void ConfigurationDialog::updateSettings()
 {
-	qDebug() << "updateSettings";
+	qDebug() << "\nupdateSettings";
 	dlgAudio->updateSettings();
 	dlgAccounts->updateSettings();
-	qDebug() << "yo  " << ConfigurationSkeleton::self()->alsaPlugin();
 }
 
-bool ConfigurationDialogKDE::hasChanged()
+bool ConfigurationDialog::hasChanged()
 {
-	qDebug() << "hasChanged" << dlgAudio->hasChanged() << dlgAccounts->hasChanged();
-	return dlgAudio->hasChanged() || dlgAccounts->hasChanged();
+	bool res = dlgAudio->hasChanged() || dlgAccounts->hasChanged();
+	qDebug() << "hasChanged" << res;
+	return res;
 }
 
-void ConfigurationDialogKDE::updateButtons()
+void ConfigurationDialog::updateButtons()
 {
-	qDebug() << "updateButtons";
-	enableButtonApply( hasChanged() );
+	bool changed = hasChanged();
+	qDebug() << "updateButtons , hasChanged = " << changed;
+// 	if(hasChanged())
+// 		enableButtonApply( true );
+	enableButtonApply( changed );
 }
 
-void ConfigurationDialogKDE::applyCustomSettings()
+void ConfigurationDialog::applyCustomSettings()
 {
-	qDebug() << "applyCustomSettings";
-	dlgAccounts->applyCustomSettings();
+	qDebug() << "\napplyCustomSettings";
 // 	if(hasChanged())
 // 	{
 		ConfigurationSkeleton::self()->writeConfig();
 // 	}
+	updateSettings();
+	updateWidgets();
 	updateButtons();
+	emit changesApplied();
 }
 
-void ConfigurationDialogKDE::reload()
+void ConfigurationDialog::reload()
 {
 	qDebug() << "reload";
 	ConfigurationSkeleton::self()->readConfig();

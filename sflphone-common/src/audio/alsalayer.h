@@ -149,14 +149,6 @@ class AlsaLayer : public AudioLayer {
     // Assignment Operator
     AlsaLayer& operator=( const AlsaLayer& rh);
 
-    bool _is_prepared_playback;
-    bool _is_prepared_capture;
-    bool _is_running_capture;
-    bool _is_running_playback;
-    bool _is_open_playback;
-    bool _is_open_capture;
-    bool _trigger_request;
-    
     bool is_playback_prepared (void) { return _is_prepared_playback; }
     bool is_capture_prepared (void) { return _is_prepared_capture; }
     void prepare_playback (void) { _is_prepared_playback = true; }
@@ -263,6 +255,14 @@ class AlsaLayer : public AudioLayer {
     /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;
 
+	bool _is_prepared_playback;
+    bool _is_prepared_capture;
+    bool _is_running_playback;
+    bool _is_running_capture;
+    bool _is_open_playback;
+    bool _is_open_capture;
+    bool _trigger_request;
+    
     AudioThread *_audioThread;
 
 };
