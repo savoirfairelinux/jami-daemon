@@ -626,7 +626,7 @@ ManagerImpl::refuseCall (const CallID& id)
 bool
 ManagerImpl::saveConfig (void)
 {
-    _debug ("Saving Configuration...\n");
+    _debug ("Saving Configuration to XDG directory %s ... \n", _path.c_str());
     setConfig (AUDIO, VOLUME_SPKR, getSpkrVolume());
     setConfig (AUDIO, VOLUME_MICRO, getMicVolume());
 
@@ -1296,7 +1296,7 @@ ManagerImpl::createSettingsPath (void)
                                         :	_path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR + PROGDIR;
 
 
-    if (mkdir (_path.data(), 0600) != 0) {
+    if (mkdir (_path.data(), 0700) != 0) {
         // If directory	creation failed
         if (errno != EEXIST) {
             _debug ("Cannot create directory: %s\n", strerror (errno));
