@@ -297,3 +297,23 @@ void MainBufferTest::testDiscardFlush()
     _mainbuffer.unBindCallID(test_id);
 
 }
+
+
+void MainBufferTest::testReadPointerInit()
+{
+
+    _debug("MainBufferTest::testReadPointerInit()\n");
+
+    CallID test_id = "test read pointer init";
+    RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(test_id);
+
+    test_ring_buffer->createReadPointer(test_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 0);
+    test_ring_buffer->storeReadPointer(10, test_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 10);
+    test_ring_buffer->removeReadPointer(test_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == NULL);
+    test_ring_buffer->removeReadPointer("false id");
+
+    _mainbuffer.removeRingBuffer(test_id);
+}

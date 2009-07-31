@@ -23,7 +23,13 @@
 #ifndef __RING_BUFFER__
 #define __RING_BUFFER__
 
+#include "../call.h"
+
+
+
 typedef unsigned char* samplePtr;
+
+typedef map<CallID, int> ReadPointer;
 
 class RingBuffer {
   public:
@@ -43,6 +49,15 @@ class RingBuffer {
      * Reset the counters to 0
      */
     void flush (void);
+
+
+    int getReadPointer(CallID call_id = "default_id");
+
+    void storeReadPointer(int pointer_value, CallID call_id = "default_id");
+
+    void createReadPointer(CallID call_id = "default_id");
+
+    void removeReadPointer(CallID call_id = "default_id");
 
     /**
      * To get how much space is available in the buffer to write in
@@ -107,6 +122,8 @@ class RingBuffer {
     int           mBufferSize;
     /** Data */
     samplePtr     mBuffer;
+
+    ReadPointer _readpointer;
 };
 
 #endif /*  __RING_BUFFER__ */

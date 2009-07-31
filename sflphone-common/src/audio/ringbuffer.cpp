@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004, 2005, 2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009Savoir-Faire Linux inc.
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -62,6 +63,46 @@ void
 RingBuffer::debug()
 {
     _debug ("Start=%d; End=%d; BufferSize=%d\n", mStart, mEnd, mBufferSize);
+}
+
+int
+RingBuffer::getReadPointer(CallID call_id)
+{
+
+    ReadPointer::iterator iter = _readpointer.find(call_id);
+    if (iter == _readpointer.end())
+	return NULL;
+    else
+        return iter->second;
+    
+}
+
+void
+RingBuffer::storeReadPointer(int pointer_value, CallID call_id)
+{
+
+    ReadPointer::iterator iter = _readpointer.find(call_id);
+    if(iter != _readpointer.end())
+	iter->second = pointer_value;
+
+}
+
+
+void
+RingBuffer::createReadPointer(CallID call_id)
+{
+
+    _readpointer[call_id] = 0;
+
+}
+
+
+void
+RingBuffer::removeReadPointer(CallID call_id)
+{
+
+    _readpointer.erase(call_id);
+
 }
 
 //
