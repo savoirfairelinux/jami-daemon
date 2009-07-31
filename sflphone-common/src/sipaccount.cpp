@@ -70,9 +70,8 @@ int SIPAccount::registerVoIPLink()
     
     int credentialCount = 0;
     credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
-    credentialCount += 1; // Default credential
     
-    pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc(sizeof(pjsip_cred_info)*credentialCount);        
+    pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc(sizeof(pjsip_cred_info)*(credentialCount+1));        
     if (cred_info == NULL) {
         _debug("Failed to set cred_info for account %s\n", _accountID.c_str());
         return !SUCCESS;
@@ -90,7 +89,7 @@ int SIPAccount::registerVoIPLink()
     cred_info[0].scheme = pj_str("digest");
             
     int i;
-    for (i = 1; i < credentialCount; i++) {
+    for (i = 0; i < credentialCount; i++) {
         std::string credentialIndex;
         std::stringstream streamOut;
         streamOut << i;
@@ -107,6 +106,8 @@ int SIPAccount::registerVoIPLink()
         cred_info[i].realm = pj_str(strdup(realm.c_str()));
         cred_info[i].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
         cred_info[i].scheme = pj_str("digest");
+        
+        _debug("Setting credential %d realm = %s\n", i, realm.c_str());
     }
 
     _credentialCount = credentialCount;
