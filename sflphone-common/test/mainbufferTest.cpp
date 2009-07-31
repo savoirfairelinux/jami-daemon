@@ -99,24 +99,24 @@ void MainBufferTest::testRingBufferInt()
     int testint2 = 13;
 
     CPPUNIT_ASSERT(test_ring_buffer->Put(&testint1, sizeof(int)) == sizeof(int));
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
 
     CPPUNIT_ASSERT(test_ring_buffer->Put(&testint2, sizeof(int)) == sizeof(int));
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 2*sizeof(int));
 
     int testget;
 
     CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(int)) == sizeof(int));
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen() == sizeof(int));
     CPPUNIT_ASSERT(testget == testint1);
 
     CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(int)) == sizeof(int));
     CPPUNIT_ASSERT(testget == testint2);
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getLen() == 0);
 
     CPPUNIT_ASSERT(test_ring_buffer->Put(&testint1, sizeof(int)) == sizeof(int));
     test_ring_buffer->flush();
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
 
     _mainbuffer.removeRingBuffer(test_id);
 }
@@ -134,24 +134,24 @@ void MainBufferTest::testRingBufferFloat()
     float testfloat2 = 13.4;
 
     CPPUNIT_ASSERT(test_ring_buffer->Put(&testfloat1, sizeof(float)) == sizeof(float));
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == sizeof(float));
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(float));
 
     CPPUNIT_ASSERT(test_ring_buffer->Put(&testfloat2, sizeof(float)) == sizeof(float));
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == 2*sizeof(float));
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 2*sizeof(float));
 
     float testget;
 
     CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(float)) == sizeof(float));
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == sizeof(float));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen() == sizeof(float));
     CPPUNIT_ASSERT(testget == testfloat1);
 
     CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(float)) == sizeof(float));
     CPPUNIT_ASSERT(testget == testfloat2);
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getLen() == 0);
 
     CPPUNIT_ASSERT(test_ring_buffer->Put(&testfloat1, sizeof(float)) == sizeof(float));
     test_ring_buffer->flush();
-    CPPUNIT_ASSERT(test_ring_buffer->Len() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
 
     _mainbuffer.removeRingBuffer(test_id);
 }
@@ -316,8 +316,117 @@ void MainBufferTest::testReadPointerInit()
     test_ring_buffer->storeReadPointer(10, test_id);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 10);
     test_ring_buffer->removeReadPointer(test_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == NULL);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == (int)NULL);
     test_ring_buffer->removeReadPointer("false id");
+
+    _mainbuffer.removeRingBuffer(test_id);
+}
+
+
+void MainBufferTest::testRingBufferSeveralPointers()
+{
+
+    _debug("MainBufferTest::testRingBufferSeveralPointers\n");
+
+    CallID test_id = "test multiple read pointer";
+    RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(test_id);
+
+    CallID test_pointer1 = "test pointer 1";
+    CallID test_pointer2 = "test pointer 2";
+
+    test_ring_buffer->createReadPointer(test_pointer1);
+    test_ring_buffer->createReadPointer(test_pointer2);
+
+    int testint1 = 12;
+    int testint2 = 13;
+    int testint3 = 14;
+    int testint4 = 15;
+
+    int testoutput;
+
+    int initPutLen = test_ring_buffer->AvailForPut();
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testint1, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen(test_pointer1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen(test_pointer2) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == sizeof(int));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testint2, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen(test_pointer1) == 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen(test_pointer2) == 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == 2*sizeof(int));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testint3, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen(test_pointer1) == 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen(test_pointer2) == 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == 3*sizeof(int));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Put(&testint4, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 4*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - 4*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen(test_pointer1) == 4*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen(test_pointer2) == 4*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == 4*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == 4*sizeof(int));
+
+
+    CPPUNIT_ASSERT(test_ring_buffer->Get(&testoutput, sizeof(int), 100, test_pointer1) == sizeof(int));
+    CPPUNIT_ASSERT(testoutput == testint1);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - 4*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == 4*sizeof(int));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Get(&testoutput, sizeof(int), 100, test_pointer2) == sizeof(int));
+    CPPUNIT_ASSERT(testoutput == testint1);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == 3*sizeof(int));
+    
+    // AvailForPut() is ok but AvailForGet(default_id) is not ok
+    // However, we should no be alowed to read in our own ring buffer 
+    // if we are either an AudioLayer or and RTP session
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 4*sizeof(int));
+    
+    CPPUNIT_ASSERT(test_ring_buffer->Get(&testoutput, sizeof(int), 100, test_pointer1) == sizeof(int));
+    CPPUNIT_ASSERT(testoutput == testint2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - 3*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == 3*sizeof(int));
+
+    // AvailForPut() is ok but AvailForGet(default_id) is not ok
+    // However, we should no be alowed to read in our own ring buffer 
+    // if we are either an AudioLayer or and RTP session
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 4*sizeof(int));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Get(&testoutput, sizeof(int), 100, test_pointer2) == sizeof(int));
+    CPPUNIT_ASSERT(testoutput == testint2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == 2*sizeof(int));
+    
+    // AvailForPut() is ok but AvailForGet(default_id) is not ok
+    // However, we should no be alowed to read in our own ring buffer 
+    // if we are either an AudioLayer or and RTP session
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 4*sizeof(int));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Discard(sizeof(int), test_pointer1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == 2*sizeof(int));
+
+    CPPUNIT_ASSERT(test_ring_buffer->Discard(sizeof(int), test_pointer2) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == initPutLen - sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_pointer2) == sizeof(int));
 
     _mainbuffer.removeRingBuffer(test_id);
 }

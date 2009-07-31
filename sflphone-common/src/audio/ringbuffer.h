@@ -53,6 +53,8 @@ class RingBuffer {
 
     int getReadPointer(CallID call_id = "default_id");
 
+    int getSmallestReadPointer();
+
     void storeReadPointer(int pointer_value, CallID call_id = "default_id");
 
     void createReadPointer(CallID call_id = "default_id");
@@ -78,7 +80,7 @@ class RingBuffer {
      * To get how much space is available in the buffer to read in
      * @return int The available size
      */
-    int AvailForGet (void);
+    int AvailForGet (CallID call_id = "default_id");
 
     /**
      * Get data in the ring buffer
@@ -87,20 +89,22 @@ class RingBuffer {
      * @param volume The volume
      * @return int Number of bytes copied
      */
-    int Get (void* buffer, int toCopy, unsigned short volume = 100);
+    int Get (void* buffer, int toCopy, unsigned short volume = 100, CallID call_id = "default_id");
 
     /**
      * Discard data from the buffer
      * @param toDiscard Number of bytes to discard
      * @return int Number of bytes discarded 
      */
-    int Discard(int toDiscard);
+    int Discard(int toDiscard, CallID call_id = "default_id");
 
     /**
      * Total length of the ring buffer
      * @return int  
      */
-    int Len();
+    int putLen();
+
+    int getLen(CallID call_id = "default_id");
     
     /**
      * Debug function print mEnd, mStart, mBufferSize
