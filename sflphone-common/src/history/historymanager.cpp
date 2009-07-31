@@ -109,6 +109,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
 
 bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list)
 {
+	_debug ("Saving history in XDG directory: %s\n", _history_path.data());
     return  history_list->saveConfigTree (_history_path.data());
 }
 
@@ -146,7 +147,7 @@ void HistoryManager::add_new_history_entry (HistoryItem *new_item)
 int HistoryManager::create_history_path (std::string path)
 {
 
-    std::string filename, userdata, xdg_env, xdg_data;
+    std::string userdata, xdg_env, xdg_data;
 
 	xdg_data = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
 
@@ -163,7 +164,7 @@ int HistoryManager::create_history_path (std::string path)
 		else
 			userdata = xdg_data;
 
-        if (mkdir (filename.data(), 0755) != 0) {
+        if (mkdir (userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
                 _debug ("Cannot create directory: %s\n", strerror (errno));
@@ -172,7 +173,7 @@ int HistoryManager::create_history_path (std::string path)
         }
 
         // Load user's history
-        _history_path = filename + DIR_SEPARATOR_STR + "history";
+        _history_path = userdata + DIR_SEPARATOR_STR + "history";
     } else
         set_history_path (path);
 
