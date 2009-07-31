@@ -147,6 +147,12 @@ sflphone_hung_up( callable_obj_t * c)
 #endif
 }
 
+static hashtable_free(gpointer key, gpointer value, gpointer user_data)
+{
+    g_free(key);
+    g_free(value);
+}
+
 /** Internal to actions: Fill account list */
     void
 sflphone_fill_account_list(gboolean toolbarInitialized)
@@ -165,6 +171,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         {
             account_t * a = g_new0(account_t,1);
             a->accountID = g_strdup(*accountID);
+            a->credential_information = NULL;
             account_list_add(a);
         }
         g_strfreev (array);
@@ -177,6 +184,25 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         if( details == NULL )
             break;
         a->properties = details;
+        
+        /* As this function might be called numberous time, we should free the 
+         * previously allocated space to avoid memory leaks.
+         */
+
+        /* Fill the actual array of credentials */
+
+        int number_of_credential = dbus_get_number_of_credential(a->accountID);
+        if(number_of_credential) {
+            a->credential_information = g_ptr_array_new();
+        } else {
+            a->credential_information = NULL;
+        }
+        
+        int credential_index;
+        for(credential_index = 0; credential_index < number_of_credential; credential_index++) {
+            GHashTable * credential_information = dbus_get_credential(a->accountID, credential_index);
+            g_ptr_array_add(a->credential_information, credential_information);
+        }
 
         gchar * status = g_hash_table_lookup(details, "Status");
         if(strcmp(status, "REGISTERED") == 0)

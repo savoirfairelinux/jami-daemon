@@ -2,6 +2,7 @@
  *  Copyright (C) 2007-2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,6 +49,19 @@ GtkWidget * entryPassword;
 GtkWidget * entryMailbox;
 GtkWidget * entryResolveNameOnlyOnce;
 GtkWidget * entryExpire;
+GtkListStore * credentialStore;
+GtkWidget * deleteCredButton;
+GtkWidget * treeViewCredential;
+GtkWidget * scrolledWindowCredential;
+		
+// Credentials
+enum {
+    COLUMN_CREDENTIAL_REALM,
+    COLUMN_CREDENTIAL_USERNAME,
+    COLUMN_CREDENTIAL_PASSWORD,
+    COLUMN_CREDENTIAL_DATA,
+    COLUMN_CREDENTIAL_COUNT
+};
 
 /* Signal to entryProtocol 'changed' */
 	void
@@ -64,6 +78,14 @@ is_iax_enabled(void)
 		return TRUE;
 	else
 		return FALSE;
+}
+
+static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
+{
+    GtkTreeIter iter;
+    gtk_tree_model_get_iter_from_string ((GtkTreeModel *) credentialStore, &iter, "0");
+    gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "column"));
+    gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)), -1);
 }
 
 static GtkWidget * createAccountTab(account_t **a) 
@@ -181,7 +203,7 @@ static GtkWidget * createAccountTab(account_t **a)
 	gtk_table_attach ( GTK_TABLE( table ), entryHostname, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	label = gtk_label_new_with_mnemonic (_("_User name"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);	
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
 	entryUsername = gtk_entry_new();
@@ -194,12 +216,16 @@ static GtkWidget * createAccountTab(account_t **a)
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
 	gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
 	gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    g_signal_connect(G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
+    g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
 
 	label = gtk_label_new_with_mnemonic (_("_Password"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
 	entryPassword = gtk_entry_new();
+    GtkSettings *settings = gtk_settings_get_default ();
+    g_object_set (G_OBJECT (settings), "gtk-entry-password-hint-timeout", 600, NULL);
 	gtk_entry_set_icon_from_stock (GTK_ENTRY (entryPassword), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
 #else
 	entryPassword = sexy_icon_entry_new();
@@ -210,7 +236,9 @@ static GtkWidget * createAccountTab(account_t **a)
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
 	gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
 	gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
+    g_signal_connect(G_OBJECT (entryPassword), "changed", G_CALLBACK (update_credential_cb), NULL);
+    g_object_set_data (G_OBJECT (entryPassword), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
+    
 	label = gtk_label_new_with_mnemonic (_("_Voicemail number"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
@@ -226,17 +254,160 @@ static GtkWidget * createAccountTab(account_t **a)
 	return frame;
 }
 
+static void fill_treeview_with_credential(GtkListStore * credentialStore, account_t * account) 
+{
+        GtkTreeIter iter;
+        gtk_list_store_clear(credentialStore);
+        gtk_list_store_append (credentialStore, &iter);
+
+        /* This is the default, undeletable credential */
+        if(g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME) == NULL) {
+            DEBUG("DEFAULT");
+            gtk_list_store_set(credentialStore, &iter,
+                    COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(account->properties, ACCOUNT_REALM), 
+                    COLUMN_CREDENTIAL_USERNAME, gtk_entry_get_text(GTK_ENTRY(entryUsername)),
+                    COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),    
+                    COLUMN_CREDENTIAL_DATA, account, 
+                    -1);
+        } else {
+            gtk_list_store_set(credentialStore, &iter,
+                    COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(account->properties, ACCOUNT_REALM), 
+                    COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME),
+                    COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),    
+                    COLUMN_CREDENTIAL_DATA, account, 
+                    -1);
+            g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
+        }
+        
+        if(account->credential_information == NULL) {
+            DEBUG("No credential defined");
+            return;
+        }
+        
+        unsigned int i;
+        for(i = 0; i < account->credential_information->len; i++)
+        {	                    
+            GHashTable * element = g_ptr_array_index(account->credential_information, i);               
+            gtk_list_store_append (credentialStore, &iter);
+            gtk_list_store_set(credentialStore, &iter,
+                    COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(element, ACCOUNT_REALM), 
+                    COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup(element, ACCOUNT_USERNAME), 
+                    COLUMN_CREDENTIAL_PASSWORD, g_hash_table_lookup(element, ACCOUNT_PASSWORD), 
+                    COLUMN_CREDENTIAL_DATA, element, // Pointer
+                    -1);
+        }
+}
+
+static select_credential_cb(GtkTreeSelection *selection, GtkTreeModel *model)
+{
+    GtkTreeIter iter;
+    GtkTreePath *path;
+    if(gtk_tree_selection_get_selected (selection, NULL, &iter)) {
+        path = gtk_tree_model_get_path (model, &iter);
+        if(gtk_tree_path_get_indices (path)[0] == 0) {
+            gtk_widget_set_sensitive(GTK_WIDGET(deleteCredButton), FALSE);
+        } else {
+            gtk_widget_set_sensitive(GTK_WIDGET(deleteCredButton), TRUE);
+        }
+    }
+}
+
+static void add_credential_cb (GtkWidget *button, gpointer data)
+{
+    GtkTreeIter iter;
+    GtkTreeModel *model = (GtkTreeModel *)data;
+    GtkRequisition requisitionTreeView;
+    GtkRequisition oldRequisitionTreeView;
+ 
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &oldRequisitionTreeView);
+           
+    gtk_list_store_append (GTK_LIST_STORE (model), &iter);
+    gtk_list_store_set (GTK_LIST_STORE (model), &iter,
+                        COLUMN_CREDENTIAL_REALM, "*",
+                        COLUMN_CREDENTIAL_USERNAME, _("Authentication"),
+                        COLUMN_CREDENTIAL_PASSWORD, _("Secret"),
+                        -1);
+                        
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), oldRequisitionTreeView.width, requisitionTreeView.height + 20);
+}
+
+static void delete_credential_cb(GtkWidget *button, gpointer data)
+{
+    GtkTreeIter iter;
+    GtkTreeView *treeview = (GtkTreeView *)data;
+    GtkTreeModel *model = gtk_tree_view_get_model (treeview);
+    GtkTreeSelection *selection = gtk_tree_view_get_selection (treeview);
+    GtkRequisition requisitionTreeView;
+    GtkRequisition oldRequisitionTreeView;
+  
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &oldRequisitionTreeView);
+          
+    if (gtk_tree_selection_get_selected (selection, NULL, &iter))
+    {
+        GtkTreePath *path;
+        path = gtk_tree_model_get_path (model, &iter);
+        gtk_list_store_remove (GTK_LIST_STORE (model), &iter);
+        
+        gtk_tree_path_free (path);
+    }
+
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), oldRequisitionTreeView.width, requisitionTreeView.height + 20);
+
+}
+
+static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gchar *text, gpointer data)
+{
+    GtkTreeModel *model = (GtkTreeModel *)data;
+    GtkTreePath *path = gtk_tree_path_new_from_string (path_desc);
+    GtkTreeIter iter;
+     
+    gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (renderer), "column"));
+    
+    if(g_strcasecmp(path_desc, "0") == 0) {
+        if(g_strcasecmp(text, gtk_entry_get_text(GTK_ENTRY(entryUsername))) != 0) {
+            g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
+        }
+    }  
+    
+    gtk_tree_model_get_iter (model, &iter, path);
+    gtk_list_store_set (GTK_LIST_STORE (model), &iter, column, text, -1);
+    gtk_tree_path_free (path);
+
+}
+
+static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editable, const gchar * path, gpointer data)
+{
+    DEBUG("Editing started");
+    gtk_entry_set_visibility(GTK_ENTRY(editable), FALSE);
+}
+
 GtkWidget * createAdvancedTab(account_t **a)
 {
 	GtkWidget * frame;
 	GtkWidget * table;
+	GtkWidget * ret;
+	GtkWidget * hbox;
+	GtkWidget * editButton;
+    GtkWidget * addButton;
+	GtkCellRenderer * renderer;
+    GtkTreeViewColumn * treeViewColumn;
+    GtkTreeSelection * treeSelection;
+    GtkRequisition requisitionTable;
+    GtkRequisition requisitionTreeView;    
+
+	
+	ret = gtk_vbox_new(FALSE, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
+    
 	account_t * currentAccount;
 
 	// Default settings
 	gchar * curAccountResolveOnce = "FALSE"; 
 	gchar * curAccountExpire = "600"; 
 
-	 currentAccount = *a;
+	currentAccount = *a;
 
 	// Load from SIP/IAX/Unknown ?
 	if(currentAccount) {
@@ -244,14 +415,8 @@ GtkWidget * createAdvancedTab(account_t **a)
 		curAccountExpire = g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTRATION_EXPIRE);
 	} 
 
-	gnome_main_section_new (_("Advanced Settings"), &frame);
-	gtk_widget_show(frame);
-
-	table = gtk_table_new (2, 2,  FALSE/* homogeneous */);
-	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
-	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-	gtk_widget_show(table);
-	gtk_container_add( GTK_CONTAINER( frame) , table );
+    gnome_main_section_new_with_table (_("Registration Options"), &frame, &table, 2, 3);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
 	label = gtk_label_new_with_mnemonic (_("Registration _expire"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
@@ -267,11 +432,137 @@ GtkWidget * createAdvancedTab(account_t **a)
 	gtk_table_attach ( GTK_TABLE( table ), entryResolveNameOnlyOnce, 0, 2, 1, 2, GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 	gtk_widget_set_sensitive( GTK_WIDGET( entryResolveNameOnlyOnce ) , TRUE );
 
-	gtk_widget_show_all( table );
+    gtk_widget_show_all( table );
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 
-	*a = currentAccount;
-	return frame;
+    gtk_widget_size_request(GTK_WIDGET(table), &requisitionTable);
+    	
+    /* Credentials tree view */
+    gnome_main_section_new_with_table (_("Credential informations"), &frame, &table, 1, 1);
+	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+	gtk_table_set_row_spacings (GTK_TABLE(table), 10);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+	
+    scrolledWindowCredential = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindowCredential), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindowCredential), GTK_SHADOW_IN);
+    gtk_table_attach (GTK_TABLE(table), scrolledWindowCredential, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    
+    credentialStore = gtk_list_store_new(COLUMN_CREDENTIAL_COUNT,
+            G_TYPE_STRING,  // Realm
+            G_TYPE_STRING,  // Username
+            G_TYPE_STRING,  // Password
+            G_TYPE_POINTER  // Pointer to the Object
+            );
+            
+    treeViewCredential = gtk_tree_view_new_with_model(GTK_TREE_MODEL(credentialStore));
+    treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW (treeViewCredential));
+    g_signal_connect(G_OBJECT (treeSelection), "changed", G_CALLBACK (select_credential_cb), credentialStore);
+    
+    renderer = gtk_cell_renderer_text_new();
+    g_object_set (renderer, "editable", TRUE, "editable-set", TRUE, NULL);
+    g_signal_connect(G_OBJECT (renderer), "edited", G_CALLBACK(cell_edited_cb), credentialStore);
+    g_object_set_data (G_OBJECT (renderer), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_REALM));
+    treeViewColumn = gtk_tree_view_column_new_with_attributes ("Realm",
+            renderer,
+            "markup", COLUMN_CREDENTIAL_REALM,
+            NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW(treeViewCredential), treeViewColumn);
+
+    renderer = gtk_cell_renderer_text_new();
+    g_object_set (renderer, "editable", TRUE, "editable-set", TRUE, NULL);
+    g_signal_connect(G_OBJECT (renderer), "edited", G_CALLBACK(cell_edited_cb), credentialStore);
+    g_object_set_data (G_OBJECT (renderer), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
+    treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Authentication name"),
+            renderer,
+            "markup", COLUMN_CREDENTIAL_USERNAME,
+            NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW(treeViewCredential), treeViewColumn);
+
+    renderer = gtk_cell_renderer_text_new();
+    g_object_set (renderer, "editable", TRUE, "editable-set", TRUE, NULL);
+    g_signal_connect(G_OBJECT (renderer), "edited", G_CALLBACK(cell_edited_cb), credentialStore);
+    g_signal_connect (renderer, "editing-started", G_CALLBACK (editing_started_cb), NULL);
+    g_object_set_data (G_OBJECT (renderer), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
+    treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Password"),
+            renderer,
+            "markup", COLUMN_CREDENTIAL_PASSWORD,
+            NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW(treeViewCredential), treeViewColumn);
+    
+    gtk_container_add(GTK_CONTAINER(scrolledWindowCredential), treeViewCredential);
+    
+    fill_treeview_with_credential(credentialStore, *a);
+        
+    /* Dynamically resize the window to fit the scrolled window */
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTable.width, requisitionTreeView.height + 20);
+        
+    /* Credential Buttons */    
+    hbox = gtk_hbox_new(FALSE, 10);
+    gtk_table_attach (GTK_TABLE(table), hbox, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    
+    addButton = gtk_button_new_from_stock (GTK_STOCK_ADD);
+    g_signal_connect (addButton, "clicked", G_CALLBACK (add_credential_cb), credentialStore);
+    gtk_box_pack_start(GTK_BOX(hbox), addButton, FALSE, FALSE, 0);
+        
+    deleteCredButton = gtk_button_new_from_stock (GTK_STOCK_REMOVE);
+    g_signal_connect (deleteCredButton, "clicked", G_CALLBACK (delete_credential_cb), treeViewCredential);
+    gtk_box_pack_start(GTK_BOX(hbox), deleteCredButton, FALSE, FALSE, 0);
+                       	
+    gtk_widget_show_all(ret);
+	return ret;
+}
+
+static GPtrArray * getNewCredential(account_t * account)
+{
+    GtkTreeIter iter;
+    gboolean valid;
+    gint row_count = 0;
+
+    valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL(credentialStore), &iter);
+
+    GPtrArray * credential_array = g_ptr_array_new ();
+        
+    gchar *username;
+    gchar *realm;
+    gchar *password;
+    GHashTable * new_table;   
+     
+    gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
+                        COLUMN_CREDENTIAL_REALM, &realm,
+                        COLUMN_CREDENTIAL_USERNAME, &username,
+                        COLUMN_CREDENTIAL_PASSWORD, &password,
+                        -1);
+
+    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_REALM), realm);
+    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
+    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_PASSWORD), password);
+  
+    valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
+                                     
+    while (valid) {        
+        gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
+                            COLUMN_CREDENTIAL_REALM, &realm,
+                            COLUMN_CREDENTIAL_USERNAME, &username,
+                            COLUMN_CREDENTIAL_PASSWORD, &password,
+                            -1);
+
+        DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
+
+        new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), realm);
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), username);
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), password);
+
+        g_ptr_array_add (credential_array, new_table);
+
+        row_count ++;
+
+        valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
+    }
+
+    return credential_array;
 }
 
 	void
@@ -346,8 +637,8 @@ show_account_window (account_t * a)
 				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
-				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryExpire))));
-
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryExpire))));				
+        
 		if (strcmp(proto, "SIP") == 0) {
 			guint i, size;
 			account_t * account;
@@ -376,13 +667,33 @@ show_account_window (account_t * a)
 			if(!flag)
 			{
 				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), (gchar*)"");
-				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED),
-						"FALSE");
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), "FALSE");
 			}
 
 			config_window_set_stun_visible();
 		}
 
+	    /* Set new credentials if any */
+	    
+        DEBUG("Setting credentials"); 
+
+        /* This hack is necessary because of the way the 
+        * configuration file is made (.ini at that time).
+        * and deleting account per account is too much 
+        * of a trouble. 
+        */
+        dbus_delete_all_credential(currentAccount);
+        
+        GPtrArray * credential = getNewCredential(a);         
+        currentAccount->credential_information = credential;
+        if(currentAccount->credential_information != NULL) {
+            int i;
+            for(i = 0; i < currentAccount->credential_information->len; i++) {
+                dbus_set_credential(currentAccount, i);
+            }
+            dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
+        }
+        
 		/** @todo Verify if it's the best condition to check */
 		if (currentAccount->accountID == NULL) {
 			dbus_add_account(currentAccount);
@@ -390,7 +701,10 @@ show_account_window (account_t * a)
 		else {
 			dbus_set_account_details(currentAccount);
 		}
-	}
+		
+
+	} 
+	
 	gtk_widget_destroy (GTK_WIDGET(dialog));
 
 }

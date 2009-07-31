@@ -41,6 +41,97 @@ ConfigurationManager::getAccountDetails (const std::string& accountID)
     return Manager::instance().getAccountDetails (accountID);
 }
 
+std::map< std::string, std::string >
+ConfigurationManager::getCredential (const std::string& accountID, const int32_t& index)
+{
+    _debug ("ConfigurationManager::getCredential number %i for accountID %s\n", index, accountID.c_str());
+
+    std::string credentialIndex;
+    std::stringstream streamOut;
+    streamOut << index;
+    credentialIndex = streamOut.str();
+    
+    std::string section = std::string("Credential") + std::string(":") + accountID + std::string(":") + credentialIndex;
+    
+    std::map<std::string, std::string> credentialInformation;
+    std::string username = Manager::instance().getConfigString(section, USERNAME);
+    std::string password = Manager::instance().getConfigString(section, PASSWORD);
+    std::string realm = Manager::instance().getConfigString(section, REALM);
+    
+    credentialInformation.insert(std::pair<std::string, std::string> (USERNAME, username));
+    credentialInformation.insert(std::pair<std::string, std::string> (PASSWORD, password));
+    credentialInformation.insert(std::pair<std::string, std::string> (REALM, realm));
+    
+    return credentialInformation;
+}
+
+int32_t
+ConfigurationManager::getNumberOfCredential (const std::string& accountID)
+{
+    _debug ("ConfigurationManager::getNumberOfCredential\n");
+    return Manager::instance().getConfigInt (accountID, CONFIG_CREDENTIAL_NUMBER);
+}
+
+void
+ConfigurationManager::setNumberOfCredential (const std::string& accountID, const int32_t& number)
+{
+    Manager::instance().setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, number);
+}
+        
+void
+ConfigurationManager::setCredential (const std::string& accountID, const int32_t& index,
+        const std::map< std::string, std::string >& details)
+{
+    _debug ("ConfigurationManager::setCredential received\n");
+    
+    std::map<std::string, std::string>::iterator it;
+    std::map<std::string, std::string> credentialInformation = details;
+    
+    std::string credentialIndex;
+    std::stringstream streamOut;
+    streamOut << index;
+    credentialIndex = streamOut.str();
+    
+    std::string section = "Credential" + std::string(":") + accountID + std::string(":") + credentialIndex;
+    
+    _debug("Setting credential in section %s\n", section.c_str());
+    
+    it = credentialInformation.find(USERNAME);
+    if(it == credentialInformation.end()) {
+        Manager::instance().setConfig (section, USERNAME, EMPTY_FIELD);    
+    } else {
+        Manager::instance().setConfig (section, USERNAME, it->second);
+    }
+    
+    _debug("Username: %s\n", it->second.c_str());
+    
+    it = credentialInformation.find(PASSWORD);
+    if(it == credentialInformation.end()) {
+        Manager::instance().setConfig (section, PASSWORD, EMPTY_FIELD);            
+    } else {
+        Manager::instance().setConfig (section, PASSWORD, it->second);
+    }
+ 
+    _debug("Password: %s\n", it->second.c_str());
+        
+    it = credentialInformation.find(REALM);
+    if(it == credentialInformation.end()) {
+        Manager::instance().setConfig (section, REALM, EMPTY_FIELD);    
+    } else {
+        Manager::instance().setConfig (section, REALM, it->second);
+    }
+    
+    _debug("Realm: %s\n", it->second.c_str());
+
+}
+
+void
+ConfigurationManager::deleteAllCredential (const std::string& accountID)
+{
+    _debug ("ConfigurationManager::deleteAllCredential received\n");
+    Manager::instance().deleteAllCredential (accountID);
+}
+
 void
 ConfigurationManager::setAccountDetails (const std::string& accountID,
         const std::map< std::string, std::string >& details)

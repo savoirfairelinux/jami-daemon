@@ -62,12 +62,13 @@ typedef enum
   * 
   * To retrieve the Alias for example, use g_hash_table_lookup(a->properties, ACCOUNT_ALIAS).  
   */
+
 typedef struct  {
   gchar * accountID;
   account_state_t state;  
   GHashTable * properties;
+  GPtrArray * credential_information;
 } account_t;
-
 
 
 /** 

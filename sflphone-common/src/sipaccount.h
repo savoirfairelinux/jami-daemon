@@ -70,10 +70,17 @@ class SIPAccount : public Account
 
         inline void setCredInfo(pjsip_cred_info *cred) {_cred = cred;}
         inline pjsip_cred_info *getCredInfo() {return _cred;}
-
+        
         inline void setContact(const std::string &contact) {_contact = contact;}
         inline std::string getContact() {return _contact;}
-
+                
+        inline std::string& getAuthenticationUsername(void) { return _authenticationUsername; }
+        inline void setAuthenticationUsername(const std::string& username) { _authenticationUsername = username; }
+        
+        inline bool isResolveOnce(void) { return _resolveOnce; }
+        
+        inline std::string& getRegistrationExpire(void) { return _registrationExpire; }
+        
         bool fullMatch(const std::string& username, const std::string& hostname);
         bool userMatch(const std::string& username);
         bool hostnameMatch(const std::string& hostname);
@@ -81,13 +88,12 @@ class SIPAccount : public Account
         pjsip_regc* getRegistrationInfo( void ) { return _regc; }
         void setRegistrationInfo( pjsip_regc *regc ) { _regc = regc; }
 
+        inline int getCredentialCount(void) { return _credentialCount; }
+        
         /* Registration flag */
         bool isRegister() {return _bRegister;}
-        void setRegister(bool result) {_bRegister = result;}
-
-        inline bool isResolveOnce(void) { return _resolveOnce; }
-
-        inline std::string& getRegistrationExpire(void) { return _registrationExpire; }
+        void setRegister(bool result) {_bRegister = result;}        
+        
     private:
 
         /**
@@ -105,14 +111,20 @@ class SIPAccount : public Account
          */
         bool _bRegister;
         
+        bool _resolveOnce;
+                
         /*
          * SIP address
          */
         std::string _contact;
         
-        bool _resolveOnce;
-        
         std::string _registrationExpire;
+        
+        std::string _authenticationUsername;
+        
+        std::string _realm;
+        
+        int _credentialCount;
 };
 
 #endif

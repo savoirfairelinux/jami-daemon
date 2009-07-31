@@ -60,10 +60,13 @@ typedef enum RegistrationState {
 #define CONFIG_ACCOUNT_ENABLE	"Account.enable"
 #define CONFIG_ACCOUNT_RESOLVE_ONCE "Account.resolveOnce"
 #define CONFIG_ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
+#define CONFIG_CREDENTIAL_NUMBER "Credential.count"
 
 #define HOSTNAME        "hostname"
 #define USERNAME        "username"
+#define AUTHENTICATION_USERNAME "authenticationUsername"
 #define PASSWORD        "password"
+#define REALM           "realm"
 
 // SIP specific parameters
 #define SIP_PROXY             "SIP.proxy"

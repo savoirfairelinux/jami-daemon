@@ -2492,6 +2492,8 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (USERNAME, getConfigString (accountID, USERNAME)));
     a.insert (std::pair<std::string, std::string> (PASSWORD, getConfigString (accountID, PASSWORD)));
     a.insert (std::pair<std::string, std::string> (HOSTNAME, getConfigString (accountID, HOSTNAME)));
+    a.insert (std::pair<std::string, std::string> (REALM, getConfigString (accountID, REALM)));
+    a.insert (std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, getConfigString (accountID, AUTHENTICATION_USERNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
 
     if (getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
@@ -2538,13 +2540,18 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
 	( (iter = map_cpy.find (HOSTNAME)) == map_cpy.end ()) ? setConfig (accountID, HOSTNAME, EMPTY_FIELD)
 														: setConfig (accountID, HOSTNAME, iter->second);
+														
+    ( (iter = map_cpy.find (REALM)) == map_cpy.end ()) ? setConfig (accountID, REALM, std::string("*"))
+													   : setConfig (accountID, REALM, iter->second);
 
 	( (iter = map_cpy.find (CONFIG_ACCOUNT_MAILBOX)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, EMPTY_FIELD)
 																		: setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, iter->second);
 
 	( (iter = map_cpy.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE)
 																					: setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, iter->second);
-
+																					
+    ( (iter = map_cpy.find (AUTHENTICATION_USERNAME)) == map_cpy.end ()) ? setConfig (accountID, AUTHENTICATION_USERNAME, EMPTY_FIELD)
+																		 : setConfig (accountID, AUTHENTICATION_USERNAME, iter->second);
     saveConfig();
 
     acc = getAccount (accountID);
@@ -2636,6 +2643,25 @@ ManagerImpl::addAccount (const std::map< std::string, std::string >& details)
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 
     return newAccountID;
+}
+
+void
+ManagerImpl::deleteAllCredential(const AccountID& accountID) 
+{
+    int numberOfCredential = getConfigInt (accountID, CONFIG_CREDENTIAL_NUMBER);
+     
+    int i;
+    for(i = 0; i < numberOfCredential; i++) {   
+        std::string credentialIndex;
+        std::stringstream streamOut;
+        streamOut << i;
+        credentialIndex = streamOut.str();
+        std::string section = "Credential" + std::string(":") + accountID + std::string(":") + credentialIndex;
+        
+        _config.removeSection (section);
+    }
+    
+    setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, 0);
 }
 
 void
@@ -2745,7 +2771,7 @@ ManagerImpl::loadAccountMap()
 
     while (iter != sections.end()) {
         // Check if it starts with "Account:" (SIP and IAX pour le moment)
-        if ( (int) (iter->find ("Account:")) == -1) {
+        if ( (int) (iter->find ("Account:")) != 0) {
             iter++;
             continue;
         }
@@ -2786,7 +2812,7 @@ ManagerImpl::unloadAccountMap()
 
     while (iter != _accountMap.end()) {
 
-        _debug ("-> Deleting account %s\n", iter->first.c_str());
+        _debug ("-> Unloading account %s\n", iter->first.c_str());
         delete iter->second;
         iter->second = 0;
 

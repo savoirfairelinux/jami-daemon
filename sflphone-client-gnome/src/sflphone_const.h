@@ -56,6 +56,8 @@
 #define ACCOUNT_HOSTNAME            "hostname"
 #define ACCOUNT_USERNAME            "username"
 #define ACCOUNT_PASSWORD            "password"
+#define ACCOUNT_AUTHENTICATION_USERNAME       "authenticationUsername"
+#define ACCOUNT_REALM               "realm"
 
 /**
  * Global logger
