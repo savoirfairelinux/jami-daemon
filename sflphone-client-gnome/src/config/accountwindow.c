@@ -51,8 +51,6 @@ GtkWidget * entryResolveNameOnlyOnce;
 GtkWidget * entryExpire;
 GtkListStore * credentialStore;
 GtkWidget * deleteCredButton;
-gchar * defaultAuthenticationUsername = NULL;
-gchar * defaultRealm = NULL;
 
 // Credentials
 enum {
@@ -261,12 +259,23 @@ static void fill_treeview_with_credential(GtkListStore * credentialStore, accoun
         gtk_list_store_append (credentialStore, &iter);
 
         /* This is the default, undeletable credential */
-        gtk_list_store_set(credentialStore, &iter,
-                COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(account->properties, ACCOUNT_REALM), 
-                COLUMN_CREDENTIAL_USERNAME, gtk_entry_get_text(GTK_ENTRY(entryUsername)),
-                COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),    
-                COLUMN_CREDENTIAL_DATA, account, 
-                -1);
+        if(g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME) == NULL) {
+            DEBUG("DEFAULT");
+            gtk_list_store_set(credentialStore, &iter,
+                    COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(account->properties, ACCOUNT_REALM), 
+                    COLUMN_CREDENTIAL_USERNAME, gtk_entry_get_text(GTK_ENTRY(entryUsername)),
+                    COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),    
+                    COLUMN_CREDENTIAL_DATA, account, 
+                    -1);
+        } else {
+            gtk_list_store_set(credentialStore, &iter,
+                    COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(account->properties, ACCOUNT_REALM), 
+                    COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME),
+                    COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),    
+                    COLUMN_CREDENTIAL_DATA, account, 
+                    -1);
+            g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
+        }
         
         if(account->credential_information == NULL) {
             DEBUG("No credential defined");
@@ -342,17 +351,6 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
     if(g_strcasecmp(path_desc, "0") == 0) {
         if(g_strcasecmp(text, gtk_entry_get_text(GTK_ENTRY(entryUsername))) != 0) {
             g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
-            switch(column) {
-                case COLUMN_CREDENTIAL_REALM:
-                    defaultRealm = text; 
-                    break;
-                case COLUMN_CREDENTIAL_USERNAME:
-                    defaultAuthenticationUsername = text;
-                    break;
-                case COLUMN_CREDENTIAL_PASSWORD:
-                    gtk_entry_set_text(entryPassword, text);
-                    break;
-            }
         }
     }  
     
@@ -501,43 +499,55 @@ GtkWidget * createAdvancedTab(account_t **a)
 	return ret;
 }
 
-static GPtrArray * getNewCredential(void)
+static GPtrArray * getNewCredential(account_t * account)
 {
-  GtkTreeIter iter;
-  gboolean valid;
-  gint row_count = 0;
-    
-  valid = gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL(credentialStore), &iter, "1");
-  
-  GPtrArray * credential_array = g_ptr_array_new ();
-  
-  while (valid) {
+    GtkTreeIter iter;
+    gboolean valid;
+    gint row_count = 0;
+
+    valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL(credentialStore), &iter);
+
+    GPtrArray * credential_array = g_ptr_array_new ();
+        
     gchar *username;
     gchar *realm;
     gchar *password;
-    GHashTable * new_table;
-        
+    GHashTable * new_table;   
+     
     gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
                         COLUMN_CREDENTIAL_REALM, &realm,
                         COLUMN_CREDENTIAL_USERNAME, &username,
                         COLUMN_CREDENTIAL_PASSWORD, &password,
                         -1);
 
-    DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
-    
-    new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-    g_hash_table_insert(new_table, ACCOUNT_REALM, realm);
-    g_hash_table_insert(new_table, ACCOUNT_USERNAME, username);
-    g_hash_table_insert(new_table, ACCOUNT_PASSWORD, password);
-        
-    g_ptr_array_add (credential_array, new_table);
-      
-    row_count ++;
-    
-    valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
-  }
+    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_REALM), realm);
+    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
+    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_PASSWORD), password);
   
-  return credential_array;
+    valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
+                                     
+    while (valid) {        
+        gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
+                            COLUMN_CREDENTIAL_REALM, &realm,
+                            COLUMN_CREDENTIAL_USERNAME, &username,
+                            COLUMN_CREDENTIAL_PASSWORD, &password,
+                            -1);
+
+        DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
+
+        new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), realm);
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), username);
+        g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), password);
+
+        g_ptr_array_add (credential_array, new_table);
+
+        row_count ++;
+
+        valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
+    }
+
+    return credential_array;
 }
 
 	void
@@ -612,13 +622,7 @@ show_account_window (account_t * a)
 				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
-				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryExpire))));
-        g_hash_table_replace(currentAccount->properties,
-				g_strdup(ACCOUNT_REALM),
-				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(defaultRealm))));
-        g_hash_table_replace(currentAccount->properties,
-				g_strdup(ACCOUNT_AUTHENTICATION_USERNAME),
-				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(defaultAuthenticationUsername))));
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryExpire))));				
         
 		if (strcmp(proto, "SIP") == 0) {
 			guint i, size;
@@ -648,21 +652,12 @@ show_account_window (account_t * a)
 			if(!flag)
 			{
 				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), (gchar*)"");
-				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED),
-						"FALSE");
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), "FALSE");
 			}
 
 			config_window_set_stun_visible();
 		}
 
-		/** @todo Verify if it's the best condition to check */
-		if (currentAccount->accountID == NULL) {
-			dbus_add_account(currentAccount);
-		}
-		else {
-			dbus_set_account_details(currentAccount);
-		}
-		
 	    /* Set new credentials if any */
 	    
         DEBUG("Setting credentials"); 
@@ -674,7 +669,7 @@ show_account_window (account_t * a)
         */
         dbus_delete_all_credential(currentAccount);
         
-        GPtrArray * credential = getNewCredential();         
+        GPtrArray * credential = getNewCredential(a);         
         currentAccount->credential_information = credential;
         if(currentAccount->credential_information != NULL) {
             int i;
@@ -683,6 +678,16 @@ show_account_window (account_t * a)
             }
             dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
         }
+        
+		/** @todo Verify if it's the best condition to check */
+		if (currentAccount->accountID == NULL) {
+			dbus_add_account(currentAccount);
+		}
+		else {
+			dbus_set_account_details(currentAccount);
+		}
+		
+
 	} 
 	
 	gtk_widget_destroy (GTK_WIDGET(dialog));

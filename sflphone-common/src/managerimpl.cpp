@@ -2478,6 +2478,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (PASSWORD, getConfigString (accountID, PASSWORD)));
     a.insert (std::pair<std::string, std::string> (HOSTNAME, getConfigString (accountID, HOSTNAME)));
     a.insert (std::pair<std::string, std::string> (REALM, getConfigString (accountID, REALM)));
+    a.insert (std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, getConfigString (accountID, AUTHENTICATION_USERNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
 
     if (getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
@@ -2526,7 +2527,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 														: setConfig (accountID, HOSTNAME, iter->second);
 														
     ( (iter = map_cpy.find (REALM)) == map_cpy.end ()) ? setConfig (accountID, REALM, std::string("*"))
-														: setConfig (accountID, REALM, iter->second);
+													   : setConfig (accountID, REALM, iter->second);
 
 	( (iter = map_cpy.find (CONFIG_ACCOUNT_MAILBOX)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, EMPTY_FIELD)
 																		: setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, iter->second);
@@ -2534,8 +2535,8 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 	( (iter = map_cpy.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE)
 																					: setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, iter->second);
 																					
-    ( (iter = map_cpy.find (CONFIG_ACCOUNT_AUTHENTICATION_USERNAME)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_AUTHENTICATION_USERNAME, EMPTY_FIELD)
-																					: setConfig (accountID, CONFIG_ACCOUNT_AUTHENTICATION_USERNAME, iter->second);
+    ( (iter = map_cpy.find (AUTHENTICATION_USERNAME)) == map_cpy.end ()) ? setConfig (accountID, AUTHENTICATION_USERNAME, EMPTY_FIELD)
+																		 : setConfig (accountID, AUTHENTICATION_USERNAME, iter->second);
     saveConfig();
 
     acc = getAccount (accountID);

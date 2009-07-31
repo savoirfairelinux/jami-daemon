@@ -61,10 +61,10 @@ typedef enum RegistrationState {
 #define CONFIG_ACCOUNT_RESOLVE_ONCE "Account.resolveOnce"
 #define CONFIG_ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
 #define CONFIG_CREDENTIAL_NUMBER "Credential.count"
-#define CONFIG_ACCOUNT_AUTHENTICATION_USERNAME "Account.authenticationUsername"
 
 #define HOSTNAME        "hostname"
 #define USERNAME        "username"
+#define AUTHENTICATION_USERNAME "authenticationUsername"
 #define PASSWORD        "password"
 #define REALM           "realm"
 

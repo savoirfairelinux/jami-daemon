@@ -47,7 +47,7 @@ SIPAccount::~SIPAccount()
     dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
     /* Delete accounts-related information */
     _regc = NULL;
-    delete _cred;
+    free(_cred);
     _cred = NULL;
 }
 
@@ -61,11 +61,57 @@ int SIPAccount::registerVoIPLink()
     if (Manager::instance().getConfigString (_accountID, HOSTNAME).length() >= PJ_MAX_HOSTNAME) {
         return !SUCCESS;
     }
-
+    
     setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
-
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
+    _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
+    _realm = Manager::instance().getConfigString (_accountID, REALM);
+    
+    int credentialCount = 0;
+    credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
+    credentialCount += 1; // Default credential
+    
+    pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc(sizeof(pjsip_cred_info)*credentialCount);        
+    if (cred_info == NULL) {
+        _debug("Failed to set cred_info for account %s\n", _accountID.c_str());
+        return !SUCCESS;
+    }
+    pj_bzero (cred_info, sizeof(pjsip_cred_info)*credentialCount);
+    
+    if (!_authenticationUsername.empty()) {
+        cred_info[0].username = pj_str(strdup(_authenticationUsername.c_str())); 
+    } else {
+        cred_info[0].username = pj_str(strdup(_username.c_str()));
+    }
+    cred_info[0].data =  pj_str(strdup(_password.c_str()));
+    cred_info[0].realm = pj_str(strdup(_realm.c_str()));
+    cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
+    cred_info[0].scheme = pj_str("digest");
+            
+    int i;
+    for (i = 1; i < credentialCount; i++) {
+        std::string credentialIndex;
+        std::stringstream streamOut;
+        streamOut << i;
+        credentialIndex = streamOut.str();
+
+        std::string section = std::string("Credential") + std::string(":") + _accountID + std::string(":") + credentialIndex;
+
+        std::string username = Manager::instance().getConfigString(section, USERNAME);
+        std::string password = Manager::instance().getConfigString(section, PASSWORD);
+        std::string realm = Manager::instance().getConfigString(section, REALM);
+        
+        cred_info[i].username = pj_str(strdup(username.c_str()));
+        cred_info[i].data = pj_str(strdup(password.c_str()));
+        cred_info[i].realm = pj_str(strdup(realm.c_str()));
+        cred_info[i].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
+        cred_info[i].scheme = pj_str("digest");
+    }
+
+    _credentialCount = credentialCount;
+    _cred = cred_info;
+    
     _resolveOnce = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? true : false;
 
     if (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
@@ -73,7 +119,7 @@ int SIPAccount::registerVoIPLink()
     } else {
         _registrationExpire = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
     }
-
+    
     /* Start registration */
     status = _link->sendRegister (_accountID);
 

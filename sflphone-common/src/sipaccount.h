@@ -74,8 +74,8 @@ class SIPAccount : public Account
         inline void setContact(const std::string &contact) {_contact = contact;}
         inline std::string getContact() {return _contact;}
                 
-        inline std::string& getAuthenticationUserName(void) { return _authenticationUserName; }
-        inline void setAuthenticationUserName(const std::string& username) { _authenticationUserName = username; }
+        inline std::string& getAuthenticationUsername(void) { return _authenticationUsername; }
+        inline void setAuthenticationUsername(const std::string& username) { _authenticationUsername = username; }
         
         inline bool isResolveOnce(void) { return _resolveOnce; }
         
@@ -88,6 +88,8 @@ class SIPAccount : public Account
         pjsip_regc* getRegistrationInfo( void ) { return _regc; }
         void setRegistrationInfo( pjsip_regc *regc ) { _regc = regc; }
 
+        inline int getCredentialCount(void) { return _credentialCount; }
+        
         /* Registration flag */
         bool isRegister() {return _bRegister;}
         void setRegister(bool result) {_bRegister = result;}        
@@ -118,7 +120,11 @@ class SIPAccount : public Account
         
         std::string _registrationExpire;
         
-        std::string _authenticationUserName;
+        std::string _authenticationUsername;
+        
+        std::string _realm;
+        
+        int _credentialCount;
 };
 
 #endif

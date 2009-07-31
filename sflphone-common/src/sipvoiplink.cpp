@@ -484,26 +484,9 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
     pjsip_cred_info *cred = account->getCredInfo();
-
-    if (!cred)
-        cred = new pjsip_cred_info();
-
-    pj_bzero (cred, sizeof (pjsip_cred_info));
-
-    pj_strdup2 (_pool, &cred->username, username.data());
-
-    cred->data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-
-    pj_strdup2 (_pool, &cred->data, password.data());
-
-    pj_strdup2 (_pool, &cred->realm, "*");
-
-    pj_strdup2 (_pool, &cred->scheme, "digest");
-
-    pjsip_regc_set_credentials (regc, 1, cred);
-
-    account->setCredInfo (cred);
-
+    int credential_count = account->getCredentialCount();
+    pjsip_regc_set_credentials (regc, credential_count, cred);
+            
     // Add User-Agent Header
     pj_list_init (&hdr_list);
 
