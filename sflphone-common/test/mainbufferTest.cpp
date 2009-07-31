@@ -278,7 +278,7 @@ void MainBufferTest::testDiscardFlush()
 
     CallID test_id = "flush discard";
     _mainbuffer.createRingBuffer(test_id);
-    _mainbuffer.removeRingBuffer(test_id);
+    _mainbuffer.bindCallID(test_id);
 
     int test_input1 = 12;
     int test_output_size;
