@@ -23,7 +23,4 @@ else
 	automake --add-missing --force-missing --copy	
 fi
 
-# now we launch configure
-./configure $@
-
 exit 0

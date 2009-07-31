@@ -15,6 +15,3 @@ autocmd autoheader
 autocmd autoconf -f
 autocmd automake --add-missing --force-missing --copy -Wall
 
-./configure $@
-
-
