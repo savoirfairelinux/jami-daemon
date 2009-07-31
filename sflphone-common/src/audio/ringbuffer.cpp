@@ -39,6 +39,7 @@ RingBuffer::RingBuffer (int size) : mStart (0), mEnd (0)
     assert (mBuffer != NULL);
 
     createReadPointer();
+    storeReadPointer(mStart);
 }
 
 // Free memory on object deletion
@@ -53,13 +54,14 @@ RingBuffer::~RingBuffer()
 void
 RingBuffer::flush (void)
 {
-    mStart = 0;
+    storeReadPointer(0);
     mEnd = 0;
 }
 
 int
-RingBuffer::Len() const
+RingBuffer::Len()
 {
+    mStart = getReadPointer();
     return (mEnd + mBufferSize - mStart) % mBufferSize;
 }
 
@@ -113,7 +115,7 @@ RingBuffer::removeReadPointer(CallID call_id)
 // For the writer only:
 //
 int
-RingBuffer::AvailForPut() const
+RingBuffer::AvailForPut()
 {
     // Always keep 4 bytes safe (?)
     return (mBufferSize-4) - Len();
@@ -184,7 +186,7 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
 //
 
 int
-RingBuffer::AvailForGet() const
+RingBuffer::AvailForGet()
 {
     // Used space
     return Len();
@@ -205,6 +207,8 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume)
     dest = (samplePtr) buffer;
 
     copied = 0;
+
+    mStart = getReadPointer();
 
     //fprintf(stderr, "G");
     while (toCopy) {
@@ -235,6 +239,8 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume)
         copied += block;
     }
 
+    storeReadPointer(mStart);
+
     return copied;
 }
 
@@ -244,10 +250,14 @@ RingBuffer::Discard (int toDiscard)
 {
     int len = Len();
 
+    mStart = getReadPointer();
+
     if (toDiscard > len)
         toDiscard = len;
 
     mStart = (mStart + toDiscard) % mBufferSize;
+
+    storeReadPointer(mStart);
 
     return toDiscard;
 }

@@ -63,7 +63,7 @@ class RingBuffer {
      * To get how much space is available in the buffer to write in
      * @return int The available size
      */
-    int AvailForPut (void) const;
+    int AvailForPut (void);
 
     /**
      * Write data in the ring buffer
@@ -78,7 +78,7 @@ class RingBuffer {
      * To get how much space is available in the buffer to read in
      * @return int The available size
      */
-    int AvailForGet (void) const;
+    int AvailForGet (void);
 
     /**
      * Get data in the ring buffer
@@ -100,7 +100,7 @@ class RingBuffer {
      * Total length of the ring buffer
      * @return int  
      */
-    int Len() const;
+    int Len();
     
     /**
      * Debug function print mEnd, mStart, mBufferSize
@@ -123,7 +123,7 @@ class RingBuffer {
     /** Data */
     samplePtr     mBuffer;
 
-    ReadPointer _readpointer;
+    ReadPointer   _readpointer;
 };
 
 #endif /*  __RING_BUFFER__ */
