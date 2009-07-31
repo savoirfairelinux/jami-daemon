@@ -51,7 +51,9 @@ GtkWidget * entryResolveNameOnlyOnce;
 GtkWidget * entryExpire;
 GtkListStore * credentialStore;
 GtkWidget * deleteCredButton;
-
+GtkWidget * treeViewCredential;
+GtkWidget * scrolledWindowCredential;
+		
 // Credentials
 enum {
     COLUMN_CREDENTIAL_REALM,
@@ -314,13 +316,20 @@ static void add_credential_cb (GtkWidget *button, gpointer data)
 {
     GtkTreeIter iter;
     GtkTreeModel *model = (GtkTreeModel *)data;
-
+    GtkRequisition requisitionTreeView;
+    GtkRequisition oldRequisitionTreeView;
+ 
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &oldRequisitionTreeView);
+           
     gtk_list_store_append (GTK_LIST_STORE (model), &iter);
     gtk_list_store_set (GTK_LIST_STORE (model), &iter,
                         COLUMN_CREDENTIAL_REALM, "*",
                         COLUMN_CREDENTIAL_USERNAME, _("Authentication"),
                         COLUMN_CREDENTIAL_PASSWORD, _("Secret"),
                         -1);
+                        
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), oldRequisitionTreeView.width, requisitionTreeView.height + 20);
 }
 
 static void delete_credential_cb(GtkWidget *button, gpointer data)
@@ -329,7 +338,11 @@ static void delete_credential_cb(GtkWidget *button, gpointer data)
     GtkTreeView *treeview = (GtkTreeView *)data;
     GtkTreeModel *model = gtk_tree_view_get_model (treeview);
     GtkTreeSelection *selection = gtk_tree_view_get_selection (treeview);
-    
+    GtkRequisition requisitionTreeView;
+    GtkRequisition oldRequisitionTreeView;
+  
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &oldRequisitionTreeView);
+          
     if (gtk_tree_selection_get_selected (selection, NULL, &iter))
     {
         GtkTreePath *path;
@@ -338,6 +351,10 @@ static void delete_credential_cb(GtkWidget *button, gpointer data)
         
         gtk_tree_path_free (path);
     }
+
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), oldRequisitionTreeView.width, requisitionTreeView.height + 20);
+
 }
 
 static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gchar *text, gpointer data)
@@ -345,7 +362,7 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
     GtkTreeModel *model = (GtkTreeModel *)data;
     GtkTreePath *path = gtk_tree_path_new_from_string (path_desc);
     GtkTreeIter iter;
-
+     
     gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (renderer), "column"));
     
     if(g_strcasecmp(path_desc, "0") == 0) {
@@ -370,8 +387,6 @@ GtkWidget * createAdvancedTab(account_t **a)
 {
 	GtkWidget * frame;
 	GtkWidget * table;
-	GtkWidget * scrolledWindow;
-	GtkWidget * treeView;
 	GtkWidget * ret;
 	GtkWidget * hbox;
 	GtkWidget * editButton;
@@ -428,10 +443,10 @@ GtkWidget * createAdvancedTab(account_t **a)
 	gtk_table_set_row_spacings (GTK_TABLE(table), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 	
-    scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_SHADOW_IN);
-    gtk_table_attach (GTK_TABLE(table), scrolledWindow, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    scrolledWindowCredential = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindowCredential), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindowCredential), GTK_SHADOW_IN);
+    gtk_table_attach (GTK_TABLE(table), scrolledWindowCredential, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     
     credentialStore = gtk_list_store_new(COLUMN_CREDENTIAL_COUNT,
             G_TYPE_STRING,  // Realm
@@ -440,8 +455,8 @@ GtkWidget * createAdvancedTab(account_t **a)
             G_TYPE_POINTER  // Pointer to the Object
             );
             
-    treeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(credentialStore));
-    treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW (treeView));
+    treeViewCredential = gtk_tree_view_new_with_model(GTK_TREE_MODEL(credentialStore));
+    treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW (treeViewCredential));
     g_signal_connect(G_OBJECT (treeSelection), "changed", G_CALLBACK (select_credential_cb), credentialStore);
     
     renderer = gtk_cell_renderer_text_new();
@@ -452,7 +467,7 @@ GtkWidget * createAdvancedTab(account_t **a)
             renderer,
             "markup", COLUMN_CREDENTIAL_REALM,
             NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
+    gtk_tree_view_append_column (GTK_TREE_VIEW(treeViewCredential), treeViewColumn);
 
     renderer = gtk_cell_renderer_text_new();
     g_object_set (renderer, "editable", TRUE, "editable-set", TRUE, NULL);
@@ -462,7 +477,7 @@ GtkWidget * createAdvancedTab(account_t **a)
             renderer,
             "markup", COLUMN_CREDENTIAL_USERNAME,
             NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
+    gtk_tree_view_append_column (GTK_TREE_VIEW(treeViewCredential), treeViewColumn);
 
     renderer = gtk_cell_renderer_text_new();
     g_object_set (renderer, "editable", TRUE, "editable-set", TRUE, NULL);
@@ -473,15 +488,15 @@ GtkWidget * createAdvancedTab(account_t **a)
             renderer,
             "markup", COLUMN_CREDENTIAL_PASSWORD,
             NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
+    gtk_tree_view_append_column (GTK_TREE_VIEW(treeViewCredential), treeViewColumn);
     
-    gtk_container_add(GTK_CONTAINER(scrolledWindow), treeView);
+    gtk_container_add(GTK_CONTAINER(scrolledWindowCredential), treeViewCredential);
     
     fill_treeview_with_credential(credentialStore, *a);
         
     /* Dynamically resize the window to fit the scrolled window */
-    gtk_widget_size_request(GTK_WIDGET(treeView), &requisitionTreeView);
-    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindow), requisitionTable.width, requisitionTreeView.height + 10);
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTable.width, requisitionTreeView.height + 20);
         
     /* Credential Buttons */    
     hbox = gtk_hbox_new(FALSE, 10);
@@ -492,7 +507,7 @@ GtkWidget * createAdvancedTab(account_t **a)
     gtk_box_pack_start(GTK_BOX(hbox), addButton, FALSE, FALSE, 0);
         
     deleteCredButton = gtk_button_new_from_stock (GTK_STOCK_REMOVE);
-    g_signal_connect (deleteCredButton, "clicked", G_CALLBACK (delete_credential_cb), treeView);
+    g_signal_connect (deleteCredButton, "clicked", G_CALLBACK (delete_credential_cb), treeViewCredential);
     gtk_box_pack_start(GTK_BOX(hbox), deleteCredButton, FALSE, FALSE, 0);
                        	
     gtk_widget_show_all(ret);
