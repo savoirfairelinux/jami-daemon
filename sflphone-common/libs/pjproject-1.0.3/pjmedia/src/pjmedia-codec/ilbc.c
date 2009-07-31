@@ -30,6 +30,9 @@
 #include <pj/pool.h>
 #include <pj/string.h>
 #include <pj/os.h>
+
+/* ILBC is not GPL-compatible */
+#if defined(PJMEDIA_HAS_ILBC_CODEC_GPL)
 #include "../../third_party/ilbc/iLBC_encode.h"
 #include "../../third_party/ilbc/iLBC_decode.h"
 
@@ -668,3 +671,4 @@ static pj_status_t  ilbc_codec_recover(pjmedia_codec *codec,
 
 #endif	/* PJMEDIA_HAS_ILBC_CODEC */
 
+#endif

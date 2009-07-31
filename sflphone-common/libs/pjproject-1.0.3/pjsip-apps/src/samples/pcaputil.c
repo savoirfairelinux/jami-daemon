@@ -232,9 +232,9 @@ static void pcap2wav(const char *wav_filename, const pj_str_t *srtp_crypto,
     T( pjmedia_codec_speex_init(app.mept, 0, 10, 10) );
 #endif /* PJMEDIA_HAS_SPEEX_CODEC */
 
-#if PJMEDIA_HAS_ILBC_CODEC
+#if PJMEDIA_HAS_ILBC_CODEC_GPL
     T( pjmedia_codec_ilbc_init(app.mept, 30) );
-#endif /* PJMEDIA_HAS_ILBC_CODEC */
+#endif /* PJMEDIA_HAS_ILBC_CODEC_GPL */
 
 #if PJMEDIA_HAS_GSM_CODEC
     T( pjmedia_codec_gsm_init(app.mept) );

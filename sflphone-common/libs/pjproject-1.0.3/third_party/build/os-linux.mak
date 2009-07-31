@@ -1,5 +1,5 @@
 DIRS += gsm
-DIRS += ilbc
+#DIRS += ilbc
 DIRS += speex
 DIRS += portaudio
 

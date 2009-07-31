@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 #if PJMEDIA_HAS_GSM_CODEC
     CHECK( pjmedia_codec_gsm_init(mept) );
 #endif
-#if PJMEDIA_HAS_ILBC_CODEC
+#if PJMEDIA_HAS_ILBC_CODEC_GPL
     CHECK( pjmedia_codec_ilbc_init(mept, 30) );
 #endif
 #if PJMEDIA_HAS_SPEEX_CODEC

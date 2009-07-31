@@ -121,7 +121,7 @@ pj_status_t pjsua_media_subsys_init(const pjsua_media_config *cfg)
 
 #endif /* PJMEDIA_HAS_SPEEX_CODEC */
 
-#if PJMEDIA_HAS_ILBC_CODEC
+#if PJMEDIA_HAS_ILBC_CODEC_GPL
     /* Register iLBC. */
     status = pjmedia_codec_ilbc_init( pjsua_var.med_endpt, 
 				      pjsua_var.media_cfg.ilbc_mode);
@@ -130,7 +130,7 @@ pj_status_t pjsua_media_subsys_init(const pjsua_media_config *cfg)
 		     status);
 	return status;
     }
-#endif /* PJMEDIA_HAS_ILBC_CODEC */
+#endif /* PJMEDIA_HAS_ILBC_CODEC_GPL */
 
 #if PJMEDIA_HAS_GSM_CODEC
     /* Register GSM */

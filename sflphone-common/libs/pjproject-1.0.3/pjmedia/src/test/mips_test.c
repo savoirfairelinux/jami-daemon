@@ -821,7 +821,11 @@ static pjmedia_port* gsm_encode_decode(  pj_pool_t *pool,
 
 static pj_status_t ilbc_init(pjmedia_endpt *endpt)
 {
+#if defined(PJMEDIA_HAS_ILBC_CODEC_GPL)
     return pjmedia_codec_ilbc_init(endpt, 20);
+#else
+	return !PJ_SUCCESS;
+#endif
 }
 
 /* iLBC benchmark */
@@ -832,9 +836,13 @@ static pjmedia_port* ilbc_encode_decode( pj_pool_t *pool,
 					 unsigned flags,
 					 struct test_entry *te)
 {
+#if defined(PJMEDIA_HAS_ILBC_CODEC_GPL)
     return codec_encode_decode(pool, "ilbc", &ilbc_init, 
 			       &pjmedia_codec_ilbc_deinit, clock_rate, 
 			       channel_count, samples_per_frame, flags, te);
+#else
+	return NULL;
+#endif
 }
 
 /* Speex narrowband benchmark */
