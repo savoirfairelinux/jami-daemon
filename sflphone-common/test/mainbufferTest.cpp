@@ -307,6 +307,10 @@ void MainBufferTest::testReadPointerInit()
     CallID test_id = "test read pointer init";
     RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(test_id);
 
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 0);
+    test_ring_buffer->storeReadPointer(30);
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 30);
+
     test_ring_buffer->createReadPointer(test_id);
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 0);
     test_ring_buffer->storeReadPointer(10, test_id);

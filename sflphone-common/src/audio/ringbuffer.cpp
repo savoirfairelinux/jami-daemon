@@ -37,6 +37,8 @@ RingBuffer::RingBuffer (int size) : mStart (0), mEnd (0)
 {
     mBuffer = new unsigned char[mBufferSize];
     assert (mBuffer != NULL);
+
+    createReadPointer();
 }
 
 // Free memory on object deletion
@@ -44,6 +46,8 @@ RingBuffer::~RingBuffer()
 {
     delete[] mBuffer;
     mBuffer = NULL;
+
+    removeReadPointer();
 }
 
 void
