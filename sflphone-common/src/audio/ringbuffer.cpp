@@ -52,9 +52,9 @@ RingBuffer::~RingBuffer()
 }
 
 void
-RingBuffer::flush (void)
+RingBuffer::flush (CallID call_id)
 {
-    storeReadPointer(0);
+    storeReadPointer(0, call_id);
     mEnd = 0;
 }
 
@@ -121,7 +121,12 @@ RingBuffer::storeReadPointer(int pointer_value, CallID call_id)
 
     ReadPointer::iterator iter = _readpointer.find(call_id);
     if(iter != _readpointer.end())
+    {	
 	iter->second = pointer_value;
+    }
+    else{
+	_debug("Cannot find \"%s\" readPointer\n", call_id.c_str());
+    }
 
 }
 
@@ -140,6 +145,15 @@ RingBuffer::removeReadPointer(CallID call_id)
 {
 
     _readpointer.erase(call_id);
+
+}
+
+
+int
+RingBuffer::getNbReadPointer()
+{
+
+    return _readpointer.size();
 
 }
 
@@ -280,6 +294,7 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 int
 RingBuffer::Discard (int toDiscard, CallID call_id)
 {
+    
     int len = getLen(call_id);
 
     mStart = getReadPointer(call_id);

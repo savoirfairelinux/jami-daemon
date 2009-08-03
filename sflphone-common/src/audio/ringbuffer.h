@@ -48,7 +48,7 @@ class RingBuffer {
     /**
      * Reset the counters to 0
      */
-    void flush (void);
+    void flush (CallID call_id = "default_id");
 
 
     int getReadPointer(CallID call_id = "default_id");
@@ -60,6 +60,8 @@ class RingBuffer {
     void createReadPointer(CallID call_id = "default_id");
 
     void removeReadPointer(CallID call_id = "default_id");
+
+    int getNbReadPointer();
 
     /**
      * To get how much space is available in the buffer to write in
