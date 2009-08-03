@@ -149,23 +149,31 @@ edit_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 /**
  * Add an account
  */
-    static void
+static void
 add_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
     show_account_window(NULL);
 }
 
-    void
+static void
+set_md5_hash_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+{
+    gboolean enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    dbus_set_md5_credential_hashing(enabled);
+}
+
+static void
 start_hidden( void )
 {
     dbus_start_hidden();
 }
 
-    void
+static void
 set_popup_mode( void )
 {
     dbus_switch_popup_mode();
 }
+
 
     void
 set_notif_level(  )
@@ -573,7 +581,7 @@ create_general_settings ()
     GtkWidget *mutewidget;
     GtkWidget *trayItem;
     GtkWidget *frame;
-    GtkWidget *history_w;
+    GtkWidget *checkBoxWidget;
     GtkWidget *label;
     GtkWidget *entryPort;
     GtkWidget *table;
@@ -629,20 +637,28 @@ create_general_settings ()
     gnome_main_section_new_with_table (_("Calls History"), &frame, &table, 3, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    history_w = gtk_check_button_new_with_mnemonic(_("_Keep my history for at least"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (history_w), history_enabled);
-    g_signal_connect (G_OBJECT (history_w) , "clicked" , G_CALLBACK (history_enabled_cb) , NULL);
-    gtk_table_attach( GTK_TABLE(table), history_w, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    checkBoxWidget = gtk_check_button_new_with_mnemonic(_("_Keep my history for at least"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkBoxWidget), history_enabled);
+    g_signal_connect (G_OBJECT (checkBoxWidget) , "clicked" , G_CALLBACK (history_enabled_cb) , NULL);
+    gtk_table_attach( GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     
     history_value = gtk_spin_button_new_with_range(1, 99, 1);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON(history_value), history_limit);
     g_signal_connect( G_OBJECT (history_value) , "value-changed" , G_CALLBACK (history_limit_cb) , history_value);
-    gtk_widget_set_sensitive (GTK_WIDGET (history_value), gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (history_w)));
+    gtk_widget_set_sensitive (GTK_WIDGET (history_value), gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (checkBoxWidget)));
     gtk_table_attach( GTK_TABLE(table), history_value, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5); 
 
     label = gtk_label_new(_("days"));
     gtk_table_attach( GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    
+  
+    // Configuration File
+    gnome_main_section_new_with_table (_("Configuration File"), &frame, &table, 1, 1);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);    
+    checkBoxWidget = gtk_check_button_new_with_mnemonic(_("Store SIP credentials as MD5 hash"));
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(checkBoxWidget), dbus_is_md5_credential_hashing() );
+    g_signal_connect(G_OBJECT( checkBoxWidget ) , "clicked" , G_CALLBACK(set_md5_hash_cb) , NULL);
+    gtk_table_attach( GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+              
     /** PULSEAUDIO CONFIGURATION */
     gnome_main_section_new_with_table (_("PulseAudio sound server"), &frame, &table, 1, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);

@@ -71,7 +71,17 @@ int SIPAccount::registerVoIPLink()
     int credentialCount = 0;
     credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
     credentialCount += 1;
-    
+
+    int md5HashingEnabled = 0;
+    int dataType = 0;
+    md5HashingEnabled = Manager::instance().getConfigInt(PREFERENCES, CONFIG_MD5HASH);
+    std::string digest;
+    if (md5HashingEnabled) {
+        dataType = PJSIP_CRED_DATA_DIGEST;
+    } else {
+        dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
+    }
+        
     pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc(sizeof(pjsip_cred_info)*(credentialCount));        
     if (cred_info == NULL) {
         _debug("Failed to set cred_info for account %s\n", _accountID.c_str());
@@ -86,7 +96,7 @@ int SIPAccount::registerVoIPLink()
     }
     cred_info[0].data =  pj_str(strdup(_password.c_str()));
     cred_info[0].realm = pj_str(strdup(_realm.c_str()));
-    cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
+    cred_info[0].data_type = dataType;
     cred_info[0].scheme = pj_str("digest");
             
     int i;
@@ -105,7 +115,7 @@ int SIPAccount::registerVoIPLink()
         cred_info[i].username = pj_str(strdup(username.c_str()));
         cred_info[i].data = pj_str(strdup(password.c_str()));
         cred_info[i].realm = pj_str(strdup(realm.c_str()));
-        cred_info[i].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
+        cred_info[i].data_type = dataType;
         cred_info[i].scheme = pj_str("digest");
         
         _debug("Setting credential %d realm = %s passwd = %s username = %s data_type = %d\n", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
