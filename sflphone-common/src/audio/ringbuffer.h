@@ -130,6 +130,10 @@ class RingBuffer {
     samplePtr     mBuffer;
 
     ReadPointer   _readpointer;
+
+  public:
+
+    friend class MainBufferTest;
 };
 
 #endif /*  __RING_BUFFER__ */

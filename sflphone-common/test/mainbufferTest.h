@@ -75,6 +75,7 @@ class MainBufferTest : public CppUnit::TestCase {
        CPPUNIT_TEST( testDiscardFlush );
        CPPUNIT_TEST( testReadPointerInit );
        CPPUNIT_TEST( testRingBufferSeveralPointers );
+       CPPUNIT_TEST( testConference );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -118,6 +119,8 @@ class MainBufferTest : public CppUnit::TestCase {
 	void testReadPointerInit();
 
 	void testRingBufferSeveralPointers();
+
+	void testConference();
 
     private:
 

@@ -239,7 +239,8 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_size);
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 0);
+    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer());
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 3*sizeof(int));
 
     // test flush data
     init_put_size = test_ring_buffer->AvailForPut();
@@ -249,14 +250,16 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (init_put_size - (int)sizeof(int)));
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == sizeof(int));
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 0);
+    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer());
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 3*sizeof(int));
 
     test_ring_buffer->Discard(sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_size);
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == sizeof(int));
+    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer());
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 4*sizeof(int));
 
     
 }
@@ -326,7 +329,8 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_size);
     CPPUNIT_ASSERT(test_ring_buffer->getLen(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id) == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 0);
+    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer(test_id));
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 3*sizeof(int));
 
     // test flush data
     init_put_size = test_ring_buffer->AvailForPut();
@@ -336,14 +340,16 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (init_put_size - (int)sizeof(int)));
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id) == sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->getLen(test_id) == sizeof(int));
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 0);
+    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer(test_id));
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 3*sizeof(int));
 
     test_ring_buffer->Discard(sizeof(int), test_id);
     CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_size);
     CPPUNIT_ASSERT(test_ring_buffer->getLen(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id) == 0);
-    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == sizeof(int));
+    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer(test_id));
+    CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 4*sizeof(int));
 
     test_ring_buffer->removeReadPointer(test_id);
     
@@ -730,4 +736,609 @@ void MainBufferTest::testRingBufferSeveralPointers()
     test_ring_buffer->removeReadPointer(test_pointer2);
 
     _mainbuffer.removeRingBuffer(test_id);
+}
+
+
+
+void MainBufferTest::testConference()
+{
+
+    _debug("MainBufferTest::testConference()\n");
+
+    CallID test_id1 = "participant A";
+    CallID test_id2 = "participant B";
+    RingBuffer* test_ring_buffer;
+
+    RingBufferMap::iterator iter_ringbuffermap;
+    ReadPointer::iterator iter_readpointer;
+    CallIDMap::iterator iter_callidmap;
+    CallIDSet::iterator iter_callidset;
+    
+
+    // test initial setup
+    // ringbuffers
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 1);
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 1);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    // callidmap
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 1);
+    iter_callidmap = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_callidmap->first == default_id);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 0);
+
+    // test bind Participant A with default 
+    _mainbuffer.bindCallID(test_id1);
+    // ringbuffers
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 2);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = test_ring_buffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 1);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    // callidmap
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 2);
+    iter_callidmap = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_callidmap->first == default_id);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 1);
+    iter_callidset = iter_callidmap->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_callidset == test_id1);
+    iter_callidmap = _mainbuffer._callIDMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_callidmap->first == test_id1);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 1);
+    iter_callidset = iter_callidmap->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_callidset == default_id);
+
+    // test bind Participant B with default
+    _mainbuffer.bindCallID(test_id2);
+    // ringbuffers
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 3);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = test_ring_buffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = test_ring_buffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 1);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 1);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    // callidmap
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 3);
+    iter_callidmap = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_callidmap->first == default_id);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 2);
+    iter_callidset = iter_callidmap->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_callidset == test_id1);
+    iter_callidset = iter_callidmap->second->find(test_id2);
+    CPPUNIT_ASSERT(*iter_callidset == test_id2);
+    iter_callidmap = _mainbuffer._callIDMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_callidmap->first == test_id1);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 1);
+    iter_callidset = iter_callidmap->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_callidset == default_id);
+    iter_callidmap = _mainbuffer._callIDMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_callidmap->first == test_id2);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 1);
+    iter_callidset = iter_callidmap->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_callidset == default_id);
+    
+    
+    // test bind Participant A with Participant B
+    _mainbuffer.bindCallID(test_id1, test_id2);
+    // ringbuffers
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 3);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = test_ring_buffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = test_ring_buffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 2);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = test_ring_buffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 2);
+    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = test_ring_buffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    // callidmap
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 3);
+    iter_callidmap = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_callidmap->first == default_id);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 2);
+    iter_callidset = iter_callidmap->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_callidset == test_id1);
+    iter_callidset = iter_callidmap->second->find(test_id2);
+    CPPUNIT_ASSERT(*iter_callidset == test_id2);
+    iter_callidmap = _mainbuffer._callIDMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_callidmap->first == test_id1);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 2);
+    iter_callidset = iter_callidmap->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_callidset == default_id);
+    iter_callidset = iter_callidmap->second->find(test_id2);
+    CPPUNIT_ASSERT(*iter_callidset == test_id2);
+    iter_callidmap = _mainbuffer._callIDMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_callidmap->first == test_id2);
+    CPPUNIT_ASSERT(iter_callidmap->second->size() == 2);
+    iter_callidset = iter_callidmap->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_callidset == default_id);
+    iter_callidset = iter_callidmap->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_callidset == test_id1);
+    
+
+    // test putData default
+    int testint = 12;
+    int init_put_defaultid;
+    int init_put_id1;
+    int init_put_id2;
+
+    init_put_defaultid = _mainbuffer.getRingBuffer(default_id)->AvailForPut();
+    init_put_id1 = _mainbuffer.getRingBuffer(test_id1)->AvailForPut();
+    init_put_id2 = _mainbuffer.getRingBuffer(test_id2)->AvailForPut();
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+    // put data test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+    //putdata test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100, test_id1) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    //putdata test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100, test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id2 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+
+
+    int test_output;
+
+    // test getData default id (audio layer)
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100) == sizeof(int));
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id2 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    // test getData test_id1 (audio layer)
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id); 
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    // test getData test_id2 (audio layer)
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, test_id2) == sizeof(int));
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_defaultid);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+
+
+    // test putData default (for discarting)
+    init_put_defaultid = _mainbuffer.getRingBuffer(default_id)->AvailForPut();
+    init_put_id1 = _mainbuffer.getRingBuffer(test_id1)->AvailForPut();
+    init_put_id2 = _mainbuffer.getRingBuffer(test_id2)->AvailForPut();
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+    // put data test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+    //putdata test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100, test_id1) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    //putdata test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100, test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id2 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    
+    // test discardData default id (audio layer)
+    CPPUNIT_ASSERT(_mainbuffer.discard(sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id2 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    // test discardData test_id1 (audio layer)
+    CPPUNIT_ASSERT(_mainbuffer.discard(sizeof(int), test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id); 
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    // test discardData test_id2 (audio layer)
+    CPPUNIT_ASSERT(_mainbuffer.discard(sizeof(int), test_id2) == sizeof(int));
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_defaultid);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+
+    
+    // test putData default (for flushing)
+    init_put_defaultid = _mainbuffer.getRingBuffer(default_id)->AvailForPut();
+    init_put_id1 = _mainbuffer.getRingBuffer(test_id1)->AvailForPut();
+    init_put_id2 = _mainbuffer.getRingBuffer(test_id2)->AvailForPut();
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+    // put data test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+    //putdata test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100, test_id1) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    //putdata test ring buffers
+    CPPUNIT_ASSERT(_mainbuffer.putData(&testint, sizeof(int), 100, test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id2 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+
+    // test flush default id (audio layer)
+    _mainbuffer.flush();
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    _debug("%i\n", test_ring_buffer->putLen());
+    test_ring_buffer->debug();
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id2 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == sizeof(int));
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    // test flush test_id1 (audio layer)
+    _mainbuffer.flush(test_id1);
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id); 
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_defaultid - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (int)(init_put_id1 - sizeof(int)));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == sizeof(int));
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == sizeof(int));
+    // test flush test_id2 (audio layer)
+    _mainbuffer.flush(test_id2);
+    CPPUNIT_ASSERT(test_output == (testint + testint));
+    test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_defaultid);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id1);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id2) == 0);
+    test_ring_buffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->putLen() == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_id2);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(default_id) == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id1) == 0);
+    // test mainbuffer availforget
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id1) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id2) == 0);
+    
+
+    _mainbuffer.unBindCallID(test_id1, test_id2);
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 3);
+
+    _mainbuffer.unBindCallID(test_id1);
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 2);
+
+    _mainbuffer.unBindCallID(test_id2);
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 1);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 1);
+
+
 }

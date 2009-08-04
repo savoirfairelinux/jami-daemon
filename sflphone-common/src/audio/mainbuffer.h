@@ -95,6 +95,8 @@ class MainBuffer {
 
 	CallIDMap _callIDMap;
 
+	SFLDataFormat* mixBuffer;
+
 	ost::Mutex _mutex;
 
     public:

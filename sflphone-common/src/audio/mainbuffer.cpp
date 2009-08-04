@@ -24,6 +24,8 @@ MainBuffer::MainBuffer()
 {
     createRingBuffer(default_id);
     createCallIDSet(default_id);
+
+    mixBuffer = new SFLDataFormat[3000];
 }
 
 
@@ -160,7 +162,7 @@ void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
     removeCallIDfromSet(call_id1, call_id2);
     removeCallIDfromSet(call_id2, call_id1);
 
-    if(getRingBuffer(call_id1)->getNbReadPointer() <= 1)
+    if(getRingBuffer(call_id1)->getNbReadPointer() < 1)
     {
 
 	removeRingBuffer(call_id1);
@@ -223,8 +225,24 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
     }
     else
     {
-	_debug("CallIDSet with ID: \"%s\" is a conference!", call_id.c_str());
-	return 0;
+
+	for (int k = 0; k < toCopy; k++)
+	{
+	    ((SFLDataFormat*)(buffer))[k] = 0;
+	}
+
+	_debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
+	CallIDSet::iterator iter_id = callid_set->begin();
+	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
+	{
+	    getDataByID(mixBuffer, toCopy, volume, *iter_id, call_id);
+	    for (int k = 0; k < toCopy; k++)
+	    {
+		((SFLDataFormat*)(buffer))[k] += mixBuffer[k];
+	    }
+	}
+	
+	return toCopy;
     }
 }
 
@@ -274,8 +292,17 @@ int MainBuffer::availForGet(CallID call_id)
     }
     else
     {
-	_debug("CallIDSet with ID: \"%s\" is a conference!", call_id.c_str());
-	return 0;
+	_debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
+	int avail_bytes = 99999;
+	int nb_bytes;
+	CallIDSet::iterator iter_id = callid_set->begin();
+	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
+	{
+	    nb_bytes = availForGetByID(*iter_id, call_id);
+	    if (nb_bytes < avail_bytes)
+		avail_bytes = nb_bytes;
+	}
+	return avail_bytes;
     }
 
 }
@@ -309,8 +336,13 @@ int MainBuffer::discard(int toDiscard, CallID call_id)
     }
     else
     {
-	_debug("CallIDSet with ID: \"%s\" is a conference!", call_id.c_str());
-	return 0;
+	_debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
+	CallIDSet::iterator iter_id = callid_set->begin();
+	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
+	{
+	    discardByID(toDiscard, *iter_id, call_id);
+	}
+	return toDiscard;
     }
 
 }
@@ -342,7 +374,12 @@ void MainBuffer::flush(CallID call_id)
     }
     else
     {
-	_debug("CallIDSet with ID: \"%s\" is a conference!", call_id.c_str());
+	_debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
+	CallIDSet::iterator iter_id = callid_set->begin();
+	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
+	{
+	    flushByID(*iter_id, call_id);
+	}
     }
 
 }

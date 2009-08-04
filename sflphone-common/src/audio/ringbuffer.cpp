@@ -54,8 +54,8 @@ RingBuffer::~RingBuffer()
 void
 RingBuffer::flush (CallID call_id)
 {
-    storeReadPointer(0, call_id);
-    mEnd = 0;
+    storeReadPointer(mEnd, call_id);
+    // mEnd = 0;
 }
 
 int
