@@ -41,7 +41,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     _debug (" Constructor of AlsaLayer called\n");
     /* Instanciate the audio thread */
     _audioThread = new AudioThread (this);
-
+    out_buffer = new SFLDataFormat[5000];
 }
 
 // Destructor
@@ -50,6 +50,8 @@ AlsaLayer::~AlsaLayer (void)
     _debug ("Destructor of AlsaLayer called\n");
     closeLayer();
 
+    delete out_buffer;
+    out_buffer = NULL;
 }
 
 bool
@@ -721,7 +723,7 @@ void AlsaLayer::audioCallback (void)
     unsigned short spkrVolume, micVolume;
     AudioLoop *tone;
 
-    SFLDataFormat *out;
+    // SFLDataFormat *out;
 
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
@@ -730,47 +732,68 @@ void AlsaLayer::audioCallback (void)
     // framePerBuffer are the number of data for one channel (left)
     urgentAvail = _urgentRingBuffer.AvailForGet();
 
+    
+
+    for(int k = 0; k < 5000; k++)
+	out_buffer[k] = 0;
+
     if (urgentAvail > 0) {
+	
         // Urgent data (dtmf, incoming call signal) come first.
         toGet = (urgentAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? urgentAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
-        out = (SFLDataFormat*) malloc (toGet * sizeof (SFLDataFormat));
-        _urgentRingBuffer.Get (out, toGet, spkrVolume);
+        // out = (SFLDataFormat*) malloc (toGet * sizeof (SFLDataFormat));
+        _urgentRingBuffer.Get (out_buffer, toGet, spkrVolume);
         /* Play the sound */
-        write (out , toGet);
-        free (out);
-        out=0;
+        write (out_buffer , toGet);
+        // free (out);
+        // out=0;
         // Consume the regular one as well (same amount of bytes)
         _mainBuffer.discard (toGet);
-    } else {
+    } 
+    else 
+    {
+	
         tone = _manager->getTelephoneTone();
         toGet = 940  ;
         maxBytes = toGet * sizeof (SFLDataFormat)  ;
 
-        if (tone != 0) {
-            out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
-            tone->getNext (out, toGet, spkrVolume);
-            write (out , maxBytes);
-        } else if ( (tone=_manager->getTelephoneFile()) != 0) {
-            out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
-            tone->getNext (out, toGet, spkrVolume);
-            write (out , maxBytes);
-        } else {
+        if (tone != 0) 
+        {
+	    
+            // out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
+            tone->getNext (out_buffer, toGet, spkrVolume);
+            write (out_buffer , maxBytes);
+        } 
+	else if ( (tone=_manager->getTelephoneFile()) != 0) 
+	{
+
+            // out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
+            tone->getNext (out_buffer, toGet, spkrVolume);
+            write (out_buffer , maxBytes);
+        } 
+	else 
+	{
+	   
             // If nothing urgent, play the regular sound samples
             normalAvail = _mainBuffer.availForGet();
             toGet = (normalAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? normalAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
-            out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+            // out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-            if (toGet) {
-                _mainBuffer.getData (out, toGet, spkrVolume);
-                write (out, toGet);
-            } else {
-                bzero (out, framesPerBufferAlsa * sizeof (SFLDataFormat));
+            if (toGet) 
+	    { 
+                _mainBuffer.getData (out_buffer, toGet, spkrVolume);
+                write (out_buffer, toGet);
+            } 
+	    else 
+	    {
+                bzero (out_buffer, framesPerBufferAlsa * sizeof (SFLDataFormat));
             }
         }
 
-        free (out);
+        // free (out);
 
-        out=0;
+
+        // out=0;
     }
 
     // Additionally handle the mic's audio stream

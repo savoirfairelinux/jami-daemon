@@ -261,6 +261,8 @@ class AudioLayer {
         int _errorMessage;
 
         ost::Mutex _mutex;
+
+	SFLDataFormat* out_buffer;
 };
 
 #endif // _AUDIO_LAYER_H_

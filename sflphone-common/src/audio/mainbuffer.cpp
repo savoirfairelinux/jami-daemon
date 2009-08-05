@@ -25,7 +25,7 @@ MainBuffer::MainBuffer()
     createRingBuffer(default_id);
     createCallIDSet(default_id);
 
-    mixBuffer = new SFLDataFormat[3000];
+    mixBuffer = new SFLDataFormat[5000];
 }
 
 
@@ -33,6 +33,9 @@ MainBuffer::~MainBuffer()
 {
     removeRingBuffer(default_id);
     removeCallIDSet(default_id);
+
+    delete mixBuffer;
+    mixBuffer = NULL;
 }
 
 CallIDSet* MainBuffer::getCallIDSet(CallID call_id)
@@ -232,7 +235,7 @@ int MainBuffer::availForPut(CallID call_id)
 int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
 
-    // _debug("MainBuffer::getData\n");
+    // _debug("MainBuffer::getData \"%s\", toCopy %i\n",call_id.c_str(), toCopy);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -301,7 +304,7 @@ int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, Cal
 
 int MainBuffer::availForGet(CallID call_id)
 {
-    _debug("MainBuffer::availForGet\n");
+    // _debug("MainBuffer::availForGet\n");
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
