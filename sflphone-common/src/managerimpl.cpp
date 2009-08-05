@@ -280,8 +280,6 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
 bool
 ManagerImpl::answerCall (const CallID& id)
 {
-    bool isActive = false;
-
     stopTone (true);
 
     AccountID currentAccountId;
@@ -1359,7 +1357,6 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 
     section = PREFERENCES;
     fill_config_str (ZONE_TONE, DFT_ZONE);
-    fill_config_int (CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
     fill_config_int (CONFIG_RINGTONE, YES_STR);
     fill_config_int (CONFIG_DIALPAD, YES_STR);
     fill_config_int (CONFIG_SEARCHBAR, YES_STR);

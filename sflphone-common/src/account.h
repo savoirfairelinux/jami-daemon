@@ -54,25 +54,34 @@ typedef enum RegistrationState {
 #define AccountNULL ""
 
 // Common account parameters
-#define CONFIG_ACCOUNT_TYPE   "Account.type"  
-#define CONFIG_ACCOUNT_ALIAS  "Account.alias"
-#define CONFIG_ACCOUNT_MAILBOX	"Account.mailbox"
-#define CONFIG_ACCOUNT_ENABLE	"Account.enable"
-#define CONFIG_ACCOUNT_RESOLVE_ONCE "Account.resolveOnce"
-#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
-#define CONFIG_CREDENTIAL_NUMBER "Credential.count"
+#define CONFIG_ACCOUNT_TYPE                 "Account.type"  
+#define CONFIG_ACCOUNT_ALIAS                "Account.alias"
+#define CONFIG_ACCOUNT_MAILBOX	            "Account.mailbox"
+#define CONFIG_ACCOUNT_ENABLE               "Account.enable"
+#define CONFIG_ACCOUNT_RESOLVE_ONCE         "Account.resolveOnce"
+#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE  "Account.expire"
+#define CONFIG_CREDENTIAL_NUMBER            "Credential.count"
 
-#define HOSTNAME        "hostname"
-#define USERNAME        "username"
-#define AUTHENTICATION_USERNAME "authenticationUsername"
-#define PASSWORD        "password"
-#define REALM           "realm"
+#define HOSTNAME                            "hostname"
+#define USERNAME                            "username"
+#define AUTHENTICATION_USERNAME             "authenticationUsername"
+#define PASSWORD                            "password"
+#define REALM                               "realm"
 
 // SIP specific parameters
-#define SIP_PROXY             "SIP.proxy"
-#define SIP_STUN_SERVER       "STUN.server"
-#define SIP_USE_STUN          "STUN.enable"
-#define SIP_STUN_PORT         "STUN.port"
+#define SIP_PROXY                           "SIP.proxy"
+#define SIP_STUN_SERVER                     "STUN.server"
+#define SIP_USE_STUN                        "STUN.enable"
+#define SIP_STUN_PORT                       "STUN.port"
+
+// SRTP specific parameters
+#define SRTP_ENABLE                         "SRTP.enable"
+#define SRTP_KEY_EXCHANGE                   "SRTP.keyExchange"
+#define SRTP_ENCRYPTION_ALGO                "SRTP.encryptionAlgorithm"  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8 
+#define ZRTP_HELLO_HASH                     "ZRTP.helloHashEnable"
+#define ZRTP_DISPLAY_SAS                    "ZRTP.displaySAS"
+#define ZRTP_NOT_SUPP_WARNING               "ZRTP.notSuppWarning"
+#define ZRTP_DISPLAY_SAS_ONCE               "ZRTP.displaySasOnce"
 
 class Account{
 

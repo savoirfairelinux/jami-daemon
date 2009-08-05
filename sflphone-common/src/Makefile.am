@@ -39,7 +39,8 @@ sflphoned_SOURCES = \
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
-		$(IAX_FLAGS)
+		$(IAX_FLAGS) \
+		@ZRTPCPP_CFLAGS@
 
 
 # Add here the dynamic libraries sflphoned should be linked against
@@ -47,6 +48,7 @@ sflphoned_LDADD = \
 		./libsflphone.la \
 		@CCGNU2_LIBS@ \
 		@CCEXT2_LIBS@ \
+		@ZRTPCPP_LIBS@ \
 		$(PJSIP_LIBS) \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
@@ -82,6 +84,7 @@ libsflphone_la_LIBADD = \
 	$(src)/libs/utilspp/libutilspp.la \
 	$(src)/libs/iax2/libiax2.la \
 	./audio/libaudio.la \
+	./audio/audiortp/libaudiortp.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./plug-in/libplugin.la \

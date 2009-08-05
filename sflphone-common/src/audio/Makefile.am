@@ -9,12 +9,11 @@ else
 ILBC_FLAG = 
 endif
 
-SUBDIRS = codecs
+SUBDIRS = codecs audiortp
 
 libaudio_la_SOURCES = \
 		audiofile.cpp \
 		tonelist.cpp \
-		audiortp.cpp \
 		audiostream.cpp \
 		dtmf.cpp \
 		tone.cpp \
@@ -36,7 +35,6 @@ noinst_HEADERS = \
 		ringbuffer.h \
 		audiofile.h \
 	 	tonelist.h \
-		audiortp.h \
 		audiolayer.h \
 		alsalayer.h \
 		pulselayer.h \

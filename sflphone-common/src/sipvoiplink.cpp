@@ -20,10 +20,13 @@
  */
 
 #include "sipvoiplink.h"
-#include "eventthread.h"
+
+#include "manager.h"
+
 #include "sipcall.h"
 #include "sipaccount.h"
-#include "audio/audiortp.h"
+#include "eventthread.h"
+
 #include "pjsip/sip_endpoint.h"
 
 #include <netinet/in.h>
@@ -205,7 +208,7 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
         , _stunServer ("")
         , _localExternAddress ("")
         , _localExternPort (0)
-        , _audiortp (new AudioRtp())
+        , _audiortp (new sfl::AudioRtpFactory())
         ,_regPort (DEFAULT_SIP_PORT)
         , _useStun (false)
         , _clients (0)
@@ -589,7 +592,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
         try {
             _debug ("Creating new rtp session in newOutgoingCall\n");
-            _audiortp->createNewSession (call);
+            _audiortp->initAudioRtpSession (call);
         } catch (...) {
             _debug ("Failed to create rtp thread from newOutGoingCall\n");
         }
@@ -641,7 +644,7 @@ SIPVoIPLink::answer (const CallID& id)
     local_sdp = call->getLocalSDP();
 
     try {
-        _audiortp->createNewSession (call);
+        _audiortp->initAudioRtpSession (call);
     } catch (...) {
         _debug ("Failed to create rtp thread from answer\n");
     }
@@ -676,7 +679,7 @@ SIPVoIPLink::answer (const CallID& id)
         _debug ("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
         terminateOneCall (call->getCallId());
         removeCall (call->getCallId());
-        _audiortp->closeRtpSession ();
+        _audiortp->stop ();
         return false;
     }
 }
@@ -719,7 +722,7 @@ SIPVoIPLink::hangup (const CallID& id)
     // Release RTP thread
     if (Manager::instance().isCurrentCall (id)) {
         _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
-        _audiortp->closeRtpSession();
+        _audiortp->stop();
     }
 
     terminateOneCall (id);
@@ -762,7 +765,7 @@ SIPVoIPLink::peerHungup (const CallID& id)
     // Release RTP thread
     if (Manager::instance().isCurrentCall (id)) {
         _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
-        _audiortp->closeRtpSession();
+        _audiortp->stop();
     }
 
     terminateOneCall (id);
@@ -812,7 +815,7 @@ SIPVoIPLink::onhold (const CallID& id)
 
     _debug ("* SIP Info: Stopping AudioRTP for onhold action\n");
 
-    _audiortp->closeRtpSession();
+    _audiortp->stop();
 
     /* Create re-INVITE with new offer */
     status = inv_session_reinvite (call, "sendonly");
@@ -883,7 +886,7 @@ SIPVoIPLink::offhold (const CallID& id)
     }
 
     try {
-        _audiortp->createNewSession (call);
+        _audiortp->initAudioRtpSession (call);
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)\n", __FILE__, __LINE__);
     }
@@ -983,7 +986,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
 
 bool SIPVoIPLink::transferStep2()
 {
-    _audiortp->closeRtpSession();
+    _audiortp->stop();
     return true;
 }
 
@@ -1033,8 +1036,6 @@ SIPVoIPLink::setRecording (const CallID& id)
 
     if (call)
         call->setRecording();
-
-    // _audiortp->setRecording();
 }
 
 bool
@@ -1259,7 +1260,7 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         Manager::instance().callFailure (id);
         terminateOneCall (id);
         removeCall (id);
-        _audiortp->closeRtpSession();
+        _audiortp->stop();
     }
 }
 
@@ -1275,7 +1276,7 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
     if (Manager::instance().isCurrentCall (id)) {
         call->setAudioStart (false);
         _debug ("* SIP Info: Stopping AudioRTP when closing\n");
-        _audiortp->closeRtpSession();
+        _audiortp->stop();
     }
 
     _debug ("After close RTP\n");
@@ -1390,7 +1391,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->getLocalSDP()->create_initial_offer();
 
         try {
-            _audiortp->createNewSession (call);
+            _audiortp->initAudioRtpSession (call);
         } catch (...) {
             _debug ("! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)\n", __FILE__, __LINE__);
         }
@@ -1929,13 +1930,13 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 void SIPVoIPLink::handle_reinvite (SIPCall *call)
 {
     // Close the previous RTP session
-    _audiortp->closeRtpSession ();
+    _audiortp->stop ();
     call->setAudioStart (false);
 
     _debug ("Create new rtp session from handle_reinvite \n");
 
     try {
-        _audiortp->createNewSession (call);
+        _audiortp->initAudioRtpSession (call);
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)\n", __FILE__, __LINE__);
     }
