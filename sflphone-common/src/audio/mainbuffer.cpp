@@ -38,6 +38,8 @@ MainBuffer::~MainBuffer()
 CallIDSet* MainBuffer::getCallIDSet(CallID call_id)
 {
 
+    _debug("MainBuffer::getCallIDSet\n");
+
     CallIDMap::iterator iter = _callIDMap.find(call_id);
     if (iter == _callIDMap.end())
     {
@@ -83,7 +85,8 @@ void MainBuffer::addCallIDtoSet(CallID set_id, CallID call_id)
 void MainBuffer::removeCallIDfromSet(CallID set_id, CallID call_id)
 {
     CallIDSet* callid_set = getCallIDSet(set_id);
-    callid_set->erase(call_id);
+    if(callid_set != NULL)
+        callid_set->erase(call_id);
 }
 
 
@@ -122,13 +125,18 @@ bool MainBuffer::removeRingBuffer(CallID call_id)
     // _callIDMap.erase(call_id);
 
     RingBuffer* ring_buffer = getRingBuffer(call_id);
-    delete ring_buffer;
-    ring_buffer = NULL;
+    if(ring_buffer != NULL)
+    {
+        delete ring_buffer;
+        ring_buffer = NULL;
 
-    if (_ringBufferMap.erase(call_id) != 0)
-        return true;
+        if (_ringBufferMap.erase(call_id) != 0)
+            return true;
+        else
+	    return false;
+    }
     else
-	return false;
+	return true;
 }
 
 
@@ -156,19 +164,38 @@ void MainBuffer::bindCallID(CallID call_id1, CallID call_id2)
 
 void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
 {
-    getRingBuffer(call_id1)->removeReadPointer(call_id2);
-    getRingBuffer(call_id2)->removeReadPointer(call_id1);
+    _debug("MainBuffer::unBindCallID\n");
+
+    RingBuffer* ringbuffer;
+
+    ringbuffer = getRingBuffer(call_id1);
+    if(ringbuffer != NULL)
+	ringbuffer->removeReadPointer(call_id2);
+    
+    ringbuffer = getRingBuffer(call_id2);
+    if(ringbuffer != NULL)
+	ringbuffer->removeReadPointer(call_id1);
+
+
+    _debug("OK 1\n");
 
     removeCallIDfromSet(call_id1, call_id2);
+    _debug("OK 2\n");
     removeCallIDfromSet(call_id2, call_id1);
+    _debug("OK 3\n");
 
-    if(getRingBuffer(call_id1)->getNbReadPointer() < 1)
+    ringbuffer = getRingBuffer(call_id1);
+    if(ringbuffer != NULL)
     {
+        if(getRingBuffer(call_id1)->getNbReadPointer() < 1)
+        {
 
-	removeRingBuffer(call_id1);
-	removeCallIDSet(call_id1);
+	    removeRingBuffer(call_id1);
+	    removeCallIDSet(call_id1);
 
+        }
     }
+    _debug("OK 4\n");
 }
 
 
@@ -209,6 +236,8 @@ int MainBuffer::availForPut(CallID call_id)
 
 int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
+
+    _debug("MainBuffer::getData\n");
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -277,6 +306,8 @@ int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, Cal
 
 int MainBuffer::availForGet(CallID call_id)
 {
+    _debug("MainBuffer::availForGet\n");
+
     CallIDSet* callid_set = getCallIDSet(call_id);
 
     if (callid_set->empty())
@@ -318,6 +349,7 @@ int MainBuffer::availForGetByID(CallID call_id, CallID reader_id)
 
 int MainBuffer::discard(int toDiscard, CallID call_id)
 {
+    _debug("MainBuffer::discard\n");
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -359,6 +391,8 @@ int MainBuffer::discardByID(int toDiscard, CallID call_id, CallID reader_id)
 
 void MainBuffer::flush(CallID call_id)
 {
+
+    _debug("MainBuffer::flush\n");
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 

@@ -79,7 +79,7 @@ void MainBufferTest::testRingBufferCreation()
     CPPUNIT_ASSERT(iter->second == _mainbuffer.getRingBuffer(test_id));
 
     CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
-    CPPUNIT_ASSERT(_mainbuffer.removeRingBuffer("null id") == false);
+    CPPUNIT_ASSERT(_mainbuffer.removeRingBuffer("null id") == true);
     CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
     CPPUNIT_ASSERT(_mainbuffer.removeRingBuffer(test_id) == true);
     CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 1);
