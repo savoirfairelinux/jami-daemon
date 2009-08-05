@@ -18,9 +18,9 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "accountcreator.h"
-#include "sipaccount.h"
+#include "sip/sipaccount.h"
 #ifdef USE_IAX
-#include "iaxaccount.h"
+#include "iax/iaxaccount.h"
 #endif
 
 AccountCreator::AccountCreator()

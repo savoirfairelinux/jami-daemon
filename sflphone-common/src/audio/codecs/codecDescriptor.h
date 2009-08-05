@@ -28,7 +28,7 @@
 
 #include "global.h"
 #include "user_cfg.h"
-#include "codecs/audiocodec.h"
+#include "audio/codecs/audiocodec.h"
 
 /** Enumeration that contains known audio payloads */
 typedef enum {
@@ -54,8 +54,6 @@ typedef enum {
   PAYLOAD_CODEC_SPEEX_16000 = 111,
   PAYLOAD_CODEC_SPEEX_32000 = 112
 } AudioCodecType;
-
-#include "codecs/audiocodec.h"
 
 /** A codec is identified by its payload. A payload is associated with a name. */ 
 typedef std::map<AudioCodecType, std::string> CodecMap;

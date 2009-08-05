@@ -23,9 +23,9 @@
 #include <pulse/pulseaudio.h>
 #include <string>
 
-#include "../global.h"
-#include "ringbuffer.h"
-#include "audioloop.h"
+#include "global.h"
+#include "audio/ringbuffer.h"
+#include "audio/audioloop.h"
 
 
 #include <cc++/thread.h>

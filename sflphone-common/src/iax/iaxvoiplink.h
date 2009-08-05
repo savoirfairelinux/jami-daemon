@@ -25,8 +25,8 @@
 #include <iax-client.h>
 #include "global.h"
 
-#include "audio/codecDescriptor.h"
-#include "samplerateconverter.h"
+#include "audio/codecs/codecDescriptor.h"
+#include "audio/samplerateconverter.h"
 #include "hooks/urlhook.h"
 
 class EventThread;

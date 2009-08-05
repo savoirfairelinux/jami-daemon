@@ -18,8 +18,8 @@
  */
  
 #include "ZrtpSessionCallback.h"
-#include "../../managerimpl.h"
-#include "../../global.h"
+#include "managerimpl.h"
+#include "global.h"
 
 #include <cstdlib> 
 #include <string>

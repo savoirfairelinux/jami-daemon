@@ -24,7 +24,7 @@
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
 
-#include "../../sipcall.h"
+#include "sip/sipcall.h"
 
 namespace sfl {
     class ZrtpSessionCallback: public ZrtpUserCallback {

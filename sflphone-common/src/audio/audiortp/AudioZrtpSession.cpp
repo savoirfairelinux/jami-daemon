@@ -17,7 +17,7 @@
  */
 #include "AudioZrtpSession.h"
 #include "ZrtpSessionCallback.h"
-#include "../user_cfg.h"
+#include "user_cfg.h"
 
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>

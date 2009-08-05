@@ -45,8 +45,13 @@ AC_CONFIG_FILES([Makefile])
 			libs/iax2/Makefile])
 
 	AC_CONFIG_FILES([src/Makefile \
+			src/sip/Makefile \
+			src/iax/Makefile \
 			src/audio/Makefile \
 			src/audio/audiortp/Makefile \
+			src/audio/pulseaudio/Makefile \
+			src/audio/alsa/Makefile \
+			src/audio/sound/Makefile \
 			src/audio/codecs/Makefile \
 			src/config/Makefile \
 			src/dbus/Makefile \

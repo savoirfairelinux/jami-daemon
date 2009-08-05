@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "ringbuffer.h"
-#include "../global.h"
+#include "global.h"
 
 #define MIN_BUFFER_SIZE	1280
 

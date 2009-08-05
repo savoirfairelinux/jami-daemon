@@ -22,7 +22,7 @@
 #include <exception>
 #include <cc++/thread.h>
 
-#include "../../sipcall.h"
+#include "sip/sipcall.h"
 
 class SIPCall;
 

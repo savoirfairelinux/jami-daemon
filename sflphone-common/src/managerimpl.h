@@ -39,10 +39,10 @@
 #include "numbercleaner.h"
 #include <history/historymanager.h>
 
-#include "audio/tonelist.h" // for Tone::TONEID declaration
-#include "audio/audiofile.h"
-#include "audio/dtmf.h"
-#include "audio/codecDescriptor.h"
+#include "audio/sound/tonelist.h" // for Tone::TONEID declaration
+#include "audio/sound/audiofile.h"
+#include "audio/sound/dtmf.h"
+#include "audio/codecs/codecDescriptor.h"
 
 class AudioLayer;
 class CodecDescriptor;
@@ -712,12 +712,23 @@ class ManagerImpl {
     bool setConfig(const std::string& section, const std::string& name, int value);
 
     /**
+     * Set a field in the configuration file to the value
+     * found in the map, otherwise, it is set to 
+     * EMPTY_FIELD.
+     * @param details The map containing the field:value association
+     * @param section The ini style section in the configuration file
+     * @param field   The field under that section to set the value to.
+     */
+    bool setConfigOrDefaultEmptyField(const std::map<std::string, std::string>& details, const char * section, const char * field);
+
+    /**
      * Get a int from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
      * @param section The section name to look in
      * @param name    The parameter name
      * @return int    The int value
      */
+     
     int getConfigInt(const std::string& section, const std::string& name);
 
     /**

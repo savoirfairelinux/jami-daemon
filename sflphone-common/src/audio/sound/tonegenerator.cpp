@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #include "tonegenerator.h"
-#include "../global.h"
+#include "global.h"
 
 int AMPLITUDE = 32767;
 

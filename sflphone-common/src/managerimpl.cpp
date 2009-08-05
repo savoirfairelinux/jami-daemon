@@ -37,14 +37,14 @@
 
 #include "manager.h"
 #include "account.h"
-#include "sipaccount.h"
+#include "sip/sipaccount.h"
 #include "audio/audiolayer.h"
-#include "audio/alsalayer.h"
-#include "audio/pulselayer.h"
-#include "audio/tonelist.h"
+#include "audio/alsa/alsalayer.h"
+#include "audio/pulseaudio/pulselayer.h"
+#include "audio/sound/tonelist.h"
 
 #include "accountcreator.h" // create new account
-#include "sipvoiplink.h"
+#include "sip/sipvoiplink.h"
 
 #include "user_cfg.h"
 
@@ -2400,6 +2400,18 @@ ManagerImpl::setConfig (const std::string& section, const std::string& name, int
     return _config.setConfigTreeItem (section, name, valueStream.str());
 }
 
+bool ManagerImpl::setConfigOrDefaultEmptyField(const std::map<std::string, std::string>& details, const char * section, const char * field)
+{
+    std::map<std::string, std::string>::iterator it;
+    std::map<std::string, std::string> detailsCpy = details;
+    
+    it = detailsCpy.find(field);
+    if (it == detailsCpy.end()) {
+        return setConfig(section, field, EMPTY_FIELD);
+    } else {
+        return setConfig(section, field, it->second);
+    }
+}
 
 void ManagerImpl::setAccountsOrder (const std::string& order)
 {

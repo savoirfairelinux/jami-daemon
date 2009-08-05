@@ -24,7 +24,7 @@
 #include <string>
 #include <cc++/thread.h>
 
-#include "../global.h"
+#include "global.h"
 
 /**
  * @file tonegenerator.h

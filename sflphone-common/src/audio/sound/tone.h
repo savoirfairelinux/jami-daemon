@@ -23,7 +23,7 @@
 #define __TONE_H__
 
 #include <string>
-#include "audioloop.h"
+#include "audio/audioloop.h"
 
 #define TONE_NBTONE 4
 #define TONE_NBCOUNTRY 7

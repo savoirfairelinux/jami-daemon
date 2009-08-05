@@ -25,7 +25,7 @@
 #include <math.h>
 
 #include "dtmfgenerator.h"
-#include "../global.h"
+#include "global.h"
 
 
 /*

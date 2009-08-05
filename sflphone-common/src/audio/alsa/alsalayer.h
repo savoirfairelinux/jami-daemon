@@ -20,7 +20,7 @@
 #ifndef _ALSA_LAYER_H
 #define _ALSA_LAYER_H
 
-#include "audiolayer.h"
+#include "audio/audiolayer.h"
 #include "eventthread.h"
 #include <alsa/asoundlib.h>
 

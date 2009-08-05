@@ -30,7 +30,7 @@
 #include <pj/pool.h>
 #include <pj/assert.h>
 
-#include "audio/codecDescriptor.h"
+#include "audio/codecs/codecDescriptor.h"
 #include "sdpmedia.h"
 
 class Sdp {

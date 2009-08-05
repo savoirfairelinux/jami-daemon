@@ -24,7 +24,7 @@
 #ifndef __DTMF_H_
 #define __DTMF_H_
 
-#include "../global.h"
+#include "global.h"
 #include "dtmfgenerator.h"
 
 /**

@@ -23,6 +23,7 @@
 #include <configurationmanager.h>
 #include <sstream>
 #include "../manager.h"
+#include "../audio/audiortp/AudioRtpFactory.h"
 
 const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
 
@@ -39,6 +40,59 @@ ConfigurationManager::getAccountDetails (const std::string& accountID)
 {
     _debug ("ConfigurationManager::getAccountDetails\n");
     return Manager::instance().getAccountDetails (accountID);
+}
+
+std::map< std::string, std::string > 
+ConfigurationManager::getIp2IpDetails(void)
+{
+
+  std::map<std::string, std::string> ip2ipAccountDetails;
+  
+  ip2ipAccountDetails.insert(std::pair<std::string, std::string> 
+                            (SRTP_KEY_EXCHANGE, Manager::instance().getConfigString(IP2IP_PROFILE, SRTP_KEY_EXCHANGE)));
+                            
+  ip2ipAccountDetails.insert(std::pair<std::string, std::string> 
+                            (SRTP_ENABLE, Manager::instance().getConfigString(IP2IP_PROFILE, SRTP_ENABLE) == "1" ? "TRUE": "FALSE"));
+                            
+  ip2ipAccountDetails.insert(std::pair<std::string, std::string> 
+                            (ZRTP_DISPLAY_SAS, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_DISPLAY_SAS) == "1" ? "TRUE": "FALSE"));
+                            
+  ip2ipAccountDetails.insert(std::pair<std::string, std::string> 
+                            (ZRTP_HELLO_HASH, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_HELLO_HASH) == "1" ? "TRUE": "FALSE"));
+                            
+  ip2ipAccountDetails.insert(std::pair<std::string, std::string> 
+                            (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING) == "1" ? "TRUE": "FALSE"));
+                            
+  ip2ipAccountDetails.insert(std::pair<std::string, std::string> 
+                            (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE) == "1" ? "TRUE": "FALSE"));
+  
+  return ip2ipAccountDetails;
+  
+}
+
+void 
+ConfigurationManager::setIp2IpDetails(const std::map< std::string, std::string >& details )
+{
+
+    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, SRTP_ENABLE); 
+    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, ZRTP_DISPLAY_SAS); 
+    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING); 
+    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, ZRTP_HELLO_HASH); 
+    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE);     
+                
+    std::string keyExchange(details.find(SRTP_KEY_EXCHANGE)->second);
+        
+    if(keyExchange.find("ZRTP") == 0) { 
+       Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, sfl::Zrtp);
+    } else {
+       Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, sfl::Sdes);
+    }
+        
+    Manager::instance().saveConfig();
+    
+    // Update account details to the client side
+    accountsChanged();
+
 }
 
 std::map< std::string, std::string >
@@ -122,7 +176,6 @@ ConfigurationManager::setCredential (const std::string& accountID, const int32_t
     }
     
     _debug("Realm: %s\n", it->second.c_str());
-
 }
 
 void

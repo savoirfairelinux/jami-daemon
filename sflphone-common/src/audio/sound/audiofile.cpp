@@ -21,7 +21,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "audiofile.h"
-#include "codecDescriptor.h"
+#include "audio/codecs/codecDescriptor.h"
 #include <fstream>
 #include <math.h>
 #include <samplerate.h>

@@ -31,10 +31,10 @@
 #include <cc++/socket.h>
 
 #include "global.h"
-#include "../../sipcall.h"
-#include "../../samplerateconverter.h"
-#include "../codecs/audiocodec.h"
-#include "../audiolayer.h"
+#include "sip/sipcall.h"
+#include "audio/samplerateconverter.h"
+#include "audio/codecs/audiocodec.h"
+#include "audio/audiolayer.h"
 
 class SIPCall;
 

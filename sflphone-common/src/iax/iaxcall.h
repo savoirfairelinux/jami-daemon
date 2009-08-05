@@ -21,7 +21,7 @@
 #define IAXCALL_H
 
 #include "call.h"
-#include "audio/codecDescriptor.h"
+#include "audio/codecs/codecDescriptor.h"
 
 #include <iax-client.h>
 #include <frame.h>

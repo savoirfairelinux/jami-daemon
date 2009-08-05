@@ -22,8 +22,8 @@
 #include "AudioSymmetricRtpSession.h"
 #include "AudioZrtpSession.h"
 
-#include "../../manager.h"
-#include "../../account.h"
+#include "manager.h"
+#include "account.h"
 
 namespace sfl {
 

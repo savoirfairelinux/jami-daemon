@@ -20,7 +20,7 @@
 #ifndef _PULSE_LAYER_H
 #define _PULSE_LAYER_H
 
-#include "audiolayer.h"
+#include "audio/audiolayer.h"
 #include "audiostream.h"
 
 #include <pulse/pulseaudio.h>

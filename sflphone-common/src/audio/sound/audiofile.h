@@ -23,9 +23,9 @@
 #ifndef __AUDIOFILE_H__
 #define __AUDIOFILE_H__
 
-#include "audioloop.h"
-#include "codecs/audiocodec.h"
-#include "codecDescriptor.h"
+#include "audio/audioloop.h"
+#include "audio/codecs/audiocodec.h"
+#include "audio/codecs/codecDescriptor.h"
 
 /**
  * @file audiofile.h
