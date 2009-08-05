@@ -351,6 +351,7 @@ void PulseLayer::writeToSpeaker (void)
     urgentAvail = _urgentRingBuffer.AvailForGet();
 
     if (urgentAvail > 0) {
+	
         // Urgent data (dtmf, incoming call signal) come first.
         //_debug("Play urgent!: %i\e" , urgentAvail);
         toGet = (urgentAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof (SFLDataFormat);
@@ -370,6 +371,9 @@ void PulseLayer::writeToSpeaker (void)
         }
 
         if ( (tone=_manager->getTelephoneFile()) != 0) {
+
+	    
+
             toGet = framesPerBuffer;
             toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat) ;
             out = (SFLDataFormat*) pa_xmalloc (toPlay);
@@ -377,7 +381,8 @@ void PulseLayer::writeToSpeaker (void)
             pa_stream_write (playback->pulseStream() , out , toPlay   , pa_xfree, 0 , PA_SEEK_RELATIVE) ;
         } else {
             out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
-            normalAvail = _mainBuffer.availForGet();
+	    normalAvail = _mainBuffer.availForGet();
+	    
             toGet = (normalAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof (SFLDataFormat);
 
             if (toGet) {

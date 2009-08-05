@@ -179,7 +179,8 @@ AudioRtpRTX::~AudioRtpRTX ()
         throw;
     }
 
-    _audiolayer->getMainBuffer()->createRingBuffer(_ca->getCallId());
+    _debug("unbind callid\n");
+    _audiolayer->getMainBuffer()->unBindCallID(_ca->getCallId());
 
     _ca = 0;
 
@@ -225,7 +226,7 @@ AudioRtpRTX::initBuffers()
     spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 
-    _audiolayer->getMainBuffer()->createRingBuffer(_ca->getCallId());
+    _audiolayer->getMainBuffer()->bindCallID(_ca->getCallId());
 }
 
 
@@ -556,6 +557,8 @@ AudioRtpRTX::run ()
     TimerPort::setTimer (threadSleep);
 
     _audiolayer->startStream();
+
+    _audiolayer->getMainBuffer()->flush(_ca->getCallId());
 
     _session->startRunning();
 
