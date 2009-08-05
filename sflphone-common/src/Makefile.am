@@ -27,8 +27,9 @@ sflphoned_SOURCES = \
 		eventthread.cpp \
 		sipaccount.cpp \
 		accountcreator.cpp \
-        sipvoiplink.cpp \
+        	sipvoiplink.cpp \
 		call.cpp \
+		conference.cpp \
 		account.cpp \
 		sipcall.cpp \
 		sdp.cpp \
@@ -59,7 +60,7 @@ sflphoned_LDFLAGS= -luuid
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
-        voiplink.h \
+        	voiplink.h \
 		managerimpl.h \
 		manager.h \
 		global.h \
@@ -70,8 +71,9 @@ noinst_HEADERS = \
 		account.h \
 		sipaccount.h \
 		accountcreator.h \
-        sipvoiplink.h \
+        	sipvoiplink.h \
 		call.h \
+		conference.h \
 		sipcall.h \
 		sdp.h \
 		sdpmedia.h \
