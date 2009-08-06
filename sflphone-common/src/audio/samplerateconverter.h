@@ -23,7 +23,7 @@
 #include <math.h>
 
 #include "global.h"
-#include "manager.h"
+
 
 class SamplerateConverter {
 	public:

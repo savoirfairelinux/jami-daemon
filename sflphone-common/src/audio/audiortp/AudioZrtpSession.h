@@ -15,14 +15,15 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef __AUDIO_ZRTP_SESSION_H__
-#define __AUDIO_ZRTP_SESSION_H__
+#ifndef __SFL_AUDIO_ZRTP_SESSION_H__
+#define __SFL_AUDIO_ZRTP_SESSION_H__
+
+#include <libzrtpcpp/zrtpccrtp.h>
 
 #include "AudioRtpSession.h"
 
-#include <iostream>
-
-#include <libzrtpcpp/zrtpccrtp.h>
+class ManagerImpl;
+class SIPCall;
 
 namespace sfl {
 
@@ -38,15 +39,7 @@ namespace sfl {
     {
         public:
 
-            AudioZrtpSession(SIPCall * sipcall, const std::string& zidFilename) :             
-                ost::SymmetricZRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-                AudioRtpSession<AudioZrtpSession>(sipcall),
-                _zidFilename(zidFilename)
-            {
-                _debug("AudioZrtpSession initialized\n");
-                initializeZid();
-                startZrtp();
-            }
+        AudioZrtpSession(ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename);          
             
         private:
             void initializeZid(void);

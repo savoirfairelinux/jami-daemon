@@ -22,10 +22,12 @@
 #define SIPCALL_H
 
 #include "call.h"
-#include "sipvoiplink.h"
-#include "sdp.h"
+
+#include <pjsip-simple/evsub.h>
+#include <pjsip_ua.h>
 
 class AudioCodec;
+class Sdp;
 
 /**
  * @file sipcall.h

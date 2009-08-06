@@ -21,6 +21,7 @@
 
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
+#include "manager.h"
 
 IAXAccount::IAXAccount (const AccountID& accountID)
         : Account (accountID, "iax2")

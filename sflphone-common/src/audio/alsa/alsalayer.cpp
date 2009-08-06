@@ -19,6 +19,8 @@
 
 #include "alsalayer.h"
 
+#include "managerimpl.h"
+
 int framesPerBufferAlsa = 2048;
 
 // Constructor

@@ -17,6 +17,7 @@
  */
 
 #include "samplerateconverter.h"
+#include "manager.h"
 
 SamplerateConverter::SamplerateConverter (void)
         : _frequence (Manager::instance().getConfigInt (AUDIO , ALSA_SAMPLE_RATE)) //44100

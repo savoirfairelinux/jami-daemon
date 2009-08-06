@@ -48,7 +48,8 @@ typedef enum RegistrationState {
         ErrorNetwork , 
         ErrorHost, 
         ErrorExistStun, 
-        ErrorConfStun
+        ErrorConfStun,
+        NumberOfState
 } RegistrationState;
 
 #define AccountNULL ""

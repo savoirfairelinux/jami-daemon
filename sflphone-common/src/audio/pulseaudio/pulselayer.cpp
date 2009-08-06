@@ -18,6 +18,7 @@
  */
 
 #include "pulselayer.h"
+#include "managerimpl.h"
 
 int framesPerBuffer = 2048;
 

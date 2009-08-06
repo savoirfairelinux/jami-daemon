@@ -26,6 +26,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "eventthread.h"
+#include "sip/sdp.h"
 
 #include "pjsip/sip_endpoint.h"
 

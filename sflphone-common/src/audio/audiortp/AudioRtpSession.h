@@ -20,23 +20,27 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef __AUDIO_RTP_SESSION_H__
-#define __AUDIO_RTP_SESSION_H__
+#ifndef __SFL_AUDIO_RTP_SESSION_H__
+#define __SFL_AUDIO_RTP_SESSION_H__
 
 #include <iostream>
 #include <exception>
-#include <ccrtp/rtp.h>
-#include <cc++/thread.h>
-#include <cc++/numbers.h>
-#include <cc++/socket.h>
 
 #include "global.h"
-#include "sip/sipcall.h"
-#include "audio/samplerateconverter.h"
-#include "audio/codecs/audiocodec.h"
-#include "audio/audiolayer.h"
 
-class SIPCall;
+#include "sip/sipcall.h"
+#include "sip/sdp.h"
+#include "audio/audiolayer.h"
+#include "audio/codecs/audiocodec.h"
+#include "audio/samplerateconverter.h"
+#include "managerimpl.h"
+
+#include <ccrtp/rtp.h>
+//#include <ccrtp/formats.h>
+//#include <ccrtp/queuebase.h>
+//#include <cc++/thread.h>
+#include <cc++/numbers.h>
+//#include <cc++/socket.h>
 
 namespace sfl {
 
@@ -58,7 +62,7 @@ namespace sfl {
             * Constructor
             * @param sipcall The pointer on the SIP call
             */
-            AudioRtpSession (SIPCall* sipcall);
+            AudioRtpSession (ManagerImpl * manager, SIPCall* sipcall);
 
             ~AudioRtpSession();
 
@@ -143,13 +147,18 @@ namespace sfl {
              */
             int _nbSamplesMax; 
             
+            /**
+             * Manager instance. 
+             */
+             ManagerImpl * _manager;
+            
         protected:
             SIPCall * _ca;
             
     };    
     
     template <typename D>
-    AudioRtpSession<D>::AudioRtpSession(SIPCall * sipcall) :
+    AudioRtpSession<D>::AudioRtpSession(ManagerImpl * manager, SIPCall * sipcall) :
      _time (new ost::Time()), 
      _mainloopSemaphore(0),
      _audiocodec (NULL),
@@ -163,7 +172,8 @@ namespace sfl {
      _converter (NULL),
      _layerSampleRate(0),
      _codecSampleRate(0), 
-     _layerFrameSize(0)
+     _layerFrameSize(0),
+     _manager(manager)
     {
         setCancel (cancelDefault);
 
@@ -172,7 +182,7 @@ namespace sfl {
         _debug ("Local audio port %i will be used\n", _ca->getLocalAudioPort());
 
         //mic, we receive from soundcard in stereo, and we send encoded
-        _audiolayer = Manager::instance().getAudioDriver();
+        _audiolayer = _manager->getAudioDriver();
         
         if (_audiolayer == NULL) { throw AudioRtpSessionException(); }
         
@@ -354,11 +364,11 @@ namespace sfl {
             // Notify (with a beep) an incoming call when there is already a call
             countTime += _time->getSecond();
 
-            if (Manager::instance().incomingCallWaiting() > 0) {
+            if (_manager->incomingCallWaiting() > 0) {
                 countTime = countTime % 500; // more often...
 
                 if (countTime == 0) {
-                    Manager::instance().notificationIncomingCall();
+                    _manager->notificationIncomingCall();
                 }
             }
 

@@ -24,8 +24,7 @@
 #include "utilspp/Singleton.hpp"
 #include "managerimpl.h"
 
-
-typedef utilspp::SingletonHolder< ManagerImpl > Manager;
+typedef utilspp::SingletonHolder<ManagerImpl> Manager;
 
 #endif 
 

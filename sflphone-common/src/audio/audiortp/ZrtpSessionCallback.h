@@ -17,8 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#ifndef __ZRTP_CALLBACK_H__
-#define __ZRTP_CALLBACK_H__
+#ifndef __SFL_ZRTP_CALLBACK_H__
+#define __SFL_ZRTP_CALLBACK_H__
 
 #include <libzrtpcpp/zrtpccrtp.h>
 #include <libzrtpcpp/ZrtpQueue.h>

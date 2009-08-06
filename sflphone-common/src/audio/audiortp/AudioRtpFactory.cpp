@@ -16,14 +16,17 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#include <assert.h>
+
 
 #include "AudioRtpFactory.h"
-#include "AudioSymmetricRtpSession.h"
 #include "AudioZrtpSession.h"
+#include "AudioSymmetricRtpSession.h"
 
 #include "manager.h"
 #include "account.h"
+#include "sip/sipcall.h"
+
+#include <assert.h>
 
 namespace sfl {
 
@@ -83,7 +86,7 @@ namespace sfl {
         
             switch(keyExchangeProtocol) {
                 case Zrtp:
-                    _rtpSession = new AudioZrtpSession(ca, zidFilename);
+                    _rtpSession = new AudioZrtpSession(&Manager::instance(), ca, zidFilename);
                     _rtpSessionType = Zrtp;
                     if (helloHashEnabled) {
                         // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
@@ -98,7 +101,7 @@ namespace sfl {
             }
         } else {
             _rtpSessionType = Symmetric;
-            _rtpSession = new AudioSymmetricRtpSession(ca);
+            _rtpSession = new AudioSymmetricRtpSession(&Manager::instance(), ca);
             _debug("Starting a symmetric unencrypted rtp session\n");
         }
     }
@@ -151,5 +154,14 @@ namespace sfl {
             _debugException("Exception caught when stopping the audio rtp session\n");
             throw AudioRtpFactoryException();
         }
+    }
+    
+    sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession() 
+    {
+           if ((_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {
+                return static_cast<AudioZrtpSession *>(_rtpSession);
+           } else {
+                throw AudioRtpFactoryException();
+           }
     }
 }

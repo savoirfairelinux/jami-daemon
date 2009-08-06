@@ -20,8 +20,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __MANAGER_H__
-#define __MANAGER_H__
+#ifndef __SFL_MANAGER_H__
+#define __SFL_MANAGER_H__
 
 #include <string>
 #include <vector>
@@ -37,22 +37,17 @@
 #include "account.h"
 #include "call.h"
 #include "numbercleaner.h"
-#include <history/historymanager.h>
 
-#include "audio/sound/tonelist.h" // for Tone::TONEID declaration
-#include "audio/sound/audiofile.h"
-#include "audio/sound/dtmf.h"
-#include "audio/codecs/codecDescriptor.h"
+#include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
+#include "audio/sound/audiofile.h" // AudioFile class contained by value here 
+#include "audio/sound/dtmf.h" // DTMF class contained by value here
+#include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
 
 class AudioLayer;
-class CodecDescriptor;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
-
-#ifdef USE_ZEROCONF
-class DNSService;
-#endif
+class HistoryManager;
 
 /** Define a type for a AccountMap container */
 typedef std::map<AccountID, Account*> AccountMap;
@@ -67,6 +62,18 @@ typedef std::set<CallID> CallIDSet;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
+
+static char * mapStateToChar[] = {
+    (char*) "UNREGISTERED",
+    (char*) "TRYING",
+    (char*) "REGISTERED",
+    (char*) "ERROR",
+    (char*) "ERRORAUTH",
+    (char*) "ERRORNETWORK",
+    (char*) "ERRORHOST",
+    (char*) "ERROREXISTSTUN",    
+    (char*) "ERRORCONFSTUN"    
+};
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl {
@@ -719,8 +726,29 @@ class ManagerImpl {
      * @param section The ini style section in the configuration file
      * @param field   The field under that section to set the value to.
      */
-    bool setConfigOrDefaultEmptyField(const std::map<std::string, std::string>& details, const char * section, const char * field);
+    bool setConfigOrDefaultValue(const std::map<std::string, std::string>& details, const std::string& section, const std::string& field);
 
+    /**
+     * Set a field in the configuration file to the value
+     * found in the map, otherwise, it is set to value.
+     * 
+     * @param details The map containing the field:value association
+     * @param section The ini style section in the configuration file
+     * @param field   The field under that section to set the value to.
+     */
+    bool setConfigOrDefaultValue(const std::map<std::string, std::string>& details, const std::string& section, const std::string& field, const std::string& value);
+    
+    inline std::string mapStateNumberToString(RegistrationState state) {
+        std::string stringRepresentation;
+        if (state > NumberOfState) {
+            stringRepresentation = "ERROR";
+            return stringRepresentation;
+        }
+        
+        stringRepresentation = mapStateToChar[state];
+        return stringRepresentation;
+    }
+    
     /**
      * Get a int from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
@@ -731,6 +759,30 @@ class ManagerImpl {
      
     int getConfigInt(const std::string& section, const std::string& name);
 
+    /**
+     * Helper method.
+     * Get a string from the configuration tree, and set
+     * its value in "details" if found, otherwise set to 
+     * EMPTY_STRING.
+     *
+     * @param section  The section name to look in
+     * @param field    The parameter name
+     * @param value    The default value if not found
+     */
+    void getConfigStringFromFileOrDefaultValue(std::map<std::string, std::string>& details, const std::string& section, const std::string& field); 
+    
+    /**
+     * Helper method.
+     * Get a string from the configuration tree, and set
+     * its value in "details" if found, otherwise set to 
+     * "value".
+     *
+     * @param section  The section name to look in
+     * @param field    The parameter name
+     * @param value    The default value if not found
+     */
+    void getConfigStringFromFileOrDefaultValue(std::map<std::string, std::string>& details, const std::string& section, const std::string& field, const std::string& value);
+        
     /**
      * Get a string from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
@@ -1171,7 +1223,7 @@ private:
     /**
       * To handle the persistent history
       */
-    HistoryManager *_history;
+    HistoryManager * _history;
 
     /**
      * Check if the call is a classic call or a direct IP-to-IP call

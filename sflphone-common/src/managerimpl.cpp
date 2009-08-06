@@ -21,6 +21,22 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "managerimpl.h"
+
+#include "account.h"
+#include "dbus/callmanager.h"
+#include "user_cfg.h"
+#include "sip/sipaccount.h"
+#include "audio/audiolayer.h"
+#include "audio/alsa/alsalayer.h"
+#include "audio/pulseaudio/pulselayer.h"
+#include "audio/sound/tonelist.h"
+#include "history/historymanager.h"
+#include "accountcreator.h" // create new account
+#include "sip/sipvoiplink.h"
+#include "manager.h"
+#include "dbus/configurationmanager.h"
+
 #include <errno.h>
 #include <time.h>
 #include <cstdlib>
@@ -30,23 +46,10 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>	// mkdir(2)
 
-#include <cc++/socket.h>   // why do I need this here?
-#include <ccrtp/channel.h> // why do I need this here?
-#include <ccrtp/rtp.h>     // why do I need this here?
-#include <cc++/file.h>
+//#include <cc++/file.h>
 
-#include "manager.h"
-#include "account.h"
-#include "sip/sipaccount.h"
-#include "audio/audiolayer.h"
-#include "audio/alsa/alsalayer.h"
-#include "audio/pulseaudio/pulselayer.h"
-#include "audio/sound/tonelist.h"
 
-#include "accountcreator.h" // create new account
-#include "sip/sipvoiplink.h"
 
-#include "user_cfg.h"
 
 #define fill_config_str(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
@@ -2370,6 +2373,27 @@ ManagerImpl::getConfigInt (const std::string& section, const std::string& name)
     return 0;
 }
 
+void ManagerImpl::getConfigStringFromFileOrDefaultValue(std::map<std::string, std::string>& details, const std::string& section, const std::string& field) 
+{
+    getConfigStringFromFileOrDefaultValue(details, section, field, EMPTY_FIELD);
+}
+
+void ManagerImpl::getConfigStringFromFileOrDefaultValue(std::map<std::string, std::string>& details, 
+                                                        const std::string& section, const std::string& field, const  std::string& value) 
+{
+    std::string setting = getConfigString(section, field);
+    
+    if (setting == "TRUE") {
+        details.insert (std::pair<std::string, std::string>(field, "1"));
+    } 
+    
+    if (setting == "FALSE") {
+        details.insert (std::pair<std::string, std::string>(field, "0"));
+    }
+    
+    details.insert (std::pair<std::string, std::string>(field, value));
+}
+    
 //THREAD=Main
 std::string
 ManagerImpl::getConfigString (const std::string& section, const std::string&
@@ -2400,15 +2424,28 @@ ManagerImpl::setConfig (const std::string& section, const std::string& name, int
     return _config.setConfigTreeItem (section, name, valueStream.str());
 }
 
-bool ManagerImpl::setConfigOrDefaultEmptyField(const std::map<std::string, std::string>& details, const char * section, const char * field)
+bool ManagerImpl::setConfigOrDefaultValue(const std::map<std::string, std::string>& details, const std::string& section, const std::string& field)
+{
+   return setConfigOrDefaultValue(details, section, field, EMPTY_FIELD);
+}
+
+bool ManagerImpl::setConfigOrDefaultValue(const std::map<std::string, std::string>& details, const std::string& section, const std::string& field, const std::string& value)
 {
     std::map<std::string, std::string>::iterator it;
     std::map<std::string, std::string> detailsCpy = details;
     
     it = detailsCpy.find(field);
     if (it == detailsCpy.end()) {
-        return setConfig(section, field, EMPTY_FIELD);
+        return setConfig(section, field, value);
     } else {
+        if (it->second == "TRUE") {
+            return setConfig(section, field, "1");
+        } 
+        
+        if (it->second == "FALSE") {
+            return setConfig(section, field, "0");
+        }
+        
         return setConfig(section, field, it->second);
     }
 }
@@ -2469,48 +2506,35 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
 {
 
     std::map<std::string, std::string> a;
-    std::string accountType;
-    RegistrationState state;
-
+    
     Account * account = _accountMap[accountID];
     if(!account){
-        _debug("getAccountDetails on unexisting account");
+        _debug("Cannot getAccountDetails on a non-existing accountID. Returning.\n");
         return a;
     }
-    state = account->getRegistrationState();
-    accountType = getConfigString (accountID, CONFIG_ACCOUNT_TYPE);
 
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, getConfigString (accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_RESOLVE_ONCE, getConfigString (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? "TRUE": "FALSE"));
-    a.insert (std::pair<std::string, std::string> (
-                  "Status",
-                  (state == Registered ? "REGISTERED":
-                   (state == Unregistered ? "UNREGISTERED":
-                    (state == Trying ? "TRYING":
-                     (state == ErrorAuth ? "ERROR_AUTH":
-                      (state == ErrorNetwork ? "ERROR_NETWORK":
-                       (state == ErrorHost ? "ERROR_HOST":
-                        (state == ErrorExistStun ? "ERROR_EXIST_STUN":
-                         (state == ErrorConfStun ? "ERROR_CONF_STUN":
-                          (state == Error ? "ERROR": "ERROR")))))))))
-              )
-             );
+    getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_ALIAS);
+    getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_ENABLE, "0");    
+    getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, "FALSE");
+    getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE);    
+    getConfigStringFromFileOrDefaultValue(a, accountID, USERNAME);
+    getConfigStringFromFileOrDefaultValue(a, accountID, PASSWORD);        
+    getConfigStringFromFileOrDefaultValue(a, accountID, REALM, "*");
+    getConfigStringFromFileOrDefaultValue(a, accountID, AUTHENTICATION_USERNAME);
+    getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_MAILBOX);
+    getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE);
+    
+    RegistrationState state; 
+    state = account->getRegistrationState();           
+    a.insert (std::pair<std::string, std::string> ("Status", mapStateNumberToString (state)));
 
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_TYPE, accountType));
-    a.insert (std::pair<std::string, std::string> (USERNAME, getConfigString (accountID, USERNAME)));
-    a.insert (std::pair<std::string, std::string> (PASSWORD, getConfigString (accountID, PASSWORD)));
-    a.insert (std::pair<std::string, std::string> (HOSTNAME, getConfigString (accountID, HOSTNAME)));
-    a.insert (std::pair<std::string, std::string> (REALM, getConfigString (accountID, REALM)));
-    a.insert (std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, getConfigString (accountID, AUTHENTICATION_USERNAME)));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
-
-    if (getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
-        a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE));
-    } else {
-        a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
-    }
-
+    getConfigStringFromFileOrDefaultValue(a, accountID, SRTP_KEY_EXCHANGE, "0");
+    getConfigStringFromFileOrDefaultValue(a, accountID, SRTP_ENABLE, "FALSE");    
+    getConfigStringFromFileOrDefaultValue(a, accountID, ZRTP_DISPLAY_SAS, "TRUE");
+    getConfigStringFromFileOrDefaultValue(a, accountID, ZRTP_DISPLAY_SAS_ONCE, "FALSE");            
+    getConfigStringFromFileOrDefaultValue(a, accountID, ZRTP_HELLO_HASH, "TRUE");    
+    getConfigStringFromFileOrDefaultValue(a, accountID, ZRTP_NOT_SUPP_WARNING, "FALSE");    
+    
     return a;
 }
 
@@ -2524,43 +2548,27 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
 	// Work on a copy
 	map_cpy = details;
-
-	// We check if every fields are available in the map before making any processing on it
-    ( (iter = map_cpy.find (CONFIG_ACCOUNT_TYPE)) == map_cpy.end ()) ? accountType = DEFAULT_ACCOUNT_TYPE 
-																	: accountType = iter->second;
-    setConfig (accountID, CONFIG_ACCOUNT_TYPE, accountType);
-
-    ( (iter = map_cpy.find (CONFIG_ACCOUNT_ALIAS)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_ALIAS, EMPTY_FIELD) 
-																	: setConfig (accountID, CONFIG_ACCOUNT_ALIAS, iter->second); 
-
-    ( (iter = map_cpy.find (CONFIG_ACCOUNT_ENABLE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_ENABLE, "0") 
-																	: setConfig (accountID, CONFIG_ACCOUNT_ENABLE, iter->second == "TRUE" ? "1"
-																																: "0");
-
-    ( (iter = map_cpy.find (CONFIG_ACCOUNT_RESOLVE_ONCE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, DFT_RESOLVE_ONCE)
-																			: setConfig (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, iter->second == "TRUE" ? "1"
-																																			: "0");
-
-	( (iter = map_cpy.find (USERNAME)) == map_cpy.end ()) ? setConfig (accountID, USERNAME, EMPTY_FIELD)
-														: setConfig (accountID, USERNAME, iter->second);
+                
+    setConfigOrDefaultValue (details, accountID, REALM, "*");
+    setConfigOrDefaultValue (details, accountID, USERNAME);
+    setConfigOrDefaultValue (details, accountID, PASSWORD);    
+    setConfigOrDefaultValue (details, accountID, HOSTNAME);    
+    setConfigOrDefaultValue (details, accountID, AUTHENTICATION_USERNAME);    
+	
+    setConfigOrDefaultValue(details, accountID, SRTP_ENABLE, "0");
+    setConfigOrDefaultValue(details, accountID, ZRTP_DISPLAY_SAS, "1");
+    setConfigOrDefaultValue(details, accountID, ZRTP_DISPLAY_SAS_ONCE, "0");        
+    setConfigOrDefaultValue(details, accountID, ZRTP_NOT_SUPP_WARNING, "0");   
+    setConfigOrDefaultValue(details, accountID, ZRTP_HELLO_HASH, "1");    
+    setConfigOrDefaultValue(details, accountID, SRTP_KEY_EXCHANGE, "0");
     
-	( (iter = map_cpy.find (PASSWORD)) == map_cpy.end ()) ? setConfig (accountID, PASSWORD, EMPTY_FIELD)
-														: setConfig (accountID, PASSWORD, iter->second);
-
-	( (iter = map_cpy.find (HOSTNAME)) == map_cpy.end ()) ? setConfig (accountID, HOSTNAME, EMPTY_FIELD)
-														: setConfig (accountID, HOSTNAME, iter->second);
-														
-    ( (iter = map_cpy.find (REALM)) == map_cpy.end ()) ? setConfig (accountID, REALM, std::string("*"))
-													   : setConfig (accountID, REALM, iter->second);
-
-	( (iter = map_cpy.find (CONFIG_ACCOUNT_MAILBOX)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, EMPTY_FIELD)
-																		: setConfig (accountID, CONFIG_ACCOUNT_MAILBOX, iter->second);
-
-	( (iter = map_cpy.find (CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) == map_cpy.end ()) ? setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE)
-																					: setConfig (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, iter->second);
-																					
-    ( (iter = map_cpy.find (AUTHENTICATION_USERNAME)) == map_cpy.end ()) ? setConfig (accountID, AUTHENTICATION_USERNAME, EMPTY_FIELD)
-																		 : setConfig (accountID, AUTHENTICATION_USERNAME, iter->second);
+    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_ALIAS);
+    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_MAILBOX);           
+    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_ENABLE, "0");
+    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE);														
+    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, DFT_RESOLVE_ONCE);
+    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE);
+       
     saveConfig();
 
     acc = getAccount (accountID);
@@ -2574,7 +2582,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     // Update account details to the client side
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-
+    
 }
 
 void

@@ -18,7 +18,7 @@
  */
  
 #include "ZrtpSessionCallback.h"
-#include "managerimpl.h"
+#include "manager.h"
 #include "global.h"
 
 #include <cstdlib> 

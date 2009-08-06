@@ -15,20 +15,22 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef __AUDIO_SYMMETRIC_RTP_SESSION_H__
-#define __AUDIO_SYMMETRIC_RTP_SESSION_H__
+#ifndef __SFL_AUDIO_SYMMETRIC_RTP_SESSION_H__
+#define __SFL_AUDIO_SYMMETRIC_RTP_SESSION_H__
 
 #include <ccrtp/rtp.h>
 
 #include "AudioRtpSession.h"
 
+class ManagerImpl;
+
 namespace sfl {
     class AudioSymmetricRtpSession : public ost::SymmetricRTPSession, public AudioRtpSession<AudioSymmetricRtpSession> 
     {
         public:
-        AudioSymmetricRtpSession(SIPCall * sipcall) :
+        AudioSymmetricRtpSession(ManagerImpl * manager, SIPCall * sipcall) :
             ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-            AudioRtpSession<AudioSymmetricRtpSession>(sipcall)
+            AudioRtpSession<AudioSymmetricRtpSession>(manager, sipcall)
         {
             _debug("AudioSymmetricRtpSession initialized\n");
         }       

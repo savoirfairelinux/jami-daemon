@@ -23,7 +23,6 @@
 #include <configurationmanager.h>
 #include <sstream>
 #include "../manager.h"
-#include "../audio/audiortp/AudioRtpFactory.h"
 
 const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
 
@@ -74,18 +73,18 @@ void
 ConfigurationManager::setIp2IpDetails(const std::map< std::string, std::string >& details )
 {
 
-    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, SRTP_ENABLE); 
-    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, ZRTP_DISPLAY_SAS); 
-    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING); 
-    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, ZRTP_HELLO_HASH); 
-    Manager::instance().setConfigOrDefaultEmptyField(details, IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE);     
+    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, SRTP_ENABLE); 
+    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, ZRTP_DISPLAY_SAS); 
+    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING); 
+    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, ZRTP_HELLO_HASH); 
+    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE);     
                 
     std::string keyExchange(details.find(SRTP_KEY_EXCHANGE)->second);
         
     if(keyExchange.find("ZRTP") == 0) { 
-       Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, sfl::Zrtp);
+       Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, "0");
     } else {
-       Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, sfl::Sdes);
+       Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, "1");
     }
         
     Manager::instance().saveConfig();

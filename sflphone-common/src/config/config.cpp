@@ -116,7 +116,7 @@ ConfigTree::addConfigTreeItem (const std::string& section, const ConfigTreeItem 
     }
 }
 
-// throw a ConfigTreeItemException if not found
+// Return an empty string if not found
 std::string
 ConfigTree::getConfigTreeItemValue (const std::string& section, const std::string& itemName)
 {

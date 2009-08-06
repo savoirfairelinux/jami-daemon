@@ -19,6 +19,8 @@
 #include "ZrtpSessionCallback.h"
 #include "user_cfg.h"
 
+#include "sip/sipcall.h"
+
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
 
@@ -28,6 +30,16 @@
 
 namespace sfl {
 
+    AudioZrtpSession::AudioZrtpSession(ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename) :             
+        ost::SymmetricZRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+        AudioRtpSession<AudioZrtpSession>(manager, sipcall),
+        _zidFilename(zidFilename)
+    {
+        _debug("AudioZrtpSession initialized\n");
+        initializeZid();
+        startZrtp();
+    }
+            
     void AudioZrtpSession::initializeZid(void) 
     {
 

@@ -16,17 +16,20 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __AUDIO_RTP_FACTORY_H__
-#define __AUDIO_RTP_FACTORY_H__
+#ifndef __SFL_AUDIO_RTP_FACTORY_H__
+#define __SFL_AUDIO_RTP_FACTORY_H__
 
 #include <exception>
 #include <cc++/thread.h>
 
-#include "sip/sipcall.h"
-
 class SIPCall;
+namespace sfl {
+    class AudioZrtpSession;
+}
 
 namespace sfl {
+
+    class AudioZrtpSession;
 
     // Possible kind of rtp session
     typedef enum RtpMethod {
@@ -79,12 +82,19 @@ namespace sfl {
          */
         void stop();
           
-          /** 
-           * @param None
-           * @return The internal audio rtp thread of the type specified in the configuration
-           * file. initAudioRtpSession must have been called prior to that. 
-           */  
+        /** 
+        * @param None
+        * @return The internal audio rtp thread of the type specified in the configuration
+        * file. initAudioRtpSession must have been called prior to that. 
+        */  
         inline void * getAudioRtpSession(void) { return _rtpSession; }
+ 
+        /**
+         * Get the current AudioZrtpSession. Throws an AudioRtpFactoryException
+         * if the current rtp thread is null, or if it's not of the correct type.
+         * @return The current AudioZrtpSession thread.
+         */
+        sfl::AudioZrtpSession * getAudioZrtpSession();       
         
         private:
            void * _rtpSession;

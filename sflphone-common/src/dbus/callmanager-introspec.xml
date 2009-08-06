@@ -117,6 +117,31 @@
     <signal name="transferFailed">
     </signal>
  
+    <method name="setSASVerified">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="resetSASVerified">
+        <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="setConfirmGoClear">
+        <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="requestGoClear">
+        <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="acceptEnrollment">
+        <arg type="s" name="callID" direction="in"/>
+        <arg type="b" name="accepted" direction="in"/>
+    </method>
+    
+    <method name="setPBXEnrollment">
+        <arg type="s" name="callID" direction="in"/>
+        <arg type="b" name="yesNo" direction="in"/>
+    </method>
 <!--
     <signal name="error">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>

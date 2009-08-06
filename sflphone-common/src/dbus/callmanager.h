@@ -17,48 +17,69 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#ifndef CALLMANAGER_H
-#define CALLMANAGER_H
+#ifndef __SFL_CALLMANAGER_H__
+#define __SFL_CALLMANAGER_H__
 
 #include "callmanager-glue.h"
-#include <dbus-c++/dbus.h>
 
-    
+#include <dbus-c++/dbus.h>
+#include <exception>
+
+class CallManagerException: public std::exception
+{
+    virtual const char* what() const throw()
+    {
+    return "A CallManagerException occured";
+    }
+};
+
+namespace sfl {
+    class AudioZrtpSession;
+}
+
 class CallManager
 : public org::sflphone::SFLphone::CallManager_adaptor,
   public DBus::IntrospectableAdaptor,
   public DBus::ObjectAdaptor
 {
-public:
+    public:
 
-    CallManager(DBus::Connection& connection);
-    static const char* SERVER_PATH;
+        CallManager(DBus::Connection& connection);
+        static const char* SERVER_PATH;
 
-public:
+        /* methods exported by this interface,
+         * you will have to implement them in your ObjectAdaptor
+         */
+        void placeCall( const std::string& accountID, const std::string& callID, const std::string& to );
+        void refuse( const std::string& callID );
+        void accept( const std::string& callID );
+        void hangUp( const std::string& callID );
+        void hold( const std::string& callID );
+        void unhold( const std::string& callID );
+        void transfert( const std::string& callID, const std::string& to );
+        void setVolume( const std::string& device, const double& value );
+        double getVolume( const std::string& device );
+        void setRecording( const std::string& callID );
+        bool getIsRecording(const std::string& callID);
+        std::string getCurrentCodecName(const std::string& callID);
+        
+        std::map< std::string, std::string > getCallDetails( const std::string& callID );
+        std::vector< std::string > getCallList (void);
 
-    /* methods exported by this interface,
-     * you will have to implement them in your ObjectAdaptor
-     */
-    void placeCall( const std::string& accountID, const std::string& callID, const std::string& to );
-    void refuse( const std::string& callID );
-    void accept( const std::string& callID );
-    void hangUp( const std::string& callID );
-    void hold( const std::string& callID );
-    void unhold( const std::string& callID );
-    void transfert( const std::string& callID, const std::string& to );
-    void setVolume( const std::string& device, const double& value );
-    double getVolume( const std::string& device );
-    void setRecording( const std::string& callID );
-    bool getIsRecording(const std::string& callID);
-    std::string getCurrentCodecName(const std::string& callID);
-    
-    std::map< std::string, std::string > getCallDetails( const std::string& callID );
-    std::vector< std::string > getCallList (void);
+        std::string getCurrentCallID(  );
+        void playDTMF( const std::string& key );
+        void startTone( const int32_t& start, const int32_t& type );
 
-    std::string getCurrentCallID(  );
-    void playDTMF( const std::string& key );
-    void startTone( const int32_t& start, const int32_t& type );
-    
+        void setSASVerified(const std::string& callID);
+        void resetSASVerified(const std::string& callID);
+        void setConfirmGoClear(const std::string& callID);
+        void requestGoClear(const std::string& callID);
+        void acceptEnrollment(const std::string& callID, const bool& accepted);
+        void setPBXEnrollment(const std::string& callID, const bool& yesNo);    
+        
+    private:
+
+        sfl::AudioZrtpSession * getAudioZrtpSession(void);
 };
 
 
