@@ -27,6 +27,15 @@ is_inserted( GtkWidget* button )
 }
 
 /**
+ * Static create_conference
+ */
+    static void
+conference_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
+{
+    sflphone_add_participant();
+}
+
+/**
  * Static rec_button
  */
     static void
@@ -268,6 +277,16 @@ GtkWidget *create_toolbar ()
     gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(recButton), -1);
 
 
+    conferenceButton = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
+#if GTK_CHECK_VERSION(2,12,0)
+    gtk_widget_set_tooltip_text(GTK_WIDGET(conferenceButton), _("Conference"));
+#endif
+    gtk_widget_set_state( GTK_WIDGET(conferenceButton), GTK_STATE_INSENSITIVE);
+    g_signal_connect (G_OBJECT (conferenceButton), "clicked",
+            G_CALLBACK (conference_button), NULL);
+    gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(conferenceButton), -1);
+    
+
     return ret;
 }
 
@@ -344,6 +363,7 @@ toolbar_update_buttons ()
                 gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
+		gtk_widget_set_sensitive( GTK_WIDGET(conferenceButton), TRUE);
                 break;
             case CALL_STATE_BUSY:
             case CALL_STATE_FAILURE:

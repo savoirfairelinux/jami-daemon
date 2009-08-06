@@ -175,6 +175,8 @@ class ManagerImpl {
      */
     bool refuseCall(const CallID& id);
 
+    void createConference();
+
     /**
      * Save config to file
      * @return true on success

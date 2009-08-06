@@ -622,6 +622,13 @@ ManagerImpl::refuseCall (const CallID& id)
     return returnValue;
 }
 
+
+void
+ManagerImpl::createConference()
+{
+    _debug("ManagerImpl::createConference()\n");
+}
+
 //THREAD=Main
 bool
 ManagerImpl::saveConfig (void)

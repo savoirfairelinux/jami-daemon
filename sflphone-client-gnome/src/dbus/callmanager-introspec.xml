@@ -52,6 +52,10 @@
       <arg type="d" name="value" direction="out"/>
     </method>
 
+    <method name="addParticipant">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+
     <method name="setRecording">
       <arg type="s" name="callID" direction="in"/>
     </method>

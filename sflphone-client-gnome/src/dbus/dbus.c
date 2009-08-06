@@ -1228,6 +1228,25 @@ dbus_set_volume_controls(  )
     }
 }
 
+    void
+dbus_add_participant(const callable_obj_t * c)
+{
+
+    DEBUG("calling dbus_add_participant on CallManager");
+    DEBUG("CallID : %s", c->_callID);
+
+    GError* error = NULL;
+    org_sflphone_SFLphone_CallManager_add_participant(
+            callManagerProxy,
+            c->_callID,
+            &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+}
+
 
     void
 dbus_set_record(const callable_obj_t * c)

@@ -118,6 +118,13 @@ CallManager::getVolume (const std::string& device)
 }
 
 void
+CallManager::addParticipant (const std::string& callID)
+{
+    _debug ("CallManager::addParticipant received %s\n", callID.c_str());
+    // Manager::instance().setRecordingCall (callID);
+}
+
+void
 CallManager::setRecording (const std::string& callID)
 {
     _debug ("CallManager::setRecording received\n");

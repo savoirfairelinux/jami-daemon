@@ -60,7 +60,7 @@ void Conference::remove(CallID participant_id)
 	ParticipantSet::iterator iter = _participants.begin();
 
 	for(iter = _participants.begin(); iter != _participants.end(); iter++)
-	    Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id, *iter);
+	    Manager::instance().getAudioDriver()->getMainBuffer()->unBindCallID(participant_id, *iter);
     }
 
     _participants.erase(participant_id);

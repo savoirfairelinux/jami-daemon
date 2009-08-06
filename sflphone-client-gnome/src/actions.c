@@ -833,6 +833,15 @@ sflphone_get_current_codec_name()
 }
 
     void
+sflphone_add_participant()
+{
+    DEBUG("sflphone add participant to conference");
+
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    dbus_add_participant(selectedCall);
+}
+
+    void
 sflphone_rec_call()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);

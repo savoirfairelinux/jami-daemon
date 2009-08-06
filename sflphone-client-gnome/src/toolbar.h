@@ -34,6 +34,7 @@ GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
 GtkToolItem * unholdButton;
 GtkToolItem * mailboxButton;
+GtkToolItem * conferenceButton;
 GtkToolItem * recButton;
 GtkToolItem * historyButton;
 GtkToolItem * contactButton;

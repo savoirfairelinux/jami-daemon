@@ -48,6 +48,7 @@ public:
     void transfert( const std::string& callID, const std::string& to );
     void setVolume( const std::string& device, const double& value );
     double getVolume( const std::string& device );
+    void addParticipant( const std::string& callID );
     void setRecording( const std::string& callID );
     bool getIsRecording(const std::string& callID);
     std::string getCurrentCodecName(const std::string& callID);

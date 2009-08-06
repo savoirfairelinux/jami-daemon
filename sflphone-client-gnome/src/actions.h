@@ -166,6 +166,8 @@ void sflphone_set_current_account();
  */
 void sflphone_fill_codec_list();
 
+void sflphone_add_participant();
+
 void sflphone_record (callable_obj_t *c);
 
 void sflphone_rec_call (void);
