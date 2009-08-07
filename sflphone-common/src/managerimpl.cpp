@@ -26,6 +26,7 @@
 #include "account.h"
 #include "dbus/callmanager.h"
 #include "user_cfg.h"
+#include "global.h"
 #include "sip/sipaccount.h"
 #include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"
@@ -1338,6 +1339,14 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 
     // Default values, that will be overwritten by the call to
     // 'populateFromFile' below.
+    section = IP2IP_PROFILE;
+    fill_config_int(SRTP_ENABLE, NO_STR);
+    fill_config_int(SRTP_KEY_EXCHANGE, YES_STR);
+    fill_config_int(ZRTP_HELLO_HASH, YES_STR);
+    fill_config_int(ZRTP_DISPLAY_SAS, YES_STR);
+    fill_config_int(ZRTP_DISPLAY_SAS_ONCE, NO_STR);
+    fill_config_int(ZRTP_NOT_SUPP_WARNING, YES_STR);
+  
     section = SIGNALISATION;
     fill_config_int (SYMMETRIC, YES_STR);
     fill_config_int (PLAY_DTMF, YES_STR);
@@ -1346,6 +1355,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     fill_config_int (SEND_DTMF_AS, SIP_INFO_STR);
     fill_config_int (STUN_ENABLE, DFT_STUN_ENABLE);
     fill_config_int (STUN_SERVER, DFT_STUN_SERVER);
+    fill_config_int (ZRTP_ZIDFILE, ZRTP_ZID_FILENAME);
 
     section = AUDIO;
     fill_config_int (ALSA_CARD_ID_IN, ALSA_DFT_CARD);

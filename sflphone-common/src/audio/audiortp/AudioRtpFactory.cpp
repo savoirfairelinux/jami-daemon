@@ -91,7 +91,7 @@ namespace sfl {
                     if (helloHashEnabled) {
                         // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                         // not even available at that point.
-                        //ca->getLocalSDP()->setZrtpHash(static_cast<AudioZrtpSession *>(_rtpSession)->getHelloHash());
+                        ca->getLocalSDP()->set_zrtp_hash(static_cast<AudioZrtpSession *>(_rtpSession)->getHelloHash());
                         _debug("Zrtp hello hash fed to SDP\n");
                     }
                     break;

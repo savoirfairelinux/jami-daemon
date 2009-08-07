@@ -1163,8 +1163,15 @@ class ManagerImpl {
      * Unload the account (delete them)
      */
     void unloadAccountMap();
-
+    
    public:
+   
+    /**
+     * Return the current DBusManagerImpl
+     * @return A pointer to the DBusManagerImpl instance
+     */
+    DBusManagerImpl * getDbusManager() { return _dbus; }
+    
      /**
      * Tell if an account exists
      * @param accountID account ID check

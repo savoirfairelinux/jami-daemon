@@ -38,6 +38,7 @@
 #define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
 #define XDG_CONFIG_HOME			(getenv ("XDG_CONFIG_HOME"))
 #define XDG_CACHE_HOME			(getenv ("XDG_CACHE_HOME"))
+#define ZRTP_ZID_FILENAME       "sfl.zid"
 
 typedef float float32;
 typedef short int16;

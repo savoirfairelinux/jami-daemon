@@ -33,6 +33,16 @@
 #include "audio/codecs/codecDescriptor.h"
 #include "sdpmedia.h"
 
+#include <exception>
+
+class sdpException: public std::exception
+{
+  virtual const char* what() const throw()
+  {
+    return "An sdpException Occured";
+  }
+};
+
 class Sdp {
 
     public:
@@ -80,11 +90,18 @@ class Sdp {
          * Build the sdp media section
          * Add rtpmap field if necessary
          *
-         * @param media     The media to add to SDP
+         * @param media The media to add to SDP
          * @param med   The structure to receive the media section
          */
         void set_media_descriptor_line( sdpMedia* media, pjmedia_sdp_media** p_med );
 
+        /* Set the zrtp hash that was previously calculated from the hello message in the zrtp layer.
+         * This hash value is unique at the media level. Therefore, if video support is added, one would
+         * have to set the correct zrtp-hash value in the corresponding media section.
+         * @param hash The hello hash of a rtp session. (Only audio at the moment)
+         */
+        inline void set_zrtp_hash(const std::string& hash) { _zrtp_hello_hash = hash; _debug("Zrtp hash set with %s\n", hash.c_str()); }
+        
         /*
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negociator instance with it.
@@ -229,6 +246,8 @@ class Sdp {
         /** Remote's audio port */
         unsigned int _remote_audio_port;
 
+        std::string _zrtp_hello_hash; 
+        
         Sdp(const Sdp&); //No Copy Constructor
         Sdp& operator=(const Sdp&); //No Assignment Operator
 
@@ -317,8 +336,16 @@ class Sdp {
 
         void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
-//////////////////////////////////////////////////////////////////3
-////////////////////////////////////////////////////////////////////
+        /* 
+         * Adds a zrtp-hash  attribute to 
+         * the given media section. The hello hash is
+         * available only after is has been computed
+         * in the AudioZrtpSession constructor. 
+         *
+         * @param media The media to add the zrtp-hash attribute to 
+         * @param hash  The hash to which the attribute should be set to
+         */ 
+        void sdp_add_zrtp_attribute(pjmedia_sdp_media* media, std::string hash);
               
 };
 

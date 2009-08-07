@@ -23,10 +23,22 @@
 #include <libzrtpcpp/zrtpccrtp.h>
 #include <libzrtpcpp/ZrtpQueue.h>
 #include <libzrtpcpp/ZrtpUserCallback.h>
+#include <exception>
+#include <map>
 
-#include "sip/sipcall.h"
+class SIPCall;
+class DBusManagerImpl;
 
 namespace sfl {
+
+    class ZrtpSessionCallbackException: public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+        return "An exception occured while being in a zrtp callback\n";
+        }
+    };
+    
     class ZrtpSessionCallback: public ZrtpUserCallback {
     public:
         ZrtpSessionCallback(SIPCall *sipcall);
@@ -38,8 +50,11 @@ namespace sfl {
         void showMessage(GnuZrtpCodes::MessageSeverity sev, int32_t subCode); 
         void zrtpNegotiationFailed(GnuZrtpCodes::MessageSeverity severity, int subCode);
         void confirmGoClear();
+                
     private:
         SIPCall* _sipcall;
+        DBusManagerImpl * _dbusManager;
+        
         static std::map<int32, std::string*> _infoMap;
         static std::map<int32, std::string*> _warningMap;
         static std::map<int32, std::string*> _severeMap;

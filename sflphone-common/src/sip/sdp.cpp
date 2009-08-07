@@ -21,7 +21,7 @@
 #include "sdp.h"
 #include "global.h"
 #include "manager.h"
-
+#define ZRTP_VERSION "1.10"
 
 static const pj_str_t STR_AUDIO = { (char*) "audio", 5};
 static const pj_str_t STR_VIDEO = { (char*) "video", 5};
@@ -32,7 +32,6 @@ static const pj_str_t STR_RTP_AVP = { (char*) "RTP/AVP", 7 };
 static const pj_str_t STR_SDP_NAME = { (char*) "sflphone", 8 };
 static const pj_str_t STR_SENDRECV = { (char*) "sendrecv", 8 };
 static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
-
 
 Sdp::Sdp (pj_pool_t *pool)
         : _local_media_cap()
@@ -116,10 +115,18 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
 
     // Add the direction stream
     attr = (pjmedia_sdp_attr*) pj_pool_zalloc (_pool, sizeof (pjmedia_sdp_attr));
-
     pj_strdup2 (_pool, &attr->name, media->get_stream_direction_str().c_str());
-
     med->attr[ med->attr_count++] = attr;
+    
+    if(!_zrtp_hello_hash.empty()) {
+        try {
+            sdp_add_zrtp_attribute(med,_zrtp_hello_hash);
+        } catch (...) {
+            throw;
+        }
+    } else { 
+        _debug("No hash specified\n"); 
+    }
 
     *p_med = med;
 }
@@ -340,6 +347,32 @@ void Sdp::sdp_add_media_description()
     }
 }
 
+void Sdp::sdp_add_zrtp_attribute(pjmedia_sdp_media* media, std::string hash) 
+{
+    pjmedia_sdp_attr *attribute;    
+    char tempbuf[256];
+    int len;
+        
+    attribute = (pjmedia_sdp_attr*)pj_pool_zalloc( _pool, sizeof(pjmedia_sdp_attr) );
+
+    attribute->name = pj_strdup3(_pool, "zrtp-hash");
+    
+    /* Format: ":version value" */
+    len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
+                            "%.*s %.*s",
+                            4,
+                            ZRTP_VERSION,
+                            hash.size(),
+                            hash.c_str());
+
+    attribute->value.slen = len;
+    attribute->value.ptr = (char*) pj_pool_alloc(_pool, attribute->value.slen+1);
+    pj_memcpy(attribute->value.ptr, tempbuf, attribute->value.slen+1);
+    
+    if(pjmedia_sdp_media_add_attr(media, attribute) != PJ_SUCCESS) {
+        throw sdpException();
+    }
+}
 
 std::string Sdp::media_to_string (void)
 {
