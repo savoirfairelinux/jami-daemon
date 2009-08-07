@@ -88,7 +88,7 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
     gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)), -1);
 }
 
-static GtkWidget * createAccountTab(account_t **a) 
+static GtkWidget * create_account_tab(account_t **a) 
 {
 	GtkWidget * frame;
 	GtkWidget * table;
@@ -261,7 +261,7 @@ static void fill_treeview_with_credential(GtkListStore * credentialStore, accoun
         gtk_list_store_append (credentialStore, &iter);
 
         /* This is the default, undeletable credential */
-        if(g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME) == NULL) {
+        if(g_strcmp0(g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME), "") == 0) {
             DEBUG("DEFAULT");
             gtk_list_store_set(credentialStore, &iter,
                     COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(account->properties, ACCOUNT_REALM), 
@@ -383,7 +383,7 @@ static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editabl
     gtk_entry_set_visibility(GTK_ENTRY(editable), FALSE);
 }
 
-GtkWidget * createAdvancedTab(account_t **a)
+GtkWidget * create_advanced_tab(account_t **a)
 {
 	GtkWidget * frame;
 	GtkWidget * table;
@@ -579,10 +579,10 @@ show_account_window (account_t * a)
 	dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
 				GTK_WINDOW(get_main_window()),
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-				GTK_STOCK_APPLY,
-				GTK_RESPONSE_ACCEPT,
-				GTK_STOCK_CANCEL,
+	    		GTK_STOCK_CANCEL,
 				GTK_RESPONSE_CANCEL,
+				GTK_STOCK_APPLY,				
+				GTK_RESPONSE_ACCEPT,
 				NULL));
 
 	gtk_dialog_set_has_separator(dialog, TRUE);
@@ -594,12 +594,12 @@ show_account_window (account_t * a)
 	gtk_widget_show(notebook);
 
 	/* General Settings */
-	tab = createAccountTab(&currentAccount);
+	tab = create_account_tab(&currentAccount);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
 	/* Advanced */
-	tab = createAdvancedTab(&currentAccount);
+	tab = create_advanced_tab(&currentAccount);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Advanced")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 

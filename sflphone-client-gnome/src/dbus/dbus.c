@@ -1211,6 +1211,36 @@ dbus_ringtone_enabled()
     }
 }
 
+    gboolean
+dbus_is_md5_credential_hashing()
+{
+    int res;
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_is_md5_credential_hashing(
+            configurationManagerProxy,
+            &res,
+            &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    return res;
+}
+
+    void
+dbus_set_md5_credential_hashing(gboolean enabled)
+{
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_md5_credential_hashing(
+            configurationManagerProxy,
+            &enabled,
+            &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+}
+
     int
 dbus_is_iax2_enabled()
 {

@@ -57,6 +57,8 @@
 #define fill_config_int(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
 
+#define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
+
 ManagerImpl::ManagerImpl (void)
         : _hasTriedToRegister (false)
         , _config()
@@ -1384,6 +1386,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     fill_config_int (CONFIG_PA_VOLUME_CTRL , YES_STR);
     fill_config_int (CONFIG_SIP_PORT, DFT_SIP_PORT);
     fill_config_str (CONFIG_ACCOUNTS_ORDER, "");
+    fill_config_int (CONFIG_MD5HASH, NO_STR);
 
     section = ADDRESSBOOK;
     fill_config_int (ADDRESSBOOK_ENABLE, YES_STR);
@@ -1805,6 +1808,22 @@ ManagerImpl::setRecordPath (const std::string& recPath)
 {
     _debug ("ManagerImpl::setRecordPath(%s)! \n", recPath.c_str());
     setConfig (AUDIO, RECORD_PATH, recPath);
+}
+
+bool
+ManagerImpl::getMd5CredentialHashing(void)
+{
+    return getConfigInt(PREFERENCES, CONFIG_MD5HASH);
+}
+
+void 
+ManagerImpl::setMd5CredentialHashing(bool enabled)
+{
+    if (enabled) {
+        setConfig(PREFERENCES, CONFIG_MD5HASH, YES_STR);
+    } else {
+        setConfig(PREFERENCES, CONFIG_MD5HASH, NO_STR);
+    }
 }
 
 int
@@ -2401,7 +2420,11 @@ void ManagerImpl::getConfigStringFromFileOrDefaultValue(std::map<std::string, st
         details.insert (std::pair<std::string, std::string>(field, "0"));
     }
     
-    details.insert (std::pair<std::string, std::string>(field, value));
+    if (setting.empty()) {
+        details.insert (std::pair<std::string, std::string>(field, value));  
+    } else {
+        details.insert (std::pair<std::string, std::string>(field, setting));
+    }
 }
     
 //THREAD=Main
@@ -2527,6 +2550,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_ENABLE, "0");    
     getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, "FALSE");
     getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE);    
+    getConfigStringFromFileOrDefaultValue(a, accountID, HOSTNAME);
     getConfigStringFromFileOrDefaultValue(a, accountID, USERNAME);
     getConfigStringFromFileOrDefaultValue(a, accountID, PASSWORD);        
     getConfigStringFromFileOrDefaultValue(a, accountID, REALM, "*");
@@ -2548,6 +2572,113 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     return a;
 }
 
+/* Transform digest to string.
+ * output must be at least PJSIP_MD5STRLEN+1 bytes.
+ * Helper function taken from sip_auth_client.c in 
+ * pjproject-1.0.3.
+ *
+ * NOTE: THE OUTPUT STRING IS NOT NULL TERMINATED!
+ */
+
+void ManagerImpl::digest2str(const unsigned char digest[], char *output)
+{
+    int i;
+    for (i = 0; i<16; ++i) {
+        pj_val_to_hex_digit(digest[i], output);
+        output += 2;
+    }    
+}
+
+std::string  ManagerImpl::computeMd5HashFromCredential(const std::string& username, const std::string& password, const std::string& realm)
+{
+    pj_md5_context pms;
+    unsigned char digest[16];
+    char ha1[PJSIP_MD5STRLEN];
+
+    pj_str_t usernamePjFormat = pj_str(strdup(username.c_str()));
+    pj_str_t passwordPjFormat = pj_str(strdup(password.c_str()));
+    pj_str_t realmPjFormat = pj_str(strdup(realm.c_str()));
+
+    /* Compute md5 hash = MD5(username ":" realm ":" password) */
+    pj_md5_init(&pms);
+    MD5_APPEND( &pms, usernamePjFormat.ptr, usernamePjFormat.slen);
+    MD5_APPEND( &pms, ":", 1);
+    MD5_APPEND( &pms, realmPjFormat.ptr, realmPjFormat.slen);
+    MD5_APPEND( &pms, ":", 1);
+    MD5_APPEND( &pms, passwordPjFormat.ptr, passwordPjFormat.slen);
+    pj_md5_final(&pms, digest);
+
+    digest2str(digest, ha1);
+
+    char ha1_null_terminated[PJSIP_MD5STRLEN+1];
+    memcpy(ha1_null_terminated, ha1, sizeof(char)*PJSIP_MD5STRLEN);
+    ha1_null_terminated[PJSIP_MD5STRLEN] = '\0';
+
+    std::string hashedDigest = ha1_null_terminated;
+    return hashedDigest;
+}
+
+void ManagerImpl::setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details)
+{
+    std::map<std::string, std::string>::iterator it;
+    std::map<std::string, std::string> credentialInformation = details;
+    
+    std::string credentialIndex;
+    std::stringstream streamOut;
+    streamOut << index;
+    credentialIndex = streamOut.str();
+    
+    std::string section = "Credential" + std::string(":") + accountID + std::string(":") + credentialIndex;
+    
+    _debug("Setting credential in section %s\n", section.c_str());
+    
+    it = credentialInformation.find(USERNAME);
+    std::string username;
+    if (it == credentialInformation.end()) { 
+        username = EMPTY_FIELD;
+    } else {
+        username = it->second;
+    }
+    Manager::instance().setConfig (section, USERNAME, username);
+
+    it = credentialInformation.find(REALM);
+    std::string realm;
+    if (it == credentialInformation.end()) { 
+        realm = EMPTY_FIELD;
+    } else {
+        realm = it->second;
+    }
+    Manager::instance().setConfig (section, REALM, realm);
+
+    
+    it = credentialInformation.find(PASSWORD);
+    std::string password;
+    if (it == credentialInformation.end()) { 
+        password = EMPTY_FIELD;
+    } else {
+        password = it->second;
+    }
+    
+    if(getMd5CredentialHashing()) {
+        // TODO: Fix this.
+        // This is an extremly weak test in order to check 
+        // if the password is a hashed value. This is done
+        // because deleteCredential() is called before this 
+        // method. Therefore, we cannot check if the value 
+        // is different from the one previously stored in 
+        // the configuration file.
+         
+        if(password.length() != 32) {
+            password = computeMd5HashFromCredential(username, password, realm);
+        }
+    } 
+        
+    Manager::instance().setConfig (section, PASSWORD, password);
+}
+
+//TODO: tidy this up. Make a macro or inline 
+// method to reduce the if/else mess.
+
 void ManagerImpl::setAccountDetails (const std::string& accountID, const std::map< std::string, std::string >& details)
 {
 
@@ -2558,27 +2689,53 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
 	// Work on a copy
 	map_cpy = details;
-                
-    setConfigOrDefaultValue (details, accountID, REALM, "*");
-    setConfigOrDefaultValue (details, accountID, USERNAME);
-    setConfigOrDefaultValue (details, accountID, PASSWORD);    
-    setConfigOrDefaultValue (details, accountID, HOSTNAME);    
-    setConfigOrDefaultValue (details, accountID, AUTHENTICATION_USERNAME);    
-	
-    setConfigOrDefaultValue(details, accountID, SRTP_ENABLE, "0");
-    setConfigOrDefaultValue(details, accountID, ZRTP_DISPLAY_SAS, "1");
-    setConfigOrDefaultValue(details, accountID, ZRTP_DISPLAY_SAS_ONCE, "0");        
-    setConfigOrDefaultValue(details, accountID, ZRTP_NOT_SUPP_WARNING, "0");   
-    setConfigOrDefaultValue(details, accountID, ZRTP_HELLO_HASH, "1");    
-    setConfigOrDefaultValue(details, accountID, SRTP_KEY_EXCHANGE, "0");
-    
-    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_ALIAS);
-    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_MAILBOX);           
-    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_ENABLE, "0");
-    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE);														
-    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, DFT_RESOLVE_ONCE);
-    setConfigOrDefaultValue (details, accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE);
-       
+																																																																
+    if(!getMd5CredentialHashing()) {
+        setConfigOrDefaultValue(map_cpy, accountID, REALM, "*");
+        setConfigOrDefaultValue(map_cpy, accountID, USERNAME);
+        setConfigOrDefaultValue(map_cpy, accountID, PASSWORD);    
+        setConfigOrDefaultValue (details, accountID, AUTHENTICATION_USERNAME);
+    } else {
+        std::string username;
+        std::string authenticationName;
+        std::string password;
+        std::string realm; 
+
+        if((iter = map_cpy.find(AUTHENTICATION_USERNAME)) == map_cpy.end()) { authenticationName = EMPTY_FIELD; } else { authenticationName = iter->second; }
+        if((iter = map_cpy.find(USERNAME)) == map_cpy.end()) { username = EMPTY_FIELD; } else { username = iter->second; }
+        if((iter = map_cpy.find(PASSWORD)) == map_cpy.end()) { password = EMPTY_FIELD; } else { password = iter->second; }
+        if((iter = map_cpy.find(REALM)) == map_cpy.end()) { realm = EMPTY_FIELD; } else { realm = iter->second; }
+
+        // Make sure not to re-hash the password field if
+        // it is already saved as a MD5 Hash.
+        // TODO: This test is weak. Fix this.
+        if ((password.compare(getConfigString(accountID, PASSWORD)) != 0) && (password.length() != 32)) {
+            _debug("Password sent and password from config are different. Re-hashing\n");
+            std::string hash;
+            if(authenticationName.empty()) {
+                hash = computeMd5HashFromCredential(username, password, realm);
+            } else {
+                hash = computeMd5HashFromCredential(authenticationName, password, realm);
+            }
+            setConfig(accountID, PASSWORD, hash);
+        }
+    }				
+    																									
+    setConfigOrDefaultValue(map_cpy, accountID, HOSTNAME);    
+    setConfigOrDefaultValue(map_cpy, accountID, SRTP_ENABLE, "0");
+    setConfigOrDefaultValue(map_cpy, accountID, ZRTP_DISPLAY_SAS, "1");
+    setConfigOrDefaultValue(map_cpy, accountID, ZRTP_DISPLAY_SAS_ONCE, "0");        
+    setConfigOrDefaultValue(map_cpy, accountID, ZRTP_NOT_SUPP_WARNING, "0");   
+    setConfigOrDefaultValue(map_cpy, accountID, ZRTP_HELLO_HASH, "1");    
+    setConfigOrDefaultValue(map_cpy, accountID, SRTP_KEY_EXCHANGE, "0");											
+
+    setConfigOrDefaultValue(map_cpy, accountID, CONFIG_ACCOUNT_ALIAS);
+    setConfigOrDefaultValue(map_cpy, accountID, CONFIG_ACCOUNT_MAILBOX);           
+    setConfigOrDefaultValue(map_cpy, accountID, CONFIG_ACCOUNT_ENABLE, "0");
+    setConfigOrDefaultValue(map_cpy, accountID, CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE);														
+    setConfigOrDefaultValue(map_cpy, accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, DFT_RESOLVE_ONCE);
+    setConfigOrDefaultValue(map_cpy, accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE);
+																					
     saveConfig();
 
     acc = getAccount (accountID);
@@ -2587,8 +2744,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if (acc->isEnabled()) {
         acc->unregisterVoIPLink();
         acc->registerVoIPLink();
-    } else
+    } else {
         acc->unregisterVoIPLink();
+    }
 
     // Update account details to the client side
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();

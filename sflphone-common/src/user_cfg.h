@@ -44,6 +44,7 @@
 #define RECORD_PATH                         "Record.path"               /** Recording path */
 
 #define PREFERENCES		                    "Preferences"		        /** Section Preferences */
+#define CONFIG_MD5HASH                      "md5Hash"                   /** Option to store credential as md5 hash*/
 #define CONFIG_DIALPAD		                "Dialpad.display"	        /** Display dialpad preferences */
 #define CONFIG_SEARCHBAR                    "Searchbar.display"	        /** Whether or nor display the search bar */
 #define CONFIG_HISTORY_LIMIT                "History.limit"	            /** Set the maximum number of days kept */

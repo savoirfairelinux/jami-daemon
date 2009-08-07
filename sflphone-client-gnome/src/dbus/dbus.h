@@ -300,6 +300,22 @@ int dbus_get_audio_device_index(const gchar* name);
 gchar* dbus_get_current_audio_output_plugin();
 
 /**
+ * ConfigurationManager - Query to server to 
+ * know if MD5 credential hashing is enabled.
+ * @return True if enabled, false otherwise
+ *
+ */
+gboolean dbus_is_md5_credential_hashing();
+
+/**
+ * ConfigurationManager - Set whether or not
+ * the server should store credential as
+ * a md5 hash.
+ * @param enabled 
+ */
+void dbus_set_md5_credential_hashing(gboolean enabled);
+
+/**
  * ConfigurationManager - Tells the GUI if IAX2 support is enabled
  * @return int 1 if IAX2 is enabled
  *	       0 otherwise

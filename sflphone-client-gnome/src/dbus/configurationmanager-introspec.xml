@@ -203,7 +203,15 @@
     </method>
 
   <!--    General Settings Panel         -->
- 
+  
+    <method name="isMd5CredentialHashing">
+      <arg type="b" name="res" direction="out"/>
+    </method>
+
+    <method name="setMd5CredentialHashing">
+      <arg type="b" name="enabled" direction="in"/>
+    </method>
+     
     <method name="isIax2Enabled">
       <arg type="i" name="res" direction="out"/>
     </method>

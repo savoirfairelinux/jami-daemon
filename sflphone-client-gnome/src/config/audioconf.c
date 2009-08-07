@@ -19,6 +19,7 @@
 
 #include <audioconf.h>
 #include <utils.h>
+#include <string.h>
 
 GtkListStore *pluginlist;
 GtkListStore *outputlist;
@@ -34,7 +35,8 @@ GtkWidget *pulse;
 GtkWidget *alsabox;
 GtkWidget *alsa_conf;
 GtkWidget *noise_conf;
-
+GtkWidget *pa_mute_widget;
+    
 // Codec properties ID
 enum {
     COLUMN_CODEC_ACTIVE,
@@ -628,6 +630,7 @@ select_audio_manager( void )
         gtk_container_add( GTK_CONTAINER(alsa_conf ) , alsabox);
         gtk_widget_show( alsa_conf );
         gtk_widget_set_sensitive(GTK_WIDGET(alsa_conf), TRUE);
+        gtk_widget_set_sensitive(GTK_WIDGET(pa_mute_widget), FALSE);
     }
     else if( SHOW_ALSA_CONF && gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ))
     {
@@ -635,12 +638,11 @@ select_audio_manager( void )
         DEBUG(" remove alsa conf panel");
         gtk_container_remove( GTK_CONTAINER(alsa_conf) , alsabox );
         gtk_widget_hide( alsa_conf );
-        // gtk_widget_set_sensitive(GTK_WIDGET(alsa_conf), FALSE);
-    }
-    else
+        gtk_widget_set_sensitive(GTK_WIDGET(pa_mute_widget), TRUE);
+    } else {
         DEBUG("alsa conf panel...nothing");
+    }
 
-    //gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) )? dbus_set_audio_manager( PULSEAUDIO ):dbus_set_audio_manager( ALSA );
 }
 
 GtkWidget* alsa_box()
@@ -760,6 +762,13 @@ GtkWidget* noise_box()
     return ret;
 }
 
+static void record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
+{
+    gchar* path;
+    path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
+    path = g_strndup (path + 7, strlen(path) - 7);
+    dbus_set_record_path( path );
+}
 
 GtkWidget* create_audio_configuration()
 {
@@ -780,16 +789,26 @@ GtkWidget* create_audio_configuration()
     gnome_main_section_new_with_table (_("Sound Manager"), &frame, &table, 1, 2);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
+    int audio_manager = dbus_get_audio_manager();
+    gboolean pulse_audio = FALSE;
+    if (audio_manager == PULSEAUDIO) {
+        pulse_audio = TRUE;
+    }
+    
     pulse = gtk_radio_button_new_with_mnemonic( NULL , _("_Pulseaudio"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pulse), !SHOW_ALSA_CONF  );
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pulse), pulse_audio);
     gtk_table_attach ( GTK_TABLE( table ), pulse, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
  
-
     alsa = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse),  _("_ALSA"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(alsa), SHOW_ALSA_CONF );
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(alsa), !pulse_audio);
     g_signal_connect(G_OBJECT(alsa), "clicked", G_CALLBACK(select_audio_manager), NULL);
     gtk_table_attach ( GTK_TABLE( table ), alsa, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
  
+    pa_mute_widget = gtk_check_button_new_with_mnemonic(_("_Mute other applications during a call"));
+    gtk_widget_set_sensitive(pa_mute_widget, pulse_audio);
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pa_mute_widget), dbus_get_pulse_app_volume_control() );
+    g_signal_connect(G_OBJECT( pa_mute_widget ) , "clicked" , G_CALLBACK( dbus_set_pulse_app_volume_control ) , NULL);
+    gtk_table_attach( GTK_TABLE(table), pa_mute_widget, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     // Box for the ALSA configuration
     gnome_main_section_new (_("ALSA settings"), &alsa_conf);
@@ -821,15 +840,35 @@ GtkWidget* create_audio_configuration()
     
     /*
     noise_conf = gtk_frame_new(_("Audio Processing"));
-=======
     gnome_main_section_new (_("Noise reduction"), &noise_conf);
->>>>>>> master:sflphone-client-gnome/src/config/audioconf.c
     gtk_box_pack_start(GTK_BOX(ret), noise_conf, FALSE, FALSE, 0);
     gtk_widget_show( noise_conf );
     box = noise_box();
     gtk_container_add( GTK_CONTAINER(noise_conf) , box );
     gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
     */
+
+    // Recorded file saving path
+    GtkWidget *label;
+    GtkWidget *folderChooser;
+    gchar *dftPath;
+    
+        /* Get the path where to save audio files */
+    dftPath = dbus_get_record_path ();/* Get the path where to save audio files */
+    dftPath = dbus_get_record_path ();
+    
+    gnome_main_section_new_with_table (_("Recordings"), &frame, &table, 1, 2);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+
+    // label
+    label = gtk_label_new(_("Destination folder"));
+    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+
+    // folder chooser button
+    folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( folderChooser), dftPath);
+    g_signal_connect( G_OBJECT( folderChooser ) , "selection_changed" , G_CALLBACK( record_path_changed ) , NULL );
+    gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
     // Box for the ringtones
     gnome_main_section_new_with_table (_("Ringtones"), &frame, &table, 1, 2);
@@ -856,14 +895,14 @@ GtkWidget* create_audio_configuration()
     gtk_file_filter_add_pattern(filter , "*.au" );
     gtk_file_chooser_add_filter( GTK_FILE_CHOOSER( fileChooser ) , filter);
     gtk_table_attach ( GTK_TABLE( table ), fileChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
+        
     gtk_widget_show_all(ret);
 
-    if( SHOW_ALSA_CONF ) {
-      gtk_widget_show( alsa_conf );
+    if(!pulse_audio) {
+      gtk_widget_show(alsa_conf);
     }
     else{
-      gtk_widget_hide( alsa_conf );
+      gtk_widget_hide(alsa_conf);
     }
 
     return ret;

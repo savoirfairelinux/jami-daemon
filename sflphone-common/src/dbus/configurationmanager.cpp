@@ -136,45 +136,7 @@ ConfigurationManager::setCredential (const std::string& accountID, const int32_t
         const std::map< std::string, std::string >& details)
 {
     _debug ("ConfigurationManager::setCredential received\n");
-    
-    std::map<std::string, std::string>::iterator it;
-    std::map<std::string, std::string> credentialInformation = details;
-    
-    std::string credentialIndex;
-    std::stringstream streamOut;
-    streamOut << index;
-    credentialIndex = streamOut.str();
-    
-    std::string section = "Credential" + std::string(":") + accountID + std::string(":") + credentialIndex;
-    
-    _debug("Setting credential in section %s\n", section.c_str());
-    
-    it = credentialInformation.find(USERNAME);
-    if(it == credentialInformation.end()) {
-        Manager::instance().setConfig (section, USERNAME, EMPTY_FIELD);    
-    } else {
-        Manager::instance().setConfig (section, USERNAME, it->second);
-    }
-    
-    _debug("Username: %s\n", it->second.c_str());
-    
-    it = credentialInformation.find(PASSWORD);
-    if(it == credentialInformation.end()) {
-        Manager::instance().setConfig (section, PASSWORD, EMPTY_FIELD);            
-    } else {
-        Manager::instance().setConfig (section, PASSWORD, it->second);
-    }
- 
-    _debug("Password: %s\n", it->second.c_str());
-        
-    it = credentialInformation.find(REALM);
-    if(it == credentialInformation.end()) {
-        Manager::instance().setConfig (section, REALM, EMPTY_FIELD);    
-    } else {
-        Manager::instance().setConfig (section, REALM, it->second);
-    }
-    
-    _debug("Realm: %s\n", it->second.c_str());
+    Manager::instance().setCredential(accountID, index, details);
 }
 
 void
@@ -372,6 +334,18 @@ ConfigurationManager::getRecordDeviceList()
     _debug ("ConfigurationManager::getRecordDeviceList received\n");
     return ret;
 
+}
+
+bool
+ConfigurationManager::isMd5CredentialHashing(void)
+{
+    return Manager::instance().getMd5CredentialHashing();
+}
+
+void 
+ConfigurationManager::setMd5CredentialHashing(const bool& enabled)
+{
+    Manager::instance().setMd5CredentialHashing(enabled);
 }
 
 int32_t
