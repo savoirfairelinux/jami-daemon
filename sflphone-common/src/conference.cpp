@@ -19,8 +19,9 @@
  */
 
 #include "conference.h"
-
 #include "manager.h"
+#include "audio/audiolayer.h"
+
 
 Conference::Conference()
 {
@@ -33,10 +34,14 @@ Conference::Conference()
 Conference::~Conference()
 {
 
+    
+
 }
 
 void Conference::add(CallID participant_id)
 {
+
+    _debug("Conference::add participant %s\n", participant_id.c_str());
 
     if(_nbParticipant >= 1)
     {
@@ -45,6 +50,8 @@ void Conference::add(CallID participant_id)
 	for(iter = _participants.begin(); iter != _participants.end(); iter++)
 	    Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id, *iter);
     }
+
+    // Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id);
 
     _participants.insert(participant_id);
 
@@ -60,7 +67,7 @@ void Conference::remove(CallID participant_id)
 	ParticipantSet::iterator iter = _participants.begin();
 
 	for(iter = _participants.begin(); iter != _participants.end(); iter++)
-	    Manager::instance().getAudioDriver()->getMainBuffer()->unBindCallID(participant_id, *iter);
+	   Manager::instance().getAudioDriver()->getMainBuffer()->unBindCallID(participant_id, *iter);
     }
 
     _participants.erase(participant_id);

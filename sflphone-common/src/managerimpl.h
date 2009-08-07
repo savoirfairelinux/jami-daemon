@@ -36,6 +36,7 @@
 
 #include "account.h"
 #include "call.h"
+#include "conference.h"
 #include "numbercleaner.h"
 #include <history/historymanager.h>
 
@@ -49,6 +50,7 @@ class CodecDescriptor;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
+// class Conference;
 
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -67,6 +69,9 @@ typedef std::set<CallID> CallIDSet;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
+
+/** To store conference objects by ids */
+typedef std::map<CallID, Conference*> ConferenceMap;
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl {
@@ -175,7 +180,9 @@ class ManagerImpl {
      */
     bool refuseCall(const CallID& id);
 
-    void createConference();
+    void createConference(const CallID& id);
+
+    void addParticipant(const CallID& id);
 
     /**
      * Save config to file
@@ -1142,6 +1149,9 @@ class ManagerImpl {
 
     int isStunEnabled (void);
     void enableStun (void);
+
+    ConferenceMap _conferencemap;
+
 private:
 
     // Copy Constructor

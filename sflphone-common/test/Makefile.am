@@ -15,13 +15,15 @@ OBJECT_FILES= \
 	../src/sflphoned-sipaccount.o \
 	../src/sflphoned-iaxaccount.o \
 	../src/sflphoned-eventthread.o \
+	../src/sflphoned-conference.o \
 	../src/plug-in/pluginmanager.o \
 	../src/plug-in/audiorecorder/audiorecord.o \
 	../src/sflphoned-samplerateconverter.o \
 	../src/sflphoned-sdp.o \
 	../src/sflphoned-sdpmedia.o \
 	../src/sflphoned-numbercleaner.o \
-    ../src/history/historymanager.o
+        ../src/history/historymanager.o
+	../
 
 numbercleanerTester_SOURCES = \
 		numbercleanerTest.h \

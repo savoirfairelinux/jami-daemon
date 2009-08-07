@@ -30,7 +30,6 @@
 
 #include <cc++/thread.h> // for ost::Mutex
 
-
 #define FRAME_PER_BUFFER	160
 
 /**

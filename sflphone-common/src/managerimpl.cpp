@@ -35,6 +35,8 @@
 #include <ccrtp/rtp.h>     // why do I need this here?
 #include <cc++/file.h>
 
+#include "conference.h"
+
 #include "manager.h"
 #include "account.h"
 #include "sipaccount.h"
@@ -308,11 +310,15 @@ ManagerImpl::answerCall (const CallID& id)
     _debug ("ManagerImpl::answerCall :: current call->getState %i \n", currentCall->getState());
     _debug ("Try to answer call: %s\n", id.data());
 
-    if (lastCall != NULL) {
-        if (lastCall->getState() == Call::Active) {
+    if (lastCall != NULL ) {
+        if (lastCall->getState() == Call::Active && _conferencemap.empty()) {
             _debug ("* Manager Info: there is currently a call, try to hold it\n");
             onHoldCall (getCurrentCallId());
         }
+	else
+	{
+	    _debug("There is a conference!!!!!!!!!!!!!!!!!!!!!!\n");
+	}
     }
 
     if (!getAccountLink (currentAccountId)->answer (id)) {
@@ -624,9 +630,43 @@ ManagerImpl::refuseCall (const CallID& id)
 
 
 void
-ManagerImpl::createConference()
+ManagerImpl::createConference(const CallID& id)
 {
     _debug("ManagerImpl::createConference()\n");
+    
+    Conference* conf = new Conference();
+    _conferencemap["conf"] = conf;
+
+    conf->add(getCurrentCallId());
+    conf->add(id);
+
+    answerCall(id);
+    
+}
+
+void
+ManagerImpl::addParticipant(const CallID& id)
+{
+    _debug("ManagerImpl::addParticipant(%s)\n", id.c_str());
+    _debug("    Current call ID %s\n", getCurrentCallId().c_str());
+
+    if(_conferencemap.empty())
+    {
+	_debug("NO CONFERENCE YET, CREATE ONE\n");
+	createConference(id);
+    }
+    else
+    {
+	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
+	Conference* conf;
+	ConferenceMap::iterator iter = _conferencemap.find("conf");
+	conf = iter->second;
+
+	conf->add(id);
+
+	answerCall(id);
+    }
+    
 }
 
 //THREAD=Main

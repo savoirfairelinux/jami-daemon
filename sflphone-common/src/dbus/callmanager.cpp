@@ -121,7 +121,7 @@ void
 CallManager::addParticipant (const std::string& callID)
 {
     _debug ("CallManager::addParticipant received %s\n", callID.c_str());
-    // Manager::instance().setRecordingCall (callID);
+    Manager::instance().addParticipant(callID);
 }
 
 void

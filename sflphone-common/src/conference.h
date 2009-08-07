@@ -22,8 +22,10 @@
 #include <set>
 
 #include "call.h"
-#include "manager.h"
-#include "audio/audiolayer.h"
+
+// class ManagerImpl;
+// class Call;
+
 
 typedef std::set<CallID> ParticipantSet;
 
