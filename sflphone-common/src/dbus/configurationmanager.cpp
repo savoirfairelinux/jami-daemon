@@ -128,7 +128,9 @@ ConfigurationManager::getNumberOfCredential (const std::string& accountID)
 void
 ConfigurationManager::setNumberOfCredential (const std::string& accountID, const int32_t& number)
 {
-    Manager::instance().setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, number);
+    if (accountID != AccountNULL || !accountID.empty()) {
+        Manager::instance().setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, number);
+    }
 }
         
 void

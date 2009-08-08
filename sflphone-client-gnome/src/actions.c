@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 guint voice_mails;
+GHashTable * ip2ip_profile=NULL;
 
     void
 sflphone_notify_voice_mail ( const gchar* accountID , guint count )
@@ -274,11 +275,24 @@ gboolean sflphone_init()
         // Fetch the configured accounts
         sflphone_fill_account_list(FALSE);
 
+        // Fetch the ip2ip profile 
+        sflphone_fill_ip2ip_profile();
+        
         // Fetch the audio codecs
         sflphone_fill_codec_list();
 
         return TRUE;
     }
+}
+
+void sflphone_fill_ip2ip_profile(void)
+{
+    ip2ip_profile = (GHashTable *) dbus_get_ip2_ip_details();
+}
+
+GHashTable * sflphone_get_ip2ip_properties(void) 
+{
+    return ip2ip_profile;
 }
 
     void

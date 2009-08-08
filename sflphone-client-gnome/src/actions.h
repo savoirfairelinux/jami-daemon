@@ -149,6 +149,18 @@ void sflphone_keypad ( guint keyval, gchar * key);
 void sflphone_place_call ( callable_obj_t * c );
 
 /**
+ * Fetch the ip2ip profile through dbus and fill
+ * the internal hash table. 
+ */
+void sflphone_fill_ip2ip_profile(void);
+
+/**
+ * @return The internal hash table representing
+ * the settings for the ip2ip profile. 
+ */
+GHashTable * sflphone_get_ip2ip_properties(void);
+ 
+/**
  * Initialize the accounts data structure
  */
 void sflphone_fill_account_list(gboolean toolbarInitialized);

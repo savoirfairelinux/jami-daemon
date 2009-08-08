@@ -60,6 +60,14 @@
       <arg type="as" name="list" direction="out"/>
     </method>
    
+    <method name="getIp2IpDetails">
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
+    
+    <method name="setIp2IpDetails">
+      <arg type="a{ss}" name="details" direction="in"/>
+    </method>
+    
     <method name="sendRegister">
       <arg type="s" name="accountID" direction="in"/>
       <arg type="i" name="expire" direction="in"/>

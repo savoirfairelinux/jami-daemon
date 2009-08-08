@@ -2412,12 +2412,14 @@ void ManagerImpl::getConfigStringFromFileOrDefaultValue(std::map<std::string, st
 {
     std::string setting = getConfigString(section, field);
     
-    if (setting == "TRUE") {
-        details.insert (std::pair<std::string, std::string>(field, "1"));
+    if (setting == "0") {
+        details.insert (std::pair<std::string, std::string>(field, "FALSE"));
+        return;
     } 
     
-    if (setting == "FALSE") {
-        details.insert (std::pair<std::string, std::string>(field, "0"));
+    if (setting == "1") {
+        details.insert (std::pair<std::string, std::string>(field, "TRUE"));
+        return;
     }
     
     if (setting.empty()) {
@@ -2547,7 +2549,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     }
 
     getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_ALIAS);
-    getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_ENABLE, "0");    
+    getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_ENABLE, "FALSE");
     getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, "FALSE");
     getConfigStringFromFileOrDefaultValue(a, accountID, CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE);    
     getConfigStringFromFileOrDefaultValue(a, accountID, HOSTNAME);
@@ -2561,8 +2563,8 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     RegistrationState state; 
     state = account->getRegistrationState();           
     a.insert (std::pair<std::string, std::string> ("Status", mapStateNumberToString (state)));
-
-    getConfigStringFromFileOrDefaultValue(a, accountID, SRTP_KEY_EXCHANGE, "0");
+    a.insert( std::pair<std::string, std::string>( SRTP_KEY_EXCHANGE, getConfigString(accountID, SRTP_KEY_EXCHANGE) ) );
+    
     getConfigStringFromFileOrDefaultValue(a, accountID, SRTP_ENABLE, "FALSE");    
     getConfigStringFromFileOrDefaultValue(a, accountID, ZRTP_DISPLAY_SAS, "TRUE");
     getConfigStringFromFileOrDefaultValue(a, accountID, ZRTP_DISPLAY_SAS_ONCE, "FALSE");            

@@ -152,6 +152,16 @@ void dbus_set_number_of_credential(account_t *a, int number);
 GHashTable* dbus_get_credential(gchar * accountID, int index);
 
 /**
+ * ConfigurationManager - Get the details for the ip2ip profile 
+ */
+GHashTable * dbus_get_ip2_ip_details(void);
+
+/**
+ * ConfigurationManager - Set the details for the ip2ip profile 
+ */
+void dbus_set_ip2_ip_details(GHashTable * properties);
+
+/**
  * ConfigurationManager - Send registration request
  * @param accountID The account to register/unregister
  * @param expire The flag for the type of registration

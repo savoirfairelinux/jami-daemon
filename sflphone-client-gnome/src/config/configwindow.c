@@ -32,6 +32,7 @@
 #include <addressbook-config.h>
 #include <hooks-config.h>
 #include <utils.h>
+#include <ip2ipdialog.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -46,6 +47,7 @@ gboolean dialogOpen = FALSE;
 gboolean ringtoneEnabled = TRUE;
 
 GtkListStore *accountStore;
+
 // instead of keeping selected codec as a variable
 GtkWidget *addButton;
 GtkWidget *editButton;
@@ -94,6 +96,17 @@ config_window_fill_account_list()
         GtkTreeIter iter;
 
         gtk_list_store_clear(accountStore);
+        
+        gtk_list_store_append (accountStore, &iter);
+
+        gtk_list_store_set(accountStore, &iter,
+                COLUMN_ACCOUNT_ALIAS, (gchar *) _("Direct calls account"),
+                COLUMN_ACCOUNT_TYPE, (gchar *) _("SIP"),   // Protocol
+                COLUMN_ACCOUNT_STATUS, (gchar *) _("Active"),      // Status
+                COLUMN_ACCOUNT_ACTIVE, TRUE,  // Enable/Disable
+                COLUMN_ACCOUNT_DATA, NULL,   // Pointer
+                -1);
+                        
         unsigned int i;
         for(i = 0; i < account_list_get_size(); i++) {
             account_t * a = account_list_get_nth (i);
@@ -101,6 +114,8 @@ config_window_fill_account_list()
             if (a) {
                 gtk_list_store_append (accountStore, &iter);
 
+                DEBUG("Filling accounts: Account is enabled :%s\n", g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
+                
                 gtk_list_store_set(accountStore, &iter,
                         COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
                         COLUMN_ACCOUNT_TYPE, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
@@ -140,7 +155,24 @@ edit_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
     if(selectedAccount)
     {
         show_account_window(selectedAccount);
+    } else {
+        GHashTable * properties = NULL;
+        properties = sflphone_get_ip2ip_properties();
+        if (properties != NULL) {
+            show_ip2ip_dialog(properties);
+        }
     }
+}
+
+static void edit_ip2ip_profile(GtkWidget * widget UNUSED, gpointer data UNUSED) 
+{
+    DEBUG("Advanced options for ZRTP and ip2ip profile");
+    GHashTable * properties = NULL;
+    properties = sflphone_get_ip2ip_properties();
+    if (properties != NULL) {
+        show_advanced_zrtp_options(properties);
+    }
+    show_advanced_zrtp_options((GHashTable *) data);
 }
 
 /**
@@ -222,6 +254,17 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
     GtkTreeIter iter;
     GValue val;
 
+    GtkTreePath *path;
+    if(gtk_tree_selection_get_selected (selection, NULL, &iter)) {
+        path = gtk_tree_model_get_path (model, &iter);
+        if(gtk_tree_path_get_indices (path)[0] == 0) {
+            gtk_widget_set_sensitive(GTK_WIDGET(editButton), TRUE);
+            gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), FALSE);
+            gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), FALSE);
+            gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), FALSE);
+        }
+    }
+    
     memset (&val, 0, sizeof(val));
     if (!gtk_tree_selection_get_selected(selection, &model, &iter))
     {
@@ -260,25 +303,28 @@ enable_account(GtkCellRendererToggle *rend UNUSED, gchar* path,  gpointer data )
     treePath = gtk_tree_path_new_from_string(path);
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
     gtk_tree_model_get_iter(model, &iter, treePath);
+    
+    if (gtk_tree_path_get_indices (treePath)[0] != 0) {
+        // Get pointer on object
+        gtk_tree_model_get(model, &iter,
+                COLUMN_ACCOUNT_ACTIVE, &enable,
+                COLUMN_ACCOUNT_DATA, &acc,
+                -1);
+        enable = !enable;
 
-    // Get pointer on object
-    gtk_tree_model_get(model, &iter,
-            COLUMN_ACCOUNT_ACTIVE, &enable,
-            COLUMN_ACCOUNT_DATA, &acc,
-            -1);
-    enable = !enable;
+        DEBUG("Account is %d enabled\n", enable);
+        // Store value
+        gtk_list_store_set(GTK_LIST_STORE(model), &iter,
+                COLUMN_ACCOUNT_ACTIVE, enable,
+                -1);
 
-    // Store value
-    gtk_list_store_set(GTK_LIST_STORE(model), &iter,
-            COLUMN_ACCOUNT_ACTIVE, enable,
-            -1);
+        gtk_tree_path_free(treePath);
 
-    gtk_tree_path_free(treePath);
+        // Modify account state
+        g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
 
-    // Modify account state
-    g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
-
-    dbus_send_register( acc->accountID , enable );
+        dbus_send_register( acc->accountID , enable );
+    }
 }
 
 /**
@@ -373,9 +419,9 @@ create_accounts_tab(GtkDialog * dialog)
 {
     GtkWidget *table;
     GtkWidget *scrolledWindow;
-    GtkWidget *treeView;
     GtkWidget *buttonBox;
     GtkCellRenderer *renderer;
+    GtkTreeView * treeView;
     GtkTreeViewColumn *treeViewColumn;
     GtkTreeSelection *treeSelection;
     GtkRequisition requisition;
