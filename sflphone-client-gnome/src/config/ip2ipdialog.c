@@ -81,6 +81,7 @@ void show_ip2ip_dialog(GHashTable * properties)
                 GTK_STOCK_SAVE,
                 GTK_RESPONSE_ACCEPT,
                 NULL));
+                
     gtk_window_set_policy( GTK_WINDOW(ip2ipDialog), FALSE, FALSE, FALSE );
     gtk_dialog_set_has_separator(ip2ipDialog, TRUE);
     gtk_container_set_border_width (GTK_CONTAINER(ip2ipDialog), 0);
@@ -90,7 +91,7 @@ void show_ip2ip_dialog(GHashTable * properties)
 
     gtk_box_pack_start(GTK_BOX(ip2ipDialog->vbox), vbox, FALSE, FALSE, 0);  
 
-    description = g_markup_printf_escaped(_("This profile is used when you want to reach a remote peer\nby simply typing sip:remotepeer without having to go throught\nan external server. The settings here defined will also apply\nin case no account could be matched to the incoming or\noutgoing call."));
+    description = g_markup_printf_escaped(_("This profile is used when you want to reach a remote peer\nby simply typing <b>sip:remotepeer</b> without having to go throught\nan external server. The settings here defined will also apply\nin case no account could be matched to the incoming or\noutgoing call."));
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), description);
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_FILL);
@@ -112,12 +113,15 @@ void show_ip2ip_dialog(GHashTable * properties)
     advancedOptions = gtk_button_new_with_label(_("Advanced options"));
     g_signal_connect(G_OBJECT(advancedOptions), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb), properties);
     
+    DEBUG("curSRTPenabled = %s\n", curSRTPEnabled);
+    
     if (g_strcasecmp(curSRTPEnabled, "FALSE") == 0)
     {
         gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
         gtk_widget_set_sensitive(GTK_WIDGET(advancedOptions), FALSE);
     } else {
-        if (strcmp(curKeyExchange, ZRTP) == 0) {
+        DEBUG("curKeyExchange %s \n", curKeyExchange);
+        if (strcmp(curKeyExchange, "0") == 0) {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
@@ -135,7 +139,8 @@ void show_ip2ip_dialog(GHashTable * properties)
         
     if(gtk_dialog_run(GTK_DIALOG(ip2ipDialog)) == GTK_RESPONSE_ACCEPT) {        
             gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
-            if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
+            DEBUG("Active text %s\n", keyExchange);
+            if (g_strcmp0(keyExchange, "ZRTP") == 0) {
                 g_hash_table_replace(properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("TRUE"));
             } else {
                 g_hash_table_replace(properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("FALSE"));

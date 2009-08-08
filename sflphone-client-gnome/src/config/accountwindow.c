@@ -576,7 +576,7 @@ GtkWidget * create_advanced_tab(account_t **a)
         gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
         gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
     } else {
-        if (strcmp(curKeyExchange, ZRTP) == 0) {
+        if (strcmp(curKeyExchange, "0") == 0) {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
