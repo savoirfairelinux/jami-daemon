@@ -56,8 +56,10 @@ CallIDSet* MainBuffer::getCallIDSet(CallID call_id)
 
 bool MainBuffer::createCallIDSet(CallID set_id)
 {
+    CallIDSet* newCallIDSet = new CallIDSet;
 
-    _callIDMap[set_id] = new CallIDSet;
+    _callIDMap.insert(pair<CallID, CallIDSet*>(set_id, newCallIDSet));
+    // _callIDMap[set_id] = new CallIDSet;
 
     return true;
 
@@ -114,7 +116,8 @@ RingBuffer* MainBuffer::createRingBuffer(CallID call_id)
 
     RingBuffer* newRingBuffer = new RingBuffer(SIZEBUF);
 
-    _ringBufferMap[call_id] = newRingBuffer;
+    _ringBufferMap.insert(pair<CallID, RingBuffer*>(call_id, newRingBuffer));
+    // _ringBufferMap[call_id] = newRingBuffer;
 
     return newRingBuffer;
 }
@@ -146,6 +149,8 @@ bool MainBuffer::removeRingBuffer(CallID call_id)
 void MainBuffer::bindCallID(CallID call_id1, CallID call_id2)
 {
 
+    // _debug("---- MainBuffer:: bind callid %s with callid %s\n", call_id1.c_str(), call_id2.c_str());
+
     RingBuffer* ring_buffer = getRingBuffer(call_id1);
     CallIDSet* callid_set = getCallIDSet(call_id1);
 
@@ -167,7 +172,8 @@ void MainBuffer::bindCallID(CallID call_id1, CallID call_id2)
 
 void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
 {
-    // _debug("MainBuffer::unBindCallID\n");
+
+    // _debug("---- MainBuffer:: unbind callid %s from callid %s\n", call_id1.c_str(), call_id2.c_str());
 
     RingBuffer* ringbuffer;
 
@@ -262,6 +268,7 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 	CallIDSet::iterator iter_id = callid_set->begin();
 	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
 	{
+	    _debug("              getData in buffer %s by %s \n", (*iter_id).c_str(), call_id.c_str());
 	    getDataByID(mixBuffer, toCopy, volume, *iter_id, call_id);
 	    for (int k = 0; k < toCopy; k++)
 	    {

@@ -135,7 +135,8 @@ void
 RingBuffer::createReadPointer(CallID call_id)
 {
 
-    _readpointer[call_id] = 0;
+    
+    _readpointer.insert(pair<CallID, int>(call_id,0));
 
 }
 
