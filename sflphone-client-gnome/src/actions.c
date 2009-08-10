@@ -1007,7 +1007,7 @@ void sflphone_fill_call_list (void)
             call_details = dbus_get_call_details(callID);
             create_new_call_from_details (callID, call_details, &c);
             c->_callID = g_strdup(callID);
-
+            c->_zrtp_confirmed = FALSE;
             // Add it to the list
             DEBUG ("Add call retrieved from server side: %s\n", c->_callID);
             calllist_add (current_calls, c);

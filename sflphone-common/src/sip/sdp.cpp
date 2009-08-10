@@ -273,6 +273,9 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         status = pjmedia_sdp_neg_negotiate (inv->pool, inv->neg, 0);
 
         _debug ("Negotiation returned with status %d PJ_SUCCESS being %d\n", status, PJ_SUCCESS);
+    } else {
+        _debug ("No need to check sdp answer since we are UAS\n");
+        return PJ_SUCCESS;
     }
 
     return status;
@@ -452,7 +455,7 @@ AudioCodec* Sdp::get_session_media (void)
     AudioCodec *codec = NULL;
     std::vector<sdpMedia*> media_list;
 
-    _debug ("sdp line %d - get_session_media ()\n", __LINE__);
+    _debug ("Executing sdp line %d - get_session_media ()\n", __LINE__);
 
     media_list = get_session_media_list ();
     nb_media = media_list.size();

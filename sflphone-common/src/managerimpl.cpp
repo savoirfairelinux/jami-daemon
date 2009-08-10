@@ -3044,7 +3044,7 @@ ManagerImpl::getAccountIdFromNameAndServer (const std::string& userName, const s
 
         if (account != NULL) {
             if (account->fullMatch (userName, server)) {
-                _debug ("fullMatch\n");
+                _debug ("Matching accountId in request is a fullmatch\n");
                 return iter->first;
             }
         }
@@ -3056,7 +3056,7 @@ ManagerImpl::getAccountIdFromNameAndServer (const std::string& userName, const s
 
         if (account != NULL) {
             if (account->hostnameMatch (server)) {
-                _debug ("hostnameMatch\n");
+                _debug ("Matching accountId in request with hostname\n");
                 return iter->first;
             }
         }
@@ -3068,7 +3068,7 @@ ManagerImpl::getAccountIdFromNameAndServer (const std::string& userName, const s
 
         if (account != NULL) {
             if (account->userMatch (userName)) {
-                _debug ("userMatch\n");
+                _debug ("Matching accountId in request with username\n");
                 return iter->first;
             }
         }

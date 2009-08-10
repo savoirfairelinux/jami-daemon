@@ -63,7 +63,7 @@ void show_ip2ip_dialog(GHashTable * properties)
     gchar * description;
         
     if(properties != NULL) {
-        curSRTPEnabled = g_hash_table_lookup(properties, ACCOUNT_ZRTP_HELLO_HASH);
+        curSRTPEnabled = g_hash_table_lookup(properties, ACCOUNT_SRTP_ENABLED);
         curKeyExchange = g_hash_table_lookup(properties, ACCOUNT_KEY_EXCHANGE);
         curHelloEnabled = g_hash_table_lookup(properties, ACCOUNT_ZRTP_HELLO_HASH);
         curSasConfirm = g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS);
@@ -113,7 +113,7 @@ void show_ip2ip_dialog(GHashTable * properties)
     advancedOptions = gtk_button_new_with_label(_("Advanced options"));
     g_signal_connect(G_OBJECT(advancedOptions), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb), properties);
     
-    DEBUG("curSRTPenabled = %s\n", curSRTPEnabled);
+    DEBUG("curSRTPEnabled = %s\n", curSRTPEnabled);
     
     if (g_strcasecmp(curSRTPEnabled, "FALSE") == 0)
     {
@@ -121,7 +121,7 @@ void show_ip2ip_dialog(GHashTable * properties)
         gtk_widget_set_sensitive(GTK_WIDGET(advancedOptions), FALSE);
     } else {
         DEBUG("curKeyExchange %s \n", curKeyExchange);
-        if (strcmp(curKeyExchange, "0") == 0) {
+        if (strcmp(curKeyExchange, "1") == 0) {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);

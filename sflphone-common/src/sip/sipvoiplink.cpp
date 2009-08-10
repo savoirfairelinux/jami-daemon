@@ -2036,12 +2036,12 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
     // After 2xx is sent/received.
     else if (inv->state == PJSIP_INV_STATE_CONNECTING) {
-        status = call->getLocalSDP()->check_sdp_answer (inv, rdata);
+       status = call->getLocalSDP()->check_sdp_answer (inv, rdata);
 
-        if (status != PJ_SUCCESS) {
+       if (status != PJ_SUCCESS) {
             _debug ("Failed to check_incoming_sdp in call_on_state_changed\n");
             return;
-        }
+       }
     }
 
     // After we sent or received a ACK - The connection is established

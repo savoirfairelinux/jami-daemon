@@ -59,7 +59,7 @@ namespace sfl {
        
         if (_rtpSession != NULL) {
             _debugException("An audio rtp thread was already created but not \
-                             destroyed, forcing it before continuing.\n");
+                             destroyed. Forcing it before continuing.\n");
             stop();
         }
         
