@@ -236,6 +236,73 @@ transfer_failed_cb (DBusGProxy *proxy UNUSED,
     sflphone_display_transfer_status("Transfer failed");
 }
 
+    static void
+secure_on_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        const gchar* cipher,
+        void * foo  UNUSED )
+{
+    DEBUG ("SRTP is ON secure_on_cb");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        c->_srtp_cipher = g_strdup(cipher);
+        sflphone_srtp_on (c);
+        notify_secure_on(c);
+    }
+}
+
+    static void
+secure_off_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        void * foo  UNUSED )
+{
+    DEBUG ("SRTP is OFF");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_srtp_off (c);
+        notify_secure_off (c);
+    }
+}
+
+    static void
+show_sas_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        const gchar* sas,
+        const gboolean* verified,
+        void * foo  UNUSED )
+{
+    DEBUG ("Showing SAS");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_srtp_show_sas (c, sas, verified);
+    }
+}
+
+    static void
+confirm_go_clear_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        void * foo  UNUSED )
+{
+    DEBUG ("Confirm Go Clear request");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_confirm_go_clear (c);
+    }
+}
+
+    static void
+zrtp_not_supported_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        void * foo  UNUSED )
+{
+    DEBUG ("ZRTP not supported on the other end");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_zrtp_not_supported (c);
+        notify_zrtp_not_supported(c);
+    }
+}
+
 
     static void
 error_alert(DBusGProxy *proxy UNUSED,
@@ -363,6 +430,37 @@ dbus_connect ()
     dbus_g_proxy_connect_signal (callManagerProxy,
             "transferFailed", G_CALLBACK(transfer_failed_cb), NULL, NULL);
 
+    /* Security related callbacks */
+    
+    /* Register a marshaller for STRING,STRING,BOOL */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_BOOL,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "showSAS", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "showSAS", G_CALLBACK(show_sas_cb), NULL, NULL);  
+  
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "secureOn", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "secureOn", G_CALLBACK(secure_on_cb), NULL, NULL);
+
+    /* Register a marshaller for STRING*/
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "secureOff", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "secureOff", G_CALLBACK(secure_off_cb), NULL, NULL);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "zrtpNotSuppOther", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "zrtpNotSuppOther", G_CALLBACK(zrtp_not_supported_cb), NULL, NULL);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "confirmGoClear", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "confirmGoClear", G_CALLBACK(confirm_go_clear_cb), NULL, NULL);               
 
     configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
             "org.sflphone.SFLphone",
@@ -1925,6 +2023,58 @@ void dbus_set_history (GHashTable* entries)
     org_sflphone_SFLphone_ConfigurationManager_set_history (configurationManagerProxy, entries, &error);
     if (error){
         ERROR ("Error calling org_sflphone_SFLphone_CallManager_set_history");
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_confirm_sas (const callable_obj_t * c)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_set_sa_sverified ( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call setSASVerified() on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_reset_sas (const callable_obj_t * c)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_reset_sa_sverified ( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call resetSASVerified on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_set_confirm_go_clear (const callable_obj_t * c)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_set_confirm_go_clear( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call set_confirm_go_clear on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_request_go_clear (const callable_obj_t * c)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_request_go_clear( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call request_go_clear on CallManager: %s",
+                error->message);
         g_error_free (error);
     }
 }

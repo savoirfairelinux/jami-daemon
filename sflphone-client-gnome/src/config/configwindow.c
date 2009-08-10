@@ -164,17 +164,6 @@ edit_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
     }
 }
 
-static void edit_ip2ip_profile(GtkWidget * widget UNUSED, gpointer data UNUSED) 
-{
-    DEBUG("Advanced options for ZRTP and ip2ip profile");
-    GHashTable * properties = NULL;
-    properties = sflphone_get_ip2ip_properties();
-    if (properties != NULL) {
-        show_advanced_zrtp_options(properties);
-    }
-    show_advanced_zrtp_options((GHashTable *) data);
-}
-
 /**
  * Add an account
  */

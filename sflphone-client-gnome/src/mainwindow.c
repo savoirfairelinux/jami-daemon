@@ -2,6 +2,7 @@
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +31,8 @@
 #include <sliders.h>
 #include <contacts/searchbar.h>
 #include <assistant.h>
+#include <widget/gtkscrollbook.h>
+#include <widget/minidialog.h>
 
 #include <gtk/gtk.h>
 
@@ -43,6 +46,7 @@ GtkWidget * speaker_control = NULL;
 GtkWidget * mic_control = NULL;
 GtkWidget * statusBar = NULL;
 GtkWidget * filterEntry = NULL;
+PidginScrollBook *embedded_error_notebook;
 
 /**
  * Minimize the main window.
@@ -126,14 +130,14 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
 
 void
 focus_on_mainwindow_out(){
-  DEBUG("focus_on_mainwindow_out \n");
+  DEBUG("focus_on_mainwindow_out");
   //  gtk_widget_grab_focus(GTK_WIDGET(window));
   
 }
 
 void
 focus_on_mainwindow_in(){
-  DEBUG("focus_on_mainwindow_in \n");
+  DEBUG("focus_on_mainwindow_in");
   //  gtk_widget_grab_focus(GTK_WIDGET(window));
 }
 
@@ -149,7 +153,7 @@ create_main_window ()
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
   gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
-  gtk_window_set_default_size (GTK_WINDOW (window), 300, 320);
+  gtk_window_set_default_size (GTK_WINDOW (window), MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
   gtk_window_set_default_icon_from_file (LOGO,
                                           NULL);
   gtk_window_set_position( GTK_WINDOW( window ) , GTK_WIN_POS_MOUSE);
@@ -195,6 +199,10 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (vbox), contacts->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
 
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
+
+  embedded_error_notebook = PIDGIN_SCROLL_BOOK(pidgin_scroll_book_new());
+  gtk_box_pack_start(GTK_BOX(subvbox),
+	GTK_WIDGET(embedded_error_notebook), FALSE, FALSE, 0);
 
   if( SHOW_VOLUME ){
     speaker_control = create_slider("speaker");
@@ -335,6 +343,62 @@ void
 statusbar_pop_message(guint id)
 {
   gtk_statusbar_pop(GTK_STATUSBAR(statusBar), id);
+}
+
+static void
+add_error_dialog(GtkWidget *dialog, callable_obj_t * call)
+{
+   	gtk_container_add(GTK_CONTAINER(embedded_error_notebook), dialog); 
+   	call_add_error(call, dialog);
+}
+
+static void
+destroy_error_dialog_cb(GtkObject *dialog, callable_obj_t * call)
+{
+    call_remove_error(call, dialog);
+}
+
+void
+main_window_zrtp_not_supported(callable_obj_t * c)
+{
+    account_t* account_details=NULL;
+    gchar* warning_enabled="";
+    
+    account_details = account_list_get_by_id(c->_accountID);
+    if(account_details != NULL) {
+        warning_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING);
+        DEBUG("Warning Enabled %s", warning_enabled);
+    } else {
+        DEBUG("Account is null callID %s", c->_callID);
+            GHashTable * properties = NULL;
+            properties = sflphone_get_ip2ip_properties();
+            if(properties != NULL)
+              { warning_enabled = g_hash_table_lookup(properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING); }
+    }
+    
+    if(g_strcasecmp(warning_enabled,"TRUE") == 0) {
+        PidginMiniDialog *mini_dialog;
+        gchar *desc = g_markup_printf_escaped(_("ZRTP is not supported by peer %s\n"), c->_peer_number);
+        mini_dialog = pidgin_mini_dialog_new(_("Secure Communication Unavailable"), desc, GTK_STOCK_DIALOG_WARNING);
+        pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
+        pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
+       
+        g_signal_connect_after(mini_dialog, "destroy", (GCallback) destroy_error_dialog_cb, c);
+		
+        add_error_dialog(GTK_WIDGET(mini_dialog), c);
+    }
+}
+
+void
+main_window_confirm_go_clear(callable_obj_t * c)
+{
+    PidginMiniDialog *mini_dialog;
+    gchar *desc = g_markup_printf_escaped(_("%s wants to stop using secure communication. Confirm will resume conversation without SRTP.\n"), c->_peer_number);
+    mini_dialog = pidgin_mini_dialog_new(_("Confirm Go Clear"), desc, GTK_STOCK_STOP);
+    pidgin_mini_dialog_add_button(mini_dialog, _("Confirm"), sflphone_set_confirm_go_clear, NULL);
+    pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
+    
+    add_error_dialog(GTK_WIDGET(mini_dialog), c);
 }
 
 

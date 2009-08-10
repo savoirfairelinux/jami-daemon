@@ -65,25 +65,29 @@ namespace sfl {
         
         AccountID accountId = Manager::instance().getAccountFromCall (ca->getCallId());
                     
-        if (Manager::instance().getConfigString(accountId, SRTP_ENABLE) == "TRUE") {
-                            
-            int keyExchangeProtocol = 0;
-            int helloHashEnabled = 0;
-
+        int srtpEnabled = 0;               
+        int keyExchangeProtocol = 0;
+        int helloHashEnabled = 0;
+            
+        // Check if it is an IP-to-IP call
+        if(accountId == AccountNULL) {
+            srtpEnabled = Manager::instance().getConfigInt(IP2IP_PROFILE, SRTP_ENABLE);
+            keyExchangeProtocol = Manager::instance().getConfigInt(IP2IP_PROFILE, SRTP_KEY_EXCHANGE);
+            _debug("Ip-to-ip profile selected with key exchange protocol number %d\n", keyExchangeProtocol);
+            helloHashEnabled = Manager::instance().getConfigInt(IP2IP_PROFILE, ZRTP_HELLO_HASH);
+        } else {
+            srtpEnabled = Manager::instance().getConfigInt(accountId, SRTP_ENABLE);
+            keyExchangeProtocol = Manager::instance().getConfigInt(accountId, SRTP_KEY_EXCHANGE);
+            _debug("Registered account %s profile selected with key exchange protocol number %d\n", accountId.c_str(), keyExchangeProtocol);
+            helloHashEnabled = Manager::instance().getConfigInt(accountId, ZRTP_HELLO_HASH);
+            
+        }
+        
+        _debug("Srtp enable: %d \n", srtpEnabled);           
+        
+        if (srtpEnabled) {
             std::string zidFilename(Manager::instance().getConfigString(SIGNALISATION, ZRTP_ZIDFILE));
                 
-            // Check if it is an IP-to-IP call
-            if(accountId == AccountNULL) {
-                keyExchangeProtocol = Manager::instance().getConfigInt(IP2IP_PROFILE, SRTP_KEY_EXCHANGE);
-                _debug("Ip-to-ip profile selected with key exchange protocol number %d\n", keyExchangeProtocol);
-                helloHashEnabled = Manager::instance().getConfigInt(IP2IP_PROFILE, ZRTP_HELLO_HASH);
-            } else {
-                keyExchangeProtocol = Manager::instance().getConfigInt(accountId, SRTP_KEY_EXCHANGE);
-                _debug("Registered account %s profile selected with key exchange protocol number %d\n", accountId.c_str(), keyExchangeProtocol);
-                helloHashEnabled = Manager::instance().getConfigInt(accountId, ZRTP_HELLO_HASH);
-                
-            }
-        
             switch(keyExchangeProtocol) {
                 case Zrtp:
                     _rtpSession = new AudioZrtpSession(&Manager::instance(), ca, zidFilename);

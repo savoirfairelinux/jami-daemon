@@ -118,6 +118,45 @@
     <signal name="transferFailed">
     </signal>
 
+    <!-- SRTP related methods and signals -->
+    <method name="setSASVerified">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="resetSASVerified">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+        
+    <method name="setConfirmGoClear">
+        <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="requestGoClear">
+        <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+         <signal name="secureOn">
+      <arg type="s" name="callID"  direction="out" />
+      <arg type="s" name="cipher"  direction="out" />
+    </signal>
+    
+    <signal name="secureOff">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
+    
+    <signal name="showSAS">
+      <arg type="s" name="callID"  direction="out" />
+      <arg type="s" name="sas"  direction="out" />
+      <arg type="b" name="verified"  direction="out" />
+    </signal>
+    
+    <signal name="zrtpNotSuppOther">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
+    
+     <signal name="confirmGoClear">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
  
 <!--
     <signal name="error">

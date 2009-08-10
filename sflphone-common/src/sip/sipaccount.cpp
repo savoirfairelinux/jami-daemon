@@ -165,6 +165,9 @@ bool SIPAccount::fullMatch (const std::string& username, const std::string& host
 
 bool SIPAccount::userMatch (const std::string& username)
 {
+    if(username.empty()) {
+        return false;
+    }
     return (username == getUsername());
 }
 

@@ -566,4 +566,32 @@ void dbus_set_history (GHashTable* entries);
 
 void sflphone_display_transfer_status (const gchar* message);
 
+/**
+ * CallManager - Confirm Short Authentication String 
+ * for a given callId
+ * @param c The call to confirm SAS
+ */
+void dbus_confirm_sas (const callable_obj_t * c);
+
+/**
+ * CallManager - Reset Short Authentication String 
+ * for a given callId
+ * @param c The call to reset SAS
+ */
+void dbus_reset_sas (const callable_obj_t * c);
+
+/**
+ * CallManager - Request Go Clear in the ZRTP Protocol 
+ * for a given callId
+ * @param c The call that we want to go clear
+ */
+void dbus_request_go_clear (const callable_obj_t * c);
+
+/**
+ * CallManager - Accept Go Clear request from remote
+ * for a given callId
+ * @param c The call to confirm
+ */
+void dbus_set_confirm_go_clear (const callable_obj_t * c);
+
 #endif

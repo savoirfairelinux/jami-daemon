@@ -292,7 +292,6 @@ ManagerImpl::answerCall (const CallID& id)
     currentAccountId = getAccountFromCall (id);
     if(currentAccountId == AccountNULL) {
         _debug("ManagerImpl::answerCall : AccountId is null\n");
-        return false;
     }
     
     Call* currentCall = NULL;
@@ -3025,11 +3024,9 @@ Account*
 ManagerImpl::getAccount (const AccountID& accountID)
 {
     AccountMap::iterator iter = _accountMap.find (accountID);
-
     if (iter == _accountMap.end()) {
         return 0;
     }
-
     return iter->second;
 }
 
@@ -3103,11 +3100,9 @@ VoIPLink* ManagerImpl::getAccountLink (const AccountID& accountID)
 {
     if (accountID!=AccountNULL) {
         Account* acc = getAccount (accountID);
-
         if (acc) {
             return acc->getVoIPLink();
         }
-
         return 0;
     } else
         return SIPVoIPLink::instance ("");

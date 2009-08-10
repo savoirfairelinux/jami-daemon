@@ -18,9 +18,8 @@
  */
  
 #include "ZrtpSessionCallback.h"
-#include "manager.h"
 #include "global.h"
-#include "dbus/dbusmanagerimpl.h"
+#include "dbus/dbusmanager.h"
 #include "sip/sipcall.h"
 #include "dbus/callmanager.h"
 
@@ -35,8 +34,7 @@ using namespace std;
 namespace sfl {
 
     ZrtpSessionCallback::ZrtpSessionCallback(SIPCall *sipcall): 
-    _sipcall(sipcall),
-    _dbusManager(NULL)
+    _sipcall(sipcall)
     {
 
         if(_mapInitialized) {
@@ -107,42 +105,35 @@ namespace sfl {
         _zrtpMap.insert(pair<int32, std::string*>(EqualZIDHello, new string("Equal ZIDs in Hello")));
         _zrtpMap.insert(pair<int32, std::string*>(GoCleatNotAllowed, new string("GoClear packet received, but not allowed")));
 
-        _mapInitialized = true;
-        
-        _dbusManager = Manager::instance().getDbusManager();
-        if (_dbusManager == NULL) {
-            throw ZrtpSessionCallbackException();
-        }
-        
-        
+        _mapInitialized = true;     
     }
 
         void
     ZrtpSessionCallback::secureOn(std::string cipher)
     {
         _debug("Secure mode is on with cipher %s\n", cipher.c_str());
-        _dbusManager->getCallManager()->secureOn(_sipcall->getCallId(), cipher);
+        DBusManager::instance().getCallManager()->secureOn(_sipcall->getCallId(), cipher);
     }
 
         void
     ZrtpSessionCallback::secureOff(void)
     {
         _debug("Secure mode is off\n");
-        _dbusManager->getCallManager()->secureOff(_sipcall->getCallId());
+        DBusManager::instance().getCallManager()->secureOff(_sipcall->getCallId());
     }
 
         void
     ZrtpSessionCallback::showSAS(std::string sas, bool verified)
     {
         _debug("SAS is: %s\n", sas.c_str());
-        _dbusManager->getCallManager()->showSAS(_sipcall->getCallId(), sas, verified);
+        DBusManager::instance().getCallManager()->showSAS(_sipcall->getCallId(), sas, verified);
     }
 
         void
     ZrtpSessionCallback::zrtpNotSuppOther() 
     {
         _debug("Callee does not support ZRTP\n");
-        _dbusManager->getCallManager()->zrtpNotSuppOther(_sipcall->getCallId());
+        DBusManager::instance().getCallManager()->zrtpNotSuppOther(_sipcall->getCallId());
     }
 
         void
@@ -197,13 +188,13 @@ namespace sfl {
             msg = _zrtpMap[subCode];
             if (msg != NULL) {
                 _debug("%s\n", msg->c_str());
-                _dbusManager->getCallManager()->zrtpNegotiationFailed(_sipcall->getCallId(), *msg, "ZRTP");
+                DBusManager::instance().getCallManager()->zrtpNegotiationFailed(_sipcall->getCallId(), *msg, "ZRTP");
             }
         }
         else {
             msg = _severeMap[subCode];
             _debug("%s\n", msg->c_str());
-            _dbusManager->getCallManager()->zrtpNegotiationFailed(_sipcall->getCallId(), *msg, "SEVERE");
+            DBusManager::instance().getCallManager()->zrtpNegotiationFailed(_sipcall->getCallId(), *msg, "SEVERE");
         }
     }
 
@@ -211,7 +202,7 @@ namespace sfl {
     ZrtpSessionCallback::confirmGoClear() 
     {
         _debug("Received go clear message. Until confirmation, ZRTP won't send any data\n");
-        _dbusManager->getCallManager()->zrtpNotSuppOther(_sipcall->getCallId());
+        DBusManager::instance().getCallManager()->zrtpNotSuppOther(_sipcall->getCallId());
     }
 
     map<int32, std::string*>ZrtpSessionCallback::_infoMap;

@@ -53,8 +53,7 @@ namespace sfl {
                 
     private:
         SIPCall* _sipcall;
-        DBusManagerImpl * _dbusManager;
-        
+                
         static std::map<int32, std::string*> _infoMap;
         static std::map<int32, std::string*> _warningMap;
         static std::map<int32, std::string*> _severeMap;
