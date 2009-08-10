@@ -57,7 +57,7 @@ PulseLayer::closeLayer (void)
     // PulseLayer to close immediately, not
     // waiting for the playback buffer to be
     // emptied. It should not hurt.
-    playback->drainStream();
+    //playback->drainStream();
 
     if (m) {
         pa_threaded_mainloop_stop (m);

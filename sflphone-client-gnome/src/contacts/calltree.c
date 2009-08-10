@@ -51,7 +51,7 @@ popup_menu (GtkWidget *widget,
 
 /* Call back when the user click on a call in the list */
     static void
-selected(GtkTreeSelection *sel, void* data UNUSED )
+call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
 {
     GtkTreeIter  iter;
     GValue val;
@@ -231,10 +231,6 @@ focus_on_calltree_in(){
     void
 calltree_create (calltab_t* tab, gboolean searchbar_type)
 {
-    // GtkWidget *sw;
-    // GtkCellRenderer *rend;
-    // GtkTreeViewColumn *col;
-    // GtkTreeSelection *sel;
 
     tab->tree = gtk_vbox_new(FALSE, 10);
 
@@ -320,7 +316,7 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
 
     sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (tab->view));
     g_signal_connect (G_OBJECT (sel), "changed",
-            G_CALLBACK (selected),
+            G_CALLBACK (call_selected_cb),
             NULL);
 
     gtk_box_pack_start(GTK_BOX(tab->tree), sw, TRUE, TRUE, 0);
@@ -672,6 +668,8 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
        { g_object_unref(G_OBJECT(pixbuf)); }
 
     gtk_tree_view_set_model (GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(history->store));
+
+    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
     
     history_reinit(history);
 }
@@ -803,6 +801,7 @@ void calltree_display (calltab_t *tab) {
     gtk_widget_show (active_calltree->tree);
 
     sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+    DEBUG("Emit signal changed from calltree_display");
     g_signal_emit_by_name(sel, "changed");
     toolbar_update_buttons();
 }

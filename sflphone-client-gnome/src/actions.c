@@ -602,7 +602,7 @@ sflphone_new_call()
     callable_obj_t *c;
     gchar *peer_name, *peer_number;
 
-    DEBUG("sflphone_new_call\n");
+    DEBUG("sflphone_new_call");
     sflphone_on_hold();
 
     // Play a tone when creating a new call
@@ -644,11 +644,11 @@ sflphone_keypad( guint keyval, gchar * key)
     }
     else if(c)
     {
-        DEBUG("call");
+        DEBUG("Call is non-zero");
         switch(c->_state)
         {
             case CALL_STATE_DIALING: // Currently dialing => edit number
-                DEBUG("Writing a number\n");
+                DEBUG("Writing a number");
                 process_dialing(c, keyval, key);
                 break;
             case CALL_STATE_RECORD:
@@ -784,6 +784,11 @@ static int _place_registered_call(callable_obj_t * c) {
 
     account_t * current = NULL;
   
+    if(c == NULL) {
+        DEBUG("callable_obj_t is NULL in _place_registered_call");
+        return -1;
+    }
+    
     if (c->_state != CALL_STATE_DIALING) {
         return -1;
     }
@@ -804,12 +809,17 @@ static int _place_registered_call(callable_obj_t * c) {
         return -1;
     }
     
-    current = account_list_get_by_id(c->_accountID);
+    if(g_strcasecmp(c->_accountID, "") != 0) {
+        current = account_list_get_by_id(c->_accountID);
+    } else {
+        current = account_list_get_current();
+    }
+
     if(current == NULL) { 
-        DEBUG("Unexpected condition: account_t is NULL in %s at %d", __FILE__, __LINE__);
+        DEBUG("Unexpected condition: account_t is NULL in %s at %d for accountID %s", __FILE__, __LINE__, c->_accountID);
         return -1;
     }   
-
+                        
     if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0) {
         /* The call is made with the current account */
         c->_accountID = current->accountID;
@@ -820,7 +830,7 @@ static int _place_registered_call(callable_obj_t * c) {
         * If we are here, we can be sure that there is at least one. 
         */
         current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-        c->_accountID = current -> accountID;
+        c->_accountID = current->accountID;
         dbus_place_call(c);
         notify_current_account( current );
     }        
