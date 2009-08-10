@@ -93,6 +93,8 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     // Allocate memory
     obj = g_new0 (callable_obj_t, 1);
 
+    obj->_error_dialogs = g_ptr_array_new();
+    
     // Set fields
     obj->_type = type;
     obj->_state = state;
