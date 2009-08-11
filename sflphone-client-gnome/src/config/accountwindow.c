@@ -570,13 +570,13 @@ GtkWidget * create_advanced_tab(account_t **a)
     
     advancedZrtpButton = gtk_button_new_with_label(_("Advanced options"));
     g_signal_connect(G_OBJECT(advancedZrtpButton), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb), currentAccount->properties);
-    
-    if (g_strcasecmp(curSRTPEnabled, "FALSE") == 0)
+        
+    if (g_strcmp0(curSRTPEnabled, "FALSE") == 0)
     {
         gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
         gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
     } else {
-        if (strcmp(curKeyExchange, "0") == 0) {
+        if (strcmp(curKeyExchange, "1") == 0) {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
