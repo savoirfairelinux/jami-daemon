@@ -84,7 +84,6 @@ void getMessageSummary( char * message , const gchar * alias, const gchar * serv
 	strcat( message, var);
 	
     strcat( message, _("Security: "));
-	strcat( message, var);
 	if (zrtp) {
 	    strcat( message, _("SRTP/ZRTP draft-zimmermann"));
 	} else {
