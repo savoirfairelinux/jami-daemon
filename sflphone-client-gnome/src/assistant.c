@@ -141,7 +141,7 @@ static void sip_apply_callback( void ) {
 
         if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)) == TRUE) {
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup((gchar *)"TRUE"));
-        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup((gchar *)"ZRTP"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup((gchar *)"1"));
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_DISPLAY_SAS), g_strdup((gchar *)"TRUE"));
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_NOT_SUPP_WARNING), g_strdup((gchar *)"TRUE"));
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_HELLO_HASH), g_strdup((gchar *)"TRUE"));

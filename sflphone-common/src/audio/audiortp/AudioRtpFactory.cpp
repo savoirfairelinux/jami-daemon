@@ -141,6 +141,7 @@ namespace sfl {
         ost::MutexLock mutex(_audioRtpThreadMutex);
         _debug("Stopping audio rtp session\n");
         if (_rtpSession == NULL) {
+            _debugException("_rtpSession is null\n");
             throw AudioRtpFactoryException();
         }
         try {
