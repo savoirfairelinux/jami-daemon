@@ -754,6 +754,7 @@ show_account_window (account_t * a)
 			gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
             if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
                 g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("TRUE"));
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup("1"));
             } else {
                 g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("FALSE"));
             }

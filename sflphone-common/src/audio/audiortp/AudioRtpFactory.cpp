@@ -58,8 +58,8 @@ namespace sfl {
         assert(ca);
        
         if (_rtpSession != NULL) {
-            _debugException("An audio rtp thread was already created but not \
-                             destroyed. Forcing it before continuing.\n");
+            _debugException("An audio rtp thread was already created but not" \
+                            "destroyed. Forcing it before continuing.\n");
             stop();
         }
         
@@ -113,27 +113,23 @@ namespace sfl {
     void AudioRtpFactory::start(void)
     {
         if (_rtpSession == NULL) {
-            throw AudioRtpFactoryException();
+            throw AudioRtpFactoryException("_rtpSession was null when trying to start audio thread");
         }
-        
-        try {
-            switch(_rtpSessionType) {
-                case Sdes:
-                case Symmetric:
-                    _debug("Starting symmetric rtp thread\n");
-                    if(static_cast<AudioSymmetricRtpSession *>(_rtpSession)->startRtpThread() != 0) {
-                        throw AudioRtpFactoryException();
-                    }
-                    break;
-                case Zrtp:
-                    if(static_cast<AudioZrtpSession *>(_rtpSession)->startRtpThread() != 0) {
-                        throw AudioRtpFactoryException();
-                    }
-                    break;       
-             }
-        } catch (...) {
-            throw AudioRtpFactoryException();
-        }
+         
+        switch(_rtpSessionType) {
+            case Sdes:
+            case Symmetric:
+                _debug("Starting symmetric rtp thread\n");
+                if(static_cast<AudioSymmetricRtpSession *>(_rtpSession)->startRtpThread() != 0) {
+                    throw AudioRtpFactoryException("Failed to start AudioSymmetricRtpSession thread");
+                }
+                break;
+            case Zrtp:
+                if(static_cast<AudioZrtpSession *>(_rtpSession)->startRtpThread() != 0) {
+                    throw AudioRtpFactoryException("Failed to start AudioZrtpSession thread");
+                }
+                break;       
+            }
     }
 
     void AudioRtpFactory::stop(void) 
@@ -141,8 +137,7 @@ namespace sfl {
         ost::MutexLock mutex(_audioRtpThreadMutex);
         _debug("Stopping audio rtp session\n");
         if (_rtpSession == NULL) {
-            _debugException("_rtpSession is null\n");
-            throw AudioRtpFactoryException();
+            throw AudioRtpFactoryException("_rtpSession is null when trying to stop");
         }
         try {
             switch(_rtpSessionType) {

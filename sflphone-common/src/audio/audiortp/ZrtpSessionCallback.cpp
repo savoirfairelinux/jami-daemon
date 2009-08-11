@@ -143,29 +143,30 @@ namespace sfl {
         if (sev == Info) {
             msg = _infoMap[subCode];
             if (msg != NULL) {
-                _debug("ZRTP Debug: %s\n", msg->c_str());
+                _debug("ZRTP Debug:\n", msg->c_str());
             }
         }
         if (sev == Warning) {
             msg = _warningMap[subCode];
             if (msg != NULL) {
-                _debug("ZRTP Debug: %s\n", msg->c_str());
+                _debug("ZRTP Debug:\n", msg->c_str());
             }
         }
         if (sev == Severe) {
             msg = _severeMap[subCode];
             if (msg != NULL) {
-                _debug("ZRTP Debug: %s\n", msg->c_str());
+                _debug("ZRTP Debug:\n", msg->c_str());
             }
         }
         if (sev == ZrtpError) {
             if (subCode < 0) {  // received an error packet from peer
                 subCode *= -1;
-                _debug("Received an error packet from peer: %s\n", msg->c_str());
+                _debug("Received an error packet from peer:\n");
             }
             else {
-                _debug("Sent error packet to peer: %s\n", msg->c_str());
+                _debug("Sent error packet to peer:\n");
             }
+            
             msg = _zrtpMap[subCode];
             if (msg != NULL) {
                 _debug("ZRTP Debug: %s\n", msg->c_str());
@@ -180,10 +181,10 @@ namespace sfl {
         if (severity == ZrtpError) {
             if (subCode < 0) {  // received an error packet from peer
                 subCode *= -1;
-                _debug("Received error packet: ");
+                _debug("Received error packet: \n");
             }
             else {
-                _debug("Sent error packet: ");
+                _debug("Sent error packet: \n");
             }
             msg = _zrtpMap[subCode];
             if (msg != NULL) {

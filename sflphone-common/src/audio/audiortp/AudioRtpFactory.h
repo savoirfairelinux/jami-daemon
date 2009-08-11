@@ -19,7 +19,7 @@
 #ifndef __SFL_AUDIO_RTP_FACTORY_H__
 #define __SFL_AUDIO_RTP_FACTORY_H__
 
-#include <exception>
+#include <stdexcept>
 #include <cc++/thread.h>
 
 class SIPCall;
@@ -38,20 +38,15 @@ namespace sfl {
         Sdes
     } RtpMethod;
 
-    class UnsupportedRtpSessionType: public std::exception
-    {
-      virtual const char* what() const throw()
-      {
-        return "Could not create RTP session of the given type";
-      }
-    };
 
-    class AudioRtpFactoryException: public std::exception
-    {
-      virtual const char* what() const throw()
-      {
-        return "An AudioRtpFactoryException occured";
-      }
+    class UnsupportedRtpSessionType : public std::logic_error {
+        public:
+        UnsupportedRtpSessionType(const std::string& msg = "") : std::logic_error(msg) {}
+    };
+    
+    class AudioRtpFactoryException : public std::logic_error {
+        public:
+        AudioRtpFactoryException(const std::string& msg = "") : std::logic_error(msg) {}
     };
 
     class AudioRtpFactory {
