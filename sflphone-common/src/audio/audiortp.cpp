@@ -49,6 +49,8 @@ AudioRtp::AudioRtp() :_RTXThread (0), _symmetric(), _threadMutex()
 
 AudioRtp::~AudioRtp (void)
 {
+    ost::MutexLock m (_threadMutex);
+
     delete _RTXThread;
     _RTXThread = 0;
 }
@@ -81,6 +83,8 @@ AudioRtp::createNewSession (SIPCall *ca)
 int
 AudioRtp::start (void)
 {
+    ost::MutexLock m (_threadMutex);
+
     if (_RTXThread == 0) {
         _debug ("! ARTP Failure: Cannot start audiortp thread since not yet created\n");
         throw AudioRtpException();
@@ -276,13 +280,10 @@ AudioRtpRTX::setRtpSessionMedia (void)
     _codecFrameSize = _audiocodec->getFrameSize();
 
     if (_audiocodec->getPayload() == 9) {
-        _debug ("We Are G722\n");
         _payloadIsSet = _session->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
     } else if (_audiocodec->hasDynamicPayload()) {
-        _debug ("We Are Dynamic\n");
         _payloadIsSet = _session->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
     } else if (!_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
-        _debug ("We Are Static\n");
         _payloadIsSet = _session->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
     }
 
@@ -468,11 +469,13 @@ AudioRtpRTX::sendSessionFromMic (int timestamp)
         return;
     }
 
+ 
 
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    _session->putData (timestamp, micDataEncoded, compSize);
+    if(compSize != 0)
+        _session->putData (timestamp, micDataEncoded, compSize);
     // _session->sendImmediate(timestamp, micDataEncoded, compSize);
 
 
@@ -499,15 +502,17 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
     const ost::AppDataUnit* adu = NULL;
 
+    int is_waiting = _session->isWaiting();
 
-    adu = _session->getData (_session->getFirstTimestamp());
+    if (is_waiting != 0)
+        adu = _session->getData (_session->getFirstTimestamp());
+    else
+	return;
 
-    // _debug("payloadType: %i\n", adu->getType());
+    
 
-    if (adu == NULL) {
-        // _debug("No RTP audio stream\n");
+    if (adu == NULL)
         return;
-    }
 
     unsigned char* spkrData  = (unsigned char*) adu->getData(); // data in char
 

@@ -38,7 +38,7 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         , record()
 {
     _debug ("PulseLayer::Pulse audio constructor: Create context\n");
-    out_buffer = new SFLDataFormat[5000];
+    out_buffer = new SFLDataFormat[SIZEBUF];
 
 }
 
@@ -343,6 +343,8 @@ void PulseLayer::processData (void)
 
 void PulseLayer::writeToSpeaker (void)
 {
+    // _debug("PulseLayer::writeToSpeaker");
+
     /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
     int urgentAvail;
     /** Bytes available in the regular ringbuffer ( reserved for voice ) */
@@ -351,9 +353,11 @@ void PulseLayer::writeToSpeaker (void)
     int toPlay;
 
     // SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
+
+    // _debug("PulseLayer::writeToSpeaker _urgentRingBuffer.AvailForGet()\n");
     urgentAvail = _urgentRingBuffer.AvailForGet();
 
-    for(int k = 0; k < 5000; k++)
+    for(int k = 0; k < SIZEBUF; k++)
 	out_buffer[k] = 0;
 
     if (urgentAvail > 0) {
@@ -362,6 +366,7 @@ void PulseLayer::writeToSpeaker (void)
         //_debug("Play urgent!: %i\e" , urgentAvail);
         toGet = (urgentAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof (SFLDataFormat);
         // out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
+	// _debug("PulseLayer::writeToSpeaker _urgentRingBuffer.get()\n");
         _urgentRingBuffer.Get (out_buffer, toGet, 100);
         pa_stream_write (playback->pulseStream() , out_buffer , toGet  , NULL, 0 , PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
@@ -390,12 +395,15 @@ void PulseLayer::writeToSpeaker (void)
             pa_stream_write (playback->pulseStream() , out_buffer , toPlay   , NULL, 0 , PA_SEEK_RELATIVE) ;
         } else {
             // out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
+	    // _debug("PulseLayer::writeToSpeaker _mainBuffer.getData() toGet %i\n", toGet);
 	    normalAvail = _mainBuffer.availForGet();
 	    
             toGet = (normalAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof (SFLDataFormat);
 
             if (toGet) {
+		// _debug("PulseLayer::writeToSpeaker _mainBuffer.getData() toGet %i\n", toGet);
                 _mainBuffer.getData (out_buffer, toGet, 100);
+		// _debug("PulseLayer::writeToSpeaker _mainBuffer.discard() toGet %i\n", toGet);
                 _mainBuffer.discard (toGet);
             } else {
                 bzero (out_buffer, framesPerBuffer * sizeof (SFLDataFormat));

@@ -91,12 +91,19 @@ RingBuffer::debug()
 int
 RingBuffer::getReadPointer(CallID call_id)
 {
+    // _debug("RingBuffer::getReadPointer callid: %s\n", call_id.c_str());
 
     ReadPointer::iterator iter = _readpointer.find(call_id);
     if (iter == _readpointer.end())
+    {
+	// _debug("RingBuffer::getReadPointer Error read pointer is null\n");
 	return NULL;
+    }
     else
+    {
+	// _debug("RingBuffer::getReadPointer readpointer: %i\n", iter->second);
         return iter->second;
+    }
     
 }
 
@@ -135,7 +142,8 @@ void
 RingBuffer::createReadPointer(CallID call_id)
 {
 
-    
+    _debug("createReadPointer call_id %s\n", call_id);
+ 
     _readpointer.insert(pair<CallID, int>(call_id,0));
 
 }
@@ -144,6 +152,8 @@ RingBuffer::createReadPointer(CallID call_id)
 void
 RingBuffer::removeReadPointer(CallID call_id)
 {
+
+    _debug("removeReadPointer call_id %s\n", call_id);
 
     _readpointer.erase(call_id);
 
@@ -243,6 +253,8 @@ RingBuffer::AvailForGet(CallID call_id)
 int
 RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
+    // _debug("RingBuffer::get callid: %s\n", call_id.c_str());
+
     samplePtr dest;
     int block;
     int copied;
@@ -255,7 +267,13 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 
     copied = 0;
 
+    
     mStart = getReadPointer(call_id);
+
+    if (mStart == (int)NULL)
+	return 0;
+
+    // _debug("RingBuffer::get mStart: %i, mEnd: %i, len: %i, toCopy: %i\n", mStart, mEnd, len, toCopy);
 
     //fprintf(stderr, "G");
     while (toCopy) {
