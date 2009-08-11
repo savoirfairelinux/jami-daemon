@@ -41,14 +41,17 @@ Conference::~Conference()
 void Conference::add(CallID participant_id)
 {
 
-    _debug("Conference::add participant %s\n", participant_id.c_str());
+    _debug("---- Conference:: add participant %s\n", participant_id.c_str());
 
     if(_nbParticipant >= 1)
     {
 	ParticipantSet::iterator iter;
 	
 	for(iter = _participants.begin(); iter != _participants.end(); iter++)
+	{
+	    _debug("---- Conference:: bind callid %s with %s in conference add\n", participant_id.c_str(), (*iter).c_str());
 	    Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id, *iter);
+	}
     }
 
     // Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id);
@@ -62,12 +65,17 @@ void Conference::add(CallID participant_id)
 void Conference::remove(CallID participant_id)
 {
 
+    _debug("---- Conference:: remove participant %s\n", participant_id.c_str());
+
     if(_nbParticipant >= 1)
     {
 	ParticipantSet::iterator iter = _participants.begin();
 
 	for(iter = _participants.begin(); iter != _participants.end(); iter++)
-	   Manager::instance().getAudioDriver()->getMainBuffer()->unBindCallID(participant_id, *iter);
+	{
+	    _debug("---- Conference:: unbind callid %s from %s in conference add\n", participant_id.c_str(), (*iter).c_str());
+	    Manager::instance().getAudioDriver()->getMainBuffer()->unBindCallID(participant_id, *iter);
+	}
     }
 
     _participants.erase(participant_id);

@@ -317,7 +317,7 @@ ManagerImpl::answerCall (const CallID& id)
         }
 	else
 	{
-	    _debug("There is a conference!!!!!!!!!!!!!!!!!!!!!!\n");
+	    _debug("There is a conference! Do not hold the current call\n");
 	}
     }
 
@@ -364,9 +364,13 @@ ManagerImpl::hangupCall (const CallID& id)
 
     _debug ("hangupCall: callList is of size %i call(s)\n", nbCalls);
 
-    // stop stream
+
+    // stop streamx
     if (! (nbCalls > 1))
         audiolayer->stopStream();
+
+    if(participToConference(id))
+	removeParticipant(id);
 
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -377,7 +381,8 @@ ManagerImpl::hangupCall (const CallID& id)
     else {
         accountid = getAccountFromCall (id);
 
-        if (accountid == AccountNULL) {
+        if (accountid == AccountNULL) 
+	{
             _debug ("! Manager Hangup Call: Call doesn't exists\n");
             return false;
         }
@@ -448,6 +453,9 @@ ManagerImpl::onHoldCall (const CallID& id)
     stopTone (true);
 
     call_id = id;
+
+    if(participToConference(id))
+	removeParticipant(id);
 
     /* Direct IP to IP call */
 
@@ -635,7 +643,9 @@ ManagerImpl::createConference(const CallID& id)
     _debug("ManagerImpl::createConference()\n");
     
     Conference* conf = new Conference();
-    _conferencemap["conf"] = conf;
+
+    _conferencecall.insert(pair<CallID, Conference*>(id, conf));
+    _conferencemap.insert(pair<CallID, Conference*>("conf", conf));
 
     conf->add(getCurrentCallId());
     conf->add(id);
@@ -645,28 +655,96 @@ ManagerImpl::createConference(const CallID& id)
 }
 
 void
-ManagerImpl::addParticipant(const CallID& id)
+ManagerImpl::removeConference(const CallID& conference_id)
 {
-    _debug("ManagerImpl::addParticipant(%s)\n", id.c_str());
+
+    _debug("ManagerImpl::removeConference(%s)\n", conference_id.c_str());
+
+    Conference* conf; 
+    ConferenceMap::iterator iter = _conferencemap.find(conference_id);
+    conf = iter->second;
+
+
+    ConferenceCallMap::iterator iter_p;
+    for(iter_p = _conferencecall.begin(); iter_p != _conferencecall.end(); iter_p++)
+    {
+	if(iter_p->second == conf)
+	{
+	    _conferencecall.erase(iter_p);
+	}
+    }
+
+    _conferencemap.erase("conf");
+
+}
+
+bool
+ManagerImpl::participToConference(const CallID& call_id)
+{
+    ConferenceCallMap::iterator iter = _conferencecall.find(call_id);
+    if(iter == _conferencecall.end())
+    {
+	return false;
+    }
+    else
+    {
+	return true;
+    }
+}
+
+void
+ManagerImpl::addParticipant(const CallID& call_id)
+{
+    _debug("ManagerImpl::addParticipant(%s)\n", call_id.c_str());
     _debug("    Current call ID %s\n", getCurrentCallId().c_str());
 
-    if(_conferencemap.empty())
+    // TODO: add conference_id as a second parameter
+    ConferenceMap::iterator iter = _conferencemap.find("conf");
+
+    if(iter == _conferencemap.end())
     {
 	_debug("NO CONFERENCE YET, CREATE ONE\n");
-	createConference(id);
+	createConference(call_id);
     }
     else
     {
 	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
-	Conference* conf;
-	ConferenceMap::iterator iter = _conferencemap.find("conf");
-	conf = iter->second;
+	Conference* conf = iter->second;
 
-	conf->add(id);
+	conf->add(call_id);
+	
+	_conferencecall.insert(pair<CallID, Conference*>(call_id, conf));
 
-	answerCall(id);
+	answerCall(call_id);
     }
     
+}
+
+void
+ManagerImpl::removeParticipant(const CallID& call_id)
+{
+    _debug("ManagerImpl::removeParticipant(%s)\n", call_id.c_str());
+
+    // TODO: add conference_id as a second parameter
+    Conference* conf;
+    ConferenceMap::iterator iter = _conferencemap.find("conf");
+
+    if(iter == _conferencemap.end())
+    {
+	_debug("NO CONFERENCE CREATED, CANNOT REMOVE PARTICIPANT\n");
+    }
+    else
+    {
+	conf = iter->second;
+
+	_debug("REMOVE PARTICIPANT %s\n", call_id.c_str());
+	conf->remove(call_id);
+
+	_conferencecall.erase(iter);
+
+	if (conf->getNbParticipants() <= 1)
+	    removeConference("conf");
+    }
 }
 
 //THREAD=Main
@@ -976,6 +1054,9 @@ ManagerImpl::peerHungupCall (const CallID& id)
     AccountID accountid;
     bool returnValue;
 
+    if(participToConference(id))
+	removeParticipant(id);
+
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -992,6 +1073,8 @@ ManagerImpl::peerHungupCall (const CallID& id)
 
         returnValue = getAccountLink (accountid)->peerHungup (id);
     }
+
+    
 
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->callStateChanged (id, "HUNGUP");

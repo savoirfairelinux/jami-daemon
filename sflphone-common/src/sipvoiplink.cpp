@@ -711,6 +711,7 @@ SIPVoIPLink::hangup (const CallID& id)
     }
 
     // User hangup current call. Notify peer
+    _debug("SIPVoIPLink::hangup  Create inv session for call id: %s\n", call->getCallId().c_str());
     status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
 
     if (status != PJ_SUCCESS)

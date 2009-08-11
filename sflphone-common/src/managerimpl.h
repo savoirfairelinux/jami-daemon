@@ -70,8 +70,11 @@ typedef std::set<CallID> CallIDSet;
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 
-/** To store conference objects by ids */
-typedef std::map<CallID, Conference*> ConferenceMap;
+/** To store conference objects by call ids */
+typedef std::map<CallID, Conference*> ConferenceCallMap;
+
+/** To store conference objects by conference ids */
+typedef std::map<CallID, Conference*> ConferenceMap; 
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl {
@@ -182,7 +185,13 @@ class ManagerImpl {
 
     void createConference(const CallID& id);
 
-    void addParticipant(const CallID& id);
+    void removeConference(const CallID& conference_id);
+
+    bool participToConference(const CallID& call_id);
+
+    void addParticipant(const CallID& call_id);
+
+    void removeParticipant(const CallID& call_id);
 
     /**
      * Save config to file
@@ -1149,6 +1158,8 @@ class ManagerImpl {
 
     int isStunEnabled (void);
     void enableStun (void);
+
+    ConferenceCallMap _conferencecall;
 
     ConferenceMap _conferencemap;
 
