@@ -211,6 +211,21 @@ notify_zrtp_not_supported (callable_obj_t* c)
 }
 
     void
+notify_zrtp_negotiation_failed (callable_obj_t* c)
+{
+
+        gchar* callerid;
+        gchar* title;
+        title = g_markup_printf_escaped ("ZRTP Error.");
+        callerid = g_markup_printf_escaped(_("ZRTP negotiation failed with %s") , c->_peer_number);
+        create_new_gnome_notification (title,
+                                        callerid, 
+                                        NOTIFY_URGENCY_CRITICAL, 
+                                        (g_strcasecmp(__TIMEOUT_MODE, "default") == 0 )? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
+                                        &_gnome_notification); 
+}
+
+    void
 notify_secure_off (callable_obj_t* c)
 {
 

@@ -91,6 +91,12 @@ void notify_secure_on (callable_obj_t* c);
 void notify_secure_off (callable_obj_t* c);
 
 /**
+ * Notify that the ZRTP negotiation failed
+ */
+ 
+void notify_zrtp_negotiation_failed (callable_obj_t* c);
+
+/**
  * Notify that the RTP session is now more secured
  */
 void notify_zrtp_not_supported (callable_obj_t* c);

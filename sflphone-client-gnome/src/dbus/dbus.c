@@ -76,6 +76,11 @@ zrtp_negotiation_failed_cb (DBusGProxy *proxy UNUSED,
 {
     DEBUG ("Zrtp negotiation failed.");
     main_window_zrtp_negotiation_failed(callID, reason, severity);
+    callable_obj_t * c = NULL;
+    c = calllist_get(current_calls, callID);
+    if(c) {
+        notify_zrtp_negotiation_failed(c);
+    }
 }
 
     static void
