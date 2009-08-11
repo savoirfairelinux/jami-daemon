@@ -170,6 +170,8 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time (new ost::Time()), 
 AudioRtpRTX::~AudioRtpRTX ()
 {
 
+    // ost::MutexLock m (_threadMutex);
+
     _debug ("Delete AudioRtpRTX instance\n");
 
     try {
@@ -179,7 +181,7 @@ AudioRtpRTX::~AudioRtpRTX ()
         throw;
     }
 
-    _debug("unbind callid\n");
+    _debug("unbind call id %s\n", _ca->getCallId().c_str());
     _audiolayer->getMainBuffer()->unBindCallID(_ca->getCallId());
 
     _ca = 0;

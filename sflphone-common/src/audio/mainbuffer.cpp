@@ -69,12 +69,15 @@ bool MainBuffer::removeCallIDSet(CallID set_id)
 {
 
     CallIDSet* callid_set = getCallIDSet(set_id);
-    delete callid_set;
-    callid_set = NULL;
 
-    if (_callIDMap.erase(set_id) != 0)
-	return true;
-    else
+    if(callid_set != NULL)
+    {
+        if (_callIDMap.erase(set_id) != 0)
+	    return true;
+        else
+	    return false;
+    }
+    else 
 	return false;
 
 }
@@ -133,9 +136,6 @@ bool MainBuffer::removeRingBuffer(CallID call_id)
     RingBuffer* ring_buffer = getRingBuffer(call_id);
     if(ring_buffer != NULL)
     {
-        delete ring_buffer;
-        ring_buffer = NULL;
-
         if (_ringBufferMap.erase(call_id) != 0)
             return true;
         else
@@ -148,6 +148,8 @@ bool MainBuffer::removeRingBuffer(CallID call_id)
 
 void MainBuffer::bindCallID(CallID call_id1, CallID call_id2)
 {
+
+    ost::MutexLock guard (_mutex);
 
     // _debug("---- MainBuffer:: bind callid %s with callid %s\n", call_id1.c_str(), call_id2.c_str());
 
@@ -172,6 +174,8 @@ void MainBuffer::bindCallID(CallID call_id1, CallID call_id2)
 
 void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
 {
+
+    ost::MutexLock guard (_mutex);
 
     // _debug("---- MainBuffer:: unbind callid %s from callid %s\n", call_id1.c_str(), call_id2.c_str());
 
@@ -206,6 +210,8 @@ void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
 int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
 
+    ost::MutexLock guard (_mutex);
+
     RingBuffer* ring_buffer = getRingBuffer(call_id);
 
     if (ring_buffer == NULL)
@@ -216,7 +222,7 @@ int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID 
 
     int a;
 
-    ost::MutexLock guard (_mutex);
+    // ost::MutexLock guard (_mutex);
     a = ring_buffer->AvailForPut();
 
     if (a >= toCopy) {
@@ -233,6 +239,8 @@ int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID 
 int MainBuffer::availForPut(CallID call_id)
 {
 
+    ost::MutexLock guard (_mutex);
+
     return getRingBuffer(call_id)->AvailForPut();
 
 }
@@ -240,6 +248,7 @@ int MainBuffer::availForPut(CallID call_id)
 
 int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
+    ost::MutexLock guard (_mutex);
 
     // _debug("MainBuffer::getData \"%s\", toCopy %i\n",call_id.c_str(), toCopy);
 
@@ -276,6 +285,8 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 	    }
 	}
 	
+	_debug("MainBuffer::getData  data mixed successfully\n");
+
 	return toCopy;
     }
 }
@@ -294,7 +305,7 @@ int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, Cal
 
     int a;
 
-    ost::MutexLock guard (_mutex);
+    // ost::MutexLock guard (_mutex);
     a = ring_buffer->AvailForGet(call_id);
 
     if (a >= toCopy) {
@@ -312,6 +323,8 @@ int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, Cal
 int MainBuffer::availForGet(CallID call_id)
 {
     // _debug("MainBuffer::availForGet\n");
+
+    ost::MutexLock guard (_mutex);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
@@ -356,6 +369,8 @@ int MainBuffer::discard(int toDiscard, CallID call_id)
 {
     // _debug("MainBuffer::discard\n");
 
+    ost::MutexLock guard (_mutex);
+
     CallIDSet* callid_set = getCallIDSet(call_id);
 
     if(callid_set->empty())
@@ -396,6 +411,7 @@ int MainBuffer::discardByID(int toDiscard, CallID call_id, CallID reader_id)
 
 void MainBuffer::flush(CallID call_id)
 {
+    ost::MutexLock guard (_mutex);
 
     // _debug("MainBuffer::flush\n");
 
@@ -425,6 +441,7 @@ void MainBuffer::flush(CallID call_id)
 
 void MainBuffer::flushDefault()
 {
+    ost::MutexLock guard (_mutex);
 
     flushByID(default_id);
 
