@@ -104,6 +104,8 @@ gboolean focus_is_on_searchbar;
 
 void main_window_zrtp_not_supported(callable_obj_t * c);
 
+void main_window_zrtp_negotiation_failed(const gchar* callID, const gchar* reason, const gchar* severity);
+
 void main_window_confirm_go_clear(callable_obj_t * c);
 
 #endif

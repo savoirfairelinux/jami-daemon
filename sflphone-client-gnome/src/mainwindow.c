@@ -390,6 +390,27 @@ main_window_zrtp_not_supported(callable_obj_t * c)
 }
 
 void
+main_window_zrtp_negotiation_failed(const gchar* callID, const gchar* reason, const gchar* severity)
+{
+    gchar* peer_number = "(number unknown)";
+    callable_obj_t * c = NULL;
+    c = calllist_get(current_calls, callID);
+    if (c != NULL) {
+        peer_number = c->_peer_number;
+    }
+     
+    PidginMiniDialog *mini_dialog;
+    gchar *desc = g_markup_printf_escaped(_("A %s error forced the call with %s to fall under unencrypted mode.\nExact reason: %s\n"), severity, peer_number, reason);
+    mini_dialog = pidgin_mini_dialog_new(_("ZRTP negotiation failed"), desc, GTK_STOCK_DIALOG_WARNING);
+    pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
+    pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
+    
+    g_signal_connect_after(mini_dialog, "destroy", (GCallback) destroy_error_dialog_cb, c);
+	
+    add_error_dialog(GTK_WIDGET(mini_dialog), c);
+}
+
+void
 main_window_confirm_go_clear(callable_obj_t * c)
 {
     PidginMiniDialog *mini_dialog;

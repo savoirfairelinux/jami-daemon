@@ -68,6 +68,17 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
 }
 
     static void
+zrtp_negotiation_failed_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        const gchar* reason,
+        const gchar* severity,
+        void * foo  UNUSED )
+{
+    DEBUG ("Zrtp negotiation failed.");
+    main_window_zrtp_negotiation_failed(callID, reason, severity);
+}
+
+    static void
 curent_selected_codec (DBusGProxy *proxy UNUSED,
         const gchar* callID,
         const gchar* codecName,
@@ -377,6 +388,7 @@ dbus_connect ()
     }
 
     DEBUG ("DBus connected to CallManager");
+    /* STRING STRING STRING Marshaller */
     /* Incoming call */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_STRING,
             G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
@@ -385,6 +397,11 @@ dbus_connect ()
     dbus_g_proxy_connect_signal (callManagerProxy,
             "incomingCall", G_CALLBACK(incoming_call_cb), NULL, NULL);
 
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "zrtpNegotiationFailed", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "zrtpNegotiationFailed", G_CALLBACK(zrtp_negotiation_failed_cb), NULL, NULL);
+            
     /* Current codec */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_STRING,
             G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);

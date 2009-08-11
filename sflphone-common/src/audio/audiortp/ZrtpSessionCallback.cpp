@@ -195,7 +195,7 @@ namespace sfl {
         else {
             msg = _severeMap[subCode];
             _debug("%s\n", msg->c_str());
-            DBusManager::instance().getCallManager()->zrtpNegotiationFailed(_sipcall->getCallId(), *msg, "SEVERE");
+            DBusManager::instance().getCallManager()->zrtpNegotiationFailed(_sipcall->getCallId(), *msg, "severe");
         }
     }
 
