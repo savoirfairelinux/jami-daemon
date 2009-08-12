@@ -47,6 +47,7 @@ public:
     std::vector< std::string > getAccountList(  );
     void sendRegister(  const std::string& accoundID , const int32_t& expire );
 
+    std::map< std::string, std::string > getTlsSettingsDefault (void);
     void setIp2IpDetails(const std::map< std::string, std::string >& details);
     std::map< std::string, std::string > getIp2IpDetails(void);
     std::map< std::string, std::string > getCredential (const std::string& accountID, const int32_t& index);
@@ -54,7 +55,8 @@ public:
     void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
     void setNumberOfCredential (const std::string& accountID, const int32_t& number);
 
-    std::vector< std::string > getCodecList(  );
+    std::vector< std::string > getCodecList(void);
+    std::vector< std::string > getSupportedTlsMethod(void);
     std::vector< std::string > getCodecDetails( const int32_t& payload );
     std::vector< std::string > getActiveCodecList(  );
     void setActiveCodecList( const std::vector< std::string >& list );

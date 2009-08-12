@@ -6,6 +6,7 @@ libconfig_la_SOURCES = \
   addressbook-config.c \
   configwindow.c \
   zrtpadvanceddialog.c \
+  tlsadvanceddialog.c \
   ip2ipdialog.c \
   accountwindow.c \
   hooks-config.c \

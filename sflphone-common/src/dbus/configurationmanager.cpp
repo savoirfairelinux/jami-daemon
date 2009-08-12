@@ -41,6 +41,29 @@ ConfigurationManager::getAccountDetails (const std::string& accountID)
     return Manager::instance().getAccountDetails (accountID);
 }
 
+std::map< std::string, std::string >
+ConfigurationManager::getTlsSettingsDefault (void)
+{
+    _debug ("ConfigurationManager::getTlsDefaultSettings\n");
+   
+    std::map<std::string, std::string> tlsSettingsDefault;
+   
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_CA_LIST_FILE, ""));
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, ""));
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, ""));
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_PASSWORD, ""));
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_METHOD, "TLSv1"));
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_CIPHERS, ""));
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_SERVER_NAME, ""));
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_VERIFY_SERVER, "TRUE"));
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, "TRUE"));                  
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, "TRUE"));                  
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"));                          
+    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"));                          
+       
+    return tlsSettingsDefault;
+}
+
 std::map< std::string, std::string > 
 ConfigurationManager::getIp2IpDetails(void)
 {
@@ -215,10 +238,23 @@ ConfigurationManager::getRingtoneList()
 
 
 std::vector< std::string  >
-ConfigurationManager::getCodecList()
+ConfigurationManager::getCodecList(void)
 {
     _debug ("ConfigurationManager::getCodecList received\n");
     return Manager::instance().getCodecList();
+}
+
+std::vector<std::string>
+ConfigurationManager::getSupportedTlsMethod(void)
+{
+    _debug ("ConfigurationManager::getSupportedTlsMethod received\n");
+    std::vector<std::string> method;
+    method.push_back("Default");
+    method.push_back("TLSv1");
+    method.push_back("SSLv2");
+    method.push_back("SSLv3");
+    method.push_back("SSLv23");    
+    return method;
 }
 
 std::vector< std::string >

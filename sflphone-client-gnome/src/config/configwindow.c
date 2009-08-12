@@ -3,6 +3,7 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +38,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 
 /**
  * Local variables
@@ -546,7 +546,7 @@ void update_registration( void )
     gtk_widget_set_sensitive(GTK_WIDGET( applyButton ) , FALSE );
 }
 
-GtkWidget* create_stun_tab()
+GtkWidget* create_network_tab()
 {
     GtkWidget * frame;
     GtkWidget * table;
@@ -617,7 +617,8 @@ GtkWidget* create_stun_tab()
     GtkWidget *applySipPortButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
     GtkWidget *entryPort; 
     
-    label = gtk_label_new(_("Port"));
+    label = gtk_label_new(_("UDP Transport"));
+ 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
@@ -787,7 +788,7 @@ show_config_window ()
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Network tab
-    tab = create_stun_tab();
+    tab = create_network_tab();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Network")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
     

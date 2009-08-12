@@ -2100,3 +2100,32 @@ dbus_request_go_clear (const callable_obj_t * c)
         g_error_free (error);
     }
 }
+
+    gchar**
+dbus_get_supported_tls_method()
+{
+    GError *error = NULL;
+    gchar** array = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_get_supported_tls_method (configurationManagerProxy, &array, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call get_supported_tls_method() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+    return array;
+}
+
+GHashTable* dbus_get_tls_settings_default(void) 
+{
+    GError *error = NULL;
+    GHashTable *results = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_tls_settings_default(configurationManagerProxy, &results, &error);
+    if (error != NULL){
+        ERROR ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_tls_settings_default");
+        g_error_free (error);
+    }
+
+    return results;
+}

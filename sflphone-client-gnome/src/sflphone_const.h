@@ -67,6 +67,19 @@
 #define ZRTP                               "1"
 #define SDES_TLS                           "2"
 
+#define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
+#define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
+#define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
+#define TLS_PASSWORD                        "TLS.password"
+#define TLS_METHOD                          "TLS.method"
+#define TLS_CIPHERS                         "TLS.ciphers"
+#define TLS_SERVER_NAME                     "TLS.serverName"
+#define TLS_VERIFY_SERVER                   "TLS.verifyServer"
+#define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
+#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
+#define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
+#define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
+
 /**
  * Global logger
  */

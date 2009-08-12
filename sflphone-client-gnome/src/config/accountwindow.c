@@ -24,6 +24,7 @@
 #include <accountlist.h>
 #include <accountwindow.h>
 #include <zrtpadvanceddialog.h>
+#include <tlsadvanceddialog.h>
 
 // From version 2.16, gtk provides the functionalities libsexy used to provide
 #if GTK_CHECK_VERSION(2,16,0)
@@ -399,6 +400,12 @@ static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer dat
     show_advanced_zrtp_options((GHashTable *) data);
 }
 
+static void show_advanced_tls_options_cb(GtkWidget *widget UNUSED, gpointer data)
+{
+    DEBUG("Advanced options for TLS");
+    show_advanced_tls_options((GHashTable *) data);
+}
+
 static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
 {
     DEBUG("Key exchange changed");
@@ -409,7 +416,6 @@ static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
         
     }
 }
-
 
 GtkWidget * create_advanced_tab(account_t **a)
 {
@@ -556,19 +562,33 @@ GtkWidget * create_advanced_tab(account_t **a)
     gtk_box_pack_start(GTK_BOX(hbox), deleteCredButton, FALSE, FALSE, 0);
  
  	 /* SRTP Section */
-    gnome_main_section_new_with_table (_("Security"), &frame, &table, 1, 3);
+    gnome_main_section_new_with_table (_("Security"), &frame, &table, 2, 3);
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 	gtk_table_set_row_spacings (GTK_TABLE(table), 10);
+    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
+    GtkWidget * useSipTlsCheckBox;
+	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
+	//gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox),
+		//	g_strcasecmp(curAccountResolveOnce,"FALSE") == 0 ? TRUE: FALSE);
+	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
+	//gtk_widget_set_sensitive(GTK_WIDGET(useSipTlsCheckBox), TRUE );
+	
+	GtkWidget * sipTlsAdvancedButton;
+	sipTlsAdvancedButton = gtk_button_new_from_stock(GTK_STOCK_EDIT);
+    gtk_table_attach_defaults(GTK_TABLE(table), sipTlsAdvancedButton, 2, 3, 0, 1);
+    g_signal_connect(G_OBJECT(sipTlsAdvancedButton), "clicked", G_CALLBACK(show_advanced_tls_options_cb), currentAccount->properties);
+       	    
     label = gtk_label_new_with_mnemonic (_("SRTP key exchange"));
+ 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     keyExchangeCombo = gtk_combo_box_new_text();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), keyExchangeCombo);
     gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "ZRTP");
     //gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "SDES");
     gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), _("Disabled"));      
     
-    advancedZrtpButton = gtk_button_new_with_label(_("Advanced options"));
+    advancedZrtpButton = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
     g_signal_connect(G_OBJECT(advancedZrtpButton), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb), currentAccount->properties);
         
     if (g_strcmp0(curSRTPEnabled, "FALSE") == 0)
@@ -586,10 +606,10 @@ GtkWidget * create_advanced_tab(account_t **a)
     
 	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), currentAccount);
     
-    gtk_table_attach_defaults( GTK_TABLE(table), label, 0, 1, 0, 1);
-    gtk_table_attach_defaults (GTK_TABLE(table), keyExchangeCombo, 1, 2, 0, 1);    
-    gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 0, 1);
-
+    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 1, 2);    
+    gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 1, 2);
+	
     gtk_widget_show_all(ret);
     
 	return ret;

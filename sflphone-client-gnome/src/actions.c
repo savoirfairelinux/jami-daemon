@@ -938,14 +938,14 @@ sflphone_fill_codec_list()
 {
     codec_list_clear();
 
-    gchar** codecs = (gchar**)dbus_codec_list();
+    gchar** codecs = NULL;
+    codecs = (gchar**)dbus_codec_list();
     gchar** order = (gchar**)dbus_get_active_codec_list();
     gchar** details;
     gchar** pl;
 
-    if (codecs)
+    if (codecs != NULL)
     {
-
         for(pl=order; *order; order++)
         {
             codec_t * c = g_new0(codec_t, 1);

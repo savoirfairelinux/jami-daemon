@@ -131,8 +131,6 @@
     <method name="setRecordPath">
       <arg type="s" name="rec" direction="in"/>
     </method>
-
-   <!--      ///////////////////////               -->
    
    <!-- Codecs-related methods -->
  
@@ -361,22 +359,22 @@
         <arg type="a{ss}" name="entries" direction="in"/>
     </method>
 
-  <!--        /////////////////////////////       -->
-
-<!--
-    <signal name="parametersChanged">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-      <arg type="a{ss}" name="details" direction="out"/>
-    </signal>
--->    
-
     <signal name="accountsChanged">
     </signal>  
 
     <signal name="errorAlert">
       <arg type="i" name="code" direction="out"/>
     </signal>
+    
+    <!-- TLS Methods -->
+    <method name="getSupportedTlsMethod">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
+    <method name="getTlsSettingsDefault">
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
 
   </interface>
 </node>

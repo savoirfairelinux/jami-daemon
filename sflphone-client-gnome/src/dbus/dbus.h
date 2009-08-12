@@ -594,4 +594,19 @@ void dbus_request_go_clear (const callable_obj_t * c);
  */
 void dbus_set_confirm_go_clear (const callable_obj_t * c);
 
+/**
+ * CallManager - Get the list of supported TLS methods from
+ * the server in textual form.  
+ * @return an array of string representing supported methods
+ */
+gchar** dbus_get_supported_tls_method();
+
+/**
+ * CallManager - Get default values for TLS. 
+ * @return a GHashTable object containing those default 
+ * TLS settings. 
+ *
+ */
+GHashTable* dbus_get_tls_settings_default(void);
+
 #endif
