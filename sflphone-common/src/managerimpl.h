@@ -74,7 +74,10 @@ typedef std::list<std::string> TokenList;
 typedef std::map<CallID, Conference*> ConferenceCallMap;
 
 /** To store conference objects by conference ids */
-typedef std::map<CallID, Conference*> ConferenceMap; 
+typedef std::map<CallID, Conference*> ConferenceMap;
+
+static CallID default_conf = "conf"; 
+
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl {

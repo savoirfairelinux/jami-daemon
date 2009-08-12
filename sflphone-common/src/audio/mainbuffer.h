@@ -37,11 +37,9 @@ typedef std::set<CallID> CallIDSet;
 
 typedef std::map<CallID, CallIDSet*> CallIDMap;
 
-#define default_id "default_id"
-
 class MainBuffer {
 
-    public:
+public:
 
         MainBuffer();
 
@@ -64,6 +62,8 @@ class MainBuffer {
 	void bindCallID(CallID call_id1, CallID call_id2 = default_id);
 
 	void unBindCallID(CallID call_id1, CallID call_id2 = default_id);
+
+	void unBindAll(CallID call_id);
 
 	int putData(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 

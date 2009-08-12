@@ -206,10 +206,13 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 0);
 
     int testget;
+    int size;
 
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 2*sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == 2*sizeof(int));
-    CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(int)) == sizeof(int));
+    size = test_ring_buffer->Get(&testget, (int)sizeof(int));
+    _debug("Error: %i\n", size);
+    CPPUNIT_ASSERT(size == sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == sizeof(int));
     CPPUNIT_ASSERT(testget == testint1);

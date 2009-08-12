@@ -22,9 +22,6 @@
 
 MainBuffer::MainBuffer()
 {
-    createRingBuffer(default_id);
-    createCallIDSet(default_id);
-
     mixBuffer = new SFLDataFormat[5000];
 }
 
@@ -237,6 +234,16 @@ void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
         }
     }
 
+
+}
+
+void MainBuffer::unBindAll(CallID call_id)
+{
+
+    // CallIDSet* callid_set = getCallIDSet(call_id);
+
+    // CallIDSet::iterator iter_set = callid_set->begin
+
 }
 
 
@@ -275,7 +282,7 @@ int MainBuffer::availForPut(CallID call_id)
     ost::MutexLock guard (_mutex);
 
     return getRingBuffer(call_id)->AvailForPut();
-
+    
 }
 
 
@@ -311,7 +318,7 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 
 	int size;
 	// _debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
-	CallIDSet::iterator iter_id = callid_set->begin();
+	CallIDSet::iterator iter_id;
 	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
 	{
 	    // _debug("MainBuffer::getData in buffer %s by %s \n", (*iter_id).c_str(), call_id.c_str());
@@ -431,7 +438,7 @@ int MainBuffer::discard(int toDiscard, CallID call_id)
     else
     {
 	// _debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
-	CallIDSet::iterator iter_id = callid_set->begin();
+	CallIDSet::iterator iter_id;
 	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
 	{
 	    discardByID(toDiscard, *iter_id, call_id);
@@ -472,7 +479,7 @@ void MainBuffer::flush(CallID call_id)
     else
     {
 	// _debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
-	CallIDSet::iterator iter_id = callid_set->begin();
+	CallIDSet::iterator iter_id;
 	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
 	{
 	    flushByID(*iter_id, call_id);

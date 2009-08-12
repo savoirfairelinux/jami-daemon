@@ -38,8 +38,8 @@ RingBuffer::RingBuffer (int size) : mStart (0), mEnd (0)
     mBuffer = new unsigned char[mBufferSize];
     assert (mBuffer != NULL);
 
-    createReadPointer();
-    storeReadPointer(mStart);
+    
+    
 }
 
 // Free memory on object deletion
@@ -115,7 +115,7 @@ RingBuffer::getSmallestReadPointer()
     ReadPointer::iterator iter;
     for( iter = _readpointer.begin(); iter != _readpointer.end(); iter++)
     {
-	if((iter->first != "default_id") && (iter->second < smallest))
+	if((iter->first != default_id) && (iter->second < smallest))
 	    smallest = iter->second;
     }
 
@@ -130,8 +130,10 @@ RingBuffer::storeReadPointer(int pointer_value, CallID call_id)
     if(iter != _readpointer.end())
     {	
 	iter->second = pointer_value;
+	_debug("store read pointer call_id %s, size: %i \n",call_id.c_str(), _readpointer.size());
     }
-    else{
+    else
+    {
 	_debug("Cannot find \"%s\" readPointer\n", call_id.c_str());
     }
 
@@ -142,9 +144,10 @@ void
 RingBuffer::createReadPointer(CallID call_id)
 {
 
-    _debug("createReadPointer call_id %s\n", call_id);
+    _debug("---- createReadPointer call_id %s\n", call_id.c_str());
  
-    _readpointer.insert(pair<CallID, int>(call_id,0));
+    _readpointer.insert(pair<CallID, int>(call_id, 0));
+    _debug("---- createReadPointer size:  %i\n", _readpointer.size());
 
 }
 
@@ -153,9 +156,10 @@ void
 RingBuffer::removeReadPointer(CallID call_id)
 {
 
-    _debug("removeReadPointer call_id %s\n", call_id);
+    _debug("---- removeReadPointer call_id %s\n", call_id.c_str());
 
     _readpointer.erase(call_id);
+    _debug("---- removeReadPointer size:  %i\n", _readpointer.size());
 
 }
 

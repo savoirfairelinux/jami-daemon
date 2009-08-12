@@ -645,7 +645,7 @@ ManagerImpl::createConference(const CallID& id)
     Conference* conf = new Conference();
 
     _conferencecall.insert(pair<CallID, Conference*>(id, conf));
-    _conferencemap.insert(pair<CallID, Conference*>("conf", conf));
+    _conferencemap.insert(pair<CallID, Conference*>(default_conf, conf));
 
     conf->add(getCurrentCallId());
     conf->add(id);
@@ -674,7 +674,7 @@ ManagerImpl::removeConference(const CallID& conference_id)
 	}
     }
 
-    _conferencemap.erase("conf");
+    _conferencemap.erase(default_conf);
 
 }
 
@@ -699,7 +699,7 @@ ManagerImpl::addParticipant(const CallID& call_id)
     _debug("    Current call ID %s\n", getCurrentCallId().c_str());
 
     // TODO: add conference_id as a second parameter
-    ConferenceMap::iterator iter = _conferencemap.find("conf");
+    ConferenceMap::iterator iter = _conferencemap.find(default_conf);
 
     if(iter == _conferencemap.end())
     {
@@ -727,7 +727,7 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 
     // TODO: add conference_id as a second parameter
     Conference* conf;
-    ConferenceMap::iterator iter = _conferencemap.find("conf");
+    ConferenceMap::iterator iter = _conferencemap.find(default_conf);
 
     if(iter == _conferencemap.end())
     {
@@ -743,7 +743,7 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 	_conferencecall.erase(iter);
 
 	if (conf->getNbParticipants() <= 1)
-	    removeConference("conf");
+	    removeConference(default_conf);
     }
 }
 

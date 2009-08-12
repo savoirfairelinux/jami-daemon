@@ -185,8 +185,9 @@ AudioRtpRTX::~AudioRtpRTX ()
         throw;
     }
 
-    _debug("unbind call id %s\n", _ca->getCallId().c_str());
-    _audiolayer->getMainBuffer()->unBindCallID(_ca->getCallId());
+    _debug("Unbind call id %s from all participants\n", _ca->getCallId().c_str());
+    // _audiolayer->getMainBuffer()->unBindCallID(_ca->getCallId());
+    // _audiolayer->getMainBuffer()->unBindAll(_ca->getCallID());
 
     _ca = 0;
 
@@ -474,8 +475,8 @@ AudioRtpRTX::sendSessionFromMic (int timestamp)
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    if(compSize != 0)
-        _session->putData (timestamp, micDataEncoded, compSize);
+    // if(compSize != 0)
+    _session->putData (timestamp, micDataEncoded, compSize);
     // _session->sendImmediate(timestamp, micDataEncoded, compSize);
 
 
@@ -502,12 +503,12 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
     const ost::AppDataUnit* adu = NULL;
 
-    int is_waiting = _session->isWaiting();
+    // int is_waiting = _session->isWaiting();
 
-    if (is_waiting != 0)
-        adu = _session->getData (_session->getFirstTimestamp());
-    else
-	return;
+    // if (is_waiting != 0)
+    adu = _session->getData (_session->getFirstTimestamp());
+    // else
+    //   return;
 
     
 
@@ -595,9 +596,11 @@ AudioRtpRTX::run ()
 
         // Let's wait for the next transmit cycle
         Thread::sleep (TimerPort::getTimer());
+	
 
         // TimerPort::incTimer(20); // 'frameSize' ms
         TimerPort::incTimer (threadSleep);
+	
     }
 
     // _audiolayer->stopStream();
