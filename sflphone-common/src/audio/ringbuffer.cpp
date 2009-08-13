@@ -31,7 +31,7 @@
 #define MIN_BUFFER_SIZE	1280
 
 // Create  a ring buffer with 'size' bytes
-RingBuffer::RingBuffer (int size) : mStart (0), mEnd (0)
+RingBuffer::RingBuffer (int size) : mEnd (0)
         , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
         , mBuffer (NULL)
 {
@@ -48,7 +48,7 @@ RingBuffer::~RingBuffer()
     delete[] mBuffer;
     mBuffer = NULL;
 
-    removeReadPointer();
+    
 }
 
 void
@@ -61,6 +61,8 @@ RingBuffer::flush (CallID call_id)
 int
 RingBuffer::putLen()
 {
+    int mStart;
+
     if(_readpointer.size() > 1)
     {
 	mStart = getSmallestReadPointer();
@@ -77,7 +79,7 @@ int
 RingBuffer::getLen(CallID call_id)
 {
 
-    mStart = getReadPointer(call_id);
+    int mStart = getReadPointer(call_id);
     return (mEnd + mBufferSize - mStart) % mBufferSize;
 
 }
@@ -85,23 +87,28 @@ RingBuffer::getLen(CallID call_id)
 void
 RingBuffer::debug()
 {
+    int mStart = getSmallestReadPointer();
+
     _debug ("Start=%d; End=%d; BufferSize=%d\n", mStart, mEnd, mBufferSize);
 }
 
 int
 RingBuffer::getReadPointer(CallID call_id)
 {
-    // _debug("RingBuffer::getReadPointer callid: %s\n", call_id.c_str());
+    _debug("RingBuffer::getReadPointer callid: %s\n", call_id.c_str());
+
+    if(getNbReadPointer() == 0)
+	return 0;
 
     ReadPointer::iterator iter = _readpointer.find(call_id);
     if (iter == _readpointer.end())
     {
-	// _debug("RingBuffer::getReadPointer Error read pointer is null\n");
+	_debug("RingBuffer::getReadPointer Error read pointer is null\n");
 	return NULL;
     }
     else
     {
-	// _debug("RingBuffer::getReadPointer readpointer: %i\n", iter->second);
+	_debug("RingBuffer::getReadPointer readpointer: %i\n", iter->second);
         return iter->second;
     }
     
@@ -110,12 +117,15 @@ RingBuffer::getReadPointer(CallID call_id)
 int
 RingBuffer::getSmallestReadPointer()
 {
-    int smallest = mBufferSize;
+    if (getNbReadPointer() == 0)
+	return 0;
+
+    int smallest = mBufferSize;	
 
     ReadPointer::iterator iter;
     for( iter = _readpointer.begin(); iter != _readpointer.end(); iter++)
     {
-	if((iter->first != default_id) && (iter->second < smallest))
+	if(iter->second < smallest)
 	    smallest = iter->second;
     }
 
@@ -168,6 +178,7 @@ int
 RingBuffer::getNbReadPointer()
 {
 
+    _debug("RingBuffer::getNbReadPointer: %i", _readpointer.size());
     return _readpointer.size();
 
 }
@@ -259,11 +270,15 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 {
     // _debug("RingBuffer::get callid: %s\n", call_id.c_str());
 
+    if(getNbReadPointer() == 0);
+        return 0;
+
     samplePtr dest;
     int block;
     int copied;
     int len = getLen(call_id);
 
+    _debug("RingBuffer::Get len: %i\n", len);
     if (toCopy > len)
         toCopy = len;
 
@@ -271,11 +286,11 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 
     copied = 0;
 
+    _debug("RingBuffer::Get getReadPointer call_id %s\n", call_id.c_str());
     
-    mStart = getReadPointer(call_id);
+    int mStart = getReadPointer(call_id);
 
-    if (mStart == (int)NULL)
-	return 0;
+    _debug("RingBuffer::Get getReadPointer mStart %i\n", mStart);
 
     // _debug("RingBuffer::get mStart: %i, mEnd: %i, len: %i, toCopy: %i\n", mStart, mEnd, len, toCopy);
 
@@ -320,7 +335,7 @@ RingBuffer::Discard (int toDiscard, CallID call_id)
     
     int len = getLen(call_id);
 
-    mStart = getReadPointer(call_id);
+    int mStart = getReadPointer(call_id);
 
     if (toDiscard > len)
         toDiscard = len;

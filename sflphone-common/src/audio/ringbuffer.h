@@ -121,7 +121,7 @@ class RingBuffer {
     RingBuffer& operator=(const RingBuffer& rh);
 
     /** Pointer on the first data */
-    int           mStart;
+    // int           mStart;
     /** Pointer on the last data */
     int           mEnd;
     /** Buffer size */
