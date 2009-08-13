@@ -67,16 +67,16 @@ class MainBufferTest : public CppUnit::TestCase {
        CPPUNIT_TEST( testRingBufferReadPointer );
        CPPUNIT_TEST( testCallIDSet );
        CPPUNIT_TEST( testRingBufferInt );
-       // CPPUNIT_TEST( testRingBufferNonDefaultID );
-       // CPPUNIT_TEST( testRingBufferFloat );
-       // CPPUNIT_TEST( testTwoPointer );
-       // CPPUNIT_TEST( testGetPutData );
-       // CPPUNIT_TEST( testGetDataAndCallID );
-       // CPPUNIT_TEST( testAvailForGetPut );
-       // CPPUNIT_TEST( testDiscardFlush );
-       // CPPUNIT_TEST( testReadPointerInit );
-       // CPPUNIT_TEST( testRingBufferSeveralPointers );
-       // CPPUNIT_TEST( testConference );
+       CPPUNIT_TEST( testRingBufferNonDefaultID );
+       CPPUNIT_TEST( testRingBufferFloat );
+       CPPUNIT_TEST( testTwoPointer );
+       CPPUNIT_TEST( testBindUnbindBuffer );
+       CPPUNIT_TEST( testGetPutDataByID );
+       CPPUNIT_TEST( testGetPutData );
+       CPPUNIT_TEST( testDiscardFlush );
+       CPPUNIT_TEST( testReadPointerInit );
+       CPPUNIT_TEST( testRingBufferSeveralPointers );
+       CPPUNIT_TEST( testConference );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -111,9 +111,9 @@ class MainBufferTest : public CppUnit::TestCase {
 
 	void testBindUnbindBuffer();
 
-	void testGetPutData();
+	void testGetPutDataByID();
 
-	void testGetDataAndCallID();
+	void testGetPutData();
 
 	void testAvailForGetPut();
 

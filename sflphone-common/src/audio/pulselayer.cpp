@@ -38,7 +38,7 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         , record()
 {
     _debug ("PulseLayer::Pulse audio constructor: Create context\n");
-    out_buffer = new SFLDataFormat[SIZEBUF];
+    out_buffer = new SFLDataFormat[STATIC_BUFSIZE];
 
 }
 
@@ -357,7 +357,7 @@ void PulseLayer::writeToSpeaker (void)
     // _debug("PulseLayer::writeToSpeaker _urgentRingBuffer.AvailForGet()\n");
     urgentAvail = _urgentRingBuffer.AvailForGet();
 
-    for(int k = 0; k < SIZEBUF; k++)
+    for(int k = 0; k < STATIC_BUFSIZE; k++)
 	out_buffer[k] = 0;
 
     if (urgentAvail > 0) {

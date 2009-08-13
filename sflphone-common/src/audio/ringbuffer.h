@@ -61,6 +61,8 @@ class RingBuffer {
 
     void removeReadPointer(CallID call_id = default_id);
 
+    bool hasThisReadPointer(CallID call_id);
+
     int getNbReadPointer();
 
     /**

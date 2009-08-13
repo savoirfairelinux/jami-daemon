@@ -22,14 +22,12 @@
 
 MainBuffer::MainBuffer()
 {
-    mixBuffer = new SFLDataFormat[5000];
+    mixBuffer = new SFLDataFormat[STATIC_BUFSIZE];
 }
 
 
 MainBuffer::~MainBuffer()
 {
-    removeRingBuffer(default_id);
-    removeCallIDSet(default_id);
 
     delete mixBuffer;
     mixBuffer = NULL;
@@ -186,18 +184,24 @@ void MainBuffer::bindCallID(CallID call_id1, CallID call_id2)
 
     _debug("---- MainBuffer:: bindCallID %s and callid %s\n", call_id1.c_str(), call_id2.c_str());
 
-    RingBuffer* ring_buffer = getRingBuffer(call_id1);
-    CallIDSet* callid_set = getCallIDSet(call_id1);
+    RingBuffer* ring_buffer;
+    CallIDSet* callid_set;
 
-    if(ring_buffer == NULL)
+    if((ring_buffer = getRingBuffer(call_id1)) == NULL)
 	createRingBuffer(call_id1);
 
-    if(callid_set == NULL)
+    if((callid_set = getCallIDSet(call_id1)) == NULL)
 	createCallIDSet(call_id1);
+
+    if((ring_buffer = getRingBuffer(call_id2)) == NULL)
+	createRingBuffer(call_id2);
+
+    if((callid_set = getCallIDSet(call_id2)) == NULL)
+	createCallIDSet(call_id2);
 
     getRingBuffer(call_id1)->createReadPointer(call_id2);
     getRingBuffer(call_id2)->createReadPointer(call_id1);
- 
+
     addCallIDtoSet(call_id1, call_id2);
     addCallIDtoSet(call_id2, call_id1);
 
@@ -218,19 +222,27 @@ void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
 
     ringbuffer = getRingBuffer(call_id2);
     if(ringbuffer != NULL)
+    {
+
 	ringbuffer->removeReadPointer(call_id1);
+
+	if(ringbuffer->getNbReadPointer() == 0)
+        {
+	    removeCallIDSet(call_id2);
+	    removeRingBuffer(call_id2);
+        }
+
+    }
 
     ringbuffer = getRingBuffer(call_id1);
     if(ringbuffer != NULL)
     {
 	ringbuffer->removeReadPointer(call_id2);
 
-        if(ringbuffer->getNbReadPointer() < 1)
+        if(ringbuffer->getNbReadPointer() == 0)
         {
-
 	    removeCallIDSet(call_id1);
 	    removeRingBuffer(call_id1);
-
         }
     }
 
@@ -240,9 +252,17 @@ void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
 void MainBuffer::unBindAll(CallID call_id)
 {
 
-    // CallIDSet* callid_set = getCallIDSet(call_id);
+    CallIDSet* callid_set = getCallIDSet(call_id);
 
-    // CallIDSet::iterator iter_set = callid_set->begin
+    if (callid_set == NULL)
+	return;
+    
+    CallIDSet::iterator iter_set;
+
+    for (iter_set = callid_set->begin(); iter_set != callid_set->end(); iter_set++)
+    {
+	unBindCallID(call_id, *iter_set);
+    }
 
 }
 
@@ -492,7 +512,7 @@ void MainBuffer::flushDefault()
 {
     ost::MutexLock guard (_mutex);
 
-    flushByID(default_id);
+    flushByID(default_id, default_id);
 
 }
 

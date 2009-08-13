@@ -239,7 +239,7 @@ void MainBufferTest::testRingBufferInt()
     int testint2 = 13;
     int init_put_size;
 
-    
+
     // test with default ring buffer
     RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(default_id);
 
@@ -261,7 +261,6 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 0);
 
     int testget = (int)NULL;
-    int size;
 
     // get some data (without any read pointers)
     CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 0);
@@ -281,10 +280,9 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 2*sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == 2*sizeof(int));
 
-    _debug("THE GET PROBLEM\n");
     CPPUNIT_ASSERT(test_ring_buffer->Get(&testget, sizeof(int), 100, default_id) == sizeof(int));
-    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 2*sizeof(int));
-    CPPUNIT_ASSERT(test_ring_buffer->getLen() == 2*sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == sizeof(int));
+    CPPUNIT_ASSERT(test_ring_buffer->getLen() == sizeof(int));
     CPPUNIT_ASSERT(testget == testint1);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (init_put_size - (int)sizeof(int)));
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == sizeof(int));
@@ -312,7 +310,6 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_size);
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 0);
-    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer());
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 3*sizeof(int));
 
     // test flush data
@@ -323,7 +320,6 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (init_put_size - (int)sizeof(int)));
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == sizeof(int));
-    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer());
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 3*sizeof(int));
 
     test_ring_buffer->Discard(sizeof(int));
@@ -331,7 +327,6 @@ void MainBufferTest::testRingBufferInt()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_size);
     CPPUNIT_ASSERT(test_ring_buffer->getLen() == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet() == 0);
-    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer());
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer() == 4*sizeof(int));
 
     
@@ -350,8 +345,8 @@ void MainBufferTest::testRingBufferNonDefaultID()
     int init_put_size;
 
     
-    // test with arbitrary id
-    RingBuffer* test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    // test putData, getData with arbitrary read pointer id
+    RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(default_id);
     test_ring_buffer->createReadPointer(test_id);
 
     init_put_size = test_ring_buffer->AvailForPut();
@@ -402,7 +397,6 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_size);
     CPPUNIT_ASSERT(test_ring_buffer->getLen(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id) == 0);
-    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer(test_id));
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 3*sizeof(int));
 
     // test flush data
@@ -413,7 +407,6 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == (init_put_size - (int)sizeof(int)));
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id) == sizeof(int));
     CPPUNIT_ASSERT(test_ring_buffer->getLen(test_id) == sizeof(int));
-    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer(test_id));
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 3*sizeof(int));
 
     test_ring_buffer->Discard(sizeof(int), test_id);
@@ -421,7 +414,6 @@ void MainBufferTest::testRingBufferNonDefaultID()
     CPPUNIT_ASSERT(test_ring_buffer->AvailForPut() == init_put_size);
     CPPUNIT_ASSERT(test_ring_buffer->getLen(test_id) == 0);
     CPPUNIT_ASSERT(test_ring_buffer->AvailForGet(test_id) == 0);
-    _debug("------------------------------ %i \n", test_ring_buffer->getReadPointer(test_id));
     CPPUNIT_ASSERT(test_ring_buffer->getReadPointer(test_id) == 4*sizeof(int));
 
     test_ring_buffer->removeReadPointer(test_id);
@@ -434,12 +426,12 @@ void MainBufferTest::testRingBufferFloat()
 
     _debug("MainBufferTest::testRingBufferFloat()\n");
 
-    CallID test_id = "test_float";
-
     float testfloat1 = 12.5;
     float testfloat2 = 13.4;
 
-    RingBuffer* test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
+    RingBuffer* test_ring_buffer = _mainbuffer.createRingBuffer(default_id);
+    test_ring_buffer->createReadPointer(default_id);
+    
 
     CPPUNIT_ASSERT(test_ring_buffer->Put(&testfloat1, sizeof(float)) == sizeof(float));
     CPPUNIT_ASSERT(test_ring_buffer->putLen() == sizeof(float));
@@ -469,7 +461,9 @@ void MainBufferTest::testTwoPointer()
 
     _debug("MainBufferTest::testTwoPointer()\n");
 
-    RingBuffer* input_buffer = _mainbuffer.getRingBuffer(default_id);
+    
+    RingBuffer* input_buffer = _mainbuffer.createRingBuffer(default_id);
+    input_buffer->createReadPointer(default_id);
     RingBuffer* output_buffer = _mainbuffer.getRingBuffer(default_id);
 
     int test_input = 12;
@@ -484,145 +478,504 @@ void MainBufferTest::testTwoPointer()
 void MainBufferTest::testBindUnbindBuffer()
 {
 
-    _debug("MainBufferTest::testGetPutData()\n");
+    _debug("MainBufferTest::testBindUnbindBuffer()\n");
     
-    CallID test_id = "bind unbind";
-
-    // _mainbuffer.createRingBuffer(test_id);
-    _mainbuffer.bindCallID(test_id);
+    CallID test_id1 = "bind unbind 1";
+    CallID test_id2 = "bind unbind 2";
 
     RingBufferMap::iterator iter_buffer;
     CallIDMap::iterator iter_idset;
     CallIDSet::iterator iter_id;
 
-    // RingBuffer* defaultbuffer = _mainbuffer.getRingBuffer(default_id);
-    // RingBuffer* otherbuffer = _mainbuffer.getRingBuffer(test_id);
+    ReadPointer::iterator iter_readpointer;
+
+    RingBuffer* ringbuffer;
+
+    // test initial state with no ring brffer created
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 0);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 0);
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(default_id);
+    CPPUNIT_ASSERT(iter_buffer == _mainbuffer._ringBufferMap.end());
+    iter_idset = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_idset == _mainbuffer._callIDMap.end());
+
+    // bind test_id1 with default_id (both buffer not already created)
+    _mainbuffer.bindCallID(test_id1);
 
     CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 2);
 
     iter_buffer = _mainbuffer._ringBufferMap.find(default_id);
     CPPUNIT_ASSERT(iter_buffer->first == default_id);
     CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(default_id));
 
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id1);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id1));
+
     iter_idset = _mainbuffer._callIDMap.find(default_id);
     CPPUNIT_ASSERT(iter_idset->second->size() == 1);
-    iter_id = iter_idset->second->find(test_id);
-    CPPUNIT_ASSERT(*iter_id == test_id);
+    iter_id = iter_idset->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_id == test_id1);
 
-    iter_buffer = _mainbuffer._ringBufferMap.find(test_id);
-    CPPUNIT_ASSERT(iter_buffer->first == test_id);
-    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id));
-
-    iter_idset = _mainbuffer._callIDMap.find(test_id);
+    iter_idset = _mainbuffer._callIDMap.find(test_id1);
     CPPUNIT_ASSERT(iter_idset->second->size() == 1);
     iter_id = iter_idset->second->find(default_id);
-    CPPUNIT_ASSERT(*iter_id == test_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
 
-    _mainbuffer.unBindCallID(test_id);
-    // _mainbuffer.removeRingBuffer(test_id);
+    ringbuffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
 
-     CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 1);
+    ringbuffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
 
-    iter_idset = _mainbuffer._callIDMap.find(test_id);
+
+    // unbind test_id1 with default_id 
+    _mainbuffer.unBindCallID(test_id1);
+
+    _debug("%i\n", _mainbuffer._ringBufferMap.size());
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 0);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 0);
+
+    CPPUNIT_ASSERT(_mainbuffer.getRingBuffer(default_id) == NULL);
+    CPPUNIT_ASSERT(_mainbuffer.getRingBuffer(test_id1) == NULL);
+    
+
+    // bind test_id2 with default_id (default_id already created)
+    // calling it twice not supposed to break anything
+    _mainbuffer.bindCallID(test_id1, default_id);
+    _mainbuffer.bindCallID(test_id1, default_id);
+
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 2);
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_buffer == _mainbuffer._ringBufferMap.end());
+    iter_idset = _mainbuffer._callIDMap.find(test_id2);
     CPPUNIT_ASSERT(iter_idset == _mainbuffer._callIDMap.end());
 
+    _mainbuffer.bindCallID(test_id2, default_id);
+    _mainbuffer.bindCallID(test_id2, default_id);
+
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 3);
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(default_id);
+    CPPUNIT_ASSERT(iter_buffer->first == default_id);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(default_id));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id1);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id1));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id2);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id2));
+
     iter_idset = _mainbuffer._callIDMap.find(default_id);
-    CPPUNIT_ASSERT(iter_idset->second->size() == 0);
-    iter_id = iter_idset->second->find(test_id);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 2);
+    iter_id = iter_idset->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_id == test_id1);
+    iter_id = iter_idset->second->find(test_id2);
+    CPPUNIT_ASSERT(*iter_id == test_id2);
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 1);
+    iter_id = iter_idset->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 1);
+    iter_id = iter_idset->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
+
+    ringbuffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 2);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+    ringbuffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+    ringbuffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+    // bind test_id1 with test_id2 (both testid1 and test_id2 already created)
+    // calling it twice not supposed to break anything
+    _mainbuffer.bindCallID(test_id1, test_id2);
+    _mainbuffer.bindCallID(test_id1, test_id2);
+    
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 3);
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(default_id);
+    CPPUNIT_ASSERT(iter_buffer->first == default_id);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(default_id));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id1);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id1));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id2);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id2));
+
+    iter_idset = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 2);
+    iter_id = iter_idset->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_id == test_id1);
+    iter_id = iter_idset->second->find(test_id2);
+    CPPUNIT_ASSERT(*iter_id == test_id2);
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 2);
+    iter_id = iter_idset->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
+    iter_id = iter_idset->second->find(test_id2);
+    CPPUNIT_ASSERT(*iter_id == test_id2);
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 2);
+    iter_id = iter_idset->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
+    iter_id = iter_idset->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_id == test_id1);
+
+    ringbuffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 2);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+    ringbuffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 2);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+    ringbuffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 2);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+    // unbind test_id1 with test_id2
+    // calling it twice not supposed to break anything
+    _mainbuffer.unBindCallID(test_id1, test_id2);
+    _mainbuffer.unBindCallID(test_id1, test_id2);
+
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 3);
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(default_id);
+    CPPUNIT_ASSERT(iter_buffer->first == default_id);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(default_id));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id1);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id1));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id2);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id2));
+
+    iter_idset = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 2);
+    iter_id = iter_idset->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_id == test_id1);
+    iter_id = iter_idset->second->find(test_id2);
+    CPPUNIT_ASSERT(*iter_id == test_id2);
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 1);
+    iter_id = iter_idset->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 1);
+    iter_id = iter_idset->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
+
+    ringbuffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 2);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id2);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+    ringbuffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+    ringbuffer = _mainbuffer.getRingBuffer(test_id2);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+
+
+    _debug("ok1\n");
+    
+    // unbind test_id1 with test_id2
+    // calling it twice not supposed to break anything
+    _mainbuffer.unBindCallID(default_id, test_id2);
+    _mainbuffer.unBindCallID(default_id, test_id2);
+
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 2);
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(default_id);
+    CPPUNIT_ASSERT(iter_buffer->first == default_id);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(default_id));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id1);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id1));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_buffer == _mainbuffer._ringBufferMap.end());
+
+    iter_idset = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 1);
+    iter_id = iter_idset->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_id == test_id1);
+    iter_id = iter_idset->second->find(test_id2);
     CPPUNIT_ASSERT(iter_id == iter_idset->second->end());
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 1);
+    iter_id = iter_idset->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_idset == _mainbuffer._callIDMap.end());
+
+    ringbuffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer == ringbuffer->_readpointer.end());
+
+    ringbuffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer == ringbuffer->_readpointer.end());
+
+    CPPUNIT_ASSERT(_mainbuffer.getRingBuffer(test_id2) == NULL);
+
+
+    _mainbuffer.unBindCallID(default_id, test_id1);
+
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 0);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 0);
+
+    // test unbind all function
+    _mainbuffer.bindCallID(default_id, test_id1);
+    _mainbuffer.bindCallID(default_id, test_id2);
+    _mainbuffer.bindCallID(test_id1, test_id2);
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 3);
+
+    _mainbuffer.unBindAll(test_id2);
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 2);
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(default_id);
+    CPPUNIT_ASSERT(iter_buffer->first == default_id);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(default_id));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_buffer->first == test_id1);
+    CPPUNIT_ASSERT(iter_buffer->second == _mainbuffer.getRingBuffer(test_id1));
+
+    iter_buffer = _mainbuffer._ringBufferMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_buffer == _mainbuffer._ringBufferMap.end());
+
+    iter_idset = _mainbuffer._callIDMap.find(default_id);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 1);
+    iter_id = iter_idset->second->find(test_id1);
+    CPPUNIT_ASSERT(*iter_id == test_id1);
+    iter_id = iter_idset->second->find(test_id2);
+    CPPUNIT_ASSERT(iter_id == iter_idset->second->end());
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id1);
+    CPPUNIT_ASSERT(iter_idset->second->size() == 1);
+    iter_id = iter_idset->second->find(default_id);
+    CPPUNIT_ASSERT(*iter_id == default_id);
+
+    iter_idset = _mainbuffer._callIDMap.find(test_id2);
+    CPPUNIT_ASSERT(iter_idset == _mainbuffer._callIDMap.end());
+
+    ringbuffer = _mainbuffer.getRingBuffer(default_id);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer == ringbuffer->_readpointer.end());
+
+    ringbuffer = _mainbuffer.getRingBuffer(test_id1);
+    CPPUNIT_ASSERT(ringbuffer != NULL);
+    CPPUNIT_ASSERT(ringbuffer->getNbReadPointer() == 1);
+    iter_readpointer = ringbuffer->_readpointer.find(default_id);
+    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
+    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    iter_readpointer = ringbuffer->_readpointer.find(test_id2);
+    CPPUNIT_ASSERT(iter_readpointer == ringbuffer->_readpointer.end());
+    
+    
 }
 
-void MainBufferTest::testGetPutData()
+void MainBufferTest::testGetPutDataByID()
 {
 
     _debug("MainBufferTest::testGetPutData()\n");
     
     CallID test_id = "getData putData";
     CallID false_id = "false id";
-    // _mainbuffer.createRingBuffer(test_id);
+    
     _mainbuffer.bindCallID(test_id);
 
     int test_input1 = 12;
     int test_input2 = 13;
     int test_output;
 
+    int avail_for_put_testid;
+    int avail_for_put_defaultid;
+
+    // put by default_id get by test_id without preleminary put
+    avail_for_put_defaultid = _mainbuffer.availForPut();
+    CPPUNIT_ASSERT(_mainbuffer.availForGetByID(default_id, test_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_output, sizeof(int), 100, default_id, test_id) == 0);
+
+    // put by default_id, get by test_id
+    CPPUNIT_ASSERT(_mainbuffer.availForPut() == avail_for_put_defaultid);
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int)) == sizeof(int));
-    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_output, sizeof(int)) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForPut() == (avail_for_put_defaultid - (int)sizeof(int)));
+    CPPUNIT_ASSERT(_mainbuffer.availForGetByID(default_id, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_output, sizeof(int), 100, default_id, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGetByID(default_id, test_id) == 0);
     CPPUNIT_ASSERT(test_input1 == test_output);
+
+    // get by default_id without preliminary input
+    avail_for_put_testid = _mainbuffer.availForPut(test_id);
+    CPPUNIT_ASSERT(_mainbuffer.availForGetByID(test_id, default_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_output, sizeof(int), 100, test_id, default_id) == 0);
+    
+    // pu by test_id get by test_id
+    CPPUNIT_ASSERT(_mainbuffer.availForPut(test_id) == avail_for_put_defaultid);
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, test_id) == sizeof(int));
-    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_output, sizeof(int), 100, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGetByID(test_id, default_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_output, sizeof(int), 100, test_id, default_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGetByID(test_id, default_id) == 0);
     CPPUNIT_ASSERT(test_input2 == test_output);
 
+    // put/get by false id
     CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, false_id) == 0);
-    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_input2, sizeof(int), 100, false_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_input2, sizeof(int), 100, false_id, false_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_input2, sizeof(int), 100, default_id, false_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.getDataByID(&test_input2, sizeof(int), 100, false_id, default_id) == 0);
 
     _mainbuffer.unBindCallID(test_id);
-    // _mainbuffer.removeRingBuffer(test_id);
+
 }
 
 
 
-void MainBufferTest::testGetDataAndCallID()
+void MainBufferTest::testGetPutData()
 {
 
     _debug("MainBufferTest::testGetDataAndCallID()\n");
     
     CallID test_id = "incoming rtp session";
-    // _mainbuffer.createRingBuffer(test_id);
+
     _mainbuffer.bindCallID(test_id);
 
     int test_input1 = 12;
     int test_input2 = 13;
     int test_output;
 
-    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
-    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, default_id) == sizeof(int));
+    int avail_for_put_testid;
+    int avail_for_put_defaultid;
+
+    // get by test_id without preleminary put
+    avail_for_put_defaultid = _mainbuffer.availForPut();
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id) == 0);
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100,  test_id) == 0);
+
+    // put by default_id, get by test_id
+    CPPUNIT_ASSERT(_mainbuffer.availForPut() == avail_for_put_defaultid);
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForPut() == (avail_for_put_defaultid - (int)sizeof(int)));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet(test_id) == 0);
     CPPUNIT_ASSERT(test_input1 == test_output);
 
-    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, default_id) == sizeof(int));
-    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100, test_id) == sizeof(int));
+    // get by default_id without preleminary put
+    avail_for_put_testid = _mainbuffer.availForPut(test_id);
+    CPPUNIT_ASSERT(_mainbuffer.availForGet() == 0);
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int)) == 0);
+
+    // put by test_id, get by default_id
+    CPPUNIT_ASSERT(_mainbuffer.availForPut(test_id) == avail_for_put_testid);
+    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input2, sizeof(int), 100, test_id) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForPut(test_id) == (avail_for_put_testid - (int)sizeof(int)));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet() == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.getData(&test_output, sizeof(int), 100) == sizeof(int));
+    CPPUNIT_ASSERT(_mainbuffer.availForGet() == 0);
     CPPUNIT_ASSERT(test_input2 == test_output);
 
     _mainbuffer.unBindCallID(test_id);
-    // _mainbuffer.removeRingBuffer(test_id);
-}
-
-
-void MainBufferTest::testAvailForGetPut()
-{
-
-    _debug("MainBufferTest::testAvailForGetPut()\n");
-
-    CallID test_id = "avail for get";
-    // _mainbuffer.createRingBuffer(test_id);
-    _mainbuffer.bindCallID(test_id);
-
-    int test_input1 = 12;
-    int test_output_size;
-    int init_size;
-
-    init_size = _mainbuffer.availForPut(test_id);
-    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
-    test_output_size = _mainbuffer.availForPut(test_id);
-    CPPUNIT_ASSERT(test_output_size == (init_size - (int)sizeof(int)));
-
-    init_size = _mainbuffer.availForGetByID(test_id);
-    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
-    test_output_size = _mainbuffer.availForGetByID(test_id);
-    CPPUNIT_ASSERT(test_output_size == (init_size + (int)sizeof(int)));
-
-    init_size = _mainbuffer.availForGet();
-    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100, test_id) == sizeof(int));
-    test_output_size = _mainbuffer.availForGet();
-    CPPUNIT_ASSERT(test_output_size == (init_size + (int)sizeof(int)));
-
-    init_size = _mainbuffer.availForGet(test_id);
-    CPPUNIT_ASSERT(_mainbuffer.putData(&test_input1, sizeof(int), 100) == sizeof(int));
-    test_output_size = _mainbuffer.availForGet(test_id);
-    CPPUNIT_ASSERT(test_output_size == (init_size + (int)sizeof(int)));
-
-    _mainbuffer.unBindCallID(test_id);
-    // _mainbuffer.removeRingBuffer(test_id);
 
 }
 
@@ -826,31 +1179,27 @@ void MainBufferTest::testConference()
     ReadPointer::iterator iter_readpointer;
     CallIDMap::iterator iter_callidmap;
     CallIDSet::iterator iter_callidset;
+
     
 
     // test initial setup
     // ringbuffers
-    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 1);
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 0);
     test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 1);
-    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
-    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(test_ring_buffer == NULL);
+
     // callidmap
-    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 1);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 0);
     iter_callidmap = _mainbuffer._callIDMap.find(default_id);
-    CPPUNIT_ASSERT(iter_callidmap->first == default_id);
-    CPPUNIT_ASSERT(iter_callidmap->second->size() == 0);
+    CPPUNIT_ASSERT(iter_callidmap == _mainbuffer._callIDMap.end());
+
 
     // test bind Participant A with default 
     _mainbuffer.bindCallID(test_id1);
     // ringbuffers
     CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 2);
     test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 2);
-    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
-    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 1);
     iter_readpointer = test_ring_buffer->_readpointer.find(test_id1);
     CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
     CPPUNIT_ASSERT(iter_readpointer->second == 0);
@@ -877,10 +1226,7 @@ void MainBufferTest::testConference()
     // ringbuffers
     CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
     test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 3);
-    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
-    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 2);
     iter_readpointer = test_ring_buffer->_readpointer.find(test_id1);
     CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
     CPPUNIT_ASSERT(iter_readpointer->second == 0);
@@ -923,10 +1269,7 @@ void MainBufferTest::testConference()
     // ringbuffers
     CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 3);
     test_ring_buffer = _mainbuffer.getRingBuffer(default_id);
-    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 3);
-    iter_readpointer = test_ring_buffer->_readpointer.find(default_id);
-    CPPUNIT_ASSERT(iter_readpointer->first == default_id);
-    CPPUNIT_ASSERT(iter_readpointer->second == 0);
+    CPPUNIT_ASSERT(test_ring_buffer->getNbReadPointer() == 2);
     iter_readpointer = test_ring_buffer->_readpointer.find(test_id1);
     CPPUNIT_ASSERT(iter_readpointer->first == test_id1);
     CPPUNIT_ASSERT(iter_readpointer->second == 0);
@@ -1410,8 +1753,8 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 2);
 
     _mainbuffer.unBindCallID(test_id2);
-    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 1);
-    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 1);
+    CPPUNIT_ASSERT(_mainbuffer._ringBufferMap.size() == 0);
+    CPPUNIT_ASSERT(_mainbuffer._callIDMap.size() == 0);
 
 
 }

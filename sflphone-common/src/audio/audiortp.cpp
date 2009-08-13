@@ -186,8 +186,7 @@ AudioRtpRTX::~AudioRtpRTX ()
     }
 
     _debug("Unbind call id %s from all participants\n", _ca->getCallId().c_str());
-    // _audiolayer->getMainBuffer()->unBindCallID(_ca->getCallId());
-    // _audiolayer->getMainBuffer()->unBindAll(_ca->getCallID());
+    _audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
 
     _ca = 0;
 
@@ -233,7 +232,7 @@ AudioRtpRTX::initBuffers()
     spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 
-    _audiolayer->getMainBuffer()->bindCallID(_ca->getCallId());
+    // _audiolayer->getMainBuffer()->bindCallID(_ca->getCallId());
 }
 
 

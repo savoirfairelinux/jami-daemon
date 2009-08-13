@@ -83,13 +83,13 @@ public:
 
 	RingBuffer* getRingBuffer(CallID call_id);
 
-	int getDataByID(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id, CallID reader_id = default_id);
+	int getDataByID(void *buffer, int toCopy, unsigned short volume, CallID call_id, CallID reader_id);
 
-	int availForGetByID(CallID call_id = default_id, CallID reader_id = default_id);
+	int availForGetByID(CallID call_id, CallID reader_id);
 
-	int discardByID(int toDiscard, CallID call_id = default_id, CallID reader_id = default_id);
+	int discardByID(int toDiscard, CallID call_id, CallID reader_id);
 
-	void flushByID(CallID call_id = default_id, CallID reader_id = default_id);
+	void flushByID(CallID call_id, CallID reader_id);
 
 	RingBufferMap _ringBufferMap;
 
