@@ -127,6 +127,8 @@ std::map< std::string, std::string >
 ConfigurationManager::getTlsSettings(const std::string& section)
 {
     std::map<std::string, std::string> tlsSettings;   
+   tlsSettings.insert(std::pair<std::string, std::string> 
+        (TLS_ENABLE, Manager::instance().getConfigString(section, TLS_ENABLE)));    
     tlsSettings.insert(std::pair<std::string, std::string> 
         (TLS_CA_LIST_FILE, Manager::instance().getConfigString(section, TLS_CA_LIST_FILE)));
     tlsSettings.insert(std::pair<std::string, std::string> 
@@ -160,6 +162,11 @@ ConfigurationManager::setTlsSettings(const std::string& section, const std::map<
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
     
+    it = map_cpy.find(TLS_ENABLE);
+    if (it != details.end()) {
+        Manager::instance().setConfig(section, TLS_ENABLE, it->second); 
+    }
+        
     it = map_cpy.find(TLS_CA_LIST_FILE);
     if (it != details.end()) {
         Manager::instance().setConfig(section, TLS_CA_LIST_FILE, it->second); 

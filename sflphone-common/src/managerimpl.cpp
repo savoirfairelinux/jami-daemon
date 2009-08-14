@@ -1336,12 +1336,13 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     // 'populateFromFile' below.    
      
     // Peer to peer settings
-    _config.addDefaultValue(std::pair<std::string, std::string> (SRTP_ENABLE, FALSE_STR), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (SRTP_ENABLE, FALSE_STR), IP2IP_PROFILE);
     _config.addDefaultValue(std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, "1"), IP2IP_PROFILE);  
     _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_HELLO_HASH, TRUE_STR), IP2IP_PROFILE);      
     _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, TRUE_STR), IP2IP_PROFILE);  
     _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, FALSE_STR), IP2IP_PROFILE);  
     _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, TRUE_STR), IP2IP_PROFILE);          
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_ENABLE, FALSE_STR), IP2IP_PROFILE);    
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_CA_LIST_FILE, EMPTY_FIELD), IP2IP_PROFILE);
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, EMPTY_FIELD), IP2IP_PROFILE);
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, EMPTY_FIELD), IP2IP_PROFILE);    
@@ -2553,7 +2554,21 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, getConfigString(accountID, ZRTP_DISPLAY_SAS_ONCE)));            
     a.insert(std::pair<std::string, std::string> (ZRTP_HELLO_HASH, getConfigString(accountID, ZRTP_HELLO_HASH)));    
     a.insert(std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, getConfigString(accountID, ZRTP_NOT_SUPP_WARNING)));    
-    
+
+    a.insert(std::pair<std::string, std::string> (TLS_ENABLE, Manager::instance().getConfigString(accountID, TLS_ENABLE)));    
+    a.insert(std::pair<std::string, std::string> (TLS_CA_LIST_FILE, Manager::instance().getConfigString(accountID, TLS_CA_LIST_FILE)));
+    a.insert(std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, Manager::instance().getConfigString(accountID, TLS_CERTIFICATE_FILE)));
+    a.insert(std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, Manager::instance().getConfigString(accountID, TLS_PRIVATE_KEY_FILE)));
+    a.insert(std::pair<std::string, std::string> (TLS_PASSWORD, Manager::instance().getConfigString(accountID, TLS_PASSWORD)));
+    a.insert(std::pair<std::string, std::string> (TLS_METHOD, Manager::instance().getConfigString(accountID, TLS_METHOD)));
+    a.insert(std::pair<std::string, std::string> (TLS_CIPHERS, Manager::instance().getConfigString(accountID, TLS_CIPHERS)));
+    a.insert(std::pair<std::string, std::string> (TLS_SERVER_NAME, Manager::instance().getConfigString(accountID, TLS_SERVER_NAME)));
+    a.insert(std::pair<std::string, std::string> (TLS_VERIFY_SERVER, Manager::instance().getConfigString(accountID, TLS_VERIFY_SERVER)));    
+    a.insert(std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, Manager::instance().getConfigString(accountID, TLS_VERIFY_CLIENT)));    
+    a.insert(std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, Manager::instance().getConfigString(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE)));    
+    a.insert(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, Manager::instance().getConfigString(accountID, TLS_NEGOTIATION_TIMEOUT_SEC)));    
+    a.insert(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, Manager::instance().getConfigString(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC)));   
+            
     return a;
 }
 
@@ -2704,20 +2719,35 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
             }
             setConfig(accountID, PASSWORD, hash);
         }
-    }				
-    std::string hostname = "";
-    std::string srtpEnable = "";
-    std::string zrtpDisplaySas = "";
-    std::string zrtpDisplaySasOnce = "";
-    std::string zrtpNotSuppWarning = "";
-    std::string zrtpHelloHash = "";
-    std::string srtpKeyExchange = "";
-    std::string alias = "";
-    std::string mailbox = "";
-    std::string accountEnable = "";
-    std::string type = "";
-    std::string resolveOnce = "";
-    std::string registrationExpire = "";
+    }
+    std::string alias;
+    std::string mailbox;
+    std::string accountEnable;
+    std::string type;
+    std::string resolveOnce;
+    std::string registrationExpire;
+    				
+    std::string hostname;
+    std::string srtpEnable;
+    std::string zrtpDisplaySas;
+    std::string zrtpDisplaySasOnce;
+    std::string zrtpNotSuppWarning;
+    std::string zrtpHelloHash;
+    std::string srtpKeyExchange;
+        
+    std::string tlsEnable;
+    std::string tlsCaListFile;
+    std::string tlsCertificateFile;    
+    std::string tlsPrivateKeyFile;     
+    std::string tlsPassword;
+    std::string tlsMethod;
+    std::string tlsCiphers;
+    std::string tlsServerName;
+    std::string tlsVerifyServer;
+    std::string tlsVerifyClient;    
+    std::string tlsRequireClientCertificate;    
+    std::string tlsNegotiationTimeoutSec;        
+    std::string tlsNegotiationTimeoutMsec;        
  
     if((iter = map_cpy.find(HOSTNAME)) != map_cpy.end()) { hostname = iter->second; }
     if((iter = map_cpy.find(SRTP_ENABLE)) != map_cpy.end()) { srtpEnable = iter->second; }
@@ -2733,6 +2763,20 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if((iter = map_cpy.find(CONFIG_ACCOUNT_TYPE)) != map_cpy.end()) { type = iter->second; }
     if((iter = map_cpy.find(CONFIG_ACCOUNT_RESOLVE_ONCE)) != map_cpy.end()) { resolveOnce = iter->second; }
     if((iter = map_cpy.find(CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) != map_cpy.end()) { registrationExpire = iter->second; }
+
+    if((iter = map_cpy.find(TLS_ENABLE)) != map_cpy.end()) { tlsEnable = iter->second; }
+    if((iter = map_cpy.find(TLS_CA_LIST_FILE)) != map_cpy.end()) { tlsCaListFile = iter->second; }
+    if((iter = map_cpy.find(TLS_CERTIFICATE_FILE)) != map_cpy.end()) { tlsCertificateFile = iter->second; }
+    if((iter = map_cpy.find(TLS_PRIVATE_KEY_FILE)) != map_cpy.end()) { tlsPrivateKeyFile = iter->second; }
+    if((iter = map_cpy.find(TLS_PASSWORD)) != map_cpy.end()) { tlsPassword = iter->second; }
+    if((iter = map_cpy.find(TLS_METHOD)) != map_cpy.end()) { tlsMethod = iter->second; }
+    if((iter = map_cpy.find(TLS_CIPHERS)) != map_cpy.end()) { tlsCiphers = iter->second; }
+    if((iter = map_cpy.find(TLS_SERVER_NAME)) != map_cpy.end()) { tlsServerName = iter->second; }
+    if((iter = map_cpy.find(TLS_VERIFY_SERVER)) != map_cpy.end()) { tlsVerifyServer = iter->second; }
+    if((iter = map_cpy.find(TLS_VERIFY_CLIENT)) != map_cpy.end()) { tlsVerifyClient = iter->second; }                
+    if((iter = map_cpy.find(TLS_REQUIRE_CLIENT_CERTIFICATE)) != map_cpy.end()) { tlsRequireClientCertificate = iter->second; }                 
+    if((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_SEC)) != map_cpy.end()) { tlsNegotiationTimeoutSec = iter->second; }                          
+    if((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_MSEC)) != map_cpy.end()) { tlsNegotiationTimeoutMsec = iter->second; }      
     
     _debug("Enable account %s\n", accountEnable.c_str());        																									
     setConfig(accountID, HOSTNAME, hostname);    
@@ -2742,7 +2786,21 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig(accountID, ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning);   
     setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);    
     setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);											
-
+    
+    setConfig(accountID, TLS_ENABLE, srtpEnable);    
+    setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);    
+    setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);    
+    setConfig(accountID, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile);    
+    setConfig(accountID, TLS_PASSWORD, tlsPassword);    
+    setConfig(accountID, TLS_METHOD, tlsMethod);    
+    setConfig(accountID, TLS_CIPHERS, tlsCiphers);    
+    setConfig(accountID, TLS_SERVER_NAME, tlsServerName);    
+    setConfig(accountID, TLS_VERIFY_SERVER, tlsVerifyServer);    
+    setConfig(accountID, TLS_VERIFY_CLIENT, tlsVerifyClient);    
+    setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate);    
+    setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutMsec);     
+    setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec);      
+    
     setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
     setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, mailbox);           
     setConfig(accountID, CONFIG_ACCOUNT_ENABLE, accountEnable);

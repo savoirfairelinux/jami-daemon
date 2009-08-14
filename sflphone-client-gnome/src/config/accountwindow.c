@@ -58,7 +58,8 @@ GtkWidget * treeViewCredential;
 GtkWidget * scrolledWindowCredential;
 GtkWidget * advancedZrtpButton;
 GtkWidget * keyExchangeCombo;
-        	
+GtkWidget * useSipTlsCheckBox;
+            	
 // Credentials
 enum {
     COLUMN_CREDENTIAL_REALM,
@@ -430,8 +431,7 @@ GtkWidget * create_advanced_tab(account_t **a)
     GtkTreeViewColumn * treeViewColumn;
     GtkTreeSelection * treeSelection;
     GtkRequisition requisitionTable;
-    GtkRequisition requisitionTreeView;    
-
+    GtkRequisition requisitionTreeView;
 	
 	ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -443,7 +443,8 @@ GtkWidget * create_advanced_tab(account_t **a)
     gchar * curKeyExchange = NULL;
     gchar * curAccountResolveOnce = NULL;
     gchar * curAccountExpire = NULL;
-       
+    gchar * curTLSEnabled = NULL;
+    
 	// Load from SIP/IAX/Unknown ?
 	if(currentAccount) {
 		curAccountResolveOnce = g_hash_table_lookup(currentAccount->properties, ACCOUNT_RESOLVE_ONCE);
@@ -462,8 +463,13 @@ GtkWidget * create_advanced_tab(account_t **a)
 		      		  
         curSRTPEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SRTP_ENABLED);
         if (curSRTPEnabled == NULL) {
-            curSRTPEnabled == "false";
+            curSRTPEnabled = "false";
         }
+        
+        curTLSEnabled = g_hash_table_lookup(currentAccount->properties, TLS_ENABLE);
+        if (curTLSEnabled == NULL) {
+            curTLSEnabled = "false";
+        }        
 	} 
 
     gnome_main_section_new_with_table (_("Registration Options"), &frame, &table, 2, 3);
@@ -568,16 +574,15 @@ GtkWidget * create_advanced_tab(account_t **a)
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    GtkWidget * useSipTlsCheckBox;
+    DEBUG("is TLS enabled ? %s", curTLSEnabled);
 	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
-	//gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox),
-		//	g_strcasecmp(curAccountResolveOnce,"false") == 0 ? TRUE: FALSE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTLSEnabled, "false") == 0) ? FALSE:TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
-	//gtk_widget_set_sensitive(GTK_WIDGET(useSipTlsCheckBox), TRUE );
 	
 	GtkWidget * sipTlsAdvancedButton;
 	sipTlsAdvancedButton = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_table_attach_defaults(GTK_TABLE(table), sipTlsAdvancedButton, 2, 3, 0, 1);
+	//gtk_widget_set_sensitive(GTK_WIDGET(sipsTlsAdvancedButton), curTlsEnable);    
     g_signal_connect(G_OBJECT(sipTlsAdvancedButton), "clicked", G_CALLBACK(show_advanced_tls_options_cb), currentAccount->properties);
        	    
     label = gtk_label_new_with_mnemonic (_("SRTP key exchange"));
@@ -779,6 +784,10 @@ show_account_window (account_t * a)
                 g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
             }
     		
+    	    DEBUG("TLS enable %s saved to file", (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
+    		g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
+    		g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
+
 			config_window_set_stun_visible();
 		}
 
