@@ -737,26 +737,6 @@ class ManagerImpl {
      *		      false otherwise
      */
     bool setConfig(const std::string& section, const std::string& name, int value);
-
-    /**
-     * Set a field in the configuration file to the value
-     * found in the map, otherwise, it is set to 
-     * EMPTY_FIELD.
-     * @param details The map containing the field:value association
-     * @param section The ini style section in the configuration file
-     * @param field   The field under that section to set the value to.
-     */
-    bool setConfigOrDefaultValue(const std::map<std::string, std::string>& details, const std::string& section, const std::string& field);
-
-    /**
-     * Set a field in the configuration file to the value
-     * found in the map, otherwise, it is set to value.
-     * 
-     * @param details The map containing the field:value association
-     * @param section The ini style section in the configuration file
-     * @param field   The field under that section to set the value to.
-     */
-    bool setConfigOrDefaultValue(const std::map<std::string, std::string>& details, const std::string& section, const std::string& field, const std::string& value);
     
     inline std::string mapStateNumberToString(RegistrationState state) {
         std::string stringRepresentation;
@@ -778,30 +758,6 @@ class ManagerImpl {
      */
      
     int getConfigInt(const std::string& section, const std::string& name);
-
-    /**
-     * Helper method.
-     * Get a string from the configuration tree, and set
-     * its value in "details" if found, otherwise set to 
-     * EMPTY_STRING.
-     *
-     * @param section  The section name to look in
-     * @param field    The parameter name
-     * @param value    The default value if not found
-     */
-    void getConfigStringFromFileOrDefaultValue(std::map<std::string, std::string>& details, const std::string& section, const std::string& field); 
-    
-    /**
-     * Helper method.
-     * Get a string from the configuration tree, and set
-     * its value in "details" if found, otherwise set to 
-     * "value".
-     *
-     * @param section  The section name to look in
-     * @param field    The parameter name
-     * @param value    The default value if not found
-     */
-    void getConfigStringFromFileOrDefaultValue(std::map<std::string, std::string>& details, const std::string& section, const std::string& field, const std::string& value);
         
     /**
      * Get a string from the configuration tree

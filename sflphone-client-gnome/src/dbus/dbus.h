@@ -609,4 +609,12 @@ gchar** dbus_get_supported_tls_method();
  */
 GHashTable* dbus_get_tls_settings_default(void);
 
+/**
+ * CallManager - Get TLS settings for that account
+ * @return a GHashTable object containing those default 
+ * TLS settings. 
+ *
+ */
+GHashTable* dbus_get_tls_settings(const gchar * accountID);
+
 #endif

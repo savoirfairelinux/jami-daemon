@@ -135,6 +135,9 @@ public:
     std::map <std::string, std::string> getHistory (void);
     void setHistory (const std::map <std::string, std::string>& entries);
 
+    std::map<std::string, std::string> getTlsSettings(const std::string& accountID);
+    void setTlsSettings(const std::string& accountID, const std::map< std::string, std::string >& details);
+
 };
 
 

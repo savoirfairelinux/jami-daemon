@@ -67,6 +67,7 @@ typedef struct  {
   gchar * accountID;
   account_state_t state;  
   GHashTable * properties;
+  GHashTable * tlsSettings;
   GPtrArray * credential_information;
 } account_t;
 

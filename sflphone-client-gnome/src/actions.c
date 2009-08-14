@@ -187,6 +187,10 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
             break;
         a->properties = details;
         
+        GHashTable * tlsSettings = NULL;
+        tlsSettings = dbus_get_tls_settings(a->accountID);
+        a->tlsSettings = tlsSettings;
+        
         /* As this function might be called numberous time, we should free the 
          * previously allocated space to avoid memory leaks.
          */

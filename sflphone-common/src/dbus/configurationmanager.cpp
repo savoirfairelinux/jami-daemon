@@ -95,13 +95,30 @@ ConfigurationManager::getIp2IpDetails(void)
 void 
 ConfigurationManager::setIp2IpDetails(const std::map< std::string, std::string >& details )
 {
-
-    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, SRTP_ENABLE); 
-    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, ZRTP_DISPLAY_SAS); 
-    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING); 
-    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, ZRTP_HELLO_HASH); 
-    Manager::instance().setConfigOrDefaultValue(details, IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE);     
-                
+    std::map<std::string, std::string> map_cpy = details;
+    std::map<std::string, std::string>::iterator it;
+    
+    it = map_cpy.find(SRTP_ENABLE);
+    if (it != details.end()) {
+        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_ENABLE, it->second); 
+    }
+    it = map_cpy.find(ZRTP_DISPLAY_SAS);
+    if (it != details.end()) {
+        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_ENABLE, it->second); 
+    }
+    it = map_cpy.find(ZRTP_NOT_SUPP_WARNING);
+    if (it != details.end()) {
+        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_ENABLE, it->second); 
+    }
+    it = map_cpy.find(ZRTP_HELLO_HASH);
+    if (it != details.end()) {
+        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_ENABLE, it->second); 
+    }
+    it = map_cpy.find(ZRTP_DISPLAY_SAS_ONCE);
+    if (it != details.end()) {
+        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_ENABLE, it->second); 
+    }
+                        
     std::string keyExchange(details.find(SRTP_KEY_EXCHANGE)->second);
         
     if(keyExchange.find("ZRTP") == 0) { 
@@ -115,6 +132,16 @@ ConfigurationManager::setIp2IpDetails(const std::map< std::string, std::string >
     // Update account details to the client side
     accountsChanged();
 
+}
+
+std::map< std::string, std::string > 
+ConfigurationManager::getTlsSettings(const std::string& accountID)
+{
+}
+
+void 
+ConfigurationManager::setTlsSettings(const std::string& accountID, const std::map< std::string, std::string >& details )
+{
 }
 
 std::map< std::string, std::string >

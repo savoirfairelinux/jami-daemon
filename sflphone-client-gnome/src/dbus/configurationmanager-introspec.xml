@@ -375,6 +375,18 @@
     <method name="getTlsSettingsDefault">
       <arg type="a{ss}" name="details" direction="out"/>
     </method>
+    
+    <method name="getTlsSettings">
+      <arg type="s" name="accountID" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
+    
+    <method name="setTlsSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="a{ss}" name="details" direction="in"/>
+    </method>
 
   </interface>
 </node>

@@ -699,7 +699,7 @@ dbus_set_credential(account_t *a, int index)
     }
             
     if (error) {
-        ERROR ("Failed to call set_account_details() on ConfigurationManager: %s",
+        ERROR ("Failed to call set_credential() on ConfigurationManager: %s",
                 error->message);
         g_error_free (error);
     }
@@ -713,7 +713,7 @@ dbus_set_number_of_credential(account_t *a, int number)
     org_sflphone_SFLphone_ConfigurationManager_set_number_of_credential( configurationManagerProxy, a->accountID, number, &error);
             
     if (error) {
-        ERROR ("Failed to call set_account_details() on ConfigurationManager: %s",
+        ERROR ("Failed to call set_number_of_credential() on ConfigurationManager: %s",
                 error->message);
         g_error_free (error);
     } 
@@ -2128,4 +2128,32 @@ GHashTable* dbus_get_tls_settings_default(void)
     }
 
     return results;
+}
+
+GHashTable* dbus_get_tls_settings(const gchar * accountID) 
+{
+    GError *error = NULL;
+    GHashTable *results = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_tls_settings(configurationManagerProxy, accountID, &results, &error);
+    if (error != NULL){
+        ERROR ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_tls_settings_default");
+        g_error_free (error);
+    }
+    return results;
+}
+
+void dbus_set_tls_settings (account_t *a)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_tls_settings (
+            configurationManagerProxy,
+            a->accountID,
+            a->tlsSettings,
+            &error);
+    if (error) {
+        ERROR ("Failed to call set_tls_settings() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
 }

@@ -68,6 +68,7 @@ typedef enum RegistrationState {
 #define AUTHENTICATION_USERNAME             "authenticationUsername"
 #define PASSWORD                            "password"
 #define REALM                               "realm"
+#define DEFAULT_REALM                       "*"
 
 // SIP specific parameters
 #define SIP_PROXY                           "SIP.proxy"
