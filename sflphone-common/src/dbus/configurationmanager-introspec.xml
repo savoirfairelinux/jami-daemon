@@ -29,7 +29,15 @@
      <method name="deleteAllCredential">
       <arg type="s" name="accountID" direction="in"/>
     </method>
+  
+    <method name="getIp2IpDetails">
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
     
+    <method name="setIp2IpDetails">
+      <arg type="a{ss}" name="details" direction="in"/>
+    </method>
+      
     <method name="getCredential">
       <arg type="s" name="accountID" direction="in"/>
       <arg type="i" name="index" direction="in"/>
@@ -132,7 +140,7 @@
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
-   
+       
    <method name="getCodecDetails">
      <arg type="i" name="payload" direction="in"/>
      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
@@ -203,7 +211,15 @@
     </method>
 
   <!--    General Settings Panel         -->
- 
+
+    <method name="isMd5CredentialHashing">
+      <arg type="b" name="res" direction="out"/>
+    </method>
+
+    <method name="setMd5CredentialHashing">
+      <arg type="b" name="enabled" direction="in"/>
+    </method>
+     
     <method name="isIax2Enabled">
       <arg type="i" name="res" direction="out"/>
     </method>
@@ -344,23 +360,34 @@
         <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
         <arg type="a{ss}" name="entries" direction="in"/>
     </method>
-
-  <!--        /////////////////////////////       -->
-
-<!--
-    <signal name="parametersChanged">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-      <arg type="a{ss}" name="details" direction="out"/>
-    </signal>
--->    
-
+      
     <signal name="accountsChanged">
     </signal>  
 
     <signal name="errorAlert">
       <arg type="i" name="code" direction="out"/>
-    </signal>
+    </signal> 
+    
+    <!-- TLS Methods -->
+    <method name="getSupportedTlsMethod">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
 
+    <method name="getTlsSettingsDefault">
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
+
+    <method name="getTlsSettings">
+      <arg type="s" name="accountID" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
+    
+    <method name="setTlsSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="a{ss}" name="details" direction="in"/>
+    </method>
   </interface>
 </node>

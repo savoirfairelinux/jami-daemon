@@ -63,21 +63,32 @@ void set_account_type( GtkWidget* widget , gpointer data UNUSED ) {
  * Fills string message with the final message of account registration
  * with alias, server and username specified.
  */
-void getMessageSummary( char * message , const gchar * alias, const gchar * server, const gchar * username) {
+void getMessageSummary( char * message , const gchar * alias, const gchar * server, const gchar * username, const gchar * zrtp) 
+{
 	char var[64];
 	sprintf( message, _("This assistant is now finished."));
 	strcat( message, "\n" );
 	strcat( message, _("You can at any time check your registration state or modify your accounts parameters in the Options/Accounts window."));
 	strcat( message, "\n\n");
+	
 	strcat( message, _("Alias"));
 	sprintf( var, " :   %s\n", alias);
 	strcat( message, var);
+	
 	strcat( message, _("Server"));
 	sprintf( var, " :   %s\n", server);
 	strcat( message, var);
+	
 	strcat( message, _("Username"));
 	sprintf( var, " :   %s\n", username);
 	strcat( message, var);
+	
+    strcat( message, _("Security: "));
+	if (zrtp) {
+	    strcat( message, _("SRTP/ZRTP draft-zimmermann"));
+	} else {
+	    strcat( message, _("None"));
+	}
 }
 
 void set_sflphone_org( GtkWidget* widget , gpointer data UNUSED ) {
@@ -119,27 +130,32 @@ static void sip_apply_callback( void ) {
 	}
 	if( account_type == _SIP ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias))));
-		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("TRUE"));
+		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("true"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("SIP"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_server))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_password))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_username))));
-		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), g_strdup((gchar *)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable))? "TRUE":"FALSE")));
+		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), g_strdup((gchar *)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable))? "true":"false")));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->addr))));
 
+        if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)) == TRUE) {
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup((gchar *)"true"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup((gchar *)ZRTP));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_DISPLAY_SAS), g_strdup((gchar *)"true"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_NOT_SUPP_WARNING), g_strdup((gchar *)"true"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_HELLO_HASH), g_strdup((gchar *)"true"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_DISPLAY_SAS_ONCE), g_strdup((gchar *)"false"));
+        	}
+		
 		dbus_add_account( current );
 		getMessageSummary(message, 
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
-			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username))
-		) ;
-//         	sprintf(message, MESSAGE_SUMMARY,
-// 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
-// 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
-// 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username))
-                       	// gtk_entry_get_text (GTK_ENTRY(wiz->sip_password))
-// 				) ;
+			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username)),
+			(gchar *)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)))
+		);
+
 	gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}
 }
@@ -151,26 +167,21 @@ static void sip_apply_callback( void ) {
 static void iax_apply_callback( void ) {
 	if( account_type == _IAX) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias))));
-		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("TRUE"));
+		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("true"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_voicemail))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("IAX"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_username))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_server))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
-		//g_hash_table_insert(current->properties, g_strdup(ACCOUNT_RESOLVE_ONCE), g_strdup("FALSE"));
-		//g_hash_table_insert(current->properties, g_strdup(ACCOUNT_REGISTRATION_EXPIRE), g_strdup("600"));
 
 		dbus_add_account( current );
 		getMessageSummary(message, 
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),
-			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username))
+			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username)),
+			(gchar *) _("None")
 		) ;
-//         	sprintf(message, MESSAGE_SUMMARY,
-// 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
-// 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),
-// 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username))
-// 			) ;
+
 		gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}
 }
@@ -331,6 +342,12 @@ GtkWidget* build_sip_account_configuration( void ) {
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_voicemail);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->sip_voicemail, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+    // Security options
+	wiz->zrtp_enable = gtk_check_button_new_with_mnemonic(_("Secure communications with _ZRTP"));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable), FALSE);
+	gtk_table_attach ( GTK_TABLE( table ), wiz->zrtp_enable, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_widget_set_sensitive( GTK_WIDGET( wiz->zrtp_enable ) , TRUE );
+	
 	//gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->sip_account, TRUE);
 	return wiz->sip_account;
 }

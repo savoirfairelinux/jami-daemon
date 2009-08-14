@@ -106,8 +106,6 @@ main (int argc, char **argv)
             else {
                 fclose (fp);
 
-				_debug ("SDLauiobvzsfivbsfivbsuobvsobvasbvfasdkbvkdbvbvksdbvksdbvkzsdbvasdfb: %i\n", atoi (cOldPid));
-
                 if (kill (atoi (cOldPid), 0) == SUCCESS) {
                     fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.\n");
                     exit (-1);

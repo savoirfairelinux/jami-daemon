@@ -23,6 +23,8 @@
 #include <mainwindow.h>
 #include <accountlist.h>
 #include <accountwindow.h>
+#include <zrtpadvanceddialog.h>
+#include <tlsadvanceddialog.h>
 
 // From version 2.16, gtk provides the functionalities libsexy used to provide
 #if GTK_CHECK_VERSION(2,16,0)
@@ -34,6 +36,7 @@
 #include <dbus/dbus.h>
 #include <config.h>
 #include <gtk/gtk.h>
+
 
 /** Local variables */
 GtkDialog * dialog;
@@ -53,7 +56,10 @@ GtkListStore * credentialStore;
 GtkWidget * deleteCredButton;
 GtkWidget * treeViewCredential;
 GtkWidget * scrolledWindowCredential;
-		
+GtkWidget * advancedZrtpButton;
+GtkWidget * keyExchangeCombo;
+GtkWidget * useSipTlsCheckBox;
+            	
 // Credentials
 enum {
     COLUMN_CREDENTIAL_REALM,
@@ -88,7 +94,7 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
     gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)), -1);
 }
 
-static GtkWidget * createAccountTab(account_t **a) 
+static GtkWidget * create_account_tab(account_t **a) 
 {
 	GtkWidget * frame;
 	GtkWidget * table;
@@ -100,8 +106,8 @@ static GtkWidget * createAccountTab(account_t **a)
 
 	// Default settings
 	gchar * curAccountID = "";
-	gchar * curAccountEnabled = "TRUE";
-	gchar * curAccountResolveOnce = "FALSE";
+	gchar * curAccountEnabled = "true";
+	gchar * curAccountResolveOnce = "false";
 	gchar * curAccountType = "SIP";
 	gchar * curAlias = "";
 	gchar * curUsername = "";
@@ -154,7 +160,7 @@ static GtkWidget * createAccountTab(account_t **a)
 
 	entryEnabled = gtk_check_button_new_with_mnemonic(_("_Enable this account"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled),
-			g_strcasecmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE);
+			g_strcasecmp(curAccountEnabled,"true") == 0 ? TRUE: FALSE);
 	gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_widget_set_sensitive( GTK_WIDGET( entryEnabled ) , TRUE );
 
@@ -261,10 +267,16 @@ static void fill_treeview_with_credential(GtkListStore * credentialStore, accoun
         gtk_list_store_append (credentialStore, &iter);
 
         /* This is the default, undeletable credential */
-        if(g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME) == NULL) {
+        gchar * authentication_name = g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME);
+        gchar * realm = g_hash_table_lookup(account->properties, ACCOUNT_REALM);        
+        if (realm == NULL || (g_strcmp0(realm, "") == 0)) {
+            realm = g_strdup("*");
+        }
+        
+        if((authentication_name == NULL) || (g_strcmp0(authentication_name, "") == 0)) {
             DEBUG("DEFAULT");
             gtk_list_store_set(credentialStore, &iter,
-                    COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(account->properties, ACCOUNT_REALM), 
+                    COLUMN_CREDENTIAL_REALM, realm, 
                     COLUMN_CREDENTIAL_USERNAME, gtk_entry_get_text(GTK_ENTRY(entryUsername)),
                     COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),    
                     COLUMN_CREDENTIAL_DATA, account, 
@@ -383,10 +395,34 @@ static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editabl
     gtk_entry_set_visibility(GTK_ENTRY(editable), FALSE);
 }
 
-GtkWidget * createAdvancedTab(account_t **a)
+static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
+{
+    DEBUG("Advanced options for ZRTP");
+    show_advanced_zrtp_options((GHashTable *) data);
+}
+
+static void show_advanced_tls_options_cb(GtkWidget *widget UNUSED, gpointer data)
+{
+    DEBUG("Advanced options for TLS");
+    show_advanced_tls_options((GHashTable *) data);
+}
+
+static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
+{
+    DEBUG("Key exchange changed");
+    if (g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo)), (gchar *) "ZRTP") == 0) {
+        gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), TRUE);
+    } else {
+        gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
+        
+    }
+}
+
+GtkWidget * create_advanced_tab(account_t **a)
 {
 	GtkWidget * frame;
 	GtkWidget * table;
+	GtkWidget * label;
 	GtkWidget * ret;
 	GtkWidget * hbox;
 	GtkWidget * editButton;
@@ -395,41 +431,62 @@ GtkWidget * createAdvancedTab(account_t **a)
     GtkTreeViewColumn * treeViewColumn;
     GtkTreeSelection * treeSelection;
     GtkRequisition requisitionTable;
-    GtkRequisition requisitionTreeView;    
-
+    GtkRequisition requisitionTreeView;
 	
 	ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
     
 	account_t * currentAccount;
-
-	// Default settings
-	gchar * curAccountResolveOnce = "FALSE"; 
-	gchar * curAccountExpire = "600"; 
-
 	currentAccount = *a;
-
+	
+    gchar * curSRTPEnabled = NULL;
+    gchar * curKeyExchange = NULL;
+    gchar * curAccountResolveOnce = NULL;
+    gchar * curAccountExpire = NULL;
+    gchar * curTLSEnabled = NULL;
+    
 	// Load from SIP/IAX/Unknown ?
 	if(currentAccount) {
 		curAccountResolveOnce = g_hash_table_lookup(currentAccount->properties, ACCOUNT_RESOLVE_ONCE);
+		if (curAccountResolveOnce == NULL) {
+		    curAccountResolveOnce = "false";
+		}
 		curAccountExpire = g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTRATION_EXPIRE);
+		if (curAccountExpire == NULL) {
+		    curAccountExpire = "600";
+		}		
+		
+        curKeyExchange = g_hash_table_lookup(currentAccount->properties, ACCOUNT_KEY_EXCHANGE);
+		if (curKeyExchange == NULL) {
+		    curKeyExchange = "none";
+		}		
+		      		  
+        curSRTPEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SRTP_ENABLED);
+        if (curSRTPEnabled == NULL) {
+            curSRTPEnabled = "false";
+        }
+        
+        curTLSEnabled = g_hash_table_lookup(currentAccount->properties, TLS_ENABLE);
+        if (curTLSEnabled == NULL) {
+            curTLSEnabled = "false";
+        }        
 	} 
 
     gnome_main_section_new_with_table (_("Registration Options"), &frame, &table, 2, 3);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
 	label = gtk_label_new_with_mnemonic (_("Registration _expire"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
+	gtk_table_attach_defaults( GTK_TABLE( table ), label, 0, 1, 0, 1);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryExpire = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryExpire);
 	gtk_entry_set_text(GTK_ENTRY(entryExpire), curAccountExpire);
-	gtk_table_attach ( GTK_TABLE( table ), entryExpire, 1, 2, 0, 1, GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
+	gtk_table_attach_defaults( GTK_TABLE( table ), entryExpire, 1, 2, 0, 1);
 
-	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Conform to RFC 3263"));
+	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Comply with RFC 3263"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),
-			g_strcasecmp(curAccountResolveOnce,"FALSE") == 0 ? TRUE: FALSE);
-	gtk_table_attach ( GTK_TABLE( table ), entryResolveNameOnlyOnce, 0, 2, 1, 2, GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
+			g_strcasecmp(curAccountResolveOnce,"false") == 0 ? TRUE: FALSE);
+	gtk_table_attach_defaults( GTK_TABLE( table ), entryResolveNameOnlyOnce, 0, 2, 1, 2);
 	gtk_widget_set_sensitive( GTK_WIDGET( entryResolveNameOnlyOnce ) , TRUE );
 
     gtk_widget_show_all( table );
@@ -440,13 +497,13 @@ GtkWidget * createAdvancedTab(account_t **a)
     /* Credentials tree view */
     gnome_main_section_new_with_table (_("Credential informations"), &frame, &table, 1, 1);
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-	gtk_table_set_row_spacings (GTK_TABLE(table), 10);
+	gtk_table_set_row_spacings(GTK_TABLE(table), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 	
     scrolledWindowCredential = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindowCredential), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindowCredential), GTK_SHADOW_IN);
-    gtk_table_attach (GTK_TABLE(table), scrolledWindowCredential, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach_defaults (GTK_TABLE(table), scrolledWindowCredential, 0, 1, 0, 1);
     
     credentialStore = gtk_list_store_new(COLUMN_CREDENTIAL_COUNT,
             G_TYPE_STRING,  // Realm
@@ -500,7 +557,7 @@ GtkWidget * createAdvancedTab(account_t **a)
         
     /* Credential Buttons */    
     hbox = gtk_hbox_new(FALSE, 10);
-    gtk_table_attach (GTK_TABLE(table), hbox, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0, 2, 1, 2);
     
     addButton = gtk_button_new_from_stock (GTK_STOCK_ADD);
     g_signal_connect (addButton, "clicked", G_CALLBACK (add_credential_cb), credentialStore);
@@ -509,12 +566,61 @@ GtkWidget * createAdvancedTab(account_t **a)
     deleteCredButton = gtk_button_new_from_stock (GTK_STOCK_REMOVE);
     g_signal_connect (deleteCredButton, "clicked", G_CALLBACK (delete_credential_cb), treeViewCredential);
     gtk_box_pack_start(GTK_BOX(hbox), deleteCredButton, FALSE, FALSE, 0);
-                       	
+ 
+ 	 /* SRTP Section */
+    gnome_main_section_new_with_table (_("Security"), &frame, &table, 2, 3);
+	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+	gtk_table_set_row_spacings (GTK_TABLE(table), 10);
+    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+
+    DEBUG("is TLS enabled ? %s", curTLSEnabled);
+	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTLSEnabled, "false") == 0) ? FALSE:TRUE);
+	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
+	
+	GtkWidget * sipTlsAdvancedButton;
+	sipTlsAdvancedButton = gtk_button_new_from_stock(GTK_STOCK_EDIT);
+    gtk_table_attach_defaults(GTK_TABLE(table), sipTlsAdvancedButton, 2, 3, 0, 1);
+	//gtk_widget_set_sensitive(GTK_WIDGET(sipsTlsAdvancedButton), curTlsEnable);    
+    g_signal_connect(G_OBJECT(sipTlsAdvancedButton), "clicked", G_CALLBACK(show_advanced_tls_options_cb), currentAccount->properties);
+       	    
+    label = gtk_label_new_with_mnemonic (_("SRTP key exchange"));
+ 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    keyExchangeCombo = gtk_combo_box_new_text();
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), keyExchangeCombo);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "ZRTP");
+    //gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "SDES");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), _("Disabled"));      
+    
+    advancedZrtpButton = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
+    g_signal_connect(G_OBJECT(advancedZrtpButton), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb), currentAccount->properties);
+        
+    if (g_strcmp0(curSRTPEnabled, "false") == 0)
+    {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
+        gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
+    } else {
+        if (strcmp(curKeyExchange, ZRTP) == 0) {
+            gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
+        } else {
+            gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
+            gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
+        }
+    }
+    
+	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), currentAccount);
+    
+    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 1, 2);    
+    gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 1, 2);
+	
     gtk_widget_show_all(ret);
+    
 	return ret;
 }
 
-static GPtrArray * getNewCredential(account_t * account)
+static GPtrArray * getNewCredential(GHashTable * properties)
 {
     GtkTreeIter iter;
     gboolean valid;
@@ -535,9 +641,9 @@ static GPtrArray * getNewCredential(account_t * account)
                         COLUMN_CREDENTIAL_PASSWORD, &password,
                         -1);
 
-    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_REALM), realm);
-    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
-    g_hash_table_insert(account->properties, g_strdup(ACCOUNT_PASSWORD), password);
+    g_hash_table_insert(properties, g_strdup(ACCOUNT_REALM), realm);
+    g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
+    g_hash_table_insert(properties, g_strdup(ACCOUNT_PASSWORD), password);
   
     valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
                                      
@@ -579,10 +685,10 @@ show_account_window (account_t * a)
 	dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
 				GTK_WINDOW(get_main_window()),
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-				GTK_STOCK_APPLY,
-				GTK_RESPONSE_ACCEPT,
-				GTK_STOCK_CANCEL,
+	    		GTK_STOCK_CANCEL,
 				GTK_RESPONSE_CANCEL,
+				GTK_STOCK_APPLY,				
+				GTK_RESPONSE_ACCEPT,
 				NULL));
 
 	gtk_dialog_set_has_separator(dialog, TRUE);
@@ -594,15 +700,15 @@ show_account_window (account_t * a)
 	gtk_widget_show(notebook);
 
 	/* General Settings */
-	tab = createAccountTab(&currentAccount);
+	tab = create_account_tab(&currentAccount);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-
+	
 	/* Advanced */
-	tab = createAdvancedTab(&currentAccount);
+	tab = create_advanced_tab(&currentAccount);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Advanced")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-
+	
 	gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -613,10 +719,10 @@ show_account_window (account_t * a)
 
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_ENABLED),
-				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "TRUE": "FALSE"));
+				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "true": "false"));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_RESOLVE_ONCE),
-				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "FALSE": "TRUE"));
+				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "false": "true"));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_ALIAS),
 				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryAlias))));
@@ -667,8 +773,20 @@ show_account_window (account_t * a)
 			if(!flag)
 			{
 				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), (gchar*)"");
-				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), "FALSE");
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), "false");
 			}
+			
+			gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
+            if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
+            } else {
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
+            }
+    		
+    	    DEBUG("TLS enable %s saved to file", (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
+    		g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
+    		g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
 
 			config_window_set_stun_visible();
 		}
@@ -684,7 +802,7 @@ show_account_window (account_t * a)
         */
         dbus_delete_all_credential(currentAccount);
         
-        GPtrArray * credential = getNewCredential(a);         
+        GPtrArray * credential = getNewCredential(currentAccount->properties);         
         currentAccount->credential_information = credential;
         if(currentAccount->credential_information != NULL) {
             int i;

@@ -53,6 +53,7 @@ struct _wizard
   GtkWidget *test;
   GtkWidget *state;
   GtkWidget *mailbox;
+  GtkWidget *zrtp_enable;
   /** Page 3 - IAX account creation */
   GtkWidget *iax_account;
   GtkWidget *iax_alias;

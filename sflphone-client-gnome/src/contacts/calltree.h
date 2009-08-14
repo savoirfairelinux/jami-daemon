@@ -24,6 +24,11 @@
 #include <calltab.h>
 #include <mainwindow.h>
 
+#define SFLPHONE_HIG_MARGIN 10
+#define CALLTREE_CALL_ICON_WIDTH 24
+#define CALLTREE_SECURITY_ICON_WIDTH 24
+#define CALLTREE_TEXT_WIDTH (MAIN_WINDOW_WIDTH - CALLTREE_SECURITY_ICON_WIDTH - CALLTREE_CALL_ICON_WIDTH - (2*SFLPHONE_HIG_MARGIN))
+
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
   */

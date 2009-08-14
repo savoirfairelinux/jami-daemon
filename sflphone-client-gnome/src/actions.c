@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 guint voice_mails;
+GHashTable * ip2ip_profile=NULL;
 
     void
 sflphone_notify_voice_mail ( const gchar* accountID , guint count )
@@ -141,6 +142,7 @@ sflphone_hung_up( callable_obj_t * c)
     calllist_remove( current_calls, c->_callID);
     calltree_remove_call(current_calls, c);
     c->_state = CALL_STATE_DIALING;
+    call_remove_all_errors(c);
     update_menus();
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
@@ -184,6 +186,10 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         if( details == NULL )
             break;
         a->properties = details;
+        
+        GHashTable * tlsSettings = NULL;
+        tlsSettings = dbus_get_tls_settings(a->accountID);
+        a->tlsSettings = tlsSettings;
         
         /* As this function might be called numberous time, we should free the 
          * previously allocated space to avoid memory leaks.
@@ -274,11 +280,24 @@ gboolean sflphone_init()
         // Fetch the configured accounts
         sflphone_fill_account_list(FALSE);
 
+        // Fetch the ip2ip profile 
+        sflphone_fill_ip2ip_profile();
+        
         // Fetch the audio codecs
         sflphone_fill_codec_list();
 
         return TRUE;
     }
+}
+
+void sflphone_fill_ip2ip_profile(void)
+{
+    ip2ip_profile = (GHashTable *) dbus_get_ip2_ip_details();
+}
+
+GHashTable * sflphone_get_ip2ip_properties(void) 
+{
+    return ip2ip_profile;
 }
 
     void
@@ -294,6 +313,7 @@ sflphone_hang_up()
                 break;
             case CALL_STATE_RINGING:
                 dbus_hang_up (selectedCall);
+                call_remove_all_errors(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 //selectedCall->_stop = 0;
                 break;
@@ -302,20 +322,24 @@ sflphone_hang_up()
             case CALL_STATE_BUSY:
             case CALL_STATE_RECORD:
                 dbus_hang_up (selectedCall);
+                call_remove_all_errors(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 set_timestamp (&selectedCall->_time_stop);
                 break;
             case CALL_STATE_FAILURE:
                 dbus_hang_up (selectedCall);
+                call_remove_all_errors(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 break;
             case CALL_STATE_INCOMING:
                 dbus_refuse (selectedCall);
+                call_remove_all_errors(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 DEBUG("from sflphone_hang_up : "); stop_notification();
                 break;
             case CALL_STATE_TRANSFERT:
                 dbus_hang_up (selectedCall);
+                call_remove_all_errors(selectedCall);
                 set_timestamp (&selectedCall->_time_stop);
                 break;
             default:
@@ -588,7 +612,7 @@ sflphone_new_call()
     callable_obj_t *c;
     gchar *peer_name, *peer_number;
 
-    DEBUG("sflphone_new_call\n");
+    DEBUG("sflphone_new_call");
     sflphone_on_hold();
 
     // Play a tone when creating a new call
@@ -614,7 +638,7 @@ sflphone_keypad( guint keyval, gchar * key)
 
     if((active_calltree != current_calls) || (active_calltree == current_calls && !c))
     {
-        // Not in a call, not dialing, create a new call
+        DEBUG("Not in a call, not dialing, create a new call");
         //dbus_play_dtmf(key);
         switch (keyval)
         {
@@ -630,11 +654,11 @@ sflphone_keypad( guint keyval, gchar * key)
     }
     else if(c)
     {
-        DEBUG("call");
+        DEBUG("Call is non-zero");
         switch(c->_state)
         {
             case CALL_STATE_DIALING: // Currently dialing => edit number
-                DEBUG("Writing a number\n");
+                DEBUG("Writing a number");
                 process_dialing(c, keyval, key);
                 break;
             case CALL_STATE_RECORD:
@@ -736,87 +760,115 @@ sflphone_keypad( guint keyval, gchar * key)
  * If there is no default account selected, place a call with the first
  * registered account of the account list
  * Else, check if it an IP call. if not, popup an error message
+ *
  */
+ 
+static gboolean _is_direct_call(callable_obj_t * c) {
+
+    if(g_strcasecmp(c->_accountID, EMPTY_ENTRY) == 0) {
+        if(!g_str_has_prefix (c->_peer_number, "sip:")) {
+            gchar * new_number = g_strconcat("sip:", c->_peer_number, NULL);
+            g_free(c->_peer_number);
+            c->_peer_number = new_number;
+        }
+        return 1;
+    }
+
+    if(g_str_has_prefix (c->_peer_number, "sip:")) {
+        return 1;
+    }
+
+    return 0;
+}
+
+static int _place_direct_call(const callable_obj_t * c) {
+    if (c->_state == CALL_STATE_DIALING) {
+        dbus_place_call (c);
+    } else {
+        return -1;
+    }
+    return 0;
+}
+
+static int _place_registered_call(callable_obj_t * c) {
+
+    account_t * current = NULL;
+  
+    if(c == NULL) {
+        DEBUG("callable_obj_t is NULL in _place_registered_call");
+        return -1;
+    }
+    
+    if (c->_state != CALL_STATE_DIALING) {
+        return -1;
+    }
+  
+    if(g_strcasecmp(c->_peer_number, "") == 0) {
+        return -1;
+    }
+    
+    if( account_list_get_size() == 0 ) {
+        notify_no_accounts();
+        sflphone_fail(c);
+        return -1;
+    } 
+    
+    if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL ) {
+        notify_no_registered_accounts();
+        sflphone_fail(c);
+        return -1;
+    }
+    
+    if(g_strcasecmp(c->_accountID, "") != 0) {
+        current = account_list_get_by_id(c->_accountID);
+    } else {
+        current = account_list_get_current();
+    }
+
+    if(current == NULL) { 
+        DEBUG("Unexpected condition: account_t is NULL in %s at %d for accountID %s", __FILE__, __LINE__, c->_accountID);
+        return -1;
+    }   
+                        
+    if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0) {
+        /* The call is made with the current account */
+        c->_accountID = current->accountID;
+        dbus_place_call(c);
+    } else {
+       /* Place the call with the first registered account
+        * and switch the current account.
+        * If we are here, we can be sure that there is at least one. 
+        */
+        current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
+        c->_accountID = current->accountID;
+        dbus_place_call(c);
+        notify_current_account( current );
+    }        
+
+    c->_history_state = OUTGOING;
+    calllist_add(history, c);                
+    return 0;
+}
+
     void
 sflphone_place_call ( callable_obj_t * c )
 {
+    DEBUG("Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
+    
+    if(c == NULL) {
+        DEBUG("Unexpected condition: callable_obj_t is null in %s at %d", __FILE__, __LINE__);
+        return;
+    }
 
-    if (c)
-    {
-
-        if (c->_state == CALL_STATE_DIALING && g_str_has_prefix (c->_peer_number, "sip:"))
-        {
-            dbus_place_call (c);
+    if(_is_direct_call(c)) {
+        if(_place_direct_call(c) < 0) {
+            DEBUG("An error occured while placing direct call in %s at %d", __FILE__, __LINE__);
+            return;
         }
-
-        else {
-
-            if(c->_state == CALL_STATE_DIALING && strcmp(c->_peer_number, "") != 0)
-            {
-
-                if( account_list_get_size() == 0 )
-                {
-                    notify_no_accounts();
-                    sflphone_fail(c);
-                }
-
-                else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
-                {
-                    notify_no_registered_accounts();
-                    sflphone_fail(c);
-                }
-
-                else
-                {
-
-                    account_t * current;
-
-                    if(g_strcasecmp(c->_accountID, "") != 0) {
-                        current = account_list_get_by_id(c->_accountID);
-                    } else {
-                        current = account_list_get_current();
-                    }
-                    // DEBUG("sflphone_place_call :: c->accountID : %i",c->accountID);
-
-                    // account_t * current = c->accountID;
-
-
-                    if( current )
-                    {
-
-                        if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
-                        {
-                            // OK, everything alright - the call is made with the current account
-                            c->_accountID = current -> accountID;
-                            dbus_place_call(c);
-                        }
-                        else
-                        {
-                            // Current account is not registered
-                            // So we place a call with the first registered account
-                            // And we switch the current account
-                            current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-                            c->_accountID = current -> accountID;
-                            dbus_place_call(c);
-                            notify_current_account( current );
-                        }
-                    }
-                    else
-                    {
-
-                        // No current accounts have been setup.
-                        // So we place a call with the first registered account
-                        // and we change the current account
-                        current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-                        c->_accountID = current -> accountID;
-                        dbus_place_call(c);
-                        notify_current_account( current );
-                    }
-                }
-                // Update history
-                c->_history_state = OUTGOING;
-                calllist_add(history, c);
-            }
+    } else {
+        if(_place_registered_call(c) < 0) {
+            DEBUG("An error occured while placing registered call in %s at %d", __FILE__, __LINE__);
+            return;
         }
     }
 }
@@ -890,14 +942,14 @@ sflphone_fill_codec_list()
 {
     codec_list_clear();
 
-    gchar** codecs = (gchar**)dbus_codec_list();
+    gchar** codecs = NULL;
+    codecs = (gchar**)dbus_codec_list();
     gchar** order = (gchar**)dbus_get_active_codec_list();
     gchar** details;
     gchar** pl;
 
-    if (codecs)
+    if (codecs != NULL)
     {
-
         for(pl=order; *order; order++)
         {
             codec_t * c = g_new0(codec_t, 1);
@@ -959,7 +1011,7 @@ void sflphone_fill_call_list (void)
             call_details = dbus_get_call_details(callID);
             create_new_call_from_details (callID, call_details, &c);
             c->_callID = g_strdup(callID);
-
+            c->_zrtp_confirmed = FALSE;
             // Add it to the list
             DEBUG ("Add call retrieved from server side: %s\n", c->_callID);
             calllist_add (current_calls, c);
@@ -1024,5 +1076,68 @@ void sflphone_save_history (void)
 
     // Decrement the reference count
     g_hash_table_unref(result);
+}
+
+   void
+sflphone_srtp_on( callable_obj_t * c)
+{
+    c->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
+
+    calltree_update_call(current_calls, c);
+    update_menus();
+}
+
+    void
+sflphone_srtp_off( callable_obj_t * c )
+{
+    c->_srtp_state = SRTP_STATE_UNLOCKED;
+    calltree_update_call(current_calls, c);
+    update_menus();
+}
+
+    void
+sflphone_srtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean verified)
+{
+    if(c==NULL) {
+        DEBUG("Panic callable obj is NULL in %s at %d", __FILE__, __LINE__);
+    }
+    c->_sas = g_strdup(sas);
+    if(verified == TRUE) {
+        c->_srtp_state = SRTP_STATE_SAS_CONFIRMED;
+    } else {
+        c->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
+    }
+    calltree_update_call(current_calls, c);
+    update_menus();
+}
+
+    void 
+sflphone_zrtp_not_supported( callable_obj_t * c )
+{
+    DEBUG("ZRTP not supported");
+    main_window_zrtp_not_supported(c);
+}
+
+/* Method on sflphoned */
+    void 
+sflphone_set_confirm_go_clear( callable_obj_t * c )
+{
+   dbus_set_confirm_go_clear(c);
+}
+
+ void 
+sflphone_request_go_clear(void)
+{
+    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    if(selectedCall) {
+        dbus_request_go_clear(selectedCall);
+    }
+}
+
+/* Signal sent by sflphoned */
+    void 
+sflphone_confirm_go_clear( callable_obj_t * c )
+{
+    main_window_confirm_go_clear(c);
 }
 

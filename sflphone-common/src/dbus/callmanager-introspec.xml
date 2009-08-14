@@ -116,7 +116,62 @@
 
     <signal name="transferFailed">
     </signal>
+    
+    <!-- ZRTP Methods and Signals -->
+    <signal name="secureOn">
+      <arg type="s" name="callID"  direction="out" />
+      <arg type="s" name="cipher"  direction="out" />
+    </signal>
+    
+    <signal name="secureOff">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
+    
+    <signal name="confirmGoClear">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
+    
+    <signal name="zrtpNegotiationFailed">
+      <arg type="s" name="callID"  direction="out" />
+      <arg type="s" name="reason"  direction="out" />
+      <arg type="s" name="severity"  direction="out" />
+    </signal>
+    
+    <signal name="zrtpNotSuppOther">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
+    
+    <signal name="showSAS">
+      <arg type="s" name="callID"  direction="out" />
+      <arg type="s" name="sas"  direction="out" />
+      <arg type="b" name="verified"  direction="out" />
+    </signal>
  
+    <method name="setSASVerified">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="resetSASVerified">
+        <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="setConfirmGoClear">
+        <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="requestGoClear">
+        <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="acceptEnrollment">
+        <arg type="s" name="callID" direction="in"/>
+        <arg type="b" name="accepted" direction="in"/>
+    </method>
+    
+    <method name="setPBXEnrollment">
+        <arg type="s" name="callID" direction="in"/>
+        <arg type="b" name="yesNo" direction="in"/>
+    </method>
 <!--
     <signal name="error">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>

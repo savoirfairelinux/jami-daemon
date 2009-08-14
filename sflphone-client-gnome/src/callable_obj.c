@@ -69,6 +69,21 @@ gchar* call_get_peer_number (const gchar *format)
 }
 
 
+void call_add_error(callable_obj_t * call, gpointer dialog)
+{
+    g_ptr_array_add (call->_error_dialogs, dialog);
+}
+
+void call_remove_error(callable_obj_t * call, gpointer dialog)
+{
+    g_ptr_array_remove (call->_error_dialogs, dialog);
+}
+
+void call_remove_all_errors(callable_obj_t * call)
+{
+    g_ptr_array_foreach (call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
+}
+
 void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
 {
 
@@ -78,6 +93,8 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     // Allocate memory
     obj = g_new0 (callable_obj_t, 1);
 
+    obj->_error_dialogs = g_ptr_array_new();
+    
     // Set fields
     obj->_type = type;
     obj->_state = state;

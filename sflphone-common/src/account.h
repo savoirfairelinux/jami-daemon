@@ -48,32 +48,57 @@ typedef enum RegistrationState {
         ErrorNetwork , 
         ErrorHost, 
         ErrorExistStun, 
-        ErrorConfStun
+        ErrorConfStun,
+        NumberOfState
 } RegistrationState;
 
 #define AccountNULL ""
 
 // Common account parameters
-#define CONFIG_ACCOUNT_TYPE   "Account.type"  
-#define CONFIG_ACCOUNT_ALIAS  "Account.alias"
-#define CONFIG_ACCOUNT_MAILBOX	"Account.mailbox"
-#define CONFIG_ACCOUNT_ENABLE	"Account.enable"
-#define CONFIG_ACCOUNT_RESOLVE_ONCE "Account.resolveOnce"
-#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
-#define CONFIG_CREDENTIAL_NUMBER "Credential.count"
+#define CONFIG_ACCOUNT_TYPE                 "Account.type"  
+#define CONFIG_ACCOUNT_ALIAS                "Account.alias"
+#define CONFIG_ACCOUNT_MAILBOX	            "Account.mailbox"
+#define CONFIG_ACCOUNT_ENABLE               "Account.enable"
+#define CONFIG_ACCOUNT_RESOLVE_ONCE         "Account.resolveOnce"
+#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE  "Account.expire"
+#define CONFIG_CREDENTIAL_NUMBER            "Credential.count"
 
-#define HOSTNAME        "hostname"
-#define USERNAME        "username"
-#define AUTHENTICATION_USERNAME "authenticationUsername"
-#define PASSWORD        "password"
-#define REALM           "realm"
+#define HOSTNAME                            "hostname"
+#define USERNAME                            "username"
+#define AUTHENTICATION_USERNAME             "authenticationUsername"
+#define PASSWORD                            "password"
+#define REALM                               "realm"
+#define DEFAULT_REALM                       "*"
 
 // SIP specific parameters
-#define SIP_PROXY             "SIP.proxy"
-#define SIP_STUN_SERVER       "STUN.server"
-#define SIP_USE_STUN          "STUN.enable"
-#define SIP_STUN_PORT         "STUN.port"
+#define SIP_PROXY                           "SIP.proxy"
+#define SIP_STUN_SERVER                     "STUN.server"
+#define SIP_USE_STUN                        "STUN.enable"
+#define SIP_STUN_PORT                       "STUN.port"
 
+// SRTP specific parameters
+#define SRTP_ENABLE                         "SRTP.enable"
+#define SRTP_KEY_EXCHANGE                   "SRTP.keyExchange"
+#define SRTP_ENCRYPTION_ALGO                "SRTP.encryptionAlgorithm"  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8 
+#define ZRTP_HELLO_HASH                     "ZRTP.helloHashEnable"
+#define ZRTP_DISPLAY_SAS                    "ZRTP.displaySAS"
+#define ZRTP_NOT_SUPP_WARNING               "ZRTP.notSuppWarning"
+#define ZRTP_DISPLAY_SAS_ONCE               "ZRTP.displaySasOnce"
+
+#define TLS_ENABLE                          "TLS.enable"
+#define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
+#define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
+#define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
+#define TLS_PASSWORD                        "TLS.password"
+#define TLS_METHOD                          "TLS.method"
+#define TLS_CIPHERS                         "TLS.ciphers"
+#define TLS_SERVER_NAME                     "TLS.serverName"
+#define TLS_VERIFY_SERVER                   "TLS.verifyServer"
+#define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
+#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
+#define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
+#define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
+    
 class Account{
 
     public:

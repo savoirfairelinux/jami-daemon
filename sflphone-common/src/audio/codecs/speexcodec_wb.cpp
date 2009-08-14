@@ -125,10 +125,10 @@ class Speex : public AudioCodec
             speex_preprocess_run (_preprocess_state, src);
 #endif
 
-            printf ("Codec::codecEncode() size %i\n", size);
+            //printf ("Codec::codecEncode() size %i\n", size);
             speex_encode_int (_speex_enc_state, src, &_speex_enc_bits);
             int nbBytes = speex_bits_write (&_speex_enc_bits, (char*) dst, size);
-            printf ("Codec::codecEncode() nbBytes %i\n", nbBytes);
+            //printf ("Codec::codecEncode() nbBytes %i\n", nbBytes);
             return nbBytes;
         }
 

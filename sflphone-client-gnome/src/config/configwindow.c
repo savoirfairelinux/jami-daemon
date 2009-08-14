@@ -3,6 +3,7 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,11 +33,11 @@
 #include <addressbook-config.h>
 #include <hooks-config.h>
 #include <utils.h>
+#include <ip2ipdialog.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 
 /**
  * Local variables
@@ -46,6 +47,7 @@ gboolean dialogOpen = FALSE;
 gboolean ringtoneEnabled = TRUE;
 
 GtkListStore *accountStore;
+
 // instead of keeping selected codec as a variable
 GtkWidget *addButton;
 GtkWidget *editButton;
@@ -94,6 +96,17 @@ config_window_fill_account_list()
         GtkTreeIter iter;
 
         gtk_list_store_clear(accountStore);
+        
+        gtk_list_store_append (accountStore, &iter);
+
+        gtk_list_store_set(accountStore, &iter,
+                COLUMN_ACCOUNT_ALIAS, (gchar *) _("Direct calls account"),
+                COLUMN_ACCOUNT_TYPE, (gchar *) _("SIP"),   // Protocol
+                COLUMN_ACCOUNT_STATUS, (gchar *) _("Active"),      // Status
+                COLUMN_ACCOUNT_ACTIVE, TRUE,  // Enable/Disable
+                COLUMN_ACCOUNT_DATA, NULL,   // Pointer
+                -1);
+                        
         unsigned int i;
         for(i = 0; i < account_list_get_size(); i++) {
             account_t * a = account_list_get_nth (i);
@@ -101,11 +114,13 @@ config_window_fill_account_list()
             if (a) {
                 gtk_list_store_append (accountStore, &iter);
 
+                DEBUG("Filling accounts: Account is enabled :%s\n", g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
+                
                 gtk_list_store_set(accountStore, &iter,
                         COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
                         COLUMN_ACCOUNT_TYPE, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
                         COLUMN_ACCOUNT_STATUS, account_state_name(a->state),      // Status
-                        COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"TRUE") == 0)? TRUE:FALSE,  // Enable/Disable
+                        COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"true") == 0)? TRUE:FALSE,  // Enable/Disable
                         COLUMN_ACCOUNT_DATA, a,   // Pointer
                         -1);
             }
@@ -140,29 +155,43 @@ edit_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
     if(selectedAccount)
     {
         show_account_window(selectedAccount);
+    } else {
+        GHashTable * properties = NULL;
+        properties = sflphone_get_ip2ip_properties();
+        if (properties != NULL) {
+            show_ip2ip_dialog(properties);
+        }
     }
 }
 
 /**
  * Add an account
  */
-    static void
+static void
 add_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
     show_account_window(NULL);
 }
 
-    void
+static void
+set_md5_hash_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
+{
+    gboolean enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    dbus_set_md5_credential_hashing(enabled);
+}
+
+static void
 start_hidden( void )
 {
     dbus_start_hidden();
 }
 
-    void
+static void
 set_popup_mode( void )
 {
     dbus_switch_popup_mode();
 }
+
 
     void
 set_notif_level(  )
@@ -214,6 +243,17 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
     GtkTreeIter iter;
     GValue val;
 
+    GtkTreePath *path;
+    if(gtk_tree_selection_get_selected (selection, NULL, &iter)) {
+        path = gtk_tree_model_get_path (model, &iter);
+        if(gtk_tree_path_get_indices (path)[0] == 0) {
+            gtk_widget_set_sensitive(GTK_WIDGET(editButton), TRUE);
+            gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), FALSE);
+            gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), FALSE);
+            gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), FALSE);
+        }
+    }
+    
     memset (&val, 0, sizeof(val));
     if (!gtk_tree_selection_get_selected(selection, &model, &iter))
     {
@@ -252,25 +292,35 @@ enable_account(GtkCellRendererToggle *rend UNUSED, gchar* path,  gpointer data )
     treePath = gtk_tree_path_new_from_string(path);
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
     gtk_tree_model_get_iter(model, &iter, treePath);
+    
+    if (gtk_tree_path_get_indices (treePath)[0] != 0) {
+        // Get pointer on object
+        gtk_tree_model_get(model, &iter,
+                COLUMN_ACCOUNT_ACTIVE, &enable,
+                COLUMN_ACCOUNT_DATA, &acc,
+                -1);
+        enable = !enable;
 
-    // Get pointer on object
-    gtk_tree_model_get(model, &iter,
-            COLUMN_ACCOUNT_ACTIVE, &enable,
-            COLUMN_ACCOUNT_DATA, &acc,
-            -1);
-    enable = !enable;
+        DEBUG("Account is %d enabled", enable);
+        // Store value
+        gtk_list_store_set(GTK_LIST_STORE(model), &iter,
+                COLUMN_ACCOUNT_ACTIVE, enable,
+                -1);
 
-    // Store value
-    gtk_list_store_set(GTK_LIST_STORE(model), &iter,
-            COLUMN_ACCOUNT_ACTIVE, enable,
-            -1);
+        gtk_tree_path_free(treePath);
 
-    gtk_tree_path_free(treePath);
+        // Modify account state
+        gchar * registrationState;
+        if (enable == TRUE) {
+            registrationState = g_strdup("true");
+        } else {
+            registrationState = g_strdup("false");
+        }
+        DEBUG("Replacing with %s\n", registrationState);
+        g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED), registrationState);
 
-    // Modify account state
-    g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
-
-    dbus_send_register( acc->accountID , enable );
+        dbus_send_register(acc->accountID, enable);
+    }
 }
 
 /**
@@ -352,13 +402,7 @@ account_move_down(GtkButton *button UNUSED, gpointer data)
     account_move(FALSE, data);
 }
 
-    static void
-set_pulse_app_volume_control( void )
-{
-    dbus_set_pulse_app_volume_control();
-}
-
-static void update_port( GtkSpinButton *button UNUSED, void *ptr )
+static void update_port_cb ( GtkSpinButton *button UNUSED, void *ptr )
 {
     dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
 }
@@ -371,9 +415,9 @@ create_accounts_tab(GtkDialog * dialog)
 {
     GtkWidget *table;
     GtkWidget *scrolledWindow;
-    GtkWidget *treeView;
     GtkWidget *buttonBox;
     GtkCellRenderer *renderer;
+    GtkTreeView * treeView;
     GtkTreeViewColumn *treeViewColumn;
     GtkTreeSelection *treeSelection;
     GtkRequisition requisition;
@@ -474,7 +518,7 @@ create_accounts_tab(GtkDialog * dialog)
     config_window_fill_account_list();
 
     gtk_widget_size_request(GTK_WIDGET(treeView), &requisition);
-    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindow), requisition.width, requisition.height);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindow), requisition.width + 20, requisition.height);
     
     gtk_widget_show_all(table);
     
@@ -506,10 +550,10 @@ void update_registration( void )
     dbus_set_stun_server((gchar *)gtk_entry_get_text(GTK_ENTRY(stunServer)));
     dbus_enable_stun();
 
-    gtk_widget_set_sensitive(GTK_WIDGET( applyButton ) , FALSE );
+    gtk_widget_set_sensitive(GTK_WIDGET(applyButton) , FALSE );
 }
 
-GtkWidget* create_stun_tab()
+GtkWidget* create_network_tab()
 {
     GtkWidget * frame;
     GtkWidget * table;
@@ -517,7 +561,7 @@ GtkWidget* create_stun_tab()
     GtkWidget * ret;
     gchar * description;
     gchar * stun_server= "stun.sflphone.org:3478";
-    gchar * stun_enabled = "FALSE";
+    gchar * stun_enabled = "false";
 
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -527,7 +571,7 @@ GtkWidget* create_stun_tab()
     gtk_widget_show (frame);
     
     /* Retrieve the STUN configuration */
-    stun_enabled = (dbus_stun_is_enabled()==1)?"TRUE":"FALSE";
+    stun_enabled = (dbus_stun_is_enabled()==1)?"true":"false";
     stun_server = dbus_get_stun_server();
     
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
@@ -536,11 +580,11 @@ GtkWidget* create_stun_tab()
     // NAT detection code section
     description = g_markup_printf_escaped(_("STUN will apply to each SIP account created.\nIt will be effective only after pressing \"apply\", closing all sessions."));
     label = gtk_label_new(NULL);
-    gtk_label_set_markup(label, description);
+    gtk_label_set_markup(GTK_LABEL(label), description);
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     stunEnable = gtk_check_button_new_with_mnemonic( _("E_nable STUN"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"TRUE") == 0 ? TRUE: FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"true") == 0 ? TRUE: FALSE);
     g_signal_connect( G_OBJECT (GTK_TOGGLE_BUTTON(stunEnable)) , "toggled" , G_CALLBACK( stun_state ), NULL);
 #if GTK_CHECK_VERSION(2,12,0)
     gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("You should probably enable this if you are behind a firewall."));
@@ -563,7 +607,34 @@ GtkWidget* create_stun_tab()
 #endif
     g_signal_connect( G_OBJECT( applyButton) , "clicked" , update_registration , NULL);
     gtk_table_attach ( GTK_TABLE( table ), applyButton, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-        
+ 
+    /** SIP port information */
+    int curPort = dbus_get_sip_port();
+    if(curPort <= 0 || curPort > 65535) {
+        curPort = 5060; 
+    }
+    
+    int account_number = account_list_get_sip_account_number();
+    DEBUG("sip account number = %i", account_number);
+    
+    gnome_main_section_new_with_table (_("SIP Port"), &frame, &table, 1, 3);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+    gtk_widget_set_sensitive(GTK_WIDGET(frame),(account_number == 0) ? FALSE:TRUE);
+
+    GtkWidget *applySipPortButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+    GtkWidget *entryPort; 
+    
+    label = gtk_label_new(_("UDP Transport"));
+ 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
+    g_signal_connect( G_OBJECT( applySipPortButton) , "clicked" , G_CALLBACK( update_port_cb ) , entryPort);
+
+    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_table_attach( GTK_TABLE(table), entryPort, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    gtk_table_attach( GTK_TABLE(table), applySipPortButton, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    
     gtk_widget_show_all(ret);
 
     return ret;
@@ -573,20 +644,14 @@ GtkWidget* create_stun_tab()
 create_general_settings ()
 {
 
-    int curPort;
-    int n;
-
     GtkWidget *ret;
 
     GtkWidget *notifAll;
-    // GtkWidget *widg;
 
-    GtkWidget *mutewidget;
     GtkWidget *trayItem;
     GtkWidget *frame;
-    GtkWidget *history_w;
+    GtkWidget *checkBoxWidget;
     GtkWidget *label;
-    GtkWidget *entryPort;
     GtkWidget *table;
 
     // Load history configuration
@@ -640,111 +705,28 @@ create_general_settings ()
     gnome_main_section_new_with_table (_("Calls History"), &frame, &table, 3, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    history_w = gtk_check_button_new_with_mnemonic(_("_Keep my history for at least"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (history_w), history_enabled);
-    g_signal_connect (G_OBJECT (history_w) , "clicked" , G_CALLBACK (history_enabled_cb) , NULL);
-    gtk_table_attach( GTK_TABLE(table), history_w, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    checkBoxWidget = gtk_check_button_new_with_mnemonic(_("_Keep my history for at least"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkBoxWidget), history_enabled);
+    g_signal_connect (G_OBJECT (checkBoxWidget) , "clicked" , G_CALLBACK (history_enabled_cb) , NULL);
+    gtk_table_attach( GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     
     history_value = gtk_spin_button_new_with_range(1, 99, 1);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON(history_value), history_limit);
     g_signal_connect( G_OBJECT (history_value) , "value-changed" , G_CALLBACK (history_limit_cb) , history_value);
-    gtk_widget_set_sensitive (GTK_WIDGET (history_value), gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (history_w)));
+    gtk_widget_set_sensitive (GTK_WIDGET (history_value), gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (checkBoxWidget)));
     gtk_table_attach( GTK_TABLE(table), history_value, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5); 
 
     label = gtk_label_new(_("days"));
     gtk_table_attach( GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    
-    /** PULSEAUDIO CONFIGURATION */
-    gnome_main_section_new_with_table (_("PulseAudio sound server"), &frame, &table, 1, 1);
-    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-
-    mutewidget = gtk_check_button_new_with_mnemonic(_("_Mute other applications during a call"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(mutewidget), dbus_get_pulse_app_volume_control() );
-    g_signal_connect(G_OBJECT( mutewidget ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
-    gtk_table_attach( GTK_TABLE(table), mutewidget, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    
-
-    n = account_list_get_sip_account_number();
-    DEBUG("sip account number = %i", n);
-
-    /** SIP port information */
-    curPort = dbus_get_sip_port();
-    if(curPort <= 0 || curPort > 65535)
-        curPort = 5060;
-
-    gnome_main_section_new_with_table (_("SIP Port"), &frame, &table, 1, 3);
-    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-    // gtk_widget_show( frame );
-    gtk_widget_set_sensitive( GTK_WIDGET(frame), (n==0)?FALSE:TRUE );
-
-    // hbox = gtk_hbox_new(FALSE, 10);
-    // gtk_widget_show( hbox );
-    // gtk_container_add( GTK_CONTAINER(frame) , hbox);
-
-    GtkWidget *applyButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-    //gtk_widget_set_size_request(applyButton, 100, 35);
-    //gtk_widget_set_sensitive( GTK_WIDGET(applyButton), (n==0)?FALSE:TRUE );
-
-    label = gtk_label_new(_("Port"));
-    // gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
-    entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
-    g_signal_connect( G_OBJECT( applyButton) , "clicked" , G_CALLBACK( update_port ) , entryPort);
-
-    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    gtk_table_attach( GTK_TABLE(table), entryPort, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    gtk_table_attach( GTK_TABLE(table), applyButton, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-
-    gtk_widget_show_all(ret);
-
-    return ret;
-}
-
-void
-record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
-{
-    gchar* path;
-
-    path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
-    path = g_strndup (path + 7, strlen(path) - 7);
-    dbus_set_record_path( path );
-}
-
-GtkWidget*
-create_recording_settings ()
-{
-
-    GtkWidget *ret;
-    GtkWidget *label;
-    GtkWidget *table;
-    GtkWidget *savePathFrame;
-    GtkWidget *folderChooser;
-    gchar *dftPath;
-
-    /* Get the path where to save audio files */
-    dftPath = dbus_get_record_path ();
-
-    // Main widget
-    ret = gtk_vbox_new(FALSE, 10);
-    gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
-
-    // Recorded file saving path
-    gnome_main_section_new_with_table (_("General"), &savePathFrame, &table, 1, 2);
-    gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
-
-    // label
-    label = gtk_label_new(_("Destination folder"));
-    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    // gtk_misc_set_alignment(GTK_MISC(label), 0.08, 0.5);
-
-
-    // folder chooser button
-    folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( folderChooser), dftPath);
-    g_signal_connect( G_OBJECT( folderChooser ) , "selection_changed" , G_CALLBACK( record_path_changed ) , NULL );
-    gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-
+  
+    // Configuration File
+    gnome_main_section_new_with_table (_("Configuration File"), &frame, &table, 1, 1);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);    
+    checkBoxWidget = gtk_check_button_new_with_mnemonic(_("Store SIP credentials as MD5 hash"));
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(checkBoxWidget), dbus_is_md5_credential_hashing() );
+    g_signal_connect(G_OBJECT( checkBoxWidget ) , "clicked" , G_CALLBACK(set_md5_hash_cb) , NULL);
+    gtk_table_attach( GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+              
     gtk_widget_show_all(ret);
 
     return ret;
@@ -802,11 +784,6 @@ show_config_window ()
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
-    // Recording tab
-    tab = create_recording_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Recordings")));
-    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-
     // Addressbook tab
     tab = create_addressbook_settings();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
@@ -818,7 +795,7 @@ show_config_window ()
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Network tab
-    tab = create_stun_tab();
+    tab = create_network_tab();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Network")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
     

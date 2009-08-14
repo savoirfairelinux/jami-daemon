@@ -45,7 +45,6 @@ void ConfigurationTest::testDefaultValueAudio()
 void ConfigurationTest::testDefaultValuePreferences()
 {
     CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, ZONE_TONE) == DFT_ZONE);
-    CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_ZEROCONF) == CONFIG_ZEROCONF_DEFAULT_STR);
     CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_DIALPAD) == YES_STR);
     CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_RINGTONE) == YES_STR);
     CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_SEARCHBAR) == YES_STR);

@@ -20,9 +20,10 @@
 #ifndef __DBUSMANAGERIMPL_H__
 #define __DBUSMANAGERIMPL_H__
 
-#include "callmanager.h"
-#include "configurationmanager.h"
 #include "instance.h"
+
+class ConfigurationManager;
+class CallManager;
 
 class DBusManagerImpl {
     public:

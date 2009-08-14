@@ -45,7 +45,13 @@ AC_CONFIG_FILES([Makefile])
 			libs/iax2/Makefile])
 
 	AC_CONFIG_FILES([src/Makefile \
+			src/sip/Makefile \
+			src/iax/Makefile \
 			src/audio/Makefile \
+			src/audio/audiortp/Makefile \
+			src/audio/pulseaudio/Makefile \
+			src/audio/alsa/Makefile \
+			src/audio/sound/Makefile \
 			src/audio/codecs/Makefile \
 			src/config/Makefile \
 			src/dbus/Makefile \
@@ -188,6 +194,13 @@ AC_SUBST(CCEXT2_CFLAGS)
 	PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 	AC_SUBST(CCRTP_LIBS)
 AC_SUBST(CCRTP_CFLAGS)
+
+dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
+	LIBZRTPCPP_MIN_VERSION=1.3.0
+	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION})
+	AC_SUBST(ZRTPCPP_LIBS)
+	AC_SUBST(ZRTPCPP_CFLAGS)
+	
 
 dnl DBus-C++ detection (used to be in library own build system)
 	DBUS_REQUIRED_VERSION=0.60

@@ -74,6 +74,7 @@ src/config/Makefile
 src/dbus/Makefile
 src/contacts/Makefile
 src/contacts/addressbook/Makefile
+src/widget/Makefile
 pixmaps/Makefile
 sflphone.desktop
 tests/Makefile

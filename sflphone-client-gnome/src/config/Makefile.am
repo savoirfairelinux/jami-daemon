@@ -5,10 +5,13 @@ noinst_LTLIBRARIES = libconfig.la
 libconfig_la_SOURCES = \
   addressbook-config.c \
   configwindow.c \
+  zrtpadvanceddialog.c \
+  tlsadvanceddialog.c \
+  ip2ipdialog.c \
   accountwindow.c \
   hooks-config.c \
   audioconf.c \
-  utils.c
+  utils.c 
 
 libconfig_la_LDFLAGS = @DEPS_LDFLAGS@
 					  
