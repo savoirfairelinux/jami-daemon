@@ -149,6 +149,7 @@ class ConfigTree
          */
         std::string getConfigTreeItemValue (const std::string& section, const std::string& itemName);
         int getConfigTreeItemIntValue (const std::string& section, const std::string& itemName);
+        bool getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName);
 
         /**
          * Flush data to .ini file

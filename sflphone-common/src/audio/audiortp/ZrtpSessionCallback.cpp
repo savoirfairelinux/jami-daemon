@@ -143,19 +143,19 @@ namespace sfl {
         if (sev == Info) {
             msg = _infoMap[subCode];
             if (msg != NULL) {
-                _debug("ZRTP Debug:\n", msg->c_str());
+                _debug("ZRTP Debug:\n");
             }
         }
         if (sev == Warning) {
             msg = _warningMap[subCode];
             if (msg != NULL) {
-                _debug("ZRTP Debug:\n", msg->c_str());
+                _debug("ZRTP Debug:\n");
             }
         }
         if (sev == Severe) {
             msg = _severeMap[subCode];
             if (msg != NULL) {
-                _debug("ZRTP Debug:\n", msg->c_str());
+                _debug("ZRTP Debug:\n");
             }
         }
         if (sev == ZrtpError) {

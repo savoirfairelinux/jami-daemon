@@ -716,14 +716,14 @@ ManagerImpl::sendDtmf (const CallID& id, char code)
 bool
 ManagerImpl::playDtmf (char code, bool isTalking)
 {
-    int hasToPlayTone, pulselen, layer, size;
+    int pulselen, layer, size;
     bool ret = false;
     AudioLayer *audiolayer;
     SFLDataFormat *buf;
 
     stopTone (false);
 
-    hasToPlayTone = getConfigInt (SIGNALISATION, PLAY_DTMF);
+    bool hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_DTMF);
 
     if (!hasToPlayTone)
         return false;
@@ -1023,12 +1023,12 @@ void ManagerImpl::connectionStatusNotification()
  */
 bool ManagerImpl::playATone (Tone::TONEID toneId)
 {
-    int hasToPlayTone;
+    bool hasToPlayTone;
     AudioLoop *audioloop;
     AudioLayer *audiolayer;
     unsigned int nbSamples;
 
-    hasToPlayTone = getConfigInt (SIGNALISATION, PLAY_TONES);
+    hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_TONES);
 
     if (!hasToPlayTone)
         return false;
@@ -1058,9 +1058,9 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
  */
 void ManagerImpl::stopTone (bool stopAudio=true)
 {
-    int hasToPlayTone;
+    bool hasToPlayTone;
 
-    hasToPlayTone = getConfigInt (SIGNALISATION, PLAY_TONES);
+    hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_TONES);
 
     if (!hasToPlayTone)
         return;
@@ -1778,13 +1778,13 @@ ManagerImpl::isIax2Enabled (void)
 int
 ManagerImpl::isRingtoneEnabled (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_RINGTONE);
+    return (getConfigString (PREFERENCES, CONFIG_RINGTONE) == "true") ? 1:0;
 }
 
 void
 ManagerImpl::ringtoneEnabled (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_RINGTONE) == RINGTONE_ENABLED) ? setConfig (PREFERENCES , CONFIG_RINGTONE , FALSE_STR) : setConfig (PREFERENCES , CONFIG_RINGTONE , TRUE_STR);
+    (getConfigString (PREFERENCES , CONFIG_RINGTONE) == RINGTONE_ENABLED) ? setConfig (PREFERENCES , CONFIG_RINGTONE , FALSE_STR) : setConfig (PREFERENCES , CONFIG_RINGTONE , TRUE_STR);
 }
 
 std::string
@@ -1830,7 +1830,7 @@ ManagerImpl::setRecordPath (const std::string& recPath)
 bool
 ManagerImpl::getMd5CredentialHashing(void)
 {
-    return getConfigInt(PREFERENCES, CONFIG_MD5HASH);
+    return getConfigBool(PREFERENCES, CONFIG_MD5HASH);
 }
 
 void 
@@ -1871,7 +1871,7 @@ void ManagerImpl::setStunServer (const std::string &server)
 
 int ManagerImpl::isStunEnabled (void)
 {
-    return getConfigInt (SIGNALISATION , STUN_ENABLE);
+    return getConfigString(SIGNALISATION, STUN_ENABLE) == TRUE_STR ? 1:0;
 }
 
 void ManagerImpl::enableStun (void)
@@ -1921,19 +1921,19 @@ ManagerImpl::isRecording (const CallID& id)
 void
 ManagerImpl::startHidden (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_START) ==  START_HIDDEN) ? setConfig (PREFERENCES , CONFIG_START , FALSE_STR) : setConfig (PREFERENCES , CONFIG_START , TRUE_STR);
+    (getConfigString(PREFERENCES, CONFIG_START) ==  START_HIDDEN) ? setConfig(PREFERENCES , CONFIG_START , FALSE_STR) : setConfig (PREFERENCES , CONFIG_START , TRUE_STR);
 }
 
 int
 ManagerImpl::isStartHidden (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_START);
+    return (getConfigBool(PREFERENCES, CONFIG_START) == true) ? 1:0;
 }
 
 void
 ManagerImpl::switchPopupMode (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_POPUP) ==  WINDOW_POPUP) ? setConfig (PREFERENCES , CONFIG_POPUP , FALSE_STR) : setConfig (PREFERENCES , CONFIG_POPUP , TRUE_STR);
+    (getConfigString (PREFERENCES, CONFIG_POPUP) ==  WINDOW_POPUP) ? setConfig (PREFERENCES, CONFIG_POPUP, FALSE_STR) : setConfig (PREFERENCES, CONFIG_POPUP, TRUE_STR);
 }
 
 void ManagerImpl::setHistoryLimit (const int& days)
@@ -1971,25 +1971,25 @@ ManagerImpl::setSearchbar (void)
 int
 ManagerImpl::popupMode (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_POPUP);
+    return (getConfigBool(PREFERENCES, CONFIG_POPUP) == true) ? 1:0 ;
 }
 
 int32_t
 ManagerImpl::getNotify (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_NOTIFY);
+    return (getConfigBool(PREFERENCES , CONFIG_NOTIFY) == true) ? 1:0;
 }
 
 void
 ManagerImpl::setNotify (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_NOTIFY) == NOTIFY_ALL) ?  setConfig (PREFERENCES , CONFIG_NOTIFY , FALSE_STR) : setConfig (PREFERENCES , CONFIG_NOTIFY , TRUE_STR);
+    (getConfigString(PREFERENCES, CONFIG_NOTIFY) == NOTIFY_ALL) ?  setConfig (PREFERENCES, CONFIG_NOTIFY , FALSE_STR) : setConfig (PREFERENCES, CONFIG_NOTIFY , TRUE_STR);
 }
 
 int32_t
 ManagerImpl::getMailNotify (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_MAIL_NOTIFY);
+    return getConfigInt(PREFERENCES, CONFIG_MAIL_NOTIFY);
 }
 
 int32_t
@@ -2038,7 +2038,7 @@ ManagerImpl::getAudioManager (void)
 void
 ManagerImpl::setMailNotify (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_MAIL_NOTIFY) == NOTIFY_ALL) ?  setConfig (PREFERENCES , CONFIG_MAIL_NOTIFY , FALSE_STR) : setConfig (PREFERENCES , CONFIG_MAIL_NOTIFY , TRUE_STR);
+    (getConfigString (PREFERENCES , CONFIG_MAIL_NOTIFY) == NOTIFY_ALL) ?  setConfig (PREFERENCES , CONFIG_MAIL_NOTIFY , FALSE_STR) : setConfig (PREFERENCES , CONFIG_MAIL_NOTIFY , TRUE_STR);
 }
 
 void
@@ -2425,6 +2425,18 @@ ManagerImpl::getConfigInt (const std::string& section, const std::string& name)
     }
 
     return 0;
+}
+
+bool
+ManagerImpl::getConfigBool (const std::string& section, const std::string& name)
+{
+    try {
+        return (_config.getConfigTreeItemValue (section, name) == TRUE_STR) ? true:false;
+    } catch (Conf::ConfigTreeItemException& e) {
+        throw e;
+    }
+
+    return false;
 }
     
 //THREAD=Main

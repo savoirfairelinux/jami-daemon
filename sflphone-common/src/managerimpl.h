@@ -758,7 +758,17 @@ class ManagerImpl {
      */
      
     int getConfigInt(const std::string& section, const std::string& name);
-        
+ 
+  /**
+     * Get a bool from the configuration tree
+     * Throw an Conf::ConfigTreeItemException if not found
+     * @param section The section name to look in
+     * @param name    The parameter name
+     * @return bool    The bool value
+     */
+     
+    bool getConfigBool(const std::string& section, const std::string& name);
+            
     /**
      * Get a string from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found

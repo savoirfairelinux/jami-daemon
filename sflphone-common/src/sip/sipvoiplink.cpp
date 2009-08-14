@@ -1591,9 +1591,9 @@ bool SIPVoIPLink::pjsip_init()
     port = _regPort;
 
     /* Retrieve the STUN configuration */
-    useStun = Manager::instance().getConfigInt (SIGNALISATION, SIP_USE_STUN);
+    useStun = Manager::instance().getConfigBool(SIGNALISATION, SIP_USE_STUN);
     this->setStunServer (Manager::instance().getConfigString (SIGNALISATION, SIP_STUN_SERVER));
-    this->useStun (useStun!=0 ? true : false);
+    this->useStun(useStun);
 
     if (useStun && !Manager::instance().behindNat (getStunServer(), port)) {
         port = RANDOM_SIP_PORT;

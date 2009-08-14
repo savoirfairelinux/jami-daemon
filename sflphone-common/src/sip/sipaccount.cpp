@@ -72,9 +72,9 @@ int SIPAccount::registerVoIPLink()
     credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
     credentialCount += 1;
 
-    int md5HashingEnabled = 0;
+    bool md5HashingEnabled = false;
     int dataType = 0;
-    md5HashingEnabled = Manager::instance().getConfigInt(PREFERENCES, CONFIG_MD5HASH);
+    md5HashingEnabled = Manager::instance().getConfigBool(PREFERENCES, CONFIG_MD5HASH);
     std::string digest;
     if (md5HashingEnabled) {
         dataType = PJSIP_CRED_DATA_DIGEST;

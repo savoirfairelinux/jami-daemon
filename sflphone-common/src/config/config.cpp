@@ -160,6 +160,17 @@ ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::st
 }
 
 bool
+ConfigTree::getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName)
+{
+    std::string configItem = getConfigTreeItemValue (section, itemName);
+    if (configItem == "true") {
+        return true;
+    }
+
+    return false;
+}
+
+bool
 ConfigTree::getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg)
 {
     ConfigTreeItem *item = getConfigTreeItem (section, itemName);
