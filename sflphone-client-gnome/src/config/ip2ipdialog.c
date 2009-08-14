@@ -54,11 +54,11 @@ void show_ip2ip_dialog(GHashTable * properties)
     GtkWidget * advancedOptions; 
     GtkWidget * keyExchangeCombo;
     
-    gchar * curSasConfirm = "TRUE";
-    gchar * curHelloEnabled = "TRUE";
-    gchar * curZrtpNotSuppOther = "TRUE";
-    gchar * curDisplaySasOnce = "FALSE";
-    gchar * curSRTPEnabled = "FALSE";
+    gchar * curSasConfirm = "true";
+    gchar * curHelloEnabled = "true";
+    gchar * curZrtpNotSuppOther = "true";
+    gchar * curDisplaySasOnce = "false";
+    gchar * curSRTPEnabled = "false";
     gchar * curKeyExchange = "0";
     gchar * description;
         
@@ -115,13 +115,13 @@ void show_ip2ip_dialog(GHashTable * properties)
     
     DEBUG("curSRTPEnabled = %s\n", curSRTPEnabled);
     
-    if (g_strcasecmp(curSRTPEnabled, "FALSE") == 0)
+    if (g_strcasecmp(curSRTPEnabled, "false") == 0)
     {
         gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
         gtk_widget_set_sensitive(GTK_WIDGET(advancedOptions), FALSE);
     } else {
         DEBUG("curKeyExchange %s \n", curKeyExchange);
-        if (strcmp(curKeyExchange, "1") == 0) {
+        if (strcmp(curKeyExchange, ZRTP) == 0) {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
@@ -141,9 +141,9 @@ void show_ip2ip_dialog(GHashTable * properties)
             gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
             DEBUG("Active text %s\n", keyExchange);
             if (g_strcmp0(keyExchange, "ZRTP") == 0) {
-                g_hash_table_replace(properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("TRUE"));
+                g_hash_table_replace(properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
             } else {
-                g_hash_table_replace(properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("FALSE"));
+                g_hash_table_replace(properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
             }  
         dbus_set_ip2_ip_details(properties);            
     }    

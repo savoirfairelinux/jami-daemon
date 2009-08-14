@@ -1336,29 +1336,29 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     // 'populateFromFile' below.    
      
     // Peer to peer settings
-    _config.addDefaultValue(std::pair<std::string, std::string> (SRTP_ENABLE, NO_STR), IP2IP_PROFILE);  
-    _config.addDefaultValue(std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, YES_STR), IP2IP_PROFILE);  
-    _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_HELLO_HASH, YES_STR), IP2IP_PROFILE);      
-    _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, YES_STR), IP2IP_PROFILE);  
-    _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, NO_STR), IP2IP_PROFILE);  
-    _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, YES_STR), IP2IP_PROFILE);          
+    _config.addDefaultValue(std::pair<std::string, std::string> (SRTP_ENABLE, FALSE_STR), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, "1"), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_HELLO_HASH, TRUE_STR), IP2IP_PROFILE);      
+    _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, TRUE_STR), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, FALSE_STR), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, TRUE_STR), IP2IP_PROFILE);          
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_CA_LIST_FILE, EMPTY_FIELD), IP2IP_PROFILE);
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, EMPTY_FIELD), IP2IP_PROFILE);
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, EMPTY_FIELD), IP2IP_PROFILE);    
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_PASSWORD, EMPTY_FIELD), IP2IP_PROFILE);    
-    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_METHOD, EMPTY_FIELD), IP2IP_PROFILE);        
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_METHOD, "TLSv1"), IP2IP_PROFILE);        
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_CIPHERS, EMPTY_FIELD), IP2IP_PROFILE);    
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_SERVER_NAME, EMPTY_FIELD), IP2IP_PROFILE);    
-    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_VERIFY_SERVER, EMPTY_FIELD), IP2IP_PROFILE);        
-    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, EMPTY_FIELD), IP2IP_PROFILE);    
-    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, EMPTY_FIELD), IP2IP_PROFILE);        
-    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, EMPTY_FIELD), IP2IP_PROFILE);        
-    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, EMPTY_FIELD), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_VERIFY_SERVER, TRUE_STR), IP2IP_PROFILE);        
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, TRUE_STR), IP2IP_PROFILE);    
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR), IP2IP_PROFILE);        
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"), IP2IP_PROFILE);        
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"), IP2IP_PROFILE);  
     
     // Signalisation settings       
-    _config.addDefaultValue(std::pair<std::string, std::string> (SYMMETRIC, YES_STR), SIGNALISATION);  
-    _config.addDefaultValue(std::pair<std::string, std::string> (PLAY_DTMF, YES_STR), SIGNALISATION);  
-    _config.addDefaultValue(std::pair<std::string, std::string> (PLAY_TONES, YES_STR), SIGNALISATION);      
+    _config.addDefaultValue(std::pair<std::string, std::string> (SYMMETRIC, TRUE_STR), SIGNALISATION);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (PLAY_DTMF, TRUE_STR), SIGNALISATION);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (PLAY_TONES, TRUE_STR), SIGNALISATION);      
     _config.addDefaultValue(std::pair<std::string, std::string> (PULSE_LENGTH, DFT_PULSE_LENGTH_STR), SIGNALISATION);  
     _config.addDefaultValue(std::pair<std::string, std::string> (SEND_DTMF_AS, SIP_INFO_STR), SIGNALISATION);  
     _config.addDefaultValue(std::pair<std::string, std::string> (STUN_ENABLE, DFT_STUN_ENABLE), SIGNALISATION);        
@@ -1378,36 +1378,36 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 
     // General settings       
     _config.addDefaultValue(std::pair<std::string, std::string> (ZONE_TONE, DFT_ZONE), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_RINGTONE, YES_STR), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_DIALPAD, YES_STR), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_SEARCHBAR, YES_STR), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_START, NO_STR), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_POPUP, YES_STR), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_NOTIFY, YES_STR), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_MAIL_NOTIFY, NO_STR), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_VOLUME, YES_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_RINGTONE, TRUE_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_DIALPAD, TRUE_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_SEARCHBAR, TRUE_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_START, FALSE_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_POPUP, TRUE_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_NOTIFY, TRUE_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_MAIL_NOTIFY, FALSE_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_VOLUME, TRUE_STR), PREFERENCES);
     _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_HISTORY_LIMIT, DFT_HISTORY_LIMIT), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_HISTORY_ENABLED, YES_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_HISTORY_ENABLED, TRUE_STR), PREFERENCES);
     _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_AUDIO, DFT_AUDIO_MANAGER), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_PA_VOLUME_CTRL, YES_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_PA_VOLUME_CTRL, TRUE_STR), PREFERENCES);
     _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_SIP_PORT, DFT_SIP_PORT), PREFERENCES);
     _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNTS_ORDER, EMPTY_FIELD), PREFERENCES);
-    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_MD5HASH, NO_STR), PREFERENCES);
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_MD5HASH, FALSE_STR), PREFERENCES);
 
     // Addressbook settings       
-    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_ENABLE, YES_STR), ADDRESSBOOK);
+    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_ENABLE, TRUE_STR), ADDRESSBOOK);
     _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_MAX_RESULTS, "25"), ADDRESSBOOK);
-    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, NO_STR), ADDRESSBOOK);
-    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, YES_STR), ADDRESSBOOK);
-    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_DISPLAY_PHONE_HOME, NO_STR), ADDRESSBOOK);
-    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_DISPLAY_PHONE_MOBILE, NO_STR), ADDRESSBOOK);
+    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, FALSE_STR), ADDRESSBOOK);
+    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, TRUE_STR), ADDRESSBOOK);
+    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_DISPLAY_PHONE_HOME, FALSE_STR), ADDRESSBOOK);
+    _config.addDefaultValue(std::pair<std::string, std::string> (ADDRESSBOOK_DISPLAY_PHONE_MOBILE, FALSE_STR), ADDRESSBOOK);
 
     // Hooks settings       
     _config.addDefaultValue(std::pair<std::string, std::string> (URLHOOK_SIP_FIELD, HOOK_DEFAULT_SIP_FIELD), HOOKS);
     _config.addDefaultValue(std::pair<std::string, std::string> (URLHOOK_COMMAND, HOOK_DEFAULT_URL_COMMAND), HOOKS);
-    _config.addDefaultValue(std::pair<std::string, std::string> (URLHOOK_SIP_ENABLED, NO_STR), HOOKS);
-    _config.addDefaultValue(std::pair<std::string, std::string> (URLHOOK_IAX2_ENABLED, NO_STR), HOOKS);
-    _config.addDefaultValue(std::pair<std::string, std::string> (PHONE_NUMBER_HOOK_ENABLED, NO_STR), HOOKS);
+    _config.addDefaultValue(std::pair<std::string, std::string> (URLHOOK_SIP_ENABLED, FALSE_STR), HOOKS);
+    _config.addDefaultValue(std::pair<std::string, std::string> (URLHOOK_IAX2_ENABLED, FALSE_STR), HOOKS);
+    _config.addDefaultValue(std::pair<std::string, std::string> (PHONE_NUMBER_HOOK_ENABLED, FALSE_STR), HOOKS);
     _config.addDefaultValue(std::pair<std::string, std::string> (PHONE_NUMBER_HOOK_ADD_PREFIX, EMPTY_FIELD), HOOKS);
 
     std::string path;
@@ -1418,13 +1418,20 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
         _exist = _config.populateFromFile (path);
     }
     
-    // Globally shared default values (not to be populated from file)
+    // Globally shared default values (not to be populated from file)    
     _config.addDefaultValue(std::pair<std::string, std::string> (HOSTNAME, EMPTY_FIELD));
     _config.addDefaultValue(std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, EMPTY_FIELD));
     _config.addDefaultValue(std::pair<std::string, std::string> (USERNAME, EMPTY_FIELD));              
     _config.addDefaultValue(std::pair<std::string, std::string> (PASSWORD, EMPTY_FIELD));                  
     _config.addDefaultValue(std::pair<std::string, std::string> (REALM, DEFAULT_REALM));
-    
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE)); 
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNT_RESOLVE_ONCE, FALSE_STR));        
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, EMPTY_FIELD));        
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, EMPTY_FIELD));            
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, TRUE_STR));            
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_CREDENTIAL_NUMBER, "0"));            
+    _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE));            
+            
     _setupLoaded = (_exist == 2) ? false : true;
 }
 
@@ -1777,7 +1784,7 @@ ManagerImpl::isRingtoneEnabled (void)
 void
 ManagerImpl::ringtoneEnabled (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_RINGTONE) == RINGTONE_ENABLED) ? setConfig (PREFERENCES , CONFIG_RINGTONE , NO_STR) : setConfig (PREFERENCES , CONFIG_RINGTONE , YES_STR);
+    (getConfigInt (PREFERENCES , CONFIG_RINGTONE) == RINGTONE_ENABLED) ? setConfig (PREFERENCES , CONFIG_RINGTONE , FALSE_STR) : setConfig (PREFERENCES , CONFIG_RINGTONE , TRUE_STR);
 }
 
 std::string
@@ -1830,22 +1837,26 @@ void
 ManagerImpl::setMd5CredentialHashing(bool enabled)
 {
     if (enabled) {
-        setConfig(PREFERENCES, CONFIG_MD5HASH, YES_STR);
+        setConfig(PREFERENCES, CONFIG_MD5HASH, TRUE_STR);
     } else {
-        setConfig(PREFERENCES, CONFIG_MD5HASH, NO_STR);
+        setConfig(PREFERENCES, CONFIG_MD5HASH, FALSE_STR);
     }
 }
 
 int
 ManagerImpl::getDialpad (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_DIALPAD);
+    if (getConfigString(PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 void
 ManagerImpl::setDialpad (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_DIALPAD) == DISPLAY_DIALPAD) ? setConfig (PREFERENCES , CONFIG_DIALPAD , NO_STR) : setConfig (PREFERENCES , CONFIG_DIALPAD , YES_STR);
+    (getConfigString(PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) ? setConfig(PREFERENCES, CONFIG_DIALPAD, FALSE_STR) : setConfig (PREFERENCES, CONFIG_DIALPAD, TRUE_STR);
 }
 
 std::string ManagerImpl::getStunServer (void)
@@ -1866,7 +1877,7 @@ int ManagerImpl::isStunEnabled (void)
 void ManagerImpl::enableStun (void)
 {
     /* Update the config */
-    (getConfigInt (SIGNALISATION , STUN_ENABLE) == STUN_ENABLED) ? setConfig (SIGNALISATION , STUN_ENABLE , NO_STR) : setConfig (SIGNALISATION , STUN_ENABLE , YES_STR);
+    (getConfigString(SIGNALISATION , STUN_ENABLE) == TRUE_STR) ? setConfig(SIGNALISATION , STUN_ENABLE , FALSE_STR) : setConfig (SIGNALISATION , STUN_ENABLE , TRUE_STR);
 
     /* Restart PJSIP */
     this->restartPJSIP ();
@@ -1876,13 +1887,17 @@ void ManagerImpl::enableStun (void)
 int
 ManagerImpl::getVolumeControls (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_VOLUME);
+    if (getConfigString(PREFERENCES , CONFIG_VOLUME) == TRUE_STR) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 void
 ManagerImpl::setVolumeControls (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_VOLUME) == DISPLAY_VOLUME_CONTROLS) ? setConfig (PREFERENCES , CONFIG_VOLUME , NO_STR) : setConfig (PREFERENCES , CONFIG_VOLUME , YES_STR);
+    (getConfigString(PREFERENCES, CONFIG_VOLUME) == TRUE_STR) ? setConfig(PREFERENCES , CONFIG_VOLUME , FALSE_STR) : setConfig (PREFERENCES , CONFIG_VOLUME , TRUE_STR);
 }
 
 void
@@ -1906,7 +1921,7 @@ ManagerImpl::isRecording (const CallID& id)
 void
 ManagerImpl::startHidden (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_START) ==  START_HIDDEN) ? setConfig (PREFERENCES , CONFIG_START , NO_STR) : setConfig (PREFERENCES , CONFIG_START , YES_STR);
+    (getConfigInt (PREFERENCES , CONFIG_START) ==  START_HIDDEN) ? setConfig (PREFERENCES , CONFIG_START , FALSE_STR) : setConfig (PREFERENCES , CONFIG_START , TRUE_STR);
 }
 
 int
@@ -1918,7 +1933,7 @@ ManagerImpl::isStartHidden (void)
 void
 ManagerImpl::switchPopupMode (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_POPUP) ==  WINDOW_POPUP) ? setConfig (PREFERENCES , CONFIG_POPUP , NO_STR) : setConfig (PREFERENCES , CONFIG_POPUP , YES_STR);
+    (getConfigInt (PREFERENCES , CONFIG_POPUP) ==  WINDOW_POPUP) ? setConfig (PREFERENCES , CONFIG_POPUP , FALSE_STR) : setConfig (PREFERENCES , CONFIG_POPUP , TRUE_STR);
 }
 
 void ManagerImpl::setHistoryLimit (const int& days)
@@ -1938,7 +1953,7 @@ int ManagerImpl::getHistoryEnabled (void)
 
 void ManagerImpl::setHistoryEnabled (void)
 {
-    (getConfigInt (PREFERENCES, CONFIG_HISTORY_ENABLED) == 1) ? setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, NO_STR) : setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, YES_STR);
+    (getConfigInt (PREFERENCES, CONFIG_HISTORY_ENABLED) == 1) ? setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, FALSE_STR) : setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, TRUE_STR);
 }
 
 int
@@ -1950,7 +1965,7 @@ ManagerImpl::getSearchbar (void)
 void
 ManagerImpl::setSearchbar (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_SEARCHBAR) ==  1) ? setConfig (PREFERENCES , CONFIG_SEARCHBAR , NO_STR) : setConfig (PREFERENCES , CONFIG_SEARCHBAR , YES_STR);
+    (getConfigInt (PREFERENCES , CONFIG_SEARCHBAR) ==  1) ? setConfig (PREFERENCES , CONFIG_SEARCHBAR , FALSE_STR) : setConfig (PREFERENCES , CONFIG_SEARCHBAR , TRUE_STR);
 }
 
 int
@@ -1968,7 +1983,7 @@ ManagerImpl::getNotify (void)
 void
 ManagerImpl::setNotify (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_NOTIFY) == NOTIFY_ALL) ?  setConfig (PREFERENCES , CONFIG_NOTIFY , NO_STR) : setConfig (PREFERENCES , CONFIG_NOTIFY , YES_STR);
+    (getConfigInt (PREFERENCES , CONFIG_NOTIFY) == NOTIFY_ALL) ?  setConfig (PREFERENCES , CONFIG_NOTIFY , FALSE_STR) : setConfig (PREFERENCES , CONFIG_NOTIFY , TRUE_STR);
 }
 
 int32_t
@@ -1986,7 +2001,7 @@ ManagerImpl::getPulseAppVolumeControl (void)
 void
 ManagerImpl::setPulseAppVolumeControl (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL) == 1) ? setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , NO_STR) : setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , YES_STR) ;
+    (getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL) == 1) ? setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , FALSE_STR) : setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , TRUE_STR) ;
 }
 
 void ManagerImpl::setAudioManager (const int32_t& api)
@@ -2023,7 +2038,7 @@ ManagerImpl::getAudioManager (void)
 void
 ManagerImpl::setMailNotify (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_MAIL_NOTIFY) == NOTIFY_ALL) ?  setConfig (PREFERENCES , CONFIG_MAIL_NOTIFY , NO_STR) : setConfig (PREFERENCES , CONFIG_MAIL_NOTIFY , YES_STR);
+    (getConfigInt (PREFERENCES , CONFIG_MAIL_NOTIFY) == NOTIFY_ALL) ?  setConfig (PREFERENCES , CONFIG_MAIL_NOTIFY , FALSE_STR) : setConfig (PREFERENCES , CONFIG_MAIL_NOTIFY , TRUE_STR);
 }
 
 void
@@ -2430,6 +2445,7 @@ ManagerImpl::getConfigString (const std::string& section, const std::string&
 bool
 ManagerImpl::setConfig (const std::string& section, const std::string& name, const std::string& value)
 {
+    _debug("ManagerImp::setConfig %s %s %s\n", section.c_str(), name.c_str(), value.c_str());
     return _config.setConfigTreeItem (section, name, value);
 }
 
@@ -2652,10 +2668,10 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string password;
     std::string realm; 
 
-    if((iter = map_cpy.find(AUTHENTICATION_USERNAME)) == map_cpy.end()) { authenticationName = EMPTY_FIELD; } else { authenticationName = iter->second; }
-    if((iter = map_cpy.find(USERNAME)) == map_cpy.end()) { username = EMPTY_FIELD; } else { username = iter->second; }
-    if((iter = map_cpy.find(PASSWORD)) == map_cpy.end()) { password = EMPTY_FIELD; } else { password = iter->second; }
-    if((iter = map_cpy.find(REALM)) == map_cpy.end()) { realm = EMPTY_FIELD; } else { realm = iter->second; }
+    if((iter = map_cpy.find(AUTHENTICATION_USERNAME)) != map_cpy.end()) { authenticationName = iter->second; }
+    if((iter = map_cpy.find(USERNAME)) != map_cpy.end()) { username = iter->second; }
+    if((iter = map_cpy.find(PASSWORD)) != map_cpy.end()) { password = iter->second; }
+    if((iter = map_cpy.find(REALM)) != map_cpy.end()) { realm = iter->second; }
 																																																															
     if(!getMd5CredentialHashing()) {
         setConfig(accountID, REALM, realm);
@@ -2677,19 +2693,19 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
             setConfig(accountID, PASSWORD, hash);
         }
     }				
-    std::string hostname;
-    std::string srtpEnable;
-    std::string zrtpDisplaySas;
-    std::string zrtpDisplaySasOnce;
-    std::string zrtpNotSuppWarning;
-    std::string zrtpHelloHash;
-    std::string srtpKeyExchange;
-    std::string alias;
-    std::string mailbox;
-    std::string accountEnable;
-    std::string type;
-    std::string resolveOnce;
-    std::string registrationExpire;
+    std::string hostname = "";
+    std::string srtpEnable = "";
+    std::string zrtpDisplaySas = "";
+    std::string zrtpDisplaySasOnce = "";
+    std::string zrtpNotSuppWarning = "";
+    std::string zrtpHelloHash = "";
+    std::string srtpKeyExchange = "";
+    std::string alias = "";
+    std::string mailbox = "";
+    std::string accountEnable = "";
+    std::string type = "";
+    std::string resolveOnce = "";
+    std::string registrationExpire = "";
  
     if((iter = map_cpy.find(HOSTNAME)) != map_cpy.end()) { hostname = iter->second; }
     if((iter = map_cpy.find(SRTP_ENABLE)) != map_cpy.end()) { srtpEnable = iter->second; }
@@ -2705,7 +2721,8 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if((iter = map_cpy.find(CONFIG_ACCOUNT_TYPE)) != map_cpy.end()) { type = iter->second; }
     if((iter = map_cpy.find(CONFIG_ACCOUNT_RESOLVE_ONCE)) != map_cpy.end()) { resolveOnce = iter->second; }
     if((iter = map_cpy.find(CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) != map_cpy.end()) { registrationExpire = iter->second; }
-            																									
+    
+    _debug("Enable account %s\n", accountEnable.c_str());        																									
     setConfig(accountID, HOSTNAME, hostname);    
     setConfig(accountID, SRTP_ENABLE, srtpEnable);
     setConfig(accountID, ZRTP_DISPLAY_SAS, zrtpDisplaySas);
@@ -2739,12 +2756,13 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 }
 
 void
-ManagerImpl::sendRegister (const std::string& accountID , const int32_t& expire)
+ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 {
 
     _debug ("ManagerImpl::sendRegister \n");
+    
     // Update the active field
-    setConfig (accountID, CONFIG_ACCOUNT_ENABLE, expire);
+    setConfig (accountID, CONFIG_ACCOUNT_ENABLE, (enable == 1) ? TRUE_STR:FALSE_STR);
     _debug ("ManagerImpl::sendRegister set config done\n");
 
     Account* acc = getAccount (accountID);
@@ -2831,7 +2849,9 @@ ManagerImpl::deleteAllCredential(const AccountID& accountID)
         _config.removeSection (section);
     }
     
-    setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, 0);
+    if (accountID.empty() == false) {
+        setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, 0);
+    }
 }
 
 void

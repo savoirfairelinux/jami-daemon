@@ -813,10 +813,10 @@ dbus_set_ip2_ip_details(GHashTable * properties)
 }
 
     void
-dbus_send_register ( gchar* accountID , const guint expire)
+dbus_send_register ( gchar* accountID , const guint enable)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_send_register ( configurationManagerProxy, accountID, expire ,&error);
+    org_sflphone_SFLphone_ConfigurationManager_send_register(configurationManagerProxy, accountID, enable ,&error);
     if (error)
     {
         ERROR ("Failed to call send_register() on ConfigurationManager: %s",

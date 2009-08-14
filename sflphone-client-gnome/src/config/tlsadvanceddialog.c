@@ -214,19 +214,19 @@ void show_advanced_tls_options(GHashTable * properties)
     GtkWidget * verifyCertificateServer;
 	verifyCertificateServer = gtk_check_button_new_with_mnemonic(_("Verify incoming certificates, as a client"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(verifyCertificateServer),
-			g_strcasecmp(verify_server,"TRUE") == 0 ? TRUE: FALSE);
+			g_strcasecmp(verify_server,"true") == 0 ? TRUE: FALSE);
 	gtk_table_attach (GTK_TABLE(table), verifyCertificateServer, 0, 1, 10, 11, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     GtkWidget * verifyCertificateClient;
 	verifyCertificateClient = gtk_check_button_new_with_mnemonic(_("Verify certificates from answer, as a server"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(verifyCertificateClient),
-			g_strcasecmp(verify_client,"TRUE") == 0 ? TRUE: FALSE);
+			g_strcasecmp(verify_client,"true") == 0 ? TRUE: FALSE);
 	gtk_table_attach (GTK_TABLE(table), verifyCertificateClient, 0, 1, 11, 12, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     GtkWidget * requireCertificate;
 	requireCertificate = gtk_check_button_new_with_mnemonic(_("Require certificate for incoming tls connections"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(requireCertificate),
-		g_strcasecmp(require_client_certificate,"TRUE") == 0 ? TRUE: FALSE);
+		g_strcasecmp(require_client_certificate,"true") == 0 ? TRUE: FALSE);
 	gtk_table_attach (GTK_TABLE(table), requireCertificate, 0, 1, 12, 13, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
     gtk_widget_show_all(ret);

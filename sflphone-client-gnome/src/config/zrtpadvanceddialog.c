@@ -34,10 +34,10 @@ void show_advanced_zrtp_options(GHashTable * properties)
     GtkWidget * enableZrtpNotSuppOther;
     GtkWidget * displaySasOnce;
     
-    gchar * curSasConfirm = "TRUE";
-    gchar * curHelloEnabled = "TRUE";
-    gchar * curZrtpNotSuppOther = "TRUE";
-    gchar * curDisplaySasOnce = "FALSE";
+    gchar * curSasConfirm = "true";
+    gchar * curHelloEnabled = "true";
+    gchar * curZrtpNotSuppOther = "true";
+    gchar * curDisplaySasOnce = "false";
     
     if(properties != NULL) {
         curHelloEnabled = g_hash_table_lookup(properties, ACCOUNT_ZRTP_HELLO_HASH);
@@ -67,25 +67,25 @@ void show_advanced_zrtp_options(GHashTable * properties)
     
     enableHelloHash = gtk_check_button_new_with_mnemonic(_("Send Hello Hash in S_DP"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableHelloHash),
-            g_strcasecmp(curHelloEnabled,"TRUE") == 0 ? TRUE: FALSE);
+            g_strcasecmp(curHelloEnabled,"true") == 0 ? TRUE: FALSE);
     gtk_table_attach ( GTK_TABLE(tableZrtp), enableHelloHash, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive( GTK_WIDGET( enableHelloHash ) , TRUE );
         
     enableSASConfirm = gtk_check_button_new_with_mnemonic(_("Ask User to Confirm SAS"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableSASConfirm),
-            g_strcasecmp(curSasConfirm,"TRUE") == 0 ? TRUE: FALSE);
+            g_strcasecmp(curSasConfirm,"true") == 0 ? TRUE: FALSE);
     gtk_table_attach ( GTK_TABLE(tableZrtp), enableSASConfirm, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive( GTK_WIDGET( enableSASConfirm ) , TRUE ); 
   
     enableZrtpNotSuppOther = gtk_check_button_new_with_mnemonic(_("_Warn if ZRTP not supported"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableZrtpNotSuppOther),
-            g_strcasecmp(curZrtpNotSuppOther,"TRUE") == 0 ? TRUE: FALSE);
+            g_strcasecmp(curZrtpNotSuppOther,"true") == 0 ? TRUE: FALSE);
     gtk_table_attach ( GTK_TABLE(tableZrtp), enableZrtpNotSuppOther, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive( GTK_WIDGET( enableZrtpNotSuppOther ) , TRUE );
   
     displaySasOnce = gtk_check_button_new_with_mnemonic(_("Display SAS once for hold events"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(displaySasOnce),
-            g_strcasecmp(curDisplaySasOnce,"TRUE") == 0 ? TRUE: FALSE);
+            g_strcasecmp(curDisplaySasOnce,"true") == 0 ? TRUE: FALSE);
     gtk_table_attach ( GTK_TABLE(tableZrtp), displaySasOnce, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive( GTK_WIDGET( displaySasOnce ) , TRUE );
     
@@ -96,19 +96,19 @@ void show_advanced_zrtp_options(GHashTable * properties)
     if(gtk_dialog_run(GTK_DIALOG(securityDialog)) == GTK_RESPONSE_ACCEPT) {        
         g_hash_table_replace(properties,
                 g_strdup(ACCOUNT_ZRTP_DISPLAY_SAS),
-                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableSASConfirm)) ? "TRUE": "FALSE"));   
+                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableSASConfirm)) ? "true": "false"));   
                 
          g_hash_table_replace(properties,
                 g_strdup(ACCOUNT_DISPLAY_SAS_ONCE),
-                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(displaySasOnce)) ? "TRUE": "FALSE")); 
+                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(displaySasOnce)) ? "true": "false")); 
                 
         g_hash_table_replace(properties,
                 g_strdup(ACCOUNT_ZRTP_HELLO_HASH),
-                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableHelloHash)) ? "TRUE": "FALSE"));
+                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableHelloHash)) ? "true": "false"));
                 
         g_hash_table_replace(properties,
                 g_strdup(ACCOUNT_ZRTP_NOT_SUPP_WARNING),
-                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableZrtpNotSuppOther)) ? "TRUE": "FALSE"));                
+                g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableZrtpNotSuppOther)) ? "true": "false"));                
     }    
     
     gtk_widget_destroy (GTK_WIDGET(securityDialog));

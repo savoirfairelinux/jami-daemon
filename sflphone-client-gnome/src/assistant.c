@@ -130,22 +130,22 @@ static void sip_apply_callback( void ) {
 	}
 	if( account_type == _SIP ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias))));
-		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("TRUE"));
+		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("true"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_voicemail))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("SIP"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_server))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_password))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_username))));
-		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), g_strdup((gchar *)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable))? "TRUE":"FALSE")));
+		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), g_strdup((gchar *)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable))? "true":"false")));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->addr))));
 
         if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)) == TRUE) {
-        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup((gchar *)"TRUE"));
-        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup((gchar *)"1"));
-        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_DISPLAY_SAS), g_strdup((gchar *)"TRUE"));
-        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_NOT_SUPP_WARNING), g_strdup((gchar *)"TRUE"));
-        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_HELLO_HASH), g_strdup((gchar *)"TRUE"));
-        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_DISPLAY_SAS_ONCE), g_strdup((gchar *)"FALSE"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup((gchar *)"true"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup((gchar *)ZRTP));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_DISPLAY_SAS), g_strdup((gchar *)"true"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_NOT_SUPP_WARNING), g_strdup((gchar *)"true"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_HELLO_HASH), g_strdup((gchar *)"true"));
+        	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_DISPLAY_SAS_ONCE), g_strdup((gchar *)"false"));
         	}
 		
 		dbus_add_account( current );
@@ -167,14 +167,12 @@ static void sip_apply_callback( void ) {
 static void iax_apply_callback( void ) {
 	if( account_type == _IAX) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias))));
-		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("TRUE"));
+		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("true"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_voicemail))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("IAX"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_username))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_server))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
-		//g_hash_table_insert(current->properties, g_strdup(ACCOUNT_RESOLVE_ONCE), g_strdup("FALSE"));
-		//g_hash_table_insert(current->properties, g_strdup(ACCOUNT_REGISTRATION_EXPIRE), g_strdup("600"));
 
 		dbus_add_account( current );
 		getMessageSummary(message, 

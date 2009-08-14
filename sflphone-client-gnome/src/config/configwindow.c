@@ -120,7 +120,7 @@ config_window_fill_account_list()
                         COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
                         COLUMN_ACCOUNT_TYPE, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
                         COLUMN_ACCOUNT_STATUS, account_state_name(a->state),      // Status
-                        COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"TRUE") == 0)? TRUE:FALSE,  // Enable/Disable
+                        COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"true") == 0)? TRUE:FALSE,  // Enable/Disable
                         COLUMN_ACCOUNT_DATA, a,   // Pointer
                         -1);
             }
@@ -301,7 +301,7 @@ enable_account(GtkCellRendererToggle *rend UNUSED, gchar* path,  gpointer data )
                 -1);
         enable = !enable;
 
-        DEBUG("Account is %d enabled\n", enable);
+        DEBUG("Account is %d enabled", enable);
         // Store value
         gtk_list_store_set(GTK_LIST_STORE(model), &iter,
                 COLUMN_ACCOUNT_ACTIVE, enable,
@@ -310,9 +310,16 @@ enable_account(GtkCellRendererToggle *rend UNUSED, gchar* path,  gpointer data )
         gtk_tree_path_free(treePath);
 
         // Modify account state
-        g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
+        gchar * registrationState;
+        if (enable == TRUE) {
+            registrationState = g_strdup("true");
+        } else {
+            registrationState = g_strdup("false");
+        }
+        DEBUG("Replacing with %s\n", registrationState);
+        g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED), registrationState);
 
-        dbus_send_register( acc->accountID , enable );
+        dbus_send_register(acc->accountID, enable);
     }
 }
 
@@ -543,7 +550,7 @@ void update_registration( void )
     dbus_set_stun_server((gchar *)gtk_entry_get_text(GTK_ENTRY(stunServer)));
     dbus_enable_stun();
 
-    gtk_widget_set_sensitive(GTK_WIDGET( applyButton ) , FALSE );
+    gtk_widget_set_sensitive(GTK_WIDGET(applyButton) , FALSE );
 }
 
 GtkWidget* create_network_tab()
@@ -554,7 +561,7 @@ GtkWidget* create_network_tab()
     GtkWidget * ret;
     gchar * description;
     gchar * stun_server= "stun.sflphone.org:3478";
-    gchar * stun_enabled = "FALSE";
+    gchar * stun_enabled = "false";
 
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -564,7 +571,7 @@ GtkWidget* create_network_tab()
     gtk_widget_show (frame);
     
     /* Retrieve the STUN configuration */
-    stun_enabled = (dbus_stun_is_enabled()==1)?"TRUE":"FALSE";
+    stun_enabled = (dbus_stun_is_enabled()==1)?"true":"false";
     stun_server = dbus_get_stun_server();
     
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
@@ -577,7 +584,7 @@ GtkWidget* create_network_tab()
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     stunEnable = gtk_check_button_new_with_mnemonic( _("E_nable STUN"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"TRUE") == 0 ? TRUE: FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"true") == 0 ? TRUE: FALSE);
     g_signal_connect( G_OBJECT (GTK_TOGGLE_BUTTON(stunEnable)) , "toggled" , G_CALLBACK( stun_state ), NULL);
 #if GTK_CHECK_VERSION(2,12,0)
     gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("You should probably enable this if you are behind a firewall."));

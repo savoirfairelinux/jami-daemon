@@ -286,11 +286,11 @@ class ManagerImpl {
     /**
      * ConfigurationManager - Send registration request
      * @param accountId The account to register/unregister
-     * @param expire The flag for the type of registration
+     * @param enable The flag for the type of registration
      *		 0 for unregistration request
      *		 1 for registration request
      */
-    void sendRegister( const ::std::string& accountId , const int32_t& expire );
+    void sendRegister( const ::std::string& accountId , const int32_t& enable);
 
     bool getCallStatus(const std::string& sequenceId);
 

@@ -92,8 +92,8 @@
 #define EMPTY_FIELD		                    ""			                /** Default value for empty field */
 #define DEFAULT_ACCOUNT_TYPE                "SIP"		
 #define DFT_STUN_SERVER 	                "stun.sflphone.org"	        /** Default STUN server address */
-#define	YES_STR			                    "1"			                /** Default YES value */
-#define	NO_STR			                    "0"			                /** Default NO value */
+#define	TRUE_STR			                "true"			            /** Default YES value */
+#define	FALSE_STR			                "false"			            /** Default NO value */
 #define DFT_PULSE_LENGTH_STR                "250"			            /** Default DTMF lenght */
 #define SIP_INFO_STR		                "0"			                /** Default DTMF transport mode */
 #define ALSA_DFT_CARD		                "0"			                /** Default sound card index */
@@ -107,10 +107,10 @@
 #define DFT_NOTIF_LEVEL		                "2"			                /** Default desktop notification level : maximum */
 #define DFT_HISTORY_LIMIT                   "30"			            /** Default maximum days in history */
 #define DFT_EXPIRE_VALUE	                "600"			            /** Default expire value for registration */
-#define DFT_RESOLVE_ONCE	                "0"
+#define DFT_RESOLVE_ONCE	                FALSE_STR
 #define DFT_AUDIO_MANAGER	                "1"			                /** Default audio manager */
 #define DFT_SIP_PORT                        "5060"
-#define DFT_STUN_ENABLE                     "0"
+#define DFT_STUN_ENABLE                     FALSE_STR
 #define DFT_RECORD_PATH                     HOMEDIR
 
 #endif // __USER_CFG_H__

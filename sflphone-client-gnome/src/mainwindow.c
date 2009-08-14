@@ -204,7 +204,7 @@ create_main_window ()
   gtk_box_pack_start(GTK_BOX(subvbox),
 	GTK_WIDGET(embedded_error_notebook), FALSE, FALSE, 0);
 
-  if( SHOW_VOLUME ){
+  if(SHOW_VOLUME){
     speaker_control = create_slider("speaker");
     gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (speaker_control);
@@ -213,7 +213,7 @@ create_main_window ()
     gtk_widget_show_all (mic_control);
   }
 
-  if( SHOW_DIALPAD ){
+  if(SHOW_DIALPAD){
     dialpad = create_dialpad();
     gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (dialpad);
@@ -376,7 +376,7 @@ main_window_zrtp_not_supported(callable_obj_t * c)
               { warning_enabled = g_hash_table_lookup(properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING); }
     }
     
-    if(g_strcasecmp(warning_enabled,"TRUE") == 0) {
+    if(g_strcasecmp(warning_enabled,"true") == 0) {
         PidginMiniDialog *mini_dialog;
         gchar *desc = g_markup_printf_escaped(_("ZRTP is not supported by peer %s\n"), c->_peer_number);
         mini_dialog = pidgin_mini_dialog_new(_("Secure Communication Unavailable"), desc, GTK_STOCK_DIALOG_WARNING);

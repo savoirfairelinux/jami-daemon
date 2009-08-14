@@ -163,7 +163,7 @@ void  row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
             {
                 case SRTP_STATE_SAS_UNCONFIRMED:
                     selectedCall->_srtp_state = SRTP_STATE_SAS_CONFIRMED;
-                    if(g_strcasecmp(displaySasOnce,"TRUE") == 0) {
+                    if(g_strcasecmp(displaySasOnce,"true") == 0) {
                         selectedCall->_zrtp_confirmed = TRUE;
                     }
                     dbus_confirm_sas(selectedCall);
@@ -382,13 +382,13 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
         account_details = account_list_get_by_id(c->_accountID);
         if(account_details != NULL) {
             srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
-            if(g_strcasecmp(g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_DISPLAY_SAS),"FALSE") == 0) 
+            if(g_strcasecmp(g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0) 
                 { display_sas = FALSE; }
         } else {
             GHashTable * properties = NULL;
             properties = sflphone_get_ip2ip_properties();
             if(properties != NULL) {
-                if(g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS),"FALSE") == 0) 
+                if(g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0) 
                 { display_sas = FALSE; }
             }
         }
@@ -487,13 +487,13 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
                                 break;
                             case SRTP_STATE_UNLOCKED:  
                                 DEBUG("Secure is off calltree %d", c->_state);
-                                if(g_strcasecmp(srtp_enabled,"TRUE") == 0) {
+                                if(g_strcasecmp(srtp_enabled,"true") == 0) {
                                     pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL); 
                                 }
                                 break;
                             default:
                                 WARN("Update calltree srtp state #%d- Should not happen!", c->_srtp_state); 
-                                if(g_strcasecmp(srtp_enabled,"TRUE") == 0) {
+                                if(g_strcasecmp(srtp_enabled,"true") == 0) {
                                     pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);    
                                 }
                         }
@@ -622,7 +622,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
                 WARN("Update calltree add - Should not happen!");
         }
         
-        if(g_strcasecmp(srtp_enabled,"TRUE") == 0) {
+        if(g_strcasecmp(srtp_enabled,"true") == 0) {
             pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/secure_off.svg", NULL);
         }
     }

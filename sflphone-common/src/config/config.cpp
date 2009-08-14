@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <iostream>
 
 namespace Conf
 {
@@ -57,12 +58,12 @@ void ConfigTree::addDefaultValue(const std::pair<std::string, std::string>& toke
 
 std::string ConfigTree::getDefaultValue(const std::string& key)
 {
+    _debug("Getting default value for %s\n", key.c_str());
     std::map<std::string, std::string>::iterator it;
     it = _defaultValueMap.find(key);
     if (it == _defaultValueMap.end()) {
         return std::string("");
     }
-    
     return it->second;
 }
 
@@ -176,8 +177,6 @@ ConfigTree::getConfigTreeItemToken (const std::string& section, const std::strin
     return false;
 }
 
-
-
 /**
  * Return a ConfigTreeItem or NULL if not found
  */
@@ -203,6 +202,7 @@ ConfigTree::getConfigTreeItem (const std::string& section, const std::string& it
  * Set the configItem if found, if not, *CREATE IT*
  *
  * @todo Élimier les 45,000 classes qui servent à rien pour Conf.
+ * The true/false logic is useless here.
  */
 bool
 ConfigTree::setConfigTreeItem (const std::string& section,
@@ -211,7 +211,6 @@ ConfigTree::setConfigTreeItem (const std::string& section,
 {
 
     SectionMap::iterator iter = _sections.find (section);
-
     if (iter == _sections.end()) {
         // Not found, create section
         _sections[section] = new ItemMap;
@@ -226,10 +225,15 @@ ConfigTree::setConfigTreeItem (const std::string& section,
         std::string defaultValue = getDefaultValue(itemName);
         addConfigTreeItem (section, ConfigTreeItem (itemName, value, defaultValue));
         return true;
+    } 
+
+    // Use default value if the value is empty. 
+    if (value.empty() == true) {
+        iterItem->second.setValue(getDefaultValue(itemName));
+        return true;
     }
 
-    iterItem->second.setValue (value);
-
+    iterItem->second.setValue(value);
     return true;
 }
 

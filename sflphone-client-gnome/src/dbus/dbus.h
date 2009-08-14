@@ -164,11 +164,11 @@ void dbus_set_ip2_ip_details(GHashTable * properties);
 /**
  * ConfigurationManager - Send registration request
  * @param accountID The account to register/unregister
- * @param expire The flag for the type of registration
+ * @param enable The flag for the type of registration
  *		 0 for unregistration request
  *		 1 for registration request
  */
-void dbus_send_register( gchar* accountID , const guint expire );
+void dbus_send_register( gchar* accountID , const guint enable );
 
 /**
  * ConfigurationManager - Add an account to the list

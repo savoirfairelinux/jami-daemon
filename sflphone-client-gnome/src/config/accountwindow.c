@@ -105,8 +105,8 @@ static GtkWidget * create_account_tab(account_t **a)
 
 	// Default settings
 	gchar * curAccountID = "";
-	gchar * curAccountEnabled = "TRUE";
-	gchar * curAccountResolveOnce = "FALSE";
+	gchar * curAccountEnabled = "true";
+	gchar * curAccountResolveOnce = "false";
 	gchar * curAccountType = "SIP";
 	gchar * curAlias = "";
 	gchar * curUsername = "";
@@ -159,7 +159,7 @@ static GtkWidget * create_account_tab(account_t **a)
 
 	entryEnabled = gtk_check_button_new_with_mnemonic(_("_Enable this account"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled),
-			g_strcasecmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE);
+			g_strcasecmp(curAccountEnabled,"true") == 0 ? TRUE: FALSE);
 	gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_widget_set_sensitive( GTK_WIDGET( entryEnabled ) , TRUE );
 
@@ -448,7 +448,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	if(currentAccount) {
 		curAccountResolveOnce = g_hash_table_lookup(currentAccount->properties, ACCOUNT_RESOLVE_ONCE);
 		if (curAccountResolveOnce == NULL) {
-		    curAccountResolveOnce = "FALSE";
+		    curAccountResolveOnce = "false";
 		}
 		curAccountExpire = g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTRATION_EXPIRE);
 		if (curAccountExpire == NULL) {
@@ -462,7 +462,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 		      		  
         curSRTPEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SRTP_ENABLED);
         if (curSRTPEnabled == NULL) {
-            curSRTPEnabled == "FALSE";
+            curSRTPEnabled == "false";
         }
 	} 
 
@@ -477,9 +477,9 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gtk_entry_set_text(GTK_ENTRY(entryExpire), curAccountExpire);
 	gtk_table_attach_defaults( GTK_TABLE( table ), entryExpire, 1, 2, 0, 1);
 
-	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Conform to RFC 3263"));
+	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Comply with RFC 3263"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),
-			g_strcasecmp(curAccountResolveOnce,"FALSE") == 0 ? TRUE: FALSE);
+			g_strcasecmp(curAccountResolveOnce,"false") == 0 ? TRUE: FALSE);
 	gtk_table_attach_defaults( GTK_TABLE( table ), entryResolveNameOnlyOnce, 0, 2, 1, 2);
 	gtk_widget_set_sensitive( GTK_WIDGET( entryResolveNameOnlyOnce ) , TRUE );
 
@@ -571,7 +571,7 @@ GtkWidget * create_advanced_tab(account_t **a)
     GtkWidget * useSipTlsCheckBox;
 	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
 	//gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox),
-		//	g_strcasecmp(curAccountResolveOnce,"FALSE") == 0 ? TRUE: FALSE);
+		//	g_strcasecmp(curAccountResolveOnce,"false") == 0 ? TRUE: FALSE);
 	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
 	//gtk_widget_set_sensitive(GTK_WIDGET(useSipTlsCheckBox), TRUE );
 	
@@ -591,12 +591,12 @@ GtkWidget * create_advanced_tab(account_t **a)
     advancedZrtpButton = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
     g_signal_connect(G_OBJECT(advancedZrtpButton), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb), currentAccount->properties);
         
-    if (g_strcmp0(curSRTPEnabled, "FALSE") == 0)
+    if (g_strcmp0(curSRTPEnabled, "false") == 0)
     {
         gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
         gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
     } else {
-        if (strcmp(curKeyExchange, "1") == 0) {
+        if (strcmp(curKeyExchange, ZRTP) == 0) {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
         } else {
             gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
@@ -714,10 +714,10 @@ show_account_window (account_t * a)
 
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_ENABLED),
-				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "TRUE": "FALSE"));
+				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "true": "false"));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_RESOLVE_ONCE),
-				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "FALSE": "TRUE"));
+				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "false": "true"));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_ALIAS),
 				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryAlias))));
@@ -768,15 +768,15 @@ show_account_window (account_t * a)
 			if(!flag)
 			{
 				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), (gchar*)"");
-				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), "FALSE");
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), "false");
 			}
 			
 			gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
-            if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
-                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("TRUE"));
-                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup("1"));
+            if (g_strcasecmp(keyExchange, ZRTP) == 0) {
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
             } else {
-                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("FALSE"));
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
             }
     		
 			config_window_set_stun_visible();
