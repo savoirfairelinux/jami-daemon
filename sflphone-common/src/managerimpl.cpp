@@ -2547,7 +2547,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     
     RegistrationState state; 
     state = account->getRegistrationState();           
-    a.insert (std::pair<std::string, std::string> ("Status", mapStateNumberToString (state)));
+    a.insert(std::pair<std::string, std::string> ("Status", mapStateNumberToString (state)));
     a.insert(std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, getConfigString(accountID, SRTP_KEY_EXCHANGE)));
     a.insert(std::pair<std::string, std::string> (SRTP_ENABLE, getConfigString(accountID, SRTP_ENABLE)));    
     a.insert(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, getConfigString(accountID, ZRTP_DISPLAY_SAS)));
@@ -2787,7 +2787,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);    
     setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);											
     
-    setConfig(accountID, TLS_ENABLE, srtpEnable);    
+    setConfig(accountID, TLS_ENABLE, tlsEnable);    
     setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);    
     setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);    
     setConfig(accountID, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile);    
