@@ -2792,7 +2792,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);											
     
     setConfig(accountID, TLS_ENABLE, tlsEnable);   
-    setConfig(accountID, TLS_ENABLE, tlsPort);         
+    setConfig(accountID, TLS_PORT, tlsPort);         
     setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);    
     setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);    
     setConfig(accountID, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile);    
