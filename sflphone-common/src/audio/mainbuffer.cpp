@@ -256,13 +256,16 @@ void MainBuffer::unBindAll(CallID call_id)
 
     if (callid_set == NULL)
 	return;
+
+    if (callid_set->empty())
+	return;
     
     CallIDSet::iterator iter_set;
 
     for (iter_set = callid_set->begin(); iter_set != callid_set->end(); iter_set++)
     {
 	CallID call_id_in_set = *iter_set;
-	_debug("--------------- call_id1: %s, call_id2: %s -----------------------", call_id.c_str(), call_id_in_set.c_str());
+	// _debug("--------------- call_id1: %s, call_id2: %s -----------------------", call_id.c_str(), call_id_in_set.c_str());
 	unBindCallID(call_id, call_id_in_set);
     }
 
@@ -321,6 +324,8 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
+    int nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
+
     if(callid_set == NULL)
 	return 0;
 
@@ -341,7 +346,7 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 
 	// _debug("callid_set->size() == %i\n", callid_set->size());
 
-	for (int k = 0; k < toCopy; k++)
+	for (int k = 0; k < nbSmplToCopy; k++)
 	{
 	    ((SFLDataFormat*)(buffer))[k] = 0;
 	}
@@ -352,10 +357,13 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
 	{
 	    // _debug("MainBuffer::getData in buffer %s by %s \n", (*iter_id).c_str(), call_id.c_str());
+	    
 	    size = getDataByID(mixBuffer, toCopy, volume, (CallID)(*iter_id), call_id);
+	    // _debug("MainBuffer::getData: tocopy %i, size: %i \n", toCopy, size);
+	    
 	    if (size > 0)
 	    {
-	        for (int k = 0; k < toCopy; k++)
+	        for (int k = 0; k < nbSmplToCopy; k++)
 	        {
 		    ((SFLDataFormat*)(buffer))[k] += mixBuffer[k];
 	        }

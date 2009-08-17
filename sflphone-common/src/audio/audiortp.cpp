@@ -231,6 +231,8 @@ AudioRtpRTX::initBuffers()
     converter = new SamplerateConverter (_layerSampleRate , _layerFrameSize);
 
     int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
+
+    
     _debug("AudioRtpRTX::initBuffers NBSAMPLEMAX %i\n", nbSamplesMax);
 
     micData = new SFLDataFormat[nbSamplesMax];
@@ -366,18 +368,24 @@ AudioRtpRTX::processDataEncode()
 
     // available bytes inside ringbuffer
     int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
-    
+
+    // _debug("AudioRtpRTX::processDataEncode: availBytesFromMic: %i\n", availBytesFromMic);
     // set available byte to maxByteToGet
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
     // _debug("bytesAvail %i\n", bytesAvail);
     if (bytesAvail == 0)
         return 0;
 
+    // _debug("AudioRtpRTX::processDataEncode: bytesAvail: %i\n", bytesAvail);
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = _audiolayer->getMainBuffer()->getData (micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
+    // _debug("AudioRtpRTX::processDataEncode: nbSample: %i\n", nbSample);
+
     // nb bytes to be sent over RTP
     int compSize = 0;
+
+    
 
     // test if resampling is required
     if (_audiocodec->getClockRate() != _layerSampleRate) {
@@ -484,6 +492,7 @@ AudioRtpRTX::sendSessionFromMic (int timestamp)
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
+    // _debug("AudioRtpRTX::sendSessionFromMic: timestamp: %i, compsize: %i\n", timestamp, compSize);
     if((compSize != 0) && (micDataEncoded != NULL))
         _session->putData (timestamp, micDataEncoded, compSize);
     // _session->sendImmediate(timestamp, micDataEncoded, compSize);

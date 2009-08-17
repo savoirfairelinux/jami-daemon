@@ -265,12 +265,11 @@ int PulseLayer::getMic (void *buffer, int toCopy)
 void PulseLayer::startStream (void)
 {
     _debug ("PulseLayer::Start stream\n");
+
     _urgentRingBuffer.flush();
-    // _micRingBuffer.flush();
-    // _voiceRingBuffer.flush();
 
     _mainBuffer.flush();
-    _mainBuffer.flushDefault();
+    // _mainBuffer.flushDefault();
 
     pa_threaded_mainloop_lock (m);
 
