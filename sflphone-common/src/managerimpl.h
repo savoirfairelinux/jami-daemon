@@ -196,6 +196,8 @@ class ManagerImpl {
 
     void removeParticipant(const CallID& call_id);
 
+    void addStream(const CallID& call_id);
+
     /**
      * Save config to file
      * @return true on success
@@ -1162,8 +1164,10 @@ class ManagerImpl {
     int isStunEnabled (void);
     void enableStun (void);
 
+    // Map 
     ConferenceCallMap _conferencecall;
 
+    // 
     ConferenceMap _conferencemap;
 
 private:

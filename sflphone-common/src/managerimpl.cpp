@@ -369,9 +369,6 @@ ManagerImpl::hangupCall (const CallID& id)
     if (! (nbCalls > 1))
         audiolayer->stopStream();
 
-    if(participToConference(id))
-	removeParticipant(id);
-
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
         returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (id);
@@ -391,6 +388,9 @@ ManagerImpl::hangupCall (const CallID& id)
 
         removeCallAccount (id);
     }
+
+    if(participToConference(id))
+	removeParticipant(id);
 
     switchCall ("");
 
@@ -650,8 +650,6 @@ ManagerImpl::createConference(const CallID& id)
     conf->add(getCurrentCallId());
     conf->add(id);
 
-    answerCall(id);
-    
 }
 
 void
@@ -705,6 +703,9 @@ ManagerImpl::addParticipant(const CallID& call_id)
     {
 	_debug("NO CONFERENCE YET, CREATE ONE\n");
 	createConference(call_id);
+
+	answerCall(call_id);
+
     }
     else
     {
@@ -744,6 +745,25 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 
 	if (conf->getNbParticipants() <= 1)
 	    removeConference(default_conf);
+    }
+}
+
+void
+ManagerImpl::addStream(const CallID& call_id)
+{
+    _debug("ManagerImpl::addStream %s\n", call_id.c_str());
+
+    if(participToConference(call_id))
+    {
+	ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+	
+	Conference* conf = iter->second;
+
+	conf->bindParticipant(call_id);
+    }
+    else
+    {
+	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
     }
 }
 

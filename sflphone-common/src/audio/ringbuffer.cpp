@@ -98,11 +98,19 @@ RingBuffer::getReadPointer(CallID call_id)
     if(getNbReadPointer() == 0)
 	return 0;
 
+    // _debug("RingBuffer::getReadPointer() id %s\n", call_id.c_str());
+    
     ReadPointer::iterator iter = _readpointer.find(call_id);
     if (iter == _readpointer.end())
     {
-	_debug("RingBuffer::getReadPointer Error read pointer is null\n");
-	return NULL;
+	// _debug("                RingBuffer::getReadPointer Error read pointer size: %i\n", _readpointer.size());
+	// _debug("                RingBuffer::getReadPointer Error read pointer \"%s\" is null\n", call_id.c_str());
+	ReadPointer::iterator iter2;
+	for( iter2 = _readpointer.begin(); iter2 != _readpointer.end(); iter2++)
+	{
+	    // x_debug("                RingBuffer::getReadPointer list avail pointer \"%s\"\n", iter2->first.c_str());
+	}
+	return 0;
     }
     else
     {
@@ -137,7 +145,7 @@ RingBuffer::storeReadPointer(int pointer_value, CallID call_id)
     if(iter != _readpointer.end())
     {	
 	iter->second = pointer_value;
-	_debug("store read pointer call_id %s, size: %i \n",call_id.c_str(), _readpointer.size());
+	// _debug("store read pointer call_id %s, size: %i \n",call_id.c_str(), _readpointer.size());
     }
     else
     {
@@ -295,10 +303,8 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
     dest = (samplePtr) buffer;
 
     copied = 0;
-    
+
     int mStart = getReadPointer(call_id);
-
-
 
     //fprintf(stderr, "G");
     while (toCopy) {

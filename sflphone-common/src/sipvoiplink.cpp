@@ -734,7 +734,7 @@ SIPVoIPLink::hangup (const CallID& id)
 
     // Release RTP thread
     if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
+        _debug ("* SIP Info: Stopping AudioRTP for hangup %s\n", call->getCallId().c_str());
         call->getAudioRtp()->closeRtpSession();
     }
 

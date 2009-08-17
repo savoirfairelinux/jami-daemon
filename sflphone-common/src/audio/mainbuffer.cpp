@@ -301,7 +301,12 @@ int MainBuffer::availForPut(CallID call_id)
 
     ost::MutexLock guard (_mutex);
 
-    return getRingBuffer(call_id)->AvailForPut();
+    RingBuffer* ringbuffer = getRingBuffer(call_id);
+
+    if (ringbuffer == NULL)
+	return 0;
+    else
+	return ringbuffer->AvailForPut();
     
 }
 
@@ -313,6 +318,9 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
     // _debug("MainBuffer::getData by \"%s\", toCopy %i\n",call_id.c_str(), toCopy);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
+
+    if(callid_set == NULL)
+	return 0;
 
     if(callid_set->empty())
     {
@@ -391,15 +399,17 @@ int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, Cal
 
 int MainBuffer::availForGet(CallID call_id)
 {
-    // _debug("MainBuffer::availForGet\n");
 
     ost::MutexLock guard (_mutex);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
 
+    if (callid_set == NULL)
+	return 0;
+
     if (callid_set->empty())
     {
-	// _debug("CallIDSet with ID: \"%s\" is empty!\n", call_id.c_str());
+	_debug("CallIDSet with ID: \"%s\" is empty!\n", call_id.c_str());
 	return 0;
     }
 
@@ -429,7 +439,12 @@ int MainBuffer::availForGet(CallID call_id)
 int MainBuffer::availForGetByID(CallID call_id, CallID reader_id)
 {
 
-    return getRingBuffer(call_id)->AvailForGet(reader_id);
+    RingBuffer* ringbuffer = getRingBuffer(call_id);
+    
+    if (ringbuffer == NULL)
+	return 0;
+    else
+	return ringbuffer->AvailForGet(reader_id);
 
 }
 
@@ -441,6 +456,9 @@ int MainBuffer::discard(int toDiscard, CallID call_id)
     ost::MutexLock guard (_mutex);
 
     CallIDSet* callid_set = getCallIDSet(call_id);
+
+    if (callid_set == NULL)
+	return 0;
 
     if(callid_set->empty())
     {
@@ -472,7 +490,12 @@ int MainBuffer::discard(int toDiscard, CallID call_id)
 int MainBuffer::discardByID(int toDiscard, CallID call_id, CallID reader_id)
 {
 
-    return getRingBuffer(call_id)->Discard(toDiscard, reader_id);
+    RingBuffer* ringbuffer = getRingBuffer(call_id);
+    
+    if(ringbuffer == NULL)
+	return 0;
+    else
+	return ringbuffer->Discard(toDiscard, reader_id);
 
 }
 
@@ -485,6 +508,9 @@ void MainBuffer::flush(CallID call_id)
     // _debug("MainBuffer::flush\n");
 
     CallIDSet* callid_set = getCallIDSet(call_id);
+
+    if (callid_set == NULL)
+	return;
 
     if(callid_set->empty())
     {
@@ -520,5 +546,8 @@ void MainBuffer::flushDefault()
 void MainBuffer::flushByID(CallID call_id, CallID reader_id)
 {
 
-    getRingBuffer(call_id)->flush(reader_id);
+    RingBuffer* ringbuffer = getRingBuffer(call_id);
+
+    if(ringbuffer != NULL)
+	ringbuffer->flush(reader_id);
 }

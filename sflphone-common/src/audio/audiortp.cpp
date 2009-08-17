@@ -43,23 +43,26 @@
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtp::AudioRtp() :_RTXThread (0), _symmetric(), _threadMutex()
+AudioRtp::AudioRtp() :_RTXThread (0), _symmetric(), _rtpMutex()
 {
 }
 
 AudioRtp::~AudioRtp (void)
 {
-    ost::MutexLock m (_threadMutex);
+    ost::MutexLock m (_rtpMutex);
 
-    delete _RTXThread;
-    _RTXThread = 0;
+    if (_RTXThread != _RTXThread)
+    {
+        delete _RTXThread;
+        _RTXThread = 0;
+    }
 }
 
 void
 AudioRtp::createNewSession (SIPCall *ca)
 {
 
-    ost::MutexLock m (_threadMutex);
+    ost::MutexLock m (_rtpMutex);
 
     _debug ("AudioRtp::Create new rtp session\n");
 
@@ -83,7 +86,7 @@ AudioRtp::createNewSession (SIPCall *ca)
 int
 AudioRtp::start (void)
 {
-    ost::MutexLock m (_threadMutex);
+    ost::MutexLock m (_rtpMutex);
 
     if (_RTXThread == 0) {
         _debug ("! ARTP Failure: Cannot start audiortp thread since not yet created\n");
@@ -109,7 +112,7 @@ bool
 AudioRtp::closeRtpSession ()
 {
 
-    ost::MutexLock m (_threadMutex);
+    ost::MutexLock m (_rtpMutex);
     // This will make RTP threads finish.
     _debug ("AudioRtp::Stopping rtp session\n");
 
@@ -174,9 +177,9 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time (new ost::Time()), 
 AudioRtpRTX::~AudioRtpRTX ()
 {
 
-    // ost::MutexLock m (_threadMutex);
+    ost::MutexLock m (_rtpRtxMutex);
 
-    _debug ("Delete AudioRtpRTX instance\n");
+    _debug ("Delete AudioRtpRTX instance in callid %s\n", _ca->getCallId().c_str());
 
     try {
         this->terminate();
@@ -188,8 +191,7 @@ AudioRtpRTX::~AudioRtpRTX ()
     _debug("Unbind call id %s from all participants\n", _ca->getCallId().c_str());
     _audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
 
-    _ca = 0;
-
+    _debug("DELETE print micData address %p\n", micData);
     delete [] micData;
     micData = NULL;
     delete [] micDataConverted;
@@ -208,6 +210,7 @@ AudioRtpRTX::~AudioRtpRTX ()
     delete converter;
     converter = NULL;
 
+    _ca = 0;
     // _session->terminate();
 
     delete _session;
@@ -221,17 +224,24 @@ AudioRtpRTX::~AudioRtpRTX ()
 void
 AudioRtpRTX::initBuffers()
 {
+    ost::MutexLock m (_rtpRtxMutex);
+    
+    _debug("AudioRtpRTX::initBuffers Init RTP buffers for %s\n", _ca->getCallId().c_str());
+    
     converter = new SamplerateConverter (_layerSampleRate , _layerFrameSize);
 
     int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
+    _debug("AudioRtpRTX::initBuffers NBSAMPLEMAX %i\n", nbSamplesMax);
 
     micData = new SFLDataFormat[nbSamplesMax];
+    _debug("CREATE print micData address %p\n", micData);
     micDataConverted = new SFLDataFormat[nbSamplesMax];
     micDataEncoded = new unsigned char[nbSamplesMax];
 
     spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 
+    Manager::instance().addStream(_ca->getCallId());
     // _audiolayer->getMainBuffer()->bindCallID(_ca->getCallId());
 }
 
@@ -356,10 +366,10 @@ AudioRtpRTX::processDataEncode()
 
     // available bytes inside ringbuffer
     int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
-
+    
     // set available byte to maxByteToGet
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-
+    // _debug("bytesAvail %i\n", bytesAvail);
     if (bytesAvail == 0)
         return 0;
 
@@ -573,6 +583,7 @@ AudioRtpRTX::run ()
 
     while (!testCancel()) {
 
+	// _debug("Main while loop for call: %s\n", _ca->getCallId().c_str());
         // Send session
         sessionWaiting = _session->isWaiting();
 

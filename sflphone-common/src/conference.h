@@ -43,6 +43,8 @@ class Conference{
 
 	void remove(CallID participant_id);
 
+	void bindParticipant(CallID participant_id);
+
     private:  
 
         /** Unique ID of the call */

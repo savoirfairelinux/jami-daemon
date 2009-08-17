@@ -222,6 +222,9 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     
     /** The audio codec used during the session */
     AudioCodec* _audiocodec;
+
+    /** Mutex */
+    ost::Mutex _rtpRtxMutex;
    
 };
 
@@ -281,7 +284,7 @@ class AudioRtp {
     bool _symmetric;
 
     /** Mutex */
-    ost::Mutex _threadMutex;
+    ost::Mutex _rtpMutex;
 };
 
 #endif // __AUDIO_RTP_H__

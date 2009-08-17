@@ -39,7 +39,8 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call
 
 SIPCall::~SIPCall()
 {
-
+    delete _audiortp;
+    _audiortp = 0;
     delete _local_sdp;
     _local_sdp = 0;
     _debug ("SIPCALL::Destructor for this class is called \n");

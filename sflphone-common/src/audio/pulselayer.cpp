@@ -40,6 +40,8 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     _debug ("PulseLayer::Pulse audio constructor: Create context\n");
     out_buffer = new SFLDataFormat[STATIC_BUFSIZE];
 
+    _urgentRingBuffer.createReadPointer();
+
 }
 
 // Destructor
@@ -361,6 +363,7 @@ void PulseLayer::writeToSpeaker (void)
 	out_buffer[k] = 0;
 
     if (urgentAvail > 0) {
+
 	
         // Urgent data (dtmf, incoming call signal) come first.
         //_debug("Play urgent!: %i\e" , urgentAvail);
@@ -396,6 +399,7 @@ void PulseLayer::writeToSpeaker (void)
         } else {
             // out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
 	    // _debug("PulseLayer::writeToSpeaker _mainBuffer.getData() toGet %i\n", toGet);
+	    
 	    normalAvail = _mainBuffer.availForGet();
 	    
             toGet = (normalAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof (SFLDataFormat);
