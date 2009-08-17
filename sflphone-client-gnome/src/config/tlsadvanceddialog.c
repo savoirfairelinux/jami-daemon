@@ -28,7 +28,6 @@
 void show_advanced_tls_options(GHashTable * properties)
 {
     GtkDialog * tlsDialog;
-    GtkWidget * image;
     GtkWidget * ret;
             
     tlsDialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Advanced options for TLS"),
@@ -71,39 +70,67 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinTlsPort), 5061);
     gtk_table_attach(GTK_TABLE(table), spinTlsPort, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    GHashTable * default_settings = NULL;
-    gchar * tls_method = NULL;
-    gchar * negotiation_timeout_sec = NULL;
-    gchar * negotiation_timeout_msec = NULL; 
-    gchar * require_client_certificate = NULL;
-    gchar * verify_server = NULL;
-    gchar * verify_client = NULL;
+    gchar * tls_ca_list_file;
+    gchar * tls_certificate_file;
+    gchar * tls_private_key_file;
+    gchar * tls_password;    
+    gchar * tls_method;
+    gchar * tls_ciphers;
+    gchar * tls_server_name;
+    gchar * verify_server; 
+    gchar * verify_client;     
+    gchar * require_client_certificate;    	    
+    gchar * negotiation_timeout_sec;
+    gchar * negotiation_timeout_msec;	  
     
-    default_settings = dbus_get_tls_settings_default();
-    if (default_settings != NULL) {
-	    tls_method = g_hash_table_lookup(default_settings, TLS_METHOD);
-	    negotiation_timeout_sec = g_hash_table_lookup(default_settings, TLS_NEGOTIATION_TIMEOUT_SEC);
-	    negotiation_timeout_msec = g_hash_table_lookup(default_settings, TLS_NEGOTIATION_TIMEOUT_MSEC);
-	    require_client_certificate = g_hash_table_lookup(default_settings, TLS_REQUIRE_CLIENT_CERTIFICATE);	    	    
-	    verify_server = g_hash_table_lookup(default_settings, TLS_VERIFY_SERVER);	    	    
-	    verify_client = g_hash_table_lookup(default_settings, TLS_VERIFY_CLIENT);	    	    
+    if (properties != NULL) {
+	    tls_ca_list_file = g_hash_table_lookup(properties, TLS_CA_LIST_FILE);
+	    tls_certificate_file = g_hash_table_lookup(properties, TLS_CERTIFICATE_FILE);
+	    tls_private_key_file = g_hash_table_lookup(properties, TLS_PRIVATE_KEY_FILE);
+	    tls_password = g_hash_table_lookup(properties, TLS_PASSWORD);	    
+	    tls_method = g_hash_table_lookup(properties, TLS_METHOD);
+	    tls_ciphers = g_hash_table_lookup(properties, TLS_CIPHERS);	  
+	    tls_server_name = g_hash_table_lookup(properties, TLS_SERVER_NAME);	  	    
+	    verify_server = g_hash_table_lookup(properties, TLS_VERIFY_SERVER);	    	    
+	    verify_client = g_hash_table_lookup(properties, TLS_VERIFY_CLIENT);	 	      
+	    require_client_certificate = g_hash_table_lookup(properties, TLS_REQUIRE_CLIENT_CERTIFICATE);	    	    
+	    negotiation_timeout_sec = g_hash_table_lookup(properties, TLS_NEGOTIATION_TIMEOUT_SEC);
+	    negotiation_timeout_msec = g_hash_table_lookup(properties, TLS_NEGOTIATION_TIMEOUT_MSEC);	    
+	    
+	    DEBUG("ca_list_file %s", tls_ca_list_file);
+	    DEBUG("certificate_file %s", tls_certificate_file);
     }
     
     label = gtk_label_new( _("Certificate of Authority list"));
  	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach (GTK_TABLE(table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    GtkWidget * fileChooser;
-    fileChooser = gtk_file_chooser_button_new(_("Choose a CA list file"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());
-    gtk_table_attach (GTK_TABLE(table), fileChooser, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-  
+    GtkWidget * caListFileChooser;
+    caListFileChooser = gtk_file_chooser_button_new(_("Choose a CA list file"), GTK_FILE_CHOOSER_ACTION_OPEN);
+    gtk_table_attach (GTK_TABLE(table), caListFileChooser, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    if (tls_ca_list_file == NULL) {
+        gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(caListFileChooser), g_get_home_dir());
+    } else {
+        GFile * file = g_file_new_for_path(tls_ca_list_file);
+        gtk_file_chooser_set_file (GTK_FILE_CHOOSER(caListFileChooser), file, NULL);
+        g_object_unref(file);
+    }
+
     label = gtk_label_new( _("Public endpoint certificate file"));
  	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach (GTK_TABLE(table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    fileChooser = gtk_file_chooser_button_new(_("Choose a CA list file"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());
-    gtk_table_attach (GTK_TABLE(table), fileChooser, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
- 
+    GtkWidget * certificateFileChooser;
+    certificateFileChooser = gtk_file_chooser_button_new(_("Choose a CA list file"), GTK_FILE_CHOOSER_ACTION_OPEN);
+    gtk_table_attach (GTK_TABLE(table), certificateFileChooser, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    if (tls_certificate_file == NULL) {
+        gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(caListFileChooser), g_get_home_dir());
+    } else {
+        GFile * file = g_file_new_for_path(tls_certificate_file);
+        gtk_file_chooser_set_file (GTK_FILE_CHOOSER(certificateFileChooser), file, NULL);
+        g_object_unref(file);
+    }
+         
 	label = gtk_label_new_with_mnemonic (_("Certificate private key"));
  	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 	gtk_table_attach (GTK_TABLE(table), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);	
@@ -118,7 +145,7 @@ void show_advanced_tls_options(GHashTable * properties)
 #endif
 	gtk_entry_set_visibility(GTK_ENTRY(privateKeyEntry), FALSE);
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), privateKeyEntry);
-	//gtk_entry_set_text(GTK_ENTRY(privateKeyEntry), curPassword);
+	gtk_entry_set_text(GTK_ENTRY(privateKeyEntry), tls_private_key_file);
 	gtk_table_attach (GTK_TABLE(table), privateKeyEntry, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
  
  	label = gtk_label_new_with_mnemonic (_("Password for the private key"));
@@ -135,7 +162,7 @@ void show_advanced_tls_options(GHashTable * properties)
 #endif
 	gtk_entry_set_visibility(GTK_ENTRY(privateKeyPasswordEntry), FALSE);
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), privateKeyPasswordEntry);
-	//gtk_entry_set_text(GTK_ENTRY(privateKeyEntry), curPassword);
+	gtk_entry_set_text(GTK_ENTRY(privateKeyPasswordEntry), tls_password);
 	gtk_table_attach (GTK_TABLE(table), privateKeyPasswordEntry, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);  
    
     /* TLS protocol methods */    
@@ -183,7 +210,7 @@ void show_advanced_tls_options(GHashTable * properties)
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 	cipherListEntry = gtk_entry_new();
 	gtk_label_set_mnemonic_widget(GTK_LABEL(label), cipherListEntry);
-	//gtk_entry_set_text(GTK_ENTRY(entryHostname), curHostname);
+	gtk_entry_set_text(GTK_ENTRY(cipherListEntry), tls_ciphers);
 	gtk_table_attach (GTK_TABLE(table), cipherListEntry, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	
     GtkWidget * serverNameInstance;
@@ -192,7 +219,7 @@ void show_advanced_tls_options(GHashTable * properties)
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 	serverNameInstance = gtk_entry_new();
 	gtk_label_set_mnemonic_widget(GTK_LABEL(label), serverNameInstance);
-	//gtk_entry_set_text(GTK_ENTRY(entryHostname), curHostname);
+	gtk_entry_set_text(GTK_ENTRY(serverNameInstance), tls_server_name);
 	gtk_table_attach (GTK_TABLE(table), serverNameInstance, 1, 2, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     label = gtk_label_new(_("Negotiation timeout (sec:msec)"));
@@ -212,13 +239,13 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_box_pack_start_defaults(GTK_BOX(hbox), tlsTimeOutMSec);   
     
     GtkWidget * verifyCertificateServer;
-	verifyCertificateServer = gtk_check_button_new_with_mnemonic(_("Verify incoming certificates, as a client"));
+	verifyCertificateServer = gtk_check_button_new_with_mnemonic(_("Verify incoming certificates, as a server"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(verifyCertificateServer),
 			g_strcasecmp(verify_server,"true") == 0 ? TRUE: FALSE);
 	gtk_table_attach (GTK_TABLE(table), verifyCertificateServer, 0, 1, 10, 11, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     GtkWidget * verifyCertificateClient;
-	verifyCertificateClient = gtk_check_button_new_with_mnemonic(_("Verify certificates from answer, as a server"));
+	verifyCertificateClient = gtk_check_button_new_with_mnemonic(_("Verify certificates from answer, as a client"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(verifyCertificateClient),
 			g_strcasecmp(verify_client,"true") == 0 ? TRUE: FALSE);
 	gtk_table_attach (GTK_TABLE(table), verifyCertificateClient, 0, 1, 11, 12, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -231,8 +258,53 @@ void show_advanced_tls_options(GHashTable * properties)
   
     gtk_widget_show_all(ret);
           
-    if(gtk_dialog_run(GTK_DIALOG(tlsDialog)) == GTK_RESPONSE_ACCEPT) {        
-            
+    if(gtk_dialog_run(GTK_DIALOG(tlsDialog)) == GTK_RESPONSE_ACCEPT) {
+    
+        g_hash_table_replace(properties,
+				g_strdup(TLS_CA_LIST_FILE), g_strdup(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(caListFileChooser))));
+       
+        g_hash_table_replace(properties,
+				g_strdup(TLS_CERTIFICATE_FILE), g_strdup(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(certificateFileChooser))));
+		
+		g_hash_table_replace(properties,
+				g_strdup(TLS_PRIVATE_KEY_FILE),
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(privateKeyEntry))));  
+				
+		g_hash_table_replace(properties,
+				g_strdup(TLS_PASSWORD),
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(privateKeyPasswordEntry))));  				
+												
+		g_hash_table_replace(properties,
+				g_strdup(TLS_METHOD),
+                g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(tlsProtocolMethodCombo))));
+				
+		g_hash_table_replace(properties,
+				g_strdup(TLS_CIPHERS),
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(cipherListEntry))));  
+				
+		g_hash_table_replace(properties,
+				g_strdup(TLS_SERVER_NAME),
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(serverNameInstance))));					  				   
+
+		g_hash_table_replace(properties,
+				g_strdup(TLS_VERIFY_SERVER),
+				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(verifyCertificateServer)) ? "true": "false"));
+
+		g_hash_table_replace(properties,
+				g_strdup(TLS_VERIFY_CLIENT),
+				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(verifyCertificateClient)) ? "true": "false"));	
+				
+		g_hash_table_replace(properties,
+				g_strdup(TLS_REQUIRE_CLIENT_CERTIFICATE),
+				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(requireCertificate)) ? "true": "false"));	
+				
+		g_hash_table_replace(properties,
+				g_strdup(TLS_NEGOTIATION_TIMEOUT_SEC),
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(tlsTimeOutSec))));		
+
+		g_hash_table_replace(properties,
+				g_strdup(TLS_NEGOTIATION_TIMEOUT_MSEC),
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(tlsTimeOutMSec))));																				
     }    
     
     gtk_widget_destroy (GTK_WIDGET(tlsDialog));

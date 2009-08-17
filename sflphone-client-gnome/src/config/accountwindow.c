@@ -418,6 +418,17 @@ static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
     }
 }
 
+static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+        DEBUG("Using sips");
+    	gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);            
+    } else {
+        gtk_widget_set_sensitive(GTK_WIDGET(data), FALSE);    
+    }
+    
+}
+
 GtkWidget * create_advanced_tab(account_t **a)
 {
 	GtkWidget * frame;
@@ -574,16 +585,16 @@ GtkWidget * create_advanced_tab(account_t **a)
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-    DEBUG("is TLS enabled ? %s", curTLSEnabled);
-	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTLSEnabled, "false") == 0) ? FALSE:TRUE);
-	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
-	
 	GtkWidget * sipTlsAdvancedButton;
 	sipTlsAdvancedButton = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_table_attach_defaults(GTK_TABLE(table), sipTlsAdvancedButton, 2, 3, 0, 1);
-	//gtk_widget_set_sensitive(GTK_WIDGET(sipsTlsAdvancedButton), curTlsEnable);    
+	gtk_widget_set_sensitive(GTK_WIDGET(sipTlsAdvancedButton), FALSE);    
     g_signal_connect(G_OBJECT(sipTlsAdvancedButton), "clicked", G_CALLBACK(show_advanced_tls_options_cb), currentAccount->properties);
+    
+	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
+	g_signal_connect (useSipTlsCheckBox, "toggled", G_CALLBACK(use_sip_tls_cb), sipTlsAdvancedButton);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTLSEnabled, "false") == 0) ? FALSE:TRUE);
+	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
        	    
     label = gtk_label_new_with_mnemonic (_("SRTP key exchange"));
  	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
