@@ -86,6 +86,7 @@ typedef enum RegistrationState {
 #define ZRTP_DISPLAY_SAS_ONCE               "ZRTP.displaySasOnce"
 
 #define TLS_ENABLE                          "TLS.enable"
+#define TLS_PORT                            "TLS.port"
 #define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
 #define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
 #define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"

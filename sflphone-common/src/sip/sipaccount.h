@@ -25,6 +25,7 @@
 
 #include "account.h"
 #include "sipvoiplink.h"
+#include "pjsip/sip_transport_tls.h"
 
 class SIPVoIPLink;
 
@@ -94,8 +95,24 @@ class SIPAccount : public Account
         bool isRegister() {return _bRegister;}
         void setRegister(bool result) {_bRegister = result;}        
         
+        inline pjsip_tls_setting * getTlsSetting(void) { return _tlsSetting; }
+        inline bool isTlsEnabled(void) { return _tlsEnabled; }
+        inline pj_uint16_t getTlsPort(void) { return _tlsPort; }
+        
     private:
-
+        /* Maps a string description of the SSL method 
+         * to the corresponding enum value in pjsip_ssl_method.
+         * @param method The string representation 
+         * @return pjsip_ssl_method The corresponding value in the enum
+         */
+        pjsip_ssl_method sslMethodStringToPjEnum(const std::string& method);
+    
+        /*
+         * Initializes tls settings from configuration file.
+         *
+         */  
+        void initTlsConfiguration(void);  
+        
         /**
          * Credential information
          */
@@ -105,6 +122,19 @@ class SIPAccount : public Account
          * The pjsip client registration information
          */
         pjsip_regc *_regc;
+        
+        /**
+         *  The TLS settings, if tls is chosen as 
+         *  a sip transport. 
+         */ 
+         pjsip_tls_setting * _tlsSetting;	
+         
+        /** 
+         *  A flag telling if tls is enabled or not.
+         */
+        bool _tlsEnabled;
+        
+        pj_uint16_t _tlsPort;
         
         /**
          * To check if the account is registered

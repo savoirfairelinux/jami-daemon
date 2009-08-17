@@ -3,7 +3,8 @@
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
- *
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -29,6 +30,7 @@
 #include "sip/sdp.h"
 
 #include "pjsip/sip_endpoint.h"
+#include "pjsip/sip_transport_tls.h"
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -1778,7 +1780,6 @@ int SIPVoIPLink::createUDPServer (void)
     pj_strdup2 (_pool, &a_name.host, tmpIP);
     a_name.port = (pj_uint16_t) _localExternPort;
 
-
     status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, NULL);
 
     if (status != PJ_SUCCESS) {
@@ -1788,8 +1789,53 @@ int SIPVoIPLink::createUDPServer (void)
         _debug ("UserAgent: UDP server listening on port %d\n", _localExternPort);
     }
 
-
     _debug ("Transport initialized successfully! \n");
+
+    return PJ_SUCCESS;
+}
+
+int SIPVoIPLink::createTLSServer(AccountID id)
+{
+    pjsip_tpfactory *tls;
+    pj_sockaddr_in local_addr;
+    pjsip_host_port a_name;        
+    pj_status_t status;
+
+    /* Grab the tls settings, populated
+     * from configuration file.
+     */
+    SIPAccount * account = NULL;
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
+    if (account == NULL) {
+        _debug("Account is null. Returning");
+        return !PJ_SUCCESS;
+    }
+   
+   /**
+    * Init local address.
+    * IP interface address is not specified,
+    * so socket will be bound to PJ_INADDR_ANY.
+    * If user specified port is an empty string
+    * of if is equal to 0, then the port will 
+    * be chosen automatically by the OS.
+    */
+    pj_sockaddr_in_init(&local_addr, 0, 0); 
+    pj_uint16_t localTlsPort = account->getTlsPort();
+    if (localTlsPort != 0) {
+            local_addr.sin_port = pj_htons(localTlsPort);
+    }
+    
+    /* Init published name */
+    pj_bzero(&a_name, sizeof(pjsip_host_port));
+    pj_cstr(&a_name.host, _localExternAddress.c_str());
+    a_name.port = (pj_uint16_t) _localExternPort;
+        
+    pjsip_tls_setting * tls_setting = account->getTlsSetting();
+    status = pjsip_tls_transport_start(_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
+    
+    if (status != PJ_SUCCESS) {
+        _debug("Error creating SIP TLS listener (%d)\n", status);
+    }    
 
     return PJ_SUCCESS;
 }

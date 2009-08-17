@@ -23,7 +23,7 @@ PJSIP_LIBS= \
 			-lpjsip-ua-sfl-$(target) \
 			-lpjmedia-codec-sfl-$(target) \
 			-lpjlib-util-sfl-$(target) \
-			-lpj-sfl-$(target)
+			-lpj-sfl-$(target) 
 
 SIP_CFLAGS=-I$(src)/libs/pjproject-$(PJSIP_VERSION)/pjsip/include \
 		   -I$(src)/libs/pjproject-$(PJSIP_VERSION)/pjlib/include \

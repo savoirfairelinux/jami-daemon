@@ -1343,6 +1343,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, FALSE_STR), IP2IP_PROFILE);  
     _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, TRUE_STR), IP2IP_PROFILE);          
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_ENABLE, FALSE_STR), IP2IP_PROFILE);    
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_PORT, DEFAULT_SIP_TLS_PORT), IP2IP_PROFILE);        
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_CA_LIST_FILE, EMPTY_FIELD), IP2IP_PROFILE);
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, EMPTY_FIELD), IP2IP_PROFILE);
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, EMPTY_FIELD), IP2IP_PROFILE);    
@@ -2556,6 +2557,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert(std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, getConfigString(accountID, ZRTP_NOT_SUPP_WARNING)));    
 
     a.insert(std::pair<std::string, std::string> (TLS_ENABLE, Manager::instance().getConfigString(accountID, TLS_ENABLE)));    
+    a.insert(std::pair<std::string, std::string> (TLS_PORT, Manager::instance().getConfigString(accountID, TLS_PORT)));        
     a.insert(std::pair<std::string, std::string> (TLS_CA_LIST_FILE, Manager::instance().getConfigString(accountID, TLS_CA_LIST_FILE)));
     a.insert(std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, Manager::instance().getConfigString(accountID, TLS_CERTIFICATE_FILE)));
     a.insert(std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, Manager::instance().getConfigString(accountID, TLS_PRIVATE_KEY_FILE)));
@@ -2736,6 +2738,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string srtpKeyExchange;
         
     std::string tlsEnable;
+    std::string tlsPort;    
     std::string tlsCaListFile;
     std::string tlsCertificateFile;    
     std::string tlsPrivateKeyFile;     
@@ -2765,6 +2768,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if((iter = map_cpy.find(CONFIG_ACCOUNT_REGISTRATION_EXPIRE)) != map_cpy.end()) { registrationExpire = iter->second; }
 
     if((iter = map_cpy.find(TLS_ENABLE)) != map_cpy.end()) { tlsEnable = iter->second; }
+    if((iter = map_cpy.find(TLS_PORT)) != map_cpy.end()) { tlsPort = iter->second; }    
     if((iter = map_cpy.find(TLS_CA_LIST_FILE)) != map_cpy.end()) { tlsCaListFile = iter->second; }
     if((iter = map_cpy.find(TLS_CERTIFICATE_FILE)) != map_cpy.end()) { tlsCertificateFile = iter->second; }
     if((iter = map_cpy.find(TLS_PRIVATE_KEY_FILE)) != map_cpy.end()) { tlsPrivateKeyFile = iter->second; }
@@ -2787,7 +2791,8 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);    
     setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);											
     
-    setConfig(accountID, TLS_ENABLE, tlsEnable);    
+    setConfig(accountID, TLS_ENABLE, tlsEnable);   
+    setConfig(accountID, TLS_ENABLE, tlsPort);         
     setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);    
     setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);    
     setConfig(accountID, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile);    

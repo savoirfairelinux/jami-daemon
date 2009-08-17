@@ -2,6 +2,7 @@
  *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +30,9 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _bRegister (false)
         , _contact ("")
         , _resolveOnce (false)
+        , _tlsSetting (NULL)
+        , _tlsEnabled (false)
+        , _tlsPort (0)
 {
     /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
     /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
@@ -48,7 +52,7 @@ SIPAccount::~SIPAccount()
     /* Delete accounts-related information */
     _regc = NULL;
     free(_cred);
-    _cred = NULL;
+    free(_tlsSetting);
 }
 
 int SIPAccount::registerVoIPLink()
@@ -132,6 +136,13 @@ int SIPAccount::registerVoIPLink()
         _registrationExpire = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
     }
     
+    /* Init TLS settings if the user wants to use TLS */
+    _tlsEnabled = Manager::instance().getConfigBool(_accountID, TLS_ENABLE);
+    if (_tlsEnabled) {
+        _tlsPort = (pj_uint16_t) Manager::instance().getConfigInt(_accountID, TLS_PORT);
+        initTlsConfiguration();
+    }
+      
     /* Start registration */
     status = _link->sendRegister (_accountID);
 
@@ -150,6 +161,62 @@ int SIPAccount::unregisterVoIPLink()
     } else
         return false;
 
+}
+
+pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
+{
+    if (method == "Default") { return PJSIP_SSL_UNSPECIFIED_METHOD; }
+    
+    if (method == "TLSv1") { return PJSIP_TLSV1_METHOD; }
+    
+    if (method == "SSLv2") { return PJSIP_SSLV2_METHOD; }
+    
+    if (method == "SSLv3") { return PJSIP_SSLV3_METHOD; }
+    
+    if (method == "SSLv23") { return PJSIP_SSLV23_METHOD; }
+    
+    return PJSIP_SSL_UNSPECIFIED_METHOD;
+}
+
+void SIPAccount::initTlsConfiguration(void) 
+{
+    /* 
+     * Initialize structure to zero
+     */
+    _tlsSetting = (pjsip_tls_setting *) malloc(sizeof(pjsip_tls_setting));        
+
+    assert(_tlsSetting);
+             
+    pjsip_tls_setting_default(_tlsSetting);  
+   
+    std::string tlsCaListFile = Manager::instance().getConfigString(_accountID, TLS_CA_LIST_FILE);
+    std::string tlsCertificateFile = Manager::instance().getConfigString(_accountID, TLS_CERTIFICATE_FILE);
+    std::string tlsPrivateKeyFile = Manager::instance().getConfigString(_accountID, TLS_PRIVATE_KEY_FILE);
+    std::string tlsPassword = Manager::instance().getConfigString(_accountID, TLS_PASSWORD);
+    std::string tlsMethod = Manager::instance().getConfigString(_accountID, TLS_METHOD);
+    std::string tlsCiphers = Manager::instance().getConfigString(_accountID, TLS_CIPHERS);
+    std::string tlsServerName = Manager::instance().getConfigString(_accountID, TLS_SERVER_NAME);
+    bool tlsVerifyServer = Manager::instance().getConfigBool(_accountID, TLS_VERIFY_SERVER);    
+    bool tlsVerifyClient = Manager::instance().getConfigBool(_accountID, TLS_VERIFY_CLIENT);    
+    bool tlsRequireClientCertificate = Manager::instance().getConfigBool(_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);    
+    std::string tlsNegotiationTimeoutSec = Manager::instance().getConfigString(_accountID, TLS_NEGOTIATION_TIMEOUT_SEC);    
+    std::string tlsNegotiationTimeoutMsec = Manager::instance().getConfigString(_accountID, TLS_NEGOTIATION_TIMEOUT_MSEC); 
+
+     pj_cstr(&_tlsSetting->ca_list_file, tlsCaListFile.c_str());
+     pj_cstr(&_tlsSetting->cert_file, tlsCertificateFile.c_str());
+     pj_cstr(&_tlsSetting->privkey_file, tlsPrivateKeyFile.c_str());
+     pj_cstr(&_tlsSetting->password, tlsPassword.c_str());
+    _tlsSetting->method = sslMethodStringToPjEnum(tlsMethod);        
+     pj_cstr(&_tlsSetting->ciphers, tlsCiphers.c_str());
+     pj_cstr(&_tlsSetting->server_name, tlsServerName.c_str());
+     
+    _tlsSetting->verify_server = (tlsVerifyServer == true) ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->verify_client = (tlsVerifyClient == true) ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->require_client_cert = (tlsRequireClientCertificate == true) ? PJ_TRUE: PJ_FALSE;
+    
+    _tlsSetting->timeout.sec = atol(tlsNegotiationTimeoutSec.c_str());
+    _tlsSetting->timeout.msec = atol(tlsNegotiationTimeoutMsec.c_str());
+        
 }
 
 void SIPAccount::loadConfig()

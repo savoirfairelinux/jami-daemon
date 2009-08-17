@@ -362,6 +362,9 @@ class SIPVoIPLink : public VoIPLink
         /** Create SIP UDP Listener */
         int createUDPServer();
 
+        /** Create SIP TLS Listener */
+        int createTLSServer(AccountID id);
+        
         bool loadSIPLocalIP();
 
         std::string getLocalIP() {return _localExternAddress;}
