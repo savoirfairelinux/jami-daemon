@@ -261,7 +261,7 @@ class AudioLayer {
 
         ost::Mutex _mutex;
 
-	SFLDataFormat* out_buffer;
+	// SFLDataFormat* out_buffer;
 };
 
 #endif // _AUDIO_LAYER_H_

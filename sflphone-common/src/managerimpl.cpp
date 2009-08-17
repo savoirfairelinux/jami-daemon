@@ -354,20 +354,18 @@ ManagerImpl::hangupCall (const CallID& id)
 
     /* Broadcast a signal over DBus */
 
+    _debug("ManagerImpl::hangupCall: Send DBUS call state change (HUNGUP) for id %s\n", id.c_str());
     if (_dbus) _dbus->getCallManager()->callStateChanged (id, "HUNGUP");
-
-    _debug ("Stop audio stream\n");
-
-    audiolayer = getAudioDriver();
 
     int nbCalls = getCallList().size();
 
-    _debug ("hangupCall: callList is of size %i call(s)\n", nbCalls);
-
-
+    audiolayer = getAudioDriver();
     // stop streamx
-    if (! (nbCalls > 1))
+    if (! (nbCalls >= 1))
+    {
+	_debug("ManagerImpl::stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
         audiolayer->stopStream();
+    }
 
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -392,7 +390,11 @@ ManagerImpl::hangupCall (const CallID& id)
     if(participToConference(id))
 	removeParticipant(id);
 
+    _debug("What next (before switch call)?\n");
+
     switchCall ("");
+
+    _debug("What next (after switch call, before restore pulse app volume)?\n");
 
     if (_audiodriver->getLayerType() == PULSEAUDIO && getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL)) {
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
@@ -400,7 +402,7 @@ ManagerImpl::hangupCall (const CallID& id)
         if (pulselayer)  pulselayer->restorePulseAppsVolume();
     }
 
-
+    _debug("What next (after restore pulse app volume)?\n");
 
     return returnValue;
 }
@@ -673,6 +675,8 @@ ManagerImpl::removeConference(const CallID& conference_id)
     }
 
     _conferencemap.erase(default_conf);
+
+    _debug("ManagerImpl::conference removed succesfully\n");
 
 }
 

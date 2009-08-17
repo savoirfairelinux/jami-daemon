@@ -38,7 +38,7 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         , record()
 {
     _debug ("PulseLayer::Pulse audio constructor: Create context\n");
-    out_buffer = new SFLDataFormat[STATIC_BUFSIZE];
+    // out_buffer = new SFLDataFormat[STATIC_BUFSIZE];
 
     _urgentRingBuffer.createReadPointer();
 
@@ -48,8 +48,6 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 PulseLayer::~PulseLayer (void)
 {
     closeLayer ();
-    delete out_buffer;
-    out_buffer = NULL;
 }
 
 bool
@@ -353,13 +351,13 @@ void PulseLayer::writeToSpeaker (void)
     int toGet;
     int toPlay;
 
-    // SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
+    SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
 
     // _debug("PulseLayer::writeToSpeaker _urgentRingBuffer.AvailForGet()\n");
     urgentAvail = _urgentRingBuffer.AvailForGet();
 
-    for(int k = 0; k < STATIC_BUFSIZE; k++)
-	out_buffer[k] = 0;
+    // for(int k = 0; k < STATIC_BUFSIZE; k++)
+    // out_buffer[k] = 0;
 
     if (urgentAvail > 0) {
 
@@ -367,12 +365,14 @@ void PulseLayer::writeToSpeaker (void)
         // Urgent data (dtmf, incoming call signal) come first.
         //_debug("Play urgent!: %i\e" , urgentAvail);
         toGet = (urgentAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof (SFLDataFormat);
-        // out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
+        out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
 	// _debug("PulseLayer::writeToSpeaker _urgentRingBuffer.get()\n");
-        _urgentRingBuffer.Get (out_buffer, toGet, 100);
-        pa_stream_write (playback->pulseStream() , out_buffer , toGet  , NULL, 0 , PA_SEEK_RELATIVE);
+        _urgentRingBuffer.Get (out, toGet, 100);
+        pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
         _mainBuffer.discard (toGet);
+
+	pa_xfree(out);
     } 
     else 
     {
@@ -381,22 +381,23 @@ void PulseLayer::writeToSpeaker (void)
         if (tone != 0) 
 	{
             toGet = framesPerBuffer;
-            // out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
-            tone->getNext (out_buffer, toGet , 100);
-            pa_stream_write (playback->pulseStream() , out_buffer , toGet  * sizeof (SFLDataFormat)   , NULL, 0 , PA_SEEK_RELATIVE);
+            out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
+            tone->getNext (out, toGet , 100);
+            pa_stream_write (playback->pulseStream(), out, toGet  * sizeof (SFLDataFormat)   , NULL, 0 , PA_SEEK_RELATIVE);
         }
 
-        if ( (tone=_manager->getTelephoneFile()) != 0) {
-
-	    
+        if ( (tone=_manager->getTelephoneFile()) != 0) 
+	{   
 
             toGet = framesPerBuffer;
-            toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat) ;
-            // out = (SFLDataFormat*) pa_xmalloc (toPlay);
-            tone->getNext (out_buffer, toPlay/2 , 100);
-            pa_stream_write (playback->pulseStream() , out_buffer , toPlay   , NULL, 0 , PA_SEEK_RELATIVE) ;
-        } else {
-            // out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
+            toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat);
+            out = (SFLDataFormat*) pa_xmalloc (toPlay);
+            tone->getNext (out, toPlay/2 , 100);
+            pa_stream_write (playback->pulseStream(), out, toPlay, NULL, 0, PA_SEEK_RELATIVE);
+        } 
+	else 
+	{
+            out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
 	    // _debug("PulseLayer::writeToSpeaker _mainBuffer.getData() toGet %i\n", toGet);
 	    
 	    normalAvail = _mainBuffer.availForGet();
@@ -405,17 +406,19 @@ void PulseLayer::writeToSpeaker (void)
 
             if (toGet) {
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.getData() toGet %i\n", toGet);
-                _mainBuffer.getData (out_buffer, toGet, 100);
+                _mainBuffer.getData (out, toGet, 100);
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.discard() toGet %i\n", toGet);
                 _mainBuffer.discard (toGet);
             } else {
-                bzero (out_buffer, framesPerBuffer * sizeof (SFLDataFormat));
+                bzero (out, framesPerBuffer * sizeof (SFLDataFormat));
             }
 
-            pa_stream_write (playback->pulseStream() , out_buffer , toGet  , NULL, 0 , PA_SEEK_RELATIVE);
+	    // _debug("PulseLayer::pa_stream_write\n");
+            pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
 
-            // pa_xfree (out);
         }
+
+	pa_xfree (out);
     }
 
 }
