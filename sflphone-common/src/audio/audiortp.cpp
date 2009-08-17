@@ -484,8 +484,8 @@ AudioRtpRTX::sendSessionFromMic (int timestamp)
     int compSize = processDataEncode();
 
     // putData put the data on RTP queue, sendImmediate bypass this queue
-    // if(compSize != 0)
-    _session->putData (timestamp, micDataEncoded, compSize);
+    if((compSize != 0) && (micDataEncoded != NULL))
+        _session->putData (timestamp, micDataEncoded, compSize);
     // _session->sendImmediate(timestamp, micDataEncoded, compSize);
 
 
@@ -529,6 +529,12 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     unsigned int size = adu->getSize(); // size in char
 
     processDataDecode (spkrData, size, countTime);
+
+    if (adu != NULL)
+    {
+        delete adu;
+	adu = NULL;
+    }
 
 }
 

@@ -261,7 +261,9 @@ void MainBuffer::unBindAll(CallID call_id)
 
     for (iter_set = callid_set->begin(); iter_set != callid_set->end(); iter_set++)
     {
-	unBindCallID(call_id, *iter_set);
+	CallID call_id_in_set = *iter_set;
+	_debug("--------------- call_id1: %s, call_id2: %s -----------------------", call_id.c_str(), call_id_in_set.c_str());
+	unBindCallID(call_id, call_id_in_set);
     }
 
 }
