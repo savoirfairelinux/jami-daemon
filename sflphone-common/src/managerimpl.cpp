@@ -647,6 +647,7 @@ ManagerImpl::createConference(const CallID& id)
     Conference* conf = new Conference();
 
     _conferencecall.insert(pair<CallID, Conference*>(id, conf));
+    _conferencecall.insert(pair<CallID, Conference*>(getCurrentCallId(), conf));
     _conferencemap.insert(pair<CallID, Conference*>(default_conf, conf));
 
     conf->add(getCurrentCallId());
@@ -660,23 +661,38 @@ ManagerImpl::removeConference(const CallID& conference_id)
 
     _debug("ManagerImpl::removeConference(%s)\n", conference_id.c_str());
 
-    Conference* conf; 
+    Conference* conf;
+    conf = NULL;
+
+    _debug("ManagerImpl:: _conferencemap.size: %i\n", _conferencemap.size());
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
-    conf = iter->second;
 
+    if (iter != _conferencemap.end())
+    {
+	_debug("Found conference id %s in conferencemap\n", conference_id.c_str());
+        conf = iter->second;
+    }
 
+    if(conf == NULL)
+	return;
+
+    _debug("ManagerImpl:: _conferencecall.size: %i\n", _conferencecall.size());
     ConferenceCallMap::iterator iter_p;
     for(iter_p = _conferencecall.begin(); iter_p != _conferencecall.end(); iter_p++)
     {
+	_debug("ManagerImpl:: iterate participant %s\n", iter_p->first.c_str());
 	if(iter_p->second == conf)
 	{
+	    _debug("ManagerImpl:: remove particiant (%s) from conference %s\n", iter_p->first.c_str(), conference_id.c_str());
 	    _conferencecall.erase(iter_p);
 	}
     }
 
-    _conferencemap.erase(default_conf);
-
-    _debug("ManagerImpl::conference removed succesfully\n");
+    _debug("ManagerImpl:: remove conference %s\n", conference_id.c_str());
+    if (_conferencemap.erase(conference_id) == 1)
+        _debug("ManagerImpl:: conference %s removed succesfully\n", conference_id.c_str());
+    else
+	_debug("ManagerImpl:: error cannot remove conference id: %s\n", conference_id.c_str());
 
 }
 
