@@ -28,11 +28,12 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _cred (NULL)
         , _regc()
         , _bRegister (false)
-        , _contact ("")
         , _resolveOnce (false)
+        , _contact ("")
+        , _displayName ("")
         , _tlsSetting (NULL)
-        , _tlsEnabled (false)
-        , _tlsPort (0)
+        , _port(DFT_SIP_PORT)
+        , _transportType(PJSIP_TRANSPORT_UNSPECIFIED)
 {
     /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
     /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
@@ -55,23 +56,8 @@ SIPAccount::~SIPAccount()
     free(_tlsSetting);
 }
 
-int SIPAccount::registerVoIPLink()
+int SIPAccount::initCredential(void)
 {
-    int status;
-
-    /* Retrieve the account information */
-    /* Stuff needed for SIP registration */
-
-    if (Manager::instance().getConfigString (_accountID, HOSTNAME).length() >= PJ_MAX_HOSTNAME) {
-        return !SUCCESS;
-    }
-    
-    setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
-    setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
-    setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
-    _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
-    _realm = Manager::instance().getConfigString (_accountID, REALM);
-    
     int credentialCount = 0;
     credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
     credentialCount += 1;
@@ -128,6 +114,22 @@ int SIPAccount::registerVoIPLink()
     _credentialCount = credentialCount;
     _cred = cred_info;
     
+    return SUCCESS;
+}
+
+
+int SIPAccount::registerVoIPLink()
+{
+    if (Manager::instance().getConfigString (_accountID, HOSTNAME).length() >= PJ_MAX_HOSTNAME) {
+        return !SUCCESS;
+    }
+    
+    // Init general account settings
+    setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
+    setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
+    setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
+    _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
+    _realm = Manager::instance().getConfigString (_accountID, REALM);
     _resolveOnce = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? true : false;
 
     if (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
@@ -136,15 +138,22 @@ int SIPAccount::registerVoIPLink()
         _registrationExpire = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
     }
     
-    /* Init TLS settings if the user wants to use TLS */
-    _tlsEnabled = Manager::instance().getConfigBool(_accountID, TLS_ENABLE);
-    if (_tlsEnabled) {
-        _tlsPort = (pj_uint16_t) Manager::instance().getConfigInt(_accountID, TLS_PORT);
+    _port = Manager::instance().getSipPort();
+    _transportType = PJSIP_TRANSPORT_UDP;
+    
+    // Init set of additional credentials, if supplied by the user
+    initCredential();
+        
+    // Init TLS settings if the user wants to use TLS
+    bool tlsEnabled = Manager::instance().getConfigBool(_accountID, TLS_ENABLE);
+    if (tlsEnabled) {
+        _port = (pj_uint16_t) Manager::instance().getConfigInt(_accountID, TLS_PORT);
+        _transportType = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
       
-    /* Start registration */
-    status = _link->sendRegister (_accountID);
+    // Start registration
+    int status = _link->sendRegister (_accountID);
 
     ASSERT (status , SUCCESS);
 
@@ -242,4 +251,120 @@ bool SIPAccount::hostnameMatch (const std::string& hostname)
 {
     return (hostname == getHostname());
 }
+
+pj_str_t SIPAccount::getFromUri(void) 
+{
+    char uri[PJSIP_MAX_URL_SIZE];
+    const char * beginquote, * endquote;
+    
+    std::string scheme;
+    std::string transport;
+    
+    // if IPV6, should be set to []
+    beginquote = endquote = "";
+    
+    // UDP does not require the transport specification
+    if (_transportType != PJSIP_TRANSPORT_UDP) {
+        scheme = "sips";
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(_transportType));
+    } else {
+        scheme = "sip";
+    }
+    
+    pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
+                     "<%s:%s%s%s%s:%s%s>",
+                     scheme.c_str(), 
+                     beginquote,
+                     _username.c_str(),
+                     _hostname.c_str(),
+                     endquote,
+                     _port.c_str(),
+                     transport.c_str());  
+                     
+    return pj_str(uri);
+}
+
+pj_str_t SIPAccount::getToUri(const std::string& username) 
+{
+    char uri[PJSIP_MAX_URL_SIZE];
+    
+    std::string scheme;
+    std::string transport;
+    
+    // UDP does not require the transport specification
+    if (_transportType != PJSIP_TRANSPORT_UDP) {
+        scheme = "sips";
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(_transportType));
+    } else {
+        scheme = "sip";
+    }
+    
+    pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
+                     "<%s:%s@%s%s>",
+                     scheme.c_str(), 
+                     username.c_str(),
+                     _hostname.c_str(),
+                     transport.c_str());  
+                     
+    return pj_str(uri);
+}
+
+pj_str_t SIPAccount::getServerUri(void) 
+{
+    char uri[PJSIP_MAX_URL_SIZE];
+    
+    std::string scheme;
+    std::string transport;
+    
+    // UDP does not require the transport specification
+    if (_transportType != PJSIP_TRANSPORT_UDP) {
+        scheme = "sips";
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(_transportType));
+    } else {
+        scheme = "sip";
+    }
+    
+    pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
+                     "<%s:%s%s>",
+                     scheme.c_str(), 
+                     _hostname.c_str(),
+                     transport.c_str());  
+                     
+    return pj_str(uri);
+}
+
+pj_str_t SIPAccount::getContactHeader(const std::string& address, const std::string& port)
+{
+    char contact[PJSIP_MAX_URL_SIZE];
+    const char * beginquote, * endquote;
+    
+    std::string scheme;
+    std::string transport;
+
+    // if IPV6, should be set to []
+    beginquote = endquote = "";
+    
+    if (_transportType != PJSIP_TRANSPORT_UDP) {
+        scheme = "sips";
+        transport = ";transport=" + std::string(pjsip_transport_get_type_name(_transportType));
+    } else {
+        scheme = "sip";
+    }
+    
+    pj_ansi_snprintf(contact, PJSIP_MAX_URL_SIZE,
+                    "%s%s<%s:%s%s%s%s%s:%d%s>",
+                    _displayName.c_str(),
+                    (_displayName.empty() ? "" : " "),
+                    scheme.c_str(),
+                    _username.c_str(),
+                    (_username.empty() ? "":"@"),
+                    beginquote,
+                    address.c_str(),
+                    endquote,
+                    atoi(port.c_str()),
+                    transport.c_str());
+                    
+    return pj_str(contact);
+}
+
 

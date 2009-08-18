@@ -31,6 +31,7 @@
 
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
+#include "pjsip/sip_uri.h" 
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -212,7 +213,7 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
         , _localExternAddress ("")
         , _localExternPort (0)
         , _audiortp (new sfl::AudioRtpFactory())
-        ,_regPort (DEFAULT_SIP_PORT)
+        ,_regPort (atoi(DEFAULT_SIP_PORT))
         , _useStun (false)
         , _clients (0)
 {
@@ -368,10 +369,9 @@ SIPVoIPLink::getEvent()
 int SIPVoIPLink::sendRegister (AccountID id)
 {
     int expire_value;
-    char contactTmp[256];
-
+    
     pj_status_t status;
-    pj_str_t svr, aor, contact, useragent;
+    pj_str_t useragent;
     pjsip_tx_data *tdata;
     pjsip_host_info destination;
 
@@ -423,14 +423,9 @@ int SIPVoIPLink::sendRegister (AccountID id)
         }
     }
 
-    hostname = account->getHostname();
-
-    username = account->getUsername();
-    password = account->getPassword();
-
     _mutexSIP.enterMutex();
 
-    /* Get the client registration information for this particular account */
+    // Get the client registration information for this particular account
     regc = account->getRegistrationInfo();
     /* TODO If the registration already exists, delete it */
     /*if(regc) {
@@ -441,7 +436,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     account->setRegister (true);
 
-    /* Set the expire value of the message from the config file */
+    // Set the expire value of the message from the config file 
     istringstream stream (account->getRegistrationExpire());
     stream >> expire_value;
 
@@ -449,7 +444,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         expire_value = PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
     }
 
-    /* Update the state of the voip link */
+    // Update the state of the voip link 
     account->setRegistrationState (Trying);
 
     if (!validStunServer) {
@@ -459,7 +454,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
-    /* Create the registration according to the account ID */
+    // Create the registration according to the account ID 
     status = pjsip_regc_create (_endpt, (void*) account, &regc_cb, &regc);
 
     if (status != PJ_SUCCESS) {
@@ -468,23 +463,35 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
-    tmp = "sip:" + hostname;
-
-    pj_strdup2 (_pool, &svr, tmp.data());
-
-    // tmp = "<sip:" + username + "@" + hostname + ";transport=tls>";
-    tmp = "<sip:" + username + "@" + hostname + ">";
-    pj_strdup2 (_pool, &aor, tmp.data());
-
-    _debug ("<sip:%s@%s:%d>\n", username.data(), _localExternAddress.data(), _localExternPort);
-    sprintf (contactTmp, "<sip:%s@%s:%d>", username.data(), _localExternAddress.data(), _localExternPort);
-    pj_strdup2 (_pool, &contact, contactTmp);
-    account->setContact (contactTmp);
-
-    status = pjsip_regc_init (regc, &svr, &aor, &aor, 1, &contact, expire_value);   //timeout);
+    // Creates URI
+    pj_str_t fromUri;
+    pj_str_t contactUri;
+    pj_str_t srvUri;
+    
+    fromUri = account->getFromUri();
+    srvUri = account->getServerUri();
+    
+    pj_str_t address = findLocalAddressFromUri(&srvUri);
+    int port = findLocalPortFromUri(&srvUri);
+    std::stringstream ss;
+    std::string portStr;
+    ss << port;
+    ss >> portStr;
+    contactUri = account->getContactHeader(std::string(address.ptr, address.slen), portStr);
+    
+    _debug("sendRegister: fromUri: %.*s serverUri: %.*s contactUri: %.*s\n",
+            (int)fromUri.slen,
+            fromUri.ptr,
+            (int)srvUri.slen,
+            srvUri.ptr,
+            (int)contactUri.slen,
+            contactUri.ptr);
+                  
+    // Initializes registration 
+    status = pjsip_regc_init (regc, &srvUri, &fromUri, &fromUri, 1, &contactUri, expire_value);   
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to initialize regc. %d\n", status);   //, regc->str_srv_url.ptr);
+        _debug ("UserAgent: Unable to initialize regc. %d\n", status);
         _mutexSIP.leaveMutex();
         return false;
     }
@@ -513,6 +520,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
+    // Send registration request
     status = pjsip_regc_send (regc, tdata);
 
     if (status != PJ_SUCCESS) {
@@ -572,15 +580,14 @@ SIPVoIPLink::sendUnregister (AccountID id)
 Call*
 SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 {
-    Account* account;
+    SIPAccount * account = NULL;
     pj_status_t status;
 
     SIPCall* call = new SIPCall (id, Call::Outgoing, _pool);
 
     if (call) {
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
-
-        if (!account) {
+        if (account == NULL) {
             _debug ("Error retrieving the account to the make the call with\n");
             call->setConnectionState (Call::Disconnected);
             call->setState (Call::Error);
@@ -589,7 +596,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             return call;
         }
 
-        call->setPeerNumber (getSipTo (toUrl, account->getHostname()));
+        pj_str_t toUri = account->getToUri(toUrl);
+        call->setPeerNumber(std::string(toUri.ptr, toUri.slen));
 
         setCallAudioLocal (call, getLocalIPAddress(), useStun(), getStunServer());
 
@@ -918,33 +926,28 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     pj_status_t status;
     pj_str_t dest;
     AccountID account_id;
-    Account* account;
+    SIPAccount * account = NULL;
 
     call = getSIPCall (id);
     call->stopRecording();
     account_id = Manager::instance().getAccountFromCall (id);
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
+    if (account == NULL) {
+        _debug("SIPVoIPLink::transfer account is null. Returning.\n");
+        return false;
+    }
+    
     if (call==0) {
         _debug ("! SIP Failure: Call doesn't exist\n");
         return false;
     }
 
-    tmp_to = SIPToHeader (to);
-
-    if (account) {
-        if (tmp_to.find ("@") == std::string::npos) {
-            tmp_to = tmp_to + "@" + account->getHostname();
-        }
+    if (to.find ("@") == std::string::npos) {
+        dest = account->getToUri(to);            
     }
 
-    else {
-
-    }
-
-    _debug ("In transfer, tmp_to is %s\n", tmp_to.data());
-
-    pj_strdup2 (_pool, &dest, tmp_to.data());
+    _debug ("Transfering to %.*s\n", (int)dest.slen, dest.ptr);
 
     /* Create xfer client subscription. */
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
@@ -1153,42 +1156,51 @@ SIPVoIPLink::SIPOutgoingInvite (SIPCall* call)
 bool
 SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 {
-    std::string strTo, strFrom;
     pj_status_t status;
+    pjsip_inv_session *inv;
     pjsip_dialog *dialog;
     pjsip_tx_data *tdata;
-    pj_str_t from, to, contact;
-    AccountID id;
-    SIPAccount *account;
-    pjsip_inv_session *inv;
 
-    if (!call)
+    AccountID id;
+
+    if (call == NULL)
         return false;
 
     id = Manager::instance().getAccountFromCall (call->getCallId());
 
     // Get the basic information about the callee account
+    SIPAccount * account = NULL;
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
-
-    strTo = getSipTo (call->getPeerNumber(), account->getHostname());
-
-    // Generate the from URI
-    strFrom = "sip:" + account->getUsername() + "@" + account->getHostname();
-
-    _debug ("Placing new call: \nTo: %s\nFrom: %s\n", strTo.data(), strFrom.c_str());
-
-    // pjsip need the from and to information in pj_str_t format
-    pj_strdup2 (_pool, &from, strFrom.data());
-
-    pj_strdup2 (_pool, &to, strTo.data());
-
-    pj_strdup2 (_pool, &contact, account->getContact().data());
-
-    //_debug("%s %s %s\n", from.ptr, contact.ptr, to.ptr);
-    // create the dialog (UAC)
-    status = pjsip_dlg_create_uac (pjsip_ua_instance(), &from,
-                                   &contact,
-                                   &to,
+    if (account == NULL) {
+        _debug("Account is null in SIPStartCall\n");
+        return false;
+    }
+    
+    // Creates URI
+    pj_str_t fromUri, toUri, contactUri;
+    fromUri = account->getFromUri();
+    toUri = account->getToUri(call->getPeerNumber()); // expecting number@hostname
+        
+    pj_str_t address = findLocalAddressFromUri(&toUri);
+    int port = findLocalPortFromUri(&toUri);
+    std::stringstream ss;
+    std::string portStr;
+    ss << port;
+    ss >> portStr;
+    contactUri = account->getContactHeader(std::string(address.ptr, address.slen), portStr);
+    
+    _debug("SIPStartCall: fromUri: %.*s toUri: %.*s contactUri: %.*s\n",
+            (int)fromUri.slen,
+            fromUri.ptr,
+            (int)toUri.slen,
+            toUri.ptr,
+            (int)contactUri.slen,
+            contactUri.ptr);
+            
+    // Create the dialog (UAC)
+    status = pjsip_dlg_create_uac (pjsip_ua_instance(), &fromUri,
+                                   &contactUri,
+                                   &toUri,
                                    NULL,
                                    &dialog);
 
@@ -1221,36 +1233,6 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         return false;
     }
 
-    return true;
-}
-
-std::string SIPVoIPLink::getSipTo (const std::string& to_url, std::string hostname)
-{
-    // Form the From header field basis on configuration panel
-    //bool isRegistered = (_eXosipRegID == EXOSIP_ERROR_STD) ? false : true;
-
-    // add a @host if we are registered and there is no one inside the url
-    if (to_url.find ("@") == std::string::npos) {    // && isRegistered) {
-        if (!hostname.empty()) {
-            return SIPToHeader (to_url + "@" + hostname);
-        }
-    }
-
-    return SIPToHeader (to_url);
-}
-
-std::string SIPVoIPLink::SIPToHeader (const std::string& to)
-{
-    if (to.find ("sip:") == std::string::npos) {
-        return ("sip:" + to);
-    } else {
-        return to;
-    }
-}
-
-bool
-SIPVoIPLink::SIPCheckUrl (const std::string& url UNUSED)
-{
     return true;
 }
 
@@ -1361,9 +1343,6 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 {
     SIPCall *call;
     pj_status_t status;
-    std::string uri_from, uri_to, hostname;
-    std::ostringstream uri_contact;
-    pj_str_t from, str_to, contact;
     pjsip_dialog *dialog;
     pjsip_inv_session *inv;
     pjsip_tx_data *tdata;
@@ -1374,20 +1353,18 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     if (call) {
 
         call->setCallConfiguration (Call::IPtoIP);
-        call->setPeerNumber (getSipTo (to, getLocalIPAddress()));
-
-        // Generate the from URI
-        hostname = pj_gethostname()->ptr;
-        uri_from = "sip:" + hostname + "@" + getLocalIPAddress() ;
-
-        // Generate the from URI
-        uri_to = "sip:" + to.substr (4, to.length());
-
-        _debug ("get local ip address: %s \n", getLocalIPAddress().c_str());
-        // Generate the to URI
         setCallAudioLocal (call, getLocalIPAddress(), useStun(), getStunServer());
-
         call->initRecFileName();
+        
+        SIPAccount * account = NULL;
+        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
+        if (account == NULL) {
+            _debug("Account is null. Returning");
+            return !PJ_SUCCESS;
+        }
+    
+        pj_str_t toUri = account->getToUri(to);
+        call->setPeerNumber(std::string(toUri.ptr, toUri.slen));
 
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address (getLocalIP());
@@ -1398,20 +1375,29 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         } catch (...) {
             _debug ("! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)\n", __FILE__, __LINE__);
         }
-
-        // Generate the contact URI
-        // uri_contact << "<" << uri_from << ":" << call->getLocalSDP()->get_local_extern_audio_port() << ">";
-        uri_contact << "<" << uri_from << ":" << _localExternPort << ">";
-
-        // pjsip need the from and to information in pj_str_t format
-        pj_strdup2 (_pool, &from, uri_from.data());
-
-        pj_strdup2 (_pool, &str_to, uri_to.data());
-
-        pj_strdup2 (_pool, &contact, uri_contact.str().data());
+        
+        pj_str_t fromUri, contactUri;
+        fromUri = account->getFromUri();
+        
+        pj_str_t address = findLocalAddressFromUri(&toUri);
+        int port = findLocalPortFromUri(&toUri);
+        std::stringstream ss;
+        std::string portStr;
+        ss << port;
+        ss >> portStr;
+        contactUri = account->getContactHeader(std::string(address.ptr, address.slen), portStr);
+        
+        _debug("New_ip_to_ip_call: fromUri: %.*s toUri: %.*s contactUri: %.*s\n",
+                (int)fromUri.slen,
+                fromUri.ptr,
+                (int)toUri.slen,
+                toUri.ptr,
+                (int)contactUri.slen,
+                contactUri.ptr);
+                
 
         // create the dialog (UAC)
-        status = pjsip_dlg_create_uac (pjsip_ua_instance(), &from, &contact, &str_to, NULL, &dialog);
+        status = pjsip_dlg_create_uac (pjsip_ua_instance(), &fromUri, &contactUri, &toUri, NULL, &dialog);
 
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
@@ -1794,6 +1780,99 @@ int SIPVoIPLink::createUDPServer (void)
     return PJ_SUCCESS;
 }
 
+pj_str_t SIPVoIPLink::findLocalAddressFromUri(const pj_str_t * uri)
+{
+    pj_str_t localAddress;
+    pjsip_transport_type_e transportType;
+
+    // Find the transport that must be used with the given uri
+    pj_str_t tmp;
+    pj_strdup_with_null(_pool, &tmp, uri);
+    pjsip_uri * genericUri;
+    genericUri = pjsip_parse_uri(_pool, tmp.ptr, tmp.slen, 0);
+    
+    pjsip_sip_uri * sip_uri = NULL;
+    sip_uri = (pjsip_sip_uri*)pjsip_uri_get_uri(genericUri);  
+    if (sip_uri == NULL) {
+        _debug("Invalid uri in findLocalAddressFromTransport\n");
+        return *pj_gethostname();
+    }
+ 
+    if (PJSIP_URI_SCHEME_IS_SIPS(sip_uri)) {
+        transportType = PJSIP_TRANSPORT_TLS;
+    } else {
+        transportType = PJSIP_TRANSPORT_UDP;
+    }
+
+    // Get the transport manager associated with 
+    // this endpoint
+    pjsip_tpmgr * tpmgr = NULL;
+    tpmgr = pjsip_endpt_get_tpmgr(_endpt);
+    if (tpmgr) {
+        _debug("Unexpected: Cannot get tpmgr from endpoint.\n");
+        return *pj_gethostname();
+    }
+  
+    // Find the local address (and port) based on the registered
+    // transports and the transport type     
+    int port;
+    pj_status_t status;
+    status = pjsip_tpmgr_find_local_addr(tpmgr, _pool, transportType, NULL, &localAddress, &port);
+    if (status != PJ_SUCCESS) {
+        _debug("Failed to find local address from transport\n");
+        return *pj_gethostname();
+    }	
+    
+    return localAddress;
+}
+
+int SIPVoIPLink::findLocalPortFromUri(const pj_str_t * uri)
+{
+    pj_str_t localAddress;
+    pjsip_transport_type_e transportType;
+    int port;
+    
+    // Find the transport that must be used with the given uri
+    pj_str_t tmp;
+    pj_strdup_with_null(_pool, &tmp, uri);
+    pjsip_uri * genericUri;
+    genericUri = pjsip_parse_uri(_pool, tmp.ptr, tmp.slen, 0);
+    
+    pjsip_sip_uri * sip_uri = NULL;
+    sip_uri = (pjsip_sip_uri*)pjsip_uri_get_uri(genericUri);  
+    if (sip_uri == NULL) {
+        _debug("Invalid uri in findLocalAddressFromTransport\n");
+        return atoi(DEFAULT_SIP_PORT);
+    }
+ 
+    if (PJSIP_URI_SCHEME_IS_SIPS(sip_uri)) {
+        transportType = PJSIP_TRANSPORT_TLS;
+        port = atoi(DEFAULT_SIP_TLS_PORT);
+    } else {
+        transportType = PJSIP_TRANSPORT_UDP;
+        port = atoi(DEFAULT_SIP_PORT);        
+    }
+
+    // Get the transport manager associated with 
+    // this endpoint
+    pjsip_tpmgr * tpmgr = NULL;
+    tpmgr = pjsip_endpt_get_tpmgr(_endpt);
+    if (tpmgr) {
+        _debug("Unexpected: Cannot get tpmgr from endpoint.\n");
+        return port;
+    }
+  
+    // Find the local address (and port) based on the registered
+    // transports and the transport type     
+
+    pj_status_t status;
+    status = pjsip_tpmgr_find_local_addr(tpmgr, _pool, transportType, NULL, &localAddress, &port);
+    if (status != PJ_SUCCESS) {
+        _debug("Failed to find local address from transport\n");
+    }	
+    
+    return port;
+}
 int SIPVoIPLink::createTLSServer(AccountID id)
 {
     pjsip_tpfactory *tls;
@@ -1820,7 +1899,7 @@ int SIPVoIPLink::createTLSServer(AccountID id)
     * be chosen automatically by the OS.
     */
     pj_sockaddr_in_init(&local_addr, 0, 0); 
-    pj_uint16_t localTlsPort = account->getTlsPort();
+    pj_uint16_t localTlsPort = account->getPort();
     if (localTlsPort != 0) {
             local_addr.sin_port = pj_htons(localTlsPort);
     }
@@ -2291,7 +2370,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     AccountID account_id;
     pjsip_uri *uri;
     pjsip_sip_uri *sip_uri;
-    std::string userName, server, caller, callerServer, peerNumber;
+    std::string userName, server;
     SIPVoIPLink *link;
     CallID id;
     SIPCall* call;
@@ -2344,15 +2423,15 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     uri = rdata->msg_info.from->uri;
     sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
 
-
-    /* Retrieve only the fisrt characters */
-    caller = std::string (sip_uri->user.ptr, sip_uri->user.slen);
-    callerServer = std::string (sip_uri->host.ptr, sip_uri->host.slen);
-    peerNumber = caller + "@" + callerServer;
+    // Store the peer number
+    char tmp[PJSIP_MAX_URL_SIZE];
+    int length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+            		sip_uri, tmp, PJSIP_MAX_URL_SIZE);		    
+            		
+    std::string peerNumber(tmp, length);
 
     // Get the server voicemail notification
     // Catch the NOTIFY message
-
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
         method_name = "NOTIFY";
         // Retrieve all the message. Should contains only the method name but ...

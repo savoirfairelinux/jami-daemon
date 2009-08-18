@@ -26,6 +26,7 @@
 #include "account.h"
 #include "sipvoiplink.h"
 #include "pjsip/sip_transport_tls.h"
+#include "pjsip/sip_types.h"
 
 class SIPVoIPLink;
 
@@ -96,8 +97,46 @@ class SIPAccount : public Account
         void setRegister(bool result) {_bRegister = result;}        
         
         inline pjsip_tls_setting * getTlsSetting(void) { return _tlsSetting; }
-        inline bool isTlsEnabled(void) { return _tlsEnabled; }
-        inline pj_uint16_t getTlsPort(void) { return _tlsPort; }
+        inline bool isTlsEnabled(void) { return (_transportType == PJSIP_TRANSPORT_TLS) ? true: false; }
+        inline pj_uint16_t getPort(void) { return (pj_uint16_t) atoi(_port.c_str()); }
+
+        /*
+         * @return pj_str_t "From" uri based on account information.
+         * From RFC3261: "The To header field first and foremost specifies the desired
+         * logical" recipient of the request, or the address-of-record of the
+         * user or resource that is the target of this request. [...]  As such, it is
+         * very important that the From URI not contain IP addresses or the FQDN
+         * of the host on which the UA is running, since these are not logical
+         * names."
+         */
+        pj_str_t getFromUri(void);
+        
+        /*
+         * This method adds the correct scheme, hostname and append
+         * the ;transport= parameter at the end of the uri, in accordance with RFC3261.
+         * It is expected that "port" is present in the internal _hostname.
+         *
+         * @return pj_str_t "To" uri based on @param username
+         * @param username A string formatted as : "username"
+         */
+        pj_str_t getToUri(const std::string& username);
+
+        /*
+         * In the current version of SFLPhone, "srv" uri is obtained in the preformated 
+         * way: hostname:port. This method adds the correct scheme and append
+         * the ;transport= parameter at the end of the uri, in accordance with RFC3261.
+         *
+         * @return pj_str_t "server" uri based on @param hostPort
+         * @param hostPort A string formatted as : "hostname:port"
+         */
+        pj_str_t getServerUri(void);
+               
+        /*
+         * @param port Optional port. Otherwise set to the port defined for that account.
+         * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
+         * @return pj_str_t The contact header based on account information
+         */
+        pj_str_t getContactHeader(const std::string& address, const std::string& port);
         
     private:
         /* Maps a string description of the SSL method 
@@ -112,6 +151,11 @@ class SIPAccount : public Account
          *
          */  
         void initTlsConfiguration(void);  
+ 
+        /*
+         * Initializes set of additional credentials, if supplied by the user.
+         */
+        int initCredential(void);       
         
         /**
          * Credential information
@@ -123,19 +167,16 @@ class SIPAccount : public Account
          */
         pjsip_regc *_regc;
         
+        std::string _port;
+        
+        pjsip_transport_type_e _transportType;
+        
         /**
-         *  The TLS settings, if tls is chosen as 
-         *  a sip transport. 
-         */ 
-         pjsip_tls_setting * _tlsSetting;	
-         
-        /** 
-         *  A flag telling if tls is enabled or not.
-         */
-        bool _tlsEnabled;
-        
-        pj_uint16_t _tlsPort;
-        
+        *  The TLS settings, if tls is chosen as 
+        *  a sip transport. 
+        */ 
+        pjsip_tls_setting * _tlsSetting;	
+                         
         /**
          * To check if the account is registered
          */
@@ -147,6 +188,8 @@ class SIPAccount : public Account
          * SIP address
          */
         std::string _contact;
+        
+        std::string _displayName;
         
         std::string _registrationExpire;
         

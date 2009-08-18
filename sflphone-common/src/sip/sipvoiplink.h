@@ -211,22 +211,6 @@ class SIPVoIPLink : public VoIPLink
         void terminateOneCall(const CallID& id);
 
         /**
-         * Build a sip address with the number that you want to call
-         * Example: sip:124@domain.com
-         * @param to  The header of the recipient
-         * @return std::string  Result as a string
-         */
-        std::string SIPToHeader(const std::string& to);
-
-        /**
-         * Check if an url is sip-valid
-         * @param url The url to check
-         * @return bool True if osip tell that is valid
-         */
-        bool SIPCheckUrl(const std::string& url);
-
-
-        /**
          * Send an outgoing call invite
          * @param call  The current call
          * @return bool True if all is correct
@@ -240,13 +224,6 @@ class SIPVoIPLink : public VoIPLink
          * @return true if all is correct
          */
         bool SIPStartCall(SIPCall* call, const std::string& subject);
-
-        /**
-         * Get the Sip TO url (add sip:, add @host, etc...)
-         * @param to_url  The To url
-         * @return std::string  The SIP to address
-         */
-        std::string getSipTo(const std::string& to_url, std::string hostname);
 
         /**
          * Tell the user that the call was answered
@@ -396,6 +373,24 @@ class SIPVoIPLink : public VoIPLink
 
         /* Number of SIP accounts connected to the link */
         int _clients;
+        
+        /* 
+         * Get the correct address to use (ie advertised) from 
+         * a uri. The corresponding transport that should be used
+         * with that uri will be discovered. 
+         *
+         * @param uri The uri from which we want to discover the address to use
+         * @return pj_str_t The extern (public) address
+         */
+        pj_str_t findLocalAddressFromUri(const pj_str_t * uri);
+        
+        /* 
+         * Does the same as findLocalAddressFromUri but returns a port.
+         * @param uri The uri from which we want to discover the address to use
+         * @return int The extern (public) port
+         */
+        int findLocalPortFromUri(const pj_str_t * uri);
 };
+
 
 #endif
