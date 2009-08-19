@@ -369,6 +369,8 @@ AudioRtpRTX::processDataEncode()
     // available bytes inside ringbuffer
     int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
 
+    // _debug("AudioRtpRTX::processDataEncode() callid: %s availBytesFromMic %i\n", _ca->getCallId().c_str(), availBytesFromMic);
+
     // _debug("AudioRtpRTX::processDataEncode: availBytesFromMic: %i\n", availBytesFromMic);
     // set available byte to maxByteToGet
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;

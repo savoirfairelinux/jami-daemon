@@ -142,7 +142,7 @@ RingBuffer* MainBuffer::createRingBuffer(CallID call_id)
 
     _debug("---- MainBuffer::createRingBuffer callid %s\n", call_id.c_str());
 
-    RingBuffer* newRingBuffer = new RingBuffer(SIZEBUF);
+    RingBuffer* newRingBuffer = new RingBuffer(SIZEBUF, call_id);
 
     _ringBufferMap.insert(pair<CallID, RingBuffer*>(call_id, newRingBuffer));
 
@@ -252,6 +252,8 @@ void MainBuffer::unBindCallID(CallID call_id1, CallID call_id2)
 void MainBuffer::unBindAll(CallID call_id)
 {
 
+    ost::MutexLock guard (_mutex);
+
     CallIDSet* callid_set = getCallIDSet(call_id);
 
     if (callid_set == NULL)
@@ -339,7 +341,14 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
     {
 	// _debug("callid_set->size() == %i\n", callid_set->size());
 	CallIDSet::iterator iter_id = callid_set->begin();
-	return getDataByID(buffer, toCopy, volume, *iter_id, call_id);
+
+	if (iter_id != callid_set->end())
+	{
+	    // _debug("MainBuffer::getData in buffer %s by %s \n", (*iter_id).c_str(), call_id.c_str());
+	    return getDataByID(buffer, toCopy, volume, *iter_id, call_id);
+	}
+	else 
+	    return 0;
     }
     else
     {
@@ -393,14 +402,14 @@ int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, Cal
     int a;
 
     // ost::MutexLock guard (_mutex);
-    a = ring_buffer->AvailForGet(call_id);
+    // a = ring_buffer->AvailForGet(reader_id);
 
-    if (a >= toCopy) {
-        return ring_buffer->Get (buffer, toCopy, volume, reader_id);
-    } else {
+    // if (a >= toCopy) {
+    return ring_buffer->Get (buffer, toCopy, volume, reader_id);
+	// } else {
         // _debug ("RingBuffer is quite empty\n");
-        return ring_buffer->Get (buffer, a, volume, reader_id);
-    }
+        // return ring_buffer->Get (buffer, a, volume, reader_id);
+	// }
 
     return 0;
 
@@ -426,11 +435,19 @@ int MainBuffer::availForGet(CallID call_id)
     if (callid_set->size() == 1)
     {
 	CallIDSet::iterator iter_id = callid_set->begin();
+	// _debug("MainBuffer::availForGet availForGetByID(%s,%s)\n", (*iter_id).c_str(), call_id.c_str());
+	if((call_id != default_id) && (*iter_id == call_id))
+	{
+	    _debug("**********************************************************************\n");
+	    _debug("Error an RTP session ring buffer is not supposed to have a readpointer on tiself\n");
+	    _debug("This problem should not occur since we have %i element\n", callid_set->size());
+	}
+	// else
 	return availForGetByID(*iter_id, call_id);
     }
     else
     {
-	// _debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
+	_debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
 	int avail_bytes = 99999;
 	int nb_bytes;
 	CallIDSet::iterator iter_id = callid_set->begin();
@@ -449,10 +466,19 @@ int MainBuffer::availForGet(CallID call_id)
 int MainBuffer::availForGetByID(CallID call_id, CallID reader_id)
 {
 
+    if((call_id != default_id) && (reader_id == call_id))
+    {
+	_debug("**********************************************************************\n");
+	_debug("Error an RTP session ring buffer is not supposed to have a readpointer on tiself\n");
+    }
+
     RingBuffer* ringbuffer = getRingBuffer(call_id);
     
     if (ringbuffer == NULL)
+    {
+	_debug("Error: ring buffer does not exist\n");
 	return 0;
+    }
     else
 	return ringbuffer->AvailForGet(reader_id);
 

@@ -740,7 +740,9 @@ SIPVoIPLink::hangup (const CallID& id)
 
     terminateOneCall (id);
 
+    _debug("SIPVoIPLink::hangup removeCall\n");
     removeCall (id);
+    _debug("SIPVoIPLink::hangup (call removed)\n");
 
     return true;
 }

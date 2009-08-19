@@ -37,7 +37,7 @@ class RingBuffer {
      * Constructor
      * @param size  Size of the buffer to create
      */
-    RingBuffer(int size);
+    RingBuffer(int size, CallID call_id);
 
     /**
      * Destructor
@@ -132,6 +132,8 @@ class RingBuffer {
     samplePtr     mBuffer;
 
     ReadPointer   _readpointer;
+
+    CallID buffer_id;
 
   public:
 

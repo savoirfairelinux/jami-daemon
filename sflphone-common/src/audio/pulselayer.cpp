@@ -405,6 +405,7 @@ void PulseLayer::writeToSpeaker (void)
             toGet = (normalAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof (SFLDataFormat);
 
             if (toGet) {
+		
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.getData() toGet %i\n", toGet);
                 _mainBuffer.getData (out, toGet, 100);
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.discard() toGet %i\n", toGet);

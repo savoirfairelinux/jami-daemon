@@ -56,7 +56,7 @@ class AudioLayer {
             : _defaultVolume(100)
 			  , _layerType( type )
               , _manager(manager)
-              , _urgentRingBuffer( SIZEBUF )
+	    , _urgentRingBuffer( SIZEBUF, default_id )
               , _indexIn ( 0 )
               , _indexOut ( 0 )
               , _sampleRate ( 0 )
