@@ -677,8 +677,8 @@ ManagerImpl::removeConference(const CallID& conference_id)
 	return;
 
     _debug("ManagerImpl:: _conferencecall.size: %i\n", _conferencecall.size());
-    ConferenceCallMap::iterator iter_p;
-    for(iter_p = _conferencecall.begin(); iter_p != _conferencecall.end(); iter_p++)
+    ConferenceCallMap::iterator iter_p = _conferencecall.begin();
+    while (iter_p != _conferencecall.end())
     {
 	_debug("ManagerImpl:: iterate participant %s\n", iter_p->first.c_str());
 	if(iter_p->second == conf)
@@ -686,6 +686,8 @@ ManagerImpl::removeConference(const CallID& conference_id)
 	    _debug("ManagerImpl:: remove particiant (%s) from conference %s\n", iter_p->first.c_str(), conference_id.c_str());
 	    _conferencecall.erase(iter_p);
 	}
+
+	iter_p++;
     }
 
     _debug("ManagerImpl:: remove conference %s\n", conference_id.c_str());
@@ -3130,6 +3132,8 @@ void ManagerImpl::registerCurSIPAccounts (VoIPLink *link)
 
 std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings ()
 {
+
+    _debug("Euhhhh.......... ManagerImpl::getAddressbookSettings called?\n");
 
     std::map<std::string, int32_t> settings;
 

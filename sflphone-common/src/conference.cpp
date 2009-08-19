@@ -92,15 +92,16 @@ void Conference::bindParticipant(CallID participant_id)
 
     if(_nbParticipant >= 1)
     {
-	ParticipantSet::iterator iter;
-	
-	for(iter = _participants.begin(); iter != _participants.end(); iter++)
+	ParticipantSet::iterator iter = _participants.begin();
+
+	while (iter != _participants.end())
 	{
 	    if (participant_id != (*iter))
 	    {
 	        _debug("---- Conference:: bind callid %s with %s in conference add\n", participant_id.c_str(), (*iter).c_str());
 	        Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id, *iter);
 	    }
+	    iter++;
 	}
     }
 

@@ -291,7 +291,7 @@ int
 RingBuffer::AvailForGet(CallID call_id)
 {
     // Used space
-    _debug("RingBuffer::AvailForGet buffer_id %s, call_id %s --------------------\n", buffer_id.c_str(), call_id.c_str());
+    // _debug("RingBuffer::AvailForGet buffer_id %s, call_id %s --------------------\n", buffer_id.c_str(), call_id.c_str());
     return getLen(call_id);
 }
 
