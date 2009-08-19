@@ -382,14 +382,14 @@ class SIPVoIPLink : public VoIPLink
          * @param uri The uri from which we want to discover the address to use
          * @return pj_str_t The extern (public) address
          */
-        pj_str_t findLocalAddressFromUri(const pj_str_t * uri);
+        std::string findLocalAddressFromUri(const std::string& uri);
         
         /* 
          * Does the same as findLocalAddressFromUri but returns a port.
          * @param uri The uri from which we want to discover the address to use
          * @return int The extern (public) port
          */
-        int findLocalPortFromUri(const pj_str_t * uri);
+        int findLocalPortFromUri(const std::string& uri);
 };
 
 

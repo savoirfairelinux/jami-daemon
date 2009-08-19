@@ -252,16 +252,12 @@ bool SIPAccount::hostnameMatch (const std::string& hostname)
     return (hostname == getHostname());
 }
 
-pj_str_t SIPAccount::getFromUri(void) 
+std::string SIPAccount::getFromUri(void) 
 {
     char uri[PJSIP_MAX_URL_SIZE];
-    const char * beginquote, * endquote;
     
     std::string scheme;
     std::string transport;
-    
-    // if IPV6, should be set to []
-    beginquote = endquote = "";
     
     // UDP does not require the transport specification
     if (_transportType != PJSIP_TRANSPORT_UDP) {
@@ -271,20 +267,17 @@ pj_str_t SIPAccount::getFromUri(void)
         scheme = "sip";
     }
     
-    pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
-                     "<%s:%s%s%s%s:%s%s>",
+    int len = pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
+                     "<%s:%s@%s%s>",
                      scheme.c_str(), 
-                     beginquote,
                      _username.c_str(),
                      _hostname.c_str(),
-                     endquote,
-                     _port.c_str(),
                      transport.c_str());  
                      
-    return pj_str(uri);
+    return std::string(uri, len);
 }
 
-pj_str_t SIPAccount::getToUri(const std::string& username) 
+std::string SIPAccount::getToUri(const std::string& username) 
 {
     char uri[PJSIP_MAX_URL_SIZE];
     
@@ -299,17 +292,17 @@ pj_str_t SIPAccount::getToUri(const std::string& username)
         scheme = "sip";
     }
     
-    pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
+    int len = pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
                      "<%s:%s@%s%s>",
                      scheme.c_str(), 
                      username.c_str(),
                      _hostname.c_str(),
                      transport.c_str());  
                      
-    return pj_str(uri);
+    return std::string(uri, len);
 }
 
-pj_str_t SIPAccount::getServerUri(void) 
+std::string SIPAccount::getServerUri(void) 
 {
     char uri[PJSIP_MAX_URL_SIZE];
     
@@ -324,16 +317,16 @@ pj_str_t SIPAccount::getServerUri(void)
         scheme = "sip";
     }
     
-    pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
+    int len = pj_ansi_snprintf(uri, PJSIP_MAX_URL_SIZE, 
                      "<%s:%s%s>",
                      scheme.c_str(), 
                      _hostname.c_str(),
                      transport.c_str());  
                      
-    return pj_str(uri);
+    return std::string(uri, len);
 }
 
-pj_str_t SIPAccount::getContactHeader(const std::string& address, const std::string& port)
+std::string SIPAccount::getContactHeader(const std::string& address, const std::string& port)
 {
     char contact[PJSIP_MAX_URL_SIZE];
     const char * beginquote, * endquote;
@@ -351,7 +344,7 @@ pj_str_t SIPAccount::getContactHeader(const std::string& address, const std::str
         scheme = "sip";
     }
     
-    pj_ansi_snprintf(contact, PJSIP_MAX_URL_SIZE,
+    int len = pj_ansi_snprintf(contact, PJSIP_MAX_URL_SIZE,
                     "%s%s<%s:%s%s%s%s%s:%d%s>",
                     _displayName.c_str(),
                     (_displayName.empty() ? "" : " "),
@@ -364,7 +357,7 @@ pj_str_t SIPAccount::getContactHeader(const std::string& address, const std::str
                     atoi(port.c_str()),
                     transport.c_str());
                     
-    return pj_str(contact);
+    return std::string(contact, len);
 }
 
 

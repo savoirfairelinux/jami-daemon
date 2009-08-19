@@ -109,7 +109,7 @@ class SIPAccount : public Account
          * of the host on which the UA is running, since these are not logical
          * names."
          */
-        pj_str_t getFromUri(void);
+        std::string getFromUri(void);
         
         /*
          * This method adds the correct scheme, hostname and append
@@ -119,7 +119,7 @@ class SIPAccount : public Account
          * @return pj_str_t "To" uri based on @param username
          * @param username A string formatted as : "username"
          */
-        pj_str_t getToUri(const std::string& username);
+        std::string getToUri(const std::string& username);
 
         /*
          * In the current version of SFLPhone, "srv" uri is obtained in the preformated 
@@ -129,14 +129,14 @@ class SIPAccount : public Account
          * @return pj_str_t "server" uri based on @param hostPort
          * @param hostPort A string formatted as : "hostname:port"
          */
-        pj_str_t getServerUri(void);
+        std::string getServerUri(void);
                
         /*
          * @param port Optional port. Otherwise set to the port defined for that account.
          * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
          * @return pj_str_t The contact header based on account information
          */
-        pj_str_t getContactHeader(const std::string& address, const std::string& port);
+        std::string getContactHeader(const std::string& address, const std::string& port);
         
     private:
         /* Maps a string description of the SSL method 
