@@ -3334,20 +3334,11 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     saveConfig ();
 }
 
-
-
-
 void ManagerImpl::check_call_configuration (const CallID& id, const std::string &to, Call::CallConfiguration *callConfig)
 {
-    std::string pattern;
     Call::CallConfiguration config;
 
-    /* Check if the call is an IP-to-IP call */
-    /* For an IP-to-IP call, we don't need any account */
-    /* Pattern looked for : ip:xxx.xxx.xxx.xxx */
-    pattern = to.substr (0,4);
-
-    if (pattern==IP_TO_IP_PATTERN) {
+    if (to.find(SIP_SCHEME) == 0 || to.find(SIPS_SCHEME) == 0) {
         _debug ("Sending Sip Call \n");
         config = Call::IPtoIP;
     } else {
