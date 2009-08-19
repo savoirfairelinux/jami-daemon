@@ -419,6 +419,8 @@ void PulseLayer::writeToSpeaker (void)
 
         }
 
+	_urgentRingBuffer.Discard (toGet);
+
 	pa_xfree (out);
     }
 

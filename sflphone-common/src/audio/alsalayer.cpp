@@ -729,9 +729,11 @@ void AlsaLayer::audioCallback (void)
 
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
+    
     urgentAvail = _urgentRingBuffer.AvailForGet();
-    if (urgentAvail > 0) {
-	_debug("URGENT\n");
+    if (urgentAvail > 0) 
+    {
+	
         // Urgent data (dtmf, incoming call signal) come first.
         toGet = (urgentAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? urgentAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) malloc (toGet * sizeof (SFLDataFormat));
@@ -745,28 +747,27 @@ void AlsaLayer::audioCallback (void)
     } 
     else 
     {
-	_debug("NOT URGENT\n");
+	
         tone = _manager->getTelephoneTone();
         toGet = 940  ;
         maxBytes = toGet * sizeof (SFLDataFormat)  ;
 
         if (tone != 0) 
         {
-	    
             out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
             tone->getNext (out, toGet, spkrVolume);
             write (out, maxBytes);
         } 
 	else if ( (tone=_manager->getTelephoneFile()) != 0) 
 	{
-
             out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
             tone->getNext (out, toGet, spkrVolume);
             write (out, maxBytes);
+	    
         } 
 	else 
 	{
-	    _debug("VOICE DATA\n");
+	    
        
             // If nothing urgent, play the regular sound samples
             normalAvail = _mainBuffer.availForGet();
@@ -785,6 +786,8 @@ void AlsaLayer::audioCallback (void)
         }
 
         free (out);
+
+        _urgentRingBuffer.Discard (toGet);
 
 
         out=0;
