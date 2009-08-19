@@ -676,15 +676,17 @@ ManagerImpl::removeConference(const CallID& conference_id)
     if(conf == NULL)
 	return;
 
+    ConferenceCallMap temp_map = _conferencecall;
+
     _debug("ManagerImpl:: _conferencecall.size: %i\n", _conferencecall.size());
-    ConferenceCallMap::iterator iter_p = _conferencecall.begin();
-    while (iter_p != _conferencecall.end())
+    ConferenceCallMap::iterator iter_p = temp_map.begin();
+    while (iter_p != temp_map.end())
     {
 	_debug("ManagerImpl:: iterate participant %s\n", iter_p->first.c_str());
 	if(iter_p->second == conf)
 	{
 	    _debug("ManagerImpl:: remove particiant (%s) from conference %s\n", iter_p->first.c_str(), conference_id.c_str());
-	    _conferencecall.erase(iter_p);
+	    _conferencecall.erase(iter_p->first);
 	}
 
 	iter_p++;
@@ -750,7 +752,9 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 
     // TODO: add conference_id as a second parameter
     Conference* conf;
-    ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+
+    ConferenceMap conf_map = _conferencemap;
+    ConferenceMap::iterator iter = conf_map.find(default_conf);
 
     if(iter == _conferencemap.end())
     {
@@ -763,7 +767,7 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 	_debug("REMOVE PARTICIPANT %s\n", call_id.c_str());
 	conf->remove(call_id);
 
-	_conferencecall.erase(iter);
+	_conferencecall.erase(iter->first);
 
 	if (conf->getNbParticipants() <= 1)
 	    removeConference(default_conf);

@@ -262,12 +262,15 @@ void MainBuffer::unBindAll(CallID call_id)
     if (callid_set->empty())
 	return;
     
-    CallIDSet::iterator iter_set = callid_set->begin();
+    CallIDSet temp_set = *callid_set;
+ 
+    CallIDSet::iterator iter_set = temp_set.begin();
 
-    while (iter_set != callid_set->end())
+    _debug("MainBuffer::unBindAll\n");
+    while (iter_set != temp_set.end())
     {
 	CallID call_id_in_set = *iter_set;
-	// _debug("--------------- call_id1: %s, call_id2: %s -----------------------", call_id.c_str(), call_id_in_set.c_str());
+	_debug("--------------- call_id1: %s, call_id2: %s -----------------------", call_id.c_str(), call_id_in_set.c_str());
 	unBindCallID(call_id, call_id_in_set);
 
 	iter_set++;
