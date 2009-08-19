@@ -28,6 +28,7 @@
 #include "user_cfg.h"
 #include "global.h"
 #include "sip/sipaccount.h"
+
 #include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
@@ -46,10 +47,6 @@
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>	// mkdir(2)
-
-//#include <cc++/file.h>
-
-
 
 
 #define fill_config_str(name, value) \
@@ -90,6 +87,7 @@ ManagerImpl::ManagerImpl (void)
         , _accountMap()
         , _cleaner (NULL)
         , _history (NULL)
+        , _directIpAccount (NULL)
 {
 
     // initialize random generator for call id
@@ -2496,7 +2494,7 @@ ManagerImpl::getAccountList()
         iter = _accountMap.begin ();
 
         while (iter != _accountMap.end()) {
-            if (iter->second != 0) {
+            if (iter->second != NULL) {
                 v.push_back (iter->first.data());
             }
 
@@ -3064,6 +3062,20 @@ ManagerImpl::loadAccountMap()
         iter++;
     }
 
+    // Those calls that are placed to an uri that cannot be 
+    // associated to an account are using that special account.
+    // An account, that is not account, in the sense of 
+    // registration. This is useful since the Account object 
+    // provides a handful of method that simplifies URI creation
+    // and loading of various settings.
+    //
+    _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
+    if (_directIpAccount == NULL) {
+        _debug("Failed to create direct ip calls \"account\"\n");
+    } else {
+        _directIpAccount->registerVoIPLink();
+    }
+          
     _debug ("nbAccount loaded %i \n",nbAccount);
 
     return nbAccount;
@@ -3102,9 +3114,15 @@ ManagerImpl::accountExists (const AccountID& accountID)
 Account*
 ManagerImpl::getAccount (const AccountID& accountID)
 {
+    // In our definition, 
+    // this is the "direct ip calls account"
+    if (accountID == AccountNULL) {
+        return _directIpAccount;
+    }
+    
     AccountMap::iterator iter = _accountMap.find (accountID);
     if (iter == _accountMap.end()) {
-        return 0;
+        return NULL;
     }
     return iter->second;
 }

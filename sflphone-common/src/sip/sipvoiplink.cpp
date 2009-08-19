@@ -498,7 +498,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);   
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to initialize regc. %d\n", status);
+        _debug ("UserAgent: Unable to initialize account %d in sendRegister\n", status);
         _mutexSIP.leaveMutex();
         return false;
     }
@@ -1372,16 +1372,18 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         setCallAudioLocal (call, getLocalIPAddress(), useStun(), getStunServer());
         call->initRecFileName();
         
+        AccountID accountId = Manager::instance().getAccountFromCall(id);
         SIPAccount * account = NULL;
-        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
+        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(accountId));
         if (account == NULL) {
-            _debug("Account is null. Returning");
+            _debug("Account is null. Returning\n");
             return !PJ_SUCCESS;
         }
-    
+
+        _debug("toUri received in new_ip_to_ip call %s\n", to.c_str());    
         std::string toUri = account->getToUri(to);
         call->setPeerNumber(toUri);
-
+        _debug("toUri in new_ip_to_ip call %s\n", toUri.c_str());
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address (getLocalIP());
         call->getLocalSDP()->create_initial_offer();
@@ -1420,7 +1422,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         pj_cstr(&pjContact, contactUri.c_str());
                 
         // Create the dialog (UAC)
-        // (Parameters are "strduped" inside the function)
+        // (Parameters are "strduped" inside this function)
         status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
 
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);

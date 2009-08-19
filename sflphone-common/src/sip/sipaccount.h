@@ -4,7 +4,8 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *                                                                              
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -138,7 +139,8 @@ class SIPAccount : public Account
          */
         std::string getContactHeader(const std::string& address, const std::string& port);
         
-    private:
+    protected:
+    
         /* Maps a string description of the SSL method 
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation 
@@ -162,11 +164,6 @@ class SIPAccount : public Account
          */
         pjsip_cred_info *_cred;
 
-        /**
-         * The pjsip client registration information
-         */
-        pjsip_regc *_regc;
-        
         std::string _port;
         
         pjsip_transport_type_e _transportType;
@@ -175,21 +172,53 @@ class SIPAccount : public Account
         *  The TLS settings, if tls is chosen as 
         *  a sip transport. 
         */ 
-        pjsip_tls_setting * _tlsSetting;	
-                         
+        pjsip_tls_setting * _tlsSetting;	                                                  
+        
+        /**
+         * Special hack that is not here to stay
+         * See #1852
+         */
+        bool _resolveOnce;
+        
+        /**
+         * Display Name that can be used in 
+         * SIP URI.
+         */
+        std::string _displayName;
+
+    private: 
+
+        /**
+         * If username is not provided, as it happens for Direct ip calls, 
+         * fetch the hostname of the machine on which the program is running
+         * onto.
+         * @return std::string The machine hostname as returned by pj_gethostname()
+         */
+        std::string getMachineName(void);
+        
+        /**
+         * If username is not provided, as it happens for Direct ip calls, 
+         * fetch the Real Name field of the user that is currently 
+         * running this program. 
+         * @return std::string The login name under which SFLPhone is running.
+         */ 
+        std::string getLoginName(void);
+            
+    private:               
+        /**
+         * The pjsip client registration information
+         */
+        pjsip_regc *_regc;
+        
         /**
          * To check if the account is registered
          */
-        bool _bRegister;
-        
-        bool _resolveOnce;
+        bool _bRegister; 
                 
         /*
          * SIP address
          */
         std::string _contact;
-        
-        std::string _displayName;
         
         std::string _registrationExpire;
         

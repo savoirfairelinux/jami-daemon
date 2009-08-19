@@ -48,6 +48,7 @@ class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
 class HistoryManager;
+class SIPAccount;
 
 /** Define a type for a AccountMap container */
 typedef std::map<AccountID, Account*> AccountMap;
@@ -1147,6 +1148,8 @@ class ManagerImpl {
     /**
      *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
     AccountMap _accountMap;
+    
+    Account * _directIpAccount;
 
     /**
      * Load the account from configuration
