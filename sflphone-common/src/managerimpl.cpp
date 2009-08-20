@@ -221,7 +221,7 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
     Call::CallConfiguration callConfig;
     SIPVoIPLink *siplink;
 
-    _debug ("ManagerImpl::outgoingCall() method \n");
+    _debug ("ManagerImpl::outgoingCall(%s)\n", id.c_str());
 
     if (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ENABLED) ==  "1")
         _cleaner->set_phone_number_prefix (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX));
@@ -282,7 +282,8 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
 bool
 ManagerImpl::answerCall (const CallID& id)
 {
-    bool isActive = false;
+
+    _debug("ManagerImpl::answerCall(%s)", id.c_str());
 
     stopTone (true);
 
@@ -455,8 +456,7 @@ ManagerImpl::onHoldCall (const CallID& id)
 
     call_id = id;
 
-    if(participToConference(id))
-	removeParticipant(id);
+    switchCall (id);
 
     /* Direct IP to IP call */
 
@@ -500,10 +500,12 @@ ManagerImpl::offHoldCall (const CallID& id)
     call_id = id;
     //Place current call on hold if it isn't
 
-    if (hasCurrentCall()) {
+    if (hasCurrentCall() ) {
         _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
         onHoldCall (getCurrentCallId());
     }
+
+    switchCall(id);
 
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -535,7 +537,7 @@ ManagerImpl::offHoldCall (const CallID& id)
 
     }
 
-    switchCall (id);
+    // switchCall (id);
 
     codecName = getCurrentCodecName (id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
