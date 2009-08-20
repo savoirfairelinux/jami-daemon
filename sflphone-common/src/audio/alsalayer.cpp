@@ -771,6 +771,7 @@ void AlsaLayer::audioCallback (void)
        
             // If nothing urgent, play the regular sound samples
             normalAvail = _mainBuffer.availForGet();
+	    // _debug("Alsa: normalAvail %i\n", normalAvail);
             toGet = (normalAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? normalAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
             out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 

@@ -58,7 +58,7 @@ CallManager::accept (const std::string& callID)
 void
 CallManager::hangUp (const std::string& callID)
 {
-    _debug ("CallManager::hangUp received\n");
+    _debug ("CallManager::hangUp received %s\n", callID.c_str());
     Manager::instance().hangupCall (callID);
 
 }
@@ -66,7 +66,7 @@ CallManager::hangUp (const std::string& callID)
 void
 CallManager::hold (const std::string& callID)
 {
-    _debug ("CallManager::hold received\n");
+    _debug ("CallManager::hold received %s\n", callID.c_str());
     Manager::instance().onHoldCall (callID);
 
 }
@@ -74,7 +74,7 @@ CallManager::hold (const std::string& callID)
 void
 CallManager::unhold (const std::string& callID)
 {
-    _debug ("CallManager::unhold received\n");
+    _debug ("CallManager::unhold received %s\n", callID.c_str());
     Manager::instance().offHoldCall (callID);
 }
 
@@ -134,7 +134,7 @@ CallManager::setRecording (const std::string& callID)
 bool
 CallManager::getIsRecording (const std::string& callID)
 {
-    _debug ("CallManager::getIsRecording received  \n");
+    _debug ("CallManager::getIsRecording received \n");
     return Manager::instance().isRecording (callID);
 }
 

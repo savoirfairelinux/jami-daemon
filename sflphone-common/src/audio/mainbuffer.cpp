@@ -93,7 +93,7 @@ bool MainBuffer::removeCallIDSet(CallID set_id)
 
 void MainBuffer::addCallIDtoSet(CallID set_id, CallID call_id)
 {
-    _debug("---- MainBuffer::addCallIDtoSet %s from callid %s\n", set_id.c_str(), call_id.c_str());
+    _debug("---- MainBuffer::addCallIDtoSet %s in %s\n", set_id.c_str(), call_id.c_str());
 
     CallIDSet* callid_set = getCallIDSet(set_id);
     callid_set->insert(call_id);
@@ -102,7 +102,7 @@ void MainBuffer::addCallIDtoSet(CallID set_id, CallID call_id)
 
 void MainBuffer::removeCallIDfromSet(CallID set_id, CallID call_id)
 {
-    _debug("---- MainBuffer::removeCallIDfromSet element %s from set %s\n", call_id.c_str(), set_id.c_str());
+    _debug("---- MainBuffer::removeCallIDfromSet element %s from %s\n", call_id.c_str(), set_id.c_str());
 
     CallIDSet* callid_set = getCallIDSet(set_id);
     if(callid_set != NULL)
@@ -182,7 +182,7 @@ void MainBuffer::bindCallID(CallID call_id1, CallID call_id2)
 
     ost::MutexLock guard (_mutex);
 
-    _debug("---- MainBuffer:: bindCallID %s and callid %s\n", call_id1.c_str(), call_id2.c_str());
+    _debug("---- MainBuffer::bindCallID %s and callid %s\n", call_id1.c_str(), call_id2.c_str());
 
     RingBuffer* ring_buffer;
     CallIDSet* callid_set;
@@ -270,7 +270,6 @@ void MainBuffer::unBindAll(CallID call_id)
     while (iter_set != temp_set.end())
     {
 	CallID call_id_in_set = *iter_set;
-	_debug("--------------- call_id1: %s, call_id2: %s -----------------------", call_id.c_str(), call_id_in_set.c_str());
 	unBindCallID(call_id, call_id_in_set);
 
 	iter_set++;
@@ -404,17 +403,7 @@ int MainBuffer::getDataByID(void *buffer, int toCopy, unsigned short volume, Cal
 	return 0;
     }
 
-    int a;
-
-    // ost::MutexLock guard (_mutex);
-    // a = ring_buffer->AvailForGet(reader_id);
-
-    // if (a >= toCopy) {
     return ring_buffer->Get (buffer, toCopy, volume, reader_id);
-	// } else {
-        // _debug ("RingBuffer is quite empty\n");
-        // return ring_buffer->Get (buffer, a, volume, reader_id);
-	// }
 
     return 0;
 

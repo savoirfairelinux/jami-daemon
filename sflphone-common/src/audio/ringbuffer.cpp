@@ -168,10 +168,10 @@ void
 RingBuffer::createReadPointer(CallID call_id)
 {
 
-    _debug("---- createReadPointer call_id %s\n", call_id.c_str());
+    _debug("---- createReadPointer ringbuffer_id %s, call_id %s\n", buffer_id.c_str(), call_id.c_str());
  
     _readpointer.insert(pair<CallID, int>(call_id, mEnd));
-    _debug("---- createReadPointer size:  %i\n", _readpointer.size());
+    _debug("---- createReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(),_readpointer.size());
 
 }
 
@@ -180,10 +180,10 @@ void
 RingBuffer::removeReadPointer(CallID call_id)
 {
 
-    _debug("---- removeReadPointer call_id %s\n", call_id.c_str());
+    _debug("---- removeReadPointer ringbuffer_id %s, call_id %s\n", buffer_id.c_str(), call_id.c_str());
 
     _readpointer.erase(call_id);
-    _debug("---- removeReadPointer size:  %i\n", _readpointer.size());
+    _debug("---- removeReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(), _readpointer.size());
 
 }
 

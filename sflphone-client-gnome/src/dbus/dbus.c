@@ -416,6 +416,8 @@ dbus_clean ()
     void
 dbus_hold (const callable_obj_t * c)
 {
+    DEBUG("dbus_hold %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hold ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -429,6 +431,8 @@ dbus_hold (const callable_obj_t * c)
     void
 dbus_unhold (const callable_obj_t * c)
 {
+    DEBUG("dbus_unhold %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_unhold ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -442,6 +446,8 @@ dbus_unhold (const callable_obj_t * c)
     void
 dbus_hang_up (const callable_obj_t * c)
 {
+    DEBUG("dbus_hang_up %s\n", c->_callID);
+    
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hang_up ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -471,6 +477,9 @@ dbus_accept (const callable_obj_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
 #endif
+
+    DEBUG("dbus_accept %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_accept ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -487,6 +496,9 @@ dbus_refuse (const callable_obj_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
 #endif
+
+    DEBUG("dbus_refuse %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_refuse ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -501,6 +513,8 @@ dbus_refuse (const callable_obj_t * c)
     void
 dbus_place_call (const callable_obj_t * c)
 {
+    DEBUG("dbus_place_call %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_place_call ( callManagerProxy, c->_accountID, c->_callID, c->_peer_number, &error);
     if (error)
@@ -1232,8 +1246,7 @@ dbus_set_volume_controls(  )
 dbus_add_participant(const callable_obj_t * c)
 {
 
-    DEBUG("calling dbus_add_participant on CallManager");
-    DEBUG("CallID : %s", c->_callID);
+    DEBUG("dbus_add_participant %s\n", c->_callID);
 
     GError* error = NULL;
     org_sflphone_SFLphone_CallManager_add_participant(
@@ -1251,8 +1264,8 @@ dbus_add_participant(const callable_obj_t * c)
     void
 dbus_set_record(const callable_obj_t * c)
 {
-    DEBUG("calling dbus_set_record on CallManager");
-    DEBUG("CallID : %s", c->_callID);
+    DEBUG("dbus_set_record %s\n", c->_callID);
+
     GError* error = NULL;
     org_sflphone_SFLphone_CallManager_set_recording (
             callManagerProxy,
@@ -1267,7 +1280,7 @@ dbus_set_record(const callable_obj_t * c)
     gboolean
 dbus_get_is_recording(const callable_obj_t * c)
 {
-    DEBUG("calling dbus_get_is_recording on CallManager");
+    DEBUG("dbus_get_is_recording %s\n", c->_callID);
     GError* error = NULL;
     gboolean isRecording;
     org_sflphone_SFLphone_CallManager_get_is_recording (
