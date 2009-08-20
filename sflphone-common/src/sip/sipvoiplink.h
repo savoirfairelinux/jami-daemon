@@ -339,8 +339,33 @@ class SIPVoIPLink : public VoIPLink
         /** Create SIP UDP Listener */
         int createUDPServer();
 
-        /** Create SIP TLS Listener */
-        int createTLSServer(AccountID id);
+        /**
+         * Try to create a new TLS transport
+         * with the settings defined in the corresponding
+         * SIPAccount with id "id". If creatation fails
+         * for whatever reason, it will try to start
+         * it again on a randomly chosen port.
+         *
+         * A better idea would be to list all the transports
+         * registered to the transport manager in order to find
+         * an available port. Note that creation might also fail
+         * for other reason than just a wrong port.
+         * 
+         * @param id The account id for which a tranport must
+         * be created.
+         * @return pj_status_t PJ_SUCCESS on success
+         */
+        pj_status_t createTlsTransportRetryOnFailure(AccountID id);
+
+        /**
+         * Try to create a TLS transport with the settings
+         * defined in the corresponding SIPAccount with id
+         * "id". 
+         * @param id The account id for which a transport must
+         * be created.
+         * @return pj_status_t PJ_SUCCESS on success 
+         */
+        pj_status_t createTlsTransport(AccountID id);
         
         bool loadSIPLocalIP();
 

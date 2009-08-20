@@ -904,7 +904,7 @@ class ManagerImpl {
      * @param port  On which port we want to listen to
      * @return true if we are behind a NAT (without error)
      */
-    bool behindNat(const std::string& svr, int port);
+    bool isBehindNat(const std::string& svr, int port);
 
     /**
      * Init default values for the different fields in the config file.

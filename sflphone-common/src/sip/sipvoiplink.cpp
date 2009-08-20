@@ -1594,7 +1594,7 @@ bool SIPVoIPLink::pjsip_init()
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
-    /* Start resolving STUN server */
+    // Start resolving STUN server
     // if we useStun and we failed to receive something on port 5060, we try a random port
     // If use STUN server, firewall address setup
     if (!loadSIPLocalIP()) {
@@ -1609,10 +1609,10 @@ bool SIPVoIPLink::pjsip_init()
     this->setStunServer (Manager::instance().getConfigString (SIGNALISATION, SIP_STUN_SERVER));
     this->useStun(useStun);
 
-    if (useStun && !Manager::instance().behindNat (getStunServer(), port)) {
+    if (useStun && !Manager::instance().isBehindNat (getStunServer(), port)) {
         port = RANDOM_SIP_PORT;
 
-        if (!Manager::instance().behindNat (getStunServer(), port)) {
+        if (!Manager::instance().isBehindNat (getStunServer(), port)) {
             _debug ("UserAgent: Unable to check NAT setting\n");
             validStunServer = false;
             return false; // hoho we can't use the random sip port too...
@@ -1621,37 +1621,75 @@ bool SIPVoIPLink::pjsip_init()
 
     _localPort = port;
 
+
+    // Retreive Direct IP Calls settings.
+    // This corresponds to the accountID set to 
+    // AccountNULL
+    SIPAccount * account = NULL;
+    bool directIpCallsTlsEnabled = false;
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(AccountNULL));
+    if (account == NULL) {
+        _debug("Account is null");
+    } else {
+        directIpCallsTlsEnabled = account->isTlsEnabled();
+    }
+    
     if (useStun) {
-        // set by last behindNat() call (ish)...
+        // set by last isBehindNat() call (ish)...
         stunServerResolve();
         _localExternAddress = Manager::instance().getFirewallAddress();
-        _localExternPort = Manager::instance().getFirewallPort();
-        errPjsip = createUDPServer();
-
-        if (errPjsip != 0) {
-            _debug ("UserAgent: Could not initialize SIP listener on port %d\n", port);
-            return errPjsip;
-        }
+        _localExternPort = Manager::instance().getFirewallPort();        
     } else {
         _localExternAddress = _localIPAddress;
         _localExternPort = _localPort;
         errPjsip = createUDPServer();
+    }
+    
+    // Create a UDP listener meant for all accounts
+    // for which TLS was not enabled
+    errPjsip = createUDPServer();
 
-        if (errPjsip != 0) {
-            _debug ("UserAgent: Could not initialize SIP listener on port %d\n", _localExternPort);
-            _localExternPort = _localPort = RANDOM_SIP_PORT;
-            _debug ("UserAgent: Try to initialize SIP listener on port %d\n", _localExternPort);
-            errPjsip = createUDPServer();
+    // If stun was not enabled an the above UDP server
+    // could not be created, then give it another try
+    // on a random sip port
+    if (errPjsip != PJ_SUCCESS && !useStun) {
+        _debug ("UserAgent: Could not initialize SIP listener on port %d\n", _localExternPort);
+        _localExternPort = _localPort = RANDOM_SIP_PORT;
+        
+        _debug ("UserAgent: Try to initialize SIP listener on port %d\n", _localExternPort);
+        errPjsip = createUDPServer();
 
-            if (errPjsip != 0) {
-                _debug ("UserAgent: Fail to initialize SIP listener on port %d\n", _localExternPort);
-                return errPjsip;
-            }
+        if (errPjsip != PJ_SUCCESS) {
+            _debug ("UserAgent: Fail to initialize SIP listener on port %d\n", _localExternPort);
+            return errPjsip;
         }
+    } 
+   
+    // If we use stun and UDP server creation 
+    // failed, then just complain and return
+    // since retrying on a random sip port
+    // would just go against the need of 
+    // using it.
+    if (errPjsip != PJ_SUCCESS && useStun) {
+        _debug("Could not create UDP server with STUN\n");
+        return errPjsip;
     }
 
     _debug ("UserAgent: SIP Init -- listening on port %d\n", _localExternPort);
 
+    // Create a TLS listener meant for Direct IP calls
+    // if the user did enabled it.
+    if (directIpCallsTlsEnabled) {        
+        errPjsip = createTlsTransportRetryOnFailure(AccountNULL);
+    }
+    
+    if (errPjsip != PJ_SUCCESS) {
+        _debug("pj_init(): could not start TLS transport for Direct Calls");
+    }
+    
+    // TODO: For TLS, retry on random port, just we already do above
+    // for UDP transport.
+    
     // Initialize transaction layer
     status = pjsip_tsx_layer_init_module (_endpt);
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
@@ -1912,7 +1950,46 @@ int SIPVoIPLink::findLocalPortFromUri(const std::string& uri)
     
     return port;
 }
-int SIPVoIPLink::createTLSServer(AccountID id)
+
+pj_status_t SIPVoIPLink::createTlsTransportRetryOnFailure(AccountID id)
+{
+    pj_status_t success;
+    
+    // Create a TLS listener.
+    // Note that STUN cannot be used for
+    // TCP NAT traversal. At the moment (20/08/09)
+    // user must supply the public address/port 
+    // manually.
+    success = createTlsTransport(id);
+
+    if (success != PJ_SUCCESS) {    
+        unsigned int randomPort = RANDOM_SIP_PORT;   
+
+        // Update new port in the corresponding SIPAccount
+        SIPAccount * account = NULL;
+        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
+        if (account == NULL) {
+            _debug("createTlsTransportRetryOnFailure: Account is null. Returning");
+            return !PJ_SUCCESS;
+        }
+        
+        account->setLocalPort((pj_uint16_t) randomPort);
+        
+        // Try to start the transport again on 
+        // the new port.       
+        success = createTlsTransport(id);
+        if (success != PJ_SUCCESS) {
+            _debug ("createTlsTransportRetryOnFailure: failed to retry on random port %d\n", randomPort);
+            return success;
+        }
+        
+        _debug ("createTlsTransportRetryOnFailure: TLS transport listening on port %d\n", randomPort);
+    } 
+ 
+    return PJ_SUCCESS;  
+}
+
+pj_status_t SIPVoIPLink::createTlsTransport(AccountID id)
 {
     pjsip_tpfactory *tls;
     pj_sockaddr_in local_addr;
@@ -1934,21 +2011,23 @@ int SIPVoIPLink::createTLSServer(AccountID id)
     * IP interface address is not specified,
     * so socket will be bound to PJ_INADDR_ANY.
     * If user specified port is an empty string
-    * of if is equal to 0, then the port will 
+    * or if it is equal to 0, then the port will 
     * be chosen automatically by the OS.
     */
     pj_sockaddr_in_init(&local_addr, 0, 0); 
-    pj_uint16_t localTlsPort = account->getPort();
+    pj_uint16_t localTlsPort = account->getLocalPort();
     if (localTlsPort != 0) {
             local_addr.sin_port = pj_htons(localTlsPort);
     }
     
     /* Init published name */
     pj_bzero(&a_name, sizeof(pjsip_host_port));
-    pj_cstr(&a_name.host, _localExternAddress.c_str());
-    a_name.port = (pj_uint16_t) _localExternPort;
-        
+    pj_cstr(&a_name.host, (account->getPublishedAddress()).c_str());
+    a_name.port = account->getPublishedPort();
+    
+    /* Get TLS settings. Expected to be filled */    
     pjsip_tls_setting * tls_setting = account->getTlsSetting();
+    
     status = pjsip_tls_transport_start(_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
     
     if (status != PJ_SUCCESS) {
@@ -3144,7 +3223,7 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP, bool stun, std::stri
 
     if (stun) {
         // If use Stun server
-        if (Manager::instance().behindNat (server, callLocalAudioPort)) {
+        if (Manager::instance().isBehindNat (server, callLocalAudioPort)) {
             callLocalExternAudioPort = Manager::instance().getFirewallPort();
         }
     }

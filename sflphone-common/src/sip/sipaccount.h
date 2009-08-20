@@ -73,10 +73,7 @@ class SIPAccount : public Account
 
         inline void setCredInfo(pjsip_cred_info *cred) {_cred = cred;}
         inline pjsip_cred_info *getCredInfo() {return _cred;}
-        
-        inline void setContact(const std::string &contact) {_contact = contact;}
-        inline std::string getContact() {return _contact;}
-                
+              
         inline std::string& getAuthenticationUsername(void) { return _authenticationUsername; }
         inline void setAuthenticationUsername(const std::string& username) { _authenticationUsername = username; }
         
@@ -87,20 +84,49 @@ class SIPAccount : public Account
         bool fullMatch(const std::string& username, const std::string& hostname);
         bool userMatch(const std::string& username);
         bool hostnameMatch(const std::string& hostname);
-
-        pjsip_regc* getRegistrationInfo( void ) { return _regc; }
-        void setRegistrationInfo( pjsip_regc *regc ) { _regc = regc; }
-
-        inline int getCredentialCount(void) { return _credentialCount; }
         
         /* Registration flag */
         bool isRegister() {return _bRegister;}
         void setRegister(bool result) {_bRegister = result;}        
         
-        inline pjsip_tls_setting * getTlsSetting(void) { return _tlsSetting; }
-        inline bool isTlsEnabled(void) { return (_transportType == PJSIP_TRANSPORT_TLS) ? true: false; }
-        inline pj_uint16_t getPort(void) { return (pj_uint16_t) atoi(_port.c_str()); }
+        /**
+         * Get the registration stucture that is used 
+         * for PJSIP in the registration process.
+         * Settings are loaded from configuration file.
+         * @param void
+         * @return pjsip_regc* A pointer to the registration structure
+         */
+        pjsip_regc* getRegistrationInfo( void ) { return _regc; }
+        
+        /** 
+         * Set the registration structure that is used
+         * for PJSIP in the registration process;
+         * @pram A pointer to the new registration structure
+         * @return void
+         */
+        void setRegistrationInfo( pjsip_regc *regc ) { _regc = regc; }
 
+        /**
+         * Get the number of credentials defined for 
+         * this account.
+         * @param none
+         * @return int The number of credentials set for this account.
+         */
+        inline int getCredentialCount(void) { return _credentialCount; }
+                
+        /**
+         * @return pjsip_tls_setting structure, filled from the configuration
+         * file, that can be used directly by PJSIP to initialize 
+         * TLS transport.
+         */
+        inline pjsip_tls_setting * getTlsSetting(void) { return _tlsSetting; }
+        
+        /**
+         * @return bool Tells if current transport for that 
+         * account is set to TLS.
+         */
+        inline bool isTlsEnabled(void) { return (_transportType == PJSIP_TRANSPORT_TLS) ? true: false; }
+                
         /*
          * @return pj_str_t "From" uri based on account information.
          * From RFC3261: "The To header field first and foremost specifies the desired
@@ -132,15 +158,70 @@ class SIPAccount : public Account
          */
         std::string getServerUri(void);
                
-        /*
+        /**
          * @param port Optional port. Otherwise set to the port defined for that account.
          * @param hostname Optional local address. Otherwise set to the hostname defined for that account.
          * @return pj_str_t The contact header based on account information
          */
         std::string getContactHeader(const std::string& address, const std::string& port);
+
+        /**
+         * Get the port on which the transport/listener should use, or is
+         * actually using.
+         * @return pj_uint16 The port used for that account
+         */   
+        inline pj_uint16_t getLocalPort(void) { return (pj_uint16_t) _localPort; }
         
-    protected:
-    
+        /** 
+         * Set the new port on which this account is running over.
+         * @pram port The port used by this account.
+         */
+        inline void setLocalPort(pj_uint16_t port) { _localPort = port; }
+                
+        /**
+         * Get the published port, which is the port to be advertised as the port
+         * for the chosen SIP transport.
+         * @return pj_uint16 The port used for that account
+         */   
+        inline pj_uint16_t getPublishedPort(void) { return (pj_uint16_t) _publishedPort; }
+        
+        /** 
+         * Set the published port, which is the port to be advertised as the port
+         * for the chosen SIP transport.
+         * @pram port The port used by this account.
+         */
+        inline void setPublishedPort(pj_uint16_t port) { _publishedPort = port; }
+
+        /**
+         * Get the bound address set by the user.
+         * @return std::string The public IPV4 address formatted in the standard dot notation.
+         */
+        inline std::string getLocalAddress(void) { return _localIpAddress; }
+        
+        /**
+         * Set the bound address chosen by the user.
+         * @param The public IPV4 address in the standard dot notation.
+         * @return void
+         */
+        inline void setLocalAddress(const std::string& address) { _localIpAddress = address; }
+                
+        /**
+         * Get the public IP address set by the user for this account.
+         * If this setting is not provided, the local bound adddress
+         * will be used.
+         * @return std::string The public IPV4 address formatted in the standard dot notation.
+         */
+        inline std::string getPublishedAddress(void) { return _publishedIpAddress; }
+        
+        /**
+         * Set the public IP address to be used in Contact header.
+         * @param The public IPV4 address in the standard dot notation.
+         * @return void
+         */
+        inline void setPublishedAddress(const std::string& publishedIpAddress) { _publishedIpAddress = publishedIpAddress; }
+        
+    private: 
+
         /* Maps a string description of the SSL method 
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation 
@@ -160,35 +241,6 @@ class SIPAccount : public Account
         int initCredential(void);       
         
         /**
-         * Credential information
-         */
-        pjsip_cred_info *_cred;
-
-        std::string _port;
-        
-        pjsip_transport_type_e _transportType;
-        
-        /**
-        *  The TLS settings, if tls is chosen as 
-        *  a sip transport. 
-        */ 
-        pjsip_tls_setting * _tlsSetting;	                                                  
-        
-        /**
-         * Special hack that is not here to stay
-         * See #1852
-         */
-        bool _resolveOnce;
-        
-        /**
-         * Display Name that can be used in 
-         * SIP URI.
-         */
-        std::string _displayName;
-
-    private: 
-
-        /**
          * If username is not provided, as it happens for Direct ip calls, 
          * fetch the hostname of the machine on which the program is running
          * onto.
@@ -205,28 +257,38 @@ class SIPAccount : public Account
         std::string getLoginName(void);
             
     private:               
-        /**
-         * The pjsip client registration information
-         */
+
+        // The pjsip client registration information
         pjsip_regc *_regc;
-        
-        /**
-         * To check if the account is registered
-         */
+        // To check if the account is registered
         bool _bRegister; 
-                
-        /*
-         * SIP address
-         */
-        std::string _contact;
-        
+
+        // Network settings
         std::string _registrationExpire;
+                
+        std::string _localIpAddress;
+        std::string _publishedIpAddress;
         
+        pj_uint16_t _localPort;
+        pj_uint16_t _publishedPort;
+        
+        pjsip_transport_type_e _transportType;
+        // Special hack that is not here to stay
+        // See #1852
+        bool _resolveOnce;
+                        
+        //Credential information
+        int _credentialCount;        
+        pjsip_cred_info *_cred; 
+        std::string _realm;                       
         std::string _authenticationUsername;
+
+        // The TLS settings, if tls is chosen as 
+        // a sip transport. 
+        pjsip_tls_setting * _tlsSetting;	                                                  
         
-        std::string _realm;
-        
-        int _credentialCount;
+        // Display Name that can be used in  SIP URI.        
+        std::string _displayName;        
 };
 
 #endif

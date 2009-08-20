@@ -26,15 +26,21 @@
 
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
-        , _cred (NULL)
-        , _regc()
-        , _bRegister (false)
-        , _resolveOnce (false)
-        , _contact ("")
-        , _displayName ("")
-        , _tlsSetting (NULL)
-        , _port(DFT_SIP_PORT)
-        , _transportType(PJSIP_TRANSPORT_UNSPECIFIED)
+        , _regc(NULL)
+        , _bRegister(false)
+        , _registrationExpire("")
+        , _localIpAddress("")
+        , _publishedIpAddress("")
+        , _localPort(atoi(DEFAULT_SIP_PORT))
+        , _publishedPort(atoi(DEFAULT_SIP_PORT))
+        , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
+        , _resolveOnce(false)
+        , _credentialCount(0)
+        , _cred(NULL)
+        , _realm(DEFAULT_REALM)
+        , _authenticationUsername("")
+        , _tlsSetting(NULL)
+        , _displayName("")
 {
     /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
     /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
@@ -134,7 +140,6 @@ int SIPAccount::registerVoIPLink()
     // Init TLS settings if the user wants to use TLS
     bool tlsEnabled = Manager::instance().getConfigBool(_accountID, TLS_ENABLE);
     if (tlsEnabled) {
-        _port = (pj_uint16_t) Manager::instance().getConfigInt(_accountID, TLS_PORT);
         _transportType = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -221,23 +226,33 @@ void SIPAccount::initTlsConfiguration(void)
 }
 
 void SIPAccount::loadConfig()
-{    
-    // Init general account settings        
-    setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
+{       
+    // Load primary credential
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
-    
     _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
     _realm = Manager::instance().getConfigString (_accountID, REALM);
     _resolveOnce = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? true : false;
 
+    // Load general account settings        
+    setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
     if (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
         _registrationExpire = DFT_EXPIRE_VALUE;
     } else {
         _registrationExpire = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
     }
     
-    _port = Manager::instance().getSipPort();
+    // Load network settings
+    std::string localPort = Manager::instance().getConfigString(_accountID, LOCAL_PORT);
+    std::string publishedPort = Manager::instance().getConfigString(_accountID, PUBLISHED_PORT);    
+    std::stringstream ss;
+    ss << localPort;
+    ss >> _localPort;        
+    ss << publishedPort;
+    ss >> _publishedPort; 
+    
+    _localIpAddress = Manager::instance().getConfigString(_accountID, LOCAL_ADDRESS);
+    _publishedIpAddress = Manager::instance().getConfigString(_accountID, PUBLISHED_ADDRESS);
     _transportType = PJSIP_TRANSPORT_UDP;
     
     // Account generic
@@ -420,5 +435,4 @@ std::string SIPAccount::getContactHeader(const std::string& address, const std::
                     
     return std::string(contact, len);
 }
-
 
