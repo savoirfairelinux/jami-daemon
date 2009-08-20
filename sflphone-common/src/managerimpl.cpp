@@ -311,13 +311,13 @@ ManagerImpl::answerCall (const CallID& id)
     _debug ("Try to answer call: %s\n", id.data());
 
     if (lastCall != NULL ) {
-        if (lastCall->getState() == Call::Active && _conferencemap.empty()) {
+        if (lastCall->getState() == Call::Active && !participToConference(getCurrentCallId())) {
             _debug ("* Manager Info: there is currently a call, try to hold it\n");
             onHoldCall (getCurrentCallId());
         }
 	else
 	{
-	    _debug("There is a conference! Do not hold the current call\n");
+	    _debug("Current call particips to a conference! Do not hold it!\n");
 	}
     }
 
@@ -351,6 +351,7 @@ ManagerImpl::hangupCall (const CallID& id)
     AudioLayer *audiolayer;
 
     stopTone (false);
+    switchCall (id);
 
     /* Broadcast a signal over DBus */
 
@@ -390,19 +391,17 @@ ManagerImpl::hangupCall (const CallID& id)
     if(participToConference(id))
 	removeParticipant(id);
 
-    _debug("What next (before switch call)?\n");
+    _debug("ManagerImpl::hangupCall CURRENT CALL ID %s\n", getCurrentCallId().c_str());
 
     switchCall ("");
 
-    _debug("What next (after switch call, before restore pulse app volume)?\n");
+    _debug("ManagerImpl::hangupCall CURRENT CALL ID %s\n", getCurrentCallId().c_str());
 
     if (_audiodriver->getLayerType() == PULSEAUDIO && getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL)) {
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
 
         if (pulselayer)  pulselayer->restorePulseAppsVolume();
     }
-
-    _debug("What next (after restore pulse app volume)?\n");
 
     return returnValue;
 }
@@ -3136,8 +3135,6 @@ void ManagerImpl::registerCurSIPAccounts (VoIPLink *link)
 
 std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings ()
 {
-
-    _debug("Euhhhh.......... ManagerImpl::getAddressbookSettings called?\n");
 
     std::map<std::string, int32_t> settings;
 
