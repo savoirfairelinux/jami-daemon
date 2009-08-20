@@ -1102,6 +1102,8 @@ ManagerImpl::peerHungupCall (const CallID& id)
     if(participToConference(id))
 	removeParticipant(id);
 
+    switchCall(id);
+
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP) {
