@@ -300,6 +300,16 @@ class SIPVoIPLink : public VoIPLink
 
         std::string get_useragent_name (void);
 
+        /** 
+         * List all the interfaces on the system and return 
+         * a vector list containing their IPV4 address.
+         * @param void
+         * @return std::vector<std::string> A std::string vector
+         * of IPV4 address available on all of the interfaces on
+         * the system.
+         */
+        std::vector<std::string> getAllIpInterface(void);
+
     private:
         /**
          * Constructor

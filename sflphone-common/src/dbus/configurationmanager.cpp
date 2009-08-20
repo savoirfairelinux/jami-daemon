@@ -23,6 +23,7 @@
 #include <configurationmanager.h>
 #include <sstream>
 #include "../manager.h"
+#include "sip/sipvoiplink.h"
 
 const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
 
@@ -751,4 +752,18 @@ std::map <std::string, std::string> ConfigurationManager::getHistory (void)
 void ConfigurationManager::setHistory (const std::map <std::string, std::string>& entries)
 {
     Manager::instance().receive_history_from_client (entries);
+}
+
+std::vector<std::string> ConfigurationManager::getAllIpInterface(void)
+{
+    _debug ("ConfigurationManager::getAllIpInterface received\n");
+    
+    std::vector<std::string> vector;
+    SIPVoIPLink * sipLink = NULL;
+    sipLink = SIPVoIPLink::instance ("");
+    if (sipLink != NULL) {
+        vector = sipLink->getAllIpInterface();
+    }
+   
+    return vector;
 }

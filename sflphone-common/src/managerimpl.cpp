@@ -46,8 +46,8 @@
 #include <fstream>
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
-#include <sys/stat.h>	// mkdir(2)
-#include <pwd.h> // getpwuid
+#include <sys/stat.h>  // mkdir(2)
+#include <pwd.h>       // getpwuid
 
 #define fill_config_str(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))

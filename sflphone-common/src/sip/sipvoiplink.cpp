@@ -3273,4 +3273,26 @@ std::string fetch_header_value (pjsip_msg *msg, std::string field)
     return url;
 }
 
+std::vector<std::string> SIPVoIPLink::getAllIpInterface(void)
+{
+    pj_sockaddr addrList[16];
+    unsigned int addrCnt = PJ_ARRAY_SIZE(addrList);
+    
+    pj_status_t success;
+    success = pj_enum_ip_interface (pj_AF_INET(), &addrCnt, addrList);
+    
+    std::vector<std::string> ifaceList;
+    if (success != PJ_SUCCESS) {
+        return ifaceList;
+    }
+    
+    _debug("Detecting available interfaces...\n");
+    int i;
+    for (i = 0; i < addrCnt; i++) {
+        char tmpAddr[PJ_INET_ADDRSTRLEN];
+        pj_sockaddr_print(&addrList[i], tmpAddr, sizeof(tmpAddr), 0);
+        ifaceList.push_back(std::string(tmpAddr));
+        _debug("Local interface %s\n", tmpAddr);
+    }
+}
 
