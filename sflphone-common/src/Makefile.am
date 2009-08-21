@@ -19,7 +19,8 @@ sflphoned_SOURCES = \
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
-		@ZRTPCPP_CFLAGS@
+		@ZRTPCPP_CFLAGS@ \
+		@libssl_CFLAGS@
 
 
 # Add here the dynamic libraries sflphoned should be linked against
@@ -32,7 +33,8 @@ sflphoned_LDADD = \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
-		@SAMPLERATE_LIBS@ 
+		@SAMPLERATE_LIBS@ \
+		@libssl_LIBS@
 
 # sflphoned_LDFLAGS= -pg -luuid
 sflphoned_LDFLAGS= -luuid

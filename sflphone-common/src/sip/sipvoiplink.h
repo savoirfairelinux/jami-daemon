@@ -48,7 +48,7 @@ namespace sfl {
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 0 
+#define PJ_LOG_LEVEL 6 
 
 /**
  * @file sipvoiplink.h
@@ -211,22 +211,6 @@ class SIPVoIPLink : public VoIPLink
         void terminateOneCall(const CallID& id);
 
         /**
-         * Build a sip address with the number that you want to call
-         * Example: sip:124@domain.com
-         * @param to  The header of the recipient
-         * @return std::string  Result as a string
-         */
-        std::string SIPToHeader(const std::string& to);
-
-        /**
-         * Check if an url is sip-valid
-         * @param url The url to check
-         * @return bool True if osip tell that is valid
-         */
-        bool SIPCheckUrl(const std::string& url);
-
-
-        /**
          * Send an outgoing call invite
          * @param call  The current call
          * @return bool True if all is correct
@@ -240,13 +224,6 @@ class SIPVoIPLink : public VoIPLink
          * @return true if all is correct
          */
         bool SIPStartCall(SIPCall* call, const std::string& subject);
-
-        /**
-         * Get the Sip TO url (add sip:, add @host, etc...)
-         * @param to_url  The To url
-         * @return std::string  The SIP to address
-         */
-        std::string getSipTo(const std::string& to_url, std::string hostname);
 
         /**
          * Tell the user that the call was answered
@@ -323,6 +300,16 @@ class SIPVoIPLink : public VoIPLink
 
         std::string get_useragent_name (void);
 
+        /** 
+         * List all the interfaces on the system and return 
+         * a vector list containing their IPV4 address.
+         * @param void
+         * @return std::vector<std::string> A std::string vector
+         * of IPV4 address available on all of the interfaces on
+         * the system.
+         */
+        std::vector<std::string> getAllIpInterface(void);
+
     private:
         /**
          * Constructor
@@ -362,6 +349,34 @@ class SIPVoIPLink : public VoIPLink
         /** Create SIP UDP Listener */
         int createUDPServer();
 
+        /**
+         * Try to create a new TLS transport
+         * with the settings defined in the corresponding
+         * SIPAccount with id "id". If creatation fails
+         * for whatever reason, it will try to start
+         * it again on a randomly chosen port.
+         *
+         * A better idea would be to list all the transports
+         * registered to the transport manager in order to find
+         * an available port. Note that creation might also fail
+         * for other reason than just a wrong port.
+         * 
+         * @param id The account id for which a tranport must
+         * be created.
+         * @return pj_status_t PJ_SUCCESS on success
+         */
+        pj_status_t createTlsTransportRetryOnFailure(AccountID id);
+
+        /**
+         * Try to create a TLS transport with the settings
+         * defined in the corresponding SIPAccount with id
+         * "id". 
+         * @param id The account id for which a transport must
+         * be created.
+         * @return pj_status_t PJ_SUCCESS on success 
+         */
+        pj_status_t createTlsTransport(AccountID id);
+        
         bool loadSIPLocalIP();
 
         std::string getLocalIP() {return _localExternAddress;}
@@ -393,6 +408,24 @@ class SIPVoIPLink : public VoIPLink
 
         /* Number of SIP accounts connected to the link */
         int _clients;
+        
+        /* 
+         * Get the correct address to use (ie advertised) from 
+         * a uri. The corresponding transport that should be used
+         * with that uri will be discovered. 
+         *
+         * @param uri The uri from which we want to discover the address to use
+         * @return pj_str_t The extern (public) address
+         */
+        std::string findLocalAddressFromUri(const std::string& uri);
+        
+        /* 
+         * Does the same as findLocalAddressFromUri but returns a port.
+         * @param uri The uri from which we want to discover the address to use
+         * @return int The extern (public) port
+         */
+        int findLocalPortFromUri(const std::string& uri);
 };
+
 
 #endif

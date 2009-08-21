@@ -28,6 +28,7 @@
 #include "user_cfg.h"
 #include "global.h"
 #include "sip/sipaccount.h"
+
 #include "audio/audiolayer.h"
 #include "audio/alsa/alsalayer.h"
 #include "audio/pulseaudio/pulselayer.h"
@@ -45,12 +46,8 @@
 #include <fstream>
 #include <sstream>
 #include <sys/types.h> // mkdir(2)
-#include <sys/stat.h>	// mkdir(2)
-
-//#include <cc++/file.h>
-
-
-
+#include <sys/stat.h>  // mkdir(2)
+#include <pwd.h>       // getpwuid
 
 #define fill_config_str(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
@@ -90,6 +87,7 @@ ManagerImpl::ManagerImpl (void)
         , _accountMap()
         , _cleaner (NULL)
         , _history (NULL)
+        , _directIpAccount (NULL)
 {
 
     // initialize random generator for call id
@@ -1262,7 +1260,7 @@ ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr, int port)
 }
 
 bool
-ManagerImpl::behindNat (const std::string& svr, int port)
+ManagerImpl::isBehindNat (const std::string& svr, int port)
 {
     StunAddress4 stunSvrAddr;
     stunSvrAddr.addr = 0;
@@ -1354,7 +1352,22 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, TRUE_STR), IP2IP_PROFILE);    
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR), IP2IP_PROFILE);        
     _config.addDefaultValue(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"), IP2IP_PROFILE);        
-    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"), IP2IP_PROFILE); 
+    _config.addDefaultValue(std::pair<std::string, std::string> (LOCAL_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (PUBLISHED_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (LOCAL_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);  
+    _config.addDefaultValue(std::pair<std::string, std::string> (PUBLISHED_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);
+    
+    // Init display name to the username under which 
+    // this sflphone instance is running.
+    std::string diplayName("");
+    uid_t uid = getuid();
+    struct passwd * user_info = NULL;
+    user_info = getpwuid(uid);
+    if (user_info != NULL) {
+        diplayName = user_info->pw_name;
+    }
+    _config.addDefaultValue(std::pair<std::string, std::string> (DISPLAY_NAME, diplayName), IP2IP_PROFILE);                       
     
     // Signalisation settings       
     _config.addDefaultValue(std::pair<std::string, std::string> (SYMMETRIC, TRUE_STR), SIGNALISATION);  
@@ -2495,7 +2508,7 @@ ManagerImpl::getAccountList()
         iter = _accountMap.begin ();
 
         while (iter != _accountMap.end()) {
-            if (iter->second != 0) {
+            if (iter->second != NULL) {
                 v.push_back (iter->first.data());
             }
 
@@ -2544,6 +2557,11 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert(std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, getConfigString(accountID, AUTHENTICATION_USERNAME)));
     a.insert(std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)));
     a.insert(std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
+    a.insert(std::pair<std::string, std::string> (LOCAL_ADDRESS, getConfigString(accountID, LOCAL_ADDRESS)));
+    a.insert(std::pair<std::string, std::string> (PUBLISHED_ADDRESS, getConfigString(accountID, PUBLISHED_ADDRESS)));
+    a.insert(std::pair<std::string, std::string> (LOCAL_PORT, getConfigString(accountID, LOCAL_PORT)));
+    a.insert(std::pair<std::string, std::string> (PUBLISHED_PORT, getConfigString(accountID, PUBLISHED_PORT)));
+    a.insert(std::pair<std::string, std::string> (DISPLAY_NAME, getConfigString(accountID, DISPLAY_NAME)));                    
     
     RegistrationState state; 
     state = account->getRegistrationState();           
@@ -2728,6 +2746,11 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string registrationExpire;
     				
     std::string hostname;
+    std::string displayName;
+    std::string localAddress;
+    std::string publishedAddress;
+    std::string localPort;
+    std::string publishedPort;    
     std::string srtpEnable;
     std::string zrtpDisplaySas;
     std::string zrtpDisplaySasOnce;
@@ -2735,7 +2758,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string zrtpHelloHash;
     std::string srtpKeyExchange;
         
-    std::string tlsEnable;
+    std::string tlsEnable;          
     std::string tlsCaListFile;
     std::string tlsCertificateFile;    
     std::string tlsPrivateKeyFile;     
@@ -2750,6 +2773,11 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string tlsNegotiationTimeoutMsec;        
  
     if((iter = map_cpy.find(HOSTNAME)) != map_cpy.end()) { hostname = iter->second; }
+    if((iter = map_cpy.find(DISPLAY_NAME)) != map_cpy.end()) { displayName = iter->second; } 
+    if((iter = map_cpy.find(LOCAL_ADDRESS)) != map_cpy.end()) { localAddress = iter->second; }           
+    if((iter = map_cpy.find(PUBLISHED_ADDRESS)) != map_cpy.end()) { publishedAddress = iter->second; }        
+    if((iter = map_cpy.find(LOCAL_PORT)) != map_cpy.end()) { localPort = iter->second; }
+    if((iter = map_cpy.find(PUBLISHED_PORT)) != map_cpy.end()) { publishedPort = iter->second; }                   
     if((iter = map_cpy.find(SRTP_ENABLE)) != map_cpy.end()) { srtpEnable = iter->second; }
     if((iter = map_cpy.find(ZRTP_DISPLAY_SAS)) != map_cpy.end()) { zrtpDisplaySas = iter->second; }
     if((iter = map_cpy.find(ZRTP_DISPLAY_SAS_ONCE)) != map_cpy.end()) { zrtpDisplaySasOnce = iter->second; }
@@ -2779,7 +2807,12 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_MSEC)) != map_cpy.end()) { tlsNegotiationTimeoutMsec = iter->second; }      
     
     _debug("Enable account %s\n", accountEnable.c_str());        																									
-    setConfig(accountID, HOSTNAME, hostname);    
+    setConfig(accountID, HOSTNAME, hostname);
+    setConfig(accountID, LOCAL_ADDRESS, localAddress);    
+    setConfig(accountID, PUBLISHED_ADDRESS, publishedAddress);            
+    setConfig(accountID, LOCAL_PORT, localPort);    
+    setConfig(accountID, PUBLISHED_PORT, publishedPort);
+    setConfig(accountID, DISPLAY_NAME, displayName);                
     setConfig(accountID, SRTP_ENABLE, srtpEnable);
     setConfig(accountID, ZRTP_DISPLAY_SAS, zrtpDisplaySas);
     setConfig(accountID, ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce);        
@@ -2787,7 +2820,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);    
     setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);											
     
-    setConfig(accountID, TLS_ENABLE, tlsEnable);    
+    setConfig(accountID, TLS_ENABLE, tlsEnable);   
     setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);    
     setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);    
     setConfig(accountID, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile);    
@@ -3059,6 +3092,22 @@ ManagerImpl::loadAccountMap()
         iter++;
     }
 
+    // Those calls that are placed to an uri that cannot be 
+    // associated to an account are using that special account.
+    // An account, that is not account, in the sense of 
+    // registration. This is useful since the Account object 
+    // provides a handful of method that simplifies URI creation
+    // and loading of various settings.
+    _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
+    if (_directIpAccount == NULL) {
+        _debug("Failed to create direct ip calls \"account\"\n");
+    } else {
+        // Force the options to be loaded
+        // No registration in the sense of 
+        // the REGISTER method is performed.
+        _directIpAccount->registerVoIPLink(); 
+    }
+          
     _debug ("nbAccount loaded %i \n",nbAccount);
 
     return nbAccount;
@@ -3097,9 +3146,15 @@ ManagerImpl::accountExists (const AccountID& accountID)
 Account*
 ManagerImpl::getAccount (const AccountID& accountID)
 {
+    // In our definition, 
+    // this is the "direct ip calls account"
+    if (accountID == AccountNULL) {
+        return _directIpAccount;
+    }
+    
     AccountMap::iterator iter = _accountMap.find (accountID);
     if (iter == _accountMap.end()) {
-        return 0;
+        return NULL;
     }
     return iter->second;
 }
@@ -3329,20 +3384,11 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     saveConfig ();
 }
 
-
-
-
 void ManagerImpl::check_call_configuration (const CallID& id, const std::string &to, Call::CallConfiguration *callConfig)
 {
-    std::string pattern;
     Call::CallConfiguration config;
 
-    /* Check if the call is an IP-to-IP call */
-    /* For an IP-to-IP call, we don't need any account */
-    /* Pattern looked for : ip:xxx.xxx.xxx.xxx */
-    pattern = to.substr (0,4);
-
-    if (pattern==IP_TO_IP_PATTERN) {
+    if (to.find(SIP_SCHEME) == 0 || to.find(SIPS_SCHEME) == 0) {
         _debug ("Sending Sip Call \n");
         config = Call::IPtoIP;
     } else {

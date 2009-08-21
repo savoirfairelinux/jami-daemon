@@ -137,7 +137,8 @@ public:
 
     std::map<std::string, std::string> getTlsSettings(const std::string& accountID);
     void setTlsSettings(const std::string& accountID, const std::map< std::string, std::string >& details);
-
+    
+    std::vector<std::string> getAllIpInterface(void);
 };
 
 

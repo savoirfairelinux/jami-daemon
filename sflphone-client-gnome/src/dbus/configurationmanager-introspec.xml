@@ -388,5 +388,9 @@
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
 
+    <method name="getAllIpInterface">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
   </interface>
 </node>

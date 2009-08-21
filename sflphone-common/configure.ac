@@ -195,6 +195,11 @@ AC_SUBST(CCEXT2_CFLAGS)
 	AC_SUBST(CCRTP_LIBS)
 AC_SUBST(CCRTP_CFLAGS)
 
+dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
+	PKG_CHECK_MODULES([libssl], libssl, , AC_MSG_ERROR([libssl is required]))
+	AC_SUBST(libssl_CFLAGS)
+	AC_SUBST(libssl_LIBS)
+
 dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 	LIBZRTPCPP_MIN_VERSION=1.3.0
 	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION})

@@ -3,7 +3,8 @@
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
- *
+ *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -29,6 +30,8 @@
 #include "sip/sdp.h"
 
 #include "pjsip/sip_endpoint.h"
+#include "pjsip/sip_transport_tls.h"
+#include "pjsip/sip_uri.h" 
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -210,7 +213,7 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
         , _localExternAddress ("")
         , _localExternPort (0)
         , _audiortp (new sfl::AudioRtpFactory())
-        ,_regPort (DEFAULT_SIP_PORT)
+        ,_regPort (atoi(DEFAULT_SIP_PORT))
         , _useStun (false)
         , _clients (0)
 {
@@ -366,10 +369,9 @@ SIPVoIPLink::getEvent()
 int SIPVoIPLink::sendRegister (AccountID id)
 {
     int expire_value;
-    char contactTmp[256];
-
+    
     pj_status_t status;
-    pj_str_t svr, aor, contact, useragent;
+    pj_str_t useragent;
     pjsip_tx_data *tdata;
     pjsip_host_info destination;
 
@@ -386,6 +388,12 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
+    // Resolve hostname here and keep its
+    // IP address for the whole time the 
+    // account is connected. This was a 
+    // workaround meant to help issue 
+    // #1852 that we hope should be fixed
+    // soon.
     if (account->isResolveOnce()) {
 
         struct result result;
@@ -420,26 +428,26 @@ int SIPVoIPLink::sendRegister (AccountID id)
             account->setHostname (addr_buf);
         }
     }
+    
+    // Launch a new TLS listener/transport 
+    // if the user did choose it.
+    if (account->isTlsEnabled()) {
+        pj_status_t status;    
+        
+        status = createTlsTransportRetryOnFailure(id);
+        
+        if (status != PJ_SUCCESS) {
+            _debug("Failed to initialize TLS transport for account %s\n", id.c_str());
+        }
+    }
 
-    hostname = account->getHostname();
-
-    username = account->getUsername();
-    password = account->getPassword();
 
     _mutexSIP.enterMutex();
-
-    /* Get the client registration information for this particular account */
+    // Get the client registration information for this particular account
     regc = account->getRegistrationInfo();
-    /* TODO If the registration already exists, delete it */
-    /*if(regc) {
-        status = pjsip_regc_destroy(regc);
-        regc = NULL;
-        PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-    }*/
-
     account->setRegister (true);
 
-    /* Set the expire value of the message from the config file */
+    // Set the expire value of the message from the config file 
     istringstream stream (account->getRegistrationExpire());
     stream >> expire_value;
 
@@ -447,7 +455,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         expire_value = PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
     }
 
-    /* Update the state of the voip link */
+    // Update the state of the voip link 
     account->setRegistrationState (Trying);
 
     if (!validStunServer) {
@@ -457,7 +465,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
-    /* Create the registration according to the account ID */
+    // Create the registration according to the account ID 
     status = pjsip_regc_create (_endpt, (void*) account, &regc_cb, &regc);
 
     if (status != PJ_SUCCESS) {
@@ -466,23 +474,43 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
-    tmp = "sip:" + hostname;
-
-    pj_strdup2 (_pool, &svr, tmp.data());
-
-    // tmp = "<sip:" + username + "@" + hostname + ";transport=tls>";
-    tmp = "<sip:" + username + "@" + hostname + ">";
-    pj_strdup2 (_pool, &aor, tmp.data());
-
-    _debug ("<sip:%s@%s:%d>\n", username.data(), _localExternAddress.data(), _localExternPort);
-    sprintf (contactTmp, "<sip:%s@%s:%d>", username.data(), _localExternAddress.data(), _localExternPort);
-    pj_strdup2 (_pool, &contact, contactTmp);
-    account->setContact (contactTmp);
-
-    status = pjsip_regc_init (regc, &svr, &aor, &aor, 1, &contact, expire_value);   //timeout);
+    // Creates URI
+    std::string fromUri;
+    std::string contactUri;
+    std::string srvUri;
+    std::string address;
+       
+    fromUri = account->getFromUri();
+    srvUri = account->getServerUri();
+    address = findLocalAddressFromUri(srvUri);
+          
+    int port = findLocalPortFromUri(srvUri);
+    std::stringstream ss;
+    std::string portStr;
+    ss << port;
+    ss >> portStr;
+    // DON'T FORGET TO REMOVE THIS 5061 VALUE !
+    contactUri = account->getContactHeader(address, "5061");
+ 
+    _debug("sendRegister: fromUri: %s serverUri: %s contactUri: %s\n",
+            fromUri.c_str(),
+            srvUri.c_str(),
+            contactUri.c_str());
+    
+    pj_str_t pjFrom;
+    pj_cstr(&pjFrom, fromUri.c_str());
+    
+    pj_str_t pjContact;
+    pj_cstr(&pjContact, contactUri.c_str());
+    
+    pj_str_t pjSrv; 
+    pj_cstr(&pjSrv, srvUri.c_str());
+                  
+    // Initializes registration 
+    status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);   
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to initialize regc. %d\n", status);   //, regc->str_srv_url.ptr);
+        _debug ("UserAgent: Unable to initialize account %d in sendRegister\n", status);
         _mutexSIP.leaveMutex();
         return false;
     }
@@ -511,6 +539,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
+    // Send registration request
     status = pjsip_regc_send (regc, tdata);
 
     if (status != PJ_SUCCESS) {
@@ -570,15 +599,14 @@ SIPVoIPLink::sendUnregister (AccountID id)
 Call*
 SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 {
-    Account* account;
+    SIPAccount * account = NULL;
     pj_status_t status;
 
     SIPCall* call = new SIPCall (id, Call::Outgoing, _pool);
 
     if (call) {
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
-
-        if (!account) {
+        if (account == NULL) {
             _debug ("Error retrieving the account to the make the call with\n");
             call->setConnectionState (Call::Disconnected);
             call->setState (Call::Error);
@@ -587,7 +615,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             return call;
         }
 
-        call->setPeerNumber (getSipTo (toUrl, account->getHostname()));
+        std::string toUri = account->getToUri(toUrl);
+        call->setPeerNumber(toUri);
 
         setCallAudioLocal (call, getLocalIPAddress(), useStun(), getStunServer());
 
@@ -911,38 +940,34 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     std::string tmp_to;
     pjsip_evsub *sub;
     pjsip_tx_data *tdata;
-
     struct pjsip_evsub_user xfer_cb;
     pj_status_t status;
-    pj_str_t dest;
     AccountID account_id;
-    Account* account;
+    SIPAccount * account = NULL;
 
     call = getSIPCall (id);
     call->stopRecording();
     account_id = Manager::instance().getAccountFromCall (id);
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
+    if (account == NULL) {
+        _debug("SIPVoIPLink::transfer account is null. Returning.\n");
+        return false;
+    }
+    
     if (call==0) {
         _debug ("! SIP Failure: Call doesn't exist\n");
         return false;
     }
 
-    tmp_to = SIPToHeader (to);
-
-    if (account) {
-        if (tmp_to.find ("@") == std::string::npos) {
-            tmp_to = tmp_to + "@" + account->getHostname();
-        }
+    std::string dest;
+    pj_str_t pjDest;
+    if (to.find ("@") == std::string::npos) {
+        dest = account->getToUri(to);   
+        pj_cstr(&pjDest, dest.c_str());      
     }
 
-    else {
-
-    }
-
-    _debug ("In transfer, tmp_to is %s\n", tmp_to.data());
-
-    pj_strdup2 (_pool, &dest, tmp_to.data());
+    _debug ("Transfering to %s\n", dest.c_str());
 
     /* Create xfer client subscription. */
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
@@ -967,7 +992,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     /*
      * Create REFER request.
      */
-    status = pjsip_xfer_initiate (sub, &dest, &tdata);
+    status = pjsip_xfer_initiate (sub, &pjDest, &tdata);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to create REFER request -- %d\n", status);
@@ -1151,42 +1176,60 @@ SIPVoIPLink::SIPOutgoingInvite (SIPCall* call)
 bool
 SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 {
-    std::string strTo, strFrom;
     pj_status_t status;
+    pjsip_inv_session *inv;
     pjsip_dialog *dialog;
     pjsip_tx_data *tdata;
-    pj_str_t from, to, contact;
-    AccountID id;
-    SIPAccount *account;
-    pjsip_inv_session *inv;
 
-    if (!call)
+    AccountID id;
+
+    if (call == NULL)
         return false;
 
     id = Manager::instance().getAccountFromCall (call->getCallId());
 
     // Get the basic information about the callee account
+    SIPAccount * account = NULL;
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
+    if (account == NULL) {
+        _debug("Account is null in SIPStartCall\n");
+        return false;
+    }
+    
+    // Creates URI
+    std::string fromUri;
+    std::string toUri;
+    std::string contactUri;
+    
+    fromUri = account->getFromUri();
+    toUri = call->getPeerNumber(); // expecting a fully well formed sip uri
+        
+    std::string address = findLocalAddressFromUri(toUri);
+    int port = findLocalPortFromUri(toUri);
+    std::stringstream ss;
+    std::string portStr;
+    ss << port;
+    ss >> portStr;
+    contactUri = account->getContactHeader(address, portStr);
+    
+    _debug("SIPStartCall: fromUri: %s toUri: %s contactUri: %s\n",
+            fromUri.c_str(),
+            toUri.c_str(),
+            contactUri.c_str());
+     
+    pj_str_t pjFrom;
+    pj_cstr(&pjFrom, fromUri.c_str());     
 
-    strTo = getSipTo (call->getPeerNumber(), account->getHostname());
+    pj_str_t pjContact;
+    pj_cstr(&pjContact, contactUri.c_str());
 
-    // Generate the from URI
-    strFrom = "sip:" + account->getUsername() + "@" + account->getHostname();
-
-    _debug ("Placing new call: \nTo: %s\nFrom: %s\n", strTo.data(), strFrom.c_str());
-
-    // pjsip need the from and to information in pj_str_t format
-    pj_strdup2 (_pool, &from, strFrom.data());
-
-    pj_strdup2 (_pool, &to, strTo.data());
-
-    pj_strdup2 (_pool, &contact, account->getContact().data());
-
-    //_debug("%s %s %s\n", from.ptr, contact.ptr, to.ptr);
-    // create the dialog (UAC)
-    status = pjsip_dlg_create_uac (pjsip_ua_instance(), &from,
-                                   &contact,
-                                   &to,
+    pj_str_t pjTo;
+    pj_cstr(&pjTo, toUri.c_str());
+           
+    // Create the dialog (UAC)
+    status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom,
+                                   &pjContact,
+                                   &pjTo,
                                    NULL,
                                    &dialog);
 
@@ -1219,36 +1262,6 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         return false;
     }
 
-    return true;
-}
-
-std::string SIPVoIPLink::getSipTo (const std::string& to_url, std::string hostname)
-{
-    // Form the From header field basis on configuration panel
-    //bool isRegistered = (_eXosipRegID == EXOSIP_ERROR_STD) ? false : true;
-
-    // add a @host if we are registered and there is no one inside the url
-    if (to_url.find ("@") == std::string::npos) {    // && isRegistered) {
-        if (!hostname.empty()) {
-            return SIPToHeader (to_url + "@" + hostname);
-        }
-    }
-
-    return SIPToHeader (to_url);
-}
-
-std::string SIPVoIPLink::SIPToHeader (const std::string& to)
-{
-    if (to.find ("sip:") == std::string::npos) {
-        return ("sip:" + to);
-    } else {
-        return to;
-    }
-}
-
-bool
-SIPVoIPLink::SIPCheckUrl (const std::string& url UNUSED)
-{
     return true;
 }
 
@@ -1359,9 +1372,6 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 {
     SIPCall *call;
     pj_status_t status;
-    std::string uri_from, uri_to, hostname;
-    std::ostringstream uri_contact;
-    pj_str_t from, str_to, contact;
     pjsip_dialog *dialog;
     pjsip_inv_session *inv;
     pjsip_tx_data *tdata;
@@ -1370,23 +1380,22 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     call = new SIPCall (id, Call::Outgoing, _pool);
 
     if (call) {
-
         call->setCallConfiguration (Call::IPtoIP);
-        call->setPeerNumber (getSipTo (to, getLocalIPAddress()));
-
-        // Generate the from URI
-        hostname = pj_gethostname()->ptr;
-        uri_from = "sip:" + hostname + "@" + getLocalIPAddress() ;
-
-        // Generate the from URI
-        uri_to = "sip:" + to.substr (4, to.length());
-
-        _debug ("get local ip address: %s \n", getLocalIPAddress().c_str());
-        // Generate the to URI
         setCallAudioLocal (call, getLocalIPAddress(), useStun(), getStunServer());
-
         call->initRecFileName();
+        
+        AccountID accountId = Manager::instance().getAccountFromCall(id);
+        SIPAccount * account = NULL;
+        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(accountId));
+        if (account == NULL) {
+            _debug("Account is null. Returning\n");
+            return !PJ_SUCCESS;
+        }
 
+        _debug("toUri received in new_ip_to_ip call %s\n", to.c_str());    
+        std::string toUri = account->getToUri(to);
+        call->setPeerNumber(toUri);
+        _debug("toUri in new_ip_to_ip call %s\n", toUri.c_str());
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address (getLocalIP());
         call->getLocalSDP()->create_initial_offer();
@@ -1396,20 +1405,37 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         } catch (...) {
             _debug ("! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)\n", __FILE__, __LINE__);
         }
+        
+        // Create URI
+        std::string fromUri;
+        std::string contactUri;
+        fromUri = account->getFromUri();
+        
+        std::string address = findLocalAddressFromUri(toUri);
+        int port = findLocalPortFromUri(toUri);
+        std::stringstream ss;
+        std::string portStr;
+        ss << port;
+        ss >> portStr;
+        contactUri = account->getContactHeader(address, portStr);
+        
+        _debug("new_ip_to_ip_call: fromUri: %s toUri: %s contactUri: %s\n",
+                fromUri.c_str(),
+                toUri.c_str(),
+                contactUri.c_str());
+        
+        pj_str_t pjFrom;
+        pj_cstr(&pjFrom, fromUri.c_str());
 
-        // Generate the contact URI
-        // uri_contact << "<" << uri_from << ":" << call->getLocalSDP()->get_local_extern_audio_port() << ">";
-        uri_contact << "<" << uri_from << ":" << _localExternPort << ">";
+        pj_str_t pjTo;
+        pj_cstr(&pjTo, toUri.c_str());
 
-        // pjsip need the from and to information in pj_str_t format
-        pj_strdup2 (_pool, &from, uri_from.data());
-
-        pj_strdup2 (_pool, &str_to, uri_to.data());
-
-        pj_strdup2 (_pool, &contact, uri_contact.str().data());
-
-        // create the dialog (UAC)
-        status = pjsip_dlg_create_uac (pjsip_ua_instance(), &from, &contact, &str_to, NULL, &dialog);
+        pj_str_t pjContact;
+        pj_cstr(&pjContact, contactUri.c_str());
+                
+        // Create the dialog (UAC)
+        // (Parameters are "strduped" inside this function)
+        status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
 
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
@@ -1580,7 +1606,7 @@ bool SIPVoIPLink::pjsip_init()
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
-    /* Start resolving STUN server */
+    // Start resolving STUN server
     // if we useStun and we failed to receive something on port 5060, we try a random port
     // If use STUN server, firewall address setup
     if (!loadSIPLocalIP()) {
@@ -1595,10 +1621,10 @@ bool SIPVoIPLink::pjsip_init()
     this->setStunServer (Manager::instance().getConfigString (SIGNALISATION, SIP_STUN_SERVER));
     this->useStun(useStun);
 
-    if (useStun && !Manager::instance().behindNat (getStunServer(), port)) {
+    if (useStun && !Manager::instance().isBehindNat (getStunServer(), port)) {
         port = RANDOM_SIP_PORT;
 
-        if (!Manager::instance().behindNat (getStunServer(), port)) {
+        if (!Manager::instance().isBehindNat (getStunServer(), port)) {
             _debug ("UserAgent: Unable to check NAT setting\n");
             validStunServer = false;
             return false; // hoho we can't use the random sip port too...
@@ -1607,37 +1633,75 @@ bool SIPVoIPLink::pjsip_init()
 
     _localPort = port;
 
+
+    // Retreive Direct IP Calls settings.
+    // This corresponds to the accountID set to 
+    // AccountNULL
+    SIPAccount * account = NULL;
+    bool directIpCallsTlsEnabled = false;
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(AccountNULL));
+    if (account == NULL) {
+        _debug("Account is null");
+    } else {
+        directIpCallsTlsEnabled = account->isTlsEnabled();
+    }
+    
     if (useStun) {
-        // set by last behindNat() call (ish)...
+        // set by last isBehindNat() call (ish)...
         stunServerResolve();
         _localExternAddress = Manager::instance().getFirewallAddress();
-        _localExternPort = Manager::instance().getFirewallPort();
-        errPjsip = createUDPServer();
-
-        if (errPjsip != 0) {
-            _debug ("UserAgent: Could not initialize SIP listener on port %d\n", port);
-            return errPjsip;
-        }
+        _localExternPort = Manager::instance().getFirewallPort();        
     } else {
         _localExternAddress = _localIPAddress;
         _localExternPort = _localPort;
         errPjsip = createUDPServer();
+    }
+    
+    // Create a UDP listener meant for all accounts
+    // for which TLS was not enabled
+    errPjsip = createUDPServer();
 
-        if (errPjsip != 0) {
-            _debug ("UserAgent: Could not initialize SIP listener on port %d\n", _localExternPort);
-            _localExternPort = _localPort = RANDOM_SIP_PORT;
-            _debug ("UserAgent: Try to initialize SIP listener on port %d\n", _localExternPort);
-            errPjsip = createUDPServer();
+    // If stun was not enabled an the above UDP server
+    // could not be created, then give it another try
+    // on a random sip port
+    if (errPjsip != PJ_SUCCESS && !useStun) {
+        _debug ("UserAgent: Could not initialize SIP listener on port %d\n", _localExternPort);
+        _localExternPort = _localPort = RANDOM_SIP_PORT;
+        
+        _debug ("UserAgent: Try to initialize SIP listener on port %d\n", _localExternPort);
+        errPjsip = createUDPServer();
 
-            if (errPjsip != 0) {
-                _debug ("UserAgent: Fail to initialize SIP listener on port %d\n", _localExternPort);
-                return errPjsip;
-            }
+        if (errPjsip != PJ_SUCCESS) {
+            _debug ("UserAgent: Fail to initialize SIP listener on port %d\n", _localExternPort);
+            return errPjsip;
         }
+    } 
+   
+    // If we use stun and UDP server creation 
+    // failed, then just complain and return
+    // since retrying on a random sip port
+    // would just go against the need of 
+    // using it.
+    if (errPjsip != PJ_SUCCESS && useStun) {
+        _debug("Could not create UDP server with STUN\n");
+        return errPjsip;
     }
 
     _debug ("UserAgent: SIP Init -- listening on port %d\n", _localExternPort);
 
+    // Create a TLS listener meant for Direct IP calls
+    // if the user did enabled it.
+    if (directIpCallsTlsEnabled) {        
+        errPjsip = createTlsTransportRetryOnFailure(AccountNULL);
+    }
+    
+    if (errPjsip != PJ_SUCCESS) {
+        _debug("pj_init(): could not start TLS transport for Direct Calls");
+    }
+    
+    // TODO: For TLS, retry on random port, just we already do above
+    // for UDP transport.
+    
     // Initialize transaction layer
     status = pjsip_tsx_layer_init_module (_endpt);
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
@@ -1778,7 +1842,6 @@ int SIPVoIPLink::createUDPServer (void)
     pj_strdup2 (_pool, &a_name.host, tmpIP);
     a_name.port = (pj_uint16_t) _localExternPort;
 
-
     status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, NULL);
 
     if (status != PJ_SUCCESS) {
@@ -1788,8 +1851,201 @@ int SIPVoIPLink::createUDPServer (void)
         _debug ("UserAgent: UDP server listening on port %d\n", _localExternPort);
     }
 
-
     _debug ("Transport initialized successfully! \n");
+
+    return PJ_SUCCESS;
+}
+
+std::string SIPVoIPLink::findLocalAddressFromUri(const std::string& uri)
+{
+    pj_str_t localAddress;
+    pjsip_transport_type_e transportType;
+
+    // Find the transport that must be used with the given uri
+    pj_str_t tmp;
+    pj_strdup2_with_null(_pool, &tmp, uri.c_str());
+    pjsip_uri * genericUri = NULL;
+    genericUri = pjsip_parse_uri(_pool, tmp.ptr, tmp.slen, 0);
+
+    pj_str_t pjMachineName;
+    pj_strdup(_pool, &pjMachineName, pj_gethostname());
+    std::string machineName(pjMachineName.ptr, pjMachineName.slen);
+    
+    if (genericUri == NULL) {
+        _debug("genericUri is NULL in findLocalPortFromUri\n");
+        return machineName;        
+    }
+    
+    pjsip_sip_uri * sip_uri = NULL;
+    sip_uri = (pjsip_sip_uri*)pjsip_uri_get_uri(genericUri);  
+    if (sip_uri == NULL) {
+        _debug("Invalid uri in findLocalAddressFromTransport\n");
+        return machineName;
+    }
+ 
+    if (PJSIP_URI_SCHEME_IS_SIPS(sip_uri)) {
+        transportType = PJSIP_TRANSPORT_TLS;
+    } else {
+        transportType = PJSIP_TRANSPORT_UDP;
+    }
+
+    // Get the transport manager associated with 
+    // this endpoint
+    pjsip_tpmgr * tpmgr = NULL;
+    tpmgr = pjsip_endpt_get_tpmgr(_endpt);
+    if (tpmgr == NULL) {
+        _debug("Unexpected: Cannot get tpmgr from endpoint.\n");
+        return machineName;
+    }
+  
+    // Find the local address (and port) based on the registered
+    // transports and the transport type     
+    int port;
+    pj_status_t status;
+    status = pjsip_tpmgr_find_local_addr(tpmgr, _pool, transportType, NULL, &localAddress, &port);
+    if (status != PJ_SUCCESS) {
+        _debug("Failed to find local address from transport\n");
+        return machineName;        
+    }	
+    
+    return std::string(localAddress.ptr, localAddress.slen);
+}
+
+int SIPVoIPLink::findLocalPortFromUri(const std::string& uri)
+{
+    pj_str_t localAddress;
+    pjsip_transport_type_e transportType;
+    int port;
+    
+    // Find the transport that must be used with the given uri
+    pj_str_t tmp;
+    pj_strdup2_with_null(_pool, &tmp, uri.c_str());
+    pjsip_uri * genericUri = NULL;
+    genericUri = pjsip_parse_uri(_pool, tmp.ptr, tmp.slen, 0);
+    if (genericUri == NULL) {
+        _debug("genericUri is NULL in findLocalPortFromUri\n");
+        return atoi(DEFAULT_SIP_PORT);        
+    }
+
+    pjsip_sip_uri * sip_uri = NULL;
+    sip_uri = (pjsip_sip_uri*)pjsip_uri_get_uri(genericUri);  
+    if (sip_uri == NULL) {
+        _debug("Invalid uri in findLocalAddressFromTransport\n");
+        return atoi(DEFAULT_SIP_PORT);
+    }
+    
+    if (PJSIP_URI_SCHEME_IS_SIPS(sip_uri)) {
+        transportType = PJSIP_TRANSPORT_TLS;
+        port = atoi(DEFAULT_SIP_TLS_PORT);
+    } else {
+        transportType = PJSIP_TRANSPORT_UDP;
+        port = atoi(DEFAULT_SIP_PORT);        
+    }
+
+    // Get the transport manager associated with 
+    // this endpoint
+    pjsip_tpmgr * tpmgr = NULL;
+    tpmgr = pjsip_endpt_get_tpmgr(_endpt);
+    if (tpmgr == NULL) {
+        _debug("Unexpected: Cannot get tpmgr from endpoint.\n");
+        return port;
+    }
+  
+    // Find the local address (and port) based on the registered
+    // transports and the transport type     
+
+    pj_status_t status;
+    status = pjsip_tpmgr_find_local_addr(tpmgr, _pool, transportType, NULL, &localAddress, &port);
+    if (status != PJ_SUCCESS) {
+        _debug("Failed to find local address from transport\n");
+    }	
+    
+    return port;
+}
+
+pj_status_t SIPVoIPLink::createTlsTransportRetryOnFailure(AccountID id)
+{
+    pj_status_t success;
+    
+    // Create a TLS listener.
+    // Note that STUN cannot be used for
+    // TCP NAT traversal. At the moment (20/08/09)
+    // user must supply the public address/port 
+    // manually.
+    success = createTlsTransport(id);
+
+    if (success != PJ_SUCCESS) {    
+        unsigned int randomPort = RANDOM_SIP_PORT;   
+
+        // Update new port in the corresponding SIPAccount
+        SIPAccount * account = NULL;
+        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
+        if (account == NULL) {
+            _debug("createTlsTransportRetryOnFailure: Account is null. Returning");
+            return !PJ_SUCCESS;
+        }
+        
+        account->setLocalPort((pj_uint16_t) randomPort);
+        
+        // Try to start the transport again on 
+        // the new port.       
+        success = createTlsTransport(id);
+        if (success != PJ_SUCCESS) {
+            _debug ("createTlsTransportRetryOnFailure: failed to retry on random port %d\n", randomPort);
+            return success;
+        }
+        
+        _debug ("createTlsTransportRetryOnFailure: TLS transport listening on port %d\n", randomPort);
+    } 
+ 
+    return PJ_SUCCESS;  
+}
+
+pj_status_t SIPVoIPLink::createTlsTransport(AccountID id)
+{
+    pjsip_tpfactory *tls;
+    pj_sockaddr_in local_addr;
+    pjsip_host_port a_name;        
+    pj_status_t status;
+
+    /* Grab the tls settings, populated
+     * from configuration file.
+     */
+    SIPAccount * account = NULL;
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
+    if (account == NULL) {
+        _debug("Account is null. Returning");
+        return !PJ_SUCCESS;
+    }
+   
+   /**
+    * Init local address.
+    * IP interface address is not specified,
+    * so socket will be bound to PJ_INADDR_ANY.
+    * If user specified port is an empty string
+    * or if it is equal to 0, then the port will 
+    * be chosen automatically by the OS.
+    */
+    pj_sockaddr_in_init(&local_addr, 0, 0); 
+    //pj_uint16_t localTlsPort = account->getLocalPort();
+    pj_uint16_t localTlsPort = 5061;
+    if (localTlsPort != 0) {
+            local_addr.sin_port = pj_htons(localTlsPort);
+    }
+    
+    /* Init published name */
+    pj_bzero(&a_name, sizeof(pjsip_host_port));
+    pj_cstr(&a_name.host, (account->getPublishedAddress()).c_str());
+    a_name.port = account->getPublishedPort();
+    
+    /* Get TLS settings. Expected to be filled */    
+    pjsip_tls_setting * tls_setting = account->getTlsSetting();
+    
+    status = pjsip_tls_transport_start(_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
+    
+    if (status != PJ_SUCCESS) {
+        _debug("Error creating SIP TLS listener (%d)\n", status);
+    }    
 
     return PJ_SUCCESS;
 }
@@ -2245,7 +2501,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     AccountID account_id;
     pjsip_uri *uri;
     pjsip_sip_uri *sip_uri;
-    std::string userName, server, caller, callerServer, peerNumber;
+    std::string userName, server;
     SIPVoIPLink *link;
     CallID id;
     SIPCall* call;
@@ -2298,15 +2554,15 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     uri = rdata->msg_info.from->uri;
     sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
 
-
-    /* Retrieve only the fisrt characters */
-    caller = std::string (sip_uri->user.ptr, sip_uri->user.slen);
-    callerServer = std::string (sip_uri->host.ptr, sip_uri->host.slen);
-    peerNumber = caller + "@" + callerServer;
+    // Store the peer number
+    char tmp[PJSIP_MAX_URL_SIZE];
+    int length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+            		sip_uri, tmp, PJSIP_MAX_URL_SIZE);		    
+            		
+    std::string peerNumber(tmp, length);
 
     // Get the server voicemail notification
     // Catch the NOTIFY message
-
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
         method_name = "NOTIFY";
         // Retrieve all the message. Should contains only the method name but ...
@@ -2980,7 +3236,7 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP, bool stun, std::stri
 
     if (stun) {
         // If use Stun server
-        if (Manager::instance().behindNat (server, callLocalAudioPort)) {
+        if (Manager::instance().isBehindNat (server, callLocalAudioPort)) {
             callLocalExternAudioPort = Manager::instance().getFirewallPort();
         }
     }
@@ -3030,4 +3286,26 @@ std::string fetch_header_value (pjsip_msg *msg, std::string field)
     return url;
 }
 
+std::vector<std::string> SIPVoIPLink::getAllIpInterface(void)
+{
+    pj_sockaddr addrList[16];
+    unsigned int addrCnt = PJ_ARRAY_SIZE(addrList);
+    
+    pj_status_t success;
+    success = pj_enum_ip_interface (pj_AF_INET(), &addrCnt, addrList);
+    
+    std::vector<std::string> ifaceList;
+    if (success != PJ_SUCCESS) {
+        return ifaceList;
+    }
+    
+    _debug("Detecting available interfaces...\n");
+    int i;
+    for (i = 0; i < addrCnt; i++) {
+        char tmpAddr[PJ_INET_ADDRSTRLEN];
+        pj_sockaddr_print(&addrList[i], tmpAddr, sizeof(tmpAddr), 0);
+        ifaceList.push_back(std::string(tmpAddr));
+        _debug("Local interface %s\n", tmpAddr);
+    }
+}
 

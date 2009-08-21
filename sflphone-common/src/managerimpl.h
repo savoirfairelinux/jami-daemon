@@ -48,6 +48,7 @@ class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
 class HistoryManager;
+class SIPAccount;
 
 /** Define a type for a AccountMap container */
 typedef std::map<AccountID, Account*> AccountMap;
@@ -903,7 +904,7 @@ class ManagerImpl {
      * @param port  On which port we want to listen to
      * @return true if we are behind a NAT (without error)
      */
-    bool behindNat(const std::string& svr, int port);
+    bool isBehindNat(const std::string& svr, int port);
 
     /**
      * Init default values for the different fields in the config file.
@@ -1147,6 +1148,8 @@ class ManagerImpl {
     /**
      *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
     AccountMap _accountMap;
+    
+    Account * _directIpAccount;
 
     /**
      * Load the account from configuration
