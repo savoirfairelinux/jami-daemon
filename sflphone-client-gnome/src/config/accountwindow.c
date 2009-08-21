@@ -108,7 +108,7 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
     gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)), -1);
 }
 
-static GtkWidget * create_account_tab(account_t **a) 
+static GtkWidget * create_basic_tab(account_t **a) 
 {
 	GtkWidget * frame;
 	GtkWidget * table;
@@ -613,10 +613,10 @@ static same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         DEBUG("Same as local");
-		gchar * ip_address = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+		gchar * ip_address = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
 	    gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), ip_address);
 	    
-        gchar * local_port = gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
+        gchar * local_port = (gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(local_port, NULL));
             
     	gtk_widget_set_sensitive(publishedPortSpinBox, FALSE);
@@ -722,26 +722,6 @@ GtkWidget * create_advanced_tab(account_t **a)
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
     gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
-    
-   
-	/*label = gtk_label_new_with_mnemonic (_("Local address"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-	localAddressCombo = gtk_combo_box_new_text();
-	gtk_label_set_mnemonic_widget (GTK_LABEL(label), localAddressCombo);
-
-    gchar ** iface_list = NULL;
-    iface_list = dbus_get_all_ip_interface();
-    gchar ** iface = NULL;
-    if (iface_list != NULL) {
-        for (iface = iface_list; *iface; iface++)
-        {
-            DEBUG("Interface %s", *iface);
-        	gtk_combo_box_append_text(GTK_COMBO_BOX(localAddressCombo), *iface);                    
-        }
-        g_strfreev (iface_list);
-    }
-	gtk_table_attach ( GTK_TABLE( table ), localAddressCombo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);*/
 
     /**
      * Local port
@@ -860,7 +840,7 @@ show_account_window (account_t * a)
 	gtk_widget_show(notebook);
 
 	/* General Settings */
-	tab = create_account_tab(&currentAccount);
+	tab = create_basic_tab(&currentAccount);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
@@ -953,6 +933,22 @@ show_account_window (account_t * a)
     		g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
     		g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
 
+    		g_hash_table_replace(currentAccount->properties,
+    				g_strdup(LOCAL_PORT),
+    				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));	
+
+    		g_hash_table_replace(currentAccount->properties,
+    				g_strdup(LOCAL_ADDRESS),
+			        g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
+
+    		g_hash_table_replace(currentAccount->properties,
+    				g_strdup(PUBLISHED_PORT),
+    				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedPortSpinBox))));	
+
+    		g_hash_table_replace(currentAccount->properties,
+    				g_strdup(PUBLISHED_ADDRESS),
+    				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry))));	    
+    								    								
 			config_window_set_stun_visible();
 		}
 

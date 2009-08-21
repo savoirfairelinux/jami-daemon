@@ -388,6 +388,12 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
+    // Resolve hostname here and keep its
+    // IP address for the whole time the 
+    // account is connected. This was a 
+    // workaround meant to help issue 
+    // #1852 that we hope should be fixed
+    // soon.
     if (account->isResolveOnce()) {
 
         struct result result;
@@ -422,18 +428,23 @@ int SIPVoIPLink::sendRegister (AccountID id)
             account->setHostname (addr_buf);
         }
     }
+    
+    // Launch a new TLS listener/transport 
+    // if the user did choose it.
+    if (account->isTlsEnabled()) {
+        pj_status_t status;    
+        
+        status = createTlsTransportRetryOnFailure(id);
+        
+        if (status != PJ_SUCCESS) {
+            _debug("Failed to initialize TLS transport for account %s\n", id.c_str());
+        }
+    }
+
 
     _mutexSIP.enterMutex();
-
     // Get the client registration information for this particular account
     regc = account->getRegistrationInfo();
-    /* TODO If the registration already exists, delete it */
-    /*if(regc) {
-        status = pjsip_regc_destroy(regc);
-        regc = NULL;
-        PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-    }*/
-
     account->setRegister (true);
 
     // Set the expire value of the message from the config file 
@@ -478,7 +489,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     std::string portStr;
     ss << port;
     ss >> portStr;
-    contactUri = account->getContactHeader(address, portStr);
+    // DON'T FORGET TO REMOVE THIS 5061 VALUE !
+    contactUri = account->getContactHeader(address, "5061");
  
     _debug("sendRegister: fromUri: %s serverUri: %s contactUri: %s\n",
             fromUri.c_str(),
@@ -2015,7 +2027,8 @@ pj_status_t SIPVoIPLink::createTlsTransport(AccountID id)
     * be chosen automatically by the OS.
     */
     pj_sockaddr_in_init(&local_addr, 0, 0); 
-    pj_uint16_t localTlsPort = account->getLocalPort();
+    //pj_uint16_t localTlsPort = account->getLocalPort();
+    pj_uint16_t localTlsPort = 5061;
     if (localTlsPort != 0) {
             local_addr.sin_port = pj_htons(localTlsPort);
     }

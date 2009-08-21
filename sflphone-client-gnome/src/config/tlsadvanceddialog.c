@@ -61,7 +61,6 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_label_set_markup(GTK_LABEL(label), description);
     gtk_table_attach(GTK_TABLE(table), label, 0, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
             
-    gchar * tls_port;
     gchar * tls_ca_list_file;
     gchar * tls_certificate_file;
     gchar * tls_private_key_file;
@@ -76,7 +75,6 @@ void show_advanced_tls_options(GHashTable * properties)
     gchar * negotiation_timeout_msec;	  
     
     if (properties != NULL) {
-	    tls_port = g_hash_table_lookup(properties, TLS_PORT);    
 	    tls_ca_list_file = g_hash_table_lookup(properties, TLS_CA_LIST_FILE);
 	    tls_certificate_file = g_hash_table_lookup(properties, TLS_CERTIFICATE_FILE);
 	    tls_private_key_file = g_hash_table_lookup(properties, TLS_PRIVATE_KEY_FILE);
@@ -92,18 +90,8 @@ void show_advanced_tls_options(GHashTable * properties)
 	    
 	    DEBUG("ca_list_file %s", tls_ca_list_file);
 	    DEBUG("certificate_file %s", tls_certificate_file);
-	    DEBUG("tls port %s", tls_port);	    
     }
-    
-    label = gtk_label_new(_("TLS listener port"));
- 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    GtkWidget * spinTlsPort;    
-    spinTlsPort = gtk_spin_button_new_with_range(1, 65535, 1);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinTlsPort);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinTlsPort), g_ascii_strtod(tls_port, NULL));
-    gtk_table_attach(GTK_TABLE(table), spinTlsPort, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    
+       
     label = gtk_label_new( _("Certificate of Authority list"));
  	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_table_attach (GTK_TABLE(table), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -259,11 +247,7 @@ void show_advanced_tls_options(GHashTable * properties)
   
     gtk_widget_show_all(ret);
           
-    if(gtk_dialog_run(GTK_DIALOG(tlsDialog)) == GTK_RESPONSE_ACCEPT) {
-		g_hash_table_replace(properties,
-				g_strdup(TLS_PORT),
-				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(spinTlsPort))));	
-				    
+    if(gtk_dialog_run(GTK_DIALOG(tlsDialog)) == GTK_RESPONSE_ACCEPT) {				    
         g_hash_table_replace(properties,
 				g_strdup(TLS_CA_LIST_FILE), g_strdup(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(caListFileChooser))));
        
