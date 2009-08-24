@@ -128,7 +128,7 @@ void
 CallManager::joinParticipant (const std::string& sel_callID, const std::string& drag_callID)
 {
     _debug ("CallManager::joinParticipant received %s, %s\n", sel_callID.c_str(), drag_callID.c_str());
-    // Manager::instance().joinParticipant(callID);
+    Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
