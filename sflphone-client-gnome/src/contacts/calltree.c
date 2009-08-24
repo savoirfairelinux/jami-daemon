@@ -34,11 +34,14 @@ GtkTreeSelection *sel;
 
 char *dragged_path;
 char *call_id;
-char *previous_id; 
+char *previous_id;
+
+callable_obj_t *selected_call; 
+callable_obj_t *dragged_call;
 
 
 static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data);
-void drag_end_cb(GtkWidget * mblist, GdkDragContext * context, gpointer data);
+static void drag_end_cb(GtkWidget * mblist, GdkDragContext * context, gpointer data);
 
 void drag_data_received_cb(GtkWidget *widget, GdkDragContext *dc, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data);
 
@@ -79,6 +82,7 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     string_path = (char*)gtk_tree_path_to_string(path);
 
     previous_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+    selected_call = (callable_obj_t*)g_value_get_pointer(&val);
 
     printf("  source path %s, %s\n", string_path, previous_id);
 
@@ -665,15 +669,18 @@ void calltree_display (calltab_t *tab) {
 
 
 static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
-    {
-        // g_print("drag_begin_cb %s\n", dragged_path);
-    }
+{
+    // g_print("drag_begin_cb %s\n", dragged_path);
+}
 
-    void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer data)
-    {
-        g_print("drag_end_cb\n");
-        g_print("    dragged path %s, call_id %s on previous_id %s\n", dragged_path, call_id, previous_id);
-    }
+static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer data)
+{
+    g_print("drag_end_cb\n");
+    g_print("    dragged path %s, call_id %s on previous_id %s\n", dragged_path, call_id, previous_id);
+
+    if(selected_call != NULL && dragged_call != NULL)
+        dbus_join_participant(selected_call, dragged_call);
+}
 
 
     void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data)
@@ -718,21 +725,25 @@ static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
             case GTK_TREE_VIEW_DROP_AFTER:
                 dragged_path = "NULL";
 		call_id = "NULL";
+		dragged_call = NULL;
                 // g_print("    AFTER %s\n", dragged_path);
                 break;
             case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
                 dragged_path = (char*)gtk_tree_path_to_string(drop_path);
 		call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+		dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
                 // g_print("    INTO_OR_AFTER %s\n", dragged_path);
                 break;
             case GTK_TREE_VIEW_DROP_BEFORE:
                 dragged_path = "NULL";
 		call_id = "NULL";
+		dragged_call = NULL;
                 // g_print("    BEFORE %s\n", dragged_path);
                 break;
             case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
                 dragged_path = (char*)gtk_tree_path_to_string(drop_path);
 		call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+		dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
                 // g_print("    INTO_OR_BEFORE %s\n", dragged_path);
                 break;
 

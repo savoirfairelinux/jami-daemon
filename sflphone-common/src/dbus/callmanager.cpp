@@ -125,6 +125,13 @@ CallManager::addParticipant (const std::string& callID)
 }
 
 void
+CallManager::joinParticipant (const std::string& sel_callID, const std::string& drag_callID)
+{
+    _debug ("CallManager::joinParticipant received %s, %s\n", sel_callID.c_str(), drag_callID.c_str());
+    // Manager::instance().joinParticipant(callID);
+}
+
+void
 CallManager::setRecording (const std::string& callID)
 {
     _debug ("CallManager::setRecording received\n");

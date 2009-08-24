@@ -56,6 +56,11 @@
       <arg type="s" name="callID" direction="in"/>
     </method>
 
+    <method name="joinParticipant">
+      <arg type="s" name="sel_callID" direction="in"/>
+      <arg type="s" name="drag_callID" direction="in"/>
+    </method>
+
     <method name="setRecording">
       <arg type="s" name="callID" direction="in"/>
     </method>
