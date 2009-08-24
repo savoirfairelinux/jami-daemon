@@ -33,6 +33,8 @@ GtkTreeSelection *sel;
 
 
 char *dragged_path;
+char *call_id;
+
 
 static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data);
 void drag_end_cb(GtkWidget * mblist, GdkDragContext * context, gpointer data);
@@ -713,18 +715,22 @@ static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
         {
             case GTK_TREE_VIEW_DROP_AFTER:
                 dragged_path = "NULL";
+		call_id = "NULL";
                 // g_print("    AFTER %s\n", dragged_path);
                 break;
             case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
                 dragged_path = (char*)gtk_tree_path_to_string(drop_path);
+		call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
                 // g_print("    INTO_OR_AFTER %s\n", dragged_path);
                 break;
             case GTK_TREE_VIEW_DROP_BEFORE:
                 dragged_path = "NULL";
+		call_id = "NULL";
                 // g_print("    BEFORE %s\n", dragged_path);
                 break;
             case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
                 dragged_path = (char*)gtk_tree_path_to_string(drop_path);
+		call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
                 // g_print("    INTO_OR_BEFORE %s\n", dragged_path);
                 break;
 
