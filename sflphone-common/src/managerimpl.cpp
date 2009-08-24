@@ -753,6 +753,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     // _debug("    Current call ID %s\n", getCurrentCallId().c_str());
 
     // TODO: add conference_id as a second parameter
+    std::map<std::string, std::string> call_details;
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
 
     if(iter == _conferencemap.end())
@@ -761,6 +762,15 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	// createConference(call_id1, call_id2);
 
 	// answerCall(call_id);
+	call_details = getCallDetails(call_id1);
+	std::map<std::string, std::string>::iterator iter = call_details.find("CALL_STATE");
+	_debug("    call %s state: %s\n", call_id1.c_str(), iter->second.c_str());
+
+	call_details = getCallDetails(call_id2);
+	iter = call_details.find("CALL_STATE");
+	_debug("    call %s state: %s\n", call_id2.c_str(), iter->second.c_str());
+	
+        
 
     }
     else
