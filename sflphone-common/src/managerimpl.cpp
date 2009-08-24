@@ -2572,6 +2572,7 @@ ManagerImpl::getCallStatus (const std::string& sequenceId UNUSED)
             switch (call->getState()) {
 
                 case Call::Active:
+	        case Call::Conferencing:
                     code="112";
                     status = "Established";
                     break;

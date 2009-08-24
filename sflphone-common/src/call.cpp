@@ -134,6 +134,10 @@ Call::getStateStr ()
 
             break;
 
+        case Conferencing:
+	    state_str = "CONFERENCING";
+	    break;
+
         case Refused:
 
         case Error:

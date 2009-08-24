@@ -67,7 +67,7 @@ class Call{
         /**
          * The Call State.
          */
-        enum CallState {Inactive, Active, Hold, Busy, Refused, Error};
+        enum CallState {Inactive, Active, Hold, Busy, Conferencing, Refused, Error};
 
         /**
          * Constructor of a call
