@@ -32,6 +32,15 @@ GtkTreeViewColumn *col;
 GtkTreeSelection *sel;
 
 
+char *dragged_path;
+
+static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data);
+void drag_end_cb(GtkWidget * mblist, GdkDragContext * context, gpointer data);
+
+void drag_data_received_cb(GtkWidget *widget, GdkDragContext *dc, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data);
+
+
+
 /**
  * Show popup menu
  */
@@ -219,6 +228,14 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
             G_CALLBACK (focus_on_calltree_in), NULL);
     g_signal_connect_after (G_OBJECT (tab->view), "focus-out-event",
             G_CALLBACK (focus_on_calltree_out), NULL);
+
+    // source widget drag n drop signals
+    g_signal_connect (G_OBJECT (tab->view), "drag_begin", G_CALLBACK (drag_begin_cb), NULL);
+    g_signal_connect (G_OBJECT (tab->view), "drag_end", G_CALLBACK (drag_end_cb), NULL);
+
+    // destination widget drag n drop signals
+    g_signal_connect (G_OBJECT (tab->view), "drag_data_received", G_CALLBACK (drag_data_received_cb), NULL);
+
 
     gtk_widget_grab_focus(GTK_WIDGET(tab->view));
 
@@ -630,3 +647,66 @@ void calltree_display (calltab_t *tab) {
     g_signal_emit_by_name(sel, "changed");
     toolbar_update_buttons();
 }
+
+
+
+
+static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
+    {
+        // g_print("drag_begin_cb %s\n", dragged_path);
+    }
+
+    void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer data)
+    {
+        g_print("drag_end_cb\n");
+        g_print("    dragged path %s\n", dragged_path);
+    }
+
+
+    void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data)
+    {
+
+        GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
+        GtkTreePath *drop_path;
+        GtkTreeViewDropPosition position;
+
+        GtkTreeModel* tree_model = gtk_tree_view_get_model(tree_view);
+
+        GtkTreeIter iter;
+        gchar value;
+
+        gtk_tree_view_get_drag_dest_row(tree_view, &drop_path, &position);
+
+        if(drop_path)
+        {  
+
+            // dragged_path = (char*)gtk_tree_path_to_string(drop_path);
+
+            // gtk_tree_model_get_iter(GTK_TREE_MODEL(tree_model), &iter, drop_path);
+            // gtk_tree_model_get_value(GTK_TREE_MODEL(tree_model), &iter, TYPE, &value);
+            // g_print("drag_data_received_cb %s\n", &value);
+
+            switch (position) 
+            {
+                case GTK_TREE_VIEW_DROP_AFTER:
+                    dragged_path = "NULL";
+                    // g_print("drag_data_received_cb AFTER %s\n", dragged_path);
+                    break;
+                case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
+                    dragged_path = (char*)gtk_tree_path_to_string(drop_path);
+                    // g_print("drag_data_received_cb INTO_OR_AFTER %s\n", dragged_path);
+                    break;
+                case GTK_TREE_VIEW_DROP_BEFORE:
+                    dragged_path = "NULL";
+                    // g_print("drag_data_received_cb BEFORE %s\n", dragged_path);
+                    break;
+                case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
+                    dragged_path = (char*)gtk_tree_path_to_string(drop_path);
+                    // g_print("drag_data_received_cb INTO_OR_BEFORE %s\n", dragged_path);
+                    break;
+
+                default:
+                    return;
+            } 
+        }
+    }
