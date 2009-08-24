@@ -59,7 +59,7 @@ export APP_LDFLAGS := -L$(PJDIR)/pjlib/lib\
 	-L$(PJDIR)/pjsip/lib\
 	-L$(PJDIR)/third_party/lib\
 	@LDFLAGS@
-export APP_LDLIBS := -lpjsua-$(TARGET_NAME)\
+export APP_LDLIBS := -lpjsua-sfl-$(TARGET_NAME)\
 	-lpjsip-ua-sfl-$(TARGET_NAME)\
 	-lpjsip-simple-sfl-$(TARGET_NAME)\
 	-lpjsip-sfl-$(TARGET_NAME)\
