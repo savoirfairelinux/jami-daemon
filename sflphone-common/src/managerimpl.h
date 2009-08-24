@@ -192,9 +192,13 @@ class ManagerImpl {
 
     bool participToConference(const CallID& call_id);
 
+/*
     void addParticipant(const CallID& call_id);
+*/
 
     void joinParticipant(const CallID& call_id1, const CallID& call_id2);
+
+    void detachParticipant(const CallID& call_id);
 
     void removeParticipant(const CallID& call_id);
 

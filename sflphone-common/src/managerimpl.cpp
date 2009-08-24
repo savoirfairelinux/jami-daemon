@@ -716,7 +716,7 @@ ManagerImpl::participToConference(const CallID& call_id)
 	return true;
     }
 }
-
+/*
 void
 ManagerImpl::addParticipant(const CallID& call_id)
 {
@@ -747,6 +747,7 @@ ManagerImpl::addParticipant(const CallID& call_id)
     }
     
 }
+*/
 
 void
 ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
@@ -755,39 +756,38 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     // _debug("    Current call ID %s\n", getCurrentCallId().c_str());
 
     // TODO: add conference_id as a second parameter
-    std::map<std::string, std::string> call_details;
+    std::map<std::string, std::string> call1_details = getCallDetails(call_id1);
+    std::map<std::string, std::string> call2_details = getCallDetails(call_id2);
+
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+    std::map<std::string, std::string>::iterator iter_details;
 
     if(iter == _conferencemap.end())
     {
 	_debug("NO CONFERENCE YET, CREATE ONE\n");
 	createConference(call_id1, call_id2);
-	
 
-	// answerCall(call_id);
-	call_details = getCallDetails(call_id1);
-	std::map<std::string, std::string>::iterator iter = call_details.find("CALL_STATE");
-	_debug("    call %s state: %s\n", call_id1.c_str(), iter->second.c_str());
-	if (iter->second == "HOLD")
+	iter_details = call1_details.find("CALL_STATE");
+	_debug("    call %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
+	if (iter_details->second == "HOLD")
 	{
 	    _debug("    OFFHOLD %s\n", call_id1.c_str());
 	    offHoldCall(call_id1);
 	}
-	else if(iter->second == "INCOMING")
+	else if(iter_details->second == "INCOMING")
 	{
 	    _debug("    ANSWER %s\n", call_id1.c_str());
 	    answerCall(call_id1);
 	}
 
-	call_details = getCallDetails(call_id2);
-	iter = call_details.find("CALL_STATE");
-	_debug("    call %s state: %s\n", call_id2.c_str(), iter->second.c_str());
-	if (iter->second == "HOLD")
+	iter_details = call2_details.find("CALL_STATE");
+	_debug("    call %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
+	if (iter_details->second == "HOLD")
 	{
 	    _debug("    OFFHOLD %s\n", call_id2.c_str());
 	    offHoldCall (call_id2);
 	}
-	else if(iter->second == "INCOMING")
+	else if(iter_details->second == "INCOMING")
 	{
 	    _debug("    ANSWER %s\n", call_id2.c_str());
 	    answerCall(call_id2);
@@ -799,8 +799,27 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     else
     {
 	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
-	// Conference* conf = iter->second;
+	Conference* conf = iter->second;
 
+	iter_details = call1_details.find("CALL_STATE");
+	if(iter_details->second == "HOLD")
+	{
+
+	}
+	else if(iter_details->second == "INCOMING")
+	{
+
+	}
+
+	iter_details = call2_details.find("CALL_STATE");
+	if(iter_details->second == "HOLD")
+	{
+
+	}
+	else if(iter_details->second == "INCOMING")
+	{
+
+	}
 	// conf->add(call_id);
 	// _conferencecall.insert(pair<CallID, Conference*>(call_id, conf));
 
@@ -808,6 +827,36 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     }
     
 }
+
+
+void
+ManagerImpl::detachParticipant(const CallID& call_id)
+{
+    _debug("ManagerImpl::detachParticipant(%s)\n", call_id.c_str());
+
+    // TODO: add conference_id as a second parameter
+    ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+
+    if(iter == _conferencemap.end())
+    {
+	_debug("Error there is no conference, call is not conferencing\n");
+
+    }
+    else
+    {
+	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
+	Conference* conf = iter->second;
+
+	// conf->remove(call_id);
+	
+	// _conferencecall.erase(call_id);
+	removeParticipant(call_id);
+
+	onHoldCall(call_id);
+    }
+    
+}
+
 
 void
 ManagerImpl::removeParticipant(const CallID& call_id)

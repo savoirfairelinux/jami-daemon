@@ -118,13 +118,6 @@ CallManager::getVolume (const std::string& device)
 }
 
 void
-CallManager::addParticipant (const std::string& callID)
-{
-    _debug ("CallManager::addParticipant received %s\n", callID.c_str());
-    Manager::instance().addParticipant(callID);
-}
-
-void
 CallManager::joinParticipant (const std::string& sel_callID, const std::string& drag_callID)
 {
     _debug ("CallManager::joinParticipant received %s, %s\n", sel_callID.c_str(), drag_callID.c_str());
@@ -135,7 +128,7 @@ void
 CallManager::detachParticipant (const std::string& callID)
 {
     _debug ("CallManager::detachParticipant received %s\n", callID.c_str());
-    // Manager::instance().detachParticipant(callID);
+    Manager::instance().detachParticipant(callID);
 }
 
 

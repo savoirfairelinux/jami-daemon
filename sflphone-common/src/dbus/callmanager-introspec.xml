@@ -52,10 +52,6 @@
       <arg type="d" name="value" direction="out"/>
     </method>
 
-    <method name="addParticipant">
-      <arg type="s" name="callID" direction="in"/>
-    </method>
-
     <method name="joinParticipant">
       <arg type="s" name="sel_callID" direction="in"/>
       <arg type="s" name="drag_callID" direction="in"/>
