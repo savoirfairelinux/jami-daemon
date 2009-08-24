@@ -493,16 +493,18 @@ ManagerImpl::offHoldCall (const CallID& id)
     AccountID accountid;
     bool returnValue, rec;
     std::string codecName;
-    CallID call_id;
+    CallID call_id, current_call_id;
 
     stopTone (false);
 
     call_id = id;
+    current_call_id = getCurrentCallId();
     //Place current call on hold if it isn't
 
-    if (hasCurrentCall() ) {
+    if (hasCurrentCall() && !participToConference(current_call_id)) 
+    {
         _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
-        onHoldCall (getCurrentCallId());
+        onHoldCall (current_call_id);
     }
 
     switchCall(id);
@@ -759,16 +761,37 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     if(iter == _conferencemap.end())
     {
 	_debug("NO CONFERENCE YET, CREATE ONE\n");
-	// createConference(call_id1, call_id2);
+	createConference(call_id1, call_id2);
+	
 
 	// answerCall(call_id);
 	call_details = getCallDetails(call_id1);
 	std::map<std::string, std::string>::iterator iter = call_details.find("CALL_STATE");
 	_debug("    call %s state: %s\n", call_id1.c_str(), iter->second.c_str());
+	if (iter->second == "HOLD")
+	{
+	    _debug("    OFFHOLD %s\n", call_id1.c_str());
+	    offHoldCall(call_id1);
+	}
+	else if(iter->second == "INCOMING")
+	{
+	    _debug("    INCOMING %s\n", call_id1.c_str());
+	    answerCall(call_id1);
+	}
 
 	call_details = getCallDetails(call_id2);
 	iter = call_details.find("CALL_STATE");
 	_debug("    call %s state: %s\n", call_id2.c_str(), iter->second.c_str());
+	if (iter->second == "HOLD")
+	{
+	    _debug("    OFFHOLD %s\n", call_id2.c_str());
+	    offHoldCall (call_id2);
+	}
+	else if(iter->second == "INCOMING")
+	{
+	    _debug("    INCOMING %s\n", call_id2.c_str());
+	    answerCall(call_id2);
+	}
 	
         
 
