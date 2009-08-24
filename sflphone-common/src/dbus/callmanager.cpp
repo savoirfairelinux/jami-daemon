@@ -132,6 +132,16 @@ CallManager::joinParticipant (const std::string& sel_callID, const std::string& 
 }
 
 void
+CallManager::detachParticipant (const std::string& callID)
+{
+    _debug ("CallManager::detachParticipant received %s\n", callID.c_str());
+    // Manager::instance().detachParticipant(callID);
+}
+
+
+
+
+void
 CallManager::setRecording (const std::string& callID)
 {
     _debug ("CallManager::setRecording received\n");

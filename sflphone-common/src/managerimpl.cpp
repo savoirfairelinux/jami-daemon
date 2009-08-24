@@ -775,7 +775,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	}
 	else if(iter->second == "INCOMING")
 	{
-	    _debug("    INCOMING %s\n", call_id1.c_str());
+	    _debug("    ANSWER %s\n", call_id1.c_str());
 	    answerCall(call_id1);
 	}
 
@@ -789,7 +789,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	}
 	else if(iter->second == "INCOMING")
 	{
-	    _debug("    INCOMING %s\n", call_id2.c_str());
+	    _debug("    ANSWER %s\n", call_id2.c_str());
 	    answerCall(call_id2);
 	}
 	

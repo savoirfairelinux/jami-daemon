@@ -833,12 +833,12 @@ sflphone_get_current_codec_name()
 }
 
     void
-sflphone_add_participant()
+sflphone_detach_participant()
 {
-    DEBUG("sflphone add participant to conference");
+    DEBUG("sflphone detach participant from conference");
 
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-    dbus_add_participant(selectedCall);
+    dbus_detach_participant(selectedCall);
 }
 
     void

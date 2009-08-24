@@ -1242,24 +1242,6 @@ dbus_set_volume_controls(  )
     }
 }
 
-    void
-dbus_add_participant(const callable_obj_t * c)
-{
-
-    DEBUG("dbus_add_participant %s\n", c->_callID);
-
-    GError* error = NULL;
-    org_sflphone_SFLphone_CallManager_add_participant(
-            callManagerProxy,
-            c->_callID,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-    
-}
-
 
 dbus_join_participant(const callable_obj_t * c_sel, const callable_obj_t * c_drag)
 {
@@ -1273,6 +1255,24 @@ dbus_join_participant(const callable_obj_t * c_sel, const callable_obj_t * c_dra
 	     c_sel->_callID, 
 	     c_drag->_callID, 
 	     &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+}
+
+    void
+dbus_detach_participant(const callable_obj_t * c)
+{
+
+    DEBUG("dbus_detach_participant %s\n", c->_callID);
+
+    GError* error = NULL;
+    org_sflphone_SFLphone_CallManager_detach_participant(
+            callManagerProxy,
+            c->_callID,
+            &error);
     if(error)
     {
         g_error_free(error);

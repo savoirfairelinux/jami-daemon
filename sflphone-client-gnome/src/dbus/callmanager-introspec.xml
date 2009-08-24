@@ -61,6 +61,14 @@
       <arg type="s" name="drag_callID" direction="in"/>
     </method>
 
+    <method name="detachParticipant">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+
+    <signal name="displayCoference">
+      <arg type="s" name="confID" direction="out"/>
+    </signal>
+
     <method name="setRecording">
       <arg type="s" name="callID" direction="in"/>
     </method>

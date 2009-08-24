@@ -50,6 +50,7 @@ public:
     double getVolume( const std::string& device );
     void addParticipant( const std::string& callID );
     void joinParticipant( const std::string& sel_callID, const std::string& drag_callID );
+    void detachParticipant( const std::string& callID );
     void setRecording( const std::string& callID );
     bool getIsRecording(const std::string& callID);
     std::string getCurrentCodecName(const std::string& callID);
