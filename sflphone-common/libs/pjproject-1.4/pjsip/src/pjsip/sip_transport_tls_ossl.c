@@ -959,7 +959,7 @@ PJ_DEF(pj_status_t) pjsip_tls_transport_start( pjsip_endpoint *endpt,
     listener = PJ_POOL_ZALLOC_T(pool, struct tls_listener);
     listener->factory.pool = pool;
     listener->factory.type = PJSIP_TRANSPORT_TLS;
-    listener->factory.type_name = "tls";
+    listener->factory.type_name = "TLS";
     listener->factory.flag = 
 	pjsip_transport_get_flag_from_type(PJSIP_TRANSPORT_TLS);
     listener->sock = PJ_INVALID_SOCKET;
@@ -1270,7 +1270,7 @@ static pj_status_t tls_create( struct tls_listener *listener,
 
     tls->base.key.type = PJSIP_TRANSPORT_TLS;
     pj_memcpy(&tls->base.key.rem_addr, remote, sizeof(pj_sockaddr_in));
-    tls->base.type_name = "tls";
+    tls->base.type_name = "TLS";
     tls->base.flag = pjsip_transport_get_flag_from_type(PJSIP_TRANSPORT_TLS);
 
     tls->base.info = (char*) pj_pool_alloc(pool, 64);
