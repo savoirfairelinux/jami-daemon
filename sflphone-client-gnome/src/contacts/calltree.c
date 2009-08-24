@@ -73,7 +73,6 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     gtk_tree_model_get_value (model, &iter, 2, &val);
 
     calltab_select_call(active_calltree, (callable_obj_t*) g_value_get_pointer(&val));
-    g_value_unset(&val);
 
     path = gtk_tree_model_get_path(model, &iter);
     string_path = (char*)gtk_tree_path_to_string(path);
