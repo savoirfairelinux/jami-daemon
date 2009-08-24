@@ -19,6 +19,8 @@
  */
 #include "accountcreator.h"
 #include "sip/sipaccount.h"
+#include "user_cfg.h"
+
 #ifdef USE_IAX
 #include "iax/iaxaccount.h"
 #endif
@@ -36,16 +38,17 @@ Account*
 AccountCreator::createAccount (AccountType type, AccountID accountID)
 {
     switch (type) {
-
         case SIP_ACCOUNT:
             return new SIPAccount (accountID);
             break;
-#ifdef USE_IAX
-
+        case SIP_DIRECT_IP_ACCOUNT:
+            return new SIPAccount (IP2IP_PROFILE);
+            break;
+        #ifdef USE_IAX
         case IAX_ACCOUNT:
             return new IAXAccount (accountID);
             break;
-#endif
+        #endif
     }
 
     return 0;

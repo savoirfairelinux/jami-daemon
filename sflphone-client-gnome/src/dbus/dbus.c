@@ -2157,3 +2157,28 @@ void dbus_set_tls_settings (account_t *a)
         g_error_free (error);
     }
 }
+
+gchar ** dbus_get_all_ip_interface(void)
+{
+    GError *error = NULL;
+    char ** array;
+
+    if(!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface ( configurationManagerProxy, &array, &error))
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+        {
+            ERROR ("Caught remote method (get_all_ip_interface) exception  %s: %s", dbus_g_error_get_name(error), error->message);
+        }
+        else
+        {
+            ERROR("Error while calling get_all_ip_interface: %s", error->message);
+        }
+        g_error_free (error);
+        return NULL;
+    }
+    else{
+        DEBUG ("DBus called get_all_ip_interface() on ConfigurationManager");
+        return array;
+    }
+}
+

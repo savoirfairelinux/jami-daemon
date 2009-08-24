@@ -70,6 +70,14 @@ typedef enum RegistrationState {
 #define REALM                               "realm"
 #define DEFAULT_REALM                       "*"
 
+#define LOCAL_PORT                          "Account.localPort"
+#define LOCAL_ADDRESS                       "Account.localAddress"
+#define PUBLISHED_PORT                      "Account.publishedPort"
+#define PUBLISHED_ADDRESS                   "Account.publishedAddress"
+
+#define DISPLAY_NAME                        "Account.displayName"
+#define DEFAULT_ADDRESS                     "0.0.0.0"
+
 // SIP specific parameters
 #define SIP_PROXY                           "SIP.proxy"
 #define SIP_STUN_SERVER                     "STUN.server"

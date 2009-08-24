@@ -23,6 +23,7 @@
 #include <configurationmanager.h>
 #include <sstream>
 #include "../manager.h"
+#include "sip/sipvoiplink.h"
 
 const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
 
@@ -47,7 +48,6 @@ ConfigurationManager::getTlsSettingsDefault (void)
     _debug ("ConfigurationManager::getTlsDefaultSettings\n");
    
     std::map<std::string, std::string> tlsSettingsDefault;
-   
     tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_CA_LIST_FILE, ""));
     tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, ""));
     tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, ""));
@@ -128,7 +128,7 @@ ConfigurationManager::getTlsSettings(const std::string& section)
 {
     std::map<std::string, std::string> tlsSettings;   
    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_ENABLE, Manager::instance().getConfigString(section, TLS_ENABLE)));    
+        (TLS_ENABLE, Manager::instance().getConfigString(section, TLS_ENABLE)));           
     tlsSettings.insert(std::pair<std::string, std::string> 
         (TLS_CA_LIST_FILE, Manager::instance().getConfigString(section, TLS_CA_LIST_FILE)));
     tlsSettings.insert(std::pair<std::string, std::string> 
@@ -166,7 +166,7 @@ ConfigurationManager::setTlsSettings(const std::string& section, const std::map<
     if (it != details.end()) {
         Manager::instance().setConfig(section, TLS_ENABLE, it->second); 
     }
-        
+  
     it = map_cpy.find(TLS_CA_LIST_FILE);
     if (it != details.end()) {
         Manager::instance().setConfig(section, TLS_CA_LIST_FILE, it->second); 
@@ -752,4 +752,18 @@ std::map <std::string, std::string> ConfigurationManager::getHistory (void)
 void ConfigurationManager::setHistory (const std::map <std::string, std::string>& entries)
 {
     Manager::instance().receive_history_from_client (entries);
+}
+
+std::vector<std::string> ConfigurationManager::getAllIpInterface(void)
+{
+    _debug ("ConfigurationManager::getAllIpInterface received\n");
+    
+    std::vector<std::string> vector;
+    SIPVoIPLink * sipLink = NULL;
+    sipLink = SIPVoIPLink::instance ("");
+    if (sipLink != NULL) {
+        vector = sipLink->getAllIpInterface();
+    }
+   
+    return vector;
 }

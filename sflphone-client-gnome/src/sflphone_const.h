@@ -68,6 +68,7 @@
 #define SDES_TLS                           "2"
 
 #define TLS_ENABLE                          "TLS.enable"
+#define TLS_PORT                            "TLS.port"
 #define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
 #define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
 #define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
@@ -80,6 +81,11 @@
 #define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
 #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
+
+#define LOCAL_PORT                          "Account.localPort"
+#define LOCAL_ADDRESS                       "Account.localAddress"
+#define PUBLISHED_PORT                      "Account.publishedPort"
+#define PUBLISHED_ADDRESS                   "Account.publishedAddress"
 
 /**
  * Global logger
