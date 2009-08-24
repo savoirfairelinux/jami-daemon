@@ -2831,7 +2831,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig(accountID, TLS_VERIFY_SERVER, tlsVerifyServer);    
     setConfig(accountID, TLS_VERIFY_CLIENT, tlsVerifyClient);    
     setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate);    
-    setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutMsec);     
+    setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec);     
     setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec);      
     
     setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
