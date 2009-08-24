@@ -252,6 +252,10 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
         gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
     }
 
+    // Make calltree reordable for drag n drop
+    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
+
+
     gtk_widget_show(tab->tree);
 }
 
