@@ -34,6 +34,7 @@ GtkTreeSelection *sel;
 
 char *dragged_path;
 char *call_id;
+char *previous_id; 
 
 
 static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data);
@@ -77,7 +78,9 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     path = gtk_tree_model_get_path(model, &iter);
     string_path = (char*)gtk_tree_path_to_string(path);
 
-    printf("  source path %s, %s\n", string_path, ((callable_obj_t*)g_value_get_pointer(&val))->_callID);
+    previous_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+
+    printf("  source path %s, %s\n", string_path, previous_id);
 
     g_value_unset(&val);
     toolbar_update_buttons();
@@ -669,14 +672,14 @@ static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
     void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer data)
     {
         g_print("drag_end_cb\n");
-        g_print("    dragged path %s\n", dragged_path);
+        g_print("    dragged path %s, call_id %s on previous_id %s\n", dragged_path, call_id, previous_id);
     }
 
 
     void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data)
 {
 
-    g_print("drag_data_received_cb\n");
+    // g_print("drag_data_received_cb\n");
     GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
     GtkTreePath *drop_path;
     GtkTreeViewDropPosition position;
@@ -701,7 +704,7 @@ static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
         gtk_tree_model_get_iter(tree_model, &iter, drop_path);
         gtk_tree_model_get_value (tree_model, &iter, 2, &val);
 
-        g_print("    dragged on %s\n", ((callable_obj_t*)g_value_get_pointer(&val))->_callID);
+        // g_print("    dragged on %s\n", ((callable_obj_t*)g_value_get_pointer(&val))->_callID);
 
 
         // dragged_path = (char*)gtk_tree_path_to_string(drop_path);
