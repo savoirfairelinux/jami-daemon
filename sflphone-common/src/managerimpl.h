@@ -204,6 +204,8 @@ class ManagerImpl {
 
     void addStream(const CallID& call_id);
 
+    void removeStream(const CallID& call_id);
+
     /**
      * Save config to file
      * @return true on success

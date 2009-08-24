@@ -188,8 +188,9 @@ AudioRtpRTX::~AudioRtpRTX ()
         throw;
     }
 
-    _debug("Unbind call id %s from all participants\n", _ca->getCallId().c_str());
+    _debug("Remove audio stream for call id %s\n", _ca->getCallId().c_str());
     _audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
+    // Manager::instance().removeStream(_ca->getCallId());
 
     _debug("DELETE print micData address %p\n", micData);
     delete [] micData;

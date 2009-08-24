@@ -389,9 +389,6 @@ ManagerImpl::hangupCall (const CallID& id)
         removeCallAccount (id);
     }
 
-    if(participToConference(id))
-	removeParticipant(id);
-
     _debug("ManagerImpl::hangupCall CURRENT CALL ID %s\n", getCurrentCallId().c_str());
 
     switchCall ("");
@@ -402,6 +399,11 @@ ManagerImpl::hangupCall (const CallID& id)
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
 
         if (pulselayer)  pulselayer->restorePulseAppsVolume();
+    }
+
+    if(participToConference(id))
+    {
+	removeParticipant(id);
     }
 
     return returnValue;
@@ -764,67 +766,69 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 
     if(iter == _conferencemap.end())
     {
-	_debug("NO CONFERENCE YET, CREATE ONE\n");
-	createConference(call_id1, call_id2);
+	 _debug("NO CONFERENCE YET, CREATE ONE\n");
+	 createConference(call_id1, call_id2);
 
-	iter_details = call1_details.find("CALL_STATE");
-	_debug("    call %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
-	if (iter_details->second == "HOLD")
-	{
-	    _debug("    OFFHOLD %s\n", call_id1.c_str());
-	    offHoldCall(call_id1);
-	}
-	else if(iter_details->second == "INCOMING")
-	{
-	    _debug("    ANSWER %s\n", call_id1.c_str());
-	    answerCall(call_id1);
-	}
+	 iter_details = call1_details.find("CALL_STATE");
+	 _debug("    call %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
+	 if (iter_details->second == "HOLD")
+	 {
+	     _debug("    OFFHOLD %s\n", call_id1.c_str());
+	     offHoldCall(call_id1);
+	 }
+	 else if(iter_details->second == "INCOMING")
+	 {
+	     _debug("    ANSWER %s\n", call_id1.c_str());
+	     answerCall(call_id1);
+	 }
 
-	iter_details = call2_details.find("CALL_STATE");
-	_debug("    call %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
-	if (iter_details->second == "HOLD")
-	{
-	    _debug("    OFFHOLD %s\n", call_id2.c_str());
-	    offHoldCall (call_id2);
-	}
-	else if(iter_details->second == "INCOMING")
-	{
-	    _debug("    ANSWER %s\n", call_id2.c_str());
-	    answerCall(call_id2);
-	}
+	 iter_details = call2_details.find("CALL_STATE");
+	 _debug("    call %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
+	 if (iter_details->second == "HOLD")
+	 {
+	     _debug("    OFFHOLD %s\n", call_id2.c_str());
+	     offHoldCall (call_id2);
+	 }
+	 else if(iter_details->second == "INCOMING")
+	 {
+	     _debug("    ANSWER %s\n", call_id2.c_str());
+	     answerCall(call_id2);
+	 }
 	
         
 
     }
     else
     {
-	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
-	Conference* conf = iter->second;
+	 _debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
+	 Conference* conf = iter->second;
+	 conf->add(call_id1);
+	 _conferencecall.insert(pair<CallID, Conference*>(call_id1, conf));
+	 
+	 iter_details = call1_details.find("CALL_STATE");
+	 if(iter_details->second == "HOLD")
+	 {
+	     _debug("    Add INCOMING call to conference\n");
+	     offHoldCall (call_id1);
+	 }
+	 else if(iter_details->second == "INCOMING")
+	 {
+	     _debug("    Add INCOMING call to conference\n");
+	     answerCall(call_id1);
+	 }
 
-	iter_details = call1_details.find("CALL_STATE");
-	if(iter_details->second == "HOLD")
-	{
+	 /*
+	 iter_details = call2_details.find("CALL_STATE");
+	 if(iter_details->second == "HOLD")
+	 {
+	       
+	 }
+	 else if(iter_details->second == "INCOMING")
+	 {
 
-	}
-	else if(iter_details->second == "INCOMING")
-	{
-
-	}
-
-	iter_details = call2_details.find("CALL_STATE");
-	if(iter_details->second == "HOLD")
-	{
-
-	}
-	else if(iter_details->second == "INCOMING")
-	{
-
-	}
-	// conf->add(call_id);
-	// _conferencecall.insert(pair<CallID, Conference*>(call_id, conf));
-
-	// answerCall(call_id);
-    }
+	 }
+	 */
+    }    
     
 }
 
@@ -845,7 +849,7 @@ ManagerImpl::detachParticipant(const CallID& call_id)
     else
     {
 	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
-	Conference* conf = iter->second;
+	// Conference* conf = iter->second;
 
 	// conf->remove(call_id);
 	
@@ -904,6 +908,20 @@ ManagerImpl::addStream(const CallID& call_id)
     {
 	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
     }
+}
+
+void
+ManagerImpl::removeStream(const CallID& call_id)
+{
+    _debug("ManagerImpl::removeStream %s\n", call_id.c_str());
+
+    getAudioDriver()->getMainBuffer()->unBindAll(call_id);
+
+    if(participToConference(call_id))
+    {
+	removeParticipant(call_id);
+    }
+    
 }
 
 //THREAD=Main
@@ -1213,9 +1231,6 @@ ManagerImpl::peerHungupCall (const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    if(participToConference(id))
-	removeParticipant(id);
-
     switchCall(id);
 
     /* Direct IP to IP call */
@@ -1253,6 +1268,11 @@ ManagerImpl::peerHungupCall (const CallID& id)
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
 
         if (pulselayer)  pulselayer->restorePulseAppsVolume();
+    }
+
+    if(participToConference(id))
+    {
+	removeParticipant(id);
     }
 }
 
