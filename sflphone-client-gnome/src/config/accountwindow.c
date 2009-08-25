@@ -57,7 +57,7 @@ GtkWidget * entryHostname;
 GtkWidget * entryPassword;
 GtkWidget * entryMailbox;
 GtkWidget * entryResolveNameOnlyOnce;
-GtkWidget * entryExpire;
+GtkWidget * expireSpinBox;
 GtkListStore * credentialStore;
 GtkWidget * deleteCredButton;
 GtkWidget * treeViewCredential;
@@ -693,14 +693,14 @@ GtkWidget * create_advanced_tab(account_t **a)
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 5);	
-	
-	label = gtk_label_new_with_mnemonic (_("Registration _expire"));
-	gtk_table_attach_defaults( GTK_TABLE( table ), label, 0, 1, 0, 1);
-	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-	entryExpire = gtk_entry_new();
-	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryExpire);
-	gtk_entry_set_text(GTK_ENTRY(entryExpire), account_expire);
-	gtk_table_attach_defaults( GTK_TABLE( table ), entryExpire, 1, 2, 0, 1);
+
+	label = gtk_label_new_with_mnemonic (_("Local port"));
+	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
+	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    expireSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
+	gtk_label_set_mnemonic_widget(GTK_LABEL(label), expireSpinBox);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(expireSpinBox), g_ascii_strtod(account_expire, NULL));
+	gtk_table_attach_defaults(GTK_TABLE(table), expireSpinBox, 1, 2, 0, 1);
 
 	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Comply with RFC 3263"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),
@@ -961,7 +961,7 @@ show_account_window (account_t * a)
 				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
-				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryExpire))));				
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox))));				
         
 		if (strcmp(proto, "SIP") == 0) {
 			guint i, size;

@@ -298,9 +298,13 @@ gchar * account_list_get_ordered_list (void) {
     gchar *order="";
     guint i;
 
-    for( i=0; i<account_list_get_size(); i++ )
+    for( i=0; i < account_list_get_size(); i++ )
     {
-        order = g_strconcat (order, account_list_get_nth (i)->accountID, "/", NULL);
+        account_t * account = NULL;
+        account = account_list_get_nth(i);    
+        if (account != NULL) {
+            order = g_strconcat (order, account->accountID, "/", NULL);
+        }
     }
     return order;
 }

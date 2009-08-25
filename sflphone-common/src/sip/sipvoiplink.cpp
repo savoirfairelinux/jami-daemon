@@ -2329,8 +2329,8 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         if (link)
             link->SIPCallAnswered (call, rdata);
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
-        _debug ("Invitation falled in state \"disconnected\".\n");
-        _debug ("State: %i, Disconnection cause: %i\n", inv->state, inv->cause);
+    
+        _debug ("State: %s. Cause: %.*s\n", invitationStateMap[inv->state], (int)inv->cause_text.slen, inv->cause_text.ptr);
 
         switch (inv->cause) {
                 /* The call terminates normally - BYE / CANCEL */
@@ -2343,11 +2343,8 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
                 if (link) {
                     link->SIPCallClosed (call);
                 }
-
                 break;
-
-                /* The call connection failed */
-
+                
             case PJSIP_SC_NOT_FOUND:            /* peer not found */
             case PJSIP_SC_DECLINE:
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
