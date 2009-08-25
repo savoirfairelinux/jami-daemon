@@ -78,6 +78,7 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
 
     calltab_select_call(active_calltree, (callable_obj_t*) g_value_get_pointer(&val));
 
+    // store info for dragndrop
     path = gtk_tree_model_get_path(model, &iter);
     string_path = (char*)gtk_tree_path_to_string(path);
 

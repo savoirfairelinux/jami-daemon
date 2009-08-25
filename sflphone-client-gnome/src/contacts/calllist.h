@@ -31,12 +31,12 @@ typedef struct {
 	GtkListStore* store;
 	GtkWidget* view;
 	GtkWidget* tree;
-    GtkWidget* searchbar;
+        GtkWidget* searchbar;
 
-  // Calllist vars
+        // Calllist vars
 	GQueue* callQueue;
 	callable_obj_t* selectedCall;
-    gchar *_name;
+        gchar *_name;
 } calltab_t;
 
 void
