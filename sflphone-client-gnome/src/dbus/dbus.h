@@ -27,6 +27,7 @@
 
 #include <accountlist.h>
 #include <calllist.h>
+#include <conferencelist.h>
 #include <sflnotify.h>
 
 /** @file dbus.h

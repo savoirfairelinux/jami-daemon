@@ -3478,3 +3478,68 @@ ManagerImpl::getCallList (void)
 
     return v;
 }
+
+
+std::map< std::string, std::string > 
+ManagerImpl::getConferenceDetails(const CallID& callID)
+{
+
+    std::map<std::string, std::string> call_details;
+    AccountID accountid;
+    Account *account;
+    VoIPLink *link;
+    Call *call = NULL;
+    std::stringstream type;
+
+
+    // We need here to retrieve the call information attached to the call ID
+    // To achieve that, we need to get the voip link attached to the call
+    // But to achieve that, we need to get the account the call was made with
+
+    // So first we fetch the account
+    accountid = getAccountFromCall (callID);
+    _debug ("%s\n",callID.c_str());
+    // Then the VoIP link this account is linked with (IAX2 or SIP)
+
+    if ( (account=getAccount (accountid)) != 0) {
+        link = account->getVoIPLink ();
+
+        if (link) {
+            call = link->getCall (callID);
+        }
+    }
+
+    if (call) {
+        type << call->getCallType ();
+        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr ()));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", type.str ()));
+    } else {
+        _debug ("Error: Managerimpl - getCallDetails ()\n");
+        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "UNKNOWN"));
+        call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", "0"));
+    }
+
+    return call_details;
+}
+
+
+std::vector< std::string >
+ManagerImpl::getConferenceList (void)
+{
+    _debug("ManagerImpl::getConferenceList\n");
+    std::vector< std::string > v;
+
+    ConferenceMap::iterator iter = _conferencemap.begin();
+    while (iter != _conferencemap.end ()) {
+        v.push_back (iter->first);
+        iter++;
+    }
+
+    return v;
+}

@@ -59,6 +59,7 @@ conferencelist_add(const gchar* conf_id)
     gchar* c = (gchar*)conferencelist_get(conf_id);
     if(!c)
     {
+	g_print("Conference id(s): %s\n", conf_id);
         g_queue_push_tail (conferenceQueue, (gpointer)conf_id);
     }
 }
@@ -89,8 +90,8 @@ conferencelist_get (const gchar* conf_id)
 }
 
 
-gchar*
-calllist_get_nth (const gchar* conf_id, guint n )
+gchar* 
+conferencelist_get_nth (const gchar* conf_id, guint n )
 {
     GList* c = g_queue_peek_nth(conferenceQueue, n);
     if (c)

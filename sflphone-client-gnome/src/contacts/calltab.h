@@ -21,6 +21,7 @@
 #define __CALLTAB_H__
 
 #include <calllist.h>
+#include <conferencelist.h>
 #include <gtk/gtk.h>
 
 calltab_t* active_calltree;

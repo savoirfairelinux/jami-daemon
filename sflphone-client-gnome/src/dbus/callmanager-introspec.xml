@@ -61,9 +61,15 @@
       <arg type="s" name="callID" direction="in"/>
     </method>
 
-    <signal name="displayCoference">
-      <arg type="s" name="confID" direction="out"/>
-    </signal>
+    <method name="getConferenceDetails">
+      <arg type="s" name="callID" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="infos" direction="out"/>
+    </method>
+    
+    <method name="getConferenceList">
+        <arg type="as" name="list" direction="out"/>
+    </method>
 
     <method name="setRecording">
       <arg type="s" name="callID" direction="in"/>

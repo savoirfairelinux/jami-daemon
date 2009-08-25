@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <glib/gprintf.h>
 #include <calllist.h>
+#include <conferencelist.h>
 #include <toolbar.h>
 #include <mainwindow.h>
 #include <history.h>
@@ -62,7 +63,7 @@ popup_menu (GtkWidget *widget,
     static void
 selected(GtkTreeSelection *sel, void* data UNUSED )
 {
-    g_print("selected_cb\n");
+
     GtkTreeIter  iter;
     GValue val;
     GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
@@ -85,7 +86,11 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     previous_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
     selected_call = (callable_obj_t*)g_value_get_pointer(&val);
 
-    printf("  source path %s, %s\n", string_path, previous_id);
+    DEBUG("selected_cb\n");
+    DEBUG("  source path %s, %s\n", string_path, previous_id);
+
+    conferencelist_reset ();
+    sflphone_fill_conference_list();
 
     g_value_unset(&val);
     toolbar_update_buttons();
@@ -608,6 +613,16 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
 
 }
 
+
+void calltree_add_conference(calltab_t *tab)
+{
+   if (tab == history || tab==contacts)
+        return;
+
+   
+}
+
+
 void calltree_display (calltab_t *tab) {
 
 
@@ -676,8 +691,8 @@ static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
 
 static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer data)
 {
-    g_print("drag_end_cb\n");
-    g_print("    dragged path %s, call_id %s on previous_id %s\n", dragged_path, call_id, previous_id);
+    DEBUG("drag_end_cb\n");
+    DEBUG("    dragged path %s, call_id %s on previous_id %s\n", dragged_path, call_id, previous_id);
 
     if(selected_call != NULL && dragged_call != NULL)
         sflphone_join_participant(selected_call, dragged_call);

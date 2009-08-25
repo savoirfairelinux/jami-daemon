@@ -131,8 +131,19 @@ CallManager::detachParticipant (const std::string& callID)
     Manager::instance().detachParticipant(callID);
 }
 
+std::map< std::string, std::string >
+CallManager::getConferenceDetails (const std::string& callID)
+{
+    _debug ("CallManager::getCallDetails received\n");
+    return Manager::instance().getConferenceDetails (callID);
+}
 
-
+std::vector< std::string >
+CallManager::getConferenceList (void)
+{
+    _debug("CallManager::getConferenceList\n");
+    return Manager::instance().getConferenceList();
+}
 
 void
 CallManager::setRecording (const std::string& callID)

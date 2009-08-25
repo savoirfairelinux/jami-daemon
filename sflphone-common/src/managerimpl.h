@@ -70,7 +70,8 @@ typedef std::set<CallID> CallIDSet;
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 
-/** To store conference objects by call ids */
+/** To store conference objects by call ids 
+    used to retreive the conference according to a call */
 typedef std::map<CallID, Conference*> ConferenceCallMap;
 
 /** To store conference objects by conference ids */
@@ -348,6 +349,19 @@ class ManagerImpl {
      * @return std::vector<std::string> A list of call IDs
      */
     std::vector< std::string >  getCallList (void);
+
+    /**
+     * Retrieve details about a given call
+     * @param callID	  The account identifier
+     * @return std::map< std::string, std::string > The call details
+     */
+    std::map< std::string, std::string > getConferenceDetails(const CallID& callID);
+
+    /**
+     * Get call list
+     * @return std::vector<std::string> A list of call IDs
+     */
+    std::vector< std::string >  getConferenceList (void);
 
     /**
      * Save the details of an existing account, given the account ID

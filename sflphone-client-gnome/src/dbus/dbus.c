@@ -1782,6 +1782,20 @@ gchar** dbus_get_call_list (void)
     return list;
 }
 
+gchar** dbus_get_conference_list (void)
+{
+    GError *error = NULL;
+    gchar **list = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_conference_list (callManagerProxy, &list, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_conference_list");
+        g_error_free (error);
+    }
+
+    return list;
+}
+
 void dbus_set_accounts_order (const gchar* order) {
 
     GError *error = NULL;

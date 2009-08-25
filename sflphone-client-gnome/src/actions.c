@@ -244,12 +244,16 @@ gboolean sflphone_init()
 
         account_list_init ();
         codec_list_init();
+	conferencelist_init();
 
         // Fetch the configured accounts
         sflphone_fill_account_list(FALSE);
 
         // Fetch the audio codecs
         sflphone_fill_codec_list();
+
+	// Fetch the conference list
+	sflphone_fill_conference_list();
 
         return TRUE;
     }
@@ -850,6 +854,14 @@ sflphone_join_participant(callable_obj_t* selected_call, callable_obj_t* dragged
 }
 
     void
+sflphone_add_conference()
+{
+    DEBUG("sflphone add a conference to tree view");
+
+    // dbus_join_participant(selected_call, dragged_call);
+}
+
+    void
 sflphone_rec_call()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
@@ -957,6 +969,29 @@ void sflphone_fill_call_list (void)
             // Update the GUI
             calltree_add_call (current_calls, c);
         }
+    }
+}
+
+
+void sflphone_fill_conference_list(void)
+{
+    gchar** conferences = (gchar**)dbus_get_conference_list();
+    gchar** pl;
+    gchar* conf_id;
+    gchar* c;
+
+    DEBUG("sflphone_fill_conference_list");
+
+    if(conferences)
+    {
+	for (pl = conferences; *conferences; conferences++)
+	{
+	    c = g_new0(gchar,1);
+	    conf_id = (gchar*)(*conferences);
+	    c = g_strdup(conf_id);
+
+	    conferencelist_add(c);
+	}
     }
 }
 

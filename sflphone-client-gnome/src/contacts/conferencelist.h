@@ -61,7 +61,7 @@ conferencelist_get_size (const gchar* conf_id);
   * @param n The position of the call you want
   * @return A call or NULL */
 gchar*
-conferencelist_get_nth (const gchar* conf_id);
+conferencelist_get_nth (const gchar* conf_id, guint n );
 
 /** Return the call corresponding to the callID
   * @param n The callID of the call you want
