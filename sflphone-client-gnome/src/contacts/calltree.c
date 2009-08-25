@@ -679,7 +679,7 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
     g_print("    dragged path %s, call_id %s on previous_id %s\n", dragged_path, call_id, previous_id);
 
     if(selected_call != NULL && dragged_call != NULL)
-        dbus_join_participant(selected_call, dragged_call);
+        sflphone_join_participant(selected_call, dragged_call);
 }
 
 

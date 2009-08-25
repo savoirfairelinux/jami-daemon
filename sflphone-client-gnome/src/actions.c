@@ -842,6 +842,14 @@ sflphone_detach_participant()
 }
 
     void
+sflphone_join_participant(callable_obj_t* selected_call, callable_obj_t* dragged_call)
+{
+    DEBUG("sflphone join participant from conference");
+
+    dbus_join_participant(selected_call, dragged_call);
+}
+
+    void
 sflphone_rec_call()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
