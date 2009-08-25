@@ -122,6 +122,13 @@
 
     <signal name="conferenceChanged">
     </signal>
+
+    <signal name="conferenceAdded">
+      <arg type="s" name="confID"  direction="out"/>
+    </signal>
+
+    <signal name="conferenceRemoved">
+    </signal>
     
     <signal name="voiceMailNotify">
       <arg type="s" name="accountID"  direction="out"/>

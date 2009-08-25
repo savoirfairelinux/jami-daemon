@@ -252,12 +252,21 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
     g_signal_connect_after (G_OBJECT (tab->view), "focus-out-event",
             G_CALLBACK (focus_on_calltree_out), NULL);
 
-    // source widget drag n drop signals
-    g_signal_connect (G_OBJECT (tab->view), "drag_begin", G_CALLBACK (drag_begin_cb), NULL);
-    g_signal_connect (G_OBJECT (tab->view), "drag_end", G_CALLBACK (drag_end_cb), NULL);
 
-    // destination widget drag n drop signals
-    g_signal_connect (G_OBJECT (tab->view), "drag_data_received", G_CALLBACK (drag_data_received_cb), NULL);
+    if(tab != history || tab!=contacts) {
+
+	DEBUG("SET TREE VIEW REORDABLE");
+        // Make calltree reordable for drag n drop
+        gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE); 
+
+        // source widget drag n drop signals
+        g_signal_connect (G_OBJECT (tab->view), "drag_begin", G_CALLBACK (drag_begin_cb), NULL);
+        g_signal_connect (G_OBJECT (tab->view), "drag_end", G_CALLBACK (drag_end_cb), NULL);
+
+        // destination widget drag n drop signals
+        g_signal_connect (G_OBJECT (tab->view), "drag_data_received", G_CALLBACK (drag_data_received_cb), NULL);
+
+    }
 
 
     gtk_widget_grab_focus(GTK_WIDGET(tab->view));
@@ -291,10 +300,6 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
         calltab_create_searchbar (tab);
         gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
     }
-
-    // Make calltree reordable for drag n drop
-    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tab->view), TRUE);
-
 
     gtk_widget_show(tab->tree);
 }

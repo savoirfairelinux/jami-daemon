@@ -203,6 +203,33 @@ call_state_cb (DBusGProxy *proxy UNUSED,
     }
 }
 
+static void
+conference_changed_cb (DBusGProxy *proxy UNUSED,
+        void * foo  UNUSED )
+{
+    DEBUG ("Conference changed\n");
+    // sflphone_display_transfer_status("Transfer successfull");
+}
+
+
+static void
+conference_added_cb (DBusGProxy *proxy UNUSED,
+	const gchar* confID,
+        void * foo  UNUSED )
+{
+    DEBUG ("Conference added %s\n", confID);
+    // sflphone_display_transfer_status("Transfer successfull");
+}
+
+
+static void
+conference_removed_cb (DBusGProxy *proxy UNUSED,
+        void * foo  UNUSED )
+{
+    DEBUG ("Conference removed\n");
+    // sflphone_display_transfer_status("Transfer successfull");
+}
+
 
     static void
 accounts_changed_cb (DBusGProxy *proxy UNUSED,
@@ -361,6 +388,23 @@ dbus_connect ()
             "transferFailed", G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
             "transferFailed", G_CALLBACK(transfer_failed_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "conferenceChanged", G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "conferenceChanged", G_CALLBACK(conference_changed_cb), NULL, NULL);
+
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "conferenceAdded", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "conferenceAdded", G_CALLBACK(conference_added_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "conferenceRemoved", G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "conferenceRemoved", G_CALLBACK(conference_removed_cb), NULL, NULL);
 
 
     configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 

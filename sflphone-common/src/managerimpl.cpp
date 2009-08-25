@@ -658,10 +658,13 @@ ManagerImpl::createConference(const CallID& id1, const CallID& id2)
     conf->add(id1);
     conf->add(id2);
 
+    // broadcast a signal over dbus
+    _dbus->getCallManager()->conferenceAdded(default_conf);
+
 }
 
 void
-ManagerImpl::removeConference(const CallID& conference_id)
+ManagerImpl::removeConference(const ConfID& conference_id)
 {
 
     _debug("ManagerImpl::removeConference(%s)\n", conference_id.c_str());
@@ -687,7 +690,6 @@ ManagerImpl::removeConference(const CallID& conference_id)
     ConferenceCallMap::iterator iter_p = temp_map.begin();
     while (iter_p != temp_map.end())
     {
-	_debug("ManagerImpl:: iterate participant %s\n", iter_p->first.c_str());
 	if(iter_p->second == conf)
 	{
 	    _debug("ManagerImpl:: remove particiant (%s) from conference %s\n", iter_p->first.c_str(), conference_id.c_str());
@@ -697,11 +699,16 @@ ManagerImpl::removeConference(const CallID& conference_id)
 	iter_p++;
     }
 
+    
+
     _debug("ManagerImpl:: remove conference %s\n", conference_id.c_str());
     if (_conferencemap.erase(conference_id) == 1)
         _debug("ManagerImpl:: conference %s removed succesfully\n", conference_id.c_str());
     else
 	_debug("ManagerImpl:: error cannot remove conference id: %s\n", conference_id.c_str());
+
+    // broadcast a signal over dbus
+    _dbus->getCallManager()->conferenceRemoved();
 
 }
 
