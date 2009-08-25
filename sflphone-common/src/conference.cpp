@@ -38,6 +38,19 @@ Conference::~Conference()
 
 }
 
+
+int Conference::getState()
+{
+    return _confState;
+}
+
+
+void Conference::setState(ConferenceState state)
+{
+    _confState = state;
+}
+
+
 void Conference::add(CallID participant_id)
 {
 
@@ -90,23 +103,46 @@ void Conference::remove(CallID participant_id)
 void Conference::bindParticipant(CallID participant_id)
 {
 
-    if(_nbParticipant >= 1)
-    {
+    if(_nbParticipant >= 1) {
 	ParticipantSet::iterator iter = _participants.begin();
 
-	while (iter != _participants.end())
-	{
-	    if (participant_id != (*iter))
-	    {
+	while (iter != _participants.end()) {
+
+	    if (participant_id != (*iter)) {
+
 	        _debug("---- Conference:: bind callid %s with %s in conference add\n", participant_id.c_str(), (*iter).c_str());
 	        Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id, *iter);
 	    }
 	    iter++;
 	}
+
     }
 
-    _debug("---- Conference:: bind callid %s with default_id in conference add\n", participant_id.c_str());
+    _debug("---- Conference::bind callid %s with default_id in conference add\n", participant_id.c_str());
 
     Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id);
 
+}
+
+
+std::string Conference::getStateStr()
+{
+
+    std::string state_str;
+
+    switch(_confState) {
+
+        case Active:
+	    state_str = "ACTIVE";
+	    break;
+	   
+        case Hold:
+	    state_str = "HOLD";
+	    break;
+
+        default:
+	    break;
+    }
+
+    return state_str;
 }

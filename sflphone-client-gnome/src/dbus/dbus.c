@@ -1796,6 +1796,20 @@ gchar** dbus_get_conference_list (void)
     return list;
 }
 
+GHashTable* dbus_get_conference_details (const gchar *confID)
+{
+    GError *error = NULL;
+    GHashTable *details = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_conference_details (callManagerProxy, confID, &details, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_conference_details");
+        g_error_free (error);
+    }
+
+    return details;
+}
+
 void dbus_set_accounts_order (const gchar* order) {
 
     GError *error = NULL;

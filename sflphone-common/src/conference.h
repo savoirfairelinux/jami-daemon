@@ -26,6 +26,7 @@
 // class ManagerImpl;
 // class Call;
 
+typedef std::string ConfID;
 
 typedef std::set<CallID> ParticipantSet;
 
@@ -33,9 +34,17 @@ class Conference{
 
     public:
 
+        enum ConferenceState {Active, Hold};
+
         Conference();
 
         ~Conference();
+
+	int getState();
+
+	void setState(ConferenceState state);
+
+	std::string getStateStr();
 
 	int getNbParticipants() { return _nbParticipant; }
 
@@ -49,6 +58,8 @@ class Conference{
 
         /** Unique ID of the call */
         CallID _id;
+
+	ConferenceState _confState;
 
         ParticipantSet _participants;
 

@@ -3481,51 +3481,23 @@ ManagerImpl::getCallList (void)
 
 
 std::map< std::string, std::string > 
-ManagerImpl::getConferenceDetails(const CallID& callID)
+ManagerImpl::getConferenceDetails(const ConfID& confID)
 {
 
-    std::map<std::string, std::string> call_details;
-    AccountID accountid;
-    Account *account;
-    VoIPLink *link;
-    Call *call = NULL;
-    std::stringstream type;
+    std::map<std::string, std::string> conf_details;
+    ConferenceMap::iterator iter_conf;
 
+    iter_conf = _conferencemap.find(confID);
 
-    // We need here to retrieve the call information attached to the call ID
-    // To achieve that, we need to get the voip link attached to the call
-    // But to achieve that, we need to get the account the call was made with
+    Conference *conf;
+    if(iter_conf != _conferencemap.end()) {
 
-    // So first we fetch the account
-    accountid = getAccountFromCall (callID);
-    _debug ("%s\n",callID.c_str());
-    // Then the VoIP link this account is linked with (IAX2 or SIP)
-
-    if ( (account=getAccount (accountid)) != 0) {
-        link = account->getVoIPLink ();
-
-        if (link) {
-            call = link->getCall (callID);
-        }
+	
+        conf_details.insert (std::pair<std::string, std::string> ("CONFID", confID));
+        conf_details.insert (std::pair<std::string, std::string> ("CONF_STATE", conf->getStateStr()));
     }
 
-    if (call) {
-        type << call->getCallType ();
-        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
-        call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
-        call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
-        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr ()));
-        call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", type.str ()));
-    } else {
-        _debug ("Error: Managerimpl - getCallDetails ()\n");
-        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
-        call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
-        call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
-        call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", "UNKNOWN"));
-        call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", "0"));
-    }
-
-    return call_details;
+    return conf_details;
 }
 
 

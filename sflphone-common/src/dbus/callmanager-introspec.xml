@@ -119,6 +119,9 @@
       <arg type="s" name="callID"  direction="out"/>
       <arg type="s" name="state"  direction="out"/>
     </signal>
+
+    <signal name="conferenceChanged">
+    </signal>
     
     <signal name="voiceMailNotify">
       <arg type="s" name="accountID"  direction="out"/>
