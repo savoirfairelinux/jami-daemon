@@ -2541,9 +2541,8 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     std::map<std::string, std::string> a;
     
     Account * account = _accountMap[accountID];
-    if(!account){
-        _debug("Cannot getAccountDetails on a non-existing accountID. Returning.\n");
-        return a;
+    if(account == NULL) {
+        _debug("Cannot getAccountDetails on a non-existing accountID. Defaults will be used.\n");
     }
     
     a.insert(std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString(accountID, CONFIG_ACCOUNT_ALIAS)));
@@ -2564,7 +2563,11 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert(std::pair<std::string, std::string> (DISPLAY_NAME, getConfigString(accountID, DISPLAY_NAME)));                    
     
     RegistrationState state; 
-    state = account->getRegistrationState();           
+    if (account != NULL) {
+        state = account->getRegistrationState();           
+    } else {
+        state = Unregistered;
+    }
     a.insert(std::pair<std::string, std::string> ("Status", mapStateNumberToString (state)));
     a.insert(std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, getConfigString(accountID, SRTP_KEY_EXCHANGE)));
     a.insert(std::pair<std::string, std::string> (SRTP_ENABLE, getConfigString(accountID, SRTP_ENABLE)));    

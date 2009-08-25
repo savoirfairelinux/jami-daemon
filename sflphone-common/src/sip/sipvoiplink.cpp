@@ -489,8 +489,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     std::string portStr;
     ss << port;
     ss >> portStr;
-    // DON'T FORGET TO REMOVE THIS 5061 VALUE !
-    contactUri = account->getContactHeader(address, "5061");
+    contactUri = account->getContactHeader(address, portStr);
  
     _debug("sendRegister: fromUri: %s serverUri: %s contactUri: %s\n",
             fromUri.c_str(),
@@ -2020,19 +2019,30 @@ pj_status_t SIPVoIPLink::createTlsTransport(AccountID id)
    
    /**
     * Init local address.
-    * IP interface address is not specified,
-    * so socket will be bound to PJ_INADDR_ANY.
+    * If IP interface address is not specified,
+    * socket will be bound to PJ_INADDR_ANY.
     * If user specified port is an empty string
     * or if it is equal to 0, then the port will 
     * be chosen automatically by the OS.
     */
     pj_sockaddr_in_init(&local_addr, 0, 0); 
-    //pj_uint16_t localTlsPort = account->getLocalPort();
-    pj_uint16_t localTlsPort = 5061;
+    pj_uint16_t localTlsPort = account->getLocalPort();
     if (localTlsPort != 0) {
             local_addr.sin_port = pj_htons(localTlsPort);
     }
     
+    std::string localAddress = account->getLocalAddress();
+    if (!localAddress.empty()) {
+        pj_str_t pjAddress;
+        pj_cstr(&pjAddress, (account->getLocalAddress()).c_str());
+        
+       pj_status_t success;
+       success = pj_sockaddr_in_set_str_addr(&local_addr, &pjAddress);
+       if (success != PJ_SUCCESS) {
+            _debug("Failed to set local address in %d\n", __LINE__);        
+       }
+    }
+       
     /* Init published name */
     pj_bzero(&a_name, sizeof(pjsip_host_port));
     pj_cstr(&a_name.host, (account->getPublishedAddress()).c_str());
@@ -2041,6 +2051,11 @@ pj_status_t SIPVoIPLink::createTlsTransport(AccountID id)
     /* Get TLS settings. Expected to be filled */    
     pjsip_tls_setting * tls_setting = account->getTlsSetting();
     
+    _debug("TLS transport to be initialized with published address %.*s,"
+           " published port %d, local address %s, local port %d\n", 
+           (int)a_name.host.slen, a_name.host.ptr, 
+           (int)a_name.port, localAddress.c_str(), (int)localTlsPort);
+           
     status = pjsip_tls_transport_start(_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
     
     if (status != PJ_SUCCESS) {

@@ -136,18 +136,13 @@ static GtkWidget * create_basic_tab(account_t **a)
 	{
 		curAccountID = currentAccount->accountID;
 		curAccountType = g_hash_table_lookup(currentAccount->properties, ACCOUNT_TYPE);
+		DEBUG("CuraccountType %s", curAccountType);
 		curAccountEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED);
 		curAlias = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ALIAS);
 		curHostname = g_hash_table_lookup(currentAccount->properties, ACCOUNT_HOSTNAME);
 		curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_PASSWORD);
 		curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERNAME);
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
-	}
-	else
-	{
-		currentAccount = g_new0(account_t, 1);
-		currentAccount->properties = g_hash_table_new(NULL, g_str_equal);
-		curAccountID = "new";
 	}
 
 	gnome_main_section_new (_("Account Parameters"), &frame);
@@ -821,7 +816,14 @@ show_account_window (account_t * a)
 	account_t *currentAccount;
 
 	currentAccount = a;   
-
+	
+    if (currentAccount == NULL) {
+		currentAccount = g_new0(account_t, 1);
+		currentAccount->properties = dbus_account_details(NULL);
+		currentAccount->accountID = "new";    
+        DEBUG("Account is NULL. Will fetch default values\n");      
+    }
+    
 	dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
 				GTK_WINDOW(get_main_window()),
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,

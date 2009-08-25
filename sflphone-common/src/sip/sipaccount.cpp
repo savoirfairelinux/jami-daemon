@@ -244,13 +244,10 @@ void SIPAccount::loadConfig()
     
     // Load network settings
     std::string localPort = Manager::instance().getConfigString(_accountID, LOCAL_PORT);
-    std::string publishedPort = Manager::instance().getConfigString(_accountID, PUBLISHED_PORT);    
-    std::stringstream ss;
-    ss << localPort;
-    ss >> _localPort;        
-    ss << publishedPort;
-    ss >> _publishedPort; 
-    
+    std::string publishedPort = Manager::instance().getConfigString(_accountID, PUBLISHED_PORT);  
+
+    _localPort = atoi(localPort.c_str());
+    _publishedPort = atoi(publishedPort.c_str());
     _localIpAddress = Manager::instance().getConfigString(_accountID, LOCAL_ADDRESS);
     _publishedIpAddress = Manager::instance().getConfigString(_accountID, PUBLISHED_ADDRESS);
     _transportType = PJSIP_TRANSPORT_UDP;
