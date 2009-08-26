@@ -68,8 +68,10 @@ GtkWidget * status;
 static int history_limit;
 static gboolean history_enabled = TRUE;
 
-account_t *selectedAccount;
+account_t * selectedAccount = NULL;
 
+GHashTable * directIpCallsProperties = NULL;
+    
 // Account properties
 enum {
     COLUMN_ACCOUNT_ALIAS,
@@ -97,16 +99,6 @@ config_window_fill_account_list()
 
         gtk_list_store_clear(accountStore);
         
-        gtk_list_store_append (accountStore, &iter);
-
-        gtk_list_store_set(accountStore, &iter,
-                COLUMN_ACCOUNT_ALIAS, (gchar *) _("Direct calls account"),
-                COLUMN_ACCOUNT_TYPE, (gchar *) _("SIP"),   // Protocol
-                COLUMN_ACCOUNT_STATUS, (gchar *) _("Active"),      // Status
-                COLUMN_ACCOUNT_ACTIVE, TRUE,  // Enable/Disable
-                COLUMN_ACCOUNT_DATA, NULL,   // Pointer
-                -1);
-                        
         unsigned int i;
         for(i = 0; i < account_list_get_size(); i++) {
             account_t * a = account_list_get_nth (i);
@@ -137,7 +129,7 @@ config_window_fill_account_list()
     static void
 delete_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
-    if(selectedAccount)
+    if(selectedAccount != NULL)
     {
         dbus_remove_account(selectedAccount->accountID);
         if(account_list_get_sip_account_number() == 1 &&
@@ -152,16 +144,10 @@ delete_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
     static void
 edit_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
-    if(selectedAccount)
+    if(selectedAccount != NULL)
     {
         show_account_window(selectedAccount);
-    } else {
-        GHashTable * properties = NULL;
-        properties = sflphone_get_ip2ip_properties();
-        if (properties != NULL) {
-            show_ip2ip_dialog(properties);
-        }
-    }
+    } 
 }
 
 /**
@@ -243,17 +229,6 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
     GtkTreeIter iter;
     GValue val;
 
-    GtkTreePath *path;
-    if(gtk_tree_selection_get_selected (selection, NULL, &iter)) {
-        path = gtk_tree_model_get_path (model, &iter);
-        if(gtk_tree_path_get_indices (path)[0] == 0) {
-            gtk_widget_set_sensitive(GTK_WIDGET(editButton), TRUE);
-            gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), FALSE);
-            gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), FALSE);
-            gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), FALSE);
-        }
-    }
-    
     memset (&val, 0, sizeof(val));
     if (!gtk_tree_selection_get_selected(selection, &model, &iter))
     {
@@ -269,13 +244,12 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
     selectedAccount = (account_t*)g_value_get_pointer(&val);
     g_value_unset(&val);
 
-    if(selectedAccount)
+    if(selectedAccount != NULL)
     {
-        gtk_widget_set_sensitive(GTK_WIDGET(editButton), TRUE);
-        gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), TRUE);
     }
+    
     DEBUG("Selecting account in account window");
 }
 
@@ -283,44 +257,39 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
 enable_account(GtkCellRendererToggle *rend UNUSED, gchar* path,  gpointer data )
 {
     GtkTreeIter iter;
-    GtkTreePath *treePath;
+    GtkTreePath *treePath;    
     GtkTreeModel *model;
     gboolean enable;
     account_t* acc ;
 
-    // Get path of clicked codec active toggle box
+    // Get pointer on object
     treePath = gtk_tree_path_new_from_string(path);
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
     gtk_tree_model_get_iter(model, &iter, treePath);
-    
-    if (gtk_tree_path_get_indices (treePath)[0] != 0) {
-        // Get pointer on object
-        gtk_tree_model_get(model, &iter,
-                COLUMN_ACCOUNT_ACTIVE, &enable,
-                COLUMN_ACCOUNT_DATA, &acc,
-                -1);
-        enable = !enable;
+    gtk_tree_model_get(model, &iter,
+            COLUMN_ACCOUNT_ACTIVE, &enable,
+            COLUMN_ACCOUNT_DATA, &acc,
+            -1);
+    enable = !enable;
 
-        DEBUG("Account is %d enabled", enable);
-        // Store value
-        gtk_list_store_set(GTK_LIST_STORE(model), &iter,
-                COLUMN_ACCOUNT_ACTIVE, enable,
-                -1);
+    DEBUG("Account is %d enabled", enable);
+    // Store value
+    gtk_list_store_set(GTK_LIST_STORE(model), &iter,
+            COLUMN_ACCOUNT_ACTIVE, enable,
+            -1);
 
-        gtk_tree_path_free(treePath);
-
-        // Modify account state
-        gchar * registrationState;
-        if (enable == TRUE) {
-            registrationState = g_strdup("true");
-        } else {
-            registrationState = g_strdup("false");
-        }
-        DEBUG("Replacing with %s\n", registrationState);
-        g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED), registrationState);
-
-        dbus_send_register(acc->accountID, enable);
+    // Modify account state
+    gchar * registrationState;
+    if (enable == TRUE) {
+        registrationState = g_strdup("true");
+    } else {
+        registrationState = g_strdup("false");
     }
+    DEBUG("Replacing with %s\n", registrationState);
+    g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED), registrationState);
+
+    dbus_send_register(acc->accountID, enable);
+
 }
 
 /**
@@ -553,6 +522,130 @@ void update_registration( void )
     gtk_widget_set_sensitive(GTK_WIDGET(applyButton) , FALSE );
 }
 
+static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
+{
+    DEBUG("Advanced options for ZRTP");
+    show_advanced_zrtp_options((GHashTable *) data);
+}
+
+static void show_advanced_tls_options_cb(GtkWidget *widget UNUSED, gpointer data)
+{
+    DEBUG("Advanced options for TLS");
+    show_advanced_tls_options((GHashTable *) data);
+}
+
+static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
+{
+    DEBUG("Key exchange changed");
+    if (g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget)), (gchar *) "ZRTP") == 0) {
+        gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);
+        g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
+    } else {
+        gtk_widget_set_sensitive(GTK_WIDGET(data), FALSE);
+        DEBUG("Setting key exchange %s to %s\n", ACCOUNT_KEY_EXCHANGE, KEY_EXCHANGE_NONE);
+        g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(KEY_EXCHANGE_NONE));
+    }
+}
+
+static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+        DEBUG("Using sips");
+    	gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);  
+        g_hash_table_replace(directIpCallsProperties,
+				g_strdup(TLS_ENABLE), g_strdup("true"));    	          
+    } else {
+        gtk_widget_set_sensitive(GTK_WIDGET(data), FALSE);
+        g_hash_table_replace(directIpCallsProperties,
+				g_strdup(TLS_ENABLE), g_strdup("false"));             
+    }   
+}
+
+GtkWidget* create_direct_ip_calls_tab()
+{
+    GtkWidget * frame;
+    GtkWidget * table;
+    GtkWidget * label;
+    GtkWidget * explanationLabel;
+    GtkWidget * keyExchangeCombo;
+    GtkWidget * advancedZrtpButton;
+    GtkWidget * useSipTlsCheckBox;    
+    
+    gchar * curSRTPEnabled = "false";
+    gchar * curTlsEnabled = "false";    
+    gchar * curKeyExchange = "0";
+    gchar * description;
+   
+    directIpCallsProperties = sflphone_get_ip2ip_properties();
+              
+    if(directIpCallsProperties != NULL) {
+        curSRTPEnabled = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_SRTP_ENABLED);
+        curKeyExchange = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_KEY_EXCHANGE);
+        curTlsEnabled = g_hash_table_lookup(directIpCallsProperties, TLS_ENABLE);        
+    }
+                
+	GtkWidget * vbox = gtk_vbox_new(FALSE, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+
+    description = g_markup_printf_escaped(_("This profile is used when you want to reach a remote peer simply by typing a sip URI such as <b>sip:remotepeer</b>. The settings you define here will also be used if no account can be matched to an incoming or outgoing call."));
+    explanationLabel = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(explanationLabel), description);
+ 	gtk_misc_set_alignment(GTK_MISC(explanationLabel), 0, 0.5);    
+    gtk_box_pack_start(GTK_BOX(vbox), explanationLabel, FALSE, FALSE, 0);
+
+    gnome_main_section_new_with_table (_("Security"), &frame, &table, 2, 3);
+	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+	gtk_table_set_row_spacings (GTK_TABLE(table), 10);
+    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+
+	GtkWidget * sipTlsAdvancedButton;
+	sipTlsAdvancedButton = gtk_button_new_from_stock(GTK_STOCK_EDIT);
+    gtk_table_attach_defaults(GTK_TABLE(table), sipTlsAdvancedButton, 2, 3, 0, 1);
+	gtk_widget_set_sensitive(GTK_WIDGET(sipTlsAdvancedButton), FALSE);    
+    g_signal_connect(G_OBJECT(sipTlsAdvancedButton), "clicked", G_CALLBACK(show_advanced_tls_options_cb), directIpCallsProperties);
+    
+	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
+	g_signal_connect (useSipTlsCheckBox, "toggled", G_CALLBACK(use_sip_tls_cb), sipTlsAdvancedButton);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTlsEnabled, "false") == 0) ? FALSE:TRUE);
+	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
+       	    
+    label = gtk_label_new_with_mnemonic (_("SRTP key exchange"));
+ 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    keyExchangeCombo = gtk_combo_box_new_text();
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), keyExchangeCombo);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "ZRTP");
+    //gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "SDES");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), _("Disabled"));      
+    
+    advancedZrtpButton = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
+    g_signal_connect(G_OBJECT(advancedZrtpButton), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb), directIpCallsProperties);
+    
+    if (g_strcasecmp(curKeyExchange, ZRTP) == 0) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
+    } else {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
+        gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
+    }
+    
+	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), advancedZrtpButton);
+    
+    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 1, 2);    
+    gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 1, 2);
+    
+    gtk_widget_show_all(table);
+        
+    GtkRequisition requisition;
+    gtk_widget_size_request(GTK_WIDGET(table), &requisition);
+    gtk_widget_set_size_request(GTK_WIDGET(explanationLabel), requisition.width * 1.5, -1);        
+    gtk_label_set_line_wrap(GTK_LABEL(explanationLabel), TRUE);
+    
+    gtk_widget_show_all(vbox);
+    
+    return vbox;
+}
+
 GtkWidget* create_network_tab()
 {
     GtkWidget * frame;
@@ -740,7 +833,9 @@ void save_configuration_parameters (void) {
 
     // History config
     dbus_set_history_limit (history_limit);
-
+    
+    // Direct IP calls config
+    dbus_set_ip2ip_details(directIpCallsProperties);
 }
 
 /**
@@ -798,7 +893,12 @@ show_config_window ()
     tab = create_network_tab();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Network")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-    
+
+    // Direct IP calls tab
+    tab = create_direct_ip_calls_tab();
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Direct IP calls")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+        
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
 
     result = gtk_dialog_run(dialog);
@@ -866,5 +966,4 @@ void config_window_set_stun_visible()
 {
     gtk_widget_set_sensitive( GTK_WIDGET(stunFrame), TRUE );
 }
-
 

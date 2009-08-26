@@ -145,7 +145,7 @@ void show_ip2ip_dialog(GHashTable * properties)
             } else {
                 g_hash_table_replace(properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
             }  
-        dbus_set_ip2_ip_details(properties);            
+        dbus_set_ip2ip_details(properties);            
     }    
     
     gtk_widget_destroy (GTK_WIDGET(ip2ipDialog));

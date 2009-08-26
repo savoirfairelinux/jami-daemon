@@ -77,6 +77,10 @@ ConfigurationManager::getIp2IpDetails(void)
   ip2ipAccountDetails.insert(std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
   ip2ipAccountDetails.insert(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
   
+  std::map<std::string, std::string> tlsSettings;
+  tlsSettings = getTlsSettings(IP2IP_PROFILE);
+  std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
+  
   return ip2ipAccountDetails;
   
 }
@@ -91,6 +95,12 @@ ConfigurationManager::setIp2IpDetails(const std::map< std::string, std::string >
     if (it != details.end()) {
         Manager::instance().setConfig(IP2IP_PROFILE, SRTP_ENABLE, it->second); 
     }
+    
+    it = map_cpy.find(SRTP_KEY_EXCHANGE);
+    if (it != details.end()) {
+        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, it->second); 
+    }
+        
     it = map_cpy.find(ZRTP_DISPLAY_SAS);
     if (it != details.end()) {
         Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_DISPLAY_SAS, it->second); 
@@ -108,13 +118,7 @@ ConfigurationManager::setIp2IpDetails(const std::map< std::string, std::string >
         Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE, it->second); 
     }
                         
-    std::string keyExchange(details.find(SRTP_KEY_EXCHANGE)->second);
-        
-    if(keyExchange.find("ZRTP") == 0) { 
-       Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, "0");
-    } else {
-       Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, "1");
-    }
+    setTlsSettings(IP2IP_PROFILE, details);
         
     Manager::instance().saveConfig();
     
@@ -166,49 +170,48 @@ ConfigurationManager::setTlsSettings(const std::string& section, const std::map<
     if (it != details.end()) {
         Manager::instance().setConfig(section, TLS_ENABLE, it->second); 
     }
-  
     it = map_cpy.find(TLS_CA_LIST_FILE);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_CA_LIST_FILE, it->second); 
     }
     it = map_cpy.find(TLS_CERTIFICATE_FILE);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_CERTIFICATE_FILE, it->second); 
     }
     it = map_cpy.find(TLS_PRIVATE_KEY_FILE);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_PRIVATE_KEY_FILE, it->second); 
     }
     it = map_cpy.find(TLS_PASSWORD);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_PASSWORD, it->second); 
     }
     it = map_cpy.find(TLS_METHOD);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_METHOD, it->second); 
     }
     it = map_cpy.find(TLS_CIPHERS);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_CIPHERS, it->second); 
     }
     it = map_cpy.find(TLS_SERVER_NAME);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_SERVER_NAME, it->second); 
     }                        
    it = map_cpy.find(TLS_VERIFY_CLIENT);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_VERIFY_CLIENT, it->second); 
     }
     it = map_cpy.find(TLS_REQUIRE_CLIENT_CERTIFICATE);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_REQUIRE_CLIENT_CERTIFICATE, it->second); 
     }
     it = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_SEC);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_NEGOTIATION_TIMEOUT_SEC, it->second); 
     }  
     it = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_MSEC);
-    if (it != details.end()) {
+    if (it != map_cpy.end()) {
         Manager::instance().setConfig(section, TLS_NEGOTIATION_TIMEOUT_MSEC, it->second); 
     }             
     

@@ -797,7 +797,7 @@ GHashTable* dbus_get_ip2_ip_details(void)
 }
 
     void
-dbus_set_ip2_ip_details(GHashTable * properties)
+dbus_set_ip2ip_details(GHashTable * properties)
 {
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_ip2_ip_details (
@@ -857,7 +857,6 @@ dbus_set_account_details(account_t *a)
         g_error_free (error);
     }
 }
-
     gchar*
 dbus_add_account(account_t *a)
 {

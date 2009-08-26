@@ -2467,7 +2467,7 @@ ManagerImpl::getConfigString (const std::string& section, const std::string&
 bool
 ManagerImpl::setConfig (const std::string& section, const std::string& name, const std::string& value)
 {
-    _debug("ManagerImp::setConfig %s %s %s\n", section.c_str(), name.c_str(), value.c_str());
+    _debug("ManagerImpl::setConfig %s %s %s\n", section.c_str(), name.c_str(), value.c_str());
     return _config.setConfigTreeItem (section, name, value);
 }
 

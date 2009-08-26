@@ -159,7 +159,7 @@ GHashTable * dbus_get_ip2_ip_details(void);
 /**
  * ConfigurationManager - Set the details for the ip2ip profile 
  */
-void dbus_set_ip2_ip_details(GHashTable * properties);
+void dbus_set_ip2ip_details(GHashTable * properties);
 
 /**
  * ConfigurationManager - Send registration request
