@@ -33,7 +33,6 @@
 #include <addressbook-config.h>
 #include <hooks-config.h>
 #include <utils.h>
-#include <ip2ipdialog.h>
 
 #include <stdlib.h>
 #include <stdio.h>

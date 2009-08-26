@@ -7,7 +7,6 @@ libconfig_la_SOURCES = \
   configwindow.c \
   zrtpadvanceddialog.c \
   tlsadvanceddialog.c \
-  ip2ipdialog.c \
   accountwindow.c \
   hooks-config.c \
   audioconf.c \
