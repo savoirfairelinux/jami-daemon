@@ -230,10 +230,17 @@ conference_added_cb (DBusGProxy *proxy UNUSED,
 
 static void
 conference_removed_cb (DBusGProxy *proxy UNUSED,
+	const gchar* confID,
         void * foo  UNUSED )
 {
     DEBUG ("Conference removed\n");
+
     // sflphone_display_transfer_status("Transfer successfull");
+    conference_obj_t * c = conferencelist_get(confID);
+    calltree_remove_conference (current_calls, c);
+
+    conferencelist_remove(c->_confID); 
+
 }
 
 

@@ -701,11 +701,13 @@ void calltree_update_conference (calltab_t* tab, const gchar* confID)
 }
 
 
-void calltree_remove_conference (calltab_t* tab, const gchar* confID)
+void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
 {
 
-    DEBUG("calltree_remove_conference");
+    DEBUG("calltree_remove_conference %s\n", conf->_confID);
 
+    
+    
 }
 
 

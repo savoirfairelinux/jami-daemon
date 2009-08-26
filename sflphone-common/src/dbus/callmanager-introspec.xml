@@ -128,6 +128,7 @@
     </signal>
 
     <signal name="conferenceRemoved">
+      <arg type="s" name="confID"  direction="out"/>
     </signal>
     
     <signal name="voiceMailNotify">

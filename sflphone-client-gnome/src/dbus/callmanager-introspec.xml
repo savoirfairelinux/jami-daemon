@@ -128,13 +128,13 @@
     </signal>
 
     <signal name="conferenceRemoved">
+      <arg type="s" name="confID"  direction="out"/>
     </signal>
     
     <signal name="voiceMailNotify">
       <arg type="s" name="accountID"  direction="out"/>
       <arg type="i" name="count"  direction="out"/>
     </signal>
-    
     
     <signal name="volumeChanged">
       <arg type="s" name="device"  direction="out"/>
@@ -147,7 +147,6 @@
     <signal name="transferFailed">
     </signal>
 
- 
 <!--
     <signal name="error">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>

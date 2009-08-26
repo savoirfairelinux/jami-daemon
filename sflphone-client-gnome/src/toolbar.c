@@ -277,18 +277,17 @@ GtkWidget *create_toolbar ()
             G_CALLBACK (rec_button), NULL);
     gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(recButton), -1);
 
-
-    detachButton = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
-    label_detach = "Detach";
-    gtk_button_set_label(GTK_BUTTON(detachButton), label_detach);
+    // label_detach = "Detach";
+    detachButton = gtk_tool_button_new(NULL,"Detach");
+    // gtk_tool_button_set_label(detachButton, label_detach);
 #if GTK_CHECK_VERSION(2,12,0)
     gtk_widget_set_tooltip_text(GTK_WIDGET(detachButton), _("Detach"));
 #endif
     gtk_widget_set_state( GTK_WIDGET(detachButton), GTK_STATE_INSENSITIVE);
     g_signal_connect (G_OBJECT (detachButton), "clicked",
             G_CALLBACK (detach_button), NULL);
-    gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(detachButton), -1);
-    
+    gtk_toolbar_insert(GTK_TOOLBAR(ret), detachButton, -1);
+  
 
     return ret;
 }
@@ -337,7 +336,6 @@ toolbar_update_buttons ()
             case CALL_STATE_INCOMING:
                 gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(hangupButton), TRUE);
-		gtk_widget_set_sensitive( GTK_WIDGET(detachButton), TRUE);
                 g_object_ref(callButton);
                 gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
                 gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
@@ -367,6 +365,7 @@ toolbar_update_buttons ()
                 gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
+		gtk_widget_set_sensitive( GTK_WIDGET(detachButton),     TRUE);
                 break;
             case CALL_STATE_BUSY:
             case CALL_STATE_FAILURE:
@@ -387,6 +386,7 @@ toolbar_update_buttons ()
                 gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
+		gtk_widget_set_sensitive( GTK_WIDGET(detachButton),     TRUE);
                 break;
             default:
                 // Fix bug #1145

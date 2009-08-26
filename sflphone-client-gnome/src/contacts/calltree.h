@@ -63,7 +63,7 @@ void
 calltree_update_conference (calltab_t* tab, const gchar* confID);
 
 void
-calltree_remove_conference (calltab_t* tab, const gchar* confID);
+calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf);
 
 void
 calltree_reset (calltab_t* tab);
