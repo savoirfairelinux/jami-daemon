@@ -977,8 +977,9 @@ void sflphone_fill_conference_list(void)
 {
     gchar** conferences = (gchar**)dbus_get_conference_list();
     gchar** pl;
+    GHashTable *conference_details;
     gchar* conf_id;
-    gchar* c;
+    conference_obj_t* c;
 
     DEBUG("sflphone_fill_conference_list");
 
@@ -986,9 +987,11 @@ void sflphone_fill_conference_list(void)
     {
 	for (pl = conferences; *conferences; conferences++)
 	{
-	    c = g_new0(gchar,1);
+	    c = g_new0(conference_obj_t, 1);
 	    conf_id = (gchar*)(*conferences);
-	    c = g_strdup(conf_id);
+	    conference_details = dbus_get_conference_details(conf_id);
+	    create_new_call_from_details (conf_id, conference_details, &c);
+	    c->_confID = g_strdup(conf_id);
 
 	    conferencelist_add(c);
 	}
