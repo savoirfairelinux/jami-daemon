@@ -49,11 +49,11 @@ void create_new_conference (conference_state_t state, gchar* confID, conference_
     // Set the ID field
     conf_id = confID;
     obj->_confID = g_strdup (conf_id);
-
     *new_conf = obj;
+    
 }
 
-void create_new_conference_from_details (const gchar *conf_id, GHashTable *details, conference_obj_t **conf)
+void create_new_conference_from_details (const gchar *conf_id, GHashTable *details, conference_obj_t *conf)
 {
     /*
     gchar *peer_name, *peer_number, *accountID, *state_str;

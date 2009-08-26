@@ -222,8 +222,9 @@ conference_added_cb (DBusGProxy *proxy UNUSED,
     conference_obj_t* new_conf;
 
     create_new_conference(CONFERENCE_STATE_ACTIVE, confID, &new_conf);
+    new_conf->_confID = g_strdup(confID);
     conferencelist_add(new_conf);
-    calltree_add_conference (current_calls, confID);
+    calltree_add_conference (current_calls, new_conf);
 }
 
 

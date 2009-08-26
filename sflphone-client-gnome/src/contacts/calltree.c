@@ -625,10 +625,10 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
 }
 
 
-void calltree_add_conference (calltab_t* tab, const gchar* confID)
+void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
 {
 
-    DEBUG("calltree_add_conference");
+    DEBUG("calltree_add_conference conf->_confID %s\n", conf->_confID);
 
 
     GdkPixbuf *pixbuf=NULL;
@@ -637,7 +637,7 @@ void calltree_add_conference (calltab_t* tab, const gchar* confID)
     // New call in the list
     
     gchar * description;
-    description = g_markup_printf_escaped("<b>%s</b>", confID);
+    description = g_markup_printf_escaped("<b>%s</b>", conf->_confID);
 
     gtk_list_store_prepend (tab->store, &iter);
 
@@ -663,6 +663,7 @@ void calltree_add_conference (calltab_t* tab, const gchar* confID)
     gtk_list_store_set(tab->store, &iter,
             0, pixbuf, // Icon
             1, description, // Description
+	    2, conf, // Pointer
             -1);
 
     

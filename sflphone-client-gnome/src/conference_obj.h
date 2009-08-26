@@ -50,7 +50,7 @@ typedef struct  {
 
 void create_new_conference (conference_state_t, gchar*, conference_obj_t **);
 
-void create_new_conference_from_details (const gchar *, GHashTable *, conference_obj_t **);
+void create_new_conference_from_details (const gchar *, GHashTable *, conference_obj_t *);
 
 void free_conference_obj_t (conference_obj_t *c);
 
