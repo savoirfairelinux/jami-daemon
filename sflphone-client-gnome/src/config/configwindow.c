@@ -117,9 +117,6 @@ config_window_fill_account_list()
                         -1);
             }
         }
-
-        gtk_widget_set_sensitive( GTK_WIDGET(editButton),   FALSE);
-        gtk_widget_set_sensitive( GTK_WIDGET(deleteButton), FALSE);
     }
 }
 
@@ -235,6 +232,8 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
         selectedAccount = NULL;
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(editButton), FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), FALSE);                
         return;
     }
 
@@ -248,6 +247,8 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
     {
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), TRUE);
+        gtk_widget_set_sensitive(GTK_WIDGET(editButton), TRUE);
+        gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), TRUE);            
     }
     
     DEBUG("Selecting account in account window");
@@ -473,12 +474,14 @@ create_accounts_tab(GtkDialog * dialog)
     gtk_widget_show(addButton);
 
     editButton = gtk_button_new_from_stock (GTK_STOCK_EDIT);
+    gtk_widget_set_sensitive(GTK_WIDGET(editButton), FALSE);    
     g_signal_connect_swapped(G_OBJECT(editButton), "clicked",
             G_CALLBACK(edit_account), NULL);
     gtk_box_pack_start(GTK_BOX(buttonBox), editButton, FALSE, FALSE, 0);
     gtk_widget_show(editButton);
 
     deleteButton = gtk_button_new_from_stock (GTK_STOCK_REMOVE);
+    gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), FALSE);    
     g_signal_connect_swapped(G_OBJECT(deleteButton), "clicked",
             G_CALLBACK(delete_account), stunFrame);
     gtk_box_pack_start(GTK_BOX(buttonBox), deleteButton, FALSE, FALSE, 0);

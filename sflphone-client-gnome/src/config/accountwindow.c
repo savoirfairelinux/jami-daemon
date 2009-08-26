@@ -1002,7 +1002,6 @@ show_account_window (account_t * a)
                 g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
             }
     		
-    	    DEBUG("TLS enable %s saved to file", (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
     		g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
     		g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
 

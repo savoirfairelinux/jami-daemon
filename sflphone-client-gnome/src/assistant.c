@@ -146,7 +146,7 @@ static void sip_apply_callback( void ) {
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_NOT_SUPP_WARNING), g_strdup((gchar *)"true"));
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_HELLO_HASH), g_strdup((gchar *)"true"));
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_DISPLAY_SAS_ONCE), g_strdup((gchar *)"false"));
-        	}
+        }
 		
 		dbus_add_account( current );
 		getMessageSummary(message, 
