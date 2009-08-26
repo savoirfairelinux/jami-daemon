@@ -220,6 +220,12 @@ class SIPAccount : public Account
          */
         inline void setPublishedAddress(const std::string& publishedIpAddress) { _publishedIpAddress = publishedIpAddress; }
         
+        /**
+         * Get the chosen transport type.
+         * @return pjsip_transport_type_e Transport type chosen by the user for this account.
+         */
+        inline pjsip_transport_type_e getTransportType(void) { return _transportType; }
+        
     private: 
 
         /* Maps a string description of the SSL method 

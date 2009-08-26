@@ -1236,15 +1236,11 @@ ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr, int port)
     struct in_addr in;
     char* addr;
 
-    //int fd3, fd4;
-    // bool ok = stunOpenSocketPair(stunSvrAddr, &mappedAddr, &fd3, &fd4, port);
     int fd1 = stunOpenSocket (stunSvrAddr, &mappedAddr, port);
     bool ok = (fd1 == -1 || fd1 == INVALID_SOCKET) ? false : true;
 
     if (ok) {
         closesocket (fd1);
-        //closesocket(fd3);
-        //closesocket(fd4);
         _firewallPort = mappedAddr.port;
         // Convert ipv4 address to host byte ordering
         in.s_addr = ntohl (mappedAddr.addr);
@@ -1374,9 +1370,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue(std::pair<std::string, std::string> (PLAY_DTMF, TRUE_STR), SIGNALISATION);  
     _config.addDefaultValue(std::pair<std::string, std::string> (PLAY_TONES, TRUE_STR), SIGNALISATION);      
     _config.addDefaultValue(std::pair<std::string, std::string> (PULSE_LENGTH, DFT_PULSE_LENGTH_STR), SIGNALISATION);  
-    _config.addDefaultValue(std::pair<std::string, std::string> (SEND_DTMF_AS, SIP_INFO_STR), SIGNALISATION);  
-    _config.addDefaultValue(std::pair<std::string, std::string> (STUN_ENABLE, DFT_STUN_ENABLE), SIGNALISATION);        
-    _config.addDefaultValue(std::pair<std::string, std::string> (STUN_SERVER, DFT_STUN_SERVER), SIGNALISATION);        
+    _config.addDefaultValue(std::pair<std::string, std::string> (SEND_DTMF_AS, SIP_INFO_STR), SIGNALISATION);         
     _config.addDefaultValue(std::pair<std::string, std::string> (ZRTP_ZIDFILE, ZRTP_ZID_FILENAME), SIGNALISATION);        
  
     // Audio settings           
@@ -1445,7 +1439,9 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, TRUE_STR));            
     _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_CREDENTIAL_NUMBER, "0"));            
     _config.addDefaultValue(std::pair<std::string, std::string> (CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE));            
-            
+    _config.addDefaultValue(std::pair<std::string, std::string> (STUN_ENABLE, DFT_STUN_ENABLE));        
+    _config.addDefaultValue(std::pair<std::string, std::string> (STUN_SERVER, DFT_STUN_SERVER)); 
+                
     _setupLoaded = (_exist == 2) ? false : true;
 }
 
@@ -2560,7 +2556,9 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert(std::pair<std::string, std::string> (PUBLISHED_ADDRESS, getConfigString(accountID, PUBLISHED_ADDRESS)));
     a.insert(std::pair<std::string, std::string> (LOCAL_PORT, getConfigString(accountID, LOCAL_PORT)));
     a.insert(std::pair<std::string, std::string> (PUBLISHED_PORT, getConfigString(accountID, PUBLISHED_PORT)));
-    a.insert(std::pair<std::string, std::string> (DISPLAY_NAME, getConfigString(accountID, DISPLAY_NAME)));                    
+    a.insert(std::pair<std::string, std::string> (DISPLAY_NAME, getConfigString(accountID, DISPLAY_NAME)));
+    a.insert(std::pair<std::string, std::string> (STUN_ENABLE, getConfigString(accountID, STUN_ENABLE)));
+    a.insert(std::pair<std::string, std::string> (STUN_SERVER, getConfigString(accountID, STUN_SERVER)));                        
     
     RegistrationState state; 
     if (account != NULL) {
@@ -2704,7 +2702,6 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 {
 
     std::string accountType;
-    Account *acc;
 	std::map <std::string, std::string> map_cpy;
 	std::map<std::string, std::string>::iterator iter;
 
@@ -2753,7 +2750,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string localAddress;
     std::string publishedAddress;
     std::string localPort;
-    std::string publishedPort;    
+    std::string publishedPort;
+    std::string stunEnable;
+    std::string stunServer;
     std::string srtpEnable;
     std::string zrtpDisplaySas;
     std::string zrtpDisplaySasOnce;
@@ -2780,7 +2779,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if((iter = map_cpy.find(LOCAL_ADDRESS)) != map_cpy.end()) { localAddress = iter->second; }           
     if((iter = map_cpy.find(PUBLISHED_ADDRESS)) != map_cpy.end()) { publishedAddress = iter->second; }        
     if((iter = map_cpy.find(LOCAL_PORT)) != map_cpy.end()) { localPort = iter->second; }
-    if((iter = map_cpy.find(PUBLISHED_PORT)) != map_cpy.end()) { publishedPort = iter->second; }                   
+    if((iter = map_cpy.find(PUBLISHED_PORT)) != map_cpy.end()) { publishedPort = iter->second; } 
+    if((iter = map_cpy.find(STUN_ENABLE)) != map_cpy.end()) { stunEnable = iter->second; } 
+    if((iter = map_cpy.find(STUN_SERVER)) != map_cpy.end()) { stunServer = iter->second; }                           
     if((iter = map_cpy.find(SRTP_ENABLE)) != map_cpy.end()) { srtpEnable = iter->second; }
     if((iter = map_cpy.find(ZRTP_DISPLAY_SAS)) != map_cpy.end()) { zrtpDisplaySas = iter->second; }
     if((iter = map_cpy.find(ZRTP_DISPLAY_SAS_ONCE)) != map_cpy.end()) { zrtpDisplaySasOnce = iter->second; }
@@ -2846,16 +2847,21 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 																					
     saveConfig();
 
+    Account * acc = NULL;
     acc = getAccount (accountID);
-    acc->loadConfig();
-
-    if (acc->isEnabled()) {
-        acc->unregisterVoIPLink();
-        acc->registerVoIPLink();
+    if (acc != NULL) {
+        acc->loadConfig();
+        
+        if (acc->isEnabled()) {
+            acc->unregisterVoIPLink();
+            acc->registerVoIPLink();
+        } else {
+            acc->unregisterVoIPLink();
+        }
     } else {
-        acc->unregisterVoIPLink();
+        _debug("ManagerImpl::setAccountDetails: account is NULL\n");
     }
-
+    
     // Update account details to the client side
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
     
