@@ -64,6 +64,8 @@ popup_menu (GtkWidget *widget,
 selected(GtkTreeSelection *sel, void* data UNUSED )
 {
 
+    DEBUG("Selection Callback");
+
     GtkTreeIter  iter;
     GValue val;
     GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
@@ -83,14 +85,17 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     path = gtk_tree_model_get_path(model, &iter);
     string_path = (char*)gtk_tree_path_to_string(path);
 
-    previous_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
     selected_call = (callable_obj_t*)g_value_get_pointer(&val);
 
-    DEBUG("selected_cb\n");
-    DEBUG("  source path %s, %s\n", string_path, previous_id);
+    if (selected_call != NULL) {
 
-    conferencelist_reset ();
-    sflphone_fill_conference_list();
+        previous_id = selected_call->_callID;
+
+	DEBUG("selected_cb\n");
+	DEBUG("  source path %s, %s\n", string_path, previous_id);
+    }
+    // conferencelist_reset ();
+    // sflphone_fill_conference_list();
 
     g_value_unset(&val);
     toolbar_update_buttons();
