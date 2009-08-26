@@ -24,10 +24,13 @@
 
 #include "manager.h"
 
+#include "sip/sdp.h"
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "eventthread.h"
-#include "sip/sdp.h"
+
+#include "dbus/dbusmanager.h"
+#include "dbus/callmanager.h"
 
 #include "pjsip/sip_endpoint.h"
 #include "pjsip/sip_transport_tls.h"
@@ -2219,26 +2222,40 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 {
     _debug ("call_on_state_changed to state %s\n", invitationStateMap[inv->state]);
 
-    SIPCall *call;
-    AccountID accId;
-    SIPVoIPLink *link;
     pjsip_rx_data *rdata;
     pj_status_t status;
 
     /* Retrieve the call information */
+    SIPCall * call = NULL;    
     call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
 
-    if (!call)
+    if (call == NULL) {
+        _debug("Call is NULL in call_on_state_changed");
         return;
+    }
 
     //Retrieve the body message
     rdata = e->body.tsx_state.src.rdata;
 
-
-    /* If this is an outgoing INVITE that was created because of
-     * REFER/transfer, send NOTIFY to transferer.
-     */
+    // If the call is a direct IP-to-IP call
+    AccountID accId;
+    SIPVoIPLink * link = NULL;    
+    if (call->getCallConfiguration () == Call::IPtoIP) {
+        link = SIPVoIPLink::instance ("");
+    } else {
+        accId = Manager::instance().getAccountFromCall (call->getCallId());
+        link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
+    }
+    
+    if (link == NULL) {
+        _debug("Link is NULL in call_on_state_changed");
+        return;
+    }
+        
+    // If this is an outgoing INVITE that was created because of
+    // REFER/transfer, send NOTIFY to transferer.
     if (call->getXferSub() && e->type==PJSIP_EVENT_TSX_STATE) {
+        
         int st_code = -1;
         pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
 
@@ -2298,7 +2315,22 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
         return;
     }
-
+    
+    if (inv->state != PJSIP_INV_STATE_CONFIRMED) {
+        // Update UI with the current status code and description    
+        //pjsip_transaction * tsx 
+        pjsip_transaction * tsx = NULL;
+        tsx = e->body.tsx_state.tsx;
+        int statusCode;
+        if (tsx != NULL) {
+            statusCode = tsx->status_code;
+        }
+        const pj_str_t * description = pjsip_get_status_text(statusCode);    
+        if (statusCode) {
+            DBusManager::instance().getCallManager()->sipCallStateChanged(call->getCallId(), std::string(description->ptr, description->slen), statusCode);
+        }   
+    }
+        
     // The call is ringing - We need to handle this case only on outgoing call
     if (inv->state == PJSIP_INV_STATE_EARLY && e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
         call->setConnectionState (Call::Ringing);
@@ -2317,17 +2349,9 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
     // After we sent or received a ACK - The connection is established
     else if (inv->state == PJSIP_INV_STATE_CONFIRMED) {
-
-        /* If the call is a direct IP-to-IP call */
-        if (call->getCallConfiguration () == Call::IPtoIP) {
-            link = SIPVoIPLink::instance ("");
-        } else {
-            accId = Manager::instance().getAccountFromCall (call->getCallId());
-            link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-        }
-
-        if (link)
+    
             link->SIPCallAnswered (call, rdata);
+            
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
     
         _debug ("State: %s. Cause: %.*s\n", invitationStateMap[inv->state], (int)inv->cause_text.slen, inv->cause_text.ptr);
@@ -2434,7 +2458,7 @@ void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
 void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
 {
     _debug ("call_on_tsx_changed to state %s\n", transactionStateMap[tsx->state]);
-
+    
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
             pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
@@ -2444,13 +2468,19 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
 void regc_cb (struct pjsip_regc_cbparam *param)
 {
-    SIPAccount *account;
-
+    SIPAccount * account = NULL;
     account = static_cast<SIPAccount *> (param->token);
-
-    if (!account)
+    if (account == NULL) {
+        _debug("Account is NULL in regc_cb.\n");
         return;
-
+    }
+    
+    assert(param);
+    const pj_str_t * description = pjsip_get_status_text(param->code);
+    if (param->code) {
+        DBusManager::instance().getCallManager()->sipCallStateChanged(account->getAccountID(), std::string(description->ptr, description->slen), param->code);
+    }
+    
     if (param->status == PJ_SUCCESS) {
         if (param->code < 0 || param->code >= 300) {
             /* Sometimes, the status is OK, but we still failed.

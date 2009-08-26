@@ -94,10 +94,12 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     obj = g_new0 (callable_obj_t, 1);
 
     obj->_error_dialogs = g_ptr_array_new();
-    
+
     // Set fields
     obj->_type = type;
     obj->_state = state;
+    obj->_state_code = 0;
+    obj->_state_code_description = "";
     obj->_accountID = g_strdup (accountID);
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);

@@ -232,5 +232,15 @@ void sflphone_confirm_go_clear( callable_obj_t * c );
  */
 void sflphone_request_go_clear(void);
 
+/** 
+ * Called when the UI needs to be refreshed to 
+ * better inform the user about the current
+ * state of the call. 
+ * @param c A pointer to the call that needs to be updated
+ * @param description A textual description of the code
+ * @param code The status code as in SIP or IAX
+ */
+
+void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code);
 
 #endif

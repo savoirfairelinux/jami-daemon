@@ -16,11 +16,11 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
 #include "ZrtpSessionCallback.h"
+
 #include "global.h"
-#include "dbus/dbusmanager.h"
 #include "sip/sipcall.h"
+#include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
 
 #include <cstdlib> 

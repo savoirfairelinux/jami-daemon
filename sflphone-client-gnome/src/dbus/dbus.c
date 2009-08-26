@@ -319,6 +319,21 @@ zrtp_not_supported_cb (DBusGProxy *proxy UNUSED,
     }
 }
 
+    static void
+sip_call_state_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        const gchar* description,
+        const guint code, 
+        void * foo  UNUSED )
+{
+    callable_obj_t * c = NULL;
+    c = calllist_get(current_calls, callID);
+        DEBUG("sip_call_state_cb received code %d callID %s", code, callID);           
+    if(c != NULL) {
+        DEBUG("sip_call_state_cb received code %d", code);       
+        sflphone_call_state_changed(c, description, code);
+    }
+}
 
     static void
 error_alert(DBusGProxy *proxy UNUSED,
@@ -484,6 +499,14 @@ dbus_connect ()
     dbus_g_proxy_connect_signal (callManagerProxy,
             "confirmGoClear", G_CALLBACK(confirm_go_clear_cb), NULL, NULL);               
 
+    /* VOID STRING STRING INT */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_INT,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "sipCallStateChanged", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "sipCallStateChanged", G_CALLBACK(sip_call_state_cb), NULL, NULL);
+            
     configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
             "org.sflphone.SFLphone",
             "/org/sflphone/SFLphone/ConfigurationManager",

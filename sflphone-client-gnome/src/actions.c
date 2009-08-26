@@ -1098,7 +1098,7 @@ sflphone_srtp_off( callable_obj_t * c )
     void
 sflphone_srtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean verified)
 {
-    if(c==NULL) {
+    if(c == NULL) {
         DEBUG("Panic callable obj is NULL in %s at %d", __FILE__, __LINE__);
     }
     c->_sas = g_strdup(sas);
@@ -1141,3 +1141,20 @@ sflphone_confirm_go_clear( callable_obj_t * c )
     main_window_confirm_go_clear(c);
 }
 
+
+    void 
+sflphone_call_state_changed( callable_obj_t * c, const gchar * description, const guint code)
+{
+        DEBUG("sflphone_call_state_changed");
+    if(c == NULL) {
+        DEBUG("Panic callable obj is NULL in %s at %d", __FILE__, __LINE__);
+    } else {
+        //g_free(c->_state_code_description); 
+        //DEBUG("sflphone_call_state_changed");
+        c->_state_code_description = g_strdup(description);
+        c->_state_code = code;   
+    }
+    
+    calltree_update_call(current_calls, c);
+    update_menus();
+}

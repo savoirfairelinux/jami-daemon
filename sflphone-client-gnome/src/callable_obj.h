@@ -91,12 +91,14 @@ typedef enum
 typedef struct  {
 
     callable_type_t _type;          // CALL - HISTORY ENTRY - CONTACT
-    call_state_t _state;             // The state of the call
+    call_state_t _state;            // The state of the call
+    int _state_code;                // The numeric state code as defined in SIP or IAX
+    gchar* _state_code_description; // A textual description of _state_code   
     gchar* _callID;                 // The call ID
     gchar* _accountID;              // The account the call is made with
-    time_t _time_start;              // The timestamp the call was initiating
+    time_t _time_start;             // The timestamp the call was initiating
     time_t _time_stop;              // The timestamp the call was over
-    history_state_t _history_state;  // The history state if necessary
+    history_state_t _history_state; // The history state if necessary
     srtp_state_t _srtp_state;       // The state of security on the call 
     gchar* _srtp_cipher;            // Cipher used for the srtp session
     gchar* _sas;                    // The Short Authentication String that should be displayed

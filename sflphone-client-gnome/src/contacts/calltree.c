@@ -394,167 +394,177 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
     
     for( i = 0; i < nbChild; i++)
     {
-        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+        if(!gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i)) {
+            continue;
+        }
+        
+        val.g_type = 0;
+        gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, COLUMN_ACCOUNT_PTR, &val);
+
+        iterCall = (callable_obj_t*) g_value_get_pointer(&val);
+        g_value_unset(&val);
+
+        if(iterCall != c) {
+            continue;
+        }
+        
+        /* Update text */
+        gchar * description;
+        gchar * date="";
+        gchar * duration="";
+        
+        if(c->_state == CALL_STATE_TRANSFERT)
         {
-            val.g_type = 0;
-            gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, COLUMN_ACCOUNT_PTR, &val);
-
-            iterCall = (callable_obj_t*) g_value_get_pointer(&val);
-            g_value_unset(&val);
-
-            if(iterCall == c)
-            {
-                // Existing call in the list
-                gchar * description;
-                gchar * date="";
-                gchar * duration="";
-                
-                if(c->_state == CALL_STATE_TRANSFERT)
-                {
-                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:%s</i> ",
-                            c->_peer_number,
-                            c->_peer_name,
-                            c->_trsft_to
-                            );
+            description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:%s</i> ",
+                    c->_peer_number,
+                    c->_peer_name,
+                    c->_trsft_to
+                    );
+        }
+        else
+        {
+            // c->_zrtp_confirmed == FALSE : Hack explained in callable_obj.h
+            if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
+                description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
+                    c->_peer_number,
+                    c->_peer_name,
+                    c->_sas
+                    );
+            } else {
+                DEBUG("Updating state code %d %s", c->_state_code, c->_state_code_description);
+                if (c->_state_code) {
+                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>%s (%d)</i>",
+                        c->_peer_number,
+                        c->_peer_name,
+                        c->_state_code_description,
+                        c->_state_code);
+                } else {
+                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
+                        c->_peer_number,
+                        c->_peer_name );                
                 }
-                else
-                {
-                
-                        // c->_zrtp_confirmed == FALSE : Hack explained in callable_obj.h
-                    if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
-                        description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
-                            c->_peer_number,
-                            c->_peer_name,
-                            c->_sas
-                            );
-                    } else {
-                        description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-                            c->_peer_number,
-                            c->_peer_name );
-                    }
-                }
-
-                
-                if( tab == current_calls )
-                {
-                    switch(c->_state)
-                    {
-                        case CALL_STATE_HOLD:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
-                            break;
-                        case CALL_STATE_RINGING:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
-                            break;
-                        case CALL_STATE_CURRENT:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
-                            break;
-                        case CALL_STATE_DIALING:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
-                            break;
-                        case CALL_STATE_FAILURE:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
-                            break;
-                        case CALL_STATE_BUSY:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
-                            break;
-                        case CALL_STATE_TRANSFERT:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
-                            break;
-                        case CALL_STATE_RECORD:
-                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/rec_call.svg", NULL);
-                            break;
-                        default:
-                            WARN("Update calltree - Should not happen!");
-                    }
-                    
-
-                        switch(c->_srtp_state)
-                        {
-                            case SRTP_STATE_SAS_UNCONFIRMED:
-                                DEBUG("Secure is ON");
-                                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
-                                if(c->_sas != NULL) { DEBUG("SAS is ready with value %s", c->_sas); }
-                                break;
-                            case SRTP_STATE_SAS_CONFIRMED:
-                                DEBUG("SAS is confirmed");
-                                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);   
-                                break;
-                            case SRTP_STATE_SAS_SIGNED:   
-                                DEBUG("Secure is ON with SAS signed and verified");
-                                pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
-                                break;
-                            case SRTP_STATE_UNLOCKED:  
-                                DEBUG("Secure is off calltree %d", c->_state);
-                                if(g_strcasecmp(srtp_enabled,"true") == 0) {
-                                    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL); 
-                                }
-                                break;
-                            default:
-                                WARN("Update calltree srtp state #%d- Should not happen!", c->_srtp_state); 
-                                if(g_strcasecmp(srtp_enabled,"true") == 0) {
-                                    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);    
-                                }
-                        }
-                }
-                else
-                {
-                    switch(c->_history_state)
-                    {
-                        case OUTGOING:
-                            DEBUG("Outgoing state");
-                            pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/outgoing.svg", NULL);
-                            break;
-                        case INCOMING:
-                            DEBUG("Incoming state");
-                            pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/incoming.svg", NULL);
-                            break;
-                        case MISSED:
-                            DEBUG("Missed state");
-                            pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/missed.svg", NULL);
-                            break;
-                        default:
-                            DEBUG("No history state");
-                            break;
-                    }
-                    date = get_formatted_start_timestamp (c);
-                    duration = get_call_duration (c);
-                    duration = g_strconcat( date , duration , NULL);
-                    description = g_strconcat( description , duration, NULL);
-                }
-                
-                //Resize it
-                if(pixbuf != NULL)
-                {
-                    if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
-                    {
-                        pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
-                    }
-                }
-                
-                if(pixbuf_security != NULL)
-                {
-                    if(gdk_pixbuf_get_width(pixbuf_security) > 32 || gdk_pixbuf_get_height(pixbuf_security) > 32)
-                    {
-                        pixbuf_security =  gdk_pixbuf_scale_simple(pixbuf_security, 32, 32, GDK_INTERP_BILINEAR);
-                    }
-                }
-                
-                gtk_list_store_set(store, &iter,
-                        0, pixbuf, // Icon
-                        1, description, // Description
-                        2, pixbuf_security, // Icon
-                        -1);
-
-                if (pixbuf != NULL)
-                    { g_object_unref(G_OBJECT(pixbuf)); }
-                    
-                if (pixbuf_security != NULL)
-                    { g_object_unref(G_OBJECT(pixbuf_security)); }
-
             }
         }
 
+        /* Update icons */
+        if( tab == current_calls )
+        {
+            DEBUG("Receiving in state %d", c->_state);
+            switch(c->_state)
+            {
+                case CALL_STATE_HOLD:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
+                    break;
+                case CALL_STATE_INCOMING:
+                case CALL_STATE_RINGING:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+                    break;
+                case CALL_STATE_CURRENT:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                    break;
+                case CALL_STATE_DIALING:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
+                    break;
+                case CALL_STATE_FAILURE:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
+                    break;
+                case CALL_STATE_BUSY:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
+                    break;
+                case CALL_STATE_TRANSFERT:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
+                    break;
+                case CALL_STATE_RECORD:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/rec_call.svg", NULL);
+                    break;
+                default:
+                    WARN("Update calltree - Should not happen!");
+            }        
+
+            switch(c->_srtp_state)
+            {
+                case SRTP_STATE_SAS_UNCONFIRMED:
+                    DEBUG("Secure is ON");
+                    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
+                    if(c->_sas != NULL) { DEBUG("SAS is ready with value %s", c->_sas); }
+                    break;
+                case SRTP_STATE_SAS_CONFIRMED:
+                    DEBUG("SAS is confirmed");
+                    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);   
+                    break;
+                case SRTP_STATE_SAS_SIGNED:   
+                    DEBUG("Secure is ON with SAS signed and verified");
+                    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
+                    break;
+                case SRTP_STATE_UNLOCKED:  
+                    DEBUG("Secure is off calltree %d", c->_state);
+                    if(g_strcasecmp(srtp_enabled,"true") == 0) {
+                        pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL); 
+                    }
+                    break;
+                default:
+                    WARN("Update calltree srtp state #%d- Should not happen!", c->_srtp_state); 
+                    if(g_strcasecmp(srtp_enabled,"true") == 0) {
+                        pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);    
+                    }
+            }
+        }
+        else
+        {
+            switch(c->_history_state)
+            {
+                case OUTGOING:
+                    DEBUG("Outgoing state");
+                    pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/outgoing.svg", NULL);
+                    break;
+                case INCOMING:
+                    DEBUG("Incoming state");
+                    pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/incoming.svg", NULL);
+                    break;
+                case MISSED:
+                    DEBUG("Missed state");
+                    pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/missed.svg", NULL);
+                    break;
+                default:
+                    DEBUG("No history state");
+                    break;
+            }
+            date = get_formatted_start_timestamp (c);
+            duration = get_call_duration (c);
+            duration = g_strconcat( date , duration , NULL);
+            description = g_strconcat( description , duration, NULL);
+        }
+        
+        //Resize it
+        if(pixbuf != NULL)
+        {
+            if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
+            {
+                pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+            }
+        }
+        
+        if(pixbuf_security != NULL)
+        {
+            if(gdk_pixbuf_get_width(pixbuf_security) > 32 || gdk_pixbuf_get_height(pixbuf_security) > 32)
+            {
+                pixbuf_security =  gdk_pixbuf_scale_simple(pixbuf_security, 32, 32, GDK_INTERP_BILINEAR);
+            }
+        }
+        
+        gtk_list_store_set(store, &iter,
+                0, pixbuf, // Icon
+                1, description, // Description
+                2, pixbuf_security, // Icon
+                -1);
+
+        if (pixbuf != NULL)
+            { g_object_unref(G_OBJECT(pixbuf)); }
+            
+        if (pixbuf_security != NULL)
+            { g_object_unref(G_OBJECT(pixbuf_security)); }
     }
+    
     toolbar_update_buttons();
 }
 
