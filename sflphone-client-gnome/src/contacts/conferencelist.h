@@ -20,6 +20,8 @@
 #ifndef __CONFERENCELIST_H__
 #define __CONFERENCELIST_H__
 
+
+#include <conference_obj.h>
 #include <gtk/gtk.h>
 
 /** @file conferencelist.h
@@ -44,30 +46,30 @@ conferencelist_reset ();
   * @param conf The conference you want to add
   * */
 void
-conferencelist_add (const gchar* conf_id);
+conferencelist_add (const conference_obj_t* conf);
 
 /** This function remove a conference from list.
   * @param callID The callID of the conference you want to remove
   */
 void
-conferencelist_remove (const gchar* conf_id);
+conferencelist_remove (const gchar* conf);
 
 /** Return the number of calls in the list
   * @return The number of calls in the list */
 guint
-conferencelist_get_size (const gchar* conf_id);
+conferencelist_get_size ();
 
 /** Return the call at the nth position in the list
   * @param n The position of the call you want
   * @return A call or NULL */
-gchar*
-conferencelist_get_nth (const gchar* conf_id, guint n );
+conference_obj_t*
+conferencelist_get_nth (guint n );
 
 /** Return the call corresponding to the callID
   * @param n The callID of the call you want
   * @return A call or NULL */
-gchar*
-conferencelist_get (const gchar* conf_id);
+conference_obj_t*
+conferencelist_get (const gchar* conf);
 
 
 #endif

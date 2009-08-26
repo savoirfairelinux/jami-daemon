@@ -54,5 +54,9 @@ void create_new_conference_from_details (const gchar *, GHashTable *, conference
 
 void free_conference_obj_t (conference_obj_t *c);
 
+/* 
+ * GCompareFunc to compare a confID (gchar* and a callable_obj_t) 
+ */
+gint is_confID_confstruct ( gconstpointer, gconstpointer);
 
 #endif

@@ -21,6 +21,19 @@
 #include <sflphone_const.h>
 #include <time.h>
 
+gint is_confID_confstruct ( gconstpointer a, gconstpointer b)
+{
+    conference_obj_t * c = (conference_obj_t*)a;
+    if(g_strcasecmp(c->_confID, (const gchar*) b) == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
 void create_new_conference (conference_state_t state, gchar* confID, conference_obj_t ** new_conf)
 {
 
