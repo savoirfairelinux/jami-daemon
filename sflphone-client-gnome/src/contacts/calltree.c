@@ -706,7 +706,33 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
 
     DEBUG("calltree_remove_conference %s\n", conf->_confID);
 
-    
+    GtkTreeIter iter;
+    GValue val;
+    conference_obj_t * iterCall;
+    GtkListStore* store = tab->store;
+
+    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
+    int i;
+    for( i = 0; i < nbChild; i++)
+    {
+        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+        {
+            val.g_type = 0;
+            gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
+
+            iterCall = (conference_obj_t*) g_value_get_pointer(&val);
+            g_value_unset(&val);
+
+            if(iterCall == conf)
+            {
+                gtk_list_store_remove(store, &iter);
+            }
+        }
+    }
+    // callable_obj_t * selectedCall = calltab_get_selected_call(tab);
+    // if(selectedCall == c)
+    // calltab_select_call(tab, NULL);
+    toolbar_update_buttons();
     
 }
 

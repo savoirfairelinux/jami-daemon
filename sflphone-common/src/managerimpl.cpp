@@ -708,7 +708,8 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 	_debug("ManagerImpl:: error cannot remove conference id: %s\n", conference_id.c_str());
 
     // broadcast a signal over dbus
-    _dbus->getCallManager()->conferenceRemoved(default_conf);
+    _debug("ManagerImpl:: broadcast call removed on dbus: %s\n", conference_id.c_str());
+    _dbus->getCallManager()->conferenceRemoved(conference_id);
 
 }
 

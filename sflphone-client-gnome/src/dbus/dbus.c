@@ -233,14 +233,11 @@ conference_removed_cb (DBusGProxy *proxy UNUSED,
 	const gchar* confID,
         void * foo  UNUSED )
 {
-    DEBUG ("Conference removed\n");
+    DEBUG ("Conference removed %s\n", confID);
 
-    // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t * c = conferencelist_get(confID);
     calltree_remove_conference (current_calls, c);
-
     conferencelist_remove(c->_confID); 
-
 }
 
 
@@ -415,7 +412,7 @@ dbus_connect ()
             "conferenceAdded", G_CALLBACK(conference_added_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal (callManagerProxy,
-            "conferenceRemoved", G_TYPE_INVALID);
+            "conferenceRemoved", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
             "conferenceRemoved", G_CALLBACK(conference_removed_cb), NULL, NULL);
 

@@ -59,7 +59,6 @@ conferencelist_add(const conference_obj_t* conf)
     gchar* c = (gchar*)conferencelist_get(conf->_confID);
     if(!c)
     {
-	g_print("Conference id(s): %s\n", conf->_confID);
         g_queue_push_tail (conferenceQueue, (gpointer)conf);
     }
 }
@@ -78,6 +77,7 @@ conferencelist_remove (const gchar* conf)
 conference_obj_t* 
 conferencelist_get (const gchar* conf_id)
 {
+
     GList* c = g_queue_find_custom(conferenceQueue, conf_id, is_confID_confstruct);
     if (c)
     {
