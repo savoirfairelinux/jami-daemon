@@ -519,6 +519,7 @@ void calltree_add_history_entry (callable_obj_t * c)
     history_reinit(history);
 }
 
+
 void calltree_add_call (calltab_t* tab, callable_obj_t * c)
 {
 
@@ -619,12 +620,86 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
 }
 
 
-void calltree_add_conference(calltab_t *tab)
+void calltree_add_conference (calltab_t* tab, const gchar* confID)
 {
-   if (tab == history || tab==contacts)
-        return;
 
-   
+    DEBUG("calltree_add_conference");
+
+
+    GdkPixbuf *pixbuf=NULL;
+    GtkTreeIter iter;
+
+    // New call in the list
+    
+    gchar * description;
+    description = g_markup_printf_escaped("<b>%s</b>", confID);
+
+    gtk_list_store_prepend (tab->store, &iter);
+
+    if( tab == current_calls )
+    {
+        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
+    }
+    
+    else {
+        WARN ("Conferences cannot be added in this widget - This is a bug in the application.");
+    }
+
+    /*
+    //Resize it
+    if(pixbuf)
+    {
+        if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
+        {
+            pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+        }
+    }
+    */
+    gtk_list_store_set(tab->store, &iter,
+            0, pixbuf, // Icon
+            1, description, // Description
+            -1);
+
+    
+    if (pixbuf != NULL)
+        g_object_unref(G_OBJECT(pixbuf));
+
+    /*
+    // history_reinit (tab);
+
+    // sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
+    // gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
+
+    // history_reinit (tab);
+
+    */
+
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
+
+    // gtk_tree_view_set_model (GTK_TREE_VIEW (tab->view), GTK_TREE_MODEL (history_filter));
+
+    /*
+    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
+    */
+
+    toolbar_update_buttons();
+
+}
+
+
+void calltree_update_conference (calltab_t* tab, const gchar* confID)
+{
+
+    DEBUG("calltree_update_conference");
+
+}
+
+
+void calltree_remove_conference (calltab_t* tab, const gchar* confID)
+{
+
+    DEBUG("calltree_remove_conference");
+
 }
 
 

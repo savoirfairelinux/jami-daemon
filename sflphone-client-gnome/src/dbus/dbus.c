@@ -219,6 +219,7 @@ conference_added_cb (DBusGProxy *proxy UNUSED,
 {
     DEBUG ("Conference added %s\n", confID);
     // sflphone_display_transfer_status("Transfer successfull");
+    calltree_add_conference (current_calls, confID);
 }
 
 
