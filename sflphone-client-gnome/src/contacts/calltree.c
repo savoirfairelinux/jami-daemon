@@ -727,32 +727,64 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
 
     DEBUG("calltree_remove_conference %s\n", conf->_confID);
 
-    GtkTreeIter iter;
-    GValue val;
-    conference_obj_t * iterCall;
+    GtkTreeIter iter_parent;
+    GtkTreeIter iter_child;
+    GValue confval;
+    GValue callval;
+    conference_obj_t * tempconf;
+    callable_obj_t * call;
     GtkTreeStore* store = tab->store;
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
+
+    int nbParticipant;
+
     int i;
+    int j;
     for( i = 0; i < nbChild; i++)
     {
-        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter_parent, NULL, i))
         {
-            val.g_type = 0;
-            gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
+            confval.g_type = 0;
+            gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter_parent, 2, &confval);
 
-            iterCall = (conference_obj_t*) g_value_get_pointer(&val);
-            g_value_unset(&val);
+            tempconf = (conference_obj_t*) g_value_get_pointer(&confval);
+            g_value_unset(&confval);
 
-            if(iterCall == conf)
+            if(tempconf == conf)
             {
-                gtk_tree_store_remove(store, &iter);
+		if(gtk_tree_model_iter_has_child (GTK_TREE_MODEL(store), &iter_parent))
+		{
+		    nbParticipant = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), &iter_parent);
+		    DEBUG("nbParticipant: %i\n", nbParticipant);
+		    for( j = 0; j < nbParticipant; j++)
+		    {
+			DEBUG("Participant: %i\n", j);
+			call = NULL;
+			if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter_child, &iter_parent, i))
+			{
+			    callval.g_type = 0;
+			    gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter_child, 2, &callval);
+
+			    call = (callable_obj_t*)g_value_get_pointer(&callval);
+
+			    if(call)
+			    {
+				calltree_add_call (tab, call, NULL);
+			    }
+			}
+		    }
+		}
+
+                gtk_tree_store_remove(store, &iter_parent);
             }
         }
     }
+
     // callable_obj_t * selectedCall = calltab_get_selected_call(tab);
     // if(selectedCall == c)
     // calltab_select_call(tab, NULL);
+
     toolbar_update_buttons();
     
 }
