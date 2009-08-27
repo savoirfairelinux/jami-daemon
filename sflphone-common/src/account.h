@@ -106,7 +106,11 @@ typedef enum RegistrationState {
 #define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
 #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
-    
+
+#define REGISTRATION_STATUS                 "Status"
+#define REGISTRATION_STATE_CODE             "Registration.code" 
+#define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
+
 class Account{
 
     public:
@@ -162,7 +166,30 @@ class Account{
          */
         inline RegistrationState getRegistrationState() { return _registrationState; }
 
+        /**
+         * Set the registration state of the specified link
+         * @param state	The registration state of underlying VoIPLink
+         */
         void setRegistrationState( RegistrationState state );
+        
+        /**
+         * Set the latest up-to-date state code
+         * for that account. These codes are 
+         * those used in SIP and IAX (eg. 200, 500 ...)
+         * @param state The Code:Description state
+         * @return void
+         */
+        void setRegistrationStateDetailed(std::pair<int, std::string> state) { _registrationStateDetailed = state; }
+        
+        /**
+         * Get the latest up-to-date state code
+         * for that account. These codes are 
+         * those used in SIP and IAX (eg. 200, 500 ...)
+         * @param void
+         * @return std::pair<int, std::string> A Code:Description state
+         */
+        std::pair<int, std::string> getRegistrationStateDetailed(void) { return _registrationStateDetailed; }
+                        
 
         /* inline functions */
         /* They should be treated like macro definitions by the C++ compiler */
@@ -233,9 +260,16 @@ class Account{
         std::string _type;
 
         /*
-         * The registration state of the account
+         * The general, protocol neutral registration 
+         * state of the account
          */
         RegistrationState _registrationState;
+        
+        /*
+         * Details about the registration state.
+         * This is a protocol Code:Description pair. 
+         */
+        std::pair<int, std::string> _registrationStateDetailed;
 
 };
 

@@ -2478,7 +2478,9 @@ void regc_cb (struct pjsip_regc_cbparam *param)
     assert(param);
     const pj_str_t * description = pjsip_get_status_text(param->code);
     if (param->code) {
-        DBusManager::instance().getCallManager()->sipCallStateChanged(account->getAccountID(), std::string(description->ptr, description->slen), param->code);
+        DBusManager::instance().getCallManager()->registrationStateChanged(account->getAccountID(), std::string(description->ptr, description->slen), param->code);
+        std::pair<int, std::string> details(param->code, std::string(description->ptr, description->slen));
+        account->setRegistrationStateDetailed(details);
     }
     
     if (param->status == PJ_SUCCESS) {
@@ -2489,25 +2491,18 @@ void regc_cb (struct pjsip_regc_cbparam *param)
             _debug ("UserAgent: The error is: %d\n", param->code);
 
             switch (param->code) {
-
                 case 606:
                     account->setRegistrationState (ErrorConfStun);
                     break;
-
                 case 503:
-
                 case 408:
                     account->setRegistrationState (ErrorHost);
                     break;
-
                 case 401:
-
                 case 403:
-
                 case 404:
                     account->setRegistrationState (ErrorAuth);
                     break;
-
                 default:
                     account->setRegistrationState (Error);
                     break;
@@ -2516,7 +2511,6 @@ void regc_cb (struct pjsip_regc_cbparam *param)
             account->setRegister (false);
         } else {
             // Registration/Unregistration is success
-
             if (account->isRegister())
                 account->setRegistrationState (Registered);
             else {

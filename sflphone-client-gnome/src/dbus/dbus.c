@@ -24,7 +24,8 @@
 #include <callmanager-glue.h>
 #include <configurationmanager-glue.h>
 #include <instance-glue.h>
-#include <configwindow.h>
+#include <preferencesdialog.h>
+#include <accountlistconfigdialog.h>
 #include <mainwindow.h>
 #include <marshaller.h>
 #include <sliders.h>
@@ -227,7 +228,7 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
     DEBUG ("Accounts changed");
     sflphone_fill_account_list(TRUE);
     sflphone_fill_ip2ip_profile();
-    config_window_fill_account_list();
+    account_list_config_dialog_fill();
 
     // Update the status bar in case something happened
     // Should fix ticket #1215
@@ -328,7 +329,7 @@ sip_call_state_cb (DBusGProxy *proxy UNUSED,
 {
     callable_obj_t * c = NULL;
     c = calllist_get(current_calls, callID);
-        DEBUG("sip_call_state_cb received code %d callID %s", code, callID);           
+
     if(c != NULL) {
         DEBUG("sip_call_state_cb received code %d", code);       
         sflphone_call_state_changed(c, description, code);
@@ -502,11 +503,12 @@ dbus_connect ()
     /* VOID STRING STRING INT */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_INT,
             G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+
     dbus_g_proxy_add_signal (callManagerProxy,
             "sipCallStateChanged", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
             "sipCallStateChanged", G_CALLBACK(sip_call_state_cb), NULL, NULL);
-            
+                        
     configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
             "org.sflphone.SFLphone",
             "/org/sflphone/SFLphone/ConfigurationManager",
@@ -2150,34 +2152,6 @@ GHashTable* dbus_get_tls_settings_default(void)
     }
 
     return results;
-}
-
-GHashTable* dbus_get_tls_settings(const gchar * accountID) 
-{
-    GError *error = NULL;
-    GHashTable *results = NULL;
-
-    org_sflphone_SFLphone_ConfigurationManager_get_tls_settings(configurationManagerProxy, accountID, &results, &error);
-    if (error != NULL){
-        ERROR ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_tls_settings_default");
-        g_error_free (error);
-    }
-    return results;
-}
-
-void dbus_set_tls_settings (account_t *a)
-{
-    GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_tls_settings (
-            configurationManagerProxy,
-            a->accountID,
-            a->tlsSettings,
-            &error);
-    if (error) {
-        ERROR ("Failed to call set_tls_settings() on ConfigurationManager: %s",
-                error->message);
-        g_error_free (error);
-    }
 }
 
 gchar ** dbus_get_all_ip_interface(void)

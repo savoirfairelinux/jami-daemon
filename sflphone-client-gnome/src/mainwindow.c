@@ -24,7 +24,7 @@
 #include <actions.h>
 #include <calltree.h>
 #include <calltab.h>
-#include <configwindow.h>
+#include <preferencesdialog.h>
 #include <dialpad.h>
 #include <mainwindow.h>
 #include <menus.h>
@@ -257,7 +257,7 @@ create_main_window ()
 
     if (response == GTK_RESPONSE_YES)
     {
-      show_config_window();
+      show_preferences_dialog();
     }
 #endif
   }

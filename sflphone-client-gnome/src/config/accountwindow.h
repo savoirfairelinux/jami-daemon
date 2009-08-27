@@ -25,7 +25,7 @@
   */
 
 #include "utils.h"
-#include "configwindow.h"
+#include "preferencesdialog.h"
 
 /** 
  * Display the main account widget 
