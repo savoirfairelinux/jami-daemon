@@ -61,7 +61,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
     create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _("Voicemail"), to, &mailbox_call);
     DEBUG("TO : %s" , mailbox_call->_peer_number);
     calllist_add( current_calls , mailbox_call );
-    calltree_add_call( current_calls , mailbox_call );
+    calltree_add_call( current_calls, mailbox_call, NULL);
     update_menus();
     sflphone_place_call( mailbox_call );
     calltree_display(current_calls);
@@ -88,7 +88,7 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
             create_new_call (CALL, CALL_STATE_DIALING, "", "", "", selectedCall->_peer_number, &new_call);
 
             calllist_add(current_calls, new_call);
-            calltree_add_call(current_calls, new_call);
+            calltree_add_call(current_calls, new_call, NULL);
             sflphone_place_call(new_call);
             calltree_display (current_calls);
         }

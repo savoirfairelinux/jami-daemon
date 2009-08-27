@@ -40,7 +40,7 @@ calltree_create(calltab_t* tab, gboolean searchbar_type);
  * @param c The call to add
  */
 void
-calltree_add_call (calltab_t* ct, callable_obj_t * c);
+calltree_add_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 
 /*
  * Update the call tree if the call state changes

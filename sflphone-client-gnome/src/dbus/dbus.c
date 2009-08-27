@@ -194,7 +194,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
 
             calllist_add (current_calls, new_call);
             calllist_add (history, new_call);
-            calltree_add_call (current_calls, new_call);
+            calltree_add_call (current_calls, new_call, NULL);
             update_menus ();
             calltree_display (current_calls);
 
@@ -213,7 +213,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
 
 
 static void
-conference_added_cb (DBusGProxy *proxy UNUSED,
+conference_created_cb (DBusGProxy *proxy UNUSED,
 	const gchar* confID,
         void * foo  UNUSED )
 {
@@ -399,17 +399,17 @@ dbus_connect ()
     dbus_g_proxy_connect_signal (callManagerProxy,
             "transferFailed", G_CALLBACK(transfer_failed_cb), NULL, NULL);
 
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_add_signal (callManagerProxy,
             "conferenceChanged", G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
             "conferenceChanged", G_CALLBACK(conference_changed_cb), NULL, NULL);
 
-    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
-            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_add_signal (callManagerProxy,
-            "conferenceAdded", G_TYPE_STRING, G_TYPE_INVALID);
+            "conferenceCreated", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
-            "conferenceAdded", G_CALLBACK(conference_added_cb), NULL, NULL);
+            "conferenceCreated", G_CALLBACK(conference_created_cb), NULL, NULL);
 
     dbus_g_proxy_add_signal (callManagerProxy,
             "conferenceRemoved", G_TYPE_STRING, G_TYPE_INVALID);
@@ -1849,6 +1849,22 @@ gchar** dbus_get_conference_list (void)
 
     return list;
 }
+
+
+gchar** dbus_get_participant_list (const char * confID)
+{
+    GError *error = NULL;
+    gchar **list = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_participant_list (callManagerProxy, confID, &list, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_participant_list");
+        g_error_free (error);
+    }
+
+    return list;
+}
+
 
 GHashTable* dbus_get_conference_details (const gchar *confID)
 {

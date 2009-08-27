@@ -278,7 +278,7 @@ call_back( void * foo UNUSED)
         create_new_call (CALL, CALL_STATE_DIALING, "", "", selected_call->_peer_name, selected_call->_peer_number, &new_call);
 
         calllist_add(current_calls, new_call);
-        calltree_add_call(current_calls, new_call);
+        calltree_add_call(current_calls, new_call, NULL);
         sflphone_place_call(new_call);
         calltree_display (current_calls);
     }
@@ -1020,7 +1020,7 @@ static void ok_cb (GtkWidget *widget UNUSED, gpointer userdata) {
 
     // Update the internal data structure and the GUI
     calllist_add(current_calls, modified_call);
-    calltree_add_call(current_calls, modified_call);
+    calltree_add_call(current_calls, modified_call, NULL);
     sflphone_place_call(modified_call);
     calltree_display (current_calls);
 

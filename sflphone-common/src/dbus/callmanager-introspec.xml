@@ -123,7 +123,12 @@
     <signal name="conferenceChanged">
     </signal>
 
-    <signal name="conferenceAdded">
+    <method name="getParticipantList">
+      <arg type="s" name="confID" direction="in"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
+    <signal name="conferenceCreated">
       <arg type="s" name="confID"  direction="out"/>
     </signal>
 

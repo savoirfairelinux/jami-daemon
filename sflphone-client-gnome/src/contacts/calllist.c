@@ -54,7 +54,7 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
         }
 
         calllist_add (contacts, new_call);
-        calltree_add_call(contacts, new_call);
+        calltree_add_call(contacts, new_call, NULL);
     }
 }
 
@@ -84,7 +84,7 @@ void calllist_add_history_entry (callable_obj_t *obj)
     if (state == 1)
     {
         g_queue_push_tail (history->callQueue, (gpointer *) obj);
-        calltree_add_call (history, obj);
+        calltree_add_call (history, obj, NULL);
     }
 }
 

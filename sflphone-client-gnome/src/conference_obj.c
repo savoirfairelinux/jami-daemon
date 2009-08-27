@@ -34,7 +34,7 @@ gint is_confID_confstruct ( gconstpointer a, gconstpointer b)
     }
 }
 
-void create_new_conference (conference_state_t state, gchar* confID, conference_obj_t ** new_conf)
+void create_new_conference (conference_state_t state, const gchar* confID, conference_obj_t ** new_conf)
 {
 
     conference_obj_t *obj;

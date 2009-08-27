@@ -145,6 +145,12 @@ CallManager::getConferenceList (void)
     return Manager::instance().getConferenceList();
 }
 
+std::vector< std::string >
+CallManager::getParticipantList (const std::string& confID)
+{
+    return Manager::instance().getParticipantList(confID);
+}
+
 void
 CallManager::setRecording (const std::string& callID)
 {

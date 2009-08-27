@@ -659,7 +659,7 @@ ManagerImpl::createConference(const CallID& id1, const CallID& id2)
     conf->add(id2);
 
     // broadcast a signal over dbus
-    _dbus->getCallManager()->conferenceAdded(default_conf);
+    _dbus->getCallManager()->conferenceCreated(default_conf);
 
 }
 
@@ -3497,7 +3497,7 @@ ManagerImpl::getConferenceDetails(const ConfID& confID)
 
     iter_conf = _conferencemap.find(confID);
 
-    Conference *conf;
+    Conference *conf = NULL;
     if(iter_conf != _conferencemap.end()) {
 
 	
@@ -3523,3 +3523,31 @@ ManagerImpl::getConferenceList (void)
 
     return v;
 }
+
+
+std::vector< std::string >
+ManagerImpl::getParticipantList (const std::string& confID)
+{
+    _debug("ManagerImpl::getParticipantList\n");
+    std::vector< std::string > v;
+
+    ConferenceMap::iterator iter_conf = _conferencemap.find(confID);
+    Conference *conf = NULL;
+    if(iter_conf != _conferencemap.end())
+        conf = iter_conf->second;
+
+    ConferenceCallMap::iterator iter_call = _conferencecall.begin();
+    Conference *temp;
+    while (iter_call != _conferencecall.end ()) {
+
+	temp = iter_call->second;
+
+	if (conf == temp)
+            v.push_back (iter_call->first);
+
+        iter_call++;
+    }
+
+    return v;
+}
+

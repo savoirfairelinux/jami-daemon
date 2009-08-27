@@ -66,15 +66,19 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
 
     DEBUG("Selection Callback");
 
-    GtkTreeIter  iter;
+    GtkTreeIter iter;
     GValue val;
     GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
 
     GtkTreePath* path;
     char* string_path;
 
+    char* type;
+    GValue typeval;
+
     if (! gtk_tree_selection_get_selected (sel, &model, &iter))
         return;
+
 
     val.g_type = 0;
     gtk_tree_model_get_value (model, &iter, 2, &val);
@@ -153,7 +157,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
             create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
 
             calllist_add(current_calls, new_call);
-            calltree_add_call(current_calls, new_call);
+            calltree_add_call(current_calls, new_call, NULL);
             sflphone_place_call(new_call);
             calltree_display(current_calls);
         }
@@ -189,7 +193,7 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     void
 calltree_reset (calltab_t* tab)
 {
-    gtk_list_store_clear (tab->store);
+    gtk_tree_store_clear (tab->store);
 }
 
 void
@@ -225,10 +229,10 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
 
-    tab->store = gtk_list_store_new (3,
+    tab->store = gtk_tree_store_new (3,
             GDK_TYPE_PIXBUF,// Icon
             G_TYPE_STRING,  // Description
-            G_TYPE_POINTER  // Pointer to the Object
+	    G_TYPE_POINTER  // Pointer to the Object
             );
 
     tab->view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(tab->store));
@@ -315,7 +319,7 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c)
     GtkTreeIter iter;
     GValue val;
     callable_obj_t * iterCall;
-    GtkListStore* store = tab->store;
+    GtkTreeStore* store = tab->store;
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
     int i;
@@ -331,7 +335,7 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c)
 
             if(iterCall == c)
             {
-                gtk_list_store_remove(store, &iter);
+                gtk_tree_store_remove(store, &iter);
             }
         }
     }
@@ -348,7 +352,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
     GtkTreeIter iter;
     GValue val;
     callable_obj_t * iterCall;
-    GtkListStore* store = tab->store;
+    GtkTreeStore* store = tab->store;
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
     int i;
@@ -450,7 +454,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
                         pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
                     }
                 }
-                gtk_list_store_set(store, &iter,
+                gtk_tree_store_set(store, &iter,
                         0, pixbuf, // Icon
                         1, description, // Description
                         -1);
@@ -480,7 +484,7 @@ void calltree_add_history_entry (callable_obj_t * c)
             c->_peer_number,
             c->_peer_name);
 
-    gtk_list_store_prepend (history->store, &iter);
+    gtk_tree_store_prepend (history->store, &iter, NULL);
 
     switch(c->_history_state)
     {
@@ -510,7 +514,7 @@ void calltree_add_history_entry (callable_obj_t * c)
             pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
         }
     }
-    gtk_list_store_set(history->store, &iter,
+    gtk_tree_store_set(history->store, &iter,
             0, pixbuf, // Icon
             1, description, // Description
             2, c,      // Pointer
@@ -525,7 +529,7 @@ void calltree_add_history_entry (callable_obj_t * c)
 }
 
 
-void calltree_add_call (calltab_t* tab, callable_obj_t * c)
+void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 {
 
     if (tab == history)
@@ -545,7 +549,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
             c->_peer_number,
             c->_peer_name);
 
-    gtk_list_store_prepend (tab->store, &iter);
+    gtk_tree_store_prepend (tab->store, &iter, parent);
 
 
     if( tab == current_calls )
@@ -596,7 +600,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
             pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
         }
     }
-    gtk_list_store_set(tab->store, &iter,
+    gtk_tree_store_set(tab->store, &iter,
             0, pixbuf, // Icon
             1, description, // Description
             2, c,      // Pointer
@@ -634,12 +638,18 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
 
+    gchar** participant = (gchar**)dbus_get_participant_list(conf->_confID);
+    gchar** pl;
+    gchar* call_id;
+
+    callable_obj_t * call;
+
     // New call in the list
     
     gchar * description;
     description = g_markup_printf_escaped("<b>%s</b>", conf->_confID);
 
-    gtk_list_store_prepend (tab->store, &iter);
+    gtk_tree_store_prepend (tab->store, &iter, NULL);
 
     if( tab == current_calls )
     {
@@ -650,7 +660,7 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
         WARN ("Conferences cannot be added in this widget - This is a bug in the application.");
     }
 
-    /*
+    DEBUG("PIXWITH: %i\n", gdk_pixbuf_get_width(pixbuf));
     //Resize it
     if(pixbuf)
     {
@@ -659,8 +669,8 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
             pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
         }
     }
-    */
-    gtk_list_store_set(tab->store, &iter,
+    
+    gtk_tree_store_set(tab->store, &iter,
             0, pixbuf, // Icon
             1, description, // Description
 	    2, conf, // Pointer
@@ -670,23 +680,24 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
     if (pixbuf != NULL)
         g_object_unref(G_OBJECT(pixbuf));
 
-    /*
-    // history_reinit (tab);
 
-    // sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
-    // gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
+    if(participant)
+    {
+	for (pl = participant; *participant; participant++)
+	{
+	    
+	    call_id = (gchar*)(*participant);
+	    call = calllist_get (tab, call_id);
+	    // create_new_call_from_details (conf_id, conference_details, &c);
 
-    // history_reinit (tab);
+	    calltree_remove_call(tab, call);
+	    calltree_add_call (tab, call, &iter);
+	}
+    }
 
-    */
 
     gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
 
-    // gtk_tree_view_set_model (GTK_TREE_VIEW (tab->view), GTK_TREE_MODEL (history_filter));
-
-    /*
-    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view)), &iter);
-    */
 
     toolbar_update_buttons();
 
@@ -709,7 +720,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
     GtkTreeIter iter;
     GValue val;
     conference_obj_t * iterCall;
-    GtkListStore* store = tab->store;
+    GtkTreeStore* store = tab->store;
 
     int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
     int i;
@@ -725,7 +736,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
 
             if(iterCall == conf)
             {
-                gtk_list_store_remove(store, &iter);
+                gtk_tree_store_remove(store, &iter);
             }
         }
     }

@@ -476,7 +476,7 @@ sflphone_incoming_call (callable_obj_t * c)
     c->_history_state = MISSED;
     calllist_add ( current_calls, c );
     calllist_add( history, c );
-    calltree_add_call( current_calls , c );
+    calltree_add_call( current_calls, c, NULL);
     update_menus();
     calltree_display (current_calls);
 }
@@ -578,7 +578,7 @@ sflphone_new_call()
     create_new_call (CALL, CALL_STATE_DIALING, "", "", peer_name, peer_number, &c);
 
     calllist_add (current_calls,c);
-    calltree_add_call (current_calls,c);
+    calltree_add_call (current_calls, c, NULL);
     update_menus();
 
     return c;
@@ -967,7 +967,7 @@ void sflphone_fill_call_list (void)
             DEBUG ("Add call retrieved from server side: %s\n", c->_callID);
             calllist_add (current_calls, c);
             // Update the GUI
-            calltree_add_call (current_calls, c);
+            calltree_add_call (current_calls, c, NULL);
         }
     }
 }
@@ -989,6 +989,7 @@ void sflphone_fill_conference_list(void)
 	{
 	    c = g_new0(conference_obj_t, 1);
 	    conf_id = (gchar*)(*conferences);
+
 	    conference_details = dbus_get_conference_details(conf_id);
 	    create_new_call_from_details (conf_id, conference_details, &c);
 	    c->_confID = g_strdup(conf_id);

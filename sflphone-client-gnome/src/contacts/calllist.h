@@ -28,7 +28,7 @@
   */
 
 typedef struct {
-	GtkListStore* store;
+	GtkTreeStore* store;
 	GtkWidget* view;
 	GtkWidget* tree;
         GtkWidget* searchbar;
