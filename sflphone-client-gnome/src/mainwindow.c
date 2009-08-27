@@ -106,7 +106,7 @@ main_window_ask_quit(){
 static gboolean
 on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSED)
 {
-  DEBUG("On key released from Main Window : %s\n", gtk_widget_get_name(widget));
+  DEBUG("On key released from Main Window : %s", gtk_widget_get_name(widget));
 
   if (focus_is_on_searchbar == FALSE) {
         // If a modifier key is pressed, it's a shortcut, pass along
