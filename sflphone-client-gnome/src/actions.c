@@ -186,11 +186,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         if( details == NULL )
             break;
         a->properties = details;
-        
-        GHashTable * tlsSettings = NULL;
-        tlsSettings = dbus_get_tls_settings(a->accountID);
-        a->tlsSettings = tlsSettings;
-        
+                        
         /* As this function might be called numberous time, we should free the 
          * previously allocated space to avoid memory leaks.
          */
@@ -210,7 +206,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
             g_ptr_array_add(a->credential_information, credential_information);
         }
 
-        gchar * status = g_hash_table_lookup(details, "Status");
+        gchar * status = g_hash_table_lookup(details, REGISTRATION_STATUS);
         if(strcmp(status, "REGISTERED") == 0)
         {
             a->state = ACCOUNT_STATE_REGISTERED;
@@ -252,6 +248,13 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
             a->state = ACCOUNT_STATE_INVALID;
         }
 
+        gchar * code = NULL;
+        code = g_hash_table_lookup(details, REGISTRATION_STATE_CODE);
+        if (code != NULL) {
+            a->protocol_state_code = atoi(code);
+        }
+        g_free(a->protocol_state_description);
+        a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
     }
 
     // Prevent update being called when toolbar is not yet initialized

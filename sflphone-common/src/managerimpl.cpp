@@ -1012,8 +1012,9 @@ ManagerImpl::startVoiceMessageNotification (const AccountID& accountId, int nb_m
 
 void ManagerImpl::connectionStatusNotification()
 {
-    if (_dbus)
+    if (_dbus != NULL) {
         _dbus->getConfigurationManager()->accountsChanged();
+    }
 }
 
 /**
@@ -2560,13 +2561,22 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert(std::pair<std::string, std::string> (STUN_ENABLE, getConfigString(accountID, STUN_ENABLE)));
     a.insert(std::pair<std::string, std::string> (STUN_SERVER, getConfigString(accountID, STUN_SERVER)));                        
     
-    RegistrationState state; 
+    RegistrationState state;
+    std::string registrationStateCode;
+    std::string registrationStateDescription; 
     if (account != NULL) {
-        state = account->getRegistrationState();           
+        state = account->getRegistrationState(); 
+        int code = account->getRegistrationStateDetailed().first;
+        std::stringstream out;
+        out << code;
+        registrationStateCode = out.str();
+        registrationStateDescription = account->getRegistrationStateDetailed().second;          
     } else {
         state = Unregistered;
     }
-    a.insert(std::pair<std::string, std::string> ("Status", mapStateNumberToString (state)));
+    a.insert(std::pair<std::string, std::string> (REGISTRATION_STATUS, mapStateNumberToString (state)));
+    a.insert(std::pair<std::string, std::string> (REGISTRATION_STATE_CODE, registrationStateCode));
+    a.insert(std::pair<std::string, std::string> (REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));        
     a.insert(std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, getConfigString(accountID, SRTP_KEY_EXCHANGE)));
     a.insert(std::pair<std::string, std::string> (SRTP_ENABLE, getConfigString(accountID, SRTP_ENABLE)));    
     a.insert(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, getConfigString(accountID, ZRTP_DISPLAY_SAS)));
@@ -2697,6 +2707,7 @@ void ManagerImpl::setCredential (const std::string& accountID, const int32_t& in
 
 //TODO: tidy this up. Make a macro or inline 
 // method to reduce the if/else mess.
+// Even better, switch to XML !
 
 void ManagerImpl::setAccountDetails (const std::string& accountID, const std::map< std::string, std::string >& details)
 {
@@ -2810,7 +2821,6 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_SEC)) != map_cpy.end()) { tlsNegotiationTimeoutSec = iter->second; }                          
     if((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_MSEC)) != map_cpy.end()) { tlsNegotiationTimeoutMsec = iter->second; }      
     
-    _debug("Enable account %s\n", accountEnable.c_str());        																									
     setConfig(accountID, HOSTNAME, hostname);
     setConfig(accountID, LOCAL_ADDRESS, localAddress);    
     setConfig(accountID, PUBLISHED_ADDRESS, publishedAddress);            

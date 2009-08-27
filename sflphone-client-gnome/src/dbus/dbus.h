@@ -601,20 +601,6 @@ void dbus_set_confirm_go_clear (const callable_obj_t * c);
  */
 gchar** dbus_get_supported_tls_method();
 
-/**
- * CallManager - Get default values for TLS. 
- * @return a GHashTable object containing those default 
- * TLS settings. 
- *
- */
-GHashTable* dbus_get_tls_settings_default(void);
 
-/**
- * CallManager - Get TLS settings for that account
- * @return a GHashTable object containing those default 
- * TLS settings. 
- *
- */
-GHashTable* dbus_get_tls_settings(const gchar * accountID);
 
 #endif

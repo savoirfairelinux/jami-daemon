@@ -33,7 +33,6 @@
 #include <addressbook-config.h>
 #include <hooks-config.h>
 #include <utils.h>
-#include <ip2ipdialog.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -71,7 +70,9 @@ static gboolean history_enabled = TRUE;
 account_t * selectedAccount = NULL;
 
 GHashTable * directIpCallsProperties = NULL;
-    
+
+GtkDialog * accountListDialog;
+      
 // Account properties
 enum {
     COLUMN_ACCOUNT_ALIAS,
@@ -106,7 +107,7 @@ config_window_fill_account_list()
             if (a) {
                 gtk_list_store_append (accountStore, &iter);
 
-                DEBUG("Filling accounts: Account is enabled :%s\n", g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
+                DEBUG("Filling accounts: Account is enabled :%s", g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
                 
                 gtk_list_store_set(accountStore, &iter,
                         COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
@@ -377,6 +378,30 @@ static void update_port_cb ( GtkSpinButton *button UNUSED, void *ptr )
     dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
 }
 
+static void 
+help_contents_cb (GtkWidget * widget,
+                  gpointer data UNUSED)
+{
+    GError *error = NULL;
+    
+    gboolean success = gtk_show_uri (NULL, "ghelp: sflphone.xml", GDK_CURRENT_TIME, &error);
+
+    if (error != NULL)
+    {    
+            g_warning ("%s", error->message);
+
+            g_error_free (error);
+    }    
+}
+
+static void
+close_dialog_cb (GtkWidget * widget,
+                  gpointer data UNUSED)
+{
+    gtk_dialog_response(GTK_DIALOG(accountListDialog), GTK_RESPONSE_ACCEPT);
+
+}
+
 /**
  * Account settings tab
  */
@@ -395,9 +420,9 @@ create_accounts_tab(GtkDialog * dialog)
     selectedAccount = NULL;
 
     table = gtk_table_new (1, 2, FALSE/* homogeneous */);
-    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-    gtk_container_set_border_width(GTK_CONTAINER (table), 10);
-
+    gtk_table_set_col_spacings(GTK_TABLE(table), 10); 
+    gtk_container_set_border_width(GTK_TABLE(table), 10);    
+    
     scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_SHADOW_IN);
@@ -452,10 +477,9 @@ create_accounts_tab(GtkDialog * dialog)
     
     /* The buttons to press! */    
     buttonBox = gtk_vbutton_box_new();
-    gtk_box_set_spacing(GTK_BOX(buttonBox), 10); //GAIM_HIG_BOX_SPACE
+    gtk_box_set_spacing(GTK_BOX(buttonBox), 10);
     gtk_button_box_set_layout(GTK_BUTTON_BOX(buttonBox), GTK_BUTTONBOX_START);
     gtk_table_attach (GTK_TABLE(table), buttonBox, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_widget_show (buttonBox);
 
     accountMoveUpButton = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
     gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), FALSE);
@@ -471,27 +495,43 @@ create_accounts_tab(GtkDialog * dialog)
     g_signal_connect_swapped(G_OBJECT(addButton), "clicked",
             G_CALLBACK(add_account), NULL);
     gtk_box_pack_start(GTK_BOX(buttonBox), addButton, FALSE, FALSE, 0);
-    gtk_widget_show(addButton);
 
     editButton = gtk_button_new_from_stock (GTK_STOCK_EDIT);
     gtk_widget_set_sensitive(GTK_WIDGET(editButton), FALSE);    
     g_signal_connect_swapped(G_OBJECT(editButton), "clicked",
             G_CALLBACK(edit_account), NULL);
     gtk_box_pack_start(GTK_BOX(buttonBox), editButton, FALSE, FALSE, 0);
-    gtk_widget_show(editButton);
 
     deleteButton = gtk_button_new_from_stock (GTK_STOCK_REMOVE);
     gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), FALSE);    
     g_signal_connect_swapped(G_OBJECT(deleteButton), "clicked",
             G_CALLBACK(delete_account), stunFrame);
     gtk_box_pack_start(GTK_BOX(buttonBox), deleteButton, FALSE, FALSE, 0);
-    gtk_widget_show(deleteButton);
+
+    /* help and close buttons */    
+    GtkWidget * buttonHbox = gtk_hbutton_box_new();
+    gtk_table_attach(GTK_TABLE(table), buttonHbox, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+    
+    GtkWidget * helpButton = gtk_button_new_from_stock (GTK_STOCK_HELP);
+    g_signal_connect_swapped(G_OBJECT(helpButton), "clicked",
+             G_CALLBACK(help_contents_cb), NULL);
+    gtk_box_pack_start(GTK_BOX(buttonHbox), helpButton, FALSE, FALSE, 0);
         
+    GtkWidget * closeButton = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
+    g_signal_connect_swapped(G_OBJECT(closeButton), "clicked",  G_CALLBACK(close_dialog_cb), NULL);
+    gtk_box_pack_start(GTK_BOX(buttonHbox), closeButton, FALSE, FALSE, 0);
+   
+    gtk_widget_show_all(table);
     config_window_fill_account_list();
 
+    /* Resize the scrolledWindow for a better view */
     gtk_widget_size_request(GTK_WIDGET(treeView), &requisition);
     gtk_widget_set_size_request(GTK_WIDGET(scrolledWindow), requisition.width + 20, requisition.height);
-    
+    GtkRequisition requisitionButton;
+    gtk_widget_size_request(GTK_WIDGET(deleteButton), &requisitionButton);
+    gtk_widget_set_size_request(GTK_WIDGET(closeButton), requisitionButton.width, -1);
+    gtk_widget_set_size_request(GTK_WIDGET(helpButton), requisitionButton.width, -1);    
+            
     gtk_widget_show_all(table);
     
     return table;
@@ -920,40 +960,36 @@ show_config_window ()
     void
 show_accounts_window( void )
 {
-    GtkDialog * dialog;
     GtkWidget * accountFrame;
     GtkWidget * tab;
 
     accDialogOpen = TRUE;
 
-    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Accounts"),
+    accountListDialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Accounts"),
                 GTK_WINDOW(get_main_window()),
                 GTK_DIALOG_DESTROY_WITH_PARENT,
-                GTK_STOCK_HELP, GTK_RESPONSE_HELP,
-                GTK_STOCK_CLOSE, GTK_RESPONSE_ACCEPT,
                 NULL));
 
     // Set window properties
-    gtk_dialog_set_has_separator(dialog, FALSE);
-    gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
+    gtk_dialog_set_has_separator(accountListDialog, FALSE);
+    gtk_container_set_border_width(GTK_CONTAINER(accountListDialog), 0);
 
     gnome_main_section_new (_("Configured Accounts"), &accountFrame);
-    gtk_box_pack_start( GTK_BOX( dialog->vbox ), accountFrame , TRUE, TRUE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(accountFrame), 10);
+    gtk_box_pack_start( GTK_BOX( accountListDialog->vbox ), accountFrame , TRUE, TRUE, 0);
     gtk_widget_show(accountFrame);
 
     // Accounts tab
-    tab = create_accounts_tab(dialog);
-
-    gtk_container_add(GTK_CONTAINER(accountFrame) , tab);
-
-    gtk_dialog_run( dialog );
+    tab = create_accounts_tab(accountListDialog);
+    gtk_widget_show(tab);    
+    gtk_container_add(GTK_CONTAINER(accountFrame), tab);
+    
+    gtk_dialog_run(accountListDialog);
 
     status_bar_display_account ();
 
     accDialogOpen=FALSE;
 
-    gtk_widget_destroy(GTK_WIDGET(dialog));
+    gtk_widget_destroy(GTK_WIDGET(accountListDialog));
     toolbar_update_buttons();
 }
 

@@ -287,7 +287,6 @@ static void fill_treeview_with_credential(GtkListStore * credentialStore, accoun
         }
         
         if((authentication_name == NULL) || (g_strcmp0(authentication_name, "") == 0)) {
-            DEBUG("DEFAULT");
             gtk_list_store_set(credentialStore, &iter,
                     COLUMN_CREDENTIAL_REALM, realm, 
                     COLUMN_CREDENTIAL_USERNAME, gtk_entry_get_text(GTK_ENTRY(entryUsername)),
@@ -453,8 +452,6 @@ GtkWidget * create_security_tab(account_t **a)
 	GtkCellRenderer * renderer;
     GtkTreeViewColumn * treeViewColumn;
     GtkTreeSelection * treeSelection;
-    GtkRequisition requisitionTable;
-    GtkRequisition requisitionTreeView;
 	
 	ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -481,7 +478,9 @@ GtkWidget * create_security_tab(account_t **a)
         curTLSEnabled = g_hash_table_lookup(currentAccount->properties, TLS_ENABLE);
         if (curTLSEnabled == NULL) {
             curTLSEnabled = "false";
-        }        
+        } 
+        
+        DEBUG("TLS is enabled to %s", curTLSEnabled);       
 	} 
   	
     /* Credentials tree view */
@@ -540,11 +539,7 @@ GtkWidget * create_security_tab(account_t **a)
     gtk_container_add(GTK_CONTAINER(scrolledWindowCredential), treeViewCredential);
     
     fill_treeview_with_credential(credentialStore, *a);
-        
-    /* Dynamically resize the window to fit the scrolled window */
-    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
-    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTreeView.width, requisitionTreeView.height + 20);
-        
+            
     /* Credential Buttons */    
     hbox = gtk_hbox_new(FALSE, 10);
     gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0, 2, 1, 2);
@@ -572,7 +567,7 @@ GtkWidget * create_security_tab(account_t **a)
     
 	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
 	g_signal_connect (useSipTlsCheckBox, "toggled", G_CALLBACK(use_sip_tls_cb), sipTlsAdvancedButton);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTLSEnabled, "false") == 0) ? FALSE:TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTLSEnabled, "true") == 0) ? TRUE:FALSE);
 	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
        	    
     label = gtk_label_new_with_mnemonic (_("SRTP key exchange"));
@@ -604,7 +599,16 @@ GtkWidget * create_security_tab(account_t **a)
     gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
     gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 1, 2);    
     gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 1, 2);
-	
+
+    gtk_widget_show_all(table);
+    
+    /* Dynamically resize the window to fit the scrolled window */
+    GtkRequisition requisitionTable;
+    GtkRequisition requisitionTreeView;
+    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
+    gtk_widget_size_request(GTK_WIDGET(table), &requisitionTable);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTable.width, requisitionTreeView.height + 20);
+    	
     gtk_widget_show_all(ret);
     
 	return ret;
@@ -774,7 +778,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	useStunRadioButton = gtk_radio_button_new_with_mnemonic(NULL,_("Using STUN "));
 	gtk_table_attach_defaults(GTK_TABLE(table), useStunRadioButton, 0, 2, 3, 4);
 	gtk_widget_set_sensitive(GTK_TOGGLE_BUTTON(useStunRadioButton),
-			g_strcasecmp(use_tls,"false") == 0 ? TRUE: FALSE);
+			g_strcasecmp(use_tls,"true") == 0 ? FALSE: TRUE);
 	
 	sameAsLocalRadioButton = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(useStunRadioButton), _("Same as local parameters"));
 	gtk_table_attach_defaults(GTK_TABLE(table), sameAsLocalRadioButton, 0, 2, 4, 5);
@@ -1021,7 +1025,7 @@ show_account_window (account_t * a)
     				g_strdup(PUBLISHED_ADDRESS),
     				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry))));	    
     								    								
-			config_window_set_stun_visible();
+			preferences_dialog_set_stun_visible();
 		}
 
 	    /* Set new credentials if any */

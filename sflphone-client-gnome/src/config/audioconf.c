@@ -51,7 +51,7 @@ enum {
  * Fills the tree list with supported codecs
  */
     void
-config_window_fill_codec_list()
+preferences_dialog_fill_codec_list()
 {
     GtkListStore *codecStore;
     GtkTreeIter iter;
@@ -84,7 +84,7 @@ config_window_fill_codec_list()
  * Fill store with output audio plugins
  */
     void
-config_window_fill_output_audio_plugin_list()
+preferences_dialog_fill_output_audio_plugin_list()
 {
     GtkTreeIter iter;
     gchar** list;
@@ -112,7 +112,7 @@ config_window_fill_output_audio_plugin_list()
  * Fill output audio device store
  */
     void
-config_window_fill_output_audio_device_list()
+preferences_dialog_fill_output_audio_device_list()
 {
 
     GtkTreeIter iter;
@@ -179,7 +179,7 @@ select_active_output_audio_device()
  * Fill input audio device store
  */
     void
-config_window_fill_input_audio_device_list()
+preferences_dialog_fill_input_audio_device_list()
 {
 
     GtkTreeIter iter;
@@ -611,7 +611,7 @@ GtkWidget* codecs_box()
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveDownButton, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(codecMoveDownButton), "clicked", G_CALLBACK(codec_move_down), codecTreeView);
 
-    config_window_fill_codec_list();
+    preferences_dialog_fill_codec_list();
 
     return ret;
 }
@@ -667,7 +667,7 @@ GtkWidget* alsa_box()
     gtk_widget_show( item );
     // Set choices of audio managers
     pluginlist = gtk_list_store_new(1, G_TYPE_STRING);
-    config_window_fill_output_audio_plugin_list();
+    preferences_dialog_fill_output_audio_plugin_list();
     plugin = gtk_combo_box_new_with_model(GTK_TREE_MODEL(pluginlist));
     select_active_output_audio_plugin();
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), plugin);
@@ -689,7 +689,7 @@ GtkWidget* alsa_box()
     gtk_widget_show(item);
     // Set choices of output devices
     outputlist = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
-    config_window_fill_output_audio_device_list();
+    preferences_dialog_fill_output_audio_device_list();
     output = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputlist));
     select_active_output_audio_device();
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), output);
@@ -712,7 +712,7 @@ GtkWidget* alsa_box()
 
     // Set choices of output devices
     inputlist = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
-    config_window_fill_input_audio_device_list();
+    preferences_dialog_fill_input_audio_device_list();
     input = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputlist));
     select_active_input_audio_device();
     gtk_label_set_mnemonic_widget(GTK_LABEL(item), input);

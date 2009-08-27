@@ -88,6 +88,10 @@
 #define PUBLISHED_PORT                      "Account.publishedPort"
 #define PUBLISHED_ADDRESS                   "Account.publishedAddress"
 
+#define REGISTRATION_STATUS                 "Status"
+#define REGISTRATION_STATE_CODE             "Registration.code" 
+#define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
+
 /**
  * Global logger
  */

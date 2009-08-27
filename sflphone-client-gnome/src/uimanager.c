@@ -19,7 +19,7 @@
 
 #include <menus.h>
 #include <config.h>
-#include <configwindow.h>
+#include <preferencesdialog.h>
 #include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <assistant.h>

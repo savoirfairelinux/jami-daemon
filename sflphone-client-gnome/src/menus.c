@@ -20,7 +20,8 @@
 
 #include <menus.h>
 #include <config.h>
-#include <configwindow.h>
+#include <preferencesdialog.h>
+#include <accountlistconfigdialog.h>
 #include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <assistant.h>
@@ -393,13 +394,13 @@ create_call_menu()
     static void
 edit_preferences ( void * foo UNUSED)
 {
-    show_config_window();
+    show_preferences_dialog();
 }
 
     static void
 edit_accounts ( void * foo UNUSED)
 {
-    show_accounts_window();
+    show_account_list_config_dialog();
 }
 
 // The menu Edit/Copy should copy the current selected call's number
