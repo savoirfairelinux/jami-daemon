@@ -23,35 +23,30 @@
 #include <calllist.h>
 
 /**
- * @file configwindow.h
+ * @file preferencesdialog.h
  * @brief The Preferences window.
  */
 
 /**
- * Fill the account list widget with the data the server send
- */
-void config_window_fill_account_list();
-
-/**
  * Fill the codec list widget with the data the server send
  */
-void config_window_fill_codec_list();
+void preferences_dialog_fill_codec_list();
 
 /**
  * Fill the input audio plugin list widget with the data the server send
  * Currently not used
  */
-void config_window_fill_input_audio_plugin_list();
+void preferences_dialog_fill_input_audio_plugin_list();
 
 /**
  * Fill the output audio plugin list widget with the data the server send
  */
-void config_window_fill_output_audio_plugin_list();
+void preferences_dialog_fill_output_audio_plugin_list();
 
 /**
  * Fill the output audio device list widget with the data the server send
  */
-void config_window_fill_output_audio_device_list();
+void preferences_dialog_fill_output_audio_device_list();
 
 /**
  * Select an output audio device
@@ -61,7 +56,7 @@ void select_active_output_audio_device();
 /**
  * Fill the input audio device list widget with the data the server send
  */
-void config_window_fill_input_audio_device_list();
+void preferences_dialog_fill_input_audio_device_list();
 
 /**
  * Select an input audio device
@@ -107,14 +102,9 @@ GtkWidget * create_recording_settings();
 /**
  * Display the main configuration window
  */
-void show_config_window();
+void show_preferences_dialog();
 
-/**
- * Display the main account window
- */
-void show_accounts_window();
-
-void config_window_set_stun_visible();
+void preferences_dialog_set_stun_visible();
 
 void save_configuration_parameters (void);
 
