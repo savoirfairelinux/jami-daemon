@@ -112,7 +112,7 @@ calllist_clean_history( void )
     callable_obj_t* c = calllist_get_nth( history , i );
     // Delete the call from the call tree
     DEBUG("Delete calls");
-    calltree_remove_call(history , c);
+    calltree_remove_call(history, c, NULL);
   }
   calllist_reset( history );
 }
@@ -122,7 +122,7 @@ void
 calllist_remove_from_history( callable_obj_t* c )
 {
   calllist_remove( history, c->_callID );
-  calltree_remove_call( history, c );
+  calltree_remove_call(history, c, NULL);
   DEBUG("Size of history = %i" , calllist_get_size( history ));
 }
 

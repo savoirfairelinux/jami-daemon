@@ -54,7 +54,7 @@ calltree_update_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
  * @param c The call to remove
  */
 void
-calltree_remove_call (calltab_t* ct, callable_obj_t * c);
+calltree_remove_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 
 void
 calltree_add_conference (calltab_t* tab, const conference_obj_t* conf);

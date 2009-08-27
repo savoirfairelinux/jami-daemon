@@ -314,19 +314,24 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
 }
 
     void
-calltree_remove_call (calltab_t* tab, callable_obj_t * c)
+    calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 {
     GtkTreeIter iter;
     GValue val;
     callable_obj_t * iterCall;
     GtkTreeStore* store = tab->store;
 
-    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
+    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
     int i;
     for( i = 0; i < nbChild; i++)
     {
-        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, parent, i))
         {
+	    if(gtk_tree_model_iter_has_child(GTK_TREE_MODEL(store), &iter))
+	    {
+		calltree_remove_call (tab, c, &iter);
+	    }
+
             val.g_type = 0;
             gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
@@ -700,7 +705,7 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
 	    call = calllist_get (tab, call_id);
 	    // create_new_call_from_details (conf_id, conference_details, &c);
 
-	    calltree_remove_call(tab, call);
+	    calltree_remove_call(tab, call, NULL);
 	    calltree_add_call (tab, call, &iter);
 	}
     }
@@ -739,8 +744,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
 
     int nbParticipant;
 
-    int i;
-    int j;
+    int i, j;
     for( i = 0; i < nbChild; i++)
     {
         if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter_parent, NULL, i))

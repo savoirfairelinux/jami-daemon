@@ -139,7 +139,7 @@ sflphone_ringing(callable_obj_t * c )
 sflphone_hung_up( callable_obj_t * c)
 {
     calllist_remove( current_calls, c->_callID);
-    calltree_remove_call(current_calls, c);
+    calltree_remove_call(current_calls, c, NULL);
     c->_state = CALL_STATE_DIALING;
     update_menus();
 #if GTK_CHECK_VERSION(2,10,0)
