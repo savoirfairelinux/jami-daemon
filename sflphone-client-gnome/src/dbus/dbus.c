@@ -124,11 +124,11 @@ call_state_cb (DBusGProxy *proxy UNUSED,
                 // peer hung up, the conversation was established, so _stop has been initialized with the current time value
                 DEBUG("call state current");
                 set_timestamp (&c->_time_stop);
-                calltree_update_call( history, c );
+                calltree_update_call( history, c, NULL);
             }
             stop_notification();
             sflphone_hung_up (c);
-            calltree_update_call( history, c );
+            calltree_update_call( history, c, NULL );
             status_bar_display_account();
         }
         else if ( strcmp(state, "UNHOLD_CURRENT") == 0 )

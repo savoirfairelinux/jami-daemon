@@ -346,7 +346,7 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c)
 }
 
     void
-calltree_update_call (calltab_t* tab, callable_obj_t * c)
+    calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 {
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
@@ -354,12 +354,21 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c)
     callable_obj_t * iterCall;
     GtkTreeStore* store = tab->store;
 
-    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
+    
+    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
     int i;
+
     for( i = 0; i < nbChild; i++)
     {
-        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+
+        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, parent, i))
         {
+
+	    if(gtk_tree_model_iter_has_child(GTK_TREE_MODEL(store), &iter))
+	    {
+		calltree_update_call (tab, c, &iter);
+	    }
+
             val.g_type = 0;
             gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
@@ -647,7 +656,8 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
     // New call in the list
     
     gchar * description;
-    description = g_markup_printf_escaped("<b>%s</b>", conf->_confID);
+    // description = g_markup_printf_escaped("<b>%s</b>", conf->_confID);
+    description = g_markup_printf_escaped("<b>%s</b>", "");
 
     gtk_tree_store_prepend (tab->store, &iter, NULL);
 

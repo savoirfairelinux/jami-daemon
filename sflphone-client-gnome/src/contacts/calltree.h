@@ -47,7 +47,7 @@ calltree_add_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
  * @param c The call to update
  */
 void
-calltree_update_call (calltab_t* ct, callable_obj_t * c);
+calltree_update_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 
 /**
  * Remove a call from the call tree

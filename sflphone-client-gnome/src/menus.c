@@ -459,7 +459,7 @@ edit_paste ( void * foo UNUSED)
                     {
                         selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);	        		
                     }
-                    calltree_update_call(current_calls, selectedCall);
+                    calltree_update_call(current_calls, selectedCall, NULL);
                 }
                 break;
             case CALL_STATE_RINGING:
@@ -476,7 +476,7 @@ edit_paste ( void * foo UNUSED)
 
                     selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);
 
-                    calltree_update_call(current_calls, selectedCall);
+                    calltree_update_call(current_calls, selectedCall, NULL);
                 }
                 break;
             case CALL_STATE_CURRENT:
@@ -492,7 +492,7 @@ edit_paste ( void * foo UNUSED)
                         gchar * temp = g_strconcat(selectedCall->_peer_number, oneNo, NULL);
                         selectedCall->_peer_info = get_peer_info (temp, selectedCall->_peer_name);
                         // g_free(temp);
-                        calltree_update_call(current_calls, selectedCall);
+                        calltree_update_call(current_calls, selectedCall, NULL);
 
                     }
                 }
@@ -511,7 +511,7 @@ edit_paste ( void * foo UNUSED)
 
         g_free(selectedCall->_peer_info);
         selectedCall->_peer_info = g_strconcat("\"\" <", selectedCall->_peer_number, ">", NULL);
-        calltree_update_call(current_calls,selectedCall);
+        calltree_update_call(current_calls, selectedCall, NULL);
     }
 
 }

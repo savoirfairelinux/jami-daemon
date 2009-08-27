@@ -123,7 +123,7 @@ sflphone_quit ()
 sflphone_hold (callable_obj_t * c )
 {
     c->_state = CALL_STATE_HOLD;
-    calltree_update_call(current_calls,c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -131,7 +131,7 @@ sflphone_hold (callable_obj_t * c )
 sflphone_ringing(callable_obj_t * c )
 {
     c->_state = CALL_STATE_RINGING;
-    calltree_update_call(current_calls,c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -301,7 +301,7 @@ sflphone_hang_up()
                 break;
         }
     }
-    calltree_update_call( history , selectedCall );
+    calltree_update_call(history, selectedCall, NULL);
 }
 
 
@@ -321,7 +321,7 @@ sflphone_pick_up()
                 break;
             case CALL_STATE_INCOMING:
                 selectedCall->_history_state = INCOMING;
-                calltree_update_call( history , selectedCall );
+                calltree_update_call( history, selectedCall, NULL);
                 dbus_accept (selectedCall);
                 DEBUG("from sflphone_pick_up : "); stop_notification();
                 break;
@@ -404,7 +404,7 @@ sflphone_off_hold ()
 sflphone_fail( callable_obj_t * c )
 {
     c->_state = CALL_STATE_FAILURE;
-    calltree_update_call(current_calls,c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -412,7 +412,7 @@ sflphone_fail( callable_obj_t * c )
 sflphone_busy( callable_obj_t * c )
 {
     c->_state = CALL_STATE_BUSY;
-    calltree_update_call(current_calls, c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -422,7 +422,7 @@ sflphone_current( callable_obj_t * c )
     if( c->_state != CALL_STATE_HOLD )
         set_timestamp (&c->_time_start);
     c->_state = CALL_STATE_CURRENT;
-    calltree_update_call(current_calls,c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -432,7 +432,7 @@ sflphone_record( callable_obj_t * c )
     if( c->_state != CALL_STATE_HOLD )
         set_timestamp (&c->_time_start);
     c->_state = CALL_STATE_RECORD;
-    calltree_update_call(current_calls,c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -444,7 +444,7 @@ sflphone_set_transfert()
     {
         c->_state = CALL_STATE_TRANSFERT;
         c->_trsft_to = g_strdup("");
-        calltree_update_call(current_calls,c);
+        calltree_update_call(current_calls, c, NULL);
         update_menus();
     }
     toolbar_update_buttons();
@@ -458,7 +458,7 @@ sflphone_unset_transfert()
     {
         c->_state = CALL_STATE_CURRENT;
         c->_trsft_to = g_strdup("");
-        calltree_update_call(current_calls,c);
+        calltree_update_call(current_calls, c, NULL);
         update_menus();
     }
     toolbar_update_buttons();
@@ -517,7 +517,7 @@ process_dialing(callable_obj_t * c, guint keyval, gchar * key)
 						g_free(before);
 						DEBUG("TO: backspace %s", c->_peer_number);
                     }
-                    calltree_update_call(current_calls,c);
+					calltree_update_call(current_calls, c, NULL);
                 }
                 else if(strlen(c->_peer_number) == 0)
                 {
@@ -552,7 +552,7 @@ process_dialing(callable_obj_t * c, guint keyval, gchar * key)
                     //g_free(c->_peer_name);
                     //c->_peer_name = g_strconcat("\"\" <", c->_peer_number, ">", NULL);
                 }
-                calltree_update_call(current_calls,c);
+                calltree_update_call(current_calls, c, NULL);
             }
             break;
     }
@@ -622,7 +622,7 @@ sflphone_keypad( guint keyval, gchar * key)
                     case 65307: /* ESCAPE */
                         dbus_hang_up(c);
                         set_timestamp (&c->_time_stop);
-                        calltree_update_call( history , c );
+                        calltree_update_call(history, c, NULL);
                         break;
                     default:
                         // To play the dtmf when calling mail box for instance
@@ -645,7 +645,7 @@ sflphone_keypad( guint keyval, gchar * key)
                     case 65293: /* ENTER */
                     case 65421: /* ENTER numpad */
                         c->_history_state = INCOMING;
-                        calltree_update_call( history , c );
+                        calltree_update_call(history, c, NULL);
                         dbus_accept(c);
                         DEBUG("from sflphone_keypad ( enter ) : "); stop_notification();
                         break;
@@ -695,7 +695,7 @@ sflphone_keypad( guint keyval, gchar * key)
                     case 65307: /* ESCAPE */
                         dbus_hang_up(c);
                         //c->_stop = 0;
-                        calltree_update_call( history , c );
+                        calltree_update_call(history, c, NULL);
                         break;
                 }
                 break;
@@ -880,7 +880,7 @@ sflphone_rec_call()
             WARN("Should not happen in sflphone_off_hold ()!");
             break;
     }
-    calltree_update_call(current_calls,selectedCall);
+    calltree_update_call(current_calls, selectedCall, NULL);
     update_menus();
 
     // gchar* codname = sflphone_get_current_codec_name();
