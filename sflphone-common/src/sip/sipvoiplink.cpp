@@ -519,7 +519,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     pjsip_cred_info *cred = account->getCredInfo();
     int credential_count = account->getCredentialCount();
-    _debug("setting %d credentials\n", credential_count);
+    _debug("setting %d credentials in sendRegister\n", credential_count);
     pjsip_regc_set_credentials (regc, credential_count, cred);
             
     // Add User-Agent Header

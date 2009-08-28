@@ -73,27 +73,43 @@ int SIPAccount::initCredential(void)
     int dataType = 0;
     md5HashingEnabled = Manager::instance().getConfigBool(PREFERENCES, CONFIG_MD5HASH);
     std::string digest;
-    if (md5HashingEnabled) {
-        dataType = PJSIP_CRED_DATA_DIGEST;
-    } else {
-        dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
-    }
-        
+
+    // Create the credential array
     pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc(sizeof(pjsip_cred_info)*(credentialCount));        
     if (cred_info == NULL) {
         _debug("Failed to set cred_info for account %s\n", _accountID.c_str());
         return !SUCCESS;
     }
+    
     pj_bzero (cred_info, sizeof(pjsip_cred_info)*credentialCount);
     
+    // Use authentication username if provided
     if (!_authenticationUsername.empty()) {
         cred_info[0].username = pj_str(strdup(_authenticationUsername.c_str())); 
     } else {
         cred_info[0].username = pj_str(strdup(_username.c_str()));
     }
+   
+    // Set password 
     cred_info[0].data =  pj_str(strdup(_password.c_str()));
+    
+    // Set realm for that credential. * by default.
     cred_info[0].realm = pj_str(strdup(_realm.c_str()));
+    
+    // We want to make sure that the password is really
+    // 32 characters long. Otherwise, pjsip will fail
+    // on an assertion.
+    if (md5HashingEnabled && _password.length() == 32) {
+        dataType = PJSIP_CRED_DATA_DIGEST; 
+        _debug("Setting digest \n");   
+    } else {
+        dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
+    }
+    
+    // Set the datatype 
     cred_info[0].data_type = dataType;
+    
+    // Set the secheme
     cred_info[0].scheme = pj_str("digest");
             
     int i;
@@ -112,7 +128,18 @@ int SIPAccount::initCredential(void)
         cred_info[i].username = pj_str(strdup(username.c_str()));
         cred_info[i].data = pj_str(strdup(password.c_str()));
         cred_info[i].realm = pj_str(strdup(realm.c_str()));
+    
+        // We want to make sure that the password is really
+        // 32 characters long. Otherwise, pjsip will fail
+        // on an assertion.
+        if (md5HashingEnabled && _password.length() == 32) {
+            dataType = PJSIP_CRED_DATA_DIGEST; 
+            _debug("Setting digest \n");   
+        } else {
+            dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
+        }
         cred_info[i].data_type = dataType;
+    
         cred_info[i].scheme = pj_str("digest");
         
         _debug("Setting credential %d realm = %s passwd = %s username = %s data_type = %d\n", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
@@ -144,8 +171,10 @@ int SIPAccount::registerVoIPLink()
         initTlsConfiguration();
     }
       
+    // In our definition of the
+    // ip2ip profile (aka Direct IP Calls),
+    // no registration should be performed
     if (_accountID != IP2IP_PROFILE) {  
-        // Start registration
         int status = _link->sendRegister (_accountID);
         ASSERT (status , SUCCESS);
     }

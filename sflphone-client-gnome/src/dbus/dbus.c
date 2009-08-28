@@ -1416,7 +1416,7 @@ dbus_set_md5_credential_hashing(gboolean enabled)
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_md5_credential_hashing(
             configurationManagerProxy,
-            &enabled,
+            enabled,
             &error);
     if(error)
     {

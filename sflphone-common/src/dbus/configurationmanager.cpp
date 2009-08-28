@@ -482,13 +482,18 @@ ConfigurationManager::getRecordDeviceList()
 bool
 ConfigurationManager::isMd5CredentialHashing(void)
 {
-    return Manager::instance().getMd5CredentialHashing();
+    bool isEnabled = Manager::instance().getConfigBool(PREFERENCES, CONFIG_MD5HASH);
+    return isEnabled;
 }
 
 void 
 ConfigurationManager::setMd5CredentialHashing(const bool& enabled)
 {
-    Manager::instance().setMd5CredentialHashing(enabled);
+    if (enabled) {
+        Manager::instance().setConfig(PREFERENCES, CONFIG_MD5HASH, TRUE_STR);
+    } else {
+        Manager::instance().setConfig(PREFERENCES, CONFIG_MD5HASH, FALSE_STR);
+    }
 }
 
 int32_t

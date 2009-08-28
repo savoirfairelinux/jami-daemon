@@ -51,7 +51,6 @@ GtkWidget * label;
 GtkWidget * entryID;
 GtkWidget * entryAlias;
 GtkWidget * entryProtocol;
-GtkWidget * entryEnabled;
 GtkWidget * entryUsername;
 GtkWidget * entryHostname;
 GtkWidget * entryPassword;
@@ -170,12 +169,6 @@ static GtkWidget * create_basic_tab(account_t **a)
 	gtk_widget_set_sensitive( GTK_WIDGET(entryID), FALSE);
 	gtk_table_attach ( GTK_TABLE( table ), entryID, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 #endif
-
-	entryEnabled = gtk_check_button_new_with_mnemonic(_("_Enable this account"));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled),
-			g_strcasecmp(curAccountEnabled,"true") == 0 ? TRUE: FALSE);
-	gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	gtk_widget_set_sensitive( GTK_WIDGET( entryEnabled ) , TRUE );
 
 	label = gtk_label_new_with_mnemonic (_("_Alias"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -340,10 +333,6 @@ static void add_credential_cb (GtkWidget *button, gpointer data)
 {
     GtkTreeIter iter;
     GtkTreeModel *model = (GtkTreeModel *)data;
-    GtkRequisition requisitionTreeView;
-    GtkRequisition oldRequisitionTreeView;
- 
-    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &oldRequisitionTreeView);
            
     gtk_list_store_append (GTK_LIST_STORE (model), &iter);
     gtk_list_store_set (GTK_LIST_STORE (model), &iter,
@@ -351,9 +340,6 @@ static void add_credential_cb (GtkWidget *button, gpointer data)
                         COLUMN_CREDENTIAL_USERNAME, _("Authentication"),
                         COLUMN_CREDENTIAL_PASSWORD, _("Secret"),
                         -1);
-                        
-    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
-    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), oldRequisitionTreeView.width, requisitionTreeView.height + 20);
 }
 
 static void delete_credential_cb(GtkWidget *button, gpointer data)
@@ -362,10 +348,6 @@ static void delete_credential_cb(GtkWidget *button, gpointer data)
     GtkTreeView *treeview = (GtkTreeView *)data;
     GtkTreeModel *model = gtk_tree_view_get_model (treeview);
     GtkTreeSelection *selection = gtk_tree_view_get_selection (treeview);
-    GtkRequisition requisitionTreeView;
-    GtkRequisition oldRequisitionTreeView;
-  
-    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &oldRequisitionTreeView);
           
     if (gtk_tree_selection_get_selected (selection, NULL, &iter))
     {
@@ -375,9 +357,6 @@ static void delete_credential_cb(GtkWidget *button, gpointer data)
         
         gtk_tree_path_free (path);
     }
-
-    gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
-    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), oldRequisitionTreeView.width, requisitionTreeView.height + 20);
 
 }
 
@@ -607,7 +586,7 @@ GtkWidget * create_security_tab(account_t **a)
     GtkRequisition requisitionTreeView;
     gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
     gtk_widget_size_request(GTK_WIDGET(table), &requisitionTable);
-    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTable.width, requisitionTreeView.height + 20);
+    gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTable.width, 120);
     	
     gtk_widget_show_all(ret);
     
@@ -939,9 +918,6 @@ show_account_window (account_t * a)
 	{
 		gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
 
-		g_hash_table_replace(currentAccount->properties,
-				g_strdup(ACCOUNT_ENABLED),
-				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "true": "false"));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_RESOLVE_ONCE),
 				g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "false": "true"));

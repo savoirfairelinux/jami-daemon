@@ -506,14 +506,6 @@ class ManagerImpl {
     void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
 
     /**
-     * Set whether we should pre-hash the credentials 
-     * in config file.
-     * 
-     * @param enabled True if hashing should be used, false otherwise.
-     */
-    void setMd5CredentialHashing(bool enabled);
-
-    /**
      * Retreive the value set in the configuration file.
      * @return True if credentials hashing is enabled.
      */

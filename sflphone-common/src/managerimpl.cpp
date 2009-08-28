@@ -1844,16 +1844,6 @@ ManagerImpl::getMd5CredentialHashing(void)
     return getConfigBool(PREFERENCES, CONFIG_MD5HASH);
 }
 
-void 
-ManagerImpl::setMd5CredentialHashing(bool enabled)
-{
-    if (enabled) {
-        setConfig(PREFERENCES, CONFIG_MD5HASH, TRUE_STR);
-    } else {
-        setConfig(PREFERENCES, CONFIG_MD5HASH, FALSE_STR);
-    }
-}
-
 int
 ManagerImpl::getDialpad (void)
 {
@@ -2695,7 +2685,8 @@ void ManagerImpl::setCredential (const std::string& accountID, const int32_t& in
         // because deleteCredential() is called before this 
         // method. Therefore, we cannot check if the value 
         // is different from the one previously stored in 
-        // the configuration file.
+        // the configuration file. This is to avoid to 
+        // re-hash a hashed password.
          
         if(password.length() != 32) {
             password = computeMd5HashFromCredential(username, password, realm);
@@ -2728,12 +2719,12 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if((iter = map_cpy.find(USERNAME)) != map_cpy.end()) { username = iter->second; }
     if((iter = map_cpy.find(PASSWORD)) != map_cpy.end()) { password = iter->second; }
     if((iter = map_cpy.find(REALM)) != map_cpy.end()) { realm = iter->second; }
-																																																															
+
+    setConfig(accountID, REALM, realm);
+    setConfig(accountID, USERNAME, username);
+    setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);        																																																															
     if(!getMd5CredentialHashing()) {
-        setConfig(accountID, REALM, realm);
-        setConfig(accountID, USERNAME, username);
         setConfig(accountID, PASSWORD, password);    
-        setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
     } else {
         // Make sure not to re-hash the password field if
         // it is already saved as a MD5 Hash.
