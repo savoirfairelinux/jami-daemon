@@ -557,7 +557,7 @@ create_edit_menu()
     gtk_widget_show (menu_items);
 #endif
 
-    menu_items = gtk_menu_item_new_with_mnemonic( _("_Accounts") );
+    menu_items = gtk_menu_item_new_with_mnemonic( _("_Manage accounts") );
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
             G_CALLBACK (edit_accounts),

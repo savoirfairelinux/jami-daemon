@@ -197,9 +197,15 @@ void build_wizard( void ) {
 
 	wiz = ( struct _wizard* )g_malloc( sizeof( struct _wizard));
 	current = g_new0(account_t, 1);
-	current->properties = g_hash_table_new(NULL, g_str_equal);
+	current->properties = NULL;
+	current->properties = dbus_account_details(NULL);	
+	if (current->properties == NULL) {
+	    DEBUG("Failed to get default values. Creating from scratch");
+	    current->properties = g_hash_table_new(NULL, g_str_equal);
+	}
+    current->accountID = "new";
 
-	wiz->assistant = gtk_assistant_new( );
+	wiz->assistant = gtk_assistant_new();
 
 	gtk_window_set_title( GTK_WINDOW(wiz->assistant), _("SFLphone account creation wizard") );
 	gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
