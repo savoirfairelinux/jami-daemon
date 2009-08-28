@@ -476,7 +476,8 @@ show_account_list_config_dialog(void)
     /* Set window properties */
     gtk_dialog_set_has_separator(accountListDialog, FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(accountListDialog), 0);
-
+    gtk_window_set_resizable(GTK_WINDOW(accountListDialog), FALSE);
+    
     gnome_main_section_new (_("Configured Accounts"), &accountFrame);
     gtk_box_pack_start( GTK_BOX(accountListDialog->vbox ), accountFrame , TRUE, TRUE, 0);
     gtk_widget_show(accountFrame);
@@ -488,9 +489,28 @@ show_account_list_config_dialog(void)
  
     /* Status bar for the account list */
     status_bar = gtk_statusbar_new();
-    gtk_widget_show(status_bar);    
+    gtk_statusbar_set_has_resize_grip(status_bar, FALSE);    
+    gtk_widget_show(status_bar);
     gtk_box_pack_start(GTK_BOX(accountListDialog->vbox ), status_bar, TRUE, TRUE, 0);
-   
+
+    int number_accounts = account_list_get_size();
+    if (number_accounts) {
+        gchar number_accounts_str[4];
+        g_snprintf(number_accounts_str, 4, "%d", number_accounts);
+        
+        gchar * message = g_strconcat(
+                            _("There "),
+                            (number_accounts == 1) ? _("is "):_("are "),
+                            number_accounts_str,
+                            _(" active account"), 
+                            (number_accounts == 1) ? _(""):_("s"),
+                            NULL);                 
+        gtk_statusbar_push(status_bar, CONTEXT_ID_REGISTRATION, message);
+        g_free(message);
+    } else {
+        gtk_statusbar_push(status_bar, CONTEXT_ID_REGISTRATION, _("You have no active account"));        
+    }
+    
     gtk_dialog_run(accountListDialog);
     
     status_bar_display_account ();
