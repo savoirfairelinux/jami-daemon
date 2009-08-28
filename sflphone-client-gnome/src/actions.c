@@ -846,11 +846,11 @@ sflphone_detach_participant()
 }
 
     void
-sflphone_join_participant(callable_obj_t* selected_call, callable_obj_t* dragged_call)
+sflphone_join_participant(const gchar* sel_callID, const gchar* drag_callID)
 {
     DEBUG("sflphone join participant from conference");
 
-    dbus_join_participant(selected_call, dragged_call);
+    dbus_join_participant(sel_callID, drag_callID);
 }
 
     void

@@ -49,6 +49,7 @@ public:
     void setVolume( const std::string& device, const double& value );
     double getVolume( const std::string& device );
     void joinParticipant( const std::string& sel_callID, const std::string& drag_callID );
+    void addParticipant( const std::string& callID, const std::string& confID );
     void detachParticipant( const std::string& callID );
     std::vector< std::string > getConferenceList (void);
     std::vector< std::string > getParticipantList (const std::string& confID);

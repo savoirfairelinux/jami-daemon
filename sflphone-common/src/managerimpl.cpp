@@ -675,8 +675,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
     _debug("ManagerImpl:: _conferencemap.size: %i\n", _conferencemap.size());
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
 
-    if (iter != _conferencemap.end())
-    {
+    if (iter != _conferencemap.end()) {
 	_debug("Found conference id %s in conferencemap\n", conference_id.c_str());
         conf = iter->second;
     }
@@ -688,10 +687,9 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 
     _debug("ManagerImpl:: _conferencecall.size: %i\n", _conferencecall.size());
     ConferenceCallMap::iterator iter_p = temp_map.begin();
-    while (iter_p != temp_map.end())
-    {
-	if(iter_p->second == conf)
-	{
+    while (iter_p != temp_map.end()) {
+
+	if(iter_p->second == conf) {
 	    _debug("ManagerImpl:: remove particiant (%s) from conference %s\n", iter_p->first.c_str(), conference_id.c_str());
 	    _conferencecall.erase(iter_p->first);
 	}
@@ -714,39 +712,50 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 }
 
 bool
-ManagerImpl::participToConference(const CallID& call_id)
+ManagerImpl::isConference(const CallID& id)
 {
-    ConferenceCallMap::iterator iter = _conferencecall.find(call_id);
-    if(iter == _conferencecall.end())
-    {
+    ConferenceMap::iterator iter = _conferencemap.find(id);
+    if(iter == _conferencemap.end()) {
 	return false;
     }
-    else
-    {
+    else {
 	return true;
     }
 }
-/*
-void
-ManagerImpl::addParticipant(const CallID& call_id)
+
+bool
+ManagerImpl::participToConference(const CallID& call_id)
 {
-    _debug("ManagerImpl::addParticipant(%s)\n", call_id.c_str());
-    _debug("    Current call ID %s\n", getCurrentCallId().c_str());
+    ConferenceCallMap::iterator iter = _conferencecall.find(call_id);
 
-    // TODO: add conference_id as a second parameter
-    ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+    if(iter == _conferencecall.end()) {
+	return false;
+    }
+    else {
+	return true;
+    }
+}
 
-    if(iter == _conferencemap.end())
-    {
+
+void
+ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
+{
+    _debug("ManagerImpl::addParticipant(%s, %s)\n", call_id.c_str(), conference_id.c_str());
+    // _debug("    Current call ID %s\n", getCurrentCallId().c_str());
+
+    ConferenceMap::iterator iter = _conferencemap.find(conference_id);
+
+    if(iter == _conferencemap.end()) {
+
 	_debug("NO CONFERENCE YET, CREATE ONE\n");
-	createConference(call_id, getCurrentCallId());
+	// createConference(call_id, getCurrentCallId());
 
-	answerCall(call_id);
+	// answerCall(call_id);
 
     }
-    else
-    {
-	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
+    else {
+
+	_debug("ADD PARTICIPANT TO CONFERENCE\n");
 	Conference* conf = iter->second;
 
 	conf->add(call_id);
@@ -757,7 +766,7 @@ ManagerImpl::addParticipant(const CallID& call_id)
     }
     
 }
-*/
+
 
 void
 ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
@@ -765,15 +774,14 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     _debug("ManagerImpl::joinParticipant(%s, %s)\n", call_id1.c_str(), call_id2.c_str());
     // _debug("    Current call ID %s\n", getCurrentCallId().c_str());
 
-    // TODO: add conference_id as a second parameter
     std::map<std::string, std::string> call1_details = getCallDetails(call_id1);
     std::map<std::string, std::string> call2_details = getCallDetails(call_id2);
 
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
     std::map<std::string, std::string>::iterator iter_details;
 
-    if(iter == _conferencemap.end())
-    {
+    if(iter == _conferencemap.end()){
+
 	 _debug("NO CONFERENCE YET, CREATE ONE\n");
 	 createConference(call_id1, call_id2);
 
@@ -806,8 +814,8 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
         
 
     }
-    else
-    {
+    else {
+
 	 _debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
 	 Conference* conf = iter->second;
 	 conf->add(call_id1);
@@ -849,13 +857,11 @@ ManagerImpl::detachParticipant(const CallID& call_id)
     // TODO: add conference_id as a second parameter
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
 
-    if(iter == _conferencemap.end())
-    {
+    if(iter == _conferencemap.end()) {
 	_debug("Error there is no conference, call is not conferencing\n");
 
     }
-    else
-    {
+    else {
 	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
 	// Conference* conf = iter->second;
 
@@ -881,12 +887,10 @@ ManagerImpl::removeParticipant(const CallID& call_id)
     ConferenceMap conf_map = _conferencemap;
     ConferenceMap::iterator iter = conf_map.find(default_conf);
 
-    if(iter == _conferencemap.end())
-    {
+    if(iter == _conferencemap.end()) {
 	_debug("NO CONFERENCE CREATED, CANNOT REMOVE PARTICIPANT\n");
     }
-    else
-    {
+    else {
 	conf = iter->second;
 
 	_debug("REMOVE PARTICIPANT %s\n", call_id.c_str());
@@ -904,16 +908,14 @@ ManagerImpl::addStream(const CallID& call_id)
 {
     _debug("ManagerImpl::addStream %s\n", call_id.c_str());
 
-    if(participToConference(call_id))
-    {
+    if(participToConference(call_id)) {
 	ConferenceMap::iterator iter = _conferencemap.find(default_conf);
 	
 	Conference* conf = iter->second;
 
 	conf->bindParticipant(call_id);
     }
-    else
-    {
+    else {
 	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
     }
 }
@@ -925,8 +927,7 @@ ManagerImpl::removeStream(const CallID& call_id)
 
     getAudioDriver()->getMainBuffer()->unBindAll(call_id);
 
-    if(participToConference(call_id))
-    {
+    if(participToConference(call_id)) {
 	removeParticipant(call_id);
     }
     

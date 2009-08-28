@@ -57,6 +57,11 @@
       <arg type="s" name="drag_callID" direction="in"/>
     </method>
 
+    <method name="addParticipant">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="confID" direction="in"/>
+    </method>
+
     <method name="detachParticipant">
       <arg type="s" name="callID" direction="in"/>
     </method>

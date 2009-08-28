@@ -913,13 +913,27 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
         if(dragged_path_depth == 1)
         {
 	    // dragged a single call on a single call
-	    if(selected_call != NULL && dragged_call != NULL)
-                sflphone_join_participant(selected_call, dragged_call);
-
-	    // TODO: dragged a single call on a conference
-	    // TODO: dragged a conference on a single call
-	    // TODO: dragged a single call on a NULL element
-	    // TODO: dragged a conference on a NULL element
+	    if (selected_type == A_CALL && dragged_type == A_CALL) 
+	    {
+	        if(selected_call != NULL && dragged_call != NULL)
+		    sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
+	    }
+	    else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
+	    {
+		// TODO: dragged a single call on a conference
+		sflphone_join_participant(selected_call_id, dragged_call_id);
+	    }
+	    else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
+	    {
+		// TODO: dragged a conference on a single call
+		
+	    }
+	    else if(selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE)
+	    {
+		// TODO: dragged a conference on a conference
+	    }
+	    // TODO: dragged a single call on a NULL element (should do nothing)
+	    // TODO: dragged a conference on a NULL element (should do nothing)
 	
         }
 	else // dragged_path_depth == 2
@@ -1011,8 +1025,15 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
             case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
                 dragged_path = gtk_tree_path_to_string(drop_path);
 		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-		dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
-		dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
+		if (dragged_type == A_CALL)
+		{
+		    dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+		    dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
+		}
+		else
+		{
+		    dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
+		}
                 g_print("    INTO_OR_AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
 
@@ -1027,8 +1048,15 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
             case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
                 dragged_path = gtk_tree_path_to_string(drop_path);
 		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-		dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
-		dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
+		if (dragged_type == A_CALL)
+		{
+		    dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+		    dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
+		}
+		else
+		{
+		    dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
+		}
                 g_print("    INTO_OR_BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
 

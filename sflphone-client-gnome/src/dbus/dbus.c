@@ -1297,17 +1297,17 @@ dbus_set_volume_controls(  )
 }
 
 
-dbus_join_participant(const callable_obj_t * c_sel, const callable_obj_t * c_drag)
+dbus_join_participant(const gchar* sel_callID, const gchar* drag_callID)
 {
 
-    DEBUG("dbus_join_participant %s and %s\n", c_sel->_callID, c_drag->_callID);
+    DEBUG("dbus_join_participant %s and %s\n", sel_callID, drag_callID);
 
     GError* error = NULL;
     
     org_sflphone_SFLphone_CallManager_join_participant (
              callManagerProxy, 
-	     c_sel->_callID, 
-	     c_drag->_callID, 
+	     sel_callID, 
+	     drag_callID, 
 	     &error);
     if(error)
     {
