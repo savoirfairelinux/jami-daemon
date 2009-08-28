@@ -20,7 +20,7 @@
  
 #ifndef __ACCOUNTWINDOW_H__
 #define __ACCOUNTWINDOW_H__
-/** @file accountwindow.h
+/** @file accountconfigdialog.h
   * @brief The window to edit account details.
   */
 

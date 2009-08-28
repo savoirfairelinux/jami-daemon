@@ -22,7 +22,7 @@
 #include <actions.h>
 #include <mainwindow.h>
 #include <accountlist.h>
-#include <accountwindow.h>
+#include <accountconfigdialog.h>
 #include <zrtpadvanceddialog.h>
 #include <tlsadvanceddialog.h>
 
@@ -698,7 +698,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 5);	
 
-	label = gtk_label_new_with_mnemonic (_("Local port"));
+	label = gtk_label_new_with_mnemonic (_("Registration expire"));
 	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     expireSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);

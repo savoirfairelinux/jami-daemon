@@ -8,7 +8,7 @@ libconfig_la_SOURCES = \
   accountlistconfigdialog.c \
   zrtpadvanceddialog.c \
   tlsadvanceddialog.c \
-  accountwindow.c \
+  accountconfigdialog.c \
   hooks-config.c \
   audioconf.c \
   utils.c 
