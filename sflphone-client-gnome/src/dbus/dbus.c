@@ -1339,15 +1339,15 @@ dbus_add_participant(const gchar* callID, const gchar* confID)
 
 
     void
-dbus_detach_participant(const callable_obj_t * c)
+dbus_detach_participant(const gchar* callID)
 {
 
-    DEBUG("dbus_detach_participant %s\n", c->_callID);
+    DEBUG("dbus_detach_participant %s\n", callID);
 
     GError* error = NULL;
     org_sflphone_SFLphone_CallManager_detach_participant(
             callManagerProxy,
-            c->_callID,
+            callID,
             &error);
     if(error)
     {

@@ -32,7 +32,7 @@ is_inserted( GtkWidget* button )
     static void
 detach_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
-    sflphone_detach_participant();
+    sflphone_detach_participant(NULL);
 }
 
 /**

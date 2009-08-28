@@ -926,6 +926,7 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
 	    {
 		// TODO: dragged a conference on a single call
+		sflphone_add_participant(dragged_call_id, selected_call_id);
 		
 	    }
 	    else if(selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE)

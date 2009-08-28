@@ -186,4 +186,6 @@ void sflphone_join_participant(const gchar* sel_callID, const gchar* drag_callID
 
 void sflphone_add_participant(const gchar* callID, const gchar* confID);
 
+void sflphone_detach_participant(const gchar* callID);
+
 #endif

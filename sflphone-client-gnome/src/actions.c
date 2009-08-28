@@ -837,12 +837,18 @@ sflphone_get_current_codec_name()
 }
 
     void
-sflphone_detach_participant()
+sflphone_detach_participant(const gchar* callID)
 {
     DEBUG("sflphone detach participant from conference");
 
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-    dbus_detach_participant(selectedCall);
+    if(callID == NULL) {
+        callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+        dbus_detach_participant(selectedCall->_callID);
+    }
+    else {
+	dbus_detach_participant(callID);	
+    }
+     
 }
 
     void
