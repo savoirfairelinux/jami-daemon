@@ -907,6 +907,7 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 	_debug("NO CONFERENCE CREATED, CANNOT REMOVE PARTICIPANT\n");
     }
     else {
+
 	conf = iter->second;
 
 	_debug("REMOVE PARTICIPANT %s\n", call_id.c_str());

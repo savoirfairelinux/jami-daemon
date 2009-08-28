@@ -841,11 +841,22 @@ sflphone_detach_participant(const gchar* callID)
 {
     DEBUG("sflphone detach participant from conference");
 
+    
+
     if(callID == NULL) {
         callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+	DEBUG("    sflphone_detach_participant %s\n", selectedCall->_callID);
+
+	calltree_remove_call(current_calls, selectedCall, NULL);
+	calltree_add_call(current_calls, selectedCall, NULL);
         dbus_detach_participant(selectedCall->_callID);
     }
     else {
+	callable_obj_t * selectedCall = calllist_get(current_calls, callID);
+	DEBUG("    sflphone_detach_participant %s\n", callID);
+
+	calltree_remove_call(current_calls, selectedCall, NULL);
+	calltree_add_call(current_calls, selectedCall, NULL);
 	dbus_detach_participant(callID);	
     }
      

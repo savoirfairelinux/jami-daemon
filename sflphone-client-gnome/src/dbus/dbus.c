@@ -210,6 +210,10 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
 {
     DEBUG ("Conference changed\n");
     // sflphone_display_transfer_status("Transfer successfull");
+    conference_obj_t* changed_conf = conferencelist_get(confID);
+
+    calltree_remove_conference (current_calls, changed_conf);
+    calltree_add_conference (current_calls, changed_conf);
 }
 
 
@@ -416,7 +420,6 @@ dbus_connect ()
             "conferenceRemoved", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
             "conferenceRemoved", G_CALLBACK(conference_removed_cb), NULL, NULL);
-
 
     configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
             "org.sflphone.SFLphone",
