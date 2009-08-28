@@ -377,6 +377,12 @@ GtkWidget* build_email_configuration( void ) {
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->mailbox);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->mailbox, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+    // Security options
+	wiz->zrtp_enable = gtk_check_button_new_with_mnemonic(_("Secure communications with _ZRTP"));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable), FALSE);
+	gtk_table_attach ( GTK_TABLE( table ), wiz->zrtp_enable, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_widget_set_sensitive( GTK_WIDGET( wiz->zrtp_enable ) , TRUE );
+	
 	return wiz->email;
 }
 
