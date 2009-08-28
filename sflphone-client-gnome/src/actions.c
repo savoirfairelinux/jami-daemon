@@ -848,16 +848,25 @@ sflphone_detach_participant()
     void
 sflphone_join_participant(const gchar* sel_callID, const gchar* drag_callID)
 {
-    DEBUG("sflphone join participant from conference");
+    DEBUG("sflphone join participants %s and %s", sel_callID, drag_callID);
 
+    
     dbus_join_participant(sel_callID, drag_callID);
+}
+
+
+    void
+sflphone_add_participant(const gchar* callID, const gchar* confID)
+{
+    DEBUG("sflphone add participant %s to conference %s", callID, confID);
+
+    dbus_add_participant(callID, confID);
 }
 
     void
 sflphone_add_conference()
 {
     DEBUG("sflphone add a conference to tree view");
-
     // dbus_join_participant(selected_call, dragged_call);
 }
 

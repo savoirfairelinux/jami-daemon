@@ -743,7 +743,10 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     _debug("ManagerImpl::addParticipant(%s, %s)\n", call_id.c_str(), conference_id.c_str());
     // _debug("    Current call ID %s\n", getCurrentCallId().c_str());
 
+    std::map<std::string, std::string> call_details = getCallDetails(call_id);
+
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
+    std::map<std::string, std::string>::iterator iter_details;
 
     if(iter == _conferencemap.end()) {
 
@@ -762,7 +765,20 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	
 	_conferencecall.insert(pair<CallID, Conference*>(call_id, conf));
 
-	answerCall(call_id);
+	iter_details = call_details.find("CALL_STATE");
+
+	if (iter_details->second == "HOLD")
+	 {
+	     _debug("    OFFHOLD %s\n", call_id.c_str());
+	     offHoldCall(call_id);
+	 }
+	 else if(iter_details->second == "INCOMING")
+	 {
+	     _debug("    ANSWER %s\n", call_id.c_str());
+	     answerCall(call_id);
+	 }
+
+	_dbus->getCallManager()->conferenceChanged(conference_id);
     }
     
 }

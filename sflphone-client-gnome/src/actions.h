@@ -182,4 +182,8 @@ void sflphone_fill_history (void);
 
 void sflphone_save_history (void);
 
+void sflphone_join_participant(const gchar* sel_callID, const gchar* drag_callID);
+
+void sflphone_add_participant(const gchar* callID, const gchar* confID);
+
 #endif

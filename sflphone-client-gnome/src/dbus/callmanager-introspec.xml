@@ -126,6 +126,7 @@
     </signal>
 
     <signal name="conferenceChanged">
+      <arg type="s" name="confID"  direction="out"/>
     </signal>
 
     <method name="getParticipantList">

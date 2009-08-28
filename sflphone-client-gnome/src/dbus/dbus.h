@@ -449,7 +449,7 @@ void dbus_set_stun_server( gchar* server);
 gint dbus_stun_is_enabled (void);
 void dbus_enable_stun (void);
 
-void dbus_add_participant(const callable_obj_t * c);
+void dbus_add_participant(const gchar* callID, const gchar* confID);
 
 void dbus_set_record (const callable_obj_t * c);
 

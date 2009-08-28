@@ -205,6 +205,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
 
 static void
 conference_changed_cb (DBusGProxy *proxy UNUSED,
+	const gchar* confID,
         void * foo  UNUSED )
 {
     DEBUG ("Conference changed\n");
@@ -402,7 +403,7 @@ dbus_connect ()
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
             G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_add_signal (callManagerProxy,
-            "conferenceChanged", G_TYPE_INVALID);
+            "conferenceChanged", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
             "conferenceChanged", G_CALLBACK(conference_changed_cb), NULL, NULL);
 
@@ -1315,6 +1316,27 @@ dbus_join_participant(const gchar* sel_callID, const gchar* drag_callID)
     }
     
 }
+
+
+dbus_add_participant(const gchar* callID, const gchar* confID)
+{
+
+    DEBUG("dbus_add_participant %s and %s\n", callID, confID);
+
+    GError* error = NULL;
+    
+    org_sflphone_SFLphone_CallManager_add_participant (
+             callManagerProxy, 
+	     callID, 
+	     confID, 
+	     &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+}
+
 
     void
 dbus_detach_participant(const callable_obj_t * c)
