@@ -212,7 +212,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get(confID);
 
-    calltree_remove_conference (current_calls, changed_conf);
+    calltree_remove_conference (current_calls, changed_conf, NULL);
     calltree_add_conference (current_calls, changed_conf);
 }
 
@@ -241,7 +241,7 @@ conference_removed_cb (DBusGProxy *proxy UNUSED,
     DEBUG ("Conference removed %s\n", confID);
 
     conference_obj_t * c = conferencelist_get(confID);
-    calltree_remove_conference (current_calls, c);
+    calltree_remove_conference (current_calls, c, NULL);
     conferencelist_remove(c->_confID); 
 }
 

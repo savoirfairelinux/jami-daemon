@@ -701,7 +701,7 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
     // description = g_markup_printf_escaped("<b>%s</b>", conf->_confID);
     description = g_markup_printf_escaped("<b>%s</b>", "");
 
-    gtk_tree_store_prepend (tab->store, &iter, NULL);
+    gtk_tree_store_append (tab->store, &iter, NULL);
 
     if( tab == current_calls )
     {
@@ -765,7 +765,7 @@ void calltree_update_conference (calltab_t* tab, const gchar* confID)
 }
 
 
-void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
+void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, GtkTreeIter *parent)
 {
 
     DEBUG("calltree_remove_conference %s\n", conf->_confID);
@@ -778,17 +778,21 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
     callable_obj_t * call;
     GtkTreeStore* store = tab->store;
 
-    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
+    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
 
     int nbParticipant;
-
+    
     int i, j;
     for( i = 0; i < nbChild; i++)
     {
-        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter_parent, NULL, i))
+	
+        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter_parent, parent, i))
         {
+	    
 	    if (gtk_tree_model_iter_has_child(GTK_TREE_MODEL(store), &iter_parent))
 	    {
+		
+		calltree_remove_conference (tab, conf, &iter_parent);
 	    
 		confval.g_type = 0;
 		gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter_parent, 2, &confval);
@@ -927,9 +931,10 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
     {
         if(dragged_path_depth == 1)
         {
-	    // dragged a single call on a single call
+	    
 	    if (selected_type == A_CALL && dragged_type == A_CALL) 
 	    {
+		// dragged a single call on a single call
 	        if(selected_call != NULL && dragged_call != NULL)
 		    sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
 	    }
@@ -941,7 +946,9 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
 	    {
 		// TODO: dragged a conference on a single call (make no sence)
-		calltree_remove_conference(current_calls, selected_conf);
+		// calltree_add_conference(current_calls, selected_conf);
+		calltree_remove_conference(current_calls, selected_conf, NULL);
+		calltree_add_conference(current_calls, selected_conf);
 		
 		
 	    }
@@ -949,14 +956,26 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    {
 		// TODO: dragged a conference on a conference
 	    }
+
 	    // TODO: dragged a single call on a NULL element (should do nothing)
 	    // TODO: dragged a conference on a NULL element (should do nothing)
 	
         }
 	else // dragged_path_depth == 2
 	{
-	    // TODO: dragged a call on a conference call
-	    // TODO: dragged a conference on a conference call
+	    if (selected_type == A_CALL && dragged_type == A_CALL)
+	    {
+		// TODO: dragged a call on a conference call
+		calltree_remove_call(current_calls, selected_call, NULL);
+		calltree_add_call(current_calls, selected_call, NULL);
+	    }
+	    else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
+	    {
+		// TODO: dragged a conference on a conference call
+		calltree_remove_conference(current_calls, selected_conf, NULL);
+		calltree_add_conference(current_calls, selected_conf);
+	    }
+ 
 	    // TODO: dragged a single call on a NULL element 
 	    // TODO: dragged a conference on a NULL element
 	}
