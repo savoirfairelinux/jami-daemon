@@ -32,18 +32,30 @@ GtkCellRenderer *rend;
 GtkTreeViewColumn *col;
 GtkTreeSelection *sel;
 
+enum
+{
+    A_CALL,
+    A_CONFERENCE
+};
 
-char *dragged_path;
-char *call_id;
-char *previous_id;
+gint dragged_type;
+gint selected_type;
 
-callable_obj_t *selected_call; 
+gchar *dragged_call_id;
+gchar *selected_call_id;
+
+gchar *dragged_path;
+gchar *selected_path;
+
+gint dragged_path_depth;
+gint selected_path_depth;
+ 
 callable_obj_t *dragged_call;
+callable_obj_t *selected_call;
 
 
 static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data);
 static void drag_end_cb(GtkWidget * mblist, GdkDragContext * context, gpointer data);
-
 void drag_data_received_cb(GtkWidget *widget, GdkDragContext *dc, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data);
 
 
@@ -71,14 +83,23 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
 
     GtkTreePath* path;
-    char* string_path;
+    gchar* string_path;
 
-    char* type;
-    GValue typeval;
 
     if (! gtk_tree_selection_get_selected (sel, &model, &iter))
         return;
 
+    if(gtk_tree_model_iter_has_child(GTK_TREE_MODEL(model), &iter))
+    {
+	DEBUG("SELECTED A CONFERENCE");
+	selected_type = A_CONFERENCE;
+    }
+    else
+    {
+	DEBUG("SELECTED A CALL");
+	selected_type = A_CALL;
+	// gtk_tree_model_iter_parent(GTK_TREE_MODEL(model), parent_conference, &iter);
+    }
 
     val.g_type = 0;
     gtk_tree_model_get_value (model, &iter, 2, &val);
@@ -87,16 +108,19 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
 
     // store info for dragndrop
     path = gtk_tree_model_get_path(model, &iter);
-    string_path = (char*)gtk_tree_path_to_string(path);
+    string_path = gtk_tree_path_to_string(path);
+    selected_path_depth = gtk_tree_path_get_depth(path);
 
     selected_call = (callable_obj_t*)g_value_get_pointer(&val);
+    
 
     if (selected_call != NULL) {
 
-        previous_id = selected_call->_callID;
+        selected_call_id = selected_call->_callID;
+	selected_path = string_path;
 
 	DEBUG("selected_cb\n");
-	DEBUG("  source path %s, %s\n", string_path, previous_id);
+	DEBUG("  selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
     }
     // conferencelist_reset ();
     // sflphone_fill_conference_list();
@@ -777,6 +801,8 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf)
 				calltree_add_call (tab, call, NULL);
 			    }
 			}
+
+			g_value_unset(&callval);
 		    }
 		}
 
@@ -857,20 +883,85 @@ void calltree_display (calltab_t *tab) {
 
 static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
 {
+
+    GtkTargetList* target_list;
+
     // g_print("drag_begin_cb %s\n", dragged_path);
+    if((target_list = gtk_drag_source_get_target_list(widget)) != NULL);
+        
+    
 }
 
 static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer data)
 {
     DEBUG("drag_end_cb\n");
-    DEBUG("    dragged path %s, call_id %s on previous_id %s\n", dragged_path, call_id, previous_id);
+    DEBUG("    selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
+    DEBUG("    dragged path %s, dragged_call_id %s, dragged_path_depth %i\n", selected_path, selected_call_id, dragged_path_depth);
 
-    if(selected_call != NULL && dragged_call != NULL)
-        sflphone_join_participant(selected_call, dragged_call);
+    GtkTreeModel* model = (GtkTreeModel*)current_calls->store;
+    GtkTreePath *path = gtk_tree_path_new_from_string(dragged_path);
+
+    GtkTreeIter iter_parent;
+    GtkTreeIter iter_children;
+    GtkTreeIter parent_conference;
+
+    GValue val;
+
+
+    if(selected_path_depth == 1)
+    {
+        if(dragged_path_depth == 1)
+        {
+	    // dragged a single call on a single call
+	    if(selected_call != NULL && dragged_call != NULL)
+                sflphone_join_participant(selected_call, dragged_call);
+
+	    // TODO: dragged a single call on a conference
+	    // TODO: dragged a conference on a single call
+	    // TODO: dragged a single call on a NULL element
+	    // TODO: dragged a conference on a NULL element
+	
+        }
+	else // dragged_path_depth == 2
+	{
+	    // TODO: dragged a call on a conference call
+	    // TODO: dragged a conference on a conference call
+	    // TODO: dragged a single call on a NULL element 
+	    // TODO: dragged a conference on a NULL element
+	}
+    }
+    else // selected_path_depth == 2
+    {
+	
+	if(dragged_path_depth == 1)
+	{
+	    // TODO: dragged a conference call on a call
+	    // TODO: dragged a conference call on a conference
+	    // TODO: dragged a conference call on a NULL element
+	}
+	else // dragged_path_depth == 2
+	{
+	    // dragged a conference call on another conference call (same conference)
+	    // TODO: dragged a conference call on another conference call (different conference)
+	    DEBUG("NON-AUTHORIZED DRAG");
+	    gtk_tree_path_up(path);
+
+	    gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
+
+	    calltree_remove_call (current_calls, selected_call, NULL);
+	    calltree_add_call (current_calls, selected_call, &parent_conference);
+
+	    // TODO: dragged a conference call on another conference call (different conference)
+	    // TODO: dragged a conference call on a NULL element (same conference)
+	    // TODO: dragged a conference call on a NULL element (different conference)
+	}
+
+    }	
+    
 }
 
 
-    void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data)
+void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data)
 {
 
     // g_print("drag_data_received_cb\n");
@@ -892,46 +983,53 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
     if(drop_path)
     {
 
-        // if(g_ascii_strcasecmp ((char*)gtk_tree_path_to_string(drop_path), "NULL") == 0)
-            // return;
-
         gtk_tree_model_get_iter(tree_model, &iter, drop_path);
-        gtk_tree_model_get_value (tree_model, &iter, 2, &val);
-
-        // g_print("    dragged on %s\n", ((callable_obj_t*)g_value_get_pointer(&val))->_callID);
+        gtk_tree_model_get_value(tree_model, &iter, 2, &val);
 
 
-        // dragged_path = (char*)gtk_tree_path_to_string(drop_path);
-
-        // gtk_tree_model_get_iter(GTK_TREE_MODEL(tree_model), &iter, drop_path);
-        // gtk_tree_model_get_value(GTK_TREE_MODEL(tree_model), &iter, TYPE, &value);
-        // g_print("drag_data_received_cb %s\n", &value);
+	if(gtk_tree_model_iter_has_child(tree_model, &iter))
+	{
+	    DEBUG("DRAGGING ON A CONFERENCE");
+	    dragged_type = A_CONFERENCE;
+	}
+	else
+	{
+	    DEBUG("DRAGGING ON A CALL");
+	    dragged_type = A_CALL;
+	}
 
         switch (position) 
         {
             case GTK_TREE_VIEW_DROP_AFTER:
-                dragged_path = "NULL";
-		call_id = "NULL";
+                dragged_path = gtk_tree_path_to_string(drop_path);
+		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
+		dragged_call_id = "NULL";
 		dragged_call = NULL;
-                // g_print("    AFTER %s\n", dragged_path);
+                g_print("    AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
+
             case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
-                dragged_path = (char*)gtk_tree_path_to_string(drop_path);
-		call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+                dragged_path = gtk_tree_path_to_string(drop_path);
+		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
+		dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
 		dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
-                // g_print("    INTO_OR_AFTER %s\n", dragged_path);
+                g_print("    INTO_OR_AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
+
             case GTK_TREE_VIEW_DROP_BEFORE:
-                dragged_path = "NULL";
-		call_id = "NULL";
+                dragged_path = gtk_tree_path_to_string(drop_path);
+		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
+		dragged_call_id = "NULL";
 		dragged_call = NULL;
-                // g_print("    BEFORE %s\n", dragged_path);
+                g_print("    BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
+
             case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
-                dragged_path = (char*)gtk_tree_path_to_string(drop_path);
-		call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+                dragged_path = gtk_tree_path_to_string(drop_path);
+		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
+		dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
 		dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
-                // g_print("    INTO_OR_BEFORE %s\n", dragged_path);
+                g_print("    INTO_OR_BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
 
             default:
