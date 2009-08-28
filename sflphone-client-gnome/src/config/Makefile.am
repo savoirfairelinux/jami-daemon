@@ -4,11 +4,12 @@ noinst_LTLIBRARIES = libconfig.la
 
 libconfig_la_SOURCES = \
   addressbook-config.c \
+  assistant.c \
   preferencesdialog.c \
   accountlistconfigdialog.c \
   zrtpadvanceddialog.c \
   tlsadvanceddialog.c \
-  accountwindow.c \
+  accountconfigdialog.c \
   hooks-config.c \
   audioconf.c \
   utils.c 

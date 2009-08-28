@@ -23,7 +23,7 @@
 #include <gtk/gtk.h>
 
 #include <accountlist.h>
-#include <accountwindow.h>
+#include <accountconfigdialog.h>
 #include <actions.h>
 #include <config.h>
 #include <toolbar.h>
