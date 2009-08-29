@@ -1778,7 +1778,6 @@ ManagerImpl::getCurrentAudioDevicesIndex()
 int
 ManagerImpl::isIax2Enabled (void)
 {
-    //return ( IAX2_ENABLED ) ? true : false;
 #ifdef USE_IAX
     return true;
 #else
@@ -2496,13 +2495,13 @@ ManagerImpl::getAccountList()
 
         while (iter != _accountMap.end()) {
             if (iter->second != NULL) {
+                //_debug("PUSHING BACK %s\n", iter->first.c_str());
                 v.push_back (iter->first.data());
             }
 
             iter++;
         }
     }
-
     // Otherelse, load the custom one
     // ie according to the saved order
     else {
@@ -2511,7 +2510,7 @@ ManagerImpl::getAccountList()
             // This account has not been loaded, so we ignore it
             if ( (iter=_accountMap.find (account_order[i])) != _accountMap.end()) {
                 // If the account is valid
-                if (iter->second != 0) {
+                if (iter->second != NULL) {
                     v.push_back (iter->first.data ());
                 }
             }
@@ -2519,7 +2518,7 @@ ManagerImpl::getAccountList()
 
 
     }
-
+    
     return v;
 }
 
@@ -2729,7 +2728,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
         // Make sure not to re-hash the password field if
         // it is already saved as a MD5 Hash.
         // TODO: This test is weak. Fix this.
-        if ((password.compare(getConfigString(accountID, PASSWORD)) != 0) && (password.length() != 32)) {
+        if ((password.compare(getConfigString(accountID, PASSWORD)) != 0)) {
             _debug("Password sent and password from config are different. Re-hashing\n");
             std::string hash;
             if(authenticationName.empty()) {
@@ -2971,9 +2970,9 @@ void
 ManagerImpl::removeAccount (const AccountID& accountID)
 {
     // Get it down and dying
-    Account* remAccount = getAccount (accountID);
-
-    if (remAccount) {
+    Account* remAccount = NULL;
+    remAccount = getAccount (accountID);
+    if (remAccount != NULL) {
         remAccount->unregisterVoIPLink();
         _accountMap.erase (accountID);
         delete remAccount;

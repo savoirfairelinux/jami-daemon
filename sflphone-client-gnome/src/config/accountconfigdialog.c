@@ -159,27 +159,16 @@ static GtkWidget * create_basic_tab(account_t **a)
 	gtk_widget_show(table);
 	gtk_container_add( GTK_CONTAINER( frame) , table );
 
-#ifdef DEBUG
-	label = gtk_label_new_with_mnemonic ("ID:");
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-	entryID = gtk_entry_new();
-	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryID);
-	gtk_entry_set_text(GTK_ENTRY(entryID), curAccountID);
-	gtk_widget_set_sensitive( GTK_WIDGET(entryID), FALSE);
-	gtk_table_attach ( GTK_TABLE( table ), entryID, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-#endif
-
 	label = gtk_label_new_with_mnemonic (_("_Alias"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryAlias = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryAlias);
 	gtk_entry_set_text(GTK_ENTRY(entryAlias), curAlias);
-	gtk_table_attach ( GTK_TABLE( table ), entryAlias, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryAlias, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	label = gtk_label_new_with_mnemonic (_("_Protocol"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryProtocol = gtk_combo_box_new_text();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryProtocol);
@@ -199,7 +188,7 @@ static GtkWidget * create_basic_tab(account_t **a)
 		gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), _("Unknown"));
 		gtk_combo_box_set_active(GTK_COMBO_BOX(entryProtocol),2);
 	}
-	gtk_table_attach ( GTK_TABLE( table ), entryProtocol, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryProtocol, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	/* Link signal 'changed' */
 	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(entryProtocol)), "changed",
@@ -207,15 +196,15 @@ static GtkWidget * create_basic_tab(account_t **a)
 			currentAccount);
 
 	label = gtk_label_new_with_mnemonic (_("_Host name"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryHostname = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryHostname);
 	gtk_entry_set_text(GTK_ENTRY(entryHostname), curHostname);
-	gtk_table_attach ( GTK_TABLE( table ), entryHostname, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryHostname, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	label = gtk_label_new_with_mnemonic (_("_User name"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);	
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);	
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
 	entryUsername = gtk_entry_new();
@@ -227,12 +216,12 @@ static GtkWidget * create_basic_tab(account_t **a)
 #endif
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
 	gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
-	gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     g_signal_connect(G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
     g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
 
 	label = gtk_label_new_with_mnemonic (_("_Password"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
 	entryPassword = gtk_entry_new();
@@ -247,17 +236,17 @@ static GtkWidget * create_basic_tab(account_t **a)
 	gtk_entry_set_visibility(GTK_ENTRY(entryPassword), FALSE);
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
 	gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
-	gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     g_signal_connect(G_OBJECT (entryPassword), "changed", G_CALLBACK (update_credential_cb), NULL);
     g_object_set_data (G_OBJECT (entryPassword), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
     
 	label = gtk_label_new_with_mnemonic (_("_Voicemail number"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryMailbox = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryMailbox);
 	gtk_entry_set_text(GTK_ENTRY(entryMailbox), curMailbox);
-	gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	gtk_widget_show_all( table );
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
@@ -887,7 +876,7 @@ show_account_window (account_t * a)
 				GTK_RESPONSE_ACCEPT,
 				NULL));
 
-	gtk_dialog_set_has_separator(dialog, TRUE);
+	gtk_dialog_set_has_separator(dialog, FALSE);
 	gtk_container_set_border_width (GTK_CONTAINER(dialog), 0);
 
 	notebook = gtk_notebook_new();
