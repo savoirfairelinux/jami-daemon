@@ -754,6 +754,36 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 void
 ManagerImpl::holdConference(const CallID& id)
 {
+    _debug ("ManagerImpl::holdConference()\n");
+
+    Conference *conf;
+    ConferenceMap::iterator iter_conf = _conferencemap.find(id);
+
+    AccountID currentAccountId;
+
+    Call* call = NULL;
+
+    if(iter_conf != _conferencemap.end())
+    {
+	conf = iter_conf->second;
+ 
+	ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
+
+	while(iter_participant != _conferencecall.end())
+	{
+	    _debug("ManagerImpl::hangupConference participant %s\n", iter_participant->first.c_str());
+	    currentAccountId = getAccountFromCall (iter_participant->first);
+	    call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
+
+	    if(call->getConfId() == id)
+	        onHoldCall (iter_participant->first);
+
+	    iter_participant++;
+
+	}
+
+    }
+
     
 }
 
@@ -761,6 +791,36 @@ ManagerImpl::holdConference(const CallID& id)
 void
 ManagerImpl::unHoldConference(const CallID& id)
 {
+
+    _debug ("ManagerImpl::unHoldConference()\n");
+
+    Conference *conf;
+    ConferenceMap::iterator iter_conf = _conferencemap.find(id);
+
+    AccountID currentAccountId;
+
+    Call* call = NULL;
+
+    if(iter_conf != _conferencemap.end())
+    {
+	conf = iter_conf->second;
+ 
+	ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
+
+	while(iter_participant != _conferencecall.end())
+	{
+	    _debug("ManagerImpl::hangupConference participant %s\n", iter_participant->first.c_str());
+	    currentAccountId = getAccountFromCall (iter_participant->first);
+	    call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
+
+	    if(call->getConfId() == id)
+	        offHoldCall (iter_participant->first);
+
+	    iter_participant++;
+
+	}
+
+    }
 
 }
 

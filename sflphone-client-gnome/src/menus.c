@@ -240,12 +240,14 @@ conference_hold  (void* foo UNUSED)
         if(selectedConf->_state == CONFERENCE_STATE_HOLD)
         {
             gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_unhold.svg"));
-            sflphone_conference_off_hold();
+	    selectedConf->_state = CONFERENCE_STATE_ACTIVE;
+            sflphone_conference_off_hold(selectedConf);
         }
         else
         {
             gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_hold.svg"));
-            sflphone_conference_on_hold();
+	    selectedConf->_state = CONFERENCE_STATE_HOLD;
+            sflphone_conference_on_hold(selectedConf);
         }
     }
 }

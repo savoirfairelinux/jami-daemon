@@ -898,15 +898,17 @@ sflphone_add_conference()
 }
 
 void
-sflphone_conference_on_hold()
+sflphone_conference_on_hold(const conference_obj_t * c)
 {
-
+    DEBUG("sflphone_conference_on_hold");
+    dbus_hold_conference(c);
 }
 
 void
-sflphone_conference_off_hold()
+sflphone_conference_off_hold(const conference_obj_t * c)
 {
-
+    DEBUG("sflphone_conference_off_hold");
+    dbus_unhold_conference(c);
 }
 
 
