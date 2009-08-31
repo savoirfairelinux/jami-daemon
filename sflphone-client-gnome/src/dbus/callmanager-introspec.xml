@@ -141,6 +141,14 @@
     <signal name="conferenceRemoved">
       <arg type="s" name="confID"  direction="out"/>
     </signal>
+
+    <method name="holdConference">
+      <arg type="s" name="confID" direction="in"/>
+    </method>
+
+    <method name="unHoldConference">
+      <arg type="s" name="confID" direction="in"/>
+    </method>
     
     <signal name="voiceMailNotify">
       <arg type="s" name="accountID"  direction="out"/>

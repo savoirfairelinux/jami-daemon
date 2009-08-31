@@ -51,6 +51,8 @@ public:
     void joinParticipant( const std::string& sel_callID, const std::string& drag_callID );
     void addParticipant( const std::string& callID, const std::string& confID );
     void detachParticipant( const std::string& callID );
+    void holdConference( const std::string& confID );
+    void unHoldConference( const std::string& confID );
     std::vector< std::string > getConferenceList (void);
     std::vector< std::string > getParticipantList (const std::string& confID);
     std::map< std::string, std::string > getConferenceDetails ( const std::string& callID );

@@ -711,6 +711,19 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 
 }
 
+void
+ManagerImpl::holdConference(const CallID& id)
+{
+    
+}
+
+
+void
+ManagerImpl::unHoldConference(const CallID& id)
+{
+
+}
+
 bool
 ManagerImpl::isConference(const CallID& id)
 {

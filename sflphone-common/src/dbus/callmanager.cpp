@@ -138,6 +138,20 @@ CallManager::detachParticipant (const std::string& callID)
     Manager::instance().detachParticipant(callID);
 }
 
+void
+CallManager::holdConference (const std::string& confID)
+{
+    _debug ("CallManager::holdConference received %s\n", confID.c_str());
+    Manager::instance().holdConference(confID);
+}
+
+void
+CallManager::unHoldConference (const std::string& confID)
+{
+    _debug ("CallManager::unHoldConference received %s\n", confID.c_str());
+    Manager::instance().unHoldConference(confID);
+}
+
 std::map< std::string, std::string >
 CallManager::getConferenceDetails (const std::string& callID)
 {
