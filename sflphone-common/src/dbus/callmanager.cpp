@@ -136,8 +136,15 @@ CallManager::joinParticipant (const std::string& sel_callID, const std::string& 
 void
 CallManager::addParticipant (const std::string& callID, const std::string& confID)
 {
-    _debug ("CallManager::joinParticipant received %s, %s\n", callID.c_str(), confID.c_str());
+    _debug ("CallManager::addParticipant received %s, %s\n", callID.c_str(), confID.c_str());
     Manager::instance().addParticipant(callID, confID);
+}
+
+void
+CallManager::addMainParticipant (const std::string& confID)
+{
+    _debug ("CallManager::addMainParticipant received %s\n", confID.c_str());
+    Manager::instance().addMainParticipant(confID);
 }
 
 void

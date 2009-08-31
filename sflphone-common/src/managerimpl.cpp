@@ -186,7 +186,7 @@ ManagerImpl::isCurrentCall (const CallID& callId)
 bool
 ManagerImpl::hasCurrentCall()
 {
-    _debug ("Current call ID = %s\n", _currentCallId2.c_str());
+    _debug ("ManagerImpl::hasCurrentCall current call ID = %s\n", _currentCallId2.c_str());
 
     if (_currentCallId2 != "") {
         return true;
@@ -205,6 +205,7 @@ void
 ManagerImpl::switchCall (const CallID& id)
 {
     ost::MutexLock m (_currentCallMutex);
+    _debug("------------------------- SWITCH %s ---------------------------\n", id.c_str());
     _currentCallId2 = id;
 }
 
@@ -233,8 +234,24 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
     /* Check what kind of call we are dealing with */
     check_call_configuration (id, to_cleaned, &callConfig);
 
+    if (hasCurrentCall()) {
+	
+	_debug ("ManagerImpl::outgoingCall() Has current call (id %s) put it onhold\n", getCurrentCallId().c_str());	
+	// if this is not a conferenceand this and is not a conference participant
+	if (!isConference(getCurrentCallId()) && !participToConference(getCurrentCallId()))
+	{
+	    _debug ("ManagerImpl::outgoingCall() Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
+	    onHoldCall (getCurrentCallId());
+	}
+	else 
+	{
+	    _debug ("ManagerImpl::outgoingCall() Put the current conference (ID=%s) on hold\n", getCurrentCallId().c_str());
+	    detachParticipant();
+	}
+    }
+
     if (callConfig == Call::IPtoIP) {
-        _debug ("Start IP to IP call\n");
+        _debug ("ManagerImpl::outgoingCall Start IP to IP call\n");
         /* We need to retrieve the sip voiplink instance */
         siplink = SIPVoIPLink::instance ("");
 
@@ -258,10 +275,6 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
         return false;
     }
 
-    if (hasCurrentCall()) {
-        _debug ("* Manager Info: there is currently a call, try to hold it\n");
-        onHoldCall (getCurrentCallId());
-    }
 
     _debug ("- Manager Action: Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
 
@@ -445,6 +458,8 @@ ManagerImpl::hangupConference (const ConfID& id)
 
     }
 
+    switchCall ("");
+
     return true;
 }
 
@@ -543,10 +558,19 @@ ManagerImpl::offHoldCall (const CallID& id)
     current_call_id = getCurrentCallId();
     //Place current call on hold if it isn't
 
-    if (hasCurrentCall() && !participToConference(current_call_id)) 
+    if (hasCurrentCall()) 
     {
-        _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
-        onHoldCall (current_call_id);
+	// if this is not a conferenceand this and is not a conference participant
+	if (!isConference(current_call_id) && !participToConference(current_call_id))
+	{
+	    _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
+	    onHoldCall (current_call_id);
+	}
+	else 
+	{
+	    _debug ("Put the current conference (ID=%s) on hold\n", getCurrentCallId().c_str());
+	    detachParticipant();
+	}
     }
 
     switchCall(id);
@@ -771,12 +795,15 @@ ManagerImpl::holdConference(const CallID& id)
 
 	while(iter_participant != _conferencecall.end())
 	{
-	    _debug("ManagerImpl::hangupConference participant %s\n", iter_participant->first.c_str());
+	    _debug("ManagerImpl::holdConference participant %s\n", iter_participant->first.c_str());
 	    currentAccountId = getAccountFromCall (iter_participant->first);
 	    call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
 
 	    if(call->getConfId() == id)
+	    {
+		switchCall(iter_participant->first);
 	        onHoldCall (iter_participant->first);
+	    }
 
 	    iter_participant++;
 
@@ -809,7 +836,7 @@ ManagerImpl::unHoldConference(const CallID& id)
 
 	while(iter_participant != _conferencecall.end())
 	{
-	    _debug("ManagerImpl::hangupConference participant %s\n", iter_participant->first.c_str());
+	    _debug("ManagerImpl::unholdConference participant %s\n", iter_participant->first.c_str());
 	    currentAccountId = getAccountFromCall (iter_participant->first);
 	    call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
 
@@ -901,7 +928,38 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 
 	_dbus->getCallManager()->conferenceChanged(conference_id);
     }
+
+    switchCall(default_id);
     
+}
+
+void
+ManagerImpl::addMainParticipant(const CallID& conference_id)
+{
+    if(hasCurrentCall())
+    {
+	CallID current_call_id = getCurrentCallId();
+	onHoldCall(current_call_id);
+    }
+
+    ConferenceMap::iterator iter = _conferencemap.find(conference_id);
+
+    Conference *conf = NULL;
+
+    if(iter != _conferencemap.end()) 
+    {
+	conf = iter->second;
+    }
+
+    ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
+    while(iter_participant != _conferencecall.end())
+    {
+	_debug("Quecequispasse\n");
+	if (iter_participant->second == conf)
+	    _audiodriver->getMainBuffer()->bindCallID(iter_participant->first, default_id);
+
+	iter_participant++;
+    }
 }
 
 
@@ -999,6 +1057,8 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	 */
     }
 
+    switchCall(default_conf);
+
 }
 
 
@@ -1010,20 +1070,28 @@ ManagerImpl::detachParticipant(const CallID& call_id)
     // TODO: add conference_id as a second parameter
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
 
+    
+
     if(iter == _conferencemap.end()) {
 	_debug("Error there is no conference, call is not conferencing\n");
 
     }
     else {
 	_debug("ManagerImpl::detachParticipant detach participant %s\n", call_id.c_str());
-	// Conference* conf = iter->second;
-
-	// conf->remove(call_id);
 	
-	// _conferencecall.erase(call_id);
-	removeParticipant(call_id);
+	if(call_id != default_id)
+	{
 
-	onHoldCall(call_id);
+	    removeParticipant(call_id);
+
+	    onHoldCall(call_id);
+
+	}
+	else
+	{
+	    _debug("ManagerImpl::detachParticipant unbind main participant from all\n");
+	    _audiodriver->getMainBuffer()->unBindAll(default_id);
+	}
 
 	// _dbus->getCallManager()->conferenceChanged(conference_id);
     }
@@ -1297,7 +1365,7 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     if (accountId==AccountNULL)
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
 
-    _debug ("ManagerImpl::incomingCall :: hasCurrentCall() %i \n",hasCurrentCall());
+    _debug ("ManagerImpl::incomingCall :: hasCurrentCall() %i \n", hasCurrentCall());
 
     if (!hasCurrentCall()) {
         call->setConnectionState (Call::Ringing);

@@ -140,56 +140,83 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         GtkTreeViewColumn *column UNUSED,
         void * data UNUSED)
 {
-    callable_obj_t* selectedCall;
+    callable_obj_t* selectedCall = NULL;
     callable_obj_t* new_call;
+    conference_obj_t* selectedConf = NULL;
     gchar *account_id;
 
     DEBUG("double click action");
 
-    selectedCall = calltab_get_selected_call( active_calltree );
-
-    if (selectedCall)
+    if( active_calltree == current_calls )
     {
-        // Get the right event from the right calltree
-        if( active_calltree == current_calls )
-        {
-            switch(selectedCall->_state)
-            {
-                case CALL_STATE_INCOMING:
-                    dbus_accept(selectedCall);
-                    stop_notification();
-                    break;
-                case CALL_STATE_HOLD:
-                    dbus_unhold(selectedCall);
-                    break;
-                case CALL_STATE_RINGING:
-                case CALL_STATE_CURRENT:
-                case CALL_STATE_BUSY:
-                case CALL_STATE_FAILURE:
-                    break;
-                case CALL_STATE_DIALING:
-                    sflphone_place_call (selectedCall);
-                    break;
-                default:
-                    WARN("Row activated - Should not happen!");
-                    break;
-            }
-        }
+	
+	if(calltab_get_selected_type(current_calls) == A_CALL)
+	{
+	    selectedCall = calltab_get_selected_call(current_calls);
 
-        // If history or contact: double click action places a new call
-        else
-        {
-            account_id = g_strdup (selectedCall->_accountID);
+	    if (selectedCall)
+	    {
+		// Get the right event from the right calltree
+		if( active_calltree == current_calls )
+		{
+		    switch(selectedCall->_state)
+		    {
+		    case CALL_STATE_INCOMING:
+			dbus_accept(selectedCall);
+			stop_notification();
+			break;
+		    case CALL_STATE_HOLD:
+			dbus_unhold(selectedCall);
+			break;
+		    case CALL_STATE_RINGING:
+		    case CALL_STATE_CURRENT:
+		    case CALL_STATE_BUSY:
+		    case CALL_STATE_FAILURE:
+			break;
+		    case CALL_STATE_DIALING:
+			sflphone_place_call (selectedCall);
+			break;
+		    default:
+			WARN("Row activated - Should not happen!");
+			break;
+		    }
+		}
 
-            // Create a new call
-            create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
+		// If history or contact: double click action places a new call
+		else
+		{
+		    account_id = g_strdup (selectedCall->_accountID);
 
-            calllist_add(current_calls, new_call);
-            calltree_add_call(current_calls, new_call, NULL);
-            sflphone_place_call(new_call);
-            calltree_display(current_calls);
-        }
+		    // Create a new call
+		    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
+		    
+		    calllist_add(current_calls, new_call);
+		    calltree_add_call(current_calls, new_call, NULL);
+		    sflphone_place_call(new_call);
+		    calltree_display(current_calls);
+		}
+	    }
+	}
+	else
+	{
+	    selectedConf = calltab_get_selected_conf(current_calls);
+ 
+	    if(selectedConf)
+	    {
+		switch(selectedConf->_state)
+		{
+	            case CONFERENCE_STATE_ACTIVE:
+		        sflphone_add_main_participant(selectedConf);
+			break;
+	            case CONFERENCE_STATE_HOLD:
+			sflphone_conference_off_hold(selectedConf);
+			break;
+		}
+	    }
+	}
     }
+    
+    
 }
 
     static gboolean

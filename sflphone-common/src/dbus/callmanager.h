@@ -51,6 +51,7 @@ public:
     double getVolume( const std::string& device );
     void joinParticipant( const std::string& sel_callID, const std::string& drag_callID );
     void addParticipant( const std::string& callID, const std::string& confID );
+    void addMainParticipant( const std::string& confID );
     void detachParticipant( const std::string& callID );
     void holdConference( const std::string& confID );
     void unholdConference( const std::string& confID );

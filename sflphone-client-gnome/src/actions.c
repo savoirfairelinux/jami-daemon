@@ -898,6 +898,13 @@ sflphone_add_conference()
 }
 
 void
+sflphone_add_main_participant(const conference_obj_t * c)
+{
+    DEBUG("sflphone add main participant");
+    dbus_add_main_participant(c->_confID);
+}
+
+void
 sflphone_conference_on_hold(const conference_obj_t * c)
 {
     DEBUG("sflphone_conference_on_hold");

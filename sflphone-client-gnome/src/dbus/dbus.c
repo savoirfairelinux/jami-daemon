@@ -1386,6 +1386,22 @@ dbus_add_participant(const gchar* callID, const gchar* confID)
     
 }
 
+dbus_add_main_participant(const gchar* confID)
+{
+    DEBUG("dbus_add_participant %s\n", confID);
+
+    GError* error = NULL;
+
+    org_sflphone_SFLphone_CallManager_add_main_participant (
+             callManagerProxy, 
+	     confID, 
+	     &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+}
+
 
     void
 dbus_detach_participant(const gchar* callID)

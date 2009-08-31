@@ -209,9 +209,11 @@ class ManagerImpl {
 
     void addParticipant(const CallID& call_id, const CallID& conference_id);
 
+    void addMainParticipant(const CallID& conference_id);
+
     void joinParticipant(const CallID& call_id1, const CallID& call_id2);
 
-    void detachParticipant(const CallID& call_id);
+    void detachParticipant(const CallID& call_id = default_id);
 
     void removeParticipant(const CallID& call_id);
 
