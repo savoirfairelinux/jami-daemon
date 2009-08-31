@@ -502,12 +502,58 @@ dbus_unhold (const callable_obj_t * c)
 }
 
     void
+dbus_hold_conference (const conference_obj_t * c)
+{
+    DEBUG("dbus_hold_conference %s\n", c->_confID);
+
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_hold_conference ( callManagerProxy, c->_confID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call hold() on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_unhold_conference (const conference_obj_t * c)
+{
+    DEBUG("dbus_unhold_conference %s\n", c->_confID);
+
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_unhold_conference ( callManagerProxy, c->_confID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call unhold() on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
 dbus_hang_up (const callable_obj_t * c)
 {
     DEBUG("dbus_hang_up %s\n", c->_callID);
     
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hang_up ( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call hang_up() on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+
+    void
+dbus_hang_up_conference (const conference_obj_t * c)
+{
+    DEBUG("dbus_hang_up_conference %s\n", c->_confID);
+    
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_hang_up_conference ( callManagerProxy, c->_confID, &error);
     if (error)
     {
         ERROR ("Failed to call hang_up() on CallManager: %s",

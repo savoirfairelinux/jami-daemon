@@ -83,6 +83,14 @@ class Call{
          */
         CallID& getCallId() {return _id; }
 
+	/** 
+         * Return a reference on the conference id
+         * @return call id
+         */
+        CallID& getConfId() {return _confID; }
+
+	void setConfId(CallID id) {_confID = id; }
+
         inline CallType getCallType (void)
         {
             return _type;
@@ -255,6 +263,9 @@ class Call{
 
         /** Unique ID of the call */
         CallID _id;
+
+	/** Unique conference ID, used exclusively in case of a conferece */
+	CallID _confID;
 
         /** Type of the call */
         CallType _type;

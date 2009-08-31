@@ -43,6 +43,7 @@ public:
     void refuse( const std::string& callID );
     void accept( const std::string& callID );
     void hangUp( const std::string& callID );
+    void hangUpConference( const std::string& confID );
     void hold( const std::string& callID );
     void unhold( const std::string& callID );
     void transfert( const std::string& callID, const std::string& to );
@@ -52,7 +53,7 @@ public:
     void addParticipant( const std::string& callID, const std::string& confID );
     void detachParticipant( const std::string& callID );
     void holdConference( const std::string& confID );
-    void unHoldConference( const std::string& confID );
+    void unholdConference( const std::string& confID );
     std::vector< std::string > getConferenceList (void);
     std::vector< std::string > getParticipantList (const std::string& confID);
     std::map< std::string, std::string > getConferenceDetails ( const std::string& callID );

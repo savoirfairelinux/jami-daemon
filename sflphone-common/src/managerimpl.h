@@ -141,6 +141,14 @@ class ManagerImpl {
      */
     bool hangupCall(const CallID& id);
 
+
+    /**
+     * Functions which occur with a user's action
+     * Hangup the conference (hangup every participants)
+     * @param id  The call identifier
+     */
+    bool hangupConference(const ConfID& id);
+
     /**
      * Functions which occur with a user's action
      * Cancel the call

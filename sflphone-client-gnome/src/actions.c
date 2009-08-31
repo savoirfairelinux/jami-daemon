@@ -305,6 +305,16 @@ sflphone_hang_up()
 }
 
 
+void
+sflphone_conference_hang_up()
+{
+    conference_obj_t * selectedConf = calltab_get_selected_conf();
+
+    if(selectedConf)
+	dbus_hang_up_conference(selectedConf);
+}
+
+
     void
 sflphone_pick_up()
 {
@@ -886,6 +896,19 @@ sflphone_add_conference()
     DEBUG("sflphone add a conference to tree view");
     // dbus_join_participant(selected_call, dragged_call);
 }
+
+void
+sflphone_conference_on_hold()
+{
+
+}
+
+void
+sflphone_conference_off_hold()
+{
+
+}
+
 
     void
 sflphone_rec_call()

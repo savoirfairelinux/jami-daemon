@@ -21,6 +21,7 @@
 #define __CALLLIST_H__
 
 #include <callable_obj.h>
+#include <conference_obj.h>
 #include <gtk/gtk.h>
 
 /** @file calllist.h
@@ -35,7 +36,9 @@ typedef struct {
 
         // Calllist vars
 	GQueue* callQueue;
+        gint selectedType;
 	callable_obj_t* selectedCall;
+        conference_obj_t* selectedConf;
         gchar *_name;
 } calltab_t;
 

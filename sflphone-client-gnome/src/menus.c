@@ -231,6 +231,26 @@ call_hold  (void* foo UNUSED)
 }
 
     static void
+conference_hold  (void* foo UNUSED)
+{
+    conference_obj_t * selectedConf = calltab_get_selected_conf();
+
+    if(selectedConf)
+    {
+        if(selectedConf->_state == CONFERENCE_STATE_HOLD)
+        {
+            gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_unhold.svg"));
+            sflphone_conference_off_hold();
+        }
+        else
+        {
+            gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_hold.svg"));
+            sflphone_conference_on_hold();
+        }
+    }
+}
+
+    static void
 call_pick_up ( void * foo UNUSED)
 {
     sflphone_pick_up();
@@ -240,6 +260,12 @@ call_pick_up ( void * foo UNUSED)
 call_hang_up ( void * foo UNUSED)
 {
     sflphone_hang_up();
+}
+
+    static void
+conference_hang_up ( void * foo UNUSED)
+{
+    sflphone_conference_hang_up();
 }
 
     static void
@@ -689,45 +715,81 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 {
     // TODO update the selection to make sure the call under the mouse is the call selected
 
+    // call type boolean
     gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE;
     gboolean accounts = FALSE;
 
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-    if (selectedCall)
+    // conference type boolean
+    gboolean hangup_conf = FALSE, hold_conf = FALSE; 
+
+    callable_obj_t * selectedCall;
+    conference_obj_t * selectedConf;
+
+    if (calltab_get_selected_type(current_calls) == A_CALL)
     {
-        copy = TRUE;
-        switch(selectedCall->_state)
-        {
-            case CALL_STATE_INCOMING:
-                pickup = TRUE;
-                hangup = TRUE;
-                break;
-            case CALL_STATE_HOLD:
-                hangup = TRUE;
-                hold   = TRUE;
-                break;
-            case CALL_STATE_RINGING:
-                hangup = TRUE;
-                break;
-            case CALL_STATE_DIALING:
-                pickup = TRUE;
-                hangup = TRUE;
-                accounts = TRUE;
-                break;
-            case CALL_STATE_RECORD:
-            case CALL_STATE_CURRENT:
-                hangup = TRUE;
-                hold   = TRUE;
-                record = TRUE;
-                break;
-            case CALL_STATE_BUSY:
-            case CALL_STATE_FAILURE:
-                hangup = TRUE;
-                break;
-            default:
-                WARN("Should not happen in show_popup_menu!");
-                break;
-        }
+	DEBUG("MENUS: SELECTED A CALL");
+        selectedCall = calltab_get_selected_call(current_calls);
+
+	if (selectedCall)
+	{
+	    copy = TRUE;
+	    switch(selectedCall->_state)
+	    {
+                case CALL_STATE_INCOMING:
+		    pickup = TRUE;
+		    hangup = TRUE;
+		    break;
+                case CALL_STATE_HOLD:
+		    hangup = TRUE;
+		    hold   = TRUE;
+		    break;
+                case CALL_STATE_RINGING:
+		    hangup = TRUE;
+		    break;
+                case CALL_STATE_DIALING:
+		    pickup = TRUE;
+		    hangup = TRUE;
+		    accounts = TRUE;
+		    break;
+                case CALL_STATE_RECORD:
+                case CALL_STATE_CURRENT:
+		    hangup = TRUE;
+		    hold   = TRUE;
+		    record = TRUE;
+		    break;
+                case CALL_STATE_BUSY:
+                case CALL_STATE_FAILURE:
+		    hangup = TRUE;
+		    break;
+                default:
+		    WARN("Should not happen in show_popup_menu for calls!");
+		    break;
+	    }
+	}
+    }
+    else
+    {
+        DEBUG("MENUS: SELECTED A CONF");	
+	selectedConf = calltab_get_selected_conf();
+
+	if (selectedConf)
+	{
+	    switch(selectedConf->_state)
+	    {
+	        case CONFERENCE_STATE_ACTIVE:
+		    hangup_conf = TRUE;
+		    hold_conf = TRUE;
+		    break;
+	        case CONFERENCE_STATE_HOLD:
+		    hangup_conf = TRUE;
+		    hold_conf = TRUE;
+		    break;
+	        default:
+		    WARN("Should not happen in show_popup_menu for conferences!");
+		    break;
+	    }
+	}
+
     }
 
     GtkWidget *menu;
@@ -738,94 +800,127 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     menu = gtk_menu_new ();
     //g_signal_connect (menu, "deactivate",
     //       G_CALLBACK (gtk_widget_destroy), NULL);
-
-    if(copy)
+    if (calltab_get_selected_type(current_calls) == A_CALL)
     {
-        menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_COPY, get_accel_group());
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-        g_signal_connect (G_OBJECT (menu_items), "activate",
-                G_CALLBACK (edit_copy),
-                NULL);
-        gtk_widget_show (menu_items);
+	DEBUG("BUILD CALL MENU");
+
+	if(copy)
+	{
+	    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_COPY, get_accel_group());
+	    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	    g_signal_connect (G_OBJECT (menu_items), "activate",
+			      G_CALLBACK (edit_copy),
+			      NULL);
+	    gtk_widget_show (menu_items);
+	}
+
+	menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PASTE, get_accel_group());
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	g_signal_connect (G_OBJECT (menu_items), "activate",
+			  G_CALLBACK (edit_paste),
+			  NULL);
+	gtk_widget_show (menu_items);
+	
+	if(pickup || hangup || hold)
+	{
+	    menu_items = gtk_separator_menu_item_new ();
+	    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	    gtk_widget_show (menu_items);
+	}
+	
+	if(pickup)
+	{
+	    
+	    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Pick up"));
+	    image = gtk_image_new_from_file( ICONS_DIR "/icon_accept.svg");
+	    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+	    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	    g_signal_connect (G_OBJECT (menu_items), "activate",
+			      G_CALLBACK (call_pick_up),
+			      NULL);
+	    gtk_widget_show (menu_items);
+	}
+
+	if(hangup)
+	{
+	    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
+	    image = gtk_image_new_from_file( ICONS_DIR "/icon_hangup.svg");
+	    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+	    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	    g_signal_connect (G_OBJECT (menu_items), "activate",
+			      G_CALLBACK (call_hang_up),
+			      NULL);
+	    gtk_widget_show (menu_items);
+	}
+
+	if(hold)
+	{
+	    menu_items = gtk_check_menu_item_new_with_mnemonic (_("On _Hold"));
+	    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
+					   (selectedCall->_state == CALL_STATE_HOLD ? TRUE : FALSE));
+	    g_signal_connect(G_OBJECT (menu_items), "activate",
+			     G_CALLBACK (call_hold),
+			     NULL);
+	    gtk_widget_show (menu_items);
+	}
+	
+	if(record)
+	{
+	    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
+	    image = gtk_image_new_from_stock (GTK_STOCK_MEDIA_RECORD, GTK_ICON_SIZE_MENU);
+	    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+	    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	    g_signal_connect (G_OBJECT (menu_items), "activate",
+			      G_CALLBACK (call_record),
+			      NULL);
+	    gtk_widget_show (menu_items);
+	}
+
     }
-
-    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PASTE, get_accel_group());
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-    g_signal_connect (G_OBJECT (menu_items), "activate",
-            G_CALLBACK (edit_paste),
-            NULL);
-    gtk_widget_show (menu_items);
-
-    if(pickup || hangup || hold)
+    else
     {
-        menu_items = gtk_separator_menu_item_new ();
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-        gtk_widget_show (menu_items);
-    }
+	DEBUG("BUILD CONFERENCE MENU");
 
-    if(pickup)
-    {
+	if(hangup_conf)
+	{
+	    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
+	    image = gtk_image_new_from_file( ICONS_DIR "/icon_hangup.svg");
+	    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+	    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	    g_signal_connect (G_OBJECT (menu_items), "activate",
+			      G_CALLBACK (conference_hang_up),
+			      NULL);
+	    gtk_widget_show (menu_items);
+	}
 
-        menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Pick up"));
-        image = gtk_image_new_from_file( ICONS_DIR "/icon_accept.svg");
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-        g_signal_connect (G_OBJECT (menu_items), "activate",
-                G_CALLBACK (call_pick_up),
-                NULL);
-        gtk_widget_show (menu_items);
-    }
-
-    if(hangup)
-    {
-        menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
-        image = gtk_image_new_from_file( ICONS_DIR "/icon_hangup.svg");
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-        g_signal_connect (G_OBJECT (menu_items), "activate",
-                G_CALLBACK (call_hang_up),
-                NULL);
-        gtk_widget_show (menu_items);
-    }
-
-    if(hold)
-    {
-        menu_items = gtk_check_menu_item_new_with_mnemonic (_("On _Hold"));
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-        gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
-                (selectedCall->_state == CALL_STATE_HOLD ? TRUE : FALSE));
-        g_signal_connect(G_OBJECT (menu_items), "activate",
-                G_CALLBACK (call_hold),
-                NULL);
-        gtk_widget_show (menu_items);
-    }
-
-    if(record)
-    {
-        menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-        image = gtk_image_new_from_stock (GTK_STOCK_MEDIA_RECORD, GTK_ICON_SIZE_MENU);
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-        g_signal_connect (G_OBJECT (menu_items), "activate",
-                G_CALLBACK (call_record),
-                NULL);
-        gtk_widget_show (menu_items);
+	if(hold_conf)
+	{
+	    menu_items = gtk_check_menu_item_new_with_mnemonic (_("On _Hold"));
+	    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
+					   (selectedCall->_state == CALL_STATE_HOLD ? TRUE : FALSE));
+	    g_signal_connect(G_OBJECT (menu_items), "activate",
+			     G_CALLBACK (conference_hold),
+			     NULL);
+	    gtk_widget_show (menu_items);
+	}
     }
 
     if(accounts)
     {
-        add_registered_accounts_to_menu (menu);
+	add_registered_accounts_to_menu (menu);
     }
-
+	
     if (event)
     {
-        button = event->button;
-        event_time = event->time;
+	button = event->button;
+	event_time = event->time;
     }
     else
     {
-        button = 0;
-        event_time = gtk_get_current_event_time ();
+	button = 0;
+	event_time = gtk_get_current_event_time ();
     }
 
     gtk_menu_attach_to_widget (GTK_MENU (menu), my_widget, NULL);

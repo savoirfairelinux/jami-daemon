@@ -64,6 +64,15 @@ CallManager::hangUp (const std::string& callID)
 }
 
 void
+CallManager::hangUpConference (const std::string& confID)
+{
+    _debug ("CallManager::hangUpConference received %s\n", confID.c_str());
+    Manager::instance().hangupConference (confID);
+
+}
+
+
+void
 CallManager::hold (const std::string& callID)
 {
     _debug ("CallManager::hold received %s\n", callID.c_str());
@@ -146,7 +155,7 @@ CallManager::holdConference (const std::string& confID)
 }
 
 void
-CallManager::unHoldConference (const std::string& confID)
+CallManager::unholdConference (const std::string& confID)
 {
     _debug ("CallManager::unHoldConference received %s\n", confID.c_str());
     Manager::instance().unHoldConference(confID);

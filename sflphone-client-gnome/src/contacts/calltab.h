@@ -31,16 +31,27 @@ calltab_t* contacts;
 
 calltab_t* calltab_init (gboolean searchbar_type, gchar *name);
 
+
+
 /** Mark a call as selected.  There can be only one selected call.  This call
   * is the currently highlighted one in the list.
   * @param c The call */
 void
 calltab_select_call (calltab_t*, callable_obj_t *);
 
+void
+calltab_select_conf (conference_obj_t *);
+
+gint
+calltab_get_selected_type(calltab_t* tab);
+
 /** Return the selected call.
   * @return The number of the caller */
 callable_obj_t *
 calltab_get_selected_call (calltab_t*);
+
+conference_obj_t *
+calltab_get_selected_conf ();
 
 void
 calltab_create_searchbar (calltab_t *);

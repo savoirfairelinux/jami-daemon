@@ -19,6 +19,10 @@
     <method name="hangUp">
       <arg type="s" name="callID" direction="in"/>
     </method>
+
+    <method name="hangUpConference">
+      <arg type="s" name="confID" direction="in"/>
+    </method>
     
     <method name="hold">
       <arg type="s" name="callID" direction="in"/>
@@ -146,7 +150,7 @@
       <arg type="s" name="confID" direction="in"/>
     </method>
 
-    <method name="unHoldConference">
+    <method name="unholdConference">
       <arg type="s" name="confID" direction="in"/>
     </method>
     

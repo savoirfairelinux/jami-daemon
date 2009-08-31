@@ -32,12 +32,6 @@ GtkCellRenderer *rend;
 GtkTreeViewColumn *col;
 GtkTreeSelection *sel;
 
-enum
-{
-    A_CALL,
-    A_CONFERENCE
-};
-
 gint dragged_type;
 gint selected_type;
 
@@ -104,6 +98,8 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
 
 	val.g_type = 0;
 	gtk_tree_model_get_value (model, &iter, 2, &val);
+
+	calltab_select_conf((conference_obj_t*) g_value_get_pointer(&val));
 
 	selected_conf = (conference_obj_t*)g_value_get_pointer(&val);
 

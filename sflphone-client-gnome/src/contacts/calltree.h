@@ -29,6 +29,12 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
+enum
+{
+    A_CALL,
+    A_CONFERENCE
+};
+
 /**
  * Create a new widget calltree
  * @return GtkWidget* A new widget

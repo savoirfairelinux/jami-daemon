@@ -409,6 +409,46 @@ ManagerImpl::hangupCall (const CallID& id)
     return returnValue;
 }
 
+
+bool
+ManagerImpl::hangupConference (const ConfID& id)
+{
+    _debug ("ManagerImpl::hangupConference()\n");
+
+    Conference *conf;
+    ConferenceMap::iterator iter_conf = _conferencemap.find(id);
+
+    ConferenceCallMap tempmap = _conferencecall;
+
+    AccountID currentAccountId;
+
+    Call* call = NULL;
+
+    if(iter_conf != _conferencemap.end())
+    {
+	conf = iter_conf->second;
+ 
+	ConferenceCallMap::iterator iter_participant = tempmap.begin();
+
+	while(iter_participant != tempmap.end())
+	{
+	    _debug("ManagerImpl::hangupConference participant %s\n", iter_participant->first.c_str());
+	    currentAccountId = getAccountFromCall (iter_participant->first);
+	    call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
+
+	    if(call->getConfId() == id)
+	        hangupCall (iter_participant->first);
+
+	    iter_participant++;
+
+	}
+
+    }
+
+    return true;
+}
+
+
 //THREAD=Main
 bool
 ManagerImpl::cancelCall (const CallID& id)
@@ -809,6 +849,10 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
     std::map<std::string, std::string>::iterator iter_details;
 
+
+    // currentAccountId = getAccountFromCall (iter_participant->first);
+    // call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
+
     if(iter == _conferencemap.end()){
 
 	 _debug("NO CONFERENCE YET, CREATE ONE\n");
@@ -873,8 +917,19 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 
 	 }
 	 */
-    }    
-    
+    }
+
+    AccountID currentAccountId;
+
+    Call* call = NULL;
+
+    currentAccountId = getAccountFromCall (call_id1);
+    call = getAccountLink (currentAccountId)->getCall (call_id1);
+    call->setConfId (default_conf);
+
+    currentAccountId = getAccountFromCall (call_id2);
+    call = getAccountLink (currentAccountId)->getCall (call_id2);
+    call->setConfId (default_conf);
 }
 
 
@@ -901,6 +956,14 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 
 	onHoldCall(call_id);
     }
+
+    AccountID currentAccountId;
+
+    Call* call = NULL;
+
+    currentAccountId = getAccountFromCall (call_id);
+    call = getAccountLink (currentAccountId)->getCall (default_conf);
+    call->setConfId (default_conf);
     
 }
 
