@@ -821,15 +821,23 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	iter_details = call_details.find("CALL_STATE");
 
 	if (iter_details->second == "HOLD")
-	 {
-	     _debug("    OFFHOLD %s\n", call_id.c_str());
-	     offHoldCall(call_id);
-	 }
+	{
+	    _debug("    OFFHOLD %s\n", call_id.c_str());
+	    offHoldCall(call_id);
+	}
 	 else if(iter_details->second == "INCOMING")
-	 {
-	     _debug("    ANSWER %s\n", call_id.c_str());
-	     answerCall(call_id);
-	 }
+	{
+	    _debug("    ANSWER %s\n", call_id.c_str());
+	    answerCall(call_id);
+	}
+
+	AccountID currentAccountId;
+
+        Call* call = NULL;
+
+	currentAccountId = getAccountFromCall (call_id);
+	call = getAccountLink (currentAccountId)->getCall (conference_id);
+	call->setConfId (default_conf);
 
 	_dbus->getCallManager()->conferenceChanged(conference_id);
     }
@@ -883,13 +891,24 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	     _debug("    ANSWER %s\n", call_id2.c_str());
 	     answerCall(call_id2);
 	 }
-	
-        
+
+	 AccountID currentAccountId;
+
+	 Call* call = NULL;
+
+	 currentAccountId = getAccountFromCall (call_id1);
+	 call = getAccountLink (currentAccountId)->getCall (call_id1);
+	 call->setConfId (default_conf);
+
+	 currentAccountId = getAccountFromCall (call_id2);
+	 call = getAccountLink (currentAccountId)->getCall (call_id2);
+	 call->setConfId (default_conf);      
 
     }
     else {
 
-	 _debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
+	 _debug("ALREADY A CONFERENCE CREATED\n");
+	 /*
 	 Conference* conf = iter->second;
 	 conf->add(call_id1);
 	 _conferencecall.insert(pair<CallID, Conference*>(call_id1, conf));
@@ -905,6 +924,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	     _debug("    Add INCOMING call to conference\n");
 	     answerCall(call_id1);
 	 }
+	 */
 
 	 /*
 	 iter_details = call2_details.find("CALL_STATE");
@@ -919,17 +939,6 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	 */
     }
 
-    AccountID currentAccountId;
-
-    Call* call = NULL;
-
-    currentAccountId = getAccountFromCall (call_id1);
-    call = getAccountLink (currentAccountId)->getCall (call_id1);
-    call->setConfId (default_conf);
-
-    currentAccountId = getAccountFromCall (call_id2);
-    call = getAccountLink (currentAccountId)->getCall (call_id2);
-    call->setConfId (default_conf);
 }
 
 
@@ -946,7 +955,7 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 
     }
     else {
-	_debug("ALREADY A CONFERENCE CREATED, ADD PARTICIPANT TO IT\n");
+	_debug("ManagerImpl::detachParticipant detach participant %s\n", call_id.c_str());
 	// Conference* conf = iter->second;
 
 	// conf->remove(call_id);
@@ -955,15 +964,9 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 	removeParticipant(call_id);
 
 	onHoldCall(call_id);
+
+	// _dbus->getCallManager()->conferenceChanged(conference_id);
     }
-
-    AccountID currentAccountId;
-
-    Call* call = NULL;
-
-    currentAccountId = getAccountFromCall (call_id);
-    call = getAccountLink (currentAccountId)->getCall (default_conf);
-    call->setConfId (default_conf);
     
 }
 

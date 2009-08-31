@@ -983,7 +983,12 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	{
 	    // TODO: dragged a conference call on a call
 	    // TODO: dragged a conference call on a conference
-	    // TODO: dragged a conference call on a NULL element
+
+	    else if(selected_type == A_CONFERENCE && dragged_type == NULL)
+	    {
+		// TODO: dragged a conference call on a NULL element
+		sflphone_detach_participant(selected_call_id);
+	    }
 	}
 	else // dragged_path_depth == 2
 	{
