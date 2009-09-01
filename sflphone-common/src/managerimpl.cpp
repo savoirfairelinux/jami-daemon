@@ -881,24 +881,14 @@ void
 ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 {
     _debug("ManagerImpl::addParticipant(%s, %s)\n", call_id.c_str(), conference_id.c_str());
-    // _debug("    Current call ID %s\n", getCurrentCallId().c_str());
 
     std::map<std::string, std::string> call_details = getCallDetails(call_id);
 
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
     std::map<std::string, std::string>::iterator iter_details;
 
-    if(iter == _conferencemap.end()) {
+    if(iter != _conferencemap.end()) {
 
-	_debug("NO CONFERENCE YET, CREATE ONE\n");
-	// createConference(call_id, getCurrentCallId());
-
-	// answerCall(call_id);
-
-    }
-    else {
-
-	_debug("ADD PARTICIPANT TO CONFERENCE\n");
 	Conference* conf = iter->second;
 
 	conf->add(call_id);
@@ -907,15 +897,21 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 
 	iter_details = call_details.find("CALL_STATE");
 
+	_debug("ManagerImpl::addParticipant call state: %s\n", iter_details->second.c_str());
+
 	if (iter_details->second == "HOLD")
 	{
 	    _debug("    OFFHOLD %s\n", call_id.c_str());
 	    offHoldCall(call_id);
 	}
-	 else if(iter_details->second == "INCOMING")
+	else if(iter_details->second == "INCOMING")
 	{
 	    _debug("    ANSWER %s\n", call_id.c_str());
 	    answerCall(call_id);
+	}
+	else if(iter_details->second == "CURRENT")
+	{
+	    conf->bindParticipant(call_id);
 	}
 
 	AccountID currentAccountId;
@@ -923,13 +919,13 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
         Call* call = NULL;
 
 	currentAccountId = getAccountFromCall (call_id);
-	call = getAccountLink (currentAccountId)->getCall (conference_id);
+	call = getAccountLink (currentAccountId)->getCall (call_id);
 	call->setConfId (default_conf);
 
 	_dbus->getCallManager()->conferenceChanged(conference_id);
     }
 
-    switchCall(default_id);
+    switchCall(conference_id);
     
 }
 
@@ -951,6 +947,9 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
 	conf = iter->second;
     }
 
+    conf->bindParticipant(default_id);
+
+    /*
     ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
     while(iter_participant != _conferencecall.end())
     {
@@ -960,6 +959,7 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
 
 	iter_participant++;
     }
+    */
 }
 
 
