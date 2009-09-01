@@ -1,6 +1,6 @@
 include ../globals.mak
 
-noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester historyTester
+noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester historyTester #rtpTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
@@ -58,6 +58,8 @@ pluginmanagerTester_LDADD = \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
@@ -76,6 +78,8 @@ hookmanagerTester_LDADD = \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
@@ -95,6 +99,8 @@ audiolayerTester_LDADD = \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
@@ -115,6 +121,8 @@ rtpTester_LDADD = \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
 		$(OBJECT_FILES)
@@ -133,6 +141,8 @@ historyTester_LDADD = \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \

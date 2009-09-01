@@ -32,8 +32,8 @@
 #include "user_cfg.h"
 
 #include "audio/audiolayer.h"
-#include "audio/alsalayer.h"
-#include "audio/pulselayer.h"
+#include "audio/alsa/alsalayer.h"
+#include "audio/pulseaudio/pulselayer.h"
 
 /*
  * @file audiorecorderTest.cpp  
