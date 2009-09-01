@@ -54,6 +54,8 @@ class Conference{
 
 	void bindParticipant(CallID participant_id);
 
+	CallID getLastParticipant();
+
     private:  
 
         /** Unique ID of the call */

@@ -246,7 +246,7 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
 	else 
 	{
 	    _debug ("ManagerImpl::outgoingCall() Put the current conference (ID=%s) on hold\n", getCurrentCallId().c_str());
-	    detachParticipant();
+	    // detachParticipant();
 	}
     }
 
@@ -569,7 +569,7 @@ ManagerImpl::offHoldCall (const CallID& id)
 	else 
 	{
 	    _debug ("Put the current conference (ID=%s) on hold\n", getCurrentCallId().c_str());
-	    detachParticipant();
+	    // detachParticipant();
 	}
     }
 
@@ -708,7 +708,7 @@ ManagerImpl::refuseCall (const CallID& id)
 }
 
 
-void
+Conference*
 ManagerImpl::createConference(const CallID& id1, const CallID& id2)
 {
     _debug("ManagerImpl::createConference()\n");
@@ -724,7 +724,8 @@ ManagerImpl::createConference(const CallID& id1, const CallID& id2)
 
     // broadcast a signal over dbus
     _dbus->getCallManager()->conferenceCreated(default_conf);
-
+    
+    return conf;
 }
 
 void
@@ -981,8 +982,10 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 
     if(iter == _conferencemap.end()){
 
-	 _debug("NO CONFERENCE YET, CREATE ONE\n");
-	 createConference(call_id1, call_id2);
+	 _debug("ManagerImpl::joinParticipant create a conference\n");
+	 Conference *conf = createConference(call_id1, call_id2);
+
+	 
 
 	 iter_details = call1_details.find("CALL_STATE");
 	 _debug("    call %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
@@ -995,6 +998,11 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	 {
 	     _debug("    ANSWER %s\n", call_id1.c_str());
 	     answerCall(call_id1);
+	 }
+	 else if(iter_details->second == "CURRENT")
+	 {
+	     _debug("    CURRENT %s\n", call_id1.c_str());
+	     conf->bindParticipant(call_id1);
 	 }
 
 	 iter_details = call2_details.find("CALL_STATE");
@@ -1009,6 +1017,11 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	     _debug("    ANSWER %s\n", call_id2.c_str());
 	     answerCall(call_id2);
 	 }
+	 else if(iter_details->second == "CURRENT")
+	 {
+	     _debug("    CURRENT %s\n", call_id2.c_str());
+	     conf->bindParticipant(call_id2);
+	 }
 
 	 AccountID currentAccountId;
 
@@ -1020,44 +1033,16 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 
 	 currentAccountId = getAccountFromCall (call_id2);
 	 call = getAccountLink (currentAccountId)->getCall (call_id2);
-	 call->setConfId (default_conf);      
+	 call->setConfId (default_conf);   
+
+	 switchCall(default_conf);
 
     }
     else {
 
-	 _debug("ALREADY A CONFERENCE CREATED\n");
-	 /*
-	 Conference* conf = iter->second;
-	 conf->add(call_id1);
-	 _conferencecall.insert(pair<CallID, Conference*>(call_id1, conf));
+	 _debug("ManagerImpl::joinParticipant already a conference created with this ID\n");
 	 
-	 iter_details = call1_details.find("CALL_STATE");
-	 if(iter_details->second == "HOLD")
-	 {
-	     _debug("    Add INCOMING call to conference\n");
-	     offHoldCall (call_id1);
-	 }
-	 else if(iter_details->second == "INCOMING")
-	 {
-	     _debug("    Add INCOMING call to conference\n");
-	     answerCall(call_id1);
-	 }
-	 */
-
-	 /*
-	 iter_details = call2_details.find("CALL_STATE");
-	 if(iter_details->second == "HOLD")
-	 {
-	       
-	 }
-	 else if(iter_details->second == "INCOMING")
-	 {
-
-	 }
-	 */
     }
-
-    switchCall(default_conf);
 
 }
 
@@ -1072,11 +1057,8 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 
     
 
-    if(iter == _conferencemap.end()) {
-	_debug("Error there is no conference, call is not conferencing\n");
+    if(iter != _conferencemap.end()) {
 
-    }
-    else {
 	_debug("ManagerImpl::detachParticipant detach participant %s\n", call_id.c_str());
 	
 	if(call_id != default_id)
@@ -1094,6 +1076,13 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 	}
 
 	// _dbus->getCallManager()->conferenceChanged(conference_id);
+
+    }
+    else {
+	
+
+	_debug("Error there is no conference, call is not conferencing\n");
+
     }
     
 }
@@ -1111,19 +1100,39 @@ ManagerImpl::removeParticipant(const CallID& call_id)
     ConferenceMap::iterator iter = conf_map.find(default_conf);
 
     if(iter == _conferencemap.end()) {
-	_debug("NO CONFERENCE CREATED, CANNOT REMOVE PARTICIPANT\n");
+	_debug("ManagerImpl::removeParticipant no conference created, cannot remove participant \n");
     }
     else {
 
 	conf = iter->second;
 
-	_debug("REMOVE PARTICIPANT %s\n", call_id.c_str());
+	_debug("ManagerImpl::removeParticipant %s\n", call_id.c_str());
 	conf->remove(call_id);
 
 	_conferencecall.erase(iter->first);
 
-	if (conf->getNbParticipants() <= 1)
+	if(conf->getNbParticipants() > 1)
+	{
+	    switchCall(default_conf);
+	}
+	else if (conf->getNbParticipants() == 1)
+	{
+	    CallID last_participant = conf->getLastParticipant();
+
+	    _debug("ManagerImpl::removeParticipant only one participant remaining %s\n", last_participant.c_str());
+
 	    removeConference(default_conf);
+
+	    switchCall(last_participant);
+	}
+	else
+	{
+	    removeConference(default_conf);
+
+	    switchCall("");
+	}
+
+	
     }
 }
 

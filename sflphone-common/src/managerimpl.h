@@ -195,7 +195,7 @@ class ManagerImpl {
      */
     bool refuseCall(const CallID& id);
 
-    void createConference(const CallID& id1, const CallID& id2);
+    Conference* createConference(const CallID& id1, const CallID& id2);
 
     void removeConference(const CallID& conference_id);
 

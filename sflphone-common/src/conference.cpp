@@ -56,20 +56,6 @@ void Conference::add(CallID participant_id)
 
     _debug("---- Conference:: add participant %s\n", participant_id.c_str());
 
-    /*
-    if(_nbParticipant >= 1)
-    {
-	ParticipantSet::iterator iter;
-	
-	for(iter = _participants.begin(); iter != _participants.end(); iter++)
-	{
-	    _debug("---- Conference:: bind callid %s with %s in conference add\n", participant_id.c_str(), (*iter).c_str());
-	    Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id, *iter);
-	}
-    }
-
-    Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID(participant_id);
-    */
     _participants.insert(participant_id);
 
     _nbParticipant++;
@@ -80,19 +66,6 @@ void Conference::remove(CallID participant_id)
 {
 
     _debug("---- Conference:: remove participant %s\n", participant_id.c_str());
-
-    /*
-    if(_nbParticipant >= 1)
-    {
-	ParticipantSet::iterator iter = _participants.begin();
-
-	for(iter = _participants.begin(); iter != _participants.end(); iter++)
-	{
-	    _debug("---- Conference:: unbind callid %s from %s in conference add\n", participant_id.c_str(), (*iter).c_str());
-	    Manager::instance().getAudioDriver()->getMainBuffer()->unBindCallID(participant_id, *iter);
-	}
-    }
-    */
 
     _participants.erase(participant_id);
 
@@ -145,4 +118,17 @@ std::string Conference::getStateStr()
     }
 
     return state_str;
+}
+
+
+CallID Conference::getLastParticipant()
+{
+    CallID call_id = "";
+    
+    ParticipantSet::iterator iter = _participants.begin();
+    if (iter != _participants.end())
+    {
+	call_id = *iter;
+	return call_id;
+    }
 }
