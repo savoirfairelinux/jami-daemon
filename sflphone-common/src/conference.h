@@ -36,9 +36,11 @@ class Conference{
 
         enum ConferenceState {Active, Hold};
 
-        Conference();
+        Conference(ConfID confID);
 
         ~Conference();
+
+	std::string getConfID() { return _id; }
 
 	int getState();
 
@@ -58,7 +60,7 @@ class Conference{
 
     private:  
 
-        /** Unique ID of the call */
+        /** Unique ID of the conference */
         CallID _id;
 
 	ConferenceState _confState;

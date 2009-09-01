@@ -589,6 +589,7 @@ ManagerImpl::offHoldCall (const CallID& id)
 	}
     }
 
+    // switch current call id to id since sipvoip link need it to amke a call 
     switchCall(id);
 
     /* Direct IP to IP call */
@@ -621,7 +622,13 @@ ManagerImpl::offHoldCall (const CallID& id)
 
     }
 
-    // switchCall (id);
+    if ( participToConference(id) ) {
+	ConferenceCallMap::iterator iter = _conferencecall.find(id);
+	if(iter != _conferencecall.end())
+	    switchCall(iter->second->getConfID());
+    }
+    // else the 
+  
 
     codecName = getCurrentCodecName (id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
@@ -729,7 +736,7 @@ ManagerImpl::createConference(const CallID& id1, const CallID& id2)
 {
     _debug("ManagerImpl::createConference()\n");
     
-    Conference* conf = new Conference();
+    Conference* conf = new Conference(default_conf);
 
     _conferencecall.insert(pair<CallID, Conference*>(id1, conf));
     _conferencecall.insert(pair<CallID, Conference*>(id2, conf));
@@ -904,6 +911,9 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
     std::map<std::string, std::string>::iterator iter_details;
 
+    // store the current call id (it will change in offHoldCall or in answerCall)
+    CallID previous_call_id = getCurrentCallId();
+
     if(iter != _conferencemap.end()) {
 
 	Conference* conf = iter->second;
@@ -937,6 +947,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	    conf->bindParticipant(call_id);
 	}
 
+
 	AccountID currentAccountId;
 
         Call* call = NULL;
@@ -948,7 +959,22 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	_dbus->getCallManager()->conferenceChanged(conference_id);
     }
 
+    
+    if(previous_call_id == call_id)
+    {
+	_debug("**************************** BIND US TO CONFERENCE ******************* \n");
+	_debug("previous_call_id %s\n", previous_call_id.c_str());
+	_debug("call_id %s\n", call_id.c_str());
+	// bind main participant to conference after adding new participant 
+	_audiodriver->getMainBuffer()->unBindAll(default_id);
+	switchCall("");
+	addMainParticipant(conference_id);
+
+    }
+  
+
     switchCall(conference_id);
+    
     
 }
 
@@ -983,6 +1009,8 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
 	iter_participant++;
     }
     */
+
+    switchCall(conference_id);
 }
 
 

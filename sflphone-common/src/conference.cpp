@@ -23,10 +23,11 @@
 #include "audio/audiolayer.h"
 
 
-Conference::Conference()
+Conference::Conference(ConfID confID)
 {
 
     _nbParticipant = 0;
+    _id = confID;
 
 }
 
