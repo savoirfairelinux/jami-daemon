@@ -996,9 +996,10 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
 	conf = iter->second;
     }
 
-    conf->bindParticipant(default_id);
+    // should be nice but at some point default_id is bound to itself
+    // conf->bindParticipant(default_id);
 
-    /*
+    // so we must do it manually
     ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
     while(iter_participant != _conferencecall.end())
     {
@@ -1008,7 +1009,6 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
 
 	iter_participant++;
     }
-    */
 
     switchCall(conference_id);
 }
