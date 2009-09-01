@@ -101,7 +101,7 @@ public:
     int32_t getHistoryLimit (void);
     
     void setHistoryEnabled (void);
-    int32_t getHistoryEnabled (void);
+	std::string getHistoryEnabled (void);
 
     int32_t getVolumeControls( void );
     void setVolumeControls( void );

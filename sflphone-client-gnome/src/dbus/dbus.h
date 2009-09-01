@@ -424,7 +424,7 @@ void dbus_set_history_limit (const guint days);
 
 void dbus_set_history_enabled (void);
 
-int dbus_get_history_enabled (void);
+gchar* dbus_get_history_enabled (void);
 
 /**
  * ConfigurationManager - Configure the start-up option

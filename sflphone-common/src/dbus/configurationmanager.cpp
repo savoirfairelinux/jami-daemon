@@ -592,7 +592,7 @@ void ConfigurationManager::setHistoryEnabled (void)
     Manager::instance ().setHistoryEnabled ();
 }
 
-int32_t ConfigurationManager::getHistoryEnabled (void)
+std::string ConfigurationManager::getHistoryEnabled (void)
 {
     return Manager::instance ().getHistoryEnabled ();
 }

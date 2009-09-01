@@ -1946,14 +1946,14 @@ int ManagerImpl::getHistoryLimit (void)
     return getConfigInt (PREFERENCES , CONFIG_HISTORY_LIMIT);
 }
 
-int ManagerImpl::getHistoryEnabled (void)
+std::string ManagerImpl::getHistoryEnabled (void)
 {
-    return getConfigInt (PREFERENCES, CONFIG_HISTORY_ENABLED);
+    return getConfigString (PREFERENCES, CONFIG_HISTORY_ENABLED);
 }
 
 void ManagerImpl::setHistoryEnabled (void)
 {
-    (getConfigInt (PREFERENCES, CONFIG_HISTORY_ENABLED) == 1) ? setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, FALSE_STR) : setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, TRUE_STR);
+    (getConfigString (PREFERENCES, CONFIG_HISTORY_ENABLED) == TRUE_STR) ? setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, FALSE_STR) : setConfig (PREFERENCES, CONFIG_HISTORY_ENABLED, TRUE_STR);
 }
 
 int

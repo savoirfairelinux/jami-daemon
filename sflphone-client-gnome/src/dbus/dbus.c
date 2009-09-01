@@ -1626,9 +1626,9 @@ void dbus_set_history_enabled ()
     }
 }
 
-int dbus_get_history_enabled ()
+gchar* dbus_get_history_enabled ()
 {
-    int state; 
+    gchar* state; 
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_history_enabled(
             configurationManagerProxy,

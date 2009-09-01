@@ -561,7 +561,7 @@ class ManagerImpl {
 
     void setHistoryEnabled (void);
 
-    int getHistoryEnabled (void);
+	std::string getHistoryEnabled (void);
 
 
     /**

@@ -685,7 +685,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c)
 void calltree_add_history_entry (callable_obj_t * c)
 {
 
-    if (dbus_get_history_enabled () == 0)
+    if ( g_strcasecmp (dbus_get_history_enabled (), "false") == 0)
         return;
 
     GdkPixbuf *pixbuf=NULL;

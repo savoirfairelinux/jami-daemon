@@ -478,7 +478,7 @@ void history_load_configuration ()
 {
     history_limit = dbus_get_history_limit ();
     history_enabled = TRUE;
-    if (dbus_get_history_enabled () == 0)
+    if (g_strcasecmp (dbus_get_history_enabled (), "false") == 0)
         history_enabled = FALSE;
 }
 

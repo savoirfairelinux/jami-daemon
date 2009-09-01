@@ -14,22 +14,30 @@
       <arg type="s" name="accountID" direction="in"/>
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
-
-    <method name="setNumberOfCredential">
-      <arg type="s" name="accountID" direction="in"/>
-      <arg type="i" name="number" direction="in"/>
-    </method>
     
-    <method name="deleteAllCredential">
-      <arg type="s" name="accountID" direction="in"/>
-    </method>
-       
     <method name="setCredential">
       <arg type="s" name="accountID" direction="in"/>
       <arg type="i" name="index" direction="in"/>
       <arg type="a{ss}" name="credentialInformation" direction="in"/>
     </method>
+
+    <method name="setNumberOfCredential">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="i" name="number" direction="in"/>
+    </method>
+       
+     <method name="deleteAllCredential">
+      <arg type="s" name="accountID" direction="in"/>
+    </method>
+  
+    <method name="getIp2IpDetails">
+      <arg type="a{ss}" name="details" direction="out"/>
+    </method>
     
+    <method name="setIp2IpDetails">
+      <arg type="a{ss}" name="details" direction="in"/>
+    </method>
+      
     <method name="getCredential">
       <arg type="s" name="accountID" direction="in"/>
       <arg type="i" name="index" direction="in"/>
@@ -40,7 +48,7 @@
       <arg type="s" name="accountID" direction="in"/>
       <arg type="i" name="numberOfCredential" direction="out"/>
     </method>
-    
+        
     <method name="addAccount">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
       <arg type="a{ss}" name="details" direction="in"/>
@@ -60,14 +68,6 @@
       <arg type="as" name="list" direction="out"/>
     </method>
    
-    <method name="getIp2IpDetails">
-      <arg type="a{ss}" name="details" direction="out"/>
-    </method>
-    
-    <method name="setIp2IpDetails">
-      <arg type="a{ss}" name="details" direction="in"/>
-    </method>
-    
     <method name="sendRegister">
       <arg type="s" name="accountID" direction="in"/>
       <arg type="i" name="expire" direction="in"/>
@@ -131,6 +131,8 @@
     <method name="setRecordPath">
       <arg type="s" name="rec" direction="in"/>
     </method>
+
+   <!--      ///////////////////////               -->
    
    <!-- Codecs-related methods -->
  
@@ -138,7 +140,7 @@
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
-   
+       
    <method name="getCodecDetails">
      <arg type="i" name="payload" direction="in"/>
      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
@@ -209,7 +211,7 @@
     </method>
 
   <!--    General Settings Panel         -->
-  
+
     <method name="isMd5CredentialHashing">
       <arg type="b" name="res" direction="out"/>
     </method>
@@ -254,7 +256,7 @@
     </method>
 
     <method name="getHistoryEnabled">
-      <arg type="i" name="state" direction="out"/>
+      <arg type="s" name="state" direction="out"/>
     </method>
 
     <method name="getVolumeControls">
@@ -358,13 +360,13 @@
         <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
         <arg type="a{ss}" name="entries" direction="in"/>
     </method>
-
+      
     <signal name="accountsChanged">
     </signal>  
 
     <signal name="errorAlert">
       <arg type="i" name="code" direction="out"/>
-    </signal>
+    </signal> 
     
     <!-- TLS Methods -->
     <method name="getSupportedTlsMethod">
@@ -375,7 +377,7 @@
     <method name="getTlsSettingsDefault">
       <arg type="a{ss}" name="details" direction="out"/>
     </method>
-    
+
     <method name="getTlsSettings">
       <arg type="s" name="accountID" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -387,10 +389,11 @@
       <arg type="s" name="accountID" direction="in"/>
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
-
+    
     <method name="getAllIpInterface">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
+    
   </interface>
 </node>
