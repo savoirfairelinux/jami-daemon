@@ -243,10 +243,10 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
 	    _debug ("ManagerImpl::outgoingCall() Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
 	    onHoldCall (getCurrentCallId());
 	}
-	else 
+	else if (isConference(getCurrentCallId()))
 	{
-	    _debug ("ManagerImpl::outgoingCall() Put the current conference (ID=%s) on hold\n", getCurrentCallId().c_str());
-	    // detachParticipant();
+	    _debug ("ManagerImpl::outgoingCall() detach main participant from conference\n");
+	    detachParticipant();
 	}
     }
 
@@ -312,7 +312,7 @@ ManagerImpl::answerCall (const CallID& id)
     if (currentCall == NULL) {
         _debug("ManagerImpl::answerCall : currentCall is null\n");
     }
-    
+    /*
     Call* lastCall = NULL;
     if (!getCurrentCallId().empty()) {
         lastCall = getAccountLink (currentAccountId)->getCall (getCurrentCallId());
@@ -329,9 +329,25 @@ ManagerImpl::answerCall (const CallID& id)
             _debug ("* Manager Info: there is currently a call, try to hold it\n");
             onHoldCall (getCurrentCallId());
         }
-	else
+	else if (isConference(getCurrentCallId()))
 	{
 	    _debug("Current call particips to a conference! Do not hold it!\n");
+	}
+    }
+    */
+    if (hasCurrentCall()) {
+	
+	_debug ("ManagerImpl::answerCall() Has current call (id %s) put it onhold\n", getCurrentCallId().c_str());	
+	// if this is not a conferenceand this and is not a conference participant
+	if (!isConference(getCurrentCallId()) && !participToConference(getCurrentCallId()))
+	{
+	    _debug ("ManagerImpl::answerCall() Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
+	    onHoldCall (getCurrentCallId());
+	}
+	else if (isConference(getCurrentCallId()))
+	{
+	    _debug ("ManagerImpl::answerCall() detach main participant from conference\n");
+	    detachParticipant();
 	}
     }
 
@@ -563,13 +579,13 @@ ManagerImpl::offHoldCall (const CallID& id)
 	// if this is not a conferenceand this and is not a conference participant
 	if (!isConference(current_call_id) && !participToConference(current_call_id))
 	{
-	    _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
+	    _debug ("ManagerImpl::offHoldCall put current call (ID=%s) on hold\n", current_call_id.c_str());
 	    onHoldCall (current_call_id);
 	}
-	else 
+	else if (isConference(current_call_id))
 	{
-	    _debug ("Put the current conference (ID=%s) on hold\n", getCurrentCallId().c_str());
-	    // detachParticipant();
+	    _debug ("ManagerImpl::offHoldCall Put current conference (ID=%s) on hold\n", current_call_id.c_str());
+	    detachParticipant();
 	}
     }
 
@@ -903,15 +919,21 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	if (iter_details->second == "HOLD")
 	{
 	    _debug("    OFFHOLD %s\n", call_id.c_str());
+
+	    // offHoldCall create a new rtp session which use addStream to bind participant
 	    offHoldCall(call_id);
 	}
 	else if(iter_details->second == "INCOMING")
 	{
 	    _debug("    ANSWER %s\n", call_id.c_str());
+
+	    // answerCall create a new rtp session which use addStream to bind participant
 	    answerCall(call_id);
 	}
 	else if(iter_details->second == "CURRENT")
 	{
+	    // Already a curent call, so we beed to reset audio stream bindings manually
+	    _audiodriver->getMainBuffer()->unBindAll(call_id);
 	    conf->bindParticipant(call_id);
 	}
 
@@ -1002,6 +1024,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	 else if(iter_details->second == "CURRENT")
 	 {
 	     _debug("    CURRENT %s\n", call_id1.c_str());
+	     _audiodriver->getMainBuffer()->unBindAll(call_id1);
 	     conf->bindParticipant(call_id1);
 	 }
 
@@ -1020,6 +1043,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	 else if(iter_details->second == "CURRENT")
 	 {
 	     _debug("    CURRENT %s\n", call_id2.c_str());
+	     _audiodriver->getMainBuffer()->unBindAll(call_id2);
 	     conf->bindParticipant(call_id2);
 	 }
 
@@ -1379,7 +1403,7 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     if (!hasCurrentCall()) {
         call->setConnectionState (Call::Ringing);
         ringtone();
-        switchCall (call->getCallId());
+        // switchCall (call->getCallId());
 
     }
 
