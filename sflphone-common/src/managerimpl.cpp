@@ -344,7 +344,7 @@ ManagerImpl::answerCall (const CallID& id)
 	    _debug ("ManagerImpl::answerCall() Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
 	    onHoldCall (getCurrentCallId());
 	}
-	else if (isConference(getCurrentCallId()))
+	else if (isConference(getCurrentCallId()) && !participToConference(id))
 	{
 	    _debug ("ManagerImpl::answerCall() detach main participant from conference\n");
 	    detachParticipant();
