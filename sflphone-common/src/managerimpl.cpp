@@ -1190,23 +1190,22 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 
     CallID current_call_id = getCurrentCallId();
 
-    AccountID currentAccountId;
-    Call* call = NULL;
+    if(call_id != default_id)
+    {
+	AccountID currentAccountId;
+	Call* call = NULL;
 
-    currentAccountId = getAccountFromCall (call_id);
-    call = getAccountLink (currentAccountId)->getCall (call_id);
+	currentAccountId = getAccountFromCall (call_id);
+	call = getAccountLink (currentAccountId)->getCall (call_id);
 
-    // TODO: add conference_id as a second parameter
-    ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
+	// TODO: add conference_id as a second parameter
+	ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
 
-    if(iter != _conferencemap.end()) {
+	if(iter != _conferencemap.end()) {
 
-	Conference *conf = iter->second;
+	    Conference *conf = iter->second;
 
-	_debug("ManagerImpl::detachParticipant detach participant %s\n", call_id.c_str());
-	
-	if(call_id != default_id)
-	{
+	    _debug("ManagerImpl::detachParticipant detach participant %s\n", call_id.c_str());
 
 	    std::map<std::string, std::string> call_details = getCallDetails(call_id);
 	    std::map<std::string, std::string>::iterator iter_details;
@@ -1263,21 +1262,18 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 		    switchCall("");
 		}
 	    }
-	}
-	else
-	{
-	    _debug("ManagerImpl::detachParticipant unbind main participant from all\n");
-	    _audiodriver->getMainBuffer()->unBindAll(default_id);
-	}
-
-	// _dbus->getCallManager()->conferenceChanged(conference_id);
-
-    }
-    else {
+	}	    
+        else {
 	
 
-	_debug("Error there is no conference, call is not conferencing\n");
-
+	    _debug("Error there is no conference, call is not conferencing\n");
+       
+        }
+    }
+    else
+    {
+	_debug("ManagerImpl::detachParticipant unbind main participant from all\n");
+	_audiodriver->getMainBuffer()->unBindAll(default_id);
     }
     
 }
