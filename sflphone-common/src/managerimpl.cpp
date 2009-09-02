@@ -1663,7 +1663,9 @@ ManagerImpl::peerHungupCall (const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    switchCall(id);
+    _debug("-------------------------- ManagerImpl::peerHungupCall -----------------------------\n");
+
+    CallID current_call_id = getCurrentCallId();
 
     /* Direct IP to IP call */
 
@@ -1678,8 +1680,71 @@ ManagerImpl::peerHungupCall (const CallID& id)
             _debug ("peerHungupCall: Call doesn't exists\n");
             return;
         }
+	_debug("-----------------------------------------------------------------------\n");
 
         returnValue = getAccountLink (accountid)->peerHungup (id);
+    }
+
+    switchCall(id);
+
+
+    if(participToConference(id))
+    {
+
+	AccountID currentAccountId;
+	Call* call = NULL;
+
+	currentAccountId = getAccountFromCall (id);
+	call = getAccountLink (currentAccountId)->getCall (id);
+
+	ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
+	if(iter != _conferencemap.end())
+	{
+
+	    Conference *conf = iter->second;
+
+	    removeParticipant(id);
+	    
+	    if(conf->getNbParticipants() > 1)
+	    {
+		switchCall(conf->getConfID());
+	    }
+	    else if (conf->getNbParticipants() == 1)
+	    {
+		AccountID currentAccountId;
+		Call* call = NULL;
+	    
+		ParticipantSet participants = conf->getParticipantList();
+		ParticipantSet::iterator iter_participant = participants.begin();
+		
+		// bind main participant to remaining conference call
+		if (iter_participant != participants.end()) {
+		    
+		    // this call is no more a conference participant
+		    currentAccountId = getAccountFromCall (*iter_participant);
+		    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+		    call->setConfId ("");
+		    
+		    if (current_call_id != conf->getConfID())
+		    {
+			onHoldCall(call->getCallId());
+			switchCall(current_call_id);
+		    }
+		    else
+		    {
+			switchCall(*iter_participant);
+		    }
+		}
+	    
+		removeConference(conf->getConfID());
+	    }
+	    else
+	    {
+		removeConference(conf->getConfID());
+		
+		switchCall("");
+	    }
+	}
     }
 
     
@@ -1700,11 +1765,6 @@ ManagerImpl::peerHungupCall (const CallID& id)
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
 
         if (pulselayer)  pulselayer->restorePulseAppsVolume();
-    }
-
-    if(participToConference(id))
-    {
-	removeParticipant(id);
     }
 }
 
