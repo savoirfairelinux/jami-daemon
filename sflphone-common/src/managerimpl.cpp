@@ -1133,8 +1133,6 @@ ManagerImpl::detachParticipant(const CallID& call_id)
     // TODO: add conference_id as a second parameter
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
 
-    
-
     if(iter != _conferencemap.end()) {
 
 	_debug("ManagerImpl::detachParticipant detach participant %s\n", call_id.c_str());
@@ -1142,10 +1140,23 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 	if(call_id != default_id)
 	{
 
-	    
-	    onHoldCall(call_id);
+	    std::map<std::string, std::string> call_details = getCallDetails(call_id);
+	    std::map<std::string, std::string>::iterator iter_details;
 
-	    removeParticipant(call_id);
+
+	    iter_details = call_details.find("CALL_STATE");
+	    if (iter_details->second == "RINGING")
+	    {
+		removeParticipant(call_id);
+	    }
+	    else
+	    {
+		_debug("    ONHOLD %s\n", call_id.c_str());
+		onHoldCall(call_id);
+
+		removeParticipant(call_id);
+		
+	    }
 
 	}
 	else
