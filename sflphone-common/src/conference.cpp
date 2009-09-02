@@ -18,16 +18,30 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <sstream>
+
 #include "conference.h"
 #include "manager.h"
 #include "audio/audiolayer.h"
 
+int Conference::count = 0;
 
-Conference::Conference(ConfID confID)
+Conference::Conference()
 {
+    _nbParticipant = 0;
+
+    ++count;
+
+    std::string conf("conf_");
+
+    // convert count into string
+    std::string s;
+    std::stringstream out;
+    out << count;
+    s = out.str();
 
     _nbParticipant = 0;
-    _id = confID;
+    _id = conf.append(s);
 
 }
 

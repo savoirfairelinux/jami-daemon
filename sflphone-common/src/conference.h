@@ -36,7 +36,9 @@ class Conference{
 
         enum ConferenceState {Active, Hold};
 
-        Conference(ConfID confID);
+	static int count;
+
+        Conference();
 
         ~Conference();
 
@@ -69,5 +71,7 @@ class Conference{
 
         int _nbParticipant;
 };
+
+// Conference::count = 0;
 
 #endif

@@ -380,6 +380,8 @@ ManagerImpl::hangupCall (const CallID& id)
     bool returnValue;
     AudioLayer *audiolayer;
 
+    CallID current_call_id = getCurrentCallId();
+
     stopTone (false);
     switchCall (id);
 
@@ -397,10 +399,64 @@ ManagerImpl::hangupCall (const CallID& id)
 	_debug("ManagerImpl::stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
         audiolayer->stopStream();
     }
-
+   
     if(participToConference(id))
     {
-	removeParticipant(id);
+
+	AccountID currentAccountId;
+	Call* call = NULL;
+
+	currentAccountId = getAccountFromCall (id);
+	call = getAccountLink (currentAccountId)->getCall (id);
+
+	ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
+	if(iter != _conferencemap.end())
+	{
+
+	    Conference *conf = iter->second;
+
+	    removeParticipant(id);
+	    
+	    if(conf->getNbParticipants() > 1)
+	    {
+		switchCall(conf->getConfID());
+	    }
+	    else if (conf->getNbParticipants() == 1)
+	    {
+		AccountID currentAccountId;
+		Call* call = NULL;
+	    
+		ParticipantSet participants = conf->getParticipantList();
+		ParticipantSet::iterator iter_participant = participants.begin();
+		
+		// bind main participant to remaining conference call
+		if (iter_participant != participants.end()) {
+		    
+		    // this call is no more a conference participant
+		    currentAccountId = getAccountFromCall (*iter_participant);
+		    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+		    call->setConfId ("");
+		    
+		    if (current_call_id != conf->getConfID())
+		    {
+			onHoldCall(call->getCallId());
+			switchCall(current_call_id);
+		    }
+		    else
+		    {
+			switchCall(*iter_participant);
+		    }
+		}
+	    
+		removeConference(conf->getConfID());
+	    }
+	    else
+	    {
+		removeConference(conf->getConfID());
+		
+		switchCall("");
+	    }
+	}
     }
 
     /* Direct IP to IP call */
@@ -738,17 +794,17 @@ ManagerImpl::createConference(const CallID& id1, const CallID& id2)
 {
     _debug("ManagerImpl::createConference()\n");
     
-    Conference* conf = new Conference(default_conf);
+    Conference* conf = new Conference();
 
     // _conferencecall.insert(pair<CallID, Conference*>(id1, conf));
     // _conferencecall.insert(pair<CallID, Conference*>(id2, conf));
-    _conferencemap.insert(pair<CallID, Conference*>(default_conf, conf));
+    _conferencemap.insert(pair<CallID, Conference*>(conf->getConfID(), conf));
 
     conf->add(id1);
     conf->add(id2);
 
     // broadcast a signal over dbus
-    _dbus->getCallManager()->conferenceCreated(default_conf);
+    _dbus->getCallManager()->conferenceCreated(conf->getConfID());
     
     return conf;
 }
@@ -906,6 +962,8 @@ ManagerImpl::participToConference(const CallID& call_id)
     if (call == NULL)
 	return false;
 
+    _debug("!!!!!!!!!!!!!!!!!! confid: %s !!!!!!!!!!!!!!!!!!!!!!!!!\n", call->getConfId().c_str());
+
     if(call->getConfId() == "") {
 	return false;
     }
@@ -969,7 +1027,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 
 	currentAccountId = getAccountFromCall (call_id);
 	call = getAccountLink (currentAccountId)->getCall (call_id);
-	call->setConfId (default_conf);
+	call->setConfId (conf->getConfID());
 
 	_dbus->getCallManager()->conferenceChanged(conference_id);
     }
@@ -1080,7 +1138,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 
 	 currentAccountId = getAccountFromCall (call_id1);
 	 call = getAccountLink (currentAccountId)->getCall (call_id1);
-	 call->setConfId (default_conf);
+	 call->setConfId (conf->getConfID());
 
 
 	 switchCall("");
@@ -1106,14 +1164,14 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 
 	 currentAccountId = getAccountFromCall (call_id2);
 	 call = getAccountLink (currentAccountId)->getCall (call_id2);
-	 call->setConfId (default_conf);
+	 call->setConfId (conf->getConfID());
 
 
 	 // finally bind main participant to conference
 	 // addMainParticipant(default_conf);
 
 
-	 switchCall(default_conf);
+	 switchCall(conf->getConfID());
 
     }
     else {
@@ -1132,8 +1190,14 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 
     CallID current_call_id = getCurrentCallId();
 
+    AccountID currentAccountId;
+    Call* call = NULL;
+
+    currentAccountId = getAccountFromCall (call_id);
+    call = getAccountLink (currentAccountId)->getCall (call_id);
+
     // TODO: add conference_id as a second parameter
-    ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+    ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
 
     if(iter != _conferencemap.end()) {
 
@@ -1161,7 +1225,7 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 
 		if(conf->getNbParticipants() > 1)
 		{
-		    switchCall(default_conf);
+		    switchCall(conf->getConfID());
 		}
 		else if (conf->getNbParticipants() == 1)
 		{
@@ -1179,7 +1243,7 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 			call = getAccountLink (currentAccountId)->getCall (*iter_participant);
 			call->setConfId ("");
 
-			if (current_call_id != default_conf)
+			if (current_call_id != conf->getConfID())
 			{
 			    onHoldCall(call->getCallId());
 			    switchCall(current_call_id);
@@ -1190,11 +1254,11 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 			}
 		    }
 		    
-		    removeConference(default_conf);
+		    removeConference(conf->getConfID());
 		}
 		else
 		{
-		    removeConference(default_conf);
+		    removeConference(conf->getConfID());
 		    
 		    switchCall("");
 		}
@@ -1227,16 +1291,15 @@ ManagerImpl::removeParticipant(const CallID& call_id)
     // TODO: add conference_id as a second parameter
     Conference* conf;
 
-    ConferenceMap conf_map = _conferencemap;
-    ConferenceMap::iterator iter = conf_map.find(default_conf);
-
     AccountID currentAccountId;
     Call* call = NULL;
 
     // this call is no more a conference participant
     currentAccountId = getAccountFromCall (call_id);
     call = getAccountLink (currentAccountId)->getCall (call_id);
-    call->setConfId ("");
+
+    ConferenceMap conf_map = _conferencemap;
+    ConferenceMap::iterator iter = conf_map.find(call->getConfId());
 
     // unbind main participant from conference
     // _audiodriver->getMainBuffer()->unBindAll(default_id);
@@ -1260,10 +1323,16 @@ ManagerImpl::addStream(const CallID& call_id)
 {
     _debug("ManagerImpl::addStream %s\n", call_id.c_str());
 
+    AccountID currentAccountId;
+    Call* call = NULL;
+
+    currentAccountId = getAccountFromCall (call_id);
+    call = getAccountLink (currentAccountId)->getCall (call_id);
+
     if(participToConference(call_id)) {
 
 	// bind to conference participant
-	ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+	ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
 	if (iter != _conferencemap.end())
 	{
 	    Conference* conf = iter->second;
