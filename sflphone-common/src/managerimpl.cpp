@@ -398,6 +398,12 @@ ManagerImpl::hangupCall (const CallID& id)
         audiolayer->stopStream();
     }
 
+    if(participToConference(id))
+    {
+	_debug("??????????????????? STILL PARTICIP TO A CONFERENCE ?????????????????\n");
+	removeParticipant(id);
+    }
+
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
         returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (id);
@@ -428,12 +434,6 @@ ManagerImpl::hangupCall (const CallID& id)
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
 
         if (pulselayer)  pulselayer->restorePulseAppsVolume();
-    }
-
-    if(participToConference(id))
-    {
-	_debug("??????????????????? STILL PARTICIP TO A CONFERENCE ?????????????????\n");
-	removeParticipant(id);
     }
 
     return returnValue;
@@ -760,8 +760,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 
     _debug("ManagerImpl::removeConference(%s)\n", conference_id.c_str());
 
-    Conference* conf;
-    conf = NULL;
+    Conference* conf = NULL;
 
     _debug("ManagerImpl::removeConference _conferencemap.size: %i\n", _conferencemap.size());
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
@@ -774,25 +773,21 @@ ManagerImpl::removeConference(const ConfID& conference_id)
     if(conf == NULL)
 	return;
 
-    // broadcast a signal over dbus
-    _debug("ManagerImpl::removeConference broadcast call removed on dbus: %s\n", conference_id.c_str());
-    _dbus->getCallManager()->conferenceRemoved(conference_id);
 
 
-    /*
+    // unbind main participant from conference
+    _audiodriver->getMainBuffer()->unBindAll(default_id);
+
     ParticipantSet participants = conf->getParticipantList();
 
-    _debug("ManagerImpl::removeConference _conferencecall.size: %i\n", _conferencecall.size());
-    ConferenceCallMap::iterator iter_p = participants.begin();
-    while (iter_p != participants.end()) {
+    // bind main participant to remaining conference call
+    ParticipantSet::iterator iter_p = participants.begin();
+    if (iter_p != participants.end()) {
 
-	
-	    _conferencecall.erase(iter_p->first);
-	
-
-	iter_p++;
+	// to avoid puting onhold the call
+	// switchCall("");	
+	_audiodriver->getMainBuffer()->bindCallID(*iter_p, default_id);
     }
-    */
 
     
 
@@ -803,8 +798,8 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 	_debug("ManagerImpl:: error cannot remove conference id: %s\n", conference_id.c_str());
 
     // broadcast a signal over dbus
-    // _debug("ManagerImpl:: broadcast call removed on dbus: %s\n", conference_id.c_str());
-    // _dbus->getCallManager()->conferenceRemoved(conference_id);
+    _debug("ManagerImpl::removeConference broadcast call removed on dbus: %s\n", conference_id.c_str());
+    _dbus->getCallManager()->conferenceRemoved(conference_id);
 
 }
 
@@ -908,11 +903,14 @@ ManagerImpl::participToConference(const CallID& call_id)
     accountId = getAccountFromCall (call_id);
     call = getAccountLink (accountId)->getCall(call_id);
 
+    if (call == NULL)
+	return false;
+
     if(call->getConfId() == "") {
-	return true;
+	return false;
     }
     else {
-	return false;
+	return true;
     }
 }
 
@@ -1052,6 +1050,13 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	 _debug("ManagerImpl::joinParticipant create a conference\n");
 	 Conference *conf = createConference(call_id1, call_id2);
 
+	 AccountID currentAccountId;
+	 Call* call = NULL;
+
+	 // unbind main participant from either call_id1 or call_id2
+	 // _audiodriver->getMainBuffer()->unBindAll(default_id);
+
+
 	 switchCall("");
 
 	 iter_details = call1_details.find("CALL_STATE");
@@ -1072,6 +1077,11 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	     _audiodriver->getMainBuffer()->unBindAll(call_id1);
 	     conf->bindParticipant(call_id1);
 	 }
+
+	 currentAccountId = getAccountFromCall (call_id1);
+	 call = getAccountLink (currentAccountId)->getCall (call_id1);
+	 call->setConfId (default_conf);
+
 
 	 switchCall("");
 
@@ -1094,17 +1104,14 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	     conf->bindParticipant(call_id2);
 	 }
 
-	 AccountID currentAccountId;
-
-	 Call* call = NULL;
-
-	 currentAccountId = getAccountFromCall (call_id1);
-	 call = getAccountLink (currentAccountId)->getCall (call_id1);
-	 call->setConfId (default_conf);
-
 	 currentAccountId = getAccountFromCall (call_id2);
 	 call = getAccountLink (currentAccountId)->getCall (call_id2);
-	 call->setConfId (default_conf);   
+	 call->setConfId (default_conf);
+
+
+	 // finally bind main participant to conference
+	 // addMainParticipant(default_conf);
+
 
 	 switchCall(default_conf);
 
@@ -1222,13 +1229,19 @@ ManagerImpl::addStream(const CallID& call_id)
     _debug("ManagerImpl::addStream %s\n", call_id.c_str());
 
     if(participToConference(call_id)) {
-	ConferenceMap::iterator iter = _conferencemap.find(default_conf);
-	
-	Conference* conf = iter->second;
 
-	conf->bindParticipant(call_id);
+	// bind to conference participant
+	ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+	if (iter != _conferencemap.end())
+	{
+	    Conference* conf = iter->second;
+
+	    conf->bindParticipant(call_id);
+	}
     }
     else {
+
+	// bind to main 
 	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
     }
 }

@@ -56,8 +56,6 @@ class Conference{
 
 	void bindParticipant(CallID participant_id);
 
-	CallID getLastParticipant();
-
 	ParticipantSet getParticipantList();
 
     private:  
