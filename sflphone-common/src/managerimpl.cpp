@@ -544,7 +544,7 @@ ManagerImpl::onHoldCall (const CallID& id)
 
         returnValue = getAccountLink (accountid)->onhold (id);
     }
-
+    
     removeWaitingCall (id);
 
     switchCall ("");
@@ -1142,9 +1142,10 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 	if(call_id != default_id)
 	{
 
-	    removeParticipant(call_id);
-
+	    
 	    onHoldCall(call_id);
+
+	    removeParticipant(call_id);
 
 	}
 	else
@@ -1177,6 +1178,14 @@ ManagerImpl::removeParticipant(const CallID& call_id)
     ConferenceMap conf_map = _conferencemap;
     ConferenceMap::iterator iter = conf_map.find(default_conf);
 
+    AccountID currentAccountId;
+    Call* call = NULL;
+
+    // this call is no more a conference participant
+    currentAccountId = getAccountFromCall (call_id);
+    call = getAccountLink (currentAccountId)->getCall (call_id);
+    call->setConfId ("");
+
     // unbind main participant from conference
     // _audiodriver->getMainBuffer()->unBindAll(default_id);
 
@@ -1204,10 +1213,12 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 	    // bind main participant to remaining conference call
 	    if (iter_participant != participants.end()) {
 
-		// _debug("    bind to participant %s remaining\n", (*iter_participant).c_str());
+		// this call is no more a conference participant
+		currentAccountId = getAccountFromCall (*iter_participant);
+		call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+		call->setConfId ("");
 
 		switchCall(*iter_participant);
-		// _audiodriver->getMainBuffer()->bindCallID(*iter_participant, default_id);
 	    }
 
 	    removeConference(default_conf);
