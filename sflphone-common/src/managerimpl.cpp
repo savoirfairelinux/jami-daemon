@@ -1130,10 +1130,14 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 {
     _debug("ManagerImpl::detachParticipant(%s)\n", call_id.c_str());
 
+    CallID current_call_id = getCurrentCallId();
+
     // TODO: add conference_id as a second parameter
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
 
     if(iter != _conferencemap.end()) {
+
+	Conference *conf = iter->second;
 
 	_debug("ManagerImpl::detachParticipant detach participant %s\n", call_id.c_str());
 	
@@ -1142,7 +1146,6 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 
 	    std::map<std::string, std::string> call_details = getCallDetails(call_id);
 	    std::map<std::string, std::string>::iterator iter_details;
-
 
 	    iter_details = call_details.find("CALL_STATE");
 	    if (iter_details->second == "RINGING")
@@ -1155,9 +1158,47 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 		onHoldCall(call_id);
 
 		removeParticipant(call_id);
-		
-	    }
 
+		if(conf->getNbParticipants() > 1)
+		{
+		    switchCall(default_conf);
+		}
+		else if (conf->getNbParticipants() == 1)
+		{
+		    AccountID currentAccountId;
+		    Call* call = NULL;
+		    
+		    ParticipantSet participants = conf->getParticipantList();
+		    ParticipantSet::iterator iter_participant = participants.begin();
+	    
+		    // bind main participant to remaining conference call
+		    if (iter_participant != participants.end()) {
+			
+			// this call is no more a conference participant
+			currentAccountId = getAccountFromCall (*iter_participant);
+			call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+			call->setConfId ("");
+
+			if (current_call_id != default_conf)
+			{
+			    onHoldCall(call->getCallId());
+			    switchCall(current_call_id);
+			}
+			else
+			{
+			    switchCall(*iter_participant);
+			}
+		    }
+		    
+		    removeConference(default_conf);
+		}
+		else
+		{
+		    removeConference(default_conf);
+		    
+		    switchCall("");
+		}
+	    }
 	}
 	else
 	{
@@ -1209,40 +1250,9 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 
 	_debug("    removeParticipant %s\n", call_id.c_str());
 	conf->remove(call_id);
-	
-	
-	if(conf->getNbParticipants() > 1)
-	{
-	    switchCall(default_conf);
-	}
-	else if (conf->getNbParticipants() == 1)
-	{
-	    
-	    ParticipantSet participants = conf->getParticipantList();
-	    ParticipantSet::iterator iter_participant = participants.begin();
-	    
-	    // bind main participant to remaining conference call
-	    if (iter_participant != participants.end()) {
 
-		// this call is no more a conference participant
-		currentAccountId = getAccountFromCall (*iter_participant);
-		call = getAccountLink (currentAccountId)->getCall (*iter_participant);
-		call->setConfId ("");
-
-		switchCall(*iter_participant);
-	    }
-
-	    removeConference(default_conf);
-	}
-	else
-	{
-	    removeConference(default_conf);
-
-	    switchCall("");
-	}
-
-	
     }
+
 }
 
 void

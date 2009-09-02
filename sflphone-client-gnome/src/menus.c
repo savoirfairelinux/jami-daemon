@@ -718,7 +718,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     // TODO update the selection to make sure the call under the mouse is the call selected
 
     // call type boolean
-    gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE;
+    gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE, detach = FALSE;
     gboolean accounts = FALSE;
 
     // conference type boolean
@@ -740,13 +740,16 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
                 case CALL_STATE_INCOMING:
 		    pickup = TRUE;
 		    hangup = TRUE;
+		    detach = TRUE;
 		    break;
                 case CALL_STATE_HOLD:
 		    hangup = TRUE;
 		    hold   = TRUE;
+		    detach = TRUE;
 		    break;
                 case CALL_STATE_RINGING:
 		    hangup = TRUE;
+		    detach = TRUE;
 		    break;
                 case CALL_STATE_DIALING:
 		    pickup = TRUE;
@@ -758,6 +761,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 		    hangup = TRUE;
 		    hold   = TRUE;
 		    record = TRUE;
+		    detach = TRUE;
 		    break;
                 case CALL_STATE_BUSY:
                 case CALL_STATE_FAILURE:
