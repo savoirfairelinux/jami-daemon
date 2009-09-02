@@ -1277,7 +1277,8 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         Manager::instance().callFailure (id);
         terminateOneCall (id);
         removeCall (id);
-        call->getAudioRtp()->closeRtpSession();
+	if(call->getAudioRtp() != 0)
+	    call->getAudioRtp()->closeRtpSession();
     }
 }
 

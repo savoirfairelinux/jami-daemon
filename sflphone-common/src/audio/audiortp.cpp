@@ -117,8 +117,10 @@ AudioRtp::closeRtpSession ()
     _debug ("AudioRtp::Stopping rtp session\n");
 
     try {
-        delete _RTXThread;
-        _RTXThread = 0;
+	if (_RTXThread != 0) {
+            delete _RTXThread;
+            _RTXThread = 0;
+	}
     } catch (...) {
         _debugException ("! ARTP Exception: when stopping audiortp\n");
         throw;
