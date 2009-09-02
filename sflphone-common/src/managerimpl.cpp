@@ -400,7 +400,6 @@ ManagerImpl::hangupCall (const CallID& id)
 
     if(participToConference(id))
     {
-	_debug("??????????????????? STILL PARTICIP TO A CONFERENCE ?????????????????\n");
 	removeParticipant(id);
     }
 
@@ -774,7 +773,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 	return;
 
 
-
+    /*
     // unbind main participant from conference
     _audiodriver->getMainBuffer()->unBindAll(default_id);
 
@@ -788,6 +787,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 	// switchCall("");	
 	_audiodriver->getMainBuffer()->bindCallID(*iter_p, default_id);
     }
+    */
 
     
 
@@ -894,7 +894,7 @@ ManagerImpl::isConference(const CallID& id)
 bool
 ManagerImpl::participToConference(const CallID& call_id)
 {
-    _debug("ManagerImpl::participToConference\n");
+    // _debug("ManagerImpl::participToConference\n");
 
     AccountID accountId;
 
@@ -1177,23 +1177,19 @@ ManagerImpl::removeParticipant(const CallID& call_id)
     ConferenceMap conf_map = _conferencemap;
     ConferenceMap::iterator iter = conf_map.find(default_conf);
 
-    
+    // unbind main participant from conference
+    // _audiodriver->getMainBuffer()->unBindAll(default_id);
 
     if(iter == conf_map.end()) {
-	_debug("ManagerImpl::removeParticipant no conference created, cannot remove participant \n");
+	_debug("    no conference created, cannot remove participant \n");
     }
     else {
 
 	conf = iter->second;
 
-	_debug("ManagerImpl::removeParticipant %s\n", call_id.c_str());
+	_debug("    removeParticipant %s\n", call_id.c_str());
 	conf->remove(call_id);
 	
-	/*
-	_debug("************************** _conferencecall size: %i **************************\n", _conferencecall.size());
-	_conferencecall.erase(iter->first);
-	_debug("************************** _conferencecall size: %i **************************\n", _conferencecall.size());
-	*/
 	
 	if(conf->getNbParticipants() > 1)
 	{
@@ -1201,16 +1197,20 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 	}
 	else if (conf->getNbParticipants() == 1)
 	{
+	    
 	    ParticipantSet participants = conf->getParticipantList();
 	    ParticipantSet::iterator iter_participant = participants.begin();
+	    
+	    // bind main participant to remaining conference call
+	    if (iter_participant != participants.end()) {
 
-	    _debug("ManagerImpl::removeParticipant only one participant remaining %s\n", (*iter_participant).c_str());
+		// _debug("    bind to participant %s remaining\n", (*iter_participant).c_str());
+
+		switchCall(*iter_participant);
+		// _audiodriver->getMainBuffer()->bindCallID(*iter_participant, default_id);
+	    }
 
 	    removeConference(default_conf);
-
-	    CallID last_participant = *iter_participant;
-
-	    switchCall(last_participant);
 	}
 	else
 	{

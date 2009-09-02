@@ -66,10 +66,10 @@ void Conference::add(CallID participant_id)
 void Conference::remove(CallID participant_id)
 {
 
-    _debug("---- Conference:: remove participant %s\n", participant_id.c_str());
+    _debug("---- Conference::remove participant %s\n", participant_id.c_str());
 
     _participants.erase(participant_id);
-
+    
     _nbParticipant--;
 
 }

@@ -733,10 +733,10 @@ SIPVoIPLink::hangup (const CallID& id)
 
 
     // Release RTP thread
-    if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup %s\n", call->getCallId().c_str());
-        call->getAudioRtp()->closeRtpSession();
-    }
+    // if (Manager::instance().isCurrentCall (id)) {
+    _debug ("* SIP Info: Stopping AudioRTP for hangup %s\n", call->getCallId().c_str());
+    call->getAudioRtp()->closeRtpSession();
+    // }
 
     terminateOneCall (id);
 
@@ -778,10 +778,10 @@ SIPVoIPLink::peerHungup (const CallID& id)
     call->getInvSession()->mod_data[getModId() ] = NULL;
 
     // Release RTP thread
-    if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
-        call->getAudioRtp()->closeRtpSession();
-    }
+    // if (Manager::instance().isCurrentCall (id)) {
+    _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
+    call->getAudioRtp()->closeRtpSession();
+    // }
 
     terminateOneCall (id);
 
