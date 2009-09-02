@@ -28,6 +28,7 @@
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>
 #include <string.h> // for strlen
+#include <libgnome/gnome-help.h>
 
 GtkWidget * pickUpMenu;
 GtkWidget * hangUpMenu;
@@ -109,6 +110,19 @@ void update_menus()
 
 }
 /* ----------------------------------------------------------------- */
+static void help_contents_cb ()
+{
+	    GError *error = NULL;
+
+		    gnome_help_display ("sflphone.xml", NULL, &error);
+			    if (error != NULL) {
+					        g_warning ("%s", error->message);
+							        g_error_free (error);
+									    }
+}
+
+
+
     static void
 help_about ( void * foo UNUSED)
 {
@@ -161,10 +175,18 @@ create_help_menu()
             NULL);
     gtk_widget_show (menu_items);
 
+
+	menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_HELP, get_accel_group());
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
+					            G_CALLBACK (help_contents_cb),
+								            NULL);
+	gtk_widget_show (menu_items);
+
     root_menu = gtk_menu_item_new_with_mnemonic (_("_Help"));
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
 
-    return root_menu;
+	return root_menu;
 }
 /* ----------------------------------------------------------------- */
     GtkWidget *
@@ -181,6 +203,7 @@ create_waiting_icon()
     return waiting_icon;
 }
 /* ----------------------------------------------------------------- */
+
     static void
 call_new_call ( void * foo UNUSED)
 {

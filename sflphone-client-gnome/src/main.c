@@ -23,6 +23,9 @@
 #include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <statusicon.h>
+#include <libgnome/libgnome.h>
+#include <libgnomeui/libgnomeui.h>
+
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -84,6 +87,12 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
   // Internationalization
   bindtextdomain("sflphone-client-gnome", "/usr/share/locale");
   textdomain("sflphone-client-gnome");
+
+  // Initialises the GNOME libraries
+  gnome_program_init (	"sflphone", VERSION,
+						LIBGNOMEUI_MODULE, argc, argv,
+						GNOME_PROGRAM_STANDARD_PROPERTIES,
+						NULL);
 
   if (sflphone_init())
     {

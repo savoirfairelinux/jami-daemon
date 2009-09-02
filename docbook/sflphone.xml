@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"  [
+	<!ENTITY app "SFLphone">
+	<!ENTITY appversion "0.9.7 beta">
+]>
+
+<!-- =============Document Header ============================= -->
+<article id="index" lang="en">
+<!-- please do not change the id; for translations, change lang to -->
+<!-- appropriate code -->
+  <articleinfo>
+    <title>SFLphone Manual v1.0</title>
+
+    <copyright>
+      <year>2006</year>
+      <year>2007</year>
+      <year>2008</year>
+      <year>2009</year>
+      <holder>Savoir-faire Linux</holder>
+    </copyright>
+
+<!-- translators: uncomment this:
+
+   -->
+    <abstract role="description">
+      <para>
+	SFLphone is an enterprise-class SIP/IAX2 compatible softphone for GNU/Linux, published under the GPLv3 license.
+		</para>
+    </abstract>
+
+    <publisher>
+      <publishername>Savoir-faire Linux</publishername>
+    </publisher>
+
+    <legalnotice id="legalnotice">
+	 <para>Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation Licence (GFDL), Version 1.1 or any later version published by the Free Software Foundation with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. You can find a copy of the GFDL at this <ulink type="help" url="ghelp:fdl">link</ulink> or in the file COPYING-DOCS distributed with this manual.</para>
+         <para>This manual is part of a collection of GNOME manuals distributed under the GFDL. If you want to distribute this manual separately from the collection, you can do so by adding a copy of the licence to the manual, as described in section 6 of the licence.</para>
+	</legalnotice>
+
+  <authorgroup>
+	<author>
+      <firstname>Pierre-Luc</firstname>
+      <surname>Bacon</surname>
+      <affiliation>
+        <address><email>pierre-luc.bacon@savoirfairelinux.com</email></address>
+      </affiliation>
+    </author>
+
+	<author>
+      <firstname>Emmanuel</firstname>
+      <surname>Milou</surname>
+      <affiliation>
+        <address><email>emmanuel.milou@savoirfairelinux.com</email></address>
+      </affiliation>
+    </author>
+
+    <author>
+      <firstname>J&eacute;r&eacute;my</firstname>
+      <surname>Quentin</surname>
+      <affiliation>
+        <address><email>jeremy.quentin@savoirfairelinux.com</email></address>
+      </affiliation>
+    </author>
+
+	<author>
+      <firstname>Alexandre</firstname>
+      <surname>Savard</surname>
+      <affiliation>
+        <address><email>alexandre.savard@savoirfairelinux.com</email></address>
+      </affiliation>
+    </author>
+</authorgroup>
+
+<revhistory>
+      <revision>
+            <revnumber>SFLphone Manual V1.0</revnumber>
+            <date>September 2009</date>
+            <revdescription>
+                <para role="author">SFLphone team</para>
+                <para role="publisher">Savoir-faire Linux</para>
+            </revdescription>
+      </revision>
+</revhistory>
+
+<releaseinfo>This manual describes version 0.9.7 of SFLphone.</releaseinfo>
+
+</articleinfo>
+
+<indexterm>
+    <primary>SFLphone</primary>
+ </indexterm>
+
+<sect1 id="introduction">
+    <title>A brief introduction to SFLphone</title>
+<para>
+<application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind.
+</para>
+<para>
+<application>SFLphone</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community.
+</para>
+<para>
+Among the many features we developed for you, we could highlight the high definition sound (wide-band audio codecs - speex, G722, Celt), audio recording, voicemail notification and call history.
+More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer and on/off hold option.
+</para>
+  
+<para>
+Besides the native ALSA interface, <application>SFLphone</application> now fully supports PulseAudio sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
+</para>
+</sect1>
+
+<sect1 id="accounts">
+<title>SIP/IAX2 accounts</title>
+
+</sect1>
+
+
+<sect1 id="audio_interfaces">
+<title>Audio configuration</title>
+<para>
+ALSA and Pulseaudio native interfaces are available.
+</para>
+
+    <sect2 label="Pulseaudio">
+        <para>
+        </para>
+    </sect2>
+
+    <sect2 label="ALSA">
+        <para>
+        </para>
+    </sect2>
+
+</sect1>
+
+<sect1 id="codecs_overview">
+<title>Codecs overview</title>
+<para>
+</para>
+</sect1>
+
+<sect1 id="addressbook">
+<title>How to use the address books</title>
+
+<para>
+</para>
+
+</sect1>
+
+</article>

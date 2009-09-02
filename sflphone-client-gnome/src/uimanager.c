@@ -30,7 +30,8 @@
 static void help_contents_cb (GtkAction *action,  GSRWindow *window)
 {
     GError *error = NULL;
-    gnome_help_display ("gnome-sound-recorder.xml", NULL, &error);
+
+    gnome_help_display ("sflphone.xml", NULL, &error);
     if (error != NULL) {
         g_warning ("%s", error->message);
         g_error_free (error);

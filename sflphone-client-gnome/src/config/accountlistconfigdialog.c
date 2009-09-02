@@ -309,7 +309,8 @@ help_contents_cb (GtkWidget * widget,
 {
     GError *error = NULL;
     
-    gboolean success = gtk_show_uri (NULL, "ghelp: sflphone.xml", GDK_CURRENT_TIME, &error);
+    //gboolean success = gtk_show_uri (NULL, "ghelp: sflphone.xml", GDK_CURRENT_TIME, &error);
+	gnome_help_display ("sflphone.xml", "accounts", &error);
 
     if (error != NULL)
     {    
