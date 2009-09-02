@@ -58,6 +58,8 @@ class Conference{
 
 	CallID getLastParticipant();
 
+	ParticipantSet getParticipantList();
+
     private:  
 
         /** Unique ID of the conference */

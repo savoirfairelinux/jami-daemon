@@ -122,14 +122,7 @@ std::string Conference::getStateStr()
 }
 
 
-CallID Conference::getLastParticipant()
+ParticipantSet Conference::getParticipantList()
 {
-    CallID call_id = "";
-    
-    ParticipantSet::iterator iter = _participants.begin();
-    if (iter != _participants.end())
-    {
-	call_id = *iter;
-	return call_id;
-    }
+    return _participants;   
 }

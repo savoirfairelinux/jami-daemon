@@ -432,6 +432,7 @@ ManagerImpl::hangupCall (const CallID& id)
 
     if(participToConference(id))
     {
+	_debug("??????????????????? STILL PARTICIP TO A CONFERENCE ?????????????????\n");
 	removeParticipant(id);
     }
 
@@ -447,26 +448,22 @@ ManagerImpl::hangupConference (const ConfID& id)
     Conference *conf;
     ConferenceMap::iterator iter_conf = _conferencemap.find(id);
 
-    ConferenceCallMap tempmap = _conferencecall;
-
     AccountID currentAccountId;
 
-    Call* call = NULL;
+    // Call* call = NULL;
 
     if(iter_conf != _conferencemap.end())
     {
 	conf = iter_conf->second;
  
-	ConferenceCallMap::iterator iter_participant = tempmap.begin();
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
 
-	while(iter_participant != tempmap.end())
+	while(iter_participant != participants.end())
 	{
-	    _debug("ManagerImpl::hangupConference participant %s\n", iter_participant->first.c_str());
-	    currentAccountId = getAccountFromCall (iter_participant->first);
-	    call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
+	    _debug("ManagerImpl::hangupConference participant %s\n", (*iter_participant).c_str());
 
-	    if(call->getConfId() == id)
-	        hangupCall (iter_participant->first);
+	    hangupCall (*iter_participant);
 
 	    iter_participant++;
 
@@ -623,9 +620,15 @@ ManagerImpl::offHoldCall (const CallID& id)
     }
 
     if ( participToConference(id) ) {
-	ConferenceCallMap::iterator iter = _conferencecall.find(id);
-	if(iter != _conferencecall.end())
-	    switchCall(iter->second->getConfID());
+
+	 
+	AccountID currentAccountId;
+        Call* call = NULL;
+
+	currentAccountId = getAccountFromCall (id);
+	call = getAccountLink (currentAccountId)->getCall (id);
+	
+	switchCall(call->getConfId());
     }
     // else the 
   
@@ -738,8 +741,8 @@ ManagerImpl::createConference(const CallID& id1, const CallID& id2)
     
     Conference* conf = new Conference(default_conf);
 
-    _conferencecall.insert(pair<CallID, Conference*>(id1, conf));
-    _conferencecall.insert(pair<CallID, Conference*>(id2, conf));
+    // _conferencecall.insert(pair<CallID, Conference*>(id1, conf));
+    // _conferencecall.insert(pair<CallID, Conference*>(id2, conf));
     _conferencemap.insert(pair<CallID, Conference*>(default_conf, conf));
 
     conf->add(id1);
@@ -760,7 +763,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
     Conference* conf;
     conf = NULL;
 
-    _debug("ManagerImpl:: _conferencemap.size: %i\n", _conferencemap.size());
+    _debug("ManagerImpl::removeConference _conferencemap.size: %i\n", _conferencemap.size());
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
 
     if (iter != _conferencemap.end()) {
@@ -771,19 +774,25 @@ ManagerImpl::removeConference(const ConfID& conference_id)
     if(conf == NULL)
 	return;
 
-    ConferenceCallMap temp_map = _conferencecall;
+    // broadcast a signal over dbus
+    _debug("ManagerImpl::removeConference broadcast call removed on dbus: %s\n", conference_id.c_str());
+    _dbus->getCallManager()->conferenceRemoved(conference_id);
 
-    _debug("ManagerImpl:: _conferencecall.size: %i\n", _conferencecall.size());
-    ConferenceCallMap::iterator iter_p = temp_map.begin();
-    while (iter_p != temp_map.end()) {
 
-	if(iter_p->second == conf) {
-	    _debug("ManagerImpl:: remove particiant (%s) from conference %s\n", iter_p->first.c_str(), conference_id.c_str());
+    /*
+    ParticipantSet participants = conf->getParticipantList();
+
+    _debug("ManagerImpl::removeConference _conferencecall.size: %i\n", _conferencecall.size());
+    ConferenceCallMap::iterator iter_p = participants.begin();
+    while (iter_p != participants.end()) {
+
+	
 	    _conferencecall.erase(iter_p->first);
-	}
+	
 
 	iter_p++;
     }
+    */
 
     
 
@@ -794,8 +803,8 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 	_debug("ManagerImpl:: error cannot remove conference id: %s\n", conference_id.c_str());
 
     // broadcast a signal over dbus
-    _debug("ManagerImpl:: broadcast call removed on dbus: %s\n", conference_id.c_str());
-    _dbus->getCallManager()->conferenceRemoved(conference_id);
+    // _debug("ManagerImpl:: broadcast call removed on dbus: %s\n", conference_id.c_str());
+    // _dbus->getCallManager()->conferenceRemoved(conference_id);
 
 }
 
@@ -815,19 +824,19 @@ ManagerImpl::holdConference(const CallID& id)
     {
 	conf = iter_conf->second;
  
-	ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
+	// ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
 
-	while(iter_participant != _conferencecall.end())
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+
+	while(iter_participant != participants.end())
 	{
-	    _debug("ManagerImpl::holdConference participant %s\n", iter_participant->first.c_str());
-	    currentAccountId = getAccountFromCall (iter_participant->first);
-	    call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
+	    _debug("ManagerImpl::holdConference participant %s\n", (*iter_participant).c_str());
+	    currentAccountId = getAccountFromCall (*iter_participant);
+	    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
 
-	    if(call->getConfId() == id)
-	    {
-		switchCall(iter_participant->first);
-	        onHoldCall (iter_participant->first);
-	    }
+	    switchCall(*iter_participant);
+	    onHoldCall(*iter_participant);
 
 	    iter_participant++;
 
@@ -856,16 +865,16 @@ ManagerImpl::unHoldConference(const CallID& id)
     {
 	conf = iter_conf->second;
  
-	ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
 
-	while(iter_participant != _conferencecall.end())
+	while(iter_participant != participants.end())
 	{
-	    _debug("ManagerImpl::unholdConference participant %s\n", iter_participant->first.c_str());
-	    currentAccountId = getAccountFromCall (iter_participant->first);
-	    call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
+	    _debug("ManagerImpl::unholdConference participant %s\n", (*iter_participant).c_str());
+	    currentAccountId = getAccountFromCall (*iter_participant);
+	    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
 
-	    if(call->getConfId() == id)
-	        offHoldCall (iter_participant->first);
+	    offHoldCall(*iter_participant);
 
 	    iter_participant++;
 
@@ -890,13 +899,20 @@ ManagerImpl::isConference(const CallID& id)
 bool
 ManagerImpl::participToConference(const CallID& call_id)
 {
-    ConferenceCallMap::iterator iter = _conferencecall.find(call_id);
+    _debug("ManagerImpl::participToConference\n");
 
-    if(iter == _conferencecall.end()) {
-	return false;
+    AccountID accountId;
+
+    Call* call = NULL;
+
+    accountId = getAccountFromCall (call_id);
+    call = getAccountLink (accountId)->getCall(call_id);
+
+    if(call->getConfId() == "") {
+	return true;
     }
     else {
-	return true;
+	return false;
     }
 }
 
@@ -920,7 +936,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 
 	conf->add(call_id);
 	
-	_conferencecall.insert(pair<CallID, Conference*>(call_id, conf));
+	// _conferencecall.insert(pair<CallID, Conference*>(call_id, conf));
 
 	iter_details = call_details.find("CALL_STATE");
 
@@ -929,6 +945,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	if (iter_details->second == "HOLD")
 	{
 	    _debug("    OFFHOLD %s\n", call_id.c_str());
+	    switchCall("");
 
 	    // offHoldCall create a new rtp session which use addStream to bind participant
 	    offHoldCall(call_id);
@@ -936,7 +953,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	else if(iter_details->second == "INCOMING")
 	{
 	    _debug("    ANSWER %s\n", call_id.c_str());
-
+	    switchCall("");
 	    // answerCall create a new rtp session which use addStream to bind participant
 	    answerCall(call_id);
 	}
@@ -962,16 +979,15 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     
     if(previous_call_id == call_id)
     {
-	_debug("**************************** BIND US TO CONFERENCE ******************* \n");
-	_debug("previous_call_id %s\n", previous_call_id.c_str());
-	_debug("call_id %s\n", call_id.c_str());
+
 	// bind main participant to conference after adding new participant 
 	_audiodriver->getMainBuffer()->unBindAll(default_id);
+
+	// to avoid puting onhold the added call
 	switchCall("");
 	addMainParticipant(conference_id);
 
     }
-  
 
     switchCall(conference_id);
     
@@ -1000,12 +1016,13 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
     // conf->bindParticipant(default_id);
 
     // so we must do it manually
-    ConferenceCallMap::iterator iter_participant = _conferencecall.begin();
-    while(iter_participant != _conferencecall.end())
+
+    ParticipantSet participants = conf->getParticipantList();
+
+    ParticipantSet::iterator iter_participant = participants.begin();
+    while(iter_participant != participants.end())
     {
-	_debug("Quecequispasse\n");
-	if (iter_participant->second == conf)
-	    _audiodriver->getMainBuffer()->bindCallID(iter_participant->first, default_id);
+	_audiodriver->getMainBuffer()->bindCallID(*iter_participant, default_id);
 
 	iter_participant++;
     }
@@ -1035,7 +1052,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	 _debug("ManagerImpl::joinParticipant create a conference\n");
 	 Conference *conf = createConference(call_id1, call_id2);
 
-	 
+	 switchCall("");
 
 	 iter_details = call1_details.find("CALL_STATE");
 	 _debug("    call %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
@@ -1055,6 +1072,8 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	     _audiodriver->getMainBuffer()->unBindAll(call_id1);
 	     conf->bindParticipant(call_id1);
 	 }
+
+	 switchCall("");
 
 	 iter_details = call2_details.find("CALL_STATE");
 	 _debug("    call %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
@@ -1151,7 +1170,9 @@ ManagerImpl::removeParticipant(const CallID& call_id)
     ConferenceMap conf_map = _conferencemap;
     ConferenceMap::iterator iter = conf_map.find(default_conf);
 
-    if(iter == _conferencemap.end()) {
+    
+
+    if(iter == conf_map.end()) {
 	_debug("ManagerImpl::removeParticipant no conference created, cannot remove participant \n");
     }
     else {
@@ -1160,20 +1181,27 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 
 	_debug("ManagerImpl::removeParticipant %s\n", call_id.c_str());
 	conf->remove(call_id);
-
+	
+	/*
+	_debug("************************** _conferencecall size: %i **************************\n", _conferencecall.size());
 	_conferencecall.erase(iter->first);
-
+	_debug("************************** _conferencecall size: %i **************************\n", _conferencecall.size());
+	*/
+	
 	if(conf->getNbParticipants() > 1)
 	{
 	    switchCall(default_conf);
 	}
 	else if (conf->getNbParticipants() == 1)
 	{
-	    CallID last_participant = conf->getLastParticipant();
+	    ParticipantSet participants = conf->getParticipantList();
+	    ParticipantSet::iterator iter_participant = participants.begin();
 
-	    _debug("ManagerImpl::removeParticipant only one participant remaining %s\n", last_participant.c_str());
+	    _debug("ManagerImpl::removeParticipant only one participant remaining %s\n", (*iter_participant).c_str());
 
 	    removeConference(default_conf);
+
+	    CallID last_participant = *iter_participant;
 
 	    switchCall(last_participant);
 	}
@@ -3822,16 +3850,16 @@ ManagerImpl::getParticipantList (const std::string& confID)
     if(iter_conf != _conferencemap.end())
         conf = iter_conf->second;
 
-    ConferenceCallMap::iterator iter_call = _conferencecall.begin();
-    Conference *temp;
-    while (iter_call != _conferencecall.end ()) {
+    if(conf != NULL)
+    {
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+	while (iter_participant != participants.end ()) {
 
-	temp = iter_call->second;
-
-	if (conf == temp)
-            v.push_back (iter_call->first);
-
-        iter_call++;
+	    v.push_back (*iter_participant);
+	    
+	    iter_participant++;
+	}
     }
 
     return v;
