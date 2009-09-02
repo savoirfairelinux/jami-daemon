@@ -17,8 +17,17 @@ sflphoned_SOURCES = \
 		account.cpp \
 		numbercleaner.cpp 
 
+# Redefine the USE_IAX variable here, so that it could be used in managerimpl
+if USE_IAX
+IAX_CXXFLAG=-DUSE_IAX
+IAX_LIB=./iax/libiaxlink.la
+else
+IAX_CXXFLAG=
+IAX_LIB=
+endif
+
 sflphoned_CXXFLAGS = \
-		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
+		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG)\
 		@ZRTPCPP_CFLAGS@ \
 		@libssl_CFLAGS@
 
@@ -58,7 +67,7 @@ libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \
 	$(src)/libs/utilspp/libutilspp.la \
 	$(src)/libs/iax2/libiax2.la \
-	./iax/libiaxlink.la \
+	$(IAX_LIB) \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \
 	./audio/audiortp/libaudiortp.la \
