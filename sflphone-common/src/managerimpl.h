@@ -199,6 +199,8 @@ class ManagerImpl {
 
     void removeConference(const CallID& conference_id);
 
+    Conference* getConferenceFromCallID(const CallID& call_id);
+
     void holdConference(const CallID& conferece_id);
 
     void unHoldConference(const CallID& conference_id);
