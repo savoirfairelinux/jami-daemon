@@ -92,35 +92,131 @@
 
 <sect1 id="introduction">
     <title>A brief introduction to SFLphone</title>
-<para>
-<application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind.
-</para>
-<para>
-<application>SFLphone</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community.
-</para>
-<para>
-Among the many features we developed for you, we could highlight the high definition sound (wide-band audio codecs - speex, G722, Celt), audio recording, voicemail notification and call history.
-More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer and on/off hold option.
-</para>
-  
-<para>
-Besides the native ALSA interface, <application>SFLphone</application> now fully supports PulseAudio sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
-</para>
+	<para>
+		<application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind.
+	</para>
+	<para>
+		<application>SFLphone</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community.
+	</para>
+	<para>
+		Among the many features we developed for you, we could highlight the high definition sound (wide-band audio codecs - speex, G722, Celt), audio recording, voicemail notification and call history.
+		More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer and on/off hold option.
+	</para>
+	<para>
+		This release also provides advanced security features (secure RTP and TLS).
+	</para>
+
+	<para>
+		Besides the native ALSA interface, <application>SFLphone</application> now fully supports PulseAudio sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
+	</para>
+</sect1>
+
+<sect1 id="getting-started">
+	<title>Getting started</title>
+	<para>
+		The first time you start up sflphone, you will be ask to complete a wizard to set up your(s) account(s). This account configuration manager offers you two possibilities:
+		<itemizedlist>
+			<listitem>
+				<para><guilabel>Create a free SIP/IAX2 account on sflphone.org</guilabel></para>			
+				<para>Savoir-faire Linux provides free SIP/IAX2 accounts on an Asterisk server. 
+				By clicking this option, you will be created an account to make test calls. The echo service is available, you may also call other accounts registered to the same server.</para>			
+				<para>By filling out your email address information, you will receive voicemail notifications by email. This information is not mandatory to get your free account.</para>
+			</listitem>
+			<listitem>
+				<para><guilabel>Register an existing SIP or IAX2 account</guilabel></para>			
+				<para>Click there if you already have an account and you want to use it with SFLphone. 
+				You will be prompted to select the account type (SIP or IAX2) and to fill out your account information. <application>SFLphone</application> will then try to register it so you could start using it.</para>
+			</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		You can always access the account creation manager: <menuchoice><guimenu>Edit</guimenu> <guimenuitem>Account creation assistant</guimenuitem></menuchoice>. 
+	</para>
 </sect1>
 
 <sect1 id="accounts">
-<title>SIP/IAX2 accounts</title>
-<para>
-<application>SFLphone</application> supports both IAX2 and SIP accounts.
-</para>
+	<title>Managing your accounts</title>
+	<para>
+		<application>SFLphone</application> supports both IAX2 and SIP accounts.
+	</para>
+
+	<sect2 id="account_creation">
+		<title>Creating a new account</title>
+		<para>To create a new account, perform the following steps:</para>
+  		<orderedlist>
+			<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
+			<listitem><para>Click on the <guilabel>Add</guilabel> button. Fill out the following information:</para>
+            	<itemizedlist>
+                 	<listitem>
+                    	<para><guilabel>Alias</guilabel></para>
+						<para>The name to identify your account in the list. It is not used for the communications</para>
+                  	</listitem>
+                  	<listitem>
+                    	<para><guilabel>Protocol</guilabel></para>
+						<para>Select SIP or IAX2. The most commons are SIP accounts.</para>
+                  	</listitem>
+                  	<listitem>
+                    	<para><guilabel>Host name</guilabel></para>
+						<para>The name or the IP address of the server you want to register on.</para>
+                  	</listitem>
+                  	<listitem>
+                    	<para><guilabel>User name</guilabel></para>
+						<para>The name or the extension for your account.</para>
+                  	</listitem>
+                  	<listitem>
+                    	<para><guilabel>Password</guilabel></para>
+						<para>The password for your account.</para>
+                  	</listitem>
+                  	<listitem>
+                    	<para><guilabel>Voicemail number</guilabel></para>
+						<para>The number to dial to reach your voicemail. Example: 888, or *97. It will be used as a quick dial button on the main interface.</para>
+                  	</listitem>
+                </itemizedlist>
+			</listitem>
+    		<listitem><para>Click the <menuchoice><guimenu>Apply</guimenu></menuchoice> button.</para></listitem>
+		</orderedlist>
+		<para>You may now check the state of your account(s). You may have as many setup accounts as you wish. If it is registered, you may now use it to make calls.</para>
+	</sect2>
+
+	<sect2 id="account_edit">
+		<title>Editing an configured account</title>
+		<para>To edit an existing account, perform the following steps:</para>
+  		<orderedlist>
+			<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
+			<listitem><para>Select in the list the account you would like to edit, then click on the <guilabel>Edit</guilabel> button.</para></listitem>
+			<listitem><para>Make your modifications, then click on the <guilabel>Apply</guilabel> button.</para></listitem>
+     	</orderedlist>
+	</sect2>
+	
+	<sect2 id="account_delete">
+		<title>Deleting an account</title>
+		<para>To delete an existing account, perform the following steps:</para>
+  		<orderedlist>
+			<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
+			<listitem><para>Select in the list the account you would like to delete, then click on the <guilabel>Delete</guilabel> button.</para></listitem>
+     	</orderedlist>
+	</sect2>
+	
+	<sect2 id="account_selection">
+		<title>Selecting a default account</title>
+		<para>As it is possible to have an unlimited number of registered accounts at the same time, which account will be used when making a call ? You can not only set up a default account to be used every time you are making a call, but an entire priority list. To do that, perform the following steps:</para>
+			<orderedlist>
+				<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice> to access the accounts list.</para></listitem>
+				<listitem>
+					<para>The first account in the account in list will be used as the default account to make calls with. If it is not registered, SFLphone will try to use the second in the list, if still not registered, the third, and so one ...</para>
+					<para>To reorder the accounts as you wish, select an account and click on the <menuchoice><guimenu>Up</guimenu></menuchoice> or  <menuchoice><guimenu>Down</guimenu></menuchoice> button.</para>
+				</listitem>
+     		</orderedlist>
+		<para>Note that you also can select an account to make a call with when dialing by right-clicking on it.</para>
+	</sect2>
+
 </sect1>
 
-
 <sect1 id="audio_interfaces">
-<title>Audio configuration</title>
-<para>
-ALSA and Pulseaudio native interfaces are available.
-</para>
+	<title>Audio configuration</title>
+	<para>
+		ALSA and Pulseaudio native interfaces are available.
+	</para>
 
     <sect2 label="Pulseaudio">
         <para>
@@ -131,20 +227,19 @@ ALSA and Pulseaudio native interfaces are available.
         <para>
         </para>
     </sect2>
-
 </sect1>
 
 <sect1 id="codecs_overview">
-<title>Codecs overview</title>
-<para>
-</para>
+	<title>Codecs overview</title>
+	<para>
+	</para>
 </sect1>
 
 <sect1 id="addressbook">
-<title>How to use the address books</title>
+	<title>How to use the address books</title>
 
-<para>
-</para>
+	<para>
+	</para>
 
 </sect1>
 
