@@ -120,8 +120,12 @@ std::string Conference::getStateStr()
 
     switch(_confState) {
 
-        case Active:
-	    state_str = "ACTIVE";
+        case Active_Atached:
+	    state_str = "ACTIVE_ATACHED";
+	    break;
+
+	case Active_Detached:
+	    state_str = "ACTIVE_DETACHED";
 	    break;
 	   
         case Hold:

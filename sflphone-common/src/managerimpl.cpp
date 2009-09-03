@@ -4,6 +4,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -878,7 +879,13 @@ ManagerImpl::holdConference(const CallID& id)
 
 	}
 
+	conf->setState(Conference::Hold);
+
+	_dbus->getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+
     }
+
+    
 
     
 }
@@ -915,6 +922,10 @@ ManagerImpl::unHoldConference(const CallID& id)
 	    iter_participant++;
 
 	}
+
+	conf->setState(Conference::Active_Atached);
+
+	_dbus->getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 
     }
 
@@ -1009,7 +1020,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	call = getAccountLink (currentAccountId)->getCall (call_id);
 	call->setConfId (conf->getConfID());
 
-	_dbus->getCallManager()->conferenceChanged(conference_id);
+	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
     }
 
 

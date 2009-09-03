@@ -206,14 +206,34 @@ call_state_cb (DBusGProxy *proxy UNUSED,
 static void
 conference_changed_cb (DBusGProxy *proxy UNUSED,
 	const gchar* confID,
+        const gchar* state,
         void * foo  UNUSED )
 {
     DEBUG ("Conference changed\n");
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get(confID);
 
-    calltree_remove_conference (current_calls, changed_conf, NULL);
-    calltree_add_conference (current_calls, changed_conf);
+    DEBUG("    %s\n", state);
+
+    if(changed_conf)
+    {
+	calltree_remove_conference (current_calls, changed_conf, NULL);
+
+	if ( strcmp(state, "ACTIVE_ATACHED") == 0 )
+	{
+	    changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+	}
+	else if ( strcmp(state, "ACTIVE_DTACHED") == 0 )
+	{
+	    changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
+	}
+	else if ( strcmp(state, "HOLD") == 0 )
+	{
+	    changed_conf->_state = CONFERENCE_STATE_HOLD;
+	}
+
+	calltree_add_conference (current_calls, changed_conf);
+    }
 }
 
 
@@ -226,7 +246,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED,
 
     conference_obj_t* new_conf;
 
-    create_new_conference(CONFERENCE_STATE_ACTIVE, confID, &new_conf);
+    create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
     new_conf->_confID = g_strdup(confID);
     conferencelist_add(new_conf);
     calltree_add_conference (current_calls, new_conf);
@@ -407,7 +427,7 @@ dbus_connect ()
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
             G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_add_signal (callManagerProxy,
-            "conferenceChanged", G_TYPE_STRING, G_TYPE_INVALID);
+            "conferenceChanged", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
             "conferenceChanged", G_CALLBACK(conference_changed_cb), NULL, NULL);
 

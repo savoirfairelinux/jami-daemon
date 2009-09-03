@@ -34,7 +34,7 @@ class Conference{
 
     public:
 
-        enum ConferenceState {Active, Hold};
+        enum ConferenceState {Active_Atached, Active_Detached, Hold};
 
 	static int count;
 

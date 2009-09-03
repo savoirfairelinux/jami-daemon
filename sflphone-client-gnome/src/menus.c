@@ -235,20 +235,26 @@ conference_hold  (void* foo UNUSED)
 {
     conference_obj_t * selectedConf = calltab_get_selected_conf();
 
-    if(selectedConf)
+    switch(selectedConf->_state)
     {
-        if(selectedConf->_state == CONFERENCE_STATE_HOLD)
-        {
-            gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_unhold.svg"));
-	    selectedConf->_state = CONFERENCE_STATE_ACTIVE;
-            sflphone_conference_off_hold(selectedConf);
-        }
-        else
-        {
-            gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_hold.svg"));
-	    selectedConf->_state = CONFERENCE_STATE_HOLD;
-            sflphone_conference_on_hold(selectedConf);
-        }
+        case CONFERENCE_STATE_HOLD:
+            {
+                gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_unhold.svg"));
+	        selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+                sflphone_conference_off_hold(selectedConf);
+            }
+	    break;
+	
+        case CONFERENCE_STATE_ACTIVE_ATACHED:
+	case CONFERENCE_STATE_ACTIVE_DETACHED:
+            {
+		gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_hold.svg"));
+		selectedConf->_state = CONFERENCE_STATE_HOLD;
+		sflphone_conference_on_hold(selectedConf);
+            }
+	    break;
+        default:
+	    break;
     }
 }
 
@@ -782,9 +788,11 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 	{
 	    switch(selectedConf->_state)
 	    {
-	        case CONFERENCE_STATE_ACTIVE:
+	        case CONFERENCE_STATE_ACTIVE_ATACHED:
 		    hangup_conf = TRUE;
 		    hold_conf = TRUE;
+		    break;
+	        case CONFERENCE_STATE_ACTIVE_DETACHED:
 		    break;
 	        case CONFERENCE_STATE_HOLD:
 		    hangup_conf = TRUE;
