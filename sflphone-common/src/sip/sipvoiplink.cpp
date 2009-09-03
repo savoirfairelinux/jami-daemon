@@ -730,6 +730,12 @@ SIPVoIPLink::hangup (const CallID& id)
         return false;
     }
 
+    // Release RTP thread
+    if (Manager::instance().isCurrentCall (id)) {
+        _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
+        _audiortp->stop();
+    }
+
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
 
@@ -749,13 +755,6 @@ SIPVoIPLink::hangup (const CallID& id)
 
 
     call->getInvSession()->mod_data[getModId() ] = NULL;
-
-
-    // Release RTP thread
-    if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
-        _audiortp->stop();
-    }
 
     terminateOneCall (id);
 
@@ -778,6 +777,12 @@ SIPVoIPLink::peerHungup (const CallID& id)
         return false;
     }
 
+    // Release RTP thread
+    if (Manager::instance().isCurrentCall (id)) {
+        _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
+        _audiortp->stop();
+    }
+
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
 
@@ -793,12 +798,6 @@ SIPVoIPLink::peerHungup (const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId() ] = NULL;
-
-    // Release RTP thread
-    if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
-        _audiortp->stop();
-    }
 
     terminateOneCall (id);
 
