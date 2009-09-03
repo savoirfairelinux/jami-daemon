@@ -9,6 +9,8 @@ function autocmd()
         }
 }
 
+gnome-doc-prepare --force
+
 autocmd libtoolize --force --copy
 autocmd aclocal
 autocmd autoheader

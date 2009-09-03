@@ -176,3 +176,5 @@ sflphone-common/libs/dbus-c++/tools/dbusxx-xml2cpp
 # Ignore temp files
 *~
 
+# GNOME doc file
+sflphone-client-gnome/gnome-doc-utils.make

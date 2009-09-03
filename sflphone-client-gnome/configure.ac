@@ -2,6 +2,7 @@ AC_INIT([SFLphone],[0.9.6~beta],[sflphoneteam@savoirfairelinux.com],[sflphone-cl
 AM_CONFIG_HEADER(config.h)
 
 LT_INIT
+GNOME_DOC_INIT
 
 PACKAGE=SFLphone
 VERSION=`cat VERSION`
@@ -54,7 +55,8 @@ PKG_CHECK_MODULES(DEPS,     \
     gtk+-2.0 >= 2.2         \
     glib-2.0 >= 2.2         \
     libebook-1.2 >= 2.22	\
-	libgnomeui-2.0
+	libgnomeui-2.0			\
+	gnome-doc-utils
 )
 
 AC_SUBST(DEPS_CFLAGS)
@@ -81,6 +83,7 @@ sflphone.desktop
 tests/Makefile
 man/Makefile
 po/Makefile
+doc/Makefile
 ])
 
 
