@@ -740,10 +740,8 @@ SIPVoIPLink::hangup (const CallID& id)
 
     terminateOneCall (id);
 
-    _debug("SIPVoIPLink::hangup removeCall\n");
     removeCall (id);
-    _debug("SIPVoIPLink::hangup (call removed)\n");
-
+    
     return true;
 }
 
@@ -773,20 +771,16 @@ SIPVoIPLink::peerHungup (const CallID& id)
     status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
 
     if (status != PJ_SUCCESS){
-	_debug("    peerHungup: pjsip_inv_end_session  %i\n", status);
         return false;
     }
 
     if (tdata == NULL){
-	
-        _debug("    peerHungup: tdata=null \n");
 	return true;
     }
 
     status = pjsip_inv_send_msg (call->getInvSession(), tdata);
 
     if (status != PJ_SUCCESS){
-	_debug("    peerHungup: pjsip_inv_send_msg  %i\n", status);
         return false;
     }
 

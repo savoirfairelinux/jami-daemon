@@ -419,45 +419,7 @@ ManagerImpl::hangupCall (const CallID& call_id)
 	    // remove this participant
 	    removeParticipant(call_id);
 
-	    // process other participant
-	    if(conf->getNbParticipants() > 1)
-	    {
-
-	    }
-	    else if (conf->getNbParticipants() == 1)
-	    {
-		AccountID currentAccountId;
-		Call* call = NULL;
-	    
-		ParticipantSet participants = conf->getParticipantList();
-		ParticipantSet::iterator iter_participant = participants.begin();
-		
-		// bind main participant to remaining conference call
-		if (iter_participant != participants.end()) {
-		    
-		    // this call is no more a conference participant
-		    currentAccountId = getAccountFromCall (*iter_participant);
-		    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
-		    call->setConfId ("");
-		    
-		    if (current_call_id != conf->getConfID())
-		    {
-			onHoldCall(call->getCallId());
-		    }
-		    else
-		    {
-			switchCall(*iter_participant);
-		    }
-		}
-	    
-		removeConference(conf->getConfID());
-	    }
-	    else
-	    {
-		removeConference(conf->getConfID());
-		
-		switchCall("");
-	    }
+	    processRemainingParticipant(current_call_id, conf);
 	}
     }
     else
@@ -1243,46 +1205,7 @@ ManagerImpl::detachParticipant(const CallID& call_id)
 
 		removeParticipant(call_id);
 
-		if(conf->getNbParticipants() > 1)
-		{
-
-		}
-		else if (conf->getNbParticipants() == 1)
-		{
-		    AccountID currentAccountId;
-		    Call* call = NULL;
-		    
-		    ParticipantSet participants = conf->getParticipantList();
-		    ParticipantSet::iterator iter_participant = participants.begin();
-	    
-		    // bind main participant to remaining conference call
-		    if (iter_participant != participants.end()) {
-
-			_debug("****************************  no more a conference participant  ******************************\n");
-			
-			// this call is no more a conference participant
-			currentAccountId = getAccountFromCall (*iter_participant);
-			call = getAccountLink (currentAccountId)->getCall (*iter_participant);
-			call->setConfId ("");
-
-			if (current_call_id != conf->getConfID())
-			{
-			    onHoldCall(call->getCallId());
-			}
-			else
-			{
-			    switchCall(*iter_participant);
-			}
-		    }
-		    
-		    removeConference(conf->getConfID());
-		}
-		else
-		{
-		    removeConference(conf->getConfID());
-		    
-		    switchCall("");
-		}
+		processRemainingParticipant(current_call_id, conf);
 	    }
 	}	    
         else {
@@ -1330,6 +1253,52 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 	conf->remove(call_id);
 	call->setConfId ("");
 
+    }
+
+}
+
+
+void
+ManagerImpl::processRemainingParticipant(CallID current_call_id, Conference *conf)
+{
+
+    if(conf->getNbParticipants() > 1)
+    {
+
+    }
+    else if (conf->getNbParticipants() == 1)
+    {
+	AccountID currentAccountId;
+	Call* call = NULL;
+	
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+	
+	// bind main participant to remaining conference call
+	if (iter_participant != participants.end()) {
+	    
+	    // this call is no more a conference participant
+	    currentAccountId = getAccountFromCall (*iter_participant);
+	    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+	    call->setConfId ("");
+	    
+	    if (current_call_id != conf->getConfID())
+	    {
+		onHoldCall(call->getCallId());
+	    }
+	    else
+	    {
+		switchCall(*iter_participant);
+	    }
+	}
+	
+	removeConference(conf->getConfID());
+    }
+    else
+    {
+	removeConference(conf->getConfID());
+	
+	switchCall("");
     }
 
 }
@@ -1699,44 +1668,7 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
 
 	    removeParticipant(call_id);
 	    
-	    if(conf->getNbParticipants() > 1)
-	    {
-
-	    }
-	    else if (conf->getNbParticipants() == 1)
-	    {
-		AccountID currentAccountId;
-		Call* call = NULL;
-	    
-		ParticipantSet participants = conf->getParticipantList();
-		ParticipantSet::iterator iter_participant = participants.begin();
-		
-		// bind main participant to remaining conference call
-		if (iter_participant != participants.end()) {
-		    
-		    // this call is no more a conference participant
-		    currentAccountId = getAccountFromCall (*iter_participant);
-		    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
-		    call->setConfId ("");
-		    
-		    if (current_call_id != conf->getConfID())
-		    {
-			onHoldCall(call->getCallId());
-		    }
-		    else
-		    {
-			switchCall(*iter_participant);
-		    }
-		}
-	    
-		removeConference(conf->getConfID());
-	    }
-	    else
-	    {
-		removeConference(conf->getConfID());
-		
-		switchCall("");
-	    }
+	    processRemainingParticipant(current_call_id, conf);
 	}
     }
     else
@@ -1754,7 +1686,7 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
     }
 
     else {
-	_debug("Peer hangup call ............................... %s\n", call_id.c_str());
+
         account_id = getAccountFromCall (call_id);
 
         if (account_id == AccountNULL) {
