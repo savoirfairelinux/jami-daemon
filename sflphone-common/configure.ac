@@ -426,6 +426,6 @@ AC_SUBST(DBUS_SERVICES_DIR)
 	AC_SUBST(SFLPHONE_CFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
-	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-1.4) has already been compiled. Run `make' to build the software.]])
+	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
 
 
