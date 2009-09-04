@@ -251,7 +251,7 @@ ManagerImpl::outgoingCall (const std::string& account_id, const CallID& call_id,
 	else if (isConference(current_call_id) && !participToConference(call_id))
 	{
 	    _debug ("    outgoingCall: detach main participant from conference\n");
-	    detachParticipant();
+	    detachParticipant(default_id, current_call_id);
 	}
     }
 
@@ -357,7 +357,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 	else if (isConference(current_call_id) && !participToConference(call_id))
 	{
 	    _debug ("    answerCall: detach main participant from conference\n");
-	    detachParticipant();
+	    detachParticipant(default_id, current_call_id);
 	}
     }
 
@@ -601,7 +601,7 @@ ManagerImpl::offHoldCall (const CallID& call_id)
 	else if (isConference(current_call_id) && !participToConference(call_id))
 	{
 	    _debug ("    offHoldCall Put current conference (%s) on hold\n", current_call_id.c_str());
-	    detachParticipant();
+	    detachParticipant(default_id, current_call_id);
 	}
     }
 
@@ -1025,7 +1025,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 
 
     // bind main participant to conference after adding new participant 
-    detachParticipant();
+    detachParticipant(default_id, current_call_id);
 
     // to avoid puting onhold the added call
     switchCall("");
@@ -1042,7 +1042,15 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
     if(hasCurrentCall())
     {
 	CallID current_call_id = getCurrentCallId();
-	onHoldCall(current_call_id);
+
+	if(isConference(current_call_id))
+	{
+	    detachParticipant(default_id, current_call_id);
+	}    
+	else
+	{
+	    onHoldCall(current_call_id);
+	}
     }
 
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
@@ -1052,21 +1060,21 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
     if(iter != _conferencemap.end()) 
     {
 	conf = iter->second;
-    }
 
-    // should be nice but at some point default_id is bound to itself
-    // conf->bindParticipant(default_id);
+	ParticipantSet participants = conf->getParticipantList();
 
-    // so we must do it manually
+	ParticipantSet::iterator iter_participant = participants.begin();
+	while(iter_participant != participants.end())
+	{
+	    _audiodriver->getMainBuffer()->bindCallID(*iter_participant, default_id);
+	    
+	    iter_participant++;
+	}
 
-    ParticipantSet participants = conf->getParticipantList();
+	conf->setState(Conference::Active_Atached);
 
-    ParticipantSet::iterator iter_participant = participants.begin();
-    while(iter_participant != participants.end())
-    {
-	_audiodriver->getMainBuffer()->bindCallID(*iter_participant, default_id);
-
-	iter_participant++;
+	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+	
     }
 
     switchCall(conference_id);
@@ -1093,7 +1101,7 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     if ((current_call_id != call_id1) && (current_call_id != call_id2))
     {
 	if (isConference(current_call_id))
-	    detachParticipant();
+	    detachParticipant(default_id, current_call_id);
 	else
 	    onHoldCall(current_call_id);
     }
@@ -1178,11 +1186,11 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 
 
 void
-ManagerImpl::detachParticipant(const CallID& call_id)
+ManagerImpl::detachParticipant(const CallID& call_id, const CallID& current_call_id)
 {
     _debug("ManagerImpl::detachParticipant(%s)\n", call_id.c_str());
 
-    CallID current_call_id = getCurrentCallId();
+    // CallID current_call_id = getCurrentCallId();
 
     if(call_id != default_id)
     {
@@ -1230,6 +1238,18 @@ ManagerImpl::detachParticipant(const CallID& call_id)
     {
 	_debug("    detachParticipant: unbind main participant from all\n");
 	_audiodriver->getMainBuffer()->unBindAll(default_id);
+
+	if( isConference(current_call_id) )
+	{
+
+	    ConferenceMap::iterator iter = _conferencemap.find(current_call_id);
+	    Conference *conf = iter->second;
+
+	    conf->setState(Conference::Active_Detached);
+
+	    _dbus->getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+	}
+	    
     }
     
 }

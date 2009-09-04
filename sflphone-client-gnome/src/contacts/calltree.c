@@ -209,6 +209,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 		        sflphone_add_main_participant(selectedConf);
 			break;
 		    case CONFERENCE_STATE_ACTIVE_DETACHED:
+			sflphone_add_main_participant(selectedConf);
 			break;
 	            case CONFERENCE_STATE_HOLD:
 			sflphone_conference_off_hold(selectedConf);
@@ -733,17 +734,20 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
 	switch(conf->_state)
 	{
 	    case CONFERENCE_STATE_ACTIVE_ATACHED:
+	    {
 		pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersActive.svg", NULL);
 	        break;
+	    }
             case CONFERENCE_STATE_ACTIVE_DETACHED:
             case CONFERENCE_STATE_HOLD:
+	    {
 	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
 	        break;
+	    }
 	    default:
                 WARN("Update conference add - Should not happen!");
 	}
 
-        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
     }
     
     else {

@@ -209,7 +209,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
         const gchar* state,
         void * foo  UNUSED )
 {
-    DEBUG ("Conference changed\n");
+    DEBUG ("-------------------- Conference changed ---------------------\n");
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get(confID);
 
@@ -223,7 +223,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
 	{
 	    changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
 	}
-	else if ( strcmp(state, "ACTIVE_DTACHED") == 0 )
+	else if ( strcmp(state, "ACTIVE_DETACHED") == 0 )
 	{
 	    changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
 	}
