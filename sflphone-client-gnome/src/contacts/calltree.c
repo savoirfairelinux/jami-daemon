@@ -714,6 +714,8 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
 
     GdkPixbuf *pixbuf=NULL;
     GtkTreeIter iter;
+    GtkTreePath *path;
+    GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
 
     gchar** participant = (gchar**)dbus_get_participant_list(conf->_confID);
     gchar** pl;
@@ -789,9 +791,11 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
 	}
     }
 
-
     gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
 
+    path = gtk_tree_model_get_path(model, &iter);
+
+    gtk_tree_view_expand_row(GTK_TREE_VIEW(tab->view), path, FALSE);
 
     toolbar_update_buttons();
 
