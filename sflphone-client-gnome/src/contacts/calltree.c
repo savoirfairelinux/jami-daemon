@@ -1045,6 +1045,8 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    {
 	        // TODO: dragged a conference call on a conference
 		sflphone_detach_participant(selected_call_id);
+
+		sflphone_add_participant(selected_call_id, dragged_call_id);
 	    }
 	    else
 	    {
