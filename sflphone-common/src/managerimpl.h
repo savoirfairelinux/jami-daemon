@@ -221,6 +221,8 @@ class ManagerImpl {
 
     void processRemainingParticipant(CallID current_call_id, Conference *conf);
 
+    void joinConference(const CallID& conf_id1, const CallID& conf_id2);
+
     void addStream(const CallID& call_id);
 
     void removeStream(const CallID& call_id);

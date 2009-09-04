@@ -188,4 +188,6 @@ void sflphone_add_participant(const gchar* callID, const gchar* confID);
 
 void sflphone_detach_participant(const gchar* callID);
 
+void sflphone_join_conference(const gchar* sel_confID, const gchar* drag_confID);
+
 #endif

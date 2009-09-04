@@ -986,13 +986,12 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    }
 	    else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
 	    {
-		// TODO: dragged a single call on a conference
+		// dragged a single call on a conference
 		sflphone_add_participant(selected_call_id, dragged_call_id);
 	    }
 	    else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
 	    {
-		// TODO: dragged a conference on a single call (make no sence)
-		// calltree_add_conference(current_calls, selected_conf);
+		// dragged a conference on a single call (make no sence)
 		calltree_remove_conference(current_calls, selected_conf, NULL);
 		calltree_add_conference(current_calls, selected_conf);
 		
@@ -1000,7 +999,8 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    }
 	    else if(selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE)
 	    {
-		// TODO: dragged a conference on a conference
+		// dragged a conference on a conference
+		sflphone_join_conference(selected_conf->_confID, dragged_conf->_confID);
 	    }
 
 	    // TODO: dragged a single call on a NULL element (should do nothing)
@@ -1034,24 +1034,24 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    
 	    if(selected_type == A_CALL && dragged_type == A_CALL)
 	    {
+
+		// dragged a conference call on a call
 		sflphone_detach_participant(selected_call_id);
 
-		// TODO: dragged a conference call on a call
 		if(selected_call != NULL && dragged_call != NULL)
 		    sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
     
 	    }
 	    else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
 	    {
-	        // TODO: dragged a conference call on a conference
+	        // dragged a conference call on a conference
 		sflphone_detach_participant(selected_call_id);
 
 		sflphone_add_participant(selected_call_id, dragged_call_id);
 	    }
 	    else
 	    {
-		// TODO: dragged a conference call on a NULL element
-		// sflphone_detach_participant(selected_call_id);
+		// dragged a conference call on a NULL element
 		sflphone_detach_participant(selected_call_id);
 	    }
 

@@ -1442,6 +1442,27 @@ dbus_detach_participant(const gchar* callID)
 }
 
 
+dbus_join_conference(const gchar* sel_confID, const gchar* drag_confID)
+{
+
+    DEBUG("dbus_join_conference %s and %s\n", sel_confID, drag_confID);
+
+    GError* error = NULL;
+    
+    org_sflphone_SFLphone_CallManager_join_conference (
+             callManagerProxy, 
+	     sel_confID, 
+	     drag_confID, 
+	     &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+}
+
+
+
     void
 dbus_set_record(const callable_obj_t * c)
 {
@@ -1457,6 +1478,7 @@ dbus_set_record(const callable_obj_t * c)
         g_error_free(error);
     }
 }
+
 
     gboolean
 dbus_get_is_recording(const callable_obj_t * c)

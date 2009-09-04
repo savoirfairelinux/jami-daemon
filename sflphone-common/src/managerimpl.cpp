@@ -1360,6 +1360,27 @@ ManagerImpl::processRemainingParticipant(CallID current_call_id, Conference *con
 }
 
 void
+ManagerImpl::joinConference(const CallID& conf_id1, const CallID& conf_id2)
+{
+    ConferenceMap::iterator iter;
+
+    Conference *conf1;
+    Conference *conf2;
+
+    iter = _conferencemap.find(conf_id1);
+    
+    if(iter != _conferencemap.end())
+	conf1 = iter->second;
+
+    iter = _conferencemap.find(conf_id2);
+
+    if(iter != _conferencemap.end())
+	conf2 = iter->second;
+
+    
+}
+
+void
 ManagerImpl::addStream(const CallID& call_id)
 {
     _debug("ManagerImpl::addStream %s\n", call_id.c_str());

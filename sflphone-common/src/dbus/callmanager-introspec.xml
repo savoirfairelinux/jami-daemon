@@ -74,6 +74,11 @@
       <arg type="s" name="callID" direction="in"/>
     </method>
 
+    <method name="joinConference">
+      <arg type="s" name="sel_confID" direction="in"/>
+      <arg type="s" name="drag_confID" direction="in"/>
+    </method>
+
     <method name="getConferenceDetails">
       <arg type="s" name="callID" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
