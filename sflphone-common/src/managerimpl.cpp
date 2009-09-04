@@ -1093,11 +1093,15 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     ConferenceMap::iterator iter = _conferencemap.find(default_conf);
     std::map<std::string, std::string>::iterator iter_details;
 
+    AccountID currentAccountId;
+    Call* call = NULL;
+
     CallID current_call_id = getCurrentCallId();
 
     // currentAccountId = getAccountFromCall (iter_participant->first);
     // call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
 
+    // detach from the conference and switch to this conference 
     if ((current_call_id != call_id1) && (current_call_id != call_id2))
     {
 	if (isConference(current_call_id))
@@ -1105,14 +1109,34 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	else
 	    onHoldCall(current_call_id);
     }
+    /*
+    if(participToConference(call_id1))
+    {
+	_debug("    joinParticipant: call1 particip to a conference\n");
+	// callid1 is currently in a conference detach it
+	detachParticipant(call_id1, "");
+
+	// reset the rtpsession by th way
+	// offHoldCall(call_id1);
+    }
+    if(participToConference(call_id2))
+    {
+	_debug("    joinParticipant: call2 particip to a conference detach it\n");
+	// call_id2 is currently in a conference detach it
+	detachParticipant(call_id2, "");
+
+	// reset the rtpsession by th way
+	// offHoldCall(call_id2);
+    }
+    */
 
     if(iter == _conferencemap.end()){
 
 	 _debug("    joinParticipant: create a conference\n");
 	 Conference *conf = createConference(call_id1, call_id2);
 
-	 AccountID currentAccountId;
-	 Call* call = NULL;
+	 // AccountID currentAccountId;
+	 // Call* call = NULL;
 
 	 // unbind main participant from either call_id1 or call_id2
 	 // _audiodriver->getMainBuffer()->unBindAll(default_id);
@@ -1313,6 +1337,7 @@ ManagerImpl::processRemainingParticipant(CallID current_call_id, Conference *con
 	    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
 	    call->setConfId ("");
 	    
+	    // if we are not listening to this conference
 	    if (current_call_id != conf->getConfID())
 	    {
 		onHoldCall(call->getCallId());

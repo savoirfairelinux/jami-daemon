@@ -580,8 +580,6 @@ AudioRtpRTX::run ()
 
     int timestep = _codecFrameSize;
 
-    int timestamp = _session->getCurrentTimestamp(); // for mic
-
     int countTime = 0; // for receive
 
     int threadSleep = 0;
@@ -598,6 +596,8 @@ AudioRtpRTX::run ()
     _audiolayer->getMainBuffer()->flush(_ca->getCallId());
 
     _session->startRunning();
+
+    int timestamp = _session->getCurrentTimestamp(); // for mic
 
     _debug ("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
 
