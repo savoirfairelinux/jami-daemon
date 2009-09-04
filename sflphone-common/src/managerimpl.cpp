@@ -979,6 +979,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     // store the current call id (it will change in offHoldCall or in answerCall)
     CallID current_call_id = getCurrentCallId();
 
+    _debug("    addParticipant: enter main process\n");
     if(iter != _conferencemap.end()) {
 
 	Conference* conf = iter->second;
@@ -1021,6 +1022,9 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	call->setConfId (conf->getConfID());
 
 	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+    }
+    {
+	_debug("    addParticipant: Error, conference %s conference_id not found!\n", conference_id.c_str());
     }
 
 
@@ -1362,10 +1366,12 @@ ManagerImpl::processRemainingParticipant(CallID current_call_id, Conference *con
 void
 ManagerImpl::joinConference(const CallID& conf_id1, const CallID& conf_id2)
 {
+    _debug("ManagerImpl::joinConference(%s, %s)\n", conf_id1.c_str(), conf_id2.c_str());
+    
     ConferenceMap::iterator iter;
 
-    Conference *conf1;
-    Conference *conf2;
+    Conference *conf1 = NULL;
+    Conference *conf2 = NULL;
 
     iter = _conferencemap.find(conf_id1);
     
@@ -1377,6 +1383,19 @@ ManagerImpl::joinConference(const CallID& conf_id1, const CallID& conf_id2)
     if(iter != _conferencemap.end())
 	conf2 = iter->second;
 
+    ParticipantSet participants = conf1->getParticipantList();
+
+    ParticipantSet::iterator iter_participant = participants.begin();
+
+    while(iter_participant != participants.end())
+    {
+	detachParticipant(*iter_participant, "");
+	addParticipant(*iter_participant, conf_id2);
+
+	iter_participant++;
+    }
+
+    // detachParticipant(default_id, "");
     
 }
 

@@ -1136,6 +1136,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 		else
 		{
 		    dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
+		    dragged_conf = (conference_obj_t*)g_value_get_pointer(&val);
 		}
                 g_print("    INTO_OR_AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
@@ -1159,6 +1160,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 		else
 		{
 		    dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
+		    dragged_conf = (conference_obj_t*)g_value_get_pointer(&val);
 		}
                 g_print("    INTO_OR_BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;

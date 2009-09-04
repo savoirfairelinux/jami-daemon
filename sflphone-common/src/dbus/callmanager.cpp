@@ -157,7 +157,7 @@ CallManager::detachParticipant (const std::string& callID)
 void
 CallManager::joinConference (const std::string& sel_confID, const std::string& drag_confID)
 {
-    _debug ("CallManager::joinParticipant received %s, %s\n", sel_confID.c_str(), drag_confID.c_str());
+    _debug ("CallManager::joinConference received %s, %s\n", sel_confID.c_str(), drag_confID.c_str());
     Manager::instance().joinConference(sel_confID, drag_confID);
 }
 

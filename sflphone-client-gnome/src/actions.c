@@ -901,7 +901,7 @@ sflphone_add_conference()
 sflphone_join_conference(const gchar* sel_confID, const gchar* drag_confID)
 {
     DEBUG("sflphone join two conference");
-    dbus_join_conference(sel_confID, sel_confID);
+    dbus_join_conference(sel_confID, drag_confID);
 }
 
 void
