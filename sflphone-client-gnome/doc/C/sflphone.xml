@@ -230,21 +230,178 @@
 	<title>Call features</title>
 
 	<para>All the following features are available with both SIP and IAX2 accounts.</para>
-	<sect2>
-		<title>Calling a number</title>
+
+	<sect2 label="Dialing a number">
+	<!-- ==== Figure ==== -->
+        <figure id="dial-fig">
+            <title>Dial button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/dial.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+
 	</sect2>
-	<sect2>
-		<title>Hanging up a call</title>
-	</sect2>
-	<sect2>
-		<title>Holding on a call</title>
-	</sect2>
-	<sect2>
-		<title>Transfering a call</title>
+	
+	<sect2 label="Calling a number">
+	<!-- ==== Figure ==== -->
+        <figure id="call-fig">
+            <title>Call button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/call.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
 	</sect2>
 
-	<sect2>
-		<title>Direct IP calls</title>
+	<sect2 label="Answering a call">
+	<!-- ==== Figure ==== -->
+        <figure id="answer-fig">
+            <title>Answer button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/answer.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+	</sect2>
+
+	<sect2 label="Hanging up a call">
+	<!-- ==== Figure ==== -->
+        <figure id="hangup-fig">
+            <title>Hangup button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/hangup.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+	</sect2>
+
+	<sect2 label="Refusing a call">
+    <!-- ==== Figure ==== -->
+        <figure id="refuse-fig">
+            <title>Refuse button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/refuse.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+    </sect2>
+
+
+	<sect2 label="Holding on/off a call">
+		<!-- ==== Figure ==== -->
+        <figure id="holdon-fig">
+            <title>Hold on button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/holdon.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+		<!-- ==== Figure ==== -->
+        <figure id="holdoff-fig">
+            <title>Hold off button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/holdoff.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+	</sect2>
+
+	<sect2 label="Transfering a call">
+	<!-- ==== Figure ==== -->
+        <figure id="transfer-fig">
+            <title>Transfer button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/transfer.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+
+		<para>Then type the number you want to transfer the current call to.</para>
+		<!-- ==== Figure ==== -->
+        <figure id="transfer-go-fig">
+            <title>Validate the transfer</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/transfer-go.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+
+	<para>And press Enter. Clicking again on the transfer button cancels the transfer.</para>
+
+	</sect2>
+
+	<sect2 label="Record a call">
+    <!-- ==== Figure ==== -->
+        <figure id="record-fig">
+            <title>Record button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/record.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+    </sect2>
+
+	<sect2 label="Voicemail quick dial">
+	
+	<caution>This feature is available only if you fill out the voicemail number information for your default account.</caution>
+
+    <!-- ==== Figure ==== -->
+        <figure id="voicemail-fig">
+            <title>Voicemail button</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/voicemail.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+    </sect2>
+
+
+	<sect2 label="Direct IP calls">
 	</sect2>
 </sect1>
 
