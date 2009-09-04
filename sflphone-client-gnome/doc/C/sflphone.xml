@@ -140,7 +140,9 @@
 		<application>SFLphone</application> supports both IAX2 and SIP accounts.
 	</para>
 
-	<sect2 id="account_creation">
+	<sect2 id="accounts_basic">
+	<title>Basic features</title>
+	<sect3 id="account_creation">
 		<title>Creating a new account</title>
 		<para>To create a new account, perform the following steps:</para>
   		<orderedlist>
@@ -176,9 +178,9 @@
     		<listitem><para>Click the <menuchoice><guimenu>Apply</guimenu></menuchoice> button.</para></listitem>
 		</orderedlist>
 		<para>You may now check the state of your account(s). You may have as many setup accounts as you wish. If it is registered, you may now use it to make calls.</para>
-	</sect2>
+	</sect3>
 
-	<sect2 id="account_edit">
+	<sect3 id="account_edit">
 		<title>Editing an configured account</title>
 		<para>To edit an existing account, perform the following steps:</para>
   		<orderedlist>
@@ -186,18 +188,18 @@
 			<listitem><para>Select in the list the account you would like to edit, then click on the <guilabel>Edit</guilabel> button.</para></listitem>
 			<listitem><para>Make your modifications, then click on the <guilabel>Apply</guilabel> button.</para></listitem>
      	</orderedlist>
-	</sect2>
+	</sect3>
 	
-	<sect2 id="account_delete">
+	<sect3 id="account_delete">
 		<title>Deleting an account</title>
 		<para>To delete an existing account, perform the following steps:</para>
   		<orderedlist>
 			<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>.</para></listitem>
-			<listitem><para>Select in the list the account you would like to delete, then click on the <guilabel>Delete</guilabel> button.</para></listitem>
+			<listitem><para>Select in the list the account you would like to delete, then click on the <guibutton>Delete</guibutton> button.</para></listitem>
      	</orderedlist>
-	</sect2>
+	</sect3>
 	
-	<sect2 id="account_selection">
+	<sect3 id="account_selection">
 		<title>Selecting a default account</title>
 		<para>As it is possible to have an unlimited number of registered accounts at the same time, which account will be used when making a call ? You can not only set up a default account to be used every time you are making a call, but an entire priority list. To do that, perform the following steps:</para>
 			<orderedlist>
@@ -208,9 +210,44 @@
 				</listitem>
      		</orderedlist>
 		<para>Note that you also can select an account to make a call with when dialing by right-clicking on it.</para>
+	</sect3>
+</sect2>
+
+	<sect2 id="account_advanced">
+		<title>SIP advanced features</title>
+		<para>The advanced security features are only available with SIP.</para>
+		<sect3 id="accounts_zrtp">
+			<title>Secure RTP</title>
+		</sect3>
+		<sect3 id="accounts_tls">
+			<title>TLS</title>
+		</sect3>
 	</sect2>
 
 </sect1>
+
+<sect1 id="call_features">
+	<title>Call features</title>
+
+	<para>All the following features are available with both SIP and IAX2 accounts.</para>
+	<sect2>
+		<title>Calling a number</title>
+	</sect2>
+	<sect2>
+		<title>Hanging up a call</title>
+	</sect2>
+	<sect2>
+		<title>Holding on a call</title>
+	</sect2>
+	<sect2>
+		<title>Transfering a call</title>
+	</sect2>
+
+	<sect2>
+		<title>Direct IP calls</title>
+	</sect2>
+</sect1>
+
 
 <sect1 id="audio_interfaces">
 	<title>Audio configuration</title>
@@ -236,11 +273,79 @@
 </sect1>
 
 <sect1 id="addressbook">
-	<title>How to use the address books</title>
+	<title>Address books</title>
+	<sect2 id="adressbook_enable">
+	<title>Enable the address book support</title>
+	<para>To enable the address book, perform the following steps:</para>
+    <orderedlist>
+		<listitem>
+			<para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice>.
+			</para>
+		</listitem>
+		<listitem>
+			<para>Select the <menuchoice><guimenu>Address book</guimenu></menuchoice> tab.
+			</para>
+		</listitem>
+		<listitem>
+			<para>Check the <guilabel>Use Evolution address books</guilabel> box.</para>
+		</listitem>
+    </orderedlist>
+	<para>Every address books you configured in Evolution will be now available in <application>SFLphone</application>. Please be sure you selected at least one address book.</para>
+	</sect2>
 
-	<para>
-	</para>
+	<sect2 id="adressbook_options">
+		<title>Available options</title>
+			<para>In <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem><guimenuitem>Address book</guimenuitem></menuchoice>, you may select one or all of the following options:</para>
+		<variablelist>
+			<varlistentry>
+				<term><guilabel>Display contact photo if available</guilabel></term>
+				<listitem><para>
+					The contact photo will be displayed as a thumbnail beside the phone number.
+				</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><guilabel>Fields from Evolution's address book</guilabel></term>
+				<listitem><para>
+					You may use one or all of these following information from your contact.</para>
+					<itemizedlist>
+						<listitem>Work phone number</listitem>
+						<listitem>Home phone number</listitem>
+						<listitem>Mobile phone number</listitem>
+					</itemizedlist>
+				</listitem>
+			</varlistentry>
+		</variablelist>
+	</sect2>
+	
+	<sect2 id="addressbook_use">
+		<title>Using the address book</title>
+		<orderedlist>
+		<listitem>
+		<para>On the toolbar, click on the following button to display the address book window:</para>
 
+		<!-- ==== Figure ==== -->
+      	<figure id="addressbook-fig">
+    		<title>&app; toolbar</title>
+    		<screenshot>
+      			<mediaobject>
+        			<imageobject>
+        				<imagedata fileref="figures/addressbook-button.png" format="PNG"/>
+        			</imageobject>
+      			</mediaobject>
+    		</screenshot>
+		</figure>
+    	<!-- ==== End of Figure ==== -->
+		</listitem>
+
+		<listitem>
+		<para>Search for a contact</para>
+		</listitem>
+
+		<listitem>
+		<para>New entries should have appeared in the window. Double click on it to call the contact. You may also <menuchoice><guimenu>Right click</guimenu><guimenuitem>Edit before calling</guimenuitem></menuchoice> to modify the entry before calling.</para>
+		</listitem>
+	</orderedlist>
+	</sect2>
 </sect1>
 
 </article>
