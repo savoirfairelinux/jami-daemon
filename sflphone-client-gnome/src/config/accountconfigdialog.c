@@ -50,7 +50,7 @@ GtkWidget * hbox;
 GtkWidget * label;
 GtkWidget * entryID;
 GtkWidget * entryAlias;
-GtkWidget * entryProtocol;
+GtkWidget * protocolComboBox;
 GtkWidget * entryUsername;
 GtkWidget * entryHostname;
 GtkWidget * entryPassword;
@@ -78,6 +78,9 @@ GtkWidget * stunServerLabel;
 GtkWidget * stunServerEntry;
 
 GtkWidget * displayNameEntry;
+
+GtkWidget * security_tab;
+GtkWidget * advanced_tab;
             	
 // Credentials
 enum {
@@ -88,11 +91,19 @@ enum {
     COLUMN_CREDENTIAL_COUNT
 };
 
-/* Signal to entryProtocol 'changed' */
+/* Signal to protocolComboBox 'changed' */
 	void
-change_protocol (account_t * currentAccount UNUSED)
+change_protocol_cb (account_t * currentAccount UNUSED)
 {
-	(gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
+	gchar * protocol = gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+	
+	if (g_strcasecmp(protocol, "IAX") == 0) {
+	    gtk_widget_hide(security_tab);
+	    gtk_widget_hide(advanced_tab);
+	} else {
+	    gtk_widget_show(security_tab);
+	    gtk_widget_show(advanced_tab);
+	}
 }
 
 	int
@@ -170,29 +181,29 @@ static GtkWidget * create_basic_tab(account_t **a)
 	label = gtk_label_new_with_mnemonic (_("_Protocol"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-	entryProtocol = gtk_combo_box_new_text();
-	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryProtocol);
-	gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), "SIP");
-	if( is_iax_enabled() ) gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), "IAX");
+	protocolComboBox = gtk_combo_box_new_text();
+	gtk_label_set_mnemonic_widget (GTK_LABEL (label), protocolComboBox);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(protocolComboBox), "SIP");
+	if( is_iax_enabled() ) gtk_combo_box_append_text(GTK_COMBO_BOX(protocolComboBox), "IAX");
 	if(strcmp(curAccountType, "SIP") == 0)
 	{
-		gtk_combo_box_set_active(GTK_COMBO_BOX(entryProtocol),0);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(protocolComboBox),0);
 	}
 	else if(strcmp(curAccountType, "IAX") == 0)
 	{
-		gtk_combo_box_set_active(GTK_COMBO_BOX(entryProtocol),1);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(protocolComboBox),1);
 	}
 	else
 	{
 		/* Should never come here, add debug message. */
-		gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), _("Unknown"));
-		gtk_combo_box_set_active(GTK_COMBO_BOX(entryProtocol),2);
+		gtk_combo_box_append_text(GTK_COMBO_BOX(protocolComboBox), _("Unknown"));
+		gtk_combo_box_set_active(GTK_COMBO_BOX(protocolComboBox),2);
 	}
-	gtk_table_attach ( GTK_TABLE( table ), entryProtocol, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), protocolComboBox, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	/* Link signal 'changed' */
-	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(entryProtocol)), "changed",
-			G_CALLBACK (change_protocol),
+	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(protocolComboBox)), "changed",
+			G_CALLBACK (change_protocol_cb),
 			currentAccount);
 
 	label = gtk_label_new_with_mnemonic (_("_Host name"));
@@ -890,22 +901,24 @@ show_account_window (account_t * a)
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
 	/* Advanced */
-	tab = create_advanced_tab(&currentAccount);
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Advanced")));
-	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+	advanced_tab = create_advanced_tab(&currentAccount);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), advanced_tab, gtk_label_new(_("Advanced")));
+	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), advanced_tab);
 		
     /* Security */
-    tab = create_security_tab(&currentAccount);
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Security")));
-	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+    security_tab = create_security_tab(&currentAccount);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
+	gtk_notebook_page_num(GTK_NOTEBOOK(notebook),security_tab);
 		    	
 	gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
 
+    g_signal_emit_by_name(protocolComboBox, "changed", NULL);
+    
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
 	if(response == GTK_RESPONSE_ACCEPT)
 	{
-		gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
+		gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
 
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_RESOLVE_ONCE),
