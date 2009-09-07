@@ -25,6 +25,18 @@
 
 namespace sfl {
     
+    /**
+     * While waiting for C++0x to come out
+     * Let's say that we have something like
+     * std::range
+     *
+     * Defines a pair of iterator over a vector of
+     * strings. The fist element corresponds to the
+     * begining of the vector, while the second is
+     * set to the end.
+     */
+     typedef std::pair<std::vector<std::string>::iterator, std::vector<std::string>::iterator> range;
+     
     /** 
      * Exception object that is throw when
      * an error occured while compiling the
@@ -99,7 +111,7 @@ namespace sfl {
              *         containing the substrings that 
              *         were matched.
              */             
-            std::vector<std::string>::iterator finditer(const std::string& subject);
+            range finditer(const std::string& subject);
             
         private:
             

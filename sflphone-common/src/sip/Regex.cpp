@@ -125,11 +125,12 @@ namespace sfl {
         return _outputVector;
     }
     
-    std::vector<std::string>::iterator Regex::finditer(const std::string& subject)
+    range Regex::finditer(const std::string& subject)
     {
         findall(subject);   
-        std::vector<std::string>::iterator iter = _outputVector.begin();
-        return iter;
+        std::vector<std::string>::iterator iterBegin = _outputVector.begin();
+        std::vector<std::string>::iterator iterEnd = _outputVector.end();        
+        return range(iterBegin, iterEnd);
     }
 
 }
