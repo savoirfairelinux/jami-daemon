@@ -18,10 +18,12 @@
 #ifndef __SFL_REGEX_H__
 #define __SFL_REGEX_H__
 
-#include <stdexcept> 
+#include <stdexcept>
+#include <ostream>
 #include <vector>
 
 #include <pcre.h>
+#include <cc++/thread.h> 
 
 namespace sfl {
     
@@ -82,6 +84,33 @@ namespace sfl {
             
             ~Regex();
             
+            /**
+             * Set the regular expression 
+             * to be used on subject strings
+             * 
+             * @param The new pattern
+             */
+             void setPattern(const std::string& pattern) { 
+                _reMutex.enterMutex();
+                    _pattern = pattern; 
+                _reMutex.leaveMutex();
+             }
+
+            /**
+             * Compile the regular expression
+             * from the pattern that was set for 
+             * this object.
+             */
+            void compile(void);
+             
+            /**
+             * Get the currently set regular expression 
+             * that is used on subject strings
+             * 
+             * @return The currently set pattern
+             */             
+             std::string getPattern(void) { return _pattern; }
+             
             /** 
              * Match the given expression against
              * this pattern and returns a vector of
@@ -112,7 +141,7 @@ namespace sfl {
              *         were matched.
              */             
             range finditer(const std::string& subject);
-            
+                        
         private:
             
             /**
@@ -138,6 +167,12 @@ namespace sfl {
             */
 
             std::vector<std::string> _outputVector;
+            
+            /**
+            * Protects the above data from concurrent
+            * access.
+            */
+            ost::Mutex _reMutex;
     };
     
 }

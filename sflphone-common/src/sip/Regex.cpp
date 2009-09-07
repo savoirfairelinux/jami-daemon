@@ -24,17 +24,30 @@ namespace sfl {
 
     const int MAX_SUBSTRINGS = 30;
     
-    Regex::Regex(const std::string& pattern) :
+    Regex::Regex(const std::string& pattern = "") :
     _pattern(pattern)
     ,_re(NULL)
     ,_pcreOutputVector(NULL)
+    ,_reMutex(NULL)
     {   
+        compile();
+    }
+
+    Regex::~Regex() 
+    {
+        pcre_free(_re);
+        delete[] _pcreOutputVector;
+    }
+    
+    void Regex::compile(void)
+    {
         // Compile the pattern
         int offset;
         const char * error;
         
+        _reMutex.enterMutex();
         _re = pcre_compile(_pattern.c_str(), 0, &error, &offset, NULL);
-    
+
         if (_re == NULL) {
             std::string offsetStr;
             std::stringstream ss;
@@ -47,23 +60,23 @@ namespace sfl {
         }
         
         // Allocate space for 
-        // the output vector    
+        // the output vector
+        if (_pcreOutputVector != NULL) {
+            delete[] _pcreOutputVector;
+        }
         _pcreOutputVector = new int[MAX_SUBSTRINGS];
-    }
-
-    Regex::~Regex() 
-    {
-        pcre_free(_re);
-        delete[] _pcreOutputVector;
+        _reMutex.leaveMutex();        
     }
     
     const std::vector<std::string>& Regex::findall(const std::string& subject)
     {
         // Execute the PCRE regex
         int status;
-                
+        
+        _reMutex.enterMutex();    
         status = pcre_exec(_re, NULL, subject.c_str(), subject.length(), 
                         0, 0, _pcreOutputVector, MAX_SUBSTRINGS);
+        _reMutex.leaveMutex();                              
 
         // Handle error cases
         if (status < 0) {
@@ -107,6 +120,7 @@ namespace sfl {
         int count = status;      
         const char **stringlist;     
         
+        _reMutex.enterMutex();        
         status = pcre_get_substring_list(subject.c_str(), _pcreOutputVector, count, &stringlist);
         if (status < 0) {
             fprintf(stderr, "Get substring list failed");
@@ -121,6 +135,7 @@ namespace sfl {
             pcre_free_substring_list(stringlist);
 
         }        
+        _reMutex.leaveMutex();
         
         return _outputVector;
     }
