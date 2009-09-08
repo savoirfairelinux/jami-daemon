@@ -965,6 +965,8 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 
     GtkTreeModel* model = (GtkTreeModel*)current_calls->store;
     GtkTreePath *path = gtk_tree_path_new_from_string(dragged_path);
+    GtkTreePath *dpath = gtk_tree_path_new_from_string(dragged_path);
+    GtkTreePath *spath = gtk_tree_path_new_from_string(selected_path);
 
     GtkTreeIter iter_parent;
     GtkTreeIter iter_children;
@@ -1000,7 +1002,16 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    else if(selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE)
 	    {
 		// dragged a conference on a conference
-		sflphone_join_conference(selected_conf->_confID, dragged_conf->_confID);
+		if(gtk_tree_path_compare (dpath, spath) == 0) 
+		{
+		    DEBUG("Joined the same conference!\n");
+		    gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls->view), path, FALSE);
+		}
+		else
+		{
+      		    DEBUG("Joined two conference %s, %s!\n", dragged_path, selected_path);
+		    sflphone_join_conference(selected_conf->_confID, dragged_conf->_confID);
+		}
 	    }
 
 	    // TODO: dragged a single call on a NULL element (should do nothing)
@@ -1065,8 +1076,20 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 
 	    gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
 
-	    calltree_remove_call (current_calls, selected_call, NULL);
-	    calltree_add_call (current_calls, selected_call, &parent_conference);
+	    gtk_tree_path_up(dpath);
+	    gtk_tree_path_up(spath);
+
+	    if(gtk_tree_path_compare (dpath, spath) == 0)
+	    {
+		DEBUG("Dragged call in the same conference");
+		calltree_remove_call (current_calls, selected_call, NULL);
+		calltree_add_call (current_calls, selected_call, &parent_conference);
+	    }
+	    else
+	    {
+		
+	    }
+
 
 	    // TODO: dragged a conference call on another conference call (different conference)
 	    // TODO: dragged a conference call on a NULL element (same conference)
