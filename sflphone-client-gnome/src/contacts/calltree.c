@@ -968,11 +968,14 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
     GtkTreePath *dpath = gtk_tree_path_new_from_string(dragged_path);
     GtkTreePath *spath = gtk_tree_path_new_from_string(selected_path);
 
+    GtkTreeIter iter;
     GtkTreeIter iter_parent;
     GtkTreeIter iter_children;
     GtkTreeIter parent_conference;
 
     GValue val;
+
+    conference_obj_t* conf;
 
 
     if(selected_path_depth == 1)
@@ -1071,7 +1074,7 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	{
 	    // dragged a conference call on another conference call (same conference)
 	    // TODO: dragged a conference call on another conference call (different conference)
-	    DEBUG("NON-AUTHORIZED DRAG");
+	    
 	    gtk_tree_path_up(path);
 
 	    gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
@@ -1081,13 +1084,38 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 
 	    if(gtk_tree_path_compare (dpath, spath) == 0)
 	    {
-		DEBUG("Dragged call in the same conference");
+		
+		DEBUG("Dragged a call in the same conference");
 		calltree_remove_call (current_calls, selected_call, NULL);
 		calltree_add_call (current_calls, selected_call, &parent_conference);
 	    }
 	    else
 	    {
-		
+		DEBUG("Dragged a conference call onto another conference call %s, %s", gtk_tree_path_to_string(dpath), gtk_tree_path_to_string(spath));
+
+		conf = NULL;
+
+		val.g_type = 0;
+		if(gtk_tree_model_get_iter (model, &iter, dpath))
+		{
+		    DEBUG("we got an iter!");
+		    gtk_tree_model_get_value (model, &iter, 2, &val);
+
+		    conf = (conference_obj_t*)g_value_get_pointer(&val);
+		}
+		g_value_unset(&val);
+
+		sflphone_detach_participant(selected_call_id);
+
+		if(conf)
+		{
+		    DEBUG("we got a conf!");
+		    sflphone_add_participant(selected_call_id, conf->_confID);
+		}
+		else
+		{
+		    DEBUG("didn't find a conf!");
+		}
 	    }
 
 
