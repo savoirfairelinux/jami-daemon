@@ -985,9 +985,17 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    
 	    if (selected_type == A_CALL && dragged_type == A_CALL) 
 	    {
-		// dragged a single call on a single call
-	        if(selected_call != NULL && dragged_call != NULL)
-		    sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
+ 
+		if(gtk_tree_path_compare (dpath, spath) == 0)
+		{
+		    // draged a call on itself
+		}
+		else
+		{
+		    // dragged a single call on a single call
+		    if(selected_call != NULL && dragged_call != NULL)
+			sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
+		}
 	    }
 	    else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
 	    {
@@ -1061,7 +1069,8 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	        // dragged a conference call on a conference
 		sflphone_detach_participant(selected_call_id);
 
-		sflphone_add_participant(selected_call_id, dragged_call_id);
+		if(selected_call != NULL && dragged_conf != NULL)
+		    sflphone_add_participant(selected_call_id, dragged_call_id);
 	    }
 	    else
 	    {

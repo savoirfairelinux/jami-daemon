@@ -1101,9 +1101,8 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     Call* call = NULL;
 
     CallID current_call_id = getCurrentCallId();
+    _debug("    joinParticipant: current_call_id %s\n", current_call_id.c_str());
 
-    // currentAccountId = getAccountFromCall (iter_participant->first);
-    // call = getAccountLink (currentAccountId)->getCall (iter_participant->first);
 
     // detach from the conference and switch to this conference 
     if ((current_call_id != call_id1) && (current_call_id != call_id2))
@@ -1113,26 +1112,6 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	else
 	    onHoldCall(current_call_id);
     }
-    /*
-    if(participToConference(call_id1))
-    {
-	_debug("    joinParticipant: call1 particip to a conference\n");
-	// callid1 is currently in a conference detach it
-	detachParticipant(call_id1, "");
-
-	// reset the rtpsession by th way
-	// offHoldCall(call_id1);
-    }
-    if(participToConference(call_id2))
-    {
-	_debug("    joinParticipant: call2 particip to a conference detach it\n");
-	// call_id2 is currently in a conference detach it
-	detachParticipant(call_id2, "");
-
-	// reset the rtpsession by th way
-	// offHoldCall(call_id2);
-    }
-    */
 
     if(iter == _conferencemap.end()){
 
@@ -1214,11 +1193,14 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 
 
 void
-ManagerImpl::detachParticipant(const CallID& call_id, const CallID& current_call_id)
+ManagerImpl::detachParticipant(const CallID& call_id, const CallID& current_id)
 {
     _debug("ManagerImpl::detachParticipant(%s)\n", call_id.c_str());
 
-    // CallID current_call_id = getCurrentCallId();
+    CallID current_call_id = current_id;
+    
+    if(current_call_id.compare("") == 0);
+        current_call_id = getCurrentCallId();
 
     if(call_id != default_id)
     {
