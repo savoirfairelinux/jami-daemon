@@ -91,7 +91,7 @@
  </indexterm>
 
 <sect1 id="introduction">
-    <title>A brief introduction to SFLphone</title>
+    <title>Introduction</title>
 	<para>
 		<application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind.
 	</para>
@@ -245,9 +245,27 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
+		<para>You may have an unlimited number of calls at the same time, even with different accounts.</para>
+		<para>To create a new call when you already have a current call, just click on the <guilabel>Dial</guilabel> button. The current call will automatically be put on hold.</para>
+		<!-- ==== Figure ==== -->
+        <figure id="call-second-fig">
+            <title>Make an other call</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/call-second.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+
+		<para>Keyboard shortcut to perform this action: <accel>NUMPAD</accel> or almost any keys.</para>	
+
 	</sect2>
 	
 	<sect2 label="Calling a number">
+
 	<!-- ==== Figure ==== -->
         <figure id="call-fig">
             <title>Call button</title>
@@ -260,6 +278,9 @@
             </screenshot>
         </figure>
         <!-- ==== End of Figure ==== -->
+
+		<para>Keyboard shortcut to perform this action: <accel>Enter</accel>.</para>	
+
 	</sect2>
 
 	<sect2 label="Answering a call">
@@ -275,6 +296,8 @@
             </screenshot>
         </figure>
         <!-- ==== End of Figure ==== -->
+
+		<para>Keyboard shortcut to perform this action: <accel>Enter</accel>.</para>	
 	</sect2>
 
 	<sect2 label="Hanging up a call">
@@ -290,9 +313,14 @@
             </screenshot>
         </figure>
         <!-- ==== End of Figure ==== -->
+
+		<para>Keyboard shortcut to perform this action: <accel>ESC</accel>.</para>	
 	</sect2>
 
 	<sect2 label="Refusing a call">
+
+	<para>When you refuse a call, your caller is automatically redirected to your voicemail box, if applicable.</para>
+
     <!-- ==== Figure ==== -->
         <figure id="refuse-fig">
             <title>Refuse button</title>
@@ -305,6 +333,8 @@
             </screenshot>
         </figure>
         <!-- ==== End of Figure ==== -->
+
+		<para>Keyboard shortcut to perform this action: <accel>ESC</accel>.</para>	
     </sect2>
 
 
@@ -363,11 +393,27 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-	<para>And press Enter. Clicking again on the transfer button cancels the transfer.</para>
+	<para>And press <accel>Enter</accel>. Clicking again on the transfer button cancels the transfer.</para>
 
 	</sect2>
 
 	<sect2 label="Record a call">
+	
+	<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Audio</guimenuitem></menuchoice> to configure the recordings destination folder.</para>
+
+	<!-- ==== Figure ==== -->
+        <figure id="rec-settings-fig">
+            <title>Record settings</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/rec-settings.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+
     <!-- ==== Figure ==== -->
         <figure id="record-fig">
             <title>Record button</title>
@@ -402,6 +448,11 @@
 
 
 	<sect2 label="Direct IP calls">
+		<para>A direct IP call is a call established between two peers without any accounts. When dialing, such a call must prefixed with <guilabel>sip:</guilabel>.</para>
+
+		<para>Direct IP calls use SIP protocol to establish communication and RTP to transport data. It is right now not available with IAX2.</para>
+
+		<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Direct IP calls</guimenuitem></menuchoice> to configure the advanced security features for this kind of calls.</para>
 	</sect2>
 </sect1>
 
@@ -410,7 +461,7 @@
 	<title>Audio configuration</title>
 	<para>
 		ALSA and Pulseaudio native interfaces are available.
-	</para>
+	</para> 
 
     <sect2 label="Pulseaudio">
         <para>
