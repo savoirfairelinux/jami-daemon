@@ -16,5 +16,5 @@ DOC_FIGURES =	figures/addressbook-button.png \
 				figures/transfer.png				\
 				figures/transfer-go.png				\
 				figures/voicemail.png				\
-				figures/rec-settings.png				\
+				figures/rec-settings.png			
 DOC_LINGUAS = fr de es it zh_TW zh_HK zh_CN ko pl pt_BR pt ru
