@@ -40,7 +40,7 @@ namespace sfl {
      typedef std::pair<std::vector<std::string>::iterator, std::vector<std::string>::iterator> range;
      
     /** 
-     * Exception object that is throw when
+     * Exception object that is thrown when
      * an error occured while compiling the
      * regular expression.
      */
@@ -52,7 +52,7 @@ namespace sfl {
     };
     
     /** 
-     * Exception object that is throw when
+     * Exception object that is thrown when
      * an error occured while mathing a
      * pattern to an expression.
      */
@@ -80,7 +80,8 @@ namespace sfl {
              *      The regular expression to 
              *      be used for this instance.
              */
-            Regex(const std::string& pattern);
+             
+            Regex(const std::string& pattern = "");
             
             ~Regex();
             
@@ -88,19 +89,50 @@ namespace sfl {
              * Set the regular expression 
              * to be used on subject strings
              * 
-             * @param The new pattern
+             * @param pattern The new pattern
              */
+             
              void setPattern(const std::string& pattern) { 
                 _reMutex.enterMutex();
-                    _pattern = pattern; 
+                _pattern = pattern; 
                 _reMutex.leaveMutex();
              }
 
+            /**
+             * Assignment operator overloading.
+             * Set the regular expression 
+             * to be used on subject strings
+             * and compile the regular expression 
+             * from that string. 
+             *
+             * You should use the setPattern() method to 
+             * only set the variable itself, then manually 
+             * compile the expression with the compile()
+             * method.
+             * 
+             * @param pattern The new pattern
+             */
+             
+            void operator=(const std::string& pattern) {
+                _reMutex.enterMutex();
+                _pattern = pattern; 
+                _reMutex.leaveMutex();
+                compile();            
+            }
+            
+            void operator=(const char * pattern) {
+                _reMutex.enterMutex();
+                _pattern = pattern; 
+                _reMutex.leaveMutex();
+                compile();            
+            }            
+                                    
             /**
              * Compile the regular expression
              * from the pattern that was set for 
              * this object.
              */
+             
             void compile(void);
              
             /**
@@ -108,8 +140,9 @@ namespace sfl {
              * that is used on subject strings
              * 
              * @return The currently set pattern
-             */             
-             std::string getPattern(void) { return _pattern; }
+             */ 
+                         
+            inline std::string getPattern(void) { return _pattern; }
              
             /** 
              * Match the given expression against
@@ -125,8 +158,42 @@ namespace sfl {
              *       defined. Throws a match_error if the 
              *       expression cannot be matched.
              */ 
+             
             const std::vector<std::string>& findall(const std::string& subject);
 
+            /**
+             * << operator overload. Sets the the subject
+             * for latter use on the >> operator. 
+             * 
+             * @param subject 
+             *      The expression to be evaluated
+             *      by the pattern.
+             *
+             */
+             
+            void operator<<(const std::string& subject) {
+                _reMutex.enterMutex();
+                _subject = subject;
+                _reMutex.leaveMutex();            
+            }
+            
+            /**
+             * >> operator overload. Executes the 
+             * findall method with the subject previously
+             * set with the << operator.
+             *
+             * @return a vector containing the substrings
+             *       in the order that the parentheses were
+             *       defined. Throws a match_error if the 
+             *       expression cannot be matched.
+             */
+             
+            void operator>>(std::vector<std::string>& outputVector) {
+                _reMutex.enterMutex();
+                outputVector = findall(_subject);
+                _reMutex.leaveMutex();            
+            }            
+            
             /** 
              * Match the given expression against
              * this pattern and returns an iterator
@@ -139,8 +206,22 @@ namespace sfl {
              * @return an iterator to the output vector
              *         containing the substrings that 
              *         were matched.
-             */             
+             */ 
+                         
             range finditer(const std::string& subject);
+            
+            /**
+             * Try to match the regular expression
+             * on the subject previously set in this
+             * object and return the substring matched
+             * by the given group name.
+             *
+             * @param groupName The name of the group  
+             * @return the substring matched by the 
+             *         regular expression designated
+             *         the group name.
+             */
+            std::string group(const std::string& groupName);
                         
         private:
             
@@ -149,29 +230,39 @@ namespace sfl {
             */
 
             std::string _pattern;
+            
+            /** 
+             * The optional subject string that can be used
+             * by the << and >> operator. 
+             */
 
+            std::string _subject;
+            
             /**
-            * The pcre regular expression structure
-            */
+             * The pcre regular expression structure
+             */
+            
             pcre * _re;
 
             /**
-            * The output vector used to contain
-            * substrings that were matched by pcre.
-            */
+             * The output vector used to contain
+             * substrings that were matched by pcre.
+             */
+            
             int * _pcreOutputVector;
 
             /**
-            * The output std::vector used to contain 
-            * substrings that were matched by pcre.
-            */
+             * The output std::vector used to contain 
+             * substrings that were matched by pcre.
+             */
 
             std::vector<std::string> _outputVector;
             
             /**
-            * Protects the above data from concurrent
-            * access.
-            */
+             * Protects the above data from concurrent
+             * access.
+             */
+             
             ost::Mutex _reMutex;
     };
     

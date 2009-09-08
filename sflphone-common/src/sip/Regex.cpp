@@ -24,15 +24,14 @@ namespace sfl {
 
     const int MAX_SUBSTRINGS = 30;
     
-    Regex::Regex(const std::string& pattern = "") :
+    Regex::Regex(const std::string& pattern) :
     _pattern(pattern)
-    ,_re(NULL)
     ,_pcreOutputVector(NULL)
-    ,_reMutex(NULL)
+    ,_re(NULL)
     {   
         compile();
     }
-
+    
     Regex::~Regex() 
     {
         pcre_free(_re);
@@ -148,4 +147,41 @@ namespace sfl {
         return range(iterBegin, iterEnd);
     }
 
+    std::string Regex::group(const std::string& groupName)
+    {
+        _reMutex.enterMutex();
+        
+        // Executes the regex
+        findall(_subject);
+        
+        // Access the named substring
+        const char * substring;
+        std::string substringReturned;
+        
+        int rc = pcre_get_named_substring(_re, _subject.c_str(), _pcreOutputVector, 
+                    _outputVector.size(), groupName.c_str(), &substring);
+                    
+        // Handle errors
+        if (rc < 0) {
+        
+            switch(rc) {
+                case PCRE_ERROR_NOMEMORY:
+                    throw match_error("Couln't get memory");
+                    break;
+                case PCRE_ERROR_NOSUBSTRING:
+                    throw match_error("No such captured substring");
+                    break;
+                default:
+                    throw match_error("Error copying substring");
+            }
+        
+        } else {
+            substringReturned = substring;
+            pcre_free_substring(substring);
+        }    
+        _reMutex.leaveMutex();
+        
+        return substringReturned;
+    }
 }
+
