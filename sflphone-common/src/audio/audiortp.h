@@ -31,6 +31,7 @@
 #include "../global.h"
 // #include "plug-in/audiorecorder/audiorecord.h"
 #include "../samplerateconverter.h"
+#include "codecDescriptor.h"
 
 #include <fstream>
 
@@ -223,7 +224,8 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     int reSampleData(SFLDataFormat *input, SFLDataFormat *output,int sampleRate_codec, int nbSamples, int status);
     
     /** The audio codec used during the session */
-    AudioCodec* _audiocodec;
+    AudioCodec *_audiocodec;
+    // AudioCodec _audioCodecInstance;
 
     /** Mutex */
     ost::Mutex _rtpRtxMutex;
@@ -234,6 +236,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     std::fstream *rtp_output_rec;
 
     static int count_rtp;
+
    
 };
 

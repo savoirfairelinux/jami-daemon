@@ -144,6 +144,7 @@ int Sdp::create_local_offer ()
     sdp_add_session_name();
     sdp_add_connection_info();
     sdp_add_timing();
+
     //sdp_addAttributes( _pool );
     sdp_add_media_description();
 
@@ -174,7 +175,7 @@ int Sdp::create_initial_offer()
     // Create the SDP negociator instance with local offer
     status = pjmedia_sdp_neg_create_w_local_offer (_pool, get_local_sdp_session(), &_negociator);
 
-    state = pjmedia_sdp_neg_get_state (_negociator);
+    state = pjmedia_sdp_neg_get_state(_negociator);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 

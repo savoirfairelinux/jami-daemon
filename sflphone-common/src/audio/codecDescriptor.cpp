@@ -3,6 +3,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -125,7 +126,7 @@ CodecDescriptor::addCodec (AudioCodecType payload UNUSED)
 double
 CodecDescriptor::getBitRate (AudioCodecType payload)
 {
-    CodecsMap::iterator iter = _CodecsMap.find (payload);
+    CodecsMap::iterator iter = _CodecsMap.find(payload);
 
     if (iter!=_CodecsMap.end())
         return (iter->second->getBitRate());
@@ -250,12 +251,13 @@ CodecDescriptor::loadCodec (std::string path)
 
     AudioCodec* a = createCodec();
 
-    p = CodecHandlePointer (a, codecHandle);
+    p = CodecHandlePointer(a, codecHandle);
 
-    _CodecInMemory.push_back (p);
+    _CodecInMemory.push_back(p);
 
     return a;
 }
+
 
 void
 CodecDescriptor::unloadCodec (CodecHandlePointer p)
@@ -270,6 +272,34 @@ CodecDescriptor::unloadCodec (CodecHandlePointer p)
     destroyCodec (p.first);
 
     dlclose (p.second);
+}
+
+AudioCodec*
+CodecDescriptor::instantiateCodec(AudioCodecType payload)
+{
+
+    using std::cerr;
+
+    std::vector< CodecHandlePointer >::iterator iter = _CodecInMemory.begin();
+    while(iter != _CodecInMemory.end())
+    {
+	if (iter->first->getPayload() == payload)
+	{
+	    create_t* createCodec = (create_t*) dlsym (iter->second , "create");
+
+	    if (dlerror())
+		cerr << dlerror() << '\n';
+
+	    AudioCodec* a = createCodec();
+
+	    return a;
+
+	}
+
+	iter++;
+    }
+
+    return NULL;
 }
 
 AudioCodec*

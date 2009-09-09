@@ -318,7 +318,8 @@ AudioRtpRTX::setRtpSessionMedia (void)
         return;
     }
 
-    _audiocodec = _ca->getLocalSDP()->get_session_media ();
+    AudioCodecType pl = (AudioCodecType)_ca->getLocalSDP()->get_session_media()->getPayload();
+    _audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec(pl);
 
     if (_audiocodec == NULL) {
         _debug (" !ARTP: No audiocodec, can't init RTP media\n");
@@ -327,9 +328,7 @@ AudioRtpRTX::setRtpSessionMedia (void)
 
     _debug ("Init audio RTP session: codec payload %i\n", _audiocodec->getPayload());
 
-    if (_audiocodec == NULL) {
-        return;
-    }
+    // _audioCodecInstance = *_audiocodec;
 
     _codecSampleRate = _audiocodec->getClockRate();
 

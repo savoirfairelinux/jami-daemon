@@ -269,8 +269,10 @@ class Call{
 
         /** Type of the call */
         CallType _type;
+
         /** Disconnected/Progressing/Trying/Ringing/Connected */
         ConnectionState _connectionState;
+
         /** Inactive/Active/Hold/Busy/Refused/Error */
         CallState _callState;
 

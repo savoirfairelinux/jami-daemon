@@ -72,6 +72,7 @@ typedef std::map<AudioCodecType , AudioCodec*> CodecsMap;
  */
 
 class CodecDescriptor {
+
   public:
     /**
      * Constructor 
@@ -117,7 +118,7 @@ class CodecDescriptor {
 
     /**
      * Set the default codecs order
-     */   
+     */
     void setDefaultOrder();
 
     /**
@@ -195,6 +196,12 @@ class CodecDescriptor {
      */
     AudioCodec* getFirstCodecAvailable( void );
 
+    /**
+     * Instantiate a codec, used in AudioRTP to get an instance of Codec per call
+     * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
+     */
+    AudioCodec* instantiateCodec(AudioCodecType payload);
+
   private:
 
     /**
@@ -217,6 +224,7 @@ class CodecDescriptor {
      */
     void unloadCodec( CodecHandlePointer );
 
+    
     /**
      * Check if the files found in searched directories seems valid
      * @param std::string	The name of the file
