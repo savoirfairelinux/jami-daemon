@@ -32,6 +32,8 @@
 // #include "plug-in/audiorecorder/audiorecord.h"
 #include "../samplerateconverter.h"
 
+#include <fstream>
+
 #define UP_SAMPLING 0
 #define DOWN_SAMPLING 1
 
@@ -225,6 +227,13 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 
     /** Mutex */
     ost::Mutex _rtpRtxMutex;
+
+  public:
+
+    std::fstream *rtp_input_rec;
+    std::fstream *rtp_output_rec;
+
+    static int count_rtp;
    
 };
 
@@ -285,6 +294,7 @@ class AudioRtp {
 
     /** Mutex */
     ost::Mutex _rtpMutex;
+
 };
 
 #endif // __AUDIO_RTP_H__

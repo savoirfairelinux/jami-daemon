@@ -40,11 +40,15 @@
 #include "../user_cfg.h"
 #include "../sipcall.h"
 
+
+int AudioRtpRTX::count_rtp = 0;
+
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtp::AudioRtp() :_RTXThread (0), _symmetric(), _rtpMutex()
 {
+
 }
 
 AudioRtp::~AudioRtp (void)
@@ -56,6 +60,7 @@ AudioRtp::~AudioRtp (void)
         delete _RTXThread;
         _RTXThread = 0;
     }
+
 }
 
 void
@@ -174,6 +179,28 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time (new ost::Time()), 
     _payloadIsSet = false;
     _remoteIpIsSet = false;
 
+
+    count_rtp++;
+    // open files
+    std::string s_input;
+    std::string s_output;
+
+    // convert count into string
+    std::stringstream out;
+    out << count_rtp;
+    
+    s_input = "/home/alexandresavard/Desktop/buffer_record/rtp_input_";
+    s_input.append(out.str());
+
+    s_output = "/home/alexandresavard/Desktop/buffer_record/rtp_output_";
+    s_output.append(out.str());
+
+    rtp_input_rec = new std::fstream();
+    rtp_output_rec = new std::fstream();
+
+    rtp_input_rec->open(s_input.c_str(), std::fstream::out);
+    rtp_output_rec->open(s_output.c_str(), std::fstream::out);
+
 }
 
 AudioRtpRTX::~AudioRtpRTX ()
@@ -221,6 +248,9 @@ AudioRtpRTX::~AudioRtpRTX ()
 
     _debug ("AudioRtpRTX instance deleted\n");
 
+    rtp_input_rec->close();
+    rtp_output_rec->close();
+
 }
 
 
@@ -233,7 +263,7 @@ AudioRtpRTX::initBuffers()
     
     converter = new SamplerateConverter (_layerSampleRate , _layerFrameSize);
 
-    int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
+    nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
 
     
     _debug("AudioRtpRTX::initBuffers NBSAMPLEMAX %i\n", nbSamplesMax);
@@ -245,6 +275,17 @@ AudioRtpRTX::initBuffers()
 
     spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
+
+    for(int i = 0; i < nbSamplesMax; i++)
+    {
+	micData = new SFLDataFormat[nbSamplesMax];
+	_debug("CREATE print micData address %p\n", micData);
+	micDataConverted = new SFLDataFormat[nbSamplesMax];
+	micDataEncoded = new unsigned char[nbSamplesMax];
+
+	spkrDataConverted = new SFLDataFormat[nbSamplesMax];
+	spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
+    }
 
     Manager::instance().addStream(_ca->getCallId());
     // _audiolayer->getMainBuffer()->bindCallID(_ca->getCallId());
@@ -385,12 +426,12 @@ AudioRtpRTX::processDataEncode()
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = _audiolayer->getMainBuffer()->getData (micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
+    rtp_output_rec->write((char*)micData, bytesAvail);
+
     // _debug("AudioRtpRTX::processDataEncode: nbSample: %i\n", nbSample);
 
     // nb bytes to be sent over RTP
     int compSize = 0;
-
-    
 
     // test if resampling is required
     if (_audiocodec->getClockRate() != _layerSampleRate) {
@@ -433,8 +474,12 @@ AudioRtpRTX::processDataDecode (unsigned char* spkrData, unsigned int size, int&
             int nb_sample_down = nbSample;
             nbSample = reSampleData (spkrDataDecoded, spkrDataConverted, _codecSampleRate, nb_sample_down, UP_SAMPLING);
 
+	    rtp_input_rec->write((char*)spkrDataConverted, nbSample * sizeof (SFLDataFormat));
+
             // Store the number of samples for recording
             _nSamplesSpkr = nbSample;
+
+
 
             // put data in audio layer, size in byte
             _audiolayer->getMainBuffer()->putData (spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
@@ -602,6 +647,16 @@ AudioRtpRTX::run ()
     _debug ("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
 
     while (!testCancel()) {
+
+	for(int i = 0; i < nbSamplesMax; i++)
+	{
+	    micData[i] = 0;
+	    micDataConverted[i] = 0;
+	    micDataEncoded[i] = 0;
+
+	    spkrDataConverted[i] = 0;
+	    spkrDataDecoded[i] = 0;
+	}
 
 	// _debug("Main while loop for call: %s\n", _ca->getCallId().c_str());
         // Send session

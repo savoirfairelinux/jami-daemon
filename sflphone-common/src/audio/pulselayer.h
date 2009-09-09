@@ -26,6 +26,8 @@
 #include <pulse/pulseaudio.h>
 #include <pulse/stream.h>
 
+#include <fstream>
+
 #define PLAYBACK_STREAM_NAME	    "SFLphone out"
 #define CAPTURE_STREAM_NAME	    "SFLphone in"
 
@@ -199,6 +201,10 @@ class PulseLayer : public AudioLayer {
 public: 
 
     friend class AudioLayerTest;
+
+    std::fstream *file_spkr;
+    std::fstream *file_mic;
+
 };
 
 #endif // _PULSE_LAYER_H_

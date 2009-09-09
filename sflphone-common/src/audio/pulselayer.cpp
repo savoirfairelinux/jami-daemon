@@ -19,6 +19,7 @@
 
 #include "pulselayer.h"
 
+
 int framesPerBuffer = 2048;
 
 static  void audioCallback (pa_stream* s, size_t bytes, void* userdata)
@@ -42,12 +43,39 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 
     _urgentRingBuffer.createReadPointer();
 
+    file_spkr = new std::fstream();
+    file_spkr->open("/home/alexandresavard/Desktop/buffer_record/pulselayer_spkr.audio", std::fstream::out);
+
+    file_mic = new std::fstream();
+    file_mic->open("/home/alexandresavard/Desktop/buffer_record/pulselayer_mic.audio", std::fstream::out);
+
+    if (file_spkr->is_open())
+	_debug("------------------------ FILE SPKR OPENED -----------------------\n");
+
+    if (file_mic->is_open())
+	_debug("------------------------ FILE MIC OPENED -----------------------\n");
+
+
 }
 
 // Destructor
 PulseLayer::~PulseLayer (void)
 {
     closeLayer ();
+
+    file_spkr->close();
+    if (!file_spkr->is_open())
+	_debug("------------------------ FILE SPKR CLOSED -----------------------\n");
+
+    file_mic->close();
+    if (!file_mic->is_open())
+	_debug("------------------------ FILE MIC CLOSED -----------------------\n");
+
+    delete file_spkr;
+    file_spkr = NULL;
+
+    delete file_mic;
+    file_mic = NULL;
 }
 
 bool
@@ -404,10 +432,15 @@ void PulseLayer::writeToSpeaker (void)
 	    
             toGet = (normalAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof (SFLDataFormat);
 
+	    
             if (toGet) {
 		
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.getData() toGet %i\n", toGet);
                 _mainBuffer.getData (out, toGet, 100);
+
+		file_spkr->write((const char*)out, toGet);
+	      
+		pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.discard() toGet %i\n", toGet);
                 _mainBuffer.discard (toGet);
             } else {
@@ -415,7 +448,7 @@ void PulseLayer::writeToSpeaker (void)
             }
 
 	    // _debug("PulseLayer::pa_stream_write\n");
-            pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
+            // pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
 
         }
 
@@ -428,14 +461,15 @@ void PulseLayer::writeToSpeaker (void)
 
 void PulseLayer::readFromMic (void)
 {
-    const char* data;
+    const void* data;
     size_t r;
 
-    if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
+    if (pa_stream_peek (record->pulseStream() , &data , &r) < 0 || !data) {
         //_debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
     }
 
-    if (data != 0) {
+    if (data) {
+	file_mic->write((char*)data, r);
         _mainBuffer.putData ( (void*) data ,r, 100);
     }
 

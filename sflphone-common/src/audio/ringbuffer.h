@@ -25,6 +25,7 @@
 
 #include "../call.h"
 
+#include <fstream>
 
 
 typedef unsigned char* samplePtr;
@@ -138,6 +139,13 @@ class RingBuffer {
   public:
 
     friend class MainBufferTest;
+
+    std::fstream *buffer_input_rec;
+    std::fstream *buffer_output_rec;
+
+    static int count_rb;
+    
 };
+
 
 #endif /*  __RING_BUFFER__ */
