@@ -6,6 +6,7 @@ DOC_INCLUDES =
 DOC_FIGURES =	figures/addressbook-button.png \
 				figures/answer.png				\
 				figures/call.png				\
+				figures/call-second.png				\
 				figures/dial.png				\
 				figures/hangup.png				\
 				figures/holdon.png				\
@@ -15,4 +16,5 @@ DOC_FIGURES =	figures/addressbook-button.png \
 				figures/transfer.png				\
 				figures/transfer-go.png				\
 				figures/voicemail.png				\
+				figures/rec-settings.png			
 DOC_LINGUAS = fr de es it zh_TW zh_HK zh_CN ko pl pt_BR pt ru
