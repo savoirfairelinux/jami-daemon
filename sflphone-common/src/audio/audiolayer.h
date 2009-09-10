@@ -28,6 +28,7 @@
 #include "manager.h"
 #include "mainbuffer.h"
 
+
 #include <cc++/thread.h> // for ost::Mutex
 
 #define FRAME_PER_BUFFER	160
@@ -36,6 +37,8 @@
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware. 
  */
+
+class Recordable;
 
 class AudioLayer {
 
@@ -189,14 +192,39 @@ class AudioLayer {
          */
         unsigned int getFrameSize() { return _frameSize; }
 
+	/**
+         * Get the layer type for this instance (either Alsa or PulseAudio)
+         * @return unsigned int The layer type
+         *
+         */
         int getLayerType( void ) { return _layerType; }
 
+	/**
+         * Get a pointer to the application MainBuffer class.
+	 *
+	 * In order to send signal to other parts of the application, one must pass through the mainbuffer.
+	 * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+	 *
+         * @return MainBuffer* a pointer to the MainBuffer instance
+         */
 	MainBuffer* getMainBuffer( void ) { return &_mainBuffer; }
 
         /**
          * Default volume for incoming RTP and Urgent sounds.
          */
         unsigned short _defaultVolume; // 100
+
+	
+	/**
+	 * Set the audio recorder
+	 */
+	void setRecorderInstance(Recordable* rec) {_recorder = rec;}
+
+	/**
+	 * Get the audio recorder
+	 */
+	Recordable* getRecorderInstance(Recordable* rec) {return _recorder;}
+
 
     protected:
 
@@ -218,11 +246,21 @@ class AudioLayer {
         /**
          * Urgent ring buffer used for ringtones
          */
-        // RingBuffer _voiceRingBuffer;
         RingBuffer _urgentRingBuffer;
-        // RingBuffer _micRingBuffer;
 
+	/**
+	 * Instance of the MainBuffer for the whole application
+	 *
+	 * In order to send signal to other parts of the application, one must pass through the mainbuffer.
+	 * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+	 *
+	 */ 
 	MainBuffer _mainBuffer;
+
+	/**
+	 * A pointer to the recordable instance (may be a call or a conference)
+	 */
+	Recordable* _recorder;
 
         /**
          * Number of audio cards on which capture stream has been opened 
@@ -260,8 +298,6 @@ class AudioLayer {
         int _errorMessage;
 
         ost::Mutex _mutex;
-
-	// SFLDataFormat* out_buffer;
 };
 
 #endif // _AUDIO_LAYER_H_

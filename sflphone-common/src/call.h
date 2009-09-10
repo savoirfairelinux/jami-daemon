@@ -39,8 +39,6 @@ typedef std::string CallID;
 
 static CallID default_id = "default_id";
 
-class AudioRecord;
-
 class Call: public Recordable{
     public:
 
@@ -216,11 +214,6 @@ class Call: public Recordable{
          * @return Return the file name for this call
          */
         std::string getFileName() {return _filename;}
-
-        /**
-         * A recorder for this call
-         */
-        // AudioRecord recAudio;
 
         /**
          * SetRecording

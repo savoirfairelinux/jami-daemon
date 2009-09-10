@@ -72,11 +72,6 @@ class Conference: public Recordable{
 
         int _nbParticipant;
 
-	/**
-         * An audio recorder for this conference
-         */
-        // AudioRecord recAudio;
-
 };
 
 // Conference::count = 0;
