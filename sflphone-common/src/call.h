@@ -235,6 +235,9 @@ class Call: public Recordable{
          */
         void initRecFileName();
 
+
+	std::string getRecFileId(){ return getPeerName(); }
+
     protected:
         /** Protect every attribute that can be changed by two threads */
         ost::Mutex _callMutex;

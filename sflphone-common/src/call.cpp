@@ -36,18 +36,11 @@ Call::Call (const CallID& id, Call::CallType type)
         , _peerNumber()
 {
 
-    FILE_TYPE fileType = FILE_WAV;
-    SOUND_FORMAT soundFormat = INT16;
-
-    recAudio.setRecordingOption (fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH),id);
 }
 
 
 Call::~Call()
 {
-    if (recAudio.isOpenFile()) {
-        recAudio.closeFile();
-    }
 }
 
 void

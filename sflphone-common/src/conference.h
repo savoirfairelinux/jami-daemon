@@ -20,6 +20,7 @@
 #define CONFERENCE_H
 
 #include <set>
+#include <string>
 
 #include "audio/recordable.h"
 #include "call.h"
@@ -60,6 +61,8 @@ class Conference: public Recordable{
 	void bindParticipant(CallID participant_id);
 
 	ParticipantSet getParticipantList();
+
+	std::string getRecFileId(){ return getConfID(); }
 
     private:  
 

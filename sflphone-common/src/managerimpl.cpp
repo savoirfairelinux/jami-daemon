@@ -639,8 +639,6 @@ ManagerImpl::offHoldCall (const CallID& call_id)
     }
 
     if ( participToConference(call_id) ) {
-
-	_debug("?????????????????????????  Particip to conference ????????????????????????????");
 	 
 	AccountID currentAccountId;
         Call* call = NULL;
@@ -2658,19 +2656,32 @@ ManagerImpl::setVolumeControls (void)
 void
 ManagerImpl::setRecordingCall (const CallID& id)
 {
+    /*
     _debug ("ManagerImpl::setRecording()! \n");
     AccountID accountid = getAccountFromCall (id);
 
     getAccountLink (accountid)->setRecording (id);
+    */
+    AccountID accountid = getAccountFromCall (id);
+    Recordable* rec = (Recordable*)getAccountLink (accountid)->getCall(id);
+
+    rec->setRecording();
 }
 
 bool
 ManagerImpl::isRecording (const CallID& id)
 {
+    /*
     _debug ("ManagerImpl::isRecording()! \n");
     AccountID accountid = getAccountFromCall (id);
 
     return getAccountLink (accountid)->isRecording (id);
+    */
+
+    AccountID accountid = getAccountFromCall (id);
+    Recordable* rec = (Recordable*)getAccountLink (accountid)->getCall(id);
+
+    rec->isRecording();
 }
 
 void
