@@ -21,6 +21,7 @@
 
 #include <set>
 
+#include "audio/recordable.h"
 #include "call.h"
 
 // class ManagerImpl;
@@ -30,7 +31,7 @@ typedef std::string ConfID;
 
 typedef std::set<CallID> ParticipantSet;
 
-class Conference{
+class Conference: public Recordable{
 
     public:
 
@@ -70,6 +71,12 @@ class Conference{
         ParticipantSet _participants;
 
         int _nbParticipant;
+
+	/**
+         * An audio recorder for this conference
+         */
+        // AudioRecord recAudio;
+
 };
 
 // Conference::count = 0;

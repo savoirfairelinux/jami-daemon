@@ -24,7 +24,8 @@
 #include <cc++/thread.h> // for mutex
 #include <sstream>
 
-#include "plug-in/audiorecorder/audiorecord.h"
+// #include "plug-in/audiorecorder/audiorecord.h"
+#include "audio/recordable.h"
 
 #define IP_TO_IP_PATTERN       "sip:"
 
@@ -40,7 +41,7 @@ static CallID default_id = "default_id";
 
 class AudioRecord;
 
-class Call{
+class Call: public Recordable{
     public:
 
         /**
@@ -219,7 +220,7 @@ class Call{
         /**
          * A recorder for this call
          */
-        AudioRecord recAudio;
+        // AudioRecord recAudio;
 
         /**
          * SetRecording

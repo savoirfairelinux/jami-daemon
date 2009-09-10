@@ -28,6 +28,7 @@ libaudio_la_SOURCES = \
 		audioloop.cpp \
 		ringbuffer.cpp \
 		mainbuffer.cpp \
+		recordable.cpp \
 		$(SPEEX_SOURCES_CPP)
 
 noinst_HEADERS = \
@@ -47,5 +48,6 @@ noinst_HEADERS = \
  		codecDescriptor.h \
 		dtmf.h \
 		mainbuffer.h \
+	 	recordable.h \
 		tone.h 
 
