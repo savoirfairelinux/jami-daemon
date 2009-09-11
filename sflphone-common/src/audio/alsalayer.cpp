@@ -43,6 +43,8 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     _audioThread = new AudioThread (this);
 
     _urgentRingBuffer.createReadPointer();
+
+    _recorder = NULL;
     
 }
 

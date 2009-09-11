@@ -43,6 +43,8 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 
     _urgentRingBuffer.createReadPointer();
 
+    _recorder = NULL;
+
     file_spkr = new std::fstream();
     file_spkr->open("/home/alexandresavard/Desktop/buffer_record/pulselayer_spkr.audio", std::fstream::out);
 
@@ -439,6 +441,12 @@ void PulseLayer::writeToSpeaker (void)
                 _mainBuffer.getData (out, toGet, 100);
 
 		file_spkr->write((const char*)out, toGet);
+
+		if(_recorder != NULL)
+		{
+		    _debug("RECORDING!!!\n");
+		    _recorder->recAudio.recData(out, toGet/sizeof(SFLDataFormat));
+		}
 	      
 		pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.discard() toGet %i\n", toGet);

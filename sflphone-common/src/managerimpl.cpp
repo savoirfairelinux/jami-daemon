@@ -208,6 +208,15 @@ ManagerImpl::switchCall (const CallID& id)
     ost::MutexLock m (_currentCallMutex);
     _debug("------------------------- SWITCH %s ---------------------------\n", id.c_str());
     _currentCallId2 = id;
+
+    // set the recordable instance in audiolayer
+    AccountID account_id = getAccountFromCall(id);
+    AudioLayer* al = getAudioDriver();
+
+    Call* call = NULL;
+    call = getAccountLink (account_id)->getCall(id);
+
+    al->setRecorderInstance((Recordable*)call);
 }
 
 
@@ -579,7 +588,7 @@ ManagerImpl::offHoldCall (const CallID& call_id)
 {
 
     AccountID account_id;
-    bool returnValue, rec;
+    bool returnValue, is_rec;
     std::string codecName;
 
 
@@ -610,7 +619,7 @@ ManagerImpl::offHoldCall (const CallID& call_id)
 
     /* Direct IP to IP call */
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
-        rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (call_id);
+        // is_rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (call_id);
         returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (call_id);
     }
 
@@ -625,13 +634,13 @@ ManagerImpl::offHoldCall (const CallID& call_id)
 
         _debug ("Setting OFFHOLD, Account %s, callid %s\n", account_id.c_str(), call_id.c_str());
 
-        rec = getAccountLink (account_id)->isRecording (call_id);
+        is_rec = getAccountLink (account_id)->getCall(call_id)->isRecording();
         returnValue = getAccountLink (account_id)->offhold (call_id);
     }
 
 
     if (_dbus) {
-        if (rec)
+        if (is_rec)
             _dbus->getCallManager()->callStateChanged (call_id, "UNHOLD_RECORD");
         else
             _dbus->getCallManager()->callStateChanged (call_id, "UNHOLD_CURRENT");
@@ -2681,7 +2690,7 @@ ManagerImpl::isRecording (const CallID& id)
     AccountID accountid = getAccountFromCall (id);
     Recordable* rec = (Recordable*)getAccountLink (accountid)->getCall(id);
 
-    rec->isRecording();
+    return rec->isRecording();
 }
 
 void

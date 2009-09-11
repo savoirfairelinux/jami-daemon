@@ -609,7 +609,7 @@ IAXVoIPLink::refuse (const CallID& id)
     return true;
 }
 
-
+/*
 void
 IAXVoIPLink::setRecording (const CallID& id)
 {
@@ -629,7 +629,7 @@ IAXVoIPLink::isRecording (const CallID& id)
 
     return call->isRecording();
 }
-
+*/
 
 
 

@@ -670,6 +670,7 @@ AudioRtpRTX::run ()
 
         // Let's wait for the next transmit cycle
 
+	/*
         if (sessionWaiting == 1) {
             // Record mic and speaker during conversation
             _ca->recAudio.recData (spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
@@ -677,6 +678,7 @@ AudioRtpRTX::run ()
             // Record mic only while leaving a message
             _ca->recAudio.recData (micData,_nSamplesMic);
         }
+	*/
 
         // Let's wait for the next transmit cycle
         Thread::sleep (TimerPort::getTimer());

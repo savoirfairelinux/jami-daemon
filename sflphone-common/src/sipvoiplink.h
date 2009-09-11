@@ -289,17 +289,19 @@ class SIPVoIPLink : public VoIPLink
         /** Decrement the number of SIP account connected to this link */
         void decrementClients (void);
 
+	
  	/**
      	* Set Recording
      	* @param id The call identifier
      	*/
-    	void setRecording(const CallID& id);
+    	// void setRecording(const CallID& id);
       
         /**
      	* Returning state (true recording)
      	* @param id The call identifier
      	*/
-    	bool isRecording(const CallID& id);
+    	// bool isRecording(const CallID& id);
+	
 
         /**
          * Return the codec protocol used for this call 

@@ -1047,6 +1047,8 @@ SIPVoIPLink::refuse (const CallID& id)
     return true;
 }
 
+/*
+
 void
 SIPVoIPLink::setRecording (const CallID& id)
 {
@@ -1070,6 +1072,7 @@ SIPVoIPLink::isRecording (const CallID& id)
         return false;
 }
 
+*/
 
 std::string
 SIPVoIPLink::getCurrentCodecName()
