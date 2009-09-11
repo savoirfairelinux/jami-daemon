@@ -451,7 +451,7 @@ void dbus_enable_stun (void);
 
 void dbus_add_participant(const gchar* callID, const gchar* confID);
 
-void dbus_set_record (const callable_obj_t * c);
+void dbus_set_record (const gchar * id);
 
 void dbus_set_record_path (const gchar *path);
 gchar* dbus_get_record_path (void);

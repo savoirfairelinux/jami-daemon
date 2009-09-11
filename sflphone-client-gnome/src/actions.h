@@ -28,6 +28,7 @@
 #include <codeclist.h>
 #include <sflphone_const.h>
 #include <errors.h>
+#include <conference_obj.h>
 
 /** @file actions.h
   * @brief General functions that change the state of the application.

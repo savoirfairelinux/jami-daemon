@@ -209,14 +209,37 @@ ManagerImpl::switchCall (const CallID& id)
     _debug("------------------------- SWITCH %s ---------------------------\n", id.c_str());
     _currentCallId2 = id;
 
-    // set the recordable instance in audiolayer
-    AccountID account_id = getAccountFromCall(id);
-    AudioLayer* al = getAudioDriver();
+    /*
+    AudioLayer *al = getAudioDriver();
 
-    Call* call = NULL;
-    call = getAccountLink (account_id)->getCall(id);
+    if (id != "") {
 
-    al->setRecorderInstance((Recordable*)call);
+	if(isConference(id)) {
+
+	    Conference *conf;
+
+	    ConferenceMap::iterator iter = _conferencemap.find(id);
+	    if(iter != _conferencemap.end())
+	    {
+		_debug("    set call recordable in audio layer\n");
+		conf = iter->second;
+		al->setRecorderInstance((Recordable*)conf);
+	    }
+	}
+	else {
+
+	    // set the recordable instance in audiolayer
+	    AccountID account_id = getAccountFromCall(id);
+	
+
+	    Call *call = NULL;
+	    call = getAccountLink (account_id)->getCall(id);
+
+	    _debug("    set call recordable in audio layer\n");
+	    al->setRecorderInstance((Recordable*)call);
+	}
+    }
+    */
 }
 
 

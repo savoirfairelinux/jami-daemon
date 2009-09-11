@@ -59,7 +59,7 @@ class AudioLayer {
             : _defaultVolume(100)
 			  , _layerType( type )
               , _manager(manager)
-	    , _urgentRingBuffer( SIZEBUF, default_id )
+	      , _urgentRingBuffer( SIZEBUF, default_id )
               , _indexIn ( 0 )
               , _indexOut ( 0 )
               , _sampleRate ( 0 )
@@ -218,7 +218,7 @@ class AudioLayer {
 	/**
 	 * Set the audio recorder
 	 */
-	void setRecorderInstance(Recordable* rec) {_recorder = rec;}
+	void setRecorderInstance(Recordable* rec) {_recorder = NULL; _recorder = rec;}
 
 	/**
 	 * Get the audio recorder

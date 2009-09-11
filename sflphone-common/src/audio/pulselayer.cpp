@@ -440,13 +440,17 @@ void PulseLayer::writeToSpeaker (void)
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.getData() toGet %i\n", toGet);
                 _mainBuffer.getData (out, toGet, 100);
 
-		file_spkr->write((const char*)out, toGet);
-
+		// file_spkr->write((const char*)out, toGet);
+		
+		/*
 		if(_recorder != NULL)
 		{
-		    _debug("RECORDING!!!\n");
+		    // _debug("RECORDING!!!\n");
 		    _recorder->recAudio.recData(out, toGet/sizeof(SFLDataFormat));
 		}
+		*/
+		
+	        
 	      
 		pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
 		// _debug("PulseLayer::writeToSpeaker _mainBuffer.discard() toGet %i\n", toGet);
@@ -477,7 +481,7 @@ void PulseLayer::readFromMic (void)
     }
 
     if (data) {
-	file_mic->write((char*)data, r);
+	// file_mic->write((char*)data, r);
         _mainBuffer.putData ( (void*) data ,r, 100);
     }
 

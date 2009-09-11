@@ -136,6 +136,7 @@ AudioRtp::closeRtpSession ()
     return true;
 }
 
+/*
 void
 AudioRtp::setRecording()
 {
@@ -144,6 +145,7 @@ AudioRtp::setRecording()
     _RTXThread->_ca->setRecording();
 
 }
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
@@ -275,17 +277,6 @@ AudioRtpRTX::initBuffers()
 
     spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
-
-    for(int i = 0; i < nbSamplesMax; i++)
-    {
-	micData = new SFLDataFormat[nbSamplesMax];
-	_debug("CREATE print micData address %p\n", micData);
-	micDataConverted = new SFLDataFormat[nbSamplesMax];
-	micDataEncoded = new unsigned char[nbSamplesMax];
-
-	spkrDataConverted = new SFLDataFormat[nbSamplesMax];
-	spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
-    }
 
     Manager::instance().addStream(_ca->getCallId());
     // _audiolayer->getMainBuffer()->bindCallID(_ca->getCallId());
@@ -647,15 +638,6 @@ AudioRtpRTX::run ()
 
     while (!testCancel()) {
 
-	for(int i = 0; i < nbSamplesMax; i++)
-	{
-	    micData[i] = 0;
-	    micDataConverted[i] = 0;
-	    micDataEncoded[i] = 0;
-
-	    spkrDataConverted[i] = 0;
-	    spkrDataDecoded[i] = 0;
-	}
 
 	// _debug("Main while loop for call: %s\n", _ca->getCallId().c_str());
         // Send session
@@ -670,7 +652,7 @@ AudioRtpRTX::run ()
 
         // Let's wait for the next transmit cycle
 
-	/*
+	
         if (sessionWaiting == 1) {
             // Record mic and speaker during conversation
             _ca->recAudio.recData (spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
@@ -678,7 +660,7 @@ AudioRtpRTX::run ()
             // Record mic only while leaving a message
             _ca->recAudio.recData (micData,_nSamplesMic);
         }
-	*/
+	
 
         // Let's wait for the next transmit cycle
         Thread::sleep (TimerPort::getTimer());

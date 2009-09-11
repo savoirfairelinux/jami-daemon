@@ -2725,7 +2725,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
     }
 
     /*
-     * On incoming NOTIFY, notify application about call transfer progress.
+     * On incoming NOTIFY, notify application about callset transfer progress.
      */
     else if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACTIVE ||
              pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {

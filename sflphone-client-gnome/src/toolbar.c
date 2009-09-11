@@ -329,6 +329,7 @@ toolbar_update_buttons ()
     gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 
     callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
     if (selectedCall)
     {
         switch(selectedCall->_state)
@@ -395,6 +396,26 @@ toolbar_update_buttons ()
                 // WARN("Toolbar update - Should not happen!");
                 break;
         }
+    }
+    else if(selectedConf)
+    {
+	switch(selectedConf->_state)
+	{
+	    case CONFERENCE_STATE_ACTIVE_ATACHED:
+	        gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+	        break;
+	    case CONFERENCE_STATE_ACTIVE_DETACHED:
+		gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+		break;
+            case CONFERENCE_STATE_RECORD:
+		gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+		break;
+            case CONFERENCE_STATE_HOLD:
+		gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+		break;
+	    default:
+		break;
+	}
     }
     else
     {

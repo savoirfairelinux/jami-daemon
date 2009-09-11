@@ -210,33 +210,9 @@ class Call: public Recordable{
          */
         unsigned int getLocalAudioPort();
 
-        /**
-         * @return Return the file name for this call
-         */
-        std::string getFileName() {return _filename;}
-
-        /**
-         * SetRecording
-         */
-        void setRecording();
-
-        /**
-         * stopRecording, make sure the recording is stopped (whe transfering call)
-         */
-        void stopRecording();
-
-        /**
-         * Return Recording state
-         */
-        bool isRecording(); 
-
-        /**
-         *
-         */
-        void initRecFileName();
-
-
 	std::string getRecFileId(){ return getPeerName(); }
+
+	std::string getFileName() { return _filename; }
 
     protected:
         /** Protect every attribute that can be changed by two threads */
@@ -282,7 +258,7 @@ class Call: public Recordable{
         /** Number of the peer */
         std::string _peerNumber;
 
-        /** File name for his call : time YY-MM-DD */
+	/** File name for his call : time YY-MM-DD */
         std::string _filename;
 };
 

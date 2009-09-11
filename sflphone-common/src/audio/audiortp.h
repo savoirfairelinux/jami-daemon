@@ -81,15 +81,10 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Thread associated method */    
     virtual void run ();
 
-    /**
-     * Audio recording object
-     */
-    // AudioRecord recAudio;
-
     /** A SIP call */
     SIPCall* _ca;
 
-   /**
+    /**
      * Update RTP session media info as received from SDP negociation 
      */
     void setRtpSessionMedia(void);
@@ -275,7 +270,7 @@ class AudioRtp {
     /**
      * Start recording
      */
-    void setRecording ();
+    // void setRecording ();
 
     friend class RtpTest;
 

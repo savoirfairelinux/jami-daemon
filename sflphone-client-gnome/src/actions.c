@@ -930,20 +930,39 @@ sflphone_conference_off_hold(const conference_obj_t * c)
 sflphone_rec_call()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-    dbus_set_record(selectedCall);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(current_calls);
 
-
-    switch(selectedCall->_state)
+    if(selectedCall)
     {
-        case CALL_STATE_CURRENT:
-            selectedCall->_state = CALL_STATE_RECORD;
-            break;
-        case CALL_STATE_RECORD:
-            selectedCall->_state = CALL_STATE_CURRENT;
-            break;
-        default:
-            WARN("Should not happen in sflphone_off_hold ()!");
-            break;
+	dbus_set_record(selectedCall->_callID);
+	switch(selectedCall->_state)
+	{
+            case CALL_STATE_CURRENT:
+		selectedCall->_state = CALL_STATE_RECORD;
+		break;
+            case CALL_STATE_RECORD:
+		selectedCall->_state = CALL_STATE_CURRENT;
+		break;
+            default:
+		WARN("Should not happen in sflphone_off_hold ()!");
+		break;
+	}
+    }
+    else if(selectedConf)
+    {
+	dbus_set_record(selectedConf->_confID);
+	switch(selectedConf->_state)
+	{
+            case CONFERENCE_STATE_ACTIVE_ATACHED:
+		selectedCall->_state = CONFERENCE_STATE_RECORD;
+		break;
+            case CONFERENCE_STATE_RECORD:
+		selectedCall->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+		break;
+            default:
+		WARN("Should not happen in sflphone_off_hold ()!");
+		break;
+	}
     }
     calltree_update_call(current_calls, selectedCall, NULL);
     update_menus();

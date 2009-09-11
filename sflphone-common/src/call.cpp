@@ -173,27 +173,3 @@ Call::isAudioStarted()
     return _audioStarted;
 }
 
-void
-Call::setRecording()
-{
-    recAudio.setRecording();
-}
-
-void
-Call::initRecFileName()
-{
-    recAudio.initFileName (_peerNumber);
-}
-
-void
-Call::stopRecording()
-{
-    recAudio.stopRecording();
-}
-
-bool
-Call::isRecording()
-{
-    return recAudio.isRecording();
-}
-

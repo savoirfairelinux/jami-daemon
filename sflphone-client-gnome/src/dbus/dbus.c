@@ -1366,7 +1366,7 @@ dbus_set_volume_controls(  )
     }
 }
 
-
+void
 dbus_join_participant(const gchar* sel_callID, const gchar* drag_callID)
 {
 
@@ -1386,7 +1386,7 @@ dbus_join_participant(const gchar* sel_callID, const gchar* drag_callID)
     
 }
 
-
+void
 dbus_add_participant(const gchar* callID, const gchar* confID)
 {
 
@@ -1406,6 +1406,7 @@ dbus_add_participant(const gchar* callID, const gchar* confID)
     
 }
 
+void
 dbus_add_main_participant(const gchar* confID)
 {
     DEBUG("dbus_add_participant %s\n", confID);
@@ -1464,14 +1465,14 @@ dbus_join_conference(const gchar* sel_confID, const gchar* drag_confID)
 
 
     void
-dbus_set_record(const callable_obj_t * c)
+dbus_set_record(const gchar* id)
 {
-    DEBUG("dbus_set_record %s\n", c->_callID);
+    DEBUG("dbus_set_record %s\n", id);
 
     GError* error = NULL;
     org_sflphone_SFLphone_CallManager_set_recording (
             callManagerProxy,
-            c->_callID,
+            id,
             &error);
     if(error)
     {
