@@ -18,10 +18,23 @@
 #ifndef __SFL_SDES_NEGOTIATOR_H__
 #define __SFL_SDES_NEGOTIATOR_H__
 
-#include <vector>
+#include <stdexcept>
 #include <string> 
+#include <vector>
 
 namespace sfl {
+
+    /** 
+     * General exception object that is thrown when
+     * an error occured with a regular expression
+     * operation.
+     */
+    class parse_error : public std::invalid_argument 
+    {
+        public:     
+        explicit parse_error(const std::string& error) :  
+        std::invalid_argument(error) {}
+    };
     
     enum CipherMode {
         AESCounterMode,
@@ -99,7 +112,7 @@ namespace sfl {
 
 
         private:
-            bool parse(void);
+            void parse(void);
             CryptoAttribute * tokenize(const std::string& attributeLine);
     };
 }
