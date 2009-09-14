@@ -39,7 +39,6 @@ Recordable::~Recordable()
 
 void Recordable::initRecFileName()
 {
-    _debug("XXXXXXXXXXXXXXXXX getRecFileId() %s XXXXXXXXXXXXXXXXXXX\n", getRecFileId().c_str());
 
     recAudio.initFileName (getRecFileId());
 }

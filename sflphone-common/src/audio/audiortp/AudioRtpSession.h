@@ -199,6 +199,9 @@ namespace sfl {
             throw;
         }
 
+	_debug("Unbind audio RTP stream for call id %i\n", _ca->getCallId().c_str());
+	_audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
+
         delete [] _micData;
         delete [] _micDataConverted;
         delete [] _micDataEncoded;
@@ -219,6 +222,8 @@ namespace sfl {
         _micDataEncoded = new unsigned char[nbSamplesMax];
         _spkrDataConverted = new SFLDataFormat[nbSamplesMax];
         _spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
+
+	_manager->addStream(_ca->getCallId());
     }
     
     template <typename D>

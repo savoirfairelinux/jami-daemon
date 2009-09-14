@@ -2,6 +2,7 @@
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -347,12 +348,11 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
 
 
-    tab->store = gtk_list_store_new (4,
+    tab->store = gtk_tree_store_new (4,
             GDK_TYPE_PIXBUF,// Icon
             G_TYPE_STRING,  // Description
             GDK_TYPE_PIXBUF, // Security Icon
             G_TYPE_POINTER  // Pointer to the Object
-
             );
 
     tab->view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(tab->store));
@@ -672,6 +672,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
         calltree_add_history_entry (c);
         return;
     }
+
     account_t* account_details=NULL;
 
     GdkPixbuf *pixbuf=NULL;
@@ -688,7 +689,9 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             c->_peer_number,
             c->_peer_name);
 
+    DEBUG("CRITICAL!!!!!!!");
     gtk_tree_store_prepend (tab->store, &iter, parent);
+    DEBUG("CRITICAL!!!!!!!");
 
     if(c != NULL) {
         account_details = account_list_get_by_id(c->_callID);
@@ -759,7 +762,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
         }
     }
     
-    gtk_list_store_set(tab->store, &iter,
+    gtk_tree_store_set(tab->store, &iter,
 		       0, pixbuf, // Icon
 		       1, description, // Description
 		       2, pixbuf_security, // Informs user about the state of security
@@ -781,6 +784,8 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 void calltree_add_history_entry (callable_obj_t * c)
 {
 
+    DEBUG("calltree_add_history_entry %s", c->_callID);
+
     if ( g_strcasecmp (dbus_get_history_enabled (), "false") == 0)
         return;
 
@@ -794,7 +799,7 @@ void calltree_add_history_entry (callable_obj_t * c)
             c->_peer_number,
             c->_peer_name);
 
-    gtk_list_store_prepend (history->store, &iter);
+    gtk_tree_store_prepend (history->store, &iter, NULL);
 
     switch(c->_history_state)
     {
@@ -834,7 +839,7 @@ void calltree_add_history_entry (callable_obj_t * c)
             pixbuf_security =  gdk_pixbuf_scale_simple(pixbuf_security, 32, 32, GDK_INTERP_BILINEAR);
         }
     }
-    gtk_list_store_set(history->store, &iter,
+    gtk_tree_store_set(history->store, &iter,
             0, pixbuf, // Icon
             1, description, // Description
             2, pixbuf_security, // Icon
