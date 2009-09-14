@@ -1226,7 +1226,7 @@ sflphone_srtp_on( callable_obj_t * c)
 {
     c->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
 
-    calltree_update_call(current_calls, c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -1234,7 +1234,7 @@ sflphone_srtp_on( callable_obj_t * c)
 sflphone_srtp_off( callable_obj_t * c )
 {
     c->_srtp_state = SRTP_STATE_UNLOCKED;
-    calltree_update_call(current_calls, c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -1250,7 +1250,7 @@ sflphone_srtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean ver
     } else {
         c->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
     }
-    calltree_update_call(current_calls, c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }
 
@@ -1298,6 +1298,6 @@ sflphone_call_state_changed( callable_obj_t * c, const gchar * description, cons
         c->_state_code = code;   
     }
     
-    calltree_update_call(current_calls, c);
+    calltree_update_call(current_calls, c, NULL);
     update_menus();
 }

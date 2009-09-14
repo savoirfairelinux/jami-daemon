@@ -237,8 +237,10 @@ namespace sfl {
     void AudioRtpSession<D>::setSessionMedia(void)
     {
         assert(_ca);
-        
-        _audiocodec = _ca->getLocalSDP()->get_session_media ();
+
+	AudioCodecType pl = (AudioCodecType)_ca->getLocalSDP()->get_session_media()->getPayload();
+	_audiocodec = _manager->getCodecDescriptorMap().instantiateCodec(pl);
+
         if (_audiocodec == NULL) {
             _debug ("No audiocodec, can't init RTP media\n");
             throw AudioRtpSessionException();

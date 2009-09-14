@@ -27,7 +27,7 @@ sflphone_client_gnome_SOURCES = \
   reqaccount.c
 
 noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
-                  assistant.h reqaccount.h errors.h sflphone_const.h \
+                  reqaccount.h errors.h sflphone_const.h \
                   menus.h accountlist.h sliders.h statusicon.h callable_obj.h conference_obj.h toolbar.h
 
 

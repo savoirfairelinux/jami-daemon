@@ -270,12 +270,12 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
                         selectedCall->_zrtp_confirmed = TRUE;
                     }
                     dbus_confirm_sas(selectedCall);
-                    calltree_update_call(current_calls, selectedCall);
+                    calltree_update_call(current_calls, selectedCall, NULL);
                     break;
                 case SRTP_STATE_SAS_CONFIRMED:
                     selectedCall->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
                     dbus_reset_sas(selectedCall);
-                    calltree_update_call(current_calls, selectedCall);
+                    calltree_update_call(current_calls, selectedCall, NULL);
                     break;
                 default:
                     DEBUG("Single click but no action");
