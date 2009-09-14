@@ -1,14 +1,16 @@
-SUBDIRS = src pixmaps tests man po
+SUBDIRS = src pixmaps tests man po doc
 
 ACLOCAL_AMFLAGS = -I m4
+
+GNOME_DOC=gnome-doc-utils.make
 
 log4crc_DATA = log4crc
 log4crcdir = $(datadir)/sflphone
 
-EXTRA_DIST   = $(log4crc_DATA) sflphone.desktop.in 
+EXTRA_DIST   = $(log4crc_DATA) sflphone.desktop.in $(GNOME_DOC) m4
 appsdir = $(datadir)/applications
 apps_in_files = sflphone.desktop.in
 apps_DATA = $(apps_in_files:.desktop.in=.desktop)
 #@INTLTOOL_DESKTOP_RULE@
 
-DISTCLEANFILES= sflphone.desktop
+DISTCLEANFILES= sflphone.desktop $(GNOME_DOC)

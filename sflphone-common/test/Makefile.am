@@ -1,26 +1,27 @@
 include ../globals.mak
 
-noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester rtpTester historyTester mainbufferTester
+
+noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester historyTester mainbufferTester #rtpTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
 	../src/sflphoned-accountcreator.o \
 	../src/sflphoned-call.o \
-	../src/sflphoned-sipcall.o \
-	../src/sflphoned-iaxcall.o \
+	../src/sip/sipcall.o \
+	../src/iax/libiaxlink_la-iaxcall.o \
 	../src/sflphoned-voiplink.o \
-	../src/sflphoned-sipvoiplink.o \
-	../src/sflphoned-iaxvoiplink.o \
+	../src/sip/sipvoiplink.o \
+	../src/iax/libiaxlink_la-iaxvoiplink.o \
 	../src/sflphoned-account.o \
-	../src/sflphoned-sipaccount.o \
-	../src/sflphoned-iaxaccount.o \
+	../src/sip/sipaccount.o \
+	../src/iax/libiaxlink_la-iaxaccount.o \
 	../src/sflphoned-eventthread.o \
 	../src/sflphoned-conference.o \
 	../src/plug-in/pluginmanager.o \
 	../src/plug-in/audiorecorder/audiorecord.o \
-	../src/sflphoned-samplerateconverter.o \
-	../src/sflphoned-sdp.o \
-	../src/sflphoned-sdpmedia.o \
+	../src/audio/samplerateconverter.o \
+	../src/sip/sdp.o \
+	../src/sip/sdpmedia.o \
 	../src/sflphoned-numbercleaner.o \
         ../src/history/historymanager.o
 	../
@@ -40,6 +41,8 @@ numbercleanerTester_LDADD = \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
 		$(OBJECT_FILES)
@@ -58,6 +61,8 @@ pluginmanagerTester_LDADD = \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
@@ -76,6 +81,8 @@ hookmanagerTester_LDADD = \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
@@ -95,25 +102,8 @@ audiolayerTester_LDADD = \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		$(PJSIP_LIBS) \
-		-luuid \
-		$(OBJECT_FILES)
-
-rtpTester_SOURCES = \
-		rtpTest.h \
-		rtpTest.cpp \
-		TestMain.cpp
-
-rtpTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
@@ -133,6 +123,8 @@ historyTester_LDADD = \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \

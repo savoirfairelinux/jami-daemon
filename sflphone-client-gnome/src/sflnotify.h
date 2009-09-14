@@ -80,6 +80,27 @@ void notify_no_registered_accounts(  );
  */
 void stop_notification( void );
 
+/**
+ * Notify that the RTP session is secured
+ */
+void notify_secure_on (callable_obj_t* c);
+
+/**
+ * Notify that the RTP session is now more secured
+ */
+void notify_secure_off (callable_obj_t* c);
+
+/**
+ * Notify that the ZRTP negotiation failed
+ */
+ 
+void notify_zrtp_negotiation_failed (callable_obj_t* c);
+
+/**
+ * Notify that the RTP session is now more secured
+ */
+void notify_zrtp_not_supported (callable_obj_t* c);
+
 G_END_DECLS
 
 #endif

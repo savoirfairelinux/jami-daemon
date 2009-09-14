@@ -80,8 +80,7 @@ calllist_reset (calltab_t* tab)
 
 void calllist_add_history_entry (callable_obj_t *obj)
 {
-    int state = dbus_get_history_enabled ();
-    if (state == 1)
+    if ( g_strcasecmp (dbus_get_history_enabled (), "true") == 0)
     {
         g_queue_push_tail (history->callQueue, (gpointer *) obj);
         calltree_add_call (history, obj, NULL);

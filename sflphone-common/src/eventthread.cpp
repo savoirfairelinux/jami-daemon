@@ -19,7 +19,7 @@
 
 #include "eventthread.h"
 #include "voiplink.h"
-#include "audio/alsalayer.h"
+#include "audio/alsa/alsalayer.h"
 
 /********************************** Voiplink thread *************************************/
 EventThread::EventThread (VoIPLink *link)

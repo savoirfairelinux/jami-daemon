@@ -109,13 +109,68 @@ GHashTable * dbus_account_details(gchar * accountID);
 void dbus_set_account_details(account_t *a);
 
 /**
+ * ConfigurationManager - Set the additional credential information 
+ * of a specific account, for a specific credential index.
+ * This function will add the new section on the server side
+ * if it cannot be found.
+ * @param a The account to update
+ * @param index The index for the credential to update
+ */
+void dbus_set_credential(account_t *a, int index);
+
+/**
+ * ConfigurationManager - Set the additional credential information 
+ * of a specific account, for a specific credential index.
+ * This function will add the new section on the server side
+ * if it cannot be found.
+ * @param a The account to update
+ * @return int The number of credentials specified
+ */
+int dbus_get_number_of_credential(gchar * accountID);
+
+/**
+ * ConfigurationManager - Delete all credentials defined for
+ * a given account.
+ * @param a The account id
+ */
+void dbus_delete_all_credential(account_t *a);
+
+/**
+ * ConfigurationManager - Set the number of credential that
+ * is being used.
+ * @param a The account id
+ */
+void dbus_set_number_of_credential(account_t *a, int number);
+
+/**
+ * ConfigurationManager - Set the additional credential information 
+ * of a specific account, for a specific credential index.
+ * This function will add the new section on the server side
+ * if it cannot be found.
+ * @param a The account to update
+ * @param index The credential index
+ * @return GHashTable* The credential at index "index" for the given account
+ */
+GHashTable* dbus_get_credential(gchar * accountID, int index);
+
+/**
+ * ConfigurationManager - Get the details for the ip2ip profile 
+ */
+GHashTable * dbus_get_ip2_ip_details(void);
+
+/**
+ * ConfigurationManager - Set the details for the ip2ip profile 
+ */
+void dbus_set_ip2ip_details(GHashTable * properties);
+
+/**
  * ConfigurationManager - Send registration request
  * @param accountID The account to register/unregister
- * @param expire The flag for the type of registration
+ * @param enable The flag for the type of registration
  *		 0 for unregistration request
  *		 1 for registration request
  */
-void dbus_send_register( gchar* accountID , const guint expire );
+void dbus_send_register( gchar* accountID , const guint enable );
 
 /**
  * ConfigurationManager - Add an account to the list
@@ -257,6 +312,22 @@ int dbus_get_audio_device_index(const gchar* name);
 gchar* dbus_get_current_audio_output_plugin();
 
 /**
+ * ConfigurationManager - Query to server to 
+ * know if MD5 credential hashing is enabled.
+ * @return True if enabled, false otherwise
+ *
+ */
+gboolean dbus_is_md5_credential_hashing();
+
+/**
+ * ConfigurationManager - Set whether or not
+ * the server should store credential as
+ * a md5 hash.
+ * @param enabled 
+ */
+void dbus_set_md5_credential_hashing(gboolean enabled);
+
+/**
  * ConfigurationManager - Tells the GUI if IAX2 support is enabled
  * @return int 1 if IAX2 is enabled
  *	       0 otherwise
@@ -355,7 +426,7 @@ void dbus_set_history_limit (const guint days);
 
 void dbus_set_history_enabled (void);
 
-int dbus_get_history_enabled (void);
+gchar* dbus_get_history_enabled (void);
 
 /**
  * ConfigurationManager - Configure the start-up option
@@ -498,5 +569,42 @@ GHashTable* dbus_get_history (void);
 void dbus_set_history (GHashTable* entries);
 
 void sflphone_display_transfer_status (const gchar* message);
+
+/**
+ * CallManager - Confirm Short Authentication String 
+ * for a given callId
+ * @param c The call to confirm SAS
+ */
+void dbus_confirm_sas (const callable_obj_t * c);
+
+/**
+ * CallManager - Reset Short Authentication String 
+ * for a given callId
+ * @param c The call to reset SAS
+ */
+void dbus_reset_sas (const callable_obj_t * c);
+
+/**
+ * CallManager - Request Go Clear in the ZRTP Protocol 
+ * for a given callId
+ * @param c The call that we want to go clear
+ */
+void dbus_request_go_clear (const callable_obj_t * c);
+
+/**
+ * CallManager - Accept Go Clear request from remote
+ * for a given callId
+ * @param c The call to confirm
+ */
+void dbus_set_confirm_go_clear (const callable_obj_t * c);
+
+/**
+ * CallManager - Get the list of supported TLS methods from
+ * the server in textual form.  
+ * @return an array of string representing supported methods
+ */
+gchar** dbus_get_supported_tls_method();
+
+
 
 #endif

@@ -39,10 +39,10 @@
 
 // Application import
 #include "manager.h"
-#include "audio/audiortp.h"
-#include "../src/call.h"
-#include "../src/sipcall.h"
-#include "../src/sipvoiplink.h"
+#include "audio/audiortp/AudioRtpSession.h"
+#include "call.h"
+#include "sip/sipcall.h"
+#include "sip/sipvoiplink.h"
 
 #include "config/config.h"
 #include "user_cfg.h"

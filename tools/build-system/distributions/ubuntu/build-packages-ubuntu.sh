@@ -30,9 +30,12 @@ else
 	DIST="${DIST}-daily"
 fi
 
-echo "Do updates"
+echo "Do updates and dependencies build"
 sudo apt-get update >/dev/null
 sudo apt-get upgrade -y >/dev/null
+sudo apt-get build-dep sflphone-common >/dev/null
+sudo apt-get build-dep sflphone-client-gnome >/dev/null
+sudo apt-get build-dep sflphone-client-kde >/dev/null
 
 for PACKAGE in ${PACKAGES[@]}
 do

@@ -60,12 +60,24 @@ main (int argc, char **argv)
         unsigned int iPid = getpid();
         char cPid[64], cOldPid[64];
         sprintf (cPid,"%d", iPid);
+		std::string xdg_config, xdg_env, path;
 
-        sprintf (homepid, "%s/.%s/%s", HOMEDIR, PROGDIR, PIDFILE);
-        sprintf (sfldir, "%s/.%s", HOMEDIR, PROGDIR);
+		xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
+
+		if (XDG_CACHE_HOME != NULL) 
+		{
+			xdg_env = std::string (XDG_CACHE_HOME);
+			(xdg_env.length() > 0) ? path = xdg_env
+							:		path = xdg_config;
+		}
+		else
+			path = xdg_config;
+
+        sprintf (sfldir, "%s", path.c_str ());
+        sprintf (homepid, "%s/%s", path.c_str (), PIDFILE);
 
         if ( (fp = fopen (homepid,"r")) == NULL) {
-            // Check if $HOME/.sflphone directory exists or not.
+            // Check if $XDG_CACHE_HOME directory exists or not.
             DIR *dir;
 
             if ( (dir = opendir (sfldir)) == NULL) {
@@ -123,7 +135,7 @@ main (int argc, char **argv)
         bool initOK = false;
 
         try {
-            _debug ("Initialize manager in main \n");
+            // TODO Use $XDG_CONFIG_HOME to save the config file (which default to $HOME/.config)
             Manager::instance().initConfigFile();
             Manager::instance().init();
             initOK = true;

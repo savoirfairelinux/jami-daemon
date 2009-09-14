@@ -26,7 +26,6 @@
 using std::cout;
 using std::endl;
 
-#define HOMEDIR (getenv ("HOME"))
 #define HISTORY_SAMPLE  "history-sample"
 #define HISTORY_SAMPLE_SIZE     3
 #define CONFIG_SAMPLE   "sflphonedrc-sample"
@@ -42,10 +41,12 @@ void HistoryTest::test_create_history_path ()
 {
 
     int result;
+    char *cpath;
     std::string path;
 
-    path = HOMEDIR;
-    path += "/.sflphone/history";
+    cpath = getenv ("XDG_DATA_HOME");
+    (cpath != NULL) ? path = std::string (cpath) : path = std::string (HOMEDIR) + "/.local/share/sflphone/history";
+
     result = history->create_history_path ();
     CPPUNIT_ASSERT (result == 0);
     CPPUNIT_ASSERT (!history->is_loaded ());

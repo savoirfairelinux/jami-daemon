@@ -193,7 +193,7 @@ bool AudioRecord::setRecording()
     _debug ("AudioRecord::setRecording() \n");
 
     if (isOpenFile()) {
-        _debug ("AuioRecord::setRecording()::file already opened \n");
+        _debug ("AudioRecord::setRecording()::file already opened \n");
 
         if (!recordingEnabled_)
             recordingEnabled_ = true;

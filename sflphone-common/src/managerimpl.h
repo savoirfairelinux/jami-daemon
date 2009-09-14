@@ -20,8 +20,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __MANAGER_H__
-#define __MANAGER_H__
+#ifndef __SFL_MANAGER_H__
+#define __SFL_MANAGER_H__
 
 #include <string>
 #include <vector>
@@ -38,23 +38,25 @@
 #include "call.h"
 #include "conference.h"
 #include "numbercleaner.h"
-#include <history/historymanager.h>
 
-#include "audio/tonelist.h" // for Tone::TONEID declaration
-#include "audio/audiofile.h"
-#include "audio/dtmf.h"
-#include "audio/codecDescriptor.h"
+#include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
+#include "audio/sound/audiofile.h" // AudioFile class contained by value here 
+#include "audio/sound/dtmf.h" // DTMF class contained by value here
+#include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
 
 class AudioLayer;
-class CodecDescriptor;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
+
 // class Conference;
 
 #ifdef USE_ZEROCONF
 class DNSService;
 #endif
+
+class HistoryManager;
+class SIPAccount;
 
 /** Define a type for a AccountMap container */
 typedef std::map<AccountID, Account*> AccountMap;
@@ -79,6 +81,18 @@ typedef std::map<CallID, Conference*> ConferenceMap;
 
 static CallID default_conf = "conf"; 
 
+
+static char * mapStateToChar[] = {
+    (char*) "UNREGISTERED",
+    (char*) "TRYING",
+    (char*) "REGISTERED",
+    (char*) "ERROR",
+    (char*) "ERRORAUTH",
+    (char*) "ERRORNETWORK",
+    (char*) "ERRORHOST",
+    (char*) "ERROREXISTSTUN",    
+    (char*) "ERRORCONFSTUN"    
+};
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl {
@@ -331,11 +345,11 @@ class ManagerImpl {
     /**
      * ConfigurationManager - Send registration request
      * @param accountId The account to register/unregister
-     * @param expire The flag for the type of registration
+     * @param enable The flag for the type of registration
      *		 0 for unregistration request
      *		 1 for registration request
      */
-    void sendRegister( const ::std::string& accountId , const int32_t& expire );
+    void sendRegister( const ::std::string& accountId , const int32_t& enable);
 
     bool getCallStatus(const std::string& sequenceId);
 
@@ -414,6 +428,13 @@ class ManagerImpl {
      */
     void removeAccount(const AccountID& accountID);
 
+
+    /**
+     * Deletes all credentials defined for an account
+     * @param accountID The account unique ID
+     */
+    void deleteAllCredential(const AccountID& accountID);
+    
     /**
      * Get the list of codecs we supports, not ordered
      * @return The list of the codecs
@@ -556,6 +577,18 @@ class ManagerImpl {
      */
     void setRecordPath( const std::string& recPath);
 
+    /** 
+     * Set a credential for a given account. If it 
+     * does not exist yet, it will be created.
+     */
+    void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
+
+    /**
+     * Retreive the value set in the configuration file.
+     * @return True if credentials hashing is enabled.
+     */
+    bool getMd5CredentialHashing(void);
+    
     /**
      * Tells if the user wants to display the dialpad or not
      * @return int 1 if dialpad has to be displayed
@@ -606,7 +639,7 @@ class ManagerImpl {
 
     void setHistoryEnabled (void);
 
-    int getHistoryEnabled (void);
+	std::string getHistoryEnabled (void);
 
 
     /**
@@ -775,7 +808,18 @@ class ManagerImpl {
      *		      false otherwise
      */
     bool setConfig(const std::string& section, const std::string& name, int value);
-
+    
+    inline std::string mapStateNumberToString(RegistrationState state) {
+        std::string stringRepresentation;
+        if (state > NumberOfState) {
+            stringRepresentation = "ERROR";
+            return stringRepresentation;
+        }
+        
+        stringRepresentation = mapStateToChar[state];
+        return stringRepresentation;
+    }
+    
     /**
      * Get a int from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
@@ -783,8 +827,19 @@ class ManagerImpl {
      * @param name    The parameter name
      * @return int    The int value
      */
+     
     int getConfigInt(const std::string& section, const std::string& name);
-
+ 
+  /**
+     * Get a bool from the configuration tree
+     * Throw an Conf::ConfigTreeItemException if not found
+     * @param section The section name to look in
+     * @param name    The parameter name
+     * @return bool    The bool value
+     */
+     
+    bool getConfigBool(const std::string& section, const std::string& name);
+            
     /**
      * Get a string from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
@@ -919,7 +974,7 @@ class ManagerImpl {
      * @param port  On which port we want to listen to
      * @return true if we are behind a NAT (without error)
      */
-    bool behindNat(const std::string& svr, int port);
+    bool isBehindNat(const std::string& svr, int port);
 
     /**
      * Init default values for the different fields in the config file.
@@ -969,8 +1024,24 @@ class ManagerImpl {
      * Initialize audiodriver
      */
     bool initAudioDriver(void);
-
+    
   private:
+    /* Transform digest to string.
+    * output must be at least PJSIP_MD5STRLEN+1 bytes.
+    * Helper function taken from sip_auth_client.c in 
+    * pjproject-1.0.3.
+    *
+    * NOTE: THE OUTPUT STRING IS NOT NULL TERMINATED!
+    */
+    void digest2str(const unsigned char digest[], char *output);
+
+    /** 
+     * Helper function that creates an MD5 Hash from the credential
+     * information provided as parameters. The hash is computed as
+     * MD5(username ":" realm ":" password).
+     * 
+     */
+    std::string computeMd5HashFromCredential(const std::string& username, const std::string& password, const std::string& realm);
 
     /**
      * Check if a process is running with the system command
@@ -1147,6 +1218,8 @@ class ManagerImpl {
     /**
      *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
     AccountMap _accountMap;
+    
+    Account * _directIpAccount;
 
     /**
      * Load the account from configuration
@@ -1165,8 +1238,15 @@ class ManagerImpl {
      * Unload the account (delete them)
      */
     void unloadAccountMap();
-
+    
    public:
+   
+    /**
+     * Return the current DBusManagerImpl
+     * @return A pointer to the DBusManagerImpl instance
+     */
+    DBusManagerImpl * getDbusManager() { return _dbus; }
+    
      /**
      * Tell if an account exists
      * @param accountID account ID check
@@ -1232,7 +1312,7 @@ private:
     /**
       * To handle the persistent history
       */
-    HistoryManager *_history;
+    HistoryManager * _history;
 
     /**
      * Check if the call is a classic call or a direct IP-to-IP call

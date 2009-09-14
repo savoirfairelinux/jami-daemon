@@ -2,18 +2,17 @@ include ../globals.mak
 
 bin_PROGRAMS = sflphone-client-gnome
 
-SUBDIRS = config contacts dbus
+SUBDIRS = config contacts dbus widget
   
 NOFIFY_LIBS = -lnotify
 LOG4C = -llog4c
 
-SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la ./dbus/libdbus.la
+SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la ./dbus/libdbus.la ./widget/libwidget.la
 
 sflphone_client_gnome_SOURCES = \
   main.c \
   errors.c \
   sflnotify.c \
-  assistant.c \
   mainwindow.c \
   dialpad.c \
   menus.c \
@@ -30,6 +29,7 @@ sflphone_client_gnome_SOURCES = \
 noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
                   assistant.h reqaccount.h errors.h sflphone_const.h \
                   menus.h accountlist.h sliders.h statusicon.h callable_obj.h conference_obj.h toolbar.h
+
 
 
 sflphone_client_gnome_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(LIBSEXY_LIBS) $(LOG4C)

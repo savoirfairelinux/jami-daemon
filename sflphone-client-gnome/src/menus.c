@@ -20,13 +20,15 @@
 
 #include <menus.h>
 #include <config.h>
-#include <configwindow.h>
+#include <preferencesdialog.h>
+#include <accountlistconfigdialog.h>
 #include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <assistant.h>
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>
 #include <string.h> // for strlen
+#include <libgnome/gnome-help.h>
 
 GtkWidget * pickUpMenu;
 GtkWidget * hangUpMenu;
@@ -108,6 +110,19 @@ void update_menus()
 
 }
 /* ----------------------------------------------------------------- */
+static void help_contents_cb ()
+{
+	    GError *error = NULL;
+
+		    gnome_help_display ("sflphone.xml", NULL, &error);
+			    if (error != NULL) {
+					        g_warning ("%s", error->message);
+							        g_error_free (error);
+									    }
+}
+
+
+
     static void
 help_about ( void * foo UNUSED)
 {
@@ -160,10 +175,18 @@ create_help_menu()
             NULL);
     gtk_widget_show (menu_items);
 
+
+	menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_HELP, get_accel_group());
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
+					            G_CALLBACK (help_contents_cb),
+								            NULL);
+	gtk_widget_show (menu_items);
+
     root_menu = gtk_menu_item_new_with_mnemonic (_("_Help"));
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
 
-    return root_menu;
+	return root_menu;
 }
 /* ----------------------------------------------------------------- */
     GtkWidget *
@@ -180,6 +203,7 @@ create_waiting_icon()
     return waiting_icon;
 }
 /* ----------------------------------------------------------------- */
+
     static void
 call_new_call ( void * foo UNUSED)
 {
@@ -283,7 +307,7 @@ call_record ( void * foo UNUSED)
 }
 
     static void
-call_wizard ( void * foo UNUSED)
+call_configuration_assistant ( void * foo UNUSED)
 {
 #if GTK_CHECK_VERSION(2,10,0)
     build_wizard();
@@ -385,17 +409,7 @@ create_call_menu()
     // Separator
     menu_items = gtk_separator_menu_item_new ();
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-
-#if GTK_CHECK_VERSION(2,10,0)
-    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account creation wizard"));
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-    g_signal_connect_swapped( G_OBJECT( menu_items ) , "activate" , G_CALLBACK( call_wizard  ) , NULL );
-    gtk_widget_show (menu_items);
-    // Separator
-    menu_items = gtk_separator_menu_item_new ();
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-#endif
-
+    
     // Close menu to minimize the main window to the system tray
     menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_CLOSE, get_accel_group());
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
@@ -403,10 +417,6 @@ create_call_menu()
             G_CALLBACK (call_minimize),
             NULL);
     gtk_widget_show (menu_items);
-
-    // Separator
-    menu_items = gtk_separator_menu_item_new ();
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
     // Quit Menu - quit SFLphone
     menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_QUIT, get_accel_group());
@@ -427,13 +437,13 @@ create_call_menu()
     static void
 edit_preferences ( void * foo UNUSED)
 {
-    show_config_window();
+    show_preferences_dialog();
 }
 
     static void
 edit_accounts ( void * foo UNUSED)
 {
-    show_accounts_window();
+    show_account_list_config_dialog();
 }
 
 // The menu Edit/Copy should copy the current selected call's number
@@ -597,7 +607,14 @@ create_edit_menu()
     menu_items = gtk_separator_menu_item_new ();
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
-    menu_items = gtk_menu_item_new_with_mnemonic( _("_Accounts") );
+#if GTK_CHECK_VERSION(2,10,0)
+    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account creation assistant"));
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect_swapped( G_OBJECT( menu_items ) , "activate" , G_CALLBACK( call_configuration_assistant  ) , NULL );
+    gtk_widget_show (menu_items);
+#endif
+
+    menu_items = gtk_menu_item_new_with_mnemonic( _("_Manage accounts") );
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
             G_CALLBACK (edit_accounts),

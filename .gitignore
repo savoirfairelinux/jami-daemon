@@ -94,6 +94,7 @@ sflphone-client-gnome/src/contacts/addressbook/Makefile
 sflphone-client-gnome/pixmaps/Makefile
 sflphone-client-gnome/tests/Makefile
 sflphone-client-gnome/man/Makefile
+sflphone-client-gnome/src/widget/Makefile
 
 
 # Ignore sflphone-client-gnome stuff
@@ -175,3 +176,5 @@ sflphone-common/libs/dbus-c++/tools/dbusxx-xml2cpp
 # Ignore temp files
 *~
 
+# GNOME doc file
+sflphone-client-gnome/gnome-doc-utils.make

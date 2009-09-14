@@ -21,13 +21,3 @@ Internet Draft for IAX2 protocol
 
 http://tools.ietf.org/id/draft-guy-iax-03.txt
 
-
-Compilation and installation
-============================
-
-Run:
--------------------------
-./gen.sh
-./configure --prefix=/usr
-make
--------------------------

@@ -57,7 +57,8 @@ Authors:
 %setup -q
 
 %build
-./autogen.sh --prefix=%{_prefix}
+./autogen.sh
+./configure --prefix=%{_prefix}
 make -j
 
 %install

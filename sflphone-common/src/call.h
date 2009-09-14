@@ -27,9 +27,11 @@
 // #include "plug-in/audiorecorder/audiorecord.h"
 #include "audio/recordable.h"
 
-#define IP_TO_IP_PATTERN       "sip:"
+#define SIP_SCHEME       "sip:"
+#define SIPS_SCHEME      "sips:"
 
-#define CallConfigNULL          NULL
+#define CallConfigNULL   NULL
+
 /* 
  * @file call.h 
  * @brief A call is the base class for protocol-based calls

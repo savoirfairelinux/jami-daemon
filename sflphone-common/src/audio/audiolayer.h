@@ -25,9 +25,7 @@
 #include "global.h"
 #include "audiodevice.h"
 #include "ringbuffer.h"
-#include "manager.h"
 #include "mainbuffer.h"
-
 
 #include <cc++/thread.h> // for ost::Mutex
 
@@ -38,7 +36,10 @@
  * @brief Main sound class. Manages the data transfers between the application and the hardware. 
  */
 
+
 class Recordable;
+class ManagerImpl;
+
 
 class AudioLayer {
 

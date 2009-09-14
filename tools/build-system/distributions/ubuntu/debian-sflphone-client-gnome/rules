@@ -20,7 +20,8 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh --prefix=/usr
+	./autogen.sh
+	./configure --prefix=/usr
 	touch configure-stamp
 
 

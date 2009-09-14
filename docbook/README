@@ -1,0 +1,27 @@
+################################################################################################################
+TIPS
+
+I already created page samples. Each docbook document represents a chapter in the user manual. The file manual.docbook is the main file, and includes all the chapters to build one document.
+
+
+
+# Adding a new chapter
+
+Create a new file new-chapter.docbook. Copy the squeleton of an other docbook file if needed. These files are xml-based files. Here is a link to a quick overview of the syntax to use:
+http://www.ibm.com/developerworks/library/l-docbk.html.
+Then add your new file reference in manual.docbook (at the beginning and at the end)
+You are done!
+
+
+
+# Generating the manual
+
+You may need to install sgmltools-lite package: sudo apt-get install sgmltools-lite
+Run: 
+					sgmltools -b html manual.docbook
+
+It will output HTML files in the manual directory.
+
+
+
+Enjoy !

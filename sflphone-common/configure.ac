@@ -2,7 +2,7 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
-	AC_INIT([SFLphone],[0.9.6~rc1],[sflphoneteam@savoirfairelinux.com],[sflphone])
+	AC_INIT([SFLphone],[0.9.7~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
 	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
@@ -45,7 +45,13 @@ AC_CONFIG_FILES([Makefile])
 			libs/iax2/Makefile])
 
 	AC_CONFIG_FILES([src/Makefile \
+			src/sip/Makefile \
+			src/iax/Makefile \
 			src/audio/Makefile \
+			src/audio/audiortp/Makefile \
+			src/audio/pulseaudio/Makefile \
+			src/audio/alsa/Makefile \
+			src/audio/sound/Makefile \
 			src/audio/codecs/Makefile \
 			src/config/Makefile \
 			src/dbus/Makefile \
@@ -188,6 +194,18 @@ AC_SUBST(CCEXT2_CFLAGS)
 	PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 	AC_SUBST(CCRTP_LIBS)
 AC_SUBST(CCRTP_CFLAGS)
+
+dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
+	PKG_CHECK_MODULES([libssl], libssl, , AC_MSG_ERROR([libssl is required]))
+	AC_SUBST(libssl_CFLAGS)
+	AC_SUBST(libssl_LIBS)
+
+dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
+	LIBZRTPCPP_MIN_VERSION=1.3.0
+	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION})
+	AC_SUBST(ZRTPCPP_LIBS)
+	AC_SUBST(ZRTPCPP_CFLAGS)
+	
 
 dnl DBus-C++ detection (used to be in library own build system)
 	DBUS_REQUIRED_VERSION=0.60
@@ -408,6 +426,6 @@ AC_SUBST(DBUS_SERVICES_DIR)
 	AC_SUBST(SFLPHONE_CFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
-	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-1.0.3) has already been compiled. Run `make' to build the software.]])
+	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
 
 

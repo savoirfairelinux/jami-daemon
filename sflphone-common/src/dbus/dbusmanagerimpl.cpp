@@ -18,7 +18,11 @@
  */
 
 #include <dbusmanagerimpl.h>
+#include "global.h"
 #include "manager.h"
+
+#include "callmanager.h"
+#include "configurationmanager.h"
 
 const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLphone";
 
