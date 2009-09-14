@@ -4,7 +4,7 @@ INSTALLATION GUIDE
     # Go to the root of the application core directory
     cd sflphone-common
     # Compile pjsip
-    cd libs/pjproject-1.4
+    cd libs/pjproject
 	./autogen.sh
     ./configure
     make dep && make
