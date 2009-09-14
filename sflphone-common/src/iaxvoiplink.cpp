@@ -297,10 +297,12 @@ IAXVoIPLink::sendAudioFromMic (void)
 
     if (!ac) {
         // Audio codec still not determined.
+	/*
         if (audiolayer) {
             // To keep latency low..
             audiolayer->flushMic();
-        }
+	}
+	*/
 
         return;
     }
@@ -313,7 +315,8 @@ IAXVoIPLink::sendAudioFromMic (void)
         maxBytesToGet = audiolayer->getSampleRate() * audiolayer->getFrameSize() / 1000 * sizeof (SFLDataFormat);
 
         // available bytes inside ringbuffer
-        availBytesFromMic = audiolayer->canGetMic();
+        // availBytesFromMic = audiolayer->canGetMic();
+	availBytesFromMic = audiolayer->getMainBuffer()->availForGet(currentCall->getCallId());
 
         if (availBytesFromMic < maxBytesToGet) {
             // We need packets full!
@@ -326,7 +329,8 @@ IAXVoIPLink::sendAudioFromMic (void)
         //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
 
         // Get bytes from micRingBuffer to data_from_mic
-        nbSample_ = audiolayer->getMic (micData, bytesAvail) / sizeof (SFLDataFormat);
+        // nbSample_ = audiolayer->getMic (micData, bytesAvail) / sizeof (SFLDataFormat);
+	nbSample_ = audiolayer->getMainBuffer()->getData(micData , bytesAvail, 100, currentCall->getCallId()) / sizeof (SFLDataFormat);
 
         // Store the number of samples for recording
         nbSampleForRec_ = nbSample_;
@@ -905,7 +909,8 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         nbInt16 = converter->upsampleData (spkrDataDecoded , spkrDataConverted , ac->getClockRate() , audiolayer->getSampleRate() , nbSample_);
 
         /* Write the data to the mic ring buffer */
-        audiolayer->putMain (spkrDataConverted , nbInt16 * sizeof (SFLDataFormat));
+	//  audiolayer->putMain (spkrDataConverted , nbInt16 * sizeof (SFLDataFormat));
+	audiolayer->getMainBuffer()->putData (spkrDataConverted, nbInt16 * sizeof (SFLDataFormat), 100, call->getCallId());
 
     } else {
         _debug ("IAX: incoming audio, but no sound card open");

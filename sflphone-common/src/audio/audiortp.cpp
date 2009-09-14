@@ -414,7 +414,7 @@ AudioRtpRTX::processDataEncode()
 
     // _debug("AudioRtpRTX::processDataEncode: bytesAvail: %i\n", bytesAvail);
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = _audiolayer->getMainBuffer()->getData (micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
+    int nbSample = _audiolayer->getMainBuffer()->getData(micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
     rtp_output_rec->write((char*)micData, bytesAvail);
 

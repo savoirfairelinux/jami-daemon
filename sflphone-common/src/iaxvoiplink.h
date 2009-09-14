@@ -26,6 +26,7 @@
 #include "global.h"
 
 #include "audio/codecDescriptor.h"
+#include "audio/mainbuffer.h"
 #include "samplerateconverter.h"
 #include "hooks/urlhook.h"
 
