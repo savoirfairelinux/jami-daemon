@@ -25,6 +25,11 @@
 #include <gtk/gtk.h>
 #include <math.h>
 
+#if GTK_CHECK_VERSION(2,16,0)
+#else
+#include <libsexy/sexy-icon-entry.h>
+#endif
+
 void show_advanced_tls_options(GHashTable * properties)
 {
     GtkDialog * tlsDialog;
@@ -146,7 +151,7 @@ void show_advanced_tls_options(GHashTable * properties)
 	gtk_entry_set_icon_from_stock (GTK_ENTRY (privateKeyPasswordEntry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
 #else
 	privateKeyPasswordEntry = sexy_icon_entry_new();
-	image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
+	GtkWidget image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
 	sexy_icon_entry_set_icon(SEXY_ICON_ENTRY(privateKeyPasswordEntry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
 #endif
 	gtk_entry_set_visibility(GTK_ENTRY(privateKeyPasswordEntry), FALSE);
