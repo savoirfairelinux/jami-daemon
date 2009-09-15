@@ -49,7 +49,7 @@ namespace sfl {
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 0 
+#define PJ_LOG_LEVEL 6 
 
 /**
  * @file sipvoiplink.h
@@ -184,22 +184,6 @@ class SIPVoIPLink : public VoIPLink
          * @return bool True on success
          */
         bool carryingDTMFdigits(const CallID& id, char code);
-
-        /** 
-         * If set to true, we check for a firewall
-         * @param use true if we use STUN
-         */
-        inline void useStun(bool use) { _useStun=use; }
-
-        inline bool useStun( void ) { return _useStun; }
-
-        /** 
-         * The name of the STUN server
-         * @param server Server FQDN/IP
-         */
-        void setStunServer(const std::string& server);
-
-        std::string getStunServer (void) { return _stunServer; }
 
         /** 
          * Terminate every call not hangup | brutal | Protected by mutex 
@@ -345,7 +329,7 @@ class SIPVoIPLink : public VoIPLink
          */
         bool pjsip_shutdown(void);
 
-        pj_status_t stunServerResolve();
+        pj_status_t stunServerResolve (AccountID id);
 
         /** Create SIP UDP Listener */
         int createUDPServer();
@@ -377,6 +361,8 @@ class SIPVoIPLink : public VoIPLink
          * @return pj_status_t PJ_SUCCESS on success 
          */
         pj_status_t createTlsTransport(AccountID id);
+
+		pj_status_t createAlternateUdpTransport (AccountID id);
         
         bool loadSIPLocalIP();
 

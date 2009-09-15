@@ -69,8 +69,6 @@
 #define PULSE_LENGTH                        "DTMF.pulseLength"          /** Length of the DTMF in millisecond */
 #define SEND_DTMF_AS                        "DTMF.sendDTMFas"           /** DTMF send mode */
 #define SYMMETRIC		                    "VoIPLink.symmetric"        /** VoIP link type */
-#define STUN_ENABLE                         "STUN.enable"
-#define STUN_SERVER                         "STUN.server"
 
 #define ADDRESSBOOK                         "Addressbook"               /** Address book section */
 #define ADDRESSBOOK_ENABLE                  "Addressbook.enable"        /** Enable address book */

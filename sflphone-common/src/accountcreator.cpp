@@ -38,17 +38,20 @@ Account*
 AccountCreator::createAccount (AccountType type, AccountID accountID)
 {
     switch (type) {
+
         case SIP_ACCOUNT:
             return new SIPAccount (accountID);
             break;
+
         case SIP_DIRECT_IP_ACCOUNT:
             return new SIPAccount (IP2IP_PROFILE);
             break;
-        #ifdef USE_IAX
+#ifdef USE_IAX
+
         case IAX_ACCOUNT:
             return new IAXAccount (accountID);
             break;
-        #endif
+#endif
     }
 
     return 0;

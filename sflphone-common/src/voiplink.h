@@ -220,8 +220,6 @@ class VoIPLink {
          */
         Call* getCall(const CallID& id);
 
-        virtual void setStunServer( const std::string &server ) = 0;
-
     private:
         /**
          * ID of parent's Account

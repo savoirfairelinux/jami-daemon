@@ -60,20 +60,19 @@ main (int argc, char **argv)
         unsigned int iPid = getpid();
         char cPid[64], cOldPid[64];
         sprintf (cPid,"%d", iPid);
-		std::string xdg_config, xdg_env, path;
+        std::string xdg_config, xdg_env, path;
 
-		xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
+        xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
 
-		if (XDG_CACHE_HOME != NULL) 
-		{
-			xdg_env = std::string (XDG_CACHE_HOME);
-			(xdg_env.length() > 0) ? path = xdg_env
-							:		path = xdg_config;
-		}
-		else
-			path = xdg_config;
+        if (XDG_CACHE_HOME != NULL) {
+            xdg_env = std::string (XDG_CACHE_HOME);
+            (xdg_env.length() > 0) ? path = xdg_env
+                                            :		path = xdg_config;
+        } else
+            path = xdg_config;
 
         sprintf (sfldir, "%s", path.c_str ());
+
         sprintf (homepid, "%s/%s", path.c_str (), PIDFILE);
 
         if ( (fp = fopen (homepid,"r")) == NULL) {

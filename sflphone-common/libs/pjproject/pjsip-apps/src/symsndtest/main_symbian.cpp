@@ -1,5 +1,5 @@
 /* $Id: main_symbian.cpp 2506 2009-03-12 18:11:37Z bennylp $ */
-/* 
+/*
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <e32std.h>
@@ -29,7 +29,7 @@
 CConsoleBase* console;
 
 // Needed by APS
-TPtrC APP_UID = _L("A000000E");
+TPtrC APP_UID = _L ("A000000E");
 
 int app_main();
 
@@ -39,13 +39,13 @@ int app_main();
 LOCAL_C void DoStartL()
 {
     CActiveScheduler *scheduler = new (ELeave) CActiveScheduler;
-    CleanupStack::PushL(scheduler);
-    CActiveScheduler::Install(scheduler);
+    CleanupStack::PushL (scheduler);
+    CActiveScheduler::Install (scheduler);
 
     app_main();
 
-    CActiveScheduler::Install(NULL);
-    CleanupStack::Pop(scheduler);
+    CActiveScheduler::Install (NULL);
+    CleanupStack::Pop (scheduler);
     delete scheduler;
 }
 
@@ -62,22 +62,25 @@ GLDEF_C TInt E32Main()
     CTrapCleanup* cleanup = CTrapCleanup::New();
 
     // Create output console
-    TRAPD(createError, console = Console::NewL(_L("Console"), TSize(KConsFullScreen,KConsFullScreen)));
+    TRAPD (createError, console = Console::NewL (_L ("Console"), TSize (KConsFullScreen,KConsFullScreen)));
+
     if (createError)
         return createError;
 
-    TRAPD(startError, DoStartL());
+    TRAPD (startError, DoStartL());
 
     //console->Printf(_L("[press any key to close]\n"));
     //console->Getch();
 
     delete console;
+
     delete cleanup;
 
     CloseSTDLIB();
 
     // Mark end of heap usage, detect memory leaks
     __UHEAP_MARKEND;
+
     return KErrNone;
 }
 

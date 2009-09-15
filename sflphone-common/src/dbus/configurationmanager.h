@@ -117,10 +117,6 @@ public:
     void setPulseAppVolumeControl( void );
     int32_t getSipPort( void );
     void setSipPort( const int32_t& portNum);
-    std::string getStunServer( void );
-    void setStunServer( const std::string& server );
-    void enableStun (void);
-    int32_t isStunEnabled (void);
 
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);

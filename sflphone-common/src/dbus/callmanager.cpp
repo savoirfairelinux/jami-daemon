@@ -185,120 +185,127 @@ CallManager::startTone (const int32_t& start , const int32_t& type)
 
 // TODO: this will have to be adapted
 // for conferencing in order to get
-// the right pointer for the given 
+// the right pointer for the given
 // callID.
-sfl::AudioZrtpSession * CallManager::getAudioZrtpSession(void)
+sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (void)
 {
     SIPVoIPLink * link = NULL;
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
+
     if (link == NULL) {
         _debug ("Failed to get sip link\n");
         throw CallManagerException();
     }
-    
+
     sfl::AudioRtpFactory * audioRtp = NULL;
+
     audioRtp = link->getAudioRtp();
+
     if (audioRtp == NULL) {
         _debug ("Failed to get AudioRtpFactory\n");
         throw CallManagerException();
     }
-    
+
     sfl::AudioZrtpSession * zSession = NULL;
+
     zSession = audioRtp->getAudioZrtpSession();
+
     if (zSession == NULL) {
-        _debug("Failed to get AudioZrtpSession\n");
+        _debug ("Failed to get AudioZrtpSession\n");
         throw CallManagerException();
-    } 
-    
+    }
+
     return zSession;
 }
 
 void
-CallManager::setSASVerified(const std::string& callID)
+CallManager::setSASVerified (const std::string& callID)
 {
-    _debug("CallManager::setSASVerified received for account %s\n", callID.c_str());
-    
+    _debug ("CallManager::setSASVerified received for account %s\n", callID.c_str());
+
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();        
+        zSession = getAudioZrtpSession();
         zSession->SASVerified();
     } catch (...) {
         throw;
     }
-        
+
 }
 
 void
-CallManager::resetSASVerified(const std::string& callID)
+CallManager::resetSASVerified (const std::string& callID)
 {
-    _debug("CallManager::resetSASVerified received for account %s\n", callID.c_str());
-    
+    _debug ("CallManager::resetSASVerified received for account %s\n", callID.c_str());
+
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();        
+        zSession = getAudioZrtpSession();
         zSession->resetSASVerified();
     } catch (...) {
         throw;
     }
-     
+
 }
 
 void
-CallManager::setConfirmGoClear(const std::string& callID)
+CallManager::setConfirmGoClear (const std::string& callID)
 {
-    _debug("CallManager::setConfirmGoClear received for account %s\n", callID.c_str());
-    
+    _debug ("CallManager::setConfirmGoClear received for account %s\n", callID.c_str());
+
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();        
+        zSession = getAudioZrtpSession();
         zSession->goClearOk();
     } catch (...) {
         throw;
     }
-     
+
 }
 
 void
-CallManager::requestGoClear(const std::string& callID)
+CallManager::requestGoClear (const std::string& callID)
 {
-    _debug("CallManager::requestGoClear received for account %s\n", callID.c_str());
-    
+    _debug ("CallManager::requestGoClear received for account %s\n", callID.c_str());
+
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();        
+        zSession = getAudioZrtpSession();
         zSession->requestGoClear();
     } catch (...) {
         throw;
     }
-     
+
 }
 
-void 
-CallManager::acceptEnrollment(const std::string& callID, const bool& accepted) {
+void
+CallManager::acceptEnrollment (const std::string& callID, const bool& accepted)
+{
 
-    _debug("CallManager::acceptEnrollment received for account %s\n", callID.c_str());
-     
-    try {
-        sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();        
-        zSession->acceptEnrollment(accepted);
-    } catch (...) {
-        throw;
-    }
-     
-}
-
-void 
-CallManager::setPBXEnrollment(const std::string& callID, const bool& yesNo) {
-
-     _debug("CallManager::setPBXEnrollment received for account %s\n", callID.c_str());
+    _debug ("CallManager::acceptEnrollment received for account %s\n", callID.c_str());
 
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();        
-        zSession->setPBXEnrollment(yesNo);
+        zSession = getAudioZrtpSession();
+        zSession->acceptEnrollment (accepted);
     } catch (...) {
         throw;
     }
-     
+
+}
+
+void
+CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo)
+{
+
+    _debug ("CallManager::setPBXEnrollment received for account %s\n", callID.c_str());
+
+    try {
+        sfl::AudioZrtpSession * zSession;
+        zSession = getAudioZrtpSession();
+        zSession->setPBXEnrollment (yesNo);
+    } catch (...) {
+        throw;
+    }
+
 }

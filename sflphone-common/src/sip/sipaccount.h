@@ -120,12 +120,34 @@ class SIPAccount : public Account
          * TLS transport.
          */
         inline pjsip_tls_setting * getTlsSetting(void) { return _tlsSetting; }
+		
+		/**
+         * @return pj_str_t , filled from the configuration
+         * file, that can be used directly by PJSIP to initialize 
+         * an alternate UDP transport.
+         */
+        inline pj_str_t getStunServerName(void) { return _stunServerName; }
+
+		/**
+         * @return pj_uint8_t structure, filled from the configuration
+         * file, that can be used directly by PJSIP to initialize 
+         * an alternate UDP transport.
+         */
+        inline pj_uint16_t getStunPort (void) { return _stunPort; }
+        
         
         /**
          * @return bool Tells if current transport for that 
          * account is set to TLS.
          */
         inline bool isTlsEnabled(void) { return (_transportType == PJSIP_TRANSPORT_TLS) ? true: false; }
+		
+		/**
+         * @return bool Tells if current transport for that 
+         * account is set to OTHER.
+         */
+        inline bool isStunEnabled(void) { return (_transportType == PJSIP_TRANSPORT_START_OTHER) ? true: false; }
+         
                 
         /*
          * @return pj_str_t "From" uri based on account information.
@@ -240,6 +262,11 @@ class SIPAccount : public Account
          *
          */  
         void initTlsConfiguration(void);  
+
+		/*
+		 * Initializes STUN config from the config file
+		 */
+		void initStunConfiguration (void);
  
         /*
          * Initializes set of additional credentials, if supplied by the user.
@@ -292,6 +319,12 @@ class SIPAccount : public Account
         // The TLS settings, if tls is chosen as 
         // a sip transport. 
         pjsip_tls_setting * _tlsSetting;	                                                  
+
+		// The STUN server name, if applicable
+        pj_str_t _stunServerName;	                                                  
+
+		// The STUN server port, if applicable
+		pj_uint16_t _stunPort;
         
         // Display Name that can be used in  SIP URI.        
         std::string _displayName;        

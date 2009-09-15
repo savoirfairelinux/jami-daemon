@@ -100,19 +100,19 @@ class ConfigTree
         ConfigTree();
         ~ConfigTree();
         /**
-         * Add a default value for a given key. 
-         * It looks in a map of default values when 
+         * Add a default value for a given key.
+         * It looks in a map of default values when
          * the value for a given key cannot be found.
          *
-         * @param section the section under which the given key/value pair 
-                          should go under. Note that this has no effect 
-                          when searching for a default value later on. Only 
+         * @param section the section under which the given key/value pair
+                          should go under. Note that this has no effect
+                          when searching for a default value later on. Only
                           one possible value is actually supported as a default
-                          value for a given key.   
-           @param token   A default key/value pair. 
+                          value for a given key.
+           @param token   A default key/value pair.
          */
-        void addDefaultValue(const std::pair<std::string, std::string>& token, std::string section = std::string(""));
-        
+        void addDefaultValue (const std::pair<std::string, std::string>& token, std::string section = std::string (""));
+
         void createSection (const std::string& section);
         void removeSection (const std::string& section);
         /**
@@ -138,9 +138,9 @@ class ConfigTree
         /**
          * Get a value.
          *
-         * If the key cannot be found in  the actual file representation in 
-         * memory, it check for a default value in the default value map. If it's 
-         * not found there, it will return an empty string. 
+         * If the key cannot be found in  the actual file representation in
+         * memory, it check for a default value in the default value map. If it's
+         * not found there, it will return an empty string.
          *
          * @param section The name of the [section] in the .ini file.
          * @param itemName The name of the item= in the .ini file.
@@ -149,7 +149,7 @@ class ConfigTree
          */
         std::string getConfigTreeItemValue (const std::string& section, const std::string& itemName);
         int getConfigTreeItemIntValue (const std::string& section, const std::string& itemName);
-        bool getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName);
+        bool getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName);
 
         /**
          * Flush data to .ini file
@@ -164,7 +164,7 @@ class ConfigTree
         bool getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg);
 
     private:
-        std::string getDefaultValue(const std::string& key);
+        std::string getDefaultValue (const std::string& key);
         ConfigTreeItem* getConfigTreeItem (const std::string& section, const std::string& itemName);
 
         /**
@@ -173,7 +173,7 @@ class ConfigTree
         SectionMap _sections;
 
         std::map<std::string, std::string> _defaultValueMap;
-        
+
         friend class ConfigTreeIterator;
 
     public:
