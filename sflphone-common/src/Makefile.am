@@ -46,7 +46,7 @@ sflphoned_LDADD = \
 		@libssl_LIBS@
 
 # sflphoned_LDFLAGS= -pg -luuid
-sflphoned_LDFLAGS= -luuid
+# sflphoned_LDFLAGS= -luuid
 
 noinst_LTLIBRARIES = libsflphone.la
 

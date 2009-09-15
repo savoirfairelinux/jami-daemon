@@ -157,10 +157,10 @@ AC_CHECK_TYPES([ptrdiff_t])
 #AC_SUBST(SIP_CFLAGS)
 
 	dnl Check for uuid development package - name: uuid-dev 
-	UUID_MIN_VERSION=1.0
-	PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
-	AC_SUBST(UUID_CFLAGS)
-AC_SUBST(UUID_LIBS)
+	dnl UUID_MIN_VERSION=1.0
+	dnl PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
+	dnl AC_SUBST(UUID_CFLAGS)
+dnl AC_SUBST(UUID_LIBS)
 
 	dnl Check for alsa development package - name: libasound2-dev 
 	LIBASOUND2_MIN_VERSION=1.0
