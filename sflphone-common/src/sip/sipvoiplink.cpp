@@ -149,7 +149,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e);
  * @param	inv	A pointer on a pjsip_inv_session structure
  * @param	status	A pj_status_t structure
  */
-void call_on_media_update (pjsip_inv_session *inv UNUSED, pj_status_t status UNUSED);
+void call_on_media_update (pjsip_inv_session *inv, pj_status_t status UNUSED);
 
 /*
  * Called when the invite usage module has created a new dialog and invite
@@ -2207,6 +2207,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     SIPCall * call = NULL;    
     call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
 
+    _debug("    call_on_state_changed: call id %s\n", call->getCallId().c_str());
     if (call == NULL) {
         _debug("Call is NULL in call_on_state_changed");
         return;
@@ -2404,6 +2405,10 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         return;
     }
 
+    if(!inv->neg)
+    {
+	return;
+    }
     // Get the new sdp, result of the negotiation
     pjmedia_sdp_neg_get_active_local (inv->neg, &local_sdp);
 
