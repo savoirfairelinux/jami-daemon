@@ -357,7 +357,7 @@ std::string SIPVoIPLink::get_useragent_name (void)
 void
 SIPVoIPLink::getEvent()
 {
-    // We have to register the external thread so it could access the pjsip framework
+    // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered())
         pj_thread_register (NULL, desc, &thread);
 
@@ -1239,6 +1239,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     status = pjsip_inv_send_msg (inv, tdata);
 
     if (status != PJ_SUCCESS) {
+	_debug("    SIPStartCall: failed to send invite\n");
         return false;
     }
 
@@ -1632,6 +1633,8 @@ bool SIPVoIPLink::pjsip_init()
         _localExternAddress = Manager::instance().getFirewallAddress();
         _localExternPort = Manager::instance().getFirewallPort();        
     } else {
+	// Create a UDP listener meant for all accounts
+        // for which TLS was not enabled
         _localExternAddress = _localIPAddress;
         _localExternPort = _localPort;
         errPjsip = createUDPServer();
@@ -1639,7 +1642,7 @@ bool SIPVoIPLink::pjsip_init()
     
     // Create a UDP listener meant for all accounts
     // for which TLS was not enabled
-    errPjsip = createUDPServer();
+    // errPjsip = createUDPServer();
 
     // If stun was not enabled an the above UDP server
     // could not be created, then give it another try
@@ -1808,6 +1811,8 @@ int SIPVoIPLink::createUDPServer (void)
     pj_sockaddr_in bound_addr;
     pjsip_host_port a_name;
     char tmpIP[32];
+
+    _debug("Debug: createUDPServer called!\n");
 
     // Init bound address to ANY
     pj_memset (&bound_addr, 0, sizeof (bound_addr));
@@ -2207,10 +2212,14 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     SIPCall * call = NULL;    
     call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
 
-    _debug("    call_on_state_changed: call id %s\n", call->getCallId().c_str());
     if (call == NULL) {
         _debug("Call is NULL in call_on_state_changed");
         return;
+    }
+    else
+    {
+	_debug("    call_on_state_changed: call id %s\n", call->getCallId().c_str());
+	_debug("    call_on_state_changed: call state %s\n", invitationStateMap[call->getInvSession()->state]);
     }
 
     //Retrieve the body message
@@ -2239,6 +2248,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
 
         switch (call->getInvSession()->state) {
+	// switch (inv->state) {
 
             case PJSIP_INV_STATE_NULL:
 
