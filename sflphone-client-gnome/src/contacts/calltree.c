@@ -112,8 +112,14 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
 
 	selected_conf = (conference_obj_t*)g_value_get_pointer(&val);
 
-	selected_call_id = selected_conf->_confID;
-	selected_path = string_path;
+	if(selected_conf) 
+	{
+
+	    selected_call_id = selected_conf->_confID;
+	    selected_path = string_path;
+
+	}
+
     }
     else
     {
@@ -689,9 +695,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
             c->_peer_number,
             c->_peer_name);
 
-    DEBUG("CRITICAL!!!!!!!");
     gtk_tree_store_prepend (tab->store, &iter, parent);
-    DEBUG("CRITICAL!!!!!!!");
 
     if(c != NULL) {
         account_details = account_list_get_by_id(c->_callID);
@@ -864,6 +868,7 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
 
 
     GdkPixbuf *pixbuf=NULL;
+    GdkPixbuf *pixbuf_security=NULL;
     GtkTreeIter iter;
     GtkTreePath *path;
     GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
@@ -920,7 +925,8 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
     gtk_tree_store_set(tab->store, &iter,
             0, pixbuf, // Icon
             1, description, // Description
-	    2, conf, // Pointer
+	    2, pixbuf_security,
+	    3, conf, // Pointer
             -1);
 
     
@@ -992,7 +998,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 		calltree_remove_conference (tab, conf, &iter_parent);
 	    
 		confval.g_type = 0;
-		gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter_parent, 2, &confval);
+		gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter_parent, COLUMN_ACCOUNT_PTR, &confval);
 
 		tempconf = (conference_obj_t*) g_value_get_pointer(&confval);
 		g_value_unset(&confval);
@@ -1008,7 +1014,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 			{
 			    
 			    callval.g_type = 0;
-			    gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter_child, 2, &callval);
+			    gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter_child, COLUMN_ACCOUNT_PTR, &callval);
 			    
 			    call = (callable_obj_t*)g_value_get_pointer(&callval);
 			    g_value_unset(&callval);
@@ -1260,7 +1266,7 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 		if(gtk_tree_model_get_iter (model, &iter, dpath))
 		{
 		    DEBUG("we got an iter!");
-		    gtk_tree_model_get_value (model, &iter, 2, &val);
+		    gtk_tree_model_get_value (model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
 		    conf = (conference_obj_t*)g_value_get_pointer(&val);
 		}
@@ -1313,7 +1319,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
     {
 
         gtk_tree_model_get_iter(tree_model, &iter, drop_path);
-        gtk_tree_model_get_value(tree_model, &iter, 2, &val);
+        gtk_tree_model_get_value(tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
 
 	if(gtk_tree_model_iter_has_child(tree_model, &iter))

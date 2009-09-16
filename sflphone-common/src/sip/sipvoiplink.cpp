@@ -2218,8 +2218,8 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     }
     else
     {
-	_debug("    call_on_state_changed: call id %s\n", call->getCallId().c_str());
-	_debug("    call_on_state_changed: call state %s\n", invitationStateMap[call->getInvSession()->state]);
+	// _debug("    call_on_state_changed: call id %s\n", call->getCallId().c_str());
+	// _debug("    call_on_state_changed: call state %s\n", invitationStateMap[call->getInvSession()->state]);
     }
 
     //Retrieve the body message
