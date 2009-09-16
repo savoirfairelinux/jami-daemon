@@ -347,7 +347,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 
     AccountID account_id = getAccountFromCall (call_id);
     if(account_id == AccountNULL) {
-        _debug("ManagerImpl::answerCall : AccountId is null\n");
+        _debug("    answerCall : AccountId is null\n");
     }
     
     Call* call = NULL;
@@ -355,29 +355,6 @@ ManagerImpl::answerCall (const CallID& call_id)
     if (call == NULL) {
         _debug("    answerCall: currentCall is null\n");
     }
-    /*
-    Call* lastCall = NULL;
-    if (!getCurrentCallId().empty()) {
-        lastCall = getAccountLink (currentAccountId)->getCall (getCurrentCallId());
-        if (lastCall == NULL) {
-            _debug("ManagerImpl::answerCall : lastCall is null\n");
-        }
-    }
-
-    _debug ("ManagerImpl::answerCall :: current call->getState %i \n", currentCall->getState());
-    _debug ("Try to answer call: %s\n", id.data());
-
-    if (lastCall != NULL ) {
-        if (lastCall->getState() == Call::Active && !participToConference(getCurrentCallId())) {
-            _debug ("* Manager Info: there is currently a call, try to hold it\n");
-            onHoldCall (getCurrentCallId());
-        }
-	else if (isConference(getCurrentCallId()))
-	{
-	    _debug("Current call particips to a conference! Do not hold it!\n");
-	}
-    }
-    */
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {

@@ -361,7 +361,7 @@ void PulseLayer::writeToSpeaker (void)
         toGet = (urgentAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
         _urgentRingBuffer.Get (out, toGet, 100);
-        pa_stream_write (playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
+        pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of bytes)
         _mainBuffer.discard (toGet);
 
@@ -376,7 +376,7 @@ void PulseLayer::writeToSpeaker (void)
             toGet = framesPerBuffer;
             out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
             tone->getNext (out, toGet , 100);
-            pa_stream_write (playback->pulseStream() , out , toGet  * sizeof (SFLDataFormat)   , pa_xfree, 0 , PA_SEEK_RELATIVE);
+            pa_stream_write (playback->pulseStream(), out, toGet  * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
 	    pa_xfree (out);
         }
@@ -387,7 +387,7 @@ void PulseLayer::writeToSpeaker (void)
             toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat) ;
             out = (SFLDataFormat*) pa_xmalloc (toPlay);
             tone->getNext (out, toPlay/2 , 100);
-            pa_stream_write (playback->pulseStream() , out , toPlay   , pa_xfree, 0 , PA_SEEK_RELATIVE) ;
+            pa_stream_write (playback->pulseStream(), out, toPlay, NULL, 0, PA_SEEK_RELATIVE);
 
 	    pa_xfree (out);
 
@@ -400,7 +400,7 @@ void PulseLayer::writeToSpeaker (void)
             if (toGet) {
 
                 _mainBuffer.getData (out, toGet, 100);
-		pa_stream_write (playback->pulseStream() , out , toGet  , NULL, 0 , PA_SEEK_RELATIVE);
+		pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
 		_urgentRingBuffer.Discard (toGet);
             } else {
 
@@ -409,6 +409,8 @@ void PulseLayer::writeToSpeaker (void)
 
             pa_xfree (out);
         }
+
+	_urgentRingBuffer.Discard(toGet);
     }
 
 }
