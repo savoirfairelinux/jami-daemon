@@ -691,11 +691,22 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     gchar * description;
     gchar * date="";
     gchar *duration="";
-    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>%s (%d)</i>",
+
+    if(c->_state_code == 0) {
+
+	description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
+							      c->_peer_number,
+							      c->_peer_name);
+
+    }
+    else {
+
+	description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>%s (%d)</i>",
 							      c->_peer_number,
 							      c->_peer_name,
 							      c->_state_code_description,
 							      c->_state_code);
+    }
 
     gtk_tree_store_prepend (tab->store, &iter, parent);
 
