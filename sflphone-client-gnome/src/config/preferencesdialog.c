@@ -45,10 +45,6 @@ gboolean accDialogOpen = FALSE;
 gboolean dialogOpen = FALSE;
 gboolean ringtoneEnabled = TRUE;
 
-/* STUN configuration part */
-GtkWidget * stunEnable;
-GtkWidget * stunFrame;
-GtkWidget * stunServer;
 GtkWidget * applyButton;
 GtkWidget * history_value;
 
@@ -121,41 +117,11 @@ static void history_enabled_cb (GtkWidget *widget)
     // Toggle it through D-Bus
     dbus_set_history_enabled ();
 }
-
-
-    void
+    
+	void
 clean_history( void )
 {
     calllist_clean_history();
-}
-
-
-void stun_state( void )
-{
-
-    guint stun_enabled = 0;
-
-    gboolean stunActive = (gboolean)gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( stunEnable ));
-    gtk_widget_set_sensitive( GTK_WIDGET( stunServer ) , stunActive );
-
-    // Check if we actually change the state
-    stun_enabled = dbus_stun_is_enabled();
-
-    if( (stunActive && stun_enabled ==0 ) || (!stunActive && stun_enabled ==1))
-    {
-        gtk_widget_set_sensitive( GTK_WIDGET( applyButton ) , TRUE );
-    }
-    else
-        gtk_widget_set_sensitive( GTK_WIDGET( applyButton ) , FALSE );
-
-}
-
-void update_registration( void )
-{
-    dbus_set_stun_server((gchar *)gtk_entry_get_text(GTK_ENTRY(stunServer)));
-    dbus_enable_stun();
-
-    gtk_widget_set_sensitive(GTK_WIDGET(applyButton) , FALSE );
 }
 
 static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
@@ -289,54 +255,10 @@ GtkWidget* create_network_tab()
     GtkWidget * label;
     GtkWidget * ret;
     gchar * description;
-    gchar * stun_server= "stun.sflphone.org:3478";
-    gchar * stun_enabled = "false";
 
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    gnome_main_section_new_with_table (_("NAT Traversal"), &frame, &table, 3, 2);
-    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-    gtk_widget_show (frame);
-    
-    /* Retrieve the STUN configuration */
-    stun_enabled = (dbus_stun_is_enabled()==1)?"true":"false";
-    stun_server = dbus_get_stun_server();
-    
-    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-    gtk_container_set_border_width(GTK_CONTAINER (table), 10);
-
-    // NAT detection code section
-    description = g_markup_printf_escaped(_("STUN will apply to each SIP account created.\nIt will be effective only after pressing \"apply\", closing all sessions."));
-    label = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(label), description);
-    gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
-    stunEnable = gtk_check_button_new_with_mnemonic( _("E_nable STUN"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"true") == 0 ? TRUE: FALSE);
-    g_signal_connect( G_OBJECT (GTK_TOGGLE_BUTTON(stunEnable)) , "toggled" , G_CALLBACK( stun_state ), NULL);
-#if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("You should probably enable this if you are behind a firewall."));
-#endif
-    gtk_table_attach ( GTK_TABLE( table ), stunEnable, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
-    stunServer = gtk_entry_new();
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), stunServer);
-    gtk_entry_set_text(GTK_ENTRY(stunServer), stun_server);
-#if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET( stunServer ) , _("Format : name.server:port"));
-#endif
-    gtk_widget_set_sensitive( GTK_WIDGET( stunServer ), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stunEnable)));
-    gtk_table_attach ( GTK_TABLE( table ), stunServer, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
-    applyButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-    gtk_widget_set_sensitive( GTK_WIDGET( applyButton ), FALSE );
-#if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET(applyButton) , _("Pressing \"apply\" will restart the network layer. Otherwise, SFLPhone would have to be restarted."));
-#endif
-    g_signal_connect( G_OBJECT( applyButton) , "clicked" , update_registration , NULL);
-    gtk_table_attach ( GTK_TABLE( table ), applyButton, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
- 
     /** SIP port information */
     int curPort = dbus_get_sip_port();
     if(curPort <= 0 || curPort > 65535) {
@@ -480,11 +402,6 @@ void history_load_configuration ()
     history_enabled = TRUE;
     if (g_strcasecmp (dbus_get_history_enabled (), "false") == 0)
         history_enabled = FALSE;
-}
-
-void preferences_dialog_set_stun_visible()
-{
-    gtk_widget_set_sensitive( GTK_WIDGET(stunFrame), TRUE );
 }
 
 /**

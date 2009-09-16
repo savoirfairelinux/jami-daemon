@@ -30,7 +30,6 @@
 #include <cc++/thread.h>
 #include "dbus/dbusmanager.h"
 
-#include "stund/stun.h"
 #include "observer.h"
 #include "config/config.h"
 
@@ -859,45 +858,6 @@ class ManagerImpl {
      */
     void setMicVolume(unsigned short mic_vol);
 
-    // Manage information about firewall
-
-    /*
-     * Get information about firewall
-     * @param  stunSvrAddr: stun server
-     * @param  port         port number to open to test the connection
-     * @return true if the connection is successful
-     */
-    bool getStunInfo(StunAddress4& stunSvrAddr, int port);
-
-    /*
-     * Inline functions to manage firewall settings
-     * @return int The firewall port
-     */
-    inline int getFirewallPort(void) 		{ return _firewallPort; }
-
-    /*
-     * Inline functions to manage firewall settings
-     * @param port The firewall port
-     */
-    inline void setFirewallPort(int port) 	{ _firewallPort = port; }
-
-    /*
-     * Inline functions to manage firewall settings
-     * @return std::string The firewall address
-     */
-    inline std::string getFirewallAddress (void) 	{ return _firewallAddr; }
-
-    /**
-     * If you are behind a NAT, you have to use STUN server, specified in
-     * STUN configuration(you can change this one by default) to give you an
-     * public IP address and assign a port number.
-     * Note: Set firewall port/address retreive
-     * @param svr   Server on which to send request
-     * @param port  On which port we want to listen to
-     * @return true if we are behind a NAT (without error)
-     */
-    bool isBehindNat(const std::string& svr, int port);
-
     /**
      * Init default values for the different fields in the config file.
      * Fills the local _config (Conf::ConfigTree) with the default contents.
@@ -1094,13 +1054,6 @@ class ManagerImpl {
     std::string 	_path;
     int _exist;
     int _setupLoaded;
-
-    // To handle firewall
-    int _firewallPort;
-    std::string _firewallAddr;
-
-    // tell if we have zeroconf is enabled
-    int _hasZeroconf;
 
 #ifdef USE_ZEROCONF
     // DNSService contain every zeroconf services

@@ -64,7 +64,6 @@ noinst_HEADERS = \
 		numbercleaner.h
 
 libsflphone_la_LIBADD = \
-	$(src)/libs/stund/libstun.la \
 	$(src)/libs/utilspp/libutilspp.la \
 	$(src)/libs/iax2/libiax2.la \
 	$(IAX_LIB) \

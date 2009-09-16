@@ -978,8 +978,6 @@ show_account_window (account_t * a)
     		g_hash_table_replace(currentAccount->properties,
     				g_strdup(PUBLISHED_ADDRESS),
     				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry))));	    
-    								    								
-			preferences_dialog_set_stun_visible();
 		}
 
 	    /* Set new credentials if any */

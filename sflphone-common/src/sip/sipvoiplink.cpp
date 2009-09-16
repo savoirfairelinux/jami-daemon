@@ -135,6 +135,11 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body);
 
 // Documentated from the PJSIP Developer's Guide, available on the pjsip website/
 
+
+pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status);
+pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len);
+
+
 /*
  * Session callback
  * Called when the invite session state has changed.
@@ -454,7 +459,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
 			_debug ("Failed to initialize an other UDP transport with an externe published address for account %s\n", id.c_str());
 		}
 	}
-
 
     _mutexSIP.enterMutex();
 
@@ -1606,7 +1610,6 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
 
 }
 
-
 bool SIPVoIPLink::pjsip_init()
 {
     pj_status_t status;
@@ -1615,8 +1618,6 @@ bool SIPVoIPLink::pjsip_init()
     pjsip_inv_callback inv_cb;
     pj_str_t accepted;
     std::string name_mod;
-    bool useStun;
-    validStunServer = true;
     pj_dns_resolver *p_resv;
 
     name_mod = "sflphone";
@@ -1662,22 +1663,6 @@ bool SIPVoIPLink::pjsip_init()
     }
 
     port = _regPort;
-
-    /* Retrieve the STUN configuration */
-    //useStun = Manager::instance().getConfigBool (SIGNALISATION, SIP_USE_STUN);
-	useStun = false;
-
-	/*
-    if (useStun && !Manager::instance().isBehindNat (getStunServer(), port)) {
-        port = RANDOM_SIP_PORT;
-
-        if (!Manager::instance().isBehindNat (getStunServer(), port)) {
-            _debug ("UserAgent: Unable to check NAT setting\n");
-            validStunServer = false;
-            return false; // hoho we can't use the random sip port too...
-        }
-    }*/
-
     _localPort = port;
 
     // Retrieve Direct IP Calls settings.
@@ -1693,25 +1678,16 @@ bool SIPVoIPLink::pjsip_init()
         directIpCallsTlsEnabled = account->isTlsEnabled();
     }
 
-    if (useStun) {
-        // set by last isBehindNat() call (ish)...
-        //stunServerResolve();
-        _localExternAddress = Manager::instance().getFirewallAddress();
-        _localExternPort = Manager::instance().getFirewallPort();
-    } else {
-        _localExternAddress = _localIPAddress;
-        _localExternPort = _localPort;
-        errPjsip = createUDPServer();
-    }
-
+    _localExternAddress = _localIPAddress;
+    _localExternPort = _localPort;
     // Create a UDP listener meant for all accounts
     // for which TLS was not enabled
     errPjsip = createUDPServer();
 
-    // If stun was not enabled an the above UDP server
+    // If the above UDP server
     // could not be created, then give it another try
     // on a random sip port
-    if (errPjsip != PJ_SUCCESS && !useStun) {
+    if (errPjsip != PJ_SUCCESS) {
         _debug ("UserAgent: Could not initialize SIP listener on port %d\n", _localExternPort);
         _localExternPort = _localPort = RANDOM_SIP_PORT;
 
@@ -1722,16 +1698,6 @@ bool SIPVoIPLink::pjsip_init()
             _debug ("UserAgent: Fail to initialize SIP listener on port %d\n", _localExternPort);
             return errPjsip;
         }
-    }
-
-    // If we use stun and UDP server creation
-    // failed, then just complain and return
-    // since retrying on a random sip port
-    // would just go against the need of
-    // using it.
-    if (errPjsip != PJ_SUCCESS && useStun) {
-        _debug ("Could not create UDP server with STUN\n");
-        return errPjsip;
     }
 
     _debug ("UserAgent: SIP Init -- listening on port %d\n", _localExternPort);
@@ -1842,13 +1808,12 @@ bool SIPVoIPLink::pjsip_init()
 
 pj_status_t SIPVoIPLink::stunServerResolve (AccountID id)
 {
-    pj_str_t stun_adr, stunServer, hostPart;
+    pj_str_t stunServer;
 	pj_uint16_t stunPort;
 	pj_stun_sock_cb stun_sock_cb;
 	pj_stun_sock *stun_sock;
     pj_stun_config stunCfg;
     pj_status_t status;
-	const int af = pj_AF_INET();
 
 	// Fetch the account information from the config file
 	SIPAccount * account = NULL;
@@ -1867,9 +1832,9 @@ pj_status_t SIPVoIPLink::stunServerResolve (AccountID id)
 
     status = PJ_EPENDING;
 
-	//pj_bzero (&stun_sock_cb, sizeof(stun_sock_cb));
-	//stun_sock_cb.on_rx_data = &stun_sock_on_rx_data;
-	//stun_sock_cb.on_status = &stun_sock_on_status;
+	pj_bzero (&stun_sock_cb, sizeof(stun_sock_cb));
+	stun_sock_cb.on_rx_data = &stun_sock_on_rx_data;
+	stun_sock_cb.on_status = &stun_sock_on_status;
 
 	status = pj_stun_sock_create (&stunCfg, "stunresolve", pj_AF_INET(), &stun_sock_cb, NULL, NULL, &stun_sock);
 
@@ -2092,15 +2057,13 @@ pj_status_t SIPVoIPLink::createTlsTransportRetryOnFailure (AccountID id)
 
 pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 {
-    pj_sockaddr_in boundAddr, local_addr, bound_addr;
+    pj_sockaddr_in boundAddr;
     pjsip_host_port a_name;
     pj_status_t status;
-	pj_str_t stunServer, pjAddress;
-    pj_str_t hostPart;
-	pj_uint16_t stunPort, port;
+	pj_str_t stunServer;
+	pj_uint16_t stunPort;
 	pj_sockaddr_in pub_addr;
 	pj_sock_t sock;
-	pj_sockaddr stunSrvSocket;
 
     /* 
 	 * Retrieve the account information
@@ -2119,7 +2082,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 	status = stunServerResolve (id);
 		
 	if (status != PJ_SUCCESS) {
-		_debug ("Error resolving STUN server: %s\n", status);
+		_debug ("Error resolving STUN server: %i\n", status);
 		return status;
 	}
 
@@ -2140,49 +2103,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     	return status;
     }
 
-/*
-	status = pj_sockaddr_in_set_str_addr (PJ_AF_INET, &stunSrvSocket, &pjAddress);
-	if (status != PJ_SUCCESS) {
-		_debug ("Failed to set published address in %d\n", __LINE__);
-		return status;
-	}
-*/
-/*
-	pj_sockaddr_in_init (&local_addr, 0, 0);
-
-    pj_uint16_t localUdpPort = account->getLocalPort();
-
-    if (localUdpPort != 0) {
-        local_addr.sin_port = pj_htons (localUdpPort);
-    }
-
-    std::string localAddress = account->getLocalAddress();
-
-    if (!localAddress.empty()) {
-    	pj_str_t pjAddress;
-        pj_cstr (&pjAddress, localAddress.c_str());
-
-        pj_status_t success;
-        success = pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
-
-        if (success != PJ_SUCCESS) {
-            _debug ("Failed to set published address in %d\n", __LINE__);
-        }
-    }
-
-*/
-    /* Init published name 
-    pj_bzero (&a_name, sizeof (pjsip_host_port));
-
-    pj_cstr (&a_name.host, (account->getPublishedAddress()).c_str());
-
-    a_name.port = account->getPublishedPort();
-
-    _debug ("Alternate UDP transport to be initialized with published address %.*s,"
-            " published port %d, local address %s, local port %d\n",
-            (int) a_name.host.slen, a_name.host.ptr,
-            (int) a_name.port, localAddress.c_str(), (int) localUdpPort);
-	*/
+	// Query the mapped IP address and port on the 'outside' of the NAT
 	status = pjstun_get_mapped_addr (&_cp.factory, 1, &sock, &stunServer, stunPort, &stunServer, stunPort, &pub_addr);
 	
 	if (status != PJ_SUCCESS) {
@@ -2195,48 +2116,21 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
               pj_inet_ntoa (pub_addr.sin_addr),
               pj_ntohs(pub_addr.sin_port));
 
-	// Create UDP-Server (default port: 5060)
-    // char tmpIP[32];
-    // strcpy (tmpIP, stunServer.ptr);
-    // pj_strdup2 (_pool, &a_name.host, tmpIP);
-    //a_name.port = (pj_uint16_t) stunPort;
 	a_name.host = pj_str (pj_inet_ntoa (pub_addr.sin_addr));
     a_name.port = pj_ntohs(pub_addr.sin_port);
 
+	_localExternAddress = std::string (a_name.host.ptr);
+	_localExternPort =  (int)a_name.port;
+	//account->setStunServerName (a_name.host);
+	//account->setStunPort (a_name.port);
+
+	// Create the UDP transport
 	pjsip_udp_transport_attach2 (_endpt, PJSIP_TRANSPORT_UDP, sock, &a_name, 1, NULL);
     if (status != PJ_SUCCESS) {
         _debug ("Error creating alternate SIP UDP listener (%d)\n", status);
     }
 
     return PJ_SUCCESS;
-
-    // Init bound address to ANY
-	/*
-    pj_memset (&bound_addr, 0, sizeof (bound_addr));
-
-    bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
-    bound_addr.sin_port = pj_htons ( (pj_uint16_t) _localPort);
-    bound_addr.sin_family = PJ_AF_INET;
-    pj_bzero (bound_addr.sin_zero, sizeof (bound_addr.sin_zero));
-
-    // Create UDP-Server (default port: 5060)
-    strcpy (tmpIP, stunServer.ptr);
-    pj_strdup2 (_pool, &a_name.host, tmpIP);
-    a_name.port = (pj_uint16_t) stunPort;
-
-    //status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, NULL);
-
-    if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: (%d) Unable to start UDP transport!\n", status);
-        return -1;
-    } else {
-        _debug ("UserAgent: UDP server listening on port %d\n", _localExternPort);
-    }
-
-    _debug ("Transport initialized successfully! \n");
-
-    return PJ_SUCCESS;
-*/
 }
 
 
@@ -3546,9 +3440,9 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
 
     	if (account->isStunEnabled ()) {
         	// If use Stun server
-        	if (Manager::instance().isBehindNat (std::string (account->getStunServerName ().ptr), callLocalAudioPort)) {
-            	callLocalExternAudioPort = Manager::instance().getFirewallPort();
-        	}
+        	//if (Manager::instance().isBehindNat (std::string (account->getStunServerName ().ptr), callLocalAudioPort)) {
+            	callLocalExternAudioPort = account->getStunPort ();//localExternPort; //Manager::instance().getFirewallPort();
+        	//}
     	}
 
     	_debug ("            Setting local audio port to: %d\n", callLocalAudioPort);
@@ -3625,3 +3519,16 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
     }
 }
 
+
+pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status)
+{
+	if (status == PJ_SUCCESS)
+		return PJ_TRUE;
+	else
+		return PJ_FALSE;
+}
+
+pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len)
+{
+	return PJ_TRUE;
+}

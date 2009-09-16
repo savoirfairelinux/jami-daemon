@@ -78,9 +78,6 @@ ManagerImpl::ManagerImpl (void)
         , _path ("")
         , _exist (0)
         , _setupLoaded (false)
-        , _firewallPort()
-        , _firewallAddr ("")
-        , _hasZeroconf (false)
         , _callAccountMap()
         , _callAccountMapMutex()
         , _callConfigMap()
@@ -1231,56 +1228,6 @@ void ManagerImpl::notificationIncomingCall (void)
         /* Put the data in the urgent ring buffer */
         audiolayer->putUrgent (buf, sizeof (SFLDataFormat) *nbSampling);
     }
-}
-
-/**
- * Multi Thread
- */
-bool
-ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr, int port)
-{
-    StunAddress4 mappedAddr;
-
-    struct in_addr in;
-    char* addr;
-
-    int fd1 = stunOpenSocket (stunSvrAddr, &mappedAddr, port);
-    bool ok = (fd1 == -1 || fd1 == INVALID_SOCKET) ? false : true;
-
-    if (ok) {
-        closesocket (fd1);
-        _firewallPort = mappedAddr.port;
-        // Convert ipv4 address to host byte ordering
-        in.s_addr = ntohl (mappedAddr.addr);
-        addr = inet_ntoa (in);
-        _firewallAddr = std::string (addr);
-        _debug ("STUN Firewall: [%s:%d]\n", _firewallAddr.data(), _firewallPort);
-        return true;
-    } else {
-        _debug ("Opening a stun socket pair failed\n");
-    }
-
-    return false;
-}
-
-bool
-ManagerImpl::isBehindNat (const std::string& svr, int port)
-{
-    StunAddress4 stunSvrAddr;
-    stunSvrAddr.addr = 0;
-
-    // Convert char* to StunAddress4 structure
-    bool ret = stunParseServerName ( (char*) svr.data(), stunSvrAddr);
-
-    if (!ret) {
-        _debug ("SIP: Stun server address (%s) is not valid\n", svr.data());
-        return 0;
-    }
-
-    // Firewall address
-    _debug ("STUN server: %s\n", svr.data());
-
-    return getStunInfo (stunSvrAddr, port);
 }
 
 
