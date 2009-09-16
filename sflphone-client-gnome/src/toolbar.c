@@ -27,15 +27,6 @@ is_inserted( GtkWidget* button )
 }
 
 /**
- * Static create_conference
- */
-    static void
-detach_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
-{
-    sflphone_detach_participant(NULL);
-}
-
-/**
  * Static rec_button
  */
     static void
@@ -165,7 +156,6 @@ GtkWidget *create_toolbar ()
 {
     GtkWidget *ret;
     GtkWidget *image;
-    const gchar *label_detach;
 
     ret = gtk_toolbar_new();
     toolbar = ret;
@@ -277,18 +267,6 @@ GtkWidget *create_toolbar ()
             G_CALLBACK (rec_button), NULL);
     gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(recButton), -1);
 
-    // label_detach = "Detach";
-    detachButton = gtk_tool_button_new(NULL,"Detach");
-    // gtk_tool_button_set_label(detachButton, label_detach);
-#if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text(GTK_WIDGET(detachButton), _("Detach"));
-#endif
-    gtk_widget_set_state( GTK_WIDGET(detachButton), GTK_STATE_INSENSITIVE);
-    g_signal_connect (G_OBJECT (detachButton), "clicked",
-            G_CALLBACK (detach_button), NULL);
-    gtk_toolbar_insert(GTK_TOOLBAR(ret), detachButton, -1);
-  
-
     return ret;
 }
 
@@ -366,7 +344,6 @@ toolbar_update_buttons ()
                 gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
-		gtk_widget_set_sensitive( GTK_WIDGET(detachButton),     TRUE);
                 break;
             case CALL_STATE_BUSY:
             case CALL_STATE_FAILURE:
@@ -387,7 +364,6 @@ toolbar_update_buttons ()
                 gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
-		gtk_widget_set_sensitive( GTK_WIDGET(detachButton),     TRUE);
                 break;
             default:
                 // Fix bug #1145
