@@ -249,6 +249,10 @@ class SIPAccount : public Account
          */
         inline pjsip_transport_type_e getTransportType(void) { return _transportType; }
         
+		inline pjsip_transport* getAccountTransport (void) { return _transport; }
+
+		inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
+
     private: 
 
         /* Maps a string description of the SSL method 
@@ -307,6 +311,9 @@ class SIPAccount : public Account
         pj_uint16_t _publishedPort;
         
         pjsip_transport_type_e _transportType;
+
+		pjsip_transport* _transport;
+
         // Special hack that is not here to stay
         // See #1852
         bool _resolveOnce;

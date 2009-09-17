@@ -295,6 +295,15 @@ class SIPVoIPLink : public VoIPLink
          */
         std::vector<std::string> getAllIpInterface(void);
 
+		/**
+		 * Initialize the transport selector
+		 * @param transport		A transport associated with an account
+		 * @param tp_sel		A pointer to receive the transport selector structure
+		 *
+		 * @return pj_status_t		PJ_SUCCESS if the structure was successfully initialized
+		 */
+		pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
+
     private:
         /**
          * Constructor
@@ -332,7 +341,7 @@ class SIPVoIPLink : public VoIPLink
         pj_status_t stunServerResolve (AccountID id);
 
         /** Create SIP UDP Listener */
-        int createUDPServer();
+        int createUDPServer (AccountID = "");
 
         /**
          * Try to create a new TLS transport
@@ -402,16 +411,18 @@ class SIPVoIPLink : public VoIPLink
          * with that uri will be discovered. 
          *
          * @param uri The uri from which we want to discover the address to use
+         * @param transport The transport to use to discover the address 
          * @return pj_str_t The extern (public) address
          */
-        std::string findLocalAddressFromUri(const std::string& uri);
+        std::string findLocalAddressFromUri(const std::string& uri, pjsip_transport *transport);
         
         /* 
          * Does the same as findLocalAddressFromUri but returns a port.
-         * @param uri The uri from which we want to discover the address to use
+         * @param uri The uri from which we want to discover the port to use
+         * @param transport The transport to use to discover the port 
          * @return int The extern (public) port
          */
-        int findLocalPortFromUri(const std::string& uri);
+        int findLocalPortFromUri(const std::string& uri, pjsip_transport *transport);
 };
 
 
