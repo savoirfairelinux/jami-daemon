@@ -655,6 +655,8 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
                 gtk_tree_store_set(store, &iter,
                         0, pixbuf, // Icon
                         1, description, // Description
+			2, pixbuf_security,
+			3, c,
                         -1);
 
                 if (pixbuf != NULL)
