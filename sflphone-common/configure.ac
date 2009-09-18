@@ -34,7 +34,6 @@ AC_CONFIG_MACRO_DIR([m4])
 	dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 	AC_CONFIG_FILES([libs/Makefile \
-			libs/stund/Makefile \
 			libs/utilspp/Makefile \
 			libs/utilspp/functor/Makefile \
 			libs/utilspp/singleton/Makefile \
