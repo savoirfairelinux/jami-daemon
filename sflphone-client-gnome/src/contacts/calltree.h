@@ -72,7 +72,7 @@ void
 calltree_add_history_entry (callable_obj_t * c);
 
 void
-calltree_add_conference (calltab_t* tab, const conference_obj_t* conf);
+calltree_add_conference (calltab_t* tab, conference_obj_t* conf);
 
 void
 calltree_update_conference (calltab_t* tab, const gchar* confID);

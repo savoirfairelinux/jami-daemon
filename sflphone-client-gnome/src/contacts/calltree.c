@@ -876,7 +876,7 @@ void calltree_add_history_entry (callable_obj_t * c)
 }
 
 
-void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
+void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 {
 
     DEBUG("calltree_add_conference conf->_confID %s\n", conf->_confID);
@@ -927,6 +927,8 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
         WARN ("Conferences cannot be added in this widget - This is a bug in the application.");
     }
 
+    
+
     DEBUG("PIXWITH: %i\n", gdk_pixbuf_get_width(pixbuf));
     //Resize it
     if(pixbuf)
@@ -936,6 +938,37 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
             pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
         }
     }
+
+    /*
+    conf->_conference_secured = TRUE;
+
+    if(participant)
+    {
+
+	for (pl = participant; *participant; participant++)
+	{
+	    
+	    call_id = (gchar*)(*participant);
+	    call = calllist_get (tab, call_id);
+
+	    if(call->_srtp_state == 0)
+	    {
+		conf->_conference_secured = FALSE;
+		break;
+	    }
+	}
+    }
+
+    if(conf->_conference_secured)
+    {
+	pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
+    }
+    else
+    {
+	pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
+    }
+
+    */
     
     gtk_tree_store_set(tab->store, &iter,
             0, pixbuf, // Icon
@@ -953,6 +986,7 @@ void calltree_add_conference (calltab_t* tab, const conference_obj_t* conf)
     {
 	for (pl = participant; *participant; participant++)
 	{
+	    
 	    
 	    call_id = (gchar*)(*participant);
 	    call = calllist_get (tab, call_id);
