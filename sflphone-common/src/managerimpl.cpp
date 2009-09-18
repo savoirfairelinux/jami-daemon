@@ -1492,7 +1492,7 @@ ManagerImpl::sendDtmf (const CallID& id, char code)
     AccountID accountid = getAccountFromCall (id);
 
     if (accountid == AccountNULL) {
-        //_debug("Send DTMF: call doesn't exists\n");
+        _debug("Send DTMF: call doesn't exists\n");
         playDtmf (code, false);
         return false;
     }
@@ -1535,13 +1535,19 @@ ManagerImpl::playDtmf (char code, bool isTalking)
     bool hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_DTMF);
 
     if (!hasToPlayTone)
+    {
+	_debug("    playDtmf: Do not have to play a tone...\n");
         return false;
+    }
 
     // length in milliseconds
     pulselen = getConfigInt (SIGNALISATION, PULSE_LENGTH);
 
     if (!pulselen)
+    {
+	_debug("    playDtmf: Pulse length is not set...\n");
         return false;
+    }
 
     // numbers of int = length in milliseconds / 1000 (number of seconds)
     //                = number of seconds * SAMPLING_RATE by SECONDS
@@ -1551,13 +1557,16 @@ ManagerImpl::playDtmf (char code, bool isTalking)
 
     // fast return, no sound, so no dtmf
     if (audiolayer==0 || _dtmfKey == 0)
+    {
+	_debug("    playDtmf: Error no audio layer...\n");
         return false;
+    }
 
     // number of data sampling in one pulselen depends on samplerate
     // size (n sampling) = time_ms * sampling/s
     //                     ---------------------
     //                            ms/s
-    size = (int) (pulselen * ( (float) audiolayer->getSampleRate() /1000));
+    size = (int) ((pulselen * (float) audiolayer->getSampleRate()) / 1000);
 
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
@@ -1573,6 +1582,9 @@ ManagerImpl::playDtmf (char code, bool isTalking)
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         audiolayer->startStream();
         audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
+    }
+    else {
+	_debug("    playDtmf: Error cannot play dtmf");
     }
 
     ret = true;

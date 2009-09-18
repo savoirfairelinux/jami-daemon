@@ -401,7 +401,7 @@ void PulseLayer::writeToSpeaker (void)
 
                 _mainBuffer.getData (out, toGet, 100);
 		pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
-		_urgentRingBuffer.Discard (toGet);
+
             } else {
 
                 bzero (out, framesPerBuffer * sizeof (SFLDataFormat));
