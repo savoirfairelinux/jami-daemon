@@ -41,7 +41,7 @@ void Account::loadConfig()
 
     p =  Manager::instance().getConfigString (_accountID , CONFIG_ACCOUNT_TYPE);
 #ifdef USE_IAX
-    _enabled = (Manager::instance().getConfigString(_accountID, CONFIG_ACCOUNT_ENABLE) == "true") ? true : false;
+    _enabled = (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_ENABLE) == "true") ? true : false;
 #else
 
     if (p.c_str() == "IAX")

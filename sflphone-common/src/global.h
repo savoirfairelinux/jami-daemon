@@ -122,7 +122,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define START_HIDDEN		      TRUE_STR		/** SFlphone starts hidden at start-up or not */
 #define WINDOW_POPUP		      TRUE_STR		/** Popup mode */
 #define NOTIFY_ALL		          TRUE_STR		/** Desktop notification level 0: never notify */
-#define STUN_ENABLED              TRUE_STR
 
 // Error codes for error handling
 #define NO_ERROR		      0x0000	/** No error - Everything alright */

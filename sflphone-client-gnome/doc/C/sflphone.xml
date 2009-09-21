@@ -5,7 +5,7 @@
 ]>
 
 <!-- =============Document Header ============================= -->
-<article id="index" lang="en">
+ <article id="index" lang="en">
 <!-- please do not change the id; for translations, change lang to -->
 <!-- appropriate code -->
   <articleinfo>
@@ -447,7 +447,7 @@
     </sect2>
 
 
-	<sect2 label="Direct IP calls">
+	<sect2 id="directip" label="Direct IP calls">
 		<para>A direct IP call is a call established between two peers without any accounts. When dialing, such a call must prefixed with <guilabel>sip:</guilabel>.</para>
 
 		<para>Direct IP calls use SIP protocol to establish communication and RTP to transport data. It is right now not available with IAX2.</para>
@@ -533,7 +533,7 @@
 
 		<!-- ==== Figure ==== -->
       	<figure id="addressbook-fig">
-    		<title>&app; toolbar</title>
+    		<title>Address book toolbar button</title>
     		<screenshot>
       			<mediaobject>
         			<imageobject>
@@ -555,5 +555,185 @@
 	</orderedlist>
 	</sect2>
 </sect1>
+
+<sect1 id="preferences">
+	<title>Preferences</title>
+
+	<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice> to access the configuration panel.</para>
+	<para>Each section is detailed below.</para>
+
+	<sect2>
+		<title>General</title>
+		<para>This section provides the user general settings regarding the application.</para>
+		<sect3 label="Desktop Notifications">
+			<!-- ==== Figure ==== -->
+        <figure id="desktop-notif-settings-fig">
+            <title>Desktop notifications options</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/desktop-notif-settings.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+
+
+			<variablelist>
+            <varlistentry>
+                <term><guilabel>Enable notifications</guilabel></term>
+                <listitem><para>
+					Both clients use their desktop environment notification system. If checked, you will receive desktop notifications for events such as incoming calls and system messages.
+				</para>	
+			<figure id="notif-example-fig">
+            <title>Example of an incoming call notification</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/notif-example.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+               </listitem>
+            </varlistentry>
+			<varlistentry>
+                <term><guilabel>Enable voicemail notifications</guilabel></term>
+                <listitem><para>
+					The voicemail notifications are handled separatly. If checked, you will be notified with the number of unread voicemails for your accounts.
+				</para>
+				<figure id="voicemail-notif-fig">
+            <title>Example of a voicemail notification</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/voicemail-notif.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+
+
+                </listitem>
+            </varlistentry>
+			</variablelist>
+		</sect3>
+
+		<sect3 label="System Tray Icon">
+			<!-- ==== Figure ==== -->
+        <figure id="systemtray-settings-fig">
+            <title>System tray options</title>
+            <screenshot>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="figures/systemtray-settings.png" format="PNG"/>
+                    </imageobject>
+                </mediaobject>
+            </screenshot>
+        </figure>
+        <!-- ==== End of Figure ==== -->
+
+
+			<variablelist>
+            <varlistentry>
+                <term><guilabel>Popup main window on incoming call</guilabel></term>
+                <listitem><para>
+				If SFLphone is closed on the system tray, pops the main window up on foreground when receiving an incoming call.
+                </para></listitem>
+            </varlistentry>
+			<varlistentry>
+                <term><guilabel>Never popup main window</guilabel></term>
+                <listitem><para>
+				If SFLphone is closed on the system tray, never pops the main window up on foreground when receiving an incoming call.
+                </para></listitem>
+            </varlistentry>
+			<varlistentry>
+                <term><guilabel>Hide SFLphone window on startup</guilabel></term>
+                <listitem><para>
+				On startup, SFLphone will go directly on the system tray.
+                </para></listitem>
+            </varlistentry>
+
+			</variablelist>
+
+		</sect3>
+
+
+		<sect3 label="Calls history">
+			    <!-- ==== Figure ==== -->
+        	<figure id="callshistory-settings-fig">
+            	<title>Calls history options</title>
+            		<screenshot>
+                		<mediaobject>
+                    		<imageobject>
+                        		<imagedata fileref="figures/callshistory-settings.png" format="PNG"/>
+                    		</imageobject>
+                			</mediaobject>
+            		</screenshot>
+        	</figure>
+        	<!-- ==== End of Figure ==== -->
+
+			<variablelist>
+            <varlistentry>
+                <term><guilabel>Keep my history for at least n days</guilabel></term>
+                <listitem><para>
+					If checked, calls will be kept up to N days in the history. You may select a custom number of days. Do not check it if you don't want to use this feature.
+                </para></listitem>
+            </varlistentry>
+			</variablelist>
+		</sect3>
+
+		<sect3 label="Configuration File">
+			   <!-- ==== Figure ==== -->
+            <figure id="configfile-settings-fig">
+                <title>Configuration file options</title>
+                    <screenshot>
+                        <mediaobject>
+                            <imageobject>
+                                <imagedata fileref="figures/configfile-settings.png" format="PNG"/>
+                            </imageobject>
+                            </mediaobject>
+                    </screenshot>
+            </figure>
+            <!-- ==== End of Figure ==== -->
+
+			<variablelist>
+            <varlistentry>
+                <term><guilabel>Store SIP credentials as MD5 hash</guilabel></term>
+                <listitem><para>
+				If checked, your password information will be encrypted in the configuration file, instead of plain text.
+                </para></listitem>
+            </varlistentry>
+            </variablelist>
+
+		
+		</sect3>
+	</sect2>
+
+	<sect2>
+		<title>Audio</title>
+	</sect2>
+
+	<sect2>
+		<title>Address book</title>	
+
+		<para>Refer to the <link linkend='addressbook'>Address books</link> section for more information.</para>
+	</sect2>
+
+	<sect2>
+		<title>Hooks</title>	
+	</sect2>
+
+	<sect2>
+		<title>Network</title>	
+	</sect2>
+
+	<sect2>
+		<title>Direct IP calls</title>	
+		<para>Refer to the <link linkend='directip'>Direct IP calls</link> section for more information.</para>
+	</sect2>
+</sect1>
+
 
 </article>

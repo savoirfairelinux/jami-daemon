@@ -46,177 +46,209 @@ std::map< std::string, std::string >
 ConfigurationManager::getTlsSettingsDefault (void)
 {
     _debug ("ConfigurationManager::getTlsDefaultSettings\n");
-   
+
     std::map<std::string, std::string> tlsSettingsDefault;
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_CA_LIST_FILE, ""));
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, ""));
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, ""));
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_PASSWORD, ""));
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_METHOD, "TLSv1"));
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_CIPHERS, ""));
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_SERVER_NAME, ""));
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_VERIFY_SERVER, "true"));
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, "true"));                  
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, "true"));                  
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"));                          
-    tlsSettingsDefault.insert(std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"));                          
-       
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_PASSWORD, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_METHOD, "TLSv1"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CIPHERS, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_SERVER_NAME, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_VERIFY_SERVER, "true"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, "true"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, "true"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"));
+
     return tlsSettingsDefault;
 }
 
-std::map< std::string, std::string > 
-ConfigurationManager::getIp2IpDetails(void)
+std::map< std::string, std::string >
+ConfigurationManager::getIp2IpDetails (void)
 {
 
-  std::map<std::string, std::string> ip2ipAccountDetails;
-  
-  ip2ipAccountDetails.insert(std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, Manager::instance().getConfigString(IP2IP_PROFILE, SRTP_KEY_EXCHANGE)));
-  ip2ipAccountDetails.insert(std::pair<std::string, std::string> (SRTP_ENABLE, Manager::instance().getConfigString(IP2IP_PROFILE, SRTP_ENABLE)));
-  ip2ipAccountDetails.insert(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_DISPLAY_SAS)));
-  ip2ipAccountDetails.insert(std::pair<std::string, std::string> (ZRTP_HELLO_HASH, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_HELLO_HASH)));
-  ip2ipAccountDetails.insert(std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
-  ip2ipAccountDetails.insert(std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString(IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
-  
-  std::map<std::string, std::string> tlsSettings;
-  tlsSettings = getTlsSettings(IP2IP_PROFILE);
-  std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
-  
-  return ip2ipAccountDetails;
-  
+    std::map<std::string, std::string> ip2ipAccountDetails;
+
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_KEY_EXCHANGE)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_ENABLE, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_ENABLE)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_HELLO_HASH, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_HELLO_HASH)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
+
+    std::map<std::string, std::string> tlsSettings;
+    tlsSettings = getTlsSettings (IP2IP_PROFILE);
+    std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (ip2ipAccountDetails, ip2ipAccountDetails.end()));
+
+    return ip2ipAccountDetails;
+
 }
 
-void 
-ConfigurationManager::setIp2IpDetails(const std::map< std::string, std::string >& details )
+void
+ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string >& details)
 {
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
-    
-    it = map_cpy.find(SRTP_ENABLE);
+
+    it = map_cpy.find (SRTP_ENABLE);
+
     if (it != details.end()) {
-        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_ENABLE, it->second); 
+        Manager::instance().setConfig (IP2IP_PROFILE, SRTP_ENABLE, it->second);
     }
-    
-    it = map_cpy.find(SRTP_KEY_EXCHANGE);
+
+    it = map_cpy.find (SRTP_KEY_EXCHANGE);
+
     if (it != details.end()) {
-        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE, it->second); 
+        Manager::instance().setConfig (IP2IP_PROFILE, SRTP_KEY_EXCHANGE, it->second);
     }
-        
-    it = map_cpy.find(ZRTP_DISPLAY_SAS);
+
+    it = map_cpy.find (ZRTP_DISPLAY_SAS);
+
     if (it != details.end()) {
-        Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_DISPLAY_SAS, it->second); 
+        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_DISPLAY_SAS, it->second);
     }
-    it = map_cpy.find(ZRTP_NOT_SUPP_WARNING);
+
+    it = map_cpy.find (ZRTP_NOT_SUPP_WARNING);
+
     if (it != details.end()) {
-        Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING, it->second); 
+        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING, it->second);
     }
-    it = map_cpy.find(ZRTP_HELLO_HASH);
+
+    it = map_cpy.find (ZRTP_HELLO_HASH);
+
     if (it != details.end()) {
-        Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_HELLO_HASH, it->second); 
+        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_HELLO_HASH, it->second);
     }
-    it = map_cpy.find(ZRTP_DISPLAY_SAS_ONCE);
+
+    it = map_cpy.find (ZRTP_DISPLAY_SAS_ONCE);
+
     if (it != details.end()) {
-        Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE, it->second); 
+        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE, it->second);
     }
-                        
-    setTlsSettings(IP2IP_PROFILE, details);
-        
+
+    setTlsSettings (IP2IP_PROFILE, details);
+
     Manager::instance().saveConfig();
-    
+
     // Update account details to the client side
     accountsChanged();
 
 }
 
-std::map< std::string, std::string > 
-ConfigurationManager::getTlsSettings(const std::string& section)
+std::map< std::string, std::string >
+ConfigurationManager::getTlsSettings (const std::string& section)
 {
-    std::map<std::string, std::string> tlsSettings;   
-   tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_ENABLE, Manager::instance().getConfigString(section, TLS_ENABLE)));           
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_CA_LIST_FILE, Manager::instance().getConfigString(section, TLS_CA_LIST_FILE)));
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_CERTIFICATE_FILE, Manager::instance().getConfigString(section, TLS_CERTIFICATE_FILE)));
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_PRIVATE_KEY_FILE, Manager::instance().getConfigString(section, TLS_PRIVATE_KEY_FILE)));
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_PASSWORD, Manager::instance().getConfigString(section, TLS_PASSWORD)));
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_METHOD, Manager::instance().getConfigString(section, TLS_METHOD)));
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_CIPHERS, Manager::instance().getConfigString(section, TLS_CIPHERS)));
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_SERVER_NAME, Manager::instance().getConfigString(section, TLS_SERVER_NAME)));
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_VERIFY_SERVER, Manager::instance().getConfigString(section, TLS_VERIFY_SERVER)));    
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_VERIFY_CLIENT, Manager::instance().getConfigString(section, TLS_VERIFY_CLIENT)));    
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_REQUIRE_CLIENT_CERTIFICATE, Manager::instance().getConfigString(section, TLS_REQUIRE_CLIENT_CERTIFICATE)));    
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_NEGOTIATION_TIMEOUT_SEC, Manager::instance().getConfigString(section, TLS_NEGOTIATION_TIMEOUT_SEC)));    
-    tlsSettings.insert(std::pair<std::string, std::string> 
-        (TLS_NEGOTIATION_TIMEOUT_MSEC, Manager::instance().getConfigString(section, TLS_NEGOTIATION_TIMEOUT_MSEC)));    
-    return tlsSettings;        
+    std::map<std::string, std::string> tlsSettings;
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_ENABLE, Manager::instance().getConfigString (section, TLS_ENABLE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_CA_LIST_FILE, Manager::instance().getConfigString (section, TLS_CA_LIST_FILE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_CERTIFICATE_FILE, Manager::instance().getConfigString (section, TLS_CERTIFICATE_FILE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_PRIVATE_KEY_FILE, Manager::instance().getConfigString (section, TLS_PRIVATE_KEY_FILE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_PASSWORD, Manager::instance().getConfigString (section, TLS_PASSWORD)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_METHOD, Manager::instance().getConfigString (section, TLS_METHOD)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_CIPHERS, Manager::instance().getConfigString (section, TLS_CIPHERS)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_SERVER_NAME, Manager::instance().getConfigString (section, TLS_SERVER_NAME)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_VERIFY_SERVER, Manager::instance().getConfigString (section, TLS_VERIFY_SERVER)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_VERIFY_CLIENT, Manager::instance().getConfigString (section, TLS_VERIFY_CLIENT)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_REQUIRE_CLIENT_CERTIFICATE, Manager::instance().getConfigString (section, TLS_REQUIRE_CLIENT_CERTIFICATE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_NEGOTIATION_TIMEOUT_SEC, Manager::instance().getConfigString (section, TLS_NEGOTIATION_TIMEOUT_SEC)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_NEGOTIATION_TIMEOUT_MSEC, Manager::instance().getConfigString (section, TLS_NEGOTIATION_TIMEOUT_MSEC)));
+    return tlsSettings;
 }
 
-void 
-ConfigurationManager::setTlsSettings(const std::string& section, const std::map< std::string, std::string >& details )
+void
+ConfigurationManager::setTlsSettings (const std::string& section, const std::map< std::string, std::string >& details)
 {
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
-    
-    it = map_cpy.find(TLS_ENABLE);
+
+    it = map_cpy.find (TLS_ENABLE);
+
     if (it != details.end()) {
-        Manager::instance().setConfig(section, TLS_ENABLE, it->second); 
+        Manager::instance().setConfig (section, TLS_ENABLE, it->second);
     }
-    it = map_cpy.find(TLS_CA_LIST_FILE);
+
+    it = map_cpy.find (TLS_CA_LIST_FILE);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_CA_LIST_FILE, it->second); 
+        Manager::instance().setConfig (section, TLS_CA_LIST_FILE, it->second);
     }
-    it = map_cpy.find(TLS_CERTIFICATE_FILE);
+
+    it = map_cpy.find (TLS_CERTIFICATE_FILE);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_CERTIFICATE_FILE, it->second); 
+        Manager::instance().setConfig (section, TLS_CERTIFICATE_FILE, it->second);
     }
-    it = map_cpy.find(TLS_PRIVATE_KEY_FILE);
+
+    it = map_cpy.find (TLS_PRIVATE_KEY_FILE);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_PRIVATE_KEY_FILE, it->second); 
+        Manager::instance().setConfig (section, TLS_PRIVATE_KEY_FILE, it->second);
     }
-    it = map_cpy.find(TLS_PASSWORD);
+
+    it = map_cpy.find (TLS_PASSWORD);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_PASSWORD, it->second); 
+        Manager::instance().setConfig (section, TLS_PASSWORD, it->second);
     }
-    it = map_cpy.find(TLS_METHOD);
+
+    it = map_cpy.find (TLS_METHOD);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_METHOD, it->second); 
+        Manager::instance().setConfig (section, TLS_METHOD, it->second);
     }
-    it = map_cpy.find(TLS_CIPHERS);
+
+    it = map_cpy.find (TLS_CIPHERS);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_CIPHERS, it->second); 
+        Manager::instance().setConfig (section, TLS_CIPHERS, it->second);
     }
-    it = map_cpy.find(TLS_SERVER_NAME);
+
+    it = map_cpy.find (TLS_SERVER_NAME);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_SERVER_NAME, it->second); 
-    }                        
-   it = map_cpy.find(TLS_VERIFY_CLIENT);
-    if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_VERIFY_CLIENT, it->second); 
+        Manager::instance().setConfig (section, TLS_SERVER_NAME, it->second);
     }
-    it = map_cpy.find(TLS_REQUIRE_CLIENT_CERTIFICATE);
+
+    it = map_cpy.find (TLS_VERIFY_CLIENT);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_REQUIRE_CLIENT_CERTIFICATE, it->second); 
+        Manager::instance().setConfig (section, TLS_VERIFY_CLIENT, it->second);
     }
-    it = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_SEC);
+
+    it = map_cpy.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_NEGOTIATION_TIMEOUT_SEC, it->second); 
-    }  
-    it = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_MSEC);
+        Manager::instance().setConfig (section, TLS_REQUIRE_CLIENT_CERTIFICATE, it->second);
+    }
+
+    it = map_cpy.find (TLS_NEGOTIATION_TIMEOUT_SEC);
+
     if (it != map_cpy.end()) {
-        Manager::instance().setConfig(section, TLS_NEGOTIATION_TIMEOUT_MSEC, it->second); 
-    }             
-    
+        Manager::instance().setConfig (section, TLS_NEGOTIATION_TIMEOUT_SEC, it->second);
+    }
+
+    it = map_cpy.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_NEGOTIATION_TIMEOUT_MSEC, it->second);
+    }
+
     Manager::instance().saveConfig();
-    
+
     // Update account details to the client side
     accountsChanged();
 
@@ -231,18 +263,18 @@ ConfigurationManager::getCredential (const std::string& accountID, const int32_t
     std::stringstream streamOut;
     streamOut << index;
     credentialIndex = streamOut.str();
-    
-    std::string section = std::string("Credential") + std::string(":") + accountID + std::string(":") + credentialIndex;
-    
+
+    std::string section = std::string ("Credential") + std::string (":") + accountID + std::string (":") + credentialIndex;
+
     std::map<std::string, std::string> credentialInformation;
-    std::string username = Manager::instance().getConfigString(section, USERNAME);
-    std::string password = Manager::instance().getConfigString(section, PASSWORD);
-    std::string realm = Manager::instance().getConfigString(section, REALM);
-    
-    credentialInformation.insert(std::pair<std::string, std::string> (USERNAME, username));
-    credentialInformation.insert(std::pair<std::string, std::string> (PASSWORD, password));
-    credentialInformation.insert(std::pair<std::string, std::string> (REALM, realm));
-    
+    std::string username = Manager::instance().getConfigString (section, USERNAME);
+    std::string password = Manager::instance().getConfigString (section, PASSWORD);
+    std::string realm = Manager::instance().getConfigString (section, REALM);
+
+    credentialInformation.insert (std::pair<std::string, std::string> (USERNAME, username));
+    credentialInformation.insert (std::pair<std::string, std::string> (PASSWORD, password));
+    credentialInformation.insert (std::pair<std::string, std::string> (REALM, realm));
+
     return credentialInformation;
 }
 
@@ -260,13 +292,13 @@ ConfigurationManager::setNumberOfCredential (const std::string& accountID, const
         Manager::instance().setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, number);
     }
 }
-        
+
 void
 ConfigurationManager::setCredential (const std::string& accountID, const int32_t& index,
-        const std::map< std::string, std::string >& details)
+                                     const std::map< std::string, std::string >& details)
 {
     _debug ("ConfigurationManager::setCredential received\n");
-    Manager::instance().setCredential(accountID, index, details);
+    Manager::instance().setCredential (accountID, index, details);
 }
 
 void
@@ -343,22 +375,22 @@ ConfigurationManager::getRingtoneList()
 
 
 std::vector< std::string  >
-ConfigurationManager::getCodecList(void)
+ConfigurationManager::getCodecList (void)
 {
     _debug ("ConfigurationManager::getCodecList received\n");
     return Manager::instance().getCodecList();
 }
 
 std::vector<std::string>
-ConfigurationManager::getSupportedTlsMethod(void)
+ConfigurationManager::getSupportedTlsMethod (void)
 {
     _debug ("ConfigurationManager::getSupportedTlsMethod received\n");
     std::vector<std::string> method;
-    method.push_back("Default");
-    method.push_back("TLSv1");
-    method.push_back("SSLv2");
-    method.push_back("SSLv3");
-    method.push_back("SSLv23");    
+    method.push_back ("Default");
+    method.push_back ("TLSv1");
+    method.push_back ("SSLv2");
+    method.push_back ("SSLv3");
+    method.push_back ("SSLv23");
     return method;
 }
 
@@ -480,19 +512,19 @@ ConfigurationManager::getRecordDeviceList()
 }
 
 bool
-ConfigurationManager::isMd5CredentialHashing(void)
+ConfigurationManager::isMd5CredentialHashing (void)
 {
-    bool isEnabled = Manager::instance().getConfigBool(PREFERENCES, CONFIG_MD5HASH);
+    bool isEnabled = Manager::instance().getConfigBool (PREFERENCES, CONFIG_MD5HASH);
     return isEnabled;
 }
 
-void 
-ConfigurationManager::setMd5CredentialHashing(const bool& enabled)
+void
+ConfigurationManager::setMd5CredentialHashing (const bool& enabled)
 {
     if (enabled) {
-        Manager::instance().setConfig(PREFERENCES, CONFIG_MD5HASH, TRUE_STR);
+        Manager::instance().setConfig (PREFERENCES, CONFIG_MD5HASH, TRUE_STR);
     } else {
-        Manager::instance().setConfig(PREFERENCES, CONFIG_MD5HASH, FALSE_STR);
+        Manager::instance().setConfig (PREFERENCES, CONFIG_MD5HASH, FALSE_STR);
     }
 }
 
@@ -692,30 +724,6 @@ ConfigurationManager::setSipPort (const int32_t& portNum)
     Manager::instance().setSipPort (portNum);
 }
 
-std::string ConfigurationManager::getStunServer (void)
-{
-    _debug ("Manager received getStunServer\n") ;
-    return Manager::instance().getStunServer();
-}
-
-void ConfigurationManager::setStunServer (const std::string& server)
-{
-    _debug ("Manager received setStunServer\n") ;
-    Manager::instance().setStunServer (server);
-}
-
-void ConfigurationManager::enableStun (void)
-{
-    _debug ("Manager received enableStun\n") ;
-    Manager::instance().enableStun();
-}
-
-int32_t ConfigurationManager::isStunEnabled (void)
-{
-    _debug ("Manager received isStunEnabled\n") ;
-    return Manager::instance().isStunEnabled();
-}
-
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)
 {
     return Manager::instance().getAddressbookSettings ();
@@ -762,16 +770,17 @@ void ConfigurationManager::setHistory (const std::map <std::string, std::string>
     Manager::instance().receive_history_from_client (entries);
 }
 
-std::vector<std::string> ConfigurationManager::getAllIpInterface(void)
+std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
 {
     _debug ("ConfigurationManager::getAllIpInterface received\n");
-    
+
     std::vector<std::string> vector;
     SIPVoIPLink * sipLink = NULL;
     sipLink = SIPVoIPLink::instance ("");
+
     if (sipLink != NULL) {
         vector = sipLink->getAllIpInterface();
     }
-   
+
     return vector;
 }

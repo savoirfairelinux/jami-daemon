@@ -190,8 +190,6 @@ class IAXVoIPLink : public VoIPLink
    
     void updateAudiolayer( void ); 
 
-    void setStunServer( const std::string &server ) {};
-
   private:
 
     /* 

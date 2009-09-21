@@ -47,7 +47,7 @@ sflphoned_LDADD = \
 		@libssl_LIBS@
 
 # sflphoned_LDFLAGS= -pg -luuid
-sflphoned_LDFLAGS= -luuid
+sflphoned_LDFLAGS= $(UUID_LIBS)
 
 noinst_LTLIBRARIES = libsflphone.la
 
@@ -66,7 +66,6 @@ noinst_HEADERS = \
 		numbercleaner.h
 
 libsflphone_la_LIBADD = \
-	$(src)/libs/stund/libstun.la \
 	$(src)/libs/utilspp/libutilspp.la \
 	$(src)/libs/iax2/libiax2.la \
 	$(IAX_LIB) \

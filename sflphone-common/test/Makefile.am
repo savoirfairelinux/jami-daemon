@@ -44,7 +44,6 @@ numbercleanerTester_LDADD = \
 		@ZRTPCPP_LIBS@ \
 		@libssl_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 
 pluginmanagerTester_SOURCES = \
@@ -65,7 +64,6 @@ pluginmanagerTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 						
 hookmanagerTester_SOURCES = \
@@ -85,7 +83,6 @@ hookmanagerTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 
 audiolayerTester_SOURCES = \
@@ -106,7 +103,6 @@ audiolayerTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 
 historyTester_SOURCES = \
@@ -127,7 +123,6 @@ historyTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 
 
@@ -149,5 +144,4 @@ mainbufferTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)

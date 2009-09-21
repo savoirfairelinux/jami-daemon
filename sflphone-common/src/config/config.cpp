@@ -48,22 +48,25 @@ ConfigTree::~ConfigTree()
     }
 }
 
-void ConfigTree::addDefaultValue(const std::pair<std::string, std::string>& token, std::string section)
+void ConfigTree::addDefaultValue (const std::pair<std::string, std::string>& token, std::string section)
 {
-    _defaultValueMap.insert(token);
+    _defaultValueMap.insert (token);
+
     if (section.empty() == false) {
-        addConfigTreeItem(section, ConfigTreeItem(token.first, token.second, token.second, "string"));
+        addConfigTreeItem (section, ConfigTreeItem (token.first, token.second, token.second, "string"));
     }
 }
 
-std::string ConfigTree::getDefaultValue(const std::string& key)
+std::string ConfigTree::getDefaultValue (const std::string& key)
 {
-    _debug("Getting default value for %s\n", key.c_str());
+    _debug ("Getting default value for %s\n", key.c_str());
     std::map<std::string, std::string>::iterator it;
-    it = _defaultValueMap.find(key);
+    it = _defaultValueMap.find (key);
+
     if (it == _defaultValueMap.end()) {
-        return std::string("");
+        return std::string ("");
     }
+
     return it->second;
 }
 
@@ -142,11 +145,11 @@ ConfigTree::getConfigTreeItemValue (const std::string& section, const std::strin
 
     if (item != NULL) {
         return item->getValue();
-    } 
-       
+    }
+
     _debug ("Option doesn't exist: [%s] %s\n", section.c_str(), itemName.c_str());
-    
-    return getDefaultValue(itemName);
+
+    return getDefaultValue (itemName);
 }
 
 // throw a ConfigTreeItemException if not found
@@ -160,9 +163,10 @@ ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::st
 }
 
 bool
-ConfigTree::getConfigTreeItemBoolValue(const std::string& section, const std::string& itemName)
+ConfigTree::getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName)
 {
     std::string configItem = getConfigTreeItemValue (section, itemName);
+
     if (configItem == "true") {
         return true;
     }
@@ -222,6 +226,7 @@ ConfigTree::setConfigTreeItem (const std::string& section,
 {
 
     SectionMap::iterator iter = _sections.find (section);
+
     if (iter == _sections.end()) {
         // Not found, create section
         _sections[section] = new ItemMap;
@@ -233,18 +238,19 @@ ConfigTree::setConfigTreeItem (const std::string& section,
     if (iterItem == iter->second->end()) {
         // If not found, search in our default list to find
         // something that would fit.
-        std::string defaultValue = getDefaultValue(itemName);
+        std::string defaultValue = getDefaultValue (itemName);
         addConfigTreeItem (section, ConfigTreeItem (itemName, value, defaultValue));
-        return true;
-    } 
-
-    // Use default value if the value is empty. 
-    if (value.empty() == true) {
-        iterItem->second.setValue(getDefaultValue(itemName));
         return true;
     }
 
-    iterItem->second.setValue(value);
+    // Use default value if the value is empty.
+    if (value.empty() == true) {
+        iterItem->second.setValue (getDefaultValue (itemName));
+        return true;
+    }
+
+    iterItem->second.setValue (value);
+
     return true;
 }
 

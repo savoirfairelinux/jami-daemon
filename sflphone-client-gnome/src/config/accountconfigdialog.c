@@ -667,7 +667,6 @@ GtkWidget * create_advanced_tab(account_t **a)
 		local_address = g_hash_table_lookup(currentAccount->properties,  LOCAL_ADDRESS);
 		published_address = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_ADDRESS);
 		published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
-		published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
 		stun_enable = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_ENABLED);
 		stun_server = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_SERVER);				
 	} 
@@ -946,36 +945,13 @@ show_account_window (account_t * a)
 				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox))));				
         
 		if (strcmp(proto, "SIP") == 0) {
-			guint i, size;
-			account_t * account;
-			gchar * stun_srv;
-			gchar * stun_enable;
-			gboolean flag = FALSE;
-
-			size = account_list_get_size();
-			// If a SIP account already exists, fetch its information about STUN
-			for(i=0; i<size; i++){
-				account = account_list_get_nth(i);
-				if( strcmp(g_hash_table_lookup(account->properties, ACCOUNT_TYPE), "SIP" ) == 0 )
-				{
-					stun_srv = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_SERVER);
-					stun_enable = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_ENABLED);
-					g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER),
-							g_strdup(stun_srv));
-					g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED),
-							g_strdup(stun_enable));
-					flag = TRUE;
-					break;
-				}
-			}
-
-			// Otherwise set a default value
-			if(!flag)
-			{
-				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), (gchar*)"");
-				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), "false");
-			}
 			
+			g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
+					            g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useStunRadioButton)) ? "true":"false"));
+
+			g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), 
+					            g_strdup(gtk_entry_get_text(GTK_ENTRY(stunServerEntry))));
+
 			gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
             if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
                 g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
@@ -1002,8 +978,6 @@ show_account_window (account_t * a)
     		g_hash_table_replace(currentAccount->properties,
     				g_strdup(PUBLISHED_ADDRESS),
     				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry))));	    
-    								    								
-			preferences_dialog_set_stun_visible();
 		}
 
 	    /* Set new credentials if any */
