@@ -223,8 +223,7 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
         , _nbTryListenAddr (2)   // number of times to try to start SIP listener
         , _localExternAddress ("")
         , _localExternPort (0)
-        , _audiortp (new sfl::AudioRtpFactory())
-        ,_regPort (atoi (DEFAULT_SIP_PORT))
+        , _regPort (atoi (DEFAULT_SIP_PORT))
         , _clients (0)
 {
     // to get random number for RANDOM_PORT
@@ -391,6 +390,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pjsip_generic_string_hdr *h;
     pjsip_hdr hdr_list;
 
+    _debug("SIPVoIPLink::sendRegister()\n");
+
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
     if (account == NULL) {
@@ -444,6 +445,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     if (account->isTlsEnabled()) {
         pj_status_t status;
 
+	_debug("    sendRegister: createTlsTransport\n");
         status = createTlsTransportRetryOnFailure (id);
 
         if (status != PJ_SUCCESS) {
@@ -451,26 +453,28 @@ int SIPVoIPLink::sendRegister (AccountID id)
         }
     }
 
-	// Launch a new UDP listener/transport, using the published address
-	if (account->isStunEnabled ()) {
-		pj_status_t status;
+    // Launch a new UDP listener/transport, using the published address
+    if (account->isStunEnabled ()) {
+	pj_status_t status;
 
-		status = createAlternateUdpTransport (id);
+	_debug("    sendRegister: createAlternateUdpTransport\n");
+	status = createAlternateUdpTransport (id);
 		
-		if (status != PJ_SUCCESS) {
-			_debug ("Failed to initialize UDP transport with an extern published address for account %s\n", id.c_str());
-		}
+	if (status != PJ_SUCCESS) {
+	    _debug ("Failed to initialize UDP transport with an extern published address for account %s\n", id.c_str());
 	}
-	else
-	{
-		status = createUDPServer (id);
-		if (status != PJ_SUCCESS) {
-			_debug ("Failed to initialize UDP transport with a local address for account %s\n", id.c_str());
-		}
+    }
+    else
+    {
+	_debug("    sendRegister: createUDPServer\n");
+	status = createUDPServer (id);
+	if (status != PJ_SUCCESS) {
+	    _debug ("Failed to initialize UDP transport with a local address for account %s\n", id.c_str());
 	}
+    }
 
     _mutexSIP.enterMutex();
-
+    
     // Get the client registration information for this particular account
     regc = account->getRegistrationInfo();
     account->setRegister (true);
@@ -579,17 +583,20 @@ int SIPVoIPLink::sendRegister (AccountID id)
         _mutexSIP.leaveMutex();
         return false;
     }
-
-	// Set the appropriate transport
-	pjsip_tpselector *tp;
-	init_transport_selector (account->getAccountTransport (), &tp);
-	status = pjsip_regc_set_transport (regc, tp);
-	
-	if (status != PJ_SUCCESS) {
-		_debug ("UserAgent: Unable to set transport.\n");
-		_mutexSIP.leaveMutex ();
-		return false;
-	}
+    // _debug("before\n");
+    // _debug("account user name: %s\n", account->getAuthenticationUsername().c_str());
+    // _debug("after\n");
+    // Set the appropriate transport
+    pjsip_tpselector *tp;
+    pjsip_transport *thetransport = account->getAccountTransport();
+    init_transport_selector (account->getAccountTransport (), &tp);
+    status = pjsip_regc_set_transport (regc, tp);
+    
+    if (status != PJ_SUCCESS) {
+	_debug ("UserAgent: Unable to set transport.\n");
+	_mutexSIP.leaveMutex ();
+	return false;
+    }
 
     // Send registration request
     status = pjsip_regc_send (regc, tdata);
@@ -603,7 +610,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     _mutexSIP.leaveMutex();
 
     account->setRegistrationInfo (regc);
-
+    _debug("ok\n");
     return true;
 }
 
@@ -1866,55 +1873,81 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     pj_sockaddr_in bound_addr;
     pjsip_host_port a_name;
     char tmpIP[32];
-	pjsip_transport *transport;
+    pjsip_transport *transport;
 
-	/* 
-	 * Retrieve the account information
-	 */
-	SIPAccount * account = NULL;
-	account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
+    // pj_in_addr remote_addr;
+    pj_sockaddr_in remote_addr;
 
-	if (account == NULL) {
-		_debug ("Account is null. Returning");
-		return !PJ_SUCCESS;
-	}
+    /* 
+     * Retrieve the account information
+     */
+    SIPAccount * account = NULL;
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
+    
+    if (account == NULL) {
+	_debug ("Account is null. Returning");
+	return !PJ_SUCCESS;
+    }
 
-    _debug("Debug: createUDPServer called!\n");
+    _debug("Try to acquire transport for account host name: %s\n", (account->getHostname()).c_str());
+    pj_str_t hostname = pj_str (const_cast<char*>((account->getHostname()).c_str()));
 
-    // Init bound address to ANY
-    pj_memset (&bound_addr, 0, sizeof (bound_addr));
+    // pjsip_endpt_acquire_transport do not use the port number
+    pj_sockaddr_in_init(&remote_addr, &hostname, 0);
 
-    bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
-    bound_addr.sin_port = pj_htons ( (pj_uint16_t) _localPort);
-    bound_addr.sin_family = PJ_AF_INET;
-    pj_bzero (bound_addr.sin_zero, sizeof (bound_addr.sin_zero));
+    status = pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_UDP, &remote_addr, sizeof(remote_addr), NULL, &transport);
 
-    // Create UDP-Server (default port: 5060)
-    strcpy (tmpIP, _localExternAddress.data());
-    pj_strdup2 (_pool, &a_name.host, tmpIP);
-    a_name.port = (pj_uint16_t) _localExternPort;
+    if (status != PJ_SUCCESS)
+    {
 
-    status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
+	_debug("Debug: createUDPServer called for account %s!\n", id.c_str());
+
+	// Init bound address to ANY
+	pj_memset (&bound_addr, 0, sizeof (bound_addr));
+       
+	bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
+	bound_addr.sin_port = pj_htons ( (pj_uint16_t) _localPort);
+	bound_addr.sin_family = PJ_AF_INET;
+	pj_bzero (bound_addr.sin_zero, sizeof (bound_addr.sin_zero));
+	
+	// Create UDP-Server (default port: 5060)
+	strcpy (tmpIP, _localExternAddress.data());
+	pj_strdup2 (_pool, &a_name.host, tmpIP);
+	a_name.port = (pj_uint16_t) _localExternPort;
+
+        status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
+    }
+
+    // Get the transport manager associated with
+    // this endpoint
+    pjsip_tpmgr * tpmgr = NULL;
+
+    tpmgr = pjsip_endpt_get_tpmgr (_endpt);
+
+    _debug("number of transport: %i\n", pjsip_tpmgr_get_transport_count(tpmgr));
+    pjsip_tpmgr_dump_transports(tpmgr);
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: (%d) Unable to start UDP transport!\n", status);
+        _debug("UserAgent: (%d) Unable to start UDP transport!\n", status);
         return -1;
     } else {
-        _debug ("UserAgent: UDP server listening on port %d\n", _localExternPort);
+        _debug("UserAgent: UDP server listening on port %d\n", _localExternPort);
     }
 
     _debug ("Transport initialized successfully! \n");
 	
-	account->setAccountTransport (transport);
+    account->setAccountTransport (transport);
 
     return PJ_SUCCESS;
 }
 
-std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_transport *transport)
+std::string SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_transport *transport)
 {
     pj_str_t localAddress;
     pjsip_transport_type_e transportType;
-	pjsip_tpselector *tp_sel;
+    pjsip_tpselector *tp_sel;
+
+    _debug("SIPVoIPLink::findLocalAddressFromUri\n");
 
     // Find the transport that must be used with the given uri
     pj_str_t tmp;
@@ -1950,7 +1983,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     // this endpoint
     pjsip_tpmgr * tpmgr = NULL;
 
-    tpmgr = pjsip_endpt_get_tpmgr (_endpt);
+    tpmgr = pjsip_endpt_get_tpmgr (_endpt); 	
 
     if (tpmgr == NULL) {
         _debug ("Unexpected: Cannot get tpmgr from endpoint.\n");
@@ -1963,21 +1996,21 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
 
     pj_status_t status;
 
-	/* Init the transport selector */
-	_debug ("Transport ID: %s\n", transport->obj_name);
-	status = init_transport_selector (transport, &tp_sel);
+    /* Init the transport selector */
+    _debug ("Transport ID: %s\n", transport->obj_name);
+    status = init_transport_selector (transport, &tp_sel);
 
-	if (status == PJ_SUCCESS)
-		status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
-	else
-		status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+    if (status == PJ_SUCCESS)
+	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
+    else
+	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
 
     if (status != PJ_SUCCESS) {
         _debug ("Failed to find local address from transport\n");
         return machineName;
     }
 
-	_debug ("Local ADdress From URI: %s\n", localAddress.ptr);
+    // _debug ("Local ADdress From URI: %s\n", localAddress.ptr);
     return std::string (localAddress.ptr, localAddress.slen);
 }
 
@@ -2046,17 +2079,17 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
 
     // Find the local address (and port) based on the registered
     // transports and the transport type
-	
-	/* Init the transport selector */
-	_debug ("Transport ID: %s\n", transport->obj_name);
+    
+    /* Init the transport selector */
+    _debug ("Transport ID: %s\n", transport->obj_name);
     pj_status_t status;
 
-	status = init_transport_selector (transport, &tp_sel);
+    status = init_transport_selector (transport, &tp_sel);
 
-	if (status == PJ_SUCCESS)
-		status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
-	else
-		status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+    if (status == PJ_SUCCESS)
+	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
+    else
+	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
 
     if (status != PJ_SUCCESS) {
         _debug ("Failed to find local address from transport\n");
