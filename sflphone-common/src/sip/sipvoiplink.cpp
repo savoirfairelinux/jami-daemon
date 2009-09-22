@@ -678,7 +678,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         call->setPeerNumber (toUri);
 
 		localAddr = account->getSessionAddress ();
-        setCallAudioLocal (call, localAddr);
+        setCallAudioLocal (call, call->getLocalIp());
 
         try {
             _debug ("Creating new rtp session in newOutgoingCall\n");
@@ -1470,7 +1470,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->setPeerNumber (toUri);
         _debug ("toUri in new_ip_to_ip call %s\n", toUri.c_str());
         // Building the local SDP offer
-        call->getLocalSDP()->set_ip_address (getLocalIP());
+        call->getLocalSDP()->set_ip_address (getLocalIPAddress ());
         call->getLocalSDP()->create_initial_offer();
 
         try {
@@ -1486,9 +1486,9 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         fromUri = account->getFromUri();
 
-        std::string address = findLocalAddressFromUri (toUri, account->getAccountTransport ());
+        std::string address = findLocalAddressFromUri (toUri, _localUDPTransport);
 
-        int port = findLocalPortFromUri (toUri, account->getAccountTransport ());
+        int port = findLocalPortFromUri (toUri, _localUDPTransport);
 
         std::stringstream ss;
 
@@ -1527,6 +1527,16 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
 
         PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+
+		// Set the appropriate transport
+		pjsip_tpselector *tp;
+		init_transport_selector (_localUDPTransport, &tp);
+		status = pjsip_dlg_set_transport (dialog, tp);
+
+		if (status != PJ_SUCCESS) {
+			_debug ("Failed to set the transport for an IP call\n");
+			return status;
+		}
 
         // Associate current call in the invite session
         inv->mod_data[getModId() ] = call;
@@ -2460,7 +2470,7 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
     _audiortp->stop ();
     call->setAudioStart (false);
 
-    _debug ("Create new rtp session from handle_reinvite \n");
+    _debug ("Create new rtp session from handle_reinvite : %s:%i\n", call->getLocalIp().c_str(), call->getLocalAudioPort());
 
     try {
         _audiortp->initAudioRtpSession (call);
@@ -2962,7 +2972,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Have to do some stuff with the SDP
     // Set the codec map, IP, peer number and so on... for the SIPCall object
-    setCallAudioLocal (call, addrToUse);
+    setCallAudioLocal (call, link->getLocalIPAddress());
 
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
     call->getLocalSDP()->set_ip_address (addrToUse);
