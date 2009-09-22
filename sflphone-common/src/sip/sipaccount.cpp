@@ -1,23 +1,23 @@
 /*
- *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
- *
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+*  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
+*
+*  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+*  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+*
+*  This program is free software; you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation; either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with this program; if not, write to the Free Software
+*   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
 
 #include "sipaccount.h"
 #include "manager.h"
@@ -25,240 +25,242 @@
 #include <pwd.h>
 
 SIPAccount::SIPAccount (const AccountID& accountID)
-        : Account (accountID, "sip")
-        , _regc (NULL)
-        , _bRegister (false)
-        , _registrationExpire ("")
-        , _localIpAddress ("")
-        , _publishedIpAddress ("")
-        , _localPort (atoi (DEFAULT_SIP_PORT))
-        , _publishedPort (atoi (DEFAULT_SIP_PORT))
-        , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
-        , _resolveOnce (false)
-        , _credentialCount (0)
-        , _cred (NULL)
-        , _realm (DEFAULT_REALM)
-        , _authenticationUsername ("")
-        , _tlsSetting (NULL)
-        , _displayName ("")
+	: Account (accountID, "sip")
+	, _regc (NULL)
+	, _bRegister (false)
+	, _registrationExpire ("")
+	, _localIpAddress ("")
+	, _publishedIpAddress ("")
+	, _actualSessionAddress ("")
+	, _localPort (atoi (DEFAULT_SIP_PORT))
+	, _publishedPort (atoi (DEFAULT_SIP_PORT))
+	, _actualSessionPort (atoi (DEFAULT_SIP_PORT))
+	, _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
+	, _resolveOnce (false)
+	, _credentialCount (0)
+	, _cred (NULL)
+	, _realm (DEFAULT_REALM)
+	, _authenticationUsername ("")
+	, _tlsSetting (NULL)
+	, _displayName ("")
 {
-    /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
-    /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
-    /* The SIP library initialization is done in the SIPVoIPLink constructor */
-    /* The SIP voip link is now independant of the account ID as it can manage several SIP accounts */
-    _link = SIPVoIPLink::instance ("");
+/* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
+/* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
+/* The SIP library initialization is done in the SIPVoIPLink constructor */
+/* The SIP voip link is now independant of the account ID as it can manage several SIP accounts */
+_link = SIPVoIPLink::instance ("");
 
-    /* Represents the number of SIP accounts connected the same link */
-    dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
+/* Represents the number of SIP accounts connected the same link */
+dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
 
 }
 
 SIPAccount::~SIPAccount()
 {
-    /* One SIP account less connected to the sip voiplink */
-    dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
-    /* Delete accounts-related information */
-    _regc = NULL;
-    free (_cred);
-    free (_tlsSetting);
+/* One SIP account less connected to the sip voiplink */
+dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
+/* Delete accounts-related information */
+_regc = NULL;
+free (_cred);
+free (_tlsSetting);
 }
 
 int SIPAccount::initCredential (void)
 {
-    int credentialCount = 0;
-    credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
-    credentialCount += 1;
+int credentialCount = 0;
+credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
+credentialCount += 1;
 
-    bool md5HashingEnabled = false;
-    int dataType = 0;
-    md5HashingEnabled = Manager::instance().getConfigBool (PREFERENCES, CONFIG_MD5HASH);
-    std::string digest;
+bool md5HashingEnabled = false;
+int dataType = 0;
+md5HashingEnabled = Manager::instance().getConfigBool (PREFERENCES, CONFIG_MD5HASH);
+std::string digest;
 
-    // Create the credential array
-    pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (credentialCount));
+// Create the credential array
+pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (credentialCount));
 
-    if (cred_info == NULL) {
-        _debug ("Failed to set cred_info for account %s\n", _accountID.c_str());
-        return !SUCCESS;
-    }
+if (cred_info == NULL) {
+	_debug ("Failed to set cred_info for account %s\n", _accountID.c_str());
+	return !SUCCESS;
+}
 
-    pj_bzero (cred_info, sizeof (pjsip_cred_info) *credentialCount);
+pj_bzero (cred_info, sizeof (pjsip_cred_info) *credentialCount);
 
-    // Use authentication username if provided
+// Use authentication username if provided
 
-    if (!_authenticationUsername.empty()) {
-        cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
-    } else {
-        cred_info[0].username = pj_str (strdup (_username.c_str()));
-    }
+if (!_authenticationUsername.empty()) {
+	cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
+} else {
+	cred_info[0].username = pj_str (strdup (_username.c_str()));
+}
 
-    // Set password
-    cred_info[0].data =  pj_str (strdup (_password.c_str()));
+// Set password
+cred_info[0].data =  pj_str (strdup (_password.c_str()));
 
-    // Set realm for that credential. * by default.
-    cred_info[0].realm = pj_str (strdup (_realm.c_str()));
+// Set realm for that credential. * by default.
+cred_info[0].realm = pj_str (strdup (_realm.c_str()));
 
-    // We want to make sure that the password is really
-    // 32 characters long. Otherwise, pjsip will fail
-    // on an assertion.
-    if (md5HashingEnabled && _password.length() == 32) {
-        dataType = PJSIP_CRED_DATA_DIGEST;
-        _debug ("Setting digest \n");
-    } else {
-        dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
-    }
+// We want to make sure that the password is really
+// 32 characters long. Otherwise, pjsip will fail
+// on an assertion.
+if (md5HashingEnabled && _password.length() == 32) {
+	dataType = PJSIP_CRED_DATA_DIGEST;
+	_debug ("Setting digest \n");
+} else {
+	dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
+}
 
-    // Set the datatype
-    cred_info[0].data_type = dataType;
+// Set the datatype
+cred_info[0].data_type = dataType;
 
-    // Set the secheme
-    cred_info[0].scheme = pj_str ( (char*)"digest");
+// Set the secheme
+cred_info[0].scheme = pj_str ( (char*)"digest");
 
-    int i;
+int i;
 
-    for (i = 1; i < credentialCount; i++) {
-        std::string credentialIndex;
-        std::stringstream streamOut;
-        streamOut << i - 1;
-        credentialIndex = streamOut.str();
+for (i = 1; i < credentialCount; i++) {
+	std::string credentialIndex;
+	std::stringstream streamOut;
+	streamOut << i - 1;
+	credentialIndex = streamOut.str();
 
-        std::string section = std::string ("Credential") + std::string (":") + _accountID + std::string (":") + credentialIndex;
+	std::string section = std::string ("Credential") + std::string (":") + _accountID + std::string (":") + credentialIndex;
 
-        std::string username = Manager::instance().getConfigString (section, USERNAME);
-        std::string password = Manager::instance().getConfigString (section, PASSWORD);
-        std::string realm = Manager::instance().getConfigString (section, REALM);
+	std::string username = Manager::instance().getConfigString (section, USERNAME);
+	std::string password = Manager::instance().getConfigString (section, PASSWORD);
+	std::string realm = Manager::instance().getConfigString (section, REALM);
 
-        cred_info[i].username = pj_str (strdup (username.c_str()));
-        cred_info[i].data = pj_str (strdup (password.c_str()));
-        cred_info[i].realm = pj_str (strdup (realm.c_str()));
+	cred_info[i].username = pj_str (strdup (username.c_str()));
+	cred_info[i].data = pj_str (strdup (password.c_str()));
+	cred_info[i].realm = pj_str (strdup (realm.c_str()));
 
-        // We want to make sure that the password is really
-        // 32 characters long. Otherwise, pjsip will fail
-        // on an assertion.
+	// We want to make sure that the password is really
+	// 32 characters long. Otherwise, pjsip will fail
+	// on an assertion.
 
-        if (md5HashingEnabled && _password.length() == 32) {
-            dataType = PJSIP_CRED_DATA_DIGEST;
-            _debug ("Setting digest \n");
-        } else {
-            dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
-        }
+	if (md5HashingEnabled && _password.length() == 32) {
+		dataType = PJSIP_CRED_DATA_DIGEST;
+		_debug ("Setting digest \n");
+	} else {
+		dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
+	}
 
-        cred_info[i].data_type = dataType;
+	cred_info[i].data_type = dataType;
 
-        cred_info[i].scheme = pj_str ( (char*)"digest");
+	cred_info[i].scheme = pj_str ( (char*)"digest");
 
-        _debug ("Setting credential %d realm = %s passwd = %s username = %s data_type = %d\n", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
-    }
+	_debug ("Setting credential %d realm = %s passwd = %s username = %s data_type = %d\n", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
+}
 
-    _credentialCount = credentialCount;
+_credentialCount = credentialCount;
 
-    _cred = cred_info;
+_cred = cred_info;
 
-    return SUCCESS;
+return SUCCESS;
 }
 
 
 int SIPAccount::registerVoIPLink()
 {
-    // Init general settings
-    loadConfig();
+// Init general settings
+loadConfig();
 
-    if (_hostname.length() >= PJ_MAX_HOSTNAME) {
-        return !SUCCESS;
-    }
+if (_hostname.length() >= PJ_MAX_HOSTNAME) {
+	return !SUCCESS;
+}
 
-    // Init set of additional credentials, if supplied by the user
-    initCredential();
+// Init set of additional credentials, if supplied by the user
+initCredential();
 
-    // Init TLS settings if the user wants to use TLS
-    bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
+// Init TLS settings if the user wants to use TLS
+bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
 
-    if (tlsEnabled) {
-        _transportType = PJSIP_TRANSPORT_TLS;
-        initTlsConfiguration();
-    }
+if (tlsEnabled) {
+	_transportType = PJSIP_TRANSPORT_TLS;
+	initTlsConfiguration();
+}
 
-    // Init STUN settings for this account if the user selected it
-    bool stunEnabled = Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
+// Init STUN settings for this account if the user selected it
+bool stunEnabled = Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
 
-    if (stunEnabled) {
-        _transportType = PJSIP_TRANSPORT_START_OTHER;
-		initStunConfiguration ();
-    }
+if (stunEnabled) {
+	_transportType = PJSIP_TRANSPORT_START_OTHER;
+	initStunConfiguration ();
+}
 
-    // In our definition of the
-    // ip2ip profile (aka Direct IP Calls),
-    // no registration should be performed
-    if (_accountID != IP2IP_PROFILE) {
-        int status = _link->sendRegister (_accountID);
-        ASSERT (status , SUCCESS);
-    }
+// In our definition of the
+// ip2ip profile (aka Direct IP Calls),
+// no registration should be performed
+if (_accountID != IP2IP_PROFILE) {
+	int status = _link->sendRegister (_accountID);
+	ASSERT (status , SUCCESS);
+}
 
-    return SUCCESS;
+return SUCCESS;
 }
 
 int SIPAccount::unregisterVoIPLink()
 {
-    _debug ("unregister account %s\n" , getAccountID().c_str());
+_debug ("unregister account %s\n" , getAccountID().c_str());
 
-    if (_accountID == IP2IP_PROFILE) {
-        return true;
-    }
+if (_accountID == IP2IP_PROFILE) {
+	return true;
+}
 
-    if (_link->sendUnregister (_accountID)) {
-        setRegistrationInfo (NULL);
-        return true;
-    } else
-        return false;
+if (_link->sendUnregister (_accountID)) {
+	setRegistrationInfo (NULL);
+	return true;
+} else
+	return false;
 
 }
 
 pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
 {
-    if (method == "Default") {
-        return PJSIP_SSL_UNSPECIFIED_METHOD;
-    }
+if (method == "Default") {
+	return PJSIP_SSL_UNSPECIFIED_METHOD;
+}
 
-    if (method == "TLSv1") {
-        return PJSIP_TLSV1_METHOD;
-    }
+if (method == "TLSv1") {
+	return PJSIP_TLSV1_METHOD;
+}
 
-    if (method == "SSLv2") {
-        return PJSIP_SSLV2_METHOD;
-    }
+if (method == "SSLv2") {
+	return PJSIP_SSLV2_METHOD;
+}
 
-    if (method == "SSLv3") {
-        return PJSIP_SSLV3_METHOD;
-    }
+if (method == "SSLv3") {
+	return PJSIP_SSLV3_METHOD;
+}
 
-    if (method == "SSLv23") {
-        return PJSIP_SSLV23_METHOD;
-    }
+if (method == "SSLv23") {
+	return PJSIP_SSLV23_METHOD;
+}
 
-    return PJSIP_SSL_UNSPECIFIED_METHOD;
+return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
 void SIPAccount::initTlsConfiguration (void)
 {
-    /*
-     * Initialize structure to zero
-     */
-    _tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
+/*
+	* Initialize structure to zero
+	*/
+_tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
 
-    assert (_tlsSetting);
+assert (_tlsSetting);
 
-    pjsip_tls_setting_default (_tlsSetting);
+pjsip_tls_setting_default (_tlsSetting);
 
-    std::string tlsCaListFile = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
-    std::string tlsCertificateFile = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
-    std::string tlsPrivateKeyFile = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
-    std::string tlsPassword = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
-    std::string tlsMethod = Manager::instance().getConfigString (_accountID, TLS_METHOD);
-    std::string tlsCiphers = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
-    std::string tlsServerName = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
-    bool tlsVerifyServer = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
-    bool tlsVerifyClient = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
-    bool tlsRequireClientCertificate = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
+std::string tlsCaListFile = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
+std::string tlsCertificateFile = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
+std::string tlsPrivateKeyFile = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
+std::string tlsPassword = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
+std::string tlsMethod = Manager::instance().getConfigString (_accountID, TLS_METHOD);
+std::string tlsCiphers = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
+std::string tlsServerName = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
+bool tlsVerifyServer = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
+bool tlsVerifyClient = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
+bool tlsRequireClientCertificate = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
     std::string tlsNegotiationTimeoutSec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_SEC);
     std::string tlsNegotiationTimeoutMsec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_MSEC);
 
@@ -326,10 +328,12 @@ void SIPAccount::loadConfig()
     std::string publishedPort = Manager::instance().getConfigString (_accountID, PUBLISHED_PORT);
 
     _localPort = atoi (localPort.c_str());
+    _actualSessionPort = _localPort;
 
     _publishedPort = atoi (publishedPort.c_str());
 
     _localIpAddress = Manager::instance().getConfigString (_accountID, LOCAL_ADDRESS);
+	_actualSessionAddress = _localIpAddress;
 
     _publishedIpAddress = Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS);
 

@@ -253,6 +253,15 @@ class SIPAccount : public Account
 
 		inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
 
+		inline std::string getSessionAddress () { return _actualSessionAddress; }
+
+		inline void setSessionAddress (std::string addr) { _actualSessionAddress = addr; }
+		
+		inline pj_uint16_t getSessionPort () { return _actualSessionPort; }
+
+		inline void setSessionPort (pj_uint16_t port) { _actualSessionPort = port; }
+
+
     private: 
 
         /* Maps a string description of the SSL method 
@@ -336,6 +345,11 @@ class SIPAccount : public Account
         
         // Display Name that can be used in  SIP URI.        
         std::string _displayName;        
+
+		// The actual address we use in the SDP to be contacted
+		// it needs to be per account, otherwise the same address is used for every account
+		std::string _actualSessionAddress;
+		pj_uint16_t _actualSessionPort;
 };
 
 #endif
