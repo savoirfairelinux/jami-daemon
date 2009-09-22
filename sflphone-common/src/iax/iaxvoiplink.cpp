@@ -539,6 +539,8 @@ IAXVoIPLink::peerHungup (const CallID& id)
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
 
+    audiolayer->getMainBuffer()->unBindAll(call->getCallId());
+
     _mutexIAX.enterMutex();
 
     _mutexIAX.leaveMutex();
@@ -564,6 +566,8 @@ IAXVoIPLink::onhold (const CallID& id)
 
     CHK_VALID_CALL;
 
+    audiolayer->getMainBuffer()->unBindAll(call->getCallId());
+
     //if (call->getState() == Call::Hold) { _debug("Call is already on hold\n"); return false; }
 
     _mutexIAX.enterMutex();
@@ -580,6 +584,8 @@ IAXVoIPLink::offhold (const CallID& id)
     IAXCall* call = getIAXCall (id);
 
     CHK_VALID_CALL;
+
+    Manager::instance().addStream(call->getCallId());
 
     //if (call->getState() == Call::Active) { _debug("Call is already active\n"); return false; }
     _mutexIAX.enterMutex();
