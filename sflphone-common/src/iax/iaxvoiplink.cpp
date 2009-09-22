@@ -475,6 +475,8 @@ IAXVoIPLink::answer (const CallID& id)
     IAXCall* call = getIAXCall (id);
     call->setCodecMap (Manager::instance().getCodecDescriptorMap());
 
+    Manager::instance().addStream(call->getCallId());
+
     CHK_VALID_CALL;
 
     _mutexIAX.enterMutex();
@@ -496,6 +498,9 @@ IAXVoIPLink::hangup (const CallID& id)
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
+
+    audiolayer->getMainBuffer()->unBindAll(call->getCallId());
+
     _mutexIAX.enterMutex();
 
     iax_hangup (call->getSession(), (char*) reason.c_str());
