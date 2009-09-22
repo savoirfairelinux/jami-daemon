@@ -207,6 +207,8 @@ IAXVoIPLink::getEvent()
     _mutexIAX.enterMutex();
     iax_event* event = NULL;
 
+    
+
     while ( (event = iax_get_event (IAX_NONBLOCKING)) != NULL) {
         // If we received an 'ACK', libiax2 tells apps to ignore them.
         if (event->etype == IAX_EVENT_NULL) {
@@ -238,7 +240,7 @@ IAXVoIPLink::getEvent()
 
 
     if (call) {
-        call->recAudio.recData (spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
+         call->recAudio.recData (spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
     }
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
@@ -250,8 +252,8 @@ IAXVoIPLink::getEvent()
     }
 
     // reinitialize speaker buffer for recording (when recording a voice mail)
-    for (int i = 0; i < nbSampleForRec_; i++)
-        spkrDataConverted[i] = 0;
+    // for (int i = 0; i < nbSampleForRec_; i++)
+    //     spkrDataConverted[i] = 0;
 
 
     // thread wait 3 millisecond
