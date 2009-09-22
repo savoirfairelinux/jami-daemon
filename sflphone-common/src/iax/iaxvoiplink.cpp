@@ -630,11 +630,19 @@ IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 std::string
 IAXVoIPLink::getCurrentCodecName()
 {
-    IAXCall *call = getIAXCall (Manager::instance().getCurrentCallId());
+    IAXCall *call = NULL;
+    AudioCodec *ac = NULL;
+    std::string name = "";
 
-    AudioCodec *ac = call->getCodecMap().getCodec (call->getAudioCodec());
+    call = getIAXCall (Manager::instance().getCurrentCallId());
 
-    return ac->getCodecName();
+    if(call)
+	ac = call->getCodecMap().getCodec (call->getAudioCodec());
+
+    if(ac)
+	name = ac->getCodecName();
+    
+    return name;
 }
 
 
