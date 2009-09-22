@@ -271,6 +271,8 @@ IAXVoIPLink::sendAudioFromMic (void)
     AudioCodec *ac;
     IAXCall *currentCall;
 
+
+    
     // We have to update the audio layer type in case we switched
     // TODO Find out a better way to do it
     updateAudiolayer();
@@ -278,9 +280,13 @@ IAXVoIPLink::sendAudioFromMic (void)
     currentCall = getIAXCall (Manager::instance().getCurrentCallId());
 
     if (!currentCall) {
+
+
         // Let's mind our own business.
         return;
     }
+
+    
 
     if (currentCall -> getAudioCodec() < 0)
         return;
@@ -307,8 +313,12 @@ IAXVoIPLink::sendAudioFromMic (void)
         return;
     }
 
+    
+
     // Send sound here
     if (audiolayer) {
+
+	
 
         // we have to get 20ms of data from the mic *20/1000 = /50
         // rate/50 shall be lower than IAX__20S_48KHZ_MAX
@@ -329,6 +339,8 @@ IAXVoIPLink::sendAudioFromMic (void)
 
         // Get bytes from micRingBuffer to data_from_mic
         nbSample_ = audiolayer->getMainBuffer()->getData (micData, bytesAvail, 100, currentCall->getCallId()) / sizeof (SFLDataFormat);
+
+	
 
         // Store the number of samples for recording
         nbSampleForRec_ = nbSample_;
@@ -526,6 +538,7 @@ IAXVoIPLink::peerHungup (const CallID& id)
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
+
     _mutexIAX.enterMutex();
 
     _mutexIAX.leaveMutex();
@@ -769,6 +782,9 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
         case IAX_EVENT_ANSWER:
 
             if (call->getConnectionState() != Call::Connected) {
+
+		Manager::instance().addStream(call->getCallId());
+
                 call->setConnectionState (Call::Connected);
                 call->setState (Call::Active);
                 audiolayer->startStream();
@@ -850,6 +866,8 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
     int expandedSize, nbSample_;
     AudioCodec *ac;
 
+
+    
     // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
     // were triggered
 
@@ -859,7 +877,8 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         return;
     }
 
-    if (audiolayer) {
+    if (audiolayer) {	
+
         // On-the-fly codec changing (normally, when we receive a full packet)
         // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
         // - subclass holds the voiceformat property.
@@ -999,6 +1018,8 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             _debug ("> IAX_EVENT_CONNECT (receive)\n");
 
             id = Manager::instance().getNewCallID();
+
+	    _debug("-------------------------------------------------------------- callid %s", id.c_str());
 
             call = new IAXCall (id, Call::Incoming);
 
