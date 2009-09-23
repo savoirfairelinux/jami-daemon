@@ -27,11 +27,7 @@
       <stop
          id="stop4910"
          offset="0"
-<<<<<<< HEAD:sflphone-client-gnome/pixmaps/usersActive.svg
-         style="stop-color:#0000ff;stop-opacity:1;" />
-=======
          style="stop-color:#ff0000;stop-opacity:1;" />
->>>>>>> master:sflphone-client-gnome/pixmaps/usersActive.svg
       <stop
          id="stop4912"
          offset="1"
@@ -533,20 +529,6 @@
        fx="29.922075"
        fy="17.727694"
        r="17.986025" />
-<<<<<<< HEAD:sflphone-client-gnome/pixmaps/usersActive.svg
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient4908"
-       id="radialGradient2486"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(0.558489,0,-1.377346e-8,0.563387,14.87134,4.364123)"
-       cx="29.922075"
-       cy="17.727694"
-       fx="29.922075"
-       fy="17.727694"
-       r="17.986025" />
-=======
->>>>>>> master:sflphone-client-gnome/pixmaps/usersActive.svg
   </defs>
   <sodipodi:namedview
      inkscape:showpageshadow="false"
@@ -559,27 +541,16 @@
      inkscape:zoom="8"
      inkscape:cx="31.452526"
      inkscape:cy="23.601838"
-<<<<<<< HEAD:sflphone-client-gnome/pixmaps/usersActive.svg
-     inkscape:current-layer="g5058"
-=======
      inkscape:current-layer="layer2"
->>>>>>> master:sflphone-client-gnome/pixmaps/usersActive.svg
      showgrid="true"
      inkscape:grid-bbox="true"
      inkscape:document-units="px"
      fill="#9db029"
      stroke="#727e0a"
-<<<<<<< HEAD:sflphone-client-gnome/pixmaps/usersActive.svg
      inkscape:window-width="1910"
      inkscape:window-height="1003"
      inkscape:window-x="0"
      inkscape:window-y="143" />
-=======
-     inkscape:window-width="1920"
-     inkscape:window-height="1003"
-     inkscape:window-x="0"
-     inkscape:window-y="25" />
->>>>>>> master:sflphone-client-gnome/pixmaps/usersActive.svg
   <metadata
      id="metadata4">
     <rdf:RDF>
