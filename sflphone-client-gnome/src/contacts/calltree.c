@@ -908,12 +908,15 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	{
 	    case CONFERENCE_STATE_ACTIVE_ATACHED:
 	    {
-		pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersActive.svg", NULL);
+		
+		pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
 	        break;
 	    }
             case CONFERENCE_STATE_ACTIVE_DETACHED:
             case CONFERENCE_STATE_HOLD:
 	    {
+
+		
 	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
 	        break;
 	    }
@@ -927,9 +930,6 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         WARN ("Conferences cannot be added in this widget - This is a bug in the application.");
     }
 
-    
-
-    DEBUG("PIXWITH: %i\n", gdk_pixbuf_get_width(pixbuf));
     //Resize it
     if(pixbuf)
     {
@@ -938,8 +938,12 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
             pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
         }
     }
+    else 
+    {
+	DEBUG("Error no pixbuff for conference from %s", ICONS_DIR);
+    }
 
-    /*
+    
     conf->_conference_secured = TRUE;
 
     if(participant)
@@ -968,7 +972,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
     }
 
-    */
+    DEBUG("add conference to tree store");
     
     gtk_tree_store_set(tab->store, &iter,
             0, pixbuf, // Icon
@@ -976,6 +980,8 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	    2, pixbuf_security,
 	    3, conf, // Pointer
             -1);
+
+    DEBUG("add conference to tree store");
 
     
     if (pixbuf != NULL)
