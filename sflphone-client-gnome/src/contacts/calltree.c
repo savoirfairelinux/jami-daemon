@@ -909,7 +909,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	    case CONFERENCE_STATE_ACTIVE_ATACHED:
 	    {
 		
-		pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
+		pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/usersActive.svg", NULL);
 	        break;
 	    }
             case CONFERENCE_STATE_ACTIVE_DETACHED:
