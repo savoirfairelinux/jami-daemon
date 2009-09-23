@@ -466,15 +466,17 @@ int SIPVoIPLink::sendRegister (AccountID id)
 	if (status != PJ_SUCCESS) {
 	    _debug ("Failed to initialize UDP transport with an extern published address for account %s\n", id.c_str());
 	}
-	else
-	{
-		status = createUDPServer (id);
-		if (status != PJ_SUCCESS) {
-			_debug ("Failed to initialize UDP transport with a local address for account %s\n. Try to use the local UDT transport", id.c_str());
-			account->setAccountTransport (_localUDPTransport);
-		}
+    }
+    else
+    {
+	
+	status = createUDPServer (id);
+	if (status != PJ_SUCCESS) {
+	    _debug ("Failed to initialize UDP transport with a local address for account %s\n. Try to use the local UDT transport", id.c_str());
+	    account->setAccountTransport (_localUDPTransport);
 	}
     }
+    
 
     _mutexSIP.enterMutex();
     
@@ -586,12 +588,9 @@ int SIPVoIPLink::sendRegister (AccountID id)
         _mutexSIP.leaveMutex();
         return false;
     }
-    // _debug("before\n");
-    // _debug("account user name: %s\n", account->getAuthenticationUsername().c_str());
-    // _debug("after\n");
-    // Set the appropriate transport
+    
     pjsip_tpselector *tp;
-    pjsip_transport *thetransport = account->getAccountTransport();
+
     init_transport_selector (account->getAccountTransport (), &tp);
     status = pjsip_regc_set_transport (regc, tp);
     
@@ -1229,7 +1228,6 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     pjsip_inv_session *inv;
     pjsip_dialog *dialog;
     pjsip_tx_data *tdata;
-	pjsip_transport *transport;
 
     AccountID id;
 
@@ -1702,7 +1700,7 @@ bool SIPVoIPLink::pjsip_init()
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (AccountNULL));
 
     if (account == NULL) {
-        _debug ("Account is null");
+        _debug ("Account is null in pjsip init\n");
     } else {
         directIpCallsTlsEnabled = account->isTlsEnabled();
     }
@@ -1849,7 +1847,7 @@ pj_status_t SIPVoIPLink::stunServerResolve (AccountID id)
 	account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
 	if (account == NULL) {
-		_debug ("stunServerResolve: Account is null. Returning");
+		_debug ("stunServerResolve: Account is null. Returning\n");
 		return !PJ_SUCCESS;
 	}
 	// Get the STUN server name and port
@@ -1897,9 +1895,6 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     char tmpIP[32];
     pjsip_transport *transport;
 
-    // pj_in_addr remote_addr;
-    pj_sockaddr_in remote_addr;
-
 
     /* 
      * Retrieve the account information
@@ -1907,41 +1902,34 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     SIPAccount * account = NULL;
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
-	// Set information to the local address and port
-	if (account == NULL) {
-		// We are trying to initialize a UDP transport available for all local accounts and direct IP calls
-		_debug ("Account is null.");
-		_localExternAddress = _localIPAddress;
-		_localExternPort = _localPort;
-	}
-	else
-	{
-		_localExternAddress = account->getSessionAddress ();
-		_localExternPort = account->getSessionPort ();
-	}
-
-
-
-    if (status != PJ_SUCCESS)
-    {
-
-	_debug("Debug: createUDPServer called for account %s!\n", id.c_str());
-
-	// Init bound address to ANY
-	pj_memset (&bound_addr, 0, sizeof (bound_addr));
-       
-	bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
-	bound_addr.sin_port = pj_htons ( (pj_uint16_t) _localPort);
-	bound_addr.sin_family = PJ_AF_INET;
-	pj_bzero (bound_addr.sin_zero, sizeof (bound_addr.sin_zero));
-	
-	// Create UDP-Server (default port: 5060)
-	strcpy (tmpIP, _localExternAddress.data());
-	pj_strdup2 (_pool, &a_name.host, tmpIP);
-	a_name.port = (pj_uint16_t) _localExternPort;
-
-        status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
+    // Set information to the local address and port
+    if (account == NULL) {
+    // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
+	_debug ("Account is null in createUDPServer.\n");
+	_localExternAddress = _localIPAddress;
+	_localExternPort = _localPort;
     }
+    else
+    {
+	_localExternAddress = account->getSessionAddress ();
+	_localExternPort = account->getSessionPort ();
+    }
+
+    // Init bound address to ANY
+    pj_memset (&bound_addr, 0, sizeof (bound_addr));
+       
+    bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
+    bound_addr.sin_port = pj_htons ( (pj_uint16_t) _localPort);
+    bound_addr.sin_family = PJ_AF_INET;
+    pj_bzero (bound_addr.sin_zero, sizeof (bound_addr.sin_zero));
+	
+    // Create UDP-Server (default port: 5060)
+    strcpy (tmpIP, _localExternAddress.data());
+    pj_strdup2 (_pool, &a_name.host, tmpIP);
+    a_name.port = (pj_uint16_t) _localExternPort;
+    
+    status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
+    
 
     // Get the transport manager associated with
     // this endpoint
@@ -2159,7 +2147,7 @@ pj_status_t SIPVoIPLink::createTlsTransportRetryOnFailure (AccountID id)
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
         if (account == NULL) {
-            _debug ("createTlsTransportRetryOnFailure: Account is null. Returning");
+            _debug ("createTlsTransportRetryOnFailure: Account is null. Returning\n");
             return !PJ_SUCCESS;
         }
 
@@ -2197,7 +2185,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
     if (account == NULL) {
-        _debug ("Account is null. Returning");
+        _debug ("Account is null. Returning\n");
         return !PJ_SUCCESS;
     }
 
@@ -2282,7 +2270,7 @@ pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
     if (account == NULL) {
-        _debug ("Account is null. Returning");
+        _debug ("Account is null. Returning\n");
         return !PJ_SUCCESS;
     }
 
@@ -3663,7 +3651,7 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
 
     int i;
 
-    for (i = 0; i < addrCnt; i++) {
+    for (i = 0; i < (int)addrCnt; i++) {
         char tmpAddr[PJ_INET_ADDRSTRLEN];
         pj_sockaddr_print (&addrList[i], tmpAddr, sizeof (tmpAddr), 0);
         ifaceList.push_back (std::string (tmpAddr));
