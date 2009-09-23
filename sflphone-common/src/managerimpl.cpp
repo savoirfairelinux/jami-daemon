@@ -804,7 +804,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 	return;
 
 
-    /*
+    
     // unbind main participant from conference
     _audiodriver->getMainBuffer()->unBindAll(default_id);
 
@@ -818,7 +818,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 	// switchCall("");	
 	_audiodriver->getMainBuffer()->bindCallID(*iter_p, default_id);
     }
-    */
+    
 
     
 
@@ -1310,6 +1310,8 @@ ManagerImpl::removeParticipant(const CallID& call_id)
 void
 ManagerImpl::processRemainingParticipant(CallID current_call_id, Conference *conf)
 {
+
+    _debug("ManagerImpl::processRemainingParticipant()\n");
 
     if(conf->getNbParticipants() > 1)
     {

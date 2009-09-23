@@ -1283,7 +1283,11 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 		sflphone_detach_participant(selected_call_id);
 
 		if(selected_call != NULL && dragged_conf != NULL)
+		{
+		    DEBUG("Adding a participant, since dragged call on a conference");
+	  
 		    sflphone_add_participant(selected_call_id, dragged_call_id);
+		}
 	    }
 	    else
 	    {
@@ -1395,6 +1399,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
 		dragged_call_id = "NULL";
 		dragged_call = NULL;
+		dragged_conf = NULL;
                 g_print("    AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
 
@@ -1419,6 +1424,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
 		dragged_call_id = "NULL";
 		dragged_call = NULL;
+		dragged_conf = NULL;
                 g_print("    BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
                 break;
 
