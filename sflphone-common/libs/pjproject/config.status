@@ -337,7 +337,7 @@ Copyright (C) 2006 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/emilou/git-repos/sflphone/sflphone-common/libs/pjproject'
+ac_pwd='/home/alexandresavard/Development/sflphone/sflphone-common/libs/pjproject'
 srcdir='.'
 # If no file are specified by the user, then we need to provide default
 # value.  By we need to know if files were specified by the user.
@@ -530,17 +530,17 @@ s,@LIBS@,|#_!!_#|-lm -luuid -lnsl -lrt -lpthread  -lasound -lssl -lcrypto,g
 s,@build_alias@,|#_!!_#|,g
 s,@host_alias@,|#_!!_#|,g
 s,@target_alias@,|#_!!_#|,g
-s,@build@,|#_!!_#|x86_64-unknown-linux-gnu,g
-s,@build_cpu@,|#_!!_#|x86_64,g
-s,@build_vendor@,|#_!!_#|unknown,g
+s,@build@,|#_!!_#|i686-pc-linux-gnu,g
+s,@build_cpu@,|#_!!_#|i686,g
+s,@build_vendor@,|#_!!_#|pc,g
 s,@build_os@,|#_!!_#|linux-gnu,g
-s,@host@,|#_!!_#|x86_64-unknown-linux-gnu,g
-s,@host_cpu@,|#_!!_#|x86_64,g
-s,@host_vendor@,|#_!!_#|unknown,g
+s,@host@,|#_!!_#|i686-pc-linux-gnu,g
+s,@host_cpu@,|#_!!_#|i686,g
+s,@host_vendor@,|#_!!_#|pc,g
 s,@host_os@,|#_!!_#|linux-gnu,g
-s,@target@,|#_!!_#|x86_64-unknown-linux-gnu,g
-s,@target_cpu@,|#_!!_#|x86_64,g
-s,@target_vendor@,|#_!!_#|unknown,g
+s,@target@,|#_!!_#|i686-pc-linux-gnu,g
+s,@target_cpu@,|#_!!_#|i686,g
+s,@target_vendor@,|#_!!_#|pc,g
 s,@target_os@,|#_!!_#|linux-gnu,g
 s,@CC@,|#_!!_#|gcc,g
 s,@CFLAGS@,|#_!!_#|-O2,g
@@ -552,7 +552,7 @@ s,@OBJEXT@,|#_!!_#|o,g
 s,@CXX@,|#_!!_#|g++,g
 s,@CXXFLAGS@,|#_!!_#|-O2 ,g
 s,@ac_ct_CXX@,|#_!!_#|g++,g
-s,@ac_pjdir@,|#_!!_#|/home/emilou/git-repos/sflphone/sflphone-common/libs/pjproject,g
+s,@ac_pjdir@,|#_!!_#|/home/alexandresavard/Development/sflphone/sflphone-common/libs/pjproject,g
 s,@ac_build_mak_vars@,|#_!!_#|,g
 s,@CPP@,|#_!!_#|gcc -E,g
 s,@GREP@,|#_!!_#|/bin/grep,g
@@ -837,8 +837,8 @@ s,^\([	 #]*\)[^	 ]*\([	 ]*HAVE_LIBPTHREAD\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*HAVE_LIBRT\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*HAVE_LIBNSL\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*HAVE_LIBUUID\)[	 (].*,\1define\2 1 ,
-s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_M_NAME\)[	 (].*,\1define\2 "x86_64" ,
-s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_POOL_ALIGNMENT\)[	 (].*,\1define\2 8 ,
+s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_M_NAME\)[	 (].*,\1define\2 "i686" ,
+s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_POOL_ALIGNMENT\)[	 (].*,\1define\2 4 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*STDC_HEADERS\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*HAVE_SYS_TYPES_H\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*HAVE_SYS_STAT_H\)[	 (].*,\1define\2 1 ,
@@ -889,7 +889,7 @@ s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_HAS_SYS_TYPES_H\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_HAS_TIME_H\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_HAS_UNISTD_H\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_HAS_NET_IF_H\)[	 (].*,\1define\2 1 ,
-s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_OS_NAME\)[	 (].*,\1define\2 "x86_64-unknown-linux-gnu" ,
+s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_OS_NAME\)[	 (].*,\1define\2 "i686-pc-linux-gnu" ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_HAS_ERRNO_VAR\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_HAS_HIGH_RES_TIMER\)[	 (].*,\1define\2 1 ,
 s,^\([	 #]*\)[^	 ]*\([	 ]*PJ_HAS_MALLOC\)[	 (].*,\1define\2 1 ,

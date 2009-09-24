@@ -14,6 +14,8 @@ SUBDIRS = codecs audiortp sound alsa pulseaudio
 libaudio_la_SOURCES = \
 		audioloop.cpp \
 		ringbuffer.cpp \
+		mainbuffer.cpp \
+		recordable.cpp \
 		audiolayer.cpp \
 		audiodevice.cpp \
 		samplerateconverter.cpp \
@@ -25,5 +27,8 @@ noinst_HEADERS = \
 		ringbuffer.h \
 		audiolayer.h \
 		audiodevice.h \
+		mainbuffer.h \
+	 	recordable.h \
 		samplerateconverter.h
+
 

@@ -40,7 +40,7 @@ class G722 : public AudioCodec
         G722 (int payload=9)
                 : AudioCodec (payload, "G722") {
             _clockRate = 16000;
-            _frameSize = 320; // samples, 10 ms at 16kHz
+            _frameSize = 320; // samples, 20 ms at 16kHz
             _channel   = 1;
             _bitrate = 64;
             _bandwidth = 80;

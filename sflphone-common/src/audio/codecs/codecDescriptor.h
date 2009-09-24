@@ -193,6 +193,12 @@ class CodecDescriptor {
      */
     AudioCodec* getFirstCodecAvailable( void );
 
+    /**
+     * Instantiate a codec, used in AudioRTP to get an instance of Codec per call
+     * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
+     */
+    AudioCodec* instantiateCodec(AudioCodecType payload);
+
   private:
 
     /**

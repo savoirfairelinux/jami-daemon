@@ -45,7 +45,7 @@ public:
   
   void setSndSamplingRate(int smplRate);
 
-  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path, std::string id);
+  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
 
   void initFileName( std::string peerNumber );
 
@@ -226,11 +226,6 @@ protected:
    * Path for this recording
    */
   std::string savePath_;
-  
-  /**
-   * Path for this recordingId for this call
-   */
-  std::string call_id_;
  
 };
 

@@ -199,6 +199,9 @@ namespace sfl {
             throw;
         }
 
+	_debug("Unbind audio RTP stream for call id %i\n", _ca->getCallId().c_str());
+	_audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
+
         delete [] _micData;
         delete [] _micDataConverted;
         delete [] _micDataEncoded;
@@ -219,6 +222,8 @@ namespace sfl {
         _micDataEncoded = new unsigned char[nbSamplesMax];
         _spkrDataConverted = new SFLDataFormat[nbSamplesMax];
         _spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
+
+	_manager->addStream(_ca->getCallId());
     }
     
     template <typename D>
@@ -237,8 +242,10 @@ namespace sfl {
     void AudioRtpSession<D>::setSessionMedia(void)
     {
         assert(_ca);
-        
-        _audiocodec = _ca->getLocalSDP()->get_session_media ();
+
+	AudioCodecType pl = (AudioCodecType)_ca->getLocalSDP()->get_session_media()->getPayload();
+	_audiocodec = _manager->getCodecDescriptorMap().instantiateCodec(pl);
+
         if (_audiocodec == NULL) {
             _debug ("No audiocodec, can't init RTP media\n");
             throw AudioRtpSessionException();
@@ -299,7 +306,7 @@ namespace sfl {
         int maxBytesToGet = computeNbByteAudioLayer (fixed_codec_framesize);
 
         // available bytes inside ringbuffer
-        int availBytesFromMic = _audiolayer->canGetMic();
+        int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
 
         // set available byte to maxByteToGet
         int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
@@ -308,7 +315,7 @@ namespace sfl {
             return 0;
 
         // Get bytes from micRingBuffer to data_from_mic
-        int nbSample = _audiolayer->getMic (_micData , bytesAvail) / sizeof (SFLDataFormat);
+        int nbSample = _audiolayer->getMainBuffer()->getData(_micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
         // nb bytes to be sent over RTP
         int compSize = 0;
@@ -347,14 +354,14 @@ namespace sfl {
                 _nSamplesSpkr = nbSample;
 
                 // put data in audio layer, size in byte
-                _audiolayer->putMain (_spkrDataConverted, nbSample * sizeof (SFLDataFormat));
+		_audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
             } else {
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
 
                 // put data in audio layer, size in byte
-                _audiolayer->putMain (_spkrDataDecoded, nbSample * sizeof (SFLDataFormat));
+                _audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
             }
 
             // Notify (with a beep) an incoming call when there is already a call

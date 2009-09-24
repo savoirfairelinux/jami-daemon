@@ -164,13 +164,13 @@ class VoIPLink {
      	* Set Recording
      	* @param id The call identifier
      	*/
-    	virtual void setRecording(const CallID& id) = 0;
+    	// virtual void setRecording(const CallID& id) = 0;
 
         /**
      	* Return recording state
      	* @param id The call identifier
      	*/
-    	virtual bool isRecording(const CallID& id) = 0;
+    	// virtual bool isRecording(const CallID& id) = 0;
 
         /**
          * Return the codec protocol used for this call 

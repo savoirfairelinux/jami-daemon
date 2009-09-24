@@ -22,7 +22,9 @@
 void AudioLayer::flushMain (void)
 {
     ost::MutexLock guard (_mutex);
-    _voiceRingBuffer.flush();
+
+    // should pass call id 
+    _mainBuffer.flush();
 }
 
 void AudioLayer::flushUrgent (void)
@@ -34,7 +36,7 @@ void AudioLayer::flushUrgent (void)
 void AudioLayer::flushMic (void)
 {
     ost::MutexLock guard (_mutex);
-    _micRingBuffer.flush();
+    _mainBuffer.flushDefault();
 }
 
 int AudioLayer::putUrgent (void* buffer, int toCopy)
@@ -53,18 +55,18 @@ int AudioLayer::putUrgent (void* buffer, int toCopy)
     return 0;
 }
 
-int AudioLayer::putMain (void *buffer, int toCopy)
+int AudioLayer::putMain (void *buffer, int toCopy, CallID call_id)
 {
     int a;
 
     ost::MutexLock guard (_mutex);
-    a = _voiceRingBuffer.AvailForPut();
+    a = _mainBuffer.availForPut(call_id);
 
     if (a >= toCopy) {
-        return _voiceRingBuffer.Put (buffer, toCopy, _defaultVolume);
+        return _mainBuffer.putData (buffer, toCopy, _defaultVolume, call_id);
     } else {
         _debug ("Chopping sound, Ouch! RingBuffer full ?\n");
-        return _voiceRingBuffer.Put (buffer, a, _defaultVolume);
+        return _mainBuffer.putData (buffer, a, _defaultVolume, call_id);
     }
 
     return 0;

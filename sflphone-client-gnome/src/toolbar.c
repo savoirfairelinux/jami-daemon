@@ -52,7 +52,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
     create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _("Voicemail"), to, &mailbox_call);
     DEBUG("TO : %s" , mailbox_call->_peer_number);
     calllist_add( current_calls , mailbox_call );
-    calltree_add_call( current_calls , mailbox_call );
+    calltree_add_call( current_calls, mailbox_call, NULL);
     update_menus();
     sflphone_place_call( mailbox_call );
     calltree_display(current_calls);
@@ -79,7 +79,7 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
             create_new_call (CALL, CALL_STATE_DIALING, "", "", "", selectedCall->_peer_number, &new_call);
 
             calllist_add(current_calls, new_call);
-            calltree_add_call(current_calls, new_call);
+            calltree_add_call(current_calls, new_call, NULL);
             sflphone_place_call(new_call);
             calltree_display (current_calls);
         }
@@ -267,7 +267,6 @@ GtkWidget *create_toolbar ()
             G_CALLBACK (rec_button), NULL);
     gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(recButton), -1);
 
-
     return ret;
 }
 
@@ -308,6 +307,7 @@ toolbar_update_buttons ()
     gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 
     callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
     if (selectedCall)
     {
         switch(selectedCall->_state)
@@ -372,6 +372,26 @@ toolbar_update_buttons ()
                 // WARN("Toolbar update - Should not happen!");
                 break;
         }
+    }
+    else if(selectedConf)
+    {
+	switch(selectedConf->_state)
+	{
+	    case CONFERENCE_STATE_ACTIVE_ATACHED:
+	        gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+	        break;
+	    case CONFERENCE_STATE_ACTIVE_DETACHED:
+		gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+		break;
+            case CONFERENCE_STATE_RECORD:
+		gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+		break;
+            case CONFERENCE_STATE_HOLD:
+		gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+		break;
+	    default:
+		break;
+	}
     }
     else
     {

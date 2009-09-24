@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2009 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  * 
  *  Portions Copyright (C) Dominic Mazzoni (Audacity)
  *                                                                              
@@ -23,7 +24,14 @@
 #ifndef __RING_BUFFER__
 #define __RING_BUFFER__
 
+#include "../call.h"
+
+#include <fstream>
+
+
 typedef unsigned char* samplePtr;
+
+typedef map<CallID, int> ReadPointer;
 
 class RingBuffer {
   public:
@@ -31,7 +39,7 @@ class RingBuffer {
      * Constructor
      * @param size  Size of the buffer to create
      */
-    RingBuffer(int size);
+    RingBuffer(int size, CallID call_id);
 
     /**
      * Destructor
@@ -42,13 +50,28 @@ class RingBuffer {
     /**
      * Reset the counters to 0
      */
-    void flush (void);
+    void flush (CallID call_id = default_id);
+
+
+    int getReadPointer(CallID call_id = default_id);
+
+    int getSmallestReadPointer();
+
+    void storeReadPointer(int pointer_value, CallID call_id = default_id);
+
+    void createReadPointer(CallID call_id = default_id);
+
+    void removeReadPointer(CallID call_id = default_id);
+
+    bool hasThisReadPointer(CallID call_id);
+
+    int getNbReadPointer();
 
     /**
      * To get how much space is available in the buffer to write in
      * @return int The available size
      */
-    int AvailForPut (void) const;
+    int AvailForPut (void);
 
     /**
      * Write data in the ring buffer
@@ -63,7 +86,7 @@ class RingBuffer {
      * To get how much space is available in the buffer to read in
      * @return int The available size
      */
-    int AvailForGet (void) const;
+    int AvailForGet (CallID call_id = default_id);
 
     /**
      * Get data in the ring buffer
@@ -72,20 +95,22 @@ class RingBuffer {
      * @param volume The volume
      * @return int Number of bytes copied
      */
-    int Get (void* buffer, int toCopy, unsigned short volume = 100);
+    int Get (void* buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 
     /**
      * Discard data from the buffer
      * @param toDiscard Number of bytes to discard
      * @return int Number of bytes discarded 
      */
-    int Discard(int toDiscard);
+    int Discard(int toDiscard, CallID call_id = default_id);
 
     /**
      * Total length of the ring buffer
      * @return int  
      */
-    int Len() const;
+    int putLen();
+
+    int getLen(CallID call_id = default_id);
     
     /**
      * Debug function print mEnd, mStart, mBufferSize
@@ -100,13 +125,28 @@ class RingBuffer {
     RingBuffer& operator=(const RingBuffer& rh);
 
     /** Pointer on the first data */
-    int           mStart;
+    // int           mStart;
     /** Pointer on the last data */
     int           mEnd;
     /** Buffer size */
     int           mBufferSize;
     /** Data */
     samplePtr     mBuffer;
+
+    ReadPointer   _readpointer;
+
+    CallID buffer_id;
+
+  public:
+
+    friend class MainBufferTest;
+
+    std::fstream *buffer_input_rec;
+    std::fstream *buffer_output_rec;
+
+    static int count_rb;
+    
 };
+
 
 #endif /*  __RING_BUFFER__ */

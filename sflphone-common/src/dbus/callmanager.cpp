@@ -63,15 +63,24 @@ CallManager::accept (const std::string& callID)
 void
 CallManager::hangUp (const std::string& callID)
 {
-    _debug ("CallManager::hangUp received\n");
+    _debug ("CallManager::hangUp received %s\n", callID.c_str());
     Manager::instance().hangupCall (callID);
 
 }
 
 void
+CallManager::hangUpConference (const std::string& confID)
+{
+    _debug ("CallManager::hangUpConference received %s\n", confID.c_str());
+    Manager::instance().hangupConference (confID);
+
+}
+
+
+void
 CallManager::hold (const std::string& callID)
 {
-    _debug ("CallManager::hold received\n");
+    _debug ("CallManager::hold received %s\n", callID.c_str());
     Manager::instance().onHoldCall (callID);
 
 }
@@ -79,7 +88,7 @@ CallManager::hold (const std::string& callID)
 void
 CallManager::unhold (const std::string& callID)
 {
-    _debug ("CallManager::unhold received\n");
+    _debug ("CallManager::unhold received %s\n", callID.c_str());
     Manager::instance().offHoldCall (callID);
 }
 
@@ -123,6 +132,75 @@ CallManager::getVolume (const std::string& device)
 }
 
 void
+CallManager::joinParticipant (const std::string& sel_callID, const std::string& drag_callID)
+{
+    _debug ("CallManager::joinParticipant received %s, %s\n", sel_callID.c_str(), drag_callID.c_str());
+    Manager::instance().joinParticipant(sel_callID, drag_callID);
+}
+
+void
+CallManager::addParticipant (const std::string& callID, const std::string& confID)
+{
+    _debug ("CallManager::addParticipant received %s, %s\n", callID.c_str(), confID.c_str());
+    Manager::instance().addParticipant(callID, confID);
+}
+
+void
+CallManager::addMainParticipant (const std::string& confID)
+{
+    _debug ("CallManager::addMainParticipant received %s\n", confID.c_str());
+    Manager::instance().addMainParticipant(confID);
+}
+
+void
+CallManager::detachParticipant (const std::string& callID)
+{
+    _debug ("CallManager::detachParticipant received %s\n", callID.c_str());
+    Manager::instance().detachParticipant(callID, "");
+}
+
+void
+CallManager::joinConference (const std::string& sel_confID, const std::string& drag_confID)
+{
+    _debug ("CallManager::joinConference received %s, %s\n", sel_confID.c_str(), drag_confID.c_str());
+    Manager::instance().joinConference(sel_confID, drag_confID);
+}
+
+void
+CallManager::holdConference (const std::string& confID)
+{
+    _debug ("CallManager::holdConference received %s\n", confID.c_str());
+    Manager::instance().holdConference(confID);
+}
+
+void
+CallManager::unholdConference (const std::string& confID)
+{
+    _debug ("CallManager::unHoldConference received %s\n", confID.c_str());
+    Manager::instance().unHoldConference(confID);
+}
+
+std::map< std::string, std::string >
+CallManager::getConferenceDetails (const std::string& callID)
+{
+    _debug ("CallManager::getCallDetails received\n");
+    return Manager::instance().getConferenceDetails (callID);
+}
+
+std::vector< std::string >
+CallManager::getConferenceList (void)
+{
+    _debug("CallManager::getConferenceList\n");
+    return Manager::instance().getConferenceList();
+}
+
+std::vector< std::string >
+CallManager::getParticipantList (const std::string& confID)
+{
+    return Manager::instance().getParticipantList(confID);
+}
+
+void
 CallManager::setRecording (const std::string& callID)
 {
     _debug ("CallManager::setRecording received\n");
@@ -132,7 +210,7 @@ CallManager::setRecording (const std::string& callID)
 bool
 CallManager::getIsRecording (const std::string& callID)
 {
-    _debug ("CallManager::getIsRecording received  \n");
+    _debug ("CallManager::getIsRecording received \n");
     return Manager::instance().isRecording (callID);
 }
 
@@ -187,7 +265,7 @@ CallManager::startTone (const int32_t& start , const int32_t& type)
 // for conferencing in order to get
 // the right pointer for the given
 // callID.
-sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (void)
+sfl::AudioZrtpSession * CallManager::getAudioZrtpSession(const std::string& callID)
 {
     SIPVoIPLink * link = NULL;
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
@@ -197,10 +275,10 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (void)
         throw CallManagerException();
     }
 
+    SIPCall *call = link->getSIPCall(callID);
+    
     sfl::AudioRtpFactory * audioRtp = NULL;
-
-    audioRtp = link->getAudioRtp();
-
+    audioRtp = call->getAudioRtp();
     if (audioRtp == NULL) {
         _debug ("Failed to get AudioRtpFactory\n");
         throw CallManagerException();
@@ -225,7 +303,7 @@ CallManager::setSASVerified (const std::string& callID)
 
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();
+        zSession = getAudioZrtpSession(callID);        
         zSession->SASVerified();
     } catch (...) {
         throw;
@@ -240,7 +318,7 @@ CallManager::resetSASVerified (const std::string& callID)
 
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();
+        zSession = getAudioZrtpSession(callID);        
         zSession->resetSASVerified();
     } catch (...) {
         throw;
@@ -255,7 +333,7 @@ CallManager::setConfirmGoClear (const std::string& callID)
 
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();
+        zSession = getAudioZrtpSession(callID);        
         zSession->goClearOk();
     } catch (...) {
         throw;
@@ -270,7 +348,7 @@ CallManager::requestGoClear (const std::string& callID)
 
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();
+        zSession = getAudioZrtpSession(callID);        
         zSession->requestGoClear();
     } catch (...) {
         throw;
@@ -286,8 +364,8 @@ CallManager::acceptEnrollment (const std::string& callID, const bool& accepted)
 
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();
-        zSession->acceptEnrollment (accepted);
+        zSession = getAudioZrtpSession(callID);        
+        zSession->acceptEnrollment(accepted);
     } catch (...) {
         throw;
     }
@@ -302,8 +380,8 @@ CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo)
 
     try {
         sfl::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession();
-        zSession->setPBXEnrollment (yesNo);
+        zSession = getAudioZrtpSession(callID);        
+        zSession->setPBXEnrollment(yesNo);
     } catch (...) {
         throw;
     }

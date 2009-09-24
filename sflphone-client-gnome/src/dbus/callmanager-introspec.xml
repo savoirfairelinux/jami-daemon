@@ -19,6 +19,10 @@
     <method name="hangUp">
       <arg type="s" name="callID" direction="in"/>
     </method>
+
+    <method name="hangUpConference">
+      <arg type="s" name="confID" direction="in"/>
+    </method>
     
     <method name="hold">
       <arg type="s" name="callID" direction="in"/>
@@ -50,6 +54,39 @@
     <method name="getVolume">
       <arg type="s" name="device" direction="in"/>
       <arg type="d" name="value" direction="out"/>
+    </method>
+
+    <method name="joinParticipant">
+      <arg type="s" name="sel_callID" direction="in"/>
+      <arg type="s" name="drag_callID" direction="in"/>
+    </method>
+
+    <method name="addParticipant">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="confID" direction="in"/>
+    </method>
+
+    <method name="addMainParticipant">
+      <arg type="s" name="confID" direction="in"/>
+    </method>
+
+    <method name="detachParticipant">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+
+    <method name="joinConference">
+      <arg type="s" name="sel_confID" direction="in"/>
+      <arg type="s" name="drag_confID" direction="in"/>
+    </method>
+
+    <method name="getConferenceDetails">
+      <arg type="s" name="callID" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="infos" direction="out"/>
+    </method>
+    
+    <method name="getConferenceList">
+        <arg type="as" name="list" direction="out"/>
     </method>
 
     <method name="setRecording">
@@ -101,17 +138,42 @@
       <arg type="s" name="state"  direction="out"/>
     </signal>
 
+    <signal name="conferenceChanged">
+      <arg type="s" name="confID"  direction="out"/>
+      <arg type="s" name="state"  direction="out"/>
+    </signal>
+
+    <method name="getParticipantList">
+      <arg type="s" name="confID" direction="in"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
+    <signal name="conferenceCreated">
+      <arg type="s" name="confID"  direction="out"/>
+    </signal>
+
+    <signal name="conferenceRemoved">
+      <arg type="s" name="confID"  direction="out"/>
+    </signal>
+
+    <method name="holdConference">
+      <arg type="s" name="confID" direction="in"/>
+    </method>
+
+    <method name="unholdConference">
+      <arg type="s" name="confID" direction="in"/>
+    </method>
+
     <signal name="sipCallStateChanged">
       <arg type="s" name="callID"  direction="out"/>
       <arg type="s" name="state"  direction="out"/>
       <arg type="i" name="code"  direction="out"/>            
     </signal>   
-       
+
     <signal name="voiceMailNotify">
       <arg type="s" name="accountID"  direction="out"/>
       <arg type="i" name="count"  direction="out"/>
     </signal>
-    
     
     <signal name="volumeChanged">
       <arg type="s" name="device"  direction="out"/>
@@ -169,7 +231,7 @@
      <signal name="confirmGoClear">
       <arg type="s" name="callID"  direction="out" />
     </signal>
- 
+
 <!--
     <signal name="error">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>

@@ -26,7 +26,6 @@
 #include "voiplink.h"
 #include "hooks/urlhook.h"
 
-#include "audio/audiortp/AudioRtpFactory.h"
 
 //////////////////////////////
 /* PJSIP imports */
@@ -39,11 +38,6 @@
 
 class EventThread;
 class SIPCall;
-class AudioRtp;
-
-namespace sfl {
-    class AudioRtpFactory;
-}
 
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
@@ -168,7 +162,7 @@ class SIPVoIPLink : public VoIPLink
         bool transfer(const CallID& id, const std::string& to);
 
         /** Handle the incoming refer msg, not finished yet */
-        bool transferStep2();
+        bool transferStep2(SIPCall* call);
 
         /**
          * Refuse the call
@@ -251,9 +245,6 @@ class SIPVoIPLink : public VoIPLink
 
         /** when we init the listener, how many times we try to bind a port? */
         int _nbTryListenAddr;
-
-        /** Returns a pointer to the AudioRtp object */
-        inline sfl::AudioRtpFactory * getAudioRtp(void) { return _audiortp; }
 
         /** Increment the number of SIP account connected to this link */
         void incrementClients (void) { _clients++; }
@@ -388,9 +379,6 @@ class SIPVoIPLink : public VoIPLink
 
         /** Local Extern Port is the port seen by peers for SIP listener */
         unsigned int _localExternPort;
-
-        /** Starting sound */
-        sfl::AudioRtpFactory * _audiortp;
         
         /** For registration use only */
         int _regPort;

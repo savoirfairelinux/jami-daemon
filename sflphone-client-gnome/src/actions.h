@@ -28,6 +28,7 @@
 #include <codeclist.h>
 #include <sflphone_const.h>
 #include <errors.h>
+#include <conference_obj.h>
 
 /** @file actions.h
   * @brief General functions that change the state of the application.
@@ -178,6 +179,8 @@ void sflphone_set_current_account();
  */
 void sflphone_fill_codec_list();
 
+void sflphone_add_participant();
+
 void sflphone_record (callable_obj_t *c);
 
 void sflphone_rec_call (void);
@@ -191,6 +194,14 @@ void status_bar_display_account ();
 void sflphone_fill_history (void);
 
 void sflphone_save_history (void);
+
+void sflphone_join_participant(const gchar* sel_callID, const gchar* drag_callID);
+
+void sflphone_add_participant(const gchar* callID, const gchar* confID);
+
+void sflphone_detach_participant(const gchar* callID);
+
+void sflphone_join_conference(const gchar* sel_confID, const gchar* drag_confID);
 
 /** Nofity that the communication is 
  *  now secured.
@@ -242,5 +253,6 @@ void sflphone_request_go_clear(void);
  */
 
 void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code);
+
 
 #endif

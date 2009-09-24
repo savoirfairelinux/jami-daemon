@@ -4,6 +4,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,6 +40,8 @@
 #include "manager.h"
 #include "dbus/configurationmanager.h"
 
+#include "conference.h"
+
 #include <errno.h>
 #include <time.h>
 #include <cstdlib>
@@ -48,6 +51,7 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 #include <pwd.h>       // getpwuid
+
 
 #define fill_config_str(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
@@ -185,7 +189,7 @@ ManagerImpl::isCurrentCall (const CallID& callId)
 bool
 ManagerImpl::hasCurrentCall()
 {
-    _debug ("Current call ID = %s\n", _currentCallId2.c_str());
+    _debug ("ManagerImpl::hasCurrentCall current call ID = %s\n", _currentCallId2.c_str());
 
     if (_currentCallId2 != "") {
         return true;
@@ -204,7 +208,40 @@ void
 ManagerImpl::switchCall (const CallID& id)
 {
     ost::MutexLock m (_currentCallMutex);
+    _debug("------------------------- SWITCH %s ---------------------------\n", id.c_str());
     _currentCallId2 = id;
+
+    /*
+    AudioLayer *al = getAudioDriver();
+
+    if (id != "") {
+
+	if(isConference(id)) {
+
+	    Conference *conf;
+
+	    ConferenceMap::iterator iter = _conferencemap.find(id);
+	    if(iter != _conferencemap.end())
+	    {
+		_debug("    set call recordable in audio layer\n");
+		conf = iter->second;
+		al->setRecorderInstance((Recordable*)conf);
+	    }
+	}
+	else {
+
+	    // set the recordable instance in audiolayer
+	    AccountID account_id = getAccountFromCall(id);
+	
+
+	    Call *call = NULL;
+	    call = getAccountLink (account_id)->getCall(id);
+
+	    _debug("    set call recordable in audio layer\n");
+	    al->setRecorderInstance((Recordable*)call);
+	}
+    }
+    */
 }
 
 
@@ -214,13 +251,15 @@ ManagerImpl::switchCall (const CallID& id)
 /* Main Thread */
 
 bool
-ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const std::string& to)
+ManagerImpl::outgoingCall (const std::string& account_id, const CallID& call_id, const std::string& to)
 {
     std::string pattern, to_cleaned;
     Call::CallConfiguration callConfig;
     SIPVoIPLink *siplink;
 
-    _debug ("ManagerImpl::outgoingCall() method \n");
+    _debug ("ManagerImpl::outgoingCall(%s)\n", call_id.c_str());
+
+    CallID current_call_id = getCurrentCallId();
 
     if (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ENABLED) ==  "1")
         _cleaner->set_phone_number_prefix (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX));
@@ -230,47 +269,61 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
     to_cleaned = _cleaner->clean (to);
 
     /* Check what kind of call we are dealing with */
-    check_call_configuration (id, to_cleaned, &callConfig);
+    check_call_configuration (call_id, to_cleaned, &callConfig);
+
+    // in any cases we have to detach from current communication
+    if (hasCurrentCall()) {
+	
+	_debug ("    outgoingCall: Has current call (%s) put it onhold\n", current_call_id.c_str());
+
+	// if this is not a conferenceand this and is not a conference participant
+	if (!isConference(current_call_id) && !participToConference(current_call_id))
+	{
+	    _debug ("    outgoingCall: Put the current call (%s) on hold\n", current_call_id.c_str());
+	    onHoldCall (current_call_id);
+	}
+	else if (isConference(current_call_id) && !participToConference(call_id))
+	{
+	    _debug ("    outgoingCall: detach main participant from conference\n");
+	    detachParticipant(default_id, current_call_id);
+	}
+    }
 
     if (callConfig == Call::IPtoIP) {
-        _debug ("Start IP to IP call\n");
+        _debug ("    outgoingCall: Start IP to IP call\n");
         /* We need to retrieve the sip voiplink instance */
         siplink = SIPVoIPLink::instance ("");
 
-        if (siplink->new_ip_to_ip_call (id, to_cleaned)) {
-            switchCall (id);
+        if (siplink->new_ip_to_ip_call (call_id, to_cleaned)) {
+            switchCall (call_id);
             return true;
         } else {
-            callFailure (id);
+            callFailure (call_id);
         }
 
         return false;
     }
 
-    if (!accountExists (accountid)) {
+    if (!accountExists (account_id)) {
         _debug ("! Manager Error: Outgoing Call: account doesn't exist\n");
         return false;
     }
 
-    if (getAccountFromCall (id) != AccountNULL) {
+    if (getAccountFromCall (call_id) != AccountNULL) {
         _debug ("! Manager Error: Outgoing Call: call id already exists\n");
         return false;
     }
 
-    if (hasCurrentCall()) {
-        _debug ("* Manager Info: there is currently a call, try to hold it\n");
-        onHoldCall (getCurrentCallId());
-    }
 
-    _debug ("- Manager Action: Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
+    _debug ("- Manager Action: Adding Outgoing Call %s on account %s\n", call_id.data(), account_id.data());
 
-    associateCallToAccount (id, accountid);
+    associateCallToAccount (call_id, account_id);
 
-    if (getAccountLink (accountid)->newOutgoingCall (id, to_cleaned)) {
-        switchCall (id);
+    if (getAccountLink (account_id)->newOutgoingCall (call_id, to_cleaned)) {
+        switchCall (call_id);
         return true;
     } else {
-        callFailure (id);
+        callFailure (call_id);
         _debug ("! Manager Error: An error occur, the call was not created\n");
     }
 
@@ -279,114 +332,132 @@ ManagerImpl::outgoingCall (const std::string& accountid, const CallID& id, const
 
 //THREAD=Main : for outgoing Call
 bool
-ManagerImpl::answerCall (const CallID& id)
+ManagerImpl::answerCall (const CallID& call_id)
 {
+
+    _debug("ManagerImpl::answerCall(%s)", call_id.c_str());
+
     stopTone (true);
 
-    AccountID currentAccountId;
-    currentAccountId = getAccountFromCall (id);
+    // store the current call id
+    CallID current_call_id = getCurrentCallId();
 
-    if (currentAccountId == AccountNULL) {
-        _debug ("ManagerImpl::answerCall : AccountId is null\n");
+    AccountID account_id = getAccountFromCall (call_id);
+    if(account_id == AccountNULL) {
+        _debug("    answerCall : AccountId is null\n");
+    }
+    
+    Call* call = NULL;
+    call = getAccountLink (account_id)->getCall (call_id);
+    if (call == NULL) {
+        _debug("    answerCall: currentCall is null\n");
     }
 
-    Call* currentCall = NULL;
-
-    currentCall = getAccountLink (currentAccountId)->getCall (id);
-
-    if (currentCall == NULL) {
-        _debug ("ManagerImpl::answerCall : currentCall is null\n");
+    // in any cases we have to detach from current communication
+    if (hasCurrentCall()) {
+	
+	_debug ("    answerCall: Has current call or conference (%s)\n", current_call_id.c_str());	
+	// if it is not a conference and is not a conference participant
+	if (!isConference(current_call_id) && !participToConference(current_call_id))
+	{
+	    _debug ("    answerCall: Put the current call (%s) on hold\n", current_call_id.c_str());
+	    onHoldCall (current_call_id);
+	}
+	// if we are talking to a conference and we are answering an incoming call
+	else if (isConference(current_call_id) && !participToConference(call_id))
+	{
+	    _debug ("    answerCall: detach main participant from conference\n");
+	    detachParticipant(default_id, current_call_id);
+	}
     }
 
-    Call* lastCall = NULL;
-
-    if (!getCurrentCallId().empty()) {
-        lastCall = getAccountLink (currentAccountId)->getCall (getCurrentCallId());
-
-        if (lastCall == NULL) {
-            _debug ("ManagerImpl::answerCall : lastCall is null\n");
-        }
-    }
-
-    _debug ("ManagerImpl::answerCall :: current call->getState %i \n", currentCall->getState());
-
-    _debug ("Try to answer call: %s\n", id.data());
-
-    if (lastCall != NULL) {
-        if (lastCall->getState() == Call::Active) {
-            _debug ("* Manager Info: there is currently a call, try to hold it\n");
-            onHoldCall (getCurrentCallId());
-        }
-    }
-
-    if (!getAccountLink (currentAccountId)->answer (id)) {
+    if (!getAccountLink (account_id)->answer (call_id)) {
         // error when receiving...
-        removeCallAccount (id);
+        removeCallAccount (call_id);
         return false;
     }
 
     // if it was waiting, it's waiting no more
-    if (_dbus) _dbus->getCallManager()->callStateChanged (id, "CURRENT");
+    if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "CURRENT");
+        
+    std::string codecName = Manager::instance().getCurrentCodecName (call_id);
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id, codecName.c_str());
+        
+    removeWaitingCall (call_id);
 
-    std::string codecName = Manager::instance().getCurrentCodecName (id);
-
-    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
-
-    removeWaitingCall (id);
-
-    switchCall (id);
+    switchCall (call_id);
 
     return true;
 }
 
 //THREAD=Main
 bool
-ManagerImpl::hangupCall (const CallID& id)
+ManagerImpl::hangupCall (const CallID& call_id)
 {
-    _debug ("ManagerImpl::hangupCall()\n");
+    _debug ("ManagerImpl::hangupCall(%s)\n", call_id.c_str());
     PulseLayer *pulselayer;
-    AccountID accountid;
+    AccountID account_id;
     bool returnValue;
     AudioLayer *audiolayer;
 
+    // store the current call id
+    CallID current_call_id = getCurrentCallId();
+
     stopTone (false);
+    // switchCall (call_id);
 
     /* Broadcast a signal over DBus */
-
-    if (_dbus) _dbus->getCallManager()->callStateChanged (id, "HUNGUP");
-
-    _debug ("Stop audio stream\n");
-
-    audiolayer = getAudioDriver();
+    _debug("    hangupCall: Send DBUS call state change (HUNGUP) for id %s\n", call_id.c_str());
+    if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "HUNGUP");
 
     int nbCalls = getCallList().size();
 
-    _debug ("hangupCall: callList is of size %i call(s)\n", nbCalls);
-
-    // stop stream
-    if (! (nbCalls > 1))
+    audiolayer = getAudioDriver();
+    // stop streamx
+    if (! (nbCalls >= 1))
+    {
+	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
         audiolayer->stopStream();
+    }
+   
+    if(participToConference(call_id))
+    {
 
-    /* Direct IP to IP call */
-    if (getConfigFromCall (id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (id);
+	Conference *conf = getConferenceFromCallID(call_id);
+
+	if(conf != NULL)
+	{
+	    // remove this participant
+	    removeParticipant(call_id);
+
+	    processRemainingParticipant(current_call_id, conf);
+	}
+    }
+    else
+    {
+	// we are not participating to a conference, current call switched to ""
+	if (!isConference(current_call_id))
+	    switchCall("");
     }
 
+    /* Direct IP to IP call */
+    if (getConfigFromCall (call_id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (call_id);
+    }
     /* Classic call, attached to an account */
     else {
-        accountid = getAccountFromCall (id);
+        account_id = getAccountFromCall (call_id);
 
-        if (accountid == AccountNULL) {
+        if (account_id == AccountNULL) 
+	{
             _debug ("! Manager Hangup Call: Call doesn't exists\n");
             return false;
         }
 
-        returnValue = getAccountLink (accountid)->hangup (id);
+        returnValue = getAccountLink (account_id)->hangup (call_id);
 
-        removeCallAccount (id);
+        removeCallAccount (call_id);
     }
-
-    switchCall ("");
 
     if (_audiodriver->getLayerType() == PULSEAUDIO && getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL)) {
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
@@ -394,10 +465,46 @@ ManagerImpl::hangupCall (const CallID& id)
         if (pulselayer)  pulselayer->restorePulseAppsVolume();
     }
 
-
-
     return returnValue;
 }
+
+
+bool
+ManagerImpl::hangupConference (const ConfID& id)
+{
+    _debug ("ManagerImpl::hangupConference()\n");
+
+    Conference *conf;
+    ConferenceMap::iterator iter_conf = _conferencemap.find(id);
+
+    AccountID currentAccountId;
+
+    // Call* call = NULL;
+
+    if(iter_conf != _conferencemap.end())
+    {
+	conf = iter_conf->second;
+ 
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+
+	while(iter_participant != participants.end())
+	{
+	    _debug("ManagerImpl::hangupConference participant %s\n", (*iter_participant).c_str());
+
+	    hangupCall (*iter_participant);
+
+	    iter_participant++;
+
+	}
+
+    }
+
+    switchCall ("");
+
+    return true;
+}
+
 
 //THREAD=Main
 bool
@@ -438,37 +545,38 @@ ManagerImpl::cancelCall (const CallID& id)
 
 //THREAD=Main
 bool
-ManagerImpl::onHoldCall (const CallID& id)
+ManagerImpl::onHoldCall (const CallID& call_id)
 {
-    AccountID accountid;
+    AccountID account_id;
     bool returnValue;
-    CallID call_id;
+
+    _debug("ManagerImpl::onHoldCall(%s)\n", call_id.c_str());
 
     stopTone (true);
 
-    call_id = id;
+    // switchCall (id);
 
     /* Direct IP to IP call */
 
-    if (getConfigFromCall (id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (id);
+    if (getConfigFromCall (call_id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (call_id);
     }
 
     /* Classic call, attached to an account */
     else {
-        accountid = getAccountFromCall (id);
+        account_id = getAccountFromCall (call_id);
 
-        if (accountid == AccountNULL) {
-            _debug ("Manager On Hold Call: Account ID %s or callid %s doesn't exists\n", accountid.c_str(), id.c_str());
+        if (account_id == AccountNULL) {
+            _debug ("    onHoldCall: Account ID %s or callid %s doesn't exists\n", account_id.c_str(), call_id.c_str());
             return false;
         }
 
-        returnValue = getAccountLink (accountid)->onhold (id);
+        returnValue = getAccountLink (account_id)->onhold (call_id);
     }
+    
+    removeWaitingCall (call_id);
 
-    removeWaitingCall (id);
-
-    switchCall ("");
+    // switchCall ("");
 
     if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "HOLD");
 
@@ -477,60 +585,88 @@ ManagerImpl::onHoldCall (const CallID& id)
 
 //THREAD=Main
 bool
-ManagerImpl::offHoldCall (const CallID& id)
+ManagerImpl::offHoldCall (const CallID& call_id)
 {
 
-    AccountID accountid;
-    bool returnValue, rec;
+    AccountID account_id;
+    bool returnValue, is_rec;
     std::string codecName;
-    CallID call_id;
+
+
+    _debug ("ManagerImpl::offHoldCall(%s)\n", call_id.c_str());
 
     stopTone (false);
 
-    call_id = id;
-    //Place current call on hold if it isn't
+    CallID current_call_id = getCurrentCallId();
 
-    if (hasCurrentCall()) {
-        _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
-        onHoldCall (getCurrentCallId());
+    //Place current call on hold if it isn't
+    if (hasCurrentCall()) 
+    {
+	// if this is not a conferenceand this and is not a conference participant
+	if (!isConference(current_call_id) && !participToConference(current_call_id))
+	{
+	    _debug ("    offHoldCall: put current call (%s) on hold\n", current_call_id.c_str());
+	    onHoldCall (current_call_id);
+	}
+	else if (isConference(current_call_id) && !participToConference(call_id))
+	{
+	    _debug ("    offHoldCall Put current conference (%s) on hold\n", current_call_id.c_str());
+	    detachParticipant(default_id, current_call_id);
+	}
     }
 
+    // switch current call id to id since sipvoip link need it to amke a call 
+    // switchCall(id);
+
     /* Direct IP to IP call */
-    if (getConfigFromCall (id) == Call::IPtoIP) {
-        rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (id);
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (id);
+    if (getConfigFromCall (call_id) == Call::IPtoIP) {
+        // is_rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (call_id);
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (call_id);
     }
 
     /* Classic call, attached to an account */
     else {
-        accountid = getAccountFromCall (id);
+        account_id = getAccountFromCall (call_id);
 
-        if (accountid == AccountNULL) {
+        if (account_id == AccountNULL) {
             _debug ("Manager OffHold Call: Call doesn't exists\n");
             return false;
         }
 
-        _debug ("Setting OFFHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
+        _debug ("Setting OFFHOLD, Account %s, callid %s\n", account_id.c_str(), call_id.c_str());
 
-        rec = getAccountLink (accountid)->isRecording (id);
-        returnValue = getAccountLink (accountid)->offhold (id);
+        is_rec = getAccountLink (account_id)->getCall(call_id)->isRecording();
+        returnValue = getAccountLink (account_id)->offhold (call_id);
     }
 
 
     if (_dbus) {
-        if (rec)
+        if (is_rec)
             _dbus->getCallManager()->callStateChanged (call_id, "UNHOLD_RECORD");
         else
             _dbus->getCallManager()->callStateChanged (call_id, "UNHOLD_CURRENT");
 
     }
 
-    switchCall (id);
+    if ( participToConference(call_id) ) {
+	 
+	AccountID currentAccountId;
+        Call* call = NULL;
 
-    codecName = getCurrentCodecName (id);
+	currentAccountId = getAccountFromCall (call_id);
+	call = getAccountLink (currentAccountId)->getCall (call_id);
+	
+	switchCall(call->getConfId());
+    }
+    else
+    {
+	switchCall(call_id);
+    }
+
+    codecName = getCurrentCodecName (call_id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
 
-    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id,codecName.c_str());
 
     return returnValue;
 }
@@ -627,6 +763,678 @@ ManagerImpl::refuseCall (const CallID& id)
     return returnValue;
 }
 
+
+Conference*
+ManagerImpl::createConference(const CallID& id1, const CallID& id2)
+{
+    _debug("ManagerImpl::createConference()\n");
+    
+    Conference* conf = new Conference();
+
+    // _conferencecall.insert(pair<CallID, Conference*>(id1, conf));
+    // _conferencecall.insert(pair<CallID, Conference*>(id2, conf));
+    _conferencemap.insert(pair<CallID, Conference*>(conf->getConfID(), conf));
+
+    conf->add(id1);
+    conf->add(id2);
+
+    // broadcast a signal over dbus
+    _dbus->getCallManager()->conferenceCreated(conf->getConfID());
+    
+    return conf;
+}
+
+void
+ManagerImpl::removeConference(const ConfID& conference_id)
+{
+
+    _debug("ManagerImpl::removeConference(%s)\n", conference_id.c_str());
+
+    Conference* conf = NULL;
+
+    _debug("    removeConference: _conferencemap.size: %i\n", _conferencemap.size());
+    ConferenceMap::iterator iter = _conferencemap.find(conference_id);
+
+    if (iter != _conferencemap.end()) {
+	_debug("    removeConference: Found conference id %s in conferencemap\n", conference_id.c_str());
+        conf = iter->second;
+    }
+
+    if(conf == NULL) {
+
+	_debug("    removeConference: Error conference not found\n");
+	return;
+    }
+
+
+    // We now need to bind the audio to the remain participant
+
+    // unbind main participant from conference (just to be sure)
+    _audiodriver->getMainBuffer()->unBindAll(default_id);
+
+    ParticipantSet participants = conf->getParticipantList();
+
+    // bind main participant to remaining conference call
+    ParticipantSet::iterator iter_p = participants.begin();
+    if (iter_p != participants.end()) {
+
+	// to avoid puting onhold the call
+	// switchCall("");	
+	_audiodriver->getMainBuffer()->bindCallID(*iter_p, default_id);
+    }
+    
+    // Then remove the conference from the conference map
+    _debug("ManagerImpl:: remove conference %s\n", conference_id.c_str());
+    if (_conferencemap.erase(conference_id) == 1)
+        _debug("ManagerImpl:: conference %s removed succesfully\n", conference_id.c_str());
+    else
+	_debug("ManagerImpl:: error cannot remove conference id: %s\n", conference_id.c_str());
+
+    // broadcast a signal over dbus
+    _debug("ManagerImpl::removeConference broadcast call removed on dbus: %s\n", conference_id.c_str());
+    _dbus->getCallManager()->conferenceRemoved(conference_id);
+
+}
+
+
+Conference*
+ManagerImpl::getConferenceFromCallID(const CallID& call_id)
+{
+    AccountID account_id;
+    Call* call = NULL;
+
+    account_id = getAccountFromCall (call_id);
+    call = getAccountLink (account_id)->getCall (call_id);
+
+    ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
+    if(iter != _conferencemap.end())
+    {
+	return iter->second;
+    }
+    else
+    {
+	return NULL;
+    }
+}
+
+void
+ManagerImpl::holdConference(const CallID& id)
+{
+    _debug ("ManagerImpl::holdConference()\n");
+
+    Conference *conf;
+    ConferenceMap::iterator iter_conf = _conferencemap.find(id);
+
+    AccountID currentAccountId;
+
+    Call* call = NULL;
+
+    if(iter_conf != _conferencemap.end())
+    {
+	conf = iter_conf->second;
+
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+
+	while(iter_participant != participants.end())
+	{
+	    _debug("    holdConference: participant %s\n", (*iter_participant).c_str());
+	    currentAccountId = getAccountFromCall (*iter_participant);
+	    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+
+	    switchCall(*iter_participant);
+	    onHoldCall(*iter_participant);
+
+	    iter_participant++;
+
+	}
+
+	conf->setState(Conference::Hold);
+
+	_dbus->getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+
+    }
+
+    
+
+    
+}
+
+
+void
+ManagerImpl::unHoldConference(const CallID& id)
+{
+
+    _debug ("ManagerImpl::unHoldConference()\n");
+
+    Conference *conf;
+    ConferenceMap::iterator iter_conf = _conferencemap.find(id);
+
+    AccountID currentAccountId;
+
+    Call* call = NULL;
+
+    if(iter_conf != _conferencemap.end())
+    {
+	conf = iter_conf->second;
+ 
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+
+	while(iter_participant != participants.end())
+	{
+	    _debug("    unholdConference: participant %s\n", (*iter_participant).c_str());
+	    currentAccountId = getAccountFromCall (*iter_participant);
+	    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+
+	    offHoldCall(*iter_participant);
+
+	    iter_participant++;
+
+	}
+
+	conf->setState(Conference::Active_Atached);
+
+	_dbus->getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+
+    }
+
+}
+
+bool
+ManagerImpl::isConference(const CallID& id)
+{
+    ConferenceMap::iterator iter = _conferencemap.find(id);
+    if(iter == _conferencemap.end()) {
+	return false;
+    }
+    else {
+	return true;
+    }
+}
+
+bool
+ManagerImpl::participToConference(const CallID& call_id)
+{
+
+    AccountID accountId;
+
+    Call* call = NULL;
+
+    accountId = getAccountFromCall (call_id);
+    call = getAccountLink (accountId)->getCall(call_id);
+
+    if (call == NULL)
+	return false;
+
+    if(call->getConfId() == "") {
+	return false;
+    }
+    else {
+	return true;
+    }
+}
+
+
+void
+ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
+{
+    _debug("ManagerImpl::addParticipant(%s, %s)\n", call_id.c_str(), conference_id.c_str());
+
+    std::map<std::string, std::string> call_details = getCallDetails(call_id);
+
+    ConferenceMap::iterator iter = _conferencemap.find(conference_id);
+    std::map<std::string, std::string>::iterator iter_details;
+
+    // store the current call id (it will change in offHoldCall or in answerCall)
+    CallID current_call_id = getCurrentCallId();
+
+    _debug("    addParticipant: enter main process\n");
+    if(iter != _conferencemap.end()) {
+
+	Conference* conf = iter->second;
+
+	conf->add(call_id);
+	
+
+	iter_details = call_details.find("CALL_STATE");
+
+	switchCall("");
+
+	_debug("    addParticipant: call state: %s\n", iter_details->second.c_str());
+	if (iter_details->second == "HOLD")
+	{
+	    _debug("    OFFHOLD %s\n", call_id.c_str());
+
+	    // offHoldCall create a new rtp session which use addStream to bind participant
+	    offHoldCall(call_id);
+	}
+	else if(iter_details->second == "INCOMING")
+	{
+	    _debug("    ANSWER %s\n", call_id.c_str());
+	    // answerCall create a new rtp session which use addStream to bind participant
+	    answerCall(call_id);
+	}
+	else if(iter_details->second == "CURRENT")
+	{
+	    // Already a curent call, so we beed to reset audio stream bindings manually
+	    _audiodriver->getMainBuffer()->unBindAll(call_id);
+	    conf->bindParticipant(call_id);
+	}
+
+	// update this call conference id
+	AccountID currentAccountId;
+
+        Call* call = NULL;
+
+	currentAccountId = getAccountFromCall (call_id);
+	call = getAccountLink (currentAccountId)->getCall (call_id);
+	call->setConfId (conf->getConfID());
+
+	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+    }
+    {
+	_debug("    addParticipant: Error, conference %s conference_id not found!\n", conference_id.c_str());
+    }
+
+
+    // bind main participant to conference after adding new participant 
+    detachParticipant(default_id, current_call_id);
+
+    // to avoid puting onhold the added call
+    switchCall("");
+    addMainParticipant(conference_id);
+
+    
+    
+    
+}
+
+void
+ManagerImpl::addMainParticipant(const CallID& conference_id)
+{
+    if(hasCurrentCall())
+    {
+	CallID current_call_id = getCurrentCallId();
+
+	if(isConference(current_call_id))
+	{
+	    detachParticipant(default_id, current_call_id);
+	}    
+	else
+	{
+	    onHoldCall(current_call_id);
+	}
+    }
+
+    ConferenceMap::iterator iter = _conferencemap.find(conference_id);
+
+    Conference *conf = NULL;
+
+    if(iter != _conferencemap.end()) 
+    {
+	conf = iter->second;
+
+	ParticipantSet participants = conf->getParticipantList();
+
+	ParticipantSet::iterator iter_participant = participants.begin();
+	while(iter_participant != participants.end())
+	{
+	    _audiodriver->getMainBuffer()->bindCallID(*iter_participant, default_id);
+	    
+	    iter_participant++;
+	}
+
+	conf->setState(Conference::Active_Atached);
+
+	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+	
+    }
+
+    switchCall(conference_id);
+}
+
+
+void
+ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
+{
+    _debug("ManagerImpl::joinParticipant(%s, %s)\n", call_id1.c_str(), call_id2.c_str());
+    // _debug("    Current call ID %s\n", getCurrentCallId().c_str());
+
+    std::map<std::string, std::string> call1_details = getCallDetails(call_id1);
+    std::map<std::string, std::string> call2_details = getCallDetails(call_id2);
+
+    ConferenceMap::iterator iter = _conferencemap.find(default_conf);
+    std::map<std::string, std::string>::iterator iter_details;
+
+    AccountID currentAccountId;
+    Call* call = NULL;
+
+    CallID current_call_id = getCurrentCallId();
+    _debug("    joinParticipant: current_call_id %s\n", current_call_id.c_str());
+
+
+    // detach from the conference and switch to this conference 
+    if ((current_call_id != call_id1) && (current_call_id != call_id2))
+    {
+	if (isConference(current_call_id))
+	    detachParticipant(default_id, current_call_id);
+	else
+	    onHoldCall(current_call_id);
+    }
+
+    if(iter == _conferencemap.end()){
+
+	 _debug("    joinParticipant: create a conference\n");
+	 Conference *conf = createConference(call_id1, call_id2);
+
+	 // AccountID currentAccountId;
+	 // Call* call = NULL;
+
+	 // unbind main participant from either call_id1 or call_id2
+	 // _audiodriver->getMainBuffer()->unBindAll(default_id);
+
+	 switchCall("");
+
+	 iter_details = call1_details.find("CALL_STATE");
+	 _debug("    joinParticipant: call1 %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
+	 if (iter_details->second == "HOLD")
+	 {
+	     _debug("    OFFHOLD %s\n", call_id1.c_str());
+	     offHoldCall(call_id1);
+	 }
+	 else if(iter_details->second == "INCOMING")
+	 {
+	     _debug("    ANSWER %s\n", call_id1.c_str());
+	     answerCall(call_id1);
+	 }
+	 else if(iter_details->second == "CURRENT")
+	 {
+	     _debug("    CURRENT %s\n", call_id1.c_str());
+	     _audiodriver->getMainBuffer()->unBindAll(call_id1);
+	     conf->bindParticipant(call_id1);
+	 }
+
+	 currentAccountId = getAccountFromCall (call_id1);
+	 call = getAccountLink (currentAccountId)->getCall (call_id1);
+	 call->setConfId (conf->getConfID());
+
+
+	 switchCall("");
+
+	 iter_details = call2_details.find("CALL_STATE");
+	 _debug("    joinParticipant: call2 %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
+	 if (iter_details->second == "HOLD")
+	 {
+	     _debug("    OFFHOLD %s\n", call_id2.c_str());
+	     offHoldCall (call_id2);
+	 }
+	 else if(iter_details->second == "INCOMING")
+	 {
+	     _debug("    ANSWER %s\n", call_id2.c_str());
+	     answerCall(call_id2);
+	 }
+	 else if(iter_details->second == "CURRENT")
+	 {
+	     _debug("    CURRENT %s\n", call_id2.c_str());
+	     _audiodriver->getMainBuffer()->unBindAll(call_id2);
+	     conf->bindParticipant(call_id2);
+	 }
+
+	 currentAccountId = getAccountFromCall (call_id2);
+	 call = getAccountLink (currentAccountId)->getCall (call_id2);
+	 call->setConfId (conf->getConfID());
+
+
+	 // finally bind main participant to conference
+	 // addMainParticipant(default_conf);
+
+
+	 switchCall(conf->getConfID());
+
+    }
+    else {
+
+	 _debug("ManagerImpl::joinParticipant already a conference created with this ID\n");
+	 
+    }
+
+}
+
+
+void
+ManagerImpl::detachParticipant(const CallID& call_id, const CallID& current_id)
+{
+    _debug("ManagerImpl::detachParticipant(%s)\n", call_id.c_str());
+
+    CallID current_call_id = current_id;
+    
+    if(current_call_id.compare("") == 0);
+        current_call_id = getCurrentCallId();
+
+    if(call_id != default_id)
+    {
+	AccountID currentAccountId;
+	Call* call = NULL;
+
+	currentAccountId = getAccountFromCall (call_id);
+	call = getAccountLink (currentAccountId)->getCall (call_id);
+
+	// TODO: add conference_id as a second parameter
+	ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
+
+	Conference *conf = getConferenceFromCallID(call_id);
+
+	if(conf != NULL) {
+
+	    _debug("    detachParticipant: detaching participant %s\n", call_id.c_str());
+
+	    std::map<std::string, std::string> call_details = getCallDetails(call_id);
+	    std::map<std::string, std::string>::iterator iter_details;
+
+	    iter_details = call_details.find("CALL_STATE");
+	    if (iter_details->second == "RINGING")
+	    {
+		removeParticipant(call_id);
+	    }
+	    else
+	    {
+		_debug("    ONHOLD %s\n", call_id.c_str());
+		onHoldCall(call_id);
+
+		removeParticipant(call_id);
+
+		processRemainingParticipant(current_call_id, conf);
+	    }
+	}	    
+        else {
+	
+
+	    _debug("    detachParticipant: call is not conferencing, cannot detach\n");
+       
+        }
+    }
+    else
+    {
+	_debug("    detachParticipant: unbind main participant from all\n");
+	_audiodriver->getMainBuffer()->unBindAll(default_id);
+
+	if( isConference(current_call_id) )
+	{
+
+	    ConferenceMap::iterator iter = _conferencemap.find(current_call_id);
+	    Conference *conf = iter->second;
+
+	    conf->setState(Conference::Active_Detached);
+
+	    _dbus->getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+	}
+	    
+    }
+    
+}
+
+
+void
+ManagerImpl::removeParticipant(const CallID& call_id)
+{
+    _debug("ManagerImpl::removeParticipant(%s)\n", call_id.c_str());
+
+    // TODO: add conference_id as a second parameter
+    Conference* conf;
+
+    AccountID currentAccountId;
+    Call* call = NULL;
+
+    // this call is no more a conference participant
+    currentAccountId = getAccountFromCall (call_id);
+    call = getAccountLink (currentAccountId)->getCall (call_id);
+
+    ConferenceMap conf_map = _conferencemap;
+    ConferenceMap::iterator iter = conf_map.find(call->getConfId());
+
+    if(iter == conf_map.end()) {
+	_debug("    no conference created, cannot remove participant \n");
+    }
+    else {
+
+	conf = iter->second;
+
+	_debug("    removeParticipant %s\n", call_id.c_str());
+	conf->remove(call_id);
+	call->setConfId ("");
+
+    }
+
+}
+
+
+void
+ManagerImpl::processRemainingParticipant(CallID current_call_id, Conference *conf)
+{
+
+    _debug("ManagerImpl::processRemainingParticipant()\n");
+
+    if(conf->getNbParticipants() > 1)
+    {
+
+    }
+    else if (conf->getNbParticipants() == 1)
+    {
+	AccountID currentAccountId;
+	Call* call = NULL;
+	
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+	
+	// bind main participant to remaining conference call
+	if (iter_participant != participants.end()) {
+	    
+	    // this call is no more a conference participant
+	    currentAccountId = getAccountFromCall (*iter_participant);
+	    call = getAccountLink (currentAccountId)->getCall (*iter_participant);
+	    call->setConfId ("");
+	    
+	    // if we are not listening to this conference
+	    if (current_call_id != conf->getConfID())
+	    {
+		onHoldCall(call->getCallId());
+	    }
+	    else
+	    {
+		switchCall(*iter_participant);
+	    }
+	}
+	
+	removeConference(conf->getConfID());
+    }
+    else
+    {
+	removeConference(conf->getConfID());
+	
+	switchCall("");
+    }
+
+}
+
+void
+ManagerImpl::joinConference(const CallID& conf_id1, const CallID& conf_id2)
+{
+    _debug("ManagerImpl::joinConference(%s, %s)\n", conf_id1.c_str(), conf_id2.c_str());
+    
+    ConferenceMap::iterator iter;
+
+    Conference *conf1 = NULL;
+    Conference *conf2 = NULL;
+
+    iter = _conferencemap.find(conf_id1);
+    
+    if(iter != _conferencemap.end())
+	conf1 = iter->second;
+
+    iter = _conferencemap.find(conf_id2);
+
+    if(iter != _conferencemap.end())
+	conf2 = iter->second;
+
+    ParticipantSet participants = conf1->getParticipantList();
+
+    ParticipantSet::iterator iter_participant = participants.begin();
+
+    while(iter_participant != participants.end())
+    {
+	detachParticipant(*iter_participant, "");
+	addParticipant(*iter_participant, conf_id2);
+
+	iter_participant++;
+    }
+
+    // detachParticipant(default_id, "");
+    
+}
+
+void
+ManagerImpl::addStream(const CallID& call_id)
+{
+    _debug("ManagerImpl::addStream %s\n", call_id.c_str());
+
+    AccountID currentAccountId;
+    Call* call = NULL;
+
+    currentAccountId = getAccountFromCall (call_id);
+    call = getAccountLink (currentAccountId)->getCall (call_id);
+
+    if(participToConference(call_id)) {
+
+	// bind to conference participant
+	ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
+	if (iter != _conferencemap.end())
+	{
+	    Conference* conf = iter->second;
+
+	    conf->bindParticipant(call_id);
+	}
+    }
+    else {
+
+	// bind to main 
+	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
+    }
+}
+
+void
+ManagerImpl::removeStream(const CallID& call_id)
+{
+    _debug("ManagerImpl::removeStream %s\n", call_id.c_str());
+
+    getAudioDriver()->getMainBuffer()->unBindAll(call_id);
+
+    if(participToConference(call_id)) {
+	removeParticipant(call_id);
+    }
+    
+}
+
 //THREAD=Main
 bool
 ManagerImpl::saveConfig (void)
@@ -685,7 +1493,6 @@ ManagerImpl::sendDtmf (const CallID& id, char code)
     AccountID accountid = getAccountFromCall (id);
 
     if (accountid == AccountNULL) {
-        //_debug("Send DTMF: call doesn't exists\n");
         playDtmf (code, false);
         return false;
     }
@@ -728,13 +1535,19 @@ ManagerImpl::playDtmf (char code, bool isTalking)
     bool hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_DTMF);
 
     if (!hasToPlayTone)
+    {
+	_debug("    playDtmf: Do not have to play a tone...\n");
         return false;
+    }
 
     // length in milliseconds
     pulselen = getConfigInt (SIGNALISATION, PULSE_LENGTH);
 
     if (!pulselen)
+    {
+	_debug("    playDtmf: Pulse length is not set...\n");
         return false;
+    }
 
     // numbers of int = length in milliseconds / 1000 (number of seconds)
     //                = number of seconds * SAMPLING_RATE by SECONDS
@@ -744,13 +1557,16 @@ ManagerImpl::playDtmf (char code, bool isTalking)
 
     // fast return, no sound, so no dtmf
     if (audiolayer==0 || _dtmfKey == 0)
+    {
+	_debug("    playDtmf: Error no audio layer...\n");
         return false;
+    }
 
     // number of data sampling in one pulselen depends on samplerate
     // size (n sampling) = time_ms * sampling/s
     //                     ---------------------
     //                            ms/s
-    size = (int) (pulselen * ( (float) audiolayer->getSampleRate() /1000));
+    size = (int) ((pulselen * (float) audiolayer->getSampleRate()) / 1000);
 
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
@@ -766,6 +1582,9 @@ ManagerImpl::playDtmf (char code, bool isTalking)
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         audiolayer->startStream();
         audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
+    }
+    else {
+	_debug("    playDtmf: Error cannot play dtmf\n");
     }
 
     ret = true;
@@ -835,12 +1654,12 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     if (accountId==AccountNULL)
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
 
-    _debug ("ManagerImpl::incomingCall :: hasCurrentCall() %i \n",hasCurrentCall());
+    _debug ("ManagerImpl::incomingCall :: hasCurrentCall() %i \n", hasCurrentCall());
 
     if (!hasCurrentCall()) {
         call->setConnectionState (Call::Ringing);
         ringtone();
-        switchCall (call->getCallId());
+        // switchCall (call->getCallId());
 
     }
 
@@ -928,40 +1747,63 @@ ManagerImpl::peerRingingCall (const CallID& id)
 
 //THREAD=VoIP Call=Outgoing/Ingoing
 void
-ManagerImpl::peerHungupCall (const CallID& id)
+ManagerImpl::peerHungupCall (const CallID& call_id)
 {
     PulseLayer *pulselayer;
-    AccountID accountid;
+    AccountID account_id;
     bool returnValue;
 
-    /* Direct IP to IP call */
+    _debug("ManagerImpl::peerHungupCall(%s)\n", call_id.c_str());
 
-    if (getConfigFromCall (id) == Call::IPtoIP) {
-        SIPVoIPLink::instance (AccountNULL)->hangup (id);
+    // store the current call id
+    CallID current_call_id = getCurrentCallId();
+
+
+    if(participToConference(call_id))
+    {
+
+	Conference *conf = getConferenceFromCallID(call_id);
+
+	if(conf != NULL)
+	{
+
+	    removeParticipant(call_id);
+	    
+	    processRemainingParticipant(current_call_id, conf);
+	}
+    }
+    else
+    {
+	if (isCurrentCall(call_id)) 
+	{
+	    stopTone (true);
+	    switchCall ("");
+	}
+    }
+
+    /* Direct IP to IP call */
+    if (getConfigFromCall (call_id) == Call::IPtoIP) {
+        SIPVoIPLink::instance (AccountNULL)->hangup (call_id);
     }
 
     else {
-        accountid = getAccountFromCall (id);
 
-        if (accountid == AccountNULL) {
+        account_id = getAccountFromCall (call_id);
+
+        if (account_id == AccountNULL) {
             _debug ("peerHungupCall: Call doesn't exists\n");
             return;
         }
 
-        returnValue = getAccountLink (accountid)->peerHungup (id);
+        returnValue = getAccountLink (account_id)->peerHungup (call_id);
     }
 
     /* Broadcast a signal over DBus */
-    if (_dbus) _dbus->getCallManager()->callStateChanged (id, "HUNGUP");
+    if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "HUNGUP");
 
-    if (isCurrentCall (id)) {
-        stopTone (true);
-        switchCall ("");
-    }
+    removeWaitingCall (call_id);
 
-    removeWaitingCall (id);
-
-    removeCallAccount (id);
+    removeCallAccount (call_id);
 
     if (_audiodriver->getLayerType() == PULSEAUDIO && getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL)) {
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
@@ -1873,19 +2715,32 @@ ManagerImpl::setVolumeControls (void)
 void
 ManagerImpl::setRecordingCall (const CallID& id)
 {
+    /*
     _debug ("ManagerImpl::setRecording()! \n");
     AccountID accountid = getAccountFromCall (id);
 
     getAccountLink (accountid)->setRecording (id);
+    */
+    AccountID accountid = getAccountFromCall (id);
+    Recordable* rec = (Recordable*)getAccountLink (accountid)->getCall(id);
+
+    rec->setRecording();
 }
 
 bool
 ManagerImpl::isRecording (const CallID& id)
 {
+    /*
     _debug ("ManagerImpl::isRecording()! \n");
     AccountID accountid = getAccountFromCall (id);
 
     return getAccountLink (accountid)->isRecording (id);
+    */
+
+    AccountID accountid = getAccountFromCall (id);
+    Recordable* rec = (Recordable*)getAccountLink (accountid)->getCall(id);
+
+    return rec->isRecording();
 }
 
 void
@@ -2321,6 +3176,7 @@ ManagerImpl::getCallStatus (const std::string& sequenceId UNUSED)
             switch (call->getState()) {
 
                 case Call::Active:
+	        case Call::Conferencing:
                     code="112";
                     status = "Established";
                     break;
@@ -3626,3 +4482,68 @@ ManagerImpl::getCallList (void)
 
     return v;
 }
+
+
+std::map< std::string, std::string > 
+ManagerImpl::getConferenceDetails(const ConfID& confID)
+{
+
+    std::map<std::string, std::string> conf_details;
+    ConferenceMap::iterator iter_conf;
+
+    iter_conf = _conferencemap.find(confID);
+
+    Conference *conf = NULL;
+    if(iter_conf != _conferencemap.end()) {
+
+	
+        conf_details.insert (std::pair<std::string, std::string> ("CONFID", confID));
+        conf_details.insert (std::pair<std::string, std::string> ("CONF_STATE", conf->getStateStr()));
+    }
+
+    return conf_details;
+}
+
+
+std::vector< std::string >
+ManagerImpl::getConferenceList (void)
+{
+    _debug("ManagerImpl::getConferenceList\n");
+    std::vector< std::string > v;
+
+    ConferenceMap::iterator iter = _conferencemap.begin();
+    while (iter != _conferencemap.end ()) {
+        v.push_back (iter->first);
+        iter++;
+    }
+
+    return v;
+}
+
+
+std::vector< std::string >
+ManagerImpl::getParticipantList (const std::string& confID)
+{
+    _debug("ManagerImpl::getParticipantList\n");
+    std::vector< std::string > v;
+
+    ConferenceMap::iterator iter_conf = _conferencemap.find(confID);
+    Conference *conf = NULL;
+    if(iter_conf != _conferencemap.end())
+        conf = iter_conf->second;
+
+    if(conf != NULL)
+    {
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+	while (iter_participant != participants.end ()) {
+
+	    v.push_back (*iter_participant);
+	    
+	    iter_participant++;
+	}
+    }
+
+    return v;
+}
+

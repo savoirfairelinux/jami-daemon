@@ -27,7 +27,7 @@
 
 // Application import
 #include "numbercleaner.h"
-
+// #include "../src/conference.h"
 /*
  * @file numbercleanerTest.cpp  
  * @brief       Regroups unitary tests related to the phone number cleanup function.

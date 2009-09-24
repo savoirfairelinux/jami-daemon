@@ -27,6 +27,8 @@
 
 #include <accountlist.h>
 #include <calllist.h>
+#include <conferencelist.h>
+#include <conference_obj.h>
 #include <sflnotify.h>
 
 /** @file dbus.h
@@ -518,7 +520,9 @@ void dbus_set_stun_server( gchar* server);
 gint dbus_stun_is_enabled (void);
 void dbus_enable_stun (void);
 
-void dbus_set_record (const callable_obj_t * c);
+void dbus_add_participant(const gchar* callID, const gchar* confID);
+
+void dbus_set_record (const gchar * id);
 
 void dbus_set_record_path (const gchar *path);
 gchar* dbus_get_record_path (void);
