@@ -3585,8 +3585,8 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
         	//}
     	}
 
+	_debug ("            Setting local ip address: %s\n", localIP.c_str());
     	_debug ("            Setting local audio port to: %d\n", callLocalAudioPort);
-
     	_debug ("            Setting local audio port (external) to: %d\n", callLocalExternAudioPort);
 
     	// Set local audio port for SIPCall(id)

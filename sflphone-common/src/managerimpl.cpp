@@ -792,20 +792,24 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 
     Conference* conf = NULL;
 
-    _debug("ManagerImpl::removeConference _conferencemap.size: %i\n", _conferencemap.size());
+    _debug("    removeConference: _conferencemap.size: %i\n", _conferencemap.size());
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
 
     if (iter != _conferencemap.end()) {
-	_debug("Found conference id %s in conferencemap\n", conference_id.c_str());
+	_debug("    removeConference: Found conference id %s in conferencemap\n", conference_id.c_str());
         conf = iter->second;
     }
 
-    if(conf == NULL)
+    if(conf == NULL) {
+
+	_debug("    removeConference: Error conference not found\n");
 	return;
+    }
 
 
-    
-    // unbind main participant from conference
+    // We now need to bind the audio to the remain participant
+
+    // unbind main participant from conference (just to be sure)
     _audiodriver->getMainBuffer()->unBindAll(default_id);
 
     ParticipantSet participants = conf->getParticipantList();
@@ -819,9 +823,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 	_audiodriver->getMainBuffer()->bindCallID(*iter_p, default_id);
     }
     
-
-    
-
+    // Then remove the conference from the conference map
     _debug("ManagerImpl:: remove conference %s\n", conference_id.c_str());
     if (_conferencemap.erase(conference_id) == 1)
         _debug("ManagerImpl:: conference %s removed succesfully\n", conference_id.c_str());
@@ -1491,7 +1493,6 @@ ManagerImpl::sendDtmf (const CallID& id, char code)
     AccountID accountid = getAccountFromCall (id);
 
     if (accountid == AccountNULL) {
-        _debug("Send DTMF: call doesn't exists\n");
         playDtmf (code, false);
         return false;
     }
@@ -1583,7 +1584,7 @@ ManagerImpl::playDtmf (char code, bool isTalking)
         audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
     }
     else {
-	_debug("    playDtmf: Error cannot play dtmf");
+	_debug("    playDtmf: Error cannot play dtmf\n");
     }
 
     ret = true;
