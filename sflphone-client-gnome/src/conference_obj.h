@@ -47,7 +47,8 @@ typedef struct  {
 
     conference_state_t _state;       // The state of the call
     gchar* _confID;                  // The call ID
-    gboolean _conference_secured     // the security state of the conference 
+    gboolean _conference_secured;    // the security state of the conference
+    gboolean _conf_srtp_enabled;     // security required for this conference
 
 } conference_obj_t;
 

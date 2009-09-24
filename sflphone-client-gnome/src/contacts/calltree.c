@@ -618,7 +618,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
 			break;
                     case CALL_STATE_RECORD:
-			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/rec_call.svg", NULL);
+			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
 			break;
                     default:
 			WARN("Update calltree - Should not happen!");
@@ -881,7 +881,6 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
     DEBUG("calltree_add_conference conf->_confID %s\n", conf->_confID);
 
-
     GdkPixbuf *pixbuf=NULL;
     GdkPixbuf *pixbuf_security=NULL;
     GtkTreeIter iter;
@@ -893,6 +892,9 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     gchar* call_id;
 
     callable_obj_t * call;
+
+    account_t* account_details=NULL;
+    gchar* srtp_enabled="";
 
     // New call in the list
     
@@ -943,33 +945,72 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	DEBUG("Error no pixbuff for conference from %s", ICONS_DIR);
     }
 
-    
+
+    // Used to determine if at least one participant use a security feature
+    // If true (at least on call use a security feature) we need to display security icons 
+    conf->_conf_srtp_enabled = FALSE;
+
+    // Used to determine if the conference is secured
+    // Every participant to a conference must be secured, the conference is not secured elsewhere
     conf->_conference_secured = TRUE;
 
+
+    participant = (gchar**)dbus_get_participant_list(conf->_confID);
     if(participant)
     {
-
+	participant = (gchar**)dbus_get_participant_list(conf->_confID);
 	for (pl = participant; *participant; participant++)
-	{
-	    
+	{	    
 	    call_id = (gchar*)(*participant);
 	    call = calllist_get (tab, call_id);
 
-	    if(call->_srtp_state == 0)
-	    {
-		conf->_conference_secured = FALSE;
-		break;
+	    if(call != NULL) {
+		
+		account_details = account_list_get_by_id(call->_callID);
+		if(account_details != NULL) {
+		    srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
+		}
+
+		if(g_strcasecmp(srtp_enabled,"true") == 0) {
+		    conf->_conf_srtp_enabled = TRUE;
+		    break;
+		}
+
+		
+	    }
+
+	}
+
+	if(conf->_conf_srtp_enabled)
+	{
+	    participant = (gchar**)dbus_get_participant_list(conf->_confID);
+	    for (pl = participant; *participant; participant++)
+	    {	    
+		call_id = (gchar*)(*participant);
+		call = calllist_get (tab, call_id);
+		
+		if(call != NULL) {
+		    
+		    if(call->_srtp_state == 0)
+		    {
+			conf->_conference_secured = FALSE;
+			break;
+		    }
+		}
 	    }
 	}
     }
 
-    if(conf->_conference_secured)
+    if(conf->_conf_srtp_enabled)
     {
-	pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
-    }
-    else
-    {
-	pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
+	if(conf->_conference_secured)
+	{
+	    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
+	}
+	else
+	{
+	    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
+	}
     }
 
     DEBUG("add conference to tree store");
@@ -988,6 +1029,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
         g_object_unref(G_OBJECT(pixbuf));
 
 
+    participant = (gchar**)dbus_get_participant_list(conf->_confID);
     if(participant)
     {
 	for (pl = participant; *participant; participant++)
