@@ -2974,10 +2974,15 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 	account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
 	if (account != NULL) {
-		addrToUse = account->getSessionAddress ();
+		if (account_id == AccountNULL)
+			addrToUse = link->getLocalIPAddress();
+		else
+			addrToUse = account->getSessionAddress ();
 	}
-	else
+	else {
 		addrToUse = link->getLocalIPAddress();
+	}
+
 
     // Have to do some stuff with the SDP
     // Set the codec map, IP, peer number and so on... for the SIPCall object
