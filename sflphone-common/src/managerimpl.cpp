@@ -350,13 +350,13 @@ ManagerImpl::answerCall (const CallID& call_id)
     Call* call = NULL;
     call = getAccountLink (account_id)->getCall (call_id);
     if (call == NULL) {
-        _debug("    answerCall: currentCall is null\n");
+        _debug("    answerCall: Call is null\n");
     }
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
 	
-	_debug ("    answerCall: Has current call or conference (%s)\n", current_call_id.c_str());	
+	_debug ("    answerCall: Currently conversing with %s\n", current_call_id.c_str());	
 	// if it is not a conference and is not a conference participant
 	if (!isConference(current_call_id) && !participToConference(current_call_id))
 	{
@@ -366,7 +366,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 	// if we are talking to a conference and we are answering an incoming call
 	else if (isConference(current_call_id) && !participToConference(call_id))
 	{
-	    _debug ("    answerCall: detach main participant from conference\n");
+	    _debug ("    answerCall: Detach main participant from conference\n");
 	    detachParticipant(default_id, current_call_id);
 	}
     }
@@ -385,7 +385,21 @@ ManagerImpl::answerCall (const CallID& call_id)
         
     removeWaitingCall (call_id);
 
-    switchCall (call_id);
+    // if we dragged this call into a conference already
+    if ( participToConference(call_id) ) {
+	 
+	// AccountID currentAccountId;
+        // Call* call = NULL;
+
+	// currentAccountId = getAccountFromCall (call_id);
+	// call = getAccountLink (currentAccountId)->getCall (call_id);
+	
+	switchCall(call->getConfId());
+    }
+    else
+    {
+	switchCall(call_id);
+    }
 
     return true;
 }
@@ -556,27 +570,33 @@ ManagerImpl::onHoldCall (const CallID& call_id)
 
     // switchCall (id);
 
-    /* Direct IP to IP call */
+    CallID current_call_id = getCurrentCallId();
 
+    _debug("    onHoldCall: try to put call %s on hold\n", call_id.c_str());
+
+    /* Direct IP to IP call */
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (call_id);
+	returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (call_id);
     }
 
     /* Classic call, attached to an account */
     else {
-        account_id = getAccountFromCall (call_id);
+	account_id = getAccountFromCall (call_id);
+	    
+	if (account_id == AccountNULL) {
+	    _debug ("    onHoldCall: Account ID %s or callid %s doesn't exists\n", account_id.c_str(), call_id.c_str());
+	    return false;
+	}
 
-        if (account_id == AccountNULL) {
-            _debug ("    onHoldCall: Account ID %s or callid %s doesn't exists\n", account_id.c_str(), call_id.c_str());
-            return false;
-        }
-
-        returnValue = getAccountLink (account_id)->onhold (call_id);
+	returnValue = getAccountLink (account_id)->onhold (call_id);
     }
-    
+
     removeWaitingCall (call_id);
 
-    // switchCall ("");
+    if(current_call_id == call_id) {
+
+	switchCall ("");
+    }
 
     if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "HOLD");
 
@@ -1732,6 +1752,8 @@ ManagerImpl::peerAnsweredCall (const CallID& id)
 
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
     if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
+
+    
 }
 
 //THREAD=VoIP Call=Outgoing
