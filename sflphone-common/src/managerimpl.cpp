@@ -344,7 +344,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 
     AccountID account_id = getAccountFromCall (call_id);
     if(account_id == AccountNULL) {
-        _debug("    answerCall : AccountId is null\n");
+        _debug("    answerCall: AccountId is null\n");
     }
     
     Call* call = NULL;
@@ -369,6 +369,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 	    _debug ("    answerCall: Detach main participant from conference\n");
 	    detachParticipant(default_id, current_call_id);
 	}
+
     }
 
     if (!getAccountLink (account_id)->answer (call_id)) {
@@ -593,6 +594,7 @@ ManagerImpl::onHoldCall (const CallID& call_id)
 
     removeWaitingCall (call_id);
 
+    // keeps current call id if the action is not holding this call or a new outgoing call
     if(current_call_id == call_id) {
 
 	switchCall ("");
@@ -1009,17 +1011,31 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     // store the current call id (it will change in offHoldCall or in answerCall)
     CallID current_call_id = getCurrentCallId();
 
+    // detach from the conference and switch to this conference 
+    if (current_call_id != call_id)
+    {
+	if (isConference(current_call_id))
+	    detachParticipant(default_id, current_call_id);
+	else
+	    onHoldCall(current_call_id);
+    }
+
     _debug("    addParticipant: enter main process\n");
     if(iter != _conferencemap.end()) {
 
 	Conference* conf = iter->second;
+	switchCall(conf->getConfID());
+
+	AccountID currentAccountId;
+        Call* call = NULL;
+
+	currentAccountId = getAccountFromCall (call_id);
+	call = getAccountLink (currentAccountId)->getCall (call_id);
+	call->setConfId (conf->getConfID());
 
 	conf->add(call_id);
 	
-
 	iter_details = call_details.find("CALL_STATE");
-
-	switchCall("");
 
 	_debug("    addParticipant: call state: %s\n", iter_details->second.c_str());
 	if (iter_details->second == "HOLD")
@@ -1041,15 +1057,6 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	    _audiodriver->getMainBuffer()->unBindAll(call_id);
 	    conf->bindParticipant(call_id);
 	}
-
-	// update this call conference id
-	AccountID currentAccountId;
-
-        Call* call = NULL;
-
-	currentAccountId = getAccountFromCall (call_id);
-	call = getAccountLink (currentAccountId)->getCall (call_id);
-	call->setConfId (conf->getConfID());
 
 	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
     }
@@ -1146,15 +1153,13 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     if(iter == _conferencemap.end()){
 
 	 _debug("    joinParticipant: create a conference\n");
+
 	 Conference *conf = createConference(call_id1, call_id2);
+	 switchCall(conf->getConfID());
 
-	 // AccountID currentAccountId;
-	 // Call* call = NULL;
-
-	 // unbind main participant from either call_id1 or call_id2
-	 // _audiodriver->getMainBuffer()->unBindAll(default_id);
-
-	 switchCall("");
+	 currentAccountId = getAccountFromCall (call_id1);
+	 call = getAccountLink (currentAccountId)->getCall (call_id1);
+	 call->setConfId (conf->getConfID());
 
 	 iter_details = call1_details.find("CALL_STATE");
 	 _debug("    joinParticipant: call1 %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
@@ -1175,12 +1180,9 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	     conf->bindParticipant(call_id1);
 	 }
 
-	 currentAccountId = getAccountFromCall (call_id1);
-	 call = getAccountLink (currentAccountId)->getCall (call_id1);
+	 currentAccountId = getAccountFromCall (call_id2);
+	 call = getAccountLink (currentAccountId)->getCall (call_id2);
 	 call->setConfId (conf->getConfID());
-
-
-	 switchCall("");
 
 	 iter_details = call2_details.find("CALL_STATE");
 	 _debug("    joinParticipant: call2 %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
@@ -1201,16 +1203,11 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	     conf->bindParticipant(call_id2);
 	 }
 
-	 currentAccountId = getAccountFromCall (call_id2);
-	 call = getAccountLink (currentAccountId)->getCall (call_id2);
-	 call->setConfId (conf->getConfID());
-
-
 	 // finally bind main participant to conference
 	 // addMainParticipant(default_conf);
 
 
-	 switchCall(conf->getConfID());
+	 // switchCall(conf->getConfID());
 
     }
     else {
@@ -1289,6 +1286,8 @@ ManagerImpl::detachParticipant(const CallID& call_id, const CallID& current_id)
 
 	    _dbus->getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 	}
+
+	switchCall("");
 	    
     }
     
