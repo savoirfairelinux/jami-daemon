@@ -22,7 +22,6 @@
 #include <dbus/dbus.h>
 #include <statusicon.h>
 #include <contacts/searchbar.h>
-#include <menus.h>
 #include <toolbar.h>
 
 #include <gtk/gtk.h>
