@@ -249,6 +249,8 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
 	    changed_conf->_state = CONFERENCE_STATE_HOLD;
 	}
 
+	changed_conf->participant = (gchar**)dbus_get_participant_list(changed_conf->_confID);
+
 	calltree_add_conference (current_calls, changed_conf);
     }
 }
@@ -265,6 +267,7 @@ conference_created_cb (DBusGProxy *proxy UNUSED,
 
     create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
     new_conf->_confID = g_strdup(confID);
+    new_conf->participant = (gchar**)dbus_get_participant_list(new_conf->_confID);
     conferencelist_add(new_conf);
     calltree_add_conference (current_calls, new_conf);
 }

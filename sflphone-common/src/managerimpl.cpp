@@ -568,9 +568,7 @@ ManagerImpl::onHoldCall (const CallID& call_id)
     _debug("ManagerImpl::onHoldCall(%s)\n", call_id.c_str());
 
     stopTone (true);
-
-    // switchCall (id);
-
+    
     CallID current_call_id = getCurrentCallId();
 
     _debug("    onHoldCall: try to put call %s on hold\n", call_id.c_str());
@@ -1058,8 +1056,9 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	    conf->bindParticipant(call_id);
 	}
 
-	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+	// _dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
     }
+    else
     {
 	_debug("    addParticipant: Error, conference %s conference_id not found!\n", conference_id.c_str());
     }
@@ -1072,7 +1071,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     switchCall("");
     addMainParticipant(conference_id);
 
-    
+    // _dbus->getCallManager()->conferenceChanged(conference_id, conference_id);
     
     
 }
