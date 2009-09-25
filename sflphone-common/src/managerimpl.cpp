@@ -1018,6 +1018,8 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	    onHoldCall(current_call_id);
     }
 
+    addMainParticipant(conference_id);
+
     _debug("    addParticipant: enter main process\n");
     if(iter != _conferencemap.end()) {
 
@@ -1065,11 +1067,11 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 
 
     // bind main participant to conference after adding new participant 
-    detachParticipant(default_id, current_call_id);
+    // detachParticipant(default_id, current_call_id);
 
     // to avoid puting onhold the added call
-    switchCall("");
-    addMainParticipant(conference_id);
+    // switchCall("");
+    // addMainParticipant(conference_id);
 
     // _dbus->getCallManager()->conferenceChanged(conference_id, conference_id);
     
