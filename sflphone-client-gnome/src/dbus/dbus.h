@@ -605,6 +605,7 @@ void dbus_set_confirm_go_clear (const callable_obj_t * c);
  */
 gchar** dbus_get_supported_tls_method();
 
+gchar** dbus_get_participant_list (const char * confID);
 
 
 #endif

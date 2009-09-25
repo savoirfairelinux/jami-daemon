@@ -776,7 +776,6 @@ sflphone_keypad( guint keyval, gchar * key)
  * If there is no default account selected, place a call with the first
  * registered account of the account list
  * Else, check if it an IP call. if not, popup an error message
- *
  */
  
 static gboolean _is_direct_call(callable_obj_t * c) {
