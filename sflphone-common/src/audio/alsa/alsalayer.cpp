@@ -797,6 +797,7 @@ void AlsaLayer::audioCallback (void)
     {
         micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
 	_debug("AlsaLayer::audioCallback (mic): micAvailAlsa %i\n", micAvailAlsa);
+	
 	if(micAvailAlsa > 0) 
 	{
             micAvailPut = _mainBuffer.availForPut();
@@ -810,6 +811,10 @@ void AlsaLayer::audioCallback (void)
 	    }
             free(in); in=0;
         }
+	else if(micAvailAlsa < 0)
+	{
+	    _debug("AlsaLayer::audioCallback (mic): error: %s\n", snd_strerror(micAvailAlsa));
+	}
     }
 }
 
