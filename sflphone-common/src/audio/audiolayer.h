@@ -25,10 +25,9 @@
 #include "global.h"
 #include "audiodevice.h"
 #include "ringbuffer.h"
-
+#include "mainbuffer.h"
 
 #include <cc++/thread.h> // for ost::Mutex
-
 
 #define FRAME_PER_BUFFER	160
 
@@ -37,7 +36,10 @@
  * @brief Main sound class. Manages the data transfers between the application and the hardware. 
  */
 
+
+class Recordable;
 class ManagerImpl;
+
 
 class AudioLayer {
 
@@ -58,9 +60,7 @@ class AudioLayer {
             : _defaultVolume(100)
 			  , _layerType( type )
               , _manager(manager)
-              , _voiceRingBuffer( SIZEBUF )
-              , _urgentRingBuffer( SIZEBUF)
-              , _micRingBuffer( SIZEBUF )
+	      , _urgentRingBuffer( SIZEBUF, default_id )
               , _indexIn ( 0 )
               , _indexOut ( 0 )
               , _sampleRate ( 0 )
@@ -138,7 +138,7 @@ class AudioLayer {
          * @param toCopy    The size of the buffer
          * @return int      The number of bytes copied
          */
-        int putMain(void* buffer, int toCopy);
+        int putMain(void* buffer, int toCopy, CallID call_id = default_id);
 
         void flushMain (void);
 
@@ -193,12 +193,39 @@ class AudioLayer {
          */
         unsigned int getFrameSize() { return _frameSize; }
 
+	/**
+         * Get the layer type for this instance (either Alsa or PulseAudio)
+         * @return unsigned int The layer type
+         *
+         */
         int getLayerType( void ) { return _layerType; }
+
+	/**
+         * Get a pointer to the application MainBuffer class.
+	 *
+	 * In order to send signal to other parts of the application, one must pass through the mainbuffer.
+	 * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+	 *
+         * @return MainBuffer* a pointer to the MainBuffer instance
+         */
+	MainBuffer* getMainBuffer( void ) { return &_mainBuffer; }
 
         /**
          * Default volume for incoming RTP and Urgent sounds.
          */
         unsigned short _defaultVolume; // 100
+
+	
+	/**
+	 * Set the audio recorder
+	 */
+	void setRecorderInstance(Recordable* rec) {_recorder = NULL; _recorder = rec;}
+
+	/**
+	 * Get the audio recorder
+	 */
+	Recordable* getRecorderInstance(Recordable* rec) {return _recorder;}
+
 
     protected:
 
@@ -220,9 +247,21 @@ class AudioLayer {
         /**
          * Urgent ring buffer used for ringtones
          */
-        RingBuffer _voiceRingBuffer;
         RingBuffer _urgentRingBuffer;
-        RingBuffer _micRingBuffer;
+
+	/**
+	 * Instance of the MainBuffer for the whole application
+	 *
+	 * In order to send signal to other parts of the application, one must pass through the mainbuffer.
+	 * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+	 *
+	 */ 
+	MainBuffer _mainBuffer;
+
+	/**
+	 * A pointer to the recordable instance (may be a call or a conference)
+	 */
+	Recordable* _recorder;
 
         /**
          * Number of audio cards on which capture stream has been opened 

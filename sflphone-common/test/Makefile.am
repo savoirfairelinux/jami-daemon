@@ -1,6 +1,7 @@
 include ../globals.mak
 
-noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester historyTester #rtpTester
+
+noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester historyTester mainbufferTester #rtpTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
@@ -15,13 +16,15 @@ OBJECT_FILES= \
 	../src/sip/sipaccount.o \
 	../src/iax/libiaxlink_la-iaxaccount.o \
 	../src/sflphoned-eventthread.o \
+	../src/sflphoned-conference.o \
 	../src/plug-in/pluginmanager.o \
 	../src/plug-in/audiorecorder/audiorecord.o \
 	../src/audio/samplerateconverter.o \
 	../src/sip/sdp.o \
 	../src/sip/sdpmedia.o \
 	../src/sflphoned-numbercleaner.o \
-    ../src/history/historymanager.o
+        ../src/history/historymanager.o
+	../
 
 numbercleanerTester_SOURCES = \
 		numbercleanerTest.h \
@@ -41,7 +44,6 @@ numbercleanerTester_LDADD = \
 		@ZRTPCPP_LIBS@ \
 		@libssl_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 
 pluginmanagerTester_SOURCES = \
@@ -62,7 +64,6 @@ pluginmanagerTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 						
 hookmanagerTester_SOURCES = \
@@ -82,7 +83,6 @@ hookmanagerTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 
 audiolayerTester_SOURCES = \
@@ -103,28 +103,6 @@ audiolayerTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
-		$(OBJECT_FILES)
-
-rtpTester_SOURCES = \
-		rtpTest.h \
-		rtpTest.cpp \
-		TestMain.cpp
-
-rtpTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		@ZRTPCPP_LIBS@ \
-		@libssl_LIBS@ \
-		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 
 historyTester_SOURCES = \
@@ -145,6 +123,25 @@ historyTester_LDADD = \
 		@libssl_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 
+
+mainbufferTester_SOURCES = \
+		mainbufferTest.h \
+		mainbufferTest.cpp \
+		TestMain.cpp
+
+mainbufferTester_LDADD = \
+		../src/libsflphone.la  \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@CPPUNIT_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@CCGNU2_LIBS@ \
+		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
+		$(OBJECT_FILES)

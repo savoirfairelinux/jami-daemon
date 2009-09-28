@@ -28,6 +28,7 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call
         , _cid (0)
         , _did (0)
         , _tid (0)
+	, _audiortp (new sfl::AudioRtpFactory())
         , _xferSub (NULL)
         , _invSession (NULL)
         , _local_sdp (0)
@@ -38,7 +39,8 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call
 
 SIPCall::~SIPCall()
 {
-
+    delete _audiortp;
+    _audiortp = 0;
     delete _local_sdp;
     _local_sdp = 0;
     _debug ("SIPCALL::Destructor for this class is called \n");

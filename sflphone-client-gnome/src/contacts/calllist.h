@@ -21,6 +21,7 @@
 #define __CALLLIST_H__
 
 #include <callable_obj.h>
+#include <conference_obj.h>
 #include <gtk/gtk.h>
 
 /** @file calllist.h
@@ -28,15 +29,17 @@
   */
 
 typedef struct {
-	GtkListStore* store;
+	GtkTreeStore* store;
 	GtkWidget* view;
 	GtkWidget* tree;
-    GtkWidget* searchbar;
+        GtkWidget* searchbar;
 
-  // Calllist vars
+        // Calllist vars
 	GQueue* callQueue;
+        gint selectedType;
 	callable_obj_t* selectedCall;
-    gchar *_name;
+        conference_obj_t* selectedConf;
+        gchar *_name;
 } calltab_t;
 
 void

@@ -80,9 +80,8 @@ typedef enum RegistrationState {
 
 // SIP specific parameters
 #define SIP_PROXY                           "SIP.proxy"
-#define SIP_STUN_SERVER                     "STUN.server"
-#define SIP_USE_STUN                        "STUN.enable"
-#define SIP_STUN_PORT                       "STUN.port"
+#define STUN_SERVER							"STUN.server"
+#define STUN_ENABLE							"STUN.enable"
 
 // SRTP specific parameters
 #define SRTP_ENABLE                         "SRTP.enable"

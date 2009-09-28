@@ -17,5 +17,6 @@ AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
 					-DPREFIX=\""$(prefix)"\"							\
 					-DSYSCONFDIR=\""$(sysconfdir)"\"					\
 					-DDATADIR=\""$(datadir)"\"							\
-					-DLIBDIR=\""$(libdir)"\"
+					-DLIBDIR=\""$(libdir)"\"							\
+					-DSFLPHONE_UIDIR=\""$(datadir)/sflphone/ui"\"
 

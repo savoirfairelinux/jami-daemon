@@ -26,8 +26,15 @@
 #include <pjsip-simple/evsub.h>
 #include <pjsip_ua.h>
 
+#include "audio/audiortp/AudioRtpFactory.h"
+
 class AudioCodec;
 class Sdp;
+class AudioRtp;
+
+namespace sfl {
+    class AudioRtpFactory;
+}
 
 /**
  * @file sipcall.h
@@ -79,6 +86,8 @@ class SIPCall : public Call
      * @return int  SIP transaction id
      */
     int  getTid() { return _tid; }
+
+    
     
     
     /** 
@@ -97,6 +106,9 @@ class SIPCall : public Call
 
     void setLocalSDP (Sdp *local_sdp) { _local_sdp = local_sdp; }
 
+    /** Returns a pointer to the AudioRtp object */
+    inline sfl::AudioRtpFactory * getAudioRtp(void) { return _audiortp; }
+
   private:
 
     int _cid;
@@ -108,8 +120,10 @@ class SIPCall : public Call
 
     // Assignment Operator
     SIPCall& operator=( const SIPCall& rh);
-    
-    
+
+    /** Starting sound */
+    sfl::AudioRtpFactory * _audiortp;
+
     pjsip_evsub *_xferSub;
     
 	pjsip_inv_session *_invSession;

@@ -35,6 +35,10 @@ if ! $have_log4c; then
     AC_MSG_ERROR(Please install the log4c library)
 fi
 
+dnl uninstalled gsr ui dir
+AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
+  [path to uninstalled SFLphone UI dir])
+
 dnl Check for GTK+ version
 dnl If gtk+-2.0 >= 2.16, we don't need libsexy package anymore
 PKG_CHECK_MODULES(GTK216, gtk+-2.0 >= 2.16, need_libsexy=false, need_libsexy=true)

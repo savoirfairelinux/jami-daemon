@@ -165,18 +165,6 @@ class IAXVoIPLink : public VoIPLink
      *		  false otherwise
      */
     bool refuse (const CallID& id);
-   
-    /**
-     * Set Recording
-     * @param id The call identifier
-     */
-    void setRecording(const CallID& id);
-
-    /**
-     * Return recording state
-     * @param id The call identifier
-     */
-    bool isRecording(const CallID& id);
  
     /**
      * Send DTMF  
@@ -201,8 +189,6 @@ class IAXVoIPLink : public VoIPLink
   public: // iaxvoiplink only
    
     void updateAudiolayer( void ); 
-
-    void setStunServer( const std::string &server ) {};
 
   private:
 

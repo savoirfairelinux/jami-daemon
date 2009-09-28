@@ -26,7 +26,6 @@
 #include "voiplink.h"
 #include "hooks/urlhook.h"
 
-#include "audio/audiortp/AudioRtpFactory.h"
 
 //////////////////////////////
 /* PJSIP imports */
@@ -39,17 +38,12 @@
 
 class EventThread;
 class SIPCall;
-class AudioRtp;
-
-namespace sfl {
-    class AudioRtpFactory;
-}
 
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 0 
+#define PJ_LOG_LEVEL 6 
 
 /**
  * @file sipvoiplink.h
@@ -168,7 +162,7 @@ class SIPVoIPLink : public VoIPLink
         bool transfer(const CallID& id, const std::string& to);
 
         /** Handle the incoming refer msg, not finished yet */
-        bool transferStep2();
+        bool transferStep2(SIPCall* call);
 
         /**
          * Refuse the call
@@ -184,22 +178,6 @@ class SIPVoIPLink : public VoIPLink
          * @return bool True on success
          */
         bool carryingDTMFdigits(const CallID& id, char code);
-
-        /** 
-         * If set to true, we check for a firewall
-         * @param use true if we use STUN
-         */
-        inline void useStun(bool use) { _useStun=use; }
-
-        inline bool useStun( void ) { return _useStun; }
-
-        /** 
-         * The name of the STUN server
-         * @param server Server FQDN/IP
-         */
-        void setStunServer(const std::string& server);
-
-        std::string getStunServer (void) { return _stunServer; }
 
         /** 
          * Terminate every call not hangup | brutal | Protected by mutex 
@@ -268,9 +246,6 @@ class SIPVoIPLink : public VoIPLink
         /** when we init the listener, how many times we try to bind a port? */
         int _nbTryListenAddr;
 
-        /** Returns a pointer to the AudioRtp object */
-        inline sfl::AudioRtpFactory * getAudioRtp(void) { return _audiortp; }
-
         /** Increment the number of SIP account connected to this link */
         void incrementClients (void) { _clients++; }
 
@@ -311,6 +286,15 @@ class SIPVoIPLink : public VoIPLink
          */
         std::vector<std::string> getAllIpInterface(void);
 
+		/**
+		 * Initialize the transport selector
+		 * @param transport		A transport associated with an account
+		 * @param tp_sel		A pointer to receive the transport selector structure
+		 *
+		 * @return pj_status_t		PJ_SUCCESS if the structure was successfully initialized
+		 */
+		pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
+
     private:
         /**
          * Constructor
@@ -345,10 +329,10 @@ class SIPVoIPLink : public VoIPLink
          */
         bool pjsip_shutdown(void);
 
-        pj_status_t stunServerResolve();
+        pj_status_t stunServerResolve (AccountID id);
 
         /** Create SIP UDP Listener */
-        int createUDPServer();
+        int createUDPServer (AccountID = "");
 
         /**
          * Try to create a new TLS transport
@@ -377,6 +361,8 @@ class SIPVoIPLink : public VoIPLink
          * @return pj_status_t PJ_SUCCESS on success 
          */
         pj_status_t createTlsTransport(AccountID id);
+
+		pj_status_t createAlternateUdpTransport (AccountID id);
         
         bool loadSIPLocalIP();
 
@@ -393,9 +379,6 @@ class SIPVoIPLink : public VoIPLink
 
         /** Local Extern Port is the port seen by peers for SIP listener */
         unsigned int _localExternPort;
-
-        /** Starting sound */
-        sfl::AudioRtpFactory * _audiortp;
         
         /** For registration use only */
         int _regPort;
@@ -416,16 +399,18 @@ class SIPVoIPLink : public VoIPLink
          * with that uri will be discovered. 
          *
          * @param uri The uri from which we want to discover the address to use
+         * @param transport The transport to use to discover the address 
          * @return pj_str_t The extern (public) address
          */
-        std::string findLocalAddressFromUri(const std::string& uri);
+        std::string findLocalAddressFromUri(const std::string& uri, pjsip_transport *transport);
         
         /* 
          * Does the same as findLocalAddressFromUri but returns a port.
-         * @param uri The uri from which we want to discover the address to use
+         * @param uri The uri from which we want to discover the port to use
+         * @param transport The transport to use to discover the port 
          * @return int The extern (public) port
          */
-        int findLocalPortFromUri(const std::string& uri);
+        int findLocalPortFromUri(const std::string& uri, pjsip_transport *transport);
 };
 
 

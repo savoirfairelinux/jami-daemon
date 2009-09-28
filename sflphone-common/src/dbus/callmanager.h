@@ -50,6 +50,8 @@ class CallManager
         /* methods exported by this interface,
          * you will have to implement them in your ObjectAdaptor
          */
+
+	/* Call related methods */
         void placeCall( const std::string& accountID, const std::string& callID, const std::string& to );
         void refuse( const std::string& callID );
         void accept( const std::string& callID );
@@ -57,19 +59,33 @@ class CallManager
         void hold( const std::string& callID );
         void unhold( const std::string& callID );
         void transfert( const std::string& callID, const std::string& to );
+	std::map< std::string, std::string > getCallDetails( const std::string& callID );
+        std::vector< std::string > getCallList (void);
+	std::string getCurrentCallID(  );
+
+	/* Conference related methods */
+	void joinParticipant( const std::string& sel_callID, const std::string& drag_callID );
+	void addParticipant( const std::string& callID, const std::string& confID );
+	void addMainParticipant( const std::string& confID );
+	void detachParticipant( const std::string& callID );
+	void joinConference( const std::string& sel_confID, const std::string& drag_confID );
+	void hangUpConference( const std::string& confID );
+	void holdConference( const std::string& confID );
+	void unholdConference( const std::string& confID );
+	std::vector< std::string > getConferenceList (void);
+	std::vector< std::string > getParticipantList (const std::string& confID);
+	std::map< std::string, std::string > getConferenceDetails ( const std::string& callID );
+
+	/* General audio methods */
         void setVolume( const std::string& device, const double& value );
         double getVolume( const std::string& device );
         void setRecording( const std::string& callID );
         bool getIsRecording(const std::string& callID);
         std::string getCurrentCodecName(const std::string& callID);
-        
-        std::map< std::string, std::string > getCallDetails( const std::string& callID );
-        std::vector< std::string > getCallList (void);
-
-        std::string getCurrentCallID(  );
         void playDTMF( const std::string& key );
         void startTone( const int32_t& start, const int32_t& type );
 
+	/* Security related methods */
         void setSASVerified(const std::string& callID);
         void resetSASVerified(const std::string& callID);
         void setConfirmGoClear(const std::string& callID);
@@ -79,7 +95,7 @@ class CallManager
         
     private:
 
-        sfl::AudioZrtpSession * getAudioZrtpSession(void);
+        sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
 };
 
 

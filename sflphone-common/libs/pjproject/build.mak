@@ -3,7 +3,7 @@ export MACHINE_NAME := auto
 export OS_NAME := auto
 export HOST_NAME := unix
 export CC_NAME := gcc
-export TARGET_NAME := x86_64-unknown-linux-gnu
+export TARGET_NAME := i686-pc-linux-gnu
 export CROSS_COMPILE := 
 export LINUX_POLL := select 
 
@@ -42,7 +42,7 @@ endif
 
 
 # CFLAGS, LDFLAGS, and LIBS to be used by applications
-export PJDIR := /home/emilou/git-repos/sflphone/sflphone-common/libs/pjproject
+export PJDIR := /home/alexandresavard/Development/sflphone/sflphone-common/libs/pjproject
 export APP_CC := $(CROSS_COMPILE)$(CC_NAME)
 export APP_CFLAGS := -DPJ_AUTOCONF=1\
 	-O2\

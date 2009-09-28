@@ -109,7 +109,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
 
 bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list)
 {
-	_debug ("Saving history in XDG directory: %s\n", _history_path.data());
+    _debug ("Saving history in XDG directory: %s\n", _history_path.data());
     return  history_list->saveConfigTree (_history_path.data());
 }
 
@@ -149,20 +149,18 @@ int HistoryManager::create_history_path (std::string path)
 
     std::string userdata, xdg_env, xdg_data;
 
-	xdg_data = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
+    xdg_data = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".local/share/sflphone";
 
     if (path == "") {
 
-		// If the environment variable is set (not null and not empty), we'll use it to save the history
-		// Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
-        if (XDG_DATA_HOME != NULL)
-		{
-			xdg_env = std::string (XDG_DATA_HOME);
-			(xdg_env.length() > 0) ?	userdata = xdg_env 
-										: userdata = xdg_data;
-		}
-		else
-			userdata = xdg_data;
+        // If the environment variable is set (not null and not empty), we'll use it to save the history
+        // Else we 'll the standard one, ie: XDG_DATA_HOME = $HOMEDIR/.local/share/sflphone
+        if (XDG_DATA_HOME != NULL) {
+            xdg_env = std::string (XDG_DATA_HOME);
+            (xdg_env.length() > 0) ?	userdata = xdg_env
+                                                : userdata = xdg_data;
+        } else
+            userdata = xdg_data;
 
         if (mkdir (userdata.data(), 0755) != 0) {
             // If directory	creation failed

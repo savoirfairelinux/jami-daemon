@@ -34,7 +34,6 @@ AC_CONFIG_MACRO_DIR([m4])
 	dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 	AC_CONFIG_FILES([libs/Makefile \
-			libs/stund/Makefile \
 			libs/utilspp/Makefile \
 			libs/utilspp/functor/Makefile \
 			libs/utilspp/singleton/Makefile \
@@ -157,9 +156,12 @@ AC_CHECK_TYPES([ptrdiff_t])
 #AC_SUBST(SIP_CFLAGS)
 
 	dnl Check for uuid development package - name: uuid-dev 
-	UUID_MIN_VERSION=1.0
-	PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
-	AC_SUBST(UUID_CFLAGS)
+	dnl PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
+	dnl AC_SUBST(UUID_CFLAGS)
+dnl AC_SUBST(UUID_LIBS)
+UUID_MIN_VERSION=1.0
+PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
+AC_SUBST(UUID_CFLAGS)
 AC_SUBST(UUID_LIBS)
 
 	dnl Check for alsa development package - name: libasound2-dev 

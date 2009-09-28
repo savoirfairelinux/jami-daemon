@@ -7,6 +7,7 @@ SUBDIRS = dbus audio config plug-in hooks history sip iax
 
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \
+		conference.cpp \
 		voiplink.cpp \
 		main.cpp \
 		managerimpl.cpp \
@@ -46,12 +47,13 @@ sflphoned_LDADD = \
 		@libssl_LIBS@
 
 # sflphoned_LDFLAGS= -pg -luuid
-sflphoned_LDFLAGS= -luuid
+sflphoned_LDFLAGS= $(UUID_LIBS)
 
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
-        voiplink.h \
+		conference.h \
+        	voiplink.h \
 		managerimpl.h \
 		manager.h \
 		global.h \
@@ -64,7 +66,6 @@ noinst_HEADERS = \
 		numbercleaner.h
 
 libsflphone_la_LIBADD = \
-	$(src)/libs/stund/libstun.la \
 	$(src)/libs/utilspp/libutilspp.la \
 	$(src)/libs/iax2/libiax2.la \
 	$(IAX_LIB) \

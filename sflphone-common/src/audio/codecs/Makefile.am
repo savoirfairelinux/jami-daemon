@@ -110,7 +110,7 @@ uninstall-libcodec_speex_wb_so:
 	rm -f $(sflcodecdir)/libcodec_speex_wb.so
 uninstall-libcodec_speex_ub_so:
 	rm -f $(sflcodecdir)/libcodec_speex_ub.so
+uninstall-libcodec_celt_so:
+	rm -f $(sflcodecdir)/libcodec_celt.so
 	rm -rf $(sflcodecdir)
-uninstall-libcodec_celt_so: libcodec_celt.so
-	$(INSTALL_PROGRAM)  libcodec_celt.so $(sflcodecdir)
 

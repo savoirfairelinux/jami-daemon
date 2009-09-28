@@ -207,6 +207,8 @@ IAXVoIPLink::getEvent()
     _mutexIAX.enterMutex();
     iax_event* event = NULL;
 
+    
+
     while ( (event = iax_get_event (IAX_NONBLOCKING)) != NULL) {
         // If we received an 'ACK', libiax2 tells apps to ignore them.
         if (event->etype == IAX_EVENT_NULL) {
@@ -238,7 +240,7 @@ IAXVoIPLink::getEvent()
 
 
     if (call) {
-        call->recAudio.recData (spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
+         call->recAudio.recData (spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
     }
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
@@ -250,8 +252,8 @@ IAXVoIPLink::getEvent()
     }
 
     // reinitialize speaker buffer for recording (when recording a voice mail)
-    for (int i = 0; i < nbSampleForRec_; i++)
-        spkrDataConverted[i] = 0;
+    // for (int i = 0; i < nbSampleForRec_; i++)
+    //     spkrDataConverted[i] = 0;
 
 
     // thread wait 3 millisecond
@@ -269,6 +271,8 @@ IAXVoIPLink::sendAudioFromMic (void)
     AudioCodec *ac;
     IAXCall *currentCall;
 
+
+    
     // We have to update the audio layer type in case we switched
     // TODO Find out a better way to do it
     updateAudiolayer();
@@ -276,9 +280,13 @@ IAXVoIPLink::sendAudioFromMic (void)
     currentCall = getIAXCall (Manager::instance().getCurrentCallId());
 
     if (!currentCall) {
+
+
         // Let's mind our own business.
         return;
     }
+
+    
 
     if (currentCall -> getAudioCodec() < 0)
         return;
@@ -305,15 +313,19 @@ IAXVoIPLink::sendAudioFromMic (void)
         return;
     }
 
+    
+
     // Send sound here
     if (audiolayer) {
+
+	
 
         // we have to get 20ms of data from the mic *20/1000 = /50
         // rate/50 shall be lower than IAX__20S_48KHZ_MAX
         maxBytesToGet = audiolayer->getSampleRate() * audiolayer->getFrameSize() / 1000 * sizeof (SFLDataFormat);
 
         // available bytes inside ringbuffer
-        availBytesFromMic = audiolayer->canGetMic();
+        availBytesFromMic = audiolayer->getMainBuffer()->availForGet(currentCall->getCallId());
 
         if (availBytesFromMic < maxBytesToGet) {
             // We need packets full!
@@ -326,7 +338,9 @@ IAXVoIPLink::sendAudioFromMic (void)
         //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
 
         // Get bytes from micRingBuffer to data_from_mic
-        nbSample_ = audiolayer->getMic (micData, bytesAvail) / sizeof (SFLDataFormat);
+        nbSample_ = audiolayer->getMainBuffer()->getData (micData, bytesAvail, 100, currentCall->getCallId()) / sizeof (SFLDataFormat);
+
+	
 
         // Store the number of samples for recording
         nbSampleForRec_ = nbSample_;
@@ -473,6 +487,8 @@ IAXVoIPLink::answer (const CallID& id)
     IAXCall* call = getIAXCall (id);
     call->setCodecMap (Manager::instance().getCodecDescriptorMap());
 
+    Manager::instance().addStream(call->getCallId());
+
     CHK_VALID_CALL;
 
     _mutexIAX.enterMutex();
@@ -494,6 +510,9 @@ IAXVoIPLink::hangup (const CallID& id)
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
+
+    audiolayer->getMainBuffer()->unBindAll(call->getCallId());
+
     _mutexIAX.enterMutex();
 
     iax_hangup (call->getSession(), (char*) reason.c_str());
@@ -519,6 +538,9 @@ IAXVoIPLink::peerHungup (const CallID& id)
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
+
+    audiolayer->getMainBuffer()->unBindAll(call->getCallId());
+
     _mutexIAX.enterMutex();
 
     _mutexIAX.leaveMutex();
@@ -544,6 +566,8 @@ IAXVoIPLink::onhold (const CallID& id)
 
     CHK_VALID_CALL;
 
+    audiolayer->getMainBuffer()->unBindAll(call->getCallId());
+
     //if (call->getState() == Call::Hold) { _debug("Call is already on hold\n"); return false; }
 
     _mutexIAX.enterMutex();
@@ -560,6 +584,8 @@ IAXVoIPLink::offhold (const CallID& id)
     IAXCall* call = getIAXCall (id);
 
     CHK_VALID_CALL;
+
+    Manager::instance().addStream(call->getCallId());
 
     //if (call->getState() == Call::Active) { _debug("Call is already active\n"); return false; }
     _mutexIAX.enterMutex();
@@ -610,29 +636,6 @@ IAXVoIPLink::refuse (const CallID& id)
 }
 
 
-void
-IAXVoIPLink::setRecording (const CallID& id)
-{
-    _debug ("IAXVoIPLink::setRecording()!");
-
-    IAXCall* call = getIAXCall (id);
-
-    call->setRecording();
-}
-
-bool
-IAXVoIPLink::isRecording (const CallID& id)
-{
-    _debug ("IAXVoIPLink::setRecording()!");
-
-    IAXCall* call = getIAXCall (id);
-
-    return call->isRecording();
-}
-
-
-
-
 bool
 IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 {
@@ -651,11 +654,19 @@ IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 std::string
 IAXVoIPLink::getCurrentCodecName()
 {
-    IAXCall *call = getIAXCall (Manager::instance().getCurrentCallId());
+    IAXCall *call = NULL;
+    AudioCodec *ac = NULL;
+    std::string name = "";
 
-    AudioCodec *ac = call->getCodecMap().getCodec (call->getAudioCodec());
+    call = getIAXCall (Manager::instance().getCurrentCallId());
 
-    return ac->getCodecName();
+    if(call)
+	ac = call->getCodecMap().getCodec (call->getAudioCodec());
+
+    if(ac)
+	name = ac->getCodecName();
+    
+    return name;
 }
 
 
@@ -777,6 +788,9 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
         case IAX_EVENT_ANSWER:
 
             if (call->getConnectionState() != Call::Connected) {
+
+		Manager::instance().addStream(call->getCallId());
+
                 call->setConnectionState (Call::Connected);
                 call->setState (Call::Active);
                 audiolayer->startStream();
@@ -858,6 +872,8 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
     int expandedSize, nbSample_;
     AudioCodec *ac;
 
+
+    
     // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
     // were triggered
 
@@ -867,7 +883,8 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         return;
     }
 
-    if (audiolayer) {
+    if (audiolayer) {	
+
         // On-the-fly codec changing (normally, when we receive a full packet)
         // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
         // - subclass holds the voiceformat property.
@@ -905,7 +922,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         nbInt16 = converter->upsampleData (spkrDataDecoded , spkrDataConverted , ac->getClockRate() , audiolayer->getSampleRate() , nbSample_);
 
         /* Write the data to the mic ring buffer */
-        audiolayer->putMain (spkrDataConverted , nbInt16 * sizeof (SFLDataFormat));
+        audiolayer->getMainBuffer()->putData (spkrDataConverted , nbInt16 * sizeof (SFLDataFormat), 100, call->getCallId());
 
     } else {
         _debug ("IAX: incoming audio, but no sound card open");
@@ -1007,6 +1024,8 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             _debug ("> IAX_EVENT_CONNECT (receive)\n");
 
             id = Manager::instance().getNewCallID();
+
+	    _debug("-------------------------------------------------------------- callid %s", id.c_str());
 
             call = new IAXCall (id, Call::Incoming);
 

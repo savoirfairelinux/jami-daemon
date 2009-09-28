@@ -68,7 +68,7 @@ void AudioRecord::setSndSamplingRate (int smplRate)
     sndSmplRate_ = smplRate;
 }
 
-void AudioRecord::setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path, std::string id)
+void AudioRecord::setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path)
 {
 
 
@@ -76,7 +76,6 @@ void AudioRecord::setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int s
     sndFormat_ = format;
     channels_ = 1;
     sndSmplRate_ = sndSmplRate;
-    call_id_ = id;
 
     savePath_ = path + "/";
 

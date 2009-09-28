@@ -303,21 +303,6 @@
       <arg type="i" name="port" direction="out"/>
     </method>
 
-    <method name="setStunServer">
-      <arg type="s" name="server" direction="in"/>
-    </method>
-
-    <method name="getStunServer">
-      <arg type="s" name="server" direction="out"/>
-    </method>
-
-    <method name="enableStun">
-    </method>
-
-    <method name="isStunEnabled">
-      <arg type="i" name="state" direction="out"/>
-    </method>
-
     <!-- Addressbook configuration -->
     <method name="getAddressbookSettings">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>

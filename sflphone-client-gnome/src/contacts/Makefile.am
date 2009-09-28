@@ -10,7 +10,8 @@ libcontacts_la_SOURCES = \
   calltab.c \
   calltree.c \
   history.c \
-  addressbook.c
+  addressbook.c \
+  conferencelist.c
 
 libcontacts_la_LDFLAGS = @DEPS_LDFLAGS@
 					  

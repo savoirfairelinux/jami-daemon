@@ -90,6 +90,7 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define CODECDIR         "codecs"		/** Codecs directory */
 
 #define SIZEBUF 				1024*1024
+#define STATIC_BUFSIZE 	 5000
 
 #define ALSA_DFT_CARD_ID     0			/** Index of the default soundcard */
 
@@ -121,7 +122,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define START_HIDDEN		      TRUE_STR		/** SFlphone starts hidden at start-up or not */
 #define WINDOW_POPUP		      TRUE_STR		/** Popup mode */
 #define NOTIFY_ALL		          TRUE_STR		/** Desktop notification level 0: never notify */
-#define STUN_ENABLED              TRUE_STR
 
 // Error codes for error handling
 #define NO_ERROR		      0x0000	/** No error - Everything alright */

@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +34,12 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
+enum
+{
+    A_CALL,
+    A_CONFERENCE
+};
+
 /**
  * Create a new widget calltree
  * @return GtkWidget* A new widget
@@ -45,21 +52,33 @@ calltree_create(calltab_t* tab, gboolean searchbar_type);
  * @param c The call to add
  */
 void
-calltree_add_call (calltab_t* ct, callable_obj_t * c);
+calltree_add_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 
 /*
  * Update the call tree if the call state changes
  * @param c The call to update
  */
 void
-calltree_update_call (calltab_t* ct, callable_obj_t * c);
+calltree_update_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
 
 /**
  * Remove a call from the call tree
  * @param c The call to remove
  */
 void
-calltree_remove_call (calltab_t* ct, callable_obj_t * c);
+calltree_remove_call (calltab_t* ct, callable_obj_t * c, GtkTreeIter *parent);
+
+void 
+calltree_add_history_entry (callable_obj_t * c);
+
+void
+calltree_add_conference (calltab_t* tab, conference_obj_t* conf);
+
+void
+calltree_update_conference (calltab_t* tab, const gchar* confID);
+
+void
+calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, GtkTreeIter *parent);
 
 void
 calltree_reset (calltab_t* tab);

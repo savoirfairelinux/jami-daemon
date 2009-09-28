@@ -30,12 +30,12 @@
 #include <cc++/thread.h>
 #include "dbus/dbusmanager.h"
 
-#include "stund/stun.h"
 #include "observer.h"
 #include "config/config.h"
 
 #include "account.h"
 #include "call.h"
+#include "conference.h"
 #include "numbercleaner.h"
 
 #include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
@@ -47,6 +47,13 @@ class AudioLayer;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
+
+// class Conference;
+
+#ifdef USE_ZEROCONF
+class DNSService;
+#endif
+
 class HistoryManager;
 class SIPAccount;
 
@@ -63,6 +70,16 @@ typedef std::set<CallID> CallIDSet;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
+
+/** To store conference objects by call ids 
+    used to retreive the conference according to a call */
+typedef std::map<CallID, Conference*> ConferenceCallMap;
+
+/** To store conference objects by conference ids */
+typedef std::map<CallID, Conference*> ConferenceMap;
+
+static CallID default_conf = "conf"; 
+
 
 static char * mapStateToChar[] = {
     (char*) "UNREGISTERED",
@@ -137,6 +154,14 @@ class ManagerImpl {
      */
     bool hangupCall(const CallID& id);
 
+
+    /**
+     * Functions which occur with a user's action
+     * Hangup the conference (hangup every participants)
+     * @param id  The call identifier
+     */
+    bool hangupConference(const ConfID& id);
+
     /**
      * Functions which occur with a user's action
      * Cancel the call
@@ -182,6 +207,38 @@ class ManagerImpl {
      * @param id  The call identifier
      */
     bool refuseCall(const CallID& id);
+
+    Conference* createConference(const CallID& id1, const CallID& id2);
+
+    void removeConference(const CallID& conference_id);
+
+    Conference* getConferenceFromCallID(const CallID& call_id);
+
+    void holdConference(const CallID& conferece_id);
+
+    void unHoldConference(const CallID& conference_id);
+
+    bool isConference(const CallID& call_id);
+
+    bool participToConference(const CallID& call_id);
+
+    void addParticipant(const CallID& call_id, const CallID& conference_id);
+
+    void addMainParticipant(const CallID& conference_id);
+
+    void joinParticipant(const CallID& call_id1, const CallID& call_id2);
+
+    void detachParticipant(const CallID& call_id, const CallID& current_call_id);
+
+    void removeParticipant(const CallID& call_id);
+
+    void processRemainingParticipant(CallID current_call_id, Conference *conf);
+
+    void joinConference(const CallID& conf_id1, const CallID& conf_id2);
+
+    void addStream(const CallID& call_id);
+
+    void removeStream(const CallID& call_id);
 
     /**
      * Save config to file
@@ -325,6 +382,26 @@ class ManagerImpl {
      * @return std::vector<std::string> A list of call IDs
      */
     std::vector< std::string >  getCallList (void);
+
+    /**
+     * Retrieve details about a given call
+     * @param callID	  The account identifier
+     * @return std::map< std::string, std::string > The call details
+     */
+    std::map< std::string, std::string > getConferenceDetails(const CallID& callID);
+
+    /**
+     * Get call list
+     * @return std::vector<std::string> A list of call IDs
+     */
+    std::vector< std::string >  getConferenceList (void);
+
+
+    /**
+     * Get a list of participant to a conference
+     * @return std::vector<std::string> A list of call IDs
+     */
+    std::vector< std::string >  getParticipantList (const std::string& confID);
 
     /**
      * Save the details of an existing account, given the account ID
@@ -859,45 +936,6 @@ class ManagerImpl {
      */
     void setMicVolume(unsigned short mic_vol);
 
-    // Manage information about firewall
-
-    /*
-     * Get information about firewall
-     * @param  stunSvrAddr: stun server
-     * @param  port         port number to open to test the connection
-     * @return true if the connection is successful
-     */
-    bool getStunInfo(StunAddress4& stunSvrAddr, int port);
-
-    /*
-     * Inline functions to manage firewall settings
-     * @return int The firewall port
-     */
-    inline int getFirewallPort(void) 		{ return _firewallPort; }
-
-    /*
-     * Inline functions to manage firewall settings
-     * @param port The firewall port
-     */
-    inline void setFirewallPort(int port) 	{ _firewallPort = port; }
-
-    /*
-     * Inline functions to manage firewall settings
-     * @return std::string The firewall address
-     */
-    inline std::string getFirewallAddress (void) 	{ return _firewallAddr; }
-
-    /**
-     * If you are behind a NAT, you have to use STUN server, specified in
-     * STUN configuration(you can change this one by default) to give you an
-     * public IP address and assign a port number.
-     * Note: Set firewall port/address retreive
-     * @param svr   Server on which to send request
-     * @param port  On which port we want to listen to
-     * @return true if we are behind a NAT (without error)
-     */
-    bool isBehindNat(const std::string& svr, int port);
-
     /**
      * Init default values for the different fields in the config file.
      * Fills the local _config (Conf::ConfigTree) with the default contents.
@@ -1095,13 +1133,6 @@ class ManagerImpl {
     int _exist;
     int _setupLoaded;
 
-    // To handle firewall
-    int _firewallPort;
-    std::string _firewallAddr;
-
-    // tell if we have zeroconf is enabled
-    int _hasZeroconf;
-
 #ifdef USE_ZEROCONF
     // DNSService contain every zeroconf services
     //  configuration detected on the network
@@ -1214,6 +1245,13 @@ class ManagerImpl {
 
     int isStunEnabled (void);
     void enableStun (void);
+
+    // Map 
+    ConferenceCallMap _conferencecall;
+
+    // 
+    ConferenceMap _conferencemap;
+
 private:
 
     // Copy Constructor
