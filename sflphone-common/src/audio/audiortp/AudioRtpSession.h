@@ -308,6 +308,8 @@ namespace sfl {
         // available bytes inside ringbuffer
         int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
 
+	_debug("AudioRtpSession::processDataEncode (%s): avail bytes from mic %i\n", _ca->getCallId().c_str(), availBytesFromMic);
+
         // set available byte to maxByteToGet
         int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
 
@@ -356,9 +358,13 @@ namespace sfl {
                 // put data in audio layer, size in byte
 		_audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
+		_debug("AudioRtpSession::processDataDecode (%s): decode bytes: %i\n", _ca->getCallId().c_str(), nbSample);
+
             } else {
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
+
+		_debug("AudioRtpSession::processDataDecode (%s): decode bytes: %i\n", _ca->getCallId().c_str(), nbSample);
 
                 // put data in audio layer, size in byte
                 _audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());

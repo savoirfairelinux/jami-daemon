@@ -762,6 +762,7 @@ void AlsaLayer::audioCallback (void)
 
             // If nothing urgent, play the regular sound samples
             normalAvail = _mainBuffer.availForGet();
+	    _debug("AlsaLayer::audioCallback (spkr): availforget %i\n", normalAvail);
             toGet = (normalAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? normalAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
             out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
@@ -798,6 +799,7 @@ void AlsaLayer::audioCallback (void)
 	if(micAvailAlsa > 0) 
 	{
             micAvailPut = _mainBuffer.availForPut();
+	    _debug("AlsaLayer::audioCallback (mic): availforput %i\n", micAvailPut);
             toPut = (micAvailAlsa <= micAvailPut) ? micAvailAlsa : micAvailPut;
             in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
             toPut = read (in, toPut* sizeof(SFLDataFormat));
