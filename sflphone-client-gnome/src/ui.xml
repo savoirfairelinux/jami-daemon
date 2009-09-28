@@ -6,7 +6,7 @@
       <separator/>
       <menuitem action="PickUp"/>
       <menuitem action="HangUp"/>
-      <menuitem action="OnHold"/>
+      <menuitem name="OnHoldMenu" action="OnHold"/>
       <menuitem action="Record"/>
       <separator/>
       <menuitem action="AccountAssistant"/>
@@ -26,8 +26,14 @@
     </menu>
 	
 	<menu name="ViewMenu" action="View">
+      <menuitem action="Toolbar"/>
+      <separator/>
       <menuitem action="Dialpad"/>
       <menuitem action="VolumeControls"/>
+      <separator/>
+	  <menuitem action="CallWindow"/>
+	  <menuitem action="History"/>
+	  <menuitem action="Addressbook"/>
     </menu>
 
     <menu name="HelpMenu" action="Help">
@@ -35,5 +41,22 @@
       <menuitem action="About"/>
     </menu>
 
-  </menubar>
+	</menubar>
+
+	<toolbar name="ToolbarActions">
+		<toolitem action="NewCall"/>
+		<toolitem action="PickUp"/>
+		<toolitem action="HangUp"/>
+		<toolitem name="TransferToolbar" action="Transfer"/>
+		<toolitem name="OnHoldToolbar" action="OnHold"/>
+		<separator/>
+		<toolitem action="Voicemail"/>
+	</toolbar>
+
+	<toolbar name="ToolbarWindows">
+		<toolitem action="CallWindow"/>
+		<toolitem action="History"/>
+		<toolitem action="Addressbook"/>
+	</toolbar>
+
 </ui>

@@ -22,6 +22,9 @@
 
 G_BEGIN_DECLS
 
+guint transfertButtonConnId; //The button toggled signal connection ID
+guint holdConnId;     //The hold_menu signal connection ID
+
 gboolean uimanager_new (GtkUIManager**);
 
 G_END_DECLS

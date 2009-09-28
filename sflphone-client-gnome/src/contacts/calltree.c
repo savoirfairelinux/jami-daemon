@@ -24,7 +24,6 @@
 #include <glib/gprintf.h>
 #include <calllist.h>
 #include <conferencelist.h>
-#include <toolbar.h>
 #include <mainwindow.h>
 #include <history.h>
 
@@ -145,7 +144,7 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
     // sflphone_fill_conference_list();
 
     g_value_unset(&val);
-    toolbar_update_buttons();
+    update_actions();
 
 }
 
@@ -494,7 +493,7 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     callable_obj_t * selectedCall = calltab_get_selected_call(tab);
     if(selectedCall == c)
         calltab_select_call(tab, NULL);
-    toolbar_update_buttons();
+    update_actions();
 }
 
 void
@@ -666,7 +665,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
         }
 
     }
-    toolbar_update_buttons();
+    update_actions();
 }
 
 
@@ -1056,7 +1055,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
     gtk_tree_view_expand_row(GTK_TREE_VIEW(tab->view), path, FALSE);
 
-    toolbar_update_buttons();
+    update_actions();
 
     
 }
@@ -1140,7 +1139,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
     // if(selectedCall == c)
     // calltab_select_call(tab, NULL);
 
-    toolbar_update_buttons();
+    update_actions();
     
 }
 
@@ -1159,12 +1158,13 @@ void calltree_display (calltab_t *tab) {
 
         DEBUG ("display main tab");
 
+	/*
         if (active_calltree==contacts) {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
         } else {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
         }
-
+	*/
     }
 
     /* case 2: we want to display the history */
@@ -1173,10 +1173,10 @@ void calltree_display (calltab_t *tab) {
         DEBUG ("display history tab");
 
         if (active_calltree==contacts) {
-            gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
+            //gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
         }
 
-        gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, TRUE);
+        //gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, TRUE);
     }
 
     else if (tab==contacts) {
@@ -1184,10 +1184,10 @@ void calltree_display (calltab_t *tab) {
         DEBUG ("display contact tab");
 
         if (active_calltree==history) {
-            gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
+            //gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
         }
 
-        gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, TRUE);
+        //gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, TRUE);
     }
 
     else
@@ -1201,7 +1201,7 @@ void calltree_display (calltab_t *tab) {
     sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
     DEBUG("Emit signal changed from calltree_display");
     g_signal_emit_by_name(sel, "changed");
-    toolbar_update_buttons();
+    update_actions();
 }
 
 

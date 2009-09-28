@@ -212,7 +212,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
             calllist_add (current_calls, new_call);
             calllist_add (history, new_call);
             calltree_add_call (current_calls, new_call, NULL);
-            update_menus ();
+            update_actions ();
             calltree_display (current_calls);
 
             //sflphone_incoming_call (new_call);

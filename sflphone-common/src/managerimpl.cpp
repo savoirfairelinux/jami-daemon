@@ -2691,33 +2691,6 @@ ManagerImpl::setDialpad (void)
     (getConfigString (PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) ? setConfig (PREFERENCES, CONFIG_DIALPAD, FALSE_STR) : setConfig (PREFERENCES, CONFIG_DIALPAD, TRUE_STR);
 }
 
-/*
-std::string ManagerImpl::getStunServer (void)
-{
-    return getConfigString (SIGNALISATION , STUN_SERVER);
-}
-
-void ManagerImpl::setStunServer (const std::string &server)
-{
-    setConfig (SIGNALISATION , STUN_SERVER, server);
-}
-
-int ManagerImpl::isStunEnabled (void)
-{
-    return getConfigString (SIGNALISATION, STUN_ENABLE) == TRUE_STR ? 1:0;
-}
-
-
-void ManagerImpl::enableStun (void)
-{
-    // Update the config 
-    (getConfigString (SIGNALISATION , STUN_ENABLE) == TRUE_STR) ? setConfig (SIGNALISATION , STUN_ENABLE , FALSE_STR) : setConfig (SIGNALISATION , STUN_ENABLE , TRUE_STR);
-
-    // Restart PJSIP 
-    this->restartPJSIP ();
-}
-*/
-
 int
 ManagerImpl::getVolumeControls (void)
 {
