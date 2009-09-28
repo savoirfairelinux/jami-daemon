@@ -383,7 +383,7 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 	    }
 	}
 	
-	// _debug("MainBuffer::getData  data mixed successfully\n");
+	// _debug("MainBuffer::getData data mixed successfully\n");
 
 	return size;
     }
@@ -432,8 +432,6 @@ int MainBuffer::availForGet(CallID call_id)
 	// _debug("MainBuffer::availForGet availForGetByID(%s,%s)\n", (*iter_id).c_str(), call_id.c_str());
 	if((call_id != default_id) && (*iter_id == call_id))
 	{
-	    _debug("**********************************************************************\n");
-	    _debug("Error an RTP session ring buffer is not supposed to have a readpointer on tiself\n");
 	    _debug("This problem should not occur since we have %i element\n", callid_set->size());
 	}
 	// else
@@ -448,10 +446,10 @@ int MainBuffer::availForGet(CallID call_id)
 	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
 	{
 	    nb_bytes = availForGetByID(*iter_id, call_id);
-	    if (nb_bytes < avail_bytes)
+	    if ((nb_bytes != 0) && (nb_bytes < avail_bytes))
 		avail_bytes = nb_bytes;
 	}
-	return avail_bytes;
+	return avail_bytes != 99999 ? avail_bytes : 0;
     }
 
 }
