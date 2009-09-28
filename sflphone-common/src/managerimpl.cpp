@@ -682,6 +682,8 @@ ManagerImpl::offHoldCall (const CallID& call_id)
     else
     {
 	switchCall(call_id);
+
+	_audiodriver->getMainBuffer()->flush(default_id);
     }
 
     codecName = getCurrentCodecName (call_id);
