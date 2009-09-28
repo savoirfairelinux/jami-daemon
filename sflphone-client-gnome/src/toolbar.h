@@ -22,7 +22,6 @@
 
 #include <callable_obj.h>
 #include <gtk/gtk.h>
-#include <menus.h>
 #include <sflphone_const.h>
 #include <actions.h>
 

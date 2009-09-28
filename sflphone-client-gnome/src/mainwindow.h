@@ -22,6 +22,7 @@
 
 #include <calllist.h>
 #include <calltree.h>
+#include <uimanager.h>
 
 #define MAIN_WINDOW_WIDTH 300
 #define MAIN_WINDOW_HEIGHT 320
