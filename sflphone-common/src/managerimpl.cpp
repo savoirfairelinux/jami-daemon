@@ -1130,6 +1130,17 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
 	    iter_participant++;
 	}
 
+	// Reset ringbuffer's readpointers
+	iter_participant = participants.begin();
+	while(iter_participant != participants.end())
+	{
+	    _audiodriver->getMainBuffer()->flush(*iter_participant);
+	    
+	    iter_participant++;
+	}
+
+	_audiodriver->getMainBuffer()->flush(default_id);
+
 	conf->setState(Conference::Active_Atached);
 
 	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
