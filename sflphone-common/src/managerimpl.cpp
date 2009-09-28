@@ -677,6 +677,7 @@ ManagerImpl::offHoldCall (const CallID& call_id)
 	call = getAccountLink (currentAccountId)->getCall (call_id);
 	
 	switchCall(call->getConfId());
+	
     }
     else
     {
@@ -687,6 +688,8 @@ ManagerImpl::offHoldCall (const CallID& call_id)
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
 
     if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id,codecName.c_str());
+
+    
 
     return returnValue;
 }
@@ -1059,6 +1062,20 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	}
 
 	// _dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+
+	ParticipantSet participants = conf->getParticipantList();
+	// reset ring buffer for all conference participant
+	ParticipantSet::iterator iter_p = participants.begin();
+	while(iter_p != participants.end()) {
+
+	    // to avoid puting onhold the call
+	    // switchCall("");	
+	    _audiodriver->getMainBuffer()->flush(*iter_p);
+
+	    iter_p++;
+	}
+
+	_audiodriver->getMainBuffer()->flush(default_id);
     }
     else
     {
