@@ -626,10 +626,15 @@ sflphone_new_call()
 {
 
     callable_obj_t *c;
+    callable_obj_t * current_selected_call;
     gchar *peer_name, *peer_number;
 
     DEBUG("sflphone_new_call");
-    sflphone_on_hold();
+
+    current_selected_call = calltab_get_selected_call(current_calls);
+
+    if ((current_selected_call != NULL) && (current_selected_call->_confID != NULL))
+	sflphone_on_hold();
 
     // Play a tone when creating a new call
     if( calllist_get_size(current_calls) == 0 )
