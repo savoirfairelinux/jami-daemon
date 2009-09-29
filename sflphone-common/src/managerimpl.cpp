@@ -1461,17 +1461,39 @@ ManagerImpl::addStream(const CallID& call_id)
 
 	// bind to conference participant
 	ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
+
 	if (iter != _conferencemap.end())
 	{
 	    Conference* conf = iter->second;
 
+	    _debug("    addStream: bind call %s to conference %s\n", call_id.c_str(), conf->getConfID().c_str());
+
 	    conf->bindParticipant(call_id);
+
+	    ParticipantSet participants = conf->getParticipantList();
+	    // reset ring buffer for all conference participant
+	    ParticipantSet::iterator iter_p = participants.begin();
+	    while(iter_p != participants.end()) {
+
+		// to avoid puting onhold the call
+		// switchCall("");	
+		_audiodriver->getMainBuffer()->flush(*iter_p);
+		
+		iter_p++;
+	    }
+
+	    _audiodriver->getMainBuffer()->flush(default_id);
 	}
+	
     }
     else {
 
+	_debug("    addStream: bind call %s to main\n", call_id.c_str());
+
 	// bind to main 
 	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
+
+	_audiodriver->getMainBuffer()->flush(default_id);
     }
 }
 
