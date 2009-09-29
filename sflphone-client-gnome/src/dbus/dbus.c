@@ -264,11 +264,24 @@ conference_created_cb (DBusGProxy *proxy UNUSED,
     DEBUG ("Conference added %s\n", confID);
 
     conference_obj_t* new_conf;
+    callable_obj_t* call;
+    gchar* call_id;
+    gchar** participant;
+    gchar** pl;
 
     create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
     new_conf->_confID = g_strdup(confID);
     new_conf->participant = (gchar**)dbus_get_participant_list(new_conf->_confID);
     conferencelist_add(new_conf);
+
+    participant = new_conf->participant;
+    for (pl = participant; *participant; participant++)
+    {	    
+	call_id = (gchar*)(*participant);
+	call = calllist_get (current_calls, call_id);
+	call->_confID = g_strdup(confID);
+    }
+
     calltree_add_conference (current_calls, new_conf);
 }
 

@@ -633,7 +633,7 @@ sflphone_new_call()
 
     current_selected_call = calltab_get_selected_call(current_calls);
 
-    if ((current_selected_call != NULL) && (current_selected_call->_confID != NULL))
+    if ((current_selected_call != NULL) && (current_selected_call->_confID == NULL))
 	sflphone_on_hold();
 
     // Play a tone when creating a new call
