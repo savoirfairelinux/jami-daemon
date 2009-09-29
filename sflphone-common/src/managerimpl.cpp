@@ -1016,12 +1016,17 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     // detach from the conference and switch to this conference 
     if (current_call_id != call_id)
     {
-	if (isConference(current_call_id))
+	if (isConference(current_call_id)) {
 	    detachParticipant(default_id, current_call_id);
+	}
 	else
 	    onHoldCall(current_call_id);
     }
 
+    // TODO: remove this ugly hack => There should be different calls when double clicking 
+    // a conference to add main participant to it, or (in this case) adding a participant 
+    // toconference 
+    switchCall("");
     addMainParticipant(conference_id);
 
     _debug("    addParticipant: enter main process\n");
