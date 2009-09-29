@@ -677,16 +677,20 @@ ManagerImpl::offHoldCall (const CallID& call_id)
 	call = getAccountLink (currentAccountId)->getCall (call_id);
 	
 	switchCall(call->getConfId());
+	
     }
     else
     {
 	switchCall(call_id);
+	_audiodriver->getMainBuffer()->flush(default_id);
     }
 
     codecName = getCurrentCodecName (call_id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
 
     if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id,codecName.c_str());
+
+    
 
     return returnValue;
 }
@@ -1012,12 +1016,17 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     // detach from the conference and switch to this conference 
     if (current_call_id != call_id)
     {
-	if (isConference(current_call_id))
+	if (isConference(current_call_id)) {
 	    detachParticipant(default_id, current_call_id);
+	}
 	else
 	    onHoldCall(current_call_id);
     }
 
+    // TODO: remove this ugly hack => There should be different calls when double clicking 
+    // a conference to add main participant to it, or (in this case) adding a participant 
+    // toconference 
+    switchCall("");
     addMainParticipant(conference_id);
 
     _debug("    addParticipant: enter main process\n");
@@ -1059,6 +1068,20 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	}
 
 	// _dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+
+	ParticipantSet participants = conf->getParticipantList();
+	// reset ring buffer for all conference participant
+	ParticipantSet::iterator iter_p = participants.begin();
+	while(iter_p != participants.end()) {
+
+	    // to avoid puting onhold the call
+	    // switchCall("");	
+	    _audiodriver->getMainBuffer()->flush(*iter_p);
+
+	    iter_p++;
+	}
+
+	_audiodriver->getMainBuffer()->flush(default_id);
     }
     else
     {
@@ -1113,6 +1136,17 @@ ManagerImpl::addMainParticipant(const CallID& conference_id)
 	    iter_participant++;
 	}
 
+	// Reset ringbuffer's readpointers
+	iter_participant = participants.begin();
+	while(iter_participant != participants.end())
+	{
+	    _audiodriver->getMainBuffer()->flush(*iter_participant);
+	    
+	    iter_participant++;
+	}
+
+	_audiodriver->getMainBuffer()->flush(default_id);
+
 	conf->setState(Conference::Active_Atached);
 
 	_dbus->getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
@@ -1132,7 +1166,6 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     std::map<std::string, std::string> call1_details = getCallDetails(call_id1);
     std::map<std::string, std::string> call2_details = getCallDetails(call_id2);
 
-    ConferenceMap::iterator iter = _conferencemap.find(default_conf);
     std::map<std::string, std::string>::iterator iter_details;
 
     AccountID currentAccountId;
@@ -1151,71 +1184,62 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	    onHoldCall(current_call_id);
     }
 
-    if(iter == _conferencemap.end()){
+    _debug("    joinParticipant: create a conference\n");
 
-	 _debug("    joinParticipant: create a conference\n");
+    Conference *conf = createConference(call_id1, call_id2);
+    switchCall(conf->getConfID());
 
-	 Conference *conf = createConference(call_id1, call_id2);
-	 switchCall(conf->getConfID());
-
-	 currentAccountId = getAccountFromCall (call_id1);
-	 call = getAccountLink (currentAccountId)->getCall (call_id1);
-	 call->setConfId (conf->getConfID());
-
-	 iter_details = call1_details.find("CALL_STATE");
-	 _debug("    joinParticipant: call1 %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
-	 if (iter_details->second == "HOLD")
-	 {
-	     _debug("    OFFHOLD %s\n", call_id1.c_str());
-	     offHoldCall(call_id1);
-	 }
-	 else if(iter_details->second == "INCOMING")
-	 {
-	     _debug("    ANSWER %s\n", call_id1.c_str());
-	     answerCall(call_id1);
-	 }
-	 else if(iter_details->second == "CURRENT")
-	 {
-	     _debug("    CURRENT %s\n", call_id1.c_str());
-	     _audiodriver->getMainBuffer()->unBindAll(call_id1);
-	     conf->bindParticipant(call_id1);
-	 }
-
-	 currentAccountId = getAccountFromCall (call_id2);
-	 call = getAccountLink (currentAccountId)->getCall (call_id2);
-	 call->setConfId (conf->getConfID());
-
-	 iter_details = call2_details.find("CALL_STATE");
-	 _debug("    joinParticipant: call2 %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
-	 if (iter_details->second == "HOLD")
-	 {
-	     _debug("    OFFHOLD %s\n", call_id2.c_str());
-	     offHoldCall (call_id2);
-	 }
-	 else if(iter_details->second == "INCOMING")
-	 {
-	     _debug("    ANSWER %s\n", call_id2.c_str());
-	     answerCall(call_id2);
-	 }
-	 else if(iter_details->second == "CURRENT")
-	 {
-	     _debug("    CURRENT %s\n", call_id2.c_str());
-	     _audiodriver->getMainBuffer()->unBindAll(call_id2);
-	     conf->bindParticipant(call_id2);
-	 }
-
-	 // finally bind main participant to conference
-	 // addMainParticipant(default_conf);
-
-
-	 // switchCall(conf->getConfID());
-
+    currentAccountId = getAccountFromCall (call_id1);
+    call = getAccountLink (currentAccountId)->getCall (call_id1);
+    call->setConfId (conf->getConfID());
+    
+    iter_details = call1_details.find("CALL_STATE");
+    _debug("    joinParticipant: call1 %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
+    if (iter_details->second == "HOLD")
+    {
+	_debug("    OFFHOLD %s\n", call_id1.c_str());
+	offHoldCall(call_id1);
     }
-    else {
-
-	 _debug("ManagerImpl::joinParticipant already a conference created with this ID\n");
-	 
+    else if(iter_details->second == "INCOMING")
+    {
+	_debug("    ANSWER %s\n", call_id1.c_str());
+	answerCall(call_id1);
     }
+    else if(iter_details->second == "CURRENT")
+    {
+	_debug("    CURRENT %s\n", call_id1.c_str());
+	_audiodriver->getMainBuffer()->unBindAll(call_id1);
+	conf->bindParticipant(call_id1);
+    }
+
+    currentAccountId = getAccountFromCall (call_id2);
+    call = getAccountLink (currentAccountId)->getCall (call_id2);
+    call->setConfId (conf->getConfID());
+    
+    iter_details = call2_details.find("CALL_STATE");
+    _debug("    joinParticipant: call2 %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
+    if (iter_details->second == "HOLD")
+    {
+	_debug("    OFFHOLD %s\n", call_id2.c_str());
+	offHoldCall (call_id2);
+    }
+    else if(iter_details->second == "INCOMING")
+    {
+	_debug("    ANSWER %s\n", call_id2.c_str());
+	answerCall(call_id2);
+    }
+    else if(iter_details->second == "CURRENT")
+    {
+	_debug("    CURRENT %s\n", call_id2.c_str());
+	_audiodriver->getMainBuffer()->unBindAll(call_id2);
+	conf->bindParticipant(call_id2);
+    }
+
+    // finally bind main participant to conference
+    // addMainParticipant(default_conf);
+    
+    
+    // switchCall(conf->getConfID());
 
 }
 
@@ -1338,6 +1362,20 @@ ManagerImpl::processRemainingParticipant(CallID current_call_id, Conference *con
     if(conf->getNbParticipants() > 1)
     {
 
+	ParticipantSet participants = conf->getParticipantList();
+	ParticipantSet::iterator iter_participant = participants.begin();
+
+	// Reset ringbuffer's readpointers
+	iter_participant = participants.begin();
+	while(iter_participant != participants.end())
+	{
+	    _audiodriver->getMainBuffer()->flush(*iter_participant);
+	    
+	    iter_participant++;
+	}
+
+	_audiodriver->getMainBuffer()->flush(default_id);
+
     }
     else if (conf->getNbParticipants() == 1)
     {
@@ -1428,17 +1466,39 @@ ManagerImpl::addStream(const CallID& call_id)
 
 	// bind to conference participant
 	ConferenceMap::iterator iter = _conferencemap.find(call->getConfId());
+
 	if (iter != _conferencemap.end())
 	{
 	    Conference* conf = iter->second;
 
+	    _debug("    addStream: bind call %s to conference %s\n", call_id.c_str(), conf->getConfID().c_str());
+
 	    conf->bindParticipant(call_id);
+
+	    ParticipantSet participants = conf->getParticipantList();
+	    // reset ring buffer for all conference participant
+	    ParticipantSet::iterator iter_p = participants.begin();
+	    while(iter_p != participants.end()) {
+
+		// to avoid puting onhold the call
+		// switchCall("");	
+		_audiodriver->getMainBuffer()->flush(*iter_p);
+		
+		iter_p++;
+	    }
+
+	    _audiodriver->getMainBuffer()->flush(default_id);
 	}
+	
     }
     else {
 
+	_debug("    addStream: bind call %s to main\n", call_id.c_str());
+
 	// bind to main 
 	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
+
+	_audiodriver->getMainBuffer()->flush(default_id);
     }
 }
 

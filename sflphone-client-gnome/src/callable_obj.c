@@ -112,8 +112,9 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
         call_id = generate_call_id ();
     else
         call_id = callID;
-    // Set the ID
+    // Set the IDs
     obj->_callID = g_strdup (call_id);
+    obj->_confID = NULL;
 
     *new_call = obj;
 }

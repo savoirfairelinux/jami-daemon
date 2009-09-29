@@ -765,6 +765,7 @@ void AlsaLayer::audioCallback (void)
             toGet = (normalAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? normalAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
             out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
+
             if (toGet) {
 
                 _mainBuffer.getData(out, toGet, spkrVolume);
@@ -795,6 +796,7 @@ void AlsaLayer::audioCallback (void)
     if(is_capture_running())
     {
         micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
+	
 	if(micAvailAlsa > 0) 
 	{
             micAvailPut = _mainBuffer.availForPut();
@@ -807,6 +809,10 @@ void AlsaLayer::audioCallback (void)
 	    }
             free(in); in=0;
         }
+	else if(micAvailAlsa < 0)
+	{
+	    _debug("AlsaLayer::audioCallback (mic): error: %s\n", snd_strerror(micAvailAlsa));
+	}
     }
 }
 
