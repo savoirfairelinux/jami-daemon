@@ -73,8 +73,8 @@ void SamplerateConverter::init (void)
     // interpolator SRC_SINC_BEST_QUALITY
     // interpolator SRC_SINC_FASTEST
     // interpolator SRC_LINEAR
-    _src_state_mic  = src_new (SRC_SINC_FASTEST, 1, &_src_err);
-    _src_state_spkr = src_new (SRC_SINC_FASTEST, 1, &_src_err);
+    _src_state_mic  = src_new (SRC_LINEAR, 1, &_src_err);
+    _src_state_spkr = src_new (SRC_LINEAR, 1, &_src_err);
 
     int nbSamplesMax = (int) (getFrequence() * getFramesize() / 1000);
     _floatBufferDownMic  = new float32[nbSamplesMax];
