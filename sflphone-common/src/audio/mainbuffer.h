@@ -24,6 +24,7 @@
 #include <map>
 #include <set>
 #include <cc++/thread.h> // for ost::Mutex
+#include <string>
 
 #include "../global.h"
 #include "../call.h"
@@ -78,6 +79,8 @@ public:
 	void flush(CallID call_id = default_id);
 
 	void flushDefault();
+
+	void stateInfo();
 
     private:
 

@@ -29,23 +29,18 @@ MainBuffer::MainBuffer()
 MainBuffer::~MainBuffer()
 {
 
-    delete mixBuffer;
+    delete [] mixBuffer;
     mixBuffer = NULL;
 }
 
 CallIDSet* MainBuffer::getCallIDSet(CallID call_id)
 {
 
-    // _debug("MainBuffer::getCallIDSet\n");
-
     CallIDMap::iterator iter = _callIDMap.find(call_id);
-    if (iter == _callIDMap.end())
-    {
-	// _debug("CallIDSet with ID: \"%s\" doesn't exist! \n", call_id.c_str());
-	return NULL;
-    }
-    else
+    if (iter != _callIDMap.end())
 	return iter->second;
+    else
+	return NULL;
 
 }
 
@@ -287,7 +282,6 @@ int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID 
 
     if (ring_buffer == NULL)
     {
-	// _debug("Input RingBuffer ID: \"%s\" does not exist!\n", call_id.c_str());
 	return 0;
     }
 
@@ -297,13 +291,13 @@ int MainBuffer::putData(void *buffer, int toCopy, unsigned short volume, CallID 
     a = ring_buffer->AvailForPut();
 
     if (a >= toCopy) {
+
         return ring_buffer->Put (buffer, toCopy, volume);
+
     } else {
-        // _debug ("Chopping sound, Ouch! RingBuffer full ?\n");
+
         return ring_buffer->Put (buffer, a, volume);
     }
-
-    return 0;
 
 }
 
@@ -326,8 +320,6 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 {
     ost::MutexLock guard (_mutex);
 
-    // _debug("MainBuffer::getData by \"%s\", toCopy %i\n",call_id.c_str(), toCopy);
-
     CallIDSet* callid_set = getCallIDSet(call_id);
 
     int nbSmplToCopy = toCopy / sizeof(SFLDataFormat);
@@ -337,18 +329,16 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 
     if(callid_set->empty())
     {
-	// _debug("CallIDSet with ID: \"%s\" is empty!\n", call_id.c_str());
 	return 0;
     }
     
     if (callid_set->size() == 1)
     {
-	// _debug("callid_set->size() == %i\n", callid_set->size());
+
 	CallIDSet::iterator iter_id = callid_set->begin();
 
 	if (iter_id != callid_set->end())
 	{
-	    // _debug("MainBuffer::getData in buffer %s by %s \n", (*iter_id).c_str(), call_id.c_str());
 	    return getDataByID(buffer, toCopy, volume, *iter_id, call_id);
 	}
 	else 
@@ -357,22 +347,18 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
     else
     {
 
-	// _debug("callid_set->size() == %i\n", callid_set->size());
-
 	for (int k = 0; k < nbSmplToCopy; k++)
 	{
 	    ((SFLDataFormat*)(buffer))[k] = 0;
 	}
 
-	int size;
-	// _debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
-	CallIDSet::iterator iter_id;
-	for(iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++)
+	int size = 0;
+
+	CallIDSet::iterator iter_id = callid_set->begin();
+	while(iter_id != callid_set->end())
 	{
-	    // _debug("MainBuffer::getData in buffer %s by %s \n", (*iter_id).c_str(), call_id.c_str());
 	    
 	    size = getDataByID(mixBuffer, toCopy, volume, (CallID)(*iter_id), call_id);
-	    // _debug("MainBuffer::getData: tocopy %i, size: %i \n", toCopy, size);
 	    
 	    if (size > 0)
 	    {
@@ -381,9 +367,9 @@ int MainBuffer::getData(void *buffer, int toCopy, unsigned short volume, CallID 
 		    ((SFLDataFormat*)(buffer))[k] += mixBuffer[k];
 	        }
 	    }
+
+	    iter_id++;
 	}
-	
-	// _debug("MainBuffer::getData data mixed successfully\n");
 
 	return size;
     }
@@ -578,4 +564,37 @@ void MainBuffer::flushByID(CallID call_id, CallID reader_id)
 
     if(ringbuffer != NULL)
 	ringbuffer->flush(reader_id);
+}
+
+
+void MainBuffer::stateInfo()
+{
+    _debug("MainBuffer state info\n");
+
+    CallIDMap::iterator iter_map = _callIDMap.begin();
+
+    while(iter_map != _callIDMap.end())
+    {
+	CallIDSet* id_set = getCallIDSet(iter_map->first);
+
+	std::string dbg_str("    Buffer: ");
+
+	dbg_str.append(string(iter_map->first.c_str()));
+	dbg_str.append(string(" bound to "));
+
+	if(id_set != NULL)
+	{
+	    CallIDSet::iterator iter_set = id_set->begin();
+
+	    while(iter_set != id_set->end())
+	    {
+	        dbg_str.append(string(iter_set->c_str()));
+		dbg_str.append(string(", "));
+	    }
+	}
+
+	_debug("%s\n", dbg_str.c_str());
+	
+	iter_map++;
+    }
 }
