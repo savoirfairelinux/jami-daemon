@@ -33,6 +33,17 @@ MainBuffer::~MainBuffer()
     mixBuffer = NULL;
 }
 
+
+void MainBuffer::setInternalSamplingRate(int sr)
+{
+    if (sr != _internalSamplingRate)
+    {
+	_internalSamplingRate = sr;
+
+	flushAllBuffers();
+    }
+}
+
 CallIDSet* MainBuffer::getCallIDSet(CallID call_id)
 {
 
@@ -564,6 +575,19 @@ void MainBuffer::flushByID(CallID call_id, CallID reader_id)
 
     if(ringbuffer != NULL)
 	ringbuffer->flush(reader_id);
+}
+
+
+void MainBuffer::flushAllBuffers()
+{
+    RingBufferMap::iterator iter_buffer = _ringBufferMap.begin();
+
+    while(iter_buffer != _ringBufferMap.end())
+    {
+	iter_buffer->second->flushAll();
+
+	iter_buffer++;
+    }
 }
 
 

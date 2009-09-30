@@ -57,6 +57,20 @@ RingBuffer::flush (CallID call_id)
     storeReadPointer(mEnd, call_id);
 }
 
+
+void
+RingBuffer::flushAll ()
+{
+
+    ReadPointer::iterator iter_pointer = _readpointer.begin();
+    while(iter_pointer != _readpointer.end())
+    {	
+	iter_pointer->second = mEnd;
+
+	iter_pointer++;
+    }
+}
+
 int
 RingBuffer::putLen()
 {

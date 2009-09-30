@@ -46,6 +46,10 @@ public:
 
         ~MainBuffer();
 
+	void setInternalSamplingRate(int sr);
+
+	int getInternalSamplingRate() {return _internalSamplingRate;}
+
 	CallIDSet* getCallIDSet(CallID call_id);
 
 	bool createCallIDSet(CallID set_id);
@@ -78,6 +82,8 @@ public:
 
 	void flush(CallID call_id = default_id);
 
+	void flushAllBuffers();
+
 	void flushDefault();
 
 	void stateInfo();
@@ -101,6 +107,8 @@ public:
 	SFLDataFormat* mixBuffer;
 
 	ost::Mutex _mutex;
+
+	int _internalSamplingRate;
 
     public:
 
