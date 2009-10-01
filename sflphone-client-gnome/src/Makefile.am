@@ -2,13 +2,13 @@ include ../globals.mak
 
 bin_PROGRAMS = sflphone-client-gnome
 
-SUBDIRS = config contacts dbus widget
+SUBDIRS = config contacts dbus widget icons
   
 NOFIFY_LIBS = -lnotify
 LOG4C = -llog4c
 
 
-SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la ./dbus/libdbus.la ./widget/libwidget.la
+SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la
 
 sflphone_client_gnome_SOURCES = \
   main.c \

@@ -82,6 +82,7 @@ src/dbus/Makefile
 src/contacts/Makefile
 src/contacts/addressbook/Makefile
 src/widget/Makefile
+src/icons/Makefile
 pixmaps/Makefile
 sflphone.desktop
 tests/Makefile

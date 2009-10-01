@@ -226,8 +226,8 @@ void update_actions()
                 gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
                 gtk_widget_set_sensitive( GTK_WIDGET(holdToolbar),   TRUE);
                 // gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
-                gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (holdMenu), gtk_image_new_from_stock (GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_MENU));
-                gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON (holdToolbar), gtk_image_new_from_stock (GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_SMALL_TOOLBAR));
+                gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (holdMenu), gtk_image_new_from_stock (GTK_STOCK_OFFHOLD, GTK_ICON_SIZE_MENU));
+                gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON (holdToolbar), gtk_image_new_from_stock (GTK_STOCK_OFFHOLD, GTK_ICON_SIZE_SMALL_TOOLBAR));
                 break;
             case CALL_STATE_RINGING:
                 gtk_action_set_sensitive( GTK_ACTION(pickUpAction), TRUE);
@@ -243,7 +243,7 @@ void update_actions()
                 gtk_action_set_sensitive (GTK_ACTION(hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET(holdMenu),   TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET(holdToolbar),   TRUE);
-                gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (holdMenu), gtk_image_new_from_stock (GTK_STOCK_MEDIA_PAUSE, GTK_ICON_SIZE_MENU));
+                gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (holdMenu), gtk_image_new_from_stock (GTK_STOCK_ONHOLD, GTK_ICON_SIZE_MENU));
                 gtk_widget_set_sensitive (GTK_WIDGET(transferToolbar),   TRUE);
                 //gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
                 gtk_action_set_sensitive( GTK_ACTION(recordAction), TRUE);
@@ -720,9 +720,9 @@ static const GtkActionEntry menu_entries[] = {
 
     // Call Menu 
     { "Call", NULL, "Call" },
-    { "NewCall", GTK_STOCK_NEW, "_New call", "<control>N", "Place a new call", G_CALLBACK (call_new_call) },
-    { "PickUp", "call-start", "_Pick up", NULL, "Answer the call", G_CALLBACK (call_pick_up) },
-    { "HangUp", "call-stop", "_Hang up", "<control>S", "Finish the call", G_CALLBACK (call_hang_up) },    
+    { "NewCall", GTK_STOCK_DIAL, "_New call", "<control>N", "Place a new call", G_CALLBACK (call_new_call) },
+    { "PickUp", GTK_STOCK_PICKUP, "_Pick up", NULL, "Answer the call", G_CALLBACK (call_pick_up) },
+    { "HangUp", GTK_STOCK_HANGUP, "_Hang up", "<control>S", "Finish the call", G_CALLBACK (call_hang_up) },    
     { "Record", GTK_STOCK_MEDIA_RECORD, "_Record", "<control>R", "Record the current conversation", G_CALLBACK (call_record) },        
     { "AccountAssistant", NULL, "Configuration _Assistant", NULL, "Run the configuration assistant", G_CALLBACK (call_configuration_assistant) },    
     { "Voicemail", "mail-message-new", "Voicemail", NULL, "Call your voicemail", G_CALLBACK (call_mailbox_cb) },    
@@ -749,8 +749,8 @@ static const GtkActionEntry menu_entries[] = {
 
 static const GtkToggleActionEntry toggle_menu_entries[] = {
 
-    { "OnHold", GTK_STOCK_MEDIA_PAUSE, "O_n hold", "<control>P", "Place the call on hold", G_CALLBACK (call_hold) },    
-    { "Transfer", "go-next", "_Transfer", "<control>T", "Transfer the call", G_CALLBACK (call_transfer_cb) },        
+    { "OnHold", GTK_STOCK_ONHOLD, "O_n hold", "<control>P", "Place the call on hold", G_CALLBACK (call_hold) },    
+    { "Transfer", GTK_STOCK_TRANSFER, "_Transfer", "<control>T", "Transfer the call", G_CALLBACK (call_transfer_cb) },        
     { "Toolbar", NULL, "_Show toolbar", "<control>T", "Show the toolbar", NULL },
     { "Dialpad", NULL, "_Dialpad", "<control>D", "Show the dialpad", G_CALLBACK (dialpad_bar_cb) },
     { "VolumeControls",NULL, "_Volume controls", "<control>V", "Show the volume controls", G_CALLBACK (volume_bar_cb) }
@@ -761,7 +761,7 @@ static const GtkRadioActionEntry radio_menu_entries[] = {
 
 	{"CallWindow", GTK_STOCK_HOME, "_Call window", NULL, "Calls list", CALLTREE_CALLS},
 	{"History", "appointment-soon", "_History", NULL, "Calls history", CALLTREE_HISTORY},
-	{"Addressbook", "logviewer", "_Address book", NULL, "Address book", CALLTREE_CONTACTS}
+	{"Addressbook", GTK_STOCK_ADDRESSBOOK, "_Address book", NULL, "Address book", CALLTREE_CONTACTS}
 
 };
 

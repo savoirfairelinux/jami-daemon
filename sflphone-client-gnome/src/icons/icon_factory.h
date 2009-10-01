@@ -17,17 +17,25 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef UI_MANAGER_H
-#define UI_MANAGER_H
+#ifndef ICON_FACTORY_H
+#define ICON_FACTORY_H
 
-#include "icons/icon_factory.h"
+#include <gtk/gtkiconfactory.h>
+#include "icons/pixmap_data.h"
+#include "sflphone_const.h"
 
 G_BEGIN_DECLS
 
-guint transfertButtonConnId; //The button toggled signal connection ID
-guint holdConnId;     //The hold_menu signal connection ID
+#define GTK_STOCK_PICKUP				"gnome-stock-pickup"
+#define GTK_STOCK_HANGUP				"gnome-stock-hangup"
+#define GTK_STOCK_ONHOLD				"gnome-stock-onhold"
+#define GTK_STOCK_OFFHOLD				"gnome-stock-offhold"
+#define GTK_STOCK_TRANSFER				"gnome-stock-transfer"
+#define GTK_STOCK_DIAL					"gnome-stock-dial"
+#define GTK_STOCK_CALL_CURRENT			"gnome-stock-call-current"
+#define GTK_STOCK_ADDRESSBOOK			"gnome-stock-addressbook"
 
-gboolean uimanager_new (GtkUIManager**);
+void init_icon_factory (void);
 
 G_END_DECLS
 

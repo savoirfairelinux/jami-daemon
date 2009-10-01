@@ -22,6 +22,7 @@
 #include <dbus/dbus.h>
 #include <statusicon.h>
 #include <contacts/searchbar.h>
+#include "icons/icon_factory.h"
 
 #include <gtk/gtk.h>
 #include <string.h>
@@ -271,13 +272,16 @@ gboolean sflphone_init()
     {
         dbus_register(getpid(), "Gtk+ Client");
 
+		// Init icons factory
+		init_icon_factory ();
+
         current_calls = calltab_init(FALSE, CURRENT_CALLS);
         contacts = calltab_init(TRUE, CONTACTS);
         history = calltab_init(TRUE, HISTORY);
 
         account_list_init ();
         codec_list_init();
-	conferencelist_init();
+		conferencelist_init();
 
         // Fetch the configured accounts
         sflphone_fill_account_list(FALSE);
@@ -288,8 +292,8 @@ gboolean sflphone_init()
         // Fetch the audio codecs
         sflphone_fill_codec_list();
 
-	// Fetch the conference list
-	sflphone_fill_conference_list();
+		// Fetch the conference list
+		sflphone_fill_conference_list();
 
         return TRUE;
     }
