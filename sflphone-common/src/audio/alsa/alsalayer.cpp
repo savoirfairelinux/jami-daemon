@@ -724,6 +724,7 @@ void AlsaLayer::audioCallback (void)
     AudioLoop *tone;
 
     SFLDataFormat *out;
+    SFLDataFormat *rsmpl_out;
 
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
@@ -772,13 +773,15 @@ void AlsaLayer::audioCallback (void)
 
             if (toGet) {
 
+		_debug("AlsaLayer::writeToSpeaker\n");
+
 		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
                 _mainBuffer.getData(out, toGet, spkrVolume);
 
 		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
 
-		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+		    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
@@ -791,7 +794,7 @@ void AlsaLayer::audioCallback (void)
 
 		    _debug("    nbSample (after conversion): %i\n", nbSample);
 
-		    write (rsmpl_out, nbSample);
+		    write (rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
 		    free(rsmpl_out);
 		
@@ -824,6 +827,7 @@ void AlsaLayer::audioCallback (void)
     in = 0;
     if(is_capture_running())
     {
+        _debug("AlsaLayer::readFromMic\n");	
         micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
 	
 	if(micAvailAlsa > 0) 
@@ -842,6 +846,10 @@ void AlsaLayer::audioCallback (void)
 
 		    int nbSample = toPut / sizeof(SFLDataFormat);
 		    int nb_sample_up = nbSample;
+
+		    _debug("    _sampleRate: %i\n", _sampleRate);
+		    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
+		    _debug("    nbSample (before conversion): %i\n", nbSample);
 
 		    nbSample = _converter->downsampleData ((SFLDataFormat*)in, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_up);
 
