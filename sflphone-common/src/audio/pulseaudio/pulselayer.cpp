@@ -358,6 +358,8 @@ void PulseLayer::writeToSpeaker (void)
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
     urgentAvail = _urgentRingBuffer.AvailForGet();
 
+    _debug("PulseLayer::writeToSpeaker\n");
+
     if (urgentAvail > 0) {
 
         // Urgent data (dtmf, incoming call signal) come first.
@@ -399,7 +401,9 @@ void PulseLayer::writeToSpeaker (void)
 
             out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
             normalAvail = _mainBuffer.availForGet();
+	    _debug("    normalAvail: %i", normalAvail);
             toGet = (normalAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof (SFLDataFormat);
+	    _debug("    toGet: %i", toGet);
 
             if (toGet) {
 
@@ -408,13 +412,20 @@ void PulseLayer::writeToSpeaker (void)
                 _mainBuffer.getData (out, toGet, 100);
 
 		// test if resampling is required
-		if (_sampleRate != _mainBufferSampleRate) {
+		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
 
-		     SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
+		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
+		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
 
+		    _debug("    _sampleRate: %i\n", _sampleRate);
+		    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
+		    _debug("    nbSample (before conversion): %i\n", nb_sample_down);
+
 		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_down);
+
+		    _debug("    nbSample (after conversion): %i\n", nbSample);
 
 		    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
@@ -448,19 +459,27 @@ void PulseLayer::readFromMic (void)
         //_debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
     }
 
+    _debug("PulseLayer::readFromMic\n");
+
     if (data != 0) {
 
 	int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
 	// test if resampling is required
-        if (_sampleRate != _mainBufferSampleRate) {
+        if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
 
 	    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
 
 	    int nbSample = r / sizeof(SFLDataFormat);
             int nb_sample_up = nbSample;
+
+	    _debug("    _sampleRate: %i\n", _sampleRate);
+	    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
+	    _debug("    nbSample (before conversion): %i\n", nbSample);
             
             nbSample = _converter->downsampleData ((SFLDataFormat*)data, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_up);
+
+	    _debug("    nbSample (after conversion): %i\n", nbSample);
 
 	    _mainBuffer.putData ( (void*) rsmpl_out, nbSample*sizeof(SFLDataFormat), 100);
 

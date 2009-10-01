@@ -21,6 +21,7 @@
 #define _ALSA_LAYER_H
 
 #include "audio/audiolayer.h"
+#include "audio/samplerateconverter.h"
 #include "eventthread.h"
 #include <alsa/asoundlib.h>
 
@@ -264,6 +265,9 @@ class AlsaLayer : public AudioLayer {
     bool _trigger_request;
     
     AudioThread *_audioThread;
+
+    /** Sample rate converter object */
+    SamplerateConverter * _converter;
 
 };
 

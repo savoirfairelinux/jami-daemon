@@ -52,6 +52,8 @@ AlsaLayer::~AlsaLayer (void)
 {
     _debug ("Destructor of AlsaLayer called\n");
     closeLayer();
+
+    delete _converter; _converter = NULL;
 }
 
 bool
@@ -118,6 +120,8 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     std::string pcmp = buildDeviceTopo (plugin , indexOut , 0);
 
     std::string pcmc = buildDeviceTopo (PCM_PLUGHW , indexIn , 0);
+
+    _converter = new SamplerateConverter (_sampleRate, _frameSize);
 
     return open_device (pcmp , pcmc , stream);
 }
@@ -768,8 +772,33 @@ void AlsaLayer::audioCallback (void)
 
             if (toGet) {
 
+		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+
                 _mainBuffer.getData(out, toGet, spkrVolume);
-                write (out, toGet);
+
+		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+
+		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+		    
+		    // Do sample rate conversion
+		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
+
+		    _debug("    _sampleRate: %i\n", _sampleRate);
+		    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
+		    _debug("    nbSample (before conversion): %i\n", nb_sample_down);
+
+		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_down);
+
+		    _debug("    nbSample (after conversion): %i\n", nbSample);
+
+		    write (rsmpl_out, nbSample);
+
+		    free(rsmpl_out);
+		
+		} else {
+
+		    write (out, toGet);
+		}
 
             } else {
 
@@ -805,7 +834,25 @@ void AlsaLayer::audioCallback (void)
             toPut = read (in, toPut* sizeof(SFLDataFormat));
             if (in != 0)
             {
-                _mainBuffer.putData(in, toPut, 100);
+		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+
+		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+
+		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+
+		    int nbSample = toPut / sizeof(SFLDataFormat);
+		    int nb_sample_up = nbSample;
+
+		    nbSample = _converter->downsampleData ((SFLDataFormat*)in, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_up);
+
+		    _mainBuffer.putData(rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
+
+		    free(rsmpl_out);
+		
+		} else {
+
+		    _mainBuffer.putData(in, toPut, 100);
+		}
 	    }
             free(in); in=0;
         }
