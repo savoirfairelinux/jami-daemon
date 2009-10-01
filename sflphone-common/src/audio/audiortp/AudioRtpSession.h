@@ -390,7 +390,7 @@ namespace sfl {
                 _nSamplesSpkr = nbSample;
 
                 // put data in audio layer, size in byte
-                _audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
+                _audiolayer->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
             }
 
             // Notify (with a beep) an incoming call when there is already a call
