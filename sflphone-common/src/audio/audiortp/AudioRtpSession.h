@@ -147,6 +147,8 @@ namespace sfl {
              * Manager instance. 
              */
              ManagerImpl * _manager;
+
+	     int converterSamplingRate;
             
         protected:
             SIPCall * _ca;
@@ -199,7 +201,7 @@ namespace sfl {
             throw;
         }
 
-	_debug("Unbind audio RTP stream for call id %i\n", _ca->getCallId().c_str());
+	_debug("Unbind audio RTP stream for call id %s\n", _ca->getCallId().c_str());
 	_audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
 
         delete [] _micData;
@@ -215,8 +217,16 @@ namespace sfl {
     template <typename D>
     void AudioRtpSession<D>::initBuffers() 
     {
-        _converter = new SamplerateConverter (8000, _layerFrameSize);
-        int nbSamplesMax = (int) (8000 * _layerFrameSize /1000);
+	// Set sampling rate, main buffer choose the highest one
+	_audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
+
+	// may be different than one already setted
+	converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+
+	// initialize SampleRate converter using MainBuffers's sampling rate
+        _converter = new SamplerateConverter (converterSamplingRate, _layerFrameSize);
+
+        int nbSamplesMax = (int) (_codecSampleRate * _layerFrameSize /1000)*2;
         _micData = new SFLDataFormat[nbSamplesMax];
         _micDataConverted = new SFLDataFormat[nbSamplesMax];
         _micDataEncoded = new unsigned char[nbSamplesMax];
@@ -224,7 +234,6 @@ namespace sfl {
         _spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 
 	_manager->addStream(_ca->getCallId());
-	_audiolayer->getMainBuffer()->setInternalSamplingRate(8000);
     }
     
     template <typename D>
@@ -476,11 +485,12 @@ namespace sfl {
     template <typename D>
     void AudioRtpSession<D>::run ()
     {
-        initBuffers();
 
         setSessionTimeouts();
         setDestinationIpAddress();
         setSessionMedia();
+
+	initBuffers();
 
         int sessionWaiting;
         int timestep = _codecFrameSize;
@@ -511,7 +521,17 @@ namespace sfl {
         while (!testCancel()) {
 
 
-	    // if(converterSamplingRate != _audiolayer->getMainBuffer()->getInternalSamplingRate())
+	    if(converterSamplingRate != _audiolayer->getMainBuffer()->getInternalSamplingRate())
+	    {
+		delete _converter; _converter = NULL;
+
+		// may be different than one already setted
+		converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+
+		// initialize SampleRate converter using MainBuffers's sampling rate
+		_converter = new SamplerateConverter (converterSamplingRate, _layerFrameSize);
+
+	    }
 
             // Send session
             sessionWaiting = static_cast<D*>(this)->isWaiting();

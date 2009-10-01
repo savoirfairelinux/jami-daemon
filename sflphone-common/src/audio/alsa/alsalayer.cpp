@@ -22,6 +22,7 @@
 #include "managerimpl.h"
 
 int framesPerBufferAlsa = 2048;
+// int framesPerBufferAlsa = 320;
 
 // Constructor
 AlsaLayer::AlsaLayer (ManagerImpl* manager)
@@ -764,24 +765,39 @@ void AlsaLayer::audioCallback (void)
             write (out , maxBytes);
 
         } else {
+	    
+	    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+	    int maxNbFrames = 0;
+
+	    if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+ 
+		double downsampleFactor = (double) _mainBufferSampleRate / _sampleRate;
+
+		maxNbFrames = (int) ((double) framesPerBufferAlsa / downsampleFactor);
+
+	    } else {
+
+		maxNbFrames = framesPerBufferAlsa;
+
+	    }
 
             // If nothing urgent, play the regular sound samples
             normalAvail = _mainBuffer.availForGet();
-            toGet = (normalAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? normalAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
-            out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+            toGet = (normalAvail < (int) (maxNbFrames * sizeof (SFLDataFormat))) ? normalAvail : maxNbFrames * sizeof (SFLDataFormat);
+            out = (SFLDataFormat*) malloc (maxNbFrames * sizeof (SFLDataFormat));
 
 
-            if (toGet) {
+            if (normalAvail) {
 
 		_debug("AlsaLayer::writeToSpeaker\n");
-
-		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
                 _mainBuffer.getData(out, toGet, spkrVolume);
 
 		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
 
-		    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+		    _debug("    malloc in byte: %i\n", maxNbFrames * sizeof (SFLDataFormat));
+
+		    rsmpl_out = (SFLDataFormat*) malloc (maxNbFrames * sizeof (SFLDataFormat));
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
@@ -801,11 +817,12 @@ void AlsaLayer::audioCallback (void)
 		} else {
 
 		    write (out, toGet);
+
 		}
 
             } else {
 
-                bzero (out, framesPerBufferAlsa * sizeof (SFLDataFormat));
+                bzero (out, maxNbFrames * sizeof (SFLDataFormat));
             }
 
 	    _urgentRingBuffer.Discard (toGet); 

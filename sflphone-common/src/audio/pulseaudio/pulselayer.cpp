@@ -20,7 +20,8 @@
 #include "pulselayer.h"
 #include "managerimpl.h"
 
-int framesPerBuffer = 2048;
+// int framesPerBuffer = 2048;
+int framesPerBuffer = 320;
 
 static  void audioCallback (pa_stream* s, size_t bytes, void* userdata)
 {
@@ -399,10 +400,25 @@ void PulseLayer::writeToSpeaker (void)
 
         } else {
 
-            out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
+	    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+	    int maxNbFrames = 0;
+
+	    if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+ 
+		double downsampleFactor = (double) _mainBufferSampleRate / _sampleRate;
+
+		maxNbFrames = (int) ((double) framesPerBuffer / downsampleFactor);
+
+	    } else {
+
+		maxNbFrames = framesPerBuffer;
+
+	    }
+
+            out = (SFLDataFormat*) pa_xmalloc (maxNbFrames * sizeof (SFLDataFormat));
             normalAvail = _mainBuffer.availForGet();
 	    _debug("    normalAvail: %i", normalAvail);
-            toGet = (normalAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof (SFLDataFormat);
+            toGet = (normalAvail < (int) (maxNbFrames * sizeof (SFLDataFormat))) ? normalAvail : maxNbFrames * sizeof (SFLDataFormat);
 	    _debug("    toGet: %i", toGet);
 
             if (toGet) {
@@ -414,7 +430,7 @@ void PulseLayer::writeToSpeaker (void)
 		// test if resampling is required
 		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
 
-		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
+		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (maxNbFrames * sizeof (SFLDataFormat));
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
@@ -439,7 +455,7 @@ void PulseLayer::writeToSpeaker (void)
 
             } else {
 
-                bzero (out, framesPerBuffer * sizeof (SFLDataFormat));
+                bzero (out, maxNbFrames * sizeof (SFLDataFormat));
             }
 
             pa_xfree (out);

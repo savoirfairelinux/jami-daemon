@@ -92,6 +92,8 @@ class SamplerateConverter {
 		SRC_STATE*    _src_state_spkr;
 		/** libSamplerateConverter error */
 		int _src_err;
+
+		
 };
 
 #endif //_SAMPLE_RATE_H
