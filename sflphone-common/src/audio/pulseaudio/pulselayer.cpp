@@ -47,6 +47,8 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 PulseLayer::~PulseLayer (void)
 {
     closeLayer ();
+
+    delete _converter; _converter = NULL;
 }
 
 bool
@@ -230,6 +232,8 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
 
     // startStream();
 
+    _converter = new SamplerateConverter (_sampleRate, _frameSize);
+
     _debug ("Connection Done!! \n");
 
     return true;
@@ -399,8 +403,28 @@ void PulseLayer::writeToSpeaker (void)
 
             if (toGet) {
 
+		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+
                 _mainBuffer.getData (out, toGet, 100);
-		pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
+
+		// test if resampling is required
+		if (_sampleRate != _mainBufferSampleRate) {
+
+		     SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
+		    // Do sample rate conversion
+		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
+
+		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_down);
+
+		    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+		    pa_xfree (rsmpl_out);
+
+		} else {
+
+		    pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
+
+		}
 
             } else {
 
@@ -425,7 +449,31 @@ void PulseLayer::readFromMic (void)
     }
 
     if (data != 0) {
-        _mainBuffer.putData ( (void*) data ,r, 100);
+
+	int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+
+	// test if resampling is required
+        if (_sampleRate != _mainBufferSampleRate) {
+
+	    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
+
+	    int nbSample = r / sizeof(SFLDataFormat);
+            int nb_sample_up = nbSample;
+            
+            nbSample = _converter->downsampleData ((SFLDataFormat*)data, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_up);
+
+	    _mainBuffer.putData ( (void*) rsmpl_out, nbSample*sizeof(SFLDataFormat), 100);
+
+	    pa_xfree (rsmpl_out);
+
+        } else {
+
+            // no resampling required
+            _mainBuffer.putData ( (void*) data, r, 100);
+        }
+
+
+	
     }
 
     if (pa_stream_drop (record->pulseStream()) < 0) {

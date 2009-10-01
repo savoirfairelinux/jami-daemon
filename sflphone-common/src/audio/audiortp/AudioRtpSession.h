@@ -224,6 +224,7 @@ namespace sfl {
         _spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 
 	_manager->addStream(_ca->getCallId());
+	_audiolayer->getMainBuffer()->setInternalSamplingRate(_layerSampleRate);
     }
     
     template <typename D>
@@ -298,6 +299,8 @@ namespace sfl {
     {
         assert(_audiocodec);
         assert(_audiolayer);
+
+	int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
         
         // compute codec framesize in ms
         float fixed_codec_framesize = computeCodecFrameSize (_audiocodec->getFrameSize(), _audiocodec->getClockRate());
@@ -321,10 +324,10 @@ namespace sfl {
         int compSize = 0;
 
         // test if resampling is required
-        if (_audiocodec->getClockRate() != _layerSampleRate) {
+        if (_audiocodec->getClockRate() != _mainBufferSampleRate) {
             int nb_sample_up = nbSample;
             _nSamplesMic = nbSample;
-            nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _layerSampleRate , nb_sample_up);
+            nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _mainBufferSampleRate, nb_sample_up);
             compSize = _audiocodec->codecEncode (_micDataEncoded, _micDataConverted, nbSample*sizeof (int16));
         } else {
             // no resampling required
@@ -338,6 +341,9 @@ namespace sfl {
     void AudioRtpSession<D>::processDataDecode(unsigned char * spkrData, unsigned int size, int& countTime) 
     {
         if (_audiocodec != NULL) {
+
+	    int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+
             // Return the size of data in bytes
             int expandedSize = _audiocodec->codecDecode (_spkrDataDecoded , spkrData , size);
 
@@ -345,11 +351,11 @@ namespace sfl {
             int nbSample = expandedSize / sizeof (SFLDataFormat);
 
             // test if resampling is required
-            if (_audiocodec->getClockRate() != _layerSampleRate) {
+            if (_audiocodec->getClockRate() != _mainBufferSampleRate) {
 
                 // Do sample rate conversion
                 int nb_sample_down = nbSample;
-                nbSample = _converter->upsampleData (_spkrDataDecoded, _spkrDataConverted, _codecSampleRate, _layerSampleRate , nb_sample_down);
+                nbSample = _converter->upsampleData (_spkrDataDecoded, _spkrDataConverted, _codecSampleRate, _mainBufferSampleRate, nb_sample_down);
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
 

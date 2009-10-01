@@ -21,6 +21,7 @@
 #define _PULSE_LAYER_H
 
 #include "audio/audiolayer.h"
+#include "audio/samplerateconverter.h"
 #include "audiostream.h"
 
 #include <pulse/pulseaudio.h>
@@ -188,6 +189,9 @@ class PulseLayer : public AudioLayer {
      * A stream object to handle the pulseaudio capture stream
      */
     AudioStream* record;
+
+    /** Sample rate converter object */
+    SamplerateConverter * _converter;
 
     bool isCorked;
 
