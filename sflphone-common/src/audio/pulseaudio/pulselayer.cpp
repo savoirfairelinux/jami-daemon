@@ -407,7 +407,7 @@ void PulseLayer::writeToSpeaker (void)
  
 		double downsampleFactor = (double) _mainBufferSampleRate / _sampleRate;
 
-		maxNbFrames = (int) ((double) framesPerBuffer / downsampleFactor);
+		maxNbFrames = (int) ((double) framesPerBuffer * downsampleFactor);
 
 	    } else {
 
@@ -415,11 +415,16 @@ void PulseLayer::writeToSpeaker (void)
 
 	    }
 
+	    if(!maxNbFrames)
+	    {
+		_debug("Error, maxNbFrames is 0!\n");
+	    }
+
             out = (SFLDataFormat*) pa_xmalloc (maxNbFrames * sizeof (SFLDataFormat));
             normalAvail = _mainBuffer.availForGet();
-	    _debug("    normalAvail: %i", normalAvail);
+	    _debug("    normalAvail: %i\n", normalAvail);
             toGet = (normalAvail < (int) (maxNbFrames * sizeof (SFLDataFormat))) ? normalAvail : maxNbFrames * sizeof (SFLDataFormat);
-	    _debug("    toGet: %i", toGet);
+	    _debug("    toGet: %i\n", toGet);
 
             if (toGet) {
 
@@ -430,7 +435,7 @@ void PulseLayer::writeToSpeaker (void)
 		// test if resampling is required
 		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
 
-		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (maxNbFrames * sizeof (SFLDataFormat));
+		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);

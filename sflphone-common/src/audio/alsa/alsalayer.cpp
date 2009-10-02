@@ -773,12 +773,17 @@ void AlsaLayer::audioCallback (void)
  
 		double downsampleFactor = (double) _mainBufferSampleRate / _sampleRate;
 
-		maxNbFrames = (int) ((double) framesPerBufferAlsa / downsampleFactor);
+		maxNbFrames = (int) ((double) framesPerBufferAlsa * downsampleFactor);
 
 	    } else {
 
 		maxNbFrames = framesPerBufferAlsa;
 
+	    }
+
+	    if(!maxNbFrames)
+	    {
+		_debug("Error, maxNbFrames is 0!\n");
 	    }
 
             // If nothing urgent, play the regular sound samples
@@ -797,7 +802,7 @@ void AlsaLayer::audioCallback (void)
 
 		    _debug("    malloc in byte: %i\n", maxNbFrames * sizeof (SFLDataFormat));
 
-		    rsmpl_out = (SFLDataFormat*) malloc (maxNbFrames * sizeof (SFLDataFormat));
+		    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
