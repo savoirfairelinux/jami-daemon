@@ -36,12 +36,16 @@ MainBuffer::~MainBuffer()
 
 void MainBuffer::setInternalSamplingRate(int sr)
 {
+    ost::MutexLock guard (_mutex);
+    
     if (sr != _internalSamplingRate)
     {
+	// flushAllBuffers();
 	_internalSamplingRate = sr;
 
-	flushAllBuffers();
     }
+
+    flushAllBuffers();
 }
 
 CallIDSet* MainBuffer::getCallIDSet(CallID call_id)

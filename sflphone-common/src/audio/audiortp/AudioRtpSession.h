@@ -82,7 +82,7 @@ namespace sfl {
                 return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
             }          
             inline int computeNbByteAudioLayer (float codecFrameSize) {
-                return (int) ( (float) 8000 * codecFrameSize * (float) sizeof (SFLDataFormat) / 1000.0);
+                return (int) ( (float) converterSamplingRate * codecFrameSize * (float) sizeof (SFLDataFormat) / 1000.0);
             }
           
             void sendMicData(int timestamp);
@@ -223,8 +223,9 @@ namespace sfl {
 	// may be different than one already setted
 	converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
 
-	// initialize SampleRate converter using MainBuffers's sampling rate
-        _converter = new SamplerateConverter (converterSamplingRate, _layerFrameSize);
+	// initialize SampleRate converter using AudioLayer's sampling rate
+	// (internal buffers initialized with maximal sampling rate and frame size)
+        _converter = new SamplerateConverter (_layerSampleRate, _layerFrameSize);
 
         int nbSamplesMax = (int) (_codecSampleRate * _layerFrameSize /1000)*2;
         _micData = new SFLDataFormat[nbSamplesMax];
@@ -324,6 +325,9 @@ namespace sfl {
         // available bytes inside ringbuffer
         int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
 
+	_debug("    availBytesFromMic: %i\n", availBytesFromMic);
+	_debug("    maxByesToGet: %i\n", maxBytesToGet);
+
         // set available byte to maxByteToGet
         int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
 
@@ -353,6 +357,7 @@ namespace sfl {
         } else {
             // no resampling required
             compSize = _audiocodec->codecEncode (_micDataEncoded, _micData, nbSample*sizeof (int16));
+	    _debug("    compSize: %i\n", compSize);
         }
 
         return compSize;
@@ -511,27 +516,12 @@ namespace sfl {
             throw AudioRtpSessionException();
         }
 
-	
-
         _audiolayer->startStream();
         static_cast<D*>(this)->startRunning();
 
         _debug ("Entering RTP mainloop for callid %s\n",_ca->getCallId().c_str());
 
         while (!testCancel()) {
-
-
-	    if(converterSamplingRate != _audiolayer->getMainBuffer()->getInternalSamplingRate())
-	    {
-		delete _converter; _converter = NULL;
-
-		// may be different than one already setted
-		converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-
-		// initialize SampleRate converter using MainBuffers's sampling rate
-		_converter = new SamplerateConverter (converterSamplingRate, _layerFrameSize);
-
-	    }
 
             // Send session
             sessionWaiting = static_cast<D*>(this)->isWaiting();

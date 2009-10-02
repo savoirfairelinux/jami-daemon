@@ -48,7 +48,9 @@ PulseLayer::~PulseLayer (void)
 {
     closeLayer ();
 
-    delete _converter; _converter = NULL;
+    if (_converter) {
+	delete _converter; _converter = NULL;
+    }
 }
 
 bool
@@ -212,7 +214,7 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
 {
 
     _debug ("PulseLayer::openDevice \n");
-    _sampleRate = sampleRate;
+    _audioSampleRate = sampleRate;
     _frameSize = frameSize;
 
     m = pa_threaded_mainloop_new();
@@ -232,7 +234,7 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
 
     // startStream();
 
-    _converter = new SamplerateConverter (_sampleRate, _frameSize);
+    _converter = new SamplerateConverter (_audioSampleRate, _frameSize);
 
     _debug ("Connection Done!! \n");
 
@@ -349,22 +351,22 @@ void PulseLayer::processData (void)
 void PulseLayer::writeToSpeaker (void)
 {
     /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
-    int urgentAvail;
+    int urgentAvailBytes;
     /** Bytes available in the regular ringbuffer ( reserved for voice ) */
-    int normalAvail;
+    int normalAvailBytes;
     int toGet;
     int toPlay;
 
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
-    urgentAvail = _urgentRingBuffer.AvailForGet();
+    urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
     _debug("PulseLayer::writeToSpeaker\n");
 
-    if (urgentAvail > 0) {
+    if (urgentAvailBytes > 0) {
 
         // Urgent data (dtmf, incoming call signal) come first.
         //_debug("Play urgent!: %i\e" , urgentAvail);
-        toGet = (urgentAvail < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof (SFLDataFormat);
+        toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
         _urgentRingBuffer.Get (out, toGet, 100);
         pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
@@ -400,50 +402,46 @@ void PulseLayer::writeToSpeaker (void)
         } else {
 
 	    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-	    int maxNbFrames = 0;
+	    int maxNbSamplesToGet = 0;
+	    int maxNbBytesToGet = 0;
 
-	    if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+	    if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
  
-		double downsampleFactor = (double) _mainBufferSampleRate / _sampleRate;
+		double upsampleFactor = (double) _mainBufferSampleRate / _audioSampleRate;
 
-		maxNbFrames = (int) ((double) framesPerBuffer * downsampleFactor);
+		maxNbSamplesToGet = (int) ((double) framesPerBuffer * upsampleFactor);
 
 	    } else {
 
-		maxNbFrames = framesPerBuffer;
+		maxNbSamplesToGet = framesPerBuffer;
 
 	    }
 
-	    if(!maxNbFrames)
-	    {
-		_debug("Error, maxNbFrames is 0!\n");
-	    }
+	    maxNbBytesToGet = maxNbSamplesToGet * sizeof(SFLDataFormat);
 
-            out = (SFLDataFormat*) pa_xmalloc (maxNbFrames * sizeof (SFLDataFormat));
-            normalAvail = _mainBuffer.availForGet();
-	    _debug("    normalAvail: %i\n", normalAvail);
-            toGet = (normalAvail < (int) (maxNbFrames * sizeof (SFLDataFormat))) ? normalAvail : maxNbFrames * sizeof (SFLDataFormat);
+            out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
+            normalAvailBytes = _mainBuffer.availForGet();
+	    _debug("    normalAvail: %i\n", normalAvailBytes);
+            toGet = (normalAvailBytes < (int)(maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
 	    _debug("    toGet: %i\n", toGet);
 
             if (toGet) {
 
-		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-
                 _mainBuffer.getData (out, toGet, 100);
 
 		// test if resampling is required
-		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
 
 		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
 
-		    _debug("    _sampleRate: %i\n", _sampleRate);
+		    _debug("    _audioSampleRate: %i\n", _audioSampleRate);
 		    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
 		    _debug("    nbSample (before conversion): %i\n", nb_sample_down);
 
-		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_down);
+		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
 		    _debug("    nbSample (after conversion): %i\n", nbSample);
 
@@ -459,13 +457,14 @@ void PulseLayer::writeToSpeaker (void)
 
             } else {
 
-                bzero (out, maxNbFrames * sizeof (SFLDataFormat));
+                bzero (out, maxNbBytesToGet);
             }
+
+	    _urgentRingBuffer.Discard(toGet);
 
             pa_xfree (out);
         }
 
-	_urgentRingBuffer.Discard(toGet);
     }
 
 }
@@ -486,7 +485,7 @@ void PulseLayer::readFromMic (void)
 	int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
 	// test if resampling is required
-        if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+        if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
 
 
 	    _debug("    framesPerBuffer: %i\n", framesPerBuffer);
@@ -495,11 +494,11 @@ void PulseLayer::readFromMic (void)
 	    int nbSample = r / sizeof(SFLDataFormat);
             int nb_sample_up = nbSample;
 
-	    _debug("    _sampleRate: %i\n", _sampleRate);
+	    _debug("    _audioSampleRate: %i\n", _audioSampleRate);
 	    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
 	    _debug("    nbSample (before conversion): %i\n", nbSample);
             
-            nbSample = _converter->downsampleData ((SFLDataFormat*)data, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_up);
+            nbSample = _converter->downsampleData ((SFLDataFormat*)data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
 	    _debug("    nbSample (after conversion): %i\n", nbSample);
 

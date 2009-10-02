@@ -63,7 +63,7 @@ class AudioLayer {
 	      , _urgentRingBuffer( SIZEBUF, default_id )
               , _indexIn ( 0 )
               , _indexOut ( 0 )
-              , _sampleRate ( 0 )
+              , _audioSampleRate ( 0 )
               , _frameSize ( 0 )
               , _inChannel( 1 )
               , _outChannel ( 1 )
@@ -184,7 +184,7 @@ class AudioLayer {
          * @return unsigned int The sample rate
          *			    default: 44100 HZ
          */
-        unsigned int getSampleRate() { return _sampleRate; }
+        unsigned int getSampleRate() { return _audioSampleRate; }
 
         /**
          * Get the frame size of the audio layer
@@ -277,7 +277,7 @@ class AudioLayer {
          * Sample Rate SFLphone should send sound data to the sound card 
          * The value can be set in the user config file- now: 44100HZ
          */
-        unsigned int _sampleRate;
+        unsigned int _audioSampleRate;
 
         /**
          * Length of the sound frame we capture or read in ms

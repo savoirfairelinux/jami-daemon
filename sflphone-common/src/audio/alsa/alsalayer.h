@@ -269,6 +269,8 @@ class AlsaLayer : public AudioLayer {
     /** Sample rate converter object */
     SamplerateConverter * _converter;
 
+    int _converterSamplingRate;
+
 };
 
 #endif // _ALSA_LAYER_H_

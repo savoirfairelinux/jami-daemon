@@ -38,6 +38,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
         , _is_open_playback (false)
         , _is_open_capture (false)
         , _trigger_request (false)
+	, _converterSamplingRate(0)
 
 {
     _debug (" Constructor of AlsaLayer called\n");
@@ -53,7 +54,9 @@ AlsaLayer::~AlsaLayer (void)
     _debug ("Destructor of AlsaLayer called\n");
     closeLayer();
 
-    delete _converter; _converter = NULL;
+    if(_converter) {
+	delete _converter; _converter = NULL;
+    }
 }
 
 bool
@@ -101,7 +104,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     _indexOut = indexOut;
 
-    _sampleRate = sampleRate;
+    _audioSampleRate = sampleRate;
 
     _frameSize = frameSize;
 
@@ -113,7 +116,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     _debugAlsa ("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
 
-    _debugAlsa ("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLDataFormatString);
+    _debugAlsa ("                   : sample rate=%5d, format=%s\n", _audioSampleRate, SFLDataFormatString);
 
     ost::MutexLock lock (_mutex);
 
@@ -121,7 +124,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     std::string pcmc = buildDeviceTopo (PCM_PLUGHW , indexIn , 0);
 
-    _converter = new SamplerateConverter (_sampleRate, _frameSize);
+    _converter = new SamplerateConverter (_audioSampleRate, _frameSize);
 
     return open_device (pcmp , pcmc , stream);
 }
@@ -719,7 +722,7 @@ AlsaLayer::soundCardGetIndex (std::string description)
 void AlsaLayer::audioCallback (void)
 {
 
-    int toGet, urgentAvail, normalAvail, maxBytes;
+    int toGet, urgentAvailBytes, normalAvailBytes, maxBytes;
     unsigned short spkrVolume, micVolume;
     AudioLoop *tone;
 
@@ -728,20 +731,24 @@ void AlsaLayer::audioCallback (void)
 
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
+    
 
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
-    urgentAvail = _urgentRingBuffer.AvailForGet();
-    if (urgentAvail > 0) {
+    urgentAvailBytes = _urgentRingBuffer.AvailForGet();
+    if (urgentAvailBytes > 0) {
 
         // Urgent data (dtmf, incoming call signal) come first.
-        toGet = (urgentAvail < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? urgentAvail : framesPerBufferAlsa * sizeof (SFLDataFormat);
+        toGet = (urgentAvailBytes < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBufferAlsa * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) malloc (toGet * sizeof (SFLDataFormat));
         _urgentRingBuffer.Get (out, toGet, spkrVolume);
+
         /* Play the sound */
         write (out, toGet);
+
         free (out);
         out=0;
+
         // Consume the regular one as well (same amount of bytes)
         _mainBuffer.discard (toGet);
 
@@ -757,66 +764,79 @@ void AlsaLayer::audioCallback (void)
             tone->getNext (out, toGet, spkrVolume);
             write (out , maxBytes);
 
+	    free(out);
+	    out = 0;
+
         } else if ( (tone=_manager->getTelephoneFile()) != 0) {
 
             out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
             tone->getNext (out, toGet, spkrVolume);
             write (out , maxBytes);
 
+	    free(out);
+	    out = 0;
+
         } else {
-	    
+
+	    _debug("AlsaLayer::writeToSpeaker\n");
+
+	    // If nothing urgent, play the regular sound samples
+   
 	    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-	    int maxNbFrames = 0;
+	    int maxNbSamplesToGet = 0;
+	    int maxNbBytesToGet = 0;
 
-	    if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+	    // Compute maximal value to get into the ring buffer
+	    if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
  
-		double downsampleFactor = (double) _mainBufferSampleRate / _sampleRate;
+		double upsampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
 
-		maxNbFrames = (int) ((double) framesPerBufferAlsa * downsampleFactor);
+		_debug("    upsampleFactor: %f\n", upsampleFactor);
+		_debug("    toGet: %i\n", toGet);
+
+		maxNbSamplesToGet = (int) ((double) framesPerBufferAlsa / upsampleFactor);
+
+		_debug("    maxNbFrames: %i\n", maxNbSamplesToGet);
 
 	    } else {
 
-		maxNbFrames = framesPerBufferAlsa;
+		maxNbSamplesToGet = framesPerBufferAlsa;
 
 	    }
 
-	    if(!maxNbFrames)
-	    {
-		_debug("Error, maxNbFrames is 0!\n");
-	    }
+	    maxNbBytesToGet = maxNbSamplesToGet * sizeof(SFLDataFormat);
+            
+            normalAvailBytes = _mainBuffer.availForGet();
+            toGet = (normalAvailBytes < (int)maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
 
-            // If nothing urgent, play the regular sound samples
-            normalAvail = _mainBuffer.availForGet();
-            toGet = (normalAvail < (int) (maxNbFrames * sizeof (SFLDataFormat))) ? normalAvail : maxNbFrames * sizeof (SFLDataFormat);
-            out = (SFLDataFormat*) malloc (maxNbFrames * sizeof (SFLDataFormat));
+            out = (SFLDataFormat*) malloc (maxNbBytesToGet);
 
-
-            if (normalAvail) {
-
-		_debug("AlsaLayer::writeToSpeaker\n");
+            if (normalAvailBytes) {
 
                 _mainBuffer.getData(out, toGet, spkrVolume);
 
-		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
 
-		    _debug("    malloc in byte: %i\n", maxNbFrames * sizeof (SFLDataFormat));
+		    _debug("    malloc in byte: %i\n", maxNbBytesToGet);
 
 		    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
 
-		    _debug("    _sampleRate: %i\n", _sampleRate);
+		    _debug("    _audioSampleRate: %i\n", _audioSampleRate);
 		    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
 		    _debug("    nbSample (before conversion): %i\n", nb_sample_down);
 
-		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_down);
+		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
 		    _debug("    nbSample (after conversion): %i\n", nbSample);
 
 		    write (rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
 		    free(rsmpl_out);
+		    _debug("    successfull rsmpl_out free!\n");
+		    rsmpl_out = 0;
 		
 		} else {
 
@@ -826,19 +846,20 @@ void AlsaLayer::audioCallback (void)
 
             } else {
 
-                bzero (out, maxNbFrames * sizeof (SFLDataFormat));
+		bzero (out, maxNbBytesToGet);
             }
 
 	    _urgentRingBuffer.Discard (toGet); 
+
+	    free (out);
+	    out = 0;
+
         }
 
-        free (out);
-
-        out=0;
     }
 
     // Additionally handle the mic's audio stream
-    int micAvailAlsa;
+    int micAvailBytes;
     int micAvailPut;
     int toPut;
     SFLDataFormat* in;
@@ -849,34 +870,35 @@ void AlsaLayer::audioCallback (void)
     if(is_capture_running())
     {
         _debug("AlsaLayer::readFromMic\n");	
-        micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
+        micAvailBytes = snd_pcm_avail_update(_CaptureHandle);
 	
-	if(micAvailAlsa > 0) 
+	if(micAvailBytes > 0) 
 	{
             micAvailPut = _mainBuffer.availForPut();
-            toPut = (micAvailAlsa <= micAvailPut) ? micAvailAlsa : micAvailPut;
+            toPut = (micAvailBytes <= micAvailPut) ? micAvailBytes : micAvailPut;
             in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
             toPut = read (in, toPut* sizeof(SFLDataFormat));
             if (in != 0)
             {
 		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
-		if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
+		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
 
 		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
 		    int nbSample = toPut / sizeof(SFLDataFormat);
 		    int nb_sample_up = nbSample;
 
-		    _debug("    _sampleRate: %i\n", _sampleRate);
+		    _debug("    _audioSampleRate: %i\n", _audioSampleRate);
 		    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
 		    _debug("    nbSample (before conversion): %i\n", nbSample);
 
-		    nbSample = _converter->downsampleData ((SFLDataFormat*)in, rsmpl_out, _mainBufferSampleRate, _sampleRate, nb_sample_up);
+		    nbSample = _converter->downsampleData ((SFLDataFormat*)in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
 		    _mainBuffer.putData(rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
 
 		    free(rsmpl_out);
+		    rsmpl_out = 0;
 		
 		} else {
 
@@ -885,10 +907,12 @@ void AlsaLayer::audioCallback (void)
 	    }
             free(in); in=0;
         }
+	/*
 	else if(micAvailAlsa < 0)
 	{
 	    _debug("AlsaLayer::audioCallback (mic): error: %s\n", snd_strerror(micAvailAlsa));
 	}
+	*/
     }
 }
 
