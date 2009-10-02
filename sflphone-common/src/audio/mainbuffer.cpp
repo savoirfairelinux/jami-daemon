@@ -20,7 +20,7 @@
 
 #include "mainbuffer.h"
 
-MainBuffer::MainBuffer()
+MainBuffer::MainBuffer() : _internalSamplingRate(0)
 {
     mixBuffer = new SFLDataFormat[STATIC_BUFSIZE];
 }
