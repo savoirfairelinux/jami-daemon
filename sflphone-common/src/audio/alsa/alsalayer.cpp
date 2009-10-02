@@ -22,7 +22,6 @@
 #include "managerimpl.h"
 
 int framesPerBufferAlsa = 2048;
-// int framesPerBufferAlsa = 320;
 
 // Constructor
 AlsaLayer::AlsaLayer (ManagerImpl* manager)

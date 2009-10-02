@@ -20,8 +20,7 @@
 #include "pulselayer.h"
 #include "managerimpl.h"
 
-// int framesPerBuffer = 2048;
-int framesPerBuffer = 320;
+int framesPerBuffer = 2048;
 
 static  void audioCallback (pa_stream* s, size_t bytes, void* userdata)
 {
@@ -489,6 +488,8 @@ void PulseLayer::readFromMic (void)
 	// test if resampling is required
         if (_mainBufferSampleRate && ((int)_sampleRate != _mainBufferSampleRate)) {
 
+
+	    _debug("    framesPerBuffer: %i\n", framesPerBuffer);
 	    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
 
 	    int nbSample = r / sizeof(SFLDataFormat);
