@@ -43,9 +43,11 @@ void MainBuffer::setInternalSamplingRate(int sr)
 	// flushAllBuffers();
 	_internalSamplingRate = sr;
 
+	flushAllBuffers();
+
     }
 
-    flushAllBuffers();
+    // flushAllBuffers();
 }
 
 CallIDSet* MainBuffer::getCallIDSet(CallID call_id)

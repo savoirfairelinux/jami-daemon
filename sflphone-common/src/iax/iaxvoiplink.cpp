@@ -127,6 +127,10 @@ IAXVoIPLink::init()
             _evThread->start();
 
             audiolayer = Manager::instance().getAudioDriver();
+
+	    // may be different than one already setted
+            converterSamplingRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
+	    
             break;
         }
 
@@ -313,12 +317,12 @@ IAXVoIPLink::sendAudioFromMic (void)
         return;
     }
 
-    
+    audiolayer->getMainBuffer()->setInternalSamplingRate(ac->getClockRate());
 
     // Send sound here
     if (audiolayer) {
 
-	
+	int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
 
         // we have to get 20ms of data from the mic *20/1000 = /50
         // rate/50 shall be lower than IAX__20S_48KHZ_MAX
@@ -347,14 +351,22 @@ IAXVoIPLink::sendAudioFromMic (void)
 
         // _debug("IAXVoIPLink::sendAudioFromMic : %i \n",nbSampleForRec_);
 
-        // resample
-        nbSample_ = converter->downsampleData (micData , micDataConverted , (int) ac ->getClockRate() , (int) audiolayer->getSampleRate() , nbSample_);
 
-        // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-        compSize = ac->codecEncode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
+	if (ac->getClockRate() && (ac->getClockRate() != _mainBufferSampleRate)) {
 
-        // Send it out!
-        _mutexIAX.enterMutex();
+	    // resample
+	    nbSample_ = converter->downsampleData (micData , micDataConverted , (int) ac->getClockRate(), _mainBufferSampleRate, nbSample_);
+	
+	    // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
+	    compSize = ac->codecEncode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
+	} else {
+
+	    // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
+	    compSize = ac->codecEncode (micDataEncoded, micData, nbSample_*sizeof (int16));
+	}
+
+	// Send it out!
+	_mutexIAX.enterMutex();
 
         // Make sure the session and the call still exists.
         if (currentCall->getSession() && micDataEncoded != NULL) {
@@ -872,7 +884,9 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
     int expandedSize, nbSample_;
     AudioCodec *ac;
 
+    ac = call->getCodecMap().getCodec (call -> getAudioCodec());
 
+    audiolayer->getMainBuffer()->setInternalSamplingRate(ac->getClockRate());
     
     // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
     // were triggered
@@ -883,7 +897,9 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         return;
     }
 
-    if (audiolayer) {	
+    if (audiolayer) {
+
+	int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
 
         // On-the-fly codec changing (normally, when we receive a full packet)
         // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
@@ -893,7 +909,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         }
 
         //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
-        ac = call->getCodecMap().getCodec (call -> getAudioCodec());
+        // ac = call->getCodecMap().getCodec (call -> getAudioCodec());
 
         data = (unsigned char*) event->data;
 
@@ -918,11 +934,21 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 
         nbSample_ = nbInt16;
 
-        // resample
-        nbInt16 = converter->upsampleData (spkrDataDecoded , spkrDataConverted , ac->getClockRate() , audiolayer->getSampleRate() , nbSample_);
+	// test if resampling is required
+        if (ac->getClockRate() && (ac->getClockRate() != _mainBufferSampleRate)) {
 
-        /* Write the data to the mic ring buffer */
-        audiolayer->getMainBuffer()->putData (spkrDataConverted , nbInt16 * sizeof (SFLDataFormat), 100, call->getCallId());
+	    // resample
+	    nbInt16 = converter->upsampleData (spkrDataDecoded, spkrDataConverted, ac->getClockRate(), _mainBufferSampleRate, nbSample_);
+
+	    /* Write the data to the mic ring buffer */
+	    audiolayer->getMainBuffer()->putData (spkrDataConverted, nbInt16 * sizeof (SFLDataFormat), 100, call->getCallId());
+
+	} else {
+
+	    /* Write the data to the mic ring buffer */
+	    audiolayer->getMainBuffer()->putData (spkrDataDecoded, nbInt16 * sizeof (SFLDataFormat), 100, call->getCallId());
+	    
+	}
 
     } else {
         _debug ("IAX: incoming audio, but no sound card open");

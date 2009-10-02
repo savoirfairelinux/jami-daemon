@@ -287,6 +287,8 @@ class IAXVoIPLink : public VoIPLink
 
     /** Sample rate converter object */
     SamplerateConverter* converter;
+
+    int converterSamplingRate;
     
     /** number of sample */
     int nbSample_;
