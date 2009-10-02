@@ -778,7 +778,6 @@ void AlsaLayer::audioCallback (void)
 
         } else {
 
-	    _debug("AlsaLayer::writeToSpeaker\n");
 
 	    // If nothing urgent, play the regular sound samples
    
@@ -791,12 +790,8 @@ void AlsaLayer::audioCallback (void)
  
 		double upsampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
 
-		_debug("    upsampleFactor: %f\n", upsampleFactor);
-		_debug("    toGet: %i\n", toGet);
-
 		maxNbSamplesToGet = (int) ((double) framesPerBufferAlsa / upsampleFactor);
 
-		_debug("    maxNbFrames: %i\n", maxNbSamplesToGet);
 
 	    } else {
 
@@ -817,25 +812,20 @@ void AlsaLayer::audioCallback (void)
 
 		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
 
-		    _debug("    malloc in byte: %i\n", maxNbBytesToGet);
 
 		    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
 
-		    _debug("    _audioSampleRate: %i\n", _audioSampleRate);
-		    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
-		    _debug("    nbSample (before conversion): %i\n", nb_sample_down);
 
 		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
-		    _debug("    nbSample (after conversion): %i\n", nbSample);
+		    
 
 		    write (rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
 		    free(rsmpl_out);
-		    _debug("    successfull rsmpl_out free!\n");
 		    rsmpl_out = 0;
 		
 		} else {
@@ -869,7 +859,7 @@ void AlsaLayer::audioCallback (void)
     in = 0;
     if(is_capture_running())
     {
-        _debug("AlsaLayer::readFromMic\n");	
+	
         micAvailBytes = snd_pcm_avail_update(_CaptureHandle);
 	
 	if(micAvailBytes > 0) 
@@ -888,10 +878,6 @@ void AlsaLayer::audioCallback (void)
 
 		    int nbSample = toPut / sizeof(SFLDataFormat);
 		    int nb_sample_up = nbSample;
-
-		    _debug("    _audioSampleRate: %i\n", _audioSampleRate);
-		    _debug("    _mainBufferSampleRate: %i\n", _mainBufferSampleRate);
-		    _debug("    nbSample (before conversion): %i\n", nbSample);
 
 		    nbSample = _converter->downsampleData ((SFLDataFormat*)in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
