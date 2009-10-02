@@ -82,7 +82,7 @@ namespace sfl {
                 return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
             }          
             inline int computeNbByteAudioLayer (float codecFrameSize) {
-                return (int) ( (float) _layerSampleRate * codecFrameSize * (float) sizeof (SFLDataFormat) / 1000.0);
+                return (int) ( (float) converterSamplingRate * codecFrameSize * (float) sizeof (SFLDataFormat) / 1000.0);
             }
           
             void sendMicData(int timestamp);
@@ -147,6 +147,8 @@ namespace sfl {
              * Manager instance. 
              */
              ManagerImpl * _manager;
+
+	     int converterSamplingRate;
             
         protected:
             SIPCall * _ca;
@@ -199,7 +201,7 @@ namespace sfl {
             throw;
         }
 
-	_debug("Unbind audio RTP stream for call id %i\n", _ca->getCallId().c_str());
+	_debug("Unbind audio RTP stream for call id %s\n", _ca->getCallId().c_str());
 	_audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
 
         delete [] _micData;
@@ -215,8 +217,17 @@ namespace sfl {
     template <typename D>
     void AudioRtpSession<D>::initBuffers() 
     {
-        _converter = new SamplerateConverter (_layerSampleRate , _layerFrameSize);
-        int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
+	// Set sampling rate, main buffer choose the highest one
+	_audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
+
+	// may be different than one already setted
+	converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+
+	// initialize SampleRate converter using AudioLayer's sampling rate
+	// (internal buffers initialized with maximal sampling rate and frame size)
+        _converter = new SamplerateConverter (_layerSampleRate, _layerFrameSize);
+
+        int nbSamplesMax = (int) (_codecSampleRate * _layerFrameSize /1000)*2;
         _micData = new SFLDataFormat[nbSamplesMax];
         _micDataConverted = new SFLDataFormat[nbSamplesMax];
         _micDataEncoded = new unsigned char[nbSamplesMax];
@@ -298,6 +309,9 @@ namespace sfl {
     {
         assert(_audiocodec);
         assert(_audiolayer);
+	
+
+	int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
         
         // compute codec framesize in ms
         float fixed_codec_framesize = computeCodecFrameSize (_audiocodec->getFrameSize(), _audiocodec->getClockRate());
@@ -321,11 +335,13 @@ namespace sfl {
         int compSize = 0;
 
         // test if resampling is required
-        if (_audiocodec->getClockRate() != _layerSampleRate) {
+        if (_audiocodec->getClockRate() != _mainBufferSampleRate) {
             int nb_sample_up = nbSample;
             _nSamplesMic = nbSample;
-            nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _layerSampleRate , nb_sample_up);
+            nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _mainBufferSampleRate, nb_sample_up);
+
             compSize = _audiocodec->codecEncode (_micDataEncoded, _micDataConverted, nbSample*sizeof (int16));
+
         } else {
             // no resampling required
             compSize = _audiocodec->codecEncode (_micDataEncoded, _micData, nbSample*sizeof (int16));
@@ -337,7 +353,11 @@ namespace sfl {
     template <typename D>
     void AudioRtpSession<D>::processDataDecode(unsigned char * spkrData, unsigned int size, int& countTime) 
     {
+
         if (_audiocodec != NULL) {
+
+	    int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+
             // Return the size of data in bytes
             int expandedSize = _audiocodec->codecDecode (_spkrDataDecoded , spkrData , size);
 
@@ -345,23 +365,26 @@ namespace sfl {
             int nbSample = expandedSize / sizeof (SFLDataFormat);
 
             // test if resampling is required
-            if (_audiocodec->getClockRate() != _layerSampleRate) {
+            if (_audiocodec->getClockRate() != _mainBufferSampleRate) {
 
                 // Do sample rate conversion
                 int nb_sample_down = nbSample;
-                nbSample = _converter->upsampleData (_spkrDataDecoded, _spkrDataConverted, _codecSampleRate, _layerSampleRate , nb_sample_down);
+
+                nbSample = _converter->upsampleData (_spkrDataDecoded, _spkrDataConverted, _codecSampleRate, _mainBufferSampleRate, nb_sample_down);
+
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
 
                 // put data in audio layer, size in byte
 		_audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
+
             } else {
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
 
                 // put data in audio layer, size in byte
-                _audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
+                _audiolayer->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
             }
 
             // Notify (with a beep) an incoming call when there is already a call
@@ -447,11 +470,12 @@ namespace sfl {
     template <typename D>
     void AudioRtpSession<D>::run ()
     {
-        initBuffers();
 
         setSessionTimeouts();
         setDestinationIpAddress();
         setSessionMedia();
+
+	initBuffers();
 
         int sessionWaiting;
         int timestep = _codecFrameSize;
@@ -478,6 +502,7 @@ namespace sfl {
         _debug ("Entering RTP mainloop for callid %s\n",_ca->getCallId().c_str());
 
         while (!testCancel()) {
+
             // Send session
             sessionWaiting = static_cast<D*>(this)->isWaiting();
 

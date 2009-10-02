@@ -52,6 +52,8 @@ class RingBuffer {
      */
     void flush (CallID call_id = default_id);
 
+    void flushAll();
+
 
     int getReadPointer(CallID call_id = default_id);
 

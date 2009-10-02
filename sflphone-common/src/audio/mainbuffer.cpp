@@ -20,7 +20,7 @@
 
 #include "mainbuffer.h"
 
-MainBuffer::MainBuffer()
+MainBuffer::MainBuffer() : _internalSamplingRate(0)
 {
     mixBuffer = new SFLDataFormat[STATIC_BUFSIZE];
 }
@@ -31,6 +31,23 @@ MainBuffer::~MainBuffer()
 
     delete [] mixBuffer;
     mixBuffer = NULL;
+}
+
+
+void MainBuffer::setInternalSamplingRate(int sr)
+{
+    ost::MutexLock guard (_mutex);
+    
+    if (sr != _internalSamplingRate)
+    {
+	// flushAllBuffers();
+	_internalSamplingRate = sr;
+
+	flushAllBuffers();
+
+    }
+
+    // flushAllBuffers();
 }
 
 CallIDSet* MainBuffer::getCallIDSet(CallID call_id)
@@ -564,6 +581,19 @@ void MainBuffer::flushByID(CallID call_id, CallID reader_id)
 
     if(ringbuffer != NULL)
 	ringbuffer->flush(reader_id);
+}
+
+
+void MainBuffer::flushAllBuffers()
+{
+    RingBufferMap::iterator iter_buffer = _ringBufferMap.begin();
+
+    while(iter_buffer != _ringBufferMap.end())
+    {
+	iter_buffer->second->flushAll();
+
+	iter_buffer++;
+    }
 }
 
 
