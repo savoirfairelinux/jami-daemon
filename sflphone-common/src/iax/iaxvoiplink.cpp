@@ -326,7 +326,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
         // we have to get 20ms of data from the mic *20/1000 = /50
         // rate/50 shall be lower than IAX__20S_48KHZ_MAX
-        maxBytesToGet = audiolayer->getSampleRate() * audiolayer->getFrameSize() / 1000 * sizeof (SFLDataFormat);
+	maxBytesToGet = _mainBufferSampleRate * audiolayer->getFrameSize() / 1000 * sizeof (SFLDataFormat);
 
         // available bytes inside ringbuffer
         availBytesFromMic = audiolayer->getMainBuffer()->availForGet(currentCall->getCallId());
@@ -339,17 +339,13 @@ IAXVoIPLink::sendAudioFromMic (void)
         // take the lowest
         bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
 
-        //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
 
         // Get bytes from micRingBuffer to data_from_mic
         nbSample_ = audiolayer->getMainBuffer()->getData (micData, bytesAvail, 100, currentCall->getCallId()) / sizeof (SFLDataFormat);
 
-	
 
         // Store the number of samples for recording
         nbSampleForRec_ = nbSample_;
-
-        // _debug("IAXVoIPLink::sendAudioFromMic : %i \n",nbSampleForRec_);
 
 
 	if (ac->getClockRate() && (ac->getClockRate() != _mainBufferSampleRate)) {
@@ -359,10 +355,12 @@ IAXVoIPLink::sendAudioFromMic (void)
 	
 	    // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
 	    compSize = ac->codecEncode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
+
 	} else {
 
 	    // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
 	    compSize = ac->codecEncode (micDataEncoded, micData, nbSample_*sizeof (int16));
+
 	}
 
 	// Send it out!
