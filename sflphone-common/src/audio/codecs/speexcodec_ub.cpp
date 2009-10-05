@@ -115,7 +115,7 @@ class Speex : public AudioCodec
             speex_decode_int (_speex_dec_state, &_speex_dec_bits, dst);
 
             // return the nuber of byte, not the number of sample
-            return _speex_frame_size * 2;
+            return _frameSize * 2;
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
