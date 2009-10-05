@@ -47,9 +47,9 @@
 		<toolitem name="NewCallToolbar" action="NewCall"/>
 		<toolitem name="PickUpToolbar" action="PickUp"/>
 		<toolitem action="HangUp"/>
-		<toolitem name="TransferToolbar" action="Transfer"/>
 		<toolitem name="OnHoldToolbar" action="OnHold"/>
 		<toolitem name="OffHoldToolbar" action="OffHold"/>
+		<toolitem name="TransferToolbar" action="Transfer"/>
 		<separator/>
 		<toolitem action="Voicemail"/>
 	</toolbar>

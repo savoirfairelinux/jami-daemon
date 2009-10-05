@@ -212,6 +212,7 @@ void update_actions()
 	gtk_action_set_sensitive (GTK_ACTION (hangUpAction), FALSE);
 	gtk_widget_set_sensitive (GTK_WIDGET (holdMenu),   FALSE);
 	gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar),   FALSE);
+	gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar),   FALSE);
 	gtk_action_set_sensitive (GTK_ACTION (recordAction), FALSE);
 	gtk_action_set_sensitive (GTK_ACTION (copyAction),   FALSE);
 	gtk_action_set_sensitive (GTK_ACTION (voicemailAction), FALSE);
@@ -793,7 +794,7 @@ static const GtkToggleActionEntry toggle_menu_entries[] = {
 
 static const GtkRadioActionEntry radio_menu_entries[] = {
 
-	{"CallWindow", GTK_STOCK_HOME, "_Call window", NULL, "Calls list", CALLTREE_CALLS},
+	{"CallWindow", GTK_STOCK_CALLS, "_Call window", NULL, "Calls list", CALLTREE_CALLS},
 	{"History", "appointment-soon", "_History", NULL, "Calls history", CALLTREE_HISTORY},
 	{"Addressbook", GTK_STOCK_ADDRESSBOOK, "_Address book", NULL, "Address book", CALLTREE_CONTACTS}
 
