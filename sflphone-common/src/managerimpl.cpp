@@ -613,6 +613,7 @@ ManagerImpl::offHoldCall (const CallID& call_id)
     bool returnValue, is_rec;
     std::string codecName;
 
+    is_rec = false;
 
     _debug ("ManagerImpl::offHoldCall(%s)\n", call_id.c_str());
 
@@ -2194,8 +2195,6 @@ ManagerImpl::createSettingsPath (void)
 
     xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR + PROGDIR;
 
-    //_path = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
-
     if (XDG_CONFIG_HOME != NULL) {
         xdg_env = std::string (XDG_CONFIG_HOME);
         (xdg_env.length() > 0) ? _path = xdg_env
@@ -2506,6 +2505,7 @@ ManagerImpl::getCurrentCodecName (const CallID& id)
     AccountID accountid = getAccountFromCall(id);
     VoIPLink* link = getAccountLink (accountid);
     Call* call = link->getCall(id);
+
 
     if(call->getState() != Call::Active)
 	return "";
