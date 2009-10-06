@@ -48,7 +48,7 @@ void AudioZrtpSession::initializeZid (void)
         throw ZrtpZidException();
     }
 
-    std::string zidCompleteFilename = std::string (HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR + "/" + _zidFilename;
+    std::string zidCompleteFilename = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/" + PROGDIR + "/" + _zidFilename;
 
     if (initialize (zidCompleteFilename.c_str()) >= 0) {
         _debug ("Register callbacks\n");
