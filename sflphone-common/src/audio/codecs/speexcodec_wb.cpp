@@ -111,9 +111,6 @@ class Speex : public AudioCodec
 
             int ratio = 320 / _speex_frame_size;
 
-	    printf("_speex_frame_size: %i\n", _speex_frame_size);
-	    printf("_frameSize: %i\n", _frameSize);
-
             speex_bits_read_from (&_speex_dec_bits, (char*) src, size);
             speex_decode_int (_speex_dec_state, &_speex_dec_bits, dst);
 
