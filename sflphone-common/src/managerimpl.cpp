@@ -495,6 +495,7 @@ ManagerImpl::hangupConference (const ConfID& id)
     AccountID currentAccountId;
 
     // Call* call = NULL;
+    
 
     if(iter_conf != _conferencemap.end())
     {
@@ -697,38 +698,58 @@ ManagerImpl::offHoldCall (const CallID& call_id)
 
 //THREAD=Main
 bool
-ManagerImpl::transferCall (const CallID& id, const std::string& to)
+ManagerImpl::transferCall (const CallID& call_id, const std::string& to)
 {
     AccountID accountid;
     bool returnValue;
 
     stopTone (true);
 
+    CallID current_call_id = getCurrentCallId();
+
     /* Direct IP to IP call */
 
-    if (getConfigFromCall (id) == Call::IPtoIP) {
-        returnValue = SIPVoIPLink::instance (AccountNULL)-> transfer (id, to);
+    if (getConfigFromCall (call_id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> transfer (call_id, to);
     }
 
     /* Classic call, attached to an account */
     else {
-        accountid = getAccountFromCall (id);
+        accountid = getAccountFromCall (call_id);
 
         if (accountid == AccountNULL) {
             _debug ("! Manager Transfer Call: Call doesn't exists\n");
             return false;
         }
 
-        returnValue = getAccountLink (accountid)->transfer (id, to);
+        returnValue = getAccountLink (accountid)->transfer (call_id, to);
 
-        removeCallAccount (id);
+        removeCallAccount (call_id);
     }
 
-    removeWaitingCall (id);
+    removeWaitingCall (call_id);
 
-    switchCall ("");
+    if(participToConference(call_id))
+    {
 
-    if (_dbus) _dbus->getCallManager()->callStateChanged (id, "HUNGUP");
+	Conference *conf = getConferenceFromCallID(call_id);
+
+	if(conf != NULL)
+	{
+	    // remove this participant
+	    removeParticipant(call_id);
+
+	    processRemainingParticipant(current_call_id, conf);
+	}
+    }
+    else
+    {
+	// we are not participating to a conference, current call switched to ""
+	if (!isConference(current_call_id))
+	    switchCall("");
+    }
+
+    if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "HUNGUP");
 
     return returnValue;
 }
