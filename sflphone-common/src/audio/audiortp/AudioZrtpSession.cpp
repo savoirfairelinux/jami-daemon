@@ -48,7 +48,21 @@ void AudioZrtpSession::initializeZid (void)
         throw ZrtpZidException();
     }
 
-    std::string zidCompleteFilename = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/" + PROGDIR + "/" + _zidFilename;
+    std::string zidCompleteFilename;
+
+    // xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
+
+    std::string xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PROGDIR + "/" + _zidFilename;
+
+    _debug("    xdg_config %s\n", xdg_config.c_str());
+
+    if (XDG_CACHE_HOME != NULL) {
+	std::string xdg_env = std::string (XDG_CACHE_HOME);
+	_debug("    xdg_env %s\n", xdg_env.c_str());
+	(xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
+    } else
+	zidCompleteFilename = xdg_config;
+
 
     if (initialize (zidCompleteFilename.c_str()) >= 0) {
         _debug ("Register callbacks\n");
