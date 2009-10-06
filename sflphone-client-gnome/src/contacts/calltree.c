@@ -279,6 +279,12 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
          */
         if( active_calltree == current_calls )
         {
+
+	    // sflphone_selected_call_codec(selectedCall);
+
+	    // DEBUG("single click action: %s", dbus_get_current_codec_name(selectedCall));
+	    sflphone_display_selected_codec(dbus_get_current_codec_name(selectedCall));
+
             switch(selectedCall->_srtp_state)
             {
                 case SRTP_STATE_SAS_UNCONFIRMED:

@@ -913,12 +913,20 @@ sflphone_display_selected_codec (const gchar* codecName)
                 msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
             }
             else {
-                msg = g_markup_printf_escaped("%s %s (%s) - %s %s" ,
+
+		if (strcmp(codecName, "") != 0) {
+                    msg = g_markup_printf_escaped("%s %s (%s) - %s %s" ,
                         _("Using account"),
                         (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                         (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
                         _("Codec"),
                         codecName);
+		} else {
+		    msg = g_markup_printf_escaped("%s %s (%s)" ,
+                        _("Using account"),
+                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+		        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
+		}
             }
             statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
             g_free(msg);

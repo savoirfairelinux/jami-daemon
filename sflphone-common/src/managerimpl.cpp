@@ -2502,10 +2502,15 @@ ManagerImpl::getCodecDetails (const int32_t& payload)
 std::string
 ManagerImpl::getCurrentCodecName (const CallID& id)
 {
-    // _debug("ManagerImpl::getCurrentCodecName method called \n");
-    AccountID accountid = getAccountFromCall (id);
-    // _debug("ManagerImpl::getCurrentCodecName : %s \n",getAccountLink(accountid)->getCurrentCodecName().c_str());
-    return getAccountLink (accountid)->getCurrentCodecName();
+
+    AccountID accountid = getAccountFromCall(id);
+    VoIPLink* link = getAccountLink (accountid);
+    Call* call = link->getCall(id);
+
+    if(call->getState() != Call::Active)
+	return "";
+    else
+	return link->getCurrentCodecName();
 }
 
 /**
