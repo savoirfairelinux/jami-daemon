@@ -310,29 +310,16 @@ namespace sfl {
         assert(_audiocodec);
         assert(_audiolayer);
 
-	_debug("AudioRtpSession::processDataEncode %s\n", _ca->getCallId().c_str());
-
 	int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-
-	_debug("    _mainBufferSampleRate %i\n", _mainBufferSampleRate);
-
-	_debug("    converterSamplingRate %i\n", converterSamplingRate);
-
-	_debug("    _audiocodec->getFrameSize() %i, _audiocodec->getClockRate() %i\n", _audiocodec->getFrameSize(), _audiocodec->getClockRate());
 
         // compute codec framesize in ms
         float fixed_codec_framesize = computeCodecFrameSize (_audiocodec->getFrameSize(), _audiocodec->getClockRate());
-	_debug("    fixed_codec_framesize %f\n", fixed_codec_framesize);
 
         // compute nb of byte to get coresponding to 20 ms at audio layer frame size (44.1 khz)
         int maxBytesToGet = computeNbByteAudioLayer (fixed_codec_framesize);
 
-	_debug("    maxBytesToGet %i\n", maxBytesToGet);
-
         // available bytes inside ringbuffer
         int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
-
-	_debug("    availBytesFromMic %i\n", availBytesFromMic);
 
         // set available byte to maxByteToGet
         int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
@@ -342,8 +329,6 @@ namespace sfl {
 
         // Get bytes from micRingBuffer to data_from_mic
         int nbSample = _audiolayer->getMainBuffer()->getData(_micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
-
-	_debug("    nbSample %i\n", nbSample);
 
         // nb bytes to be sent over RTP
         int compSize = 0;
@@ -355,8 +340,6 @@ namespace sfl {
             nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _mainBufferSampleRate, nb_sample_up);
 
             compSize = _audiocodec->codecEncode (_micDataEncoded, _micDataConverted, nbSample*sizeof (int16));
-
-	    _debug("    nbSample(in resampling block) %i\n", nbSample); 
 
         } else {
             // no resampling required
@@ -370,8 +353,6 @@ namespace sfl {
     void AudioRtpSession<D>::processDataDecode(unsigned char * spkrData, unsigned int size, int& countTime) 
     {
 
-	_debug("AudioRtpSession::processDataDecode %s\n", _ca->getCallId().c_str());
-
         if (_audiocodec != NULL) {
 
 
@@ -383,10 +364,6 @@ namespace sfl {
             // buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
             int nbSample = expandedSize / sizeof (SFLDataFormat);
 
-	    _debug("    nbSample %i\n", nbSample);
-
-	    _debug("    _mainBufferSampleRate %i\n", _mainBufferSampleRate);
-
             // test if resampling is required
             if (_audiocodec->getClockRate() != _mainBufferSampleRate) {
 
@@ -397,8 +374,6 @@ namespace sfl {
 
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
-
-		_debug("    nbSample (in resampling block) %i\n", nbSample);
 
                 // put data in audio layer, size in byte
 		_audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
