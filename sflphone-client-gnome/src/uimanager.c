@@ -1386,5 +1386,9 @@ GtkWidget* create_toolbar_windows (GtkUIManager *ui_manager)
 	toolbar = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows");
 	active_calltree = current_calls;
 
+	historyButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/HistoryToolbar");
+	contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/AddressbookToolbar");
+	currentCallsButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/CallWindowToolbar");
+
 	return toolbar;
 }

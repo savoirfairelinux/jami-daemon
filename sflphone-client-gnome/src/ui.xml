@@ -55,9 +55,9 @@
 	</toolbar>
 
 	<toolbar name="ToolbarWindows">
-		<toolitem action="CallWindow"/>
-		<toolitem action="History"/>
-		<toolitem action="Addressbook"/>
+		<toolitem name="CallWindowToolbar" action="CallWindow"/>
+		<toolitem name="HistoryToolbar" action="History"/>
+		<toolitem name="AddressbookToolbar" action="Addressbook"/>
 	</toolbar>
 
 </ui>
