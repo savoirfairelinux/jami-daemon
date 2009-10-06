@@ -325,14 +325,14 @@ calltree_reset (calltab_t* tab)
 
 void
 focus_on_calltree_out(){
-    DEBUG("set_focus_on_calltree_out");
+    //DEBUG("set_focus_on_calltree_out");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = FALSE;
 }
 
 void
 focus_on_calltree_in(){
-    DEBUG("set_focus_on_calltree_in");
+    //DEBUG("set_focus_on_calltree_in");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = TRUE;
 }

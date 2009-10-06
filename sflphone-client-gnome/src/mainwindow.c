@@ -129,14 +129,12 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
 
 void
 focus_on_mainwindow_out(){
-	DEBUG("focus_on_mainwindow_out");
 	//  gtk_widget_grab_focus(GTK_WIDGET(window));
 
 }
 
 void
 focus_on_mainwindow_in(){
-	DEBUG("focus_on_mainwindow_in");
 	//  gtk_widget_grab_focus(GTK_WIDGET(window));
 }
 
