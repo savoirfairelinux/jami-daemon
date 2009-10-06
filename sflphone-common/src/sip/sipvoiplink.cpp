@@ -773,9 +773,11 @@ SIPVoIPLink::answer (const CallID& id)
 
         // Terminate the call
         _debug ("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
+	if(call->getAudioRtp())
+	    call->getAudioRtp()->stop ();
+
         terminateOneCall (call->getCallId());
         removeCall (call->getCallId());
-        call->getAudioRtp()->stop ();
         return false;
     }
 }
@@ -1342,8 +1344,8 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         Manager::instance().callFailure (id);
         terminateOneCall (id);
         removeCall (id);
-		if (call->getAudioRtp ())
-			call->getAudioRtp()->stop();
+	if (call->getAudioRtp ())
+	    call->getAudioRtp()->stop();
     }
 }
 

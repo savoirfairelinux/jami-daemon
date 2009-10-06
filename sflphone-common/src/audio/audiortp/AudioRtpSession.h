@@ -81,8 +81,8 @@ namespace sfl {
             inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
                 return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
             }          
-            inline int computeNbByteAudioLayer (float codecFrameSize) {
-                return (int) ( (float) converterSamplingRate * codecFrameSize * (float) sizeof (SFLDataFormat) / 1000.0);
+            int computeNbByteAudioLayer (float codecFrameSize) {
+                return (int) ( ((float) converterSamplingRate * codecFrameSize * sizeof(SFLDataFormat))/ 1000.0);
             }
           
             void sendMicData(int timestamp);
@@ -225,9 +225,9 @@ namespace sfl {
 
 	// initialize SampleRate converter using AudioLayer's sampling rate
 	// (internal buffers initialized with maximal sampling rate and frame size)
-        _converter = new SamplerateConverter (_layerSampleRate, _layerFrameSize);
+        _converter = new SamplerateConverter(_layerSampleRate, _layerFrameSize);
 
-        int nbSamplesMax = (int) (_codecSampleRate * _layerFrameSize /1000)*2;
+        int nbSamplesMax = (int)(_codecSampleRate * _layerFrameSize /1000)*2;
         _micData = new SFLDataFormat[nbSamplesMax];
         _micDataConverted = new SFLDataFormat[nbSamplesMax];
         _micDataEncoded = new unsigned char[nbSamplesMax];
@@ -309,10 +309,9 @@ namespace sfl {
     {
         assert(_audiocodec);
         assert(_audiolayer);
-	
 
 	int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-        
+
         // compute codec framesize in ms
         float fixed_codec_framesize = computeCodecFrameSize (_audiocodec->getFrameSize(), _audiocodec->getClockRate());
 
@@ -356,6 +355,7 @@ namespace sfl {
 
         if (_audiocodec != NULL) {
 
+
 	    int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
 
             // Return the size of data in bytes
@@ -382,6 +382,7 @@ namespace sfl {
             } else {
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
+
 
                 // put data in audio layer, size in byte
                 _audiolayer->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
@@ -502,6 +503,8 @@ namespace sfl {
         _debug ("Entering RTP mainloop for callid %s\n",_ca->getCallId().c_str());
 
         while (!testCancel()) {
+
+	    converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
 
             // Send session
             sessionWaiting = static_cast<D*>(this)->isWaiting();

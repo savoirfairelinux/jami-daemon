@@ -162,73 +162,84 @@ row_activated(GtkTreeView       *tree_view UNUSED,
 
     DEBUG("double click action");
 
-    if( active_calltree == current_calls )
+    if(calltab_get_selected_type(active_calltree) == A_CALL)
     {
-	
-	if(calltab_get_selected_type(current_calls) == A_CALL)
+
+	DEBUG("Selected a call\n");
+	selectedCall = calltab_get_selected_call(active_calltree);
+
+	if (selectedCall)
 	{
-	    selectedCall = calltab_get_selected_call(current_calls);
+	    DEBUG("there is a selected call\n");
 
-	    if (selectedCall)
+	    // Get the right event from the right calltree
+	    if( active_calltree == current_calls )
 	    {
-		// Get the right event from the right calltree
-		if( active_calltree == current_calls )
-		{
-		    switch(selectedCall->_state)
-		    {
-		    case CALL_STATE_INCOMING:
-			dbus_accept(selectedCall);
-			stop_notification();
-			break;
-		    case CALL_STATE_HOLD:
-			dbus_unhold(selectedCall);
-			break;
-		    case CALL_STATE_RINGING:
-		    case CALL_STATE_CURRENT:
-		    case CALL_STATE_BUSY:
-		    case CALL_STATE_FAILURE:
-			break;
-		    case CALL_STATE_DIALING:
-			sflphone_place_call (selectedCall);
-			break;
-		    default:
-			WARN("Row activated - Should not happen!");
-			break;
-		    }
-		}
 
-		// If history or contact: double click action places a new call
-		else
-		{
-		    account_id = g_strdup (selectedCall->_accountID);
+		DEBUG("active tree is current calls");
 
-		    // Create a new call
-		    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
-		    
-		    calllist_add(current_calls, new_call);
-		    calltree_add_call(current_calls, new_call, NULL);
-		    sflphone_place_call(new_call);
-		    calltree_display(current_calls);
+		switch(selectedCall->_state)
+		{
+		case CALL_STATE_INCOMING:
+		    dbus_accept(selectedCall);
+		    stop_notification();
+		    break;
+		case CALL_STATE_HOLD:
+		    dbus_unhold(selectedCall);
+		    break;
+		case CALL_STATE_RINGING:
+		case CALL_STATE_CURRENT:
+		case CALL_STATE_BUSY:
+		case CALL_STATE_FAILURE:
+		    break;
+		case CALL_STATE_DIALING:
+		    sflphone_place_call (selectedCall);
+		    break;
+		default:
+		    WARN("Row activated - Should not happen!");
+		    break;
 		}
 	    }
+
+	    // If history or contact: double click action places a new call
+	    else
+	    {
+		DEBUG("active tree is history or contact");
+
+		account_id = g_strdup (selectedCall->_accountID);
+
+		// Create a new call
+		create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
+		
+		calllist_add(current_calls, new_call);
+		calltree_add_call(current_calls, new_call, NULL);
+		sflphone_place_call(new_call);
+		calltree_display(current_calls);
+	    }
 	}
-	else
+    }
+    else if(calltab_get_selected_type(current_calls) == A_CONFERENCE)
+    {
+	DEBUG("Selected a conference\n");
+
+	if( active_calltree == current_calls )
 	{
+
 	    selectedConf = calltab_get_selected_conf(current_calls);
  
 	    if(selectedConf)
 	    {
 		switch(selectedConf->_state)
 		{
-	            case CONFERENCE_STATE_ACTIVE_ATACHED:
+		    case CONFERENCE_STATE_ACTIVE_ATACHED:
 		        sflphone_add_main_participant(selectedConf);
 			break;
-		    case CONFERENCE_STATE_ACTIVE_DETACHED:
-			sflphone_add_main_participant(selectedConf);
-			break;
-	            case CONFERENCE_STATE_HOLD:
-			sflphone_conference_off_hold(selectedConf);
-			break;
+		case CONFERENCE_STATE_ACTIVE_DETACHED:
+		    sflphone_add_main_participant(selectedConf);
+		    break;
+		case CONFERENCE_STATE_HOLD:
+		    sflphone_conference_off_hold(selectedConf);
+		    break;
 		}
 	    }
 	}
@@ -268,6 +279,12 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
          */
         if( active_calltree == current_calls )
         {
+
+	    // sflphone_selected_call_codec(selectedCall);
+
+	    // DEBUG("single click action: %s", dbus_get_current_codec_name(selectedCall));
+	    sflphone_display_selected_codec(dbus_get_current_codec_name(selectedCall));
+
             switch(selectedCall->_srtp_state)
             {
                 case SRTP_STATE_SAS_UNCONFIRMED:

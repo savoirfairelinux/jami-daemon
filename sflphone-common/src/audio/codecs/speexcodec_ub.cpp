@@ -37,7 +37,7 @@ class Speex : public AudioCodec
                 _speex_frame_size(),
                 _preprocess_state() {
             _clockRate = 32000;
-            _frameSize = 320; // 10 ms at 32 kHz
+            _frameSize = 640; // 20 ms at 32 kHz
             _channel = 1;
             _bitrate = 0;
             _bandwidth = 0;
@@ -80,10 +80,10 @@ class Speex : public AudioCodec
             speex_encoder_ctl (_speex_enc_state, SPEEX_SET_COMPLEXITY, &complex);
 
             // Init the decoder struct
-            speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
+            speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_frameSize);
 
             // Init the preprocess struct
-            _preprocess_state = speex_preprocess_state_init (_speex_frame_size,_clockRate);
+            _preprocess_state = speex_preprocess_state_init (_frameSize,_clockRate);
             speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
             speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &attenuation);
             speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &enable);
@@ -115,7 +115,7 @@ class Speex : public AudioCodec
             speex_decode_int (_speex_dec_state, &_speex_dec_bits, dst);
 
             // return the nuber of byte, not the number of sample
-            return _speex_frame_size * 2;
+            return _frameSize * 2;
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
