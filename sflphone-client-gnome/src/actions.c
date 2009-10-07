@@ -1085,7 +1085,7 @@ sflphone_fill_codec_list()
         for(pl=codecs; *codecs; codecs++)
         {
             details = (gchar **)dbus_codec_details(atoi(*codecs));
-            if(codec_list_get_by_payload(atoi(*codecs))!=NULL){
+            if(codec_list_get_by_payload((gconstpointer) atoi(*codecs))!=NULL){
                 // does nothing - the codec is already in the list, so is active.
             }
             else{
@@ -1155,7 +1155,7 @@ void sflphone_fill_conference_list(void)
 	    c = g_new0(conference_obj_t, 1);
 	    conf_id = (gchar*)(*conferences);
 
-	    conference_details = dbus_get_conference_details(conf_id);
+	    conference_details = (GHashTable*) dbus_get_conference_details(conf_id);
 	    create_new_call_from_details (conf_id, conference_details, &c);
 	    c->_confID = g_strdup(conf_id);
 

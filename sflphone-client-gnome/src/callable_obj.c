@@ -164,7 +164,7 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
     // details is in serialized form, i e: calltype%to%from%callid
 
-    if ((ptr = strtok(details, delim)) != NULL) {
+    if ((ptr = g_strsplit(details, delim,0)) != NULL) {
         do {
             switch (token)
             {
@@ -187,7 +187,7 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
                     break;
             }
             token ++;
-        } while ((ptr = strtok(NULL, delim)) != NULL);
+        } while ((ptr = g_strsplit(NULL, delim, 0)) != NULL);
 
     }
     if (g_strcasecmp (peer_name, "empty") == 0)
