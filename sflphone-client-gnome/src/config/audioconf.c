@@ -631,7 +631,8 @@ select_audio_manager( void )
         gtk_widget_show( alsa_conf );
         gtk_widget_set_sensitive(GTK_WIDGET(alsa_conf), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(pa_mute_widget), FALSE);
-		gtk_widget_set_sensitive (GTK_WIDGET (volumeToggle), TRUE);
+
+		gtk_action_set_sensitive (GTK_ACTION (volumeToggle), TRUE);
     }
     else if( SHOW_ALSA_CONF && gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ))
     {
@@ -640,7 +641,13 @@ select_audio_manager( void )
         gtk_container_remove( GTK_CONTAINER(alsa_conf) , alsabox );
         gtk_widget_hide( alsa_conf );
         gtk_widget_set_sensitive(GTK_WIDGET(pa_mute_widget), TRUE);
-		gtk_widget_set_sensitive (GTK_WIDGET (volumeToggle), FALSE);
+		if (gtk_toggle_action_get_active ( GTK_TOGGLE_ACTION (volumeToggle)))
+		{
+			    main_window_volume_controls(FALSE);
+				dbus_set_volume_controls (FALSE);
+				gtk_toggle_action_set_active ( GTK_TOGGLE_ACTION (volumeToggle), FALSE);
+		}
+		gtk_action_set_sensitive (GTK_ACTION (volumeToggle), FALSE);
     } else {
         DEBUG("alsa conf panel...nothing");
     }

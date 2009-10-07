@@ -183,8 +183,7 @@ create_main_window ()
 	ret = uimanager_new (&ui_manager);
 	if (!ret)
     {
-        //show_error_dialog (GTK_WINDOW (window), error->message,
-          //  _("Could not load ui.xml. The program may be not properly installed"));
+		ERROR ("Could not load xml GUI\n");
         g_error_free (error);
         exit (1);
     }

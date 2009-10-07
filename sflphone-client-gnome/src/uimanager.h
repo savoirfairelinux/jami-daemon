@@ -30,7 +30,7 @@ GtkWidget *historyButton;
 GtkWidget *contactButton;
 GtkWidget *currentCallsButton;
 
-GtkWidget *volumeToggle;
+GtkAction *volumeToggle;
 
 gboolean uimanager_new (GtkUIManager**);
 

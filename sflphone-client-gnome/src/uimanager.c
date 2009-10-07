@@ -350,15 +350,18 @@ void update_actions()
 static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 {
 	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
+	g_print ("%i\n", toggled);
 	main_window_volume_controls(toggled);
-	dbus_set_volume_controls(toggled);
+	if (toggled || SHOW_VOLUME)
+		dbus_set_volume_controls(toggled);
 }
 
 static void dialpad_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 {
 	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
 	main_window_dialpad(toggled);
-	dbus_set_dialpad(toggled);
+	if (toggled || SHOW_DIALPAD)
+		dbus_set_dialpad(toggled);
 }
 
 static void help_contents_cb (GtkAction *action)
@@ -1353,14 +1356,16 @@ GtkWidget* create_menus (GtkUIManager *ui_manager)
 	recordAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/Record");
 	copyAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/EditMenu/Copy");
 	pasteAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/EditMenu/Paste");
-	volumeToggle = gtk_ui_manager_get_widget (ui_manager, "/MenuBar/ViewMenu/VolumeControlsToggle");
+	volumeToggle = gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/VolumeControls");
 
 	// Set the toggle buttons
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")), (gboolean)SHOW_DIALPAD);
-	//gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/VolumeControls")), (gboolean) SHOW_VOLUME);
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")), (gboolean) SHOW_DIALPAD);
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (volumeToggle), (gboolean) SHOW_VOLUME);
 
-	gtk_widget_set_sensitive (GTK_WIDGET (volumeToggle), SHOW_ALSA_CONF);
-	gtk_widget_set_sensitive (GTK_WIDGET (gtk_ui_manager_get_widget (ui_manager, "/MenuBar/ViewMenu/Toolbar")), SHOW_ALSA_CONF);
+	gtk_action_set_sensitive (GTK_ACTION (volumeToggle), SHOW_ALSA_CONF);
+
+	// Disable it right now
+	gtk_action_set_sensitive (GTK_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Toolbar")), FALSE);
 
 	waitingLayer = create_waiting_icon ();
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), waitingLayer);
