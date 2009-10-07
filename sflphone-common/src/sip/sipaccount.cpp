@@ -514,6 +514,10 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
         transport = "";
     }
 
+    _displayName = Manager::instance().getConfigString(_accountID, DISPLAY_NAME);
+
+    _debug("Display Name: %s\n", _displayName.c_str());
+
     int len = pj_ansi_snprintf (contact, PJSIP_MAX_URL_SIZE,
 
                                 "%s%s<%s%s%s%s%s%s:%d%s>",
