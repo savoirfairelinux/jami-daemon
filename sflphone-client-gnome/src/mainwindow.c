@@ -19,7 +19,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <toolbar.h>
 #include <config.h>
 #include <actions.h>
 #include <calltree.h>
@@ -27,7 +26,6 @@
 #include <preferencesdialog.h>
 #include <dialpad.h>
 #include <mainwindow.h>
-#include <menus.h>
 #include <sliders.h>
 #include <contacts/searchbar.h>
 #include <assistant.h>
@@ -37,6 +35,7 @@
 #include <gtk/gtk.h>
 
 /** Local variables */
+GtkUIManager *ui_manager = NULL;
 GtkAccelGroup * accelGroup = NULL;
 GtkWidget * window    = NULL;
 GtkWidget * subvbox   = NULL;
@@ -51,375 +50,387 @@ PidginScrollBook *embedded_error_notebook;
 /**
  * Minimize the main window.
  */
-static gboolean
+	static gboolean
 on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
 #if GTK_CHECK_VERSION(2,10,0)
-  gtk_widget_hide(GTK_WIDGET( get_main_window() ));
-  set_minimized( TRUE );
+	gtk_widget_hide(GTK_WIDGET( get_main_window() ));
+	set_minimized( TRUE );
 #endif
-  return TRUE;
+	return TRUE;
 }
 
 /** Ask the user if he wants to hangup current calls */
 gboolean
 main_window_ask_quit(){
-    guint count = calllist_get_size(current_calls);
-    GtkWidget * dialog;
-    gint response;
-    gchar * question;
+	guint count = calllist_get_size(current_calls);
+	GtkWidget * dialog;
+	gint response;
+	gchar * question;
 
-  if(count == 1)
-  {
-    question = _("There is one call in progress.");
-  }
-  else
-  {
-    question = _("There are calls in progress.");
-  }
+	if(count == 1)
+	{
+		question = _("There is one call in progress.");
+	}
+	else
+	{
+		question = _("There are calls in progress.");
+	}
 
-  dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window) ,
-                                  GTK_DIALOG_MODAL,
-                                  GTK_MESSAGE_QUESTION,
-                                  GTK_BUTTONS_YES_NO,
-                                  "%s\n%s",
-                                  question,
-                                   _("Do you still want to quit?") );
+	dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window) ,
+			GTK_DIALOG_MODAL,
+			GTK_MESSAGE_QUESTION,
+			GTK_BUTTONS_YES_NO,
+			"%s\n%s",
+			question,
+			_("Do you still want to quit?") );
 
 
-  response = gtk_dialog_run (GTK_DIALOG (dialog));
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
-  gtk_widget_destroy (dialog);
-  if(response == GTK_RESPONSE_YES)
-  {
-    return TRUE;
-  }
-  else if(response == GTK_RESPONSE_NO)
-  {
-    return FALSE;
-  }
-  return TRUE;
+	gtk_widget_destroy (dialog);
+	if(response == GTK_RESPONSE_YES)
+	{
+		return TRUE;
+	}
+	else if(response == GTK_RESPONSE_NO)
+	{
+		return FALSE;
+	}
+	return TRUE;
 }
 
 
 
-static gboolean
+	static gboolean
 on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSED)
 {
-  DEBUG("On key released from Main Window : %s", gtk_widget_get_name(widget));
+	DEBUG("On key released from Main Window : %s", gtk_widget_get_name(widget));
 
-  if (focus_is_on_searchbar == FALSE) {
-        // If a modifier key is pressed, it's a shortcut, pass along
-        if(event->state & GDK_CONTROL_MASK ||
-                event->state & GDK_MOD1_MASK    ||
-                event->keyval == 60             || // <
-                event->keyval == 62             || // >
-                event->keyval == 34             || // "
-                event->keyval == 65361          || // left arrow
-                event->keyval == 65363          || // right arrow
-                event->keyval >= 65470          || // F-keys
-                event->keyval == 32                // space
-                )
-            return FALSE;
-        else
-            sflphone_keypad(event->keyval, event->string);        
-   }
+	if (focus_is_on_searchbar == FALSE) {
+		// If a modifier key is pressed, it's a shortcut, pass along
+		if(event->state & GDK_CONTROL_MASK ||
+				event->state & GDK_MOD1_MASK    ||
+				event->keyval == 60             || // <
+				event->keyval == 62             || // >
+				event->keyval == 34             || // "
+				event->keyval == 65361          || // left arrow
+				event->keyval == 65363          || // right arrow
+				event->keyval >= 65470          || // F-keys
+				event->keyval == 32                // space
+		  )
+			return FALSE;
+		else
+			sflphone_keypad(event->keyval, event->string);        
+	}
 
-   return TRUE;
+	return TRUE;
 }
 
 void
 focus_on_mainwindow_out(){
-  DEBUG("focus_on_mainwindow_out");
-  //  gtk_widget_grab_focus(GTK_WIDGET(window));
-  
+	//  gtk_widget_grab_focus(GTK_WIDGET(window));
+
 }
 
 void
 focus_on_mainwindow_in(){
-  DEBUG("focus_on_mainwindow_in");
-  //  gtk_widget_grab_focus(GTK_WIDGET(window));
+	//  gtk_widget_grab_focus(GTK_WIDGET(window));
 }
 
 
-void
+	void
 create_main_window ()
 {
-  GtkWidget *widget;
+	GtkWidget *widget;
+	gchar *path;
+	GError *error = NULL;
+	gboolean ret;
 
-  focus_is_on_calltree = FALSE;
-  focus_is_on_searchbar = FALSE;
+	focus_is_on_calltree = FALSE;
+	focus_is_on_searchbar = FALSE;
 
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_container_set_border_width (GTK_CONTAINER (window), 0);
-  gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
-  gtk_window_set_default_size (GTK_WINDOW (window), MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
-  gtk_window_set_default_icon_from_file (LOGO,
-                                          NULL);
-  gtk_window_set_position( GTK_WINDOW( window ) , GTK_WIN_POS_MOUSE);
+	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	gtk_container_set_border_width (GTK_CONTAINER (window), 0);
+	gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
+	gtk_window_set_default_size (GTK_WINDOW (window), MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
+	gtk_window_set_default_icon_from_file (LOGO,
+			NULL);
+	gtk_window_set_position( GTK_WINDOW( window ) , GTK_WIN_POS_MOUSE);
 
-  // GTK_WIDGET_SET_FLAGS (GTK_WIDGET(window),GTK_CAN_FOCUS);
-  // gtk_widget_grab_focus (GTK_WIDGET(window));
+	// GTK_WIDGET_SET_FLAGS (GTK_WIDGET(window),GTK_CAN_FOCUS);
+	// gtk_widget_grab_focus (GTK_WIDGET(window));
 
-  /* Connect the destroy event of the window with our on_destroy function
-   * When the window is about to be destroyed we get a notificaiton and
-   * stop the main GTK loop
-   */
-  g_signal_connect (G_OBJECT (window), "delete-event",
-                    G_CALLBACK (on_delete), NULL);
+	/* Connect the destroy event of the window with our on_destroy function
+	 * When the window is about to be destroyed we get a notificaiton and
+	 * stop the main GTK loop
+	 */
+	g_signal_connect (G_OBJECT (window), "delete-event",
+			G_CALLBACK (on_delete), NULL);
 
-  g_signal_connect (G_OBJECT (window), "key-release-event",
-                     G_CALLBACK (on_key_released), NULL);
+	g_signal_connect (G_OBJECT (window), "key-release-event",
+			G_CALLBACK (on_key_released), NULL);
 
-  g_signal_connect_after (G_OBJECT (window), "focus-in-event",
-                    G_CALLBACK (focus_on_mainwindow_in), NULL);
+	g_signal_connect_after (G_OBJECT (window), "focus-in-event",
+			G_CALLBACK (focus_on_mainwindow_in), NULL);
 
-  g_signal_connect_after (G_OBJECT (window), "focus-out-event",
-                    G_CALLBACK (focus_on_mainwindow_out), NULL);
-  
-
-  gtk_widget_set_name (window, "mainwindow");
-
-  /* Create an accel group for window's shortcuts */
-  accelGroup = gtk_accel_group_new ();
-  gtk_window_add_accel_group(GTK_WINDOW(window), accelGroup);
-
-  vbox = gtk_vbox_new ( FALSE /*homogeneous*/, 0 /*spacing*/);
-  subvbox = gtk_vbox_new ( FALSE /*homogeneous*/, 5 /*spacing*/);
-
-  widget = create_menus();
-  gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-
-  widget = create_toolbar();
-  gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+	g_signal_connect_after (G_OBJECT (window), "focus-out-event",
+			G_CALLBACK (focus_on_mainwindow_out), NULL);
 
 
-  gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
-  gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
-  gtk_box_pack_start (GTK_BOX (vbox), contacts->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+	gtk_widget_set_name (window, "mainwindow");
 
-  gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
-
-  embedded_error_notebook = PIDGIN_SCROLL_BOOK(pidgin_scroll_book_new());
-  gtk_box_pack_start(GTK_BOX(subvbox),
-	GTK_WIDGET(embedded_error_notebook), FALSE, FALSE, 0);
-
-  if(SHOW_VOLUME){
-    speaker_control = create_slider("speaker");
-    gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_widget_show_all (speaker_control);
-    mic_control = create_slider("mic");
-    gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_widget_show_all (mic_control);
-  }
-
-  if(SHOW_DIALPAD){
-    dialpad = create_dialpad();
-    gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_widget_show_all (dialpad);
-  }
-
-  /* Status bar */
-  statusBar = gtk_statusbar_new();
-  gtk_box_pack_start (GTK_BOX (vbox), statusBar, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
-  gtk_container_add (GTK_CONTAINER (window), vbox);
-
-  /* make sure that everything, window and label, are visible */
-  gtk_widget_show_all (window);
-
-  /* dont't show the history */
-  gtk_widget_hide(history->tree);
-
-  /* dont't show the contact list */
-  gtk_widget_hide(contacts->tree);
-
-  searchbar_init(history);
-  searchbar_init(contacts);
-
-  /* don't show waiting layer */
-  gtk_widget_hide(waitingLayer);
-
-  // Configuration wizard
-  if (account_list_get_size() == 0)
-  {
-#if GTK_CHECK_VERSION(2,10,0)
-    build_wizard();
-#else
-    GtkWidget * dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window),
-                                  GTK_DIALOG_DESTROY_WITH_PARENT,
-                                  GTK_MESSAGE_INFO,
-                                  GTK_BUTTONS_YES_NO,
-                                  "<b><big>Welcome to SFLphone!</big></b>\n\nThere are no VoIP accounts configured, would you like to edit the preferences now?");
-
-    int response = gtk_dialog_run (GTK_DIALOG(dialog));
-
-    gtk_widget_destroy (GTK_WIDGET(dialog));
-
-    if (response == GTK_RESPONSE_YES)
+	ret = uimanager_new (&ui_manager);
+	if (!ret)
     {
-      show_preferences_dialog();
+        //show_error_dialog (GTK_WINDOW (window), error->message,
+          //  _("Could not load ui.xml. The program may be not properly installed"));
+        g_error_free (error);
+        exit (1);
     }
+
+	/* Create an accel group for window's shortcuts */
+	gtk_window_add_accel_group(GTK_WINDOW(window), gtk_ui_manager_get_accel_group (ui_manager));
+
+	vbox = gtk_vbox_new ( FALSE /*homogeneous*/, 0 /*spacing*/);
+	subvbox = gtk_vbox_new ( FALSE /*homogeneous*/, 5 /*spacing*/);
+
+	widget = create_menus (ui_manager);
+	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+
+	widget = create_toolbar_actions (ui_manager);
+	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+
+	gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+	gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+	gtk_box_pack_start (GTK_BOX (vbox), contacts->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+
+	gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
+
+	embedded_error_notebook = PIDGIN_SCROLL_BOOK(pidgin_scroll_book_new());
+	gtk_box_pack_start(GTK_BOX(subvbox),
+			GTK_WIDGET(embedded_error_notebook), FALSE, FALSE, 0);
+
+	widget = create_toolbar_windows (ui_manager);
+	gtk_toolbar_set_style (GTK_TOOLBAR (widget), GTK_TOOLBAR_ICONS);
+	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+
+	if(SHOW_VOLUME){
+		speaker_control = create_slider("speaker");
+		gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+		gtk_widget_show_all (speaker_control);
+		mic_control = create_slider("mic");
+		gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+		gtk_widget_show_all (mic_control);
+	}
+
+	if(SHOW_DIALPAD){
+		dialpad = create_dialpad();
+		gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+		gtk_widget_show_all (dialpad);
+	}
+
+	/* Status bar */
+	statusBar = gtk_statusbar_new();
+	gtk_box_pack_start (GTK_BOX (vbox), statusBar, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+	gtk_container_add (GTK_CONTAINER (window), vbox);
+
+	/* make sure that everything, window and label, are visible */
+	gtk_widget_show_all (window);
+
+	/* dont't show the history */
+	gtk_widget_hide(history->tree);
+
+	/* dont't show the contact list */
+	gtk_widget_hide(contacts->tree);
+
+	searchbar_init(history);
+	searchbar_init(contacts);
+
+	/* don't show waiting layer */
+	gtk_widget_hide(waitingLayer);
+
+	// Configuration wizard
+	if (account_list_get_size() == 0)
+	{
+#if GTK_CHECK_VERSION(2,10,0)
+		build_wizard();
+#else
+		GtkWidget * dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window),
+				GTK_DIALOG_DESTROY_WITH_PARENT,
+				GTK_MESSAGE_INFO,
+				GTK_BUTTONS_YES_NO,
+				"<b><big>Welcome to SFLphone!</big></b>\n\nThere are no VoIP accounts configured, would you like to edit the preferences now?");
+
+		int response = gtk_dialog_run (GTK_DIALOG(dialog));
+
+		gtk_widget_destroy (GTK_WIDGET(dialog));
+
+		if (response == GTK_RESPONSE_YES)
+		{
+			show_preferences_dialog();
+		}
 #endif
-  }
+	}
 }
 
-GtkAccelGroup *
+	GtkAccelGroup *
 get_accel_group()
 {
-  return accelGroup;
+	return accelGroup;
 }
 
-GtkWidget *
+	GtkWidget *
 get_main_window()
 {
-  return window;
+	return window;
 }
 
 void
 main_window_message(GtkMessageType type, gchar * markup){
-  
-  GtkWidget * dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(get_main_window()),
-                                      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                      type,
-                                      GTK_BUTTONS_CLOSE,
-                                      "%s\n",
-                                      markup);
+
+	GtkWidget * dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(get_main_window()),
+			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+			type,
+			GTK_BUTTONS_CLOSE,
+			"%s\n",
+			markup);
 
 
-  gtk_window_set_title(GTK_WINDOW(dialog), _("SFLphone Error"));
+	gtk_window_set_title(GTK_WINDOW(dialog), _("SFLphone Error"));
 
-  gtk_dialog_run (GTK_DIALOG(dialog));
-  gtk_widget_destroy (GTK_WIDGET(dialog));
+	gtk_dialog_run (GTK_DIALOG(dialog));
+	gtk_widget_destroy (GTK_WIDGET(dialog));
 }
 
 void
 main_window_error_message(gchar * markup){
-  main_window_message(GTK_MESSAGE_ERROR, markup);
+	main_window_message(GTK_MESSAGE_ERROR, markup);
 }
 
 void
 main_window_warning_message(gchar * markup){
-  main_window_message(GTK_MESSAGE_WARNING, markup);
+	main_window_message(GTK_MESSAGE_WARNING, markup);
 }
 
 void
 main_window_info_message(gchar * markup){
-  main_window_message(GTK_MESSAGE_INFO, markup);
+	main_window_message(GTK_MESSAGE_INFO, markup);
 }
 
 void
 main_window_dialpad( gboolean state ){
-  if(state) {
-    dialpad = create_dialpad();
-    gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_widget_show_all (dialpad);
-  } else {
-    gtk_container_remove(GTK_CONTAINER (subvbox), dialpad);
-  }
+	if(state) {
+		dialpad = create_dialpad();
+		gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+		gtk_widget_show_all (dialpad);
+	} else {
+		gtk_container_remove(GTK_CONTAINER (subvbox), dialpad);
+	}
 }
 
 void
 main_window_volume_controls( gboolean state ){
-  if(state){
-    speaker_control = create_slider("speaker");
-    gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_widget_show_all (speaker_control);
-    mic_control = create_slider("mic");
-    gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_widget_show_all (mic_control);
-  } else {
-    gtk_container_remove( GTK_CONTAINER(subvbox) , speaker_control );
-    gtk_container_remove( GTK_CONTAINER(subvbox) , mic_control );
-  }
+	if(state){
+		speaker_control = create_slider("speaker");
+		gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+		gtk_widget_show_all (speaker_control);
+		mic_control = create_slider("mic");
+		gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+		gtk_widget_show_all (mic_control);
+	} else {
+		gtk_container_remove( GTK_CONTAINER(subvbox) , speaker_control );
+		gtk_container_remove( GTK_CONTAINER(subvbox) , mic_control );
+	}
 }
 
-void
+	void
 statusbar_push_message(const gchar * message, guint id)
 {
-  gtk_statusbar_push(GTK_STATUSBAR(statusBar), id, message);
+	gtk_statusbar_push(GTK_STATUSBAR(statusBar), id, message);
 }
 
-void
+	void
 statusbar_pop_message(guint id)
 {
-  gtk_statusbar_pop(GTK_STATUSBAR(statusBar), id);
+	gtk_statusbar_pop(GTK_STATUSBAR(statusBar), id);
 }
 
-static void
+	static void
 add_error_dialog(GtkWidget *dialog, callable_obj_t * call)
 {
-   	gtk_container_add(GTK_CONTAINER(embedded_error_notebook), dialog); 
-   	call_add_error(call, dialog);
+	gtk_container_add(GTK_CONTAINER(embedded_error_notebook), dialog); 
+	call_add_error(call, dialog);
 }
 
-static void
+	static void
 destroy_error_dialog_cb(GtkObject *dialog, callable_obj_t * call)
 {
-    call_remove_error(call, dialog);
+	call_remove_error(call, dialog);
 }
 
-void
+	void
 main_window_zrtp_not_supported(callable_obj_t * c)
 {
-    account_t* account_details=NULL;
-    gchar* warning_enabled="";
-    
-    account_details = account_list_get_by_id(c->_accountID);
-    if(account_details != NULL) {
-        warning_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING);
-        DEBUG("Warning Enabled %s", warning_enabled);
-    } else {
-        DEBUG("Account is null callID %s", c->_callID);
-            GHashTable * properties = NULL;
-            properties = sflphone_get_ip2ip_properties();
-            if(properties != NULL)
-              { warning_enabled = g_hash_table_lookup(properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING); }
-    }
-    
-    if(g_strcasecmp(warning_enabled,"true") == 0) {
-        PidginMiniDialog *mini_dialog;
-        gchar *desc = g_markup_printf_escaped(_("ZRTP is not supported by peer %s\n"), c->_peer_number);
-        mini_dialog = pidgin_mini_dialog_new(_("Secure Communication Unavailable"), desc, GTK_STOCK_DIALOG_WARNING);
-        pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
-        pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
-       
-        g_signal_connect_after(mini_dialog, "destroy", (GCallback) destroy_error_dialog_cb, c);
-		
-        add_error_dialog(GTK_WIDGET(mini_dialog), c);
-    }
+	account_t* account_details=NULL;
+	gchar* warning_enabled="";
+
+	account_details = account_list_get_by_id(c->_accountID);
+	if(account_details != NULL) {
+		warning_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING);
+		DEBUG("Warning Enabled %s", warning_enabled);
+	} else {
+		DEBUG("Account is null callID %s", c->_callID);
+		GHashTable * properties = NULL;
+		properties = sflphone_get_ip2ip_properties();
+		if(properties != NULL)
+		{ warning_enabled = g_hash_table_lookup(properties, ACCOUNT_ZRTP_NOT_SUPP_WARNING); }
+	}
+
+	if(g_strcasecmp(warning_enabled,"true") == 0) {
+		PidginMiniDialog *mini_dialog;
+		gchar *desc = g_markup_printf_escaped(_("ZRTP is not supported by peer %s\n"), c->_peer_number);
+		mini_dialog = pidgin_mini_dialog_new(_("Secure Communication Unavailable"), desc, GTK_STOCK_DIALOG_WARNING);
+		pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
+		pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
+
+		g_signal_connect_after(mini_dialog, "destroy", (GCallback) destroy_error_dialog_cb, c);
+
+		add_error_dialog(GTK_WIDGET(mini_dialog), c);
+	}
 }
 
-void
+	void
 main_window_zrtp_negotiation_failed(const gchar* callID, const gchar* reason, const gchar* severity)
 {
-    gchar* peer_number = "(number unknown)";
-    callable_obj_t * c = NULL;
-    c = calllist_get(current_calls, callID);
-    if (c != NULL) {
-        peer_number = c->_peer_number;
-    }
-     
-    PidginMiniDialog *mini_dialog;
-    gchar *desc = g_markup_printf_escaped(_("A %s error forced the call with %s to fall under unencrypted mode.\nExact reason: %s\n"), severity, peer_number, reason);
-    mini_dialog = pidgin_mini_dialog_new(_("ZRTP negotiation failed"), desc, GTK_STOCK_DIALOG_WARNING);
-    pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
-    pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
-    
-    g_signal_connect_after(mini_dialog, "destroy", (GCallback) destroy_error_dialog_cb, c);
-	
-    add_error_dialog(GTK_WIDGET(mini_dialog), c);
+	gchar* peer_number = "(number unknown)";
+	callable_obj_t * c = NULL;
+	c = calllist_get(current_calls, callID);
+	if (c != NULL) {
+		peer_number = c->_peer_number;
+	}
+
+	PidginMiniDialog *mini_dialog;
+	gchar *desc = g_markup_printf_escaped(_("A %s error forced the call with %s to fall under unencrypted mode.\nExact reason: %s\n"), severity, peer_number, reason);
+	mini_dialog = pidgin_mini_dialog_new(_("ZRTP negotiation failed"), desc, GTK_STOCK_DIALOG_WARNING);
+	pidgin_mini_dialog_add_button(mini_dialog, _("Continue"), NULL, NULL);
+	pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
+
+	g_signal_connect_after(mini_dialog, "destroy", (GCallback) destroy_error_dialog_cb, c);
+
+	add_error_dialog(GTK_WIDGET(mini_dialog), c);
 }
 
-void
+	void
 main_window_confirm_go_clear(callable_obj_t * c)
 {
-    PidginMiniDialog *mini_dialog;
-    gchar *desc = g_markup_printf_escaped(_("%s wants to stop using secure communication. Confirm will resume conversation without SRTP.\n"), c->_peer_number);
-    mini_dialog = pidgin_mini_dialog_new(_("Confirm Go Clear"), desc, GTK_STOCK_STOP);
-    pidgin_mini_dialog_add_button(mini_dialog, _("Confirm"), sflphone_set_confirm_go_clear, NULL);
-    pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
-    
-    add_error_dialog(GTK_WIDGET(mini_dialog), c);
+	PidginMiniDialog *mini_dialog;
+	gchar *desc = g_markup_printf_escaped(_("%s wants to stop using secure communication. Confirm will resume conversation without SRTP.\n"), c->_peer_number);
+	mini_dialog = pidgin_mini_dialog_new(_("Confirm Go Clear"), desc, GTK_STOCK_STOP);
+	pidgin_mini_dialog_add_button(mini_dialog, _("Confirm"), sflphone_set_confirm_go_clear, NULL);
+	pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
+
+	add_error_dialog(GTK_WIDGET(mini_dialog), c);
 }
 
 

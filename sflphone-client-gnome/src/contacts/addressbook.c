@@ -19,7 +19,6 @@
 
 #include <addressbook.h>
 #include <searchbar.h>
-#include <toolbar.h>
 #include <string.h>
 #include <addressbook-config.h>
 
@@ -109,7 +108,7 @@ addressbook_config_books()
     }
 
   // Update buttons
-  toolbar_update_buttons();
+  update_actions ();
 }
 
 /**

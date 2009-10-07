@@ -22,5 +22,6 @@ DOC_FIGURES =	figures/addressbook-button.png \
 				figures/configfile-settings.png		\
 				figures/notif-example.png			\
 				figures/systemtray-settings.png		\
-				figures/voicemail-notif.png
+				figures/voicemail-notif.png			\
+				figures/account_advanced.png
 DOC_LINGUAS = fr de es it zh_TW zh_HK zh_CN ko pl pt_BR pt ru

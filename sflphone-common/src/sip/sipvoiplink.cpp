@@ -773,9 +773,11 @@ SIPVoIPLink::answer (const CallID& id)
 
         // Terminate the call
         _debug ("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
+	if(call->getAudioRtp())
+	    call->getAudioRtp()->stop ();
+
         terminateOneCall (call->getCallId());
         removeCall (call->getCallId());
-        call->getAudioRtp()->stop ();
         return false;
     }
 }
@@ -1342,7 +1344,8 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
         Manager::instance().callFailure (id);
         terminateOneCall (id);
         removeCall (id);
-        call->getAudioRtp()->stop();
+	if (call->getAudioRtp ())
+	    call->getAudioRtp()->stop();
     }
 }
 
@@ -2319,6 +2322,8 @@ pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
             (int) a_name.host.slen, a_name.host.ptr,
             (int) a_name.port, localAddress.c_str(), (int) localTlsPort);
 
+    
+
     status = pjsip_tls_transport_start (_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
 
     if (status != PJ_SUCCESS) {
@@ -2973,10 +2978,15 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 	account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
 	if (account != NULL) {
-		addrToUse = account->getSessionAddress ();
+		if (account_id == AccountNULL)
+			addrToUse = link->getLocalIPAddress();
+		else
+			addrToUse = account->getSessionAddress ();
 	}
-	else
+	else {
 		addrToUse = link->getLocalIPAddress();
+	}
+
 
     // Have to do some stuff with the SDP
     // Set the codec map, IP, peer number and so on... for the SIPCall object

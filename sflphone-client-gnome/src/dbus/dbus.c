@@ -212,7 +212,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
             calllist_add (current_calls, new_call);
             calllist_add (history, new_call);
             calltree_add_call (current_calls, new_call, NULL);
-            update_menus ();
+            update_actions ();
             calltree_display (current_calls);
 
             //sflphone_incoming_call (new_call);
@@ -249,6 +249,8 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
 	    changed_conf->_state = CONFERENCE_STATE_HOLD;
 	}
 
+	changed_conf->participant = (gchar**)dbus_get_participant_list(changed_conf->_confID);
+
 	calltree_add_conference (current_calls, changed_conf);
     }
 }
@@ -262,10 +264,24 @@ conference_created_cb (DBusGProxy *proxy UNUSED,
     DEBUG ("Conference added %s\n", confID);
 
     conference_obj_t* new_conf;
+    callable_obj_t* call;
+    gchar* call_id;
+    gchar** participant;
+    gchar** pl;
 
     create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
     new_conf->_confID = g_strdup(confID);
+    new_conf->participant = (gchar**)dbus_get_participant_list(new_conf->_confID);
     conferencelist_add(new_conf);
+
+    participant = new_conf->participant;
+    for (pl = participant; *participant; participant++)
+    {	    
+	call_id = (gchar*)(*participant);
+	call = calllist_get (current_calls, call_id);
+	call->_confID = g_strdup(confID);
+    }
+
     calltree_add_conference (current_calls, new_conf);
 }
 

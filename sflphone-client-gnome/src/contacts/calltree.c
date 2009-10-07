@@ -24,7 +24,6 @@
 #include <glib/gprintf.h>
 #include <calllist.h>
 #include <conferencelist.h>
-#include <toolbar.h>
 #include <mainwindow.h>
 #include <history.h>
 
@@ -145,7 +144,7 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
     // sflphone_fill_conference_list();
 
     g_value_unset(&val);
-    toolbar_update_buttons();
+    update_actions();
 
 }
 
@@ -163,73 +162,84 @@ row_activated(GtkTreeView       *tree_view UNUSED,
 
     DEBUG("double click action");
 
-    if( active_calltree == current_calls )
+    if(calltab_get_selected_type(active_calltree) == A_CALL)
     {
-	
-	if(calltab_get_selected_type(current_calls) == A_CALL)
+
+	DEBUG("Selected a call\n");
+	selectedCall = calltab_get_selected_call(active_calltree);
+
+	if (selectedCall)
 	{
-	    selectedCall = calltab_get_selected_call(current_calls);
+	    DEBUG("there is a selected call\n");
 
-	    if (selectedCall)
+	    // Get the right event from the right calltree
+	    if( active_calltree == current_calls )
 	    {
-		// Get the right event from the right calltree
-		if( active_calltree == current_calls )
-		{
-		    switch(selectedCall->_state)
-		    {
-		    case CALL_STATE_INCOMING:
-			dbus_accept(selectedCall);
-			stop_notification();
-			break;
-		    case CALL_STATE_HOLD:
-			dbus_unhold(selectedCall);
-			break;
-		    case CALL_STATE_RINGING:
-		    case CALL_STATE_CURRENT:
-		    case CALL_STATE_BUSY:
-		    case CALL_STATE_FAILURE:
-			break;
-		    case CALL_STATE_DIALING:
-			sflphone_place_call (selectedCall);
-			break;
-		    default:
-			WARN("Row activated - Should not happen!");
-			break;
-		    }
-		}
 
-		// If history or contact: double click action places a new call
-		else
-		{
-		    account_id = g_strdup (selectedCall->_accountID);
+		DEBUG("active tree is current calls");
 
-		    // Create a new call
-		    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
-		    
-		    calllist_add(current_calls, new_call);
-		    calltree_add_call(current_calls, new_call, NULL);
-		    sflphone_place_call(new_call);
-		    calltree_display(current_calls);
+		switch(selectedCall->_state)
+		{
+		case CALL_STATE_INCOMING:
+		    dbus_accept(selectedCall);
+		    stop_notification();
+		    break;
+		case CALL_STATE_HOLD:
+		    dbus_unhold(selectedCall);
+		    break;
+		case CALL_STATE_RINGING:
+		case CALL_STATE_CURRENT:
+		case CALL_STATE_BUSY:
+		case CALL_STATE_FAILURE:
+		    break;
+		case CALL_STATE_DIALING:
+		    sflphone_place_call (selectedCall);
+		    break;
+		default:
+		    WARN("Row activated - Should not happen!");
+		    break;
 		}
 	    }
+
+	    // If history or contact: double click action places a new call
+	    else
+	    {
+		DEBUG("active tree is history or contact");
+
+		account_id = g_strdup (selectedCall->_accountID);
+
+		// Create a new call
+		create_new_call (CALL, CALL_STATE_DIALING, "", account_id, selectedCall->_peer_name, selectedCall->_peer_number, &new_call);
+		
+		calllist_add(current_calls, new_call);
+		calltree_add_call(current_calls, new_call, NULL);
+		sflphone_place_call(new_call);
+		calltree_display(current_calls);
+	    }
 	}
-	else
+    }
+    else if(calltab_get_selected_type(current_calls) == A_CONFERENCE)
+    {
+	DEBUG("Selected a conference\n");
+
+	if( active_calltree == current_calls )
 	{
+
 	    selectedConf = calltab_get_selected_conf(current_calls);
  
 	    if(selectedConf)
 	    {
 		switch(selectedConf->_state)
 		{
-	            case CONFERENCE_STATE_ACTIVE_ATACHED:
+		    case CONFERENCE_STATE_ACTIVE_ATACHED:
 		        sflphone_add_main_participant(selectedConf);
 			break;
-		    case CONFERENCE_STATE_ACTIVE_DETACHED:
-			sflphone_add_main_participant(selectedConf);
-			break;
-	            case CONFERENCE_STATE_HOLD:
-			sflphone_conference_off_hold(selectedConf);
-			break;
+		case CONFERENCE_STATE_ACTIVE_DETACHED:
+		    sflphone_add_main_participant(selectedConf);
+		    break;
+		case CONFERENCE_STATE_HOLD:
+		    sflphone_conference_off_hold(selectedConf);
+		    break;
 		}
 	    }
 	}
@@ -269,6 +279,12 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
          */
         if( active_calltree == current_calls )
         {
+
+	    // sflphone_selected_call_codec(selectedCall);
+
+	    // DEBUG("single click action: %s", dbus_get_current_codec_name(selectedCall));
+	    sflphone_display_selected_codec(dbus_get_current_codec_name(selectedCall));
+
             switch(selectedCall->_srtp_state)
             {
                 case SRTP_STATE_SAS_UNCONFIRMED:
@@ -326,14 +342,14 @@ calltree_reset (calltab_t* tab)
 
 void
 focus_on_calltree_out(){
-    DEBUG("set_focus_on_calltree_out");
+    //DEBUG("set_focus_on_calltree_out");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = FALSE;
 }
 
 void
 focus_on_calltree_in(){
-    DEBUG("set_focus_on_calltree_in");
+    //DEBUG("set_focus_on_calltree_in");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = TRUE;
 }
@@ -494,7 +510,7 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
     callable_obj_t * selectedCall = calltab_get_selected_call(tab);
     if(selectedCall == c)
         calltab_select_call(tab, NULL);
-    toolbar_update_buttons();
+    update_actions();
 }
 
 void
@@ -666,7 +682,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
         }
 
     }
-    toolbar_update_buttons();
+    update_actions();
 }
 
 
@@ -887,7 +903,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     GtkTreePath *path;
     GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
 
-    gchar** participant = (gchar**)dbus_get_participant_list(conf->_confID);
+    gchar** participant = conf->participant;
     gchar** pl;
     gchar* call_id;
 
@@ -906,6 +922,8 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
     if( tab == current_calls )
     {
+
+	DEBUG("------------- calltree_add_conference %s, %s ------------------------", tab, current_calls);
 	switch(conf->_state)
 	{
 	    case CONFERENCE_STATE_ACTIVE_ATACHED:
@@ -926,133 +944,137 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
                 WARN("Update conference add - Should not happen!");
 	}
 
-    }
     
-    else {
-        WARN ("Conferences cannot be added in this widget - This is a bug in the application.");
-    }
 
-    //Resize it
-    if(pixbuf)
-    {
-        if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
-        {
-            pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
-        }
-    }
-    else 
-    {
-	DEBUG("Error no pixbuff for conference from %s", ICONS_DIR);
-    }
-
-
-    // Used to determine if at least one participant use a security feature
-    // If true (at least on call use a security feature) we need to display security icons 
-    conf->_conf_srtp_enabled = FALSE;
-
-    // Used to determine if the conference is secured
-    // Every participant to a conference must be secured, the conference is not secured elsewhere
-    conf->_conference_secured = TRUE;
-
-
-    participant = (gchar**)dbus_get_participant_list(conf->_confID);
-    if(participant)
-    {
-	participant = (gchar**)dbus_get_participant_list(conf->_confID);
-	for (pl = participant; *participant; participant++)
-	{	    
-	    call_id = (gchar*)(*participant);
-	    call = calllist_get (tab, call_id);
-
-	    if(call != NULL) {
-		
-		account_details = account_list_get_by_id(call->_callID);
-		if(account_details != NULL) {
-		    srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
-		}
-
-		if(g_strcasecmp(srtp_enabled,"true") == 0) {
-		    conf->_conf_srtp_enabled = TRUE;
-		    break;
-		}
-
-		
+	//Resize it
+	if(pixbuf)
+	{
+	    if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
+	    {
+		pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
 	    }
-
+	}
+	else 
+	{
+	    DEBUG("Error no pixbuff for conference from %s", ICONS_DIR);
 	}
 
-	if(conf->_conf_srtp_enabled)
+
+	// Used to determine if at least one participant use a security feature
+	// If true (at least on call use a security feature) we need to display security icons 
+	conf->_conf_srtp_enabled = FALSE;
+
+	// Used to determine if the conference is secured
+	// Every participant to a conference must be secured, the conference is not secured elsewhere
+	conf->_conference_secured = TRUE;
+
+
+	participant = conf->participant;
+	if(participant)
 	{
-	    participant = (gchar**)dbus_get_participant_list(conf->_confID);
+	    participant = conf->participant;
 	    for (pl = participant; *participant; participant++)
 	    {	    
 		call_id = (gchar*)(*participant);
 		call = calllist_get (tab, call_id);
-		
+
 		if(call != NULL) {
 		    
-		    if(call->_srtp_state == 0)
-		    {
-			conf->_conference_secured = FALSE;
+		    account_details = account_list_get_by_id(call->_callID);
+		    if(account_details != NULL) {
+			srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
+		    }
+
+		    if(g_strcasecmp(srtp_enabled,"true") == 0) {
+			conf->_conf_srtp_enabled = TRUE;
 			break;
+		    }
+
+		    
+		}
+
+	    }
+
+	    if(conf->_conf_srtp_enabled)
+	    {
+		participant = conf->participant;
+		for (pl = participant; *participant; participant++)
+		{	    
+		    call_id = (gchar*)(*participant);
+		    call = calllist_get (tab, call_id);
+		    
+		    if(call != NULL) {
+		    
+			if(call->_srtp_state == 0)
+			{
+			    conf->_conference_secured = FALSE;
+			    break;
+			}
 		    }
 		}
 	    }
 	}
-    }
 
-    if(conf->_conf_srtp_enabled)
-    {
-	if(conf->_conference_secured)
+	if(conf->_conf_srtp_enabled)
 	{
-	    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
+	    if(conf->_conference_secured)
+	    {
+		pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
+	    }
+	    else
+	    {
+		pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
+	    }
 	}
-	else
-	{
-	    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
-	}
-    }
 
-    DEBUG("add conference to tree store");
+	DEBUG("add conference to tree store");
+	
+	gtk_tree_store_set(tab->store, &iter,
+			   0, pixbuf, // Icon
+			   1, description, // Description
+			   2, pixbuf_security,
+			   3, conf, // Pointer
+			   -1);
+
+	DEBUG("add conference to tree store");
+
     
-    gtk_tree_store_set(tab->store, &iter,
-            0, pixbuf, // Icon
-            1, description, // Description
-	    2, pixbuf_security,
-	    3, conf, // Pointer
-            -1);
-
-    DEBUG("add conference to tree store");
-
-    
-    if (pixbuf != NULL)
-        g_object_unref(G_OBJECT(pixbuf));
+	if (pixbuf != NULL)
+	    g_object_unref(G_OBJECT(pixbuf));
 
 
-    participant = (gchar**)dbus_get_participant_list(conf->_confID);
-    if(participant)
-    {
-	for (pl = participant; *participant; participant++)
+	participant = conf->participant;
+	if(participant)
 	{
-	    
-	    
-	    call_id = (gchar*)(*participant);
-	    call = calllist_get (tab, call_id);
-	    // create_new_call_from_details (conf_id, conference_details, &c);
+	    for (pl = participant; *participant; participant++)
+	    {
+		
+		
+		call_id = (gchar*)(*participant);
+		call = calllist_get (tab, call_id);
+		// create_new_call_from_details (conf_id, conference_details, &c);
 
-	    calltree_remove_call(tab, call, NULL);
-	    calltree_add_call (tab, call, &iter);
+		calltree_remove_call(tab, call, NULL);
+		calltree_add_call (tab, call, &iter);
+	    }
 	}
-    }
 
+    }
+    
+    else 
+    {
+        WARN ("Conferences cannot be added in this widget - This is a bug in the application.");    
+    }
+    
     gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
 
     path = gtk_tree_model_get_path(model, &iter);
 
     gtk_tree_view_expand_row(GTK_TREE_VIEW(tab->view), path, FALSE);
 
-    toolbar_update_buttons();
+    update_actions();
 
+    
 }
 
 
@@ -1134,7 +1156,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
     // if(selectedCall == c)
     // calltab_select_call(tab, NULL);
 
-    toolbar_update_buttons();
+    update_actions();
     
 }
 
@@ -1153,12 +1175,14 @@ void calltree_display (calltab_t *tab) {
 
         DEBUG ("display main tab");
 
+	
         if (active_calltree==contacts) {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
         } else {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
         }
-
+		gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)currentCallsButton, TRUE);
+	
     }
 
     /* case 2: we want to display the history */
@@ -1195,7 +1219,7 @@ void calltree_display (calltab_t *tab) {
     sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
     DEBUG("Emit signal changed from calltree_display");
     g_signal_emit_by_name(sel, "changed");
-    toolbar_update_buttons();
+    update_actions();
 }
 
 
@@ -1255,6 +1279,7 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	    else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
 	    {
 		// dragged a single call on a conference
+		selected_call->_confID = g_strdup(dragged_call_id);
 		sflphone_add_participant(selected_call_id, dragged_call_id);
 	    }
 	    else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)

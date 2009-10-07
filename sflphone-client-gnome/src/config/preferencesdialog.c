@@ -26,7 +26,6 @@
 #include <accountconfigdialog.h>
 #include <actions.h>
 #include <config.h>
-#include <toolbar.h>
 #include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <audioconf.h>

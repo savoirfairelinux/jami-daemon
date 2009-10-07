@@ -26,7 +26,6 @@
 #include <libgnome/libgnome.h>
 #include <libgnomeui/libgnomeui.h>
 
-
 #include <gtk/gtk.h>
 #include <stdlib.h>
 

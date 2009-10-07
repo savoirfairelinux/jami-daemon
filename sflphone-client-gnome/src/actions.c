@@ -22,8 +22,7 @@
 #include <dbus/dbus.h>
 #include <statusicon.h>
 #include <contacts/searchbar.h>
-#include <menus.h>
-#include <toolbar.h>
+#include "icons/icon_factory.h"
 
 #include <gtk/gtk.h>
 #include <string.h>
@@ -125,7 +124,7 @@ sflphone_hold (callable_obj_t * c )
 {
     c->_state = CALL_STATE_HOLD;
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void
@@ -133,7 +132,7 @@ sflphone_ringing(callable_obj_t * c )
 {
     c->_state = CALL_STATE_RINGING;
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void
@@ -143,7 +142,7 @@ sflphone_hung_up( callable_obj_t * c)
     calltree_remove_call(current_calls, c, NULL);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors(c);
-    update_menus();
+    update_actions();
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
 #endif
@@ -259,7 +258,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 
     // Prevent update being called when toolbar is not yet initialized
     if(toolbarInitialized)
-        toolbar_update_buttons();
+        update_actions ();
 }
 
 gboolean sflphone_init()
@@ -273,13 +272,16 @@ gboolean sflphone_init()
     {
         dbus_register(getpid(), "Gtk+ Client");
 
+		// Init icons factory
+		init_icon_factory ();
+
         current_calls = calltab_init(FALSE, CURRENT_CALLS);
         contacts = calltab_init(TRUE, CONTACTS);
         history = calltab_init(TRUE, HISTORY);
 
         account_list_init ();
         codec_list_init();
-	conferencelist_init();
+		conferencelist_init();
 
         // Fetch the configured accounts
         sflphone_fill_account_list(FALSE);
@@ -290,8 +292,8 @@ gboolean sflphone_init()
         // Fetch the audio codecs
         sflphone_fill_codec_list();
 
-	// Fetch the conference list
-	sflphone_fill_conference_list();
+		// Fetch the conference list
+		sflphone_fill_conference_list();
 
         return TRUE;
     }
@@ -468,7 +470,7 @@ sflphone_fail( callable_obj_t * c )
 {
     c->_state = CALL_STATE_FAILURE;
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void
@@ -476,7 +478,7 @@ sflphone_busy( callable_obj_t * c )
 {
     c->_state = CALL_STATE_BUSY;
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void
@@ -486,7 +488,7 @@ sflphone_current( callable_obj_t * c )
         set_timestamp (&c->_time_start);
     c->_state = CALL_STATE_CURRENT;
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void
@@ -496,7 +498,7 @@ sflphone_record( callable_obj_t * c )
         set_timestamp (&c->_time_start);
     c->_state = CALL_STATE_RECORD;
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void
@@ -508,9 +510,9 @@ sflphone_set_transfert()
         c->_state = CALL_STATE_TRANSFERT;
         c->_trsft_to = g_strdup("");
         calltree_update_call(current_calls, c, NULL);
-        update_menus();
+        update_actions();
     }
-    toolbar_update_buttons();
+    update_actions();
 }
 
     void
@@ -522,9 +524,9 @@ sflphone_unset_transfert()
         c->_state = CALL_STATE_CURRENT;
         c->_trsft_to = g_strdup("");
         calltree_update_call(current_calls, c, NULL);
-        update_menus();
+        update_actions();
     }
-    toolbar_update_buttons();
+    update_actions();
 }
 
     void
@@ -540,7 +542,7 @@ sflphone_incoming_call (callable_obj_t * c)
     calllist_add ( current_calls, c );
     calllist_add( history, c );
     calltree_add_call( current_calls, c, NULL);
-    update_menus();
+    update_actions();
     calltree_display (current_calls);
 }
 
@@ -627,10 +629,15 @@ sflphone_new_call()
 {
 
     callable_obj_t *c;
+    callable_obj_t * current_selected_call;
     gchar *peer_name, *peer_number;
 
     DEBUG("sflphone_new_call");
-    sflphone_on_hold();
+
+    current_selected_call = calltab_get_selected_call(current_calls);
+
+    if ((current_selected_call != NULL) && (current_selected_call->_confID == NULL))
+	sflphone_on_hold();
 
     // Play a tone when creating a new call
     if( calllist_get_size(current_calls) == 0 )
@@ -642,7 +649,7 @@ sflphone_new_call()
 
     calllist_add (current_calls,c);
     calltree_add_call (current_calls, c, NULL);
-    update_menus();
+    update_actions();
 
     return c;
 }
@@ -777,7 +784,6 @@ sflphone_keypad( guint keyval, gchar * key)
  * If there is no default account selected, place a call with the first
  * registered account of the account list
  * Else, check if it an IP call. if not, popup an error message
- *
  */
  
 static gboolean _is_direct_call(callable_obj_t * c) {
@@ -907,12 +913,20 @@ sflphone_display_selected_codec (const gchar* codecName)
                 msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
             }
             else {
-                msg = g_markup_printf_escaped("%s %s (%s) - %s %s" ,
+
+		if (strcmp(codecName, "") != 0) {
+                    msg = g_markup_printf_escaped("%s %s (%s) - %s %s" ,
                         _("Using account"),
                         (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                         (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
                         _("Codec"),
                         codecName);
+		} else {
+		    msg = g_markup_printf_escaped("%s %s (%s)" ,
+                        _("Using account"),
+                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+		        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
+		}
             }
             statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
             g_free(msg);
@@ -1046,7 +1060,7 @@ sflphone_rec_call()
 	}
     }
     calltree_update_call(current_calls, selectedCall, NULL);
-    update_menus();
+    update_actions();
 
     // gchar* codname = sflphone_get_current_codec_name();
     // DEBUG("sflphone_get_current_codec_name: %s",codname);
@@ -1227,7 +1241,7 @@ sflphone_srtp_on( callable_obj_t * c)
     c->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
 
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void
@@ -1235,7 +1249,7 @@ sflphone_srtp_off( callable_obj_t * c )
 {
     c->_srtp_state = SRTP_STATE_UNLOCKED;
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void
@@ -1251,7 +1265,7 @@ sflphone_srtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean ver
         c->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
     }
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }
 
     void 
@@ -1299,5 +1313,5 @@ sflphone_call_state_changed( callable_obj_t * c, const gchar * description, cons
     }
     
     calltree_update_call(current_calls, c, NULL);
-    update_menus();
+    update_actions();
 }

@@ -41,28 +41,7 @@ RingBuffer::RingBuffer (int size, CallID call_id) : mEnd (0)
     mBuffer = new unsigned char[mBufferSize];
     assert (mBuffer != NULL);
 
-    count_rb++;
-
-    // open files
-    std::string s_input;
-    std::string s_output;
-
-    // convert count into string
-    std::stringstream out;
-    out << count_rb;
-    
-    s_input = "/home/alexandresavard/Desktop/buffer_record/buffer_input_";
-    s_input.append(out.str());
-
-    s_output = "/home/alexandresavard/Desktop/buffer_record/buffer_output_";
-    s_output.append(out.str());
-
-    buffer_input_rec = new std::fstream();
-    buffer_output_rec = new std::fstream();
-
-    buffer_input_rec->open(s_input.c_str(), std::fstream::out);
-    buffer_output_rec->open(s_output.c_str(), std::fstream::out);
-    
+    count_rb++;    
 }
 
 // Free memory on object deletion
@@ -70,18 +49,26 @@ RingBuffer::~RingBuffer()
 {
     delete[] mBuffer;
     mBuffer = NULL;
-
-    buffer_input_rec->close();
-    delete buffer_input_rec; buffer_input_rec = NULL;
-
-    buffer_output_rec->close();
-    delete buffer_output_rec; buffer_output_rec = NULL;
 }
 
 void
 RingBuffer::flush (CallID call_id)
 {
     storeReadPointer(mEnd, call_id);
+}
+
+
+void
+RingBuffer::flushAll ()
+{
+
+    ReadPointer::iterator iter_pointer = _readpointer.begin();
+    while(iter_pointer != _readpointer.end())
+    {	
+	iter_pointer->second = mEnd;
+
+	iter_pointer++;
+    }
 }
 
 int
@@ -292,7 +279,6 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
 
         // bcopy(src, dest, len)
         //fprintf(stderr, "has %d put %d\t", len, block);
-	buffer_input_rec->write((char*)src, block);
         bcopy (src, mBuffer + pos, block);
 
         src += block;
@@ -368,7 +354,6 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 
         // bcopy(src, dest, len)
         bcopy (mBuffer + mStart, dest, block);
-	buffer_output_rec->write((char*)dest, block);
 
         dest += block;
 

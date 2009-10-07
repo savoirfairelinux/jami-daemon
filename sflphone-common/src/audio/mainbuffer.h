@@ -24,6 +24,7 @@
 #include <map>
 #include <set>
 #include <cc++/thread.h> // for ost::Mutex
+#include <string>
 
 #include "../global.h"
 #include "../call.h"
@@ -44,6 +45,10 @@ public:
         MainBuffer();
 
         ~MainBuffer();
+
+	void setInternalSamplingRate(int sr);
+
+	int getInternalSamplingRate() {return _internalSamplingRate;}
 
 	CallIDSet* getCallIDSet(CallID call_id);
 
@@ -77,7 +82,11 @@ public:
 
 	void flush(CallID call_id = default_id);
 
+	void flushAllBuffers();
+
 	void flushDefault();
+
+	void stateInfo();
 
     private:
 
@@ -98,6 +107,8 @@ public:
 	SFLDataFormat* mixBuffer;
 
 	ost::Mutex _mutex;
+
+	int _internalSamplingRate;
 
     public:
 
