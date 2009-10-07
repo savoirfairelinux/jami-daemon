@@ -29,6 +29,8 @@
 
 static GtkWidget *toolbar;
 
+guint transfertButtonConnId; //The button toggled signal connection ID
+
 GtkAction * pickUpAction;
 GtkWidget * pickUpWidget;
 GtkWidget * newCallAction;
@@ -291,9 +293,9 @@ void update_actions()
 				gtk_action_set_sensitive( GTK_ACTION(hangUpAction), TRUE);
 				break;
 			case CALL_STATE_TRANSFERT:
-				//gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
+				gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
 				gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON(transferToolbar), TRUE);
-				//gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
+				gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
 				gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
 				gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), TRUE);
 				gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
@@ -723,9 +725,9 @@ static void calltree_switch_cb (GtkRadioAction *action, GtkRadioAction *current)
 /**
  * Transfert the line
  */
-static void call_transfer_cb (GtkAction * action, gpointer data)
+static void call_transfer_cb ()
 {
-	gtk_toggle_action_get_active (GTK_TOGGLE_ACTION(action))? sflphone_set_transfert() : sflphone_unset_transfert() ; 
+	gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar))? sflphone_set_transfert() : sflphone_unset_transfert() ; 
 }
 
 static void call_mailbox_cb (void)
@@ -1376,6 +1378,10 @@ GtkWidget* create_toolbar_actions (GtkUIManager *ui_manager)
 	newCallWidget = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/NewCallToolbar");
 	pickUpWidget = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/PickUpToolbar");
 
+	// Set the handler ID for the transfer
+    transfertButtonConnId = g_signal_connect (G_OBJECT (transferToolbar), "toggled", G_CALLBACK (call_transfer_cb), NULL);
+	holdConnId = g_signal_connect (G_OBJECT (holdToolbar), "toggled", G_CALLBACK (call_hold), NULL);
+
 	return toolbar;
 }
 
@@ -1385,6 +1391,10 @@ GtkWidget* create_toolbar_windows (GtkUIManager *ui_manager)
 
 	toolbar = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows");
 	active_calltree = current_calls;
+
+	historyButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/HistoryToolbar");
+	contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/AddressbookToolbar");
+	currentCallsButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/CallWindowToolbar");
 
 	return toolbar;
 }

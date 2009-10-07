@@ -20,13 +20,6 @@
 #include <toolbar.h>
 #include <contacts/addressbook.h>
 
-    static gboolean
-is_inserted( GtkWidget* button )
-{
-    return ( GTK_WIDGET(button)->parent == GTK_WIDGET( toolbar ) );
-}
-
-
 
     static void
 call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)

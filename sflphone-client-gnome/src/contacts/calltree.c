@@ -342,14 +342,14 @@ calltree_reset (calltab_t* tab)
 
 void
 focus_on_calltree_out(){
-    DEBUG("set_focus_on_calltree_out");
+    //DEBUG("set_focus_on_calltree_out");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = FALSE;
 }
 
 void
 focus_on_calltree_in(){
-    DEBUG("set_focus_on_calltree_in");
+    //DEBUG("set_focus_on_calltree_in");
     // gtk_widget_grab_focus(GTK_WIDGET(sw));
     focus_is_on_calltree = TRUE;
 }
@@ -1175,13 +1175,14 @@ void calltree_display (calltab_t *tab) {
 
         DEBUG ("display main tab");
 
-	/*
+	
         if (active_calltree==contacts) {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
         } else {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
         }
-	*/
+		gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)currentCallsButton, TRUE);
+	
     }
 
     /* case 2: we want to display the history */
@@ -1190,10 +1191,10 @@ void calltree_display (calltab_t *tab) {
         DEBUG ("display history tab");
 
         if (active_calltree==contacts) {
-            //gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
+            gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
         }
 
-        //gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, TRUE);
+        gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, TRUE);
     }
 
     else if (tab==contacts) {
@@ -1201,10 +1202,10 @@ void calltree_display (calltab_t *tab) {
         DEBUG ("display contact tab");
 
         if (active_calltree==history) {
-            //gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
+            gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
         }
 
-        //gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, TRUE);
+        gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, TRUE);
     }
 
     else

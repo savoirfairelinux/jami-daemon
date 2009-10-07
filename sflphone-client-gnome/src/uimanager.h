@@ -24,8 +24,11 @@
 
 G_BEGIN_DECLS
 
-guint transfertButtonConnId; //The button toggled signal connection ID
 guint holdConnId;     //The hold_menu signal connection ID
+
+GtkWidget *historyButton;
+GtkWidget *contactButton;
+GtkWidget *currentCallsButton;
 
 gboolean uimanager_new (GtkUIManager**);
 
