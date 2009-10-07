@@ -29,7 +29,7 @@
       <menuitem action="Toolbar"/>
       <separator/>
       <menuitem action="Dialpad"/>
-      <menuitem action="VolumeControls"/>
+      <menuitem name="VolumeControlsToggle" action="VolumeControls"/>
       <separator/>
 	  <menuitem action="CallWindow"/>
 	  <menuitem action="History"/>
