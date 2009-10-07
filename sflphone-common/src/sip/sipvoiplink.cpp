@@ -3668,7 +3668,7 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
         _debug ("Local interface %s\n", tmpAddr);
     }
 
-	return ifaceList;
+    return ifaceList;
 }
 
 

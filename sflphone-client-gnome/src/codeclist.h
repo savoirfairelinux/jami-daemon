@@ -117,6 +117,6 @@ void codec_list_move_codec_down(guint index);
  */
 void codec_list_update_to_daemon();
 
-codec_t* codec_list_get_by_payload( const int payload);
+codec_t* codec_list_get_by_payload(gconstpointer payload);
 
 #endif
