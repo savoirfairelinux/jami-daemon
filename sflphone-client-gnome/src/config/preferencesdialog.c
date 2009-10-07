@@ -140,10 +140,12 @@ static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
     DEBUG("Key exchange changed");
     if (g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget)), (gchar *) "ZRTP") == 0) {
         gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);
+	g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
         g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
     } else {
         gtk_widget_set_sensitive(GTK_WIDGET(data), FALSE);
         DEBUG("Setting key exchange %s to %s\n", ACCOUNT_KEY_EXCHANGE, KEY_EXCHANGE_NONE);
+	g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
         g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(KEY_EXCHANGE_NONE));
     }
 }
@@ -180,7 +182,9 @@ GtkWidget* create_direct_ip_calls_tab()
     directIpCallsProperties = sflphone_get_ip2ip_properties();
               
     if(directIpCallsProperties != NULL) {
+	DEBUG("got a directIpCallsProperties");
         curSRTPEnabled = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_SRTP_ENABLED);
+	DEBUG("    curSRTPEnabled = %s", curSRTPEnabled);
         curKeyExchange = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_KEY_EXCHANGE);
         curTlsEnabled = g_hash_table_lookup(directIpCallsProperties, TLS_ENABLE);        
     }
