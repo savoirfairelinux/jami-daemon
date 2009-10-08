@@ -120,13 +120,13 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     ost::MutexLock lock (_mutex);
 
-    std::string pcmp = buildDeviceTopo (plugin , indexOut , 0);
+    std::string pcmp = buildDeviceTopo (plugin, indexOut, 0);
 
-    std::string pcmc = buildDeviceTopo (PCM_PLUGHW , indexIn , 0);
+    std::string pcmc = buildDeviceTopo (PCM_PLUGHW, indexIn, 0);
 
     _converter = new SamplerateConverter (_audioSampleRate, _frameSize);
 
-    return open_device (pcmp , pcmc , stream);
+    return open_device (pcmp, pcmc, stream);
 }
 
 void
@@ -507,7 +507,7 @@ AlsaLayer::write (void* buffer, int length)
                 break;
 
             default:
-                //_debugAlsa ("Write error unknown - dropping frames **********************************: %s\n", snd_strerror(err));
+                _debugAlsa ("Write error unknown - dropping frames **********************************: %s\n", snd_strerror(err));
                 stopPlaybackStream ();
 
                 break;
@@ -868,6 +868,9 @@ void AlsaLayer::audioCallback (void)
             toPut = (micAvailBytes <= micAvailPut) ? micAvailBytes : micAvailPut;
             in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
             toPut = read (in, toPut* sizeof(SFLDataFormat));
+
+	    adjustVolume (in, toPut, SFL_PCM_CAPTURE);
+
             if (in != 0)
             {
 		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
@@ -893,12 +896,11 @@ void AlsaLayer::audioCallback (void)
 	    }
             free(in); in=0;
         }
-	/*
-	else if(micAvailAlsa < 0)
+	else if(micAvailBytes < 0)
 	{
-	    _debug("AlsaLayer::audioCallback (mic): error: %s\n", snd_strerror(micAvailAlsa));
+	    _debug("AlsaLayer::audioCallback (mic): error: %s\n", snd_strerror(micAvailBytes));
 	}
-	*/
+
     }
 }
 
