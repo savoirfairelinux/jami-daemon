@@ -41,6 +41,7 @@
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include <istream>
 
 #define CAN_REINVITE        1
 
@@ -2836,13 +2837,15 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     AccountID account_id;
     pjsip_uri *uri;
     pjsip_sip_uri *sip_uri;
-    std::string userName, server;
+    std::string userName, server, displayName;
     SIPVoIPLink *link;
     CallID id;
     SIPCall* call;
     pjsip_inv_session *inv;
 	SIPAccount *account;
     pjmedia_sdp_session *r_sdp;
+
+    pjsip_generic_string_hdr* hdr;
 
     // voicemail part
     std::string method_name;
@@ -2882,12 +2885,26 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         return false;
     }
 
+    
+    char* from_header = strstr(rdata->msg_info.msg_buf, "From: ");
+    // _debug("------------------------------ thefromheader: %s\n", from_header);
+    char* display_name = strtok(from_header, "\"");
+    display_name = strtok(NULL, "\"");
+    _debug("UserAgent: The displayname for this call: %s\n", display_name);
+    displayName = string(display_name);
+
     _debug ("UserAgent: The receiver is : %s@%s\n", userName.data(), server.data());
 
     _debug ("UserAgent: The callee account id is %s\n", account_id.c_str());
 
     /* Now, it is the time to find the information of the caller */
     uri = rdata->msg_info.from->uri;
+
+
+    // display_name = rdata->msg_info.from->name;
+
+    std::string temp((char*)(&display_name));
+
     sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
 
     // Store the peer number
@@ -3008,6 +3025,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     call->setConnectionState (Call::Progressing);
 
     call->setPeerNumber (peerNumber);
+
+    call->setDisplayName(displayName);
 
     call->initRecFileName();
 

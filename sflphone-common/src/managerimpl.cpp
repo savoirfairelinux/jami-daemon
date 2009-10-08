@@ -1745,7 +1745,7 @@ bool
 ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
 {
     PulseLayer *pulselayer;
-    std::string from, number;
+    std::string from, number, display_name;
 
     stopTone (true);
 
@@ -1775,7 +1775,11 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
 
     from = call->getPeerName();
 
+    display_name = call->getDisplayName();
+
     number = call->getPeerNumber();
+
+    _debug(    "incomingCall display_name from: %s, number: %s\n");
 
     if (from != "" && number != "") {
         from.append (" <");
@@ -1797,7 +1801,8 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     */
 
     /* Broadcast a signal over DBus */
-    if (_dbus) _dbus->getCallManager()->incomingCall (accountId, call->getCallId(), from);
+    _debug("    From: %s, Number: %s\n", from.c_str(), number.c_str());
+    if (_dbus) _dbus->getCallManager()->incomingCall (accountId, call->getCallId(), from.c_str());
 
     //if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
 
@@ -2626,6 +2631,8 @@ ManagerImpl::setAudioOutputDevice (const int index)
     alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
     alsaplugin = alsalayer->getAudioPlugin ();
 
+    _debug("  set output plugin: %s\n", alsaplugin.c_str());
+
     _audiodriver->openDevice (_audiodriver->getIndexIn(), index, _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_PLAYBACK, alsaplugin);
 
     if (_audiodriver -> getErrorMessage() != -1)
@@ -2645,6 +2652,7 @@ ManagerImpl::getAudioInputDeviceList (void)
     std::vector <std::string> devices;
 
     audiolayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+
 
     if (audiolayer)
         devices = audiolayer->getSoundCardsInfo (SFL_PCM_CAPTURE);
@@ -2667,6 +2675,8 @@ ManagerImpl::setAudioInputDevice (const int index)
 
     alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
     alsaplugin = alsalayer->getAudioPlugin ();
+
+    _debug("  set input plugin: %s\n", alsaplugin.c_str());
 
     _audiodriver->openDevice (index, _audiodriver->getIndexOut(), _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_CAPTURE, alsaplugin);
 

@@ -125,6 +125,20 @@ class Call: public Recordable{
          */
         const std::string& getPeerName() {  return _peerName; }
 
+	/** 
+         * Set the display name (caller in ingoing)
+         * not protected by mutex (when created)
+         * @return std::string The peer display name
+         */
+        void setDisplayName(const std::string& name) {  _displayName = name; }
+
+	/** 
+         * Get the peer display name (caller in ingoing)
+         * not protected by mutex (when created)
+         * @return std::string The peer name
+         */
+        const std::string& getDisplayName() {  return _displayName; }
+
         /**
          * Tell if the call is incoming
          * @return true if yes
@@ -260,8 +274,13 @@ class Call: public Recordable{
         /** Number of the peer */
         std::string _peerNumber;
 
+	/** Display Name */
+	std::string _displayName;
+
 	/** File name for his call : time YY-MM-DD */
         std::string _filename;
+
+	
 };
 
 #endif
