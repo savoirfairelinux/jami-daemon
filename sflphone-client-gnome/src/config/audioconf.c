@@ -396,11 +396,11 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
 
     // codec_list_get_by_name(name);
     if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"8 kHz")==0))
-        codec = codec_list_get_by_payload(110);
+        codec = codec_list_get_by_payload((gconstpointer) 110);
     else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"16 kHz")==0))
-        codec = codec_list_get_by_payload(111);
+        codec = codec_list_get_by_payload((gconstpointer) 111);
     else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"32 kHz")==0))
-        codec = codec_list_get_by_payload(112);
+        codec = codec_list_get_by_payload((gconstpointer) 112);
     else
         codec = codec_list_get_by_name(name);
 
@@ -631,6 +631,8 @@ select_audio_manager( void )
         gtk_widget_show( alsa_conf );
         gtk_widget_set_sensitive(GTK_WIDGET(alsa_conf), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(pa_mute_widget), FALSE);
+
+		gtk_action_set_sensitive (GTK_ACTION (volumeToggle), TRUE);
     }
     else if( SHOW_ALSA_CONF && gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ))
     {
@@ -639,6 +641,13 @@ select_audio_manager( void )
         gtk_container_remove( GTK_CONTAINER(alsa_conf) , alsabox );
         gtk_widget_hide( alsa_conf );
         gtk_widget_set_sensitive(GTK_WIDGET(pa_mute_widget), TRUE);
+		if (gtk_toggle_action_get_active ( GTK_TOGGLE_ACTION (volumeToggle)))
+		{
+			    main_window_volume_controls(FALSE);
+				dbus_set_volume_controls (FALSE);
+				gtk_toggle_action_set_active ( GTK_TOGGLE_ACTION (volumeToggle), FALSE);
+		}
+		gtk_action_set_sensitive (GTK_ACTION (volumeToggle), FALSE);
     } else {
         DEBUG("alsa conf panel...nothing");
     }

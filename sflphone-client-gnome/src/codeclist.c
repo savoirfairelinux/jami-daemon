@@ -103,7 +103,7 @@ codec_list_get_by_name( const gchar* name)
 }
 
 codec_t*
-codec_list_get_by_payload( const int payload)
+codec_list_get_by_payload(gconstpointer payload)
 {
   GList * c = g_queue_find_custom(codecQueue, payload, is_payload_codecstruct);
   if(c)

@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+
+if [ "$1" = "remove" ]; then
+    # Remove alternatives symlink set in postinst
+    update-alternatives --remove sflphone /usr/bin/sflphone
+fi

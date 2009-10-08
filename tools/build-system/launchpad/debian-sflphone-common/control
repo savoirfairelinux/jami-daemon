@@ -1,0 +1,19 @@
+Source: sflphone-common
+Maintainer: SavoirFaireLinux Inc <emmanuel.milou@savoirfairelinux.com>
+Section: gnome
+Priority: optional
+Build-Depends: debhelper (>= 5), libgcc1 , autoconf, automake, libpulse-dev, libsamplerate0-dev, libcommoncpp2-dev, libccrtp-dev, libgsm1-dev, libspeex-dev, libtool, libdbus-1-dev, libasound2-dev, libspeexdsp-dev, uuid-dev, libexpat1-dev, libzrtpcpp-dev, libssl-dev
+Standards-Version: 3.7.3
+
+Package: sflphone-common
+Priority: optional
+Architecture: i386
+Depends: libsamplerate0 (>=0.1.2) , libexpat1 , libc6 (>= 2.3.6-6) , libcommoncpp2-1.6-0  , libgsm1 (>=1.0.10) , libspeex1 (>=1.1.12) , libdbus-1-3, libasound2 (>= 1.0), libpulse0 (>= 0.9.6), libccrtp1-1.6-1, libspeexdsp1
+Replaces: sflphone
+Conflicts: sflphone
+Homepage: http://www.sflphone.org
+Description: SIP and IAX2 compatible softphone - Core
+ SFLphone is meant to be a robust enterprise-class desktop phone.
+ SFLphone is released under the GNU General Public License.
+ SFLphone is being developed by the global community, and maintained by
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.

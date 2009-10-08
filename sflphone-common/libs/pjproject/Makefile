@@ -70,7 +70,6 @@ xhdrid:
 		cp /tmp/id $$f; \
 	done
 
-prefix = /usr/local
 install:
 	mkdir -p $(DESTDIR)$(prefix)/lib
 	cp -L $$(find . -name '*.a') $(DESTDIR)$(prefix)/lib
