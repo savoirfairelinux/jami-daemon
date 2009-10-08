@@ -50,13 +50,17 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
         const gchar* from,
         void * foo  UNUSED )
 {
-    DEBUG ("Incoming call! %s",callID);
+    DEBUG("Incoming call! %s", callID);
+    DEBUG("    from: %s", from);
 
     callable_obj_t * c;
     gchar *peer_name, *peer_number;
     // We receive the from field under a formatted way. We want to extract the number and the name of the caller
     peer_name = call_get_peer_name (from);
     peer_number = call_get_peer_number (from);
+
+    DEBUG("    peer name: %s", peer_name);
+    DEBUG("    peer number: %s", peer_number);
 
     create_new_call (CALL, CALL_STATE_INCOMING, g_strdup(callID), g_strdup(accountID), peer_name, peer_number, &c);
 #if GTK_CHECK_VERSION(2,10,0)

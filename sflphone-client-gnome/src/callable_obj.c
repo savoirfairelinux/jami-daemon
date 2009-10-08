@@ -51,20 +51,33 @@ gchar* call_get_peer_name (const gchar *format)
 {
     gchar *end, *name;
 
-    end = g_strrstr (format, "\"");
+    DEBUG("    callable_obj: %s", format);
+
+    end = g_strrstr (format, "<");
+
     if (!end) {
         return g_strndup (format, 0);
     } else {
-        name = format +1;
+        name = format;
         return g_strndup(name, end - name);
     }
+    
+    
+    
 }
 
 gchar* call_get_peer_number (const gchar *format)
 {
+    DEBUG("    callable_obj: %s", format);
+
     gchar * number = g_strrstr(format, "<") + 1;
     gchar * end = g_strrstr(format, ">");
-    number = g_strndup(number, end - number  );
+
+    if(end && number)
+	number = g_strndup(number, end - number  );
+    else
+	number = g_strdup(format);
+    
     return number;
 }
 

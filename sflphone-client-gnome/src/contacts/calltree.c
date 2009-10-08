@@ -576,7 +576,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
         
 	    if(c->_state == CALL_STATE_TRANSFERT)
 	    {
-		description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:%s</i> ",
+		description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
 						      c->_peer_number,
 						      c->_peer_name,
 						      c->_trsft_to);
@@ -585,20 +585,20 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	    {
 		// c->_zrtp_confirmed == FALSE : Hack explained in callable_obj.h
 		if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
-		    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
+		    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
 							  c->_peer_number,
 							  c->_peer_name,
 							  c->_sas);
 		} else {
 		    DEBUG("Updating state code %d %s", c->_state_code, c->_state_code_description);
 		    if (c->_state_code) {
-			description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>%s (%d)</i>",
+			description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
 							      c->_peer_number,
 							      c->_peer_name,
 							      c->_state_code_description,
 							      c->_state_code);
 		    } else {
-			description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
+			description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
 							      c->_peer_number,
 							      c->_peer_name );                
 		    }
@@ -712,14 +712,14 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     if(c->_state_code == 0) {
 
-	description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
+	description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
 							      c->_peer_number,
 							      c->_peer_name);
 
     }
     else {
 
-	description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>%s (%d)</i>",
+	description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
 							      c->_peer_number,
 							      c->_peer_name,
 							      c->_state_code_description,
@@ -830,7 +830,7 @@ void calltree_add_history_entry (callable_obj_t * c)
 
     // New call in the list
     gchar * description, *date="", *duration="";
-    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
+    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
             c->_peer_number,
             c->_peer_name);
 
@@ -968,10 +968,13 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	// Every participant to a conference must be secured, the conference is not secured elsewhere
 	conf->_conference_secured = TRUE;
 
+	DEBUG("Determine if conference is secured");
 
 	participant = conf->participant;
 	if(participant)
 	{
+	    DEBUG("    determine if at least one participant uses srtp");
+
 	    participant = conf->participant;
 	    for (pl = participant; *participant; participant++)
 	    {	    
@@ -986,14 +989,18 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 		    }
 
 		    if(g_strcasecmp(srtp_enabled,"true") == 0) {
+			DEBUG("    srtp enabled for participant %s\n", participant);
 			conf->_conf_srtp_enabled = TRUE;
 			break;
+		    } else {
+			DEBUG("    srtp is not enabled for participant %s\n", participant);
 		    }
-
 		    
 		}
 
 	    }
+
+	    DEBUG("    determine if all conference participant are secured");
 
 	    if(conf->_conf_srtp_enabled)
 	    {
@@ -1007,8 +1014,11 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 		    
 			if(call->_srtp_state == 0)
 			{
+			    DEBUG("    participant %s is not secured", participant);
 			    conf->_conference_secured = FALSE;
 			    break;
+			} else {
+			    DEBUG("    participant %s is secured", participant);
 			}
 		    }
 		}
@@ -1019,10 +1029,12 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	{
 	    if(conf->_conference_secured)
 	    {
+		DEBUG("Conference is secured");
 		pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
 	    }
 	    else
 	    {
+		DEBUG("Conference is not secured");
 		pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
 	    }
 	}

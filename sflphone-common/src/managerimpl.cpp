@@ -1745,7 +1745,7 @@ bool
 ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
 {
     PulseLayer *pulselayer;
-    std::string from, number, display_name;
+    std::string from, number, display_name, display;
 
     stopTone (true);
 
@@ -1775,11 +1775,11 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
 
     from = call->getPeerName();
 
-    display_name = call->getDisplayName();
-
     number = call->getPeerNumber();
 
-    _debug(    "incomingCall display_name from: %s, number: %s\n");
+    display_name = call->getDisplayName();
+
+    // _debug(    "incomingCall from: %s, number: %s, display_name: %s\n", from.c_str(), number.c_str(), display_name.c_str());
 
     if (from != "" && number != "") {
         from.append (" <");
@@ -1801,8 +1801,16 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     */
 
     /* Broadcast a signal over DBus */
-    _debug("    From: %s, Number: %s\n", from.c_str(), number.c_str());
-    if (_dbus) _dbus->getCallManager()->incomingCall (accountId, call->getCallId(), from.c_str());
+    _debug("    From: %s, Number: %s, DisplayName: %s\n", from.c_str(), number.c_str(), display_name.c_str());
+
+    display = display_name;
+    display.append(" ");
+    display.append(from);
+
+    _debug("    To be displayed: %s\n", display.c_str());
+    
+
+    if (_dbus) _dbus->getCallManager()->incomingCall (accountId, call->getCallId(), display.c_str());
 
     //if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
 
@@ -2511,7 +2519,9 @@ ManagerImpl::getCurrentCodecName (const CallID& id)
     VoIPLink* link = getAccountLink (accountid);
     Call* call = link->getCall(id);
 
-
+    if(!call)
+	return "";
+    
     if(call->getState() != Call::Active)
 	return "";
     else
