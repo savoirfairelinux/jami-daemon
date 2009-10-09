@@ -457,27 +457,29 @@ int SIPVoIPLink::sendRegister (AccountID id)
         }
     }
 
-    // Launch a new UDP listener/transport, using the published address
-    if (account->isStunEnabled ()) {
-	pj_status_t status;
+	else
+	{
+		// Launch a new UDP listener/transport, using the published address
+		if (account->isStunEnabled ()) {
+			pj_status_t status;
 
-	_debug("    sendRegister: createAlternateUdpTransport\n");
-	status = createAlternateUdpTransport (id);
+			_debug("    sendRegister: createAlternateUdpTransport\n");
+			status = createAlternateUdpTransport (id);
 		
-	if (status != PJ_SUCCESS) {
-	    _debug ("Failed to initialize UDP transport with an extern published address for account %s\n", id.c_str());
-	}
-    }
-    else
-    {
+			if (status != PJ_SUCCESS) {
+				_debug ("Failed to initialize UDP transport with an extern published address for account %s\n", id.c_str());
+			}
+		}
+		else
+		{
 	
-	status = createUDPServer (id);
-	if (status != PJ_SUCCESS) {
-	    _debug ("Failed to initialize UDP transport with a local address for account %s\n. Try to use the local UDT transport", id.c_str());
-	    account->setAccountTransport (_localUDPTransport);
+			status = createUDPServer (id);
+			if (status != PJ_SUCCESS) {
+			_debug ("Failed to initialize UDP transport with a local address for account %s\n. Try to use the local UDT transport", id.c_str());
+			account->setAccountTransport (_localUDPTransport);
+			}
+		}
 	}
-    }
-    
 
     _mutexSIP.enterMutex();
     
@@ -814,9 +816,7 @@ SIPVoIPLink::hangup (const CallID& id)
     if (status != PJ_SUCCESS)
         return false;
 
-
     call->getInvSession()->mod_data[getModId() ] = NULL;
-
 
     // Release RTP thread
     if (Manager::instance().isCurrentCall (id)) {
@@ -1986,11 +1986,6 @@ std::string SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_t
         return machineName;
     }
 
-	if (transport == NULL) {
-        _debug ("transport is NULL in findLocalAddressFromUri\n. Try the local UDP transport");
-        transport = _localUDPTransport;
-    }
-
     pjsip_sip_uri * sip_uri = NULL;
 
     sip_uri = (pjsip_sip_uri*) pjsip_uri_get_uri (genericUri);
@@ -2003,6 +1998,10 @@ std::string SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_t
     if (PJSIP_URI_SCHEME_IS_SIPS (sip_uri)) {
         transportType = PJSIP_TRANSPORT_TLS;
     } else {
+		if (transport == NULL) {
+			_debug ("transport is NULL in findLocalAddressFromUri\n. Try the local UDP transport");
+			transport = _localUDPTransport;
+		}
         transportType = PJSIP_TRANSPORT_UDP;
     }
 
@@ -2022,17 +2021,19 @@ std::string SIPVoIPLink::findLocalAddressFromUri(const std::string& uri, pjsip_t
     int port;
 
     pj_status_t status;
-
-
 	/* Init the transport selector */
 	//_debug ("Transport ID: %s\n", transport->obj_name);
-	status = init_transport_selector (transport, &tp_sel);
+	if (transportType == PJSIP_TRANSPORT_UDP)
+	{
+		status = init_transport_selector (transport, &tp_sel);
 
-
-    if (status == PJ_SUCCESS)
-	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
-    else
-	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+		if (status == PJ_SUCCESS)
+			status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
+		else
+			status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+	}
+	else
+		status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
 
     if (status != PJ_SUCCESS) {
         _debug ("Failed to find local address from transport\n");
@@ -2078,11 +2079,6 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
         return atoi (DEFAULT_SIP_PORT);
     }
 
-	if (transport == NULL) {
-        _debug ("transport is NULL in findLocalPortFromUri - Try the local UDP transport\n");
-		transport = _localUDPTransport;
-	}
-
     pjsip_sip_uri * sip_uri = NULL;
 
     sip_uri = (pjsip_sip_uri*) pjsip_uri_get_uri (genericUri);
@@ -2096,6 +2092,11 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
         transportType = PJSIP_TRANSPORT_TLS;
         port = atoi (DEFAULT_SIP_TLS_PORT);
     } else {
+		if (transport == NULL) {
+			_debug ("transport is NULL in findLocalPortFromUri - Try the local UDP transport\n");
+			transport = _localUDPTransport;
+		}
+
         transportType = PJSIP_TRANSPORT_UDP;
         port = atoi (DEFAULT_SIP_PORT);
     }
@@ -2115,15 +2116,21 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     // transports and the transport type
     
     /* Init the transport selector */
-    _debug ("Transport ID: %s\n", transport->obj_name);
-    pj_status_t status;
+	pj_status_t status;
+	if (transportType == PJSIP_TRANSPORT_UDP)
+	{
+		_debug ("Transport ID: %s\n", transport->obj_name);
 
-    status = init_transport_selector (transport, &tp_sel);
+		status = init_transport_selector (transport, &tp_sel);
 
-    if (status == PJ_SUCCESS)
-	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
-    else
-	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+		if (status == PJ_SUCCESS)
+			status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
+		else
+			status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+	}
+	else
+		status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+		
 
     if (status != PJ_SUCCESS) {
         _debug ("Failed to find local address from transport\n");
@@ -2888,10 +2895,10 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     
     char* from_header = strstr(rdata->msg_info.msg_buf, "From: ");
     // _debug("------------------------------ thefromheader: %s\n", from_header);
-    char* display_name = strtok(from_header, "\"");
-    display_name = strtok(NULL, "\"");
-    _debug("UserAgent: The displayname for this call: %s\n", display_name);
-    displayName = string(display_name);
+    //char* display_name = strtok(from_header, "\"");
+    //display_name = strtok(NULL, "\"");
+    //_debug("UserAgent: The displayname for this call: %s\n", display_name);
+    displayName = string("");//display_name);
 
     _debug ("UserAgent: The receiver is : %s@%s\n", userName.data(), server.data());
 
@@ -2903,7 +2910,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // display_name = rdata->msg_info.from->name;
 
-    std::string temp((char*)(&display_name));
+    std::string temp("");///(char*)(&display_name));
 
     sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
 
