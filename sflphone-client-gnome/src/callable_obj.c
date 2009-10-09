@@ -172,40 +172,46 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
     gchar *peer_number="", *accountID="", *time_stop="";
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
-    char *ptr;
+    char **ptr;
     const char *delim="|";
     int token=0;
 
     // details is in serialized form, i e: calltype%to%from%callid
 
-    if ((ptr = g_strsplit(details, delim,0)) != NULL) {
-        do {
+    if ((ptr = g_strsplit(details, delim,5)) != NULL) {
+
+	while (ptr != NULL && token < 5) {
+	    
             switch (token)
             {
                 case 0:
-                    history_state = get_history_state_from_id (ptr);
+                    history_state = get_history_state_from_id (*ptr);
                     break;
-                case 1:
-                    peer_number = ptr;
+	        case 1: 
+                    peer_number = *ptr;
                     break;
                 case 2:
-                    peer_name = ptr;
+                    peer_name = *ptr;
                     break;
                 case 3:
-                    time_stop = ptr;
+                    time_stop = *ptr;
                     break;
                 case 4:
-                    accountID = ptr;
+                    accountID = *ptr;
                     break;
                 default:
                     break;
             }
-            token ++;
-        } while ((ptr = g_strsplit(NULL, delim, 0)) != NULL);
+
+            token++;
+	    ptr++;
+
+	}
 
     }
     if (g_strcasecmp (peer_name, "empty") == 0)
         peer_name="";
+
     create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", accountID, peer_name, peer_number, &new_call);
     new_call->_history_state = history_state;
     new_call->_time_start = convert_gchar_to_timestamp (timestamp);
@@ -306,14 +312,14 @@ gchar* serialize_history_entry (callable_obj_t *entry)
     history_state = get_history_id_from_state (entry->_history_state);
     // and the timestamps
     timestamp = convert_timestamp_to_gchar (entry->_time_stop);
-    
+
     result = g_strconcat (history_state, separator, 
                           entry->_peer_number, separator, 
                           g_strcasecmp (entry->_peer_name,"") ==0 ? "empty": entry->_peer_name, separator, 
                           timestamp, separator, 
                           g_strcasecmp (entry->_accountID,"") ==0 ? "empty": entry->_accountID, 
                           NULL);
-
+    
     return result;
 }
 
