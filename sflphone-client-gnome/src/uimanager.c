@@ -23,6 +23,7 @@
 #include <mainwindow.h>
 #include <assistant.h>
 #include <gtk/gtk.h>
+#include <string.h>
 #include <glib/gprintf.h>
 #include <libgnome/gnome-help.h>
 #include <uimanager.h>
@@ -33,7 +34,7 @@ guint transfertButtonConnId; //The button toggled signal connection ID
 
 GtkAction * pickUpAction;
 GtkWidget * pickUpWidget;
-GtkWidget * newCallAction;
+GtkAction * newCallAction;
 GtkWidget * newCallWidget;
 GtkAction * hangUpAction;
 GtkWidget * holdMenu;
@@ -226,13 +227,13 @@ void update_actions()
 		gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (holdToolbar));
 	if (is_inserted (GTK_WIDGET (offHoldToolbar))) 
 		gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (offHoldToolbar));
-	gtk_toolbar_insert (GTK_TOOLBAR (toolbar), holdToolbar, 3);
+	gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 3);
 
 	if (is_inserted (GTK_WIDGET (newCallWidget))) 
 		gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (newCallWidget));
 	if (is_inserted (GTK_WIDGET (pickUpWidget))) 
 		gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (pickUpWidget));
-	gtk_toolbar_insert (GTK_TOOLBAR (toolbar), newCallWidget, 0);
+	gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (newCallWidget), 0);
 
 	g_signal_handler_block ( (gpointer)transferToolbar, transfertButtonConnId);
 	gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
@@ -254,7 +255,7 @@ void update_actions()
 				// Replace the dial button with the hangup button
 				g_object_ref (newCallWidget);
 				gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET(newCallWidget));
-				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), pickUpWidget, 0);
+				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (pickUpWidget), 0);
 				break;
 			case CALL_STATE_HOLD:
 				gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
@@ -264,7 +265,7 @@ void update_actions()
 				// Replace the hold button with the off-hold button
 				g_object_ref (holdToolbar);
 				gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET(holdToolbar));
-				gtk_toolbar_insert (GTK_TOOLBAR(toolbar), offHoldToolbar, 3);
+				gtk_toolbar_insert (GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM (offHoldToolbar), 3);
 				break;
 			case CALL_STATE_RINGING:
 				gtk_action_set_sensitive (GTK_ACTION (pickUpAction), TRUE);
@@ -276,7 +277,7 @@ void update_actions()
 				//gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
 				g_object_ref (newCallWidget);
 				gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (newCallWidget));
-				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), pickUpWidget, 0);
+				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (pickUpWidget), 0);
 				break;
 			case CALL_STATE_CURRENT:
 			case CALL_STATE_RECORD:
@@ -862,6 +863,40 @@ static void edit_number_cb (GtkWidget *widget UNUSED, gpointer user_data) {
 	show_edit_number ((callable_obj_t*)user_data);
 }
 
+void add_registered_accounts_to_menu (GtkWidget *menu) {
+
+	GtkWidget *menu_items;
+	unsigned int i;
+	account_t* acc, *current;
+	gchar* alias;
+
+	menu_items = gtk_separator_menu_item_new ();
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	gtk_widget_show (menu_items);
+
+	for( i = 0 ; i < account_list_get_size() ; i++ ){
+		acc = account_list_get_nth(i);
+		// Display only the registered accounts
+		if( g_strcasecmp( account_state_name(acc->state) , account_state_name(ACCOUNT_STATE_REGISTERED) ) == 0 ){
+			alias = g_strconcat( g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) , " - ",g_hash_table_lookup(acc->properties , ACCOUNT_TYPE), NULL);
+			menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
+			gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+			g_object_set_data( G_OBJECT( menu_items ) , "account" , acc );
+			g_free( alias );
+			current = account_list_get_current();
+			if(current){
+				gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
+						(g_strcasecmp( acc->accountID , current->accountID) == 0)? TRUE : FALSE);
+			}
+			g_signal_connect (G_OBJECT (menu_items), "activate",
+					G_CALLBACK (switch_account),
+					NULL);
+			gtk_widget_show (menu_items);
+		} // fi
+	}
+
+}
+
 
 	void
 show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
@@ -1225,40 +1260,6 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
 			button, event_time);
 }
 
-
-void add_registered_accounts_to_menu (GtkWidget *menu) {
-
-	GtkWidget *menu_items;
-	unsigned int i;
-	account_t* acc, *current;
-	gchar* alias;
-
-	menu_items = gtk_separator_menu_item_new ();
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-	gtk_widget_show (menu_items);
-
-	for( i = 0 ; i < account_list_get_size() ; i++ ){
-		acc = account_list_get_nth(i);
-		// Display only the registered accounts
-		if( g_strcasecmp( account_state_name(acc->state) , account_state_name(ACCOUNT_STATE_REGISTERED) ) == 0 ){
-			alias = g_strconcat( g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) , " - ",g_hash_table_lookup(acc->properties , ACCOUNT_TYPE), NULL);
-			menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
-			gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-			g_object_set_data( G_OBJECT( menu_items ) , "account" , acc );
-			g_free( alias );
-			current = account_list_get_current();
-			if(current){
-				gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
-						(g_strcasecmp( acc->accountID , current->accountID) == 0)? TRUE : FALSE);
-			}
-			g_signal_connect (G_OBJECT (menu_items), "activate",
-					G_CALLBACK (switch_account),
-					NULL);
-			gtk_widget_show (menu_items);
-		} // fi
-	}
-
-}
 
 static void ok_cb (GtkWidget *widget UNUSED, gpointer userdata) {
 

@@ -367,7 +367,7 @@ secure_off_cb (DBusGProxy *proxy UNUSED,
 show_sas_cb (DBusGProxy *proxy UNUSED,
         const gchar* callID,
         const gchar* sas,
-        const gboolean* verified,
+        const gboolean verified,
         void * foo  UNUSED )
 {
     DEBUG ("Showing SAS");

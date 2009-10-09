@@ -11,6 +11,9 @@ AC_REVISION([$Revision$])
 	AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AM_CONFIG_HEADER([config.h])
 
+# Silent build by default. Use make V=1 to increase verbosity
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+
 	dnl Use this variable in the program
 AC_SUBST(PACKAGE_VERSION)
 
@@ -159,9 +162,9 @@ AC_CHECK_TYPES([ptrdiff_t])
 	dnl PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
 	dnl AC_SUBST(UUID_CFLAGS)
 dnl AC_SUBST(UUID_LIBS)
-UUID_MIN_VERSION=1.0
-PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
-AC_SUBST(UUID_CFLAGS)
+	UUID_MIN_VERSION=1.0
+	PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
+	AC_SUBST(UUID_CFLAGS)
 AC_SUBST(UUID_LIBS)
 
 	dnl Check for alsa development package - name: libasound2-dev 
@@ -197,17 +200,17 @@ AC_SUBST(CCEXT2_CFLAGS)
 	AC_SUBST(CCRTP_LIBS)
 AC_SUBST(CCRTP_CFLAGS)
 
-dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
+	dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
 	PKG_CHECK_MODULES([libssl], libssl, , AC_MSG_ERROR([libssl is required]))
 	AC_SUBST(libssl_CFLAGS)
-	AC_SUBST(libssl_LIBS)
+AC_SUBST(libssl_LIBS)
 
-dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
+	dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 	LIBZRTPCPP_MIN_VERSION=1.3.0
 	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION})
 	AC_SUBST(ZRTPCPP_LIBS)
-	AC_SUBST(ZRTPCPP_CFLAGS)
-	
+AC_SUBST(ZRTPCPP_CFLAGS)
+
 
 dnl DBus-C++ detection (used to be in library own build system)
 	DBUS_REQUIRED_VERSION=0.60

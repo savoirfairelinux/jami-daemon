@@ -23,6 +23,7 @@
 #include <dbus/dbus.h>
 #include <actions.h>
 #include <utils.h>
+#include <string.h>
 
 #define CONTEXT_ID_REGISTRATION 0
 
@@ -127,6 +128,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
 {
     GtkTreeIter iter;
     GValue val;
+	gchar *state;
 
     memset (&val, 0, sizeof(val));
     if (!gtk_tree_selection_get_selected(selection, &model, &iter))
@@ -153,7 +155,7 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
         gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), TRUE);      
 
         /* Update status bar about current registration state */
-        gtk_statusbar_pop(status_bar, CONTEXT_ID_REGISTRATION);
+        gtk_statusbar_pop (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION);
         
         if (selectedAccount->protocol_state_description != NULL  
             && selectedAccount->protocol_state_code != 0) {
@@ -171,13 +173,13 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
                                 ") ",
                                 NULL);
                         
-           gtk_statusbar_push(status_bar, CONTEXT_ID_REGISTRATION, message);
+           gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, message);
            
            g_free(message);
             
         } else {
-            gchar * state = account_state_name(selectedAccount->state);        
-            gtk_statusbar_push(status_bar, CONTEXT_ID_REGISTRATION, state);        
+            state = (gchar*) account_state_name (selectedAccount->state);        
+            gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, state);        
         }
                   
     }
@@ -347,7 +349,7 @@ create_account_list(GtkDialog * dialog)
 
     table = gtk_table_new (1, 2, FALSE/* homogeneous */);
     gtk_table_set_col_spacings(GTK_TABLE(table), 10); 
-    gtk_container_set_border_width(GTK_TABLE(table), 10);    
+    gtk_container_set_border_width (GTK_CONTAINER (table), 10);    
     
     scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -362,7 +364,7 @@ create_account_list(GtkDialog * dialog)
             G_TYPE_POINTER  // Pointer to the Object
             );
 
-    treeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(accountStore));
+    treeView = gtk_tree_view_new_with_model (GTK_TREE_MODEL (accountStore));
     treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW (treeView));
     g_signal_connect(G_OBJECT (treeSelection), "changed",
             G_CALLBACK (select_account_cb),
@@ -399,7 +401,7 @@ create_account_list(GtkDialog * dialog)
 
     g_object_unref(G_OBJECT(accountStore));
     
-    gtk_container_add(GTK_CONTAINER(scrolledWindow), treeView);
+    gtk_container_add (GTK_CONTAINER(scrolledWindow), GTK_WIDGET (treeView));
     
     /* The buttons to press! */    
     buttonBox = gtk_vbutton_box_new();
@@ -490,7 +492,7 @@ show_account_list_config_dialog(void)
  
     /* Status bar for the account list */
     status_bar = gtk_statusbar_new();
-    gtk_statusbar_set_has_resize_grip(status_bar, FALSE);    
+    gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR (status_bar), FALSE);    
     gtk_widget_show(status_bar);
     gtk_box_pack_start(GTK_BOX(accountListDialog->vbox ), status_bar, TRUE, TRUE, 0);
 
@@ -506,10 +508,10 @@ show_account_list_config_dialog(void)
                             _(" active account"), 
                             (number_accounts == 1) ? _(""):_("s"),
                             NULL);                 
-        gtk_statusbar_push(status_bar, CONTEXT_ID_REGISTRATION, message);
+        gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, message);
         g_free(message);
     } else {
-        gtk_statusbar_push(status_bar, CONTEXT_ID_REGISTRATION, _("You have no active account"));        
+        gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, _("You have no active account"));        
     }
     
     gtk_dialog_run(accountListDialog);

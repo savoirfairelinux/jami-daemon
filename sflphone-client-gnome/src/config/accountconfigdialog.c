@@ -755,7 +755,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 
 	useStunRadioButton = gtk_radio_button_new_with_mnemonic(NULL,_("Using STUN "));
 	gtk_table_attach_defaults(GTK_TABLE(table), useStunRadioButton, 0, 2, 3, 4);
-	gtk_widget_set_sensitive(GTK_TOGGLE_BUTTON(useStunRadioButton),
+	gtk_widget_set_sensitive (GTK_WIDGET(useStunRadioButton),
 			g_strcasecmp(use_tls,"true") == 0 ? FALSE: TRUE);
 	
 	sameAsLocalRadioButton = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(useStunRadioButton), _("Same as local parameters"));

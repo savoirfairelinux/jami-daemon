@@ -21,18 +21,6 @@
 
 static GtkIconFactory *icon_factory = NULL;
 
-void init_icon_factory (void)
-{
-	// Init the factory
-	icon_factory = gtk_icon_factory_new ();
-
-	// Load icons
-	register_sflphone_stock_icons (icon_factory);
-
-	// Specify a default icon set
-	gtk_icon_factory_add_default (icon_factory);
-}
-
 void add_icon (GtkIconFactory *factory, const gchar *stock_id, const guint8 *icon_data, GtkIconSize size)
 {
 	GtkIconSet *icons;
@@ -72,4 +60,17 @@ void register_sflphone_stock_icons (GtkIconFactory *factory)
 	add_icon (factory, GTK_STOCK_ADDRESSBOOK, gnome_stock_addressbook, GTK_ICON_SIZE_SMALL_TOOLBAR);	
 	add_icon (factory, GTK_STOCK_CALLS, gnome_stock_calls, GTK_ICON_SIZE_SMALL_TOOLBAR);	
 }
+
+void init_icon_factory (void)
+{
+	// Init the factory
+	icon_factory = gtk_icon_factory_new ();
+
+	// Load icons
+	register_sflphone_stock_icons (icon_factory);
+
+	// Specify a default icon set
+	gtk_icon_factory_add_default (icon_factory);
+}
+
 

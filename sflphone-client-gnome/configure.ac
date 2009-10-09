@@ -10,6 +10,9 @@ VERSION=`cat VERSION`
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AC_CONFIG_MACRO_DIR([m4])
 
+dnl Silent build by default. Use make V=1 to increase verbosity
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+
 AC_ARG_WITH(debug,
 		AS_HELP_STRING(
 			[--with-debug],
