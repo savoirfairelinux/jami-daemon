@@ -22,6 +22,7 @@
 
 #include "audio/audiolayer.h"
 #include "audio/samplerateconverter.h"
+#include "audio/dcblocker.h"
 #include "audiostream.h"
 
 #include <pulse/pulseaudio.h>
@@ -197,6 +198,8 @@ class PulseLayer : public AudioLayer {
 
     int spkrVolume;
     int micVolume;
+
+    DcBlocker* dcblocker;
 
     // private:
 

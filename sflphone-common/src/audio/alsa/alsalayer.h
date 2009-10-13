@@ -22,6 +22,7 @@
 
 #include "audio/audiolayer.h"
 #include "audio/samplerateconverter.h"
+#include "audio/dcblocker.h"
 #include "eventthread.h"
 #include <alsa/asoundlib.h>
 
@@ -270,6 +271,8 @@ class AlsaLayer : public AudioLayer {
     SamplerateConverter * _converter;
 
     int _converterSamplingRate;
+
+    DcBlocker* dcblocker;
 
 };
 

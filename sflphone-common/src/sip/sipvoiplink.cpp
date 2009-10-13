@@ -594,8 +594,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     
     pjsip_tpselector *tp;
 
-    init_transport_selector (account->getAccountTransport (), &tp);
-    status = pjsip_regc_set_transport (regc, tp);
+    // init_transport_selector (account->getAccountTransport (), &tp);
+    // status = pjsip_regc_set_transport (regc, tp);
     
     if (status != PJ_SUCCESS) {
 	_debug ("UserAgent: Unable to set transport.\n");
@@ -1322,9 +1322,9 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     call->setInvSession (inv);
 
 	// Set the appropriate transport
-	pjsip_tpselector *tp;
-	init_transport_selector (account->getAccountTransport (), &tp);
-	status = pjsip_dlg_set_transport (dialog, tp);
+	// pjsip_tpselector *tp;
+	// init_transport_selector (account->getAccountTransport (), &tp);
+	// status = pjsip_dlg_set_transport (dialog, tp);
 
     status = pjsip_inv_send_msg (inv, tdata);
 

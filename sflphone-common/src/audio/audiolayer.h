@@ -299,6 +299,7 @@ class AudioLayer {
         int _errorMessage;
 
         ost::Mutex _mutex;
+
 };
 
 #endif // _AUDIO_LAYER_H_

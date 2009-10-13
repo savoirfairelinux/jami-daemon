@@ -19,6 +19,7 @@ libaudio_la_SOURCES = \
 		audiolayer.cpp \
 		audiodevice.cpp \
 		samplerateconverter.cpp \
+		dcblocker.cpp \
 		$(SPEEX_SOURCES_CPP)
 
 noinst_HEADERS = \
@@ -29,6 +30,7 @@ noinst_HEADERS = \
 		audiodevice.h \
 		mainbuffer.h \
 	 	recordable.h \
+		dcblocker.h \
 		samplerateconverter.h
 
 

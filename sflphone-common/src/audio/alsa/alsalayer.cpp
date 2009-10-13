@@ -46,6 +46,8 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     _audioThread = new AudioThread (this);
 
     _urgentRingBuffer.createReadPointer();
+
+    dcblocker = new DcBlocker();
 }
 
 // Destructor
@@ -57,6 +59,8 @@ AlsaLayer::~AlsaLayer (void)
     if(_converter) {
 	delete _converter; _converter = NULL;
     }
+
+    delete dcblocker; dcblocker = NULL;
 }
 
 bool
@@ -883,6 +887,8 @@ void AlsaLayer::audioCallback (void)
 		    int nb_sample_up = nbSample;
 
 		    nbSample = _converter->downsampleData ((SFLDataFormat*)in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
+
+		    dcblocker->filter_signal(rsmpl_out, nbSample);
 
 		    _mainBuffer.putData(rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
 

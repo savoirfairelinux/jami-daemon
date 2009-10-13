@@ -41,6 +41,7 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     _debug ("PulseLayer::Pulse audio constructor: Create context\n");
 
     _urgentRingBuffer.createReadPointer();
+    dcblocker = new DcBlocker();
 }
 
 // Destructor
@@ -51,6 +52,8 @@ PulseLayer::~PulseLayer (void)
     if (_converter) {
 	delete _converter; _converter = NULL;
     }
+
+    delete dcblocker; dcblocker = NULL;
 }
 
 bool
@@ -486,6 +489,8 @@ void PulseLayer::readFromMic (void)
             
             nbSample = _converter->downsampleData ((SFLDataFormat*)data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
+	    // remove dc offset
+	    dcblocker->filter_signal( rsmpl_out, nbSample );
 
 	    _mainBuffer.putData ( (void*) rsmpl_out, nbSample*sizeof(SFLDataFormat), 100);
 
