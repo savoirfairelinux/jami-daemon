@@ -3710,7 +3710,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string localPort;
     std::string publishedPort;
     std::string stunEnable;
-std::string stunServer;
+    std::string stunServer;
     std::string srtpEnable;
     std::string zrtpDisplaySas;
     std::string zrtpDisplaySasOnce;

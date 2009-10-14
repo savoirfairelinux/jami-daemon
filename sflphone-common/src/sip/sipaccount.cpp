@@ -162,55 +162,55 @@ return SUCCESS;
 
 int SIPAccount::registerVoIPLink()
 {
-// Init general settings
-loadConfig();
+    // Init general settings
+    loadConfig();
 
-if (_hostname.length() >= PJ_MAX_HOSTNAME) {
+    if (_hostname.length() >= PJ_MAX_HOSTNAME) {
 	return !SUCCESS;
-}
+    }
 
-// Init set of additional credentials, if supplied by the user
-initCredential();
+    // Init set of additional credentials, if supplied by the user
+    initCredential();
 
-// Init TLS settings if the user wants to use TLS
-bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
+    // Init TLS settings if the user wants to use TLS
+    bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
 
-if (tlsEnabled) {
+    if (tlsEnabled) {
 	_transportType = PJSIP_TRANSPORT_TLS;
 	initTlsConfiguration();
-}
+    }
 
-// Init STUN settings for this account if the user selected it
-bool stunEnabled = Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
+    // Init STUN settings for this account if the user selected it
+    bool stunEnabled = Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
 
-if (stunEnabled) {
+    if (stunEnabled) {
 	_transportType = PJSIP_TRANSPORT_START_OTHER;
 	initStunConfiguration ();
-}
+    }
 
-// In our definition of the
-// ip2ip profile (aka Direct IP Calls),
-// no registration should be performed
-if (_accountID != IP2IP_PROFILE) {
+    // In our definition of the
+    // ip2ip profile (aka Direct IP Calls),
+    // no registration should be performed
+    if (_accountID != IP2IP_PROFILE) {
 	int status = _link->sendRegister (_accountID);
 	ASSERT (status , SUCCESS);
-}
+    }
 
-return SUCCESS;
+    return SUCCESS;
 }
 
 int SIPAccount::unregisterVoIPLink()
 {
-_debug ("unregister account %s\n" , getAccountID().c_str());
-
-if (_accountID == IP2IP_PROFILE) {
+    _debug ("unregister account %s\n" , getAccountID().c_str());
+    
+    if (_accountID == IP2IP_PROFILE) {
 	return true;
-}
-
-if (_link->sendUnregister (_accountID)) {
+    }
+    
+    if (_link->sendUnregister (_accountID)) {
 	setRegistrationInfo (NULL);
 	return true;
-} else
+    } else
 	return false;
 
 }
@@ -242,25 +242,30 @@ return PJSIP_SSL_UNSPECIFIED_METHOD;
 
 void SIPAccount::initTlsConfiguration (void)
 {
-/*
-	* Initialize structure to zero
-	*/
-_tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
+    /*
+     * Initialize structure to zero
+     */
+    if(_tlsSetting){
+	free (_tlsSetting);
+	_tlsSetting = NULL;
+    } 
 
-assert (_tlsSetting);
+    _tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
 
-pjsip_tls_setting_default (_tlsSetting);
+    assert (_tlsSetting);
 
-std::string tlsCaListFile = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
-std::string tlsCertificateFile = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
-std::string tlsPrivateKeyFile = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
-std::string tlsPassword = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
-std::string tlsMethod = Manager::instance().getConfigString (_accountID, TLS_METHOD);
-std::string tlsCiphers = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
-std::string tlsServerName = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
-bool tlsVerifyServer = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
-bool tlsVerifyClient = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
-bool tlsRequireClientCertificate = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
+    pjsip_tls_setting_default (_tlsSetting);
+
+    std::string tlsCaListFile = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
+    std::string tlsCertificateFile = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
+    std::string tlsPrivateKeyFile = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
+    std::string tlsPassword = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
+    std::string tlsMethod = Manager::instance().getConfigString (_accountID, TLS_METHOD);
+    std::string tlsCiphers = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
+    std::string tlsServerName = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
+    bool tlsVerifyServer = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
+    bool tlsVerifyClient = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
+    bool tlsRequireClientCertificate = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
     std::string tlsNegotiationTimeoutSec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_SEC);
     std::string tlsNegotiationTimeoutMsec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_MSEC);
 
@@ -337,7 +342,18 @@ void SIPAccount::loadConfig()
 
     _publishedIpAddress = Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS);
 
-    _transportType = PJSIP_TRANSPORT_UDP;
+    // Init TLS settings if the user wants to use TLS
+    bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
+
+    if (tlsEnabled) {
+	_debug("---------------------------- TLS Enabled\n");
+	initTlsConfiguration();
+	_transportType = PJSIP_TRANSPORT_TLS;
+    }
+    else
+    {
+	_transportType = PJSIP_TRANSPORT_UDP;
+    }
 
     // Account generic
     Account::loadConfig();
