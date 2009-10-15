@@ -37,6 +37,7 @@ doc/*.html
 /stamp-h1
 /Makefile
 sflphone-client-gnome/stamp-h1
+*.omf
 
 # Ignore built stuff
 /src/sflphoned
@@ -94,6 +95,8 @@ sflphone-client-gnome/pixmaps/Makefile
 sflphone-client-gnome/tests/Makefile
 sflphone-client-gnome/man/Makefile
 sflphone-client-gnome/src/widget/Makefile
+sflphone-client-gnome/doc/Makefile
+sflphone-client-gnome/po/Makefile
 
 
 # Ignore sflphone-client-gnome stuff
@@ -177,3 +180,16 @@ sflphone-common/libs/dbus-c++/tools/dbusxx-xml2cpp
 
 # GNOME doc file
 sflphone-client-gnome/gnome-doc-utils.make
+sflphone-client-gnome/doc/de/
+sflphone-client-gnome/doc/fr/
+sflphone-client-gnome/doc/es/
+sflphone-client-gnome/doc/it/
+sflphone-client-gnome/doc/ko/
+sflphone-client-gnome/doc/pl/
+sflphone-client-gnome/doc/pt/
+sflphone-client-gnome/doc/pt_BR/
+sflphone-client-gnome/doc/ru/
+sflphone-client-gnome/doc/zh_CN/
+sflphone-client-gnome/doc/zh_TW/
+sflphone-client-gnome/doc/zh_HK/
+
