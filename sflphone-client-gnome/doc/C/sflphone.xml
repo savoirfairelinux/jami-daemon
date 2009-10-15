@@ -505,6 +505,57 @@
 
 		<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Direct IP calls</guimenuitem></menuchoice> to configure the advanced security features for this kind of calls.</para>
 	</sect2>
+
+	<sect2 id="conferencecall" label="Conference calls">
+	<para>SFLphone now supports conference calling
+        integrating server like features in a simple
+        GUI.</para>
+        <para>
+          <itemizedlist>
+            <listitem>
+              <guilabel>Create a conference</guilabel>
+              <para>To create a conference, drag and drop one call
+            on another. Additional participants are
+            added the same way, dragging a call on the
+            conference icon. SFLphone automatically
+            includes into the newly created conference.
+              </para>
+            </listitem>
+            <listitem>
+              <guilabel>Leave a conference</guilabel>
+              <para>
+            The Main Participant may leave at any time to
+            answer any other incoming communication or initiate
+            new ones. The conference is not interupted if Main
+            Participant left it. Double clicking the conference
+            let the Main Participant reintroduce
+            the conference.
+              </para>
+            </listitem>
+            <listitem>
+              <guilabel>Multiple conference</guilabel>
+              <para>
+            SFLphone supports multiple conferences running
+            simultaneously. Conferences may be joined the same way
+            they are created, dragging one on the
+            other.
+              </para>
+            </listitem>
+            <listitem>
+              <guilabel>Hangup/Hold a conference</guilabel>
+              <para>
+            Right click the conference icon.
+            Holding the conference put all
+            participants on hold.
+            Hangup a conference hangup all
+            participants.
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+	</sect2>
+
+
 </sect1>
 
 
@@ -527,8 +578,42 @@
 
 <sect1 id="codecs_overview">
 	<title>Codecs overview</title>
-	<para>
-	</para>
+	<para>SFLphone supports several widely used audio codec:</para>
+        <para>
+          <itemizedlist>
+            <listitem>
+              <guilabel>PCMU</guilabel>
+                <para>
+                </para>
+            </listitem>
+            <listitem>
+              <guilabel>PCMA</guilabel>
+              <para>
+              </para>
+            </listitem>
+            <listitem>
+              <guilabel>GSM</guilabel>
+              <para>
+              </para>
+            </listitem>
+            <listitem>
+              <guilabel>G722</guilabel>
+              <para>
+              </para>
+            </listitem>
+            <listitem>
+              <guilabel>SPEEX</guilabel>
+              <para>
+              </para>
+            </listitem>
+            <listitem>
+              <guilabel>CELT</guilabel>
+              <para>
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+
 </sect1>
 
 <sect1 id="addressbook">
