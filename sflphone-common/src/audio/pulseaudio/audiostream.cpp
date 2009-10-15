@@ -188,8 +188,8 @@ AudioStream::createStream (pa_context* c)
         attributes->prebuf = 4096;
         attributes->minreq = 940;
         attributes->fragsize = 4096;
-        // pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
-        pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
+        pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
+        // pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
 
         // attributes->maxlength = 66500;
@@ -201,8 +201,8 @@ AudioStream::createStream (pa_context* c)
         attributes->minreq = 940;
         attributes->fragsize = 4096;
 
-        pa_stream_connect_record (s , NULL , attributes , PA_STREAM_START_CORKED);
-        // pa_stream_connect_record( s , NULL , attributes , PA_STREAM_INTERPOLATE_TIMING );
+        // pa_stream_connect_record (s , NULL , attributes , PA_STREAM_START_CORKED);
+        pa_stream_connect_record( s , NULL , attributes , PA_STREAM_INTERPOLATE_TIMING );
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);
     } else {

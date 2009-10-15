@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,6 +31,33 @@ static  void audioCallback (pa_stream* s, size_t bytes, void* userdata)
 }
 
 
+static void stream_suspended_callback (pa_stream *s UNUSED, void *userdata UNUSED)
+{
+    _debug("PulseLayer::Stream Suspended\n");
+}
+
+
+static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
+{
+    _debug("PulseLayer::Stream Moved\n");
+}
+
+
+static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
+{
+    _debug ("PulseLayer::Buffer Underflow\n");
+    pa_stream_trigger (s, NULL, NULL);
+}
+
+
+static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
+{
+    _debug("PulseLayer::Buffer OverFlow\n");
+    //PulseLayer* pulse = (PulseLayer*) userdata;
+    // pa_stream_drop (s);
+    // pa_stream_trigger (s, NULL, NULL);
+}
+
 
 PulseLayer::PulseLayer (ManagerImpl* manager)
         : AudioLayer (manager , PULSEAUDIO)
@@ -42,6 +70,7 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 
     _urgentRingBuffer.createReadPointer();
     dcblocker = new DcBlocker();
+    is_started = false;
 }
 
 // Destructor
@@ -190,7 +219,11 @@ bool PulseLayer::createStreams (pa_context* c)
 
     playback = new AudioStream (playbackParam);
     playback->connectStream();
-    pa_stream_set_write_callback (playback->pulseStream(), audioCallback, this);
+    pa_stream_set_write_callback(playback->pulseStream(), audioCallback, this);
+    pa_stream_set_overflow_callback(playback->pulseStream(), playback_overflow_callback, this);
+    pa_stream_set_underflow_callback(playback->pulseStream(), playback_underflow_callback, this);
+    pa_stream_set_suspended_callback(playback->pulseStream(), stream_suspended_callback, this);
+    pa_stream_set_moved_callback(playback->pulseStream(), stream_moved_callback, this);
     delete playbackParam;
 
     PulseLayerType * recordParam = new PulseLayerType();
@@ -203,11 +236,12 @@ bool PulseLayer::createStreams (pa_context* c)
     record = new AudioStream (recordParam);
     record->connectStream();
     pa_stream_set_read_callback (record->pulseStream() , audioCallback, this);
+    pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
+    pa_stream_set_moved_callback(record->pulseStream(), stream_moved_callback, this);
     delete recordParam;
 
     pa_threaded_mainloop_signal (m , 0);
 
-    isCorked = true;
 
     return true;
 }
@@ -270,20 +304,25 @@ int PulseLayer::getMic (void *buffer, int toCopy)
 
 void PulseLayer::startStream (void)
 {
-    _debug ("PulseLayer::Start stream\n");
+   
 
-    _urgentRingBuffer.flush();
+    if(!is_started) {
 
-    _mainBuffer.flush();
+	_debug ("------------------------ PulseLayer::Start stream ---------------\n");
 
-    pa_threaded_mainloop_lock (m);
+	_urgentRingBuffer.flush();
 
-    pa_stream_cork (playback->pulseStream(), 0, NULL, NULL);
-    pa_stream_cork (record->pulseStream(), 0, NULL, NULL);
+	_mainBuffer.flushAllBuffers();
 
-    pa_threaded_mainloop_unlock (m);
+	// pa_threaded_mainloop_lock (m);
 
-    isCorked = false;
+	// pa_stream_cork (playback->pulseStream(), 0, NULL, NULL);
+	// pa_stream_cork (record->pulseStream(), 0, NULL, NULL);
+
+	// pa_threaded_mainloop_unlock (m);
+
+	is_started = true;
+    }
 
 }
 
@@ -291,22 +330,26 @@ void
 PulseLayer::stopStream (void)
 {
 
-    _debug ("PulseLayer::Stop stream\n");
-    pa_stream_flush (playback->pulseStream(), NULL, NULL);
-    pa_stream_flush (record->pulseStream(), NULL, NULL);
+    if(is_started) {
 
-    flushMic();
-    flushMain();
-    flushUrgent();
+	_debug ("------------------------ PulseLayer::Stop stream ---------------\n");
+	pa_stream_flush (playback->pulseStream(), NULL, NULL);
+	pa_stream_flush (record->pulseStream(), NULL, NULL);
 
-    pa_threaded_mainloop_lock (m);
+	flushMic();
+	flushMain();
+	flushUrgent();
 
-    pa_stream_cork (playback->pulseStream(), 1, NULL, NULL);
-    pa_stream_cork (record->pulseStream(), 1, NULL, NULL);
+	// pa_threaded_mainloop_lock (m);
+	
+	// pa_stream_cork (playback->pulseStream(), 1, NULL, NULL);
+	// pa_stream_cork (record->pulseStream(), 1, NULL, NULL);
 
-    pa_threaded_mainloop_unlock (m);
+	// pa_threaded_mainloop_unlock (m);
 
-    isCorked = true;
+	is_started = false;
+
+    }
 
 }
 
