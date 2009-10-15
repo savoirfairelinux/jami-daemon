@@ -25,7 +25,7 @@ Recordable::Recordable()
     FILE_TYPE fileType = FILE_WAV;
     SOUND_FORMAT soundFormat = INT16;
 
-    recAudio.setRecordingOption (fileType, soundFormat, 44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH));
+    recAudio.setRecordingOption (fileType, soundFormat, 8000, Manager::instance().getConfigString (AUDIO, RECORD_PATH));
 }
 
 
@@ -41,4 +41,12 @@ void Recordable::initRecFileName()
 {
 
     recAudio.initFileName (getRecFileId());
+}
+
+
+void Recordable::setRecordingSmplRate(int smplRate)
+{
+
+    recAudio.setSndSamplingRate(smplRate);
+
 }

@@ -497,6 +497,8 @@ namespace sfl {
             throw AudioRtpSessionException();
         }
 
+	_ca->setRecordingSmplRate(_audiocodec->getClockRate());
+
         _audiolayer->startStream();
         static_cast<D*>(this)->startRunning();
 
@@ -518,7 +520,7 @@ namespace sfl {
             // Let's wait for the next transmit cycle
             if (sessionWaiting == 1) {
                 // Record mic and speaker during conversation
-                _ca->recAudio.recData (_spkrDataConverted, _micData, _nSamplesSpkr, _nSamplesMic);
+                _ca->recAudio.recData (_spkrDataDecoded, _micData, _nSamplesSpkr, _nSamplesMic);
             } else {
                 // Record mic only while leaving a message
                 _ca->recAudio.recData (_micData,_nSamplesMic);

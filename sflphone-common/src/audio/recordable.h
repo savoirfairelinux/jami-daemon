@@ -37,6 +37,8 @@ class Recordable {
 
 	void initRecFileName();
 
+	void setRecordingSmplRate(int smplRate);
+
 	virtual std::string getRecFileId() = 0;
 
 	// virtual std::string getFileName() = 0;
