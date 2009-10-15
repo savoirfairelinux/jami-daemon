@@ -41,7 +41,7 @@ struct wavhdr {
 AudioRecord::AudioRecord()
 {
 
-    sndSmplRate_ = 44100;
+    sndSmplRate_ = 8000;
     channels_ = 1;
     byteCounter_ = 0;
     recordingEnabled_ = false;
@@ -305,7 +305,7 @@ bool AudioRecord::setWavFile()
     }
 
     struct wavhdr hdr = {"RIF", 44, "WAV", "fmt", 16, 1, 1,
-        44100, 0, 2, 16, "dat", 0
+        sndSmplRate_, 0, 2, 16, "dat", 0
     };
 
     hdr.riff[3] = 'F';
