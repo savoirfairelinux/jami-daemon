@@ -104,12 +104,25 @@ void show_advanced_tls_options(GHashTable * properties)
     caListFileChooser = gtk_file_chooser_button_new(_("Choose a CA list file (optional)"), GTK_FILE_CHOOSER_ACTION_OPEN);
     gtk_table_attach (GTK_TABLE(table), caListFileChooser, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+
     if (tls_ca_list_file == NULL) {
-        gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(caListFileChooser), g_get_home_dir());
-    } else {
-        GFile * file = g_file_new_for_path(tls_ca_list_file);
-        gtk_file_chooser_set_file (GTK_FILE_CHOOSER(caListFileChooser), file, NULL);
-        g_object_unref(file);
+        // gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(caListFileChooser), g_get_home_dir());
+	gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
+
+    } 
+    else {
+	DEBUG("**********************************************************%s\n", tls_ca_list_file);
+
+	if(g_strcmp0(tls_ca_list_file, "") == 0) {
+
+	    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
+	}
+	else{
+
+	    GFile * file = g_file_new_for_path(tls_ca_list_file);
+	    gtk_file_chooser_set_file (GTK_FILE_CHOOSER(caListFileChooser), file, NULL);
+	    g_object_unref(file);
+	}
     }
 
     label = gtk_label_new( _("Public endpoint certificate file"));
@@ -120,11 +133,20 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_table_attach (GTK_TABLE(table), certificateFileChooser, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     if (tls_certificate_file == NULL) {
-        gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(caListFileChooser), g_get_home_dir());
+        // gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(caListFileChooser), g_get_home_dir());
+	gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
     } else {
-        GFile * file = g_file_new_for_path(tls_certificate_file);
-        gtk_file_chooser_set_file (GTK_FILE_CHOOSER(certificateFileChooser), file, NULL);
-        g_object_unref(file);
+	DEBUG("**********************************************************%s\n", tls_certificate_file);
+	if(g_strcmp0(tls_certificate_file, "") == 0){
+
+	    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(certificateFileChooser));
+	}
+	else {
+
+	    GFile * file = g_file_new_for_path(tls_certificate_file);
+	    gtk_file_chooser_set_file (GTK_FILE_CHOOSER(certificateFileChooser), file, NULL);
+	    g_object_unref(file);
+	}
     }
          
     label = gtk_label_new(("Private key file"));
@@ -135,11 +157,22 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_table_attach (GTK_TABLE(table), privateKeyFileChooser, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     if (tls_private_key_file == NULL) {
-        gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(privateKeyFileChooser), g_get_home_dir());
+	gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(caListFileChooser));
+        // gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(privateKeyFileChooser), g_get_home_dir());
     } else {
-        GFile * file = g_file_new_for_path(tls_private_key_file);
-        gtk_file_chooser_set_file (GTK_FILE_CHOOSER(privateKeyFileChooser), file, NULL);
-        g_object_unref(file);
+	DEBUG("**********************************************************%s\n", tls_private_key_file);
+	if(g_strcmp0(tls_private_key_file, "") == 0) {
+
+	    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(privateKeyFileChooser));
+	}
+	else {
+
+	    GFile * file = g_file_new_for_path(tls_private_key_file);
+	    gtk_file_chooser_set_file (GTK_FILE_CHOOSER(privateKeyFileChooser), file, NULL);
+	    g_object_unref(file);
+
+	}
+
     }
   
  	label = gtk_label_new_with_mnemonic (_("Password for the private key"));
