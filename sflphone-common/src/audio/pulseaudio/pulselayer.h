@@ -78,7 +78,7 @@ class PulseLayer : public AudioLayer {
     static void underflow ( pa_stream* s, void* userdata );
     static void stream_state_callback( pa_stream* s, void* user_data );	
     static void context_state_callback( pa_context* c, void* user_data );
-    static void stream_suspended_callback ( pa_stream* s, void* userdata );	
+    // static void stream_suspended_callback ( pa_stream* s, void* userdata );	
 
     bool isCaptureActive (void){return true;}
 
@@ -130,7 +130,9 @@ class PulseLayer : public AudioLayer {
     int getMicVolume( void ) { return micVolume; }
     void setMicVolume( int value ) { micVolume = value; }
 
-    void processData( void );
+    void processPlaybackData( void );
+
+    void processCaptureData( void );
     
   private:
     // Copy Constructor

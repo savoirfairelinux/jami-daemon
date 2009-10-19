@@ -182,12 +182,14 @@ AudioStream::createStream (pa_context* c)
 
     assert (s);
 
+    // parameters are defined as number of bytes
+    // 2048 bytes (1024 int16) is 20 ms at 44100 Hz 
     if (_streamType == PLAYBACK_STREAM) {
-        attributes->maxlength = 60000;
-        attributes->tlength = 4096;
-        attributes->prebuf = 4096;
-        attributes->minreq = 940;
-        attributes->fragsize = 4096;
+        attributes->maxlength = 16000;
+        attributes->tlength = 2048;
+        attributes->prebuf = 1024;
+        attributes->minreq = 1024;
+        attributes->fragsize = 1024;
         pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
         // pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
@@ -195,11 +197,11 @@ AudioStream::createStream (pa_context* c)
         // attributes->maxlength = 66500;
         // attributes->fragsize = (uint32_t)-1;
 
-        attributes->maxlength = 60000;
-        attributes->tlength = 4096;
-        attributes->prebuf = 4096;
-        attributes->minreq = 940;
-        attributes->fragsize = 4096;
+        attributes->maxlength = 16000;
+        attributes->tlength = 1024;
+        attributes->prebuf = 1024;
+        attributes->minreq = 512;
+        attributes->fragsize = 1024;
 
         // pa_stream_connect_record (s , NULL , attributes , PA_STREAM_START_CORKED);
         pa_stream_connect_record( s , NULL , attributes , PA_STREAM_INTERPOLATE_TIMING );

@@ -428,7 +428,8 @@ ManagerImpl::hangupCall (const CallID& call_id)
     int nbCalls = getCallList().size();
 
     audiolayer = getAudioDriver();
-    // stop streamx
+
+    // stop streams
     if (! (nbCalls >= 1))
     {
 	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
@@ -3149,6 +3150,7 @@ void ManagerImpl::switchAudioManager (void)
 
         default:
             _debug ("Error: audio layer unknown\n");
+	    break;
     }
 
     _audiodriver->setErrorMessage (-1);

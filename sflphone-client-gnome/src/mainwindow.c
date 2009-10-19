@@ -198,6 +198,7 @@ create_main_window ()
 	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 
 	widget = create_toolbar_actions (ui_manager);
+	gtk_toolbar_set_style (GTK_TOOLBAR (widget), GTK_TOOLBAR_BOTH);
 	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 
 	gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
