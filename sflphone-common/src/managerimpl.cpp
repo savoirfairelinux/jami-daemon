@@ -1998,6 +1998,9 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 
     audiolayer = getAudioDriver();
 
+    if (audiolayer)
+	audiolayer->startStream();
+
     if (_telephoneTone != 0) {
         _toneMutex.enterMutex();
         _telephoneTone->setCurrentTone (toneId);
@@ -2148,7 +2151,7 @@ ManagerImpl::ringtone()
 AudioLoop*
 ManagerImpl::getTelephoneTone()
 {
-    // _debug("ManagerImpl::getTelephoneTone()\n");
+    _debug("ManagerImpl::getTelephoneTone()\n");
     if (_telephoneTone != 0) {
         ost::MutexLock m (_toneMutex);
         return _telephoneTone->getCurrentTone();

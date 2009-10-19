@@ -154,6 +154,8 @@ PulseLayer::connectPulseAudioServer (void)
 
     pa_threaded_mainloop_unlock (m);
 
+    _urgentRingBuffer.flushAll();
+
     //serverinfo();
     //muteAudioApps(99);
     _debug ("Context creation done\n");
@@ -246,6 +248,8 @@ bool PulseLayer::createStreams (pa_context* c)
 
     pa_threaded_mainloop_signal (m , 0);
 
+    _urgentRingBuffer.flushAll();
+
 
     return true;
 }
@@ -257,6 +261,8 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
     _debug ("PulseLayer::openDevice \n");
     _audioSampleRate = sampleRate;
     _frameSize = frameSize;
+
+    _urgentRingBuffer.flushAll();
 
     /*
     m = pa_threaded_mainloop_new();
@@ -373,9 +379,9 @@ PulseLayer::stopStream (void)
 	pa_stream_flush (playback->pulseStream(), NULL, NULL);
 	pa_stream_flush (record->pulseStream(), NULL, NULL);
 
-	flushMic();
-	flushMain();
-	flushUrgent();
+	// flushMic();
+	// flushMain();
+	// flushUrgent();
 
 	// closeCaptureStream();
 	// closePlaybackStream();
@@ -428,6 +434,8 @@ void PulseLayer::processPlaybackData (void)
     // Handle the data for the speakers
     if ( playback &&(playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
 
+	_debug("PulseLayer::processPlaybackData()\n");
+
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if (pa_stream_writable_size (playback->pulseStream()) == 0)
             return;
@@ -462,6 +470,8 @@ void PulseLayer::writeToSpeaker (void)
 
     if (urgentAvailBytes > 0) {
 
+	_debug("Urgent Avail?????????????????????\n");
+
         // Urgent data (dtmf, incoming call signal) come first.
         //_debug("Play urgent!: %i\e" , urgentAvail);
         toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
@@ -476,26 +486,43 @@ void PulseLayer::writeToSpeaker (void)
     } else {
 
         AudioLoop* tone = _manager->getTelephoneTone();
+	AudioLoop* file_tone = _manager->getTelephoneFile();
 
         if (tone != 0) {
 
-            toGet = framesPerBuffer;
-            out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
-            tone->getNext (out, toGet , 100);
-            pa_stream_write (playback->pulseStream(), out, toGet  * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+	    if (playback->getStreamState() == PA_STREAM_READY)
+	    {
+		_debug("Play Tone!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-	    pa_xfree (out);
+		toGet = framesPerBuffer;
+		out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
+		tone->getNext (out, toGet , 100);
+		pa_stream_write (playback->pulseStream(), out, toGet  * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+		pa_xfree (out);
+	    }
         }
 
-        if ( (tone=_manager->getTelephoneFile()) != 0) {
+        if (file_tone != 0) {
 
-            toGet = framesPerBuffer;
-            toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat) ;
-            out = (SFLDataFormat*) pa_xmalloc (toPlay);
-            tone->getNext (out, toPlay/2 , 100);
-            pa_stream_write (playback->pulseStream(), out, toPlay, NULL, 0, PA_SEEK_RELATIVE);
+	    if (playback->getStreamState() == PA_STREAM_READY)
+	    {
 
-	    pa_xfree (out);
+		_debug("Play File Tone!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+
+		toGet = framesPerBuffer;
+		toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat);
+		_debug("toPlay: %i\n", toPlay);
+		out = (SFLDataFormat*) pa_xmalloc (toPlay);
+		file_tone->getNext (out, toPlay/2 , 100);
+		pa_stream_write (playback->pulseStream(), out, toPlay, NULL, 0, PA_SEEK_RELATIVE);
+
+		_debug("ok\n");
+
+		pa_xfree (out);
+
+		_debug("end of play file\n");
+	    }
 
         } else {
 
@@ -549,10 +576,13 @@ void PulseLayer::writeToSpeaker (void)
 
             } else {
 
-		_debug("send zeros......................\n");
+		if((tone == 0) && (file_tone == 0)) {
+		    
+		    _debug("send zeros......................\n");
 
-                bzero (out, maxNbBytesToGet);
-		pa_stream_write (playback->pulseStream(), out, maxNbBytesToGet, NULL, 0, PA_SEEK_RELATIVE);
+		    bzero (out, maxNbBytesToGet);
+		    pa_stream_write (playback->pulseStream(), out, maxNbBytesToGet, NULL, 0, PA_SEEK_RELATIVE);
+		}
             }
 
 	    _urgentRingBuffer.Discard(toGet);

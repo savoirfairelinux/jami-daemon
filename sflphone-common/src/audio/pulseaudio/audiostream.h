@@ -183,6 +183,8 @@ class AudioStream {
     
     ost::Mutex _mutex;
 
+    bool _stream_is_ready;
+
 };
 
 #endif // _AUDIO_STREAM_H

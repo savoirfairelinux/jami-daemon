@@ -20,7 +20,7 @@
 #include <audiostream.h>
 #include "pulselayer.h"
 
-static pa_channel_map channel_map ;
+static pa_channel_map channel_map;
 
 
 AudioStream::AudioStream (PulseLayerType * driver)
@@ -31,7 +31,7 @@ AudioStream::AudioStream (PulseLayerType * driver)
         _volume(),
         flag (PA_STREAM_AUTO_TIMING_UPDATE),
         sample_spec(),
-        _mainloop (driver->mainloop)
+	_mainloop (driver->mainloop)
 {
     sample_spec.format = PA_SAMPLE_S16LE;
     sample_spec.rate = 44100;
@@ -136,7 +136,6 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
             break;
 
         case PA_STREAM_READY:
-
             _debug ("Stream successfully created, connected to %s\n", pa_stream_get_device_name (s));
             // pa_stream_cork( s, 0, NULL, NULL);
             break;
@@ -187,9 +186,9 @@ AudioStream::createStream (pa_context* c)
     if (_streamType == PLAYBACK_STREAM) {
         attributes->maxlength = 16000;
         attributes->tlength = 2048;
-        attributes->prebuf = 1024;
+        attributes->prebuf = 2048;
         attributes->minreq = 1024;
-        attributes->fragsize = 1024;
+        attributes->fragsize = 4096;
         pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
         // pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
