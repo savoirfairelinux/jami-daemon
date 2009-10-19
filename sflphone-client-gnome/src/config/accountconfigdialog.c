@@ -790,6 +790,8 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gtk_entry_set_text(GTK_ENTRY(stunServerEntry), stun_server);
 	gtk_table_attach_defaults(GTK_TABLE(table), stunServerEntry, 1, 2, 8, 9);
 	 
+	use_stun_cb (GTK_WIDGET (useStunRadioButton), NULL);
+
     // This will trigger a signal, and the above two
     // widgets need to be instanciated before that.
 	g_signal_connect(useStunRadioButton, "toggled", G_CALLBACK(use_stun_cb), useStunRadioButton);		    		
