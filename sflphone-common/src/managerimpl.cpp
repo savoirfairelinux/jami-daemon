@@ -779,6 +779,19 @@ ManagerImpl::refuseCall (const CallID& id)
 
     stopTone (true);
 
+
+    int nbCalls = getCallList().size();
+
+    // AudioLayer* audiolayer = getAudioDriver();
+    
+    if (nbCalls <= 1)
+    {
+	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
+	
+	AudioLayer* audiolayer = getAudioDriver();
+	audiolayer->stopStream();
+    }
+
     /* Direct IP to IP call */
 
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -808,6 +821,8 @@ ManagerImpl::refuseCall (const CallID& id)
 
         switchCall ("");
     }
+
+    
 
     return returnValue;
 }
