@@ -99,7 +99,7 @@ AudioStream::disconnectStream (void)
 {
     _debug ("Destroy audio streams\n");
 
-    pa_threaded_mainloop_lock (_mainloop);
+    // pa_threaded_mainloop_lock (_mainloop);
 
     if (_audiostream) {
         pa_stream_disconnect (_audiostream);
@@ -107,7 +107,7 @@ AudioStream::disconnectStream (void)
         _audiostream = NULL;
     }
 
-    pa_threaded_mainloop_unlock (_mainloop);
+    // pa_threaded_mainloop_unlock (_mainloop);
 
     return true;
 }

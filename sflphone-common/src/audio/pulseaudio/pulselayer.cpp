@@ -294,16 +294,26 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
 void PulseLayer::closeCaptureStream (void)
 {
     if (record) {
+
+	pa_threaded_mainloop_lock (m);
+	
 	delete record;
 	record=NULL;
+
+	pa_threaded_mainloop_unlock (m);
     }
 }
 
 void PulseLayer::closePlaybackStream (void)
 {
     if (playback) {
+
+	pa_threaded_mainloop_lock (m);
+
 	delete playback;
 	playback=NULL;
+
+	pa_threaded_mainloop_unlock (m);
     }
 }
 
@@ -471,13 +481,12 @@ void PulseLayer::writeToSpeaker (void)
     if (urgentAvailBytes > 0) {
 
 	_debug("Urgent Avail?????????????????????\n");
-
-        // Urgent data (dtmf, incoming call signal) come first.
-        //_debug("Play urgent!: %i\e" , urgentAvail);
+        
         toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
         _urgentRingBuffer.Get (out, toGet, 100);
         pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
+
         // Consume the regular one as well (same amount of bytes)
         _mainBuffer.discard (toGet);
 
