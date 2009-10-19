@@ -427,10 +427,12 @@ ManagerImpl::hangupCall (const CallID& call_id)
 
     int nbCalls = getCallList().size();
 
+    // _debug("nbCalls: %i\n", nbCalls);
+
     audiolayer = getAudioDriver();
 
     // stop streams
-    if (! (nbCalls >= 1))
+    if (nbCalls <= 1)
     {
 	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
         audiolayer->stopStream();
@@ -1895,6 +1897,18 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
 	if (isCurrentCall(call_id)) 
 	{
 	    stopTone (true);
+
+	    int nbCalls = getCallList().size();
+
+	    // stop streams
+	    if (nbCalls <= 1)
+	    {
+		_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
+		
+		AudioLayer* audiolayer = getAudioDriver();
+		audiolayer->stopStream();
+	    }
+	    
 	    switchCall ("");
 	}
     }
