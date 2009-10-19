@@ -23,11 +23,22 @@
 
 int framesPerBuffer = 2048;
 
-static  void audioCallback (pa_stream* s, size_t bytes, void* userdata)
+static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
 {
+    _debug("playback_callback\n");
+
     assert (s && bytes);
     assert (bytes > 0);
-    static_cast<PulseLayer*> (userdata)->processData();
+    static_cast<PulseLayer*> (userdata)->processPlaybackData();
+}
+
+static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
+{
+    // _debug("capture_callback\n");
+
+    assert(s && bytes);
+    assert(bytes > 0);
+    static_cast<PulseLayer*> (userdata)->processCaptureData();
 }
 
 
@@ -138,7 +149,7 @@ PulseLayer::connectPulseAudioServer (void)
 
     if (pa_context_get_state (context) != PA_CONTEXT_READY) {
         _debug ("Error connecting to pulse audio server\n");
-        pa_threaded_mainloop_unlock (m);
+        // pa_threaded_mainloop_unlock (m);
     }
 
     pa_threaded_mainloop_unlock (m);
@@ -212,9 +223,9 @@ bool PulseLayer::createStreams (pa_context* c)
 
     playback = new AudioStream (playbackParam);
     playback->connectStream();
-    pa_stream_set_write_callback(playback->pulseStream(), audioCallback, this);
+    pa_stream_set_write_callback(playback->pulseStream(), playback_callback, this);
     pa_stream_set_overflow_callback(playback->pulseStream(), playback_overflow_callback, this);
-    // pa_stream_set_underflow_callback(playback->pulseStream(), playback_underflow_callback, this);
+    pa_stream_set_underflow_callback(playback->pulseStream(), playback_underflow_callback, this);
     // pa_stream_set_suspended_callback(playback->pulseStream(), stream_suspended_callback, this);
     // pa_stream_set_moved_callback(playback->pulseStream(), stream_moved_callback, this);
     delete playbackParam;
@@ -228,7 +239,7 @@ bool PulseLayer::createStreams (pa_context* c)
 
     record = new AudioStream (recordParam);
     record->connectStream();
-    pa_stream_set_read_callback (record->pulseStream() , audioCallback, this);
+    pa_stream_set_read_callback (record->pulseStream() , capture_callback, this);
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
     // pa_stream_set_moved_callback(record->pulseStream(), stream_moved_callback, this);
     delete recordParam;
@@ -412,7 +423,7 @@ void PulseLayer::overflow (pa_stream* s, void* userdata UNUSED)
 }
 
 
-void PulseLayer::processData (void)
+void PulseLayer::processPlaybackData (void)
 {
     // Handle the data for the speakers
     if ( playback &&(playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
@@ -424,13 +435,17 @@ void PulseLayer::processData (void)
         writeToSpeaker();
     }
 
+}
+
+
+void PulseLayer::processCaptureData(void)
+{
 
     // Handle the mic
     // We check if the stream is ready
     if ( record &&(record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
         readFromMic();
-
-
+    
 }
 
 void PulseLayer::writeToSpeaker (void)
@@ -534,7 +549,10 @@ void PulseLayer::writeToSpeaker (void)
 
             } else {
 
+		_debug("send zeros......................\n");
+
                 bzero (out, maxNbBytesToGet);
+		pa_stream_write (playback->pulseStream(), out, maxNbBytesToGet, NULL, 0, PA_SEEK_RELATIVE);
             }
 
 	    _urgentRingBuffer.Discard(toGet);

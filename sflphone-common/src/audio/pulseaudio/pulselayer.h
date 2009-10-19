@@ -130,7 +130,9 @@ class PulseLayer : public AudioLayer {
     int getMicVolume( void ) { return micVolume; }
     void setMicVolume( int value ) { micVolume = value; }
 
-    void processData( void );
+    void processPlaybackData( void );
+
+    void processCaptureData( void );
     
   private:
     // Copy Constructor
