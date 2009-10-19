@@ -29,6 +29,7 @@
 #include <uimanager.h>
 
 static GtkWidget *toolbar;
+static GtkWidget *toolbarWindows;
 
 guint transfertButtonConnId; //The button toggled signal connection ID
 
@@ -57,9 +58,9 @@ enum {
 };
 
 
-static gboolean is_inserted (GtkWidget* button)
+static gboolean is_inserted (GtkWidget* button, GtkWidget *current_toolbar)
 {
-	return (GTK_WIDGET (button)->parent == GTK_WIDGET (toolbar));
+	return (GTK_WIDGET (button)->parent == GTK_WIDGET (current_toolbar));
 }
 
 
@@ -220,20 +221,41 @@ void update_actions()
 	gtk_action_set_sensitive (GTK_ACTION (copyAction),   FALSE);
 	gtk_action_set_sensitive (GTK_ACTION (voicemailAction), FALSE);
 	gtk_widget_set_sensitive (GTK_WIDGET (transferToolbar), FALSE);
+	gtk_widget_set_sensitive( GTK_WIDGET(contactButton), FALSE);
+	gtk_widget_set_tooltip_text (GTK_WIDGET (contactButton), _("No address book selected"));
 
 	//g_object_ref (holdToolbar);
 	//g_object_ref (unholdButton);
-	if (is_inserted (GTK_WIDGET (holdToolbar)))   
+
+	g_object_ref (contactButton);
+	if (is_inserted (GTK_WIDGET(contactButton), GTK_WIDGET (toolbarWindows)))    
+	{
+		gtk_container_remove (GTK_CONTAINER (toolbarWindows), GTK_WIDGET (contactButton));
+	}
+
+	if (is_inserted (GTK_WIDGET (holdToolbar), GTK_WIDGET (toolbar)))   
 		gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (holdToolbar));
-	if (is_inserted (GTK_WIDGET (offHoldToolbar))) 
+	if (is_inserted (GTK_WIDGET (offHoldToolbar), GTK_WIDGET (toolbar))) 
 		gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (offHoldToolbar));
 	gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 3);
 
-	if (is_inserted (GTK_WIDGET (newCallWidget))) 
+	if (is_inserted (GTK_WIDGET (newCallWidget), GTK_WIDGET (toolbar))) 
 		gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (newCallWidget));
-	if (is_inserted (GTK_WIDGET (pickUpWidget))) 
+	if (is_inserted (GTK_WIDGET (pickUpWidget), GTK_WIDGET (toolbar))) 
 		gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET (pickUpWidget));
 	gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (newCallWidget), 0);
+
+	// If addressbook support has been enabled and all addressbooks are loaded, display the icon
+	
+	if (addressbook_is_enabled () && addressbook_is_ready()) {  
+		gtk_toolbar_insert (GTK_TOOLBAR (toolbarWindows), contactButton, 2);
+		// Make the icon clickable only if at least one address book is active
+		if (addressbook_is_active ())
+		{
+			gtk_widget_set_sensitive( GTK_WIDGET(contactButton), TRUE);
+			gtk_widget_set_tooltip_text (GTK_WIDGET (contactButton), _("Address book"));
+		}
+	}
 
 	g_signal_handler_block ( (gpointer)transferToolbar, transfertButtonConnId);
 	gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
@@ -802,7 +824,7 @@ static const GtkRadioActionEntry radio_menu_entries[] = {
 
 	{"CallWindow", GTK_STOCK_CALLS, "_Call window", NULL, "Calls list", CALLTREE_CALLS},
 	{"History", "appointment-soon", "_History", NULL, "Calls history", CALLTREE_HISTORY},
-	{"Addressbook", GTK_STOCK_ADDRESSBOOK, "_Address book", NULL, "Address book", CALLTREE_CONTACTS}
+	{"Addressbook", GTK_STOCK_ADDRESSBOOK, "_Address book", NULL, NULL, CALLTREE_CONTACTS}
 
 };
 
@@ -1394,14 +1416,12 @@ GtkWidget* create_toolbar_actions (GtkUIManager *ui_manager)
 
 GtkWidget* create_toolbar_windows (GtkUIManager *ui_manager)
 {
-	GtkWidget *toolbar;
-
-	toolbar = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows");
+	toolbarWindows = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows");
 	active_calltree = current_calls;
 
 	historyButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/HistoryToolbar");
 	contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/AddressbookToolbar");
 	currentCallsButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/CallWindowToolbar");
 
-	return toolbar;
+	return toolbarWindows;
 }
