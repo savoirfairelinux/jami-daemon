@@ -372,6 +372,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 
     }
 
+
     if (!getAccountLink (account_id)->answer (call_id)) {
         // error when receiving...
         removeCallAccount (call_id);
@@ -777,7 +778,7 @@ ManagerImpl::refuseCall (const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    stopTone (true);
+    stopTone (false);
 
 
     int nbCalls = getCallList().size();
@@ -1700,6 +1701,8 @@ ManagerImpl::playDtmf (char code, bool isTalking)
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
+	audiolayer->flushUrgent();
+
         audiolayer->startStream();
         audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
     }
@@ -2030,6 +2033,8 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
     if (audiolayer)
 	audiolayer->startStream();
 
+    audiolayer->flushUrgent();
+
     if (_telephoneTone != 0) {
         _toneMutex.enterMutex();
         _telephoneTone->setCurrentTone (toneId);
@@ -2039,6 +2044,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
         nbSamples = audioloop->getSize();
         SFLDataFormat buf[nbSamples];
 
+	
         if (audiolayer) {
             audiolayer->putUrgent (buf, nbSamples);
         } else
@@ -2218,6 +2224,7 @@ void ManagerImpl::notificationIncomingCall (void)
         SFLDataFormat buf[nbSampling];
         tone.getNext (buf, tone.getSize());
         /* Put the data in the urgent ring buffer */
+	audiolayer->flushUrgent();
         audiolayer->putUrgent (buf, sizeof (SFLDataFormat) *nbSampling);
     }
 }
