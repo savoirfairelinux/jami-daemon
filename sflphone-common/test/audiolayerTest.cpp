@@ -169,7 +169,7 @@ void AudioLayerTest::testPulseConnect()
     CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 1);
 
     // usleep(1000000);
-    CPPUNIT_ASSERT (_pulselayer->disconnectPulseAudioServer() == true);
+    CPPUNIT_ASSERT (_pulselayer->disconnectAudioStream() == true);
 }
 
 
