@@ -25,7 +25,7 @@ int framesPerBuffer = 2048;
 
 static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
 {
-    _debug("playback_callback\n");
+    // _debug("playback_callback\n");
 
     assert (s && bytes);
     assert (bytes > 0);
@@ -448,7 +448,6 @@ void PulseLayer::writeToSpeaker (void)
 
     if (urgentAvailBytes > 0) {
 
-	_debug("Urgent Avail?????????????????????\n");
         
         toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
@@ -469,7 +468,6 @@ void PulseLayer::writeToSpeaker (void)
 
 	    if (playback->getStreamState() == PA_STREAM_READY)
 	    {
-		_debug("Play Tone!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
 		toGet = framesPerBuffer;
 		out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
@@ -485,8 +483,6 @@ void PulseLayer::writeToSpeaker (void)
 	    if (playback->getStreamState() == PA_STREAM_READY)
 	    {
 
-		_debug("Play File Tone!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-
 		toGet = framesPerBuffer;
 		toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat);
 		_debug("toPlay: %i\n", toPlay);
@@ -494,11 +490,7 @@ void PulseLayer::writeToSpeaker (void)
 		file_tone->getNext (out, toPlay/2 , 100);
 		pa_stream_write (playback->pulseStream(), out, toPlay, NULL, 0, PA_SEEK_RELATIVE);
 
-		_debug("ok\n");
-
 		pa_xfree (out);
-
-		_debug("end of play file\n");
 	    }
 
         } else {
@@ -554,8 +546,6 @@ void PulseLayer::writeToSpeaker (void)
             } else {
 
 		if((tone == 0) && (file_tone == 0)) {
-		    
-		    _debug("send zeros......................\n");
 
 		    bzero (out, maxNbBytesToGet);
 		    pa_stream_write (playback->pulseStream(), out, maxNbBytesToGet, NULL, 0, PA_SEEK_RELATIVE);

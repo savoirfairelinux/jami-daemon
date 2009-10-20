@@ -136,10 +136,15 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 void
 AlsaLayer::startStream (void)
 {
-    _debug ("Start ALSA streams\n");
+    _debug ("AlsaLayer:: startStream\n");
     prepareCaptureStream ();
+    _debug("------------------------------\n");
+    preparePlaybackStream ();
+    _debug("------------------------------\n");
     startCaptureStream ();
+    _debug("------------------------------\n");
     startPlaybackStream ();
+    _debug("------------------------------\n");
 
     _urgentRingBuffer.flush();
     _mainBuffer.flush();
@@ -150,9 +155,9 @@ AlsaLayer::startStream (void)
 void
 AlsaLayer::stopStream (void)
 {
-    _debug ("AlsaLayer::stopStream :: Stop ALSA streams\n");
+    _debug ("AlsaLayer:: stopStream\n");
     stopCaptureStream ();
-    //stopPlaybackStream ();
+    stopPlaybackStream ();
 
     /* Flush the ring buffers */
     flushUrgent ();
@@ -227,40 +232,53 @@ void AlsaLayer::stopCaptureStream (void)
     int err;
 
     if (_CaptureHandle) {
-        err = snd_pcm_drop (_CaptureHandle);
-
-        stop_capture ();
+	_debug("AlsaLayer:: stop Alsa capture\n");
+        if((err = snd_pcm_drop (_CaptureHandle)) < 0)
+	    _debug("AlsaLayer:: Error stopping ALSA capture: %s\n", snd_strerror(err));
+	else
+	    stop_capture ();
 
     }
 }
 
 void AlsaLayer::closeCaptureStream (void)
 {
-    _debug("Close Capture Stream\n");
+    int err;
+
+    _debug("AlsaLayer:: close ALSA capture\n");
 
     if (is_capture_prepared() == true && is_capture_running() == true)
         stopCaptureStream ();
 
-    if (is_capture_open())
-        snd_pcm_close (_CaptureHandle);
-
-    close_capture ();
+    if (is_capture_open()) {
+        if ((err = snd_pcm_close (_CaptureHandle)) < 0)
+	    _debug("Error closing ALSA capture: %s\n", snd_strerror(err));
+	else
+	    close_capture ();
+    }
 }
 
 void AlsaLayer::startCaptureStream (void)
 {
-    if (_CaptureHandle) {
-        _debug ("Start the capture\n");
-        snd_pcm_start (_CaptureHandle);
-        start_capture();
+    int err;
+
+    if (_CaptureHandle && !is_capture_running()) {
+        _debug ("AlsaLayer:: start ALSA capture\n");
+        if((err = snd_pcm_start (_CaptureHandle)) < 0)
+	    _debug("Error starting ALSA capture: %s\n",  snd_strerror(err));
+	else
+	    start_capture();
     }
 }
 
 void AlsaLayer::prepareCaptureStream (void)
 {
-    if (is_capture_open()) {
-        if (snd_pcm_prepare (_CaptureHandle) < 0)
-            _debug ("");
+    int err;
+
+    if (is_capture_open() && !is_capture_prepared()) {
+	_debug("AlsaLayer:: prepare ALSA capture\n");
+        if ((err = snd_pcm_prepare (_CaptureHandle)) < 0)
+            _debug ("Error preparing ALSA capture: %s\n", snd_strerror(err));
         else
             prepare_capture ();
     }
@@ -268,38 +286,56 @@ void AlsaLayer::prepareCaptureStream (void)
 
 void AlsaLayer::stopPlaybackStream (void)
 {
-    if (_PlaybackHandle) {
-        snd_pcm_drop (_PlaybackHandle);
-        stop_playback ();
+    int err;
+
+    if (_PlaybackHandle && is_playback_running()) {
+	_debug("AlsaLayer:: stop ALSA playback\n");
+        if((err = snd_pcm_drop (_PlaybackHandle)) < 0)
+	    _debug("Error stopping ALSA playback: %s\n", snd_strerror(err));
+	else
+	    stop_playback ();
     }
 }
 
 
 void AlsaLayer::closePlaybackStream (void)
 {
+    int err;
+
     if (is_playback_prepared() == true && is_playback_running() == true)
         stopPlaybackStream ();
 
-    if (is_playback_open())
-        snd_pcm_close (_PlaybackHandle);
-
-    close_playback ();
+    if (is_playback_open()) {
+        if ((err = snd_pcm_close (_PlaybackHandle)) < 0)
+	    _debug("Error closing ALSA playback: %s\n", snd_strerror(err));
+        else
+	    close_playback ();
+    }
 }
 
 void AlsaLayer::startPlaybackStream (void)
 {
-    if (_PlaybackHandle) {
-        snd_pcm_start (_PlaybackHandle);
-        start_playback();
+    int err;
+
+    if (_PlaybackHandle && !is_playback_running()) {
+	_debug ("AlsaLayer:: start ALSA playback\n");
+        if ((err = snd_pcm_start (_PlaybackHandle)) < 0)
+	    _debug("Error starting ALSA playback: %s\n", snd_strerror(err));
+	else
+	    start_playback();
     }
 }
 
 void AlsaLayer::preparePlaybackStream (void)
 {
-    if (is_playback_open()) {
-        if (snd_pcm_prepare (_PlaybackHandle) < 0)  _debug ("Error preparing the device\n");
+    int err;
 
-        prepare_playback ();
+    if (is_playback_open() && !is_playback_prepared()) {
+	_debug("AlsaLayer:: prepare playback stream\n");
+        if ((err = snd_pcm_prepare (_PlaybackHandle)) < 0)  
+	    _debug ("Error preparing the device: %s\n", snd_strerror(err));
+	else
+	    prepare_playback ();
     }
 }
 
