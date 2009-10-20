@@ -372,6 +372,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 
     }
 
+
     if (!getAccountLink (account_id)->answer (call_id)) {
         // error when receiving...
         removeCallAccount (call_id);
@@ -427,10 +428,12 @@ ManagerImpl::hangupCall (const CallID& call_id)
 
     int nbCalls = getCallList().size();
 
+    // _debug("nbCalls: %i\n", nbCalls);
+
     audiolayer = getAudioDriver();
 
     // stop streams
-    if (! (nbCalls >= 1))
+    if (nbCalls <= 1)
     {
 	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
         audiolayer->stopStream();
@@ -775,7 +778,20 @@ ManagerImpl::refuseCall (const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    stopTone (true);
+    stopTone (false);
+
+
+    int nbCalls = getCallList().size();
+
+    // AudioLayer* audiolayer = getAudioDriver();
+    
+    if (nbCalls <= 1)
+    {
+	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
+	
+	AudioLayer* audiolayer = getAudioDriver();
+	audiolayer->stopStream();
+    }
 
     /* Direct IP to IP call */
 
@@ -806,6 +822,8 @@ ManagerImpl::refuseCall (const CallID& id)
 
         switchCall ("");
     }
+
+    
 
     return returnValue;
 }
@@ -1683,6 +1701,8 @@ ManagerImpl::playDtmf (char code, bool isTalking)
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
+	audiolayer->flushUrgent();
+
         audiolayer->startStream();
         audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
     }
@@ -1895,6 +1915,18 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
 	if (isCurrentCall(call_id)) 
 	{
 	    stopTone (true);
+
+	    int nbCalls = getCallList().size();
+
+	    // stop streams
+	    if (nbCalls <= 1)
+	    {
+		_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
+		
+		AudioLayer* audiolayer = getAudioDriver();
+		audiolayer->stopStream();
+	    }
+	    
 	    switchCall ("");
 	}
     }
@@ -1998,6 +2030,11 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 
     audiolayer = getAudioDriver();
 
+    if (audiolayer)
+	audiolayer->startStream();
+
+    audiolayer->flushUrgent();
+
     if (_telephoneTone != 0) {
         _toneMutex.enterMutex();
         _telephoneTone->setCurrentTone (toneId);
@@ -2007,6 +2044,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
         nbSamples = audioloop->getSize();
         SFLDataFormat buf[nbSamples];
 
+	
         if (audiolayer) {
             audiolayer->putUrgent (buf, nbSamples);
         } else
@@ -2148,7 +2186,7 @@ ManagerImpl::ringtone()
 AudioLoop*
 ManagerImpl::getTelephoneTone()
 {
-    // _debug("ManagerImpl::getTelephoneTone()\n");
+    _debug("ManagerImpl::getTelephoneTone()\n");
     if (_telephoneTone != 0) {
         ost::MutexLock m (_toneMutex);
         return _telephoneTone->getCurrentTone();
@@ -2186,6 +2224,7 @@ void ManagerImpl::notificationIncomingCall (void)
         SFLDataFormat buf[nbSampling];
         tone.getNext (buf, tone.getSize());
         /* Put the data in the urgent ring buffer */
+	audiolayer->flushUrgent();
         audiolayer->putUrgent (buf, sizeof (SFLDataFormat) *nbSampling);
     }
 }

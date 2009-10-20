@@ -172,7 +172,7 @@ class PulseLayer : public AudioLayer {
     /**
      * Close the connection with the local pulseaudio server
      */
-    bool disconnectPulseAudioServer( void );
+    bool disconnectAudioStream( void );
 
     /**
      * Get some information about the pulseaudio server
