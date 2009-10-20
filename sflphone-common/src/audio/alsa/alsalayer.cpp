@@ -126,7 +126,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     std::string pcmp = buildDeviceTopo (plugin, indexOut, 0);
 
-    std::string pcmc = buildDeviceTopo (PCM_PLUGHW, indexIn, 0);
+    std::string pcmc = buildDeviceTopo (plugin, indexIn, 0);
 
     _converter = new SamplerateConverter (_audioSampleRate, _frameSize);
 
@@ -236,6 +236,8 @@ void AlsaLayer::stopCaptureStream (void)
 
 void AlsaLayer::closeCaptureStream (void)
 {
+    _debug("Close Capture Stream\n");
+
     if (is_capture_prepared() == true && is_capture_running() == true)
         stopCaptureStream ();
 
