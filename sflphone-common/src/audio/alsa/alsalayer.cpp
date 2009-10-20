@@ -135,7 +135,8 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     _converter = new SamplerateConverter (_audioSampleRate, _frameSize);
 
-    return open_device (pcmp, pcmc, stream);
+    // open_device (pcmp, pcmc, stream);
+    return true; // open_device (pcmp, pcmc, stream);
 }
 
 void
@@ -155,20 +156,14 @@ AlsaLayer::startStream (void)
     }
    
     prepareCaptureStream ();
-    _debug("------------------------------\n");
     preparePlaybackStream ();
-    _debug("------------------------------\n");
     startCaptureStream ();
-    _debug("------------------------------\n");
     startPlaybackStream ();
-    _debug("------------------------------\n");
 
     _urgentRingBuffer.flush();
-    _mainBuffer.flush();
+    _mainBuffer.flushAllBuffers();
     _mainBuffer.flushDefault();
 
-    
-    _debug("audiothread %p\n", _audioThread);
     if(_audioThread == NULL) {
 	try {
 	    _debug("Start Audio Thread\n");
@@ -550,7 +545,7 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, int flag)
 
         open_capture ();
 
-        prepare_capture ();
+        // prepare_capture ();
     }
 
     /* Start the secondary audio thread for callbacks */
@@ -676,7 +671,7 @@ AlsaLayer::handle_xrun_capture (void)
 void
 AlsaLayer::handle_xrun_playback (void)
 {
-    _debugAlsa("handle_xrun_playback\n");
+    _debugAlsa("AlsaLayer:: handle_xrun_playback\n");
 
     int state;
     snd_pcm_status_t* status;
@@ -901,8 +896,6 @@ void AlsaLayer::audioCallback (void)
             normalAvailBytes = _mainBuffer.availForGet();
             toGet = (normalAvailBytes < (int)maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
 
-
-	    _debug("maxNbByteToGet %i\n", maxNbBytesToGet);
             out = (SFLDataFormat*) malloc (maxNbBytesToGet);
 
             if (normalAvailBytes) {
@@ -917,7 +910,6 @@ void AlsaLayer::audioCallback (void)
 		    // Do sample rate conversion
 		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
 
-		    _debug("nb_sample_down %i\n", nb_sample_down);
 		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
 		    
@@ -937,7 +929,6 @@ void AlsaLayer::audioCallback (void)
 
 		if((tone == 0) && (file_tone == 0)) {
 
-		    _debug("Write Zeros ......................\n");
 		    bzero (out, maxNbBytesToGet);
 		    write (out, maxNbBytesToGet);
 		}
