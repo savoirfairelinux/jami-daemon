@@ -405,11 +405,18 @@ PulseLayer::stopStream (void)
 
 	// pa_threaded_mainloop_unlock (m);
 
+	_debug("Disconnecting PulseAudio context\n");
+
 	if (context) {
+
+	    pa_threaded_mainloop_lock (m);
 	    pa_context_disconnect (context);
 	    pa_context_unref (context);
+	    pa_threaded_mainloop_unlock (m);
 	    context = NULL;
 	}
+
+	_debug("Freeing Pulseaudio mainloop\n");
 
 	if (m) {
 	    pa_threaded_mainloop_free (m);
