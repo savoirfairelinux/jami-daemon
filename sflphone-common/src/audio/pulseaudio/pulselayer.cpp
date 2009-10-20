@@ -112,10 +112,12 @@ PulseLayer::closeLayer (void)
     }
 
     // playback->disconnectStream();
-    closePlaybackStream();
+    // closePlaybackStream();
 
     // record->disconnectStream();
-    closeCaptureStream();
+    // closeCaptureStream();
+
+    disconnectAudioStream();
 
     if (context) {
         pa_context_disconnect (context);
@@ -191,15 +193,15 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
         default:
             _debug (" Error : %s\n" , pa_strerror (pa_context_errno (c)));
-            pulse->disconnectPulseAudioServer();
+            pulse->disconnectAudioStream();
             exit (0);
             break;
     }
 }
 
-bool PulseLayer::disconnectPulseAudioServer (void)
+bool PulseLayer::disconnectAudioStream (void)
 {
-    _debug (" PulseLayer::disconnectPulseAudioServer( void ) \n");
+    _debug (" PulseLayer::disconnectAudioStream( void ) \n");
 
     closePlaybackStream();
     
@@ -214,7 +216,7 @@ bool PulseLayer::disconnectPulseAudioServer (void)
 
 bool PulseLayer::createStreams (pa_context* c)
 {
-    _debug ("--------------------------------- PulseLayer::createStreams ---------------------\n");
+    _debug ("PulseLayer::createStreams\n");
 
     PulseLayerType * playbackParam = new PulseLayerType();
     playbackParam->context = c;
@@ -257,36 +259,12 @@ bool PulseLayer::createStreams (pa_context* c)
 
 bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
 {
-
-    _debug ("PulseLayer::openDevice \n");
     _audioSampleRate = sampleRate;
     _frameSize = frameSize;
 
     _urgentRingBuffer.flushAll();
 
-    /*
-    m = pa_threaded_mainloop_new();
-    assert (m);
-    if (pa_threaded_mainloop_start (m) < 0) {
-        _debug ("Failed starting the mainloop\n");
-    }
-    */
-
-    /*
-    // Instanciate a context
-    if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
-        _debug ("Error while creating the context\n");
-
-    assert (context);
-    */
-
-    // connectPulseAudioServer();
-
-    // startStream();
-
     _converter = new SamplerateConverter (_audioSampleRate, _frameSize);
-
-    _debug ("Connection Done!! \n");
 
     return true;
 }
@@ -296,11 +274,9 @@ void PulseLayer::closeCaptureStream (void)
     if (record) {
 
 	pa_threaded_mainloop_lock (m);
-	
 	delete record;
-	record=NULL;
-
 	pa_threaded_mainloop_unlock (m);
+	record=NULL;
     }
 }
 
@@ -309,11 +285,9 @@ void PulseLayer::closePlaybackStream (void)
     if (playback) {
 
 	pa_threaded_mainloop_lock (m);
-
 	delete playback;
-	playback=NULL;
-
 	pa_threaded_mainloop_unlock (m);
+	playback=NULL;
     }
 }
 
@@ -339,9 +313,11 @@ void PulseLayer::startStream (void)
 
     if(!is_started) {
 
-	_debug ("------------------------ PulseLayer::Start stream ---------------\n");
+	_debug ("PulseLayer::Start Stream\n");
 
 	if (!m) {
+
+	    _debug("Creating PulseAudio MainLoop\n");
 	    m = pa_threaded_mainloop_new();
 	    assert (m);
 	
@@ -352,27 +328,21 @@ void PulseLayer::startStream (void)
 
 	if (!context) {
 
+	    _debug("Creating new PulseAudio Context\n");
+	    pa_threaded_mainloop_lock (m);
 	    // Instanciate a context
 	    if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
 		_debug ("Error while creating the context\n");
+	    pa_threaded_mainloop_unlock (m);
 	    
 	    assert (context);
 	}
 
 	_urgentRingBuffer.flush();
-
 	_mainBuffer.flushAllBuffers();
 
+	// Create Streams
 	connectPulseAudioServer();
-
-	// pa_threaded_mainloop_lock (m);
-
-	// pa_stream_cork (playback->pulseStream(), 0, NULL, NULL);
-	// pa_stream_cork (record->pulseStream(), 0, NULL, NULL);
-
-	// pa_threaded_mainloop_unlock (m);
-
-	// createStreams(context);
 
 	is_started = true;
     }
@@ -385,25 +355,16 @@ PulseLayer::stopStream (void)
 
     if(is_started) {
 
-	_debug ("------------------------ PulseLayer::Stop stream ---------------\n");
+	_debug ("PulseLayer::Stop Audio Stream\n");
 	pa_stream_flush (playback->pulseStream(), NULL, NULL);
 	pa_stream_flush (record->pulseStream(), NULL, NULL);
 
-	// flushMic();
-	// flushMain();
-	// flushUrgent();
+	disconnectAudioStream();
 
-	// closeCaptureStream();
-	// closePlaybackStream();
+	if (m) {
+	    pa_threaded_mainloop_stop (m);
+	}
 
-	disconnectPulseAudioServer();
-
-	// pa_threaded_mainloop_lock (m);
-	
-	// pa_stream_cork (playback->pulseStream(), 1, NULL, NULL);
-	// pa_stream_cork (record->pulseStream(), 1, NULL, NULL);
-
-	// pa_threaded_mainloop_unlock (m);
 
 	_debug("Disconnecting PulseAudio context\n");
 
@@ -451,7 +412,7 @@ void PulseLayer::processPlaybackData (void)
     // Handle the data for the speakers
     if ( playback &&(playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
 
-	_debug("PulseLayer::processPlaybackData()\n");
+	// _debug("PulseLayer::processPlaybackData()\n");
 
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if (pa_stream_writable_size (playback->pulseStream()) == 0)
