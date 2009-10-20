@@ -7,7 +7,7 @@ GNOME_DOC=gnome-doc-utils.make
 log4crc_DATA = log4crc
 log4crcdir = $(datadir)/sflphone
 
-uidir=$(DESTDIR)$(datadir)/sflphone/ui
+uidir=$(datadir)/sflphone/ui
 ui_DATA=src/ui.xml
 
 EXTRA_DIST   = $(log4crc_DATA) sflphone.desktop.in $(GNOME_DOC) m4 $(UI_DATA)
