@@ -1,5 +1,6 @@
 usr/bin
 usr/lib
+usr/lib/sflphone
 usr/share/applications
 usr/share/dbus-1/services
 usr/share/sflphone/ringtones
