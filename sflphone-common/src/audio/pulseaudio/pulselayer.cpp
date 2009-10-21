@@ -546,6 +546,7 @@ void PulseLayer::writeToSpeaker (void)
 
 		if((tone == 0) && (file_tone == 0)) {
 
+		    // _debug("maxNbBytesToGet: %i\n", maxNbBytesToGet);
 		    bzero (out, maxNbBytesToGet);
 		    pa_stream_write (playback->pulseStream(), out, maxNbBytesToGet, NULL, 0, PA_SEEK_RELATIVE);
 		}
