@@ -57,7 +57,8 @@ static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
 static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
 {
     _debug ("PulseLayer::Buffer Underflow\n");
-    pa_stream_trigger (s, NULL, NULL);
+    // pa_stream_trigger (s, NULL, NULL);
+
 }
 
 
@@ -546,6 +547,7 @@ void PulseLayer::writeToSpeaker (void)
 
 		if((tone == 0) && (file_tone == 0)) {
 
+		    // _debug("maxNbBytesToGet: %i\n", maxNbBytesToGet);
 		    bzero (out, maxNbBytesToGet);
 		    pa_stream_write (playback->pulseStream(), out, maxNbBytesToGet, NULL, 0, PA_SEEK_RELATIVE);
 		}
