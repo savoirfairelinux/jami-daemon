@@ -34,6 +34,8 @@ GtkAction *volumeToggle;
 
 gboolean uimanager_new (GtkUIManager**);
 
+static void show_edit_number ();
+
 G_END_DECLS
 
 #endif

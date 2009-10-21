@@ -293,7 +293,7 @@ gboolean sflphone_init()
         sflphone_fill_codec_list();
 
 		// Fetch the conference list
-		sflphone_fill_conference_list();
+		// sflphone_fill_conference_list();
 
         return TRUE;
     }
@@ -484,6 +484,7 @@ sflphone_busy( callable_obj_t * c )
     void
 sflphone_current( callable_obj_t * c )
 {
+
     if( c->_state != CALL_STATE_HOLD )
         set_timestamp (&c->_time_start);
     c->_state = CALL_STATE_CURRENT;
@@ -510,7 +511,6 @@ sflphone_set_transfert()
         c->_state = CALL_STATE_TRANSFERT;
         c->_trsft_to = g_strdup("");
         calltree_update_call(current_calls, c, NULL);
-        update_actions();
     }
     update_actions();
 }
@@ -524,7 +524,6 @@ sflphone_unset_transfert()
         c->_state = CALL_STATE_CURRENT;
         c->_trsft_to = g_strdup("");
         calltree_update_call(current_calls, c, NULL);
-        update_actions();
     }
     update_actions();
 }
@@ -1154,6 +1153,8 @@ void sflphone_fill_call_list (void)
 
 void sflphone_fill_conference_list(void)
 {
+	// TODO Fetch the active conferences at client startup
+	/*
     gchar** conferences = (gchar**)dbus_get_conference_list();
     gchar** pl;
     GHashTable *conference_details;
@@ -1176,6 +1177,7 @@ void sflphone_fill_conference_list(void)
 	    conferencelist_add(c);
 	}
     }
+	*/
 }
 
 void sflphone_fill_history (void)

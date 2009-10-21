@@ -224,8 +224,8 @@ void update_actions()
 	gtk_widget_set_sensitive( GTK_WIDGET(contactButton), FALSE);
 	gtk_widget_set_tooltip_text (GTK_WIDGET (contactButton), _("No address book selected"));
 
-	//g_object_ref (holdToolbar);
-	//g_object_ref (unholdButton);
+	g_object_ref (holdToolbar);
+	g_object_ref (offHoldToolbar);
 
 	g_object_ref (contactButton);
 	if (is_inserted (GTK_WIDGET(contactButton), GTK_WIDGET (toolbarWindows)))    
@@ -246,9 +246,8 @@ void update_actions()
 	gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (newCallWidget), 0);
 
 	// If addressbook support has been enabled and all addressbooks are loaded, display the icon
-	
 	if (addressbook_is_enabled () && addressbook_is_ready()) {  
-		gtk_toolbar_insert (GTK_TOOLBAR (toolbarWindows), contactButton, 2);
+		gtk_toolbar_insert (GTK_TOOLBAR (toolbarWindows), GTK_TOOL_ITEM (contactButton), 2);
 		// Make the icon clickable only if at least one address book is active
 		if (addressbook_is_active ())
 		{
@@ -257,9 +256,9 @@ void update_actions()
 		}
 	}
 
-	g_signal_handler_block ( (gpointer)transferToolbar, transfertButtonConnId);
-	gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
-	g_signal_handler_unblock ( (gpointer)transferToolbar, transfertButtonConnId);
+	// g_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
+	// gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
+	// g_signal_handler_unblock ( GTK_OBJECT (transferToolbar), transfertButtonConnId);
 
 	callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
 	conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
@@ -285,7 +284,7 @@ void update_actions()
 				gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
 				gtk_widget_set_sensitive (GTK_WIDGET (newCallWidget), TRUE);
 				// Replace the hold button with the off-hold button
-				g_object_ref (holdToolbar);
+				//g_object_ref (holdToolbar);
 				gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET(holdToolbar));
 				gtk_toolbar_insert (GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM (offHoldToolbar), 3);
 				break;
@@ -310,6 +309,9 @@ void update_actions()
 				gtk_widget_set_sensitive (GTK_WIDGET (transferToolbar),   TRUE);
 				//gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
 				gtk_action_set_sensitive( GTK_ACTION (recordAction), TRUE);
+				gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
+				gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
+				gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
 				break;
 			case CALL_STATE_BUSY:
 			case CALL_STATE_FAILURE:
@@ -317,7 +319,7 @@ void update_actions()
 				break;
 			case CALL_STATE_TRANSFERT:
 				gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
-				gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON(transferToolbar), TRUE);
+				gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), TRUE);
 				gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
 				gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
 				gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), TRUE);
@@ -366,7 +368,8 @@ void update_actions()
 
 		// gtk_action_set_sensitive( GTK_ACTION(newCallMenu), TRUE);
 	}
-	//gtk_signal_handler_unblock (holdToolbar, holdConnId);
+	// gtk_signal_handler_unblock (holdToolbar, holdConnId);
+	// gtk_signal_handler_unblock (offHoldToolbar, holdConnId);
 
 }
 
@@ -642,6 +645,7 @@ edit_copy ( void * foo UNUSED)
 	static void
 edit_paste ( void * foo UNUSED)
 {
+
 	GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 	callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
 	gchar * no = gtk_clipboard_wait_for_text (clip);
@@ -747,13 +751,29 @@ static void calltree_switch_cb (GtkRadioAction *action, GtkRadioAction *current)
 	}
 }
 
-
 /**
  * Transfert the line
  */
 static void call_transfer_cb ()
 {
-	gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar))? sflphone_set_transfert() : sflphone_unset_transfert() ; 
+	g_print ("call transfer cd !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+	gboolean active = gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar)); 
+	//g_print ("vsmb;dbfmd; bm: %i\n", active);
+	active ? sflphone_set_transfert() : sflphone_unset_transfert() ; 
+	/*callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+
+
+	if(selectedCall)
+	{
+		if(selectedCall->_state == CALL_STATE_TRANSFERT)
+		{
+			sflphone_unset_transfert ();
+		}
+		else
+		{
+			sflphone_set_transfert ();
+		}
+	}*/
 }
 
 static void call_mailbox_cb (void)
@@ -785,6 +805,8 @@ static const GtkActionEntry menu_entries[] = {
 	{ "NewCall", GTK_STOCK_DIAL, "_New call", "<control>N", "Place a new call", G_CALLBACK (call_new_call) },
 	{ "PickUp", GTK_STOCK_PICKUP, "_Pick up", NULL, "Answer the call", G_CALLBACK (call_pick_up) },
 	{ "HangUp", GTK_STOCK_HANGUP, "_Hang up", "<control>S", "Finish the call", G_CALLBACK (call_hang_up) },    
+	{ "OnHold", GTK_STOCK_ONHOLD, "O_n hold", "<control>P", "Place the call on hold", G_CALLBACK (call_hold) },    
+	{ "OffHold", GTK_STOCK_OFFHOLD, "O_ff hold", "<control>P", "Place the call off hold", G_CALLBACK (call_hold) },    
 	{ "Record", GTK_STOCK_MEDIA_RECORD, "_Record", "<control>R", "Record the current conversation", G_CALLBACK (call_record) },        
 	{ "AccountAssistant", NULL, "Configuration _Assistant", NULL, "Run the configuration assistant", G_CALLBACK (call_configuration_assistant) },    
 	{ "Voicemail", "mail-message-new", "Voicemail", NULL, "Call your voicemail", G_CALLBACK (call_mailbox_cb) },    
@@ -811,9 +833,7 @@ static const GtkActionEntry menu_entries[] = {
 
 static const GtkToggleActionEntry toggle_menu_entries[] = {
 
-	{ "OnHold", GTK_STOCK_ONHOLD, "O_n hold", "<control>P", "Place the call on hold", G_CALLBACK (call_hold) },    
-	{ "OffHold", GTK_STOCK_OFFHOLD, "O_ff hold", "<control>P", "Place the call off hold", G_CALLBACK (call_hold) },    
-	{ "Transfer", GTK_STOCK_TRANSFER, "_Transfer", "<control>T", "Transfer the call", G_CALLBACK (call_transfer_cb) },        
+	{ "Transfer", GTK_STOCK_TRANSFER, "_Transfer", "<control>T", "Transfer the call", NULL }, //G_CALLBACK (call_transfer_cb) },        
 	{ "Toolbar", NULL, "_Show toolbar", "<control>T", "Show the toolbar", NULL },
 	{ "Dialpad", NULL, "_Dialpad", "<control>D", "Show the dialpad", G_CALLBACK (dialpad_bar_cb) },
 	{ "VolumeControls",NULL, "_Volume controls", "<control>V", "Show the volume controls", G_CALLBACK (volume_bar_cb) }
@@ -1409,7 +1429,7 @@ GtkWidget* create_toolbar_actions (GtkUIManager *ui_manager)
 
 	// Set the handler ID for the transfer
     transfertButtonConnId = g_signal_connect (G_OBJECT (transferToolbar), "toggled", G_CALLBACK (call_transfer_cb), NULL);
-	holdConnId = g_signal_connect (G_OBJECT (holdToolbar), "toggled", G_CALLBACK (call_hold), NULL);
+	// holdConnId = g_signal_connect (G_OBJECT (holdToolbar), "toggled", G_CALLBACK (call_hold), NULL);
 
 	return toolbar;
 }
