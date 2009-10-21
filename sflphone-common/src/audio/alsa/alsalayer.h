@@ -265,13 +265,12 @@ class AlsaLayer : public AudioLayer {
     bool _is_open_capture;
     bool _trigger_request;
     
-    AudioThread *_audioThread;
+    AudioThread* _audioThread;
 
     /** Sample rate converter object */
-    SamplerateConverter * _converter;
+    SamplerateConverter* _converter;
 
-    int _converterSamplingRate;
-
+    // Allpass filter to remove DC offset
     DcBlocker* dcblocker;
 
 };
