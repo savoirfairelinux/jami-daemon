@@ -24,13 +24,13 @@ void AudioLayer::flushMain (void)
     ost::MutexLock guard (_mutex);
 
     // should pass call id 
-    _mainBuffer.flush();
+    _mainBuffer.flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent (void)
 {
     ost::MutexLock guard (_mutex);
-    _urgentRingBuffer.flush();
+    _urgentRingBuffer.flushAll();
 }
 
 void AudioLayer::flushMic (void)

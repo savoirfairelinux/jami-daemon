@@ -498,9 +498,11 @@ namespace sfl {
         }
 
 	_ca->setRecordingSmplRate(_audiocodec->getClockRate());
-
+ 
         _audiolayer->startStream();
         static_cast<D*>(this)->startRunning();
+
+	_audiolayer->flushUrgent();
 
         _debug ("Entering RTP mainloop for callid %s\n",_ca->getCallId().c_str());
 
