@@ -485,9 +485,8 @@ void PulseLayer::writeToSpeaker (void)
 
 		toGet = framesPerBuffer;
 		toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat);
-		_debug("toPlay: %i\n", toPlay);
 		out = (SFLDataFormat*) pa_xmalloc (toPlay);
-		file_tone->getNext (out, toPlay/2 , 100);
+		file_tone->getNext(out, toPlay/2 , 100);
 		pa_stream_write (playback->pulseStream(), out, toPlay, NULL, 0, PA_SEEK_RELATIVE);
 
 		pa_xfree (out);

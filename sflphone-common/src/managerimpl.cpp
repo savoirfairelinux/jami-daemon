@@ -2030,10 +2030,11 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 
     audiolayer = getAudioDriver();
 
-    if (audiolayer)
+    
+    if (audiolayer) {
 	audiolayer->startStream();
-
-    audiolayer->flushUrgent();
+	audiolayer->flushUrgent();
+    }
 
     if (_telephoneTone != 0) {
         _toneMutex.enterMutex();
@@ -2168,12 +2169,8 @@ ManagerImpl::ringtone()
             _audiofile.start();
             _toneMutex.leaveMutex();
 
-            if (CHECK_INTERFACE (layer, ALSA)) {
-                //ringback();
-
-            } else {
-                audiolayer->startStream();
-            }
+            audiolayer->startStream();
+ 
         } else {
             ringback();
         }
