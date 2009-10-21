@@ -473,7 +473,7 @@ void PulseLayer::writeToSpeaker (void)
 
     if (urgentAvailBytes > 0) {
 
-        _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
+        // _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
 
         toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
@@ -572,7 +572,7 @@ void PulseLayer::writeToSpeaker (void)
 
 		if((tone == 0) && (file_tone == 0)) {
 
-		    _debug("maxNbBytesToGet: %i\n", maxNbBytesToGet);
+		    // _debug("maxNbBytesToGet: %i\n", maxNbBytesToGet);
 		    SFLDataFormat* zeros = (SFLDataFormat*)pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat));
   
 		    bzero (zeros, framesPerBuffer*sizeof(SFLDataFormat));

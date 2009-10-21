@@ -713,6 +713,8 @@ AlsaLayer::handle_xrun_playback (void)
         if (state  == SND_PCM_STATE_XRUN) {
             stopPlaybackStream ();
             preparePlaybackStream ();
+
+	    
             _trigger_request = true;
         }
     }
@@ -958,8 +960,12 @@ void AlsaLayer::audioCallback (void)
 
 		if((tone == 0) && (file_tone == 0)) {
 
-		    bzero (out, maxNbBytesToGet);
-		    write (out, maxNbBytesToGet);
+		    SFLDataFormat* zeros = (SFLDataFormat*)malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+
+		    bzero (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat));
+		    write (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat));
+
+		    free (zeros);
 		}
             }
 

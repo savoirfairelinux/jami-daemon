@@ -1689,9 +1689,6 @@ ManagerImpl::playDtmf (char code, bool isTalking)
     //                            ms/s
     size = (int) ((pulselen * (float) audiolayer->getSampleRate()) / 1000);
 
-    _debug("DTMF ---------------- size: %i\n", size);
-    _debug("DTMF ----------pulselength: %i\n", pulselen);
-
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
     buf = new SFLDataFormat[size];
