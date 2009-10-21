@@ -57,7 +57,14 @@ static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
 static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
 {
     _debug ("PulseLayer::Buffer Underflow\n");
+    // const pa_timing_info* info = pa_stream_get_timing_info(s);
+    // _debug("         pa write_index: %l\n", (long)(info->write_index));
+    // _debug("         pa write_index_corupt (if not 0): %i\n",  info->write_index_corrupt);
+    // _debug("         pa read_index: %l\n", (long)(info->read_index));
+    // _debug("         pa read_index_corrupt (if not 0): %i\n", info->read_index_corrupt);
+    
 
+    // fill in audio buffer twice the prebuffering value to restart playback
     SFLDataFormat* out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat));
     bzero (out, framesPerBuffer*sizeof(SFLDataFormat));
 
@@ -347,11 +354,11 @@ void PulseLayer::startStream (void)
 	    assert (context);
 	}
 
-	_urgentRingBuffer.flush();
-	_mainBuffer.flushAllBuffers();
-
 	// Create Streams
 	connectPulseAudioServer();
+
+	_urgentRingBuffer.flushAll();
+	_mainBuffer.flushAllBuffers();
 
 	is_started = true;
     }
@@ -402,18 +409,19 @@ PulseLayer::stopStream (void)
 
 
 
-void PulseLayer::underflow (pa_stream* s UNUSED,  void* userdata UNUSED)
-{
-    _debug ("PulseLayer::Buffer Underflow\n");
-}
+// void PulseLayer::underflow (pa_stream* s UNUSED,  void* userdata UNUSED)
+//{
+//    _debug ("PulseLayer::Buffer Underflow\n");
+//}
 
-
+/*
 void PulseLayer::overflow (pa_stream* s, void* userdata UNUSED)
 {
     //PulseLayer* pulse = (PulseLayer*) userdata;
     pa_stream_drop (s);
     pa_stream_trigger (s, NULL, NULL);
 }
+*/
 
 
 void PulseLayer::processPlaybackData (void)
@@ -452,12 +460,21 @@ void PulseLayer::writeToSpeaker (void)
     int toGet;
     int toPlay;
 
+    // const pa_timing_info* info = pa_stream_get_timing_info(s);
+    
+    // _debug("         pa write_index: %i", info->write_index);
+    // _debug("         pa write_index_corupt (if not 0): %i"  info->write_index_corrupt);
+    // _debug("         pa read_index: %i", info->read_index);
+    // _debug("         pa read_index_corrupt (if not 0): %i", info->read_index_corrupt);
+
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
+
     if (urgentAvailBytes > 0) {
 
-        
+        // _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
+
         toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
         _urgentRingBuffer.Get (out, toGet, 100);
@@ -487,7 +504,7 @@ void PulseLayer::writeToSpeaker (void)
 	    }
         }
 
-        if (file_tone != 0) {
+        else if (file_tone != 0) {
 
 	    if (playback->getStreamState() == PA_STREAM_READY)
 	    {
@@ -556,11 +573,17 @@ void PulseLayer::writeToSpeaker (void)
 		if((tone == 0) && (file_tone == 0)) {
 
 		    // _debug("maxNbBytesToGet: %i\n", maxNbBytesToGet);
-		    bzero (out, maxNbBytesToGet);
-		    pa_stream_write (playback->pulseStream(), out, maxNbBytesToGet, NULL, 0, PA_SEEK_RELATIVE);
+		    SFLDataFormat* zeros = (SFLDataFormat*)pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat));
+  
+		    bzero (zeros, framesPerBuffer*sizeof(SFLDataFormat));
+		    pa_stream_write(playback->pulseStream(), zeros, framesPerBuffer*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+		    pa_xfree (zeros);
+
 		}
             }
 
+	    
 	    _urgentRingBuffer.Discard(toGet);
 
             pa_xfree (out);
