@@ -1704,7 +1704,7 @@ ManagerImpl::playDtmf (char code, bool isTalking)
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
-	audiolayer->flushUrgent();
+	// audiolayer->flushUrgent();
 
         audiolayer->startStream();
         audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
