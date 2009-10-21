@@ -59,10 +59,10 @@ static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
     _debug ("PulseLayer::Buffer Underflow\n");
 
     // fill in audio buffer twice the prebuffering value to restart playback
-    SFLDataFormat* out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat)*2);
-    bzero (out, framesPerBuffer*sizeof(SFLDataFormat)*2);
+    SFLDataFormat* out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat));
+    bzero (out, framesPerBuffer*sizeof(SFLDataFormat));
 
-    pa_stream_write (s, out, framesPerBuffer*sizeof(SFLDataFormat)*2, NULL, 0, PA_SEEK_RELATIVE); 
+    pa_stream_write (s, out, framesPerBuffer*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE); 
     pa_stream_trigger (s, NULL, NULL);
 
     pa_xfree (out);
