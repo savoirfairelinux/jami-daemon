@@ -1,4 +1,4 @@
-sflphone-client-kde (0.9.6-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.6-SYSVER) SYSTEM; urgency=low
 
     ** 0.9.6 **
 
@@ -63,9 +63,9 @@ sflphone-client-kde (0.9.6-SYSVER) SYSTEM; urgency=low
   * [#1425] Put actions in SFLPhone window class instead of ui view,
     made a separate toolbar for screens.
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 27 Jul 2009 09:53:37 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 27 Jul 2009 09:53:19 -0400
 
-sflphone-client-kde (0.9.6~rc2-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.6~rc2-SYSVER) SYSTEM; urgency=low
 
     ** 0.9.6~rc2 **
 
@@ -118,9 +118,9 @@ sflphone-client-kde (0.9.6~rc2-SYSVER) SYSTEM; urgency=low
   * common po files
   * [#1753] Remove ILBC from pjproject
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 17 Jul 2009 19:13:11 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 17 Jul 2009 19:12:58 -0400
 
-sflphone-client-kde (0.9.6~rc1-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.6~rc1-SYSVER) SYSTEM; urgency=low
 
     ** 0.9.6~rc1 **
 
@@ -226,9 +226,9 @@ sflphone-client-kde (0.9.6~rc1-SYSVER) SYSTEM; urgency=low
   * [#1317] Changed tag convention
   * [#1317] Cleaned git-dch
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 10 Jul 2009 15:50:55 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 10 Jul 2009 15:50:26 -0400
 
-sflphone-client-kde (0.9.6~beta-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.6~beta-SYSVER) SYSTEM; urgency=low
 
     ** 0.9.6~beta **
 
@@ -521,9 +521,9 @@ sflphone-client-kde (0.9.6~beta-SYSVER) SYSTEM; urgency=low
   * Config Dialog almost finished.
   * Base of QT client
 
- -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 23 Jun 2009 11:15:26 -0400
+ -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 23 Jun 2009 11:13:42 -0400
 
-sflphone-client-kde (0.9.5-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-SYSVER) SYSTEM; urgency=low
 
     ** 0.9.5 release **
 
@@ -554,7 +554,7 @@ sflphone-client-kde (0.9.5-SYSVER) SYSTEM; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 25 May 2009 11:34:48 -0400
 
-sflphone-client-kde (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
     ** 0.9.5 rc2 **
 
@@ -608,7 +608,7 @@ sflphone-client-kde (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 19 May 2009 12:08:18 -0400
 
-sflphone-client-kde (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
   [ SFLphone Project ]
   * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
@@ -637,7 +637,7 @@ sflphone-client-kde (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
  -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 05 May 2009 19:16:13 -0400
 
-sflphone-client-kde (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
   [ Julien Bonjean ]
   * Updated Eclipse stuff
@@ -859,7 +859,7 @@ sflphone-client-kde (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
  -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Mon, 27 Apr 2009 17:00:03 -0400
 
-sflphone-client-kde (0.9.4-0ubuntu2) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.4-0ubuntu2) SYSTEM; urgency=low
 
   [ Alexandre Savard ]
   * Restore speex and GSM detection
