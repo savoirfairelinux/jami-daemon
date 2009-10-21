@@ -57,7 +57,15 @@ static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
 static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
 {
     _debug ("PulseLayer::Buffer Underflow\n");
+
+    SFLDataFormat* out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat));
+    bzero (out, framesPerBuffer*sizeof(SFLDataFormat));
+
+    pa_stream_write (s, out, framesPerBuffer*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE); 
     pa_stream_trigger (s, NULL, NULL);
+
+    pa_xfree (out);
+    
 
 }
 
@@ -485,9 +493,9 @@ void PulseLayer::writeToSpeaker (void)
 	    {
 
 		toGet = framesPerBuffer;
-		toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer) ? framesPerBuffer : toGet * sizeof (SFLDataFormat);
+		toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer * sizeof (SFLDataFormat)) ? framesPerBuffer : toGet * sizeof (SFLDataFormat);
 		out = (SFLDataFormat*) pa_xmalloc (toPlay);
-		file_tone->getNext(out, toPlay/2 , 100);
+		file_tone->getNext(out, toPlay/sizeof(SFLDataFormat), 100);
 		pa_stream_write (playback->pulseStream(), out, toPlay, NULL, 0, PA_SEEK_RELATIVE);
 
 		pa_xfree (out);
