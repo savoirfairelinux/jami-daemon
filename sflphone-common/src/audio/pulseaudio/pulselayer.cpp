@@ -458,7 +458,8 @@ void PulseLayer::writeToSpeaker (void)
 
     if (urgentAvailBytes > 0) {
 
-        
+        _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
+
         toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
         _urgentRingBuffer.Get (out, toGet, 100);
@@ -488,7 +489,7 @@ void PulseLayer::writeToSpeaker (void)
 	    }
         }
 
-        if (file_tone != 0) {
+        else if (file_tone != 0) {
 
 	    if (playback->getStreamState() == PA_STREAM_READY)
 	    {
