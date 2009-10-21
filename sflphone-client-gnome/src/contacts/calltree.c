@@ -851,8 +851,6 @@ void calltree_add_history_entry (callable_obj_t * c)
 			WARN("History - Should not happen!");
 	}
 
-	pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
-
 	date = get_formatted_start_timestamp (c);
 	duration = get_call_duration (c);
 	duration = g_strconcat( date , duration , NULL);
