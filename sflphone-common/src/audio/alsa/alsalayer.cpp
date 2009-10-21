@@ -376,6 +376,35 @@ void AlsaLayer::preparePlaybackStream (void)
     }
 }
 
+/*
+void AlsaLayer::recoverPlaybackStream(int error)
+{
+
+    int err;
+
+    if (is_playback_open() && is_playback_running()) {
+	_debug("AlsaLayer:: recover playback stream\n");
+	if((err = snd_pcm_recover(_PlaybackHandle, error, 0)) < 0 )
+	    _debug("Error recovering the device: %s\n", snd_strerror(err));
+    }
+}
+*/
+
+/*
+void AlsaLayer::recoverPlaybackStream(int error)
+{
+
+    int err;
+
+    if (is_capture_open() && is_capture_running()) {
+	_debug("AlsaLayer:: recover capture stream\n");
+	if((err = snd_pcm_recover(_PlaybackHandle, error, 0)) < 0 )
+	    _debug("Error recovering the device: %s\n", snd_strerror(err));
+    }
+}
+*/
+
+
 bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
 {
 
