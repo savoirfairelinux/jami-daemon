@@ -186,11 +186,12 @@ AudioStream::createStream (pa_context* c)
     if (_streamType == PLAYBACK_STREAM) {
         attributes->maxlength = 88200;
         attributes->tlength = 22050;
-        attributes->prebuf = 4096;      // Pulseaudio will not start if prebuffering is not reached
-        attributes->minreq = 2048;      // The server side playback framesize
+        attributes->prebuf = 0;      // Pulseaudio will not start if prebuffering is not reached
+        attributes->minreq = 0;      // The server side playback framesize
         attributes->fragsize = 11025;    // Fragment size at wich we receive an interupt
-        pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_NOFLAGS, &_volume, NULL);
+        // pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_NOFLAGS, &_volume, NULL);
         // pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
+	pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
 
         // attributes->maxlength = 66500;
@@ -198,13 +199,13 @@ AudioStream::createStream (pa_context* c)
 
         attributes->maxlength = 88200;
         attributes->tlength = 22050;
-        attributes->prebuf = 4096;
-        attributes->minreq = 2048;
+        attributes->prebuf = 0;
+        attributes->minreq = 0;
         attributes->fragsize = 11025;
 
         // pa_stream_connect_record (s , NULL , attributes , PA_STREAM_START_CORKED);
         // pa_stream_connect_record( s , NULL , attributes , PA_STREAM_INTERPOLATE_TIMING );
-	pa_stream_connect_record( s, NULL, NULL, PA_STREAM_NOFLAGS);
+	pa_stream_connect_record( s, NULL, attributes, PA_STREAM_INTERPOLATE_TIMING);
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);
     } else {
