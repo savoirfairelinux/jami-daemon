@@ -186,9 +186,9 @@ AudioStream::createStream (pa_context* c)
     if (_streamType == PLAYBACK_STREAM) {
         attributes->maxlength = 16000;
         attributes->tlength = 8192;
-        attributes->prebuf = 2048;      // Pulseaudio will not start if prebuffering is not reached
-        attributes->minreq = 512;       // The server side playback framesize
-        attributes->fragsize = 1024;    // Fragment size at wich we receive an interupt
+        attributes->prebuf = 4096;      // Pulseaudio will not start if prebuffering is not reached
+        attributes->minreq = 2048;       // The server side playback framesize
+        attributes->fragsize = 4096;    // Fragment size at wich we receive an interupt
         pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
         // pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
