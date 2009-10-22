@@ -200,7 +200,7 @@ AudioStream::createStream (pa_context* c)
         attributes->tlength = (uint32_t)-1;
         attributes->prebuf = (uint32_t)-1;
         attributes->minreq = (uint32_t)-1;
-        attributes->fragsize = (uint32_t)-1;
+        attributes->fragsize = 4096;
 
         // pa_stream_connect_record (s , NULL , attributes , PA_STREAM_START_CORKED);
         // pa_stream_connect_record( s , NULL , attributes , PA_STREAM_INTERPOLATE_TIMING );
