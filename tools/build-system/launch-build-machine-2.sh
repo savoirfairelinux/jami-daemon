@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-10-20
-# Last Modified: 2009-10-21 16:54:28 -0400
+# Last Modified: 2009-10-21 18:18:07 -0400
 #####################################################
 
 # home directory
@@ -21,7 +21,6 @@ VERSION_INDEX="1"
 DO_PUSH=1
 DO_LOGGING=1
 DO_UPLOAD=1
-DO_GIT_BRANCH_CHANGE=1
 
 EDITOR=echo
 export EDITOR
@@ -31,7 +30,8 @@ REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
 WORKING_DIR="${ROOT_DIR}/sflphone-build-repository/tools/build-system"
 LAUNCHPAD_DIR="${WORKING_DIR}/launchpad"
 LAUNCHPAD_DISTRIBUTIONS=( "jaunty" "karmic" )
-LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
+#LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
+LAUNCHPAD_PACKAGES=( "sflphone-client-kde" )
 
 echo
 echo "    /***********************\\"
@@ -48,16 +48,13 @@ do
                 echo " --skip-push"
                 echo " --skip-upload"
                 echo " --no-logging"
-                echo " --skip-git-branch-change"
                 echo " --release"
                 echo " --version-index=[1,2,...]"
                 echo
                 exit 0;;
         --skip-push)
                 unset DO_PUSH;;
-        --skip-git-branch-change)
-                unset DO_GIT_BRANCH_CHANGE;;
-         --skip-upload)
+        --skip-upload)
                 unset DO_UPLOAD;;
         --no-logging)
                 unset DO_LOGGING;;
@@ -141,13 +138,13 @@ if [ ${IS_RELEASE} ]; then
 	COMMIT_HASH_BEGIN="${PREVIOUS_RELEASE_COMMIT_HASH}"
 else
 	SNAPSHOT_TAG=`date +%Y%m%d`
-	SOFTWARE_VERSION="snapshot${SNAPSHOT_TAG}0${VERSION_INDEX}"
+	SOFTWARE_VERSION="snapshot${SNAPSHOT_TAG}"
 	COMMIT_HASH_BEGIN="${CURRENT_RELEASE_COMMIT_HASH}"
 fi
 
 cd ${LAUNCHPAD_DIR}
 
-VERSION="ppa~SYSTEM~${SOFTWARE_VERSION}"
+VERSION="${SOFTWARE_VERSION}~ppa${VERSION_INDEX}~SYSTEM"
 
 for LAUNCHPAD_PACKAGE in ${LAUNCHPAD_PACKAGES[*]}
 do
@@ -192,7 +189,7 @@ END
 	for LAUNCHPAD_DISTRIBUTION in ${LAUNCHPAD_DISTRIBUTIONS[*]}
 	do
 
-		LOCAL_VERSION="ppa~${LAUNCHPAD_DISTRIBUTION}~${SOFTWARE_VERSION}"
+		LOCAL_VERSION="${SOFTWARE_VERSION}~ppa${VERSION_INDEX}~${LAUNCHPAD_DISTRIBUTION}"
 
 		cp ${DEBIAN_DIR}/control.${LAUNCHPAD_DISTRIBUTION} ${DEBIAN_DIR}/control
 		cp ${DEBIAN_DIR}/changelog.generic ${DEBIAN_DIR}/changelog
@@ -212,7 +209,7 @@ END
 done
 
 # if push is activated
-if [[ ${DO_PUSH} && ${IS_RELEASE} && ${DO_GIT_BRANCH_CHANGE} ]];then
+if [[ ${DO_PUSH} && ${IS_RELEASE} ]];then
 	echo " Doing commit"
 	git commit -m "[#1262] Released ${SOFTWARE_VERSION}" .
 
