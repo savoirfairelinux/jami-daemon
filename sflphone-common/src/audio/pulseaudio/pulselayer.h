@@ -133,6 +133,8 @@ class PulseLayer : public AudioLayer {
     void processPlaybackData( void );
 
     void processCaptureData( void );
+
+    void processData(void);
     
   private:
     // Copy Constructor

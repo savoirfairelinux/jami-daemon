@@ -30,6 +30,7 @@ static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
     assert (s && bytes);
     assert (bytes > 0);
     static_cast<PulseLayer*> (userdata)->processPlaybackData();
+    // static_cast<PulseLayer*> (userdata)->processData();
 }
 
 static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
@@ -39,6 +40,7 @@ static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
     assert(s && bytes);
     assert(bytes > 0);
     static_cast<PulseLayer*> (userdata)->processCaptureData();
+    // static_cast<PulseLayer*> (userdata)->processData();
 }
 
 
@@ -357,11 +359,14 @@ void PulseLayer::startStream (void)
 	// Create Streams
 	connectPulseAudioServer();
 
-	_urgentRingBuffer.flushAll();
-	_mainBuffer.flushAllBuffers();
+	// _urgentRingBuffer.flushAll();
+	// _mainBuffer.flushAllBuffers();
 
 	is_started = true;
     }
+
+    _urgentRingBuffer.flushAll();
+    _mainBuffer.flushAllBuffers();
 
 }
 
@@ -451,6 +456,30 @@ void PulseLayer::processCaptureData(void)
     
 }
 
+
+void PulseLayer::processData(void)
+{
+
+    // Handle the data for the speakers
+    if ( playback &&(playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
+
+	// _debug("PulseLayer::processPlaybackData()\n");
+
+        // If the playback buffer is full, we don't overflow it; wait for it to have free space
+        if (pa_stream_writable_size (playback->pulseStream()) == 0)
+            return;
+
+        writeToSpeaker();
+    }
+
+    // Handle the mic
+    // We check if the stream is ready
+    if ( record &&(record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
+        readFromMic();
+
+}
+
+
 void PulseLayer::writeToSpeaker (void)
 {
     /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
@@ -471,9 +500,9 @@ void PulseLayer::writeToSpeaker (void)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
 
-    if (urgentAvailBytes > 0) {
+    if (urgentAvailBytes > (framesPerBuffer*sizeof(SFLDataFormat))) {
 
-        // _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
+        _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
 
         toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
@@ -489,6 +518,8 @@ void PulseLayer::writeToSpeaker (void)
 
         AudioLoop* tone = _manager->getTelephoneTone();
 	AudioLoop* file_tone = _manager->getTelephoneFile();
+
+	_urgentRingBuffer.flushAll();
 
         if (tone != 0) {
 
@@ -577,12 +608,14 @@ void PulseLayer::writeToSpeaker (void)
 		if((tone == 0) && (file_tone == 0)) {
 
 		    // _debug("maxNbBytesToGet: %i\n", maxNbBytesToGet);
+		    
 		    SFLDataFormat* zeros = (SFLDataFormat*)pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat));
   
 		    bzero (zeros, framesPerBuffer*sizeof(SFLDataFormat));
 		    pa_stream_write(playback->pulseStream(), zeros, framesPerBuffer*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
 		    pa_xfree (zeros);
+		    
 
 		}
             }
@@ -603,7 +636,7 @@ void PulseLayer::readFromMic (void)
     size_t r;
 
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
-        //_debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+        _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
     }
 
     if (data != 0) {

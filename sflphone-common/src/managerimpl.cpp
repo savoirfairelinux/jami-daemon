@@ -1651,6 +1651,8 @@ ManagerImpl::playDtmf (char code, bool isTalking)
     AudioLayer *audiolayer;
     SFLDataFormat *buf;
 
+    _debug("ManagerImpl::playDtmf\n");
+
     stopTone (false);
 
     bool hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_DTMF);
@@ -1688,6 +1690,9 @@ ManagerImpl::playDtmf (char code, bool isTalking)
     //                     ---------------------
     //                            ms/s
     size = (int) ((pulselen * (float) audiolayer->getSampleRate()) / 1000);
+
+    _debug("DTMF pulselen: %i\n", pulselen);
+    _debug("DTMF size: %i\n", size);
 
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
@@ -2023,6 +2028,8 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
     AudioLayer *audiolayer;
     unsigned int nbSamples;
 
+    _debug("ManagerImpl::playATone\n");
+
     hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_TONES);
 
     if (!hasToPlayTone)
@@ -2212,6 +2219,8 @@ void ManagerImpl::notificationIncomingCall (void)
     unsigned int samplerate, nbSampling;
 
     audiolayer = getAudioDriver();
+
+    _debug("ManagerImpl::notificationIncomingCall\n");
 
     if (audiolayer != 0) {
         samplerate = audiolayer->getSampleRate();
