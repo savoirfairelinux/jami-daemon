@@ -524,10 +524,14 @@ void PulseLayer::writeToSpeaker (void)
 	    int maxNbSamplesToGet = 0;
 	    int maxNbBytesToGet = 0;
 
+	    // test if audio resampling is needed
 	    if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
  
+		// upsamplefactor is used to compute the number of bytes to get in the ring buffer 
 		double upsampleFactor = (double) _mainBufferSampleRate / _audioSampleRate;
 
+		// maxNbSamplesToGet is the number of sample to get in the ring buffer which, 
+                // once resampled, will not be over the framesPerBuffer
 		maxNbSamplesToGet = (int) ((double) framesPerBuffer * upsampleFactor);
 
 	    } else {
@@ -595,7 +599,7 @@ void PulseLayer::writeToSpeaker (void)
 
 void PulseLayer::readFromMic (void)
 {
-    const char* data;
+    const char* data = NULL;
     size_t r;
 
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
