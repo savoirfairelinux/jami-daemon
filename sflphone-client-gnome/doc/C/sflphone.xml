@@ -99,8 +99,11 @@
 		<application>SFLphone</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community.
 	</para>
 	<para>
-		Among the many features we developed for you, we could highlight the high definition sound (wide-band audio codecs - speex, G722, Celt), audio recording, voicemail notification and call history.
-		More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer and on/off hold option.
+		Among the many features we developed for you, we could
+		highlight the high definition sound (wide-band audio
+		codecs - speex, G722, Celt), multiple conference call,
+		audio recording, voicemail notification, and call history.
+		More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer, and on/off hold option.
 	</para>
 	<para>
 		This release also provides advanced security features (secure RTP and TLS).
@@ -137,7 +140,8 @@
 <sect1 id="accounts">
 	<title>Managing your accounts</title>
 	<para>
-		<application>SFLphone</application> supports both IAX2 and SIP accounts.
+		<application>SFLphone</application> supports both IAX2
+		and SIP accounts.
 	</para>
 
 	<sect2 id="accounts_basic">
@@ -507,36 +511,34 @@
 	</sect2>
 
 	<sect2 id="conferencecall" label="Conference calls">
-	<para>SFLphone now supports conference calling
-        integrating server like features in a simple
-        GUI.</para>
+	<para>SFLphone now supports conference call hosting
+        integrating server like features in a simple GUI.
+        </para>
         <para>
           <itemizedlist>
             <listitem>
               <guilabel>Create a conference</guilabel>
-              <para>To create a conference, drag and drop one call
+              <para>To host a conference, simply drag and drop one call
             on another. Additional participants are
             added the same way, dragging a call on the
-            conference icon. SFLphone automatically
-            includes into the newly created conference.
+            conference icon.
               </para>
             </listitem>
             <listitem>
               <guilabel>Leave a conference</guilabel>
               <para>
-            The Main Participant may leave at any time to
-            answer any other incoming communication or initiate
-            new ones. The conference is not interupted if Main
-            Participant left it. Double clicking the conference
-            let the Main Participant reintroduce
-            the conference.
+            SFLphone conference model let you leave a conference that
+            you are currently hosting to answer any other incoming
+            communication or even initiate new ones. The conference is
+            not interupted Double clicking the conference icon
+            let you reintroduce the conference.
               </para>
             </listitem>
             <listitem>
               <guilabel>Multiple conference</guilabel>
               <para>
             SFLphone supports multiple conferences running
-            simultaneously. Conferences may be joined the same way
+            simultaneously. Two conferences can be joined the same way
             they are created, dragging one on the
             other.
               </para>
@@ -582,33 +584,39 @@
         <para>
           <itemizedlist>
             <listitem>
-              <guilabel>PCMU</guilabel>
+              <guilabel>PCMU/PCMA</guilabel>
                 <para>
+		  ITU-T telefony standard PCM formats, 8kHz, 64
+		  kbit/s, using logarithmic byte compression algorithm.
                 </para>
-            </listitem>
-            <listitem>
-              <guilabel>PCMA</guilabel>
-              <para>
-              </para>
             </listitem>
             <listitem>
               <guilabel>GSM</guilabel>
               <para>
+		Global System for Mobile communications (GSM)
+		narrowband 8kHz standard based on linear prediction encoding.
               </para>
             </listitem>
             <listitem>
               <guilabel>G722</guilabel>
               <para>
+		ITU-T standard wideband 16kHz standard based on linear prediction.
               </para>
             </listitem>
             <listitem>
               <guilabel>SPEEX</guilabel>
               <para>
+		High quality voice encoding/decoding available
+		in narrowband 8Khz, wideband 16khz (HD Voice), 
+		and ultra-wideband 32 kHz. 
+		Integrate additional features such as Variable Bit
+		Rate (VBR) and noise reduction. 
               </para>
             </listitem>
             <listitem>
               <guilabel>CELT</guilabel>
               <para>
+		
               </para>
             </listitem>
           </itemizedlist>

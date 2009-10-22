@@ -184,27 +184,27 @@ AudioStream::createStream (pa_context* c)
     // parameters are defined as number of bytes
     // 2048 bytes (1024 int16) is 20 ms at 44100 Hz 
     if (_streamType == PLAYBACK_STREAM) {
-        attributes->maxlength = 16000;
-        attributes->tlength = 8192;
+        attributes->maxlength = 88200;
+        attributes->tlength = 22050;
         attributes->prebuf = 4096;      // Pulseaudio will not start if prebuffering is not reached
-        attributes->minreq = 2048;       // The server side playback framesize
-        attributes->fragsize = 4096;    // Fragment size at wich we receive an interupt
-        pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
+        attributes->minreq = 2048;      // The server side playback framesize
+        attributes->fragsize = 11025;    // Fragment size at wich we receive an interupt
+        pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_NOFLAGS, &_volume, NULL);
         // pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
 
         // attributes->maxlength = 66500;
         // attributes->fragsize = (uint32_t)-1;
 
-        attributes->maxlength = 32000;
-        attributes->tlength = (uint32_t)-1;
-        attributes->prebuf = (uint32_t)-1;
-        attributes->minreq = (uint32_t)-1;
-        attributes->fragsize = 4096;
+        attributes->maxlength = 88200;
+        attributes->tlength = 22050;
+        attributes->prebuf = 4096;
+        attributes->minreq = 2048;
+        attributes->fragsize = 11025;
 
         // pa_stream_connect_record (s , NULL , attributes , PA_STREAM_START_CORKED);
         // pa_stream_connect_record( s , NULL , attributes , PA_STREAM_INTERPOLATE_TIMING );
-	pa_stream_connect_record( s, NULL, NULL, PA_STREAM_INTERPOLATE_TIMING );
+	pa_stream_connect_record( s, NULL, NULL, PA_STREAM_NOFLAGS);
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);
     } else {
