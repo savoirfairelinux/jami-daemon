@@ -57,7 +57,6 @@ AM_CPPFLAGS = \
 	$(ZEROCONFFLAGS) \
 	$(IAX_FLAGS) \
 	$(SIP_CFLAGS) \
-	$(DBUSCPP_CFLAGS) \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \
 	-DPLUGINS_DIR=\""$(sflplugindir)"\" \
 	-DENABLE_TRACE \
