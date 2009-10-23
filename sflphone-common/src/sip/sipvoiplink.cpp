@@ -475,7 +475,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 	
 			status = createUDPServer (id);
 			if (status != PJ_SUCCESS) {
-			_debug ("Failed to initialize UDP transport with a local address for account %s\n. Try to use the local UDT transport", id.c_str());
+			_debug ("Failed to initialize UDP transport with a local address for account %s\n. Try to use the local UDP transport", id.c_str());
 			account->setAccountTransport (_localUDPTransport);
 			}
 		}
@@ -497,13 +497,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     // Update the state of the voip link
     account->setRegistrationState (Trying);
-
-    if (!validStunServer) {
-        account->setRegistrationState (ErrorExistStun);
-        account->setRegister (false);
-        _mutexSIP.leaveMutex();
-        return false;
-    }
 
     // Create the registration according to the account ID
     status = pjsip_regc_create (_endpt, (void*) account, &regc_cb, &regc);
