@@ -155,6 +155,9 @@ void
 PulseLayer::connectPulseAudioServer (void)
 {
     _debug ("PulseLayer::connectPulseAudioServer \n");
+
+    setenv("PULSE_PROP_media.role", "phone", 1);
+
     pa_context_flags_t flag = PA_CONTEXT_NOAUTOSPAWN ;
 
     pa_threaded_mainloop_lock (m);

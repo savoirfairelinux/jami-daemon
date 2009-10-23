@@ -28,6 +28,8 @@
 #include <pulse/pulseaudio.h>
 #include <pulse/stream.h>
 
+#include <stdlib.h>
+
 #define PLAYBACK_STREAM_NAME	    "SFLphone out"
 #define CAPTURE_STREAM_NAME	    "SFLphone in"
 
