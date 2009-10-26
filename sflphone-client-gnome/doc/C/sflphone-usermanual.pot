@@ -1,0 +1,940 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2009-10-26 15:41-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:230(None)
+msgid "@@image: 'figures/account_advanced.png'; md5=8cc040a5f56fe61566ad7b0fa83955d9"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:296(None)
+msgid "@@image: 'figures/dial.png'; md5=81ff4280c293e62a49fad3a4b61b9bb5"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:311(None)
+msgid "@@image: 'figures/call-second.png'; md5=fa490e3b07eebaa9f4ff719f579d68ef"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:330(None)
+msgid "@@image: 'figures/call.png'; md5=ecd96beec76f808b5c1469ecc1293237"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:348(None)
+msgid "@@image: 'figures/answer.png'; md5=c168995c6b36b5d200c49d1c02c2ea52"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:365(None)
+msgid "@@image: 'figures/hangup.png'; md5=0cac4dfe3a9a4bdf4d12229f77e3723a"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:385(None)
+msgid "@@image: 'figures/refuse.png'; md5=34b6cbf068e56163058e79de3ca70c59"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:403(None)
+msgid "@@image: 'figures/holdon.png'; md5=655078b8b495ada29f65b58501187d16"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:415(None)
+msgid "@@image: 'figures/holdoff.png'; md5=e06b8eba03f1545cd18891630b22f281"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:430(None)
+msgid "@@image: 'figures/transfer.png'; md5=92f921c7c6ba4ee2487ccf6e02226d9a"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:444(None)
+msgid "@@image: 'figures/transfer-go.png'; md5=553b57d5a9fc9f248ba15cecc32d343f"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:465(None)
+msgid "@@image: 'figures/rec-settings.png'; md5=27d51e45ff23dde58b0512f90773f6ce"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:478(None)
+msgid "@@image: 'figures/record.png'; md5=7a594660924940e8def9ecfcee0e8cb4"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:496(None)
+msgid "@@image: 'figures/voicemail.png'; md5=36dbeb4bcc6a68519d474552a888ce1e"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:684(None)
+msgid "@@image: 'figures/addressbook-button.png'; md5=b4a820013ef8b8f48e7de780a66c7800"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:719(None)
+msgid "@@image: 'figures/desktop-notif-settings.png'; md5=2bca85d6d9871883399481b994bd3384"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:738(None)
+msgid "@@image: 'figures/notif-example.png'; md5=d09008bedcaee435b12cd165d42e39b7"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:755(None)
+msgid "@@image: 'figures/voicemail-notif.png'; md5=a33ed4ce4b693d67ee453b4ef1fa6c30"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:774(None)
+msgid "@@image: 'figures/systemtray-settings.png'; md5=638612a08eb31eb768c4f08ace9c909a"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:814(None)
+msgid "@@image: 'figures/callshistory-settings.png'; md5=287d8aed7d7c71752257c64e89a9127d"
+msgstr ""
+
+#. When image changes, this message will be marked fuzzy or untranslated for you.
+#. It doesn't matter what you translate it to: it's not used at all.
+#: sflphone.xml:838(None)
+msgid "@@image: 'figures/configfile-settings.png'; md5=eb4a5545f137b825dcdaf0396a9f1a7d"
+msgstr ""
+
+#: sflphone.xml:12(title)
+msgid "SFLphone Manual v1.0"
+msgstr ""
+
+#: sflphone.xml:15(year)
+msgid "2006"
+msgstr ""
+
+#: sflphone.xml:16(year)
+msgid "2007"
+msgstr ""
+
+#: sflphone.xml:17(year)
+msgid "2008"
+msgstr ""
+
+#: sflphone.xml:18(year)
+msgid "2009"
+msgstr ""
+
+#: sflphone.xml:19(holder) sflphone.xml:32(publishername) sflphone.xml:80(para)
+msgid "Savoir-faire Linux"
+msgstr ""
+
+#: sflphone.xml:26(para)
+msgid "SFLphone is an enterprise-class SIP/IAX2 compatible softphone for GNU/Linux, published under the GPLv3 license."
+msgstr ""
+
+#: sflphone.xml:36(para)
+msgid "Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation Licence (GFDL), Version 1.1 or any later version published by the Free Software Foundation with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. You can find a copy of the GFDL at this <ulink type=\"help\" url=\"ghelp:fdl\">link</ulink> or in the file COPYING-DOCS distributed with this manual."
+msgstr ""
+
+#: sflphone.xml:37(para)
+msgid "This manual is part of a collection of GNOME manuals distributed under the GFDL. If you want to distribute this manual separately from the collection, you can do so by adding a copy of the licence to the manual, as described in section 6 of the licence."
+msgstr ""
+
+#: sflphone.xml:42(firstname)
+msgid "Pierre-Luc"
+msgstr ""
+
+#: sflphone.xml:43(surname)
+msgid "Bacon"
+msgstr ""
+
+#: sflphone.xml:45(email)
+msgid "pierre-luc.bacon@savoirfairelinux.com"
+msgstr ""
+
+#: sflphone.xml:50(firstname)
+msgid "Emmanuel"
+msgstr ""
+
+#: sflphone.xml:51(surname)
+msgid "Milou"
+msgstr ""
+
+#: sflphone.xml:53(email)
+msgid "emmanuel.milou@savoirfairelinux.com"
+msgstr ""
+
+#: sflphone.xml:58(firstname)
+msgid "Jérémy"
+msgstr ""
+
+#: sflphone.xml:59(surname)
+msgid "Quentin"
+msgstr ""
+
+#: sflphone.xml:61(email)
+msgid "jeremy.quentin@savoirfairelinux.com"
+msgstr ""
+
+#: sflphone.xml:66(firstname)
+msgid "Alexandre"
+msgstr ""
+
+#: sflphone.xml:67(surname)
+msgid "Savard"
+msgstr ""
+
+#: sflphone.xml:69(email)
+msgid "alexandre.savard@savoirfairelinux.com"
+msgstr ""
+
+#: sflphone.xml:76(revnumber)
+msgid "SFLphone Manual V1.0"
+msgstr ""
+
+#: sflphone.xml:77(date)
+msgid "September 2009"
+msgstr ""
+
+#: sflphone.xml:79(para)
+msgid "SFLphone team"
+msgstr ""
+
+#: sflphone.xml:85(releaseinfo)
+msgid "This manual describes version 0.9.7 of SFLphone."
+msgstr ""
+
+#: sflphone.xml:90(primary)
+msgid "SFLphone"
+msgstr ""
+
+#: sflphone.xml:94(title)
+msgid "Introduction"
+msgstr ""
+
+#: sflphone.xml:95(para)
+msgid "<application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind."
+msgstr ""
+
+#: sflphone.xml:98(para)
+msgid "<application>SFLphone</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community."
+msgstr ""
+
+#: sflphone.xml:101(para)
+msgid "Among the many features we developed for you, we could highlight the high definition sound (wide-band audio codecs - speex, G722, Celt), multiple conference call, audio recording, voicemail notification, and call history. More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer, and on/off hold option."
+msgstr ""
+
+#: sflphone.xml:108(para)
+msgid "This release also provides advanced security features (secure RTP and TLS)."
+msgstr ""
+
+#: sflphone.xml:112(para)
+msgid "Besides the native ALSA interface, <application>SFLphone</application> now fully supports PulseAudio sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...)."
+msgstr ""
+
+#: sflphone.xml:118(title)
+msgid "Getting started"
+msgstr ""
+
+#: sflphone.xml:123(guilabel)
+msgid "Create a free SIP/IAX2 account on sflphone.org"
+msgstr ""
+
+#: sflphone.xml:124(para)
+msgid "Savoir-faire Linux provides free SIP/IAX2 accounts on an Asterisk server. By clicking this option, you will be created an account to make test calls. The echo service is available, you may also call other accounts registered to the same server."
+msgstr ""
+
+#: sflphone.xml:126(para)
+msgid "By filling out your email address information, you will receive voicemail notifications by email. This information is not mandatory to get your free account."
+msgstr ""
+
+#: sflphone.xml:129(guilabel)
+msgid "Register an existing SIP or IAX2 account"
+msgstr ""
+
+#: sflphone.xml:130(para)
+msgid "Click there if you already have an account and you want to use it with SFLphone. You will be prompted to select the account type (SIP or IAX2) and to fill out your account information. <application>SFLphone</application> will then try to register it so you could start using it."
+msgstr ""
+
+#: sflphone.xml:119(para)
+msgid "The first time you start up sflphone, you will be ask to complete a wizard to set up your(s) account(s). This account configuration manager offers you two possibilities: <placeholder-1/>"
+msgstr ""
+
+#: sflphone.xml:135(para)
+msgid "You can always access the account creation manager: <menuchoice><guimenu>Edit</guimenu><guimenuitem>Account creation assistant</guimenuitem></menuchoice>."
+msgstr ""
+
+#: sflphone.xml:141(title)
+msgid "Managing your accounts"
+msgstr ""
+
+#: sflphone.xml:142(para)
+msgid "<application>SFLphone</application> supports both IAX2 and SIP accounts."
+msgstr ""
+
+#: sflphone.xml:148(title)
+msgid "Basic features"
+msgstr ""
+
+#: sflphone.xml:150(title)
+msgid "Creating a new account"
+msgstr ""
+
+#: sflphone.xml:151(para)
+msgid "To create a new account, perform the following steps:"
+msgstr ""
+
+#: sflphone.xml:153(para) sflphone.xml:191(para) sflphone.xml:201(para)
+msgid "Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice>."
+msgstr ""
+
+#: sflphone.xml:154(para)
+msgid "Click on the <guilabel>Add</guilabel> button. Fill out the following information:"
+msgstr ""
+
+#: sflphone.xml:157(guilabel)
+msgid "Alias"
+msgstr ""
+
+#: sflphone.xml:158(para)
+msgid "The name to identify your account in the list. It is not used for the communications"
+msgstr ""
+
+#: sflphone.xml:161(guilabel)
+msgid "Protocol"
+msgstr ""
+
+#: sflphone.xml:162(para)
+msgid "Select SIP or IAX2. The most commons are SIP accounts."
+msgstr ""
+
+#: sflphone.xml:165(guilabel)
+msgid "Host name"
+msgstr ""
+
+#: sflphone.xml:166(para)
+msgid "The name or the IP address of the server you want to register on."
+msgstr ""
+
+#: sflphone.xml:169(guilabel)
+msgid "User name"
+msgstr ""
+
+#: sflphone.xml:170(para)
+msgid "The name or the extension for your account."
+msgstr ""
+
+#: sflphone.xml:173(guilabel)
+msgid "Password"
+msgstr ""
+
+#: sflphone.xml:174(para)
+msgid "The password for your account."
+msgstr ""
+
+#: sflphone.xml:177(guilabel)
+msgid "Voicemail number"
+msgstr ""
+
+#: sflphone.xml:178(para)
+msgid "The number to dial to reach your voicemail. Example: 888, or *97. It will be used as a quick dial button on the main interface."
+msgstr ""
+
+#: sflphone.xml:182(para)
+msgid "Click the <menuchoice><guimenu>Apply</guimenu></menuchoice> button."
+msgstr ""
+
+#: sflphone.xml:184(para)
+msgid "You may now check the state of your account(s). You may have as many setup accounts as you wish. If it is registered, you may now use it to make calls."
+msgstr ""
+
+#: sflphone.xml:188(title)
+msgid "Editing a configured account"
+msgstr ""
+
+#: sflphone.xml:189(para)
+msgid "To edit an existing account, perform the following steps:"
+msgstr ""
+
+#: sflphone.xml:192(para)
+msgid "Select in the list the account you would like to edit, then click on the <guilabel>Edit</guilabel> button."
+msgstr ""
+
+#: sflphone.xml:193(para)
+msgid "Make your modifications, then click on the <guilabel>Apply</guilabel> button."
+msgstr ""
+
+#: sflphone.xml:198(title)
+msgid "Deleting an account"
+msgstr ""
+
+#: sflphone.xml:199(para)
+msgid "To delete an existing account, perform the following steps:"
+msgstr ""
+
+#: sflphone.xml:202(para)
+msgid "Select in the list the account you would like to delete, then click on the <guibutton>Delete</guibutton> button."
+msgstr ""
+
+#: sflphone.xml:207(title)
+msgid "Selecting a default account"
+msgstr ""
+
+#: sflphone.xml:208(para)
+msgid "As it is possible to have an unlimited number of registered accounts at the same time, which account will be used when making a call ? You can not only set up a default account to be used every time you are making a call, but an entire priority list. To do that, perform the following steps:"
+msgstr ""
+
+#: sflphone.xml:210(para)
+msgid "Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice> to access the accounts list."
+msgstr ""
+
+#: sflphone.xml:212(para)
+msgid "The first account in the account in list will be used as the default account to make calls with. If it is not registered, SFLphone will try to use the second in the list, if still not registered, the third, and so one ..."
+msgstr ""
+
+#: sflphone.xml:213(para)
+msgid "To reorder the accounts as you wish, select an account and click on the <menuchoice><guimenu>Up</guimenu></menuchoice> or <menuchoice><guimenu>Down</guimenu></menuchoice> button."
+msgstr ""
+
+#: sflphone.xml:216(para)
+msgid "Note that you also can select an account to make a call with when dialing by right-clicking on it."
+msgstr ""
+
+#: sflphone.xml:221(title)
+msgid "Advanced features"
+msgstr ""
+
+#: sflphone.xml:222(para) sflphone.xml:273(para)
+msgid "These features are only available with SIP."
+msgstr ""
+
+#: sflphone.xml:223(para)
+msgid "Follow the indications to <link linkend=\"account_edit\">edit an account</link> and choose the <guimenu>Advanced</guimenu> tab."
+msgstr ""
+
+#: sflphone.xml:226(title)
+msgid "Advanced features configuration panel"
+msgstr ""
+
+#: sflphone.xml:237(title)
+msgid "Registration"
+msgstr ""
+
+#: sflphone.xml:238(para)
+msgid "You may set the expires header for a contact."
+msgstr ""
+
+#: sflphone.xml:239(para)
+msgid "It basically represents the duration your registration will remain active. If you don't register again within that time, calls will no longer be routed to you. it should be not used as a keepalive mechanism though. The default value is 600 seconds (ten minutes)."
+msgstr ""
+
+#: sflphone.xml:240(note)
+msgid "To register to some VoIP services, you will need to set this value at at least 1600 seconds (Example: French VoIP server freephonie.net)."
+msgstr ""
+
+#: sflphone.xml:244(title) sflphone.xml:873(title)
+msgid "Network"
+msgstr ""
+
+#: sflphone.xml:245(para)
+msgid "This section enables you to set advanced network parameters."
+msgstr ""
+
+#: sflphone.xml:248(guilabel)
+msgid "Local address"
+msgstr ""
+
+#: sflphone.xml:249(para)
+msgid "it is initialized to your private/local IP address. Calls will be routed to this address by default."
+msgstr ""
+
+#: sflphone.xml:252(guilabel)
+msgid "Local port"
+msgstr ""
+
+#: sflphone.xml:253(para)
+msgid "It is initialized to the default SIP port, 5060."
+msgstr ""
+
+#: sflphone.xml:256(guilabel)
+msgid "Set published address and port"
+msgstr ""
+
+#: sflphone.xml:260(para)
+msgid "If enabled, the core will try to initialize an UDP transport on the mapped address/port number that the NAT (Network Address Translator) has allocated to <application>SFLphone</application>."
+msgstr ""
+
+#: sflphone.xml:259(listitem)
+msgid "Using STUN <placeholder-1/>"
+msgstr ""
+
+#: sflphone.xml:261(listitem)
+msgid "Same as local parameters"
+msgstr ""
+
+#: sflphone.xml:263(listitem)
+msgid "Manually"
+msgstr ""
+
+#: sflphone.xml:272(title)
+msgid "Security features"
+msgstr ""
+
+#: sflphone.xml:275(title)
+msgid "Secure RTP"
+msgstr ""
+
+#: sflphone.xml:278(title)
+msgid "TLS"
+msgstr ""
+
+#: sflphone.xml:285(title)
+msgid "Call features"
+msgstr ""
+
+#: sflphone.xml:287(para)
+msgid "All the following features are available with both SIP and IAX2 accounts."
+msgstr ""
+
+#: sflphone.xml:292(title)
+msgid "Dial button"
+msgstr ""
+
+#. ==== End of Figure ====
+#: sflphone.xml:303(para)
+msgid "You may have an unlimited number of calls at the same time, even with different accounts."
+msgstr ""
+
+#: sflphone.xml:304(para)
+msgid "To create a new call when you already have a current call, just click on the <guilabel>Dial</guilabel> button. The current call will automatically be put on hold."
+msgstr ""
+
+#: sflphone.xml:307(title)
+msgid "Make an other call"
+msgstr ""
+
+#. ==== End of Figure ====
+#: sflphone.xml:318(para)
+msgid "Keyboard shortcut to perform this action: <accel>NUMPAD</accel> or almost any keys."
+msgstr ""
+
+#: sflphone.xml:326(title)
+msgid "Call button"
+msgstr ""
+
+#. ==== End of Figure ====
+#: sflphone.xml:337(para) sflphone.xml:355(para)
+msgid "Keyboard shortcut to perform this action: <accel>Enter</accel>."
+msgstr ""
+
+#: sflphone.xml:344(title)
+msgid "Answer button"
+msgstr ""
+
+#: sflphone.xml:361(title)
+msgid "Hangup button"
+msgstr ""
+
+#. ==== End of Figure ====
+#: sflphone.xml:372(para) sflphone.xml:392(para)
+msgid "Keyboard shortcut to perform this action: <accel>ESC</accel>."
+msgstr ""
+
+#: sflphone.xml:377(para)
+msgid "When you refuse a call, your caller is automatically redirected to your voicemail box, if applicable."
+msgstr ""
+
+#: sflphone.xml:381(title)
+msgid "Refuse button"
+msgstr ""
+
+#: sflphone.xml:399(title)
+msgid "Hold on button"
+msgstr ""
+
+#: sflphone.xml:411(title)
+msgid "Hold off button"
+msgstr ""
+
+#: sflphone.xml:426(title)
+msgid "Transfer button"
+msgstr ""
+
+#. ==== End of Figure ====
+#: sflphone.xml:437(para)
+msgid "Then type the number you want to transfer the current call to."
+msgstr ""
+
+#: sflphone.xml:440(title)
+msgid "Validate the transfer"
+msgstr ""
+
+#. ==== End of Figure ====
+#: sflphone.xml:451(para)
+msgid "And press <accel>Enter</accel>. Clicking again on the transfer button cancels the transfer."
+msgstr ""
+
+#: sflphone.xml:457(para)
+msgid "Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem><guimenuitem>Audio</guimenuitem></menuchoice> to configure the recordings destination folder."
+msgstr ""
+
+#: sflphone.xml:461(title)
+msgid "Record settings"
+msgstr ""
+
+#: sflphone.xml:474(title)
+msgid "Record button"
+msgstr ""
+
+#: sflphone.xml:488(caution)
+msgid "This feature is available only if you fill out the voicemail number information for your default account."
+msgstr ""
+
+#: sflphone.xml:492(title)
+msgid "Voicemail button"
+msgstr ""
+
+#: sflphone.xml:506(para)
+msgid "A direct IP call is a call established between two peers without any accounts. When dialing, such a call must prefixed with <guilabel>sip:</guilabel>."
+msgstr ""
+
+#: sflphone.xml:508(para)
+msgid "Direct IP calls use SIP protocol to establish communication and RTP to transport data. It is right now not available with IAX2."
+msgstr ""
+
+#: sflphone.xml:510(para)
+msgid "Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem><guimenuitem>Direct IP calls</guimenuitem></menuchoice> to configure the advanced security features for this kind of calls."
+msgstr ""
+
+#: sflphone.xml:514(para)
+msgid "SFLphone now supports conference call hosting integrating server like features in a simple GUI."
+msgstr ""
+
+#: sflphone.xml:520(guilabel)
+msgid "Create a conference"
+msgstr ""
+
+#: sflphone.xml:521(para)
+msgid "To host a conference, simply drag and drop one call on another. Additional participants are added the same way, dragging a call on the conference icon."
+msgstr ""
+
+#: sflphone.xml:528(guilabel)
+msgid "Leave a conference"
+msgstr ""
+
+#: sflphone.xml:529(para)
+msgid "SFLphone conference model let you leave a conference that you are currently hosting to answer any other incoming communication or even initiate new ones. The conference is not interupted Double clicking the conference icon let you reintroduce the conference."
+msgstr ""
+
+#: sflphone.xml:538(guilabel)
+msgid "Multiple conference"
+msgstr ""
+
+#: sflphone.xml:539(para)
+msgid "SFLphone supports multiple conferences running simultaneously. Two conferences can be joined the same way they are created, dragging one on the other."
+msgstr ""
+
+#: sflphone.xml:547(guilabel)
+msgid "Hangup/Hold a conference"
+msgstr ""
+
+#: sflphone.xml:548(para)
+msgid "Right click the conference icon. Holding the conference put all participants on hold. Hangup a conference hangup all participants."
+msgstr ""
+
+#: sflphone.xml:565(title)
+msgid "Audio configuration"
+msgstr ""
+
+#: sflphone.xml:566(para)
+msgid "ALSA and Pulseaudio native interfaces are available."
+msgstr ""
+
+#: sflphone.xml:582(title)
+msgid "Codecs overview"
+msgstr ""
+
+#: sflphone.xml:583(para)
+msgid "SFLphone supports several widely used audio codec:"
+msgstr ""
+
+#: sflphone.xml:587(guilabel)
+msgid "PCMU/PCMA"
+msgstr ""
+
+#: sflphone.xml:588(para)
+msgid "ITU-T telefony standard PCM formats, 8kHz, 64 kbit/s, using logarithmic byte compression algorithm."
+msgstr ""
+
+#: sflphone.xml:594(guilabel)
+msgid "GSM"
+msgstr ""
+
+#: sflphone.xml:595(para)
+msgid "Global System for Mobile communications (GSM) narrowband 8kHz standard based on linear prediction encoding."
+msgstr ""
+
+#: sflphone.xml:601(guilabel)
+msgid "G722"
+msgstr ""
+
+#: sflphone.xml:602(para)
+msgid "ITU-T standard wideband 16kHz standard based on linear prediction."
+msgstr ""
+
+#: sflphone.xml:607(guilabel)
+msgid "SPEEX"
+msgstr ""
+
+#: sflphone.xml:608(para)
+msgid "High quality voice encoding/decoding available in narrowband 8Khz, wideband 16khz (HD Voice), and ultra-wideband 32 kHz. Integrate additional features such as Variable Bit Rate (VBR) and noise reduction."
+msgstr ""
+
+#: sflphone.xml:617(guilabel)
+msgid "CELT"
+msgstr ""
+
+#: sflphone.xml:628(title)
+msgid "Address books"
+msgstr ""
+
+#: sflphone.xml:630(title)
+msgid "Enable the address book support"
+msgstr ""
+
+#: sflphone.xml:631(para)
+msgid "To enable the address book, perform the following steps:"
+msgstr ""
+
+#: sflphone.xml:634(para)
+msgid "Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice>."
+msgstr ""
+
+#: sflphone.xml:638(para)
+msgid "Select the <menuchoice><guimenu>Address book</guimenu></menuchoice> tab."
+msgstr ""
+
+#: sflphone.xml:642(para)
+msgid "Check the <guilabel>Use Evolution address books</guilabel> box."
+msgstr ""
+
+#: sflphone.xml:645(para)
+msgid "Every address books you configured in Evolution will be now available in <application>SFLphone</application>. Please be sure you selected at least one address book."
+msgstr ""
+
+#: sflphone.xml:649(title)
+msgid "Available options"
+msgstr ""
+
+#: sflphone.xml:650(para)
+msgid "In <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem><guimenuitem>Address book</guimenuitem></menuchoice>, you may select one or all of the following options:"
+msgstr ""
+
+#: sflphone.xml:653(guilabel)
+msgid "Display contact photo if available"
+msgstr ""
+
+#: sflphone.xml:654(para)
+msgid "The contact photo will be displayed as a thumbnail beside the phone number."
+msgstr ""
+
+#: sflphone.xml:659(guilabel)
+msgid "Fields from Evolution's address book"
+msgstr ""
+
+#: sflphone.xml:660(para)
+msgid "You may use one or all of these following information from your contact."
+msgstr ""
+
+#: sflphone.xml:663(listitem)
+msgid "Work phone number"
+msgstr ""
+
+#: sflphone.xml:664(listitem)
+msgid "Home phone number"
+msgstr ""
+
+#: sflphone.xml:665(listitem)
+msgid "Mobile phone number"
+msgstr ""
+
+#: sflphone.xml:673(title)
+msgid "Using the address book"
+msgstr ""
+
+#: sflphone.xml:676(para)
+msgid "On the toolbar, click on the following button to display the address book window:"
+msgstr ""
+
+#: sflphone.xml:680(title)
+msgid "Address book toolbar button"
+msgstr ""
+
+#: sflphone.xml:693(para)
+msgid "Search for a contact"
+msgstr ""
+
+#: sflphone.xml:697(para)
+msgid "New entries should have appeared in the window. Double click on it to call the contact. You may also <menuchoice><guimenu>Right click</guimenu><guimenuitem>Edit before calling</guimenuitem></menuchoice> to modify the entry before calling."
+msgstr ""
+
+#: sflphone.xml:704(title)
+msgid "Preferences"
+msgstr ""
+
+#: sflphone.xml:706(para)
+msgid "Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice> to access the configuration panel."
+msgstr ""
+
+#: sflphone.xml:707(para)
+msgid "Each section is detailed below."
+msgstr ""
+
+#: sflphone.xml:710(title)
+msgid "General"
+msgstr ""
+
+#: sflphone.xml:711(para)
+msgid "This section provides the user general settings regarding the application."
+msgstr ""
+
+#: sflphone.xml:715(title)
+msgid "Desktop notifications options"
+msgstr ""
+
+#: sflphone.xml:729(guilabel)
+msgid "Enable notifications"
+msgstr ""
+
+#: sflphone.xml:730(para)
+msgid "Both clients use their desktop environment notification system. If checked, you will receive desktop notifications for events such as incoming calls and system messages."
+msgstr ""
+
+#: sflphone.xml:734(title)
+msgid "Example of an incoming call notification"
+msgstr ""
+
+#: sflphone.xml:746(guilabel)
+msgid "Enable voicemail notifications"
+msgstr ""
+
+#: sflphone.xml:747(para)
+msgid "The voicemail notifications are handled separatly. If checked, you will be notified with the number of unread voicemails for your accounts."
+msgstr ""
+
+#: sflphone.xml:751(title)
+msgid "Example of a voicemail notification"
+msgstr ""
+
+#: sflphone.xml:770(title)
+msgid "System tray options"
+msgstr ""
+
+#: sflphone.xml:784(guilabel)
+msgid "Popup main window on incoming call"
+msgstr ""
+
+#: sflphone.xml:785(para)
+msgid "If SFLphone is closed on the system tray, pops the main window up on foreground when receiving an incoming call."
+msgstr ""
+
+#: sflphone.xml:790(guilabel)
+msgid "Never popup main window"
+msgstr ""
+
+#: sflphone.xml:791(para)
+msgid "If SFLphone is closed on the system tray, never pops the main window up on foreground when receiving an incoming call."
+msgstr ""
+
+#: sflphone.xml:796(guilabel)
+msgid "Hide SFLphone window on startup"
+msgstr ""
+
+#: sflphone.xml:797(para)
+msgid "On startup, SFLphone will go directly on the system tray."
+msgstr ""
+
+#: sflphone.xml:810(title)
+msgid "Calls history options"
+msgstr ""
+
+#: sflphone.xml:823(guilabel)
+msgid "Keep my history for at least n days"
+msgstr ""
+
+#: sflphone.xml:824(para)
+msgid "If checked, calls will be kept up to N days in the history. You may select a custom number of days. Do not check it if you don't want to use this feature."
+msgstr ""
+
+#: sflphone.xml:834(title)
+msgid "Configuration file options"
+msgstr ""
+
+#: sflphone.xml:847(guilabel)
+msgid "Store SIP credentials as MD5 hash"
+msgstr ""
+
+#: sflphone.xml:848(para)
+msgid "If checked, your password information will be encrypted in the configuration file, instead of plain text."
+msgstr ""
+
+#: sflphone.xml:859(title)
+msgid "Audio"
+msgstr ""
+
+#: sflphone.xml:863(title)
+msgid "Address book"
+msgstr ""
+
+#: sflphone.xml:865(para)
+msgid "Refer to the <link linkend=\"addressbook\">Address books</link> section for more information."
+msgstr ""
+
+#: sflphone.xml:869(title)
+msgid "Hooks"
+msgstr ""
+
+#: sflphone.xml:877(title)
+msgid "Direct IP calls"
+msgstr ""
+
+#: sflphone.xml:878(para)
+msgid "Refer to the <link linkend=\"directip\">Direct IP calls</link> section for more information."
+msgstr ""
+
+#. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2
+#: sflphone.xml:0(None)
+msgid "translator-credits"
+msgstr ""
+

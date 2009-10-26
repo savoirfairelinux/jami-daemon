@@ -357,7 +357,7 @@ void dbus_set_pulse_app_volume_control( void );
 /**
  * ConfigurationManager - Get PA behaviour for the other sound streams
  */
-int dbus_get_pulse_app_volume_control( void );
+gchar* dbus_get_pulse_app_volume_control( void );
 
 /**
  * ConfigurationManager - Get the ringtone
@@ -513,12 +513,6 @@ void dbus_unregister(int pid);
 void dbus_set_sip_port(const guint portNum);
 
 guint dbus_get_sip_port();
-
-gchar* dbus_get_stun_server (void);
-void dbus_set_stun_server( gchar* server);
-
-gint dbus_stun_is_enabled (void);
-void dbus_enable_stun (void);
 
 void dbus_add_participant(const gchar* callID, const gchar* confID);
 
