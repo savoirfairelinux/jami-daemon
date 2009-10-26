@@ -24,7 +24,7 @@
 #include <calltree.h>
 #include <uimanager.h>
 
-#define MAIN_WINDOW_WIDTH 400
+#define MAIN_WINDOW_WIDTH 350
 #define MAIN_WINDOW_HEIGHT 320
 
 /** @file mainwindow.h
