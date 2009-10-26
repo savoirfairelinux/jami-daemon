@@ -27,7 +27,6 @@
 #include "audio/ringbuffer.h"
 #include "audio/audioloop.h"
 
-
 #include <cc++/thread.h>
 
 /**
@@ -135,7 +134,7 @@ class AudioStream {
      * @param c	The pulseaudio context
      * @return pa_stream* The newly created audio stream
      */
-    pa_stream* createStream( pa_context* c ); 
+    pa_stream* createStream( pa_context* c); 
 
     /**
      * Mandatory asynchronous callback on the audio stream state

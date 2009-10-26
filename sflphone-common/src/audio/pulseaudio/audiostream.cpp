@@ -34,6 +34,7 @@ AudioStream::AudioStream (PulseLayerType * driver)
 	_mainloop (driver->mainloop)
 {
     sample_spec.format = PA_SAMPLE_S16LE;
+    // sample_spec.format = PA_SAMPLE_FLOAT32LE;
     sample_spec.rate = 44100;
     sample_spec.channels = 1;
     channel_map.channels = 1;
@@ -184,23 +185,31 @@ AudioStream::createStream (pa_context* c)
     // parameters are defined as number of bytes
     // 2048 bytes (1024 int16) is 20 ms at 44100 Hz 
     if (_streamType == PLAYBACK_STREAM) {
-	
-        attributes->maxlength = 88200;
-        attributes->tlength = 44100;
+	/*
+        attributes->maxlength = (uint32_t) -1;
+        attributes->tlength = 4096;
+        attributes->prebuf = (uint32_t) -1;      
+        attributes->minreq = (uint32_t) -1;
+        attributes->fragsize = (uint32_t) -1;
+	*/
+	attributes->maxlength = 88200;
+        attributes->tlength = 8192;
         attributes->prebuf = 4096;      
         attributes->minreq = 2048;
         attributes->fragsize = 4096;
 
 	pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_ADJUST_LATENCY, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
-
-        attributes->maxlength = 88200;
-        attributes->tlength = 44100;
-        attributes->prebuf = 4096;
-        attributes->minreq = 2048;
+	
+        attributes->maxlength = (uint32_t) -1;
+        attributes->tlength = (uint32_t) -1;
+        attributes->prebuf = (uint32_t) -1;
+        attributes->minreq = (uint32_t) -1;
         attributes->fragsize = 4096;
+	
+	
 
-	pa_stream_connect_record( s, NULL, attributes, PA_STREAM_ADJUST_LATENCY);
+	pa_stream_connect_record( s, NULL, attributes, (pa_stream_flags_t)(PA_STREAM_PEAK_DETECT|PA_STREAM_ADJUST_LATENCY));
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);
     } else {

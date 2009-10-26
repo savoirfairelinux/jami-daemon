@@ -66,14 +66,8 @@ static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
     // _debug("         pa read_index_corrupt (if not 0): %i\n", info->read_index_corrupt);
     
 
-    // fill in audio buffer twice the prebuffering value to restart playback
-    SFLDataFormat* out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat));
-    bzero (out, framesPerBuffer*sizeof(SFLDataFormat));
-
-    pa_stream_write (s, out, framesPerBuffer*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE); 
+    // fill in audio buffer twice the prebuffering value to restart playback 
     pa_stream_trigger (s, NULL, NULL);
-
-    pa_xfree (out);
     
 
 }
@@ -503,19 +497,19 @@ void PulseLayer::writeToSpeaker (void)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
 
-    if (urgentAvailBytes > (framesPerBuffer*sizeof(SFLDataFormat))) {
+    if (urgentAvailBytes > (signed int)(framesPerBuffer*sizeof(SFLDataFormat))) {
 
         _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
 
         toGet = (urgentAvailBytes < (int) (framesPerBuffer * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBuffer * sizeof (SFLDataFormat);
         out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
         _urgentRingBuffer.Get (out, toGet, 100);
-        pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
+        pa_stream_write (playback->pulseStream(), out, toGet, pa_xfree, 0, PA_SEEK_RELATIVE);
 
         // Consume the regular one as well (same amount of bytes)
         _mainBuffer.discard (toGet);
 
-	pa_xfree(out);
+	// pa_xfree(out);
 
     } else {
 
@@ -532,9 +526,9 @@ void PulseLayer::writeToSpeaker (void)
 		toGet = framesPerBuffer;
 		out = (SFLDataFormat*) pa_xmalloc (toGet * sizeof (SFLDataFormat));
 		tone->getNext (out, toGet , 100);
-		pa_stream_write (playback->pulseStream(), out, toGet  * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+		pa_stream_write (playback->pulseStream(), out, toGet  * sizeof (SFLDataFormat), pa_xfree, 0, PA_SEEK_RELATIVE);
 
-		pa_xfree (out);
+		// pa_xfree (out);
 	    }
         }
 
@@ -544,12 +538,12 @@ void PulseLayer::writeToSpeaker (void)
 	    {
 
 		toGet = framesPerBuffer;
-		toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > framesPerBuffer * sizeof (SFLDataFormat)) ? framesPerBuffer : toGet * sizeof (SFLDataFormat);
+		toPlay = ( (int) (toGet * sizeof (SFLDataFormat)) > (signed int)(framesPerBuffer * sizeof (SFLDataFormat))) ? framesPerBuffer : toGet * sizeof (SFLDataFormat);
 		out = (SFLDataFormat*) pa_xmalloc (toPlay);
 		file_tone->getNext(out, toPlay/sizeof(SFLDataFormat), 100);
-		pa_stream_write (playback->pulseStream(), out, toPlay, NULL, 0, PA_SEEK_RELATIVE);
+		pa_stream_write (playback->pulseStream(), out, toPlay, pa_xfree, 0, PA_SEEK_RELATIVE);
 
-		pa_xfree (out);
+		// pa_xfree (out);
 	    }
 
         } else {
@@ -596,13 +590,13 @@ void PulseLayer::writeToSpeaker (void)
 
 		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
-		    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+		    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof(SFLDataFormat), pa_xfree, 0, PA_SEEK_RELATIVE);
 
-		    pa_xfree (rsmpl_out);
+		    // pa_xfree (rsmpl_out);
 
 		} else {
 
-		    pa_stream_write (playback->pulseStream(), out, toGet, NULL, 0, PA_SEEK_RELATIVE);
+		    pa_stream_write (playback->pulseStream(), out, toGet, pa_xfree, 0, PA_SEEK_RELATIVE);
 
 		}
 
@@ -615,9 +609,9 @@ void PulseLayer::writeToSpeaker (void)
 		    SFLDataFormat* zeros = (SFLDataFormat*)pa_xmalloc (framesPerBuffer*sizeof(SFLDataFormat));
   
 		    bzero (zeros, framesPerBuffer*sizeof(SFLDataFormat));
-		    pa_stream_write(playback->pulseStream(), zeros, framesPerBuffer*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+		    pa_stream_write(playback->pulseStream(), zeros, framesPerBuffer*sizeof(SFLDataFormat), pa_xfree, 0, PA_SEEK_RELATIVE);
 
-		    pa_xfree (zeros);
+		    // pa_xfree (zeros);
 		    
 
 		}
@@ -626,7 +620,7 @@ void PulseLayer::writeToSpeaker (void)
 	    
 	    _urgentRingBuffer.Discard(toGet);
 
-            pa_xfree (out);
+            // pa_xfree (out);
         }
 
     }
