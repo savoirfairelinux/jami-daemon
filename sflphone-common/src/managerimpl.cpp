@@ -2964,16 +2964,16 @@ ManagerImpl::getMailNotify (void)
     return getConfigInt (PREFERENCES, CONFIG_MAIL_NOTIFY);
 }
 
-int32_t
+std::string
 ManagerImpl::getPulseAppVolumeControl (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL);
+    return getConfigString (PREFERENCES , CONFIG_PA_VOLUME_CTRL);
 }
 
 void
 ManagerImpl::setPulseAppVolumeControl (void)
 {
-    (getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL) == 1) ? setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , FALSE_STR) : setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , TRUE_STR) ;
+    (getConfigString (PREFERENCES , CONFIG_PA_VOLUME_CTRL) == TRUE_STR) ? setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , FALSE_STR) : setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , TRUE_STR) ;
 }
 
 void ManagerImpl::setAudioManager (const int32_t& api)

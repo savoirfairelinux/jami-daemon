@@ -699,7 +699,7 @@ ConfigurationManager::getMailNotify (void)
     return Manager::instance().getMailNotify();
 }
 
-int32_t
+std::string
 ConfigurationManager::getPulseAppVolumeControl (void)
 {
     return Manager::instance().getPulseAppVolumeControl();

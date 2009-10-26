@@ -4,20 +4,24 @@ DOMAIN=sflphone-client-gnome
 
 
 POFILES=\
-	 fr/sflphone-client-gnome.po \
-	 es/sflphone-client-gnome.po \
-	 de/sflphone-client-gnome.po \
-     zh_CN/sflphone-client-gnome.po \
-     zh_HK/sflphone-client-gnome.po \
-	 ru/sflphone-client-gnome.po
+	 fr/fr.po \
+	 es/es.po \
+	 de/de.po \
+     zh_CN/zh_CN.po \
+     zh_HK/zh_HK.po \
+	 ru/ru.po \
+	 it/it.po \
+	 pt_BR/pt_BR.po
 
 MOFILES=\
-	 fr/sflphone-client-gnome.mo \
-	 es/sflphone-client-gnome.mo \
-	 de/sflphone-client-gnome.mo \
-     zh_CN/sflphone-client-gnome.mo \
-     zh_HK/sflphone-client-gnome.mo \
-	 ru/sflphone-client-gnome.mo
+	 fr/fr.mo \
+	 es/es.mo \
+	 de/de.mo \
+     zh_CN/zh_CN.mo \
+     zh_HK/zh_HK.mo \
+	 ru/ru.mo \
+	 it/it.mo \
+	 pt_BR/pt_BR.mo
 
 MSGFMT=msgfmt
 

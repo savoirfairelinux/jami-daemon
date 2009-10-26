@@ -2090,10 +2090,10 @@ dbus_set_pulse_app_volume_control( void )
     }
 }
 
-    int
+   gchar* 
 dbus_get_pulse_app_volume_control( void )
 {
-    int state;
+    gchar* state;
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_pulse_app_volume_control(
             configurationManagerProxy,
@@ -2130,62 +2130,6 @@ dbus_get_sip_port( void )
         g_error_free(error);
     }
     return (guint)portNum;
-}
-
-gchar* dbus_get_stun_server (void)
-{
-    GError* error = NULL;
-    gchar* server;
-    org_sflphone_SFLphone_ConfigurationManager_get_stun_server(
-            configurationManagerProxy,
-            &server,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-    return server;
-}
-
-void dbus_set_stun_server( gchar* server)
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_stun_server(
-            configurationManagerProxy,
-            server,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-}
-
-gint dbus_stun_is_enabled (void)
-{
-    GError* error = NULL;
-    gint stun;
-    org_sflphone_SFLphone_ConfigurationManager_is_stun_enabled(
-            configurationManagerProxy,
-            &stun,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-    return stun;
-}
-
-void dbus_enable_stun (void)
-{
-
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_enable_stun(
-            configurationManagerProxy,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
 }
 
 GHashTable* dbus_get_addressbook_settings (void) {

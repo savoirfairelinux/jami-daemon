@@ -815,7 +815,7 @@ GtkWidget* create_audio_configuration()
  
     pa_mute_widget = gtk_check_button_new_with_mnemonic(_("_Mute other applications during a call"));
     gtk_widget_set_sensitive(pa_mute_widget, pulse_audio);
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pa_mute_widget), dbus_get_pulse_app_volume_control() );
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (pa_mute_widget), (g_strcasecmp (dbus_get_pulse_app_volume_control(), "true") == 0)? TRUE: FALSE);
     g_signal_connect(G_OBJECT( pa_mute_widget ) , "clicked" , G_CALLBACK( dbus_set_pulse_app_volume_control ) , NULL);
     gtk_table_attach( GTK_TABLE(table), pa_mute_widget, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 

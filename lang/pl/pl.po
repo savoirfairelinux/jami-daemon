@@ -3,13 +3,12 @@
 # This file is distributed under the same license as the sflphone package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
-#: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:509
 msgid ""
 msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-10-14 11:18-0400\n"
-"PO-Revision-Date: 2009-10-07 16:31+0000\n"
+"PO-Revision-Date: 2009-10-14 17:24+0000\n"
 "Last-Translator: Maxime Chambreuil <maxime.chambreuil@gmail.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2009-10-14 15:20+0000\n"
+"X-Launchpad-Export-Date: 2009-10-26 15:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: ../sflphone-client-gnome/src/accountlist.c:175
@@ -100,8 +99,8 @@ msgstr ""
 msgid ""
 "<b>Error: No audio codecs found.\n"
 "\n"
-"</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</"
-"b> directory in your home( <i>%s</i> )"
+"</b> SFL audio codecs have to be placed in <i>%s</i> or in the "
+"<b>.sflphone</b> directory in your home( <i>%s</i> )"
 msgstr ""
 
 #: ../sflphone-client-gnome/src/errors.c:29
@@ -998,9 +997,11 @@ msgstr ""
 #~ msgctxt "NAME OF TRANSLATORS"
 #~ msgid "Your names"
 #~ msgstr ""
-#~ ",Launchpad Contributions:,Maxime Chambreuil, ,Launchpad Contributions:,"
-#~ "Maxime Chambreuil"
+#~ ",Launchpad Contributions:,Maxime Chambreuil, ,Launchpad "
+#~ "Contributions:,Maxime Chambreuil, ,Launchpad Contributions:,Maxime Chambreuil"
 
 #~ msgctxt "EMAIL OF TRANSLATORS"
 #~ msgid "Your emails"
-#~ msgstr ",,maxime.chambreuil@gmail.com,,,maxime.chambreuil@gmail.com"
+#~ msgstr ""
+#~ ",,maxime.chambreuil@gmail.com,,,maxime.chambreuil@gmail.com,,,maxime.chambreu"
+#~ "il@gmail.com"
