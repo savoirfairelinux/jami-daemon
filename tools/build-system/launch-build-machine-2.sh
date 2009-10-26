@@ -21,6 +21,7 @@ VERSION_INDEX="1"
 DO_PUSH=1
 DO_LOGGING=1
 DO_UPLOAD=1
+SNAPSHOT_TAG=`date +%Y%m%d`
 
 EDITOR=echo
 export EDITOR
@@ -30,8 +31,7 @@ REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
 WORKING_DIR="${ROOT_DIR}/sflphone-build-repository/tools/build-system"
 LAUNCHPAD_DIR="${WORKING_DIR}/launchpad"
 LAUNCHPAD_DISTRIBUTIONS=( "jaunty" "karmic" )
-#LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
-LAUNCHPAD_PACKAGES=( "sflphone-client-kde" )
+LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
 
 echo
 echo "    /***********************\\"
@@ -103,9 +103,9 @@ fi
 
 echo "Update reference sources"
 if [ ${IS_RELEASE} ]; then
-        cd ${REFERENCE_REPOSITORY} && git checkout origin/release -b release && git pull
+        cd ${REFERENCE_REPOSITORY} && git checkout . && git checkout -f release && git pull
 else
-        cd ${REFERENCE_REPOSITORY} && git checkout master && git pull
+        cd ${REFERENCE_REPOSITORY} && git checkout . && git checkout -f master && git pull
 fi
 
 echo "Retrieve build info"
@@ -125,6 +125,7 @@ cd ${LAUNCHPAD_DIR}
 COMMIT_HASH_BEGIN=""
 COMMIT_HASH_END=""
 SOFTWARE_VERSION=""
+LAUNCHPAD_CONF_PREFIX=""
 
 echo "Clean build directory"
 git clean -f -x ${LAUNCHPAD_DIR}/* >/dev/null
@@ -136,10 +137,11 @@ if [ ${IS_RELEASE} ]; then
 	fi
 	SOFTWARE_VERSION="${CURRENT_RELEASE_VERSION}${VERSION_APPEND}"
 	COMMIT_HASH_BEGIN="${PREVIOUS_RELEASE_COMMIT_HASH}"
+	LAUNCHPAD_CONF_PREFIX="sflphone"
 else
-	SNAPSHOT_TAG=`date +%Y%m%d`
 	SOFTWARE_VERSION="snapshot${SNAPSHOT_TAG}"
 	COMMIT_HASH_BEGIN="${CURRENT_RELEASE_COMMIT_HASH}"
+	LAUNCHPAD_CONF_PREFIX="sflphone-nightly"
 fi
 
 cd ${LAUNCHPAD_DIR}
@@ -198,24 +200,24 @@ END
 
 		cd ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}
 		./autogen.sh
-		debuild -S -sa -kCCCC676C
+		debuild -S -sa -kFDFE4451
 		cd ${LAUNCHPAD_DIR}
 
 		if [ ${DO_UPLOAD} ] ; then
-			dput -f -c ${LAUNCHPAD_DIR}/dput.conf sflphone-${LAUNCHPAD_DISTRIBUTION} ${LAUNCHPAD_PACKAGE}_${LOCAL_VERSION}_source.changes
+			dput -f -c ${LAUNCHPAD_DIR}/dput.conf ${LAUNCHPAD_CONF_PREFIX}-${LAUNCHPAD_DISTRIBUTION} ${LAUNCHPAD_PACKAGE}_${LOCAL_VERSION}_source.changes
 		fi
 	done
 
 done
 
 # if push is activated
-if [[ ${DO_PUSH} && ${IS_RELEASE} ]];then
-	echo " Doing commit"
-	git commit -m "[#1262] Released ${SOFTWARE_VERSION}" .
-
-	echo " Pushing commit"
-	git push origin release
-fi
+#if [[ ${DO_PUSH} && ${IS_RELEASE} ]];then
+#	echo " Doing commit"
+#	git commit -m "[#1262] Released ${SOFTWARE_VERSION}" .
+#
+#	echo " Pushing commit"
+#	git push origin release
+#fi
 
 # close file descriptor
 exec 3>&-
