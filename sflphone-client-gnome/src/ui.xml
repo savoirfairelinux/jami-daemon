@@ -47,18 +47,19 @@
 	<toolbar name="ToolbarActions">
 		<toolitem name="NewCallToolbar" action="NewCall"/>
 		<toolitem name="PickUpToolbar" action="PickUp"/>
-		<toolitem action="HangUp"/>
+		<toolitem name="HangUpToolbar" action="HangUp"/>
 		<toolitem name="OnHoldToolbar" action="OnHold"/>
 		<toolitem name="OffHoldToolbar" action="OffHold"/>
 		<toolitem name="TransferToolbar" action="Transfer"/>
+		<toolitem name="RecordToolbar" action="Record"/>
 		<separator/>
-		<toolitem action="Voicemail"/>
+		<toolitem name="VoicemailToolbar" action="Voicemail"/>
+		<toolitem name="HistoryToolbar" action="History"/>
+		<toolitem name="AddressbookToolbar" action="Addressbook"/>
 	</toolbar>
 
 	<toolbar name="ToolbarWindows">
-		<toolitem name="CallWindowToolbar" action="CallWindow"/>
-		<toolitem name="HistoryToolbar" action="History"/>
-		<toolitem name="AddressbookToolbar" action="Addressbook"/>
+		<!--toolitem name="CallWindowToolbar" action="CallWindow"/-->
 	</toolbar>
 
 </ui>
