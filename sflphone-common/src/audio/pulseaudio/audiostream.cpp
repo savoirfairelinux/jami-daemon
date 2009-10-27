@@ -194,7 +194,7 @@ AudioStream::createStream (pa_context* c)
     if (_streamType == PLAYBACK_STREAM) {
 	
         attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes(50 * PA_USEC_PER_MSEC, &sample_spec);
+        attributes->tlength = pa_usec_to_bytes(20 * PA_USEC_PER_MSEC, &sample_spec);
         attributes->prebuf = (uint32_t) -1;      
         attributes->minreq = (uint32_t) -1;
         attributes->fragsize = (uint32_t) -1;
