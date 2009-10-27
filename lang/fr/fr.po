@@ -892,7 +892,7 @@ msgstr "Fichier de configuration"
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:379
 msgid "Store SIP credentials as MD5 hash"
 msgstr ""
-"Stocker les informations d'authentification sour forme encryptée (MD5)"
+"Stocker les informations d'authentification sous forme encryptée (MD5)"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:423
 msgid "Preferences"
