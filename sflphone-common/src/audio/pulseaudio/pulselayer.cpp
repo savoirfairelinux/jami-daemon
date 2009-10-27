@@ -546,22 +546,16 @@ void PulseLayer::writeToSpeaker (void)
         } else {
 
 	    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-	    // int maxNbSamplesToGet = 0;
+
 	    int maxNbBytesToGet = 0;
 
-	    _debug("--------------- Playback -----------\n");
-	    _debug("writeableSize: %i\n", writeableSize);
 
 	    // test if audio resampling is needed
 	    if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
  
 		// upsamplefactor is used to compute the number of bytes to get in the ring buffer 
 		double upsampleFactor = (double) _mainBufferSampleRate / _audioSampleRate;
-		_debug("upsampleFactor: %f\n", upsampleFactor);
 
-		// maxNbSamplesToGet is the number of sample to get in the ring buffer which, 
-                // once resampled, will not be over the writeableSize
-		// maxNbSamplesToGet = (int) ((double) framesPerBuffer * upsampleFactor);
 		maxNbBytesToGet = ((double) writeableSize * upsampleFactor);
 
 	    } else {
@@ -571,15 +565,10 @@ void PulseLayer::writeToSpeaker (void)
 
 	    }
 
-	    //  maxNbBytesToGet = maxNbSamplesToGet * sizeof(SFLDataFormat);
-	    _debug("maxNbBytesToGet: %i\n", maxNbBytesToGet);
-
             out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
             normalAvailBytes = _mainBuffer.availForGet();
-	    _debug("normalAvailBytes: %i\n", normalAvailBytes);
 	    
             byteToGet = (normalAvailBytes < (int)(maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
-	    _debug("byteToGet: %i\n", byteToGet);
 
             if (byteToGet) {
 
@@ -597,12 +586,8 @@ void PulseLayer::writeToSpeaker (void)
 		    
 		    // Do sample rate conversion
 		    int nb_sample_down = byteToGet / sizeof(SFLDataFormat);
-		    _debug("nbSampleDown: %i\n", nb_sample_down);
-
 
 		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
-		    _debug("nbSample converted: %i\n", nbSample);
-		    _debug("bytes to be written: %i\n", nbSample*sizeof(SFLDataFormat));
 		    
 		    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
@@ -618,16 +603,11 @@ void PulseLayer::writeToSpeaker (void)
             } else {
 
 		if((tone == 0) && (file_tone == 0)) {
-
-		    // _debug("maxNbBytesToGet: %i\n", maxNbBytesToGet);
 		    
 		    SFLDataFormat* zeros = (SFLDataFormat*)pa_xmalloc (writeableSize);
   
 		    bzero (zeros, writeableSize);
 		    pa_stream_write(playback->pulseStream(), zeros, writeableSize, pa_xfree, 0, PA_SEEK_RELATIVE);
-
-		    // pa_xfree (zeros);
-		    
 
 		}
             }
@@ -635,7 +615,6 @@ void PulseLayer::writeToSpeaker (void)
 	    
 	    _urgentRingBuffer.Discard(byteToGet);
 
-            // pa_xfree (out);
         }
 
     }
@@ -646,8 +625,6 @@ void PulseLayer::readFromMic (void)
 {
     const char* data = NULL;
     size_t r;
-
-    // _debug("--------------- Capture -----------\n");
 
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
         _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
@@ -666,15 +643,11 @@ void PulseLayer::readFromMic (void)
 	    int nbSample = r / sizeof(SFLDataFormat);
             int nb_sample_up = nbSample;
 
-	    // _debug("nbSample from mic: %i\n", nbSample);
-
             
             nbSample = _converter->downsampleData ((SFLDataFormat*)data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
 	    // remove dc offset
 	    dcblocker->filter_signal( rsmpl_out, nbSample );
-
-	    // _debug("nbSample copied: %i\n", nbSample);
 
 	    _mainBuffer.putData ( (void*) rsmpl_out, nbSample*sizeof(SFLDataFormat), 100);
 
