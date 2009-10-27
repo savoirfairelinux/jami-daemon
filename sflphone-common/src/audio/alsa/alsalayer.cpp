@@ -853,6 +853,10 @@ void AlsaLayer::audioCallback (void)
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
     
+    /*
+    int writeableSize = snd_pcm_avail_update(_PlaybackHandle);
+    _debug("writeableSize %i\n", writeableSize);
+    */
 
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
