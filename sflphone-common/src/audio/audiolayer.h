@@ -210,6 +210,11 @@ class AudioLayer {
          */
 	MainBuffer* getMainBuffer( void ) { return &_mainBuffer; }
 
+	/**
+	 * Set the mainbuffer once the audiolayer is created
+	 */
+	// void setMainBuffer( MainBuffer* mainbuffer ) { _mainBuffer = mainbuffer; }
+
         /**
          * Default volume for incoming RTP and Urgent sounds.
          */

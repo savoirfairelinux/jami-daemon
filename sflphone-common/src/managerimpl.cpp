@@ -3209,12 +3209,16 @@ void ManagerImpl::switchAudioManager (void)
 
     _debug ("has current call: %i \n", hasCurrentCall());
 
-    // need to stop audio streams if there is currently no call
-    if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
-        // _debug("There is currently a call!!\n");
-        _audiodriver->stopStream();
+    if(hasCurrentCall())
+	_audiodriver->startStream();
+	
 
-    }
+    // need to stop audio streams if there is currently no call
+    // if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
+        // _debug("There is currently a call!!\n");
+        // _audiodriver->stopStream();
+
+	// }
 }
 
 /**

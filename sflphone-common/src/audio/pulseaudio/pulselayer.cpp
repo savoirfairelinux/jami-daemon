@@ -358,14 +358,11 @@ void PulseLayer::startStream (void)
 	// Create Streams
 	connectPulseAudioServer();
 
-	// _urgentRingBuffer.flushAll();
-	// _mainBuffer.flushAllBuffers();
-
 	is_started = true;
     }
 
     _urgentRingBuffer.flushAll();
-    _mainBuffer.flushAllBuffers();
+    getMainBuffer()->flushAllBuffers();
 
 }
 
@@ -507,7 +504,7 @@ void PulseLayer::writeToSpeaker (void)
         pa_stream_write (playback->pulseStream(), out, writeableSize, pa_xfree, 0, PA_SEEK_RELATIVE);
 
         // Consume the regular one as well (same amount of bytes)
-        _mainBuffer.discard (writeableSize);
+        getMainBuffer()->discard (writeableSize);
 
 
     } else {
@@ -566,7 +563,7 @@ void PulseLayer::writeToSpeaker (void)
 	    }
 
             out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
-            normalAvailBytes = _mainBuffer.availForGet();
+            normalAvailBytes = getMainBuffer()->availForGet();
 	    
             byteToGet = (normalAvailBytes < (int)(maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
 
@@ -577,7 +574,7 @@ void PulseLayer::writeToSpeaker (void)
 		if( (byteToGet%2) != 0 )
 		    byteToGet = byteToGet-1;
 
-                _mainBuffer.getData (out, byteToGet, 100);
+                getMainBuffer()->getData (out, byteToGet, 100);
 
 		// test if resampling is required
 		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
@@ -649,14 +646,14 @@ void PulseLayer::readFromMic (void)
 	    // remove dc offset
 	    dcblocker->filter_signal( rsmpl_out, nbSample );
 
-	    _mainBuffer.putData ( (void*) rsmpl_out, nbSample*sizeof(SFLDataFormat), 100);
+	    getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof(SFLDataFormat), 100);
 
 	    pa_xfree (rsmpl_out);
 
         } else {
 
             // no resampling required
-            _mainBuffer.putData ( (void*) data, r, 100);
+            getMainBuffer()->putData ( (void*) data, r, 100);
         }
 
 
