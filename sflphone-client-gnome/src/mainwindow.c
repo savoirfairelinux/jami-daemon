@@ -146,13 +146,14 @@ create_main_window ()
 	gchar *path;
 	GError *error = NULL;
 	gboolean ret;
+	const char *window_title = "SFLphone VoIP Client";
 
 	focus_is_on_calltree = FALSE;
 	focus_is_on_searchbar = FALSE;
 
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width (GTK_CONTAINER (window), 0);
-	gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
+	gtk_window_set_title (GTK_WINDOW (window), window_title);
 	gtk_window_set_default_size (GTK_WINDOW (window), MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
 	gtk_window_set_default_icon_from_file (LOGO,
 			NULL);
