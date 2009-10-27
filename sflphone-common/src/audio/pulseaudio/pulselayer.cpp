@@ -43,18 +43,19 @@ static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
     // static_cast<PulseLayer*> (userdata)->processData();
 }
 
-
+/*
 static void stream_suspended_callback (pa_stream *s UNUSED, void *userdata UNUSED)
 {
     _debug("PulseLayer::Stream Suspended\n");
 }
+*/
 
-
+/*
 static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
 {
     _debug("PulseLayer::Stream Moved\n");
 }
-
+*/
 
 static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
 {
@@ -378,12 +379,11 @@ PulseLayer::stopStream (void)
 	pa_stream_flush (playback->pulseStream(), NULL, NULL);
 	pa_stream_flush (record->pulseStream(), NULL, NULL);
 
-	disconnectAudioStream();
-
 	if (m) {
 	    pa_threaded_mainloop_stop (m);
 	}
 
+	disconnectAudioStream();
 
 	_debug("Disconnecting PulseAudio context\n");
 
@@ -484,15 +484,9 @@ void PulseLayer::writeToSpeaker (void)
     int urgentAvailBytes;
     /** Bytes available in the regular ringbuffer ( reserved for voice ) */
     int normalAvailBytes;
+    /** Bytes to get in the ring buffer **/
     int byteToGet;
-    int toPlay;
 
-    // const pa_timing_info* info = pa_stream_get_timing_info(s);
-    
-    // _debug("         pa write_index: %i", info->write_index);
-    // _debug("         pa write_index_corupt (if not 0): %i"  info->write_index_corrupt);
-    // _debug("         pa read_index: %i", info->read_index);
-    // _debug("         pa read_index_corrupt (if not 0): %i", info->read_index_corrupt);
 
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
@@ -589,7 +583,8 @@ void PulseLayer::writeToSpeaker (void)
 
             if (byteToGet) {
 
-		// TODO, find out where this problem occurs to get rid of this hack
+		// Sending an odd number of byte breaks the audio!
+		// TODO, find out where the problem occurs to get rid of this hack
 		if( (byteToGet%2) != 0 )
 		    byteToGet = byteToGet-1;
 
