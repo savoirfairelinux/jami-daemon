@@ -23,6 +23,7 @@
 static pa_channel_map channel_map;
 
 
+
 AudioStream::AudioStream (PulseLayerType * driver)
         : _audiostream (NULL),
         _context (driver->context),
@@ -172,6 +173,12 @@ AudioStream::createStream (pa_context* c)
     pa_stream* s;
     //pa_cvolume cv;
 
+    // pa_sample_spec ss;
+    // ss.format = PA_SAMPLE_S16LE;
+    // ss.rate = 44100;
+    // ss.channels = 1;
+    
+
     assert (pa_sample_spec_valid (&sample_spec));
     assert (pa_channel_map_valid (&channel_map));
 
@@ -185,19 +192,22 @@ AudioStream::createStream (pa_context* c)
     // parameters are defined as number of bytes
     // 2048 bytes (1024 int16) is 20 ms at 44100 Hz 
     if (_streamType == PLAYBACK_STREAM) {
-	/*
+	
         attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = 4096;
+        attributes->tlength = pa_usec_to_bytes(50 * PA_USEC_PER_MSEC, &sample_spec);
         attributes->prebuf = (uint32_t) -1;      
         attributes->minreq = (uint32_t) -1;
         attributes->fragsize = (uint32_t) -1;
-	*/
+
+	_debug("tlength: %i\n", pa_usec_to_bytes(20 * PA_USEC_PER_MSEC, &sample_spec));
+	/*
 	attributes->maxlength = 88200;
-        attributes->tlength = 8192;
+        attributes->tlength = 4096;
         attributes->prebuf = 4096;      
         attributes->minreq = 2048;
         attributes->fragsize = 4096;
-
+	*/
+	
 	pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_ADJUST_LATENCY, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
 	
