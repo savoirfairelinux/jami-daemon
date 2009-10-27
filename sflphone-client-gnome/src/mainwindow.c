@@ -146,13 +146,14 @@ create_main_window ()
 	gchar *path;
 	GError *error = NULL;
 	gboolean ret;
+	const char *window_title = "SFLphone VoIP Client";
 
 	focus_is_on_calltree = FALSE;
 	focus_is_on_searchbar = FALSE;
 
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width (GTK_CONTAINER (window), 0);
-	gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
+	gtk_window_set_title (GTK_WINDOW (window), window_title);
 	gtk_window_set_default_size (GTK_WINDOW (window), MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
 	gtk_window_set_default_icon_from_file (LOGO,
 			NULL);
@@ -198,7 +199,13 @@ create_main_window ()
 	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 
 	widget = create_toolbar_actions (ui_manager);
-	gtk_toolbar_set_style (GTK_TOOLBAR (widget), GTK_TOOLBAR_BOTH);
+	// Do not override GNOME user settings
+	// gtk_toolbar_set_style (GTK_TOOLBAR (widget), GTK_TOOLBAR_BOTH);
+	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+	
+	widget = create_toolbar_windows (ui_manager);
+	// Do not override GNOME user settings
+	//gtk_toolbar_set_style (GTK_TOOLBAR (widget), GTK_TOOLBAR_ICONS);
 	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 
 	gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
@@ -210,10 +217,6 @@ create_main_window ()
 	embedded_error_notebook = PIDGIN_SCROLL_BOOK(pidgin_scroll_book_new());
 	gtk_box_pack_start(GTK_BOX(subvbox),
 			GTK_WIDGET(embedded_error_notebook), FALSE, FALSE, 0);
-
-	widget = create_toolbar_windows (ui_manager);
-	gtk_toolbar_set_style (GTK_TOOLBAR (widget), GTK_TOOLBAR_ICONS);
-	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 
 	if(SHOW_VOLUME){
 		speaker_control = create_slider("speaker");

@@ -103,7 +103,7 @@ msgid ""
 "</b> SFL audio codecs have to be placed in <i>%s</i> or in the "
 "<b>.sflphone</b> directory in your home( <i>%s</i> )"
 msgstr ""
-"<b>Errore: Non è stato trovato alcun codec audio.</b>\n"
+"<b>Errore: Non Ã¨ stato trovato alcun codec audio.</b>\n"
 "\n"
 "I codec audio SFL devono trovarsi in <i>%s</i> o nella sottocartella "
 "<b>.sflphone</b> della cartella home dell'utente (</i>%s</i>)"
@@ -133,11 +133,11 @@ msgid ""
 "Pulseaudio is not running"
 msgstr ""
 "Notifica PulseAudio\n"
-"PulseAudio non è in esecuzione"
+"PulseAudio non Ã¨ in esecuzione"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:73
 msgid "There is one call in progress."
-msgstr "C'è una chiamata in corso."
+msgstr "C'Ã¨ una chiamata in corso."
 
 #: ../sflphone-client-gnome/src/mainwindow.c:77
 msgid "There are calls in progress."
@@ -176,7 +176,7 @@ msgstr "Chiudi la chiamata"
 msgid ""
 "A %s error forced the call with %s to fall under unencrypted mode.\n"
 "Exact reason: %s\n"
-msgstr "Un errore %s ha provocato il passaggio della chiamata %s in modalit� non sicura.\n"
+msgstr "Un errore %s ha provocato il passaggio della chiamata %s in modalità non sicura.\n"
 "Motivo esatto: %s\n"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:414
@@ -188,7 +188,7 @@ msgstr "Negoziazione ZRTP fallita"
 msgid ""
 "%s wants to stop using secure communication. Confirm will resume "
 "conversation without SRTP.\n"
-msgstr "%s vuole terminare l'uso della comunicazione sicura. Conferma ripristiner� "
+msgstr "%s vuole terminare l'uso della comunicazione sicura. Conferma ripristinerà "
 "la converazione senza SRTP.\n"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:428
@@ -281,7 +281,7 @@ msgstr "Segreteria telefonica"
 
 #: ../sflphone-client-gnome/src/uimanager.c:403
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "SFLphone è un client VoIP compatibile con i protocolli SIP e IAX2."
+msgstr "SFLphone Ã¨ un client VoIP compatibile con i protocolli SIP e IAX2."
 
 #: ../sflphone-client-gnome/src/uimanager.c:406
 msgid "About SFLphone"
@@ -495,7 +495,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:506
 msgid "is "
-msgstr "�"
+msgstr "è"
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:506
 msgid "are "
@@ -566,7 +566,7 @@ msgstr "Nome"
 #: ../sflphone-client-gnome/src/config/assistant.c:69
 #, c-format
 msgid "This assistant is now finished."
-msgstr "La procedura guidata � terminata."
+msgstr "La procedura guidata è terminata."
 
 #: ../sflphone-client-gnome/src/config/assistant.c:71
 msgid ""
@@ -611,7 +611,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/assistant.c:237
 msgid "This installation wizard will help you configure an account."
-msgstr "Questa procedura di installazione permetter� di configurare un account."
+msgstr "Questa procedura di installazione permetterà  di configurare un account."
 
 #: ../sflphone-client-gnome/src/config/assistant.c:251
 msgid "VoIP Protocols"
@@ -666,7 +666,7 @@ msgstr "Indirizzo email opzionale"
 #: ../sflphone-client-gnome/src/config/assistant.c:365
 msgid "This email address will be used to send your voicemail messages."
 msgstr ""
-"L'indirizzo email sarà usato per l'invio dei messaggi della segreteria "
+"L'indirizzo email sarÃ  usato per l'invio dei messaggi della segreteria "
 "telefonica."
 
 #: ../sflphone-client-gnome/src/config/assistant.c:373
@@ -727,7 +727,7 @@ msgstr "Ingresso"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:752
 msgid "_Voice Activity Detection"
-msgstr "Rilevazione dell'attivit� _Voce"
+msgstr "Rilevazione dell'attività _Voce"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:762
 msgid "_Noise Reduction (Narrow-Band Companding)"
@@ -824,7 +824,7 @@ msgid ""
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
-"Questo profilo � utilizzato quando vuoi raggiungere un nodo remoto semplicemente digitando un "
+"Questo profilo è utilizzato quando vuoi raggiungere un nodo remoto semplicemente digitando un "
 "URI sip tipo <b>sip:remotepeer</b>. Le configurazione che definisci qui saranno "
 "usate anche se nessun account corrisponde ad una chiamata in ingresso o in uscita."
 
@@ -920,14 +920,14 @@ msgid ""
 "dedicated\n"
 "port, different one from each other\n"
 msgstr ""
-"Il trasporto TLS pu� essere utilizzato con UDP per le chiamate che\n"
+"Il trasporto TLS può essere utilizzato con UDP per le chiamate che\n"
 "richiedono transazioni sip sicure (aka SIPS). Puoi configurare un trasporto\n"
-"TLS diverso per ognia account. Tuttavia, ognuino di essi girer� su una "
+"TLS diverso per ognia account. Tuttavia, ognuino di essi girerà su una "
 "porta dedicata, differente dalle altre\n"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:100
 msgid "Certificate of Authority list"
-msgstr "Lista delle Autorit� di certificazione"
+msgstr "Lista delle Autorità di certificazione"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:104
 msgid "Choose a CA list file (optional)"
@@ -971,7 +971,7 @@ msgstr "Verifica certificati in ingresso, come server"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:242
 msgid "Verify certificates from answer, as a client"
-msgstr "Verifica certificati nella risposta, come client""
+msgstr "Verifica certificati nella risposta, come client"
 
 #: ../sflphone-client-gnome/src/config/tlsadvanceddialog.c:248
 msgid "Require certificate for incoming tls connections"
@@ -991,7 +991,7 @@ msgstr "Chiedi all'utente di confermare SAS"
 
 #: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:80
 msgid "_Warn if ZRTP not supported"
-msgstr "Notifica se ZRTP non � supportato"
+msgstr "Notifica se ZRTP non è supportato"
 
 #: ../sflphone-client-gnome/src/config/zrtpadvanceddialog.c:86
 msgid "Display SAS once for hold events"
@@ -1023,8 +1023,8 @@ msgstr "Cerca tra le chiamate effettuate"
 #~ msgid "(C) 2009 Savoir-faire Linux"
 #~ msgstr "(C) 2009 Savoir-faire Linux"
 
-#~ msgid "Jérémy Quentin"
-#~ msgstr "Jérémy Quentin"
+#~ msgid "JÃ©rÃ©my Quentin"
+#~ msgstr "JÃ©rÃ©my Quentin"
 
 #~ msgid "Address book"
 #~ msgstr "Rubrica"
@@ -1057,7 +1057,7 @@ msgstr "Cerca tra le chiamate effettuate"
 #~ msgstr "Applica"
 
 #~ msgid "Down"
-#~ msgstr "Gi�"
+#~ msgstr "Giù"
 
 #~ msgid "Up"
 #~ msgstr "Su"
@@ -1195,11 +1195,11 @@ msgstr "Cerca tra le chiamate effettuate"
 #~ "Pressing \"apply\" will restart the network layer. Otherwise, SFLPhone would "
 #~ "have to be restarted."
 #~ msgstr ""
-#~ "Premendo il tasto \"Applica\" il modulo di rete verr� riavviato. In "
+#~ "Premendo il tasto \"Applica\" il modulo di rete verrà  riavviato. In "
 #~ "alternativa occorrerebbe riavviare SFLphone."
 
 #~ msgid "Creation of account has failed for the reason"
-#~ msgstr "La creazione dell'account è fallita per il seguente motivo"
+#~ msgstr "La creazione dell'account Ã¨ fallita per il seguente motivo"
 
 #~ msgid "Account creation wizard"
 #~ msgstr "Procedura guidata creazione account"
