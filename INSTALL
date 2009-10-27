@@ -8,7 +8,6 @@ INSTALLATION GUIDE
 	./autogen.sh
     ./configure
     make dep && make
-    sudo make install
     # Go back to the root
     cd ../..
     ./autogen.sh --prefix=/usr
