@@ -37,12 +37,14 @@ G_BEGIN_DECLS
 
 typedef struct _AddressBook_Config
 {
-    guint enable;
-    guint max_results;
-    guint display_contact_photo;
-    guint search_phone_home;
-    guint search_phone_business;
-    guint search_phone_mobile;
+	// gint64: a signed integer guaranteed to be 64 bits on all platforms
+	// To print or scan values of this type, use G_GINT64_MODIFIER and/or G_GINT64_FORMAT
+    gint64 enable;
+    gint64 max_results;
+    gint64 display_contact_photo;
+    gint64 search_phone_home;
+    gint64 search_phone_business;
+    gint64 search_phone_mobile;
 } AddressBook_Config;
 
 /**

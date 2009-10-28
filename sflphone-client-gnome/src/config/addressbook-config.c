@@ -56,17 +56,17 @@ addressbook_config_load_parameters(AddressBook_Config **settings)
     }
     else
     {
-        _settings->enable = (guint) (g_hash_table_lookup (_params, 
+        _settings->enable = (gint64) (g_hash_table_lookup (_params, 
                     ADDRESSBOOK_ENABLE));
-        _settings->max_results = (guint) (g_hash_table_lookup(_params,
+        _settings->max_results = (gint64) (g_hash_table_lookup(_params,
                     ADDRESSBOOK_MAX_RESULTS));
-        _settings->display_contact_photo = (guint) (g_hash_table_lookup(_params,
+        _settings->display_contact_photo = (gint64) (g_hash_table_lookup(_params,
                     ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
-        _settings->search_phone_business = (guint) (g_hash_table_lookup(_params,
+        _settings->search_phone_business = (gint64) (g_hash_table_lookup(_params,
                     ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
-        _settings->search_phone_home = (guint) (g_hash_table_lookup(_params,
+        _settings->search_phone_home = (gint64) (g_hash_table_lookup(_params,
                     ADDRESSBOOK_DISPLAY_PHONE_HOME));
-        _settings->search_phone_mobile = (guint) (g_hash_table_lookup(_params,
+        _settings->search_phone_mobile = (gint64) (g_hash_table_lookup(_params,
                     ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
     }
 
