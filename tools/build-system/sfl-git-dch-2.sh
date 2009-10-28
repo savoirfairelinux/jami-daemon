@@ -10,6 +10,8 @@
 # Last Modified: 2009-10-21 14:58:22 -0400
 #####################################################
 
+#set -x
+
 . $1
 
 echo "********************************************************************************"
@@ -22,6 +24,8 @@ if [ ${IS_RELEASE} ] ; then
 else
 	echo "Snapshot mode"
 fi
+
+cd ${WORKING_DIR}
 
 # use git log to retrieve changelog content
 CHANGELOG_CONTENT=`git log --no-merges --pretty=format:"%s" ${COMMIT_HASH_BEGIN}..${COMMIT_HASH_END} | grep -v "\[\#1262\]"`
@@ -83,6 +87,8 @@ fi
 echo
 echo "All done !"
 echo "********************************************************************************"
+
+cd -
 
 exit 0
 
