@@ -132,7 +132,7 @@ codec_set_prefered_order(guint index)
 void
 codec_list_move_codec_up(guint index)
 {
-        printf("Codec list Size: %i \n",codec_list_get_size());
+        DEBUG("Codec list Size: %i \n",codec_list_get_size());
 	if(index != 0)
 	{
 		gpointer codec = g_queue_pop_nth(codecQueue, index);
@@ -152,7 +152,7 @@ codec_list_move_codec_up(guint index)
 void
 codec_list_move_codec_down(guint index)
 {
-        printf("Codec list Size: %i \n",codec_list_get_size());
+        DEBUG("Codec list Size: %i \n",codec_list_get_size());
 	if(index != codecQueue->length)
 	{
 		gpointer codec = g_queue_pop_nth(codecQueue, index);
