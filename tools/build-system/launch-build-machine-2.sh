@@ -10,6 +10,8 @@
 # Last Modified: 2009-10-21 18:18:07 -0400
 #####################################################
 
+#set -x
+
 # home directory
 ROOT_DIR=${HOME}
 
@@ -83,6 +85,8 @@ fi
 # logging
 if [ ${DO_LOGGING} ]; then
 
+	rm -f ${ROOT_DIR}/packaging.log >/dev/null 2>&1	
+
 	# open file descriptor
 	exec 3<> ${ROOT_DIR}/packaging.log
 
@@ -101,16 +105,17 @@ fi
 # COMMON PART
 #########################
 
+cd ${REFERENCE_REPOSITORY}
+
 echo "Update reference sources"
 if [ ${IS_RELEASE} ]; then
-        cd ${REFERENCE_REPOSITORY} && git checkout . && git checkout -f release && git pull
+        git checkout . && git checkout -f release && git pull
 else
-        cd ${REFERENCE_REPOSITORY} && git checkout . && git checkout -f master && git pull
+        git checkout . && git checkout -f master && git pull
 fi
 
 echo "Retrieve build info"
 # retrieve info we may need
-cd ${REFERENCE_REPOSITORY}
 CURRENT_RELEASE_TAG_NAME=`git tag -l "[0-9]\.[0-9]\.[0-9]\.*" | tail -n 1`
 PREVIOUS_RELEASE_TAG_NAME=`git tag -l "[0-9]\.[0-9]\.[0-9]\.*" | tail -n 2 | sed -n '1p;1q'`
 CURRENT_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${CURRENT_RELEASE_TAG_NAME} | tail -n 1`
@@ -120,15 +125,13 @@ CURRENT_RELEASE_TYPE=${CURRENT_RELEASE_TAG_NAME##*.}
 PREVIOUS_RELEASE_TYPE=${PREVIOUS_RELEASE_TAG_NAME##*.}
 CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_TAG_NAME%*.*}
 PREVIOUS_VERSION=${PREVIOUS_RELEASE_TAG_NAME%*.*}
+
 cd ${LAUNCHPAD_DIR}
 
 COMMIT_HASH_BEGIN=""
 COMMIT_HASH_END=""
 SOFTWARE_VERSION=""
 LAUNCHPAD_CONF_PREFIX=""
-
-echo "Clean build directory"
-git clean -f -x ${LAUNCHPAD_DIR}/* >/dev/null
 
 if [ ${IS_RELEASE} ]; then
 	VERSION_APPEND=""
@@ -144,9 +147,10 @@ else
 	LAUNCHPAD_CONF_PREFIX="sflphone-nightly"
 fi
 
-cd ${LAUNCHPAD_DIR}
-
 VERSION="${SOFTWARE_VERSION}~ppa${VERSION_INDEX}~SYSTEM"
+
+echo "Clean build directory"
+git clean -f -x ${LAUNCHPAD_DIR}/* >/dev/null
 
 for LAUNCHPAD_PACKAGE in ${LAUNCHPAD_PACKAGES[*]}
 do
@@ -155,18 +159,18 @@ do
 	echo "  --> Clean old sources"
 	git clean -f -x ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/* >/dev/null
 
-	echo "  --> Retrieve new sources"
-	cp -r ${REFERENCE_REPOSITORY}/${LAUNCHPAD_PACKAGE} ${LAUNCHPAD_DIR}/ 
-
 	DEBIAN_DIR="${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/debian"
 
 	echo "  --> Clean debian directory"
 	git checkout ${DEBIAN_DIR} 
 
+	echo "  --> Retrieve new sources"
+	cp -r ${REFERENCE_REPOSITORY}/${LAUNCHPAD_PACKAGE} ${LAUNCHPAD_DIR}/ 
+
 	echo "  --> Update debian changelog"
 
 cat << END > ${WORKING_DIR}/sfl-git-dch.conf
-WORKING_DIR="${WORKING_DIR}"
+WORKING_DIR="${REFERENCE_REPOSITORY}"
 SOFTWARE="${LAUNCHPAD_PACKAGE}"
 VERSION="${VERSION}"
 DISTRIBUTION="SYSTEM"
@@ -174,8 +178,8 @@ CHANGELOG_FILE="${DEBIAN_DIR}/changelog"
 COMMIT_HASH_BEGIN="${COMMIT_HASH_BEGIN}"
 COMMIT_HASH_END="${COMMIT_HASH_END}"
 IS_RELEASE=${IS_RELEASE}
-export DEBFULLNAME="SFLphone Automatic Build System"
-export DEBEMAIL="team@sflphone.org"
+export DEBFULLNAME="Julien Bonjean"
+export DEBEMAIL="julien.bonjean@savoirfairelinux.com"
 export EDITOR="echo"
 END
 
@@ -185,6 +189,8 @@ END
 		exit -1
 	fi
 	rm -f ${WORKING_DIR}/sfl-git-dch.conf >/dev/null 2>&1
+
+	cd ${LAUNCHPAD_DIR}
 
 	cp ${DEBIAN_DIR}/changelog ${DEBIAN_DIR}/changelog.generic
 	
