@@ -167,6 +167,9 @@ do
 	echo "  --> Retrieve new sources"
 	cp -r ${REFERENCE_REPOSITORY}/${LAUNCHPAD_PACKAGE} ${LAUNCHPAD_DIR}/ 
 
+	echo "  --> Update software version number (${SOFTWARE_VERSION})"
+	echo "${SOFTWARE_VERSION}" > ${LAUNCHPAD_DIR}/${LAUNCHPAD_PACKAGE}/VERSION
+
 	echo "  --> Update debian changelog"
 
 cat << END > ${WORKING_DIR}/sfl-git-dch.conf
