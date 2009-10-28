@@ -24,7 +24,7 @@ void AudioLayer::flushMain (void)
     ost::MutexLock guard (_mutex);
 
     // should pass call id 
-    _mainBuffer.flushAllBuffers();
+    getMainBuffer()->flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent (void)
@@ -36,7 +36,7 @@ void AudioLayer::flushUrgent (void)
 void AudioLayer::flushMic (void)
 {
     ost::MutexLock guard (_mutex);
-    _mainBuffer.flushDefault();
+    getMainBuffer()->flushDefault();
 }
 
 int AudioLayer::putUrgent (void* buffer, int toCopy)
@@ -60,13 +60,13 @@ int AudioLayer::putMain (void *buffer, int toCopy, CallID call_id)
     int a;
 
     ost::MutexLock guard (_mutex);
-    a = _mainBuffer.availForPut(call_id);
+    a = getMainBuffer()->availForPut(call_id);
 
     if (a >= toCopy) {
-        return _mainBuffer.putData (buffer, toCopy, _defaultVolume, call_id);
+        return getMainBuffer()->putData (buffer, toCopy, _defaultVolume, call_id);
     } else {
         _debug ("Chopping sound, Ouch! RingBuffer full ?\n");
-        return _mainBuffer.putData (buffer, a, _defaultVolume, call_id);
+        return getMainBuffer()->putData (buffer, a, _defaultVolume, call_id);
     }
 
     return 0;

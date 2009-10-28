@@ -208,12 +208,12 @@ class AudioLayer {
 	 *
          * @return MainBuffer* a pointer to the MainBuffer instance
          */
-	MainBuffer* getMainBuffer( void ) { return &_mainBuffer; }
+	MainBuffer* getMainBuffer( void ) { return _mainBuffer; }
 
 	/**
 	 * Set the mainbuffer once the audiolayer is created
 	 */
-	// void setMainBuffer( MainBuffer* mainbuffer ) { _mainBuffer = mainbuffer; }
+	void setMainBuffer( MainBuffer* mainbuffer ) { _mainBuffer = mainbuffer; }
 
         /**
          * Default volume for incoming RTP and Urgent sounds.
@@ -261,7 +261,7 @@ class AudioLayer {
 	 * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
 	 *
 	 */ 
-	MainBuffer _mainBuffer;
+	MainBuffer* _mainBuffer;
 
 	/**
 	 * A pointer to the recordable instance (may be a call or a conference)

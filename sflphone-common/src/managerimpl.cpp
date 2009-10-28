@@ -3072,12 +3072,15 @@ ManagerImpl::initAudioDriver (void)
 
     if (getConfigInt (PREFERENCES , CONFIG_AUDIO) == ALSA) {
         _audiodriver = new AlsaLayer (this);
+	_audiodriver->setMainBuffer(&_mainBuffer);
     } else if (getConfigInt (PREFERENCES , CONFIG_AUDIO) == PULSEAUDIO) {
         if (app_is_running ("pulseaudio") == 0) {
             _audiodriver = new PulseLayer (this);
+	    _audiodriver->setMainBuffer(&_mainBuffer);
         } else {
             _audiodriver = new AlsaLayer (this);
             setConfig (PREFERENCES, CONFIG_AUDIO, ALSA);
+	    _audiodriver->setMainBuffer(&_mainBuffer);
         }
     } else
         _debug ("Error - Audio API unknown\n");
@@ -3176,7 +3179,7 @@ void ManagerImpl::switchAudioManager (void)
 
     _debug ("Deleting current layer... \n");
 
-    //_audiodriver->closeLayer();
+    // _audiodriver->closeLayer();
     delete _audiodriver;
 
     _audiodriver = NULL;
@@ -3186,11 +3189,13 @@ void ManagerImpl::switchAudioManager (void)
         case ALSA:
             _debug ("Creating Pulseaudio layer...\n");
             _audiodriver = new PulseLayer (this);
+	    _audiodriver->setMainBuffer(&_mainBuffer);
             break;
 
         case PULSEAUDIO:
             _debug ("Creating ALSA layer...\n");
             _audiodriver = new AlsaLayer (this);
+	    _audiodriver->setMainBuffer(&_mainBuffer);
             break;
 
         default:
