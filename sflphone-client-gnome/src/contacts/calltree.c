@@ -269,7 +269,7 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
 			DEBUG("Display SAS once %s", displaySasOnce);
 		} else {
 			GHashTable * properties = NULL;
-			properties = sflphone_get_ip2ip_properties();
+			sflphone_get_ip2ip_properties (&properties);
 			if(properties != NULL)
 			{ displaySasOnce = g_hash_table_lookup(properties, ACCOUNT_DISPLAY_SAS_ONCE); DEBUG("IP2IP displaysasonce %s", displaySasOnce); }
 		}
@@ -539,7 +539,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 			{ display_sas = FALSE; }
 		} else {
 			GHashTable * properties = NULL;
-			properties = sflphone_get_ip2ip_properties();
+			sflphone_get_ip2ip_properties (&properties);
 			if(properties != NULL) {
 				if(g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0) 
 				{ display_sas = FALSE; }

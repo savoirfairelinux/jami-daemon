@@ -304,9 +304,9 @@ void sflphone_fill_ip2ip_profile(void)
     ip2ip_profile = (GHashTable *) dbus_get_ip2_ip_details();
 }
 
-GHashTable * sflphone_get_ip2ip_properties(void) 
+void sflphone_get_ip2ip_properties (GHashTable **properties)
 {
-    return ip2ip_profile;
+	*properties	= ip2ip_profile;
 }
 
     void

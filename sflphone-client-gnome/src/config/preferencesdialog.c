@@ -179,7 +179,8 @@ GtkWidget* create_direct_ip_calls_tab()
     gchar * curKeyExchange = "0";
     gchar * description;
    
-    directIpCallsProperties = sflphone_get_ip2ip_properties();
+    //directIpCallsProperties = sflphone_get_ip2ip_properties();
+    sflphone_get_ip2ip_properties(&directIpCallsProperties);
               
     if(directIpCallsProperties != NULL) {
 	DEBUG("got a directIpCallsProperties");

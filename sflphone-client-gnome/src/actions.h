@@ -159,7 +159,7 @@ void sflphone_fill_ip2ip_profile(void);
  * @return The internal hash table representing
  * the settings for the ip2ip profile. 
  */
-GHashTable * sflphone_get_ip2ip_properties(void);
+void sflphone_get_ip2ip_properties (GHashTable **properties);
  
 /**
  * Initialize the accounts data structure
