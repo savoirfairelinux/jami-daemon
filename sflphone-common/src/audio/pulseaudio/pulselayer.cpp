@@ -651,7 +651,7 @@ void PulseLayer::readFromMic (void)
 
     int readableSize = pa_stream_readable_size(record->pulseStream());
 
-    _debug("readableSize: %i\n", readableSize);
+    // _debug("readableSize: %i\n", readableSize);
 
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
         _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
@@ -667,7 +667,7 @@ void PulseLayer::readFromMic (void)
 
 
 	    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
-	    _debug("Byte read: %i\n", r);
+	    // _debug("Byte read: %i\n", r);
 	    int nbSample = r / sizeof(SFLDataFormat);
  
             int nb_sample_up = nbSample;
