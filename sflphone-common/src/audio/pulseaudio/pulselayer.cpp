@@ -501,7 +501,11 @@ void PulseLayer::writeToSpeaker (void)
 
 	out = (SFLDataFormat*) pa_xmalloc (writeableSize);
         _urgentRingBuffer.Get (out, writeableSize, 100);
-        pa_stream_write (playback->pulseStream(), out, writeableSize, pa_xfree, 0, PA_SEEK_RELATIVE);
+	// pa_threaded_mainloop_lock (m);
+        pa_stream_write (playback->pulseStream(), out, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
+	// pa_threaded_mainloop_unlock (m);
+
+	pa_xfree(out);
 
         // Consume the regular one as well (same amount of bytes)
         getMainBuffer()->discard (writeableSize);
@@ -524,7 +528,11 @@ void PulseLayer::writeToSpeaker (void)
 
 		out = (SFLDataFormat*) pa_xmalloc (writeableSize);
 		int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
-		pa_stream_write (playback->pulseStream(), out, copied * sizeof(SFLDataFormat), pa_xfree, 0, PA_SEEK_RELATIVE);
+		// pa_threaded_mainloop_lock (m);
+		pa_stream_write (playback->pulseStream(), out, copied * sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+		// pa_threaded_mainloop_unlock (m);
+
+		pa_xfree(out);
 
 	    }
         }
@@ -536,7 +544,11 @@ void PulseLayer::writeToSpeaker (void)
 		
 		out = (SFLDataFormat*) pa_xmalloc (writeableSize);
 		int copied = file_tone->getNext(out, writeableSize / sizeof(SFLDataFormat), 100);
-		pa_stream_write (playback->pulseStream(), out, copied * sizeof(SFLDataFormat), pa_xfree, 0, PA_SEEK_RELATIVE);
+		// pa_threaded_mainloop_lock (m);
+		pa_stream_write (playback->pulseStream(), out, copied * sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+		pa_xfree(out);
+		// pa_threaded_mainloop_unlock (m);
 
 	    }
 
@@ -562,7 +574,6 @@ void PulseLayer::writeToSpeaker (void)
 
 	    }
 
-            out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
             normalAvailBytes = getMainBuffer()->availForGet();
 	    
             byteToGet = (normalAvailBytes < (int)(maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
@@ -573,6 +584,8 @@ void PulseLayer::writeToSpeaker (void)
 		// TODO, find out where the problem occurs to get rid of this hack
 		if( (byteToGet%2) != 0 )
 		    byteToGet = byteToGet-1;
+
+		out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
 
                 getMainBuffer()->getData (out, byteToGet, 100);
 
@@ -585,17 +598,22 @@ void PulseLayer::writeToSpeaker (void)
 		    int nb_sample_down = byteToGet / sizeof(SFLDataFormat);
 
 		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
-		    
-		    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
-		    pa_xfree (rsmpl_out);
-		    pa_xfree (out);
+		    if((nbSample*sizeof(SFLDataFormat)) > (unsigned int)writeableSize)
+			_debug("Error: nbsbyte exceed buffer length\n");
+
+		    // pa_threaded_mainloop_lock (m);
+		    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+		    // pa_threaded_mainloop_unlock (m);
+		    pa_xfree(rsmpl_out);
 
 		} else {
 
-		    pa_stream_write (playback->pulseStream(), out, byteToGet, pa_xfree, 0, PA_SEEK_RELATIVE);
+		    pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
 
 		}
+
+		pa_xfree(out);
 
             } else {
 
@@ -604,7 +622,12 @@ void PulseLayer::writeToSpeaker (void)
 		    SFLDataFormat* zeros = (SFLDataFormat*)pa_xmalloc (writeableSize);
   
 		    bzero (zeros, writeableSize);
-		    pa_stream_write(playback->pulseStream(), zeros, writeableSize, pa_xfree, 0, PA_SEEK_RELATIVE);
+
+		    // pa_threaded_mainloop_lock (m);
+		    pa_stream_write(playback->pulseStream(), zeros, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
+		    // pa_threaded_mainloop_unlock (m);
+
+		    pa_xfree(zeros);
 
 		}
             }
@@ -623,6 +646,13 @@ void PulseLayer::readFromMic (void)
     const char* data = NULL;
     size_t r;
 
+    // if (record->getStreamState()
+    // pa_threaded_mainloop_lock (m);
+
+    int readableSize = pa_stream_readable_size(record->pulseStream());
+
+    _debug("readableSize: %i\n", readableSize);
+
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
         _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
     }
@@ -635,9 +665,11 @@ void PulseLayer::readFromMic (void)
         if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
 
 
-	    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (framesPerBuffer * sizeof (SFLDataFormat));
 
+	    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
+	    _debug("Byte read: %i\n", r);
 	    int nbSample = r / sizeof(SFLDataFormat);
+ 
             int nb_sample_up = nbSample;
 
             
@@ -663,6 +695,8 @@ void PulseLayer::readFromMic (void)
     if (pa_stream_drop (record->pulseStream()) < 0) {
         //_debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
     }
+
+    // pa_threaded_mainloop_unlock (m);
 }
 
 static void retrieve_server_info (pa_context *c UNUSED, const pa_server_info *i, void *userdata UNUSED)
