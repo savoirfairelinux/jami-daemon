@@ -1707,9 +1707,8 @@ ManagerImpl::playDtmf (char code, bool isTalking)
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
 	// audiolayer->flushUrgent();
-
-        audiolayer->startStream();
-        audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
+	audiolayer->startStream();
+	audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
     }
     else {
 	_debug("    playDtmf: Error cannot play dtmf\n");
@@ -1920,20 +1919,20 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
 	if (isCurrentCall(call_id)) 
 	{
 	    stopTone (true);
-
-	    int nbCalls = getCallList().size();
-
-	    // stop streams
-	    if (nbCalls <= 1)
-	    {
-		_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
-		
-		AudioLayer* audiolayer = getAudioDriver();
-		audiolayer->stopStream();
-	    }
 	    
 	    switchCall ("");
 	}
+    }
+
+    int nbCalls = getCallList().size();
+
+    // stop streams
+    if (nbCalls <= 1)
+    {
+	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
+	
+	AudioLayer* audiolayer = getAudioDriver();
+	audiolayer->stopStream();
     }
 
     /* Direct IP to IP call */
@@ -2039,8 +2038,8 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 
     
     if (audiolayer) {
-	audiolayer->startStream();
 	audiolayer->flushUrgent();
+	audiolayer->startStream();
     }
 
     if (_telephoneTone != 0) {
