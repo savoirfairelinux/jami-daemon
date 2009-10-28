@@ -43,6 +43,8 @@
 #include "audio/sound/dtmf.h" // DTMF class contained by value here
 #include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
 
+#include "audio/mainbuffer.h"
+
 class AudioLayer;
 class GuiFramework;
 class TelephoneTone;
@@ -1191,6 +1193,17 @@ class ManagerImpl {
      * Unload the account (delete them)
      */
     void unloadAccountMap();
+
+
+    /**
+     * Instance of the MainBuffer for the whole application
+     *
+     * In order to send signal to other parts of the application, one must pass through the mainbuffer.
+     * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+     *
+     */ 
+     MainBuffer _mainBuffer;
+
     
    public:
    
@@ -1251,6 +1264,8 @@ class ManagerImpl {
 
     // 
     ConferenceMap _conferencemap;
+
+   
 
 private:
 

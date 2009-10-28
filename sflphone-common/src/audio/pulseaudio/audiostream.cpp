@@ -192,30 +192,23 @@ AudioStream::createStream (pa_context* c)
     // parameters are defined as number of bytes
     // 2048 bytes (1024 int16) is 20 ms at 44100 Hz 
     if (_streamType == PLAYBACK_STREAM) {
-	
+
+	// 20 ms framesize TODO: take framesize value from config
         attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes(20 * PA_USEC_PER_MSEC, &sample_spec);
+        attributes->tlength = pa_usec_to_bytes(50 * PA_USEC_PER_MSEC, &sample_spec);
         attributes->prebuf = (uint32_t) -1;      
         attributes->minreq = (uint32_t) -1;
         attributes->fragsize = (uint32_t) -1;
-
-	_debug("tlength: %i\n", pa_usec_to_bytes(20 * PA_USEC_PER_MSEC, &sample_spec));
-	/*
-	attributes->maxlength = 88200;
-        attributes->tlength = 4096;
-        attributes->prebuf = 4096;      
-        attributes->minreq = 2048;
-        attributes->fragsize = 4096;
-	*/
 	
 	pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_ADJUST_LATENCY, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
-	
+
+	// 20 ms framesize TODO: take framesize value from config
         attributes->maxlength = (uint32_t) -1;
         attributes->tlength = (uint32_t) -1;
         attributes->prebuf = (uint32_t) -1;
         attributes->minreq = (uint32_t) -1;
-        attributes->fragsize = 4096;
+        attributes->fragsize = pa_usec_to_bytes(50 * PA_USEC_PER_MSEC, &sample_spec);
 	
 	
 

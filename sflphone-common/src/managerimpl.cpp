@@ -1707,9 +1707,8 @@ ManagerImpl::playDtmf (char code, bool isTalking)
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
 	// audiolayer->flushUrgent();
-
-        audiolayer->startStream();
-        audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
+	audiolayer->startStream();
+	audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
     }
     else {
 	_debug("    playDtmf: Error cannot play dtmf\n");
@@ -1920,20 +1919,20 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
 	if (isCurrentCall(call_id)) 
 	{
 	    stopTone (true);
-
-	    int nbCalls = getCallList().size();
-
-	    // stop streams
-	    if (nbCalls <= 1)
-	    {
-		_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
-		
-		AudioLayer* audiolayer = getAudioDriver();
-		audiolayer->stopStream();
-	    }
 	    
 	    switchCall ("");
 	}
+    }
+
+    int nbCalls = getCallList().size();
+
+    // stop streams
+    if (nbCalls <= 1)
+    {
+	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
+	
+	AudioLayer* audiolayer = getAudioDriver();
+	audiolayer->stopStream();
     }
 
     /* Direct IP to IP call */
@@ -2039,8 +2038,8 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 
     
     if (audiolayer) {
-	audiolayer->startStream();
 	audiolayer->flushUrgent();
+	audiolayer->startStream();
     }
 
     if (_telephoneTone != 0) {
@@ -3072,12 +3071,15 @@ ManagerImpl::initAudioDriver (void)
 
     if (getConfigInt (PREFERENCES , CONFIG_AUDIO) == ALSA) {
         _audiodriver = new AlsaLayer (this);
+	_audiodriver->setMainBuffer(&_mainBuffer);
     } else if (getConfigInt (PREFERENCES , CONFIG_AUDIO) == PULSEAUDIO) {
         if (app_is_running ("pulseaudio") == 0) {
             _audiodriver = new PulseLayer (this);
+	    _audiodriver->setMainBuffer(&_mainBuffer);
         } else {
             _audiodriver = new AlsaLayer (this);
             setConfig (PREFERENCES, CONFIG_AUDIO, ALSA);
+	    _audiodriver->setMainBuffer(&_mainBuffer);
         }
     } else
         _debug ("Error - Audio API unknown\n");
@@ -3176,7 +3178,7 @@ void ManagerImpl::switchAudioManager (void)
 
     _debug ("Deleting current layer... \n");
 
-    //_audiodriver->closeLayer();
+    // _audiodriver->closeLayer();
     delete _audiodriver;
 
     _audiodriver = NULL;
@@ -3186,11 +3188,13 @@ void ManagerImpl::switchAudioManager (void)
         case ALSA:
             _debug ("Creating Pulseaudio layer...\n");
             _audiodriver = new PulseLayer (this);
+	    _audiodriver->setMainBuffer(&_mainBuffer);
             break;
 
         case PULSEAUDIO:
             _debug ("Creating ALSA layer...\n");
             _audiodriver = new AlsaLayer (this);
+	    _audiodriver->setMainBuffer(&_mainBuffer);
             break;
 
         default:
@@ -3209,12 +3213,16 @@ void ManagerImpl::switchAudioManager (void)
 
     _debug ("has current call: %i \n", hasCurrentCall());
 
-    // need to stop audio streams if there is currently no call
-    if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
-        // _debug("There is currently a call!!\n");
-        _audiodriver->stopStream();
+    if(hasCurrentCall())
+	_audiodriver->startStream();
+	
 
-    }
+    // need to stop audio streams if there is currently no call
+    // if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
+        // _debug("There is currently a call!!\n");
+        // _audiodriver->stopStream();
+
+	// }
 }
 
 /**

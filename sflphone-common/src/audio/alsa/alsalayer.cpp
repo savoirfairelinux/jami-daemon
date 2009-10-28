@@ -161,8 +161,8 @@ AlsaLayer::startStream (void)
     startPlaybackStream ();
 
     _urgentRingBuffer.flush();
-    _mainBuffer.flushAllBuffers();
-    _mainBuffer.flushDefault();
+    getMainBuffer()->flushAllBuffers();
+    getMainBuffer()->flushDefault();
 
     if(_audioThread == NULL) {
 	try {
@@ -853,6 +853,10 @@ void AlsaLayer::audioCallback (void)
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
     
+    /*
+    int writeableSize = snd_pcm_avail_update(_PlaybackHandle);
+    _debug("writeableSize %i\n", writeableSize);
+    */
 
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
@@ -871,7 +875,7 @@ void AlsaLayer::audioCallback (void)
         out=0;
 
         // Consume the regular one as well (same amount of bytes)
-        _mainBuffer.discard (toGet);
+        getMainBuffer()->discard (toGet);
 
     } else {
 
@@ -924,14 +928,14 @@ void AlsaLayer::audioCallback (void)
 
 	    maxNbBytesToGet = maxNbSamplesToGet * sizeof(SFLDataFormat);
             
-            normalAvailBytes = _mainBuffer.availForGet();
+            normalAvailBytes = getMainBuffer()->availForGet();
             toGet = (normalAvailBytes < (int)maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
 
             out = (SFLDataFormat*) malloc (maxNbBytesToGet);
 
             if (normalAvailBytes) {
 
-                _mainBuffer.getData(out, toGet, spkrVolume);
+                getMainBuffer()->getData(out, toGet, spkrVolume);
 
 		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
 
@@ -994,7 +998,7 @@ void AlsaLayer::audioCallback (void)
 	// _debug("micAvailBytes %i\n", micAvailBytes);
 	if(micAvailBytes > 0) 
 	{
-            micAvailPut = _mainBuffer.availForPut();
+            micAvailPut = getMainBuffer()->availForPut();
             toPut = (micAvailBytes <= framesPerBufferAlsa) ? micAvailBytes : framesPerBufferAlsa;
             in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
             toPut = read (in, toPut* sizeof(SFLDataFormat));
@@ -1017,14 +1021,14 @@ void AlsaLayer::audioCallback (void)
 
 		    dcblocker->filter_signal(rsmpl_out, nbSample);
 
-		    _mainBuffer.putData(rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
+		    getMainBuffer()->putData(rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
 
 		    free(rsmpl_out);
 		    rsmpl_out = 0;
 		
 		} else {
 
-		    _mainBuffer.putData(in, toPut, 100);
+		    getMainBuffer()->putData(in, toPut, 100);
 		}
 	    }
             free(in); in=0;
