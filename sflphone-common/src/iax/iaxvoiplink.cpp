@@ -245,19 +245,18 @@ IAXVoIPLink::getEvent()
 
     if (call) {
          call->recAudio.recData (spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
+
+	 // Do the doodle-moodle to send audio from the microphone to the IAX channel.
+	 sendAudioFromMic();
     }
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
-    sendAudioFromMic();
+    // sendAudioFromMic();
 
     // Refresh registration.
     if (_nextRefreshStamp && _nextRefreshStamp - 2 < time (NULL)) {
         sendRegister ("");
     }
-
-    // reinitialize speaker buffer for recording (when recording a voice mail)
-    // for (int i = 0; i < nbSampleForRec_; i++)
-    //     spkrDataConverted[i] = 0;
 
 
     // thread wait 3 millisecond
@@ -285,7 +284,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
     if (!currentCall) {
 
-
+	_debug("Error no iax call with id \"%s\"\n", Manager::instance().getCurrentCallId().c_str());
         // Let's mind our own business.
         return;
     }
@@ -305,22 +304,25 @@ IAXVoIPLink::sendAudioFromMic (void)
         return;
     }
 
-    ac = currentCall->getCodecMap().getCodec (currentCall -> getAudioCodec());
+    ac = currentCall->getCodecMap().getCodec (currentCall->getAudioCodec());
 
     if (!ac) {
         // Audio codec still not determined.
+	_debug("Error no audio codec determined!\n");
+	
         if (audiolayer) {
             // To keep latency low..
-            audiolayer->flushMic();
+            audiolayer->getMainBuffer()->flush(currentCall->getCallId());
         }
+	
 
         return;
     }
 
-    audiolayer->getMainBuffer()->setInternalSamplingRate(ac->getClockRate());
-
     // Send sound here
     if (audiolayer) {
+
+	audiolayer->getMainBuffer()->setInternalSamplingRate(ac->getClockRate());
 
 	int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
 
