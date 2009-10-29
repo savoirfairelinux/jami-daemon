@@ -710,7 +710,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 			
     GtkTreeIter current_local_address_iter = iter;   
     gchar ** iface_list = NULL;
-    iface_list = (gchar **)dbus_get_all_ip_interface();
+    iface_list = (gchar**) dbus_get_all_ip_interface();
     gchar ** iface = NULL;
     
     if (iface_list != NULL) {

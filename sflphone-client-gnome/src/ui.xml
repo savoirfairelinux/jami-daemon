@@ -56,9 +56,4 @@
 		<toolitem name="HistoryToolbar" action="History"/>
 		<toolitem name="AddressbookToolbar" action="Addressbook"/>
 	</toolbar>
-
-	<toolbar name="ToolbarWindows">
-		<!--toolitem name="CallWindowToolbar" action="CallWindow"/-->
-	</toolbar>
-
 </ui>

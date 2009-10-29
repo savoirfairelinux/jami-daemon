@@ -38,7 +38,6 @@ void create_new_conference (conference_state_t state, const gchar* confID, confe
 {
 
     conference_obj_t *obj;
-    gchar *conf_id;
 
     // Allocate memory
     obj = g_new0 (conference_obj_t, 1);
@@ -47,8 +46,7 @@ void create_new_conference (conference_state_t state, const gchar* confID, confe
     obj->_state = state;
 
     // Set the ID field
-    conf_id = confID;
-    obj->_confID = g_strdup (conf_id);
+    obj->_confID = g_strdup (confID);
     *new_conf = obj;
     
 }

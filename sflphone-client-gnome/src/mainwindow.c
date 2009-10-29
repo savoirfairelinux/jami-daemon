@@ -195,19 +195,13 @@ create_main_window ()
 	vbox = gtk_vbox_new ( FALSE /*homogeneous*/, 0 /*spacing*/);
 	subvbox = gtk_vbox_new ( FALSE /*homogeneous*/, 5 /*spacing*/);
 
-	widget = create_menus (ui_manager);
+	create_menus (ui_manager, &widget);
 	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 
-	widget = create_toolbar_actions (ui_manager);
+	create_toolbar_actions (ui_manager, &widget);
 	// Do not override GNOME user settings
-	// gtk_toolbar_set_style (GTK_TOOLBAR (widget), GTK_TOOLBAR_BOTH);
 	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 	
-	widget = create_toolbar_windows (ui_manager);
-	// Do not override GNOME user settings
-	//gtk_toolbar_set_style (GTK_TOOLBAR (widget), GTK_TOOLBAR_ICONS);
-	gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-
 	gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
 	gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
 	gtk_box_pack_start (GTK_BOX (vbox), contacts->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
@@ -430,7 +424,7 @@ main_window_confirm_go_clear(callable_obj_t * c)
 	PidginMiniDialog *mini_dialog;
 	gchar *desc = g_markup_printf_escaped(_("%s wants to stop using secure communication. Confirm will resume conversation without SRTP.\n"), c->_peer_number);
 	mini_dialog = pidgin_mini_dialog_new(_("Confirm Go Clear"), desc, GTK_STOCK_STOP);
-	pidgin_mini_dialog_add_button(mini_dialog, _("Confirm"), sflphone_set_confirm_go_clear, NULL);
+	pidgin_mini_dialog_add_button(mini_dialog, _("Confirm"), (PidginMiniDialogCallback)sflphone_set_confirm_go_clear, NULL);
 	pidgin_mini_dialog_add_button(mini_dialog, _("Stop Call"), sflphone_hang_up, NULL);
 
 	add_error_dialog(GTK_WIDGET(mini_dialog), c);

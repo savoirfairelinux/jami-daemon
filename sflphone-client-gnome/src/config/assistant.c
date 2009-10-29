@@ -63,7 +63,7 @@ void set_account_type( GtkWidget* widget , gpointer data UNUSED ) {
  * Fills string message with the final message of account registration
  * with alias, server and username specified.
  */
-void getMessageSummary( char * message , const gchar * alias, const gchar * server, const gchar * username, const gchar * zrtp) 
+void getMessageSummary( char * message , const gchar * alias, const gchar * server, const gchar * username, const gboolean zrtp) 
 {
 	char var[64];
 	sprintf( message, _("This assistant is now finished."));
@@ -153,7 +153,7 @@ static void sip_apply_callback( void ) {
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username)),
-			(gchar *)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)))
+			(gboolean)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)))
 		);
 
 	gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
@@ -179,7 +179,7 @@ static void iax_apply_callback( void ) {
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username)),
-			(gchar *) _("None")
+			FALSE
 		) ;
 
 		gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);

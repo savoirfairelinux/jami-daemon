@@ -46,14 +46,15 @@ void show_advanced_zrtp_options(GHashTable * properties)
         curDisplaySasOnce = g_hash_table_lookup(properties, ACCOUNT_DISPLAY_SAS_ONCE); 
     }
     
-    securityDialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("ZRTP Options"),
-                GTK_WINDOW(get_main_window()),
-                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                GTK_STOCK_CANCEL,
-                GTK_RESPONSE_CANCEL,
-                GTK_STOCK_SAVE,
-                GTK_RESPONSE_ACCEPT,
-                NULL));
+    securityDialog = GTK_DIALOG	(gtk_dialog_new_with_buttons (	_("ZRTP Options"),
+																GTK_WINDOW (get_main_window()),
+																GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+																GTK_STOCK_CANCEL,
+																GTK_RESPONSE_CANCEL,
+																GTK_STOCK_SAVE,
+																GTK_RESPONSE_ACCEPT,
+																NULL)
+								);
     gtk_window_set_policy( GTK_WINDOW(securityDialog), FALSE, FALSE, FALSE );
     gtk_dialog_set_has_separator(securityDialog, TRUE);
     gtk_container_set_border_width (GTK_CONTAINER(securityDialog), 0);

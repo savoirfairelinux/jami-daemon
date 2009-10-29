@@ -1283,7 +1283,7 @@ GtkWidget* create_waiting_icon()
 	return waiting_icon;
 }
 
-GtkWidget* create_menus (GtkUIManager *ui_manager)
+void create_menus (GtkUIManager *ui_manager, GtkWidget **widget)
 {
 
 	GtkWidget * menu_bar;
@@ -1310,10 +1310,10 @@ GtkWidget* create_menus (GtkUIManager *ui_manager)
 	waitingLayer = create_waiting_icon ();
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), waitingLayer);
 
-	return menu_bar;
+	*widget = menu_bar;
 }
 
-GtkWidget* create_toolbar_actions (GtkUIManager *ui_manager)
+void create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
 {
 	toolbar = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions");
 
@@ -1328,19 +1328,10 @@ GtkWidget* create_toolbar_actions (GtkUIManager *ui_manager)
 	recordWidget = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/RecordToolbar");
 	historyButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/HistoryToolbar");
 	contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/AddressbookToolbar");
-	//currentCallsButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarActions/CallWindowToolbar");
 
 	// Set the handler ID for the transfer
     transfertButtonConnId = g_signal_connect (G_OBJECT (transferToolbar), "toggled", G_CALLBACK (call_transfer_cb), NULL);
 	active_calltree = current_calls;
 
-	return toolbar;
-}
-
-GtkWidget* create_toolbar_windows (GtkUIManager *ui_manager)
-{
-	toolbarWindows = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows");
-	active_calltree = current_calls;
-
-	return toolbarWindows;
+	*widget = toolbar;
 }
