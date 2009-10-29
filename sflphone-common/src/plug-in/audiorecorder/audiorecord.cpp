@@ -477,7 +477,7 @@ void AudioRecord::recData (SFLDataFormat* buffer, int nSamples)
 
 
         if (sndFormat_ == INT16) {   // TODO change INT16 to SINT16
-            if (fwrite (buffer, sizeof (SFLDataFormat), nSamples, fp) != nSamples)
+            if (fwrite (buffer, sizeof (SFLDataFormat), nSamples, fp) != (unsigned int)nSamples)
                 _debug ("AudioRecord: Could not record data! \n");
             else {
                 fflush (fp);

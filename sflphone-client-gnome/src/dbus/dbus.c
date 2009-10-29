@@ -204,12 +204,12 @@ call_state_cb (DBusGProxy *proxy UNUSED,
 
             if (g_strcasecmp (type, "0") == 0)
             {
-                g_print ("incoming\n");
+                // DEBUG("incoming\n");
                 new_call->_history_state = INCOMING;
             }
             else
             {
-                g_print ("outgoing\n");
+                // DEBUG("outgoing\n");
                 new_call->_history_state = OUTGOING;
             }
 
