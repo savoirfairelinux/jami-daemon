@@ -33,6 +33,8 @@ typedef unsigned char* samplePtr;
 
 typedef map<CallID, int> ReadPointer;
 
+static CallID default_id = "audiolayer_id";
+
 class RingBuffer {
   public:
     /**

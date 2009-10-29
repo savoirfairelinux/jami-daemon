@@ -39,8 +39,6 @@
 
 typedef std::string CallID;
 
-static CallID default_id = "default_id";
-
 class Call: public Recordable{
     public:
 
