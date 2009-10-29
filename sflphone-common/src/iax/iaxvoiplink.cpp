@@ -882,22 +882,28 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
     int expandedSize, nbSample_;
     AudioCodec *ac;
 
-    ac = call->getCodecMap().getCodec (call -> getAudioCodec());
+	if (!call)
+		return;
 
-    audiolayer->getMainBuffer()->setInternalSamplingRate(ac->getClockRate());
-    
-    // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
-    // were triggered
-
-    if (!event->datalen) {
+	if (!event->datalen) {
         // Skip this empty packet.
         //_debug("IAX: Skipping empty jitter-buffer interpolated packet\n");
         return;
     }
 
-    if (audiolayer) {
+    ac = call->getCodecMap ().getCodec (call->getAudioCodec ());
 
-	int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
+	if (!ac)
+		return;
+    
+	if (audiolayer) {
+
+		audiolayer->getMainBuffer ()->setInternalSamplingRate (ac->getClockRate ());
+    
+		// If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
+		// were triggered
+
+		int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
 
         // On-the-fly codec changing (normally, when we receive a full packet)
         // as per http://tools.ietf.org/id/draft-guy-iax-03.txt

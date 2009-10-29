@@ -58,7 +58,7 @@ gchar* call_get_peer_name (const gchar *format)
     if (!end) {
         return g_strndup (format, 0);
     } else {
-        name = g_strdup (format);
+        name = format;
         return g_strndup(name, end - name);
     }
 }
