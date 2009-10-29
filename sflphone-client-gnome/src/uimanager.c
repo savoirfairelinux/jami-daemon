@@ -415,7 +415,7 @@ void update_actions()
 static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 {
 	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
-	g_print ("%i\n", toggled);
+	// DEBUG("%i\n", toggled);
 	main_window_volume_controls(toggled);
 	if (toggled || SHOW_VOLUME)
 		dbus_set_volume_controls(toggled);

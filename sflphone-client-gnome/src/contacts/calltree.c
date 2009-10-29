@@ -1240,7 +1240,7 @@ static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
 
 	GtkTargetList* target_list;
 
-	// g_print("drag_begin_cb %s\n", dragged_path);
+	// DEBUG("drag_begin_cb %s\n", dragged_path);
 	if((target_list = gtk_drag_source_get_target_list(widget)) != NULL);
 
 
@@ -1435,7 +1435,7 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data)
 {
 
-	// g_print("drag_data_received_cb\n");
+	// DEBUG("drag_data_received_cb\n");
 	GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
 	GtkTreePath *drop_path;
 	GtkTreeViewDropPosition position;
@@ -1477,7 +1477,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 				dragged_call_id = "NULL";
 				dragged_call = NULL;
 				dragged_conf = NULL;
-				g_print("    AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
+				// DEBUG("    AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
 				break;
 
 			case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
@@ -1493,7 +1493,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 					dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
 					dragged_conf = (conference_obj_t*)g_value_get_pointer(&val);
 				}
-				g_print("    INTO_OR_AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
+				// DEBUG("    INTO_OR_AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
 				break;
 
 			case GTK_TREE_VIEW_DROP_BEFORE:
@@ -1502,7 +1502,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 				dragged_call_id = "NULL";
 				dragged_call = NULL;
 				dragged_conf = NULL;
-				g_print("    BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
+				// DEBUG("    BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
 				break;
 
 			case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
@@ -1518,7 +1518,7 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 					dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
 					dragged_conf = (conference_obj_t*)g_value_get_pointer(&val);
 				}
-				g_print("    INTO_OR_BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
+				// DEBUG("    INTO_OR_BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
 				break;
 
 			default:
