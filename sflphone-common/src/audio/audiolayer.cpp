@@ -27,17 +27,13 @@ void AudioLayer::flushMain (void)
     getMainBuffer()->flushAllBuffers();
 }
 
+
 void AudioLayer::flushUrgent (void)
 {
     ost::MutexLock guard (_mutex);
     _urgentRingBuffer.flushAll();
 }
 
-void AudioLayer::flushMic (void)
-{
-    ost::MutexLock guard (_mutex);
-    getMainBuffer()->flushDefault();
-}
 
 int AudioLayer::putUrgent (void* buffer, int toCopy)
 {

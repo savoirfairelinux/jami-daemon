@@ -110,20 +110,6 @@ class AudioLayer {
         virtual void stopStream(void) = 0;
 
         /**
-         * Query the capture device for number of bytes available in the hardware ring buffer
-         * @return int The number of bytes available
-         */
-        virtual int canGetMic() = 0;
-
-        /**
-         * Get data from the capture device
-         * @param buffer The buffer for data
-         * @param toCopy The number of bytes to get
-         * @return int The number of bytes acquired ( 0 if an error occured)
-         */
-        virtual int getMic(void * buffer, int toCopy) = 0;
-
-        /**
          * Send a chunk of data to the hardware buffer to start the playback
          * Copy data in the urgent buffer. 
          * @param buffer The buffer containing the data to be played ( ringtones )
@@ -144,10 +130,6 @@ class AudioLayer {
 
         void flushUrgent (void);
 
-        /**
-         * Flush the mic ringbuffer
-         */
-        void flushMic();
 
         virtual bool isCaptureActive (void) = 0;
 

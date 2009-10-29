@@ -54,7 +54,7 @@ RingBuffer::~RingBuffer()
 void
 RingBuffer::flush (CallID call_id)
 {
-    _debug("flush: call_id on iax\n");
+    _debug("flush: reinit \"%s\" readpointer in \"%s\" ringbuffer\n", call_id.c_str(), buffer_id.c_str());
     storeReadPointer(mEnd, call_id);
 }
 
@@ -62,6 +62,7 @@ RingBuffer::flush (CallID call_id)
 void
 RingBuffer::flushAll ()
 {
+    // _debug("flushall: reinit all readpointer in \"%s\" ringbuffer\n", buffer_id.c_str());
 
     ReadPointer::iterator iter_pointer = _readpointer.begin();
     while(iter_pointer != _readpointer.end())
