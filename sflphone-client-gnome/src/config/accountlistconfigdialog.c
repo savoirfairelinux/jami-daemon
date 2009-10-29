@@ -498,16 +498,9 @@ show_account_list_config_dialog(void)
 
     int number_accounts = account_list_get_size();
     if (number_accounts) {
-        gchar number_accounts_str[4];
-        g_snprintf(number_accounts_str, 4, "%d", number_accounts);
-        
-        gchar * message = g_strconcat(
-                            _("There "),
-                            (number_accounts == 1) ? _("is "):_("are "),
-                            number_accounts_str,
-                            _(" active account"), 
-                            (number_accounts == 1) ? _(""):_("s"),
-                            NULL);                 
+        gchar * message = g_strdup_printf(n_("There is %d active account",
+                                             "There are %d active accounts", number_accounts),
+                                          number_accounts);
         gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, message);
         g_free(message);
     } else {
