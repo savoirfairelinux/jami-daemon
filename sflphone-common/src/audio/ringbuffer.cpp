@@ -171,7 +171,7 @@ RingBuffer::storeReadPointer(int pointer_value, CallID call_id)
     }
     else
     {
-	_debug("Cannot find \"%s\" readPointer\n", call_id.c_str());
+	_debug("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer\n", call_id.c_str(), buffer_id.c_str());
     }
 
 }

@@ -508,7 +508,7 @@ IAXVoIPLink::answer (const CallID& id)
     call->setState (Call::Active);
     call->setConnectionState (Call::Connected);
     // Start audio
-    audiolayer->startStream();
+    // audiolayer->startStream();
 
     return true;
 }
@@ -531,7 +531,7 @@ IAXVoIPLink::hangup (const CallID& id)
 
     if (Manager::instance().isCurrentCall (id)) {
         // stop audio
-        audiolayer->stopStream();
+        // audiolayer->stopStream();
     }
 
     terminateOneCall (id);
@@ -558,7 +558,7 @@ IAXVoIPLink::peerHungup (const CallID& id)
 
     if (Manager::instance().isCurrentCall (id)) {
         // stop audio
-        audiolayer->stopStream();
+        // audiolayer->stopStream();
     }
 
     terminateOneCall (id);
@@ -601,7 +601,7 @@ IAXVoIPLink::offhold (const CallID& id)
     _mutexIAX.enterMutex();
     iax_unquelch (call->getSession());
     _mutexIAX.leaveMutex();
-    audiolayer->startStream();
+    // audiolayer->startStream();
     call->setState (Call::Active);
     return true;
 }
@@ -752,7 +752,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
 
             if (Manager::instance().isCurrentCall (id)) {
                 // stop audio
-                audiolayer->stopStream();
+                // audiolayer->stopStream();
             }
 
             Manager::instance().peerHungupCall (id);
@@ -775,7 +775,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
 
             if (Manager::instance().isCurrentCall (id)) {
                 // stop audio
-                audiolayer->stopStream();
+                // audiolayer->stopStream();
             }
 
             call->setConnectionState (Call::Connected);
@@ -803,7 +803,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
 
                 call->setConnectionState (Call::Connected);
                 call->setState (Call::Active);
-                audiolayer->startStream();
+                // audiolayer->startStream();
 
                 if (event->ies.format) {
                     // Should not get here, should have been set in EVENT_ACCEPT
