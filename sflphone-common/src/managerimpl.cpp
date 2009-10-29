@@ -208,7 +208,7 @@ void
 ManagerImpl::switchCall (const CallID& id)
 {
     ost::MutexLock m (_currentCallMutex);
-    _debug("------------------------- SWITCH %s ---------------------------\n", id.c_str());
+    _debug("----- Switch current call id to %s -----\n", id.c_str());
     _currentCallId2 = id;
 
     /*
@@ -335,7 +335,7 @@ bool
 ManagerImpl::answerCall (const CallID& call_id)
 {
 
-    _debug("ManagerImpl::answerCall(%s)", call_id.c_str());
+    _debug("ManagerImpl::answerCall(%s)\n", call_id.c_str());
 
     stopTone (true);
 
