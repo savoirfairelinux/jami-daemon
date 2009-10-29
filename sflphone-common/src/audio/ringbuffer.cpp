@@ -99,7 +99,7 @@ RingBuffer::getLen(CallID call_id)
 
     int length = (mEnd + mBufferSize - mStart) % mBufferSize;
     // _debug("    *RingBuffer::getLen: buffer_id %s, call_id %s, mStart %i, mEnd %i, length %i, buffersie %i\n", buffer_id.c_str(), call_id.c_str(), mStart, mEnd, length, mBufferSize);
-    return (mEnd + mBufferSize - mStart) % mBufferSize;
+    return length;
 
 }
 
