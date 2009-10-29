@@ -28,7 +28,6 @@ guint holdConnId;     //The hold_menu signal connection ID
 
 GtkWidget *historyButton;
 GtkWidget *contactButton;
-GtkWidget *currentCallsButton;
 
 GtkAction *volumeToggle;
 

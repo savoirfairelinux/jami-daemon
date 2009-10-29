@@ -474,7 +474,7 @@ show_preferences_dialog ()
     result = gtk_dialog_run(dialog);
 
     save_configuration_parameters ();
-    toolbar_update_buttons();
+    update_actions();
 
     dialogOpen = FALSE;
 

@@ -522,5 +522,5 @@ show_account_list_config_dialog(void)
 
     accountListDialog = NULL;
     
-    toolbar_update_buttons();
+    update_actions ();
 }

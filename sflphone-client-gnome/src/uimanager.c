@@ -66,153 +66,8 @@ static gboolean is_inserted (GtkWidget* button, GtkWidget *current_toolbar)
 	return (GTK_WIDGET (button)->parent == GTK_WIDGET (current_toolbar));
 }
 
-
-void toolbar_update_buttons ()
-{
-
-	/*
-	   gtk_widget_set_sensitive( GTK_WIDGET(callButton),			FALSE);
-	   gtk_action_set_sensitive( GTK_ACTION(hangUpAction),			FALSE);
-	   gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),				FALSE);
-	   gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),		FALSE);
-	   gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton) ,		FALSE);
-	   gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),			FALSE);
-	   gtk_action_set_sensitive( GTK_ACTION(recordButton),			FALSE);
-	   gtk_widget_set_sensitive( GTK_WIDGET(contactButton),        FALSE);
-	   g_object_ref (contactButton);
-	   if( is_inserted( GTK_WIDGET(contactButton) ) )     gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET (contactButton));
-	   g_object_ref(holdButton);
-	   g_object_ref(unholdButton);
-	   if( is_inserted( GTK_WIDGET(holdButton) ) )   gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
-	   if( is_inserted( GTK_WIDGET(unholdButton) ) ) gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
-	   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), holdButton, 3);
-	   g_object_ref(callButton);
-	   g_object_ref(pickupButton);
-	   if( is_inserted( GTK_WIDGET(callButton) ) ) gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
-	   if( is_inserted( GTK_WIDGET(pickupButton) ) ) gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
-	   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), callButton, 0);
-
-	// If addressbook support has been enabled and all addressbooks are loaded, display the icon
-	if (addressbook_is_enabled () && addressbook_is_ready()) {  
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), contactButton, 5);
-	// Make the icon clickable only if at least one address book is active
-	if (addressbook_is_active ())   gtk_widget_set_sensitive( GTK_WIDGET(contactButton), TRUE);
-	}
-
-	gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
-	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), FALSE);
-	gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
-
-	callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
-	conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
-	if (selectedCall)
-	{
-	switch(selectedCall->_state)
-	{
-	case CALL_STATE_INCOMING:
-	gtk_widget_set_sensitive( GTK_WIDGET(pickUpAction),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(hangUpAction), TRUE);
-	g_object_ref(callButton);
-	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
-	break;
-	case CALL_STATE_HOLD:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangUpAction),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-	g_object_ref(holdButton);
-	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), unholdButton, 3);
-	break;
-	case CALL_STATE_RINGING:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangUpAction),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),     TRUE);
-	break;
-	case CALL_STATE_DIALING:
-	if( active_calltree == current_calls )  gtk_widget_set_sensitive( GTK_WIDGET(hangUpAction),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),       TRUE);
-	g_object_ref(callButton);
-	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
-	break;
-	case CALL_STATE_CURRENT:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangUpAction),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
-	break;
-	case CALL_STATE_BUSY:
-	case CALL_STATE_FAILURE:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangUpAction),     TRUE);
-	break;
-	case CALL_STATE_TRANSFERT:
-	gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
-	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), TRUE);
-	gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(hangUpAction),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
-	break;
-	case CALL_STATE_RECORD:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangUpAction),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
-	break;
-	default:
-	// Fix bug #1145
-	// Actually it could happen when sflphone_fill_account_list()
-	// call this function and no "call" is selected
-	// WARN("Toolbar update - Should not happen!");
-	break;
-}
-}
-else if(selectedConf)
-{
-	switch(selectedConf->_state)
-	{
-		case CONFERENCE_STATE_ACTIVE_ATACHED:
-			gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
-			break;
-		case CONFERENCE_STATE_ACTIVE_DETACHED:
-			gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
-			break;
-		case CONFERENCE_STATE_RECORD:
-			gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
-			break;
-		case CONFERENCE_STATE_HOLD:
-			gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
-			break;
-		default:
-			break;
-	}
-}
-else
-{
-	if( account_list_get_size() > 0 )
-	{
-		gtk_widget_set_sensitive( GTK_WIDGET(callButton), TRUE );
-		if (account_list_current_account_has_mailbox ())
-			gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton), TRUE );
-	}
-	else
-	{
-		gtk_widget_set_sensitive( GTK_WIDGET(callButton), FALSE);
-	}
-}
-*/
-
-}
-
-
-
 void update_actions()
 {
-	// Block signals for holdMenu
-	// gtk_signal_handler_block (GTK_OBJECT(holdToolbar), holdConnId);
 
 	gtk_action_set_sensitive( GTK_ACTION (newCallAction), TRUE);
 	gtk_action_set_sensitive (GTK_ACTION (pickUpAction), FALSE);
@@ -256,7 +111,6 @@ void update_actions()
 	gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar),   FALSE);
 	gtk_action_set_sensitive (GTK_ACTION (recordAction), FALSE);
 	gtk_action_set_sensitive (GTK_ACTION (copyAction),   FALSE);
-	//gtk_action_set_sensitive (GTK_ACTION (voicemailAction), FALSE);
 	gtk_widget_set_sensitive( GTK_WIDGET(contactButton), FALSE);
 	gtk_widget_set_tooltip_text (GTK_WIDGET (contactButton), _("No address book selected"));
 
@@ -1488,9 +1342,5 @@ GtkWidget* create_toolbar_windows (GtkUIManager *ui_manager)
 	toolbarWindows = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows");
 	active_calltree = current_calls;
 
-	/*historyButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/HistoryToolbar");
-	contactButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/AddressbookToolbar");
-	currentCallsButton = gtk_ui_manager_get_widget (ui_manager, "/ToolbarWindows/CallWindowToolbar");
-	*/
 	return toolbarWindows;
 }

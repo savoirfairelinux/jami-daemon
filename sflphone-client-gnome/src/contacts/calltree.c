@@ -1191,7 +1191,7 @@ void calltree_display (calltab_t *tab) {
 		} else {
 			gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
 		}
-		gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)currentCallsButton, TRUE);
+		// gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)currentCallsButton, TRUE);
 
 	}
 

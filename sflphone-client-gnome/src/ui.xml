@@ -32,7 +32,6 @@
       <!--menuitem name="VolumeControlsToggle" action="VolumeControls"/-->
       <menuitem action="VolumeControls"/>
       <separator/>
-	  <menuitem action="CallWindow"/>
 	  <menuitem action="History"/>
 	  <menuitem action="Addressbook"/>
     </menu>
