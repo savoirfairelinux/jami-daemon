@@ -240,14 +240,14 @@ IAXVoIPLink::getEvent()
 
 	_mutexIAX.leaveMutex();
 
+	sendAudioFromMic();
 
 	if (call) {
 		call->recAudio.recData (spkrDataDecoded, micData, nbSampleForRec_, nbSampleForRec_);
 
 		// Do the doodle-moodle to send audio from the microphone to the IAX channel.
 	}
-	sendAudioFromMic();
-
+	
 	// Do the doodle-moodle to send audio from the microphone to the IAX channel.
 	// sendAudioFromMic();
 
@@ -345,9 +345,9 @@ IAXVoIPLink::sendAudioFromMic (void)
 
 			if (availBytesFromMic < maxBytesToGet) {
 				// We need packets full!
-				_debug("Packet not full for call %s\n", currentCall->getCallId().c_str());
-				_debug("    availBytesFromMic: %i\n", availBytesFromMic);
-				_debug("    maxBytesToGet: %i\n",  maxBytesToGet);
+				// _debug("Packet not full for call %s\n", currentCall->getCallId().c_str());
+				// _debug("    availBytesFromMic: %i\n", availBytesFromMic);
+				// _debug("    maxBytesToGet: %i\n",  maxBytesToGet);
 				return;
 			}
 
