@@ -50,12 +50,7 @@ sflphone_notify_voice_mail ( const gchar* accountID , guint count )
 
     if(count > 0)
     {
-        gchar * message = g_new0(gchar, 50);
-        g_sprintf(message, n_("%d voice mail", "%d voice mails", count), count);
-//         if( count > 1)
-//             g_sprintf(message, _("%d voice mails"), count);
-//         else
-//             g_sprintf(message, _("%d voice mail"), count);
+        gchar * message = g_strdup_printf(n_("%d voice mail", "%d voice mails", count), count);
         statusbar_push_message(message,  __MSG_VOICE_MAILS);
         g_free(message);
     }

@@ -5,7 +5,7 @@ INSTALLATION GUIDE
     cd sflphone-common
     # Compile pjsip
     cd libs/pjproject
-	./autogen.sh
+    ./autogen.sh
     ./configure
     make dep && make
     # Go back to the root
