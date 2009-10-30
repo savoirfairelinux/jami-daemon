@@ -315,8 +315,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
 		if (!ac) {
 			// Audio codec still not determined.
-			_debug("Error no audio codec determined!\n");
-			_debug("Cannot found audio codec %i\n", currentCall->getAudioCodec());
+			_debug("Error no audio Cannot found audio codec %i\n", currentCall->getAudioCodec());
 
 			if (audiolayer) {
 				// To keep latency low..
