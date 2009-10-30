@@ -280,102 +280,122 @@ IAXVoIPLink::sendAudioFromMic (void)
     // TODO Find out a better way to do it
     updateAudiolayer();
 
-    currentCall = getIAXCall (Manager::instance().getCurrentCallId());
+    // do not use the current ID in Manager (it may refer to a conference also)
+    // currentCall = getIAXCall (Manager::instance().getCurrentCallId());
 
-    if (!currentCall) {
+    CallMap::iterator iter_call = _callMap.begin();
+    while(iter_call != _callMap.end())
 
-	_debug("Error no iax call with id \"%s\"\n", Manager::instance().getCurrentCallId().c_str());
-        // Let's mind our own business.
-        return;
-    }
+    {
+
+	currentCall = (IAXCall*)iter_call->second;
+
+	if (!currentCall) {
+
+	    _debug("Error no iax call with id \"%s\"\n", Manager::instance().getCurrentCallId().c_str());
+	    // Let's mind our own business.
+	    return;
+	}
 
     
 
-    if (currentCall -> getAudioCodec() < 0)
-        return;
+	// if (currentCall -> getAudioCodec() < 0)
+	//     return;
 
-    // Just make sure the currentCall is in state to receive audio right now.
-    //_debug("Here we get: connectionState: %d   state: %d \n",
-    //currentCall->getConnectionState(),
-    //currentCall->getState());
-
-    if (currentCall->getConnectionState() != Call::Connected ||
-            currentCall->getState() != Call::Active) {
-        return;
-    }
-
-    ac = currentCall->getCodecMap().getCodec (currentCall->getAudioCodec());
-
-    if (!ac) {
-        // Audio codec still not determined.
-	_debug("Error no audio codec determined!\n");
+	// Just make sure the currentCall is in state to receive audio right now.
+	//_debug("Here we get: connectionState: %d state: %d \n",
+	//currentCall->getConnectionState(),
+	//currentCall->getState());
 	
-        if (audiolayer) {
-            // To keep latency low..
-            audiolayer->getMainBuffer()->flush(currentCall->getCallId());
-        }
-	
-
-        return;
-    }
-
-    // Send sound here
-    if (audiolayer) {
-
-	audiolayer->getMainBuffer()->setInternalSamplingRate(ac->getClockRate());
-
-	int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
-
-        // we have to get 20ms of data from the mic *20/1000 = /50
-        // rate/50 shall be lower than IAX__20S_48KHZ_MAX
-	maxBytesToGet = _mainBufferSampleRate * audiolayer->getFrameSize() / 1000 * sizeof (SFLDataFormat);
-
-        // available bytes inside ringbuffer
-        availBytesFromMic = audiolayer->getMainBuffer()->availForGet(currentCall->getCallId());
-
-        if (availBytesFromMic < maxBytesToGet) {
-            // We need packets full!
-            return;
-        }
-
-        // take the lowest
-        bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-
-
-        // Get bytes from micRingBuffer to data_from_mic
-        nbSample_ = audiolayer->getMainBuffer()->getData (micData, bytesAvail, 100, currentCall->getCallId()) / sizeof (SFLDataFormat);
-
-
-        // Store the number of samples for recording
-        nbSampleForRec_ = nbSample_;
-
-
-	if (ac->getClockRate() && (ac->getClockRate() != _mainBufferSampleRate)) {
-
-	    // resample
-	    nbSample_ = converter->downsampleData (micData , micDataConverted , (int) ac->getClockRate(), _mainBufferSampleRate, nbSample_);
-	
-	    // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-	    compSize = ac->codecEncode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
-
-	} else {
-
-	    // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-	    compSize = ac->codecEncode (micDataEncoded, micData, nbSample_*sizeof (int16));
-
+	if (currentCall->getConnectionState() != Call::Connected ||
+	    currentCall->getState() != Call::Active) {
+	    _debug("IAX Call not connected or not active\n");
+	    return;
 	}
 
-	// Send it out!
-	_mutexIAX.enterMutex();
+    
+	ac = currentCall->getCodecMap().getCodec(currentCall->getAudioCodec());
+	
+	if (!ac) {
+	    // Audio codec still not determined.
+	    _debug("Error no audio codec determined!\n");
+	    _debug("Cannot found audio codec %i\n", currentCall->getAudioCodec());
+	
+	    if (audiolayer) {
+		// To keep latency low..
+		audiolayer->getMainBuffer()->flush(currentCall->getCallId());
+	    }
+	
 
-        // Make sure the session and the call still exists.
-        if (currentCall->getSession() && micDataEncoded != NULL) {
-            if (iax_send_voice (currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample_) == -1) {
-                _debug ("IAX: Error sending voice data.\n");
-            }
-        }
+	    return;
+	}
 
-        _mutexIAX.leaveMutex();
+	// Send sound here
+	if (audiolayer) {
+
+	    // _debug("Send sound\n");
+
+	    audiolayer->getMainBuffer()->setInternalSamplingRate(ac->getClockRate());
+
+	    int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
+
+	    // we have to get 20ms of data from the mic *20/1000 = /50
+	    // rate/50 shall be lower than IAX__20S_48KHZ_MAX
+	    maxBytesToGet = _mainBufferSampleRate * audiolayer->getFrameSize() / 1000 * sizeof (SFLDataFormat);
+
+	    // available bytes inside ringbuffer
+	    availBytesFromMic = audiolayer->getMainBuffer()->availForGet(currentCall->getCallId());
+	    
+	    if (availBytesFromMic < maxBytesToGet) {
+		// We need packets full!
+		_debug("Packet not full for call %s\n", currentCall->getCallId().c_str());
+		_debug("    availBytesFromMic: %i\n", availBytesFromMic);
+		_debug("    maxBytesToGet: %i\n",  maxBytesToGet);
+		return;
+	    }
+
+	    // take the lowest
+	    bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+	    
+
+	    // Get bytes from micRingBuffer to data_from_mic
+	    nbSample_ = audiolayer->getMainBuffer()->getData (micData, bytesAvail, 100, currentCall->getCallId()) / sizeof (SFLDataFormat);
+
+
+	    // Store the number of samples for recording
+	    nbSampleForRec_ = nbSample_;
+
+
+	    if (ac->getClockRate() && (ac->getClockRate() != _mainBufferSampleRate)) {
+
+		// resample
+		nbSample_ = converter->downsampleData (micData , micDataConverted , (int) ac->getClockRate(), _mainBufferSampleRate, nbSample_);
+	
+		// for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
+		compSize = ac->codecEncode (micDataEncoded, micDataConverted , nbSample_*sizeof (int16));
+
+	    } else {
+		
+		// for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
+		compSize = ac->codecEncode (micDataEncoded, micData, nbSample_*sizeof (int16));
+
+	    }
+
+	    // Send it out!
+	    _mutexIAX.enterMutex();
+
+	    // Make sure the session and the call still exists.
+	    if (currentCall->getSession() && micDataEncoded != NULL) {
+		if (iax_send_voice (currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample_) == -1) {
+		    _debug ("IAX: Error sending voice data.\n");
+		}
+	    }
+
+	    _mutexIAX.leaveMutex();
+	}
+
+	iter_call++;
+
     }
 }
 
@@ -603,7 +623,7 @@ IAXVoIPLink::offhold (const CallID& id)
     _mutexIAX.enterMutex();
     iax_unquelch (call->getSession());
     _mutexIAX.leaveMutex();
-    // audiolayer->startStream();
+    audiolayer->startStream();
     call->setState (Call::Active);
     return true;
 }
@@ -789,11 +809,17 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_ACCEPT:
+
             // Call accepted over there by the computer, not the user yet.
+	    _debug("IAX_EVENT_ACCEPT: codec format: ");
 
             if (event->ies.format) {
+		printf("%i\n", event->ies.format);
                 call->setFormat (event->ies.format);
             }
+	    else{
+		printf("no codec format\n");
+	    }
 
             break;
 
@@ -807,10 +833,16 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
                 call->setState (Call::Active);
                 // audiolayer->startStream();
 
+		_debug("IAX_EVENT_ANSWER: codec format: ");
+
                 if (event->ies.format) {
                     // Should not get here, should have been set in EVENT_ACCEPT
+		    printf("%i\n", event->ies.format);
                     call->setFormat (event->ies.format);
                 }
+		{
+		    printf("no codec format\n");
+		}
 
                 Manager::instance().peerAnsweredCall (id);
 
@@ -911,6 +943,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
         // - subclass holds the voiceformat property.
         if (event->subclass && event->subclass != call->getFormat()) {
+	    _debug("iaxHandleVoiceEvent: no format found in call setting it to %i\n", event->subclass);
             call->setFormat (event->subclass);
         }
 

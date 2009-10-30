@@ -94,9 +94,10 @@ CodecDescriptor::getCodec (AudioCodecType payload)
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end()) {
+	// _debug("Found codec %i _CodecsMap from codec descriptor\n", payload);
         return (iter->second);
     }
-
+    _debug("Error cannont found codec %i in _CodecsMap from codec descriptor\n", payload);
     return NULL;
 }
 
