@@ -336,12 +336,17 @@ namespace sfl {
         // test if resampling is required
         if (_audiocodec->getClockRate() != _mainBufferSampleRate) {
             int nb_sample_up = nbSample;
+
             _nSamplesMic = nbSample;
+
             nbSample = _converter->downsampleData (_micData , _micDataConverted , _audiocodec->getClockRate(), _mainBufferSampleRate, nb_sample_up);
 
             compSize = _audiocodec->codecEncode (_micDataEncoded, _micDataConverted, nbSample*sizeof (int16));
 
         } else {
+
+	    _nSamplesMic = nbSample; 
+
             // no resampling required
             compSize = _audiocodec->codecEncode (_micDataEncoded, _micData, nbSample*sizeof (int16));
         }
