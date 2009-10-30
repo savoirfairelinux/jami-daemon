@@ -244,11 +244,11 @@ IAXVoIPLink::getEvent()
 
 
     if (call) {
-         call->recAudio.recData (spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
+         call->recAudio.recData (spkrDataDecoded, micData, nbSampleForRec_, nbSampleForRec_);
 
 	 // Do the doodle-moodle to send audio from the microphone to the IAX channel.
-	 sendAudioFromMic();
     }
+    sendAudioFromMic();
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
     // sendAudioFromMic();
@@ -916,36 +916,36 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
     int expandedSize, nbSample_;
     AudioCodec *ac;
 
-	if (!call)
-		return;
-
-	if (!event->datalen) {
-        // Skip this empty packet.
+    if (!call)
+	return;
+    
+    if (!event->datalen) {
+	// Skip this empty packet.
         //_debug("IAX: Skipping empty jitter-buffer interpolated packet\n");
         return;
     }
 
     ac = call->getCodecMap ().getCodec (call->getAudioCodec ());
-
-	if (!ac)
-		return;
     
-	if (audiolayer) {
-
-		audiolayer->getMainBuffer ()->setInternalSamplingRate (ac->getClockRate ());
+    if (!ac)
+	return;
     
-		// If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
-		// were triggered
-
-		int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
-
-        // On-the-fly codec changing (normally, when we receive a full packet)
-        // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
-        // - subclass holds the voiceformat property.
-        if (event->subclass && event->subclass != call->getFormat()) {
-	    _debug("iaxHandleVoiceEvent: no format found in call setting it to %i\n", event->subclass);
-            call->setFormat (event->subclass);
-        }
+    if (audiolayer) {
+	
+	audiolayer->getMainBuffer ()->setInternalSamplingRate (ac->getClockRate ());
+	
+	// If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
+	// were triggered
+	
+	int _mainBufferSampleRate = audiolayer->getMainBuffer()->getInternalSamplingRate();
+	
+		// On-the-fly codec changing (normally, when we receive a full packet)
+		// as per http://tools.ietf.org/id/draft-guy-iax-03.txt
+		// - subclass holds the voiceformat property.
+		if (event->subclass && event->subclass != call->getFormat()) {
+		    _debug("iaxHandleVoiceEvent: no format found in call setting it to %i\n", event->subclass);
+		    call->setFormat (event->subclass);
+		}
 
         //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
         // ac = call->getCodecMap().getCodec (call -> getAudioCodec());
@@ -1089,8 +1089,6 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             _debug ("> IAX_EVENT_CONNECT (receive)\n");
 
             id = Manager::instance().getNewCallID();
-
-	    _debug("-------------------------------------------------------------- callid %s", id.c_str());
 
             call = new IAXCall (id, Call::Incoming);
 
