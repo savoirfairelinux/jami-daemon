@@ -160,21 +160,19 @@ select_account_cb(GtkTreeSelection *selection, GtkTreeModel *model)
         if (selectedAccount->protocol_state_description != NULL  
             && selectedAccount->protocol_state_code != 0) {
             
-            gchar code[4];
-            g_snprintf(code, 4, "%d", selectedAccount->protocol_state_code);
-            
+           gchar * response = g_strdup_printf(
+                                _("Server returned \"%s\" (%d)"),
+                                selectedAccount->protocol_state_description, 
+                                selectedAccount->protocol_state_code);
            gchar * message = g_strconcat(
                                 account_state_name(selectedAccount->state), 
                                 ". ", 
-                                _("Server returned \""),
-                                selectedAccount->protocol_state_description, 
-                                "\" (",
-                                code,
-                                ") ",
+                                response,
                                 NULL);
                         
            gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, message);
            
+           g_free(response);
            g_free(message);
             
         } else {
@@ -498,16 +496,9 @@ show_account_list_config_dialog(void)
 
     int number_accounts = account_list_get_size();
     if (number_accounts) {
-        gchar number_accounts_str[4];
-        g_snprintf(number_accounts_str, 4, "%d", number_accounts);
-        
-        gchar * message = g_strconcat(
-                            _("There "),
-                            (number_accounts == 1) ? _("is "):_("are "),
-                            number_accounts_str,
-                            _(" active account"), 
-                            (number_accounts == 1) ? _(""):_("s"),
-                            NULL);                 
+        gchar * message = g_strdup_printf(n_("There is %d active account",
+                                             "There are %d active accounts", number_accounts),
+                                          number_accounts);
         gtk_statusbar_push (GTK_STATUSBAR (status_bar), CONTEXT_ID_REGISTRATION, message);
         g_free(message);
     } else {

@@ -91,6 +91,7 @@ sflphone-client-gnome/stamp-h1
 /sflphone-client-gnome/src/dbus/Makefile
 /sflphone-client-gnome/src/contacts/Makefile
 /sflphone-client-gnome/src/contacts/addressbook/Makefile
+/sflphone-client-gnome/src/icons/Makefile
 /sflphone-client-gnome/pixmaps/Makefile
 /sflphone-client-gnome/tests/Makefile
 /sflphone-client-gnome/man/Makefile
