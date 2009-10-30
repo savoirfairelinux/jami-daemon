@@ -13,8 +13,8 @@ Name:           sflphone-client-gnome
 License:        GNU General Public License (GPL)
 Group:          Productivity/Networking/System
 Summary:        GNOME client for SFLphone
-Version:        0.9.6
-Release:        opensuse
+Version:        snapshot20091021
+Release:        1
 URL:            http://www.sflphone.org/
 Vendor:		Savoir-faire Linux
 Packager:       Julien Bonjean <julien.bonjean@savoirfairelinux.com>
