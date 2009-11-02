@@ -349,17 +349,6 @@ int dbus_is_ringtone_enabled( void );
 void dbus_ringtone_enabled( void );
 
 /**
- * ConfigurationManager - Set PA behaviour for the other sound streams
- * Inverse current value
- */
-void dbus_set_pulse_app_volume_control( void );
-
-/**
- * ConfigurationManager - Get PA behaviour for the other sound streams
- */
-gchar* dbus_get_pulse_app_volume_control( void );
-
-/**
  * ConfigurationManager - Get the ringtone
  * @return gchar* The file name selected as a ringtone
  */

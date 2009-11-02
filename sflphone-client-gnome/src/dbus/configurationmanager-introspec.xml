@@ -288,13 +288,6 @@
     <method name="switchPopupMode">
     </method>
 
-    <method name="setPulseAppVolumeControl">
-    </method>
-
-    <method name="getPulseAppVolumeControl">
-      <arg type="s" name="state" direction="out"/>
-    </method>
-
     <method name="setSipPort">
       <arg type="i" name="port" direction="in"/>
     </method>

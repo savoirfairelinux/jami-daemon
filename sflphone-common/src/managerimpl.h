@@ -743,9 +743,6 @@ class ManagerImpl {
 
     void switchAudioManager( void );
 
-    void setPulseAppVolumeControl( void );
-	std::string getPulseAppVolumeControl( void );
-
     /**
      * Get the desktop mail notification level
      * @return int The mail notification level

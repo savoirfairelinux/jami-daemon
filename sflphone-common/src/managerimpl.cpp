@@ -478,10 +478,8 @@ ManagerImpl::hangupCall (const CallID& call_id)
         removeCallAccount (call_id);
     }
 
-    if (_audiodriver->getLayerType() == PULSEAUDIO && getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL)) {
+    if (_audiodriver->getLayerType() == PULSEAUDIO) {
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
-
-        if (pulselayer)  pulselayer->restorePulseAppsVolume();
     }
 
     return returnValue;
@@ -1839,11 +1837,8 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
 
     //if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
 
-    // Reduce volume of the other pulseaudio-connected audio applications
-    if (_audiodriver->getLayerType() == PULSEAUDIO && getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL)) {
+    if (_audiodriver->getLayerType() == PULSEAUDIO)  {
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
-
-        if (pulselayer)  pulselayer->reducePulseAppsVolume();
     }
 
     return true;
@@ -1959,10 +1954,8 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
 
     removeCallAccount (call_id);
 
-    if (_audiodriver->getLayerType() == PULSEAUDIO && getConfigInt (PREFERENCES , CONFIG_PA_VOLUME_CTRL)) {
+    if (_audiodriver->getLayerType() == PULSEAUDIO){
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
-
-        if (pulselayer)  pulselayer->restorePulseAppsVolume();
     }
 }
 
@@ -2358,7 +2351,6 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_HISTORY_LIMIT, DFT_HISTORY_LIMIT), PREFERENCES);
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_HISTORY_ENABLED, TRUE_STR), PREFERENCES);
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_AUDIO, DFT_AUDIO_MANAGER), PREFERENCES);
-    _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_PA_VOLUME_CTRL, TRUE_STR), PREFERENCES);
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_SIP_PORT, DFT_SIP_PORT), PREFERENCES);
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_ACCOUNTS_ORDER, EMPTY_FIELD), PREFERENCES);
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_MD5HASH, FALSE_STR), PREFERENCES);
@@ -2961,18 +2953,6 @@ int32_t
 ManagerImpl::getMailNotify (void)
 {
     return getConfigInt (PREFERENCES, CONFIG_MAIL_NOTIFY);
-}
-
-std::string
-ManagerImpl::getPulseAppVolumeControl (void)
-{
-    return getConfigString (PREFERENCES , CONFIG_PA_VOLUME_CTRL);
-}
-
-void
-ManagerImpl::setPulseAppVolumeControl (void)
-{
-    (getConfigString (PREFERENCES , CONFIG_PA_VOLUME_CTRL) == TRUE_STR) ? setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , FALSE_STR) : setConfig (PREFERENCES , CONFIG_PA_VOLUME_CTRL , TRUE_STR) ;
 }
 
 void ManagerImpl::setAudioManager (const int32_t& api)

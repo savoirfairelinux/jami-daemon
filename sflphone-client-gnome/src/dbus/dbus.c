@@ -2078,31 +2078,6 @@ dbus_get_audio_manager( void )
 }
 
     void
-dbus_set_pulse_app_volume_control( void )
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_pulse_app_volume_control(
-            configurationManagerProxy,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-}
-
-   gchar* 
-dbus_get_pulse_app_volume_control( void )
-{
-    gchar* state;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_pulse_app_volume_control(
-            configurationManagerProxy,
-            &state,
-            &error);
-    return state;
-}
-
-    void
 dbus_set_sip_port( const guint portNum  )
 {
     GError* error = NULL;
