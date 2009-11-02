@@ -686,7 +686,7 @@ ManagerImpl::offHoldCall (const CallID& call_id)
     else
     {
 	switchCall(call_id);
-	_audiodriver->getMainBuffer()->flush(default_id);
+	_audiodriver->flushMain();
     }
 
     codecName = getCurrentCodecName (call_id);
@@ -1113,8 +1113,7 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
 	ParticipantSet::iterator iter_p = participants.begin();
 	while(iter_p != participants.end()) {
 
-	    // to avoid puting onhold the call
-	    // switchCall("");	
+	    // flush conference participants only
 	    _audiodriver->getMainBuffer()->flush(*iter_p);
 
 	    iter_p++;
@@ -1126,17 +1125,6 @@ ManagerImpl::addParticipant(const CallID& call_id, const CallID& conference_id)
     {
 	_debug("    addParticipant: Error, conference %s conference_id not found!\n", conference_id.c_str());
     }
-
-
-    // bind main participant to conference after adding new participant 
-    // detachParticipant(default_id, current_call_id);
-
-    // to avoid puting onhold the added call
-    // switchCall("");
-    // addMainParticipant(conference_id);
-
-    // _dbus->getCallManager()->conferenceChanged(conference_id, conference_id);
-    
     
 }
 
