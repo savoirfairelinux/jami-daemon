@@ -508,6 +508,7 @@ namespace sfl {
         static_cast<D*>(this)->startRunning();
 
 	_audiolayer->flushUrgent();
+	_audiolayer->flushMain();
 
         _debug ("Entering RTP mainloop for callid %s\n",_ca->getCallId().c_str());
 
