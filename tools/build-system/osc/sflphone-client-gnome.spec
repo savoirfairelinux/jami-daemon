@@ -13,8 +13,8 @@ Name:           sflphone-client-gnome
 License:        GNU General Public License (GPL)
 Group:          Productivity/Networking/System
 Summary:        GNOME client for SFLphone
-Version:        snapshot20091021
-Release:        1
+Version:        VERSION
+Release:        VERSION_INDEX
 URL:            http://www.sflphone.org/
 Vendor:		Savoir-faire Linux
 Packager:       Julien Bonjean <julien.bonjean@savoirfairelinux.com>
@@ -90,7 +90,7 @@ Authors:
 %build
 ./autogen.sh
 ./configure --prefix=%{_prefix}
-make
+make -j
 
 
 %install
@@ -106,6 +106,7 @@ make clean
 %files
 %defattr(-, root, root)
 %dir %{_prefix}/share/sflphone
+%dir %{_prefix}/share/sflphone/ui
 %dir %{_prefix}/share/omf/sflphone
 %lang(fr) %{_prefix}/share/locale/fr/LC_MESSAGES/*.mo
 %lang(es) %{_prefix}/share/locale/es/LC_MESSAGES/*.mo
@@ -113,6 +114,8 @@ make clean
 %lang(ru) %{_prefix}/share/locale/ru/LC_MESSAGES/*.mo
 %lang(zh_CN) %{_prefix}/share/locale/zh_CN/LC_MESSAGES/*.mo
 %lang(zh_HK) %{_prefix}/share/locale/zh_HK/LC_MESSAGES/*.mo
+%lang(it) %{_prefix}/share/locale/it/LC_MESSAGES/*.mo
+%lang(pt_BR) %{_prefix}/share/locale/pt_BR/LC_MESSAGES/*.mo
 %doc AUTHORS COPYING README
 %doc %{_prefix}/share/man/man1/sflphone-client-gnome.1.gz
 %doc %{_prefix}/share/man/man1/sflphone.1.gz
@@ -125,6 +128,7 @@ make clean
 %{_prefix}/share/sflphone/*.gif
 %{_prefix}/share/sflphone/log4crc
 %{_prefix}/share/omf/sflphone/*
+%{_prefix}/share/sflphone/ui/ui.xml
 
 %changelog
 
