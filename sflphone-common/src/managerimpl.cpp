@@ -1856,7 +1856,8 @@ ManagerImpl::peerAnsweredCall (const CallID& id)
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
     if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
 
-    
+    _audiodriver->flushMain();
+    _audiodriver->flushUrgent();
 }
 
 //THREAD=VoIP Call=Outgoing
