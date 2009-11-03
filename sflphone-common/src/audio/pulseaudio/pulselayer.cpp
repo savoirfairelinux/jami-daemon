@@ -361,8 +361,8 @@ void PulseLayer::startStream (void)
 	is_started = true;
     }
 
-    _urgentRingBuffer.flushAll();
-    getMainBuffer()->flushAllBuffers();
+    flushUrgent();
+    flushMain();
 
 }
 
@@ -487,6 +487,7 @@ void PulseLayer::writeToSpeaker (void)
 
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
+    
 
     int writeableSize = pa_stream_writable_size(playback->pulseStream());
     // _debug("PulseLayer writablesize : %i\n", writeableSize);
@@ -498,6 +499,8 @@ void PulseLayer::writeToSpeaker (void)
     if (urgentAvailBytes > writeableSize) {
 
         // _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
+
+        // _debug("Play Urgent!\n");
 
 	out = (SFLDataFormat*) pa_xmalloc (writeableSize);
         _urgentRingBuffer.Get (out, writeableSize, 100);
@@ -526,6 +529,8 @@ void PulseLayer::writeToSpeaker (void)
 	    if (playback->getStreamState() == PA_STREAM_READY)
 	    {
 
+	        // _debug("Play Sine Tone!\n");
+
 		out = (SFLDataFormat*) pa_xmalloc (writeableSize);
 		int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
 		// pa_threaded_mainloop_lock (m);
@@ -541,6 +546,7 @@ void PulseLayer::writeToSpeaker (void)
 
 	    if (playback->getStreamState() == PA_STREAM_READY)
 	    {
+	        // _debug("Play File Tone!\n");
 		
 		out = (SFLDataFormat*) pa_xmalloc (writeableSize);
 		int copied = file_tone->getNext(out, writeableSize / sizeof(SFLDataFormat), 100);
