@@ -397,11 +397,14 @@ namespace sfl {
             countTime += _time->getSecond();
 
             if (_manager->incomingCallWaiting() > 0) {
-                countTime = countTime % 500; // more often...
-
-                if (countTime == 0) {
+	        int countTime_modulo = countTime % 3000;
+		_debug("countTime: %i\n", countTime);
+		_debug("countTime_modulo: %i\n", countTime_modulo);
+                if ((countTime_modulo - countTime) < 0) {
                     _manager->notificationIncomingCall();
                 }
+
+		countTime = countTime_modulo;
             }
 
         } else {
@@ -504,11 +507,13 @@ namespace sfl {
 
 	_ca->setRecordingSmplRate(_audiocodec->getClockRate());
  
+	// Start audio stream (if not started) AND flush all buffers (main and urgent)
         _audiolayer->startStream();
         static_cast<D*>(this)->startRunning();
 
-	_audiolayer->flushUrgent();
-	_audiolayer->flushMain();
+	// Already called in _audiolayer->startStream()
+	// _audiolayer->flushUrgent();
+	// _audiolayer->flushMain();
 
         _debug ("Entering RTP mainloop for callid %s\n",_ca->getCallId().c_str());
 
