@@ -855,7 +855,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 
     Conference* conf = NULL;
 
-    _debug("    removeConference: _conferencemap.size: %i\n", _conferencemap.size());
+    _debug("    removeConference: _conferencemap.size: %i\n", (int)_conferencemap.size());
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
 
     if (iter != _conferencemap.end()) {
@@ -2007,9 +2007,9 @@ void ManagerImpl::connectionStatusNotification()
 bool ManagerImpl::playATone (Tone::TONEID toneId)
 {
     bool hasToPlayTone;
-    AudioLoop *audioloop;
+    // AudioLoop *audioloop;
     AudioLayer *audiolayer;
-    unsigned int nbSamples;
+    // unsigned int nbSamples;
 
     _debug("ManagerImpl::playATone\n");
 
