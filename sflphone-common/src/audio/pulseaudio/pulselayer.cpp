@@ -173,8 +173,6 @@ PulseLayer::connectPulseAudioServer (void)
 
     pa_threaded_mainloop_unlock (m);
 
-    _urgentRingBuffer.flushAll();
-
     //serverinfo();
     //muteAudioApps(99);
     _debug ("Context creation done\n");
@@ -267,7 +265,9 @@ bool PulseLayer::createStreams (pa_context* c)
 
     pa_threaded_mainloop_signal (m , 0);
 
-    _urgentRingBuffer.flushAll();
+    flushMain();
+    flushUrgent();
+    // _urgentRingBuffer.flushAll();
 
 
     return true;
@@ -279,7 +279,8 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
     _audioSampleRate = sampleRate;
     _frameSize = frameSize;
 
-    _urgentRingBuffer.flushAll();
+    // _urgentRingBuffer.flushAll();
+    flushUrgent();
 
     _converter = new SamplerateConverter (_audioSampleRate, _frameSize*4);
 
@@ -361,6 +362,8 @@ void PulseLayer::startStream (void)
 	is_started = true;
     }
 
+    // Flush outside the if statement: every time start stream is 
+    // called is to notify a new event
     flushUrgent();
     flushMain();
 
@@ -520,7 +523,7 @@ void PulseLayer::writeToSpeaker (void)
 	AudioLoop* file_tone = _manager->getTelephoneFile();
 
 	// flush remaining samples in _urgentRingBuffer
-	_urgentRingBuffer.flushAll();
+	flushUrgent();
 
         if (tone != 0) {
 
