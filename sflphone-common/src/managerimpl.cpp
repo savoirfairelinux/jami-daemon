@@ -1525,7 +1525,10 @@ ManagerImpl::addStream(const CallID& call_id)
 	// bind to main 
 	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
 
-	_audiodriver->getMainBuffer()->flush(default_id);
+	// _audiodriver->getMainBuffer()->flush(default_id);
+	_audiodriver->flushUrgent();
+	_audiodriver->flushMain();
+	
     }
 }
 
