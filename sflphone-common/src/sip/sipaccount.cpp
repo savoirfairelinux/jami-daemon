@@ -201,17 +201,17 @@ int SIPAccount::registerVoIPLink()
 
 int SIPAccount::unregisterVoIPLink()
 {
-    _debug ("unregister account %s\n" , getAccountID().c_str());
+    _debug ("Unregister account %s\n" , getAccountID().c_str());
     
     if (_accountID == IP2IP_PROFILE) {
 	return true;
     }
     
     if (_link->sendUnregister (_accountID)) {
-	setRegistrationInfo (NULL);
-	return true;
+		setRegistrationInfo (NULL);
+		return true;
     } else
-	return false;
+		return false;
 
 }
 

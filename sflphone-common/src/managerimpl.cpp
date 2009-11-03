@@ -86,9 +86,9 @@ ManagerImpl::ManagerImpl (void)
         , _callAccountMapMutex()
         , _callConfigMap()
         , _accountMap()
+        , _directIpAccount (NULL)
         , _cleaner (NULL)
         , _history (NULL)
-        , _directIpAccount (NULL)
 {
 
     // initialize random generator for call id
@@ -855,7 +855,7 @@ ManagerImpl::removeConference(const ConfID& conference_id)
 
     Conference* conf = NULL;
 
-    _debug("    removeConference: _conferencemap.size: %i\n", _conferencemap.size());
+    _debug("    removeConference: _conferencemap.size: %i\n", (int)_conferencemap.size());
     ConferenceMap::iterator iter = _conferencemap.find(conference_id);
 
     if (iter != _conferencemap.end()) {
@@ -4059,7 +4059,8 @@ ManagerImpl::removeAccount (const AccountID& accountID)
     if (remAccount != NULL) {
         remAccount->unregisterVoIPLink();
         _accountMap.erase (accountID);
-        delete remAccount;
+		// http://projects.savoirfairelinux.net/issues/show/2355
+		// delete remAccount;
     }
 
     _config.removeSection (accountID);
@@ -4069,6 +4070,7 @@ ManagerImpl::removeAccount (const AccountID& accountID)
     _debug ("REMOVE ACCOUNT\n");
 
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+
 }
 
 // ACCOUNT handling
