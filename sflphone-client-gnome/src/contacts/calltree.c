@@ -901,7 +901,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	GtkTreePath *path;
 	GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
 
-	gchar** participant = conf->participant;
+	gchar** participant = dbus_get_participant_list(conf->_confID);
 	gchar** pl;
 	gchar* call_id;
 
@@ -921,7 +921,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	if( tab == current_calls )
 	{
 
-		DEBUG("------------- calltree_add_conference %s, %s ------------------------", tab, current_calls);
+		
 		switch(conf->_state)
 		{
 			case CONFERENCE_STATE_ACTIVE_ATACHED:
@@ -968,12 +968,14 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
 		DEBUG("Determine if conference is secured");
 
-		participant = conf->participant;
+		// participant = conf->participant;
+		participant = dbus_get_participant_list(conf->_confID);
 		if(participant)
 		{
 			DEBUG("    determine if at least one participant uses srtp");
 
-			participant = conf->participant;
+			// participant = conf->participant;
+			participant = dbus_get_participant_list(conf->_confID);
 			for (pl = participant; *participant; participant++)
 			{	    
 				call_id = (gchar*)(*participant);
@@ -1053,7 +1055,8 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 			g_object_unref(G_OBJECT(pixbuf));
 
 
-		participant = conf->participant;
+		// participant = conf->participant;
+		participant = dbus_get_participant_list(conf->_confID);
 		if(participant)
 		{
 			for (pl = participant; *participant; participant++)
