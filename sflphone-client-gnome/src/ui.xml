@@ -56,4 +56,10 @@
 		<toolitem name="HistoryToolbar" action="History"/>
 		<toolitem name="AddressbookToolbar" action="Addressbook"/>
 	</toolbar>
+
+	<popup name="PopupMenu">
+		<menuitem action="Copy"/>
+		<menuitem action="Paste"/>
+		<separator/>
+	</popup>
 </ui>
