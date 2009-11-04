@@ -113,8 +113,9 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
     // Load the history
     sflphone_fill_history ();
 
-    // Get the active calls at startup    
+    // Get the active calls and conferences at startup    
     sflphone_fill_call_list ();
+    sflphone_fill_conference_list();
         
     /* start the main loop */
     gtk_main();

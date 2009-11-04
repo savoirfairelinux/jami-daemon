@@ -34,59 +34,56 @@ gint is_confID_confstruct ( gconstpointer a, gconstpointer b)
     }
 }
 
-void create_new_conference (conference_state_t state, const gchar* confID, conference_obj_t ** new_conf)
+void create_new_conference (conference_state_t state, const gchar* confID, conference_obj_t ** conf)
 {
-
-    conference_obj_t *obj;
-	gchar* conf_id;
+    // conference_obj_t *obj;
+    conference_obj_t *new_conf;
+    const gchar* conf_id;
 
     // Allocate memory
-    obj = g_new0 (conference_obj_t, 1);
+    new_conf = g_new0 (conference_obj_t, 1);
 
     // Set state field    
-    obj->_state = state;
+    new_conf->_state = state;
 
     // Set the ID field
-	conf_id = confID;
-    obj->_confID = g_strdup (conf_id);
-    *new_conf = obj;
-    
+    conf_id = confID;
+    new_conf->_confID = g_strdup (conf_id);
+    *conf = new_conf;
+
 }
 
 void create_new_conference_from_details (const gchar *conf_id, GHashTable *details, conference_obj_t *conf)
-{
-    /*
-    gchar *peer_name, *peer_number, *accountID, *state_str;
-    callable_obj_t *new_call;
-    call_state_t state;
+{    
 
-    accountID = g_hash_table_lookup (details, "ACCOUNTID");
-    peer_number = g_hash_table_lookup (details, "PEER_NUMBER");
-    peer_name = g_strdup ("");
+    conference_obj_t *new_conf;
+    // const gchar* conf_id;
+    // gchar** participants;
+    // gchar** part;
+    gchar* state_str;
+
+    // Allocate memory
+    new_conf = g_new0 (conference_obj_t, 1);
+
+    new_conf->_confID = g_strdup (conf_id);
+
+    new_conf->_conference_secured = FALSE;
+    new_conf->_conf_srtp_enabled = FALSE;
+
+    new_conf->participant = dbus_get_participant_list(conf_id);
+ 
     state_str = g_hash_table_lookup (details, "CALL_STATE");
 
+    if (g_strcasecmp (state_str, "ACTIVE_ATACHED") == 0)
+        new_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
 
-    if (g_strcasecmp (state_str, "CURRENT") == 0)
-        state = CALL_STATE_CURRENT;
-
-	else if (g_strcasecmp (state_str, "RINGING") == 0)
-		state = CALL_STATE_RINGING;
-
-	else if (g_strcasecmp (state_str, "INCOMING") == 0)
-		state = CALL_STATE_INCOMING;
+    else if (g_strcasecmp (state_str, "ACTIVE_DETACHED") == 0)
+        new_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
 
     else if (g_strcasecmp (state_str, "HOLD") == 0)
-        state = CALL_STATE_HOLD;
+        new_conf->_state = CONFERENCE_STATE_HOLD;
 
-    else if (g_strcasecmp (state_str, "BUSY") == 0)
-        state = CALL_STATE_BUSY;
-
-    else
-        state = CALL_STATE_FAILURE;
-
-    create_new_call (CALL, state, (gchar*)call_id, accountID, peer_name, peer_number, &new_call);
-    *call = new_call;
-    */
+    conf = new_conf;
 }
 
 void free_conference_obj_t (conference_obj_t *c)

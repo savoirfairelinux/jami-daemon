@@ -1126,6 +1126,8 @@ void sflphone_fill_call_list (void)
     callable_obj_t *c;
     gchar *callID;
 
+    DEBUG("sflphone_fill_call_list");
+
     if(calls)
     {
         for(pl=calls; *calls; calls++)
@@ -1148,31 +1150,35 @@ void sflphone_fill_call_list (void)
 
 void sflphone_fill_conference_list(void)
 {
-	// TODO Fetch the active conferences at client startup
-	/*
-    gchar** conferences = (gchar**)dbus_get_conference_list();
+    // TODO Fetch the active conferences at client startup
+
+    gchar** conferences;
     gchar** pl;
     GHashTable *conference_details;
     gchar* conf_id;
-    conference_obj_t* c;
+    conference_obj_t* conf;
 
     DEBUG("sflphone_fill_conference_list");
+
+    conferences = dbus_get_conference_list();
 
     if(conferences)
     {
 	for (pl = conferences; *conferences; conferences++)
 	{
-	    c = g_new0(conference_obj_t, 1);
+	    conf = g_new0(conference_obj_t, 1);
 	    conf_id = (gchar*)(*conferences);
 
-	    conference_details = (GHashTable*) dbus_get_conference_details(conf_id);
-	    create_new_call_from_details (conf_id, conference_details, &c);
-	    c->_confID = g_strdup(conf_id);
+	    DEBUG("   fetching conference: %s", conf_id);
 
-	    conferencelist_add(c);
+	    conference_details = (GHashTable*) dbus_get_conference_details(conf_id);
+	    create_new_conference_from_details (conf_id, conference_details, conf);
+	    conf->_confID = g_strdup(conf_id);
+
+	    conferencelist_add(conf);
 	}
     }
-	*/
+	
 }
 
 void sflphone_fill_history (void)

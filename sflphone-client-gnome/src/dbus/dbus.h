@@ -545,6 +545,10 @@ GHashTable* dbus_get_call_details (const gchar* callID);
 
 gchar** dbus_get_call_list (void);
 
+GHashTable* dbus_get_conference_details (const gchar* confID);
+
+gchar** dbus_get_conference_list (void);
+
 void dbus_set_accounts_order (const gchar* order);
 
 GHashTable* dbus_get_history (void);
