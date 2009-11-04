@@ -48,6 +48,7 @@ class RingBuffer {
      */
     ~RingBuffer();
 
+    CallID getBufferId(){ return buffer_id; }
 
     /**
      * Reset the counters to 0

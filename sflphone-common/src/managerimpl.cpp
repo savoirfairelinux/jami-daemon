@@ -1525,7 +1525,10 @@ ManagerImpl::addStream(const CallID& call_id)
 	// bind to main 
 	getAudioDriver()->getMainBuffer()->bindCallID(call_id);
 
-	_audiodriver->getMainBuffer()->flush(default_id);
+	// _audiodriver->getMainBuffer()->flush(default_id);
+	_audiodriver->flushUrgent();
+	_audiodriver->flushMain();
+	
     }
 }
 
@@ -1758,7 +1761,7 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     PulseLayer *pulselayer;
     std::string from, number, display_name, display;
 
-    stopTone (true);
+    stopTone (false);
 
     _debug ("Incoming call %s for account %s\n", call->getCallId().data(), accountId.c_str());
 
@@ -1845,6 +1848,7 @@ ManagerImpl::incomingMessage (const AccountID& accountId, const std::string& mes
 void
 ManagerImpl::peerAnsweredCall (const CallID& id)
 {
+    // The if statement is usefull only if we sent two calls at the same time. 
     if (isCurrentCall (id)) {
         stopTone (false);
     }
@@ -1856,6 +1860,7 @@ ManagerImpl::peerAnsweredCall (const CallID& id)
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
     if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
 
+    // Required if there have been no sip reinvite, in this case we must reinit buffers since the 
     _audiodriver->flushMain();
     _audiodriver->flushUrgent();
 }
@@ -2005,9 +2010,9 @@ void ManagerImpl::connectionStatusNotification()
 bool ManagerImpl::playATone (Tone::TONEID toneId)
 {
     bool hasToPlayTone;
-    AudioLoop *audioloop;
+    // AudioLoop *audioloop;
     AudioLayer *audiolayer;
-    unsigned int nbSamples;
+    // unsigned int nbSamples;
 
     _debug("ManagerImpl::playATone\n");
 
@@ -2020,15 +2025,16 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 
     
     if (audiolayer) {
-	audiolayer->flushUrgent();
-	audiolayer->startStream();
+        
+        audiolayer->flushUrgent();
+        audiolayer->startStream();
     }
 
     if (_telephoneTone != 0) {
         _toneMutex.enterMutex();
         _telephoneTone->setCurrentTone (toneId);
         _toneMutex.leaveMutex();
-
+	/*
         audioloop = getTelephoneTone();
         nbSamples = audioloop->getSize();
         SFLDataFormat buf[nbSamples];
@@ -2038,6 +2044,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
             audiolayer->putUrgent (buf, nbSamples);
         } else
             return false;
+	*/
     }
 
     return true;
@@ -2049,6 +2056,8 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 void ManagerImpl::stopTone (bool stopAudio=true)
 {
     bool hasToPlayTone;
+
+    _debug("ManagerImpl::stopTone\n");
 
     hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_TONES);
 
@@ -2104,6 +2113,8 @@ ManagerImpl::congestion ()
 void
 ManagerImpl::ringback ()
 {
+    _debug("ManagerImpl::ringback\n");
+
     playATone (Tone::TONE_RINGTONE);
 }
 
@@ -2113,6 +2124,7 @@ ManagerImpl::ringback ()
 void
 ManagerImpl::ringtone()
 {
+    _debug("ManagerImpl::ringtone\n");
     std::string ringchoice;
     AudioLayer *audiolayer;
     AudioCodec *codecForTone;
@@ -2122,6 +2134,8 @@ ManagerImpl::ringtone()
     // stopTone(true);
 
     if (isRingtoneEnabled()) {
+
+        _debug("  Tone is enabled\n");
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
 
@@ -2157,6 +2171,7 @@ ManagerImpl::ringtone()
             _audiofile.start();
             _toneMutex.leaveMutex();
 
+	    // start audio if not started AND flush all buffers (main and urgent)
             audiolayer->startStream();
  
         } else {
