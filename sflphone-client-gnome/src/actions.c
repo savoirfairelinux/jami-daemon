@@ -1176,6 +1176,7 @@ void sflphone_fill_conference_list(void)
 	    conf->_confID = g_strdup(conf_id);
 
 	    conferencelist_add(conf);
+	    calltree_add_conference (current_calls, conf);
 	}
     }
 	
