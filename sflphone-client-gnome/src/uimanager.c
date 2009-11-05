@@ -254,16 +254,7 @@ void update_actions()
 			if (account_list_current_account_has_mailbox ())
 				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (voicemailToolbar), -2);
 		}
-		else
-		{
-			// gtk_widget_set_sensitive (GTK_WIDGET(callButton), FALSE);
-		}
-
-		// gtk_action_set_sensitive( GTK_ACTION(newCallMenu), TRUE);
 	}
-	// gtk_signal_handler_unblock (holdToolbar, holdConnId);
-	// gtk_signal_handler_unblock (offHoldToolbar, holdConnId);
-
 }
 
 static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
@@ -297,18 +288,18 @@ static void help_contents_cb (GtkAction *action)
 static void help_about ( void * foo UNUSED)
 {
 	gchar *authors[] = {
+		"Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
+		"Jean-Philippe Barrette-LaPierre",
+		"Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
+		"Julien Bonjean <julien.bonjean@savoirfairelinux.com>",
+		"Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
+		"Laurielle Lea",
+		"Yun Liu <yun.liu@savoirfairelinux.com>",
+		"Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
 		"Yan Morin <yan.morin@savoirfairelinux.com>",
 		"Jérôme Oufella <jerome.oufella@savoirfairelinux.com>",
 		"Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
-		"Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
-		"Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
-		"Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
-		"Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
-		"Yun Liu <yun.liu@savoirfairelinux.com>",
 		"Alexandre Savard <alexandre.savard@savoirfairelinux.com>",
-		"Jean-Philippe Barrette-LaPierre",
-		"Laurielle Lea",
-		"Pierre-Luc Bacon <pierre-luc.bacon@savoifairelinux.com>",
 		NULL};
 	gchar *artists[] = {
 		"Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
@@ -1069,6 +1060,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 	gboolean pickup = FALSE;
 	gboolean remove = FALSE;
 	gboolean edit = FALSE;
+	gboolean accounts = FALSE;
 
 	callable_obj_t * selectedCall = calltab_get_selected_call( history );
 	if (selectedCall)
@@ -1076,6 +1068,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 		remove = TRUE;
 		pickup = TRUE;
 		edit = TRUE;
+		accounts = TRUE;
 	}
 
 	GtkWidget *menu;
@@ -1117,6 +1110,11 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 		g_signal_connect (G_OBJECT (menu_items), "activate", G_CALLBACK (remove_from_history),  NULL);
 		gtk_widget_show (menu_items);
+	}
+
+	if(accounts)
+	{
+		add_registered_accounts_to_menu (menu);
 	}
 
 	if (event)

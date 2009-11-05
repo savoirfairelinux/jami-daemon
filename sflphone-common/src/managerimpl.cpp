@@ -86,9 +86,9 @@ ManagerImpl::ManagerImpl (void)
         , _callAccountMapMutex()
         , _callConfigMap()
         , _accountMap()
+        , _directIpAccount (NULL)
         , _cleaner (NULL)
         , _history (NULL)
-        , _directIpAccount (NULL)
 {
 
     // initialize random generator for call id
@@ -4074,7 +4074,8 @@ ManagerImpl::removeAccount (const AccountID& accountID)
     if (remAccount != NULL) {
         remAccount->unregisterVoIPLink();
         _accountMap.erase (accountID);
-        delete remAccount;
+		// http://projects.savoirfairelinux.net/issues/show/2355
+		// delete remAccount;
     }
 
     _config.removeSection (accountID);
@@ -4084,6 +4085,7 @@ ManagerImpl::removeAccount (const AccountID& accountID)
     _debug ("REMOVE ACCOUNT\n");
 
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+
 }
 
 // ACCOUNT handling
