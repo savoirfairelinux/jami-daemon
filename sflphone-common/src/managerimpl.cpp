@@ -429,15 +429,6 @@ ManagerImpl::hangupCall (const CallID& call_id)
     int nbCalls = getCallList().size();
 
     // _debug("nbCalls: %i\n", nbCalls);
-
-    audiolayer = getAudioDriver();
-
-    // stop streams
-    if (nbCalls <= 1)
-    {
-	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
-        audiolayer->stopStream();
-    }
    
     if(participToConference(call_id))
     {
@@ -476,6 +467,15 @@ ManagerImpl::hangupCall (const CallID& call_id)
         returnValue = getAccountLink (account_id)->hangup (call_id);
 
         removeCallAccount (call_id);
+    }
+
+    audiolayer = getAudioDriver();
+
+    // stop streams
+    if (audiolayer && (nbCalls <= 0))
+    {
+	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
+        audiolayer->stopStream();
     }
 
     if (_audiodriver->getLayerType() == PULSEAUDIO) {
@@ -1225,24 +1225,25 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     
     iter_details = call1_details.find("CALL_STATE");
     _debug("    joinParticipant: call1 %s state: %s\n", call_id1.c_str(), iter_details->second.c_str());
-    if (iter_details->second == "HOLD")
-    {
+    if (iter_details->second == "HOLD") {
 	_debug("    OFFHOLD %s\n", call_id1.c_str());
 	offHoldCall(call_id1);
     }
-    else if(iter_details->second == "INCOMING")
-    {
+    else if(iter_details->second == "INCOMING") {
 	_debug("    ANSWER %s\n", call_id1.c_str());
 	answerCall(call_id1);
     }
-    else if(iter_details->second == "CURRENT")
-    {
+    else if(iter_details->second == "CURRENT") {
 	_debug("    CURRENT %s\n", call_id1.c_str());
 	_audiodriver->getMainBuffer()->unBindAll(call_id1);
 	conf->bindParticipant(call_id1);
     }
-    else{
-        _debug("    CAll State not recognized");
+    else if(iter_details->second == "INACTIVE") {
+	_debug("    INACTIVE %s\n", call_id1.c_str());
+	answerCall(call_id1);
+    }
+    else {
+        _debug("    CAll State not recognized\n");
     }
 
     currentAccountId = getAccountFromCall (call_id2);
@@ -1251,24 +1252,25 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
     
     iter_details = call2_details.find("CALL_STATE");
     _debug("    joinParticipant: call2 %s state: %s\n", call_id2.c_str(), iter_details->second.c_str());
-    if (iter_details->second == "HOLD")
-    {
+    if (iter_details->second == "HOLD") {
 	_debug("    OFFHOLD %s\n", call_id2.c_str());
 	offHoldCall (call_id2);
     }
-    else if(iter_details->second == "INCOMING")
-    {
+    else if(iter_details->second == "INCOMING") {
 	_debug("    ANSWER %s\n", call_id2.c_str());
 	answerCall(call_id2);
     }
-    else if(iter_details->second == "CURRENT")
-    {
+    else if(iter_details->second == "CURRENT") {
 	_debug("    CURRENT %s\n", call_id2.c_str());
 	_audiodriver->getMainBuffer()->unBindAll(call_id2);
 	conf->bindParticipant(call_id2);
     }
+    else if(iter_details->second == "INACTIVE") {
+	_debug("    INACTIVE %s\n", call_id2.c_str());
+	answerCall(call_id2);
+    }
     else{
-        _debug("    CAll State not recognized");
+        _debug("    CAll State not recognized\n");
     }
 
     // finally bind main participant to conference
