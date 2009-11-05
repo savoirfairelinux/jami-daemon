@@ -4581,6 +4581,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails (const CallID& 
         call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
         call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
+	call_details.insert (std::pair<std::string, std::string> ("DISPLAY_NAME", call->getDisplayName ()));
         call_details.insert (std::pair<std::string, std::string> ("CALL_STATE", call->getStateStr ()));
         call_details.insert (std::pair<std::string, std::string> ("CALL_TYPE", type.str ()));
     } else {
@@ -4633,10 +4634,10 @@ ManagerImpl::getConferenceDetails(const ConfID& confID)
 
     iter_conf = _conferencemap.find(confID);
 
-    Conference *conf = NULL;
+    Conference* conf = NULL;
     if(iter_conf != _conferencemap.end()) {
 
-	
+        conf = iter_conf->second;
         conf_details.insert (std::pair<std::string, std::string> ("CONFID", confID));
         conf_details.insert (std::pair<std::string, std::string> ("CONF_STATE", conf->getStateStr()));
     }

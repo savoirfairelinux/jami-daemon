@@ -1172,8 +1172,10 @@ void sflphone_fill_conference_list(void)
 	    DEBUG("   fetching conference: %s", conf_id);
 
 	    conference_details = (GHashTable*) dbus_get_conference_details(conf_id);
-	    create_new_conference_from_details (conf_id, conference_details, conf);
-	    conf->_confID = g_strdup(conf_id);
+	    
+	    create_new_conference_from_details (conf_id, conference_details, &conf);
+	    
+	    conf->_confID = g_strdup(conf_id);	    
 
 	    conferencelist_add(conf);
 	    calltree_add_conference (current_calls, conf);

@@ -137,7 +137,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
 
     accountID = g_hash_table_lookup (details, "ACCOUNTID");
     peer_number = g_hash_table_lookup (details, "PEER_NUMBER");
-    peer_name = g_strdup ("");
+    peer_name = g_hash_table_lookup (details, "DISPLAY_NAME");
     state_str = g_hash_table_lookup (details, "CALL_STATE");
 
 
