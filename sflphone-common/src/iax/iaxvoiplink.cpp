@@ -47,6 +47,7 @@
 	_evThread = new EventThread (this);
 	_regSession = NULL;
 	_nextRefreshStamp = 0;
+	countTime = 0;
 
 	// to get random number for RANDOM_PORT
 	srand (time (NULL));
@@ -256,6 +257,20 @@ IAXVoIPLink::getEvent()
 		sendRegister ("");
 	}
 
+	// Notify (with a beep) an incoming call when there is already a call
+        countTime += 3;
+
+	if((Manager::instance().incomingCallWaiting() > 0) && Manager::instance().hasCurrentCall()) {
+
+	    int countTime_modulo = countTime % 4000;
+	    // _debug("countTime: %i\n", countTime);
+	    // _debug("countTime_modulo: %i\n", countTime_modulo);
+	    if ((countTime_modulo - countTime) < 0) {
+	      Manager::instance().notificationIncomingCall();
+	    }
+
+	    countTime = countTime_modulo;
+	}
 
 	// thread wait 3 millisecond
 	_evThread->sleep (3);

@@ -189,7 +189,7 @@ ManagerImpl::isCurrentCall (const CallID& callId)
 bool
 ManagerImpl::hasCurrentCall()
 {
-    _debug ("ManagerImpl::hasCurrentCall current call ID = %s\n", _currentCallId2.c_str());
+    // _debug ("ManagerImpl::hasCurrentCall current call ID = %s\n", _currentCallId2.c_str());
 
     if (_currentCallId2 != "") {
         return true;

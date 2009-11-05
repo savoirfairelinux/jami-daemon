@@ -1098,12 +1098,6 @@ class ManagerImpl {
     void initVolume();
 
     /**
-     * Tell if there is a current call processed
-     * @return bool True if there is a current call
-     */
-    bool hasCurrentCall();
-
-    /**
      * Switch of current call id
      * @param id The new callid
      */
@@ -1264,6 +1258,12 @@ class ManagerImpl {
 
     
    public:
+
+    /**
+     * Tell if there is a current call processed
+     * @return bool True if there is a current call
+     */
+    bool hasCurrentCall();
    
     /**
      * Return the current DBusManagerImpl

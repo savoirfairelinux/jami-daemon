@@ -398,8 +398,8 @@ namespace sfl {
 
             if (_manager->incomingCallWaiting() > 0) {
 	        int countTime_modulo = countTime % 4000;
-		_debug("countTime: %i\n", countTime);
-		_debug("countTime_modulo: %i\n", countTime_modulo);
+		// _debug("countTime: %i\n", countTime);
+		// _debug("countTime_modulo: %i\n", countTime_modulo);
                 if ((countTime_modulo - countTime) < 0) {
                     _manager->notificationIncomingCall();
                 }
