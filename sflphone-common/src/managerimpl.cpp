@@ -1241,6 +1241,9 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	_audiodriver->getMainBuffer()->unBindAll(call_id1);
 	conf->bindParticipant(call_id1);
     }
+    else{
+        _debug("    CAll State not recognized");
+    }
 
     currentAccountId = getAccountFromCall (call_id2);
     call = getAccountLink (currentAccountId)->getCall (call_id2);
@@ -1263,6 +1266,9 @@ ManagerImpl::joinParticipant(const CallID& call_id1, const CallID& call_id2)
 	_debug("    CURRENT %s\n", call_id2.c_str());
 	_audiodriver->getMainBuffer()->unBindAll(call_id2);
 	conf->bindParticipant(call_id2);
+    }
+    else{
+        _debug("    CAll State not recognized");
     }
 
     // finally bind main participant to conference
