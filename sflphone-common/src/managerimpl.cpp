@@ -428,7 +428,15 @@ ManagerImpl::hangupCall (const CallID& call_id)
 
     int nbCalls = getCallList().size();
 
-    // _debug("nbCalls: %i\n", nbCalls);
+    audiolayer = getAudioDriver();
+
+    // stop streams
+    if (audiolayer && (nbCalls <= 1))
+    {
+	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
+        audiolayer->stopStream();
+    }
+
    
     if(participToConference(call_id))
     {
@@ -467,15 +475,6 @@ ManagerImpl::hangupCall (const CallID& call_id)
         returnValue = getAccountLink (account_id)->hangup (call_id);
 
         removeCallAccount (call_id);
-    }
-
-    audiolayer = getAudioDriver();
-
-    // stop streams
-    if (audiolayer && (nbCalls <= 0))
-    {
-	_debug("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
-        audiolayer->stopStream();
     }
 
     if (_audiodriver->getLayerType() == PULSEAUDIO) {
