@@ -776,6 +776,8 @@ ManagerImpl::refuseCall (const CallID& id)
     AccountID accountid;
     bool returnValue;
 
+    CallID current_call_id = getCurrentCallId();
+
     stopTone (false);
 
 
@@ -818,7 +820,8 @@ ManagerImpl::refuseCall (const CallID& id)
 
         if (_dbus) _dbus->getCallManager()->callStateChanged (id, "HUNGUP");
 
-        switchCall ("");
+	// if(current_call_id.compare("") != 0)
+        // switchCall ("");
     }
 
     
@@ -1773,6 +1776,7 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     _debug ("ManagerImpl::incomingCall :: hasCurrentCall() %i \n", hasCurrentCall());
 
     if (!hasCurrentCall()) {
+
         call->setConnectionState (Call::Ringing);
         ringtone();
         // switchCall (call->getCallId());
