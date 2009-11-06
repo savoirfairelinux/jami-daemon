@@ -2888,12 +2888,18 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     
     char* from_header = strstr(rdata->msg_info.msg_buf, "From: ");
     // _debug("------------------------------ thefromheader: %s\n", from_header);
-    std::string temp(from_header);
-    int begin_displayName = temp.find("\"") + 1;
-    int end_displayName = temp.rfind("\"");
-    // _debug("The display name start at %i, end at %i\n", begin_displayName, end_displayName);
-    
-    displayName = temp.substr(begin_displayName, end_displayName - begin_displayName);//display_name);
+
+    if(from_header) {
+
+        std::string temp(from_header);
+	int begin_displayName = temp.find("\"") + 1;
+	int end_displayName = temp.rfind("\"");
+	// _debug("The display name start at %i, end at %i\n", begin_displayName, end_displayName);
+	displayName = temp.substr(begin_displayName, end_displayName - begin_displayName);//display_name);
+    }
+    else {
+        displayName = std::string("");
+    }
 
     _debug ("UserAgent: The receiver is : %s@%s\n", userName.data(), server.data());
 
