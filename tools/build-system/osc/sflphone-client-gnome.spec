@@ -14,11 +14,12 @@ License:        GNU General Public License (GPL)
 Group:          Productivity/Networking/System
 Summary:        GNOME client for SFLphone
 Version:        VERSION
-Release:        VERSION_INDEX
+Release:        VERSION_INDEX%{?dist}
 URL:            http://www.sflphone.org/
 Vendor:		Savoir-faire Linux
 Packager:       Julien Bonjean <julien.bonjean@savoirfairelinux.com>
 
+Group:          Applications/Communications
 BuildRoot:      %{_tmppath}/%{name}
 Source0:        sflphone-client-gnome-%{version}.tar.gz
 
