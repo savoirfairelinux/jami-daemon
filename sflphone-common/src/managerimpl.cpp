@@ -385,7 +385,7 @@ ManagerImpl::answerCall (const CallID& call_id)
         
     // std::string codecName = Manager::instance().getCurrentCodecName (call_id);
     // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id, codecName.c_str());
-        
+
     removeWaitingCall (call_id);
 
     // if we dragged this call into a conference already
@@ -678,10 +678,12 @@ ManagerImpl::offHoldCall (const CallID& call_id)
         _audiodriver->flushMain();
     }
 
+
     // codecName = getCurrentCodecName (call_id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
 
     // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id,codecName.c_str());
+
 
     return returnValue;
 }
