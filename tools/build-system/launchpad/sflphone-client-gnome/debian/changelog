@@ -1,4 +1,573 @@
-sflphone-client-gnome (0.9.6-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.7~beta~ppa1~karmic) karmic; urgency=low
+
+    ** 0.9.7~beta~ppa1~karmic **
+
+  * [#1933] Cleanup debug
+  * [#1933] Clean up debug
+  * Fix mic
+  * [#1933] Set the IAx format earlier
+  * [#1933] Move IAX sendAudioFromMic outside if (call) statement
+  * [#1933] Fix startstream when offhold in iax and add debug concerning
+    codec neg.
+  * [#2371] sflphone_notify_voice_mail: minor gettext message formatting
+    cleanup
+  * [#2371] select_account_cb: properly gettextize status message
+  * [#2371] show_account_list_config_dialog: properly gettextize status
+    message
+  * INSTALL: Minor tidyup of core install guide
+  * Add /sflphone-client-gnome/src/icons/Makefile to .gitignore
+  * [#2181] Updated OpenSUSE files (tmp)
+  * [#1933] Add debug for codec negociation for iax
+  * [#1933] Get rid of getMicAvail and getMicData in audiolayer (not
+    used anymore)
+  * [#1933] Add "audio codec not determined" error in IAX
+  * [#1933] Test flush data
+  * [#1933] Do not need to start audio stream in iax anymore
+  * [#1933] Protecting pointer
+  * [#2284] Remove more compilation/execution warnings
+  * [#2284] Cleanup debug in client, use DEBUG instead of g_print
+  * [#2284] Clean up uimanager
+  * [#2370] Remove warnings
+  * [#2366] Clean up other debug
+  * [#2366] Clean up debug
+  * [#2366] Call pa_xfree explicitely in writeToSpeaker
+  * [#2284] Remove address book warnings
+  * [#2365] Fixes bad cast
+  * [#2352] Fix continuous ringing when peer hangup and call not yet
+    answered
+  * [#2181] Added version support
+  * [#2181] Fixed some minor issues
+  * [#2360] Moved MainBuffer from AudioLayer to ManagerImpl
+  * [#2352] Makes getMainBuffer() everywhere
+  * [#2352] Use 50 sec latency on pulseaudio stream creation
+  * [#2352] Add alsa debug
+  * [#2359] Update repository documentation
+  * [#2354] Move pulseaudio disconnectAudioStream after stopping main
+    loop
+  * [#2352] Adjust nb byte copied in pulseaudio according to
+    writeableSize
+  * [#2352] Specify pulseaudio tlength parameters using pa_usec_to_bytes
+  * [#2322] Convert italian translation to UTF-8
+  * [#2357] Fixes window size
+  * [#2357] Display only actionnable tool item
+  * [#2333] Update streams parameters
+  * [#2347] Use GNOME user settings for Menu and Toolbar appareance
+  * [#2349] Load/Save properly audio params
+  * [#2322] Update translations from Launchpad
+  * [#2181] Added Francois Marier script
+  * [#2350] Remove non-valid test
+  * [#2181] Updated launchpad packaging
+  * [#2333] Fix Pulseaudio Capture
+  * [#2333] Use pulseaudio ADJUST_LATENCY flag and ALSA RT-SCHEDULING
+  * [#2333] Pulseaudio Interpolate timing
+  * [#2333] Change (again) Pulseaudio settings to fit logiteck usb hdw
+    requirement
+  * [#2333] Adjust pulseaudio fragment size to 4096 (max sflphone's
+    frames per buffer)
+  * [#2284] Remove recurrent compilation warning (g++ linker problem)
+  * [#2333] Safer Audiostream parameters
+  * [#2333] Fix alsa playback to reduce underrun
+  * [#2333] Better audiostream parameters
+  * [#2181] Updated version management
+  * [#2333] Exclusive test in playback loop
+  * [#2181] Updated build system
+  * [#2333] Less underrun with these value
+  * [#2333] Update playback audiostream parameters
+  * [#2333] Lengthen the audio buffer reduce number of underrun in
+    pulseaudio
+  * [#2333] Add ALSA recovery functions for underrun (begin)
+  * [#2333] Add pa_stream_trigger in pulse audio underrun callabck
+  * [#2048] Reduce prebuffering in pulseaudio (which affect incomming
+    calls' plbck)
+  * [#2316] Do not display any icons to the right on the history tab
+  * [#2333] Comment pa_stream_trigger in pulseaudio underrun
+  * [#2333] Modify pulseaudio streams parameters
+  * [#2318] Fix transfer tool button double signal
+  * [#2181] Updated
+  * [#2333] Fix ALSA ringtone
+  * [#2333] Flush all main buffer before starting audio
+  * [#2333] Open/Close Alsa thread between calls while there is no audio
+  * [#2333] Add debug message and test condition on starting playback
+    and capture
+  * [#2181] Fixed gnome client makefile
+  * [#2181] Updated
+  * [#2308] Remove getTelephoneTone debug
+  * [#2308] Change plughw for default in ALSA
+  * [#2308] Oups, forgot to change function name in audiolayertest.cpp
+  * [#2308] Cleanup in pulseaudio code (debug, function name)
+  * [#2308] Fix pulseaudio stream closing assertion failure
+  * [#2308] Moved pulseaudio mainloop locking from AudioStream
+    disconnect stream
+  * [2308] Fix latency at the beginning of a call, when playing DTMF and
+    wehn starting tone
+  * [#2181] Updated karmic
+  * [#2317] [#2319] Fix address book toggle button contextual behaviour
+  * [#2308] Stop stream when refusing a call
+  * [#2308] Stop pulseaudio stream when peer hungup
+  * [#2308] Fix tone and  ringtone
+  * [#2312] Display the STUN entry widget when opening the tab
+  * [#2308] Implement two different callbacks for capture/playback in
+    pulseaudio
+  * [#2309] Open/close pulseaudio connections in startStream/stopStream
+  * [2308] Leave pulseaudio stream running, do not cork/uncork them
+    anymore
+  * [#2295] Set gtk file chooser to None if nothing is set in
+    configuration
+  * [#1976] Add codec and conference documentation
+  * [#2209] Fix recording in regard of resamling
+  * [#2297] Update .gitignore
+  * [#2297] Update translation files
+  * [#2297] Add reference to our coding standards
+  * [#2297] Remove old docbook code
+  * [#2296] Reinit tls account settings after modification
+  * [#2253] Add DcBlocker class to remove capture's dc offset
+  * [#2034] Fixes for TLS transport to initialize
+  * [#2284] Add silent build rule + client clean warnings
+  * [#2274] Fix unserialize history items in cilent at startup
+  * [#2274] Complete display name parsing and displaying
+  * [#2274] Parse the Display Name in sip INVITE message
+  * [#2050] Fix capture volume control in ALSA
+  * [#1970] Volume controls disable when using pulseaudio
+  * [#1970] Disable volume controls when using pulseaudio
+  * [#2277] Fix direct ip2ip ZRTP enabling/disabling in ip2ip
+    preferences
+  * [#2181] Added launchpad debian files
+  * [#2181] Added spec files for OSC
+  * [#2274] Set display name for "Contact" sip header as the hostname
+  * [#2181] Fixed daemon issues
+  * [#2181] Fixed gnome client issues
+  * [#1976] Remove warnings - need to fix the transfer
+  * [#2006] Add init is_rec variable in ManagerImpl
+  * [#2006] Update codec display on call selection
+  * [#2006] Restore double click actions in history and contact calltree
+    (GTK)
+  * [#2176] use XDG_CACHE_HOME when initializing sfl.zid file
+  * [#1976] Fix calltree switching from history
+  * [#2209] (Re)Fix cache for zid
+  * [#2209] Clean up debug messages
+  * [#2209] Clean debug messages
+  * [#2209] Fix trasnfering a call during a conference
+  * [#2209] Speex decode must return the number of bytes
+  * [#2209] Change frameSize speex 32kHz
+  * [#2209] Fix speex codec framesize
+  * [#2209] Reinit converterSamplingRate in RTP sessions
+  * [#2209] Change speex ultra wide band framesize
+  * [#1747] Add pixmap data
+  * [#2252] Fix Receiving a server error 488 crashes the callee
+  * [#2209] Fix iax low rate packate sending
+  * [#2209] Clean up debug messages
+  * [#2209] Add resampling changes for IAX
+  * [#2209] Clean up resampling code
+  * [#2209] Fix latency introduced by pulseaudio
+  * [#2209] Fix initialization of mainbuffer's internal sampling rate
+  * [#2176] Fix upsampling buffer size in audiolayer
+  * [#2209] Add dynamic converter sampling rate in audiortp sessions
+  * [#1747] Fixes runtime warnings
+  * [#1747] Remove from repo
+  * [#1747] register our icons to be used as stock icons
+  * [#2209] Fix number of byte in alsa's write to speaker
+  * [#2209] Fix putting non-resampled data in RTP's mainbuffer
+  * [#2209] Add alsa resampler
+  * [#2209] Add a samplerate converter in PulseLayer
+  * [#2209] Add mainbuffer's internal sampling rate and flushall method
+  * [#2176] Add mainbuffer stateInfo debug method
+  * [#2209] Resampling is optimal using SRC_LINEAR not SRC_FASTEST
+  * [#2176] Remove debug recordings
+  * [#2176] Fix Holding a conference participant on new calls
+  * [#2224] Add confID in callable object
+  * [#2176] Fix putting onhold a call participating to a conference when
+    pressing new call
+  * [#2176] Reset auidio buffers when adding streams (rtp, audiolayer)
+  * [#1976] Use xml to describe toolbars - Add a naviguation toolbar
+  * [#2176] Remove conference default_id in joinParticipant
+  * [#2176] Display error message in alsa's snd_pcm_avail_update call
+  * [#2176] Alsa mic avail data debug
+  * [#2176] Add some debug message for mic loss problem
+  * [#2176] Flush mic ring buffer when offholding a call
+  * [#2176] Reset ringbuffers' readpointer when adding main participant
+  * [#2176] Fix getAvailData algorithm
+  * [#2176] Reset ringbuffer's readpointer when adding a new participant
+    to a conference
+  * [#1744] Regex object renamed to Pattern. Previous attempt at
+    providing
+  * [#2176] Fix detach main participant problem when adding new one
+  * [#1976] Use right domain to translate
+  * [#1976] Add xml menu description
+  * [#2176] Store a list of confernece participant in client
+  * [#2176] Fix add participant, joinparticipant methods
+  * [#2181] Do not install dbus-c++ headers + add return value
+  * [#2176] Fix minor call handling instabilities
+  * [#2174] Fix incoming IP call contact address
+  * [#2211] Add test to protect NULL pointer
+  * [#1163] Add Advanced account configuration section
+  * [#2176] Add some usefull comments and debugging info
+  * [#2176] Add conditions to display security icons in conference
+  * [#2176] Fix detaching one participant while keeping communication to
+    others
+  * [#2176] Reenable userActive.svg in call tree
+  * [#2176] Make user active blue (not red)
+  * [#2176] Fix user active picture
+  * [#2176] Fix "hidden" merge conflict in sipvoiplink
+  * [#2176] Remove iax audio stream on peer hungup
+  * [#2174] Multiple UDP transports functional (TESTED with 2 accounts
+    and 3 calls)
+  * [#2176] Fix fix audio stream binding in iax
+  * [#2174] Create a default UDP transport + use tp selector for dialogs
+    also
+  * [#2176] Register iax audio stream in mainbuffer
+  * [#2176] Fix getAudioCodecName in IAXvoipLink
+  * [#2176] Fix iax account init
+  * [#2176] Handle multiple account using the same sip transport
+  * [#2165] Add .png files
+  * [#2176] Small fixes concerning dtmf
+  * [#2176] Fix make uninstall in codecs
+  * [#2174] remove stund makefile generation
+  * [#2176] Add conference lock
+  * [#2174] Add transport selector for multiple accounts
+  * [#2176] Change userActive picture from red to blue
+  * [#2176] Fix security pixbuff in calltree
+  * [#2176] Replace sfl.zid in .cache/sflphone instead of .sflphone
+  * [#2176] Fix add call description
+  * [#2176] Remove detach button from toolbar
+  * [#2176] Fix calltree call description state and state code in
+    conferences
+  * [#2176] Fix pulse audio double free
+  * [#2176] Fix conference selection
+  * [#2174] Clean up - remove stun settings in client network
+    configuration panel
+  * [#2174] Remove voviva stun code
+  * [#2174] Rsolve STUN with pjsip - DO NOT WORK
+  * [#2165] Add user svg
+  * [#2165] Debugging sip call failed
+  * [#929] Link against uuid if installed
+  * Oops
+  * Fixed bugs related to libsexy (with GTK < 2.16)
+  * [#929] Remove uuid-dev dependency in the core
+  * [#2165] Debugging no negociated codecs at communicatio start
+  * [#2165] Fix calltree bug (gtktreestore instead of gtkliststore)
+  * [#2165] Fix several merge problems
+  * Updated opensuse packaging script
+  * [#1163] Add missing figures
+  * [#1163] Update INSTALL file
+  * [#2165] Fix IAX
+  * [#2165] Add recordabe interface
+  * [#2165] Finish recording refactoring for call (not for conference)
+  * [#2165] Enable speaker recording for two different calls
+    simultanously
+  * [#2165] Implement call recording using the Recordable interface
+  * [#2165] Add get and set to AudioLayer's audio recorder
+  * [#2165] Add class recordable from which inherit call and conference
+  * [#2006] Fix G722 and Speex 8khz codec conferencing
+  * [#2006] add recording of audio buffers
+  * [#1163] Add general settings section
+  * [#1163] Fixes makefile error
+  * [#2006] Fix some minor issues
+  * [#2006] Drag a conference call on another conference call
+    (difference conferences)
+  * [#2006] Fix dragging a conference on itself
+  * [#1744] Integrating some of the needed regular expression patterns
+    in order
+  * COmplete call features
+  * [#1744] Added support for named subgroup in the Regex object. Also,
+    new
+  * [#1744] Adds thread safety features, compile() and setPattern()
+    methods to the Regex class.
+  * [#1744] Fix inconsistency in the finditer method from the last
+    commit.
+  * [#1744] Added regex pattern object built on top of libpcre. To be
+    used
+  * [#1744] Initial commit towards implementing RFC4568. Unimplemented
+    in the
+  * [#2157] Hide "security" and "advanced" tabs for IAX under account
+  * [#1163] Add call features section
+  * [#2006] Add joinConference capabilities
+  * [#2006] Add dbus joinConference signal
+  * [#2006] Drag a conference call onto a conference to add it
+  * [#1163] Add addressbook section
+  * [#2006] Drag a conference call onto a single call to create a
+    conference
+  * [#2006] Expand rows automatically
+  * [#2006] Add minimal multiple conference handling
+  * [#2006] Add atached/detached conference icons
+  * [#2006] Add function processRemainingParticipant
+  * [#2006] Deep refactoring, fix hangup bug
+  * [#1163] Update documentation - Accounts part
+  * [#1976] Integrate user doc to gnome client build system
+  * [#2122] Remove double inclusion in dbus-c++/src/Makefile.am
+  * Remove pjproject version number
+  * [#2006] Fix peerHungup
+  * [#1976] Make Yelp accessible from the GNOME client (need to install
+    the sflphone.xml first)
+  * [#2006] Fix multiconferencing hangup
+  * [#2006] Fix hangup calls in a conference
+  * [#2150] Make IAx2 reappear
+  * [#2006] Fix detach participant on multiple call
+  * [#2006] Can remove rining call from a conference
+  * [#2006] Reinit confID when removing a participant
+  * [#2006] Remove get isCurrentCAll in hangup/peerhungup (SipVoipLink)
+  * [#2006] Fix refuse call
+  * [#2006] Fix answerring incoming call
+  * [#2006] Refactor conference's participant list
+  * [#2101] Re-integrate test compilation in main build system
+  * [#2101] Make the test directory compile
+  * [#2136] Restore history functionality
+  * [#2006] Fix binding main participant to himself
+  * [#2006] Fix add current/incoming/onHold participant to an existing
+    conference
+  * [#2006] Fix add incoming calls to an already created conference
+  * [#2006] Fix remove stream
+  * [#2006] Fix detachParticipant/removeParticipant switchCall ids
+  * [#2006] Fix adding a call in conference having state "CURRENT"
+  * [#2006] Remove/add main participant from conferences
+  * [#2006] Hold/unHold conference
+  * [#2006] Detach a partcipant from drag n drop
+  * [#2006] Hangup a conference
+  * [#2006] Add hold/unhold conference dbus messages
+  * [#2034] gtk-ui fix under the "basic" tab.
+  * [#2006] Fix dragging calls on conference calls
+  * [#2006] Fix detach participant from a conference
+  * [#2034] Added default message is status bar under the account config
+    dialog
+  * [#2112] Fix a crashed caused when a non-md5 password was sent to
+    pjsip.
+  * [#2006] Detach participant by ID
+  * [#2006] Fix addParticipant method in managerImpl to handle
+    incoming/answered calls
+  * [#2006] Add addParticipant method in managerimpl and related dbus
+    messages
+  * [#2111] Added the ability to configure zrtp on sip.sflphone.org from
+  * [#2106] Fixed problem in the account assistant under gtk-ui. Also,
+    assistant.c
+  * [#2006] Fix dragging a conference call on another conference call
+    (same conference)
+  * [#1904] Small UI fix. Assistant was moved from "Call" to "Edit"
+    menu.
+  * [#1904] Fix a wrong label under gtk-ui.
+  * [#2034] Renaming and source code splitting.
+  * [#2034] Status bar added to account window to better reflect the
+    registration
+  * [#2006] Make calltree_remove_call recursive (for GtkTreeStore)
+  * [#1110] Small gtk-UI fix in the account window (alignment).
+  * [#2006] Fix remove conference, display children which are still
+    active
+  * [#2006] Recursive function call in calltree_update_call
+  * [#2006] Add multilayered capabilities to calltree (GtkTreeStore)
+  * [#2006] Implement remove conference in calltree
+  * [#2034] Now useless as Direct Ip calls settings moved under
+    Preferences.
+  * [#2034] Edit/add buttons were set insensitive all the time under
+    gtk-ui.
+  * [#1887] Information about the state of the current SIP call is
+    displayed
+  * [#2006] Add call tree remove callback
+  * [#2006] Fix create_conference function
+  * [#2006] Update conference_added_cb to add new conference to the list
+  * [#812] Added new tab under GTK-ui Preferences. Moving Direct Ip
+    Calls from
+  * [#2121] Disable temporarily test compilation
+  * [#2006] Fix conferencelist to handle conference_obj_t instead of
+    gchar
+  * [#2006] Add conference_obj structure
+  * [#2121] Update version
+  * [#2006] Fix conference selection
+  * [#2101] Use the new source tree to fetch the right object files
+  * [#2006] Add conference in calltree
+  * [#2006] Add Dbus signal conference added/removed/changed
+  * [#2006] Add getConferenceDetails call on dbus
+  * [#1904] Registration expire now appears as a spin box under gtk-ui.
+  * [#812] Fixing a segmentation fault caused by a non-existing account
+    ID
+  * [#2006] Add getConfList method over dbus
+  * [#2006] Add a conferencelist data structure in client-gnome
+  * [#812] Defaults value are now sent if a non-existing account is
+    requested
+  * [#2006] Add sflphone action sflphone_join_participant
+  * [#2006] Fix buffer read pointer problem deletion
+  * [pjsip] Attempt at fixing via header incompatibility with
+    Freeswitch.
+  * [#1797] forget something
+  * [#2006] Add call new state conferencing in deamon
+  * [#2006] Remove addParticipant method for conference, use
+    joinParticipant only
+  * [#1163] Update INSTALL documentation
+  * [#812] Msec/sec values were not taken into account.
+  * [#1797] Make pjproject-1.4 compile
+  * [#2006] Add Detach participant method
+  * [#2006] Dragndrop fully functional with INCOMING and HOLD call
+  * [#1797] Add pjproject-1.4
+  * [#1797] Remove pjproject-1.0.3
+  * [#2006] Get call state in conference related function
+  * [#2006] Add joinParticipant (conference) method in ManagerImpl
+  * [#2006] Add joinConference DBUS message
+  * [#2006] Store the previously selected call_id on dragndrop
+  * [#2006] Fix GValue pointer unref in selection callback
+  * [#2006] Store dragged call_id
+  * [#2006] Update drag_data_received_cb callback to manipulate CallIDs
+  * [#2006] Add dragndrop signals
+  * [#2006] Set calltree reordable
+  * [#812] Adds the ability to create a TLS listener in case the user
+    requests
+  * [#812] Adds the ability to configure local/published address from
+  * [#1883] Move switchCall in onHoldCall function
+  * [#812] Deals with the published address/port problem when
+    integrating TLS.
+  * [#1883] Switch call id in managerimpl when peerHungUp
+  * [#1883] Switch call id before hangup
+  * [#1883] Add usefull and permanent debug info for conference
+    cretion/deletion
+  * [#812] Fix various segmentation faults related to Direct IP kind of
+    calls.
+  * [#1883] Fix deletion of std::map elements using iterators
+  * [#2014] Add libzrtpcpp build dependency
+  * [#1883] Still some for loop test ambiguity (while loop instead)
+  * [#1883] Fix for loop initial test ambiguity (use while loop instead)
+  * [#1883] We must discard data in urgent ring buffer if data is get in
+    mainbuf
+  * [#1883] Fix availForGet same id for ringbuffer and readpointer
+  * [#812] Match "sips" as a Direct IP Call when the user enter a sip
+    uri
+  * [#812] Fix segmentation fault related to SIP URI creation.
+  * [#812] Towards integrating multiple tls listeners at the same time.
+    This
+  * [#1883] Add debug messages in conference and fix mainbufferTest
+  * [#812] gkt-ui fix. Private key must be fed as a filename and not as-
+    is.
+  * [#812] TLS integration within sipvoiplink and pjsip. Also,
+    configure.ac
+  * [#1883] Fix Alsa/Pulse mallocation
+  * [#1883] Fix data corruption in AudioRtp's micData buffer
+  * [#812] Full dbus integration for all the tls related options under
+    gtk-ui.
+  * [#1883] Fix memory leaks in audiortp session
+  * [#1883] Fix mem leaks in audio rtp
+  * [#812] Fix setAccountDetails where TLS_ENABLE was set to the value
+  * [#812] Small gtk-ui fix.
+  * [#811][#812] Small gtk-ui fix.
+  * [#812] Introduced a mechanism for configuration files that makes
+    possible
+  * [#812] New dbus bindings added. Also, configuration compliance was
+    enforced
+  * [#1881] Remove default buffer from MainBuffer (update unit-tests)
+  * [#1881] Add ring buffer read pointer tests
+  * [#1883] Fix issues  in ringbuffer reader pointers
+  * [#2034] Implementing a new configuration dialogue for TLS transport
+    settings
+  * [#1883] Add some usefull debug and safety checks
+  * [#2028] Notify the client with libnotify when the zrtp negotiation
+    failed.
+  * [#811] Harmless no to throw an exception, an makes the application
+    less
+  * [#2028] A minidialog is showed to the user under sflphone-client-
+    gnome
+  * Removed useless file.
+  * Ignoring Makefile in src/widget
+  * [#2027] Fix segmentation fault when showMessage callback is called
+    after
+  * [#2026] keyExchange was set to ZRTP instead of "1"
+  * [#2024] Fix the wrong summary at the end of the assistant.
+  * [#1883] Fix mnagerimpl conference map insertion
+  * [#1883] Add Mutexes in MainBuffer
+  * [#811] Gtk ui was not presenting the right information about zrtp
+    for
+  * [#2023] security icons were not installed in sflphone-client-gnome.
+  * [#2021] Fix a mistake in the readme from sflphone-common that gives
+    wrong
+  * [#811] The current SRTP mode was not properly displayed for the
+    IP2IP
+  * [#1743] Re-implementation of the "automatically remove error dialogs
+    [...]"
+  * [#2017] [#2019] Fix the inability to dial a number and place a
+    registered
+  * [#811] Final re-integration of ZRTP support in the main branch from
+    0.9.6
+  * [#1883] Fix map insertion methods
+  * [#811] Combo box now is now set to the active key exchange method
+  * [#811] ZRTP options now configurable back again from the Gtk UI.
+    IP2IP
+  * Updated hostname for git clone
+  * [#1883] Add minimal functionalities to create a conference
+  * [#811] re-integration of all the methods and signals on dbus.
+    ManagerImpl
+  * [#811] Got out of a precarious position were nothing would compile.
+  * [#1976] Build documentation squeleton with docbook
+  * [#1883] Add sflphone-client "addParticipant" button for conference
+  * [#1994] Better organize the source directory structure. New
+    subdirectories
+  * [#1883] Add a simple Conference class
+  * [#1882] Use static audio buffer in Pulse and ALSA layer (instead of
+    malloc)
+  * [#811] First commit toward re-integration and refactoring of ZRTP
+  * [#1882] Flush RTP ring buffer before entering mainloop
+  * [#1882] Fixed MainBuffer::UnBinCallID() in case there is no
+    ringbuffer
+  * [#1882] Test (and fixe) high level conference and mixing
+    functionalities
+  * [#1772] Apply patch to compile on fedora (sent by Marcin
+    Zajączkowski <mszpak@wp.pl>)
+  * [#1882] Update Bind, unBind call_id in MainBuffer
+  * [#1959] This adds the ability to store password as an MD5 Hash in
+    the
+  * [#1538] Fixes rules compilation
+  * [#1930][#1931] Fixed a mistake (again) related to index and
+    credential count
+  * [#1753] Remove ILBC from pjproject - Hacks in pjsip
+  * [#1930][#1931] Credential was not selected properly using realm
+  * [#1882] Finilize multiple reading pointer in RingBuffer
+  * [#1538] Remove configure from autogen.sh to respect debian upstream
+    authors policy
+  * [#1773] Remove generated files from repo
+  * [#1791] Use XDG_CACHE_HOME to save pid file
+  * [#1791] Fixes path to save history
+  * [#1791] Fix debian installation scripts
+  * [#1930][#1931] Settings are now taken into account in the server.
+  * [#1882] Add ringbuffer default ring buffer pointer in methods
+    involving mStart
+  * [#1882] Add default ringbuffer pointer
+  * [#1882] Add RingBuffer multiple read pointer basic functionnalities
+  * [#1882] Fix MainBuffer flushData unit test
+  * [#1930][#1931] Ability to save and retreive the configuration from
+  * [#1882] Added Multiple CallID mapping to MainBuffer
+  * [#1791] Not much
+  * [#1791] If XDG env variables are not null but empty, use default
+    ones
+  * [#1791] Make XDG_CONFIG_HOME writable
+  * [#1930][#1931] Partial commit. Not working yet. Cannot delete
+    account
+  * [#1881] Fixed alsa capture latency problem
+  * [#1881] Fixed Alsa capture temporarily
+  * [#1930] [#1931] Partial unbroken commit providing the ability to
+  * [#1881] MainBuffer implemented in AudioLayer/AudioRTP
+  * [#1881] Add discard and flush unit-tests
+  * [#1881] Add discard and flush functionnalites to MainRingBuffer
+  * [#1881] Add availForGet in MainBuffer
+  * [#1881] Add availForPut function to MainBuffer
+  * [#1880] Remove AudioRTP* pointer from SipVoIP (reapered while
+    merging master)
+  * [#1881] Add a map between call id and coresponding ring buffer
+  * [#1855] Refresh pot file and upload on Launchpad
+  * [#1881] MainBuffe now robust to false ids on getData and putData
+  * [#1881] Fix big big big memory leak
+  * [#1881] Add getData and putData to mainBuffer
+  * [#1881] Unit-test basic ring buffer functionnaities
+  * [#1881] Add class MainBuffer and basic buffer creation unit-tests
+  * [#1880] Fix call transfer (step2) issues
+  * [#1880] Moved AudioRtp* pointer from SIPVoIPLink to SIPCall class
+  * [#1791] Add postinst script to keep user data when migrating
+    config/history file
+  * [#1797] Make pjsip compile
+  * [#1777] Code indentation
+  * [#1791] Use XDG_DATA_HOME and XDG_CONFIG_HOME for sflphonedrc and
+    history + unit tests
+  * [#1746] Useless space does not appear anymore when volume sliders
+    and
+  * [#1643] GtkCheckMenuItem is used instead of icons for elements in
+    the
+  * [#1110] [#1668] STUN parameters are now located in the preferences,
+    under
+
+ -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Fri, 06 Nov 2009 11:20:01 -0500
+
+sflphone-client-gnome (0.9.6-SYSVER) karmic; urgency=low
 
     ** 0.9.6 **
 
@@ -65,7 +634,7 @@ sflphone-client-gnome (0.9.6-SYSVER) SYSTEM; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 27 Jul 2009 09:53:19 -0400
 
-sflphone-client-gnome (0.9.6~rc2-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.6~rc2-SYSVER) karmic; urgency=low
 
     ** 0.9.6~rc2 **
 
@@ -120,7 +689,7 @@ sflphone-client-gnome (0.9.6~rc2-SYSVER) SYSTEM; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 17 Jul 2009 19:12:58 -0400
 
-sflphone-client-gnome (0.9.6~rc1-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.6~rc1-SYSVER) karmic; urgency=low
 
     ** 0.9.6~rc1 **
 
@@ -228,7 +797,7 @@ sflphone-client-gnome (0.9.6~rc1-SYSVER) SYSTEM; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 10 Jul 2009 15:50:26 -0400
 
-sflphone-client-gnome (0.9.6~beta-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.6~beta-SYSVER) karmic; urgency=low
 
     ** 0.9.6~beta **
 
@@ -523,7 +1092,7 @@ sflphone-client-gnome (0.9.6~beta-SYSVER) SYSTEM; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 23 Jun 2009 11:13:42 -0400
 
-sflphone-client-gnome (0.9.5-SYSVER) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-SYSVER) karmic; urgency=low
 
     ** 0.9.5 release **
 
@@ -554,7 +1123,7 @@ sflphone-client-gnome (0.9.5-SYSVER) SYSTEM; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 25 May 2009 11:34:48 -0400
 
-sflphone-client-gnome (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-SYSVER~rc2) karmic; urgency=low
 
     ** 0.9.5 rc2 **
 
@@ -608,7 +1177,7 @@ sflphone-client-gnome (0.9.5-SYSVER~rc2) SYSTEM; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 19 May 2009 12:08:18 -0400
 
-sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~rc1) karmic; urgency=low
 
   [ SFLphone Project ]
   * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
@@ -637,7 +1206,7 @@ sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
  -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 05 May 2009 19:16:13 -0400
 
-sflphone-client-gnome (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~beta) karmic; urgency=low
 
   [ Julien Bonjean ]
   * Updated Eclipse stuff
@@ -859,7 +1428,7 @@ sflphone-client-gnome (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
  -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Mon, 27 Apr 2009 17:00:03 -0400
 
-sflphone-client-gnome (0.9.4-0ubuntu2) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.4-0ubuntu2) karmic; urgency=low
 
   [ Alexandre Savard ]
   * Restore speex and GSM detection
@@ -869,7 +1438,7 @@ sflphone-client-gnome (0.9.4-0ubuntu2) SYSTEM; urgency=low
  
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 8 Apr 2009 11:29:15 -0500
 
-sflphone (0.9.4-0ubuntu1) SYSTEM; urgency=low
+sflphone (0.9.4-0ubuntu1) karmic; urgency=low
 
   [ Emmanuel Milou ]
   * Integrate DBus-c++ and libiax2 in the main build system
@@ -894,7 +1463,7 @@ sflphone (0.9.4-0ubuntu1) SYSTEM; urgency=low
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 3 Apr 2009 18:29:15 -0500
 
 
-sflphone (0.9.4-rc1) SYSTEM; urgency=low
+sflphone (0.9.4-rc1) karmic; urgency=low
 
   [ Emmanuel Milou ]
   * Fix bug while trying to hold/unhold several simultaneous call
@@ -908,7 +1477,7 @@ sflphone (0.9.4-rc1) SYSTEM; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 27 Mar 2009 18:29:15 -0500
 
-sflphone (0.9.4-0beta1) SYSTEM; urgency=low
+sflphone (0.9.4-0beta1) karmic; urgency=low
 
   [ Alexandre Savard ]
   * Display codec used during conversation on the GUI
@@ -924,7 +1493,7 @@ sflphone (0.9.4-0beta1) SYSTEM; urgency=low
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 20 Mar 2009 18:29:15 -0500
 
 
-sflphone (0.9.3-0ubuntu3) SYSTEM; urgency=low
+sflphone (0.9.3-0ubuntu3) karmic; urgency=low
 
   [ Alexandre Savard ]
   * Both playback and record streams in PA_STREAM_CORKED (pulseaudio)
@@ -949,7 +1518,7 @@ sflphone (0.9.3-0ubuntu3) SYSTEM; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Sat, 14 Feb 2009 13:29:15 -0500
 
-sflphone (0.9.3-0ubuntu2) SYSTEM; urgency=low
+sflphone (0.9.3-0ubuntu2) karmic; urgency=low
 
   [ Emmanuel Milou ]
   * Add compilation note in README
@@ -1018,7 +1587,7 @@ sflphone (0.9.3-0ubuntu2) SYSTEM; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Sat, 14 Feb 2009 13:29:15 -0500
 
-sflphone (0.9.3-0ubuntu1) SYSTEM; urgency=low
+sflphone (0.9.3-0ubuntu1) karmic; urgency=low
 
   * Remove debug
   * Join thread before leaving
@@ -1031,7 +1600,7 @@ sflphone (0.9.3-0ubuntu1) SYSTEM; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 06 Feb 2009 19:17:32 -0500
 
-sflphone (0.9.2-2ubuntu9) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu9) karmic; urgency=low
 
   [ Alexandre Savard ]
   * Speex audio codec preprocessing initialization
@@ -1059,7 +1628,7 @@ sflphone (0.9.2-2ubuntu9) SYSTEM; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Thu, 05 Feb 2009 18:27:53 -0500
 
-sflphone (0.9.2-2ubuntu8) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu8) karmic; urgency=low
 
   [ Emmanuel Milou ]
   * Update changelogs
@@ -1103,7 +1672,7 @@ sflphone (0.9.2-2ubuntu8) SYSTEM; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 04 Feb 2009 14:00:30 -0500
 
-sflphone (0.9.2-2ubuntu7) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu7) karmic; urgency=low
 
   [ Emmanuel Milou ]
   * Update changelog to 0.9.2-6
@@ -1125,7 +1694,7 @@ sflphone (0.9.2-2ubuntu7) SYSTEM; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 23 Jan 2009 17:48:13 -0500
 
-sflphone (0.9.2-2ubuntu6) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu6) karmic; urgency=low
 
   [ Emmanuel Milou ]
   * Migrate STUN configuration to the main config window
@@ -1159,7 +1728,7 @@ sflphone (0.9.2-2ubuntu6) SYSTEM; urgency=low
 
  -- Emmanuel Milou <manu@sulfur.inside.savoirfairelinux.net>  Fri, 16 Jan 2009 18:19:05 -0500
 
-sflphone (0.9.2-2ubuntu5) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu5) karmic; urgency=low
 
   * Fix memory leak in the pulseaudio callback
   * Update debian package generation script
@@ -1175,7 +1744,7 @@ sflphone (0.9.2-2ubuntu5) SYSTEM; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 14 Jan 2009 21:17:20 -0500
 
-sflphone (0.9.2-2ubuntu4) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu4) karmic; urgency=low
 
   [ Emmanuel Milou ]
   * add german translation
@@ -1185,7 +1754,7 @@ sflphone (0.9.2-2ubuntu4) SYSTEM; urgency=low
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Thu, 08 Jan 2009 13:08:51 -0500
 
-sflphone (0.9.2-2ubuntu3) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu3) karmic; urgency=low
 
   [ Emmanuel Milou ]
   * The main thread synchronizes the ringtone thread
@@ -1197,13 +1766,13 @@ sflphone (0.9.2-2ubuntu3) SYSTEM; urgency=low
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Tue, 06 Jan 2009 16:18:38 -0500
 
-sflphone (0.9.2-2ubuntu2) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu2) karmic; urgency=low
   
   * Fix bug ticket #129
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Wed, 5 Jan 2009 15:54:53 -0500
 
-sflphone (0.9.2-2ubuntu1) SYSTEM; urgency=low
+sflphone (0.9.2-2ubuntu1) karmic; urgency=low
 
   * Migrate from eXosip library to pjsip
   * Add multiple SIP accounts support
