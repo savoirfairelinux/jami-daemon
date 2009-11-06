@@ -870,6 +870,8 @@ static int _place_registered_call(callable_obj_t * c) {
     void
 sflphone_place_call ( callable_obj_t * c )
 {
+	gchar *msg = "";
+
     DEBUG("Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
     
     if(c == NULL) {
@@ -878,6 +880,10 @@ sflphone_place_call ( callable_obj_t * c )
     }
 
     if(_is_direct_call(c)) {
+		msg = g_markup_printf_escaped (_("Direct SIP call"));
+        statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+        g_free(msg);
         if(_place_direct_call(c) < 0) {
             DEBUG("An error occured while placing direct call in %s at %d", __FILE__, __LINE__);
             return;
@@ -890,50 +896,6 @@ sflphone_place_call ( callable_obj_t * c )
     }
 }
 
-    void
-sflphone_display_selected_codec (const gchar* codecName)
-{
-
-    callable_obj_t * selectedCall;
-    gchar* msg;
-    account_t* acc;
-
-    selectedCall =  calltab_get_selected_call(current_calls);
-    if (selectedCall) {
-        if(selectedCall->_accountID != NULL){
-            statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-            acc = account_list_get_by_id(selectedCall->_accountID);
-            if (!acc) {
-                msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
-            }
-            else {
-
-		if (strcmp(codecName, "") != 0) {
-                    msg = g_markup_printf_escaped("%s %s (%s) - %s %s" ,
-                        _("Using account"),
-                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
-                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
-                        _("Codec"),
-                        codecName);
-		} else {
-		    msg = g_markup_printf_escaped("%s %s (%s)" ,
-                        _("Using account"),
-                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
-		        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
-		}
-            }
-            statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
-            g_free(msg);
-        }
-    }
-}
-
-    gchar*
-sflphone_get_current_codec_name()
-{
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-    return dbus_get_current_codec_name(selectedCall);
-}
 
     void
 sflphone_detach_participant(const gchar* callID)

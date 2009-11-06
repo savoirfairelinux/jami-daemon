@@ -281,7 +281,7 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
 			// sflphone_selected_call_codec(selectedCall);
 
 			// DEBUG("single click action: %s", dbus_get_current_codec_name(selectedCall));
-			sflphone_display_selected_codec(dbus_get_current_codec_name(selectedCall));
+			// sflphone_display_selected_codec(dbus_get_current_codec_name(selectedCall));
 
 			switch(selectedCall->_srtp_state)
 			{
@@ -524,6 +524,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	gchar* srtp_enabled = "";
 	gboolean display_sas = TRUE;
 	account_t* account_details=NULL;
+	gchar *audio_codec = "";
 
 
 	int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
@@ -571,6 +572,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 			gchar * description;
 			gchar * date="";
 			gchar * duration="";
+			audio_codec = call_get_audio_codec (c);
 
 			if(c->_state == CALL_STATE_TRANSFERT)
 			{
@@ -590,15 +592,17 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 				} else {
 					DEBUG("Updating state code %d %s", c->_state_code, c->_state_code_description);
 					if (c->_state_code) {
-						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>\n<i>%s</i>",
 								c->_peer_number,
 								c->_peer_name,
 								c->_state_code_description,
-								c->_state_code);
+								c->_state_code,
+								audio_codec);
 					} else {
-						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
 								c->_peer_number,
-								c->_peer_name );                
+								c->_peer_name,
+								audio_codec);
 					}
 				}
 			}

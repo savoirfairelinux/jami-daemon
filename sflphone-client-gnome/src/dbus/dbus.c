@@ -94,8 +94,8 @@ curent_selected_codec (DBusGProxy *proxy UNUSED,
         const gchar* codecName,
         void * foo  UNUSED )
 {
-    DEBUG ("%s codec decided for call %s",codecName,callID);
-    sflphone_display_selected_codec (codecName);
+    // DEBUG ("%s codec decided for call %s",codecName,callID);
+    // sflphone_display_selected_codec (codecName);
 }
 
     static void
@@ -1231,13 +1231,10 @@ dbus_codec_details( int payload )
     return array;
 }
 
-    gchar*
-dbus_get_current_codec_name(const callable_obj_t * c)
+gchar* dbus_get_current_codec_name (const callable_obj_t * c)
 {
 
-    DEBUG("dbus_get_current_codec_name : CallID : %s", c->_callID);
-
-    gchar* codecName;
+    gchar* codecName= "";
     GError* error = NULL;
 
     org_sflphone_SFLphone_CallManager_get_current_codec_name (

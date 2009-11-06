@@ -78,6 +78,16 @@ gchar* call_get_peer_number (const gchar *format)
     return number;
 }
 
+gchar* call_get_audio_codec (callable_obj_t *obj)
+{
+	gchar *audio_codec = "";
+	
+	if (obj)
+	{
+		audio_codec = dbus_get_current_codec_name (obj);	
+	}
+	return audio_codec;
+}
 
 void call_add_error(callable_obj_t * call, gpointer dialog)
 {

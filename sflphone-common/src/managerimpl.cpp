@@ -382,8 +382,8 @@ ManagerImpl::answerCall (const CallID& call_id)
     // if it was waiting, it's waiting no more
     if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "CURRENT");
         
-    std::string codecName = Manager::instance().getCurrentCodecName (call_id);
-    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id, codecName.c_str());
+    // std::string codecName = Manager::instance().getCurrentCodecName (call_id);
+    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id, codecName.c_str());
         
     removeWaitingCall (call_id);
 
@@ -688,12 +688,10 @@ ManagerImpl::offHoldCall (const CallID& call_id)
 	_audiodriver->flushMain();
     }
 
-    codecName = getCurrentCodecName (call_id);
+    // codecName = getCurrentCodecName (call_id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
 
-    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id,codecName.c_str());
-
-    
+    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id,codecName.c_str());
 
     return returnValue;
 }
@@ -1866,10 +1864,10 @@ ManagerImpl::peerAnsweredCall (const CallID& id)
 
     if (_dbus) _dbus->getCallManager()->callStateChanged (id, "CURRENT");
 
-    std::string codecName = getCurrentCodecName (id);
+    // std::string codecName = getCurrentCodecName (id);
 
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-    if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
+    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
 
     // Required if there have been no sip reinvite, in this case we must reinit buffers since the 
     _audiodriver->flushMain();
