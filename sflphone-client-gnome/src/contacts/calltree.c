@@ -592,7 +592,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 				} else {
 					DEBUG("Updating state code %d %s", c->_state_code, c->_state_code_description);
 					if (c->_state_code) {
-						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>\n<i>%s</i>",
+						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
 								c->_peer_number,
 								c->_peer_name,
 								c->_state_code_description,
