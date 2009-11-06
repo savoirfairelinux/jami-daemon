@@ -3665,6 +3665,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string authenticationName;
     std::string password;
     std::string realm;
+	std::string voicemail_count;
 
     if ( (iter = map_cpy.find (AUTHENTICATION_USERNAME)) != map_cpy.end()) {
         authenticationName = iter->second;
@@ -3681,9 +3682,8 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if ( (iter = map_cpy.find (REALM)) != map_cpy.end()) {
         realm = iter->second;
     }
-
+    
     setConfig (accountID, REALM, realm);
-
     setConfig (accountID, USERNAME, username);
     setConfig (accountID, AUTHENTICATION_USERNAME, authenticationName);
 
@@ -3941,15 +3941,11 @@ void
 ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 {
 
-    _debug ("ManagerImpl::sendRegister \n");
-
     // Update the active field
     setConfig (accountID, CONFIG_ACCOUNT_ENABLE, (enable == 1) ? TRUE_STR:FALSE_STR);
-    _debug ("ManagerImpl::sendRegister set config done\n");
 
     Account* acc = getAccount (accountID);
     acc->loadConfig();
-    _debug ("ManagerImpl::sendRegister acc->loadconfig done\n");
 
     // Test on the freshly updated value
 

@@ -223,38 +223,25 @@ void update_actions()
 		}
 	}
 
-	else if(selectedConf)
-	{
-		/*
-		switch(selectedConf->_state)
-		{
-			case CONFERENCE_STATE_ACTIVE_ATACHED:
-				gtk_action_set_sensitive( GTK_ACTION(recordAction),        FALSE);
-				break;
-			case CONFERENCE_STATE_ACTIVE_DETACHED:
-				gtk_action_set_sensitive( GTK_ACTION(recordAction),        FALSE);
-				break;
-			case CONFERENCE_STATE_RECORD:
-				gtk_action_set_sensitive( GTK_ACTION(recordAction),        FALSE);
-				break;
-			case CONFERENCE_STATE_HOLD:
-				gtk_action_set_sensitive( GTK_ACTION(recordAction),        FALSE);
-				break;
-			default:
-				break;
-		}
-		*/
-	}
-
 	else
 	{
-		if( account_list_get_size() > 0 )
+		if( account_list_get_size() > 0  && current_account_has_mailbox ())
 		{
-			//gtk_widget_set_sensitive (GTK_WIDGET(callButton), TRUE);
-			if (account_list_current_account_has_mailbox ())
-				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (voicemailToolbar), -2);
+			gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (voicemailToolbar), -2);
+			update_voicemail_status ();
 		}
 	}
+}
+
+void update_voicemail_status (void)
+{
+	gchar *messages = "";
+	messages = g_markup_printf_escaped (_("Voicemail (%i)"), current_account_get_message_number ());
+	(current_account_has_new_message ()) ?
+				gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (voicemailToolbar), "mail-message-new"):
+				gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (voicemailToolbar), "mail-read");
+	gtk_tool_button_set_label (GTK_TOOL_BUTTON (voicemailToolbar), messages);
+	g_free (messages);
 }
 
 static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
@@ -615,29 +602,6 @@ static void clear_history (void)
 	}
 }
 
-/*
-static void calltree_switch_cb (GtkRadioAction *action, GtkRadioAction *current)
-{
-	gint value = gtk_radio_action_get_current_value (current);
-	switch (value)
-	{
-		case CALLTREE_CALLS:
-			calltree_display (current_calls);
-			break;
-		case CALLTREE_HISTORY:
-			calltree_display (history);
-			break;
-		case CALLTREE_CONTACTS:
-			calltree_display (contacts);
-			break;
-		default:
-			calltree_display (current_calls);
-			break;
-	}
-}
-*/
-
-
 /**
  * Transfert the line
  */
@@ -694,7 +658,7 @@ static const GtkActionEntry menu_entries[] = {
 	{ "OffHold", GTK_STOCK_OFFHOLD, "O_ff hold", "<control>P", "Place the call off hold", G_CALLBACK (call_hold) },    
 	{ "Record", GTK_STOCK_MEDIA_RECORD, "_Record", "<control>R", "Record the current conversation", G_CALLBACK (call_record) },        
 	{ "AccountAssistant", NULL, "Configuration _Assistant", NULL, "Run the configuration assistant", G_CALLBACK (call_configuration_assistant) },    
-	{ "Voicemail", "mail-message-new", "Voicemail", NULL, "Call your voicemail", G_CALLBACK (call_mailbox_cb) },    
+	{ "Voicemail", "mail-read", "Voicemail", NULL, "Call your voicemail", G_CALLBACK (call_mailbox_cb) },    
 	{ "Close", GTK_STOCK_CLOSE, "_Close", "<control>W", "Minimize to system tray", G_CALLBACK (call_minimize) },
 	{ "Quit", GTK_STOCK_CLOSE, "_Quit", "<control>Q", "Quit the program", G_CALLBACK (call_quit) },   
 

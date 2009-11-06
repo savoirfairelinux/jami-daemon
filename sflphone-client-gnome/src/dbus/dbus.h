@@ -465,18 +465,6 @@ guint dbus_get_notify( void );
 void dbus_set_notify( void );
 
 /**
- * ConfigurationManager - Configure the mail notification level
- * @return int	0 disable
- *		1 enable
- */
-guint dbus_get_mail_notify( void );
-
-/**
- * ConfigurationManager - Configure the mail notification level
- */
-void dbus_set_mail_notify( void );
-
-/**
  * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed
  * @param start 1 to start
  *		0 to stop

@@ -35,6 +35,8 @@ gboolean uimanager_new (GtkUIManager**);
 
 static void show_edit_number ();
 
+void update_voicemail_status (void);
+
 G_END_DECLS
 
 #endif

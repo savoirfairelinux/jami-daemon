@@ -2022,38 +2022,6 @@ dbus_get_notify( void )
     }
 }
 
-
-    void
-dbus_set_mail_notify( void )
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_mail_notify(
-            configurationManagerProxy,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-}
-
-    guint
-dbus_get_mail_notify( void )
-{
-    gint level;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_mail_notify(
-            configurationManagerProxy,
-            &level,
-            &error);
-    if(error)
-    {
-        ERROR("Error calling dbus_get_mail_notif_level");
-        g_error_free(error);
-    }
-
-    return (guint)level;
-}
-
     void
 dbus_set_audio_manager( int api )
 {
