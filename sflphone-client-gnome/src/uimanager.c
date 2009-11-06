@@ -165,8 +165,6 @@ void update_actions()
 				gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
 				gtk_widget_set_sensitive (GTK_WIDGET (newCallWidget), TRUE);
 				// Replace the hold button with the off-hold button
-				//g_object_ref (holdToolbar);
-				gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET(holdToolbar));
 				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
 				gtk_toolbar_insert (GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
 				break;
