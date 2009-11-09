@@ -643,27 +643,28 @@ GtkWidget * create_advanced_tab(account_t **a)
 	GtkWidget * hbox;
 	
 	ret = gtk_vbox_new(FALSE, 10);
-    gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
+	gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
     
 	account_t * currentAccount;
 	currentAccount = *a;
 
-    gchar * resolve_once = NULL;
-    gchar * account_expire = NULL;
-    gchar * use_tls;
-    gchar * published_address;
-    gchar * published_port;
-    gchar * local_address;
-    gchar * local_port;
-    gchar * stun_enable;    
-    gchar * stun_server;    
+	gchar * resolve_once = NULL;
+	gchar * account_expire = NULL;
+	gchar * use_tls;
+	gchar * published_address;
+	gchar * published_port;
+	gchar * local_address;
+	gchar * local_port;
+	gchar * stun_enable;    
+	gchar * stun_server;    
         
 	// Load from SIP/IAX/Unknown ?
 	if(currentAccount) {
+
 		resolve_once = g_hash_table_lookup(currentAccount->properties, ACCOUNT_RESOLVE_ONCE);
 		account_expire = g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTRATION_EXPIRE);
 		use_tls = g_hash_table_lookup(currentAccount->properties,  TLS_ENABLE);
-	    local_port = g_hash_table_lookup(currentAccount->properties, LOCAL_PORT);
+		local_port = g_hash_table_lookup(currentAccount->properties, LOCAL_PORT);
 		local_address = g_hash_table_lookup(currentAccount->properties,  LOCAL_ADDRESS);
 		published_address = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_ADDRESS);
 		published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
@@ -671,18 +672,19 @@ GtkWidget * create_advanced_tab(account_t **a)
 		stun_server = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_SERVER);				
 	} 
 
-    gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
-    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+	gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
+	gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 5);	
 
 	label = gtk_label_new_with_mnemonic (_("Registration expire"));
 	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    expireSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
+	expireSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
 	gtk_label_set_mnemonic_widget(GTK_LABEL(label), expireSpinBox);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(expireSpinBox), g_ascii_strtod(account_expire, NULL));
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(expireSpinBox), g_ascii_strtod(account_expire, NULL));
 	gtk_table_attach_defaults(GTK_TABLE(table), expireSpinBox, 1, 2, 0, 1);
+
 
 	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Comply with RFC 3263"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),
@@ -690,62 +692,65 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gtk_table_attach_defaults( GTK_TABLE( table ), entryResolveNameOnlyOnce, 0, 2, 1, 2);
 	gtk_widget_set_sensitive( GTK_WIDGET( entryResolveNameOnlyOnce ) , TRUE );
 	
-    gnome_main_section_new_with_table (_("Network"), &frame, &table, 2, 3);
-    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+	
+	gnome_main_section_new_with_table (_("Network"), &frame, &table, 2, 3);
+	gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 5);
 		
-    /**
-     * Retreive the list of IP interface from the 
-     * the daemon and build the combo box.
-     */
+	/**
+	 * Retreive the list of IP interface from the 
+	 * the daemon and build the combo box.
+	 */
    
-    GtkListStore * ipInterfaceListStore; 
-    GtkTreeIter iter;
+	GtkListStore * ipInterfaceListStore; 
+	GtkTreeIter iter;
     
-    ipInterfaceListStore =  gtk_list_store_new( 1, G_TYPE_STRING );
+	ipInterfaceListStore =  gtk_list_store_new( 1, G_TYPE_STRING );
 	label = gtk_label_new_with_mnemonic (_("Local address"));    
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 			
-    GtkTreeIter current_local_address_iter = iter;   
-    gchar ** iface_list = NULL;
-    iface_list = (gchar**) dbus_get_all_ip_interface();
-    gchar ** iface = NULL;
+	GtkTreeIter current_local_address_iter = iter;   
+	gchar ** iface_list = NULL;
+	iface_list = (gchar**) dbus_get_all_ip_interface();
+	gchar ** iface = NULL;
     
-    if (iface_list != NULL) {
-        for (iface = iface_list; *iface; iface++) {         
+	if (iface_list != NULL) {
+	  for (iface = iface_list; *iface; iface++) {         
             DEBUG("Interface %s", *iface);            
             gtk_list_store_append(ipInterfaceListStore, &iter );
             gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
 
-            if (g_strcmp0(*iface, local_address) == 0) {
+	    if (g_strcmp0(*iface, local_address) == 0) {
                 DEBUG("Setting active local address combo box");
                 current_local_address_iter = iter;
             }
-        }
-    }
+	  }
+	}
     
-    localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
+	localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
 	gtk_label_set_mnemonic_widget(GTK_LABEL(label), localAddressCombo);
 	gtk_table_attach ( GTK_TABLE( table ), localAddressCombo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    g_object_unref(G_OBJECT(ipInterfaceListStore));	
+	g_object_unref(G_OBJECT(ipInterfaceListStore));	
     
-    GtkCellRenderer * ipInterfaceCellRenderer;
-    ipInterfaceCellRenderer = gtk_cell_renderer_text_new();
-    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
-    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
-    gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
+	GtkCellRenderer * ipInterfaceCellRenderer;
+	ipInterfaceCellRenderer = gtk_cell_renderer_text_new();
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
+	gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
 
-    /**
-     * Local port
-     */	    
+
+	/**
+	 * Local port
+	 */	    
 	label = gtk_label_new_with_mnemonic (_("Local port"));
 	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-    localPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
+	localPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), localPortSpinBox);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), g_ascii_strtod(local_port, NULL));
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), g_ascii_strtod(local_port, NULL));
+
 	gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
 
 	label = gtk_label_new_with_mnemonic (_("Set published address and port:"));
@@ -762,8 +767,8 @@ GtkWidget * create_advanced_tab(account_t **a)
 
 	publishedAddrRadioButton = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(useStunRadioButton), _("Manually"));
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedAddrRadioButton, 0, 2, 5, 6);
-
-    gtk_widget_show_all(ret);
+	
+	gtk_widget_show_all(ret);
     		
 	publishedAddressLabel = gtk_label_new_with_mnemonic (_("Published address"));
 	gtk_table_attach_defaults( GTK_TABLE(table), publishedAddressLabel, 0, 1, 6, 7);
@@ -776,10 +781,11 @@ GtkWidget * create_advanced_tab(account_t **a)
 	publishedPortLabel = gtk_label_new_with_mnemonic(_("Published port"));
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedPortLabel, 0, 1, 7, 8);
 	gtk_misc_set_alignment(GTK_MISC(publishedPortLabel), 0, 0.5);
-    publishedPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
+	publishedPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
 	gtk_label_set_mnemonic_widget(GTK_LABEL (publishedPortLabel), publishedPortSpinBox);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(published_port, NULL));
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(published_port, NULL));
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedPortSpinBox, 1, 2, 7, 8);
+
 
 	stunServerLabel = gtk_label_new_with_mnemonic (_("STUN server URL"));
 	gtk_table_attach_defaults(GTK_TABLE(table), stunServerLabel, 0, 1, 8, 9);
@@ -791,20 +797,20 @@ GtkWidget * create_advanced_tab(account_t **a)
 	 
 	use_stun_cb (GTK_WIDGET (useStunRadioButton), NULL);
 
-    // This will trigger a signal, and the above two
-    // widgets need to be instanciated before that.
+	// This will trigger a signal, and the above two
+	// widgets need to be instanciated before that.
 	g_signal_connect(useStunRadioButton, "toggled", G_CALLBACK(use_stun_cb), useStunRadioButton);		    		
 	g_signal_connect(sameAsLocalRadioButton, "toggled", G_CALLBACK(same_as_local_cb), sameAsLocalRadioButton);   
 	g_signal_connect(publishedAddrRadioButton, "toggled", G_CALLBACK(set_published_addr_manually_cb), publishedAddrRadioButton);		
 	
-    if (g_strcasecmp(stun_enable,"true") == 0)	{
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useStunRadioButton), TRUE);
-    } else if ((g_strcasecmp(published_address, local_address) == 0) 
-            && (g_strcasecmp(published_port, local_port) == 0)) {
-        	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton), TRUE);	    
-    } else {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(publishedAddrRadioButton), TRUE);
-    }
+	if (g_strcasecmp(stun_enable,"true") == 0)	{
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useStunRadioButton), TRUE);
+	} else if ((g_strcasecmp(published_address, local_address) == 0) 
+		   && (g_strcasecmp(published_port, local_port) == 0)) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton), TRUE);	    
+	} else {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(publishedAddrRadioButton), TRUE);
+	}
 	
 	return ret;
 }
@@ -871,12 +877,12 @@ show_account_window (account_t * a)
 
 	currentAccount = a;   
 	
-    if (currentAccount == NULL) {
+	if (currentAccount == NULL) {
 		currentAccount = g_new0(account_t, 1);
 		currentAccount->properties = dbus_account_details(NULL);
 		currentAccount->accountID = "new";    
-        DEBUG("Account is NULL. Will fetch default values\n");      
-    }
+		DEBUG("Account is NULL. Will fetch default values\n");      
+	}
     
 	dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
 				GTK_WINDOW(get_main_window()),
@@ -905,14 +911,14 @@ show_account_window (account_t * a)
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), advanced_tab, gtk_label_new(_("Advanced")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), advanced_tab);
 		
-    /* Security */
-    security_tab = create_security_tab(&currentAccount);
+	/* Security */
+	security_tab = create_security_tab(&currentAccount);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook),security_tab);
 		    	
 	gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
 
-    g_signal_emit_by_name(protocolComboBox, "changed", NULL);
+	g_signal_emit_by_name(protocolComboBox, "changed", NULL);
     
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
@@ -943,8 +949,9 @@ show_account_window (account_t * a)
 				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
 		g_hash_table_replace(currentAccount->properties,
 				g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
-				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox))));				
-        
+				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox))));   
+
+
 		if (strcmp(proto, "SIP") == 0) {
 			
 			g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
@@ -954,53 +961,54 @@ show_account_window (account_t * a)
 					            g_strdup(gtk_entry_get_text(GTK_ENTRY(stunServerEntry))));
 
 			gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
-            if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
-                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
-                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
-            } else {
-                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
-            }
+			if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
+			  g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
+			  g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
+			} else {
+			  g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
+			}
     		
-    		g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
-    		g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
+			g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
+					     g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
 
-    		g_hash_table_replace(currentAccount->properties,
+			g_hash_table_replace(currentAccount->properties,
     				g_strdup(LOCAL_PORT),
     				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));	
 
-    		g_hash_table_replace(currentAccount->properties,
+			g_hash_table_replace(currentAccount->properties,
     				g_strdup(LOCAL_ADDRESS),
 			        g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
 
-    		g_hash_table_replace(currentAccount->properties,
+			g_hash_table_replace(currentAccount->properties,
     				g_strdup(PUBLISHED_PORT),
-    				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedPortSpinBox))));	
+    				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedPortSpinBox))));
 
-    		g_hash_table_replace(currentAccount->properties,
+			g_hash_table_replace(currentAccount->properties,
     				g_strdup(PUBLISHED_ADDRESS),
-    				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry))));	    
+    				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry))));
+	    
 		}
 
-	    /* Set new credentials if any */
+		/* Set new credentials if any */
 	    
-        DEBUG("Setting credentials"); 
+		DEBUG("Setting credentials"); 
 
-        /* This hack is necessary because of the way the 
-        * configuration file is made (.ini at that time).
-        * and deleting account per account is too much 
-        * of a trouble. 
-        */
-        dbus_delete_all_credential(currentAccount);
+		/* This hack is necessary because of the way the 
+		 * configuration file is made (.ini at that time).
+		 * and deleting account per account is too much 
+		 * of a trouble. 
+		 */
+		dbus_delete_all_credential(currentAccount);
         
-        GPtrArray * credential = getNewCredential(currentAccount->properties);         
-        currentAccount->credential_information = credential;
-        if(currentAccount->credential_information != NULL) {
-            int i;
-            for(i = 0; i < currentAccount->credential_information->len; i++) {
-                dbus_set_credential(currentAccount, i);
-            }
-            dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
-        }
+		GPtrArray * credential = getNewCredential(currentAccount->properties);         
+		currentAccount->credential_information = credential;
+		if(currentAccount->credential_information != NULL) {
+		  int i;
+		  for(i = 0; i < currentAccount->credential_information->len; i++) {
+		    dbus_set_credential(currentAccount, i);
+		  }
+		  dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
+		}
         
 		/** @todo Verify if it's the best condition to check */
 		if (g_strcasecmp(currentAccount->accountID, "new") == 0) {
