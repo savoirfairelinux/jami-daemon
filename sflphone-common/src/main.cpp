@@ -60,19 +60,20 @@ main (int argc, char **argv)
         unsigned int iPid = getpid();
         char cPid[64], cOldPid[64];
         sprintf (cPid,"%d", iPid);
-        std::string xdg_config, xdg_env, path;
+        std::string xdg_cache, xdg_env, path;
 
-        xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/sflphone";
+        xdg_cache = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache/";
 
         if (XDG_CACHE_HOME != NULL) {
             xdg_env = std::string (XDG_CACHE_HOME);
             (xdg_env.length() > 0) ? path = xdg_env
-                                            :		path = xdg_config;
+                                            :		path = xdg_cache;
         } else
-            path = xdg_config;
+            path = xdg_cache;
 
         sprintf (sfldir, "%s", path.c_str ());
 
+		path  = path + "sflphone";	
         sprintf (homepid, "%s/%s", path.c_str (), PIDFILE);
 
         if ( (fp = fopen (homepid,"r")) == NULL) {
@@ -86,6 +87,16 @@ main (int argc, char **argv)
                     exit (-1);
                 }
             }
+
+			// Then create the sflphone directory inside the $XDG_CACHE_HOME dir
+			sprintf (sfldir, "%s", path.c_str ());
+			if ( (dir = opendir (sfldir)) == NULL) {
+				//Create it
+				if (mkdir (sfldir, 0755) != 0) {
+					fprintf (stderr, "Creating directory %s failed. Exited.\n", sfldir);
+					exit (-1);
+				}
+			}
 
             // PID file doesn't exists, create and write pid in it
             if ( (fp = fopen (homepid,"w")) == NULL) {
