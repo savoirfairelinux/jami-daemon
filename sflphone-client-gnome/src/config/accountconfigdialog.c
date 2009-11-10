@@ -667,7 +667,8 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gchar * local_address;
 	gchar * local_port;
 	gchar * stun_enable;    
-	gchar * stun_server;    
+	gchar * stun_server;
+	gchar * published_sameas_local;
         
 	// Load from SIP/IAX/Unknown ?
 	if(currentAccount) {
@@ -681,8 +682,10 @@ GtkWidget * create_advanced_tab(account_t **a)
 		published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
 		stun_enable = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_ENABLED);
 		stun_server = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_SERVER);
+		published_sameas_local = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_SAMEAS_LOCAL);
+
 		DEBUG("-------- Advanced parameters from config");
-		DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s\n", resolve_once, account_expire, use_tls, published_address, published_port, local_address, local_port, stun_enable, stun_server);
+		DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s, published_sameas_local %s\n", resolve_once, account_expire, use_tls, published_address, published_port, local_address, local_port, stun_enable, stun_server, published_sameas_local);
 	} 
 
 	gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
@@ -791,16 +794,18 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gtk_entry_set_text(GTK_ENTRY(stunServerEntry), stun_server);
 	gtk_table_attach_defaults(GTK_TABLE(table), stunServerEntry, 1, 2, 1, 2);
 
-	// label = gtk_label_new_with_mnemonic (_("Set published address and port:"));
-	// gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 2, 2, 3);
-	// gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-	
 	sameAsLocalRadioButton = gtk_radio_button_new_with_mnemonic_from_widget(NULL, _("Same as local parameters"));
 	gtk_table_attach_defaults(GTK_TABLE(table), sameAsLocalRadioButton, 0, 2, 3, 4);
 
 	publishedAddrRadioButton = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(sameAsLocalRadioButton), _("Set published address and port:"));
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedAddrRadioButton, 0, 2, 4, 5);
-	
+
+	if(g_strcasecmp(published_sameas_local, "true") == 0) {
+	    gtk_toggle_button_set_active (GTK_WIDGET(sameAsLocalRadioButton), TRUE);
+	} else {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(publishedAddrRadioButton), TRUE);
+	}
+
 	gtk_widget_show_all(ret);
     		
 	publishedAddressLabel = gtk_label_new_with_mnemonic (_("Published address"));
@@ -825,24 +830,16 @@ GtkWidget * create_advanced_tab(account_t **a)
 	// widgets need to be instanciated before that.
 	g_signal_connect(useStunCheckBox, "toggled", G_CALLBACK(use_stun_cb), useStunCheckBox);		    		
 	g_signal_connect(sameAsLocalRadioButton, "toggled", G_CALLBACK(same_as_local_cb), sameAsLocalRadioButton);   
-	g_signal_connect(publishedAddrRadioButton, "toggled", G_CALLBACK(set_published_addr_manually_cb), publishedAddrRadioButton);		
-	/*
-	if (g_strcasecmp(stun_enable,"true") == 0)	{
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useStunRadioButton), TRUE);
-	} else if ((g_strcasecmp(published_address, local_address) == 0) 
-		   && (g_strcasecmp(published_port, local_port) == 0)) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton), TRUE);	    
-	} else {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(publishedAddrRadioButton), TRUE);
-	}
-	*/
+	g_signal_connect(publishedAddrRadioButton, "toggled", G_CALLBACK(set_published_addr_manually_cb), publishedAddrRadioButton);
 
+/*
 	if ((g_strcasecmp(published_address, local_address) == 0) 
 		   && (g_strcasecmp(published_port, local_port) == 0)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton), TRUE);	    
 	} else {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(publishedAddrRadioButton), TRUE);
 	}
+*/
 	return ret;
 }
 
@@ -1001,6 +998,8 @@ show_account_window (account_t * a)
     		
 			g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
 					     g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
+
+			g_hash_table_replace(currentAccount->properties, g_strdup(PUBLISHED_SAMEAS_LOCAL), g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton)) ? "true":"false"));	
 
 			g_hash_table_replace(currentAccount->properties,
     				g_strdup(LOCAL_PORT),
