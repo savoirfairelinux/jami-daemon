@@ -165,8 +165,8 @@ static GtkWidget * create_basic_tab(account_t **a)
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
 	}
 
-	DEBUG("-------- Basic parameters from config");
-	DEBUG("curAccountID %s, curAccountType %s, curAccountEnabled %s, curAlias %s, curHostname %s, curPassword %s, curUsername %s, curMailbox %s\n", curAccountID, curAccountType, curAccountEnabled, curAlias, curHostname, curPassword, curUsername, curMailbox);
+	// DEBUG("-------- Basic parameters from config");
+	// DEBUG("curAccountID %s, curAccountType %s, curAccountEnabled %s, curAlias %s, curHostname %s, curPassword %s, curUsername %s, curMailbox %s\n", curAccountID, curAccountType, curAccountEnabled, curAlias, curHostname, curPassword, curUsername, curMailbox);
 	
 
 	gnome_main_section_new (_("Account Parameters"), &frame);
@@ -486,11 +486,12 @@ static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Showing stun options");
+        DEBUG("Showing stun options, hiding Local/Published info");
         gtk_widget_show(stunServerLabel);
         gtk_widget_show(stunServerEntry);
 	gtk_widget_set_sensitive(sameAsLocalRadioButton, FALSE);
 	gtk_widget_set_sensitive(publishedAddrRadioButton, FALSE);
+	DEBUG("Problem occurs here");
 	gtk_widget_hide(publishedAddressLabel);
         gtk_widget_hide(publishedPortLabel);
 	gtk_widget_hide(publishedAddressEntry);
@@ -702,13 +703,13 @@ GtkWidget * create_security_tab(account_t **a)
     gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
     gtk_widget_size_request(GTK_WIDGET(table), &requisitionTable);
     gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTable.width, 120);
-    	
-    gtk_widget_show_all(ret);
-
+ 
     same_as_local_cb(sameAsLocalRadioButton, NULL);
     set_published_addr_manually_cb(publishedAddrRadioButton, NULL);
+
+    gtk_widget_show_all(ret);
     
-	return ret;
+    return ret;
 }
 
 
@@ -751,8 +752,8 @@ GtkWidget * create_advanced_tab(account_t **a)
 		stun_server = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_SERVER);
 		published_sameas_local = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_SAMEAS_LOCAL);
 
-		DEBUG("-------- Advanced parameters from config");
-		DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s, published_sameas_local %s\n", resolve_once, account_expire, use_tls, published_address, published_port, local_address, local_port, stun_enable, stun_server, published_sameas_local);
+		// DEBUG("-------- Advanced parameters from config");
+		// DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s, published_sameas_local %s\n", resolve_once, account_expire, use_tls, published_address, published_port, local_address, local_port, stun_enable, stun_server, published_sameas_local);
 	} 
 
 	gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
@@ -805,6 +806,7 @@ GtkWidget * create_advanced_tab(account_t **a)
             gtk_list_store_append(ipInterfaceListStore, &iter );
             gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
 
+	    current_local_address_iter = iter;
 	    if (g_strcmp0(*iface, local_address) == 0) {
                 DEBUG("Setting active local address combo box");
                 current_local_address_iter = iter;
@@ -874,8 +876,6 @@ GtkWidget * create_advanced_tab(account_t **a)
 	}
 
 	gtk_widget_show_all(ret);
-
-	use_stun_cb (GTK_WIDGET (useStunCheckBox), NULL);
     		
 	publishedAddressLabel = gtk_label_new_with_mnemonic (_("Published address"));
 	gtk_table_attach_defaults( GTK_TABLE(table), publishedAddressLabel, 0, 1, 5, 6);
@@ -1078,6 +1078,7 @@ show_account_window (account_t * a)
 			g_hash_table_replace(currentAccount->properties,
     				g_strdup(PUBLISHED_ADDRESS),
     				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry))));
+			/*
 			DEBUG("-------- Basic parameters to ne written in config");
 			DEBUG("curAccountID %s, curAccountType %s, curAlias %s, curHostname %s, curPassword %s, curUsername %s, curMailbox %s\n", 
 			      (gchar *)currentAccount->accountID, 
@@ -1088,8 +1089,8 @@ show_account_window (account_t * a)
 			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryUsername)),
 			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))
 			      );
-
-
+			*/
+			/*
 			DEBUG("-------- Advanced parameters to be written");
 			DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s\n", 
 			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "false": "true",
@@ -1102,7 +1103,7 @@ show_account_window (account_t * a)
 			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useStunCheckBox)) ? "true":"false",
 			      gtk_entry_get_text(GTK_ENTRY(stunServerEntry))
 			      );
-	    
+			*/
 		}
 
 		
