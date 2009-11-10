@@ -2277,6 +2277,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"), IP2IP_PROFILE);
+    _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (LOCAL_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (LOCAL_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);
@@ -3418,7 +3419,7 @@ ManagerImpl::setConfig (const std::string& section, const std::string& name, int
 
 void ManagerImpl::setAccountsOrder (const std::string& order)
 {
-    _debug ("Set accounts order : %s\n", order.c_str());
+    _debug ("Setcreate accounts order : %s\n", order.c_str());
     // Set the new config
     setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
 }
@@ -3491,6 +3492,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, getConfigString (accountID, AUTHENTICATION_USERNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
+    a.insert (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, getConfigString (accountID, PUBLISHED_SAMEAS_LOCAL)));
     a.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, getConfigString (accountID, LOCAL_ADDRESS)));
     a.insert (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, getConfigString (accountID, PUBLISHED_ADDRESS)));
     a.insert (std::pair<std::string, std::string> (LOCAL_PORT, getConfigString (accountID, LOCAL_PORT)));
@@ -3724,6 +3726,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     std::string hostname;
     std::string displayName;
+    std::string publishedSameasLocal;
     std::string localAddress;
     std::string publishedAddress;
     std::string localPort;
@@ -3757,6 +3760,10 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     if ( (iter = map_cpy.find (DISPLAY_NAME)) != map_cpy.end()) {
         displayName = iter->second;
+    }
+
+    if ( (iter = map_cpy.find (PUBLISHED_SAMEAS_LOCAL)) != map_cpy.end()) {
+        publishedSameasLocal = iter->second;
     }
 
     if ( (iter = map_cpy.find (LOCAL_ADDRESS)) != map_cpy.end()) {
@@ -3885,6 +3892,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     setConfig (accountID, HOSTNAME, hostname);
 
+    setConfig (accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
     setConfig (accountID, LOCAL_ADDRESS, localAddress);
     setConfig (accountID, PUBLISHED_ADDRESS, publishedAddress);
     setConfig (accountID, LOCAL_PORT, localPort);
