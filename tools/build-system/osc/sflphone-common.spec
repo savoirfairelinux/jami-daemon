@@ -13,15 +13,15 @@ Name:           sflphone-common
 License:        GNU General Public License (GPL)
 Group:          System Environment/Daemons
 Summary:        SIP and IAX2 compatible softphone - Core
-Version:        VERSION
-Release:        VERSION_INDEX%{?dist}
+Version:	VERSION
+Release:	VERSION_INDEX%{?dist}
 URL:            http://www.sflphone.org/
 Vendor:         Savoir-faire Linux
 Packager:	Julien Bonjean <julien.bonjean@savoirfairelinux.com>
 
-Group:          Applications/Communications
 BuildRoot:      %{_tmppath}/%{name}
 Source0:        sflphone-common-%{version}.tar.gz
+Patch0:		sflphone-common-dbus-service-in-libdir.patch
 BuildRequires:	speex-devel
 BuildRequires:	gcc-c++
 BuildRequires:	expat
@@ -55,18 +55,34 @@ BuildRequires:	gsm-devel
 %endif
 
 Requires:	libsamplerate
-Requires:	libexpat1
 Requires:	commoncpp2
-Requires:	libgsm1
-Requires:	libspeex
 Requires:	dbus-1
 Requires:	dbus-1-x11
-Requires:	xorg-x11
+
+%if %{defined suse_version}
+Requires:	libgsm1
+Requires:	libexpat1
+Requires:	libspeex
 Requires:	libasound2
 Requires:	libpulse0
 Requires:	libccrtp1
+%endif
+
+%if %{defined fedora_version}
+Requires:	gsm
+Requires:	expat
+Requires:	compat-expat1
+Requires:	speex
+Requires:	alsa-lib
+Requires:	pulseaudio-libs
+Requires:	ccrtp
+Requires:	libzrtpcpp
+%endif
+
 Conflicts:      sflphone
 Prefix:		%{_prefix}
+
+Group:          Applications/Communications
 
 %description
 SFLphone is meant to be a robust enterprise-class desktop phone.
@@ -84,13 +100,13 @@ Authors:
 %build
 cd libs/pjproject
 ./autogen.sh
-./configure --prefix=%{_prefix}
+./configure --prefix=%{_prefix} --libdir=%{_libdir}
 make dep
 make clean
 make
 cd -
 ./autogen.sh
-./configure --prefix=%{_prefix} 
+./configure --prefix=%{_prefix} --libdir=%{_libdir}
 make -j
 
 %install
@@ -106,17 +122,17 @@ make clean
 %files
 %defattr(-, root, root)
 %doc AUTHORS COPYING README TODO
-%dir %{_prefix}/lib/sflphone
-%dir %{_prefix}/lib/sflphone/codecs
-%dir %{_prefix}/lib/sflphone/plugins
+%dir %{_libdir}/sflphone
+%dir %{_libdir}/sflphone/codecs
+%dir %{_libdir}/sflphone/plugins
 %dir %{_prefix}/share/sflphone
 %dir %{_prefix}/share/sflphone/ringtones
-%{_prefix}/lib/libdbus-*
-%{_prefix}/lib/sflphone/codecs/*
-%{_prefix}/lib/sflphone/plugins/*
+%{_libdir}/libdbus-*
+%{_libdir}/sflphone/codecs/*
+%{_libdir}/sflphone/plugins/*
 %{_prefix}/share/dbus-1/services/org.sflphone.*
 %{_prefix}/share/sflphone/ringtones/*
-%{_prefix}/lib/sflphone/sflphoned
+%{_libdir}/sflphone/sflphoned
 %doc %{_prefix}/share/man/man1/sflphoned.1.gz
 
 %changelog
