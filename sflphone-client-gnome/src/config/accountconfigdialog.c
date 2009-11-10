@@ -419,9 +419,45 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         DEBUG("Using sips");
-    	gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);            
+    	gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);
+	// Uncheck stun
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useStunCheckBox), FALSE);
+	gtk_widget_set_sensitive(GTK_WIDGET(useStunCheckBox), FALSE);
+	gtk_widget_set_sensitive(GTK_WIDGET(sameAsLocalRadioButton), TRUE);
+        gtk_widget_set_sensitive(GTK_WIDGET(publishedAddrRadioButton), TRUE);
+	gtk_widget_hide(stunServerLabel);
+	gtk_widget_hide(stunServerEntry);
+
+	
+
+	if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
+	    gtk_widget_show(publishedAddressEntry);
+            gtk_widget_show(publishedPortSpinBox);
+	    gtk_widget_show(publishedAddressLabel);
+            gtk_widget_show(publishedPortLabel);
+	}
+
     } else {
-        gtk_widget_set_sensitive(GTK_WIDGET(data), FALSE);    
+        gtk_widget_set_sensitive(GTK_WIDGET(data), FALSE);
+	gtk_widget_set_sensitive(GTK_WIDGET(useStunCheckBox), TRUE);
+
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useStunCheckBox))) {
+	    gtk_widget_set_sensitive(GTK_WIDGET(sameAsLocalRadioButton), FALSE);
+	    gtk_widget_set_sensitive(GTK_WIDGET(publishedAddrRadioButton), FALSE);
+	    gtk_widget_show(stunServerLabel);
+	    gtk_widget_show(stunServerEntry);
+	    gtk_widget_hide(publishedAddressEntry);
+            gtk_widget_hide(publishedPortSpinBox);
+	    gtk_widget_hide(publishedAddressLabel);
+            gtk_widget_hide(publishedPortLabel);
+	}
+	else {
+            gtk_widget_set_sensitive(GTK_WIDGET(sameAsLocalRadioButton), TRUE);
+	    gtk_widget_set_sensitive(GTK_WIDGET(publishedAddrRadioButton), TRUE);
+	    gtk_widget_hide(stunServerLabel);
+            gtk_widget_hide(stunServerEntry);
+	}
+	
     }   
 }
 
@@ -537,24 +573,27 @@ GtkWidget * create_security_tab(account_t **a)
     g_signal_connect (deleteCredButton, "clicked", G_CALLBACK (delete_credential_cb), treeViewCredential);
     gtk_box_pack_start(GTK_BOX(hbox), deleteCredButton, FALSE, FALSE, 0);
  
- 	 /* SRTP Section */
+    /* SRTP Section */
     gnome_main_section_new_with_table (_("Security"), &frame, &table, 2, 3);
-	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-	gtk_table_set_row_spacings (GTK_TABLE(table), 10);
+    gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+    gtk_table_set_row_spacings (GTK_TABLE(table), 10);
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-	GtkWidget * sipTlsAdvancedButton;
-	sipTlsAdvancedButton = gtk_button_new_from_stock(GTK_STOCK_EDIT);
+
+    /* TLS subsection */
+    GtkWidget * sipTlsAdvancedButton;
+    sipTlsAdvancedButton = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     gtk_table_attach_defaults(GTK_TABLE(table), sipTlsAdvancedButton, 2, 3, 0, 1);
-	gtk_widget_set_sensitive(GTK_WIDGET(sipTlsAdvancedButton), FALSE);    
+    gtk_widget_set_sensitive(GTK_WIDGET(sipTlsAdvancedButton), FALSE);    
     g_signal_connect(G_OBJECT(sipTlsAdvancedButton), "clicked", G_CALLBACK(show_advanced_tls_options_cb), currentAccount->properties);
     
-	useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
-	g_signal_connect (useSipTlsCheckBox, "toggled", G_CALLBACK(use_sip_tls_cb), sipTlsAdvancedButton);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTLSEnabled, "true") == 0) ? TRUE:FALSE);
-	gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
+    useSipTlsCheckBox = gtk_check_button_new_with_mnemonic(_("Use TLS transport (sips)"));
+    g_signal_connect (useSipTlsCheckBox, "toggled", G_CALLBACK(use_sip_tls_cb), sipTlsAdvancedButton);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox), (g_strcmp0(curTLSEnabled, "true") == 0) ? TRUE:FALSE);
+    gtk_table_attach_defaults(GTK_TABLE(table), useSipTlsCheckBox, 0, 2, 0, 1);
        	    
+    /* ZRTP subsection */
     label = gtk_label_new_with_mnemonic (_("SRTP key exchange"));
  	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     keyExchangeCombo = gtk_combo_box_new_text();
@@ -607,12 +646,21 @@ static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
         gtk_widget_show(stunServerEntry);
 	gtk_widget_set_sensitive(sameAsLocalRadioButton, FALSE);
 	gtk_widget_set_sensitive(publishedAddrRadioButton, FALSE);
+	gtk_widget_hide(publishedAddressLabel);
+        gtk_widget_hide(publishedPortLabel);
+	gtk_widget_hide(publishedAddressEntry);
+        gtk_widget_hide(publishedPortSpinBox);
     } else {
         gtk_widget_hide(stunServerLabel);
         gtk_widget_hide(stunServerEntry);
 	gtk_widget_set_sensitive(sameAsLocalRadioButton, TRUE);
 	gtk_widget_set_sensitive(publishedAddrRadioButton, TRUE);
-	// sameAsLocalLabel
+	if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
+	    gtk_widget_show(publishedAddressLabel);
+	    gtk_widget_show(publishedPortLabel);
+	    gtk_widget_show(publishedAddressEntry);
+	    gtk_widget_show(publishedPortSpinBox);
+	}
     }
  
 }
@@ -781,7 +829,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 
 	useStunCheckBox = gtk_check_button_new_with_mnemonic(_("Using STUN"));
 	gtk_table_attach_defaults(GTK_TABLE(table), useStunCheckBox, 0, 1, 0, 1);
-	gtk_toggle_button_set_active (GTK_WIDGET(useStunCheckBox), 
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(useStunCheckBox), 
 			g_strcasecmp(stun_enable, "true") == 0 ? TRUE: FALSE);
 	gtk_widget_set_sensitive (GTK_WIDGET(useStunCheckBox),
 			g_strcasecmp(use_tls,"true") == 0 ? FALSE: TRUE);
@@ -801,7 +849,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedAddrRadioButton, 0, 2, 4, 5);
 
 	if(g_strcasecmp(published_sameas_local, "true") == 0) {
-	    gtk_toggle_button_set_active (GTK_WIDGET(sameAsLocalRadioButton), TRUE);
+	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(sameAsLocalRadioButton), TRUE);
 	} else {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(publishedAddrRadioButton), TRUE);
 	}
@@ -832,14 +880,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	g_signal_connect(sameAsLocalRadioButton, "toggled", G_CALLBACK(same_as_local_cb), sameAsLocalRadioButton);   
 	g_signal_connect(publishedAddrRadioButton, "toggled", G_CALLBACK(set_published_addr_manually_cb), publishedAddrRadioButton);
 
-/*
-	if ((g_strcasecmp(published_address, local_address) == 0) 
-		   && (g_strcasecmp(published_port, local_port) == 0)) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton), TRUE);	    
-	} else {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(publishedAddrRadioButton), TRUE);
-	}
-*/
+
 	return ret;
 }
 

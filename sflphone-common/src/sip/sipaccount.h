@@ -143,7 +143,7 @@ class SIPAccount : public Account
          */
         inline bool isTlsEnabled(void) { return (_transportType == PJSIP_TRANSPORT_TLS) ? true: false; }
 		
-		/**
+	/**
          * @return bool Tells if current transport for that 
          * account is set to OTHER.
          */
@@ -187,6 +187,21 @@ class SIPAccount : public Account
          * @return pj_str_t The contact header based on account information
          */
         std::string getContactHeader(const std::string& address, const std::string& port);
+
+
+	/**
+	 * Get a flag which determine the usage in sip headers of either the local 
+	 * IP address and port (_localAddress and _localPort) or to an address set 
+	 * manually (_publishedAddress and _publishedPort). 
+	 */ 
+	bool getPublishedSameasLocal(){ return _publishedSameasLocal; }
+
+	/**
+	 * Set a flag which determine the usage in sip headers of either the local 
+	 * IP address and port (_localAddress and _localPort) or to an address set 
+	 * manually (_publishedAddress and _publishedPort). 
+	 */ 
+	void setPublishedSameasLocal(bool published){ _publishedSameasLocal = published; }
 
         /**
          * Get the port on which the transport/listener should use, or is
@@ -249,17 +264,17 @@ class SIPAccount : public Account
          */
         inline pjsip_transport_type_e getTransportType(void) { return _transportType; }
         
-		inline pjsip_transport* getAccountTransport (void) { return _transport; }
+	inline pjsip_transport* getAccountTransport (void) { return _transport; }
 
-		inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
+	inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
 
-		inline std::string getSessionAddress () { return _actualSessionAddress; }
+	inline std::string getSessionAddress () { return _actualSessionAddress; }
+	
+	inline void setSessionAddress (std::string addr) { _actualSessionAddress = addr; }
+	
+	inline pj_uint16_t getSessionPort () { return _actualSessionPort; }
 
-		inline void setSessionAddress (std::string addr) { _actualSessionAddress = addr; }
-		
-		inline pj_uint16_t getSessionPort () { return _actualSessionPort; }
-
-		inline void setSessionPort (pj_uint16_t port) { _actualSessionPort = port; }
+	inline void setSessionPort (pj_uint16_t port) { _actualSessionPort = port; }
 
 
     private: 
@@ -312,6 +327,10 @@ class SIPAccount : public Account
 
         // Network settings
         std::string _registrationExpire;
+
+	// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
+        // sip headers
+	bool _publishedSameasLocal;
                 
         std::string _localIpAddress;
         std::string _publishedIpAddress;
