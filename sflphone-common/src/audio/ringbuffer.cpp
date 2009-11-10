@@ -36,12 +36,12 @@ int RingBuffer::count_rb = 0;
 RingBuffer::RingBuffer (int size, CallID call_id) : mEnd (0)
         , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
         , mBuffer (NULL)
-	, buffer_id(call_id)
+        , buffer_id (call_id)
 {
     mBuffer = new unsigned char[mBufferSize];
     assert (mBuffer != NULL);
 
-    count_rb++;    
+    count_rb++;
 }
 
 // Free memory on object deletion
@@ -54,8 +54,8 @@ RingBuffer::~RingBuffer()
 void
 RingBuffer::flush (CallID call_id)
 {
-    _debug("flush: reinit \"%s\" readpointer in \"%s\" ringbuffer\n", call_id.c_str(), buffer_id.c_str());
-    storeReadPointer(mEnd, call_id);
+    _debug ("flush: reinit \"%s\" readpointer in \"%s\" ringbuffer\n", call_id.c_str(), buffer_id.c_str());
+    storeReadPointer (mEnd, call_id);
 }
 
 
@@ -67,12 +67,12 @@ RingBuffer::flushAll ()
     // _debug("------------------------------ flushAll() in \"%s\" ringbuffer\n", buffer_id.c_str());
 
     ReadPointer::iterator iter_pointer = _readpointer.begin();
-    while(iter_pointer != _readpointer.end())
-    {	
-      // _debug("------------------------------     reinit readpointer %s\n", iter_pointer->first.c_str());
-	iter_pointer->second = mEnd;
 
-	iter_pointer++;
+    while (iter_pointer != _readpointer.end()) {
+        // _debug("------------------------------     reinit readpointer %s\n", iter_pointer->first.c_str());
+        iter_pointer->second = mEnd;
+
+        iter_pointer++;
     }
 }
 
@@ -81,26 +81,24 @@ RingBuffer::putLen()
 {
     int mStart;
 
-    if(_readpointer.size() >= 1)
-    {
-	mStart = getSmallestReadPointer();
-    }
-    else
-    {
+    if (_readpointer.size() >= 1) {
+        mStart = getSmallestReadPointer();
+    } else {
         mStart = 0;
     }
 
     int length = (mEnd + mBufferSize - mStart) % mBufferSize;
+
     // _debug("RingBuffer::putLen length %i\n", length);
     // _debug("    *RingBuffer::putLen: buffer_id %s, mStart %i, mEnd %i, length %i, buffersie %i\n", buffer_id.c_str(), mStart, mEnd, length, mBufferSize);
     return length;
 }
 
 int
-RingBuffer::getLen(CallID call_id)
+RingBuffer::getLen (CallID call_id)
 {
 
-    int mStart = getReadPointer(call_id);
+    int mStart = getReadPointer (call_id);
 
     int length = (mEnd + mBufferSize - mStart) % mBufferSize;
     // _debug("    *RingBuffer::getLen: buffer_id %s, call_id %s, mStart %i, mEnd %i, length %i, buffersie %i\n", buffer_id.c_str(), call_id.c_str(), mStart, mEnd, length, mBufferSize);
@@ -117,106 +115,101 @@ RingBuffer::debug()
 }
 
 int
-RingBuffer::getReadPointer(CallID call_id)
+RingBuffer::getReadPointer (CallID call_id)
 {
 
-    if(getNbReadPointer() == 0)
-	return 0;
+    if (getNbReadPointer() == 0)
+        return 0;
 
     // _debug("RingBuffer::getReadPointer() id %s\n", call_id.c_str());
-    
-    ReadPointer::iterator iter = _readpointer.find(call_id);
-    if (iter == _readpointer.end())
-    {
-	// _debug("                RingBuffer::getReadPointer Error read pointer size: %i\n", _readpointer.size());
-	// _debug("                RingBuffer::getReadPointer Error read pointer \"%s\" is null\n", call_id.c_str());
-	ReadPointer::iterator iter2;
-	for( iter2 = _readpointer.begin(); iter2 != _readpointer.end(); iter2++)
-	{
-	    // x_debug("                RingBuffer::getReadPointer list avail pointer \"%s\"\n", iter2->first.c_str());
-	}
-	return 0;
-    }
-    else
-    {
+
+    ReadPointer::iterator iter = _readpointer.find (call_id);
+
+    if (iter == _readpointer.end()) {
+        // _debug("                RingBuffer::getReadPointer Error read pointer size: %i\n", _readpointer.size());
+        // _debug("                RingBuffer::getReadPointer Error read pointer \"%s\" is null\n", call_id.c_str());
+        ReadPointer::iterator iter2;
+
+        for (iter2 = _readpointer.begin(); iter2 != _readpointer.end(); iter2++) {
+            // x_debug("                RingBuffer::getReadPointer list avail pointer \"%s\"\n", iter2->first.c_str());
+        }
+
+        return 0;
+    } else {
         return iter->second;
     }
-    
+
 }
 
 int
 RingBuffer::getSmallestReadPointer()
 {
     if (getNbReadPointer() == 0)
-	return 0;
+        return 0;
 
-    int smallest = mBufferSize;	
+    int smallest = mBufferSize;
 
     ReadPointer::iterator iter = _readpointer.begin();
-    while (iter != _readpointer.end())
-    {
-	if(iter->second < smallest)
-	    smallest = iter->second;
 
-	iter++;
+    while (iter != _readpointer.end()) {
+        if (iter->second < smallest)
+            smallest = iter->second;
+
+        iter++;
     }
 
     return smallest;
 }
 
 void
-RingBuffer::storeReadPointer(int pointer_value, CallID call_id)
+RingBuffer::storeReadPointer (int pointer_value, CallID call_id)
 {
 
-    ReadPointer::iterator iter = _readpointer.find(call_id);
-    if(iter != _readpointer.end())
-    {	
-	iter->second = pointer_value;
-	// _debug("store read pointer call_id %s, size: %i \n",call_id.c_str(), _readpointer.size());
-    }
-    else
-    {
-	_debug("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer\n", call_id.c_str(), buffer_id.c_str());
+    ReadPointer::iterator iter = _readpointer.find (call_id);
+
+    if (iter != _readpointer.end()) {
+        iter->second = pointer_value;
+        // _debug("store read pointer call_id %s, size: %i \n",call_id.c_str(), _readpointer.size());
+    } else {
+        _debug ("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer\n", call_id.c_str(), buffer_id.c_str());
     }
 
 }
 
 
 void
-RingBuffer::createReadPointer(CallID call_id)
+RingBuffer::createReadPointer (CallID call_id)
 {
 
-    _debug("---- createReadPointer ringbuffer_id %s, call_id %s\n", buffer_id.c_str(), call_id.c_str());
- 
-    _readpointer.insert(pair<CallID, int>(call_id, mEnd));
-    _debug("---- createReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(), (int)_readpointer.size());
+    _debug ("---- createReadPointer ringbuffer_id %s, call_id %s\n", buffer_id.c_str(), call_id.c_str());
+
+    _readpointer.insert (pair<CallID, int> (call_id, mEnd));
+    _debug ("---- createReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(), (int) _readpointer.size());
 
 }
 
 
 void
-RingBuffer::removeReadPointer(CallID call_id)
+RingBuffer::removeReadPointer (CallID call_id)
 {
 
-    _debug("---- removeReadPointer ringbuffer_id %s, call_id %s\n", buffer_id.c_str(), call_id.c_str());
+    _debug ("---- removeReadPointer ringbuffer_id %s, call_id %s\n", buffer_id.c_str(), call_id.c_str());
 
-    _readpointer.erase(call_id);
-    _debug("---- removeReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(), (int)_readpointer.size());
+    _readpointer.erase (call_id);
+    _debug ("---- removeReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(), (int) _readpointer.size());
 
 }
 
 
 bool
-RingBuffer::hasThisReadPointer(CallID call_id)
+RingBuffer::hasThisReadPointer (CallID call_id)
 {
-    ReadPointer::iterator iter = _readpointer.find(call_id);
-    if(iter == _readpointer.end())
-    {
-	return false;
-    }
-    else
-    {
-	return true;
+    ReadPointer::iterator iter = _readpointer.find (call_id);
+
+    if (iter == _readpointer.end()) {
+        return false;
+    } else {
+        return true;
     }
 }
 
@@ -306,11 +299,11 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
 //
 
 int
-RingBuffer::AvailForGet(CallID call_id)
+RingBuffer::AvailForGet (CallID call_id)
 {
     // Used space
     // _debug("RingBuffer::AvailForGet buffer_id %s, call_id %s --------------------\n", buffer_id.c_str(), call_id.c_str());
-    return getLen(call_id);
+    return getLen (call_id);
 }
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
@@ -318,17 +311,21 @@ int
 RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
 
-    if(getNbReadPointer() == 0)
+    if (getNbReadPointer() == 0)
         return 0;
 
-    if(!hasThisReadPointer(call_id))
-	return 0;
+    if (!hasThisReadPointer (call_id))
+        return 0;
 
     samplePtr dest;
+
     int block;
+
     int copied;
+
     // _debug("RingBuffer::Get buffer_id %s, call_id %s --------------------\n", buffer_id.c_str(), call_id.c_str());
-    int len = getLen(call_id);
+    int len = getLen (call_id);
+
     // _debug("    RingBuffer::Get bufferid %s, getlen %i\n", buffer_id.c_str(), len);
 
     if (toCopy > len)
@@ -338,7 +335,7 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 
     copied = 0;
 
-    int mStart = getReadPointer(call_id);
+    int mStart = getReadPointer (call_id);
 
     //fprintf(stderr, "G");
     while (toCopy) {
@@ -369,7 +366,7 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
         copied += block;
     }
 
-    storeReadPointer(mStart, call_id);
+    storeReadPointer (mStart, call_id);
 
     return copied;
 }
@@ -379,16 +376,16 @@ int
 RingBuffer::Discard (int toDiscard, CallID call_id)
 {
     // _debug("RingBuffer::Discard buffer_id %s, call_id %s --------------------\n", buffer_id.c_str(), call_id.c_str());
-    int len = getLen(call_id);
+    int len = getLen (call_id);
 
-    int mStart = getReadPointer(call_id);
+    int mStart = getReadPointer (call_id);
 
     if (toDiscard > len)
         toDiscard = len;
 
     mStart = (mStart + toDiscard) % mBufferSize;
 
-    storeReadPointer(mStart, call_id);
+    storeReadPointer (mStart, call_id);
 
     return toDiscard;
 }

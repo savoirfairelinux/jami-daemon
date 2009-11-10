@@ -265,7 +265,7 @@ ManagerImpl::outgoingCall (const std::string& account_id, const CallID& call_id,
         _cleaner->set_phone_number_prefix (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX));
     else
         _cleaner->set_phone_number_prefix ("");
- 
+
     to_cleaned = _cleaner->clean (to);
 
     /* Check what kind of call we are dealing with */
@@ -382,7 +382,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 
     // if it was waiting, it's waiting no more
     if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "CURRENT");
-        
+
     // std::string codecName = Manager::instance().getCurrentCodecName (call_id);
     // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id, codecName.c_str());
 
@@ -1728,22 +1728,23 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     associateCallToAccount (call->getCallId(), accountId);
 
     // If account is null it is an ip to ip call
+
     if (accountId==AccountNULL) {
-        
+
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
-    }
-    else {
-        // strip sip: which is not required and bring confusion with ip to ip calls 
+    } else {
+        // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history (if call is IAX, do nothing)
         std::string peerNumber = call->getPeerNumber();
 
-        int startIndex = peerNumber.find("sip:");
+        int startIndex = peerNumber.find ("sip:");
 
-	// if "sip:" is found => it is not an IAX call
-	if(startIndex != (int)string::npos) {
-	    std::string strippedPeerNumber = peerNumber.substr(startIndex+4);
-	    call->setPeerNumber(strippedPeerNumber);
-	}
+        // if "sip:" is found => it is not an IAX call
+
+        if (startIndex != (int) string::npos) {
+            std::string strippedPeerNumber = peerNumber.substr (startIndex+4);
+            call->setPeerNumber (strippedPeerNumber);
+        }
 
     }
 
@@ -3667,7 +3668,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string authenticationName;
     std::string password;
     std::string realm;
-	std::string voicemail_count;
+    std::string voicemail_count;
 
     if ( (iter = map_cpy.find (AUTHENTICATION_USERNAME)) != map_cpy.end()) {
         authenticationName = iter->second;
@@ -3684,8 +3685,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if ( (iter = map_cpy.find (REALM)) != map_cpy.end()) {
         realm = iter->second;
     }
-    
+
     setConfig (accountID, REALM, realm);
+
     setConfig (accountID, USERNAME, username);
     setConfig (accountID, AUTHENTICATION_USERNAME, authenticationName);
 

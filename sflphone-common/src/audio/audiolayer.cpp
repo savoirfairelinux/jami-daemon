@@ -25,7 +25,8 @@ void AudioLayer::flushMain (void)
 
     // should pass call id
     MainBuffer* mainbuffer = getMainBuffer();
-    if(mainbuffer)
+
+    if (mainbuffer)
         mainbuffer->flushAllBuffers();
 }
 
@@ -39,7 +40,7 @@ void AudioLayer::flushUrgent (void)
 
 int AudioLayer::putUrgent (void* buffer, int toCopy)
 {
-    _debug("------------------- AudioLayer::putUrgent --------------------\n");
+    _debug ("------------------- AudioLayer::putUrgent --------------------\n");
     int a;
 
     ost::MutexLock guard (_mutex);
@@ -59,7 +60,7 @@ int AudioLayer::putMain (void *buffer, int toCopy, CallID call_id)
     int a;
 
     ost::MutexLock guard (_mutex);
-    a = getMainBuffer()->availForPut(call_id);
+    a = getMainBuffer()->availForPut (call_id);
 
     if (a >= toCopy) {
         return getMainBuffer()->putData (buffer, toCopy, _defaultVolume, call_id);

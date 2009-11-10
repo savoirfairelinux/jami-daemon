@@ -32,7 +32,7 @@ AudioStream::AudioStream (PulseLayerType * driver)
         _volume(),
         flag (PA_STREAM_AUTO_TIMING_UPDATE),
         sample_spec(),
-	_mainloop (driver->mainloop)
+        _mainloop (driver->mainloop)
 {
     sample_spec.format = PA_SAMPLE_S16LE;
     // sample_spec.format = PA_SAMPLE_FLOAT32LE;
@@ -177,7 +177,7 @@ AudioStream::createStream (pa_context* c)
     // ss.format = PA_SAMPLE_S16LE;
     // ss.rate = 44100;
     // ss.channels = 1;
-    
+
 
     assert (pa_sample_spec_valid (&sample_spec));
     assert (pa_channel_map_valid (&channel_map));
@@ -190,29 +190,29 @@ AudioStream::createStream (pa_context* c)
     assert (s);
 
     // parameters are defined as number of bytes
-    // 2048 bytes (1024 int16) is 20 ms at 44100 Hz 
+    // 2048 bytes (1024 int16) is 20 ms at 44100 Hz
     if (_streamType == PLAYBACK_STREAM) {
 
-	// 20 ms framesize TODO: take framesize value from config
+        // 20 ms framesize TODO: take framesize value from config
         attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes(50 * PA_USEC_PER_MSEC, &sample_spec);
-        attributes->prebuf = (uint32_t) -1;      
+        attributes->tlength = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &sample_spec);
+        attributes->prebuf = (uint32_t) -1;
         attributes->minreq = (uint32_t) -1;
         attributes->fragsize = (uint32_t) -1;
-	
-	pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_ADJUST_LATENCY, &_volume, NULL);
+
+        pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_ADJUST_LATENCY, &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
 
-	// 20 ms framesize TODO: take framesize value from config
+        // 20 ms framesize TODO: take framesize value from config
         attributes->maxlength = (uint32_t) -1;
         attributes->tlength = (uint32_t) -1;
         attributes->prebuf = (uint32_t) -1;
         attributes->minreq = (uint32_t) -1;
-        attributes->fragsize = pa_usec_to_bytes(50 * PA_USEC_PER_MSEC, &sample_spec);
-	
-	
+        attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &sample_spec);
 
-	pa_stream_connect_record( s, NULL, attributes, (pa_stream_flags_t)(PA_STREAM_PEAK_DETECT|PA_STREAM_ADJUST_LATENCY));
+
+
+        pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_PEAK_DETECT|PA_STREAM_ADJUST_LATENCY));
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);
     } else {
