@@ -328,21 +328,15 @@ void SIPAccount::loadConfig()
     }
 
     // Load network settings
+	// Local parameters
     std::string localPort = Manager::instance().getConfigString (_accountID, LOCAL_PORT);
+    setLocalPort (atoi (localPort.c_str()));
+    setLocalAddress (Manager::instance().getConfigString (_accountID, LOCAL_ADDRESS));
 
+	// Published parameters
     std::string publishedPort = Manager::instance().getConfigString (_accountID, PUBLISHED_PORT);
-
-    _localPort = atoi (localPort.c_str());
-
-    _actualSessionPort = _localPort;
-
-    _publishedPort = atoi (publishedPort.c_str());
-
-    _localIpAddress = Manager::instance().getConfigString (_accountID, LOCAL_ADDRESS);
-
-    _actualSessionAddress = _localIpAddress;
-
-    _publishedIpAddress = Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS);
+    setPublishedPort (atoi (publishedPort.c_str()));
+    setPublishedAddress (Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS));
 
     // Init TLS settings if the user wants to use TLS
     bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);

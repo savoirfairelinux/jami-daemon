@@ -24,7 +24,7 @@
 #include "voiplink.h"
 #include "manager.h"
 
-VoIPLink::VoIPLink (const AccountID& accountID) : _accountID (accountID), _localIPAddress ("127.0.0.1"), _localPort (0),  _initDone (false)
+VoIPLink::VoIPLink (const AccountID& accountID) : _accountID (accountID), _localPort (0),  _initDone (false)
 {
 }
 
