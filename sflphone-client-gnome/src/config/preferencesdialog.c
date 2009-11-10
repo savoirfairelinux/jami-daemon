@@ -168,17 +168,26 @@ GtkWidget* create_direct_ip_calls_tab()
     gchar * curTlsEnabled = "false";    
     gchar * curKeyExchange = "0";
     gchar * description;
+
+    gchar * local_address;
+    gchar * local_port;
    
     //directIpCallsProperties = sflphone_get_ip2ip_properties();
     sflphone_get_ip2ip_properties(&directIpCallsProperties);
               
     if(directIpCallsProperties != NULL) {
 	DEBUG("got a directIpCallsProperties");
+	local_address = g_hash_table_lookup(directIpCallsProperties,  LOCAL_ADDRESS);
+	local_port = g_hash_table_lookup(directIpCallsProperties, LOCAL_PORT);
+	DEBUG("    local address = %s", local_address);
+	DEBUG("    local port = %s", local_port);
         curSRTPEnabled = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_SRTP_ENABLED);
 	DEBUG("    curSRTPEnabled = %s", curSRTPEnabled);
         curKeyExchange = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_KEY_EXCHANGE);
-        curTlsEnabled = g_hash_table_lookup(directIpCallsProperties, TLS_ENABLE);        
+        curTlsEnabled = g_hash_table_lookup(directIpCallsProperties, TLS_ENABLE);
     }
+
+    
                 
 	GtkWidget * vbox = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
@@ -222,10 +231,10 @@ GtkWidget* create_direct_ip_calls_tab()
 	gtk_list_store_append(ipInterfaceListStore, &iter );
 	gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
 	
-	// if (g_strcmp0(*iface, local_address) == 0) {
-	// DEBUG("Setting active local address combo box");
-	current_local_address_iter = iter;
-	// }
+	if (g_strcmp0(*iface, local_address) == 0) {
+	    DEBUG("Setting active local address combo box");
+	    current_local_address_iter = iter;
+	}
       }
     }
     
@@ -245,10 +254,7 @@ GtkWidget* create_direct_ip_calls_tab()
      * Local port
      */	    
     /** SIP port information */
-    int local_port = dbus_get_sip_port();
-    if(local_port <= 0 || local_port > 65535) {
-        local_port = 5060; 
-    }
+    // int local_port = dbus_get_sip_port();
 
     GtkWidget *applySipPortButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
 
@@ -258,7 +264,7 @@ GtkWidget* create_direct_ip_calls_tab()
     gtk_misc_set_alignment(GTK_MISC (localPortLabel), 0, 0.5);
     localPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (localPortLabel), localPortSpinBox); 
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), local_port);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), g_ascii_strtod(local_port, NULL));
     g_signal_connect( G_OBJECT( applySipPortButton) , "clicked" , G_CALLBACK( update_port_cb ) , applySipPortButton);
     
     gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
@@ -318,7 +324,7 @@ GtkWidget* create_direct_ip_calls_tab()
     
     return vbox;
 }
-
+/*
 GtkWidget* create_network_tab()
 {
     GtkWidget * frame;
@@ -330,7 +336,7 @@ GtkWidget* create_network_tab()
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    /** SIP port information */
+    // SIP port information
     int curPort = dbus_get_sip_port();
     if(curPort <= 0 || curPort > 65535) {
         curPort = 5060; 
@@ -361,6 +367,7 @@ GtkWidget* create_network_tab()
 
     return ret;
 }
+*/
 
     GtkWidget*
 create_general_settings ()
@@ -513,12 +520,12 @@ show_preferences_dialog ()
     tab = create_hooks_settings();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-
+    /*
     // Network tab
     tab = create_network_tab();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Network")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-
+    */
     // Direct IP calls tab
     tab = create_direct_ip_calls_tab();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Direct IP calls")));

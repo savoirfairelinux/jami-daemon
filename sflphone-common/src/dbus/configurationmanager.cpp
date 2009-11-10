@@ -77,6 +77,9 @@ ConfigurationManager::getIp2IpDetails (void)
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
 
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_ADDRESS)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_PORT)));
+
     std::map<std::string, std::string> tlsSettings;
     tlsSettings = getTlsSettings (IP2IP_PROFILE);
     std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (ip2ipAccountDetails, ip2ipAccountDetails.end()));
