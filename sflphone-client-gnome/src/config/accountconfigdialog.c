@@ -66,6 +66,7 @@ GtkWidget * keyExchangeCombo;
 GtkWidget * useSipTlsCheckBox;
 
 GtkWidget * publishedAddressEntry;
+GtkWidget * localAddressLabel;
 GtkWidget * localAddressCombo;
 GtkWidget * useStunCheckBox;
 GtkWidget * sameAsLocalRadioButton;
@@ -73,6 +74,7 @@ GtkWidget * publishedAddrRadioButton;
 GtkWidget * sameAsLocalLabel;
 GtkWidget * publishedAddrLabel;
 GtkWidget * publishedPortSpinBox;
+GtkWidget * localPortLabel;
 GtkWidget * localPortSpinBox;
 GtkWidget * publishedAddressLabel;
 GtkWidget * publishedPortLabel;
@@ -461,53 +463,121 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
     }   
 }
 
+
+static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
+{
+    DEBUG("set_published_addr_manually_cb");
+
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+        DEBUG("Showing manual options");    
+    	gtk_widget_show(publishedPortLabel);            
+    	gtk_widget_show(publishedPortSpinBox);
+    	gtk_widget_show(publishedAddressLabel);                	
+    	gtk_widget_show(publishedAddressEntry);
+    } else {
+        DEBUG("Hiding manual options");   
+    	gtk_widget_hide(publishedPortLabel);            
+    	gtk_widget_hide(publishedPortSpinBox);
+    	gtk_widget_hide(publishedAddressLabel);                	
+    	gtk_widget_hide(publishedAddressEntry);
+    }
+}
+
+static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+        DEBUG("Showing stun options");
+        gtk_widget_show(stunServerLabel);
+        gtk_widget_show(stunServerEntry);
+	gtk_widget_set_sensitive(sameAsLocalRadioButton, FALSE);
+	gtk_widget_set_sensitive(publishedAddrRadioButton, FALSE);
+	gtk_widget_hide(publishedAddressLabel);
+        gtk_widget_hide(publishedPortLabel);
+	gtk_widget_hide(publishedAddressEntry);
+        gtk_widget_hide(publishedPortSpinBox);
+    } else {
+        gtk_widget_hide(stunServerLabel);
+        gtk_widget_hide(stunServerEntry);
+	gtk_widget_set_sensitive(sameAsLocalRadioButton, TRUE);
+	gtk_widget_set_sensitive(publishedAddrRadioButton, TRUE);
+	if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
+	    gtk_widget_show(publishedAddressLabel);
+	    gtk_widget_show(publishedPortLabel);
+	    gtk_widget_show(publishedAddressEntry);
+	    gtk_widget_show(publishedPortSpinBox);
+	}
+    }
+ 
+}
+
+static same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+        DEBUG("Same as local");
+		gchar * ip_address = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+	    gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), ip_address);
+	    
+        gchar * local_port = (gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(local_port, NULL));
+    } 
+}
+
+
+
 GtkWidget * create_security_tab(account_t **a)
 {
-	GtkWidget * frame;
-	GtkWidget * table;
-	GtkWidget * label;
-	GtkWidget * ret;
-	GtkWidget * hbox;
-	GtkWidget * editButton;
+    GtkWidget * frame;
+    GtkWidget * table;
+    GtkWidget * label;
+    GtkWidget * ret;
+    GtkWidget * hbox;
+    GtkWidget * editButton;
     GtkWidget * addButton;
-	GtkCellRenderer * renderer;
+    GtkCellRenderer * renderer;
     GtkTreeViewColumn * treeViewColumn;
     GtkTreeSelection * treeSelection;
 	
-	ret = gtk_vbox_new(FALSE, 10);
+    ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
     
-	account_t * currentAccount;
-	currentAccount = *a;
+    account_t * currentAccount;
+    currentAccount = *a;
 	
     gchar * curSRTPEnabled = NULL;
     gchar * curKeyExchange = NULL;
     gchar * curTLSEnabled = NULL;
+
+    gchar* published_address;
+    gchar* published_port;
     
-	// Load from SIP/IAX/Unknown ?
-	if(currentAccount) {	
+    // Load from SIP/IAX/Unknown ?
+    if(currentAccount) {	
         curKeyExchange = g_hash_table_lookup(currentAccount->properties, ACCOUNT_KEY_EXCHANGE);
-		if (curKeyExchange == NULL) {
-		    curKeyExchange = "none";
-		}		
+	if (curKeyExchange == NULL) {
+	    curKeyExchange = "none";
+	}		
 		      		  
         curSRTPEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SRTP_ENABLED);
         if (curSRTPEnabled == NULL) {
-            curSRTPEnabled = "false";
+	    curSRTPEnabled = "false";
         }
         
         curTLSEnabled = g_hash_table_lookup(currentAccount->properties, TLS_ENABLE);
         if (curTLSEnabled == NULL) {
             curTLSEnabled = "false";
-        } 
+        }
+
+	published_address = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_ADDRESS);
+
+	published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
         
         DEBUG("TLS is enabled to %s", curTLSEnabled);       
-	} 
-  	
+    } 
+    
     /* Credentials tree view */
     gnome_main_section_new_with_table (_("Credential"), &frame, &table, 1, 1);
-	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-	gtk_table_set_row_spacings(GTK_TABLE(table), 10);
+    gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+    gtk_table_set_row_spacings(GTK_TABLE(table), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 	
     scrolledWindowCredential = gtk_scrolled_window_new(NULL, NULL);
@@ -573,13 +643,13 @@ GtkWidget * create_security_tab(account_t **a)
     g_signal_connect (deleteCredButton, "clicked", G_CALLBACK (delete_credential_cb), treeViewCredential);
     gtk_box_pack_start(GTK_BOX(hbox), deleteCredButton, FALSE, FALSE, 0);
  
-    /* SRTP Section */
+
+    /* Security Section */
     gnome_main_section_new_with_table (_("Security"), &frame, &table, 2, 3);
     gtk_container_set_border_width (GTK_CONTAINER(table), 10);
     gtk_table_set_row_spacings (GTK_TABLE(table), 10);
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
-
 
     /* TLS subsection */
     GtkWidget * sipTlsAdvancedButton;
@@ -595,7 +665,7 @@ GtkWidget * create_security_tab(account_t **a)
        	    
     /* ZRTP subsection */
     label = gtk_label_new_with_mnemonic (_("SRTP key exchange"));
- 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     keyExchangeCombo = gtk_combo_box_new_text();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), keyExchangeCombo);
     gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "ZRTP");
@@ -620,9 +690,9 @@ GtkWidget * create_security_tab(account_t **a)
     
 	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), currentAccount);
     
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
-    gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 1, 2);    
-    gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 5, 6);
+    gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 5, 6);    
+    gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 5, 6);
 
     gtk_widget_show_all(table);
     
@@ -634,64 +704,13 @@ GtkWidget * create_security_tab(account_t **a)
     gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTable.width, 120);
     	
     gtk_widget_show_all(ret);
+
+    same_as_local_cb(sameAsLocalRadioButton, NULL);
+    set_published_addr_manually_cb(publishedAddrRadioButton, NULL);
     
 	return ret;
 }
 
-static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Showing stun options");
-        gtk_widget_show(stunServerLabel);
-        gtk_widget_show(stunServerEntry);
-	gtk_widget_set_sensitive(sameAsLocalRadioButton, FALSE);
-	gtk_widget_set_sensitive(publishedAddrRadioButton, FALSE);
-	gtk_widget_hide(publishedAddressLabel);
-        gtk_widget_hide(publishedPortLabel);
-	gtk_widget_hide(publishedAddressEntry);
-        gtk_widget_hide(publishedPortSpinBox);
-    } else {
-        gtk_widget_hide(stunServerLabel);
-        gtk_widget_hide(stunServerEntry);
-	gtk_widget_set_sensitive(sameAsLocalRadioButton, TRUE);
-	gtk_widget_set_sensitive(publishedAddrRadioButton, TRUE);
-	if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
-	    gtk_widget_show(publishedAddressLabel);
-	    gtk_widget_show(publishedPortLabel);
-	    gtk_widget_show(publishedAddressEntry);
-	    gtk_widget_show(publishedPortSpinBox);
-	}
-    }
- 
-}
-
-static same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Same as local");
-		gchar * ip_address = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
-	    gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), ip_address);
-	    
-        gchar * local_port = (gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(local_port, NULL));
-    } 
-}
-
-static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Showing manual options");    
-    	gtk_widget_show(publishedPortLabel);            
-    	gtk_widget_show(publishedPortSpinBox);
-    	gtk_widget_show(publishedAddressLabel);                	
-    	gtk_widget_show(publishedAddressEntry);
-    } else {
-    	gtk_widget_hide(publishedPortLabel);            
-    	gtk_widget_hide(publishedPortSpinBox);
-    	gtk_widget_hide(publishedAddressLabel);                	
-    	gtk_widget_hide(publishedAddressEntry);
-    }
-}
 
 GtkWidget * create_advanced_tab(account_t **a)
 {
@@ -771,9 +790,9 @@ GtkWidget * create_advanced_tab(account_t **a)
 	GtkTreeIter iter;
     
 	ipInterfaceListStore =  gtk_list_store_new( 1, G_TYPE_STRING );
-	label = gtk_label_new_with_mnemonic (_("Local address"));    
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+	localAddressLabel = gtk_label_new_with_mnemonic (_("Local address"));    
+	gtk_table_attach ( GTK_TABLE( table ), localAddressLabel, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_misc_set_alignment(GTK_MISC (localAddressLabel), 0, 0.5);
 			
 	GtkTreeIter current_local_address_iter = iter;   
 	gchar ** iface_list = NULL;
@@ -794,7 +813,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	}
     
 	localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
-	gtk_label_set_mnemonic_widget(GTK_LABEL(label), localAddressCombo);
+	gtk_label_set_mnemonic_widget(GTK_LABEL(localAddressLabel), localAddressCombo);
 	gtk_table_attach ( GTK_TABLE( table ), localAddressCombo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	g_object_unref(G_OBJECT(ipInterfaceListStore));	
     
@@ -808,11 +827,11 @@ GtkWidget * create_advanced_tab(account_t **a)
 	/**
 	 * Local port
 	 */	    
-	label = gtk_label_new_with_mnemonic (_("Local port"));
-	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
-	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+	localPortLabel = gtk_label_new_with_mnemonic (_("Local port"));
+	gtk_table_attach_defaults(GTK_TABLE(table), localPortLabel, 0, 1, 1, 2);
+	gtk_misc_set_alignment(GTK_MISC (localPortLabel), 0, 0.5);
 	localPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
-	gtk_label_set_mnemonic_widget (GTK_LABEL (label), localPortSpinBox);
+	gtk_label_set_mnemonic_widget (GTK_LABEL (localPortLabel), localPortSpinBox);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), g_ascii_strtod(local_port, NULL));
 
 	gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
@@ -855,6 +874,8 @@ GtkWidget * create_advanced_tab(account_t **a)
 	}
 
 	gtk_widget_show_all(ret);
+
+	use_stun_cb (GTK_WIDGET (useStunCheckBox), NULL);
     		
 	publishedAddressLabel = gtk_label_new_with_mnemonic (_("Published address"));
 	gtk_table_attach_defaults( GTK_TABLE(table), publishedAddressLabel, 0, 1, 5, 6);
@@ -870,6 +891,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	publishedPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
 	gtk_label_set_mnemonic_widget(GTK_LABEL (publishedPortLabel), publishedPortSpinBox);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(published_port, NULL));
+
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedPortSpinBox, 1, 2, 6, 7);
 	 
 	use_stun_cb (GTK_WIDGET (useStunCheckBox), NULL);
@@ -879,7 +901,6 @@ GtkWidget * create_advanced_tab(account_t **a)
 	g_signal_connect(useStunCheckBox, "toggled", G_CALLBACK(use_stun_cb), useStunCheckBox);		    		
 	g_signal_connect(sameAsLocalRadioButton, "toggled", G_CALLBACK(same_as_local_cb), sameAsLocalRadioButton);   
 	g_signal_connect(publishedAddrRadioButton, "toggled", G_CALLBACK(set_published_addr_manually_cb), publishedAddrRadioButton);
-
 
 	return ret;
 }
