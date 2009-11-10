@@ -163,6 +163,10 @@ static GtkWidget * create_basic_tab(account_t **a)
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
 	}
 
+	DEBUG("-------- Basic parameters from config");
+	DEBUG("curAccountID %s, curAccountType %s, curAccountEnabled %s, curAlias %s, curHostname %s, curPassword %s, curUsername %s, curMailbox %s\n", curAccountID, curAccountType, curAccountEnabled, curAlias, curHostname, curPassword, curUsername, curMailbox);
+	
+
 	gnome_main_section_new (_("Account Parameters"), &frame);
 	gtk_widget_show(frame);
 
@@ -676,7 +680,9 @@ GtkWidget * create_advanced_tab(account_t **a)
 		published_address = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_ADDRESS);
 		published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
 		stun_enable = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_ENABLED);
-		stun_server = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_SERVER);				
+		stun_server = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_SERVER);
+		DEBUG("-------- Advanced parameters from config");
+		DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s\n", resolve_once, account_expire, use_tls, published_address, published_port, local_address, local_port, stun_enable, stun_server);
 	} 
 
 	gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
@@ -761,6 +767,9 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
 
 
+	/**
+	 *  Published address field
+	 */ 
 	gnome_main_section_new_with_table (_("Published address"), &frame, &table, 2, 3);
 	gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
@@ -769,6 +778,8 @@ GtkWidget * create_advanced_tab(account_t **a)
 
 	useStunCheckBox = gtk_check_button_new_with_mnemonic(_("Using STUN"));
 	gtk_table_attach_defaults(GTK_TABLE(table), useStunCheckBox, 0, 1, 0, 1);
+	gtk_toggle_button_set_active (GTK_WIDGET(useStunCheckBox), 
+			g_strcasecmp(stun_enable, "true") == 0 ? TRUE: FALSE);
 	gtk_widget_set_sensitive (GTK_WIDGET(useStunCheckBox),
 			g_strcasecmp(use_tls,"true") == 0 ? FALSE: TRUE);
 
@@ -907,7 +918,7 @@ show_account_window (account_t * a)
 	dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
 				GTK_WINDOW(get_main_window()),
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-	    		GTK_STOCK_CANCEL,
+				GTK_STOCK_CANCEL,
 				GTK_RESPONSE_CANCEL,
 				GTK_STOCK_APPLY,				
 				GTK_RESPONSE_ACCEPT,
@@ -1006,8 +1017,34 @@ show_account_window (account_t * a)
 			g_hash_table_replace(currentAccount->properties,
     				g_strdup(PUBLISHED_ADDRESS),
     				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry))));
+			DEBUG("-------- Basic parameters to ne written in config");
+			DEBUG("curAccountID %s, curAccountType %s, curAlias %s, curHostname %s, curPassword %s, curUsername %s, curMailbox %s\n", 
+			      (gchar *)currentAccount->accountID, 
+			      (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox)), 
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryAlias)), 
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryHostname)), 
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryPassword)), 
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryUsername)),
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))
+			      );
+
+
+			DEBUG("-------- Advanced parameters to be written");
+			DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s\n", 
+			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "false": "true",
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox)), 
+			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false",
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(publishedPortSpinBox)), 
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry)),
+			      (gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox)), 
+			      (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)),
+			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useStunCheckBox)) ? "true":"false",
+			      gtk_entry_get_text(GTK_ENTRY(stunServerEntry))
+			      );
 	    
 		}
+
+		
 
 		/* Set new credentials if any */
 	    
