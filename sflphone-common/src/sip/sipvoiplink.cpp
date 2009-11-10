@@ -397,8 +397,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pjsip_generic_string_hdr *h;
     pjsip_hdr hdr_list;
 
-    _debug ("SIPVoIPLink::sendRegister()\n");
-
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
     if (account == NULL) {
@@ -586,10 +584,10 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
 
-    // pjsip_tpselector *tp;
+    pjsip_tpselector *tp;
 
-    // init_transport_selector (account->getAccountTransport (), &tp);
-    // status = pjsip_regc_set_transport (regc, tp);
+    init_transport_selector (account->getAccountTransport (), &tp);
+    status = pjsip_regc_set_transport (regc, tp);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to set transport.\n");
@@ -1320,9 +1318,9 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     call->setInvSession (inv);
 
     // Set the appropriate transport
-    // pjsip_tpselector *tp;
-    // init_transport_selector (account->getAccountTransport (), &tp);
-    // status = pjsip_dlg_set_transport (dialog, tp);
+    pjsip_tpselector *tp;
+    init_transport_selector (account->getAccountTransport (), &tp);
+    status = pjsip_dlg_set_transport (dialog, tp);
 
     status = pjsip_inv_send_msg (inv, tdata);
 
@@ -1968,7 +1966,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     pjsip_tpmgr_dump_transports (tpmgr);
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: (%d) Unable to start UDP transport!\n", status);
+        _debug ("UserAgent: (%d) Unable to start UDP transport on %s:%d\n", status, listeningAddress.data(), listeningPort);
         // Try to acquire an existing one
         // pjsip_tpmgr_acquire_transport ()
         return status;
@@ -2212,6 +2210,8 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     pj_uint16_t stunPort;
     pj_sockaddr_in pub_addr;
     pj_sock_t sock;
+	std::string listeningAddress = "";
+	int listeningPort;
 
     /*
      * Retrieve the account information
@@ -2272,15 +2272,12 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     a_name.host = pj_str (pj_inet_ntoa (pub_addr.sin_addr));
     a_name.port = pj_ntohs (pub_addr.sin_port);
 
-    _localExternAddress = std::string (a_name.host.ptr);
-    _localExternPort = (int) a_name.port;
+    listeningAddress = std::string (a_name.host.ptr);
+    listeningPort = (int) a_name.port;
 
     // Set the address to be used in SDP
-    account->setSessionAddress (_localExternAddress);
-    account->setSessionPort (_localExternPort);
-
-    //account->setStunServerName (a_name.host);
-    //account->setStunPort (a_name.port);
+	account->setPublishedAddress (listeningAddress);
+    account->setPublishedPort (listeningPort);
 
     // Create the UDP transport
     pjsip_transport *transport;
@@ -2288,8 +2285,10 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 
     if (status != PJ_SUCCESS) {
         _debug ("Error creating alternate SIP UDP listener (%d)\n", status);
+		return status;
     }
 
+	_debug ("UDP Transport successfully created on %s:%i\n", listeningAddress.c_str (), listeningPort);
     account->setAccountTransport (transport);
 
     return PJ_SUCCESS;
