@@ -147,14 +147,27 @@ static void sip_apply_callback( void ) {
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ZRTP_HELLO_HASH), g_strdup((gchar *)"true"));
         	    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_DISPLAY_SAS_ONCE), g_strdup((gchar *)"false"));
         }
-		
-		dbus_add_account( current );
-		getMessageSummary(message, 
-			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
-			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
-			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username)),
-			(gboolean)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)))
-		);
+
+
+	// Add default interface info
+	gchar ** iface_list = NULL;
+	iface_list = (gchar**) dbus_get_all_ip_interface();
+        gchar ** iface = NULL;
+
+	// select the first interface available
+	iface = iface_list;
+	DEBUG("Selected interface %s", *iface);
+
+	g_hash_table_insert(current->properties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)*iface));
+	g_hash_table_insert(current->properties, g_strdup(PUBLISHED_ADDRESS), g_strdup((gchar *)*iface));
+
+	dbus_add_account( current );
+	getMessageSummary(message, 
+			  gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
+			  gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
+			  gtk_entry_get_text (GTK_ENTRY(wiz->sip_username)),
+			  (gboolean)(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->zrtp_enable)))
+			  );
 
 	gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}

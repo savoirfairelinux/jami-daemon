@@ -94,8 +94,8 @@ curent_selected_codec (DBusGProxy *proxy UNUSED,
         const gchar* codecName,
         void * foo  UNUSED )
 {
-    DEBUG ("%s codec decided for call %s",codecName,callID);
-    sflphone_display_selected_codec (codecName);
+    // DEBUG ("%s codec decided for call %s",codecName,callID);
+    // sflphone_display_selected_codec (codecName);
 }
 
     static void
@@ -233,28 +233,37 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
     DEBUG ("-------------------- Conference changed ---------------------\n");
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get(confID);
+    gchar** participants;
+    gchar** part;
 
-    DEBUG("    %s\n", state);
+    DEBUG("conference new state %s\n", state);
 
     if(changed_conf)
     {
+        // remove old conference from calltree
 	calltree_remove_conference (current_calls, changed_conf, NULL);
 
-	if ( strcmp(state, "ACTIVE_ATACHED") == 0 )
-	{
+	// update conference state
+	if ( strcmp(state, "ACTIVE_ATACHED") == 0 ) {
 	    changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
 	}
-	else if ( strcmp(state, "ACTIVE_DETACHED") == 0 )
-	{
+	else if ( strcmp(state, "ACTIVE_DETACHED") == 0 ) {
 	    changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
 	}
-	else if ( strcmp(state, "HOLD") == 0 )
-	{
+	else if ( strcmp(state, "HOLD") == 0 ) {
 	    changed_conf->_state = CONFERENCE_STATE_HOLD;
 	}
+	else {
+	    DEBUG("Error: conference state not recognized");
+	}
+	
 
-	changed_conf->participant = (gchar**)dbus_get_participant_list(changed_conf->_confID);
+	participants = (gchar**)dbus_get_participant_list(changed_conf->_confID);
 
+	// update conferece participants
+	conference_participant_list_update(participants, changed_conf);
+	
+	// add new conference to calltree
 	calltree_add_conference (current_calls, changed_conf);
     }
 }
@@ -270,22 +279,25 @@ conference_created_cb (DBusGProxy *proxy UNUSED,
     conference_obj_t* new_conf;
     callable_obj_t* call;
     gchar* call_id;
-    gchar** participant;
-    gchar** pl;
+    gchar** participants;
+    gchar** part;
 
     create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
-    new_conf->_confID = g_strdup(confID);
-    new_conf->participant = (gchar**)dbus_get_participant_list(new_conf->_confID);
-    conferencelist_add(new_conf);
+    // new_conf->_confID = g_strdup(confID);
 
-    participant = new_conf->participant;
-    for (pl = participant; *participant; participant++)
+    participants = (gchar**)dbus_get_participant_list(new_conf->_confID);
+
+    conference_participant_list_update(participants, new_conf);
+
+    // participant = new_conf->participant;
+    for (part = participants; *part; part++)
     {	    
-	call_id = (gchar*)(*participant);
+	call_id = (gchar*)(*part);
 	call = calllist_get (current_calls, call_id);
 	call->_confID = g_strdup(confID);
     }
 
+    conferencelist_add(new_conf);
     calltree_add_conference (current_calls, new_conf);
 }
 
@@ -1219,13 +1231,10 @@ dbus_codec_details( int payload )
     return array;
 }
 
-    gchar*
-dbus_get_current_codec_name(const callable_obj_t * c)
+gchar* dbus_get_current_codec_name (const callable_obj_t * c)
 {
 
-    DEBUG("dbus_get_current_codec_name : CallID : %s", c->_callID);
-
-    gchar* codecName;
+    gchar* codecName= "";
     GError* error = NULL;
 
     org_sflphone_SFLphone_CallManager_get_current_codec_name (
@@ -2013,38 +2022,6 @@ dbus_get_notify( void )
     }
 }
 
-
-    void
-dbus_set_mail_notify( void )
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_mail_notify(
-            configurationManagerProxy,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-}
-
-    guint
-dbus_get_mail_notify( void )
-{
-    gint level;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_mail_notify(
-            configurationManagerProxy,
-            &level,
-            &error);
-    if(error)
-    {
-        ERROR("Error calling dbus_get_mail_notif_level");
-        g_error_free(error);
-    }
-
-    return (guint)level;
-}
-
     void
 dbus_set_audio_manager( int api )
 {
@@ -2075,31 +2052,6 @@ dbus_get_audio_manager( void )
     }
 
     return api;
-}
-
-    void
-dbus_set_pulse_app_volume_control( void )
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_pulse_app_volume_control(
-            configurationManagerProxy,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-}
-
-   gchar* 
-dbus_get_pulse_app_volume_control( void )
-{
-    gchar* state;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_pulse_app_volume_control(
-            configurationManagerProxy,
-            &state,
-            &error);
-    return state;
 }
 
     void
@@ -2260,6 +2212,8 @@ gchar** dbus_get_participant_list (const char * confID)
 {
     GError *error = NULL;
     gchar **list = NULL;
+
+    DEBUG("get participant list")
 
     org_sflphone_SFLphone_CallManager_get_participant_list (callManagerProxy, confID, &list, &error);
     if (error){

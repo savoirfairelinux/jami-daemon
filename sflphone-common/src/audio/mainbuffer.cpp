@@ -435,7 +435,7 @@ int MainBuffer::availForGet(CallID call_id)
 	// _debug("MainBuffer::availForGet availForGetByID(%s,%s)\n", (*iter_id).c_str(), call_id.c_str());
 	if((call_id != default_id) && (*iter_id == call_id))
 	{
-	    _debug("This problem should not occur since we have %i element\n", callid_set->size());
+	  _debug("This problem should not occur since we have %i element\n", (int)callid_set->size());
 	}
 	// else
 	return availForGetByID(*iter_id, call_id);
@@ -586,10 +586,15 @@ void MainBuffer::flushByID(CallID call_id, CallID reader_id)
 
 void MainBuffer::flushAllBuffers()
 {
+
+  // _debug("-------------------------- flushAllBuffers()\n");
+
     RingBufferMap::iterator iter_buffer = _ringBufferMap.begin();
 
     while(iter_buffer != _ringBufferMap.end())
     {
+      // _debug("--------------------------    flushing: %s\n",iter_buffer->second->getBufferId().c_str());
+
 	iter_buffer->second->flushAll();
 
 	iter_buffer++;

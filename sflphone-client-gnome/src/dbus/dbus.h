@@ -349,17 +349,6 @@ int dbus_is_ringtone_enabled( void );
 void dbus_ringtone_enabled( void );
 
 /**
- * ConfigurationManager - Set PA behaviour for the other sound streams
- * Inverse current value
- */
-void dbus_set_pulse_app_volume_control( void );
-
-/**
- * ConfigurationManager - Get PA behaviour for the other sound streams
- */
-gchar* dbus_get_pulse_app_volume_control( void );
-
-/**
  * ConfigurationManager - Get the ringtone
  * @return gchar* The file name selected as a ringtone
  */
@@ -476,18 +465,6 @@ guint dbus_get_notify( void );
 void dbus_set_notify( void );
 
 /**
- * ConfigurationManager - Configure the mail notification level
- * @return int	0 disable
- *		1 enable
- */
-guint dbus_get_mail_notify( void );
-
-/**
- * ConfigurationManager - Configure the mail notification level
- */
-void dbus_set_mail_notify( void );
-
-/**
  * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed
  * @param start 1 to start
  *		0 to stop
@@ -555,6 +532,10 @@ gboolean dbus_get_is_recording(const callable_obj_t *);
 GHashTable* dbus_get_call_details (const gchar* callID);
 
 gchar** dbus_get_call_list (void);
+
+GHashTable* dbus_get_conference_details (const gchar* confID);
+
+gchar** dbus_get_conference_list (void);
 
 void dbus_set_accounts_order (const gchar* order);
 

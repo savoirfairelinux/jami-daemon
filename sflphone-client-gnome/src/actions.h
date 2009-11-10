@@ -185,10 +185,6 @@ void sflphone_record (callable_obj_t *c);
 
 void sflphone_rec_call (void);
 
-gchar* sflphone_get_current_codec_name();
-
-void sflphone_display_selected_codec (const gchar* codecName);
-
 void status_bar_display_account ();
 
 void sflphone_fill_history (void);

@@ -165,8 +165,6 @@ void update_actions()
 				gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
 				gtk_widget_set_sensitive (GTK_WIDGET (newCallWidget), TRUE);
 				// Replace the hold button with the off-hold button
-				//g_object_ref (holdToolbar);
-				gtk_container_remove (GTK_CONTAINER (toolbar), GTK_WIDGET(holdToolbar));
 				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
 				gtk_toolbar_insert (GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
 				break;
@@ -223,47 +221,25 @@ void update_actions()
 		}
 	}
 
-	else if(selectedConf)
-	{
-		/*
-		switch(selectedConf->_state)
-		{
-			case CONFERENCE_STATE_ACTIVE_ATACHED:
-				gtk_action_set_sensitive( GTK_ACTION(recordAction),        FALSE);
-				break;
-			case CONFERENCE_STATE_ACTIVE_DETACHED:
-				gtk_action_set_sensitive( GTK_ACTION(recordAction),        FALSE);
-				break;
-			case CONFERENCE_STATE_RECORD:
-				gtk_action_set_sensitive( GTK_ACTION(recordAction),        FALSE);
-				break;
-			case CONFERENCE_STATE_HOLD:
-				gtk_action_set_sensitive( GTK_ACTION(recordAction),        FALSE);
-				break;
-			default:
-				break;
-		}
-		*/
-	}
-
 	else
 	{
-		if( account_list_get_size() > 0 )
+		if( account_list_get_size() > 0  && current_account_has_mailbox ())
 		{
-			//gtk_widget_set_sensitive (GTK_WIDGET(callButton), TRUE);
-			if (account_list_current_account_has_mailbox ())
-				gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (voicemailToolbar), -2);
+			gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (voicemailToolbar), -2);
+			update_voicemail_status ();
 		}
-		else
-		{
-			// gtk_widget_set_sensitive (GTK_WIDGET(callButton), FALSE);
-		}
-
-		// gtk_action_set_sensitive( GTK_ACTION(newCallMenu), TRUE);
 	}
-	// gtk_signal_handler_unblock (holdToolbar, holdConnId);
-	// gtk_signal_handler_unblock (offHoldToolbar, holdConnId);
+}
 
+void update_voicemail_status (void)
+{
+	gchar *messages = "";
+	messages = g_markup_printf_escaped (_("Voicemail (%i)"), current_account_get_message_number ());
+	(current_account_has_new_message ()) ?
+				gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (voicemailToolbar), "mail-message-new"):
+				gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (voicemailToolbar), "mail-read");
+	gtk_tool_button_set_label (GTK_TOOL_BUTTON (voicemailToolbar), messages);
+	g_free (messages);
 }
 
 static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
@@ -297,18 +273,18 @@ static void help_contents_cb (GtkAction *action)
 static void help_about ( void * foo UNUSED)
 {
 	gchar *authors[] = {
+		"Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
+		"Jean-Philippe Barrette-LaPierre",
+		"Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
+		"Julien Bonjean <julien.bonjean@savoirfairelinux.com>",
+		"Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
+		"Laurielle Lea",
+		"Yun Liu <yun.liu@savoirfairelinux.com>",
+		"Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
 		"Yan Morin <yan.morin@savoirfairelinux.com>",
 		"Jérôme Oufella <jerome.oufella@savoirfairelinux.com>",
 		"Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
-		"Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
-		"Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
-		"Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>",
-		"Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
-		"Yun Liu <yun.liu@savoirfairelinux.com>",
 		"Alexandre Savard <alexandre.savard@savoirfairelinux.com>",
-		"Jean-Philippe Barrette-LaPierre",
-		"Laurielle Lea",
-		"Pierre-Luc Bacon <pierre-luc.bacon@savoifairelinux.com>",
 		NULL};
 	gchar *artists[] = {
 		"Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
@@ -624,29 +600,6 @@ static void clear_history (void)
 	}
 }
 
-/*
-static void calltree_switch_cb (GtkRadioAction *action, GtkRadioAction *current)
-{
-	gint value = gtk_radio_action_get_current_value (current);
-	switch (value)
-	{
-		case CALLTREE_CALLS:
-			calltree_display (current_calls);
-			break;
-		case CALLTREE_HISTORY:
-			calltree_display (history);
-			break;
-		case CALLTREE_CONTACTS:
-			calltree_display (contacts);
-			break;
-		default:
-			calltree_display (current_calls);
-			break;
-	}
-}
-*/
-
-
 /**
  * Transfert the line
  */
@@ -703,7 +656,7 @@ static const GtkActionEntry menu_entries[] = {
 	{ "OffHold", GTK_STOCK_OFFHOLD, "O_ff hold", "<control>P", "Place the call off hold", G_CALLBACK (call_hold) },    
 	{ "Record", GTK_STOCK_MEDIA_RECORD, "_Record", "<control>R", "Record the current conversation", G_CALLBACK (call_record) },        
 	{ "AccountAssistant", NULL, "Configuration _Assistant", NULL, "Run the configuration assistant", G_CALLBACK (call_configuration_assistant) },    
-	{ "Voicemail", "mail-message-new", "Voicemail", NULL, "Call your voicemail", G_CALLBACK (call_mailbox_cb) },    
+	{ "Voicemail", "mail-read", "Voicemail", NULL, "Call your voicemail", G_CALLBACK (call_mailbox_cb) },    
 	{ "Close", GTK_STOCK_CLOSE, "_Close", "<control>W", "Minimize to system tray", G_CALLBACK (call_minimize) },
 	{ "Quit", GTK_STOCK_CLOSE, "_Quit", "<control>Q", "Quit the program", G_CALLBACK (call_quit) },   
 
@@ -1069,6 +1022,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 	gboolean pickup = FALSE;
 	gboolean remove = FALSE;
 	gboolean edit = FALSE;
+	gboolean accounts = FALSE;
 
 	callable_obj_t * selectedCall = calltab_get_selected_call( history );
 	if (selectedCall)
@@ -1076,6 +1030,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 		remove = TRUE;
 		pickup = TRUE;
 		edit = TRUE;
+		accounts = TRUE;
 	}
 
 	GtkWidget *menu;
@@ -1117,6 +1072,11 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 		g_signal_connect (G_OBJECT (menu_items), "activate", G_CALLBACK (remove_from_history),  NULL);
 		gtk_widget_show (menu_items);
+	}
+
+	if(accounts)
+	{
+		add_registered_accounts_to_menu (menu);
 	}
 
 	if (event)

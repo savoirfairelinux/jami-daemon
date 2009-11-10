@@ -328,7 +328,7 @@ guint account_list_get_position (account_t *account)
     return -1;
 }
 
-gboolean account_list_current_account_has_mailbox (void)
+gboolean current_account_has_mailbox (void)
 {
 
     account_t *current;
@@ -345,3 +345,38 @@ gboolean account_list_current_account_has_mailbox (void)
     return FALSE;
 }
 
+void current_account_set_message_number (guint nb)
+{
+    account_t *current;
+    
+	current = account_list_get_current ();
+    if (current)
+    {
+		current->_messages_number = nb;
+	}
+}
+
+guint current_account_get_message_number (void)
+{
+    account_t *current;
+    
+	current = account_list_get_current ();
+    if (current)
+    {
+		return current->_messages_number;
+	}
+	else
+		return 0;
+}
+
+gboolean current_account_has_new_message (void)
+{
+    account_t *current;
+    
+	current = account_list_get_current ();
+    if (current)
+    {
+		return (current->_messages_number > 0);
+	}
+	return FALSE;
+}
