@@ -1,7 +1,8 @@
 # Global variables
 src=$(top_srcdir)
-sflcodecdir=$(DESTDIR)$(libdir)/sflphone/codecs
-sflplugindir=$(DESTDIR)$(libdir)/sflphone/plugins
+sfllibdir=$(DESTDIR)$(libdir)/sflphone
+sflcodecdir=$(sfllibdir)/codecs
+sflplugindir=$(sfllibdir)/plugins
 
 ASTYLERC="../astylerc"
 indent="/usr/bin/astyle"
