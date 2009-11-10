@@ -265,7 +265,7 @@ ManagerImpl::outgoingCall (const std::string& account_id, const CallID& call_id,
         _cleaner->set_phone_number_prefix (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX));
     else
         _cleaner->set_phone_number_prefix ("");
- 
+
     to_cleaned = _cleaner->clean (to);
 
     /* Check what kind of call we are dealing with */
@@ -382,7 +382,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 
     // if it was waiting, it's waiting no more
     if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "CURRENT");
-        
+
     // std::string codecName = Manager::instance().getCurrentCodecName (call_id);
     // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id, codecName.c_str());
 
@@ -1728,22 +1728,23 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     associateCallToAccount (call->getCallId(), accountId);
 
     // If account is null it is an ip to ip call
+
     if (accountId==AccountNULL) {
-        
+
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
-    }
-    else {
-        // strip sip: which is not required and bring confusion with ip to ip calls 
+    } else {
+        // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history (if call is IAX, do nothing)
         std::string peerNumber = call->getPeerNumber();
 
-        int startIndex = peerNumber.find("sip:");
+        int startIndex = peerNumber.find ("sip:");
 
-	// if "sip:" is found => it is not an IAX call
-	if(startIndex != (int)string::npos) {
-	    std::string strippedPeerNumber = peerNumber.substr(startIndex+4);
-	    call->setPeerNumber(strippedPeerNumber);
-	}
+        // if "sip:" is found => it is not an IAX call
+
+        if (startIndex != (int) string::npos) {
+            std::string strippedPeerNumber = peerNumber.substr (startIndex+4);
+            call->setPeerNumber (strippedPeerNumber);
+        }
 
     }
 
@@ -3232,6 +3233,9 @@ void ManagerImpl::setSipPort (int port)
 
 int ManagerImpl::getSipPort (void)
 {
+	int port;
+
+	// port = getConfigInt (IP2IP , CONFIG_SIP_PORT)
     return getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
 }
 
@@ -3669,7 +3673,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string authenticationName;
     std::string password;
     std::string realm;
-	std::string voicemail_count;
+    std::string voicemail_count;
 
     if ( (iter = map_cpy.find (AUTHENTICATION_USERNAME)) != map_cpy.end()) {
         authenticationName = iter->second;
@@ -3686,8 +3690,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if ( (iter = map_cpy.find (REALM)) != map_cpy.end()) {
         realm = iter->second;
     }
-    
+
     setConfig (accountID, REALM, realm);
+
     setConfig (accountID, USERNAME, username);
     setConfig (accountID, AUTHENTICATION_USERNAME, authenticationName);
 
@@ -4151,6 +4156,14 @@ ManagerImpl::loadAccountMap()
 
     TokenList::iterator iter = sections.begin();
 
+	// Those calls that are placed to an uri that cannot be
+    // associated to an account are using that special account.
+    // An account, that is not account, in the sense of
+    // registration. This is useful since the Account object
+    // provides a handful of method that simplifies URI creation
+    // and loading of various settings.
+    _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
+
     while (iter != sections.end()) {
         // Check if it starts with "Account:" (SIP and IAX pour le moment)
         if ( (int) (iter->find ("Account:")) != 0) {
@@ -4181,20 +4194,13 @@ ManagerImpl::loadAccountMap()
         iter++;
     }
 
-    // Those calls that are placed to an uri that cannot be
-    // associated to an account are using that special account.
-    // An account, that is not account, in the sense of
-    // registration. This is useful since the Account object
-    // provides a handful of method that simplifies URI creation
-    // and loading of various settings.
-    _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
-
     if (_directIpAccount == NULL) {
         _debug ("Failed to create direct ip calls \"account\"\n");
     } else {
         // Force the options to be loaded
         // No registration in the sense of
         // the REGISTER method is performed.
+        _debug ("Succeed to create direct ip calls \"account\"\n");
         _directIpAccount->registerVoIPLink();
     }
 
@@ -4239,6 +4245,7 @@ ManagerImpl::getAccount (const AccountID& accountID)
     // In our definition,
     // this is the "direct ip calls account"
     if (accountID == AccountNULL) {
+		_debug ("Returns the direct IP account\n");
         return _directIpAccount;
     }
 

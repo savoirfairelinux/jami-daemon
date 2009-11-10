@@ -177,7 +177,7 @@ int Sdp::create_initial_offer()
     status = create_local_offer();
 
     if (status != PJ_SUCCESS) {
-	_debug ("    Error: Failled to create initial offer\n");
+        _debug ("    Error: Failled to create initial offer\n");
         return status;
     }
 
@@ -185,7 +185,7 @@ int Sdp::create_initial_offer()
     status = pjmedia_sdp_neg_create_w_local_offer (_pool, get_local_sdp_session(), &_negociator);
 
     if (status != PJ_SUCCESS) {
-	_debug ("    Error: Failled to create an initial SDP negociator\n");
+        _debug ("    Error: Failled to create an initial SDP negociator\n");
         return status;
     }
 

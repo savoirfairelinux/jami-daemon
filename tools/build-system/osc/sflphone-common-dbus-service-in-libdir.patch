@@ -1,0 +1,14 @@
+diff --git sflphone-common/src/dbus/Makefile.am sflphone-common/src/dbus/Makefile.am
+index 5a2745e..5ca2e42 100644
+--- sflphone-common/src/dbus/Makefile.am
++++ sflphone-common/src/dbus/Makefile.am
+@@ -38,7 +38,7 @@ service_DATA = $(service_in_files:.service.in=.service)
+ 
+ # Rule to make the service file with bindir expanded
+ $(service_DATA): $(service_in_files) Makefile
+-	sed -e "s|libexec|$(prefix)/lib/sflphone|" $<> $@
++	sed -e "s|libexec|$(libdir)/sflphone|" $<> $@
+ 
+ EXTRA_DIST = *.xml README
+ 
+

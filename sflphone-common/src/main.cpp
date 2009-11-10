@@ -73,7 +73,8 @@ main (int argc, char **argv)
 
         sprintf (sfldir, "%s", path.c_str ());
 
-		path  = path + "sflphone";	
+        path  = path + "sflphone";
+
         sprintf (homepid, "%s/%s", path.c_str (), PIDFILE);
 
         if ( (fp = fopen (homepid,"r")) == NULL) {
@@ -88,15 +89,16 @@ main (int argc, char **argv)
                 }
             }
 
-			// Then create the sflphone directory inside the $XDG_CACHE_HOME dir
-			sprintf (sfldir, "%s", path.c_str ());
-			if ( (dir = opendir (sfldir)) == NULL) {
-				//Create it
-				if (mkdir (sfldir, 0755) != 0) {
-					fprintf (stderr, "Creating directory %s failed. Exited.\n", sfldir);
-					exit (-1);
-				}
-			}
+            // Then create the sflphone directory inside the $XDG_CACHE_HOME dir
+            sprintf (sfldir, "%s", path.c_str ());
+
+            if ( (dir = opendir (sfldir)) == NULL) {
+                //Create it
+                if (mkdir (sfldir, 0755) != 0) {
+                    fprintf (stderr, "Creating directory %s failed. Exited.\n", sfldir);
+                    exit (-1);
+                }
+            }
 
             // PID file doesn't exists, create and write pid in it
             if ( (fp = fopen (homepid,"w")) == NULL) {

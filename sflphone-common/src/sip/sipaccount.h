@@ -340,7 +340,7 @@ class SIPAccount : public Account
         
         pjsip_transport_type_e _transportType;
 
-	pjsip_transport* _transport;
+		pjsip_transport* _transport;
 
         // Special hack that is not here to stay
         // See #1852
@@ -359,15 +359,16 @@ class SIPAccount : public Account
         // The STUN server name, if applicable
         pj_str_t _stunServerName;	                                                  
 
-	// The STUN server port, if applicable
-	pj_uint16_t _stunPort;
+		// The STUN server port, if applicable
+		pj_uint16_t _stunPort;
         
         // Display Name that can be used in  SIP URI.        
         std::string _displayName;        
 
-	// The actual address we use in the SDP to be contacted
-	// it needs to be per account, otherwise the same address is used for every account
-	std::string _actualSessionAddress;
+		// The actual address we use in the SDP to be contacted
+		// it needs to be per account, otherwise the same address is used for every account
+		// TODO Use the published address or the local address
+		std::string _actualSessionAddress;
         pj_uint16_t _actualSessionPort;
 };
 

@@ -295,6 +295,8 @@ class SIPVoIPLink : public VoIPLink
 		 */
 		pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
 
+        bool loadSIPLocalIP (std::string *addr);
+
     private:
         /**
          * Constructor
@@ -364,15 +366,7 @@ class SIPVoIPLink : public VoIPLink
 
 		pj_status_t createAlternateUdpTransport (AccountID id);
         
-        bool loadSIPLocalIP();
-
         std::string getLocalIP() {return _localExternAddress;}
-
-        /* Flag to check if the STUN server is valid or not */
-        bool validStunServer;
-
-        /** The current STUN server address */
-        std::string _stunServer;
 
         /** Local Extern Address is the IP address seen by peers for SIP listener */
         std::string _localExternAddress;
@@ -382,9 +376,6 @@ class SIPVoIPLink : public VoIPLink
         
         /** For registration use only */
         int _regPort;
-
-        /** Do we use stun? */
-        bool _useStun;
 
         /** Threading object */
         EventThread* _evThread;
