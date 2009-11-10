@@ -18,11 +18,12 @@ WORKING_DIR="${ROOT_DIR}/sflphone-build-repository/tools/build-system"
 OSC_DIR="${WORKING_DIR}/osc"
 
 LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
-LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" )
+#LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" )
+#LAUNCHPAD_PACKAGES=( "sflphone-common" )
 
 REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
 
-SOFTWARE_VERSION="0.9.8~beta"
+SOFTWARE_VERSION="0.9.7.beta"
 
 VERSION_INDEX=1
 
@@ -36,7 +37,7 @@ do
 
 	cp -r ${REFERENCE_REPOSITORY}/${LAUNCHPAD_PACKAGE} ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}
 
-	cp ${OSC_DIR}/${LAUNCHPAD_PACKAGE}.spec .
+	cp ${OSC_DIR}/${LAUNCHPAD_PACKAGE}* .
 
 	sed -i -e "s/VERSION_INDEX/${VERSION_INDEX}/g" -e "s/VERSION/${SOFTWARE_VERSION}/g" ${LAUNCHPAD_PACKAGE}.spec
 
@@ -45,6 +46,8 @@ do
 	rm -rf ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION} 
 	
 	osc add ${LAUNCHPAD_PACKAGE}-${SOFTWARE_VERSION}.tar.gz
+	osc add *.patch
+
 	yes | osc commit --force -m "Version ${SOFTWARE_VERSION}"
 done
 

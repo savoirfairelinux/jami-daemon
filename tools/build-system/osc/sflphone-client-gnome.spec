@@ -64,10 +64,18 @@ Requires:	dbus-1-glib
 Requires:	gtk2
 Requires:	glib2
 Requires:	libnotify
+Requires:	libsexy
+
+%if %{defined suse_version}
 Requires:	librsvg
 Requires:	liblog4c3
-Requires:	libsexy
-# gdk-pixbuf-query-loaders > /etc/gtk-2.0/gdk-pixbuf.loaders
+%endif
+
+%if %{defined fedora_version}
+Requires:	librsvg2
+Requires:	log4c
+%endif
+
 Conflicts:	sflphone
 Prefix:		%{_prefix}
 
