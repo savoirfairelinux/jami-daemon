@@ -702,13 +702,13 @@ GtkWidget * create_security_tab(account_t **a)
     gtk_widget_size_request(GTK_WIDGET(treeViewCredential), &requisitionTreeView);
     gtk_widget_size_request(GTK_WIDGET(table), &requisitionTable);
     gtk_widget_set_size_request(GTK_WIDGET(scrolledWindowCredential), requisitionTable.width, 120);
-    	
-    gtk_widget_show_all(ret);
-
+ 
     same_as_local_cb(sameAsLocalRadioButton, NULL);
     set_published_addr_manually_cb(publishedAddrRadioButton, NULL);
+
+    gtk_widget_show_all(ret);
     
-	return ret;
+    return ret;
 }
 
 
