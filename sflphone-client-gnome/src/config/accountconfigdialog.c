@@ -486,11 +486,12 @@ static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-        DEBUG("Showing stun options");
+        DEBUG("Showing stun options, hiding Local/Published info");
         gtk_widget_show(stunServerLabel);
         gtk_widget_show(stunServerEntry);
 	gtk_widget_set_sensitive(sameAsLocalRadioButton, FALSE);
 	gtk_widget_set_sensitive(publishedAddrRadioButton, FALSE);
+	DEBUG("Problem occurs here");
 	gtk_widget_hide(publishedAddressLabel);
         gtk_widget_hide(publishedPortLabel);
 	gtk_widget_hide(publishedAddressEntry);
@@ -874,8 +875,6 @@ GtkWidget * create_advanced_tab(account_t **a)
 	}
 
 	gtk_widget_show_all(ret);
-
-	use_stun_cb (GTK_WIDGET (useStunCheckBox), NULL);
     		
 	publishedAddressLabel = gtk_label_new_with_mnemonic (_("Published address"));
 	gtk_table_attach_defaults( GTK_TABLE(table), publishedAddressLabel, 0, 1, 5, 6);
