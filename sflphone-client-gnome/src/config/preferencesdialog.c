@@ -154,9 +154,15 @@ GtkWidget* create_direct_ip_calls_tab()
     GtkWidget * table;
     GtkWidget * label;
     GtkWidget * explanationLabel;
+
+    GtkWidget * localPortLabel;
+    GtkWidget * localPortSpinBox;
+    GtkWidget * localAddressLabel;
+    GtkWidget * localAddressCombo;
+
     GtkWidget * keyExchangeCombo;
     GtkWidget * advancedZrtpButton;
-    GtkWidget * useSipTlsCheckBox;    
+    GtkWidget * useSipTlsCheckBox;  
     
     gchar * curSRTPEnabled = "false";
     gchar * curTlsEnabled = "false";    
@@ -183,6 +189,83 @@ GtkWidget* create_direct_ip_calls_tab()
  	gtk_misc_set_alignment(GTK_MISC(explanationLabel), 0, 0.5);    
     gtk_box_pack_start(GTK_BOX(vbox), explanationLabel, FALSE, FALSE, 0);
 
+    /**
+     * Network Interface Section 
+     */
+    gnome_main_section_new_with_table (_("Network Interface"), &frame, &table, 2, 2);
+    gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+    gtk_table_set_row_spacings (GTK_TABLE(table), 10);
+    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+
+    /**
+     * Retreive the list of IP interface from the 
+     * the daemon and build the combo box.
+     */
+    
+    GtkListStore * ipInterfaceListStore; 
+    GtkTreeIter iter;
+    
+    ipInterfaceListStore =  gtk_list_store_new( 1, G_TYPE_STRING );
+    localAddressLabel = gtk_label_new_with_mnemonic (_("Local address"));    
+    gtk_table_attach ( GTK_TABLE( table ), localAddressLabel, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_misc_set_alignment(GTK_MISC (localAddressLabel), 0, 0.5);
+			
+    GtkTreeIter current_local_address_iter = iter;   
+    gchar ** iface_list = NULL;
+    iface_list = (gchar**) dbus_get_all_ip_interface();
+    gchar ** iface = NULL;
+    
+    if (iface_list != NULL) {
+      for (iface = iface_list; *iface; iface++) {         
+	DEBUG("Interface %s", *iface);            
+	gtk_list_store_append(ipInterfaceListStore, &iter );
+	gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
+	
+	// if (g_strcmp0(*iface, local_address) == 0) {
+	// DEBUG("Setting active local address combo box");
+	current_local_address_iter = iter;
+	// }
+      }
+    }
+    
+    localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
+    gtk_label_set_mnemonic_widget(GTK_LABEL(localAddressLabel), localAddressCombo);
+    gtk_table_attach ( GTK_TABLE( table ), localAddressCombo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    g_object_unref(G_OBJECT(ipInterfaceListStore));	
+
+    GtkCellRenderer * ipInterfaceCellRenderer;
+    ipInterfaceCellRenderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
+    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
+    gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
+
+
+    /**
+     * Local port
+     */	    
+    /** SIP port information */
+    int local_port = dbus_get_sip_port();
+    if(local_port <= 0 || local_port > 65535) {
+        local_port = 5060; 
+    }
+
+    GtkWidget *applySipPortButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+
+    localPortLabel = gtk_label_new_with_mnemonic (_("Local port"));
+    gtk_table_attach_defaults(GTK_TABLE(table), localPortLabel, 0, 1, 1, 2);
+
+    gtk_misc_set_alignment(GTK_MISC (localPortLabel), 0, 0.5);
+    localPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (localPortLabel), localPortSpinBox); 
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), local_port);
+    g_signal_connect( G_OBJECT( applySipPortButton) , "clicked" , G_CALLBACK( update_port_cb ) , applySipPortButton);
+    
+    gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
+
+    /**
+     * Security Section 
+     */
     gnome_main_section_new_with_table (_("Security"), &frame, &table, 2, 3);
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 	gtk_table_set_row_spacings (GTK_TABLE(table), 10);
@@ -264,7 +347,7 @@ GtkWidget* create_network_tab()
     GtkWidget *entryPort; 
     
     label = gtk_label_new(_("UDP Transport"));
- 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
