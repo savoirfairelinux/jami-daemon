@@ -661,7 +661,7 @@ class ManagerImpl {
     /**
      * Set the dialpad visible or not
      */
-    void setDialpad( void );
+    void setDialpad (bool display);
 
     /**
      * Tells if the user wants to display the volume controls or not

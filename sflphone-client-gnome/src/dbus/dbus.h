@@ -363,7 +363,7 @@ void dbus_set_ringtone_choice( const gchar* tone );
 /**
  * ConfigurationManager - Set the dialpad visible or not
  */
-void dbus_set_dialpad(  );
+void dbus_set_dialpad (gboolean display);
 
 /**
  * ConfigurationManager - Tells if the user wants to display the dialpad or not

@@ -1627,13 +1627,13 @@ dbus_get_dialpad()
     return state;
 }
 
-    void
-dbus_set_dialpad(  )
+void dbus_set_dialpad (gboolean display)
 {
     
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_dialpad(
             configurationManagerProxy,
+			display,
             &error);
     if(error)
     {

@@ -92,7 +92,7 @@ public:
     std::string getRecordPath( void );
     void setRecordPath(const std::string& recPath );
     int32_t getDialpad( void );
-    void setDialpad( void );
+    void setDialpad (const bool& display);
     int32_t getSearchbar( void );
     
     void setSearchbar( void );

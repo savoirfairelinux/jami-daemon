@@ -2809,9 +2809,16 @@ ManagerImpl::getDialpad (void)
 }
 
 void
-ManagerImpl::setDialpad (void)
+ManagerImpl::setDialpad (bool display)
 {
-    (getConfigString (PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) ? setConfig (PREFERENCES, CONFIG_DIALPAD, FALSE_STR) : setConfig (PREFERENCES, CONFIG_DIALPAD, TRUE_STR);
+	std::string set;
+
+	display ? set = TRUE_STR : set = FALSE_STR;
+	// If the value we received is different from the one saved in the config file, save the new value
+	// Else do nothing
+	if ((display && (getConfigString (PREFERENCES, CONFIG_DIALPAD) != TRUE_STR)) || 
+		(!display && (getConfigString (PREFERENCES, CONFIG_DIALPAD) != FALSE_STR)))
+			setConfig (PREFERENCES, CONFIG_DIALPAD, set);
 }
 
 int

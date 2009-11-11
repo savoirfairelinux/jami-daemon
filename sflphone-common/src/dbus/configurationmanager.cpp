@@ -590,9 +590,9 @@ ConfigurationManager::getDialpad (void)
 }
 
 void
-ConfigurationManager::setDialpad (void)
+ConfigurationManager::setDialpad (const bool& display)
 {
-    Manager::instance().setDialpad();
+    Manager::instance().setDialpad (display);
 }
 
 int32_t
