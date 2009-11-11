@@ -3222,7 +3222,7 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 }
 
 
-void ManagerImpl::setIp2IpSipPort (int port)
+void ManagerImpl::setSipPort (int port)
 {
     _debug ("Setting to new port %d\n", port);
     int prevPort = getConfigInt (PREFERENCES , CONFIG_SIP_PORT);

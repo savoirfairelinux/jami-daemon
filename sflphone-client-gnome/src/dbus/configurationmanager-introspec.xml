@@ -288,12 +288,12 @@
     <method name="switchPopupMode">
     </method>
 
-    <method name="setSipPort">
-      <arg type="i" name="port" direction="in"/>
+    <method name="setSipAddress">
+      <arg type="s" name="address" direction="in"/>
     </method>
 
-    <method name="getSipPort">
-      <arg type="i" name="port" direction="out"/>
+    <method name="getSipAddress">
+      <arg type="s" name="address" direction="out"/>
     </method>
 
     <!-- Addressbook configuration -->

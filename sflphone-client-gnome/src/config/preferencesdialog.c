@@ -70,8 +70,7 @@ static void update_ip_address_port_cb ( GtkSpinButton *button UNUSED, void *ptr 
 
     DEBUG("update_ip_address_port_cb %s\n", ip_interface);
 
-    dbus_set_sip_port();
-
+    dbus_set_sip_address(ip_interface);
 }
 
 

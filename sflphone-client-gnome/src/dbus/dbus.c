@@ -2056,12 +2056,12 @@ dbus_get_audio_manager( void )
 }
 
     void
-dbus_set_sip_port( const guint portNum  )
+dbus_set_sip_address( const gchar* address )
 {
     GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_sip_port(
+    org_sflphone_SFLphone_ConfigurationManager_set_sip_address(
             configurationManagerProxy,
-            portNum,
+            address,
             &error);
     if(error)
     {
@@ -2069,20 +2069,20 @@ dbus_set_sip_port( const guint portNum  )
     }
 }
 
-    guint
-dbus_get_sip_port( void )
+    gchar*
+dbus_get_sip_address( void )
 {
     GError* error = NULL;
-    gint portNum;
-    org_sflphone_SFLphone_ConfigurationManager_get_sip_port(
+    gchar* address;
+    org_sflphone_SFLphone_ConfigurationManager_get_sip_address(
             configurationManagerProxy,
-            &portNum,
+            &address,
             &error);
     if(error)
     {
         g_error_free(error);
     }
-    return (guint)portNum;
+    return address;
 }
 
 GHashTable* dbus_get_addressbook_settings (void) {

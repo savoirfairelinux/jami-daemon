@@ -487,9 +487,9 @@ void dbus_register( int pid, gchar * name);
  */
 void dbus_unregister(int pid);
 
-void dbus_set_sip_port(const guint portNum);
+void dbus_set_sip_address(const gchar* address);
 
-guint dbus_get_sip_port();
+gchar* dbus_get_sip_address(void);
 
 void dbus_add_participant(const gchar* callID, const gchar* confID);
 
