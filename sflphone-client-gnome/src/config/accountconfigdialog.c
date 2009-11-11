@@ -811,18 +811,30 @@ GtkWidget * create_advanced_tab(account_t **a)
 	iface_list = (gchar**) dbus_get_all_ip_interface();
 	gchar ** iface = NULL;
     
+	// flag to determine if local_address is found 
+	gboolean iface_found = FALSE;
+
 	if (iface_list != NULL) {
+
+	  // fill the iterface combo box
 	  for (iface = iface_list; *iface; iface++) {         
             DEBUG("Interface %s", *iface);            
             gtk_list_store_append(ipInterfaceListStore, &iter );
             gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
 
-	    current_local_address_iter = iter;
-	    if (g_strcmp0(*iface, local_address) == 0) {
+	    // set the current local address
+	    if (!iface_found && (g_strcmp0(*iface, local_address) == 0)) {
                 DEBUG("Setting active local address combo box");
                 current_local_address_iter = iter;
+		iface_found = TRUE;
             }
 	  }
+	  
+	  if(!iface_found) {
+	      DEBUG("Did not find local ip address, take fisrt in the list");
+	      gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ipInterfaceListStore), &current_local_address_iter);
+	  }
+
 	}
     
 	localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
