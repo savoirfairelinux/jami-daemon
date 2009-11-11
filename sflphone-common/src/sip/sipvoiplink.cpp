@@ -225,8 +225,6 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
         : VoIPLink (accountID)
         , _nbTryListenAddr (2)   // number of times to try to start SIP listener
-        , _localExternAddress ("")
-        , _localExternPort (0)
         , _regPort (atoi (DEFAULT_SIP_PORT))
         , _clients (0)
 {
@@ -1055,8 +1053,6 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
      */
     pjsip_evsub_set_mod_data (sub, getModId(), this);
 
-    _debug ("SIP port listener = %i", _localExternPort);
-
     /*
      * Create REFER request.
      */
@@ -1698,9 +1694,6 @@ bool SIPVoIPLink::pjsip_init()
         return false;
     }
 
-    port = _regPort;
-    // _localPort = port;
-
     // Retrieve Direct IP Calls settings.
     // This corresponds to the accountID set to
     // AccountNULL
@@ -1710,13 +1703,12 @@ bool SIPVoIPLink::pjsip_init()
 
     if (account == NULL) {
         _debug ("Account is null in pjsip init\n");
+		port = _regPort;
     } else {
         directIpCallsTlsEnabled = account->isTlsEnabled();
+		port = account->getLocalPort ();
     }
 
-    //_localExternAddress = _localIPAddress;
-
-    //_localExternPort = _localPort;
     // Create a UDP listener meant for all accounts
     // for which TLS was not enabled
     errPjsip = createUDPServer();
@@ -1724,21 +1716,20 @@ bool SIPVoIPLink::pjsip_init()
     // If the above UDP server
     // could not be created, then give it another try
     // on a random sip port
-
     if (errPjsip != PJ_SUCCESS) {
-        _debug ("UserAgent: Could not initialize SIP listener on port %d\n", _localExternPort);
-        _localExternPort = _localPort = RANDOM_SIP_PORT;
+        _debug ("UserAgent: Could not initialize SIP listener on port %d\n", port);
+        port = RANDOM_SIP_PORT;
 
-        _debug ("UserAgent: Try to initialize SIP listener on port %d\n", _localExternPort);
+        _debug ("UserAgent: Trying to initialize SIP listener on port %d\n", port);
         errPjsip = createUDPServer();
 
         if (errPjsip != PJ_SUCCESS) {
-            _debug ("UserAgent: Fail to initialize SIP listener on port %d\n", _localExternPort);
+            _debug ("UserAgent: Fail to initialize SIP listener on port %d\n", port);
             return errPjsip;
         }
     }
 
-    _debug ("UserAgent: SIP Init -- listening on port %d\n", _localExternPort);
+    _debug ("pjsip_init -- listening on port %d\n", port);
 
     // Create a TLS listener meant for Direct IP calls
     // if the user did enabled it.
@@ -1930,7 +1921,6 @@ int SIPVoIPLink::createUDPServer (AccountID id)
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
 		if (account->getLocalAddress () != "0.0.0.0"){
 			listeningAddress = account->getLocalAddress ();
-			_debug ("**************************************** lsitening -%s-\n", listeningAddress.data());
 		}
 		listeningPort = account->getLocalPort ();
     }
@@ -3650,9 +3640,7 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
 
         if (account->isStunEnabled ()) {
             // If use Stun server
-            //if (Manager::instance().isBehindNat (std::string (account->getStunServerName ().ptr), callLocalAudioPort)) {
-            callLocalExternAudioPort = account->getStunPort ();//localExternPort; //Manager::instance().getFirewallPort();
-            //}
+            callLocalExternAudioPort = account->getStunPort ();
         }
 
         _debug ("            Setting local ip address: %s\n", localIP.c_str());
