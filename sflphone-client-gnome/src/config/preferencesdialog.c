@@ -241,20 +241,34 @@ GtkWidget* create_direct_ip_calls_tab()
     gchar ** iface_list = NULL;
     iface_list = (gchar**) dbus_get_all_ip_interface();
     gchar ** iface = NULL;
+
+    gboolean iface_found = FALSE;
     
     if (iface_list != NULL) {
+
+      // init interface list with first one
+      // iface = iface_list;
+      // g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)))); 
+
       for (iface = iface_list; *iface; iface++) {         
 	DEBUG("Interface %s", *iface);            
 	gtk_list_store_append(ipInterfaceListStore, &iter );
 	gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
 
-	current_local_address_iter = iter;
-	if (g_strcmp0(*iface, local_address) == 0) {
+	if (!iface_found && (g_strcmp0(*iface, local_address) == 0)) {
 	    DEBUG("Setting active local address combo box");
 	    current_local_address_iter = iter;
+	    iface_found = TRUE;
 	}
       }
+
+      if(!iface_found) {
+	      DEBUG("Did not find local ip address, take fisrt in the list");
+	      gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ipInterfaceListStore), &current_local_address_iter);
+      }
     }
+
+    
 
     
     localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
