@@ -94,6 +94,16 @@ ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string 
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
 
+    it = map_cpy.find (LOCAL_ADDRESS);
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, it->second);
+    }
+
+    it = map_cpy.find(LOCAL_PORT);
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_PORT, it->second);
+    }
+
     it = map_cpy.find (SRTP_ENABLE);
 
     if (it != details.end()) {
