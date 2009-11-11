@@ -152,6 +152,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 static void ip2ip_local_address_changed_cb(GtkWidget *widget, gpointer data)
 {
     DEBUG("ip2ip_local_address_changed_cb\n");
+    g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget))));
 }
 
 static void ip2ip_local_port_changed_cb(GtkWidget *widget, gpointer data)
@@ -254,6 +255,7 @@ GtkWidget* create_direct_ip_calls_tab()
 	}
       }
     }
+
     
     localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
     gtk_label_set_mnemonic_widget(GTK_LABEL(localAddressLabel), localAddressCombo);
@@ -266,6 +268,8 @@ GtkWidget* create_direct_ip_calls_tab()
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
     gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
     g_signal_connect (G_OBJECT(GTK_COMBO_BOX(localAddressCombo)), "changed", G_CALLBACK (ip2ip_local_address_changed_cb), localAddressCombo);
+
+    g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
 
     /**
      * Local port
