@@ -248,12 +248,8 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
     }
 
-	// Reset the current account message number
+	// Set the current account message number
 	current_account_set_message_number (count);
-
-    // Prevent update being called when toolbar is not yet initialized
-    if(toolbarInitialized)
-        update_actions ();
 }
 
 gboolean sflphone_init()
