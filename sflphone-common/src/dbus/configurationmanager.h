@@ -104,7 +104,7 @@ public:
 	std::string getHistoryEnabled (void);
 
     int32_t getVolumeControls( void );
-    void setVolumeControls( void );
+    void setVolumeControls (const bool& display);
     int32_t isStartHidden( void );
     void startHidden( void );
     int32_t popupMode( void );

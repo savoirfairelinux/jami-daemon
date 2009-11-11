@@ -265,6 +265,7 @@
     </method>
 
     <method name="setVolumeControls">
+      <arg type="b" name="display" direction="in"/>
     </method>
 
     <method name="getHistoryLimit">

@@ -673,7 +673,7 @@ class ManagerImpl {
     /**
      * Set the volume controls ( mic and speaker ) visible or not
      */
-    void setVolumeControls( void );
+    void setVolumeControls (bool display);
 
     /**
      * Set recording on / off

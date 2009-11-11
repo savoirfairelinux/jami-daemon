@@ -245,6 +245,8 @@ void update_voicemail_status (void)
 static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 {
 	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
+	if (toggled == SHOW_VOLUME)
+		return;
 	main_window_volume_controls(toggled);
 	if (toggled || SHOW_VOLUME)
 		dbus_set_volume_controls(toggled);
@@ -256,7 +258,6 @@ static void dialpad_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 	if (toggled == SHOW_DIALPAD)
 		return;
 	main_window_dialpad (toggled);
-	g_print ("dialpad_bar_cb - state: %i", toggled);
 	if (toggled || SHOW_DIALPAD)
 		dbus_set_dialpad(toggled);
 }

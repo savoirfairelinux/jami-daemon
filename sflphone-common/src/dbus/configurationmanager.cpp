@@ -614,9 +614,9 @@ ConfigurationManager::getVolumeControls (void)
 }
 
 void
-ConfigurationManager::setVolumeControls (void)
+ConfigurationManager::setVolumeControls (const bool& display)
 {
-    Manager::instance().setVolumeControls();
+    Manager::instance().setVolumeControls (display);
 }
 
 int32_t

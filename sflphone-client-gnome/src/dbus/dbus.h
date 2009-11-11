@@ -387,7 +387,7 @@ int dbus_get_searchbar( void );
 /**
  * ConfigurationManager - Set the volume controls visible or not
  */
-void dbus_set_volume_controls(  );
+void dbus_set_volume_controls (gboolean display);
 
 /**
  * ConfigurationManager - Tells if the user wants to display the volume controls or not

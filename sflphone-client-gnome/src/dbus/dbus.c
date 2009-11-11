@@ -1695,11 +1695,12 @@ dbus_get_volume_controls()
 }
 
     void
-dbus_set_volume_controls(  )
+dbus_set_volume_controls (gboolean display)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_volume_controls(
             configurationManagerProxy,
+			display,
             &error);
     if(error)
     {
