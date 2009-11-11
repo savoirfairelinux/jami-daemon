@@ -3233,7 +3233,6 @@ void ManagerImpl::setSipPort (int port)
 
 int ManagerImpl::getSipPort (void)
 {
-    // return getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
 	/* The 'global' SIP port is set throug the IP profile */
 	return getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
 }
