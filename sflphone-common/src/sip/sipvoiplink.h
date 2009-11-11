@@ -366,14 +366,6 @@ class SIPVoIPLink : public VoIPLink
 
 		pj_status_t createAlternateUdpTransport (AccountID id);
         
-        std::string getLocalIP() {return _localExternAddress;}
-
-        /** Local Extern Address is the IP address seen by peers for SIP listener */
-        std::string _localExternAddress;
-
-        /** Local Extern Port is the port seen by peers for SIP listener */
-        unsigned int _localExternPort;
-        
         /** For registration use only */
         int _regPort;
 

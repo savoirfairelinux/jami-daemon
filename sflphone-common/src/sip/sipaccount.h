@@ -268,16 +268,7 @@ class SIPAccount : public Account
 
 	inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
 
-	inline std::string getSessionAddress () { return _actualSessionAddress; }
-	
-	inline void setSessionAddress (std::string addr) { _actualSessionAddress = addr; }
-	
-	inline pj_uint16_t getSessionPort () { return _actualSessionPort; }
-
-	inline void setSessionPort (pj_uint16_t port) { _actualSessionPort = port; }
-
-
-    private: 
+	private: 
 
         /* Maps a string description of the SSL method 
          * to the corresponding enum value in pjsip_ssl_method.
@@ -328,9 +319,9 @@ class SIPAccount : public Account
         // Network settings
         std::string _registrationExpire;
 
-	// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
+		// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
         // sip headers
-	bool _publishedSameasLocal;
+		bool _publishedSameasLocal;
                 
         std::string _localIpAddress;
         std::string _publishedIpAddress;
@@ -364,12 +355,6 @@ class SIPAccount : public Account
         
         // Display Name that can be used in  SIP URI.        
         std::string _displayName;        
-
-		// The actual address we use in the SDP to be contacted
-		// it needs to be per account, otherwise the same address is used for every account
-		// TODO Use the published address or the local address
-		std::string _actualSessionAddress;
-        pj_uint16_t _actualSessionPort;
 };
 
 #endif
