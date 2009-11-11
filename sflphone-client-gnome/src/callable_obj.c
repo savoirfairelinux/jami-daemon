@@ -133,6 +133,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
     obj->_peer_info = g_strdup (get_peer_info (peer_name, peer_number));
+
     obj->_trsft_to = "";
     set_timestamp (&(obj->_time_start));
     set_timestamp (&(obj->_time_stop));

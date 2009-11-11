@@ -186,7 +186,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
         // The callID is unknow, threat it like a new call
         // If it were an incoming call, we won't be here
         // It means that a new call has been initiated with an other client (cli for instance)
-        if ( strcmp(state, "RINGING") == 0 )
+        if ( strcmp(state, "RINGING") == 0  || strcmp(state, "CURRENT") == 0)
         {
             callable_obj_t *new_call;
             GHashTable *call_details;
