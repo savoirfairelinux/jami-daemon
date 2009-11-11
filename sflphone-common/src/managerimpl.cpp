@@ -3215,27 +3215,31 @@ void ManagerImpl::setSpkrVolume (unsigned short spkr_vol)
     }
 }
 
+
 void ManagerImpl::setMicVolume (unsigned short mic_vol)
 {
     _mic_volume = mic_vol;
 }
 
-void ManagerImpl::setSipPort (int port)
+
+void ManagerImpl::setIp2IpSipPort (int port)
 {
     _debug ("Setting to new port %d\n", port);
     int prevPort = getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
 
-    if (prevPort != port) {
+    // if (prevPort != port) {
         setConfig (PREFERENCES, CONFIG_SIP_PORT, port);
         this->restartPJSIP ();
-    }
+    // }
 }
+
 
 int ManagerImpl::getSipPort (void)
 {
     // return getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
 	/* The 'global' SIP port is set throug the IP profile */
 	return getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
+
 }
 
 
