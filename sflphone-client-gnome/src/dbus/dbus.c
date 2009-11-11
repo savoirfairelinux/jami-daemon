@@ -230,7 +230,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
         const gchar* state,
         void * foo  UNUSED )
 {
-    DEBUG ("-------------------- Conference changed ---------------------\n");
+    
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get(confID);
     gchar** participants;
@@ -1630,6 +1630,7 @@ dbus_get_dialpad()
     void
 dbus_set_dialpad(  )
 {
+    
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_dialpad(
             configurationManagerProxy,
@@ -2359,7 +2360,7 @@ GHashTable* dbus_get_tls_settings_default(void)
 gchar ** dbus_get_all_ip_interface(void)
 {
     GError *error = NULL;
-    char ** array;
+    gchar ** array;
 
     if(!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface ( configurationManagerProxy, &array, &error))
     {
