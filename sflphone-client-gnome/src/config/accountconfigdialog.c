@@ -744,16 +744,27 @@ GtkWidget * create_advanced_tab(account_t **a)
 		resolve_once = g_hash_table_lookup(currentAccount->properties, ACCOUNT_RESOLVE_ONCE);
 		account_expire = g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTRATION_EXPIRE);
 		use_tls = g_hash_table_lookup(currentAccount->properties,  TLS_ENABLE);
+
+		published_sameas_local = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_SAMEAS_LOCAL);
+
 		local_port = g_hash_table_lookup(currentAccount->properties, LOCAL_PORT);
 		local_address = g_hash_table_lookup(currentAccount->properties,  LOCAL_ADDRESS);
-		published_address = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_ADDRESS);
-		published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
+
+		if (g_strcasecmp(published_sameas_local,"true") == 0) {
+
+		    published_address = g_hash_table_lookup(currentAccount->properties,  LOCAL_ADDRESS);
+		    published_port = g_hash_table_lookup(currentAccount->properties,  LOCAL_PORT);
+		}
+		else {
+
+		    published_address = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_ADDRESS);
+		    published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
+		}
+
 		stun_enable = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_ENABLED);
 		stun_server = g_hash_table_lookup(currentAccount->properties,  ACCOUNT_SIP_STUN_SERVER);
 		published_sameas_local = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_SAMEAS_LOCAL);
 
-		// DEBUG("-------- Advanced parameters from config");
-		// DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s, published_sameas_local %s\n", resolve_once, account_expire, use_tls, published_address, published_port, local_address, local_port, stun_enable, stun_server, published_sameas_local);
 	} 
 
 	gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
@@ -1090,32 +1101,7 @@ show_account_window (account_t * a)
 						 g_strdup(PUBLISHED_ADDRESS),
 						 g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)))); 
 			}
-			/*
-			DEBUG("-------- Basic parameters to ne written in config");
-			DEBUG("curAccountID %s, curAccountType %s, curAlias %s, curHostname %s, curPassword %s, curUsername %s, curMailbox %s\n", 
-			      (gchar *)currentAccount->accountID, 
-			      (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox)), 
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryAlias)), 
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryHostname)), 
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryPassword)), 
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryUsername)),
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))
-			      );
-			*/
-			/*
-			DEBUG("-------- Advanced parameters to be written");
-			DEBUG("resolve_once %s,  account_expire %s, use_tls %s, published_address %s, published_port %s, local_address %s, local_port %s, stun_enable %s, stun_server %s\n", 
-			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "false": "true",
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox)), 
-			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false",
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(publishedPortSpinBox)), 
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(publishedAddressEntry)),
-			      (gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox)), 
-			      (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)),
-			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useStunCheckBox)) ? "true":"false",
-			      gtk_entry_get_text(GTK_ENTRY(stunServerEntry))
-			      );
-			*/
+			
 		}
 
 		
