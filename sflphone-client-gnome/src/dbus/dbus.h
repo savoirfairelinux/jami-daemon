@@ -489,7 +489,7 @@ void dbus_unregister(int pid);
 
 void dbus_set_sip_address(const gchar* address);
 
-gchar* dbus_get_sip_address(void);
+gint dbus_get_sip_address(void);
 
 void dbus_add_participant(const gchar* callID, const gchar* confID);
 

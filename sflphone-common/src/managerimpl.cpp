@@ -3222,23 +3222,37 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 }
 
 
-void ManagerImpl::setSipPort (int port)
+void ManagerImpl::setSipAddress (const std::string& address)
 {
-    _debug ("Setting to new port %d\n", port);
-    int prevPort = getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
+  _debug ("Setting new ip to ip address %s\n", address.c_str());
 
-    // if (prevPort != port) {
-        setConfig (PREFERENCES, CONFIG_SIP_PORT, port);
-        this->restartPJSIP ();
-    // }
+    std::string ip_address = std::string(address);
+
+    int index = ip_address.find_first_of(":");
+
+    std::string local_address = ip_address.substr(0,index);
+    std::string local_port = ip_address.substr(index+1); 
+
+    _debug ("Setting new ip to ip address %s and port %s\n", local_address.c_str(), local_port.c_str());
+
+    int prevPort = getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
+    std::string prevAddress  = getConfigString(IP2IP_PROFILE, LOCAL_ADDRESS);
+
+    if (prevPort != atoi(local_port.c_str()) || (prevAddress.compare(local_address) != 0)) {
+        setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, local_address);
+        setConfig (IP2IP_PROFILE, LOCAL_PORT, atoi(local_port.c_str()));
+        // this->restartPJSIP ();
+    }
 }
 
 
-int ManagerImpl::getSipPort (void)
+int ManagerImpl::getSipAddress (void)
 {
     // return getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
-	/* The 'global' SIP port is set throug the IP profile */
-	return getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
+    /* The 'global' SIP port is set throug the IP profile */
+    _debug("-----------------------------------------getSipAddress %i\n", getConfigInt (IP2IP_PROFILE, LOCAL_PORT));
+
+    return getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
 
 }
 

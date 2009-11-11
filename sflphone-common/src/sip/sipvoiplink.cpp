@@ -270,7 +270,7 @@ bool SIPVoIPLink::init()
 
 	// TODO This port should be the one configured for the IP profile
 	// and not the global one
-    _regPort = Manager::instance().getSipPort();
+    _regPort = Manager::instance().getSipAddress();
 
     /* Instanciate the C++ thread */
     _evThread = new EventThread (this);

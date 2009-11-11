@@ -2069,11 +2069,11 @@ dbus_set_sip_address( const gchar* address )
     }
 }
 
-    gchar*
+    gint
 dbus_get_sip_address( void )
 {
     GError* error = NULL;
-    gchar* address;
+    gint address;
     org_sflphone_SFLphone_ConfigurationManager_get_sip_address(
             configurationManagerProxy,
             &address,

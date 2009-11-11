@@ -293,7 +293,7 @@
     </method>
 
     <method name="getSipAddress">
-      <arg type="s" name="address" direction="out"/>
+      <arg type="i" name="address" direction="out"/>
     </method>
 
     <!-- Addressbook configuration -->
