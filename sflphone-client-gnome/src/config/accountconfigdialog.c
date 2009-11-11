@@ -691,9 +691,9 @@ GtkWidget * create_security_tab(account_t **a)
     
 	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), currentAccount);
     
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 5, 6);
-    gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 5, 6);    
-    gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 5, 6);
+    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 1, 2);    
+    gtk_table_attach_defaults(GTK_TABLE(table), advancedZrtpButton, 2, 3, 1, 2);
 
     gtk_widget_show_all(table);
     
