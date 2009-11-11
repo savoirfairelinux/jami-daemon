@@ -320,7 +320,7 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
         void * foo  UNUSED )
 {
     DEBUG ("Accounts changed");
-    sflphone_fill_account_list(TRUE);
+    sflphone_fill_account_list ();
     sflphone_fill_ip2ip_profile();
     account_list_config_dialog_fill();
 
