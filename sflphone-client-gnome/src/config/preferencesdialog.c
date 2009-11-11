@@ -148,6 +148,22 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
     }   
 }
 
+
+static void ip2ip_local_address_changed_cb(GtkWidget *widget, gpointer data)
+{
+    DEBUG("ip2ip_local_address_changed_cb\n");
+}
+
+static void ip2ip_local_port_changed_cb(GtkWidget *widget, gpointer data)
+{
+    DEBUG("ip2ip_local_port_changed_cb\n");
+    gint new_port = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+    DEBUG("new_port %i", new_port);
+    g_hash_table_replace(directIpCallsProperties,
+			 g_strdup(LOCAL_PORT), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(GTK_SPIN_BUTTON(widget)))));
+}
+
+
 GtkWidget* create_direct_ip_calls_tab()
 {
     GtkWidget * frame;
@@ -249,16 +265,12 @@ GtkWidget* create_direct_ip_calls_tab()
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
     gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
-
+    g_signal_connect (G_OBJECT(GTK_COMBO_BOX(localAddressCombo)), "changed", G_CALLBACK (ip2ip_local_address_changed_cb), localAddressCombo);
 
     /**
      * Local port
      */	    
     /** SIP port information */
-    // int local_port = dbus_get_sip_port();
-
-    GtkWidget *applySipPortButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-
     localPortLabel = gtk_label_new_with_mnemonic (_("Local port"));
     gtk_table_attach_defaults(GTK_TABLE(table), localPortLabel, 0, 1, 1, 2);
 
@@ -266,9 +278,9 @@ GtkWidget* create_direct_ip_calls_tab()
     localPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (localPortLabel), localPortSpinBox); 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), g_ascii_strtod(local_port, NULL));
-    g_signal_connect( G_OBJECT( applySipPortButton) , "clicked" , G_CALLBACK( update_port_cb ) , applySipPortButton);
-    
+
     gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
+    g_signal_connect (G_OBJECT(localPortSpinBox), "changed", G_CALLBACK (ip2ip_local_port_changed_cb), localPortSpinBox);
 
     /**
      * Security Section 
@@ -308,7 +320,7 @@ GtkWidget* create_direct_ip_calls_tab()
         gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
     }
     
-	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), advancedZrtpButton);
+    g_signal_connect (G_OBJECT (GTK_COMBO_BOX(keyExchangeCombo)), "changed", G_CALLBACK (key_exchange_changed_cb), advancedZrtpButton);
     
     gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
     gtk_table_attach_defaults(GTK_TABLE(table), keyExchangeCombo, 1, 2, 1, 2);    
