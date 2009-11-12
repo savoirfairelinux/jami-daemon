@@ -770,9 +770,14 @@ GtkWidget* noise_box()
 
 static void record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
 {
+    DEBUG("record_path_changed");
+
     gchar* path;
-    path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
-    path = g_strndup (path + 7, strlen(path) - 7);
+    // path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
+    // DEBUG("path1 %s", path);
+    path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER( chooser ));
+    DEBUG("path2 %s", path);
+    // path = g_strndup (path + 6, strlen(path) - 6);
     dbus_set_record_path( path );
 }
 
@@ -853,9 +858,9 @@ GtkWidget* create_audio_configuration()
     GtkWidget *folderChooser;
     gchar *dftPath;
     
-        /* Get the path where to save audio files */
-    dftPath = dbus_get_record_path ();/* Get the path where to save audio files */
+    /* Get the path where to save audio files */
     dftPath = dbus_get_record_path ();
+    DEBUG("load recording path %s\n", dftPath);
     
     gnome_main_section_new_with_table (_("Recordings"), &frame, &table, 1, 2);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
