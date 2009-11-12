@@ -3222,6 +3222,9 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 }
 
 
+
+
+
 void ManagerImpl::setLocalIp2IpInfo(const std::string& address)
 {
 
@@ -3252,7 +3255,9 @@ void ManagerImpl::setLocalIp2IpInfo(const std::string& address)
         setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, local_address);
         setConfig (IP2IP_PROFILE, LOCAL_PORT, newPort);
 
-	
+	SIPVoIPLink* siplink = SIPVoIPLink::instance ("");
+	// if(siplink)
+	siplink->updateAccountInfo(_directIpAccount->getAccountID());
         // this->restartPJSIP ();
     }
 }
@@ -4195,6 +4200,17 @@ ManagerImpl::loadAccountMap()
     // and loading of various settings.
     _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
 
+    if (_directIpAccount == NULL) {
+        _debug ("Failed to create direct ip calls \"account\"\n");
+    } else {
+        // Force the options to be loaded
+        // No registration in the sense of
+        // the REGISTER method is performed.
+        _debug ("Succeed to create direct ip calls \"account\"\n");
+	_accountMap[IP2IP_PROFILE] = _directIpAccount;
+        _directIpAccount->registerVoIPLink();
+    }
+
     while (iter != sections.end()) {
         // Check if it starts with "Account:" (SIP and IAX pour le moment)
         if ( (int) (iter->find ("Account:")) != 0) {
@@ -4224,7 +4240,7 @@ ManagerImpl::loadAccountMap()
 
         iter++;
     }
-
+    /*
     if (_directIpAccount == NULL) {
         _debug ("Failed to create direct ip calls \"account\"\n");
     } else {
@@ -4233,8 +4249,9 @@ ManagerImpl::loadAccountMap()
         // the REGISTER method is performed.
         _debug ("Succeed to create direct ip calls \"account\"\n");
         _directIpAccount->registerVoIPLink();
+	_accountMap[IP2IP_PROFILE] = _directIpAccount;
     }
-
+    */
     _debug ("nbAccount loaded %i \n", nbAccount);
 
     return nbAccount;
@@ -4383,8 +4400,6 @@ VoIPLink* ManagerImpl::getSIPAccountLink()
     /* We are looking for the first SIP account we met because all the SIP accounts have the same voiplink */
     Account *account;
     AccountMap::iterator iter = _accountMap.begin();
-
-    _debug("_accountMap size %i\n", (int)_accountMap.size());
     
     while(iter != _accountMap.end()) {
 
@@ -4394,12 +4409,8 @@ VoIPLink* ManagerImpl::getSIPAccountLink()
             return account->getVoIPLink();
         }
 
-	_debug("hmmmmm\n");
-
 	++iter;
     }
-
-    _debug("done");
 
     return NULL;
 }

@@ -35,6 +35,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 	, _localPort (atoi (DEFAULT_SIP_PORT))
 	, _publishedPort (atoi (DEFAULT_SIP_PORT))
 	, _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
+	, _transport(NULL)
 	, _resolveOnce (false)
 	, _credentialCount (0)
 	, _cred (NULL)
@@ -341,7 +342,6 @@ void SIPAccount::loadConfig()
     bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
 
     if (tlsEnabled) {
-        _debug ("---------------------------- TLS Enabled\n");
         initTlsConfiguration();
         _transportType = PJSIP_TRANSPORT_TLS;
     } else {
