@@ -2436,7 +2436,6 @@ void SIPVoIPLink::busy_sleep (unsigned msec)
     pj_time_val_normalize (&tv);
 
     do {
-      _debug("tourne en rond\n");
         pjsip_endpt_handle_events (_endpt, &tv);
         pj_gettimeofday (&now);
     } while (PJ_TIME_VAL_LT (now, timeout));
