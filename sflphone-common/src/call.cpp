@@ -27,7 +27,7 @@ Call::Call (const CallID& id, Call::CallType type)
         , _localAudioPort (0)
         , _localExternalAudioPort (0)
         , _id (id)
-	, _confID ("")
+        , _confID ("")
         , _type (type)
         , _connectionState (Call::Disconnected)
         , _callState (Call::Inactive)
@@ -129,8 +129,8 @@ Call::getStateStr ()
             break;
 
         case Conferencing:
-	    state_str = "CONFERENCING";
-	    break;
+            state_str = "CONFERENCING";
+            break;
 
         case Refused:
 

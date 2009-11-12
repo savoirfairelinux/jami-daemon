@@ -164,7 +164,7 @@ void sflphone_get_ip2ip_properties (GHashTable **properties);
 /**
  * Initialize the accounts data structure
  */
-void sflphone_fill_account_list(gboolean toolbarInitialized);
+void sflphone_fill_account_list ();
 
 void sflphone_fill_call_list (void);
 

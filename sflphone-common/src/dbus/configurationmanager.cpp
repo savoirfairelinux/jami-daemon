@@ -77,6 +77,9 @@ ConfigurationManager::getIp2IpDetails (void)
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
 
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_ADDRESS)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_PORT)));
+
     std::map<std::string, std::string> tlsSettings;
     tlsSettings = getTlsSettings (IP2IP_PROFILE);
     std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (ip2ipAccountDetails, ip2ipAccountDetails.end()));
@@ -90,6 +93,16 @@ ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string 
 {
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
+
+    it = map_cpy.find (LOCAL_ADDRESS);
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, it->second);
+    }
+
+    it = map_cpy.find(LOCAL_PORT);
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_PORT, it->second);
+    }
 
     it = map_cpy.find (SRTP_ENABLE);
 
@@ -577,9 +590,9 @@ ConfigurationManager::getDialpad (void)
 }
 
 void
-ConfigurationManager::setDialpad (void)
+ConfigurationManager::setDialpad (const bool& display)
 {
-    Manager::instance().setDialpad();
+    Manager::instance().setDialpad (display);
 }
 
 int32_t
@@ -601,9 +614,9 @@ ConfigurationManager::getVolumeControls (void)
 }
 
 void
-ConfigurationManager::setVolumeControls (void)
+ConfigurationManager::setVolumeControls (const bool& display)
 {
-    Manager::instance().setVolumeControls();
+    Manager::instance().setVolumeControls (display);
 }
 
 int32_t
@@ -699,17 +712,19 @@ ConfigurationManager::getMailNotify (void)
     return Manager::instance().getMailNotify();
 }
 
-int32_t
-ConfigurationManager::getSipPort (void)
+int
+ConfigurationManager::getSipAddress (void)
 {
-    return Manager::instance().getSipPort();
+    return Manager::instance().getSipAddress();
+
+    // return "ok";
 }
 
 void
-ConfigurationManager::setSipPort (const int32_t& portNum)
+ConfigurationManager::setSipAddress (const std::string& address)
 {
-    _debug ("Manager received setSipPort: %d\n", portNum);
-    Manager::instance().setSipPort (portNum);
+    _debug ("Manager received setSipAddress: %s\n", address.c_str());
+    Manager::instance().setSipAddress (address);
 }
 
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)

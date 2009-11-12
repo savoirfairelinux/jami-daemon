@@ -363,7 +363,7 @@ void dbus_set_ringtone_choice( const gchar* tone );
 /**
  * ConfigurationManager - Set the dialpad visible or not
  */
-void dbus_set_dialpad(  );
+void dbus_set_dialpad (gboolean display);
 
 /**
  * ConfigurationManager - Tells if the user wants to display the dialpad or not
@@ -387,7 +387,7 @@ int dbus_get_searchbar( void );
 /**
  * ConfigurationManager - Set the volume controls visible or not
  */
-void dbus_set_volume_controls(  );
+void dbus_set_volume_controls (gboolean display);
 
 /**
  * ConfigurationManager - Tells if the user wants to display the volume controls or not
@@ -487,9 +487,9 @@ void dbus_register( int pid, gchar * name);
  */
 void dbus_unregister(int pid);
 
-void dbus_set_sip_port(const guint portNum);
+void dbus_set_sip_address(const gchar* address);
 
-guint dbus_get_sip_port();
+gint dbus_get_sip_address(void);
 
 void dbus_add_participant(const gchar* callID, const gchar* confID);
 

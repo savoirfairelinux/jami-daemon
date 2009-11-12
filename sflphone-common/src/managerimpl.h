@@ -661,7 +661,7 @@ class ManagerImpl {
     /**
      * Set the dialpad visible or not
      */
-    void setDialpad( void );
+    void setDialpad (bool display);
 
     /**
      * Tells if the user wants to display the volume controls or not
@@ -673,7 +673,7 @@ class ManagerImpl {
     /**
      * Set the volume controls ( mic and speaker ) visible or not
      */
-    void setVolumeControls( void );
+    void setVolumeControls (bool display);
 
     /**
      * Set recording on / off
@@ -1307,9 +1307,9 @@ class ManagerImpl {
 
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
-    int getSipPort();
+    int getSipAddress();
 
-    void setSipPort( int port );
+    void setSipAddress( const std::string& address );
 
     std::string getStunServer (void);
     void setStunServer (const std::string &server);

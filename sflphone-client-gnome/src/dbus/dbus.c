@@ -186,7 +186,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
         // The callID is unknow, threat it like a new call
         // If it were an incoming call, we won't be here
         // It means that a new call has been initiated with an other client (cli for instance)
-        if ( strcmp(state, "RINGING") == 0 )
+        if ( strcmp(state, "RINGING") == 0  || strcmp(state, "CURRENT") == 0)
         {
             callable_obj_t *new_call;
             GHashTable *call_details;
@@ -230,7 +230,7 @@ conference_changed_cb (DBusGProxy *proxy UNUSED,
         const gchar* state,
         void * foo  UNUSED )
 {
-    DEBUG ("-------------------- Conference changed ---------------------\n");
+    
     // sflphone_display_transfer_status("Transfer successfull");
     conference_obj_t* changed_conf = conferencelist_get(confID);
     gchar** participants;
@@ -320,7 +320,7 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
         void * foo  UNUSED )
 {
     DEBUG ("Accounts changed");
-    sflphone_fill_account_list(TRUE);
+    sflphone_fill_account_list ();
     sflphone_fill_ip2ip_profile();
     account_list_config_dialog_fill();
 
@@ -1627,12 +1627,13 @@ dbus_get_dialpad()
     return state;
 }
 
-    void
-dbus_set_dialpad(  )
+void dbus_set_dialpad (gboolean display)
 {
+    
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_dialpad(
             configurationManagerProxy,
+			display,
             &error);
     if(error)
     {
@@ -1694,11 +1695,12 @@ dbus_get_volume_controls()
 }
 
     void
-dbus_set_volume_controls(  )
+dbus_set_volume_controls (gboolean display)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_volume_controls(
             configurationManagerProxy,
+			display,
             &error);
     if(error)
     {
@@ -2055,12 +2057,12 @@ dbus_get_audio_manager( void )
 }
 
     void
-dbus_set_sip_port( const guint portNum  )
+dbus_set_sip_address( const gchar* address )
 {
     GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_sip_port(
+    org_sflphone_SFLphone_ConfigurationManager_set_sip_address(
             configurationManagerProxy,
-            portNum,
+            address,
             &error);
     if(error)
     {
@@ -2068,20 +2070,20 @@ dbus_set_sip_port( const guint portNum  )
     }
 }
 
-    guint
-dbus_get_sip_port( void )
+    gint
+dbus_get_sip_address( void )
 {
     GError* error = NULL;
-    gint portNum;
-    org_sflphone_SFLphone_ConfigurationManager_get_sip_port(
+    gint address;
+    org_sflphone_SFLphone_ConfigurationManager_get_sip_address(
             configurationManagerProxy,
-            &portNum,
+            &address,
             &error);
     if(error)
     {
         g_error_free(error);
     }
-    return (guint)portNum;
+    return address;
 }
 
 GHashTable* dbus_get_addressbook_settings (void) {
@@ -2359,7 +2361,7 @@ GHashTable* dbus_get_tls_settings_default(void)
 gchar ** dbus_get_all_ip_interface(void)
 {
     GError *error = NULL;
-    char ** array;
+    gchar ** array;
 
     if(!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface ( configurationManagerProxy, &array, &error))
     {

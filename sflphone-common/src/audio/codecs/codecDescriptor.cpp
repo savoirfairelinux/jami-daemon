@@ -94,10 +94,12 @@ CodecDescriptor::getCodec (AudioCodecType payload)
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end()) {
-	// _debug("Found codec %i _CodecsMap from codec descriptor\n", payload);
+        // _debug("Found codec %i _CodecsMap from codec descriptor\n", payload);
         return (iter->second);
     }
-    _debug("Error cannont found codec %i in _CodecsMap from codec descriptor\n", payload);
+
+    _debug ("Error cannont found codec %i in _CodecsMap from codec descriptor\n", payload);
+
     return NULL;
 }
 
@@ -127,7 +129,7 @@ CodecDescriptor::addCodec (AudioCodecType payload UNUSED)
 double
 CodecDescriptor::getBitRate (AudioCodecType payload)
 {
-    CodecsMap::iterator iter = _CodecsMap.find(payload);
+    CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end())
         return (iter->second->getBitRate());
@@ -252,9 +254,9 @@ CodecDescriptor::loadCodec (std::string path)
 
     AudioCodec* a = createCodec();
 
-    p = CodecHandlePointer(a, codecHandle);
+    p = CodecHandlePointer (a, codecHandle);
 
-    _CodecInMemory.push_back(p);
+    _CodecInMemory.push_back (p);
 
     return a;
 }
@@ -276,28 +278,27 @@ CodecDescriptor::unloadCodec (CodecHandlePointer p)
 }
 
 AudioCodec*
-CodecDescriptor::instantiateCodec(AudioCodecType payload)
+CodecDescriptor::instantiateCodec (AudioCodecType payload)
 {
 
     using std::cerr;
 
     std::vector< CodecHandlePointer >::iterator iter = _CodecInMemory.begin();
-    while(iter != _CodecInMemory.end())
-    {
-	if (iter->first->getPayload() == payload)
-	{
-	    create_t* createCodec = (create_t*) dlsym (iter->second , "create");
 
-	    if (dlerror())
-		cerr << dlerror() << '\n';
+    while (iter != _CodecInMemory.end()) {
+        if (iter->first->getPayload() == payload) {
+            create_t* createCodec = (create_t*) dlsym (iter->second , "create");
 
-	    AudioCodec* a = createCodec();
+            if (dlerror())
+                cerr << dlerror() << '\n';
 
-	    return a;
+            AudioCodec* a = createCodec();
 
-	}
+            return a;
 
-	iter++;
+        }
+
+        iter++;
     }
 
     return NULL;

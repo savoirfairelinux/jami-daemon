@@ -54,14 +54,14 @@ void AudioZrtpSession::initializeZid (void)
 
     std::string xdg_config = std::string (HOMEDIR) + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + PROGDIR + "/" + _zidFilename;
 
-    _debug("    xdg_config %s\n", xdg_config.c_str());
+    _debug ("    xdg_config %s\n", xdg_config.c_str());
 
     if (XDG_CACHE_HOME != NULL) {
-	std::string xdg_env = std::string (XDG_CACHE_HOME) + _zidFilename;
-	_debug("    xdg_env %s\n", xdg_env.c_str());
-	(xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
+        std::string xdg_env = std::string (XDG_CACHE_HOME) + _zidFilename;
+        _debug ("    xdg_env %s\n", xdg_env.c_str());
+        (xdg_env.length() > 0) ? zidCompleteFilename = xdg_env : zidCompleteFilename = xdg_config;
     } else
-	zidCompleteFilename = xdg_config;
+        zidCompleteFilename = xdg_config;
 
 
     if (initialize (zidCompleteFilename.c_str()) >= 0) {

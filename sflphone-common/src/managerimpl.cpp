@@ -265,7 +265,7 @@ ManagerImpl::outgoingCall (const std::string& account_id, const CallID& call_id,
         _cleaner->set_phone_number_prefix (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX));
     else
         _cleaner->set_phone_number_prefix ("");
- 
+
     to_cleaned = _cleaner->clean (to);
 
     /* Check what kind of call we are dealing with */
@@ -382,7 +382,7 @@ ManagerImpl::answerCall (const CallID& call_id)
 
     // if it was waiting, it's waiting no more
     if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "CURRENT");
-        
+
     // std::string codecName = Manager::instance().getCurrentCodecName (call_id);
     // if (_dbus) _dbus->getCallManager()->currentSelectedCodec (call_id, codecName.c_str());
 
@@ -1728,22 +1728,23 @@ ManagerImpl::incomingCall (Call* call, const AccountID& accountId)
     associateCallToAccount (call->getCallId(), accountId);
 
     // If account is null it is an ip to ip call
+
     if (accountId==AccountNULL) {
-        
+
         associateConfigToCall (call->getCallId(), Call::IPtoIP);
-    }
-    else {
-        // strip sip: which is not required and bring confusion with ip to ip calls 
+    } else {
+        // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history (if call is IAX, do nothing)
         std::string peerNumber = call->getPeerNumber();
 
-        int startIndex = peerNumber.find("sip:");
+        int startIndex = peerNumber.find ("sip:");
 
-	// if "sip:" is found => it is not an IAX call
-	if(startIndex != (int)string::npos) {
-	    std::string strippedPeerNumber = peerNumber.substr(startIndex+4);
-	    call->setPeerNumber(strippedPeerNumber);
-	}
+        // if "sip:" is found => it is not an IAX call
+
+        if (startIndex != (int) string::npos) {
+            std::string strippedPeerNumber = peerNumber.substr (startIndex+4);
+            call->setPeerNumber (strippedPeerNumber);
+        }
 
     }
 
@@ -2276,6 +2277,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"), IP2IP_PROFILE);
+    _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (LOCAL_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (LOCAL_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);
@@ -2807,9 +2809,16 @@ ManagerImpl::getDialpad (void)
 }
 
 void
-ManagerImpl::setDialpad (void)
+ManagerImpl::setDialpad (bool display)
 {
-    (getConfigString (PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) ? setConfig (PREFERENCES, CONFIG_DIALPAD, FALSE_STR) : setConfig (PREFERENCES, CONFIG_DIALPAD, TRUE_STR);
+	std::string set;
+
+	display ? set = TRUE_STR : set = FALSE_STR;
+	// If the value we received is different from the one saved in the config file, save the new value
+	// Else do nothing
+	if ((display && (getConfigString (PREFERENCES, CONFIG_DIALPAD) != TRUE_STR)) || 
+		(!display && (getConfigString (PREFERENCES, CONFIG_DIALPAD) != FALSE_STR)))
+			setConfig (PREFERENCES, CONFIG_DIALPAD, set);
 }
 
 int
@@ -2822,10 +2831,16 @@ ManagerImpl::getVolumeControls (void)
     }
 }
 
-void
-ManagerImpl::setVolumeControls (void)
+void ManagerImpl::setVolumeControls (bool display)
 {
-    (getConfigString (PREFERENCES, CONFIG_VOLUME) == TRUE_STR) ? setConfig (PREFERENCES , CONFIG_VOLUME , FALSE_STR) : setConfig (PREFERENCES , CONFIG_VOLUME , TRUE_STR);
+	std::string set;
+
+	display ? set = TRUE_STR : set = FALSE_STR;
+	// If the value we received is different from the one saved in the config file, save the new value
+	// Else do nothing
+	if ((display && (getConfigString (PREFERENCES, CONFIG_VOLUME) != TRUE_STR)) || 
+		(!display && (getConfigString (PREFERENCES, CONFIG_VOLUME) != FALSE_STR)))
+			setConfig (PREFERENCES, CONFIG_VOLUME, set);
 }
 
 void
@@ -3213,25 +3228,45 @@ void ManagerImpl::setSpkrVolume (unsigned short spkr_vol)
     }
 }
 
+
 void ManagerImpl::setMicVolume (unsigned short mic_vol)
 {
     _mic_volume = mic_vol;
 }
 
-void ManagerImpl::setSipPort (int port)
-{
-    _debug ("Setting to new port %d\n", port);
-    int prevPort = getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
 
-    if (prevPort != port) {
-        setConfig (PREFERENCES, CONFIG_SIP_PORT, port);
-        this->restartPJSIP ();
+void ManagerImpl::setSipAddress (const std::string& address)
+{
+  _debug ("Setting new ip to ip address %s\n", address.c_str());
+
+    std::string ip_address = std::string(address);
+
+    int index = ip_address.find_first_of(":");
+
+    std::string local_address = ip_address.substr(0,index);
+    std::string local_port = ip_address.substr(index+1); 
+
+    _debug ("Setting new ip to ip address %s and port %s\n", local_address.c_str(), local_port.c_str());
+
+    int prevPort = getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
+    std::string prevAddress  = getConfigString(IP2IP_PROFILE, LOCAL_ADDRESS);
+
+    if (prevPort != atoi(local_port.c_str()) || (prevAddress.compare(local_address) != 0)) {
+        setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, local_address);
+        setConfig (IP2IP_PROFILE, LOCAL_PORT, atoi(local_port.c_str()));
+        // this->restartPJSIP ();
     }
 }
 
-int ManagerImpl::getSipPort (void)
+
+int ManagerImpl::getSipAddress (void)
 {
-    return getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
+    // return getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
+    /* The 'global' SIP port is set throug the IP profile */
+    _debug("-----------------------------------------getSipAddress %i\n", getConfigInt (IP2IP_PROFILE, LOCAL_PORT));
+
+    return getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
+
 }
 
 
@@ -3414,7 +3449,7 @@ ManagerImpl::setConfig (const std::string& section, const std::string& name, int
 
 void ManagerImpl::setAccountsOrder (const std::string& order)
 {
-    _debug ("Set accounts order : %s\n", order.c_str());
+    _debug ("Setcreate accounts order : %s\n", order.c_str());
     // Set the new config
     setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
 }
@@ -3487,6 +3522,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, getConfigString (accountID, AUTHENTICATION_USERNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
+    a.insert (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, getConfigString (accountID, PUBLISHED_SAMEAS_LOCAL)));
     a.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, getConfigString (accountID, LOCAL_ADDRESS)));
     a.insert (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, getConfigString (accountID, PUBLISHED_ADDRESS)));
     a.insert (std::pair<std::string, std::string> (LOCAL_PORT, getConfigString (accountID, LOCAL_PORT)));
@@ -3667,7 +3703,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string authenticationName;
     std::string password;
     std::string realm;
-	std::string voicemail_count;
+    std::string voicemail_count;
 
     if ( (iter = map_cpy.find (AUTHENTICATION_USERNAME)) != map_cpy.end()) {
         authenticationName = iter->second;
@@ -3684,8 +3720,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     if ( (iter = map_cpy.find (REALM)) != map_cpy.end()) {
         realm = iter->second;
     }
-    
+
     setConfig (accountID, REALM, realm);
+
     setConfig (accountID, USERNAME, username);
     setConfig (accountID, AUTHENTICATION_USERNAME, authenticationName);
 
@@ -3719,6 +3756,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     std::string hostname;
     std::string displayName;
+    std::string publishedSameasLocal;
     std::string localAddress;
     std::string publishedAddress;
     std::string localPort;
@@ -3752,6 +3790,10 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     if ( (iter = map_cpy.find (DISPLAY_NAME)) != map_cpy.end()) {
         displayName = iter->second;
+    }
+
+    if ( (iter = map_cpy.find (PUBLISHED_SAMEAS_LOCAL)) != map_cpy.end()) {
+        publishedSameasLocal = iter->second;
     }
 
     if ( (iter = map_cpy.find (LOCAL_ADDRESS)) != map_cpy.end()) {
@@ -3880,6 +3922,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     setConfig (accountID, HOSTNAME, hostname);
 
+    setConfig (accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
     setConfig (accountID, LOCAL_ADDRESS, localAddress);
     setConfig (accountID, PUBLISHED_ADDRESS, publishedAddress);
     setConfig (accountID, LOCAL_PORT, localPort);
@@ -4143,6 +4186,14 @@ ManagerImpl::loadAccountMap()
 
     TokenList::iterator iter = sections.begin();
 
+	// Those calls that are placed to an uri that cannot be
+    // associated to an account are using that special account.
+    // An account, that is not account, in the sense of
+    // registration. This is useful since the Account object
+    // provides a handful of method that simplifies URI creation
+    // and loading of various settings.
+    _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
+
     while (iter != sections.end()) {
         // Check if it starts with "Account:" (SIP and IAX pour le moment)
         if ( (int) (iter->find ("Account:")) != 0) {
@@ -4173,20 +4224,13 @@ ManagerImpl::loadAccountMap()
         iter++;
     }
 
-    // Those calls that are placed to an uri that cannot be
-    // associated to an account are using that special account.
-    // An account, that is not account, in the sense of
-    // registration. This is useful since the Account object
-    // provides a handful of method that simplifies URI creation
-    // and loading of various settings.
-    _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
-
     if (_directIpAccount == NULL) {
         _debug ("Failed to create direct ip calls \"account\"\n");
     } else {
         // Force the options to be loaded
         // No registration in the sense of
         // the REGISTER method is performed.
+        _debug ("Succeed to create direct ip calls \"account\"\n");
         _directIpAccount->registerVoIPLink();
     }
 
@@ -4231,6 +4275,7 @@ ManagerImpl::getAccount (const AccountID& accountID)
     // In our definition,
     // this is the "direct ip calls account"
     if (accountID == AccountNULL) {
+		_debug ("Returns the direct IP account\n");
         return _directIpAccount;
     }
 
