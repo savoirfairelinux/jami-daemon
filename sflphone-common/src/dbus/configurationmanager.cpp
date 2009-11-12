@@ -715,7 +715,7 @@ ConfigurationManager::getMailNotify (void)
 int
 ConfigurationManager::getSipAddress (void)
 {
-    return Manager::instance().getSipAddress();
+    return Manager::instance().getLocalIp2IpPort();
 
     // return "ok";
 }
@@ -724,7 +724,7 @@ void
 ConfigurationManager::setSipAddress (const std::string& address)
 {
     _debug ("Manager received setSipAddress: %s\n", address.c_str());
-    Manager::instance().setSipAddress (address);
+    Manager::instance().setLocalIp2IpInfo(address);
 }
 
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)
