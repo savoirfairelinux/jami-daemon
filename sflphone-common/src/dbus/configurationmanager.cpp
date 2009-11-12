@@ -712,17 +712,19 @@ ConfigurationManager::getMailNotify (void)
     return Manager::instance().getMailNotify();
 }
 
-int32_t
-ConfigurationManager::getSipPort (void)
+int
+ConfigurationManager::getSipAddress (void)
 {
-    return Manager::instance().getSipPort();
+    return Manager::instance().getSipAddress();
+
+    // return "ok";
 }
 
 void
-ConfigurationManager::setSipPort (const int32_t& portNum)
+ConfigurationManager::setSipAddress (const std::string& address)
 {
-    _debug ("Manager received setSipPort: %d\n", portNum);
-    Manager::instance().setSipPort (portNum);
+    _debug ("Manager received setSipAddress: %s\n", address.c_str());
+    Manager::instance().setSipAddress (address);
 }
 
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)

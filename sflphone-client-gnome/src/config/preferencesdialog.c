@@ -44,7 +44,9 @@ gboolean accDialogOpen = FALSE;
 gboolean dialogOpen = FALSE;
 gboolean ringtoneEnabled = TRUE;
 
-GtkWidget * applyButton;
+GtkWidget * localPortSpinBox;
+GtkWidget * localAddressCombo;
+
 GtkWidget * history_value;
 
 GtkWidget * status;
@@ -55,9 +57,20 @@ static gboolean history_enabled = TRUE;
 
 GHashTable * directIpCallsProperties = NULL;
 
-static void update_port_cb ( GtkSpinButton *button UNUSED, void *ptr )
-{
-    dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
+
+
+
+static void update_ip_address_port_cb ( GtkSpinButton *button UNUSED, void *ptr )
+{ 
+    // dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
+    gchar* local_address = g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)));
+    gchar* local_port = g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox)));
+
+    gchar* ip_interface = g_strconcat(local_address, ":", local_port, NULL);
+
+    DEBUG("update_ip_address_port_cb %s\n", ip_interface);
+
+    dbus_set_sip_address(ip_interface);
 }
 
 
@@ -173,9 +186,9 @@ GtkWidget* create_direct_ip_calls_tab()
     GtkWidget * explanationLabel;
 
     GtkWidget * localPortLabel;
-    GtkWidget * localPortSpinBox;
+    // GtkWidget * localPortSpinBox;
     GtkWidget * localAddressLabel;
-    GtkWidget * localAddressCombo;
+    // GtkWidget * localAddressCombo;
 
     GtkWidget * keyExchangeCombo;
     GtkWidget * advancedZrtpButton;
@@ -218,7 +231,7 @@ GtkWidget* create_direct_ip_calls_tab()
     /**
      * Network Interface Section 
      */
-    gnome_main_section_new_with_table (_("Network Interface"), &frame, &table, 2, 2);
+    gnome_main_section_new_with_table (_("Network Interface"), &frame, &table, 2, 3);
     gtk_container_set_border_width (GTK_CONTAINER(table), 10);
     gtk_table_set_row_spacings (GTK_TABLE(table), 10);
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
@@ -245,10 +258,6 @@ GtkWidget* create_direct_ip_calls_tab()
     gboolean iface_found = FALSE;
     
     if (iface_list != NULL) {
-
-      // init interface list with first one
-      // iface = iface_list;
-      // g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)))); 
 
       for (iface = iface_list; *iface; iface++) {         
 	DEBUG("Interface %s", *iface);            
@@ -284,6 +293,7 @@ GtkWidget* create_direct_ip_calls_tab()
     g_signal_connect (G_OBJECT(GTK_COMBO_BOX(localAddressCombo)), "changed", G_CALLBACK (ip2ip_local_address_changed_cb), localAddressCombo);
 
     g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
+    
 
     /**
      * Local port
@@ -299,6 +309,12 @@ GtkWidget* create_direct_ip_calls_tab()
 
     gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
     g_signal_connect (G_OBJECT(localPortSpinBox), "changed", G_CALLBACK (ip2ip_local_port_changed_cb), localPortSpinBox);
+
+
+     GtkWidget *applyModificationButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+     g_signal_connect( G_OBJECT(applyModificationButton) , "clicked" , G_CALLBACK( update_ip_address_port_cb ), localPortSpinBox);
+     gtk_table_attach( GTK_TABLE(table), applyModificationButton, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+
 
     /**
      * Security Section 

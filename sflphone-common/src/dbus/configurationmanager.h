@@ -113,8 +113,8 @@ public:
     void setNotify( void );
     int32_t getMailNotify( void );
     void setMailNotify( void );
-    int32_t getSipPort( void );
-    void setSipPort( const int32_t& portNum);
+    int getSipAddress( void );
+    void setSipAddress( const std::string& address );
 
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
