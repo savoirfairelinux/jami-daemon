@@ -17,7 +17,8 @@ libdbus_la_SOURCES = \
     callmanager.cpp \
     configurationmanager.cpp  \
     instance.cpp  \
-    dbusmanagerimpl.cpp
+    dbusmanagerimpl.cpp  \
+    networkmanager.cpp
 
 libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
 
@@ -29,6 +30,8 @@ noinst_HEADERS =            \
     instance.h              \
     dbusmanager.h           \
     dbusmanagerimpl.h       \
+    networkmanager_proxy.h  \
+    networkmanager.h        \
     $(BUILT_SOURCES)
 
 # Dbus service file
