@@ -3235,9 +3235,11 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 }
 
 
-void ManagerImpl::setSipAddress (const std::string& address)
+
+
+
+void ManagerImpl::setLocalIp2IpInfo(const std::string& address)
 {
-  _debug ("Setting new ip to ip address %s\n", address.c_str());
 
     std::string ip_address = std::string(address);
 
@@ -3245,25 +3247,40 @@ void ManagerImpl::setSipAddress (const std::string& address)
 
     std::string local_address = ip_address.substr(0,index);
     std::string local_port = ip_address.substr(index+1); 
+    int newPort = atoi(local_port.c_str());
 
-    _debug ("Setting new ip to ip address %s and port %s\n", local_address.c_str(), local_port.c_str());
+    _debug ("Setting new address %s and port %s for default account (ip to ip calls)\n", local_address.c_str(), local_port.c_str());
 
     int prevPort = getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
     std::string prevAddress  = getConfigString(IP2IP_PROFILE, LOCAL_ADDRESS);
 
-    if (prevPort != atoi(local_port.c_str()) || (prevAddress.compare(local_address) != 0)) {
+    if ((prevPort != newPort) || (prevAddress.compare(local_address) != 0)) {
+
+        
+        if(_directIpAccount) {
+
+	     SIPAccount* account = dynamic_cast<SIPAccount*>(_directIpAccount);
+
+	     account->setLocalPort(newPort);
+	     account->setLocalAddress(local_address);
+	}
+
         setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, local_address);
-        setConfig (IP2IP_PROFILE, LOCAL_PORT, atoi(local_port.c_str()));
+        setConfig (IP2IP_PROFILE, LOCAL_PORT, newPort);
+
+	SIPVoIPLink* siplink = SIPVoIPLink::instance ("");
+	// if(siplink)
+	siplink->updateAccountInfo(_directIpAccount->getAccountID());
         // this->restartPJSIP ();
     }
 }
 
 
-int ManagerImpl::getSipAddress (void)
+int ManagerImpl::getLocalIp2IpPort (void)
 {
-    // return getConfigInt (PREFERENCES , CONFIG_SIP_PORT);
-    /* The 'global' SIP port is set throug the IP profile */
-    _debug("-----------------------------------------getSipAddress %i\n", getConfigInt (IP2IP_PROFILE, LOCAL_PORT));
+
+    /* The SIP port used for default account (IP to IP) calls */
+    _debug("Default account port %i\n", getConfigInt (IP2IP_PROFILE, LOCAL_PORT));
 
     return getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
 
@@ -4178,6 +4195,8 @@ short
 ManagerImpl::loadAccountMap()
 {
 
+    _debug("ManagerImpl::loadAccountMap\n");
+
     short nbAccount = 0;
     TokenList sections = _config.getSections();
     std::string accountType;
@@ -4186,13 +4205,24 @@ ManagerImpl::loadAccountMap()
 
     TokenList::iterator iter = sections.begin();
 
-	// Those calls that are placed to an uri that cannot be
+    // Those calls that are placed to an uri that cannot be
     // associated to an account are using that special account.
     // An account, that is not account, in the sense of
     // registration. This is useful since the Account object
     // provides a handful of method that simplifies URI creation
     // and loading of various settings.
     _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
+
+    if (_directIpAccount == NULL) {
+        _debug ("Failed to create direct ip calls \"account\"\n");
+    } else {
+        // Force the options to be loaded
+        // No registration in the sense of
+        // the REGISTER method is performed.
+        _debug ("Succeed to create direct ip calls \"account\"\n");
+	_accountMap[IP2IP_PROFILE] = _directIpAccount;
+        _directIpAccount->registerVoIPLink();
+    }
 
     while (iter != sections.end()) {
         // Check if it starts with "Account:" (SIP and IAX pour le moment)
@@ -4223,7 +4253,7 @@ ManagerImpl::loadAccountMap()
 
         iter++;
     }
-
+    /*
     if (_directIpAccount == NULL) {
         _debug ("Failed to create direct ip calls \"account\"\n");
     } else {
@@ -4232,9 +4262,10 @@ ManagerImpl::loadAccountMap()
         // the REGISTER method is performed.
         _debug ("Succeed to create direct ip calls \"account\"\n");
         _directIpAccount->registerVoIPLink();
+	_accountMap[IP2IP_PROFILE] = _directIpAccount;
     }
-
-    _debug ("nbAccount loaded %i \n",nbAccount);
+    */
+    _debug ("nbAccount loaded %i \n", nbAccount);
 
     return nbAccount;
 }
@@ -4338,18 +4369,27 @@ ManagerImpl::getAccountIdFromNameAndServer (const std::string& userName, const s
 
 void ManagerImpl::restartPJSIP (void)
 {
-    SIPVoIPLink *siplink;
-    siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    _debug("ManagerImpl::restartPJSIP\n");
+    VoIPLink *link = getSIPAccountLink();  
+    SIPVoIPLink *siplink = NULL;
 
+    if(link) {
+        siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    }
+
+    _debug("ManagerImpl::unregister sip account\n");
     this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
 
     if (siplink) {
+        _debug("ManagerImpl::Terminate sip\n");
         siplink->terminate ();
         siplink = SIPVoIPLink::instance ("");
+	_debug("ManagerImpl::Init new sip\n");
         siplink->init ();
     }
 
+    _debug("ManagerImpl::register sip account\n");
     /* Then register all enabled SIP accounts */
     this->registerCurSIPAccounts (siplink);
 }
@@ -4372,14 +4412,17 @@ VoIPLink* ManagerImpl::getSIPAccountLink()
 {
     /* We are looking for the first SIP account we met because all the SIP accounts have the same voiplink */
     Account *account;
-    AccountMap::iterator iter;
+    AccountMap::iterator iter = _accountMap.begin();
+    
+    while(iter != _accountMap.end()) {
 
-    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
         account = iter->second;
 
         if (account->getType() == "sip") {
             return account->getVoIPLink();
         }
+
+	++iter;
     }
 
     return NULL;
