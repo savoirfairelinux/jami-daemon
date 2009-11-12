@@ -16,14 +16,14 @@ public:
     void StateChanged(const uint32_t& state);
     string stateAsString(const uint32_t& state);
 
-    typedef enum NMState
+    enum NMState
     {
         NM_STATE_UNKNOWN = 0,
         NM_STATE_ASLEEP,
         NM_STATE_CONNECTING,
         NM_STATE_CONNECTED,
         NM_STATE_DISCONNECTED
-    } NMState;
+    };
 
    static const string statesString[5];
 };
