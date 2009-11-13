@@ -73,7 +73,7 @@ bool
 AudioStream::drainStream (void)
 {
     if (_audiostream) {
-        _debug ("Draining stream\n");
+        _debug ("Draining stream");
         pa_operation * operation;
 
         pa_threaded_mainloop_lock (_mainloop);
@@ -81,7 +81,7 @@ AudioStream::drainStream (void)
         if ( (operation = pa_stream_drain (_audiostream, success_cb, _mainloop))) {
             while (pa_operation_get_state (operation) != PA_OPERATION_DONE) {
                 if (!_context || pa_context_get_state (_context) != PA_CONTEXT_READY || !_audiostream || pa_stream_get_state (_audiostream) != PA_STREAM_READY) {
-                    _debug ("Connection died: %s\n", _context ? pa_strerror (pa_context_errno (_context)) : "NULL");
+                    _debug ("Connection died: %s", _context ? pa_strerror (pa_context_errno (_context)) : "NULL");
                     pa_operation_unref (operation);
                     break;
                 } else {
@@ -99,7 +99,7 @@ AudioStream::drainStream (void)
 bool
 AudioStream::disconnectStream (void)
 {
-    _debug ("Destroy audio streams\n");
+    _debug ("Destroy audio streams");
 
     // pa_threaded_mainloop_lock (_mainloop);
 
@@ -121,7 +121,7 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 {
     pa_threaded_mainloop *m;
 
-    _debug ("AudioStream::stream_state_callback :: The state of the stream changed\n");
+    _debug ("AudioStream::stream_state_callback :: The state of the stream changed");
     assert (s);
 
     m = (pa_threaded_mainloop*) user_data;
@@ -130,26 +130,26 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
     switch (pa_stream_get_state (s)) {
 
         case PA_STREAM_CREATING:
-            _debug ("Stream is creating...\n");
+            _debug ("Stream is creating...");
             break;
 
         case PA_STREAM_TERMINATED:
-            _debug ("Stream is terminating...\n");
+            _debug ("Stream is terminating...");
             break;
 
         case PA_STREAM_READY:
-            _debug ("Stream successfully created, connected to %s\n", pa_stream_get_device_name (s));
+            _debug ("Stream successfully created, connected to %s", pa_stream_get_device_name (s));
             // pa_stream_cork( s, 0, NULL, NULL);
             break;
 
         case PA_STREAM_UNCONNECTED:
-            _debug ("Stream unconnected\n");
+            _debug ("Stream unconnected");
             break;
 
         case PA_STREAM_FAILED:
 
         default:
-            _debug ("Stream error - Sink/Source doesn't exists: %s\n" , pa_strerror (pa_context_errno (pa_stream_get_context (s))));
+            _debug ("Stream error - Sink/Source doesn't exists: %s" , pa_strerror (pa_context_errno (pa_stream_get_context (s))));
             exit (0);
             break;
     }
@@ -185,7 +185,7 @@ AudioStream::createStream (pa_context* c)
     pa_buffer_attr* attributes = (pa_buffer_attr*) malloc (sizeof (pa_buffer_attr));
 
     if (! (s = pa_stream_new (c, _streamDescription.c_str() , &sample_spec, &channel_map)))
-        _debug ("%s: pa_stream_new() failed : %s\n" , _streamDescription.c_str(), pa_strerror (pa_context_errno (c)));
+        _debug ("%s: pa_stream_new() failed : %s" , _streamDescription.c_str(), pa_strerror (pa_context_errno (c)));
 
     assert (s);
 
@@ -216,7 +216,7 @@ AudioStream::createStream (pa_context* c)
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);
     } else {
-        _debug ("Stream type unknown \n");
+        _debug ("Stream type unknown ");
     }
 
     pa_stream_set_state_callback (s , stream_state_callback, _mainloop);

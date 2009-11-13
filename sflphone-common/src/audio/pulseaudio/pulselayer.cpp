@@ -25,7 +25,7 @@ int framesPerBuffer = 2048;
 
 static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
 {
-    // _debug("playback_callback\n");
+    // _debug("playback_callback");
 
     assert (s && bytes);
     assert (bytes > 0);
@@ -35,7 +35,7 @@ static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
 
 static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
 {
-    // _debug("capture_callback\n");
+    // _debug("capture_callback");
 
     assert (s && bytes);
     assert (bytes > 0);
@@ -46,25 +46,25 @@ static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
 /*
 static void stream_suspended_callback (pa_stream *s UNUSED, void *userdata UNUSED)
 {
-    _debug("PulseLayer::Stream Suspended\n");
+    _debug("PulseLayer::Stream Suspended");
 }
 */
 
 /*
 static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
 {
-    _debug("PulseLayer::Stream Moved\n");
+    _debug("PulseLayer::Stream Moved");
 }
 */
 
 static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
 {
-    _debug ("PulseLayer::Buffer Underflow\n");
+    _debug ("PulseLayer::Buffer Underflow");
     // const pa_timing_info* info = pa_stream_get_timing_info(s);
-    // _debug("         pa write_index: %l\n", (long)(info->write_index));
-    // _debug("         pa write_index_corupt (if not 0): %i\n",  info->write_index_corrupt);
-    // _debug("         pa read_index: %l\n", (long)(info->read_index));
-    // _debug("         pa read_index_corrupt (if not 0): %i\n", info->read_index_corrupt);
+    // _debug("         pa write_index: %l", (long)(info->write_index));
+    // _debug("         pa write_index_corupt (if not 0): %i",  info->write_index_corrupt);
+    // _debug("         pa read_index: %l", (long)(info->read_index));
+    // _debug("         pa read_index_corrupt (if not 0): %i", info->read_index_corrupt);
 
 
     // fill in audio buffer twice the prebuffering value to restart playback
@@ -77,7 +77,7 @@ static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
 
 static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
 {
-    _debug ("PulseLayer::Buffer OverFlow\n");
+    _debug ("PulseLayer::Buffer OverFlow");
     //PulseLayer* pulse = (PulseLayer*) userdata;
     // pa_stream_drop (s);
     // pa_stream_trigger (s, NULL, NULL);
@@ -91,7 +91,7 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         , playback()
         , record()
 {
-    _debug ("PulseLayer::Pulse audio constructor: Create context\n");
+    _debug ("PulseLayer::Pulse audio constructor: Create context");
 
     _urgentRingBuffer.createReadPointer();
     dcblocker = new DcBlocker();
@@ -116,7 +116,7 @@ PulseLayer::~PulseLayer (void)
 bool
 PulseLayer::closeLayer (void)
 {
-    _debug ("PulseLayer::closeLayer :: Destroy pulselayer\n");
+    _debug ("PulseLayer::closeLayer :: Destroy pulselayer");
 
     // Commenting the line below will make the
     // PulseLayer to close immediately, not
@@ -153,7 +153,7 @@ PulseLayer::closeLayer (void)
 void
 PulseLayer::connectPulseAudioServer (void)
 {
-    _debug ("PulseLayer::connectPulseAudioServer \n");
+    _debug ("PulseLayer::connectPulseAudioServer ");
 
     setenv ("PULSE_PROP_media.role", "phone", 1);
 
@@ -161,7 +161,7 @@ PulseLayer::connectPulseAudioServer (void)
 
     pa_threaded_mainloop_lock (m);
 
-    _debug ("Connect the context to the server\n");
+    _debug ("Connect the context to the server");
     pa_context_connect (context, NULL , flag , NULL);
 
     pa_context_set_state_callback (context, context_state_callback, this);
@@ -170,7 +170,7 @@ PulseLayer::connectPulseAudioServer (void)
     // Run the main loop
 
     if (pa_context_get_state (context) != PA_CONTEXT_READY) {
-        _debug ("Error connecting to pulse audio server\n");
+        _debug ("Error connecting to pulse audio server");
         // pa_threaded_mainloop_unlock (m);
     }
 
@@ -178,13 +178,13 @@ PulseLayer::connectPulseAudioServer (void)
 
     //serverinfo();
     //muteAudioApps(99);
-    _debug ("Context creation done\n");
+    _debug ("Context creation done");
 
 }
 
 void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 {
-    _debug ("PulseLayer::context_state_callback ::The state of the context changed\n");
+    _debug ("PulseLayer::context_state_callback ::The state of the context changed");
     PulseLayer* pulse = (PulseLayer*) user_data;
     assert (c && pulse->m);
 
@@ -195,22 +195,22 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
         case PA_CONTEXT_AUTHORIZING:
 
         case PA_CONTEXT_SETTING_NAME:
-            _debug ("Waiting....\n");
+            _debug ("Waiting....");
             break;
 
         case PA_CONTEXT_READY:
             pulse->createStreams (c);
-            _debug ("Connection to PulseAudio server established\n");
+            _debug ("Connection to PulseAudio server established");
             break;
 
         case PA_CONTEXT_TERMINATED:
-            _debug ("Context terminated\n");
+            _debug ("Context terminated");
             break;
 
         case PA_CONTEXT_FAILED:
 
         default:
-            _debug (" Error : %s\n" , pa_strerror (pa_context_errno (c)));
+            _debug (" Error : %s" , pa_strerror (pa_context_errno (c)));
             pulse->disconnectAudioStream();
             exit (0);
             break;
@@ -219,7 +219,7 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
 bool PulseLayer::disconnectAudioStream (void)
 {
-    _debug (" PulseLayer::disconnectAudioStream( void ) \n");
+    _debug (" PulseLayer::disconnectAudioStream( void ) ");
 
     closePlaybackStream();
 
@@ -234,7 +234,7 @@ bool PulseLayer::disconnectAudioStream (void)
 
 bool PulseLayer::createStreams (pa_context* c)
 {
-    _debug ("PulseLayer::createStreams\n");
+    _debug ("PulseLayer::createStreams");
 
     PulseLayerType * playbackParam = new PulseLayerType();
     playbackParam->context = c;
@@ -334,27 +334,27 @@ void PulseLayer::startStream (void)
 
     if (!is_started) {
 
-        _debug ("PulseLayer::Start Stream\n");
+        _debug ("PulseLayer::Start Stream");
 
         if (!m) {
 
-            _debug ("Creating PulseAudio MainLoop\n");
+            _debug ("Creating PulseAudio MainLoop");
             m = pa_threaded_mainloop_new();
             assert (m);
 
             if (pa_threaded_mainloop_start (m) < 0) {
-                _debug ("Failed starting the mainloop\n");
+                _debug ("Failed starting the mainloop");
             }
         }
 
         if (!context) {
 
-            _debug ("Creating new PulseAudio Context\n");
+            _debug ("Creating new PulseAudio Context");
             pa_threaded_mainloop_lock (m);
             // Instanciate a context
 
             if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
-                _debug ("Error while creating the context\n");
+                _debug ("Error while creating the context");
 
             pa_threaded_mainloop_unlock (m);
 
@@ -381,7 +381,7 @@ PulseLayer::stopStream (void)
 
     if (is_started) {
 
-        _debug ("PulseLayer::Stop Audio Stream\n");
+        _debug ("PulseLayer::Stop Audio Stream");
         pa_stream_flush (playback->pulseStream(), NULL, NULL);
         pa_stream_flush (record->pulseStream(), NULL, NULL);
 
@@ -391,7 +391,7 @@ PulseLayer::stopStream (void)
 
         disconnectAudioStream();
 
-        _debug ("Disconnecting PulseAudio context\n");
+        _debug ("Disconnecting PulseAudio context");
 
         if (context) {
 
@@ -402,7 +402,7 @@ PulseLayer::stopStream (void)
             context = NULL;
         }
 
-        _debug ("Freeing Pulseaudio mainloop\n");
+        _debug ("Freeing Pulseaudio mainloop");
 
         if (m) {
             pa_threaded_mainloop_free (m);
@@ -420,7 +420,7 @@ PulseLayer::stopStream (void)
 
 // void PulseLayer::underflow (pa_stream* s UNUSED,  void* userdata UNUSED)
 //{
-//    _debug ("PulseLayer::Buffer Underflow\n");
+//    _debug ("PulseLayer::Buffer Underflow");
 //}
 
 /*
@@ -438,7 +438,7 @@ void PulseLayer::processPlaybackData (void)
     // Handle the data for the speakers
     if (playback && (playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
 
-        // _debug("PulseLayer::processPlaybackData()\n");
+        // _debug("PulseLayer::processPlaybackData()");
 
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if (pa_stream_writable_size (playback->pulseStream()) == 0)
@@ -467,7 +467,7 @@ void PulseLayer::processData (void)
     // Handle the data for the speakers
     if (playback && (playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
 
-        // _debug("PulseLayer::processPlaybackData()\n");
+        // _debug("PulseLayer::processPlaybackData()");
 
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if (pa_stream_writable_size (playback->pulseStream()) == 0)
@@ -499,17 +499,17 @@ void PulseLayer::writeToSpeaker (void)
 
 
     int writeableSize = pa_stream_writable_size (playback->pulseStream());
-    // _debug("PulseLayer writablesize : %i\n", writeableSize);
+    // _debug("PulseLayer writablesize : %i", writeableSize);
 
     if (writeableSize < 0)
-        _debug ("PulseLayer playback error : %s\n", pa_strerror (writeableSize));
+        _debug ("PulseLayer playback error : %s", pa_strerror (writeableSize));
 
 
     if (urgentAvailBytes > writeableSize) {
 
-        // _debug("urgentAvailBytes: %i\n", urgentAvailBytes);
+        // _debug("urgentAvailBytes: %i", urgentAvailBytes);
 
-        // _debug("Play Urgent!\n");
+        // _debug("Play Urgent!");
 
         out = (SFLDataFormat*) pa_xmalloc (writeableSize);
         _urgentRingBuffer.Get (out, writeableSize, 100);
@@ -533,11 +533,11 @@ void PulseLayer::writeToSpeaker (void)
 
         if (tone != 0) {
 
-            // _debug("PlayTone writeableSize: %i\n", writeableSize);
+            // _debug("PlayTone writeableSize: %i", writeableSize);
 
             if (playback->getStreamState() == PA_STREAM_READY) {
 
-                // _debug("Play Sine Tone!\n");
+                // _debug("Play Sine Tone!");
 
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
@@ -553,7 +553,7 @@ void PulseLayer::writeToSpeaker (void)
         else if (file_tone != 0) {
 
             if (playback->getStreamState() == PA_STREAM_READY) {
-                // _debug("Play File Tone!\n");
+                // _debug("Play File Tone!");
 
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 int copied = file_tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
@@ -614,7 +614,7 @@ void PulseLayer::writeToSpeaker (void)
                     int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
                     if ( (nbSample*sizeof (SFLDataFormat)) > (unsigned int) writeableSize)
-                        _debug ("Error: nbsbyte exceed buffer length\n");
+                        _debug ("Error: nbsbyte exceed buffer length");
 
                     // pa_threaded_mainloop_lock (m);
                     pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
@@ -666,10 +666,10 @@ void PulseLayer::readFromMic (void)
 
     int readableSize = pa_stream_readable_size (record->pulseStream());
 
-    // _debug("readableSize: %i\n", readableSize);
+    // _debug("readableSize: %i", readableSize);
 
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
-        _debug ("pa_stream_peek() failed: %s\n" , pa_strerror (pa_context_errno (context)));
+        _debug ("pa_stream_peek() failed: %s" , pa_strerror (pa_context_errno (context)));
     }
 
     if (data != 0) {
@@ -683,7 +683,7 @@ void PulseLayer::readFromMic (void)
 
 
             SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
-            // _debug("Byte read: %i\n", r);
+            // _debug("Byte read: %i", r);
             int nbSample = r / sizeof (SFLDataFormat);
 
             int nb_sample_up = nbSample;
@@ -709,7 +709,7 @@ void PulseLayer::readFromMic (void)
     }
 
     if (pa_stream_drop (record->pulseStream()) < 0) {
-        //_debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+        //_debug("pa_stream_drop() failed: %s" , pa_strerror( pa_context_errno( context) ));
     }
 
     // pa_threaded_mainloop_unlock (m);
@@ -717,10 +717,10 @@ void PulseLayer::readFromMic (void)
 
 static void retrieve_server_info (pa_context *c UNUSED, const pa_server_info *i, void *userdata UNUSED)
 {
-    _debug ("Server Info: Process owner : %s\n" , i->user_name);
-    _debug ("\t\tServer name : %s - Server version = %s\n" , i->server_name, i->server_version);
-    _debug ("\t\tDefault sink name : %s\n" , i->default_sink_name);
-    _debug ("\t\tDefault source name : %s\n" , i->default_source_name);
+    _debug ("Server Info: Process owner : %s" , i->user_name);
+    _debug ("\t\tServer name : %s - Server version = %s" , i->server_name, i->server_version);
+    _debug ("\t\tDefault sink name : %s" , i->default_sink_name);
+    _debug ("\t\tDefault source name : %s" , i->default_source_name);
 }
 
 static void reduce_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
@@ -728,10 +728,10 @@ static void reduce_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info 
     PulseLayer* pulse = (PulseLayer*) userdata;
 
     if (!eol) {
-        //_debug("Sink Info: index : %i\n" , i->index);
-        //_debug("\t\tClient : %i\n" , i->client);
-        //_debug("\t\tVolume : %i\n" , i->volume.values[0]);
-        //_debug("\t\tChannels : %i\n" , i->volume.channels);
+        //_debug("Sink Info: index : %i" , i->index);
+        //_debug("\t\tClient : %i" , i->client);
+        //_debug("\t\tVolume : %i" , i->volume.values[0]);
+        //_debug("\t\tChannels : %i" , i->volume.channels);
         if (strcmp (i->name , PLAYBACK_STREAM_NAME) != 0)
             pulse->setSinkVolume (i->index , i->volume.channels, 10);
     }
@@ -742,11 +742,11 @@ static void restore_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info
     PulseLayer* pulse = (PulseLayer*) userdata;
 
     if (!eol) {
-        //_debug("Sink Info: index : %i\n" , i->index);
-        //_debug("\t\tSink name : -%s-\n" , i->name);
-        //_debug("\t\tClient : %i\n" , i->client);
-        //_debug("\t\tVolume : %i\n" , i->volume.values[0]);
-        //_debug("\t\tChannels : %i\n" , i->volume.channels);
+        //_debug("Sink Info: index : %i" , i->index);
+        //_debug("\t\tSink name : -%s-" , i->name);
+        //_debug("\t\tClient : %i" , i->client);
+        //_debug("\t\tVolume : %i" , i->volume.values[0]);
+        //_debug("\t\tChannels : %i" , i->volume.channels);
         if (strcmp (i->name , PLAYBACK_STREAM_NAME) != 0)
             pulse->setSinkVolume (i->index , i->volume.channels, 100);
     }
@@ -806,7 +806,7 @@ void PulseLayer::setSinkVolume (int index, int channels, int volume)
     pa_volume_t vol = PA_VOLUME_NORM * ( (double) volume / 100) ;
 
     pa_cvolume_set (&cvolume , channels , vol);
-    _debug ("Set sink volume of index %i\n" , index);
+    _debug ("Set sink volume of index %i" , index);
     pa_context_set_sink_input_volume (context, index, &cvolume, NULL, NULL) ;
 
 }
@@ -818,7 +818,7 @@ void PulseLayer::setSourceVolume (int index, int channels, int volume)
     pa_volume_t vol = PA_VOLUME_NORM * ( (double) volume / 100) ;
 
     pa_cvolume_set (&cvolume , channels , vol);
-    _debug ("Set source volume of index %i\n" , index);
+    _debug ("Set source volume of index %i" , index);
     pa_context_set_source_volume_by_index (context, index, &cvolume, NULL, NULL);
 
 }

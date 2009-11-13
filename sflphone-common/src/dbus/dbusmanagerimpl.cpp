@@ -46,7 +46,7 @@ DBusManagerImpl::exec()
     // Register accounts
     Manager::instance().initRegisterAccounts(); //getEvents();
 
-    _debug ("Starting DBus event loop\n");
+    _debug ("Starting DBus event loop");
     _dispatcher.enter();
 
     return 1;

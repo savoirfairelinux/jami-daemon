@@ -40,7 +40,7 @@ void AudioLayer::flushUrgent (void)
 
 int AudioLayer::putUrgent (void* buffer, int toCopy)
 {
-    _debug ("------------------- AudioLayer::putUrgent --------------------\n");
+    _debug ("------------------- AudioLayer::putUrgent --------------------");
     int a;
 
     ost::MutexLock guard (_mutex);
@@ -65,7 +65,7 @@ int AudioLayer::putMain (void *buffer, int toCopy, CallID call_id)
     if (a >= toCopy) {
         return getMainBuffer()->putData (buffer, toCopy, _defaultVolume, call_id);
     } else {
-        _debug ("Chopping sound, Ouch! RingBuffer full ?\n");
+        _debug ("Chopping sound, Ouch! RingBuffer full ?");
         return getMainBuffer()->putData (buffer, a, _defaultVolume, call_id);
     }
 

@@ -63,7 +63,7 @@ AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned i
 
     // no filename to load
     if (filename.empty()) {
-        _debug ("Unable to open audio file: filename is empty\n");
+        _debug ("Unable to open audio file: filename is empty");
         return false;
     }
 
@@ -73,7 +73,7 @@ AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned i
 
     if (!file.is_open()) {
         // unable to load the file
-        _debug ("Unable to open audio file %s\n", filename.c_str());
+        _debug ("Unable to open audio file %s", filename.c_str());
         return false;
     }
 

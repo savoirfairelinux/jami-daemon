@@ -40,7 +40,7 @@ void AudioRecorderTest::testRecordData()
       _ar->setSndSamplingRate(44100);
       _ar->openFile("theWavFile.wav",ft,sf);
 
-      cout << "file opened!\n";
+      cout << "file opened!";
 
       SFLDataFormat buf [2];
       for (SFLDataFormat i = -32768; i < 32767; i++ ){

@@ -51,14 +51,14 @@ CodecDescriptor::init()
     _nbCodecs = CodecDynamicList.size();
 
     if (_nbCodecs <= 0) {
-        _debug (" Error - No codecs available in directory %s\n" , CODECS_DIR);
+        _debug (" Error - No codecs available in directory %s" , CODECS_DIR);
     }
 
     int i;
 
     for (i = 0 ; i < _nbCodecs ; i++) {
         _CodecsMap[ (AudioCodecType) CodecDynamicList[i]->getPayload() ] = CodecDynamicList[i];
-        _debug ("%s\n" , CodecDynamicList[i]->getCodecName().c_str());
+        _debug ("%s" , CodecDynamicList[i]->getCodecName().c_str());
     }
 }
 
@@ -94,11 +94,11 @@ CodecDescriptor::getCodec (AudioCodecType payload)
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end()) {
-        // _debug("Found codec %i _CodecsMap from codec descriptor\n", payload);
+        // _debug("Found codec %i _CodecsMap from codec descriptor", payload);
         return (iter->second);
     }
 
-    _debug ("Error cannont found codec %i in _CodecsMap from codec descriptor\n", payload);
+    _debug ("Error cannont found codec %i in _CodecsMap from codec descriptor", payload);
 
     return NULL;
 }
@@ -207,7 +207,7 @@ CodecDescriptor::scanCodecDirectory (void)
 
     for (i = 0 ; (unsigned int) i < dirToScan.size() ; i++) {
         std::string dirStr = dirToScan[i];
-        _debug ("Scanning %s to find audio codecs....\n",  dirStr.c_str());
+        _debug ("Scanning %s to find audio codecs....",  dirStr.c_str());
         DIR *dir = opendir (dirStr.c_str());
         AudioCodec* audioCodec;
 
@@ -218,7 +218,7 @@ CodecDescriptor::scanCodecDirectory (void)
                 tmp =  dirStruct -> d_name ;
                 if (tmp == CURRENT_DIR || tmp == PARENT_DIR) {} else {
                     if (seemsValid (tmp) && !alreadyInCache (tmp)) {
-                        //_debug("Codec : %s\n", tmp.c_str());
+                        //_debug("Codec : %s", tmp.c_str());
                         _Cache.push_back (tmp);
                         audioCodec = loadCodec (dirStr.append (tmp));
                         codecs.push_back (audioCodec);
@@ -237,7 +237,7 @@ CodecDescriptor::scanCodecDirectory (void)
 AudioCodec*
 CodecDescriptor::loadCodec (std::string path)
 {
-    //_debug("Load path %s\n", path.c_str());
+    //_debug("Load path %s", path.c_str());
     CodecHandlePointer p;
     using std::cerr;
     void * codecHandle = dlopen (path.c_str() , RTLD_LAZY);
@@ -265,7 +265,7 @@ CodecDescriptor::loadCodec (std::string path)
 void
 CodecDescriptor::unloadCodec (CodecHandlePointer p)
 {
-    // _debug("Unload codec %s\n", p.first->getCodecName().c_str());
+    // _debug("Unload codec %s", p.first->getCodecName().c_str());
     using std::cerr;
     destroy_t* destroyCodec = (destroy_t*) dlsym (p.second , "destroy");
 

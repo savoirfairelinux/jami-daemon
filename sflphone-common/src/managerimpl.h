@@ -1029,6 +1029,14 @@ class ManagerImpl {
      */
     bool isCurrentCall(const CallID& callId);
 
+
+    /**
+     * Send registration to all enabled accounts
+     * @return 0 on registration success
+     *          1 otherelse
+     */
+    int registerAccounts();
+
     /**
      * Restart PJSIP
      * @param void

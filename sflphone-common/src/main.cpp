@@ -46,11 +46,11 @@ main (int argc, char **argv)
     if (argc == 2 && strcmp (argv[1], "--help") == 0) {
 
 
-        printf ("%1$s Daemon %2$s, by Savoir-Faire Linux 2004-2009\n\n",
+        printf ("%1$s Daemon %2$s, by Savoir-Faire Linux 2004-2009",
                 PROGNAME,
                 SFLPHONED_VERSION);
-        printf ("USAGE: sflphoned [--help]\nParameters: \n  --help\tfor this message\n\n  --port=3999\tchange the session port\n\n");
-        printf ("See http://www.sflphone.org/ for more information\n");
+        printf ("USAGE: sflphoned [--help]Parameters:   --help\tfor this message  --port=3999\tchange the session port");
+        printf ("See http://www.sflphone.org/ for more information");
 
     } else {
         FILE *fp;
@@ -84,7 +84,7 @@ main (int argc, char **argv)
             if ( (dir = opendir (sfldir)) == NULL) {
                 //Create it
                 if (mkdir (sfldir, 0755) != 0) {
-                    fprintf (stderr, "Creating directory %s failed. Exited.\n", sfldir);
+                    fprintf (stderr, "Creating directory %s failed. Exited.", sfldir);
                     exit (-1);
                 }
             }
@@ -95,14 +95,14 @@ main (int argc, char **argv)
             if ( (dir = opendir (sfldir)) == NULL) {
                 //Create it
                 if (mkdir (sfldir, 0755) != 0) {
-                    fprintf (stderr, "Creating directory %s failed. Exited.\n", sfldir);
+                    fprintf (stderr, "Creating directory %s failed. Exited.", sfldir);
                     exit (-1);
                 }
             }
 
             // PID file doesn't exists, create and write pid in it
             if ( (fp = fopen (homepid,"w")) == NULL) {
-                fprintf (stderr, "Creating PID file %s failed. Exited.\n", homepid);
+                fprintf (stderr, "Creating PID file %s failed. Exited.", homepid);
                 exit (-1);
             } else {
                 fputs (cPid , fp);
@@ -119,11 +119,11 @@ main (int argc, char **argv)
                 fclose (fp);
 
                 if (kill (atoi (cOldPid), 0) == SUCCESS) {
-                    fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.\n");
+                    fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.");
                     exit (-1);
                 } else {
                     if ( (fp = fopen (homepid,"w")) == NULL) {
-                        fprintf (stderr, "Writing to PID file %s failed. Exited.\n", homepid);
+                        fprintf (stderr, "Writing to PID file %s failed. Exited.", homepid);
                         exit (-1);
                     } else {
                         fputs (cPid , fp);
@@ -155,7 +155,7 @@ main (int argc, char **argv)
             std::cerr << e.what() << std::endl;
             exit_code = -1;
         } catch (...) {
-            fprintf (stderr, "An exception occured when initializing the system.\n");
+            fprintf (stderr, "An exception occured when initializing the system.");
             exit_code = -1;
         }
 

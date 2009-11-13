@@ -73,13 +73,13 @@ void AudioLayerTest::testAudioLayerConfig()
 void AudioLayerTest::testAudioLayerSwitch()
 {
 
-    _debug ("---------- AudioLayerTest::testAudioLayerSwitch ---------------------------\n");
+    _debug ("---------- AudioLayerTest::testAudioLayerSwitch ---------------------------");
 
 
     int previous_layer = Manager::instance().getAudioDriver()->getLayerType();
 
     for (int i = 0; i < 2; i++) {
-        _debug ("---------- AudioLayerTest::testAudioLayerSwitch - %i -------------\n",i);
+        _debug ("---------- AudioLayerTest::testAudioLayerSwitch - %i -------------",i);
         Manager::instance().switchAudioManager();
 
         if (previous_layer == ALSA) {
@@ -99,7 +99,7 @@ void AudioLayerTest::testAudioLayerSwitch()
 void AudioLayerTest::testPulseConnect()
 {
 
-    _debug ("---------- AudioLayerTest::testPulseConnect ---------------------------\n");
+    _debug ("---------- AudioLayerTest::testPulseConnect ---------------------------");
 
     ManagerImpl* manager;
     manager = &Manager::instance();
@@ -125,7 +125,7 @@ void AudioLayerTest::testPulseConnect()
     try {
         CPPUNIT_ASSERT (_pulselayer->openDevice (numCardIn, numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin) == true);
     } catch (...) {
-        _debug ("Exception occured wile opening device! \n");
+        _debug ("Exception occured wile opening device! ");
     }
 
     usleep (100000);
@@ -154,7 +154,7 @@ void AudioLayerTest::testPulseConnect()
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->disconnectStream() == true);
     CPPUNIT_ASSERT (_pulselayer->getRecordStream()->disconnectStream() == true);
 
-    // _debug("%i\n",_pulselayer->getPlaybackStream()->getStreamState());
+    // _debug("%i",_pulselayer->getPlaybackStream()->getStreamState());
 
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->connectStream() == true);
     CPPUNIT_ASSERT (_pulselayer->getRecordStream()->connectStream() == true);
@@ -176,7 +176,7 @@ void AudioLayerTest::testPulseConnect()
 void AudioLayerTest::testAlsaConnect()
 {
 
-    _debug ("---------- AudioLayerTest::testAlsaConnect ---------------------------\n");
+    _debug ("---------- AudioLayerTest::testAlsaConnect ---------------------------");
 
     int layer = Manager::instance().getAudioDriver()->getLayerType();
 

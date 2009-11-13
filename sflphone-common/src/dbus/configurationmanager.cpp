@@ -38,14 +38,14 @@ ConfigurationManager::ConfigurationManager (DBus::Connection& connection)
 std::map< std::string, std::string >
 ConfigurationManager::getAccountDetails (const std::string& accountID)
 {
-    _debug ("ConfigurationManager::getAccountDetails\n");
+    _debug ("ConfigurationManager::getAccountDetails");
     return Manager::instance().getAccountDetails (accountID);
 }
 
 std::map< std::string, std::string >
 ConfigurationManager::getTlsSettingsDefault (void)
 {
-    _debug ("ConfigurationManager::getTlsDefaultSettings\n");
+    _debug ("ConfigurationManager::getTlsDefaultSettings");
 
     std::map<std::string, std::string> tlsSettingsDefault;
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, ""));
@@ -270,7 +270,7 @@ ConfigurationManager::setTlsSettings (const std::string& section, const std::map
 std::map< std::string, std::string >
 ConfigurationManager::getCredential (const std::string& accountID, const int32_t& index)
 {
-    _debug ("ConfigurationManager::getCredential number %i for accountID %s\n", index, accountID.c_str());
+    _debug ("ConfigurationManager::getCredential number %i for accountID %s", index, accountID.c_str());
 
     std::string credentialIndex;
     std::stringstream streamOut;
@@ -294,7 +294,7 @@ ConfigurationManager::getCredential (const std::string& accountID, const int32_t
 int32_t
 ConfigurationManager::getNumberOfCredential (const std::string& accountID)
 {
-    _debug ("ConfigurationManager::getNumberOfCredential\n");
+    _debug ("ConfigurationManager::getNumberOfCredential");
     return Manager::instance().getConfigInt (accountID, CONFIG_CREDENTIAL_NUMBER);
 }
 
@@ -310,14 +310,14 @@ void
 ConfigurationManager::setCredential (const std::string& accountID, const int32_t& index,
                                      const std::map< std::string, std::string >& details)
 {
-    _debug ("ConfigurationManager::setCredential received\n");
+    _debug ("ConfigurationManager::setCredential received");
     Manager::instance().setCredential (accountID, index, details);
 }
 
 void
 ConfigurationManager::deleteAllCredential (const std::string& accountID)
 {
-    _debug ("ConfigurationManager::deleteAllCredential received\n");
+    _debug ("ConfigurationManager::deleteAllCredential received");
     Manager::instance().deleteAllCredential (accountID);
 }
 
@@ -325,21 +325,21 @@ void
 ConfigurationManager::setAccountDetails (const std::string& accountID,
         const std::map< std::string, std::string >& details)
 {
-    _debug ("ConfigurationManager::setAccountDetails received\n");
+    _debug ("ConfigurationManager::setAccountDetails received");
     Manager::instance().setAccountDetails (accountID, details);
 }
 
 void
 ConfigurationManager::sendRegister (const std::string& accountID, const int32_t& expire)
 {
-    _debug ("ConfigurationManager::sendRegister received\n");
+    _debug ("ConfigurationManager::sendRegister received");
     Manager::instance().sendRegister (accountID, expire);
 }
 
 std::string
 ConfigurationManager::addAccount (const std::map< std::string, std::string >& details)
 {
-    _debug ("ConfigurationManager::addAccount received\n");
+    _debug ("ConfigurationManager::addAccount received");
     return Manager::instance().addAccount (details);
 }
 
@@ -347,14 +347,14 @@ ConfigurationManager::addAccount (const std::map< std::string, std::string >& de
 void
 ConfigurationManager::removeAccount (const std::string& accoundID)
 {
-    _debug ("ConfigurationManager::removeAccount received\n");
+    _debug ("ConfigurationManager::removeAccount received");
     return Manager::instance().removeAccount (accoundID);
 }
 
 std::vector< std::string >
 ConfigurationManager::getAccountList()
 {
-    _debug ("ConfigurationManager::getAccountList received\n");
+    _debug ("ConfigurationManager::getAccountList received");
     return Manager::instance().getAccountList();
 }
 
@@ -363,7 +363,7 @@ std::vector< std::string >
 ConfigurationManager::getToneLocaleList()
 {
     std::vector< std::string > ret;
-    _debug ("ConfigurationManager::getToneLocaleList received\n");
+    _debug ("ConfigurationManager::getToneLocaleList received");
     return ret;
 }
 
@@ -372,7 +372,7 @@ std::string
 ConfigurationManager::getVersion()
 {
     std::string ret ("");
-    _debug ("ConfigurationManager::getVersion received\n");
+    _debug ("ConfigurationManager::getVersion received");
     return ret;
 }
 
@@ -381,7 +381,7 @@ std::vector< std::string >
 ConfigurationManager::getRingtoneList()
 {
     std::vector< std::string >  ret;
-    _debug ("ConfigurationManager::getRingtoneList received\n");
+    _debug ("ConfigurationManager::getRingtoneList received");
     return ret;
 }
 
@@ -390,14 +390,14 @@ ConfigurationManager::getRingtoneList()
 std::vector< std::string  >
 ConfigurationManager::getCodecList (void)
 {
-    _debug ("ConfigurationManager::getCodecList received\n");
+    _debug ("ConfigurationManager::getCodecList received");
     return Manager::instance().getCodecList();
 }
 
 std::vector<std::string>
 ConfigurationManager::getSupportedTlsMethod (void)
 {
-    _debug ("ConfigurationManager::getSupportedTlsMethod received\n");
+    _debug ("ConfigurationManager::getSupportedTlsMethod received");
     std::vector<std::string> method;
     method.push_back ("Default");
     method.push_back ("TLSv1");
@@ -410,21 +410,21 @@ ConfigurationManager::getSupportedTlsMethod (void)
 std::vector< std::string >
 ConfigurationManager::getCodecDetails (const int32_t& payload)
 {
-    _debug ("ConfigurationManager::getCodecDetails received\n");
+    _debug ("ConfigurationManager::getCodecDetails received");
     return Manager::instance().getCodecDetails (payload);
 }
 
 std::vector< std::string >
 ConfigurationManager::getActiveCodecList()
 {
-    _debug ("ConfigurationManager::getActiveCodecList received\n");
+    _debug ("ConfigurationManager::getActiveCodecList received");
     return Manager::instance().getActiveCodecList();
 }
 
 void
 ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list)
 {
-    _debug ("ConfigurationManager::setActiveCodecList received\n");
+    _debug ("ConfigurationManager::setActiveCodecList received");
     Manager::instance().setActiveCodecList (list);
 }
 
@@ -432,77 +432,77 @@ ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list
 std::vector< std::string >
 ConfigurationManager::getInputAudioPluginList()
 {
-    _debug ("ConfigurationManager::getInputAudioPluginList received\n");
+    _debug ("ConfigurationManager::getInputAudioPluginList received");
     return Manager::instance().getInputAudioPluginList();
 }
 
 std::vector< std::string >
 ConfigurationManager::getOutputAudioPluginList()
 {
-    _debug ("ConfigurationManager::getOutputAudioPluginList received\n");
+    _debug ("ConfigurationManager::getOutputAudioPluginList received");
     return Manager::instance().getOutputAudioPluginList();
 }
 
 void
 ConfigurationManager::setInputAudioPlugin (const std::string& audioPlugin)
 {
-    _debug ("ConfigurationManager::setInputAudioPlugin received\n");
+    _debug ("ConfigurationManager::setInputAudioPlugin received");
     return Manager::instance().setInputAudioPlugin (audioPlugin);
 }
 
 void
 ConfigurationManager::setOutputAudioPlugin (const std::string& audioPlugin)
 {
-    _debug ("ConfigurationManager::setOutputAudioPlugin received\n");
+    _debug ("ConfigurationManager::setOutputAudioPlugin received");
     return Manager::instance().setOutputAudioPlugin (audioPlugin);
 }
 
 std::vector< std::string >
 ConfigurationManager::getAudioOutputDeviceList()
 {
-    _debug ("ConfigurationManager::getAudioOutputDeviceList received\n");
+    _debug ("ConfigurationManager::getAudioOutputDeviceList received");
     return Manager::instance().getAudioOutputDeviceList();
 }
 
 void
 ConfigurationManager::setAudioOutputDevice (const int32_t& index)
 {
-    _debug ("ConfigurationManager::setAudioOutputDevice received\n");
+    _debug ("ConfigurationManager::setAudioOutputDevice received");
     return Manager::instance().setAudioOutputDevice (index);
 }
 
 std::vector< std::string >
 ConfigurationManager::getAudioInputDeviceList()
 {
-    _debug ("ConfigurationManager::getAudioInputDeviceList received\n");
+    _debug ("ConfigurationManager::getAudioInputDeviceList received");
     return Manager::instance().getAudioInputDeviceList();
 }
 
 void
 ConfigurationManager::setAudioInputDevice (const int32_t& index)
 {
-    _debug ("ConfigurationManager::setAudioInputDevice received\n");
+    _debug ("ConfigurationManager::setAudioInputDevice received");
     return Manager::instance().setAudioInputDevice (index);
 }
 
 std::vector< std::string >
 ConfigurationManager::getCurrentAudioDevicesIndex()
 {
-    _debug ("ConfigurationManager::getCurrentAudioDeviceIndex received\n");
+    _debug ("ConfigurationManager::getCurrentAudioDeviceIndex received");
     return Manager::instance().getCurrentAudioDevicesIndex();
 }
 
 int32_t
 ConfigurationManager::getAudioDeviceIndex (const std::string& name)
 {
-    _debug ("ConfigurationManager::getAudioDeviceIndex received\n");
+    _debug ("ConfigurationManager::getAudioDeviceIndex received");
     return Manager::instance().getAudioDeviceIndex (name);
 }
 
 std::string
 ConfigurationManager::getCurrentAudioOutputPlugin (void)
 {
-    _debug ("ConfigurationManager::getCurrentAudioOutputPlugin received\n");
+    _debug ("ConfigurationManager::getCurrentAudioOutputPlugin received");
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
 
@@ -511,7 +511,7 @@ std::vector< std::string >
 ConfigurationManager::getPlaybackDeviceList()
 {
     std::vector< std::string >  ret;
-    _debug ("ConfigurationManager::getPlaybackDeviceList received\n");
+    _debug ("ConfigurationManager::getPlaybackDeviceList received");
     return ret;
 }
 
@@ -519,7 +519,7 @@ std::vector< std::string >
 ConfigurationManager::getRecordDeviceList()
 {
     std::vector< std::string >  ret;
-    _debug ("ConfigurationManager::getRecordDeviceList received\n");
+    _debug ("ConfigurationManager::getRecordDeviceList received");
     return ret;
 
 }
@@ -645,70 +645,70 @@ std::string ConfigurationManager::getHistoryEnabled (void)
 void
 ConfigurationManager::startHidden (void)
 {
-    _debug ("Manager received startHidden\n");
+    _debug ("Manager received startHidden");
     Manager::instance().startHidden();
 }
 
 int32_t
 ConfigurationManager::isStartHidden (void)
 {
-    _debug ("Manager received isStartHidden\n");
+    _debug ("Manager received isStartHidden");
     return Manager::instance().isStartHidden();
 }
 
 void
 ConfigurationManager::switchPopupMode (void)
 {
-    _debug ("Manager received switchPopupMode\n");
+    _debug ("Manager received switchPopupMode");
     Manager::instance().switchPopupMode();
 }
 
 int32_t
 ConfigurationManager::popupMode (void)
 {
-    _debug ("Manager received popupMode\n");
+    _debug ("Manager received popupMode");
     return Manager::instance().popupMode();
 }
 
 void
 ConfigurationManager::setNotify (void)
 {
-    _debug ("Manager received setNotify\n");
+    _debug ("Manager received setNotify");
     Manager::instance().setNotify();
 }
 
 int32_t
 ConfigurationManager::getNotify (void)
 {
-    _debug ("Manager received getNotify\n");
+    _debug ("Manager received getNotify");
     return Manager::instance().getNotify();
 }
 
 void
 ConfigurationManager::setAudioManager (const int32_t& api)
 {
-    _debug ("Manager received setAudioManager\n");
+    _debug ("Manager received setAudioManager");
     Manager::instance().setAudioManager (api);
 }
 
 int32_t
 ConfigurationManager::getAudioManager (void)
 {
-    _debug ("Manager received getAudioManager\n");
+    _debug ("Manager received getAudioManager");
     return Manager::instance().getAudioManager();
 }
 
 void
 ConfigurationManager::setMailNotify (void)
 {
-    _debug ("Manager received setMailNotify\n");
+    _debug ("Manager received setMailNotify");
     Manager::instance().setMailNotify();
 }
 
 int32_t
 ConfigurationManager::getMailNotify (void)
 {
-    _debug ("Manager received getMailNotify\n");
+    _debug ("Manager received getMailNotify");
     return Manager::instance().getMailNotify();
 }
 
@@ -723,7 +723,7 @@ ConfigurationManager::getSipAddress (void)
 void
 ConfigurationManager::setSipAddress (const std::string& address)
 {
-    _debug ("Manager received setSipAddress: %s\n", address.c_str());
+    _debug ("Manager received setSipAddress: %s", address.c_str());
     Manager::instance().setSipAddress (address);
 }
 
@@ -744,7 +744,7 @@ std::vector< std::string > ConfigurationManager::getAddressbookList (void)
 
 void ConfigurationManager::setAddressbookList (const std::vector< std::string >& list)
 {
-    _debug ("Manager received setAddressbookList\n") ;
+    _debug ("Manager received setAddressbookList") ;
     Manager::instance().setAddressbookList (list);
 }
 
@@ -775,7 +775,7 @@ void ConfigurationManager::setHistory (const std::map <std::string, std::string>
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
 {
-    _debug ("ConfigurationManager::getAllIpInterface received\n");
+    _debug ("ConfigurationManager::getAllIpInterface received");
 
     std::vector<std::string> vector;
     SIPVoIPLink * sipLink = NULL;
