@@ -9,6 +9,9 @@ using namespace std;
 namespace Logger
 {
 	void log(const int, const char*, ...);
+
+	void setConsoleLog(bool);
+	void setDebugMode(bool);
 };
 
 #define _error(...)	Logger::log(LOG_ERROR, __VA_ARGS__)
@@ -16,9 +19,9 @@ namespace Logger
 #define _info(...)	Logger::log(LOG_INFO, __VA_ARGS__)
 #define _debug(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
 
-#define _debugException(...)
-#define _debugInit(...)
-#define _debugAlsa(...)
+#define _debugException(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
+#define _debugInit(...)		Logger::log(LOG_DEBUG, __VA_ARGS__)
+#define _debugAlsa(...)		Logger::log(LOG_DEBUG, __VA_ARGS__)
 
 #define BLACK "\033[22;30m"
 #define RED "\033[22;31m"

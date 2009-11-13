@@ -2,8 +2,17 @@
 #include <syslog.h>
 #include <stdarg.h>
 
-void Logger::log(const int level, const char* format, ...)
+namespace Logger
 {
+
+bool consoleLog = false;
+bool debugMode = false;
+
+void log(const int level, const char* format, ...)
+{
+	if(!debugMode && level == LOG_DEBUG)
+		return;
+
 	va_list ap;
 	string prefix = "<> ";
 	char buffer[1024];
@@ -47,7 +56,22 @@ void Logger::log(const int level, const char* format, ...)
 
 	syslog(level, message.c_str());
 
-	message = color_prefix + message + END_COLOR + "\n";
-	fprintf(stderr, message.c_str());
+	if(consoleLog)
+	{
+		message = color_prefix + message + END_COLOR + "\n";
+		fprintf(stderr, message.c_str());
+	}
+}
+
+void setConsoleLog(bool c)
+{
+	Logger::consoleLog = c;
+}
+
+void setDebugMode(bool d)
+{
+	Logger::debugMode = d;
+}
+
 }
 

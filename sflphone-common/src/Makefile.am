@@ -30,6 +30,7 @@ endif
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG)\
+		-DVERSION=\"$(VERSION)\" \
 		@ZRTPCPP_CFLAGS@ \
 		@libssl_CFLAGS@
 

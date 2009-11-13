@@ -1,5 +1,6 @@
 dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
+
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
 	AC_INIT([sflphone],[0.9.7~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
@@ -8,14 +9,17 @@ AC_REVISION([$Revision$])
 
 	AC_CANONICAL_SYSTEM
 
-	AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+	PACKAGE=SFLphone
+	VERSION=`cat VERSION`
+
+	AM_INIT_AUTOMAKE($NAME, $VERSION)
 AM_CONFIG_HEADER([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 	dnl Use this variable in the program
-AC_SUBST(PACKAGE_VERSION)
+	AC_SUBST(PACKAGE_VERSION)
 
 	AM_PROG_LIBTOOL
 

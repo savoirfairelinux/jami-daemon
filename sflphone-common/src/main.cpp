@@ -25,7 +25,7 @@
 #include <string>
 #include <dirent.h>
 #include <sys/stat.h>
-//#include "config.h"
+#include <cc++/common.h>
 #include "global.h"
 
 #include "user_cfg.h"
@@ -34,25 +34,63 @@
 
 #include "audio/audiolayer.h"
 
+using namespace std;
+using namespace ost;
+
+CommandOptionArg	level(
+        "log-level", "l", "Log level (not yet implemented)"
+);
+
+CommandOptionNoArg	console(
+        "console", "c", "Log in console (instead of syslog)"
+);
+
+CommandOptionNoArg	debug(
+        "debug", "d", "Debug mode (more verbose)"
+);
+
+CommandOptionNoArg	help(
+        "help", "h", "Print help"
+);
+
 int
 main (int argc, char **argv)
 {
-    int exit_code = 0;
+	int exit_code = 0;
 
-    //setlocale (LC_ALL, "");
-    //bindtextdomain (PACKAGE, LOCALEDIR);
-    //textdomain (PACKAGE);
+	Logger::setConsoleLog(false);
+	Logger::setDebugMode(false);
 
-    if (argc == 2 && strcmp (argv[1], "--help") == 0) {
+	CommandOptionParse * args = makeCommandOptionParse(argc, argv, "");
 
+	printf ("SFLphone Daemon %s, by Savoir-Faire Linux 2004-2009\n", VERSION);
+        printf ("http://www.sflphone.org/\n");
 
-        printf ("%1$s Daemon %2$s, by Savoir-Faire Linux 2004-2009",
-                PROGNAME,
-                SFLPHONED_VERSION);
-        printf ("USAGE: sflphoned [--help]Parameters:   --help\tfor this message  --port=3999\tchange the session port");
-        printf ("See http://www.sflphone.org/ for more information");
+        if ( help.numSet ) {
+                cerr << args->printUsage();
+		::exit(0);
+        }
 
-    } else {
+        if ( args->argsHaveError() ) {
+                cerr << args->printErrors();
+                cerr << args->printUsage();
+                ::exit(1);
+        }
+
+	if( console.numSet )
+	{
+		_info("Console logging activated");
+		Logger::setConsoleLog(true);
+	}
+
+	if( debug.numSet )
+	{
+		_info("Debug mode activated");
+		Logger::setDebugMode(true);
+	}
+
+        delete args;
+
         FILE *fp;
         char homepid[128];
         char sfldir[128];
@@ -163,7 +201,6 @@ main (int argc, char **argv)
             Manager::instance().setDBusManager (&DBusManager::instance());
             exit_code = DBusManager::instance().exec();  // UI Loop
         }
-    }
 
     return exit_code;
 }
