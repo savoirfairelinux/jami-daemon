@@ -31,11 +31,6 @@
 #include "sip/sipaccount.h"
 
 #include "audio/audiolayer.h"
-#include "audio/alsa/alsalayer.h"
-#include "audio/pulseaudio/pulselayer.h"
-#include "audio/sound/tonelist.h"
-#include "history/historymanager.h"
-#include "accountcreator.h" // create new account
 #include "sip/sipvoiplink.h"
 #include "manager.h"
 #include "dbus/configurationmanager.h"
