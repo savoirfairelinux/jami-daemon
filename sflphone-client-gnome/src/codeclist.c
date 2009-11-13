@@ -40,7 +40,7 @@ gint
 is_payload_codecstruct (gconstpointer a, gconstpointer b)
 {
   codec_t * c = (codec_t *)a;
-  if(c->_payload == (int)b)
+  if(c->_payload == GPOINTER_TO_INT(b))
     return 0;
   else
     return 1;
