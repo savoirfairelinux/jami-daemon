@@ -661,7 +661,7 @@ class ManagerImpl {
     /**
      * Set the dialpad visible or not
      */
-    void setDialpad( void );
+    void setDialpad (bool display);
 
     /**
      * Tells if the user wants to display the volume controls or not
@@ -673,7 +673,7 @@ class ManagerImpl {
     /**
      * Set the volume controls ( mic and speaker ) visible or not
      */
-    void setVolumeControls( void );
+    void setVolumeControls (bool display);
 
     /**
      * Set recording on / off

@@ -37,8 +37,10 @@
 
 /** Locale */
 #define _(STRING)             gettext( STRING )
+#define N_(STRING)			  (STRING)
 #define c_(COMMENT,STRING)    gettext(STRING) 
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
+
 
 
 /** Warnings unused variables **/
