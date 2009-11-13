@@ -1315,9 +1315,9 @@ class ManagerImpl {
 
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
-    int getSipAddress();
+    int getLocalIp2IpPort();
 
-    void setSipAddress( const std::string& address );
+    void setLocalIp2IpInfo( const std::string& address );
 
     std::string getStunServer (void);
     void setStunServer (const std::string &server);

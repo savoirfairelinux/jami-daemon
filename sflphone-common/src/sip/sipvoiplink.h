@@ -187,7 +187,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Terminate only one call
          */
-        void terminateOneCall(const CallID& id);
+       void terminateOneCall(const CallID& id);
 
         /**
          * Send an outgoing call invite
@@ -296,6 +296,11 @@ class SIPVoIPLink : public VoIPLink
 		pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
 
         bool loadSIPLocalIP (std::string *addr);
+
+	/**
+	 * This method is used to create a new transport and attach it to the appropriate account
+	 */
+	void updateAccountInfo(const AccountID& accountID);
 
     private:
         /**
