@@ -29,6 +29,7 @@
  */
 
 #define LOGO                ICONS_DIR "/sflphone.svg"
+#define LOGO_NOTIF			ICONS_DIR "/sflphone_notif.svg"
 #define LOGO_SMALL          ICONS_DIR "/sflphone_small.svg"
 
 #define CURRENT_CALLS       "current_calls"

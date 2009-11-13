@@ -29,6 +29,16 @@ GtkStatusIcon* status;
 GtkWidget * show_menu_item;
 gboolean __minimized = MINIMIZED;
 
+
+void popup_main_window (void)
+{
+	if (__POPUP_WINDOW)
+	{
+		gtk_widget_show (get_main_window ());
+		set_minimized (FALSE);
+	}
+}
+
 void 
 status_quit ( void * foo UNUSED)
 {
@@ -41,31 +51,27 @@ status_icon_unminimize()
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
 }
 
-gboolean
-main_widget_minimized()
+gboolean main_widget_minimized()
 {
   return __minimized;
 }
 
-void 
-show_hide (void)
+void show_hide (void)
 {
-  if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)))
-  {
-    gtk_widget_show(GTK_WIDGET(get_main_window()));
-    set_minimized( !MINIMIZED );
-  }   
-  else
-  {
-    gtk_widget_hide(GTK_WIDGET(get_main_window()));
-    set_minimized( MINIMIZED );
-  }
-
+	if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)))
+	{
+		gtk_widget_show(GTK_WIDGET(get_main_window()));
+		set_minimized( !MINIMIZED );
+	}   
+	else
+	{
+		gtk_widget_hide(GTK_WIDGET(get_main_window()));
+		set_minimized( MINIMIZED );
+	}
 }
 
 
-void 
-status_click (GtkStatusIcon *status_icon UNUSED, void * foo UNUSED)
+void status_click (GtkStatusIcon *status_icon UNUSED, void * foo UNUSED)
 {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), 
         !gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)));
@@ -80,8 +86,7 @@ void menu (GtkStatusIcon *status_icon,
     status_icon, button, activate_time);
 }
 
-GtkWidget * 
-create_menu()
+GtkWidget* create_menu()
 {
   GtkWidget * menu;
   GtkWidget * menu_items;
@@ -129,10 +134,13 @@ show_status_icon()
   g_free(tip);
 }
 
-void
-status_tray_icon_blink( gboolean active )
+void status_tray_icon_blink (gboolean active)
 {
-  gtk_status_icon_set_blinking( status , active );
+	// Set a different icon to notify of an event
+	active ? gtk_status_icon_set_from_file (status, LOGO_NOTIF) : gtk_status_icon_set_from_file (status, LOGO);
+	// Do not blink anymore ...
+	// gtk_status_icon_set_blinking (status, active);
+
 }
 
 GtkStatusIcon* 

@@ -25,6 +25,7 @@ buttons_DATA = current.svg \
 				busy.svg \
 				sflphone.svg \
 				sflphone_small.svg \
+				sflphone_notif.svg \
 				stock_person.svg \
 				icon_rec.svg \
 				rec_call.svg \

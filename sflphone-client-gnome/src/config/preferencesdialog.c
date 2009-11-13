@@ -87,10 +87,10 @@ start_hidden( void )
     dbus_start_hidden();
 }
 
-static void
-set_popup_mode( void )
+static void set_popup_mode (GtkWidget *widget, gpointer *userdata)
 {
-    dbus_switch_popup_mode();
+	if (dbus_popup_mode () || gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
+		dbus_switch_popup_mode ();
 }
 
 
@@ -452,13 +452,14 @@ create_general_settings ()
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     GtkWidget* trayItem1 = gtk_radio_button_new_with_mnemonic(NULL,  _("_Popup main window on incoming call"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem1), dbus_popup_mode() );
-    g_signal_connect(G_OBJECT( trayItem1 ), "clicked", G_CALLBACK( set_popup_mode ) , NULL);
+    g_signal_connect(G_OBJECT (trayItem1), "toggled", G_CALLBACK (set_popup_mode), NULL);
     gtk_table_attach( GTK_TABLE(table), trayItem1, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-    trayItem = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(trayItem1), _("Ne_ver popup main window"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), !dbus_popup_mode() );
+    trayItem = gtk_radio_button_new_with_mnemonic_from_widget (GTK_RADIO_BUTTON(trayItem1), _("Ne_ver popup main window"));
     gtk_table_attach( GTK_TABLE(table), trayItem, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+
+	// Toggle according to the user configuration
+	dbus_popup_mode () ? gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (trayItem1), TRUE) : gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (trayItem), TRUE);
 
     trayItem = gtk_check_button_new_with_mnemonic(_("Hide SFLphone window on _startup"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), dbus_is_start_hidden() );
