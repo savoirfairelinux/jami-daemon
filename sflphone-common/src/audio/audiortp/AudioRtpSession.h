@@ -161,7 +161,6 @@ namespace sfl {
      _mainloopSemaphore(0),
      _audiocodec (NULL),
      _audiolayer (NULL),
-     _ca (sipcall), 
      _micData (NULL), 
      _micDataConverted (NULL), 
      _micDataEncoded (NULL), 
@@ -171,7 +170,8 @@ namespace sfl {
      _layerSampleRate(0),
      _codecSampleRate(0), 
      _layerFrameSize(0),
-     _manager(manager)
+     _manager(manager),
+     _ca (sipcall)
     {
         setCancel (cancelDefault);
 
