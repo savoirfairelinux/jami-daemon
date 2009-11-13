@@ -11,6 +11,7 @@ sflphoned_SOURCES = \
 		voiplink.cpp \
 		main.cpp \
 		managerimpl.cpp \
+		managerimpl_registration.cpp \
 		observer.cpp \
 		eventthread.cpp \
 		accountcreator.cpp \
