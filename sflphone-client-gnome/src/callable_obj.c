@@ -50,7 +50,7 @@ gint get_state_callstruct ( gconstpointer a, gconstpointer b)
 
 gchar* call_get_peer_name (const gchar *format)
 {
-    gchar *end, *name;
+    const gchar *end, *name;
 
     DEBUG("    callable_obj: %s", format);
 
