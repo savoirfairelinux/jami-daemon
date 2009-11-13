@@ -16,6 +16,7 @@ sflphoned_SOURCES = \
 		accountcreator.cpp \
 		call.cpp \
 		account.cpp \
+		logger.cpp \
 		numbercleaner.cpp 
 
 # Redefine the USE_IAX variable here, so that it could be used in managerimpl
@@ -63,6 +64,7 @@ noinst_HEADERS = \
 		account.h \
 		accountcreator.h \
 		call.h \
+		logger.h \
 		numbercleaner.h
 
 libsflphone_la_LIBADD = \

@@ -31,6 +31,7 @@
 #include <sstream>
 #include <map>
 #include <vector>
+#include "logger.h"
 
 #define SFLPHONED_VERSION "0.9.6"		/** Version number */
 
@@ -70,18 +71,6 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define SFLDataFormat int16
 #define SFLDataFormatString "Int16"
 #define SFLDataAmplitude (32767 >> 4)
-#endif
-
-#ifdef SFLDEBUG
-  #define _debug(...)          fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
-  #define _debugException(...) fprintf(stderr, "[sfl-excep] " __VA_ARGS__ "\n")
-  #define _debugInit(...)      fprintf(stderr, "[sfl-init] " __VA_ARGS__ "\n")
-  #define _debugAlsa(...)      fprintf(stderr, "[alsa-debug] " __VA_ARGS__ )
-#else
-  #define _debug(...)
-  #define _debugException(...)
-  #define _debugInit(...)
-  #define _debugAlsa(...)
 #endif
 
 #define PROGNAME         "sflphoned"		/** Binary name */
