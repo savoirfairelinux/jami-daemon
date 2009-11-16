@@ -30,7 +30,7 @@ export _CFLAGS 	:= $(CC_CFLAGS) $(OS_CFLAGS) $(HOST_CFLAGS) $(M_CFLAGS) \
 		   $(CC_INC)../../pjlib-util/include \
 		   $(CC_INC)../../pjnath/include \
 		   $(CC_INC)../.. \
-		   $(SRTP_INC) 
+		   $(SRTP_INC) -O2
 export _CXXFLAGS:= $(_CFLAGS) $(CC_CXXFLAGS) $(OS_CXXFLAGS) $(M_CXXFLAGS) \
 		   $(HOST_CXXFLAGS) $(CXXFLAGS)
 export _LDFLAGS := $(subst /,$(HOST_PSEP),$(PJMEDIA_LIB)) \
