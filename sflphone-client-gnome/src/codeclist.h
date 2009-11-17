@@ -27,7 +27,7 @@
 
 typedef struct {
   /** Payload of the codec */
-  int _payload;
+  gint _payload;
   /** Tells if the codec has been activated */
   gboolean is_active;
   /** String description */

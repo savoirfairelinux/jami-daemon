@@ -375,7 +375,7 @@ void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
                             "%.*s %.*s",
                             4,
                             ZRTP_VERSION,
-                            hash.size(),
+                            (int)hash.size(),
                             hash.c_str());
 
     attribute->value.slen = len;
