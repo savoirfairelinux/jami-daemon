@@ -80,7 +80,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/actions.c:879
 msgid "Direct SIP call"
-msgstr "Appels IP"
+msgstr "Appel direct SIP"
 
 #: ../sflphone-client-gnome/src/actions.c:1071
 #, c-format
