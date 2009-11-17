@@ -14,6 +14,7 @@ public:
 
     NetworkManager(DBus::Connection&, const DBus::Path&, const char*);
     void StateChanged(const uint32_t& state);
+    void PropertiesChanged(const std::map< std::string, ::DBus::Variant >& argin0);
     string stateAsString(const uint32_t& state);
 
     enum NMState

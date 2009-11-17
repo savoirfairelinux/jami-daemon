@@ -8,6 +8,9 @@
     <signal name="StateChanged">
       <arg type="u"/>
     </signal>
+    <signal name="PropertiesChanged">
+      <arg type="a{sv}"/>
+    </signal>
   </interface>
 </node>
 
