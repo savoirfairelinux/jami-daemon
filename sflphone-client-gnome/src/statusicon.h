@@ -31,6 +31,11 @@
  */
 
 /**
+ * Popup the main window. Used on incoming calls
+ */
+void popup_main_window (void);
+
+/**
  * Create the status icon 
  */
 void show_status_icon();

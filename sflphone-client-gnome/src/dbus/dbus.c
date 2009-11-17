@@ -64,7 +64,8 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
 
     create_new_call (CALL, CALL_STATE_INCOMING, g_strdup(callID), g_strdup(accountID), peer_name, peer_number, &c);
 #if GTK_CHECK_VERSION(2,10,0)
-    status_tray_icon_blink( TRUE );
+    status_tray_icon_blink (TRUE);
+	popup_main_window ();
 #endif
 
     set_timestamp (&c->_time_start);
