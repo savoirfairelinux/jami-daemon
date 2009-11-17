@@ -38,13 +38,13 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
         else {
             switch (type) {
                 case CONTACT_PHONE_BUSINESS:
-                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
                     break;
                 case CONTACT_PHONE_HOME:
                     pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/home.svg", NULL);
                     break;
                 case CONTACT_PHONE_MOBILE:
-                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/phone.svg", NULL);
                     break;
                 default:
                     pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
