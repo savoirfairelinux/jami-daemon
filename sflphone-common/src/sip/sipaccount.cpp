@@ -162,6 +162,8 @@ int SIPAccount::initCredential (void)
 
 int SIPAccount::registerVoIPLink()
 {
+    _debug ("Register account %s\n", getAccountID().c_str());
+
     // Init general settings
     loadConfig();
 
