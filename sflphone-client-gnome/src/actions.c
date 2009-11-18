@@ -330,6 +330,8 @@ void sflphone_get_ip2ip_properties (GHashTable **properties)
 sflphone_hang_up()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -373,6 +375,10 @@ sflphone_hang_up()
                 break;
         }
     }
+    else if(selectedConf) {
+        dbus_hang_up_conference(selectedConf);
+    }
+
     calltree_update_call(history, selectedCall, NULL);
 }
 

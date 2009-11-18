@@ -3143,6 +3143,8 @@ void ManagerImpl::switchAudioManager (void)
 
     framesize = getConfigInt (AUDIO , ALSA_FRAME_SIZE);
 
+    _debug("samplerate: %i, framesize %i\n", samplerate, framesize);
+
     alsaPlugin = getConfigString (AUDIO , ALSA_PLUGIN);
 
     numCardIn  = getConfigInt (AUDIO , ALSA_CARD_ID_IN);
@@ -3985,7 +3987,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
         acc->loadConfig();
 
         if (acc->isEnabled()) {
-            acc->unregisterVoIPLink();
+	    // acc->unregisterVoIPLink(); // do not need to send an unregister
             acc->registerVoIPLink();
         } else {
             acc->unregisterVoIPLink();
