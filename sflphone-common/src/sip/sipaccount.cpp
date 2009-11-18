@@ -334,6 +334,7 @@ void SIPAccount::loadConfig()
     setLocalAddress (Manager::instance().getConfigString (_accountID, LOCAL_ADDRESS));
 
 	// Published parameters
+	setPublishedSameasLocal (Manager::instance().getConfigString (_accountID, PUBLISHED_SAMEAS_LOCAL) == TRUE_STR ? true : false);
     std::string publishedPort = Manager::instance().getConfigString (_accountID, PUBLISHED_PORT);
     setPublishedPort (atoi (publishedPort.c_str()));
     setPublishedAddress (Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS));

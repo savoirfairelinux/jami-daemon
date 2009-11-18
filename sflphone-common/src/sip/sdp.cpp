@@ -418,7 +418,7 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
     std::string type, dir;
     CodecsMap codecs_list;
     CodecsMap::iterator iter;
-    pjmedia_sdp_attr *attribute;
+    pjmedia_sdp_attr *attribute = NULL;
     pjmedia_sdp_rtpmap *rtpmap;
 
     _negociated_offer = (pjmedia_sdp_session*) sdp;
@@ -440,6 +440,9 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
         for (j=0 ; j<nb_codecs ; j++) {
             attribute = pjmedia_sdp_media_find_attr (current, &STR_RTPMAP, NULL);
             // pj_strtoul(attribute->pt)
+			if (!attribute)
+				return;
+
             pjmedia_sdp_attr_to_rtpmap (_pool, attribute, &rtpmap);
 
             // _debug("================== set_negociated_offer ===================== %i", pj_strtoul(&rtpmap->pt));
