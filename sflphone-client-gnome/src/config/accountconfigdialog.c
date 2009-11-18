@@ -134,6 +134,7 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
     GtkTreeIter iter;
     gtk_tree_model_get_iter_from_string ((GtkTreeModel *) credentialStore, &iter, "0");
     gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "column"));
+	g_print ("set password to %s\n", (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)));
     gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)), -1);
 }
 
@@ -312,7 +313,8 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
             gtk_list_store_set(credentialStore, &iter,
                     COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(account->properties, ACCOUNT_REALM), 
                     COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME),
-                    COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),    
+                    // COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),    
+                    COLUMN_CREDENTIAL_PASSWORD, PW_HIDDEN,    
                     COLUMN_CREDENTIAL_DATA, account, 
                     -1);
             g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
@@ -388,12 +390,19 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
     GtkTreePath *path = gtk_tree_path_new_from_string (path_desc);
     GtkTreeIter iter;
      
+
     gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (renderer), "column"));
+	g_print ("path desc in cell_edited_cb: %s\n", text);
     
     if(g_strcasecmp(path_desc, "0") == 0) {
         if(g_strcasecmp(text, gtk_entry_get_text (GTK_ENTRY(entryUsername))) != 0) {
             g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
         }
+
+		if (column == COLUMN_CREDENTIAL_PASSWORD) { // && g_strcasecmp (text, gtk_entry_get_text (GTK_ENTRY (entryPassword))) == 0) {
+			gtk_entry_set_text (GTK_ENTRY (entryPassword), text);
+			text = PW_HIDDEN;	
+		}
     }  
     
     gtk_tree_model_get_iter (model, &iter, path);
@@ -405,7 +414,13 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
 static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editable, const gchar * path, gpointer data)
 {
     DEBUG("Editing started");
-	// gtk_entry_set_text (GTK_ENTRY (editable), gtk_entry_get_text (GTK_ENTRY(entryPassword)));
+	g_print ("path desc in editing_started_cb: %s\n", path);
+
+	// If we are dealing the first row
+	if (g_strcasecmp (path, "0") == 0)
+	{
+		gtk_entry_set_text (GTK_ENTRY (editable), gtk_entry_get_text (GTK_ENTRY (entryPassword)));
+	}
 }
 
 static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
@@ -964,7 +979,9 @@ static GPtrArray * getNewCredential(GHashTable * properties)
 
     g_hash_table_insert(properties, g_strdup(ACCOUNT_REALM), realm);
     g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
-    g_hash_table_insert(properties, g_strdup(ACCOUNT_PASSWORD), password);
+	// Do not change the password is nothing has been changed by the user
+	if (g_strcasecmp (password, PW_HIDDEN) != 0)
+		g_hash_table_insert(properties, g_strdup(ACCOUNT_PASSWORD), password);
   
     valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
                                      
