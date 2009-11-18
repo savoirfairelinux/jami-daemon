@@ -40,7 +40,7 @@ void AudioLayer::flushUrgent (void)
 
 int AudioLayer::putUrgent (void* buffer, int toCopy)
 {
-    _debug ("------------------- AudioLayer::putUrgent --------------------\n");
+    // _debug ("------------------- AudioLayer::putUrgent --------------------\n");
     int a;
 
     ost::MutexLock guard (_mutex);

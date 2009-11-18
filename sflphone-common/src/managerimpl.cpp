@@ -3524,7 +3524,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     Account * account = _accountMap[accountID];
 
     if (account == NULL) {
-        _debug ("Cannot getAccountDetails on a non-existing accountID. Defaults will be used.\n");
+      _debug ("Cannot getAccountDetails on a non-existing accountID %s. Defaults will be used.\n", accountID.c_str());
     }
 
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));

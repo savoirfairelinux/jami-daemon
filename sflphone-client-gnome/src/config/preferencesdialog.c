@@ -219,7 +219,7 @@ GtkWidget* create_direct_ip_calls_tab()
 
     
                 
-	GtkWidget * vbox = gtk_vbox_new(FALSE, 10);
+    GtkWidget * vbox = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
     description = g_markup_printf_escaped(_("This profile is used when you want to reach a remote peer simply by typing a sip URI such as <b>sip:remotepeer</b>. The settings you define here will also be used if no account can be matched to an incoming or outgoing call."));
