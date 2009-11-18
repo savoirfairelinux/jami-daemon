@@ -69,6 +69,8 @@ static gboolean is_inserted (GtkWidget* button, GtkWidget *current_toolbar)
 void update_actions()
 {
 
+       DEBUG("Update action");
+
 	gtk_action_set_sensitive( GTK_ACTION (newCallAction), TRUE);
 	gtk_action_set_sensitive (GTK_ACTION (pickUpAction), FALSE);
 	gtk_action_set_sensitive (GTK_ACTION (hangUpAction), FALSE);
@@ -145,6 +147,7 @@ void update_actions()
 
 	if (selectedCall)
 	{
+	        // DEBUG("------------------------- selected call ---------------------------\n");
 		gtk_action_set_sensitive (GTK_ACTION (copyAction), TRUE);
 
 		switch(selectedCall->_state)
@@ -220,9 +223,48 @@ void update_actions()
 				break;
 		}
 	}
+	else if (selectedConf){
 
-	else
-	{
+	        // DEBUG("------------------------- selected conf ---------------------------\n");
+
+	        switch(selectedConf->_state) {
+
+		case CONFERENCE_STATE_ACTIVE_ATACHED:
+		  gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+		  gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+		  break;
+
+		case CONFERENCE_STATE_ACTIVE_DETACHED:
+		  gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+		  gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+		  break;
+
+		case CONFERENCE_STATE_RECORD:
+		  gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+		  gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+		  break;
+		  
+		case CONFERENCE_STATE_HOLD:
+		  gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+		  gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
+		  break;
+
+		default:
+		  WARN("Should not happen in update_action()!");
+		  break;
+		  
+		}
+	}  
+
+	else {
 		if( account_list_get_size() > 0  && current_account_has_mailbox ())
 		{
 			gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (voicemailToolbar), -2);
