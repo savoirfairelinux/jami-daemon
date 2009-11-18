@@ -385,6 +385,7 @@ switch_account(  GtkWidget* item , gpointer data UNUSED)
 call_hold  (void* foo UNUSED)
 {
 	callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+	conference_obj_t * selectedConf = calltab_get_selected_conf();
 
 	if(selectedCall)
 	{
@@ -396,6 +397,28 @@ call_hold  (void* foo UNUSED)
 		{
 			sflphone_on_hold();
 		}
+	}
+	else if (selectedConf) {
+
+	    switch(selectedConf->_state) {
+
+	    case CONFERENCE_STATE_HOLD: 
+	      {
+		selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+		sflphone_conference_off_hold(selectedConf);
+	      }
+	      break;
+	      
+	    case CONFERENCE_STATE_ACTIVE_ATACHED:
+	    case CONFERENCE_STATE_ACTIVE_DETACHED: {
+	      selectedConf->_state = CONFERENCE_STATE_HOLD;
+	      sflphone_conference_on_hold(selectedConf);
+	    }
+	      break;
+	    default:
+	      break;
+	    }
+	    
 	}
 }
 
