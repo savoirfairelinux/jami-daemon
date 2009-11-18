@@ -32,6 +32,8 @@
 #include <libsexy/sexy-icon-entry.h>
 #endif
 
+#define PW_HIDDEN		"*****"
+
 #include <string.h>
 #include <dbus/dbus.h>
 #include <config.h>
@@ -44,7 +46,6 @@
  * in a private structure.
  * Local variables 
  */
-
 GtkDialog * dialog;
 GtkWidget * hbox;
 GtkWidget * label;
@@ -95,6 +96,14 @@ enum {
     COLUMN_CREDENTIAL_COUNT
 };
 
+/*
+ * Display / Hide the password
+ */
+static void show_password_cb (GtkWidget *widget, gpointer data)
+{
+	gtk_entry_set_visibility (GTK_ENTRY (data), !gtk_entry_get_visibility (GTK_ENTRY (data)));
+}
+
 /* Signal to protocolComboBox 'changed' */
 	void
 change_protocol_cb (account_t * currentAccount UNUSED)
@@ -133,6 +142,7 @@ static GtkWidget * create_basic_tab(account_t **a)
 	GtkWidget * frame;
 	GtkWidget * table;
 	account_t *currentAccount;
+	GtkWidget * clearTextCheckbox;
 #if GTK_CHECK_VERSION(2,16,0)
 #else
 	GtkWidget *image;
@@ -169,7 +179,7 @@ static GtkWidget * create_basic_tab(account_t **a)
 	gnome_main_section_new (_("Account Parameters"), &frame);
 	gtk_widget_show(frame);
 
-	table = gtk_table_new (9, 2  ,  FALSE/* homogeneous */);
+	table = gtk_table_new (7, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
 	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
 	gtk_widget_show(table);
@@ -242,7 +252,7 @@ static GtkWidget * create_basic_tab(account_t **a)
 #if GTK_CHECK_VERSION(2,16,0)
 	entryPassword = gtk_entry_new();
     GtkSettings *settings = gtk_settings_get_default ();
-    g_object_set (G_OBJECT (settings), "gtk-entry-password-hint-timeout", 600, NULL);
+    //g_object_set (G_OBJECT (settings), "gtk-entry-password-hint-timeout", 600, NULL);
 	gtk_entry_set_icon_from_stock (GTK_ENTRY (entryPassword), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
 #else
 	entryPassword = sexy_icon_entry_new();
@@ -253,16 +263,20 @@ static GtkWidget * create_basic_tab(account_t **a)
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
 	gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
 	gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    g_signal_connect(G_OBJECT (entryPassword), "changed", G_CALLBACK (update_credential_cb), NULL);
+    g_signal_connect (G_OBJECT (entryPassword), "changed", G_CALLBACK (update_credential_cb), NULL);
     g_object_set_data (G_OBJECT (entryPassword), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
-    
+	
+	clearTextCheckbox = gtk_check_button_new_with_mnemonic (_("Show password"));
+    g_signal_connect (clearTextCheckbox, "toggled", G_CALLBACK (show_password_cb), entryPassword);
+    gtk_table_attach (GTK_TABLE (table), clearTextCheckbox, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
 	label = gtk_label_new_with_mnemonic (_("_Voicemail number"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryMailbox = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryMailbox);
 	gtk_entry_set_text(GTK_ENTRY(entryMailbox), curMailbox);
-	gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	gtk_widget_show_all( table );
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
@@ -271,7 +285,7 @@ static GtkWidget * create_basic_tab(account_t **a)
 	return frame;
 }
 
-static void fill_treeview_with_credential(GtkListStore * credentialStore, account_t * account) 
+static void fill_treeview_with_credential (GtkListStore * credentialStore, account_t * account) 
 {
         GtkTreeIter iter;
         gtk_list_store_clear(credentialStore);
@@ -374,7 +388,7 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
     gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (renderer), "column"));
     
     if(g_strcasecmp(path_desc, "0") == 0) {
-        if(g_strcasecmp(text, gtk_entry_get_text(GTK_ENTRY(entryUsername))) != 0) {
+        if(g_strcasecmp(text, gtk_entry_get_text (GTK_ENTRY(entryUsername))) != 0) {
             g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
         }
     }  
@@ -388,7 +402,7 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
 static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editable, const gchar * path, gpointer data)
 {
     DEBUG("Editing started");
-    gtk_entry_set_visibility(GTK_ENTRY(editable), FALSE);
+	// gtk_entry_set_text (GTK_ENTRY (editable), gtk_entry_get_text (GTK_ENTRY(entryPassword)));
 }
 
 static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
@@ -460,7 +474,6 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
     }   
 }
 
-
 static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 {
     DEBUG("set_published_addr_manually_cb");
@@ -531,6 +544,7 @@ GtkWidget * create_security_tab(account_t **a)
     GtkWidget * hbox;
     GtkWidget * editButton;
     GtkWidget * addButton;
+	GtkWidget * clearTextCheckbox;
     GtkCellRenderer * renderer;
     GtkTreeViewColumn * treeViewColumn;
     GtkTreeSelection * treeSelection;
@@ -606,7 +620,7 @@ GtkWidget * create_security_tab(account_t **a)
 
     renderer = gtk_cell_renderer_text_new();
     g_object_set (renderer, "editable", TRUE, "editable-set", TRUE, NULL);
-    g_signal_connect(G_OBJECT (renderer), "edited", G_CALLBACK(cell_edited_cb), credentialStore);
+    g_signal_connect (G_OBJECT (renderer), "edited", G_CALLBACK (cell_edited_cb), credentialStore);
     g_object_set_data (G_OBJECT (renderer), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
     treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Authentication name"),
             renderer,
@@ -616,7 +630,7 @@ GtkWidget * create_security_tab(account_t **a)
 
     renderer = gtk_cell_renderer_text_new();
     g_object_set (renderer, "editable", TRUE, "editable-set", TRUE, NULL);
-    g_signal_connect(G_OBJECT (renderer), "edited", G_CALLBACK(cell_edited_cb), credentialStore);
+    g_signal_connect (G_OBJECT (renderer), "edited", G_CALLBACK (cell_edited_cb), credentialStore);
     g_signal_connect (renderer, "editing-started", G_CALLBACK (editing_started_cb), NULL);
     g_object_set_data (G_OBJECT (renderer), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
     treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Password"),
@@ -631,7 +645,7 @@ GtkWidget * create_security_tab(account_t **a)
             
     /* Credential Buttons */    
     hbox = gtk_hbox_new(FALSE, 10);
-    gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0, 2, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0, 3, 1, 2);
     
     addButton = gtk_button_new_from_stock (GTK_STOCK_ADD);
     g_signal_connect (addButton, "clicked", G_CALLBACK (add_credential_cb), credentialStore);
@@ -640,7 +654,6 @@ GtkWidget * create_security_tab(account_t **a)
     deleteCredButton = gtk_button_new_from_stock (GTK_STOCK_REMOVE);
     g_signal_connect (deleteCredButton, "clicked", G_CALLBACK (delete_credential_cb), treeViewCredential);
     gtk_box_pack_start(GTK_BOX(hbox), deleteCredButton, FALSE, FALSE, 0);
- 
 
     /* Security Section */
     gnome_main_section_new_with_table (_("Security"), &frame, &table, 2, 3);

@@ -1962,11 +1962,29 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     pj_bzero (bound_addr.sin_zero, sizeof (bound_addr.sin_zero));
 
     // Create UDP-Server (default port: 5060)
-    strcpy (tmpIP, listeningAddress.data());
+	// Use here either the local information or the published address
+	if (account != NULL && !account->getPublishedSameasLocal ())
+	{
+	
 
-    pj_strdup2 (_pool, &a_name.host, tmpIP);
+		// Set the listening address to the published address
+		listeningAddress = account->getPublishedAddress ();
+		// Set the listening port to the published port
+		listeningPort = account->getPublishedPort ();
+		
+		_debug (" ******************************** Use the published address %s:%i\n", listeningAddress.c_str (), listeningPort );
+	}
 
-    a_name.port = (pj_uint16_t) listeningPort;
+    //strcpy (tmpIP, listeningAddress.data());
+	/* Init published name */
+    pj_bzero (&a_name, sizeof (pjsip_host_port));
+    pj_cstr (&a_name.host, listeningAddress.c_str());
+    a_name.port = listeningPort;
+
+
+    //pj_strdup2 (_pool, &a_name.host, tmpIP);
+
+    //a_name.port = (pj_uint16_t) listeningPort;
 
     status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
 
@@ -2417,7 +2435,6 @@ bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)
 void SIPVoIPLink::busy_sleep (unsigned msec)
 {
 
-    _debug("SIPVoIPLink::busy_sleep\n");
 #if defined(PJ_SYMBIAN) && PJ_SYMBIAN != 0
     /* Ideally we shouldn't call pj_thread_sleep() and rather
      * CActiveScheduler::WaitForAnyRequest() here, but that will

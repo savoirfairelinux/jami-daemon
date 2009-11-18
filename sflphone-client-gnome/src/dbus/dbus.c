@@ -50,8 +50,7 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
         const gchar* from,
         void * foo  UNUSED )
 {
-    DEBUG("Incoming call! %s", callID);
-    DEBUG("    from: %s", from);
+    DEBUG("Incoming call (%s) from %s", callID, from);
 
     callable_obj_t * c;
     gchar *peer_name, *peer_number;
