@@ -554,7 +554,7 @@ void MainBufferTest::testBindUnbindBuffer()
     // unbind test_id1 with default_id
     _mainbuffer.unBindCallID (test_id1);
 
-    _debug ("%i\n", _mainbuffer._ringBufferMap.size());
+    _debug ("%i\n", (int)(_mainbuffer._ringBufferMap.size()));
     CPPUNIT_ASSERT (_mainbuffer._ringBufferMap.size() == 0);
     CPPUNIT_ASSERT (_mainbuffer._callIDMap.size() == 0);
 
