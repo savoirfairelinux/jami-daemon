@@ -1921,7 +1921,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     pj_status_t status;
     pj_sockaddr_in bound_addr;
     pjsip_host_port a_name;
-    char tmpIP[32];
+    // char tmpIP[32];
     pjsip_transport *transport;
     std::string listeningAddress = "127.0.0.1";
     int listeningPort = _regPort;
@@ -1965,13 +1965,10 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 	// Use here either the local information or the published address
 	if (account != NULL && !account->getPublishedSameasLocal ())
 	{
-	
-
 		// Set the listening address to the published address
 		listeningAddress = account->getPublishedAddress ();
 		// Set the listening port to the published port
 		listeningPort = account->getPublishedPort ();
-		
 		_debug (" ******************************** Use the published address %s:%i\n", listeningAddress.c_str (), listeningPort );
 	}
 
@@ -2850,8 +2847,8 @@ void regc_cb (struct pjsip_regc_cbparam *param)
 
     if (param->code && description) {
 
-      std::string descriptionprint(description->ptr, description->slen);
-      _debug("Received client registration callback wiht code: %i, %s\n", param->code, descriptionprint.c_str());
+      //std::string descriptionprint(description->ptr, description->slen);
+      //_debug("Received client registration callback wiht code: %i, %s\n", param->code, descriptionprint.c_str());
         DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), std::string (description->ptr, description->slen), param->code);
         std::pair<int, std::string> details (param->code, std::string (description->ptr, description->slen));
         account->setRegistrationStateDetailed (details);
