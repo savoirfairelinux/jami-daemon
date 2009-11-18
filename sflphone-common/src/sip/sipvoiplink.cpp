@@ -479,7 +479,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
             status = createUDPServer (id);
 
             if (status != PJ_SUCCESS) {
-                _debug ("Use the local UDP transport");
+                _debug ("Use the local UDP transport\n");
                 account->setAccountTransport (_localUDPTransport);
             }
         }
@@ -612,7 +612,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     _mutexSIP.leaveMutex();
 
     account->setRegistrationInfo (regc);
-    _debug ("ok\n");
+
     return true;
 }
 
@@ -2831,7 +2831,10 @@ void regc_cb (struct pjsip_regc_cbparam *param)
 
     const pj_str_t * description = pjsip_get_status_text (param->code);
 
-    if (param->code) {
+    if (param->code && description) {
+
+      std::string descriptionprint(description->ptr, description->slen);
+      _debug("Received client registration callback wiht code: %i, %s\n", param->code, descriptionprint.c_str());
         DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), std::string (description->ptr, description->slen), param->code);
         std::pair<int, std::string> details (param->code, std::string (description->ptr, description->slen));
         account->setRegistrationStateDetailed (details);
