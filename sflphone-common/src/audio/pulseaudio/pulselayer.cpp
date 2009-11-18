@@ -134,7 +134,7 @@ PulseLayer::closeLayer (void)
     // record->disconnectStream();
     // closeCaptureStream();
 
-    disconnectAudioStream();
+    // disconnectAudioStream();
 
     if (context) {
         pa_context_disconnect (context);
@@ -219,7 +219,7 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
 bool PulseLayer::disconnectAudioStream (void)
 {
-    _debug (" PulseLayer::disconnectAudioStream( void ) \n");
+    _debug ("PulseLayer::disconnectAudioStream( void ) \n");
 
     closePlaybackStream();
 
@@ -294,9 +294,7 @@ void PulseLayer::closeCaptureStream (void)
 {
     if (record) {
 
-        pa_threaded_mainloop_lock (m);
         delete record;
-        pa_threaded_mainloop_unlock (m);
         record=NULL;
     }
 }
@@ -305,9 +303,7 @@ void PulseLayer::closePlaybackStream (void)
 {
     if (playback) {
 
-        pa_threaded_mainloop_lock (m);
         delete playback;
-        pa_threaded_mainloop_unlock (m);
         playback=NULL;
     }
 }
@@ -662,7 +658,6 @@ void PulseLayer::readFromMic (void)
     size_t r;
 
     // if (record->getStreamState()
-    // pa_threaded_mainloop_lock (m);
 
     int readableSize = pa_stream_readable_size (record->pulseStream());
 
@@ -671,6 +666,7 @@ void PulseLayer::readFromMic (void)
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
         _debug ("pa_stream_peek() failed: %s\n" , pa_strerror (pa_context_errno (context)));
     }
+
 
     if (data != 0) {
 
