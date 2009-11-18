@@ -1358,10 +1358,10 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT (test_ring_buffer->AvailForPut() == init_put_id2);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (default_id) == 0);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_id1) == 0);
-    // test mainbuffer availforget
+    // test mainbuffer availforget (get data even if some participant missing)
     CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == 0);
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == sizeof (int));
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == sizeof (int));
     //putdata test ring buffers
     CPPUNIT_ASSERT (_mainbuffer.putData (&testint, sizeof (int), 100, test_id1) == sizeof (int));
     test_ring_buffer = _mainbuffer.getRingBuffer (default_id);
@@ -1379,11 +1379,11 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT (test_ring_buffer->AvailForPut() == init_put_id2);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (default_id) == 0);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_id1) == 0);
-    // test mainbuffer availforget
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == 0);
+    // test mainbuffer availforget (get data even if some participant missing)
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == sizeof (int));
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == sizeof (int));
     CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == sizeof (int));
-    //putdata test ring buffers
+    //putdata test ring buffers 
     CPPUNIT_ASSERT (_mainbuffer.putData (&testint, sizeof (int), 100, test_id2) == sizeof (int));
     test_ring_buffer = _mainbuffer.getRingBuffer (default_id);
     CPPUNIT_ASSERT (test_ring_buffer->putLen() == sizeof (int));
@@ -1500,10 +1500,10 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT (test_ring_buffer->AvailForPut() == init_put_id2);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (default_id) == 0);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_id1) == 0);
-    // test mainbuffer availforget
+    // test mainbuffer availforget 
     CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == 0);
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == sizeof(int));
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == sizeof(int));
     //putdata test ring buffers
     CPPUNIT_ASSERT (_mainbuffer.putData (&testint, sizeof (int), 100, test_id1) == sizeof (int));
     test_ring_buffer = _mainbuffer.getRingBuffer (default_id);
@@ -1522,8 +1522,8 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (default_id) == 0);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_id1) == 0);
     // test mainbuffer availforget
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == 0);
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == sizeof(int));
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == sizeof(int));
     CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == sizeof (int));
     //putdata test ring buffers
     CPPUNIT_ASSERT (_mainbuffer.putData (&testint, sizeof (int), 100, test_id2) == sizeof (int));
@@ -1641,8 +1641,8 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_id1) == 0);
     // test mainbuffer availforget
     CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == 0);
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == sizeof(int));
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == sizeof(int));
     //putdata test ring buffers
     CPPUNIT_ASSERT (_mainbuffer.putData (&testint, sizeof (int), 100, test_id1) == sizeof (int));
     test_ring_buffer = _mainbuffer.getRingBuffer (default_id);
@@ -1661,8 +1661,8 @@ void MainBufferTest::testConference()
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (default_id) == 0);
     CPPUNIT_ASSERT (test_ring_buffer->AvailForGet (test_id1) == 0);
     // test mainbuffer availforget
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == 0);
-    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == 0);
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (default_id) == sizeof(int));
+    CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id1) == sizeof(int));
     CPPUNIT_ASSERT (_mainbuffer.availForGet (test_id2) == sizeof (int));
     //putdata test ring buffers
     CPPUNIT_ASSERT (_mainbuffer.putData (&testint, sizeof (int), 100, test_id2) == sizeof (int));
