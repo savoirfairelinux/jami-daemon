@@ -485,12 +485,15 @@ create_general_settings ()
     gtk_table_attach( GTK_TABLE(table), label, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
   
     // Configuration File
+	// Commented out because not functional yet
+	/*
     gnome_main_section_new_with_table (_("Configuration File"), &frame, &table, 1, 1);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);    
     checkBoxWidget = gtk_check_button_new_with_mnemonic(_("Store SIP credentials as MD5 hash"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(checkBoxWidget), dbus_is_md5_credential_hashing() );
     g_signal_connect(G_OBJECT( checkBoxWidget ) , "clicked" , G_CALLBACK(set_md5_hash_cb) , NULL);
     gtk_table_attach( GTK_TABLE(table), checkBoxWidget, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+	*/
               
     gtk_widget_show_all(ret);
 
