@@ -447,6 +447,7 @@ ManagerImpl::hangupCall (const CallID& call_id)
 
             processRemainingParticipant (current_call_id, conf);
         }
+
     } else {
         // we are not participating to a conference, current call switched to ""
         if (!isConference (current_call_id))
@@ -1948,20 +1949,35 @@ ManagerImpl::callBusy (const CallID& id)
 
 //THREAD=VoIP
 void
-ManagerImpl::callFailure (const CallID& id)
+ManagerImpl::callFailure (const CallID& call_id)
 {
-    if (_dbus) _dbus->getCallManager()->callStateChanged (id, "FAILURE");
+    if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "FAILURE");
 
-    _debug ("CALL ID = %s\n" , id.c_str());
-
-    if (isCurrentCall (id)) {
+    if (isCurrentCall (call_id)) {
         playATone (Tone::TONE_BUSY);
         switchCall ("");
     }
 
-    removeCallAccount (id);
+    CallID current_call_id = getCurrentCallId();
 
-    removeWaitingCall (id);
+    if (participToConference (call_id)) {
+
+        _debug("Call %s participating to a conference failed\n", call_id.c_str());
+
+	Conference *conf = getConferenceFromCallID (call_id);
+
+	if (conf != NULL) {
+            // remove this participant
+            removeParticipant (call_id);
+
+            processRemainingParticipant (current_call_id, conf);
+        }
+
+    }
+
+    removeCallAccount (call_id);
+
+    removeWaitingCall (call_id);
 
 }
 
