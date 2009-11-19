@@ -65,14 +65,15 @@ void AudioLayerTest::testAudioLayerConfig()
 {
     int sampling_rate = Manager::instance().getConfigInt (AUDIO, ALSA_SAMPLE_RATE);
     int frame_size = Manager::instance().getConfigInt (AUDIO, ALSA_FRAME_SIZE);
-    frame_size = 0; // frame size in config not used anymore    
+    frame_size = 0; // frame size in config not used anymore
 
     int layer = Manager::instance().getAudioDriver()->getLayerType();
 
-    if(layer != ALSA)
+    if (layer != ALSA)
         Manager::instance().switchAudioManager();
 
     CPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);
+
     CPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getFrameSize() == frame_size);
 }
 
@@ -111,7 +112,7 @@ void AudioLayerTest::testPulseConnect()
     manager = &Manager::instance();
 
     // _pulselayer = new PulseLayer (manager);
-    _pulselayer = (PulseLayer*)Manager::instance().getAudioDriver();
+    _pulselayer = (PulseLayer*) Manager::instance().getAudioDriver();
 
     CPPUNIT_ASSERT (_pulselayer->getLayerType() == PULSEAUDIO);
 
@@ -146,22 +147,22 @@ void AudioLayerTest::testPulseConnect()
     // Must return Access failure "PA_ERR_ACCESS" == 2
     // CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->getStreamState() == 2);
     // CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 2);
-    _debug("-------------------------- \n");
+    _debug ("-------------------------- \n");
     _pulselayer->startStream ();
 
     // usleep(1000000);
 
- 
+
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->pulseStream() != NULL);
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->pulseStream() != NULL);
 
     // Must return No error "PA_OK" == 1
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->getStreamState() == 1);
     CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 1);
-    
+
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->disconnectStream() == true);
     CPPUNIT_ASSERT (_pulselayer->getRecordStream()->disconnectStream() == true);
- 
+
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->connectStream() == true);
     CPPUNIT_ASSERT (_pulselayer->getRecordStream()->connectStream() == true);
 
@@ -176,7 +177,7 @@ void AudioLayerTest::testPulseConnect()
 
     // usleep(1000000);
     CPPUNIT_ASSERT (_pulselayer->disconnectAudioStream() == true);
-    
+
 }
 
 

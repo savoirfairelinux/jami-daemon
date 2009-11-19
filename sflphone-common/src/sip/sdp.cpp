@@ -375,7 +375,7 @@ void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
                             "%.*s %.*s",
                             4,
                             ZRTP_VERSION,
-                            (int)hash.size(),
+                            (int) hash.size(),
                             hash.c_str());
 
     attribute->value.slen = len;
@@ -440,8 +440,9 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
         for (j=0 ; j<nb_codecs ; j++) {
             attribute = pjmedia_sdp_media_find_attr (current, &STR_RTPMAP, NULL);
             // pj_strtoul(attribute->pt)
-			if (!attribute)
-				return;
+
+            if (!attribute)
+                return;
 
             pjmedia_sdp_attr_to_rtpmap (_pool, attribute, &rtpmap);
 

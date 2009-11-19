@@ -84,3 +84,10 @@ libsflphone_la_LIBADD = \
 	./history/libhistory.la
 
 libsflphone_la_SOURCES =
+
+indent:
+	@echo "Indenting code:"
+	if [ -f $(ASTYLERC) ] ; then \
+		$(indent) --options=$(ASTYLERC) --recursive *.cpp *.h; \
+	fi
+

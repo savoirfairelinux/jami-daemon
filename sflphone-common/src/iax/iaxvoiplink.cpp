@@ -304,7 +304,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
         if (currentCall) {
 
-            bool sessionIsConnected = (currentCall->getConnectionState() == Call::Connected);
+            // bool sessionIsConnected = (currentCall->getConnectionState() == Call::Connected);
             bool callIsActive = (currentCall->getState() == Call::Active);
 
             // if (sessionIsConnected || callIsActive) {

@@ -332,9 +332,8 @@ class ManagerImpl {
     /**
      * Play the dtmf-associated sound
      * @param code  The pressed key
-     * @param isTalking	In conversation or not. Useful to know whether or not the sound streams are started
      */
-    bool playDtmf(char code, bool isTalking);
+    bool playDtmf (char code);
 
     /**
      * Play a ringtone
@@ -352,9 +351,8 @@ class ManagerImpl {
 
     /**
      * Acts on the audio streams and audio files
-     * @param stopAudio	Tells whether or not to stop the streams
      */
-    void stopTone(bool stopAudio);
+    void stopTone (void);
 
     /**
      * When receiving a new incoming call, add it to the callaccount map
@@ -1036,9 +1034,9 @@ class ManagerImpl {
      */
     void restartPJSIP( );
 
-    void unregisterCurSIPAccounts();
+    void unregisterCurSIPAccounts (void);
 
-    void registerCurSIPAccounts(VoIPLink *link);
+    void registerCurSIPAccounts (void);
 
     /*
      * Initialize audiodriver

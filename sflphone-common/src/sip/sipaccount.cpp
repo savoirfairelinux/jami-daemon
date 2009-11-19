@@ -25,24 +25,24 @@
 #include <pwd.h>
 
 SIPAccount::SIPAccount (const AccountID& accountID)
-	: Account (accountID, "sip")
-	, _regc (NULL)
-	, _bRegister (false)
-	, _registrationExpire ("")
-	, _publishedSameasLocal(true)
-	, _localIpAddress ("")
-	, _publishedIpAddress ("")
-	, _localPort (atoi (DEFAULT_SIP_PORT))
-	, _publishedPort (atoi (DEFAULT_SIP_PORT))
-	, _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
-	, _transport(NULL)
-	, _resolveOnce (false)
-	, _credentialCount (0)
-	, _cred (NULL)
-	, _realm (DEFAULT_REALM)
-	, _authenticationUsername ("")
-	, _tlsSetting (NULL)
-	, _displayName ("")
+        : Account (accountID, "sip")
+        , _regc (NULL)
+        , _bRegister (false)
+        , _registrationExpire ("")
+        , _publishedSameasLocal (true)
+        , _localIpAddress ("")
+        , _publishedIpAddress ("")
+        , _localPort (atoi (DEFAULT_SIP_PORT))
+        , _publishedPort (atoi (DEFAULT_SIP_PORT))
+        , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
+        , _transport (NULL)
+        , _resolveOnce (false)
+        , _credentialCount (0)
+        , _cred (NULL)
+        , _realm (DEFAULT_REALM)
+        , _authenticationUsername ("")
+        , _tlsSetting (NULL)
+        , _displayName ("")
 {
     /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
     /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
@@ -330,15 +330,20 @@ void SIPAccount::loadConfig()
     }
 
     // Load network settings
-	// Local parameters
+    // Local parameters
     std::string localPort = Manager::instance().getConfigString (_accountID, LOCAL_PORT);
+
     setLocalPort (atoi (localPort.c_str()));
+
     setLocalAddress (Manager::instance().getConfigString (_accountID, LOCAL_ADDRESS));
 
-	// Published parameters
-	setPublishedSameasLocal (Manager::instance().getConfigString (_accountID, PUBLISHED_SAMEAS_LOCAL) == TRUE_STR ? true : false);
+    // Published parameters
+    setPublishedSameasLocal (Manager::instance().getConfigString (_accountID, PUBLISHED_SAMEAS_LOCAL) == TRUE_STR ? true : false);
+
     std::string publishedPort = Manager::instance().getConfigString (_accountID, PUBLISHED_PORT);
+
     setPublishedPort (atoi (publishedPort.c_str()));
+
     setPublishedAddress (Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS));
 
     // Init TLS settings if the user wants to use TLS

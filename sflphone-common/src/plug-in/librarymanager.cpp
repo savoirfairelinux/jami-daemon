@@ -92,7 +92,7 @@ int LibraryManager::resolveSymbol (const std::string &symbol, SymbolHandle *symb
 /************************************************************************************************/
 
 LibraryManagerException::LibraryManagerException (const std::string &libraryName, const std::string &details, Reason reason) :
-      std::runtime_error (""), _reason (reason), _details ("")
+        std::runtime_error (""), _reason (reason), _details ("")
 
 {
     if (_reason == loadingFailed)

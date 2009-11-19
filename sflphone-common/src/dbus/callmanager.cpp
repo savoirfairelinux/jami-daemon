@@ -258,7 +258,7 @@ CallManager::startTone (const int32_t& start , const int32_t& type)
         else
             Manager::instance().playToneWithMessage();
     } else
-        Manager::instance().stopTone (true);
+        Manager::instance().stopTone ();
 }
 
 // TODO: this will have to be adapted

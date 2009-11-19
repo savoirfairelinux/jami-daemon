@@ -106,11 +106,11 @@ AudioStream::disconnectStream (void)
     if (_audiostream) {
         pa_stream_disconnect (_audiostream);
 
-	// make sure we don't get any further callback
-	pa_stream_set_state_callback(_audiostream, NULL, NULL);
-	pa_stream_set_write_callback (_audiostream, NULL, NULL);
-	pa_stream_set_underflow_callback (_audiostream, NULL, NULL);
-	pa_stream_set_overflow_callback (_audiostream, NULL, NULL);
+        // make sure we don't get any further callback
+        pa_stream_set_state_callback (_audiostream, NULL, NULL);
+        pa_stream_set_write_callback (_audiostream, NULL, NULL);
+        pa_stream_set_underflow_callback (_audiostream, NULL, NULL);
+        pa_stream_set_overflow_callback (_audiostream, NULL, NULL);
 
         pa_stream_unref (_audiostream);
         _audiostream = NULL;

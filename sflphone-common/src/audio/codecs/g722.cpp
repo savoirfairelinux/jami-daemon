@@ -49,8 +49,8 @@ class G722 : public AudioCodec
             decode_s = new g722_decode_state_t;
             encode_s = new g722_encode_state_t;
 
-            g722_decode_init (64000, 0);
-            g722_encode_init (64000, 0);
+            g722_decode_init ();
+            g722_encode_init ();
 
         }
 
@@ -76,7 +76,7 @@ class G722 : public AudioCodec
         }
 
 
-        void g722_encode_init (int rate, int options) {
+        void g722_encode_init (void) {
 
             encode_s->itu_test_mode = FALSE;
 
@@ -92,7 +92,7 @@ class G722 : public AudioCodec
             encode_s->band[1].det = 8;
         }
 
-        void g722_decode_init (int rate, int options) {
+        void g722_decode_init (void) {
 
             decode_s->itu_test_mode = FALSE;
 
