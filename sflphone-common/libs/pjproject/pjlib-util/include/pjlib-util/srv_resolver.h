@@ -104,7 +104,19 @@ typedef enum pj_dns_srv_option
      * this option is not specified, the SRV resolver will query
      * the DNS A record for the target instead.
      */
-    PJ_DNS_SRV_RESOLVE_AAAA	= 4
+    PJ_DNS_SRV_RESOLVE_AAAA	= 4,
+
+    /** 
+     * Specify if the resolver should fallback to getaddrinfo 
+     * under IPV4 mode if DNS A fails after DNS SRV.
+     */
+     PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV4 = 8,
+    
+    /** 
+     * Specify if the resolver should fallback to getaddrinfo 
+     * under IPV6 mode if DNS A fails after DNS SRV.
+     */
+    PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV6 = 16,
 
 } pj_dns_srv_option;
 

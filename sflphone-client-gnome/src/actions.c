@@ -58,6 +58,32 @@ sflphone_notify_voice_mail (const gchar* accountID , guint count)
 		notify_voice_mails (count, current);
 }
 
+/*
+ * Place a call with the current account.
+ * If there is no default account selected, place a call with the first
+ * registered account of the account list
+ * Else, check if it an IP call. if not, popup an error message
+ */
+ 
+static gboolean _is_direct_call(callable_obj_t * c) {
+
+    if(g_strcasecmp(c->_accountID, EMPTY_ENTRY) == 0) {
+        if(!g_str_has_prefix (c->_peer_number, "sip:")) {
+            gchar * new_number = g_strconcat("sip:", c->_peer_number, NULL);
+            g_free(c->_peer_number);
+            c->_peer_number = new_number;
+        }
+        return 1;
+    }
+
+    if(g_str_has_prefix (c->_peer_number, "sip:")) {
+        return 1;
+    }
+
+    return 0;
+}
+
+
     void
 status_bar_display_account ()
 {
@@ -528,12 +554,22 @@ sflphone_display_transfer_status(const gchar* message)
     void
 sflphone_incoming_call (callable_obj_t * c)
 {
+	gchar *msg = "";
+
     c->_history_state = MISSED;
     calllist_add ( current_calls, c );
     calllist_add( history, c );
     calltree_add_call( current_calls, c, NULL);
     update_actions();
     calltree_display (current_calls);
+	
+	// Change the status bar if we are dealing with a direct SIP call
+    if(_is_direct_call(c)) {
+		msg = g_markup_printf_escaped (_("Direct SIP call"));
+        statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+        g_free(msg);
+	}
 }
 
     void
@@ -767,31 +803,6 @@ sflphone_keypad( guint keyval, gchar * key)
     else {
         sflphone_new_call();
     }
-}
-
-/*
- * Place a call with the current account.
- * If there is no default account selected, place a call with the first
- * registered account of the account list
- * Else, check if it an IP call. if not, popup an error message
- */
- 
-static gboolean _is_direct_call(callable_obj_t * c) {
-
-    if(g_strcasecmp(c->_accountID, EMPTY_ENTRY) == 0) {
-        if(!g_str_has_prefix (c->_peer_number, "sip:")) {
-            gchar * new_number = g_strconcat("sip:", c->_peer_number, NULL);
-            g_free(c->_peer_number);
-            c->_peer_number = new_number;
-        }
-        return 1;
-    }
-
-    if(g_str_has_prefix (c->_peer_number, "sip:")) {
-        return 1;
-    }
-
-    return 0;
 }
 
 static int _place_direct_call(const callable_obj_t * c) {
