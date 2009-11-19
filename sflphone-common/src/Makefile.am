@@ -29,8 +29,14 @@ IAX_CXXFLAG=
 IAX_LIB=
 endif
 
+if USE_NETWORKMANAGER
+NETWORKMANAGER=-DUSE_NETWORKMANAGER
+else
+NETWORKMANAGER=
+endif
+
 sflphoned_CXXFLAGS = \
-		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG)\
+		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG) $(NETWORKMANAGER) \
 		-DVERSION=\"$(VERSION)\" \
 		@ZRTPCPP_CFLAGS@ \
 		@libssl_CFLAGS@

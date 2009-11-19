@@ -1,3 +1,5 @@
+#ifdef USE_NETWORKMANAGER
+
 #include <global.h>
 #include "networkmanager.h"
 #include <iostream>
@@ -57,3 +59,4 @@ NetworkManager::NetworkManager(DBus::Connection& connection, const DBus::Path& p
 {
 }
 
+#endif

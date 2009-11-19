@@ -41,7 +41,9 @@ DBusManagerImpl::exec()
     _configurationManager = new ConfigurationManager (sessionConnection);
     _instanceManager = new Instance (sessionConnection);
 
+#ifdef USE_NETWORKMANAGER
     _networkManager = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
+#endif
 
     // Register accounts
     Manager::instance().initRegisterAccounts(); //getEvents();

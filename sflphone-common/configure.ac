@@ -382,6 +382,15 @@ AC_ARG_WITH([iax2],
 AC_DEFINE([HAVE_IAX], test "x$with_iax2" = "xyes", [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
+	dnl Check for network-manager
+AC_ARG_WITH([networkmanager],
+		[AS_HELP_STRING([--without-networkmanager],
+			[disable support for network-manager events])],
+		[],
+		[with_networkmanager=yes])
+
+AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
+
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
 # ----------------------------------------------------------------------------
 AC_DEFUN([BB_ENABLE_DOXYGEN],

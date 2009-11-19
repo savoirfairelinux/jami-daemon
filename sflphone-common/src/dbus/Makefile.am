@@ -20,7 +20,13 @@ libdbus_la_SOURCES = \
     dbusmanagerimpl.cpp  \
     networkmanager.cpp
 
-libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
+if USE_NETWORKMANAGER
+NETWORKMANAGER=-DUSE_NETWORKMANAGER
+else
+NETWORKMANAGER=
+endif
+
+libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(NETWORKMANAGER)
 
 libdbus_la_LIBADD = $(top_srcdir)/libs/dbus-c++/src/libdbus-c++-1.la
 
