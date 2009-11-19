@@ -1083,7 +1083,7 @@ sflphone_fill_codec_list()
         for(pl=codecs; *codecs; codecs++)
 	{
 	    details = (gchar **)dbus_codec_details(atoi(*codecs));
-            if(codec_list_get_by_payload((gconstpointer)atoi(*codecs))!=NULL){
+            if(codec_list_get_by_payload((gconstpointer)(size_t)atoi(*codecs))!=NULL){
                 // does nothing - the codec is already in the list, so is active.
             }
             else{
