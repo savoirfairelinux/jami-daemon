@@ -584,8 +584,8 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 			if(c->_state == CALL_STATE_TRANSFERT)
 			{
 				description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
-						c->_peer_number,
 						c->_peer_name,
+						c->_peer_number,
 						c->_trsft_to);
 			}
 			else
@@ -593,22 +593,22 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 				// c->_zrtp_confirmed == FALSE : Hack explained in callable_obj.h
 				if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
 					description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
-							c->_peer_number,
 							c->_peer_name,
+							c->_peer_number,
 							c->_sas);
 				} else {
 					DEBUG("Updating state code %d %s", c->_state_code, c->_state_code_description);
 					if (c->_state_code) {
 						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
-								c->_peer_number,
 								c->_peer_name,
+								c->_peer_number,
 								c->_state_code_description,
 								c->_state_code,
 								audio_codec);
 					} else {
 						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
-								c->_peer_number,
 								c->_peer_name,
+								c->_peer_number,
 								audio_codec);
 					}
 				}
@@ -722,15 +722,15 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	if(c->_state_code == 0) {
 
 		description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-				c->_peer_number,
-				c->_peer_name);
+				c->_peer_name,
+				c->_peer_number);
 
 	}
 	else {
 
 		description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
-				c->_peer_number,
 				c->_peer_name,
+				c->_peer_number,
 				c->_state_code_description,
 				c->_state_code);
 	}
@@ -840,8 +840,8 @@ void calltree_add_history_entry (callable_obj_t * c)
 	// New call in the list
 	gchar * description, *date="", *duration="";
 	description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-			c->_peer_number,
-			c->_peer_name);
+			c->_peer_name,
+			c->_peer_number);
 
 	gtk_tree_store_prepend (history->store, &iter, NULL);
 
