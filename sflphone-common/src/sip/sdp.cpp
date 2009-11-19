@@ -518,8 +518,9 @@ void Sdp::toString (void)
         sdp << _local_offer->media[0]->desc.fmt[i].ptr << " ";
     }
 
-    _debug ("LOCAL SDP: \n%s", sdp.str().c_str());
+    sdp << "\n";
 
+    _debug ("LOCAL SDP: \n%s", sdp.str().c_str());
 }
 
 void Sdp::set_local_media_capabilities ()

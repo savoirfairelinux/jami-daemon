@@ -35,42 +35,40 @@ IAXCall::setFormat (int format)
 {
     _format = format;
 
-    _debug ("IAX set supported format: ");
+    _info ("IAX set supported format: ");
 
     switch (format) {
 
         case AST_FORMAT_ULAW:
-            printf ("PCMU");
+            _info("PCMU");
             setAudioCodec (PAYLOAD_CODEC_ULAW);
             break;
 
         case AST_FORMAT_GSM:
-            printf ("GSM");
+            _info ("GSM");
             setAudioCodec (PAYLOAD_CODEC_GSM);
             break;
 
         case AST_FORMAT_ALAW:
-            printf ("ALAW");
+            _info ("ALAW");
             setAudioCodec (PAYLOAD_CODEC_ALAW);
             break;
 
         case AST_FORMAT_ILBC:
-            printf ("ILBC");
+            _info ("ILBC");
             setAudioCodec (PAYLOAD_CODEC_ILBC_20);
             break;
 
         case AST_FORMAT_SPEEX:
-            printf ("SPEEX");
+            _info ("SPEEX");
             setAudioCodec (PAYLOAD_CODEC_SPEEX_8000);
             break;
 
         default:
-            printf ("Error audio codec type %i not supported!", format);
+            _info ("Error audio codec type %i not supported!", format);
             setAudioCodec ( (AudioCodecType) -1);
             break;
     }
-
-    printf ("");
 }
 
 
@@ -81,7 +79,7 @@ IAXCall::getSupportedFormat()
     int format = 0;
     unsigned int iter;
 
-    _debug ("IAX get supported format: ");
+    _info ("IAX get supported format: ");
 
     map = getCodecMap().getActiveCodecs();
 
@@ -89,27 +87,27 @@ IAXCall::getSupportedFormat()
         switch (map[iter]) {
 
             case PAYLOAD_CODEC_ULAW:
-                printf ("PCMU ");
+                _info ("PCMU ");
                 format |= AST_FORMAT_ULAW;
                 break;
 
             case PAYLOAD_CODEC_GSM:
-                printf ("GSM ");
+                _info ("GSM ");
                 format |= AST_FORMAT_GSM;
                 break;
 
             case PAYLOAD_CODEC_ALAW:
-                printf ("PCMA ");
+                _info ("PCMA ");
                 format |= AST_FORMAT_ALAW;
                 break;
 
             case PAYLOAD_CODEC_ILBC_20:
-                printf ("ILBC ");
+                _info ("ILBC ");
                 format |= AST_FORMAT_ILBC;
                 break;
 
             case PAYLOAD_CODEC_SPEEX_8000:
-                printf ("SPEEX ");
+                _info ("SPEEX ");
                 format |= AST_FORMAT_SPEEX;
                 break;
 
@@ -117,8 +115,6 @@ IAXCall::getSupportedFormat()
                 break;
         }
     }
-
-    printf ("");
 
     return format;
 
@@ -137,27 +133,27 @@ IAXCall::getFirstMatchingFormat (int needles)
         switch (map[iter]) {
 
             case PAYLOAD_CODEC_ULAW:
-                printf ("PCMU");
+                _debug ("PCMU");
                 format = AST_FORMAT_ULAW;
                 break;
 
             case PAYLOAD_CODEC_GSM:
-                printf ("GSM");
+                _debug ("GSM");
                 format = AST_FORMAT_GSM;
                 break;
 
             case PAYLOAD_CODEC_ALAW:
-                printf ("PCMA");
+                _debug ("PCMA");
                 format = AST_FORMAT_ALAW;
                 break;
 
             case PAYLOAD_CODEC_ILBC_20:
-                printf ("ILBC");
+                _debug ("ILBC");
                 format = AST_FORMAT_ILBC;
                 break;
 
             case PAYLOAD_CODEC_SPEEX_8000:
-                printf ("SPEEX");
+                _debug ("SPEEX");
                 format = AST_FORMAT_SPEEX;
                 break;
 
@@ -170,8 +166,6 @@ IAXCall::getFirstMatchingFormat (int needles)
             return format;
 
     }
-
-    printf ("");
 
     return 0;
 }

@@ -1170,7 +1170,7 @@ SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 
     dtmf_body = new char[body_len];
 
-    snprintf (dtmf_body, body_len - 1, "Signal=%c\rDuration=%d\r", code, duration);
+    snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
 
     pj_strdup2 (_pool, &methodName, "INFO");
     pjsip_method_init_np (&method, &methodName);
@@ -3733,7 +3733,7 @@ std::string fetch_header_value (pjsip_msg *msg, std::string field)
 
     value = hdr->hvalue.ptr;
 
-    if ( (pos=value.find ("")) == std::string::npos) {
+    if ( (pos=value.find ("\n")) == std::string::npos) {
         return "";
     }
 

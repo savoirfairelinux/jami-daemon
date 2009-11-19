@@ -42,7 +42,7 @@ void log(const int level, const char* format, ...)
 		case LOG_DEBUG:
 		{
 			prefix = "<debug> ";
-			color_prefix = GREEN;
+			color_prefix = "";
 			break;
 		}
 	}

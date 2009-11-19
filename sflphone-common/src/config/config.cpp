@@ -60,7 +60,6 @@ void ConfigTree::addDefaultValue (const std::pair<std::string, std::string>& tok
 
 std::string ConfigTree::getDefaultValue (const std::string& key)
 {
-    _debug ("Getting default value for %s", key.c_str());
     std::map<std::string, std::string>::iterator it;
     it = _defaultValueMap.find (key);
 
@@ -147,8 +146,6 @@ ConfigTree::getConfigTreeItemValue (const std::string& section, const std::strin
     if (item != NULL) {
         return item->getValue();
     }
-
-    _debug ("Option doesn't exist: [%s] %s", section.c_str(), itemName.c_str());
 
     return getDefaultValue (itemName);
 }
