@@ -17,9 +17,6 @@ string NetworkManager::stateAsString(const uint32_t& state)
 void NetworkManager::StateChanged(const uint32_t& state)
 {
 	_warn("Network state changed: %s", stateAsString(state).c_str());
-
-//	if(state == NM_STATE_CONNECTED)
-//		Manager::instance().registerAccounts();
 }
 
 void NetworkManager::PropertiesChanged(const std::map< std::string, ::DBus::Variant >& argin0)
@@ -29,18 +26,19 @@ void NetworkManager::PropertiesChanged(const std::map< std::string, ::DBus::Vari
 	string message = iter->first;
 
 	_warn("Properties changed: %s", iter->first.c_str());
-
 /*
 	DBus::Variant variant = iter->second;
 	DBus::MessageIter i = variant.reader();
 	cout << i.type() << endl;// 97
 	cout << (char )i.type() << endl;
+	cout << (char)i.array_type() << endl;
+
 	cout << i.is_array() << endl;// 1
 	cout << i.is_dict() << endl;// 0
 	cout << i.array_type() << endl;// 111
 
 	int size;
-	string *value;
+	::DBus::Path* value = new ::DBus::Path[10];
 	size = i.get_array(value);
 	cout << "length: " << size << endl;
 
@@ -52,7 +50,6 @@ void NetworkManager::PropertiesChanged(const std::map< std::string, ::DBus::Vari
 		i = i.recurse();
 	}
 */
-
 	Manager::instance().registerAccounts();
 }
 
