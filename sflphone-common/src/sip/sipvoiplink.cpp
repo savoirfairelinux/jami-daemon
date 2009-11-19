@@ -2725,7 +2725,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
             case PJSIP_SC_NOT_FOUND:            /* peer not found */
 
-            case PJSIP_SC_DECLINE:
+            case PJSIP_SC_DECLINE:				/* We have been ignored */
 
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
 
@@ -2736,6 +2736,8 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
 
             case PJSIP_SC_UNAUTHORIZED:
+
+			case PJSIP_SC_FORBIDDEN:
 
             case PJSIP_SC_REQUEST_PENDING:
                 accId = Manager::instance().getAccountFromCall (call->getCallId());
