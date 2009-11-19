@@ -101,15 +101,22 @@ AudioStream::disconnectStream (void)
 {
     _debug ("Destroy audio streams");
 
-    // pa_threaded_mainloop_lock (_mainloop);
+    pa_threaded_mainloop_lock (_mainloop);
 
     if (_audiostream) {
         pa_stream_disconnect (_audiostream);
+
+	// make sure we don't get any further callback
+	pa_stream_set_state_callback(_audiostream, NULL, NULL);
+	pa_stream_set_write_callback (_audiostream, NULL, NULL);
+	pa_stream_set_underflow_callback (_audiostream, NULL, NULL);
+	pa_stream_set_overflow_callback (_audiostream, NULL, NULL);
+
         pa_stream_unref (_audiostream);
         _audiostream = NULL;
     }
 
-    // pa_threaded_mainloop_unlock (_mainloop);
+    pa_threaded_mainloop_unlock (_mainloop);
 
     return true;
 }

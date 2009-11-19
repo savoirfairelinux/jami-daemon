@@ -330,6 +330,8 @@ void sflphone_get_ip2ip_properties (GHashTable **properties)
 sflphone_hang_up()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -373,6 +375,10 @@ sflphone_hang_up()
                 break;
         }
     }
+    else if(selectedConf) {
+        dbus_hang_up_conference(selectedConf);
+    }
+
     calltree_update_call(history, selectedCall, NULL);
 }
 
@@ -436,6 +442,9 @@ sflphone_pick_up()
 sflphone_on_hold ()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+
+    DEBUG("sflphone_on_hold");
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -452,12 +461,18 @@ sflphone_on_hold ()
                 break;
         }
     }
+    else if (selectedConf) {
+        dbus_hold_conference(selectedConf);
+    }
 }
 
     void
 sflphone_off_hold ()
 {
+    DEBUG("sflphone_off_hold");
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -470,7 +485,12 @@ sflphone_off_hold ()
                 break;
         }
     }
+    else if (selectedConf) {
 
+        
+        dbus_unhold_conference(selectedConf);
+    }
+    /*
     if(dbus_get_is_recording(selectedCall))
     {
         DEBUG("Currently recording!");
@@ -479,6 +499,7 @@ sflphone_off_hold ()
     {
         DEBUG("Not recording currently");
     }
+    */
 }
 
 

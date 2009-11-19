@@ -3104,6 +3104,8 @@ void ManagerImpl::switchAudioManager (void)
 
     framesize = getConfigInt (AUDIO , ALSA_FRAME_SIZE);
 
+    _debug("samplerate: %i, framesize %i\n", samplerate, framesize);
+
     alsaPlugin = getConfigString (AUDIO , ALSA_PLUGIN);
 
     numCardIn  = getConfigInt (AUDIO , ALSA_CARD_ID_IN);
@@ -3483,7 +3485,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     Account * account = _accountMap[accountID];
 
     if (account == NULL) {
-        _debug ("Cannot getAccountDetails on a non-existing accountID. Defaults will be used.");
+      _debug ("Cannot getAccountDetails on a non-existing accountID %s. Defaults will be used.", accountID.c_str());
     }
 
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
@@ -3944,7 +3946,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
         acc->loadConfig();
 
         if (acc->isEnabled()) {
-            acc->unregisterVoIPLink();
+	    // acc->unregisterVoIPLink(); // do not need to send an unregister
             acc->registerVoIPLink();
         } else {
             acc->unregisterVoIPLink();

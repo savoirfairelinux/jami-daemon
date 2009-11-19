@@ -479,7 +479,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
             status = createUDPServer (id);
 
             if (status != PJ_SUCCESS) {
-                _debug ("Use the local UDP transport");
+                _debug ("Use the local UDP transport\n");
                 account->setAccountTransport (_localUDPTransport);
             }
         }
@@ -612,7 +612,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
     _mutexSIP.leaveMutex();
 
     account->setRegistrationInfo (regc);
-    _debug ("ok");
     return true;
 }
 
@@ -1918,7 +1917,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     pj_status_t status;
     pj_sockaddr_in bound_addr;
     pjsip_host_port a_name;
-    char tmpIP[32];
+    // char tmpIP[32];
     pjsip_transport *transport;
     std::string listeningAddress = "127.0.0.1";
     int listeningPort = _regPort;
@@ -1961,13 +1960,10 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 	// Use here either the local information or the published address
 	if (account != NULL && !account->getPublishedSameasLocal ())
 	{
-	
-
 		// Set the listening address to the published address
 		listeningAddress = account->getPublishedAddress ();
 		// Set the listening port to the published port
 		listeningPort = account->getPublishedPort ();
-		
 		_debug (" ******************************** Use the published address %s:%i\n", listeningAddress.c_str (), listeningPort );
 	}
 
@@ -2724,7 +2720,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
             case PJSIP_SC_NOT_FOUND:            /* peer not found */
 
-            case PJSIP_SC_DECLINE:
+            case PJSIP_SC_DECLINE:				/* We have been ignored */
 
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
 
@@ -2735,6 +2731,8 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
 
             case PJSIP_SC_UNAUTHORIZED:
+
+			case PJSIP_SC_FORBIDDEN:
 
             case PJSIP_SC_REQUEST_PENDING:
                 accId = Manager::instance().getAccountFromCall (call->getCallId());
@@ -2844,7 +2842,10 @@ void regc_cb (struct pjsip_regc_cbparam *param)
 
     const pj_str_t * description = pjsip_get_status_text (param->code);
 
-    if (param->code) {
+    if (param->code && description) {
+
+      //std::string descriptionprint(description->ptr, description->slen);
+      //_debug("Received client registration callback wiht code: %i, %s\n", param->code, descriptionprint.c_str());
         DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), std::string (description->ptr, description->slen), param->code);
         std::pair<int, std::string> details (param->code, std::string (description->ptr, description->slen));
         account->setRegistrationStateDetailed (details);

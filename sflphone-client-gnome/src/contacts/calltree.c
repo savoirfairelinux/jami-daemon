@@ -116,8 +116,11 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
 
 			selected_call_id = selected_conf->_confID;
 			selected_path = string_path;
+			selected_call = NULL;
 
 		}
+
+		DEBUG("  selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
 
 	}
 	else
@@ -133,12 +136,16 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
 
 		selected_call = (callable_obj_t*)g_value_get_pointer(&val);
 
-		selected_call_id = selected_call->_callID;
-		selected_path = string_path;
+		if(selected_call) {
+
+		    selected_call_id = selected_call->_callID;
+		    selected_path = string_path;
+		    selected_conf = NULL;
+		}
+
+		DEBUG("  selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
 	}
 
-	DEBUG("selected_cb\n");
-	DEBUG("  selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
 
 	// conferencelist_reset ();
 	// sflphone_fill_conference_list();

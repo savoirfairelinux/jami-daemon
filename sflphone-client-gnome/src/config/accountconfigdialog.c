@@ -175,9 +175,6 @@ static GtkWidget * create_basic_tab(account_t **a)
 		curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERNAME);
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
 	}
-
-	// DEBUG("-------- Basic parameters from config");
-	// DEBUG("curAccountID %s, curAccountType %s, curAccountEnabled %s, curAlias %s, curHostname %s, curPassword %s, curUsername %s, curMailbox %s\n", curAccountID, curAccountType, curAccountEnabled, curAlias, curHostname, curPassword, curUsername, curMailbox);
 	
 
 	gnome_main_section_new (_("Account Parameters"), &frame);
