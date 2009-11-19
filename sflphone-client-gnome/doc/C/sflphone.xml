@@ -523,6 +523,30 @@
             added the same way, dragging a call on the
             conference icon.
               </para>
+	       <!-- ==== Figure ==== -->
+               <figure id="drag_n_frop-fig">
+		 <title>Creating a new conference</title>
+		 <screenshot>
+                   <mediaobject>
+                     <imageobject>
+                       <imagedata fileref="figures/drag_n_drop.png" format="PNG"/>
+                     </imageobject>
+                   </mediaobject>
+		 </screenshot>
+               </figure>
+               <!-- ==== End of Figure ==== -->
+	       <!-- ==== Figure ==== -->
+               <figure id="conference-fig">
+		 <title>Conference call</title>
+		 <screenshot>
+                   <mediaobject>
+                     <imageobject>
+                       <imagedata fileref="figures/conference.png" format="PNG"/>
+                     </imageobject>
+                   </mediaobject>
+		 </screenshot>
+               </figure>
+               <!-- ==== End of Figure ==== -->
             </listitem>
             <listitem>
               <guilabel>Leave a conference</guilabel>
@@ -530,9 +554,33 @@
             SFLphone conference model let you leave a conference that
             you are currently hosting to answer any other incoming
             communication or even initiate new ones. The conference is
-            not interupted Double clicking the conference icon
-            let you reintroduce the conference.
-              </para>
+            not interupted, double clicking the conference icon
+            let you reintroduce it at any momment.
+	      </para>
+	    <!-- ==== Figure ==== -->
+               <figure id="conference_detached-fig">
+		 <title>Conference detached</title>
+		 <screenshot>
+                   <mediaobject>
+                     <imageobject>
+                       <imagedata fileref="figures/conference_detached.png" format="PNG"/>
+                     </imageobject>
+                   </mediaobject>
+		 </screenshot>
+               </figure>
+               <!-- ==== End of Figure ==== -->
+	       <!-- ==== Figure ==== -->
+               <figure id="conference_attached-fig">
+		 <title>Conference attached</title>
+		 <screenshot>
+                   <mediaobject>
+                     <imageobject>
+                       <imagedata fileref="figures/conference_attached.png" format="PNG"/>
+                     </imageobject>
+                   </mediaobject>
+		 </screenshot>
+               </figure>
+               <!-- ==== End of Figure ==== -->
             </listitem>
             <listitem>
               <guilabel>Multiple conference</guilabel>
@@ -546,11 +594,9 @@
             <listitem>
               <guilabel>Hangup/Hold a conference</guilabel>
               <para>
-            Right click the conference icon.
-            Holding the conference put all
-            participants on hold.
-            Hangup a conference hangup all
-            participants.
+            Select the conference icon and press hangup/hold button
+            on the toolbar. The selected action is applied on every
+            conference participants.
               </para>
             </listitem>
           </itemizedlist>
