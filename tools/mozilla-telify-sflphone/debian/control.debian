@@ -1,0 +1,16 @@
+Source: mozilla-telify-sflphone
+Section: web
+Priority: optional
+Maintainer: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+Uploaders: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+Build-Depends: debhelper (>= 7), unzip
+Depends: iceweasel-gnome-support
+Homepage: http://www.sflphone.org
+Standards-Version: 3.8.3
+DM-Upload-Allowed: yes
+
+Package: mozilla-telify-sflphone
+Architecture: all
+Depends: iceweasel (>= 3.0)
+Description: TBD
+
