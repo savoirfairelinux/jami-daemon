@@ -662,7 +662,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 {
     SIPAccount * account = NULL;
     pj_status_t status;
-    std::string localAddr;
+    std::string localAddr, addrSdp;
 
     SIPCall* call = new SIPCall (id, Call::Outgoing, _pool);
 
@@ -683,7 +683,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         call->setPeerNumber (toUri);
 
         // TODO May use the published address as well
-		account->isStunEnabled () ? localAddr = account->getPublishedAddress () : localAddr = account->getLocalAddress ();		
+		localAddr = account->getLocalAddress ()
+		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
         setCallAudioLocal (call, localAddr);
 
         try {
@@ -698,7 +699,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         _debug ("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
         // Building the local SDP offer
         // localAddr = getLocalAddressAssociatedToAccount (account->getAccountID());
-        call->getLocalSDP()->set_ip_address (localAddr);
+        call->getLocalSDP()->set_ip_address (addrSdp);
         status = call->getLocalSDP()->create_initial_offer();
 
         if (status != PJ_SUCCESS) {
@@ -1456,7 +1457,8 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         }
 
         // Set SDP parameters - Set to local or published address
-		account->isStunEnabled () ? localAddress = account->getPublishedAddress () :  localAddress = account->getLocalAddress (); 
+		// account->isStunEnabled () ? localAddress = account->getPublishedAddress () :  localAddress = account->getLocalAddress (); 
+		account->isStunEnabled () ? localAddress = account->getLocalAddress () :  localAddress = account->getLocalAddress (); 
 
         _debug ("new_ip_to_ip_call localAddress: %s\n", localAddress.c_str());
 
@@ -1473,6 +1475,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->setPeerNumber (toUri);
         _debug ("toUri in new_ip_to_ip call %s\n", toUri.c_str());
         // Building the local SDP offer
+		account->isStunEnabled () ? localAddress = account->getPublishedAddress () :  localAddress = account->getLocalAddress (); 
         call->getLocalSDP()->set_ip_address (localAddress);
         call->getLocalSDP()->create_initial_offer();
 
@@ -1490,7 +1493,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         _debug ("IptoIP local port %i\n", account->getLocalPort());
 
-        _debug ("IptoIP local address %s\n", account->getLocalAddress().c_str());
+        _debug ("IptoIP local address in sdp %s\n", account->getLocalAddress().c_str());
 
         // Create URI
         std::string fromUri;
@@ -3094,13 +3097,14 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         return false;
     }
 
-    std::string addrToUse;
+    std::string addrToUse, addrSdp;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     if (account != NULL) {
         // TODO May use the published address as well
-		account->isStunEnabled () ? addrToUse = account->getPublishedAddress () : addrToUse = account->getLocalAddress ();		
+		addrToUse = addrToUse = account->getLocalAddress ();
+		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
     }
 
     if (addrToUse == "0.0.0.0") {
@@ -3112,7 +3116,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     setCallAudioLocal (call, addrToUse);
 
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
-    call->getLocalSDP()->set_ip_address (addrToUse);
+    call->getLocalSDP()->set_ip_address (addrSdp);
 
     get_remote_sdp_from_offer (rdata, &r_sdp);
 
@@ -3712,7 +3716,7 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
         if (account->isStunEnabled ()) {
             // If use Stun server
             callLocalExternAudioPort = account->getStunPort ();
-			localIP = account->getPublishedAddress ();
+			//localIP = account->getPublishedAddress ();
         }
 
         _debug ("            Setting local ip address: %s\n", localIP.c_str());
