@@ -1,6 +1,6 @@
-sflphone-client-gnome (0.9.7~beta~ppa1~karmic) karmic; urgency=low
+sflphone-client-gnome (0.9.7~beta~ppa1~SYSTEM) SYSTEM; urgency=low
 
-    ** 0.9.7~beta~ppa1~karmic **
+    ** 0.9.7~beta~ppa1~SYSTEM **
 
   * [#1933] Cleanup debug
   * [#1933] Clean up debug
@@ -567,7 +567,7 @@ sflphone-client-gnome (0.9.7~beta~ppa1~karmic) karmic; urgency=low
 
  -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Fri, 06 Nov 2009 11:20:01 -0500
 
-sflphone-client-gnome (0.9.6-SYSVER) karmic; urgency=low
+sflphone-client-gnome (0.9.6-SYSTEM) SYSTEM; urgency=low
 
     ** 0.9.6 **
 
@@ -634,7 +634,7 @@ sflphone-client-gnome (0.9.6-SYSVER) karmic; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 27 Jul 2009 09:53:19 -0400
 
-sflphone-client-gnome (0.9.6~rc2-SYSVER) karmic; urgency=low
+sflphone-client-gnome (0.9.6~rc2-SYSTEM) SYSTEM; urgency=low
 
     ** 0.9.6~rc2 **
 
@@ -689,7 +689,7 @@ sflphone-client-gnome (0.9.6~rc2-SYSVER) karmic; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 17 Jul 2009 19:12:58 -0400
 
-sflphone-client-gnome (0.9.6~rc1-SYSVER) karmic; urgency=low
+sflphone-client-gnome (0.9.6~rc1-SYSTEM) SYSTEM; urgency=low
 
     ** 0.9.6~rc1 **
 
@@ -797,7 +797,7 @@ sflphone-client-gnome (0.9.6~rc1-SYSVER) karmic; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Fri, 10 Jul 2009 15:50:26 -0400
 
-sflphone-client-gnome (0.9.6~beta-SYSVER) karmic; urgency=low
+sflphone-client-gnome (0.9.6~beta-SYSTEM) SYSTEM; urgency=low
 
     ** 0.9.6~beta **
 
@@ -1092,7 +1092,7 @@ sflphone-client-gnome (0.9.6~beta-SYSVER) karmic; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 23 Jun 2009 11:13:42 -0400
 
-sflphone-client-gnome (0.9.5-SYSVER) karmic; urgency=low
+sflphone-client-gnome (0.9.5-SYSTEM) SYSTEM; urgency=low
 
     ** 0.9.5 release **
 
@@ -1123,7 +1123,7 @@ sflphone-client-gnome (0.9.5-SYSVER) karmic; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Mon, 25 May 2009 11:34:48 -0400
 
-sflphone-client-gnome (0.9.5-SYSVER~rc2) karmic; urgency=low
+sflphone-client-gnome (0.9.5-SYSTEM~rc2) SYSTEM; urgency=low
 
     ** 0.9.5 rc2 **
 
@@ -1177,7 +1177,7 @@ sflphone-client-gnome (0.9.5-SYSVER~rc2) karmic; urgency=low
 
  -- SFLphone Automatic Build System <team@sflphone.org>  Tue, 19 May 2009 12:08:18 -0400
 
-sflphone-client-gnome (0.9.5-0ubuntu1~rc1) karmic; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
   [ SFLphone Project ]
   * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
@@ -1206,7 +1206,7 @@ sflphone-client-gnome (0.9.5-0ubuntu1~rc1) karmic; urgency=low
 
  -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 05 May 2009 19:16:13 -0400
 
-sflphone-client-gnome (0.9.5-0ubuntu1~beta) karmic; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
   [ Julien Bonjean ]
   * Updated Eclipse stuff
@@ -1428,7 +1428,7 @@ sflphone-client-gnome (0.9.5-0ubuntu1~beta) karmic; urgency=low
 
  -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Mon, 27 Apr 2009 17:00:03 -0400
 
-sflphone-client-gnome (0.9.4-0ubuntu2) karmic; urgency=low
+sflphone-client-gnome (0.9.4-0ubuntu2) SYSTEM; urgency=low
 
   [ Alexandre Savard ]
   * Restore speex and GSM detection
@@ -1438,7 +1438,7 @@ sflphone-client-gnome (0.9.4-0ubuntu2) karmic; urgency=low
  
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 8 Apr 2009 11:29:15 -0500
 
-sflphone (0.9.4-0ubuntu1) karmic; urgency=low
+sflphone (0.9.4-0ubuntu1) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * Integrate DBus-c++ and libiax2 in the main build system
@@ -1463,7 +1463,7 @@ sflphone (0.9.4-0ubuntu1) karmic; urgency=low
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 3 Apr 2009 18:29:15 -0500
 
 
-sflphone (0.9.4-rc1) karmic; urgency=low
+sflphone (0.9.4-rc1) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * Fix bug while trying to hold/unhold several simultaneous call
@@ -1477,7 +1477,7 @@ sflphone (0.9.4-rc1) karmic; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 27 Mar 2009 18:29:15 -0500
 
-sflphone (0.9.4-0beta1) karmic; urgency=low
+sflphone (0.9.4-0beta1) SYSTEM; urgency=low
 
   [ Alexandre Savard ]
   * Display codec used during conversation on the GUI
@@ -1493,7 +1493,7 @@ sflphone (0.9.4-0beta1) karmic; urgency=low
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 20 Mar 2009 18:29:15 -0500
 
 
-sflphone (0.9.3-0ubuntu3) karmic; urgency=low
+sflphone (0.9.3-0ubuntu3) SYSTEM; urgency=low
 
   [ Alexandre Savard ]
   * Both playback and record streams in PA_STREAM_CORKED (pulseaudio)
@@ -1518,7 +1518,7 @@ sflphone (0.9.3-0ubuntu3) karmic; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Sat, 14 Feb 2009 13:29:15 -0500
 
-sflphone (0.9.3-0ubuntu2) karmic; urgency=low
+sflphone (0.9.3-0ubuntu2) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * Add compilation note in README
@@ -1587,7 +1587,7 @@ sflphone (0.9.3-0ubuntu2) karmic; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Sat, 14 Feb 2009 13:29:15 -0500
 
-sflphone (0.9.3-0ubuntu1) karmic; urgency=low
+sflphone (0.9.3-0ubuntu1) SYSTEM; urgency=low
 
   * Remove debug
   * Join thread before leaving
@@ -1600,7 +1600,7 @@ sflphone (0.9.3-0ubuntu1) karmic; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 06 Feb 2009 19:17:32 -0500
 
-sflphone (0.9.2-2ubuntu9) karmic; urgency=low
+sflphone (0.9.2-2ubuntu9) SYSTEM; urgency=low
 
   [ Alexandre Savard ]
   * Speex audio codec preprocessing initialization
@@ -1628,7 +1628,7 @@ sflphone (0.9.2-2ubuntu9) karmic; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Thu, 05 Feb 2009 18:27:53 -0500
 
-sflphone (0.9.2-2ubuntu8) karmic; urgency=low
+sflphone (0.9.2-2ubuntu8) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * Update changelogs
@@ -1672,7 +1672,7 @@ sflphone (0.9.2-2ubuntu8) karmic; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 04 Feb 2009 14:00:30 -0500
 
-sflphone (0.9.2-2ubuntu7) karmic; urgency=low
+sflphone (0.9.2-2ubuntu7) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * Update changelog to 0.9.2-6
@@ -1694,7 +1694,7 @@ sflphone (0.9.2-2ubuntu7) karmic; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 23 Jan 2009 17:48:13 -0500
 
-sflphone (0.9.2-2ubuntu6) karmic; urgency=low
+sflphone (0.9.2-2ubuntu6) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * Migrate STUN configuration to the main config window
@@ -1728,7 +1728,7 @@ sflphone (0.9.2-2ubuntu6) karmic; urgency=low
 
  -- Emmanuel Milou <manu@sulfur.inside.savoirfairelinux.net>  Fri, 16 Jan 2009 18:19:05 -0500
 
-sflphone (0.9.2-2ubuntu5) karmic; urgency=low
+sflphone (0.9.2-2ubuntu5) SYSTEM; urgency=low
 
   * Fix memory leak in the pulseaudio callback
   * Update debian package generation script
@@ -1744,7 +1744,7 @@ sflphone (0.9.2-2ubuntu5) karmic; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 14 Jan 2009 21:17:20 -0500
 
-sflphone (0.9.2-2ubuntu4) karmic; urgency=low
+sflphone (0.9.2-2ubuntu4) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * add german translation
@@ -1754,7 +1754,7 @@ sflphone (0.9.2-2ubuntu4) karmic; urgency=low
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Thu, 08 Jan 2009 13:08:51 -0500
 
-sflphone (0.9.2-2ubuntu3) karmic; urgency=low
+sflphone (0.9.2-2ubuntu3) SYSTEM; urgency=low
 
   [ Emmanuel Milou ]
   * The main thread synchronizes the ringtone thread
@@ -1766,13 +1766,13 @@ sflphone (0.9.2-2ubuntu3) karmic; urgency=low
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Tue, 06 Jan 2009 16:18:38 -0500
 
-sflphone (0.9.2-2ubuntu2) karmic; urgency=low
+sflphone (0.9.2-2ubuntu2) SYSTEM; urgency=low
   
   * Fix bug ticket #129
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Wed, 5 Jan 2009 15:54:53 -0500
 
-sflphone (0.9.2-2ubuntu1) karmic; urgency=low
+sflphone (0.9.2-2ubuntu1) SYSTEM; urgency=low
 
   * Migrate from eXosip library to pjsip
   * Add multiple SIP accounts support
