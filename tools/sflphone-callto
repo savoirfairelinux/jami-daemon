@@ -1,39 +1,39 @@
 #!/bin/sh
 #
 # This script can be used as a callto: (or other) protocol handler in
-# Mozilla/Firefox/whatever browser.
+# Mozilla Firefox-based browser.
 # In Firefox use Preferences > Applications and set the callto handler
 # to this script.
 
-# Configuration:
-# All you have to do is set this to your account alias name
-# (see ~/.sflphone/sflphonedrc file)
-ACCOUNT_ALIAS="manu"
-
-################################################################################
-
 # The sflphone daemon config file
-RESFILE=~/.sflphone/sflphonedrc
+RESFILE=~/.config/sflphone/sflphonedrc
 
-# Parse sflphonedrc and get account id string from defined alias
+# Parse sflphonedrc and get default account id string
 if [ -f "$RESFILE" ]; then
-    ACCOUNTID=`grep -B2 "Account.alias=$ACCOUNT_ALIAS" "$RESFILE" | \
-        grep "Account:[0-9]" |                                      \
-        head -n 1 |                                                 \
-        sed -e 's/[^a-zA-Z0-9:]//g' `
+
+	# Use first ID
+	ACCOUNTID=`grep Accounts.order $RESFILE | sed -e 's/Accounts.order=//' -e 's/\/.*//'`
+
+	# Accounts.order is not set
+	if [ -z $ACCOUNTID ]; then
+
+		# Use first account declared in sflphone config
+		ACCOUNTID="`grep -m 1 Account: $RESFILE | sed -e 's/\[//' -e 's/\]//'`"
+   	fi 
+
 else
     echo Fatal: Cant find sflphonedrc config file.
     exit 1
 fi
 
 # Check 1st argument (phone number)
-if [ "$1" = "" ]; then
+if [ -z $1 ]; then
     echo "Error: argument 1 (phone number) not provided."
     exit 1
 fi
 
-# Cleanup destination removing callto: prefix
-TO="`echo $1 | sed -e 's/callto://'`"
+# Cleanup destination, keeping numbers only 
+TO="`echo $1 | sed -e 's/[^0123456789]//g'`"
 
 # Generate call id.
 CALLID=${RANDOM}$$  
@@ -46,5 +46,7 @@ dbus-send                                           \
     string:"$ACCOUNTID"                             \
     string:"$CALLID"                                \
     string:"$TO"
+
+exit 0
 
 # EOF

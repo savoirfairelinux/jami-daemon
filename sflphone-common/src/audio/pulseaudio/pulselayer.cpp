@@ -37,8 +37,8 @@ static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
 {
     // _debug("capture_callback\n");
 
-    assert(s && bytes);
-    assert(bytes > 0);
+    assert (s && bytes);
+    assert (bytes > 0);
     static_cast<PulseLayer*> (userdata)->processCaptureData();
     // static_cast<PulseLayer*> (userdata)->processData();
 }
@@ -65,19 +65,19 @@ static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
     // _debug("         pa write_index_corupt (if not 0): %i\n",  info->write_index_corrupt);
     // _debug("         pa read_index: %l\n", (long)(info->read_index));
     // _debug("         pa read_index_corrupt (if not 0): %i\n", info->read_index_corrupt);
-    
 
-    // fill in audio buffer twice the prebuffering value to restart playback 
-    pa_stream_writable_size(s);
+
+    // fill in audio buffer twice the prebuffering value to restart playback
+    pa_stream_writable_size (s);
     pa_stream_trigger (s, NULL, NULL);
-    
+
 
 }
 
 
 static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
 {
-    _debug("PulseLayer::Buffer OverFlow\n");
+    _debug ("PulseLayer::Buffer OverFlow\n");
     //PulseLayer* pulse = (PulseLayer*) userdata;
     // pa_stream_drop (s);
     // pa_stream_trigger (s, NULL, NULL);
@@ -104,10 +104,13 @@ PulseLayer::~PulseLayer (void)
     closeLayer ();
 
     if (_converter) {
-	delete _converter; _converter = NULL;
+        delete _converter;
+        _converter = NULL;
     }
 
-    delete dcblocker; dcblocker = NULL;
+    delete dcblocker;
+
+    dcblocker = NULL;
 }
 
 bool
@@ -131,7 +134,7 @@ PulseLayer::closeLayer (void)
     // record->disconnectStream();
     // closeCaptureStream();
 
-    disconnectAudioStream();
+    // disconnectAudioStream();
 
     if (context) {
         pa_context_disconnect (context);
@@ -152,7 +155,7 @@ PulseLayer::connectPulseAudioServer (void)
 {
     _debug ("PulseLayer::connectPulseAudioServer \n");
 
-    setenv("PULSE_PROP_media.role", "phone", 1);
+    setenv ("PULSE_PROP_media.role", "phone", 1);
 
     pa_context_flags_t flag = PA_CONTEXT_NOAUTOSPAWN ;
 
@@ -216,10 +219,10 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 
 bool PulseLayer::disconnectAudioStream (void)
 {
-    _debug (" PulseLayer::disconnectAudioStream( void ) \n");
+    _debug ("PulseLayer::disconnectAudioStream( void ) \n");
 
     closePlaybackStream();
-    
+
     closeCaptureStream();
 
     if (!playback && !record)
@@ -242,9 +245,9 @@ bool PulseLayer::createStreams (pa_context* c)
 
     playback = new AudioStream (playbackParam);
     playback->connectStream();
-    pa_stream_set_write_callback(playback->pulseStream(), playback_callback, this);
-    pa_stream_set_overflow_callback(playback->pulseStream(), playback_overflow_callback, this);
-    pa_stream_set_underflow_callback(playback->pulseStream(), playback_underflow_callback, this);
+    pa_stream_set_write_callback (playback->pulseStream(), playback_callback, this);
+    pa_stream_set_overflow_callback (playback->pulseStream(), playback_overflow_callback, this);
+    pa_stream_set_underflow_callback (playback->pulseStream(), playback_underflow_callback, this);
     // pa_stream_set_suspended_callback(playback->pulseStream(), stream_suspended_callback, this);
     // pa_stream_set_moved_callback(playback->pulseStream(), stream_moved_callback, this);
     delete playbackParam;
@@ -291,10 +294,8 @@ void PulseLayer::closeCaptureStream (void)
 {
     if (record) {
 
-	pa_threaded_mainloop_lock (m);
-	delete record;
-	pa_threaded_mainloop_unlock (m);
-	record=NULL;
+        delete record;
+        record=NULL;
     }
 }
 
@@ -302,10 +303,8 @@ void PulseLayer::closePlaybackStream (void)
 {
     if (playback) {
 
-	pa_threaded_mainloop_lock (m);
-	delete playback;
-	pa_threaded_mainloop_unlock (m);
-	playback=NULL;
+        delete playback;
+        playback=NULL;
     }
 }
 
@@ -329,42 +328,45 @@ void PulseLayer::startStream (void)
 {
     // connectPulseAudioServer();
 
-    if(!is_started) {
+    if (!is_started) {
 
-	_debug ("PulseLayer::Start Stream\n");
+        _debug ("PulseLayer::Start Stream\n");
 
-	if (!m) {
+        if (!m) {
 
-	    _debug("Creating PulseAudio MainLoop\n");
-	    m = pa_threaded_mainloop_new();
-	    assert (m);
-	
-	    if (pa_threaded_mainloop_start (m) < 0) {
-		_debug ("Failed starting the mainloop\n");
-	    }
-	}
+            _debug ("Creating PulseAudio MainLoop\n");
+            m = pa_threaded_mainloop_new();
+            assert (m);
 
-	if (!context) {
+            if (pa_threaded_mainloop_start (m) < 0) {
+                _debug ("Failed starting the mainloop\n");
+            }
+        }
 
-	    _debug("Creating new PulseAudio Context\n");
-	    pa_threaded_mainloop_lock (m);
-	    // Instanciate a context
-	    if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
-		_debug ("Error while creating the context\n");
-	    pa_threaded_mainloop_unlock (m);
-	    
-	    assert (context);
-	}
+        if (!context) {
 
-	// Create Streams
-	connectPulseAudioServer();
+            _debug ("Creating new PulseAudio Context\n");
+            pa_threaded_mainloop_lock (m);
+            // Instanciate a context
 
-	is_started = true;
+            if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
+                _debug ("Error while creating the context\n");
+
+            pa_threaded_mainloop_unlock (m);
+
+            assert (context);
+        }
+
+        // Create Streams
+        connectPulseAudioServer();
+
+        is_started = true;
     }
 
-    // Flush outside the if statement: every time start stream is 
+    // Flush outside the if statement: every time start stream is
     // called is to notify a new event
     flushUrgent();
+
     flushMain();
 
 }
@@ -373,38 +375,38 @@ void
 PulseLayer::stopStream (void)
 {
 
-    if(is_started) {
+    if (is_started) {
 
-	_debug ("PulseLayer::Stop Audio Stream\n");
-	pa_stream_flush (playback->pulseStream(), NULL, NULL);
-	pa_stream_flush (record->pulseStream(), NULL, NULL);
+        _debug ("PulseLayer::Stop Audio Stream\n");
+        pa_stream_flush (playback->pulseStream(), NULL, NULL);
+        pa_stream_flush (record->pulseStream(), NULL, NULL);
 
-	if (m) {
-	    pa_threaded_mainloop_stop (m);
-	}
+        if (m) {
+            pa_threaded_mainloop_stop (m);
+        }
 
-	disconnectAudioStream();
+        disconnectAudioStream();
 
-	_debug("Disconnecting PulseAudio context\n");
+        _debug ("Disconnecting PulseAudio context\n");
 
-	if (context) {
+        if (context) {
 
-	    pa_threaded_mainloop_lock (m);
-	    pa_context_disconnect (context);
-	    pa_context_unref (context);
-	    pa_threaded_mainloop_unlock (m);
-	    context = NULL;
-	}
+            pa_threaded_mainloop_lock (m);
+            pa_context_disconnect (context);
+            pa_context_unref (context);
+            pa_threaded_mainloop_unlock (m);
+            context = NULL;
+        }
 
-	_debug("Freeing Pulseaudio mainloop\n");
+        _debug ("Freeing Pulseaudio mainloop\n");
 
-	if (m) {
-	    pa_threaded_mainloop_free (m);
-	    m = NULL;
-	}
-	
+        if (m) {
+            pa_threaded_mainloop_free (m);
+            m = NULL;
+        }
 
-	is_started = false;
+
+        is_started = false;
 
     }
 
@@ -430,9 +432,9 @@ void PulseLayer::overflow (pa_stream* s, void* userdata UNUSED)
 void PulseLayer::processPlaybackData (void)
 {
     // Handle the data for the speakers
-    if ( playback &&(playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
+    if (playback && (playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
 
-	// _debug("PulseLayer::processPlaybackData()\n");
+        // _debug("PulseLayer::processPlaybackData()\n");
 
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if (pa_stream_writable_size (playback->pulseStream()) == 0)
@@ -444,24 +446,24 @@ void PulseLayer::processPlaybackData (void)
 }
 
 
-void PulseLayer::processCaptureData(void)
+void PulseLayer::processCaptureData (void)
 {
 
     // Handle the mic
     // We check if the stream is ready
-    if ( record &&(record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
+    if (record && (record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
         readFromMic();
-    
+
 }
 
 
-void PulseLayer::processData(void)
+void PulseLayer::processData (void)
 {
 
     // Handle the data for the speakers
-    if ( playback &&(playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
+    if (playback && (playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
 
-	// _debug("PulseLayer::processPlaybackData()\n");
+        // _debug("PulseLayer::processPlaybackData()\n");
 
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if (pa_stream_writable_size (playback->pulseStream()) == 0)
@@ -472,7 +474,7 @@ void PulseLayer::processData(void)
 
     // Handle the mic
     // We check if the stream is ready
-    if ( record &&(record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
+    if (record && (record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
         readFromMic();
 
 }
@@ -490,13 +492,13 @@ void PulseLayer::writeToSpeaker (void)
 
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
-    
 
-    int writeableSize = pa_stream_writable_size(playback->pulseStream());
+
+    int writeableSize = pa_stream_writable_size (playback->pulseStream());
     // _debug("PulseLayer writablesize : %i\n", writeableSize);
 
-    if(writeableSize < 0)
-	_debug("PulseLayer playback error : %s\n", pa_strerror(writeableSize));
+    if (writeableSize < 0)
+        _debug ("PulseLayer playback error : %s\n", pa_strerror (writeableSize));
 
 
     if (urgentAvailBytes > writeableSize) {
@@ -505,13 +507,13 @@ void PulseLayer::writeToSpeaker (void)
 
         // _debug("Play Urgent!\n");
 
-	out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+        out = (SFLDataFormat*) pa_xmalloc (writeableSize);
         _urgentRingBuffer.Get (out, writeableSize, 100);
-	// pa_threaded_mainloop_lock (m);
+        // pa_threaded_mainloop_lock (m);
         pa_stream_write (playback->pulseStream(), out, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
-	// pa_threaded_mainloop_unlock (m);
+        // pa_threaded_mainloop_unlock (m);
 
-	pa_xfree(out);
+        pa_xfree (out);
 
         // Consume the regular one as well (same amount of bytes)
         getMainBuffer()->discard (writeableSize);
@@ -520,129 +522,129 @@ void PulseLayer::writeToSpeaker (void)
     } else {
 
         AudioLoop* tone = _manager->getTelephoneTone();
-	AudioLoop* file_tone = _manager->getTelephoneFile();
+        AudioLoop* file_tone = _manager->getTelephoneFile();
 
-	// flush remaining samples in _urgentRingBuffer
-	flushUrgent();
+        // flush remaining samples in _urgentRingBuffer
+        flushUrgent();
 
         if (tone != 0) {
 
-	    // _debug("PlayTone writeableSize: %i\n", writeableSize);
+            // _debug("PlayTone writeableSize: %i\n", writeableSize);
 
-	    if (playback->getStreamState() == PA_STREAM_READY)
-	    {
+            if (playback->getStreamState() == PA_STREAM_READY) {
 
-	        // _debug("Play Sine Tone!\n");
+                // _debug("Play Sine Tone!\n");
 
-		out = (SFLDataFormat*) pa_xmalloc (writeableSize);
-		int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
-		// pa_threaded_mainloop_lock (m);
-		pa_stream_write (playback->pulseStream(), out, copied * sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
-		// pa_threaded_mainloop_unlock (m);
+                out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+                int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
+                // pa_threaded_mainloop_lock (m);
+                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+                // pa_threaded_mainloop_unlock (m);
 
-		pa_xfree(out);
+                pa_xfree (out);
 
-	    }
+            }
         }
 
         else if (file_tone != 0) {
 
-	    if (playback->getStreamState() == PA_STREAM_READY)
-	    {
-	        // _debug("Play File Tone!\n");
-		
-		out = (SFLDataFormat*) pa_xmalloc (writeableSize);
-		int copied = file_tone->getNext(out, writeableSize / sizeof(SFLDataFormat), 100);
-		// pa_threaded_mainloop_lock (m);
-		pa_stream_write (playback->pulseStream(), out, copied * sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+            if (playback->getStreamState() == PA_STREAM_READY) {
+                // _debug("Play File Tone!\n");
 
-		pa_xfree(out);
-		// pa_threaded_mainloop_unlock (m);
+                out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+                int copied = file_tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
+                // pa_threaded_mainloop_lock (m);
+                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
-	    }
+                pa_xfree (out);
+                // pa_threaded_mainloop_unlock (m);
+
+            }
 
         } else {
 
-	    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+            int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
-	    int maxNbBytesToGet = 0;
+            int maxNbBytesToGet = 0;
 
 
-	    // test if audio resampling is needed
-	    if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
- 
-		// upsamplefactor is used to compute the number of bytes to get in the ring buffer 
-		double upsampleFactor = (double) _mainBufferSampleRate / _audioSampleRate;
+            // test if audio resampling is needed
 
-		maxNbBytesToGet = ((double) writeableSize * upsampleFactor);
+            if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
-	    } else {
+                // upsamplefactor is used to compute the number of bytes to get in the ring buffer
+                double upsampleFactor = (double) _mainBufferSampleRate / _audioSampleRate;
 
-		// maxNbSamplesToGet = framesPerBuffer;
-		maxNbBytesToGet = writeableSize;
-
-	    }
-
-            normalAvailBytes = getMainBuffer()->availForGet();
-	    
-            byteToGet = (normalAvailBytes < (int)(maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
-
-            if (byteToGet) {
-
-		// Sending an odd number of byte breaks the audio!
-		// TODO, find out where the problem occurs to get rid of this hack
-		if( (byteToGet%2) != 0 )
-		    byteToGet = byteToGet-1;
-
-		out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
-
-                getMainBuffer()->getData (out, byteToGet, 100);
-
-		// test if resampling is required
-		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
-
-		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (writeableSize);
-		    
-		    // Do sample rate conversion
-		    int nb_sample_down = byteToGet / sizeof(SFLDataFormat);
-
-		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
-
-		    if((nbSample*sizeof(SFLDataFormat)) > (unsigned int)writeableSize)
-			_debug("Error: nbsbyte exceed buffer length\n");
-
-		    // pa_threaded_mainloop_lock (m);
-		    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
-		    // pa_threaded_mainloop_unlock (m);
-		    pa_xfree(rsmpl_out);
-
-		} else {
-
-		    pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
-
-		}
-
-		pa_xfree(out);
+                maxNbBytesToGet = ( (double) writeableSize * upsampleFactor);
 
             } else {
 
-		if((tone == 0) && (file_tone == 0)) {
-		    
-		    SFLDataFormat* zeros = (SFLDataFormat*)pa_xmalloc (writeableSize);
-  
-		    bzero (zeros, writeableSize);
+                // maxNbSamplesToGet = framesPerBuffer;
+                maxNbBytesToGet = writeableSize;
 
-		    // pa_threaded_mainloop_lock (m);
-		    pa_stream_write(playback->pulseStream(), zeros, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
-		    // pa_threaded_mainloop_unlock (m);
-
-		    pa_xfree(zeros);
-
-		}
             }
 
-	    
-	    _urgentRingBuffer.Discard(byteToGet);
+            normalAvailBytes = getMainBuffer()->availForGet();
+
+            byteToGet = (normalAvailBytes < (int) (maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
+
+            if (byteToGet) {
+
+                // Sending an odd number of byte breaks the audio!
+                // TODO, find out where the problem occurs to get rid of this hack
+                if ( (byteToGet%2) != 0)
+                    byteToGet = byteToGet-1;
+
+                out = (SFLDataFormat*) pa_xmalloc (maxNbBytesToGet);
+
+                getMainBuffer()->getData (out, byteToGet, 100);
+
+                // test if resampling is required
+                if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
+
+                    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (writeableSize);
+
+                    // Do sample rate conversion
+                    int nb_sample_down = byteToGet / sizeof (SFLDataFormat);
+
+                    int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
+
+                    if ( (nbSample*sizeof (SFLDataFormat)) > (unsigned int) writeableSize)
+                        _debug ("Error: nbsbyte exceed buffer length\n");
+
+                    // pa_threaded_mainloop_lock (m);
+                    pa_stream_write (playback->pulseStream(), rsmpl_out, nbSample*sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+                    // pa_threaded_mainloop_unlock (m);
+                    pa_xfree (rsmpl_out);
+
+                } else {
+
+                    pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
+
+                }
+
+                pa_xfree (out);
+
+            } else {
+
+                if ( (tone == 0) && (file_tone == 0)) {
+
+                    SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc (writeableSize);
+
+                    bzero (zeros, writeableSize);
+
+                    // pa_threaded_mainloop_lock (m);
+                    pa_stream_write (playback->pulseStream(), zeros, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
+                    // pa_threaded_mainloop_unlock (m);
+
+                    pa_xfree (zeros);
+
+                }
+            }
+
+
+            _urgentRingBuffer.Discard (byteToGet);
 
         }
 
@@ -656,40 +658,41 @@ void PulseLayer::readFromMic (void)
     size_t r;
 
     // if (record->getStreamState()
-    // pa_threaded_mainloop_lock (m);
 
-    int readableSize = pa_stream_readable_size(record->pulseStream());
+    int readableSize = pa_stream_readable_size (record->pulseStream());
 
     // _debug("readableSize: %i\n", readableSize);
 
     if (pa_stream_peek (record->pulseStream() , (const void**) &data , &r) < 0 || !data) {
-        _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+        _debug ("pa_stream_peek() failed: %s\n" , pa_strerror (pa_context_errno (context)));
     }
+
 
     if (data != 0) {
 
-	int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+        int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
-	// test if resampling is required
-        if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
+        // test if resampling is required
+
+        if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
 
 
-	    SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
-	    // _debug("Byte read: %i\n", r);
-	    int nbSample = r / sizeof(SFLDataFormat);
- 
+            SFLDataFormat* rsmpl_out = (SFLDataFormat*) pa_xmalloc (readableSize);
+            // _debug("Byte read: %i\n", r);
+            int nbSample = r / sizeof (SFLDataFormat);
+
             int nb_sample_up = nbSample;
 
-            
-            nbSample = _converter->downsampleData ((SFLDataFormat*)data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
-	    // remove dc offset
-	    dcblocker->filter_signal( rsmpl_out, nbSample );
+            nbSample = _converter->downsampleData ( (SFLDataFormat*) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
-	    getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof(SFLDataFormat), 100);
+            // remove dc offset
+            dcblocker->filter_signal (rsmpl_out, nbSample);
 
-	    pa_xfree (rsmpl_out);
+            getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
+
+            pa_xfree (rsmpl_out);
 
         } else {
 
@@ -698,7 +701,7 @@ void PulseLayer::readFromMic (void)
         }
 
 
-	
+
     }
 
     if (pa_stream_drop (record->pulseStream()) < 0) {

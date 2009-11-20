@@ -21,7 +21,8 @@
 
 #include "dcblocker.h"
 
-DcBlocker::DcBlocker(){
+DcBlocker::DcBlocker()
+{
 
     y = 0;
     x = 0;
@@ -30,20 +31,21 @@ DcBlocker::DcBlocker(){
 
 }
 
-DcBlocker::~DcBlocker(){
+DcBlocker::~DcBlocker()
+{
 
-   
+
 }
 
-void DcBlocker::filter_signal(SFLDataFormat* audio_data, int length)
+void DcBlocker::filter_signal (SFLDataFormat* audio_data, int length)
 {
     // y(n) = x(n) - x(n-1) + R y(n-1) , R = 0.9999
 
-    for(int i = 0; i < length; i++) {
+    for (int i = 0; i < length; i++) {
 
         x = audio_data[i];
 
-        y = (SFLDataFormat)((float)x - (float)xm1 + 0.9999 * (float)ym1);
+        y = (SFLDataFormat) ( (float) x - (float) xm1 + 0.9999 * (float) ym1);
         xm1 = x;
         ym1 = y;
 

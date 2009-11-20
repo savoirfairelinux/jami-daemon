@@ -50,6 +50,7 @@ calltab_select_call (calltab_t* tab, callable_obj_t * c )
 {
     tab->selectedType = A_CALL;
     tab->selectedCall = c;
+    current_calls->selectedConf = NULL;
 }
 
 
@@ -58,6 +59,7 @@ calltab_select_conf (conference_obj_t * c )
 {
     current_calls->selectedType = A_CONFERENCE;
     current_calls->selectedConf = c;
+    current_calls->selectedCall = NULL;
 }
 
 gint

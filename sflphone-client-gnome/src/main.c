@@ -116,6 +116,9 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
     // Get the active calls and conferences at startup    
     sflphone_fill_call_list ();
     sflphone_fill_conference_list();
+
+	// Update the GUI
+	update_actions ();
         
     /* start the main loop */
     gtk_main();

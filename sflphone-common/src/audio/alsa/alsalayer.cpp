@@ -37,8 +37,8 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
         , _is_running_capture (false)
         , _is_open_playback (false)
         , _is_open_capture (false)
-        , _trigger_request (false)	
-	, _audioThread(NULL)
+        , _trigger_request (false)
+        , _audioThread (NULL)
 
 {
     _debug (" Constructor of AlsaLayer called\n");
@@ -56,12 +56,14 @@ AlsaLayer::~AlsaLayer (void)
     _debug ("Destructor of AlsaLayer called\n");
     closeLayer();
 
-    if(_converter) {
-	delete _converter; _converter = NULL;
+    if (_converter) {
+        delete _converter;
+        _converter = NULL;
     }
 
-    if(dcblocker) {
-	delete dcblocker; dcblocker = NULL;
+    if (dcblocker) {
+        delete dcblocker;
+        dcblocker = NULL;
     }
 }
 
@@ -73,7 +75,7 @@ AlsaLayer::closeLayer()
     try {
         /* Stop the audio thread first */
         if (_audioThread) {
-	    _debug("Stop Audio Thread\n");
+            _debug ("Stop Audio Thread\n");
             delete _audioThread;
             _audioThread=NULL;
         }
@@ -115,7 +117,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     _frameSize = frameSize;
 
-    _audioPlugin = std::string(plugin);
+    _audioPlugin = std::string (plugin);
 
     _debugAlsa (" Setting AlsaLayer: device     in=%2d, out=%2d\n", _indexIn, _indexOut);
 
@@ -147,15 +149,16 @@ AlsaLayer::startStream (void)
     std::string pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
     std::string pcmc = buildDeviceTopo (_audioPlugin, _indexIn, 0);
 
-    if(!is_playback_open()){
-	open_device (pcmp, pcmc, SFL_PCM_PLAYBACK);
+    if (!is_playback_open()) {
+        open_device (pcmp, pcmc, SFL_PCM_PLAYBACK);
     }
 
-    if(!is_capture_open()){
-	open_device (pcmp, pcmc, SFL_PCM_CAPTURE);
+    if (!is_capture_open()) {
+        open_device (pcmp, pcmc, SFL_PCM_CAPTURE);
     }
-   
+
     prepareCaptureStream ();
+
     preparePlaybackStream ();
     startCaptureStream ();
     startPlaybackStream ();
@@ -166,14 +169,14 @@ AlsaLayer::startStream (void)
     // getMainBuffer()->flushAllBuffers();
     // getMainBuffer()->flushDefault();
 
-    if(_audioThread == NULL) {
-	try {
-	    _debug("Start Audio Thread\n");
-	    _audioThread = new AudioThread (this);
-	    _audioThread->start();
-	} catch (...) {
-	    _debugException ("Fail to start audio thread\n");
-	}
+    if (_audioThread == NULL) {
+        try {
+            _debug ("Start Audio Thread\n");
+            _audioThread = new AudioThread (this);
+            _audioThread->start();
+        } catch (...) {
+            _debugException ("Fail to start audio thread\n");
+        }
     }
 
 }
@@ -186,7 +189,7 @@ AlsaLayer::stopStream (void)
     try {
         /* Stop the audio thread first */
         if (_audioThread) {
-	    _debug("Stop Audio Thread\n");
+            _debug ("Stop Audio Thread\n");
             delete _audioThread;
             _audioThread=NULL;
         }
@@ -196,6 +199,7 @@ AlsaLayer::stopStream (void)
     }
 
     closeCaptureStream ();
+
     closePlaybackStream ();
 
     /* Flush the ring buffers */
@@ -224,11 +228,12 @@ void AlsaLayer::stopCaptureStream (void)
     int err;
 
     if (_CaptureHandle) {
-	_debug("AlsaLayer:: stop Alsa capture\n");
-        if((err = snd_pcm_drop (_CaptureHandle)) < 0)
-	    _debug("AlsaLayer:: Error stopping ALSA capture: %s\n", snd_strerror(err));
-	else
-	    stop_capture ();
+        _debug ("AlsaLayer:: stop Alsa capture\n");
+
+        if ( (err = snd_pcm_drop (_CaptureHandle)) < 0)
+            _debug ("AlsaLayer:: Error stopping ALSA capture: %s\n", snd_strerror (err));
+        else
+            stop_capture ();
 
     }
 }
@@ -241,11 +246,12 @@ void AlsaLayer::closeCaptureStream (void)
         stopCaptureStream ();
 
     if (is_capture_open()) {
-	_debug("AlsaLayer:: close ALSA capture\n");
-        if ((err = snd_pcm_close (_CaptureHandle)) < 0)
-	    _debug("Error closing ALSA capture: %s\n", snd_strerror(err));
-	else
-	    close_capture ();
+        _debug ("AlsaLayer:: close ALSA capture\n");
+
+        if ( (err = snd_pcm_close (_CaptureHandle)) < 0)
+            _debug ("Error closing ALSA capture: %s\n", snd_strerror (err));
+        else
+            close_capture ();
     }
 }
 
@@ -255,10 +261,11 @@ void AlsaLayer::startCaptureStream (void)
 
     if (_CaptureHandle && !is_capture_running()) {
         _debug ("AlsaLayer:: start ALSA capture\n");
-        if((err = snd_pcm_start (_CaptureHandle)) < 0)
-	    _debug("Error starting ALSA capture: %s\n",  snd_strerror(err));
-	else
-	    start_capture();
+
+        if ( (err = snd_pcm_start (_CaptureHandle)) < 0)
+            _debug ("Error starting ALSA capture: %s\n",  snd_strerror (err));
+        else
+            start_capture();
     }
 }
 
@@ -267,9 +274,10 @@ void AlsaLayer::prepareCaptureStream (void)
     int err;
 
     if (is_capture_open() && !is_capture_prepared()) {
-	_debug("AlsaLayer:: prepare ALSA capture\n");
-        if ((err = snd_pcm_prepare (_CaptureHandle)) < 0)
-            _debug ("Error preparing ALSA capture: %s\n", snd_strerror(err));
+        _debug ("AlsaLayer:: prepare ALSA capture\n");
+
+        if ( (err = snd_pcm_prepare (_CaptureHandle)) < 0)
+            _debug ("Error preparing ALSA capture: %s\n", snd_strerror (err));
         else
             prepare_capture ();
     }
@@ -280,11 +288,12 @@ void AlsaLayer::stopPlaybackStream (void)
     int err;
 
     if (_PlaybackHandle && is_playback_running()) {
-	_debug("AlsaLayer:: stop ALSA playback\n");
-        if((err = snd_pcm_drop (_PlaybackHandle)) < 0)
-	    _debug("Error stopping ALSA playback: %s\n", snd_strerror(err));
-	else
-	    stop_playback ();
+        _debug ("AlsaLayer:: stop ALSA playback\n");
+
+        if ( (err = snd_pcm_drop (_PlaybackHandle)) < 0)
+            _debug ("Error stopping ALSA playback: %s\n", snd_strerror (err));
+        else
+            stop_playback ();
     }
 }
 
@@ -297,11 +306,12 @@ void AlsaLayer::closePlaybackStream (void)
         stopPlaybackStream ();
 
     if (is_playback_open()) {
-	_debug("AlsaLayer:: close ALSA playback\n");
-        if ((err = snd_pcm_close (_PlaybackHandle)) < 0)
-	    _debug("Error closing ALSA playback: %s\n", snd_strerror(err));
+        _debug ("AlsaLayer:: close ALSA playback\n");
+
+        if ( (err = snd_pcm_close (_PlaybackHandle)) < 0)
+            _debug ("Error closing ALSA playback: %s\n", snd_strerror (err));
         else
-	    close_playback ();
+            close_playback ();
     }
 }
 
@@ -310,11 +320,12 @@ void AlsaLayer::startPlaybackStream (void)
     int err;
 
     if (_PlaybackHandle && !is_playback_running()) {
-	_debug ("AlsaLayer:: start ALSA playback\n");
-        if ((err = snd_pcm_start (_PlaybackHandle)) < 0)
-	    _debug("Error starting ALSA playback: %s\n", snd_strerror(err));
-	else
-	    start_playback();
+        _debug ("AlsaLayer:: start ALSA playback\n");
+
+        if ( (err = snd_pcm_start (_PlaybackHandle)) < 0)
+            _debug ("Error starting ALSA playback: %s\n", snd_strerror (err));
+        else
+            start_playback();
     }
 }
 
@@ -323,11 +334,12 @@ void AlsaLayer::preparePlaybackStream (void)
     int err;
 
     if (is_playback_open() && !is_playback_prepared()) {
-	_debug("AlsaLayer:: prepare playback stream\n");
-        if ((err = snd_pcm_prepare (_PlaybackHandle)) < 0)  
-	    _debug ("Error preparing the device: %s\n", snd_strerror(err));
-	else
-	    prepare_playback ();
+        _debug ("AlsaLayer:: prepare playback stream\n");
+
+        if ( (err = snd_pcm_prepare (_PlaybackHandle)) < 0)
+            _debug ("Error preparing the device: %s\n", snd_strerror (err));
+        else
+            prepare_playback ();
     }
 }
 
@@ -491,8 +503,9 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, int flag)
 
     if (flag == SFL_PCM_BOTH || flag == SFL_PCM_PLAYBACK) {
 
-	_debug("AlsaLayer:: open playback device\n");
+        _debug ("AlsaLayer:: open playback device\n");
         // if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
+
         if ( (err = snd_pcm_open (&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
             _debugAlsa ("Error while opening playback device %s\n",  pcm_p.c_str());
             setErrorMessage (ALSA_PLAYBACK_DEVICE);
@@ -512,7 +525,8 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, int flag)
 
     if (flag == SFL_PCM_BOTH || flag == SFL_PCM_CAPTURE) {
 
-	_debug("AlsaLayer:: open capture device\n");
+        _debug ("AlsaLayer:: open capture device\n");
+
         if ( (err = snd_pcm_open (&_CaptureHandle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0)) < 0) {
             _debugAlsa ("Error while opening capture device %s\n",  pcm_c.c_str());
             setErrorMessage (ALSA_CAPTURE_DEVICE);
@@ -576,7 +590,8 @@ AlsaLayer::write (void* buffer, int length)
                 break;
 
             default:
-                _debugAlsa ("Write error unknown - dropping frames **********************************: %s\n", snd_strerror(err));
+                _debugAlsa ("Write error unknown - dropping frames **********************************: %s\n", snd_strerror (err));
+
                 stopPlaybackStream ();
 
                 break;
@@ -635,7 +650,7 @@ AlsaLayer::read (void* buffer, int toCopy)
 void
 AlsaLayer::handle_xrun_capture (void)
 {
-    _debugAlsa("handle_xrun_capture\n");
+    _debugAlsa ("handle_xrun_capture\n");
 
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
@@ -655,7 +670,7 @@ AlsaLayer::handle_xrun_capture (void)
 void
 AlsaLayer::handle_xrun_playback (void)
 {
-    _debugAlsa("AlsaLayer:: handle_xrun_playback\n");
+    _debugAlsa ("AlsaLayer:: handle_xrun_playback\n");
 
     int state;
     snd_pcm_status_t* status;
@@ -669,7 +684,7 @@ AlsaLayer::handle_xrun_playback (void)
             stopPlaybackStream ();
             preparePlaybackStream ();
 
-	    
+
             _trigger_request = true;
         }
     }
@@ -807,7 +822,7 @@ void AlsaLayer::audioCallback (void)
 
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
-    
+
     /*
     int writeableSize = snd_pcm_avail_update(_PlaybackHandle);
     _debug("writeableSize %i\n", writeableSize);
@@ -816,6 +831,7 @@ void AlsaLayer::audioCallback (void)
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
+
     if (urgentAvailBytes > 0) {
 
         // Urgent data (dtmf, incoming call signal) come first.
@@ -835,7 +851,7 @@ void AlsaLayer::audioCallback (void)
     } else {
 
         tone = _manager->getTelephoneTone();
-	file_tone = _manager->getTelephoneFile();
+        file_tone = _manager->getTelephoneFile();
 
         toGet = framesPerBufferAlsa;
         maxBytes = toGet * sizeof (SFLDataFormat);
@@ -846,92 +862,93 @@ void AlsaLayer::audioCallback (void)
             tone->getNext (out, toGet, spkrVolume);
             write (out , maxBytes);
 
-	    free(out);
-	    out = 0;
+            free (out);
+            out = 0;
 
         } else if (file_tone != 0) {
 
             out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
-            file_tone->getNext(out, toGet, spkrVolume);
+            file_tone->getNext (out, toGet, spkrVolume);
             write (out , maxBytes);
 
-	    free(out);
-	    out = 0;
+            free (out);
+            out = 0;
 
         } else {
 
 
-	    // If nothing urgent, play the regular sound samples
-   
-	    int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-	    int maxNbSamplesToGet = 0;
-	    int maxNbBytesToGet = 0;
+            // If nothing urgent, play the regular sound samples
 
-	    // Compute maximal value to get into the ring buffer
-	    if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
- 
-		double upsampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
+            int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+            int maxNbSamplesToGet = 0;
+            int maxNbBytesToGet = 0;
 
-		maxNbSamplesToGet = (int) ((double) framesPerBufferAlsa / upsampleFactor);
+            // Compute maximal value to get into the ring buffer
+
+            if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
+
+                double upsampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
+
+                maxNbSamplesToGet = (int) ( (double) framesPerBufferAlsa / upsampleFactor);
 
 
-	    } else {
+            } else {
 
-		maxNbSamplesToGet = framesPerBufferAlsa;
+                maxNbSamplesToGet = framesPerBufferAlsa;
 
-	    }
+            }
 
-	    maxNbBytesToGet = maxNbSamplesToGet * sizeof(SFLDataFormat);
-            
+            maxNbBytesToGet = maxNbSamplesToGet * sizeof (SFLDataFormat);
+
             normalAvailBytes = getMainBuffer()->availForGet();
-            toGet = (normalAvailBytes < (int)maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
+            toGet = (normalAvailBytes < (int) maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
 
             out = (SFLDataFormat*) malloc (maxNbBytesToGet);
 
             if (normalAvailBytes) {
 
-                getMainBuffer()->getData(out, toGet, spkrVolume);
+                getMainBuffer()->getData (out, toGet, spkrVolume);
 
-		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
+                if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
 
-		    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
-		    
-		    // Do sample rate conversion
-		    int nb_sample_down = toGet / sizeof(SFLDataFormat);
+                    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-		    int nbSample = _converter->upsampleData((SFLDataFormat*)out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
+                    // Do sample rate conversion
+                    int nb_sample_down = toGet / sizeof (SFLDataFormat);
 
-		    
+                    int nbSample = _converter->upsampleData ( (SFLDataFormat*) out, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_down);
 
-		    write (rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
-		    free(rsmpl_out);
-		    rsmpl_out = 0;
-		
-		} else {
 
-		    write (out, toGet);
+                    write (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
-		}
+                    free (rsmpl_out);
+                    rsmpl_out = 0;
+
+                } else {
+
+                    write (out, toGet);
+
+                }
 
             } else {
 
-		if((tone == 0) && (file_tone == 0)) {
+                if ( (tone == 0) && (file_tone == 0)) {
 
-		    SFLDataFormat* zeros = (SFLDataFormat*)malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+                    SFLDataFormat* zeros = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-		    bzero (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat));
-		    write (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat));
+                    bzero (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat));
+                    write (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-		    free (zeros);
-		}
+                    free (zeros);
+                }
             }
 
-	    _urgentRingBuffer.Discard (toGet); 
+            _urgentRingBuffer.Discard (toGet);
 
-	    free (out);
-	    out = 0;
+            free (out);
+            out = 0;
 
         }
 
@@ -939,59 +956,62 @@ void AlsaLayer::audioCallback (void)
 
     // Additionally handle the mic's audio stream
     int micAvailBytes;
+
     int micAvailPut;
+
     int toPut;
+
     SFLDataFormat* in;
 
 
     // snd_pcm_sframes_t micAvailAlsa;
     in = 0;
-    if(is_capture_running())
-    {
-	
-        micAvailBytes = snd_pcm_avail_update(_CaptureHandle);
-	// _debug("micAvailBytes %i\n", micAvailBytes);
-	if(micAvailBytes > 0) 
-	{
+
+    if (is_capture_running()) {
+
+        micAvailBytes = snd_pcm_avail_update (_CaptureHandle);
+        // _debug("micAvailBytes %i\n", micAvailBytes);
+
+        if (micAvailBytes > 0) {
             micAvailPut = getMainBuffer()->availForPut();
             toPut = (micAvailBytes <= framesPerBufferAlsa) ? micAvailBytes : framesPerBufferAlsa;
-            in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
-            toPut = read (in, toPut* sizeof(SFLDataFormat));
+            in = (SFLDataFormat*) malloc (toPut * sizeof (SFLDataFormat));
+            toPut = read (in, toPut* sizeof (SFLDataFormat));
 
-	    adjustVolume (in, toPut, SFL_PCM_CAPTURE);
+            adjustVolume (in, toPut, SFL_PCM_CAPTURE);
 
-            if (in != 0)
-            {
-		int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
+            if (in != 0) {
+                int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
 
-		if (_mainBufferSampleRate && ((int)_audioSampleRate != _mainBufferSampleRate)) {
+                if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
-		    SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+                    SFLDataFormat* rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
-		    int nbSample = toPut / sizeof(SFLDataFormat);
-		    int nb_sample_up = nbSample;
+                    int nbSample = toPut / sizeof (SFLDataFormat);
+                    int nb_sample_up = nbSample;
 
-		    // _debug("nb_sample_up %i\n", nb_sample_up);
-		    nbSample = _converter->downsampleData ((SFLDataFormat*)in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
+                    // _debug("nb_sample_up %i\n", nb_sample_up);
+                    nbSample = _converter->downsampleData ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
-		    dcblocker->filter_signal(rsmpl_out, nbSample);
+                    dcblocker->filter_signal (rsmpl_out, nbSample);
 
-		    getMainBuffer()->putData(rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
+                    getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
 
-		    free(rsmpl_out);
-		    rsmpl_out = 0;
-		
-		} else {
+                    free (rsmpl_out);
+                    rsmpl_out = 0;
 
-		    getMainBuffer()->putData(in, toPut, 100);
-		}
-	    }
-            free(in); in=0;
+                } else {
+
+                    getMainBuffer()->putData (in, toPut, 100);
+                }
+            }
+
+            free (in);
+
+            in=0;
+        } else if (micAvailBytes < 0) {
+            _debug ("AlsaLayer::audioCallback (mic): error: %s\n", snd_strerror (micAvailBytes));
         }
-	else if(micAvailBytes < 0)
-	{
-	    _debug("AlsaLayer::audioCallback (mic): error: %s\n", snd_strerror(micAvailBytes));
-	}
 
     }
 }

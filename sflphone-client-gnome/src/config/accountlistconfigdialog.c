@@ -362,7 +362,9 @@ create_account_list(GtkDialog * dialog)
             G_TYPE_POINTER  // Pointer to the Object
             );
 
-    treeView = gtk_tree_view_new_with_model (GTK_TREE_MODEL (accountStore));
+    account_list_config_dialog_fill();
+
+    treeView = GTK_TREE_VIEW (gtk_tree_view_new_with_model (GTK_TREE_MODEL(accountStore)));
     treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW (treeView));
     g_signal_connect(G_OBJECT (treeSelection), "changed",
             G_CALLBACK (select_account_cb),
@@ -442,13 +444,13 @@ create_account_list(GtkDialog * dialog)
     g_signal_connect_swapped(G_OBJECT(helpButton), "clicked",
              G_CALLBACK(help_contents_cb), NULL);
     gtk_box_pack_start(GTK_BOX(buttonHbox), helpButton, FALSE, FALSE, 0);
-        
+
     GtkWidget * closeButton = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
     g_signal_connect_swapped(G_OBJECT(closeButton), "clicked",  G_CALLBACK(close_dialog_cb), NULL);
     gtk_box_pack_start(GTK_BOX(buttonHbox), closeButton, FALSE, FALSE, 0);
-   
+
     gtk_widget_show_all(table);
-    account_list_config_dialog_fill();
+    // account_list_config_dialog_fill();
 
     /* Resize the scrolledWindow for a better view */
     gtk_widget_size_request(GTK_WIDGET(treeView), &requisition);
@@ -457,9 +459,9 @@ create_account_list(GtkDialog * dialog)
     gtk_widget_size_request(GTK_WIDGET(deleteButton), &requisitionButton);
     gtk_widget_set_size_request(GTK_WIDGET(closeButton), requisitionButton.width, -1);
     gtk_widget_set_size_request(GTK_WIDGET(helpButton), requisitionButton.width, -1);    
-            
+
     gtk_widget_show_all(table);
-    
+
     return table;
 }
 

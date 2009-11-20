@@ -332,9 +332,8 @@ class ManagerImpl {
     /**
      * Play the dtmf-associated sound
      * @param code  The pressed key
-     * @param isTalking	In conversation or not. Useful to know whether or not the sound streams are started
      */
-    bool playDtmf(char code, bool isTalking);
+    bool playDtmf (char code);
 
     /**
      * Play a ringtone
@@ -352,9 +351,8 @@ class ManagerImpl {
 
     /**
      * Acts on the audio streams and audio files
-     * @param stopAudio	Tells whether or not to stop the streams
      */
-    void stopTone(bool stopAudio);
+    void stopTone (void);
 
     /**
      * When receiving a new incoming call, add it to the callaccount map
@@ -661,7 +659,7 @@ class ManagerImpl {
     /**
      * Set the dialpad visible or not
      */
-    void setDialpad( void );
+    void setDialpad (bool display);
 
     /**
      * Tells if the user wants to display the volume controls or not
@@ -673,7 +671,7 @@ class ManagerImpl {
     /**
      * Set the volume controls ( mic and speaker ) visible or not
      */
-    void setVolumeControls( void );
+    void setVolumeControls (bool display);
 
     /**
      * Set recording on / off
@@ -1036,9 +1034,9 @@ class ManagerImpl {
      */
     void restartPJSIP( );
 
-    void unregisterCurSIPAccounts();
+    void unregisterCurSIPAccounts (void);
 
-    void registerCurSIPAccounts(VoIPLink *link);
+    void registerCurSIPAccounts (void);
 
     /*
      * Initialize audiodriver
@@ -1307,9 +1305,9 @@ class ManagerImpl {
 
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
-    int getSipPort();
+    int getLocalIp2IpPort();
 
-    void setSipPort( int port );
+    void setLocalIp2IpInfo( const std::string& address );
 
     std::string getStunServer (void);
     void setStunServer (const std::string &server);

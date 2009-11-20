@@ -69,6 +69,8 @@ static gboolean is_inserted (GtkWidget* button, GtkWidget *current_toolbar)
 void update_actions()
 {
 
+       DEBUG("Update action");
+
 	gtk_action_set_sensitive( GTK_ACTION (newCallAction), TRUE);
 	gtk_action_set_sensitive (GTK_ACTION (pickUpAction), FALSE);
 	gtk_action_set_sensitive (GTK_ACTION (hangUpAction), FALSE);
@@ -145,6 +147,7 @@ void update_actions()
 
 	if (selectedCall)
 	{
+	        // DEBUG("------------------------- selected call ---------------------------\n");
 		gtk_action_set_sensitive (GTK_ACTION (copyAction), TRUE);
 
 		switch(selectedCall->_state)
@@ -220,9 +223,48 @@ void update_actions()
 				break;
 		}
 	}
+	else if (selectedConf){
 
-	else
-	{
+	        // DEBUG("------------------------- selected conf ---------------------------\n");
+
+	        switch(selectedConf->_state) {
+
+		case CONFERENCE_STATE_ACTIVE_ATACHED:
+		  gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+		  gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+		  break;
+
+		case CONFERENCE_STATE_ACTIVE_DETACHED:
+		  gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+		  gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+		  break;
+
+		case CONFERENCE_STATE_RECORD:
+		  gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+		  gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+		  break;
+		  
+		case CONFERENCE_STATE_HOLD:
+		  gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+		  gtk_widget_set_sensitive (GTK_WIDGET (offHoldToolbar), TRUE);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+		  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
+		  break;
+
+		default:
+		  WARN("Should not happen in update_action()!");
+		  break;
+		  
+		}
+	}  
+
+	else {
 		if( account_list_get_size() > 0  && current_account_has_mailbox ())
 		{
 			gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (voicemailToolbar), -2);
@@ -245,7 +287,8 @@ void update_voicemail_status (void)
 static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 {
 	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
-	// DEBUG("%i\n", toggled);
+	if (toggled == SHOW_VOLUME)
+		return;
 	main_window_volume_controls(toggled);
 	if (toggled || SHOW_VOLUME)
 		dbus_set_volume_controls(toggled);
@@ -254,7 +297,9 @@ static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 static void dialpad_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 {
 	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
-	main_window_dialpad(toggled);
+	if (toggled == SHOW_DIALPAD)
+		return;
+	main_window_dialpad (toggled);
 	if (toggled || SHOW_DIALPAD)
 		dbus_set_dialpad(toggled);
 }
@@ -340,6 +385,7 @@ switch_account(  GtkWidget* item , gpointer data UNUSED)
 call_hold  (void* foo UNUSED)
 {
 	callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+	conference_obj_t * selectedConf = calltab_get_selected_conf();
 
 	if(selectedCall)
 	{
@@ -351,6 +397,28 @@ call_hold  (void* foo UNUSED)
 		{
 			sflphone_on_hold();
 		}
+	}
+	else if (selectedConf) {
+
+	    switch(selectedConf->_state) {
+
+	    case CONFERENCE_STATE_HOLD: 
+	      {
+		selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+		sflphone_conference_off_hold(selectedConf);
+	      }
+	      break;
+	      
+	    case CONFERENCE_STATE_ACTIVE_ATACHED:
+	    case CONFERENCE_STATE_ACTIVE_DETACHED: {
+	      selectedConf->_state = CONFERENCE_STATE_HOLD;
+	      sflphone_conference_on_hold(selectedConf);
+	    }
+	      break;
+	    default:
+	      break;
+	    }
+	    
 	}
 }
 
@@ -648,55 +716,46 @@ static void toggle_addressbook_cb (GtkToggleAction *action, gpointer user_data)
 static const GtkActionEntry menu_entries[] = {
 
 	// Call Menu 
-	{ "Call", NULL, "Call" },
-	{ "NewCall", GTK_STOCK_DIAL, "_New call", "<control>N", "Place a new call", G_CALLBACK (call_new_call) },
-	{ "PickUp", GTK_STOCK_PICKUP, "_Pick up", NULL, "Answer the call", G_CALLBACK (call_pick_up) },
-	{ "HangUp", GTK_STOCK_HANGUP, "_Hang up", "<control>S", "Finish the call", G_CALLBACK (call_hang_up) },    
-	{ "OnHold", GTK_STOCK_ONHOLD, "O_n hold", "<control>P", "Place the call on hold", G_CALLBACK (call_hold) },    
-	{ "OffHold", GTK_STOCK_OFFHOLD, "O_ff hold", "<control>P", "Place the call off hold", G_CALLBACK (call_hold) },    
-	{ "Record", GTK_STOCK_MEDIA_RECORD, "_Record", "<control>R", "Record the current conversation", G_CALLBACK (call_record) },        
-	{ "AccountAssistant", NULL, "Configuration _Assistant", NULL, "Run the configuration assistant", G_CALLBACK (call_configuration_assistant) },    
-	{ "Voicemail", "mail-read", "Voicemail", NULL, "Call your voicemail", G_CALLBACK (call_mailbox_cb) },    
-	{ "Close", GTK_STOCK_CLOSE, "_Close", "<control>W", "Minimize to system tray", G_CALLBACK (call_minimize) },
-	{ "Quit", GTK_STOCK_CLOSE, "_Quit", "<control>Q", "Quit the program", G_CALLBACK (call_quit) },   
+	{ "Call", NULL, N_("Call") },
+	{ "NewCall", GTK_STOCK_DIAL, N_("_New call"), "<control>N", N_("Place a new call"), G_CALLBACK (call_new_call) },
+	{ "PickUp", GTK_STOCK_PICKUP, N_("_Pick up"), NULL, N_("Answer the call"), G_CALLBACK (call_pick_up) },
+	{ "HangUp", GTK_STOCK_HANGUP, N_("_Hang up"), "<control>S", N_("Finish the call"), G_CALLBACK (call_hang_up) },    
+	{ "OnHold", GTK_STOCK_ONHOLD, N_("O_n hold"), "<control>P", N_("Place the call on hold"), G_CALLBACK (call_hold) },    
+	{ "OffHold", GTK_STOCK_OFFHOLD, N_("O_ff hold"), "<control>P", N_("Place the call off hold"), G_CALLBACK (call_hold) },    
+	{ "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), G_CALLBACK (call_record) },        
+	{ "AccountAssistant", NULL, N_("Configuration _Assistant"), NULL, N_("Run the configuration assistant"), G_CALLBACK (call_configuration_assistant) },    
+	{ "Voicemail", "mail-read", N_("Voicemail"), NULL, N_("Call your voicemail"), G_CALLBACK (call_mailbox_cb) },    
+	{ "Close", GTK_STOCK_CLOSE, N_("_Close"), "<control>W", N_("Minimize to system tray"), G_CALLBACK (call_minimize) },
+	{ "Quit", GTK_STOCK_CLOSE, N_("_Quit"), "<control>Q", N_("Quit the program"), G_CALLBACK (call_quit) },   
 
 	// Edit Menu
-	{ "Edit", NULL, "_Edit" },
-	{ "Copy", GTK_STOCK_COPY, "_Copy", "<control>C", "Copy the selection", G_CALLBACK (edit_copy) },
-	{ "Paste", GTK_STOCK_PASTE, "_Paste", "<control>V", "Paste the clipboard", G_CALLBACK (edit_paste) },
-	{ "ClearHistory", GTK_STOCK_CLEAR, "Clear _history", NULL, "Clear the call history", G_CALLBACK (clear_history) },
-	{ "Accounts", NULL, "_Accounts", NULL, "Edit your accounts", G_CALLBACK (edit_accounts) },
-	{ "Preferences", GTK_STOCK_PREFERENCES, "_Preferences", NULL, "Change your preferences", G_CALLBACK (edit_preferences) },   
+	{ "Edit", NULL, N_("_Edit") },
+	{ "Copy", GTK_STOCK_COPY, N_("_Copy"), "<control>C", N_("Copy the selection"), G_CALLBACK (edit_copy) },
+	{ "Paste", GTK_STOCK_PASTE, N_("_Paste"), "<control>V", N_("Paste the clipboard"), G_CALLBACK (edit_paste) },
+	{ "ClearHistory", GTK_STOCK_CLEAR, N_("Clear _history"), NULL, N_("Clear the call history"), G_CALLBACK (clear_history) },
+	{ "Accounts", NULL, N_("_Accounts"), NULL, N_("Edit your accounts"), G_CALLBACK (edit_accounts) },
+	{ "Preferences", GTK_STOCK_PREFERENCES, N_("_Preferences"), NULL, N_("Change your preferences"), G_CALLBACK (edit_preferences) },   
 
 	// View Menu
-	{ "View", NULL, "_View" },
+	{ "View", NULL, N_("_View") },
 
 	// Help menu
-	{ "Help", NULL, "_Help" },
-	{ "HelpContents", GTK_STOCK_HELP, "Contents", "F1", "Open the manual", G_CALLBACK (help_contents_cb) },
-	{ "About", GTK_STOCK_ABOUT, NULL, NULL,  "About this application", G_CALLBACK (help_about) }
+	{ "Help", NULL, N_("_Help") },
+	{ "HelpContents", GTK_STOCK_HELP, N_("Contents"), "F1", N_("Open the manual"), G_CALLBACK (help_contents_cb) },
+	{ "About", GTK_STOCK_ABOUT, NULL, NULL,  N_("About this application"), G_CALLBACK (help_about) }
 
 }; 
 
 static const GtkToggleActionEntry toggle_menu_entries[] = {
 
-	{ "Transfer", GTK_STOCK_TRANSFER, "_Transfer", "<control>T", "Transfer the call", NULL }, //G_CALLBACK (call_transfer_cb) },        
-	{ "Toolbar", NULL, "_Show toolbar", "<control>T", "Show the toolbar", NULL },
-	{ "Dialpad", NULL, "_Dialpad", "<control>D", "Show the dialpad", G_CALLBACK (dialpad_bar_cb) },
-	{ "VolumeControls",NULL, "_Volume controls", "<control>V", "Show the volume controls", G_CALLBACK (volume_bar_cb) },
-	{ "History", "appointment-soon", "_History", NULL, "Calls history", G_CALLBACK (toggle_history_cb), FALSE},
-	{ "Addressbook", GTK_STOCK_ADDRESSBOOK, "_Address book", NULL, "Address book", G_CALLBACK (toggle_addressbook_cb), FALSE}
+	{ "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL }, //G_CALLBACK (call_transfer_cb) },        
+	{ "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL },
+	{ "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK (dialpad_bar_cb) },
+	{ "VolumeControls",NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK (volume_bar_cb) },
+	{ "History", "appointment-soon", N_("_History"), NULL, N_("Calls history"), G_CALLBACK (toggle_history_cb), FALSE},
+	{ "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK (toggle_addressbook_cb), FALSE}
 
 };
-
-/*
-static const GtkRadioActionEntry radio_menu_entries[] = {
-
-	{"CallWindow", GTK_STOCK_CALLS, "_Call window", NULL, "Calls list", CALLTREE_CALLS},
-
-};
-*/
-
 
 gboolean uimanager_new (GtkUIManager **_ui_manager) {
 

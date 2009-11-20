@@ -206,12 +206,12 @@ class AudioLayer {
 	/**
 	 * Set the audio recorder
 	 */
-	void setRecorderInstance(Recordable* rec) {_recorder = NULL; _recorder = rec;}
+	inline void setRecorderInstance (Recordable* rec) {_recorder = NULL; _recorder = rec;}
 
 	/**
 	 * Get the audio recorder
 	 */
-	Recordable* getRecorderInstance(Recordable* rec) {return _recorder;}
+	inline Recordable* getRecorderInstance (void) {return _recorder;}
 
 
     protected:

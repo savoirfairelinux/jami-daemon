@@ -92,7 +92,7 @@ public:
     std::string getRecordPath( void );
     void setRecordPath(const std::string& recPath );
     int32_t getDialpad( void );
-    void setDialpad( void );
+    void setDialpad (const bool& display);
     int32_t getSearchbar( void );
     
     void setSearchbar( void );
@@ -104,7 +104,7 @@ public:
 	std::string getHistoryEnabled (void);
 
     int32_t getVolumeControls( void );
-    void setVolumeControls( void );
+    void setVolumeControls (const bool& display);
     int32_t isStartHidden( void );
     void startHidden( void );
     int32_t popupMode( void );
@@ -113,8 +113,8 @@ public:
     void setNotify( void );
     int32_t getMailNotify( void );
     void setMailNotify( void );
-    int32_t getSipPort( void );
-    void setSipPort( const int32_t& portNum);
+    int getSipAddress( void );
+    void setSipAddress( const std::string& address );
 
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);

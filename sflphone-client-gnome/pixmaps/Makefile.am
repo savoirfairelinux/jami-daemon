@@ -25,6 +25,7 @@ buttons_DATA = current.svg \
 				busy.svg \
 				sflphone.svg \
 				sflphone_small.svg \
+				sflphone_notif.svg \
 				stock_person.svg \
 				icon_rec.svg \
 				rec_call.svg \
@@ -38,7 +39,8 @@ buttons_DATA = current.svg \
 				lock_confirmed.svg \
 				lock_error.svg \
 				lock_off.svg \
-				lock_unconfirmed.svg
+				lock_unconfirmed.svg \
+				phone.svg
 
 buttonsdir   = $(datadir)/sflphone
 EXTRA_DIST   = $(buttons_DATA) $(icon_DATA)

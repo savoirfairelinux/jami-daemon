@@ -58,6 +58,32 @@ sflphone_notify_voice_mail (const gchar* accountID , guint count)
 		notify_voice_mails (count, current);
 }
 
+/*
+ * Place a call with the current account.
+ * If there is no default account selected, place a call with the first
+ * registered account of the account list
+ * Else, check if it an IP call. if not, popup an error message
+ */
+ 
+static gboolean _is_direct_call(callable_obj_t * c) {
+
+    if(g_strcasecmp(c->_accountID, EMPTY_ENTRY) == 0) {
+        if(!g_str_has_prefix (c->_peer_number, "sip:")) {
+            gchar * new_number = g_strconcat("sip:", c->_peer_number, NULL);
+            g_free(c->_peer_number);
+            c->_peer_number = new_number;
+        }
+        return 1;
+    }
+
+    if(g_str_has_prefix (c->_peer_number, "sip:")) {
+        return 1;
+    }
+
+    return 0;
+}
+
+
     void
 status_bar_display_account ()
 {
@@ -248,12 +274,8 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
     }
 
-	// Reset the current account message number
+	// Set the current account message number
 	current_account_set_message_number (count);
-
-    // Prevent update being called when toolbar is not yet initialized
-    if(toolbarInitialized)
-        update_actions ();
 }
 
 gboolean sflphone_init()
@@ -308,6 +330,8 @@ void sflphone_get_ip2ip_properties (GHashTable **properties)
 sflphone_hang_up()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -351,6 +375,10 @@ sflphone_hang_up()
                 break;
         }
     }
+    else if(selectedConf) {
+        dbus_hang_up_conference(selectedConf);
+    }
+
     calltree_update_call(history, selectedCall, NULL);
 }
 
@@ -414,6 +442,9 @@ sflphone_pick_up()
 sflphone_on_hold ()
 {
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+
+    DEBUG("sflphone_on_hold");
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -430,12 +461,18 @@ sflphone_on_hold ()
                 break;
         }
     }
+    else if (selectedConf) {
+        dbus_hold_conference(selectedConf);
+    }
 }
 
     void
 sflphone_off_hold ()
 {
+    DEBUG("sflphone_off_hold");
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
+
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -448,7 +485,12 @@ sflphone_off_hold ()
                 break;
         }
     }
+    else if (selectedConf) {
 
+        
+        dbus_unhold_conference(selectedConf);
+    }
+    /*
     if(dbus_get_is_recording(selectedCall))
     {
         DEBUG("Currently recording!");
@@ -457,6 +499,7 @@ sflphone_off_hold ()
     {
         DEBUG("Not recording currently");
     }
+    */
 }
 
 
@@ -532,12 +575,22 @@ sflphone_display_transfer_status(const gchar* message)
     void
 sflphone_incoming_call (callable_obj_t * c)
 {
+	gchar *msg = "";
+
     c->_history_state = MISSED;
     calllist_add ( current_calls, c );
     calllist_add( history, c );
     calltree_add_call( current_calls, c, NULL);
     update_actions();
     calltree_display (current_calls);
+	
+	// Change the status bar if we are dealing with a direct SIP call
+    if(_is_direct_call(c)) {
+		msg = g_markup_printf_escaped (_("Direct SIP call"));
+        statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+        g_free(msg);
+	}
 }
 
     void
@@ -771,31 +824,6 @@ sflphone_keypad( guint keyval, gchar * key)
     else {
         sflphone_new_call();
     }
-}
-
-/*
- * Place a call with the current account.
- * If there is no default account selected, place a call with the first
- * registered account of the account list
- * Else, check if it an IP call. if not, popup an error message
- */
- 
-static gboolean _is_direct_call(callable_obj_t * c) {
-
-    if(g_strcasecmp(c->_accountID, EMPTY_ENTRY) == 0) {
-        if(!g_str_has_prefix (c->_peer_number, "sip:")) {
-            gchar * new_number = g_strconcat("sip:", c->_peer_number, NULL);
-            g_free(c->_peer_number);
-            c->_peer_number = new_number;
-        }
-        return 1;
-    }
-
-    if(g_str_has_prefix (c->_peer_number, "sip:")) {
-        return 1;
-    }
-
-    return 0;
 }
 
 static int _place_direct_call(const callable_obj_t * c) {
@@ -1053,9 +1081,9 @@ sflphone_fill_codec_list()
         }
 
         for(pl=codecs; *codecs; codecs++)
-        {
-            details = (gchar **)dbus_codec_details(atoi(*codecs));
-            if(codec_list_get_by_payload((gconstpointer) atoi(*codecs))!=NULL){
+	{
+	    details = (gchar **)dbus_codec_details(atoi(*codecs));
+            if(codec_list_get_by_payload((gconstpointer)(size_t)atoi(*codecs))!=NULL){
                 // does nothing - the codec is already in the list, so is active.
             }
             else{

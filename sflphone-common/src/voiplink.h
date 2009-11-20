@@ -181,8 +181,6 @@ class VoIPLink {
         bool initDone (void) { return _initDone; }
         void initDone (bool state) { _initDone = state; }
 
-        std::string getLocalIPAddress (void) { return _localIPAddress; }
-
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer
          * @return bool True if the call was unique and added
@@ -232,9 +230,6 @@ class VoIPLink {
 
         /** Mutex to protect call map */
         ost::Mutex _callMapMutex;
-
-        /** Get Local IP Address (ie: 127.0.0.1, 192.168.0.1, ...) */
-        std::string _localIPAddress;
 
         /** Get local listening port (5060 for SIP, ...) */
         unsigned int _localPort;

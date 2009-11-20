@@ -43,7 +43,7 @@ class SIPCall;
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 1 
+#define PJ_LOG_LEVEL 6
 
 /**
  * @file sipvoiplink.h
@@ -187,7 +187,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Terminate only one call
          */
-        void terminateOneCall(const CallID& id);
+       void terminateOneCall(const CallID& id);
 
         /**
          * Send an outgoing call invite
@@ -295,6 +295,13 @@ class SIPVoIPLink : public VoIPLink
 		 */
 		pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
 
+        bool loadSIPLocalIP (std::string *addr);
+
+	/**
+	 * This method is used to create a new transport and attach it to the appropriate account
+	 */
+	void updateAccountInfo(const AccountID& accountID);
+
     private:
         /**
          * Constructor
@@ -364,27 +371,8 @@ class SIPVoIPLink : public VoIPLink
 
 		pj_status_t createAlternateUdpTransport (AccountID id);
         
-        bool loadSIPLocalIP();
-
-        std::string getLocalIP() {return _localExternAddress;}
-
-        /* Flag to check if the STUN server is valid or not */
-        bool validStunServer;
-
-        /** The current STUN server address */
-        std::string _stunServer;
-
-        /** Local Extern Address is the IP address seen by peers for SIP listener */
-        std::string _localExternAddress;
-
-        /** Local Extern Port is the port seen by peers for SIP listener */
-        unsigned int _localExternPort;
-        
         /** For registration use only */
         int _regPort;
-
-        /** Do we use stun? */
-        bool _useStun;
 
         /** Threading object */
         EventThread* _evThread;

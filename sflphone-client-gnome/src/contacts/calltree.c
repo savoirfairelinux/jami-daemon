@@ -116,8 +116,11 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
 
 			selected_call_id = selected_conf->_confID;
 			selected_path = string_path;
+			selected_call = NULL;
 
 		}
+
+		DEBUG("  selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
 
 	}
 	else
@@ -133,12 +136,16 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
 
 		selected_call = (callable_obj_t*)g_value_get_pointer(&val);
 
-		selected_call_id = selected_call->_callID;
-		selected_path = string_path;
+		if(selected_call) {
+
+		    selected_call_id = selected_call->_callID;
+		    selected_path = string_path;
+		    selected_conf = NULL;
+		}
+
+		DEBUG("  selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
 	}
 
-	DEBUG("selected_cb\n");
-	DEBUG("  selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
 
 	// conferencelist_reset ();
 	// sflphone_fill_conference_list();
@@ -576,33 +583,68 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
 			if(c->_state == CALL_STATE_TRANSFERT)
 			{
+			      if(g_strcmp0("",c->_peer_name) == 0){
 				description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
 						c->_peer_number,
 						c->_peer_name,
 						c->_trsft_to);
+			      }
+			      else {
+				description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
+						c->_peer_name,
+						c->_peer_number,
+						c->_trsft_to);
+			      }
 			}
 			else
 			{
 				// c->_zrtp_confirmed == FALSE : Hack explained in callable_obj.h
 				if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
+
+				  if(g_strcmp0("",c->_peer_name) == 0){
 					description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
 							c->_peer_number,
 							c->_peer_name,
 							c->_sas);
+				    }
+				    else {
+
+				         description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
+							c->_peer_name,
+							c->_peer_number,
+							c->_sas);
+				    }
 				} else {
 					DEBUG("Updating state code %d %s", c->_state_code, c->_state_code_description);
-					if (c->_state_code) {
-						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
+					if(g_strcmp0("",c->_peer_name) == 0){
+					  if (c->_state_code) {
+					    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
 								c->_peer_number,
 								c->_peer_name,
 								c->_state_code_description,
 								c->_state_code,
 								audio_codec);
-					} else {
-						description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
+					  } else {
+					    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
 								c->_peer_number,
 								c->_peer_name,
 								audio_codec);
+					  }
+					}
+					else {
+					  if (c->_state_code) {
+					    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
+								c->_peer_name,
+								c->_peer_number,
+								c->_state_code_description,
+								c->_state_code,
+								audio_codec);
+					  } else {
+					    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
+								c->_peer_name,
+								c->_peer_number,
+								audio_codec);
+					  }
 					}
 				}
 			}
@@ -714,18 +756,33 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
 	if(c->_state_code == 0) {
 
+	  if(g_strcmp0("", c->_peer_name) == 0) {
 		description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-				c->_peer_number,
-				c->_peer_name);
+				c->_peer_name,
+				c->_peer_number);
+	  }
+	  else {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+				c->_peer_name,
+				c->_peer_number);
+	  }
 
 	}
 	else {
-
+	  if(g_strcmp0("", c->_peer_name) == 0) {
 		description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
 				c->_peer_number,
 				c->_peer_name,
 				c->_state_code_description,
 				c->_state_code);
+	  }
+	  else {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+				c->_peer_name,
+				c->_peer_number,
+				c->_state_code_description,
+				c->_state_code);
+	  }
 	}
 
 	gtk_tree_store_prepend (tab->store, &iter, parent);
@@ -832,9 +889,19 @@ void calltree_add_history_entry (callable_obj_t * c)
 
 	// New call in the list
 	gchar * description, *date="", *duration="";
-	description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+
+	if(g_strcmp0("", c->_peer_name) == 0) {
+
+	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
 			c->_peer_number,
 			c->_peer_name);
+	}
+	else {
+
+	  description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+			c->_peer_name,
+			c->_peer_number);
+	}
 
 	gtk_tree_store_prepend (history->store, &iter, NULL);
 

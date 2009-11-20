@@ -177,7 +177,7 @@ int Sdp::create_initial_offer()
     status = create_local_offer();
 
     if (status != PJ_SUCCESS) {
-	_debug ("    Error: Failled to create initial offer\n");
+        _debug ("    Error: Failled to create initial offer\n");
         return status;
     }
 
@@ -185,7 +185,7 @@ int Sdp::create_initial_offer()
     status = pjmedia_sdp_neg_create_w_local_offer (_pool, get_local_sdp_session(), &_negociator);
 
     if (status != PJ_SUCCESS) {
-	_debug ("    Error: Failled to create an initial SDP negociator\n");
+        _debug ("    Error: Failled to create an initial SDP negociator\n");
         return status;
     }
 
@@ -375,7 +375,7 @@ void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
                             "%.*s %.*s",
                             4,
                             ZRTP_VERSION,
-                            hash.size(),
+                            (int) hash.size(),
                             hash.c_str());
 
     attribute->value.slen = len;
@@ -418,7 +418,7 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
     std::string type, dir;
     CodecsMap codecs_list;
     CodecsMap::iterator iter;
-    pjmedia_sdp_attr *attribute;
+    pjmedia_sdp_attr *attribute = NULL;
     pjmedia_sdp_rtpmap *rtpmap;
 
     _negociated_offer = (pjmedia_sdp_session*) sdp;
@@ -440,6 +440,10 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
         for (j=0 ; j<nb_codecs ; j++) {
             attribute = pjmedia_sdp_media_find_attr (current, &STR_RTPMAP, NULL);
             // pj_strtoul(attribute->pt)
+
+            if (!attribute)
+                return;
+
             pjmedia_sdp_attr_to_rtpmap (_pool, attribute, &rtpmap);
 
             // _debug("================== set_negociated_offer ===================== %i\n", pj_strtoul(&rtpmap->pt));

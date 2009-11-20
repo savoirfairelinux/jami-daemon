@@ -29,6 +29,7 @@
  */
 
 #define LOGO                ICONS_DIR "/sflphone.svg"
+#define LOGO_NOTIF			ICONS_DIR "/sflphone_notif.svg"
 #define LOGO_SMALL          ICONS_DIR "/sflphone_small.svg"
 
 #define CURRENT_CALLS       "current_calls"
@@ -37,8 +38,10 @@
 
 /** Locale */
 #define _(STRING)             gettext( STRING )
+#define N_(STRING)			  (STRING)
 #define c_(COMMENT,STRING)    gettext(STRING) 
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
+
 
 
 /** Warnings unused variables **/
@@ -84,6 +87,7 @@
 #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
+#define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
 #define LOCAL_PORT                          "Account.localPort"
 #define LOCAL_ADDRESS                       "Account.localAddress"
 #define PUBLISHED_PORT                      "Account.publishedPort"
