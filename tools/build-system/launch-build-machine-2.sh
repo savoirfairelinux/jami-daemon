@@ -217,6 +217,7 @@ END
 		fi
 	done
 
+	cp ${DEBIAN_DIR}/changelog.generic ${DEBIAN_DIR}/changelog
 done
 
 # if push is activated
