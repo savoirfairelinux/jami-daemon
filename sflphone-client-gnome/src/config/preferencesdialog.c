@@ -52,8 +52,6 @@ GtkWidget * status;
 static int history_limit;
 static gboolean history_enabled = TRUE;
 
-// Mail notification
-GtkWidget * widg;
 
 GHashTable * directIpCallsProperties = NULL;
 
@@ -87,20 +85,6 @@ set_popup_mode( void )
 set_notif_level(  )
 {
     dbus_set_notify();
-
-    if (dbus_get_notify())
-      gtk_widget_set_sensitive(widg, TRUE);
-    else {
-      gtk_widget_set_sensitive(widg, FALSE);
-      if (dbus_get_mail_notify())
-        gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), FALSE);
-    }
-}
-
-    void
-set_mail_notif( )
-{
-    dbus_set_mail_notify( );
 }
 
 static void history_limit_cb (GtkSpinButton *button, void *ptr)
@@ -325,18 +309,6 @@ create_general_settings ()
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() ); 
     g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
     gtk_table_attach( GTK_TABLE(table), notifAll, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-
-    // Notification
-    widg = gtk_check_button_new_with_mnemonic(  _("Enable voicemail _notifications"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_mail_notify() );
-    g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
-    gtk_table_attach( GTK_TABLE(table), widg, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    
-
-    if (dbus_get_notify())
-       gtk_widget_set_sensitive(widg, TRUE);
-    else
-       gtk_widget_set_sensitive(widg, FALSE);
 
     // System Tray option frame
     gnome_main_section_new_with_table (_("System Tray Icon"), &frame, &table, 3, 1);

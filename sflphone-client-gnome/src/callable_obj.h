@@ -135,6 +135,9 @@ typedef struct  {
      */
     GPtrArray * _error_dialogs;
 
+	/* The audio codec used for this call, if applicable */
+	gchar *_audio_codec;
+
 } callable_obj_t;
 
 void create_new_call (callable_type_t, call_state_t, gchar*, gchar*, gchar*, gchar*, callable_obj_t **);
@@ -205,5 +208,6 @@ gchar* convert_timestamp_to_gchar (time_t);
 
 time_t convert_gchar_to_timestamp (gchar*);
 
+gchar* call_get_audio_codec (callable_obj_t *obj);
 
 #endif

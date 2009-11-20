@@ -210,32 +210,93 @@ class ManagerImpl {
      */
     bool refuseCall(const CallID& id);
 
+    /**
+     * Create a new conference given two participant
+     * @param the first participant ID
+     * @param the second participant ID
+     */ 
     Conference* createConference(const CallID& id1, const CallID& id2);
 
+    /**
+     * Delete this conference
+     * @param the conference ID
+     */ 
     void removeConference(const CallID& conference_id);
 
+    /**
+     * Return the conference id for which this call is attached
+     * @ param the call id
+     */
     Conference* getConferenceFromCallID(const CallID& call_id);
 
+    /**
+     * Hold every participant to a conference
+     * @param the conference id
+     */
     void holdConference(const CallID& conferece_id);
 
+    /**
+     * Unhold all conference participants 
+     * @param the conference id
+     */
     void unHoldConference(const CallID& conference_id);
 
+    /**
+     * Test if this id is a conference (usefull to test current call)
+     * @param the call id
+     */
     bool isConference(const CallID& call_id);
 
+    /**
+     * Test if a call id particips to this conference
+     * @param the call id
+     */
     bool participToConference(const CallID& call_id);
 
+    /**
+     * Add a participant to a conference
+     * @param the call id
+     * @param the conference id
+     */
     void addParticipant(const CallID& call_id, const CallID& conference_id);
 
+    /**
+     * Bind the main participant to a conference (mainly called on a double click action)
+     * @param the conference id
+     */
     void addMainParticipant(const CallID& conference_id);
 
+    /**
+     * Join two participants to create a conference
+     * @param the fist call id
+     * @param the second call id
+     */
     void joinParticipant(const CallID& call_id1, const CallID& call_id2);
 
+    /**
+     * Detach a participant from a conference, put the call on hold, do not hangup it
+     * @param call id
+     * @param the current call id
+     */
     void detachParticipant(const CallID& call_id, const CallID& current_call_id);
 
+    /**
+     * Remove the conference participant from a conference
+     * @param call id
+     */
     void removeParticipant(const CallID& call_id);
-
+    
+    /**
+     * Process remaining participant given a conference and the current call id.
+     * Mainly called when a participant is detached or hagned up
+     * @param current call id
+     * @param conference pointer
+     */
     void processRemainingParticipant(CallID current_call_id, Conference *conf);
 
+    /**
+     * Join two conference together into one unique conference
+     */
     void joinConference(const CallID& conf_id1, const CallID& conf_id2);
 
     void addStream(const CallID& call_id);
@@ -743,9 +804,6 @@ class ManagerImpl {
 
     void switchAudioManager( void );
 
-    void setPulseAppVolumeControl( void );
-	std::string getPulseAppVolumeControl( void );
-
     /**
      * Get the desktop mail notification level
      * @return int The mail notification level
@@ -1040,12 +1098,6 @@ class ManagerImpl {
     void initVolume();
 
     /**
-     * Tell if there is a current call processed
-     * @return bool True if there is a current call
-     */
-    bool hasCurrentCall();
-
-    /**
      * Switch of current call id
      * @param id The new callid
      */
@@ -1206,6 +1258,12 @@ class ManagerImpl {
 
     
    public:
+
+    /**
+     * Tell if there is a current call processed
+     * @return bool True if there is a current call
+     */
+    bool hasCurrentCall();
    
     /**
      * Return the current DBusManagerImpl

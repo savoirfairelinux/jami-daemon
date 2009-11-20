@@ -35,7 +35,6 @@ GtkWidget *pulse;
 GtkWidget *alsabox;
 GtkWidget *alsa_conf;
 GtkWidget *noise_conf;
-GtkWidget *pa_mute_widget;
     
 // Codec properties ID
 enum {
@@ -630,7 +629,6 @@ select_audio_manager( void )
         gtk_container_add( GTK_CONTAINER(alsa_conf ) , alsabox);
         gtk_widget_show( alsa_conf );
         gtk_widget_set_sensitive(GTK_WIDGET(alsa_conf), TRUE);
-        gtk_widget_set_sensitive(GTK_WIDGET(pa_mute_widget), FALSE);
 
 		gtk_action_set_sensitive (GTK_ACTION (volumeToggle), TRUE);
     }
@@ -640,7 +638,6 @@ select_audio_manager( void )
         DEBUG(" remove alsa conf panel");
         gtk_container_remove( GTK_CONTAINER(alsa_conf) , alsabox );
         gtk_widget_hide( alsa_conf );
-        gtk_widget_set_sensitive(GTK_WIDGET(pa_mute_widget), TRUE);
 		if (gtk_toggle_action_get_active ( GTK_TOGGLE_ACTION (volumeToggle)))
 		{
 			    main_window_volume_controls(FALSE);
@@ -813,12 +810,6 @@ GtkWidget* create_audio_configuration()
     g_signal_connect(G_OBJECT(alsa), "clicked", G_CALLBACK(select_audio_manager), NULL);
     gtk_table_attach ( GTK_TABLE( table ), alsa, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
  
-    pa_mute_widget = gtk_check_button_new_with_mnemonic(_("_Mute other applications during a call"));
-    gtk_widget_set_sensitive(pa_mute_widget, pulse_audio);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (pa_mute_widget), (g_strcasecmp (dbus_get_pulse_app_volume_control(), "true") == 0)? TRUE: FALSE);
-    g_signal_connect(G_OBJECT( pa_mute_widget ) , "clicked" , G_CALLBACK( dbus_set_pulse_app_volume_control ) , NULL);
-    gtk_table_attach( GTK_TABLE(table), pa_mute_widget, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-
     // Box for the ALSA configuration
     gnome_main_section_new (_("ALSA settings"), &alsa_conf);
     gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);

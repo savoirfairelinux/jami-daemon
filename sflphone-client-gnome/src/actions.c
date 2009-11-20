@@ -31,37 +31,31 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-guint voice_mails;
 GHashTable * ip2ip_profile=NULL;
 
     void
-sflphone_notify_voice_mail ( const gchar* accountID , guint count )
+sflphone_notify_voice_mail (const gchar* accountID , guint count)
 {
     gchar *id;
-    gchar *current;
+    gchar *current_id;
+	account_t *current;
 
-    // We want to notify only for the default current account; ie the first in the list
-    id = g_strdup( accountID );
-    current = account_list_get_current_id();
-    if( strcmp( id, current ) != 0 )
+    // We want to notify only the current account; ie the first in the list
+    id = g_strdup (accountID);
+    current_id = account_list_get_current_id ();
+
+    if (g_strcasecmp (id, current_id) != 0 || account_list_get_size() == 0)
         return;
 
-    voice_mails = count ;
+	// Set the number of voice messages for the current account
+	current_account_set_message_number (count);
+	current = account_list_get_current ();
 
-    if(count > 0)
-    {
-        gchar * message = g_strdup_printf(n_("%d voice mail", "%d voice mails", count), count);
-        statusbar_push_message(message,  __MSG_VOICE_MAILS);
-        g_free(message);
-    }
+	// Update the voicemail tool button
+	update_voicemail_status ();
 
-    // TODO: add ifdef
-    if( account_list_get_size() > 0 )
-    {
-        account_t* acc = account_list_get_by_id( id );
-        if( acc != NULL )
-            notify_voice_mails( count , acc );
-    }
+	if (current)
+		notify_voice_mails (count, current);
 }
 
     void
@@ -157,6 +151,9 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
     gchar** array;
     gchar** accountID;
     unsigned int i;
+	int count;
+
+	count = current_account_get_message_number ();
 
     account_list_clear ( );
 
@@ -250,6 +247,9 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
         g_free(a->protocol_state_description);
         a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
     }
+
+	// Reset the current account message number
+	current_account_set_message_number (count);
 
     // Prevent update being called when toolbar is not yet initialized
     if(toolbarInitialized)
@@ -635,7 +635,7 @@ sflphone_new_call()
 
     // Play a tone when creating a new call
     if( calllist_get_size(current_calls) == 0 )
-        dbus_start_tone( TRUE , ( voice_mails > 0 )? TONE_WITH_MESSAGE : TONE_WITHOUT_MESSAGE) ;
+        dbus_start_tone( TRUE , (current_account_has_new_message ()  > 0)? TONE_WITH_MESSAGE : TONE_WITHOUT_MESSAGE) ;
 
     peer_number = g_strdup("");
     peer_name = g_strdup ("");
@@ -870,6 +870,8 @@ static int _place_registered_call(callable_obj_t * c) {
     void
 sflphone_place_call ( callable_obj_t * c )
 {
+	gchar *msg = "";
+
     DEBUG("Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
     
     if(c == NULL) {
@@ -878,6 +880,10 @@ sflphone_place_call ( callable_obj_t * c )
     }
 
     if(_is_direct_call(c)) {
+		msg = g_markup_printf_escaped (_("Direct SIP call"));
+        statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+        g_free(msg);
         if(_place_direct_call(c) < 0) {
             DEBUG("An error occured while placing direct call in %s at %d", __FILE__, __LINE__);
             return;
@@ -890,50 +896,6 @@ sflphone_place_call ( callable_obj_t * c )
     }
 }
 
-    void
-sflphone_display_selected_codec (const gchar* codecName)
-{
-
-    callable_obj_t * selectedCall;
-    gchar* msg;
-    account_t* acc;
-
-    selectedCall =  calltab_get_selected_call(current_calls);
-    if (selectedCall) {
-        if(selectedCall->_accountID != NULL){
-            statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-            acc = account_list_get_by_id(selectedCall->_accountID);
-            if (!acc) {
-                msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
-            }
-            else {
-
-		if (strcmp(codecName, "") != 0) {
-                    msg = g_markup_printf_escaped("%s %s (%s) - %s %s" ,
-                        _("Using account"),
-                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
-                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
-                        _("Codec"),
-                        codecName);
-		} else {
-		    msg = g_markup_printf_escaped("%s %s (%s)" ,
-                        _("Using account"),
-                        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
-		        (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
-		}
-            }
-            statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
-            g_free(msg);
-        }
-    }
-}
-
-    gchar*
-sflphone_get_current_codec_name()
-{
-    callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-    return dbus_get_current_codec_name(selectedCall);
-}
 
     void
 sflphone_detach_participant(const gchar* callID)
@@ -1126,6 +1088,8 @@ void sflphone_fill_call_list (void)
     callable_obj_t *c;
     gchar *callID;
 
+    DEBUG("sflphone_fill_call_list");
+
     if(calls)
     {
         for(pl=calls; *calls; calls++)
@@ -1148,31 +1112,38 @@ void sflphone_fill_call_list (void)
 
 void sflphone_fill_conference_list(void)
 {
-	// TODO Fetch the active conferences at client startup
-	/*
-    gchar** conferences = (gchar**)dbus_get_conference_list();
+    // TODO Fetch the active conferences at client startup
+
+    gchar** conferences;
     gchar** pl;
     GHashTable *conference_details;
     gchar* conf_id;
-    conference_obj_t* c;
+    conference_obj_t* conf;
 
     DEBUG("sflphone_fill_conference_list");
+
+    conferences = dbus_get_conference_list();
 
     if(conferences)
     {
 	for (pl = conferences; *conferences; conferences++)
 	{
-	    c = g_new0(conference_obj_t, 1);
+	    conf = g_new0(conference_obj_t, 1);
 	    conf_id = (gchar*)(*conferences);
 
-	    conference_details = (GHashTable*) dbus_get_conference_details(conf_id);
-	    create_new_call_from_details (conf_id, conference_details, &c);
-	    c->_confID = g_strdup(conf_id);
+	    DEBUG("   fetching conference: %s", conf_id);
 
-	    conferencelist_add(c);
+	    conference_details = (GHashTable*) dbus_get_conference_details(conf_id);
+	    
+	    create_new_conference_from_details (conf_id, conference_details, &conf);
+	    
+	    conf->_confID = g_strdup(conf_id);	    
+
+	    conferencelist_add(conf);
+	    calltree_add_conference (current_calls, conf);
 	}
     }
-	*/
+	
 }
 
 void sflphone_fill_history (void)

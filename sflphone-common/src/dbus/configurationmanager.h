@@ -113,8 +113,6 @@ public:
     void setNotify( void );
     int32_t getMailNotify( void );
     void setMailNotify( void );
-	std::string getPulseAppVolumeControl( void );
-    void setPulseAppVolumeControl( void );
     int32_t getSipPort( void );
     void setSipPort( const int32_t& portNum);
 

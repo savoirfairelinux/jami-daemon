@@ -718,8 +718,7 @@ GtkWidget * create_advanced_tab(account_t **a)
             DEBUG("Interface %s", *iface);            
             gtk_list_store_append(ipInterfaceListStore, &iter );
             gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
-            
-            current_local_address_iter = iter;
+
             if (g_strcmp0(*iface, local_address) == 0) {
                 DEBUG("Setting active local address combo box");
                 current_local_address_iter = iter;

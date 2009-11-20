@@ -64,9 +64,12 @@ RingBuffer::flushAll ()
 {
     // _debug("flushall: reinit all readpointer in \"%s\" ringbuffer\n", buffer_id.c_str());
 
+    // _debug("------------------------------ flushAll() in \"%s\" ringbuffer\n", buffer_id.c_str());
+
     ReadPointer::iterator iter_pointer = _readpointer.begin();
     while(iter_pointer != _readpointer.end())
     {	
+      // _debug("------------------------------     reinit readpointer %s\n", iter_pointer->first.c_str());
 	iter_pointer->second = mEnd;
 
 	iter_pointer++;
@@ -186,7 +189,7 @@ RingBuffer::createReadPointer(CallID call_id)
     _debug("---- createReadPointer ringbuffer_id %s, call_id %s\n", buffer_id.c_str(), call_id.c_str());
  
     _readpointer.insert(pair<CallID, int>(call_id, mEnd));
-    _debug("---- createReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(),_readpointer.size());
+    _debug("---- createReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(), (int)_readpointer.size());
 
 }
 
@@ -198,7 +201,7 @@ RingBuffer::removeReadPointer(CallID call_id)
     _debug("---- removeReadPointer ringbuffer_id %s, call_id %s\n", buffer_id.c_str(), call_id.c_str());
 
     _readpointer.erase(call_id);
-    _debug("---- removeReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(), _readpointer.size());
+    _debug("---- removeReadPointer ringbuffer_id %s, size %i\n", buffer_id.c_str(), (int)_readpointer.size());
 
 }
 

@@ -699,18 +699,6 @@ ConfigurationManager::getMailNotify (void)
     return Manager::instance().getMailNotify();
 }
 
-std::string
-ConfigurationManager::getPulseAppVolumeControl (void)
-{
-    return Manager::instance().getPulseAppVolumeControl();
-}
-
-void
-ConfigurationManager::setPulseAppVolumeControl (void)
-{
-    Manager::instance().setPulseAppVolumeControl();
-}
-
 int32_t
 ConfigurationManager::getSipPort (void)
 {

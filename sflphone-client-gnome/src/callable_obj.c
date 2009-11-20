@@ -18,6 +18,7 @@
  */
 
 #include <callable_obj.h>
+#include <codeclist.h>
 #include <sflphone_const.h>
 #include <time.h>
 
@@ -78,6 +79,24 @@ gchar* call_get_peer_number (const gchar *format)
     return number;
 }
 
+gchar* call_get_audio_codec (callable_obj_t *obj)
+{
+	gchar *audio_codec = "";
+	codec_t *codec;
+	gchar *format ="";
+	int samplerate;
+	
+	if (obj)
+	{
+		audio_codec = dbus_get_current_codec_name (obj);	
+		codec = codec_list_get_by_name (audio_codec);
+		if (codec){
+			samplerate = codec->sample_rate;
+			format = g_markup_printf_escaped ("%s/%i", audio_codec, samplerate);
+		}
+	}
+	return format;
+}
 
 void call_add_error(callable_obj_t * call, gpointer dialog)
 {
@@ -137,7 +156,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
 
     accountID = g_hash_table_lookup (details, "ACCOUNTID");
     peer_number = g_hash_table_lookup (details, "PEER_NUMBER");
-    peer_name = g_strdup ("");
+    peer_name = g_hash_table_lookup (details, "DISPLAY_NAME");
     state_str = g_hash_table_lookup (details, "CALL_STATE");
 
 

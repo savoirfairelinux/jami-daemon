@@ -160,9 +160,11 @@ AlsaLayer::startStream (void)
     startCaptureStream ();
     startPlaybackStream ();
 
-    _urgentRingBuffer.flush();
-    getMainBuffer()->flushAllBuffers();
-    getMainBuffer()->flushDefault();
+    flushMain();
+    flushUrgent();
+    // _urgentRingBuffer.flush();
+    // getMainBuffer()->flushAllBuffers();
+    // getMainBuffer()->flushDefault();
 
     if(_audioThread == NULL) {
 	try {

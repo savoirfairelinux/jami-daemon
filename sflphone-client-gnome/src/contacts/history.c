@@ -69,7 +69,9 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
 
     callable_obj_t *history_entry = NULL;
     gchar* text = NULL;
+
     gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(history_searchbar_widget));
+
     memset (&val, 0, sizeof(val));
     memset (&obj, 0, sizeof(obj));
     
@@ -80,7 +82,7 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
     }
     
     // Fetch the call type
-    gtk_tree_model_get_value (GTK_TREE_MODEL(model), iter, 2, &obj);
+    gtk_tree_model_get_value (GTK_TREE_MODEL(model), iter, 3, &obj);
     if (G_VALUE_HOLDS_POINTER (&obj)){
         history_entry = (gpointer) g_value_get_pointer (&obj);
     }

@@ -585,7 +585,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         return false;
     }
     
-    pjsip_tpselector *tp;
+    // pjsip_tpselector *tp;
 
     // init_transport_selector (account->getAccountTransport (), &tp);
     // status = pjsip_regc_set_transport (regc, tp);
@@ -2845,7 +2845,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 	SIPAccount *account;
     pjmedia_sdp_session *r_sdp;
 
-    pjsip_generic_string_hdr* hdr;
+    // pjsip_generic_string_hdr* hdr;
 
     // voicemail part
     std::string method_name;
@@ -2888,10 +2888,18 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     
     char* from_header = strstr(rdata->msg_info.msg_buf, "From: ");
     // _debug("------------------------------ thefromheader: %s\n", from_header);
-    //char* display_name = strtok(from_header, "\"");
-    //display_name = strtok(NULL, "\"");
-    //_debug("UserAgent: The displayname for this call: %s\n", display_name);
-    displayName = string("");//display_name);
+
+    if(from_header) {
+
+        std::string temp(from_header);
+	int begin_displayName = temp.find("\"") + 1;
+	int end_displayName = temp.rfind("\"");
+	// _debug("The display name start at %i, end at %i\n", begin_displayName, end_displayName);
+	displayName = temp.substr(begin_displayName, end_displayName - begin_displayName);//display_name);
+    }
+    else {
+        displayName = std::string("");
+    }
 
     _debug ("UserAgent: The receiver is : %s@%s\n", userName.data(), server.data());
 
@@ -2903,7 +2911,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // display_name = rdata->msg_info.from->name;
 
-    std::string temp("");///(char*)(&display_name));
+    // std::string temp("");///(char*)(&display_name));
 
     sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
 
