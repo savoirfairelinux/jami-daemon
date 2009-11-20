@@ -40,6 +40,45 @@
 #include <errno.h>
 #include <cstdlib>
 
+int
+ManagerImpl::registerAccounts()
+{
+    int status;
+    bool flag = true;
+    AccountMap::iterator iter;
+
+    _debugInit ("Initiate VoIP Links Registration");
+    iter = _accountMap.begin();
+
+    /* Loop on the account map previously loaded */
+
+    while (iter != _accountMap.end()) {
+        if (iter->second) {
+
+            if (iter->second->isEnabled()) {
+
+		_debug("Register account %s", iter->first.c_str());
+		
+                status = iter->second->registerVoIPLink();
+
+                if (status != SUCCESS) {
+                    flag = false;
+                }
+            }
+        }
+
+        iter++;
+    }
+
+    // calls the client notification here in case of errors at startup...
+    if (_audiodriver -> getErrorMessage() != -1)
+        notifyErrClient (_audiodriver -> getErrorMessage());
+
+    ASSERT (flag, true);
+
+    return SUCCESS;
+}
+
 //THREAD=Main
 int
 ManagerImpl::initRegisterAccounts()
@@ -81,59 +120,31 @@ ManagerImpl::initRegisterAccounts()
 
 void ManagerImpl::restartPJSIP (void)
 {
-    SIPVoIPLink *siplink;
-    siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    _debug ("ManagerImpl::restartPJSIP\n");
+    VoIPLink *link = getSIPAccountLink();
+    SIPVoIPLink *siplink = NULL;
+
+    if (link) {
+        siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    }
+
+    _debug ("ManagerImpl::unregister sip account\n");
 
     this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
 
     if (siplink) {
+        _debug ("ManagerImpl::Terminate sip\n");
         siplink->terminate ();
         siplink = SIPVoIPLink::instance ("");
+        _debug ("ManagerImpl::Init new sip\n");
         siplink->init ();
     }
 
+    _debug ("ManagerImpl::register sip account\n");
+
     /* Then register all enabled SIP accounts */
-    this->registerCurSIPAccounts (siplink);
-}
-
-int
-ManagerImpl::registerAccounts()
-{
-    int status;
-    bool flag = true;
-    AccountMap::iterator iter;
-
-    _debugInit ("Initiate VoIP Links Registration");
-    iter = _accountMap.begin();
-
-    /* Loop on the account map previously loaded */
-
-    while (iter != _accountMap.end()) {
-        if (iter->second) {
-
-            if (iter->second->isEnabled()) {
-
-		_debug("Register account %s", iter->first.c_str());
-		
-                status = iter->second->registerVoIPLink();
-
-                if (status != SUCCESS) {
-                    flag = false;
-                }
-            }
-        }
-
-        iter++;
-    }
-
-    // calls the client notification here in case of errors at startup...
-    if (_audiodriver -> getErrorMessage() != -1)
-        notifyErrClient (_audiodriver -> getErrorMessage());
-
-    ASSERT (flag, true);
-
-    return SUCCESS;
+    this->registerCurSIPAccounts ();
 }
 
 VoIPLink* ManagerImpl::getAccountLink (const AccountID& accountID)
@@ -154,21 +165,23 @@ VoIPLink* ManagerImpl::getSIPAccountLink()
 {
     /* We are looking for the first SIP account we met because all the SIP accounts have the same voiplink */
     Account *account;
-    AccountMap::iterator iter;
+    AccountMap::iterator iter = _accountMap.begin();
 
-    for (iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+    while (iter != _accountMap.end()) {
+
         account = iter->second;
 
         if (account->getType() == "sip") {
             return account->getVoIPLink();
         }
+
+        ++iter;
     }
 
     return NULL;
 }
 
-pjsip_regc
-*getSipRegcFromID (const AccountID& id UNUSED)
+pjsip_regc *getSipRegcFromID (const AccountID& id UNUSED)
 {
     /*SIPAccount *tmp = dynamic_cast<SIPAccount *>getAccount(id);
     if(tmp != NULL)
@@ -196,7 +209,7 @@ void ManagerImpl::unregisterCurSIPAccounts()
     }
 }
 
-void ManagerImpl::registerCurSIPAccounts (VoIPLink *link)
+void ManagerImpl::registerCurSIPAccounts (void)
 {
 
     Account *current;
@@ -233,12 +246,13 @@ ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 
     if (acc->isEnabled()) {
         // Verify we aren't already registered, then register
-        _debug ("Send register for account %s" , accountID.c_str());
+        _debug ("Send register for account %s\n" , accountID.c_str());
         acc->registerVoIPLink();
     } else {
         // Verify we are already registered, then unregister
-        _debug ("Send unregister for account %s" , accountID.c_str());
+        _debug ("Send unregister for account %s\n" , accountID.c_str());
         acc->unregisterVoIPLink();
     }
 
 }
+

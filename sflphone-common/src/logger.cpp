@@ -1,6 +1,9 @@
 #include "logger.h"
-#include <syslog.h>
 #include <stdarg.h>
+#include <string>
+#include <stdio.h>
+
+using namespace std;
 
 namespace Logger
 {

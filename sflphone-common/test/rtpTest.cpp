@@ -81,7 +81,7 @@ bool RtpTest::pjsipInit()
 void RtpTest::testRtpInitClose()
 {
 
-    audiortp = new AudioSymmetricRtpSession(Manager::instance(), sipcall);
+    audiortp = new AudioSymmetricRtpSession (Manager::instance(), sipcall);
 
     _debug ("------ void RtpTest::testRtpInit() ------");
 

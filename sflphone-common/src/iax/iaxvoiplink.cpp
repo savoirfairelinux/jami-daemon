@@ -304,7 +304,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
         if (currentCall) {
 
-            bool sessionIsConnected = (currentCall->getConnectionState() == Call::Connected);
+            // bool sessionIsConnected = (currentCall->getConnectionState() == Call::Connected);
             bool callIsActive = (currentCall->getState() == Call::Active);
 
             // if (sessionIsConnected || callIsActive) {
@@ -831,6 +831,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
                 Manager::instance().peerAnsweredCall (id);
 
                 // start audio here?
+		audiolayer->startStream();
                 audiolayer->flushMain();
             } else {
                 // deja connecté ?

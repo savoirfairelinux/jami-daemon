@@ -95,11 +95,13 @@ ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string 
     std::map<std::string, std::string>::iterator it;
 
     it = map_cpy.find (LOCAL_ADDRESS);
+
     if (it != details.end()) {
         Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, it->second);
     }
 
-    it = map_cpy.find(LOCAL_PORT);
+    it = map_cpy.find (LOCAL_PORT);
+
     if (it != details.end()) {
         Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_PORT, it->second);
     }
@@ -724,7 +726,7 @@ void
 ConfigurationManager::setSipAddress (const std::string& address)
 {
     _debug ("Manager received setSipAddress: %s", address.c_str());
-    Manager::instance().setLocalIp2IpInfo(address);
+    Manager::instance().setLocalIp2IpInfo (address);
 }
 
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)
