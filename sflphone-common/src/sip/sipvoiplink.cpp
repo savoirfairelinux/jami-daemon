@@ -682,10 +682,15 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
         call->setPeerNumber (toUri);
 
-        // TODO May use the published address as well
 		localAddr = account->getLocalAddress ();
-		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
+		if (localAddr == "0.0.0.0")
+			loadSIPLocalIP (&localAddr);
         setCallAudioLocal (call, localAddr);
+
+        // May use the published address as well
+		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
+		if (addrSdp == "0.0.0.0")
+			loadSIPLocalIP (&addrSdp);
 
         try {
             _debug ("Creating new rtp session in newOutgoingCall\n");
@@ -941,8 +946,8 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
         _debug ("! SIP Failure: unable to find local_sdp\n");
         return !PJ_SUCCESS;
     }
-
-    // reinvite only if connected
+	
+    // Reinvite only if connected
     // Build the local SDP offer
     status = call->getLocalSDP()->create_initial_offer();
 
@@ -956,7 +961,6 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     pjmedia_sdp_media_add_attr (local_sdp->media[0], attr);
 
     // Build the reinvite request
-
     status = pjsip_inv_reinvite (call->getInvSession(), NULL,
                                  local_sdp, &tdata);
 
@@ -1437,7 +1441,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     pjsip_dialog *dialog;
     pjsip_inv_session *inv;
     pjsip_tx_data *tdata;
-    std::string localAddress;
+    std::string localAddress, addrSdp;
 
     /* Create the call */
     call = new SIPCall (id, Call::Outgoing, _pool);
@@ -1456,9 +1460,10 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
             return !PJ_SUCCESS;
         }
 
+		// Set the local address
+		localAddress = account->getLocalAddress ();
         // Set SDP parameters - Set to local or published address
-		// account->isStunEnabled () ? localAddress = account->getPublishedAddress () :  localAddress = account->getLocalAddress (); 
-		account->isStunEnabled () ? localAddress = account->getLocalAddress () :  localAddress = account->getLocalAddress (); 
+		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  addrSdp = account->getLocalAddress (); 
 
         _debug ("new_ip_to_ip_call localAddress: %s\n", localAddress.c_str());
 
@@ -1466,6 +1471,10 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
             _debug ("Here is the local address: %s\n", localAddress.c_str ());
             loadSIPLocalIP (&localAddress);
         }
+
+		if (addrSdp == "0.0.0.0") {
+			addrSdp = localAddress;
+		}
 
         setCallAudioLocal (call, localAddress);
 
@@ -1475,8 +1484,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->setPeerNumber (toUri);
         _debug ("toUri in new_ip_to_ip call %s\n", toUri.c_str());
         // Building the local SDP offer
-		account->isStunEnabled () ? localAddress = account->getPublishedAddress () :  localAddress = account->getLocalAddress (); 
-        call->getLocalSDP()->set_ip_address (localAddress);
+        call->getLocalSDP()->set_ip_address (addrSdp);
         call->getLocalSDP()->create_initial_offer();
 
         try {
@@ -3097,24 +3105,30 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         return false;
     }
 
-    std::string addrToUse, addrSdp;
+    std::string addrToUse, addrSdp ="0.0.0.0";
+    pjsip_tpselector *tp;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     if (account != NULL) {
-        // TODO May use the published address as well
-		addrToUse = addrToUse = account->getLocalAddress ();
+        // May use the published address as well
+		addrToUse = account->getLocalAddress ();
 		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
+		// Set the appropriate transport to have the right VIA header
+		link->init_transport_selector (account->getAccountTransport (), &tp);
     }
-
-    if (addrToUse == "0.0.0.0") {
+    
+	if (addrToUse == "0.0.0.0") {
         link->loadSIPLocalIP (&addrToUse);
     }
+
+	if (addrSdp == "0.0.0.0") {
+		addrSdp = addrToUse;
+	}
 
     // Have to do some stuff with the SDP
     // Set the codec map, IP, peer number and so on... for the SIPCall object
     setCallAudioLocal (call, addrToUse);
-
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
     call->getLocalSDP()->set_ip_address (addrSdp);
 
@@ -3161,6 +3175,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Specify media capability during invite session creation
     status = pjsip_inv_create_uas (dialog, rdata, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
+	// Explicitly set the transport
+	status = pjsip_dlg_set_transport (dialog, tp);
+
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
