@@ -57,7 +57,6 @@ BuildRequires:	gsm-devel
 Requires:	libsamplerate
 Requires:	commoncpp2
 Requires:	dbus-1
-Requires:	dbus-1-x11
 
 %if %{defined suse_version}
 Requires:	libgsm1
@@ -96,6 +95,7 @@ Authors:
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
 cd libs/pjproject
