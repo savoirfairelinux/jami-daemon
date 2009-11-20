@@ -61,7 +61,7 @@ void ConfigurationSkeleton::readConfig()
 	////////////////////////
 	
 	//Call history settings
-	setEnableHistory(configurationManager.getHistoryEnabled());
+        setEnableHistory(QVariant(configurationManager.getHistoryEnabled()).toBool());
 	setHistoryMax(configurationManager.getHistoryLimit());
 
 	//SIP port settings
@@ -191,7 +191,9 @@ void ConfigurationSkeleton::writeConfig()
 	qDebug() << "Writing General settings";
 	
 	//Call history settings
-	if(enableHistory() != configurationManager.getHistoryEnabled()) configurationManager.setHistoryEnabled();
+        if(enableHistory() != QVariant(configurationManager.getHistoryEnabled()).toBool() ) {
+            configurationManager.setHistoryEnabled();
+        }
 	configurationManager.setHistoryLimit(historyMax());
 	//SIP port settings
 	configurationManager.setSipPort(sIPPort());

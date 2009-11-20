@@ -214,7 +214,7 @@
 		</method>
 		
 		<method name="getHistoryEnabled">
-			<arg type="i" name="state" direction="out"/>
+                        <arg type="s" name="state" direction="out"/>
 		</method>
 		
 		<method name="getVolumeControls">
