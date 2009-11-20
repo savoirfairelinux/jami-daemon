@@ -683,7 +683,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         call->setPeerNumber (toUri);
 
         // TODO May use the published address as well
-		localAddr = account->getLocalAddress ()
+		localAddr = account->getLocalAddress ();
 		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
         setCallAudioLocal (call, localAddr);
 
