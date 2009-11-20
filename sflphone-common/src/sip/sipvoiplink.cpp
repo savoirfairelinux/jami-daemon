@@ -683,7 +683,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         call->setPeerNumber (toUri);
 
         // TODO May use the published address as well
-        localAddr = account->getLocalAddress ();
+		account->isStunEnabled () ? localAddr = account->getPublishedAddress () : localAddr = account->getLocalAddress ();		
         setCallAudioLocal (call, localAddr);
 
         try {
@@ -1455,8 +1455,8 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
             return !PJ_SUCCESS;
         }
 
-        // Set SDP parameters
-        localAddress = account->getLocalAddress ();
+        // Set SDP parameters - Set to local or published address
+		account->isStunEnabled () ? localAddress = account->getPublishedAddress () :  localAddress = account->getLocalAddress (); 
 
         _debug ("new_ip_to_ip_call localAddress: %s\n", localAddress.c_str());
 
@@ -3100,7 +3100,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     if (account != NULL) {
         // TODO May use the published address as well
-        addrToUse = account->getLocalAddress ();
+		account->isStunEnabled () ? addrToUse = account->getPublishedAddress () : addrToUse = account->getLocalAddress ();		
     }
 
     if (addrToUse == "0.0.0.0") {
@@ -3712,6 +3712,7 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
         if (account->isStunEnabled ()) {
             // If use Stun server
             callLocalExternAudioPort = account->getStunPort ();
+			localIP = account->getPublishedAddress ();
         }
 
         _debug ("            Setting local ip address: %s\n", localIP.c_str());
