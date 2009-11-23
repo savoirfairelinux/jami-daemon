@@ -38,7 +38,7 @@ class Alaw : public AudioCodec
         virtual ~Alaw() {}
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
-            // _debug("Decoded by alaw \n");
+            // _debug("Decoded by alaw ");
             int16* end = dst+size;
 
             while (dst<end)
@@ -48,7 +48,7 @@ class Alaw : public AudioCodec
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
-            // _debug("Encoded by alaw \n");
+            // _debug("Encoded by alaw ");
             size >>= 1;
             uint8* end = dst+size;
 

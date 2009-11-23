@@ -56,7 +56,7 @@ void Account::setRegistrationState (RegistrationState state)
 {
 
     if (state != _registrationState) {
-        _debug ("Account::setRegistrationState\n");
+        _debug ("Account::setRegistrationState");
         _registrationState = state;
 
         // Notify the client

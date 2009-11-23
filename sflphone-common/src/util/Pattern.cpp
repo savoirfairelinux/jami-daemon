@@ -125,7 +125,7 @@ std::vector<std::string> Pattern::groups (void)
 
     while (stringList[i] != NULL) {
         matchedSubstrings.push_back (stringList[i]);
-        printf ("Substr: <start>%s<end>\n", stringList[i]);
+        printf ("Substr: <start>%s<end>", stringList[i]);
         i++;
     }
 
@@ -246,8 +246,8 @@ bool Pattern::matches (void) throw (match_error)
 
 bool Pattern::matches (const std::string& subject) throw (match_error)
 {
-    //printf("\n\n\nCurrent offset: %d, old offset: %d\n", _offset[1], _offset[0]);
-    //printf("Trying <start>%s<end>\n", subject.substr(_offset[1]).c_str());
+    //printf("Current offset: %d, old offset: %d", _offset[1], _offset[0]);
+    //printf("Trying <start>%s<end>", subject.substr(_offset[1]).c_str());
 
     // Try to find a match for this pattern
     int rc = pcre_exec (
@@ -264,7 +264,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
 
     if (rc < 0) {
         _offset[0] = _offset[1] = 0;
-        //printf("Matching failed with %d\n", rc);
+        //printf("Matching failed with %d", rc);
         return false;
     }
 
@@ -275,7 +275,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
         _offset[1] =  _ovector[1] + _offset[0];
     }
 
-    //printf("Matching succeeded with %d to %d\n", (int) start(), (int) end());
+    //printf("Matching succeeded with %d to %d", (int) start(), (int) end());
 
     // Matching succeded but not enough space.
     if (rc == 0) {

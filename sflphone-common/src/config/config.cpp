@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <iostream>
+#include <string.h>
 
 namespace Conf
 {
@@ -59,7 +60,6 @@ void ConfigTree::addDefaultValue (const std::pair<std::string, std::string>& tok
 
 std::string ConfigTree::getDefaultValue (const std::string& key)
 {
-    _debug ("Getting default value for %s\n", key.c_str());
     std::map<std::string, std::string>::iterator it;
     it = _defaultValueMap.find (key);
 
@@ -146,8 +146,6 @@ ConfigTree::getConfigTreeItemValue (const std::string& section, const std::strin
     if (item != NULL) {
         return item->getValue();
     }
-
-    _debug ("Option doesn't exist: [%s] %s\n", section.c_str(), itemName.c_str());
 
     return getDefaultValue (itemName);
 }
@@ -292,7 +290,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _debug ("Failed to set permission on configuration file because: %s\n",strerror (errno));
+        _debug ("Failed to set permission on configuration file because: %s",strerror (errno));
     }
 
     return true;
@@ -373,7 +371,7 @@ ConfigTree::populateFromFile (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _debug ("Failed to set permission on configuration file because: %s\n",strerror (errno));
+        _debug ("Failed to set permission on configuration file because: %s",strerror (errno));
     }
 
     return 1;

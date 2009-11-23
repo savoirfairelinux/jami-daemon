@@ -104,7 +104,7 @@ int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* da
 {
 
     double upsampleFactor = (double) samplerate2 / samplerate1 ;
-    //_debug("factor = %f\n" , upsampleFactor);
+    //_debug("factor = %f" , upsampleFactor);
     int nbSamplesMax = (int) (samplerate2 * getFramesize() / 1000);
     nbSamplesMax = nbSamplesMax*4;
 
@@ -116,16 +116,16 @@ int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* da
         src_data.output_frames = (int) floor (upsampleFactor * nbSamples);
         src_data.src_ratio = upsampleFactor;
         src_data.end_of_input = 0; // More data will come
-        // _debug("    upsample %d %d %f %d\n" , src_data.input_frames , src_data.output_frames, src_data.src_ratio , nbSamples);
+        // _debug("    upsample %d %d %f %d" , src_data.input_frames , src_data.output_frames, src_data.src_ratio , nbSamples);
         // Override libsamplerate conversion function
         Short2FloatArray (dataIn , _floatBufferDownSpkr, nbSamples);
         //src_short_to_float_array (dataIn , _floatBufferDownSpkr, nbSamples);
-        //_debug("upsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
+        //_debug("upsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
         src_process (_src_state_spkr, &src_data);
-        // _debug("    upsample %d %d %d\n" , samplerate1, samplerate2 , nbSamples);
+        // _debug("    upsample %d %d %d" , samplerate1, samplerate2 , nbSamples);
         nbSamples  = (src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;
         src_float_to_short_array (_floatBufferUpSpkr, dataOut, nbSamples);
-        //_debug("upsample %d %d %d\n" , samplerate1, samplerate2 , nbSamples);
+        //_debug("upsample %d %d %d" , samplerate1, samplerate2 , nbSamples);
     }
 
     return nbSamples;
@@ -136,7 +136,7 @@ int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* 
 {
 
     double downsampleFactor = (double) samplerate1 / samplerate2;
-    //_debug("factor = %f\n" , downsampleFactor);
+    //_debug("factor = %f" , downsampleFactor);
     int nbSamplesMax = (int) (samplerate1 * getFramesize() / 1000);
 
     nbSamplesMax = nbSamplesMax*4;
@@ -149,15 +149,15 @@ int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* 
         src_data.output_frames = (int) floor (downsampleFactor * nbSamples);
         src_data.src_ratio = downsampleFactor;
         src_data.end_of_input = 0; // More data will come
-        //_debug("downsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
+        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
         // Override libsamplerate conversion function
         Short2FloatArray (dataIn , _floatBufferUpMic, nbSamples);
         //src_short_to_float_array (dataIn, _floatBufferUpMic, nbSamples);
-        //_debug("downsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
+        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
         src_process (_src_state_mic, &src_data);
-        //_debug("downsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
+        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
         nbSamples  = (src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;
-        //_debug("downsample %d %f %d\n" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
+        //_debug("downsample %d %f %d" ,  src_data.output_frames, src_data.src_ratio , nbSamples);
         src_float_to_short_array (_floatBufferDownMic , dataOut , nbSamples);
     }
 

@@ -32,7 +32,7 @@ void
 Instance::Register (const int32_t& pid UNUSED,
                     const std::string& name UNUSED)
 {
-    _debug ("Instance::register received\n");
+    _debug ("Instance::register received");
     count++;
 }
 
@@ -40,7 +40,7 @@ Instance::Register (const int32_t& pid UNUSED,
 void
 Instance::Unregister (const int32_t& pid UNUSED)
 {
-    _debug ("Instance::unregister received\n");
+    _debug ("Instance::unregister received");
     count --;
 
     if (count <= 0) {
