@@ -61,6 +61,5 @@ AM_CPPFLAGS = \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \
 	-DPLUGINS_DIR=\""$(sflplugindir)"\" \
 	-DENABLE_TRACE \
-	-DSFLDEBUG \
          $(SPEEXCODEC) \
          $(GSMCODEC)

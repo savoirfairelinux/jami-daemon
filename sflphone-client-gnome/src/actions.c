@@ -94,6 +94,7 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
+	status_tray_icon_online(TRUE);
         msg = g_markup_printf_escaped("%s %s (%s)" ,
                 _("Using account"),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
@@ -101,6 +102,7 @@ status_bar_display_account ()
     }
     else
     {
+	status_tray_icon_online(FALSE);
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
     statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);

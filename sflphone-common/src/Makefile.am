@@ -11,11 +11,13 @@ sflphoned_SOURCES = \
 		voiplink.cpp \
 		main.cpp \
 		managerimpl.cpp \
+		managerimpl_registration.cpp \
 		observer.cpp \
 		eventthread.cpp \
 		accountcreator.cpp \
 		call.cpp \
 		account.cpp \
+		logger.cpp \
 		numbercleaner.cpp 
 
 # Redefine the USE_IAX variable here, so that it could be used in managerimpl
@@ -27,8 +29,15 @@ IAX_CXXFLAG=
 IAX_LIB=
 endif
 
+if USE_NETWORKMANAGER
+NETWORKMANAGER=-DUSE_NETWORKMANAGER
+else
+NETWORKMANAGER=
+endif
+
 sflphoned_CXXFLAGS = \
-		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG)\
+		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG) $(NETWORKMANAGER) \
+		-DVERSION=\"$(VERSION)\" \
 		@ZRTPCPP_CFLAGS@ \
 		@libssl_CFLAGS@
 
@@ -63,6 +72,7 @@ noinst_HEADERS = \
 		account.h \
 		accountcreator.h \
 		call.h \
+		logger.h \
 		numbercleaner.h
 
 libsflphone_la_LIBADD = \

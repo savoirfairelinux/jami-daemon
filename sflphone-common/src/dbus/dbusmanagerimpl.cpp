@@ -23,6 +23,7 @@
 
 #include "callmanager.h"
 #include "configurationmanager.h"
+#include "networkmanager.h"
 
 const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLphone";
 
@@ -32,17 +33,22 @@ DBusManagerImpl::exec()
 
     DBus::default_dispatcher = &_dispatcher;
 
-    DBus::Connection conn = DBus::Connection::SessionBus();
-    conn.request_name (SERVER_NAME);
+    DBus::Connection sessionConnection = DBus::Connection::SessionBus();
+    DBus::Connection systemConnection = DBus::Connection::SystemBus();
+    sessionConnection.request_name (SERVER_NAME);
 
-    _callManager = new CallManager (conn);
-    _configurationManager = new ConfigurationManager (conn);
-    _instanceManager = new Instance (conn);
+    _callManager = new CallManager (sessionConnection);
+    _configurationManager = new ConfigurationManager (sessionConnection);
+    _instanceManager = new Instance (sessionConnection);
+
+#ifdef USE_NETWORKMANAGER
+    _networkManager = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
+#endif
 
     // Register accounts
     Manager::instance().initRegisterAccounts(); //getEvents();
 
-    _debug ("Starting DBus event loop\n");
+    _debug ("Starting DBus event loop");
     _dispatcher.enter();
 
     return 1;

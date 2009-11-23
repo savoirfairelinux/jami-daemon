@@ -34,7 +34,7 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call
         , _local_sdp (0)
 {
     _local_sdp = new Sdp (pool);
-    _debug ("SIPCALL::Constructor for this class is called \n");
+    _debug ("SIPCALL::Constructor for this class is called ");
 }
 
 SIPCall::~SIPCall()
@@ -43,7 +43,7 @@ SIPCall::~SIPCall()
     _audiortp = 0;
     delete _local_sdp;
     _local_sdp = 0;
-    _debug ("SIPCALL::Destructor for this class is called \n");
+    _debug ("SIPCALL::Destructor for this class is called ");
 }
 
 

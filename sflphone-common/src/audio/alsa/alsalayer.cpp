@@ -41,7 +41,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
         , _audioThread (NULL)
 
 {
-    _debug (" Constructor of AlsaLayer called\n");
+    _debug (" Constructor of AlsaLayer called");
     /* Instanciate the audio thread */
     // _audioThread = new AudioThread (this);
     // _audioThread = NULL;
@@ -53,7 +53,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
 // Destructor
 AlsaLayer::~AlsaLayer (void)
 {
-    _debug ("Destructor of AlsaLayer called\n");
+    _debug ("Destructor of AlsaLayer called");
     closeLayer();
 
     if (_converter) {
@@ -70,17 +70,17 @@ AlsaLayer::~AlsaLayer (void)
 bool
 AlsaLayer::closeLayer()
 {
-    _debugAlsa ("Close ALSA streams\n");
+    _debugAlsa ("Close ALSA streams");
 
     try {
         /* Stop the audio thread first */
         if (_audioThread) {
-            _debug ("Stop Audio Thread\n");
+            _debug ("Stop Audio Thread");
             delete _audioThread;
             _audioThread=NULL;
         }
     } catch (...) {
-        _debugException ("! ARTP Exception: when stopping audiortp\n");
+        _debugException ("! ARTP Exception: when stopping audiortp");
         throw;
     }
 
@@ -119,13 +119,13 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     _audioPlugin = std::string (plugin);
 
-    _debugAlsa (" Setting AlsaLayer: device     in=%2d, out=%2d\n", _indexIn, _indexOut);
+    _debugAlsa (" Setting AlsaLayer: device     in=%2d, out=%2d", _indexIn, _indexOut);
 
-    _debugAlsa ("                   : alsa plugin=%s\n", _audioPlugin.c_str());
+    _debugAlsa ("                   : alsa plugin=%s", _audioPlugin.c_str());
 
-    _debugAlsa ("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
+    _debugAlsa ("                   : nb channel in=%2d, out=%2d", _inChannel, _outChannel);
 
-    _debugAlsa ("                   : sample rate=%5d, format=%s\n", _audioSampleRate, SFLDataFormatString);
+    _debugAlsa ("                   : sample rate=%5d, format=%s", _audioSampleRate, SFLDataFormatString);
 
     _audioThread = NULL;
 
@@ -144,7 +144,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 void
 AlsaLayer::startStream (void)
 {
-    _debug ("AlsaLayer:: startStream\n");
+    _debug ("AlsaLayer:: startStream");
 
     std::string pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
     std::string pcmc = buildDeviceTopo (_audioPlugin, _indexIn, 0);
@@ -171,11 +171,11 @@ AlsaLayer::startStream (void)
 
     if (_audioThread == NULL) {
         try {
-            _debug ("Start Audio Thread\n");
+            _debug ("Start Audio Thread");
             _audioThread = new AudioThread (this);
             _audioThread->start();
         } catch (...) {
-            _debugException ("Fail to start audio thread\n");
+            _debugException ("Fail to start audio thread");
         }
     }
 
@@ -184,17 +184,17 @@ AlsaLayer::startStream (void)
 void
 AlsaLayer::stopStream (void)
 {
-    _debug ("AlsaLayer:: stopStream\n");
+    _debug ("AlsaLayer:: stopStream");
 
     try {
         /* Stop the audio thread first */
         if (_audioThread) {
-            _debug ("Stop Audio Thread\n");
+            _debug ("Stop Audio Thread");
             delete _audioThread;
             _audioThread=NULL;
         }
     } catch (...) {
-        _debugException ("! ARTP Exception: when stopping audiortp\n");
+        _debugException ("! ARTP Exception: when stopping audiortp");
         throw;
     }
 
@@ -228,10 +228,10 @@ void AlsaLayer::stopCaptureStream (void)
     int err;
 
     if (_CaptureHandle) {
-        _debug ("AlsaLayer:: stop Alsa capture\n");
+        _debug ("AlsaLayer:: stop Alsa capture");
 
         if ( (err = snd_pcm_drop (_CaptureHandle)) < 0)
-            _debug ("AlsaLayer:: Error stopping ALSA capture: %s\n", snd_strerror (err));
+            _debug ("AlsaLayer:: Error stopping ALSA capture: %s", snd_strerror (err));
         else
             stop_capture ();
 
@@ -246,10 +246,10 @@ void AlsaLayer::closeCaptureStream (void)
         stopCaptureStream ();
 
     if (is_capture_open()) {
-        _debug ("AlsaLayer:: close ALSA capture\n");
+        _debug ("AlsaLayer:: close ALSA capture");
 
         if ( (err = snd_pcm_close (_CaptureHandle)) < 0)
-            _debug ("Error closing ALSA capture: %s\n", snd_strerror (err));
+            _debug ("Error closing ALSA capture: %s", snd_strerror (err));
         else
             close_capture ();
     }
@@ -260,10 +260,10 @@ void AlsaLayer::startCaptureStream (void)
     int err;
 
     if (_CaptureHandle && !is_capture_running()) {
-        _debug ("AlsaLayer:: start ALSA capture\n");
+        _debug ("AlsaLayer:: start ALSA capture");
 
         if ( (err = snd_pcm_start (_CaptureHandle)) < 0)
-            _debug ("Error starting ALSA capture: %s\n",  snd_strerror (err));
+            _debug ("Error starting ALSA capture: %s",  snd_strerror (err));
         else
             start_capture();
     }
@@ -274,10 +274,10 @@ void AlsaLayer::prepareCaptureStream (void)
     int err;
 
     if (is_capture_open() && !is_capture_prepared()) {
-        _debug ("AlsaLayer:: prepare ALSA capture\n");
+        _debug ("AlsaLayer:: prepare ALSA capture");
 
         if ( (err = snd_pcm_prepare (_CaptureHandle)) < 0)
-            _debug ("Error preparing ALSA capture: %s\n", snd_strerror (err));
+            _debug ("Error preparing ALSA capture: %s", snd_strerror (err));
         else
             prepare_capture ();
     }
@@ -288,10 +288,10 @@ void AlsaLayer::stopPlaybackStream (void)
     int err;
 
     if (_PlaybackHandle && is_playback_running()) {
-        _debug ("AlsaLayer:: stop ALSA playback\n");
+        _debug ("AlsaLayer:: stop ALSA playback");
 
         if ( (err = snd_pcm_drop (_PlaybackHandle)) < 0)
-            _debug ("Error stopping ALSA playback: %s\n", snd_strerror (err));
+            _debug ("Error stopping ALSA playback: %s", snd_strerror (err));
         else
             stop_playback ();
     }
@@ -306,10 +306,10 @@ void AlsaLayer::closePlaybackStream (void)
         stopPlaybackStream ();
 
     if (is_playback_open()) {
-        _debug ("AlsaLayer:: close ALSA playback\n");
+        _debug ("AlsaLayer:: close ALSA playback");
 
         if ( (err = snd_pcm_close (_PlaybackHandle)) < 0)
-            _debug ("Error closing ALSA playback: %s\n", snd_strerror (err));
+            _debug ("Error closing ALSA playback: %s", snd_strerror (err));
         else
             close_playback ();
     }
@@ -320,10 +320,10 @@ void AlsaLayer::startPlaybackStream (void)
     int err;
 
     if (_PlaybackHandle && !is_playback_running()) {
-        _debug ("AlsaLayer:: start ALSA playback\n");
+        _debug ("AlsaLayer:: start ALSA playback");
 
         if ( (err = snd_pcm_start (_PlaybackHandle)) < 0)
-            _debug ("Error starting ALSA playback: %s\n", snd_strerror (err));
+            _debug ("Error starting ALSA playback: %s", snd_strerror (err));
         else
             start_playback();
     }
@@ -334,10 +334,10 @@ void AlsaLayer::preparePlaybackStream (void)
     int err;
 
     if (is_playback_open() && !is_playback_prepared()) {
-        _debug ("AlsaLayer:: prepare playback stream\n");
+        _debug ("AlsaLayer:: prepare playback stream");
 
         if ( (err = snd_pcm_prepare (_PlaybackHandle)) < 0)
-            _debug ("Error preparing the device: %s\n", snd_strerror (err));
+            _debug ("Error preparing the device: %s", snd_strerror (err));
         else
             prepare_playback ();
     }
@@ -350,9 +350,9 @@ void AlsaLayer::recoverPlaybackStream(int error)
     int err;
 
     if (is_playback_open() && is_playback_running()) {
-	_debug("AlsaLayer:: recover playback stream\n");
+	_debug("AlsaLayer:: recover playback stream");
 	if((err = snd_pcm_recover(_PlaybackHandle, error, 0)) < 0 )
-	    _debug("Error recovering the device: %s\n", snd_strerror(err));
+	    _debug("Error recovering the device: %s", snd_strerror(err));
     }
 }
 */
@@ -364,9 +364,9 @@ void AlsaLayer::recoverPlaybackStream(int error)
     int err;
 
     if (is_capture_open() && is_capture_running()) {
-	_debug("AlsaLayer:: recover capture stream\n");
+	_debug("AlsaLayer:: recover capture stream");
 	if((err = snd_pcm_recover(_PlaybackHandle, error, 0)) < 0 )
-	    _debug("Error recovering the device: %s\n", snd_strerror(err));
+	    _debug("Error recovering the device: %s", snd_strerror(err));
     }
 }
 */
@@ -392,12 +392,12 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     /* Full configuration space */
 
     if ( (err = snd_pcm_hw_params_any (pcm_handle, hwparams)) < 0) {
-        _debugAlsa (" Cannot initialize hardware parameter structure (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot initialize hardware parameter structure (%s)", snd_strerror (err));
         return false;
     }
 
     if ( (err = snd_pcm_hw_params_set_access (pcm_handle, hwparams, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-        _debugAlsa (" Cannot set access type (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set access type (%s)", snd_strerror (err));
         return false;
     }
 
@@ -405,7 +405,7 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     format = SND_PCM_FORMAT_S16_LE;
 
     if ( (err = snd_pcm_hw_params_set_format (pcm_handle, hwparams, (snd_pcm_format_t) format)) < 0) {
-        _debugAlsa (" Cannot set sample format (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set sample format (%s)", snd_strerror (err));
         return false;
     }
 
@@ -417,17 +417,17 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     exact_ivalue = rate;
 
     if ( (err = snd_pcm_hw_params_set_rate_near (pcm_handle, hwparams, &exact_ivalue, &dir) < 0)) {
-        _debugAlsa (" Cannot set sample rate (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set sample rate (%s)", snd_strerror (err));
         return false;
     }
 
     if (dir!= 0) {
-        _debugAlsa (" (%i) The choosen rate %d Hz is not supported by your hardware.\nUsing %d Hz instead.\n ",type ,rate, exact_ivalue);
+        _debugAlsa (" (%i) The choosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ",type ,rate, exact_ivalue);
     }
 
     /* Set the number of channels */
     if ( (err = snd_pcm_hw_params_set_channels (pcm_handle, hwparams, 1)) < 0) {
-        _debugAlsa (" Cannot set channel count (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set channel count (%s)", snd_strerror (err));
         return false;
     }
 
@@ -437,12 +437,12 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     dir=0;
 
     if ( (err = snd_pcm_hw_params_set_period_size_near (pcm_handle, hwparams, &exact_lvalue , &dir)) < 0) {
-        _debugAlsa (" Cannot set period time (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set period time (%s)", snd_strerror (err));
         return false;
     }
 
     if (dir!=0) {
-        _debugAlsa ("(%i) The choosen period size %d bytes is not supported by your hardware.\nUsing %d instead.\n ", type, (int) periodsize, (int) exact_lvalue);
+        _debugAlsa ("(%i) The choosen period size %d bytes is not supported by your hardware.Using %d instead. ", type, (int) periodsize, (int) exact_lvalue);
     }
 
     periodsize = exact_lvalue;
@@ -453,12 +453,12 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     dir=0;
 
     if ( (err = snd_pcm_hw_params_set_periods_near (pcm_handle, hwparams, &exact_ivalue, &dir)) < 0) {
-        _debugAlsa (" Cannot set periods number (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set periods number (%s)", snd_strerror (err));
         return false;
     }
 
     if (dir!=0) {
-        _debugAlsa (" The choosen period number %i bytes is not supported by your hardware.\nUsing %i instead.\n ", periods, exact_ivalue);
+        _debugAlsa (" The choosen period number %i bytes is not supported by your hardware.Using %i instead. ", periods, exact_ivalue);
     }
 
     periods=exact_ivalue;
@@ -466,7 +466,7 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     /* Set the hw parameters */
 
     if ( (err = snd_pcm_hw_params (pcm_handle, hwparams)) < 0) {
-        _debugAlsa (" Cannot set hw parameters (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set hw parameters (%s)", snd_strerror (err));
         return false;
     }
 
@@ -479,12 +479,12 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     /* Set the start threshold */
 
     if ( (err = snd_pcm_sw_params_set_start_threshold (pcm_handle, swparams, 2700 /*periodsize*2*/)) < 0) {
-        _debugAlsa (" Cannot set start threshold (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set start threshold (%s)", snd_strerror (err));
         return false;
     }
 
     if ( (err = snd_pcm_sw_params (pcm_handle, swparams)) < 0) {
-        _debugAlsa (" Cannot set sw parameters (%s)\n", snd_strerror (err));
+        _debugAlsa (" Cannot set sw parameters (%s)", snd_strerror (err));
         return false;
     }
 
@@ -503,18 +503,18 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, int flag)
 
     if (flag == SFL_PCM_BOTH || flag == SFL_PCM_PLAYBACK) {
 
-        _debug ("AlsaLayer:: open playback device\n");
+        _debug ("AlsaLayer:: open playback device");
         // if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
 
         if ( (err = snd_pcm_open (&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-            _debugAlsa ("Error while opening playback device %s\n",  pcm_p.c_str());
+            _debugAlsa ("Error while opening playback device %s",  pcm_p.c_str());
             setErrorMessage (ALSA_PLAYBACK_DEVICE);
             close_playback ();
             return false;
         }
 
         if (!alsa_set_params (_PlaybackHandle, 1, getSampleRate())) {
-            _debug ("playback failed\n");
+            _debug ("playback failed");
             snd_pcm_close (_PlaybackHandle);
             close_playback ();
             return false;
@@ -525,17 +525,17 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, int flag)
 
     if (flag == SFL_PCM_BOTH || flag == SFL_PCM_CAPTURE) {
 
-        _debug ("AlsaLayer:: open capture device\n");
+        _debug ("AlsaLayer:: open capture device");
 
         if ( (err = snd_pcm_open (&_CaptureHandle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0)) < 0) {
-            _debugAlsa ("Error while opening capture device %s\n",  pcm_c.c_str());
+            _debugAlsa ("Error while opening capture device %s",  pcm_c.c_str());
             setErrorMessage (ALSA_CAPTURE_DEVICE);
             close_capture ();
             return false;
         }
 
         if (!alsa_set_params (_CaptureHandle, 0, 8000)) {
-            _debug ("capture failed\n");
+            _debug ("capture failed");
             snd_pcm_close (_CaptureHandle);
             close_capture ();
             return false;
@@ -551,7 +551,7 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, int flag)
     try {
         _audioThread->start();
     } catch (...) {
-        _debugException ("Fail to start audio thread\n");
+        _debugException ("Fail to start audio thread");
     }
     */
 
@@ -579,18 +579,18 @@ AlsaLayer::write (void* buffer, int length)
             case -ESTRPIPE:
 
             case -EIO:
-                //_debugAlsa(" XRUN playback ignored (%s)\n", snd_strerror(err));
+                //_debugAlsa(" XRUN playback ignored (%s)", snd_strerror(err));
                 handle_xrun_playback();
 
                 if (snd_pcm_writei (_PlaybackHandle , buffer , frames) <0)
-                    _debugAlsa ("XRUN handling failed\n");
+                    _debugAlsa ("XRUN handling failed");
 
                 _trigger_request = true;
 
                 break;
 
             default:
-                _debugAlsa ("Write error unknown - dropping frames **********************************: %s\n", snd_strerror (err));
+                _debugAlsa ("Write error unknown - dropping frames **********************************: %s", snd_strerror (err));
 
                 stopPlaybackStream ();
 
@@ -623,20 +623,20 @@ AlsaLayer::read (void* buffer, int toCopy)
             case -ESTRPIPE:
 
             case -EIO:
-                _debugAlsa (" XRUN capture ignored (%s)\n", snd_strerror (samples));
+                _debugAlsa (" XRUN capture ignored (%s)", snd_strerror (samples));
                 handle_xrun_capture();
                 //samples = snd_pcm_readi( _CaptureHandle, buffer, frames);
                 //if (samples<0)  samples=0;
                 break;
 
             case EPERM:
-                _debugAlsa (" Capture EPERM (%s)\n", snd_strerror (samples));
+                _debugAlsa (" Capture EPERM (%s)", snd_strerror (samples));
                 prepareCaptureStream ();
                 startCaptureStream ();
                 break;
 
             default:
-                //_debugAlsa("%s\n", snd_strerror(samples));
+                //_debugAlsa("%s", snd_strerror(samples));
                 break;
         }
 
@@ -650,7 +650,7 @@ AlsaLayer::read (void* buffer, int toCopy)
 void
 AlsaLayer::handle_xrun_capture (void)
 {
-    _debugAlsa ("handle_xrun_capture\n");
+    _debugAlsa ("handle_xrun_capture");
 
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
@@ -664,19 +664,19 @@ AlsaLayer::handle_xrun_capture (void)
             startCaptureStream ();
         }
     } else
-        _debugAlsa (" Get status failed\n");
+        _debugAlsa (" Get status failed");
 }
 
 void
 AlsaLayer::handle_xrun_playback (void)
 {
-    _debugAlsa ("AlsaLayer:: handle_xrun_playback\n");
+    _debugAlsa ("AlsaLayer:: handle_xrun_playback");
 
     int state;
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
 
-    if ( (state = snd_pcm_status (_PlaybackHandle, status)) < 0)   _debugAlsa (" Error: Cannot get playback handle status (%s)\n" , snd_strerror (state));
+    if ( (state = snd_pcm_status (_PlaybackHandle, status)) < 0)   _debugAlsa (" Error: Cannot get playback handle status (%s)" , snd_strerror (state));
     else {
         state = snd_pcm_status_get_state (status);
 
@@ -743,9 +743,9 @@ AlsaLayer::getSoundCardsInfo (int stream)
                 snd_pcm_info_set_device (pcminfo , 0);
                 snd_pcm_info_set_stream (pcminfo, (stream == SFL_PCM_CAPTURE) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
 
-                if (snd_ctl_pcm_info (handle ,pcminfo) < 0) _debugAlsa (" Cannot get info\n");
+                if (snd_ctl_pcm_info (handle ,pcminfo) < 0) _debugAlsa (" Cannot get info");
                 else {
-                    _debugAlsa ("card %i : %s [%s]\n",
+                    _debugAlsa ("card %i : %s [%s]",
                                 numCard,
                                 snd_ctl_card_info_get_id (info),
                                 snd_ctl_card_info_get_name (info));
@@ -825,7 +825,7 @@ void AlsaLayer::audioCallback (void)
 
     /*
     int writeableSize = snd_pcm_avail_update(_PlaybackHandle);
-    _debug("writeableSize %i\n", writeableSize);
+    _debug("writeableSize %i", writeableSize);
     */
 
     // AvailForGet tell the number of chars inside the buffer
@@ -970,7 +970,7 @@ void AlsaLayer::audioCallback (void)
     if (is_capture_running()) {
 
         micAvailBytes = snd_pcm_avail_update (_CaptureHandle);
-        // _debug("micAvailBytes %i\n", micAvailBytes);
+        // _debug("micAvailBytes %i", micAvailBytes);
 
         if (micAvailBytes > 0) {
             micAvailPut = getMainBuffer()->availForPut();
@@ -990,7 +990,7 @@ void AlsaLayer::audioCallback (void)
                     int nbSample = toPut / sizeof (SFLDataFormat);
                     int nb_sample_up = nbSample;
 
-                    // _debug("nb_sample_up %i\n", nb_sample_up);
+                    // _debug("nb_sample_up %i", nb_sample_up);
                     nbSample = _converter->downsampleData ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
                     dcblocker->filter_signal (rsmpl_out, nbSample);
@@ -1010,7 +1010,7 @@ void AlsaLayer::audioCallback (void)
 
             in=0;
         } else if (micAvailBytes < 0) {
-            _debug ("AlsaLayer::audioCallback (mic): error: %s\n", snd_strerror (micAvailBytes));
+            _debug ("AlsaLayer::audioCallback (mic): error: %s", snd_strerror (micAvailBytes));
         }
 
     }

@@ -25,7 +25,7 @@
 #include <string>
 #include <dirent.h>
 #include <sys/stat.h>
-//#include "config.h"
+#include <cc++/common.h>
 #include "global.h"
 
 #include "user_cfg.h"
@@ -34,25 +34,63 @@
 
 #include "audio/audiolayer.h"
 
+using namespace std;
+using namespace ost;
+
+CommandOptionArg	level(
+        "log-level", "l", "Log level (not yet implemented)"
+);
+
+CommandOptionNoArg	console(
+        "console", "c", "Log in console (instead of syslog)"
+);
+
+CommandOptionNoArg	debug(
+        "debug", "d", "Debug mode (more verbose)"
+);
+
+CommandOptionNoArg	help(
+        "help", "h", "Print help"
+);
+
 int
 main (int argc, char **argv)
 {
-    int exit_code = 0;
+	int exit_code = 0;
 
-    //setlocale (LC_ALL, "");
-    //bindtextdomain (PACKAGE, LOCALEDIR);
-    //textdomain (PACKAGE);
+	Logger::setConsoleLog(false);
+	Logger::setDebugMode(false);
 
-    if (argc == 2 && strcmp (argv[1], "--help") == 0) {
+	CommandOptionParse * args = makeCommandOptionParse(argc, argv, "");
 
+	printf ("SFLphone Daemon %s, by Savoir-Faire Linux 2004-2009\n", VERSION);
+        printf ("http://www.sflphone.org/\n");
 
-        printf ("%1$s Daemon %2$s, by Savoir-Faire Linux 2004-2009\n\n",
-                PROGNAME,
-                SFLPHONED_VERSION);
-        printf ("USAGE: sflphoned [--help]\nParameters: \n  --help\tfor this message\n\n  --port=3999\tchange the session port\n\n");
-        printf ("See http://www.sflphone.org/ for more information\n");
+        if ( help.numSet ) {
+                cerr << args->printUsage();
+		::exit(0);
+        }
 
-    } else {
+        if ( args->argsHaveError() ) {
+                cerr << args->printErrors();
+                cerr << args->printUsage();
+                ::exit(1);
+        }
+
+	if( console.numSet )
+	{
+		_info("Console logging activated");
+		Logger::setConsoleLog(true);
+	}
+
+	if( debug.numSet )
+	{
+		_info("Debug mode activated");
+		Logger::setDebugMode(true);
+	}
+
+        delete args;
+
         FILE *fp;
         char homepid[128];
         char sfldir[128];
@@ -84,7 +122,7 @@ main (int argc, char **argv)
             if ( (dir = opendir (sfldir)) == NULL) {
                 //Create it
                 if (mkdir (sfldir, 0755) != 0) {
-                    fprintf (stderr, "Creating directory %s failed. Exited.\n", sfldir);
+                    fprintf (stderr, "Creating directory %s failed. Exited.", sfldir);
                     exit (-1);
                 }
             }
@@ -95,14 +133,14 @@ main (int argc, char **argv)
             if ( (dir = opendir (sfldir)) == NULL) {
                 //Create it
                 if (mkdir (sfldir, 0755) != 0) {
-                    fprintf (stderr, "Creating directory %s failed. Exited.\n", sfldir);
+                    fprintf (stderr, "Creating directory %s failed. Exited.", sfldir);
                     exit (-1);
                 }
             }
 
             // PID file doesn't exists, create and write pid in it
             if ( (fp = fopen (homepid,"w")) == NULL) {
-                fprintf (stderr, "Creating PID file %s failed. Exited.\n", homepid);
+                fprintf (stderr, "Creating PID file %s failed. Exited.", homepid);
                 exit (-1);
             } else {
                 fputs (cPid , fp);
@@ -119,11 +157,11 @@ main (int argc, char **argv)
                 fclose (fp);
 
                 if (kill (atoi (cOldPid), 0) == SUCCESS) {
-                    fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.\n");
+                    fprintf (stderr, "There is already a sflphoned daemon running in the system. Starting Failed.");
                     exit (-1);
                 } else {
                     if ( (fp = fopen (homepid,"w")) == NULL) {
-                        fprintf (stderr, "Writing to PID file %s failed. Exited.\n", homepid);
+                        fprintf (stderr, "Writing to PID file %s failed. Exited.", homepid);
                         exit (-1);
                     } else {
                         fputs (cPid , fp);
@@ -155,7 +193,7 @@ main (int argc, char **argv)
             std::cerr << e.what() << std::endl;
             exit_code = -1;
         } catch (...) {
-            fprintf (stderr, "An exception occured when initializing the system.\n");
+            fprintf (stderr, "An exception occured when initializing the system.");
             exit_code = -1;
         }
 
@@ -163,7 +201,6 @@ main (int argc, char **argv)
             Manager::instance().setDBusManager (&DBusManager::instance());
             exit_code = DBusManager::instance().exec();  // UI Loop
         }
-    }
 
     return exit_code;
 }

@@ -138,9 +138,12 @@ void status_tray_icon_blink (gboolean active)
 {
 	// Set a different icon to notify of an event
 	active ? gtk_status_icon_set_from_file (status, LOGO_NOTIF) : gtk_status_icon_set_from_file (status, LOGO);
-	// Do not blink anymore ...
-	// gtk_status_icon_set_blinking (status, active);
+}
 
+void status_tray_icon_online (gboolean online)
+{
+	// Set a different icon to notify of an event
+	online ? gtk_status_icon_set_from_file (status, LOGO) : gtk_status_icon_set_from_file (status, LOGO_OFFLINE);
 }
 
 GtkStatusIcon* 

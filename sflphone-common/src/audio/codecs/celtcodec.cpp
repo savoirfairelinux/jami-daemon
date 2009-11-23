@@ -46,13 +46,13 @@ class Celt : public AudioCodec
             // celt_mode_info(mode, CELT_GET_LOOKAHEAD, &skip);
 
             if (mode == NULL) {
-                printf ("failed to create a mode\n");
+                printf ("failed to create a mode");
             }
 
             // bytes_per_packet = 1024;
             // if (bytes_per_packet < 0 || bytes_per_packet > MAX_PACKET)
             // {
-            //     printf ("bytes per packet must be between 0 and %d\n");
+            //     printf ("bytes per packet must be between 0 and %d");
             // }
 
             // celt_mode_info(mode, CELT_GET_FRAME_SIZE, &frame_size);
