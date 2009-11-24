@@ -805,11 +805,6 @@ SIPVoIPLink::hangup (const CallID& id)
         return false;
     }
 
-    // Release RTP thread
-    if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
-        _audiortp->stop();
-    }
 
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session (call->getInvSession(), 404, NULL, &tdata);
@@ -856,12 +851,6 @@ SIPVoIPLink::peerHungup (const CallID& id)
     if (call==0) {
         _debug ("! SIP Error: Call doesn't exist");
         return false;
-    }
-
-    // Release RTP thread
-    if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup\n");
-        _audiortp->stop();
     }
 
     // User hangup current call. Notify peer
