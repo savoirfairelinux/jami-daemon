@@ -2868,20 +2868,20 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
 	    if(r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
 
-		_debug("%s\n", pjsip_rx_data_get_info(r_data));
-		// _debug("%s\n", r_data->msg_info.msg_buf);
+	        std::string method_name = "INFO";
+		std::string request =  r_data->msg_info.msg->line.req.method.name.ptr;
 
-	   	
-		pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
+		if (request.find (method_name) != (size_t)-1) {
+
+		    _debug("%s\n", pjsip_rx_data_get_info(r_data));
+
+		    pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
 		  
-		pjsip_dlg_send_response(inv->dlg, tsx, t_data);
-		
-		// pjsip_dlg_respond
+		    pjsip_dlg_send_response(inv->dlg, tsx, t_data);
+		}
 	    }
 	}
-
     }
-    
 }
 
 void regc_cb (struct pjsip_regc_cbparam *param)
