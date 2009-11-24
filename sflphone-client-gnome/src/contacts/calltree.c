@@ -1355,165 +1355,150 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	conference_obj_t* conf;
 
 
-	if(selected_path_depth == 1)
-	{
-		if(dragged_path_depth == 1)
-		{
+	if(selected_path_depth == 1) {
 
-			if (selected_type == A_CALL && dragged_type == A_CALL) 
-			{
+	    if(dragged_path_depth == 1) {
 
-				if(gtk_tree_path_compare (dpath, spath) == 0)
-				{
-					// draged a call on itself
-				}
-				else
-				{
-					// dragged a single call on a single call
-					if(selected_call != NULL && dragged_call != NULL)
-						sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
-				}
-			}
-			else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
-			{
-				// dragged a single call on a conference
-				selected_call->_confID = g_strdup(dragged_call_id);
-				sflphone_add_participant(selected_call_id, dragged_call_id);
-			}
-			else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
-			{
-				// dragged a conference on a single call (make no sence)
-				calltree_remove_conference(current_calls, selected_conf, NULL);
-				calltree_add_conference(current_calls, selected_conf);
+	        if (selected_type == A_CALL && dragged_type == A_CALL) {
 
+		    if(gtk_tree_path_compare (dpath, spath) == 0) {
+		        // draged a call on itself
+		    }
+		    else {
+		        // dragged a single call on a single call
+		        if(selected_call != NULL && dragged_call != NULL)
+			  sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
+		    }
+		}
+		else if(selected_type == A_CALL && dragged_type == A_CONFERENCE) {
+		    // dragged a single call on a conference
+		    selected_call->_confID = g_strdup(dragged_call_id);
+		    sflphone_add_participant(selected_call_id, dragged_call_id);
+		}
+		else if(selected_type == A_CONFERENCE && dragged_type == A_CALL) {
 
-			}
-			else if(selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE)
-			{
-				// dragged a conference on a conference
-				if(gtk_tree_path_compare (dpath, spath) == 0) 
-				{
-					DEBUG("Joined the same conference!\n");
-					gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls->view), path, FALSE);
-				}
-				else
-				{
-					DEBUG("Joined two conference %s, %s!\n", dragged_path, selected_path);
-					sflphone_join_conference(selected_conf->_confID, dragged_conf->_confID);
-				}
-			}
+		    conf = selected_conf;
 
-			// TODO: dragged a single call on a NULL element (should do nothing)
-			// TODO: dragged a conference on a NULL element (should do nothing)
+		    // dragged a conference on a single call (make no sence)
+		    calltree_remove_conference(current_calls, conf, NULL);
+		    calltree_add_conference(current_calls, conf);
 
 		}
-		else // dragged_path_depth == 2
-		{
-			if (selected_type == A_CALL && dragged_type == A_CALL)
-			{
-				// TODO: dragged a call on a conference call
-				calltree_remove_call(current_calls, selected_call, NULL);
-				calltree_add_call(current_calls, selected_call, NULL);
-			}
-			else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
-			{
-				// TODO: dragged a conference on a conference call
-				calltree_remove_conference(current_calls, selected_conf, NULL);
-				calltree_add_conference(current_calls, selected_conf);
-			}
-
-			// TODO: dragged a single call on a NULL element 
-			// TODO: dragged a conference on a NULL element
+		else if(selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE) {
+		    // dragged a conference on a conference
+		    if(gtk_tree_path_compare (dpath, spath) == 0) {
+		        DEBUG("Joined the same conference!\n");
+			gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls->view), path, FALSE);
+		    }
+		    else {
+		        DEBUG("Joined two conference %s, %s!\n", dragged_path, selected_path);
+			sflphone_join_conference(selected_conf->_confID, dragged_conf->_confID);
+		    }
 		}
+
+		// TODO: dragged a single call on a NULL element (should do nothing)
+		// TODO: dragged a conference on a NULL element (should do nothing)
+
+	    }
+	    else {
+	        // dragged_path_depth == 2
+
+	        if (selected_type == A_CALL && dragged_type == A_CALL) {
+		    // TODO: dragged a call on a conference call
+		    calltree_remove_call(current_calls, selected_call, NULL);
+		    calltree_add_call(current_calls, selected_call, NULL);
+		}
+		else if(selected_type == A_CONFERENCE && dragged_type == A_CALL) {
+		    // TODO: dragged a conference on a conference call
+		    conf = selected_conf;
+
+		    calltree_remove_conference(current_calls, conf, NULL);
+		    calltree_add_conference(current_calls, conf);
+		}
+		
+		// TODO: dragged a single call on a NULL element 
+		// TODO: dragged a conference on a NULL element
+	    }
 	}
-	else // selected_path_depth == 2
-	{
+	else {
 
-		if(dragged_path_depth == 1)
-		{
+	    // selected_path_depth == 2 
 
-			if(selected_type == A_CALL && dragged_type == A_CALL)
-			{
+	    if(dragged_path_depth == 1) {
 
-				// dragged a conference call on a call
-				sflphone_detach_participant(selected_call_id);
-
-				if(selected_call != NULL && dragged_call != NULL)
-					sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
-
-			}
-			else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
-			{
-				// dragged a conference call on a conference
-				sflphone_detach_participant(selected_call_id);
-
-				if(selected_call != NULL && dragged_conf != NULL)
-				{
-					DEBUG("Adding a participant, since dragged call on a conference");
-
-					sflphone_add_participant(selected_call_id, dragged_call_id);
-				}
-			}
-			else
-			{
-				// dragged a conference call on a NULL element
-				sflphone_detach_participant(selected_call_id);
-			}
-
+	        if(selected_type == A_CALL && dragged_type == A_CALL) {
+		  
+		    // dragged a conference call on a call
+		    sflphone_detach_participant(selected_call_id);
+		    
+		    if(selected_call != NULL && dragged_call != NULL)
+		        sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
+		    
 		}
-		else // dragged_path_depth == 2
-		{
-			// dragged a conference call on another conference call (same conference)
-			// TODO: dragged a conference call on another conference call (different conference)
+		else if(selected_type == A_CALL && dragged_type == A_CONFERENCE) {
+		    // dragged a conference call on a conference
+		    sflphone_detach_participant(selected_call_id);
 
-			gtk_tree_path_up(path);
+		    if(selected_call != NULL && dragged_conf != NULL) {
+		        DEBUG("Adding a participant, since dragged call on a conference");
 
-			gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
-
-			gtk_tree_path_up(dpath);
-			gtk_tree_path_up(spath);
-
-			if(gtk_tree_path_compare (dpath, spath) == 0)
-			{
-
-				DEBUG("Dragged a call in the same conference");
-				calltree_remove_call (current_calls, selected_call, NULL);
-				calltree_add_call (current_calls, selected_call, &parent_conference);
-			}
-			else
-			{
-				DEBUG("Dragged a conference call onto another conference call %s, %s", gtk_tree_path_to_string(dpath), gtk_tree_path_to_string(spath));
-
-				conf = NULL;
-
-				val.g_type = 0;
-				if(gtk_tree_model_get_iter (model, &iter, dpath))
-				{
-					DEBUG("we got an iter!");
-					gtk_tree_model_get_value (model, &iter, COLUMN_ACCOUNT_PTR, &val);
-
-					conf = (conference_obj_t*)g_value_get_pointer(&val);
-				}
-				g_value_unset(&val);
-
-				sflphone_detach_participant(selected_call_id);
-
-				if(conf)
-				{
-					DEBUG("we got a conf!");
-					sflphone_add_participant(selected_call_id, conf->_confID);
-				}
-				else
-				{
-					DEBUG("didn't find a conf!");
-				}
-			}
-
-
-			// TODO: dragged a conference call on another conference call (different conference)
-			// TODO: dragged a conference call on a NULL element (same conference)
-			// TODO: dragged a conference call on a NULL element (different conference)
+		        sflphone_add_participant(selected_call_id, dragged_call_id);
+		    }
 		}
+		else {
+		    // dragged a conference call on a NULL element
+		    sflphone_detach_participant(selected_call_id);
+		}
+		
+	    }
+	    else {
+	        // dragged_path_depth == 2
+	        // dragged a conference call on another conference call (same conference)
+	        // TODO: dragged a conference call on another conference call (different conference)
+
+	        gtk_tree_path_up(path);
+		
+		gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
+		
+		gtk_tree_path_up(dpath);
+		gtk_tree_path_up(spath);
+
+		if(gtk_tree_path_compare (dpath, spath) == 0) {
+
+		    DEBUG("Dragged a call in the same conference");
+		    calltree_remove_call (current_calls, selected_call, NULL);
+		    calltree_add_call (current_calls, selected_call, &parent_conference);
+		}
+		else {
+		    DEBUG("Dragged a conference call onto another conference call %s, %s", gtk_tree_path_to_string(dpath), gtk_tree_path_to_string(spath));
+
+		    conf = NULL;
+
+		    val.g_type = 0;
+		    if(gtk_tree_model_get_iter (model, &iter, dpath)) {
+		        DEBUG("we got an iter!");
+			gtk_tree_model_get_value (model, &iter, COLUMN_ACCOUNT_PTR, &val);
+
+			conf = (conference_obj_t*)g_value_get_pointer(&val);
+		    }
+		    g_value_unset(&val);
+
+		    sflphone_detach_participant(selected_call_id);
+
+		    if(conf) {
+		        DEBUG("we got a conf!");
+		        sflphone_add_participant(selected_call_id, conf->_confID);
+		    }
+		    else {
+		        DEBUG("didn't find a conf!");
+		    }
+		}
+
+
+		// TODO: dragged a conference call on another conference call (different conference)
+		// TODO: dragged a conference call on a NULL element (same conference)
+		// TODO: dragged a conference call on a NULL element (different conference)
+	    }
 
 	}	
 
