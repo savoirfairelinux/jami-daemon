@@ -1246,6 +1246,9 @@ ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id2)
 
     // switchCall(conf->getConfID());
 
+    if(_audiodriver)
+      _audiodriver->getMainBuffer()->stateInfo();
+
 }
 
 
@@ -1345,6 +1348,9 @@ ManagerImpl::removeParticipant (const CallID& call_id)
         call->setConfId ("");
 
     }
+
+     if(_audiodriver)
+        _audiodriver->getMainBuffer()->stateInfo();
 
 }
 
@@ -1459,7 +1465,7 @@ ManagerImpl::addStream (const CallID& call_id)
         if (iter != _conferencemap.end()) {
             Conference* conf = iter->second;
 
-            _debug ("    addStream: bind call %s to conference %s\n", call_id.c_str(), conf->getConfID().c_str());
+            // _debug ("    addStream: bind call %s to conference %s\n", call_id.c_str(), conf->getConfID().c_str());
 
             conf->bindParticipant (call_id);
 
@@ -1481,7 +1487,7 @@ ManagerImpl::addStream (const CallID& call_id)
 
     } else {
 
-        _debug ("    addStream: bind call %s to main\n", call_id.c_str());
+        // _debug ("    addStream: bind call %s to main\n", call_id.c_str());
 
         // bind to main
         getAudioDriver()->getMainBuffer()->bindCallID (call_id);
@@ -1491,6 +1497,9 @@ ManagerImpl::addStream (const CallID& call_id)
         _audiodriver->flushMain();
 
     }
+
+    if(_audiodriver)
+        _audiodriver->getMainBuffer()->stateInfo();
 }
 
 void
@@ -1504,6 +1513,8 @@ ManagerImpl::removeStream (const CallID& call_id)
         removeParticipant (call_id);
     }
 
+    if(_audiodriver)
+        _audiodriver->getMainBuffer()->stateInfo();
 }
 
 //THREAD=Main
