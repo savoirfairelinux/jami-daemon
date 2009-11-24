@@ -2852,13 +2852,36 @@ void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
 
 void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
 {
-    _debug ("call_on_tsx_changed to state %s\n", transactionStateMap[tsx->state]);
+    _debug("call_on_tsx_changed to state %s\n", transactionStateMap[tsx->state]);
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
-            pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
+        pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
     }
+    else if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING) {
+
+	if (e && e->body.rx_msg.rdata) {
+
+	    pjsip_tx_data* t_data;
+	    pjsip_rx_data* r_data = e->body.rx_msg.rdata;
+
+	    if(r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
+
+		_debug("%s\n", pjsip_rx_data_get_info(r_data));
+		// _debug("%s\n", r_data->msg_info.msg_buf);
+
+	   	
+		pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
+		  
+		pjsip_dlg_send_response(inv->dlg, tsx, t_data);
+		
+		// pjsip_dlg_respond
+	    }
+	}
+
+    }
+    
 }
 
 void regc_cb (struct pjsip_regc_cbparam *param)
