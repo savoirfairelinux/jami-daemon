@@ -43,6 +43,7 @@ void show_advanced_tls_options(GHashTable * properties)
                 GTK_STOCK_SAVE,
                 GTK_RESPONSE_ACCEPT,
                 NULL));
+
     gtk_window_set_policy( GTK_WINDOW(tlsDialog), FALSE, FALSE, FALSE );
     gtk_dialog_set_has_separator(tlsDialog, TRUE);
     gtk_container_set_border_width (GTK_CONTAINER(tlsDialog), 0);
@@ -62,7 +63,9 @@ void show_advanced_tls_options(GHashTable * properties)
                                                     "port, different one from each other\n"));
     GtkWidget * label;                                         
     label = gtk_label_new(NULL);
- 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    gtk_widget_set_size_request(label, 600, 70); 
+    gtk_label_set_line_wrap (GTK_LABEL(label), TRUE);
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     gtk_label_set_markup(GTK_LABEL(label), description);
     gtk_table_attach(GTK_TABLE(table), label, 0, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
             

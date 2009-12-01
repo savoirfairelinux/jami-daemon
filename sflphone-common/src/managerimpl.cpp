@@ -3472,8 +3472,9 @@ ManagerImpl::getAccountList()
         iter = _accountMap.begin ();
 
         while (iter != _accountMap.end()) {
-            if (iter->second != NULL) {
-                //_debug("PUSHING BACK %s", iter->first.c_str());
+
+            if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
+                //_debug("PUSHING BACK %s\n", iter->first.c_str());
                 v.push_back (iter->first.data());
             }
 
@@ -3489,13 +3490,11 @@ ManagerImpl::getAccountList()
             // This account has not been loaded, so we ignore it
             if ( (iter=_accountMap.find (account_order[i])) != _accountMap.end()) {
                 // If the account is valid
-                if (iter->second != NULL) {
+                if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
                     v.push_back (iter->first.data ());
                 }
             }
         }
-
-
     }
 
     return v;

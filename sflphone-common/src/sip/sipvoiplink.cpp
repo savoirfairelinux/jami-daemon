@@ -3114,6 +3114,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /************************************************************************************************/
 
+    _debug("create a new call\n");
+
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
 
@@ -3125,12 +3127,15 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         return false;
     }
 
+
+
     std::string addrToUse, addrSdp ="0.0.0.0";
     pjsip_tpselector *tp;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     if (account != NULL) {
+
         // May use the published address as well
 		addrToUse = account->getLocalAddress ();
 		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
@@ -3138,29 +3143,14 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 		link->init_transport_selector (account->getAccountTransport (), &tp);
     }
     
-	if (addrToUse == "0.0.0.0") {
+    if (addrToUse == "0.0.0.0") {
         link->loadSIPLocalIP (&addrToUse);
     }
 
-	if (addrSdp == "0.0.0.0") {
-		addrSdp = addrToUse;
-	}
-
-    // Have to do some stuff with the SDP
-    // Set the codec map, IP, peer number and so on... for the SIPCall object
-    setCallAudioLocal (call, addrToUse);
-    // We retrieve the remote sdp offer in the rdata struct to begin the negociation
-    call->getLocalSDP()->set_ip_address (addrSdp);
-
-    get_remote_sdp_from_offer (rdata, &r_sdp);
-
-    status = call->getLocalSDP()->receiving_initial_offer (r_sdp);
-
-    if (status!=PJ_SUCCESS) {
-        delete call;
-        call=0;
-        return false;
+    if (addrSdp == "0.0.0.0") {
+        addrSdp = addrToUse;
     }
+
 
     call->setConnectionState (Call::Progressing);
 
@@ -3172,6 +3162,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Notify UI there is an incoming call
 
+    _debug("Add call to account link\n");
     if (Manager::instance().incomingCall (call, account_id)) {
         // Add this call to the callAccountMap in ManagerImpl
         Manager::instance().getAccountLink (account_id)->addCall (call);
@@ -3180,6 +3171,23 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         delete call;
         call = NULL;
         _debug ("UserAgent: Fail to notify UI!");
+        return false;
+    }
+
+    // Have to do some stuff with the SDP
+    // Set the codec map, IP, peer number and so on... for the SIPCall object
+    setCallAudioLocal (call, addrToUse);
+
+    // We retrieve the remote sdp offer in the rdata struct to begin the negociation
+    call->getLocalSDP()->set_ip_address (addrSdp);
+
+    get_remote_sdp_from_offer (rdata, &r_sdp);
+
+    status = call->getLocalSDP()->receiving_initial_offer (r_sdp);
+
+    if (status!=PJ_SUCCESS) {
+        delete call;
+        call=0;
         return false;
     }
 
