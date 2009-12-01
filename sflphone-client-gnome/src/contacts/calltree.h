@@ -44,8 +44,8 @@ enum {
  * Tags used to identify display type in calltree
  */
 typedef enum {
-    DISPLAY_TYPE_CALL_TRANSFER,
     DISPLAY_TYPE_CALL,
+    DISPLAY_TYPE_CALL_TRANSFER,
     DISPLAY_TYPE_SAS,
     DISPLAY_TYPE_STATE_CODE
 } CallDisplayType;

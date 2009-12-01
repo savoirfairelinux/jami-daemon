@@ -339,45 +339,83 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
 
 
 gchar* 
-calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type)
+calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gchar** display_info)
 {
 
     gchar * description;
+    gchar * tmp_info;
 
-    if(c->_state_code == 0) {
+    DEBUG("----------------- calltree_display_call_info -----------------\n");
 
-        if(g_strcmp0("", c->_peer_name) == 0) {
-	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-						  c->_peer_name,
-						  c->_peer_number);
+    switch(display_type) {
+
+    case DISPLAY_TYPE_CALL: 
+
+        DEBUG("display a normal call");
+        if(c->_state_code == 0) {
+
+	    if(g_strcmp0("", c->_peer_name) == 0) {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+						      c->_peer_name,
+						      c->_peer_number);
+	    }
+	    else {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+						      c->_peer_name,
+						      c->_peer_number);
+	    }
+
 	}
 	else {
-	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-						  c->_peer_name,
-						  c->_peer_number);
+	    if(g_strcmp0("", c->_peer_name) == 0) {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+						      c->_peer_number,
+						      c->_peer_name,
+						      c->_state_code_description,
+						      c->_state_code);
+	    }
+	    else {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+						      c->_peer_name,
+						      c->_peer_number,
+						      c->_state_code_description,
+						      c->_state_code);
+	    }
 	}
 
-    }
-    else {
-        if(g_strcmp0("", c->_peer_name) == 0) {
-	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+	break;
+
+
+    case DISPLAY_TYPE_CALL_TRANSFER: 
+
+        DEBUG("display a call transfer")
+
+        if(g_strcmp0("",c->_peer_name) == 0){
+	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
 						  c->_peer_number,
 						  c->_peer_name,
-						  c->_state_code_description,
-						  c->_state_code);
+						  c->_trsft_to);
 	}
 	else {
-	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
 						  c->_peer_name,
 						  c->_peer_number,
-						  c->_state_code_description,
-						  c->_state_code);
+						  c->_trsft_to);
 	}
+
+	DEBUG("Transfer string: %s", description);
+	break;
+
+
+    default : 
+        DEBUG("Not an allowable type of display");
+	break;
+
     }
 
-
-    return description;
-
+    // return description;
+    tmp_info = g_strdup(description);
+    *display_info = tmp_info;
 }
 
 
@@ -629,6 +667,10 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
 			if(c->_state == CALL_STATE_TRANSFERT)
 			{
+
+			    calltree_display_call_info(c, DISPLAY_TYPE_CALL_TRANSFER, &description);
+			    DEBUG("second try: %s", description);
+			    /*
 			      if(g_strcmp0("",c->_peer_name) == 0){
 				description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
 						c->_peer_number,
@@ -641,6 +683,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 						c->_peer_number,
 						c->_trsft_to);
 			      }
+			    */
 			}
 			else
 			{
@@ -800,6 +843,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	gchar * date="";
 	gchar *duration="";
 
+	/*
 	if(c->_state_code == 0) {
 
 	  if(g_strcmp0("", c->_peer_name) == 0) {
@@ -830,6 +874,9 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 				c->_state_code);
 	  }
 	}
+	*/
+
+	calltree_display_call_info(c, DISPLAY_TYPE_CALL, &description);
 
 	gtk_tree_store_prepend (tab->store, &iter, parent);
 
