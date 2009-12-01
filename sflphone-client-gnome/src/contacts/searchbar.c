@@ -36,6 +36,8 @@ GdkPixbuf *missed_pixbuf = NULL;
 
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
+    DEBUG("searchbar_entry_changed");
+
     if (active_calltree == contacts) {
         addressbook_search (entry);
     }
