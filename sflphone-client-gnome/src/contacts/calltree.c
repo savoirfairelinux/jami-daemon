@@ -253,6 +253,7 @@ row_activated(GtkTreeView       *tree_view UNUSED,
 
 }
 
+
 /* Catch cursor-activated signal. That is, when the entry is single clicked */
 	void  
 row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
@@ -335,6 +336,51 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
 	}
 	return FALSE;
 }
+
+
+gchar* 
+calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type)
+{
+
+    gchar * description;
+
+    if(c->_state_code == 0) {
+
+        if(g_strcmp0("", c->_peer_name) == 0) {
+	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+						  c->_peer_name,
+						  c->_peer_number);
+	}
+	else {
+	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+						  c->_peer_name,
+						  c->_peer_number);
+	}
+
+    }
+    else {
+        if(g_strcmp0("", c->_peer_name) == 0) {
+	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+						  c->_peer_number,
+						  c->_peer_name,
+						  c->_state_code_description,
+						  c->_state_code);
+	}
+	else {
+	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+						  c->_peer_name,
+						  c->_peer_number,
+						  c->_state_code_description,
+						  c->_state_code);
+	}
+    }
+
+
+    return description;
+
+}
+
+
 
 /**
  * Reset call tree
