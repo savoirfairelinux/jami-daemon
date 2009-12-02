@@ -466,7 +466,12 @@ namespace sfl {
 
         unsigned int size = adu->getSize(); // size in char
 
-        processDataDecode (spkrData, size, countTime);
+	// _debug("RTP size: %i\n", size);
+
+	// Size of DTMF over RTP
+	if(size > 4) {
+	    processDataDecode (spkrData, size, countTime);
+	}
     }
     
     template <typename D>
