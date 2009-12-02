@@ -1644,13 +1644,16 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
     }
 
     if (!get_dns_server_addresses (&dns_servers)) {
-        _debug ("Error  while fetching DNS information\n");
+        _debug ("Error while fetching DNS information\n");
         return -1;
     }
 
     // Build the nameservers list needed by pjsip
-    scount = dns_servers.size ();
-
+    if ((scount = dns_servers.size ()) <= 0) {
+        _debug("No server detected while fetching DNS information, stop dns resolution\n");
+	return 0;
+    }
+    
     pj_str_t nameservers[scount];
 
     for (i = 0; i<scount; i++) {
@@ -1967,8 +1970,8 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     } else {
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
         if (account->getLocalAddress () != "0.0.0.0") {
-            listeningAddress = account->getLocalAddress ();
-        }
+	    listeningAddress = account->getLocalAddress ();
+	}
 
         listeningPort = account->getLocalPort ();
     }
@@ -2029,8 +2032,9 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 
         if (account == NULL)
             _localUDPTransport = transport;
-        else
-            account->setAccountTransport (transport);
+        else {
+	    account->setAccountTransport (transport);
+	}
     }
 
     _debug ("Transport initialized successfully on %s:%i\n", listeningAddress.c_str (), listeningPort);
