@@ -100,7 +100,6 @@ void Conference::bindParticipant (CallID participant_id)
         while (iter != _participants.end()) {
 
             if (participant_id != (*iter)) {
-
                 Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID (participant_id, *iter);
             }
 

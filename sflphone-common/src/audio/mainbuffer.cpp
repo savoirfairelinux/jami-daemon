@@ -79,7 +79,6 @@ bool MainBuffer::removeCallIDSet (CallID set_id)
 
     if (callid_set != NULL) {
         if (_callIDMap.erase (set_id) != 0) {
-	    // _debug ("          callid set %s erased!", set_id.c_str());
             return true;
         } else {
             _debug ("removeCallIDSet error while removing callid set %s!", set_id.c_str());
@@ -107,7 +106,6 @@ void MainBuffer::removeCallIDfromSet (CallID set_id, CallID call_id)
 
     if (callid_set != NULL) {
         if (callid_set->erase (call_id) != 0) {
-	   // _debug ("          callid %s erased from set %s!", call_id.c_str(), set_id.c_str());
         } else {
             _debug ("removeCallIDfromSet error while removing callid %s from set %s!", call_id.c_str(), set_id.c_str());
         }
@@ -148,7 +146,6 @@ bool MainBuffer::removeRingBuffer (CallID call_id)
 
     if (ring_buffer != NULL) {
         if (_ringBufferMap.erase (call_id) != 0) {
-	  // _debug ("removeRingBuffer ringbuffer %s removed!", call_id.c_str());
             return true;
         } else {
             _debug ("removeRingBuffer error while deleting ringbuffer %s!", call_id.c_str());
@@ -547,27 +544,28 @@ void MainBuffer::stateInfo()
     CallIDMap::iterator iter_call = _callIDMap.begin();
 
     // print each call and bound call ids
-    while(iter_call != _callIDMap.end()) {
 
-        std::string dbg_str("    Call: ");
-	dbg_str.append(std::string(iter_call->first.c_str()));
-	dbg_str.append(std::string("   is bound to: "));
- 
-	CallIDSet* call_id_set = (CallIDSet*)iter_call->second;
+    while (iter_call != _callIDMap.end()) {
 
-	CallIDSet::iterator iter_call_id = call_id_set->begin();
+        std::string dbg_str ("    Call: ");
+        dbg_str.append (std::string (iter_call->first.c_str()));
+        dbg_str.append (std::string ("   is bound to: "));
 
-	while (iter_call_id != call_id_set->end()) {
+        CallIDSet* call_id_set = (CallIDSet*) iter_call->second;
 
-	    dbg_str.append (std::string (*iter_call_id));
-	    dbg_str.append (std::string (", "));
+        CallIDSet::iterator iter_call_id = call_id_set->begin();
 
-	    iter_call_id++;
-	}
+        while (iter_call_id != call_id_set->end()) {
 
-	_debug ("%s\n", dbg_str.c_str());
+            dbg_str.append (std::string (*iter_call_id));
+            dbg_str.append (std::string (", "));
 
-	iter_call++;
+            iter_call_id++;
+        }
+
+        _debug ("%s\n", dbg_str.c_str());
+
+        iter_call++;
     }
 
     // Print ringbuffers ids and readpointers
@@ -575,37 +573,36 @@ void MainBuffer::stateInfo()
 
     while (iter_buffer != _ringBufferMap.end()) {
 
-        RingBuffer* rbuffer = (RingBuffer*)iter_buffer->second;
-	ReadPointer* rpointer = NULL;
+        RingBuffer* rbuffer = (RingBuffer*) iter_buffer->second;
+        ReadPointer* rpointer = NULL;
 
         std::string dbg_str ("    Buffer: ");
 
         dbg_str.append (std::string (iter_buffer->first.c_str()));
         dbg_str.append (std::string ("   as read pointer: "));
 
-	if(rbuffer)
-	    rpointer = rbuffer->getReadPointerList();
+        if (rbuffer)
+            rpointer = rbuffer->getReadPointerList();
 
-	if(rpointer) {
+        if (rpointer) {
 
-	    ReadPointer::iterator iter_pointer = rpointer->begin();
-	    
-	    while(iter_pointer != rpointer->end()) {
+            ReadPointer::iterator iter_pointer = rpointer->begin();
 
-	        dbg_str.append (string (iter_pointer->first.c_str()));
+            while (iter_pointer != rpointer->end()) {
+
+                dbg_str.append (string (iter_pointer->first.c_str()));
                 dbg_str.append (string (", "));
 
+                iter_pointer++;
+            }
+        }
 
-	        iter_pointer++;
-	    }
-	}
-
-	_debug ("%s\n", dbg_str.c_str());
+        _debug ("%s\n", dbg_str.c_str());
 
         iter_buffer++;
     }
 
 
 
-    
+
 }

@@ -1246,8 +1246,8 @@ ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id2)
 
     // switchCall(conf->getConfID());
 
-    if(_audiodriver)
-      _audiodriver->getMainBuffer()->stateInfo();
+    if (_audiodriver)
+        _audiodriver->getMainBuffer()->stateInfo();
 
 }
 
@@ -1349,7 +1349,7 @@ ManagerImpl::removeParticipant (const CallID& call_id)
 
     }
 
-     if(_audiodriver)
+    if (_audiodriver)
         _audiodriver->getMainBuffer()->stateInfo();
 
 }
@@ -1496,7 +1496,7 @@ ManagerImpl::addStream (const CallID& call_id)
 
     }
 
-    if(_audiodriver)
+    if (_audiodriver)
         _audiodriver->getMainBuffer()->stateInfo();
 }
 
@@ -1511,7 +1511,7 @@ ManagerImpl::removeStream (const CallID& call_id)
         removeParticipant (call_id);
     }
 
-    if(_audiodriver)
+    if (_audiodriver)
         _audiodriver->getMainBuffer()->stateInfo();
 }
 
@@ -1526,6 +1526,7 @@ ManagerImpl::saveConfig (void)
     _setupLoaded = _config.saveConfigTree (_path.data());
     return _setupLoaded;
 }
+
 
 //THREAD=Main
 bool
