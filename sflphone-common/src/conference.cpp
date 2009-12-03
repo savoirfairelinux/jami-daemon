@@ -100,7 +100,7 @@ void Conference::bindParticipant (CallID participant_id)
 
             if (participant_id != (*iter)) {
 
-	      // _debug ("---- Conference:: bind callid %s with %s in conference add\n", participant_id.c_str(), (*iter).c_str());
+                // _debug ("---- Conference:: bind callid %s with %s in conference add\n", participant_id.c_str(), (*iter).c_str());
                 Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID (participant_id, *iter);
             }
 

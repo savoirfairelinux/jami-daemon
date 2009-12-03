@@ -1246,8 +1246,8 @@ ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id2)
 
     // switchCall(conf->getConfID());
 
-    if(_audiodriver)
-      _audiodriver->getMainBuffer()->stateInfo();
+    if (_audiodriver)
+        _audiodriver->getMainBuffer()->stateInfo();
 
 }
 
@@ -1349,7 +1349,7 @@ ManagerImpl::removeParticipant (const CallID& call_id)
 
     }
 
-     if(_audiodriver)
+    if (_audiodriver)
         _audiodriver->getMainBuffer()->stateInfo();
 
 }
@@ -1498,7 +1498,7 @@ ManagerImpl::addStream (const CallID& call_id)
 
     }
 
-    if(_audiodriver)
+    if (_audiodriver)
         _audiodriver->getMainBuffer()->stateInfo();
 }
 
@@ -1513,7 +1513,7 @@ ManagerImpl::removeStream (const CallID& call_id)
         removeParticipant (call_id);
     }
 
-    if(_audiodriver)
+    if (_audiodriver)
         _audiodriver->getMainBuffer()->stateInfo();
 }
 
@@ -1546,10 +1546,11 @@ ManagerImpl::initRegisterAccounts()
         if (iter->second) {
             iter->second->loadConfig();
 
-	    // TODO: take off this protection by storing localIPAddress using interface name
-	    setConfig(iter->second->getAccountID(), LOCAL_ADDRESS, "0.0.0.0");
+            // TODO: take off this protection by storing localIPAddress using interface name
+            setConfig (iter->second->getAccountID(), LOCAL_ADDRESS, "0.0.0.0");
 
             /* If the account is set as enabled, try to register */
+
             if (iter->second->isEnabled()) {
                 status = iter->second->registerVoIPLink();
 

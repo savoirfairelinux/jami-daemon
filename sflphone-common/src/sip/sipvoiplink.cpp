@@ -682,15 +682,18 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
         call->setPeerNumber (toUri);
 
-		localAddr = account->getLocalAddress ();
-		if (localAddr == "0.0.0.0")
-			loadSIPLocalIP (&localAddr);
+        localAddr = account->getLocalAddress ();
+
+        if (localAddr == "0.0.0.0")
+            loadSIPLocalIP (&localAddr);
+
         setCallAudioLocal (call, localAddr);
 
         // May use the published address as well
-		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
-		if (addrSdp == "0.0.0.0")
-			loadSIPLocalIP (&addrSdp);
+        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();
+
+        if (addrSdp == "0.0.0.0")
+            loadSIPLocalIP (&addrSdp);
 
         try {
             _debug ("Creating new rtp session in newOutgoingCall\n");
@@ -946,7 +949,7 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
         _debug ("! SIP Failure: unable to find local_sdp\n");
         return !PJ_SUCCESS;
     }
-	
+
     // Reinvite only if connected
     // Build the local SDP offer
     status = call->getLocalSDP()->create_initial_offer();
@@ -1460,10 +1463,11 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
             return !PJ_SUCCESS;
         }
 
-		// Set the local address
-		localAddress = account->getLocalAddress ();
+        // Set the local address
+        localAddress = account->getLocalAddress ();
+
         // Set SDP parameters - Set to local or published address
-		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  addrSdp = account->getLocalAddress (); 
+        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  addrSdp = account->getLocalAddress ();
 
         _debug ("new_ip_to_ip_call localAddress: %s\n", localAddress.c_str());
 
@@ -1472,9 +1476,9 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
             loadSIPLocalIP (&localAddress);
         }
 
-		if (addrSdp == "0.0.0.0") {
-			addrSdp = localAddress;
-		}
+        if (addrSdp == "0.0.0.0") {
+            addrSdp = localAddress;
+        }
 
         setCallAudioLocal (call, localAddress);
 
@@ -1649,11 +1653,11 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
     }
 
     // Build the nameservers list needed by pjsip
-    if ((scount = dns_servers.size ()) <= 0) {
-        _debug("No server detected while fetching DNS information, stop dns resolution\n");
-	return 0;
+    if ( (scount = dns_servers.size ()) <= 0) {
+        _debug ("No server detected while fetching DNS information, stop dns resolution\n");
+        return 0;
     }
-    
+
     pj_str_t nameservers[scount];
 
     for (i = 0; i<scount; i++) {
@@ -1970,8 +1974,8 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     } else {
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
         if (account->getLocalAddress () != "0.0.0.0") {
-	    listeningAddress = account->getLocalAddress ();
-	}
+            listeningAddress = account->getLocalAddress ();
+        }
 
         listeningPort = account->getLocalPort ();
     }
@@ -2033,8 +2037,8 @@ int SIPVoIPLink::createUDPServer (AccountID id)
         if (account == NULL)
             _localUDPTransport = transport;
         else {
-	    account->setAccountTransport (transport);
-	}
+            account->setAccountTransport (transport);
+        }
     }
 
     _debug ("Transport initialized successfully on %s:%i\n", listeningAddress.c_str (), listeningPort);
@@ -2856,35 +2860,34 @@ void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
 
 void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
 {
-    _debug("call_on_tsx_changed to state %s\n", transactionStateMap[tsx->state]);
+    _debug ("call_on_tsx_changed to state %s\n", transactionStateMap[tsx->state]);
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
-        pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
+            pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
-    }
-    else if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING) {
+    } else if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING) {
 
-	if (e && e->body.rx_msg.rdata) {
+        if (e && e->body.rx_msg.rdata) {
 
-	    pjsip_tx_data* t_data;
-	    pjsip_rx_data* r_data = e->body.rx_msg.rdata;
+            pjsip_tx_data* t_data;
+            pjsip_rx_data* r_data = e->body.rx_msg.rdata;
 
-	    if(r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
+            if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
 
-	        std::string method_name = "INFO";
-		std::string request =  r_data->msg_info.msg->line.req.method.name.ptr;
+                std::string method_name = "INFO";
+                std::string request =  r_data->msg_info.msg->line.req.method.name.ptr;
 
-		if (request.find (method_name) != (size_t)-1) {
+                if (request.find (method_name) != (size_t)-1) {
 
-		    _debug("%s\n", pjsip_rx_data_get_info(r_data));
+                    _debug ("%s\n", pjsip_rx_data_get_info (r_data));
 
-		    pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
-		  
-		    pjsip_dlg_send_response(inv->dlg, tsx, t_data);
-		}
-	    }
-	}
+                    pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
+
+                    pjsip_dlg_send_response (inv->dlg, tsx, t_data);
+                }
+            }
+        }
     }
 }
 
@@ -3121,7 +3124,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /************************************************************************************************/
 
-    _debug("create a new call\n");
+    _debug ("create a new call\n");
 
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
@@ -3137,6 +3140,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 
     std::string addrToUse, addrSdp ="0.0.0.0";
+
     pjsip_tpselector *tp;
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
@@ -3144,12 +3148,12 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     if (account != NULL) {
 
         // May use the published address as well
-		addrToUse = account->getLocalAddress ();
-		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
-		// Set the appropriate transport to have the right VIA header
-		link->init_transport_selector (account->getAccountTransport (), &tp);
+        addrToUse = account->getLocalAddress ();
+        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();
+        // Set the appropriate transport to have the right VIA header
+        link->init_transport_selector (account->getAccountTransport (), &tp);
     }
-    
+
     if (addrToUse == "0.0.0.0") {
         link->loadSIPLocalIP (&addrToUse);
     }
@@ -3169,7 +3173,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Notify UI there is an incoming call
 
-    _debug("Add call to account link\n");
+    _debug ("Add call to account link\n");
+
     if (Manager::instance().incomingCall (call, account_id)) {
         // Add this call to the callAccountMap in ManagerImpl
         Manager::instance().getAccountLink (account_id)->addCall (call);
@@ -3210,8 +3215,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Specify media capability during invite session creation
     status = pjsip_inv_create_uas (dialog, rdata, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
-	// Explicitly set the transport
-	status = pjsip_dlg_set_transport (dialog, tp);
+
+    // Explicitly set the transport
+    status = pjsip_dlg_set_transport (dialog, tp);
 
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
@@ -3768,7 +3774,7 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP)
         if (account->isStunEnabled ()) {
             // If use Stun server
             callLocalExternAudioPort = account->getStunPort ();
-			//localIP = account->getPublishedAddress ();
+            //localIP = account->getPublishedAddress ();
         }
 
         _debug ("            Setting local ip address: %s\n", localIP.c_str());

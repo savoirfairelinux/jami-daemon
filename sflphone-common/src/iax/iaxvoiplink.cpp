@@ -831,7 +831,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
                 Manager::instance().peerAnsweredCall (id);
 
                 // start audio here?
-		audiolayer->startStream();
+                audiolayer->startStream();
                 audiolayer->flushMain();
             } else {
                 // deja connecté ?
