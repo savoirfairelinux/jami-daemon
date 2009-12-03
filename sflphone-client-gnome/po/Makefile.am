@@ -11,7 +11,8 @@ POFILES=\
      zh_HK/zh_HK.po \
 	 ru/ru.po \
 	 it/it.po \
-	 pt_BR/pt_BR.po
+	 pt_BR/pt_BR.po \
+	 da/da.po
 
 MOFILES=\
 	 fr/fr.mo \
@@ -21,7 +22,8 @@ MOFILES=\
      zh_HK/zh_HK.mo \
 	 ru/ru.mo \
 	 it/it.mo \
-	 pt_BR/pt_BR.mo
+	 pt_BR/pt_BR.mo \
+	 da/da.mo
 
 MSGFMT=msgfmt
 
