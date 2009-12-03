@@ -613,6 +613,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     account->setRegistrationInfo (regc);
 
+    _debug("Sent account registration using transport: %s\n", account->getAccountTransport()->info);
+
     return true;
 }
 
@@ -1339,6 +1341,8 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         return false;
     }
 
+    _debug("Sent invite request using transport: %s\n", account->getAccountTransport()->info);
+
     return true;
 }
 
@@ -2018,7 +2022,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 
     tpmgr = pjsip_endpt_get_tpmgr (_endpt);
 
-    _debug ("number of transport: %i\n", pjsip_tpmgr_get_transport_count (tpmgr));
+    _debug ("Number of transport: %i\n", pjsip_tpmgr_get_transport_count (tpmgr));
 
     pjsip_tpmgr_dump_transports (tpmgr);
 
@@ -3148,6 +3152,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
 		// Set the appropriate transport to have the right VIA header
 		link->init_transport_selector (account->getAccountTransport (), &tp);
+
+		_debug("Answer invite request using transport: %s\n", account->getAccountTransport()->info);
     }
     
     if (addrToUse == "0.0.0.0") {
