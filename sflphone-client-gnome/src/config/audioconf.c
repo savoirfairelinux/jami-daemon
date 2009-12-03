@@ -773,11 +773,8 @@ static void record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSE
     DEBUG("record_path_changed");
 
     gchar* path;
-    // path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
-    // DEBUG("path1 %s", path);
     path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER( chooser ));
     DEBUG("path2 %s", path);
-    // path = g_strndup (path + 6, strlen(path) - 6);
     dbus_set_record_path( path );
 }
 
@@ -785,8 +782,6 @@ GtkWidget* create_audio_configuration()
 {
     // Main widget
     GtkWidget *ret;
-    // Main frames
-    GtkWidget *codecs_conf;
     // Sub boxes
     GtkWidget *box;
     GtkWidget *frame;
@@ -818,41 +813,16 @@ GtkWidget* create_audio_configuration()
     // Box for the ALSA configuration
     gnome_main_section_new (_("ALSA settings"), &alsa_conf);
     gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
-    // gtk_widget_hide( GTK_CONTAINER(alsa_conf) );
     gtk_widget_show( alsa_conf );
     if( SHOW_ALSA_CONF )
     {
         // Box for the ALSA configuration
-        // alsa_conf = gtk_frame_new(_("ALSA configuration"));
-        // gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
         printf("ALSA Created \n");
         alsabox = alsa_box();
         gtk_container_add( GTK_CONTAINER(alsa_conf) , alsabox );
         gtk_widget_hide( alsa_conf );
     }
     
-
-    // Box for the codecs
-    gnome_main_section_new (_("Codecs"), &codecs_conf);
-    gtk_box_pack_start(GTK_BOX(ret), codecs_conf, FALSE, FALSE, 0);
-    gtk_widget_set_size_request(GTK_WIDGET(codecs_conf), -1, 200);
-    gtk_widget_show( codecs_conf );
-    box = codecs_box();
-    gtk_container_add( GTK_CONTAINER(codecs_conf) , box );
-
-    // Box for noise reduction
-    // removed until the functions are implemented
-    
-    /*
-    noise_conf = gtk_frame_new(_("Audio Processing"));
-    gnome_main_section_new (_("Noise reduction"), &noise_conf);
-    gtk_box_pack_start(GTK_BOX(ret), noise_conf, FALSE, FALSE, 0);
-    gtk_widget_show( noise_conf );
-    box = noise_box();
-    gtk_container_add( GTK_CONTAINER(noise_conf) , box );
-    gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
-    */
-
     // Recorded file saving path
     GtkWidget *label;
     GtkWidget *folderChooser;
@@ -909,6 +879,27 @@ GtkWidget* create_audio_configuration()
     else{
       gtk_widget_hide(alsa_conf);
     }
+
+    return ret;
+}
+
+GtkWidget* create_codecs_configuration() {
+
+    // Main widget
+    GtkWidget *ret, *codecs, *box, *frame;
+
+    ret = gtk_vbox_new(FALSE, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
+
+    // Box for the codecs
+    gnome_main_section_new (_("Codecs"), &codecs);
+    gtk_box_pack_start (GTK_BOX(ret), codecs, FALSE, FALSE, 0);
+    gtk_widget_set_size_request (GTK_WIDGET (codecs), -1, 200);
+    gtk_widget_show (codecs);
+    box = codecs_box ();
+    gtk_container_add (GTK_CONTAINER (codecs) , box);
+
+    gtk_widget_show_all(ret);
 
     return ret;
 }

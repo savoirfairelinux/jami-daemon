@@ -1011,7 +1011,7 @@ show_account_window (account_t * a)
 {
 
 	GtkWidget * notebook;
-	GtkWidget * tab; 
+	GtkWidget *tab, *codecs_tab; 
 	gint response;
 	account_t *currentAccount;
 
@@ -1045,6 +1045,11 @@ show_account_window (account_t * a)
 	tab = create_basic_tab(&currentAccount);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+
+	/* Codecs */
+	codecs_tab = create_codecs_configuration ();
+	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), codecs_tab, gtk_label_new(_("Codecs")));
+	gtk_notebook_page_num (GTK_NOTEBOOK (notebook), codecs_tab);
 
 	/* Advanced */
 	advanced_tab = create_advanced_tab(&currentAccount);
