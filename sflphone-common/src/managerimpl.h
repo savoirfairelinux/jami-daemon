@@ -509,18 +509,6 @@ class ManagerImpl {
     std::string getCurrentCodecName(const CallID& id);
 
     /**
-     * Get a list of supported input audio plugin
-     * @return std::vector<std::string> List of names
-     */
-    std::vector< std::string> getInputAudioPluginList(void);
-
-    /**
-     * Get a list of supported output audio plugin
-     * @return std::vector<std::string> List of names
-     */
-    std::vector< std::string> getOutputAudioPluginList(void);
-
-    /**
      * Set input audio plugin
      * @param audioPlugin The audio plugin
      */

@@ -2508,37 +2508,6 @@ std::string ManagerImpl::getCurrentCodecName (const CallID& id) {
 }
 
 /**
- * Get list of supported input audio plugin
- */
-std::vector<std::string>
-ManagerImpl::getInputAudioPluginList (void)
-{
-    std::vector<std::string> v;
-    _debug ("Get input audio plugin list");
-
-    v.push_back ("default");
-    v.push_back ("surround40");
-    v.push_back ("plug:hw");
-
-    return v;
-}
-
-/**
- * Get list of supported output audio plugin
- */
-std::vector<std::string>
-ManagerImpl::getOutputAudioPluginList (void)
-{
-    std::vector<std::string> v;
-    _debug ("Get output audio plugin list");
-
-    v.push_back (PCM_DEFAULT);
-    v.push_back (PCM_DMIX);
-
-    return v;
-}
-
-/**
  * Set input audio plugin
  */
 void

@@ -430,18 +430,25 @@ ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list
 }
 
 // Audio devices related methods
-std::vector< std::string >
-ConfigurationManager::getInputAudioPluginList()
-{
-    _debug ("ConfigurationManager::getInputAudioPluginList received");
-    return Manager::instance().getInputAudioPluginList();
+std::vector<std::string> ConfigurationManager::getInputAudioPluginList() {
+
+	std::vector<std::string> v;
+
+    v.push_back ("default");
+    v.push_back ("surround40");
+    v.push_back ("plug:hw");
+
+    return v;
 }
 
-std::vector< std::string >
-ConfigurationManager::getOutputAudioPluginList()
-{
-    _debug ("ConfigurationManager::getOutputAudioPluginList received");
-    return Manager::instance().getOutputAudioPluginList();
+std::vector<std::string> ConfigurationManager::getOutputAudioPluginList() {
+
+    std::vector<std::string> v;
+
+    v.push_back (PCM_DEFAULT);
+    v.push_back (PCM_DMIX);
+
+    return v;
 }
 
 void
