@@ -502,14 +502,6 @@ class ManagerImpl {
     std::vector< ::std::string > getCodecList( void );
 
     /**
-     * Get the info about one codec
-     * Name / Clock rate / bitrate / bandwidth
-     * @param payload The payload of the codec
-     * @return std::vector<::DBus::string> The information
-     */
-    std::vector< ::std::string > getCodecDetails( const int32_t& payload);
-
-    /**
      * Get current codec name
      * @param call id
      * @return std::string The codec name

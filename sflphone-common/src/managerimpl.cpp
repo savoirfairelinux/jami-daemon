@@ -2376,11 +2376,14 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 void
 ManagerImpl::initAudioCodec (void)
 {
-    _debugInit ("Active Codecs List");
-    // init list of all supported codecs
-    _codecDescriptorMap.init();
-    // if the user never set the codec list, use the default configuration
+    _warn ("Init audio codecs");
 
+    /* Init list of all supported codecs by the application. 
+	 * This is a global list. Every account will inherit it.
+     */
+	_codecDescriptorMap.init();
+
+    // if the user never set the codec list, use the default configuration
     if (getConfigString (AUDIO, "ActiveCodecs") == "") {
         _codecDescriptorMap.setDefaultOrder();
     }
@@ -2392,28 +2395,30 @@ ManagerImpl::initAudioCodec (void)
     }
 }
 
+/*
+ * TODO Set the active codecs list per account
+ */
+void ManagerImpl::setActiveCodecList (const std::vector<  std::string >& list) {
 
-void
-ManagerImpl::setActiveCodecList (const std::vector<  std::string >& list)
-{
-    _debug ("Set active codecs list");
+    _warn ("Set active codecs list");
     _codecDescriptorMap.saveActiveCodecs (list);
     // setConfig
     std::string s = serialize (list);
-    _debug ("Setting codec with payload number %s to the active list", s.c_str());
+    _warn ("Setting codec with payload number %s to the active list", s.c_str());
     setConfig ("Audio", "ActiveCodecs", s);
 }
 
-std::vector<std::string>
-ManagerImpl::retrieveActiveCodecs()
-{
+/*
+ * TODO Retrieve the active codec list per account
+ */
+std::vector<std::string> ManagerImpl::retrieveActiveCodecs() {
+
+	// This property is now set per account basis
     std::string s = getConfigString (AUDIO, "ActiveCodecs");
     return unserialize (s);
 }
 
-std::vector<std::string>
-ManagerImpl::unserialize (std::string s)
-{
+std::vector<std::string> ManagerImpl::unserialize (std::string s) {
 
     std::vector<std::string> list;
     std::string  temp;
@@ -2428,9 +2433,8 @@ ManagerImpl::unserialize (std::string s)
     return list;
 }
 
-std::string
-ManagerImpl::serialize (std::vector<std::string> v)
-{
+std::string ManagerImpl::serialize (std::vector<std::string> v) {
+
     unsigned int i;
     std::string res;
 
@@ -2442,10 +2446,9 @@ ManagerImpl::serialize (std::vector<std::string> v)
 }
 
 
-std::vector <std::string>
-ManagerImpl::getActiveCodecList (void)
-{
-    _debug ("ManagerImpl::getActiveCodecList");
+std::vector <std::string> ManagerImpl::getActiveCodecList (void) {
+
+    _warn ("ManagerImpl::getActiveCodecList");
     std::vector< std::string > v;
     CodecOrder active = _codecDescriptorMap.getActiveCodecs();
     unsigned int i=0;
@@ -2455,7 +2458,7 @@ ManagerImpl::getActiveCodecList (void)
         std::stringstream ss;
         ss << active[i];
         v.push_back ( (ss.str()).data());
-        _debug ("Codec with payload number %s is active", ss.str().data());
+        _warn ("Codec with payload number %s is active", ss.str().data());
         i++;
     }
 
@@ -2465,12 +2468,12 @@ ManagerImpl::getActiveCodecList (void)
 
 /**
  * Send the list of codecs to the client through DBus.
+ * TODO Add the account ID as parameter
  */
-std::vector< std::string >
-ManagerImpl::getCodecList (void)
-{
+std::vector< std::string > ManagerImpl::getCodecList (void) {
+
     std::vector<std::string> list;
-    //CodecMap codecs = _codecDescriptorMap.getCodecMap();
+
     CodecsMap codecs = _codecDescriptorMap.getCodecsMap();
     CodecOrder order = _codecDescriptorMap.getActiveCodecs();
     CodecsMap::iterator iter = codecs.begin();
@@ -2489,30 +2492,7 @@ ManagerImpl::getCodecList (void)
     return list;
 }
 
-std::vector<std::string>
-ManagerImpl::getCodecDetails (const int32_t& payload)
-{
-
-    std::vector<std::string> v;
-    std::stringstream ss;
-
-    v.push_back (_codecDescriptorMap.getCodecName ( (AudioCodecType) payload));
-    ss << _codecDescriptorMap.getSampleRate ( (AudioCodecType) payload);
-    v.push_back ( (ss.str()).data());
-    ss.str ("");
-    ss << _codecDescriptorMap.getBitRate ( (AudioCodecType) payload);
-    v.push_back ( (ss.str()).data());
-    ss.str ("");
-    ss << _codecDescriptorMap.getBandwidthPerCall ( (AudioCodecType) payload);
-    v.push_back ( (ss.str()).data());
-    ss.str ("");
-
-    return v;
-}
-
-std::string
-ManagerImpl::getCurrentCodecName (const CallID& id)
-{
+std::string ManagerImpl::getCurrentCodecName (const CallID& id) {
 
     AccountID accountid = getAccountFromCall (id);
     VoIPLink* link = getAccountLink (accountid);

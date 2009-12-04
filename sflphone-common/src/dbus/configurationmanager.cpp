@@ -409,11 +409,10 @@ ConfigurationManager::getSupportedTlsMethod (void)
     return method;
 }
 
-std::vector< std::string >
-ConfigurationManager::getCodecDetails (const int32_t& payload)
-{
-    _debug ("ConfigurationManager::getCodecDetails received");
-    return Manager::instance().getCodecDetails (payload);
+std::vector<std::string> ConfigurationManager::getCodecDetails (const int32_t& payload) {
+
+    _warn ("ConfigurationManager::getCodecDetails received");
+    return Manager::instance().getCodecDescriptorMap().getCodecSpecifications (payload);
 }
 
 std::vector< std::string >

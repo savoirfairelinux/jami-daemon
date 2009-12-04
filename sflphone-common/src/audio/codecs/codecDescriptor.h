@@ -199,6 +199,14 @@ class CodecDescriptor {
      */
     AudioCodec* instantiateCodec(AudioCodecType payload);
 
+	/**
+	 * For a given codec, return its specification
+	 *
+	 * @param payload	The RTP payload of the codec
+	 * @return std::vector <std::string>	A vector containing codec's name, sample rate, bandwidth and bit rate
+	 */
+	std::vector <std::string> getCodecSpecifications (const int32_t& payload);
+
   private:
 
     /**

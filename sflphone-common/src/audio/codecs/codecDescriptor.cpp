@@ -397,6 +397,35 @@ CodecDescriptor::isCodecLoaded (int payload)
     return false;
 }
 
+std::vector <std::string> CodecDescriptor::getCodecSpecifications (const int32_t& payload) {
+
+	_warn ("Gathering codec specifications for payload %i", payload);
+
+	std::vector<std::string> v;
+    std::stringstream ss;
+
+	// Add the name of the codec
+    v.push_back (getCodecName ( (AudioCodecType) payload));
+
+	// Add the sample rate
+    ss << getSampleRate ( (AudioCodecType) payload);
+    v.push_back ( (ss.str()).data());
+    ss.str ("");
+
+	// Add the bit rate
+    ss << getBitRate ( (AudioCodecType) payload);
+    v.push_back ( (ss.str()).data());
+    ss.str ("");
+
+	// Add the bandwidth information
+    ss << getBandwidthPerCall ( (AudioCodecType) payload);
+    v.push_back ( (ss.str()).data());
+    ss.str ("");
+
+	return v;
+
+}
+
 
 
 
