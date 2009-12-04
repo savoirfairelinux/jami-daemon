@@ -408,6 +408,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         _debug ("In sendRegister: account is null");
         return false;
     }
+    
 
     // Resolve hostname here and keep its
     // IP address for the whole time the
@@ -591,8 +592,19 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     pjsip_tpselector *tp;
 
-    init_transport_selector (account->getAccountTransport (), &tp);
+    init_transport_selector (account->getAccountTransport (), &tp); 
+    
+    // pjsip_regc_set_transport increments transport ref count by one
     status = pjsip_regc_set_transport (regc, tp);
+
+    // decrease transport's ref count
+    pjsip_transport_dec_ref(account->getAccountTransport ());
+
+    _debug("After setting the transport in account registration using transport: %s %s (refcnt=%d)\n",
+	       account->getAccountTransport()->obj_name,
+	       account->getAccountTransport()->info,
+	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to set transport.\n");
@@ -613,7 +625,10 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     account->setRegistrationInfo (regc);
 
-    _debug("Sent account registration using transport: %s\n", account->getAccountTransport()->info);
+    _debug("Sent account registration using transport: %s %s (refcnt=%d)\n",
+	   account->getAccountTransport()->obj_name,
+	   account->getAccountTransport()->info,
+	   (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
 
     return true;
 }
@@ -628,6 +643,11 @@ SIPVoIPLink::sendUnregister (AccountID id)
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
     regc = account->getRegistrationInfo();
+
+    _debug("Sending account unregistration using transport: %s %s (refcnt=%d)\n",
+	   account->getAccountTransport()->obj_name,
+	   account->getAccountTransport()->info,
+	   (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
 
     if (!account->isRegister()) {
         account->setRegistrationState (Unregistered);
@@ -651,6 +671,37 @@ SIPVoIPLink::sendUnregister (AccountID id)
     } else {
         _debug ("UserAgent: regc is null!\n");
         return false;
+    }
+
+    if(account->getAccountTransport()) {
+
+        if(account->getAccountTransport() != _localUDPTransport) {
+
+	  // status = pjsip_transport_dec_ref(account->getAccountTransport());
+	  // status = pjsip_transport_shutdown(account->getAccountTransport());
+	    // status = pjsip_transport_destroy(account->getAccountTransport());
+	    // account->getAccountTransport()->destroy(account->getAccountTransport());
+
+	}
+
+	_debug("Sent account unregistration using transport: %s %s (refcnt=%d)\n",
+	       account->getAccountTransport()->obj_name,
+	       account->getAccountTransport()->info,
+	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+
+	pj_sockaddr *addr = (pj_sockaddr*)&(account->getAccountTransport()->key.rem_addr);
+
+	static char str[PJ_INET6_ADDRSTRLEN];
+	pj_inet_ntop(((const pj_sockaddr*)addr)->addr.sa_family, 
+		     pj_sockaddr_get_addr(addr),
+		     str, sizeof(str));
+	
+    
+	_debug("------------------------------------- KEY: %s:%d\n",
+	       // addr_string(account->getAccountTransport()->key.rem_addr),
+	       str,
+	       pj_sockaddr_get_port((const pj_sockaddr*)&(account->getAccountTransport()->key.rem_addr)));
+
     }
 
     //account->setRegistrationInfo(regc);
@@ -1332,7 +1383,12 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     init_transport_selector (account->getAccountTransport (), &tp);
 
+    // increment transport's ref count by one
     status = pjsip_dlg_set_transport (dialog, tp);
+
+    // decrement transport's ref count
+    pjsip_transport_dec_ref(account->getAccountTransport());
+    
 
     status = pjsip_inv_send_msg (inv, tdata);
 
@@ -1341,7 +1397,10 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         return false;
     }
 
-    _debug("Sent invite request using transport: %s\n", account->getAccountTransport()->info);
+    _debug("Sent invite request using transport: %s %s (refcnt=%d)\n",
+	               account->getAccountTransport()->obj_name,
+		       account->getAccountTransport()->info,
+	               (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
 
     return true;
 }
@@ -1561,7 +1620,11 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         init_transport_selector (account->getAccountTransport(), &tp);
 
+	// set_transport methods increment transport's ref_count
         status = pjsip_dlg_set_transport (dialog, tp);
+
+	// decrement transport's ref count
+	pjsip_transport_dec_ref(account->getAccountTransport());
 
         if (status != PJ_SUCCESS) {
             _debug ("Failed to set the transport for an IP call\n");
@@ -2009,13 +2072,35 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 
     a_name.port = listeningPort;
 
-
     //pj_strdup2 (_pool, &a_name.host, tmpIP);
 
     //a_name.port = (pj_uint16_t) listeningPort;
 
     status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
 
+    if(transport) {
+
+      /*
+    _debug("------------------------------- INITIAL REF COUNT: %s %s (refcnt=%i)\n",
+	   transport->obj_name,
+	   transport->info,
+	   (int)pj_atomic_get(transport->ref_cnt));
+
+
+    pj_sockaddr *addr = (pj_sockaddr*)&(transport->key.rem_addr);
+
+    static char str[PJ_INET6_ADDRSTRLEN];
+    pj_inet_ntop(((const pj_sockaddr*)addr)->addr.sa_family, 
+		 pj_sockaddr_get_addr(addr),
+		 str, sizeof(str));
+     
+    
+    _debug("------------------------------------- KEY: %s:%d\n",
+	   // addr_string(account->getAccountTransport()->key.rem_addr),
+	   str,
+	   pj_sockaddr_get_port((const pj_sockaddr*)&(transport->key.rem_addr)));
+      */
+    }
     // Get the transport manager associated with
     // this endpoint
     pjsip_tpmgr * tpmgr = NULL;
@@ -2023,6 +2108,8 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     tpmgr = pjsip_endpt_get_tpmgr (_endpt);
 
     _debug ("Number of transport: %i\n", pjsip_tpmgr_get_transport_count (tpmgr));
+
+    // status = pjsip_transport_register( tpmgr, (pjsip_transport*)transport);
 
     pjsip_tpmgr_dump_transports (tpmgr);
 
@@ -2042,6 +2129,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     }
 
     _debug ("Transport initialized successfully on %s:%i\n", listeningAddress.c_str (), listeningPort);
+
 
     return PJ_SUCCESS;
 }
@@ -2355,6 +2443,38 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     _debug ("UDP Transport successfully created on %s:%i\n", listeningAddress.c_str (), listeningPort);
 
     account->setAccountTransport (transport);
+
+    if(transport) {
+
+    _debug("------------------------------- INITIAL REF COUNT: %s %s (refcnt=%i)\n",
+	   transport->obj_name,
+	   transport->info,
+	   (int)pj_atomic_get(transport->ref_cnt));
+
+
+    pj_sockaddr *addr = (pj_sockaddr*)&(transport->key.rem_addr);
+
+    static char str[PJ_INET6_ADDRSTRLEN];
+    pj_inet_ntop(((const pj_sockaddr*)addr)->addr.sa_family, 
+		 pj_sockaddr_get_addr(addr),
+		 str, sizeof(str));
+    
+    
+    _debug("------------------------------------- KEY: %s:%d\n",
+	   // addr_string(account->getAccountTransport()->key.rem_addr),
+	   str,
+	   pj_sockaddr_get_port((const pj_sockaddr*)&(transport->key.rem_addr)));
+
+    }
+    pjsip_tpmgr * tpmgr = NULL;
+
+    tpmgr = pjsip_endpt_get_tpmgr (_endpt);
+
+    _debug ("Number of transport: %i\n", pjsip_tpmgr_get_transport_count (tpmgr));
+
+    // status = pjsip_transport_register( tpmgr, (pjsip_transport*)transport);
+
+    pjsip_tpmgr_dump_transports (tpmgr);
 
     return PJ_SUCCESS;
 }
@@ -2993,6 +3113,11 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Handle the incoming call invite in this function
     _debug ("UserAgent: Callback on_rx_request is involved! \n");
 
+    _debug("Receiving request using transport: %s %s (refcnt=%d)\n",
+	   rdata->tp_info.transport->obj_name,
+	   rdata->tp_info.transport->info,
+	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
+
     /* First, let's got the username and server name from the invite.
      * We will use them to detect which account is the callee.
      */
@@ -3153,7 +3278,12 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 		// Set the appropriate transport to have the right VIA header
 		link->init_transport_selector (account->getAccountTransport (), &tp);
 
-		_debug("Answer invite request using transport: %s\n", account->getAccountTransport()->info);
+		if(account->getAccountTransport()) {
+		_debug("Answer invite request using transport: %s %s (refcnt=%i)\n",
+		       account->getAccountTransport()->obj_name,
+		       account->getAccountTransport()->info,
+		       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+		}
     }
     
     if (addrToUse == "0.0.0.0") {
@@ -3216,9 +3346,11 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Specify media capability during invite session creation
     status = pjsip_inv_create_uas (dialog, rdata, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
-	// Explicitly set the transport
-	status = pjsip_dlg_set_transport (dialog, tp);
+    // Explicitly set the transport, set_transport methods increment transport's reference counter
+    status = pjsip_dlg_set_transport (dialog, tp);
 
+    // decrement transport's reference counter
+    pjsip_transport_dec_ref(rdata->tp_info.transport);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
@@ -3751,7 +3883,17 @@ void handle_incoming_options (pjsip_rx_data *rdata)
     /* Send response statelessly */
     pjsip_get_response_addr (tdata->pool, rdata, &res_addr);
 
+    _debug("--------------- Before sending option response: %s %s (refcnt=%d)\n",
+	   res_addr.transport->obj_name,
+	   res_addr.transport->info,
+	   (int)pj_atomic_get(res_addr.transport->ref_cnt));
+
     status = pjsip_endpt_send_response (_endpt, &res_addr, tdata, NULL, NULL);
+
+    _debug("--------------- After sending option response: %s %s (refcnt=%d)\n",
+	   res_addr.transport->obj_name,
+	   res_addr.transport->info,
+	   (int)pj_atomic_get(res_addr.transport->ref_cnt));
 
     if (status != PJ_SUCCESS)
         pjsip_tx_data_dec_ref (tdata);
