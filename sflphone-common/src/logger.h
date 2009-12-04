@@ -30,7 +30,7 @@ namespace Logger
 	void setDebugMode(bool);
 };
 
-#define _error(...)	Logger::log(LOG_ERROR, __VA_ARGS__)
+#define _error(...)	Logger::log(LOG_ERR, __VA_ARGS__)
 #define _warn(...)	Logger::log(LOG_WARNING, __VA_ARGS__)
 #define _info(...)	Logger::log(LOG_INFO, __VA_ARGS__)
 #define _debug(...)	Logger::log(LOG_DEBUG, __VA_ARGS__)
