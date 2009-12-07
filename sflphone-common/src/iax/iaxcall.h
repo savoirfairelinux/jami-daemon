@@ -90,7 +90,7 @@ public:
      * @param needles  The format(s) (bitwise) you are looking for to match
      * @return int  The matching format, thus 0 if none matches
      */
-    int getFirstMatchingFormat(int needles);
+    int getFirstMatchingFormat(int needles, AccountID account_id);
 
     // AUDIO
     /** 

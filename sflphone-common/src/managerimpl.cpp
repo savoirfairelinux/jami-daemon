@@ -2383,6 +2383,8 @@ ManagerImpl::initAudioCodec (void)
      */
 	_codecDescriptorMap.init();
 
+	// The accounts are not yet loaded. Move this logic in loadAccount ()
+	/*
     // if the user never set the codec list, use the default configuration
     if (getConfigString (AUDIO, "ActiveCodecs") == "") {
         _codecDescriptorMap.setDefaultOrder();
@@ -2392,7 +2394,7 @@ ManagerImpl::initAudioCodec (void)
     else {
         std::vector<std::string> active_list = retrieveActiveCodecs();
         setActiveCodecList (active_list);
-    }
+    }*/
 }
 
 /*
@@ -2401,10 +2403,13 @@ ManagerImpl::initAudioCodec (void)
 void ManagerImpl::setActiveCodecList (const std::vector<  std::string >& list) {
 
     _warn ("Set active codecs list");
+	// TODO Save the codec list per account
     _codecDescriptorMap.saveActiveCodecs (list);
+
     // setConfig
     std::string s = serialize (list);
     _warn ("Setting codec with payload number %s to the active list", s.c_str());
+	// Set the config per account
     setConfig ("Audio", "ActiveCodecs", s);
 }
 
@@ -2415,6 +2420,7 @@ std::vector<std::string> ManagerImpl::retrieveActiveCodecs() {
 
 	// This property is now set per account basis
     std::string s = getConfigString (AUDIO, "ActiveCodecs");
+	_warn ("ManagerImpl::retrieveActiveCodecs: %s", s.c_str ());
     return unserialize (s);
 }
 
@@ -2443,53 +2449,6 @@ std::string ManagerImpl::serialize (std::vector<std::string> v) {
     }
 
     return res;
-}
-
-
-std::vector <std::string> ManagerImpl::getActiveCodecList (void) {
-
-    _warn ("ManagerImpl::getActiveCodecList");
-    std::vector< std::string > v;
-    CodecOrder active = _codecDescriptorMap.getActiveCodecs();
-    unsigned int i=0;
-    size_t size = active.size();
-
-    while (i<size) {
-        std::stringstream ss;
-        ss << active[i];
-        v.push_back ( (ss.str()).data());
-        _warn ("Codec with payload number %s is active", ss.str().data());
-        i++;
-    }
-
-    return v;
-}
-
-
-/**
- * Send the list of codecs to the client through DBus.
- * TODO Add the account ID as parameter
- */
-std::vector< std::string > ManagerImpl::getCodecList (void) {
-
-    std::vector<std::string> list;
-
-    CodecsMap codecs = _codecDescriptorMap.getCodecsMap();
-    CodecOrder order = _codecDescriptorMap.getActiveCodecs();
-    CodecsMap::iterator iter = codecs.begin();
-
-    while (iter!=codecs.end()) {
-        std::stringstream ss;
-
-        if (iter->second != NULL) {
-            ss << iter->first;
-            list.push_back ( (ss.str()).data());
-        }
-
-        iter++;
-    }
-
-    return list;
 }
 
 std::string ManagerImpl::getCurrentCodecName (const CallID& id) {
@@ -4151,7 +4110,7 @@ ManagerImpl::loadAccountMap()
         }
 
         else {
-            _debug ("Unknown %s param in config file (%s)", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+            _error ("Unknown %s param in config file (%s)", CONFIG_ACCOUNT_TYPE, accountType.c_str());
         }
 
         if (tmpAccount != NULL) {
@@ -4163,18 +4122,6 @@ ManagerImpl::loadAccountMap()
         iter++;
     }
 
-    /*
-    if (_directIpAccount == NULL) {
-        _debug ("Failed to create direct ip calls \"account\"");
-    } else {
-        // Force the options to be loaded
-        // No registration in the sense of
-        // the REGISTER method is performed.
-        _debug ("Succeed to create direct ip calls \"account\"");
-        _directIpAccount->registerVoIPLink();
-    _accountMap[IP2IP_PROFILE] = _directIpAccount;
-    }
-    */
     _debug ("nbAccount loaded %i", nbAccount);
 
     return nbAccount;

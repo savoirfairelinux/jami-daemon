@@ -227,7 +227,7 @@ gchar** dbus_default_codec_list();
  * ConfigurationManager - Get the list of the codecs used for media negociation
  * @return gchar** The list of codecs
  */
-gchar** dbus_get_active_codec_list( void );
+gchar** dbus_get_active_codec_list (gchar *accountID);
 
 /**
  * ConfigurationManager - Set the list of codecs used for media negociation

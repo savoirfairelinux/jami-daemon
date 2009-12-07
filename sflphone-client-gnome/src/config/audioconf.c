@@ -49,26 +49,33 @@ enum {
 /**
  * Fills the tree list with supported codecs
  */
-    void
-preferences_dialog_fill_codec_list()
-{
+void preferences_dialog_fill_codec_list (account_t **a) {
+
     GtkListStore *codecStore;
     GtkTreeIter iter;
+	GQueue *current;
 
     // Get model of view and clear it
-    codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
-    gtk_list_store_clear(codecStore);
+    codecStore = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (codecTreeView)));
+    gtk_list_store_clear (codecStore);
+	if (a) {
+		current = (*a)->codecs;
+	}
+	else {
+		// Failover
+		current = get_system_codec_list ();
+	}
 
     // Insert codecs
     unsigned int i;
-    for(i = 0; i < codec_list_get_size(); i++)
+    for(i = 0; i < codec_list_get_size (); i++)
     {
-        codec_t *c = codec_list_get_nth(i);
-        DEBUG("%s", c->name);
-        if(c)
+        codec_t *c = codec_list_get_nth (i, current);
+        DEBUG ("%s", c->name);
+        if (c)
         {
-            gtk_list_store_append(codecStore, &iter);
-            gtk_list_store_set(codecStore, &iter,
+            gtk_list_store_append (codecStore, &iter);
+            gtk_list_store_set (codecStore, &iter,
                     COLUMN_CODEC_ACTIVE,	c->is_active,									// Active
                     COLUMN_CODEC_NAME,		c->name,										// Name
                     COLUMN_CODEC_FREQUENCY,	g_strdup_printf("%d kHz", c->sample_rate/1000),	// Frequency (kHz)
@@ -369,7 +376,7 @@ select_codec(GtkTreeSelection *selection, GtkTreeModel *model)
  * and in configuration files
  */
     static void
-codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpointer data )
+codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path, gpointer data )
 {
     GtkTreeIter iter;
     GtkTreePath *treePath;
@@ -378,11 +385,15 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     char* name;
     char* srate;
     codec_t* codec;
+	account_t *acc;
 
     // Get path of clicked codec active toggle box
     treePath = gtk_tree_path_new_from_string(path);
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
+    model = gtk_tree_view_get_model (GTK_TREE_VIEW (codecTreeView));
     gtk_tree_model_get_iter(model, &iter, treePath);
+
+	// Retrieve userdata
+	acc = (account_t*) data;
 
     // Get active value and name at iteration
     gtk_tree_model_get(model, &iter,
@@ -420,16 +431,15 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
         codec_set_inactive(codec);
 
     // Perpetuate changes to the deamon
-    codec_list_update_to_daemon();
+    codec_list_update_to_daemon (acc);
 }
 
 /**
  * Move codec in list depending on direction and selected codec and
  * update changes in the daemon list and the configuration files
  */
-    static void
-codec_move(gboolean moveUp, gpointer data)
-{
+static void codec_move (gboolean moveUp, gpointer data) {
+
     GtkTreeIter iter;
     GtkTreeIter *iter2;
     GtkTreeView *treeView;
@@ -437,11 +447,14 @@ codec_move(gboolean moveUp, gpointer data)
     GtkTreeSelection *selection;
     GtkTreePath *treePath;
     gchar *path;
+	account_t *acc;
 
     // Get view, model and selection of codec store
-    treeView = GTK_TREE_VIEW(data);
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeView));
-    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeView));
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView));
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(codecTreeView));
+
+	// Retrieve the user data
+	acc = (account_t*) data;
 
     // Find selected iteration and create a copy
     gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), &model, &iter);
@@ -474,32 +487,30 @@ codec_move(gboolean moveUp, gpointer data)
 
     // Perpetuate changes in codec queue
     if(moveUp)
-        codec_list_move_codec_up(indice);
+        codec_list_move_codec_up (indice, acc->codecs);
     else
-        codec_list_move_codec_down(indice);
+        codec_list_move_codec_down (indice, acc->codecs);
 
     // Perpetuate changes to the deamon
-    codec_list_update_to_daemon();
+    codec_list_update_to_daemon (acc);
 }
 
 /**
  * Called from move up codec button signal
  */
-    static void
-codec_move_up(GtkButton *button UNUSED, gpointer data)
-{
+static void codec_move_up (GtkButton *button UNUSED, gpointer data) {
+
     // Change tree view ordering and get indice changed
-    codec_move(TRUE, data);
+    codec_move (TRUE, data);
 }
 
 /**
  * Called from move down codec button signal
  */
-    static void
-codec_move_down(GtkButton *button UNUSED, gpointer data)
-{
+static void codec_move_down(GtkButton *button UNUSED, gpointer data) {
+	
     // Change tree view ordering and get indice changed
-    codec_move(FALSE, data);
+    codec_move (FALSE, data);
 }
 
     int
@@ -528,7 +539,7 @@ get_ringtone_choice( void )
 }
 
 
-GtkWidget* codecs_box()
+GtkWidget* codecs_box (account_t **a)
 {
     GtkWidget *ret;
     GtkWidget *scrolledWindow;
@@ -553,7 +564,7 @@ GtkWidget* codecs_box()
             G_TYPE_STRING,		// Frequency
             G_TYPE_STRING,		// Bit rate
             G_TYPE_STRING		// Bandwith
-            );
+			);
 
     // Create codec tree view with list store
     codecTreeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(codecStore));
@@ -603,14 +614,14 @@ GtkWidget* codecs_box()
     codecMoveUpButton = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
     gtk_widget_set_sensitive(GTK_WIDGET(codecMoveUpButton), FALSE);
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveUpButton, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(codecMoveUpButton), "clicked", G_CALLBACK(codec_move_up), codecTreeView);
+    g_signal_connect(G_OBJECT(codecMoveUpButton), "clicked", G_CALLBACK(codec_move_up), a);
 
     codecMoveDownButton = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
     gtk_widget_set_sensitive(GTK_WIDGET(codecMoveDownButton), FALSE);
     gtk_box_pack_start(GTK_BOX(buttonBox), codecMoveDownButton, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(codecMoveDownButton), "clicked", G_CALLBACK(codec_move_down), codecTreeView);
+    g_signal_connect(G_OBJECT(codecMoveDownButton), "clicked", G_CALLBACK(codec_move_down), a);
 
-    preferences_dialog_fill_codec_list();
+    preferences_dialog_fill_codec_list (a);
 
     return ret;
 }
@@ -883,7 +894,7 @@ GtkWidget* create_audio_configuration()
     return ret;
 }
 
-GtkWidget* create_codecs_configuration() {
+GtkWidget* create_codecs_configuration (account_t **a) {
 
     // Main widget
     GtkWidget *ret, *codecs, *box, *frame;
@@ -896,7 +907,7 @@ GtkWidget* create_codecs_configuration() {
     gtk_box_pack_start (GTK_BOX(ret), codecs, FALSE, FALSE, 0);
     gtk_widget_set_size_request (GTK_WIDGET (codecs), -1, 200);
     gtk_widget_show (codecs);
-    box = codecs_box ();
+    box = codecs_box (a);
     gtk_container_add (GTK_CONTAINER (codecs) , box);
 
     gtk_widget_show_all(ret);

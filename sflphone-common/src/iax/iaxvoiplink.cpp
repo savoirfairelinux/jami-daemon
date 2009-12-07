@@ -712,8 +712,8 @@ IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
 
     wait = 0;
     /** @todo Make preference dynamic, and configurable */
-    audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat());
-    audio_format_capability = call->getSupportedFormat();
+    audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat (account->getActiveCodecs ()));
+    audio_format_capability = call->getSupportedFormat (account->getActiveCodecs ());
 
     _debug ("IAX New call: %s", strNum.c_str());
     iax_call (newsession, username.c_str(), username.c_str(), strNum.c_str(), lang, wait, audio_format_preferred, audio_format_capability);
@@ -1109,9 +1109,9 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
                  * l'établissement du codec de transmission */
 
                 // Remote lists its capabilities
-                int format = call->getFirstMatchingFormat (event->ies.capability);
+                int format = call->getFirstMatchingFormat (event->ies.capability, getAccountID ());
                 // Remote asks for preferred codec voiceformat
-                int pref_format = call->getFirstMatchingFormat (event->ies.format);
+                int pref_format = call->getFirstMatchingFormat (event->ies.format, getAccountID ());
 
                 // Priority to remote's suggestion. In case it's a forwarding, no transcoding
                 // will be needed from the server, thus less latency.
@@ -1144,7 +1144,6 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             id = call->getCallId();
             _debug ("IAXVoIPLink::hungup::iaxHandlePrecallEvent");
             Manager::instance().peerHungupCall (id);
-            // terminateOneCall(id);
             removeCall (id);
             break;
 
@@ -1153,7 +1152,6 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             break;
 
         case IAX_IE_MSGCOUNT:
-            //_debug("messssssssssssssssssssssssssssssssssssssssssssssssages");
             break;
 
         default:

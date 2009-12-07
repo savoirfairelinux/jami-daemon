@@ -1252,16 +1252,13 @@ gchar* dbus_get_current_codec_name (const callable_obj_t * c)
     return codecName;
 }
 
-
-
-    gchar**
-dbus_get_active_codec_list()
-{
+gchar** dbus_get_active_codec_list (gchar *accountID) {
 
     gchar ** array;
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_active_codec_list (
             configurationManagerProxy,
+			accountID,
             &array,
             &error);
 

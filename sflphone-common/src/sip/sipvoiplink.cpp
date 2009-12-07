@@ -42,8 +42,7 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <istream>
-
-#define CAN_REINVITE        1
+//#define CAN_REINVITE        1
 
 static char * invitationStateMap[] = {
     (char*) "PJSIP_INV_STATE_NULL",
@@ -698,16 +697,15 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             _debug ("Creating new rtp session in newOutgoingCall");
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
-            _debug ("Failed to create rtp thread from newOutGoingCall");
+            _error ("Failed to create rtp thread from newOutGoingCall");
         }
 
         call->initRecFileName();
 
         _debug ("Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
         // Building the local SDP offer
-        // localAddr = getLocalAddressAssociatedToAccount (account->getAccountID());
         call->getLocalSDP()->set_ip_address (addrSdp);
-        status = call->getLocalSDP()->create_initial_offer();
+        status = call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
         if (status != PJ_SUCCESS) {
             delete call;
@@ -953,7 +951,8 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
 
     // Reinvite only if connected
     // Build the local SDP offer
-    status = call->getLocalSDP()->create_initial_offer();
+	// TODO Restore Re-Invite
+    // status = call->getLocalSDP()->create_initial_offer();
 
     if (status != PJ_SUCCESS)
         return 1;   // !PJ_SUCCESS
@@ -1490,7 +1489,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         _debug ("toUri in new_ip_to_ip call %s", toUri.c_str());
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address (addrSdp);
-        call->getLocalSDP()->create_initial_offer();
+        call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
         try {
             call->getAudioRtp()->initAudioRtpSession (call);
@@ -3191,7 +3190,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     get_remote_sdp_from_offer (rdata, &r_sdp);
 
-    status = call->getLocalSDP()->receiving_initial_offer (r_sdp);
+    status = call->getLocalSDP()->receiving_initial_offer (r_sdp, account->getActiveCodecs ());
 
     if (status!=PJ_SUCCESS) {
         delete call;
@@ -3689,7 +3688,7 @@ void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
 
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
 
-    call->getLocalSDP()->receiving_initial_offer ( (pjmedia_sdp_session*) offer);
+    // call->getLocalSDP()->receiving_initial_offer ( (pjmedia_sdp_session*) offer, account->getActiveCodecs ());
 
     status=pjsip_inv_set_sdp_answer (call->getInvSession(), call->getLocalSDP()->get_local_sdp_session());
 

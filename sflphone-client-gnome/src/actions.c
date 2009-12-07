@@ -172,9 +172,7 @@ static hashtable_free(gpointer key, gpointer value, gpointer user_data)
 }
 
 /** Internal to actions: Fill account list */
-    void
-sflphone_fill_account_list(gboolean toolbarInitialized)
-{
+void sflphone_fill_account_list (void) {
 
     gchar** array;
     gchar** accountID;
@@ -183,7 +181,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 
 	count = current_account_get_message_number ();
 
-    account_list_clear ( );
+    account_list_clear ();
 
     array = (gchar **)dbus_account_list();
     if(array)
@@ -193,6 +191,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
             account_t * a = g_new0(account_t,1);
             a->accountID = g_strdup(*accountID);
             a->credential_information = NULL;
+			// TODO Clean codec list QUEUE
             account_list_add(a);
         }
         g_strfreev (array);
@@ -211,7 +210,6 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
          */
 
         /* Fill the actual array of credentials */
-
         int number_of_credential = dbus_get_number_of_credential(a->accountID);
         if(number_of_credential) {
             a->credential_information = g_ptr_array_new();
@@ -280,8 +278,8 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 	current_account_set_message_number (count);
 }
 
-gboolean sflphone_init()
-{
+gboolean sflphone_init() {
+
     if(!dbus_connect ()){
 
         main_window_error_message(_("Unable to connect to the SFLphone server.\nMake sure the daemon is running."));
@@ -299,11 +297,11 @@ gboolean sflphone_init()
         history = calltab_init(TRUE, HISTORY);
 
         account_list_init ();
-        codec_list_init();
-		conferencelist_init();
+        system_codec_list_init ();
+		conferencelist_init ();
 
         // Fetch the configured accounts
-        sflphone_fill_account_list(FALSE);
+        sflphone_fill_account_list ();
 
         // Fetch the ip2ip profile 
         sflphone_fill_ip2ip_profile();
@@ -1052,60 +1050,86 @@ sflphone_rec_call()
     // DEBUG("sflphone_get_current_codec_name: %s",codname);
 }
 
-/* Internal to action - get the codec list */
-    void
-sflphone_fill_codec_list()
-{
-    codec_list_clear();
+void sflphone_fill_codec_list () {
 
+	guint account_list_size;
+	guint i;
+	account_t *current = NULL;
     gchar** codecs = NULL;
-    codecs = (gchar**)dbus_codec_list();
-    gchar** order = (gchar**)dbus_get_active_codec_list();
-    gchar** details;
-    gchar** pl;
 
-    if (codecs != NULL)
+	// Clear the list of codecs supported by the application.
+	// This is a global list inherited by all accounts
+    system_codec_list_clear ();
+    codecs = (gchar**) dbus_codec_list ();
+    
+	// If no codecs are available, problem ... Application has to quit
+	if (codecs != NULL)
     {
-        for(pl=order; *order; order++)
-        {
-            codec_t * c = g_new0(codec_t, 1);
-            c->_payload = atoi(*order);
-            details = (gchar **)dbus_codec_details(c->_payload);
+		account_list_size = account_list_get_size ();
 
-            //DEBUG("Codec details: %s / %s / %s / %s",details[0],details[1],details[2],details[3]);
+		for (i=0; i<account_list_size; i++)
+		{
+			current = account_list_get_nth (i);
+			if (current) {
+				sflphone_fill_codec_list_per_account (current, codecs);
+			}
+		}
+	}
+	/*
+	if (codec_list_get_size() == 0) {
 
-            c->name = details[0];
-            c->is_active = TRUE;
-            c->sample_rate = atoi(details[1]);
-            c->_bitrate = atof(details[2]);
-            c->_bandwidth = atof(details[3]);
-            codec_list_add(c);
-        }
-
-        for(pl=codecs; *codecs; codecs++)
-	{
-	    details = (gchar **)dbus_codec_details(atoi(*codecs));
-            if(codec_list_get_by_payload((gconstpointer)(size_t)atoi(*codecs))!=NULL){
-                // does nothing - the codec is already in the list, so is active.
-            }
-            else{
-                codec_t* c = g_new0(codec_t, 1);
-                c->_payload = atoi(*codecs);
-                c->name = details[0];
-                c->is_active = FALSE;
-                c->sample_rate = atoi(details[1]);
-                c->_bitrate = atof(details[2]);
-                c->_bandwidth = atof(details[3]);
-                codec_list_add(c);
-            }
-        }
-    }
-    if( codec_list_get_size() == 0) {
-
-        gchar* markup = g_markup_printf_escaped(_("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )") , CODECS_DIR , g_get_home_dir());
-        main_window_error_message( markup );
+		// Error message
+		ERROR ("No audio codecs found");
         dbus_unregister(getpid());
         exit(0);
+    }*/
+}
+
+void sflphone_fill_codec_list_per_account (account_t *account, gchar **system_wide_codecs) {
+
+	gchar **order;
+    gchar** details;
+    gchar** pl;
+	gchar *accountID;
+	GQueue *codeclist;
+
+    order = (gchar**) dbus_get_active_codec_list (account->accountID);
+    codeclist = account->codecs;
+
+	// First clean the list
+	codec_list_clear (&codeclist);	
+
+	for (pl=order; *order; order++)
+    {
+		codec_t * c = g_new0 (codec_t, 1);
+        c->_payload = atoi (*order);
+        details = (gchar **) dbus_codec_details (c->_payload);
+
+        c->name = details[0];
+        c->is_active = TRUE;
+        c->sample_rate = atoi (details[1]);
+        c->_bitrate = atof (details[2]);
+        c->_bandwidth = atof (details[3]);
+        codec_list_add (c, &codeclist);
+	g_print ("sflphone_fill_codec_list_per_account\n");
+    }
+
+	for (pl=system_wide_codecs; *system_wide_codecs; system_wide_codecs++)
+	{
+		details = (gchar **) dbus_codec_details (atoi (*system_wide_codecs));
+		if (codec_list_get_by_payload ((gconstpointer)(size_t) atoi (*system_wide_codecs))!=NULL){
+			// does nothing - the codec is already in the list, so is active.
+        }
+        else{
+			codec_t* c = g_new0 (codec_t, 1);
+            c->_payload = atoi (*system_wide_codecs);
+            c->name = details[0];
+            c->is_active = FALSE;
+            c->sample_rate = atoi (details[1]);
+            c->_bitrate = atof (details[2]);
+            c->_bandwidth = atof (details[3]);
+            codec_list_add (c, &codeclist);
+        }
     }
 }
 

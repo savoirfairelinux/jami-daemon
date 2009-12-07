@@ -496,12 +496,6 @@ class ManagerImpl {
     void deleteAllCredential(const AccountID& accountID);
     
     /**
-     * Get the list of codecs we supports, not ordered
-     * @return The list of the codecs
-     */
-    std::vector< ::std::string > getCodecList( void );
-
-    /**
      * Get current codec name
      * @param call id
      * @return std::string The codec name

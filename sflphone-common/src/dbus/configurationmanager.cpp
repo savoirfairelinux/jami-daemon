@@ -388,12 +388,29 @@ ConfigurationManager::getRingtoneList()
 }
 
 
+/**
+ * Send the list of all codecs loaded to the client through DBus.
+ * Can stay global, as only the active codecs will set per account
+ */
+std::vector<std::string> ConfigurationManager::getCodecList (void) {
 
-std::vector< std::string  >
-ConfigurationManager::getCodecList (void)
-{
-    _debug ("ConfigurationManager::getCodecList received");
-    return Manager::instance().getCodecList();
+    std::vector<std::string> list;
+
+    CodecsMap codecs = Manager::instance ().getCodecDescriptorMap ().getCodecsMap();
+    CodecsMap::iterator iter = codecs.begin();
+
+    while (iter!=codecs.end()) {
+        std::stringstream ss;
+
+        if (iter->second != NULL) {
+            ss << iter->first;
+            list.push_back ( (ss.str()).data());
+        }
+
+        iter++;
+    }
+
+    return list;
 }
 
 std::vector<std::string>
@@ -411,15 +428,34 @@ ConfigurationManager::getSupportedTlsMethod (void)
 
 std::vector<std::string> ConfigurationManager::getCodecDetails (const int32_t& payload) {
 
-    _warn ("ConfigurationManager::getCodecDetails received");
     return Manager::instance().getCodecDescriptorMap().getCodecSpecifications (payload);
 }
 
-std::vector< std::string >
-ConfigurationManager::getActiveCodecList()
-{
-    _debug ("ConfigurationManager::getActiveCodecList received");
-    return Manager::instance().getActiveCodecList();
+std::vector<std::string> ConfigurationManager::getActiveCodecList (const std::string& accountID) {
+
+    _warn ("Send active codec list for account %s", accountID.c_str ());
+
+    std::vector< std::string > v;
+	Account *acc;
+	CodecOrder active;
+    unsigned int i=0;
+	size_t size;
+
+	acc = Manager::instance ().getAccount (accountID);
+	if (acc != NULL) {
+		_warn ("Et un compte, un !");
+		active = acc->getActiveCodecs ();
+		size = active.size();
+		while (i<size) {
+			_warn ("Et un codec, un !");
+			std::stringstream ss;
+			ss << active[i];
+			v.push_back ( (ss.str()).data());
+			i++;
+		}
+	}
+
+    return v;
 }
 
 void

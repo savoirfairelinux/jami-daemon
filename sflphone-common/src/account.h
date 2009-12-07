@@ -207,6 +207,14 @@ class Account{
 
         inline std::string getType( void ) { return _type; }
         inline void setType( std::string type ) { _type = type; }
+	
+		/**
+		 * Accessor to data structures
+		 * @return CodecOrder& The list that reflects the user's choice
+		 */
+		inline CodecOrder& getActiveCodecs() { return _codecOrder; }
+
+		void setActiveCodecs (const std::vector <std::string>& list);
 
     private:
         // copy constructor
@@ -214,6 +222,8 @@ class Account{
 
         // assignment operator
         Account& operator=(const Account& rh);
+
+		void loadAudioCodecs (void);
 
     protected:
         /**
@@ -270,6 +280,11 @@ class Account{
          * This is a protocol Code:Description pair. 
          */
         std::pair<int, std::string> _registrationStateDetailed;
+
+		/**
+		 * Vector containing the order of the codecs
+		 */
+		CodecOrder _codecOrder;
 
 };
 
