@@ -872,11 +872,13 @@ SIPVoIPLink::peerHungup (const CallID& id)
 
     call->getInvSession()->mod_data[getModId() ] = NULL;
 
+
     // Release RTP thread
     if (Manager::instance().isCurrentCall (id)) {
         _debug ("* SIP Info: Stopping AudioRTP for hangup");
         call->getAudioRtp()->stop();
     }
+
 
     terminateOneCall (id);
 
