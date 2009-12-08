@@ -219,7 +219,7 @@ void sflphone_fill_account_list (void) {
         
         int credential_index;
         for(credential_index = 0; credential_index < number_of_credential; credential_index++) {
-            GHashTable * credential_information = dbus_get_credential(a->accountID, credential_index);
+            GHashTable * credential_information = dbus_get_credential (a->accountID, credential_index);
             g_ptr_array_add(a->credential_information, credential_information);
         }
 
@@ -272,6 +272,9 @@ void sflphone_fill_account_list (void) {
         }
         g_free(a->protocol_state_description);
         a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
+
+		// Attach a codec list to each account
+		account_create_codec_list (&a);
     }
 
 	// Set the current account message number
@@ -297,7 +300,7 @@ gboolean sflphone_init() {
         history = calltab_init(TRUE, HISTORY);
 
         account_list_init ();
-        system_codec_list_init ();
+        codec_capabilities_load ();
 		conferencelist_init ();
 
         // Fetch the configured accounts
@@ -307,7 +310,7 @@ gboolean sflphone_init() {
         sflphone_fill_ip2ip_profile();
         
         // Fetch the audio codecs
-        sflphone_fill_codec_list();
+        // sflphone_fill_codec_list();
 
 		// Fetch the conference list
 		// sflphone_fill_conference_list();
@@ -1059,7 +1062,7 @@ void sflphone_fill_codec_list () {
 
 	// Clear the list of codecs supported by the application.
 	// This is a global list inherited by all accounts
-    system_codec_list_clear ();
+    // system_codec_list_clear ();
     codecs = (gchar**) dbus_codec_list ();
     
 	// If no codecs are available, problem ... Application has to quit
@@ -1111,7 +1114,7 @@ void sflphone_fill_codec_list_per_account (account_t *account, gchar **system_wi
         c->_bitrate = atof (details[2]);
         c->_bandwidth = atof (details[3]);
         codec_list_add (c, &codeclist);
-	g_print ("sflphone_fill_codec_list_per_account\n");
+		g_print ("Adding codec %s\n", c->name);
     }
 
 	for (pl=system_wide_codecs; *system_wide_codecs; system_wide_codecs++)
@@ -1131,6 +1134,7 @@ void sflphone_fill_codec_list_per_account (account_t *account, gchar **system_wi
             codec_list_add (c, &codeclist);
         }
     }
+	account->codecs = codeclist; 
 }
 
 void sflphone_fill_call_list (void)

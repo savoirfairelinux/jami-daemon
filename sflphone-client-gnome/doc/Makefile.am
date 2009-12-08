@@ -28,4 +28,4 @@ DOC_FIGURES =	figures/addressbook-button.png \
 				figures/conference.png	 			\
 				figures/conference_detached.png			\
 				figures/conference_attached.png
-DOC_LINGUAS = fr de es it zh_TW zh_HK zh_CN ko pl pt_BR pt ru
+DOC_LINGUAS = fr es

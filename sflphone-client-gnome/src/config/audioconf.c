@@ -60,6 +60,7 @@ void preferences_dialog_fill_codec_list (account_t **a) {
     gtk_list_store_clear (codecStore);
 	if (a) {
 		current = (*a)->codecs;
+		g_print ("%s\n", (*a)->accountID);
 	}
 	else {
 		// Failover
@@ -71,9 +72,9 @@ void preferences_dialog_fill_codec_list (account_t **a) {
     for(i = 0; i < codec_list_get_size (); i++)
     {
         codec_t *c = codec_list_get_nth (i, current);
-        DEBUG ("%s", c->name);
         if (c)
         {
+			DEBUG ("%s", c->name);
             gtk_list_store_append (codecStore, &iter);
             gtk_list_store_set (codecStore, &iter,
                     COLUMN_CODEC_ACTIVE,	c->is_active,									// Active
@@ -425,10 +426,10 @@ codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoin
     gtk_tree_path_free(treePath);
 
     // Modify codec queue to represent change
-    if(active)
-        codec_set_active(codec);
+    if (active)
+        codec_set_active (codec);
     else
-        codec_set_inactive(codec);
+        codec_set_inactive (codec);
 
     // Perpetuate changes to the deamon
     codec_list_update_to_daemon (acc);
@@ -478,7 +479,7 @@ static void codec_move (gboolean moveUp, gpointer data) {
         gtk_list_store_swap(GTK_LIST_STORE(model), &iter, iter2);
 
     // Scroll to new position
-    gtk_tree_view_scroll_to_cell(treeView, treePath, NULL, FALSE, 0, 0);
+    gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (codecTreeView), treePath, NULL, FALSE, 0, 0);
 
     // Free resources
     gtk_tree_path_free(treePath);
@@ -487,9 +488,9 @@ static void codec_move (gboolean moveUp, gpointer data) {
 
     // Perpetuate changes in codec queue
     if(moveUp)
-        codec_list_move_codec_up (indice, acc->codecs);
+        codec_list_move_codec_up (indice);
     else
-        codec_list_move_codec_down (indice, acc->codecs);
+        codec_list_move_codec_down (indice);
 
     // Perpetuate changes to the deamon
     codec_list_update_to_daemon (acc);
