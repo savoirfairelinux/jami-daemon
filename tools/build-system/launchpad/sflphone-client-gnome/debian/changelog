@@ -1,3 +1,162 @@
+sflphone-client-gnome (0.9.7~rc1~ppa1~SYSTEM) SYSTEM; urgency=low
+
+    ** 0.9.7~rc1~ppa1~SYSTEM **
+
+  * [#2462] Set explicitly the transport on incoming call too
+  * [#2462] fix typo
+  * [#2462] Use different address for SDP and call IP
+  * [#2462] Use published address in SIP-SDP
+  * [#2181] Fixed changelog files
+  * [#2181] Updated spec file
+  * [#2402] Fix pointer to int conversion warning (atoi)
+  * [#2402] Remove daemon warnings, make indent
+  * [#2459] Make sure the stream is opened when the call is answered
+  * [#2402] Add conference related picture in documentation
+  * [#2443] Not much ...
+  * [#2399] Fix dialing display problem
+  * [#2450] Fix incoming call already in conference crash
+  * [#2399] Display peer name on the first line and peer number on the
+    second
+  * [#2450] Handle 403 FORBIDDEN when refused
+  * [#2447] Bind offHold/onHold actions to button in gtk client
+  * [#2447] Bind hangup action to button for conference
+  * [#2447] Add conference action in gtk client's ToolBar
+  * [#2381] Disable the password hashing in config file
+  * [#2402] Cleanup
+  * [#2366] Set callback to null when deleting Pulseaudio streams
+  * [#1313] Fix main buffer unit test
+  * [#1313] Fix audio layer unit test
+  * [#2315] Hide pw in security tab, display when editing, sync with
+    basic tab
+  * [#1313] UnitTest change AudioRtpSession for AudioSymetricRtpSession
+    instance
+  * [#2402] Code cleanup
+  * [#2444] Add debug to catch occasional crash when loading client's
+    config
+  * [#2444] Add debug info to catch occasional crash when loading config
+    dialog
+  * [#2402] Restore Call menu translations
+  * [#2403] Use the published address if checked in GUI
+  * [#2442] Add protection test in sdp
+  * [#1841] Reapply pjsip patch concerning DNS SRV resolution
+  * [#2384] Tags incoming call as direct SIP call, if applicable
+  * [#2402] Change the monkey face
+  * [#2315] Enable user to display password in clear text
+  * [#2434] Force optimization level at 2
+  * [#2284] Fix dbus_get_all_ip_interface compilation warnings
+  * [#2431] Popup main window on incoming if applicable
+  * [$2402] Fix simple warnings
+  * [#2402] Fix implicit variable init order in LibraryManagerException
+  * [#2402] Fixing implicit variable initialization warnings in
+    AudioRtpSession
+  * [#2402] Revert atoi change, fixing codec list doubled entries
+  * [#2402] Fix gpointer to gint conversion
+  * [#2402] Fix pointer casting to integer different size warning in
+    codec list
+  * [#2402] Fix warning discarting qualifiers from pointer target
+  * [#2402] Fix gtk tree view assignement from incompatible type warning
+  * [#1669] Fix audio recording folder utf-8 non compatibility issue
+  * [#2414] Clean up debugs
+  * [#2414] Use transport set in iptoip Account and update it frm
+    preference
+  * [#2348] Use macro N_() to mark ui.xml strings as translatable
+  * [#2414] Rename getSipAddress/setSipAddress functions
+  * [#2407] Fix volume controls display
+  * [#2407] Fixes dialpad
+  * [#2383] Set ip to ip config when clicking apply button
+  * [#2404] Update call-to script - Maxime Chambreuil
+  * [#2405] Client handles unknown call in current state as well
+  * [#2383] Add DBUS signal to send IPtoIP local address and port as
+    string
+  * [#2383] Add Ip to IP config change apply call back
+  * Clonflict
+  * [#2402] Code cleanup
+  * [#2383] Do the same for IPtoIP (init localn ip with first in the
+    list)
+  * [#2383] Use first interface in the list if local addresss is not
+    defined
+  * [#2403] Clean up unuseful addresses/ports
+  * [#2403] Use the IP profile SIP port as global SIP port
+  * [#2383] Fix dbus_get_all_ip_interface warnings
+  * [#2383] Take into account sameAsLocal when loading published address
+  * [#2383] Tsake into account sameAsLocal option when saving published
+    address
+  * [#2383] Update local ip address in ip to ip config
+  * [#2383] Save ip 2 ip local port in config
+  * [#2406] Update toolbar at startup
+  * [#2284] Remove redefinition warnings + speex warnings
+  * [#2383] Fix security table in account config
+  * [#2383] Save ip 2 ip network interface parameters in config
+  * [#2403] Restore sip transport selector
+  * [#2383] Fix filling the Localt IP Address on account creation
+  * [#2383] Fix Gtk-Critical when checking STUN
+  * [#2383] Fix reopening account configuration display issue
+  * [#2383] Load IPtoIP local address and port in preference iptoiptab
+  * [#2383] Add LocalAddress and Localport in Preference IpToIp tab
+  * [#2403] Use the address and port associated to the account as often
+    as possible
+  * [#1753] Removed pjsip generated files
+  * [#1753] Removed remaining milenage lib references
+  * [#2383] Add _publishedSameasLocal variable in sipaccount
+  * [#2383] Add PUBLISHED_SAMEAS_LOCAL variable in config
+  * [#2383] Fix stun set active or not when opening config
+  * [#2181] Added RPM 64bits dbus patch
+  * [#2402] Code indentation
+  * [#2313] Force $(HOME).cache directory creation at startup
+  * [#2383] Separate network interface and published address in account
+    config
+  * [#2400] Change dbus service installation path to libdir
+  * [#2382] Move TLS related published address options in security tab
+  * [#2382] Indent accountconfigdialog.c
+  * [#2181] Install libdbus-c++ in $pkglib instead of $lib
+  * [#1753] Remove ILBC code and disable it by default in the configure
+  * [#1753] Remove milenage directory
+  * [#2382] Fix switching interaface instabilities
+  * [#2396] Save local ip in account creation wizard
+  * [#2284] Remove warning on hold
+  * [#2387] Fixes history searching and filtering
+  * [#1215] Add samplerate display in the GUI
+  * [#1663] Voicemail icon reflects voice messages
+  * [#2395] Fix account registration ( specifically with callcentric)
+  * [#2386] Strip "sip:" on incoming call, fixing history call back
+  * [#2181] Updated spec files
+  * [#1215] Display codec name in calltree instead of status bar
+  * [#2390] Move back nbCalls and stopStream higher in refuseCall
+  * [#2392] Fix ringtone during call in IAX
+  * [#2391] Stop audio streams when there is 0 calls only
+  * [#2391] Add debug when call state is not valid
+  * [#2390] Clear returns in IAXvoipLink::sendAudioFromMic() method
+  * [#2380] Fixing IncomingCallNotification not regular
+  * [#2339] Query conference at client startup
+  * [#2339] Working conference querying at startup
+  * [#2339] Add conference in call tree
+  * [#2339] Primitives to query conferences at client startup
+  * [#2320] Add account selection in history
+  * [#2355] Temporary solution: do not delete pointer when removing
+    account
+  * [#2380] Change algorithm in AudioRtp to trigger an
+    IncomingCallNotification
+  * [#2274] Comment sdebug in MainBuffer flush method
+  * [#2274] Add flushMain() in ManagerImpl::addStream
+  * [#2274] Add getBufferID() method in ring buffer
+  * [#2274] Fix warning, comment debug in ringbuffer's flush method
+  * [#2274] Use AudioLayer flushMain() and flushUrgent() in ALSA
+  * [#2274] Clean up unused variable warning
+  * [#2274] Protect minbudffer pointer on flushing
+  * [#2274] Fix playATone method which writing empty buffer in urgent
+    ringbuffer
+  * [#2274] Use audio layer flushUrgent and flushMain in createStreams
+  * [#2274] Use flush audio calls from audiolayer
+  * [#2274] Flush when peer answered call
+  * [#2375] Flush main buffer in iax when answering a call
+  * [#2274] Parse displayname using c++ string method
+  * [#2375] Flush main buffer when off holding calls
+  * [#2375] Flush main buffer mon RTP startup
+  * [#2376] Use now Pulseaudio module-cork-music-on-phone
+  * Updated OSC packaging
+
+ -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Fri, 20 Nov 2009 13:59:02 -0500
+
 sflphone-client-gnome (0.9.7~beta~ppa1~SYSTEM) SYSTEM; urgency=low
 
     ** 0.9.7~beta~ppa1~SYSTEM **
