@@ -413,7 +413,6 @@ ManagerImpl::hangupCall (const CallID& call_id)
     PulseLayer *pulselayer;
     AccountID account_id;
     bool returnValue;
-    AudioLayer *audiolayer;
 
     // store the current call id
     CallID current_call_id = getCurrentCallId();
@@ -424,17 +423,6 @@ ManagerImpl::hangupCall (const CallID& call_id)
     _debug ("    hangupCall: Send DBUS call state change (HUNGUP) for id %s", call_id.c_str());
 
     if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "HUNGUP");
-
-    int nbCalls = getCallList().size();
-
-    audiolayer = getAudioDriver();
-
-    // stop streams
-    if (audiolayer && (nbCalls <= 1)) {
-        _debug ("    hangupCall: stop audio stream, ther is only %i call(s) remaining", nbCalls);
-        audiolayer->stopStream();
-    }
-
 
     if (participToConference (call_id)) {
 
@@ -470,6 +458,16 @@ ManagerImpl::hangupCall (const CallID& call_id)
         returnValue = getAccountLink (account_id)->hangup (call_id);
 
         removeCallAccount (call_id);
+    }
+
+    int nbCalls = getCallList().size();
+
+    AudioLayer *audiolayer = getAudioDriver();
+
+    // stop streams
+    if (audiolayer && (nbCalls <= 1)) {
+        _debug ("    hangupCall: stop audio stream, ther is only %i call(s) remaining", nbCalls);
+        audiolayer->stopStream();
     }
 
     if (_audiodriver->getLayerType() == PULSEAUDIO) {
