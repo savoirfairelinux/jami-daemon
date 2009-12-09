@@ -1855,7 +1855,7 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
         }
     }
 
-    /* Direct IP to IP call */
+   /* Direct IP to IP call */
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
         SIPVoIPLink::instance (AccountNULL)->hangup (call_id);
     }

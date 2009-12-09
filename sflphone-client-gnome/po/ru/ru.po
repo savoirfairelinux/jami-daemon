@@ -8,16 +8,15 @@ msgstr ""
 "Project-Id-Version: SFLphone 0.9.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-12-03 10:22-0500\n"
-"PO-Revision-Date: 2009-10-26 20:46+0000\n"
-"Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
+"PO-Revision-Date: 2009-12-08 20:46+0000\n"
+"Last-Translator: Hussein Abdallah <hussein.abdallah@savoirfairelinux.com>\n"
 "Language-Team: Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
 "10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2009-12-03 15:32+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Generator: \n"
 
 #: ../sflphone-client-gnome/src/accountlist.c:175
 msgid "Registered"
@@ -29,7 +28,7 @@ msgstr "Не зарегистрирован"
 
 #: ../sflphone-client-gnome/src/accountlist.c:181
 msgid "Trying..."
-msgstr "Пытаюсь..."
+msgstr "Подключение..."
 
 #: ../sflphone-client-gnome/src/accountlist.c:184
 #: ../sflphone-client-gnome/src/sflnotify.c:131
@@ -59,15 +58,15 @@ msgstr "Неверный сервер Stun"
 
 #: ../sflphone-client-gnome/src/accountlist.c:202
 msgid "Invalid"
-msgstr "Неверный"
+msgstr "Ошибка"
 
 #: ../sflphone-client-gnome/src/actions.c:98
 msgid "Using account"
-msgstr "Используя учетную запись"
+msgstr "Используется учетная запись"
 
 #: ../sflphone-client-gnome/src/actions.c:104
 msgid "No registered accounts"
-msgstr "У вас нет зарегистрированных аккаунтов"
+msgstr "Нет зарегистрированных учëтных записей"
 
 #: ../sflphone-client-gnome/src/actions.c:285
 msgid ""
@@ -127,11 +126,11 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/mainwindow.c:73
 msgid "There is one call in progress."
-msgstr "Звонок ещё не окончен."
+msgstr "Один текущий разговор."
 
 #: ../sflphone-client-gnome/src/mainwindow.c:77
 msgid "There are calls in progress."
-msgstr "Несколько звонков ещё не окончены."
+msgstr "Несколько текущих разговоров."
 
 #: ../sflphone-client-gnome/src/mainwindow.c:86
 msgid "Do you still want to quit?"
@@ -144,11 +143,11 @@ msgstr "Ошибка SFLphone."
 #: ../sflphone-client-gnome/src/mainwindow.c:392
 #, c-format
 msgid "ZRTP is not supported by peer %s\n"
-msgstr "не поддерживается устройством %s\n"
+msgstr "ZRTP не поддерживается устройством %s\n"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:393
 msgid "Secure Communication Unavailable"
-msgstr "Зашифрованная связь недоступна."
+msgstr "Зашифрованная связь недоступна"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:394
 #: ../sflphone-client-gnome/src/mainwindow.c:416
@@ -213,19 +212,19 @@ msgstr[2] "%d голосовые письма"
 #: ../sflphone-client-gnome/src/sflnotify.c:111
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
-msgstr "Звонок с аккаунтом %s <i>%s</i>"
+msgstr "Звонок с учëтной записью %s <i>%s</i>"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:115
 msgid "Current account"
-msgstr "Нынешний аккаунт"
+msgstr "Нынешняя учëтная запись"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:130
 msgid "You have no accounts set up"
-msgstr "Вы не настроили ни одного аккаунта"
+msgstr "Вы не настроили ни одной учëтной записи"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:147
 msgid "You have no registered accounts"
-msgstr "У вас нет зарегистрированных аккаунтов"
+msgstr "У вас нет зарегистрированных учëтных записей"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:190
 #, c-format
@@ -271,9 +270,9 @@ msgstr "SFLphone"
 #, c-format
 msgid "%i account configured"
 msgid_plural "%i accounts configured"
-msgstr[0] "%i аккаунт настроен."
-msgstr[1] "%i аккаунтов настроены"
-msgstr[2] "%i аккаунтов настроены"
+msgstr[0] "Настроена одна учëтная запись"
+msgstr[1] "Настроены %i учëтные записи"
+msgstr[2] "Настроены %i учëтные записи"
 
 #: ../sflphone-client-gnome/src/toolbar.c:38
 #: ../sflphone-client-gnome/src/uimanager.c:693
@@ -283,7 +282,7 @@ msgstr "Автоответчик"
 
 #: ../sflphone-client-gnome/src/uimanager.c:117
 msgid "No address book selected"
-msgstr "Адресная книга"
+msgstr "Нет выбранных адресных книг"
 
 #: ../sflphone-client-gnome/src/uimanager.c:137
 #: ../sflphone-client-gnome/src/uimanager.c:756
@@ -292,7 +291,7 @@ msgstr "Адресная книга"
 
 #: ../sflphone-client-gnome/src/uimanager.c:279
 msgid "Voicemail (%i)"
-msgstr "Автоответчик"
+msgstr "Автоответчик (%i)"
 
 #: ../sflphone-client-gnome/src/uimanager.c:342
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -313,7 +312,7 @@ msgstr "_Новый звонок"
 
 #: ../sflphone-client-gnome/src/uimanager.c:720
 msgid "Place a new call"
-msgstr ""
+msgstr "Позвонить"
 
 #: ../sflphone-client-gnome/src/uimanager.c:721
 #: ../sflphone-client-gnome/src/uimanager.c:979
@@ -322,7 +321,7 @@ msgstr "_Взять трубку"
 
 #: ../sflphone-client-gnome/src/uimanager.c:721
 msgid "Answer the call"
-msgstr ""
+msgstr "Ответить"
 
 #: ../sflphone-client-gnome/src/uimanager.c:722
 #: ../sflphone-client-gnome/src/uimanager.c:991
@@ -332,7 +331,7 @@ msgstr "_Положить трубку"
 
 #: ../sflphone-client-gnome/src/uimanager.c:722
 msgid "Finish the call"
-msgstr ""
+msgstr "Закончить звонок"
 
 #: ../sflphone-client-gnome/src/uimanager.c:723
 msgid "O_n hold"
@@ -340,15 +339,15 @@ msgstr "_Удержать звонок"
 
 #: ../sflphone-client-gnome/src/uimanager.c:723
 msgid "Place the call on hold"
-msgstr ""
+msgstr "Удержать звонок"
 
 #: ../sflphone-client-gnome/src/uimanager.c:724
 msgid "O_ff hold"
-msgstr ""
+msgstr "_Возобновить разговор"
 
 #: ../sflphone-client-gnome/src/uimanager.c:724
 msgid "Place the call off hold"
-msgstr ""
+msgstr "Возобновить разговор"
 
 #: ../sflphone-client-gnome/src/uimanager.c:725
 #: ../sflphone-client-gnome/src/uimanager.c:1015
@@ -357,15 +356,15 @@ msgstr "Записать"
 
 #: ../sflphone-client-gnome/src/uimanager.c:725
 msgid "Record the current conversation"
-msgstr ""
+msgstr "Записать переговор"
 
 #: ../sflphone-client-gnome/src/uimanager.c:726
 msgid "Configuration _Assistant"
-msgstr "Файл конфигурации"
+msgstr "Мастер настройки"
 
 #: ../sflphone-client-gnome/src/uimanager.c:726
 msgid "Run the configuration assistant"
-msgstr "Ошибка конфигурации Stun"
+msgstr "Запустить мастер настройки"
 
 #: ../sflphone-client-gnome/src/uimanager.c:727
 msgid "Call your voicemail"
@@ -373,11 +372,11 @@ msgstr "%d голосовое письмо"
 
 #: ../sflphone-client-gnome/src/uimanager.c:728
 msgid "_Close"
-msgstr ""
+msgstr "_Закрыть"
 
 #: ../sflphone-client-gnome/src/uimanager.c:728
 msgid "Minimize to system tray"
-msgstr ""
+msgstr "Уменьшить в значок"
 
 #: ../sflphone-client-gnome/src/uimanager.c:729
 msgid "_Quit"
@@ -385,7 +384,7 @@ msgstr "_Правка"
 
 #: ../sflphone-client-gnome/src/uimanager.c:729
 msgid "Quit the program"
-msgstr ""
+msgstr "Выйти из программы"
 
 #: ../sflphone-client-gnome/src/uimanager.c:732
 msgid "_Edit"
@@ -393,19 +392,19 @@ msgstr "_Правка"
 
 #: ../sflphone-client-gnome/src/uimanager.c:733
 msgid "_Copy"
-msgstr ""
+msgstr "_Копировать"
 
 #: ../sflphone-client-gnome/src/uimanager.c:733
 msgid "Copy the selection"
-msgstr "Удалить выбранную учетную запись"
+msgstr "Копировать видимое"
 
 #: ../sflphone-client-gnome/src/uimanager.c:734
 msgid "_Paste"
-msgstr ""
+msgstr "_Вставить"
 
 #: ../sflphone-client-gnome/src/uimanager.c:734
 msgid "Paste the clipboard"
-msgstr ""
+msgstr "Вставить из буфера обмена"
 
 #: ../sflphone-client-gnome/src/uimanager.c:735
 msgid "Clear _history"
@@ -417,19 +416,19 @@ msgstr "Очистить историю"
 
 #: ../sflphone-client-gnome/src/uimanager.c:736
 msgid "_Accounts"
-msgstr "_Аккаунты"
+msgstr "_Учëтные записи"
 
 #: ../sflphone-client-gnome/src/uimanager.c:736
 msgid "Edit your accounts"
-msgstr "Нынешний аккаунт"
+msgstr "Изменить ваши учëтные записи"
 
 #: ../sflphone-client-gnome/src/uimanager.c:737
 msgid "_Preferences"
-msgstr "Предпочтения"
+msgstr "_Предпочтения"
 
 #: ../sflphone-client-gnome/src/uimanager.c:737
 msgid "Change your preferences"
-msgstr ""
+msgstr "Изменить ваши предпочтении"
 
 #: ../sflphone-client-gnome/src/uimanager.c:740
 msgid "_View"
@@ -445,7 +444,7 @@ msgstr "Продолжить"
 
 #: ../sflphone-client-gnome/src/uimanager.c:744
 msgid "Open the manual"
-msgstr ""
+msgstr "Открыть справочник "
 
 #: ../sflphone-client-gnome/src/uimanager.c:745
 msgid "About this application"
@@ -457,23 +456,23 @@ msgstr "Переслать звонок на другой номер"
 
 #: ../sflphone-client-gnome/src/uimanager.c:751
 msgid "Transfer the call"
-msgstr "Передать : "
+msgstr "Переслать звонок на другой номер"
 
 #: ../sflphone-client-gnome/src/uimanager.c:752
 msgid "_Show toolbar"
-msgstr ""
+msgstr "Показать панель инструментов"
 
 #: ../sflphone-client-gnome/src/uimanager.c:752
 msgid "Show the toolbar"
-msgstr ""
+msgstr "Показать панель инструментов"
 
 #: ../sflphone-client-gnome/src/uimanager.c:753
 msgid "_Dialpad"
-msgstr "Отключен"
+msgstr "Панель набора номера"
 
 #: ../sflphone-client-gnome/src/uimanager.c:753
 msgid "Show the dialpad"
-msgstr ""
+msgstr "Показать панель набора номера"
 
 #: ../sflphone-client-gnome/src/uimanager.c:754
 msgid "_Volume controls"
@@ -489,7 +488,7 @@ msgstr "Журнал"
 
 #: ../sflphone-client-gnome/src/uimanager.c:755
 msgid "Calls history"
-msgstr "История звонков"
+msgstr "Журнал звонков"
 
 #: ../sflphone-client-gnome/src/uimanager.c:756
 msgid "_Address book"
@@ -552,7 +551,7 @@ msgstr "Па_роль"
 #: ../sflphone-client-gnome/src/config/assistant.c:363
 #: ../sflphone-client-gnome/src/config/assistant.c:473
 msgid "Show password"
-msgstr "Пароль"
+msgstr "Показать пароль"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:274
 #: ../sflphone-client-gnome/src/config/assistant.c:368
@@ -589,7 +588,7 @@ msgstr "Безопасность"
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:687
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:333
 msgid "Use TLS transport (sips)"
-msgstr "Имя для аутентификации"
+msgstr "Использовать TLS-транспорт (sips)"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:693
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:338
@@ -607,7 +606,7 @@ msgstr "Регистрация"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:800
 msgid "Registration expire"
-msgstr "Истек срок регистрации"
+msgstr "Срок истечения регистрации"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:809
 msgid "_Comply with RFC 3263"
@@ -616,7 +615,7 @@ msgstr "_Соотвествует RFC 3263"
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:816
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:234
 msgid "Network Interface"
-msgstr "Сеть недоступна"
+msgstr "Сетевые настройки"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:830
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:249
@@ -631,7 +630,7 @@ msgstr "Локальный порт"
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:893
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:928
 msgid "Published address"
-msgstr "издаваемый адрес"
+msgstr "Сетевые настройки для Интернета"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:899
 msgid "Using STUN"
@@ -651,11 +650,11 @@ msgstr "Настроить видимый адрес и порт :"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:936
 msgid "Published port"
-msgstr "издаваемый порт"
+msgstr "Публичный порт"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1027
 msgid "Account settings"
-msgstr "Настройки аккаунта"
+msgstr "Настройки учëтной записи"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1046
 msgid "Basic"
@@ -683,18 +682,18 @@ msgstr "Учётные записи"
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:484
 msgid "Configured Accounts"
-msgstr "Нынешний аккаунт"
+msgstr "Настроенные учëтные записи"
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:501
 msgid "There is %d active account"
 msgid_plural "There are %d active accounts"
-msgstr[0] " действующий аккаунт"
-msgstr[1] " действующий аккаунт"
-msgstr[2] " действующий аккаунт"
+msgstr[0] "Одна действующая учëтная запись"
+msgstr[1] "%d действующих учëтных записей"
+msgstr[2] "%d действующих учëтных записей"
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:507
 msgid "You have no active account"
-msgstr "У вас нет активного аккаунта"
+msgstr "У вас нет активной учëтной записи"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:306
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:556
@@ -707,7 +706,7 @@ msgstr "_Использовать адресную книгу Evolution"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:319
 msgid "Download limit :"
-msgstr "Ограничение скорости скачивания:"
+msgstr "Показывать не более "
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:327
 msgid "cards"
@@ -719,7 +718,7 @@ msgstr "_Показать фотографию контакта (если име
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:341
 msgid "Fields from Evolution's address books"
-msgstr "Исполоьзовать следующие поля из адресной книги Evolution:"
+msgstr "Исполоьзовать следующие номера из адресной книги Evolution"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:345
 msgid "_Work"
@@ -756,8 +755,8 @@ msgid ""
 "You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
 msgstr ""
-"Вы можете в любое время проверить статус регистрации или изменитьпараметры  "
-"ваших аккаунтов в меню Правка / Аккаунты."
+"Вы можете в любое время проверить статус регистрации или изменить параметры  "
+"ваших учëтных записей в меню Правка / Учëтные записи"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:80
 msgid "Alias"
@@ -773,7 +772,7 @@ msgstr "Пользователь"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:92
 msgid "Security: "
-msgstr "Безопасность "
+msgstr "Безопасность:"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:94
 msgid "SRTP/ZRTP draft-zimmermann"
@@ -793,7 +792,7 @@ msgstr "Добро пожаловать в SFLphone!"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:256
 msgid "This installation wizard will help you configure an account."
-msgstr "Этот мастер установки поможет вам настроить ваш аккаунт."
+msgstr "Этот мастер установки поможет вам настроить вашу учëтную запись"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:270
 msgid "VoIP Protocols"
@@ -801,7 +800,7 @@ msgstr "VoIP-протоколы"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:270
 msgid "Select an account type"
-msgstr "Выберите тип аккаунта"
+msgstr "Выберите тип учëтной записи"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:272
 msgid "SIP (Session Initiation Protocol)"
@@ -813,7 +812,7 @@ msgstr "IAX2 (InterAsterix Exchange)"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:288
 msgid "Account"
-msgstr "Аккаунты"
+msgstr "Учëтная запись"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:288
 msgid "Please select one of the following options"
@@ -821,15 +820,15 @@ msgstr "Введите пожалуйста следующие данные"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:290
 msgid "Create a free SIP/IAX2 account on sflphone.org"
-msgstr "Создать бесплатный SIP/IAX2-аккаунт на sflphone.org"
+msgstr "Создать бесплатную SIP/IAX2-учëтную запись на sflphone.org"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:292
 msgid "Register an existing SIP or IAX2 account"
-msgstr "Зарегистрировать существующий SIP или IAX2 аккаунт"
+msgstr "Зарегистрировать существующею SIP или IAX2 учëтную запись"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:306
 msgid "SIP account settings"
-msgstr "Настройка SIP-аккаунта"
+msgstr "Настройка учëтной записи SIP"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:306
 #: ../sflphone-client-gnome/src/config/assistant.c:419
@@ -855,7 +854,7 @@ msgstr "_Адрес эл. почты"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:419
 msgid "IAX2 account settings"
-msgstr "Настройка IAX2-аккаунта"
+msgstr "Настройка учëтной записи IAX2"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:496
 msgid "Network Address Translation (NAT)"
@@ -875,7 +874,7 @@ msgstr "_STUN-сервер"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:526
 msgid "Account Registration"
-msgstr "Регистрация аккаунта"
+msgstr "Регистрация учëтной записи"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:526
 msgid "Congratulations!"
@@ -1000,7 +999,7 @@ msgid ""
 "sip URI such as <b>sip:remotepeer</b>. The settings you define here will "
 "also be used if no account can be matched to an incoming or outgoing call."
 msgstr ""
-"Этот профиль используется когда бы хотите достичь удалëнное устройство "
+"Этот профиль используется когда вы хотите достичь удалëнное устройство "
 "просто набрав SIP URI (адрес) типа <b>sip:удалëнное устройство</b>. Эти "
 "настройки так-же будут использованы если не будет подходящего аккаунта для "
 "входящего или выходящего звонка."
@@ -1015,7 +1014,7 @@ msgstr "Включить звонок"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:450
 msgid "System Tray Icon"
-msgstr "System Tray Icon"
+msgstr "Поведение окна SFLPhone"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:453
 msgid "_Popup main window on incoming call"
