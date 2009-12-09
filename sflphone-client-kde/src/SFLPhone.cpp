@@ -31,7 +31,6 @@
 #include <QtGui/QStatusBar>
 #include <QtGui/QCursor>
 #include <KActionCollection>
-#include <KNotification>
 
 #include "sflphone_const.h"
 #include "instance_interface_singleton.h"
@@ -43,9 +42,7 @@ SFLPhone::SFLPhone(QWidget *parent)
       initialized_(false),
       view(new SFLPhoneView(this))
 {
-  KNotification *notification = new KNotification( "contact online" );
-  notification->setText( "text" );
-  notification->sendEvent();
+    setupActions();
 } 
 
 SFLPhone::~SFLPhone()
@@ -187,6 +184,7 @@ void SFLPhone::setupActions()
 	{
 		QDir dir;
 		dir.cdUp();
+        dir.cdUp();
 		dir.cd("data");
 		rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
 	}

@@ -23,14 +23,14 @@ SFLPhoneApplication::SFLPhoneApplication()
   // Install a message handler, so KMESS_ASSERT won't do a exit(1) or abort()
   // It makes debugging output on Windows disappear, so don't use it there
 
-// test notif
+  // Start remaining initialisation
+  initializePaths();
+  initializeMainWindow();
+
+  // test notif
   KNotification *notification = new KNotification( "contact online" );
   notification->setText( "text" );
   notification->sendEvent();
-
-  // Start remaining initialisation
-//  initializePaths();
-//  initializeMainWindow();
 }
 
 
@@ -90,9 +90,10 @@ void SFLPhoneApplication::initializeMainWindow()
 
   // Initialize KApplication
   //setTopWidget( sflphoneWindow_ );
+  sflphoneWindow_->show();
 
   // We found session data for the Contact List, to restore it
-  if( kapp->isSessionRestored() && restoredWindow != -1 )
+  /*if( kapp->isSessionRestored() && restoredWindow != -1 )
   {
     sflphoneWindow_->restore( restoredWindow, false );
   }
@@ -102,7 +103,7 @@ void SFLPhoneApplication::initializeMainWindow()
     {
       sflphoneWindow_->show();
     }
-  }
+  }*/
 }
 
 
@@ -113,9 +114,10 @@ void SFLPhoneApplication::initializeMainWindow()
 void SFLPhoneApplication::initializePaths()
 {
   // Add compile time paths as fallback
-  //KGlobal::dirs()       -> addPrefix( SFLPHONE_PREFIX );
-  //KIconLoader::global() -> addAppDir( SFLPHONE_PREFIX "/share" );
+  KGlobal::dirs()       -> addPrefix( QString("/home/mlhamel/Documents/sflphone/sflphone-client-kde/data/") );
+  KIconLoader::global() -> addAppDir( QString("/home/mlhamel/Documents/sflphone/sflphone-client-kde/data/") );
 
+  qDebug() << "KGlobal::dirs" << QString(DATA_INSTALL_DIR);
   // Test whether the prefix is correct.
   if( KGlobal::dirs()->findResource( "appdata", "icons/hi128-apps-sflphone-client-kde.png" ).isNull() )
   {

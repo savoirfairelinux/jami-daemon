@@ -7,6 +7,7 @@
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
 #include <klocale.h>
+#include <KNotification>
 
 #include "AccountWizard.h"
 #include "instance_interface_singleton.h"
@@ -48,14 +49,19 @@ int main(int argc, char **argv)
 		//options.add("+[URL]", ki18n( "Document to open" ));
 		KCmdLineArgs::addCmdLineOptions(options);
 		
-                SFLPhoneApplication app;
-                return app.exec();
-
-		//configuration dbus
-		registerCommTypes();
+        //configuration dbus
+        registerCommTypes();
 
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
+
+        SFLPhoneApplication app;
+
+        KNotification *notification = new KNotification( "contact online" );
+        notification->setText( "text" );
+        notification->sendEvent();
+
+        return app.exec();
 		
 	}
 	catch(const char * msg)

@@ -37,7 +37,7 @@ CallList::CallList(QObject * parent)
 	{
 		calls->append(Call::buildExistingCall(callList[i]));
 	}
-	MapStringString historyMap = configurationManager.getHistory().value();
+    MapStringString historyMap = configurationManager.getHistory().value();
 	qDebug() << "Call History = " << historyMap;
 	QMapIterator<QString, QString> i(historyMap);
 	while (i.hasNext()) {
@@ -50,7 +50,7 @@ CallList::CallList(QObject * parent)
 		uint stopTimeStamp = param[3].toUInt();
 		QString account = param[4];
 		calls->insert(0, Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type));
-	}
+    }
 }
 
 MapStringString CallList::getHistoryMap()

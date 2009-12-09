@@ -59,7 +59,6 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 {
 	setupUi(this);
 	
-	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	
