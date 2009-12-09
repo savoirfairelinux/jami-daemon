@@ -694,6 +694,8 @@ sflphone_new_call()
     peer_name = g_strdup ("");
     create_new_call (CALL, CALL_STATE_DIALING, "", "", peer_name, peer_number, &c);
 
+    c->_history_state = OUTGOING;
+
     calllist_add (current_calls,c);
     calltree_add_call (current_calls, c, NULL);
     update_actions();
