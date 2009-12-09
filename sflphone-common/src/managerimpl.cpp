@@ -465,7 +465,7 @@ ManagerImpl::hangupCall (const CallID& call_id)
     AudioLayer *audiolayer = getAudioDriver();
 
     // stop streams
-    if (audiolayer && (nbCalls <= 1)) {
+    if (audiolayer && (nbCalls <= 0)) {
         _debug ("    hangupCall: stop audio stream, ther is only %i call(s) remaining", nbCalls);
         audiolayer->stopStream();
     }
