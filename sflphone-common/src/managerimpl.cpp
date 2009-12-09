@@ -1899,18 +1899,7 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
         }
     }
 
-    int nbCalls = getCallList().size();
-
-    // stop streams
-
-    if (nbCalls <= 1) {
-        _debug ("    hangupCall: stop audio stream, ther is only %i call(s) remaining\n", nbCalls);
-
-        AudioLayer* audiolayer = getAudioDriver();
-        audiolayer->stopStream();
-    }
-
-    /* Direct IP to IP call */
+   /* Direct IP to IP call */
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
         SIPVoIPLink::instance (AccountNULL)->hangup (call_id);
     }
@@ -1933,6 +1922,18 @@ ManagerImpl::peerHungupCall (const CallID& call_id)
     removeWaitingCall (call_id);
 
     removeCallAccount (call_id);
+
+     int nbCalls = getCallList().size();
+
+    // stop streams
+
+    if (nbCalls <= 0) {
+        _debug ("    hangupCall: stop audio stream, ther is only %i call(s) remaining", nbCalls);
+
+        AudioLayer* audiolayer = getAudioDriver();
+        audiolayer->stopStream();
+    }
+
 
     if (_audiodriver->getLayerType() == PULSEAUDIO) {
         pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
