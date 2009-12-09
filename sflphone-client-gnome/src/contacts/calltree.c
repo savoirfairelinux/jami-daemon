@@ -351,25 +351,33 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gch
 
     DEBUG("Display call info");
 
-    // Get the hostname for this call (NULL if not existent)
-    hostname = g_strrstr(peer_number, "@");
+    // If call is outgoing, keep the hostname, strip it elsewhere
+    if(c->_type == CALL && c->_history_state == OUTGOING) {
 
-    // Test if we are dialing a new number
-    if(g_strcmp0("", c->_peer_number) != 0) {
+        display_number = peer_number; 
 
-        // Strip the hostname if existent
-        if(hostname) {
-	    display_number = g_strndup(peer_number, hostname - peer_number);
-	}
-	else {
-	    display_number = peer_number;
-	}
     }
     else {
 
-        display_number = peer_number;
-    }
+        // Get the hostname for this call (NULL if not existent)
+        hostname = g_strrstr(peer_number, "@");
 
+	// Test if we are dialing a new number
+	if(g_strcmp0("", c->_peer_number) != 0) {
+
+	    // Strip the hostname if existent
+	    if(hostname) {
+	        display_number = g_strndup(peer_number, hostname - peer_number);
+	    }
+	    else {
+	        display_number = peer_number;
+	    }
+	}
+	else {
+
+	    display_number = peer_number;
+	}
+    }
     // Different display depending on type
     switch(display_type) {
 
