@@ -1,4 +1,4 @@
-/***************************************************************************
+/************************************** *************************************
  *   Copyright (C) 2009 by Savoir-Faire Linux                              *
  *   Author : Jérémy Quentin                                               *
  *   jeremy.quentin@savoirfairelinux.com                                   *
@@ -31,6 +31,7 @@
 #include <QtGui/QStatusBar>
 #include <QtGui/QCursor>
 #include <KActionCollection>
+#include <KNotification>
 
 #include "sflphone_const.h"
 #include "instance_interface_singleton.h"
@@ -39,41 +40,57 @@
 
 SFLPhone::SFLPhone(QWidget *parent)
     : KXmlGuiWindow(parent),
+      initialized_(false),
       view(new SFLPhoneView(this))
 {
-	
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	// accept dnd
-		setAcceptDrops(true);
-
-    // tell the KXmlGuiWindow that this is indeed the main widget
-		setCentralWidget(view);
-
-		setWindowIcon(QIcon(ICON_SFLPHONE));
-		setWindowTitle(i18n("SFLphone"));
-		
-		setupActions();
-		
-		setObjectNames();
-		QMetaObject::connectSlotsByName(this);
-	   view->on_stackedWidget_screen_currentChanged(SCREEN_MAIN);
-	   view->loadWindow();
-	   
-	   
-		move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
-	   if( ! configurationManager.isStartHidden())
-	   {
-	   	show();
-	   }
-	   
-	   if(configurationManager.getAccountList().value().isEmpty())
-		{
-			(new AccountWizard())->show();
-		}   
+  KNotification *notification = new KNotification( "contact online" );
+  notification->setText( "text" );
+  notification->sendEvent();
 } 
 
 SFLPhone::~SFLPhone()
 {
+}
+
+bool SFLPhone::initialize()
+{
+  if ( initialized_ )
+  {
+    qDebug() << "Already initialized.";
+    return false;
+  }
+
+ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+        // accept dnd
+                setAcceptDrops(true);
+
+    // tell the KXmlGuiWindow that this is indeed the main widget
+                setCentralWidget(view);
+
+                setWindowIcon(QIcon(ICON_SFLPHONE));
+                setWindowTitle(i18n("SFLphone"));
+
+                setupActions();
+
+                setObjectNames();
+                QMetaObject::connectSlotsByName(this);
+           view->on_stackedWidget_screen_currentChanged(SCREEN_MAIN);
+           view->loadWindow();
+
+
+                move(QCursor::pos().x() - geometry().width()/2, QCursor::pos().y() - geometry().height()/2);
+           if( ! configurationManager.isStartHidden())
+           {
+                show();
+           }
+
+           if(configurationManager.getAccountList().value().isEmpty())
+                {
+                        (new AccountWizard())->show();
+                }
+
+
+return true;
 }
 
 void SFLPhone::setObjectNames()
@@ -158,7 +175,8 @@ void SFLPhone::setupActions()
  	trayIconMenu = new QMenu(this);
  	trayIconMenu->addAction(action_quit);
 
-	trayIcon = new QSystemTrayIcon(this->windowIcon(), this);
+
+	trayIcon = new KSystemTrayIcon(this->windowIcon(), this);
 	trayIcon->setContextMenu(trayIconMenu);
 	trayIcon->show();
 	
@@ -224,11 +242,37 @@ void SFLPhone::trayIconSignal()
 
 void SFLPhone::sendNotif(QString caller)
 {
-	trayIcon->showMessage(
+    KComponentData m_instance = KGlobal::mainComponent();
+    KNotification::event("test_notification2", i18n("Feeds added:\n %1", "message"), QPixmap() , this, KNotification::CloseOnTimeout, m_instance);
+//--------------------------------
+    KNotification::event( "test_notification2",
+                          QString("summary"),
+                          QPixmap(),
+                          topLevelWidget());
+    KNotification::beep();
+
+//--------------------------------
+    notification = new KNotification ( QString("test_notification2"), 0l );
+    notification->setActions( QStringList( i18n( "View" ) ) );
+    notification->setText(QString("messageText"));
+    notification->sendEvent();
+//--------------------------------
+
+    notification = new KNotification ( QString("test_notification"), this );
+    notification->setText("messageText")    ;
+    notification->setPixmap( QPixmap( this->windowIcon().pixmap(32, 32) ));
+//    notification->setActions( QStringList( i18n( "Open chat" ) ) );
+    notification->addContext(  QString::fromLatin1("call") , "caller" )  ;
+//    connect(notification, SIGNAL(activated(unsigned int )), this , SLOT(sendNotif()) );
+    qDebug() << notification->contexts();
+    qDebug() << notification->eventId();
+    notification->sendEvent();
+//--------------------------------
+        trayIcon->showMessage(
 	    i18n("Incoming call"), 
 	    i18n("You have an incoming call from") + " " + caller + ".\n" + i18n("Click to accept or refuse it."), 
-	    QSystemTrayIcon::Warning, 
-	    20000);
+	    KSystemTrayIcon::Warning, 
+            20000);
 }
 
 void SFLPhone::on_trayIcon_messageClicked()
@@ -246,12 +290,12 @@ void SFLPhone::changeEvent(QEvent * event)
 	}
 }
 
-void SFLPhone::on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason)
+void SFLPhone::on_trayIcon_activated(KSystemTrayIcon::ActivationReason reason)
 {
 	qDebug() << "on_trayIcon_activated";
 	switch (reason) {
-		case QSystemTrayIcon::Trigger:
-		case QSystemTrayIcon::DoubleClick:
+		case KSystemTrayIcon::Trigger:
+		case KSystemTrayIcon::DoubleClick:
 			qDebug() << "Tray icon clicked.";
 			if(isActiveWindow())
 			{

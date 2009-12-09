@@ -4,16 +4,14 @@
 #include <QtGui/QMenuBar>
 #include <QtGui/QAction>
 
-#include <kapplication.h>
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
 #include <klocale.h>
 
-#include "SFLPhone.h"
 #include "AccountWizard.h"
 #include "instance_interface_singleton.h"
 #include "sflphone_const.h"
-
+#include "SFLPhoneapplication.h"
 #include "conf/ConfigurationDialog.h"
 
 #include <QTableView>
@@ -50,24 +48,15 @@ int main(int argc, char **argv)
 		//options.add("+[URL]", ki18n( "Document to open" ));
 		KCmdLineArgs::addCmdLineOptions(options);
 		
-		KApplication app;
-		
+                SFLPhoneApplication app;
+                return app.exec();
+
 		//configuration dbus
 		registerCommTypes();
-		new SFLPhone();
 
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
 		
-// 		SortableCodecListWidget * cl = new SortableCodecListWidget();
-// 		cl->show();
-
-// 		QListView * v = new QListView();
-// 		v->setFlow(QListView::TopToBottom);
-// 		v->setModel(new AccountListModel());
-// 		v->show();
-	
-		return app.exec();
 	}
 	catch(const char * msg)
 	{

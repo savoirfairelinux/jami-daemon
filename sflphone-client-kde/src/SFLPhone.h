@@ -27,7 +27,8 @@
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QKeyEvent>
 #include <QErrorMessage>
-#include <QSystemTrayIcon>
+#include <KSystemTrayIcon>
+#include <KNotification>
 
 #include <KXmlGuiWindow>
 #include <KAction>
@@ -70,6 +71,8 @@ enum CallAction {
         NumberOfCallActions};
 
 private:
+        // Whether or not the object has been initialized
+        bool   initialized_;
 	KAction * action_accept;
 	KAction * action_refuse;
 	KAction * action_hold;
@@ -90,7 +93,8 @@ private:
 	SFLPhoneView * view;
 	QMenu *trayIconMenu;
 	bool iconChanged;
-	QSystemTrayIcon *trayIcon;
+	KSystemTrayIcon *trayIcon;
+    KNotification *notification;
 	QLabel * statusBarWidget;
 	
 private:
@@ -104,6 +108,7 @@ protected:
 public:
 	SFLPhone(QWidget *parent = 0);
 	~SFLPhone();
+        bool initialize();
 	void setupActions();
 	void sendNotif(QString caller);
 	void putForeground();
@@ -113,7 +118,7 @@ public:
 	
 	
 private slots:
-	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
+	void on_trayIcon_activated(KSystemTrayIcon::ActivationReason reason);
 	void on_trayIcon_messageClicked();
 	void on_view_statusMessageChangeAsked(const QString & message);
 	void on_view_windowTitleChangeAsked(const QString & message);
