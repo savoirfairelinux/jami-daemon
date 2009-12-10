@@ -302,6 +302,14 @@ class SIPVoIPLink : public VoIPLink
 	 */
 	void updateAccountInfo(const AccountID& accountID);
 
+	/**
+	 * This function unset the transport for a given account. It tests wether the 
+	 * associated transport is used by other accounts. If not, it shutdown the transport
+	 * putting its reference counter to zero. PJSIP assumes transport destruction since 
+	 * this action can be delayed by ongoing SIP transactions.
+	 */
+	void shutdownSipTransport(const AccountID& accountID);
+
     private:
         /**
          * Constructor
@@ -369,7 +377,7 @@ class SIPVoIPLink : public VoIPLink
          */
         pj_status_t createTlsTransport(AccountID id);
 
-		pj_status_t createAlternateUdpTransport (AccountID id);
+	pj_status_t createAlternateUdpTransport (AccountID id);
         
         /** For registration use only */
         int _regPort;
