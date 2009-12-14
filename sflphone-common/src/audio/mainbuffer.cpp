@@ -62,7 +62,6 @@ CallIDSet* MainBuffer::getCallIDSet (CallID call_id)
 bool MainBuffer::createCallIDSet (CallID set_id)
 {
 
-
     CallIDSet* newCallIDSet = new CallIDSet;
 
     _callIDMap.insert (pair<CallID, CallIDSet*> (set_id, newCallIDSet));
@@ -75,18 +74,18 @@ bool MainBuffer::createCallIDSet (CallID set_id)
 bool MainBuffer::removeCallIDSet (CallID set_id)
 {
 
+
     CallIDSet* callid_set = getCallIDSet (set_id);
 
     if (callid_set != NULL) {
         if (_callIDMap.erase (set_id) != 0) {
-            // _debug ("          callid set %s erased!\n", set_id.c_str());
             return true;
         } else {
-            _debug ("removeCallIDSet error while removing callid set %s!\n", set_id.c_str());
+            _debug ("removeCallIDSet error while removing callid set %s!", set_id.c_str());
             return false;
         }
     } else {
-        _debug ("removeCallIDSet error callid set %s does not exist!\n", set_id.c_str());
+        _debug ("removeCallIDSet error callid set %s does not exist!", set_id.c_str());
         return false;
     }
 
@@ -107,12 +106,11 @@ void MainBuffer::removeCallIDfromSet (CallID set_id, CallID call_id)
 
     if (callid_set != NULL) {
         if (callid_set->erase (call_id) != 0) {
-            // _debug ("          callid %s erased from set %s!\n", call_id.c_str(), set_id.c_str());
         } else {
-            _debug ("removeCallIDfromSet error while removing callid %s from set %s!\n", call_id.c_str(), set_id.c_str());
+            _debug ("removeCallIDfromSet error while removing callid %s from set %s!", call_id.c_str(), set_id.c_str());
         }
     } else {
-        _debug ("removeCallIDfromSet error callid set %s does not exist!\n", set_id.c_str());
+        _debug ("removeCallIDfromSet error callid set %s does not exist!", set_id.c_str());
     }
 }
 
@@ -123,7 +121,7 @@ RingBuffer* MainBuffer::getRingBuffer (CallID call_id)
     RingBufferMap::iterator iter = _ringBufferMap.find (call_id);
 
     if (iter == _ringBufferMap.end()) {
-        // _debug("ringBuffer with ID: \"%s\" doesn't exist! \n", call_id.c_str());
+        // _debug("ringBuffer with ID: \"%s\" doesn't exist! ", call_id.c_str());
         return NULL;
     } else
         return iter->second;
@@ -143,18 +141,18 @@ RingBuffer* MainBuffer::createRingBuffer (CallID call_id)
 
 bool MainBuffer::removeRingBuffer (CallID call_id)
 {
+
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
     if (ring_buffer != NULL) {
         if (_ringBufferMap.erase (call_id) != 0) {
-            // _debug ("removeRingBuffer ringbuffer %s removed!\n", call_id.c_str());
             return true;
         } else {
-            _debug ("removeRingBuffer error while deleting ringbuffer %s!\n", call_id.c_str());
+            _debug ("removeRingBuffer error while deleting ringbuffer %s!", call_id.c_str());
             return false;
         }
     } else {
-        _debug ("removeRingBuffer error ringbuffer %s does not exist!\n", call_id.c_str());
+        _debug ("removeRingBuffer error ringbuffer %s does not exist!", call_id.c_str());
         return true;
     }
 }
@@ -244,7 +242,6 @@ void MainBuffer::unBindAll (CallID call_id)
     CallIDSet temp_set = *callid_set;
 
     CallIDSet::iterator iter_set = temp_set.begin();
-
 
     while (iter_set != temp_set.end()) {
         CallID call_id_in_set = *iter_set;
@@ -377,7 +374,7 @@ int MainBuffer::availForGet (CallID call_id)
         return 0;
 
     if (callid_set->empty()) {
-        _debug ("CallIDSet with ID: \"%s\" is empty!\n", call_id.c_str());
+        _debug ("CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
         return 0;
     }
 
@@ -385,13 +382,13 @@ int MainBuffer::availForGet (CallID call_id)
         CallIDSet::iterator iter_id = callid_set->begin();
 
         if ( (call_id != default_id) && (*iter_id == call_id)) {
-            _debug ("This problem should not occur since we have %i element\n", (int) callid_set->size());
+            _debug ("This problem should not occur since we have %i element", (int) callid_set->size());
         }
 
         // else
         return availForGetByID (*iter_id, call_id);
     } else {
-        // _debug("CallIDSet with ID: \"%s\" is a conference!\n", call_id.c_str());
+        // _debug("CallIDSet with ID: \"%s\" is a conference!", call_id.c_str());
         int avail_bytes = 99999;
         int nb_bytes;
         CallIDSet::iterator iter_id = callid_set->begin();
@@ -413,14 +410,15 @@ int MainBuffer::availForGetByID (CallID call_id, CallID reader_id)
 {
 
     if ( (call_id != default_id) && (reader_id == call_id)) {
-        _debug ("**********************************************************************\n");
-        _debug ("Error an RTP session ring buffer is not supposed to have a readpointer on itself\n");
+
+        _debug ("**********************************************************************");
+        _debug ("Error an RTP session ring buffer is not supposed to have a readpointer on tiself");
     }
 
     RingBuffer* ringbuffer = getRingBuffer (call_id);
 
     if (ringbuffer == NULL) {
-        _debug ("Error: ring buffer does not exist\n");
+        _debug ("Error: ring buffer does not exist");
         return 0;
     } else
         return ringbuffer->AvailForGet (reader_id);
@@ -430,7 +428,7 @@ int MainBuffer::availForGetByID (CallID call_id, CallID reader_id)
 
 int MainBuffer::discard (int toDiscard, CallID call_id)
 {
-    // _debug("MainBuffer::discard\n");
+    // _debug("MainBuffer::discard");
 
     ost::MutexLock guard (_mutex);
 
@@ -440,7 +438,7 @@ int MainBuffer::discard (int toDiscard, CallID call_id)
         return 0;
 
     if (callid_set->empty()) {
-        // _debug("CallIDSet with ID: \"%s\" is empty!\n", call_id.c_str());
+        // _debug("CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
         return 0;
     }
 
@@ -448,8 +446,10 @@ int MainBuffer::discard (int toDiscard, CallID call_id)
     if (callid_set->size() == 1) {
 
         CallIDSet::iterator iter_id = callid_set->begin();
+
         return discardByID (toDiscard, *iter_id, call_id);
     } else {
+
 
         CallIDSet::iterator iter_id;
 
@@ -487,7 +487,7 @@ void MainBuffer::flush (CallID call_id)
         return;
 
     if (callid_set->empty()) {
-        // _debug("CallIDSet with ID: \"%s\" is empty!\n", call_id.c_str());
+        // _debug("CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
     }
 
     if (callid_set->size() == 1) {
@@ -526,7 +526,6 @@ void MainBuffer::flushByID (CallID call_id, CallID reader_id)
 void MainBuffer::flushAllBuffers()
 {
 
-
     RingBufferMap::iterator iter_buffer = _ringBufferMap.begin();
 
     while (iter_buffer != _ringBufferMap.end()) {
@@ -540,7 +539,7 @@ void MainBuffer::flushAllBuffers()
 
 void MainBuffer::stateInfo()
 {
-    _debug ("MainBuffer state info\n");
+    _debug ("MainBuffer state info");
 
     CallIDMap::iterator iter_call = _callIDMap.begin();
 

@@ -42,10 +42,10 @@ class Gsm : public AudioCodec
             _bandwidth = 29.2;
 
             if (! (_decode_gsmhandle = gsm_create()))
-                printf ("ERROR: decode_gsm_create\n");
+                printf ("ERROR: decode_gsm_create");
 
             if (! (_encode_gsmhandle = gsm_create()))
-                printf ("AudioCodec: ERROR: encode_gsm_create\n");
+                printf ("AudioCodec: ERROR: encode_gsm_create");
         }
 
         Gsm (const Gsm&);
@@ -58,18 +58,18 @@ class Gsm : public AudioCodec
         }
 
         virtual int	codecDecode	(short * dst, unsigned char * src, unsigned int size) {
-            // _debug("Decoded by gsm \n");
+            // _debug("Decoded by gsm ");
             (void) size;
 
             if (gsm_decode (_decode_gsmhandle, (gsm_byte*) src, (gsm_signal*) dst) < 0)
-                printf ("ERROR: gsm_decode\n");
+                printf ("ERROR: gsm_decode");
 
             return 320;
         }
 
         virtual int	codecEncode	(unsigned char * dst, short * src, unsigned int size) {
 
-            // _debug("Encoded by gsm \n");
+            // _debug("Encoded by gsm ");
             (void) size;
             gsm_encode (_encode_gsmhandle, (gsm_signal*) src, (gsm_byte*) dst);
             return 33;
