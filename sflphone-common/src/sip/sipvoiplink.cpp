@@ -1983,7 +1983,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 	if(transport != _transportMap.end()) {
 
 	    // Transport already exist, use it for this account
-	  _debug("Found transport (%s) in transport map\n", account->getTransportMapKey().c_str());
+	    _debug("Found transport (%s) in transport map\n", account->getTransportMapKey().c_str());
 
 	    pjsip_transport* tr = transport->second;
 
@@ -2000,11 +2000,17 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 		// associated transport is shutdowning, resurect it!!!
 		if(tp->is_shutdown == PJ_TRUE) {
 
+		  // Timer is automatically ended if refcnt increments from 0 to 1 
+		  pjsip_transport_add_ref(tp);
+
 		  _debug("Transport is shutdowning, cancel timer and reactivate it.\n");
 		  
-		  pjsip_endpt_cancel_timer(_endpt, &(tp->idle_timer));
-		  tp->is_shutdown = PJ_FALSE;
+		  /*
+		      pjsip_endpt_cancel_timer(_endpt, &(tp->idle_timer));
+		      tp->is_shutdown = PJ_FALSE;
+		  */
 		}
+
 		
 		pj_lock_release(tp->lock);
 	    }
@@ -2012,6 +2018,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 	    return true;
 	}
 	else {
+
 
 	    // Transport could not either be created, socket not available
 	    _debug("Found transport (%s) in transport map\n", account->getTransportMapKey().c_str());
@@ -2075,8 +2082,16 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
     // If Transport created succesfully, store it in the internal map
     if(status == PJ_SUCCESS) {
 
+         SipTransportMap::iterator iter_transport;
+	 iter_transport = _transportMap.find(account->getTransportMapKey());
+
+	 // old transport in transport map, erase it
+	 if(iter_transport != _transportMap.end()){
+	     _transportMap.erase(iter_transport);
+	 }
+
          std::string key = account->getTransportMapKey();
-	 pjsip_transport* transport = account->getAccountTransport();
+	 pjsip_transport* transport = account->getAccountTransport();	 
  
 	 _debug("Storing the newly created transport in transport map using key %s\n", key.c_str());
          _transportMap.insert(pair<std::string, pjsip_transport*>(key, transport));
