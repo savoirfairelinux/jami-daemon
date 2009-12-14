@@ -117,7 +117,7 @@
 <sect1 id="getting-started">
 	<title>Getting started</title>
 	<para>
-		The first time you start up sflphone, you will be ask to complete a wizard to set up your(s) account(s). This account configuration manager offers you two possibilities:
+		The first time you start up SFLphone, you will be ask to complete a wizard to set up your(s) account(s). This account configuration manager offers you two possibilities:
 		<itemizedlist>
 			<listitem>
 				<para><guilabel>Create a free SIP/IAX2 account on sflphone.org</guilabel></para>			
@@ -570,8 +570,8 @@
             SFLphone conference model let you leave a conference that
             you are currently hosting to answer any other incoming
             communication or even initiate new ones. The conference is
-            not interupted, double clicking the conference icon
-            let you reintroduce it at any momment.
+            not interrupted, double clicking the conference icon
+            let you reintroduce it at any moment.
 	      </para>
 	    <!-- ==== Figure ==== -->
                <figure id="conference_detached-fig">
@@ -632,11 +632,11 @@
                        <para>RTP is the underlying protocol that is used in pair with the widely used SIP protocol to carry voice data. RTP alone does not provide any security features.</para>
                         <para>Details for implementing Secure RTP (SRTP) were described independently in a separate document (RFC). However, in this paper, one aspect was deliberately left unspecified: how should the encryption keys be exchanged between the two parties involved in a secure RTP session ?</para>
                         
-                        <para>Mutiple solutions were proposed to fill in that blank. Among them, are SDES (RFC4568) and ZRTP which are probably the most popular today. For the 0.9.7 release, SFLphone integrates support for Secure RTP through the ZRTP protocol, and SDES is expected to be implemented in the very few next releases.</para>
+                        <para>Multiple solutions were proposed to fill in that blank. Among them, are SDES (RFC4568) and ZRTP which are probably the most popular today. For the 0.9.7 release, SFLphone integrates support for Secure RTP through the ZRTP protocol, and SDES is expected to be implemented in the very few next releases.</para>
                         
-                        <para>As of today, blueprints for ZRTP are still laid out and are recognized under the name "zrtp-draftzimmerman" in the RFC machine. The author of ZRTP is Phil Zimmermann, that same person who brought us PGP. Therefore, it is not suprising that he designed ZRTP as an anti-PKI solution for key exchange.</para>
+                        <para>As of today, blueprints for ZRTP are still laid out and are recognized under the name "zrtp-draftzimmerman" in the RFC machine. The author of ZRTP is Phil Zimmermann, that same person who brought us PGP. Therefore, it is not surprising that he designed ZRTP as an anti-PKI solution for key exchange.</para>
                         
-                        <para>ZRTP makes possible for two parties to automatically establish a shared secret in a very simple way from the users's point of view. Indeed under SFLphone no special configuration is needed, appart from  enabling the option itself.</para>
+                        <para>ZRTP makes possible for two parties to automatically establish a shared secret in a very simple way from the user's point of view. Indeed under SFLphone no special configuration is needed, apart from  enabling the option itself.</para>
                         
                         <para>If you want to use ZRTP, please take note that if you are connecting to a PBX, this one must have been configured to support ZRTP. Unfortunately, security for VoIP communications is still young and chances are that your PBX software won't support it.</para>
                         
@@ -692,16 +692,16 @@
                     			<varlistentry>
                         			<term><guilabel>Send Hello Hash in SDP</guilabel></term>
                         				<listitem><para>Selecting this option will cause the program to compute an hash function over the "Hello" packet and send it as an SDP field "zrtp-hash:". The remote end might be interested in getting this value to add an additional layer of protection based on another communication channel. Upon receiving this value, the remote point can compute the hash function on the received hello packet and compare it.</para>
-                        				<para>Take note that for 0.9.7, SFLPhone does not perform the comparasion on its side.</para></listitem>
+                        				<para>Take note that for 0.9.7, SFLphone does not perform the comparison on its side.</para></listitem>
 								</varlistentry>
                         
                         		<varlistentry>
 									<term><guilabel>Ask user to confirm SAS</guilabel></term>
-                        			<listitem><para>The short authentication mechanism is at the heart of the ZRTP protocol. Not requirering the user to manually check the SAS value presents a security risk over Man in the Middle type of attacks.</para>
+                        			<listitem><para>The short authentication mechanism is at the heart of the ZRTP protocol. Not requiring the user to manually check the SAS value presents a security risk over Man in the Middle type of attacks.</para>
                         
                         			<para>Disabling this option will stop the program from prompting the user with the SAS.</para>
                         
-                        			<para>Such an option was motivated to be developped at that time by the the state of the libzrtpcpp library that SFLPhone was making use of. It is only from version x.x that this library can cache results of SAS computation between two peers.</para>
+                        			<para>Such an option was motivated to be developed at that time by the the state of the libzrtpcpp library that SFLphone was making use of. It is only from version x.x that this library can cache results of SAS computation between two peers.</para>
 									</listitem>
 								</varlistentry>
                         
@@ -729,7 +729,7 @@
 <sect1 id="audio_interfaces">
 	<title>Audio configuration</title>
 	<para>
-		ALSA and Pulseaudio native interfaces are available.
+		ALSA and PulseAudio native interfaces are available.
 	</para> 
 
     <sect2 label="Pulseaudio">
@@ -751,7 +751,7 @@
             <listitem>
               <guilabel>PCMU/PCMA</guilabel>
                 <para>
-		  ITU-T telefony standard PCM formats, 8kHz, 64
+		  ITU-T telephony standard PCM formats, 8kHz, 64
 		  kbit/s, using logarithmic byte compression algorithm.
                 </para>
             </listitem>
@@ -772,7 +772,7 @@
               <guilabel>SPEEX</guilabel>
               <para>
 		High quality voice encoding/decoding available
-		in narrowband 8Khz, wideband 16khz (HD Voice), 
+		in narrowband 8kHz, wideband 16kHz (HD Voice), 
 		and ultra-wideband 32 kHz. 
 		Integrate additional features such as Variable Bit
 		Rate (VBR) and noise reduction. 
@@ -910,7 +910,7 @@
 			<varlistentry>
                 <term><guilabel>Enable voicemail notifications</guilabel></term>
                 <listitem><para>
-					The voicemail notifications are handled separatly. If checked, you will be notified with the number of unread voicemails for your accounts.
+					The voicemail notifications are handled separately. If checked, you will be notified with the number of unread voicemails for your accounts.
 				</para>
 				<figure id="voicemail-notif-fig">
             <title>Example of a voicemail notification</title>
