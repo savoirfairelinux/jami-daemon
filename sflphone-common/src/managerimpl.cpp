@@ -697,12 +697,31 @@ ManagerImpl::transferCall (const CallID& call_id, const std::string& to)
 
     CallID current_call_id = getCurrentCallId();
 
-    /* Direct IP to IP call */
+    if (participToConference (call_id)) {
 
+        _debug("Particip to a conference\n");
+
+        Conference *conf = getConferenceFromCallID (call_id);
+
+        if (conf != NULL) {
+            // remove this participant
+            removeParticipant (call_id);
+
+            processRemainingParticipant (current_call_id, conf);
+        }
+    } else {
+
+        _debug("Do not Particip to a conference\n");
+
+        // we are not participating to a conference, current call switched to ""
+        if (!isConference (current_call_id))
+            switchCall ("");
+    }
+
+    /* Direct IP to IP call */
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
         returnValue = SIPVoIPLink::instance (AccountNULL)-> transfer (call_id, to);
     }
-
     /* Classic call, attached to an account */
     else {
         accountid = getAccountFromCall (call_id);
@@ -718,22 +737,6 @@ ManagerImpl::transferCall (const CallID& call_id, const std::string& to)
     }
 
     removeWaitingCall (call_id);
-
-    if (participToConference (call_id)) {
-
-        Conference *conf = getConferenceFromCallID (call_id);
-
-        if (conf != NULL) {
-            // remove this participant
-            removeParticipant (call_id);
-
-            processRemainingParticipant (current_call_id, conf);
-        }
-    } else {
-        // we are not participating to a conference, current call switched to ""
-        if (!isConference (current_call_id))
-            switchCall ("");
-    }
 
     if (_dbus) _dbus->getCallManager()->callStateChanged (call_id, "HUNGUP");
 
@@ -1009,12 +1012,15 @@ ManagerImpl::participToConference (const CallID& call_id)
     accountId = getAccountFromCall (call_id);
     call = getAccountLink (accountId)->getCall (call_id);
 
-    if (call == NULL)
+    if (call == NULL) {
         return false;
+
+    }
 
     if (call->getConfId() == "") {
         return false;
     } else {
+        
         return true;
     }
 }

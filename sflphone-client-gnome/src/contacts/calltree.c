@@ -1464,11 +1464,64 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	GtkTreeIter iter;
 	GtkTreeIter iter_parent;
 	GtkTreeIter iter_children;
-	GtkTreeIter parent_conference;
+	GtkTreeIter parent_conference; // conference for which this call is attached
 
 	GValue val;
 
+	callable_obj_t* call;
 	conference_obj_t* conf;
+
+
+	// Make sure that drag n drop does not imply a dialing call
+	if(selected_type == A_CALL && selected_call->_state == CALL_STATE_DIALING) {
+ 
+	    DEBUG("Dragged a call on a dialing call");
+
+	    calltree_remove_call(current_calls, selected_call, NULL);
+	    calltree_add_call(current_calls, selected_call, NULL);
+	    return;
+	}
+	
+	else if(selected_type == A_CALL) {
+
+	    // user may have dragged it outside the conference
+	    if(dragged_call && dragged_call->_state == CALL_STATE_DIALING) {
+
+	        calltree_remove_call(current_calls, dragged_call, NULL);
+
+		DEBUG("Dragged a call on a dialing call");
+
+		// test if call participate to a conference
+		if(selected_call->_confID) {
+
+	            gtk_tree_path_up(spath);
+		    gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
+		
+		    calltree_add_call(current_calls, selected_call, &parent_conference);
+		}
+		else {
+	            calltree_add_call(current_calls, selected_call, NULL);
+		}
+
+		calltree_add_call(current_calls, dragged_call, NULL);
+		return;
+
+	    }
+
+	}
+	else if(selected_type == A_CONFERENCE) {
+
+	    DEBUG("Dragged a conference on a dialing call");
+
+	    if(dragged_call && dragged_call->_state == CALL_STATE_DIALING) {
+
+		conf = selected_conf;
+
+		calltree_remove_conference(current_calls, conf, NULL);
+		calltree_add_conference(current_calls, conf);
+		return;
+	    } 
+	}
 
 
 	if(selected_path_depth == 1) {
