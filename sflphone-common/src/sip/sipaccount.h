@@ -24,6 +24,8 @@
 #ifndef SIPACCOUNT_H
 #define SIPACCOUNT_H
 
+#include <sstream>
+
 #include "account.h"
 #include "sipvoiplink.h"
 #include "pjsip/sip_transport_tls.h"
@@ -268,7 +270,9 @@ class SIPAccount : public Account
 
 	inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
 
-	private: 
+	std::string getTransportMapKey(void);
+
+  private: 
 
         /* Maps a string description of the SSL method 
          * to the corresponding enum value in pjsip_ssl_method.
@@ -283,10 +287,10 @@ class SIPAccount : public Account
          */  
         void initTlsConfiguration(void);  
 
-		/*
-		 * Initializes STUN config from the config file
-		 */
-		void initStunConfiguration (void);
+	/*
+	 * Initializes STUN config from the config file
+	 */
+	void initStunConfiguration (void);
  
         /*
          * Initializes set of additional credentials, if supplied by the user.
@@ -308,8 +312,7 @@ class SIPAccount : public Account
          * @return std::string The login name under which SFLPhone is running.
          */ 
         std::string getLoginName(void);
-            
-    private:               
+              
 
         // The pjsip client registration information
         pjsip_regc *_regc;
@@ -319,9 +322,9 @@ class SIPAccount : public Account
         // Network settings
         std::string _registrationExpire;
 
-		// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
+	// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
         // sip headers
-		bool _publishedSameasLocal;
+	bool _publishedSameasLocal;
                 
         std::string _localIpAddress;
         std::string _publishedIpAddress;
@@ -350,8 +353,8 @@ class SIPAccount : public Account
         // The STUN server name, if applicable
         pj_str_t _stunServerName;	                                                  
 
-		// The STUN server port, if applicable
-		pj_uint16_t _stunPort;
+	// The STUN server port, if applicable
+	pj_uint16_t _stunPort;
         
         // Display Name that can be used in  SIP URI.        
         std::string _displayName;        

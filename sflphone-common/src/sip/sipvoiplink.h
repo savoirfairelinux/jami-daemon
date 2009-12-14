@@ -36,6 +36,9 @@
 #include <pjnath/stun_config.h>
 ///////////////////////////////
 
+#include <map>
+#include <sstream>
+
 class EventThread;
 class SIPCall;
 
@@ -44,6 +47,8 @@ class SIPCall;
 
 // To set the verbosity. From 0 (min) to 6 (max)
 #define PJ_LOG_LEVEL 6
+
+#define SipTransportMap std::map<std::string, pjsip_transport*>
 
 /**
  * @file sipvoiplink.h
@@ -286,15 +291,22 @@ class SIPVoIPLink : public VoIPLink
          */
         std::vector<std::string> getAllIpInterface(void);
 
-		/**
-		 * Initialize the transport selector
-		 * @param transport		A transport associated with an account
-		 * @param tp_sel		A pointer to receive the transport selector structure
-		 *
-		 * @return pj_status_t		PJ_SUCCESS if the structure was successfully initialized
-		 */
-		pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
 
+	/**
+	 * Initialize the transport selector
+	 * @param transport		A transport associated with an account
+	 * @param tp_sel		A pointer to receive the transport selector structure
+	 *
+	 * @return pj_status_t		PJ_SUCCESS if the structure was successfully initialized
+	 */
+	pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
+
+	/**
+	 * Requests PJSIP library for local IP address, using pj_gethostbyname()
+	 * @param addr*                 A string to be initialized
+	 *
+	 * @return bool                 True if addr successfully initialized
+	 */
         bool loadSIPLocalIP (std::string *addr);
 
 	/**
@@ -346,6 +358,24 @@ class SIPVoIPLink : public VoIPLink
 
         pj_status_t stunServerResolve (AccountID id);
 
+
+	/**
+	 * Function used to create a new sip transport or get an existing one from the map.
+	 * The SIP transport is "acquired" according to account's current settings.
+	 * This function should be called before registering an account
+	 * @param accountID            An account id for which transport is to be set
+	 *
+	 * @return bool                True if the account is succesfully created or 
+	 *                             successfully obtained from the transport map
+	 */
+	bool acquireTransport(const AccountID& accountID);
+
+
+	/**
+	 * Create a new sip transport according to the trasport type specified in account settings
+	 */
+	bool createSipTransport(AccountID id);
+
         /** Create SIP UDP Listener */
         int createUDPServer (AccountID = "");
 
@@ -378,7 +408,9 @@ class SIPVoIPLink : public VoIPLink
         pj_status_t createTlsTransport(AccountID id);
 
 	pj_status_t createAlternateUdpTransport (AccountID id);
-        
+
+	SipTransportMap _transportMap;
+
         /** For registration use only */
         int _regPort;
 

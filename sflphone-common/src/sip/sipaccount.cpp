@@ -407,6 +407,29 @@ std::string SIPAccount::getLoginName (void)
     return username;
 }
 
+std::string SIPAccount::getTransportMapKey(void)
+{
+    std::string mapKey;
+
+    std::stringstream out;
+
+    out << getLocalPort();
+    std::string localAddress = getLocalAddress();
+    std::string localPort = out.str();
+
+    out.seekp (0);
+    out << getPublishedPort();
+    std::string publishedAddress = getPublishedAddress();
+    std::string publishedPort = out.str();
+
+    mapKey.append(localAddress.c_str());
+    mapKey.append(localPort.c_str());
+    mapKey.append(publishedAddress.c_str());
+    mapKey.append(publishedPort.c_str());
+
+    return mapKey;
+}
+
 
 std::string SIPAccount::getFromUri (void)
 {
