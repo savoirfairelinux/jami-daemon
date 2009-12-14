@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"  [
 	<!ENTITY app "SFLphone">
-	<!ENTITY appversion "0.9.7 beta">
+	<!ENTITY appversion "0.9.7">
+	<!ENTITY docversion "1.0">
 ]>
 
 <!-- =============Document Header ============================= -->
@@ -9,7 +10,7 @@
 <!-- please do not change the id; for translations, change lang to -->
 <!-- appropriate code -->
   <articleinfo>
-    <title>SFLphone Manual v1.0</title>
+    <title>SFLphone Manual v&docversion;</title>
 
     <copyright>
       <year>2006</year>
@@ -73,7 +74,7 @@
 
 <revhistory>
       <revision>
-            <revnumber>SFLphone Manual V1.0</revnumber>
+            <revnumber>SFLphone Manual v1.0</revnumber>
             <date>September 2009</date>
             <revdescription>
                 <para role="author">SFLphone team</para>
@@ -82,7 +83,7 @@
       </revision>
 </revhistory>
 
-<releaseinfo>This manual describes version 0.9.7 of SFLphone.</releaseinfo>
+<releaseinfo>This manual describes SFLphone version &appversion;.</releaseinfo>
 
 </articleinfo>
 
