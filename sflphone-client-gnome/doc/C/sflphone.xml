@@ -160,7 +160,7 @@
                   	</listitem>
                   	<listitem>
                     	<para><guilabel>Protocol</guilabel></para>
-						<para>Select SIP or IAX2. The most commons are SIP accounts.</para>
+						<para>Select SIP or IAX2. The most commonly used protocol is SIP.</para>
                   	</listitem>
                   	<listitem>
                     	<para><guilabel>Host name</guilabel></para>
@@ -182,7 +182,8 @@
 			</listitem>
     		<listitem><para>Click the <menuchoice><guimenu>Apply</guimenu></menuchoice> button.</para></listitem>
 		</orderedlist>
-		<para>You may now check the state of your account(s). You may have as many setup accounts as you wish. If it is registered, you may now use it to make calls.</para>
+		<para>You may now check the state of your account(s). If it is registered, you may now use it to make calls.</para>
+		<note>You can setup as many accounts as you wish.</note>
 	</sect3>
 
 	<sect3 id="account_edit">
@@ -206,7 +207,7 @@
 	
 	<sect3 id="account_selection">
 		<title>Selecting a default account</title>
-		<para>As it is possible to have an unlimited number of registered accounts at the same time, which account will be used when making a call ? You can not only set up a default account to be used every time you are making a call, but an entire priority list. To do that, perform the following steps:</para>
+		<para>Since it is possible to have an unlimited number of registered accounts at the same time, which account will be used when making a call ? You can not only set up a default account to be used every time you are making a call, but an entire priority list. To do that, perform the following steps:</para>
 			<orderedlist>
 				<listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice> to access the accounts list.</para></listitem>
 				<listitem>
@@ -237,8 +238,8 @@
 		<sect3 id="accounts_registration">
 			<title>Registration</title>
 				<para>You may set the expires header for a contact.</para>
-				<para>It basically represents the duration your registration will remain active. If you don't register again within that time, calls will no longer be routed to you. it should be not used as a keepalive mechanism though. The default value is 600 seconds (ten minutes).</para>
-				<note>To register to some VoIP services, you will need to set this value at at least 1600 seconds (Example: French VoIP server freephonie.net).
+				<para>It basically represents the duration your registration will remain active. If you don't register again within that time, calls will no longer be routed to you. It should not be used as a keepalive mechanism though. The default value is 600 seconds (ten minutes).</para>
+				<note>Some VoIP services requires that you set this value at at least 1600 seconds (e.g. the French VoIP server freephonie.net).
 				</note>
 		</sect3>
 		<sect3 id="accounts_stun">
@@ -301,7 +302,7 @@
 <sect1 id="call_features">
 	<title>Call features</title>
 
-	<para>All the following features are available with both SIP and IAX2 accounts.</para>
+	<para>The following features are available with both SIP and IAX2 accounts.</para>
 
 	<sect2 label="Dialing a number">
 	<!-- ==== Figure ==== -->
@@ -746,7 +747,7 @@
 
 <sect1 id="codecs_overview">
 	<title>Codecs overview</title>
-	<para>SFLphone supports several widely used audio codec:</para>
+	<para>SFLphone supports several widely used audio codecs:</para>
         <para>
           <itemizedlist>
             <listitem>
