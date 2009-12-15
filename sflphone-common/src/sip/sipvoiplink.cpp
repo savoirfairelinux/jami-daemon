@@ -1998,33 +1998,6 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 	    // If the account is shutdowning, time is automatically canceled
 	    pjsip_transport_add_ref(tr);
 
-	    /*
-	    // Test is the associated transport is shutdowning
-	    if(account->getAccountTransport()) {
-
-	        pjsip_transport* tp = account->getAccountTransport();
-
-		pj_lock_acquire(tp->lock);
-
-		// associated transport is shutdowning, resurect it!!!
-		if(tp->is_shutdown == PJ_TRUE) {
-
-		    // Timer is automatically ended if refcnt increments from 0 to 1 
-		    // pjsip_transport_add_ref(tp);
-
-		    _debug("Transport is shutdowning, cancel timer and reactivate it.\n");
-		  
-		    
-		    // pjsip_endpt_cancel_timer(_endpt, &(tp->idle_timer));
-		    // tp->is_shutdown = PJ_FALSE;
-		    
-		}
-
-		
-		pj_lock_release(tp->lock);
-	    }
-	    */
-
 	    return true;
 	}
 	else {
