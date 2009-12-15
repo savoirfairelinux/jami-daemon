@@ -451,9 +451,10 @@ int SIPVoIPLink::sendRegister (AccountID id)
         }
     }
 
-
     // Create SIP transport or get existent SIP transport from internal map 
-    // according to account settings
+    // according to account settings, if the transport could not be created but
+    // one is already set in account, use this one (most likely this is the 
+    // transport we tried to create) 
     acquireTransport(account->getAccountID());
 
     _debug("Acquire transport in account registration: %s %s (refcnt=%d)\n",
@@ -572,7 +573,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // pjsip_regc_set_transport increments transport ref count by one
     status = pjsip_regc_set_transport (regc, tp);
 
-    // decrease transport's ref count
+    // decrease transport's ref count, counter icrementation is 
+    // managed when acquiring transport 
     pjsip_transport_dec_ref(account->getAccountTransport ());
 
     _debug("After setting the transport in account registration using transport: %s %s (refcnt=%d)\n",
@@ -1976,9 +1978,17 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 
         return true;
     }
+    else if(account->getAccountTransport()) {
+
+        // Transport could not be created, account account already have one set.
+        // Most likely this is the transport we tried to create.
+        _debug("Transport (%s) already set for account, use it\n", account->getTransportMapKey().c_str());
+
+	return true;
+    } 
     else {
 
-      _debug("Searching transport (%s) in transport map\n", account->getTransportMapKey().c_str());
+        _debug("Searching transport (%s) in transport map\n", account->getTransportMapKey().c_str());
 
         // Could not create new transport, this transport may already exists
         SipTransportMap::iterator transport;
