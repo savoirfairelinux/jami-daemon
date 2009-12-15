@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 gconftool-2 --direct --config-source xml::/etc/gconf/gconf.xml.defaults -t string -s /desktop/gnome/url-handlers/tel/command "/usr/bin/sflphone-handler %s"
 gconftool-2 --direct --config-source xml::/etc/gconf/gconf.xml.defaults -s /desktop/gnome/url-handlers/tel/needs_terminal false -t bool
 gconftool-2 --direct --config-source xml::/etc/gconf/gconf.xml.defaults -t bool -s /desktop/gnome/url-handlers/tel/enabled true

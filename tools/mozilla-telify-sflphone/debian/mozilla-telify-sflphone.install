@@ -1,5 +1,2 @@
-temp/install.rdf usr/share/mozilla-extensions/telify/
-temp/chrome.manifest usr/share/mozilla-extensions/telify/
-temp/defaults/* usr/share/mozilla-extensions/telify/defaults
-temp/chrome/* usr/share/mozilla-extensions/telify/chrome
+tmp/telify usr/share/
 sflphone-handler usr/bin/
