@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
+<?xml-stylesheet href="chrome://telify/content/dialog.css" type="text/css"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://telify/locale/lang.dtd">
+<overlay xmlns='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'>
+
+	<stringbundleset id="stringbundleset">
+		<stringbundle id="idTelifyStringBundle" src="chrome://telify/locale/lang.properties"/>
+	</stringbundleset>
+
+	<script type='application/x-javascript' src='chrome://telify/content/jshashtable.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/util.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/pref.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/locale/country_locale.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/country_data.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/locale/locale.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/telify.js'></script>
+
+	<statusbar id="status-bar">
+		<statusbarpanel id="idTelify_status" collapsed="true">
+			<popup id="idTelify_status_popup" onpopupshowing="objTelify.modifyPopup(event)">
+				<menuitem id="idTelify_status_activity" oncommand="objTelify.toggleActive()" />
+				<menuitem id="idTelify_status_blacklist" oncommand="objTelify.toggleBlacklist()" />
+			</popup>
+			<hbox id="idTelify_statusicon" context="idTelify_status_popup" class="statusbarpanel-menu-iconic" src="chrome://telify/content/icon18_active.png" />
+		</statusbarpanel>
+	</statusbar>
+
+	<menupopup id="contentAreaContextMenu">
+		<menu id="idTelify_menu_context" label="&menu.selection;" collapsed="true" insertbefore="context-sep-stop" 
+			class="menu-iconic" image="chrome://telify/content/icon_menu.png">
+			<menupopup id="idTelify_popup_context">
+				<menuitem id="idTelify_context" class="menuitem-iconic"/>
+				<menuseparator id="idTelify_sep_context"/>
+				<menuitem id="idTelify_tld_context" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context0" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context1" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context2" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context3" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context4" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context5" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context6" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context7" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context8" class="menuitem-iconic"/>
+				<menuitem id="idTelify_context9" class="menuitem-iconic"/>
+				<menuseparator />
+				<menuitem id="idTelify_edit_context" class="menuitem-iconic" label="&menu.edit_number;" image="chrome://telify/content/edit22x15.png"/>
+			</menupopup>
+		</menu>
+	</menupopup>
+
+	<popupset>
+	<menupopup id="idTelify_popup_dial">
+		<menuitem id="idTelify_dial" class="menuitem-iconic"/>
+		<menuseparator id="idTelify_sep_dial"/>
+		<menuitem id="idTelify_tld_dial" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial0" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial1" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial2" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial3" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial4" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial5" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial6" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial7" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial8" class="menuitem-iconic"/>
+		<menuitem id="idTelify_dial9" class="menuitem-iconic"/>
+		<menuseparator />
+		<menuitem id="idTelify_edit_dial" class="menuitem-iconic" label="&menu.edit_number;" image="chrome://telify/content/edit22x15.png"/>
+	</menupopup>
+	</popupset>
+
+	<menupopup id="menu_ToolsPopup">
+		<menu id="idTelify_menu" label="Telify" insertafter="devToolsSeparator">
+			<menupopup onpopupshowing="objTelify.modifyPopup(event)">
+				<menuitem id="idTelify_menu_activity" oncommand="objTelify.toggleActive()"/>
+				<menuitem id="idTelify_menu_blacklist" oncommand="objTelify.toggleBlacklist()"/>
+				<menuseparator />
+				<menuitem id="idTelify_menu_config" label="&menu.onlinehelp;" oncommand="objTelifyLocale.openOnlineHelp()"/>
+				<menuseparator />
+				<menuitem id="idTelify_menu_config" label="&menu.config;" oncommand="objTelifyPrefs.showConfigDialog()"/>
+			</menupopup>
+		</menu>
+	</menupopup>
+
+</overlay>
+

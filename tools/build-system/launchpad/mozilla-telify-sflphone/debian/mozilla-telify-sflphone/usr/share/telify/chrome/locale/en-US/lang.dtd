@@ -1,0 +1,39 @@
+﻿<!ENTITY menu.edit_number "Edit phone number">
+<!ENTITY menu.selection "Phone number selection">
+<!ENTITY menu.config "Preferences">
+<!ENTITY menu.onlinehelp "Online Help">
+<!ENTITY dialog.edit.title "Edit phone number">
+<!ENTITY dialog.edit.code "Code">
+<!ENTITY dialog.edit.country "Country">
+<!ENTITY dialog.edit.dial "Dial">
+<!ENTITY dialog.config.title "Telify Preferences">
+<!ENTITY dialog.config.general "General Settings">
+<!ENTITY dialog.config.custom "Custom URL">
+<!ENTITY dialog.config.about "About">
+<!ENTITY dialog.config.replaces "Replaces">
+<!ENTITY dialog.config.in_template "in template string">
+<!ENTITY dialog.config.idd_prefix "Replace '+' with">
+<!ENTITY dialog.config.hreftype "Used protocol">
+<!ENTITY dialog.config.hreftype0 "tel:">
+<!ENTITY dialog.config.hreftype1 "callto:">
+<!ENTITY dialog.config.hreftype2 "skype:">
+<!ENTITY dialog.config.hreftype3 "sip:">
+<!ENTITY dialog.config.hreftype_custom "Custom URL">
+<!ENTITY dialog.config.dialcc "When number has country code">
+<!ENTITY dialog.config.dialcc_menu "open menu">
+<!ENTITY dialog.config.dialcc_direct "dial directly">
+<!ENTITY dialog.config.highlight "Text highlighting">
+<!ENTITY dialog.config.highlight0 "None">
+<!ENTITY dialog.config.highlight1 "Light">
+<!ENTITY dialog.config.highlight2 "Medium">
+<!ENTITY dialog.config.highlight3 "Strong">
+<!ENTITY dialog.config.num_history "Number of recent country codes">
+<!ENTITY dialog.config.statusicon "Status icon">
+<!ENTITY dialog.config.statusicon0 "Hide">
+<!ENTITY dialog.config.statusicon1 "Show">
+<!ENTITY dialog.config.opentype "Open link">
+<!ENTITY dialog.config.opentype0 "silently in the background">
+<!ENTITY dialog.config.opentype1 "in a new window">
+<!ENTITY dialog.config.opentype2 "in a new tab without focus">
+<!ENTITY dialog.config.opentype3 "in a new tab with focus">
+ 

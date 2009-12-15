@@ -1,0 +1,33 @@
+.telInputCC {
+	width: 6em;
+}
+
+#idTelify_popup_dial .menu-iconic-icon {
+	width: 22px;
+	height: 15px;
+} 
+
+#idTelify_popup_context .menu-iconic-icon {
+	width: 22px;
+	height: 15px;
+} 
+
+.tmpl_empty {
+	color: #a0a0a0;
+}
+
+.tmpl_number {
+	color: #008000;
+}
+
+.tmpl_param {
+	color: #000080;
+}
+
+.urlresult {
+	height:4.2em;
+	padding:2px 3px;
+	border:1px solid #e0e0e0;
+	background-color:#f0f0f0;
+	margin-left:4px;
+}

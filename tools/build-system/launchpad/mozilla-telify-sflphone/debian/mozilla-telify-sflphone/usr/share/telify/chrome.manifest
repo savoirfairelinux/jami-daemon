@@ -1,0 +1,5 @@
+content	telify	chrome/content/
+locale	telify	en-US	chrome/locale/en-US/
+locale	telify	de-DE	chrome/locale/de-DE/
+
+overlay	chrome://browser/content/browser.xul	chrome://telify/content/browser.xul
