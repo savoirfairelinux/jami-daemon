@@ -636,7 +636,7 @@ SIPVoIPLink::sendUnregister (AccountID id)
 	       account->getAccountTransport()->info,
 	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
 
-	shutdownSipTransport(account->getAccountID());
+	// shutdownSipTransport(account->getAccountID());
     }
 
     // This may occurs if account failed to register and is in state INVALID
@@ -1768,7 +1768,7 @@ bool SIPVoIPLink::pjsip_init()
 
     bool directIpCallsTlsEnabled = false;
 
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (AccountNULL));
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
 
     if (account == NULL) {
         _debug ("Account is null in pjsip init\n");
@@ -1780,7 +1780,7 @@ bool SIPVoIPLink::pjsip_init()
 
     // Create a UDP listener meant for all accounts
     // for which TLS was not enabled
-    errPjsip = createUDPServer();
+    errPjsip = createUDPServer(IP2IP_PROFILE);
 
     // If the above UDP server
     // could not be created, then give it another try
@@ -1807,7 +1807,7 @@ bool SIPVoIPLink::pjsip_init()
     // if the user did enabled it.
 
     if (directIpCallsTlsEnabled) {
-        errPjsip = createTlsTransportRetryOnFailure (AccountNULL);
+        errPjsip = createTlsTransportRetryOnFailure (IP2IP_PROFILE);
     }
 
     if (errPjsip != PJ_SUCCESS) {
@@ -2189,9 +2189,12 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     } else {
         _debug ("UserAgent: UDP server listening on port %d\n", listeningPort);
 
-        if (account == NULL)
+        if (account == NULL) {
+	    _debug("Use transport as local UDP server\n");
             _localUDPTransport = transport;
+	}
         else {
+	    _debug("Bind transport to account %s\n", account->getAccountID().c_str());
 	    account->setAccountTransport (transport);
 	}
     }
@@ -2637,19 +2640,18 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
     if(!account)
         return;
 
-    _debug("decrease ref count in transport shutdown\n");
-    // decrease reference count added by pjsip_regc_send
-    status = pjsip_transport_dec_ref(account->getAccountTransport());
+    if(account->getAccountTransport()) {
 
-    // _debug("decrease ref count in transport shutdown\n");
-    // PJSIP's UDP transport is considered permanent, reference counter 
-    // is initialized to 1 at transport creation.
-    // To destroy this transport, reference counter must be zero
-    // status = pjsip_transport_dec_ref(account->getAccountTransport());
-    // status = pjsip_transport_shutdown(account->getAccountTransport());
+        _debug("Transport bound to account, decrease ref count\n");
 
-    // detach transport from this account
-    account->setAccountTransport(NULL);
+	// decrease reference count added by pjsip_regc_send
+	// PJSIP's IDLE timer is set if counter reach 0
+	status = pjsip_transport_dec_ref(account->getAccountTransport());
+
+	// detach transport from this account
+	account->setAccountTransport(NULL);
+
+    }
 
 }
 
@@ -3183,6 +3185,8 @@ void regc_cb (struct pjsip_regc_cbparam *param)
                 account->setRegistrationState (Unregistered);
                 account->setRegister (false);
 
+		SIPVoIPLink::instance("")->shutdownSipTransport(account->getAccountID());
+
 		// pjsip_regc_destroy(param->regc);
 		// account->setRegistrationInfo(NULL);
             }
@@ -3190,6 +3194,8 @@ void regc_cb (struct pjsip_regc_cbparam *param)
     } else {
         account->setRegistrationState (ErrorAuth);
         account->setRegister (false);
+
+	SIPVoIPLink::instance("")->shutdownSipTransport(account->getAccountID());
     }
 
 }
@@ -4124,7 +4130,7 @@ std::string getLocalAddressAssociatedToAccount (AccountID id)
 
     // Set the local address
 
-    if (account != NULL) {
+    if (account != NULL && account->getAccountTransport ()) {
         tspt = account->getAccountTransport ();
 
         if (tspt != NULL) {
