@@ -389,6 +389,7 @@ SIPVoIPLink::getEvent()
 
 int SIPVoIPLink::sendRegister (AccountID id)
 {
+
     int expire_value;
 
     pj_status_t status;
@@ -451,8 +452,14 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
 
-    // Create SIP transport or get SIP transport from internal map 
+    // Create SIP transport or get existent SIP transport from internal map 
+    // according to account settings
     acquireTransport(account->getAccountID());
+
+    _debug("Acquire transport in account registration: %s %s (refcnt=%d)\n",
+	       account->getAccountTransport()->obj_name,
+	       account->getAccountTransport()->info,
+	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
 
     _mutexSIP.enterMutex();
 
@@ -581,7 +588,13 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
     // Send registration request
+    // pjsip_regc_send increment the transport ref count by one, 
     status = pjsip_regc_send (regc, tdata);
+
+    // Decrease transport's ref count, since coresponding reference counter decrementation 
+    // is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
+    // regc data structure is permanently associated to the account at first registration.
+    pjsip_transport_dec_ref(account->getAccountTransport ());
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to send regc request.\n");
@@ -604,6 +617,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 int
 SIPVoIPLink::sendUnregister (AccountID id)
 {
+
     pj_status_t status = 0;
     pjsip_tx_data *tdata = NULL;
     SIPAccount *account;
@@ -612,6 +626,18 @@ SIPVoIPLink::sendUnregister (AccountID id)
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
     regc = account->getRegistrationInfo();
 
+    // If an transport is attached to this account, detach it and decrease reference counter
+    if(account->getAccountTransport()) {
+
+        _debug("Sent account unregistration using transport: %s %s (refcnt=%d)\n",
+	       account->getAccountTransport()->obj_name,
+	       account->getAccountTransport()->info,
+	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+
+	shutdownSipTransport(account->getAccountID());
+    }
+
+    // This may occurs if account failed to register and is in state INVALID
     if (!account->isRegister()) {
         account->setRegistrationState (Unregistered);
         return true;
@@ -624,7 +650,7 @@ SIPVoIPLink::sendUnregister (AccountID id)
             _debug ("UserAgent: Unable to unregister regc.\n");
             return false;
         }
-
+ 
         status = pjsip_regc_send (regc, tdata);
 
         if (status != PJ_SUCCESS) {
@@ -634,28 +660,6 @@ SIPVoIPLink::sendUnregister (AccountID id)
     } else {
         _debug ("UserAgent: regc is null!\n");
         return false;
-    }
-
-    if(account->getAccountTransport()) {
-
-        _debug("Sent account unregistration using transport: %s %s (refcnt=%d)\n",
-	       account->getAccountTransport()->obj_name,
-	       account->getAccountTransport()->info,
-	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
-
-        if(account->getAccountTransport() != _localUDPTransport) {
-
-	    shutdownSipTransport(account->getAccountID());
-
-	    /*
-	    // PJSIP's UDP transport is considered permanent, reference counter 
-	    // is incremented by 1 at transport creation.
-	    // To destroy this transport, reference counter must be zero
-	    status = pjsip_transport_dec_ref(account->getAccountTransport());
-	    status = pjsip_transport_shutdown(account->getAccountTransport());
-	    */
-
-	}
     }
 
     //account->setRegistrationInfo(regc);
@@ -1987,9 +1991,14 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 
 	    pjsip_transport* tr = transport->second;
 
+	    // Set transport to be used for transaction involving this account
 	    account->setAccountTransport(tr);
 
+	    // Increment newly associated transport reference counter
+	    // If the account is shutdowning, time is automatically canceled
+	    pjsip_transport_add_ref(tr);
 
+	    /*
 	    // Test is the associated transport is shutdowning
 	    if(account->getAccountTransport()) {
 
@@ -2000,30 +2009,30 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 		// associated transport is shutdowning, resurect it!!!
 		if(tp->is_shutdown == PJ_TRUE) {
 
-		  // Timer is automatically ended if refcnt increments from 0 to 1 
-		  pjsip_transport_add_ref(tp);
+		    // Timer is automatically ended if refcnt increments from 0 to 1 
+		    // pjsip_transport_add_ref(tp);
 
-		  _debug("Transport is shutdowning, cancel timer and reactivate it.\n");
+		    _debug("Transport is shutdowning, cancel timer and reactivate it.\n");
 		  
-		  /*
-		      pjsip_endpt_cancel_timer(_endpt, &(tp->idle_timer));
-		      tp->is_shutdown = PJ_FALSE;
-		  */
+		    
+		    // pjsip_endpt_cancel_timer(_endpt, &(tp->idle_timer));
+		    // tp->is_shutdown = PJ_FALSE;
+		    
 		}
 
 		
 		pj_lock_release(tp->lock);
 	    }
+	    */
 
 	    return true;
 	}
 	else {
 
-
 	    // Transport could not either be created, socket not available
 	    _debug("Found transport (%s) in transport map\n", account->getTransportMapKey().c_str());
 
-	    // Transport could not either be created, socket not available
+	    // Transport could not either be created or found in the map, socket not available
 	    return false;
 	}
     }
@@ -2645,17 +2654,19 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
     if(!account)
         return;
 
-    // PJSIP's UDP transport is considered permanent, reference counter 
-    // is incremented by 1 at transport creation.
-    // To destroy this transport, reference counter must be zero
-    
+    _debug("decrease ref count in transport shutdown\n");
+    // decrease reference count added by pjsip_regc_send
     status = pjsip_transport_dec_ref(account->getAccountTransport());
-    status = pjsip_transport_shutdown(account->getAccountTransport());
 
-    // account->getAccountTransport())->is_paused = PJ_TRUE;
-    // pjsip_udp_transport_pause(account->getAccountTransport(), PJSIP_UDP_TRANSPORT_DESTROY_SOCKET);
+    // _debug("decrease ref count in transport shutdown\n");
+    // PJSIP's UDP transport is considered permanent, reference counter 
+    // is initialized to 1 at transport creation.
+    // To destroy this transport, reference counter must be zero
+    // status = pjsip_transport_dec_ref(account->getAccountTransport());
+    // status = pjsip_transport_shutdown(account->getAccountTransport());
 
-    // account->setAccountTransport(NULL);
+    // detach transport from this account
+    account->setAccountTransport(NULL);
 
 }
 
@@ -3176,10 +3187,10 @@ void regc_cb (struct pjsip_regc_cbparam *param)
             account->setRegister (false);
 
 	    // shutdown this transport since useless
-	    if(account->getAccountTransport() != _localUDPTransport) {
+	    // if(account->getAccountTransport() != _localUDPTransport) {
 
-	        SIPVoIPLink::instance("")->shutdownSipTransport(account->getAccountID());
-	    }
+	    SIPVoIPLink::instance("")->shutdownSipTransport(account->getAccountID());
+	    //}
 
         } else {
             // Registration/Unregistration is success
@@ -3188,6 +3199,9 @@ void regc_cb (struct pjsip_regc_cbparam *param)
             else {
                 account->setRegistrationState (Unregistered);
                 account->setRegister (false);
+
+		// pjsip_regc_destroy(param->regc);
+		// account->setRegistrationInfo(NULL);
             }
         }
     } else {
@@ -3998,6 +4012,7 @@ void handle_incoming_options (pjsip_rx_data *rdata)
 
     status = pjsip_endpt_send_response (_endpt, &res_addr, tdata, NULL, NULL);
 
+    
     if (status != PJ_SUCCESS)
         pjsip_tx_data_dec_ref (tdata);
 }
