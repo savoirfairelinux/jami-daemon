@@ -335,7 +335,12 @@ void SIPAccount::loadConfig()
 
     setLocalPort (atoi (localPort.c_str()));
 
+    // Do not store or use IP address in config as this address may change
+    // Use loadSIPLocalIP for now instead in register/unregister (UDP,STUN,TLS), newOutGoingCall, mod_on_rx_request
+    // TODO: if we realy have to bind to a specific interface, store interfaces by name instead
+    // setLocalAddress (std::string("0.0.0.0"));
     setLocalAddress (Manager::instance().getConfigString (_accountID, LOCAL_ADDRESS));
+
 
     // Published parameters
     setPublishedSameasLocal (Manager::instance().getConfigString (_accountID, PUBLISHED_SAMEAS_LOCAL) == TRUE_STR ? true : false);

@@ -134,7 +134,7 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
     GtkTreeIter iter;
     gtk_tree_model_get_iter_from_string ((GtkTreeModel *) credentialStore, &iter, "0");
     gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "column"));
-	g_print ("set password to %s\n", (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)));
+    // g_print ("set password to %s\n", (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)));
     gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)), -1);
 }
 
@@ -389,7 +389,7 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
      
 
     gint column = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (renderer), "column"));
-	g_print ("path desc in cell_edited_cb: %s\n", text);
+	DEBUG("path desc in cell_edited_cb: %s\n", text);
     
     if(g_strcasecmp(path_desc, "0") == 0) {
         if(g_strcasecmp(text, gtk_entry_get_text (GTK_ENTRY(entryUsername))) != 0) {
@@ -411,7 +411,7 @@ static void cell_edited_cb(GtkCellRendererText *renderer, gchar *path_desc, gcha
 static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editable, const gchar * path, gpointer data)
 {
     DEBUG("Editing started");
-	g_print ("path desc in editing_started_cb: %s\n", path);
+	DEBUG("path desc in editing_started_cb: %s\n", path);
 
 	// If we are dealing the first row
 	if (g_strcasecmp (path, "0") == 0)

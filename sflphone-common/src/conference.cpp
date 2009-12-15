@@ -71,7 +71,7 @@ void Conference::setState (ConferenceState state)
 void Conference::add (CallID participant_id)
 {
 
-    _debug ("---- Conference:: add participant %s", participant_id.c_str());
+    _debug ("Conference:: add participant %s", participant_id.c_str());
 
     _participants.insert (participant_id);
 
@@ -82,7 +82,8 @@ void Conference::add (CallID participant_id)
 void Conference::remove (CallID participant_id)
 {
 
-    _debug ("---- Conference::remove participant %s", participant_id.c_str());
+
+    _debug ("Conference::remove participant %s", participant_id.c_str());
 
     _participants.erase (participant_id);
 
@@ -99,8 +100,6 @@ void Conference::bindParticipant (CallID participant_id)
         while (iter != _participants.end()) {
 
             if (participant_id != (*iter)) {
-
-                _debug ("---- Conference:: bind callid %s with %s in conference add", participant_id.c_str(), (*iter).c_str());
                 Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID (participant_id, *iter);
             }
 
@@ -109,7 +108,6 @@ void Conference::bindParticipant (CallID participant_id)
 
     }
 
-    _debug ("---- Conference::bind callid %s with default_id in conference add", participant_id.c_str());
 
     Manager::instance().getAudioDriver()->getMainBuffer()->bindCallID (participant_id);
 

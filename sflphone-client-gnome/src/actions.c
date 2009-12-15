@@ -696,6 +696,8 @@ sflphone_new_call()
     peer_name = g_strdup ("");
     create_new_call (CALL, CALL_STATE_DIALING, "", "", peer_name, peer_number, &c);
 
+    c->_history_state = OUTGOING;
+
     calllist_add (current_calls,c);
     calltree_add_call (current_calls, c, NULL);
     update_actions();
@@ -1102,7 +1104,7 @@ sflphone_fill_codec_list()
     }
     if( codec_list_get_size() == 0) {
 
-        gchar* markup = g_markup_printf_escaped(_("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )") , CODECS_DIR , g_get_home_dir());
+        gchar* markup = g_markup_printf_escaped(_("<b>No audio codecs found.</b>\n\nSFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home (<i>%s</i>)"), CODECS_DIR, g_get_home_dir());
         main_window_error_message( markup );
         dbus_unregister(getpid());
         exit(0);

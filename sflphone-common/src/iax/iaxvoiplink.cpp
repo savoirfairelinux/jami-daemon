@@ -364,7 +364,7 @@ IAXVoIPLink::sendAudioFromMic (void)
                         _mutexIAX.enterMutex();
 
                         // Make sure the session and the call still exists.
-                        if (currentCall->getSession() && micDataEncoded != NULL) {
+                        if (currentCall->getSession() && (micDataEncoded != NULL) && (nbSample_ > 0)) {
                             if (iax_send_voice (currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample_) == -1) {
                                 _debug ("IAX: Error sending voice data.");
                             }
@@ -831,7 +831,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
                 Manager::instance().peerAnsweredCall (id);
 
                 // start audio here?
-		audiolayer->startStream();
+                audiolayer->startStream();
                 audiolayer->flushMain();
             } else {
                 // deja connecté ?

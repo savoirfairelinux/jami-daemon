@@ -1195,7 +1195,7 @@ dbus_codec_list()
 {
 
     GError *error = NULL;
-    gchar** array;
+    gchar** array = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_codec_list (
             configurationManagerProxy,
             &array,

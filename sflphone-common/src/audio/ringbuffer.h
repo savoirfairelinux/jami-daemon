@@ -57,8 +57,9 @@ class RingBuffer {
 
     void flushAll();
 
-
     int getReadPointer(CallID call_id = default_id);
+
+    ReadPointer* getReadPointerList() { return &_readpointer; }
 
     int getSmallestReadPointer();
 

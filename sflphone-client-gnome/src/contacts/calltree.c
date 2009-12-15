@@ -253,6 +253,7 @@ row_activated(GtkTreeView       *tree_view UNUSED,
 
 }
 
+
 /* Catch cursor-activated signal. That is, when the entry is single clicked */
 	void  
 row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
@@ -335,6 +336,193 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
 	}
 	return FALSE;
 }
+
+
+gchar* 
+calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gchar *audio_codec, gchar** display_info)
+{
+
+    gchar * description;
+    gchar * tmp_info;
+
+    gchar * peer_number = c->_peer_number;
+    gchar * hostname = NULL;
+    gchar * display_number = "";  
+
+    DEBUG("Display call info");
+
+    // If call is outgoing, keep the hostname, strip it elsewhere
+    if(c->_type == CALL && c->_history_state == OUTGOING) {
+
+        display_number = peer_number; 
+    }
+    else {
+
+        // Get the hostname for this call (NULL if not existent)
+        hostname = g_strrstr(peer_number, "@");
+
+	// Test if we are dialing a new number
+	if(g_strcmp0("", c->_peer_number) != 0) {
+
+	    // Strip the hostname if existent
+	    if(hostname) {
+	        display_number = g_strndup(peer_number, hostname - peer_number);
+	    }
+	    else {
+	        display_number = peer_number;
+	    }
+	}
+	else {
+
+	    display_number = peer_number;
+	}
+    }
+    // Different display depending on type
+    switch(display_type) {
+
+    case DISPLAY_TYPE_CALL:
+
+        DEBUG("display a normal call");
+        if(c->_state_code == 0) {
+
+	    if(g_strcmp0("", c->_peer_name) == 0) {
+	        description = g_markup_printf_escaped("<b>%s</b><i>%s</i>",
+						      display_number, 
+						      c->_peer_name);
+	    }
+	    else {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+						      c->_peer_name,
+						      display_number);
+	    }
+
+	}
+	else {
+	    if(g_strcmp0("", c->_peer_name) == 0) {
+	        description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>",
+						      display_number,
+						      c->_peer_name,
+						      c->_state_code_description,
+						      c->_state_code);
+	    }
+	    else {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
+						      c->_peer_name,
+						      display_number,
+						      c->_state_code_description,
+						      c->_state_code);
+	    }
+	}
+
+	break;
+
+
+    case DISPLAY_TYPE_CALL_TRANSFER: 
+
+        DEBUG("display a call transfer")
+
+        if(g_strcmp0("",c->_peer_name) == 0){
+	    description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>Transfert to:%s</i> ",
+						  display_number,
+						  c->_peer_name,
+						  c->_trsft_to);
+	}
+	else {
+	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
+						  c->_peer_name,
+						  display_number,
+						  c->_trsft_to);
+	}
+	
+	break;
+
+
+    case DISPLAY_TYPE_STATE_CODE : 
+
+        DEBUG("display a state code");
+
+        if(g_strcmp0("",c->_peer_name) == 0){
+
+	    if (c->_state_code) {
+
+	        description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
+						      display_number,
+						      c->_peer_name,
+						      c->_state_code_description,
+						      c->_state_code,
+						      audio_codec);
+	    } else {
+	        description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>%s</i>",
+						      display_number,
+						      c->_peer_name,
+						      audio_codec);
+	    }
+	}
+	else {
+	    if (c->_state_code) {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
+						      c->_peer_name,
+						      display_number,
+						      c->_state_code_description,
+						      c->_state_code,
+						      audio_codec);
+	    } else {
+	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
+						      c->_peer_name,
+						      display_number,
+						      audio_codec);
+	    }
+	}
+	break;
+
+    case DISPLAY_TYPE_SAS:
+
+        DEBUG("display a call with sas");
+
+        if(g_strcmp0("",c->_peer_name) == 0){
+	    description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
+						  display_number,
+						  c->_peer_name,
+						  c->_sas);
+	}
+	else {
+
+	  description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
+						c->_peer_name,
+						display_number,
+						c->_sas);
+	}
+
+    case DISPLAY_TYPE_HISTORY :
+
+        DEBUG("display history entry");
+
+        if(g_strcmp0("", c->_peer_name) == 0) {
+
+	    description = g_markup_printf_escaped("<b>%s</b><i>%s</i>",
+			display_number,
+			c->_peer_name);
+	}
+	else {
+
+	  description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
+			c->_peer_name,
+			display_number);
+	}
+	break;
+
+    default : 
+        DEBUG("Not an allowable type of display");
+	break;
+
+    }
+
+    // return description;
+    tmp_info = g_strdup(description);
+    *display_info = tmp_info;
+}
+
+
 
 /**
  * Reset call tree
@@ -521,212 +709,180 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	void
 calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 {
-	GdkPixbuf *pixbuf=NULL;
-	GdkPixbuf *pixbuf_security=NULL;
-	GtkTreeIter iter;
-	GValue val;
-	callable_obj_t * iterCall;
-	GtkTreeStore* store = tab->store;
+    GdkPixbuf *pixbuf=NULL;
+    GdkPixbuf *pixbuf_security=NULL;
+    GtkTreeIter iter;
+    GValue val;
+    callable_obj_t * iterCall;
+    GtkTreeStore* store = tab->store;
 
-	gchar* srtp_enabled = "";
-	gboolean display_sas = TRUE;
-	account_t* account_details=NULL;
-	gchar *audio_codec = "";
+    gchar* srtp_enabled = "";
+    gboolean display_sas = TRUE;
+    account_t* account_details=NULL;
+    gchar *audio_codec = "";
 
+    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
+    int i;
 
-	int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), parent);
-	int i;
-
-	if(c != NULL) {
-		account_details = account_list_get_by_id(c->_accountID);
-		if(account_details != NULL) {
-			srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
-			if(g_strcasecmp(g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0) 
-			{ display_sas = FALSE; }
-		} else {
-			GHashTable * properties = NULL;
-			sflphone_get_ip2ip_properties (&properties);
-			if(properties != NULL) {
-				if(g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0) 
-				{ display_sas = FALSE; }
-			}
-		}
-	} 
-
-	for( i = 0; i < nbChild; i++)
-	{
-
-		if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, parent, i))
-		{
-
-			if(gtk_tree_model_iter_has_child(GTK_TREE_MODEL(store), &iter))
-			{
-				calltree_update_call (tab, c, &iter);
-			}
-
-			val.g_type = 0;
-			gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, COLUMN_ACCOUNT_PTR, &val);
-
-
-			iterCall = (callable_obj_t*) g_value_get_pointer(&val);
-			g_value_unset(&val);
-
-			if(iterCall != c) {
-				continue;
-			}
-
-			/* Update text */
-			gchar * description;
-			gchar * date="";
-			gchar * duration="";
-			audio_codec = call_get_audio_codec (c);
-
-			if(c->_state == CALL_STATE_TRANSFERT)
-			{
-			      if(g_strcmp0("",c->_peer_name) == 0){
-				description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
-						c->_peer_number,
-						c->_peer_name,
-						c->_trsft_to);
-			      }
-			      else {
-				description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
-						c->_peer_name,
-						c->_peer_number,
-						c->_trsft_to);
-			      }
-			}
-			else
-			{
-				// c->_zrtp_confirmed == FALSE : Hack explained in callable_obj.h
-				if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
-
-				  if(g_strcmp0("",c->_peer_name) == 0){
-					description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
-							c->_peer_number,
-							c->_peer_name,
-							c->_sas);
-				    }
-				    else {
-
-				         description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
-							c->_peer_name,
-							c->_peer_number,
-							c->_sas);
-				    }
-				} else {
-					DEBUG("Updating state code %d %s", c->_state_code, c->_state_code_description);
-					if(g_strcmp0("",c->_peer_name) == 0){
-					  if (c->_state_code) {
-					    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
-								c->_peer_number,
-								c->_peer_name,
-								c->_state_code_description,
-								c->_state_code,
-								audio_codec);
-					  } else {
-					    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
-								c->_peer_number,
-								c->_peer_name,
-								audio_codec);
-					  }
-					}
-					else {
-					  if (c->_state_code) {
-					    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
-								c->_peer_name,
-								c->_peer_number,
-								c->_state_code_description,
-								c->_state_code,
-								audio_codec);
-					  } else {
-					    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
-								c->_peer_name,
-								c->_peer_number,
-								audio_codec);
-					  }
-					}
-				}
-			}
-
-			/* Update icons */
-			if( tab == current_calls )
-			{
-				DEBUG("Receiving in state %d", c->_state);
-				switch(c->_state)
-				{
-					case CALL_STATE_HOLD:
-						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
-						break;
-					case CALL_STATE_INCOMING:
-					case CALL_STATE_RINGING:
-						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
-						break;
-					case CALL_STATE_CURRENT:
-						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
-						break;
-					case CALL_STATE_DIALING:
-						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
-						break;
-					case CALL_STATE_FAILURE:
-						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
-						break;
-					case CALL_STATE_BUSY:
-						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
-						break;
-					case CALL_STATE_TRANSFERT:
-						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
-						break;
-					case CALL_STATE_RECORD:
-						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
-						break;
-					default:
-						WARN("Update calltree - Should not happen!");
-				}        
-
-				switch(c->_srtp_state)
-				{
-					case SRTP_STATE_SAS_UNCONFIRMED:
-						DEBUG("Secure is ON");
-						pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
-						if(c->_sas != NULL) { DEBUG("SAS is ready with value %s", c->_sas); }
-						break;
-					case SRTP_STATE_SAS_CONFIRMED:
-						DEBUG("SAS is confirmed");
-						pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);   
-						break;
-					case SRTP_STATE_SAS_SIGNED:   
-						DEBUG("Secure is ON with SAS signed and verified");
-						pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
-						break;
-					case SRTP_STATE_UNLOCKED:  
-						DEBUG("Secure is off calltree %d", c->_state);
-						if(g_strcasecmp(srtp_enabled,"true") == 0) {
-							pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL); 
-						}
-						break;
-					default:
-						WARN("Update calltree srtp state #%d- Should not happen!", c->_srtp_state); 
-						if(g_strcasecmp(srtp_enabled,"true") == 0) {
-							pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);    
-						}
-
-				}
-				gtk_tree_store_set(store, &iter,
-						0, pixbuf, // Icon
-						1, description, // Description
-						2, pixbuf_security,
-						3, c,
-						-1);
-
-				if (pixbuf != NULL)
-					g_object_unref(G_OBJECT(pixbuf));
-
-			}
-		}
-
+    if(c != NULL) {
+        account_details = account_list_get_by_id(c->_accountID);
+	if(account_details != NULL) {
+	    srtp_enabled = g_hash_table_lookup(account_details->properties, ACCOUNT_SRTP_ENABLED);
+	    if(g_strcasecmp(g_hash_table_lookup(account_details->properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0) 
+	      { display_sas = FALSE; }
+	} else {
+	    GHashTable * properties = NULL;
+	    sflphone_get_ip2ip_properties (&properties);
+	    if(properties != NULL) {
+	        if(g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0) 
+		  { display_sas = FALSE; }
+	    }
 	}
-	update_actions();
+    } 
+
+    for( i = 0; i < nbChild; i++) {
+
+        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, parent, i)) {
+
+	    if(gtk_tree_model_iter_has_child(GTK_TREE_MODEL(store), &iter)) {
+	      calltree_update_call (tab, c, &iter);
+	    }
+
+	    val.g_type = 0;
+	    gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, COLUMN_ACCOUNT_PTR, &val);
+
+	
+	    iterCall = (callable_obj_t*) g_value_get_pointer(&val);
+	    g_value_unset(&val);
+	
+	    if(iterCall != c) {
+	        continue;
+	    }
+
+	    /* Update text */
+	    gchar * description;
+	    gchar * date="";
+	    gchar * duration="";
+	    audio_codec = call_get_audio_codec (c);
+	
+	    if(c->_state == CALL_STATE_TRANSFERT) {
+
+	        calltree_display_call_info(c, DISPLAY_TYPE_CALL_TRANSFER, NULL, &description);
+			    
+	    }
+	    else {
+
+	        if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
+
+		    calltree_display_call_info(c, DISPLAY_TYPE_SAS, NULL, &description);
+				  
+		} else {
+
+		    calltree_display_call_info(c, DISPLAY_TYPE_STATE_CODE, audio_codec, &description);		    
+		}
+	    }
+
+	    /* Update icons */
+	    if( tab == current_calls ) {
+	        DEBUG("Receiving in state %d", c->_state);
+		switch(c->_state) {
+		case CALL_STATE_HOLD:
+		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
+		    break;
+		case CALL_STATE_INCOMING:
+		case CALL_STATE_RINGING:
+		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+		    break;
+		case CALL_STATE_CURRENT:
+		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+		    break;
+		case CALL_STATE_DIALING:
+	            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
+		    break;
+		case CALL_STATE_FAILURE:
+		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
+		    break;
+		case CALL_STATE_BUSY:
+	            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
+		    break;
+		case CALL_STATE_TRANSFERT:
+	            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
+		    break;
+		case CALL_STATE_RECORD:
+	            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/icon_rec.svg", NULL);
+		    break;
+		default:
+		    WARN("Update calltree - Should not happen!");
+		}        
+
+		switch(c->_srtp_state) {
+		case SRTP_STATE_SAS_UNCONFIRMED:
+	            DEBUG("Secure is ON");
+		    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
+		    if(c->_sas != NULL) { DEBUG("SAS is ready with value %s", c->_sas); }
+		    break;
+		case SRTP_STATE_SAS_CONFIRMED:
+		    DEBUG("SAS is confirmed");
+		    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);   
+		    break;
+		case SRTP_STATE_SAS_SIGNED:   
+		    DEBUG("Secure is ON with SAS signed and verified");
+		    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
+		    break;
+		case SRTP_STATE_UNLOCKED:  
+		    DEBUG("Secure is off calltree %d", c->_state);
+		    if(g_strcasecmp(srtp_enabled,"true") == 0) {
+		        pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL); 
+		    }
+		    break;
+		default:
+		    WARN("Update calltree srtp state #%d- Should not happen!", c->_srtp_state); 
+		    if(g_strcasecmp(srtp_enabled,"true") == 0) {
+		        pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);    
+		    }
+
+		}
+	
+	    }
+
+	    if(tab == history) {
+
+	        switch(c->_history_state) {
+		case INCOMING:
+		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
+		    break;
+		case OUTGOING:
+		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
+		    break;
+		case MISSED:
+		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
+		    break;
+		default:
+		    WARN("History - Should not happen!");
+		}
+
+		calltree_display_call_info(c, DISPLAY_TYPE_HISTORY, NULL, &description);
+
+		date = get_formatted_start_timestamp (c);
+		duration = get_call_duration (c);
+		duration = g_strconcat( date , duration , NULL);
+		description = g_strconcat( description , duration, NULL);
+	    }
+
+	    gtk_tree_store_set(store, &iter,
+			   0, pixbuf, // Icon
+			   1, description, // Description
+			   2, pixbuf_security,
+			   3, c,
+			   -1);
+
+	    if (pixbuf != NULL)
+	        g_object_unref(G_OBJECT(pixbuf));
+	}
+      
+    }
+
+    update_actions();
 }
 
 
@@ -754,36 +910,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	gchar * date="";
 	gchar *duration="";
 
-	if(c->_state_code == 0) {
-
-	  if(g_strcmp0("", c->_peer_name) == 0) {
-		description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-				c->_peer_name,
-				c->_peer_number);
-	  }
-	  else {
-	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-				c->_peer_name,
-				c->_peer_number);
-	  }
-
-	}
-	else {
-	  if(g_strcmp0("", c->_peer_name) == 0) {
-		description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
-				c->_peer_number,
-				c->_peer_name,
-				c->_state_code_description,
-				c->_state_code);
-	  }
-	  else {
-	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
-				c->_peer_name,
-				c->_peer_number,
-				c->_state_code_description,
-				c->_state_code);
-	  }
-	}
+	calltree_display_call_info(c, DISPLAY_TYPE_CALL, NULL, &description);
 
 	gtk_tree_store_prepend (tab->store, &iter, parent);
 
@@ -890,18 +1017,7 @@ void calltree_add_history_entry (callable_obj_t * c)
 	// New call in the list
 	gchar * description, *date="", *duration="";
 
-	if(g_strcmp0("", c->_peer_name) == 0) {
-
-	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-			c->_peer_number,
-			c->_peer_name);
-	}
-	else {
-
-	  description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-			c->_peer_name,
-			c->_peer_number);
-	}
+	calltree_display_call_info(c, DISPLAY_TYPE_HISTORY, NULL, &description);
 
 	gtk_tree_store_prepend (history->store, &iter, NULL);
 
@@ -1340,7 +1456,7 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	DEBUG("    selected_path %s, selected_call_id %s, selected_path_depth %i\n", selected_path, selected_call_id, selected_path_depth);
 	DEBUG("    dragged path %s, dragged_call_id %s, dragged_path_depth %i\n", selected_path, selected_call_id, dragged_path_depth);
 
-	GtkTreeModel* model = (GtkTreeModel*)current_calls->store;
+	GtkTreeModel *model = (GtkTreeModel*)current_calls->store;
 	GtkTreePath *path = gtk_tree_path_new_from_string(dragged_path);
 	GtkTreePath *dpath = gtk_tree_path_new_from_string(dragged_path);
 	GtkTreePath *spath = gtk_tree_path_new_from_string(selected_path);
@@ -1348,173 +1464,243 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	GtkTreeIter iter;
 	GtkTreeIter iter_parent;
 	GtkTreeIter iter_children;
-	GtkTreeIter parent_conference;
+	GtkTreeIter parent_conference; // conference for which this call is attached
 
 	GValue val;
 
+	callable_obj_t* call;
 	conference_obj_t* conf;
 
 
-	if(selected_path_depth == 1)
-	{
-		if(dragged_path_depth == 1)
-		{
+	// Make sure that drag n drop does not imply a dialing call
+	if(selected_type == A_CALL && selected_call->_state == CALL_STATE_DIALING) {
+ 
+	    DEBUG("Dragged a call on a dialing call");
 
-			if (selected_type == A_CALL && dragged_type == A_CALL) 
-			{
+	    calltree_remove_call(current_calls, selected_call, NULL);
+	    calltree_add_call(current_calls, selected_call, NULL);
+	    return;
+	}
+	
+	else if(selected_type == A_CALL) {
 
-				if(gtk_tree_path_compare (dpath, spath) == 0)
-				{
-					// draged a call on itself
-				}
-				else
-				{
-					// dragged a single call on a single call
-					if(selected_call != NULL && dragged_call != NULL)
-						sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
-				}
-			}
-			else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
-			{
-				// dragged a single call on a conference
-				selected_call->_confID = g_strdup(dragged_call_id);
-				sflphone_add_participant(selected_call_id, dragged_call_id);
-			}
-			else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
-			{
-				// dragged a conference on a single call (make no sence)
-				calltree_remove_conference(current_calls, selected_conf, NULL);
-				calltree_add_conference(current_calls, selected_conf);
+	    // user may have dragged it outside the conference
+	    if(dragged_call && dragged_call->_state == CALL_STATE_DIALING) {
+
+	        calltree_remove_call(current_calls, dragged_call, NULL);
+
+		DEBUG("Dragged a call on a dialing call");
+
+		// test if call participate to a conference
+		if(selected_call->_confID) {
+
+	            gtk_tree_path_up(spath);
+		    gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
+		
+		    calltree_add_call(current_calls, selected_call, &parent_conference);
+		}
+		else {
+	            calltree_add_call(current_calls, selected_call, NULL);
+		}
+
+		calltree_add_call(current_calls, dragged_call, NULL);
+		return;
+
+	    }
+
+	}
+	else if(selected_type == A_CONFERENCE) {
+
+	    DEBUG("Dragged a conference on a dialing call");
+
+	    if(dragged_call && dragged_call->_state == CALL_STATE_DIALING) {
+
+		conf = selected_conf;
+
+		calltree_remove_conference(current_calls, conf, NULL);
+		calltree_add_conference(current_calls, conf);
+		return;
+	    } 
+	}
 
 
+	if(selected_path_depth == 1) {
+
+	    if(dragged_path_depth == 1) {
+
+	        if (selected_type == A_CALL && dragged_type == A_CALL) {
+
+		    if(gtk_tree_path_compare (dpath, spath) == 0) {
+		        // draged a call on itself
+		    }
+		    else {
+		        // dragged a single call on a single call
+		        if(selected_call != NULL && dragged_call != NULL)
+			  sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
+		    }
+		}
+		else if(selected_type == A_CALL && dragged_type == A_CONFERENCE) {
+
+		    // dragged a single call on a conference
+		    if(!selected_call) {
+		        DEBUG("Error: call dragged on a conference is null");
+		        return;
+		    }
+
+		    selected_call->_confID = g_strdup(dragged_call_id);
+		    sflphone_add_participant(selected_call_id, dragged_call_id);
+		}
+		else if(selected_type == A_CONFERENCE && dragged_type == A_CALL) {
+
+		    // dragged a conference on a single call
+		    conf = selected_conf;
+			        
+		    calltree_remove_conference(current_calls, conf, NULL);
+		    calltree_add_conference(current_calls, conf);
+
+
+		}
+		else if(selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE){
+
+		    // dragged a conference on a conference
+		    if(gtk_tree_path_compare (dpath, spath) == 0) {
+
+		        if(!current_calls) {
+			    DEBUG("Error while joining the same conference\n");
+			    return;
+		        }
+
+		        DEBUG("Joined the same conference!\n");
+			gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls->view), path, FALSE);
+		    }
+		    else {
+
+		        if(!selected_conf) {
+			    DEBUG("Error: selected conference is null while joining 2 conference");
 			}
-			else if(selected_type == A_CONFERENCE && dragged_type == A_CONFERENCE)
-			{
-				// dragged a conference on a conference
-				if(gtk_tree_path_compare (dpath, spath) == 0) 
-				{
-					DEBUG("Joined the same conference!\n");
-					gtk_tree_view_expand_row(GTK_TREE_VIEW(current_calls->view), path, FALSE);
-				}
-				else
-				{
-					DEBUG("Joined two conference %s, %s!\n", dragged_path, selected_path);
-					sflphone_join_conference(selected_conf->_confID, dragged_conf->_confID);
-				}
+
+			if(!dragged_conf) {
+			    DEBUG("Error: dragged conference is null while joining 2 conference");
 			}
+
+		        DEBUG("Joined two conference %s, %s!\n", dragged_path, selected_path);
+			sflphone_join_conference(selected_conf->_confID, dragged_conf->_confID);
+		    }
+		}
 
 			// TODO: dragged a single call on a NULL element (should do nothing)
 			// TODO: dragged a conference on a NULL element (should do nothing)
 
-		}
-		else // dragged_path_depth == 2
-		{
-			if (selected_type == A_CALL && dragged_type == A_CALL)
-			{
-				// TODO: dragged a call on a conference call
-				calltree_remove_call(current_calls, selected_call, NULL);
-				calltree_add_call(current_calls, selected_call, NULL);
-			}
-			else if(selected_type == A_CONFERENCE && dragged_type == A_CALL)
-			{
-				// TODO: dragged a conference on a conference call
-				calltree_remove_conference(current_calls, selected_conf, NULL);
-				calltree_add_conference(current_calls, selected_conf);
-			}
+	    }
+	    else {
+ 
+	        // dragged_path_depth == 2
+	        if (selected_type == A_CALL && dragged_type == A_CALL) {
 
-			// TODO: dragged a single call on a NULL element 
-			// TODO: dragged a conference on a NULL element
+		    // TODO: dragged a call on a conference call
+		    calltree_remove_call(current_calls, selected_call, NULL);
+		    calltree_add_call(current_calls, selected_call, NULL);
 		}
+
+		else if(selected_type == A_CONFERENCE && dragged_type == A_CALL) {
+
+		  // TODO: dragged a conference on a conference call
+		  calltree_remove_conference(current_calls, selected_conf, NULL);
+		  calltree_add_conference(current_calls, selected_conf);
+		}
+
+		// TODO: dragged a single call on a NULL element 
+		// TODO: dragged a conference on a NULL element
+	    }
 	}
-	else // selected_path_depth == 2
-	{
+	else {
 
-		if(dragged_path_depth == 1)
-		{
+	    // selected_path_depth == 2
 
-			if(selected_type == A_CALL && dragged_type == A_CALL)
-			{
+	    if(dragged_path_depth == 1) {
 
-				// dragged a conference call on a call
-				sflphone_detach_participant(selected_call_id);
+	        if(selected_type == A_CALL && dragged_type == A_CALL) {
 
-				if(selected_call != NULL && dragged_call != NULL)
-					sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
+		    // dragged a conference call on a call
+		    sflphone_detach_participant(selected_call_id);
 
-			}
-			else if(selected_type == A_CALL && dragged_type == A_CONFERENCE)
-			{
-				// dragged a conference call on a conference
-				sflphone_detach_participant(selected_call_id);
-
-				if(selected_call != NULL && dragged_conf != NULL)
-				{
-					DEBUG("Adding a participant, since dragged call on a conference");
-
-					sflphone_add_participant(selected_call_id, dragged_call_id);
-				}
-			}
-			else
-			{
-				// dragged a conference call on a NULL element
-				sflphone_detach_participant(selected_call_id);
-			}
+		    if(selected_call != NULL && dragged_call != NULL)
+		        sflphone_join_participant(selected_call->_callID, dragged_call->_callID);
 
 		}
-		else // dragged_path_depth == 2
-		{
-			// dragged a conference call on another conference call (same conference)
-			// TODO: dragged a conference call on another conference call (different conference)
+		else if(selected_type == A_CALL && dragged_type == A_CONFERENCE) {
 
-			gtk_tree_path_up(path);
+		    // dragged a conference call on a conference
+		    sflphone_detach_participant(selected_call_id);
 
-			gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
+		    if(selected_call != NULL && dragged_conf != NULL) {
 
-			gtk_tree_path_up(dpath);
-			gtk_tree_path_up(spath);
+ 		        DEBUG("Adding a participant, since dragged call on a conference");
 
-			if(gtk_tree_path_compare (dpath, spath) == 0)
-			{
+			sflphone_add_participant(selected_call_id, dragged_call_id);
+		    }
+		}
+		else {
 
-				DEBUG("Dragged a call in the same conference");
-				calltree_remove_call (current_calls, selected_call, NULL);
-				calltree_add_call (current_calls, selected_call, &parent_conference);
-			}
-			else
-			{
-				DEBUG("Dragged a conference call onto another conference call %s, %s", gtk_tree_path_to_string(dpath), gtk_tree_path_to_string(spath));
+		    // dragged a conference call on a NULL element
+		    sflphone_detach_participant(selected_call_id);
+		}
+		
+	    }
+	    else {
 
-				conf = NULL;
+	        // dragged_path_depth == 2
+	        // dragged a conference call on another conference call (same conference)
+	        // TODO: dragged a conference call on another conference call (different conference)
+	      
+	        gtk_tree_path_up(path);
 
-				val.g_type = 0;
-				if(gtk_tree_model_get_iter (model, &iter, dpath))
-				{
-					DEBUG("we got an iter!");
-					gtk_tree_model_get_value (model, &iter, COLUMN_ACCOUNT_PTR, &val);
+		gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &parent_conference, path);
 
-					conf = (conference_obj_t*)g_value_get_pointer(&val);
-				}
-				g_value_unset(&val);
+		gtk_tree_path_up(dpath);
+		gtk_tree_path_up(spath);
 
-				sflphone_detach_participant(selected_call_id);
+		if(gtk_tree_path_compare (dpath, spath) == 0) {
 
-				if(conf)
-				{
-					DEBUG("we got a conf!");
-					sflphone_add_participant(selected_call_id, conf->_confID);
-				}
-				else
-				{
-					DEBUG("didn't find a conf!");
-				}
-			}
+		    DEBUG("Dragged a call in the same conference");
+		    calltree_remove_call (current_calls, selected_call, NULL);
+		    calltree_add_call (current_calls, selected_call, &parent_conference);
+		}
+		else {
 
 
-			// TODO: dragged a conference call on another conference call (different conference)
-			// TODO: dragged a conference call on a NULL element (same conference)
-			// TODO: dragged a conference call on a NULL element (different conference)
+		    DEBUG("Dragged a conference call onto another conference call %s, %s", gtk_tree_path_to_string(dpath), gtk_tree_path_to_string(spath));
+
+		    conf = NULL;
+
+		    val.g_type = 0;
+		    if(gtk_tree_model_get_iter (model, &iter, dpath)) {
+		      
+		        DEBUG("we got an iter!");
+			gtk_tree_model_get_value (model, &iter, COLUMN_ACCOUNT_PTR, &val);
+			
+			conf = (conference_obj_t*)g_value_get_pointer(&val);
+		    }
+		    g_value_unset(&val);
+
+		    sflphone_detach_participant(selected_call_id);
+
+		    if(conf) {
+
+		        DEBUG("we got a conf!");
+			sflphone_add_participant(selected_call_id, conf->_confID);
+		    }
+		    else {
+
+		        DEBUG("didn't find a conf!");
+		    }
 		}
 
+		// TODO: dragged a conference call on another conference call (different conference)
+		// TODO: dragged a conference call on a NULL element (same conference)
+		// TODO: dragged a conference call on a NULL element (different conference)
+	    }
+	    
 	}	
 
 }
@@ -1542,75 +1728,69 @@ void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, g
 	if(drop_path)
 	{
 
-		gtk_tree_model_get_iter(tree_model, &iter, drop_path);
-		gtk_tree_model_get_value(tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
+	    gtk_tree_model_get_iter(tree_model, &iter, drop_path);
+	    gtk_tree_model_get_value(tree_model, &iter, COLUMN_ACCOUNT_PTR, &val);
 
+	    
+	    if(gtk_tree_model_iter_has_child(tree_model, &iter)) {
 
-		if(gtk_tree_model_iter_has_child(tree_model, &iter))
-		{
-			DEBUG("DRAGGING ON A CONFERENCE");
-			dragged_type = A_CONFERENCE;
+	        DEBUG("DRAGGING ON A CONFERENCE");
+		dragged_type = A_CONFERENCE;
+	    }
+	    else {
+
+	        DEBUG("DRAGGING ON A CALL");
+		dragged_type = A_CALL;
+	    }
+
+	    switch (position)  {
+
+	    case GTK_TREE_VIEW_DROP_AFTER:
+	        dragged_path = gtk_tree_path_to_string(drop_path);
+		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
+		dragged_call_id = "NULL";
+		dragged_call = NULL;
+		dragged_conf = NULL;
+		break;
+
+	    case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
+	        dragged_path = gtk_tree_path_to_string(drop_path);
+		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
+		if (dragged_type == A_CALL) {
+		  
+		    dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+		    dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
 		}
-		else
-		{
-			DEBUG("DRAGGING ON A CALL");
-			dragged_type = A_CALL;
+		else {
+
+		    dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
+		    dragged_conf = (conference_obj_t*)g_value_get_pointer(&val);
 		}
+		break;
 
-		switch (position) 
-		{
-			case GTK_TREE_VIEW_DROP_AFTER:
-				dragged_path = gtk_tree_path_to_string(drop_path);
-				dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-				dragged_call_id = "NULL";
-				dragged_call = NULL;
-				dragged_conf = NULL;
-				// DEBUG("    AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
-				break;
+	    case GTK_TREE_VIEW_DROP_BEFORE:
+	        dragged_path = gtk_tree_path_to_string(drop_path);
+		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
+		dragged_call_id = "NULL";
+		dragged_call = NULL;
+		dragged_conf = NULL;
+		break;
 
-			case GTK_TREE_VIEW_DROP_INTO_OR_AFTER:
-				dragged_path = gtk_tree_path_to_string(drop_path);
-				dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-				if (dragged_type == A_CALL)
-				{
-					dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
-					dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
-				}
-				else
-				{
-					dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
-					dragged_conf = (conference_obj_t*)g_value_get_pointer(&val);
-				}
-				// DEBUG("    INTO_OR_AFTER dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
-				break;
-
-			case GTK_TREE_VIEW_DROP_BEFORE:
-				dragged_path = gtk_tree_path_to_string(drop_path);
-				dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-				dragged_call_id = "NULL";
-				dragged_call = NULL;
-				dragged_conf = NULL;
-				// DEBUG("    BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
-				break;
-
-			case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
-				dragged_path = gtk_tree_path_to_string(drop_path);
-				dragged_path_depth = gtk_tree_path_get_depth(drop_path);
-				if (dragged_type == A_CALL)
-				{
-					dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
-					dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
-				}
-				else
-				{
-					dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
-					dragged_conf = (conference_obj_t*)g_value_get_pointer(&val);
-				}
-				// DEBUG("    INTO_OR_BEFORE dragged_path %s, dragged_call_id %s, dragged_path_depth %i\n", dragged_path, dragged_call_id, dragged_path_depth);
-				break;
-
-			default:
-				return;
+	    case GTK_TREE_VIEW_DROP_INTO_OR_BEFORE:
+	        dragged_path = gtk_tree_path_to_string(drop_path);
+		dragged_path_depth = gtk_tree_path_get_depth(drop_path);
+		if (dragged_type == A_CALL) {
+		    dragged_call_id = ((callable_obj_t*)g_value_get_pointer(&val))->_callID;
+		    dragged_call = (callable_obj_t*)g_value_get_pointer(&val);
 		}
+		else {
+		    dragged_call_id = ((conference_obj_t*)g_value_get_pointer(&val))->_confID;
+		    dragged_conf = (conference_obj_t*)g_value_get_pointer(&val);
+		}
+		break;
+
+	    default:
+	        return;
+	    }
 	}
 }
