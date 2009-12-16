@@ -7,16 +7,12 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-10-20
-# Last Modified: 2009-10-21 18:18:07 -0400
+# Last Modified: 2009-12-15 18:16:50 -0500
 #####################################################
 
 #set -x
 
-# home directory
-ROOT_DIR=${HOME}
-
-# gpg passphrase file
-GPG_FILE="${ROOT_DIR}/.gpg-sflphone"
+. `dirname $0`/setenv.sh
 
 IS_RELEASE=
 VERSION_INDEX="1"
@@ -25,14 +21,6 @@ DO_LOGGING=1
 DO_UPLOAD=1
 SNAPSHOT_TAG=`date +%Y%m%d`
 
-EDITOR=echo
-export EDITOR
-
-REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
-
-WORKING_DIR="${ROOT_DIR}/sflphone-build-repository/tools/build-system"
-LAUNCHPAD_DIR="${WORKING_DIR}/launchpad"
-LAUNCHPAD_DISTRIBUTIONS=( "jaunty" "karmic" )
 LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
 
 echo
