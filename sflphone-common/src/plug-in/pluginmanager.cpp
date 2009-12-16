@@ -59,7 +59,7 @@ PluginManager::loadPlugins (const std::string &path)
 
     /* The directory in which plugins are dropped. Default: /usr/lib/sflphone/plugins/ */
     (path == "") ? pluginDir = std::string (PLUGINS_DIR).append ("/") :pluginDir = path;
-    _debug ("Loading plugins from %s...\n", pluginDir.c_str());
+    _debug ("Loading plugins from %s...", pluginDir.c_str());
 
     dir = opendir (pluginDir.c_str());
     /* Test if the directory exists or is readable */
@@ -79,13 +79,13 @@ PluginManager::loadPlugins (const std::string &path)
                 /* Instanciate the plugin object */
 
                 if (instanciatePlugin (library, &plugin) != 0) {
-                    _debug ("Error instanciating the plugin ...\n");
+                    _debug ("Error instanciating the plugin ...");
                     return 1;
                 }
 
                 /* Regitering the current plugin */
                 if (registerPlugin (plugin, library) != 0) {
-                    _debug ("Error registering the plugin ...\n");
+                    _debug ("Error registering the plugin ...");
                     return 1;
                 }
             }
@@ -115,14 +115,14 @@ PluginManager::unloadPlugins (void)
         info = iter->second;
 
         if (deletePlugin (info) != 0) {
-            _debug ("Error deleting the plugin ... \n");
+            _debug ("Error deleting the plugin ... ");
             return 1;
         }
 
         unloadDynamicLibrary (info->_libraryPtr);
 
         if (unregisterPlugin (info) != 0) {
-            _debug ("Error unregistering the plugin ... \n");
+            _debug ("Error unregistering the plugin ... ");
             return 1;
         }
 
@@ -161,7 +161,7 @@ PluginManager::loadDynamicLibrary (const std::string& filename)
 int
 PluginManager::unloadDynamicLibrary (LibraryManager *libraryPtr)
 {
-    _debug ("Unloading dynamic library ...\n");
+    _debug ("Unloading dynamic library ...");
     /* Close it */
     return libraryPtr->unloadLibrary ();
 }

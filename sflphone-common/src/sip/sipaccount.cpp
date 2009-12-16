@@ -90,7 +90,7 @@ int SIPAccount::initCredential (void)
     pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (credentialCount));
 
     if (cred_info == NULL) {
-        _debug ("Failed to set cred_info for account %s\n", _accountID.c_str());
+        _debug ("Failed to set cred_info for account %s", _accountID.c_str());
         return !SUCCESS;
     }
 
@@ -115,7 +115,7 @@ int SIPAccount::initCredential (void)
     // on an assertion.
     if (md5HashingEnabled && _password.length() == 32) {
         dataType = PJSIP_CRED_DATA_DIGEST;
-        _debug ("Setting digest \n");
+        _debug ("Setting digest ");
     } else {
         dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
     }
@@ -150,7 +150,7 @@ int SIPAccount::initCredential (void)
 
         if (md5HashingEnabled && _password.length() == 32) {
             dataType = PJSIP_CRED_DATA_DIGEST;
-            _debug ("Setting digest \n");
+            _debug ("Setting digest ");
         } else {
             dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
         }
@@ -159,7 +159,7 @@ int SIPAccount::initCredential (void)
 
         cred_info[i].scheme = pj_str ( (char*) "digest");
 
-        _debug ("Setting credential %d realm = %s passwd = %s username = %s data_type = %d\n", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
+        _debug ("Setting credential %d realm = %s passwd = %s username = %s data_type = %d", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
     }
 
     _credentialCount = credentialCount;
@@ -213,7 +213,7 @@ int SIPAccount::registerVoIPLink()
 
 int SIPAccount::unregisterVoIPLink()
 {
-    _debug ("Unregister account %s\n" , getAccountID().c_str());
+    _debug ("Unregister account %s" , getAccountID().c_str());
 
     if (_accountID == IP2IP_PROFILE) {
         return true;
@@ -576,7 +576,7 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
 
     _displayName = Manager::instance().getConfigString (_accountID, DISPLAY_NAME);
 
-    _debug ("Display Name: %s\n", _displayName.c_str());
+    _debug ("Display Name: %s", _displayName.c_str());
 
     int len = pj_ansi_snprintf (contact, PJSIP_MAX_URL_SIZE,
 

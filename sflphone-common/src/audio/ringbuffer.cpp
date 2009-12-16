@@ -54,6 +54,7 @@ RingBuffer::~RingBuffer()
 void
 RingBuffer::flush (CallID call_id)
 {
+
     storeReadPointer (mEnd, call_id);
 }
 
@@ -61,6 +62,7 @@ RingBuffer::flush (CallID call_id)
 void
 RingBuffer::flushAll ()
 {
+
 
     ReadPointer::iterator iter_pointer = _readpointer.begin();
 
@@ -95,7 +97,7 @@ RingBuffer::getLen (CallID call_id)
     int mStart = getReadPointer (call_id);
 
     int length = (mEnd + mBufferSize - mStart) % mBufferSize;
-    // _debug("    *RingBuffer::getLen: buffer_id %s, call_id %s, mStart %i, mEnd %i, length %i, buffersie %i\n", buffer_id.c_str(), call_id.c_str(), mStart, mEnd, length, mBufferSize);
+    // _debug("    *RingBuffer::getLen: buffer_id %s, call_id %s, mStart %i, mEnd %i, length %i, buffersie %i", buffer_id.c_str(), call_id.c_str(), mStart, mEnd, length, mBufferSize);
     return length;
 
 }
@@ -105,7 +107,7 @@ RingBuffer::debug()
 {
     int mStart = getSmallestReadPointer();
 
-    _debug ("Start=%d; End=%d; BufferSize=%d\n", mStart, mEnd, mBufferSize);
+    _debug ("Start=%d; End=%d; BufferSize=%d", mStart, mEnd, mBufferSize);
 }
 
 int
@@ -154,7 +156,7 @@ RingBuffer::storeReadPointer (int pointer_value, CallID call_id)
     if (iter != _readpointer.end()) {
         iter->second = pointer_value;
     } else {
-        _debug ("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer\n", call_id.c_str(), buffer_id.c_str());
+        _debug ("storeReadPointer: Cannot find \"%s\" readPointer in \"%s\" ringbuffer", call_id.c_str(), buffer_id.c_str());
     }
 
 }
@@ -173,7 +175,9 @@ void
 RingBuffer::removeReadPointer (CallID call_id)
 {
 
+
     _readpointer.erase (call_id);
+
 
 }
 
@@ -204,6 +208,7 @@ int
 RingBuffer::AvailForPut()
 {
     // Always keep 4 bytes safe (?)
+
     return (mBufferSize-4) - putLen();
 }
 
@@ -218,6 +223,7 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
     int pos;
 
     int len = putLen();
+
 
     if (toCopy > (mBufferSize-4) - len)
         toCopy = (mBufferSize-4) - len;
@@ -253,7 +259,7 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
         //fprintf(stderr, "has %d put %d\t", len, block);
         bcopy (src, mBuffer + pos, block);
 
-        src += block;
+	  src += block;
 
         pos = (pos + block) % mBufferSize;
 
@@ -276,6 +282,7 @@ int
 RingBuffer::AvailForGet (CallID call_id)
 {
     // Used space
+
     return getLen (call_id);
 }
 
@@ -296,7 +303,9 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 
     int copied;
 
+
     int len = getLen (call_id);
+
 
     if (toCopy > len)
         toCopy = len;

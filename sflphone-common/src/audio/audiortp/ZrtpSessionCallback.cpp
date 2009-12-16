@@ -44,7 +44,7 @@ ZrtpSessionCallback::ZrtpSessionCallback (SIPCall *sipcall) :
         return;
     }
 
-    _debug ("Initialize callbacks\n");
+    _debug ("Initialize callbacks");
 
     /**
      * Information Map
@@ -114,28 +114,28 @@ ZrtpSessionCallback::ZrtpSessionCallback (SIPCall *sipcall) :
 void
 ZrtpSessionCallback::secureOn (std::string cipher)
 {
-    _debug ("Secure mode is on with cipher %s\n", cipher.c_str());
+    _debug ("Secure mode is on with cipher %s", cipher.c_str());
     DBusManager::instance().getCallManager()->secureOn (_sipcall->getCallId(), cipher);
 }
 
 void
 ZrtpSessionCallback::secureOff (void)
 {
-    _debug ("Secure mode is off\n");
+    _debug ("Secure mode is off");
     DBusManager::instance().getCallManager()->secureOff (_sipcall->getCallId());
 }
 
 void
 ZrtpSessionCallback::showSAS (std::string sas, bool verified)
 {
-    _debug ("SAS is: %s\n", sas.c_str());
+    _debug ("SAS is: %s", sas.c_str());
     DBusManager::instance().getCallManager()->showSAS (_sipcall->getCallId(), sas, verified);
 }
 
 void
 ZrtpSessionCallback::zrtpNotSuppOther()
 {
-    _debug ("Callee does not support ZRTP\n");
+    _debug ("Callee does not support ZRTP");
     DBusManager::instance().getCallManager()->zrtpNotSuppOther (_sipcall->getCallId());
 }
 
@@ -148,7 +148,7 @@ ZrtpSessionCallback::showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t sub
         msg = _infoMap[subCode];
 
         if (msg != NULL) {
-            _debug ("ZRTP Debug:\n");
+            _debug ("ZRTP Debug:");
         }
     }
 
@@ -156,7 +156,7 @@ ZrtpSessionCallback::showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t sub
         msg = _warningMap[subCode];
 
         if (msg != NULL) {
-            _debug ("ZRTP Debug:\n");
+            _debug ("ZRTP Debug:");
         }
     }
 
@@ -164,22 +164,22 @@ ZrtpSessionCallback::showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t sub
         msg = _severeMap[subCode];
 
         if (msg != NULL) {
-            _debug ("ZRTP Debug:\n");
+            _debug ("ZRTP Debug:");
         }
     }
 
     if (sev == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
             subCode *= -1;
-            _debug ("Received an error packet from peer:\n");
+            _debug ("Received an error packet from peer:");
         } else {
-            _debug ("Sent error packet to peer:\n");
+            _debug ("Sent error packet to peer:");
         }
 
         msg = _zrtpMap[subCode];
 
         if (msg != NULL) {
-            _debug ("ZRTP Debug: %s\n", msg->c_str());
+            _debug ("ZRTP Debug: %s", msg->c_str());
         }
     }
 }
@@ -192,20 +192,20 @@ ZrtpSessionCallback::zrtpNegotiationFailed (MessageSeverity severity, int subCod
     if (severity == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
             subCode *= -1;
-            _debug ("Received error packet: \n");
+            _debug ("Received error packet: ");
         } else {
-            _debug ("Sent error packet: \n");
+            _debug ("Sent error packet: ");
         }
 
         msg = _zrtpMap[subCode];
 
         if (msg != NULL) {
-            _debug ("%s\n", msg->c_str());
+            _debug ("%s", msg->c_str());
             DBusManager::instance().getCallManager()->zrtpNegotiationFailed (_sipcall->getCallId(), *msg, "ZRTP");
         }
     } else {
         msg = _severeMap[subCode];
-        _debug ("%s\n", msg->c_str());
+        _debug ("%s", msg->c_str());
         DBusManager::instance().getCallManager()->zrtpNegotiationFailed (_sipcall->getCallId(), *msg, "severe");
     }
 }
@@ -213,7 +213,7 @@ ZrtpSessionCallback::zrtpNegotiationFailed (MessageSeverity severity, int subCod
 void
 ZrtpSessionCallback::confirmGoClear()
 {
-    _debug ("Received go clear message. Until confirmation, ZRTP won't send any data\n");
+    _debug ("Received go clear message. Until confirmation, ZRTP won't send any data");
     DBusManager::instance().getCallManager()->zrtpNotSuppOther (_sipcall->getCallId());
 }
 

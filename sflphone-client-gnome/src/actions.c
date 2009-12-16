@@ -94,6 +94,7 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
+	status_tray_icon_online(TRUE);
         msg = g_markup_printf_escaped("%s %s (%s)" ,
                 _("Using account"),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
@@ -101,6 +102,7 @@ status_bar_display_account ()
     }
     else
     {
+	status_tray_icon_online(FALSE);
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
     statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
@@ -693,6 +695,8 @@ sflphone_new_call()
     peer_number = g_strdup("");
     peer_name = g_strdup ("");
     create_new_call (CALL, CALL_STATE_DIALING, "", "", peer_name, peer_number, &c);
+
+    c->_history_state = OUTGOING;
 
     calllist_add (current_calls,c);
     calltree_add_call (current_calls, c, NULL);
