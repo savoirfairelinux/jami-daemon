@@ -4258,7 +4258,9 @@ ManagerImpl::loadAccountMap()
 	// The SIP library initialization is done in the SIPVoIPLink constructor
 	// We need the IP2IP settings to be loaded at this time as they are used 
 	// for default sip transport
-	_directIpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+
+	// _directIpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+	_directIpAccount->setVoIPLink();
 
     }
 
@@ -4287,7 +4289,8 @@ ManagerImpl::loadAccountMap()
         if (tmpAccount != NULL) {
             _debug ("Loading account %s \n", iter->c_str());
             _accountMap[iter->c_str() ] = tmpAccount;
-	    tmpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+	    // tmpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+	    tmpAccount->setVoIPLink();
             nbAccount++;
         }
 
@@ -4307,7 +4310,7 @@ ManagerImpl::unloadAccountMap()
 
     while (iter != _accountMap.end()) {
 
-        _debug ("-> Unloading account %s\n", iter->first.c_str());
+        _debug ("Unloading account %s\n", iter->first.c_str());
         delete iter->second;
         iter->second = 0;
 

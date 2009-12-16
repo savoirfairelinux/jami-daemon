@@ -139,7 +139,7 @@ class Account{
          */
         inline VoIPLink* getVoIPLink() { return _link; }
 
-        inline void setVoIPLink (VoIPLink *link) { _link = link; }
+        virtual void setVoIPLink () = 0;
 
         /**
          * Register the underlying VoIPLink. Launch the event listener.

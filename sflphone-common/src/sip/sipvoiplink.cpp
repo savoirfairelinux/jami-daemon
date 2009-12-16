@@ -239,6 +239,8 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
 
 SIPVoIPLink::~SIPVoIPLink()
 {
+    _debug("SIPVoIPLink destructor called\n");
+
     terminate();
 }
 
@@ -258,6 +260,8 @@ void SIPVoIPLink::decrementClients (void)
     _clients--;
 
     if (_clients == 0) {
+
+        _debug("No SIP account anymore, terminate SIPVoIPLink\n");
         terminate();
         SIPVoIPLink::_instance=NULL;
     }
@@ -286,21 +290,18 @@ bool SIPVoIPLink::init()
 void
 SIPVoIPLink::terminate()
 {
-    _debug ("SIPVoIPLink::terminate");
-
-
+    _debug ("Terminating SIPVoIPLink\n");
 
     if (_evThread) {
-        _debug ("SIPVoIPLink:: delete eventThread");
+        _debug ("Deleting sip eventThread\n");
         delete _evThread;
         _evThread = NULL;
     }
 
 
-
     /* Clean shutdown of pjsip library */
     if (initDone()) {
-        _debug ("pjsip_shutdown\n");
+        _debug ("Shuting down PJSIP\n");
         pjsip_shutdown();
     }
 

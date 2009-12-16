@@ -58,6 +58,12 @@ class SIPAccount : public Account
          */
         virtual ~SIPAccount();
 
+	/**
+	 * Special setVoIPLink which increment SipVoIPLink's number of client. 
+	 */
+	// void setVoIPLink(VoIPLink *link);
+	void setVoIPLink();
+
         /** 
          * Actually unuseful, since config loading is done in init() 
          */

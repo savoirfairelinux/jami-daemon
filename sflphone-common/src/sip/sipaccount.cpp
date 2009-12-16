@@ -58,10 +58,20 @@ SIPAccount::~SIPAccount()
 {
     /* One SIP account less connected to the sip voiplink */
     dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
+
     /* Delete accounts-related information */
     _regc = NULL;
     free (_cred);
     free (_tlsSetting);
+}
+
+
+// void SIPAccount::setVoIPLink(VoIPLink *link) {
+void SIPAccount::setVoIPLink() {
+
+    _link = SIPVoIPLink::instance ("");
+    dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
+
 }
 
 

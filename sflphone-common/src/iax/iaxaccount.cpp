@@ -36,6 +36,11 @@ IAXAccount::~IAXAccount()
     _link = NULL;
 }
 
+void IAXAccount::setVoIPLink()
+{
+
+}
+
 int IAXAccount::registerVoIPLink()
 {
     _link->init();
