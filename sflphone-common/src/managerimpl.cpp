@@ -120,6 +120,7 @@ ManagerImpl::~ManagerImpl (void)
 void
 ManagerImpl::init()
 {
+
     // Load accounts, init map
     loadAccountMap();
 
@@ -4223,7 +4224,7 @@ short
 ManagerImpl::loadAccountMap()
 {
 
-    _debug ("ManagerImpl::loadAccountMap\n");
+    _debug ("Loading account map\n");
 
     short nbAccount = 0;
     TokenList sections = _config.getSections();
@@ -4242,16 +4243,26 @@ ManagerImpl::loadAccountMap()
     _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
 
     if (_directIpAccount == NULL) {
+
         _debug ("Failed to create direct ip calls \"account\"\n");
     } else {
-        // Force the options to be loaded
-        // No registration in the sense of
-        // the REGISTER method is performed.
+
         _debug ("Succeed to create direct ip calls \"account\"\n");
         _accountMap[IP2IP_PROFILE] = _directIpAccount;
-        _directIpAccount->registerVoIPLink();
+
+	// Force IP2IP settings to be loaded to be loaded 
+        // No registration in the sense of the REGISTER method is performed.
+	_directIpAccount->registerVoIPLink();
+
+	// SIPVoIPlink is used as a singleton, it is the first call to instance here
+	// The SIP library initialization is done in the SIPVoIPLink constructor
+	// We need the IP2IP settings to be loaded at this time as they are used 
+	// for default sip transport
+	_directIpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+
     }
 
+    // initialize other accounts
     while (iter != sections.end()) {
         // Check if it starts with "Account:" (SIP and IAX pour le moment)
         if ( (int) (iter->find ("Account:")) != 0) {
@@ -4276,25 +4287,14 @@ ManagerImpl::loadAccountMap()
         if (tmpAccount != NULL) {
             _debug ("Loading account %s \n", iter->c_str());
             _accountMap[iter->c_str() ] = tmpAccount;
+	    tmpAccount->setVoIPLink(SIPVoIPLink::instance (""));
             nbAccount++;
         }
 
         iter++;
     }
 
-    /*
-    if (_directIpAccount == NULL) {
-        _debug ("Failed to create direct ip calls \"account\"\n");
-    } else {
-        // Force the options to be loaded
-        // No registration in the sense of
-        // the REGISTER method is performed.
-        _debug ("Succeed to create direct ip calls \"account\"\n");
-        _directIpAccount->registerVoIPLink();
-    _accountMap[IP2IP_PROFILE] = _directIpAccount;
-    }
-    */
-    _debug ("nbAccount loaded %i \n", nbAccount);
+    _debug ("nb account loaded %i \n", nbAccount);
 
     return nbAccount;
 }

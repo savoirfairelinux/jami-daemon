@@ -1479,25 +1479,25 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
 
         if (account == NULL) {
-            _debug ("Account is null. Returning\n");
+	    _debug ("Account %s is null. Returning\n", IP2IP_PROFILE);
             return !PJ_SUCCESS;
         }
 
-		// Set the local address
-		localAddress = account->getLocalAddress ();
+	// Set the local address
+	localAddress = account->getLocalAddress ();
         // Set SDP parameters - Set to local or published address
-		account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  addrSdp = account->getLocalAddress (); 
+	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  addrSdp = account->getLocalAddress (); 
 
         _debug ("new_ip_to_ip_call localAddress: %s\n", localAddress.c_str());
 
         if (localAddress == "0.0.0.0") {
-            _debug ("Here is the local address: %s\n", localAddress.c_str ());
+            _debug ("Local address: %s\n", localAddress.c_str ());
             loadSIPLocalIP (&localAddress);
         }
 
-		if (addrSdp == "0.0.0.0") {
-			addrSdp = localAddress;
-		}
+	if (addrSdp == "0.0.0.0") {
+	    addrSdp = localAddress;
+	}
 
         setCallAudioLocal (call, localAddress);
 
@@ -2110,26 +2110,25 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     int listeningPort = _regPort;
 
     /* Use my local address as default value */
-
     if (!loadSIPLocalIP (&listeningAddress))
         return !PJ_SUCCESS;
 
-    _debug ("SIPVoIPLink::createUDPServer\n");
+    _debug ("Create UDP transport for account \"%s\"\n", id.c_str());
 
     /*
      * Retrieve the account information
      */
     SIPAccount * account = NULL;
-
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
     // Set information to the local address and port
-
     if (account == NULL) {
         _debug ("Account with id \"%s\" is null in createUDPServer.\n", id.c_str());
         // account = Manager::instance()->getAccount(IP2IP_PROFILE);
     } else {
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
+        _debug("Found account %s in map\n", account->getAccountID().c_str());
+
         if (account->getLocalAddress () != "0.0.0.0") {
 	    listeningAddress = account->getLocalAddress ();
 	}
@@ -2139,18 +2138,15 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 
     // Init bound address to ANY
     pj_memset (&bound_addr, 0, sizeof (bound_addr));
-
     bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
-
     bound_addr.sin_port = pj_htons ( (pj_uint16_t) listeningPort);
-
     bound_addr.sin_family = PJ_AF_INET;
-
     pj_bzero (bound_addr.sin_zero, sizeof (bound_addr.sin_zero));
 
     // Create UDP-Server (default port: 5060)
     // Use here either the local information or the published address
     if (account != NULL && !account->getPublishedSameasLocal ()) {
+
         // Set the listening address to the published address
         listeningAddress = account->getPublishedAddress ();
         // Set the listening port to the published port
@@ -2159,32 +2155,25 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 
     }
 
+
     //strcpy (tmpIP, listeningAddress.data());
     /* Init published name */
     pj_bzero (&a_name, sizeof (pjsip_host_port));
-
     pj_cstr (&a_name.host, listeningAddress.c_str());
-
     a_name.port = listeningPort;
 
     //pj_strdup2 (_pool, &a_name.host, tmpIP);
-
     //a_name.port = (pj_uint16_t) listeningPort;
 
     status = pjsip_udp_transport_start (_endpt, &bound_addr, &a_name, 1, &transport);
 
-    // Get the transport manager associated with
-    // this endpoint
-    pjsip_tpmgr * tpmgr = NULL;
-
-    tpmgr = pjsip_endpt_get_tpmgr (_endpt);
-
+    // Print info from transport manager associated to endpoint
+    pjsip_tpmgr * tpmgr = pjsip_endpt_get_tpmgr (_endpt);
     pjsip_tpmgr_dump_transports (tpmgr);
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: (%d) Unable to start UDP transport on %s:%d\n", status, listeningAddress.data(), listeningPort);
-        // Try to acquire an existing one
-        // pjsip_tpmgr_acquire_transport ()
+
         return status;
     } else {
         _debug ("UserAgent: UDP server listening on port %d\n", listeningPort);
@@ -2200,7 +2189,6 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     }
 
     _debug ("Transport initialized successfully on %s:%i\n", listeningAddress.c_str (), listeningPort);
-
 
     return PJ_SUCCESS;
 }
