@@ -1799,10 +1799,11 @@ bool SIPVoIPLink::pjsip_init()
         }
     }
 
-    // Bind the newly created transport to the ip to ip account
-    // setAccountTransport
+    if(account && (errPjsip == PJ_SUCCESS)) {
 
-    _debug ("pjsip_init -- listening on port %d\n", port);
+        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
+    }
+
 
     // Create a TLS listener meant for Direct IP calls
     // if the user did enabled it.
@@ -1983,7 +1984,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 
         // Transport could not be created, account account already have one set.
         // Most likely this is the transport we tried to create.
-        _debug("Transport (%s) already set for account, use it\n", account->getTransportMapKey().c_str());
+        _debug("Transport (%s) already set for this account, use it\n", account->getTransportMapKey().c_str());
 
 	return true;
     } 
@@ -2075,27 +2076,34 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
     // If Transport created succesfully, store it in the internal map
     if(status == PJ_SUCCESS) {
 
-         SipTransportMap::iterator iter_transport;
-	 iter_transport = _transportMap.find(account->getTransportMapKey());
+        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
 
-	 // old transport in transport map, erase it
-	 if(iter_transport != _transportMap.end()){
-	     _transportMap.erase(iter_transport);
-	 }
-
-         std::string key = account->getTransportMapKey();
-	 pjsip_transport* transport = account->getAccountTransport();	 
- 
-	 _debug("Storing the newly created transport in transport map using key %s\n", key.c_str());
-         _transportMap.insert(pair<std::string, pjsip_transport*>(key, transport));
-
-         return true;
+	return true;
     }
     else {
 
         return false;
     }
     
+}
+
+
+bool SIPVoIPLink::addTransportToMap(std::string key, pjsip_transport* transport)
+{
+
+    SipTransportMap::iterator iter_transport;
+    iter_transport = _transportMap.find(key);
+	
+    // old transport in transport map, erase it
+    if(iter_transport != _transportMap.end()){
+        _transportMap.erase(iter_transport);
+    }
+
+    _debug("Storing the newly created transport in transport map using key %s\n", key.c_str());
+    _transportMap.insert(pair<std::string, pjsip_transport*>(key, transport));
+
+    return true;
+
 }
 
 

@@ -419,6 +419,7 @@ std::string SIPAccount::getLoginName (void)
 
 std::string SIPAccount::getTransportMapKey(void)
 {
+    /*
     std::string mapKey;
 
     std::stringstream out;
@@ -436,8 +437,12 @@ std::string SIPAccount::getTransportMapKey(void)
     mapKey.append(localPort.c_str());
     mapKey.append(publishedAddress.c_str());
     mapKey.append(publishedPort.c_str());
+    */
+    std::stringstream out;
+    out << getLocalPort();
+    std::string localPort = out.str();
 
-    return mapKey;
+    return localPort;
 }
 
 

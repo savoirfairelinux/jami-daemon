@@ -376,6 +376,9 @@ class SIPVoIPLink : public VoIPLink
 	 */
 	bool createSipTransport(AccountID id);
 
+
+	bool addTransportToMap(std::string key, pjsip_transport* transport);
+
         /** Create SIP UDP Listener */
         int createUDPServer (AccountID = "");
 
