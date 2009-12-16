@@ -1812,6 +1812,9 @@ bool SIPVoIPLink::pjsip_init()
 
         addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
 
+	// if account is not NULL, use IP2IP trasport as default one
+	_localUDPTransport = account->getAccountTransport();
+ 
     }
 
     // Create a TLS listener meant for Direct IP calls
@@ -2560,13 +2563,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 	   pj_sockaddr_get_port((const pj_sockaddr*)&(transport->key.rem_addr)));
 
     }
-    pjsip_tpmgr * tpmgr = NULL;
-
-    tpmgr = pjsip_endpt_get_tpmgr (_endpt);
-
-    _debug ("Number of transport: %i\n", pjsip_tpmgr_get_transport_count (tpmgr));
-
-    // status = pjsip_transport_register( tpmgr, (pjsip_transport*)transport);
+    pjsip_tpmgr * tpmgr = pjsip_endpt_get_tpmgr (_endpt);
 
     pjsip_tpmgr_dump_transports (tpmgr);
 
