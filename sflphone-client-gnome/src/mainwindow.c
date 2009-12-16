@@ -291,11 +291,10 @@ main_window_message(GtkMessageType type, gchar * markup){
 			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
 			type,
 			GTK_BUTTONS_CLOSE,
-			"%s\n",
-			markup);
-
+			NULL);
 
 	gtk_window_set_title(GTK_WINDOW(dialog), _("SFLphone Error"));
+	gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dialog), markup);
 
 	gtk_dialog_run (GTK_DIALOG(dialog));
 	gtk_widget_destroy (GTK_WIDGET(dialog));
