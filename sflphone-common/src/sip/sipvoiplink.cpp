@@ -452,6 +452,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         }
     }
 
+
     // Create SIP transport or get existent SIP transport from internal map 
     // according to account settings, if the transport could not be created but
     // one is already set in account, use this one (most likely this is the 
@@ -637,7 +638,7 @@ SIPVoIPLink::sendUnregister (AccountID id)
 	       account->getAccountTransport()->info,
 	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
 
-	// shutdownSipTransport(account->getAccountID());
+        // shutdownSipTransport(account->getAccountID());
     }
 
     // This may occurs if account failed to register and is in state INVALID
@@ -1975,11 +1976,21 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
     if(!account)
         return false;
 
+    // If an account is already bound to this account, decrease its reference 
+    // as it is going to change. If the same transport is selected, reference 
+    // counter will be increased
+    if(account->getAccountTransport()) {
+
+        _debug("pjsip_transport_dec_ref in acquireTransport\n");
+        pjsip_transport_dec_ref(account->getAccountTransport());
+    }
+
     // Try to create a new transport
     if(createSipTransport(accountID)) {
 
         return true;
     }
+    /*
     else if(account->getAccountTransport()) {
 
         // Transport could not be created, account account already have one set.
@@ -1988,6 +1999,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 
 	return true;
     } 
+    */
     else {
 
         _debug("Searching transport (%s) in transport map\n", account->getTransportMapKey().c_str());
@@ -2038,7 +2050,7 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
     // if the user did choose it.
     if (account->isTlsEnabled()) {
 
-        _debug ("    sendRegister: createTlsTransport\n");
+        _debug ("Create TLS transport\n");
         status = createTlsTransportRetryOnFailure (id);
 
         if (status != PJ_SUCCESS) {
@@ -2049,7 +2061,7 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
         // Launch a new UDP listener/transport, using the published address
         if (account->isStunEnabled ()) {
 
-            _debug ("    sendRegister: createAlternateUdpTransport\n");
+            _debug ("Create Alternate UDP transport\n");
             status = createAlternateUdpTransport (id);
 
             if (status != PJ_SUCCESS) {
@@ -2057,6 +2069,7 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
             }
         } else {
 
+	    _debug ("Create UDP transport\n");
             status = createUDPServer (id);
 
 	    if (status != PJ_SUCCESS) {
@@ -2074,7 +2087,8 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
     }
 
     // If Transport created succesfully, store it in the internal map
-    if(status == PJ_SUCCESS) {
+    // If stun is enabled, do not store it due to stun per account policy 
+    if((status == PJ_SUCCESS) && !account->isStunEnabled()) {
 
         addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
 
