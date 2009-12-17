@@ -202,7 +202,8 @@ namespace sfl {
         }
 
 	_debug("Unbind audio RTP stream for call id %s\n", _ca->getCallId().c_str());
-	_audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
+	// _audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
+	_manager->getAudioDriver()->getMainBuffer()->unBindAll(_ca->getCallId());
 
         delete [] _micData;
         delete [] _micDataConverted;
@@ -218,10 +219,12 @@ namespace sfl {
     void AudioRtpSession<D>::initBuffers() 
     {
 	// Set sampling rate, main buffer choose the highest one
-	_audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
+	// _audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
+        _manager->getAudioDriver()->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
 
 	// may be different than one already setted
-	converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	// converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
 	// initialize SampleRate converter using AudioLayer's sampling rate
 	// (internal buffers initialized with maximal sampling rate and frame size)
@@ -310,7 +313,8 @@ namespace sfl {
         assert(_audiocodec);
         assert(_audiolayer);
 
-	int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	
+	int _mainBufferSampleRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
         // compute codec framesize in ms
         float fixed_codec_framesize = computeCodecFrameSize (_audiocodec->getFrameSize(), _audiocodec->getClockRate());
@@ -319,7 +323,7 @@ namespace sfl {
         int maxBytesToGet = computeNbByteAudioLayer (fixed_codec_framesize);
 
         // available bytes inside ringbuffer
-        int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
+        int availBytesFromMic = _manager->getAudioDriver()->getMainBuffer()->availForGet(_ca->getCallId());
 
         // set available byte to maxByteToGet
         int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
@@ -328,7 +332,7 @@ namespace sfl {
             return 0;
 
         // Get bytes from micRingBuffer to data_from_mic
-        int nbSample = _audiolayer->getMainBuffer()->getData(_micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
+        int nbSample = _manager->getAudioDriver()->getMainBuffer()->getData(_micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
         // nb bytes to be sent over RTP
         int compSize = 0;
@@ -361,7 +365,7 @@ namespace sfl {
         if (_audiocodec != NULL) {
 
 
-	    int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	    int _mainBufferSampleRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
             // Return the size of data in bytes
             int expandedSize = _audiocodec->codecDecode (_spkrDataDecoded , spkrData , size);
@@ -381,7 +385,7 @@ namespace sfl {
                 _nSamplesSpkr = nbSample;
 
                 // put data in audio layer, size in byte
-		_audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
+		_manager->getAudioDriver()->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
 
             } else {
@@ -390,7 +394,7 @@ namespace sfl {
 
 
                 // put data in audio layer, size in byte
-                _audiolayer->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
+                _manager->getAudioDriver()->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
             }
 
             // Notify (with a beep) an incoming call when there is already a call
@@ -513,7 +517,7 @@ namespace sfl {
 	_ca->setRecordingSmplRate(_audiocodec->getClockRate());
  
 	// Start audio stream (if not started) AND flush all buffers (main and urgent)
-        _audiolayer->startStream();
+        _manager->getAudioDriver()->startStream();
         static_cast<D*>(this)->startRunning();
 
 	// Already called in _audiolayer->startStream()
@@ -524,7 +528,12 @@ namespace sfl {
 
         while (!testCancel()) {
 
-	    converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	    // ost::MutexLock lock(*(_manager->getAudioLayerMutex()));
+
+	    _manager->getAudioLayerMutex()->enter();
+
+	    // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	    _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
             // Send session
             sessionWaiting = static_cast<D*>(this)->isWaiting();
@@ -543,6 +552,9 @@ namespace sfl {
                 // Record mic only while leaving a message
                 _ca->recAudio.recData (_micData,_nSamplesMic);
             }
+
+	    // ost::MutexLock unlock(*(_manager->getAudioLayerMutex()));
+	    _manager->getAudioLayerMutex()->leave();
 
             // Let's wait for the next transmit cycle
             Thread::sleep (TimerPort::getTimer());
