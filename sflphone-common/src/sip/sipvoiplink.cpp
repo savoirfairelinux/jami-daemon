@@ -2685,7 +2685,14 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 void SIPVoIPLink::updateAccountInfo (const AccountID& accountID)
 {
 
-    createUDPServer (accountID);
+    createSipTransport (accountID);
+
+    if(accountID == IP2IP_PROFILE) {
+
+        SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
+	// Store new IP2IP UDP transport as default 
+        _localUDPTransport = account->getAccountTransport();
+    }
 
 }
 
