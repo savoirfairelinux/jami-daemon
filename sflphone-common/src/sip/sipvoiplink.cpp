@@ -458,10 +458,12 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // transport we tried to create) 
     acquireTransport(account->getAccountID());
 
-    _debug("Acquire transport in account registration: %s %s (refcnt=%d)\n",
-	       account->getAccountTransport()->obj_name,
-	       account->getAccountTransport()->info,
-	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+    if (account->getAccountTransport()) {
+       _debug("Acquire transport in account registration: %s %s (refcnt=%d)\n",
+	      account->getAccountTransport()->obj_name,
+	      account->getAccountTransport()->info,
+	      (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+    }
 
     _mutexSIP.enterMutex();
 
@@ -574,15 +576,16 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // pjsip_regc_set_transport increments transport ref count by one
     status = pjsip_regc_set_transport (regc, tp);
 
-    // decrease transport's ref count, counter icrementation is 
-    // managed when acquiring transport 
-    pjsip_transport_dec_ref(account->getAccountTransport ());
+    if(account->getAccountTransport()) {
+        // decrease transport's ref count, counter icrementation is 
+        // managed when acquiring transport 
+        pjsip_transport_dec_ref(account->getAccountTransport ());
 
-    _debug("After setting the transport in account registration using transport: %s %s (refcnt=%d)\n",
+        _debug("After setting the transport in account registration using transport: %s %s (refcnt=%d)\n",
 	       account->getAccountTransport()->obj_name,
 	       account->getAccountTransport()->info,
 	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
-
+    }
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to set transport.");
@@ -594,10 +597,12 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // pjsip_regc_send increment the transport ref count by one, 
     status = pjsip_regc_send (regc, tdata);
 
-    // Decrease transport's ref count, since coresponding reference counter decrementation 
-    // is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
-    // regc data structure is permanently associated to the account at first registration.
-    pjsip_transport_dec_ref(account->getAccountTransport ());
+    if(account->getAccountTransport()) {
+        // Decrease transport's ref count, since coresponding reference counter decrementation 
+        // is performed in pjsip_regc_destroy. This function is never called in SFLphone as the
+        // regc data structure is permanently associated to the account at first registration.
+        pjsip_transport_dec_ref(account->getAccountTransport ());
+    }
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to send regc request.");
@@ -609,11 +614,13 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     account->setRegistrationInfo (regc);
 
-    _debug("Sent account registration using transport: %s %s (refcnt=%d)\n",
-	   account->getAccountTransport()->obj_name,
-	   account->getAccountTransport()->info,
-	   (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+    if(account->getAccountTransport()) {
 
+        _debug("Sent account registration using transport: %s %s (refcnt=%d)\n",
+	       account->getAccountTransport()->obj_name,
+	       account->getAccountTransport()->info,
+	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+    }
 
     return true;
 }
