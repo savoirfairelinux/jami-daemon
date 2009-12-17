@@ -2066,9 +2066,11 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
 
         if (status != PJ_SUCCESS) {
             _debug ("Failed to initialize TLS transport for account %s\n", id.c_str());
+	    return false;
         }
     }
     else {
+
         // Launch a new UDP listener/transport, using the published address
         if (account->isStunEnabled ()) {
 
@@ -2077,7 +2079,9 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
 
             if (status != PJ_SUCCESS) {
                 _debug ("Failed to initialize UDP transport with an extern published address for account %s\n", id.c_str());
+		return false;
             }
+
         } else {
 
 	    _debug ("Create UDP transport\n");
@@ -2085,32 +2089,26 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
 
 	    if (status != PJ_SUCCESS) {
                 _debug ("Failed to initialize UDP transport for account %s\n", id.c_str());
+		return false;
+	    }
+	    else {
+
+	        // If transport succesfully created, store it in the internal map.
+	        // STUN aware transport are account specific and should not be stored in map.
+	        // TLS transport is ephemeral and is managed by PJSIP, should not be stored either.
+	        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
 	    }
 
-	    // We should not bind account to local udp transport here since we must
-	    /*
-            if (status != PJ_SUCCESS) {
-                _debug ("Use the local UDP transport\n");
-                account->setAccountTransport (_localUDPTransport);
-            }
-	    */
-        }
+
+	}
+
     }
 
-    // If Transport created succesfully, store it in the internal map
-    // If stun is enabled, do not store it due to stun per account policy 
-    if((status == PJ_SUCCESS) && !account->isStunEnabled()) {
+    return true;
 
-        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
-
-	return true;
-    }
-    else {
-
-        return false;
-    }
-    
+	    
 }
+   
 
 
 bool SIPVoIPLink::addTransportToMap(std::string key, pjsip_transport* transport)
