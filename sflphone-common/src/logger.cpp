@@ -37,7 +37,7 @@ void log(const int level, const char* format, ...)
 
 	va_list ap;
 	string prefix = "<> ";
-	char buffer[1024];
+	char buffer[2048];
 	string message = "";
 	string color_prefix = "";
 
