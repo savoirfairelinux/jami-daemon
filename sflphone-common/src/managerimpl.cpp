@@ -413,7 +413,7 @@ ManagerImpl::hangupCall (const CallID& call_id)
     _debug ("ManagerImpl::hangupCall(%s)", call_id.c_str());
     PulseLayer *pulselayer;
     AccountID account_id;
-    bool returnValue;
+    bool returnValue = true;
 
     // store the current call id
     CallID current_call_id = getCurrentCallId();
@@ -446,19 +446,20 @@ ManagerImpl::hangupCall (const CallID& call_id)
     if (getConfigFromCall (call_id) == Call::IPtoIP) {
         returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (call_id);
     }
-
     /* Classic call, attached to an account */
     else {
         account_id = getAccountFromCall (call_id);
 
         if (account_id == AccountNULL) {
+
             _debug ("! Manager Hangup Call: Call doesn't exists");
-            return false;
+            returnValue = false;
         }
+	else {
 
-        returnValue = getAccountLink (account_id)->hangup (call_id);
-
-        removeCallAccount (call_id);
+	    returnValue = getAccountLink (account_id)->hangup (call_id);
+	    removeCallAccount (call_id);
+	}
     }
 
     int nbCalls = getCallList().size();
