@@ -239,7 +239,7 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    _debug("SIPVoIPLink destructor called\n");
+    _debug("SIPVoIPLink destructor called");
 
     terminate();
 }
@@ -261,7 +261,7 @@ void SIPVoIPLink::decrementClients (void)
 
     if (_clients == 0) {
 
-        _debug("No SIP account anymore, terminate SIPVoIPLink\n");
+        _debug("No SIP account anymore, terminate SIPVoIPLink");
         terminate();
         SIPVoIPLink::_instance=NULL;
     }
@@ -290,10 +290,10 @@ bool SIPVoIPLink::init()
 void
 SIPVoIPLink::terminate()
 {
-    _debug ("Terminating SIPVoIPLink\n");
+    _debug ("Terminating SIPVoIPLink");
 
     if (_evThread) {
-        _debug ("Deleting sip eventThread\n");
+        _debug ("Deleting sip eventThread");
         delete _evThread;
         _evThread = NULL;
     }
@@ -301,7 +301,7 @@ SIPVoIPLink::terminate()
 
     /* Clean shutdown of pjsip library */
     if (initDone()) {
-        _debug ("Shuting down PJSIP\n");
+        _debug ("Shuting down PJSIP");
         pjsip_shutdown();
     }
 
@@ -459,7 +459,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     acquireTransport(account->getAccountID());
 
     if (account->getAccountTransport()) {
-       _debug("Acquire transport in account registration: %s %s (refcnt=%d)\n",
+       _debug("Acquire transport in account registration: %s %s (refcnt=%d)",
 	      account->getAccountTransport()->obj_name,
 	      account->getAccountTransport()->info,
 	      (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
@@ -581,7 +581,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         // managed when acquiring transport 
         pjsip_transport_dec_ref(account->getAccountTransport ());
 
-        _debug("After setting the transport in account registration using transport: %s %s (refcnt=%d)\n",
+        _debug("After setting the transport in account registration using transport: %s %s (refcnt=%d)",
 	       account->getAccountTransport()->obj_name,
 	       account->getAccountTransport()->info,
 	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
@@ -616,7 +616,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     if(account->getAccountTransport()) {
 
-        _debug("Sent account registration using transport: %s %s (refcnt=%d)\n",
+        _debug("Sent account registration using transport: %s %s (refcnt=%d)",
 	       account->getAccountTransport()->obj_name,
 	       account->getAccountTransport()->info,
 	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
@@ -640,7 +640,7 @@ SIPVoIPLink::sendUnregister (AccountID id)
     // If an transport is attached to this account, detach it and decrease reference counter
     if(account->getAccountTransport()) {
 
-        _debug("Sent account unregistration using transport: %s %s (refcnt=%d)\n",
+        _debug("Sent account unregistration using transport: %s %s (refcnt=%d)",
 	       account->getAccountTransport()->obj_name,
 	       account->getAccountTransport()->info,
 	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
@@ -1373,7 +1373,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         return false;
     }
 
-    _debug("Sent invite request using transport: %s %s (refcnt=%d)\n",
+    _debug("Sent invite request using transport: %s %s (refcnt=%d)",
 	               account->getAccountTransport()->obj_name,
 		       account->getAccountTransport()->info,
 	               (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
@@ -1496,7 +1496,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         if (account == NULL) {
 
-	    _debug ("Account %s is null. Returning\n", IP2IP_PROFILE);
+	    _debug ("Account %s is null. Returning", IP2IP_PROFILE);
             return !PJ_SUCCESS;
         }
 
@@ -1508,7 +1508,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         _debug ("new_ip_to_ip_call localAddress: %s", localAddress.c_str());
 
         if (localAddress == "0.0.0.0") {
-            _debug ("Local address: %s\n", localAddress.c_str ());
+            _debug ("Local address: %s", localAddress.c_str ());
             loadSIPLocalIP (&localAddress);
         }
 
@@ -1535,13 +1535,13 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         // If no account already set, use the default one created at pjsip initialization
         if (account->getAccountTransport() == NULL) {
-            _debug ("No transport for this account, using the default one\n");
+            _debug ("No transport for this account, using the default one");
             account->setAccountTransport (_localUDPTransport);
         }
 
-        _debug ("IptoIP local port %i\n", account->getLocalPort());
+        _debug ("IptoIP local port %i", account->getLocalPort());
 
-        _debug ("IptoIP local address in sdp %s\n", account->getLocalAddress().c_str());
+        _debug ("IptoIP local address in sdp %s", account->getLocalAddress().c_str());
 
         // Create URI
         std::string fromUri;
@@ -1694,7 +1694,7 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
 
     // Build the nameservers list needed by pjsip
     if ( (scount = dns_servers.size ()) <= 0) {
-        _debug ("No server detected while fetching DNS information, stop dns resolution\n");
+        _debug ("No server detected while fetching DNS information, stop dns resolution");
         return 0;
     }
 
@@ -1739,7 +1739,7 @@ bool SIPVoIPLink::pjsip_init()
 
     name_mod = "sflphone";
 
-    _debug ("pjsip_init\n");
+    _debug ("pjsip_init");
 
     // Init PJLIB: must be called before any call to the pjsip library
     status = pj_init();
@@ -1999,7 +1999,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
     // counter will be increased
     if(account->getAccountTransport()) {
 
-        _debug("pjsip_transport_dec_ref in acquireTransport\n");
+        _debug("pjsip_transport_dec_ref in acquireTransport");
         pjsip_transport_dec_ref(account->getAccountTransport());
     }
 
@@ -2020,7 +2020,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
     */
     else {
 
-        _debug("Searching transport (%s) in transport map\n", account->getTransportMapKey().c_str());
+        _debug("Searching transport (%s) in transport map", account->getTransportMapKey().c_str());
 
         // Could not create new transport, this transport may already exists
         SipTransportMap::iterator transport;
@@ -2029,7 +2029,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 	if(transport != _transportMap.end()) {
 
 	    // Transport already exist, use it for this account
-	    _debug("Found transport (%s) in transport map\n", account->getTransportMapKey().c_str());
+	    _debug("Found transport (%s) in transport map", account->getTransportMapKey().c_str());
 
 	    pjsip_transport* tr = transport->second;
 
@@ -2045,7 +2045,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 	else {
 
 	    // Transport could not either be created, socket not available
-	    _debug("Found transport (%s) in transport map\n", account->getTransportMapKey().c_str());
+	    _debug("Found transport (%s) in transport map", account->getTransportMapKey().c_str());
 
 	    // Transport could not either be created or found in the map, socket not available
 	    return false;
@@ -2068,11 +2068,11 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
     // if the user did choose it.
     if (account->isTlsEnabled()) {
 
-        _debug ("Create TLS transport\n");
+        _debug ("Create TLS transport");
         status = createTlsTransportRetryOnFailure (id);
 
         if (status != PJ_SUCCESS) {
-            _debug ("Failed to initialize TLS transport for account %s\n", id.c_str());
+            _debug ("Failed to initialize TLS transport for account %s", id.c_str());
 	    return false;
         }
     }
@@ -2081,21 +2081,21 @@ bool SIPVoIPLink::createSipTransport(AccountID id) {
         // Launch a new UDP listener/transport, using the published address
         if (account->isStunEnabled ()) {
 
-            _debug ("Create Alternate UDP transport\n");
+            _debug ("Create Alternate UDP transport");
             status = createAlternateUdpTransport (id);
 
             if (status != PJ_SUCCESS) {
-                _debug ("Failed to initialize UDP transport with an extern published address for account %s\n", id.c_str());
+                _debug ("Failed to initialize UDP transport with an extern published address for account %s", id.c_str());
 		return false;
             }
 
         } else {
 
-	    _debug ("Create UDP transport\n");
+	    _debug ("Create UDP transport");
             status = createUDPServer (id);
 
 	    if (status != PJ_SUCCESS) {
-                _debug ("Failed to initialize UDP transport for account %s\n", id.c_str());
+                _debug ("Failed to initialize UDP transport for account %s", id.c_str());
 		return false;
 	    }
 	    else {
@@ -2129,7 +2129,7 @@ bool SIPVoIPLink::addTransportToMap(std::string key, pjsip_transport* transport)
         _transportMap.erase(iter_transport);
     }
 
-    _debug("Storing the newly created transport in transport map using key %s\n", key.c_str());
+    _debug("Storing the newly created transport in transport map using key %s", key.c_str());
     _transportMap.insert(pair<std::string, pjsip_transport*>(key, transport));
 
     return true;
@@ -2152,7 +2152,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     if (!loadSIPLocalIP (&listeningAddress))
         return !PJ_SUCCESS;
 
-    _debug ("Create UDP transport for account \"%s\"\n", id.c_str());
+    _debug ("Create UDP transport for account \"%s\"", id.c_str());
 
     /*
      * Retrieve the account information
@@ -2165,7 +2165,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
         _debug ("Account with id \"%s\" is null in createUDPServer.", id.c_str());
     } else {
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
-        _debug("Found account %s in map\n", account->getAccountID().c_str());
+        _debug("Found account %s in map", account->getAccountID().c_str());
 
         if (account->getLocalAddress () != "0.0.0.0") {
             listeningAddress = account->getLocalAddress ();
@@ -2189,7 +2189,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
         listeningAddress = account->getPublishedAddress ();
         // Set the listening port to the published port
         listeningPort = account->getPublishedPort ();
-        _debug ("Creating UDP transport published %s:%i\n", listeningAddress.c_str (), listeningPort);
+        _debug ("Creating UDP transport published %s:%i", listeningAddress.c_str (), listeningPort);
 
     }
 
@@ -2211,7 +2211,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 
     if (status != PJ_SUCCESS) {
 
-        _debug ("UserAgent: (%d) Unable to start UDP transport on %s:%d\n", status, listeningAddress.data(), listeningPort);
+        _debug ("UserAgent: (%d) Unable to start UDP transport on %s:%d", status, listeningAddress.data(), listeningPort);
         return status;
 
     } else {
@@ -2220,12 +2220,12 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 
         if (account == NULL) {
 
-	    _debug("Use transport as local UDP server\n");
+	    _debug("Use transport as local UDP server");
             _localUDPTransport = transport;
 	}
         else {
 
-	    _debug("Bind transport to account %s\n", account->getAccountID().c_str());
+	    _debug("Bind transport to account %s", account->getAccountID().c_str());
 	    account->setAccountTransport (transport);
 	}
     }
@@ -2269,6 +2269,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
 
     if (PJSIP_URI_SCHEME_IS_SIPS (sip_uri)) {
         transportType = PJSIP_TRANSPORT_TLS;
+
     } else {
         if (transport == NULL) {
             _debug ("transport is NULL in findLocalAddressFromUri. Try the local UDP transport");
@@ -2304,8 +2305,10 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
             status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
         else
             status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
-    } else
+    } else {
+
         status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+    }
 
     if (status != PJ_SUCCESS) {
         _debug ("Failed to find local address from transport");
@@ -2548,7 +2551,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 
     if(transport) {
 
-    _debug("INITIAL REF COUNT: %s %s (refcnt=%i)\n",
+    _debug("INITIAL REF COUNT: %s %s (refcnt=%i)",
 	   transport->obj_name,
 	   transport->info,
 	   (int)pj_atomic_get(transport->ref_cnt));
@@ -2562,7 +2565,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 		 str, sizeof(str));
     
     
-    _debug("KEY: %s:%d\n",
+    _debug("KEY: %s:%d",
 	   // addr_string(account->getAccountTransport()->key.rem_addr),
 	   str,
 	   pj_sockaddr_get_port((const pj_sockaddr*)&(transport->key.rem_addr)));
@@ -2654,7 +2657,7 @@ pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
 
 void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 {
-    _debug("Shutdown Sip Transport\n");
+    _debug("Shutdown Sip Transport");
 
     pj_status_t status = 0;
 
@@ -2665,7 +2668,7 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 
     if(account->getAccountTransport()) {
 
-        _debug("Transport bound to account, decrease ref count\n");
+        _debug("Transport bound to account, decrease ref count");
 
 	// decrease reference count added by pjsip_regc_send
 	// PJSIP's IDLE timer is set if counter reach 0
@@ -2765,7 +2768,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
     /* Shutdown PJLIB */
     pj_shutdown();
 
-    _debug ("UserAgent: Shutted down succesfully\n");
+    _debug ("UserAgent: Shutted down succesfully");
 
     /* Done. */
     return true;
@@ -3125,7 +3128,7 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
                 if (request.find (method_name) != (size_t)-1) {
 
-                    _debug ("%s\n", pjsip_rx_data_get_info (r_data));
+                    _debug ("%s", pjsip_rx_data_get_info (r_data));
 
                     pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
 
@@ -3251,7 +3254,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Handle the incoming call invite in this function
     _debug ("UserAgent: Callback on_rx_request is involved! ");
 
-    _debug("Receiving REQUEST using transport: %s %s (refcnt=%d)\n",
+    _debug("Receiving REQUEST using transport: %s %s (refcnt=%d)",
 	   rdata->tp_info.transport->obj_name,
 	   rdata->tp_info.transport->info,
 	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
@@ -3388,7 +3391,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /************************************************************************************************/
 
-    _debug ("create a new call\n");
+    _debug ("create a new call");
 
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
@@ -3420,7 +3423,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 	if(account->getAccountTransport()) {
 
-	    _debug("Process INVITE request using transport: %s %s (refcnt=%i)\n",
+	    _debug("Process INVITE request using transport: %s %s (refcnt=%i)",
 		   account->getAccountTransport()->obj_name,
 		   account->getAccountTransport()->info,
 		   (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
@@ -3447,7 +3450,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Notify UI there is an incoming call
 
-    _debug ("Add call to account link\n");
+    _debug ("Add call to account link");
 
     if (Manager::instance().incomingCall (call, account_id)) {
         // Add this call to the callAccountMap in ManagerImpl
