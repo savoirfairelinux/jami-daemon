@@ -2685,7 +2685,8 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 void SIPVoIPLink::updateAccountInfo (const AccountID& accountID)
 {
 
-    createSipTransport (accountID);
+    // createSipTransport (accountID);
+    acquireTransport(accountID);
 
     if(accountID == IP2IP_PROFILE) {
 
