@@ -70,6 +70,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
     short nb_items = 0;
     Conf::TokenList sections;
     HistoryItem *item;
+    HistoryItemMap unsorted_map;
     Conf::TokenList::iterator iter;
     std::string number, name, accountID, timestamp_start, timestamp_stop;
     CallType type;
@@ -97,15 +98,54 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
 
         if (atoi (timestamp_start.c_str ()) >= ( (int) current_timestamp - history_limit)) {
             item = new HistoryItem (timestamp_start, type, timestamp_stop, name, number, accountID);
-            add_new_history_entry (item);
+            // add_new_history_entry (item);
+	    unsorted_map [item->get_timestamp ()] = item;
             nb_items ++;
         }
 
         iter ++;
     }
 
+    sort_and_fill_history_map(&unsorted_map);
+
     return nb_items;
 }
+
+
+bool HistoryManager::sort_and_fill_history_map(HistoryItemMap *unsorted_map)
+{
+    int max_timestamp = 0;
+    int timestamp;
+    std::string key;
+
+    while(unsorted_map->size() > 0) {
+
+        HistoryItemMap::iterator iter_item = unsorted_map->begin();
+
+	// find highest timestamp
+        while(iter_item != unsorted_map->end()) {
+
+	    timestamp = atoi(iter_item->first.c_str());
+	    _debug("-------------------------------------------------- timestamp: %i\n", timestamp);
+
+	    // save items as maximum
+	    if(timestamp > max_timestamp) { 
+	        max_timestamp = timestamp;
+		key = iter_item->first;
+	    }
+	    
+	    iter_item++;
+	}
+
+	iter_item = unsorted_map->find(key);
+	add_new_history_entry (iter_item->second);
+	unsorted_map->erase(iter_item);  
+    }
+
+    return true;
+
+}
+
 
 bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list)
 {
