@@ -24,7 +24,7 @@
   */
 
 #include <glib.h>
-
+#include <mainwindow.h>
 /** 
  * Display the advanced options window for zrtp
  */  
