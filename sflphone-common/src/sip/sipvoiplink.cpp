@@ -43,6 +43,11 @@
 #include <resolv.h>
 #include <istream>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <linux/if.h>
+
 #define CAN_REINVITE        1
 
 static char * invitationStateMap[] = {
@@ -364,6 +369,38 @@ void get_remote_sdp_from_offer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
 
     else
         *r_sdp = NULL;
+}
+
+
+std::string getInterfaceAddrFromName(std::string ifaceName) {
+
+    struct ifreq ifr;
+    int fd;
+    int rval = 0;
+    int err;
+
+    struct sockaddr_in *saddr_in;
+    struct in_addr *addr_in;
+
+    if((fd = socket (AF_INET, SOCK_DGRAM,0)) < 0)
+        _debug("getInterfaceAddrFromName error could not open socket\n");
+
+    memset (&ifr, 0, sizeof (struct ifreq));
+
+    strcpy (ifr.ifr_name, ifaceName.c_str());
+    ifr.ifr_addr.sa_family = AF_INET;
+
+    if((err = ioctl(fd, SIOCGIFADDR, &ifr)) < 0)
+        _debug("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
+
+    // printf("Local address: %s\n", inet_ntos( ((struct sockaddr_in *) &ifr.ifr_ifru.ifru_addr)->sin_addr ));
+    
+    saddr_in = (struct sockaddr_in *)&ifr.ifr_addr;
+    addr_in = &(saddr_in->sin_addr);
+
+    std::string addr(pj_inet_ntoa(*((pj_in_addr*)addr_in)));
+
+    return addr;
 }
 
 
@@ -4140,6 +4177,54 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
     }
 
     return ifaceList;
+}
+
+
+int get_iface_list(struct ifconf *ifconf)
+{
+   int sock, rval;
+
+   if((sock = socket(AF_INET,SOCK_STREAM,0)) < 0)
+       _debug("get_iface_list error could not open socket\n");
+
+
+   if((rval = ioctl(sock, SIOCGIFCONF , (char*) ifconf  )) < 0 )
+       _debug("get_iface_list error ioctl(SIOGIFCONF)\n");
+
+   close(sock);
+
+   return rval;
+}
+
+
+std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName(void)
+{
+    std::vector<std::string> ifaceList;
+
+    static struct ifreq ifreqs[20];
+    struct ifconf ifconf;
+    int  nifaces;
+
+    // add the default 
+    ifaceList.push_back(std::string("default"));
+
+    memset(&ifconf,0,sizeof(ifconf));
+    ifconf.ifc_buf = (char*) (ifreqs);
+    ifconf.ifc_len = sizeof(ifreqs);
+
+    if(get_iface_list(&ifconf) < 0)
+        _debug("getAllIpInterfaceByName error could not get interface list\n");
+
+    nifaces =  ifconf.ifc_len/sizeof(struct ifreq);
+
+    _debug("Interfaces (count = %d):\n", nifaces);
+    for(int i = 0; i < nifaces; i++) {
+        _debug("  %s  ", ifreqs[i].ifr_name);
+	ifaceList.push_back(std::string (ifreqs[i].ifr_name));
+	printf("    %s\n", getInterfaceAddrFromName(std::string (ifreqs[i].ifr_name)).c_str());
+    }
+
+    return ifaceList;   
 }
 
 

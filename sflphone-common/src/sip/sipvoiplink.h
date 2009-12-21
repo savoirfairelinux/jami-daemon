@@ -292,6 +292,28 @@ class SIPVoIPLink : public VoIPLink
         std::vector<std::string> getAllIpInterface(void);
 
 
+       	/** 
+         * List all the interfaces on the system and return 
+         * a vector list containing their name (eth0, eth0:1 ...).
+         * @param void
+         * @return std::vector<std::string> A std::string vector
+         * of interface name available on all of the interfaces on
+         * the system.
+         */
+        std::vector<std::string> getAllIpInterfaceByName(void);
+
+
+	/** 
+         * List all the interfaces on the system and return 
+         * a vector list containing their name (eth0, eth0:1 ...).
+         * @param void
+         * @return std::vector<std::string> A std::string vector
+         * of interface name available on all of the interfaces on
+         * the system.
+         */
+	// std::string getInterfaceAddrFromName(std::string ifaceName);
+
+
 	/**
 	 * Initialize the transport selector
 	 * @param transport		A transport associated with an account
