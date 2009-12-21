@@ -116,8 +116,6 @@ class HistoryManager {
          */
         void add_new_history_entry (HistoryItem *new_item);
 
-	bool sort_and_fill_history_map(HistoryItemMap *unsorted_map);
-
         /*
          * Map containing the history items
          */

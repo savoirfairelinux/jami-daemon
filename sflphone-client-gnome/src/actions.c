@@ -1182,23 +1182,59 @@ void sflphone_fill_history (void)
 {
     GHashTable *entries;
     GHashTableIter iter;
-    gpointer key, value;
+    gpointer key, key_to_min, value;
     callable_obj_t *history_entry;
+
+    int timestamp, min_timestamp;
+
+    gboolean is_first;
 
     DEBUG ("Loading history ...");
 
     entries = dbus_get_history ();
-    if (entries)
-    {
-        // Init the iterator
-        g_hash_table_iter_init (&iter, entries);
-        while (g_hash_table_iter_next (&iter, &key, &value)) 
-        {
-            /* do something with key and value */
-            create_history_entry_from_serialized_form ((gchar*)key, (gchar*)value, &history_entry);    
-            // Add it and update the GUI
-            calllist_add (history, history_entry);
-        }
+    if (entries) {
+
+	while(g_hash_table_size (entries)) {
+
+	    is_first = TRUE;
+
+	    // find lowest timestamp in map
+	    g_hash_table_iter_init (&iter, entries);
+	    while (g_hash_table_iter_next (&iter, &key, &value))  {
+
+	        timestamp = atoi((gchar*)key);
+
+	        if(is_first) {
+
+		    // first iteration of the loop, init search
+		    min_timestamp = timestamp;
+		    key_to_min = key;
+
+		    is_first = FALSE;
+		}
+		else {
+
+		    // if lower, replace
+		    if(timestamp < min_timestamp) {
+
+		        min_timestamp = timestamp;
+			key_to_min = key;
+		    }
+		}
+	    }
+
+	    if(g_hash_table_lookup_extended(entries, key_to_min, &key, &value)) {
+
+	        // do something with key and value 
+	        create_history_entry_from_serialized_form ((gchar*)key, (gchar*)value, &history_entry);    
+		DEBUG("HISTORY ENTRY: %i\n", history_entry->_time_start);
+		// Add it and update the GUI
+		calllist_add (history, history_entry);
+		
+		// remove entry from map
+		g_hash_table_remove(entries, key_to_min);
+	    }
+	}
     }
 }
 
