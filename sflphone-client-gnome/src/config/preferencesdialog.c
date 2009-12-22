@@ -252,8 +252,8 @@ GtkWidget* create_direct_ip_calls_tab()
 
 	GtkTreeIter current_local_address_iter = iter;   
 	gchar ** iface_list = NULL;
-	iface_list = (gchar**) dbus_get_all_ip_interface();
-	// iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
+	// iface_list = (gchar**) dbus_get_all_ip_interface();
+	iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
 	gchar ** iface;
 
 	gboolean iface_found = FALSE;

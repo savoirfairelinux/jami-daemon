@@ -741,7 +741,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
         call->setPeerNumber (toUri);
 
-        localAddr = account->getLocalAddress ();
+        localAddr = getInterfaceAddrFromName(account->getLocalAddress ());
 
         if (localAddr == "0.0.0.0")
             loadSIPLocalIP (&localAddr);
@@ -749,7 +749,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         setCallAudioLocal (call, localAddr);
 
         // May use the published address as well
-        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();
+        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName(account->getLocalAddress ());
 
         if (addrSdp == "0.0.0.0")
             loadSIPLocalIP (&addrSdp);
@@ -1541,9 +1541,9 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         }
 
 	// Set the local address
-	localAddress = account->getLocalAddress ();
+	localAddress = getInterfaceAddrFromName(account->getLocalAddress ());
         // Set SDP parameters - Set to local or published address
-	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  addrSdp = account->getLocalAddress ();
+	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  addrSdp = getInterfaceAddrFromName(account->getLocalAddress ());
 
         _debug ("new_ip_to_ip_call localAddress: %s", localAddress.c_str());
 
@@ -2228,16 +2228,28 @@ int SIPVoIPLink::createUDPServer (AccountID id)
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
         _debug("Found account %s in map", account->getAccountID().c_str());
 
-        if (account->getLocalAddress () != "0.0.0.0") {
-            listeningAddress = account->getLocalAddress ();
+        if (account->getLocalAddress () != "default") {
+            listeningAddress = getInterfaceAddrFromName(account->getLocalAddress());
         }
 
         listeningPort = account->getLocalPort ();
     }
 
-    // Init bound address to ANY
     pj_memset (&bound_addr, 0, sizeof (bound_addr));
-    bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
+
+    pj_str_t temporary_address;
+
+    // Init bound address to ANY
+    if (account && account->getLocalAddress () == "default") {
+
+        bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
+    }
+    else {
+        // bind this account to a specific interface
+        pj_strdup2(_pool, &temporary_address, listeningAddress.c_str());
+	bound_addr.sin_addr = pj_inet_addr(&temporary_address);
+    }
+
     bound_addr.sin_port = pj_htons ( (pj_uint16_t) listeningPort);
     bound_addr.sin_family = PJ_AF_INET;
     pj_bzero (bound_addr.sin_zero, sizeof (bound_addr.sin_zero));
@@ -2678,11 +2690,11 @@ pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
         local_addr.sin_port = pj_htons (localTlsPort);
     }
 
-    std::string localAddress = account->getLocalAddress();
+    std::string localAddress = getInterfaceAddrFromName(account->getLocalAddress());
 
     if (!localAddress.empty()) {
         pj_str_t pjAddress;
-        pj_cstr (&pjAddress, (account->getLocalAddress()).c_str());
+        pj_cstr (&pjAddress, (getInterfaceAddrFromName(account->getLocalAddress())).c_str());
 
         pj_status_t success;
         success = pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
@@ -3488,8 +3500,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
         // May use the published address as well
 
-        addrToUse = account->getLocalAddress ();
-	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = account->getLocalAddress ();		
+        addrToUse = getInterfaceAddrFromName(account->getLocalAddress ());
+	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName(account->getLocalAddress ());		
 	// Set the appropriate transport to have the right VIA header
 	link->init_transport_selector (account->getAccountTransport (), &tp);
 
