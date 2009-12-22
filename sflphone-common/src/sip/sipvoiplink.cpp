@@ -1410,10 +1410,13 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
         return false;
     }
 
+    if(account->getAccountTransport()) {
+
     _debug("Sent invite request using transport: %s %s (refcnt=%d)",
 	               account->getAccountTransport()->obj_name,
 		       account->getAccountTransport()->info,
 	               (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+    }
 
     return true;
 }
@@ -1822,47 +1825,50 @@ bool SIPVoIPLink::pjsip_init()
 
     bool directIpCallsTlsEnabled = false;
 
+    // Use IP2IP_PROFILE to init default udp transport settings
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
 
-    if (account == NULL) {
-        _debug ("Account is null in pjsip init");
-        port = _regPort;
-    } else {
-        directIpCallsTlsEnabled = account->isTlsEnabled();
-        port = account->getLocalPort ();
-    }
-
-    // Create a UDP listener meant for all accounts
-    // for which TLS was not enabled
+    // Create a UDP listener meant for all accounts for which TLS was not enabled
+    // Cannot acquireTransport since default UDP transport must be created regardless of TLS
     errPjsip = createUDPServer(IP2IP_PROFILE);
-
-    // If the above UDP server
-    // could not be created, then give it another try
-    // on a random sip port
-    if (errPjsip != PJ_SUCCESS) {
-        _debug ("UserAgent: Could not initialize SIP listener on port %d", port);
-        port = RANDOM_SIP_PORT;
-
-        _debug ("UserAgent: Trying to initialize SIP listener on port %d", port);
-        errPjsip = createUDPServer();
-
-        if (errPjsip != PJ_SUCCESS) {
-            _debug ("UserAgent: Fail to initialize SIP listener on port %d", port);
-            return errPjsip;
-        }
-    }
 
     if(account && (errPjsip == PJ_SUCCESS)) {
 
+        _debug("UserAgent: Initialized sip listener on port %d", account->getLocalPort ());
         addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
 
 	// if account is not NULL, use IP2IP trasport as default one
 	_localUDPTransport = account->getAccountTransport();
  
     }
+    // If the above UDP server
+    // could not be created, then give it another try
+    // on a random sip port
+    else if (errPjsip != PJ_SUCCESS) {
+        _debug ("UserAgent: Could not initialize SIP listener on port %d", _regPort);
+        _regPort = RANDOM_SIP_PORT;
 
+        _debug ("UserAgent: Trying to initialize SIP listener on port %d", _regPort);
+	// If no AccountID specified, pointer to transport is stored in _localUDPTransport 
+        errPjsip = createUDPServer();
+
+        if (errPjsip != PJ_SUCCESS) {
+            _debug ("UserAgent: Fail to initialize SIP listener on port %d", _regPort);
+            return errPjsip;
+        }
+    }
+
+    acquireTransport(IP2IP_PROFILE);
+
+    /*
     // Create a TLS listener meant for Direct IP calls
     // if the user did enabled it.
+    if (account != NULL) {
+ 
+        directIpCallsTlsEnabled = account->isTlsEnabled();
+        port = account->getLocalPort ();
+
+    }
 
     if (directIpCallsTlsEnabled) {
         errPjsip = createTlsTransportRetryOnFailure (IP2IP_PROFILE);
@@ -1871,6 +1877,7 @@ bool SIPVoIPLink::pjsip_init()
     if (errPjsip != PJ_SUCCESS) {
         _debug ("pj_init(): could not start TLS transport for Direct Calls");
     }
+    */
 
     // TODO: For TLS, retry on random port, just we already do above
     // for UDP transport.
@@ -2082,7 +2089,16 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 	else {
 
 	    // Transport could not either be created, socket not available
-	    _debug("Found transport (%s) in transport map", account->getTransportMapKey().c_str());
+	    _debug("Did not find transport (%s) in transport map", account->getTransportMapKey().c_str());
+	    _debug("Use default one instead");
+	    account->setAccountTransport(_localUDPTransport);
+
+	    std::string localHostName(_localUDPTransport->local_name.host.ptr, _localUDPTransport->local_name.host.slen);
+
+	    _debug("Use default one instead (%s:%i)", localHostName.c_str(), _localUDPTransport->local_name.port);
+
+	    account->setLocalAddress(localHostName);
+	    account->setLocalPort(_localUDPTransport->local_name.port);
 
 	    // Transport could not either be created or found in the map, socket not available
 	    return false;
@@ -2195,12 +2211,20 @@ int SIPVoIPLink::createUDPServer (AccountID id)
      * Retrieve the account information
      */
     SIPAccount * account = NULL;
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
+
+    // if account id is not specified, init _localUDPTransport
+    if (id != "") {
+
+        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
+    }
 
     // Set information to the local address and port
     if (account == NULL) {
+
         _debug ("Account with id \"%s\" is null in createUDPServer.", id.c_str());
+
     } else {
+
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
         _debug("Found account %s in map", account->getAccountID().c_str());
 
@@ -2267,7 +2291,10 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 	}
     }
 
-    _debug ("Transport initialized successfully on %s:%i", listeningAddress.c_str (), listeningPort);
+    if (status == PJ_SUCCESS) {
+        _debug ("Transport initialized successfully on %s:%i", listeningAddress.c_str (), listeningPort);
+
+    }
 
     return PJ_SUCCESS;
 }
