@@ -834,6 +834,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	GtkTreeIter current_local_address_iter = iter;   
 	gchar ** iface_list = NULL;
 	iface_list = (gchar**) dbus_get_all_ip_interface();
+	// iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
 	gchar ** iface = NULL;
     
 	// flag to determine if local_address is found 

@@ -521,6 +521,11 @@ void dbus_set_addressbook_list (const gchar** list);
 gchar** dbus_get_all_ip_interface(void);
 
 /**
+ * Query the daemon to return a list of network interface (described as there name)
+ */
+gchar** dbus_get_all_ip_interface_by_name(void);
+
+/**
  * Encapsulate all the url hook-related configuration
  * Get the configuration
  */

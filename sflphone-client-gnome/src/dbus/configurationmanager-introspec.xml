@@ -374,6 +374,11 @@
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
+
+    <method name="getAllIpInterfaceByName">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
     
   </interface>
 </node>

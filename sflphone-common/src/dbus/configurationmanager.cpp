@@ -789,3 +789,18 @@ std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
 
     return vector;
 }
+
+std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName(void)
+{
+    _debug ("ConfigurationManager::getAllIpInterface received\n");
+
+    std::vector<std::string> vector;
+    SIPVoIPLink * sipLink = NULL;
+    sipLink = SIPVoIPLink::instance ("");
+
+    if (sipLink != NULL) {
+        vector = sipLink->getAllIpInterfaceByName();
+    }
+
+    return vector;
+}
