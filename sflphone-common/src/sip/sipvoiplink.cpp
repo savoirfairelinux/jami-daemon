@@ -2090,7 +2090,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 
 	    // Transport could not either be created, socket not available
 	    _debug("Did not find transport (%s) in transport map", account->getTransportMapKey().c_str());
-	    _debug("Use default one instead");
+
 	    account->setAccountTransport(_localUDPTransport);
 
 	    std::string localHostName(_localUDPTransport->local_name.host.ptr, _localUDPTransport->local_name.host.slen);
