@@ -372,7 +372,7 @@ void get_remote_sdp_from_offer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
 }
 
 
-std::string getInterfaceAddrFromName(std::string ifaceName) {
+std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
 
     struct ifreq ifr;
     int fd;
@@ -741,7 +741,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
         call->setPeerNumber (toUri);
 
-        localAddr = getInterfaceAddrFromName(account->getLocalAddress ());
+        localAddr = getInterfaceAddrFromName(account->getLocalInterface ());
 
         if (localAddr == "0.0.0.0")
             loadSIPLocalIP (&localAddr);
@@ -749,7 +749,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         setCallAudioLocal (call, localAddr);
 
         // May use the published address as well
-        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName(account->getLocalAddress ());
+        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName(account->getLocalInterface ());
 
         if (addrSdp == "0.0.0.0")
             loadSIPLocalIP (&addrSdp);
@@ -1541,9 +1541,9 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         }
 
 	// Set the local address
-	localAddress = getInterfaceAddrFromName(account->getLocalAddress ());
+	localAddress = getInterfaceAddrFromName(account->getLocalInterface ());
         // Set SDP parameters - Set to local or published address
-	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  addrSdp = getInterfaceAddrFromName(account->getLocalAddress ());
+	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  localAddress;
 
         _debug ("new_ip_to_ip_call localAddress: %s", localAddress.c_str());
 
@@ -1581,7 +1581,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         _debug ("IptoIP local port %i", account->getLocalPort());
 
-        _debug ("IptoIP local address in sdp %s", account->getLocalAddress().c_str());
+        _debug ("IptoIP local address in sdp %s", localAddress.c_str());
 
         // Create URI
         std::string fromUri;
@@ -2228,7 +2228,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
         _debug("Found account %s in map", account->getAccountID().c_str());
 
-        if (account->getLocalAddress () != "default") {
+        if (account->getLocalInterface () != "default") {
             listeningAddress = getInterfaceAddrFromName(account->getLocalInterface());
         }
 
@@ -2691,11 +2691,11 @@ pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
         local_addr.sin_port = pj_htons (localTlsPort);
     }
 
-    std::string localAddress = getInterfaceAddrFromName(account->getLocalAddress());
+    std::string localAddress = getInterfaceAddrFromName(account->getLocalInterface());
 
     if (!localAddress.empty()) {
         pj_str_t pjAddress;
-        pj_cstr (&pjAddress, (getInterfaceAddrFromName(account->getLocalAddress())).c_str());
+        pj_cstr (&pjAddress, (getInterfaceAddrFromName(account->getLocalInterface())).c_str());
 
         pj_status_t success;
         success = pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
@@ -3501,8 +3501,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
         // May use the published address as well
 
-        addrToUse = getInterfaceAddrFromName(account->getLocalAddress ());
-	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = getInterfaceAddrFromName(account->getLocalAddress ());		
+        addrToUse = SIPVoIPLink::instance("")->getInterfaceAddrFromName(account->getLocalInterface ());
+	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = addrToUse;		
 	// Set the appropriate transport to have the right VIA header
 	link->init_transport_selector (account->getAccountTransport (), &tp);
 

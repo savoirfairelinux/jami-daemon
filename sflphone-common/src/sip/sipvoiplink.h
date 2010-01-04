@@ -311,7 +311,7 @@ class SIPVoIPLink : public VoIPLink
          * of interface name available on all of the interfaces on
          * the system.
          */
-	// std::string getInterfaceAddrFromName(std::string ifaceName);
+	std::string getInterfaceAddrFromName(std::string ifaceName);
 
 
 	/**
