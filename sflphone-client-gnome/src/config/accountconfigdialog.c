@@ -489,6 +489,25 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
     }   
 }
 
+static local_interface_changed_cb(GtkWidget * widget, gpointer data UNUSED)
+{
+
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
+
+        gchar * local_interface;
+	gchar * local_address;
+
+	local_interface = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+	local_address = dbus_get_address_from_interface_name(local_interface);
+
+	gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), local_address);
+	    
+        // gchar * local_port = (gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
+        // gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(local_port, NULL));
+    }
+
+}
+
 static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 {
     DEBUG("set_published_addr_manually_cb");
@@ -510,6 +529,9 @@ static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 
 static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
 {
+    gchar * local_interface;
+    gchar * local_address;
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         DEBUG("Showing stun options, hiding Local/Published info");
         gtk_widget_show(stunServerLabel);
@@ -531,6 +553,14 @@ static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
 	    gtk_widget_show(publishedPortLabel);
 	    gtk_widget_show(publishedAddressEntry);
 	    gtk_widget_show(publishedPortSpinBox);
+
+	    // Since stun callback is called at initialization, we cannot reinit published address
+	    // TODO: find a way so that if stun is unchecked, reinit published address entry 
+	    //       in case local address changedd
+
+	    // local_interface = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+	    // local_address = dbus_get_address_from_interface_name(local_interface);
+	    // gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), local_address);
 	}
     }
  
@@ -958,7 +988,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 
 	// This will trigger a signal, and the above two
 	// widgets need to be instanciated before that.
-	// g_signal_connect(localAddressCombo, "changed", G_CALLBACK(use_stun_cb), useStunCheckBox);	
+	g_signal_connect(localAddressCombo, "changed", G_CALLBACK(local_interface_changed_cb), localAddressCombo);   
 
 	g_signal_connect(useStunCheckBox, "toggled", G_CALLBACK(use_stun_cb), useStunCheckBox);	
 
