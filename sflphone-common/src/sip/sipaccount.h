@@ -196,6 +196,17 @@ class SIPAccount : public Account
          */
         std::string getContactHeader(const std::string& address, const std::string& port);
 
+	/**
+	 * Set the interface name on which this account is bound, "default" means 
+	 * that the account is bound to the ANY interafec (0.0.0.0). This method should be
+	 * when binding the account to a new sip transport only.
+	 */
+	inline voidsetLocalInterface(const std::string interface&) {_interface = interface;}
+
+	/**
+	 * Get the local interface name on which this account is bound.
+	 */
+	inline std::string getLocalInterface(void) { return _interface; }
 
 	/**
 	 * Get a flag which determine the usage in sip headers of either the local 
@@ -327,6 +338,9 @@ class SIPAccount : public Account
 
         // Network settings
         std::string _registrationExpire;
+
+	// interface name on which this account is bound
+	std::string _interface;
 
 	// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
         // sip headers
