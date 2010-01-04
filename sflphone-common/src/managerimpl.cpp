@@ -2266,6 +2266,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"), IP2IP_PROFILE);
+    _config.addDefaultValue (std::pair<std::string, std::string> (LOCAL_INTERFACE, "default"), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (LOCAL_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);
@@ -3769,6 +3770,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     std::string hostname;
     std::string displayName;
+    std::string localInterface;
     std::string publishedSameasLocal;
     std::string localAddress;
     std::string publishedAddress;
@@ -3803,6 +3805,10 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     if ( (iter = map_cpy.find (DISPLAY_NAME)) != map_cpy.end()) {
         displayName = iter->second;
+    }
+
+    if ( (iter = map_cpy.find (LOCAL_INTERFACE)) != map_cpy.end()) {
+        localInterface = iter->second;
     }
 
     if ( (iter = map_cpy.find (PUBLISHED_SAMEAS_LOCAL)) != map_cpy.end()) {
@@ -3935,6 +3941,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     setConfig (accountID, HOSTNAME, hostname);
 
+    setConfig (accountID, LOCAL_INTERFACE, localInterface);
     setConfig (accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
     setConfig (accountID, LOCAL_ADDRESS, localAddress);
     setConfig (accountID, PUBLISHED_ADDRESS, publishedAddress);

@@ -201,7 +201,7 @@ class SIPAccount : public Account
 	 * that the account is bound to the ANY interafec (0.0.0.0). This method should be
 	 * when binding the account to a new sip transport only.
 	 */
-	inline voidsetLocalInterface(const std::string interface&) {_interface = interface;}
+	inline void setLocalInterface(const std::string& interface) {_interface = interface;}
 
 	/**
 	 * Get the local interface name on which this account is bound.

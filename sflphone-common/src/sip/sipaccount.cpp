@@ -341,8 +341,11 @@ void SIPAccount::loadConfig()
 
     // Load network settings
     // Local parameters
-    std::string localPort = Manager::instance().getConfigString (_accountID, LOCAL_PORT);
 
+    // Load local interface
+    setLocalInterface(Manager::instance().getConfigString (_accountID, LOCAL_INTERFACE));
+
+    std::string localPort = Manager::instance().getConfigString (_accountID, LOCAL_PORT);
     setLocalPort (atoi (localPort.c_str()));
 
     // Do not store or use IP address in config as this address may change

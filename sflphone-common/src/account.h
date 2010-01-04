@@ -70,6 +70,7 @@ typedef enum RegistrationState {
 #define REALM                               "realm"
 #define DEFAULT_REALM                       "*"
 
+#define LOCAL_INTERFACE                     "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
 #define LOCAL_PORT                          "Account.localPort"
 #define LOCAL_ADDRESS                       "Account.localAddress"
