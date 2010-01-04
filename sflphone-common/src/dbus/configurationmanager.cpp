@@ -786,7 +786,13 @@ void ConfigurationManager::setHistory (const std::map <std::string, std::string>
 std::string
 ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
-    return SIPVoIPLink::instance("")->getInterfaceAddrFromName(interface);
+    _debug ("ConfigurationManager::getAddrFromInterfaceName received");
+
+    std::string address = SIPVoIPLink::instance("")->getInterfaceAddrFromName(interface);
+
+    _debug("address: %s", address.c_str());
+
+    return address;
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface (void)

@@ -536,18 +536,23 @@ static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
  
 }
 
+
 static same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
         DEBUG("Same as local");
-		gchar * ip_address = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
-	    gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), ip_address);
+	gchar * local_interface;
+	gchar * local_address;
+
+	local_interface = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+	local_address = dbus_get_address_from_interface_name(local_interface);
+
+	gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), local_address);
 	    
         gchar * local_port = (gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(local_port, NULL));
     } 
 }
-
 
 
 GtkWidget * create_security_tab(account_t **a)
@@ -781,8 +786,9 @@ GtkWidget * create_advanced_tab(account_t **a)
 
 		if (g_strcasecmp(published_sameas_local,"true") == 0) {
 
-		    published_address = g_hash_table_lookup(currentAccount->properties,  LOCAL_ADDRESS);
+		    published_address = dbus_get_address_from_interface_name(local_interface);
 		    published_port = g_hash_table_lookup(currentAccount->properties,  LOCAL_PORT);
+
 		}
 		else {
 
@@ -935,6 +941,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gtk_misc_set_alignment(GTK_MISC (publishedAddressLabel), 0, 0.5);
 	publishedAddressEntry = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (publishedAddressLabel), publishedAddressEntry);
+
 	gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), published_address);
 	gtk_table_attach_defaults( GTK_TABLE(table), publishedAddressEntry, 1, 2, 5, 6);
 		
@@ -951,7 +958,10 @@ GtkWidget * create_advanced_tab(account_t **a)
 
 	// This will trigger a signal, and the above two
 	// widgets need to be instanciated before that.
-	g_signal_connect(useStunCheckBox, "toggled", G_CALLBACK(use_stun_cb), useStunCheckBox);		    		
+	// g_signal_connect(localAddressCombo, "changed", G_CALLBACK(use_stun_cb), useStunCheckBox);	
+
+	g_signal_connect(useStunCheckBox, "toggled", G_CALLBACK(use_stun_cb), useStunCheckBox);	
+
 	g_signal_connect(sameAsLocalRadioButton, "toggled", G_CALLBACK(same_as_local_cb), sameAsLocalRadioButton);   
 	g_signal_connect(publishedAddrRadioButton, "toggled", G_CALLBACK(set_published_addr_manually_cb), publishedAddrRadioButton);
 
@@ -1019,6 +1029,11 @@ show_account_window (account_t * a)
 	GtkWidget * tab; 
 	gint response;
 	account_t *currentAccount;
+
+	// In case the published address is same than local, 
+	// we must resolve published address from interface name 
+	gchar * local_interface;
+	gchar * published_address;
 
 	currentAccount = a;   
 	
@@ -1131,6 +1146,7 @@ show_account_window (account_t * a)
 			        g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
 			if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton)))
 			{
+
 			    g_hash_table_replace(currentAccount->properties,
 						 g_strdup(PUBLISHED_PORT),
 						 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(publishedPortSpinBox))));
@@ -1144,11 +1160,13 @@ show_account_window (account_t * a)
 			   g_hash_table_replace(currentAccount->properties,
 						 g_strdup(PUBLISHED_PORT),
 						 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
-			   
+			   local_interface = g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)));
+
+			   published_address = dbus_get_address_from_interface_name(local_interface);
 
 			   g_hash_table_replace(currentAccount->properties,
 						 g_strdup(PUBLISHED_ADDRESS),
-						 g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)))); 
+						 published_address);
 			}
 			
 		}

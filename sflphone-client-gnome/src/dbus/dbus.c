@@ -2370,6 +2370,8 @@ gchar * dbus_get_address_from_interface_name(gchar* interface)
         g_error_free (error);
     }
 
+    return address;
+
 }
 
 
