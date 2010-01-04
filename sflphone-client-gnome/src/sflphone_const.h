@@ -88,6 +88,7 @@
 #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
+#define LOCAL_INTERFACE                     "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
 #define LOCAL_PORT                          "Account.localPort"
 #define LOCAL_ADDRESS                       "Account.localAddress"

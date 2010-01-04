@@ -3536,6 +3536,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, getConfigString (accountID, AUTHENTICATION_USERNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
+    a.insert (std::pair<std::string, std::string> (LOCAL_INTERFACE, getConfigString (accountID, LOCAL_INTERFACE)));
     a.insert (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, getConfigString (accountID, PUBLISHED_SAMEAS_LOCAL)));
     a.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, getConfigString (accountID, LOCAL_ADDRESS)));
     a.insert (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, getConfigString (accountID, PUBLISHED_ADDRESS)));

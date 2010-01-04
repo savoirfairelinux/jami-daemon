@@ -165,7 +165,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 static void ip2ip_local_address_changed_cb(GtkWidget *widget, gpointer data)
 {
 	DEBUG("ip2ip_local_address_changed_cb\n");
-	g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget))));
+	g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_INTERFACE), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget))));
 }
 
 static void ip2ip_local_port_changed_cb(GtkWidget *widget, gpointer data)
@@ -199,6 +199,7 @@ GtkWidget* create_direct_ip_calls_tab()
 	gchar * curKeyExchange = "0";
 	gchar * description;
 
+	gchar * local_interface;
 	gchar * local_address;
 	gchar * local_port;
 
@@ -207,8 +208,10 @@ GtkWidget* create_direct_ip_calls_tab()
 
 	if(directIpCallsProperties != NULL) {
 		DEBUG("got a directIpCallsProperties");
+		local_interface = g_hash_table_lookup(directIpCallsProperties, LOCAL_INTERFACE);
 		local_address = g_hash_table_lookup(directIpCallsProperties,  LOCAL_ADDRESS);
 		local_port = g_hash_table_lookup(directIpCallsProperties, LOCAL_PORT);
+		DEBUG("    local interface = %s", local_interface);
 		DEBUG("    local address = %s", local_address);
 		DEBUG("    local port = %s", local_port);
 		curSRTPEnabled = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_SRTP_ENABLED);
@@ -264,7 +267,7 @@ GtkWidget* create_direct_ip_calls_tab()
 			gtk_list_store_append(ipInterfaceListStore, &iter );
 			gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
 
-			if (!iface_found && (g_strcmp0(*iface, local_address) == 0)) {
+			if (!iface_found && (g_strcmp0(*iface, local_interface) == 0)) {
 				DEBUG("Setting active local address combo box");
 				current_local_address_iter = iter;
 				iface_found = TRUE;
@@ -292,7 +295,7 @@ GtkWidget* create_direct_ip_calls_tab()
 	gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
 	g_signal_connect (G_OBJECT(GTK_COMBO_BOX(localAddressCombo)), "changed", G_CALLBACK (ip2ip_local_address_changed_cb), localAddressCombo);
 
-	g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
+	g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_INTERFACE), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
 
 
 	/**

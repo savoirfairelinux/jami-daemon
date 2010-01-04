@@ -77,6 +77,7 @@ ConfigurationManager::getIp2IpDetails (void)
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
 
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_INTERFACE, Manager::instance().getConfigString(IP2IP_PROFILE, LOCAL_INTERFACE)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_ADDRESS)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_PORT)));
 
@@ -93,6 +94,12 @@ ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string 
 {
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
+
+    it = map_cpy.find (LOCAL_INTERFACE);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_INTERFACE, it->second);
+    }
 
     it = map_cpy.find (LOCAL_ADDRESS);
 

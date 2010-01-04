@@ -757,6 +757,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 	gchar * use_tls;
 	gchar * published_address;
 	gchar * published_port;
+	gchar * local_interface;
 	gchar * local_address;
 	gchar * local_port;
 	gchar * stun_enable;    
@@ -771,6 +772,9 @@ GtkWidget * create_advanced_tab(account_t **a)
 		use_tls = g_hash_table_lookup(currentAccount->properties,  TLS_ENABLE);
 
 		published_sameas_local = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_SAMEAS_LOCAL);
+
+		local_interface = g_hash_table_lookup(currentAccount->properties, LOCAL_INTERFACE);
+
 
 		local_port = g_hash_table_lookup(currentAccount->properties, LOCAL_PORT);
 		local_address = g_hash_table_lookup(currentAccount->properties,  LOCAL_ADDRESS);
@@ -849,7 +853,7 @@ GtkWidget * create_advanced_tab(account_t **a)
             gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
 
 	    // set the current local address
-	    if (!iface_found && (g_strcmp0(*iface, local_address) == 0)) {
+	    if (!iface_found && (g_strcmp0(*iface, local_interface) == 0)) {
                 DEBUG("Setting active local address combo box");
                 current_local_address_iter = iter;
 		iface_found = TRUE;
@@ -1115,8 +1119,12 @@ show_account_window (account_t * a)
 			g_hash_table_replace(currentAccount->properties, g_strdup(PUBLISHED_SAMEAS_LOCAL), g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton)) ? "true":"false"));	
 
 			g_hash_table_replace(currentAccount->properties,
+    				g_strdup(LOCAL_INTERFACE),
+			        g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
+
+			g_hash_table_replace(currentAccount->properties,
     				g_strdup(LOCAL_PORT),
-    				g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));	
+			        g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
 
 			g_hash_table_replace(currentAccount->properties,
     				g_strdup(LOCAL_ADDRESS),
@@ -1136,6 +1144,7 @@ show_account_window (account_t * a)
 			   g_hash_table_replace(currentAccount->properties,
 						 g_strdup(PUBLISHED_PORT),
 						 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
+			   
 
 			   g_hash_table_replace(currentAccount->properties,
 						 g_strdup(PUBLISHED_ADDRESS),
