@@ -369,7 +369,12 @@
       <arg type="s" name="accountID" direction="in"/>
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
-    
+
+    <method name="getAddrFromInterfaceName">
+      <arg type="s" name="interface" direction="in"/>
+      <arg type="s" name="address" direction="out"/>
+    </method>
+
     <method name="getAllIpInterface">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>

@@ -721,6 +721,7 @@ ConfigurationManager::getMailNotify (void)
     return Manager::instance().getMailNotify();
 }
 
+
 int
 ConfigurationManager::getSipAddress (void)
 {
@@ -780,6 +781,12 @@ std::map <std::string, std::string> ConfigurationManager::getHistory (void)
 void ConfigurationManager::setHistory (const std::map <std::string, std::string>& entries)
 {
     Manager::instance().receive_history_from_client (entries);
+}
+
+std::string
+ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
+{
+    return SIPVoIPLink::instance("")->getInterfaceAddrFromName(interface);
 }
 
 std::vector<std::string> ConfigurationManager::getAllIpInterface (void)

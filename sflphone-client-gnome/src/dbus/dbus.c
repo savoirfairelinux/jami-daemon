@@ -2358,6 +2358,21 @@ GHashTable* dbus_get_tls_settings_default(void)
     return results;
 }
 
+
+gchar * dbus_get_address_from_interface_name(gchar* interface)
+{
+    GError *error = NULL;
+    gchar * address;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_addr_from_interface_name ( configurationManagerProxy, interface, &address, &error);
+    if (error != NULL){
+        ERROR ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_addr_from_interface_name\n");
+        g_error_free (error);
+    }
+
+}
+
+
 gchar ** dbus_get_all_ip_interface(void)
 {
     GError *error = NULL;
