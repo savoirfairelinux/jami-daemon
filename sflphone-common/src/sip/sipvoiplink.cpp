@@ -2229,7 +2229,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
         _debug("Found account %s in map", account->getAccountID().c_str());
 
         if (account->getLocalAddress () != "default") {
-            listeningAddress = getInterfaceAddrFromName(account->getLocalAddress());
+            listeningAddress = getInterfaceAddrFromName(account->getLocalInterface());
         }
 
         listeningPort = account->getLocalPort ();
@@ -2239,13 +2239,14 @@ int SIPVoIPLink::createUDPServer (AccountID id)
 
     pj_str_t temporary_address;
 
-    // Init bound address to ANY
-    if (account && account->getLocalAddress () == "default") {
+    if (account && account->getLocalInterface () == "default") {
 
+        // Init bound address to ANY
         bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
     }
     else {
-        // bind this account to a specific interface
+
+        // bind this account to a specific interface        
         pj_strdup2(_pool, &temporary_address, listeningAddress.c_str());
 	bound_addr.sin_addr = pj_inet_addr(&temporary_address);
     }
