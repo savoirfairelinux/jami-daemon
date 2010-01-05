@@ -78,7 +78,6 @@ ConfigurationManager::getIp2IpDetails (void)
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
 
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_INTERFACE, Manager::instance().getConfigString(IP2IP_PROFILE, LOCAL_INTERFACE)));
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_ADDRESS)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_PORT)));
 
     std::map<std::string, std::string> tlsSettings;
@@ -99,12 +98,6 @@ ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string 
 
     if (it != details.end()) {
         Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_INTERFACE, it->second);
-    }
-
-    it = map_cpy.find (LOCAL_ADDRESS);
-
-    if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, it->second);
     }
 
     it = map_cpy.find (LOCAL_PORT);
@@ -721,21 +714,6 @@ ConfigurationManager::getMailNotify (void)
     return Manager::instance().getMailNotify();
 }
 
-
-int
-ConfigurationManager::getSipAddress (void)
-{
-    return Manager::instance().getLocalIp2IpPort();
-
-    // return "ok";
-}
-
-void
-ConfigurationManager::setSipAddress (const std::string& address)
-{
-    _debug ("Manager received setSipAddress: %s", address.c_str());
-    Manager::instance().setLocalIp2IpInfo (address);
-}
 
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)
 {

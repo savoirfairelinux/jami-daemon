@@ -810,9 +810,7 @@ GtkWidget * create_advanced_tab(account_t **a)
 
 		local_interface = g_hash_table_lookup(currentAccount->properties, LOCAL_INTERFACE);
 
-
 		local_port = g_hash_table_lookup(currentAccount->properties, LOCAL_PORT);
-		local_address = g_hash_table_lookup(currentAccount->properties,  LOCAL_ADDRESS);
 
 		if (g_strcasecmp(published_sameas_local,"true") == 0) {
 
@@ -1170,10 +1168,7 @@ show_account_window (account_t * a)
 			g_hash_table_replace(currentAccount->properties,
     				g_strdup(LOCAL_PORT),
 			        g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
-
-			g_hash_table_replace(currentAccount->properties,
-    				g_strdup(LOCAL_ADDRESS),
-			        g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
+			
 			if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton)))
 			{
 

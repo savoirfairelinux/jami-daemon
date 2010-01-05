@@ -114,9 +114,6 @@ public:
     int32_t getMailNotify( void );
     void setMailNotify( void );
 
-    int getSipAddress( void );
-    void setSipAddress( const std::string& address );
-
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
     std::vector< std::string > getAddressbookList ( void );

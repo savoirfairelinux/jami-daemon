@@ -2270,7 +2270,6 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (LOCAL_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_PORT, DEFAULT_SIP_PORT), IP2IP_PROFILE);
-    _config.addDefaultValue (std::pair<std::string, std::string> (LOCAL_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (STUN_ENABLE, DFT_STUN_ENABLE), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (STUN_SERVER, DFT_STUN_SERVER), IP2IP_PROFILE);
@@ -3235,49 +3234,10 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
 
 
 
-
-
-void ManagerImpl::setLocalIp2IpInfo (const std::string& address)
-{
-    std::string ip_address = std::string (address);
-
-    int index = ip_address.find_first_of (":");
-
-    std::string local_address = ip_address.substr (0,index);
-    std::string local_port = ip_address.substr (index+1);
-    int newPort = atoi (local_port.c_str());
-
-    _debug ("Setting new address %s and port %s for default account (ip to ip calls)", local_address.c_str(), local_port.c_str());
-
-    int prevPort = getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
-    std::string prevAddress  = getConfigString (IP2IP_PROFILE, LOCAL_ADDRESS);
-
-    if ( (prevPort != newPort) || (prevAddress.compare (local_address) != 0)) {
-
-
-        if (_directIpAccount) {
-
-            SIPAccount* account = dynamic_cast<SIPAccount*> (_directIpAccount);
-
-            account->setLocalPort (newPort);
-            account->setLocalAddress (local_address);
-        }
-
-        setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, local_address);
-
-        setConfig (IP2IP_PROFILE, LOCAL_PORT, newPort);
-
-        SIPVoIPLink* siplink = SIPVoIPLink::instance ("");
-        // if(siplink)
-        siplink->updateAccountInfo (_directIpAccount->getAccountID());
-        // this->restartPJSIP ();
-    }
-}
-
-
+ 
 int ManagerImpl::getLocalIp2IpPort (void)
 {
-    /* The SIP port used for default account (IP to IP) calls */
+    // The SIP port used for default account (IP to IP) calls
     _debug ("Default account port %i", getConfigInt (IP2IP_PROFILE, LOCAL_PORT));
 
     return getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
@@ -3538,7 +3498,6 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
     a.insert (std::pair<std::string, std::string> (LOCAL_INTERFACE, getConfigString (accountID, LOCAL_INTERFACE)));
     a.insert (std::pair<std::string, std::string> (PUBLISHED_SAMEAS_LOCAL, getConfigString (accountID, PUBLISHED_SAMEAS_LOCAL)));
-    a.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, getConfigString (accountID, LOCAL_ADDRESS)));
     a.insert (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, getConfigString (accountID, PUBLISHED_ADDRESS)));
     a.insert (std::pair<std::string, std::string> (LOCAL_PORT, getConfigString (accountID, LOCAL_PORT)));
     a.insert (std::pair<std::string, std::string> (PUBLISHED_PORT, getConfigString (accountID, PUBLISHED_PORT)));
@@ -3816,10 +3775,6 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
         publishedSameasLocal = iter->second;
     }
 
-    if ( (iter = map_cpy.find (LOCAL_ADDRESS)) != map_cpy.end()) {
-        localAddress = iter->second;
-    }
-
     if ( (iter = map_cpy.find (PUBLISHED_ADDRESS)) != map_cpy.end()) {
         publishedAddress = iter->second;
     }
@@ -3944,7 +3899,6 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     setConfig (accountID, LOCAL_INTERFACE, localInterface);
     setConfig (accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
-    setConfig (accountID, LOCAL_ADDRESS, localAddress);
     setConfig (accountID, PUBLISHED_ADDRESS, publishedAddress);
     setConfig (accountID, LOCAL_PORT, localPort);
     setConfig (accountID, PUBLISHED_PORT, publishedPort);

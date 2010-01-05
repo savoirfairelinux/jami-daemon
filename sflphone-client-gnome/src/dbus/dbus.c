@@ -2056,6 +2056,7 @@ dbus_get_audio_manager( void )
     return api;
 }
 
+/*
     void
 dbus_set_sip_address( const gchar* address )
 {
@@ -2069,6 +2070,9 @@ dbus_set_sip_address( const gchar* address )
         g_error_free(error);
     }
 }
+*/
+
+ /*
 
     gint
 dbus_get_sip_address( void )
@@ -2085,6 +2089,7 @@ dbus_get_sip_address( void )
     }
     return address;
 }
+ */
 
 GHashTable* dbus_get_addressbook_settings (void) {
 

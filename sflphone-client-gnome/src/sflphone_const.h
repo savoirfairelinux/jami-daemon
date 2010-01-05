@@ -91,7 +91,6 @@
 #define LOCAL_INTERFACE                     "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
 #define LOCAL_PORT                          "Account.localPort"
-#define LOCAL_ADDRESS                       "Account.localAddress"
 #define PUBLISHED_PORT                      "Account.publishedPort"
 #define PUBLISHED_ADDRESS                   "Account.publishedAddress"
 

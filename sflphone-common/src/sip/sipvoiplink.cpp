@@ -2097,7 +2097,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 
 	    _debug("Use default one instead (%s:%i)", localHostName.c_str(), _localUDPTransport->local_name.port);
 
-	    account->setLocalAddress(localHostName);
+	    // account->setLocalAddress(localHostName);
 	    account->setLocalPort(_localUDPTransport->local_name.port);
 
 	    // Transport could not either be created or found in the map, socket not available

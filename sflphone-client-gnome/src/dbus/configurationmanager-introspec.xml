@@ -290,13 +290,6 @@
     <method name="switchPopupMode">
     </method>
 
-    <method name="setSipAddress">
-      <arg type="s" name="address" direction="in"/>
-    </method>
-
-    <method name="getSipAddress">
-      <arg type="i" name="address" direction="out"/>
-    </method>
 
     <!-- Addressbook configuration -->
     <method name="getAddressbookSettings">

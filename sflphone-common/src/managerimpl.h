@@ -1319,8 +1319,6 @@ class ManagerImpl {
 
     int getLocalIp2IpPort();
 
-    void setLocalIp2IpInfo( const std::string& address );
-
     std::string getStunServer (void);
     void setStunServer (const std::string &server);
 

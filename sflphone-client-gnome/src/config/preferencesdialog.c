@@ -58,22 +58,6 @@ static gboolean history_enabled = TRUE;
 GHashTable * directIpCallsProperties = NULL;
 
 
-
-
-static void update_ip_address_port_cb ( GtkSpinButton *button UNUSED, void *ptr )
-{ 
-	// dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
-	gchar* local_address = g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)));
-	gchar* local_port = g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox)));
-
-	gchar* ip_interface = g_strconcat(local_address, ":", local_port, NULL);
-
-	DEBUG("update_ip_address_port_cb %s\n", ip_interface);
-
-	dbus_set_sip_address(ip_interface);
-}
-
-
 	static void
 set_md5_hash_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
@@ -209,10 +193,8 @@ GtkWidget* create_direct_ip_calls_tab()
 	if(directIpCallsProperties != NULL) {
 		DEBUG("got a directIpCallsProperties");
 		local_interface = g_hash_table_lookup(directIpCallsProperties, LOCAL_INTERFACE);
-		local_address = g_hash_table_lookup(directIpCallsProperties,  LOCAL_ADDRESS);
 		local_port = g_hash_table_lookup(directIpCallsProperties, LOCAL_PORT);
 		DEBUG("    local interface = %s", local_interface);
-		DEBUG("    local address = %s", local_address);
 		DEBUG("    local port = %s", local_port);
 		curSRTPEnabled = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_SRTP_ENABLED);
 		DEBUG("    curSRTPEnabled = %s", curSRTPEnabled);
@@ -315,7 +297,7 @@ GtkWidget* create_direct_ip_calls_tab()
 
 
 	GtkWidget *applyModificationButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-	g_signal_connect( G_OBJECT(applyModificationButton) , "clicked" , G_CALLBACK( update_ip_address_port_cb ), localPortSpinBox);
+	// g_signal_connect( G_OBJECT(applyModificationButton) , "clicked" , G_CALLBACK( update_ip_address_port_cb ), localPortSpinBox);
 	gtk_table_attach( GTK_TABLE(table), applyModificationButton, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
 

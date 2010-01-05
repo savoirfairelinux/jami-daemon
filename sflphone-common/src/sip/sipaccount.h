@@ -248,19 +248,6 @@ class SIPAccount : public Account
          * @pram port The port used by this account.
          */
         inline void setPublishedPort(pj_uint16_t port) { _publishedPort = port; }
-
-        /**
-         * Get the bound address set by the user.
-         * @return std::string The public IPV4 address formatted in the standard dot notation.
-         */
-        inline std::string getLocalAddress(void) { return _localIpAddress; }
-        
-        /**
-         * Set the bound address chosen by the user.
-         * @param The public IPV4 address in the standard dot notation.
-         * @return void
-         */
-        inline void setLocalAddress(const std::string& address) { _localIpAddress = address; }
                 
         /**
          * Get the public IP address set by the user for this account.
@@ -346,7 +333,6 @@ class SIPAccount : public Account
         // sip headers
 	bool _publishedSameasLocal;
                 
-        std::string _localIpAddress;
         std::string _publishedIpAddress;
         
         pj_uint16_t _localPort;
