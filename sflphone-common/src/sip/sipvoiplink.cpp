@@ -1542,8 +1542,8 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
 	// Set the local address
 	localAddress = getInterfaceAddrFromName(account->getLocalInterface ());
-        // Set SDP parameters - Set to local or published address
-	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () :  localAddress;
+        // Set SDP parameters - Set to local
+	addrSdp = localAddress;
 
         _debug ("new_ip_to_ip_call localAddress: %s", localAddress.c_str());
 
