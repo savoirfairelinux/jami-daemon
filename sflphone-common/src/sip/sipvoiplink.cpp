@@ -2691,11 +2691,25 @@ pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
         local_addr.sin_port = pj_htons (localTlsPort);
     }
 
+    /*
+    std::string localAddress;
+    if (account->getLocalInterface() == "default"){
+
+        // Current selected interface address is 0.0.0.0, resolve local address using  
+        loadSIPLocalIP (&localAddress);
+    }
+    else {
+
+        // Specific interface selected, reslove it
+        localAddress = getInterfaceAddrFromName(account->getLocalInterface());
+    }
+    */
+
     std::string localAddress = getInterfaceAddrFromName(account->getLocalInterface());
 
     if (!localAddress.empty()) {
         pj_str_t pjAddress;
-        pj_cstr (&pjAddress, (getInterfaceAddrFromName(account->getLocalInterface())).c_str());
+        pj_cstr (&pjAddress, localAddress.c_str());
 
         pj_status_t success;
         success = pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
@@ -2705,10 +2719,30 @@ pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
         }
     }
 
+    std::string publishedAddress;
+    if (account->getPublishedSameasLocal()) {
+
+        // if "default" interface is selected, loadSIPLocalIP() is used to get local address
+        if (account->getLocalInterface() == "default"){
+
+	    loadSIPLocalIP (&publishedAddress);
+	}
+	else {
+
+	    // Specific interface selected
+	    publishedAddress = localAddress;
+	}   
+    }
+    else {
+
+        publishedAddress = account->getPublishedAddress();
+    }
+
+
     /* Init published name */
     pj_bzero (&a_name, sizeof (pjsip_host_port));
 
-    pj_cstr (&a_name.host, (account->getPublishedAddress()).c_str());
+    pj_cstr (&a_name.host, publishedAddress.c_str());
 
     a_name.port = account->getPublishedPort();
 
