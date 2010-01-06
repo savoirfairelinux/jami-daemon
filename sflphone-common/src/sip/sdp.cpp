@@ -130,6 +130,8 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
         _debug ("No hash specified");
     }
 
+    // sdp_add_srtp_attribute (med);
+
     *p_med = med;
 }
 
@@ -359,6 +361,37 @@ void Sdp::sdp_add_media_description()
         this->_local_offer->media[i] = med;
     }
 }
+
+
+void Sdp::sdp_add_srtp_attribute (pjmedia_sdp_media* media)
+{
+
+    char tempbuf[256];
+
+    std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
+    std::string application = "srtp";
+    std::string key = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
+
+    pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc(_pool, sizeof(pjmedia_sdp_attr));
+
+    attribute->name = pj_strdup3(_pool, "crypto");
+
+    int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
+			       "%.*s %.*s %.*s",
+			       (int)crypto_suite.size(), crypto_suite.c_str(),
+			       (int)application.size(), application.c_str(),
+			       (int)key.size(), key.c_str());
+
+    attribute->value.slen = len;
+    attribute->value.ptr = (char*) pj_pool_alloc (_pool, attribute->value.slen+1);
+    pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
+
+    if(pjmedia_sdp_media_add_attr(media, attribute) != PJ_SUCCESS) {
+        throw sdpException();
+    }
+
+}
+
 
 void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
 {
