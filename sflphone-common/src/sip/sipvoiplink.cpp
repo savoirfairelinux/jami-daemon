@@ -3419,6 +3419,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         int end_displayName = temp.rfind ("\"");
         // _debug("The display name start at %i, end at %i", begin_displayName, end_displayName);
         displayName = temp.substr (begin_displayName, end_displayName - begin_displayName);//display_name);
+	if(displayName.size() > 25) {
+	    displayName = std::string ("");
+	}
     } else {
         displayName = std::string ("");
     }
