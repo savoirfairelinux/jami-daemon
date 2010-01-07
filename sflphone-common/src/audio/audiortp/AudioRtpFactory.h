@@ -25,11 +25,13 @@
 class SIPCall;
 namespace sfl {
     class AudioZrtpSession;
+    class AudioSrtpSession;
 }
 
 namespace sfl {
 
     class AudioZrtpSession;
+    class AudioSrtpSession;
 
     // Possible kind of rtp session
     typedef enum RtpMethod {

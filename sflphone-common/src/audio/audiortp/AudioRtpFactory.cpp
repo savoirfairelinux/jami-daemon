@@ -20,6 +20,7 @@
 
 #include "AudioRtpFactory.h"
 #include "AudioZrtpSession.h"
+#include "AudioSrtpSession.h"
 #include "AudioSymmetricRtpSession.h"
 
 #include "manager.h"
@@ -106,6 +107,11 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 
             case Sdes:
 
+	        _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
+                _rtpSessionType = Sdes;
+
+		break;
+
             default:
                 throw UnsupportedRtpSessionType();
         }
@@ -125,6 +131,9 @@ void AudioRtpFactory::start (void)
     switch (_rtpSessionType) {
 
         case Sdes:
+	    if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread() != 0) {
+                throw AudioRtpFactoryException ("Failed to start AudioSRtpSession thread");
+            }
 	    break;
 
         case Symmetric:
