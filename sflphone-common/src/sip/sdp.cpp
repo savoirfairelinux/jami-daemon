@@ -677,7 +677,7 @@ void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sd
 
     int i;
     int attr_count;
-    // pjmedia_sdp_attr * attribute;
+    pjmedia_sdp_attr * attribute;
     *r_crypto =  NULL;
 
     attr_count = remote_sdp->attr_count;
@@ -685,11 +685,11 @@ void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sd
     // *r_crypto= pjmedia_sdp_media_find_attr(attribute, &STR_CRYPTO, NULL);
 
     _debug("****************** Parse for Crypto %i ********************", attr_count);
-    _debug("****************** Parse for Media %i ********************", attr_count);
 
     for (i = 0; i < attr_count; ++i) {
 
-      _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
+        _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
+	_debug("%.*s", (int)remote_sdp->attr[i]->value.slen, remote_sdp->attr[i]->value.ptr);
         if (pj_stricmp2 (&remote_sdp->attr[i]->name, "crypto") == 0) {
 	    _debug("****************** Found a Crypto ********************");
             *r_crypto = remote_sdp->attr[i];
