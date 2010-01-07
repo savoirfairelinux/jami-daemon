@@ -47,13 +47,17 @@ namespace sfl {
 
 	    void initializeMasterSalt(void);
 
-	    void initializeCryptoContext(void);
+	    void initializeInputCryptoContext(void);
+
+	    void initializeOutputCryptoContext(void);
 
             uint8 _masterKey[16];
 
 	    uint8 _masterSalt[14];
 
-	    ost::CryptoContext* txCryptoCtx;
+	    ost::CryptoContext* inputCryptoCtx;
+
+	    ost::CryptoContext* outputCryptoCtx;
     };
    
 }

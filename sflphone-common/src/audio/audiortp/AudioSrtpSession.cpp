@@ -25,6 +25,12 @@
 #include <cstring>
 #include <cerrno>
 
+static uint8 mk[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+
+static uint8 ms[] = { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+	 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d };
+
 namespace sfl
 {
 
@@ -35,18 +41,19 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     _debug ("AudioSrtpSession initialized");
     initializeMasterKey();
     initializeMasterSalt();
-    initializeCryptoContext();
-    txCryptoCtx->deriveSrtpKeys(0);
+    initializeInputCryptoContext();
+    initializeOutputCryptoContext();
+    outputCryptoCtx->deriveSrtpKeys(0);
 
-    setInQueueCryptoContext(txCryptoCtx);
-    setOutQueueCryptoContext(txCryptoCtx);
+    setInQueueCryptoContext(inputCryptoCtx);
+    setOutQueueCryptoContext(outputCryptoCtx);
 }
 
 void AudioSrtpSession::initializeMasterKey(void)
 {
 
-    _masterKey = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		   0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+    for(int i = 0; i < 16; i++)
+        _masterKey[i] = mk[i];
 
     return;
 }
@@ -54,17 +61,35 @@ void AudioSrtpSession::initializeMasterKey(void)
 
 void AudioSrtpSession::initializeMasterSalt(void)
 {
-    _masterSalt = { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-		    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d };
+    for(int i = 0; i < 16; i++)
+        _masterSalt[i] = ms[i];
 
     return;
 
 }
 
-void AudioSrtpSession::initializeCryptoContext(void)
+void AudioSrtpSession::initializeInputCryptoContext(void)
 {
 
-    txCryptoCtx = new ost::CryptoContext(0x12345678,
+    inputCryptoCtx = new ost::CryptoContext(0x12345678,
+					 0,                           // roc,
+					 0L,                          // keydr,
+					 SrtpEncryptionAESCM,         // encryption algo
+					 SrtpAuthenticationSha1Hmac,  // authtication algo
+					 _masterKey,                  // Master Key
+					 128 / 8,                     // Master Key length
+					 _masterSalt,                 // Master Salt
+					 112 / 8,                     // Master Salt length
+					 128 / 8,                     // encryption keyl
+					 160 / 8,                     // authentication key len
+					 112 / 8,                     // session salt len
+					 80 / 8);                     // authentication tag len
+}
+
+void AudioSrtpSession::initializeOutputCryptoContext(void)
+{
+
+    outputCryptoCtx = new ost::CryptoContext(0x12345678,
 					 0,                           // roc,
 					 0L,                          // keydr,
 					 SrtpEncryptionAESCM,         // encryption algo
