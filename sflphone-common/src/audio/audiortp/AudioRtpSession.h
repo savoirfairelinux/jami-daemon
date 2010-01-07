@@ -187,8 +187,6 @@ namespace sfl {
         _layerFrameSize = _audiolayer->getFrameSize(); // in ms
         _layerSampleRate = _audiolayer->getSampleRate();
 
-	// if(this->)
-
     }
     
     template <typename D>

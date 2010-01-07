@@ -35,6 +35,11 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     _debug ("AudioSrtpSession initialized");
     initializeMasterKey();
     initializeMasterSalt();
+    initializeCryptoContext();
+    txCryptoCtx->deriveSrtpKeys(0);
+
+    setInQueueCryptoContext(txCryptoCtx);
+    setOutQueueCryptoContext(txCryptoCtx);
 }
 
 void AudioSrtpSession::initializeMasterKey(void)
