@@ -38,7 +38,7 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
         AudioRtpSession<AudioSrtpSession> (manager, sipcall)
 {
-    _debug ("AudioSrtpSession initialized");
+    _debug ("***************** AudioSrtpSession initialized *********************");
     initializeMasterKey();
     initializeMasterSalt();
     initializeInputCryptoContext();
@@ -72,7 +72,7 @@ void AudioSrtpSession::initializeMasterSalt(void)
 void AudioSrtpSession::initializeInputCryptoContext(void)
 {
 
-    inputCryptoCtx = new ost::CryptoContext(getLocalSSRCNetwork(),
+    inputCryptoCtx = new ost::CryptoContext(IncomingDataQueue::getLocalSSRC(),
 					    0,                           // roc,
 					    0L,                          // keydr,
 					    SrtpEncryptionAESCM,         // encryption algo
@@ -85,12 +85,14 @@ void AudioSrtpSession::initializeInputCryptoContext(void)
 					    160 / 8,                     // authentication key len
 					    112 / 8,                     // session salt len
 					    80 / 8);                     // authentication tag len
+
+    _debug("********************* Crypto Context IN with SSRC %i ******************", IncomingDataQueue::getLocalSSRC());
 }
 
 void AudioSrtpSession::initializeOutputCryptoContext(void)
 {
 
-    outputCryptoCtx = new ost::CryptoContext(getLocalSSRCNetwork(),
+    outputCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
 					     0,                           // roc,
 					     0L,                          // keydr,
 					     SrtpEncryptionAESCM,         // encryption algo
@@ -103,5 +105,7 @@ void AudioSrtpSession::initializeOutputCryptoContext(void)
 					     160 / 8,                     // authentication key len
 					     112 / 8,                     // session salt len
 					     80 / 8);                     // authentication tag len
+
+    _debug("********************* Crypto Context OUT with SSRC %i ******************", OutgoingDataQueue::getLocalSSRC());
 }
 }
