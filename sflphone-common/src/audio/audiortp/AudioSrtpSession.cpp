@@ -72,26 +72,30 @@ void AudioSrtpSession::initializeMasterSalt(void)
 void AudioSrtpSession::initializeInputCryptoContext(void)
 {
 
-    inputCryptoCtx = new ost::CryptoContext(IncomingDataQueue::getLocalSSRC(),
-					    0,                           // roc,
-					    0L,                          // keydr,
-					    SrtpEncryptionAESCM,         // encryption algo
-					    SrtpAuthenticationSha1Hmac,  // authtication algo
-					    _masterKey,                  // Master Key
-					    128 / 8,                     // Master Key length
-					    _masterSalt,                 // Master Salt
-					    112 / 8,                     // Master Salt length
-					    128 / 8,                     // encryption keyl
-					    160 / 8,                     // authentication key len
-					    112 / 8,                     // session salt len
-					    80 / 8);                     // authentication tag len
+  // this one does not works
+  // inputCryptoCtx = new ost::CryptoContext(IncomingDataQueue::getLocalSSRCNetwork(),
+  inputCryptoCtx = new ost::CryptoContext(0x0,
+					  0,                           // roc,
+					  0L,                          // keydr,
+					  SrtpEncryptionAESCM,         // encryption algo
+					  SrtpAuthenticationSha1Hmac,  // authtication algo
+					  _masterKey,                  // Master Key
+					  128 / 8,                     // Master Key length
+					  _masterSalt,                 // Master Salt
+					  112 / 8,                     // Master Salt length
+					  128 / 8,                     // encryption keyl
+					  160 / 8,                     // authentication key len
+					  112 / 8,                     // session salt len
+					  80 / 8);                     // authentication tag len
 
-    _debug("********************* Crypto Context IN with SSRC %i ******************", IncomingDataQueue::getLocalSSRC());
+    _debug("********************* Crypto Context IN with SSRC %i ******************", IncomingDataQueue::getLocalSSRCNetwork());
 }
 
 void AudioSrtpSession::initializeOutputCryptoContext(void)
 {
 
+  // this one works
+  // outputCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
     outputCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
 					     0,                           // roc,
 					     0L,                          // keydr,
