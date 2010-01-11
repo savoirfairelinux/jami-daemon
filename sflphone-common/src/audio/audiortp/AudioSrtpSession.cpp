@@ -61,19 +61,26 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
  
 std::string AudioSrtpSession::getCryptoSdpInfo() {
 
+    _debug("Get Cryptographic info from this rtp session");
+
     std::string tag = "1";
     std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
     std::string application = "srtp";
-    std::string srtp_key = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
+    // std::string srtp_keys = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
 
-    std::string crypto = tag;
+    // format srtp keys as the following
+    // inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32
+    std::string srtp_keys = "inline:";
+    srtp_keys.append("16/14/");
+    srtp_keys += getBase64ConcatenatedKeys();
+    srtp_keys.append("/2^20/1:32");
 
-    crypto.append(" ");
-    crypto.append(crypto_suite);
-    crypto.append(" ");
-    crypto.append(application);
-    crypto.append(" ");
-    crypto.append(srtp_key);
+    std::string crypto = tag.append(" ");
+    crypto += crypto_suite.append(" ");
+    crypto += application.append(" ");
+    crypto += srtp_keys;
+
+    _debug("%s", crypto.c_str());
 
     return crypto;
 }
@@ -105,10 +112,12 @@ void AudioSrtpSession::initializeMasterSalt(void)
 std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 {
 
+    // concatenate master and salt
     uint8 concatenated[30];
     memcpy((void*)concatenated, (void*)_masterKey, 16);
     memcpy((void*)(concatenated+16), (void*)_masterSalt, 14);
 
+    // encode concatenated keys in base64
     char *output = encodeBase64((unsigned char*)concatenated, 30);
 
     std::string keys(output);
@@ -185,8 +194,8 @@ char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
     // get pointer to data
     BIO_get_mem_ptr(b64, &bptr);
 
-    // copy result in output buffer
-    strncpy(buffer, (char*)(bptr->data), bptr->length);
+    // copy result in output buffer (-1 since we do not want the EOF character)
+    strncpy(buffer, (char*)(bptr->data), bptr->length-1);
 
     BIO_free_all(bmem);
 
