@@ -28,6 +28,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "eventthread.h"
+#include "SdesNegotiator.h"
 
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
@@ -3215,6 +3216,15 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     pjmedia_sdp_attr *attribute;
     call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, &attribute);
+
+    // create remote cryptografic offer
+    std::vector<std::string> remoteOffer;
+
+    std::string attr(attribute->value.ptr, attribute->value.slen);
+
+    remoteOffer.push_back(attr);
+
+    // sfl::SdesNegotiator sdesnego(sfl::CryptoSuites, remoteOffer);
 
     try {
         call->setAudioStart (true);

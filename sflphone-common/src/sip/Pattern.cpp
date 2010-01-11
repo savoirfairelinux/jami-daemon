@@ -23,8 +23,7 @@
 namespace sfl
 {
 
-namespace util {
-Pattern::Pattern (const std::string& pattern, const std::string& options = "") :
+Pattern::Pattern (const std::string& pattern, const std::string& options) :
         _pattern (pattern),
         _ovector (NULL),
         _ovectorSize (0),
@@ -304,11 +303,10 @@ std::vector<std::string> Pattern::split (void)
         tokenEnd = end();
     }
 
-    substringSplitted.push_back (_subject.substr (tokenEnd + 1,
+    substringSplitted.push_back (_subject.substr (tokenEnd + 1, tokenStart - tokenEnd - 1));
 
-                                 tokenStart - tokenEnd - 1));
     return substringSplitted;
 }
 }
-}
+
 
