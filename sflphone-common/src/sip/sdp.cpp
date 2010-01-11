@@ -158,10 +158,9 @@ int Sdp::create_local_offer ()
     //sdp_addAttributes( _pool );
     sdp_add_media_description();
 
-    // if(!_srtp_master_key.empty()) {
-
-    sdp_add_sdes_attribute();
-    // }
+    if(!_srtp_crypto.empty()) { 
+        sdp_add_sdes_attribute(_srtp_crypto);
+    }
 
     //toString ();
 
@@ -368,7 +367,7 @@ void Sdp::sdp_add_media_description()
 }
 
 
-void Sdp::sdp_add_sdes_attribute ()
+void Sdp::sdp_add_sdes_attribute (std::string crypto)
 {
 
     char tempbuf[256];
@@ -382,12 +381,17 @@ void Sdp::sdp_add_sdes_attribute ()
 
     attribute->name = pj_strdup3(_pool, "crypto");
 
+    /*
     int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
 			       "%.*s %.*s %.*s",
 			       (int)tag.size(), tag.c_str(),
 			       (int)crypto_suite.size(), crypto_suite.c_str(),
 			       (int)key.size(), key.c_str());
-    
+    */
+
+    int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
+			       "%.*s",(int)crypto.size(), crypto.c_str());
+
     attribute->value.slen = len;
     attribute->value.ptr = (char*) pj_pool_alloc (_pool, attribute->value.slen+1);
     pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);

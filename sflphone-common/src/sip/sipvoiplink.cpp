@@ -1559,19 +1559,21 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         setCallAudioLocal (call, localAddress);
 
         _debug ("toUri received in new_ip_to_ip call %s", to.c_str());
-
         std::string toUri = account->getToUri (to);
         call->setPeerNumber (toUri);
         _debug ("toUri in new_ip_to_ip call %s", toUri.c_str());
-        // Building the local SDP offer
-        call->getLocalSDP()->set_ip_address (addrSdp);
-        call->getLocalSDP()->create_initial_offer();
 
-        try {
+	// Audio Rtp Session must be initialized before creating initial offer in SDP session
+	// since SDES require crypto attribute.
+	try {
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
             _debug ("! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)", __FILE__, __LINE__);
         }
+
+        // Building the local SDP offer
+        call->getLocalSDP()->set_ip_address (addrSdp);
+        call->getLocalSDP()->create_initial_offer();
 
         // If no account already set, use the default one created at pjsip initialization
         if (account->getAccountTransport() == NULL) {

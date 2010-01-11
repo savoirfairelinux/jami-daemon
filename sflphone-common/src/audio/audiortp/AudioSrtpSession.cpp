@@ -36,12 +36,6 @@ static uint8 ms[] = { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
 	 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d };
 
 
-// static std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
-// static std::string application = "srtp";
-// static std::string srtp_key = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
-
-
-
 namespace sfl
 {
 
@@ -61,13 +55,26 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     setOutQueueCryptoContext(outputCryptoCtx);
 }
 
-  /*
-std::string AudioSrtpSession::getCryptoInfo() {
+ 
+std::string AudioSrtpSession::getCryptoSdpInfo() {
 
+    std::string tag = "1";
+    std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
+    std::string application = "srtp";
+    std::string srtp_key = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
 
-    return ;
+    std::string crypto = tag;
+
+    crypto.append(" ");
+    crypto.append(crypto_suite);
+    crypto.append(" ");
+    crypto.append(application);
+    crypto.append(" ");
+    crypto.append(srtp_key);
+
+    return crypto;
 }
-  */
+
 
 void AudioSrtpSession::initializeMasterKey(void)
 {

@@ -105,7 +105,7 @@ class Sdp {
 	/* Set the srtp _master_key
          * @param mk The Master Key of a srtp session.
          */
-        inline void set_srtp_master_key(const std::string& mk) { _srtp_master_key = mk; }
+        inline void set_srtp_crypto(const std::string& mk) { _srtp_crypto = mk; }
         
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -253,7 +253,8 @@ class Sdp {
 
         std::string _zrtp_hello_hash;
 
-	std::string _srtp_master_key;
+	/** "a=crypto" sdes attribute obtained from AudioSrtpSession */
+	std::string _srtp_crypto;
         
         Sdp(const Sdp&); //No Copy Constructor
         Sdp& operator=(const Sdp&); //No Assignment Operator
@@ -344,14 +345,13 @@ class Sdp {
         void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
 	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_attr** r_crypto);
-
 	
 	/* 
          * Adds a sdes attribute to the given media section.
          *
          * @param media The media to add the srtp attribute to 
 	 */
-	void sdp_add_sdes_attribute();
+	void sdp_add_sdes_attribute(std::string crypto);
 
         /* 
          * Adds a zrtp-hash  attribute to 

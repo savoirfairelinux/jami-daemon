@@ -42,9 +42,7 @@ namespace sfl {
 
             AudioSrtpSession(ManagerImpl * manager, SIPCall * sipcall);
 
-	    // std::string getCryptoInfo(void);
-
-	    uint8* getMasterKey(void){ return _masterKey; }
+	    std::string getCryptoSdpInfo(void);
 
         private:
 
