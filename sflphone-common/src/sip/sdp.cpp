@@ -648,11 +648,7 @@ void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *r
 
     pjmedia_sdp_media *r_media;
 
-    pjmedia_sdp_attr *attribute;
-
     this->get_remote_sdp_media_from_offer (remote_sdp, &r_media);
-
-    this->get_remote_sdp_crypto_from_offer(remote_sdp, &attribute);
 
     if (r_media==NULL) {
         _debug ("SDP Failure: no remote sdp media found in the remote offer");
@@ -662,6 +658,7 @@ void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *r
     this->set_remote_audio_port_from_sdp (r_media);
 
     this->set_remote_ip_from_sdp (remote_sdp);
+
 }
 
 void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)

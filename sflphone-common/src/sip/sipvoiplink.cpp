@@ -3212,6 +3212,10 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     // Set remote ip / port
     call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
 
+    // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
+    pjmedia_sdp_attr *attribute;
+    call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, &attribute);
+
     try {
         call->setAudioStart (true);
         call->getAudioRtp()->start();

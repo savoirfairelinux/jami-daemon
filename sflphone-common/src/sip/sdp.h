@@ -218,6 +218,8 @@ class Sdp {
 
         std::vector<sdpMedia*> get_session_media_list (void) { return _session_media; }
 
+	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_attr** r_crypto);
+
     private:
         /** Codec Map */
         std::vector<sdpMedia*> _local_media_cap;
@@ -344,7 +346,6 @@ class Sdp {
 
         void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
-	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_attr** r_crypto);
 	
 	/* 
          * Adds a sdes attribute to the given media section.
