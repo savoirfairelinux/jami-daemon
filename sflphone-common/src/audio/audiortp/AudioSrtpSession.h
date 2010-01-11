@@ -54,13 +54,19 @@ namespace sfl {
 
 	    void initializeOutputCryptoContext(void);
 
+	    std::string getBase64ConcatenatedKeys();
+
 	    char* encodeBase64(unsigned char *input, int length);
 
 	    char* decodeBase64(unsigned char *input, int length);
 
             uint8 _masterKey[16];
 
+	    int _masterKeyLength;
+
 	    uint8 _masterSalt[14];
+
+	    int _masterSaltLength;
 
 	    ost::CryptoContext* inputCryptoCtx;
 

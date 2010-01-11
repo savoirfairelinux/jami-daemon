@@ -21,8 +21,11 @@
 
 #include "sip/sipcall.h"
 
-#include <openssl/bio.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
 #include <openssl/evp.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
 
 
 #include <cstdio>
@@ -30,10 +33,10 @@
 #include <cerrno>
 
 static uint8 mk[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-	 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+		      0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
 
 static uint8 ms[] = { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-	 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d };
+		      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d };
 
 
 namespace sfl
@@ -78,6 +81,7 @@ std::string AudioSrtpSession::getCryptoSdpInfo() {
 
 void AudioSrtpSession::initializeMasterKey(void)
 {
+    _masterKeyLength = 16;
 
     for(int i = 0; i < 16; i++)
         _masterKey[i] = mk[i];
@@ -88,12 +92,32 @@ void AudioSrtpSession::initializeMasterKey(void)
 
 void AudioSrtpSession::initializeMasterSalt(void)
 {
-    for(int i = 0; i < 16; i++)
+    _masterSaltLength = 14;
+
+    for(int i = 0; i < 14; i++)
         _masterSalt[i] = ms[i];
 
     return;
 
 }
+
+
+std::string AudioSrtpSession::getBase64ConcatenatedKeys()
+{
+
+    uint8 concatenated[30];
+    memcpy((void*)concatenated, (void*)_masterKey, 16);
+    memcpy((void*)(concatenated+16), (void*)_masterSalt, 14);
+
+    char *output = encodeBase64((unsigned char*)concatenated, 30);
+
+    std::string keys(output);
+
+    free(output);
+
+    return keys;
+}
+
 
 void AudioSrtpSession::initializeInputCryptoContext(void)
 {
@@ -143,19 +167,30 @@ void AudioSrtpSession::initializeOutputCryptoContext(void)
 char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
 {
     BIO *b64, *bmem;
+    BUF_MEM *bptr ;
 
-    char *buffer = (char *)malloc(length);
-    memset(buffer, 0, length);
+    char *buffer = (char *)malloc(2*length);
+    memset(buffer, 0, 2*length);
 
+    // init decoder and buffer
     b64 = BIO_new(BIO_f_base64());
-    bmem = BIO_new_mem_buf(input, length);
-    bmem = BIO_push(bmem, b64);
+    bmem = BIO_new(BIO_s_mem());
 
-    BIO_read(bmem, buffer, length);
+    // create decoder chain
+    b64 = BIO_push(b64, bmem);
+
+    BIO_write(b64, input, length);
+    BIO_flush(b64);
+
+    // get pointer to data
+    BIO_get_mem_ptr(b64, &bptr);
+
+    // copy result in output buffer
+    strncpy(buffer, (char*)(bptr->data), bptr->length);
 
     BIO_free_all(bmem);
 
-    return buffer;
+    return buffer;    
 }
 
 char* AudioSrtpSession::decodeBase64(unsigned char *input, int length)
@@ -164,16 +199,20 @@ char* AudioSrtpSession::decodeBase64(unsigned char *input, int length)
 
     char *buffer = (char *)malloc(length);
     memset(buffer, 0, length);
-  
+
+    // init decoder and read-only BIO buffer
     b64 = BIO_new(BIO_f_base64());
     bmem = BIO_new_mem_buf(input, length);
-    bmem = BIO_push(b64, bmem);
+
+    // create encoder chain
+    bmem = BIO_push(bmem, b64);
 
     BIO_read(bmem, buffer, length);
 
     BIO_free_all(bmem);
 
     return buffer;
+
 }
 
 }
