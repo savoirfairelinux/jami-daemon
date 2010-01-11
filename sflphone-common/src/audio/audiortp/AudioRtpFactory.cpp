@@ -110,6 +110,8 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 	        _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
                 _rtpSessionType = Sdes;
 
+		// ca->getLocalSDP()->set_srtp_master_key (static_cast<AudioSrtpSession *> (_rtpSession)->getMasterKey());
+
 		break;
 
             default:

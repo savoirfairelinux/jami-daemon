@@ -101,6 +101,11 @@ class Sdp {
          * @param hash The hello hash of a rtp session. (Only audio at the moment)
          */
         inline void set_zrtp_hash(const std::string& hash) { _zrtp_hello_hash = hash; _debug("Zrtp hash set with %s\n", hash.c_str()); }
+
+	/* Set the srtp _master_key
+         * @param mk The Master Key of a srtp session.
+         */
+        inline void set_srtp_master_key(const std::string& mk) { _srtp_master_key = mk; }
         
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -246,7 +251,9 @@ class Sdp {
         /** Remote's audio port */
         unsigned int _remote_audio_port;
 
-        std::string _zrtp_hello_hash; 
+        std::string _zrtp_hello_hash;
+
+	std::string _srtp_master_key;
         
         Sdp(const Sdp&); //No Copy Constructor
         Sdp& operator=(const Sdp&); //No Assignment Operator

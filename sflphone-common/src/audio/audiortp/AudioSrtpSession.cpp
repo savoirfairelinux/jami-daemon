@@ -21,6 +21,10 @@
 
 #include "sip/sipcall.h"
 
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+
+
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
@@ -30,6 +34,13 @@ static uint8 mk[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 
 static uint8 ms[] = { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
 	 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d };
+
+
+// static std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
+// static std::string application = "srtp";
+// static std::string srtp_key = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
+
+
 
 namespace sfl
 {
@@ -49,6 +60,14 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     setInQueueCryptoContext(inputCryptoCtx);
     setOutQueueCryptoContext(outputCryptoCtx);
 }
+
+  /*
+std::string AudioSrtpSession::getCryptoInfo() {
+
+
+    return ;
+}
+  */
 
 void AudioSrtpSession::initializeMasterKey(void)
 {
@@ -88,7 +107,7 @@ void AudioSrtpSession::initializeInputCryptoContext(void)
 					  112 / 8,                     // session salt len
 					  80 / 8);                     // authentication tag len
 
-    _debug("********************* Crypto Context IN with SSRC %i ******************", IncomingDataQueue::getLocalSSRCNetwork());
+    
 }
 
 void AudioSrtpSession::initializeOutputCryptoContext(void)
@@ -110,6 +129,44 @@ void AudioSrtpSession::initializeOutputCryptoContext(void)
 					     112 / 8,                     // session salt len
 					     80 / 8);                     // authentication tag len
 
-    _debug("********************* Crypto Context OUT with SSRC %i ******************", OutgoingDataQueue::getLocalSSRC());
+
 }
+
+
+char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
+{
+    BIO *b64, *bmem;
+
+    char *buffer = (char *)malloc(length);
+    memset(buffer, 0, length);
+
+    b64 = BIO_new(BIO_f_base64());
+    bmem = BIO_new_mem_buf(input, length);
+    bmem = BIO_push(bmem, b64);
+
+    BIO_read(bmem, buffer, length);
+
+    BIO_free_all(bmem);
+
+    return buffer;
+}
+
+char* AudioSrtpSession::decodeBase64(unsigned char *input, int length)
+{
+    BIO *b64, *bmem;
+
+    char *buffer = (char *)malloc(length);
+    memset(buffer, 0, length);
+  
+    b64 = BIO_new(BIO_f_base64());
+    bmem = BIO_new_mem_buf(input, length);
+    bmem = BIO_push(b64, bmem);
+
+    BIO_read(bmem, buffer, length);
+
+    BIO_free_all(bmem);
+
+    return buffer;
+}
+
 }

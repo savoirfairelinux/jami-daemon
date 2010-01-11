@@ -39,8 +39,13 @@ namespace sfl {
     class AudioSrtpSession : public ost::SymmetricRTPSession, public AudioRtpSession<AudioSrtpSession> 
     {
         public:
-        AudioSrtpSession(ManagerImpl * manager, SIPCall * sipcall);          
-            
+
+            AudioSrtpSession(ManagerImpl * manager, SIPCall * sipcall);
+
+	    // std::string getCryptoInfo(void);
+
+	    uint8* getMasterKey(void){ return _masterKey; }
+
         private:
 
             void initializeMasterKey(void);
@@ -50,6 +55,10 @@ namespace sfl {
 	    void initializeInputCryptoContext(void);
 
 	    void initializeOutputCryptoContext(void);
+
+	    char* encodeBase64(unsigned char *input, int length);
+
+	    char* decodeBase64(unsigned char *input, int length);
 
             uint8 _masterKey[16];
 

@@ -158,7 +158,10 @@ int Sdp::create_local_offer ()
     //sdp_addAttributes( _pool );
     sdp_add_media_description();
 
+    // if(!_srtp_master_key.empty()) {
+
     sdp_add_sdes_attribute();
+    // }
 
     //toString ();
 
