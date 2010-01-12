@@ -20,3 +20,6 @@ noinst_HEADERS = \
 		sipaccount.h \
 		sipcall.h \
 		sipvoiplink.h
+
+libsiplink_la_CXXFLAGS = \
+		@PCRE_LIBS@

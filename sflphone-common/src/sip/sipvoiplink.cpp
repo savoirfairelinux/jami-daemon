@@ -3224,7 +3224,13 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     remoteOffer.push_back(attr);
 
-    // sfl::SdesNegotiator sdesnego(sfl::CryptoSuites, remoteOffer);
+    std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+    for(int i = 0; i < 3; i++) {
+      localCapabilities.push_back(sfl::CryptoSuites[i]);
+    }
+
+    sfl::SdesNegotiator sdesnego(localCapabilities, remoteOffer);
+
 
     try {
         call->setAudioStart (true);

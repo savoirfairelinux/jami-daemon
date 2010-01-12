@@ -214,12 +214,6 @@ AC_SUBST(libssl_LIBS)
 	AC_SUBST(ZRTPCPP_LIBS)
 AC_SUBST(ZRTPCPP_CFLAGS)
 
-	dnl Check for libpcre
-#	LIBPCRE_MIN_VERSION=0.0.0
-#	PKG_CHECK_MODULES(PCRE, libpcre >= ${LIBPCRE_MIN_VERSION})
-#	AC_SUBST(PCRE_LIBS)
-#AC_SUBST(PCRE_CFLAGS)
-
 
 dnl DBus-C++ detection (used to be in library own build system)
 	DBUS_REQUIRED_VERSION=0.60
@@ -290,7 +284,7 @@ fi
 xml_CFLAGS=
 xml_LIBS=-lexpat
 
-	AC_SUBST(xml_CFLAGS)
+AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([pthread], pthread_create,
@@ -301,6 +295,7 @@ AC_CHECK_LIB([pthread], pthread_create,
 AC_MSG_ERROR([You need the POSIX Thread library (pthreads)])	
 	fi
 
+
 AC_CHECK_LIB([pcre], pcre_free,
 		[AC_CHECK_HEADERS(pcre.h, have_pcre=true, have_pcre=false)],
 		have_pcre=false)
@@ -308,6 +303,12 @@ AC_CHECK_LIB([pcre], pcre_free,
 	if test "$have_pcre" = "false"; then
 AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])	
 	fi
+
+PCRE_LIBS=-lpcre
+PCRE_CFLAGS=
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
 
 
 # For the tools/, we need libdbus-c++ for the "build" architecture as well
