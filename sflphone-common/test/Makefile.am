@@ -4,25 +4,28 @@ include ../globals.mak
 noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester historyTester mainbufferTester #rtpTester
 
 OBJECT_FILES= \
+	../src/sflphoned-logger.o \
 	../src/sflphoned-managerimpl.o \
+	../src/sflphoned-account.o\
 	../src/sflphoned-accountcreator.o \
 	../src/sflphoned-call.o \
-	../src/sip/sipcall.o \
-	../src/iax/libiaxlink_la-iaxcall.o \
-	../src/sflphoned-voiplink.o \
-	../src/sip/sipvoiplink.o \
-	../src/iax/libiaxlink_la-iaxvoiplink.o \
-	../src/sflphoned-account.o \
-	../src/sip/sipaccount.o \
-	../src/iax/libiaxlink_la-iaxaccount.o \
-	../src/sflphoned-eventthread.o \
 	../src/sflphoned-conference.o \
+	../src/sflphoned-eventthread.o \
+	../src/sflphoned-managerimpl_registration.o \
+	../src/sflphoned-numbercleaner.o \
+	../src/sflphoned-observer.o \
+	../src/sflphoned-voiplink.o \
+	../src/sip/libsiplink_la-sipcall.o \
+	../src/iax/libiaxlink_la-iaxcall.o \
+	../src/sip/libsiplink_la-sipvoiplink.o \
+	../src/iax/libiaxlink_la-iaxvoiplink.o \
+	../src/sip/libsiplink_la-sipaccount.o \
+	../src/iax/libiaxlink_la-iaxaccount.o \
+	../src/sip/libsiplink_la-sdp.o \
+	../src/sip/libsiplink_la-sdpmedia.o \
 	../src/plug-in/pluginmanager.o \
 	../src/plug-in/audiorecorder/audiorecord.o \
 	../src/audio/samplerateconverter.o \
-	../src/sip/sdp.o \
-	../src/sip/sdpmedia.o \
-	../src/sflphoned-numbercleaner.o \
         ../src/history/historymanager.o
 	../
 
@@ -65,7 +68,7 @@ pluginmanagerTester_LDADD = \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		$(OBJECT_FILES)
-						
+
 hookmanagerTester_SOURCES = \
 		hookmanagerTest.cpp \
 		TestMain.cpp
