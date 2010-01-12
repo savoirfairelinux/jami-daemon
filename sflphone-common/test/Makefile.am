@@ -1,7 +1,7 @@
 include ../globals.mak
 
 
-noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester historyTester mainbufferTester #rtpTester
+noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester historyTester mainbufferTester sdesnegotiatorTester #rtpTester
 
 OBJECT_FILES= \
 	../src/sflphoned-logger.o \
@@ -135,6 +135,26 @@ mainbufferTester_SOURCES = \
 		TestMain.cpp
 
 mainbufferTester_LDADD = \
+		../src/libsflphone.la  \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@CPPUNIT_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@CCGNU2_LIBS@ \
+		@CCRTP_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@libssl_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
+		$(OBJECT_FILES)
+
+sdesnegotiatorTester_SOURCES = \
+		sdesnegotiatorTest.h \
+		sdesnegotiatorTest.cpp \
+		TestMain.cpp
+
+sdesnegotiatorTester_LDADD = \
 		../src/libsflphone.la  \
 		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
 		@ALSA_LIBS@ \
