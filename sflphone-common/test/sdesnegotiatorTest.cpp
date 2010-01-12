@@ -41,6 +41,19 @@ using std::endl;
 void SdesNegotiatorTest::setUp()
 {
 
+    // std::string attr("1 AES_CM_128_HMAC_SHA1_32 srtp inline:16/14/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd/2^20/1:32");
+
+    std::string attr("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32");
+
+    remoteOffer = new std::vector<std::string>();
+    remoteOffer->push_back(attr);
+
+    localCapabilities = new std::vector<sfl::CryptoSuiteDefinition>();
+    for(int i = 0; i < 3; i++) {
+        localCapabilities->push_back(sfl::CryptoSuites[i]);
+    }
+
+    sdesnego = new sfl::SdesNegotiator(*localCapabilities, *remoteOffer);
 
 }
 
@@ -48,12 +61,20 @@ void SdesNegotiatorTest::setUp()
 void SdesNegotiatorTest::tearDown()
 {
 
+    delete remoteOffer;
+    remoteOffer = NULL;
+
+    delete localCapabilities;
+    localCapabilities = NULL;
+
+    delete sdesnego;
+    sdesnego = NULL;
+
 }
 
 void SdesNegotiatorTest::testNegotiation()
 {
-
-
+    CPPUNIT_ASSERT(sdesnego->negotiate());
 }
 
 

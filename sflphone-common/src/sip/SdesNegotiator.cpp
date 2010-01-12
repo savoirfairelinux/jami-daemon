@@ -20,6 +20,7 @@
 
 #include "Pattern.h"
 
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -101,10 +102,11 @@ void SdesNegotiator::parse (void)
 
         // Split the line into its component
         // that we will analyze further down.
-
+	std::vector<std::string> sdesLine;
+	
         *generalSyntaxPattern << (*iter);
-        std::vector<std::string> sdesLine;
-
+        
+	
         try {
             sdesLine = generalSyntaxPattern->split();
 
@@ -114,10 +116,13 @@ void SdesNegotiator::parse (void)
         } catch (match_error& exception) {
             throw parse_error ("Error while analyzing the SDES line.");
         }
+	
 
         // Check if the attribute starts with a=crypto
         // and get the tag for this line
         *tagPattern << sdesLine.at (0);
+
+	printf("sdesLine.at (0).c_str() : %s\n", sdesLine.at (0).c_str());
 
         try {
             std::string tag = tagPattern->group ("tag");

@@ -29,6 +29,7 @@
 #include <sstream>
 #include <ccrtp/rtp.h>
 
+#include <vector>
 
 // pjsip import
 #include <pjsip.h>
@@ -83,6 +84,12 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
        	void testNegotiation();
 
     private:
+
+	sfl::SdesNegotiator *sdesnego;
+
+	std::vector<std::string> *remoteOffer;
+
+	std::vector<sfl::CryptoSuiteDefinition> *localCapabilities;
 
 };
 
