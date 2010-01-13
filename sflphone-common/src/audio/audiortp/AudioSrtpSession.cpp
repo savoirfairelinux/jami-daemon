@@ -46,7 +46,7 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
         AudioRtpSession<AudioSrtpSession> (manager, sipcall)
 {
-    _debug ("***************** AudioSrtpSession initialized *********************");
+    _debug ("***************** Initialize AudioSrtpSession *********************");
     initializeLocalMasterKey();
     initializeLocalMasterSalt();
     // initializeRemoteCryptoContext();
@@ -77,7 +77,7 @@ std::string AudioSrtpSession::getLocalCryptoInfo() {
 
     std::string crypto = tag.append(" ");
     crypto += crypto_suite.append(" ");
-    crypto += application.append(" ");
+    // crypto += application.append(" ");
     crypto += srtp_keys;
 
     _debug("%s", crypto.c_str());
@@ -90,18 +90,28 @@ void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego) {
 
     _debug("Set remote Cryptographic info for this rtp session");
 
+    _debug("nego.getKeyInfo() : %s", nego.getKeyInfo().c_str());
+
     unBase64ConcatenatedKeys(nego.getKeyInfo());
     
     initializeRemoteCryptoContext();
+    setInQueueCryptoContext(_remoteCryptoCtx);
 }
 
 
 void AudioSrtpSession::initializeLocalMasterKey(void)
 {
+    _debug("initializeLocalMasterKey");
+
     _localMasterKeyLength = 16;
 
-    for(int i = 0; i < 16; i++)
+    printf("Local Master: ");
+    for(int i = 0; i < 16; i++) {
         _localMasterKey[i] = mk[i];
+	printf("%i", _localMasterKey[i]);
+    }
+    printf("\n");
+    
 
     return;
 }
@@ -111,8 +121,12 @@ void AudioSrtpSession::initializeLocalMasterSalt(void)
 {
     _localMasterSaltLength = 14;
 
-    for(int i = 0; i < 14; i++)
+    printf("Remote Salt: ");
+    for(int i = 0; i < 14; i++) {
         _localMasterSalt[i] = ms[i];
+	printf("%i", _localMasterSalt[i]);
+    }
+    printf("\n");
 
     return;
 
@@ -141,19 +155,23 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
   void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 {
 
+    printf("unBase64ConcatenatedKeys : base64keys %s\n", base64keys.c_str());
+    printf("unBase64ConcatenatedKeys : size %i\n", (int)base64keys.size());
     char *output = decodeBase64((unsigned char*)base64keys.c_str(), base64keys.size());
 
-    uint8 finally[30];
-    memcpy((void*)finally, (void*)output, 30);
+    uint8 concatenated[30];
+    memcpy((void*)concatenated, (void*)output, 30);
 
-     printf("Master: ");
+     printf("Remote Master: ");
      for(int i = 0; i < 16; i++) {
-       printf("%i", finally[i]);
+       _remoteMasterKey[i] = concatenated[i];
+       printf("%i", concatenated[i]);
      }
      printf("\n");
-     printf("Salt: ");
-     for(int i = 16; i < 30; i++) {
-       printf("%i", finally[i]);
+     printf("Remote Salt: ");
+     for(int i = 14; i < 30; i++) {
+       _remoteMasterSalt[i-14] = concatenated[i];
+       printf("%i", concatenated[i]);
      }
      printf("\n");
 
