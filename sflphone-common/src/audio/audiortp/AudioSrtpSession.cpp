@@ -73,7 +73,7 @@ std::string AudioSrtpSession::getLocalCryptoInfo() {
     std::string srtp_keys = "inline:";
     // srtp_keys.append("16/14/");
     srtp_keys += getBase64ConcatenatedKeys();
-    srtp_keys.append("/2^20/1:32");
+    srtp_keys.append("|2^20|1:32");
 
     std::string crypto = tag.append(" ");
     crypto += crypto_suite.append(" ");

@@ -41,9 +41,9 @@ using std::endl;
 void SdesNegotiatorTest::setUp()
 {
 
-    // std::string attr("1 AES_CM_128_HMAC_SHA1_32 srtp inline:16/14/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd/2^20/1:32");
+  std::string attr("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32");
 
-    std::string attr("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32");
+  // std::string attr("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32");
 
     remoteOffer = new std::vector<std::string>();
     remoteOffer->push_back(attr);
@@ -149,7 +149,7 @@ void SdesNegotiatorTest::testNegotiation()
     CPPUNIT_ASSERT(sdesnego->negotiate());
     CPPUNIT_ASSERT(sdesnego->getCryptoSuite().compare("AES_CM_128_HMAC_SHA1_80") == 0);
     CPPUNIT_ASSERT(sdesnego->getKeyMethod().compare("inline") == 0);
-    CPPUNIT_ASSERT(sdesnego->getKeyInfo().compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj") == 0);
+    CPPUNIT_ASSERT(sdesnego->getKeyInfo().compare("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd") == 0);
     CPPUNIT_ASSERT(sdesnego->getLifeTime().compare("20") == 0);
     CPPUNIT_ASSERT(sdesnego->getMkiValue().compare("1") == 0);
     CPPUNIT_ASSERT(sdesnego->getMkiLength().compare("32") == 0);
