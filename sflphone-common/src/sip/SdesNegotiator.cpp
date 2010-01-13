@@ -59,9 +59,12 @@ void SdesNegotiator::parse (void)
     * sessionParamPattern;
 
     try {
+
+        // used to match white space (which are used as separator) 
         generalSyntaxPattern = new Pattern ("[\x20\x09]+", "g");
 
-        tagPattern = new Pattern ("^a=crypto:(?P<tag>[0-9]{1,9})");
+        tagPattern = new Pattern ("^a=crypto:(?P<tag>[0-9]{1,9})", "g");
+	// tagPattern = new Pattern ("[0-9]");
 
         cryptoSuitePattern = new Pattern (
             "(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
@@ -90,10 +93,12 @@ void SdesNegotiator::parse (void)
         throw parse_error ("A compile exception occured on a pattern.");
 
     }
+      
 
     // Take each line from the vector
     // and parse its content
 
+    
     std::vector<std::string>::iterator iter;
 
     for (iter = _remoteAttribute.begin(); iter != _remoteAttribute.end(); iter++) {
@@ -122,7 +127,7 @@ void SdesNegotiator::parse (void)
         // and get the tag for this line
         *tagPattern << sdesLine.at (0);
 
-	printf("sdesLine.at (0).c_str() : %s\n", sdesLine.at (0).c_str());
+	tagPattern->matches();
 
         try {
             std::string tag = tagPattern->group ("tag");
@@ -134,6 +139,8 @@ void SdesNegotiator::parse (void)
         // Check if the crypto suite is valid and retreive
         // its value.
         *cryptoSuitePattern << sdesLine.at (1);
+
+	cryptoSuitePattern->matches();
 
         try {
 	    std::string cryptoSuite;
@@ -197,4 +204,6 @@ void SdesNegotiator::parse (void)
 bool SdesNegotiator::negotiate (void)
 {
     parse();
+
+    return true;
 }

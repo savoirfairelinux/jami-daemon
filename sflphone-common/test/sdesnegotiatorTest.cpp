@@ -72,6 +72,62 @@ void SdesNegotiatorTest::tearDown()
 
 }
 
+void SdesNegotiatorTest::testTagPattern()
+{
+    std::string subject = "a=crypto:4"; 
+
+    pattern = new sfl::Pattern("^a=crypto:(?P<tag>[0-9]{1,9})");
+    *pattern << subject;
+
+    CPPUNIT_ASSERT(pattern->matches());
+    CPPUNIT_ASSERT(pattern->group("tag").compare("4") == 0);
+
+    delete pattern;
+    pattern = NULL;
+}
+
+
+void SdesNegotiatorTest::testCryptoSuitePattern()
+{
+    std::string subject = "AES_CM_128_HMAC_SHA1_80"; 
+
+    pattern = new sfl::Pattern("(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
+			       "AES_CM_128_HMAC_SHA1_32|"		\
+			       "F8_128_HMAC_SHA1_80|"			\
+			       "[A-Za-z0-9_]+)");
+    *pattern << subject;
+
+    CPPUNIT_ASSERT(pattern->matches());
+    CPPUNIT_ASSERT(pattern->group("cryptoSuite").compare("AES_CM_128_HMAC_SHA1_80") == 0);
+
+    delete pattern;
+    pattern = NULL;
+}
+
+
+void SdesNegotiatorTest::testKeyParamsPattern()
+{
+
+    std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32";
+
+    pattern = new sfl::Pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+			       "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
+			       "2\\^(?P<lifetime>[0-9]+)\\|"		\
+			       "(?P<mkiValue>[0-9]+)\\:"		\
+			       "(?P<mkiLength>[0-9]{1,3})\\;?");
+
+    *pattern << subject;
+
+    CPPUNIT_ASSERT(pattern->matches());
+    CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
+    // printf("srtpKeyInfo %s\n", pattern->group("srtpKeyInfo").c_str());
+    // CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj"));
+
+    delete pattern;
+    pattern = NULL;
+}
+
+
 void SdesNegotiatorTest::testNegotiation()
 {
     CPPUNIT_ASSERT(sdesnego->negotiate());

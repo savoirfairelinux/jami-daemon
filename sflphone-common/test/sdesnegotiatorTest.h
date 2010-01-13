@@ -40,7 +40,7 @@
 
 // Application import
 #include "sip/SdesNegotiator.h"
-
+#include "sip/Pattern.h"
 // #include "config/config.h"
 // #include "user_cfg.h"
 
@@ -62,7 +62,10 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE( SdesNegotiatorTest );
-        CPPUNIT_TEST( testNegotiation );
+    CPPUNIT_TEST( testTagPattern );
+    CPPUNIT_TEST( testCryptoSuitePattern );
+    CPPUNIT_TEST( testKeyParamsPattern );
+    CPPUNIT_TEST( testNegotiation );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -81,9 +84,17 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
          */
         inline void tearDown();
 
+	void testTagPattern();
+
+	void testCryptoSuitePattern();
+
+	void testKeyParamsPattern();
+
        	void testNegotiation();
 
     private:
+
+	sfl::Pattern *pattern;
 
 	sfl::SdesNegotiator *sdesnego;
 
