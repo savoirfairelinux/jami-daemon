@@ -97,8 +97,37 @@ namespace sfl {
             SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites, const std::vector<std::string>& remoteAttribute);
             ~SdesNegotiator() { };
             
-        public:
             bool negotiate(void);
+
+	    /**
+	     * Return crypto suite after negotiation
+	     */
+	    std::string getCryptoSuite(void) { return _cryptoSuite; }
+
+	    /**
+	     * Return key method after negotiation (most likely inline:)
+	     */
+	    std::string getKeyMethod(void) { return _srtpKeyMethod; }
+
+	    /**
+	     * Return crypto suite after negotiation
+	     */
+	    std::string getKeyInfo(void) { return _srtpKeyInfo; }
+
+	    /**
+	     * Return key lifetime after negotiation
+	     */
+	    std::string getLifeTime(void) { return _lifetime; }
+
+	    /**
+	     * Return mki value after negotiation
+	     */
+	    std::string getMkiValue(void) { return _mkiValue; }
+
+	    /**
+	     * Return mki length after negotiation
+	     */
+	    std::string getMkiLength(void) { return _mkiLength; }
 
         private:
             /**
@@ -107,12 +136,41 @@ namespace sfl {
              * prefered method is then chosen from that list.
              */
             std::vector<std::string> _remoteAttribute;
+
             std::vector<CryptoSuiteDefinition> _localCapabilities;
+
+	    /**
+	     * Selected crypto suite after negotiation
+	     */
+	    std::string _cryptoSuite;
+
+	    /**
+	     * Selected key method after negotiation (most likely inline:)
+	     */
+	    std::string _srtpKeyMethod;
+
+	    /**
+	     * Selected crypto suite after negotiation
+	     */
+	    std::string _srtpKeyInfo;
+
+	    /**
+	     * Selected key lifetime after negotiation
+	     */
+	    std::string _lifetime;
+
+	    /**
+	     * Selected mki value after negotiation
+	     */
+	    std::string _mkiValue;
+
+	    /**
+	     * Selected mki length after negotiation
+	     */
+	    std::string _mkiLength;
             
-
-
-        private:
             void parse(void);
+
             CryptoAttribute * tokenize(const std::string& attributeLine);
     };
 }

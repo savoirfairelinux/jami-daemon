@@ -114,14 +114,30 @@ void SdesNegotiatorTest::testKeyParamsPattern()
 			       "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
 			       "2\\^(?P<lifetime>[0-9]+)\\|"		\
 			       "(?P<mkiValue>[0-9]+)\\:"		\
-			       "(?P<mkiLength>[0-9]{1,3})\\;?");
+			       "(?P<mkiLength>[0-9]{1,3})\\;?", "g");
 
     *pattern << subject;
 
-    CPPUNIT_ASSERT(pattern->matches());
+    pattern->matches();
     CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
-    // printf("srtpKeyInfo %s\n", pattern->group("srtpKeyInfo").c_str());
-    // CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj"));
+
+    /*
+    while (pattern->matches()) {
+                
+        std::string _srtpKeyMethod = pattern->group ("srtpKeyMethod");
+	std::string _srtpKeyInfo = pattern->group ("srtpKeyInfo");
+	std::string _lifetime = pattern->group ("lifetime");
+	std::string _mkiValue = pattern->group ("mkiValue");
+	std::string _mkiLength = pattern->group ("mkiLength");
+    }
+
+
+    CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
+    CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj"));
+    CPPUNIT_ASSERT(pattern->group("lifetime").compare("20"));
+    CPPUNIT_ASSERT(pattern->group("mkivalue").compare("1"));
+    CPPUNIT_ASSERT(pattern->group("mkilength").compare("32"));
+    */
 
     delete pattern;
     pattern = NULL;
@@ -131,6 +147,12 @@ void SdesNegotiatorTest::testKeyParamsPattern()
 void SdesNegotiatorTest::testNegotiation()
 {
     CPPUNIT_ASSERT(sdesnego->negotiate());
+    CPPUNIT_ASSERT(sdesnego->getCryptoSuite().compare("AES_CM_128_HMAC_SHA1_80") == 0);
+    CPPUNIT_ASSERT(sdesnego->getKeyMethod().compare("inline") == 0);
+    CPPUNIT_ASSERT(sdesnego->getKeyInfo().compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj") == 0);
+    CPPUNIT_ASSERT(sdesnego->getLifeTime().compare("20") == 0);
+    CPPUNIT_ASSERT(sdesnego->getMkiValue().compare("1") == 0);
+    CPPUNIT_ASSERT(sdesnego->getMkiLength().compare("32") == 0);
 }
 
 

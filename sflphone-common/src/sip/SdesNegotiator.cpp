@@ -143,9 +143,8 @@ void SdesNegotiator::parse (void)
 	cryptoSuitePattern->matches();
 
         try {
-	    std::string cryptoSuite;
-            cryptoSuite = cryptoSuitePattern->group ("cryptoSuite");
-            std::cout << "crypto-suite = " << cryptoSuite << std::endl;
+            _cryptoSuite = cryptoSuitePattern->group ("cryptoSuite");
+            std::cout << "crypto-suite = " << _cryptoSuite << std::endl;
         } catch (match_error& exception) {
             throw parse_error ("Error while parsing the crypto-suite field");
         }
@@ -155,25 +154,21 @@ void SdesNegotiator::parse (void)
 
         try {
             while (keyParamsPattern->matches()) {
-                std::string srtpKeyMethod;
-                srtpKeyMethod = keyParamsPattern->group ("srtpKeyMethod");
-                std::cout << "srtp-key-method = " << srtpKeyMethod << std::endl;
+                
+                _srtpKeyMethod = keyParamsPattern->group ("srtpKeyMethod");
+                std::cout << "srtp-key-method = " << _srtpKeyMethod << std::endl;
 
-                std::string srtpKeyInfo;
-                srtpKeyInfo = keyParamsPattern->group ("srtpKeyInfo");
-                std::cout << "srtp-key-info = " << srtpKeyInfo << std::endl;
+                _srtpKeyInfo = keyParamsPattern->group ("srtpKeyInfo");
+                std::cout << "srtp-key-info = " << _srtpKeyInfo << std::endl;
 
-                std::string lifetime;
-                lifetime = keyParamsPattern->group ("lifetime");
-                std::cout << "lifetime = " << lifetime << std::endl;
+                _lifetime = keyParamsPattern->group ("lifetime");
+                std::cout << "lifetime = " << _lifetime << std::endl;
 
-                std::string mkiValue;
-                mkiValue = keyParamsPattern->group ("mkiValue");
-                std::cout << "mkiValue = " << mkiValue << std::endl;
+                _mkiValue = keyParamsPattern->group ("mkiValue");
+                std::cout << "mkiValue = " << _mkiValue << std::endl;
 
-                std::string mkiLength;
-                mkiLength = keyParamsPattern->group ("mkiLength");
-                std::cout << "mkiLength = " << mkiLength << std::endl;
+                _mkiLength = keyParamsPattern->group ("mkiLength");
+                std::cout << "mkiLength = " << _mkiLength << std::endl;
             }
         } catch (match_error& exception) {
             throw parse_error ("Error while parsing the key-params field");
