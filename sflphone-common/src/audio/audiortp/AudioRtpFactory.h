@@ -22,7 +22,11 @@
 #include <stdexcept>
 #include <cc++/thread.h>
 
+#include "sip/SdesNegotiator.h"
+
+class SdesNegotiator;
 class SIPCall;
+
 namespace sfl {
     class AudioZrtpSession;
     class AudioSrtpSession;
@@ -97,7 +101,7 @@ namespace sfl {
          * Set remote cryptographic info. Should be called after negotiation in SDP
 	 * offer/answer session.
          */
-        void setRemoteCryptoInfo();   
+        void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);   
         
         private:
            void * _rtpSession;

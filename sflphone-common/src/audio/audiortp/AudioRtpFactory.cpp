@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "account.h"
 #include "sip/sipcall.h"
+#include "sip/SdesNegotiator.h"
 
 #include <assert.h>
 
@@ -198,10 +199,10 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
     }
 }
 
-void AudioRtpFactory::setRemoteCryptoInfo()
+  void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
-    if ( (_rtpSessionType != NULL) && (_rtpSessionType != Sdes)) {
-        static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo();
+    if ( (_rtpSessionType != NULL) && (_rtpSessionType == Sdes)) {
+        static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo(nego);
     }
     else {
         throw AudioRtpFactoryException();

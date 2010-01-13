@@ -3214,33 +3214,37 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
-    pjmedia_sdp_attr *attribute;
+    pjmedia_sdp_attr *attribute = NULL;
     call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, &attribute);
 
-    
-    
-    // create remote cryptografic offer
-    std::vector<std::string> remoteOffer;
+    if(attribute) {
 
-    std::string attr(attribute->value.ptr, attribute->value.slen);
+        _debug("Crypto attribute in SDP: init Srtp session");
 
-    remoteOffer.push_back(attr);
+        // create remote cryptografic offer
+        std::vector<std::string> remoteOffer;
 
-    std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
-    for(int i = 0; i < 3; i++) {
-      localCapabilities.push_back(sfl::CryptoSuites[i]);
+	// @TODO parser expects attribute names to be present, should not 
+	std::string attr(attribute->value.ptr, attribute->value.slen);
+	std::string full_attr = "a=crypto:";
+	full_attr += attr;
+
+	remoteOffer.push_back(full_attr);
+
+	std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+	for(int i = 0; i < 3; i++) {
+	    localCapabilities.push_back(sfl::CryptoSuites[i]);
+	}
+
+	sfl::SdesNegotiator sdesnego(localCapabilities, remoteOffer);
+	
+	if(sdesnego.negotiate()) {
+	    _debug("******************** Negociation Is Successfull *********************\n");
+
+	    call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
+	}
+
     }
-
-    sfl::SdesNegotiator sdesnego(localCapabilities, remoteOffer);
-
-    sdesnego.negotiate();
-
-    if(sdesnego.negotiate()) {
-        _debug("******************** Negociation Is Successfull *********************\n");
-
-	call->getAudioRtp()->setRemoteCryptoInfo();
-    }
-
 
     try {
         call->setAudioStart (true);

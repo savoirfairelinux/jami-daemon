@@ -20,9 +20,11 @@
 #define __SFL_AUDIO_SRTP_SESSION_H__
 
 #include "AudioRtpSession.h"
+#include "sip/SdesNegotiator.h"
 
 #include <ccrtp/CryptoContext.h>
 
+class SdesNegotiator;
 class ManagerImpl;
 class SIPCall;
 
@@ -44,35 +46,45 @@ namespace sfl {
 
 	    std::string getLocalCryptoInfo(void);
 
-	    void setRemoteCryptoInfo(void);
+	    void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
 
         private:
 
-            void initializeMasterKey(void);
+            void initializeLocalMasterKey(void);
 
-	    void initializeMasterSalt(void);
+	    void initializeLocalMasterSalt(void);
 
-	    void initializeInputCryptoContext(void);
+	    void initializeRemoteCryptoContext(void);
 
-	    void initializeOutputCryptoContext(void);
+	    void initializeLocalCryptoContext(void);
 
 	    std::string getBase64ConcatenatedKeys();
+
+	    void unBase64ConcatenatedKeys(std::string base64keys);
 
 	    char* encodeBase64(unsigned char *input, int length);
 
 	    char* decodeBase64(unsigned char *input, int length);
 
-            uint8 _masterKey[16];
+            uint8 _localMasterKey[16];
 
-	    int _masterKeyLength;
+	    int _localMasterKeyLength;
 
-	    uint8 _masterSalt[14];
+	    uint8 _localMasterSalt[14];
 
-	    int _masterSaltLength;
+	    int _localMasterSaltLength;
 
-	    ost::CryptoContext* _inputCryptoCtx;
+	    uint8 _remoteMasterKey[16];
 
-	    ost::CryptoContext* _outputCryptoCtx;
+	    int _remoteMasterKeyLength;
+
+	    uint8 _remoteMasterSalt[14];
+
+	    int _remoteMasterSaltLength;
+
+	    ost::CryptoContext* _remoteCryptoCtx;
+
+	    ost::CryptoContext* _localCryptoCtx;
     };
    
 }
