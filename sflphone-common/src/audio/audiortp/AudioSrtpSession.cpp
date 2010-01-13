@@ -69,7 +69,7 @@ std::string AudioSrtpSession::getLocalCryptoInfo() {
     // std::string srtp_keys = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
 
     // format srtp keys as the following
-    // inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32
+    // inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32
     std::string srtp_keys = "inline:";
     // srtp_keys.append("16/14/");
     srtp_keys += getBase64ConcatenatedKeys();
