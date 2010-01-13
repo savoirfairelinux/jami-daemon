@@ -91,7 +91,13 @@ namespace sfl {
          * if the current rtp thread is null, or if it's not of the correct type.
          * @return The current AudioZrtpSession thread.
          */
-        sfl::AudioZrtpSession * getAudioZrtpSession();       
+        sfl::AudioZrtpSession * getAudioZrtpSession();  
+
+	/**
+         * Set remote cryptographic info. Should be called after negotiation in SDP
+	 * offer/answer session.
+         */
+        void setRemoteCryptoInfo();   
         
         private:
            void * _rtpSession;

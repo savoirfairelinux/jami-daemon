@@ -52,14 +52,14 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     initializeInputCryptoContext();
     initializeOutputCryptoContext();
 
-    outputCryptoCtx->deriveSrtpKeys(0);
+    _outputCryptoCtx->deriveSrtpKeys(0);
 
-    setInQueueCryptoContext(inputCryptoCtx);
-    setOutQueueCryptoContext(outputCryptoCtx);
+    setInQueueCryptoContext(_inputCryptoCtx);
+    setOutQueueCryptoContext(_outputCryptoCtx);
 }
 
  
-std::string AudioSrtpSession::getCryptoSdpInfo() {
+std::string AudioSrtpSession::getLocalCryptoInfo() {
 
     _debug("Get Cryptographic info from this rtp session");
 
@@ -83,6 +83,13 @@ std::string AudioSrtpSession::getCryptoSdpInfo() {
     _debug("%s", crypto.c_str());
 
     return crypto;
+}
+
+
+void AudioSrtpSession::setRemoteCryptoInfo() {
+
+    _debug("Set remote Cryptographic info for this rtp session");
+
 }
 
 
@@ -131,31 +138,9 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 void AudioSrtpSession::initializeInputCryptoContext(void)
 {
 
-  // this one does not works
-  // inputCryptoCtx = new ost::CryptoContext(IncomingDataQueue::getLocalSSRCNetwork(),
-  inputCryptoCtx = new ost::CryptoContext(0x0,
-					  0,                           // roc,
-					  0L,                          // keydr,
-					  SrtpEncryptionAESCM,         // encryption algo
-					  SrtpAuthenticationSha1Hmac,  // authtication algo
-					  _masterKey,                  // Master Key
-					  128 / 8,                     // Master Key length
-					  _masterSalt,                 // Master Salt
-					  112 / 8,                     // Master Salt length
-					  128 / 8,                     // encryption keyl
-					  160 / 8,                     // authentication key len
-					  112 / 8,                     // session salt len
-					  80 / 8);                     // authentication tag len
-
-    
-}
-
-void AudioSrtpSession::initializeOutputCryptoContext(void)
-{
-
-  // this one works
-  // outputCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
-    outputCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
+    // this one does not works
+    // inputCryptoCtx = new ost::CryptoContext(IncomingDataQueue::getLocalSSRCNetwork(),
+    _inputCryptoCtx = new ost::CryptoContext(0x0,
 					     0,                           // roc,
 					     0L,                          // keydr,
 					     SrtpEncryptionAESCM,         // encryption algo
@@ -168,6 +153,28 @@ void AudioSrtpSession::initializeOutputCryptoContext(void)
 					     160 / 8,                     // authentication key len
 					     112 / 8,                     // session salt len
 					     80 / 8);                     // authentication tag len
+
+    
+}
+
+void AudioSrtpSession::initializeOutputCryptoContext(void)
+{
+
+    // this one works
+    // outputCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
+    _outputCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
+					      0,                           // roc,
+					      0L,                          // keydr,
+					      SrtpEncryptionAESCM,         // encryption algo
+					      SrtpAuthenticationSha1Hmac,  // authtication algo
+					      _masterKey,                  // Master Key
+					      128 / 8,                     // Master Key length
+					      _masterSalt,                 // Master Salt
+					      112 / 8,                     // Master Salt length
+					      128 / 8,                     // encryption keyl
+					      160 / 8,                     // authentication key len
+					      112 / 8,                     // session salt len
+					      80 / 8);                     // authentication tag len
 
 
 }

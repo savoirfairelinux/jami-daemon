@@ -42,7 +42,9 @@ namespace sfl {
 
             AudioSrtpSession(ManagerImpl * manager, SIPCall * sipcall);
 
-	    std::string getCryptoSdpInfo(void);
+	    std::string getLocalCryptoInfo(void);
+
+	    void setRemoteCryptoInfo(void);
 
         private:
 
@@ -68,9 +70,9 @@ namespace sfl {
 
 	    int _masterSaltLength;
 
-	    ost::CryptoContext* inputCryptoCtx;
+	    ost::CryptoContext* _inputCryptoCtx;
 
-	    ost::CryptoContext* outputCryptoCtx;
+	    ost::CryptoContext* _outputCryptoCtx;
     };
    
 }

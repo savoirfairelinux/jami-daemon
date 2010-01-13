@@ -3217,6 +3217,8 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     pjmedia_sdp_attr *attribute;
     call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, &attribute);
 
+    
+    
     // create remote cryptografic offer
     std::vector<std::string> remoteOffer;
 
@@ -3230,6 +3232,14 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     }
 
     sfl::SdesNegotiator sdesnego(localCapabilities, remoteOffer);
+
+    sdesnego.negotiate();
+
+    if(sdesnego.negotiate()) {
+        _debug("******************** Negociation Is Successfull *********************\n");
+
+	call->getAudioRtp()->setRemoteCryptoInfo();
+    }
 
 
     try {
