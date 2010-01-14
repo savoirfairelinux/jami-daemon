@@ -234,6 +234,7 @@ char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
 
     // init decoder and buffer
     b64 = BIO_new(BIO_f_base64());
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bmem = BIO_new(BIO_s_mem());
 
     // create decoder chain
@@ -262,7 +263,7 @@ char* AudioSrtpSession::decodeBase64(unsigned char *input, int length, int *leng
 
     // init decoder and read-only BIO buffer
     b64 = BIO_new(BIO_f_base64());
-    // BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bmem = BIO_new_mem_buf(input, length);
 
     // create encoder chain
