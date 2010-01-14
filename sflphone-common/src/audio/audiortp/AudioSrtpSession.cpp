@@ -170,10 +170,20 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
     char *output = decodeBase64((unsigned char*)dataptr, strlen(dataptr), &length);
 
     printf("Master and Salt: ");
-    for (int i = 0; i<length; i++) {
+    for (int i = 0; i < length; i++) {
         printf("%x ", output[i]);
     }
     printf("\n");
+
+    for (int i = 0; i < 16; i++) {
+
+        _remoteMasterKey[i] = output[i];	
+    }
+
+    for (int i = 0; i < 14; i++) {
+
+        _remoteMasterSalt[i] = output[i+16];	
+    }
 
     free(output);
 }
