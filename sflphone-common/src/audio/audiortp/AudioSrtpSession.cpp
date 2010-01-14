@@ -137,14 +137,18 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 {
 
     // concatenate master and salt
-    uint8 concatenated[30];
-    memcpy((void*)concatenated, (void*)_localMasterKey, 16);
-    memcpy((void*)(concatenated+16), (void*)_localMasterSalt, 14);
+    int concatLength = _localMasterKeyLength + _localMasterSaltLength;
+    uint8 concatKeys[concatLength];
+    memcpy((void*)concatKeys, (void*)_localMasterKey, _localMasterKeyLength);
+    memcpy((void*)(concatKeys + _localMasterKeyLength), (void*)_localMasterSalt, _localMasterSaltLength);
 
     // encode concatenated keys in base64
-    char *output = encodeBase64((unsigned char*)concatenated, 30);
+    char *output = encodeBase64((unsigned char*)concatKeys, concatLength);
 
     std::string keys(output);
+
+    printf("Base64ConcatenatedKeys : base64keys %s\n", keys.c_str());
+    printf("Base64ConcatenatedKeys : size %d\n", (int)keys.size());
 
     free(output);
 
@@ -152,28 +156,24 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 }
 
 
-  void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
+void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 {
 
+  // base64keys.append("\0");
     printf("unBase64ConcatenatedKeys : base64keys %s\n", base64keys.c_str());
-    printf("unBase64ConcatenatedKeys : size %i\n", (int)base64keys.size());
-    char *output = decodeBase64((unsigned char*)base64keys.c_str(), base64keys.size());
+    printf("unBase64ConcatenatedKeys : size %d\n", (int)base64keys.size());
 
-    uint8 concatenated[30];
-    memcpy((void*)concatenated, (void*)output, 30);
+    int length;
 
-     printf("Remote Master: ");
-     for(int i = 0; i < 16; i++) {
-       _remoteMasterKey[i] = concatenated[i];
-       printf("%i", concatenated[i]);
-     }
-     printf("\n");
-     printf("Remote Salt: ");
-     for(int i = 14; i < 30; i++) {
-       _remoteMasterSalt[i-14] = concatenated[i];
-       printf("%i", concatenated[i]);
-     }
-     printf("\n");
+    char *dataptr = (char*)base64keys.data();
+
+    char *output = decodeBase64((unsigned char*)dataptr, strlen(dataptr), &length);
+
+    printf("Master and Salt: ");
+    for (int i = 0; i<length; i++) {
+        printf("%x ", output[i]);
+    }
+    printf("\n");
 
     free(output);
 }
@@ -246,14 +246,14 @@ char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
     BIO_get_mem_ptr(b64, &bptr);
 
     // copy result in output buffer (-1 since we do not want the EOF character)
-    strncpy(buffer, (char*)(bptr->data), bptr->length-1);
+    strncpy(buffer, (char*)(bptr->data), bptr->length);
 
     BIO_free_all(bmem);
 
     return buffer;    
 }
 
-char* AudioSrtpSession::decodeBase64(unsigned char *input, int length)
+char* AudioSrtpSession::decodeBase64(unsigned char *input, int length, int *length_out)
 {
     BIO *b64, *bmem;
 
@@ -262,12 +262,13 @@ char* AudioSrtpSession::decodeBase64(unsigned char *input, int length)
 
     // init decoder and read-only BIO buffer
     b64 = BIO_new(BIO_f_base64());
+    // BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bmem = BIO_new_mem_buf(input, length);
 
     // create encoder chain
-    bmem = BIO_push(bmem, b64);
+    bmem = BIO_push(b64, bmem);
 
-    BIO_read(bmem, buffer, length);
+    *length_out = BIO_read(bmem, buffer, length);
 
     BIO_free_all(bmem);
 

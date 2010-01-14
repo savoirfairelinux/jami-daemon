@@ -64,7 +64,7 @@ namespace sfl {
 
 	    char* encodeBase64(unsigned char *input, int length);
 
-	    char* decodeBase64(unsigned char *input, int length);
+	    char* decodeBase64(unsigned char *input, int length, int *length_out);
 
             uint8 _localMasterKey[16];
 
