@@ -26,6 +26,7 @@
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
+#include <openssl/rand.h>
 
 
 #include <cstdio>
@@ -101,16 +102,16 @@ void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego) {
 void AudioSrtpSession::initializeLocalMasterKey(void)
 {
 
-    // @TODO key shold be generated randomly
+    // @TODO key may have different length depending on cipher suite
     _localMasterKeyLength = 16;
 
-    printf("Local Master: ");
-    for(int i = 0; i < 16; i++) {
-        _localMasterKey[i] = mk[i];
-	printf("%d", _localMasterKey[i]);
-    }
-    printf("\n");
-    
+    unsigned char *random_key = new unsigned char[_localMasterKeyLength];
+
+    int err;
+    if((err = RAND_bytes(random_key, _localMasterKeyLength)) != 1)
+        _debug("Error occured while generating cryptographically strong pseudo-random key");
+
+    memcpy(_localMasterKey, random_key, _localMasterKeyLength);
 
     return;
 }
@@ -119,15 +120,16 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
 void AudioSrtpSession::initializeLocalMasterSalt(void)
 {
 
-    // @TODO key shold be generated randomly
+    // @TODO key may have different length depending on cipher suite 
     _localMasterSaltLength = 14;
 
-    printf("Local Salt: ");
-    for(int i = 0; i < 14; i++) {
-        _localMasterSalt[i] = ms[i];
-	printf("%d", _localMasterSalt[i]);
-    }
-    printf("\n");
+    unsigned char *random_key = new unsigned char[_localMasterSaltLength];
+
+    int err;
+    if((err = RAND_bytes(random_key, _localMasterSaltLength)) != 1)
+        _debug("Error occured while generating cryptographically strong pseudo-random key");
+
+    memcpy(_localMasterSalt, random_key, _localMasterSaltLength);
 
     return;
 
