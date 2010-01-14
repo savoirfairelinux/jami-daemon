@@ -63,21 +63,20 @@ std::string AudioSrtpSession::getLocalCryptoInfo() {
 
     _debug("Get Cryptographic info from this rtp session");
 
+    // @TODO we should return a vector containing supported 
+    // cryptographic context tagged 1, 2, 3...
     std::string tag = "1";
-    std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
-    std::string application = "srtp";
-    // std::string srtp_keys = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
 
-    // format srtp keys as the following
-    // inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32
+    std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
+
+    // srtp keys formated as the following  as the following
+    // inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32
     std::string srtp_keys = "inline:";
-    // srtp_keys.append("16/14/");
     srtp_keys += getBase64ConcatenatedKeys();
     srtp_keys.append("|2^20|1:32");
 
     std::string crypto = tag.append(" ");
     crypto += crypto_suite.append(" ");
-    // crypto += application.append(" ");
     crypto += srtp_keys;
 
     _debug("%s", crypto.c_str());
@@ -88,12 +87,12 @@ std::string AudioSrtpSession::getLocalCryptoInfo() {
 
 void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego) {
 
-    _debug("Set remote Cryptographic info for this rtp session");
+    _debug("Set remote Cryptographic info for Srtp session");
 
-    _debug("nego.getKeyInfo() : %s", nego.getKeyInfo().c_str());
-
+    // decode keys
     unBase64ConcatenatedKeys(nego.getKeyInfo());
-    
+
+    // init crypto content int Srtp session
     initializeRemoteCryptoContext();
     setInQueueCryptoContext(_remoteCryptoCtx);
 }
@@ -101,14 +100,14 @@ void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego) {
 
 void AudioSrtpSession::initializeLocalMasterKey(void)
 {
-    _debug("initializeLocalMasterKey");
 
+    // @TODO key shold be generated randomly
     _localMasterKeyLength = 16;
 
     printf("Local Master: ");
     for(int i = 0; i < 16; i++) {
         _localMasterKey[i] = mk[i];
-	printf("%i", _localMasterKey[i]);
+	printf("%d", _localMasterKey[i]);
     }
     printf("\n");
     
@@ -119,12 +118,14 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
 
 void AudioSrtpSession::initializeLocalMasterSalt(void)
 {
+
+    // @TODO key shold be generated randomly
     _localMasterSaltLength = 14;
 
-    printf("Remote Salt: ");
+    printf("Local Salt: ");
     for(int i = 0; i < 14; i++) {
         _localMasterSalt[i] = ms[i];
-	printf("%i", _localMasterSalt[i]);
+	printf("%d", _localMasterSalt[i]);
     }
     printf("\n");
 
@@ -145,10 +146,8 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
     // encode concatenated keys in base64
     char *output = encodeBase64((unsigned char*)concatKeys, concatLength);
 
+    // init string containing encoded data
     std::string keys(output);
-
-    printf("Base64ConcatenatedKeys : base64keys %s\n", keys.c_str());
-    printf("Base64ConcatenatedKeys : size %d\n", (int)keys.size());
 
     free(output);
 
@@ -159,31 +158,18 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 {
 
-  // base64keys.append("\0");
-    printf("unBase64ConcatenatedKeys : base64keys %s\n", base64keys.c_str());
-    printf("unBase64ConcatenatedKeys : size %d\n", (int)base64keys.size());
-
+    // length of decoded data data
     int length;
 
+    // pointer to binary data
     char *dataptr = (char*)base64keys.data();
 
+    // decode concatenated binary keys
     char *output = decodeBase64((unsigned char*)dataptr, strlen(dataptr), &length);
 
-    printf("Master and Salt: ");
-    for (int i = 0; i < length; i++) {
-        printf("%x ", output[i]);
-    }
-    printf("\n");
-
-    for (int i = 0; i < 16; i++) {
-
-        _remoteMasterKey[i] = output[i];	
-    }
-
-    for (int i = 0; i < 14; i++) {
-
-        _remoteMasterSalt[i] = output[i+16];	
-    }
+    // copy master and slt respectively
+    memcpy((void*)_remoteMasterKey, (void*)output, 16);
+    memcpy((void*)_remoteMasterSalt, (void*)(output + 16), 16);
 
     free(output);
 }
@@ -192,8 +178,6 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 void AudioSrtpSession::initializeRemoteCryptoContext(void)
 {
 
-    // this one does not works
-    // inputCryptoCtx = new ost::CryptoContext(IncomingDataQueue::getLocalSSRCNetwork(),
     _remoteCryptoCtx = new ost::CryptoContext(0x0,
 					     0,                           // roc,
 					     0L,                          // keydr,
@@ -214,8 +198,6 @@ void AudioSrtpSession::initializeRemoteCryptoContext(void)
 void AudioSrtpSession::initializeLocalCryptoContext(void)
 {
 
-    // this one works
-    // outputCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
     _localCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
 					      0,                           // roc,
 					      0L,                          // keydr,
@@ -242,9 +224,11 @@ char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
     char *buffer = (char *)malloc(2*length);
     memset(buffer, 0, 2*length);
 
-    // init decoder and buffer
+    // init decoder
     b64 = BIO_new(BIO_f_base64());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+
+    // init internal buffer
     bmem = BIO_new(BIO_s_mem());
 
     // create decoder chain
@@ -274,6 +258,8 @@ char* AudioSrtpSession::decodeBase64(unsigned char *input, int length, int *leng
     // init decoder and read-only BIO buffer
     b64 = BIO_new(BIO_f_base64());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+
+    // init internal buffer
     bmem = BIO_new_mem_buf(input, length);
 
     // create encoder chain

@@ -3239,9 +3239,8 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 	sfl::SdesNegotiator sdesnego(localCapabilities, remoteOffer);
 	
 	if(sdesnego.negotiate()) {
-	    _debug("******************** Negociation Is Successfull *********************\n");
+	    _debug("SDES negociation successfull \n");
 
-	    _debug("keys : %s", sdesnego.getKeyInfo().c_str());
 	    call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
 	}
 
