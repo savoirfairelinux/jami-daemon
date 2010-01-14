@@ -111,7 +111,7 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
     if((err = RAND_bytes(random_key, _localMasterKeyLength)) != 1)
         _debug("Error occured while generating cryptographically strong pseudo-random key");
 
-    memcpy(_localMasterKey, random_key, _localMasterKeyLength);
+    memcpy(_localMasterKey, mk, _localMasterKeyLength);
 
     return;
 }
@@ -129,7 +129,7 @@ void AudioSrtpSession::initializeLocalMasterSalt(void)
     if((err = RAND_bytes(random_key, _localMasterSaltLength)) != 1)
         _debug("Error occured while generating cryptographically strong pseudo-random key");
 
-    memcpy(_localMasterSalt, random_key, _localMasterSaltLength);
+    memcpy(_localMasterSalt, ms, _localMasterSaltLength);
 
     return;
 
