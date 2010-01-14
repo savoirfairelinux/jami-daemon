@@ -111,11 +111,13 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
     if((err = RAND_bytes(random_key, _localMasterKeyLength)) != 1)
         _debug("Error occured while generating cryptographically strong pseudo-random key");
 
-    // memcpy(_localMasterKey, mk, _localMasterKeyLength);
+    memcpy(_localMasterKey, mk, _localMasterKeyLength);
 
+    printf("Local Master: ");
     for(int i = 0; i < _localMasterKeyLength; i++){
-      _localMasterKey[i] = mk[i];
+        printf("%d", _localMasterKey[i]);
     }
+    printf("\n");
 
     return;
 }
@@ -133,11 +135,13 @@ void AudioSrtpSession::initializeLocalMasterSalt(void)
     if((err = RAND_bytes(random_key, _localMasterSaltLength)) != 1)
         _debug("Error occured while generating cryptographically strong pseudo-random key");
 
-    // memcpy(_localMasterSalt, ms, _localMasterSaltLength);
+    memcpy(_localMasterSalt, ms, _localMasterSaltLength);
 
+    printf("Local Salt: ");
     for(int i = 0; i < _localMasterSaltLength; i++){
-      _localMasterSalt[i] = ms[i];
+      printf("%d", _localMasterSalt[i]);
     }
+    printf("\n");
 
     return;
 
@@ -168,6 +172,9 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 {
 
+    _remoteMasterKeyLength = 16;
+    _remoteMasterSaltLength = 14;
+
     // length of decoded data data
     int length;
 
@@ -178,8 +185,20 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
     char *output = decodeBase64((unsigned char*)dataptr, strlen(dataptr), &length);
 
     // copy master and slt respectively
-    memcpy((void*)_remoteMasterKey, (void*)output, 16);
-    memcpy((void*)_remoteMasterSalt, (void*)(output + 16), 16);
+    memcpy((void*)_remoteMasterKey, (void*)output, _remoteMasterKeyLength);
+    memcpy((void*)_remoteMasterSalt, (void*)(output + _remoteMasterKeyLength), _remoteMasterSaltLength);
+
+    printf("Remote Master: ");
+    for(int i = 0; i < _remoteMasterKeyLength; i++){
+        printf("%d", _remoteMasterKey[i]);
+    }
+    printf("\n");
+
+    printf("Remote Salt: ");
+    for(int i = 0; i < _remoteMasterSaltLength; i++){
+        printf("%d", _remoteMasterSalt[i]);
+    }
+    printf("\n");
 
     free(output);
 }
