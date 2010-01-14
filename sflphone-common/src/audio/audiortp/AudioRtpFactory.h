@@ -89,6 +89,15 @@ namespace sfl {
         * file. initAudioRtpSession must have been called prior to that. 
         */  
         inline void * getAudioRtpSession(void) { return _rtpSession; }
+
+	/** 
+        * @param None
+        * @return The internal audio rtp session type 
+	*         Symmetric = 0
+        *         Zrtp = 1
+        *         Sdes = 2 
+        */  
+        inline RtpMethod getAudioRtpType(void) { return _rtpSessionType; }
  
         /**
          * Get the current AudioZrtpSession. Throws an AudioRtpFactoryException

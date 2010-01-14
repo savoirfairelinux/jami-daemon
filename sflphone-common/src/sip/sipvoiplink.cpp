@@ -809,11 +809,13 @@ SIPVoIPLink::answer (const CallID& id)
 
     local_sdp = call->getLocalSDP();
 
+    /*
     try {
         call->getAudioRtp()->initAudioRtpSession (call);
     } catch (...) {
         _debug ("Failed to create rtp thread from answer");
     }
+    */
 
     inv_session = call->getInvSession();
 
@@ -3627,6 +3629,12 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
     call->getLocalSDP()->set_ip_address (addrSdp);
+
+    try {
+        call->getAudioRtp()->initAudioRtpSession (call);
+    } catch (...) {
+        _debug ("Failed to create rtp thread from answer");
+    }
 
     get_remote_sdp_from_offer (rdata, &r_sdp);
 
