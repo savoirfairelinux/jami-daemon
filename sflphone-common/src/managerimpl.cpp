@@ -3979,6 +3979,7 @@ ManagerImpl::addAccount (const std::map< std::string, std::string >& details)
 
     if (accountType == "SIP") {
         newAccount = AccountCreator::createAccount (AccountCreator::SIP_ACCOUNT, newAccountID);
+	newAccount->setVoIPLink();
     } else if (accountType == "IAX") {
         newAccount = AccountCreator::createAccount (AccountCreator::IAX_ACCOUNT, newAccountID);
     } else {
