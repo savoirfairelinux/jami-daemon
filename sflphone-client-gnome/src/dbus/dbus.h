@@ -27,6 +27,8 @@
 
 #include <accountlist.h>
 #include <calllist.h>
+#include <conferencelist.h>
+#include <conference_obj.h>
 #include <sflnotify.h>
 
 /** @file dbus.h
@@ -127,6 +129,20 @@ void dbus_set_credential(account_t *a, int index);
 int dbus_get_number_of_credential(gchar * accountID);
 
 /**
+ * ConfigurationManager - Delete all credentials defined for
+ * a given account.
+ * @param a The account id
+ */
+void dbus_delete_all_credential(account_t *a);
+
+/**
+ * ConfigurationManager - Set the number of credential that
+ * is being used.
+ * @param a The account id
+ */
+void dbus_set_number_of_credential(account_t *a, int number);
+
+/**
  * ConfigurationManager - Set the additional credential information 
  * of a specific account, for a specific credential index.
  * This function will add the new section on the server side
@@ -138,13 +154,23 @@ int dbus_get_number_of_credential(gchar * accountID);
 GHashTable* dbus_get_credential(gchar * accountID, int index);
 
 /**
+ * ConfigurationManager - Get the details for the ip2ip profile 
+ */
+GHashTable * dbus_get_ip2_ip_details(void);
+
+/**
+ * ConfigurationManager - Set the details for the ip2ip profile 
+ */
+void dbus_set_ip2ip_details(GHashTable * properties);
+
+/**
  * ConfigurationManager - Send registration request
  * @param accountID The account to register/unregister
- * @param expire The flag for the type of registration
+ * @param enable The flag for the type of registration
  *		 0 for unregistration request
  *		 1 for registration request
  */
-void dbus_send_register( gchar* accountID , const guint expire );
+void dbus_send_register( gchar* accountID , const guint enable );
 
 /**
  * ConfigurationManager - Add an account to the list
@@ -286,6 +312,22 @@ int dbus_get_audio_device_index(const gchar* name);
 gchar* dbus_get_current_audio_output_plugin();
 
 /**
+ * ConfigurationManager - Query to server to 
+ * know if MD5 credential hashing is enabled.
+ * @return True if enabled, false otherwise
+ *
+ */
+gboolean dbus_is_md5_credential_hashing();
+
+/**
+ * ConfigurationManager - Set whether or not
+ * the server should store credential as
+ * a md5 hash.
+ * @param enabled 
+ */
+void dbus_set_md5_credential_hashing(gboolean enabled);
+
+/**
  * ConfigurationManager - Tells the GUI if IAX2 support is enabled
  * @return int 1 if IAX2 is enabled
  *	       0 otherwise
@@ -307,17 +349,6 @@ int dbus_is_ringtone_enabled( void );
 void dbus_ringtone_enabled( void );
 
 /**
- * ConfigurationManager - Set PA behaviour for the other sound streams
- * Inverse current value
- */
-void dbus_set_pulse_app_volume_control( void );
-
-/**
- * ConfigurationManager - Get PA behaviour for the other sound streams
- */
-int dbus_get_pulse_app_volume_control( void );
-
-/**
  * ConfigurationManager - Get the ringtone
  * @return gchar* The file name selected as a ringtone
  */
@@ -332,7 +363,7 @@ void dbus_set_ringtone_choice( const gchar* tone );
 /**
  * ConfigurationManager - Set the dialpad visible or not
  */
-void dbus_set_dialpad(  );
+void dbus_set_dialpad (gboolean display);
 
 /**
  * ConfigurationManager - Tells if the user wants to display the dialpad or not
@@ -356,7 +387,7 @@ int dbus_get_searchbar( void );
 /**
  * ConfigurationManager - Set the volume controls visible or not
  */
-void dbus_set_volume_controls(  );
+void dbus_set_volume_controls (gboolean display);
 
 /**
  * ConfigurationManager - Tells if the user wants to display the volume controls or not
@@ -384,7 +415,7 @@ void dbus_set_history_limit (const guint days);
 
 void dbus_set_history_enabled (void);
 
-int dbus_get_history_enabled (void);
+gchar* dbus_get_history_enabled (void);
 
 /**
  * ConfigurationManager - Configure the start-up option
@@ -434,18 +465,6 @@ guint dbus_get_notify( void );
 void dbus_set_notify( void );
 
 /**
- * ConfigurationManager - Configure the mail notification level
- * @return int	0 disable
- *		1 enable
- */
-guint dbus_get_mail_notify( void );
-
-/**
- * ConfigurationManager - Configure the mail notification level
- */
-void dbus_set_mail_notify( void );
-
-/**
  * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed
  * @param start 1 to start
  *		0 to stop
@@ -468,17 +487,13 @@ void dbus_register( int pid, gchar * name);
  */
 void dbus_unregister(int pid);
 
-void dbus_set_sip_port(const guint portNum);
+void dbus_set_sip_address(const gchar* address);
 
-guint dbus_get_sip_port();
+gint dbus_get_sip_address(void);
 
-gchar* dbus_get_stun_server (void);
-void dbus_set_stun_server( gchar* server);
+void dbus_add_participant(const gchar* callID, const gchar* confID);
 
-gint dbus_stun_is_enabled (void);
-void dbus_enable_stun (void);
-
-void dbus_set_record (const callable_obj_t * c);
+void dbus_set_record (const gchar * id);
 
 void dbus_set_record_path (const gchar *path);
 gchar* dbus_get_record_path (void);
@@ -500,6 +515,21 @@ gchar** dbus_get_addressbook_list (void);
 void dbus_set_addressbook_list (const gchar** list);
 
 /**
+ * Resolve the local address given an interface name
+ */
+gchar * dbus_get_address_from_interface_name(gchar* interface);
+
+/**
+ * Query the daemon to return a list of network interface (described as there IP address)
+ */
+gchar** dbus_get_all_ip_interface(void);
+
+/**
+ * Query the daemon to return a list of network interface (described as there name)
+ */
+gchar** dbus_get_all_ip_interface_by_name(void);
+
+/**
  * Encapsulate all the url hook-related configuration
  * Get the configuration
  */
@@ -518,6 +548,10 @@ GHashTable* dbus_get_call_details (const gchar* callID);
 
 gchar** dbus_get_call_list (void);
 
+GHashTable* dbus_get_conference_details (const gchar* confID);
+
+gchar** dbus_get_conference_list (void);
+
 void dbus_set_accounts_order (const gchar* order);
 
 GHashTable* dbus_get_history (void);
@@ -525,5 +559,43 @@ GHashTable* dbus_get_history (void);
 void dbus_set_history (GHashTable* entries);
 
 void sflphone_display_transfer_status (const gchar* message);
+
+/**
+ * CallManager - Confirm Short Authentication String 
+ * for a given callId
+ * @param c The call to confirm SAS
+ */
+void dbus_confirm_sas (const callable_obj_t * c);
+
+/**
+ * CallManager - Reset Short Authentication String 
+ * for a given callId
+ * @param c The call to reset SAS
+ */
+void dbus_reset_sas (const callable_obj_t * c);
+
+/**
+ * CallManager - Request Go Clear in the ZRTP Protocol 
+ * for a given callId
+ * @param c The call that we want to go clear
+ */
+void dbus_request_go_clear (const callable_obj_t * c);
+
+/**
+ * CallManager - Accept Go Clear request from remote
+ * for a given callId
+ * @param c The call to confirm
+ */
+void dbus_set_confirm_go_clear (const callable_obj_t * c);
+
+/**
+ * CallManager - Get the list of supported TLS methods from
+ * the server in textual form.  
+ * @return an array of string representing supported methods
+ */
+gchar** dbus_get_supported_tls_method();
+
+gchar** dbus_get_participant_list (const char * confID);
+
 
 #endif

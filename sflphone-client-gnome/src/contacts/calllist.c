@@ -38,13 +38,13 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
         else {
             switch (type) {
                 case CONTACT_PHONE_BUSINESS:
-                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
                     break;
                 case CONTACT_PHONE_HOME:
                     pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/home.svg", NULL);
                     break;
                 case CONTACT_PHONE_MOBILE:
-                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/phone.svg", NULL);
                     break;
                 default:
                     pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
@@ -54,7 +54,7 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
         }
 
         calllist_add (contacts, new_call);
-        calltree_add_call(contacts, new_call);
+        calltree_add_call(contacts, new_call, NULL);
     }
 }
 
@@ -80,11 +80,10 @@ calllist_reset (calltab_t* tab)
 
 void calllist_add_history_entry (callable_obj_t *obj)
 {
-    int state = dbus_get_history_enabled ();
-    if (state == 1)
+    if ( g_strcasecmp (dbus_get_history_enabled (), "true") == 0)
     {
         g_queue_push_tail (history->callQueue, (gpointer *) obj);
-        calltree_add_call (history, obj);
+        calltree_add_call (history, obj, NULL);
     }
 }
 
@@ -112,7 +111,7 @@ calllist_clean_history( void )
     callable_obj_t* c = calllist_get_nth( history , i );
     // Delete the call from the call tree
     DEBUG("Delete calls");
-    calltree_remove_call(history , c);
+    calltree_remove_call(history, c, NULL);
   }
   calllist_reset( history );
 }
@@ -122,7 +121,7 @@ void
 calllist_remove_from_history( callable_obj_t* c )
 {
   calllist_remove( history, c->_callID );
-  calltree_remove_call( history, c );
+  calltree_remove_call(history, c, NULL);
   DEBUG("Size of history = %i" , calllist_get_size( history ));
 }
 

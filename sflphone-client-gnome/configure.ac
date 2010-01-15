@@ -1,13 +1,17 @@
-AC_INIT([SFLphone],[0.9.6~beta],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
+AC_INIT([SFLphone],[0.9.7~beta],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
 AM_CONFIG_HEADER(config.h)
 
 LT_INIT
+GNOME_DOC_INIT
 
 PACKAGE=SFLphone
 VERSION=`cat VERSION`
 
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AC_CONFIG_MACRO_DIR([m4])
+
+dnl Silent build by default. Use make V=1 to increase verbosity
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_ARG_WITH(debug,
 		AS_HELP_STRING(
@@ -34,6 +38,10 @@ if ! $have_log4c; then
     AC_MSG_ERROR(Please install the log4c library)
 fi
 
+dnl uninstalled gsr ui dir
+AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
+  [path to uninstalled SFLphone UI dir])
+
 dnl Check for GTK+ version
 dnl If gtk+-2.0 >= 2.16, we don't need libsexy package anymore
 PKG_CHECK_MODULES(GTK216, gtk+-2.0 >= 2.16, need_libsexy=false, need_libsexy=true)
@@ -53,7 +61,9 @@ PKG_CHECK_MODULES(DEPS,     \
     libnotify >= 0.4        \
     gtk+-2.0 >= 2.2         \
     glib-2.0 >= 2.2         \
-    libebook-1.2 >= 2.22
+    libebook-1.2 >= 2.22	\
+	libgnomeui-2.0			\
+	gnome-doc-utils
 )
 
 AC_SUBST(DEPS_CFLAGS)
@@ -74,11 +84,14 @@ src/config/Makefile
 src/dbus/Makefile
 src/contacts/Makefile
 src/contacts/addressbook/Makefile
+src/widget/Makefile
+src/icons/Makefile
 pixmaps/Makefile
 sflphone.desktop
 tests/Makefile
 man/Makefile
 po/Makefile
+doc/Makefile
 ])
 
 

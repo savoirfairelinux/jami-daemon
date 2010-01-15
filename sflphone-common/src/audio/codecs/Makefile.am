@@ -1,5 +1,9 @@
 include $(top_srcdir)/globals.mak
 
+noinst_LTLIBRARIES = libcodecdescriptor.la
+
+libcodecdescriptor_la_SOURCES = codecDescriptor.cpp 
+
 if BUILD_GSM
 GSM_LIB = libcodec_gsm.so
 libcodec_gsm_so_SOURCES = gsmcodec.cpp
@@ -52,8 +56,7 @@ endif
 
 noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_g722.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(SPEEX_UB_LIB) $(CELT_LIB)
 
-
-noinst_HEADERS = audiocodec.h
+noinst_HEADERS = audiocodec.h codecDescriptor.h
 
 libcodec_ulaw_so_SOURCES = ulaw.cpp
 libcodec_ulaw_so_CFLAGS = -fPIC -g -Wall
@@ -107,7 +110,7 @@ uninstall-libcodec_speex_wb_so:
 	rm -f $(sflcodecdir)/libcodec_speex_wb.so
 uninstall-libcodec_speex_ub_so:
 	rm -f $(sflcodecdir)/libcodec_speex_ub.so
+uninstall-libcodec_celt_so:
+	rm -f $(sflcodecdir)/libcodec_celt.so
 	rm -rf $(sflcodecdir)
-uninstall-libcodec_celt_so: libcodec_celt.so
-	$(INSTALL_PROGRAM)  libcodec_celt.so $(sflcodecdir)
 

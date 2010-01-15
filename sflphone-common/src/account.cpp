@@ -41,13 +41,13 @@ void Account::loadConfig()
 
     p =  Manager::instance().getConfigString (_accountID , CONFIG_ACCOUNT_TYPE);
 #ifdef USE_IAX
-    _enabled = Manager::instance().getConfigInt (_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
+    _enabled = (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_ENABLE) == "true") ? true : false;
 #else
 
     if (p.c_str() == "IAX")
         _enabled = false;
     else
-        _enabled = Manager::instance().getConfigInt (_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
+        _enabled = (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_ENABLE) == "true") ? true : false;
 
 #endif
 }
@@ -56,7 +56,7 @@ void Account::setRegistrationState (RegistrationState state)
 {
 
     if (state != _registrationState) {
-        _debug ("Account::setRegistrationState\n");
+        _debug ("Account::setRegistrationState");
         _registrationState = state;
 
         // Notify the client

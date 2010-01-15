@@ -22,6 +22,10 @@
 
 #include <calllist.h>
 #include <calltree.h>
+#include <uimanager.h>
+
+#define MAIN_WINDOW_WIDTH 280
+#define MAIN_WINDOW_HEIGHT 320
 
 /** @file mainwindow.h
   * @brief The main window of the client.
@@ -98,5 +102,11 @@ void statusbar_pop_message( guint id );
 gboolean focus_is_on_calltree;
 
 gboolean focus_is_on_searchbar;
+
+void main_window_zrtp_not_supported(callable_obj_t * c);
+
+void main_window_zrtp_negotiation_failed(const gchar* callID, const gchar* reason, const gchar* severity);
+
+void main_window_confirm_go_clear(callable_obj_t * c);
 
 #endif

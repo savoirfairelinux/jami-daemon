@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  * 
@@ -31,6 +32,9 @@
 #include "../global.h"
 // #include "plug-in/audiorecorder/audiorecord.h"
 #include "../samplerateconverter.h"
+#include "codecDescriptor.h"
+
+#include <fstream>
 
 #define UP_SAMPLING 0
 #define DOWN_SAMPLING 1
@@ -77,15 +81,10 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Thread associated method */    
     virtual void run ();
 
-    /**
-     * Audio recording object
-     */
-    // AudioRecord recAudio;
-
     /** A SIP call */
     SIPCall* _ca;
 
-   /**
+    /**
      * Update RTP session media info as received from SDP negociation 
      */
     void setRtpSessionMedia(void);
@@ -221,7 +220,19 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     int reSampleData(SFLDataFormat *input, SFLDataFormat *output,int sampleRate_codec, int nbSamples, int status);
     
     /** The audio codec used during the session */
-    AudioCodec* _audiocodec;
+    AudioCodec *_audiocodec;
+    // AudioCodec _audioCodecInstance;
+
+    /** Mutex */
+    ost::Mutex _rtpRtxMutex;
+
+  public:
+
+    std::fstream *rtp_input_rec;
+    std::fstream *rtp_output_rec;
+
+    static int count_rtp;
+
    
 };
 
@@ -259,7 +270,7 @@ class AudioRtp {
     /**
      * Start recording
      */
-    void setRecording ();
+    // void setRecording ();
 
     friend class RtpTest;
 
@@ -281,7 +292,8 @@ class AudioRtp {
     bool _symmetric;
 
     /** Mutex */
-    ost::Mutex _threadMutex;
+    ost::Mutex _rtpMutex;
+
 };
 
 #endif // __AUDIO_RTP_H__

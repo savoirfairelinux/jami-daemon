@@ -29,6 +29,8 @@
  */
 
 #define LOGO                ICONS_DIR "/sflphone.svg"
+#define LOGO_NOTIF          ICONS_DIR "/sflphone_notif.svg"
+#define LOGO_OFFLINE        ICONS_DIR "/sflphone_offline.svg"
 #define LOGO_SMALL          ICONS_DIR "/sflphone_small.svg"
 
 #define CURRENT_CALLS       "current_calls"
@@ -37,27 +39,64 @@
 
 /** Locale */
 #define _(STRING)             gettext( STRING )
+#define N_(STRING)			  (STRING)
 #define c_(COMMENT,STRING)    gettext(STRING) 
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
+
+
 
 /** Warnings unused variables **/
 #define UNUSED_VAR(var)      (void*)var
 
 #define UNUSED  __attribute__((__unused__))
 
-#define ACCOUNT_TYPE                "Account.type"
-#define ACCOUNT_ALIAS		        "Account.alias"
-#define ACCOUNT_ENABLED		        "Account.enable"
-#define ACCOUNT_MAILBOX		        "Account.mailbox"
-#define ACCOUNT_RESOLVE_ONCE        "Account.resolveOnce"
-#define ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
-#define ACCOUNT_SIP_STUN_SERVER	    "STUN.server"
-#define ACCOUNT_SIP_STUN_ENABLED    "STUN.enable"
-#define ACCOUNT_HOSTNAME            "hostname"
-#define ACCOUNT_USERNAME            "username"
-#define ACCOUNT_PASSWORD            "password"
-#define ACCOUNT_AUTH_USERNAME       "authenticationUsername"
-#define ACCOUNT_REALM               "realm"
+#define ACCOUNT_TYPE                       "Account.type"
+#define ACCOUNT_ALIAS		           "Account.alias"
+#define ACCOUNT_ENABLED		           "Account.enable"
+#define ACCOUNT_MAILBOX		           "Account.mailbox"
+#define ACCOUNT_RESOLVE_ONCE               "Account.resolveOnce"
+#define ACCOUNT_REGISTRATION_EXPIRE        "Account.expire"
+#define ACCOUNT_SIP_STUN_SERVER	           "STUN.server"
+#define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
+#define ACCOUNT_HOSTNAME                   "hostname"
+#define ACCOUNT_USERNAME                   "username"
+#define ACCOUNT_PASSWORD                   "password"
+#define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
+#define ACCOUNT_REALM                      "realm"
+#define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
+#define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
+#define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
+#define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
+#define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
+#define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
+#define KEY_EXCHANGE_NONE                  "0"
+#define ZRTP                               "1"
+#define SDES                               "2"
+
+#define TLS_ENABLE                          "TLS.enable"
+#define TLS_PORT                            "TLS.port"
+#define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
+#define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
+#define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
+#define TLS_PASSWORD                        "TLS.password"
+#define TLS_METHOD                          "TLS.method"
+#define TLS_CIPHERS                         "TLS.ciphers"
+#define TLS_SERVER_NAME                     "TLS.serverName"
+#define TLS_VERIFY_SERVER                   "TLS.verifyServer"
+#define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
+#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
+#define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
+#define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
+
+#define LOCAL_INTERFACE                     "Account.localInterface"
+#define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
+#define LOCAL_PORT                          "Account.localPort"
+#define PUBLISHED_PORT                      "Account.publishedPort"
+#define PUBLISHED_ADDRESS                   "Account.publishedAddress"
+
+#define REGISTRATION_STATUS                 "Status"
+#define REGISTRATION_STATE_CODE             "Registration.code" 
+#define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
 
 /**
  * Global logger
@@ -81,10 +120,10 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define __POPUP_WINDOW  ( dbus_popup_mode() )
 /** Show/Hide the dialpad */
 #define SHOW_DIALPAD	( dbus_get_dialpad() )
-/** Show/Hide the volume controls */
-#define SHOW_VOLUME	( dbus_get_volume_controls() )
 /** Show/Hide the alsa configuration panel */
 #define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
+/** Show/Hide the volume controls */
+#define SHOW_VOLUME	(dbus_get_volume_controls() && SHOW_ALSA_CONF)
 
 /** Audio Managers */
 #define ALSA	      0

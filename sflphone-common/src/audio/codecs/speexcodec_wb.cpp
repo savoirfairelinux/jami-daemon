@@ -109,12 +109,13 @@ class Speex : public AudioCodec
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
 
-            int ratio = 320 / _speex_frame_size;
+            // int ratio = 320 / _speex_frame_size;
 
             speex_bits_read_from (&_speex_dec_bits, (char*) src, size);
             speex_decode_int (_speex_dec_state, &_speex_dec_bits, dst);
 
-            return 2 * _speex_frame_size * ratio;
+            // return size in bytes
+            return _frameSize * 2;
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
@@ -125,10 +126,10 @@ class Speex : public AudioCodec
             speex_preprocess_run (_preprocess_state, src);
 #endif
 
-            printf ("Codec::codecEncode() size %i\n", size);
+            //printf ("Codec::codecEncode() size %i\n", size);
             speex_encode_int (_speex_enc_state, src, &_speex_enc_bits);
             int nbBytes = speex_bits_write (&_speex_enc_bits, (char*) dst, size);
-            printf ("Codec::codecEncode() nbBytes %i\n", nbBytes);
+            //printf ("Codec::codecEncode() nbBytes %i\n", nbBytes);
             return nbBytes;
         }
 

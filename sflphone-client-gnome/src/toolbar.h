@@ -22,7 +22,6 @@
 
 #include <callable_obj.h>
 #include <gtk/gtk.h>
-#include <menus.h>
 #include <sflphone_const.h>
 #include <actions.h>
 
@@ -34,6 +33,7 @@ GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
 GtkToolItem * unholdButton;
 GtkToolItem * mailboxButton;
+GtkToolItem * detachButton;
 GtkToolItem * recButton;
 GtkToolItem * historyButton;
 GtkToolItem * contactButton;

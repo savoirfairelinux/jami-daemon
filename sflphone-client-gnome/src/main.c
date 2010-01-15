@@ -23,6 +23,8 @@
 #include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <statusicon.h>
+#include <libgnome/libgnome.h>
+#include <libgnomeui/libgnomeui.h>
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -82,8 +84,14 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
   srand(time(NULL));
 
   // Internationalization
-  bindtextdomain("sflphone-client-gnome", "/usr/share/locale");
+  bindtextdomain("sflphone-client-gnome", LOCALEDIR);
   textdomain("sflphone-client-gnome");
+
+  // Initialises the GNOME libraries
+  gnome_program_init (	"sflphone", VERSION,
+						LIBGNOMEUI_MODULE, argc, argv,
+						GNOME_PROGRAM_STANDARD_PROPERTIES,
+						NULL);
 
   if (sflphone_init())
     {
@@ -105,8 +113,12 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
     // Load the history
     sflphone_fill_history ();
 
-    // Get the active calls at startup    
+    // Get the active calls and conferences at startup    
     sflphone_fill_call_list ();
+    sflphone_fill_conference_list();
+
+	// Update the GUI
+	update_actions ();
         
     /* start the main loop */
     gtk_main();

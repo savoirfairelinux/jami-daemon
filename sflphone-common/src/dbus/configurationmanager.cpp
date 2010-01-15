@@ -23,6 +23,7 @@
 #include <configurationmanager.h>
 #include <sstream>
 #include "../manager.h"
+#include "sip/sipvoiplink.h"
 
 const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
 
@@ -37,99 +38,310 @@ ConfigurationManager::ConfigurationManager (DBus::Connection& connection)
 std::map< std::string, std::string >
 ConfigurationManager::getAccountDetails (const std::string& accountID)
 {
-    _debug ("ConfigurationManager::getAccountDetails\n");
+    _debug ("ConfigurationManager::getAccountDetails");
     return Manager::instance().getAccountDetails (accountID);
+}
+
+std::map< std::string, std::string >
+ConfigurationManager::getTlsSettingsDefault (void)
+{
+    _debug ("ConfigurationManager::getTlsDefaultSettings");
+
+    std::map<std::string, std::string> tlsSettingsDefault;
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_PASSWORD, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_METHOD, "TLSv1"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CIPHERS, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_SERVER_NAME, ""));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_VERIFY_SERVER, "true"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_VERIFY_CLIENT, "true"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_REQUIRE_CLIENT_CERTIFICATE, "true"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_SEC, "2"));
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_NEGOTIATION_TIMEOUT_MSEC, "0"));
+
+    return tlsSettingsDefault;
+}
+
+std::map< std::string, std::string >
+ConfigurationManager::getIp2IpDetails (void)
+{
+
+    std::map<std::string, std::string> ip2ipAccountDetails;
+
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_KEY_EXCHANGE)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_ENABLE, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_ENABLE)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_HELLO_HASH, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_HELLO_HASH)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
+
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_INTERFACE, Manager::instance().getConfigString(IP2IP_PROFILE, LOCAL_INTERFACE)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_PORT)));
+
+    std::map<std::string, std::string> tlsSettings;
+    tlsSettings = getTlsSettings (IP2IP_PROFILE);
+    std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (ip2ipAccountDetails, ip2ipAccountDetails.end()));
+
+    return ip2ipAccountDetails;
+
+}
+
+void
+ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string >& details)
+{
+    std::map<std::string, std::string> map_cpy = details;
+    std::map<std::string, std::string>::iterator it;
+
+    it = map_cpy.find (LOCAL_INTERFACE);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_INTERFACE, it->second);
+    }
+
+    it = map_cpy.find (LOCAL_PORT);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_PORT, it->second);
+    }
+
+    it = map_cpy.find (SRTP_ENABLE);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, SRTP_ENABLE, it->second);
+    }
+
+    it = map_cpy.find (SRTP_KEY_EXCHANGE);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, SRTP_KEY_EXCHANGE, it->second);
+    }
+
+    it = map_cpy.find (ZRTP_DISPLAY_SAS);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_DISPLAY_SAS, it->second);
+    }
+
+    it = map_cpy.find (ZRTP_NOT_SUPP_WARNING);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING, it->second);
+    }
+
+    it = map_cpy.find (ZRTP_HELLO_HASH);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_HELLO_HASH, it->second);
+    }
+
+    it = map_cpy.find (ZRTP_DISPLAY_SAS_ONCE);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE, it->second);
+    }
+
+    setTlsSettings (IP2IP_PROFILE, details);
+
+    Manager::instance().saveConfig();
+
+    // Update account details to the client side
+    accountsChanged();
+
+}
+
+std::map< std::string, std::string >
+ConfigurationManager::getTlsSettings (const std::string& section)
+{
+    std::map<std::string, std::string> tlsSettings;
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_ENABLE, Manager::instance().getConfigString (section, TLS_ENABLE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_CA_LIST_FILE, Manager::instance().getConfigString (section, TLS_CA_LIST_FILE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_CERTIFICATE_FILE, Manager::instance().getConfigString (section, TLS_CERTIFICATE_FILE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_PRIVATE_KEY_FILE, Manager::instance().getConfigString (section, TLS_PRIVATE_KEY_FILE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_PASSWORD, Manager::instance().getConfigString (section, TLS_PASSWORD)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_METHOD, Manager::instance().getConfigString (section, TLS_METHOD)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_CIPHERS, Manager::instance().getConfigString (section, TLS_CIPHERS)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_SERVER_NAME, Manager::instance().getConfigString (section, TLS_SERVER_NAME)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_VERIFY_SERVER, Manager::instance().getConfigString (section, TLS_VERIFY_SERVER)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_VERIFY_CLIENT, Manager::instance().getConfigString (section, TLS_VERIFY_CLIENT)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_REQUIRE_CLIENT_CERTIFICATE, Manager::instance().getConfigString (section, TLS_REQUIRE_CLIENT_CERTIFICATE)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_NEGOTIATION_TIMEOUT_SEC, Manager::instance().getConfigString (section, TLS_NEGOTIATION_TIMEOUT_SEC)));
+    tlsSettings.insert (std::pair<std::string, std::string>
+                        (TLS_NEGOTIATION_TIMEOUT_MSEC, Manager::instance().getConfigString (section, TLS_NEGOTIATION_TIMEOUT_MSEC)));
+    return tlsSettings;
+}
+
+void
+ConfigurationManager::setTlsSettings (const std::string& section, const std::map< std::string, std::string >& details)
+{
+    std::map<std::string, std::string> map_cpy = details;
+    std::map<std::string, std::string>::iterator it;
+
+    it = map_cpy.find (TLS_ENABLE);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig (section, TLS_ENABLE, it->second);
+    }
+
+    it = map_cpy.find (TLS_CA_LIST_FILE);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_CA_LIST_FILE, it->second);
+    }
+
+    it = map_cpy.find (TLS_CERTIFICATE_FILE);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_CERTIFICATE_FILE, it->second);
+    }
+
+    it = map_cpy.find (TLS_PRIVATE_KEY_FILE);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_PRIVATE_KEY_FILE, it->second);
+    }
+
+    it = map_cpy.find (TLS_PASSWORD);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_PASSWORD, it->second);
+    }
+
+    it = map_cpy.find (TLS_METHOD);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_METHOD, it->second);
+    }
+
+    it = map_cpy.find (TLS_CIPHERS);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_CIPHERS, it->second);
+    }
+
+    it = map_cpy.find (TLS_SERVER_NAME);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_SERVER_NAME, it->second);
+    }
+
+    it = map_cpy.find (TLS_VERIFY_CLIENT);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_VERIFY_CLIENT, it->second);
+    }
+
+    it = map_cpy.find (TLS_REQUIRE_CLIENT_CERTIFICATE);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_REQUIRE_CLIENT_CERTIFICATE, it->second);
+    }
+
+    it = map_cpy.find (TLS_NEGOTIATION_TIMEOUT_SEC);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_NEGOTIATION_TIMEOUT_SEC, it->second);
+    }
+
+    it = map_cpy.find (TLS_NEGOTIATION_TIMEOUT_MSEC);
+
+    if (it != map_cpy.end()) {
+        Manager::instance().setConfig (section, TLS_NEGOTIATION_TIMEOUT_MSEC, it->second);
+    }
+
+    Manager::instance().saveConfig();
+
+    // Update account details to the client side
+    accountsChanged();
+
 }
 
 std::map< std::string, std::string >
 ConfigurationManager::getCredential (const std::string& accountID, const int32_t& index)
 {
-    _debug ("ConfigurationManager::getCredential number %i for accountID %s\n", index, accountID.c_str());
+    _debug ("ConfigurationManager::getCredential number %i for accountID %s", index, accountID.c_str());
 
     std::string credentialIndex;
     std::stringstream streamOut;
     streamOut << index;
     credentialIndex = streamOut.str();
-    
-    std::string section = std::string("Credential") + std::string(":") + accountID + std::string(":") + credentialIndex;
-    
+
+    std::string section = std::string ("Credential") + std::string (":") + accountID + std::string (":") + credentialIndex;
+
     std::map<std::string, std::string> credentialInformation;
-    std::string username = Manager::instance().getConfigString(section, USERNAME);
-    std::string password = Manager::instance().getConfigString(section, PASSWORD);
-    std::string realm = Manager::instance().getConfigString(section, REALM);
-    
-    credentialInformation.insert(std::pair<std::string, std::string> (USERNAME, username));
-    credentialInformation.insert(std::pair<std::string, std::string> (PASSWORD, password));
-    credentialInformation.insert(std::pair<std::string, std::string> (REALM, realm));
-    
+    std::string username = Manager::instance().getConfigString (section, USERNAME);
+    std::string password = Manager::instance().getConfigString (section, PASSWORD);
+    std::string realm = Manager::instance().getConfigString (section, REALM);
+
+    credentialInformation.insert (std::pair<std::string, std::string> (USERNAME, username));
+    credentialInformation.insert (std::pair<std::string, std::string> (PASSWORD, password));
+    credentialInformation.insert (std::pair<std::string, std::string> (REALM, realm));
+
     return credentialInformation;
 }
 
 int32_t
 ConfigurationManager::getNumberOfCredential (const std::string& accountID)
 {
-    _debug ("ConfigurationManager::getNumberOfCredential\n");
+    _debug ("ConfigurationManager::getNumberOfCredential");
     return Manager::instance().getConfigInt (accountID, CONFIG_CREDENTIAL_NUMBER);
 }
 
 void
-ConfigurationManager::setCredential (const std::string& accountID, const int32_t& index,
-        const std::map< std::string, std::string >& details)
+ConfigurationManager::setNumberOfCredential (const std::string& accountID, const int32_t& number)
 {
-    _debug ("ConfigurationManager::setCredential received\n");
-    
-    std::map<std::string, std::string>::iterator it;
-    std::map<std::string, std::string> credentialInformation = details;
-    
-    std::string credentialIndex;
-    std::stringstream streamOut;
-    streamOut << index;
-    credentialIndex = streamOut.str();
-    
-    std::string section = "Credential" + std::string(":") + accountID + std::string(":") + credentialIndex;
-    
-    it = credentialInformation.find(USERNAME);
-    if(it == credentialInformation.end()) {
-        Manager::instance().setConfig (section, USERNAME, EMPTY_FIELD);    
-    } else {
-        Manager::instance().setConfig (section, USERNAME, it->second);
+    if (accountID != AccountNULL || !accountID.empty()) {
+        Manager::instance().setConfig (accountID, CONFIG_CREDENTIAL_NUMBER, number);
     }
-    
-    it = credentialInformation.find(PASSWORD);
-    if(it == credentialInformation.end()) {
-        Manager::instance().setConfig (section, PASSWORD, EMPTY_FIELD);            
-    } else {
-        Manager::instance().setConfig (section, PASSWORD, it->second);
-    }
-    
-    it = credentialInformation.find(REALM);
-    if(it == credentialInformation.end()) {
-        Manager::instance().setConfig (section, REALM, EMPTY_FIELD);    
-    } else {
-        Manager::instance().setConfig (section, REALM, it->second);
-    }
+}
 
+void
+ConfigurationManager::setCredential (const std::string& accountID, const int32_t& index,
+                                     const std::map< std::string, std::string >& details)
+{
+    _debug ("ConfigurationManager::setCredential received");
+    Manager::instance().setCredential (accountID, index, details);
+}
+
+void
+ConfigurationManager::deleteAllCredential (const std::string& accountID)
+{
+    _debug ("ConfigurationManager::deleteAllCredential received");
+    Manager::instance().deleteAllCredential (accountID);
 }
 
 void
 ConfigurationManager::setAccountDetails (const std::string& accountID,
         const std::map< std::string, std::string >& details)
 {
-    _debug ("ConfigurationManager::setAccountDetails received\n");
+    _debug ("ConfigurationManager::setAccountDetails received");
     Manager::instance().setAccountDetails (accountID, details);
 }
 
 void
 ConfigurationManager::sendRegister (const std::string& accountID, const int32_t& expire)
 {
-    _debug ("ConfigurationManager::sendRegister received\n");
+    _debug ("ConfigurationManager::sendRegister received");
     Manager::instance().sendRegister (accountID, expire);
 }
 
 std::string
 ConfigurationManager::addAccount (const std::map< std::string, std::string >& details)
 {
-    _debug ("ConfigurationManager::addAccount received\n");
+    _debug ("ConfigurationManager::addAccount received");
     return Manager::instance().addAccount (details);
 }
 
@@ -137,14 +349,14 @@ ConfigurationManager::addAccount (const std::map< std::string, std::string >& de
 void
 ConfigurationManager::removeAccount (const std::string& accoundID)
 {
-    _debug ("ConfigurationManager::removeAccount received\n");
+    _debug ("ConfigurationManager::removeAccount received");
     return Manager::instance().removeAccount (accoundID);
 }
 
 std::vector< std::string >
 ConfigurationManager::getAccountList()
 {
-    _debug ("ConfigurationManager::getAccountList received\n");
+    _debug ("ConfigurationManager::getAccountList received");
     return Manager::instance().getAccountList();
 }
 
@@ -153,7 +365,7 @@ std::vector< std::string >
 ConfigurationManager::getToneLocaleList()
 {
     std::vector< std::string > ret;
-    _debug ("ConfigurationManager::getToneLocaleList received\n");
+    _debug ("ConfigurationManager::getToneLocaleList received");
     return ret;
 }
 
@@ -162,7 +374,7 @@ std::string
 ConfigurationManager::getVersion()
 {
     std::string ret ("");
-    _debug ("ConfigurationManager::getVersion received\n");
+    _debug ("ConfigurationManager::getVersion received");
     return ret;
 }
 
@@ -171,37 +383,50 @@ std::vector< std::string >
 ConfigurationManager::getRingtoneList()
 {
     std::vector< std::string >  ret;
-    _debug ("ConfigurationManager::getRingtoneList received\n");
+    _debug ("ConfigurationManager::getRingtoneList received");
     return ret;
 }
 
 
 
 std::vector< std::string  >
-ConfigurationManager::getCodecList()
+ConfigurationManager::getCodecList (void)
 {
-    _debug ("ConfigurationManager::getCodecList received\n");
+    _debug ("ConfigurationManager::getCodecList received");
     return Manager::instance().getCodecList();
+}
+
+std::vector<std::string>
+ConfigurationManager::getSupportedTlsMethod (void)
+{
+    _debug ("ConfigurationManager::getSupportedTlsMethod received");
+    std::vector<std::string> method;
+    method.push_back ("Default");
+    method.push_back ("TLSv1");
+    method.push_back ("SSLv2");
+    method.push_back ("SSLv3");
+    method.push_back ("SSLv23");
+    return method;
 }
 
 std::vector< std::string >
 ConfigurationManager::getCodecDetails (const int32_t& payload)
 {
-    _debug ("ConfigurationManager::getCodecDetails received\n");
+    _debug ("ConfigurationManager::getCodecDetails received");
     return Manager::instance().getCodecDetails (payload);
 }
 
 std::vector< std::string >
 ConfigurationManager::getActiveCodecList()
 {
-    _debug ("ConfigurationManager::getActiveCodecList received\n");
+    _debug ("ConfigurationManager::getActiveCodecList received");
     return Manager::instance().getActiveCodecList();
 }
 
 void
 ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list)
 {
-    _debug ("ConfigurationManager::setActiveCodecList received\n");
+    _debug ("ConfigurationManager::setActiveCodecList received");
     Manager::instance().setActiveCodecList (list);
 }
 
@@ -209,77 +434,77 @@ ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list
 std::vector< std::string >
 ConfigurationManager::getInputAudioPluginList()
 {
-    _debug ("ConfigurationManager::getInputAudioPluginList received\n");
+    _debug ("ConfigurationManager::getInputAudioPluginList received");
     return Manager::instance().getInputAudioPluginList();
 }
 
 std::vector< std::string >
 ConfigurationManager::getOutputAudioPluginList()
 {
-    _debug ("ConfigurationManager::getOutputAudioPluginList received\n");
+    _debug ("ConfigurationManager::getOutputAudioPluginList received");
     return Manager::instance().getOutputAudioPluginList();
 }
 
 void
 ConfigurationManager::setInputAudioPlugin (const std::string& audioPlugin)
 {
-    _debug ("ConfigurationManager::setInputAudioPlugin received\n");
+    _debug ("ConfigurationManager::setInputAudioPlugin received");
     return Manager::instance().setInputAudioPlugin (audioPlugin);
 }
 
 void
 ConfigurationManager::setOutputAudioPlugin (const std::string& audioPlugin)
 {
-    _debug ("ConfigurationManager::setOutputAudioPlugin received\n");
+    _debug ("ConfigurationManager::setOutputAudioPlugin received");
     return Manager::instance().setOutputAudioPlugin (audioPlugin);
 }
 
 std::vector< std::string >
 ConfigurationManager::getAudioOutputDeviceList()
 {
-    _debug ("ConfigurationManager::getAudioOutputDeviceList received\n");
+    _debug ("ConfigurationManager::getAudioOutputDeviceList received");
     return Manager::instance().getAudioOutputDeviceList();
 }
 
 void
 ConfigurationManager::setAudioOutputDevice (const int32_t& index)
 {
-    _debug ("ConfigurationManager::setAudioOutputDevice received\n");
+    _debug ("ConfigurationManager::setAudioOutputDevice received");
     return Manager::instance().setAudioOutputDevice (index);
 }
 
 std::vector< std::string >
 ConfigurationManager::getAudioInputDeviceList()
 {
-    _debug ("ConfigurationManager::getAudioInputDeviceList received\n");
+    _debug ("ConfigurationManager::getAudioInputDeviceList received");
     return Manager::instance().getAudioInputDeviceList();
 }
 
 void
 ConfigurationManager::setAudioInputDevice (const int32_t& index)
 {
-    _debug ("ConfigurationManager::setAudioInputDevice received\n");
+    _debug ("ConfigurationManager::setAudioInputDevice received");
     return Manager::instance().setAudioInputDevice (index);
 }
 
 std::vector< std::string >
 ConfigurationManager::getCurrentAudioDevicesIndex()
 {
-    _debug ("ConfigurationManager::getCurrentAudioDeviceIndex received\n");
+    _debug ("ConfigurationManager::getCurrentAudioDeviceIndex received");
     return Manager::instance().getCurrentAudioDevicesIndex();
 }
 
 int32_t
 ConfigurationManager::getAudioDeviceIndex (const std::string& name)
 {
-    _debug ("ConfigurationManager::getAudioDeviceIndex received\n");
+    _debug ("ConfigurationManager::getAudioDeviceIndex received");
     return Manager::instance().getAudioDeviceIndex (name);
 }
 
 std::string
 ConfigurationManager::getCurrentAudioOutputPlugin (void)
 {
-    _debug ("ConfigurationManager::getCurrentAudioOutputPlugin received\n");
+    _debug ("ConfigurationManager::getCurrentAudioOutputPlugin received");
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
 
@@ -288,7 +513,7 @@ std::vector< std::string >
 ConfigurationManager::getPlaybackDeviceList()
 {
     std::vector< std::string >  ret;
-    _debug ("ConfigurationManager::getPlaybackDeviceList received\n");
+    _debug ("ConfigurationManager::getPlaybackDeviceList received");
     return ret;
 }
 
@@ -296,9 +521,26 @@ std::vector< std::string >
 ConfigurationManager::getRecordDeviceList()
 {
     std::vector< std::string >  ret;
-    _debug ("ConfigurationManager::getRecordDeviceList received\n");
+    _debug ("ConfigurationManager::getRecordDeviceList received");
     return ret;
 
+}
+
+bool
+ConfigurationManager::isMd5CredentialHashing (void)
+{
+    bool isEnabled = Manager::instance().getConfigBool (PREFERENCES, CONFIG_MD5HASH);
+    return isEnabled;
+}
+
+void
+ConfigurationManager::setMd5CredentialHashing (const bool& enabled)
+{
+    if (enabled) {
+        Manager::instance().setConfig (PREFERENCES, CONFIG_MD5HASH, TRUE_STR);
+    } else {
+        Manager::instance().setConfig (PREFERENCES, CONFIG_MD5HASH, FALSE_STR);
+    }
 }
 
 int32_t
@@ -350,9 +592,9 @@ ConfigurationManager::getDialpad (void)
 }
 
 void
-ConfigurationManager::setDialpad (void)
+ConfigurationManager::setDialpad (const bool& display)
 {
-    Manager::instance().setDialpad();
+    Manager::instance().setDialpad (display);
 }
 
 int32_t
@@ -374,9 +616,9 @@ ConfigurationManager::getVolumeControls (void)
 }
 
 void
-ConfigurationManager::setVolumeControls (void)
+ConfigurationManager::setVolumeControls (const bool& display)
 {
-    Manager::instance().setVolumeControls();
+    Manager::instance().setVolumeControls (display);
 }
 
 int32_t
@@ -397,7 +639,7 @@ void ConfigurationManager::setHistoryEnabled (void)
     Manager::instance ().setHistoryEnabled ();
 }
 
-int32_t ConfigurationManager::getHistoryEnabled (void)
+std::string ConfigurationManager::getHistoryEnabled (void)
 {
     return Manager::instance ().getHistoryEnabled ();
 }
@@ -405,121 +647,73 @@ int32_t ConfigurationManager::getHistoryEnabled (void)
 void
 ConfigurationManager::startHidden (void)
 {
-    _debug ("Manager received startHidden\n");
+    _debug ("Manager received startHidden");
     Manager::instance().startHidden();
 }
 
 int32_t
 ConfigurationManager::isStartHidden (void)
 {
-    _debug ("Manager received isStartHidden\n");
+    _debug ("Manager received isStartHidden");
     return Manager::instance().isStartHidden();
 }
 
 void
 ConfigurationManager::switchPopupMode (void)
 {
-    _debug ("Manager received switchPopupMode\n");
+    _debug ("Manager received switchPopupMode");
     Manager::instance().switchPopupMode();
 }
 
 int32_t
 ConfigurationManager::popupMode (void)
 {
-    _debug ("Manager received popupMode\n");
+    _debug ("Manager received popupMode");
     return Manager::instance().popupMode();
 }
 
 void
 ConfigurationManager::setNotify (void)
 {
-    _debug ("Manager received setNotify\n");
+    _debug ("Manager received setNotify");
     Manager::instance().setNotify();
 }
 
 int32_t
 ConfigurationManager::getNotify (void)
 {
-    _debug ("Manager received getNotify\n");
+    _debug ("Manager received getNotify");
     return Manager::instance().getNotify();
 }
 
 void
 ConfigurationManager::setAudioManager (const int32_t& api)
 {
-    _debug ("Manager received setAudioManager\n");
+    _debug ("Manager received setAudioManager");
     Manager::instance().setAudioManager (api);
 }
 
 int32_t
 ConfigurationManager::getAudioManager (void)
 {
-    _debug ("Manager received getAudioManager\n");
+    _debug ("Manager received getAudioManager");
     return Manager::instance().getAudioManager();
 }
 
 void
 ConfigurationManager::setMailNotify (void)
 {
-    _debug ("Manager received setMailNotify\n");
+    _debug ("Manager received setMailNotify");
     Manager::instance().setMailNotify();
 }
 
 int32_t
 ConfigurationManager::getMailNotify (void)
 {
-    _debug ("Manager received getMailNotify\n");
+    _debug ("Manager received getMailNotify");
     return Manager::instance().getMailNotify();
 }
 
-int32_t
-ConfigurationManager::getPulseAppVolumeControl (void)
-{
-    return Manager::instance().getPulseAppVolumeControl();
-}
-
-void
-ConfigurationManager::setPulseAppVolumeControl (void)
-{
-    Manager::instance().setPulseAppVolumeControl();
-}
-
-int32_t
-ConfigurationManager::getSipPort (void)
-{
-    return Manager::instance().getSipPort();
-}
-
-void
-ConfigurationManager::setSipPort (const int32_t& portNum)
-{
-    _debug ("Manager received setSipPort: %d\n", portNum);
-    Manager::instance().setSipPort (portNum);
-}
-
-std::string ConfigurationManager::getStunServer (void)
-{
-    _debug ("Manager received getStunServer\n") ;
-    return Manager::instance().getStunServer();
-}
-
-void ConfigurationManager::setStunServer (const std::string& server)
-{
-    _debug ("Manager received setStunServer\n") ;
-    Manager::instance().setStunServer (server);
-}
-
-void ConfigurationManager::enableStun (void)
-{
-    _debug ("Manager received enableStun\n") ;
-    Manager::instance().enableStun();
-}
-
-int32_t ConfigurationManager::isStunEnabled (void)
-{
-    _debug ("Manager received isStunEnabled\n") ;
-    return Manager::instance().isStunEnabled();
-}
 
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)
 {
@@ -538,7 +732,7 @@ std::vector< std::string > ConfigurationManager::getAddressbookList (void)
 
 void ConfigurationManager::setAddressbookList (const std::vector< std::string >& list)
 {
-    _debug ("Manager received setAddressbookList\n") ;
+    _debug ("Manager received setAddressbookList") ;
     Manager::instance().setAddressbookList (list);
 }
 
@@ -565,4 +759,46 @@ std::map <std::string, std::string> ConfigurationManager::getHistory (void)
 void ConfigurationManager::setHistory (const std::map <std::string, std::string>& entries)
 {
     Manager::instance().receive_history_from_client (entries);
+}
+
+std::string
+ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
+{
+    _debug ("ConfigurationManager::getAddrFromInterfaceName received");
+
+    std::string address = SIPVoIPLink::instance("")->getInterfaceAddrFromName(interface);
+
+    _debug("address: %s", address.c_str());
+
+    return address;
+}
+
+std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
+{
+    _debug ("ConfigurationManager::getAllIpInterface received");
+
+    std::vector<std::string> vector;
+    SIPVoIPLink * sipLink = NULL;
+    sipLink = SIPVoIPLink::instance ("");
+
+    if (sipLink != NULL) {
+        vector = sipLink->getAllIpInterface();
+    }
+
+    return vector;
+}
+
+std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName(void)
+{
+    _debug ("ConfigurationManager::getAllIpInterface received\n");
+
+    std::vector<std::string> vector;
+    SIPVoIPLink * sipLink = NULL;
+    sipLink = SIPVoIPLink::instance ("");
+
+    if (sipLink != NULL) {
+        vector = sipLink->getAllIpInterfaceByName();
+    }
+
+    return vector;
 }

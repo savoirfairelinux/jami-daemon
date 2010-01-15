@@ -35,6 +35,8 @@ codec is considerably faster, and still fully compatible with wideband terminals
 
 */
 
+#include <stdint.h>
+
 enum
 {
     G722_SAMPLE_RATE_8000 = 0x0001,
@@ -128,11 +130,11 @@ typedef struct
 extern "C" {
 #endif
 
-void g722_encode_init(int rate, int options);
+void g722_encode_init (void);
 int g722_encode_release();
 int g722_encode(uint8_t g722_data[], const int16_t amp[], int len);
 
-void g722_decode_init(int rate, int options);
+void g722_decode_init (void);
 int g722_decode_release();
 int g722_decode(int16_t amp[], const uint8_t g722_data[], int len);
 

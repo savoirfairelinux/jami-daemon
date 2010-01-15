@@ -23,7 +23,7 @@
 #define __AUDIOLOOP_H__
 
 #include <string>
-#include "../global.h" // for int16 declaration
+#include "global.h" // for int16 declaration
 
 /**
  * @file audioloop.h

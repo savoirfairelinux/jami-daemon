@@ -18,6 +18,7 @@
  */
 
 #include <callable_obj.h>
+#include <codeclist.h>
 #include <sflphone_const.h>
 #include <time.h>
 
@@ -49,25 +50,68 @@ gint get_state_callstruct ( gconstpointer a, gconstpointer b)
 
 gchar* call_get_peer_name (const gchar *format)
 {
-    gchar *end, *name;
+    const gchar *end, *name;
 
-    end = g_strrstr (format, "\"");
+    DEBUG("    callable_obj: %s", format);
+
+    end = g_strrstr (format, "<");
+
     if (!end) {
         return g_strndup (format, 0);
     } else {
-        name = format +1;
+        name = format;
         return g_strndup(name, end - name);
     }
 }
 
 gchar* call_get_peer_number (const gchar *format)
 {
+    DEBUG("    callable_obj: %s", format);
+
     gchar * number = g_strrstr(format, "<") + 1;
     gchar * end = g_strrstr(format, ">");
-    number = g_strndup(number, end - number  );
+
+    if(end && number)
+	number = g_strndup(number, end - number  );
+    else
+	number = g_strdup(format);
+    
     return number;
 }
 
+gchar* call_get_audio_codec (callable_obj_t *obj)
+{
+	gchar *audio_codec = "";
+	codec_t *codec;
+	gchar *format ="";
+	int samplerate;
+	
+	if (obj)
+	{
+		audio_codec = dbus_get_current_codec_name (obj);	
+		codec = codec_list_get_by_name (audio_codec);
+		if (codec){
+			samplerate = codec->sample_rate;
+			format = g_markup_printf_escaped ("%s/%i", audio_codec, samplerate);
+		}
+	}
+	return format;
+}
+
+void call_add_error(callable_obj_t * call, gpointer dialog)
+{
+    g_ptr_array_add (call->_error_dialogs, dialog);
+}
+
+void call_remove_error(callable_obj_t * call, gpointer dialog)
+{
+    g_ptr_array_remove (call->_error_dialogs, dialog);
+}
+
+void call_remove_all_errors(callable_obj_t * call)
+{
+    g_ptr_array_foreach (call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
+}
 
 void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
 {
@@ -78,13 +122,18 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     // Allocate memory
     obj = g_new0 (callable_obj_t, 1);
 
+    obj->_error_dialogs = g_ptr_array_new();
+
     // Set fields
     obj->_type = type;
     obj->_state = state;
+    obj->_state_code = 0;
+    obj->_state_code_description = "";
     obj->_accountID = g_strdup (accountID);
     obj->_peer_name = g_strdup (peer_name);
     obj->_peer_number = g_strdup (peer_number);
     obj->_peer_info = g_strdup (get_peer_info (peer_name, peer_number));
+
     obj->_trsft_to = "";
     set_timestamp (&(obj->_time_start));
     set_timestamp (&(obj->_time_stop));
@@ -93,8 +142,9 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
         call_id = generate_call_id ();
     else
         call_id = callID;
-    // Set the ID
+    // Set the IDs
     obj->_callID = g_strdup (call_id);
+    obj->_confID = NULL;
 
     *new_call = obj;
 }
@@ -107,7 +157,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
 
     accountID = g_hash_table_lookup (details, "ACCOUNTID");
     peer_number = g_hash_table_lookup (details, "PEER_NUMBER");
-    peer_name = g_strdup ("");
+    peer_name = g_hash_table_lookup (details, "DISPLAY_NAME");
     state_str = g_hash_table_lookup (details, "CALL_STATE");
 
 
@@ -139,40 +189,46 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
     gchar *peer_number="", *accountID="", *time_stop="";
     callable_obj_t *new_call;
     history_state_t history_state = MISSED;
-    char *ptr;
+    char **ptr;
     const char *delim="|";
     int token=0;
 
     // details is in serialized form, i e: calltype%to%from%callid
 
-    if ((ptr = strtok(details, delim)) != NULL) {
-        do {
+    if ((ptr = g_strsplit(details, delim,5)) != NULL) {
+
+	while (ptr != NULL && token < 5) {
+	    
             switch (token)
             {
                 case 0:
-                    history_state = get_history_state_from_id (ptr);
+                    history_state = get_history_state_from_id (*ptr);
                     break;
-                case 1:
-                    peer_number = ptr;
+	        case 1: 
+                    peer_number = *ptr;
                     break;
                 case 2:
-                    peer_name = ptr;
+                    peer_name = *ptr;
                     break;
                 case 3:
-                    time_stop = ptr;
+                    time_stop = *ptr;
                     break;
                 case 4:
-                    accountID = ptr;
+                    accountID = *ptr;
                     break;
                 default:
                     break;
             }
-            token ++;
-        } while ((ptr = strtok(NULL, delim)) != NULL);
+
+            token++;
+	    ptr++;
+
+	}
 
     }
     if (g_strcasecmp (peer_name, "empty") == 0)
         peer_name="";
+
     create_new_call (HISTORY_ENTRY, CALL_STATE_DIALING, "", accountID, peer_name, peer_number, &new_call);
     new_call->_history_state = history_state;
     new_call->_time_start = convert_gchar_to_timestamp (timestamp);
@@ -273,14 +329,14 @@ gchar* serialize_history_entry (callable_obj_t *entry)
     history_state = get_history_id_from_state (entry->_history_state);
     // and the timestamps
     timestamp = convert_timestamp_to_gchar (entry->_time_stop);
-    
+
     result = g_strconcat (history_state, separator, 
                           entry->_peer_number, separator, 
                           g_strcasecmp (entry->_peer_name,"") ==0 ? "empty": entry->_peer_name, separator, 
                           timestamp, separator, 
                           g_strcasecmp (entry->_accountID,"") ==0 ? "empty": entry->_accountID, 
                           NULL);
-
+    
     return result;
 }
 

@@ -24,7 +24,8 @@
 #include <callmanager-glue.h>
 #include <configurationmanager-glue.h>
 #include <instance-glue.h>
-#include <configwindow.h>
+#include <preferencesdialog.h>
+#include <accountlistconfigdialog.h>
 #include <mainwindow.h>
 #include <marshaller.h>
 #include <sliders.h>
@@ -49,7 +50,7 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
         const gchar* from,
         void * foo  UNUSED )
 {
-    DEBUG ("Incoming call! %s",callID);
+    DEBUG("Incoming call (%s) from %s", callID, from);
 
     callable_obj_t * c;
     gchar *peer_name, *peer_number;
@@ -57,9 +58,13 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
     peer_name = call_get_peer_name (from);
     peer_number = call_get_peer_number (from);
 
+    DEBUG("    peer name: %s", peer_name);
+    DEBUG("    peer number: %s", peer_number);
+
     create_new_call (CALL, CALL_STATE_INCOMING, g_strdup(callID), g_strdup(accountID), peer_name, peer_number, &c);
 #if GTK_CHECK_VERSION(2,10,0)
-    status_tray_icon_blink( TRUE );
+    status_tray_icon_blink (TRUE);
+	popup_main_window ();
 #endif
 
     set_timestamp (&c->_time_start);
@@ -68,13 +73,29 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
 }
 
     static void
+zrtp_negotiation_failed_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        const gchar* reason,
+        const gchar* severity,
+        void * foo  UNUSED )
+{
+    DEBUG ("Zrtp negotiation failed.");
+    main_window_zrtp_negotiation_failed(callID, reason, severity);
+    callable_obj_t * c = NULL;
+    c = calllist_get(current_calls, callID);
+    if(c) {
+        notify_zrtp_negotiation_failed(c);
+    }
+}
+
+    static void
 curent_selected_codec (DBusGProxy *proxy UNUSED,
         const gchar* callID,
         const gchar* codecName,
         void * foo  UNUSED )
 {
-    DEBUG ("%s codec decided for call %s",codecName,callID);
-    sflphone_display_selected_codec (codecName);
+    // DEBUG ("%s codec decided for call %s",codecName,callID);
+    // sflphone_display_selected_codec (codecName);
 }
 
     static void
@@ -124,11 +145,11 @@ call_state_cb (DBusGProxy *proxy UNUSED,
                 // peer hung up, the conversation was established, so _stop has been initialized with the current time value
                 DEBUG("call state current");
                 set_timestamp (&c->_time_stop);
-                calltree_update_call( history, c );
+                calltree_update_call( history, c, NULL);
             }
             stop_notification();
             sflphone_hung_up (c);
-            calltree_update_call( history, c );
+            calltree_update_call( history, c, NULL );
             status_bar_display_account();
         }
         else if ( strcmp(state, "UNHOLD_CURRENT") == 0 )
@@ -165,7 +186,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
         // The callID is unknow, threat it like a new call
         // If it were an incoming call, we won't be here
         // It means that a new call has been initiated with an other client (cli for instance)
-        if ( strcmp(state, "RINGING") == 0 )
+        if ( strcmp(state, "RINGING") == 0  || strcmp(state, "CURRENT") == 0)
         {
             callable_obj_t *new_call;
             GHashTable *call_details;
@@ -183,24 +204,114 @@ call_state_cb (DBusGProxy *proxy UNUSED,
 
             if (g_strcasecmp (type, "0") == 0)
             {
-                g_print ("incoming\n");
+                // DEBUG("incoming\n");
                 new_call->_history_state = INCOMING;
             }
             else
             {
-                g_print ("outgoing\n");
+                // DEBUG("outgoing\n");
                 new_call->_history_state = OUTGOING;
             }
 
             calllist_add (current_calls, new_call);
             calllist_add (history, new_call);
-            calltree_add_call (current_calls, new_call);
-            update_menus ();
+            calltree_add_call (current_calls, new_call, NULL);
+            update_actions ();
             calltree_display (current_calls);
 
             //sflphone_incoming_call (new_call);
         }
     }
+}
+
+static void
+conference_changed_cb (DBusGProxy *proxy UNUSED,
+	const gchar* confID,
+        const gchar* state,
+        void * foo  UNUSED )
+{
+    
+    // sflphone_display_transfer_status("Transfer successfull");
+    conference_obj_t* changed_conf = conferencelist_get(confID);
+    gchar** participants;
+    gchar** part;
+
+    DEBUG("conference new state %s\n", state);
+
+    if(changed_conf)
+    {
+        // remove old conference from calltree
+	calltree_remove_conference (current_calls, changed_conf, NULL);
+
+	// update conference state
+	if ( strcmp(state, "ACTIVE_ATACHED") == 0 ) {
+	    changed_conf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+	}
+	else if ( strcmp(state, "ACTIVE_DETACHED") == 0 ) {
+	    changed_conf->_state = CONFERENCE_STATE_ACTIVE_DETACHED;
+	}
+	else if ( strcmp(state, "HOLD") == 0 ) {
+	    changed_conf->_state = CONFERENCE_STATE_HOLD;
+	}
+	else {
+	    DEBUG("Error: conference state not recognized");
+	}
+	
+
+	participants = (gchar**)dbus_get_participant_list(changed_conf->_confID);
+
+	// update conferece participants
+	conference_participant_list_update(participants, changed_conf);
+	
+	// add new conference to calltree
+	calltree_add_conference (current_calls, changed_conf);
+    }
+}
+
+
+static void
+conference_created_cb (DBusGProxy *proxy UNUSED,
+	const gchar* confID,
+        void * foo  UNUSED )
+{
+    DEBUG ("Conference added %s\n", confID);
+
+    conference_obj_t* new_conf;
+    callable_obj_t* call;
+    gchar* call_id;
+    gchar** participants;
+    gchar** part;
+
+    create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
+    // new_conf->_confID = g_strdup(confID);
+
+    participants = (gchar**)dbus_get_participant_list(new_conf->_confID);
+
+    conference_participant_list_update(participants, new_conf);
+
+    // participant = new_conf->participant;
+    for (part = participants; *part; part++)
+    {	    
+	call_id = (gchar*)(*part);
+	call = calllist_get (current_calls, call_id);
+	call->_confID = g_strdup(confID);
+    }
+
+    conferencelist_add(new_conf);
+    calltree_add_conference (current_calls, new_conf);
+}
+
+
+static void
+conference_removed_cb (DBusGProxy *proxy UNUSED,
+	const gchar* confID,
+        void * foo  UNUSED )
+{
+    DEBUG ("Conference removed %s\n", confID);
+
+    conference_obj_t * c = conferencelist_get(confID);
+    calltree_remove_conference (current_calls, c, NULL);
+    conferencelist_remove(c->_confID); 
 }
 
 
@@ -209,8 +320,9 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
         void * foo  UNUSED )
 {
     DEBUG ("Accounts changed");
-    sflphone_fill_account_list(TRUE);
-    config_window_fill_account_list();
+    sflphone_fill_account_list ();
+    sflphone_fill_ip2ip_profile();
+    account_list_config_dialog_fill();
 
     // Update the status bar in case something happened
     // Should fix ticket #1215
@@ -235,6 +347,88 @@ transfer_failed_cb (DBusGProxy *proxy UNUSED,
     sflphone_display_transfer_status("Transfer failed");
 }
 
+    static void
+secure_on_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        const gchar* cipher,
+        void * foo  UNUSED )
+{
+    DEBUG ("SRTP is ON secure_on_cb");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        c->_srtp_cipher = g_strdup(cipher);
+        sflphone_srtp_on (c);
+        notify_secure_on(c);
+    }
+}
+
+    static void
+secure_off_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        void * foo  UNUSED )
+{
+    DEBUG ("SRTP is OFF");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_srtp_off (c);
+        notify_secure_off (c);
+    }
+}
+
+    static void
+show_sas_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        const gchar* sas,
+        const gboolean verified,
+        void * foo  UNUSED )
+{
+    DEBUG ("Showing SAS");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_srtp_show_sas (c, sas, verified);
+    }
+}
+
+    static void
+confirm_go_clear_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        void * foo  UNUSED )
+{
+    DEBUG ("Confirm Go Clear request");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_confirm_go_clear (c);
+    }
+}
+
+    static void
+zrtp_not_supported_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        void * foo  UNUSED )
+{
+    DEBUG ("ZRTP not supported on the other end");
+    callable_obj_t * c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_zrtp_not_supported (c);
+        notify_zrtp_not_supported(c);
+    }
+}
+
+    static void
+sip_call_state_cb (DBusGProxy *proxy UNUSED,
+        const gchar* callID,
+        const gchar* description,
+        const guint code, 
+        void * foo  UNUSED )
+{
+    callable_obj_t * c = NULL;
+    c = calllist_get(current_calls, callID);
+
+    if(c != NULL) {
+        DEBUG("sip_call_state_cb received code %d", code);       
+        sflphone_call_state_changed(c, description, code);
+    }
+}
 
     static void
 error_alert(DBusGProxy *proxy UNUSED,
@@ -309,6 +503,7 @@ dbus_connect ()
     }
 
     DEBUG ("DBus connected to CallManager");
+    /* STRING STRING STRING Marshaller */
     /* Incoming call */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_STRING,
             G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
@@ -317,6 +512,11 @@ dbus_connect ()
     dbus_g_proxy_connect_signal (callManagerProxy,
             "incomingCall", G_CALLBACK(incoming_call_cb), NULL, NULL);
 
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "zrtpNegotiationFailed", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "zrtpNegotiationFailed", G_CALLBACK(zrtp_negotiation_failed_cb), NULL, NULL);
+            
     /* Current codec */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_STRING,
             G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
@@ -362,7 +562,67 @@ dbus_connect ()
     dbus_g_proxy_connect_signal (callManagerProxy,
             "transferFailed", G_CALLBACK(transfer_failed_cb), NULL, NULL);
 
+    /* Conference related callback */
 
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "conferenceChanged", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "conferenceChanged", G_CALLBACK(conference_changed_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "conferenceCreated", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "conferenceCreated", G_CALLBACK(conference_created_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "conferenceRemoved", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "conferenceRemoved", G_CALLBACK(conference_removed_cb), NULL, NULL);
+
+    /* Security related callbacks */
+    
+    /* Register a marshaller for STRING,STRING,BOOL */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_BOOL,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "showSAS", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "showSAS", G_CALLBACK(show_sas_cb), NULL, NULL);  
+  
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "secureOn", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "secureOn", G_CALLBACK(secure_on_cb), NULL, NULL);
+
+    /* Register a marshaller for STRING*/
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "secureOff", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "secureOff", G_CALLBACK(secure_off_cb), NULL, NULL);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "zrtpNotSuppOther", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "zrtpNotSuppOther", G_CALLBACK(zrtp_not_supported_cb), NULL, NULL);
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "confirmGoClear", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "confirmGoClear", G_CALLBACK(confirm_go_clear_cb), NULL, NULL);               
+
+    /* VOID STRING STRING INT */
+    dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_INT,
+            G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "sipCallStateChanged", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "sipCallStateChanged", G_CALLBACK(sip_call_state_cb), NULL, NULL);
+                        
     configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
             "org.sflphone.SFLphone",
             "/org/sflphone/SFLphone/ConfigurationManager",
@@ -416,6 +676,8 @@ dbus_clean ()
     void
 dbus_hold (const callable_obj_t * c)
 {
+    DEBUG("dbus_hold %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hold ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -429,6 +691,8 @@ dbus_hold (const callable_obj_t * c)
     void
 dbus_unhold (const callable_obj_t * c)
 {
+    DEBUG("dbus_unhold %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_unhold ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -440,10 +704,58 @@ dbus_unhold (const callable_obj_t * c)
 }
 
     void
+dbus_hold_conference (const conference_obj_t * c)
+{
+    DEBUG("dbus_hold_conference %s\n", c->_confID);
+
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_hold_conference ( callManagerProxy, c->_confID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call hold() on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_unhold_conference (const conference_obj_t * c)
+{
+    DEBUG("dbus_unhold_conference %s\n", c->_confID);
+
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_unhold_conference ( callManagerProxy, c->_confID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call unhold() on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
 dbus_hang_up (const callable_obj_t * c)
 {
+    DEBUG("dbus_hang_up %s\n", c->_callID);
+    
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_hang_up ( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call hang_up() on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+
+    void
+dbus_hang_up_conference (const conference_obj_t * c)
+{
+    DEBUG("dbus_hang_up_conference %s\n", c->_confID);
+    
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_hang_up_conference ( callManagerProxy, c->_confID, &error);
     if (error)
     {
         ERROR ("Failed to call hang_up() on CallManager: %s",
@@ -471,6 +783,9 @@ dbus_accept (const callable_obj_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
 #endif
+
+    DEBUG("dbus_accept %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_accept ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -487,6 +802,9 @@ dbus_refuse (const callable_obj_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
 #endif
+
+    DEBUG("dbus_refuse %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_refuse ( callManagerProxy, c->_callID, &error);
     if (error)
@@ -501,6 +819,8 @@ dbus_refuse (const callable_obj_t * c)
     void
 dbus_place_call (const callable_obj_t * c)
 {
+    DEBUG("dbus_place_call %s\n", c->_callID);
+
     GError *error = NULL;
     org_sflphone_SFLphone_CallManager_place_call ( callManagerProxy, c->_accountID, c->_callID, c->_peer_number, &error);
     if (error)
@@ -562,18 +882,54 @@ GHashTable* dbus_account_details(gchar * accountID)
     void
 dbus_set_credential(account_t *a, int index)
 {
+    DEBUG("Sending credential %d to server", index);
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_credential (
-            configurationManagerProxy,
-            a->accountID,
-            index,
-            g_array_index(a->credential_information, GHashTable*, index),
-            &error);
+    GHashTable * credential = g_ptr_array_index(a->credential_information, index);
+    
+    if(credential == NULL) {
+        DEBUG("Credential %d was deleted", index);
+    } else {
+        org_sflphone_SFLphone_ConfigurationManager_set_credential (
+                configurationManagerProxy,
+                a->accountID,
+                index,
+                credential,
+                &error);
+    }
+            
     if (error) {
-        ERROR ("Failed to call set_account_details() on ConfigurationManager: %s",
+        ERROR ("Failed to call set_credential() on ConfigurationManager: %s",
                 error->message);
         g_error_free (error);
     }
+}
+    void 
+dbus_set_number_of_credential(account_t *a, int number) 
+{
+    DEBUG("Sending number of credential %d to server", number);
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_set_number_of_credential( configurationManagerProxy, a->accountID, number, &error);
+            
+    if (error) {
+        ERROR ("Failed to call set_number_of_credential() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    } 
+}
+    void
+dbus_delete_all_credential(account_t *a)
+{
+    DEBUG("Deleting all credentials\n");
+    GError *error = NULL;
+    
+    org_sflphone_SFLphone_ConfigurationManager_delete_all_credential(configurationManagerProxy, a->accountID, &error);
+        
+    if (error) {
+        ERROR ("Failed to call deleteAllCredential on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    } 
 }
 
     int
@@ -617,11 +973,49 @@ GHashTable* dbus_get_credential(gchar * accountID, int index)
     }
 }
 
-    void
-dbus_send_register ( gchar* accountID , const guint expire)
+GHashTable* dbus_get_ip2_ip_details(void)
 {
     GError *error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_send_register ( configurationManagerProxy, accountID, expire ,&error);
+    GHashTable * details;
+    if(!org_sflphone_SFLphone_ConfigurationManager_get_ip2_ip_details( configurationManagerProxy, &details, &error))
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+        {
+            ERROR ("Caught remote method (get_ip2_ip_details) exception  %s: %s", dbus_g_error_get_name(error), error->message);
+        }
+        else
+        {
+            ERROR("Error while calling get_ip2_ip_details: %s", error->message);
+        }
+        g_error_free (error);
+        return NULL;
+    }
+    else{
+        return details;
+    }
+}
+
+    void
+dbus_set_ip2ip_details(GHashTable * properties)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_ip2_ip_details (
+            configurationManagerProxy,
+            properties,
+            &error);
+    if (error)
+    {
+        ERROR ("Failed to call set_ip_2ip_details() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_send_register ( gchar* accountID , const guint enable)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_send_register(configurationManagerProxy, accountID, enable ,&error);
     if (error)
     {
         ERROR ("Failed to call send_register() on ConfigurationManager: %s",
@@ -662,7 +1056,6 @@ dbus_set_account_details(account_t *a)
         g_error_free (error);
     }
 }
-
     gchar*
 dbus_add_account(account_t *a)
 {
@@ -802,7 +1195,7 @@ dbus_codec_list()
 {
 
     GError *error = NULL;
-    gchar** array;
+    gchar** array = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_codec_list (
             configurationManagerProxy,
             &array,
@@ -838,13 +1231,10 @@ dbus_codec_details( int payload )
     return array;
 }
 
-    gchar*
-dbus_get_current_codec_name(const callable_obj_t * c)
+gchar* dbus_get_current_codec_name (const callable_obj_t * c)
 {
 
-    DEBUG("dbus_get_current_codec_name : CallID : %s", c->_callID);
-
-    gchar* codecName;
+    gchar* codecName= "";
     GError* error = NULL;
 
     org_sflphone_SFLphone_CallManager_get_current_codec_name (
@@ -1175,6 +1565,36 @@ dbus_ringtone_enabled()
     }
 }
 
+    gboolean
+dbus_is_md5_credential_hashing()
+{
+    int res;
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_is_md5_credential_hashing(
+            configurationManagerProxy,
+            &res,
+            &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    return res;
+}
+
+    void
+dbus_set_md5_credential_hashing(gboolean enabled)
+{
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_set_md5_credential_hashing(
+            configurationManagerProxy,
+            enabled,
+            &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+}
+
     int
 dbus_is_iax2_enabled()
 {
@@ -1207,12 +1627,13 @@ dbus_get_dialpad()
     return state;
 }
 
-    void
-dbus_set_dialpad(  )
+void dbus_set_dialpad (gboolean display)
 {
+    
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_dialpad(
             configurationManagerProxy,
+			display,
             &error);
     if(error)
     {
@@ -1274,12 +1695,70 @@ dbus_get_volume_controls()
 }
 
     void
-dbus_set_volume_controls(  )
+dbus_set_volume_controls (gboolean display)
 {
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_volume_controls(
             configurationManagerProxy,
+			display,
             &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+}
+
+void
+dbus_join_participant(const gchar* sel_callID, const gchar* drag_callID)
+{
+
+    DEBUG("dbus_join_participant %s and %s\n", sel_callID, drag_callID);
+
+    GError* error = NULL;
+    
+    org_sflphone_SFLphone_CallManager_join_participant (
+             callManagerProxy, 
+	     sel_callID, 
+	     drag_callID, 
+	     &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+}
+
+void
+dbus_add_participant(const gchar* callID, const gchar* confID)
+{
+
+    DEBUG("dbus_add_participant %s and %s\n", callID, confID);
+
+    GError* error = NULL;
+    
+    org_sflphone_SFLphone_CallManager_add_participant (
+             callManagerProxy, 
+	     callID, 
+	     confID, 
+	     &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+}
+
+void
+dbus_add_main_participant(const gchar* confID)
+{
+    DEBUG("dbus_add_participant %s\n", confID);
+
+    GError* error = NULL;
+
+    org_sflphone_SFLphone_CallManager_add_main_participant (
+             callManagerProxy, 
+	     confID, 
+	     &error);
     if(error)
     {
         g_error_free(error);
@@ -1288,14 +1767,54 @@ dbus_set_volume_controls(  )
 
 
     void
-dbus_set_record(const callable_obj_t * c)
+dbus_detach_participant(const gchar* callID)
 {
-    DEBUG("calling dbus_set_record on CallManager");
-    DEBUG("CallID : %s", c->_callID);
+
+    DEBUG("dbus_detach_participant %s\n", callID);
+
+    GError* error = NULL;
+    org_sflphone_SFLphone_CallManager_detach_participant(
+            callManagerProxy,
+            callID,
+            &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+}
+
+
+dbus_join_conference(const gchar* sel_confID, const gchar* drag_confID)
+{
+
+    DEBUG("dbus_join_conference %s and %s\n", sel_confID, drag_confID);
+
+    GError* error = NULL;
+    
+    org_sflphone_SFLphone_CallManager_join_conference (
+             callManagerProxy, 
+	     sel_confID, 
+	     drag_confID, 
+	     &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+}
+
+
+
+    void
+dbus_set_record(const gchar* id)
+{
+    DEBUG("dbus_set_record %s\n", id);
+
     GError* error = NULL;
     org_sflphone_SFLphone_CallManager_set_recording (
             callManagerProxy,
-            c->_callID,
+            id,
             &error);
     if(error)
     {
@@ -1303,10 +1822,11 @@ dbus_set_record(const callable_obj_t * c)
     }
 }
 
+
     gboolean
 dbus_get_is_recording(const callable_obj_t * c)
 {
-    DEBUG("calling dbus_get_is_recording on CallManager");
+    DEBUG("dbus_get_is_recording %s\n", c->_callID);
     GError* error = NULL;
     gboolean isRecording;
     org_sflphone_SFLphone_CallManager_get_is_recording (
@@ -1377,9 +1897,9 @@ void dbus_set_history_enabled ()
     }
 }
 
-int dbus_get_history_enabled ()
+gchar* dbus_get_history_enabled ()
 {
-    int state; 
+    gchar* state; 
     GError* error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_get_history_enabled(
             configurationManagerProxy,
@@ -1504,38 +2024,6 @@ dbus_get_notify( void )
     }
 }
 
-
-    void
-dbus_set_mail_notify( void )
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_mail_notify(
-            configurationManagerProxy,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-}
-
-    guint
-dbus_get_mail_notify( void )
-{
-    gint level;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_mail_notify(
-            configurationManagerProxy,
-            &level,
-            &error);
-    if(error)
-    {
-        ERROR("Error calling dbus_get_mail_notif_level");
-        g_error_free(error);
-    }
-
-    return (guint)level;
-}
-
     void
 dbus_set_audio_manager( int api )
 {
@@ -1568,116 +2056,40 @@ dbus_get_audio_manager( void )
     return api;
 }
 
+/*
     void
-dbus_set_pulse_app_volume_control( void )
+dbus_set_sip_address( const gchar* address )
 {
     GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_pulse_app_volume_control(
+    org_sflphone_SFLphone_ConfigurationManager_set_sip_address(
             configurationManagerProxy,
+            address,
             &error);
     if(error)
     {
         g_error_free(error);
     }
 }
+*/
 
-    int
-dbus_get_pulse_app_volume_control( void )
-{
-    int state;
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_get_pulse_app_volume_control(
-            configurationManagerProxy,
-            &state,
-            &error);
-    return state;
-}
+ /*
 
-    void
-dbus_set_sip_port( const guint portNum  )
+    gint
+dbus_get_sip_address( void )
 {
     GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_sip_port(
+    gint address;
+    org_sflphone_SFLphone_ConfigurationManager_get_sip_address(
             configurationManagerProxy,
-            portNum,
+            &address,
             &error);
     if(error)
     {
         g_error_free(error);
     }
+    return address;
 }
-
-    guint
-dbus_get_sip_port( void )
-{
-    GError* error = NULL;
-    gint portNum;
-    org_sflphone_SFLphone_ConfigurationManager_get_sip_port(
-            configurationManagerProxy,
-            &portNum,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-    return (guint)portNum;
-}
-
-gchar* dbus_get_stun_server (void)
-{
-    GError* error = NULL;
-    gchar* server;
-    org_sflphone_SFLphone_ConfigurationManager_get_stun_server(
-            configurationManagerProxy,
-            &server,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-    return server;
-}
-
-void dbus_set_stun_server( gchar* server)
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_stun_server(
-            configurationManagerProxy,
-            server,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-}
-
-gint dbus_stun_is_enabled (void)
-{
-    GError* error = NULL;
-    gint stun;
-    org_sflphone_SFLphone_ConfigurationManager_is_stun_enabled(
-            configurationManagerProxy,
-            &stun,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-    return stun;
-}
-
-void dbus_enable_stun (void)
-{
-
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_enable_stun(
-            configurationManagerProxy,
-            &error);
-    if(error)
-    {
-        g_error_free(error);
-    }
-}
+ */
 
 GHashTable* dbus_get_addressbook_settings (void) {
 
@@ -1788,6 +2200,52 @@ gchar** dbus_get_call_list (void)
     return list;
 }
 
+gchar** dbus_get_conference_list (void)
+{
+    GError *error = NULL;
+    gchar **list = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_conference_list (callManagerProxy, &list, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_conference_list");
+        g_error_free (error);
+    }
+
+    return list;
+}
+
+
+gchar** dbus_get_participant_list (const char * confID)
+{
+    GError *error = NULL;
+    gchar **list = NULL;
+
+    DEBUG("get participant list")
+
+    org_sflphone_SFLphone_CallManager_get_participant_list (callManagerProxy, confID, &list, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_participant_list");
+        g_error_free (error);
+    }
+
+    return list;
+}
+
+
+GHashTable* dbus_get_conference_details (const gchar *confID)
+{
+    GError *error = NULL;
+    GHashTable *details = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_conference_details (callManagerProxy, confID, &details, &error);
+    if (error){
+        ERROR ("Error calling org_sflphone_SFLphone_CallManager_get_conference_details");
+        g_error_free (error);
+    }
+
+    return details;
+}
+
 void dbus_set_accounts_order (const gchar* order) {
 
     GError *error = NULL;
@@ -1823,3 +2281,150 @@ void dbus_set_history (GHashTable* entries)
         g_error_free (error);
     }
 }
+
+    void
+dbus_confirm_sas (const callable_obj_t * c)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_set_sa_sverified ( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call setSASVerified() on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_reset_sas (const callable_obj_t * c)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_reset_sa_sverified ( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call resetSASVerified on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_set_confirm_go_clear (const callable_obj_t * c)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_set_confirm_go_clear( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call set_confirm_go_clear on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    void
+dbus_request_go_clear (const callable_obj_t * c)
+{
+    GError *error = NULL;
+    org_sflphone_SFLphone_CallManager_request_go_clear( callManagerProxy, c->_callID, &error);
+    if (error)
+    {
+        ERROR ("Failed to call request_go_clear on CallManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+    gchar**
+dbus_get_supported_tls_method()
+{
+    GError *error = NULL;
+    gchar** array = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_get_supported_tls_method (configurationManagerProxy, &array, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call get_supported_tls_method() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+    return array;
+}
+
+GHashTable* dbus_get_tls_settings_default(void) 
+{
+    GError *error = NULL;
+    GHashTable *results = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_tls_settings_default(configurationManagerProxy, &results, &error);
+    if (error != NULL){
+        ERROR ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_tls_settings_default");
+        g_error_free (error);
+    }
+
+    return results;
+}
+
+
+gchar * dbus_get_address_from_interface_name(gchar* interface)
+{
+    GError *error = NULL;
+    gchar * address;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_addr_from_interface_name ( configurationManagerProxy, interface, &address, &error);
+    if (error != NULL){
+        ERROR ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_addr_from_interface_name\n");
+        g_error_free (error);
+    }
+
+    return address;
+
+}
+
+
+gchar ** dbus_get_all_ip_interface(void)
+{
+    GError *error = NULL;
+    gchar ** array;
+
+    if(!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface ( configurationManagerProxy, &array, &error))
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+        {
+            ERROR ("Caught remote method (get_all_ip_interface) exception  %s: %s", dbus_g_error_get_name(error), error->message);
+        }
+        else
+        {
+            ERROR("Error while calling get_all_ip_interface: %s", error->message);
+        }
+        g_error_free (error);
+        return NULL;
+    }
+    else{
+        DEBUG ("DBus called get_all_ip_interface() on ConfigurationManager");
+        return array;
+    }
+}
+
+gchar ** dbus_get_all_ip_interface_by_name(void)
+{
+    GError *error = NULL;
+    gchar ** array;
+
+    if(!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface_by_name ( configurationManagerProxy, &array, &error))
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+        {
+            ERROR ("Caught remote method (get_all_ip_interface) exception  %s: %s", dbus_g_error_get_name(error), error->message);
+        }
+        else
+        {
+            ERROR("Error while calling get_all_ip_interface: %s", error->message);
+        }
+        g_error_free (error);
+        return NULL;
+    }
+    else{
+        DEBUG ("DBus called get_all_ip_interface() on ConfigurationManager");
+        return array;
+    }
+}
+

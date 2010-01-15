@@ -25,10 +25,9 @@
 #include "global.h"
 #include "audiodevice.h"
 #include "ringbuffer.h"
-#include "manager.h"
+#include "mainbuffer.h"
 
 #include <cc++/thread.h> // for ost::Mutex
-
 
 #define FRAME_PER_BUFFER	160
 
@@ -36,6 +35,11 @@
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware. 
  */
+
+
+class Recordable;
+class ManagerImpl;
+
 
 class AudioLayer {
 
@@ -56,12 +60,10 @@ class AudioLayer {
             : _defaultVolume(100)
 			  , _layerType( type )
               , _manager(manager)
-              , _voiceRingBuffer( SIZEBUF )
-              , _urgentRingBuffer( SIZEBUF)
-              , _micRingBuffer( SIZEBUF )
+	      , _urgentRingBuffer( SIZEBUF, default_id )
               , _indexIn ( 0 )
               , _indexOut ( 0 )
-              , _sampleRate ( 0 )
+              , _audioSampleRate ( 0 )
               , _frameSize ( 0 )
               , _inChannel( 1 )
               , _outChannel ( 1 )
@@ -108,20 +110,6 @@ class AudioLayer {
         virtual void stopStream(void) = 0;
 
         /**
-         * Query the capture device for number of bytes available in the hardware ring buffer
-         * @return int The number of bytes available
-         */
-        virtual int canGetMic() = 0;
-
-        /**
-         * Get data from the capture device
-         * @param buffer The buffer for data
-         * @param toCopy The number of bytes to get
-         * @return int The number of bytes acquired ( 0 if an error occured)
-         */
-        virtual int getMic(void * buffer, int toCopy) = 0;
-
-        /**
          * Send a chunk of data to the hardware buffer to start the playback
          * Copy data in the urgent buffer. 
          * @param buffer The buffer containing the data to be played ( ringtones )
@@ -136,16 +124,12 @@ class AudioLayer {
          * @param toCopy    The size of the buffer
          * @return int      The number of bytes copied
          */
-        int putMain(void* buffer, int toCopy);
+        int putMain(void* buffer, int toCopy, CallID call_id = default_id);
 
         void flushMain (void);
 
         void flushUrgent (void);
 
-        /**
-         * Flush the mic ringbuffer
-         */
-        void flushMic();
 
         virtual bool isCaptureActive (void) = 0;
 
@@ -182,7 +166,7 @@ class AudioLayer {
          * @return unsigned int The sample rate
          *			    default: 44100 HZ
          */
-        unsigned int getSampleRate() { return _sampleRate; }
+        unsigned int getSampleRate() { return _audioSampleRate; }
 
         /**
          * Get the frame size of the audio layer
@@ -191,12 +175,49 @@ class AudioLayer {
          */
         unsigned int getFrameSize() { return _frameSize; }
 
+	/**
+         * Get the layer type for this instance (either Alsa or PulseAudio)
+         * @return unsigned int The layer type
+         *
+         */
         int getLayerType( void ) { return _layerType; }
+
+	/**
+         * Get a pointer to the application MainBuffer class.
+	 *
+	 * In order to send signal to other parts of the application, one must pass through the mainbuffer.
+	 * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+	 *
+         * @return MainBuffer* a pointer to the MainBuffer instance
+         */
+	MainBuffer* getMainBuffer( void ) { return _mainBuffer; }
+
+	/**
+	 * Set the mainbuffer once the audiolayer is created
+	 */
+	void setMainBuffer( MainBuffer* mainbuffer ) { _mainBuffer = mainbuffer; }
 
         /**
          * Default volume for incoming RTP and Urgent sounds.
          */
         unsigned short _defaultVolume; // 100
+
+	
+	/**
+	 * Set the audio recorder
+	 */
+	inline void setRecorderInstance (Recordable* rec) {_recorder = NULL; _recorder = rec;}
+
+	/**
+	 * Get the audio recorder
+	 */
+	inline Recordable* getRecorderInstance (void) {return _recorder;}
+
+	/**
+	 * Get the mutex lock for the entire audio layer 
+	 */
+	inline ost::Mutex* getMutexLock(void) { return &_mutex; }
+
 
     protected:
 
@@ -218,9 +239,21 @@ class AudioLayer {
         /**
          * Urgent ring buffer used for ringtones
          */
-        RingBuffer _voiceRingBuffer;
         RingBuffer _urgentRingBuffer;
-        RingBuffer _micRingBuffer;
+
+	/**
+	 * Instance of the MainBuffer for the whole application
+	 *
+	 * In order to send signal to other parts of the application, one must pass through the mainbuffer.
+	 * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+	 *
+	 */ 
+	MainBuffer* _mainBuffer;
+
+	/**
+	 * A pointer to the recordable instance (may be a call or a conference)
+	 */
+	Recordable* _recorder;
 
         /**
          * Number of audio cards on which capture stream has been opened 
@@ -236,7 +269,7 @@ class AudioLayer {
          * Sample Rate SFLphone should send sound data to the sound card 
          * The value can be set in the user config file- now: 44100HZ
          */
-        unsigned int _sampleRate;
+        unsigned int _audioSampleRate;
 
         /**
          * Length of the sound frame we capture or read in ms
@@ -257,7 +290,11 @@ class AudioLayer {
         /** Contains the current error code */
         int _errorMessage;
 
+	/**
+	 * Lock for the entire audio layer
+	 */ 
         ost::Mutex _mutex;
+
 };
 
 #endif // _AUDIO_LAYER_H_

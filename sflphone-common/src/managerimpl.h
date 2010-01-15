@@ -20,8 +20,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __MANAGER_H__
-#define __MANAGER_H__
+#ifndef __SFL_MANAGER_H__
+#define __SFL_MANAGER_H__
 
 #include <string>
 #include <vector>
@@ -30,29 +30,34 @@
 #include <cc++/thread.h>
 #include "dbus/dbusmanager.h"
 
-#include "stund/stun.h"
 #include "observer.h"
 #include "config/config.h"
 
 #include "account.h"
 #include "call.h"
+#include "conference.h"
 #include "numbercleaner.h"
-#include <history/historymanager.h>
 
-#include "audio/tonelist.h" // for Tone::TONEID declaration
-#include "audio/audiofile.h"
-#include "audio/dtmf.h"
-#include "audio/codecDescriptor.h"
+#include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
+#include "audio/sound/audiofile.h" // AudioFile class contained by value here 
+#include "audio/sound/dtmf.h" // DTMF class contained by value here
+#include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
+
+#include "audio/mainbuffer.h"
 
 class AudioLayer;
-class CodecDescriptor;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
 
+// class Conference;
+
 #ifdef USE_ZEROCONF
 class DNSService;
 #endif
+
+class HistoryManager;
+class SIPAccount;
 
 /** Define a type for a AccountMap container */
 typedef std::map<AccountID, Account*> AccountMap;
@@ -67,6 +72,28 @@ typedef std::set<CallID> CallIDSet;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
+
+/** To store conference objects by call ids 
+    used to retreive the conference according to a call */
+typedef std::map<CallID, Conference*> ConferenceCallMap;
+
+/** To store conference objects by conference ids */
+typedef std::map<CallID, Conference*> ConferenceMap;
+
+static CallID default_conf = "conf"; 
+
+
+static char * mapStateToChar[] = {
+    (char*) "UNREGISTERED",
+    (char*) "TRYING",
+    (char*) "REGISTERED",
+    (char*) "ERROR",
+    (char*) "ERRORAUTH",
+    (char*) "ERRORNETWORK",
+    (char*) "ERRORHOST",
+    (char*) "ERROREXISTSTUN",    
+    (char*) "ERRORCONFSTUN"    
+};
 
 /** Manager (controller) of sflphone daemon */
 class ManagerImpl {
@@ -129,6 +156,14 @@ class ManagerImpl {
      */
     bool hangupCall(const CallID& id);
 
+
+    /**
+     * Functions which occur with a user's action
+     * Hangup the conference (hangup every participants)
+     * @param id  The call identifier
+     */
+    bool hangupConference(const ConfID& id);
+
     /**
      * Functions which occur with a user's action
      * Cancel the call
@@ -176,6 +211,99 @@ class ManagerImpl {
     bool refuseCall(const CallID& id);
 
     /**
+     * Create a new conference given two participant
+     * @param the first participant ID
+     * @param the second participant ID
+     */ 
+    Conference* createConference(const CallID& id1, const CallID& id2);
+
+    /**
+     * Delete this conference
+     * @param the conference ID
+     */ 
+    void removeConference(const CallID& conference_id);
+
+    /**
+     * Return the conference id for which this call is attached
+     * @ param the call id
+     */
+    Conference* getConferenceFromCallID(const CallID& call_id);
+
+    /**
+     * Hold every participant to a conference
+     * @param the conference id
+     */
+    void holdConference(const CallID& conferece_id);
+
+    /**
+     * Unhold all conference participants 
+     * @param the conference id
+     */
+    void unHoldConference(const CallID& conference_id);
+
+    /**
+     * Test if this id is a conference (usefull to test current call)
+     * @param the call id
+     */
+    bool isConference(const CallID& call_id);
+
+    /**
+     * Test if a call id particips to this conference
+     * @param the call id
+     */
+    bool participToConference(const CallID& call_id);
+
+    /**
+     * Add a participant to a conference
+     * @param the call id
+     * @param the conference id
+     */
+    void addParticipant(const CallID& call_id, const CallID& conference_id);
+
+    /**
+     * Bind the main participant to a conference (mainly called on a double click action)
+     * @param the conference id
+     */
+    void addMainParticipant(const CallID& conference_id);
+
+    /**
+     * Join two participants to create a conference
+     * @param the fist call id
+     * @param the second call id
+     */
+    void joinParticipant(const CallID& call_id1, const CallID& call_id2);
+
+    /**
+     * Detach a participant from a conference, put the call on hold, do not hangup it
+     * @param call id
+     * @param the current call id
+     */
+    void detachParticipant(const CallID& call_id, const CallID& current_call_id);
+
+    /**
+     * Remove the conference participant from a conference
+     * @param call id
+     */
+    void removeParticipant(const CallID& call_id);
+    
+    /**
+     * Process remaining participant given a conference and the current call id.
+     * Mainly called when a participant is detached or hagned up
+     * @param current call id
+     * @param conference pointer
+     */
+    void processRemainingParticipant(CallID current_call_id, Conference *conf);
+
+    /**
+     * Join two conference together into one unique conference
+     */
+    void joinConference(const CallID& conf_id1, const CallID& conf_id2);
+
+    void addStream(const CallID& call_id);
+
+    void removeStream(const CallID& call_id);
+
+    /**
      * Save config to file
      * @return true on success
      *	    false otherwise
@@ -204,9 +332,8 @@ class ManagerImpl {
     /**
      * Play the dtmf-associated sound
      * @param code  The pressed key
-     * @param isTalking	In conversation or not. Useful to know whether or not the sound streams are started
      */
-    bool playDtmf(char code, bool isTalking);
+    bool playDtmf (char code);
 
     /**
      * Play a ringtone
@@ -224,9 +351,8 @@ class ManagerImpl {
 
     /**
      * Acts on the audio streams and audio files
-     * @param stopAudio	Tells whether or not to stop the streams
      */
-    void stopTone(bool stopAudio);
+    void stopTone (void);
 
     /**
      * When receiving a new incoming call, add it to the callaccount map
@@ -279,11 +405,11 @@ class ManagerImpl {
     /**
      * ConfigurationManager - Send registration request
      * @param accountId The account to register/unregister
-     * @param expire The flag for the type of registration
+     * @param enable The flag for the type of registration
      *		 0 for unregistration request
      *		 1 for registration request
      */
-    void sendRegister( const ::std::string& accountId , const int32_t& expire );
+    void sendRegister( const ::std::string& accountId , const int32_t& enable);
 
     bool getCallStatus(const std::string& sequenceId);
 
@@ -319,6 +445,26 @@ class ManagerImpl {
     std::vector< std::string >  getCallList (void);
 
     /**
+     * Retrieve details about a given call
+     * @param callID	  The account identifier
+     * @return std::map< std::string, std::string > The call details
+     */
+    std::map< std::string, std::string > getConferenceDetails(const CallID& callID);
+
+    /**
+     * Get call list
+     * @return std::vector<std::string> A list of call IDs
+     */
+    std::vector< std::string >  getConferenceList (void);
+
+
+    /**
+     * Get a list of participant to a conference
+     * @return std::vector<std::string> A list of call IDs
+     */
+    std::vector< std::string >  getParticipantList (const std::string& confID);
+
+    /**
      * Save the details of an existing account, given the account ID
      * This will load the configuration map with the given data.
      * It will also register/unregister links where the 'Enabled' switched.
@@ -342,6 +488,13 @@ class ManagerImpl {
      */
     void removeAccount(const AccountID& accountID);
 
+
+    /**
+     * Deletes all credentials defined for an account
+     * @param accountID The account unique ID
+     */
+    void deleteAllCredential(const AccountID& accountID);
+    
     /**
      * Get the list of codecs we supports, not ordered
      * @return The list of the codecs
@@ -484,6 +637,18 @@ class ManagerImpl {
      */
     void setRecordPath( const std::string& recPath);
 
+    /** 
+     * Set a credential for a given account. If it 
+     * does not exist yet, it will be created.
+     */
+    void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
+
+    /**
+     * Retreive the value set in the configuration file.
+     * @return True if credentials hashing is enabled.
+     */
+    bool getMd5CredentialHashing(void);
+    
     /**
      * Tells if the user wants to display the dialpad or not
      * @return int 1 if dialpad has to be displayed
@@ -494,7 +659,7 @@ class ManagerImpl {
     /**
      * Set the dialpad visible or not
      */
-    void setDialpad( void );
+    void setDialpad (bool display);
 
     /**
      * Tells if the user wants to display the volume controls or not
@@ -506,7 +671,7 @@ class ManagerImpl {
     /**
      * Set the volume controls ( mic and speaker ) visible or not
      */
-    void setVolumeControls( void );
+    void setVolumeControls (bool display);
 
     /**
      * Set recording on / off
@@ -534,7 +699,7 @@ class ManagerImpl {
 
     void setHistoryEnabled (void);
 
-    int getHistoryEnabled (void);
+	std::string getHistoryEnabled (void);
 
 
     /**
@@ -637,9 +802,6 @@ class ManagerImpl {
 
     void switchAudioManager( void );
 
-    void setPulseAppVolumeControl( void );
-    int32_t getPulseAppVolumeControl( void );
-
     /**
      * Get the desktop mail notification level
      * @return int The mail notification level
@@ -703,7 +865,18 @@ class ManagerImpl {
      *		      false otherwise
      */
     bool setConfig(const std::string& section, const std::string& name, int value);
-
+    
+    inline std::string mapStateNumberToString(RegistrationState state) {
+        std::string stringRepresentation;
+        if (state > NumberOfState) {
+            stringRepresentation = "ERROR";
+            return stringRepresentation;
+        }
+        
+        stringRepresentation = mapStateToChar[state];
+        return stringRepresentation;
+    }
+    
     /**
      * Get a int from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
@@ -711,8 +884,19 @@ class ManagerImpl {
      * @param name    The parameter name
      * @return int    The int value
      */
+     
     int getConfigInt(const std::string& section, const std::string& name);
-
+ 
+  /**
+     * Get a bool from the configuration tree
+     * Throw an Conf::ConfigTreeItemException if not found
+     * @param section The section name to look in
+     * @param name    The parameter name
+     * @return bool    The bool value
+     */
+     
+    bool getConfigBool(const std::string& section, const std::string& name);
+            
     /**
      * Get a string from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
@@ -810,45 +994,6 @@ class ManagerImpl {
      */
     void setMicVolume(unsigned short mic_vol);
 
-    // Manage information about firewall
-
-    /*
-     * Get information about firewall
-     * @param  stunSvrAddr: stun server
-     * @param  port         port number to open to test the connection
-     * @return true if the connection is successful
-     */
-    bool getStunInfo(StunAddress4& stunSvrAddr, int port);
-
-    /*
-     * Inline functions to manage firewall settings
-     * @return int The firewall port
-     */
-    inline int getFirewallPort(void) 		{ return _firewallPort; }
-
-    /*
-     * Inline functions to manage firewall settings
-     * @param port The firewall port
-     */
-    inline void setFirewallPort(int port) 	{ _firewallPort = port; }
-
-    /*
-     * Inline functions to manage firewall settings
-     * @return std::string The firewall address
-     */
-    inline std::string getFirewallAddress (void) 	{ return _firewallAddr; }
-
-    /**
-     * If you are behind a NAT, you have to use STUN server, specified in
-     * STUN configuration(you can change this one by default) to give you an
-     * public IP address and assign a port number.
-     * Note: Set firewall port/address retreive
-     * @param svr   Server on which to send request
-     * @param port  On which port we want to listen to
-     * @return true if we are behind a NAT (without error)
-     */
-    bool behindNat(const std::string& svr, int port);
-
     /**
      * Init default values for the different fields in the config file.
      * Fills the local _config (Conf::ConfigTree) with the default contents.
@@ -882,6 +1027,14 @@ class ManagerImpl {
      */
     bool isCurrentCall(const CallID& callId);
 
+
+    /**
+     * Send registration to all enabled accounts
+     * @return 0 on registration success
+     *          1 otherelse
+     */
+    int registerAccounts();
+
     /**
      * Restart PJSIP
      * @param void
@@ -889,16 +1042,34 @@ class ManagerImpl {
      */
     void restartPJSIP( );
 
-    void unregisterCurSIPAccounts();
+    void unregisterCurSIPAccounts (void);
 
-    void registerCurSIPAccounts(VoIPLink *link);
+    void registerCurSIPAccounts (void);
 
     /*
      * Initialize audiodriver
      */
     bool initAudioDriver(void);
 
+    ost::Mutex* getAudioLayerMutex() { return &_audiolayer_mutex; }
+    
   private:
+    /* Transform digest to string.
+    * output must be at least PJSIP_MD5STRLEN+1 bytes.
+    * Helper function taken from sip_auth_client.c in 
+    * pjproject-1.0.3.
+    *
+    * NOTE: THE OUTPUT STRING IS NOT NULL TERMINATED!
+    */
+    void digest2str(const unsigned char digest[], char *output);
+
+    /** 
+     * Helper function that creates an MD5 Hash from the credential
+     * information provided as parameters. The hash is computed as
+     * MD5(username ":" realm ":" password).
+     * 
+     */
+    std::string computeMd5HashFromCredential(const std::string& username, const std::string& password, const std::string& realm);
 
     /**
      * Check if a process is running with the system command
@@ -933,12 +1104,6 @@ class ManagerImpl {
      * Init the volume for speakers/micro from 0 to 100 value
      */
     void initVolume();
-
-    /**
-     * Tell if there is a current call processed
-     * @return bool True if there is a current call
-     */
-    bool hasCurrentCall();
 
     /**
      * Switch of current call id
@@ -992,6 +1157,8 @@ class ManagerImpl {
     /** Mutex to protect access to code section */
     ost::Mutex _mutex;
 
+    ost::Mutex _audiolayer_mutex;
+
     // Multithread variable (non protected)
     DBusManagerImpl * _dbus;
 
@@ -1029,13 +1196,6 @@ class ManagerImpl {
     std::string 	_path;
     int _exist;
     int _setupLoaded;
-
-    // To handle firewall
-    int _firewallPort;
-    std::string _firewallAddr;
-
-    // tell if we have zeroconf is enabled
-    int _hasZeroconf;
 
 #ifdef USE_ZEROCONF
     // DNSService contain every zeroconf services
@@ -1075,6 +1235,8 @@ class ManagerImpl {
     /**
      *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
     AccountMap _accountMap;
+    
+    Account * _directIpAccount;
 
     /**
      * Load the account from configuration
@@ -1094,7 +1256,31 @@ class ManagerImpl {
      */
     void unloadAccountMap();
 
+
+    /**
+     * Instance of the MainBuffer for the whole application
+     *
+     * In order to send signal to other parts of the application, one must pass through the mainbuffer.
+     * Audio instances must be registered into the MainBuffer and bound together via the ManagerImpl.
+     *
+     */ 
+     MainBuffer _mainBuffer;
+
+    
    public:
+
+    /**
+     * Tell if there is a current call processed
+     * @return bool True if there is a current call
+     */
+    bool hasCurrentCall();
+   
+    /**
+     * Return the current DBusManagerImpl
+     * @return A pointer to the DBusManagerImpl instance
+     */
+    DBusManagerImpl * getDbusManager() { return _dbus; }
+    
      /**
      * Tell if an account exists
      * @param accountID account ID check
@@ -1131,15 +1317,22 @@ class ManagerImpl {
 
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
-    int getSipPort();
-
-    void setSipPort( int port );
+    int getLocalIp2IpPort();
 
     std::string getStunServer (void);
     void setStunServer (const std::string &server);
 
     int isStunEnabled (void);
     void enableStun (void);
+
+    // Map 
+    ConferenceCallMap _conferencecall;
+
+    // 
+    ConferenceMap _conferencemap;
+
+   
+
 private:
 
     // Copy Constructor
@@ -1153,7 +1346,7 @@ private:
     /**
       * To handle the persistent history
       */
-    HistoryManager *_history;
+    HistoryManager * _history;
 
     /**
      * Check if the call is a classic call or a direct IP-to-IP call

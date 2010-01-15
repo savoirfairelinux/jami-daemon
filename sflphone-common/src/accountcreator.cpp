@@ -18,9 +18,11 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "accountcreator.h"
-#include "sipaccount.h"
+#include "sip/sipaccount.h"
+#include "user_cfg.h"
+
 #ifdef USE_IAX
-#include "iaxaccount.h"
+#include "iax/iaxaccount.h"
 #endif
 
 AccountCreator::AccountCreator()
@@ -39,6 +41,10 @@ AccountCreator::createAccount (AccountType type, AccountID accountID)
 
         case SIP_ACCOUNT:
             return new SIPAccount (accountID);
+            break;
+
+        case SIP_DIRECT_IP_ACCOUNT:
+            return new SIPAccount (IP2IP_PROFILE);
             break;
 #ifdef USE_IAX
 

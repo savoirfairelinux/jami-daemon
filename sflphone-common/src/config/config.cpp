@@ -25,6 +25,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <iostream>
+#include <string.h>
 
 namespace Conf
 {
@@ -45,6 +47,27 @@ ConfigTree::~ConfigTree()
         iter->second = NULL;
         iter++;
     }
+}
+
+void ConfigTree::addDefaultValue (const std::pair<std::string, std::string>& token, std::string section)
+{
+    _defaultValueMap.insert (token);
+
+    if (section.empty() == false) {
+        addConfigTreeItem (section, ConfigTreeItem (token.first, token.second, token.second, "string"));
+    }
+}
+
+std::string ConfigTree::getDefaultValue (const std::string& key)
+{
+    std::map<std::string, std::string>::iterator it;
+    it = _defaultValueMap.find (key);
+
+    if (it == _defaultValueMap.end()) {
+        return std::string ("");
+    }
+
+    return it->second;
 }
 
 /**
@@ -90,7 +113,6 @@ ConfigTree::getSections()
     return sections;
 }
 
-
 /**
  * Add the config item only if it exists..
  * If the section doesn't exists, create it
@@ -116,7 +138,6 @@ ConfigTree::addConfigTreeItem (const std::string& section, const ConfigTreeItem 
     }
 }
 
-// throw a ConfigTreeItemException if not found
 std::string
 ConfigTree::getConfigTreeItemValue (const std::string& section, const std::string& itemName)
 {
@@ -124,19 +145,9 @@ ConfigTree::getConfigTreeItemValue (const std::string& section, const std::strin
 
     if (item != NULL) {
         return item->getValue();
-    } else {
-        _debug ("Option doesn't exist: [%s] %s\n", section.c_str(), itemName.c_str());
-        /** @todo If item doesn't exist, we should check against the default values for those
-         * types of information, and return the default value.
-         * ...
-         * Maybe this should be implemented when called ? When we need a bit of configuration,
-         * we call the getConfig with a defaultValue as parameter, in that context we know best
-         * what would be the default value, rather than inside this generic configuration
-         * management class.
-         */
     }
 
-    return "";
+    return getDefaultValue (itemName);
 }
 
 // throw a ConfigTreeItemException if not found
@@ -147,6 +158,18 @@ ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::st
     int retval = atoi (configItem.data());
 
     return retval;
+}
+
+bool
+ConfigTree::getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName)
+{
+    std::string configItem = getConfigTreeItemValue (section, itemName);
+
+    if (configItem == "true") {
+        return true;
+    }
+
+    return false;
 }
 
 bool
@@ -166,8 +189,6 @@ ConfigTree::getConfigTreeItemToken (const std::string& section, const std::strin
 
     return false;
 }
-
-
 
 /**
  * Return a ConfigTreeItem or NULL if not found
@@ -194,6 +215,7 @@ ConfigTree::getConfigTreeItem (const std::string& section, const std::string& it
  * Set the configItem if found, if not, *CREATE IT*
  *
  * @todo Élimier les 45,000 classes qui servent à rien pour Conf.
+ * The true/false logic is useless here.
  */
 bool
 ConfigTree::setConfigTreeItem (const std::string& section,
@@ -212,8 +234,16 @@ ConfigTree::setConfigTreeItem (const std::string& section,
     ItemMap::iterator iterItem = iter->second->find (itemName);
 
     if (iterItem == iter->second->end()) {
-        // Item not found, create it, defaults to type "string"
-        addConfigTreeItem (section, ConfigTreeItem (itemName, value, "string"));
+        // If not found, search in our default list to find
+        // something that would fit.
+        std::string defaultValue = getDefaultValue (itemName);
+        addConfigTreeItem (section, ConfigTreeItem (itemName, value, defaultValue));
+        return true;
+    }
+
+    // Use default value if the value is empty.
+    if (value.empty() == true) {
+        iterItem->second.setValue (getDefaultValue (itemName));
         return true;
     }
 
@@ -260,7 +290,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _debug ("Failed to set permission on configuration file because: %s\n",strerror (errno));
+        _debug ("Failed to set permission on configuration file because: %s",strerror (errno));
     }
 
     return true;
@@ -341,7 +371,7 @@ ConfigTree::populateFromFile (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _debug ("Failed to set permission on configuration file because: %s\n",strerror (errno));
+        _debug ("Failed to set permission on configuration file because: %s",strerror (errno));
     }
 
     return 1;

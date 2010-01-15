@@ -27,6 +27,7 @@ Call::Call (const CallID& id, Call::CallType type)
         , _localAudioPort (0)
         , _localExternalAudioPort (0)
         , _id (id)
+        , _confID ("")
         , _type (type)
         , _connectionState (Call::Disconnected)
         , _callState (Call::Inactive)
@@ -35,18 +36,11 @@ Call::Call (const CallID& id, Call::CallType type)
         , _peerNumber()
 {
 
-    FILE_TYPE fileType = FILE_WAV;
-    SOUND_FORMAT soundFormat = INT16;
-
-    recAudio.setRecordingOption (fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH),id);
 }
 
 
 Call::~Call()
 {
-    if (recAudio.isOpenFile()) {
-        recAudio.closeFile();
-    }
 }
 
 void
@@ -134,6 +128,10 @@ Call::getStateStr ()
 
             break;
 
+        case Conferencing:
+            state_str = "CONFERENCING";
+            break;
+
         case Refused:
 
         case Error:
@@ -173,29 +171,5 @@ Call::isAudioStarted()
 {
     ost::MutexLock m (_callMutex);
     return _audioStarted;
-}
-
-void
-Call::setRecording()
-{
-    recAudio.setRecording();
-}
-
-void
-Call::initRecFileName()
-{
-    recAudio.initFileName (_peerNumber);
-}
-
-void
-Call::stopRecording()
-{
-    recAudio.stopRecording();
-}
-
-bool
-Call::isRecording()
-{
-    return recAudio.isRecording();
 }
 

@@ -36,14 +36,14 @@ LibraryManager::LibraryHandle LibraryManager::loadLibrary (const std::string &fi
     LibraryHandle pluginHandlePtr = NULL;
     const char *error;
 
-    _debug ("Loading dynamic library %s\n", filename.c_str());
+    _debug ("Loading dynamic library %s", filename.c_str());
 
     /* Load the library */
     pluginHandlePtr = dlopen (filename.c_str(), RTLD_LAZY);
 
     if (!pluginHandlePtr) {
         error = dlerror();
-        _debug ("Error while opening plug-in: %s\n", error);
+        _debug ("Error while opening plug-in: %s", error);
         return NULL;
     }
 
@@ -57,12 +57,12 @@ int LibraryManager::unloadLibrary ()
     if (_handlePtr == NULL)
         return 1;
 
-    _debug ("Unloading dynamic library ...\n");
+    _debug ("Unloading dynamic library ...");
 
     dlclose (_handlePtr);
 
     if (dlerror()) {
-        _debug ("Error unloading the library : %s\n...", dlerror());
+        _debug ("Error unloading the library : %s...", dlerror());
         return 1;
     }
 
@@ -92,11 +92,11 @@ int LibraryManager::resolveSymbol (const std::string &symbol, SymbolHandle *symb
 /************************************************************************************************/
 
 LibraryManagerException::LibraryManagerException (const std::string &libraryName, const std::string &details, Reason reason) :
-        _reason (reason), _details (""), std::runtime_error ("")
+        std::runtime_error (""), _reason (reason), _details ("")
 
 {
     if (_reason == loadingFailed)
-        _details = "Error when loading " + libraryName + "\n" + details;
+        _details = "Error when loading " + libraryName + "" + details;
     else
         _details = "Error when resolving symbol " + details + " in " + libraryName;
 }

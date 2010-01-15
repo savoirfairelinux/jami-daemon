@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-07-21 14:12:07 -0400
+# Last Modified: 2009-08-07 17:01:32 -0400
 #####################################################
 
 #
@@ -225,7 +225,7 @@ if [ ${DO_PREPARE} ]; then
 	mkdir ${TODEPLOY_BUILD_DIR}
 
 	echo "Clone repository"
-	git clone ssh://repos-sflphone-git@sflphone.org/~/sflphone.git ${REPOSITORY_DIR} >/dev/null 2>&1
+	git clone ssh://repos-sflphone-git@git.sflphone.org/~/sflphone.git ${REPOSITORY_DIR} >/dev/null 2>&1
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot clone repository"

@@ -31,10 +31,15 @@
 #include <sstream>
 #include <map>
 #include <vector>
+#include "logger.h"
 
 #define SFLPHONED_VERSION "0.9.6"		/** Version number */
 
-#define HOMEDIR	(getenv ("HOME"))		/** Home directory */
+#define HOMEDIR					(getenv ("HOME"))				/** Home directory */
+#define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
+#define XDG_CONFIG_HOME			(getenv ("XDG_CONFIG_HOME"))
+#define XDG_CACHE_HOME			(getenv ("XDG_CACHE_HOME"))
+#define ZRTP_ZID_FILENAME       "sfl.zid"
 
 typedef float float32;
 typedef short int16;
@@ -68,24 +73,13 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define SFLDataAmplitude (32767 >> 4)
 #endif
 
-#ifdef SFLDEBUG
-  #define _debug(...)          fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
-  #define _debugException(...) fprintf(stderr, "[sfl-excep] " __VA_ARGS__ "\n")
-  #define _debugInit(...)      fprintf(stderr, "[sfl-init] " __VA_ARGS__ "\n")
-  #define _debugAlsa(...)      fprintf(stderr, "[alsa-debug] " __VA_ARGS__ )
-#else
-  #define _debug(...)
-  #define _debugException(...)
-  #define _debugInit(...)
-  #define _debugAlsa(...)
-#endif
-
 #define PROGNAME         "sflphoned"		/** Binary name */
 #define PROGDIR          "sflphone"		/** Program directory */
 #define RINGDIR          "ringtones"		/** Ringtones directory */
 #define CODECDIR         "codecs"		/** Codecs directory */
 
 #define SIZEBUF 				1024*1024
+#define STATIC_BUFSIZE 	 5000
 
 #define ALSA_DFT_CARD_ID     0			/** Index of the default soundcard */
 
@@ -110,15 +104,13 @@ static const SOUND_FORMAT INT32 = 0x8;
 
 #define GSM_STRING_DESCRIPTION	  "gsm"		/** GSM codec string description */
 #define SPEEX_STRING_DESCRIPTION  "speex"	/** SPEEX codec string description */
-#define ILBC_STRING_DESCRIPTION  "ilbc"		/** Ilbc codec string description */
-#define RINGTONE_ENABLED	  1		/** Custom ringtone enable or not */
-#define DISPLAY_DIALPAD		  1		/** Display dialpad or not */
-#define DISPLAY_VOLUME_CONTROLS	  1		/** Display the volume controls or not */
-#define START_HIDDEN		  1		/** SFlphone starts hidden at start-up or not */
-#define WINDOW_POPUP		  1		/** Popup mode */
-#define NOTIFY_ALL		  1		/** Desktop notification level 0: never notify */
-#define NOTIFY_MAILS		  1		/** Desktop mail notification level 0: never notify */
-#define STUN_ENABLED         1
+#define ILBC_STRING_DESCRIPTION   "ilbc"		/** Ilbc codec string description */
+#define RINGTONE_ENABLED	      TRUE_STR		/** Custom ringtone enable or not */
+#define DISPLAY_DIALPAD		      TRUE_STR		/** Display dialpad or not */
+#define DISPLAY_VOLUME_CONTROLS	  TRUE_STR		/** Display the volume controls or not */
+#define START_HIDDEN		      TRUE_STR		/** SFlphone starts hidden at start-up or not */
+#define WINDOW_POPUP		      TRUE_STR		/** Popup mode */
+#define NOTIFY_ALL		          TRUE_STR		/** Desktop notification level 0: never notify */
 
 // Error codes for error handling
 #define NO_ERROR		      0x0000	/** No error - Everything alright */
@@ -133,7 +125,8 @@ static const SOUND_FORMAT INT32 = 0x8;
 
 #define UNUSED          __attribute__((__unused__))      
 
-#define DEFAULT_SIP_PORT    5060
+#define DEFAULT_SIP_PORT    "5060"
+#define DEFAULT_SIP_TLS_PORT "5061"
 
 #define HOOK_DEFAULT_SIP_FIELD      "X-sflphone-url"
 #define HOOK_DEFAULT_URL_COMMAND    "x-www-browser"

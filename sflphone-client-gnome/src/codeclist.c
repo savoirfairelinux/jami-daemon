@@ -40,7 +40,7 @@ gint
 is_payload_codecstruct (gconstpointer a, gconstpointer b)
 {
   codec_t * c = (codec_t *)a;
-  if(c->_payload == (int)b)
+  if(c->_payload == GPOINTER_TO_INT(b))
     return 0;
   else
     return 1;
@@ -103,7 +103,7 @@ codec_list_get_by_name( const gchar* name)
 }
 
 codec_t*
-codec_list_get_by_payload( const int payload)
+codec_list_get_by_payload(gconstpointer payload)
 {
   GList * c = g_queue_find_custom(codecQueue, payload, is_payload_codecstruct);
   if(c)
@@ -132,7 +132,7 @@ codec_set_prefered_order(guint index)
 void
 codec_list_move_codec_up(guint index)
 {
-        printf("Codec list Size: %i \n",codec_list_get_size());
+        DEBUG("Codec list Size: %i \n",codec_list_get_size());
 	if(index != 0)
 	{
 		gpointer codec = g_queue_pop_nth(codecQueue, index);
@@ -152,7 +152,7 @@ codec_list_move_codec_up(guint index)
 void
 codec_list_move_codec_down(guint index)
 {
-        printf("Codec list Size: %i \n",codec_list_get_size());
+        DEBUG("Codec list Size: %i \n",codec_list_get_size());
 	if(index != codecQueue->length)
 	{
 		gpointer codec = g_queue_pop_nth(codecQueue, index);

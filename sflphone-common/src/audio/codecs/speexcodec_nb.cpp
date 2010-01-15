@@ -66,6 +66,8 @@ class Speex : public AudioCodec
 
             speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
 
+
+
 #ifdef HAVE_SPEEXDSP_LIB
 
             int enable = 1;
@@ -109,11 +111,12 @@ class Speex : public AudioCodec
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
 
-            int ratio = 320 / _speex_frame_size;
+            // int ratio = 320 / _speex_frame_size;
             speex_bits_read_from (&_speex_dec_bits, (char*) src, size);
             speex_decode_int (_speex_dec_state, &_speex_dec_bits, dst);
 
-            return _speex_frame_size * ratio;
+            // return size in bytes
+            return _frameSize * 2;
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {

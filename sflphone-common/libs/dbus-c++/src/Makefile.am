@@ -26,7 +26,6 @@ HEADER_FILES = \
 	$(HEADER_DIR)/object.h \
 	$(HEADER_DIR)/pendingcall.h \
 	$(HEADER_DIR)/server.h \
-	$(HEADER_DIR)/debug.h \
 	$(HEADER_DIR)/util.h \
 	$(HEADER_DIR)/refptr_impl.h \
 	$(HEADER_DIR)/introspection.h \
@@ -35,12 +34,13 @@ HEADER_FILES = \
 	$(HEADER_DIR)/eventloop-integration.h \
 	$(GLIB_H)
 
-lib_includedir=$(includedir)/dbus-c++-1/dbus-c++/
-lib_include_HEADERS = $(HEADER_FILES)
+# noinst_lib_includedir=$(includedir)/dbus-c++-1/dbus-c++/
+noinst_HEADERS = $(HEADER_FILES)
 
-lib_LTLIBRARIES = libdbus-c++-1.la
+pkglib_LTLIBRARIES = libdbus-c++-1.la
 libdbus_c___1_la_SOURCES = $(HEADER_FILES) interface.cpp object.cpp introspection.cpp debug.cpp types.cpp connection.cpp connection_p.h property.cpp dispatcher.cpp dispatcher_p.h pendingcall.cpp pendingcall_p.h error.cpp internalerror.h message.cpp message_p.h server.cpp server_p.h eventloop.cpp eventloop-integration.cpp $(GLIB_CPP) $(ECORE_CPP)
 libdbus_c___1_la_LIBADD = $(dbus_LIBS) $(glib_LIBS) $(pthread_LIBS)
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
+

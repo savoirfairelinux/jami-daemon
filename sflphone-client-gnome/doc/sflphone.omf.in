@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<omf>
+  <resource>
+    <creator>
+      sflphoneteam@savoirfairelinux.com    
+	</creator>
+    <maintainer>
+      emmanuel.milou@savoirfairelinux.com
+    </maintainer>
+    <title>
+      SFLphone Manual V1.0
+    </title>
+    <date>
+      2009-09-03
+    </date>
+    <version identifier="0.9.7" date="2009-09-01"/>
+    <subject category="GNOME|Applications|Internet"/>
+    <description>
+      User manual for SFLphone
+    </description>
+    <type>
+	  manual
+    </type>
+    <format mime="text/xml" dtd="-//OASIS//DTD DocBook XML V4.1.2//EN"/>
+    <identifier url="sflphone.xml"/>
+    <language code="C"/>
+	<relation seriesid="00e1b4a0-74d3-6e38-acf3-04cbb6e855c540"/>
+    <rights type="GNU FDL" license.version="1.1" holder="Savoir-faire Linux Inc"/>
+  </resource>        
+</omf>

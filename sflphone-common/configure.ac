@@ -1,18 +1,25 @@
 dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
+
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
-	AC_INIT([SFLphone],[0.9.6~rc1],[sflphoneteam@savoirfairelinux.com],[sflphone])
+	AC_INIT([sflphone],[0.9.7~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
 	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
 	AC_CANONICAL_SYSTEM
 
-	AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+	PACKAGE=SFLphone
+	VERSION=`cat VERSION`
+
+	AM_INIT_AUTOMAKE($NAME, $VERSION)
 AM_CONFIG_HEADER([config.h])
 
+# Silent build by default. Use make V=1 to increase verbosity
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+
 	dnl Use this variable in the program
-AC_SUBST(PACKAGE_VERSION)
+	AC_SUBST(PACKAGE_VERSION)
 
 	AM_PROG_LIBTOOL
 
@@ -34,7 +41,6 @@ AC_CONFIG_MACRO_DIR([m4])
 	dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 	AC_CONFIG_FILES([libs/Makefile \
-			libs/stund/Makefile \
 			libs/utilspp/Makefile \
 			libs/utilspp/functor/Makefile \
 			libs/utilspp/singleton/Makefile \
@@ -45,7 +51,13 @@ AC_CONFIG_FILES([Makefile])
 			libs/iax2/Makefile])
 
 	AC_CONFIG_FILES([src/Makefile \
+			src/sip/Makefile \
+			src/iax/Makefile \
 			src/audio/Makefile \
+			src/audio/audiortp/Makefile \
+			src/audio/pulseaudio/Makefile \
+			src/audio/alsa/Makefile \
+			src/audio/sound/Makefile \
 			src/audio/codecs/Makefile \
 			src/config/Makefile \
 			src/dbus/Makefile \
@@ -82,7 +94,6 @@ AC_SUBST(PKGADD_VENDOR)
 
 	dnl Check for programs
 	AC_PROG_CC
-	SFL_CXX_WITH_DEBUG
 	AC_PROG_CXX
 	AC_PROG_CPP
 	AC_PROG_INSTALL
@@ -151,8 +162,11 @@ AC_CHECK_TYPES([ptrdiff_t])
 #AC_SUBST(SIP_CFLAGS)
 
 	dnl Check for uuid development package - name: uuid-dev 
+	dnl PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
+	dnl AC_SUBST(UUID_CFLAGS)
+dnl AC_SUBST(UUID_LIBS)
 	UUID_MIN_VERSION=1.0
-	PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
+	PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION}, HAVE_UUID=true, HAVE_UUID=false);
 	AC_SUBST(UUID_CFLAGS)
 AC_SUBST(UUID_LIBS)
 
@@ -188,6 +202,18 @@ AC_SUBST(CCEXT2_CFLAGS)
 	PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 	AC_SUBST(CCRTP_LIBS)
 AC_SUBST(CCRTP_CFLAGS)
+
+	dnl Check for OpenSSL to link against pjsip and provide SIPS TLS support
+	PKG_CHECK_MODULES([libssl], libssl, , AC_MSG_ERROR([libssl is required]))
+	AC_SUBST(libssl_CFLAGS)
+AC_SUBST(libssl_LIBS)
+
+	dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
+	LIBZRTPCPP_MIN_VERSION=1.3.0
+	PKG_CHECK_MODULES(ZRTPCPP, libzrtpcpp >= ${LIBZRTPCPP_MIN_VERSION})
+	AC_SUBST(ZRTPCPP_LIBS)
+AC_SUBST(ZRTPCPP_CFLAGS)
+
 
 dnl DBus-C++ detection (used to be in library own build system)
 	DBUS_REQUIRED_VERSION=0.60
@@ -258,7 +284,7 @@ fi
 xml_CFLAGS=
 xml_LIBS=-lexpat
 
-	AC_SUBST(xml_CFLAGS)
+AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([pthread], pthread_create,
@@ -268,6 +294,22 @@ AC_CHECK_LIB([pthread], pthread_create,
 	if test "$have_pthread" = "false"; then
 AC_MSG_ERROR([You need the POSIX Thread library (pthreads)])	
 	fi
+
+
+AC_CHECK_LIB([pcre], pcre_free,
+		[AC_CHECK_HEADERS(pcre.h, have_pcre=true, have_pcre=false)],
+		have_pcre=false)
+
+	if test "$have_pcre" = "false"; then
+AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])	
+	fi
+
+PCRE_LIBS=-lpcre
+PCRE_CFLAGS=
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
+
 
 # For the tools/, we need libdbus-c++ for the "build" architecture as well
 
@@ -355,6 +397,15 @@ AC_ARG_WITH([iax2],
 AC_DEFINE([HAVE_IAX], test "x$with_iax2" = "xyes", [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
+	dnl Check for network-manager
+AC_ARG_WITH([networkmanager],
+		[AS_HELP_STRING([--without-networkmanager],
+			[disable support for network-manager events])],
+		[],
+		[with_networkmanager=yes])
+
+AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
+
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
 # ----------------------------------------------------------------------------
 AC_DEFUN([BB_ENABLE_DOXYGEN],
@@ -408,6 +459,6 @@ AC_SUBST(DBUS_SERVICES_DIR)
 	AC_SUBST(SFLPHONE_CFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
-	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-1.0.3) has already been compiled. Run `make' to build the software.]])
+	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
 
 

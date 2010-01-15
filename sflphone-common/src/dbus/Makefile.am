@@ -17,9 +17,16 @@ libdbus_la_SOURCES = \
     callmanager.cpp \
     configurationmanager.cpp  \
     instance.cpp  \
-    dbusmanagerimpl.cpp
+    dbusmanagerimpl.cpp  \
+    networkmanager.cpp
 
-libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
+if USE_NETWORKMANAGER
+NETWORKMANAGER=-DUSE_NETWORKMANAGER
+else
+NETWORKMANAGER=
+endif
+
+libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(NETWORKMANAGER)
 
 libdbus_la_LIBADD = $(top_srcdir)/libs/dbus-c++/src/libdbus-c++-1.la
 
@@ -29,6 +36,8 @@ noinst_HEADERS =            \
     instance.h              \
     dbusmanager.h           \
     dbusmanagerimpl.h       \
+    networkmanager_proxy.h  \
+    networkmanager.h        \
     $(BUILT_SOURCES)
 
 # Dbus service file
@@ -38,7 +47,7 @@ service_DATA = $(service_in_files:.service.in=.service)
 
 # Rule to make the service file with bindir expanded
 $(service_DATA): $(service_in_files) Makefile
-	sed -e "s|libexec|$(prefix)/lib/sflphone|" $<> $@
+	sed -e "s|libexec|$(libdir)/sflphone|" $<> $@
 
 EXTRA_DIST = *.xml README
 

@@ -24,11 +24,14 @@
 #include <cc++/thread.h> // for mutex
 #include <sstream>
 
-#include "plug-in/audiorecorder/audiorecord.h"
+// #include "plug-in/audiorecorder/audiorecord.h"
+#include "audio/recordable.h"
 
-#define IP_TO_IP_PATTERN       "sip:"
+#define SIP_SCHEME       "sip:"
+#define SIPS_SCHEME      "sips:"
 
-#define CallConfigNULL          NULL
+#define CallConfigNULL   NULL
+
 /* 
  * @file call.h 
  * @brief A call is the base class for protocol-based calls
@@ -36,9 +39,7 @@
 
 typedef std::string CallID;
 
-class AudioRecord;
-
-class Call{
+class Call: public Recordable{
     public:
 
         /**
@@ -65,7 +66,7 @@ class Call{
         /**
          * The Call State.
          */
-        enum CallState {Inactive, Active, Hold, Busy, Refused, Error};
+        enum CallState {Inactive, Active, Hold, Busy, Conferencing, Refused, Error};
 
         /**
          * Constructor of a call
@@ -80,6 +81,14 @@ class Call{
          * @return call id
          */
         CallID& getCallId() {return _id; }
+
+	/** 
+         * Return a reference on the conference id
+         * @return call id
+         */
+        CallID& getConfId() {return _confID; }
+
+	void setConfId(CallID id) {_confID = id; }
 
         inline CallType getCallType (void)
         {
@@ -113,6 +122,20 @@ class Call{
          * @return std::string The peer name
          */
         const std::string& getPeerName() {  return _peerName; }
+
+	/** 
+         * Set the display name (caller in ingoing)
+         * not protected by mutex (when created)
+         * @return std::string The peer display name
+         */
+        void setDisplayName(const std::string& name) {  _displayName = name; }
+
+	/** 
+         * Get the peer display name (caller in ingoing)
+         * not protected by mutex (when created)
+         * @return std::string The peer name
+         */
+        const std::string& getDisplayName() {  return _displayName; }
 
         /**
          * Tell if the call is incoming
@@ -201,35 +224,9 @@ class Call{
          */
         unsigned int getLocalAudioPort();
 
-        /**
-         * @return Return the file name for this call
-         */
-        std::string getFileName() {return _filename;}
+	std::string getRecFileId(){ return getPeerName(); }
 
-        /**
-         * A recorder for this call
-         */
-        AudioRecord recAudio;
-
-        /**
-         * SetRecording
-         */
-        void setRecording();
-
-        /**
-         * stopRecording, make sure the recording is stopped (whe transfering call)
-         */
-        void stopRecording();
-
-        /**
-         * Return Recording state
-         */
-        bool isRecording(); 
-
-        /**
-         *
-         */
-        void initRecFileName();
+	std::string getFileName() { return _filename; }
 
     protected:
         /** Protect every attribute that can be changed by two threads */
@@ -254,10 +251,15 @@ class Call{
         /** Unique ID of the call */
         CallID _id;
 
+	/** Unique conference ID, used exclusively in case of a conferece */
+	CallID _confID;
+
         /** Type of the call */
         CallType _type;
+
         /** Disconnected/Progressing/Trying/Ringing/Connected */
         ConnectionState _connectionState;
+
         /** Inactive/Active/Hold/Busy/Refused/Error */
         CallState _callState;
 
@@ -270,8 +272,13 @@ class Call{
         /** Number of the peer */
         std::string _peerNumber;
 
-        /** File name for his call : time YY-MM-DD */
+	/** Display Name */
+	std::string _displayName;
+
+	/** File name for his call : time YY-MM-DD */
         std::string _filename;
+
+	
 };
 
 #endif

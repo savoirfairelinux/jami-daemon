@@ -19,7 +19,6 @@
 
 #include <addressbook.h>
 #include <searchbar.h>
-#include <toolbar.h>
 #include <string.h>
 #include <addressbook-config.h>
 
@@ -33,17 +32,21 @@ void
 addressbook_search(GtkEntry* entry)
 {
 
-  AddressBook_Config *addressbook_config;
+    gchar* query = gtk_entry_get_text(GTK_ENTRY (entry));
+    if (strlen(query) >= 3) {
 
-  // Activate waiting layer
-  activateWaitingLayer();
+        AddressBook_Config *addressbook_config;
+	
+	// Activate waiting layer
+	activateWaitingLayer();
 
-  // Load the address book parameters
-  addressbook_config_load_parameters(&addressbook_config);
+	// Load the address book parameters
+	addressbook_config_load_parameters(&addressbook_config);
+      
+	// Start the asynchronous search as soon as we have an entry */
+	search_async(gtk_entry_get_text(GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
 
-  // Start the asynchronous search as soon as we have an entry */
-  search_async(gtk_entry_get_text(GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search,
-      addressbook_config);
+    }
 }
 
 /**
@@ -85,6 +88,7 @@ addressbook_is_active()
 static void
 addressbook_config_books()
 {
+
   gchar **config_book_uid;
   book_data_t *book_data;
   gchar **list;
@@ -92,24 +96,24 @@ addressbook_config_books()
   // Retrieve list of books
   list = (gchar **) dbus_get_addressbook_list();
 
-  if (list)
-    {
-      for (config_book_uid = list; *config_book_uid; config_book_uid++)
-        {
+  if (list) {
+
+      for (config_book_uid = list; *config_book_uid; config_book_uid++) {
+
           // Get corresponding book data
           book_data = books_get_book_data_by_uid(*config_book_uid);
 
           // If book_data exists
-          if (book_data != NULL)
-            {
+          if (book_data != NULL) {
+
               book_data->active = TRUE;
-            }
-        }
+	  }
+      }
       g_strfreev(list);
-    }
+  }
 
   // Update buttons
-  toolbar_update_buttons();
+  update_actions ();
 }
 
 /**

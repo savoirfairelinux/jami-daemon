@@ -28,6 +28,7 @@
 #include <codeclist.h>
 #include <sflphone_const.h>
 #include <errors.h>
+#include <conference_obj.h>
 
 /** @file actions.h
   * @brief General functions that change the state of the application.
@@ -149,9 +150,21 @@ void sflphone_keypad ( guint keyval, gchar * key);
 void sflphone_place_call ( callable_obj_t * c );
 
 /**
+ * Fetch the ip2ip profile through dbus and fill
+ * the internal hash table. 
+ */
+void sflphone_fill_ip2ip_profile(void);
+
+/**
+ * @return The internal hash table representing
+ * the settings for the ip2ip profile. 
+ */
+void sflphone_get_ip2ip_properties (GHashTable **properties);
+ 
+/**
  * Initialize the accounts data structure
  */
-void sflphone_fill_account_list(gboolean toolbarInitialized);
+void sflphone_fill_account_list ();
 
 void sflphone_fill_call_list (void);
 
@@ -166,18 +179,76 @@ void sflphone_set_current_account();
  */
 void sflphone_fill_codec_list();
 
+void sflphone_add_participant();
+
 void sflphone_record (callable_obj_t *c);
 
 void sflphone_rec_call (void);
-
-gchar* sflphone_get_current_codec_name();
-
-void sflphone_display_selected_codec (const gchar* codecName);
 
 void status_bar_display_account ();
 
 void sflphone_fill_history (void);
 
 void sflphone_save_history (void);
+
+void sflphone_join_participant(const gchar* sel_callID, const gchar* drag_callID);
+
+void sflphone_add_participant(const gchar* callID, const gchar* confID);
+
+void sflphone_detach_participant(const gchar* callID);
+
+void sflphone_join_conference(const gchar* sel_confID, const gchar* drag_confID);
+
+/** Nofity that the communication is 
+ *  now secured.
+ * @param c* The current call
+ */
+void sflphone_srtp_on( callable_obj_t * c);
+
+/** Called when the RTP session goes
+ * unsecured.
+ * @param c* The current call
+ */
+void sflphone_srtp_off( callable_obj_t * c );
+
+/** Called when the sas has been computed
+ * and is ready to be displayed.
+ * @param c* The current call
+ * @param sas* The Short Authentication String
+ * @param verified* Weather the SAS was confirmed or not.
+ */
+void sflphone_srtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean verified);
+
+/** Called when the remote peer does not support ZRTP
+ * @param c* The current call
+ */
+void sflphone_zrtp_not_supported( callable_obj_t * c );
+
+/** Called when user wants to confirm go clear request.
+ * @param c* The call to confirm the go clear request.
+ */
+void sflphone_set_confirm_go_clear( callable_obj_t * c );
+
+/** Called when user wants to confirm go clear request.
+ * @param c* The call to confirm the go clear request.
+ */
+void sflphone_confirm_go_clear( callable_obj_t * c );
+
+/** Called when user wants to clear.
+ * @param c* The call on which to go clear
+ */
+void sflphone_request_go_clear(void);
+
+/** 
+ * Called when the UI needs to be refreshed to 
+ * better inform the user about the current
+ * state of the call. 
+ * @param c A pointer to the call that needs to be updated
+ * @param description A textual description of the code
+ * @param code The status code as in SIP or IAX
+ */
+
+void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code);
+
 
 #endif

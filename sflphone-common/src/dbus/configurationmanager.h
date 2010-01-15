@@ -43,14 +43,20 @@ public:
     void setAccountDetails( const std::string& accountID, const std::map< std::string, std::string >& details );
     std::string addAccount( const std::map< std::string, std::string >& details );
     void removeAccount( const std::string& accoundID );
+    void deleteAllCredential (const std::string& accountID);
     std::vector< std::string > getAccountList(  );
     void sendRegister(  const std::string& accoundID , const int32_t& expire );
 
+    std::map< std::string, std::string > getTlsSettingsDefault (void);
+    void setIp2IpDetails(const std::map< std::string, std::string >& details);
+    std::map< std::string, std::string > getIp2IpDetails(void);
     std::map< std::string, std::string > getCredential (const std::string& accountID, const int32_t& index);
     int32_t getNumberOfCredential (const std::string& accountID);
     void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
+    void setNumberOfCredential (const std::string& accountID, const int32_t& number);
 
-    std::vector< std::string > getCodecList(  );
+    std::vector< std::string > getCodecList(void);
+    std::vector< std::string > getSupportedTlsMethod(void);
     std::vector< std::string > getCodecDetails( const int32_t& payload );
     std::vector< std::string > getActiveCodecList(  );
     void setActiveCodecList( const std::vector< std::string >& list );
@@ -76,6 +82,8 @@ public:
     int32_t getAudioManager( void );
     void setAudioManager( const int32_t& api );
 
+    bool isMd5CredentialHashing (void);
+    void setMd5CredentialHashing (const bool& enabled);
     int32_t isIax2Enabled( void );
     int32_t isRingtoneEnabled( void );
     void ringtoneEnabled( void );
@@ -84,7 +92,7 @@ public:
     std::string getRecordPath( void );
     void setRecordPath(const std::string& recPath );
     int32_t getDialpad( void );
-    void setDialpad( void );
+    void setDialpad (const bool& display);
     int32_t getSearchbar( void );
     
     void setSearchbar( void );
@@ -93,10 +101,10 @@ public:
     int32_t getHistoryLimit (void);
     
     void setHistoryEnabled (void);
-    int32_t getHistoryEnabled (void);
+	std::string getHistoryEnabled (void);
 
     int32_t getVolumeControls( void );
-    void setVolumeControls( void );
+    void setVolumeControls (const bool& display);
     int32_t isStartHidden( void );
     void startHidden( void );
     int32_t popupMode( void );
@@ -105,14 +113,6 @@ public:
     void setNotify( void );
     int32_t getMailNotify( void );
     void setMailNotify( void );
-    int32_t getPulseAppVolumeControl( void );
-    void setPulseAppVolumeControl( void );
-    int32_t getSipPort( void );
-    void setSipPort( const int32_t& portNum);
-    std::string getStunServer( void );
-    void setStunServer( const std::string& server );
-    void enableStun (void);
-    int32_t isStunEnabled (void);
 
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
@@ -127,6 +127,13 @@ public:
     std::map <std::string, std::string> getHistory (void);
     void setHistory (const std::map <std::string, std::string>& entries);
 
+    std::map<std::string, std::string> getTlsSettings(const std::string& accountID);
+    void setTlsSettings(const std::string& accountID, const std::map< std::string, std::string >& details);
+
+    std::string getAddrFromInterfaceName(const std::string& interface);
+    
+    std::vector<std::string> getAllIpInterface(void);
+    std::vector<std::string> getAllIpInterfaceByName(void);
 };
 
 

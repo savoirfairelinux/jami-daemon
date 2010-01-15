@@ -48,30 +48,68 @@ typedef enum RegistrationState {
         ErrorNetwork , 
         ErrorHost, 
         ErrorExistStun, 
-        ErrorConfStun
+        ErrorConfStun,
+        NumberOfState
 } RegistrationState;
 
 #define AccountNULL ""
 
 // Common account parameters
-#define CONFIG_ACCOUNT_TYPE   "Account.type"  
-#define CONFIG_ACCOUNT_ALIAS  "Account.alias"
-#define CONFIG_ACCOUNT_MAILBOX	"Account.mailbox"
-#define CONFIG_ACCOUNT_ENABLE	"Account.enable"
-#define CONFIG_ACCOUNT_RESOLVE_ONCE "Account.resolveOnce"
-#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE "Account.expire"
-#define CONFIG_CREDENTIAL_NUMBER "Credential.count"
+#define CONFIG_ACCOUNT_TYPE                 "Account.type"  
+#define CONFIG_ACCOUNT_ALIAS                "Account.alias"
+#define CONFIG_ACCOUNT_MAILBOX	            "Account.mailbox"
+#define CONFIG_ACCOUNT_ENABLE               "Account.enable"
+#define CONFIG_ACCOUNT_RESOLVE_ONCE         "Account.resolveOnce"
+#define CONFIG_ACCOUNT_REGISTRATION_EXPIRE  "Account.expire"
+#define CONFIG_CREDENTIAL_NUMBER            "Credential.count"
 
-#define HOSTNAME        "hostname"
-#define USERNAME        "username"
-#define PASSWORD        "password"
-#define REALM           "realm"
+#define HOSTNAME                            "hostname"
+#define USERNAME                            "username"
+#define AUTHENTICATION_USERNAME             "authenticationUsername"
+#define PASSWORD                            "password"
+#define REALM                               "realm"
+#define DEFAULT_REALM                       "*"
+
+#define LOCAL_INTERFACE                     "Account.localInterface"
+#define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
+#define LOCAL_PORT                          "Account.localPort"
+#define PUBLISHED_PORT                      "Account.publishedPort"
+#define PUBLISHED_ADDRESS                   "Account.publishedAddress"
+
+#define DISPLAY_NAME                        "Account.displayName"
+#define DEFAULT_ADDRESS                     "0.0.0.0"
 
 // SIP specific parameters
-#define SIP_PROXY             "SIP.proxy"
-#define SIP_STUN_SERVER       "STUN.server"
-#define SIP_USE_STUN          "STUN.enable"
-#define SIP_STUN_PORT         "STUN.port"
+#define SIP_PROXY                           "SIP.proxy"
+#define STUN_SERVER							"STUN.server"
+#define STUN_ENABLE							"STUN.enable"
+
+// SRTP specific parameters
+#define SRTP_ENABLE                         "SRTP.enable"
+#define SRTP_KEY_EXCHANGE                   "SRTP.keyExchange"
+#define SRTP_ENCRYPTION_ALGO                "SRTP.encryptionAlgorithm"  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8 
+#define ZRTP_HELLO_HASH                     "ZRTP.helloHashEnable"
+#define ZRTP_DISPLAY_SAS                    "ZRTP.displaySAS"
+#define ZRTP_NOT_SUPP_WARNING               "ZRTP.notSuppWarning"
+#define ZRTP_DISPLAY_SAS_ONCE               "ZRTP.displaySasOnce"
+
+#define TLS_ENABLE                          "TLS.enable"
+#define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
+#define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
+#define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
+#define TLS_PASSWORD                        "TLS.password"
+#define TLS_METHOD                          "TLS.method"
+#define TLS_CIPHERS                         "TLS.ciphers"
+#define TLS_SERVER_NAME                     "TLS.serverName"
+#define TLS_VERIFY_SERVER                   "TLS.verifyServer"
+#define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
+#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
+#define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
+#define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
+
+#define REGISTRATION_STATUS                 "Status"
+#define REGISTRATION_STATE_CODE             "Registration.code" 
+#define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
 
 class Account{
 
@@ -101,7 +139,7 @@ class Account{
          */
         inline VoIPLink* getVoIPLink() { return _link; }
 
-        inline void setVoIPLink (VoIPLink *link) { _link = link; }
+        virtual void setVoIPLink () = 0;
 
         /**
          * Register the underlying VoIPLink. Launch the event listener.
@@ -128,7 +166,30 @@ class Account{
          */
         inline RegistrationState getRegistrationState() { return _registrationState; }
 
+        /**
+         * Set the registration state of the specified link
+         * @param state	The registration state of underlying VoIPLink
+         */
         void setRegistrationState( RegistrationState state );
+        
+        /**
+         * Set the latest up-to-date state code
+         * for that account. These codes are 
+         * those used in SIP and IAX (eg. 200, 500 ...)
+         * @param state The Code:Description state
+         * @return void
+         */
+        void setRegistrationStateDetailed(std::pair<int, std::string> state) { _registrationStateDetailed = state; }
+        
+        /**
+         * Get the latest up-to-date state code
+         * for that account. These codes are 
+         * those used in SIP and IAX (eg. 200, 500 ...)
+         * @param void
+         * @return std::pair<int, std::string> A Code:Description state
+         */
+        std::pair<int, std::string> getRegistrationStateDetailed(void) { return _registrationStateDetailed; }
+                        
 
         /* inline functions */
         /* They should be treated like macro definitions by the C++ compiler */
@@ -199,9 +260,16 @@ class Account{
         std::string _type;
 
         /*
-         * The registration state of the account
+         * The general, protocol neutral registration 
+         * state of the account
          */
         RegistrationState _registrationState;
+        
+        /*
+         * Details about the registration state.
+         * This is a protocol Code:Description pair. 
+         */
+        std::pair<int, std::string> _registrationStateDetailed;
 
 };
 

@@ -23,7 +23,6 @@
 #ifndef __VOIP_LINK_H__
 #define __VOIP_LINK_H__
 
-#include "account.h"
 #include "call.h"
 
 class AudioCodec;
@@ -165,13 +164,13 @@ class VoIPLink {
      	* Set Recording
      	* @param id The call identifier
      	*/
-    	virtual void setRecording(const CallID& id) = 0;
+    	// virtual void setRecording(const CallID& id) = 0;
 
         /**
      	* Return recording state
      	* @param id The call identifier
      	*/
-    	virtual bool isRecording(const CallID& id) = 0;
+    	// virtual bool isRecording(const CallID& id) = 0;
 
         /**
          * Return the codec protocol used for this call 
@@ -181,8 +180,6 @@ class VoIPLink {
 
         bool initDone (void) { return _initDone; }
         void initDone (bool state) { _initDone = state; }
-
-        std::string getLocalIPAddress (void) { return _localIPAddress; }
 
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer
@@ -221,8 +218,6 @@ class VoIPLink {
          */
         Call* getCall(const CallID& id);
 
-        virtual void setStunServer( const std::string &server ) = 0;
-
     private:
         /**
          * ID of parent's Account
@@ -235,9 +230,6 @@ class VoIPLink {
 
         /** Mutex to protect call map */
         ost::Mutex _callMapMutex;
-
-        /** Get Local IP Address (ie: 127.0.0.1, 192.168.0.1, ...) */
-        std::string _localIPAddress;
 
         /** Get local listening port (5060 for SIP, ...) */
         unsigned int _localPort;

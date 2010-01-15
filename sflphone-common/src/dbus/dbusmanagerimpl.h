@@ -20,9 +20,11 @@
 #ifndef __DBUSMANAGERIMPL_H__
 #define __DBUSMANAGERIMPL_H__
 
-#include "callmanager.h"
-#include "configurationmanager.h"
 #include "instance.h"
+
+class ConfigurationManager;
+class CallManager;
+class NetworkManager;
 
 class DBusManagerImpl {
     public:
@@ -37,6 +39,7 @@ class DBusManagerImpl {
         ConfigurationManager* _configurationManager;
         Instance*             _instanceManager;
         DBus::BusDispatcher   _dispatcher;
+	NetworkManager* _networkManager;
 };
 
 #endif
