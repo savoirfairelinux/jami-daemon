@@ -158,7 +158,7 @@ int Sdp::create_local_offer ()
     //sdp_addAttributes( _pool );
     sdp_add_media_description();
 
-    if(!_srtp_crypto.empty()) { 
+    if(!_srtp_crypto.empty()) {
         sdp_add_sdes_attribute(_srtp_crypto);
     }
 
@@ -210,8 +210,6 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
 
     pj_status_t status;
-
-    _debug ("Receiving initial offer");
 
     // Create the SDP negociator instance by calling
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
@@ -370,32 +368,25 @@ void Sdp::sdp_add_media_description()
 void Sdp::sdp_add_sdes_attribute (std::string crypto)
 {
 
+    // temporary buffer used to store crypto attribute
     char tempbuf[256];
 
-    std::string tag = "1";
-    std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
-    std::string application = "srtp";
-    std::string key = "inline:16/14/NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj/2^20/1:32";
-
+    // the attribute to add to sdp
     pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc(_pool, sizeof(pjmedia_sdp_attr));
 
     attribute->name = pj_strdup3(_pool, "crypto");
 
-    /*
-    int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
-			       "%.*s %.*s %.*s",
-			       (int)tag.size(), tag.c_str(),
-			       (int)crypto_suite.size(), crypto_suite.c_str(),
-			       (int)key.size(), key.c_str());
-    */
+    // _debug("crypto from sdp: %s", crypto.c_str());
 
+    
     int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
 			       "%.*s",(int)crypto.size(), crypto.c_str());
-
+ 
     attribute->value.slen = len;
     attribute->value.ptr = (char*) pj_pool_alloc (_pool, attribute->value.slen+1);
     pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
 
+    // add crypto attribute to sdp session
     if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
         throw sdpException();
     }
@@ -676,28 +667,40 @@ void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp
     }
 }
 
-void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_attr** r_crypto)
+void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
 {
 
     int i;
     int attr_count;
-    pjmedia_sdp_attr * attribute;
-    *r_crypto =  NULL;
+    pjmedia_sdp_attr *attribute;
 
+    // get the number of attribute for this sdp session
     attr_count = remote_sdp->attr_count;
 
     // *r_crypto= pjmedia_sdp_media_find_attr(attribute, &STR_CRYPTO, NULL);
 
     _debug("****************** Parse for Crypto %i ********************", attr_count);
 
+    CryptoOffer remoteOffer;
+
+    // iterate over all atribute
     for (i = 0; i < attr_count; ++i) {
 
         _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
 	_debug("%.*s", (int)remote_sdp->attr[i]->value.slen, remote_sdp->attr[i]->value.ptr);
+
+	// test if this attribute is a crypto
         if (pj_stricmp2 (&remote_sdp->attr[i]->name, "crypto") == 0) {
+
+	    attribute = remote_sdp->attr[i];
+
 	    _debug("****************** Found a Crypto ********************");
-            *r_crypto = remote_sdp->attr[i];
-            return;
+	    std::string attr(attribute->value.ptr, attribute->value.slen);
+	    // @TODO our parser require the "acrypto:" to be present
+	    std::string full_attr = "a=crypto:";
+	    full_attr += attr;
+
+	    crypto_offer.push_back(full_attr);
         }
     }
 

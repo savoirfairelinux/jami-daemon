@@ -29,6 +29,7 @@
 #include <pjmedia/errno.h>
 #include <pj/pool.h>
 #include <pj/assert.h>
+#include <vector>
 
 #include "audio/codecs/codecDescriptor.h"
 #include "sdpmedia.h"
@@ -42,6 +43,8 @@ class sdpException: public std::exception
     return "An sdpException Occured";
   }
 };
+
+typedef std::vector<std::string> CryptoOffer;
 
 class Sdp {
 
@@ -218,7 +221,7 @@ class Sdp {
 
         std::vector<sdpMedia*> get_session_media_list (void) { return _session_media; }
 
-	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_attr** r_crypto);
+	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
 
     private:
         /** Codec Map */
