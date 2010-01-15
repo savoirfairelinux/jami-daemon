@@ -3226,6 +3226,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     CryptoOffer crypto_offer;
     call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, crypto_offer);
 
+    bool nego_success = false;
     if(!crypto_offer.empty()) {
 
         _debug("Crypto attribute in SDP: init Srtp session");
@@ -3240,10 +3241,37 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 	
 	if(sdesnego.negotiate()) {
 	    _debug("SDES negociation successfull \n");
-
+	    nego_success = true;
 	    call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
 	}
+	else {
 
+	    //@TODO Handle fallback mechanism here
+	    // - Call may Failed if SrtpOnly
+	    // - Call fallback to RTP (make sure PBX support it, if not ...)
+	    // - Ask (display a pop-up message)
+
+	    call->getAudioRtp()->getAudioRtpType();
+
+	}
+    }
+
+    // We did not found any crypto context for this media
+    if(!nego_success && call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
+       
+        // We did not found any crypto context for this media
+        // @TODO if SRTPONLY, CallFail
+
+        // if RTPFALLBACK, change RTP session 
+        call->getAudioRtp()->stop();
+        call->getAudioRtp()->getAudioRtpType(sfl::Symmetric);
+	call->getAudioRtp()->initAudioRtpSession(call);
+    }
+
+    if(nego_success && call->getAudioRtp()->getAudioRtpType() != sfl::Sdes) {
+       
+        // We found a crypto context for this media bt Sdes is not 
+        // enabled for this call, make a try using RTP only
     }
 
     try {

@@ -104,6 +104,11 @@ namespace sfl {
         *         Sdes = 2 
         */  
         inline RtpMethod getAudioRtpType(void) { return _rtpSessionType; }
+	
+        /** 
+        * @param Set internal audio rtp session type (Symmetric, Zrtp, Sdes) 
+        */  
+        inline RtpMethod getAudioRtpType(RtpMethod type) { return _rtpSessionType = type; }
  
         /**
          * Get the current AudioZrtpSession. Throws an AudioRtpFactoryException
