@@ -45,6 +45,8 @@ namespace sfl
 
 AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+	_localCryptoSuite(0),
+	_remoteCryptoSuite(0),
         AudioRtpSession<AudioSrtpSession> (manager, sipcall)
 {
 
@@ -68,7 +70,7 @@ std::string AudioSrtpSession::getLocalCryptoInfo() {
     // cryptographic context tagged 1, 2, 3...
     std::string tag = "1";
 
-    std::string crypto_suite = "AES_CM_128_HMAC_SHA1_32";
+    std::string crypto_suite = sfl::CryptoSuites[_localCryptoSuite].name;
 
     // srtp keys formated as the following  as the following
     // inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32
@@ -104,7 +106,7 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
 {
 
     // @TODO key may have different length depending on cipher suite
-    _localMasterKeyLength = 16;
+    _localMasterKeyLength = sfl::CryptoSuites[_localCryptoSuite].masterKeyLength / 8;
 
     // Allocate memory for key
     unsigned char *random_key = new unsigned char[_localMasterKeyLength];
@@ -130,7 +132,7 @@ void AudioSrtpSession::initializeLocalMasterSalt(void)
 {
 
     // @TODO key may have different length depending on cipher suite 
-    _localMasterSaltLength = 14;
+  _localMasterSaltLength = sfl::CryptoSuites[_localCryptoSuite].masterSaltLength / 8;
 
     // Allocate memory for key
     unsigned char *random_key = new unsigned char[_localMasterSaltLength];
@@ -174,8 +176,9 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 {
 
-    _remoteMasterKeyLength = 16;
-    _remoteMasterSaltLength = 14;
+    
+    _remoteMasterKeyLength = sfl::CryptoSuites[1].masterKeyLength / 8;
+    _remoteMasterSaltLength = sfl::CryptoSuites[1].masterSaltLength / 8;
 
     // length of decoded data data
     int length;
@@ -203,9 +206,9 @@ void AudioSrtpSession::initializeRemoteCryptoContext(void)
 					     SrtpEncryptionAESCM,         // encryption algo
 					     SrtpAuthenticationSha1Hmac,  // authtication algo
 					     _remoteMasterKey,            // Master Key
-					     128 / 8,                     // Master Key length
+					     _remoteMasterKeyLength,      // Master Key length
 					     _remoteMasterSalt,           // Master Salt
-					     112 / 8,                     // Master Salt length
+					     _remoteMasterSaltLength,     // Master Salt length
 					     128 / 8,                     // encryption keyl
 					     160 / 8,                     // authentication key len
 					     112 / 8,                     // session salt len
@@ -223,9 +226,9 @@ void AudioSrtpSession::initializeLocalCryptoContext(void)
 					      SrtpEncryptionAESCM,         // encryption algo
 					      SrtpAuthenticationSha1Hmac,  // authtication algo
 					      _localMasterKey,             // Master Key
-					      128 / 8,                     // Master Key length
+					      _localMasterKeyLength,       // Master Key length
 					      _localMasterSalt,            // Master Salt
-					      112 / 8,                     // Master Salt length
+					      _localMasterSaltLength,      // Master Salt length
 					      128 / 8,                     // encryption keyl
 					      160 / 8,                     // authentication key len
 					      112 / 8,                     // session salt len

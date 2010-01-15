@@ -28,6 +28,30 @@ class SdesNegotiator;
 class ManagerImpl;
 class SIPCall;
 
+/* 
+   Table from RFC 4568 6.2. Crypto-Suites, which define key parameters for supported 
+   cipher suite
+
+   +---------------------+-------------+--------------+---------------+
+   |                     |AES_CM_128_  | AES_CM_128_  | F8_128_       |
+   |                     |HMAC_SHA1_80 | HMAC_SHA1_32 |  HMAC_SHA1_80 |
+   +---------------------+-------------+--------------+---------------+
+   | Master key length   |   128 bits  |   128 bits   |   128 bits    |
+   | Master salt length  |   112 bits  |   112 bits   |   112 bits    |
+   | SRTP lifetime       | 2^48 packets| 2^48 packets | 2^48 packets  |
+   | SRTCP lifetime      | 2^31 packets| 2^31 packets | 2^31 packets  |
+   | Cipher              | AES Counter | AES Counter  | AES F8 Mode   |
+   |                     | Mode        | Mode         |               |
+   | Encryption key      |   128 bits  |   128 bits   |   128 bits    |
+   | MAC                 |  HMAC-SHA1  |  HMAC-SHA1   |  HMAC-SHA1    |
+   | SRTP auth. tag      |    80 bits  |    32 bits   |    80 bits    |
+   | SRTCP auth. tag     |    80 bits  |    80 bits   |    80 bits    |
+   | SRTP auth. key len. |   160 bits  |   160 bits   |   160 bits    |
+   | SRTCP auth. key len.|   160 bits  |   160 bits   |   160 bits    |
+   +---------------------+-------------+--------------+---------------+
+*/
+
+
 namespace sfl {
 
     class SrtpException: public std::exception
@@ -66,20 +90,30 @@ namespace sfl {
 
 	    char* decodeBase64(unsigned char *input, int length, int *length_out);
 
+	    /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
+	    int _localCryptoSuite;
+
+	    /** Remote crypto suite is initialized at AES_CM_128_HMAC_SHA1_80*/
+	    int _remoteCryptoSuite;
+
             uint8 _localMasterKey[16];
 
+	    /** local master key length in byte */
 	    int _localMasterKeyLength;
 
 	    uint8 _localMasterSalt[14];
 
+	    /** local master salt length in byte */
 	    int _localMasterSaltLength;
 
 	    uint8 _remoteMasterKey[16];
 
+	    /** remote master key length in byte */
 	    int _remoteMasterKeyLength;
 
 	    uint8 _remoteMasterSalt[14];
 
+	    /** remote master salt length in byte */
 	    int _remoteMasterSaltLength;
 
 	    ost::CryptoContext* _remoteCryptoCtx;

@@ -696,6 +696,7 @@ void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sd
 
 	    _debug("****************** Found a Crypto ********************");
 	    std::string attr(attribute->value.ptr, attribute->value.slen);
+
 	    // @TODO our parser require the "acrypto:" to be present
 	    std::string full_attr = "a=crypto:";
 	    full_attr += attr;
