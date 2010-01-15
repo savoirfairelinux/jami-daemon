@@ -757,6 +757,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
         try {
             _debug ("Creating new rtp session in newOutgoingCall");
+	    call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
             _debug ("Failed to create rtp thread from newOutGoingCall");
@@ -1060,6 +1061,7 @@ SIPVoIPLink::offhold (const CallID& id)
     }
 
     try {
+        call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
@@ -1569,6 +1571,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 	// Audio Rtp Session must be initialized before creating initial offer in SDP session
 	// since SDES require crypto attribute.
 	try {
+	    call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
             _debug ("! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)", __FILE__, __LINE__);
@@ -3265,9 +3268,10 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         // We did not found any crypto context for this media
         // @TODO if SRTPONLY, CallFail
 
-        // if RTPFALLBACK, change RTP session 
+        // if RTPFALLBACK, change RTP session
+        _debug("Did not found any crypto or negociation failed but Sdes enabled");
         call->getAudioRtp()->stop();
-        call->getAudioRtp()->setAudioRtpType(sfl::Symmetric);
+	call->getAudioRtp()->setSrtpEnabled(false);
 	call->getAudioRtp()->initAudioRtpSession(call);
     }
 
@@ -3661,6 +3665,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     call->getLocalSDP()->set_ip_address (addrSdp);
 
     try {
+        call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
     } catch (...) {
         _debug ("Failed to create rtp thread from answer");
