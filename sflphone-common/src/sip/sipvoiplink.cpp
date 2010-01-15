@@ -3226,6 +3226,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     CryptoOffer crypto_offer;
     call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, crypto_offer);
 
+
     bool nego_success = false;
     if(!crypto_offer.empty()) {
 
@@ -3242,7 +3243,9 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 	if(sdesnego.negotiate()) {
 	    _debug("SDES negociation successfull \n");
 	    nego_success = true;
-	    call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
+
+	    if(call->getAudioRtp()->getAudioRtpType() == sfl::Sdes)
+	        call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
 	}
 	else {
 
@@ -3270,8 +3273,9 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     if(nego_success && call->getAudioRtp()->getAudioRtpType() != sfl::Sdes) {
        
-        // We found a crypto context for this media bt Sdes is not 
-        // enabled for this call, make a try using RTP only
+        // We found a crypto context for this media but Sdes is not 
+        // enabled for this call, make a try using RTP only...
+        _debug("Sdes not initialized for this call\n");
     }
 
     try {

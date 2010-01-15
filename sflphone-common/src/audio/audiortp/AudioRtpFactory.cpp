@@ -115,6 +115,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 		break;
 
             default:
+	        _debug("Unsupported Rtp Session Exception Type!");
                 throw UnsupportedRtpSessionType();
         }
     } else {
@@ -186,7 +187,7 @@ void AudioRtpFactory::stop (void)
         _rtpSession = NULL;
     } catch (...) {
         _debugException ("Exception caught when stopping the audio rtp session");
-        throw AudioRtpFactoryException();
+        throw AudioRtpFactoryException("caught exception in AudioRtpFactory::stop");
     }
 }
 
@@ -218,7 +219,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
     if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {
         return static_cast<AudioZrtpSession *> (_rtpSession);
     } else {
-        throw AudioRtpFactoryException();
+        throw AudioRtpFactoryException("_rtpSession is NULL in getAudioZrtpSession");
     }
 }
 
@@ -228,7 +229,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
         static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo(nego);
     }
     else {
-        throw AudioRtpFactoryException();
+        throw AudioRtpFactoryException("_rtpSession is NULL in setRemoteCryptoInfo");
     }
 }
 }
