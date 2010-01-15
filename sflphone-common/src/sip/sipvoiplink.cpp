@@ -2953,6 +2953,7 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 
 void SIPVoIPLink::handle_reinvite (SIPCall *call)
 {
+    /*
     // Close the previous RTP session
     call->getAudioRtp()->stop ();
     call->setAudioStart (false);
@@ -2964,6 +2965,12 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
     }
+    */
+    _debug("******************************************");
+    _debug("*             handle_reinvite            *");
+    _debug("******************************************");
+
+    call->getAudioRtp()->updateDestinationIpAddress();
 }
 
 // This callback is called when the invite session state has changed
