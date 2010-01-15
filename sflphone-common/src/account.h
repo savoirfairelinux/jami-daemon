@@ -70,9 +70,9 @@ typedef enum RegistrationState {
 #define REALM                               "realm"
 #define DEFAULT_REALM                       "*"
 
+#define LOCAL_INTERFACE                     "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
 #define LOCAL_PORT                          "Account.localPort"
-#define LOCAL_ADDRESS                       "Account.localAddress"
 #define PUBLISHED_PORT                      "Account.publishedPort"
 #define PUBLISHED_ADDRESS                   "Account.publishedAddress"
 
@@ -139,7 +139,7 @@ class Account{
          */
         inline VoIPLink* getVoIPLink() { return _link; }
 
-        inline void setVoIPLink (VoIPLink *link) { _link = link; }
+        virtual void setVoIPLink () = 0;
 
         /**
          * Register the underlying VoIPLink. Launch the event listener.

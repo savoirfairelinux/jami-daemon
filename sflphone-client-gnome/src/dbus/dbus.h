@@ -514,11 +514,20 @@ gchar** dbus_get_addressbook_list (void);
 
 void dbus_set_addressbook_list (const gchar** list);
 
+/**
+ * Resolve the local address given an interface name
+ */
+gchar * dbus_get_address_from_interface_name(gchar* interface);
 
 /**
  * Query the daemon to return a list of network interface (described as there IP address)
  */
 gchar** dbus_get_all_ip_interface(void);
+
+/**
+ * Query the daemon to return a list of network interface (described as there name)
+ */
+gchar** dbus_get_all_ip_interface_by_name(void);
 
 /**
  * Encapsulate all the url hook-related configuration

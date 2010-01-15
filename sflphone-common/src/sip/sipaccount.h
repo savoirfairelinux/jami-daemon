@@ -24,6 +24,8 @@
 #ifndef SIPACCOUNT_H
 #define SIPACCOUNT_H
 
+#include <sstream>
+
 #include "account.h"
 #include "sipvoiplink.h"
 #include "pjsip/sip_transport_tls.h"
@@ -55,6 +57,12 @@ class SIPAccount : public Account
          * Virtual destructor
          */
         virtual ~SIPAccount();
+
+	/**
+	 * Special setVoIPLink which increment SipVoIPLink's number of client. 
+	 */
+	// void setVoIPLink(VoIPLink *link);
+	void setVoIPLink();
 
         /** 
          * Actually unuseful, since config loading is done in init() 
@@ -188,6 +196,17 @@ class SIPAccount : public Account
          */
         std::string getContactHeader(const std::string& address, const std::string& port);
 
+	/**
+	 * Set the interface name on which this account is bound, "default" means 
+	 * that the account is bound to the ANY interafec (0.0.0.0). This method should be
+	 * when binding the account to a new sip transport only.
+	 */
+	inline void setLocalInterface(const std::string& interface) {_interface = interface;}
+
+	/**
+	 * Get the local interface name on which this account is bound.
+	 */
+	inline std::string getLocalInterface(void) { return _interface; }
 
 	/**
 	 * Get a flag which determine the usage in sip headers of either the local 
@@ -229,19 +248,6 @@ class SIPAccount : public Account
          * @pram port The port used by this account.
          */
         inline void setPublishedPort(pj_uint16_t port) { _publishedPort = port; }
-
-        /**
-         * Get the bound address set by the user.
-         * @return std::string The public IPV4 address formatted in the standard dot notation.
-         */
-        inline std::string getLocalAddress(void) { return _localIpAddress; }
-        
-        /**
-         * Set the bound address chosen by the user.
-         * @param The public IPV4 address in the standard dot notation.
-         * @return void
-         */
-        inline void setLocalAddress(const std::string& address) { _localIpAddress = address; }
                 
         /**
          * Get the public IP address set by the user for this account.
@@ -268,7 +274,9 @@ class SIPAccount : public Account
 
 	inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
 
-	private: 
+	std::string getTransportMapKey(void);
+
+  private: 
 
         /* Maps a string description of the SSL method 
          * to the corresponding enum value in pjsip_ssl_method.
@@ -283,10 +291,10 @@ class SIPAccount : public Account
          */  
         void initTlsConfiguration(void);  
 
-		/*
-		 * Initializes STUN config from the config file
-		 */
-		void initStunConfiguration (void);
+	/*
+	 * Initializes STUN config from the config file
+	 */
+	void initStunConfiguration (void);
  
         /*
          * Initializes set of additional credentials, if supplied by the user.
@@ -308,8 +316,7 @@ class SIPAccount : public Account
          * @return std::string The login name under which SFLPhone is running.
          */ 
         std::string getLoginName(void);
-            
-    private:               
+              
 
         // The pjsip client registration information
         pjsip_regc *_regc;
@@ -319,11 +326,13 @@ class SIPAccount : public Account
         // Network settings
         std::string _registrationExpire;
 
-		// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
+	// interface name on which this account is bound
+	std::string _interface;
+
+	// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
         // sip headers
-		bool _publishedSameasLocal;
+	bool _publishedSameasLocal;
                 
-        std::string _localIpAddress;
         std::string _publishedIpAddress;
         
         pj_uint16_t _localPort;
@@ -350,8 +359,8 @@ class SIPAccount : public Account
         // The STUN server name, if applicable
         pj_str_t _stunServerName;	                                                  
 
-		// The STUN server port, if applicable
-		pj_uint16_t _stunPort;
+	// The STUN server port, if applicable
+	pj_uint16_t _stunPort;
         
         // Display Name that can be used in  SIP URI.        
         std::string _displayName;        

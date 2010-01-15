@@ -587,6 +587,7 @@ void PulseLayer::writeToSpeaker (void)
             normalAvailBytes = getMainBuffer()->availForGet();
 
             byteToGet = (normalAvailBytes < (int) (maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
+	    // _debug("byteToGet: %i", byteToGet);
 
             if (byteToGet) {
 

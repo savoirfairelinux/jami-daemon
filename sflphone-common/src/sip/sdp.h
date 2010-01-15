@@ -336,6 +336,16 @@ class Sdp {
 
         void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
+	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_crypto);
+
+	
+	/* 
+         * Adds a sdes attribute to the given media section.
+         *
+         * @param media The media to add the srtp attribute to 
+	 */
+	void sdp_add_sdes_attribute(pjmedia_sdp_media* media);
+
         /* 
          * Adds a zrtp-hash  attribute to 
          * the given media section. The hello hash is

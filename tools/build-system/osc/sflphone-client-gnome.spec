@@ -125,6 +125,7 @@ make clean
 %lang(zh_HK) %{_prefix}/share/locale/zh_HK/LC_MESSAGES/*.mo
 %lang(it) %{_prefix}/share/locale/it/LC_MESSAGES/*.mo
 %lang(pt_BR) %{_prefix}/share/locale/pt_BR/LC_MESSAGES/*.mo
+%lang(da) %{_prefix}/share/locale/da/LC_MESSAGES/*.mo
 %doc AUTHORS COPYING README
 %doc %{_prefix}/share/man/man1/sflphone-client-gnome.1.gz
 %doc %{_prefix}/share/man/man1/sflphone.1.gz

@@ -125,6 +125,7 @@ void AudioRtpFactory::start (void)
     switch (_rtpSessionType) {
 
         case Sdes:
+	    break;
 
         case Symmetric:
             _debug ("Starting symmetric rtp thread");

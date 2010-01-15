@@ -58,22 +58,6 @@ static gboolean history_enabled = TRUE;
 GHashTable * directIpCallsProperties = NULL;
 
 
-
-
-static void update_ip_address_port_cb ( GtkSpinButton *button UNUSED, void *ptr )
-{ 
-	// dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
-	gchar* local_address = g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo)));
-	gchar* local_port = g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox)));
-
-	gchar* ip_interface = g_strconcat(local_address, ":", local_port, NULL);
-
-	DEBUG("update_ip_address_port_cb %s\n", ip_interface);
-
-	dbus_set_sip_address(ip_interface);
-}
-
-
 	static void
 set_md5_hash_cb(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
@@ -165,7 +149,7 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 static void ip2ip_local_address_changed_cb(GtkWidget *widget, gpointer data)
 {
 	DEBUG("ip2ip_local_address_changed_cb\n");
-	g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget))));
+	g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_INTERFACE), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget))));
 }
 
 static void ip2ip_local_port_changed_cb(GtkWidget *widget, gpointer data)
@@ -199,6 +183,7 @@ GtkWidget* create_direct_ip_calls_tab()
 	gchar * curKeyExchange = "0";
 	gchar * description;
 
+	gchar * local_interface;
 	gchar * local_address;
 	gchar * local_port;
 
@@ -207,9 +192,9 @@ GtkWidget* create_direct_ip_calls_tab()
 
 	if(directIpCallsProperties != NULL) {
 		DEBUG("got a directIpCallsProperties");
-		local_address = g_hash_table_lookup(directIpCallsProperties,  LOCAL_ADDRESS);
+		local_interface = g_hash_table_lookup(directIpCallsProperties, LOCAL_INTERFACE);
 		local_port = g_hash_table_lookup(directIpCallsProperties, LOCAL_PORT);
-		DEBUG("    local address = %s", local_address);
+		DEBUG("    local interface = %s", local_interface);
 		DEBUG("    local port = %s", local_port);
 		curSRTPEnabled = g_hash_table_lookup(directIpCallsProperties, ACCOUNT_SRTP_ENABLED);
 		DEBUG("    curSRTPEnabled = %s", curSRTPEnabled);
@@ -252,7 +237,8 @@ GtkWidget* create_direct_ip_calls_tab()
 
 	GtkTreeIter current_local_address_iter = iter;   
 	gchar ** iface_list = NULL;
-	iface_list = (gchar**) dbus_get_all_ip_interface();
+	// iface_list = (gchar**) dbus_get_all_ip_interface();
+	iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
 	gchar ** iface;
 
 	gboolean iface_found = FALSE;
@@ -263,7 +249,7 @@ GtkWidget* create_direct_ip_calls_tab()
 			gtk_list_store_append(ipInterfaceListStore, &iter );
 			gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
 
-			if (!iface_found && (g_strcmp0(*iface, local_address) == 0)) {
+			if (!iface_found && (g_strcmp0(*iface, local_interface) == 0)) {
 				DEBUG("Setting active local address combo box");
 				current_local_address_iter = iter;
 				iface_found = TRUE;
@@ -291,7 +277,7 @@ GtkWidget* create_direct_ip_calls_tab()
 	gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
 	g_signal_connect (G_OBJECT(GTK_COMBO_BOX(localAddressCombo)), "changed", G_CALLBACK (ip2ip_local_address_changed_cb), localAddressCombo);
 
-	g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
+	g_hash_table_replace(directIpCallsProperties, g_strdup(LOCAL_INTERFACE), g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
 
 
 	/**
@@ -311,7 +297,7 @@ GtkWidget* create_direct_ip_calls_tab()
 
 
 	GtkWidget *applyModificationButton = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-	g_signal_connect( G_OBJECT(applyModificationButton) , "clicked" , G_CALLBACK( update_ip_address_port_cb ), localPortSpinBox);
+	// g_signal_connect( G_OBJECT(applyModificationButton) , "clicked" , G_CALLBACK( update_ip_address_port_cb ), localPortSpinBox);
 	gtk_table_attach( GTK_TABLE(table), applyModificationButton, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
 

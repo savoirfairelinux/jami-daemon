@@ -291,13 +291,6 @@
     <method name="switchPopupMode">
     </method>
 
-    <method name="setSipAddress">
-      <arg type="s" name="address" direction="in"/>
-    </method>
-
-    <method name="getSipAddress">
-      <arg type="i" name="address" direction="out"/>
-    </method>
 
     <!-- Addressbook configuration -->
     <method name="getAddressbookSettings">
@@ -370,8 +363,18 @@
       <arg type="s" name="accountID" direction="in"/>
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
-    
+
+    <method name="getAddrFromInterfaceName">
+      <arg type="s" name="interface" direction="in"/>
+      <arg type="s" name="address" direction="out"/>
+    </method>
+
     <method name="getAllIpInterface">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
+    <method name="getAllIpInterfaceByName">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>

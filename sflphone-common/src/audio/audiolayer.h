@@ -213,6 +213,11 @@ class AudioLayer {
 	 */
 	inline Recordable* getRecorderInstance (void) {return _recorder;}
 
+	/**
+	 * Get the mutex lock for the entire audio layer 
+	 */
+	inline ost::Mutex* getMutexLock(void) { return &_mutex; }
+
 
     protected:
 
@@ -285,6 +290,9 @@ class AudioLayer {
         /** Contains the current error code */
         int _errorMessage;
 
+	/**
+	 * Lock for the entire audio layer
+	 */ 
         ost::Mutex _mutex;
 
 };

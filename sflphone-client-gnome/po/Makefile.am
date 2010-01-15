@@ -38,7 +38,7 @@ SUFFIXES=.po .mo
 .po.mo:
 	$(MSGFMT) -o $@ $<
 
-install-data-local:
+install-data-local: $(MOFILES)
 	@catalogs='$(MOFILES)'; \
 	for i in $$catalogs; do \
 		destdir=$(locale_installdir); \
@@ -58,4 +58,4 @@ uninstall-local:
 	done
 
 clean-local:
-	rm -rf *.mo
+	rm -f $(MOFILES)

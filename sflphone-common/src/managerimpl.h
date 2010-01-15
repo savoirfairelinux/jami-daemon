@@ -1024,6 +1024,8 @@ class ManagerImpl {
      * Initialize audiodriver
      */
     bool initAudioDriver(void);
+
+    ost::Mutex* getAudioLayerMutex() { return &_audiolayer_mutex; }
     
   private:
     /* Transform digest to string.
@@ -1128,6 +1130,8 @@ class ManagerImpl {
     //
     /** Mutex to protect access to code section */
     ost::Mutex _mutex;
+
+    ost::Mutex _audiolayer_mutex;
 
     // Multithread variable (non protected)
     DBusManagerImpl * _dbus;
@@ -1288,8 +1292,6 @@ class ManagerImpl {
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
     int getLocalIp2IpPort();
-
-    void setLocalIp2IpInfo( const std::string& address );
 
     std::string getStunServer (void);
     void setStunServer (const std::string &server);

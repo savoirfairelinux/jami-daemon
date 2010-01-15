@@ -77,7 +77,7 @@ ConfigurationManager::getIp2IpDetails (void)
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
 
-    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_ADDRESS, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_ADDRESS)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_INTERFACE, Manager::instance().getConfigString(IP2IP_PROFILE, LOCAL_INTERFACE)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT, Manager::instance().getConfigString (IP2IP_PROFILE, LOCAL_PORT)));
 
     std::map<std::string, std::string> tlsSettings;
@@ -94,10 +94,10 @@ ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string 
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
 
-    it = map_cpy.find (LOCAL_ADDRESS);
+    it = map_cpy.find (LOCAL_INTERFACE);
 
     if (it != details.end()) {
-        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_ADDRESS, it->second);
+        Manager::instance().setConfig (IP2IP_PROFILE, LOCAL_INTERFACE, it->second);
     }
 
     it = map_cpy.find (LOCAL_PORT);
@@ -756,20 +756,6 @@ ConfigurationManager::getMailNotify (void)
     return Manager::instance().getMailNotify();
 }
 
-int
-ConfigurationManager::getSipAddress (void)
-{
-    return Manager::instance().getLocalIp2IpPort();
-
-    // return "ok";
-}
-
-void
-ConfigurationManager::setSipAddress (const std::string& address)
-{
-    _debug ("Manager received setSipAddress: %s", address.c_str());
-    Manager::instance().setLocalIp2IpInfo (address);
-}
 
 std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void)
 {
@@ -817,6 +803,18 @@ void ConfigurationManager::setHistory (const std::map <std::string, std::string>
     Manager::instance().receive_history_from_client (entries);
 }
 
+std::string
+ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
+{
+    _debug ("ConfigurationManager::getAddrFromInterfaceName received");
+
+    std::string address = SIPVoIPLink::instance("")->getInterfaceAddrFromName(interface);
+
+    _debug("address: %s", address.c_str());
+
+    return address;
+}
+
 std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
 {
     _debug ("ConfigurationManager::getAllIpInterface received");
@@ -827,6 +825,21 @@ std::vector<std::string> ConfigurationManager::getAllIpInterface (void)
 
     if (sipLink != NULL) {
         vector = sipLink->getAllIpInterface();
+    }
+
+    return vector;
+}
+
+std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName(void)
+{
+    _debug ("ConfigurationManager::getAllIpInterface received\n");
+
+    std::vector<std::string> vector;
+    SIPVoIPLink * sipLink = NULL;
+    sipLink = SIPVoIPLink::instance ("");
+
+    if (sipLink != NULL) {
+        vector = sipLink->getAllIpInterfaceByName();
     }
 
     return vector;

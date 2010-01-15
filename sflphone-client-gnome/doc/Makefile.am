@@ -24,8 +24,11 @@ DOC_FIGURES =	figures/addressbook-button.png \
 				figures/systemtray-settings.png			\
 				figures/voicemail-notif.png			\
 				figures/account_advanced.png 			\
+				figures/accounts_security.png 			\
 				figures/drag_n_drop.png 			\
 				figures/conference.png	 			\
 				figures/conference_detached.png			\
-				figures/conference_attached.png
+				figures/conference_attached.png			\
+				figures/srtp_enabled.png				\
+				figures/zrtp_options.png	
 DOC_LINGUAS = fr es

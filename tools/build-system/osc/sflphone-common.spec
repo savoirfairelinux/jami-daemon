@@ -21,7 +21,6 @@ Packager:	Julien Bonjean <julien.bonjean@savoirfairelinux.com>
 
 BuildRoot:      %{_tmppath}/%{name}
 Source0:        sflphone-common-%{version}.tar.gz
-Patch0:		sflphone-common-dbus-service-in-libdir.patch
 BuildRequires:	speex-devel
 BuildRequires:	gcc-c++
 BuildRequires:	expat
@@ -95,7 +94,6 @@ Authors:
 
 %prep
 %setup -q
-%patch0 -p1
 
 %build
 cd libs/pjproject
@@ -127,7 +125,7 @@ make clean
 %dir %{_libdir}/sflphone/plugins
 %dir %{_prefix}/share/sflphone
 %dir %{_prefix}/share/sflphone/ringtones
-%{_libdir}/libdbus-*
+%{_libdir}/sflphone/libdbus-*
 %{_libdir}/sflphone/codecs/*
 %{_libdir}/sflphone/plugins/*
 %{_prefix}/share/dbus-1/services/org.sflphone.*

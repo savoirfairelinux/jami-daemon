@@ -95,11 +95,8 @@ ManagerImpl::initRegisterAccounts()
     while (iter != _accountMap.end()) {
         if (iter->second) {
             iter->second->loadConfig();
+
             /* If the account is set as enabled, try to register */
-
-            // TODO: take off this protection by storing localIPAddress using interface name
-            setConfig (iter->second->getAccountID(), LOCAL_ADDRESS, "0.0.0.0");
-
             if (iter->second->isEnabled()) {
                 status = iter->second->registerVoIPLink();
 
