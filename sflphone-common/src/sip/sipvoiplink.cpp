@@ -3267,7 +3267,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
         // if RTPFALLBACK, change RTP session 
         call->getAudioRtp()->stop();
-        call->getAudioRtp()->getAudioRtpType(sfl::Symmetric);
+        call->getAudioRtp()->setAudioRtpType(sfl::Symmetric);
 	call->getAudioRtp()->initAudioRtpSession(call);
     }
 
