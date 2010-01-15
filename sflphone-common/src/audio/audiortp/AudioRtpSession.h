@@ -66,7 +66,12 @@ namespace sfl {
             virtual void run ();
             
             int startRtpThread();
-    
+
+	    /**
+	     * Used mostly when receiving a reinvite
+	     */
+	    void updateDestinationIpAddress(void);
+
         private:
         
             void initBuffers(void);
@@ -98,6 +103,16 @@ namespace sfl {
             // it amounts to the same as doing
             // start() with no semaphore at all. 
             ost::Semaphore * _mainloopSemaphore;
+
+	    // Main destination address for this rtp session.
+	    // Stored in case or reINVITE, which may require to forget 
+	    // this destination and update a new one.
+	    ost::InetHostAddress _remote_ip;
+
+	    // Main destination port for this rtp session.
+	    // Stored in case reINVITE, which may require to forget
+	    // this destination and update a new one
+	    unsigned short _remote_port;
                      
             AudioCodec * _audiocodec;
             
@@ -292,19 +307,35 @@ namespace sfl {
         }
         
         _debug ("Setting IP address for the RTP session\n");
-        
-        ost::InetHostAddress remote_ip (_ca->getLocalSDP()->get_remote_ip().c_str());
+
+	// Store remote ip in case we would need to forget current destination
+        _remote_ip = ost::InetHostAddress(_ca->getLocalSDP()->get_remote_ip().c_str());
         _debug ("Init audio RTP session: remote ip %s\n", _ca->getLocalSDP()->get_remote_ip().data());
 
-        if (!remote_ip) {
+        if (!_remote_ip) {
             _debug ("Target IP address [%s] is not correct!\n", _ca->getLocalSDP()->get_remote_ip().data());
             return;
         }
 
-        if (! static_cast<D*>(this)->addDestination (remote_ip, (unsigned short) _ca->getLocalSDP()->get_remote_audio_port())) {
+	// Store remote port in case we would need to forget current destination
+	_remote_port = (unsigned short) _ca->getLocalSDP()->get_remote_audio_port();
+
+        if (! static_cast<D*>(this)->addDestination (_remote_ip, _remote_port)) {
             _debug ("Can't add destination to session!\n");
             return;
         }
+    }
+
+    template <typename D>
+    void AudioRtpSession<D>::updateDestinationIpAddress(void)
+    {
+        // Destination address are stored in a list in ccrtp
+        // This method clear off this entry
+        static_cast<D*>(this)->forgetDestination(_remote_ip, _remote_port);
+
+	// new destination is stored in call
+	// we just need to recall this method
+        setDestinationIpAddress();
     }
     
     template <typename D>

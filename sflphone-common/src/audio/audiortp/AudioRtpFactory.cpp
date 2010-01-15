@@ -190,6 +190,29 @@ void AudioRtpFactory::stop (void)
     }
 }
 
+void AudioRtpFactory::updateDestinationIpAddress (void)
+{
+    _debug ("Updating IP address");
+    if (_rtpSession == NULL) {
+        throw AudioRtpFactoryException ("_rtpSession was null when trying to update IP address");
+    }
+
+    switch (_rtpSessionType) {
+
+        case Sdes:
+	    static_cast<AudioSrtpSession *> (_rtpSession)->updateDestinationIpAddress();
+	    break;
+
+        case Symmetric:
+            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            break;
+
+        case Zrtp:
+	    static_cast<AudioZrtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            break;
+    }
+}
+
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
     if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {

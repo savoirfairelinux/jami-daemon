@@ -47,15 +47,15 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
         AudioRtpSession<AudioSrtpSession> (manager, sipcall)
 {
-    _debug ("***************** Initialize AudioSrtpSession *********************");
+
+    // Initialize local Crypto context
     initializeLocalMasterKey();
     initializeLocalMasterSalt();
-    // initializeRemoteCryptoContext();
     initializeLocalCryptoContext();
 
+    // Set local crypto context in ccrtp
     _localCryptoCtx->deriveSrtpKeys(0);
 
-    // setInQueueCryptoContext(_remoteCryptoCtx);
     setOutQueueCryptoContext(_localCryptoCtx);
 }
 
@@ -76,6 +76,7 @@ std::string AudioSrtpSession::getLocalCryptoInfo() {
     srtp_keys += getBase64ConcatenatedKeys();
     srtp_keys.append("|2^20|1:32");
 
+    // generate crypto attribute
     std::string crypto = tag.append(" ");
     crypto += crypto_suite.append(" ");
     crypto += srtp_keys;
@@ -105,8 +106,10 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
     // @TODO key may have different length depending on cipher suite
     _localMasterKeyLength = 16;
 
+    // Allocate memory for key
     unsigned char *random_key = new unsigned char[_localMasterKeyLength];
 
+    // Generate ryptographically strong pseudo-random bytes
     int err;
     if((err = RAND_bytes(random_key, _localMasterKeyLength)) != 1)
         _debug("Error occured while generating cryptographically strong pseudo-random key");
@@ -129,19 +132,15 @@ void AudioSrtpSession::initializeLocalMasterSalt(void)
     // @TODO key may have different length depending on cipher suite 
     _localMasterSaltLength = 14;
 
+    // Allocate memory for key
     unsigned char *random_key = new unsigned char[_localMasterSaltLength];
 
+    // Generate ryptographically strong pseudo-random bytes
     int err;
     if((err = RAND_bytes(random_key, _localMasterSaltLength)) != 1)
         _debug("Error occured while generating cryptographically strong pseudo-random key");
 
     memcpy(_localMasterSalt, random_key, _localMasterSaltLength);
-
-    printf("Local Salt: ");
-    for(int i = 0; i < _localMasterSaltLength; i++){
-      printf("%d", _localMasterSalt[i]);
-    }
-    printf("\n");
 
     return;
 
@@ -151,9 +150,12 @@ void AudioSrtpSession::initializeLocalMasterSalt(void)
 std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 {
 
-    // concatenate master and salt
+    // compute concatenated master and salt length
     int concatLength = _localMasterKeyLength + _localMasterSaltLength;
+
     uint8 concatKeys[concatLength];
+
+    // concatenate keys
     memcpy((void*)concatKeys, (void*)_localMasterKey, _localMasterKeyLength);
     memcpy((void*)(concatKeys + _localMasterKeyLength), (void*)_localMasterSalt, _localMasterSaltLength);
 
@@ -187,18 +189,6 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
     // copy master and slt respectively
     memcpy((void*)_remoteMasterKey, (void*)output, _remoteMasterKeyLength);
     memcpy((void*)_remoteMasterSalt, (void*)(output + _remoteMasterKeyLength), _remoteMasterSaltLength);
-
-    printf("Remote Master: ");
-    for(int i = 0; i < _remoteMasterKeyLength; i++){
-        printf("%d", _remoteMasterKey[i]);
-    }
-    printf("\n");
-
-    printf("Remote Salt: ");
-    for(int i = 0; i < _remoteMasterSaltLength; i++){
-        printf("%d", _remoteMasterSalt[i]);
-    }
-    printf("\n");
 
     free(output);
 }

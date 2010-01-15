@@ -82,6 +82,12 @@ namespace sfl {
          * @param None
          */
         void stop();
+
+	/**
+         * Update current RTP destination address with one stored in call 
+         * @param None
+         */
+	void updateDestinationIpAddress (void);
           
         /** 
         * @param None
