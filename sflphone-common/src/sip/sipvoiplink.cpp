@@ -28,6 +28,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "eventthread.h"
+#include "SdesNegotiator.h"
 
 #include "dbus/dbusmanager.h"
 #include "dbus/callmanager.h"
@@ -807,11 +808,13 @@ SIPVoIPLink::answer (const CallID& id)
 
     local_sdp = call->getLocalSDP();
 
+    /*
     try {
         call->getAudioRtp()->initAudioRtpSession (call);
     } catch (...) {
         _debug ("Failed to create rtp thread from answer");
     }
+    */
 
     inv_session = call->getInvSession();
 
@@ -1559,7 +1562,6 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         setCallAudioLocal (call, localAddress);
 
         _debug ("toUri received in new_ip_to_ip call %s", to.c_str());
-
         std::string toUri = account->getToUri (to);
         call->setPeerNumber (toUri);
         _debug ("toUri in new_ip_to_ip call %s", toUri.c_str());
@@ -1567,11 +1569,17 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->getLocalSDP()->set_ip_address (addrSdp);
         call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
 
-        try {
+	// Audio Rtp Session must be initialized before creating initial offer in SDP session
+	// since SDES require crypto attribute.
+	try {
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
             _debug ("! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)", __FILE__, __LINE__);
         }
+
+        // Building the local SDP offer
+        call->getLocalSDP()->set_ip_address (addrSdp);
+        call->getLocalSDP()->create_initial_offer();
 
         // If no account already set, use the default one created at pjsip initialization
         if (account->getAccountTransport() == NULL) {
@@ -2948,6 +2956,7 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 
 void SIPVoIPLink::handle_reinvite (SIPCall *call)
 {
+    /*
     // Close the previous RTP session
     call->getAudioRtp()->stop ();
     call->setAudioStart (false);
@@ -2959,6 +2968,12 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
     } catch (...) {
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
     }
+    */
+    _debug("******************************************");
+    _debug("*             handle_reinvite            *");
+    _debug("******************************************");
+
+    call->getAudioRtp()->updateDestinationIpAddress();
 }
 
 // This callback is called when the invite session state has changed
@@ -3209,6 +3224,30 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     // Set remote ip / port
     call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
+
+    // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
+    CryptoOffer crypto_offer;
+    call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, crypto_offer);
+
+    if(!crypto_offer.empty()) {
+
+        _debug("Crypto attribute in SDP: init Srtp session");
+
+	// init local cryptografic capabilities for negotiation
+	std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+	for(int i = 0; i < 3; i++) {
+	    localCapabilities.push_back(sfl::CryptoSuites[i]);
+	}
+
+	sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+	
+	if(sdesnego.negotiate()) {
+	    _debug("SDES negociation successfull \n");
+
+	    call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
+	}
+
+    }
 
     try {
         call->setAudioStart (true);
@@ -3591,6 +3630,12 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // We retrieve the remote sdp offer in the rdata struct to begin the negociation
     call->getLocalSDP()->set_ip_address (addrSdp);
+
+    try {
+        call->getAudioRtp()->initAudioRtpSession (call);
+    } catch (...) {
+        _debug ("Failed to create rtp thread from answer");
+    }
 
     get_remote_sdp_from_offer (rdata, &r_sdp);
 

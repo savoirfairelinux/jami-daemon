@@ -20,11 +20,13 @@
 
 #include "AudioRtpFactory.h"
 #include "AudioZrtpSession.h"
+#include "AudioSrtpSession.h"
 #include "AudioSymmetricRtpSession.h"
 
 #include "manager.h"
 #include "account.h"
 #include "sip/sipcall.h"
+#include "sip/SdesNegotiator.h"
 
 #include <assert.h>
 
@@ -106,6 +108,12 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 
             case Sdes:
 
+	        _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
+                _rtpSessionType = Sdes;
+
+		ca->getLocalSDP()->set_srtp_crypto(static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
+		break;
+
             default:
                 throw UnsupportedRtpSessionType();
         }
@@ -125,6 +133,9 @@ void AudioRtpFactory::start (void)
     switch (_rtpSessionType) {
 
         case Sdes:
+	    if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread() != 0) {
+                throw AudioRtpFactoryException ("Failed to start AudioSRtpSession thread");
+            }
 	    break;
 
         case Symmetric:
@@ -160,6 +171,8 @@ void AudioRtpFactory::stop (void)
         switch (_rtpSessionType) {
 
             case Sdes:
+	        delete static_cast<AudioSrtpSession *> (_rtpSession);
+		break;
 
             case Symmetric:
                 delete static_cast<AudioSymmetricRtpSession *> (_rtpSession);
@@ -177,6 +190,29 @@ void AudioRtpFactory::stop (void)
     }
 }
 
+void AudioRtpFactory::updateDestinationIpAddress (void)
+{
+    _debug ("Updating IP address");
+    if (_rtpSession == NULL) {
+        throw AudioRtpFactoryException ("_rtpSession was null when trying to update IP address");
+    }
+
+    switch (_rtpSessionType) {
+
+        case Sdes:
+	    static_cast<AudioSrtpSession *> (_rtpSession)->updateDestinationIpAddress();
+	    break;
+
+        case Symmetric:
+            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            break;
+
+        case Zrtp:
+	    static_cast<AudioZrtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            break;
+    }
+}
+
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 {
     if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {
@@ -185,4 +221,16 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
         throw AudioRtpFactoryException();
     }
 }
+
+  void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
+{
+    if ( (_rtpSessionType != NULL) && (_rtpSessionType == Sdes)) {
+        static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo(nego);
+    }
+    else {
+        throw AudioRtpFactoryException();
+    }
 }
+}
+
+

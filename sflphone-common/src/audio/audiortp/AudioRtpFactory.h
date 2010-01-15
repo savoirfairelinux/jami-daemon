@@ -22,14 +22,20 @@
 #include <stdexcept>
 #include <cc++/thread.h>
 
+#include "sip/SdesNegotiator.h"
+
+class SdesNegotiator;
 class SIPCall;
+
 namespace sfl {
     class AudioZrtpSession;
+    class AudioSrtpSession;
 }
 
 namespace sfl {
 
     class AudioZrtpSession;
+    class AudioSrtpSession;
 
     // Possible kind of rtp session
     typedef enum RtpMethod {
@@ -76,6 +82,12 @@ namespace sfl {
          * @param None
          */
         void stop();
+
+	/**
+         * Update current RTP destination address with one stored in call 
+         * @param None
+         */
+	void updateDestinationIpAddress (void);
           
         /** 
         * @param None
@@ -83,13 +95,28 @@ namespace sfl {
         * file. initAudioRtpSession must have been called prior to that. 
         */  
         inline void * getAudioRtpSession(void) { return _rtpSession; }
+
+	/** 
+        * @param None
+        * @return The internal audio rtp session type 
+	*         Symmetric = 0
+        *         Zrtp = 1
+        *         Sdes = 2 
+        */  
+        inline RtpMethod getAudioRtpType(void) { return _rtpSessionType; }
  
         /**
          * Get the current AudioZrtpSession. Throws an AudioRtpFactoryException
          * if the current rtp thread is null, or if it's not of the correct type.
          * @return The current AudioZrtpSession thread.
          */
-        sfl::AudioZrtpSession * getAudioZrtpSession();       
+        sfl::AudioZrtpSession * getAudioZrtpSession();  
+
+	/**
+         * Set remote cryptographic info. Should be called after negotiation in SDP
+	 * offer/answer session.
+         */
+        void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);   
         
         private:
            void * _rtpSession;

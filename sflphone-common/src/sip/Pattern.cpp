@@ -23,8 +23,7 @@
 namespace sfl
 {
 
-namespace util {
-Pattern::Pattern (const std::string& pattern, const std::string& options = "") :
+Pattern::Pattern (const std::string& pattern, const std::string& options) :
         _pattern (pattern),
         _ovector (NULL),
         _ovectorSize (0),
@@ -32,6 +31,8 @@ Pattern::Pattern (const std::string& pattern, const std::string& options = "") :
         _count (0),
         _options (0)
 {
+
+    // printf("Pattern constructor called for %s!\n", pattern.c_str());
     // Set offsets
     _offset[0] = _offset[1] = 0;
 
@@ -125,7 +126,7 @@ std::vector<std::string> Pattern::groups (void)
 
     while (stringList[i] != NULL) {
         matchedSubstrings.push_back (stringList[i]);
-        printf ("Substr: <start>%s<end>", stringList[i]);
+        // printf ("Substr: <start>%s<end>", stringList[i]);
         i++;
     }
 
@@ -137,6 +138,8 @@ std::vector<std::string> Pattern::groups (void)
 std::string Pattern::group (int groupNumber)
 {
     const char * stringPtr;
+
+    // printf("_subject.substr : %s\n", _subject.substr (_offset[0]).c_str());
 
     int rc = pcre_get_substring (
                  _subject.substr (_offset[0]).c_str(),
@@ -178,16 +181,22 @@ std::string Pattern::group (const std::string& groupName)
                  groupName.c_str(),
                  &stringPtr);
 
+    // printf("  _count : %i\n", _count);
+    // printf("stringPtr : %s\n", stringPtr);
+    
     if (rc < 0) {
         switch (rc) {
 
             case PCRE_ERROR_NOSUBSTRING:
+	        // printf("Pattern::PCRE_ERROR_NOSUBSTRING\n");
                 throw std::out_of_range ("Invalid group reference.");
 
             case PCRE_ERROR_NOMEMORY:
+	        // printf("Pattern::PCRE_ERROR_NOMEMORY\n");
                 throw match_error ("Memory exhausted.");
 
             default:
+	        // printf("Pattern::default match error\n");
                 throw match_error ("Failed to get named substring.");
         }
     }
@@ -241,13 +250,14 @@ size_t Pattern::end (void) const
 
 bool Pattern::matches (void) throw (match_error)
 {
-    matches (_subject);
+    return matches (_subject);
 }
 
 bool Pattern::matches (const std::string& subject) throw (match_error)
 {
-    //printf("Current offset: %d, old offset: %d", _offset[1], _offset[0]);
-    //printf("Trying <start>%s<end>", subject.substr(_offset[1]).c_str());
+    // printf("Pattern::matches\n");
+    // printf("  Current offset: %d, old offset: %d", _offset[1], _offset[0]);
+    // printf("  Trying <start>%s<end>\n", subject.substr(_offset[1]).c_str());
 
     // Try to find a match for this pattern
     int rc = pcre_exec (
@@ -264,7 +274,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
 
     if (rc < 0) {
         _offset[0] = _offset[1] = 0;
-        //printf("Matching failed with %d", rc);
+        // printf("  Matching failed with %d\n", rc);
         return false;
     }
 
@@ -275,7 +285,7 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
         _offset[1] =  _ovector[1] + _offset[0];
     }
 
-    //printf("Matching succeeded with %d to %d", (int) start(), (int) end());
+    // printf("  Matching succeeded with %d to %d\n", (int) start(), (int) end());
 
     // Matching succeded but not enough space.
     if (rc == 0) {
@@ -285,7 +295,8 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
 
     // Matching succeeded. Keep the number of substrings for
     // subsequent calls to group().
-    _count = rc;
+    // printf("_count: %i = %i\n", _count, rc);
+      _count = rc;
 
     return true;
 }
@@ -301,14 +312,15 @@ std::vector<std::string> Pattern::split (void)
         tokenStart = start();
         substringSplitted.push_back (_subject.substr (tokenEnd + 1,
                                      tokenStart - tokenEnd - 1));
+	// printf("split: %s\n", _subject.substr (tokenEnd + 1,
+	// 					 tokenStart - tokenEnd - 1).c_str());
         tokenEnd = end();
     }
 
-    substringSplitted.push_back (_subject.substr (tokenEnd + 1,
+    substringSplitted.push_back (_subject.substr (tokenEnd + 1, tokenStart - tokenEnd - 1));
 
-                                 tokenStart - tokenEnd - 1));
     return substringSplitted;
 }
 }
-}
+
 

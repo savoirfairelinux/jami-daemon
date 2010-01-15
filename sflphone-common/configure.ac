@@ -284,7 +284,7 @@ fi
 xml_CFLAGS=
 xml_LIBS=-lexpat
 
-	AC_SUBST(xml_CFLAGS)
+AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([pthread], pthread_create,
@@ -294,6 +294,22 @@ AC_CHECK_LIB([pthread], pthread_create,
 	if test "$have_pthread" = "false"; then
 AC_MSG_ERROR([You need the POSIX Thread library (pthreads)])	
 	fi
+
+
+AC_CHECK_LIB([pcre], pcre_free,
+		[AC_CHECK_HEADERS(pcre.h, have_pcre=true, have_pcre=false)],
+		have_pcre=false)
+
+	if test "$have_pcre" = "false"; then
+AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])	
+	fi
+
+PCRE_LIBS=-lpcre
+PCRE_CFLAGS=
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
+
 
 # For the tools/, we need libdbus-c++ for the "build" architecture as well
 

@@ -18,14 +18,15 @@
 
 #include "SdesNegotiator.h"
 
-#include "util/Pattern.h"
+#include "Pattern.h"
 
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
 
-using namespace sfl::util;
+using namespace sfl;
 
 struct CryptoAttribute {
     std::string tag;
@@ -58,9 +59,12 @@ void SdesNegotiator::parse (void)
     * sessionParamPattern;
 
     try {
+
+        // used to match white space (which are used as separator) 
         generalSyntaxPattern = new Pattern ("[\x20\x09]+", "g");
 
-        tagPattern = new Pattern ("^a=crypto:(?P<tag>[0-9]{1,9})");
+        tagPattern = new Pattern ("^a=crypto:(?P<tag>[0-9]{1,9})", "g");
+	// tagPattern = new Pattern ("[0-9]");
 
         cryptoSuitePattern = new Pattern (
             "(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
@@ -81,7 +85,7 @@ void SdesNegotiator::parse (void)
             "UNENCRYPTED_SRTCP|" \
             "UNAUTHENTICATED_SRTP|" \
             "FEC_ORDER=(?P<fecOrder>FEC_SRTP|SRTP_FEC)|" \
-            "FEC_KEY=(?P<fecKey>" + keyParamsPattern.getPattern() + ")|" \
+            "FEC_KEY=(?P<fecKey>" + keyParamsPattern->getPattern() + ")|" \
             "WSH=(?P<wsh>[0-9]{1,2})|" \
             "(?<!\\-)[[:graph:]]+))*", "g"); // srtp-session-extension
 
@@ -89,10 +93,12 @@ void SdesNegotiator::parse (void)
         throw parse_error ("A compile exception occured on a pattern.");
 
     }
+      
 
     // Take each line from the vector
     // and parse its content
 
+    
     std::vector<std::string>::iterator iter;
 
     for (iter = _remoteAttribute.begin(); iter != _remoteAttribute.end(); iter++) {
@@ -101,12 +107,13 @@ void SdesNegotiator::parse (void)
 
         // Split the line into its component
         // that we will analyze further down.
-
-        generalSyntaxPattern << (*iter);
-        std::vector<std::string> sdesLine;
-
+	std::vector<std::string> sdesLine;
+	
+        *generalSyntaxPattern << (*iter);
+        
+	
         try {
-            sdesLine = generalSyntaxPattern.split();
+            sdesLine = generalSyntaxPattern->split();
 
             if (sdesLine.size() < 3) {
                 throw parse_error ("Missing components in SDES line");
@@ -114,13 +121,16 @@ void SdesNegotiator::parse (void)
         } catch (match_error& exception) {
             throw parse_error ("Error while analyzing the SDES line.");
         }
+	
 
         // Check if the attribute starts with a=crypto
         // and get the tag for this line
-        tagPattern << sdesLine.at (0);
+        *tagPattern << sdesLine.at (0);
+
+	tagPattern->matches();
 
         try {
-            std::string tag = tagPattern.group ("tag");
+            std::string tag = tagPattern->group ("tag");
             std::cout << "tag = " << tag << std::endl;
         } catch (match_error& exception) {
             throw parse_error ("Error while parsing the tag field");
@@ -128,40 +138,37 @@ void SdesNegotiator::parse (void)
 
         // Check if the crypto suite is valid and retreive
         // its value.
-        cryptoSuitePattern << sdesLine.at (1);
+        *cryptoSuitePattern << sdesLine.at (1);
+
+	cryptoSuitePattern->matches();
 
         try {
-            std::string cryptoSuite
-            cryptoSuite = cryptoSuitePattern.group ("cryptoSuite");
-            std::cout << "crypto-suite = " << cryptoSuite << std::endl;
+            _cryptoSuite = cryptoSuitePattern->group ("cryptoSuite");
+            std::cout << "crypto-suite = " << _cryptoSuite << std::endl;
         } catch (match_error& exception) {
             throw parse_error ("Error while parsing the crypto-suite field");
         }
 
         // Parse one or more key-params field.
-        keyParamsPattern << sdesLine.at (2);
+        *keyParamsPattern << sdesLine.at (2);
 
         try {
-            while (keyParamsPattern.matches()) {
-                std::string srtpKeyMethod;
-                srtpKeyMethod = keyParamsMatched.group ("srtpKeyMethod");
-                std::cout << "srtp-key-method = " << srtpKeyMethod << std::endl;
+            while (keyParamsPattern->matches()) {
+                
+                _srtpKeyMethod = keyParamsPattern->group ("srtpKeyMethod");
+                std::cout << "srtp-key-method = " << _srtpKeyMethod << std::endl;
 
-                std::string srtpKeyInfo;
-                srtpKeyInfo = keyParamsPattern.group ("srtpKeyInfo");
-                std::cout << "srtp-key-info = " << srtpKeyInfo << std::endl;
+                _srtpKeyInfo = keyParamsPattern->group ("srtpKeyInfo");
+                std::cout << "srtp-key-info = " << _srtpKeyInfo << std::endl;
 
-                std::string lifetime;
-                lifetime = keyParamsPattern.group ("lifetime");
-                std::cout << "lifetime = " << lifetime << std::endl;
+                _lifetime = keyParamsPattern->group ("lifetime");
+                std::cout << "lifetime = " << _lifetime << std::endl;
 
-                std::string mkiValue
-                mkiValue = keyParamsPattern.group ("mkiValue");
-                std::cout << "mkiValue = " << mkiValue << std::endl;
+                _mkiValue = keyParamsPattern->group ("mkiValue");
+                std::cout << "mkiValue = " << _mkiValue << std::endl;
 
-                std::string mkiLength;
-                mkiLength = keyParamsPattern.group ("mkiLength");
-                std::cout << "mkiLength = " << mkiLength << std::endl;
+                _mkiLength = keyParamsPattern->group ("mkiLength");
+                std::cout << "mkiLength = " << _mkiLength << std::endl;
             }
         } catch (match_error& exception) {
             throw parse_error ("Error while parsing the key-params field");
@@ -192,4 +199,6 @@ void SdesNegotiator::parse (void)
 bool SdesNegotiator::negotiate (void)
 {
     parse();
+
+    return true;
 }

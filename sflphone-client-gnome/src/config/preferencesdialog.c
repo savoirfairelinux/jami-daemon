@@ -120,10 +120,16 @@ static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
 {
 	DEBUG("Key exchange changed");
 	if (g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget)), (gchar *) "ZRTP") == 0) {
-		gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);
-		g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
-		g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
-	} else {
+	    gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);
+	    g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
+	    g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
+	} 
+	else if (g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget)), (gchar *) "SDES") == 0) {
+	    gtk_widget_set_sensitive(GTK_WIDGET(data), FALSE);
+	    g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
+	    g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(SDES));
+	}
+	else {
 		gtk_widget_set_sensitive(GTK_WIDGET(data), FALSE);
 		DEBUG("Setting key exchange %s to %s\n", ACCOUNT_KEY_EXCHANGE, KEY_EXCHANGE_NONE);
 		g_hash_table_replace(directIpCallsProperties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
@@ -326,16 +332,20 @@ GtkWidget* create_direct_ip_calls_tab()
 	keyExchangeCombo = gtk_combo_box_new_text();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), keyExchangeCombo);
 	gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "ZRTP");
-	//gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "SDES");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), "SDES");
 	gtk_combo_box_append_text(GTK_COMBO_BOX(keyExchangeCombo), _("Disabled"));      
 
 	advancedZrtpButton = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
 	g_signal_connect(G_OBJECT(advancedZrtpButton), "clicked", G_CALLBACK(show_advanced_zrtp_options_cb), directIpCallsProperties);
 
 	if (g_strcasecmp(curKeyExchange, ZRTP) == 0) {
-		gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
-	} else {
-		gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 1);
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),0);
+	}
+	else if(g_strcasecmp(curKeyExchange, SDES) == 0) {
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo),1);
+	}
+	else {
+		gtk_combo_box_set_active(GTK_COMBO_BOX(keyExchangeCombo), 2);
 		gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);
 	}
 
