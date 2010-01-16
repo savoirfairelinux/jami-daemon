@@ -180,23 +180,17 @@ std::string Pattern::group (const std::string& groupName)
                  _count,
                  groupName.c_str(),
                  &stringPtr);
-
-    // printf("  _count : %i\n", _count);
-    // printf("stringPtr : %s\n", stringPtr);
     
     if (rc < 0) {
         switch (rc) {
 
             case PCRE_ERROR_NOSUBSTRING:
-	        // printf("Pattern::PCRE_ERROR_NOSUBSTRING\n");
                 throw std::out_of_range ("Invalid group reference.");
 
             case PCRE_ERROR_NOMEMORY:
-	        // printf("Pattern::PCRE_ERROR_NOMEMORY\n");
                 throw match_error ("Memory exhausted.");
 
             default:
-	        // printf("Pattern::default match error\n");
                 throw match_error ("Failed to get named substring.");
         }
     }
@@ -255,10 +249,6 @@ bool Pattern::matches (void) throw (match_error)
 
 bool Pattern::matches (const std::string& subject) throw (match_error)
 {
-    // printf("Pattern::matches\n");
-    // printf("  Current offset: %d, old offset: %d", _offset[1], _offset[0]);
-    // printf("  Trying <start>%s<end>\n", subject.substr(_offset[1]).c_str());
-
     // Try to find a match for this pattern
     int rc = pcre_exec (
                  _re,
@@ -271,7 +261,6 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
                  _ovectorSize);
 
     // Matching failed.
-
     if (rc < 0) {
         _offset[0] = _offset[1] = 0;
         // printf("  Matching failed with %d\n", rc);
@@ -285,8 +274,6 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
         _offset[1] =  _ovector[1] + _offset[0];
     }
 
-    // printf("  Matching succeeded with %d to %d\n", (int) start(), (int) end());
-
     // Matching succeded but not enough space.
     if (rc == 0) {
         throw match_error ("No space to store all substrings.");
@@ -295,7 +282,6 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
 
     // Matching succeeded. Keep the number of substrings for
     // subsequent calls to group().
-    // printf("_count: %i = %i\n", _count, rc);
       _count = rc;
 
     return true;
