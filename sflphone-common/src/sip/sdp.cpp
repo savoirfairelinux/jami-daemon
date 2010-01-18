@@ -365,39 +365,46 @@ void Sdp::sdp_add_media_description()
 }
 
 // @TODO crypto should be a vector of string
-void Sdp::sdp_add_sdes_attribute (std::string crypto)
+void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto)
 {
 
     // temporary buffer used to store crypto attribute
     char tempbuf[256];
 
-    // the attribute to add to sdp
-    pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc(_pool, sizeof(pjmedia_sdp_attr));
+    std::vector<std::string>::iterator iter = crypto.begin();
 
-    attribute->name = pj_strdup3(_pool, "crypto");
+    while(iter != crypto.end()) {
 
-    // _debug("crypto from sdp: %s", crypto.c_str());
+        // the attribute to add to sdp
+        pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc(_pool, sizeof(pjmedia_sdp_attr));
+
+	attribute->name = pj_strdup3(_pool, "crypto");
+
+	// _debug("crypto from sdp: %s", crypto.c_str());
 
     
-    int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
-			       "%.*s",(int)crypto.size(), crypto.c_str());
+	int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
+				   "%.*s",(int)(*iter).size(), (*iter).c_str());
  
-    attribute->value.slen = len;
-    attribute->value.ptr = (char*) pj_pool_alloc (_pool, attribute->value.slen+1);
-    pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
+	attribute->value.slen = len;
+	attribute->value.ptr = (char*) pj_pool_alloc (_pool, attribute->value.slen+1);
+	pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
 
-    // get number of media for this SDP
-    int media_count = _local_offer->media_count;
+	// get number of media for this SDP
+	int media_count = _local_offer->media_count;
 
-    // add crypto attribute to media
-    for(int i = 0; i < media_count; i++) {
+	// add crypto attribute to media
+	for(int i = 0; i < media_count; i++) {
 
-        if(pjmedia_sdp_media_add_attr(_local_offer->media[i], attribute) != PJ_SUCCESS) {
-        // if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
-	    throw sdpException();
+	    if(pjmedia_sdp_media_add_attr(_local_offer->media[i], attribute) != PJ_SUCCESS) {
+	      // if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
+	        throw sdpException();
+	    }
 	}
-    }
 
+
+	iter++;
+    }
 }
 
 

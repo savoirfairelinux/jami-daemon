@@ -62,9 +62,11 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
 }
 
  
-std::string AudioSrtpSession::getLocalCryptoInfo() {
+std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo() {
 
     _debug("Get Cryptographic info from this rtp session");
+
+    std::vector<std::string> crypto_vector;
 
     // @TODO we should return a vector containing supported 
     // cryptographic context tagged 1, 2, 3...
@@ -79,13 +81,15 @@ std::string AudioSrtpSession::getLocalCryptoInfo() {
     srtp_keys.append("|2^20|1:32");
 
     // generate crypto attribute
-    std::string crypto = tag.append(" ");
-    crypto += crypto_suite.append(" ");
-    crypto += srtp_keys;
+    std::string crypto_attr = tag.append(" ");
+    crypto_attr += crypto_suite.append(" ");
+    crypto_attr += srtp_keys;
 
-    _debug("%s", crypto.c_str());
+    _debug("%s", crypto_attr.c_str());
 
-    return crypto;
+    crypto_vector.push_back(crypto_attr);
+
+    return crypto_vector;
 }
 
 
