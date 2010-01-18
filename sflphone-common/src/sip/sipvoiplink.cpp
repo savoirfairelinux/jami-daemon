@@ -4,6 +4,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -3247,8 +3248,10 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 	    _debug("SDES negociation successfull \n");
 	    nego_success = true;
 
-	    if(call->getAudioRtp()->getAudioRtpType() == sfl::Sdes)
+	    if(call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
+	        _debug("Set remote cryptographic context\n");
 	        call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
+	    }
 	}
 	else {
 
