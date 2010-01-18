@@ -364,7 +364,7 @@ void Sdp::sdp_add_media_description()
     }
 }
 
-
+// @TODO should be a vector
 void Sdp::sdp_add_sdes_attribute (std::string crypto)
 {
 
@@ -386,9 +386,16 @@ void Sdp::sdp_add_sdes_attribute (std::string crypto)
     attribute->value.ptr = (char*) pj_pool_alloc (_pool, attribute->value.slen+1);
     pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
 
-    // add crypto attribute to sdp session
-    if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
-        throw sdpException();
+    // get number of media for this SDP
+    int media_count = _local_offer->media_count;
+
+    // add crypto attribute to media
+    for(int i = 0; i < media_count; i++) {
+
+        if(pjmedia_sdp_media_add_attr(_local_offer->media[i], attribute) != PJ_SUCCESS) {
+        // if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
+	    throw sdpException();
+	}
     }
 
 }
@@ -670,42 +677,52 @@ void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp
 void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
 {
 
-    int i;
-    int attr_count;
+    int i, j;
+    int attr_count, media_count;
     pjmedia_sdp_attr *attribute;
+    pjmedia_sdp_media *media;
 
-    // get the number of attribute for this sdp session
-    attr_count = remote_sdp->attr_count;
+    // get the number of media for this sdp session
+    media_count = remote_sdp->media_count;
 
-    // *r_crypto= pjmedia_sdp_media_find_attr(attribute, &STR_CRYPTO, NULL);
+    // *r_crypto = pjmedia_sdp_media_find_attr(attribute, &STR_CRYPTO, NULL);
 
-    _debug("****************** Parse for Crypto %i ********************", attr_count);
+    _debug("****************** Parse for Crypto ********************");
 
     CryptoOffer remoteOffer;
 
-    // iterate over all atribute
-    for (i = 0; i < attr_count; ++i) {
+    // iterate over all media
+    for (i = 0; i < media_count; ++i) {
 
         _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
 	_debug("%.*s", (int)remote_sdp->attr[i]->value.slen, remote_sdp->attr[i]->value.ptr);
 
-	// test if this attribute is a crypto
-        if (pj_stricmp2 (&remote_sdp->attr[i]->name, "crypto") == 0) {
+	// get media
+	media = remote_sdp->media[i];
 
-	    attribute = remote_sdp->attr[i];
+	// get number of attribute for this memdia
+	attr_count = media->attr_count;
 
-	    _debug("****************** Found a Crypto ********************");
-	    std::string attr(attribute->value.ptr, attribute->value.slen);
+	// iterate over all attribute for this media
+        for(j = 0; j < attr_count; j++) {
 
-	    // @TODO our parser require the "acrypto:" to be present
-	    std::string full_attr = "a=crypto:";
-	    full_attr += attr;
+	    attribute = media->attr[i];
 
-	    crypto_offer.push_back(full_attr);
-        }
+	    // test if this attribute is a crypto
+	    if (pj_stricmp2 (&attribute->name, "crypto") == 0) {
+
+		_debug("****************** Found a Crypto ********************");
+		std::string attr(attribute->value.ptr, attribute->value.slen);
+
+		// @TODO our parser require the "a=crypto:" to be present
+		std::string full_attr = "a=crypto:";
+		full_attr += attr;
+
+		crypto_offer.push_back(full_attr);
+	    }
+
+	}
     }
-
-    _debug("****************** Did not Found any Crypto ********************");
     
 }
 
