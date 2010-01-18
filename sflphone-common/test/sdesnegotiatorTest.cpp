@@ -40,21 +40,18 @@ using std::endl;
 
 void SdesNegotiatorTest::setUp()
 {
-
-  std::string attr("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32");
-
-  // std::string attr("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32");
-
+	// Add a new SDES crypto line to be processed. 
     remoteOffer = new std::vector<std::string>();
-    remoteOffer->push_back(attr);
-
+    remoteOffer->push_back(std::string("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32"));
+	remoteOffer->push_back(std::string("a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32"));
+	
+	// Register the local capabilities.
     localCapabilities = new std::vector<sfl::CryptoSuiteDefinition>();
     for(int i = 0; i < 3; i++) {
         localCapabilities->push_back(sfl::CryptoSuites[i]);
     }
 
     sdesnego = new sfl::SdesNegotiator(*localCapabilities, *remoteOffer);
-
 }
 
 
@@ -121,38 +118,40 @@ void SdesNegotiatorTest::testKeyParamsPattern()
     pattern->matches();
     CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
 
-    /*
-    while (pattern->matches()) {
-                
-        std::string _srtpKeyMethod = pattern->group ("srtpKeyMethod");
-	std::string _srtpKeyInfo = pattern->group ("srtpKeyInfo");
-	std::string _lifetime = pattern->group ("lifetime");
-	std::string _mkiValue = pattern->group ("mkiValue");
-	std::string _mkiLength = pattern->group ("mkiLength");
-    }
-
-
-    CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
-    CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj"));
-    CPPUNIT_ASSERT(pattern->group("lifetime").compare("20"));
-    CPPUNIT_ASSERT(pattern->group("mkivalue").compare("1"));
-    CPPUNIT_ASSERT(pattern->group("mkilength").compare("32"));
-    */
-
     delete pattern;
     pattern = NULL;
 }
 
-
+/**
+ * Make sure that all the fields can be extracted
+ * properly from the syntax. 
+ */
 void SdesNegotiatorTest::testNegotiation()
 {
     CPPUNIT_ASSERT(sdesnego->negotiate());
-    CPPUNIT_ASSERT(sdesnego->getCryptoSuite().compare("AES_CM_128_HMAC_SHA1_80") == 0);
-    CPPUNIT_ASSERT(sdesnego->getKeyMethod().compare("inline") == 0);
-    CPPUNIT_ASSERT(sdesnego->getKeyInfo().compare("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd") == 0);
-    CPPUNIT_ASSERT(sdesnego->getLifeTime().compare("20") == 0);
-    CPPUNIT_ASSERT(sdesnego->getMkiValue().compare("1") == 0);
-    CPPUNIT_ASSERT(sdesnego->getMkiLength().compare("32") == 0);
+}
+
+/**
+ * Make sure that unproperly formatted crypto lines are rejected.
+ */
+void SdesNegotiatorTest::testComponent()
+{
+	// Register the local capabilities.
+    std::vector<sfl::CryptoSuiteDefinition> * capabilities = new std::vector<sfl::CryptoSuiteDefinition>();
+	
+	//Support all the CryptoSuites
+    for(int i = 0; i < 3; i++) {
+        capabilities->push_back(sfl::CryptoSuites[i]);
+    }
+	
+	// Make sure that if a component is missing, negotiate will fail
+	std::string cryptoLine("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:|2^20|1:32");
+	std::vector<std::string> * cryptoOffer = new std::vector<std::string>();
+    cryptoOffer->push_back(cryptoLine);	
+
+    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator(*capabilities, *cryptoOffer);
+
+	CPPUNIT_ASSERT(negotiator->negotiate() == false);
 }
 
 
