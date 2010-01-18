@@ -706,7 +706,7 @@ void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sd
 	// iterate over all attribute for this media
         for(j = 0; j < attr_count; j++) {
 
-	    attribute = media->attr[i];
+	    attribute = media->attr[j];
 
 	    // test if this attribute is a crypto
 	    if (pj_stricmp2 (&attribute->name, "crypto") == 0) {
