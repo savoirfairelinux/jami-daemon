@@ -364,7 +364,7 @@ void Sdp::sdp_add_media_description()
     }
 }
 
-// @TODO should be a vector
+// @TODO crypto should be a vector of string
 void Sdp::sdp_add_sdes_attribute (std::string crypto)
 {
 
@@ -694,8 +694,8 @@ void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sd
     // iterate over all media
     for (i = 0; i < media_count; ++i) {
 
-        _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
-	_debug("%.*s", (int)remote_sdp->attr[i]->value.slen, remote_sdp->attr[i]->value.ptr);
+      // _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
+      // _debug("%.*s", (int)remote_sdp->attr[i]->value.slen, remote_sdp->attr[i]->value.ptr);
 
 	// get media
 	media = remote_sdp->media[i];
