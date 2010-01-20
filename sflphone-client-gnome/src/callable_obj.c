@@ -89,7 +89,7 @@ gchar* call_get_audio_codec (callable_obj_t *obj)
 	if (obj)
 	{
 		audio_codec = dbus_get_current_codec_name (obj);	
-		codec = codec_list_get_by_name (audio_codec);
+		codec = codec_list_get_by_name (audio_codec, NULL);
 		if (codec){
 			samplerate = codec->sample_rate;
 			format = g_markup_printf_escaped ("%s/%i", audio_codec, samplerate);

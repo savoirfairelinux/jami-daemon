@@ -408,16 +408,17 @@ codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoin
 			-1);
 
 	printf("%s, %s\n", name, srate);
+	printf("%i\n", g_queue_get_length (acc->codecs));
 
 	// codec_list_get_by_name(name);
 	if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"8 kHz")==0))
-		codec = codec_list_get_by_payload((gconstpointer) 110, NULL);
+		codec = codec_list_get_by_payload((gconstpointer) 110, acc->codecs);
 	else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"16 kHz")==0))
-		codec = codec_list_get_by_payload((gconstpointer) 111, NULL);
+		codec = codec_list_get_by_payload((gconstpointer) 111, acc->codecs);
 	else if ((g_strcasecmp(name,"speex")==0) && (g_strcasecmp(srate,"32 kHz")==0))
-		codec = codec_list_get_by_payload((gconstpointer) 112, NULL);
+		codec = codec_list_get_by_payload((gconstpointer) 112, acc->codecs);
 	else
-		codec = codec_list_get_by_name(name);
+		codec = codec_list_get_by_name ((gconstpointer) name, acc->codecs);
 
 	// Toggle active value
 	active = !active;
@@ -431,9 +432,9 @@ codec_active_toggled (GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoin
 
 	// Modify codec queue to represent change
 	if (active)
-		codec_set_active (codec);
+		codec_set_active (&codec);
 	else
-		codec_set_inactive (codec);
+		codec_set_inactive (&codec);
 
 	// Perpetuate changes to the deamon
 	// codec_list_update_to_daemon (acc);
@@ -587,7 +588,7 @@ GtkWidget* codecs_box (account_t **a)
 	gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 
 	// Toggle codec active property on clicked
-	g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK (codec_active_toggled), (gpointer) codecTreeView);
+	g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK (codec_active_toggled), (gpointer) *a);
 
 	// Name column
 	renderer = gtk_cell_renderer_text_new();

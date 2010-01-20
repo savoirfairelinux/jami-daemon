@@ -177,19 +177,21 @@ void codec_list_add(codec_t * c, GQueue **queue) {
 	g_queue_push_tail (*queue, (gpointer *) c);
 }
 
-void codec_set_active (codec_t * c) {
+void codec_set_active (codec_t **c) {
 
 	if(c)
 	{
-		DEBUG("%s set active", c->name);
-		c->is_active = TRUE;
+		DEBUG("%s set active", (*c)->name);
+		(*c)->is_active = TRUE;
 	}
 }
 
-void codec_set_inactive (codec_t * c) {
+void codec_set_inactive (codec_t **c) {
 
-	if(c)
-		c->is_active = FALSE;
+	if(c){
+		DEBUG("%s set active", (*c)->name);
+		(*c)->is_active = FALSE;
+	}
 }
 
 guint codec_list_get_size () {
@@ -199,9 +201,13 @@ guint codec_list_get_size () {
 	return g_queue_get_length (codecsCapabilities);
 }
 
-codec_t* codec_list_get_by_name (const gchar* name) {
+codec_t* codec_list_get_by_name (gconstpointer name, GQueue *q) {
 
-	GList * c = g_queue_find_custom (codecsCapabilities, name, is_name_codecstruct);
+	// If NULL is passed as argument, we look into the global capabilities
+	if (q == NULL)
+		q = codecsCapabilities;
+
+	GList * c = g_queue_find_custom (q, name, is_name_codecstruct);
 	if(c)
 		return (codec_t *)c->data;
 	else
