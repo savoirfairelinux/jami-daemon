@@ -1562,9 +1562,9 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 	    addrSdp = localAddress;
 	}
 
+	// Set local address for RTP media
         setCallAudioLocal (call, localAddress);
 
-        _debug ("toUri received in new_ip_to_ip call %s", to.c_str());
         std::string toUri = account->getToUri (to);
         call->setPeerNumber (toUri);
         _debug ("toUri in new_ip_to_ip call %s", toUri.c_str());
@@ -1582,7 +1582,28 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->getLocalSDP()->set_ip_address (addrSdp);
         call->getLocalSDP()->create_initial_offer();
 
-        // If no account already set, use the default one created at pjsip initialization
+	// Init TLS transport if enabled
+	if(account->isTlsEnabled()) {
+
+	    _debug("TLS enabled for ip-to-ip calls, acquire TLS transport from pjsip's manager");
+
+	    pj_sockaddr_in rem_addr;
+	    pj_str_t remote;
+
+	    int at = toUri.find("@");
+	    std::string remotestr = toUri.substr(at+1, toUri.size()-1);
+	    pj_cstr(&remote, remotestr.c_str());
+	    
+	    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t)5060);
+
+	    pjsip_transport *tcp;
+	    pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr),
+	    				  NULL, &tcp);
+
+	    account->setAccountTransport(tcp); 
+	}
+
+        // If no transport already set, use the default one created at pjsip initialization
         if (account->getAccountTransport() == NULL) {
             _debug ("No transport for this account, using the default one");
             account->setAccountTransport (_localUDPTransport);
@@ -1604,11 +1625,8 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         int port = findLocalPortFromUri (toUri, account->getAccountTransport());
 
         std::stringstream ss;
-
         std::string portStr;
-
         ss << port;
-
         ss >> portStr;
 
         contactUri = account->getContactHeader (address, portStr);
@@ -1880,6 +1898,7 @@ bool SIPVoIPLink::pjsip_init()
     }
 
     if (directIpCallsTlsEnabled) {
+        _debug("*********************Tls IP to IP call enabled Create IT");
         errPjsip = createTlsTransportRetryOnFailure (IP2IP_PROFILE);
     }
 
@@ -2770,6 +2789,9 @@ pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
     if (status != PJ_SUCCESS) {
         _debug ("Error creating SIP TLS listener (%d)", status);
     }
+    else {
+
+    }
 
     return PJ_SUCCESS;
 }
@@ -2970,9 +2992,8 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
         _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
     }
     */
-    _debug("******************************************");
-    _debug("*             handle_reinvite            *");
-    _debug("******************************************");
+    
+    _debug("Handle reINVITE");
 
     call->getAudioRtp()->updateDestinationIpAddress();
 }
