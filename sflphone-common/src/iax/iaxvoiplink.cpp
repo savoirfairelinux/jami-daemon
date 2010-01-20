@@ -712,8 +712,8 @@ IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
 
     wait = 0;
     /** @todo Make preference dynamic, and configurable */
-    audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat (account->getActiveCodecs ()));
-    audio_format_capability = call->getSupportedFormat (account->getActiveCodecs ());
+    audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat (getAccountID ()), getAccountID ());
+    audio_format_capability = call->getSupportedFormat (getAccountID ());
 
     _debug ("IAX New call: %s", strNum.c_str());
     iax_call (newsession, username.c_str(), username.c_str(), strNum.c_str(), lang, wait, audio_format_preferred, audio_format_capability);

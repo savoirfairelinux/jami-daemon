@@ -104,6 +104,7 @@ codec_t * codec_list_get_by_name(const gchar * name);
  * @return codec_t* A codec or NULL 
  */
 codec_t* codec_list_get_nth (guint index, GQueue *q);
+codec_t* capabilities_get_nth (guint index);
 
 /**
  * Set the prefered codec first in the codec list
@@ -115,20 +116,20 @@ void codec_set_prefered_order (guint index, GQueue *q);
  * Move the codec from an unit up in the codec_list
  * @param index The current index in the list
  */
-void codec_list_move_codec_up (guint index);
+void codec_list_move_codec_up (guint index, GQueue **q);
 
 /** 
  * Move the codec from an unit down in the codec_list
  * @param index The current index in the list
  */
-void codec_list_move_codec_down (guint index);
+void codec_list_move_codec_down (guint index, GQueue **q);
 
 /**
  * Notify modifications on codecs to the server
  */
 void codec_list_update_to_daemon (account_t *acc);
 
-codec_t* codec_list_get_by_payload(gconstpointer payload);
+codec_t* codec_list_get_by_payload (gconstpointer payload, GQueue *q);
 
 GQueue* get_system_codec_list (void);
 
@@ -152,6 +153,8 @@ void codec_create_new (gint payload, gboolean active, codec_t **c);
  */
 void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, codec_t **c);
 
+
+void codec_create_new_from_caps (codec_t *original, codec_t **copy);
 /*
  * Attach a codec list to a specific account
  *

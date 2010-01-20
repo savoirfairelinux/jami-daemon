@@ -458,11 +458,19 @@ std::vector<std::string> ConfigurationManager::getActiveCodecList (const std::st
     return v;
 }
 
-void
-ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list)
+void ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID)
 {
     _debug ("ConfigurationManager::setActiveCodecList received");
-    Manager::instance().setActiveCodecList (list);
+
+	Account *acc;
+    unsigned int i=0;
+	size_t size;
+
+	// Save the codecs list per account
+	acc = Manager::instance ().getAccount (accountID);
+	if (acc != NULL) {
+		acc->setActiveCodecs (list);
+	}
 }
 
 // Audio devices related methods

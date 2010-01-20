@@ -59,7 +59,7 @@ public:
     std::vector< std::string > getSupportedTlsMethod(void);
     std::vector< std::string > getCodecDetails( const int32_t& payload );
     std::vector< std::string > getActiveCodecList (const std::string& accountID);
-    void setActiveCodecList( const std::vector< std::string >& list );
+    void setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID);
 
     std::vector< std::string > getInputAudioPluginList();
     std::vector< std::string > getOutputAudioPluginList();

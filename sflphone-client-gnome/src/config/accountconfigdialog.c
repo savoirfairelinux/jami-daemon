@@ -1073,6 +1073,7 @@ show_account_window (account_t * a)
 		currentAccount = g_new0(account_t, 1);
 		currentAccount->properties = dbus_account_details(NULL);
 		currentAccount->accountID = "new";    
+		sflphone_fill_codec_list_per_account (&currentAccount);
 		DEBUG("Account is NULL. Will fetch default values\n");      
 	}
     
@@ -1241,6 +1242,9 @@ show_account_window (account_t * a)
 			dbus_set_account_details(currentAccount);
 		}
 		
+
+		// Perpetuate changes to the deamon
+		codec_list_update_to_daemon (currentAccount);
 
 	} 
 	

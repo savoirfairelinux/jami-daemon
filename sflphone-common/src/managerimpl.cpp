@@ -2405,22 +2405,6 @@ ManagerImpl::initAudioCodec (void)
 }
 
 /*
- * TODO Set the active codecs list per account
- */
-void ManagerImpl::setActiveCodecList (const std::vector<  std::string >& list) {
-
-    _warn ("Set active codecs list");
-	// TODO Save the codec list per account
-    _codecDescriptorMap.saveActiveCodecs (list);
-
-    // setConfig
-    std::string s = serialize (list);
-    _warn ("Setting codec with payload number %s to the active list", s.c_str());
-	// Set the config per account
-    setConfig ("Audio", "ActiveCodecs", s);
-}
-
-/*
  * TODO Retrieve the active codec list per account
  */
 std::vector<std::string> ManagerImpl::retrieveActiveCodecs() {

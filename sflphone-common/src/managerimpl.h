@@ -795,12 +795,6 @@ class ManagerImpl {
      */
     std::vector< ::std::string > getActiveCodecList( void );
 
-    /**
-     * Set the list of the active codecs
-     * @param list  The new list of active codecs
-     */
-    void setActiveCodecList( const std::vector< ::std::string >& list);
-
     /*
      * Notify the client that an error occured
      * @param errCode The error code. Could be: ALSA_CAPTURE_ERROR

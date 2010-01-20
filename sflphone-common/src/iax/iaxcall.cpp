@@ -19,6 +19,7 @@
  */
 
 #include "iaxcall.h"
+#include "manager.h"
 #include "global.h" // for _debug
 
 IAXCall::IAXCall (const CallID& id, Call::CallType type) : Call (id, type), _session (NULL)
@@ -73,15 +74,22 @@ IAXCall::setFormat (int format)
 
 
 	int
-IAXCall::getSupportedFormat()
+IAXCall::getSupportedFormat (std::string accountID)
 {
 	CodecOrder map;
 	int format = 0;
 	unsigned int iter;
+	Account *account;
 
 	_info ("IAX get supported format: ");
 
-	map = getCodecMap().getActiveCodecs();
+	account = Manager::instance().getAccount (accountID);
+	if (account != NULL) {
+		map = account->getActiveCodecs();
+	}
+	else {
+		_error ("No IAx account could be found");
+	}
 
 	for (iter=0 ; iter < map.size() ; iter++) {
 		switch (map[iter]) {
@@ -120,7 +128,7 @@ IAXCall::getSupportedFormat()
 
 }
 
-int IAXCall::getFirstMatchingFormat (int needles, account_id) {
+int IAXCall::getFirstMatchingFormat (int needles, std::string accountID) {
 
 	Account *account;
 	CodecOrder map;
@@ -129,7 +137,7 @@ int IAXCall::getFirstMatchingFormat (int needles, account_id) {
 
 	_debug ("IAX get first matching codec: ");
 
-	account = Manager::instance().getAccount (account_id);
+	account = Manager::instance().getAccount (accountID);
 	if (account != NULL) {
 		map = account->getActiveCodecs();
 	}

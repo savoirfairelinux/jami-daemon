@@ -75,7 +75,7 @@ public:
     /**
      * @return int  The bitwise list of supported formats
      */
-    int getSupportedFormat();
+    int getSupportedFormat (std::string accountID);
 
     /**
      * Return a format (int) with the first matching codec selected.
@@ -90,7 +90,7 @@ public:
      * @param needles  The format(s) (bitwise) you are looking for to match
      * @return int  The matching format, thus 0 if none matches
      */
-    int getFirstMatchingFormat(int needles, AccountID account_id);
+    int getFirstMatchingFormat(int needles, std::string accountID);
 
     // AUDIO
     /** 

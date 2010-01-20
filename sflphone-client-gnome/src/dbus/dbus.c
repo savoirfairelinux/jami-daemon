@@ -1272,13 +1272,14 @@ gchar** dbus_get_active_codec_list (gchar *accountID) {
 }
 
     void
-dbus_set_active_codec_list(const gchar** list)
+dbus_set_active_codec_list(const gchar** list, const gchar *accountID)
 {
 
     GError *error = NULL;
     org_sflphone_SFLphone_ConfigurationManager_set_active_codec_list (
             configurationManagerProxy,
             list,
+			accountID,
             &error);
 
     if (error)

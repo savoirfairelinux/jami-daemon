@@ -233,7 +233,7 @@ gchar** dbus_get_active_codec_list (gchar *accountID);
  * ConfigurationManager - Set the list of codecs used for media negociation
  * @param list The list of codecs
  */
-void dbus_set_active_codec_list( const gchar** list );
+void dbus_set_active_codec_list (const gchar** list, const gchar*);
 
 /**
  * CallManager - return the codec name

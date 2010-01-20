@@ -1579,7 +1579,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address (addrSdp);
-        call->getLocalSDP()->create_initial_offer();
+        call->getLocalSDP()->create_initial_offer(account->getActiveCodecs ());
 
         // If no account already set, use the default one created at pjsip initialization
         if (account->getAccountTransport() == NULL) {

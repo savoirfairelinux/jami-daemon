@@ -179,7 +179,7 @@ void sflphone_set_current_account();
  */
 void sflphone_fill_codec_list ();
 
-void sflphone_fill_codec_list_per_account (account_t *, gchar**);
+void sflphone_fill_codec_list_per_account (account_t **);
 
 void sflphone_add_participant();
 
