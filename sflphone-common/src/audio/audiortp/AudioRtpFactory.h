@@ -22,14 +22,20 @@
 #include <stdexcept>
 #include <cc++/thread.h>
 
+#include "sip/SdesNegotiator.h"
+
+class SdesNegotiator;
 class SIPCall;
+
 namespace sfl {
     class AudioZrtpSession;
+    class AudioSrtpSession;
 }
 
 namespace sfl {
 
     class AudioZrtpSession;
+    class AudioSrtpSession;
 
     // Possible kind of rtp session
     typedef enum RtpMethod {
@@ -55,6 +61,8 @@ namespace sfl {
         AudioRtpFactory(SIPCall * ca);
         ~AudioRtpFactory();
 
+	void initAudioRtpConfig(SIPCall *ca);
+
         /**
          * Lazy instantiation method. Create a new RTP session of a given 
          * type according to the content of the configuration file. 
@@ -76,6 +84,12 @@ namespace sfl {
          * @param None
          */
         void stop();
+
+	/**
+         * Update current RTP destination address with one stored in call 
+         * @param None
+         */
+	void updateDestinationIpAddress (void);
           
         /** 
         * @param None
@@ -83,18 +97,65 @@ namespace sfl {
         * file. initAudioRtpSession must have been called prior to that. 
         */  
         inline void * getAudioRtpSession(void) { return _rtpSession; }
+
+	/** 
+        * @param None
+        * @return The internal audio rtp session type 
+	*         Symmetric = 0
+        *         Zrtp = 1
+        *         Sdes = 2 
+        */  
+        inline RtpMethod getAudioRtpType(void) { return _rtpSessionType; }
+	
+        /** 
+        * @param Set internal audio rtp session type (Symmetric, Zrtp, Sdes) 
+        */  
+        inline void setAudioRtpType(RtpMethod type) { _rtpSessionType = type; }
+
+	/**
+	 * Manually set the srtpEnable option (usefull for RTP fallback)
+	 */
+	void setSrtpEnabled(bool enable){ _srtpEnabled = enable; }
+
+	/**
+	 * Manually set the keyExchangeProtocol parameter (usefull for RTP fallback)
+	 */
+	void setKeyExchangeProtocol(int proto){ _keyExchangeProtocol = proto; }
+
+	/**
+	 * Manually set the setHelloHashEnabled parameter (usefull for RTP fallback)
+	 */
+	void setHelloHashEnabled(bool enable){ _helloHashEnabled = enable; }
  
         /**
          * Get the current AudioZrtpSession. Throws an AudioRtpFactoryException
          * if the current rtp thread is null, or if it's not of the correct type.
          * @return The current AudioZrtpSession thread.
          */
-        sfl::AudioZrtpSession * getAudioZrtpSession();       
+        sfl::AudioZrtpSession * getAudioZrtpSession();  
+
+	/**
+         * Set remote cryptographic info. Should be called after negotiation in SDP
+	 * offer/answer session.
+         */
+        void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);   
         
         private:
            void * _rtpSession;
            RtpMethod _rtpSessionType;
            ost::Mutex _audioRtpThreadMutex;
+
+	   // Field used when initializinga udio rtp session
+	   // May be set manually or from config using initAudioRtpConfig
+	   bool _srtpEnabled;
+
+	   // Field used when initializinga udio rtp session
+	   // May be set manually or from config using initAudioRtpConfig
+	   int _keyExchangeProtocol;
+
+	   // Field used when initializinga udio rtp session
+	   // May be set manually or from config using initAudioRtpConfig
+	   bool _helloHashEnabled;
     };
 }
 #endif // __AUDIO_RTP_FACTORY_H__

@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2009 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,21 +19,15 @@
 
 #include "SdesNegotiator.h"
 
-#include "util/Pattern.h"
+#include "Pattern.h"
 
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
 
-using namespace sfl::util;
-
-struct CryptoAttribute {
-    std::string tag;
-    std::string cryptoSuite;
-    std::string keyParams;
-    std::string sessionParams;
-};
+using namespace sfl;
 
 SdesNegotiator::SdesNegotiator (const std::vector<CryptoSuiteDefinition>& localCapabilites,
                                 const std::vector<std::string>& remoteAttribute) :
@@ -42,7 +37,7 @@ SdesNegotiator::SdesNegotiator (const std::vector<CryptoSuiteDefinition>& localC
 
 }
 
-void SdesNegotiator::parse (void)
+std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 {
     // The patterns below try to follow
     // the ABNF grammar rules described in
@@ -58,6 +53,8 @@ void SdesNegotiator::parse (void)
     * sessionParamPattern;
 
     try {
+
+        // used to match white space (which are used as separator) 
         generalSyntaxPattern = new Pattern ("[\x20\x09]+", "g");
 
         tagPattern = new Pattern ("^a=crypto:(?P<tag>[0-9]{1,9})");
@@ -81,32 +78,32 @@ void SdesNegotiator::parse (void)
             "UNENCRYPTED_SRTCP|" \
             "UNAUTHENTICATED_SRTP|" \
             "FEC_ORDER=(?P<fecOrder>FEC_SRTP|SRTP_FEC)|" \
-            "FEC_KEY=(?P<fecKey>" + keyParamsPattern.getPattern() + ")|" \
+            "FEC_KEY=(?P<fecKey>" + keyParamsPattern->getPattern() + ")|" \
             "WSH=(?P<wsh>[0-9]{1,2})|" \
             "(?<!\\-)[[:graph:]]+))*", "g"); // srtp-session-extension
 
     } catch (compile_error& exception) {
         throw parse_error ("A compile exception occured on a pattern.");
-
     }
+      
 
     // Take each line from the vector
     // and parse its content
 
+    
     std::vector<std::string>::iterator iter;
-
+    std::vector<CryptoAttribute *> cryptoAttributeVector;
+	
     for (iter = _remoteAttribute.begin(); iter != _remoteAttribute.end(); iter++) {
-
-        std::cout << (*iter) << std::endl;
 
         // Split the line into its component
         // that we will analyze further down.
-
-        generalSyntaxPattern << (*iter);
         std::vector<std::string> sdesLine;
-
+	
+	*generalSyntaxPattern << (*iter);
+        
         try {
-            sdesLine = generalSyntaxPattern.split();
+            sdesLine = generalSyntaxPattern->split();
 
             if (sdesLine.size() < 3) {
                 throw parse_error ("Missing components in SDES line");
@@ -114,54 +111,55 @@ void SdesNegotiator::parse (void)
         } catch (match_error& exception) {
             throw parse_error ("Error while analyzing the SDES line.");
         }
+	
 
         // Check if the attribute starts with a=crypto
         // and get the tag for this line
-        tagPattern << sdesLine.at (0);
-
-        try {
-            std::string tag = tagPattern.group ("tag");
-            std::cout << "tag = " << tag << std::endl;
-        } catch (match_error& exception) {
-            throw parse_error ("Error while parsing the tag field");
-        }
+        *tagPattern << sdesLine.at (0);
+				
+	std::string tag; 
+	if (tagPattern->matches()) {
+	try {
+	    tag = tagPattern->group ("tag");
+	} catch (match_error& exception) {
+	    throw parse_error ("Error while parsing the tag field");
+	}
+	} else {
+	    return cryptoAttributeVector;
+	}
 
         // Check if the crypto suite is valid and retreive
         // its value.
-        cryptoSuitePattern << sdesLine.at (1);
+        *cryptoSuitePattern << sdesLine.at (1);
 
-        try {
-            std::string cryptoSuite
-            cryptoSuite = cryptoSuitePattern.group ("cryptoSuite");
-            std::cout << "crypto-suite = " << cryptoSuite << std::endl;
-        } catch (match_error& exception) {
-            throw parse_error ("Error while parsing the crypto-suite field");
-        }
-
+	std::string cryptoSuite;
+		
+	if (cryptoSuitePattern->matches()) {
+	    try {
+	        cryptoSuite  = cryptoSuitePattern->group ("cryptoSuite");
+	    } catch (match_error& exception) {
+	        throw parse_error ("Error while parsing the crypto-suite field");
+	    }
+	} else {
+	    return cryptoAttributeVector;
+	}
+	
         // Parse one or more key-params field.
-        keyParamsPattern << sdesLine.at (2);
+        *keyParamsPattern << sdesLine.at (2);
 
+	std::string srtpKeyInfo;
+	std::string srtpKeyMethod;
+	std::string lifetime;
+	std::string mkiLength;
+	std::string mkiValue;
+	
         try {
-            while (keyParamsPattern.matches()) {
-                std::string srtpKeyMethod;
-                srtpKeyMethod = keyParamsMatched.group ("srtpKeyMethod");
-                std::cout << "srtp-key-method = " << srtpKeyMethod << std::endl;
-
-                std::string srtpKeyInfo;
-                srtpKeyInfo = keyParamsPattern.group ("srtpKeyInfo");
-                std::cout << "srtp-key-info = " << srtpKeyInfo << std::endl;
-
-                std::string lifetime;
-                lifetime = keyParamsPattern.group ("lifetime");
-                std::cout << "lifetime = " << lifetime << std::endl;
-
-                std::string mkiValue
-                mkiValue = keyParamsPattern.group ("mkiValue");
-                std::cout << "mkiValue = " << mkiValue << std::endl;
-
-                std::string mkiLength;
-                mkiLength = keyParamsPattern.group ("mkiLength");
-                std::cout << "mkiLength = " << mkiLength << std::endl;
+            while (keyParamsPattern->matches()) {
+                srtpKeyMethod = keyParamsPattern->group ("srtpKeyMethod");
+                srtpKeyInfo = keyParamsPattern->group ("srtpKeyInfo");
+                lifetime = keyParamsPattern->group ("lifetime");
+                mkiValue = keyParamsPattern->group ("mkiValue");
+                mkiLength = keyParamsPattern->group ("mkiLength");
             }
         } catch (match_error& exception) {
             throw parse_error ("Error while parsing the key-params field");
@@ -169,7 +167,7 @@ void SdesNegotiator::parse (void)
 
         /**
          *  Parse the optional session-param fields
-         * @todo Implement this !
+         * @TODO Implement this !
          */
         /*
         if (sdesLine.size() == 3) continue;
@@ -184,12 +182,68 @@ void SdesNegotiator::parse (void)
         		}
         	}
         } */
+		
+	// Add the new CryptoAttribute to the vector
+	std::cout << (*iter) << std::endl;
+	CryptoAttribute * cryptoAttribute = new CryptoAttribute(tag, cryptoSuite, srtpKeyMethod, srtpKeyInfo, lifetime, mkiValue, mkiLength);
+	cryptoAttributeVector.push_back(cryptoAttribute);
     }
 
-
+    return cryptoAttributeVector;
 }
 
 bool SdesNegotiator::negotiate (void)
 {
-    parse();
+    std::vector<CryptoAttribute *> cryptoAttributeVector = parse();
+    std::vector<CryptoAttribute *>::iterator iter_offer = cryptoAttributeVector.begin();
+
+    std::vector<CryptoSuiteDefinition>::iterator iter_local = _localCapabilities.begin();
+
+    bool negotiationSuccess = false;
+
+    try {
+		
+        while (!negotiationSuccess && (iter_offer != cryptoAttributeVector.end())) {
+
+	    /*
+	    std::cout << "Negotiate tag: " + (*iter_offer)->getTag() << std::endl;
+	    std::cout << "Crypto Suite: " + (*iter_offer)->getCryptoSuite() << std::endl;
+	    std::cout << "SRTP Key Method: " + (*iter_offer)->getSrtpKeyMethod() << std::endl;
+	    std::cout << "SRTP Key Info: " + (*iter_offer)->getSrtpKeyInfo() << std::endl;
+	    std::cout << "Lifetime: " + (*iter_offer)->getLifetime() << std::endl;
+	    std::cout << "MKI Value: " + (*iter_offer)->getMkiValue() << std::endl;			
+	    std::cout << "MKI Length: " + (*iter_offer)->getMkiLength() << std::endl;			
+	    */
+
+	    iter_local = _localCapabilities.begin();
+
+	    while(!negotiationSuccess && (iter_local != _localCapabilities.end())) {  
+
+	        if((*iter_offer)->getCryptoSuite().compare((*iter_local).name)){
+
+		    negotiationSuccess = true;
+
+		    _cryptoSuite = (*iter_offer)->getCryptoSuite();
+		    _srtpKeyMethod = (*iter_offer)->getSrtpKeyMethod();
+		    _srtpKeyInfo = (*iter_offer)->getSrtpKeyInfo();
+		    _lifetime = (*iter_offer)->getLifetime();
+		    _mkiValue = (*iter_offer)->getMkiValue();
+		    _mkiLength = (*iter_offer)->getMkiLength();
+		}
+
+		iter_local++;
+	    }
+
+	    delete (*iter_offer);
+	    
+	    iter_offer++;
+	}
+	
+    } catch (parse_error& exception) {
+        return false;
+    } catch (match_error& exception) {
+        return false;
+    }
+	
+    return negotiationSuccess;
 }

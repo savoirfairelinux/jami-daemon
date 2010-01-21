@@ -51,9 +51,9 @@
 #define UNUSED  __attribute__((__unused__))
 
 #define ACCOUNT_TYPE                       "Account.type"
-#define ACCOUNT_ALIAS		               "Account.alias"
-#define ACCOUNT_ENABLED		               "Account.enable"
-#define ACCOUNT_MAILBOX		               "Account.mailbox"
+#define ACCOUNT_ALIAS		           "Account.alias"
+#define ACCOUNT_ENABLED		           "Account.enable"
+#define ACCOUNT_MAILBOX		           "Account.mailbox"
 #define ACCOUNT_RESOLVE_ONCE               "Account.resolveOnce"
 #define ACCOUNT_REGISTRATION_EXPIRE        "Account.expire"
 #define ACCOUNT_SIP_STUN_SERVER	           "STUN.server"
@@ -71,7 +71,7 @@
 #define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
 #define KEY_EXCHANGE_NONE                  "0"
 #define ZRTP                               "1"
-#define SDES_TLS                           "2"
+#define SDES                               "2"
 
 #define TLS_ENABLE                          "TLS.enable"
 #define TLS_PORT                            "TLS.port"
@@ -88,9 +88,9 @@
 #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
+#define LOCAL_INTERFACE                     "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
 #define LOCAL_PORT                          "Account.localPort"
-#define LOCAL_ADDRESS                       "Account.localAddress"
 #define PUBLISHED_PORT                      "Account.publishedPort"
 #define PUBLISHED_ADDRESS                   "Account.publishedAddress"
 

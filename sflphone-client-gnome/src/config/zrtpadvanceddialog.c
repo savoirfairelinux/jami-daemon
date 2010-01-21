@@ -47,7 +47,7 @@ void show_advanced_zrtp_options(GHashTable * properties)
     }
     
     securityDialog = GTK_DIALOG	(gtk_dialog_new_with_buttons (	_("ZRTP Options"),
-																GTK_WINDOW (get_main_window()),
+			    GTK_WINDOW (get_main_window()),
 																GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
 																GTK_STOCK_CANCEL,
 																GTK_RESPONSE_CANCEL,

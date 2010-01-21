@@ -2056,6 +2056,7 @@ dbus_get_audio_manager( void )
     return api;
 }
 
+/*
     void
 dbus_set_sip_address( const gchar* address )
 {
@@ -2069,6 +2070,9 @@ dbus_set_sip_address( const gchar* address )
         g_error_free(error);
     }
 }
+*/
+
+ /*
 
     gint
 dbus_get_sip_address( void )
@@ -2085,6 +2089,7 @@ dbus_get_sip_address( void )
     }
     return address;
 }
+ */
 
 GHashTable* dbus_get_addressbook_settings (void) {
 
@@ -2358,12 +2363,53 @@ GHashTable* dbus_get_tls_settings_default(void)
     return results;
 }
 
+
+gchar * dbus_get_address_from_interface_name(gchar* interface)
+{
+    GError *error = NULL;
+    gchar * address;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_addr_from_interface_name ( configurationManagerProxy, interface, &address, &error);
+    if (error != NULL){
+        ERROR ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_addr_from_interface_name\n");
+        g_error_free (error);
+    }
+
+    return address;
+
+}
+
+
 gchar ** dbus_get_all_ip_interface(void)
 {
     GError *error = NULL;
     gchar ** array;
 
     if(!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface ( configurationManagerProxy, &array, &error))
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+        {
+            ERROR ("Caught remote method (get_all_ip_interface) exception  %s: %s", dbus_g_error_get_name(error), error->message);
+        }
+        else
+        {
+            ERROR("Error while calling get_all_ip_interface: %s", error->message);
+        }
+        g_error_free (error);
+        return NULL;
+    }
+    else{
+        DEBUG ("DBus called get_all_ip_interface() on ConfigurationManager");
+        return array;
+    }
+}
+
+gchar ** dbus_get_all_ip_interface_by_name(void)
+{
+    GError *error = NULL;
+    gchar ** array;
+
+    if(!org_sflphone_SFLphone_ConfigurationManager_get_all_ip_interface_by_name ( configurationManagerProxy, &array, &error))
     {
         if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
         {

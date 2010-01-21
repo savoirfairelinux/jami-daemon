@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2009 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,11 +75,43 @@ namespace sfl {
           {"AES_CM_128_HMAC_SHA1_32", 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160 },
           {"F8_128_HMAC_SHA1_80", 128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160 } };   
         
-    /** 
-     * Internal structure 
-     * used during parsing.
-     */  
-    struct CryptoAttribute;                    
+
+    class CryptoAttribute {
+	
+    public:
+    CryptoAttribute(std::string tag, 
+		    std::string cryptoSuite, 
+		    std::string srtpKeyMethod, 
+		    std::string srtpKeyInfo, 
+		    std::string lifetime, 
+		    std::string mkiValue, 
+		    std::string mkiLength) :
+                      tag(tag),
+		      cryptoSuite(cryptoSuite),
+		      srtpKeyMethod(srtpKeyMethod),
+		      srtpKeyInfo(srtpKeyInfo),
+		      lifetime(lifetime),
+		      mkiValue(mkiValue),
+		      mkiLength(mkiLength) {};
+		    
+			
+		      inline std::string getTag() { return tag; };
+		      inline std::string getCryptoSuite() { return cryptoSuite; };
+		      inline std::string getSrtpKeyMethod() { return srtpKeyMethod; };
+		      inline std::string getSrtpKeyInfo() { return srtpKeyInfo; };
+		      inline std::string getLifetime() { return lifetime; };
+		      inline std::string getMkiValue() { return mkiValue; };
+		      inline std::string getMkiLength() { return mkiLength; };
+
+		private:
+		      std::string tag;
+		      std::string cryptoSuite;
+		      std::string srtpKeyMethod;
+		      std::string srtpKeyInfo;
+		      std::string lifetime;
+		      std::string mkiValue;
+		      std::string mkiLength;
+    };         
 
     class SdesNegotiator 
     {
@@ -97,8 +130,37 @@ namespace sfl {
             SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites, const std::vector<std::string>& remoteAttribute);
             ~SdesNegotiator() { };
             
-        public:
             bool negotiate(void);
+
+	    /**
+	     * Return crypto suite after negotiation
+	     */
+	    std::string getCryptoSuite(void) { return _cryptoSuite; }
+
+	    /**
+	     * Return key method after negotiation (most likely inline:)
+	     */
+	    std::string getKeyMethod(void) { return _srtpKeyMethod; }
+	    
+	    /**
+	     * Return crypto suite after negotiation
+	     */
+	    std::string getKeyInfo(void) { return _srtpKeyInfo; }
+	    
+	    /**
+	     * Return key lifetime after negotiation
+	     */
+	    std::string getLifeTime(void) { return _lifetime; }
+	    
+	    /**
+	     * Return mki value after negotiation
+	     */
+	    std::string getMkiValue(void) { return _mkiValue; }
+	    
+	    /**
+	     * Return mki length after negotiation
+	     */
+	    std::string getMkiLength(void) { return _mkiLength; }
 
         private:
             /**
@@ -107,13 +169,40 @@ namespace sfl {
              * prefered method is then chosen from that list.
              */
             std::vector<std::string> _remoteAttribute;
+
             std::vector<CryptoSuiteDefinition> _localCapabilities;
-            
 
-
-        private:
-            void parse(void);
-            CryptoAttribute * tokenize(const std::string& attributeLine);
+	    /**
+	     * Selected crypto suite after negotiation
+	     */
+	    std::string _cryptoSuite;
+	    
+	    /**
+	     * Selected key method after negotiation (most likely inline:)
+	     */
+	    std::string _srtpKeyMethod;
+	    
+	    /**
+	     * Selected crypto suite after negotiation
+	     */
+	    std::string _srtpKeyInfo;
+	    
+	    /**
+	     * Selected key lifetime after negotiation
+	     */
+	    std::string _lifetime;
+	    
+	    /**
+	     * Selected mki value after negotiation
+	     */
+	    std::string _mkiValue;
+	    
+	    /**
+	     * Selected mki length after negotiation
+	     */
+	    std::string _mkiLength;
+	    
+	    std::vector<CryptoAttribute *> parse(void);
     };
 }
 #endif

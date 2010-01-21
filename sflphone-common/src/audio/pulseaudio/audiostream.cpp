@@ -202,8 +202,8 @@ AudioStream::createStream (pa_context* c)
 
         // 20 ms framesize TODO: take framesize value from config
         attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &sample_spec);
-        attributes->prebuf = (uint32_t) -1;
+        attributes->tlength = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &sample_spec);
+        attributes->prebuf = 0;
         attributes->minreq = (uint32_t) -1;
         attributes->fragsize = (uint32_t) -1;
 

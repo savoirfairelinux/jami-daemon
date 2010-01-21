@@ -2,6 +2,7 @@
  *  Copyright (C) 2009 Savoir-Faire Linux inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +33,8 @@ static const pj_str_t STR_RTP_AVP = { (char*) "RTP/AVP", 7 };
 static const pj_str_t STR_SDP_NAME = { (char*) "sflphone", 8 };
 static const pj_str_t STR_SENDRECV = { (char*) "sendrecv", 8 };
 static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
+static const pj_str_t STR_CRYPTO = { (char*) "crypto", 6 };
+
 
 Sdp::Sdp (pj_pool_t *pool)
         : _local_media_cap()
@@ -156,6 +159,10 @@ int Sdp::create_local_offer ()
     //sdp_addAttributes( _pool );
     sdp_add_media_description();
 
+    if(!_srtp_crypto.empty()) {
+        sdp_add_sdes_attribute(_srtp_crypto);
+    }
+
     //toString ();
 
     // Validate the sdp session
@@ -204,8 +211,6 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
 
     pj_status_t status;
-
-    _debug ("Receiving initial offer");
 
     // Create the SDP negociator instance by calling
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
@@ -359,6 +364,50 @@ void Sdp::sdp_add_media_description()
         this->_local_offer->media[i] = med;
     }
 }
+
+// @TODO crypto should be a vector of string
+void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto)
+{
+
+    // temporary buffer used to store crypto attribute
+    char tempbuf[256];
+
+    std::vector<std::string>::iterator iter = crypto.begin();
+
+    while(iter != crypto.end()) {
+
+        // the attribute to add to sdp
+        pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc(_pool, sizeof(pjmedia_sdp_attr));
+
+	attribute->name = pj_strdup3(_pool, "crypto");
+
+	// _debug("crypto from sdp: %s", crypto.c_str());
+
+    
+	int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
+				   "%.*s",(int)(*iter).size(), (*iter).c_str());
+ 
+	attribute->value.slen = len;
+	attribute->value.ptr = (char*) pj_pool_alloc (_pool, attribute->value.slen+1);
+	pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
+
+	// get number of media for this SDP
+	int media_count = _local_offer->media_count;
+
+	// add crypto attribute to media
+	for(int i = 0; i < media_count; i++) {
+
+	    if(pjmedia_sdp_media_add_attr(_local_offer->media[i], attribute) != PJ_SUCCESS) {
+	      // if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
+	        throw sdpException();
+	    }
+	}
+
+
+	iter++;
+    }
+}
+
 
 void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
 {
@@ -615,6 +664,7 @@ void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *r
     this->set_remote_audio_port_from_sdp (r_media);
 
     this->set_remote_ip_from_sdp (remote_sdp);
+
 }
 
 void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)
@@ -630,5 +680,57 @@ void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp
             return;
         }
     }
+}
+
+void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
+{
+
+    int i, j;
+    int attr_count, media_count;
+    pjmedia_sdp_attr *attribute;
+    pjmedia_sdp_media *media;
+
+    // get the number of media for this sdp session
+    media_count = remote_sdp->media_count;
+
+    // *r_crypto = pjmedia_sdp_media_find_attr(attribute, &STR_CRYPTO, NULL);
+
+    _debug("****************** Parse for Crypto ********************");
+
+    CryptoOffer remoteOffer;
+
+    // iterate over all media
+    for (i = 0; i < media_count; ++i) {
+
+      // _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
+      // _debug("%.*s", (int)remote_sdp->attr[i]->value.slen, remote_sdp->attr[i]->value.ptr);
+
+	// get media
+	media = remote_sdp->media[i];
+
+	// get number of attribute for this memdia
+	attr_count = media->attr_count;
+
+	// iterate over all attribute for this media
+        for(j = 0; j < attr_count; j++) {
+
+	    attribute = media->attr[j];
+
+	    // test if this attribute is a crypto
+	    if (pj_stricmp2 (&attribute->name, "crypto") == 0) {
+
+		_debug("****************** Found a Crypto ********************");
+		std::string attr(attribute->value.ptr, attribute->value.slen);
+
+		// @TODO our parser require the "a=crypto:" to be present
+		std::string full_attr = "a=crypto:";
+		full_attr += attr;
+
+		crypto_offer.push_back(full_attr);
+	    }
+
+	}
+    }
+    
 }
 

@@ -107,6 +107,7 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
     return nb_items;
 }
 
+
 bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list)
 {
     _debug ("Saving history in XDG directory: %s", _history_path.data());

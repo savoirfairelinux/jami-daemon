@@ -30,7 +30,6 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _bRegister (false)
         , _registrationExpire ("")
         , _publishedSameasLocal (true)
-        , _localIpAddress ("")
         , _publishedIpAddress ("")
         , _localPort (atoi (DEFAULT_SIP_PORT))
         , _publishedPort (atoi (DEFAULT_SIP_PORT))
@@ -44,14 +43,13 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _tlsSetting (NULL)
         , _displayName ("")
 {
-    /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
-    /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
-    /* The SIP library initialization is done in the SIPVoIPLink constructor */
-    /* The SIP voip link is now independant of the account ID as it can manage several SIP accounts */
-    _link = SIPVoIPLink::instance ("");
+    
+    // IP2IP settings must be loaded before singleton instanciation, cannot call it here... 
+
+    // _link = SIPVoIPLink::instance ("");
 
     /* Represents the number of SIP accounts connected the same link */
-    dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
+    // dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
 
 }
 
@@ -59,11 +57,22 @@ SIPAccount::~SIPAccount()
 {
     /* One SIP account less connected to the sip voiplink */
     dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
+
     /* Delete accounts-related information */
     _regc = NULL;
     free (_cred);
     free (_tlsSetting);
 }
+
+
+// void SIPAccount::setVoIPLink(VoIPLink *link) {
+void SIPAccount::setVoIPLink() {
+
+    _link = SIPVoIPLink::instance ("");
+    dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
+
+}
+
 
 int SIPAccount::initCredential (void)
 {
@@ -76,7 +85,7 @@ int SIPAccount::initCredential (void)
     md5HashingEnabled = Manager::instance().getConfigBool (PREFERENCES, CONFIG_MD5HASH);
     std::string digest;
 
-// Create the credential array
+    // Create the credential array
     pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (credentialCount));
 
     if (cred_info == NULL) {
@@ -86,7 +95,7 @@ int SIPAccount::initCredential (void)
 
     pj_bzero (cred_info, sizeof (pjsip_cred_info) *credentialCount);
 
-// Use authentication username if provided
+    // Use authentication username if provided
 
     if (!_authenticationUsername.empty()) {
         cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
@@ -94,15 +103,15 @@ int SIPAccount::initCredential (void)
         cred_info[0].username = pj_str (strdup (_username.c_str()));
     }
 
-// Set password
+    // Set password
     cred_info[0].data =  pj_str (strdup (_password.c_str()));
 
-// Set realm for that credential. * by default.
+    // Set realm for that credential. * by default.
     cred_info[0].realm = pj_str (strdup (_realm.c_str()));
 
-// We want to make sure that the password is really
-// 32 characters long. Otherwise, pjsip will fail
-// on an assertion.
+    // We want to make sure that the password is really
+    // 32 characters long. Otherwise, pjsip will fail
+    // on an assertion.
     if (md5HashingEnabled && _password.length() == 32) {
         dataType = PJSIP_CRED_DATA_DIGEST;
         _debug ("Setting digest ");
@@ -110,10 +119,10 @@ int SIPAccount::initCredential (void)
         dataType = PJSIP_CRED_DATA_PLAIN_PASSWD;
     }
 
-// Set the datatype
+    // Set the datatype
     cred_info[0].data_type = dataType;
-
-// Set the secheme
+    
+    // Set the secheme
     cred_info[0].scheme = pj_str ( (char*) "digest");
 
     int i;
@@ -331,15 +340,12 @@ void SIPAccount::loadConfig()
 
     // Load network settings
     // Local parameters
+
+    // Load local interface
+    setLocalInterface(Manager::instance().getConfigString (_accountID, LOCAL_INTERFACE));
+
     std::string localPort = Manager::instance().getConfigString (_accountID, LOCAL_PORT);
-
     setLocalPort (atoi (localPort.c_str()));
-
-    // Do not store or use IP address in config as this address may change
-    // Use loadSIPLocalIP for now instead in register/unregister (UDP,STUN,TLS), newOutGoingCall, mod_on_rx_request
-    // TODO: if we realy have to bind to a specific interface, store interfaces by name instead
-    // setLocalAddress (std::string("0.0.0.0"));
-    setLocalAddress (Manager::instance().getConfigString (_accountID, LOCAL_ADDRESS));
 
 
     // Published parameters
@@ -405,6 +411,16 @@ std::string SIPAccount::getLoginName (void)
     }
 
     return username;
+}
+
+std::string SIPAccount::getTransportMapKey(void)
+{
+    
+    std::stringstream out;
+    out << getLocalPort();
+    std::string localPort = out.str();
+
+    return localPort;
 }
 
 
