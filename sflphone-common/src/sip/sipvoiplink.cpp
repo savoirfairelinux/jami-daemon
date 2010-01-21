@@ -1591,10 +1591,11 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 	    pj_str_t remote;
 
 	    int at = toUri.find("@");
-	    std::string remotestr = toUri.substr(at+1, toUri.size()-1);
+	    int trns = toUri.find(";transport");
+	    std::string remotestr = toUri.substr(at+1, trns-at-1);
 	    pj_cstr(&remote, remotestr.c_str());
 	    
-	    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t)5060);
+	    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t)5061);
 
 	    pjsip_transport *tcp;
 	    pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr),
@@ -1663,6 +1664,10 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         pjsip_tpselector *tp;
 
         init_transport_selector (account->getAccountTransport(), &tp);
+
+	if(!account->getAccountTransport()) {
+	    _debug("Error transport is NULL in ip to ip call");
+	}
 
 	// set_transport methods increment transport's ref_count
         status = pjsip_dlg_set_transport (dialog, tp);
