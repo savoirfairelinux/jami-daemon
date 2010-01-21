@@ -30,6 +30,7 @@ static const pj_str_t STR_IN = { (char*) "IN", 2 };
 static const pj_str_t STR_IP4 = { (char*) "IP4", 3};
 static const pj_str_t STR_IP6 = { (char*) "IP6", 3};
 static const pj_str_t STR_RTP_AVP = { (char*) "RTP/AVP", 7 };
+static const pj_str_t STR_RTP_SAVP = { (char*) "RTP/SAVP", 8 };
 static const pj_str_t STR_SDP_NAME = { (char*) "sflphone", 8 };
 static const pj_str_t STR_SENDRECV = { (char*) "sendrecv", 8 };
 static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
@@ -83,7 +84,16 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
                (media->get_media_type() == MIME_TYPE_AUDIO) ? &STR_AUDIO : &STR_VIDEO);
     med->desc.port_count = 1;
     med->desc.port = media->get_port();
-    pj_strdup (_pool, &med->desc.transport, &STR_RTP_AVP);
+
+    // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
+    if(_srtp_crypto.empty()) {
+      
+        pj_strdup (_pool, &med->desc.transport, &STR_RTP_AVP);
+    }
+    else {
+
+        pj_strdup (_pool, &med->desc.transport, &STR_RTP_SAVP);
+    }
 
     // Media format ( RTP payload )
     count = media->get_media_codec_list().size();
