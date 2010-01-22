@@ -1850,70 +1850,12 @@ bool SIPVoIPLink::pjsip_init()
         return false;
     }
 
-    // Retrieve Direct IP Calls settings.
-    // This corresponds to the accountID set to
-    // AccountNULL
-    SIPAccount * account = NULL;
+    // Initialize default UDP transport according to 
+    // IP to IP settings (most likely using port 5060)
+    createDefaultSipUdpTransport();
 
-    bool directIpCallsTlsEnabled = false;
-
-    // Use IP2IP_PROFILE to init default udp transport settings
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
-
-    // Create a UDP listener meant for all accounts for which TLS was not enabled
-    // Cannot acquireTransport since default UDP transport must be created regardless of TLS
-    errPjsip = createUDPServer(IP2IP_PROFILE);
-
-    if(account && (errPjsip == PJ_SUCCESS)) {
-
-        _debug("UserAgent: Initialized sip listener on port %d", account->getLocalPort ());
-        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
-
-	// if account is not NULL, use IP2IP trasport as default one
-	_localUDPTransport = account->getAccountTransport();
- 
-    }
-    // If the above UDP server
-    // could not be created, then give it another try
-    // on a random sip port
-    else if (errPjsip != PJ_SUCCESS) {
-        _debug ("UserAgent: Could not initialize SIP listener on port %d", _regPort);
-        _regPort = RANDOM_SIP_PORT;
-
-        _debug ("UserAgent: Trying to initialize SIP listener on port %d", _regPort);
-	// If no AccountID specified, pointer to transport is stored in _localUDPTransport 
-        errPjsip = createUDPServer();
-
-        if (errPjsip != PJ_SUCCESS) {
-            _debug ("UserAgent: Fail to initialize SIP listener on port %d", _regPort);
-            return errPjsip;
-        }
-    }
-
-    acquireTransport(IP2IP_PROFILE);
-
-    /*
-    // Create a TLS listener meant for Direct IP calls
-    // if the user did enabled it.
-    if (account != NULL) {
- 
-        directIpCallsTlsEnabled = account->isTlsEnabled();
-        port = account->getLocalPort ();
-
-    }
-
-    if (directIpCallsTlsEnabled) {
-        _debug("*********************Tls IP to IP call enabled Create IT");
-        errPjsip = createTlsTransportRetryOnFailure (IP2IP_PROFILE);
-    }
-
-    if (errPjsip != PJ_SUCCESS) {
-        _debug ("pj_init(): could not start TLS transport for Direct Calls");
-    }
-    */
-
-    // TODO: For TLS, retry on random port, just we already do above
-    // for UDP transport.
+    // Call this method to create TLS listener 
+    // acquireTransport(IP2IP_PROFILE);
 
     // Initialize transaction layer
     status = pjsip_tsx_layer_init_module (_endpt);
@@ -2140,8 +2082,60 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
 }
 
 
-bool SIPVoIPLink::createSipTransport(AccountID id) {
+bool SIPVoIPLink::createDefaultSipUdpTransport()
+{
 
+    int errPjsip = 0;
+
+    // Retrieve Direct IP Calls settings.
+    SIPAccount * account = NULL;
+
+    // Use IP2IP_PROFILE to init default udp transport settings
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
+
+    // Create a UDP listener meant for all accounts for which TLS was not enabled
+    // Cannot acquireTransport since default UDP transport must be created regardless of TLS
+    errPjsip = createUDPServer(IP2IP_PROFILE);
+
+    if(account && (errPjsip == PJ_SUCCESS)) {
+
+        _debug("UserAgent: Initialized sip listener on port %d", account->getLocalPort ());
+        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
+
+	// if account is not NULL, use IP2IP trasport as default one
+	_localUDPTransport = account->getAccountTransport();
+ 
+    }
+    // If the above UDP server
+    // could not be created, then give it another try
+    // on a random sip port
+    else if (errPjsip != PJ_SUCCESS) {
+        _debug ("UserAgent: Could not initialize SIP listener on port %d", _regPort);
+        _regPort = RANDOM_SIP_PORT;
+
+        _debug ("UserAgent: Trying to initialize SIP listener on port %d", _regPort);
+	// If no AccountID specified, pointer to transport is stored in _localUDPTransport 
+        errPjsip = createUDPServer();
+
+        if (errPjsip != PJ_SUCCESS) {
+            _debug ("UserAgent: Fail to initialize SIP listener on port %d", _regPort);
+	    return false;
+        }
+    }
+
+    return true;
+
+}
+
+
+void SIPVoIPLink::createDefaultSipTlsListener()
+{
+    
+}
+
+
+bool SIPVoIPLink::createSipTransport(AccountID id)
+{
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 

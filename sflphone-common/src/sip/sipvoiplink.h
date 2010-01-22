@@ -395,6 +395,18 @@ class SIPVoIPLink : public VoIPLink
 
 
 	/**
+	 * Create the default UDP transport according ot Ip2Ip profile settings
+	 */
+	bool createDefaultSipUdpTransport();
+
+
+	/**
+	 * Create the default TLS litener on port 5061
+	 */
+	void createDefaultSipTlsListener();
+
+
+	/**
 	 * Create a new sip transport according to the trasport type specified in account settings
 	 */
 	bool createSipTransport(AccountID id);
