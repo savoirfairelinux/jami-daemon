@@ -1855,7 +1855,7 @@ bool SIPVoIPLink::pjsip_init()
     createDefaultSipUdpTransport();
 
     // Call this method to create TLS listener 
-    // acquireTransport(IP2IP_PROFILE);
+    createDefaultSipTlsListener();
 
     // Initialize transaction layer
     status = pjsip_tsx_layer_init_module (_endpt);
@@ -2130,6 +2130,60 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
 
 void SIPVoIPLink::createDefaultSipTlsListener()
 {
+
+    pjsip_tpfactory *tls;
+    pj_sockaddr_in local_addr;
+    pjsip_host_port a_name;
+    pj_status_t status;
+    pj_status_t success;
+
+    /* Grab the tls settings, populated
+     * from configuration file.
+     */
+    SIPAccount * account = NULL;
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
+
+    if (account == NULL) {
+        _debug ("Account is null while creating TLS default listener. Returning");
+        // return !PJ_SUCCESS;
+    }
+
+
+    // Init local address for this listener to be bound (ADDR_ANY on port 5061).
+    pj_sockaddr_in_init (&local_addr, 0, 0);
+    pj_uint16_t localTlsPort = 5061;
+    local_addr.sin_port = pj_htons (localTlsPort);
+     
+    pj_str_t pjAddress;
+    pj_cstr (&pjAddress, PJ_INADDR_ANY);
+    success = pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
+
+
+    // Init published address for this listener (Local IP address on port 5061)
+    std::string publishedAddress;
+    loadSIPLocalIP(&publishedAddress);
+
+    pj_bzero (&a_name, sizeof (pjsip_host_port));
+    pj_cstr (&a_name.host, publishedAddress.c_str());
+    a_name.port = 5061;
+
+    /* Get TLS settings. Expected to be filled */
+    pjsip_tls_setting * tls_setting = account->getTlsSetting();
+
+    
+    _debug ("TLS transport to be initialized with published address %.*s,"
+            " published port %d, local address %.*s, local port %d",
+            (int) a_name.host.slen, a_name.host.ptr,
+            (int) a_name.port, pjAddress.slen, pjAddress.ptr, (int) localTlsPort);
+    
+
+    status = pjsip_tls_transport_start (_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
+
+    if (status != PJ_SUCCESS) {
+        _debug ("Error creating SIP TLS listener (%d)", status);
+    }
+
+    // return PJ_SUCCESS;
     
 }
 
@@ -2185,15 +2239,10 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 	        // TLS transport is ephemeral and is managed by PJSIP, should not be stored either.
 	        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
 	    }
-
-
 	}
-
     }
 
-    return true;
-
-	    
+    return true;   
 }
    
 
