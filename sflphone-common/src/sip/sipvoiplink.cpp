@@ -1587,21 +1587,11 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
 	    _debug("TLS enabled for ip-to-ip calls, acquire TLS transport from pjsip's manager");
 
-	    pj_sockaddr_in rem_addr;
-	    pj_str_t remote;
-
 	    int at = toUri.find("@");
 	    int trns = toUri.find(";transport");
-	    std::string remotestr = toUri.substr(at+1, trns-at-1);
-	    pj_cstr(&remote, remotestr.c_str());
-	    
-	    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t)5061);
+	    std::string remoteaddr = toUri.substr(at+1, trns-at-1);
 
-	    pjsip_transport *tcp;
-	    pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr),
-	    				  NULL, &tcp);
-
-	    account->setAccountTransport(tcp); 
+	    createTlsTransport(account->getAccountID(), remoteaddr);
 	}
 
         // If no transport already set, use the default one created at pjsip initialization
@@ -2022,23 +2012,18 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
         pjsip_transport_dec_ref(account->getAccountTransport());
     }
 
-    // Try to create a new transport
+    // Try to create a new transport in case the settings for this account
+    // are different than one defined for already created ones
+    // If TLS is enabled, TLS connection is automatically handled when sending account registration
+    // However, for any other sip transaction, we must create TLS connection 
     if(createSipTransport(accountID)) {
 
         return true;
     }
-    /*
-    else if(account->getAccountTransport()) {
-
-        // Transport could not be created, account account already have one set.
-        // Most likely this is the transport we tried to create.
-        _debug("Transport (%s) already set for this account, use it\n", account->getTransportMapKey().c_str());
-
-	return true;
-    } 
-    */
+    // A transport is already created on this port, use it
     else {
 
+        _debug("Could not create a new transport (%s)", account->getTransportMapKey().c_str());
         _debug("Searching transport (%s) in transport map", account->getTransportMapKey().c_str());
 
         // Could not create new transport, this transport may already exists
@@ -2095,7 +2080,7 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
 
     // Create a UDP listener meant for all accounts for which TLS was not enabled
     // Cannot acquireTransport since default UDP transport must be created regardless of TLS
-    errPjsip = createUDPServer(IP2IP_PROFILE);
+    errPjsip = createUdpTransport(IP2IP_PROFILE);
 
     if(account && (errPjsip == PJ_SUCCESS)) {
 
@@ -2115,7 +2100,7 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
 
         _debug ("UserAgent: Trying to initialize SIP listener on port %d", _regPort);
 	// If no AccountID specified, pointer to transport is stored in _localUDPTransport 
-        errPjsip = createUDPServer();
+        errPjsip = createUdpTransport();
 
         if (errPjsip != PJ_SUCCESS) {
             _debug ("UserAgent: Fail to initialize SIP listener on port %d", _regPort);
@@ -2198,17 +2183,12 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 
     pj_status_t status;
 
-    // Launch a new TLS listener/transport
-    // if the user did choose it.
     if (account->isTlsEnabled()) {
 
-        _debug ("Create TLS transport");
-        status = createTlsTransportRetryOnFailure (id);
-
-        if (status != PJ_SUCCESS) {
-            _debug ("Failed to initialize TLS transport for account %s", id.c_str());
-	    return false;
-        }
+        // Nothing to do, TLS listener already created at pjsip's startup and TLS connection
+        // is automatically handled in pjsip when sending registration messages.
+	// status = createTlsTransport(id, );
+        return true;
     }
     else {
 
@@ -2226,7 +2206,7 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
         } else {
 
 	    _debug ("Create UDP transport");
-            status = createUDPServer (id);
+            status = createUdpTransport (id);
 
 	    if (status != PJ_SUCCESS) {
                 _debug ("Failed to initialize UDP transport for account %s", id.c_str());
@@ -2266,7 +2246,7 @@ bool SIPVoIPLink::addTransportToMap(std::string key, pjsip_transport* transport)
 }
 
 
-int SIPVoIPLink::createUDPServer (AccountID id)
+int SIPVoIPLink::createUdpTransport (AccountID id)
 {
 
     pj_status_t status;
@@ -2297,7 +2277,7 @@ int SIPVoIPLink::createUDPServer (AccountID id)
     // Set information to the local address and port
     if (account == NULL) {
 
-        _debug ("Account with id \"%s\" is null in createUDPServer.", id.c_str());
+        _debug ("Account with id \"%s\" is null in createUdpTransport.", id.c_str());
 
     } else {
 
@@ -2571,42 +2551,31 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     return port;
 }
 
-pj_status_t SIPVoIPLink::createTlsTransportRetryOnFailure (AccountID id)
+
+pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::string& remoteAddr)
 {
-    pj_status_t success;
+    
+    // Retrieve the account information
+    SIPAccount * account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
-    // Create a TLS listener.
-    // Note that STUN cannot be used for
-    // TCP NAT traversal. At the moment (20/08/09)
-    // user must supply the public address/port
-    // manually.
-    success = createTlsTransport (id);
+    if(!account) {
 
-    if (success != PJ_SUCCESS) {
-        unsigned int randomPort = RANDOM_SIP_PORT;
-
-        // Update new port in the corresponding SIPAccount
-        SIPAccount * account = NULL;
-        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
-
-        if (account == NULL) {
-            _debug ("createTlsTransportRetryOnFailure: Account is null. Returning");
-            return !PJ_SUCCESS;
-        }
-
-        account->setLocalPort ( (pj_uint16_t) randomPort);
-
-        // Try to start the transport again on
-        // the new port.
-        success = createTlsTransport (id);
-
-        if (success != PJ_SUCCESS) {
-            _debug ("createTlsTransportRetryOnFailure: failed to retry on random port %d", randomPort);
-            return success;
-        }
-
-        _debug ("createTlsTransportRetryOnFailure: TLS transport listening on port %d", randomPort);
+        _debug("Account is NULL, returning");
+	return !PJ_SUCCESS;
     }
+
+    pj_sockaddr_in rem_addr;
+    pj_str_t remote;
+
+    pj_cstr(&remote, remoteAddr.c_str());
+
+    pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t)5061);
+
+    pjsip_transport *tcp;
+    pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr),
+	    				  NULL, &tcp);
+
+    account->setAccountTransport(tcp);
 
     return PJ_SUCCESS;
 }
@@ -2727,119 +2696,6 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     pjsip_tpmgr * tpmgr = pjsip_endpt_get_tpmgr (_endpt);
 
     pjsip_tpmgr_dump_transports (tpmgr);
-
-    return PJ_SUCCESS;
-}
-
-
-
-pj_status_t SIPVoIPLink::createTlsTransport (AccountID id)
-{
-    pjsip_tpfactory *tls;
-    pj_sockaddr_in local_addr;
-    pjsip_host_port a_name;
-    pj_status_t status;
-
-    /* Grab the tls settings, populated
-     * from configuration file.
-     */
-    SIPAccount * account = NULL;
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
-
-    if (account == NULL) {
-        _debug ("Account is null. Returning");
-        return !PJ_SUCCESS;
-    }
-
-    /**
-     * Init local address.
-     * If IP interface address is not specified,
-     * socket will be bound to PJ_INADDR_ANY.
-     * If user specified port is an empty string
-     * or if it is equal to 0, then the port will
-     * be chosen automatically by the OS.
-     */
-    pj_sockaddr_in_init (&local_addr, 0, 0);
-
-    pj_uint16_t localTlsPort = account->getLocalPort();
-
-    if (localTlsPort != 0) {
-        local_addr.sin_port = pj_htons (localTlsPort);
-    }
-
-    /*
-    std::string localAddress;
-    if (account->getLocalInterface() == "default"){
-
-        // Current selected interface address is 0.0.0.0, resolve local address using  
-        loadSIPLocalIP (&localAddress);
-    }
-    else {
-
-        // Specific interface selected, reslove it
-        localAddress = getInterfaceAddrFromName(account->getLocalInterface());
-    }
-    */
-
-    std::string localAddress = getInterfaceAddrFromName(account->getLocalInterface());
-
-    if (!localAddress.empty()) {
-        pj_str_t pjAddress;
-        pj_cstr (&pjAddress, localAddress.c_str());
-
-        pj_status_t success;
-        success = pj_sockaddr_in_set_str_addr (&local_addr, &pjAddress);
-
-        if (success != PJ_SUCCESS) {
-            _debug ("Failed to set local address in %d", __LINE__);
-        }
-    }
-
-    std::string publishedAddress;
-    if (account->getPublishedSameasLocal()) {
-
-        // if "default" interface is selected, loadSIPLocalIP() is used to get local address
-        if (account->getLocalInterface() == "default"){
-
-	    loadSIPLocalIP (&publishedAddress);
-	}
-	else {
-
-	    // Specific interface selected
-	    publishedAddress = localAddress;
-	}   
-    }
-    else {
-
-        publishedAddress = account->getPublishedAddress();
-    }
-
-
-    /* Init published name */
-    pj_bzero (&a_name, sizeof (pjsip_host_port));
-
-    pj_cstr (&a_name.host, publishedAddress.c_str());
-
-    a_name.port = account->getPublishedPort();
-
-    /* Get TLS settings. Expected to be filled */
-    pjsip_tls_setting * tls_setting = account->getTlsSetting();
-
-    _debug ("TLS transport to be initialized with published address %.*s,"
-            " published port %d, local address %s, local port %d",
-            (int) a_name.host.slen, a_name.host.ptr,
-            (int) a_name.port, localAddress.c_str(), (int) localTlsPort);
-
-
-
-    status = pjsip_tls_transport_start (_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
-
-    if (status != PJ_SUCCESS) {
-        _debug ("Error creating SIP TLS listener (%d)", status);
-    }
-    else {
-
-    }
 
     return PJ_SUCCESS;
 }
