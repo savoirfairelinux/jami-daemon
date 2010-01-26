@@ -1,5 +1,5 @@
 /* $Id: log_writer_symbian_console.cpp 2394 2008-12-23 17:27:53Z bennylp $ */
-/*
+/* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 #include <pj/log.h>
 #include <pj/os.h>
@@ -24,21 +24,21 @@
 #include "os_symbian.h"
 #include <e32cons.h>
 
-PJ_DEF (void) pj_log_write (int level, const char *buffer, int len)
+PJ_DEF(void) pj_log_write(int level, const char *buffer, int len)
 {
 #if 0
     wchar_t wbuffer[PJ_LOG_MAX_SIZE];
     CConsoleBase *cons = PjSymbianOS::Instance->Console();
 
-    pj_ansi_to_unicode (buffer, len, wbuffer, PJ_ARRAY_SIZE (wbuffer));
+    pj_ansi_to_unicode(buffer, len, wbuffer, PJ_ARRAY_SIZE(wbuffer));
 
-
-    TPtrC16 aPtr ( (TUint16*) wbuffer, len);
-    console->Write (aPtr);
+    
+    TPtrC16 aPtr((TUint16*)wbuffer, len);
+    console->Write(aPtr);
 #else
-    PJ_UNUSED_ARG (level);
-    PJ_UNUSED_ARG (buffer);
-    PJ_UNUSED_ARG (len);
+    PJ_UNUSED_ARG(level);
+    PJ_UNUSED_ARG(buffer);
+    PJ_UNUSED_ARG(len);
 #endif
 }
 

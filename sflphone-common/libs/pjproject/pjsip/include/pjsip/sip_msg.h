@@ -1,4 +1,4 @@
-/* $Id: sip_msg.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: sip_msg.h 2968 2009-10-26 11:21:37Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -510,6 +510,18 @@ typedef struct pjsip_media_type
     pj_str_t subtype;	    /**< Media subtype. */
     pj_str_t param;	    /**< Media type parameters (concatenated). */
 } pjsip_media_type;
+
+
+/**
+ * Copy SIP media type to another.
+ *
+ * @param pool	    Pool to duplicate strings.
+ * @param dst	    Destination structure.
+ * @param src	    Source structure.
+ */
+PJ_DECL(void) pjsip_media_type_cp(pj_pool_t *pool,
+				  pjsip_media_type *dst,
+				  const pjsip_media_type *src);
 
 /**
  * @}

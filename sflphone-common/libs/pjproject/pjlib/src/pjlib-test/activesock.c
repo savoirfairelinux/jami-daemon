@@ -1,4 +1,4 @@
-/* $Id: activesock.c 2771 2009-06-17 13:31:13Z bennylp $ */
+/* $Id: activesock.c 3048 2010-01-08 09:53:31Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -489,8 +489,6 @@ on_return:
 int activesock_test(void)
 {
     int ret;
-
-    ret = (int)&udp_ping_pong_test;
 
     PJ_LOG(3,("", "..udp ping/pong test"));
     ret = udp_ping_pong_test();

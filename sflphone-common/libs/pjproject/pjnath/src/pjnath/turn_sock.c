@@ -1,4 +1,4 @@
-/* $Id: turn_sock.c 2642 2009-04-22 17:20:24Z bennylp $ */
+/* $Id: turn_sock.c 3028 2009-12-08 13:11:25Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -46,6 +46,7 @@ struct pj_turn_sock
 
     pj_turn_alloc_param	 alloc_param;
     pj_stun_config	 cfg;
+    pj_turn_sock_cfg	 setting;
 
     pj_bool_t		 destroy_request;
     pj_timer_entry	 timer;
@@ -92,6 +93,14 @@ static void destroy(pj_turn_sock *turn_sock);
 static void timer_cb(pj_timer_heap_t *th, pj_timer_entry *e);
 
 
+/* Init config */
+PJ_DEF(void) pj_turn_sock_cfg_default(pj_turn_sock_cfg *cfg)
+{
+    pj_bzero(cfg, sizeof(*cfg));
+    cfg->qos_type = PJ_QOS_TYPE_BEST_EFFORT;
+    cfg->qos_ignore_error = PJ_TRUE;
+}
+
 /*
  * Create.
  */
@@ -99,20 +108,25 @@ PJ_DEF(pj_status_t) pj_turn_sock_create(pj_stun_config *cfg,
 					int af,
 					pj_turn_tp_type conn_type,
 					const pj_turn_sock_cb *cb,
-					unsigned options,
+					const pj_turn_sock_cfg *setting,
 					void *user_data,
 					pj_turn_sock **p_turn_sock)
 {
     pj_turn_sock *turn_sock;
     pj_turn_session_cb sess_cb;
+    pj_turn_sock_cfg default_setting;
     pj_pool_t *pool;
     const char *name_tmpl;
     pj_status_t status;
 
     PJ_ASSERT_RETURN(cfg && p_turn_sock, PJ_EINVAL);
     PJ_ASSERT_RETURN(af==pj_AF_INET() || af==pj_AF_INET6(), PJ_EINVAL);
-    PJ_ASSERT_RETURN(options==0, PJ_EINVAL);
     PJ_ASSERT_RETURN(conn_type!=PJ_TURN_TP_TCP || PJ_HAS_TCP, PJ_EINVAL);
+
+    if (!setting) {
+	pj_turn_sock_cfg_default(&default_setting);
+	setting = &default_setting;
+    }
 
     switch (conn_type) {
     case PJ_TURN_TP_UDP:
@@ -138,6 +152,9 @@ PJ_DEF(pj_status_t) pj_turn_sock_create(pj_stun_config *cfg,
 
     /* Copy STUN config (this contains ioqueue, timer heap, etc.) */
     pj_memcpy(&turn_sock->cfg, cfg, sizeof(*cfg));
+
+    /* Copy setting (QoS parameters etc */
+    pj_memcpy(&turn_sock->setting, setting, sizeof(*setting));
 
     /* Set callback */
     if (cb) {
@@ -256,14 +273,7 @@ static void timer_cb(pj_timer_heap_t *th, pj_timer_entry *e)
 static void show_err(pj_turn_sock *turn_sock, const char *title,
 		     pj_status_t status)
 {
-    char errmsg[PJ_ERR_MSG_SIZE];
-
-    if (status != PJ_SUCCESS) {
-	pj_strerror(status, errmsg, sizeof(errmsg));
-	PJ_LOG(4,(turn_sock->obj_name, "%s: %s", title, errmsg));
-    } else {
-	PJ_LOG(4,(turn_sock->obj_name, "%s", title, errmsg));
-    }
+    PJ_PERROR(4,(turn_sock->obj_name, status, title));
 }
 
 /* On error, terminate session */
@@ -271,8 +281,9 @@ static void sess_fail(pj_turn_sock *turn_sock, const char *title,
 		      pj_status_t status)
 {
     show_err(turn_sock, title, status);
-    if (turn_sock->sess)
-	pj_turn_session_destroy(turn_sock->sess);
+    if (turn_sock->sess) {
+	pj_turn_session_destroy(turn_sock->sess, status);
+    }
 }
 
 /*
@@ -477,6 +488,49 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
     return PJ_TRUE;
 }
 
+static pj_uint16_t GETVAL16H(const pj_uint8_t *buf, unsigned pos)
+{
+    return (pj_uint16_t) ((buf[pos + 0] << 8) | \
+			  (buf[pos + 1] << 0));
+}
+
+/* Quick check to determine if there is enough packet to process in the
+ * incoming buffer. Return the packet length, or zero if there's no packet.
+ */
+static unsigned has_packet(pj_turn_sock *turn_sock, const void *buf, pj_size_t bufsize)
+{
+    pj_bool_t is_stun;
+
+    if (turn_sock->conn_type == PJ_TURN_TP_UDP)
+	return bufsize;
+
+    /* Quickly check if this is STUN message, by checking the first two bits and
+     * size field which must be multiple of 4 bytes
+     */
+    is_stun = ((((pj_uint8_t*)buf)[0] & 0xC0) == 0) &&
+	      ((GETVAL16H((const pj_uint8_t*)buf, 2) & 0x03)==0);
+
+    if (is_stun) {
+	pj_size_t msg_len = GETVAL16H((const pj_uint8_t*)buf, 2);
+	return (msg_len+20 <= bufsize) ? msg_len+20 : 0;
+    } else {
+	/* This must be ChannelData. */
+	pj_turn_channel_data cd;
+
+	if (bufsize < 4)
+	    return 0;
+
+	/* Decode ChannelData packet */
+	pj_memcpy(&cd, buf, sizeof(pj_turn_channel_data));
+	cd.length = pj_ntohs(cd.length);
+
+	if (bufsize >= cd.length+sizeof(cd)) 
+	    return (cd.length+sizeof(cd)+3) & (~3);
+	else
+	    return 0;
+    }
+}
+
 /*
  * Notification from ioqueue when incoming UDP packet is received.
  */
@@ -487,21 +541,51 @@ static pj_bool_t on_data_read(pj_activesock_t *asock,
 			      pj_size_t *remainder)
 {
     pj_turn_sock *turn_sock;
-    pj_size_t parsed_len;
     pj_bool_t ret = PJ_TRUE;
 
     turn_sock = (pj_turn_sock*) pj_activesock_get_user_data(asock);
     pj_lock_acquire(turn_sock->lock);
 
     if (status == PJ_SUCCESS && turn_sock->sess) {
-	/* Report incoming packet to TURN session */
-	parsed_len = (unsigned)size;
-	pj_turn_session_on_rx_pkt(turn_sock->sess, data,  size, &parsed_len);
-	if (parsed_len < (unsigned)size) {
-	    *remainder = size - parsed_len;
-	    pj_memmove(data, ((char*)data)+parsed_len, *remainder);
-	} else {
-	    *remainder = 0;
+	/* Report incoming packet to TURN session, repeat while we have
+	 * "packet" in the buffer (required for stream-oriented transports)
+	 */
+	unsigned pkt_len;
+
+	//PJ_LOG(5,(turn_sock->pool->obj_name, 
+	//	  "Incoming data, %lu bytes total buffer", size));
+
+	while ((pkt_len=has_packet(turn_sock, data, size)) != 0) {
+	    pj_size_t parsed_len;
+	    //const pj_uint8_t *pkt = (const pj_uint8_t*)data;
+
+	    //PJ_LOG(5,(turn_sock->pool->obj_name, 
+	    //	      "Packet start: %02X %02X %02X %02X", 
+	    //	      pkt[0], pkt[1], pkt[2], pkt[3]));
+
+	    //PJ_LOG(5,(turn_sock->pool->obj_name, 
+	    //	      "Processing %lu bytes packet of %lu bytes total buffer",
+	    //	      pkt_len, size));
+
+	    parsed_len = (unsigned)size;
+	    pj_turn_session_on_rx_pkt(turn_sock->sess, data,  size, &parsed_len);
+
+	    /* parsed_len may be zero if we have parsing error, so use our
+	     * previous calculation to exhaust the bad packet.
+	     */
+	    if (parsed_len == 0)
+		parsed_len = pkt_len;
+
+	    if (parsed_len < (unsigned)size) {
+		*remainder = size - parsed_len;
+		pj_memmove(data, ((char*)data)+parsed_len, *remainder);
+	    } else {
+		*remainder = 0;
+	    }
+	    size = *remainder;
+
+	    //PJ_LOG(5,(turn_sock->pool->obj_name, 
+	    //	      "Buffer size now %lu bytes", size));
 	}
     } else if (status != PJ_SUCCESS && 
 	       turn_sock->conn_type != PJ_TURN_TP_UDP) 
@@ -648,6 +732,16 @@ static void turn_on_state(pj_turn_session *sess,
 	/* Init socket */
 	status = pj_sock_socket(turn_sock->af, sock_type, 0, &sock);
 	if (status != PJ_SUCCESS) {
+	    pj_turn_sock_destroy(turn_sock);
+	    return;
+	}
+
+        /* Apply QoS, if specified */
+	status = pj_sock_apply_qos2(sock, turn_sock->setting.qos_type,
+				    &turn_sock->setting.qos_params, 
+				    (turn_sock->setting.qos_ignore_error?2:1),
+				    turn_sock->pool->obj_name, NULL);
+	if (status != PJ_SUCCESS && !turn_sock->setting.qos_ignore_error) {
 	    pj_turn_sock_destroy(turn_sock);
 	    return;
 	}

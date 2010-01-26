@@ -1,4 +1,4 @@
-/* $Id: cc_armcc.h 2407 2009-01-01 20:56:36Z bennylp $ */
+/* $Id: cc_armcc.h 3046 2010-01-06 08:34:41Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -30,9 +30,9 @@
 #endif
 
 #define PJ_CC_NAME		"armcc"
-#define PJ_CC_VER_1		__ARMCC__
-#define PJ_CC_VER_2		__ARMCC_MINOR__
-#define PJ_CC_VER_3		__ARMCC_PATCHLEVEL__
+#define PJ_CC_VER_1             (__ARMCC_VERSION/100000)
+#define PJ_CC_VER_2             ((__ARMCC_VERSION%100000)/10000)
+#define PJ_CC_VER_3             (__ARMCC_VERSION%10000)
 
 #ifdef __cplusplus
 #  define PJ_INLINE_SPECIFIER	inline

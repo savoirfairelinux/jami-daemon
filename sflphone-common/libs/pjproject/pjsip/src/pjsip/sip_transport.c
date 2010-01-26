@@ -1,4 +1,4 @@
-/* $Id: sip_transport.c 2724 2009-05-29 13:04:03Z bennylp $ */
+/* $Id: sip_transport.c 2915 2009-09-22 17:56:44Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -1438,6 +1438,14 @@ PJ_DEF(pj_ssize_t) pjsip_tpmgr_receive_packet( pjsip_tpmgr *mgr,
 	     */
 	    if (rdata->msg_info.via->rport_param == 0) {
 		rdata->msg_info.via->rport_param = rdata->pkt_info.src_port;
+	    }
+	} else {
+	    /* Drop malformed responses */
+	    if (rdata->msg_info.msg->line.status.code < 100 ||
+		rdata->msg_info.msg->line.status.code >= 700)
+	    {
+		mgr->on_rx_msg(mgr->endpt, PJSIP_EINVALIDSTATUS, rdata);
+		goto finish_process_fragment;
 	    }
 	}
 

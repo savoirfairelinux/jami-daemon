@@ -1,4 +1,4 @@
-/* $Id: errno.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: errno.c 2992 2009-11-09 04:09:13Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -157,6 +157,10 @@ int errno_test(void)
     pj_strerror(PJ_EBUG, errbuf, CUT);
     PJ_LOG(3,(THIS_FILE, "...msg for rc=PJ_EBUG, cut at %d chars: '%s'", 
               CUT, errbuf));
+
+    /* Perror */
+    pj_perror(3, THIS_FILE, PJ_SUCCESS, "...testing %s", "pj_perror");
+    PJ_PERROR(3,(THIS_FILE, PJ_SUCCESS, "...testing %s", "PJ_PERROR"));
 
     return 0;
 }

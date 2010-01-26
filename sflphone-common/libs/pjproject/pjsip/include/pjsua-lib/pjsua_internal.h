@@ -1,4 +1,4 @@
-/* $Id: pjsua_internal.h 2874 2009-08-13 15:55:47Z bennylp $ */
+/* $Id: pjsua_internal.h 2968 2009-10-26 11:21:37Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -82,6 +82,9 @@ typedef struct pjsua_call
     pjmedia_transport	*med_orig;  /**< Original media transport	    */
     pj_bool_t		 med_tp_auto_del; /**< May delete media transport   */
     pjsua_med_tp_st	 med_tp_st; /**< Media transport state		    */
+    pj_sockaddr		 med_rtp_addr; /**< Current RTP source address
+					    (used to update ICE default
+					    address)			    */
     pj_stun_nat_type	 rem_nat_type; /**< NAT type of remote endpoint.    */
     pjmedia_srtp_use	 rem_srtp_use; /**< Remote's SRTP usage policy.	    */
 
@@ -141,6 +144,8 @@ typedef struct pjsua_acc
     pjsip_publishc  *publish_sess;  /**< Client publication session.	*/
     pj_bool_t	     publish_state; /**< Last published online status	*/
 
+    pjsip_evsub	    *mwi_sub;	    /**< MWI client subscription	*/
+    pjsip_dialog    *mwi_dlg;	    /**< Dialog for MWI sub.		*/
 } pjsua_acc;
 
 
@@ -182,9 +187,10 @@ typedef struct pjsua_buddy
     pj_bool_t		 monitor;   /**< Should we monitor?		*/
     pjsip_dialog	*dlg;	    /**< The underlying dialog.		*/
     pjsip_evsub		*sub;	    /**< Buddy presence subscription	*/
+    unsigned		 term_code; /**< Subscription termination code	*/
     pj_str_t		 term_reason;/**< Subscription termination reason */
     pjsip_pres_status	 status;    /**< Buddy presence status.		*/
-
+    pj_timer_entry	 timer;	    /**< Resubscription timer		*/
 } pjsua_buddy;
 
 
@@ -446,6 +452,11 @@ void pjsua_pres_delete_acc(int acc_id);
  * Init IM module handler to handle incoming MESSAGE outside dialog.
  */
 pj_status_t pjsua_im_init(void);
+
+/**
+ * Start MWI subscription
+ */
+void pjsua_start_mwi(pjsua_acc *acc);
 
 /**
  * Init call subsystem.

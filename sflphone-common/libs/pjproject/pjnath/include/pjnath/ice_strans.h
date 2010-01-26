@@ -1,4 +1,4 @@
-/* $Id: ice_strans.h 2724 2009-05-29 13:04:03Z bennylp $ */
+/* $Id: ice_strans.h 3028 2009-12-08 13:11:25Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -271,6 +271,13 @@ typedef struct pj_ice_strans_cfg
      */
     struct {
 	/**
+	 * Optional TURN socket settings. The default values will be
+	 * initialized by #pj_turn_sock_cfg_default(). This contains
+	 * settings such as QoS.
+	 */
+	pj_turn_sock_cfg     cfg;
+
+	/**
 	 * Specify the TURN server domain or hostname or IP address.
 	 * If DNS SRV resolution is required, application must fill
 	 * in this setting with the domain name of the TURN server 
@@ -324,7 +331,80 @@ typedef struct pj_ice_strans_cfg
 
     } turn;
 
+    /**
+     * Component specific settings, which will override the settings in
+     * the STUN and TURN settings above. For example, setting the QoS
+     * parameters here allows the application to have different QoS
+     * traffic type for RTP and RTCP component.
+     */
+    struct {
+	/**
+	 * QoS traffic type to be set on this transport. When application
+	 * wants to apply QoS tagging to the transport, it's preferable to
+	 * set this field rather than \a qos_param fields since this is 
+	 * more portable.
+	 *
+	 * Default value is PJ_QOS_TYPE_BEST_EFFORT.
+	 */
+	pj_qos_type qos_type;
+
+	/**
+	 * Set the low level QoS parameters to the transport. This is a 
+	 * lower level operation than setting the \a qos_type field and
+	 * may not be supported on all platforms.
+	 *
+	 * By default all settings in this structure are disabled.
+	 */
+	pj_qos_params qos_params;
+
+    } comp[PJ_ICE_MAX_COMP];
+
 } pj_ice_strans_cfg;
+
+
+/**
+ * ICE stream transport's state.
+ */
+typedef enum pj_ice_strans_state
+{
+    /**
+     * ICE stream transport is not created.
+     */
+    PJ_ICE_STRANS_STATE_NULL,
+
+    /**
+     * ICE candidate gathering process is in progress.
+     */
+    PJ_ICE_STRANS_STATE_INIT,
+
+    /**
+     * ICE stream transport initialization/candidate gathering process is
+     * complete, ICE session may be created on this stream transport.
+     */
+    PJ_ICE_STRANS_STATE_READY,
+
+    /**
+     * New session has been created and the session is ready.
+     */
+    PJ_ICE_STRANS_STATE_SESS_READY,
+
+    /**
+     * ICE negotiation is in progress.
+     */
+    PJ_ICE_STRANS_STATE_NEGO,
+
+    /**
+     * ICE negotiation has completed successfully and media is ready
+     * to be used.
+     */
+    PJ_ICE_STRANS_STATE_RUNNING,
+
+    /**
+     * ICE negotiation has completed with failure.
+     */
+    PJ_ICE_STRANS_STATE_FAILED
+
+} pj_ice_strans_state;
 
 
 /** 
@@ -369,6 +449,26 @@ PJ_DECL(pj_status_t) pj_ice_strans_create(const char *name,
 					  void *user_data,
 					  const pj_ice_strans_cb *cb,
 					  pj_ice_strans **p_ice_st);
+
+/**
+ * Get ICE session state.
+ *
+ * @param ice_st	The ICE stream transport.
+ *
+ * @return		ICE session state.
+ */
+PJ_DECL(pj_ice_strans_state) pj_ice_strans_get_state(pj_ice_strans *ice_st);
+
+
+/**
+ * Get string representation of ICE state.
+ *
+ * @param state		ICE stream transport state.
+ *
+ * @return		String.
+ */
+PJ_DECL(const char*) pj_ice_strans_state_name(pj_ice_strans_state state);
+
 
 /**
  * Destroy the ICE stream transport. This will destroy the ICE session
@@ -520,6 +620,17 @@ PJ_DECL(pj_status_t) pj_ice_strans_get_ufrag_pwd(pj_ice_strans *ice_st,
 						 pj_str_t *rem_ufrag,
 						 pj_str_t *rem_pwd);
 
+
+/**
+ * Get the number of local candidates for the specified component ID.
+ *
+ * @param ice_st	The ICE stream transport.
+ * @param comp_id	Component ID.
+ *
+ * @return		The number of candidates.
+ */
+PJ_DECL(unsigned) pj_ice_strans_get_cands_count(pj_ice_strans *ice_st,
+					        unsigned comp_id);
 
 /**
  * Enumerate the local candidates for the specified component.

@@ -1,4 +1,4 @@
-/* $Id: pjlib.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: pjlib.h 2970 2009-10-26 15:47:52Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -50,7 +50,9 @@
 #include <pj/rand.h>
 #include <pj/rbtree.h>
 #include <pj/sock.h>
+#include <pj/sock_qos.h>
 #include <pj/sock_select.h>
+#include <pj/ssl_sock.h>
 #include <pj/string.h>
 #include <pj/timer.h>
 #include <pj/unicode.h>

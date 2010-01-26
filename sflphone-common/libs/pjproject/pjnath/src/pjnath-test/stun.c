@@ -1,4 +1,4 @@
-/* $Id: stun.c 2775 2009-06-18 14:04:44Z nanang $ */
+/* $Id: stun.c 2938 2009-10-11 05:06:43Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -479,7 +479,9 @@ static struct test_vector
 	"",
 	"",
 	&create_msgint1
-    },
+    }
+    /* disabled: see http://trac.pjsip.org/repos/ticket/960
+    ,
     {
 	PJ_STUN_BINDING_RESPONSE,
 	"\xb7\xe7\xa7\x01\xbc\x34\xd6\x86\xfa\x87\xdf\xae",
@@ -503,6 +505,9 @@ static struct test_vector
 	"",
 	&create_msgint2
     }
+    */
+
+    /* disabled: see http://trac.pjsip.org/repos/ticket/960
 #if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6!=0
     ,
     {
@@ -542,6 +547,7 @@ static struct test_vector
 	&create_msgint3
     }
 #endif
+    */
 };
 
 
@@ -590,6 +596,10 @@ static int fingerprint_test_vector()
     pj_status_t status;
     unsigned i;
     int rc = 0;
+
+    /* To avoid function not referenced warnings */
+    (void)create_msgint2;
+    (void)create_msgint3;
 
     PJ_LOG(3,(THIS_FILE, "  draft-denis-behave-rfc3489bis-test-vectors-02"));
 

@@ -1,4 +1,4 @@
-/* $Id: os_win32_wince.h 2660 2009-04-28 19:38:43Z nanang $ */
+/* $Id: os_win32_wince.h 2962 2009-10-24 00:00:40Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -40,6 +40,7 @@
 #define PJ_HAS_MALLOC_H		    1
 #define PJ_HAS_NETDB_H		    0
 #define PJ_HAS_NETINET_IN_H	    0
+#define PJ_HAS_NETINET_TCP_H	    0
 #define PJ_HAS_SETJMP_H		    1
 #define PJ_HAS_STDARG_H		    1
 #define PJ_HAS_STDDEF_H		    1

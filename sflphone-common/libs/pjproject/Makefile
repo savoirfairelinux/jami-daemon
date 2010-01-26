@@ -29,17 +29,17 @@ doc:
 		fi; \
 	done
 	
-LIBS = 	pjlib/lib/libpj-sfl-$(TARGET_NAME).a \
-	pjlib-util/lib/libpjlib-util-sfl-$(TARGET_NAME).a \
-	pjnath/lib/libpjnath-sfl-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-sfl-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-audiodev-sfl-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-codec-sfl-$(TARGET_NAME).a \
-       	pjsip/lib/libpjsip-sfl-$(TARGET_NAME).a \
-	pjsip/lib/libpjsip-ua-sfl-$(TARGET_NAME).a \
-	pjsip/lib/libpjsip-simple-sfl-$(TARGET_NAME).a \
-	pjsip/lib/libpjsua-sfl-$(TARGET_NAME).a
-BINS = 	pjsip-apps/bin/pjsua-sfl-$(TARGET_NAME)$(HOST_EXE) 
+LIBS = 	pjlib/lib/libpj-$(TARGET_NAME).a \
+	pjlib-util/lib/libpjlib-util-$(TARGET_NAME).a \
+	pjnath/lib/libpjnath-$(TARGET_NAME).a \
+	pjmedia/lib/libpjmedia-$(TARGET_NAME).a \
+	pjmedia/lib/libpjmedia-audiodev-$(TARGET_NAME).a \
+	pjmedia/lib/libpjmedia-codec-$(TARGET_NAME).a \
+       	pjsip/lib/libpjsip-$(TARGET_NAME).a \
+	pjsip/lib/libpjsip-ua-$(TARGET_NAME).a \
+	pjsip/lib/libpjsip-simple-$(TARGET_NAME).a \
+	pjsip/lib/libpjsua-$(TARGET_NAME).a
+BINS = 	pjsip-apps/bin/pjsua-$(TARGET_NAME)$(HOST_EXE) 
 
 size:
 	@echo -n 'Date: '
@@ -70,6 +70,27 @@ xhdrid:
 		cp /tmp/id $$f; \
 	done
 
+selftest: pjlib-test pjlib-util-test pjnath-test pjmedia-test pjsip-test pjsua-test
+
+pjlib-test: pjlib/bin/pjlib-test-$(TARGET_NAME)
+	cd pjlib/build && ../bin/pjlib-test-$(TARGET_NAME)
+
+pjlib-util-test: pjlib-util/bin/pjlib-util-test-$(TARGET_NAME)
+	cd pjlib-util/build && ../bin/pjlib-util-test-$(TARGET_NAME)
+
+pjnath-test: pjnath/bin/pjnath-test-$(TARGET_NAME)
+	cd pjnath/build && ../bin/pjnath-test-$(TARGET_NAME)
+
+pjmedia-test: pjmedia/bin/pjmedia-test-$(TARGET_NAME)
+	cd pjmedia/build && ../bin/pjmedia-test-$(TARGET_NAME)
+
+pjsip-test: pjsip/bin/pjsip-test-$(TARGET_NAME)
+	cd pjsip/build && ../bin/pjsip-test-$(TARGET_NAME)
+
+pjsua-test:
+	cd tests/pjsua && python runall.py
+
+prefix = /usr/local
 install:
 	mkdir -p $(DESTDIR)$(prefix)/lib
 	cp -L $$(find . -name '*.a') $(DESTDIR)$(prefix)/lib
@@ -79,4 +100,4 @@ install:
 		ln -s $$i $$(echo $$i | sed -e "s/-$(TARGET_NAME)//");\
 	done
 	mkdir -p $(DESTDIR)$(prefix)/lib/pkgconfig
-	sed -e "s!@PREFIX@!$(DESTDIR)$(prefix)!" libpj-sfl.pc.in > $(DESTDIR)/$(prefix)/lib/pkgconfig/libpj-sfl.pc
+	sed -e "s!@PREFIX@!$(DESTDIR)$(prefix)!" libpj.pc.in > $(DESTDIR)/$(prefix)/lib/pkgconfig/libpj.pc

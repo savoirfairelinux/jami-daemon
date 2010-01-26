@@ -1,4 +1,4 @@
-/* $Id: sdp.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: sdp.h 2995 2009-11-09 05:18:12Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -650,6 +650,18 @@ pjmedia_sdp_session_clone( pj_pool_t *pool,
 PJ_DECL(pj_status_t) pjmedia_sdp_session_cmp(const pjmedia_sdp_session *sd1,
 					     const pjmedia_sdp_session *sd2,
 					     unsigned option);
+
+
+/**
+ * Add new attribute to the session descriptor.
+ *
+ * @param s		The SDP session description.
+ * @param attr		Attribute to add.
+ *
+ * @return		PJ_SUCCESS or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjmedia_sdp_session_add_attr(pjmedia_sdp_session *m,
+						  pjmedia_sdp_attr *attr);
 
 
 PJ_END_DECL
