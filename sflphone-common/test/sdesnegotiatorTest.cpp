@@ -122,6 +122,26 @@ void SdesNegotiatorTest::testKeyParamsPattern()
     pattern = NULL;
 }
 
+void SdesNegotiatorTest::testKeyParamsPatternCiscoStyle()
+{
+
+    std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj";
+
+    pattern = new sfl::Pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+			       "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)" \
+			       "(\\|2\\^(?P<lifetime>[0-9]+)\\|"		\
+			       "(?P<mkiValue>[0-9]+)\\:"		\
+			       "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
+
+    *pattern << subject;
+    pattern->matches();
+    CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));  
+    CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj") == 0);          
+    
+    delete pattern;
+    pattern = NULL;
+}
+
 /**
  * Make sure that all the fields can be extracted
  * properly from the syntax. 
