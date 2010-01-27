@@ -151,7 +151,8 @@ sflphone-client-gnome/stamp-h1
 /sflphone-client-kde/src/kcfg_settings.cpp
 /sflphone-client-kde/src/kcfg_settings.h
 /sflphone-client-kde/src/qrc_resources.cxx
-
+/sflphone-client-kde/src/sflphone-client-kde
+/sflphone-client-kde/src/sflphone-client-kde.shell
 
 # Ignore sub-modules stuff
 ## libiax2
