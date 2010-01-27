@@ -1,4 +1,4 @@
-/* $Id: sip_config.h 2859 2009-08-11 16:26:20Z nanang $ */
+/* $Id: sip_config.h 3019 2009-11-20 04:18:27Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -213,7 +213,7 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
  * This mainly affects the size of mod_data array in various components.
  */
 #ifndef PJSIP_MAX_MODULE
-#   define PJSIP_MAX_MODULE		16
+#   define PJSIP_MAX_MODULE		32
 #endif
 
 
@@ -513,10 +513,10 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
  * Enable TLS SIP transport support. For most systems this means that
  * OpenSSL must be installed.
  *
- * Default: 0 (for now)
+ * Default: follow PJ_HAS_SSL_SOCK setting, which is 0 (disabled) by default.
  */
 #ifndef PJSIP_HAS_TLS_TRANSPORT
-#   define PJSIP_HAS_TLS_TRANSPORT	    0
+#   define PJSIP_HAS_TLS_TRANSPORT          PJ_HAS_SSL_SOCK
 #endif
 
 
@@ -893,6 +893,20 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
  */
 #ifndef PJSIP_SESS_TIMER_DEF_SE
 #   define PJSIP_SESS_TIMER_DEF_SE		1800
+#endif
+
+
+/**
+ * Specify whether the client publication session should queue the
+ * PUBLISH request should there be another PUBLISH transaction still
+ * pending. If this is set to false, the client will return error
+ * on the PUBLISH request if there is another PUBLISH transaction still
+ * in progress.
+ *
+ * Default: 1 (yes)
+ */
+#ifndef PJSIP_PUBLISHC_QUEUE_REQUEST
+#   define PJSIP_PUBLISHC_QUEUE_REQUEST		1
 #endif
 
 

@@ -80,6 +80,10 @@ static gboolean _is_direct_call(callable_obj_t * c) {
         return 1;
     }
 
+    if(g_str_has_prefix (c->_peer_number, "sips:")) {
+        return 1;
+    }
+
     return 0;
 }
 

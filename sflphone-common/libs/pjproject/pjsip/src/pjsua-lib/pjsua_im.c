@@ -1,4 +1,4 @@
-/* $Id: pjsua_im.c 2855 2009-08-05 18:41:23Z nanang $ */
+/* $Id: pjsua_im.c 2923 2009-10-01 14:17:49Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -380,6 +380,9 @@ static void im_callback(void *token, pjsip_event *e)
 		/* Must duplicate im_data */
 		im_data2 = pjsua_im_data_dup(tdata->pool, im_data);
 
+		/* Increment CSeq */
+		PJSIP_MSG_CSEQ_HDR(tdata->msg)->cseq++;
+
 		/* Re-send request */
 		status = pjsip_endpt_send_request( pjsua_var.endpt, tdata, -1,
 						   im_data2, &im_callback);
@@ -478,6 +481,9 @@ static void typing_callback(void *token, pjsip_event *e)
 
 		/* Must duplicate im_data */
 		im_data2 = pjsua_im_data_dup(tdata->pool, im_data);
+
+		/* Increment CSeq */
+		PJSIP_MSG_CSEQ_HDR(tdata->msg)->cseq++;
 
 		/* Re-send request */
 		status = pjsip_endpt_send_request( pjsua_var.endpt, tdata, -1,

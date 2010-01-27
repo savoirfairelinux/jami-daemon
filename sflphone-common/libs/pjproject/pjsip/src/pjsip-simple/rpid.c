@@ -1,4 +1,4 @@
-/* $Id: rpid.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: rpid.c 2935 2009-10-09 13:17:56Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -21,6 +21,7 @@
 #include <pjsip-simple/errno.h>
 #include <pj/assert.h>
 #include <pj/guid.h>
+#include <pj/pool.h>
 #include <pj/string.h>
 
 
@@ -146,7 +147,16 @@ PJ_DEF(pj_status_t) pjrpid_add_element(pjpidf_pres *pres,
 	attr = pj_xml_attr_new(pool, &ID, &elem->id);
     } else {
 	pj_str_t person_id;
-	pj_create_unique_string(pool, &person_id);
+	/* xs:ID must start with letter */
+	//pj_create_unique_string(pool, &person_id);
+	person_id.ptr = (char*)pj_pool_alloc(pool, PJ_GUID_STRING_LENGTH+2);
+	person_id.ptr += 2;
+	pj_generate_unique_string(&person_id);
+	person_id.ptr -= 2;
+	person_id.ptr[0] = 'p';
+	person_id.ptr[1] = 'j';
+	person_id.slen += 2;
+
 	attr = pj_xml_attr_new(pool, &ID, &person_id);
     }
     pj_xml_add_attr(nd_person, attr);

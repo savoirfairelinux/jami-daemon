@@ -1,4 +1,4 @@
-/* $Id: stun_session.c 2773 2009-06-17 19:14:20Z bennylp $ */
+/* $Id: stun_session.c 2938 2009-10-11 05:06:43Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -227,7 +227,7 @@ static pj_status_t apply_msg_options(pj_stun_session *sess,
     if (sess->srv_name.slen && 
 	pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_SOFTWARE, 0)==NULL &&
 	(PJ_STUN_IS_RESPONSE(msg->hdr.type) ||
-	 PJ_STUN_IS_REQUEST(msg->hdr.type) && msg->hdr.magic==PJ_STUN_MAGIC)) 
+	 (PJ_STUN_IS_REQUEST(msg->hdr.type) && msg->hdr.magic==PJ_STUN_MAGIC))) 
     {
 	pj_stun_msg_add_string_attr(pool, msg, PJ_STUN_ATTR_SOFTWARE,
 				    &sess->srv_name);

@@ -1,4 +1,4 @@
-/* $Id: transport_ice.c 2896 2009-08-17 18:55:13Z bennylp $ */
+/* $Id: transport_ice.c 2957 2009-10-20 14:44:00Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -1147,7 +1147,9 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
     pj_status_t status;
 
     /* Validate media transport */
-    /* For now, this transport only support RTP/AVP transport */
+    /* This transport only support RTP/AVP transport, unless if
+     * transport checking is disabled
+     */
     if ((tp_ice->media_option & PJMEDIA_TPMED_NO_TRANSPORT_CHECKING) == 0) {
 	pjmedia_sdp_media *loc_m, *rem_m;
 
@@ -1410,6 +1412,17 @@ static pj_status_t transport_media_start(pjmedia_transport *tp,
 	    }
 	}
 
+	/* Ticket #977: Update role if turns out we're supposed to be the 
+	 * Controlling agent (e.g. when talking to ice-lite peer). 
+	 */
+	if (tp_ice->rem_offer_state.local_role==PJ_ICE_SESS_ROLE_CONTROLLING &&
+	    pj_ice_strans_has_sess(tp_ice->ice_st)) 
+	{
+	    pj_ice_strans_change_role(tp_ice->ice_st, 
+				      PJ_ICE_SESS_ROLE_CONTROLLING);
+	}
+
+
 	/* start ICE */
     }
 
@@ -1471,6 +1484,38 @@ static pj_status_t transport_get_info(pjmedia_transport *tp,
     if (tp_ice->use_ice || tp_ice->rtp_src_cnt) {
 	info->src_rtp_name  = tp_ice->rtp_src_addr;
 	info->src_rtcp_name = tp_ice->rtcp_src_addr;
+    }
+
+    /* Fill up transport specific info */
+    if (info->specific_info_cnt < PJ_ARRAY_SIZE(info->spc_info)) {
+	pjmedia_transport_specific_info *tsi;
+	pjmedia_ice_transport_info *ii;
+	unsigned i;
+
+	pj_assert(sizeof(*ii) <= sizeof(tsi->buffer));
+	tsi = &info->spc_info[info->specific_info_cnt++];
+	tsi->type = PJMEDIA_TRANSPORT_TYPE_ICE;
+	tsi->cbsize = sizeof(*ii);
+
+	ii = (pjmedia_ice_transport_info*) tsi->buffer;
+	pj_bzero(ii, sizeof(*ii));
+
+	if (pj_ice_strans_has_sess(tp_ice->ice_st))
+	    ii->role = pj_ice_strans_get_role(tp_ice->ice_st);
+	else
+	    ii->role = PJ_ICE_SESS_ROLE_UNKNOWN;
+	ii->sess_state = pj_ice_strans_get_state(tp_ice->ice_st);
+	ii->comp_cnt = pj_ice_strans_get_running_comp_cnt(tp_ice->ice_st);
+	
+	for (i=1; i<=ii->comp_cnt && i<=PJ_ARRAY_SIZE(ii->comp); ++i) {
+	    const pj_ice_sess_check *chk;
+
+	    chk = pj_ice_strans_get_valid_pair(tp_ice->ice_st, i);
+	    if (chk) {
+		ii->comp[i-1].lcand_type = chk->lcand->type;
+		ii->comp[i-1].rcand_type = chk->rcand->type;
+	    }
+	}
     }
 
     return PJ_SUCCESS;

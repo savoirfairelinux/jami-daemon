@@ -1,5 +1,5 @@
-/* $Id: config.h 2850 2009-08-01 09:20:59Z bennylp $ */
-/*
+/* $Id: config.h 2977 2009-10-29 09:39:17Z bennylp $ */
+/* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 #ifndef __PJMEDIA_CONFIG_H__
 #define __PJMEDIA_CONFIG_H__
@@ -45,11 +45,11 @@
 #endif
 
 /**
- * Specify whether we prefer to use audio switch board rather than
+ * Specify whether we prefer to use audio switch board rather than 
  * conference bridge.
  *
- * Audio switch board is a kind of simplified version of conference
- * bridge, but not really the subset of conference bridge. It has
+ * Audio switch board is a kind of simplified version of conference 
+ * bridge, but not really the subset of conference bridge. It has 
  * stricter rules on audio routing among the pjmedia ports and has
  * no audio mixing capability. The power of it is it could work with
  * encoded audio frames where conference brigde couldn't.
@@ -103,10 +103,16 @@
 #endif
 
 /**
- * Specify default sound device latency, in milisecond.
+ * Specify default sound device latency, in milisecond. 
+ *
+ * Default is 160ms for Windows Mobile and 140ms for other platforms.
  */
 #ifndef PJMEDIA_SND_DEFAULT_PLAY_LATENCY
-#   define PJMEDIA_SND_DEFAULT_PLAY_LATENCY 100
+#   if defined(PJ_WIN32_WINCE) && PJ_WIN32_WINCE!=0
+#	define PJMEDIA_SND_DEFAULT_PLAY_LATENCY	    160
+#   else
+#	define PJMEDIA_SND_DEFAULT_PLAY_LATENCY	    140
+#   endif
 #endif
 
 
@@ -127,21 +133,21 @@
 /**
  * This denotes implementation of WSOLA using fixed or floating point WSOLA
  * algorithm. This implementation provides the best quality of the result,
- * at the expense of one frame delay and intensive processing power
+ * at the expense of one frame delay and intensive processing power 
  * requirement.
  */
 #define PJMEDIA_WSOLA_IMP_WSOLA		    1
 
 /**
- * This denotes implementation of WSOLA algorithm with faster waveform
- * similarity calculation. This implementation provides fair quality of
+ * This denotes implementation of WSOLA algorithm with faster waveform 
+ * similarity calculation. This implementation provides fair quality of 
  * the result with the main advantage of low processing power requirement.
  */
 #define PJMEDIA_WSOLA_IMP_WSOLA_LITE	    2
 
 /**
  * Specify type of Waveform based Similarity Overlap and Add (WSOLA) backend
- * implementation to be used. WSOLA is an algorithm to expand and/or compress
+ * implementation to be used. WSOLA is an algorithm to expand and/or compress 
  * audio frames without changing the pitch, and used by the delaybuf and as PLC
  * backend algorithm.
  *
@@ -154,8 +160,8 @@
 
 /**
  * Specify the default maximum duration of synthetic audio that is generated
- * by WSOLA. This value should be long enough to cover burst of packet losses.
- * but not too long, because as the duration increases the quality would
+ * by WSOLA. This value should be long enough to cover burst of packet losses. 
+ * but not too long, because as the duration increases the quality would 
  * degrade considerably.
  *
  * Note that this limit is only applied when fading is enabled in the WSOLA
@@ -184,7 +190,7 @@
 /**
  * Specify WSOLA algorithm delay, in milliseconds. The algorithm delay is
  * used to merge synthetic samples with real samples in the transition
- * between real to synthetic and vice versa. The longer the delay, the
+ * between real to synthetic and vice versa. The longer the delay, the 
  * smoother signal to be generated, at the expense of longer latency and
  * a slighty more computation.
  *
@@ -213,17 +219,17 @@
 /**
  * Specify number of sound buffers. Larger number is better for sound
  * stability and to accommodate sound devices that are unable to send frames
- * in timely manner, however it would probably cause more audio delay (and
+ * in timely manner, however it would probably cause more audio delay (and 
  * definitely will take more memory). One individual buffer is normally 10ms
  * or 20 ms long, depending on ptime settings (samples_per_frame value).
  *
  * The setting here currently is used by the conference bridge, the splitter
  * combiner port, and dsound.c.
  *
- * Default: 6
+ * Default: (PJMEDIA_SND_DEFAULT_PLAY_LATENCY+20)/20
  */
 #ifndef PJMEDIA_SOUND_BUFFER_COUNT
-#   define PJMEDIA_SOUND_BUFFER_COUNT	    6
+#   define PJMEDIA_SOUND_BUFFER_COUNT	    ((PJMEDIA_SND_DEFAULT_PLAY_LATENCY+20)/20)
 #endif
 
 
@@ -296,13 +302,13 @@
  */
 #define PJMEDIA_RESAMPLE_NONE		    1	/**< No resampling.	    */
 #define PJMEDIA_RESAMPLE_LIBRESAMPLE	    2	/**< Sample rate conversion 
-using libresample.  */
+						     using libresample.  */
 #define PJMEDIA_RESAMPLE_SPEEX		    3	/**< Sample rate conversion 
-using Speex. */
+						     using Speex. */
 #define PJMEDIA_RESAMPLE_LIBSAMPLERATE	    4	/**< Sample rate conversion 
-using libsamplerate
-(a.k.a Secret Rabbit Code)
-*/
+						     using libsamplerate 
+						     (a.k.a Secret Rabbit Code)
+						 */
 
 /**
  * Select which resample implementation to use. Currently pjmedia supports:
@@ -342,7 +348,7 @@ using libsamplerate
  * This (among other thing) will affect the size of buffers to be allocated
  * for outgoing packets.
  */
-#ifndef PJMEDIA_MAX_FRAME_DURATION_MS
+#ifndef PJMEDIA_MAX_FRAME_DURATION_MS   
 #   define PJMEDIA_MAX_FRAME_DURATION_MS   	200
 #endif
 
@@ -350,7 +356,7 @@ using libsamplerate
 /**
  * Max packet size to support.
  */
-#ifndef PJMEDIA_MAX_MTU
+#ifndef PJMEDIA_MAX_MTU			
 #  define PJMEDIA_MAX_MTU			1500
 #endif
 
@@ -358,7 +364,7 @@ using libsamplerate
 /**
  * DTMF/telephone-event duration, in timestamp.
  */
-#ifndef PJMEDIA_DTMF_DURATION
+#ifndef PJMEDIA_DTMF_DURATION		
 #  define PJMEDIA_DTMF_DURATION			1600	/* in timestamp */
 #endif
 
@@ -368,7 +374,7 @@ using libsamplerate
  * remote address required to make the stream switch transmission
  * to the source address.
  */
-#ifndef PJMEDIA_RTP_NAT_PROBATION_CNT
+#ifndef PJMEDIA_RTP_NAT_PROBATION_CNT	
 #  define PJMEDIA_RTP_NAT_PROBATION_CNT		10
 #endif
 
@@ -409,9 +415,9 @@ using libsamplerate
 
 /**
  * Specify whether RTCP XR support should be built into PJMEDIA. Disabling
- * this feature will reduce footprint slightly. Note that even when this
- * setting is enabled, RTCP XR processing will only be performed in stream
- * if it is enabled on run-time on per stream basis. See
+ * this feature will reduce footprint slightly. Note that even when this 
+ * setting is enabled, RTCP XR processing will only be performed in stream 
+ * if it is enabled on run-time on per stream basis. See  
  * PJMEDIA_STREAM_ENABLE_XR setting for more info.
  *
  * Default: 1 (yes).
@@ -423,7 +429,7 @@ using libsamplerate
 
 /**
  * The RTCP XR feature is activated and used by stream if \a enable_rtcp_xr
- * field of \a pjmedia_stream_info structure is non-zero. This setting
+ * field of \a pjmedia_stream_info structure is non-zero. This setting 
  * controls the default value of this field.
  *
  * Default: 0 (disabled)
@@ -442,7 +448,7 @@ using libsamplerate
  *
  * Specify zero to disable this feature.
  *
- * Default: 600 msec (which gives good probability that some RTP
+ * Default: 600 msec (which gives good probability that some RTP 
  *                    packets will reach the destination, but without
  *                    filling up the jitter buffer on the remote end).
  */
@@ -452,13 +458,13 @@ using libsamplerate
 
 
 /**
- * Specify the maximum duration of silence period in the codec, in msec.
+ * Specify the maximum duration of silence period in the codec, in msec. 
  * This is useful for example to keep NAT binding open in the firewall
- * and to prevent server from disconnecting the call because no
+ * and to prevent server from disconnecting the call because no 
  * RTP packet is received.
  *
  * This only applies to codecs that use PJMEDIA's VAD (pretty much
- * everything including iLBC, except Speex, which has its own DTX
+ * everything including iLBC, except Speex, which has its own DTX 
  * mechanism).
  *
  * Use (-1) to disable this feature.
@@ -510,7 +516,7 @@ using libsamplerate
  * remote, or should it rather use the codec preference as specified by
  * local endpoint.
  *
- * For example, suppose incoming call has codec order "8 0 3", while
+ * For example, suppose incoming call has codec order "8 0 3", while 
  * local codec order is "3 0 8". If remote codec order is preferable,
  * the selected codec will be 8, while if local codec order is preferable,
  * the selected codec will be 3.
@@ -538,7 +544,7 @@ using libsamplerate
 
 
 /**
- * This macro controls whether pjmedia should include SDP rtpmap
+ * This macro controls whether pjmedia should include SDP rtpmap 
  * attribute for static payload types. SDP rtpmap for static
  * payload types are optional, although they are normally included
  * for interoperability reason.
@@ -592,12 +598,12 @@ using libsamplerate
 #endif
 
 
-/*
+/* 
  * Below specifies the various tone generator backend algorithm.
  */
 
-/**
- * The math's sine(), floating point. This has very good precision
+/** 
+ * The math's sine(), floating point. This has very good precision 
  * but it's the slowest and requires floating point support and
  * linking with the math library.
  */
@@ -613,7 +619,7 @@ using libsamplerate
 /**
  * Fixed point using sine signal generated by Cordic algorithm. This
  * algorithm can be tuned to provide balance between precision and
- * performance by tuning the PJMEDIA_TONEGEN_FIXED_POINT_CORDIC_LOOP
+ * performance by tuning the PJMEDIA_TONEGEN_FIXED_POINT_CORDIC_LOOP 
  * setting, and may be suitable for platforms that lack floating-point
  * support.
  */
@@ -628,7 +634,7 @@ using libsamplerate
 
 
 /**
- * Specify the tone generator algorithm to be used. Please see
+ * Specify the tone generator algorithm to be used. Please see 
  * http://trac.pjsip.org/repos/wiki/Tone_Generator for the performance
  * analysis results of the various tone generator algorithms.
  *
@@ -648,7 +654,7 @@ using libsamplerate
 /**
  * Specify the number of calculation loops to generate the tone, when
  * PJMEDIA_TONEGEN_FIXED_POINT_CORDIC algorithm is used. With more calculation
- * loops, the tone signal gets more precise, but this will add more
+ * loops, the tone signal gets more precise, but this will add more 
  * processing.
  *
  * Valid values are 1 to 28.
@@ -736,8 +742,8 @@ using libsamplerate
 
 /**
  * Transport info (pjmedia_transport_info) contains a socket info and list
- * of transport specific info, since transports can be chained together
- * (for example, SRTP transport uses UDP transport as the underlying
+ * of transport specific info, since transports can be chained together 
+ * (for example, SRTP transport uses UDP transport as the underlying 
  * transport). This constant specifies maximum number of transport specific
  * infos that can be held in a transport info.
  */
@@ -780,22 +786,22 @@ using libsamplerate
 #endif
 
 /**
- * Specify another type of keep-alive and NAT hole punching
+ * Specify another type of keep-alive and NAT hole punching 
  * mechanism (the other type is PJMEDIA_STREAM_VAD_SUSPEND_MSEC
- * and PJMEDIA_CODEC_MAX_SILENCE_PERIOD) to be used by stream.
- * When this feature is enabled, the stream will initially
+ * and PJMEDIA_CODEC_MAX_SILENCE_PERIOD) to be used by stream. 
+ * When this feature is enabled, the stream will initially 
  * transmit one packet to punch a hole in NAT, and periodically
  * transmit keep-alive packets.
  *
  * When this alternative keep-alive mechanism is used, application
- * may disable the other keep-alive mechanisms, i.e: by setting
- * PJMEDIA_STREAM_VAD_SUSPEND_MSEC to zero and
+ * may disable the other keep-alive mechanisms, i.e: by setting 
+ * PJMEDIA_STREAM_VAD_SUSPEND_MSEC to zero and 
  * PJMEDIA_CODEC_MAX_SILENCE_PERIOD to -1.
  *
  * The value of this macro specifies the type of packet used
  * for the keep-alive mechanism. Valid values are
  * PJMEDIA_STREAM_KA_EMPTY_RTP and PJMEDIA_STREAM_KA_USER.
- *
+ * 
  * The duration of the keep-alive interval further can be set
  * with PJMEDIA_STREAM_KA_INTERVAL setting.
  *

@@ -1,4 +1,4 @@
-/* $Id: test.c 2769 2009-06-17 12:36:36Z bennylp $ */
+/* $Id: test.c 2970 2009-10-26 15:47:52Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -165,6 +165,10 @@ int test_inner(void)
 
 #if INCLUDE_FILE_TEST
     DO_TEST( file_test() );
+#endif
+
+#if INCLUDE_SSLSOCK_TEST
+    DO_TEST( ssl_sock_test() );
 #endif
 
 #if INCLUDE_ECHO_SERVER

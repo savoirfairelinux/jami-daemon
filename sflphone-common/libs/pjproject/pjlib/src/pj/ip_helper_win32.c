@@ -1,4 +1,4 @@
-/* $Id: ip_helper_win32.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: ip_helper_win32.c 3040 2009-12-30 08:39:14Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -41,16 +41,53 @@
 #include <pj/errno.h>
 #include <pj/string.h>
 
+/* Dealing with Unicode quirks:
+
+ There seems to be a difference with GetProcAddress() API signature between
+ Windows (i.e. Win32) and Windows CE (e.g. Windows Mobile). On Windows, the
+ API is declared as:
+
+   FARPROC GetProcAddress(
+     HMODULE hModule,
+     LPCSTR lpProcName);
+ 
+ while on Windows CE:
+
+   FARPROC GetProcAddress(
+     HMODULE hModule,
+     LPCWSTR lpProcName);
+
+ Notice the difference with lpProcName argument type. This means that on 
+ Windows, even on Unicode Windows, the lpProcName always takes ANSI format, 
+ while on Windows CE, the argument follows the UNICODE setting.
+
+ Because of this, we use a different Unicode treatment here than the usual
+ PJ_NATIVE_STRING_IS_UNICODE PJLIB setting (<pj/unicode.h>):
+   - GPA_TEXT macro: convert literal string to platform's native literal 
+         string
+   - gpa_char: the platform native character type
+
+ Note that "GPA" and "gpa" are abbreviations for GetProcAddress.
+*/
+#if defined(PJ_WIN32_WINCE) && PJ_WIN32_WINCE!=0
+    /* on CE, follow the PJLIB Unicode setting */
+#   define GPA_TEXT(x)	PJ_T(x)
+#   define gpa_char	pj_char_t
+#else
+    /* on non-CE, always use ANSI format */
+#   define GPA_TEXT(x)	x
+#   define gpa_char	char
+#endif
+
+
 typedef DWORD (WINAPI *PFN_GetIpAddrTable)(PMIB_IPADDRTABLE pIpAddrTable, 
 					   PULONG pdwSize, 
 					   BOOL bOrder);
-#if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6!=0
 typedef DWORD (WINAPI *PFN_GetAdapterAddresses)(ULONG Family,
 					        ULONG Flags,
 					        PVOID Reserved,
 					        PIP_ADAPTER_ADDRESSES AdapterAddresses,
 					        PULONG SizePointer);
-#endif	/* PJ_HAS_IPV6 */
 typedef DWORD (WINAPI *PFN_GetIpForwardTable)(PMIB_IPFORWARDTABLE pIpForwardTable,
 					      PULONG pdwSize, 
 					      BOOL bOrder);
@@ -58,9 +95,7 @@ typedef DWORD (WINAPI *PFN_GetIfEntry)(PMIB_IFROW pIfRow);
 
 static HANDLE s_hDLL;
 static PFN_GetIpAddrTable s_pfnGetIpAddrTable;
-#if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6!=0
-    static PFN_GetAdapterAddresses s_pfnGetAdapterAddresses;
-#endif	/* PJ_HAS_IPV6 */
+static PFN_GetAdapterAddresses s_pfnGetAdapterAddresses;
 static PFN_GetIpForwardTable s_pfnGetIpForwardTable;
 static PFN_GetIfEntry s_pfnGetIfEntry;
 
@@ -72,12 +107,10 @@ static void unload_iphlp_module(void)
     s_pfnGetIpAddrTable = NULL;
     s_pfnGetIpForwardTable = NULL;
     s_pfnGetIfEntry = NULL;
-#if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6!=0
     s_pfnGetAdapterAddresses = NULL;
-#endif
 }
 
-static FARPROC GetIpHlpApiProc(pj_char_t *lpProcName)
+static FARPROC GetIpHlpApiProc(gpa_char *lpProcName)
 {
     if(NULL == s_hDLL) {
 	s_hDLL = LoadLibrary(PJ_T("IpHlpApi"));
@@ -98,7 +131,7 @@ static DWORD MyGetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable,
 {
     if(NULL == s_pfnGetIpAddrTable) {
 	s_pfnGetIpAddrTable = (PFN_GetIpAddrTable) 
-	    GetIpHlpApiProc(PJ_T("GetIpAddrTable"));
+	    GetIpHlpApiProc(GPA_TEXT("GetIpAddrTable"));
     }
     
     if(NULL != s_pfnGetIpAddrTable) {
@@ -108,7 +141,6 @@ static DWORD MyGetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable,
     return ERROR_NOT_SUPPORTED;
 }
 
-#if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6!=0
 static DWORD MyGetAdapterAddresses(ULONG Family,
 				   ULONG Flags,
 				   PVOID Reserved,
@@ -117,7 +149,7 @@ static DWORD MyGetAdapterAddresses(ULONG Family,
 {
     if(NULL == s_pfnGetAdapterAddresses) {
 	s_pfnGetAdapterAddresses = (PFN_GetAdapterAddresses) 
-	    GetIpHlpApiProc(PJ_T("GetAdapterAddresses"));
+	    GetIpHlpApiProc(GPA_TEXT("GetAdaptersAddresses"));
     }
     
     if(NULL != s_pfnGetAdapterAddresses) {
@@ -127,14 +159,13 @@ static DWORD MyGetAdapterAddresses(ULONG Family,
     
     return ERROR_NOT_SUPPORTED;
 }
-#endif	/* PJ_HAS_IPV6 */
 
 #if PJ_IP_HELPER_IGNORE_LOOPBACK_IF
 static DWORD MyGetIfEntry(MIB_IFROW *pIfRow)
 {
     if(NULL == s_pfnGetIfEntry) {
 	s_pfnGetIfEntry = (PFN_GetIfEntry) 
-	    GetIpHlpApiProc(PJ_T("GetIfEntry"));
+	    GetIpHlpApiProc(GPA_TEXT("GetIfEntry"));
     }
     
     if(NULL != s_pfnGetIfEntry) {
@@ -152,7 +183,7 @@ static DWORD MyGetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable,
 {
     if(NULL == s_pfnGetIpForwardTable) {
 	s_pfnGetIpForwardTable = (PFN_GetIpForwardTable) 
-	    GetIpHlpApiProc(PJ_T("GetIpForwardTable"));
+	    GetIpHlpApiProc(GPA_TEXT("GetIpForwardTable"));
     }
     
     if(NULL != s_pfnGetIpForwardTable) {
@@ -168,25 +199,30 @@ static DWORD MyGetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable,
 static pj_status_t enum_ipv4_interface(unsigned *p_cnt,
 				       pj_sockaddr ifs[])
 {
-    /* Provide enough buffer or otherwise it will fail with 
-     * error 22 ("Not Enough Buffer") error.
-     */
-    char ipTabBuff[1024];
-    MIB_IPADDRTABLE *pTab;
-    ULONG tabSize;
+    char ipTabBuff[512];
+    MIB_IPADDRTABLE *pTab = (MIB_IPADDRTABLE*)ipTabBuff;
+    ULONG tabSize = sizeof(ipTabBuff);
     unsigned i, count;
     DWORD rc = NO_ERROR;
 
     PJ_ASSERT_RETURN(p_cnt && ifs, PJ_EINVAL);
 
-    pTab = (MIB_IPADDRTABLE*)ipTabBuff;
-
     /* Get IP address table */
-    tabSize = sizeof(ipTabBuff);
-
     rc = MyGetIpAddrTable(pTab, &tabSize, FALSE);
-    if (rc != NO_ERROR)
-	return PJ_RETURN_OS_ERROR(rc);
+    if (rc != NO_ERROR) {
+	if (rc == ERROR_INSUFFICIENT_BUFFER) {
+	    /* Retry with larger buffer */
+	    pTab = (MIB_IPADDRTABLE*)malloc(tabSize);
+	    if (pTab)
+		rc = MyGetIpAddrTable(pTab, &tabSize, FALSE);
+	}
+
+	if (rc != NO_ERROR) {
+	    if (pTab != (MIB_IPADDRTABLE*)ipTabBuff)
+		free(pTab);
+	    return PJ_RETURN_OS_ERROR(rc);
+	}
+    }
 
     /* Reset result */
     pj_bzero(ifs, sizeof(ifs[0]) * (*p_cnt));
@@ -223,37 +259,103 @@ static pj_status_t enum_ipv4_interface(unsigned *p_cnt,
 	(*p_cnt)++;
     }
 
+    if (pTab != (MIB_IPADDRTABLE*)ipTabBuff)
+	free(pTab);
+
     return (*p_cnt) ? PJ_SUCCESS : PJ_ENOTFOUND;
 }
-
 
 /* Enumerate local IP interface using GetAdapterAddresses(),
  * which works for both IPv4 and IPv6.
  */
-#if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6!=0
 static pj_status_t enum_ipv4_ipv6_interface(int af,
 					    unsigned *p_cnt,
 					    pj_sockaddr ifs[])
 {
-    pj_uint8_t buffer[1024];
+    pj_uint8_t buffer[600];
     IP_ADAPTER_ADDRESSES *adapter = (IP_ADAPTER_ADDRESSES*)buffer;
     ULONG size = sizeof(buffer);
+    ULONG flags;
     unsigned i;
     DWORD rc;
 
-    rc = MyGetAdapterAddresses(af, 0, NULL, adapter, &size);
-    if (rc != ERROR_SUCCESS)
-	return PJ_RETURN_OS_ERROR(rc);
+    flags = GAA_FLAG_SKIP_FRIENDLY_NAME |
+	    GAA_FLAG_SKIP_DNS_SERVER |
+	    GAA_FLAG_SKIP_MULTICAST;
 
-    for (i=0; i<*p_cnt && adapter; ++i, adapter = adapter->Next) {
-	SOCKET_ADDRESS *pAddr = &adapter->FirstUnicastAddress->Address;
-	ifs[i].addr.sa_family = pAddr->lpSockaddr->sa_family;
-	pj_memcpy(&ifs[i], pAddr->lpSockaddr, pAddr->iSockaddrLength);
+    rc = MyGetAdapterAddresses(af, flags, NULL, adapter, &size);
+    if (rc != ERROR_SUCCESS) {
+	if (rc == ERROR_BUFFER_OVERFLOW) {
+	    /* Retry with larger memory size */
+	    adapter = (IP_ADAPTER_ADDRESSES*) malloc(size);
+	    if (adapter != NULL)
+		rc = MyGetAdapterAddresses(af, flags, NULL, adapter, &size);
+	} 
+
+	if (rc != ERROR_SUCCESS) {
+	    if (adapter != (IP_ADAPTER_ADDRESSES*)buffer)
+		free(adapter);
+	    return PJ_RETURN_OS_ERROR(rc);
+	}
     }
 
-    return PJ_SUCCESS;
-}
+    /* Reset result */
+    pj_bzero(ifs, sizeof(ifs[0]) * (*p_cnt));
+
+    /* Enumerate interface */
+    for (i=0; i<*p_cnt && adapter; adapter = adapter->Next) {
+	if (adapter->FirstUnicastAddress) {
+	    SOCKET_ADDRESS *pAddr = &adapter->FirstUnicastAddress->Address;
+
+	    /* Ignore address family which we didn't request, just in case */
+	    if (pAddr->lpSockaddr->sa_family != PJ_AF_INET &&
+		pAddr->lpSockaddr->sa_family != PJ_AF_INET6)
+	    {
+		continue;
+	    }
+
+	    /* Apply some filtering to known IPv4 unusable addresses */
+	    if (pAddr->lpSockaddr->sa_family == PJ_AF_INET) {
+		const pj_sockaddr_in *addr_in = 
+		    (const pj_sockaddr_in*)pAddr->lpSockaddr;
+
+		/* Ignore 0.0.0.0 address (interface is down?) */
+		if (addr_in->sin_addr.s_addr == 0)
+		    continue;
+
+		/* Ignore 0.0.0.0/8 address. This is a special address
+		 * which doesn't seem to have practical use.
+		 */
+		if ((pj_ntohl(addr_in->sin_addr.s_addr) >> 24) == 0)
+		    continue;
+	    }
+
+#if PJ_IP_HELPER_IGNORE_LOOPBACK_IF
+	    /* Ignore loopback interfaces */
+	    /* This should have been IF_TYPE_SOFTWARE_LOOPBACK according to
+	     * MSDN, and this macro should have been declared in Ipifcons.h, 
+	     * but some SDK versions don't have it.
+	     */
+	    if (adapter->IfType == MIB_IF_TYPE_LOOPBACK)
+		continue;
 #endif
+
+	    /* Ignore down interface */
+	    if (adapter->OperStatus != IfOperStatusUp)
+		continue;
+
+	    ifs[i].addr.sa_family = pAddr->lpSockaddr->sa_family;
+	    pj_memcpy(&ifs[i], pAddr->lpSockaddr, pAddr->iSockaddrLength);
+	    ++i;
+	}
+    }
+
+    if (adapter != (IP_ADAPTER_ADDRESSES*)buffer)
+	free(adapter);
+
+    *p_cnt = i;
+    return (*p_cnt) ? PJ_SUCCESS : PJ_ENOTFOUND;
+}
 
 
 /*
@@ -269,20 +371,10 @@ PJ_DEF(pj_status_t) pj_enum_ip_interface(int af,
     PJ_ASSERT_RETURN(af==PJ_AF_UNSPEC || af==PJ_AF_INET || af==PJ_AF_INET6,
 		     PJ_EAFNOTSUP);
 
-#if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6!=0
     status = enum_ipv4_ipv6_interface(af, p_cnt, ifs);
     if (status != PJ_SUCCESS && (af==PJ_AF_INET || af==PJ_AF_UNSPEC))
 	status = enum_ipv4_interface(p_cnt, ifs);
     return status;
-#else
-    if (af==PJ_AF_INET6)
-	return PJ_EIPV6NOTSUP;
-    else if (af != PJ_AF_INET && af != PJ_AF_UNSPEC)
-	return PJ_EAFNOTSUP;
-
-    status = enum_ipv4_interface(p_cnt, ifs);
-    return status;
-#endif
 }
 
 /*

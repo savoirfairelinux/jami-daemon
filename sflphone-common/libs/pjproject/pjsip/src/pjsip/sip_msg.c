@@ -1,4 +1,4 @@
-/* $Id: sip_msg.c 2724 2009-05-29 13:04:03Z bennylp $ */
+/* $Id: sip_msg.c 2968 2009-10-26 11:21:37Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -21,6 +21,7 @@
 #include <pjsip/sip_parser.h>
 #include <pjsip/print_util.h>
 #include <pjsip/sip_errno.h>
+#include <pj/ctype.h>
 #include <pj/string.h>
 #include <pj/pool.h>
 #include <pj/assert.h>
@@ -595,6 +596,20 @@ PJ_DEF(const pj_str_t*) pjsip_get_status_text(int code)
     return (code>=100 && 
 	    code<(int)(sizeof(status_phrase)/sizeof(status_phrase[0]))) ? 
 	&status_phrase[code] : &status_phrase[0];
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * Media type
+ */
+PJ_DEF(void) pjsip_media_type_cp( pj_pool_t *pool,
+				  pjsip_media_type *dst,
+				  const pjsip_media_type *src)
+{
+    PJ_ASSERT_ON_FAIL(pool && dst && src, return);
+    pj_strdup(pool, &dst->type,    &src->type);
+    pj_strdup(pool, &dst->subtype, &src->subtype);
+    pj_strdup(pool, &dst->param,   &src->param);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1718,6 +1733,7 @@ PJ_DEF(pjsip_retry_after_hdr*) pjsip_retry_after_hdr_init( pj_pool_t *pool,
 
     init_hdr(hdr, PJSIP_H_RETRY_AFTER, &retry_after_hdr_vptr);
     hdr->ivalue = value;
+    hdr->comment.slen = 0;
     pj_list_init(&hdr->param);
     return hdr;
 }
@@ -1903,7 +1919,14 @@ static int pjsip_via_hdr_print( pjsip_via_hdr *hdr,
     /* SIP/2.0/transport host:port */
     pj_memcpy(buf, sip_ver.ptr, sip_ver.slen);
     buf += sip_ver.slen;
-    pj_memcpy(buf, hdr->transport.ptr, hdr->transport.slen);
+    //pj_memcpy(buf, hdr->transport.ptr, hdr->transport.slen);
+    /* Convert transport type to UPPERCASE (some endpoints want that) */
+    {
+	int i;
+	for (i=0; i<hdr->transport.slen; ++i) {
+	    buf[i] = (char)pj_toupper(hdr->transport.ptr[i]);
+	}
+    }
     buf += hdr->transport.slen;
     *buf++ = ' ';
 

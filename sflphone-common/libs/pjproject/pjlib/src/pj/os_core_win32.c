@@ -1,4 +1,4 @@
-/* $Id: os_core_win32.c 2853 2009-08-05 10:58:02Z bennylp $ */
+/* $Id: os_core_win32.c 3023 2009-11-23 15:04:18Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -1037,6 +1037,7 @@ PJ_DEF(pj_bool_t) pj_mutex_is_locked(pj_mutex_t *mutex)
 #if PJ_DEBUG
     return mutex->owner == pj_thread_this();
 #else
+    PJ_UNUSED_ARG(mutex);
     pj_assert(!"PJ_DEBUG is not set!");
     return 1;
 #endif

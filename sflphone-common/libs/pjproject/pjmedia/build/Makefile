@@ -11,14 +11,14 @@ include $(PJDIR)/build/common.mak
 
 RULES_MAK := $(PJDIR)/build/rules.mak
 
-PJLIB_LIB:=$(PJDIR)/pjlib/lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
-PJLIB_UTIL_LIB:=$(PJDIR)/pjlib-util/lib/libpjlib-util-sfl-$(TARGET_NAME)$(LIBEXT)
-PJNATH_LIB:=$(PJDIR)/pjnath/lib/libpjnath-sfl-$(TARGET_NAME)$(LIBEXT)
+PJLIB_LIB:=$(PJDIR)/pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
+PJLIB_UTIL_LIB:=$(PJDIR)/pjlib-util/lib/libpjlib-util-$(TARGET_NAME)$(LIBEXT)
+PJNATH_LIB:=$(PJDIR)/pjnath/lib/libpjnath-$(TARGET_NAME)$(LIBEXT)
 
-export PJMEDIA_LIB:=../lib/libpjmedia-sfl-$(TARGET_NAME)$(LIBEXT)
-export PJMEDIA_CODEC_LIB:=../lib/libpjmedia-codec-sfl-$(TARGET_NAME)$(LIBEXT)
-export PJSDP_LIB:=../lib/libpjsdp-sfl-$(TARGET_NAME)$(LIBEXT)
-export PJMEDIA_AUDIODEV_LIB:=../lib/libpjmedia-audiodev-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJMEDIA_LIB:=../lib/libpjmedia-$(TARGET_NAME)$(LIBEXT)
+export PJMEDIA_CODEC_LIB:=../lib/libpjmedia-codec-$(TARGET_NAME)$(LIBEXT)
+export PJSDP_LIB:=../lib/libpjsdp-$(TARGET_NAME)$(LIBEXT)
+export PJMEDIA_AUDIODEV_LIB:=../lib/libpjmedia-audiodev-$(TARGET_NAME)$(LIBEXT)
 
 
 ###############################################################################
@@ -30,7 +30,7 @@ export _CFLAGS 	:= $(CC_CFLAGS) $(OS_CFLAGS) $(HOST_CFLAGS) $(M_CFLAGS) \
 		   $(CC_INC)../../pjlib-util/include \
 		   $(CC_INC)../../pjnath/include \
 		   $(CC_INC)../.. \
-		   $(SRTP_INC) -O2
+		   $(SRTP_INC) 
 export _CXXFLAGS:= $(_CFLAGS) $(CC_CXXFLAGS) $(OS_CXXFLAGS) $(M_CXXFLAGS) \
 		   $(HOST_CXXFLAGS) $(CXXFLAGS)
 export _LDFLAGS := $(subst /,$(HOST_PSEP),$(PJMEDIA_LIB)) \
@@ -49,7 +49,7 @@ export _LDFLAGS := $(subst /,$(HOST_PSEP),$(PJMEDIA_LIB)) \
 #
 export PJMEDIA_SRCDIR = ../src/pjmedia
 export PJMEDIA_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
-			alaw_ulaw.o alaw_ulaw_table.o clock_thread.o codec.o \
+			alaw_ulaw.o alaw_ulaw_table.o bidirectional.o clock_thread.o codec.o \
 			conference.o conf_switch.o delaybuf.o echo_common.o \
 			echo_port.o echo_suppress.o endpoint.o errno.o \
 			g711.o jbuf.o master_port.o mem_capture.o mem_player.o \
@@ -177,14 +177,14 @@ realclean:
 	$(subst @@,$(subst /,$(HOST_PSEP),.pjsdp-$(TARGET_NAME).depend),$(HOST_RMR))
 	
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA app=pjmedia $@
-	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA app=pjmedia-audiodev $@
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_AUDIODEV app=pjmedia-audiodev $@
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_CODEC app=pjmedia-codec $@
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_TEST app=pjmedia-test $@
 	$(MAKE) -f $(RULES_MAK) APP=PJSDP app=pjsdp $@
 
 depend:
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA app=pjmedia $@
-	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA app=pjmedia-audiodev $@
+	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_AUDIODEV app=pjmedia-audiodev $@
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_CODEC app=pjmedia-codec $@
 	$(MAKE) -f $(RULES_MAK) APP=PJMEDIA_TEST app=pjmedia-test $@
 	$(MAKE) -f $(RULES_MAK) APP=PJSDP app=pjsdp $@

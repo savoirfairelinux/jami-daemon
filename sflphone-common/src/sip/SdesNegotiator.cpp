@@ -68,9 +68,20 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
         keyParamsPattern = new Pattern (
             "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
             "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
+            "(?:2\\^(?P<lifetime>[0-9]+)\\|" \
+            "(?P<mkiValue>[0-9]+)\\:" \
+            "(?P<mkiLength>[0-9]{1,3})\\;?)?","g");
+
+	// "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|(?:2\\^(?P<lifetime>[0-9]+)\\|(?P<mkiValue>[0-9]+)\\:(?P<mkiLength>[0-9]{1,3})\\;?)?"
+
+	/*
+	keyParamsPattern = new Pattern (
+            "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+            "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
             "2\\^(?P<lifetime>[0-9]+)\\|" \
             "(?P<mkiValue>[0-9]+)\\:" \
             "(?P<mkiLength>[0-9]{1,3})\\;?", "g");
+	*/
 
         sessionParamPattern = new Pattern (
             "(?P<sessionParam>(kdr\\=[0-9]{1,2}|" \
@@ -120,7 +131,9 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 	std::string tag; 
 	if (tagPattern->matches()) {
 	try {
+	    // std::cout << "Parsing the tag field";
 	    tag = tagPattern->group ("tag");
+	    // std::cout << ": " << tag << std::endl;
 	} catch (match_error& exception) {
 	    throw parse_error ("Error while parsing the tag field");
 	}
@@ -136,7 +149,9 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 		
 	if (cryptoSuitePattern->matches()) {
 	    try {
+	        // std::cout << "Parsing the crypto suite field";
 	        cryptoSuite  = cryptoSuitePattern->group ("cryptoSuite");
+		// std::cout << ": " << cryptoSuite << std::endl;
 	    } catch (match_error& exception) {
 	        throw parse_error ("Error while parsing the crypto-suite field");
 	    }
@@ -155,11 +170,17 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 	
         try {
             while (keyParamsPattern->matches()) {
+	        // std::cout << "Parsing the key parameters: " << std::endl;  
                 srtpKeyMethod = keyParamsPattern->group ("srtpKeyMethod");
+		// std::cout << " method: "<< srtpKeyMethod << std::endl;  
                 srtpKeyInfo = keyParamsPattern->group ("srtpKeyInfo");
+		// std::cout << " info: "<< srtpKeyInfo << std::endl;  
                 lifetime = keyParamsPattern->group ("lifetime");
+		// std::cout << " lifetime: "<< lifetime << std::endl;  
                 mkiValue = keyParamsPattern->group ("mkiValue");
+		// std::cout << " mkiValue: "<< mkiValue << std::endl;
                 mkiLength = keyParamsPattern->group ("mkiLength");
+		// std::cout << " mkiLength: "<< mkiLength << std::endl;
             }
         } catch (match_error& exception) {
             throw parse_error ("Error while parsing the key-params field");
@@ -184,7 +205,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
         } */
 		
 	// Add the new CryptoAttribute to the vector
-	std::cout << (*iter) << std::endl;
+	
 	CryptoAttribute * cryptoAttribute = new CryptoAttribute(tag, cryptoSuite, srtpKeyMethod, srtpKeyInfo, lifetime, mkiValue, mkiLength);
 	cryptoAttributeVector.push_back(cryptoAttribute);
     }
@@ -194,6 +215,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 
 bool SdesNegotiator::negotiate (void)
 {
+
     std::vector<CryptoAttribute *> cryptoAttributeVector = parse();
     std::vector<CryptoAttribute *>::iterator iter_offer = cryptoAttributeVector.begin();
 

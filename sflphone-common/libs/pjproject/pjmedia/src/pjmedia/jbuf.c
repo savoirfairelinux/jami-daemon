@@ -1,4 +1,4 @@
-/* $Id: jbuf.c 2844 2009-07-29 12:14:21Z bennylp $ */
+/* $Id: jbuf.c 3015 2009-11-11 04:26:00Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -735,7 +735,7 @@ PJ_DEF(void) pjmedia_jbuf_get_frame2(pjmedia_jbuf *jb,
 
     } else {
 
-	pjmedia_jb_frame_type ftype;
+	pjmedia_jb_frame_type ftype = PJMEDIA_JB_MISSING_FRAME;
 	pj_bool_t res;
 
 	/* Retrieve a frame from frame list */

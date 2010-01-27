@@ -1,4 +1,4 @@
-/* $Id: sock.c 2863 2009-08-12 10:56:06Z bennylp $ */
+/* $Id: sock.c 3044 2010-01-04 16:54:50Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -71,6 +71,18 @@
 
 static char bigdata[BIG_DATA_LEN];
 static char bigbuffer[BIG_DATA_LEN];
+
+/* Macro for checking the value of "sin_len" member of sockaddr
+ * (it must always be zero).
+ */
+#if defined(PJ_SOCKADDR_HAS_LEN) && PJ_SOCKADDR_HAS_LEN!=0
+#   define CHECK_SA_ZERO_LEN(addr, ret) \
+	if (((pj_addr_hdr*)(addr))->sa_zero_len != 0) \
+	    return ret
+#else
+#   define CHECK_SA_ZERO_LEN(addr, ret)
+#endif
+
 
 static int format_test(void)
 {
@@ -167,6 +179,28 @@ static int format_test(void)
 
     /* pj_gethostaddr() */
 
+    /* Various constants */
+#if !defined(PJ_SYMBIAN) || PJ_SYMBIAN==0
+    if (PJ_AF_INET==0xFFFF) return -5500;
+    if (PJ_AF_INET6==0xFFFF) return -5501;
+    
+    /* 0xFFFF could be a valid SOL_SOCKET (e.g: on some Win or Mac) */
+    //if (PJ_SOL_SOCKET==0xFFFF) return -5503;
+    
+    if (PJ_SOL_IP==0xFFFF) return -5502;
+    if (PJ_SOL_TCP==0xFFFF) return -5510;
+    if (PJ_SOL_UDP==0xFFFF) return -5520;
+    if (PJ_SOL_IPV6==0xFFFF) return -5530;
+
+    if (PJ_SO_TYPE==0xFFFF) return -5540;
+    if (PJ_SO_RCVBUF==0xFFFF) return -5550;
+    if (PJ_SO_SNDBUF==0xFFFF) return -5560;
+    if (PJ_TCP_NODELAY==0xFFFF) return -5570;
+    if (PJ_SO_REUSEADDR==0xFFFF) return -5580;
+
+    if (PJ_MSG_OOB==0xFFFF) return -5590;
+    if (PJ_MSG_PEEK==0xFFFF) return -5600;
+#endif
 
     return 0;
 }
@@ -262,6 +296,9 @@ static int parse_test(void)
 	    return -10;
 	}
 
+	/* Check "sin_len" member of parse result */
+	CHECK_SA_ZERO_LEN(&addr, -20);
+
 	/* Build the correct result */
 	status = pj_sockaddr_init(valid_tests[i].result_af,
 				  &result,
@@ -289,6 +326,9 @@ static int parse_test(void)
 		      valid_tests[i].input));
 	    return -50;
 	}
+
+	/* Check "sin_len" member of parse result */
+	CHECK_SA_ZERO_LEN(&addr, -55);
 
 	/* Compare the result again */
 	if (pj_sockaddr_cmp(&addr, &result) != 0) {
@@ -325,6 +365,68 @@ static int parse_test(void)
 	    return -100;
 	}
     }
+
+    return 0;
+}
+
+static int purity_test(void)
+{
+    PJ_LOG(3,("test", "...purity_test()"));
+
+#if defined(PJ_SOCKADDR_HAS_LEN) && PJ_SOCKADDR_HAS_LEN!=0
+    /* Check on "sin_len" member of sockaddr */
+    {
+	const pj_str_t str_ip = {"1.1.1.1", 7};
+	pj_sockaddr addr[16];
+	pj_addrinfo ai[16];
+	unsigned cnt;
+	pj_status_t rc;
+
+	/* pj_enum_ip_interface() */
+	cnt = PJ_ARRAY_SIZE(addr);
+	rc = pj_enum_ip_interface(pj_AF_UNSPEC(), &cnt, addr);
+	if (rc == PJ_SUCCESS) {
+	    while (cnt--)
+		CHECK_SA_ZERO_LEN(&addr[cnt], -10);
+	}
+
+	/* pj_gethostip() on IPv4 */
+	rc = pj_gethostip(pj_AF_INET(), &addr[0]);
+	if (rc == PJ_SUCCESS)
+	    CHECK_SA_ZERO_LEN(&addr[0], -20);
+
+	/* pj_gethostip() on IPv6 */
+	rc = pj_gethostip(pj_AF_INET6(), &addr[0]);
+	if (rc == PJ_SUCCESS)
+	    CHECK_SA_ZERO_LEN(&addr[0], -30);
+
+	/* pj_getdefaultipinterface() on IPv4 */
+	rc = pj_getdefaultipinterface(pj_AF_INET(), &addr[0]);
+	if (rc == PJ_SUCCESS)
+	    CHECK_SA_ZERO_LEN(&addr[0], -40);
+
+	/* pj_getdefaultipinterface() on IPv6 */
+	rc = pj_getdefaultipinterface(pj_AF_INET6(), &addr[0]);
+	if (rc == PJ_SUCCESS)
+	    CHECK_SA_ZERO_LEN(&addr[0], -50);
+
+	/* pj_getaddrinfo() on a host name */
+	cnt = PJ_ARRAY_SIZE(ai);
+	rc = pj_getaddrinfo(pj_AF_UNSPEC(), pj_gethostname(), &cnt, ai);
+	if (rc == PJ_SUCCESS) {
+	    while (cnt--)
+		CHECK_SA_ZERO_LEN(&ai[cnt].ai_addr, -60);
+	}
+
+	/* pj_getaddrinfo() on an IP address */
+	cnt = PJ_ARRAY_SIZE(ai);
+	rc = pj_getaddrinfo(pj_AF_UNSPEC(), &str_ip, &cnt, ai);
+	if (rc == PJ_SUCCESS) {
+	    pj_assert(cnt == 1);
+	    CHECK_SA_ZERO_LEN(&ai[0].ai_addr, -70);
+	}
+    }
+#endif
 
     return 0;
 }
@@ -735,6 +837,10 @@ int sock_test()
 	return rc;
 
     rc = parse_test();
+    if (rc != 0)
+	return rc;
+
+    rc = purity_test();
     if (rc != 0)
 	return rc;
 

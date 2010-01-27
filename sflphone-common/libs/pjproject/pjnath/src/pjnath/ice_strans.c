@@ -1,4 +1,4 @@
-/* $Id: ice_strans.c 2724 2009-05-29 13:04:03Z bennylp $ */
+/* $Id: ice_strans.c 3028 2009-12-08 13:11:25Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -173,6 +173,7 @@ struct pj_ice_strans
     pj_ice_strans_cb	     cb;	/**< Application callback.	*/
     pj_lock_t		    *init_lock; /**< Initialization mutex.	*/
 
+    pj_ice_strans_state	     state;	/**< Session state.		*/
     pj_ice_sess		    *ice;	/**< ICE session.		*/
     pj_time_val		     start_time;/**< Time when ICE was started	*/
 
@@ -210,6 +211,7 @@ PJ_DEF(void) pj_ice_strans_cfg_default(pj_ice_strans_cfg *cfg)
     pj_stun_config_init(&cfg->stun_cfg, NULL, 0, NULL, NULL);
     pj_stun_sock_cfg_default(&cfg->stun.cfg);
     pj_turn_alloc_param_default(&cfg->turn.alloc_param);
+    pj_turn_sock_cfg_default(&cfg->turn.cfg);
 
     pj_ice_sess_options_default(&cfg->opt);
 
@@ -272,6 +274,17 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
 	stun_sock_cb.on_status = &stun_on_status;
 	stun_sock_cb.on_data_sent = &stun_on_data_sent;
 	
+	/* Override component specific QoS settings, if any */
+	if (ice_st->cfg.comp[comp_id-1].qos_type) {
+	    ice_st->cfg.stun.cfg.qos_type = 
+		ice_st->cfg.comp[comp_id-1].qos_type;
+	}
+	if (ice_st->cfg.comp[comp_id-1].qos_params.flags) {
+	    pj_memcpy(&ice_st->cfg.stun.cfg.qos_params,
+		      &ice_st->cfg.comp[comp_id-1].qos_params,
+		      sizeof(ice_st->cfg.stun.cfg.qos_params));
+	}
+
 	/* Create the STUN transport */
 	status = pj_stun_sock_create(&ice_st->cfg.stun_cfg, NULL,
 				     ice_st->cfg.af, &stun_sock_cb,
@@ -390,10 +403,22 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
 	turn_sock_cb.on_rx_data = &turn_on_rx_data;
 	turn_sock_cb.on_state = &turn_on_state;
 
+	/* Override with component specific QoS settings, if any */
+	if (ice_st->cfg.comp[comp_id-1].qos_type) {
+	    ice_st->cfg.turn.cfg.qos_type = 
+		ice_st->cfg.comp[comp_id-1].qos_type;
+	}
+	if (ice_st->cfg.comp[comp_id-1].qos_params.flags) {
+	    pj_memcpy(&ice_st->cfg.turn.cfg.qos_params,
+		      &ice_st->cfg.comp[comp_id-1].qos_params,
+		      sizeof(ice_st->cfg.turn.cfg.qos_params));
+	}
+
+	/* Create the TURN transport */
 	status = pj_turn_sock_create(&ice_st->cfg.stun_cfg, ice_st->cfg.af,
 				     ice_st->cfg.turn.conn_type,
-				     &turn_sock_cb, 0, comp, 
-				     &comp->turn_sock);
+				     &turn_sock_cb, &ice_st->cfg.turn.cfg, 
+				     comp, &comp->turn_sock);
 	if (status != PJ_SUCCESS) {
 	    return status;
 	}
@@ -452,7 +477,8 @@ PJ_DEF(pj_status_t) pj_ice_strans_create( const char *name,
     if (status != PJ_SUCCESS)
 	return status;
 
-    PJ_ASSERT_RETURN(comp_cnt && cb && p_ice_st, PJ_EINVAL);
+    PJ_ASSERT_RETURN(comp_cnt && cb && p_ice_st &&
+		     comp_cnt <= PJ_ICE_MAX_COMP , PJ_EINVAL);
 
     if (name == NULL)
 	name = "ice%p";
@@ -487,6 +513,9 @@ PJ_DEF(pj_status_t) pj_ice_strans_create( const char *name,
     ice_st->comp_cnt = comp_cnt;
     ice_st->comp = (pj_ice_strans_comp**) 
 		   pj_pool_calloc(pool, comp_cnt, sizeof(pj_ice_strans_comp*));
+
+    /* Move state to candidate gathering */
+    ice_st->state = PJ_ICE_STRANS_STATE_INIT;
 
     /* Acquire initialization mutex to prevent callback to be 
      * called before we finish initialization.
@@ -561,6 +590,29 @@ static void destroy_ice_st(pj_ice_strans *ice_st)
     pj_pool_release(ice_st->pool);
 }
 
+/* Get ICE session state. */
+PJ_DEF(pj_ice_strans_state) pj_ice_strans_get_state(pj_ice_strans *ice_st)
+{
+    return ice_st->state;
+}
+
+/* State string */
+PJ_DEF(const char*) pj_ice_strans_state_name(pj_ice_strans_state state)
+{
+    const char *names[] = {
+	"Null",
+	"Candidate Gathering",
+	"Candidate Gathering Complete",
+	"Session Initialized",
+	"Negotiation In Progress",
+	"Negotiation Success",
+	"Negotiation Failed"
+    };
+
+    PJ_ASSERT_RETURN(state <= PJ_ICE_STRANS_STATE_FAILED, "???");
+    return names[state];
+}
+
 /* Notification about failure */
 static void sess_fail(pj_ice_strans *ice_st, pj_ice_strans_op op,
 		      const char *title, pj_status_t status)
@@ -603,6 +655,7 @@ static void sess_init_update(pj_ice_strans *ice_st)
 
     /* All candidates have been gathered */
     ice_st->cb_called = PJ_TRUE;
+    ice_st->state = PJ_ICE_STRANS_STATE_READY;
     if (ice_st->cb.on_ice_complete)
 	(*ice_st->cb.on_ice_complete)(ice_st, PJ_ICE_STRANS_OP_INIT, 
 				      PJ_SUCCESS);
@@ -782,6 +835,9 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
 	}
     }
 
+    /* ICE session is ready for negotiation */
+    ice_st->state = PJ_ICE_STRANS_STATE_SESS_READY;
+
     return PJ_SUCCESS;
 
 on_error:
@@ -853,6 +909,27 @@ PJ_DEF(pj_status_t) pj_ice_strans_get_ufrag_pwd( pj_ice_strans *ice_st,
     }
 
     return PJ_SUCCESS;
+}
+
+/*
+ * Get number of candidates
+ */
+PJ_DEF(unsigned) pj_ice_strans_get_cands_count(pj_ice_strans *ice_st,
+					       unsigned comp_id)
+{
+    unsigned i, cnt;
+
+    PJ_ASSERT_RETURN(ice_st && ice_st->ice && comp_id && 
+		     comp_id <= ice_st->comp_cnt, 0);
+
+    cnt = 0;
+    for (i=0; i<ice_st->ice->lcand_cnt; ++i) {
+	if (ice_st->ice->lcand[i].comp_id != comp_id)
+	    continue;
+	++cnt;
+    }
+
+    return cnt;
 }
 
 /*
@@ -982,6 +1059,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_start_ice( pj_ice_strans *ice_st,
 	return status;
     }
 
+    ice_st->state = PJ_ICE_STRANS_STATE_NEGO;
     return status;
 }
 
@@ -1011,6 +1089,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_stop_ice(pj_ice_strans *ice_st)
 	ice_st->ice = NULL;
     }
 
+    ice_st->state = PJ_ICE_STRANS_STATE_INIT;
     return PJ_SUCCESS;
 }
 
@@ -1168,6 +1247,9 @@ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status)
 		}
 	    }
 	}
+
+	ice_st->state = (status==PJ_SUCCESS) ? PJ_ICE_STRANS_STATE_RUNNING :
+					       PJ_ICE_STRANS_STATE_FAILED;
 
 	(*ice_st->cb.on_ice_complete)(ice_st, PJ_ICE_STRANS_OP_NEGOTIATION, 
 				      status);

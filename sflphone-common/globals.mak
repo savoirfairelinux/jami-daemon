@@ -14,15 +14,15 @@ PJSIP_LIBS= \
 			-L$(src)/libs/pjproject/pjlib/lib/ \
 			-L$(src)/libs/pjproject/pjlib-util/lib/ \
 			-L$(src)/libs/pjproject/pjmedia/lib/ \
-			-lpjnath-sfl-$(target) \
-			-lpjsua-sfl-$(target) \
-			-lpjsip-sfl-$(target) \
-			-lpjmedia-sfl-$(target) \
-			-lpjsip-simple-sfl-$(target) \
-			-lpjsip-ua-sfl-$(target) \
-			-lpjmedia-codec-sfl-$(target) \
-			-lpjlib-util-sfl-$(target) \
-			-lpj-sfl-$(target) 
+			-lpjnath-$(target) \
+			-lpjsua-$(target) \
+			-lpjsip-$(target) \
+			-lpjmedia-$(target) \
+			-lpjsip-simple-$(target) \
+			-lpjsip-ua-$(target) \
+			-lpjmedia-codec-$(target) \
+			-lpjlib-util-$(target) \
+			-lpj-$(target) 
 
 SIP_CFLAGS=-I$(src)/libs/pjproject/pjsip/include \
 		   -I$(src)/libs/pjproject/pjlib/include \

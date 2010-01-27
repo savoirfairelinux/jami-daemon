@@ -1,4 +1,4 @@
-/* $Id: rtp.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: rtp.c 2904 2009-08-20 13:06:17Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -170,7 +170,7 @@ PJ_DEF(pj_status_t) pjmedia_rtp_decode_rtp( pjmedia_rtp_session *ses,
     if ((*hdr)->x) {
 	pjmedia_rtp_ext_hdr *ext = (pjmedia_rtp_ext_hdr*) 
 				    (((pj_uint8_t*)pkt) + offset);
-	offset += (pj_ntohs(ext->length) * sizeof(pj_uint32_t));
+	offset += ((pj_ntohs(ext->length)+1) * sizeof(pj_uint32_t));
     }
 
     /* Check that offset is less than packet size */
