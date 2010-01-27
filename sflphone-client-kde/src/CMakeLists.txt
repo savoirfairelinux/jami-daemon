@@ -16,10 +16,11 @@ ENDIF(${CMAKE_BUILD_TYPE} MATCHES Release)
 
 SET ( KDE4_KABC_LIBS  -lkabc )
 
-SET(	   sflphone_client_kde_SRCS
+SET(	sflphone_client_kde_SRCS
 	SFLPhoneView.cpp
 	SFLPhone.cpp
         SFLPhoneapplication.cpp
+	SFLPhoneTray.cpp
 	main.cpp
 	sflphone_const.h
 	Account.cpp

@@ -39,6 +39,7 @@
 #include "AccountWizard.h"
 #include "Contact.h"
 #include "SFLPhoneView.h"
+#include "SFLPhoneTray.h"
 
 class SFLPhoneView;
 
@@ -93,7 +94,7 @@ private:
 	SFLPhoneView * view;
 	QMenu *trayIconMenu;
 	bool iconChanged;
-	KSystemTrayIcon *trayIcon;
+    SFLPhoneTray *trayIcon;
     KNotification *notification;
 	QLabel * statusBarWidget;
 	
@@ -111,15 +112,14 @@ public:
         bool initialize();
 	void setupActions();
 	void sendNotif(QString caller);
-	void putForeground();
 	void trayIconSignal();
 	SFLPhoneView * getView();
 	QList<QAction *> getCallActions();
 	
 	
 private slots:
-	void on_trayIcon_activated(KSystemTrayIcon::ActivationReason reason);
-	void on_trayIcon_messageClicked();
+    /*void on_trayIcon_activated(KSystemTrayIcon::ActivationReason reason);
+    void on_trayIcon_messageClicked();*/
 	void on_view_statusMessageChangeAsked(const QString & message);
 	void on_view_windowTitleChangeAsked(const QString & message);
 	void on_view_enabledActionsChangeAsked(const bool * enabledActions);

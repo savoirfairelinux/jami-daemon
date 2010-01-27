@@ -118,9 +118,40 @@ sflphone-client-gnome/stamp-h1
 /sflphone-client-gnome/tests/check_global
 /sflphone-client-gnome/src/dbus/marshaller.c
 /sflphone-client-gnome/src/dbus/marshaller.h
+/sflphone-client-gnome/ltmain.sh
 
 # Ignore sflphone_kde stuff
 /sflphone-client-kde/build
+/sflphone-client-kde/*.moc
+/sflphone-client-kde/src/moc_*.cpp
+/sflphone-client-kde/src/ui_*.h
+/sflphone-client-kde/po/
+/sflphone-client-kde/po/* 
+/sflphone-client-kde/doc/
+/sflphone-client-kde/man/
+/sflphone-client-kde/data/
+/sflphone-client-kde/CMakeCache.txt
+/sflphone-client-kde/CMakeLists.txt.user
+/sflphone-client-kde/CTestTestfile.cmake
+/sflphone-client-kde/*.cmake
+/sflphone-client-kde/Makefile
+/sflphone-client-kde/CMakeFiles/*
+/sflphone-client-kde/CMakeTmp/
+/sflphone-client-kde/qtcreator-build/
+/sflphone-client-kde/src/Makefile
+/sflphone-client-kde/src/CTestTestfile.cmake
+/sflphone-client-kde/src/CMakeFiles/
+/sflphone-client-kde/src/*.moc
+/sflphone-client-kde/src/callmanager_dbus_interface.*
+/sflphone-client-kde/src/configurationmanager_dbus_interface.*
+/sflphone-client-kde/src/instance_dbus_interface.*
+/sflphone-client-kde/src/sflphone-client-kde_automoc.cpp
+/sflphone-client-kde/src/sflphone-client-kde_automoc.cpp.files
+/sflphone-client-kde/src/cmake_install.cmake
+/sflphone-client-kde/src/kcfg_settings.cpp
+/sflphone-client-kde/src/kcfg_settings.h
+/sflphone-client-kde/src/qrc_resources.cxx
+
 
 # Ignore sub-modules stuff
 ## libiax2

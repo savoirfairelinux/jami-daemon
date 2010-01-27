@@ -72,12 +72,8 @@ bool SFLPhone::initialize()
   statusBarWidget = new QLabel();
   statusBar()->addWidget(statusBarWidget);
 
-  trayIconMenu = new QMenu(this);
-  trayIconMenu->addAction(action_quit);
 
-  trayIcon = new KSystemTrayIcon(this->windowIcon(), this);
-  trayIcon->setContextMenu(trayIconMenu);
-
+  trayIcon = new SFLPhoneTray(this->windowIcon(), this);
   trayIcon->show();
 
   iconChanged = false;
@@ -98,6 +94,7 @@ bool SFLPhone::initialize()
       (new AccountWizard())->show();
   }
 
+  initialized_ = true;
 
   return true;
 }
@@ -211,47 +208,26 @@ void SFLPhone::quitButton()
 	if(view->listWidget_callList->count() > 0 && instance.getRegistrationCount() <= 1)
 	{
 		qDebug() << "Attempting to quit when still having some calls open.";
-// 		view->getErrorWindow()->showMessage(i18n("You still have some calls open. Please close all calls before quitting."));
 	}
 	view->saveState();
 	instance.Unregister(getpid());
 	qApp->quit();
 }
 
-
-void SFLPhone::putForeground()
-{
-	activateWindow();
-	hide();
-	activateWindow();
-	show();
-	activateWindow();
-}
-
-void SFLPhone::trayIconSignal()
-{
-	if(! isActiveWindow())
-	{
-		trayIcon->setIcon(QIcon(ICON_TRAY_NOTIF));
-		iconChanged = true;
-	}
-}
-
 void SFLPhone::sendNotif(QString caller)
-{
+{/*
     notification = new KNotification ( QString("test_notification"), this );
     notification->setText("messageText")    ;
     notification->setPixmap( QPixmap( this->windowIcon().pixmap(32, 32) ));
     notification->setActions( QStringList( i18n( "Open chat" ) ) );
     notification->addContext(  QString::fromLatin1("call") , "caller" )  ;
-    connect(notification, SIGNAL(activated(unsigned int )), this , SLOT(sendNotif()) );
-    notification->sendEvent();
-}
-
-void SFLPhone::on_trayIcon_messageClicked()
-{
-	qDebug() << "on_trayIcon_messageClicked";
-	putForeground();
+    notification->sendEvent();*/
+   /* KNotification::event(QString("test_notification"),
+                         QString("Allo"),
+                         this->windowIcon().pixmap(32, 32),
+                         parentWidget(),
+                         KNotification::CloseOnTimeout,
+                         KGlobal::mainComponent());*/
 }
 
 void SFLPhone::changeEvent(QEvent * event)
@@ -261,31 +237,6 @@ void SFLPhone::changeEvent(QEvent * event)
 		iconChanged = false;
 	}
 }
-
-void SFLPhone::on_trayIcon_activated(KSystemTrayIcon::ActivationReason reason)
-{
-	qDebug() << "on_trayIcon_activated";
-	switch (reason) {
-		case KSystemTrayIcon::Trigger:
-		case KSystemTrayIcon::DoubleClick:
-			qDebug() << "Tray icon clicked.";
-			if(isActiveWindow())
-			{
-				qDebug() << "isactive -> hide()";
-				hide();
-			}
-			else
-			{
-				qDebug() << "isnotactive -> show()";
-				putForeground();
-			}
-			break;
-		default:
-			qDebug() << "Tray icon activated with unknown reason.";
-			break;
-	}
-}
-
 
 void SFLPhone::on_view_statusMessageChangeAsked(const QString & message)
 {
@@ -375,11 +326,11 @@ QList <QAction *> SFLPhone::getCallActions()
 void SFLPhone::on_view_incomingCall(const Call * call)
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	trayIconSignal();
-	if(configurationManager.popupMode())
+    //trayIconSignal();
+    /*if(configurationManager.popupMode())
 	{
 		putForeground();
-	}
+    }*/
 	if(configurationManager.getNotify())
 	{
 		sendNotif(call->getPeerName().isEmpty() ? call->getPeerPhoneNumber() : call->getPeerName());
