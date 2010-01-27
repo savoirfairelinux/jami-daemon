@@ -2185,7 +2185,7 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 
     if (account->isTlsEnabled()) {
 
-        // Nothing to do, TLS listener already created at pjsip's startup and TLS connection
+        // Nothing to do, TLS listener already created at pjsip's startup and TLS connection\
         // is automatically handled in pjsip when sending registration messages.
 	// status = createTlsTransport(id, );
         return true;
