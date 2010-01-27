@@ -5,6 +5,7 @@
 #include <KIconLoader>
 #include <KStandardDirs>
 #include <KNotification>
+#include <KSystemTrayIcon>
 #include <KMainWindow>
 #include "SFLPhone.h"
 
@@ -26,11 +27,6 @@ SFLPhoneApplication::SFLPhoneApplication()
   // Start remaining initialisation
   initializePaths();
   initializeMainWindow();
-
-  // test notif
-  KNotification *notification = new KNotification( "contact online" );
-  notification->setText( "text" );
-  notification->sendEvent();
 }
 
 
@@ -91,19 +87,6 @@ void SFLPhoneApplication::initializeMainWindow()
   // Initialize KApplication
   //setTopWidget( sflphoneWindow_ );
   sflphoneWindow_->show();
-
-  // We found session data for the Contact List, to restore it
-  /*if( kapp->isSessionRestored() && restoredWindow != -1 )
-  {
-    sflphoneWindow_->restore( restoredWindow, false );
-  }
-  else
-  {
-    if( ! args->isSet( "hidden" ) )
-    {
-      sflphoneWindow_->show();
-    }
-  }*/
 }
 
 
@@ -114,10 +97,11 @@ void SFLPhoneApplication::initializeMainWindow()
 void SFLPhoneApplication::initializePaths()
 {
   // Add compile time paths as fallback
-  KGlobal::dirs()       -> addPrefix( QString("/home/mlhamel/Documents/sflphone/sflphone-client-kde/data/") );
-  KIconLoader::global() -> addAppDir( QString("/home/mlhamel/Documents/sflphone/sflphone-client-kde/data/") );
+  KGlobal::dirs()       -> addPrefix( QString(DATA_INSTALL_DIR) );
+  KIconLoader::global() -> addAppDir( QString(DATA_INSTALL_DIR) + "/share" );
 
   qDebug() << "KGlobal::dirs" << QString(DATA_INSTALL_DIR);
+
   // Test whether the prefix is correct.
   if( KGlobal::dirs()->findResource( "appdata", "icons/hi128-apps-sflphone-client-kde.png" ).isNull() )
   {

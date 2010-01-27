@@ -46,7 +46,6 @@ int main(int argc, char **argv)
 		about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
 		KCmdLineArgs::init(argc, argv, &about);
 		KCmdLineOptions options;
-		//options.add("+[URL]", ki18n( "Document to open" ));
 		KCmdLineArgs::addCmdLineOptions(options);
 		
         //configuration dbus
@@ -56,10 +55,6 @@ int main(int argc, char **argv)
 		instance.Register(getpid(), APP_NAME);
 
         SFLPhoneApplication app;
-
-        KNotification *notification = new KNotification( "contact online" );
-        notification->setText( "text" );
-        notification->sendEvent();
 
         return app.exec();
 		
