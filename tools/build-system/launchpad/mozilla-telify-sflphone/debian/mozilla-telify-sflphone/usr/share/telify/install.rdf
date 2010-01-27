@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+	<Description about="urn:mozilla:install-manifest">
+		<em:id>{6c5f349a-ddda-49ad-bdf0-326d3fe1f938}</em:id>
+		<em:extension>true</em:extension>
+		<em:iconURL>chrome://telify/content/icon32.png</em:iconURL>
+		<em:version>0.4.7.3</em:version>
+		<em:creator>Michael Koch</em:creator>
+		<em:homepageURL>http://www.codepad.de/</em:homepageURL>
+		<em:optionsURL>chrome://telify/content/config.xul</em:optionsURL> 
+
+		<em:localized>
+			<Description>
+				<em:locale>de-DE</em:locale>
+				<em:name>Telify</em:name>
+				<em:description>Erzeugt klickbare Links aus Telefonnummern</em:description>
+			</Description>
+		</em:localized>
+
+		<em:localized>
+			<Description>
+				<em:locale>en-US</em:locale>
+				<em:name>Telify</em:name>
+				<em:description>Converts telephone numbers into clickable links</em:description>
+			</Description>
+		</em:localized>
+
+		<!-- Firefox -->
+		<em:targetApplication>
+			<Description>
+				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+				<em:minVersion>3.0</em:minVersion>
+				<em:maxVersion>3.6.*</em:maxVersion>
+			</Description>
+		</em:targetApplication>
+	</Description>
+</RDF>

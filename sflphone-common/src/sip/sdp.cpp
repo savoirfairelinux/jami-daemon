@@ -2,6 +2,7 @@
  *  Copyright (C) 2009 Savoir-Faire Linux inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +33,8 @@ static const pj_str_t STR_RTP_AVP = { (char*) "RTP/AVP", 7 };
 static const pj_str_t STR_SDP_NAME = { (char*) "sflphone", 8 };
 static const pj_str_t STR_SENDRECV = { (char*) "sendrecv", 8 };
 static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
+static const pj_str_t STR_CRYPTO = { (char*) "crypto", 6 };
+
 
 Sdp::Sdp (pj_pool_t *pool)
         : _local_media_cap()
@@ -91,7 +94,7 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
     for (i=0; i<count; i++) {
         codec = media->get_media_codec_list() [i];
         tmp = this->convert_int_to_string (codec->getPayload ());
-        _debug ("%s\n", tmp.c_str());
+        _debug ("%s", tmp.c_str());
         pj_strdup2 (_pool, &med->desc.fmt[i], tmp.c_str());
 
         // Add a rtpmap field for each codec
@@ -127,7 +130,7 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
             throw;
         }
     } else {
-        _debug ("No hash specified\n");
+        _debug ("No hash specified");
     }
 
     *p_med = med;
@@ -137,7 +140,7 @@ int Sdp::create_local_offer ()
 {
     pj_status_t status;
 
-    _debug ("Create local offer\n");
+    _debug ("Create local offer");
     // Build local media capabilities
     set_local_media_capabilities ();
 
@@ -156,6 +159,10 @@ int Sdp::create_local_offer ()
     //sdp_addAttributes( _pool );
     sdp_add_media_description();
 
+    if(!_srtp_crypto.empty()) {
+        sdp_add_sdes_attribute(_srtp_crypto);
+    }
+
     //toString ();
 
     // Validate the sdp session
@@ -172,12 +179,12 @@ int Sdp::create_initial_offer()
     pj_status_t status;
     pjmedia_sdp_neg_state state;
 
-    _debug ("Create initial offer\n");
+    _debug ("Create initial offer");
     // Build the SDP session descriptor
     status = create_local_offer();
 
     if (status != PJ_SUCCESS) {
-        _debug ("    Error: Failled to create initial offer\n");
+        _debug ("    Error: Failled to create initial offer");
         return status;
     }
 
@@ -185,7 +192,7 @@ int Sdp::create_initial_offer()
     status = pjmedia_sdp_neg_create_w_local_offer (_pool, get_local_sdp_session(), &_negociator);
 
     if (status != PJ_SUCCESS) {
-        _debug ("    Error: Failled to create an initial SDP negociator\n");
+        _debug ("    Error: Failled to create an initial SDP negociator");
         return status;
     }
 
@@ -193,7 +200,7 @@ int Sdp::create_initial_offer()
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
-    _debug ("    Initial offer created succesfully\n");
+    _debug ("    Initial offer created succesfully");
 
     return PJ_SUCCESS;
 }
@@ -204,8 +211,6 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
 
     pj_status_t status;
-
-    _debug ("Receiving initial offer\n");
 
     // Create the SDP negociator instance by calling
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
@@ -246,12 +251,12 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         }
 
         if (message->body == NULL) {
-            _debug ("Empty message body\n");
+            _debug ("Empty message body");
             return PJMEDIA_SDP_EINSDP;
         }
 
         if (pj_stricmp (&message->body->content_type.type, &str_application) || pj_stricmp (&message->body->content_type.subtype, &str_sdp)) {
-            _debug ("Incoming Message does not contain SDP\n");
+            _debug ("Incoming Message does not contain SDP");
             return PJMEDIA_SDP_EINSDP;
         }
 
@@ -263,17 +268,17 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         }
 
         if (status != PJ_SUCCESS) {
-            _debug ("SDP cannot be validated\n");
+            _debug ("SDP cannot be validated");
             return PJMEDIA_SDP_EINSDP;
         }
 
         // This is an answer
-        _debug ("Got SDP answer %s\n", pjsip_rx_data_get_info (rdata));
+        _debug ("Got SDP answer %s", pjsip_rx_data_get_info (rdata));
 
         status = pjmedia_sdp_neg_set_remote_answer (inv->pool, inv->neg, remote_sdp);
 
         if (status != PJ_SUCCESS) {
-            _debug ("An error occured while processing remote answer %s\n", pjsip_rx_data_get_info (rdata));
+            _debug ("An error occured while processing remote answer %s", pjsip_rx_data_get_info (rdata));
             return PJMEDIA_SDP_EINSDP;
         }
 
@@ -282,9 +287,9 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
 
         status = pjmedia_sdp_neg_negotiate (inv->pool, inv->neg, 0);
 
-        _debug ("Negotiation returned with status %d PJ_SUCCESS being %d\n", status, PJ_SUCCESS);
+        _debug ("Negotiation returned with status %d PJ_SUCCESS being %d", status, PJ_SUCCESS);
     } else {
-        _debug ("No need to check sdp answer since we are UAS\n");
+        _debug ("No need to check sdp answer since we are UAS");
         return PJ_SUCCESS;
     }
 
@@ -359,6 +364,50 @@ void Sdp::sdp_add_media_description()
         this->_local_offer->media[i] = med;
     }
 }
+
+// @TODO crypto should be a vector of string
+void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto)
+{
+
+    // temporary buffer used to store crypto attribute
+    char tempbuf[256];
+
+    std::vector<std::string>::iterator iter = crypto.begin();
+
+    while(iter != crypto.end()) {
+
+        // the attribute to add to sdp
+        pjmedia_sdp_attr *attribute = (pjmedia_sdp_attr*) pj_pool_zalloc(_pool, sizeof(pjmedia_sdp_attr));
+
+	attribute->name = pj_strdup3(_pool, "crypto");
+
+	// _debug("crypto from sdp: %s", crypto.c_str());
+
+    
+	int len = pj_ansi_snprintf(tempbuf, sizeof(tempbuf),
+				   "%.*s",(int)(*iter).size(), (*iter).c_str());
+ 
+	attribute->value.slen = len;
+	attribute->value.ptr = (char*) pj_pool_alloc (_pool, attribute->value.slen+1);
+	pj_memcpy (attribute->value.ptr, tempbuf, attribute->value.slen+1);
+
+	// get number of media for this SDP
+	int media_count = _local_offer->media_count;
+
+	// add crypto attribute to media
+	for(int i = 0; i < media_count; i++) {
+
+	    if(pjmedia_sdp_media_add_attr(_local_offer->media[i], attribute) != PJ_SUCCESS) {
+	      // if(pjmedia_sdp_attr_add(&(_local_offer->attr_count), _local_offer->attr, attribute) != PJ_SUCCESS){
+	        throw sdpException();
+	    }
+	}
+
+
+	iter++;
+    }
+}
+
 
 void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
 {
@@ -446,9 +495,9 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
 
             pjmedia_sdp_attr_to_rtpmap (_pool, attribute, &rtpmap);
 
-            // _debug("================== set_negociated_offer ===================== %i\n", pj_strtoul(&rtpmap->pt));
-            // _debug("================== set_negociated_offer ===================== %s\n", current->desc.fmt[j].ptr);
-            // _debug("================== set_negociated_offer ===================== %i\n", atoi(current->desc.fmt[j].ptr));
+            // _debug("================== set_negociated_offer ===================== %i", pj_strtoul(&rtpmap->pt));
+            // _debug("================== set_negociated_offer ===================== %s", current->desc.fmt[j].ptr);
+            // _debug("================== set_negociated_offer ===================== %i", atoi(current->desc.fmt[j].ptr));
             iter = codecs_list.find ( (AudioCodecType) pj_strtoul (&rtpmap->pt));
 
             if (iter==codecs_list.end())
@@ -469,7 +518,7 @@ AudioCodec* Sdp::get_session_media (void)
     AudioCodec *codec = NULL;
     std::vector<sdpMedia*> media_list;
 
-    _debug ("Executing sdp line %d - get_session_media ()\n", __LINE__);
+    _debug ("Executing sdp line %d - get_session_media ()", __LINE__);
 
     media_list = get_session_media_list ();
     nb_media = media_list.size();
@@ -521,8 +570,7 @@ void Sdp::toString (void)
 
     sdp << "\n";
 
-    _debug ("LOCAL SDP: \n%s\n", sdp.str().c_str());
-
+    _debug ("LOCAL SDP: \n%s", sdp.str().c_str());
 }
 
 void Sdp::set_local_media_capabilities ()
@@ -537,7 +585,7 @@ void Sdp::set_local_media_capabilities ()
     // Clean it first
     _local_media_cap.clear();
 
-    _debug ("Fetch local media capabilities. Local extern audio port: %i\n" , get_local_extern_audio_port());
+    _debug ("Fetch local media capabilities. Local extern audio port: %i" , get_local_extern_audio_port());
 
     /* Only one audio media used right now */
     audio = new sdpMedia (MIME_TYPE_AUDIO);
@@ -585,7 +633,7 @@ void Sdp::set_remote_ip_from_sdp (const pjmedia_sdp_session *r_sdp)
 {
 
     std::string remote_ip (r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
-    _debug ("            Remote IP from fetching SDP: %s\n", remote_ip.c_str());
+    _debug ("            Remote IP from fetching SDP: %s", remote_ip.c_str());
     this->set_remote_ip (remote_ip);
 }
 
@@ -595,27 +643,28 @@ void Sdp::set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media)
     int remote_port;
 
     remote_port = r_media->desc.port;
-    _debug ("            Remote Audio Port from fetching SDP: %d\n", remote_port);
+    _debug ("            Remote Audio Port from fetching SDP: %d", remote_port);
     this->set_remote_audio_port (remote_port);
 }
 
 void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *remote_sdp)
 {
 
-    _debug ("Fetching media from sdp\n");
+    _debug ("Fetching media from sdp");
 
     pjmedia_sdp_media *r_media;
 
     this->get_remote_sdp_media_from_offer (remote_sdp, &r_media);
 
     if (r_media==NULL) {
-        _debug ("SDP Failure: no remote sdp media found in the remote offer\n");
+        _debug ("SDP Failure: no remote sdp media found in the remote offer");
         return;
     }
 
     this->set_remote_audio_port_from_sdp (r_media);
 
     this->set_remote_ip_from_sdp (remote_sdp);
+
 }
 
 void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)
@@ -631,5 +680,57 @@ void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp
             return;
         }
     }
+}
+
+void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
+{
+
+    int i, j;
+    int attr_count, media_count;
+    pjmedia_sdp_attr *attribute;
+    pjmedia_sdp_media *media;
+
+    // get the number of media for this sdp session
+    media_count = remote_sdp->media_count;
+
+    // *r_crypto = pjmedia_sdp_media_find_attr(attribute, &STR_CRYPTO, NULL);
+
+    _debug("****************** Parse for Crypto ********************");
+
+    CryptoOffer remoteOffer;
+
+    // iterate over all media
+    for (i = 0; i < media_count; ++i) {
+
+      // _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
+      // _debug("%.*s", (int)remote_sdp->attr[i]->value.slen, remote_sdp->attr[i]->value.ptr);
+
+	// get media
+	media = remote_sdp->media[i];
+
+	// get number of attribute for this memdia
+	attr_count = media->attr_count;
+
+	// iterate over all attribute for this media
+        for(j = 0; j < attr_count; j++) {
+
+	    attribute = media->attr[j];
+
+	    // test if this attribute is a crypto
+	    if (pj_stricmp2 (&attribute->name, "crypto") == 0) {
+
+		_debug("****************** Found a Crypto ********************");
+		std::string attr(attribute->value.ptr, attribute->value.slen);
+
+		// @TODO our parser require the "a=crypto:" to be present
+		std::string full_attr = "a=crypto:";
+		full_attr += attr;
+
+		crypto_offer.push_back(full_attr);
+	    }
+
+	}
+    }
+    
 }
 

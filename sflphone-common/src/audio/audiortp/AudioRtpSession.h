@@ -66,7 +66,12 @@ namespace sfl {
             virtual void run ();
             
             int startRtpThread();
-    
+
+	    /**
+	     * Used mostly when receiving a reinvite
+	     */
+	    void updateDestinationIpAddress(void);
+
         private:
         
             void initBuffers(void);
@@ -98,6 +103,16 @@ namespace sfl {
             // it amounts to the same as doing
             // start() with no semaphore at all. 
             ost::Semaphore * _mainloopSemaphore;
+
+	    // Main destination address for this rtp session.
+	    // Stored in case or reINVITE, which may require to forget 
+	    // this destination and update a new one.
+	    ost::InetHostAddress _remote_ip;
+
+	    // Main destination port for this rtp session.
+	    // Stored in case reINVITE, which may require to forget
+	    // this destination and update a new one
+	    unsigned short _remote_port;
                      
             AudioCodec * _audiocodec;
             
@@ -202,7 +217,8 @@ namespace sfl {
         }
 
 	_debug("Unbind audio RTP stream for call id %s\n", _ca->getCallId().c_str());
-	_audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
+	// _audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
+	_manager->getAudioDriver()->getMainBuffer()->unBindAll(_ca->getCallId());
 
         delete [] _micData;
         delete [] _micDataConverted;
@@ -218,10 +234,12 @@ namespace sfl {
     void AudioRtpSession<D>::initBuffers() 
     {
 	// Set sampling rate, main buffer choose the highest one
-	_audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
+	// _audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
+        _manager->getAudioDriver()->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
 
 	// may be different than one already setted
-	converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	// converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
 	// initialize SampleRate converter using AudioLayer's sampling rate
 	// (internal buffers initialized with maximal sampling rate and frame size)
@@ -289,19 +307,35 @@ namespace sfl {
         }
         
         _debug ("Setting IP address for the RTP session\n");
-        
-        ost::InetHostAddress remote_ip (_ca->getLocalSDP()->get_remote_ip().c_str());
+
+	// Store remote ip in case we would need to forget current destination
+        _remote_ip = ost::InetHostAddress(_ca->getLocalSDP()->get_remote_ip().c_str());
         _debug ("Init audio RTP session: remote ip %s\n", _ca->getLocalSDP()->get_remote_ip().data());
 
-        if (!remote_ip) {
+        if (!_remote_ip) {
             _debug ("Target IP address [%s] is not correct!\n", _ca->getLocalSDP()->get_remote_ip().data());
             return;
         }
 
-        if (! static_cast<D*>(this)->addDestination (remote_ip, (unsigned short) _ca->getLocalSDP()->get_remote_audio_port())) {
+	// Store remote port in case we would need to forget current destination
+	_remote_port = (unsigned short) _ca->getLocalSDP()->get_remote_audio_port();
+
+        if (! static_cast<D*>(this)->addDestination (_remote_ip, _remote_port)) {
             _debug ("Can't add destination to session!\n");
             return;
         }
+    }
+
+    template <typename D>
+    void AudioRtpSession<D>::updateDestinationIpAddress(void)
+    {
+        // Destination address are stored in a list in ccrtp
+        // This method clear off this entry
+        static_cast<D*>(this)->forgetDestination(_remote_ip, _remote_port);
+
+	// new destination is stored in call
+	// we just need to recall this method
+        setDestinationIpAddress();
     }
     
     template <typename D>
@@ -310,7 +344,8 @@ namespace sfl {
         assert(_audiocodec);
         assert(_audiolayer);
 
-	int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	
+	int _mainBufferSampleRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
         // compute codec framesize in ms
         float fixed_codec_framesize = computeCodecFrameSize (_audiocodec->getFrameSize(), _audiocodec->getClockRate());
@@ -319,7 +354,7 @@ namespace sfl {
         int maxBytesToGet = computeNbByteAudioLayer (fixed_codec_framesize);
 
         // available bytes inside ringbuffer
-        int availBytesFromMic = _audiolayer->getMainBuffer()->availForGet(_ca->getCallId());
+        int availBytesFromMic = _manager->getAudioDriver()->getMainBuffer()->availForGet(_ca->getCallId());
 
         // set available byte to maxByteToGet
         int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
@@ -328,7 +363,7 @@ namespace sfl {
             return 0;
 
         // Get bytes from micRingBuffer to data_from_mic
-        int nbSample = _audiolayer->getMainBuffer()->getData(_micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
+        int nbSample = _manager->getAudioDriver()->getMainBuffer()->getData(_micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
 
         // nb bytes to be sent over RTP
         int compSize = 0;
@@ -361,7 +396,7 @@ namespace sfl {
         if (_audiocodec != NULL) {
 
 
-	    int _mainBufferSampleRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	    int _mainBufferSampleRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
             // Return the size of data in bytes
             int expandedSize = _audiocodec->codecDecode (_spkrDataDecoded , spkrData , size);
@@ -381,7 +416,7 @@ namespace sfl {
                 _nSamplesSpkr = nbSample;
 
                 // put data in audio layer, size in byte
-		_audiolayer->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
+		_manager->getAudioDriver()->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
 
             } else {
@@ -390,7 +425,7 @@ namespace sfl {
 
 
                 // put data in audio layer, size in byte
-                _audiolayer->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
+                _manager->getAudioDriver()->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
             }
 
             // Notify (with a beep) an incoming call when there is already a call
@@ -466,7 +501,12 @@ namespace sfl {
 
         unsigned int size = adu->getSize(); // size in char
 
-        processDataDecode (spkrData, size, countTime);
+	// _debug("RTP size: %i\n", size);
+
+	// Size of DTMF over RTP
+	if(size > 4) {
+	    processDataDecode (spkrData, size, countTime);
+	}
     }
     
     template <typename D>
@@ -508,7 +548,7 @@ namespace sfl {
 	_ca->setRecordingSmplRate(_audiocodec->getClockRate());
  
 	// Start audio stream (if not started) AND flush all buffers (main and urgent)
-        _audiolayer->startStream();
+        _manager->getAudioDriver()->startStream();
         static_cast<D*>(this)->startRunning();
 
 	// Already called in _audiolayer->startStream()
@@ -519,7 +559,12 @@ namespace sfl {
 
         while (!testCancel()) {
 
-	    converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	    // ost::MutexLock lock(*(_manager->getAudioLayerMutex()));
+
+	    _manager->getAudioLayerMutex()->enter();
+
+	    // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	    _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
             // Send session
             sessionWaiting = static_cast<D*>(this)->isWaiting();
@@ -538,6 +583,9 @@ namespace sfl {
                 // Record mic only while leaving a message
                 _ca->recAudio.recData (_micData,_nSamplesMic);
             }
+
+	    // ost::MutexLock unlock(*(_manager->getAudioLayerMutex()));
+	    _manager->getAudioLayerMutex()->leave();
 
             // Let's wait for the next transmit cycle
             Thread::sleep (TimerPort::getTimer());

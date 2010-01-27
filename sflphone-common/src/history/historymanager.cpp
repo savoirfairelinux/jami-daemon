@@ -107,9 +107,10 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
     return nb_items;
 }
 
+
 bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list)
 {
-    _debug ("Saving history in XDG directory: %s\n", _history_path.data());
+    _debug ("Saving history in XDG directory: %s", _history_path.data());
     return  history_list->saveConfigTree (_history_path.data());
 }
 
@@ -165,7 +166,7 @@ int HistoryManager::create_history_path (std::string path)
         if (mkdir (userdata.data(), 0755) != 0) {
             // If directory	creation failed
             if (errno != EEXIST) {
-                _debug ("Cannot create directory: %s\n", strerror (errno));
+                _debug ("Cannot create directory: %s", strerror (errno));
                 return -1;
             }
         }

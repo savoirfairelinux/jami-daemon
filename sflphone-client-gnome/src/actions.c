@@ -94,6 +94,7 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
+	status_tray_icon_online(TRUE);
         msg = g_markup_printf_escaped("%s %s (%s)" ,
                 _("Using account"),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
@@ -101,6 +102,7 @@ status_bar_display_account ()
     }
     else
     {
+	status_tray_icon_online(FALSE);
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
     statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
@@ -694,6 +696,8 @@ sflphone_new_call()
     peer_name = g_strdup ("");
     create_new_call (CALL, CALL_STATE_DIALING, "", "", peer_name, peer_number, &c);
 
+    c->_history_state = OUTGOING;
+
     calllist_add (current_calls,c);
     calltree_add_call (current_calls, c, NULL);
     update_actions();
@@ -1083,7 +1087,7 @@ sflphone_fill_codec_list()
         for(pl=codecs; *codecs; codecs++)
 	{
 	    details = (gchar **)dbus_codec_details(atoi(*codecs));
-            if(codec_list_get_by_payload((gconstpointer)atoi(*codecs))!=NULL){
+            if(codec_list_get_by_payload((gconstpointer)(size_t)atoi(*codecs))!=NULL){
                 // does nothing - the codec is already in the list, so is active.
             }
             else{
@@ -1100,7 +1104,7 @@ sflphone_fill_codec_list()
     }
     if( codec_list_get_size() == 0) {
 
-        gchar* markup = g_markup_printf_escaped(_("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )") , CODECS_DIR , g_get_home_dir());
+        gchar* markup = g_markup_printf_escaped(_("<b>No audio codecs found.</b>\n\nSFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home (<i>%s</i>)"), CODECS_DIR, g_get_home_dir());
         main_window_error_message( markup );
         dbus_unregister(getpid());
         exit(0);
@@ -1178,23 +1182,59 @@ void sflphone_fill_history (void)
 {
     GHashTable *entries;
     GHashTableIter iter;
-    gpointer key, value;
+    gpointer key, key_to_min, value;
     callable_obj_t *history_entry;
+
+    int timestamp, min_timestamp;
+
+    gboolean is_first;
 
     DEBUG ("Loading history ...");
 
     entries = dbus_get_history ();
-    if (entries)
-    {
-        // Init the iterator
-        g_hash_table_iter_init (&iter, entries);
-        while (g_hash_table_iter_next (&iter, &key, &value)) 
-        {
-            /* do something with key and value */
-            create_history_entry_from_serialized_form ((gchar*)key, (gchar*)value, &history_entry);    
-            // Add it and update the GUI
-            calllist_add (history, history_entry);
-        }
+    if (entries) {
+
+	while(g_hash_table_size (entries)) {
+
+	    is_first = TRUE;
+
+	    // find lowest timestamp in map
+	    g_hash_table_iter_init (&iter, entries);
+	    while (g_hash_table_iter_next (&iter, &key, &value))  {
+
+	        timestamp = atoi((gchar*)key);
+
+	        if(is_first) {
+
+		    // first iteration of the loop, init search
+		    min_timestamp = timestamp;
+		    key_to_min = key;
+
+		    is_first = FALSE;
+		}
+		else {
+
+		    // if lower, replace
+		    if(timestamp < min_timestamp) {
+
+		        min_timestamp = timestamp;
+			key_to_min = key;
+		    }
+		}
+	    }
+
+	    if(g_hash_table_lookup_extended(entries, key_to_min, &key, &value)) {
+
+	        // do something with key and value 
+	        create_history_entry_from_serialized_form ((gchar*)key, (gchar*)value, &history_entry);    
+		DEBUG("HISTORY ENTRY: %i\n", history_entry->_time_start);
+		// Add it and update the GUI
+		calllist_add (history, history_entry);
+		
+		// remove entry from map
+		g_hash_table_remove(entries, key_to_min);
+	    }
+	}
     }
 }
 

@@ -1027,6 +1027,14 @@ class ManagerImpl {
      */
     bool isCurrentCall(const CallID& callId);
 
+
+    /**
+     * Send registration to all enabled accounts
+     * @return 0 on registration success
+     *          1 otherelse
+     */
+    int registerAccounts();
+
     /**
      * Restart PJSIP
      * @param void
@@ -1042,6 +1050,8 @@ class ManagerImpl {
      * Initialize audiodriver
      */
     bool initAudioDriver(void);
+
+    ost::Mutex* getAudioLayerMutex() { return &_audiolayer_mutex; }
     
   private:
     /* Transform digest to string.
@@ -1146,6 +1156,8 @@ class ManagerImpl {
     //
     /** Mutex to protect access to code section */
     ost::Mutex _mutex;
+
+    ost::Mutex _audiolayer_mutex;
 
     // Multithread variable (non protected)
     DBusManagerImpl * _dbus;
@@ -1306,8 +1318,6 @@ class ManagerImpl {
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
     int getLocalIp2IpPort();
-
-    void setLocalIp2IpInfo( const std::string& address );
 
     std::string getStunServer (void);
     void setStunServer (const std::string &server);

@@ -1,5 +1,6 @@
 dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
+
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
 	AC_INIT([sflphone],[0.9.7~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
@@ -8,14 +9,17 @@ AC_REVISION([$Revision$])
 
 	AC_CANONICAL_SYSTEM
 
-	AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+	PACKAGE=SFLphone
+	VERSION=`cat VERSION`
+
+	AM_INIT_AUTOMAKE($NAME, $VERSION)
 AM_CONFIG_HEADER([config.h])
 
 # Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 	dnl Use this variable in the program
-AC_SUBST(PACKAGE_VERSION)
+	AC_SUBST(PACKAGE_VERSION)
 
 	AM_PROG_LIBTOOL
 
@@ -90,7 +94,6 @@ AC_SUBST(PKGADD_VENDOR)
 
 	dnl Check for programs
 	AC_PROG_CC
-	SFL_CXX_WITH_DEBUG
 	AC_PROG_CXX
 	AC_PROG_CPP
 	AC_PROG_INSTALL
@@ -281,7 +284,7 @@ fi
 xml_CFLAGS=
 xml_LIBS=-lexpat
 
-	AC_SUBST(xml_CFLAGS)
+AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([pthread], pthread_create,
@@ -291,6 +294,22 @@ AC_CHECK_LIB([pthread], pthread_create,
 	if test "$have_pthread" = "false"; then
 AC_MSG_ERROR([You need the POSIX Thread library (pthreads)])	
 	fi
+
+
+AC_CHECK_LIB([pcre], pcre_free,
+		[AC_CHECK_HEADERS(pcre.h, have_pcre=true, have_pcre=false)],
+		have_pcre=false)
+
+	if test "$have_pcre" = "false"; then
+AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])	
+	fi
+
+PCRE_LIBS=-lpcre
+PCRE_CFLAGS=
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
+
 
 # For the tools/, we need libdbus-c++ for the "build" architecture as well
 
@@ -377,6 +396,15 @@ AC_ARG_WITH([iax2],
 
 AC_DEFINE([HAVE_IAX], test "x$with_iax2" = "xyes", [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
+
+	dnl Check for network-manager
+AC_ARG_WITH([networkmanager],
+		[AS_HELP_STRING([--without-networkmanager],
+			[disable support for network-manager events])],
+		[],
+		[with_networkmanager=yes])
+
+AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
 
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
 # ----------------------------------------------------------------------------

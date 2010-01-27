@@ -20,11 +20,13 @@
 
 #include "AudioRtpFactory.h"
 #include "AudioZrtpSession.h"
+#include "AudioSrtpSession.h"
 #include "AudioSymmetricRtpSession.h"
 
 #include "manager.h"
 #include "account.h"
 #include "sip/sipcall.h"
+#include "sip/SdesNegotiator.h"
 
 #include <assert.h>
 
@@ -52,67 +54,71 @@ AudioRtpFactory::~AudioRtpFactory()
     stop();
 }
 
-void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
+void AudioRtpFactory::initAudioRtpConfig(SIPCall *ca)
 {
-    ost::MutexLock m (_audioRtpThreadMutex);
-
     assert (ca);
 
     if (_rtpSession != NULL) {
         _debugException ("An audio rtp thread was already created but not" \
-                         "destroyed. Forcing it before continuing.\n");
+                         "destroyed. Forcing it before continuing.");
         stop();
     }
 
     AccountID accountId = Manager::instance().getAccountFromCall (ca->getCallId());
 
-    bool srtpEnabled = false;
-    int keyExchangeProtocol = 1;
-    bool helloHashEnabled = true;
-
     // Check if it is an IP-to-IP call
-
     if (accountId == AccountNULL) {
-        srtpEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, SRTP_ENABLE);
-        keyExchangeProtocol = Manager::instance().getConfigInt (IP2IP_PROFILE, SRTP_KEY_EXCHANGE);
-        _debug ("Ip-to-ip profile selected with key exchange protocol number %d\n", keyExchangeProtocol);
-        helloHashEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, ZRTP_HELLO_HASH);
+        _srtpEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, SRTP_ENABLE);
+        _keyExchangeProtocol = Manager::instance().getConfigInt (IP2IP_PROFILE, SRTP_KEY_EXCHANGE);
+        _debug ("Ip-to-ip profile selected with key exchange protocol number %d", _keyExchangeProtocol);
+        _helloHashEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, ZRTP_HELLO_HASH);
     } else {
-        srtpEnabled = Manager::instance().getConfigBool (accountId, SRTP_ENABLE);
-        keyExchangeProtocol = Manager::instance().getConfigInt (accountId, SRTP_KEY_EXCHANGE);
-        _debug ("Registered account %s profile selected with key exchange protocol number %d\n", accountId.c_str(), keyExchangeProtocol);
-        helloHashEnabled = Manager::instance().getConfigBool (accountId, ZRTP_HELLO_HASH);
+        _srtpEnabled = Manager::instance().getConfigBool (accountId, SRTP_ENABLE);
+        _keyExchangeProtocol = Manager::instance().getConfigInt (accountId, SRTP_KEY_EXCHANGE);
+        _debug ("Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
+        _helloHashEnabled = Manager::instance().getConfigBool (accountId, ZRTP_HELLO_HASH);
     }
+}
 
-    _debug ("Srtp enable: %d \n", srtpEnabled);
+void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
+{
+    ost::MutexLock m (_audioRtpThreadMutex);
 
-    if (srtpEnabled) {
+    _debug ("Srtp enable: %d ", _srtpEnabled);
+    if (_srtpEnabled) {
         std::string zidFilename (Manager::instance().getConfigString (SIGNALISATION, ZRTP_ZIDFILE));
 
-        switch (keyExchangeProtocol) {
+        switch (_keyExchangeProtocol) {
 
             case Zrtp:
                 _rtpSession = new AudioZrtpSession (&Manager::instance(), ca, zidFilename);
                 _rtpSessionType = Zrtp;
 
-                if (helloHashEnabled) {
+                if (_helloHashEnabled) {
                     // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                     // not even available at that point.
                     ca->getLocalSDP()->set_zrtp_hash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
-                    _debug ("Zrtp hello hash fed to SDP\n");
+                    _debug ("Zrtp hello hash fed to SDP");
                 }
 
                 break;
 
             case Sdes:
 
+	        _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
+                _rtpSessionType = Sdes;
+
+		ca->getLocalSDP()->set_srtp_crypto(static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
+		break;
+
             default:
+	        _debug("Unsupported Rtp Session Exception Type!");
                 throw UnsupportedRtpSessionType();
         }
     } else {
         _rtpSessionType = Symmetric;
         _rtpSession = new AudioSymmetricRtpSession (&Manager::instance(), ca);
-        _debug ("Starting a symmetric unencrypted rtp session\n");
+        _debug ("Starting a symmetric unencrypted rtp session");
     }
 }
 
@@ -125,9 +131,13 @@ void AudioRtpFactory::start (void)
     switch (_rtpSessionType) {
 
         case Sdes:
+	    if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread() != 0) {
+                throw AudioRtpFactoryException ("Failed to start AudioSRtpSession thread");
+            }
+	    break;
 
         case Symmetric:
-            _debug ("Starting symmetric rtp thread\n");
+            _debug ("Starting symmetric rtp thread");
 
             if (static_cast<AudioSymmetricRtpSession *> (_rtpSession)->startRtpThread() != 0) {
                 throw AudioRtpFactoryException ("Failed to start AudioSymmetricRtpSession thread");
@@ -148,7 +158,7 @@ void AudioRtpFactory::start (void)
 void AudioRtpFactory::stop (void)
 {
     ost::MutexLock mutex (_audioRtpThreadMutex);
-    _debug ("Stopping audio rtp session\n");
+    _debug ("Stopping audio rtp session");
 
     if (_rtpSession == NULL) {
         _debugException ("_rtpSession is null when trying to stop. Returning.");
@@ -159,6 +169,8 @@ void AudioRtpFactory::stop (void)
         switch (_rtpSessionType) {
 
             case Sdes:
+	        delete static_cast<AudioSrtpSession *> (_rtpSession);
+		break;
 
             case Symmetric:
                 delete static_cast<AudioSymmetricRtpSession *> (_rtpSession);
@@ -171,8 +183,31 @@ void AudioRtpFactory::stop (void)
 
         _rtpSession = NULL;
     } catch (...) {
-        _debugException ("Exception caught when stopping the audio rtp session\n");
-        throw AudioRtpFactoryException();
+        _debugException ("Exception caught when stopping the audio rtp session");
+        throw AudioRtpFactoryException("caught exception in AudioRtpFactory::stop");
+    }
+}
+
+void AudioRtpFactory::updateDestinationIpAddress (void)
+{
+    _debug ("Updating IP address");
+    if (_rtpSession == NULL) {
+        throw AudioRtpFactoryException ("_rtpSession was null when trying to update IP address");
+    }
+
+    switch (_rtpSessionType) {
+
+        case Sdes:
+	    static_cast<AudioSrtpSession *> (_rtpSession)->updateDestinationIpAddress();
+	    break;
+
+        case Symmetric:
+            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            break;
+
+        case Zrtp:
+	    static_cast<AudioZrtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            break;
     }
 }
 
@@ -181,7 +216,19 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
     if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {
         return static_cast<AudioZrtpSession *> (_rtpSession);
     } else {
-        throw AudioRtpFactoryException();
+        throw AudioRtpFactoryException("_rtpSession is NULL in getAudioZrtpSession");
+    }
+}
+
+  void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
+{
+    if ( (_rtpSessionType != NULL) && (_rtpSessionType == Sdes)) {
+        static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo(nego);
+    }
+    else {
+        throw AudioRtpFactoryException("_rtpSession is NULL in setRemoteCryptoInfo");
     }
 }
 }
+
+

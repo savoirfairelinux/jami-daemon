@@ -164,7 +164,8 @@ static void sip_apply_callback( void ) {
 	iface = iface_list;
 	DEBUG("Selected interface %s", *iface);
 
-	g_hash_table_insert(current->properties, g_strdup(LOCAL_ADDRESS), g_strdup((gchar *)*iface));
+	g_hash_table_insert(current->properties, g_strdup(LOCAL_INTERFACE), g_strdup((gchar *)*iface));
+
 	g_hash_table_insert(current->properties, g_strdup(PUBLISHED_ADDRESS), g_strdup((gchar *)*iface));
 
 	dbus_add_account( current );

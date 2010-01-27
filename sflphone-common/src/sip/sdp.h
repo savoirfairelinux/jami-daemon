@@ -29,6 +29,7 @@
 #include <pjmedia/errno.h>
 #include <pj/pool.h>
 #include <pj/assert.h>
+#include <vector>
 
 #include "audio/codecs/codecDescriptor.h"
 #include "sdpmedia.h"
@@ -42,6 +43,8 @@ class sdpException: public std::exception
     return "An sdpException Occured";
   }
 };
+
+typedef std::vector<std::string> CryptoOffer;
 
 class Sdp {
 
@@ -101,6 +104,11 @@ class Sdp {
          * @param hash The hello hash of a rtp session. (Only audio at the moment)
          */
         inline void set_zrtp_hash(const std::string& hash) { _zrtp_hello_hash = hash; _debug("Zrtp hash set with %s\n", hash.c_str()); }
+
+	/* Set the srtp _master_key
+         * @param mk The Master Key of a srtp session.
+         */
+        inline void set_srtp_crypto(const std::vector<std::string> lc) { _srtp_crypto = lc; }
         
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -213,6 +221,8 @@ class Sdp {
 
         std::vector<sdpMedia*> get_session_media_list (void) { return _session_media; }
 
+	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
+
     private:
         /** Codec Map */
         std::vector<sdpMedia*> _local_media_cap;
@@ -246,7 +256,10 @@ class Sdp {
         /** Remote's audio port */
         unsigned int _remote_audio_port;
 
-        std::string _zrtp_hello_hash; 
+        std::string _zrtp_hello_hash;
+
+	/** "a=crypto" sdes local attributes obtained from AudioSrtpSession */
+	std::vector<std::string> _srtp_crypto;
         
         Sdp(const Sdp&); //No Copy Constructor
         Sdp& operator=(const Sdp&); //No Assignment Operator
@@ -335,6 +348,14 @@ class Sdp {
         void set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media);
 
         void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
+
+	
+	/* 
+         * Adds a sdes attribute to the given media section.
+         *
+         * @param media The media to add the srtp attribute to 
+	 */
+	void sdp_add_sdes_attribute(std::vector<std::string>& crypto);
 
         /* 
          * Adds a zrtp-hash  attribute to 

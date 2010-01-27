@@ -33,6 +33,8 @@ class IAXAccount : public Account
 
         ~IAXAccount();
 
+	void setVoIPLink ();
+
         /** 
          * Actually unuseful, since config loading is done in init() 
          */

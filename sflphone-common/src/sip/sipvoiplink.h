@@ -4,6 +4,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,6 +37,9 @@
 #include <pjnath/stun_config.h>
 ///////////////////////////////
 
+#include <map>
+#include <sstream>
+
 class EventThread;
 class SIPCall;
 
@@ -44,6 +48,8 @@ class SIPCall;
 
 // To set the verbosity. From 0 (min) to 6 (max)
 #define PJ_LOG_LEVEL 6
+
+#define SipTransportMap std::map<std::string, pjsip_transport*>
 
 /**
  * @file sipvoiplink.h
@@ -286,21 +292,58 @@ class SIPVoIPLink : public VoIPLink
          */
         std::vector<std::string> getAllIpInterface(void);
 
-		/**
-		 * Initialize the transport selector
-		 * @param transport		A transport associated with an account
-		 * @param tp_sel		A pointer to receive the transport selector structure
-		 *
-		 * @return pj_status_t		PJ_SUCCESS if the structure was successfully initialized
-		 */
-		pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
 
+       	/** 
+         * List all the interfaces on the system and return 
+         * a vector list containing their name (eth0, eth0:1 ...).
+         * @param void
+         * @return std::vector<std::string> A std::string vector
+         * of interface name available on all of the interfaces on
+         * the system.
+         */
+        std::vector<std::string> getAllIpInterfaceByName(void);
+
+
+	/** 
+         * List all the interfaces on the system and return 
+         * a vector list containing their name (eth0, eth0:1 ...).
+         * @param void
+         * @return std::vector<std::string> A std::string vector
+         * of interface name available on all of the interfaces on
+         * the system.
+         */
+	std::string getInterfaceAddrFromName(std::string ifaceName);
+
+
+	/**
+	 * Initialize the transport selector
+	 * @param transport		A transport associated with an account
+	 * @param tp_sel		A pointer to receive the transport selector structure
+	 *
+	 * @return pj_status_t		PJ_SUCCESS if the structure was successfully initialized
+	 */
+	pj_status_t init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel);
+
+	/**
+	 * Requests PJSIP library for local IP address, using pj_gethostbyname()
+	 * @param addr*                 A string to be initialized
+	 *
+	 * @return bool                 True if addr successfully initialized
+	 */
         bool loadSIPLocalIP (std::string *addr);
 
 	/**
 	 * This method is used to create a new transport and attach it to the appropriate account
 	 */
 	void updateAccountInfo(const AccountID& accountID);
+
+	/**
+	 * This function unset the transport for a given account. It tests wether the 
+	 * associated transport is used by other accounts. If not, it shutdown the transport
+	 * putting its reference counter to zero. PJSIP assumes transport destruction since 
+	 * this action can be delayed by ongoing SIP transactions.
+	 */
+	void shutdownSipTransport(const AccountID& accountID);
 
     private:
         /**
@@ -338,6 +381,27 @@ class SIPVoIPLink : public VoIPLink
 
         pj_status_t stunServerResolve (AccountID id);
 
+
+	/**
+	 * Function used to create a new sip transport or get an existing one from the map.
+	 * The SIP transport is "acquired" according to account's current settings.
+	 * This function should be called before registering an account
+	 * @param accountID            An account id for which transport is to be set
+	 *
+	 * @return bool                True if the account is succesfully created or 
+	 *                             successfully obtained from the transport map
+	 */
+	bool acquireTransport(const AccountID& accountID);
+
+
+	/**
+	 * Create a new sip transport according to the trasport type specified in account settings
+	 */
+	bool createSipTransport(AccountID id);
+
+
+	bool addTransportToMap(std::string key, pjsip_transport* transport);
+
         /** Create SIP UDP Listener */
         int createUDPServer (AccountID = "");
 
@@ -369,8 +433,10 @@ class SIPVoIPLink : public VoIPLink
          */
         pj_status_t createTlsTransport(AccountID id);
 
-		pj_status_t createAlternateUdpTransport (AccountID id);
-        
+	pj_status_t createAlternateUdpTransport (AccountID id);
+
+	SipTransportMap _transportMap;
+
         /** For registration use only */
         int _regPort;
 

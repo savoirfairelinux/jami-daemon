@@ -84,7 +84,7 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
   srand(time(NULL));
 
   // Internationalization
-  bindtextdomain("sflphone-client-gnome", "/usr/share/locale");
+  bindtextdomain("sflphone-client-gnome", LOCALEDIR);
   textdomain("sflphone-client-gnome");
 
   // Initialises the GNOME libraries

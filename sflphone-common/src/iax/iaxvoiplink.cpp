@@ -37,13 +37,13 @@
 
 #define MUSIC_ONHOLD true
 
-#define CHK_VALID_CALL   if (call == NULL) { _debug("IAX: Call doesn't exists\n"); \
+#define CHK_VALID_CALL   if (call == NULL) { _debug("IAX: Call doesn't exists"); \
 	return false; }
 
 IAXVoIPLink::IAXVoIPLink (const AccountID& accountID)
         : VoIPLink (accountID)
 {
-    // _debug("IAXVoIPLink::IAXVoIPLink : creating eventhread \n ");
+    // _debug("IAXVoIPLink::IAXVoIPLink : creating eventhread  ");
     _evThread = new EventThread (this);
     _regSession = NULL;
     _nextRefreshStamp = 0;
@@ -116,13 +116,13 @@ IAXVoIPLink::init()
         port = iax_init (port);
 
         if (port < 0) {
-            _debug ("IAX Warning: already initialize on port %d\n", last_port);
+            _debug ("IAX Warning: already initialize on port %d", last_port);
             port = RANDOM_IAX_PORT;
         } else if (port == IAX_FAILURE) {
             _debug ("IAX Fail to start on port %d", last_port);
             port = RANDOM_IAX_PORT;
         } else {
-            _debug ("IAX Info: listening on port %d\n", last_port);
+            _debug ("IAX Info: listening on port %d", last_port);
             _localPort = last_port;
             returnValue = true;
             _evThread->start();
@@ -141,7 +141,7 @@ IAXVoIPLink::init()
     }
 
     if (port == IAX_FAILURE || nbTry==0) {
-        _debug ("Fail to initialize iax\n");
+        _debug ("Fail to initialize iax");
 
         initDone (false);
     }
@@ -195,7 +195,7 @@ void IAXVoIPLink::terminateOneCall (const CallID& id)
     IAXCall* call = getIAXCall (id);
 
     if (call) {
-        _debug ("IAXVoIPLink::terminateOneCall()::the call is deleted, should close recording file \n");
+        _debug ("IAXVoIPLink::terminateOneCall()::the call is deleted, should close recording file ");
         delete call;
         call = 0;
     }
@@ -218,7 +218,7 @@ IAXVoIPLink::getEvent()
             continue;
         }
 
-        //_debug ("Receive IAX Event: %d (0x%x)\n", event->etype, event->etype);
+        //_debug ("Receive IAX Event: %d (0x%x)", event->etype, event->etype);
 
         call = iaxFindCallBySession (event->session);
 
@@ -234,7 +234,7 @@ IAXVoIPLink::getEvent()
             iaxHandlePrecallEvent (event);
         }
 
-        // _debug("IAXVoIPLink::getEvent() : timestamp %i \n",event->ts);
+        // _debug("IAXVoIPLink::getEvent() : timestamp %i ",event->ts);
 
         iax_event_free (event);
     }
@@ -263,8 +263,8 @@ IAXVoIPLink::getEvent()
     if ( (Manager::instance().incomingCallWaiting() > 0) && Manager::instance().hasCurrentCall()) {
 
         int countTime_modulo = countTime % 4000;
-        // _debug("countTime: %i\n", countTime);
-        // _debug("countTime_modulo: %i\n", countTime_modulo);
+        // _debug("countTime: %i", countTime);
+        // _debug("countTime_modulo: %i", countTime_modulo);
 
         if ( (countTime_modulo - countTime) < 0) {
             Manager::instance().notificationIncomingCall();
@@ -317,7 +317,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
                 if (ac && audiolayer) {
 
-                    // _debug("Send sound\n");
+                    // _debug("Send sound");
                     // audiolayer->getMainBuffer()->flush(currentCall->getCallId());
 
                     audiolayer->getMainBuffer()->setInternalSamplingRate (ac->getClockRate());
@@ -364,9 +364,9 @@ IAXVoIPLink::sendAudioFromMic (void)
                         _mutexIAX.enterMutex();
 
                         // Make sure the session and the call still exists.
-                        if (currentCall->getSession() && micDataEncoded != NULL) {
+                        if (currentCall->getSession() && (micDataEncoded != NULL) && (nbSample_ > 0)) {
                             if (iax_send_voice (currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample_) == -1) {
-                                _debug ("IAX: Error sending voice data.\n");
+                                _debug ("IAX: Error sending voice data.");
                             }
                         }
 
@@ -426,9 +426,9 @@ IAXVoIPLink::sendRegister (AccountID id)
     if (!_regSession) {
         _debug ("Error when generating new session for register");
     } else {
-        _debug ("IAX Sending registration to %s with user %s\n", account->getHostname().c_str() , account->getUsername().c_str());
+        _debug ("IAX Sending registration to %s with user %s", account->getHostname().c_str() , account->getUsername().c_str());
         int val = iax_register (_regSession, account->getHostname().data(), account->getUsername().data(), account->getPassword().data(), 120);
-        _debug ("Return value: %d\n", val);
+        _debug ("Return value: %d", val);
         // set the time-out to 15 seconds, after that, resend a registration request.
         // until we unregister.
         _nextRefreshStamp = time (NULL) + 10;
@@ -466,7 +466,7 @@ IAXVoIPLink::sendUnregister (AccountID id)
 
     _nextRefreshStamp = 0;
 
-    _debug ("IAX2 send unregister\n");
+    _debug ("IAX2 send unregister");
     account->setRegistrationState (Unregistered);
 
     return SUCCESS;
@@ -522,7 +522,7 @@ IAXVoIPLink::answer (const CallID& id)
 bool
 IAXVoIPLink::hangup (const CallID& id)
 {
-    _debug ("IAXVoIPLink::hangup() : function called once hangup \n");
+    _debug ("IAXVoIPLink::hangup() : function called once hangup ");
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
@@ -550,7 +550,7 @@ IAXVoIPLink::hangup (const CallID& id)
 bool
 IAXVoIPLink::peerHungup (const CallID& id)
 {
-    _debug ("IAXVoIPLink::peerHangup() : function called once hangup \n");
+    _debug ("IAXVoIPLink::peerHangup() : function called once hangup ");
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
@@ -584,7 +584,7 @@ IAXVoIPLink::onhold (const CallID& id)
 
     audiolayer->getMainBuffer()->unBindAll (call->getCallId());
 
-    //if (call->getState() == Call::Hold) { _debug("Call is already on hold\n"); return false; }
+    //if (call->getState() == Call::Hold) { _debug("Call is already on hold"); return false; }
 
     _mutexIAX.enterMutex();
     iax_quelch_moh (call->getSession() , MUSIC_ONHOLD);
@@ -603,7 +603,7 @@ IAXVoIPLink::offhold (const CallID& id)
 
     Manager::instance().addStream (call->getCallId());
 
-    //if (call->getState() == Call::Active) { _debug("Call is already active\n"); return false; }
+    //if (call->getState() == Call::Active) { _debug("Call is already active"); return false; }
     _mutexIAX.enterMutex();
     iax_unquelch (call->getSession());
     _mutexIAX.leaveMutex();
@@ -700,7 +700,7 @@ IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
     newsession = iax_session_new();
 
     if (!newsession) {
-        _debug ("IAX Error: Can't make new session for a new call\n");
+        _debug ("IAX Error: Can't make new session for a new call");
         return false;
     }
 
@@ -715,7 +715,7 @@ IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
     audio_format_preferred =  call->getFirstMatchingFormat (call->getSupportedFormat());
     audio_format_capability = call->getSupportedFormat();
 
-    _debug ("IAX New call: %s\n", strNum.c_str());
+    _debug ("IAX New call: %s", strNum.c_str());
     iax_call (newsession, username.c_str(), username.c_str(), strNum.c_str(), lang, wait, audio_format_preferred, audio_format_capability);
 
     return true;
@@ -798,10 +798,10 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             _debug ("IAX_EVENT_ACCEPT: codec format: ");
 
             if (event->ies.format) {
-                printf ("%i\n", event->ies.format);
+                printf ("%i", event->ies.format);
                 call->setFormat (event->ies.format);
             } else {
-                printf ("no codec format\n");
+                printf ("no codec format");
             }
 
             break;
@@ -820,18 +820,18 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
 
                 if (event->ies.format) {
                     // Should not get here, should have been set in EVENT_ACCEPT
-                    printf ("%i\n", event->ies.format);
+                    printf ("%i", event->ies.format);
                     call->setFormat (event->ies.format);
                 }
 
                 {
-                    printf ("no codec format\n");
+                    printf ("no codec format");
                 }
 
                 Manager::instance().peerAnsweredCall (id);
 
                 // start audio here?
-		audiolayer->startStream();
+                audiolayer->startStream();
                 audiolayer->flushMain();
             } else {
                 // deja connecté ?
@@ -850,7 +850,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
         case IAX_EVENT_VOICE:
             //if (!audiolayer->isCaptureActive ())
             //  audiolayer->startStream ();
-            // _debug("IAX_EVENT_VOICE: \n");
+            // _debug("IAX_EVENT_VOICE: ");
             iaxHandleVoiceEvent (event, call);
             break;
 
@@ -872,7 +872,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
 
             if (Manager::instance().getConfigString (HOOKS, URLHOOK_IAX2_ENABLED) == "1") {
                 if (strcmp ( (char*) event->data, "") != 0) {
-                    _debug ("> IAX_EVENT_URL received: %s\n", event->data);
+                    _debug ("> IAX_EVENT_URL received: %s", event->data);
                     urlhook->addAction ( (char*) event->data, Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
                 }
             }
@@ -886,7 +886,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
             break;
 
         default:
-            _debug ("iaxHandleCallEvent: Unknown event type (in call event): %d\n", event->etype);
+            _debug ("iaxHandleCallEvent: Unknown event type (in call event): %d", event->etype);
 
     }
 }
@@ -907,7 +907,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
 
     if (!event->datalen) {
         // Skip this empty packet.
-        //_debug("IAX: Skipping empty jitter-buffer interpolated packet\n");
+        //_debug("IAX: Skipping empty jitter-buffer interpolated packet");
         return;
     }
 
@@ -930,11 +930,11 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         // - subclass holds the voiceformat property.
 
         if (event->subclass && event->subclass != call->getFormat()) {
-            _debug ("iaxHandleVoiceEvent: no format found in call setting it to %i\n", event->subclass);
+            _debug ("iaxHandleVoiceEvent: no format found in call setting it to %i", event->subclass);
             call->setFormat (event->subclass);
         }
 
-        //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
+        //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p", event->datalen, call->getFormat(), _receiveDataDecoded);
         // ac = call->getCodecMap().getCodec (call -> getAudioCodec());
 
         data = (unsigned char*) event->data;
@@ -945,7 +945,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         max = (int) (ac->getClockRate() * audiolayer->getFrameSize() / 1000);
 
         if (size > max) {
-            _debug ("The size %d is bigger than expected %d. Packet cropped. Ouch!\n", size, max);
+            _debug ("The size %d is bigger than expected %d. Packet cropped. Ouch!", size, max);
             size = max;
         }
 
@@ -954,7 +954,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
         nbInt16      = expandedSize/sizeof (int16);
 
         if (nbInt16 > max) {
-            _debug ("We have decoded an IAX VOICE packet larger than expected: %i VS %i. Cropping.\n", nbInt16, max);
+            _debug ("We have decoded an IAX VOICE packet larger than expected: %i VS %i. Cropping.", nbInt16, max);
             nbInt16 = max;
         }
 
@@ -1013,7 +1013,7 @@ IAXVoIPLink::iaxHandleRegReply (iax_event* event)
         // Looking for the voicemail information
         //if( event->ies != 0 )
         //new_voicemails = processIAXMsgCount(event->ies.msgcount);
-        //_debug("iax voicemail number notification: %i\n", new_voicemails);
+        //_debug("iax voicemail number notification: %i", new_voicemails);
         // Notify the client if new voicemail waiting for the current account
         //account_id = getAccountID();
         //Manager::instance().startVoiceMessageNotification(account_id.c_str(), new_voicemails);
@@ -1063,18 +1063,18 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
         case IAX_EVENT_REGACK:
 
         case IAX_EVENT_REGREJ:
-            _debug ("IAX Registration Event in a pre-call setup\n");
+            _debug ("IAX Registration Event in a pre-call setup");
             break;
 
         case IAX_EVENT_REGREQ:
             // Received when someone wants to register to us!?!
             // Asterisk receives and answers to that, not us, we're a phone.
-            _debug ("Registration by a peer, don't allow it\n");
+            _debug ("Registration by a peer, don't allow it");
             break;
 
         case IAX_EVENT_CONNECT:
             // We've got an incoming call! Yikes!
-            _debug ("> IAX_EVENT_CONNECT (receive)\n");
+            _debug ("> IAX_EVENT_CONNECT (receive)");
 
             id = Manager::instance().getNewCallID();
 
@@ -1153,11 +1153,11 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
             break;
 
         case IAX_IE_MSGCOUNT:
-            //_debug("messssssssssssssssssssssssssssssssssssssssssssssssages\n");
+            //_debug("messssssssssssssssssssssssssssssssssssssssssssssssages");
             break;
 
         default:
-            _debug ("IAXVoIPLink::iaxHandlePrecallEvent: Unknown event type (in precall): %d\n", event->etype);
+            _debug ("IAXVoIPLink::iaxHandlePrecallEvent: Unknown event type (in precall): %d", event->etype);
     }
 
 }

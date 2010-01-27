@@ -34,11 +34,22 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
-enum
-{
+enum {
     A_CALL,
     A_CONFERENCE
 };
+
+
+/**
+ * Tags used to identify display type in calltree
+ */
+typedef enum {
+    DISPLAY_TYPE_CALL,
+    DISPLAY_TYPE_CALL_TRANSFER,
+    DISPLAY_TYPE_SAS,
+    DISPLAY_TYPE_STATE_CODE,
+    DISPLAY_TYPE_HISTORY
+} CallDisplayType;
 
 /**
  * Create a new widget calltree

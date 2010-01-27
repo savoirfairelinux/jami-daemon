@@ -23,7 +23,7 @@ LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
 
 REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
 
-SOFTWARE_VERSION="0.9.7.beta"
+SOFTWARE_VERSION="0.9.7.rc2"
 
 VERSION_INDEX=1
 

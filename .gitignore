@@ -240,3 +240,15 @@ sflphone-client-gnome/stamp-h1
 /tools/build-system/launchpad/*.build
 /tools/build-system/launchpad/*.upload
 
+# telify
+/tools/mozilla-telify-sflphone/debian/mozilla-telify-sflphone
+/tools/mozilla-telify-sflphone/tmp/
+/tools/mozilla-telify-sflphone/*-stamp
+/tools/*.dsc
+/tools/*.tar.gz
+/tools/*.deb
+/tools/*.build
+/tools/*.changes
+/tools/mozilla-telify-sflphone/debian/control
+/tools/mozilla-telify-sflphone/debian/mozilla-telify-sflphone.links
+

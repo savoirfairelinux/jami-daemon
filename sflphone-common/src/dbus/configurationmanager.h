@@ -113,8 +113,6 @@ public:
     void setNotify( void );
     int32_t getMailNotify( void );
     void setMailNotify( void );
-    int getSipAddress( void );
-    void setSipAddress( const std::string& address );
 
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
@@ -131,8 +129,11 @@ public:
 
     std::map<std::string, std::string> getTlsSettings(const std::string& accountID);
     void setTlsSettings(const std::string& accountID, const std::map< std::string, std::string >& details);
+
+    std::string getAddrFromInterfaceName(const std::string& interface);
     
     std::vector<std::string> getAllIpInterface(void);
+    std::vector<std::string> getAllIpInterfaceByName(void);
 };
 
 
