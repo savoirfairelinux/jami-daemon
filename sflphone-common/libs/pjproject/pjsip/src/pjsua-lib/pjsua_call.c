@@ -1,4 +1,4 @@
-/* $Id: pjsua_call.c 2869 2009-08-12 17:53:47Z bennylp $ */
+/* $Id: pjsua_call.c 3013 2009-11-11 00:33:00Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -132,6 +132,11 @@ pj_status_t pjsua_call_subsys_init(const pjsua_config *cfg)
 
     /* Copy config */
     pjsua_config_dup(pjsua_var.pool, &pjsua_var.ua_cfg, cfg);
+
+    /* Verify settings */
+    if (pjsua_var.ua_cfg.max_calls >= PJSUA_MAX_CALLS) {
+	pjsua_var.ua_cfg.max_calls = PJSUA_MAX_CALLS;
+    }
 
     /* Check the route URI's and force loose route if required */
     for (i=0; i<pjsua_var.ua_cfg.outbound_proxy_cnt; ++i) {
@@ -384,12 +389,15 @@ PJ_DEF(pj_status_t) pjsua_call_make_call( pjsua_acc_id acc_id,
     call_id = alloc_call_id();
 
     if (call_id == PJSUA_INVALID_ID) {
-	pjsua_perror(THIS_FILE, "Error making file", PJ_ETOOMANY);
+	pjsua_perror(THIS_FILE, "Error making call", PJ_ETOOMANY);
 	PJSUA_UNLOCK();
 	return PJ_ETOOMANY;
     }
 
     call = &pjsua_var.calls[call_id];
+
+    /* Associate session with account */
+    call->acc_id = acc_id;
 
     /* Create temporary pool */
     tmp_pool = pjsua_pool_create("tmpcall10", 512, 256);
@@ -499,7 +507,6 @@ PJ_DEF(pj_status_t) pjsua_call_make_call( pjsua_acc_id acc_id,
     }
 
     /* Create and associate our data in the session. */
-    call->acc_id = acc_id;
     call->inv = inv;
 
     dlg->mod_data[pjsua_var.mod.id] = call;
@@ -644,6 +651,14 @@ pj_bool_t pjsua_call_on_incoming(pjsip_rx_data *rdata)
      */
     if (dlg || tsx)
 	return PJ_FALSE;
+
+    /* Don't want to accept the call if shutdown is in progress */
+    if (pjsua_var.thread_quit_flag) {
+	pjsip_endpt_respond_stateless(pjsua_var.endpt, rdata, 
+				      PJSIP_SC_TEMPORARILY_UNAVAILABLE, NULL,
+				      NULL, NULL);
+	return PJ_TRUE;
+    }
 
     PJSUA_LOCK();
 
@@ -2821,11 +2836,11 @@ PJ_DEF(pj_status_t) pjsua_call_dump( pjsua_call_id call_id,
 	*p = '\0';
     }
 
-    /* Get SRTP status */
+    /* Get and ICE SRTP status */
     pjmedia_transport_info_init(&tp_info);
     pjmedia_transport_get_info(call->med_tp, &tp_info);
     if (tp_info.specific_info_cnt > 0) {
-	int i;
+	unsigned i;
 	for (i = 0; i < tp_info.specific_info_cnt; ++i) {
 	    if (tp_info.spc_info[i].type == PJMEDIA_TRANSPORT_TYPE_SRTP) 
 	    {
@@ -2842,7 +2857,23 @@ PJ_DEF(pj_status_t) pjsua_call_dump( pjsua_call_id call_id,
 		    *p++ = '\n';
 		    *p = '\0';
 		}
-		break;
+	    } else if (tp_info.spc_info[i].type==PJMEDIA_TRANSPORT_TYPE_ICE) {
+		const pjmedia_ice_transport_info *ii;
+
+		ii = (const pjmedia_ice_transport_info*) 
+		     tp_info.spc_info[i].buffer;
+
+		len = pj_ansi_snprintf(p, end-p, 
+				       "%s  ICE role: %s, state: %s, comp_cnt: %u",
+				       indent,
+				       pj_ice_sess_role_name(ii->role),
+				       pj_ice_strans_state_name(ii->sess_state),
+				       ii->comp_cnt);
+		if (len > 0 && len < end-p) {
+		    p += len;
+		    *p++ = '\n';
+		    *p = '\0';
+		}
 	    }
 	}
     }
@@ -2942,18 +2973,18 @@ static void pjsua_call_on_state_changed(pjsip_inv_session *inv,
 		ev_state = PJSIP_EVSUB_STATE_ACTIVE;
 	    break;
 
+	case PJSIP_INV_STATE_CONFIRMED:
 #if 0
 /* We don't need this, as we've terminated the subscription in
  * CONNECTING state.
  */
-	case PJSIP_INV_STATE_CONFIRMED:
 	    /* When state is confirmed, send the final 200/OK and terminate
 	     * subscription.
 	     */
 	    st_code = e->body.tsx_state.tsx->status_code;
 	    ev_state = PJSIP_EVSUB_STATE_TERMINATED;
-	    break;
 #endif
+	    break;
 
 	case PJSIP_INV_STATE_DISCONNECTED:
 	    st_code = e->body.tsx_state.tsx->status_code;

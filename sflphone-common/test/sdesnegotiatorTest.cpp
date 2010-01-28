@@ -40,32 +40,12 @@ using std::endl;
 
 void SdesNegotiatorTest::setUp()
 {
-    // Add a new SDES crypto line to be processed. 
-    remoteOffer = new std::vector<std::string>();
-    remoteOffer->push_back(std::string("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32"));
-    remoteOffer->push_back(std::string("a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32"));
-	
-    // Register the local capabilities.
-    localCapabilities = new std::vector<sfl::CryptoSuiteDefinition>();
-    for(int i = 0; i < 3; i++) {
-        localCapabilities->push_back(sfl::CryptoSuites[i]);
-    }
-
-    sdesnego = new sfl::SdesNegotiator(*localCapabilities, *remoteOffer);
+    
 }
 
 
 void SdesNegotiatorTest::tearDown()
 {
-
-    delete remoteOffer;
-    remoteOffer = NULL;
-
-    delete localCapabilities;
-    localCapabilities = NULL;
-
-    delete sdesnego;
-    sdesnego = NULL;
 
 }
 
@@ -148,7 +128,30 @@ void SdesNegotiatorTest::testKeyParamsPatternCiscoStyle()
  */
 void SdesNegotiatorTest::testNegotiation()
 {
+     // Add a new SDES crypto line to be processed. 
+    remoteOffer = new std::vector<std::string>();
+    remoteOffer->push_back(std::string("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32"));
+    remoteOffer->push_back(std::string("a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32"));
+	
+    // Register the local capabilities.
+    localCapabilities = new std::vector<sfl::CryptoSuiteDefinition>();
+    for(int i = 0; i < 3; i++) {
+        localCapabilities->push_back(sfl::CryptoSuites[i]);
+    }
+
+    sdesnego = new sfl::SdesNegotiator(*localCapabilities, *remoteOffer);
+
     CPPUNIT_ASSERT(sdesnego->negotiate());
+    // CPPUNIT_ASSERT(sdesnego->getKeyInfo().compare("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd|2^20|1:32")==0);
+
+    delete remoteOffer;
+    remoteOffer = NULL;
+
+    delete localCapabilities;
+    localCapabilities = NULL;
+
+    delete sdesnego;
+    sdesnego = NULL;
 }
 
 /**
@@ -172,6 +175,45 @@ void SdesNegotiatorTest::testComponent()
     sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator(*capabilities, *cryptoOffer);
 
     CPPUNIT_ASSERT(negotiator->negotiate() == false);
+}
+
+
+
+/**
+ * Make sure that most simple case does not fail.
+ */
+void SdesNegotiatorTest::testMostSimpleCase()
+{
+    // Register the local capabilities.
+    std::vector<sfl::CryptoSuiteDefinition> * capabilities = new std::vector<sfl::CryptoSuiteDefinition>();
+
+    //Support all the CryptoSuites
+    for(int i = 0; i < 3; i++) {
+        capabilities->push_back(sfl::CryptoSuites[i]);
+    }
+
+    // Make sure taht this case works (since it's default for most application)
+    std::string cryptoLine("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
+    std::vector<std::string> * cryptoOffer = new std::vector<std::string>();
+    cryptoOffer->push_back(cryptoLine);	
+
+    sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator(*capabilities, *cryptoOffer);
+
+    printf("negotiator->getCryptoSuite() %s\n", negotiator->getCryptoSuite().c_str());
+    printf("negotiator->getKeyMethod() %s\n", negotiator->getKeyMethod().c_str());
+    printf("negotiator->getKeyInfo() %s\n", negotiator->getKeyInfo().c_str());
+
+    CPPUNIT_ASSERT(negotiator->negotiate() == true);
+    
+    CPPUNIT_ASSERT(negotiator->getCryptoSuite().compare("AES_CM_128_HMAC_SHA1_80") == 0);
+    CPPUNIT_ASSERT(negotiator->getKeyMethod().compare("inline") == 0);
+    CPPUNIT_ASSERT(negotiator->getKeyInfo().compare("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd") == 0);
+
+    delete capabilities; capabilities = NULL;
+    delete cryptoOffer; cryptoOffer = NULL;
+    delete negotiator; negotiator = NULL;
+
+    
 }
 
 

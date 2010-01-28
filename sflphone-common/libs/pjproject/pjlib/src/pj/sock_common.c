@@ -1,4 +1,4 @@
-/* $Id: sock_common.c 2886 2009-08-17 10:10:31Z bennylp $ */
+/* $Id: sock_common.c 3037 2009-12-29 16:53:33Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -338,7 +338,7 @@ PJ_DEF(pj_bool_t) pj_sockaddr_has_addr(const pj_sockaddr_t *addr)
      * This may break some parts of upper layer libraries.
      */
     //PJ_ASSERT_RETURN(a->addr.sa_family == PJ_AF_INET ||
-    //		     a->addr.sa_family == PJ_AF_INET6, PJ_EAFNOTSUP);
+    //		     a->addr.sa_family == PJ_AF_INET6, PJ_FALSE);
 
     if (a->addr.sa_family!=PJ_AF_INET && a->addr.sa_family!=PJ_AF_INET6) {
 	return PJ_FALSE;
@@ -372,7 +372,7 @@ PJ_DEF(unsigned) pj_sockaddr_get_addr_len(const pj_sockaddr_t *addr)
 {
     const pj_sockaddr *a = (const pj_sockaddr*) addr;
     PJ_ASSERT_RETURN(a->addr.sa_family == PJ_AF_INET ||
-		     a->addr.sa_family == PJ_AF_INET6, PJ_EAFNOTSUP);
+		     a->addr.sa_family == PJ_AF_INET6, 0);
     return a->addr.sa_family == PJ_AF_INET6 ?
 	    sizeof(pj_in6_addr) : sizeof(pj_in_addr);
 }
@@ -384,7 +384,7 @@ PJ_DEF(unsigned) pj_sockaddr_get_len(const pj_sockaddr_t *addr)
 {
     const pj_sockaddr *a = (const pj_sockaddr*) addr;
     PJ_ASSERT_RETURN(a->addr.sa_family == PJ_AF_INET ||
-		     a->addr.sa_family == PJ_AF_INET6, PJ_EAFNOTSUP);
+		     a->addr.sa_family == PJ_AF_INET6, 0);
     return a->addr.sa_family == PJ_AF_INET6 ?
 	    sizeof(pj_sockaddr_in6) : sizeof(pj_sockaddr_in);
 }
@@ -1060,6 +1060,21 @@ PJ_DEF(pj_uint16_t) pj_SO_RCVBUF(void)
 PJ_DEF(pj_uint16_t) pj_SO_SNDBUF(void)
 {
     return PJ_SO_SNDBUF;
+}
+
+PJ_DEF(pj_uint16_t) pj_TCP_NODELAY(void)
+{
+    return PJ_TCP_NODELAY;
+}
+
+PJ_DEF(pj_uint16_t) pj_SO_REUSEADDR(void)
+{
+    return PJ_SO_REUSEADDR;
+}
+
+PJ_DEF(pj_uint16_t) pj_SO_PRIORITY(void)
+{
+    return PJ_SO_PRIORITY;
 }
 
 PJ_DEF(pj_uint16_t) pj_IP_MULTICAST_IF(void)

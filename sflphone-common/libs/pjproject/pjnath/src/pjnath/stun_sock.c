@@ -1,4 +1,4 @@
-/* $Id: stun_sock.c 2667 2009-04-30 17:14:50Z bennylp $ */
+/* $Id: stun_sock.c 2993 2009-11-09 04:32:33Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -136,6 +136,8 @@ PJ_DEF(void) pj_stun_sock_cfg_default(pj_stun_sock_cfg *cfg)
     cfg->max_pkt_size = PJ_STUN_SOCK_PKT_LEN;
     cfg->async_cnt = 1;
     cfg->ka_interval = PJ_STUN_KEEP_ALIVE_SEC;
+    cfg->qos_type = PJ_QOS_TYPE_BEST_EFFORT;
+    cfg->qos_ignore_error = PJ_TRUE;
 }
 
 
@@ -200,6 +202,14 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
     if (status != PJ_SUCCESS)
 	goto on_error;
 
+    /* Apply QoS, if specified */
+    status = pj_sock_apply_qos2(stun_sock->sock_fd, cfg->qos_type,
+				&cfg->qos_params, 2, stun_sock->obj_name,
+				NULL);
+    if (status != PJ_SUCCESS && !cfg->qos_ignore_error)
+	goto on_error;
+
+    /* Bind socket */
     if (pj_sockaddr_has_addr(&cfg->bound_addr)) {
 	status = pj_sock_bind(stun_sock->sock_fd, &cfg->bound_addr,
 			      pj_sockaddr_get_len(&cfg->bound_addr));
@@ -429,12 +439,11 @@ static pj_bool_t sess_fail(pj_stun_sock *stun_sock,
 			   pj_stun_sock_op op,
 			   pj_status_t status)
 {
-    char errmsg[PJ_ERR_MSG_SIZE];
     pj_bool_t ret;
 
-    pj_strerror(status, errmsg, sizeof(errmsg));
-    PJ_LOG(4,(stun_sock->obj_name, "Session failed because %s failed: %s",
-	      pj_stun_sock_op_name(op), errmsg));
+    PJ_PERROR(4,(stun_sock->obj_name, status, 
+	         "Session failed because %s failed",
+		 pj_stun_sock_op_name(op)));
 
     ret = (*stun_sock->cb.on_status)(stun_sock, op, status);
 
@@ -758,10 +767,7 @@ static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
 
     /* Log socket error */
     if (status != PJ_SUCCESS) {
-	char errmsg[PJ_ERR_MSG_SIZE];
-
-	pj_strerror(status, errmsg, sizeof(errmsg));
-	PJ_LOG(2,(stun_sock->obj_name, "recvfrom() error: %s", errmsg));
+	PJ_PERROR(2,(stun_sock->obj_name, status, "recvfrom() error"));
 	return PJ_TRUE;
     }
 

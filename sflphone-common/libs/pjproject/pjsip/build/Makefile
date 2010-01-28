@@ -8,15 +8,15 @@ include $(PJDIR)/build/common.mak
 
 RULES_MAK := $(PJDIR)/build/rules.mak
 
-PJLIB_LIB:=../../pjlib/lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
-PJLIB_UTIL_LIB:=../../pjlib-util/lib/libpjlib-util-sfl-$(TARGET_NAME)$(LIBEXT)
-PJMEDIA_LIB:=../../pjmedia/lib/libpjmedia-sfl-$(TARGET_NAME)$(LIBEXT)
-PJMEDIA_CODEC_LIB:=../../pjmedia/lib/libpjmedia-codec-sfl-$(TARGET_NAME)$(LIBEXT)
+PJLIB_LIB:=../../pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
+PJLIB_UTIL_LIB:=../../pjlib-util/lib/libpjlib-util-$(TARGET_NAME)$(LIBEXT)
+PJMEDIA_LIB:=../../pjmedia/lib/libpjmedia-$(TARGET_NAME)$(LIBEXT)
+PJMEDIA_CODEC_LIB:=../../pjmedia/lib/libpjmedia-codec-$(TARGET_NAME)$(LIBEXT)
 
-export PJSIP_LIB:=../lib/libpjsip-sfl-$(TARGET_NAME)$(LIBEXT)
-export PJSIP_UA_LIB:=../lib/libpjsip-ua-sfl-$(TARGET_NAME)$(LIBEXT)
-export PJSIP_SIMPLE_LIB:=../lib/libpjsip-simple-sfl-$(TARGET_NAME)$(LIBEXT)
-export PJSUA_LIB_LIB=../lib/libpjsua-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJSIP_LIB:=../lib/libpjsip-$(TARGET_NAME)$(LIBEXT)
+export PJSIP_UA_LIB:=../lib/libpjsip-ua-$(TARGET_NAME)$(LIBEXT)
+export PJSIP_SIMPLE_LIB:=../lib/libpjsip-simple-$(TARGET_NAME)$(LIBEXT)
+export PJSUA_LIB_LIB=../lib/libpjsua-$(TARGET_NAME)$(LIBEXT)
 
 
 ###############################################################################
@@ -41,7 +41,7 @@ export PJSIP_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 		sip_endpoint.o sip_util.o sip_util_proxy.o \
 		sip_resolve.o sip_transport.o sip_transport_loop.o \
 		sip_transport_udp.o sip_transport_tcp.o \
-		sip_transport_tls_ossl.o sip_auth_aka.o sip_auth_client.o \
+		sip_transport_tls.o sip_auth_aka.o sip_auth_client.o \
 		sip_auth_msg.o sip_auth_parser.o \
 		sip_auth_server.o \
 		sip_transaction.o sip_util_statefull.o \
@@ -64,7 +64,7 @@ export PJSIP_UA_CFLAGS += $(_CFLAGS)
 export PJSIP_SIMPLE_SRCDIR = ../src/pjsip-simple
 export PJSIP_SIMPLE_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			errno.o evsub.o evsub_msg.o iscomposing.o \
-			pidf.o presence.o presence_body.o publishc.o \
+			mwi.o pidf.o presence.o presence_body.o publishc.o \
 			rpid.o xpidf.o
 export PJSIP_SIMPLE_CFLAGS += $(_CFLAGS)
 

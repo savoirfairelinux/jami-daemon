@@ -4,7 +4,7 @@ include $(PJDIR)/build/common.mak
 RULES_MAK := $(PJDIR)/build/rules.mak
 
 
-export PJLIB_LIB := ../lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJLIB_LIB := ../lib/libpj-$(TARGET_NAME)$(LIBEXT)
 
 ###############################################################################
 # Gather all flags.
@@ -25,7 +25,8 @@ export PJLIB_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 	activesock.o array.o config.o ctype.o errno.o except.o fifobuf.o \
 	guid.o hash.o ip_helper_generic.o list.o lock.o log.o os_time_common.o \
 	pool.o pool_buf.o pool_caching.o pool_dbg.o rand.o \
-	rbtree.o sock_common.o string.o timer.o types.o
+	rbtree.o sock_common.o sock_qos_common.o sock_qos_bsd.o \
+	ssl_sock_common.o ssl_sock_ossl.o string.o timer.o types.o
 export PJLIB_CFLAGS += $(_CFLAGS)
 
 ###############################################################################
@@ -36,7 +37,7 @@ export TEST_OBJS += activesock.o atomic.o echo_clt.o errno.o exception.o \
 		    fifobuf.o file.o hash_test.o ioq_perf.o ioq_udp.o \
 		    ioq_unreg.o ioq_tcp.o \
 		    list.o mutex.o os.o pool.o pool_perf.o rand.o rbtree.o \
-		    select.o sleep.o sock.o sock_perf.o \
+		    select.o sleep.o sock.o sock_perf.o ssl_sock.o \
 		    string.o test.o thread.o timer.o timestamp.o \
 		    udp_echo_srv_sync.o udp_echo_srv_ioqueue.o \
 		    util.o

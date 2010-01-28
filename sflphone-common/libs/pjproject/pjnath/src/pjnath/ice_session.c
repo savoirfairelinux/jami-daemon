@@ -1,4 +1,4 @@
-/* $Id: ice_session.c 2827 2009-07-02 11:09:23Z nanang $ */
+/* $Id: ice_session.c 3022 2009-11-23 15:02:18Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -531,7 +531,9 @@ PJ_DEF(pj_status_t) pj_ice_sess_set_prefs(pj_ice_sess *ice,
     ice->prefs = (pj_uint8_t*) pj_pool_calloc(ice->pool, PJ_ARRAY_SIZE(prefs),
 					      sizeof(pj_uint8_t));
     for (i=0; i<4; ++i) {
+#if PJ_ICE_CAND_TYPE_PREF_BITS < 8
 	pj_assert(prefs[i] < (2 << PJ_ICE_CAND_TYPE_PREF_BITS));
+#endif
 	ice->prefs[i] = prefs[i];
     }
     return PJ_SUCCESS;
@@ -947,12 +949,24 @@ static void clist_set_state(pj_ice_sess *ice, pj_ice_sess_checklist *clist,
 }
 
 /* Sort checklist based on priority */
-static void sort_checklist(pj_ice_sess_checklist *clist)
+static void sort_checklist(pj_ice_sess *ice, pj_ice_sess_checklist *clist)
 {
     unsigned i;
+    pj_ice_sess_check **check_ptr[PJ_ICE_MAX_COMP*2];
+    unsigned check_ptr_cnt = 0;
+
+    for (i=0; i<ice->comp_cnt; ++i) {
+	if (ice->comp[i].valid_check) {
+	    check_ptr[check_ptr_cnt++] = &ice->comp[i].valid_check;
+	}
+	if (ice->comp[i].nominated_check) {
+	    check_ptr[check_ptr_cnt++] = &ice->comp[i].nominated_check;
+	}
+    }
 
     for (i=0; i<clist->count-1; ++i) {
 	unsigned j, highest = i;
+
 	for (j=i+1; j<clist->count; ++j) {
 	    if (CMP_CHECK_PRIO(&clist->checks[j], &clist->checks[highest]) > 0) {
 		highest = j;
@@ -961,12 +975,23 @@ static void sort_checklist(pj_ice_sess_checklist *clist)
 
 	if (highest != i) {
 	    pj_ice_sess_check tmp;
+	    unsigned k;
 
 	    pj_memcpy(&tmp, &clist->checks[i], sizeof(pj_ice_sess_check));
 	    pj_memcpy(&clist->checks[i], &clist->checks[highest], 
 		      sizeof(pj_ice_sess_check));
 	    pj_memcpy(&clist->checks[highest], &tmp, 
 		      sizeof(pj_ice_sess_check));
+
+	    /* Update valid and nominated check pointers, since we're moving
+	     * around checks
+	     */
+	    for (k=0; k<check_ptr_cnt; ++k) {
+		if (*check_ptr[k] == &clist->checks[highest])
+		    *check_ptr[k] = &clist->checks[i];
+		else if (*check_ptr[k] == &clist->checks[i])
+		    *check_ptr[k] = &clist->checks[highest];
+	    }
 	}
     }
 }
@@ -1099,6 +1124,7 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
 {
     pj_ice_sess *ice = (pj_ice_sess*) te->user_data;
     enum timer_type type = (enum timer_type)te->id;
+    pj_bool_t has_mutex = PJ_TRUE;
 
     PJ_UNUSED_ARG(th);
 
@@ -1114,16 +1140,27 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
 	on_ice_complete(ice, PJNATH_EICENOMTIMEOUT);
 	break;
     case TIMER_COMPLETION_CALLBACK:
-	/* Start keep-alive timer but don't send any packets yet.
-	 * Need to do it here just in case app destroy the session
-	 * in the callback.
-	 */
-	if (ice->ice_status == PJ_SUCCESS)
-	    ice_keep_alive(ice, PJ_FALSE);
+	{
+	    void (*on_ice_complete)(pj_ice_sess *ice, pj_status_t status);
+	    pj_status_t ice_status;
 
-	/* Notify app about ICE completion*/
-	if (ice->cb.on_ice_complete)
-	    (*ice->cb.on_ice_complete)(ice, ice->ice_status);
+	    /* Start keep-alive timer but don't send any packets yet.
+	     * Need to do it here just in case app destroy the session
+	     * in the callback.
+	     */
+	    if (ice->ice_status == PJ_SUCCESS)
+		ice_keep_alive(ice, PJ_FALSE);
+
+	    /* Release mutex in case app destroy us in the callback */
+	    ice_status = ice->ice_status;
+	    on_ice_complete = ice->cb.on_ice_complete;
+	    has_mutex = PJ_FALSE;
+	    pj_mutex_unlock(ice->mutex);
+
+	    /* Notify app about ICE completion*/
+	    if (on_ice_complete)
+		(*on_ice_complete)(ice, ice_status);
+	}
 	break;
     case TIMER_START_NOMINATED_CHECK:
 	start_nominated_check(ice);
@@ -1136,7 +1173,8 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
 	break;
     }
 
-    pj_mutex_unlock(ice->mutex);
+    if (has_mutex)
+	pj_mutex_unlock(ice->mutex);
 }
 
 /* Send keep-alive */
@@ -1651,7 +1689,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
     }
 
     /* Sort checklist based on priority */
-    sort_checklist(clist);
+    sort_checklist(ice, clist);
 
     /* Prune the checklist */
     status = prune_checklist(ice, clist);
@@ -1904,7 +1942,7 @@ static void start_nominated_check(pj_ice_sess *ice)
     }
 
     /* And (re)start the periodic check */
-    if (!ice->clist.timer.id) {
+    if (ice->clist.timer.id) {
 	pj_timer_heap_cancel(ice->stun_cfg.timer_heap, &ice->clist.timer);
 	ice->clist.timer.id = PJ_FALSE;
     }
@@ -2313,11 +2351,13 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
 	ice->valid_list.checks[i].nominated = check->nominated;
     }
 
-    /* Sort valid_list */
-    sort_checklist(&ice->valid_list);
-
     /* Update valid check and nominated check for the component */
     update_comp_check(ice, new_check->lcand->comp_id, new_check);
+
+    /* Sort valid_list (must do so after update_comp_check(), otherwise
+     * new_check will point to something else (#953)
+     */
+    sort_checklist(ice, &ice->valid_list);
 
     /* 7.1.2.2.2.  Updating Pair States
      * 

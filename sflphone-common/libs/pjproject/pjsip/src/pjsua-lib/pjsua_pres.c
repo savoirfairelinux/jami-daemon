@@ -1,4 +1,4 @@
-/* $Id: pjsua_pres.c 2824 2009-06-30 13:53:47Z bennylp $ */
+/* $Id: pjsua_pres.c 3031 2009-12-10 05:16:23Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -24,13 +24,14 @@
 #define THIS_FILE   "pjsua_pres.c"
 
 
-static void subscribe_buddy_presence(unsigned index);
+static void subscribe_buddy_presence(pjsua_buddy_id buddy_id);
+static void unsubscribe_buddy_presence(pjsua_buddy_id buddy_id);
 
 
 /*
  * Find buddy.
  */
-static pjsua_buddy_id pjsua_find_buddy(const pjsip_uri *uri)
+static pjsua_buddy_id find_buddy(const pjsip_uri *uri)
 {
     const pjsip_sip_uri *sip_uri;
     unsigned i;
@@ -60,6 +61,87 @@ static pjsua_buddy_id pjsua_find_buddy(const pjsip_uri *uri)
     return PJSUA_INVALID_ID;
 }
 
+#define LOCK_DIALOG	1
+#define LOCK_PJSUA	2
+#define LOCK_ALL	(LOCK_DIALOG | LOCK_PJSUA)
+
+/* Buddy lock object */
+struct buddy_lock
+{
+    pjsua_buddy	    *buddy;
+    pjsip_dialog    *dlg;
+    pj_uint8_t	     flag;
+};
+
+/* Acquire lock to the specified buddy_id */
+pj_status_t lock_buddy(const char *title,
+		       pjsua_buddy_id buddy_id,
+		       struct buddy_lock *lck,
+		       unsigned _unused_)
+{
+    enum { MAX_RETRY=50 };
+    pj_bool_t has_pjsua_lock = PJ_FALSE;
+    unsigned retry;
+
+    PJ_UNUSED_ARG(_unused_);
+
+    pj_bzero(lck, sizeof(*lck));
+
+    for (retry=0; retry<MAX_RETRY; ++retry) {
+	
+	if (PJSUA_TRY_LOCK() != PJ_SUCCESS) {
+	    pj_thread_sleep(retry/10);
+	    continue;
+	}
+
+	has_pjsua_lock = PJ_TRUE;
+	lck->flag = LOCK_PJSUA;
+	lck->buddy = &pjsua_var.buddy[buddy_id];
+
+	if (lck->buddy->dlg == NULL)
+	    return PJ_SUCCESS;
+
+	if (pjsip_dlg_try_inc_lock(lck->buddy->dlg) != PJ_SUCCESS) {
+	    lck->flag = 0;
+	    lck->buddy = NULL;
+	    has_pjsua_lock = PJ_FALSE;
+	    PJSUA_UNLOCK();
+	    pj_thread_sleep(retry/10);
+	    continue;
+	}
+
+	lck->dlg = lck->buddy->dlg;
+	lck->flag = LOCK_DIALOG;
+	PJSUA_UNLOCK();
+
+	break;
+    }
+
+    if (lck->flag == 0) {
+	if (has_pjsua_lock == PJ_FALSE)
+	    PJ_LOG(1,(THIS_FILE, "Timed-out trying to acquire PJSUA mutex "
+				 "(possibly system has deadlocked) in %s",
+				 title));
+	else
+	    PJ_LOG(1,(THIS_FILE, "Timed-out trying to acquire dialog mutex "
+				 "(possibly system has deadlocked) in %s",
+				 title));
+	return PJ_ETIMEDOUT;
+    }
+    
+    return PJ_SUCCESS;
+}
+
+/* Release buddy lock */
+static void unlock_buddy(struct buddy_lock *lck)
+{
+    if (lck->flag & LOCK_DIALOG)
+	pjsip_dlg_dec_lock(lck->dlg);
+
+    if (lck->flag & LOCK_PJSUA)
+	PJSUA_UNLOCK();
+}
+
 
 /*
  * Get total number of buddies.
@@ -86,8 +168,11 @@ PJ_DEF(pjsua_buddy_id) pjsua_buddy_find(const pj_str_t *uri_str)
     uri = pjsip_parse_uri(pool, input.ptr, input.slen, 0);
     if (!uri)
 	buddy_id = PJSUA_INVALID_ID;
-    else
-	buddy_id = pjsua_find_buddy(uri);
+    else {
+	PJSUA_LOCK();
+	buddy_id = find_buddy(uri);
+	PJSUA_UNLOCK();
+    }
 
     pj_pool_release(pool);
 
@@ -139,20 +224,22 @@ PJ_DEF(pj_status_t) pjsua_buddy_get_info( pjsua_buddy_id buddy_id,
 					  pjsua_buddy_info *info)
 {
     unsigned total=0;
+    struct buddy_lock lck;
     pjsua_buddy *buddy;
+    pj_status_t status;
 
-    PJ_ASSERT_RETURN(buddy_id>=0 && 
-		       buddy_id<(int)PJ_ARRAY_SIZE(pjsua_var.buddy), 
-		     PJ_EINVAL);
-
-    PJSUA_LOCK();
+    PJ_ASSERT_RETURN(pjsua_buddy_is_valid(buddy_id),  PJ_EINVAL);
 
     pj_bzero(info, sizeof(pjsua_buddy_info));
 
-    buddy = &pjsua_var.buddy[buddy_id];
+    status = lock_buddy("pjsua_buddy_get_info()", buddy_id, &lck, 0);
+    if (status != PJ_SUCCESS)
+	return status;
+
+    buddy = lck.buddy;
     info->id = buddy->index;
     if (pjsua_var.buddy[buddy_id].uri.slen == 0) {
-	PJSUA_UNLOCK();
+	unlock_buddy(&lck);
 	return PJ_SUCCESS;
     }
 
@@ -186,13 +273,19 @@ PJ_DEF(pj_status_t) pjsua_buddy_get_info( pjsua_buddy_id buddy_id,
 
     } else {
 	info->status = PJSUA_BUDDY_STATUS_OFFLINE;
-	info->status_text = pj_str("Offline");
+	info->rpid = buddy->status.info[0].rpid;
+
+	if (info->rpid.note.slen)
+	    info->status_text = info->rpid.note;
+	else
+	    info->status_text = pj_str("Offline");
     }
 
     /* monitor pres */
     info->monitor_pres = buddy->monitor;
 
     /* subscription state and termination reason */
+    info->sub_term_code = buddy->term_code;
     if (buddy->sub) {
 	info->sub_state = pjsip_evsub_get_state(buddy->sub);
 	info->sub_state_name = pjsip_evsub_get_state_name(buddy->sub);
@@ -218,7 +311,7 @@ PJ_DEF(pj_status_t) pjsua_buddy_get_info( pjsua_buddy_id buddy_id,
 	info->sub_term_reason = pj_str("");
     }
 
-    PJSUA_UNLOCK();
+    unlock_buddy(&lck);
     return PJ_SUCCESS;
 }
 
@@ -228,15 +321,18 @@ PJ_DEF(pj_status_t) pjsua_buddy_get_info( pjsua_buddy_id buddy_id,
 PJ_DEF(pj_status_t) pjsua_buddy_set_user_data( pjsua_buddy_id buddy_id,
 					       void *user_data)
 {
-    PJ_ASSERT_RETURN(buddy_id>=0 && 
-		       buddy_id<(int)PJ_ARRAY_SIZE(pjsua_var.buddy),
-		     PJ_EINVAL);
+    struct buddy_lock lck;
+    pj_status_t status;
 
-    PJSUA_LOCK();
+    PJ_ASSERT_RETURN(pjsua_buddy_is_valid(buddy_id), PJ_EINVAL);
+
+    status = lock_buddy("pjsua_buddy_set_user_data()", buddy_id, &lck, 0);
+    if (status != PJ_SUCCESS)
+	return status;
 
     pjsua_var.buddy[buddy_id].user_data = user_data;
 
-    PJSUA_UNLOCK();
+    unlock_buddy(&lck);
 
     return PJ_SUCCESS;
 }
@@ -247,17 +343,19 @@ PJ_DEF(pj_status_t) pjsua_buddy_set_user_data( pjsua_buddy_id buddy_id,
  */
 PJ_DEF(void*) pjsua_buddy_get_user_data(pjsua_buddy_id buddy_id)
 {
+    struct buddy_lock lck;
+    pj_status_t status;
     void *user_data;
 
-    PJ_ASSERT_RETURN(buddy_id>=0 && 
-		       buddy_id<(int)PJ_ARRAY_SIZE(pjsua_var.buddy),
-		     NULL);
+    PJ_ASSERT_RETURN(pjsua_buddy_is_valid(buddy_id), NULL);
 
-    PJSUA_LOCK();
+    status = lock_buddy("pjsua_buddy_get_user_data()", buddy_id, &lck, 0);
+    if (status != PJ_SUCCESS)
+	return NULL;
 
     user_data = pjsua_var.buddy[buddy_id].user_data;
 
-    PJSUA_UNLOCK();
+    unlock_buddy(&lck);
 
     return user_data;
 }
@@ -382,6 +480,9 @@ PJ_DEF(pj_status_t) pjsua_buddy_add( const pjsua_buddy_config *cfg,
  */
 PJ_DEF(pj_status_t) pjsua_buddy_del(pjsua_buddy_id buddy_id)
 {
+    struct buddy_lock lck;
+    pj_status_t status;
+
     PJ_ASSERT_RETURN(buddy_id>=0 && 
 			buddy_id<(int)PJ_ARRAY_SIZE(pjsua_var.buddy),
 		     PJ_EINVAL);
@@ -390,10 +491,12 @@ PJ_DEF(pj_status_t) pjsua_buddy_del(pjsua_buddy_id buddy_id)
 	return PJ_SUCCESS;
     }
 
+    status = lock_buddy("pjsua_buddy_del()", buddy_id, &lck, 0);
+    if (status != PJ_SUCCESS)
+	return status;
+
     /* Unsubscribe presence */
     pjsua_buddy_subscribe_pres(buddy_id, PJ_FALSE);
-
-    PJSUA_LOCK();
 
     /* Not interested with further events for this buddy */
     if (pjsua_var.buddy[buddy_id].sub) {
@@ -405,10 +508,16 @@ PJ_DEF(pj_status_t) pjsua_buddy_del(pjsua_buddy_id buddy_id)
     pjsua_var.buddy[buddy_id].uri.slen = 0;
     pjsua_var.buddy_cnt--;
 
+    /* Clear timer */
+    if (pjsua_var.buddy[buddy_id].timer.id) {
+	pjsua_cancel_timer(&pjsua_var.buddy[buddy_id].timer);
+	pjsua_var.buddy[buddy_id].timer.id = PJ_FALSE;
+    }
+
     /* Reset buddy struct */
     reset_buddy(buddy_id);
 
-    PJSUA_UNLOCK();
+    unlock_buddy(&lck);
     return PJ_SUCCESS;
 }
 
@@ -419,21 +528,20 @@ PJ_DEF(pj_status_t) pjsua_buddy_del(pjsua_buddy_id buddy_id)
 PJ_DEF(pj_status_t) pjsua_buddy_subscribe_pres( pjsua_buddy_id buddy_id,
 						pj_bool_t subscribe)
 {
-    pjsua_buddy *buddy;
+    struct buddy_lock lck;
+    pj_status_t status;
 
-    PJ_ASSERT_RETURN(buddy_id>=0 && 
-			buddy_id<(int)PJ_ARRAY_SIZE(pjsua_var.buddy),
-		     PJ_EINVAL);
+    PJ_ASSERT_RETURN(pjsua_buddy_is_valid(buddy_id), PJ_EINVAL);
 
-    PJSUA_LOCK();
+    status = lock_buddy("pjsua_buddy_subscribe_pres()", buddy_id, &lck, 0);
+    if (status != PJ_SUCCESS)
+	return status;
 
-    buddy = &pjsua_var.buddy[buddy_id];
-    buddy->monitor = subscribe;
+    lck.buddy->monitor = subscribe;
 
-    PJSUA_UNLOCK();
+    pjsua_buddy_update_pres(buddy_id);
 
-    pjsua_pres_refresh();
-
+    unlock_buddy(&lck);
     return PJ_SUCCESS;
 }
 
@@ -443,32 +551,32 @@ PJ_DEF(pj_status_t) pjsua_buddy_subscribe_pres( pjsua_buddy_id buddy_id,
  */
 PJ_DEF(pj_status_t) pjsua_buddy_update_pres(pjsua_buddy_id buddy_id)
 {
-    pjsua_buddy *buddy;
+    struct buddy_lock lck;
+    pj_status_t status;
 
-    PJ_ASSERT_RETURN(buddy_id>=0 && 
-			buddy_id<(int)PJ_ARRAY_SIZE(pjsua_var.buddy),
-		     PJ_EINVAL);
+    PJ_ASSERT_RETURN(pjsua_buddy_is_valid(buddy_id), PJ_EINVAL);
 
-    PJSUA_LOCK();
+    status = lock_buddy("pjsua_buddy_update_pres()", buddy_id, &lck, 0);
+    if (status != PJ_SUCCESS)
+	return status;
 
-    buddy = &pjsua_var.buddy[buddy_id];
-
-    /* Return error if buddy's presence monitoring is not enabled */
-    if (!buddy->monitor) {
-	PJSUA_UNLOCK();
-	return PJ_EINVALIDOP;
+    /* Is this an unsubscribe request? */
+    if (!lck.buddy->monitor) {
+	unsubscribe_buddy_presence(buddy_id);
+	unlock_buddy(&lck);
+	return PJ_SUCCESS;
     }
 
     /* Ignore if presence is already active for the buddy */
-    if (buddy->sub) {
-	PJSUA_UNLOCK();
+    if (lck.buddy->sub) {
+	unlock_buddy(&lck);
 	return PJ_SUCCESS;
     }
 
     /* Initiate presence subscription */
     subscribe_buddy_presence(buddy_id);
 
-    PJSUA_UNLOCK();
+    unlock_buddy(&lck);
 
     return PJ_SUCCESS;
 }
@@ -682,6 +790,14 @@ static pj_bool_t pres_on_rx_request(pjsip_rx_data *rdata)
 
     /* Incoming SUBSCRIBE: */
 
+    /* Don't want to accept the request if shutdown is in progress */
+    if (pjsua_var.thread_quit_flag) {
+	pjsip_endpt_respond_stateless(pjsua_var.endpt, rdata, 
+				      PJSIP_SC_TEMPORARILY_UNAVAILABLE, NULL,
+				      NULL, NULL);
+	return PJ_TRUE;
+    }
+
     PJSUA_LOCK();
 
     /* Find which account for the incoming request. */
@@ -797,7 +913,7 @@ static pj_bool_t pres_on_rx_request(pjsip_rx_data *rdata)
     if (pjsua_var.ua_cfg.cb.on_incoming_subscribe) {
 	pjsua_buddy_id buddy_id;
 
-	buddy_id = pjsua_find_buddy(rdata->msg_info.from->uri);
+	buddy_id = find_buddy(rdata->msg_info.from->uri);
 
 	(*pjsua_var.ua_cfg.cb.on_incoming_subscribe)(acc_id, uapres, buddy_id,
 						     &dlg->remote.info_str, 
@@ -943,7 +1059,7 @@ PJ_DEF(pj_status_t) pjsua_pres_notify( pjsua_acc_id acc_id,
 
 
     /* Subscribe to buddy's presence if we're not subscribed */
-    buddy_id = pjsua_find_buddy(srv_pres->dlg->remote.info->uri);
+    buddy_id = find_buddy(srv_pres->dlg->remote.info->uri);
     if (buddy_id != PJSUA_INVALID_ID) {
 	pjsua_buddy *b = &pjsua_var.buddy[buddy_id];
 	if (b->monitor && b->sub == NULL) {
@@ -992,7 +1108,7 @@ static void publish_cb(struct pjsip_publishc_cbparam *param)
 	}
 
     } else {
-	if (param->expiration == -1) {
+	if (param->expiration < 1) {
 	    /* Could happen if server "forgot" to include Expires header
 	     * in the response. We will not renew, so destroy the pubc.
 	     */
@@ -1073,7 +1189,10 @@ static pj_status_t send_publish(int acc_id, pj_bool_t active)
 
     /* Send the PUBLISH request */
     status = pjsip_publishc_send(acc->publish_sess, tdata);
-    if (status != PJ_SUCCESS) {
+    if (status == PJ_EPENDING) {
+	PJ_LOG(3,(THIS_FILE, "Previous request is in progress, "
+		  "PUBLISH request is queued"));
+    } else if (status != PJ_SUCCESS) {
 	pjsua_perror(THIS_FILE, "Error sending PUBLISH request", status);
 	goto on_error;
     }
@@ -1102,7 +1221,8 @@ pj_status_t pjsua_pres_init_publish_acc(int acc_id)
     if (acc_cfg->publish_enabled) {
 
 	/* Create client publication */
-	status = pjsip_publishc_create(pjsua_var.endpt, 0, acc, &publish_cb,
+	status = pjsip_publishc_create(pjsua_var.endpt, &acc_cfg->publish_opt, 
+				       acc, &publish_cb,
 				       &acc->publish_sess);
 	if (status != PJ_SUCCESS) {
 	    acc->publish_sess = NULL;
@@ -1197,10 +1317,13 @@ void pjsua_pres_delete_acc(int acc_id)
     if (acc->publish_sess) {
 	acc->online_status = PJ_FALSE;
 	send_publish(acc_id, PJ_FALSE);
+	/* By ticket #364, don't destroy the session yet (let the callback
+	   destroy it)
 	if (acc->publish_sess) {
 	    pjsip_publishc_destroy(acc->publish_sess);
 	    acc->publish_sess = NULL;
 	}
+	*/
 	acc_cfg->publish_enabled = PJ_FALSE;
     }
 }
@@ -1265,6 +1388,46 @@ void pjsua_pres_update_acc(int acc_id, pj_bool_t force)
  * Client subscription.
  */
 
+static void buddy_timer_cb(pj_timer_heap_t *th, pj_timer_entry *entry)
+{
+    pjsua_buddy *buddy = (pjsua_buddy*)entry->user_data;
+
+    PJ_UNUSED_ARG(th);
+
+    entry->id = PJ_FALSE;
+    pjsua_buddy_update_pres(buddy->index);
+}
+
+/* Reschedule subscription refresh timer or terminate the subscription
+ * refresh timer for the specified buddy.
+ */
+static void buddy_resubscribe(pjsua_buddy *buddy, pj_bool_t resched,
+			      unsigned msec_interval)
+{
+    if (buddy->timer.id) {
+	pjsua_cancel_timer(&buddy->timer);
+	buddy->timer.id = PJ_FALSE;
+    }
+
+    if (resched) {
+	pj_time_val delay;
+
+	PJ_LOG(4,(THIS_FILE,  
+	          "Resubscribing buddy id %u in %u ms (reason: %.*s)", 
+		  buddy->index, msec_interval,
+		  (int)buddy->term_reason.slen,
+		  buddy->term_reason.ptr));
+
+	pj_timer_entry_init(&buddy->timer, 0, buddy, &buddy_timer_cb);
+	delay.sec = 0;
+	delay.msec = msec_interval;
+	pj_time_val_normalize(&delay);
+
+	if (pjsua_schedule_timer(&buddy->timer, &delay)==PJ_SUCCESS)
+	    buddy->timer.id = PJ_TRUE;
+    }
+}
+
 /* Callback called when *client* subscription state has changed. */
 static void pjsua_evsub_on_state( pjsip_evsub *sub, pjsip_event *event)
 {
@@ -1272,8 +1435,10 @@ static void pjsua_evsub_on_state( pjsip_evsub *sub, pjsip_event *event)
 
     PJ_UNUSED_ARG(event);
 
-    PJSUA_LOCK();
-
+    /* Note: #937: no need to acuire PJSUA_LOCK here. Since the buddy has
+     *   a dialog attached to it, lock_buddy() will use the dialog
+     *   lock, which we are currently holding!
+     */
     buddy = (pjsua_buddy*) pjsip_evsub_get_mod_data(sub, pjsua_var.mod.id);
     if (buddy) {
 	PJ_LOG(4,(THIS_FILE, 
@@ -1283,6 +1448,8 @@ static void pjsua_evsub_on_state( pjsip_evsub *sub, pjsip_event *event)
 		  pjsip_evsub_get_state_name(sub)));
 
 	if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+	    int resub_delay = -1;
+
 	    if (buddy->term_reason.ptr == NULL) {
 		buddy->term_reason.ptr = (char*) 
 					 pj_pool_alloc(buddy->pool,
@@ -1291,7 +1458,95 @@ static void pjsua_evsub_on_state( pjsip_evsub *sub, pjsip_event *event)
 	    pj_strncpy(&buddy->term_reason, 
 		       pjsip_evsub_get_termination_reason(sub), 
 		       PJSUA_BUDDY_SUB_TERM_REASON_LEN);
+
+	    buddy->term_code = 200;
+
+	    /* Determine whether to resubscribe automatically */
+	    if (event && event->type==PJSIP_EVENT_TSX_STATE) {
+		const pjsip_transaction *tsx = event->body.tsx_state.tsx;
+		if (pjsip_method_cmp(&tsx->method, 
+				     &pjsip_subscribe_method)==0)
+		{
+		    buddy->term_code = tsx->status_code;
+		    switch (tsx->status_code) {
+		    case PJSIP_SC_CALL_TSX_DOES_NOT_EXIST:
+			/* 481: we refreshed too late? resubscribe
+			 * immediately.
+			 */
+			/* But this must only happen when the 481 is received
+			 * on subscription refresh request. We MUST NOT try to
+			 * resubscribe automatically if the 481 is received
+			 * on the initial SUBSCRIBE (if server returns this
+			 * response for some reason).
+			 */
+			if (buddy->dlg->remote.contact)
+			    resub_delay = 500;
+			break;
+		    }
+		} else if (pjsip_method_cmp(&tsx->method,
+					    &pjsip_notify_method)==0)
+		{
+		    if (pj_stricmp2(&buddy->term_reason, "deactivated")==0 ||
+			pj_stricmp2(&buddy->term_reason, "timeout")==0) {
+			/* deactivated: The subscription has been terminated, 
+			 * but the subscriber SHOULD retry immediately with 
+			 * a new subscription.
+			 */
+			/* timeout: The subscription has been terminated 
+			 * because it was not refreshed before it expired.
+			 * Clients MAY re-subscribe immediately. The 
+			 * "retry-after" parameter has no semantics for 
+			 * "timeout".
+			 */
+			resub_delay = 500;
+		    } 
+		    else if (pj_stricmp2(&buddy->term_reason, "probation")==0||
+			     pj_stricmp2(&buddy->term_reason, "giveup")==0) {
+			/* probation: The subscription has been terminated, 
+			 * but the client SHOULD retry at some later time.  
+			 * If a "retry-after" parameter is also present, the 
+			 * client SHOULD wait at least the number of seconds 
+			 * specified by that parameter before attempting to re-
+			 * subscribe.
+			 */
+			/* giveup: The subscription has been terminated because
+			 * the notifier could not obtain authorization in a 
+			 * timely fashion.  If a "retry-after" parameter is 
+			 * also present, the client SHOULD wait at least the
+			 * number of seconds specified by that parameter before
+			 * attempting to re-subscribe; otherwise, the client 
+			 * MAY retry immediately, but will likely get put back
+			 * into pending state.
+			 */
+			const pjsip_sub_state_hdr *sub_hdr;
+			pj_str_t sub_state = { "Subscription-State", 18 };
+			const pjsip_msg *msg;
+
+			msg = event->body.tsx_state.src.rdata->msg_info.msg;
+			sub_hdr = (const pjsip_sub_state_hdr*)
+				  pjsip_msg_find_hdr_by_name(msg, &sub_state,
+							     NULL);
+			if (sub_hdr && sub_hdr->retry_after > 0)
+			    resub_delay = sub_hdr->retry_after * 1000;
+		    }
+
+		}
+	    }
+
+	    /* For other cases of subscription termination, if resubscribe
+	     * timer is not set, schedule with default expiration (plus minus
+	     * some random value, to avoid sending SUBSCRIBEs all at once)
+	     */
+	    if (resub_delay == -1) {
+		pj_assert(PJSUA_PRES_TIMER >= 3);
+		resub_delay = PJSUA_PRES_TIMER*1000 - 2500 + (pj_rand()%5000);
+	    }
+
+	    buddy_resubscribe(buddy, PJ_TRUE, resub_delay);
+
 	} else {
+	    /* This will clear the last termination code/reason */
+	    buddy->term_code = 0;
 	    buddy->term_reason.slen = 0;
 	}
 
@@ -1303,11 +1558,10 @@ static void pjsua_evsub_on_state( pjsip_evsub *sub, pjsip_event *event)
 	if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
 	    buddy->sub = NULL;
 	    buddy->status.info_cnt = 0;
+	    buddy->dlg = NULL;
 	    pjsip_evsub_set_mod_data(sub, pjsua_var.mod.id, NULL);
 	}
     }
-
-    PJSUA_UNLOCK();
 }
 
 
@@ -1319,11 +1573,12 @@ static void pjsua_evsub_on_tsx_state(pjsip_evsub *sub,
     pjsua_buddy *buddy;
     pjsip_contact_hdr *contact_hdr;
 
-    PJSUA_LOCK();
-
+    /* Note: #937: no need to acuire PJSUA_LOCK here. Since the buddy has
+     *   a dialog attached to it, lock_buddy() will use the dialog
+     *   lock, which we are currently holding!
+     */
     buddy = (pjsua_buddy*) pjsip_evsub_get_mod_data(sub, pjsua_var.mod.id);
     if (!buddy) {
-	PJSUA_UNLOCK();
 	return;
     }
 
@@ -1332,7 +1587,6 @@ static void pjsua_evsub_on_tsx_state(pjsip_evsub *sub,
      */
     if (buddy->contact.slen != 0) {
 	/* Contact already set */
-	PJSUA_UNLOCK();
 	return;
     }
     
@@ -1342,7 +1596,6 @@ static void pjsua_evsub_on_tsx_state(pjsip_evsub *sub,
 	event->type != PJSIP_EVENT_RX_MSG || 
 	pjsip_method_cmp(&tsx->method, pjsip_get_subscribe_method())!=0)
     {
-	PJSUA_UNLOCK();
 	return;
     }
 
@@ -1351,7 +1604,6 @@ static void pjsua_evsub_on_tsx_state(pjsip_evsub *sub,
 		  pjsip_msg_find_hdr(event->body.rx_msg.rdata->msg_info.msg,
 				     PJSIP_H_CONTACT, NULL);
     if (!contact_hdr) {
-	PJSUA_UNLOCK();
 	return;
     }
 
@@ -1363,8 +1615,6 @@ static void pjsua_evsub_on_tsx_state(pjsip_evsub *sub,
 					   PJSIP_MAX_URL_SIZE);
     if (buddy->contact.slen < 0)
 	buddy->contact.slen = 0;
-
-    PJSUA_UNLOCK();
 }
 
 
@@ -1378,8 +1628,10 @@ static void pjsua_evsub_on_rx_notify(pjsip_evsub *sub,
 {
     pjsua_buddy *buddy;
 
-    PJSUA_LOCK();
-
+    /* Note: #937: no need to acuire PJSUA_LOCK here. Since the buddy has
+     *   a dialog attached to it, lock_buddy() will use the dialog
+     *   lock, which we are currently holding!
+     */
     buddy = (pjsua_buddy*) pjsip_evsub_get_mod_data(sub, pjsua_var.mod.id);
     if (buddy) {
 	/* Update our info. */
@@ -1394,8 +1646,6 @@ static void pjsua_evsub_on_rx_notify(pjsip_evsub *sub,
     PJ_UNUSED_ARG(p_st_text);
     PJ_UNUSED_ARG(res_hdr);
     PJ_UNUSED_ARG(p_body);
-
-    PJSUA_UNLOCK();
 }
 
 
@@ -1421,7 +1671,7 @@ static pjsip_evsub_user pres_callback =
 
 
 /* It does what it says.. */
-static void subscribe_buddy_presence(unsigned index)
+static void subscribe_buddy_presence(pjsua_buddy_id buddy_id)
 {
     pj_pool_t *tmp_pool = NULL;
     pjsua_buddy *buddy;
@@ -1431,13 +1681,13 @@ static void subscribe_buddy_presence(unsigned index)
     pjsip_tx_data *tdata;
     pj_status_t status;
 
-    buddy = &pjsua_var.buddy[index];
+    buddy = &pjsua_var.buddy[buddy_id];
     acc_id = pjsua_acc_find_for_outgoing(&buddy->uri);
 
     acc = &pjsua_var.acc[acc_id];
 
     PJ_LOG(4,(THIS_FILE, "Using account %d for buddy %d subscription",
-			 acc_id, index));
+			 acc_id, buddy_id));
 
     /* Generate suitable Contact header unless one is already set in
      * the account
@@ -1478,13 +1728,13 @@ static void subscribe_buddy_presence(unsigned index)
     status = pjsip_pres_create_uac( buddy->dlg, &pres_callback, 
 				    PJSIP_EVSUB_NO_EVENT_ID, &buddy->sub);
     if (status != PJ_SUCCESS) {
-	pjsua_var.buddy[index].sub = NULL;
+	buddy->sub = NULL;
 	pjsua_perror(THIS_FILE, "Unable to create presence client", 
 		     status);
 	/* This should destroy the dialog since there's no session
 	 * referencing it
 	 */
-	pjsip_dlg_dec_lock(buddy->dlg);
+	if (buddy->dlg) pjsip_dlg_dec_lock(buddy->dlg);
 	if (tmp_pool) pj_pool_release(tmp_pool);
 	return;
     }
@@ -1517,7 +1767,7 @@ static void subscribe_buddy_presence(unsigned index)
 
     status = pjsip_pres_initiate(buddy->sub, -1, &tdata);
     if (status != PJ_SUCCESS) {
-	pjsip_dlg_dec_lock(buddy->dlg);
+	if (buddy->dlg) pjsip_dlg_dec_lock(buddy->dlg);
 	if (buddy->sub) {
 	    pjsip_pres_terminate(buddy->sub, PJ_FALSE);
 	}
@@ -1532,7 +1782,7 @@ static void subscribe_buddy_presence(unsigned index)
 
     status = pjsip_pres_send_request(buddy->sub, tdata);
     if (status != PJ_SUCCESS) {
-	pjsip_dlg_dec_lock(buddy->dlg);
+	if (buddy->dlg) pjsip_dlg_dec_lock(buddy->dlg);
 	if (buddy->sub) {
 	    pjsip_pres_terminate(buddy->sub, PJ_FALSE);
 	}
@@ -1549,19 +1799,19 @@ static void subscribe_buddy_presence(unsigned index)
 
 
 /* It does what it says... */
-static void unsubscribe_buddy_presence(unsigned index)
+static void unsubscribe_buddy_presence(pjsua_buddy_id buddy_id)
 {
     pjsua_buddy *buddy;
     pjsip_tx_data *tdata;
     pj_status_t status;
 
-    buddy = &pjsua_var.buddy[index];
+    buddy = &pjsua_var.buddy[buddy_id];
 
     if (buddy->sub == NULL)
 	return;
 
     if (pjsip_evsub_get_state(buddy->sub) == PJSIP_EVSUB_STATE_TERMINATED) {
-	pjsua_var.buddy[index].sub = NULL;
+	buddy->sub = NULL;
 	return;
     }
 
@@ -1579,38 +1829,21 @@ static void unsubscribe_buddy_presence(unsigned index)
     }
 }
 
-
-/* Lock all buddies */
-#define LOCK_BUDDIES	unsigned cnt_ = 0; \
-			pjsip_dialog *dlg_list_[PJSUA_MAX_BUDDIES]; \
-			unsigned i_; \
-			for (i_=0; i_<PJ_ARRAY_SIZE(pjsua_var.buddy);++i_) { \
-			    if (pjsua_var.buddy[i_].sub) { \
-				dlg_list_[cnt_++] = pjsua_var.buddy[i_].dlg; \
-				pjsip_dlg_inc_lock(pjsua_var.buddy[i_].dlg); \
-			    } \
-			} \
-			PJSUA_LOCK();
-
-/* Unlock all buddies */
-#define UNLOCK_BUDDIES	PJSUA_UNLOCK(); \
-			for (i_=0; i_<cnt_; ++i_) { \
-			    pjsip_dlg_dec_lock(dlg_list_[i_]); \
-			}
-			
-
-
 /* It does what it says.. */
-static void refresh_client_subscriptions(void)
+static pj_status_t refresh_client_subscriptions(void)
 {
     unsigned i;
-
-    LOCK_BUDDIES;
+    pj_status_t status;
 
     for (i=0; i<PJ_ARRAY_SIZE(pjsua_var.buddy); ++i) {
+	struct buddy_lock lck;
 
-	if (!pjsua_var.buddy[i].uri.slen)
+	if (!pjsua_buddy_is_valid(i))
 	    continue;
+
+	status = lock_buddy("refresh_client_subscriptions()", i, &lck, 0);
+	if (status != PJ_SUCCESS)
+	    return status;
 
 	if (pjsua_var.buddy[i].monitor && !pjsua_var.buddy[i].sub) {
 	    subscribe_buddy_presence(i);
@@ -1619,10 +1852,317 @@ static void refresh_client_subscriptions(void)
 	    unsubscribe_buddy_presence(i);
 
 	}
+
+	unlock_buddy(&lck);
     }
 
-    UNLOCK_BUDDIES;
+    return PJ_SUCCESS;
 }
+
+/***************************************************************************
+ * MWI
+ */
+/* Callback called when *client* subscription state has changed. */
+static void mwi_evsub_on_state( pjsip_evsub *sub, pjsip_event *event)
+{
+    pjsua_acc *acc;
+
+    PJ_UNUSED_ARG(event);
+
+    /* Note: #937: no need to acuire PJSUA_LOCK here. Since the buddy has
+     *   a dialog attached to it, lock_buddy() will use the dialog
+     *   lock, which we are currently holding!
+     */
+    acc = (pjsua_acc*) pjsip_evsub_get_mod_data(sub, pjsua_var.mod.id);
+    if (!acc)
+	return;
+
+    PJ_LOG(4,(THIS_FILE, 
+	      "MWI subscription for %.*s is %s",
+	      (int)acc->cfg.id.slen, acc->cfg.id.ptr, 
+	      pjsip_evsub_get_state_name(sub)));
+
+    if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+	/* Clear subscription */
+	acc->mwi_dlg = NULL;
+	acc->mwi_sub = NULL;
+	pjsip_evsub_set_mod_data(sub, pjsua_var.mod.id, NULL);
+
+    }
+}
+
+/* Callback called when we receive NOTIFY */
+static void mwi_evsub_on_rx_notify(pjsip_evsub *sub, 
+				   pjsip_rx_data *rdata,
+				   int *p_st_code,
+				   pj_str_t **p_st_text,
+				   pjsip_hdr *res_hdr,
+				   pjsip_msg_body **p_body)
+{
+    pjsua_mwi_info mwi_info;
+    pjsua_acc *acc;
+
+    PJ_UNUSED_ARG(p_st_code);
+    PJ_UNUSED_ARG(p_st_text);
+    PJ_UNUSED_ARG(res_hdr);
+    PJ_UNUSED_ARG(p_body);
+
+    acc = (pjsua_acc*) pjsip_evsub_get_mod_data(sub, pjsua_var.mod.id);
+    if (!acc)
+	return;
+
+    /* Construct mwi_info */
+    pj_bzero(&mwi_info, sizeof(mwi_info));
+    mwi_info.evsub = sub;
+    mwi_info.rdata = rdata;
+
+    /* Call callback */
+    if (pjsua_var.ua_cfg.cb.on_mwi_info) {
+	(*pjsua_var.ua_cfg.cb.on_mwi_info)(acc->index, &mwi_info);
+    }
+}
+
+
+/* Event subscription callback. */
+static pjsip_evsub_user mwi_cb = 
+{
+    &mwi_evsub_on_state,  
+    NULL,   /* on_tsx_state: not interested */
+    NULL,   /* on_rx_refresh: don't care about SUBSCRIBE refresh, unless 
+	     * we want to authenticate 
+	     */
+
+    &mwi_evsub_on_rx_notify,
+
+    NULL,   /* on_client_refresh: Use default behaviour, which is to 
+	     * refresh client subscription. */
+
+    NULL,   /* on_server_timeout: Use default behaviour, which is to send 
+	     * NOTIFY to terminate. 
+	     */
+};
+
+void pjsua_start_mwi(pjsua_acc *acc)
+{
+    pj_pool_t *tmp_pool = NULL;
+    pj_str_t contact;
+    pjsip_tx_data *tdata;
+    pj_status_t status;
+
+    if (!acc->cfg.mwi_enabled) {
+	if (acc->mwi_sub) {
+	    /* Terminate MWI subscription */
+	    pjsip_tx_data *tdata;
+	    pjsip_evsub *sub = acc->mwi_sub;
+
+	    /* Detach sub from this account */
+	    acc->mwi_sub = NULL;
+	    acc->mwi_dlg = NULL;
+	    pjsip_evsub_set_mod_data(sub, pjsua_var.mod.id, NULL);
+
+	    /* Unsubscribe */
+	    status = pjsip_mwi_initiate(acc->mwi_sub, 0, &tdata);
+	    if (status == PJ_SUCCESS) {
+		status = pjsip_mwi_send_request(acc->mwi_sub, tdata);
+	    }
+	}
+	return;
+    }
+
+    if (acc->mwi_sub) {
+	/* Subscription is already active */
+	return;
+
+    }
+
+    /* Generate suitable Contact header unless one is already set in 
+     * the account
+     */
+    if (acc->contact.slen) {
+	contact = acc->contact;
+    } else {
+	tmp_pool = pjsua_pool_create("tmpmwi", 512, 256);
+	status = pjsua_acc_create_uac_contact(tmp_pool, &contact,
+					      acc->index, &acc->cfg.id);
+	if (status != PJ_SUCCESS) {
+	    pjsua_perror(THIS_FILE, "Unable to generate Contact header", 
+		         status);
+	    pj_pool_release(tmp_pool);
+	    return;
+	}
+    }
+
+    /* Create UAC dialog */
+    status = pjsip_dlg_create_uac( pjsip_ua_instance(),
+				   &acc->cfg.id,
+				   &contact,
+				   &acc->cfg.id,
+				   NULL, &acc->mwi_dlg);
+    if (status != PJ_SUCCESS) {
+	pjsua_perror(THIS_FILE, "Unable to create dialog", status);
+	if (tmp_pool) pj_pool_release(tmp_pool);
+	return;
+    }
+
+    /* Increment the dialog's lock otherwise when presence session creation
+     * fails the dialog will be destroyed prematurely.
+     */
+    pjsip_dlg_inc_lock(acc->mwi_dlg);
+
+    /* Create UAC subscription */
+    status = pjsip_mwi_create_uac(acc->mwi_dlg, &mwi_cb, 
+				  PJSIP_EVSUB_NO_EVENT_ID, &acc->mwi_sub);
+    if (status != PJ_SUCCESS) {
+	pjsua_perror(THIS_FILE, "Error creating MWI subscription", status);
+	if (tmp_pool) pj_pool_release(tmp_pool);
+	if (acc->mwi_dlg) pjsip_dlg_dec_lock(acc->mwi_dlg);
+	return;
+    }
+
+    /* If account is locked to specific transport, then lock dialog
+     * to this transport too.
+     */
+    if (acc->cfg.transport_id != PJSUA_INVALID_ID) {
+	pjsip_tpselector tp_sel;
+
+	pjsua_init_tpselector(acc->cfg.transport_id, &tp_sel);
+	pjsip_dlg_set_transport(acc->mwi_dlg, &tp_sel);
+    }
+
+    /* Set route-set */
+    if (!pj_list_empty(&acc->route_set)) {
+	pjsip_dlg_set_route_set(acc->mwi_dlg, &acc->route_set);
+    }
+
+    /* Set credentials */
+    if (acc->cred_cnt) {
+	pjsip_auth_clt_set_credentials( &acc->mwi_dlg->auth_sess, 
+					acc->cred_cnt, acc->cred);
+    }
+
+    /* Set authentication preference */
+    pjsip_auth_clt_set_prefs(&acc->mwi_dlg->auth_sess, &acc->cfg.auth_pref);
+
+    pjsip_evsub_set_mod_data(acc->mwi_sub, pjsua_var.mod.id, acc);
+
+    status = pjsip_mwi_initiate(acc->mwi_sub, -1, &tdata);
+    if (status != PJ_SUCCESS) {
+	if (acc->mwi_dlg) pjsip_dlg_dec_lock(acc->mwi_dlg);
+	if (acc->mwi_sub) {
+	    pjsip_pres_terminate(acc->mwi_sub, PJ_FALSE);
+	}
+	acc->mwi_sub = NULL;
+	acc->mwi_dlg = NULL;
+	pjsua_perror(THIS_FILE, "Unable to create initial MWI SUBSCRIBE", 
+		     status);
+	if (tmp_pool) pj_pool_release(tmp_pool);
+	return;
+    }
+
+    pjsua_process_msg_data(tdata, NULL);
+
+    status = pjsip_pres_send_request(acc->mwi_sub, tdata);
+    if (status != PJ_SUCCESS) {
+	if (acc->mwi_dlg) pjsip_dlg_dec_lock(acc->mwi_dlg);
+	if (acc->mwi_sub) {
+	    pjsip_pres_terminate(acc->mwi_sub, PJ_FALSE);
+	}
+	acc->mwi_sub = NULL;
+	acc->mwi_dlg = NULL;
+	pjsua_perror(THIS_FILE, "Unable to send initial MWI SUBSCRIBE", 
+		     status);
+	if (tmp_pool) pj_pool_release(tmp_pool);
+	return;
+    }
+
+    pjsip_dlg_dec_lock(acc->mwi_dlg);
+    if (tmp_pool) pj_pool_release(tmp_pool);
+
+}
+
+
+/***************************************************************************
+ * Unsolicited MWI
+ */
+static pj_bool_t unsolicited_mwi_on_rx_request(pjsip_rx_data *rdata)
+{
+    pjsip_msg *msg = rdata->msg_info.msg;
+    pj_str_t EVENT_HDR  = { "Event", 5 };
+    pj_str_t MWI = { "message-summary", 15 };
+    pjsip_event_hdr *eh;
+
+    if (pjsip_method_cmp(&msg->line.req.method, &pjsip_notify_method)!=0) {
+	/* Only interested with NOTIFY request */
+	return PJ_FALSE;
+    }
+
+    eh = (pjsip_event_hdr*) pjsip_msg_find_hdr_by_name(msg, &EVENT_HDR, NULL);
+    if (!eh) {
+	/* Something wrong with the request, it has no Event hdr */
+	return PJ_FALSE;
+    }
+
+    if (pj_stricmp(&eh->event_type, &MWI) != 0) {
+	/* Not MWI event */
+	return PJ_FALSE;
+    }
+
+    /* Got unsolicited MWI request, respond with 200/OK first */
+    pjsip_endpt_respond(pjsua_get_pjsip_endpt(), NULL, rdata, 200, NULL,
+			NULL, NULL, NULL);
+
+
+    /* Call callback */
+    if (pjsua_var.ua_cfg.cb.on_mwi_info) {
+	pjsua_acc_id acc_id;
+	pjsua_mwi_info mwi_info;
+
+	acc_id = pjsua_acc_find_for_incoming(rdata);
+
+	pj_bzero(&mwi_info, sizeof(mwi_info));
+	mwi_info.rdata = rdata;
+
+	(*pjsua_var.ua_cfg.cb.on_mwi_info)(acc_id, &mwi_info);
+    }
+
+    
+    return PJ_TRUE;
+}
+
+/* The module instance. */
+static pjsip_module pjsua_unsolicited_mwi_mod = 
+{
+    NULL, NULL,				/* prev, next.		*/
+    { "mod-unsolicited-mwi", 19 },	/* Name.		*/
+    -1,					/* Id			*/
+    PJSIP_MOD_PRIORITY_APPLICATION,	/* Priority	        */
+    NULL,				/* load()		*/
+    NULL,				/* start()		*/
+    NULL,				/* stop()		*/
+    NULL,				/* unload()		*/
+    &unsolicited_mwi_on_rx_request,	/* on_rx_request()	*/
+    NULL,				/* on_rx_response()	*/
+    NULL,				/* on_tx_request.	*/
+    NULL,				/* on_tx_response()	*/
+    NULL,				/* on_tsx_state()	*/
+};
+
+static pj_status_t enable_unsolicited_mwi(void)
+{
+    pj_status_t status;
+
+    status = pjsip_endpt_register_module(pjsua_get_pjsip_endpt(), 
+					 &pjsua_unsolicited_mwi_mod);
+    if (status != PJ_SUCCESS)
+	pjsua_perror(THIS_FILE, "Error registering unsolicited MWI module", 
+		     status);
+
+    return status;
+}
+
+
+
+/***************************************************************************/
 
 /* Timer callback to re-create client subscription */
 static void pres_timer_cb(pj_timer_heap_t *th,
@@ -1631,15 +2171,25 @@ static void pres_timer_cb(pj_timer_heap_t *th,
     unsigned i;
     pj_time_val delay = { PJSUA_PRES_TIMER, 0 };
 
-    /* Retry failed PUBLISH requests */
+    entry->id = PJ_FALSE;
+
+    /* Retry failed PUBLISH and MWI SUBSCRIBE requests */
     for (i=0; i<PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
 	pjsua_acc *acc = &pjsua_var.acc[i];
+
+	/* Retry PUBLISH */
 	if (acc->cfg.publish_enabled && acc->publish_sess==NULL)
 	    pjsua_pres_init_publish_acc(acc->index);
+
+	/* Re-subscribe MWI subscription if it's terminated prematurely */
+	if (acc->cfg.mwi_enabled && !acc->mwi_sub)
+	    pjsua_start_mwi(acc);
     }
 
-    entry->id = PJ_FALSE;
-    refresh_client_subscriptions();
+    /* #937: No need to do bulk client refresh, as buddies have their
+     *       own individual timer now.
+     */
+    //refresh_client_subscriptions();
 
     pjsip_endpt_schedule_timer(pjsua_var.endpt, entry, &delay);
     entry->id = PJ_TRUE;
@@ -1687,23 +2237,13 @@ pj_status_t pjsua_pres_start(void)
 	pjsua_var.pres_timer.id = PJ_TRUE;
     }
 
-    return PJ_SUCCESS;
-}
-
-
-/*
- * Refresh presence subscriptions
- */
-void pjsua_pres_refresh()
-{
-    unsigned i;
-
-    refresh_client_subscriptions();
-
-    for (i=0; i<PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
-	if (pjsua_var.acc[i].valid)
-	    pjsua_pres_update_acc(i, PJ_FALSE);
+    if (pjsua_var.ua_cfg.enable_unsolicited_mwi) {
+	pj_status_t status = enable_unsolicited_mwi();
+	if (status != PJ_SUCCESS)
+	    return status;
     }
+
+    return PJ_SUCCESS;
 }
 
 
@@ -1713,6 +2253,8 @@ void pjsua_pres_refresh()
 void pjsua_pres_shutdown(void)
 {
     unsigned i;
+
+    PJ_LOG(4,(THIS_FILE, "Shutting down presence.."));
 
     if (pjsua_var.pres_timer.id != 0) {
 	pjsip_endpt_cancel_timer(pjsua_var.endpt, &pjsua_var.pres_timer);
@@ -1729,5 +2271,10 @@ void pjsua_pres_shutdown(void)
 	pjsua_var.buddy[i].monitor = 0;
     }
 
-    pjsua_pres_refresh();
+    refresh_client_subscriptions();
+
+    for (i=0; i<PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
+	if (pjsua_var.acc[i].valid)
+	    pjsua_pres_update_acc(i, PJ_FALSE);
+    }
 }

@@ -1,7 +1,7 @@
 #ifndef PA_WIN_WMME_H
 #define PA_WIN_WMME_H
 /*
- * $Id: pa_win_wmme.h 1337 2008-02-15 07:32:09Z rossb $
+ * $Id: pa_win_wmme.h 1405 2009-03-08 08:10:55Z rossb $
  * PortAudio Portable Real-Time Audio Library
  * MME specific extensions
  *
@@ -53,6 +53,10 @@ extern "C"
 #endif /* __cplusplus */
 
 
+/* The following are flags which can be set in 
+  PaWinMmeStreamInfo's flags field.
+*/
+
 #define paWinMmeUseLowLevelLatencyParameters            (0x01)
 #define paWinMmeUseMultipleDevices                      (0x02)  /* use mme specific multiple device feature */
 #define paWinMmeUseChannelMask                          (0x04)
@@ -63,6 +67,11 @@ extern "C"
     run at THREAD_PRIORITY_TIME_CRITICAL.
 */
 #define paWinMmeDontThrottleOverloadedProcessingThread  (0x08)
+
+/*  Flags for non-PCM spdif passthrough.
+*/
+#define paWinMmeWaveFormatDolbyAc3Spdif                 (0x10)
+#define paWinMmeWaveFormatWmaSpdif                      (0x20)
 
 
 typedef struct PaWinMmeDeviceAndChannelCount{

@@ -1,4 +1,4 @@
-/* $Id: pjsip_simple.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: pjsip_simple.h 2968 2009-10-26 11:21:37Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -35,7 +35,9 @@
 #define __PJSIP_SIMPLE_H__
 
 #include <pjsip-simple/evsub.h>
+#include <pjsip-simple/evsub_msg.h>
 #include <pjsip-simple/iscomposing.h>
+#include <pjsip-simple/mwi.h>
 #include <pjsip-simple/presence.h>
 #include <pjsip-simple/pidf.h>
 #include <pjsip-simple/publish.h>

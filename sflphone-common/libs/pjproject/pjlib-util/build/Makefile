@@ -7,8 +7,8 @@ include $(PJDIR)/build/common.mak
 
 RULES_MAK := $(PJDIR)/build/rules.mak
 
-PJLIB_LIB:=$(PJDIR)/pjlib/lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
-export PJLIB_UTIL_LIB:=../lib/libpjlib-util-sfl-$(TARGET_NAME)$(LIBEXT)
+PJLIB_LIB:=$(PJDIR)/pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
+export PJLIB_UTIL_LIB:=../lib/libpjlib-util-$(TARGET_NAME)$(LIBEXT)
 
 ###############################################################################
 # Gather all flags.

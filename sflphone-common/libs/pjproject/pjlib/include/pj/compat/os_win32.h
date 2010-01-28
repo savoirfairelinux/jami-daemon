@@ -1,4 +1,4 @@
-/* $Id: os_win32.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: os_win32.h 3002 2009-11-10 04:30:46Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -41,6 +41,7 @@
 #define PJ_HAS_MALLOC_H		    1
 #define PJ_HAS_NETDB_H		    0
 #define PJ_HAS_NETINET_IN_H	    0
+#define PJ_HAS_NETINET_TCP_H	    0
 #define PJ_HAS_SETJMP_H		    1
 #define PJ_HAS_STDARG_H		    1
 #define PJ_HAS_STDDEF_H		    1
@@ -110,7 +111,12 @@
 #ifndef PJ_OS_HAS_CHECK_STACK
 #   define PJ_OS_HAS_CHECK_STACK	1
 #endif
-#define PJ_NATIVE_STRING_IS_UNICODE	0
+
+#ifdef UNICODE
+#   define PJ_NATIVE_STRING_IS_UNICODE    1
+#else
+#   define PJ_NATIVE_STRING_IS_UNICODE    0
+#endif
 
 #define PJ_ATOMIC_VALUE_TYPE		long
 

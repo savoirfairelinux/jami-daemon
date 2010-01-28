@@ -1,4 +1,4 @@
-/* $Id: pjsua_acc.c 2855 2009-08-05 18:41:23Z nanang $ */
+/* $Id: pjsua_acc.c 3032 2009-12-14 11:13:45Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -328,7 +328,11 @@ PJ_DEF(pj_status_t) pjsua_acc_add( const pjsua_acc_config *cfg,
     /* If accounts has registration enabled, start registration */
     if (pjsua_var.acc[id].cfg.reg_uri.slen)
 	pjsua_acc_set_registration(id, PJ_TRUE);
-
+    else {
+	/* Otherwise subscribe to MWI, if it's enabled */
+	if (pjsua_var.acc[id].cfg.mwi_enabled)
+	    pjsua_start_mwi(&pjsua_var.acc[id]);
+    }
 
     return PJ_SUCCESS;
 }
@@ -683,6 +687,19 @@ static pj_bool_t acc_check_nat_addr(pjsua_acc *acc,
 	return PJ_FALSE;
     }
 
+    /* Also don't switch if only the port number part is different, and
+     * the Via received address is private.
+     * See http://trac.pjsip.org/repos/ticket/864
+     */
+    if (acc->cfg.allow_contact_rewrite != 2 &&
+	pj_sockaddr_cmp(&contact_addr, &recv_addr)==0 &&
+	is_private_ip(via_addr))
+    {
+	/* Don't switch */
+	pj_pool_release(pool);
+	return PJ_FALSE;
+    }
+
     PJ_LOG(3,(THIS_FILE, "IP address change detected for account %d "
 			 "(%.*s:%d --> %.*s:%d). Updating registration..",
 			 acc->index,
@@ -739,16 +756,9 @@ static pj_bool_t acc_check_nat_addr(pjsua_acc *acc,
 	pj_strdup2_with_null(acc->pool, &acc->contact, tmp);
     }
 
-    /* For UDP transport, if STUN is enabled then update the transport's
-     * published name as well.
-     */
-    if (tp->key.type==PJSIP_TRANSPORT_UDP &&
-	(pjsua_var.ua_cfg.stun_domain.slen != 0 ||
-	 pjsua_var.ua_cfg.stun_host.slen != 0))
-    {
-	pj_strdup_with_null(tp->pool, &tp->local_name.host, via_addr);
-	tp->local_name.port = rport;
-    }
+    /* Always update, by http://trac.pjsip.org/repos/ticket/864. */
+    pj_strdup_with_null(tp->pool, &tp->local_name.host, via_addr);
+    tp->local_name.port = rport;
 
     /* Perform new registration */
     pjsua_acc_set_registration(acc->index, PJ_TRUE);
@@ -1056,6 +1066,10 @@ static void regc_cb(struct pjsip_regc_cbparam *param)
 	    /* Send initial PUBLISH if it is enabled */
 	    if (acc->cfg.publish_enabled && acc->publish_sess==NULL)
 		pjsua_pres_init_publish_acc(acc->index);
+
+	    /* Subscribe to MWI, if it's enabled */
+	    if (acc->cfg.mwi_enabled)
+		pjsua_start_mwi(acc);
 	}
 
     } else {
@@ -1597,7 +1611,17 @@ PJ_DEF(pj_status_t) pjsua_acc_create_request(pjsua_acc_id acc_id,
 			  (pjsip_hdr*)pjsip_hdr_clone(tdata->pool, r));
 	r = r->next;
     }
-    
+
+    /* If account is locked to specific transport, then set that transport to
+     * the transmit data.
+     */
+    if (pjsua_var.acc[acc_id].cfg.transport_id != PJSUA_INVALID_ID) {
+	pjsip_tpselector tp_sel;
+
+	pjsua_init_tpselector(acc->cfg.transport_id, &tp_sel);
+	pjsip_tx_data_set_transport(tdata, &tp_sel);
+    }
+
     /* Done */
     *p_tdata = tdata;
     return PJ_SUCCESS;

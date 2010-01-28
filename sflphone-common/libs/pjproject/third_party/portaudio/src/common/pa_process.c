@@ -1,5 +1,5 @@
 /*
- * $Id: pa_process.c 1341 2008-02-15 11:43:43Z rossb $
+ * $Id: pa_process.c 1408 2009-03-13 16:41:39Z rossb $
  * Portable Audio I/O Library
  * streamCallback <-> host buffer processing adapter
  *
@@ -997,7 +997,7 @@ static unsigned long AdaptingInputOnlyProcess( PaUtilBufferProcessor *bp,
                         bp->framesPerUserBuffer, bp->timeInfo,
                         bp->callbackStatusFlags, bp->userData );
 
-                bp->timeInfo->inputBufferAdcTime += frameCount * bp->samplePeriod;
+                bp->timeInfo->inputBufferAdcTime += bp->framesPerUserBuffer * bp->samplePeriod;
             }
             
             bp->framesInTempInputBuffer = 0;
