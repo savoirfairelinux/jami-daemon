@@ -65,9 +65,9 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
     CPPUNIT_TEST( testTagPattern );
     CPPUNIT_TEST( testCryptoSuitePattern );
     CPPUNIT_TEST( testKeyParamsPattern );
-    CPPUNIT_TEST( testKeyParamsPatternCiscoStyle );    
+    CPPUNIT_TEST( testKeyParamsPatternWithoutMKI );
     CPPUNIT_TEST( testNegotiation );
-    //CPPUNIT_TEST( testMostSimpleCase );
+    CPPUNIT_TEST( testMostSimpleCase );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -93,6 +93,8 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
 		void testKeyParamsPattern();
 		
         void testKeyParamsPatternCiscoStyle();
+
+		void testKeyParamsPatternWithoutMKI();
 
 		void testNegotiation();
 		

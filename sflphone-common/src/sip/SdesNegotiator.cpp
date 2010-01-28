@@ -65,23 +65,12 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
             "F8_128_HMAC_SHA1_80|" \
             "[A-Za-z0-9_]+)"); // srtp-crypto-suite-ext
 
-        keyParamsPattern = new Pattern (
-            "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
-            "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
-            "(?:2\\^(?P<lifetime>[0-9]+)\\|" \
-            "(?P<mkiValue>[0-9]+)\\:" \
-            "(?P<mkiLength>[0-9]{1,3})\\;?)?","g");
-
-	// "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|(?:2\\^(?P<lifetime>[0-9]+)\\|(?P<mkiValue>[0-9]+)\\:(?P<mkiLength>[0-9]{1,3})\\;?)?"
-
-	/*
 	keyParamsPattern = new Pattern (
-            "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
-            "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
-            "2\\^(?P<lifetime>[0-9]+)\\|" \
-            "(?P<mkiValue>[0-9]+)\\:" \
-            "(?P<mkiLength>[0-9]{1,3})\\;?", "g");
-	*/
+	    "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+	    "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)"	 \
+	    "(\\|2\\^(?P<lifetime>[0-9]+)\\|"		 \
+	    "(?P<mkiValue>[0-9]+)\\:"			 \
+	    "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
 
         sessionParamPattern = new Pattern (
             "(?P<sessionParam>(kdr\\=[0-9]{1,2}|" \
@@ -150,7 +139,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 	if (cryptoSuitePattern->matches()) {
 	    try {
 	        // std::cout << "Parsing the crypto suite field";
-	        cryptoSuite  = cryptoSuitePattern->group ("cryptoSuite");
+	        cryptoSuite = cryptoSuitePattern->group ("cryptoSuite");
 		// std::cout << ": " << cryptoSuite << std::endl;
 	    } catch (match_error& exception) {
 	        throw parse_error ("Error while parsing the crypto-suite field");
@@ -169,18 +158,12 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
 	std::string mkiValue;
 	
         try {
-            while (keyParamsPattern->matches()) {
-	        // std::cout << "Parsing the key parameters: " << std::endl;  
+            while(keyParamsPattern->matches()) {
                 srtpKeyMethod = keyParamsPattern->group ("srtpKeyMethod");
-		// std::cout << " method: "<< srtpKeyMethod << std::endl;  
                 srtpKeyInfo = keyParamsPattern->group ("srtpKeyInfo");
-		// std::cout << " info: "<< srtpKeyInfo << std::endl;  
                 lifetime = keyParamsPattern->group ("lifetime");
-		// std::cout << " lifetime: "<< lifetime << std::endl;  
                 mkiValue = keyParamsPattern->group ("mkiValue");
-		// std::cout << " mkiValue: "<< mkiValue << std::endl;
                 mkiLength = keyParamsPattern->group ("mkiLength");
-		// std::cout << " mkiLength: "<< mkiLength << std::endl;
             }
         } catch (match_error& exception) {
             throw parse_error ("Error while parsing the key-params field");
