@@ -62,10 +62,11 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE( SdesNegotiatorTest );
-    // CPPUNIT_TEST( testTagPattern );
-    // CPPUNIT_TEST( testCryptoSuitePattern );
-    // CPPUNIT_TEST( testKeyParamsPattern );
-    // CPPUNIT_TEST( testNegotiation );
+    CPPUNIT_TEST( testTagPattern );
+    CPPUNIT_TEST( testCryptoSuitePattern );
+    CPPUNIT_TEST( testKeyParamsPattern );
+    CPPUNIT_TEST( testKeyParamsPatternWithoutMKI );
+    CPPUNIT_TEST( testNegotiation );
     CPPUNIT_TEST( testMostSimpleCase );
     CPPUNIT_TEST_SUITE_END();
 
@@ -90,6 +91,8 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
 		void testCryptoSuitePattern();
 
 		void testKeyParamsPattern();
+
+		void testKeyParamsPatternWithoutMKI();
 
 		void testNegotiation();
 		

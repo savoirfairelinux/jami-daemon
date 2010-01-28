@@ -89,18 +89,45 @@ void SdesNegotiatorTest::testKeyParamsPattern()
 
     pattern = new sfl::Pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
 			       "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
-			       "2\\^(?P<lifetime>[0-9]+)\\|"		\
+			       "(2\\^(?P<lifetime>[0-9]+)\\|"		\
 			       "(?P<mkiValue>[0-9]+)\\:"		\
-			       "(?P<mkiLength>[0-9]{1,3})\\;?", "g");
+			       "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
 
     *pattern << subject;
 
     pattern->matches();
     CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
+    CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj")
+== 0);
+    CPPUNIT_ASSERT(pattern->group("lifetime").compare("20")== 0);
+    CPPUNIT_ASSERT(pattern->group("mkiValue").compare("1")== 0);
+    CPPUNIT_ASSERT(pattern->group("mkiLength").compare("32")== 0);
 
     delete pattern;
     pattern = NULL;
 }
+
+void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
+{
+
+    std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj";
+
+    pattern = new sfl::Pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+                               "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)" \
+                               "(\\|2\\^(?P<lifetime>[0-9]+)\\|"                \
+                               "(?P<mkiValue>[0-9]+)\\:"                \
+                               "(?P<mkiLength>[0-9]{1,3})\\;?)?", "g");
+
+    *pattern << subject;
+    pattern->matches();
+    CPPUNIT_ASSERT(pattern->group("srtpKeyMethod").compare("inline:"));
+    CPPUNIT_ASSERT(pattern->group("srtpKeyInfo").compare("d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj")
+== 0);
+
+    delete pattern;
+    pattern = NULL;
+}
+
 
 /**
  * Make sure that all the fields can be extracted
@@ -179,15 +206,14 @@ void SdesNegotiatorTest::testMostSimpleCase()
 
     sfl::SdesNegotiator * negotiator = new sfl::SdesNegotiator(*capabilities, *cryptoOffer);
 
-    printf("negotiator->getCryptoSuite() %s\n", negotiator->getCryptoSuite().c_str());
-    printf("negotiator->getKeyMethod() %s\n", negotiator->getKeyMethod().c_str());
-    printf("negotiator->getKeyInfo() %s\n", negotiator->getKeyInfo().c_str());
-
     CPPUNIT_ASSERT(negotiator->negotiate() == true);
-    
+
     CPPUNIT_ASSERT(negotiator->getCryptoSuite().compare("AES_CM_128_HMAC_SHA1_80") == 0);
     CPPUNIT_ASSERT(negotiator->getKeyMethod().compare("inline") == 0);
     CPPUNIT_ASSERT(negotiator->getKeyInfo().compare("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd") == 0);
+    CPPUNIT_ASSERT(negotiator->getLifeTime().compare("")== 0);
+    CPPUNIT_ASSERT(negotiator->getMkiValue().compare("")== 0);
+    CPPUNIT_ASSERT(negotiator->getMkiLength().compare("")== 0);
 
     delete capabilities; capabilities = NULL;
     delete cryptoOffer; cryptoOffer = NULL;

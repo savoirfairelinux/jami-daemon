@@ -25,9 +25,9 @@ namespace sfl
 
 Pattern::Pattern (const std::string& pattern, const std::string& options) :
         _pattern (pattern),
+	_re (NULL),
         _ovector (NULL),
         _ovectorSize (0),
-        _re (NULL),
         _count (0),
         _options (0)
 {
@@ -139,8 +139,6 @@ std::string Pattern::group (int groupNumber)
 {
     const char * stringPtr;
 
-    // printf("_subject.substr : %s\n", _subject.substr (_offset[0]).c_str());
-
     int rc = pcre_get_substring (
                  _subject.substr (_offset[0]).c_str(),
                  _ovector,
@@ -180,12 +178,13 @@ std::string Pattern::group (const std::string& groupName)
                  _count,
                  groupName.c_str(),
                  &stringPtr);
-    
+
     if (rc < 0) {
         switch (rc) {
 
             case PCRE_ERROR_NOSUBSTRING:
-                throw std::out_of_range ("Invalid group reference.");
+	        
+		break;
 
             case PCRE_ERROR_NOMEMORY:
                 throw match_error ("Memory exhausted.");
@@ -195,14 +194,23 @@ std::string Pattern::group (const std::string& groupName)
         }
     }
 
-    std::string matchedStr (stringPtr);
+    std::string matchedStr;
 
-    pcre_free_substring (stringPtr);
+    if(stringPtr) {
+
+	matchedStr = stringPtr;
+	pcre_free_substring (stringPtr);
+    }
+    else {
+
+         matchedStr = "";
+    }
 
     return matchedStr;
+
 }
 
-size_t Pattern::start (const std::string& groupName) const
+void Pattern::start (const std::string& groupName) const
 {
     int index = pcre_get_stringnumber (_re, groupName.c_str());
     start (index);
@@ -210,7 +218,7 @@ size_t Pattern::start (const std::string& groupName) const
 
 size_t Pattern::start (unsigned int groupNumber) const
 {
-    if (groupNumber <= _count) {
+  if (groupNumber <= (unsigned int)_count) {
         return _ovector[ (groupNumber + 1) * 2];
     } else {
         throw std::out_of_range ("Invalid group reference.");
@@ -222,7 +230,7 @@ size_t Pattern::start (void) const
     return _ovector[0] + _offset[0];
 }
 
-size_t Pattern::end (const std::string& groupName) const
+void Pattern::end (const std::string& groupName) const
 {
     int index = pcre_get_stringnumber (_re, groupName.c_str());
     end (index);
@@ -230,7 +238,7 @@ size_t Pattern::end (const std::string& groupName) const
 
 size_t Pattern::end (unsigned int groupNumber) const
 {
-    if (groupNumber <= _count) {
+  if (groupNumber <= (unsigned int)_count) {
         return _ovector[ ( (groupNumber + 1) * 2) + 1 ] - 1;
     } else {
         throw std::out_of_range ("Invalid group reference.");
@@ -249,6 +257,7 @@ bool Pattern::matches (void) throw (match_error)
 
 bool Pattern::matches (const std::string& subject) throw (match_error)
 {
+
     // Try to find a match for this pattern
     int rc = pcre_exec (
                  _re,
@@ -259,6 +268,8 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
                  _options,
                  _ovector,
                  _ovectorSize);
+
+  
 
     // Matching failed.
     if (rc < 0) {
