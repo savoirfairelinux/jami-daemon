@@ -110,9 +110,9 @@
 
 /** Account details */
 #define ACCOUNT_TYPE                      "Account.type"
-#define ACCOUNT_ALIAS		               "Account.alias"
-#define ACCOUNT_ENABLED		               "Account.enable"
-#define ACCOUNT_MAILBOX		               "Account.mailbox"
+#define ACCOUNT_ALIAS		          "Account.alias"
+#define ACCOUNT_ENABLED		          "Account.enable"
+#define ACCOUNT_MAILBOX		          "Account.mailbox"
 #define ACCOUNT_HOSTNAME                  "hostname"
 #define ACCOUNT_RESOLVE_ONCE              "Account.resolveOnce"
 #define ACCOUNT_EXPIRE                    "Account.expire"
@@ -123,8 +123,8 @@
 #define ACCOUNT_SIP_STUN_ENABLED          "STUN.enable"
 #define ACCOUNT_EXPIRE_DEFAULT            600
 
-#define ACCOUNT_ENABLED_TRUE              "TRUE"
-#define ACCOUNT_ENABLED_FALSE             "FALSE"
+#define ACCOUNT_ENABLED_TRUE              "true"
+#define ACCOUNT_ENABLED_FALSE             "false"
 
 #define ACCOUNT_TYPE_SIP                  "SIP"
 #define ACCOUNT_TYPE_IAX                  "IAX"
