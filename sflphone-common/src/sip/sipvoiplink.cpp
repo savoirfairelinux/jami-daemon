@@ -2084,7 +2084,7 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
 
     if(account && (errPjsip == PJ_SUCCESS)) {
 
-        _debug("UserAgent: Initialized sip listener on port %d", account->getLocalPort ());
+        // Store transport in transport map
         addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
 
 	// if account is not NULL, use IP2IP trasport as default one
@@ -2129,7 +2129,7 @@ void SIPVoIPLink::createDefaultSipTlsListener()
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
 
     if (account == NULL) {
-        _debug ("Account is null while creating TLS default listener. Returning");
+        _debug ("UserAgent: Account is null while creating TLS default listener. Returning");
         // return !PJ_SUCCESS;
     }
 
@@ -2156,8 +2156,8 @@ void SIPVoIPLink::createDefaultSipTlsListener()
     pjsip_tls_setting * tls_setting = account->getTlsSetting();
 
     
-    _debug ("TLS transport to be initialized with published address %.*s,"
-            " published port %d, local address %.*s, local port %d",
+    _debug ("UserAgent: TLS transport to be initialized with published address %.*s,"
+            " published port %d,\n                  local address %.*s, local port %d",
             (int) a_name.host.slen, a_name.host.ptr,
             (int) a_name.port, pjAddress.slen, pjAddress.ptr, (int) localTlsPort);
     
@@ -2165,7 +2165,7 @@ void SIPVoIPLink::createDefaultSipTlsListener()
     status = pjsip_tls_transport_start (_endpt, tls_setting, &local_addr, &a_name, 1, &tls);
 
     if (status != PJ_SUCCESS) {
-        _debug ("Error creating SIP TLS listener (%d)", status);
+        _debug ("UserAgent: Error creating SIP TLS listener (%d)", status);
     }
 
     // return PJ_SUCCESS;
@@ -2195,17 +2195,15 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
         // Launch a new UDP listener/transport, using the published address
         if (account->isStunEnabled ()) {
 
-            _debug ("Create Alternate UDP transport");
             status = createAlternateUdpTransport (id);
 
             if (status != PJ_SUCCESS) {
-                _debug ("Failed to initialize UDP transport with an extern published address for account %s", id.c_str());
+                _debug ("Failed to init UDP transport with STUN published address for account %s", id.c_str());
 		return false;
             }
 
         } else {
 
-	    _debug ("Create UDP transport");
             status = createUdpTransport (id);
 
 	    if (status != PJ_SUCCESS) {
@@ -2238,7 +2236,7 @@ bool SIPVoIPLink::addTransportToMap(std::string key, pjsip_transport* transport)
         _transportMap.erase(iter_transport);
     }
 
-    _debug("Storing the newly created transport in transport map using key %s", key.c_str());
+    _debug("UserAgent: Storing newly created transport in map using key %s", key.c_str());
     _transportMap.insert(pair<std::string, pjsip_transport*>(key, transport));
 
     return true;
@@ -2261,7 +2259,7 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
     if (!loadSIPLocalIP (&listeningAddress))
         return !PJ_SUCCESS;
 
-    _debug ("Create UDP transport for account \"%s\"", id.c_str());
+    _debug ("UserAgent: Create UDP transport for account \"%s\"", id.c_str());
 
     /*
      * Retrieve the account information
@@ -2277,12 +2275,12 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
     // Set information to the local address and port
     if (account == NULL) {
 
-        _debug ("Account with id \"%s\" is null in createUdpTransport.", id.c_str());
+        _debug ("UserAgent: Account with id \"%s\" is null in createUdpTransport.", id.c_str());
 
     } else {
 
         // We are trying to initialize a UDP transport available for all local accounts and direct IP calls
-        _debug("Found account %s in map", account->getAccountID().c_str());
+        _debug("UserAgent: found account %s in map", account->getAccountID().c_str());
 
         if (account->getLocalInterface () != "default") {
             listeningAddress = getInterfaceAddrFromName(account->getLocalInterface());
@@ -2319,7 +2317,7 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
         listeningAddress = account->getPublishedAddress ();
         // Set the listening port to the published port
         listeningPort = account->getPublishedPort ();
-        _debug ("Creating UDP transport published %s:%i", listeningAddress.c_str (), listeningPort);
+        _debug ("UserAgent: Creating UDP transport published %s:%i", listeningAddress.c_str (), listeningPort);
 
     }
 
@@ -2346,23 +2344,18 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
     } else {
 
-        _debug ("UserAgent: UDP server listening on port %d", listeningPort);
+        _debug ("UserAgent: UDP transport initialized successfully on %s:%d", listeningAddress.c_str (), listeningPort);
 
         if (account == NULL) {
 
-	    _debug("Use transport as local UDP server");
+	    _debug("UserAgent: Use transport as local UDP server");
             _localUDPTransport = transport;
 	}
         else {
 
-	    _debug("Bind transport to account %s", account->getAccountID().c_str());
+	    _debug("UserAgent: bind transport to account %s", account->getAccountID().c_str());
 	    account->setAccountTransport (transport);
 	}
-    }
-
-    if (status == PJ_SUCCESS) {
-        _debug ("Transport initialized successfully on %s:%i", listeningAddress.c_str (), listeningPort);
-
     }
 
     return PJ_SUCCESS;
@@ -2592,6 +2585,8 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     std::string listeningAddress = "";
     int listeningPort;
 
+    _debug ("UserAgent: Create Alternate UDP transport");
+
     /*
      * Retrieve the account information
      */
@@ -2757,7 +2752,7 @@ bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)
         returnValue = false;
     } else {
         localAddress = std::string (pj_inet_ntoa (ip_addr.ipv4.sin_addr));
-        _debug ("UserAgent: Checking network, setting local IP address to: %s", localAddress.data());
+        _debug ("UserAgent: Checking network, local IP address: %s", localAddress.data());
     }
 
     *addr = localAddress;

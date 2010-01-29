@@ -3237,9 +3237,7 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol)
  
 int ManagerImpl::getLocalIp2IpPort (void)
 {
-    // The SIP port used for default account (IP to IP) calls
-    _debug ("Default account port %i", getConfigInt (IP2IP_PROFILE, LOCAL_PORT));
-
+    // The SIP port used for default account (IP to IP) calls=
     return getConfigInt (IP2IP_PROFILE, LOCAL_PORT);
 
 }
@@ -4130,7 +4128,7 @@ short
 ManagerImpl::loadAccountMap()
 {
 
-    _debug ("Loading account map\n");
+    _debug ("Loading account map");
 
     short nbAccount = 0;
     TokenList sections = _config.getSections();
@@ -4148,12 +4146,12 @@ ManagerImpl::loadAccountMap()
     // and loading of various settings.
     _directIpAccount = AccountCreator::createAccount (AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
 
+    _debug ("Create default \"account\" (used as default UDP transport)");
     if (_directIpAccount == NULL) {
 
-        _debug ("Failed to create direct ip calls \"account\"\n");
+        _debug ("Failed to create default \"account\"");
     } else {
 
-        _debug ("Succeed to create direct ip calls \"account\"\n");
         _accountMap[IP2IP_PROFILE] = _directIpAccount;
 
 	// Force IP2IP settings to be loaded to be loaded 
