@@ -337,6 +337,9 @@
     <signal name="accountsChanged">
     </signal>  
 
+    <signal name="audioManagerChanged">
+    </signal>
+
     <signal name="errorAlert">
       <arg type="i" name="code" direction="out"/>
     </signal> 

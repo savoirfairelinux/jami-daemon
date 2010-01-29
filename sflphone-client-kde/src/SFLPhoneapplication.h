@@ -21,14 +21,6 @@ class SFLPhoneApplication : public KApplication
 
     // Return the contact list window
     SFLPhone*       getSFLPhoneWindow() const;
-    // Return true if quit was selected
-    //bool         quitSelected() const;
-    // Tell the application that quit was selected
-    //void         setQuitSelected(bool quitSelected);
-
- // private slots:
- //void         slotAboutToQuit();
- //   void         slotLastWindowClosed();
 
   private:  // private methods
     void         initializeMainWindow();
@@ -37,8 +29,6 @@ class SFLPhoneApplication : public KApplication
   private:
     // Reference to the sflphone window
     SFLPhone       *sflphoneWindow_;
-    // True when quit was selected
-    //bool         quitSelected_;
 };
 
 #endif // SFLPHONEAPPLICATION_H

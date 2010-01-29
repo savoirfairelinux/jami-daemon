@@ -137,23 +137,26 @@ void SFLPhone::setupActions()
 	action_configureSflPhone = KStandardAction::preferences(view, SLOT(configureSflPhone()), this);
 	action_configureSflPhone->setText(i18n("Configure SFLphone"));
 	
-	action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);
+	action_displayVolumeControls = new KAction(KIcon(QIcon(ICON_DISPLAY_VOLUME_CONSTROLS)), i18n("Display volume controls"), this);	
 	action_displayDialpad = new KAction(KIcon(QIcon(ICON_DISPLAY_DIALPAD)), i18n("Display dialpad"), this);
+	action_displayDialpad->setCheckable(true);
+
+	action_displayVolumeControls->setCheckable(true);
 	action_displayVolumeControls->setChecked(configurationManager.getVolumeControls());
 	action_displayDialpad->setChecked(configurationManager.getDialpad());
 	action_accountCreationWizard = new KAction(i18n("Account creation wizard"), this);
 	
-	connect(action_accept,                SIGNAL(triggered()),          view, SLOT(accept()));
-	connect(action_refuse,                SIGNAL(triggered()),          view, SLOT(refuse()));
-	connect(action_hold,                  SIGNAL(triggered()),          view, SLOT(hold()));
-	connect(action_transfer,              SIGNAL(triggered()),          view, SLOT(transfer()));
-	connect(action_record,                SIGNAL(triggered()),          view, SLOT(record()));
-	connect(action_screen,                SIGNAL(triggered(QAction *)), this, SLOT(updateScreen(QAction *)));
-	connect(action_mailBox,               SIGNAL(triggered()),          view, SLOT(mailBox()));
-	connect(action_displayVolumeControls, SIGNAL(triggered()),          view, SLOT(displayVolumeControls()));
-	connect(action_displayDialpad,        SIGNAL(triggered()),          view, SLOT(displayDialpad()));
-	connect(action_accountCreationWizard, SIGNAL(triggered()),          view, SLOT(accountCreationWizard()));
-	
+	connect(action_accept,                SIGNAL(triggered()),           view, SLOT(accept()));
+	connect(action_refuse,                SIGNAL(triggered()),           view, SLOT(refuse()));
+	connect(action_hold,                  SIGNAL(triggered()),           view, SLOT(hold()));
+	connect(action_transfer,              SIGNAL(triggered()),           view, SLOT(transfer()));
+	connect(action_record,                SIGNAL(triggered()),           view, SLOT(record()));
+	connect(action_screen,                SIGNAL(triggered(QAction *)),  this, SLOT(updateScreen(QAction *)));
+	connect(action_mailBox,               SIGNAL(triggered()),           view, SLOT(mailBox()));
+	connect(action_displayVolumeControls, SIGNAL(triggered()),           view, SLOT(displayVolumeControls()));
+	connect(action_displayDialpad,        SIGNAL(triggered()),           view, SLOT(displayDialpad()));
+	connect(action_accountCreationWizard, SIGNAL(triggered()),           view, SLOT(accountCreationWizard()));  
+
 	action_screen->addAction(action_main);
 	action_screen->addAction(action_history);
 	action_screen->addAction(action_addressBook);

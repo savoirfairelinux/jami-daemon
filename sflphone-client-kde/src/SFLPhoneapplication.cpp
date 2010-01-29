@@ -16,13 +16,8 @@
 SFLPhoneApplication::SFLPhoneApplication()
   : KApplication()
   , sflphoneWindow_(0)
-//  , quitSelected_(false)
 {
   // SFLPhoneApplication is created from main.cpp.
-  // It continues the initialisation of the application.
-
-  // Install a message handler, so KMESS_ASSERT won't do a exit(1) or abort()
-  // It makes debugging output on Windows disappear, so don't use it there
 
   // Start remaining initialisation
   initializePaths();

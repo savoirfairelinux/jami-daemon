@@ -23,7 +23,6 @@
 
 #include <QtGui/QLabel>
 #include <QtGui/QContextMenuEvent>
-#include <QtGui/QMenu>
 #include <QtGui/QBrush>
 #include <QtGui/QPalette>
 #include <QtGui/QInputDialog>
@@ -32,12 +31,14 @@
 #include <kstandardaction.h>
 #include <kactioncollection.h>
 #include <kaction.h>
+#include <kmenu.h>
 
 #include <kabc/addressbook.h>
 #include <kabc/stdaddressbook.h>
 #include <kabc/addresseelist.h>
 
 #include "sflphone_const.h"
+#include "conf/ConfigurationSkeleton.h"
 #include "configurationmanager_interface_singleton.h"
 #include "callmanager_interface_singleton.h"
 #include "instance_interface_singleton.h"
@@ -65,6 +66,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	errorWindow = new QErrorMessage(this);
 	callList = new CallList(this);
 	historyLoaded = false;
+
 	for(int i = 0 ; i < callList->size() ; i++)
 	{
 		Call * call = (*callList)[i];
@@ -107,6 +109,9 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	
 	connect(&configurationManager, SIGNAL(accountsChanged()),
 	        accountList,           SLOT(updateAccounts()));
+
+	connect(&configurationManager, SIGNAL(audioManagerChanged()),
+		this,         SLOT(on1_audioManagerChanged()));
 	        
 	connect(configDialog, SIGNAL(clearCallHistoryAsked()),
 	        callList,     SLOT(clearHistory()));
@@ -746,27 +751,22 @@ void SFLPhoneView::updateRecordButton()
 	if(recVol == 0.00)
 	{
 		toolButton_recVol->setIcon(QIcon(ICON_REC_VOL_0));
-		toolButton_recVolAlone->setIcon(QIcon(ICON_REC_VOL_0));
 	}
 	else if(recVol < 0.33)
 	{
 		toolButton_recVol->setIcon(QIcon(ICON_REC_VOL_1));
-		toolButton_recVolAlone->setIcon(QIcon(ICON_REC_VOL_1));
 	}
 	else if(recVol < 0.67)
 	{
 		toolButton_recVol->setIcon(QIcon(ICON_REC_VOL_2));
-		toolButton_recVolAlone->setIcon(QIcon(ICON_REC_VOL_2));
 	}
 	else
 	{
 		toolButton_recVol->setIcon(QIcon(ICON_REC_VOL_3));
-		toolButton_recVolAlone->setIcon(QIcon(ICON_REC_VOL_3));
 	}
 	if(recVol > 0)
 	{	
 		toolButton_recVol->setChecked(false);
-		toolButton_recVolAlone->setChecked(false);
 	}
 }
 void SFLPhoneView::updateVolumeButton()
@@ -777,27 +777,22 @@ void SFLPhoneView::updateVolumeButton()
 	if(sndVol == 0.00)
 	{
 		toolButton_sndVol->setIcon(QIcon(ICON_SND_VOL_0));
-		toolButton_sndVolAlone->setIcon(QIcon(ICON_SND_VOL_0));
 	}
 	else if(sndVol < 0.33)
 	{
 		toolButton_sndVol->setIcon(QIcon(ICON_SND_VOL_1));
-		toolButton_sndVolAlone->setIcon(QIcon(ICON_SND_VOL_1));
 	}
 	else if(sndVol < 0.67)
 	{
 		toolButton_sndVol->setIcon(QIcon(ICON_SND_VOL_2));
-		toolButton_sndVolAlone->setIcon(QIcon(ICON_SND_VOL_2));
 	}
 	else
 	{
 		toolButton_sndVol->setIcon(QIcon(ICON_SND_VOL_3));
-		toolButton_sndVolAlone->setIcon(QIcon(ICON_SND_VOL_3));
 	}
 	if(sndVol > 0)
 	{
 		toolButton_sndVol->setChecked(false);
-		toolButton_sndVolAlone->setChecked(false);
 	}
 }
 
@@ -809,7 +804,6 @@ void SFLPhoneView::updateRecordBar()
 	double recVol = callManager.getVolume(RECORD_DEVICE);
 	int value = (int)(recVol * 100);
 	slider_recVol->setValue(value);
-	slider_recVolAlone->setValue(value);
 }
 void SFLPhoneView::updateVolumeBar()
 {
@@ -818,26 +812,38 @@ void SFLPhoneView::updateVolumeBar()
 	double sndVol = callManager.getVolume(SOUND_DEVICE);
 	int value = (int)(sndVol * 100);
 	slider_sndVol->setValue(value);
-	slider_sndVolAlone->setValue(value);
 }
 
 void SFLPhoneView::updateVolumeControls()
 {
-	qDebug() << "updateVolumeControls";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	int display = configurationManager.getVolumeControls();
-	int displayDialpad = configurationManager.getDialpad();
-	widget_recVol->setVisible(display && displayDialpad);
-	widget_sndVol->setVisible(display && displayDialpad);
-	widget_recVolAlone->setVisible(display && ! displayDialpad);
-	widget_sndVolAlone->setVisible(display && ! displayDialpad);
+	int display = 0;
+
+	if(configurationManager.getAudioManager() == ConfigurationSkeleton::EnumInterface::ALSA)
+	{
+		display = configurationManager.getVolumeControls();
+
+		((SFLPhone*)parent())->action_displayVolumeControls->setEnabled(true);
+	}
+	else
+	{
+		((SFLPhone*)parent())->action_displayVolumeControls->setEnabled(false);
+	}
+	      
+	qDebug() << "updateVolumeControls " << display;
+		
+	((SFLPhone*)parent())->action_displayVolumeControls->setChecked(display);
+	widget_recVol->setVisible(display);
+	widget_sndVol->setVisible(display);
 }
 
 void SFLPhoneView::updateDialpad()
 {
-	qDebug() << "updateDialpad";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	int display = configurationManager.getDialpad();
+	
+	qDebug() << "updateDialpad " << display;
+
 	widget_dialpad->setVisible(display);
 }
 
@@ -846,13 +852,16 @@ void SFLPhoneView::updateStatusMessage()
 {
 	qDebug() << "updateStatusMessage";
 	Account * account = accountInUse();
+
 	if(account == NULL)
 	{
 		emit statusMessageChangeAsked(i18n("No registered accounts"));
 	}
 	else
 	{
-		emit statusMessageChangeAsked(i18n("Using account") + " \'" + account->getAlias() + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
+		emit statusMessageChangeAsked(i18n("Using account") 
+					      + " \'" + account->getAlias() 
+					      + "\' (" + account->getAccountDetail(ACCOUNT_TYPE) + ")") ;
 	}
 }
 
@@ -865,20 +874,25 @@ void SFLPhoneView::updateStatusMessage()
 void SFLPhoneView::displayVolumeControls()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	configurationManager.setVolumeControls();
+	int display = configurationManager.getVolumeControls();
+	configurationManager.setVolumeControls(!display);
 	updateVolumeControls();
 }
 
 void SFLPhoneView::displayDialpad()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	configurationManager.setDialpad();
+	int display = configurationManager.getDialpad();
+
+	configurationManager.setDialpad(!display);
 	updateDialpad();
-	updateVolumeControls();
 }
 
 
-void SFLPhoneView::on_widget_dialpad_typed(QString text)      { typeString(text); }
+void SFLPhoneView::on_widget_dialpad_typed(QString text)      
+{ 
+	typeString(text); 
+}
 
 
 void SFLPhoneView::on_lineEdit_searchHistory_textChanged()
@@ -921,19 +935,14 @@ void SFLPhoneView::on_toolButton_recVol_clicked(bool checked)
 	{
 		qDebug() << "checked";
 		toolButton_recVol->setChecked(false);
-		toolButton_recVolAlone->setChecked(false);
 		slider_recVol->setEnabled(true);
-		slider_recVolAlone->setEnabled(true);
 		callManager.setVolume(RECORD_DEVICE, (double)slider_recVol->value() / 100.0);
 	}
 	else
 	{
 		qDebug() << "unchecked";
 		toolButton_recVol->setChecked(true);
-		qDebug() << "toolButton_recVolAlone->setChecked(true);";
-		toolButton_recVolAlone->setChecked(true);
 		slider_recVol->setEnabled(false);
-		slider_recVolAlone->setEnabled(false);
 		callManager.setVolume(RECORD_DEVICE, 0.0);
 	}
 	updateRecordButton();
@@ -948,18 +957,14 @@ void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
 	{
 		qDebug() << "checked";
 		toolButton_sndVol->setChecked(false);
-		toolButton_sndVolAlone->setChecked(false);
 		slider_sndVol->setEnabled(true);
-		slider_sndVolAlone->setEnabled(true);
 		callManager.setVolume(SOUND_DEVICE, (double)slider_sndVol->value() / 100.0);
 	}
 	else
 	{
 		qDebug() << "unchecked";
 		toolButton_sndVol->setChecked(true);
-		toolButton_sndVolAlone->setChecked(true);
 		slider_sndVol->setEnabled(false);
-		slider_sndVolAlone->setEnabled(false);
 		callManager.setVolume(SOUND_DEVICE, 0.0);
 	}
 	updateVolumeButton();
@@ -1053,11 +1058,11 @@ void SFLPhoneView::on_stackedWidget_screen_currentChanged(int index)
 
 void SFLPhoneView::contextMenuEvent(QContextMenuEvent *event)
 {
-	QMenu menu(this);
+	KMenu menu(this);
 	if( ( stackedWidget_screen->currentWidget() == page_callHistory && listWidget_callHistory->currentItem() ) || 
 	    ( stackedWidget_screen->currentWidget() == page_addressBook && listWidget_addressBook->currentItem() ) )
 	{
-		QAction * action_edit = new QAction(&menu);
+		KAction * action_edit = new KAction(&menu);
 		action_edit->setText(i18n("Edit before call"));
 		connect(action_edit, SIGNAL(triggered()),
 		        this  , SLOT(editBeforeCall()));
@@ -1361,6 +1366,13 @@ void SFLPhoneView::on1_volumeChanged(const QString & /*device*/, double value)
 		updateRecordBar();
 	if(! (toolButton_sndVol->isChecked() && value == 0.0))
 		updateVolumeBar();
+}
+
+void SFLPhoneView::on1_audioManagerChanged()
+{
+	qDebug() << "Signal : Audio Manager Changed !";
+
+	updateVolumeControls();
 }
 
 void SFLPhoneView::enableAddressBook()

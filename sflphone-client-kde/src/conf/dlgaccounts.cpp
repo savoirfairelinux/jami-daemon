@@ -170,7 +170,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
 	account->setAccountDetail(ACCOUNT_MAILBOX, edit6_mailbox->text());
 	account->setAccountDetail(ACCOUNT_RESOLVE_ONCE, checkBox_conformRFC->isChecked() ? "FALSE" : "TRUE");
 	account->setAccountDetail(ACCOUNT_EXPIRE, QString::number(spinbox_regExpire->value()));
-	account->setAccountDetail(ACCOUNT_ENABLED, is_checked ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
+	account->setAccountDetail(ACCOUNT_ENABLED, account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
 }
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)

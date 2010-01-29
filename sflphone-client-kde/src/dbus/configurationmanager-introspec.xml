@@ -201,6 +201,7 @@
 		</method>
 		
 		<method name="setDialpad">
+		  <arg type="b" name="display" direction="in"/>
 		</method>
 		
 		<method name="getSearchbar">
@@ -222,6 +223,7 @@
 		</method>
 		
 		<method name="setVolumeControls">
+		  <arg type="b" name="display" direction="in"/>
 		</method>
 		
 		<method name="getHistoryLimit">
@@ -321,7 +323,10 @@
 		
 		
 		<signal name="accountsChanged">
-		</signal>  
+		</signal>
+
+		<signal name="audioManagerChanged">
+		</signal>
 		
 		<signal name="errorAlert">
 		  <arg type="i" name="code" direction="out"/>

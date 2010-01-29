@@ -2960,6 +2960,9 @@ void ManagerImpl::setAudioManager (const int32_t& api)
     setConfig (PREFERENCES , CONFIG_AUDIO , api) ;
 
     switchAudioManager();
+
+    if (_dbus) _dbus->getConfigurationManager()->audioManagerChanged();
+
     return;
 
 }

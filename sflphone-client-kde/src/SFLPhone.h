@@ -94,8 +94,8 @@ private:
 	SFLPhoneView * view;
 	QMenu *trayIconMenu;
 	bool iconChanged;
-    SFLPhoneTray *trayIcon;
-    KNotification *notification;
+	SFLPhoneTray *trayIcon;
+	KNotification *notification;
 	QLabel * statusBarWidget;
 	
 private:
@@ -115,6 +115,8 @@ public:
 	void trayIconSignal();
 	SFLPhoneView * getView();
 	QList<QAction *> getCallActions();
+
+	friend class SFLPhoneView;
 	
 	
 private slots:
@@ -127,8 +129,8 @@ private slots:
 	void on_view_recordCheckStateChangeAsked(bool recordCheckState);
 	void on_view_addressBookEnableAsked(bool enabled);
 	void on_view_screenChanged(int screen);
-	void on_view_incomingCall(const Call * call);
-	
+	void on_view_incomingCall(const Call * call);      
+
 	void updateScreen(QAction * action);
 
 	void quitButton();

@@ -331,7 +331,7 @@ public slots:
 	void on1_incomingMessage(const QString &accountID, const QString &message);
 	void on1_voiceMailNotify(const QString &accountID, int count);
 	void on1_volumeChanged(const QString &device, double value);
-	
+	void on1_audioManagerChanged();
 	void changeScreen(int screen);
 	
 signals:
