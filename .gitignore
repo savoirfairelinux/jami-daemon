@@ -138,6 +138,7 @@ sflphone-client-gnome/stamp-h1
 /sflphone-client-kde/CMakeFiles/*
 /sflphone-client-kde/CMakeTmp/
 /sflphone-client-kde/qtcreator-build/
+/sflphone-client-kde/src/.directory
 /sflphone-client-kde/src/Makefile
 /sflphone-client-kde/src/CTestTestfile.cmake
 /sflphone-client-kde/src/CMakeFiles/
