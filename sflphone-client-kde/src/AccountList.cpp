@@ -34,6 +34,7 @@ AccountList::AccountList(QStringList & _accountIds)
 	for (int i = 0; i < _accountIds.size(); ++i){
 		(*accounts) += Account::buildExistingAccountFromId(_accountIds[i]);
 	}
+
 }
 
 AccountList::AccountList(bool fill)
