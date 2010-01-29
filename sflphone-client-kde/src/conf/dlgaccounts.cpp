@@ -79,12 +79,17 @@ void DlgAccounts::saveAccountList()
 	qDebug() << "saveAccountList";
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	disconnectAccountsChangedSignal();
+
 	//save the account being edited
 	if(listWidget_accountList->currentItem())
+	{
 		saveAccount(listWidget_accountList->currentItem());
+	}
 	QStringList accountIds= QStringList(configurationManager.getAccountList().value());
+
 	//create or update each account from accountList
-	for (int i = 0; i < accountList->size(); i++){
+	for (int i = 0; i < accountList->size(); i++)
+	{
 		Account * current = (*accountList)[i];
 		QString currentId;
 		//if the account has no instanciated id, it has just been created in the client
@@ -95,7 +100,8 @@ void DlgAccounts::saveAccountList()
 			current->setAccountId(currentId);
 		}
 		//if the account has an instanciated id but it's not in configurationManager
-		else{
+		else
+		{
 			if(! accountIds.contains(current->getAccountId()))
 			{
 				qDebug() << "The account with id " << current->getAccountId() << " doesn't exist. It might have been removed by another SFLphone client.";
@@ -141,13 +147,22 @@ void DlgAccounts::disconnectAccountsChangedSignal()
 
 void DlgAccounts::saveAccount(QListWidgetItem * item)
 {
-	if(! item)  { qDebug() << "Attempting to save details of an account from a NULL item"; return; }
+	QString protocolsTab[] = ACCOUNT_TYPES_TAB;
+
+	if(! item)  
+	{ 
+		qDebug() << "Attempting to save details of an account from a NULL item"; 
+		 return; 
+	}
 	
 	Account * account = accountList->getAccountByItem(item);
-	if(! account)  {  qDebug() << "Attempting to save details of an unexisting account : " << item->text();  return;  }
+	if(! account)  
+	{  
+		qDebug() << "Attempting to save details of an unexisting account : " << item->text();  
+		return;  
+	}
 
 	account->setAccountDetail(ACCOUNT_ALIAS, edit1_alias->text());
-	QString protocolsTab[] = ACCOUNT_TYPES_TAB;
 	account->setAccountDetail(ACCOUNT_TYPE, protocolsTab[edit2_protocol->currentIndex()]);
 	account->setAccountDetail(ACCOUNT_HOSTNAME, edit3_server->text());
 	account->setAccountDetail(ACCOUNT_USERNAME, edit4_user->text());
@@ -155,7 +170,7 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
 	account->setAccountDetail(ACCOUNT_MAILBOX, edit6_mailbox->text());
 	account->setAccountDetail(ACCOUNT_RESOLVE_ONCE, checkBox_conformRFC->isChecked() ? "FALSE" : "TRUE");
 	account->setAccountDetail(ACCOUNT_EXPIRE, QString::number(spinbox_regExpire->value()));
-	account->setAccountDetail(ACCOUNT_ENABLED, account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
+	account->setAccountDetail(ACCOUNT_ENABLED, is_checked ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
 }
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
