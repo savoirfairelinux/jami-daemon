@@ -80,6 +80,7 @@ void Account::initItemWidget()
 	itemWidget = new AccountItemWidget();
 	itemWidget->setEnabled(enabled);
 	itemWidget->setAccountText(getAccountDetail(ACCOUNT_ALIAS));
+
 	if(isNew() || !enabled)
 	{
 		itemWidget->setState(AccountItemWidget::Unregistered);
@@ -100,7 +101,7 @@ Account * Account::buildExistingAccountFromId(QString _accountId)
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Account * a = new Account();
 	a->accountId = new QString(_accountId);
-	a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
+	a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );	
 	a->initItem();
 	return a;
 }
@@ -216,17 +217,18 @@ void Account::setAccountId(QString id)
 
 void Account::setEnabled(bool checked)
 {
-	qDebug() << "setEnabled = " << checked;
 	setAccountDetail(ACCOUNT_ENABLED, checked ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
 }
 
 bool Account::isEnabled() const
 {
+	qDebug() << "isEnabled = " << getAccountDetail(ACCOUNT_ENABLED);
 	return (getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE);
 }
 
 bool Account::isRegistered() const
 {
+	qDebug() << "isRegistered = " << getAccountDetail(ACCOUNT_STATUS);
 	return (getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED);
 }
 
@@ -263,3 +265,5 @@ bool Account::operator==(const Account& a)const
 {
 	return *accountId == *a.accountId;
 }
+
+
