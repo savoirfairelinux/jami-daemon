@@ -118,8 +118,6 @@ public:
 	
 	
 private slots:
-    /*void on_trayIcon_activated(KSystemTrayIcon::ActivationReason reason);
-    void on_trayIcon_messageClicked();*/
 	void on_view_statusMessageChangeAsked(const QString & message);
 	void on_view_windowTitleChangeAsked(const QString & message);
 	void on_view_enabledActionsChangeAsked(const bool * enabledActions);
