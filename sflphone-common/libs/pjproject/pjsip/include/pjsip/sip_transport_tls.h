@@ -187,6 +187,13 @@ typedef struct pjsip_tls_setting
      */
     pj_bool_t qos_ignore_error;
 
+
+    /**
+     * An optional callback for TLS verify which can be left to NULL;
+     * 
+     */ 
+    int(* on_tls_verify)()
+
 } pjsip_tls_setting;
 
 

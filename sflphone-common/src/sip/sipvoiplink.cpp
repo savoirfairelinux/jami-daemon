@@ -224,6 +224,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event);
 void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event);
 void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata);
 
+
 /*************************************************************************************************/
 
 SIPVoIPLink* SIPVoIPLink::_instance = NULL;
@@ -1535,10 +1536,9 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->setCallConfiguration (Call::IPtoIP);
         call->initRecFileName();
 
-        AccountID accountId = Manager::instance().getAccountFromCall (id);
+        // AccountID accountId = Manager::instance().getAccountFromCall (id);
         SIPAccount * account = NULL;
-
-        account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
+	account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
 
         if (account == NULL) {
 
@@ -1551,13 +1551,14 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         // Set SDP parameters - Set to local
 	addrSdp = localAddress;
 
-        _debug ("new_ip_to_ip_call localAddress: %s", localAddress.c_str());
+        _debug ("UserAgent: New IP to IP localAddress: %s", localAddress.c_str());
 
+	// If local address bound to ANY, reslove it using PJSIP
         if (localAddress == "0.0.0.0") {
-            _debug ("Local address: %s", localAddress.c_str ());
             loadSIPLocalIP (&localAddress);
         }
 
+	// Local address to appear in SDP
 	if (addrSdp == "0.0.0.0") {
 	    addrSdp = localAddress;
 	}
@@ -1575,7 +1576,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 	    call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
-            _debug ("! SIP Failure: Unable to create RTP Session  in SIPVoIPLink::new_ip_to_ip_call (%s:%d)", __FILE__, __LINE__);
+            _debug ("! SIP Failure: Unable to create RTP Session in SIPVoIPLink::new_ip_to_ip_call (%s:%d)", __FILE__, __LINE__);
         }
 
         // Building the local SDP offer
@@ -1585,13 +1586,13 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 	// Init TLS transport if enabled
 	if(account->isTlsEnabled()) {
 
-	    _debug("TLS enabled for ip-to-ip calls, acquire TLS transport from pjsip's manager");
+	    _debug("UserAgent: TLS enabled for IP to IP calls, acquire TLS transport");
 
 	    int at = toUri.find("@");
 	    int trns = toUri.find(";transport");
-	    std::string remoteaddr = toUri.substr(at+1, trns-at-1);
+	    std::string remoteAddr = toUri.substr(at+1, trns-at-1);
 
-	    createTlsTransport(account->getAccountID(), remoteaddr);
+	    createTlsTransport(account->getAccountID(), remoteAddr);
 	}
 
         // If no transport already set, use the default one created at pjsip initialization
@@ -2479,7 +2480,7 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     genericUri = pjsip_parse_uri (_pool, tmp.ptr, tmp.slen, 0);
 
     if (genericUri == NULL) {
-        _debug ("genericUri is NULL in findLocalPortFromUri");
+        _debug ("UserAgent: genericUri is NULL in findLocalPortFromUri");
         return atoi (DEFAULT_SIP_PORT);
     }
 
@@ -2488,7 +2489,7 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     sip_uri = (pjsip_sip_uri*) pjsip_uri_get_uri (genericUri);
 
     if (sip_uri == NULL) {
-        _debug ("Invalid uri in findLocalAddressFromTransport");
+        _debug ("UserAgent: Invalid uri in findLocalAddressFromTransport");
         return atoi (DEFAULT_SIP_PORT);
     }
 
@@ -2497,7 +2498,7 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
         port = atoi (DEFAULT_SIP_TLS_PORT);
     } else {
         if (transport == NULL) {
-            _debug ("transport is NULL in findLocalPortFromUri - Try the local UDP transport");
+            _debug ("UserAgent: transport is NULL in findLocalPortFromUri - Try the local UDP transport");
             transport = _localUDPTransport;
         }
 
@@ -2513,7 +2514,7 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     tpmgr = pjsip_endpt_get_tpmgr (_endpt);
 
     if (tpmgr == NULL) {
-        _debug ("Unexpected: Cannot get tpmgr from endpoint.");
+        _debug ("UserAgent: unexpected, cannot get tpmgr from endpoint.");
         return port;
     }
 
@@ -2524,7 +2525,7 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
     pj_status_t status;
 
     if (transportType == PJSIP_TRANSPORT_UDP) {
-        _debug ("Transport ID: %s", transport->obj_name);
+        _debug ("UserAgent: transport ID: %s", transport->obj_name);
 
         status = init_transport_selector (transport, &tp_sel);
 
@@ -2537,10 +2538,10 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
 
 
     if (status != PJ_SUCCESS) {
-        _debug ("Failed to find local address from transport");
+        _debug ("UserAgent: failed to find local address from transport");
     }
 
-    _debug ("Local port discovered from attached transport: %i", port);
+    _debug ("UserAgent: local port discovered from attached transport: %i", port);
     return port;
 }
 
@@ -2553,7 +2554,7 @@ pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::str
 
     if(!account) {
 
-        _debug("Account is NULL, returning");
+        _debug("UserAgent: Account is NULL when creating TLS connection, returning");
 	return !PJ_SUCCESS;
     }
 
@@ -2564,11 +2565,12 @@ pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::str
 
     pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t)5061);
 
-    pjsip_transport *tcp;
+    // Create a new TLS connection from TLS listener
+    pjsip_transport *tls;
     pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr),
-	    				  NULL, &tcp);
+	    				  NULL, &tls);
 
-    account->setAccountTransport(tcp);
+    account->setAccountTransport(tls);
 
     return PJ_SUCCESS;
 }
