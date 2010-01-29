@@ -101,9 +101,9 @@ bool SFLPhone::initialize()
 
 void SFLPhone::setObjectNames()
 {
-	view->setObjectName("view");
-	statusBar()->setObjectName("statusBar");
-    trayIcon->setObjectName("trayIcon");
+  view->setObjectName("view");
+  statusBar()->setObjectName("statusBar");
+  trayIcon->setObjectName("trayIcon");
 }
 
 void SFLPhone::setupActions()
@@ -176,13 +176,23 @@ void SFLPhone::setupActions()
 	actionCollection()->addAction("action_accountCreationWizard", action_accountCreationWizard);
 	
 	QString rcFilePath = QString(DATA_INSTALL_DIR) + "/sflphone-client-kde/sflphone-client-kdeui.rc";
+
 	if(! QFile::exists(rcFilePath))
 	{
 		QDir dir;
 		dir.cdUp();
-        dir.cdUp();
 		dir.cd("data");
 		rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
+		qDebug() << "rcFilePath = " << rcFilePath ;
+
+		if(! QFile::exists(rcFilePath)) 
+		{
+			QDir dir;
+			dir.cdUp();
+			dir.cdUp();
+			dir.cd("data");
+			rcFilePath = dir.filePath("sflphone-client-kdeui.rc");
+		}
 	}
 	qDebug() << "rcFilePath = " << rcFilePath ;
 	createGUI(rcFilePath);
@@ -205,6 +215,7 @@ void SFLPhone::quitButton()
 {
 	InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 	qDebug() << "quitButton : " << view->listWidget_callList->count() << " calls open.";
+
 	if(view->listWidget_callList->count() > 0 && instance.getRegistrationCount() <= 1)
 	{
 		qDebug() << "Attempting to quit when still having some calls open.";
@@ -232,10 +243,10 @@ void SFLPhone::sendNotif(QString caller)
 
 void SFLPhone::changeEvent(QEvent * event)
 {
-	if (event->type() == QEvent::ActivationChange && iconChanged && isActiveWindow())
-	{
-		iconChanged = false;
-	}
+  if (event->type() == QEvent::ActivationChange && iconChanged && isActiveWindow())
+    {
+      iconChanged = false;
+    }
 }
 
 void SFLPhone::on_view_statusMessageChangeAsked(const QString & message)
