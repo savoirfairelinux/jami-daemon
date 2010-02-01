@@ -230,6 +230,9 @@
       </item>
       <item>
        <widget class="QTabWidget" name="frame2_editAccounts">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>1</horstretch>
@@ -237,7 +240,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tab_basic">
          <attribute name="title">
@@ -386,34 +389,57 @@
          </layout>
         </widget>
         <widget class="QWidget" name="tab_advanced">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <attribute name="title">
           <string>Advanced</string>
          </attribute>
          <layout class="QFormLayout" name="formLayout_2">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::ExpandingFieldsGrow</enum>
-          </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_regExpire">
+          <item row="5" column="1">
+           <widget class="QCheckBox" name="checkbox_stun">
             <property name="text">
-             <string>Registration expire</string>
-            </property>
-            <property name="buddy">
-             <cstring>spinbox_regExpire</cstring>
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="KIntSpinBox" name="spinbox_regExpire">
-            <property name="maximum">
-             <number>16777215</number>
+          <item row="3" column="1">
+           <widget class="QCheckBox" name="checkbox_zrtp">
+            <property name="text">
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="3" column="0" colspan="2">
-           <widget class="QCheckBox" name="checkBox_conformRFC">
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_zrtp">
             <property name="text">
-             <string>Conform to RFC 3263</string>
+             <string>Secure with ZRTP</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_stun">
+            <property name="text">
+             <string>Enable Stun</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0" colspan="2">
+           <widget class="KLineEdit" name="edit_stunServer">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>Format : name.server:port</string>
+            </property>
+            <property name="squeezedTextEnabled">
+             <bool>false</bool>
+            </property>
+            <property name="clickMessage">
+             <string>choose Stun server (example : stunserver.org)</string>
+            </property>
+            <property name="showClearButton" stdset="0">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -424,66 +450,9 @@
      </layout>
     </widget>
    </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox_commonSettings">
-     <property name="title">
-      <string/>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_10">
-      <item>
-       <widget class="QLabel" name="label_commonSettings">
-        <property name="text">
-         <string>Stun parameters will be applied on each SIP account created.</string>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QFormLayout" name="formLayout_commonSettings">
-        <property name="fieldGrowthPolicy">
-         <enum>QFormLayout::ExpandingFieldsGrow</enum>
-        </property>
-        <item row="0" column="0">
-         <widget class="QCheckBox" name="kcfg_enableStun">
-          <property name="text">
-           <string>Enable Stun</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="KLineEdit" name="kcfg_stunServer">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="toolTip">
-           <string>Format : name.server:port</string>
-          </property>
-          <property name="squeezedTextEnabled">
-           <bool>false</bool>
-          </property>
-          <property name="clickMessage">
-           <string>choose Stun server (example : stunserver.org)</string>
-          </property>
-          <property name="showClearButton" stdset="0">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>KIntSpinBox</class>
-   <extends>QSpinBox</extends>
-   <header>knuminput.h</header>
-  </customwidget>
   <customwidget>
    <class>KLineEdit</class>
    <extends>QLineEdit</extends>
@@ -493,22 +462,5 @@
  <resources>
   <include location="../qrc/resources.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>kcfg_enableStun</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>kcfg_stunServer</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>71</x>
-     <y>414</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>167</x>
-     <y>419</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

@@ -54,10 +54,10 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	        this,                  SLOT(changedAccountList()));
 	connect(edit6_mailbox,         SIGNAL(textEdited(const QString &)),
 	        this,                  SLOT(changedAccountList()));
-	connect(spinbox_regExpire,     SIGNAL(editingFinished()),
-	        this,                  SLOT(changedAccountList()));
-	connect(checkBox_conformRFC,   SIGNAL(clicked(bool)),
-	        this,                  SLOT(changedAccountList()));
+	connect(checkbox_stun,         SIGNAL(toggled(bool)),
+		this,                  SLOT(changedAccountList()));
+	connect(checkbox_zrtp,         SIGNAL(toggled(bool)),
+		this,                  SLOT(changedAccountList()));       
 	connect(button_accountUp,      SIGNAL(clicked()),
 	        this,                  SLOT(changedAccountList()));
 	connect(button_accountDown,    SIGNAL(clicked()),
@@ -168,8 +168,6 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
 	account->setAccountDetail(ACCOUNT_USERNAME, edit4_user->text());
 	account->setAccountDetail(ACCOUNT_PASSWORD, edit5_password->text());
 	account->setAccountDetail(ACCOUNT_MAILBOX, edit6_mailbox->text());
-	account->setAccountDetail(ACCOUNT_RESOLVE_ONCE, checkBox_conformRFC->isChecked() ? "FALSE" : "TRUE");
-	account->setAccountDetail(ACCOUNT_EXPIRE, QString::number(spinbox_regExpire->value()));
 	account->setAccountDetail(ACCOUNT_ENABLED, account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
 }
 
@@ -197,10 +195,25 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit4_user->setText( account->getAccountDetail(ACCOUNT_USERNAME));
 	edit5_password->setText( account->getAccountDetail(ACCOUNT_PASSWORD));
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
-	checkBox_conformRFC->setChecked( account->getAccountDetail(ACCOUNT_RESOLVE_ONCE) != "TRUE" );
-	bool ok;
-	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(&ok);
-	spinbox_regExpire->setValue(ok ? val : ACCOUNT_EXPIRE_DEFAULT);
+	
+	if(protocolIndex == 0) // if sip selected
+	{
+		checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == ACCOUNT_ENABLED_TRUE);
+		edit_stunServer->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
+		checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == ACCOUNT_ENABLED_TRUE);
+
+		tab_advanced->setEnabled(true);
+		edit_stunServer->setEnabled(checkbox_stun->isChecked());
+	}
+	else
+	{
+		checkbox_stun->setChecked(false);
+		edit_stunServer->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
+		checkbox_zrtp->setChecked(false);
+
+		tab_advanced->setEnabled(false);
+	}
+
 	updateStatusLabel(account);
 	frame2_editAccounts->setEnabled(true);
 }
@@ -209,7 +222,6 @@ void DlgAccounts::loadAccountList()
 {
 	qDebug() << "loadAccountList";
 	accountList->updateAccounts();
-	//initialize the QListWidget object with the AccountList
 	listWidget_accountList->clear();
 	for (int i = 0; i < accountList->size(); ++i){
 		addAccountToAccountList((*accountList)[i]);
@@ -236,6 +248,18 @@ void DlgAccounts::changedAccountList()
 	accountListHasChanged = true;
 	emit updateButtons();
 	toolButton_accountsApply->setEnabled(true);
+	
+	int currentIndex = edit2_protocol->currentIndex();
+
+	if(currentIndex==0)
+	{
+		tab_advanced->setEnabled(true);
+		edit_stunServer->setEnabled(checkbox_stun->isChecked());
+	}
+	else
+	{
+		tab_advanced->setEnabled(false);
+	}
 }
 
 
