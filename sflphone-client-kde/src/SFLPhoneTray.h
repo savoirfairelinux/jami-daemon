@@ -41,11 +41,6 @@ public:
 private:
     QMenu *trayIconMenu;
     bool initialized_;
-/*
-private slots:
-    void activated(KSystemTrayIcon::ActivationReason reason);
-    void messageClicked();*/
-    void trayIconSignal();
 };
 
 #endif // SFLPHONETRAY_H
