@@ -109,26 +109,65 @@
 
 
 /** Account details */
-#define ACCOUNT_TYPE                      "Account.type"
-#define ACCOUNT_ALIAS		          "Account.alias"
-#define ACCOUNT_ENABLED		          "Account.enable"
-#define ACCOUNT_MAILBOX		          "Account.mailbox"
-#define ACCOUNT_HOSTNAME                  "hostname"
-#define ACCOUNT_RESOLVE_ONCE              "Account.resolveOnce"
-#define ACCOUNT_EXPIRE                    "Account.expire"
-#define ACCOUNT_USERNAME                  "username"
-#define ACCOUNT_PASSWORD                  "password"
-#define ACCOUNT_STATUS                    "Status"
+#define ACCOUNT_TYPE                     "Account.type"
+#define ACCOUNT_ALIAS		         "Account.alias"
+#define ACCOUNT_ENABLED		         "Account.enable"
+#define ACCOUNT_MAILBOX		         "Account.mailbox"
+#define ACCOUNT_RESOLVE_ONCE             "Account.resolveOnce"
+#define ACCOUNT_REGISTRATION_EXPIRE      "Account.expire"
 #define ACCOUNT_SIP_STUN_SERVER	         "STUN.server"
-#define ACCOUNT_SIP_STUN_ENABLED          "STUN.enable"
-#define ACCOUNT_EXPIRE_DEFAULT            600
+#define ACCOUNT_SIP_STUN_ENABLED         "STUN.enable"
+#define ACCOUNT_HOSTNAME                 "hostname"
+#define ACCOUNT_USERNAME                 "username"
+#define ACCOUNT_PASSWORD                 "password"
+#define ACCOUNT_AUTHENTICATION_USERNAME  "authenticationUsername"
+#define ACCOUNT_REALM                    "realm"
+#define ACCOUNT_KEY_EXCHANGE             "SRTP.keyExchange"
+#define ACCOUNT_SRTP_ENABLED             "SRTP.enable"
+#define ACCOUNT_ZRTP_DISPLAY_SAS         "ZRTP.displaySAS"
+#define ACCOUNT_ZRTP_NOT_SUPP_WARNING    "ZRTP.notSuppWarning"
+#define ACCOUNT_ZRTP_HELLO_HASH          "ZRTP.helloHashEnable"
+#define ACCOUNT_DISPLAY_SAS_ONCE         "ZRTP.displaySasOnce"
+#define KEY_EXCHANGE_NONE                "0"
+#define ZRTP                             "1"
+#define SDES                             "2"
 
+#define TLS_ENABLE                       "TLS.enable"
+#define TLS_PORT                         "TLS.port"
+#define TLS_CA_LIST_FILE                 "TLS.certificateListFile"
+#define TLS_CERTIFICATE_FILE             "TLS.certificateFile"
+#define TLS_PRIVATE_KEY_FILE             "TLS.privateKeyFile"
+#define TLS_PASSWORD                     "TLS.password"
+#define TLS_METHOD                       "TLS.method"
+#define TLS_CIPHERS                      "TLS.ciphers"
+#define TLS_SERVER_NAME                  "TLS.serverName"
+#define TLS_VERIFY_SERVER                "TLS.verifyServer"
+#define TLS_VERIFY_CLIENT                "TLS.verifyClient"
+#define TLS_REQUIRE_CLIENT_CERTIFICATE   "TLS.requireClientCertificate"  
+#define TLS_NEGOTIATION_TIMEOUT_SEC      "TLS.negotiationTimeoutSec"
+#define TLS_NEGOTIATION_TIMEOUT_MSEC     "TLS.negotiationTimemoutMsec"
+
+#define LOCAL_INTERFACE                  "Account.localInterface"
+#define PUBLISHED_SAMEAS_LOCAL           "Account.publishedSameAsLocal"
+#define LOCAL_PORT                       "Account.localPort"
+#define PUBLISHED_PORT                   "Account.publishedPort"
+#define PUBLISHED_ADDRESS                "Account.publishedAddress"
+
+#define REGISTRATION_STATUS              "Status"
+#define REGISTRATION_STATE_CODE          "Registration.code" 
+#define REGISTRATION_STATE_DESCRIPTION   "Registration.description"
+
+
+/** Maybe to remove **/
+#define ACCOUNT_EXPIRE                   "Account.expire"
+#define ACCOUNT_STATUS                   "Status"
+#define ACCOUNT_EXPIRE_DEFAULT            600
 #define ACCOUNT_ENABLED_TRUE              "true"
 #define ACCOUNT_ENABLED_FALSE             "false"
-
 #define ACCOUNT_TYPE_SIP                  "SIP"
 #define ACCOUNT_TYPE_IAX                  "IAX"
 #define ACCOUNT_TYPES_TAB                 {QString(ACCOUNT_TYPE_SIP), QString(ACCOUNT_TYPE_IAX)}
+/*********************/
 
 /** Constant variables */
 #define ACCOUNT_MAILBOX_DEFAULT_VALUE     "888"

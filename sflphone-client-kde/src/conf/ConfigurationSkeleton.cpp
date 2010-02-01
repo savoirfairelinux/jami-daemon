@@ -63,9 +63,6 @@ void ConfigurationSkeleton::readConfig()
 	//Call history settings
         setEnableHistory(QVariant(configurationManager.getHistoryEnabled()).toBool());
 	setHistoryMax(configurationManager.getHistoryLimit());
-
-	//SIP port settings
-	setSIPPort(configurationManager.getSipPort());
  	
 	////////////////////////
 	////Display settings////
@@ -84,11 +81,6 @@ void ConfigurationSkeleton::readConfig()
 	/////////////////////////
 	
 // 	loadAccountList();
-
-
-	//Stun settings
-	setEnableStun(configurationManager.isStunEnabled());
-	setStunServer(configurationManager.getStunServer());
 
 	
 	//////////////////////
@@ -127,11 +119,7 @@ void ConfigurationSkeleton::readConfig()
 	qDebug() << "outputDevice = " << devices[0];
 	int outputDevice = devices[0].toInt(& ok);
 	if(!ok) qDebug() << "outputDevice is not a number";
-	setAlsaOutputDevice(outputDevice);
-	
-	
-	//pulseaudio settings
-	setPulseAudioVolumeAlter(configurationManager.getPulseAppVolumeControl());
+	setAlsaOutputDevice(outputDevice);	       
 	
 	///////////////////////
 	////Record settings////
@@ -195,8 +183,6 @@ void ConfigurationSkeleton::writeConfig()
             configurationManager.setHistoryEnabled();
         }
 	configurationManager.setHistoryLimit(historyMax());
-	//SIP port settings
-	configurationManager.setSipPort(sIPPort());
 
 
 	////////////////////////
@@ -221,11 +207,6 @@ void ConfigurationSkeleton::writeConfig()
 	qDebug() << "Writing Accounts settings";
 	
 // 	saveAccountList();
-
-
-	//Stun settings
-	if(enableStun() != configurationManager.isStunEnabled()) configurationManager.enableStun();
-	configurationManager.setStunServer(stunServer());
 
 	//////////////////////
 	////Audio settings////
@@ -257,12 +238,6 @@ void ConfigurationSkeleton::writeConfig()
 		configurationManager.setOutputAudioPlugin(alsaPlugin());
 		configurationManager.setAudioInputDevice(alsaInputDevice());
 		configurationManager.setAudioOutputDevice(alsaOutputDevice());
-	}
-	//pulseaudio settings
-	if(newManager == EnumInterface::PulseAudio)
-	{
-		qDebug() << "setting pulseaudio settings";
-		if(pulseAudioVolumeAlter() != configurationManager.getPulseAppVolumeControl()) configurationManager.setPulseAppVolumeControl();
 	}
 	
 	

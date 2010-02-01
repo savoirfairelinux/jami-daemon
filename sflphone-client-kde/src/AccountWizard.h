@@ -119,21 +119,23 @@ public:
 private:
 	QLabel * label_emailAddress;
 	QLineEdit * lineEdit_emailAddress;
+	QLabel * label_enableZrtp;
+	QCheckBox * checkBox_enableZrtp;
 };
 
 /***************************************************************************
- *   Class WizardAccountFormPage                                           *
+ *   Class WizardAccountSIPFormPage                                        *
  *   Page of account settings.                                             *
  ***************************************************************************/
 
-class WizardAccountFormPage : public QWizardPage
+class WizardAccountSIPFormPage : public QWizardPage
 {
 	Q_OBJECT
 
 public:
 	
-	WizardAccountFormPage(int type, QWidget *parent = 0);
-	~WizardAccountFormPage();
+	WizardAccountSIPFormPage(QWidget *parent = 0);
+	~WizardAccountSIPFormPage();
 	int nextId() const;
 
 private:
@@ -144,7 +146,40 @@ private:
 	QLabel * label_user;
 	QLabel * label_password;
 	QLabel * label_voicemail;
+	QLabel * label_enableZrtp;
+
+	QLineEdit * lineEdit_alias;
+	QLineEdit * lineEdit_server;
+	QLineEdit * lineEdit_user;
+	QLineEdit * lineEdit_password;
+	QLineEdit * lineEdit_voicemail;
+	QCheckBox * checkBox_enableZrtp;
+};
+
+/***************************************************************************
+ *   Class WizardAccountIAXFormPage                                        *
+ *   Page of account settings.                                             *
+ ***************************************************************************/
+
+class WizardAccountIAXFormPage : public QWizardPage
+{
+	Q_OBJECT
+
+public:
 	
+	WizardAccountIAXFormPage(QWidget *parent = 0);
+	~WizardAccountIAXFormPage();
+	int nextId() const;
+
+private:
+	int type;
+
+	QLabel * label_alias;
+	QLabel * label_server;
+	QLabel * label_user;
+	QLabel * label_password;
+	QLabel * label_voicemail;
+
 	QLineEdit * lineEdit_alias;
 	QLineEdit * lineEdit_server;
 	QLineEdit * lineEdit_user;
