@@ -1346,6 +1346,13 @@ void SFLPhoneView::on1_incomingCall(const QString & /*accountID*/, const QString
 	Call * call = callList->addIncomingCall(callID);
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+
+	changeScreen(SCREEN_MAIN);
+
+	((SFLPhone*)parent())->activateWindow();
+	((SFLPhone*)parent())->raise();
+	((SFLPhone*)parent())->setVisible(true);
+
 	emit incomingCall(call);
 }
 
