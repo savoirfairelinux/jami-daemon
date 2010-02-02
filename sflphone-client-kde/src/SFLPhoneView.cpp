@@ -231,16 +231,48 @@ void SFLPhoneView::typeString(QString str)
 	
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
-		callManager.playDTMF(str);
 		QListWidgetItem * item = listWidget_callList->currentItem();
-		if(!item)
+		callManager.playDTMF(str);
+		Call *currentCall = 0;
+		Call *candidate = 0;
+
+		if(item)
+		{
+			Call *call = callList->findCallByItem(listWidget_callList->currentItem());
+
+			if(call->getState() == CALL_STATE_CURRENT)
+			{
+				currentCall = call;
+			}
+		}
+
+		for(int i = callList->size() - 1 ; i >= 0 ; i--)
+		{
+			Call * call = (*callList)[i];
+
+			if(currentCall != call && call->getState() == CALL_STATE_CURRENT)
+			{
+
+				action(call, CALL_ACTION_HOLD);
+			}
+			else if(call->getState() == CALL_STATE_DIALING)
+			{
+				candidate = call;
+			}
+		}
+		
+		if(!currentCall && !candidate)
 		{
 			qDebug() << "Typing when no item is selected. Opening an item.";
-			Call * call = callList->addDialingCall();
-			addCallToCallList(call);
+			candidate = callList->addDialingCall();
+			addCallToCallList(candidate);
 			listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 		}
-		callList->findCallByItem(listWidget_callList->currentItem())->appendItemText(str);
+
+		if(!currentCall && candidate)
+		{
+			callList->findCallByItem(listWidget_callList->currentItem())->appendItemText(str);
+		}
 	}
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
 	{
