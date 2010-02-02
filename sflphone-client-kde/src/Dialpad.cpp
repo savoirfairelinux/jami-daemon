@@ -27,7 +27,7 @@ Dialpad::Dialpad(QWidget *parent)
  : QWidget(parent)
 {
 	gridLayout = new QGridLayout(this);
-   gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
+	gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
    
 	pushButton_0      = new QPushButton(this);
 	pushButton_1      = new QPushButton(this);
@@ -42,7 +42,7 @@ Dialpad::Dialpad(QWidget *parent)
 	pushButton_diese  = new QPushButton(this);
 	pushButton_etoile = new QPushButton(this);
 		
-	pushButton_0   ->setObjectName(QString::fromUtf8("pushButton_0"));
+	pushButton_0->setObjectName(QString::fromUtf8("pushButton_0"));
 	pushButton_1->setObjectName(QString::fromUtf8("pushButton_1"));
 	pushButton_2->setObjectName(QString::fromUtf8("pushButton_2"));
 	pushButton_3->setObjectName(QString::fromUtf8("pushButton_3"));
