@@ -438,7 +438,7 @@ class SIPVoIPLink : public VoIPLink
          * be created.
          * @return pj_status_t PJ_SUCCESS on success 
          */
-        pj_status_t createTlsTransport(const AccountID& id,  std::string& remoteAddr);
+        pj_status_t createTlsTransport(const AccountID& id,  std::string remoteAddr);
 
 	/**
          * Create a UDP transport using stun server to resove public address

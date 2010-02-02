@@ -80,6 +80,7 @@ struct result {
 };
 
 pjsip_transport *_localUDPTransport;
+pjsip_tpfactory *_localTlsListener;
 
 const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
 
@@ -491,6 +492,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
             account->setHostname (addr_buf);
         }
     }
+
 
     // Create SIP transport or get existent SIP transport from internal map 
     // according to account settings, if the transport could not be created but
@@ -1713,7 +1715,6 @@ bool get_dns_server_addresses (std::vector<std::string> *servers)
 
     struct  sockaddr_in current_server;
     in_addr address;
-
     // Read configuration files
 
     if (res_init () != 0) {
@@ -2004,6 +2005,7 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
     if(!account)
         return false;
 
+
     // If an account is already bound to this account, decrease its reference 
     // as it is going to change. If the same transport is selected, reference 
     // counter will be increased
@@ -2018,7 +2020,6 @@ bool SIPVoIPLink::acquireTransport(const AccountID& accountID) {
     // If TLS is enabled, TLS connection is automatically handled when sending account registration
     // However, for any other sip transaction, we must create TLS connection 
     if(createSipTransport(accountID)) {
-
         return true;
     }
     // A transport is already created on this port, use it
@@ -2168,7 +2169,10 @@ void SIPVoIPLink::createDefaultSipTlsListener()
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Error creating SIP TLS listener (%d)", status);
     }
-
+    else {
+        _localTlsListener = tls;
+    }
+    
     // return PJ_SUCCESS;
     
 }
@@ -2186,9 +2190,15 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 
     if (account->isTlsEnabled()) {
 
+        // Parse remote address to establish connection 
+        std::string remoteSipUri = account->getServerUri();
+        int sips = remoteSipUri.find("<sips:") + 6;
+	int trns = remoteSipUri.find(";transport");
+	std::string remoteAddr = remoteSipUri.substr(sips, trns-sips);
+
         // Nothing to do, TLS listener already created at pjsip's startup and TLS connection\
         // is automatically handled in pjsip when sending registration messages.
-	// status = createTlsTransport(id, );
+        status = createTlsTransport(id, remoteAddr);
         return true;
     }
     else {
@@ -2546,9 +2556,8 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
 }
 
 
-pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::string& remoteAddr)
+pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::string remoteAddr)
 {
-    
     // Retrieve the account information
     SIPAccount * account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
@@ -2565,10 +2574,15 @@ pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::str
 
     pj_sockaddr_in_init(&rem_addr, &remote, (pj_uint16_t)5061);
 
+    // Update TLS settings for account registration using the default listeners
+    // Pjsip does not allow to create multiple listener
+    pjsip_tpmgr *mgr = pjsip_endpt_get_tpmgr(_endpt);
+    pjsip_tls_listener_update_settings(_endpt, _pool, mgr, _localTlsListener, account->getTlsSetting());
+
     // Create a new TLS connection from TLS listener
     pjsip_transport *tls;
     pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr),
-	    				  NULL, &tls);
+              			  NULL, &tls);
 
     account->setAccountTransport(tls);
 

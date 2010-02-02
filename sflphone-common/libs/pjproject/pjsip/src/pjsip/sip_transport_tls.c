@@ -30,6 +30,8 @@
 #include <pj/pool.h>
 #include <pj/string.h>
 
+#include <stdio.h>
+
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && PJSIP_HAS_TLS_TRANSPORT!=0
 
 #define THIS_FILE	"sip_transport_tls.c"
@@ -173,6 +175,28 @@ static void sockaddr_to_host_port( pj_pool_t *pool,
 /****************************************************************************
  * The TLS listener/transport factory.
  */
+
+PJ_DEF(pj_status_t) pjsip_tls_listener_update_settings(pjsip_endpoint *endpt,
+						       pj_pool_t *pool,
+						       pjsip_tpmgr *mgr,
+						       pjsip_tpfactory *factory,
+						       const pjsip_tls_setting *opt) {
+
+    struct tls_listener *listener;
+    pjsip_transport_type_e type = PJSIP_TRANSPORT_TLS;
+
+    /*
+     * Find the tls factory.
+     */
+    listener = (struct tls_listener*)factory;
+    listener->tls_setting;
+
+    pjsip_tls_setting_copy(pool, &(listener->tls_setting), opt);
+
+    return PJ_SUCCESS;
+}
+
+
 
 /*
  * This is the public API to create, initialize, register, and start the

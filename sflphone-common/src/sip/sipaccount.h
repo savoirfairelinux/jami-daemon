@@ -135,7 +135,7 @@ class SIPAccount : public Account
          * an alternate UDP transport.
          */
         inline pj_str_t getStunServerName(void) { return _stunServerName; }
-		inline void setStunServerName (pj_str_t srv) { _stunServerName = srv; }
+	inline void setStunServerName (pj_str_t srv) { _stunServerName = srv; }
 
 		/**
          * @return pj_uint8_t structure, filled from the configuration
@@ -143,7 +143,7 @@ class SIPAccount : public Account
          * an alternate UDP transport.
          */
         inline pj_uint16_t getStunPort (void) { return _stunPort; }
-		inline void setStunPort (pj_uint16_t port) { _stunPort = port; }
+	inline void setStunPort (pj_uint16_t port) { _stunPort = port; }
         
         /**
          * @return bool Tells if current transport for that 

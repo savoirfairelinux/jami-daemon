@@ -188,12 +188,6 @@ typedef struct pjsip_tls_setting
     pj_bool_t qos_ignore_error;
 
 
-    /**
-     * An optional callback for TLS verify which can be left to NULL;
-     * 
-     */ 
-    int(* on_tls_verify)()
-
 } pjsip_tls_setting;
 
 
@@ -229,6 +223,11 @@ PJ_INLINE(void) pjsip_tls_setting_copy(pj_pool_t *pool,
     pj_strdup_with_null(pool, &dst->ciphers, &src->ciphers);
 }
 
+PJ_DEF(pj_status_t) pjsip_tls_listener_update_settings(pjsip_endpoint *endpt,
+						       pj_pool_t *pool,
+						       pjsip_tpmgr *mgr,
+						       pjsip_tpfactory *factory,
+						       const pjsip_tls_setting *opt);
 
 /**
  * Register support for SIP TLS transport by creating TLS listener on
