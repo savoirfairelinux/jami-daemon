@@ -47,6 +47,7 @@
 #include "SFLPhone.h"
 #include "typedefs.h"
 #include "Dialpad.h"
+#include "CallTreeView.h"
 
 
 using namespace KABC;
@@ -64,7 +65,10 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	
 	errorWindow = new QErrorMessage(this);
+
 	callList = new CallList(this);
+	callTree = new CallTreeView(page_callList);
+
 	historyLoaded = false;
 
 	for(int i = 0 ; i < callList->size() ; i++)
@@ -93,7 +97,12 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	QPalette pal = QPalette(palette());
 	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
 	setPalette(pal);
-	
+		
+/*	listWidget_callList->setSelectionMode(QAbstractItemView::SingleSelection);
+	listWidget_callList->setDragEnabled(true);
+	listWidget_callList->setAcceptDrops(true);
+	listWidget_callList->setDropIndicatorShown(true);*/
+
 	stackedWidget_screen->setCurrentWidget(page_callList);
 	
 	connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
@@ -193,12 +202,12 @@ QErrorMessage * SFLPhoneView::getErrorWindow()
 
 void SFLPhoneView::addCallToCallList(Call * call)
 {
-	QListWidgetItem * item = call->getItem();
+	CallTreeItem * item = call->getItem();
 	QWidget * widget = call->getItemWidget();
 	if(item && widget)
 	{
-		listWidget_callList->addItem(item);
-		listWidget_callList->setItemWidget(item, widget);
+		callTree->insert(item);
+		callTree->setItemWidget(item, widget);
 	}
 }
 
@@ -231,14 +240,14 @@ void SFLPhoneView::typeString(QString str)
 	
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
-		QListWidgetItem * item = listWidget_callList->currentItem();
+		QListWidgetItem * item = callTree->currentItem();
 		callManager.playDTMF(str);
 		Call *currentCall = 0;
 		Call *candidate = 0;
 
 		if(item)
 		{
-			Call *call = callList->findCallByItem(listWidget_callList->currentItem());
+			Call *call = callList->findCallByItem(callTree->currentItem());
 
 			if(call->getState() == CALL_STATE_CURRENT)
 			{
@@ -266,12 +275,12 @@ void SFLPhoneView::typeString(QString str)
 			qDebug() << "Typing when no item is selected. Opening an item.";
 			candidate = callList->addDialingCall();
 			addCallToCallList(candidate);
-			listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+			callTree->setCurrentRow(callTree->count() - 1);
 		}
 
 		if(!currentCall && candidate)
 		{
-			callList->findCallByItem(listWidget_callList->currentItem())->appendItemText(str);
+			callList->findCallByItem(callTree->currentItem())->appendItemText(str);
 		}
 	}
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
@@ -294,14 +303,14 @@ void SFLPhoneView::backspace()
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
 		qDebug() << "In call list.";
-		QListWidgetItem * item = listWidget_callList->currentItem();
+		QListWidgetItem * item = callTree->currentItem();
 		if(!item)
 		{
 			qDebug() << "Backspace when no item is selected. Doing nothing.";
 		}
 		else
 		{
-			Call * call = callList->findCallByItem(listWidget_callList->currentItem());
+			Call * call = callList->findCallByItem(callTree->currentItem());
 			if(!call)
 			{
 				qDebug() << "Error : Backspace on unexisting call.";
@@ -321,14 +330,14 @@ void SFLPhoneView::escape()
 	if(stackedWidget_screen->currentWidget() == page_callList )
 	{
 		qDebug() << "In call list.";
-		QListWidgetItem * item = listWidget_callList->currentItem();
+		QListWidgetItem * item = callTree->currentItem();
 		if(!item)
 		{
 			qDebug() << "Escape when no item is selected. Doing nothing.";
 		}
 		else
 		{
-			Call * call = callList->findCallByItem(listWidget_callList->currentItem());
+			Call * call = callList->findCallByItem(->currentItem());
 			if(!call)
 			{
 				qDebug() << "Error : Escape on unexisting call.";

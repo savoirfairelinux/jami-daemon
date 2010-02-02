@@ -32,18 +32,7 @@
       <number>0</number>
      </property>
      <widget class="QWidget" name="page_callList">
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QListWidget" name="listWidget_callList">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <layout class="QHBoxLayout" name="horizontalLayout_3"/>
      </widget>
      <widget class="QWidget" name="page_callHistory">
       <layout class="QVBoxLayout" name="verticalLayout_3">

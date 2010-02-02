@@ -34,6 +34,7 @@
 #include "ui_SFLPhoneView_base.h"
 #include "conf/ConfigurationDialog.h"
 #include "CallList.h"
+#include "CallTreeView.h"
 #include "AccountWizard.h"
 #include "Contact.h"
 #include "AccountList.h"
@@ -65,6 +66,7 @@ private:
 	//List of calls in the window, and past ones.
 	//Handles both current calls (dialing, ringing...) and history.
 	CallList * callList;
+	CallTreeView *callTree;
 	QErrorMessage * errorWindow;
 	//Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
 	static QString priorAccountId;

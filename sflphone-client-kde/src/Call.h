@@ -25,7 +25,6 @@
 
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
-#include <QtGui/QListWidgetItem>
 #include <QtGui/QLabel>
 #include <QtGui/QWidget>
 
@@ -152,7 +151,6 @@ private:
 	QDateTime * startTime;
 	QDateTime * stopTime;
 	
-	QListWidgetItem * item;
 	QWidget * itemWidget;
 	QLabel * labelIcon;
 	QLabel * labelPeerName;
@@ -160,7 +158,6 @@ private:
 	QLabel * labelTransferPrefix;
 	QLabel * labelTransferNumber;
 	
-	QListWidgetItem * historyItem;
 	QWidget * historyItemWidget;
 	QLabel * labelHistoryIcon;
 	QLabel * labelHistoryPeerName;
@@ -236,7 +233,6 @@ public:
 	
 	//Constructors & Destructors
 	~Call();
-	void initCallItem();
 	void initCallItemWidget();
 	static Call * buildDialingCall(QString callId, const QString & peerName, QString account = "");
 	static Call * buildIncomingCall(const QString & callId);
@@ -250,9 +246,7 @@ public:
 	static history_state getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
 	
 	//Getters
-	QListWidgetItem * getItem();
 	QWidget * getItemWidget();
-	QListWidgetItem * getHistoryItem();
 	QWidget * getHistoryItemWidget();
 	call_state getState() const;
 	QString getCallId() const;
@@ -277,9 +271,6 @@ public:
 // 	void setPeerName(const QString peerName);
 	void changeCurrentState(call_state newState);
 	
-	//Updates
-	void updateItem();
-
 	//Utils
 	Contact * findContactForNumberInKAddressBook(QString number);
 

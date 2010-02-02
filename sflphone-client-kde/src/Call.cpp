@@ -28,6 +28,7 @@
 #include <kabc/addressbook.h>
 #include <kabc/stdaddressbook.h>
 
+#include "CallTreeItem.h"
 
 using namespace KABC;
 
@@ -102,14 +103,6 @@ const char * Call::callStateIcons[11] = {ICON_INCOMING, ICON_RINGING, ICON_CURRE
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
 
-void Call::initCallItem()
-{
-	item = new QListWidgetItem();
-	item->setSizeHint(QSize(140,45));
-	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
-	initCallItemWidget();
-}
-
 void Call::initCallItemWidget()
 {
 	itemWidget = new QWidget();
@@ -155,11 +148,9 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	this->callId = callId;
 	this->peerPhoneNumber = peerNumber;
 	this->peerName = peerName;
-	initCallItem();
 	changeCurrentState(startState);
 	this->account = account;
 	this->recording = false;
-	this->historyItem = NULL;
 	this->historyItemWidget = NULL;
 	this->startTime = NULL;
 	this->stopTime = NULL;
@@ -185,9 +176,7 @@ Call::~Call()
 {
 	delete startTime;
 	delete stopTime;
-	delete item;
 	//delete itemWidget;
-	delete historyItem;
 	//delete historyItemWidget;
 }
 	
@@ -391,24 +380,9 @@ Contact * Call::findContactForNumberInKAddressBook(QString number)
 	return NULL;
 }
 
-QListWidgetItem * Call::getItem()
-{
-	return item;
-}
-
 QWidget * Call::getItemWidget()
 {
 	return itemWidget;
-}
-
-QListWidgetItem * Call::getHistoryItem()
-{
-	if(historyItem == NULL && historyState != NONE)
-	{
-		historyItem = new QListWidgetItem();
-		historyItem->setSizeHint(QSize(140,45));
-	}
-	return historyItem;
 }
 
 QString Call::getStopTimeStamp() const
@@ -667,7 +641,6 @@ void Call::setRecord()
 	qDebug() << "Setting record " << !recording << " for call. callId : " << callId;
 	callManager.setRecording(callId);
 	recording = !recording;
-	updateItem();
 }
 
 void Call::start()
@@ -755,10 +728,9 @@ void Call::backspaceItemText()
 void Call::changeCurrentState(call_state newState)
 {
 	currentState = newState;
-	updateItem();
 }
 
-void Call::updateItem()
+/*void Call::updateItem()
 {
 	if(currentState != CALL_STATE_OVER)
 	{
@@ -779,5 +751,5 @@ void Call::updateItem()
 	{
 // 		qDebug() << "Updating item of call of state OVER. Doing nothing.";
 	}
-}
+	}*/
 

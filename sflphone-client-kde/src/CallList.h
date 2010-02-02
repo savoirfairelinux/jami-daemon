@@ -24,8 +24,8 @@
 
 #include <QtCore/QVector>
 #include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
 
+#include "CallTreeItem.h"
 #include "Call.h"
 #include "dbus/metatypes.h"
 
