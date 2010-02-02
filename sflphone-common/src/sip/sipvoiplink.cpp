@@ -2138,7 +2138,7 @@ void SIPVoIPLink::createDefaultSipTlsListener()
 
     // Init local address for this listener to be bound (ADDR_ANY on port 5061).
     pj_sockaddr_in_init (&local_addr, 0, 0);
-    pj_uint16_t localTlsPort = 5061;
+    pj_uint16_t localTlsPort = account->getLocalTlsPort();
     local_addr.sin_port = pj_htons (localTlsPort);
      
     pj_str_t pjAddress;
@@ -2152,7 +2152,7 @@ void SIPVoIPLink::createDefaultSipTlsListener()
 
     pj_bzero (&a_name, sizeof (pjsip_host_port));
     pj_cstr (&a_name.host, publishedAddress.c_str());
-    a_name.port = 5061;
+    a_name.port = account->getLocalTlsPort();
 
     /* Get TLS settings. Expected to be filled */
     pjsip_tls_setting * tls_setting = account->getTlsSetting();
@@ -2562,7 +2562,6 @@ pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::str
     SIPAccount * account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
     if(!account) {
-
         _debug("UserAgent: Account is NULL when creating TLS connection, returning");
 	return !PJ_SUCCESS;
     }
