@@ -715,7 +715,7 @@ SIPVoIPLink::sendUnregister (AccountID id)
         return false;
     }
 
-    //account->setRegistrationInfo(regc);
+    // account->setRegistrationInfo(regc);
     account->setRegister (false);
 
     return true;
@@ -1544,7 +1544,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         if (account == NULL) {
 
-	    _debug ("Account %s is null. Returning", IP2IP_PROFILE);
+	    _debug ("UserAgent: Account %s is null. Returning", IP2IP_PROFILE);
             return !PJ_SUCCESS;
         }
 
@@ -1553,7 +1553,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         // Set SDP parameters - Set to local
 	addrSdp = localAddress;
 
-        _debug ("UserAgent: New IP to IP localAddress: %s", localAddress.c_str());
+        _debug ("UserAgent: Local Address for IP to IP call: %s", localAddress.c_str());
 
 	// If local address bound to ANY, reslove it using PJSIP
         if (localAddress == "0.0.0.0") {
@@ -1570,7 +1570,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 
         std::string toUri = account->getToUri (to);
         call->setPeerNumber (toUri);
-        _debug ("toUri in new_ip_to_ip call %s", toUri.c_str());
+        _debug ("UserAgent: TO uri:  %s", toUri.c_str());
 
 	// Audio Rtp Session must be initialized before creating initial offer in SDP session
 	// since SDES require crypto attribute.
@@ -1578,7 +1578,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 	    call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
-            _debug ("! SIP Failure: Unable to create RTP Session in SIPVoIPLink::new_ip_to_ip_call (%s:%d)", __FILE__, __LINE__);
+            _debug ("UserAgent: Unable to create RTP Session in SIPVoIPLink::new_ip_to_ip_call (%s:%d)", __FILE__, __LINE__);
         }
 
         // Building the local SDP offer
@@ -1603,7 +1603,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
             account->setAccountTransport (_localUDPTransport);
         }
 
-        _debug ("IptoIP local port %i", account->getLocalPort());
+        _debug ("UserAgent: IptoIP local port %i", account->getLocalPort());
 
         _debug ("IptoIP local address in sdp %s", localAddress.c_str());
 

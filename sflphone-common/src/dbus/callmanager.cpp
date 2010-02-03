@@ -39,7 +39,6 @@ CallManager::placeCall (const std::string& accountID,
                         const std::string& callID,
                         const std::string& to)
 {
-    _debug ("CallManager::placeCall received");
     // Check if a destination number is available
 
     if (to == "")   _debug ("No number entered - Call stopped");
@@ -104,7 +103,6 @@ CallManager::transfert (const std::string& callID, const std::string& to)
 void
 CallManager::setVolume (const std::string& device, const double& value)
 {
-    _debug ("CallManager::setVolume received");
 
     if (device == "speaker") {
         Manager::instance().setSpkrVolume ( (int) (value*100.0));
@@ -118,7 +116,6 @@ CallManager::setVolume (const std::string& device, const double& value)
 double
 CallManager::getVolume (const std::string& device)
 {
-    _debug ("CallManager::getVolume received ");
 
     if (device == "speaker") {
         _debug ("Current speaker = %d", Manager::instance().getSpkrVolume());
@@ -183,14 +180,12 @@ CallManager::unholdConference (const std::string& confID)
 std::map< std::string, std::string >
 CallManager::getConferenceDetails (const std::string& callID)
 {
-    _debug ("CallManager::getCallDetails received");
     return Manager::instance().getConferenceDetails (callID);
 }
 
 std::vector< std::string >
 CallManager::getConferenceList (void)
 {
-    _debug ("CallManager::getConferenceList");
     return Manager::instance().getConferenceList();
 }
 
@@ -203,14 +198,12 @@ CallManager::getParticipantList (const std::string& confID)
 void
 CallManager::setRecording (const std::string& callID)
 {
-    _debug ("CallManager::setRecording received");
     Manager::instance().setRecordingCall (callID);
 }
 
 bool
 CallManager::getIsRecording (const std::string& callID)
 {
-    _debug ("CallManager::getIsRecording received ");
     return Manager::instance().isRecording (callID);
 }
 
@@ -218,7 +211,6 @@ CallManager::getIsRecording (const std::string& callID)
 std::string
 CallManager::getCurrentCodecName (const std::string& callID)
 {
-    _debug ("CallManager::getCurrentCodecName received %s ",Manager::instance().getCurrentCodecName (callID).c_str());
     return Manager::instance().getCurrentCodecName (callID).c_str();
 }
 
@@ -226,7 +218,6 @@ CallManager::getCurrentCodecName (const std::string& callID)
 std::map< std::string, std::string >
 CallManager::getCallDetails (const std::string& callID)
 {
-    _debug ("CallManager::getCallDetails received");
     return Manager::instance().getCallDetails (callID);
 }
 
@@ -239,7 +230,6 @@ CallManager::getCallList (void)
 std::string
 CallManager::getCurrentCallID()
 {
-    _debug ("CallManager::getCurrentCallID received");
     return Manager::instance().getCurrentCallId();
 }
 
@@ -300,7 +290,6 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
 void
 CallManager::setSASVerified (const std::string& callID)
 {
-    _debug ("CallManager::setSASVerified received for account %s", callID.c_str());
 
     try {
         sfl::AudioZrtpSession * zSession;
@@ -315,7 +304,6 @@ CallManager::setSASVerified (const std::string& callID)
 void
 CallManager::resetSASVerified (const std::string& callID)
 {
-    _debug ("CallManager::resetSASVerified received for account %s", callID.c_str());
 
     try {
         sfl::AudioZrtpSession * zSession;

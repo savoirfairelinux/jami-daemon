@@ -703,17 +703,10 @@ void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sd
     // get the number of media for this sdp session
     media_count = remote_sdp->media_count;
 
-    // *r_crypto = pjmedia_sdp_media_find_attr(attribute, &STR_CRYPTO, NULL);
-
-    _debug("****************** Parse for Crypto ********************");
-
     CryptoOffer remoteOffer;
 
     // iterate over all media
     for (i = 0; i < media_count; ++i) {
-
-      // _debug("%.*s", (int)remote_sdp->attr[i]->name.slen, remote_sdp->attr[i]->name.ptr);
-      // _debug("%.*s", (int)remote_sdp->attr[i]->value.slen, remote_sdp->attr[i]->value.ptr);
 
 	// get media
 	media = remote_sdp->media[i];
@@ -729,7 +722,6 @@ void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sd
 	    // test if this attribute is a crypto
 	    if (pj_stricmp2 (&attribute->name, "crypto") == 0) {
 
-		_debug("****************** Found a Crypto ********************");
 		std::string attr(attribute->value.ptr, attribute->value.slen);
 
 		// @TODO our parser require the "a=crypto:" to be present
