@@ -2273,6 +2273,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (STUN_ENABLE, DFT_STUN_ENABLE), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (STUN_SERVER, DFT_STUN_SERVER), IP2IP_PROFILE);
+    _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, "Direct calls"), IP2IP_PROFILE);
 
     // Init display name to the username under which
     // this sflphone instance is running.
@@ -3321,15 +3322,19 @@ void ManagerImpl::setAccountsOrder (const std::string& order)
     setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
 }
 
-std::vector< std::string >
-ManagerImpl::getAccountList()
-{
+std::vector< std::string > ManagerImpl::getAccountList() {
+
     std::vector< std::string > v;
     std::vector< std::string > account_order;
     unsigned int i;
 
     account_order = loadAccountOrder ();
     AccountMap::iterator iter;
+
+	// The IP2IP profile is always available, and first in the list
+	iter = _accountMap.find (IP2IP_PROFILE);
+	if (iter->second != NULL)
+		v.push_back (iter->first.data ());
 
     // If no order has been set, load the default one
     // ie according to the creation date.
