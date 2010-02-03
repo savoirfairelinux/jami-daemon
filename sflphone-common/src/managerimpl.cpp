@@ -2253,6 +2253,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, FALSE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, TRUE_STR), IP2IP_PROFILE);
+    _config.addDefaultValue (std::pair<std::string, std::string> (TLS_LISTENER_PORT, DEFAULT_SIP_TLS_PORT), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_ENABLE, FALSE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, EMPTY_FIELD), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, EMPTY_FIELD), IP2IP_PROFILE);
@@ -3482,6 +3483,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
         _debug ("Cannot getAccountDetails on a non-existing accountID %s. Defaults will be used.", accountID.c_str());
     }
 
+    a.insert (std::pair<std::string, std::string> (ACCOUNT_ID, accountID));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
 
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, getConfigString (accountID, CONFIG_ACCOUNT_ENABLE)));
@@ -3529,6 +3531,9 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (ZRTP_HELLO_HASH, getConfigString (accountID, ZRTP_HELLO_HASH)));
     a.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, getConfigString (accountID, ZRTP_NOT_SUPP_WARNING)));
 
+
+    // TLS listener is unique and parameters are modified through IP2IP_PROFILE
+    a.insert (std::pair<std::string, std::string> (TLS_LISTENER_PORT, Manager::instance().getConfigString(IP2IP_PROFILE, TLS_LISTENER_PORT)));
     a.insert (std::pair<std::string, std::string> (TLS_ENABLE, Manager::instance().getConfigString (accountID, TLS_ENABLE)));
     a.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, Manager::instance().getConfigString (accountID, TLS_CA_LIST_FILE)));
     a.insert (std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, Manager::instance().getConfigString (accountID, TLS_CERTIFICATE_FILE)));
@@ -3743,6 +3748,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string zrtpHelloHash;
     std::string srtpKeyExchange;
 
+    std::string tlsListenerPort;
     std::string tlsEnable;
     std::string tlsCaListFile;
     std::string tlsCertificateFile;
@@ -3841,6 +3847,11 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
         registrationExpire = iter->second;
     }
 
+    // The TLS listener is unique and globally defined through IP2IP_PROFILE
+    if((accountID == IP2IP_PROFILE) && (iter = map_cpy.find (TLS_LISTENER_PORT)) != map_cpy.end()) {
+        tlsListenerPort = iter->second;
+    }
+
     if ( (iter = map_cpy.find (TLS_ENABLE)) != map_cpy.end()) {
         tlsEnable = iter->second;
     }
@@ -3911,6 +3922,10 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig (accountID, STUN_ENABLE, stunEnable);
     setConfig (accountID, STUN_SERVER, stunServer);
 
+    // The TLS listener is unique and globally defined through IP2IP_PROFILE
+    if(accountID == IP2IP_PROFILE)
+        setConfig(accountID, TLS_LISTENER_PORT, tlsListenerPort);
+
     setConfig (accountID, TLS_ENABLE, tlsEnable);
     setConfig (accountID, TLS_CA_LIST_FILE, tlsCaListFile);
     setConfig (accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);
@@ -3941,7 +3956,6 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
         acc->loadConfig();
 
         if (acc->isEnabled()) {
-            // acc->unregisterVoIPLink(); // do not need to send an unregister
             acc->registerVoIPLink();
         } else {
             acc->unregisterVoIPLink();

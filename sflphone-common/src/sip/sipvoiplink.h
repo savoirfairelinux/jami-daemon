@@ -332,10 +332,6 @@ class SIPVoIPLink : public VoIPLink
 	 */
         bool loadSIPLocalIP (std::string *addr);
 
-	/**
-	 * This method is used to create a new transport and attach it to the appropriate account
-	 */
-	void updateAccountInfo(const AccountID& accountID);
 
 	/**
 	 * This function unset the transport for a given account. It tests wether the 

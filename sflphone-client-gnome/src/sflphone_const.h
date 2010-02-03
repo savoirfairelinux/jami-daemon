@@ -50,6 +50,9 @@
 
 #define UNUSED  __attribute__((__unused__))
 
+#define IP2IP_PROFILE                      "IP2IP"
+
+#define ACCOUNT_ID                         "Account.id"
 #define ACCOUNT_TYPE                       "Account.type"
 #define ACCOUNT_ALIAS		           "Account.alias"
 #define ACCOUNT_ENABLED		           "Account.enable"
@@ -73,6 +76,7 @@
 #define ZRTP                               "1"
 #define SDES                               "2"
 
+#define TLS_LISTENER_PORT                   "TLS.listenerPort"
 #define TLS_ENABLE                          "TLS.enable"
 #define TLS_PORT                            "TLS.port"
 #define TLS_CA_LIST_FILE                    "TLS.certificateListFile"

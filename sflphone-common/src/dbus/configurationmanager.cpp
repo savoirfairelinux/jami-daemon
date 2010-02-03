@@ -48,6 +48,7 @@ ConfigurationManager::getTlsSettingsDefault (void)
     _debug ("ConfigurationManager::getTlsDefaultSettings");
 
     std::map<std::string, std::string> tlsSettingsDefault;
+    tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_LISTENER_PORT, DEFAULT_SIP_TLS_PORT));
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CA_LIST_FILE, ""));
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_CERTIFICATE_FILE, ""));
     tlsSettingsDefault.insert (std::pair<std::string, std::string> (TLS_PRIVATE_KEY_FILE, ""));
@@ -70,6 +71,7 @@ ConfigurationManager::getIp2IpDetails (void)
 
     std::map<std::string, std::string> ip2ipAccountDetails;
 
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ACCOUNT_ID, IP2IP_PROFILE));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_KEY_EXCHANGE)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_ENABLE, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_ENABLE)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS)));
@@ -155,6 +157,9 @@ std::map< std::string, std::string >
 ConfigurationManager::getTlsSettings (const std::string& section)
 {
     std::map<std::string, std::string> tlsSettings;
+
+    tlsSettings.insert (std::pair<std::string, std::string>
+			(TLS_LISTENER_PORT, Manager::instance().getConfigString(section, TLS_LISTENER_PORT)));
     tlsSettings.insert (std::pair<std::string, std::string>
                         (TLS_ENABLE, Manager::instance().getConfigString (section, TLS_ENABLE)));
     tlsSettings.insert (std::pair<std::string, std::string>
@@ -189,6 +194,11 @@ ConfigurationManager::setTlsSettings (const std::string& section, const std::map
 {
     std::map<std::string, std::string> map_cpy = details;
     std::map<std::string, std::string>::iterator it;
+
+    it = map_cpy.find(TLS_LISTENER_PORT);
+    if(it != details.end()) {
+        Manager::instance().setConfig(section, TLS_LISTENER_PORT, it->second);
+    }
 
     it = map_cpy.find (TLS_ENABLE);
 

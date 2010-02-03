@@ -253,13 +253,13 @@ class SIPAccount : public Account
          * Get the local port for TLS listener.
          * @return pj_uint16 The port used for that account
          */   
-        inline pj_uint16_t getLocalTlsPort(void) { return (pj_uint16_t) _localTlsPort; }
+        inline pj_uint16_t getTlsListenerPort(void) { return (pj_uint16_t) _tlsListenerPort; }
         
         /** 
          * Set the local port for TLS listener.
          * @pram port The port used for TLS listener.
          */
-        inline void setLocalTlsPort(pj_uint16_t port) { _localTlsPort = port; }
+        inline void setTlsListenerPort(pj_uint16_t port) { _tlsListenerPort = port; }
                 
         /**
          * Get the public IP address set by the user for this account.
@@ -349,7 +349,11 @@ class SIPAccount : public Account
         
         pj_uint16_t _localPort;
         pj_uint16_t _publishedPort;
-	pj_uint16_t _localTlsPort;
+
+	/**
+	 * The global TLS listener port which can be configured through the IP2IP_PROFILE 
+	 */ 
+	pj_uint16_t _tlsListenerPort;
         
         pjsip_transport_type_e _transportType;
 

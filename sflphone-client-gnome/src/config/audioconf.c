@@ -818,14 +818,10 @@ GtkWidget* create_audio_configuration()
     // Box for the ALSA configuration
     gnome_main_section_new (_("ALSA settings"), &alsa_conf);
     gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
-    // gtk_widget_hide( GTK_CONTAINER(alsa_conf) );
     gtk_widget_show( alsa_conf );
     if( SHOW_ALSA_CONF )
     {
         // Box for the ALSA configuration
-        // alsa_conf = gtk_frame_new(_("ALSA configuration"));
-        // gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
-        printf("ALSA Created \n");
         alsabox = alsa_box();
         gtk_container_add( GTK_CONTAINER(alsa_conf) , alsabox );
         gtk_widget_hide( alsa_conf );

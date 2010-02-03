@@ -2138,7 +2138,7 @@ void SIPVoIPLink::createDefaultSipTlsListener()
 
     // Init local address for this listener to be bound (ADDR_ANY on port 5061).
     pj_sockaddr_in_init (&local_addr, 0, 0);
-    pj_uint16_t localTlsPort = account->getLocalTlsPort();
+    pj_uint16_t localTlsPort = account->getTlsListenerPort();
     local_addr.sin_port = pj_htons (localTlsPort);
      
     pj_str_t pjAddress;
@@ -2152,7 +2152,7 @@ void SIPVoIPLink::createDefaultSipTlsListener()
 
     pj_bzero (&a_name, sizeof (pjsip_host_port));
     pj_cstr (&a_name.host, publishedAddress.c_str());
-    a_name.port = account->getLocalTlsPort();
+    a_name.port = account->getTlsListenerPort();
 
     /* Get TLS settings. Expected to be filled */
     pjsip_tls_setting * tls_setting = account->getTlsSetting();
@@ -2654,7 +2654,6 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
     }
 
     _debug ("Firewall address : %s:%d",
-
             pj_inet_ntoa (pub_addr.sin_addr),
             pj_ntohs (pub_addr.sin_port));
 
@@ -2733,22 +2732,6 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 	// detach transport from this account
 	account->setAccountTransport(NULL);
 
-    }
-
-}
-
-
-void SIPVoIPLink::updateAccountInfo (const AccountID& accountID)
-{
-
-    // createSipTransport (accountID);
-    acquireTransport(accountID);
-
-    if(accountID == IP2IP_PROFILE) {
-
-        SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
-	// Store new IP2IP UDP transport as default 
-        _localUDPTransport = account->getAccountTransport();
     }
 
 }

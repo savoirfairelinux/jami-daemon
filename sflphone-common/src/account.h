@@ -54,6 +54,9 @@ typedef enum RegistrationState {
 
 #define AccountNULL ""
 
+// Account identifier                       
+#define ACCOUNT_ID                          "Account.id"
+
 // Common account parameters
 #define CONFIG_ACCOUNT_TYPE                 "Account.type"  
 #define CONFIG_ACCOUNT_ALIAS                "Account.alias"
@@ -93,6 +96,7 @@ typedef enum RegistrationState {
 #define ZRTP_NOT_SUPP_WARNING               "ZRTP.notSuppWarning"
 #define ZRTP_DISPLAY_SAS_ONCE               "ZRTP.displaySasOnce"
 
+#define TLS_LISTENER_PORT                   "TLS.listenerPort"
 #define TLS_ENABLE                          "TLS.enable"
 #define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
 #define TLS_CERTIFICATE_FILE                "TLS.certificateFile"

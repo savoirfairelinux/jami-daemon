@@ -167,6 +167,15 @@ static void ip2ip_local_port_changed_cb(GtkWidget *widget, gpointer data)
 			g_strdup(LOCAL_PORT), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(GTK_SPIN_BUTTON(widget)))));
 }
 
+/*
+static void tls_listener_port_changed_cb(GtkWidget *widget, gpointer data) {
+
+    gint new_port = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+    g_hash_table_replace(directIpCallsProperties, 
+			 g_strdup(TLS_LISTENER_PORT), g_strdup((char *)gtk_entry_get_text(GTK_ENTRY(GTK_SPIN_BUTTON(widget)))));
+}
+*/
+
 
 GtkWidget* create_direct_ip_calls_tab()
 {

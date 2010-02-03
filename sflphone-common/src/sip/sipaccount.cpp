@@ -33,7 +33,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _publishedIpAddress ("")
         , _localPort (atoi (DEFAULT_SIP_PORT))
         , _publishedPort (atoi (DEFAULT_SIP_PORT))
-	, _localTlsPort (atoi (DEFAULT_SIP_TLS_PORT))
+	, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
         , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
         , _transport (NULL)
         , _resolveOnce (false)
@@ -262,6 +262,10 @@ void SIPAccount::initTlsConfiguration (void)
         _tlsSetting = NULL;
     }
 
+    // TLS listener is unique and should be only modified through IP2IP_PROFILE
+    std::string tlsPortStr = Manager::instance().getConfigString(_accountID, TLS_LISTENER_PORT);
+    setTlsListenerPort(atoi(tlsPortStr.c_str()));
+    
     _tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
 
     assert (_tlsSetting);
