@@ -87,8 +87,23 @@ class SIPAccount : public Account
         
         inline bool isResolveOnce(void) { return _resolveOnce; }
         
+
+	/**
+	 * A client sendings a REGISTER request MAY suggest an expiration
+	 * interval that indicates how long the client would like the
+	 * registration to be valid.
+	 *
+	 * @return A string describing the expiration value.
+	 */
         inline std::string& getRegistrationExpire(void) { return _registrationExpire; }
-        
+
+	/**
+	 * Setting the Expiration Interval of Contact Addresses.
+	 *
+	 * @param A string describing the expiration value.
+	 */ 
+	inline void setRegistrationExpire(std::string expr) { _registrationExpire = expr; }
+
         bool fullMatch(const std::string& username, const std::string& hostname);
         bool userMatch(const std::string& username);
         bool hostnameMatch(const std::string& hostname);

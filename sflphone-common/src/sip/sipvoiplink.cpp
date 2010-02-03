@@ -3301,6 +3301,21 @@ void regc_cb (struct pjsip_regc_cbparam *param)
                     account->setRegistrationState (ErrorAuth);
                     break;
 
+	        case 423: { // Expiration Interval Too Brief
+
+		    int expire_value;
+		    std::istringstream stream (account->getRegistrationExpire());
+		    stream >> expire_value;
+
+		    std::stringstream out;
+		    out << (expire_value * 2);
+		    std::string s = out.str(); 
+
+		    Manager::instance().setConfig(account->getAccountID(), CONFIG_ACCOUNT_REGISTRATION_EXPIRE, s);
+		    account->registerVoIPLink();
+		}
+		    break;
+
                 default:
                     account->setRegistrationState (Error);
                     break;
