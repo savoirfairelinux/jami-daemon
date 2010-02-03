@@ -1535,6 +1535,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     call = new SIPCall (id, Call::Outgoing, _pool);
 
     if (call) {
+
         call->setCallConfiguration (Call::IPtoIP);
         call->initRecFileName();
 
@@ -1588,13 +1589,19 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 	// Init TLS transport if enabled
 	if(account->isTlsEnabled()) {
 
-	    _debug("UserAgent: TLS enabled for IP to IP calls, acquire TLS transport");
-
+	    _debug("UserAgent: TLS enabled for IP to IP calls");
 	    int at = toUri.find("@");
 	    int trns = toUri.find(";transport");
 	    std::string remoteAddr = toUri.substr(at+1, trns-at-1);
 
-	    createTlsTransport(account->getAccountID(), remoteAddr);
+	    if(toUri.find("sips:") != 1) {
+	        _debug("UserAgent: Error \"sips\" scheme required TLS call");
+	        return false;
+	    }
+
+	    if(createTlsTransport(account->getAccountID(), remoteAddr) != PJ_SUCCESS)
+		return false;
+
 	}
 
         // If no transport already set, use the default one created at pjsip initialization
@@ -2198,7 +2205,9 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 
         // Nothing to do, TLS listener already created at pjsip's startup and TLS connection\
         // is automatically handled in pjsip when sending registration messages.
-        status = createTlsTransport(id, remoteAddr);
+        if(createTlsTransport(id, remoteAddr) != PJ_SUCCESS)
+	    return false;
+
         return true;
     }
     else {
@@ -2438,12 +2447,15 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     if (transportType == PJSIP_TRANSPORT_UDP) {
         status = init_transport_selector (transport, &tp_sel);
 
-        if (status == PJ_SUCCESS)
+        if (status == PJ_SUCCESS) {
+	    _debug("pjsip_tpmgr_find_local_addr, UDP, tpsel");
             status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
-        else
+	} else {
+	    _debug("pjsip_tpmgr_find_local_addr, UDP");
             status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+	}
     } else {
-
+        _debug("pjsip_tpmgr_find_local_addr, TLS");
         status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
     }
 
@@ -2558,6 +2570,8 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
 
 pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::string remoteAddr)
 {
+    pj_status_t success;
+
     // Retrieve the account information
     SIPAccount * account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
@@ -2580,12 +2594,14 @@ pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::str
 
     // Create a new TLS connection from TLS listener
     pjsip_transport *tls;
-    pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr),
-              			  NULL, &tls);
+    success = pjsip_endpt_acquire_transport(_endpt, PJSIP_TRANSPORT_TLS, &rem_addr, sizeof(rem_addr), NULL, &tls);
 
-    account->setAccountTransport(tls);
+    if(success != PJ_SUCCESS)
+        _debug("UserAgent: Error could not create TLS transport");
+    else 
+        account->setAccountTransport(tls);
 
-    return PJ_SUCCESS;
+    return success;
 }
 
 pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)

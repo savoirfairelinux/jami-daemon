@@ -1578,8 +1578,6 @@ ManagerImpl::playDtmf (char code)
     AudioLayer *audiolayer;
     SFLDataFormat *buf;
 
-    _debug ("ManagerImpl::playDtmf");
-
     stopTone ();
 
     bool hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_DTMF);
@@ -1615,10 +1613,6 @@ ManagerImpl::playDtmf (char code)
     //                            ms/s
     size = (int) ( (pulselen * (float) audiolayer->getSampleRate()) / 1000);
 
-    _debug ("DTMF pulselen: %i", pulselen);
-
-    _debug ("DTMF size: %i", size);
-
     // this buffer is for mono
     // TODO <-- this should be global and hide if same size
     buf = new SFLDataFormat[size];
@@ -1634,8 +1628,6 @@ ManagerImpl::playDtmf (char code)
         // audiolayer->flushUrgent();
         audiolayer->startStream();
         audiolayer->putUrgent (buf, size * sizeof (SFLDataFormat));
-    } else {
-        _debug ("    playDtmf: Error cannot play dtmf");
     }
 
     ret = true;
@@ -2022,8 +2014,6 @@ bool ManagerImpl::playATone (Tone::TONEID toneId)
 void ManagerImpl::stopTone ()
 {
     bool hasToPlayTone;
-
-    _debug ("ManagerImpl::stopTone");
 
     hasToPlayTone = getConfigBool (SIGNALISATION, PLAY_TONES);
 
