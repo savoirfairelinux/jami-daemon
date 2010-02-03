@@ -35,14 +35,17 @@ class Call;
 class CallTreeView : public QTreeView
 {
 	Q_OBJECT
-private:
-	CallTreeModel *model;
 public:
 	CallTreeView(QWidget *parent);
 	~CallTreeView();
 
+	CallTreeItem* insert(CallTreeItem *item, Call* call);
 	CallTreeItem* insert(Call* call);
+	CallTreeItem* getItem(Call *call);
 	void remove(CallTreeItem* item);
+	CallTreeItem* currentItem();
+	void setCurrentRow(int row);
+	int count();
 	
 };
 

@@ -23,10 +23,15 @@
 
  #include "CallTreeItem.h"
 
- CallTreeItem::CallTreeItem(const Call &data, CallTreeItem *parent)
+ CallTreeItem::CallTreeItem(CallTreeItem *parent)
+   : parentItem(parent)
  {
-     parentItem = parent;
-     itemData = data;
+ }
+
+ CallTreeItem::CallTreeItem(const Call &data, CallTreeItem *parent)
+   : parentItem(parent),
+     itemData(data)
+ {
  }
 
  CallTreeItem::~CallTreeItem()
@@ -61,6 +66,11 @@
  QVariant CallTreeItem::data(int column) const
  {
      return itemData.value(column);
+ }
+
+ QVariant CallTreeItem::data() const
+ {
+   return data(0);
  }
 
  bool CallTreeItem::insertChildren(int position, int count, int columns)

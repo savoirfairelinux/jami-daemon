@@ -27,6 +27,9 @@ SET(	sflphone_client_kde_SRCS
 	AccountList.cpp
 	Call.cpp
 	CallList.cpp
+	CallTreeView.cpp
+	CallTreeModel.cpp
+	CallTreeItem.cpp
 	configurationmanager_interface_singleton.cpp
 	callmanager_interface_singleton.cpp
 	instance_interface_singleton.cpp

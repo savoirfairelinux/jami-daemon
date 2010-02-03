@@ -25,7 +25,6 @@
 #include <QtCore/QVector>
 #include <QtCore/QString>
 
-#include "CallTreeItem.h"
 #include "Call.h"
 #include "dbus/metatypes.h"
 
@@ -44,10 +43,10 @@ public:
 	~CallList();
 
 	//Getters
-	Call * findCallByItem(const QListWidgetItem * item);
-	Call * findCallByHistoryItem(const QListWidgetItem * item);
+	//	Call * findCallByItem(const QListWidgetItem * item);
+	//	Call * findCallByHistoryItem(const QListWidgetItem * item);
 	Call * findCallByCallId(const QString & callId);
-	Call * operator[](const QListWidgetItem * item);
+	//	Call * operator[](const QListWidgetItem * item);
 	Call * operator[](const QString & callId);
 	Call * operator[](int ind);
 	int size();

@@ -34,25 +34,27 @@ class Call;
 class CallTreeItem : public QTreeWidget
  {
  public:
-     CallTreeItem(const Call &data, CallTreeItem *parent = 0);
-     ~CallTreeItem();
-
-     CallTreeItem *child(int number);
-     int childCount() const;
-     int columnCount() const;
-     Call* data(int column) const;
-     bool insertChildren(int position, int count, int columns);
-     bool insertColumns(int position, int columns);
-     CallTreeItem *parent();
-     bool removeChildren(int position, int count);
-     bool removeColumns(int position, int columns);
-     int childNumber() const;
-     bool setData(int column, const Call &value);
+	 CallTreeItem(CallTreeItem *parent = 0);
+	 CallTreeItem(const Call &data, CallTreeItem *parent = 0);
+	 ~CallTreeItem();
+     
+	 CallTreeItem *child(int number);
+	 int childCount() const;
+	 int columnCount() const;
+	 Call* data(int column) const;
+	 Call* data() const;
+	 bool insertChildren(int position, int count, int columns);
+	 bool insertColumns(int position, int columns);
+	 CallTreeItem *parent();
+	 bool removeChildren(int position, int count);
+	 bool removeColumns(int position, int columns);
+	 int childNumber() const;
+	 bool setData(int column, const Call &value);
 
  private:
-     QList<CallTreeItem*> childItems;
-     Call *itemData;
-     CallTreeItem *parentItem;
+	 QList<CallTreeItem*> childItems;
+	 Call *itemData;
+	 CallTreeItem *parentItem;
  };
 
 #endif // CALLTREE_ITEM_H

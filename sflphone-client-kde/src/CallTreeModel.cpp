@@ -20,23 +20,21 @@
  ***************************************************************************/
 
 #include <QtGui>
+#include <klocale.h>
 
 #include "CallTreeModel.h"
 #include "CallTreeItem.h"
+#include "Call.h"
 
 CallTreeModel::CallTreeModel(QObject *parent)
 	: QAbstractItemModel(parent)
 {
-	QStringList headers  << i18n("Calls");
+	QStringList data = QString("Calls").split("\n");
 	QVector<QVariant> rootData;
+	rootData << i18n("Calls");
 
-	foreach (QString header, headers)
-	{
-		rootData << header;
-	}
-
-	rootItem = new TreeItem(rootData);
-	setupModelData(data.split(QString("\n")), rootItem);
+	rootItem = new CallTreeItem();
+	setupModelData(data, rootItem);
 }
 
 CallTreeModel::~CallTreeModel()
@@ -53,12 +51,12 @@ QVariant CallTreeModel::data(const QModelIndex &index, int role) const
 {
 	if (!index.isValid())
 	{
-		return QVariant();
+		return 0;
 	}
 
 	if (role != Qt::DisplayRole && role != Qt::EditRole)
 	{
-		return QVariant();
+		return 0;
 	}
 
 	CallTreeItem *item = getItem(index);
@@ -80,7 +78,7 @@ CallTreeItem *CallTreeModel::getItem(const QModelIndex &index) const
 {
 	if (index.isValid()) 
 	{
-		CallTreeItem *item = static_cast<TreeItem*>(index.internalPointer());
+		CallTreeItem *item = static_cast<CallTreeItem*>(index.internalPointer());
 		if (item)
 		{
 			return item;
@@ -194,6 +192,13 @@ int CallTreeModel::rowCount(const QModelIndex &parent) const
 	return parentItem->childCount();
 }
 
+bool CallTreeModel::setData(const QModelIndex &index, const Call *call, int role)
+{
+	QVariant value = QVariant(&*value);
+
+	return setData(index, value, role);
+}
+
 bool CallTreeModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
 	if (role != Qt::EditRole)
@@ -201,7 +206,7 @@ bool CallTreeModel::setData(const QModelIndex &index, const QVariant &value, int
 		return false;
 	}
 
-	TreeItem *item = getItem(index);
+	CallTreeItem *item = getItem(index);
 	bool result = item->setData(index.column(), value);
 
 	if (result)

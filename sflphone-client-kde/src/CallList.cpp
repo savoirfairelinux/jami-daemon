@@ -82,6 +82,8 @@ CallList::~CallList()
 	delete calls;
 }
 
+/*
+
 Call * CallList::operator[](const QListWidgetItem * item)
 {
 	for(int i = 0 ; i < size() ; i++)
@@ -116,7 +118,7 @@ Call * CallList::findCallByHistoryItem(const QListWidgetItem * item)
 		}
 	}
 	return NULL;
-}
+	}*/
 
 Call * CallList::findCallByCallId(const QString & callId)
 {

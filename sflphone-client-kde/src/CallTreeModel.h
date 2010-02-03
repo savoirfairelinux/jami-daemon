@@ -31,14 +31,14 @@
 #include <QtCore/QVariant>
 
 class CallTreeItem;
+class Call;
 
 class CallTreeModel : public QAbstractItemModel
 {
 	Q_OBJECT
 
 public:
-	CallTreeModel(const QStringList &headers, const QString &data,
-		      QObject *parent = 0);
+	CallTreeModel(QObject *parent = 0);
 	~CallTreeModel();
 
 	QVariant data(const QModelIndex &index, int role) const;
@@ -53,8 +53,8 @@ public:
 	int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
 	Qt::ItemFlags flags(const QModelIndex &index) const;
-	bool setData(const QModelIndex &index, const QVariant &value,
-		     int role = Qt::EditRole);
+	bool setData(const QModelIndex &index, const Call *call, int role = Qt::EditRole);
+
 	bool setHeaderData(int section, Qt::Orientation orientation,
 			   const QVariant &value, int role = Qt::EditRole);
 
@@ -67,9 +67,11 @@ public:
 	bool removeRows(int position, int rows,
 			const QModelIndex &parent = QModelIndex());
 
-private:
-	void setupModelData(const QStringList &lines, CallTreeItem *parent);
 	CallTreeItem *getItem(const QModelIndex &index) const;
+
+private:
+	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+	void setupModelData(const QStringList &lines, CallTreeItem *parent);
 	CallTreeItem *rootItem;
 };
 

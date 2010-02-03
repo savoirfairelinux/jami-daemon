@@ -26,7 +26,6 @@
 #include <QtCore/QString>
 #include <QtCore/QVector>
 #include <QtCore/QList>
-#include <QtGui/QListWidgetItem>
 #include <QtGui/QKeyEvent>
 #include <QErrorMessage>
 #include <KXmlGuiWindow>
@@ -66,7 +65,6 @@ private:
 	//List of calls in the window, and past ones.
 	//Handles both current calls (dialing, ringing...) and history.
 	CallList * callList;
-	CallTreeView *callTree;
 	QErrorMessage * errorWindow;
 	//Account used prioritary if defined and registered. If not, the first registered account in accountList is used.
 	static QString priorAccountId;
@@ -138,6 +136,10 @@ public:
 	 */
 	void saveState();
 	
+	CallTreeView *callTree;
+	CallTreeView *historyTree;
+	CallTreeView *addressBookTree;
+
 private slots:
 	/**
 	 *   Performs the action action on the call call, then updates window.
@@ -203,13 +205,13 @@ private slots:
 	 *   This function doesn't add anything to the callList object.
 	 * @param call the call to add to the call-list's listwidget
 	 */
-	void addCallToCallList(Call * call);
+	CallTreeItem* addCallToCallList(Call * call);
 	/**
 	 * Adds the call's history-item to the call-history's listwidget.
 	 * This function doesn't add anything to the callList object.
 	 * @param call the past call to add to the call-history's listwidget
 	 */
-	void addCallToCallHistory(Call * call);
+	CallTreeItem* addCallToCallHistory(Call * call);
 	/**
 	 * Adds the contact's item to the addressbook's listwidget.
 	 * @param contact the contact to add to the addressbook's listwidget
@@ -242,7 +244,7 @@ private slots:
 	void updateVolumeBar();
 	void updateVolumeControls();
 	void updateDialpad();
-	
+
 public slots:
 	/**
 	 * Updates all the display
@@ -319,11 +321,11 @@ public slots:
 	
 	void on_listWidget_callList_currentItemChanged();
 	void on_listWidget_callList_itemChanged();
-	void on_listWidget_callList_itemDoubleClicked(QListWidgetItem * item);
+	void on_listWidget_callList_itemDoubleClicked(CallTreeItem * item);
 	void on_listWidget_callHistory_currentItemChanged();
-	void on_listWidget_callHistory_itemDoubleClicked(QListWidgetItem * item);
+	void on_listWidget_callHistory_itemDoubleClicked(CallTreeItem * item);
 	void on_listWidget_addressBook_currentItemChanged();
-	void on_listWidget_addressBook_itemDoubleClicked(QListWidgetItem * item);
+	void on_listWidget_addressBook_itemDoubleClicked(CallTreeItem * item);
 	
 	void on_stackedWidget_screen_currentChanged(int index);
 	
