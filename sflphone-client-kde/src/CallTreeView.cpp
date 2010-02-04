@@ -27,42 +27,46 @@
 CallTreeView::CallTreeView(QWidget * parent)
 	: QTreeView(parent)
 {	 
-	setModel(new CallTreeModel(this));
+	treeModel = new CallTreeModel(this);
+	setModel(treeModel);
+	setHeaderHidden(true);
+	setRootIsDecorated(false);
+	setSelectionMode(QAbstractItemView::SingleSelection);
+	setDragEnabled(true);
+	setAcceptDrops(true);
+	setDropIndicatorShown(true);
 }
 
 CallTreeView::~CallTreeView()
 {
-	//
+	// delete treeModel;
 }
 
 CallTreeItem* CallTreeView::insert(Call *call)
 {
 	QModelIndex index = selectionModel()->currentIndex();
+	int position = index.row()+1;
+	QModelIndex parent = index.parent();
+	CallTreeItem *item;
 
-	if (!model()->insertRow(index.row()+1, index.parent()))
+	if (!treeModel->insertRow(position, parent))
 	{
 		return 0;
 	}
 
-	for (int column = 0; column < model()->columnCount(index.parent()); ++column) 
-	{
-		QModelIndex child = model()->index(index.row()+1, column, index.parent());
-		// TODO
-		//AAAAAAAAAAARRGG//model()->setData(child, call, Qt::EditRole);
-	}
-
 	QModelIndex child = model()->index(index.row()+1, 0, index.parent());
+	treeModel->setData(child, QVariant(""), Qt::EditRole);
 
-	// TODO
-	return ((CallTreeModel*)model())->getItem(child);
-//	return ((CallTreeModel*)model())->getItem(index.row()+1);
+	item = treeModel->getItem(child);
+	item->setCall(call);
+	setIndexWidget(child, item->widget());
 }
 
 CallTreeItem* CallTreeView::insert(CallTreeItem *parent, Call *call)
 {
 	QModelIndex index = selectionModel()->currentIndex();
-	
-	if (model()->columnCount(index) == 0) 
+
+	if (treeModel->columnCount(index) == 0) 
 	{
 		if (!model()->insertColumn(0, index))
 		{
@@ -71,22 +75,18 @@ CallTreeItem* CallTreeView::insert(CallTreeItem *parent, Call *call)
 			
 	}
 		
-	if (!model()->insertRow(0, index))
+	if (!treeModel->insertRow(0, index))
 	{
 		return 0;
 	}
+
+	CallTreeItem *item = treeModel->getItem(index);
+	item->setCall(call);
 	
-	for (int column = 0; column < model()->columnCount(index); ++column) 
+	for (int column = 0; column < treeModel->columnCount(index); ++column) 
 	{
-		QModelIndex child = model()->index(0, column, index);
-		//arrgg
-		//TODO
-		//model()->setData(child, call, Qt::EditRole);
-		
-		if (!model()->headerData(column, Qt::Horizontal).isValid())
-		{
-			model()->setHeaderData(column, Qt::Horizontal, QVariant("[No header]"), Qt::EditRole);
-		}
+		QModelIndex child = treeModel->index(0, column, index);
+		treeModel->setData(child, QVariant(""), Qt::EditRole);	       
 	}
 	
 	selectionModel()->setCurrentIndex(model()->index(0, 0, index), QItemSelectionModel::ClearAndSelect);
@@ -113,7 +113,12 @@ CallTreeItem* CallTreeView::currentItem()
 
 	CallTreeItem *item = treeModel->getItem(index);
 
+	if (!item->call())
+	{
+		return 0;
+	}
 	return item;
+		
 }
 
 void CallTreeView::setCurrentRow(int row)
@@ -121,10 +126,7 @@ void CallTreeView::setCurrentRow(int row)
 	CallTreeModel * treeModel = static_cast<CallTreeModel*>(model());
 
 	QModelIndex currentIndex = selectionModel()->currentIndex();
-	QModelIndex index = treeModel->index(row, 0, currentIndex);
-
-	// TODO: check
-
+	QModelIndex index = treeModel->index(0, 0, currentIndex);
 	selectionModel()->setCurrentIndex(index,  QItemSelectionModel::Current);
 }
 

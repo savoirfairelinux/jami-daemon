@@ -27,34 +27,59 @@
 #define CALLTREE_ITEM_H
 
 #include <QtCore/QList>
-#include <QtGui/QTreeWidget>
+#include <QtCore/QVariant>
+#include <QtCore/QVector>
 
-class Call;
+#include <QtGui/QWidget>
+#include <QtGui/QLabel>
+#include <QtGui/QSpacerItem>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QVBoxLayout>
 
-class CallTreeItem : public QTreeWidget
+#include "Call.h"
+
+class CallTreeItem : QObject
  {
  public:
-	 CallTreeItem(CallTreeItem *parent = 0);
-	 CallTreeItem(const Call &data, CallTreeItem *parent = 0);
+	 CallTreeItem(const QVector<QVariant> &data, CallTreeItem *parent);
 	 ~CallTreeItem();
      
 	 CallTreeItem *child(int number);
 	 int childCount() const;
 	 int columnCount() const;
-	 Call* data(int column) const;
-	 Call* data() const;
+	 QVariant data(int column) const;
+	 Call* call() const;
+	 QWidget* widget() const;
 	 bool insertChildren(int position, int count, int columns);
 	 bool insertColumns(int position, int columns);
 	 CallTreeItem *parent();
 	 bool removeChildren(int position, int count);
 	 bool removeColumns(int position, int columns);
 	 int childNumber() const;
-	 bool setData(int column, const Call &value);
+	 bool setData(int column, const QVariant &value);
+	 void setCall(Call *call);
+	 void updateItem();
 
+	static const char * callStateIcons[11];
  private:
 	 QList<CallTreeItem*> childItems;
-	 Call *itemData;
+	 QVector<QVariant> itemData;
 	 CallTreeItem *parentItem;
+	 Call *itemCall;
+
+	 QWidget *itemWidget;
+
+	 QLabel * labelIcon;
+	 QLabel * labelPeerName;
+	 QLabel * labelCallNumber;
+	 QLabel * labelTransferPrefix;
+	 QLabel * labelTransferNumber;
+	 
+	 QWidget * historyItemWidget;
+	 QLabel * labelHistoryIcon;
+	 QLabel * labelHistoryPeerName;
+	 QLabel * labelHistoryCallNumber;
+	 QLabel * labelHistoryTime;
  };
 
 #endif // CALLTREE_ITEM_H

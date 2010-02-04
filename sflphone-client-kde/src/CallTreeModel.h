@@ -42,35 +42,29 @@ public:
 	~CallTreeModel();
 
 	QVariant data(const QModelIndex &index, int role) const;
-	QVariant headerData(int section, Qt::Orientation orientation,
-			    int role = Qt::DisplayRole) const;
+	Call* call(const QModelIndex &index, int role) const;
 
-	QModelIndex index(int row, int column,
-			  const QModelIndex &parent = QModelIndex()) const;
+	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+
+	QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
 	QModelIndex parent(const QModelIndex &index) const;
 
 	int rowCount(const QModelIndex &parent = QModelIndex()) const;
 	int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
 	Qt::ItemFlags flags(const QModelIndex &index) const;
-	bool setData(const QModelIndex &index, const Call *call, int role = Qt::EditRole);
+	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+	bool setCall(const QModelIndex &index, Call *value, int role = Qt::EditRole);
+	bool setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role = Qt::EditRole);
 
-	bool setHeaderData(int section, Qt::Orientation orientation,
-			   const QVariant &value, int role = Qt::EditRole);
-
-	bool insertColumns(int position, int columns,
-			   const QModelIndex &parent = QModelIndex());
-	bool removeColumns(int position, int columns,
-			   const QModelIndex &parent = QModelIndex());
-	bool insertRows(int position, int rows,
-			const QModelIndex &parent = QModelIndex());
-	bool removeRows(int position, int rows,
-			const QModelIndex &parent = QModelIndex());
+	bool insertColumns(int position, int columns, const QModelIndex &parent = QModelIndex());
+	bool removeColumns(int position, int columns, const QModelIndex &parent = QModelIndex());
+	bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex());
+	bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex());
 
 	CallTreeItem *getItem(const QModelIndex &index) const;
 
 private:
-	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
 	void setupModelData(const QStringList &lines, CallTreeItem *parent);
 	CallTreeItem *rootItem;
 };

@@ -28,8 +28,6 @@
 #include <kabc/addressbook.h>
 #include <kabc/stdaddressbook.h>
 
-#include "CallTreeItem.h"
-
 using namespace KABC;
 
 const call_state Call::actionPerformedStateMap [11][5] = 
@@ -98,9 +96,6 @@ const function Call::stateChangedFunctionMap[11][6] =
 /*ERROR          */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::stop         , &Call::nothing }
 };
 
-
-const char * Call::callStateIcons[11] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", ""};
-
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
 
 void Call::initCallItemWidget()
@@ -154,6 +149,7 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	this->historyItemWidget = NULL;
 	this->startTime = NULL;
 	this->stopTime = NULL;
+	this->initCallItemWidget();
 }
 
 Call * Call::buildExistingCall(QString callId)
@@ -176,7 +172,7 @@ Call::~Call()
 {
 	delete startTime;
 	delete stopTime;
-	//delete itemWidget;
+	delete itemWidget;
 	//delete historyItemWidget;
 }
 	
@@ -729,27 +725,4 @@ void Call::changeCurrentState(call_state newState)
 {
 	currentState = newState;
 }
-
-/*void Call::updateItem()
-{
-	if(currentState != CALL_STATE_OVER)
-	{
-		if(currentState == CALL_STATE_CURRENT && recording)
-			setItemIcon(ICON_CURRENT_REC);
-		else
-		{
-			QString str = QString(callStateIcons[currentState]);
-			setItemIcon(str);
-		}
-		bool transfer = currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD;
-		labelTransferPrefix->setVisible(transfer);
-		labelTransferNumber->setVisible(transfer);
-		if(!transfer)
-			labelTransferNumber->setText("");
-	}
-	else
-	{
-// 		qDebug() << "Updating item of call of state OVER. Doing nothing.";
-	}
-	}*/
 

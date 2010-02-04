@@ -24,22 +24,26 @@
 
 #include "CallTreeModel.h"
 #include "CallTreeItem.h"
-#include "Call.h"
 
 CallTreeModel::CallTreeModel(QObject *parent)
-	: QAbstractItemModel(parent)
+	: QAbstractItemModel(parent),
+	  rootItem(0)
+	  
 {
 	QStringList data = QString("Calls").split("\n");
 	QVector<QVariant> rootData;
 	rootData << i18n("Calls");
 
-	rootItem = new CallTreeItem();
+	rootItem = new CallTreeItem(rootData, 0);
 	setupModelData(data, rootItem);
 }
 
 CallTreeModel::~CallTreeModel()
 {
-	delete rootItem;
+	if(rootItem)
+	{
+		delete rootItem;
+	}
 }
 
 int CallTreeModel::columnCount(const QModelIndex & /* parent */) const
@@ -48,6 +52,23 @@ int CallTreeModel::columnCount(const QModelIndex & /* parent */) const
 }
 
 QVariant CallTreeModel::data(const QModelIndex &index, int role) const
+{
+	if (!index.isValid())
+	{
+		return QVariant();
+	}
+
+	if (role != Qt::DisplayRole && role != Qt::EditRole)
+	{
+		return QVariant();
+	}
+
+	CallTreeItem *item = getItem(index);
+
+	return item->data(index.column());
+}
+
+Call* CallTreeModel::call(const QModelIndex &index, int role) const
 {
 	if (!index.isValid())
 	{
@@ -61,7 +82,7 @@ QVariant CallTreeModel::data(const QModelIndex &index, int role) const
 
 	CallTreeItem *item = getItem(index);
 
-	return item->data(index.column());
+	return item->call();
 }
 
 Qt::ItemFlags CallTreeModel::flags(const QModelIndex &index) const
@@ -175,7 +196,7 @@ bool CallTreeModel::removeColumns(int position, int columns, const QModelIndex &
 
 bool CallTreeModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-	TreeItem *parentItem = getItem(parent);
+	CallTreeItem *parentItem = getItem(parent);
 	bool success = true;
 
 	beginRemoveRows(parent, position, position + rows - 1);
@@ -190,13 +211,6 @@ int CallTreeModel::rowCount(const QModelIndex &parent) const
 	CallTreeItem *parentItem = getItem(parent);
 
 	return parentItem->childCount();
-}
-
-bool CallTreeModel::setData(const QModelIndex &index, const Call *call, int role)
-{
-	QVariant value = QVariant(&*value);
-
-	return setData(index, value, role);
 }
 
 bool CallTreeModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -217,7 +231,7 @@ bool CallTreeModel::setData(const QModelIndex &index, const QVariant &value, int
 	return result;
 }
 
-bool TreeModel::setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role)
+bool CallTreeModel::setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role)
 {
 	if (role != Qt::EditRole || orientation != Qt::Horizontal)
 	{
@@ -238,7 +252,7 @@ void CallTreeModel::setupModelData(const QStringList &lines, CallTreeItem *paren
 {
 	QList<CallTreeItem*> parents;
 	QList<int> indentations;
-	parents << parent;
+//	parents << parent;
 	indentations << 0;
 
 	int number = 0;
@@ -289,13 +303,13 @@ void CallTreeModel::setupModelData(const QStringList &lines, CallTreeItem *paren
 			}
 
 			// Append a new item to the current parent's list of children.
-			CallTreeItem *parent = parents.last();
+			/*CallTreeItem *parent = parents.last();
 			parent->insertChildren(parent->childCount(), 1, rootItem->columnCount());
 			
 			for (int column = 0; column < columnData.size(); ++column)
 			{
 				parent->child(parent->childCount() - 1)->setData(column, columnData[column]);
-			}
+				}*/
 		}		
 		number++;
 	}

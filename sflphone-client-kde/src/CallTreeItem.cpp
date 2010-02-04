@@ -19,19 +19,23 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <QStringList>
+#include <QtCore/QStringList>
 
- #include "CallTreeItem.h"
+#include <klocale.h>
+#include <kdebug.h>
 
- CallTreeItem::CallTreeItem(CallTreeItem *parent)
-   : parentItem(parent)
- {
- }
+#include "sflphone_const.h"
+#include "CallTreeItem.h"
 
- CallTreeItem::CallTreeItem(const Call &data, CallTreeItem *parent)
+const char * CallTreeItem::callStateIcons[11] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", ""};
+
+CallTreeItem::CallTreeItem(const QVector<QVariant> &data, CallTreeItem *parent)
    : parentItem(parent),
+     itemCall(0),
+     itemWidget(0),
      itemData(data)
  {
+	 
  }
 
  CallTreeItem::~CallTreeItem()
@@ -68,10 +72,15 @@
      return itemData.value(column);
  }
 
- QVariant CallTreeItem::data() const
- {
-   return data(0);
- }
+Call* CallTreeItem::call() const
+{
+	return itemCall;
+}
+
+QWidget* CallTreeItem::widget() const
+{
+	return itemWidget;
+}
 
  bool CallTreeItem::insertChildren(int position, int count, int columns)
  {
@@ -160,3 +169,73 @@
      itemData[column] = value;
      return true;
  }
+
+
+void CallTreeItem::setCall(Call *call)
+{
+	itemCall = call;
+
+	itemWidget = new QWidget();
+
+	labelIcon = new QLabel();
+	labelCallNumber = new QLabel(itemCall->getPeerPhoneNumber());
+	labelTransferPrefix = new QLabel(i18n("Transfer to : "));
+	labelTransferNumber = new QLabel();
+	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+	
+	QHBoxLayout * mainLayout = new QHBoxLayout();
+	mainLayout->setContentsMargins ( 3, 1, 2, 1);
+	mainLayout->setSpacing(4);
+	QVBoxLayout * descr = new QVBoxLayout();
+	descr->setMargin(1);
+	descr->setSpacing(1);
+	QHBoxLayout * transfer = new QHBoxLayout();
+	transfer->setMargin(0);
+	transfer->setSpacing(0);
+	mainLayout->addWidget(labelIcon);
+	if(! itemCall->getPeerName().isEmpty())
+	{
+		labelPeerName = new QLabel(itemCall->getPeerName());
+		descr->addWidget(labelPeerName);
+	}
+	descr->addWidget(labelCallNumber);
+	transfer->addWidget(labelTransferPrefix);
+	transfer->addWidget(labelTransferNumber);
+	descr->addLayout(transfer);
+	mainLayout->addLayout(descr);
+	mainLayout->addItem(horizontalSpacer);
+	
+	itemWidget->setLayout(mainLayout);
+	updateItem();
+}
+
+void CallTreeItem::updateItem()
+{
+	call_state state = itemCall->getState();
+	bool recording = itemCall->getRecording();
+
+	if(state != CALL_STATE_OVER)
+	{
+		if(state == CALL_STATE_CURRENT && recording)
+		{
+			labelIcon->setPixmap(QPixmap(ICON_CURRENT_REC));
+		}
+		else
+		{
+			QString str = QString(callStateIcons[state]);
+			labelIcon->setPixmap(QPixmap(str));
+		}
+		bool transfer = state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD;
+		labelTransferPrefix->setVisible(transfer);
+		labelTransferNumber->setVisible(transfer);
+
+		if(!transfer)
+		{
+			labelTransferNumber->setText("");
+		}
+	}
+	else
+	{
+ 		qDebug() << "Updating item of call of state OVER. Doing nothing.";
+	}
+}

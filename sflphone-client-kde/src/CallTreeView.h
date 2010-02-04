@@ -46,7 +46,8 @@ public:
 	CallTreeItem* currentItem();
 	void setCurrentRow(int row);
 	int count();
-	
+private:
+	CallTreeModel *treeModel;
 };
 
 #endif // CALLTREE_VIEW_H
