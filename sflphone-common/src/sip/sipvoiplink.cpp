@@ -2571,6 +2571,8 @@ pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::str
 {
     pj_status_t success;
 
+    _debug("Create TLS transport for account %s\n", accountID.c_str());
+
     // Retrieve the account information
     SIPAccount * account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
@@ -3184,10 +3186,12 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 	    _debug("SDES negociation successfull \n");
 	    nego_success = true;
 
-	    if(call->getAudioRtp()->getAudioRtpType() == sfl::Sdes) {
-	        _debug("Set remote cryptographic context\n");
-	        call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
-	    }
+            _debug("Set remote cryptographic context\n");
+            try {
+		call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
+            }
+            catch(...) {}
+          
 	}
 	else {
 

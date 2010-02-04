@@ -222,7 +222,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
 
   void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
 {
-    if ( (_rtpSessionType != NULL) && (_rtpSessionType == Sdes)) {
+    if ( _rtpSession && _rtpSessionType && (_rtpSessionType == Sdes)) {
         static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo(nego);
     }
     else {
