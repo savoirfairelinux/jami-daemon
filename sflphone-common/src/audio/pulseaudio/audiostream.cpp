@@ -207,7 +207,7 @@ AudioStream::createStream (pa_context* c)
         attributes->minreq = (uint32_t) -1;
         attributes->fragsize = (uint32_t) -1;
 
-        pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_ADJUST_LATENCY, &_volume, NULL);
+        pa_stream_connect_playback (s , NULL , attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), &_volume, NULL);
     } else if (_streamType == CAPTURE_STREAM) {
 
         // 20 ms framesize TODO: take framesize value from config
