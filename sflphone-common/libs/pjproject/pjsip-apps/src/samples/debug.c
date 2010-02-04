@@ -1,4 +1,4 @@
-/* $Id: debug.c 2846 2009-07-29 12:28:31Z bennylp $ */
+/* $Id: debug.c 3028 2009-12-08 13:11:25Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -28,5 +28,5 @@
  * E.g.:
  *  #include "playfile.c"
  */
-#include "jbsim.c"
+#include "icedemo.c"
 

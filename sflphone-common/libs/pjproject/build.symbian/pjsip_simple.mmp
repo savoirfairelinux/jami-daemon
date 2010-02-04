@@ -27,7 +27,7 @@ MACRO		PJ_SYMBIAN=1
 
 // Must compile as C++, otherwise exception would not work
 OPTION          CW -lang c++
-OPTION          ARMCC --cpp
+OPTION          ARMCC --cpp --gnu
 OPTION          GCC     -x c++
 OPTION          GCCE    -x c++
 
@@ -37,6 +37,7 @@ SOURCE	errno.c
 SOURCE	evsub.c
 SOURCE	evsub_msg.c
 SOURCE	iscomposing.c
+SOURCE	mwi.c
 SOURCE	pidf.c
 SOURCE	presence.c
 SOURCE	presence_body.c

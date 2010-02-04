@@ -54,10 +54,8 @@ AudioRtpFactory::~AudioRtpFactory()
     stop();
 }
 
-void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
+void AudioRtpFactory::initAudioRtpConfig(SIPCall *ca)
 {
-    ost::MutexLock m (_audioRtpThreadMutex);
-
     assert (ca);
 
     if (_rtpSession != NULL) {
@@ -68,36 +66,35 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 
     AccountID accountId = Manager::instance().getAccountFromCall (ca->getCallId());
 
-    bool srtpEnabled = false;
-    int keyExchangeProtocol = 1;
-    bool helloHashEnabled = true;
-
     // Check if it is an IP-to-IP call
-
     if (accountId == AccountNULL) {
-        srtpEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, SRTP_ENABLE);
-        keyExchangeProtocol = Manager::instance().getConfigInt (IP2IP_PROFILE, SRTP_KEY_EXCHANGE);
-        _debug ("Ip-to-ip profile selected with key exchange protocol number %d", keyExchangeProtocol);
-        helloHashEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, ZRTP_HELLO_HASH);
+        _srtpEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, SRTP_ENABLE);
+        _keyExchangeProtocol = Manager::instance().getConfigInt (IP2IP_PROFILE, SRTP_KEY_EXCHANGE);
+        _debug ("Ip-to-ip profile selected with key exchange protocol number %d", _keyExchangeProtocol);
+        _helloHashEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, ZRTP_HELLO_HASH);
     } else {
-        srtpEnabled = Manager::instance().getConfigBool (accountId, SRTP_ENABLE);
-        keyExchangeProtocol = Manager::instance().getConfigInt (accountId, SRTP_KEY_EXCHANGE);
-        _debug ("Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), keyExchangeProtocol);
-        helloHashEnabled = Manager::instance().getConfigBool (accountId, ZRTP_HELLO_HASH);
+        _srtpEnabled = Manager::instance().getConfigBool (accountId, SRTP_ENABLE);
+        _keyExchangeProtocol = Manager::instance().getConfigInt (accountId, SRTP_KEY_EXCHANGE);
+        _debug ("Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
+        _helloHashEnabled = Manager::instance().getConfigBool (accountId, ZRTP_HELLO_HASH);
     }
+}
 
-    _debug ("Srtp enable: %d ", srtpEnabled);
+void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
+{
+    ost::MutexLock m (_audioRtpThreadMutex);
 
-    if (srtpEnabled) {
+    _debug ("Srtp enable: %d ", _srtpEnabled);
+    if (_srtpEnabled) {
         std::string zidFilename (Manager::instance().getConfigString (SIGNALISATION, ZRTP_ZIDFILE));
 
-        switch (keyExchangeProtocol) {
+        switch (_keyExchangeProtocol) {
 
             case Zrtp:
                 _rtpSession = new AudioZrtpSession (&Manager::instance(), ca, zidFilename);
                 _rtpSessionType = Zrtp;
 
-                if (helloHashEnabled) {
+                if (_helloHashEnabled) {
                     // TODO: be careful with that. The hello hash is computed asynchronously. Maybe it's
                     // not even available at that point.
                     ca->getLocalSDP()->set_zrtp_hash (static_cast<AudioZrtpSession *> (_rtpSession)->getHelloHash());
@@ -115,6 +112,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 		break;
 
             default:
+	        _debug("Unsupported Rtp Session Exception Type!");
                 throw UnsupportedRtpSessionType();
         }
     } else {
@@ -186,7 +184,7 @@ void AudioRtpFactory::stop (void)
         _rtpSession = NULL;
     } catch (...) {
         _debugException ("Exception caught when stopping the audio rtp session");
-        throw AudioRtpFactoryException();
+        throw AudioRtpFactoryException("caught exception in AudioRtpFactory::stop");
     }
 }
 
@@ -218,7 +216,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
     if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {
         return static_cast<AudioZrtpSession *> (_rtpSession);
     } else {
-        throw AudioRtpFactoryException();
+        throw AudioRtpFactoryException("_rtpSession is NULL in getAudioZrtpSession");
     }
 }
 
@@ -228,7 +226,7 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
         static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo(nego);
     }
     else {
-        throw AudioRtpFactoryException();
+        throw AudioRtpFactoryException("_rtpSession is NULL in setRemoteCryptoInfo");
     }
 }
 }

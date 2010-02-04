@@ -23,6 +23,7 @@
 #include "sip/SdesNegotiator.h"
 
 #include <ccrtp/CryptoContext.h>
+#include <vector>
 
 class SdesNegotiator;
 class ManagerImpl;
@@ -68,7 +69,7 @@ namespace sfl {
 
             AudioSrtpSession(ManagerImpl * manager, SIPCall * sipcall);
 
-	    std::string getLocalCryptoInfo(void);
+	    std::vector<std::string> getLocalCryptoInfo(void);
 
 	    void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
 

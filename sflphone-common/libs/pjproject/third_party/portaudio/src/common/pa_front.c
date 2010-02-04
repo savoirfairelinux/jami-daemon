@@ -1,5 +1,5 @@
 /*
- * $Id: pa_front.c 1387 2008-06-28 18:28:07Z philburk $
+ * $Id: pa_front.c 1396 2008-11-03 19:31:30Z philburk $
  * Portable Audio I/O Library Multi-Host API front end
  * Validate function parameters and manage multiple host APIs.
  *
@@ -1506,7 +1506,7 @@ const PaStreamInfo* Pa_GetStreamInfo( PaStream *stream )
         result = 0;
 
         PA_LOGAPI(("Pa_GetStreamInfo returned:\n" ));
-        PA_LOGAPI(("\tconst PaStreamInfo*: 0 [PaError error:%d ( %s )]\n", result, error, Pa_GetErrorText( error ) ));
+        PA_LOGAPI(("\tconst PaStreamInfo*: 0 [PaError error:%d ( %s )]\n", error, Pa_GetErrorText( error ) ));
 
     }
     else

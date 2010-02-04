@@ -1,4 +1,4 @@
-/* $Id: presence_body.c 2877 2009-08-13 16:17:51Z bennylp $ */
+/* $Id: presence_body.c 3045 2010-01-05 15:23:43Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -124,7 +124,7 @@ PJ_DEF(pj_status_t) pjsip_pres_create_pidf( pj_pool_t *pool,
 
 	  tslen = pj_ansi_snprintf(buf, sizeof(buf),
 				   "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
-				   pt.year, pt.mon, pt.day, 
+				   pt.year, pt.mon+1, pt.day, 
 				   pt.hour, pt.min, pt.sec, pt.msec);
 	  if (tslen > 0 && tslen < sizeof(buf)) {
 	      pj_str_t time = pj_str(buf);

@@ -61,6 +61,8 @@ namespace sfl {
         AudioRtpFactory(SIPCall * ca);
         ~AudioRtpFactory();
 
+	void initAudioRtpConfig(SIPCall *ca);
+
         /**
          * Lazy instantiation method. Create a new RTP session of a given 
          * type according to the content of the configuration file. 
@@ -104,6 +106,26 @@ namespace sfl {
         *         Sdes = 2 
         */  
         inline RtpMethod getAudioRtpType(void) { return _rtpSessionType; }
+	
+        /** 
+        * @param Set internal audio rtp session type (Symmetric, Zrtp, Sdes) 
+        */  
+        inline void setAudioRtpType(RtpMethod type) { _rtpSessionType = type; }
+
+	/**
+	 * Manually set the srtpEnable option (usefull for RTP fallback)
+	 */
+	void setSrtpEnabled(bool enable){ _srtpEnabled = enable; }
+
+	/**
+	 * Manually set the keyExchangeProtocol parameter (usefull for RTP fallback)
+	 */
+	void setKeyExchangeProtocol(int proto){ _keyExchangeProtocol = proto; }
+
+	/**
+	 * Manually set the setHelloHashEnabled parameter (usefull for RTP fallback)
+	 */
+	void setHelloHashEnabled(bool enable){ _helloHashEnabled = enable; }
  
         /**
          * Get the current AudioZrtpSession. Throws an AudioRtpFactoryException
@@ -122,6 +144,18 @@ namespace sfl {
            void * _rtpSession;
            RtpMethod _rtpSessionType;
            ost::Mutex _audioRtpThreadMutex;
+
+	   // Field used when initializinga udio rtp session
+	   // May be set manually or from config using initAudioRtpConfig
+	   bool _srtpEnabled;
+
+	   // Field used when initializinga udio rtp session
+	   // May be set manually or from config using initAudioRtpConfig
+	   int _keyExchangeProtocol;
+
+	   // Field used when initializinga udio rtp session
+	   // May be set manually or from config using initAudioRtpConfig
+	   bool _helloHashEnabled;
     };
 }
 #endif // __AUDIO_RTP_FACTORY_H__

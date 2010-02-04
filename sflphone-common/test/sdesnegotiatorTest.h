@@ -65,7 +65,9 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
     CPPUNIT_TEST( testTagPattern );
     CPPUNIT_TEST( testCryptoSuitePattern );
     CPPUNIT_TEST( testKeyParamsPattern );
+    CPPUNIT_TEST( testKeyParamsPatternWithoutMKI );
     CPPUNIT_TEST( testNegotiation );
+    CPPUNIT_TEST( testMostSimpleCase );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -84,24 +86,31 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
          */
         inline void tearDown();
 
-	void testTagPattern();
+		void testTagPattern();
 
-	void testCryptoSuitePattern();
+		void testCryptoSuitePattern();
 
-	void testKeyParamsPattern();
+		void testKeyParamsPattern();
+		
+        void testKeyParamsPatternCiscoStyle();
 
-       	void testNegotiation();
+		void testKeyParamsPatternWithoutMKI();
+
+		void testNegotiation();
+		
+		void testComponent();
+
+		void testMostSimpleCase();
 
     private:
 
-	sfl::Pattern *pattern;
+		sfl::Pattern *pattern;
 
-	sfl::SdesNegotiator *sdesnego;
+		sfl::SdesNegotiator *sdesnego;
 
-	std::vector<std::string> *remoteOffer;
+		std::vector<std::string> *remoteOffer;
 
-	std::vector<sfl::CryptoSuiteDefinition> *localCapabilities;
-
+		std::vector<sfl::CryptoSuiteDefinition> *localCapabilities;
 };
 
 /* Register our test module */

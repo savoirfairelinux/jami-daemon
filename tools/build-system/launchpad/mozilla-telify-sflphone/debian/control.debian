@@ -1,0 +1,19 @@
+Source: mozilla-telify-sflphone
+Section: web
+Priority: optional
+Maintainer: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+Uploaders: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+Build-Depends: debhelper (>= 7), unzip
+Homepage: http://www.sflphone.org
+Standards-Version: 3.8.3
+DM-Upload-Allowed: yes
+
+Package: mozilla-telify-sflphone
+Depends: iceweasel-gnome-support, sflphone-client-gnome
+Architecture: all
+Description: This package provides telify firefox plugin and handler for SFLphone.
+ Telify recognizes phone numbers on web pages and converts them to clickable links.
+ Additionally, any text can be selected and handled as a phone number (including
+ vanity number conversion) by selecting the corresponding context menu item.
+ http://www.codepad.de/en/software/firefox-add-ons/telify.html
+

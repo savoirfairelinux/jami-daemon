@@ -25,9 +25,9 @@ namespace sfl
 
 Pattern::Pattern (const std::string& pattern, const std::string& options) :
         _pattern (pattern),
+	_re (NULL),
         _ovector (NULL),
         _ovectorSize (0),
-        _re (NULL),
         _count (0),
         _options (0)
 {
@@ -139,8 +139,6 @@ std::string Pattern::group (int groupNumber)
 {
     const char * stringPtr;
 
-    // printf("_subject.substr : %s\n", _subject.substr (_offset[0]).c_str());
-
     int rc = pcre_get_substring (
                  _subject.substr (_offset[0]).c_str(),
                  _ovector,
@@ -181,34 +179,38 @@ std::string Pattern::group (const std::string& groupName)
                  groupName.c_str(),
                  &stringPtr);
 
-    // printf("  _count : %i\n", _count);
-    // printf("stringPtr : %s\n", stringPtr);
-    
     if (rc < 0) {
         switch (rc) {
 
             case PCRE_ERROR_NOSUBSTRING:
-	        // printf("Pattern::PCRE_ERROR_NOSUBSTRING\n");
-                throw std::out_of_range ("Invalid group reference.");
+	        
+		break;
 
             case PCRE_ERROR_NOMEMORY:
-	        // printf("Pattern::PCRE_ERROR_NOMEMORY\n");
                 throw match_error ("Memory exhausted.");
 
             default:
-	        // printf("Pattern::default match error\n");
                 throw match_error ("Failed to get named substring.");
         }
     }
 
-    std::string matchedStr (stringPtr);
+    std::string matchedStr;
 
-    pcre_free_substring (stringPtr);
+    if(stringPtr) {
+
+	matchedStr = stringPtr;
+	pcre_free_substring (stringPtr);
+    }
+    else {
+
+         matchedStr = "";
+    }
 
     return matchedStr;
+
 }
 
-size_t Pattern::start (const std::string& groupName) const
+void Pattern::start (const std::string& groupName) const
 {
     int index = pcre_get_stringnumber (_re, groupName.c_str());
     start (index);
@@ -216,7 +218,7 @@ size_t Pattern::start (const std::string& groupName) const
 
 size_t Pattern::start (unsigned int groupNumber) const
 {
-    if (groupNumber <= _count) {
+  if (groupNumber <= (unsigned int)_count) {
         return _ovector[ (groupNumber + 1) * 2];
     } else {
         throw std::out_of_range ("Invalid group reference.");
@@ -228,7 +230,7 @@ size_t Pattern::start (void) const
     return _ovector[0] + _offset[0];
 }
 
-size_t Pattern::end (const std::string& groupName) const
+void Pattern::end (const std::string& groupName) const
 {
     int index = pcre_get_stringnumber (_re, groupName.c_str());
     end (index);
@@ -236,7 +238,7 @@ size_t Pattern::end (const std::string& groupName) const
 
 size_t Pattern::end (unsigned int groupNumber) const
 {
-    if (groupNumber <= _count) {
+  if (groupNumber <= (unsigned int)_count) {
         return _ovector[ ( (groupNumber + 1) * 2) + 1 ] - 1;
     } else {
         throw std::out_of_range ("Invalid group reference.");
@@ -255,9 +257,6 @@ bool Pattern::matches (void) throw (match_error)
 
 bool Pattern::matches (const std::string& subject) throw (match_error)
 {
-    // printf("Pattern::matches\n");
-    // printf("  Current offset: %d, old offset: %d", _offset[1], _offset[0]);
-    // printf("  Trying <start>%s<end>\n", subject.substr(_offset[1]).c_str());
 
     // Try to find a match for this pattern
     int rc = pcre_exec (
@@ -270,8 +269,9 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
                  _ovector,
                  _ovectorSize);
 
-    // Matching failed.
+  
 
+    // Matching failed.
     if (rc < 0) {
         _offset[0] = _offset[1] = 0;
         // printf("  Matching failed with %d\n", rc);
@@ -285,8 +285,6 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
         _offset[1] =  _ovector[1] + _offset[0];
     }
 
-    // printf("  Matching succeeded with %d to %d\n", (int) start(), (int) end());
-
     // Matching succeded but not enough space.
     if (rc == 0) {
         throw match_error ("No space to store all substrings.");
@@ -295,7 +293,6 @@ bool Pattern::matches (const std::string& subject) throw (match_error)
 
     // Matching succeeded. Keep the number of substrings for
     // subsequent calls to group().
-    // printf("_count: %i = %i\n", _count, rc);
       _count = rc;
 
     return true;

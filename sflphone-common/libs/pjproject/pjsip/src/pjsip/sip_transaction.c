@@ -1,4 +1,4 @@
-/* $Id: sip_transaction.c 2857 2009-08-11 12:36:49Z nanang $ */
+/* $Id: sip_transaction.c 2936 2009-10-10 13:36:43Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -545,10 +545,15 @@ static pj_status_t mod_tsx_layer_register_tsx( pjsip_transaction *tsx)
      * Do not use PJ_ASSERT_RETURN since it evaluates the expression
      * twice!
      */
-    pj_assert(pj_hash_get( mod_tsx_layer.htable, 
-			   tsx->transaction_key.ptr,
-			   tsx->transaction_key.slen, 
-			   NULL) == NULL);
+    if(pj_hash_get(mod_tsx_layer.htable, 
+		   tsx->transaction_key.ptr,
+		   tsx->transaction_key.slen, 
+		   NULL))
+    {
+	pj_mutex_unlock(mod_tsx_layer.mutex);
+	PJ_LOG(2,(THIS_FILE, "Unable to register transaction (key exists)"));
+	return PJ_EEXISTS;
+    }
 
     TSX_TRACE_((THIS_FILE, 
 		"Transaction %p registered with hkey=0x%p and key=%.*s",
@@ -1344,6 +1349,7 @@ PJ_DEF(pj_status_t) pjsip_tsx_create_uas( pjsip_module *tsx_user,
     status = pjsip_tsx_create_key(tsx->pool, &tsx->transaction_key, 
                                   PJSIP_ROLE_UAS, &tsx->method, rdata);
     if (status != PJ_SUCCESS) {
+	unlock_tsx(tsx, &lck);
         tsx_destroy(tsx);
         return status;
     }
@@ -1371,6 +1377,7 @@ PJ_DEF(pj_status_t) pjsip_tsx_create_uas( pjsip_module *tsx_user,
     /* Get response address. */
     status = pjsip_get_response_addr( tsx->pool, rdata, &tsx->res_addr );
     if (status != PJ_SUCCESS) {
+	unlock_tsx(tsx, &lck);
 	tsx_destroy(tsx);
 	return status;
     }
@@ -1393,6 +1400,7 @@ PJ_DEF(pj_status_t) pjsip_tsx_create_uas( pjsip_module *tsx_user,
     /* Register the transaction. */
     status = mod_tsx_layer_register_tsx(tsx);
     if (status != PJ_SUCCESS) {
+	unlock_tsx(tsx, &lck);
 	tsx_destroy(tsx);
 	return status;
     }
@@ -1626,6 +1634,7 @@ static void send_msg_callback( pjsip_send_state *send_state,
 			       pj_ssize_t sent, pj_bool_t *cont )
 {
     pjsip_transaction *tsx = (pjsip_transaction*) send_state->token;
+    pjsip_tx_data *tdata = send_state->tdata;
     struct tsx_lock_data lck;
 
     lock_tsx(tsx, &lck);
@@ -1644,9 +1653,9 @@ static void send_msg_callback( pjsip_send_state *send_state,
 	    pjsip_transport_add_ref(tsx->transport);
 
 	    /* Update remote address. */
-	    tsx->addr_len = send_state->addr.entry[send_state->cur_addr].addr_len;
+	    tsx->addr_len = tdata->dest_info.addr.entry[tdata->dest_info.cur_addr].addr_len;
 	    pj_memcpy(&tsx->addr, 
-		      &send_state->addr.entry[send_state->cur_addr].addr,
+		      &tdata->dest_info.addr.entry[tdata->dest_info.cur_addr].addr,
 		      tsx->addr_len);
 
 	    /* Update is_reliable flag. */
@@ -2839,6 +2848,15 @@ static pj_status_t tsx_on_state_completed_uas( pjsip_transaction *tsx,
 	    pj_time_val timeout;
 
 	    /* Process incoming ACK request. */
+
+	    /* Verify that this is an INVITE transaction */
+	    if (tsx->method.id != PJSIP_INVITE_METHOD) {
+		PJ_LOG(2, (tsx->obj_name, 
+			   "Received illegal ACK for %.*s transaction",
+			   (int)tsx->method.name.slen,
+			   tsx->method.name.ptr));
+		return PJSIP_EINVALIDMETHOD;
+	    }
 
 	    /* Cease retransmission. */
 	    if (tsx->retransmit_timer.id != 0) {

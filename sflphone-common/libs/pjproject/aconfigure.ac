@@ -150,6 +150,7 @@ AC_CHECK_HEADER(netinet/ip.h,[AC_DEFINE(PJ_HAS_NETINET_IP_H,1)],[],
           	  #	include <netinet/in_systm.h>
           	  #endif
           	 ])
+AC_CHECK_HEADER(netinet/tcp.h,[AC_DEFINE(PJ_HAS_NETINET_TCP_H,1)])
 AC_CHECK_HEADER(ifaddrs.h,[AC_DEFINE(PJ_HAS_IFADDRS_H,1)])
 AC_CHECK_HEADER(semaphore.h,[AC_DEFINE(PJ_HAS_SEMAPHORE_H,1)])
 AC_CHECK_HEADER(setjmp.h,[AC_DEFINE(PJ_HAS_SETJMP_H,1)])
@@ -559,10 +560,6 @@ AC_ARG_ENABLE(speex-codec,
 
 dnl # Include iLBC codec
 AC_SUBST(ac_no_ilbc_codec)
-#AC_DEFINE(ac_no_ilbc_codec, 1)
-#AC_DEFINE(PJMEDIA_HAS_ILBC_CODEC, 0)
-#AC_MSG_RESULT([Checking if iLBC codec is disabled...yes])
-
 AC_ARG_ENABLE(ilbc-codec,
 	      AC_HELP_STRING([--disable-ilbc-codec],
 			     [Exclude iLBC codec in the build]),
@@ -571,9 +568,7 @@ AC_ARG_ENABLE(ilbc-codec,
 		AC_DEFINE(PJMEDIA_HAS_ILBC_CODEC,0)
 		AC_MSG_RESULT([Checking if iLBC codec is disabled...yes])
 	       fi],
-		[ac_no_ilbc_codec=1]
-		AC_DEFINE(PJMEDIA_HAS_ILBC_CODEC,0)
-	    AC_MSG_RESULT([Checking if iLBC codec is disabled...yes]))
+	      AC_MSG_RESULT([Checking if iLBC codec is disabled...no]))
 
 dnl # Include libsamplerate
 AC_ARG_ENABLE(libsamplerate,
@@ -763,7 +758,9 @@ AC_ARG_ENABLE(ssl,
 		AC_CHECK_LIB(crypto,ERR_load_BIO_strings,[libcrypto_present=1 && LIBS="$LIBS -lcrypto"])
 		if test "x$openssl_h_present" = "x1" -a "x$libssl_present" = "x1" -a "x$libcrypto_present" = "x1"; then
 	        	AC_MSG_RESULT([OpenSSL library found, SSL support enabled])
-			AC_DEFINE(PJSIP_HAS_TLS_TRANSPORT, 1)
+			# PJSIP_HAS_TLS_TRANSPORT setting follows PJ_HAS_SSL_SOCK
+			#AC_DEFINE(PJSIP_HAS_TLS_TRANSPORT, 1)
+			AC_DEFINE(PJ_HAS_SSL_SOCK, 1)
 		else
 			AC_MSG_RESULT([** OpenSSL libraries not found, disabling SSL support **])
 		fi

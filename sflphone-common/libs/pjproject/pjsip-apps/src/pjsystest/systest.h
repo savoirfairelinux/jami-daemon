@@ -1,4 +1,4 @@
-/* $Id: systest.h 2839 2009-07-17 11:37:42Z bennylp $ */
+/* $Id: systest.h 2991 2009-11-08 03:35:41Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  *
@@ -53,6 +53,7 @@
     #define WAV_REC_OUT_PATH		"\\PJSYSTEST_TESTREC.WAV"
     #define WAV_TOCK8_PATH		"\\Program Files\\pjsystest\\tock8.WAV"
     #define WAV_LATENCY_OUT_PATH	"\\PJSYSTEST_LATREC.WAV"
+    #define ALT_PATH1			""
 #else
     #define LOG_OUT_PATH		"PJSYSTEST.LOG"
     #define RESULT_OUT_PATH		"PJSYSTEST_RESULT.TXT"
@@ -60,6 +61,7 @@
     #define WAV_REC_OUT_PATH		"PJSYSTEST_TESTREC.WAV"
     #define WAV_TOCK8_PATH		"tock8.wav"
     #define WAV_LATENCY_OUT_PATH	"PJSYSTEST_LATREC.WAV"
+    #define ALT_PATH1			"../../tests/pjsua/wavs/"
 #endif
 
 #ifdef __cplusplus

@@ -4,6 +4,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -374,7 +375,7 @@ class SIPVoIPLink : public VoIPLink
         bool pjsip_init();
 
         /**
-         * Delete link-related stuuf like calls
+         * Delete link-related stuff like calls
          */
         bool pjsip_shutdown(void);
 
@@ -385,55 +386,72 @@ class SIPVoIPLink : public VoIPLink
 	 * Function used to create a new sip transport or get an existing one from the map.
 	 * The SIP transport is "acquired" according to account's current settings.
 	 * This function should be called before registering an account
-	 * @param accountID            An account id for which transport is to be set
+	 * @param accountID An account id for which transport is to be set
 	 *
-	 * @return bool                True if the account is succesfully created or 
-	 *                             successfully obtained from the transport map
+	 * @return bool True if the account is succesfully created or successfully obtained 
+	 * from the transport map
 	 */
 	bool acquireTransport(const AccountID& accountID);
 
 
 	/**
-	 * Create a new sip transport according to the trasport type specified in account settings
+	 * Create the default UDP transport according ot Ip2Ip profile settings
+	 */
+	bool createDefaultSipUdpTransport();
+
+
+	/**
+	 * Create the default TLS litener on port 5061
+	 */
+	void createDefaultSipTlsListener();
+
+
+	/**
+	 * General Sip transport creation method according to the 
+	 * transport type specified in account settings
+	 * @param id The account id for which a transport must
+         * be created.
 	 */
 	bool createSipTransport(AccountID id);
 
 
+	/**
+	 * Method to store newly created UDP transport in internal transport map. 
+	 * Transports are stored in order to retreive them in case
+	 * several accounts would share the same port number for UDP transprt.
+	 * @param key The transport's port number
+	 * @param transport A pointer to the UDP transport
+	 */
 	bool addTransportToMap(std::string key, pjsip_transport* transport);
 
-        /** Create SIP UDP Listener */
-        int createUDPServer (AccountID = "");
-
-        /**
-         * Try to create a new TLS transport
-         * with the settings defined in the corresponding
-         * SIPAccount with id "id". If creatation fails
-         * for whatever reason, it will try to start
-         * it again on a randomly chosen port.
-         *
-         * A better idea would be to list all the transports
-         * registered to the transport manager in order to find
-         * an available port. Note that creation might also fail
-         * for other reason than just a wrong port.
-         * 
-         * @param id The account id for which a tranport must
+        /** 
+	 * Create SIP UDP transport from account's setting
+	 * @param id The account id for which a transport must
          * be created.
-         * @return pj_status_t PJ_SUCCESS on success
-         */
-        pj_status_t createTlsTransportRetryOnFailure(AccountID id);
+	 * @return pj_status_t PJ_SUCCESS on success 
+	 */
+        int createUdpTransport (AccountID = "");
 
         /**
-         * Try to create a TLS transport with the settings
-         * defined in the corresponding SIPAccount with id
-         * "id". 
+         * Create a TLS transport from the default TLS listener from
          * @param id The account id for which a transport must
          * be created.
          * @return pj_status_t PJ_SUCCESS on success 
          */
-        pj_status_t createTlsTransport(AccountID id);
+        pj_status_t createTlsTransport(const AccountID& id,  std::string& remoteAddr);
 
+	/**
+         * Create a UDP transport using stun server to resove public address
+         * @param id The account id for which a transport must
+         * be created.
+         * @return pj_status_t PJ_SUCCESS on success 
+         */
 	pj_status_t createAlternateUdpTransport (AccountID id);
 
+	/** 
+	 * UDP Transports are stored in this map in order to retreive them in case
+	 * several accounts would share the same port number.
+	 */
 	SipTransportMap _transportMap;
 
         /** For registration use only */

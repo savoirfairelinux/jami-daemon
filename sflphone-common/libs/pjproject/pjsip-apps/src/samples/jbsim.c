@@ -1,4 +1,4 @@
-/* $Id: jbsim.c 2854 2009-08-05 17:10:35Z bennylp $ */
+/* $Id: jbsim.c 2938 2009-10-11 05:06:43Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  *
@@ -310,7 +310,7 @@ static pj_status_t stream_init(const struct stream_cfg *cfg, struct stream **p_s
     struct stream *stream = NULL;
     pjmedia_codec_mgr *cm;
     unsigned count;
-    pjmedia_codec_info *ci;
+    const pjmedia_codec_info *ci;
     pjmedia_stream_info si;
     pj_status_t status;
 

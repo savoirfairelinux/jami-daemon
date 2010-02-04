@@ -1,4 +1,4 @@
-/* $Id: transport.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: transport.h 2945 2009-10-14 13:13:18Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -503,7 +503,7 @@ struct pjmedia_transport_info
     /**
      * Specifies number of transport specific info included.
      */
-    int specific_info_cnt;
+    unsigned specific_info_cnt;
 
     /**
      * Buffer storage of transport specific info.

@@ -1,4 +1,4 @@
-/* $Id: ioq_tcp.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: ioq_tcp.c 3051 2010-01-08 13:08:05Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -97,6 +97,15 @@ static void on_ioqueue_accept(pj_ioqueue_key_t *key,
 			  "invalid socket and status is %d", status));
 	}
     } else {
+        pj_sockaddr addr;
+        int client_addr_len;
+
+        client_addr_len = sizeof(addr);
+        status = pj_sock_getsockname(sock, &addr, &client_addr_len);
+        if (status != PJ_SUCCESS) {
+            app_perror("...ERROR in pj_sock_getsockname()", status);
+        }
+
 	callback_accept_key = key;
 	callback_accept_op = op_key;
 	callback_accept_status = status;
@@ -757,30 +766,28 @@ static int compliance_test_2(pj_bool_t allow_concur)
 		++pending_op;
 	    }
 
-	}
-
-
-	// Poll until all connected
-	while (pending_op) {
-	    pj_time_val timeout = {1, 0};
+	    // Poll until connection of this pair established
+	    while (pending_op) {
+		pj_time_val timeout = {1, 0};
 
 #ifdef PJ_SYMBIAN
-	    status = pj_symbianos_poll(-1, 1000);
+		status = pj_symbianos_poll(-1, 1000);
 #else
-	    status = pj_ioqueue_poll(ioque, &timeout);
+		status = pj_ioqueue_poll(ioque, &timeout);
 #endif
-	    if (status > 0) {
-		if (status > pending_op) {
-		    PJ_LOG(3,(THIS_FILE,
-			      "...error: pj_ioqueue_poll() returned %d "
-			      "(only expecting %d)",
-			      status, pending_op));
-		    return -110;
-		}
-		pending_op -= status;
+		if (status > 0) {
+		    if (status > pending_op) {
+			PJ_LOG(3,(THIS_FILE,
+				  "...error: pj_ioqueue_poll() returned %d "
+				  "(only expecting %d)",
+				  status, pending_op));
+			return -110;
+		    }
+		    pending_op -= status;
 
-		if (pending_op == 0) {
-		    status = 0;
+		    if (pending_op == 0) {
+			status = 0;
+		    }
 		}
 	    }
 	}

@@ -1,4 +1,4 @@
-/* $Id: sdp_neg.c 2724 2009-05-29 13:04:03Z bennylp $ */
+/* $Id: sdp_neg.c 2926 2009-10-06 11:29:14Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -1006,6 +1006,15 @@ static pj_status_t match_offer(pj_pool_t *pool,
     const pjmedia_sdp_media *master, *slave;
     pj_str_t pt_amr_need_adapt = {NULL, 0};
 
+    /* If offer has zero port, just clone the offer and update direction */
+    if (offer->desc.port == 0) {
+	answer = pjmedia_sdp_media_clone(pool, offer);
+	remove_all_media_directions(answer);
+	update_media_direction(pool, offer, answer);
+	*p_answer = answer;
+	return PJ_SUCCESS;
+    }
+
     /* Set master/slave negotiator based on prefer_remote_codec_order. */
     if (prefer_remote_codec_order) {
 	master = offer;
@@ -1217,10 +1226,6 @@ static pj_status_t match_offer(pj_pool_t *pool,
 	}
     }
     answer->desc.fmt_count = pt_answer_count;
-
-    /* If offer has zero port, set our answer with zero port too */
-    if (offer->desc.port == 0)
-	answer->desc.port = 0;
 
     /* Update media direction. */
     update_media_direction(pool, offer, answer);

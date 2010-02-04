@@ -1,4 +1,4 @@
-/* $Id: sip_autoconf.h.in 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: sip_autoconf.h.in 2973 2009-10-28 06:09:15Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -26,14 +26,14 @@
  *        autoconf)
  */
 
-/**
+/*
  * Enable/disable TLS transport, as configured by autoconf.
  * But only do this if user doesn't explicitly configure in pj/config_site.h.
  */
-#ifndef PJSIP_HAS_TLS_TRANSPORT
-#undef PJSIP_HAS_TLS_TRANSPORT
-#endif
-
+/* Since 1.5, the default setting will follow PJ_HAS_SSL_SOCK setting. */
+//#ifndef PJSIP_HAS_TLS_TRANSPORT
+//#undef PJSIP_HAS_TLS_TRANSPORT
+//#endif
 
 #endif	/* __PJSIP_SIP_AUTOCONF_H__ */
 
