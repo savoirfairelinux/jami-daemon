@@ -52,6 +52,7 @@
 #include <sys/stat.h>  // mkdir(2)
 #include <pwd.h>       // getpwuid
 
+#define DIRECT_IP_CALL	"IP CALL"
 
 #define fill_config_str(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
@@ -3368,7 +3369,9 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
         _debug ("Cannot getAccountDetails on a non-existing accountID %s. Defaults will be used.", accountID.c_str());
     }
 
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
+	// The IP profile does not allow to set an alias
+    (accountID == IP2IP_PROFILE) ? a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, DIRECT_IP_CALL)) : 
+									a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
 
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, getConfigString (accountID, CONFIG_ACCOUNT_ENABLE)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_RESOLVE_ONCE, getConfigString (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE)));
@@ -3394,17 +3397,24 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     std::string registrationStateDescription;
 
     if (account != NULL) {
-        state = account->getRegistrationState();
-        int code = account->getRegistrationStateDetailed().first;
-        std::stringstream out;
-        out << code;
-        registrationStateCode = out.str();
-        registrationStateDescription = account->getRegistrationStateDetailed().second;
+		if (accountID == IP2IP_PROFILE) {
+			registrationStateCode = EMPTY_FIELD;
+			registrationStateDescription = "Direct IP call";
+		}
+		else {
+			state = account->getRegistrationState();
+			int code = account->getRegistrationStateDetailed().first;
+			std::stringstream out;
+			out << code;
+			registrationStateCode = out.str();
+			registrationStateDescription = account->getRegistrationStateDetailed().second;
+		}
     } else {
         state = Unregistered;
     }
 
-    a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, mapStateNumberToString (state)));
+    (accountID == IP2IP_PROFILE) ? a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, "READY")) : 
+								a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, mapStateNumberToString (state)));
 
     a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_CODE, registrationStateCode));
     a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));

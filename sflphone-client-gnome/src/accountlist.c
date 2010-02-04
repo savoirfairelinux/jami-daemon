@@ -161,7 +161,7 @@ void account_list_set_current (account_t *current)
 }
 
 
-const gchar * account_state_name(account_state_t s)
+const gchar * account_state_name (account_state_t s)
 {
 	gchar * state;
 	switch(s)
@@ -192,6 +192,9 @@ const gchar * account_state_name(account_state_t s)
 			break;
 		case ACCOUNT_STATE_ERROR_EXIST_STUN:
 			state = _("Stun server invalid");
+			break;
+		case IP2IP_PROFILE_STATUS:
+			state = _("Ready");
 			break;
 		default:
 			state = _("Invalid");

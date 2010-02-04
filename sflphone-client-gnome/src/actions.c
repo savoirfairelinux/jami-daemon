@@ -265,6 +265,9 @@ void sflphone_fill_account_list (void) {
         {
             a->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
         }
+		else if (strcmp (status, "READY") == 0) {
+			a->state = IP2IP_PROFILE_STATUS;
+		}
         else
         {
             a->state = ACCOUNT_STATE_INVALID;
