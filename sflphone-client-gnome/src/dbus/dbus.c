@@ -831,8 +831,7 @@ dbus_place_call (const callable_obj_t * c)
     }
 }
 
-gchar**  dbus_account_list()
-{
+gchar**  dbus_account_list() {
     GError *error = NULL;
     char ** array;
 

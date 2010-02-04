@@ -839,7 +839,7 @@ GtkWidget * create_security_tab (account_t **a)
 	gtk_widget_show_all(ret);
 
 	return ret;
-}
+	}
 
 GtkWidget* create_registration_expire (account_t **a) {
 
@@ -1150,10 +1150,11 @@ void show_account_window (account_t * a) {
 
 	if(response == GTK_RESPONSE_ACCEPT)
 	{
+		gchar *proto = "SIP";
 
 		if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
-			gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+			proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
 
 			g_hash_table_replace(currentAccount->properties,
 					g_strdup(ACCOUNT_RESOLVE_ONCE),
@@ -1179,9 +1180,12 @@ void show_account_window (account_t * a) {
 			g_hash_table_replace(currentAccount->properties,
 					g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
 					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox))));   
+		}
 
 
-			if (strcmp(proto, "SIP") == 0) {
+		if (strcmp (proto, "SIP") == 0) {
+
+			if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
 				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
 						g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useStunCheckBox)) ? "true":"false"));
@@ -1189,37 +1193,9 @@ void show_account_window (account_t * a) {
 				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), 
 						g_strdup(gtk_entry_get_text(GTK_ENTRY(stunServerEntry))));
 
-
-				gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
-
-				if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
-					g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
-					g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
-				}
-
-				else if(g_strcasecmp(keyExchange, "SDES") == 0) {
-					g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
-					g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(SDES));
-				}
-
-				else {
-					g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
-				}
-
-				g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
-						g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
-
 				g_hash_table_replace(currentAccount->properties, g_strdup(PUBLISHED_SAMEAS_LOCAL), g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton)) ? "true":"false"));	
 
-				g_hash_table_replace(currentAccount->properties,
-						g_strdup(LOCAL_INTERFACE),
-						g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
-
-				g_hash_table_replace(currentAccount->properties,
-						g_strdup(LOCAL_PORT),
-						g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
-
-				if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton)))
+				if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton)))
 				{
 
 					g_hash_table_replace(currentAccount->properties,
@@ -1243,12 +1219,42 @@ void show_account_window (account_t * a) {
 							g_strdup(PUBLISHED_ADDRESS),
 							published_address);
 				}
-
 			}
 
-			/* Set new credentials if any */
 
-			DEBUG("Setting credentials"); 
+			gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
+
+			if (g_strcasecmp(keyExchange, "ZRTP") == 0) {
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(ZRTP));
+			}
+
+			else if(g_strcasecmp(keyExchange, "SDES") == 0) {
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("true"));
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_KEY_EXCHANGE), g_strdup(SDES));
+			}
+
+			else {
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SRTP_ENABLED), g_strdup("false"));
+			}
+
+			g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
+					g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
+
+
+			g_hash_table_replace(currentAccount->properties,
+					g_strdup(LOCAL_INTERFACE),
+					g_strdup((gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo))));
+
+			g_hash_table_replace(currentAccount->properties,
+					g_strdup(LOCAL_PORT),
+					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
+
+		}
+
+		/* Set new credentials if any */
+		DEBUG("Setting credentials"); 
+		if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
 			/* This hack is necessary because of the way the 
 			 * configuration file is made (.ini at that time).
@@ -1266,16 +1272,15 @@ void show_account_window (account_t * a) {
 				}
 				dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
 			}
+		}
+		/** @todo Verify if it's the best condition to check */
+		if (g_strcasecmp(currentAccount->accountID, "new") == 0) {
+			dbus_add_account(currentAccount);
+		}
+		else {
+			dbus_set_account_details(currentAccount);
+		}
 
-			/** @todo Verify if it's the best condition to check */
-			if (g_strcasecmp(currentAccount->accountID, "new") == 0) {
-				dbus_add_account(currentAccount);
-			}
-			else {
-				dbus_set_account_details(currentAccount);
-			}
-		}	
-		
 		// Perpetuate changes to the deamon
 		codec_list_update_to_daemon (currentAccount);
 	}
@@ -1298,10 +1303,10 @@ GtkWidget* create_direct_ip_calls_tab (account_t **a) {
 	gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
 	description = g_markup_printf_escaped(_("This profile is used when you want to reach a remote peer simply by typing a sip URI such as <b>sip:remotepeer</b>. The settings you define here will also be used if no account can be matched to an incoming or outgoing call."));
-  	label = gtk_label_new (NULL);
-  	gtk_label_set_markup (GTK_LABEL (label), description);
-  	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);    
-  	gtk_box_pack_start (GTK_BOX (ret), label, FALSE, FALSE, 0);
+	label = gtk_label_new (NULL);
+	gtk_label_set_markup (GTK_LABEL (label), description);
+	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);    
+	gtk_box_pack_start (GTK_BOX (ret), label, FALSE, FALSE, 0);
 
 	GtkRequisition requisition;
 	gtk_widget_size_request (GTK_WIDGET (ret), &requisition);

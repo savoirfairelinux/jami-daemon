@@ -2273,7 +2273,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (STUN_ENABLE, DFT_STUN_ENABLE), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (STUN_SERVER, DFT_STUN_SERVER), IP2IP_PROFILE);
-    _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, "Direct calls"), IP2IP_PROFILE);
+    _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, EMPTY_FIELD), IP2IP_PROFILE);
 
     // Init display name to the username under which
     // this sflphone instance is running.
@@ -2390,19 +2390,6 @@ ManagerImpl::initAudioCodec (void)
 	 * This is a global list. Every account will inherit it.
      */
 	_codecDescriptorMap.init();
-
-	// The accounts are not yet loaded. Move this logic in loadAccount ()
-	/*
-    // if the user never set the codec list, use the default configuration
-    if (getConfigString (AUDIO, "ActiveCodecs") == "") {
-        _codecDescriptorMap.setDefaultOrder();
-    }
-
-    // else retrieve the one set in the user config file
-    else {
-        std::vector<std::string> active_list = retrieveActiveCodecs();
-        setActiveCodecList (active_list);
-    }*/
 }
 
 /*
