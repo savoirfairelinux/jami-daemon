@@ -687,7 +687,6 @@ SIPVoIPLink::sendUnregister (AccountID id)
 	       account->getAccountTransport()->info,
 	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
 
-        // shutdownSipTransport(account->getAccountID());
     }
 
     // This may occurs if account failed to register and is in state INVALID
@@ -2728,6 +2727,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 
 void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 {
+
     _debug("Shutdown Sip Transport");
 
     pj_status_t status = 0;
@@ -2743,7 +2743,9 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 
 	// decrease reference count added by pjsip_regc_send
 	// PJSIP's IDLE timer is set if counter reach 0
-	status = pjsip_transport_dec_ref(account->getAccountTransport());
+
+        // there is still problems when account registration fails, so comment it for now
+	// status = pjsip_transport_dec_ref(account->getAccountTransport());
 
 	// detach transport from this account
 	account->setAccountTransport(NULL);
