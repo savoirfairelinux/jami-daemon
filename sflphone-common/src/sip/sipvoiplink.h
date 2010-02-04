@@ -397,9 +397,15 @@ class SIPVoIPLink : public VoIPLink
 
 
 	/**
-	 * Create the default TLS litener on port 5061
+	 * Create the default TLS litener using IP2IP_PROFILE settings
 	 */
 	void createDefaultSipTlsListener();
+
+
+	/**
+	 * Create the default TLS litener according to account settings.
+	 */
+	void createTlsListener(const AccountID& accountID);
 
 
 	/**

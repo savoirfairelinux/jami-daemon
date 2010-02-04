@@ -79,8 +79,8 @@ struct result {
     pjsip_server_addresses  servers;
 };
 
-pjsip_transport *_localUDPTransport;
-pjsip_tpfactory *_localTlsListener;
+pjsip_transport *_localUDPTransport = NULL;
+pjsip_tpfactory *_localTlsListener = NULL;
 
 const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
 
@@ -2124,17 +2124,31 @@ bool SIPVoIPLink::createDefaultSipUdpTransport()
 void SIPVoIPLink::createDefaultSipTlsListener()
 {
 
+    SIPAccount * account = NULL;
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
+
+    if(account->isTlsEnabled()) {
+        createTlsListener(IP2IP_PROFILE);
+    }
+}
+
+
+void SIPVoIPLink::createTlsListener(const AccountID& accountID)
+{
+
     pjsip_tpfactory *tls;
     pj_sockaddr_in local_addr;
     pjsip_host_port a_name;
     pj_status_t status;
     pj_status_t success;
 
+    _debug("Create TLS listener");
+
     /* Grab the tls settings, populated
      * from configuration file.
      */
     SIPAccount * account = NULL;
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
     if (account == NULL) {
         _debug ("UserAgent: Account is null while creating TLS default listener. Returning");
@@ -2195,6 +2209,9 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
     pj_status_t status;
 
     if (account->isTlsEnabled()) {
+
+        if(_localTlsListener == NULL)
+	    createTlsListener(id);
 
         // Parse remote address to establish connection 
         std::string remoteSipUri = account->getServerUri();
