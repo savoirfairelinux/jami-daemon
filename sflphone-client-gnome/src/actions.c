@@ -1278,7 +1278,7 @@ void sflphone_save_history (void)
    void
 sflphone_srtp_on( callable_obj_t * c)
 {
-    c->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
+    c->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
 
     calltree_update_call(current_calls, c, NULL);
     update_actions();
@@ -1300,9 +1300,9 @@ sflphone_srtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean ver
     }
     c->_sas = g_strdup(sas);
     if(verified == TRUE) {
-        c->_srtp_state = SRTP_STATE_SAS_CONFIRMED;
+        c->_srtp_state = SRTP_STATE_ZRTP_SAS_CONFIRMED;
     } else {
-        c->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
+        c->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
     }
     calltree_update_call(current_calls, c, NULL);
     update_actions();

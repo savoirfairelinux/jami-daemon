@@ -79,9 +79,9 @@ typedef enum
 typedef enum
 {
    SRTP_STATE_UNLOCKED = 0,
-   SRTP_STATE_SAS_CONFIRMED,
-   SRTP_STATE_SAS_UNCONFIRMED,
-   SRTP_STATE_SAS_SIGNED,
+   SRTP_STATE_ZRTP_SAS_CONFIRMED,
+   SRTP_STATE_ZRTP_SAS_UNCONFIRMED,
+   SRTP_STATE_ZRTP_SAS_SIGNED,
 } srtp_state_t;
 
 /** @struct callable_obj_t
@@ -135,8 +135,8 @@ typedef struct  {
      */
     GPtrArray * _error_dialogs;
 
-	/* The audio codec used for this call, if applicable */
-	gchar *_audio_codec;
+    /* The audio codec used for this call, if applicable */
+    gchar *_audio_codec;
 
 } callable_obj_t;
 

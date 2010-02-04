@@ -285,16 +285,16 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
 
 	  switch(selectedCall->_srtp_state) {
 
-	  case SRTP_STATE_SAS_UNCONFIRMED:
-	      selectedCall->_srtp_state = SRTP_STATE_SAS_CONFIRMED;
+	  case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
+	      selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_CONFIRMED;
 	      if(g_strcasecmp(displaySasOnce,"true") == 0) {
 		  selectedCall->_zrtp_confirmed = TRUE;
 	      }
 	      dbus_confirm_sas(selectedCall);
 	      calltree_update_call(current_calls, selectedCall, NULL);
 	      break;
-	  case SRTP_STATE_SAS_CONFIRMED:
-	      selectedCall->_srtp_state = SRTP_STATE_SAS_UNCONFIRMED;
+	  case SRTP_STATE_ZRTP_SAS_CONFIRMED:
+	      selectedCall->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
 	      dbus_reset_sas(selectedCall);
 	      calltree_update_call(current_calls, selectedCall, NULL);
 	      break;
@@ -590,7 +590,7 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
 			G_CALLBACK (focus_on_calltree_out), NULL);
 
 
-	if(tab != history || tab!=contacts) {
+	if(tab != history && tab!=contacts) {
 
 		DEBUG("SET TREE VIEW REORDABLE");
 		// Make calltree reordable for drag n drop
@@ -761,7 +761,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	    }
 	    else {
 
-	        if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
+	        if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
 
 		    calltree_display_call_info(c, DISPLAY_TYPE_SAS, NULL, &description);
 				  
@@ -805,16 +805,16 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 		}        
 
 		switch(c->_srtp_state) {
-		case SRTP_STATE_SAS_UNCONFIRMED:
+		case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
 	            DEBUG("Secure is ON");
 		    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);
 		    if(c->_sas != NULL) { DEBUG("SAS is ready with value %s", c->_sas); }
 		    break;
-		case SRTP_STATE_SAS_CONFIRMED:
+		case SRTP_STATE_ZRTP_SAS_CONFIRMED:
 		    DEBUG("SAS is confirmed");
 		    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);   
 		    break;
-		case SRTP_STATE_SAS_SIGNED:   
+		case SRTP_STATE_ZRTP_SAS_SIGNED:   
 		    DEBUG("Secure is ON with SAS signed and verified");
 		    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_certified.svg", NULL);
 		    break;
@@ -910,6 +910,8 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 			key_exchange = g_hash_table_lookup(account_details->properties, ACCOUNT_KEY_EXCHANGE);
 		}
 	} 
+
+	DEBUG("Added call key exchange is %s", key_exchange)
 
 	if( tab == current_calls )
 	{
