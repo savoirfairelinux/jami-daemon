@@ -312,6 +312,57 @@ close_dialog_cb (GtkWidget * widget,
 
 }
 
+void highlight_ip_profile (GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data) {
+
+	GValue val;
+	account_t *current;
+
+	memset (&val, 0, sizeof(val));
+	gtk_tree_model_get_value(tree_model, iter, COLUMN_ACCOUNT_DATA, &val);
+	current = (account_t*) g_value_get_pointer(&val);
+
+	g_value_unset (&val);
+
+	if (current != NULL) {
+
+		// Make the first line appear differently
+		(g_strcasecmp (current->accountID, IP2IP) == 0) ? g_object_set (G_OBJECT (rend), "weight", PANGO_WEIGHT_THIN, 
+																					 "style", PANGO_STYLE_ITALIC, 
+																					 "stretch", PANGO_STRETCH_ULTRA_EXPANDED,
+																					 "scale", 0.95,
+																					 NULL) : 
+														g_object_set (G_OBJECT (rend), "weight", PANGO_WEIGHT_MEDIUM, 
+																					 "style", PANGO_STYLE_NORMAL, 
+																					 "stretch", PANGO_STRETCH_NORMAL,
+																					 "scale", 1.0,
+																					 NULL) ; 
+	}
+}
+
+void highlight_registration (GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data) {
+
+	GValue val;
+	account_t *current;
+	GdkColor green = {0, 255, 0, 0};
+
+	memset (&val, 0, sizeof(val));
+	gtk_tree_model_get_value(tree_model, iter, COLUMN_ACCOUNT_DATA, &val);
+	current = (account_t*) g_value_get_pointer(&val);
+
+	g_value_unset (&val);
+
+	if (current != NULL) {
+		if (g_strcasecmp (current->accountID, IP2IP) != 0) {
+			// Color the account state: green -> registered, otherwise red
+			(current->state == ACCOUNT_STATE_REGISTERED) ? g_object_set (G_OBJECT (rend), "foreground", "Dark Green", NULL) :
+													g_object_set (G_OBJECT (rend), "foreground", "Dark Red", NULL);
+		}
+		else 
+			g_object_set (G_OBJECT (rend), "foreground", "Black", NULL);
+	}
+
+}
+
 /**
  * Account settings tab
  */
@@ -367,6 +418,7 @@ GtkWidget* create_account_list(GtkDialog * dialog) {
 
 	// A double click on the account line opens the window to edit the account
 	g_signal_connect( G_OBJECT( treeView ) , "row-activated" , G_CALLBACK( edit_account_cb ) , NULL );
+	gtk_tree_view_column_set_cell_data_func (treeViewColumn, renderer, highlight_ip_profile, NULL, NULL);
 
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Protocol"),
@@ -374,6 +426,7 @@ GtkWidget* create_account_list(GtkDialog * dialog) {
 			"markup", COLUMN_ACCOUNT_TYPE,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
+	gtk_tree_view_column_set_cell_data_func (treeViewColumn, renderer, highlight_ip_profile, NULL, NULL);
 
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Status"),
@@ -381,6 +434,10 @@ GtkWidget* create_account_list(GtkDialog * dialog) {
 			"markup", COLUMN_ACCOUNT_STATUS,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
+	// Highlight IP profile
+	gtk_tree_view_column_set_cell_data_func (treeViewColumn, renderer, highlight_ip_profile, NULL, NULL);
+	// Highlight account registration state 
+	gtk_tree_view_column_set_cell_data_func (treeViewColumn, renderer, highlight_registration, NULL, NULL);
 
 	g_object_unref(G_OBJECT(accountStore));
 
