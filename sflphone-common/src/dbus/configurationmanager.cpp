@@ -387,11 +387,29 @@ ConfigurationManager::getRingtoneList()
 }
 
 
+/**
+ * Send the list of all codecs loaded to the client through DBus.
+ * Can stay global, as only the active codecs will set per account
+ */
+std::vector<std::string> ConfigurationManager::getCodecList (void) {
 
-std::vector< std::string  >
-ConfigurationManager::getCodecList (void)
-{
-    return Manager::instance().getCodecList();
+    std::vector<std::string> list;
+
+    CodecsMap codecs = Manager::instance ().getCodecDescriptorMap ().getCodecsMap();
+    CodecsMap::iterator iter = codecs.begin();
+
+    while (iter!=codecs.end()) {
+        std::stringstream ss;
+
+        if (iter->second != NULL) {
+            ss << iter->first;
+            list.push_back ( (ss.str()).data());
+        }
+
+        iter++;
+    }
+
+    return list;
 }
 
 std::vector<std::string>
@@ -406,35 +424,76 @@ ConfigurationManager::getSupportedTlsMethod (void)
     return method;
 }
 
-std::vector< std::string >
-ConfigurationManager::getCodecDetails (const int32_t& payload)
-{
-    return Manager::instance().getCodecDetails (payload);
+
+std::vector<std::string> ConfigurationManager::getCodecDetails (const int32_t& payload) {
+
+    return Manager::instance().getCodecDescriptorMap().getCodecSpecifications (payload);
 }
 
-std::vector< std::string >
-ConfigurationManager::getActiveCodecList()
-{
-    return Manager::instance().getActiveCodecList();
+std::vector<std::string> ConfigurationManager::getActiveCodecList (const std::string& accountID) {
+
+    _warn ("Send active codec list for account %s", accountID.c_str ());
+
+    std::vector< std::string > v;
+	Account *acc;
+	CodecOrder active;
+    unsigned int i=0;
+	size_t size;
+
+	acc = Manager::instance ().getAccount (accountID);
+	if (acc != NULL) {
+		_warn ("Et un compte, un !");
+		active = acc->getActiveCodecs ();
+		size = active.size();
+		while (i<size) {
+			_warn ("Et un codec, un !");
+			std::stringstream ss;
+			ss << active[i];
+			v.push_back ( (ss.str()).data());
+			i++;
+		}
+	}
+
+    return v;
+
 }
 
-void
-ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list)
+void ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID)
 {
-    Manager::instance().setActiveCodecList (list);
+
+    _debug ("ConfigurationManager::setActiveCodecList received");
+
+	Account *acc;
+    unsigned int i=0;
+	size_t size;
+
+	// Save the codecs list per account
+	acc = Manager::instance ().getAccount (accountID);
+	if (acc != NULL) {
+		acc->setActiveCodecs (list);
+	}
 }
 
 // Audio devices related methods
-std::vector< std::string >
-ConfigurationManager::getInputAudioPluginList()
-{
-    return Manager::instance().getInputAudioPluginList();
+std::vector<std::string> ConfigurationManager::getInputAudioPluginList() {
+
+	std::vector<std::string> v;
+
+    v.push_back ("default");
+    v.push_back ("surround40");
+    v.push_back ("plug:hw");
+
+    return v;
 }
 
-std::vector< std::string >
-ConfigurationManager::getOutputAudioPluginList()
-{
-    return Manager::instance().getOutputAudioPluginList();
+std::vector<std::string> ConfigurationManager::getOutputAudioPluginList() {
+
+    std::vector<std::string> v;
+
+    v.push_back (PCM_DEFAULT);
+    v.push_back (PCM_DMIX);
+
+    return v;
 }
 
 void

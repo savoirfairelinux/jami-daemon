@@ -43,7 +43,7 @@
 #define c_(COMMENT,STRING)    gettext(STRING) 
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
-
+#define IP2IP	"IP2IP"
 
 /** Warnings unused variables **/
 #define UNUSED_VAR(var)      (void*)var

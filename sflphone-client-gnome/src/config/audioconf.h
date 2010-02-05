@@ -22,7 +22,8 @@
 
 #include <actions.h>
 
-GtkWidget* create_audio_configuration();
+GtkWidget* create_audio_configuration (void);
+GtkWidget* create_codecs_configuration (account_t **a);
 
 GtkWidget* api_box();
 GtkWidget* alsa_box();

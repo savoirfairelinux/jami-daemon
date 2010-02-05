@@ -87,7 +87,7 @@ class Sdp {
         /*
          * Build the local SDP offer
          */
-        int create_local_offer( );
+        int create_local_offer (CodecOrder selectedCodecs);
 
         /*
          * Build the sdp media section
@@ -114,7 +114,7 @@ class Sdp {
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negociator instance with it.
          */
-        int create_initial_offer( );
+        int create_initial_offer (CodecOrder selectedCodecs);
 
          /*
          * On receiving an invite outside a dialog, build the local offer and create the
@@ -122,7 +122,7 @@ class Sdp {
          *
          * @param remote    The remote offer
          */
-        int receiving_initial_offer( pjmedia_sdp_session* remote );
+        int receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder selectedCodecs);
         
         /*
          * On receiving a message, check if it contains SDP and negotiate. Should be used for
@@ -264,7 +264,7 @@ class Sdp {
         Sdp(const Sdp&); //No Copy Constructor
         Sdp& operator=(const Sdp&); //No Assignment Operator
 
-        void set_local_media_capabilities ();
+        void set_local_media_capabilities (CodecOrder selectedCodecs);
 
         /*
          *  Mandatory field: Origin ("o=")
