@@ -422,9 +422,15 @@ static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editabl
 
 static void show_advanced_zrtp_options_cb(GtkWidget *widget UNUSED, gpointer data)
 {
-    DEBUG("Advanced options for ZRTP");
-    show_advanced_zrtp_options((GHashTable *) data);
+    DEBUG("Advanced options for SRTP");
+    if (g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo)), (gchar *) "ZRTP") == 0) {
+        show_advanced_zrtp_options((GHashTable *) data);
+    }
+    else {
+        show_advanced_sdes_options((GHashTable *) data);
+    }
 }
+
 
 static void show_advanced_tls_options_cb(GtkWidget *widget UNUSED, gpointer data)
 {
@@ -434,8 +440,12 @@ static void show_advanced_tls_options_cb(GtkWidget *widget UNUSED, gpointer data
 
 static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
 {
-    DEBUG("Key exchange changed");
-    if (g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo)), (gchar *) "ZRTP") == 0) {
+  DEBUG("Key exchange changed %s", gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo)));
+
+    int isSdes = g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo)), (gchar *) "SDES");
+    int isZrtp = g_strcasecmp(gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo)), (gchar *) "ZRTP");
+
+    if ((isSdes == 0) || (isZrtp == 0)) {
         gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), TRUE);
     } else {
         gtk_widget_set_sensitive(GTK_WIDGET(advancedZrtpButton), FALSE);

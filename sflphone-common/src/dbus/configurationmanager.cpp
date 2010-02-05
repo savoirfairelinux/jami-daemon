@@ -72,6 +72,7 @@ ConfigurationManager::getIp2IpDetails (void)
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ACCOUNT_ID, IP2IP_PROFILE));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_KEY_EXCHANGE)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_ENABLE, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_ENABLE)));
+    ip2ipAccountDetails.insert (std::pair<std::string, std::string> (SRTP_RTP_FALLBACK, Manager::instance().getConfigString (IP2IP_PROFILE, SRTP_RTP_FALLBACK)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_DISPLAY_SAS)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_HELLO_HASH, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_HELLO_HASH)));
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString (IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
@@ -110,6 +111,12 @@ ConfigurationManager::setIp2IpDetails (const std::map< std::string, std::string 
 
     if (it != details.end()) {
         Manager::instance().setConfig (IP2IP_PROFILE, SRTP_ENABLE, it->second);
+    }
+
+    it = map_cpy.find (SRTP_RTP_FALLBACK);
+
+    if (it != details.end()) {
+        Manager::instance().setConfig(IP2IP_PROFILE, SRTP_RTP_FALLBACK, it->second);
     }
 
     it = map_cpy.find (SRTP_KEY_EXCHANGE);

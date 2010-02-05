@@ -2238,6 +2238,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 
     // Peer to peer settings
     _config.addDefaultValue (std::pair<std::string, std::string> (SRTP_ENABLE, FALSE_STR), IP2IP_PROFILE);
+    _config.addDefaultValue (std::pair<std::string, std::string> (SRTP_RTP_FALLBACK, FALSE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, "1"), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (ZRTP_HELLO_HASH, TRUE_STR), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, TRUE_STR), IP2IP_PROFILE);
@@ -3516,6 +3517,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
     a.insert (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, getConfigString (accountID, SRTP_KEY_EXCHANGE)));
     a.insert (std::pair<std::string, std::string> (SRTP_ENABLE, getConfigString (accountID, SRTP_ENABLE)));
+    a.insert (std::pair<std::string, std::string> (SRTP_RTP_FALLBACK, getConfigString (accountID, SRTP_RTP_FALLBACK)));
     a.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS, getConfigString (accountID, ZRTP_DISPLAY_SAS)));
     a.insert (std::pair<std::string, std::string> (ZRTP_DISPLAY_SAS_ONCE, getConfigString (accountID, ZRTP_DISPLAY_SAS_ONCE)));
     a.insert (std::pair<std::string, std::string> (ZRTP_HELLO_HASH, getConfigString (accountID, ZRTP_HELLO_HASH)));
@@ -3732,6 +3734,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string stunEnable;
     std::string stunServer;
     std::string srtpEnable;
+    std::string srtpRtpFallback;
     std::string zrtpDisplaySas;
     std::string zrtpDisplaySasOnce;
     std::string zrtpNotSuppWarning;
@@ -3791,6 +3794,10 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
 
     if ( (iter = map_cpy.find (SRTP_ENABLE)) != map_cpy.end()) {
         srtpEnable = iter->second;
+    }
+
+    if ( (iter = map_cpy.find (SRTP_RTP_FALLBACK)) != map_cpy.end()) {
+        srtpRtpFallback = iter->second;
     }
 
     if ( (iter = map_cpy.find (ZRTP_DISPLAY_SAS)) != map_cpy.end()) {
@@ -3903,6 +3910,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     setConfig (accountID, PUBLISHED_PORT, publishedPort);
     setConfig (accountID, DISPLAY_NAME, displayName);
     setConfig (accountID, SRTP_ENABLE, srtpEnable);
+    setConfig (accountID, SRTP_RTP_FALLBACK, srtpRtpFallback);
     setConfig (accountID, ZRTP_DISPLAY_SAS, zrtpDisplaySas);
     setConfig (accountID, ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce);
     setConfig (accountID, ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning);

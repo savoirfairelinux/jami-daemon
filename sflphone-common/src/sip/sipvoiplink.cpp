@@ -3222,11 +3222,14 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         // We did not found any crypto context for this media
         // @TODO if SRTPONLY, CallFail
 
-        // if RTPFALLBACK, change RTP session
         _debug("Did not found any crypto or negociation failed but Sdes enabled");
         call->getAudioRtp()->stop();
 	call->getAudioRtp()->setSrtpEnabled(false);
-	call->getAudioRtp()->initAudioRtpSession(call);
+
+	// if RTPFALLBACK, change RTP session
+	AccountID accountID = Manager::instance().getAccountFromCall (call->getCallId());
+	if(Manager::instance().getConfigString (accountID, SRTP_RTP_FALLBACK) == "true")
+	    call->getAudioRtp()->initAudioRtpSession(call);
     }
 
     if(nego_success && call->getAudioRtp()->getAudioRtpType() != sfl::Sdes) {
