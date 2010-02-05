@@ -68,6 +68,7 @@
 #define ACCOUNT_REALM                      "realm"
 #define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
 #define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
+#define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
 #define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
 #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
 #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"

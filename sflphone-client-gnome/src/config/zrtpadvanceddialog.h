@@ -31,4 +31,6 @@
 
 void show_advanced_zrtp_options(GHashTable * properties);
 
+void show_advanced_sdes_options(GHashTable * properties);
+
 #endif 

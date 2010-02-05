@@ -114,3 +114,61 @@ void show_advanced_zrtp_options(GHashTable * properties)
     
     gtk_widget_destroy (GTK_WIDGET(securityDialog));
 }
+
+
+void show_advanced_sdes_options(GHashTable * properties) {
+
+    GtkDialog * securityDialog;
+
+    GtkWidget * sdesTable;
+    GtkWidget * enableRtpFallback;
+    gchar * rtpFallback = "false";
+    
+    if(properties != NULL) {
+        rtpFallback = g_hash_table_lookup(properties, ACCOUNT_SRTP_RTP_FALLBACK);
+    }
+
+    securityDialog = GTK_DIALOG	(gtk_dialog_new_with_buttons (	_("SDES Options"),
+
+			       	GTK_WINDOW (get_main_window()),							
+				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+
+				GTK_STOCK_CANCEL,
+
+			        GTK_RESPONSE_CANCEL,
+
+				GTK_STOCK_SAVE,
+
+				GTK_RESPONSE_ACCEPT,	       
+				
+				NULL));
+
+    gtk_window_set_policy( GTK_WINDOW(securityDialog), FALSE, FALSE, FALSE );
+    gtk_dialog_set_has_separator(securityDialog, TRUE);
+    gtk_container_set_border_width (GTK_CONTAINER(securityDialog), 0);
+
+    sdesTable = gtk_table_new (1, 2  , FALSE/* homogeneous */);  
+    gtk_table_set_row_spacings( GTK_TABLE(sdesTable), 10);
+    gtk_table_set_col_spacings( GTK_TABLE(sdesTable), 10); 
+    gtk_box_pack_start(GTK_BOX(securityDialog->vbox), sdesTable, FALSE, FALSE, 0);  
+    gtk_widget_show(sdesTable);
+
+    enableRtpFallback = gtk_check_button_new_with_mnemonic(_("Fallback on RTP on SDES failure"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableRtpFallback),
+				 g_strcasecmp(rtpFallback,"true") == 0 ? TRUE: FALSE);
+    gtk_table_attach ( GTK_TABLE(sdesTable), enableRtpFallback, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_widget_set_sensitive( GTK_WIDGET( enableRtpFallback ) , TRUE );
+
+
+    gtk_widget_show_all(sdesTable);
+
+    gtk_container_set_border_width (GTK_CONTAINER(sdesTable), 10);
+        
+    if(gtk_dialog_run(GTK_DIALOG(securityDialog)) == GTK_RESPONSE_ACCEPT) {        
+        g_hash_table_replace(properties,
+                g_strdup(ACCOUNT_SRTP_RTP_FALLBACK),
+	        g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(enableRtpFallback)) ? "true": "false"));                
+    }    
+    
+    gtk_widget_destroy (GTK_WIDGET(securityDialog));
+}
