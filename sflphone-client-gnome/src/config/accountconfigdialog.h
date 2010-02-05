@@ -26,11 +26,17 @@
 
 #include "utils.h"
 #include "preferencesdialog.h"
+#include "accountlist.h"
 
 /** 
  * Display the main account widget 
  * @param a The account you want to edit or null for a new account
  */  
-void show_account_window ( account_t * a );
+void show_account_window (account_t *a);
+
+GtkWidget* create_registration_expire (account_t **a);
+
+GtkWidget* create_direct_ip_calls_tab (account_t **a);
+
 
 #endif 

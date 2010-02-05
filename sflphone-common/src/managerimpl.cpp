@@ -52,6 +52,7 @@
 #include <sys/stat.h>  // mkdir(2)
 #include <pwd.h>       // getpwuid
 
+#define DIRECT_IP_CALL	"IP CALL"
 
 #define fill_config_str(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
@@ -2265,6 +2266,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (PUBLISHED_ADDRESS, DEFAULT_ADDRESS), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (STUN_ENABLE, DFT_STUN_ENABLE), IP2IP_PROFILE);
     _config.addDefaultValue (std::pair<std::string, std::string> (STUN_SERVER, DFT_STUN_SERVER), IP2IP_PROFILE);
+    _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, EMPTY_FIELD), IP2IP_PROFILE);
 
     // Init display name to the username under which
     // this sflphone instance is running.
@@ -2375,44 +2377,26 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 void
 ManagerImpl::initAudioCodec (void)
 {
-    _debugInit ("Active Codecs List");
-    // init list of all supported codecs
-    _codecDescriptorMap.init();
-    // if the user never set the codec list, use the default configuration
+    _warn ("Init audio codecs");
 
-    if (getConfigString (AUDIO, "ActiveCodecs") == "") {
-        _codecDescriptorMap.setDefaultOrder();
-    }
-
-    // else retrieve the one set in the user config file
-    else {
-        std::vector<std::string> active_list = retrieveActiveCodecs();
-        setActiveCodecList (active_list);
-    }
+    /* Init list of all supported codecs by the application. 
+	 * This is a global list. Every account will inherit it.
+     */
+	_codecDescriptorMap.init();
 }
 
+/*
+ * TODO Retrieve the active codec list per account
+ */
+std::vector<std::string> ManagerImpl::retrieveActiveCodecs() {
 
-void
-ManagerImpl::setActiveCodecList (const std::vector<  std::string >& list)
-{
-    _debug ("Set active codecs list");
-    _codecDescriptorMap.saveActiveCodecs (list);
-    // setConfig
-    std::string s = serialize (list);
-    _debug ("Setting codec with payload number %s to the active list", s.c_str());
-    setConfig ("Audio", "ActiveCodecs", s);
-}
-
-std::vector<std::string>
-ManagerImpl::retrieveActiveCodecs()
-{
+	// This property is now set per account basis
     std::string s = getConfigString (AUDIO, "ActiveCodecs");
+	_warn ("ManagerImpl::retrieveActiveCodecs: %s", s.c_str ());
     return unserialize (s);
 }
 
-std::vector<std::string>
-ManagerImpl::unserialize (std::string s)
-{
+std::vector<std::string> ManagerImpl::unserialize (std::string s) {
 
     std::vector<std::string> list;
     std::string  temp;
@@ -2427,9 +2411,8 @@ ManagerImpl::unserialize (std::string s)
     return list;
 }
 
-std::string
-ManagerImpl::serialize (std::vector<std::string> v)
-{
+std::string ManagerImpl::serialize (std::vector<std::string> v) {
+
     unsigned int i;
     std::string res;
 
@@ -2440,78 +2423,7 @@ ManagerImpl::serialize (std::vector<std::string> v)
     return res;
 }
 
-
-std::vector <std::string>
-ManagerImpl::getActiveCodecList (void)
-{
-    _debug ("ManagerImpl::getActiveCodecList");
-    std::vector< std::string > v;
-    CodecOrder active = _codecDescriptorMap.getActiveCodecs();
-    unsigned int i=0;
-    size_t size = active.size();
-
-    while (i<size) {
-        std::stringstream ss;
-        ss << active[i];
-        v.push_back ( (ss.str()).data());
-        _debug ("Codec with payload number %s is active", ss.str().data());
-        i++;
-    }
-
-    return v;
-}
-
-
-/**
- * Send the list of codecs to the client through DBus.
- */
-std::vector< std::string >
-ManagerImpl::getCodecList (void)
-{
-    std::vector<std::string> list;
-    //CodecMap codecs = _codecDescriptorMap.getCodecMap();
-    CodecsMap codecs = _codecDescriptorMap.getCodecsMap();
-    CodecOrder order = _codecDescriptorMap.getActiveCodecs();
-    CodecsMap::iterator iter = codecs.begin();
-
-    while (iter!=codecs.end()) {
-        std::stringstream ss;
-
-        if (iter->second != NULL) {
-            ss << iter->first;
-            list.push_back ( (ss.str()).data());
-        }
-
-        iter++;
-    }
-
-    return list;
-}
-
-std::vector<std::string>
-ManagerImpl::getCodecDetails (const int32_t& payload)
-{
-
-    std::vector<std::string> v;
-    std::stringstream ss;
-
-    v.push_back (_codecDescriptorMap.getCodecName ( (AudioCodecType) payload));
-    ss << _codecDescriptorMap.getSampleRate ( (AudioCodecType) payload);
-    v.push_back ( (ss.str()).data());
-    ss.str ("");
-    ss << _codecDescriptorMap.getBitRate ( (AudioCodecType) payload);
-    v.push_back ( (ss.str()).data());
-    ss.str ("");
-    ss << _codecDescriptorMap.getBandwidthPerCall ( (AudioCodecType) payload);
-    v.push_back ( (ss.str()).data());
-    ss.str ("");
-
-    return v;
-}
-
-std::string
-ManagerImpl::getCurrentCodecName (const CallID& id)
-{
+std::string ManagerImpl::getCurrentCodecName (const CallID& id) {
 
     AccountID accountid = getAccountFromCall (id);
     VoIPLink* link = getAccountLink (accountid);
@@ -2524,37 +2436,6 @@ ManagerImpl::getCurrentCodecName (const CallID& id)
         return "";
     else
         return link->getCurrentCodecName();
-}
-
-/**
- * Get list of supported input audio plugin
- */
-std::vector<std::string>
-ManagerImpl::getInputAudioPluginList (void)
-{
-    std::vector<std::string> v;
-    _debug ("Get input audio plugin list");
-
-    v.push_back ("default");
-    v.push_back ("surround40");
-    v.push_back ("plug:hw");
-
-    return v;
-}
-
-/**
- * Get list of supported output audio plugin
- */
-std::vector<std::string>
-ManagerImpl::getOutputAudioPluginList (void)
-{
-    std::vector<std::string> v;
-    _debug ("Get output audio plugin list");
-
-    v.push_back (PCM_DEFAULT);
-    v.push_back (PCM_DMIX);
-
-    return v;
 }
 
 /**
@@ -3419,15 +3300,19 @@ void ManagerImpl::setAccountsOrder (const std::string& order)
     setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
 }
 
-std::vector< std::string >
-ManagerImpl::getAccountList()
-{
+std::vector< std::string > ManagerImpl::getAccountList() {
+
     std::vector< std::string > v;
     std::vector< std::string > account_order;
     unsigned int i;
 
     account_order = loadAccountOrder ();
     AccountMap::iterator iter;
+
+	// The IP2IP profile is always available, and first in the list
+	iter = _accountMap.find (IP2IP_PROFILE);
+	if (iter->second != NULL)
+		v.push_back (iter->first.data ());
 
     // If no order has been set, load the default one
     // ie according to the creation date.
@@ -3474,8 +3359,11 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
         _debug ("Cannot getAccountDetails on a non-existing accountID %s. Defaults will be used.", accountID.c_str());
     }
 
+
     a.insert (std::pair<std::string, std::string> (ACCOUNT_ID, accountID));
-    a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
+ 
+    // The IP profile does not allow to set an alias
+    (accountID == IP2IP_PROFILE) ? a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, DIRECT_IP_CALL)) : a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ALIAS, getConfigString (accountID, CONFIG_ACCOUNT_ALIAS)));
 
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_ENABLE, getConfigString (accountID, CONFIG_ACCOUNT_ENABLE)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_RESOLVE_ONCE, getConfigString (accountID, CONFIG_ACCOUNT_RESOLVE_ONCE)));
@@ -3501,17 +3389,24 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     std::string registrationStateDescription;
 
     if (account != NULL) {
-        state = account->getRegistrationState();
-        int code = account->getRegistrationStateDetailed().first;
-        std::stringstream out;
-        out << code;
-        registrationStateCode = out.str();
-        registrationStateDescription = account->getRegistrationStateDetailed().second;
+		if (accountID == IP2IP_PROFILE) {
+			registrationStateCode = EMPTY_FIELD;
+			registrationStateDescription = "Direct IP call";
+		}
+		else {
+			state = account->getRegistrationState();
+			int code = account->getRegistrationStateDetailed().first;
+			std::stringstream out;
+			out << code;
+			registrationStateCode = out.str();
+			registrationStateDescription = account->getRegistrationStateDetailed().second;
+		}
     } else {
         state = Unregistered;
     }
 
-    a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, mapStateNumberToString (state)));
+    (accountID == IP2IP_PROFILE) ? a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, "READY")) : 
+								a.insert (std::pair<std::string, std::string> (REGISTRATION_STATUS, mapStateNumberToString (state)));
 
     a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_CODE, registrationStateCode));
     a.insert (std::pair<std::string, std::string> (REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
@@ -4199,7 +4094,7 @@ ManagerImpl::loadAccountMap()
         }
 
         else {
-            _debug ("Unknown %s param in config file (%s)", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+            _error ("Unknown %s param in config file (%s)", CONFIG_ACCOUNT_TYPE, accountType.c_str());
         }
 
         if (tmpAccount != NULL) {

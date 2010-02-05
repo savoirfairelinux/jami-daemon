@@ -50,25 +50,9 @@ Sdp::Sdp (pj_pool_t *pool)
     _pool = pool;
 }
 
-Sdp::~Sdp()
-{
+Sdp::~Sdp() { }
 
-    //unsigned int k;
-
-    /*
-    for( k=0; k<_session_media.size(); k++ ){
-        delete _session_media[k];
-        _session_media[k] = 0;
-    }*/
-
-    //for( k=0; k<_local_media_cap.size(); k++ ){
-    //  delete _local_media_cap[k];
-    //_local_media_cap[k] = 0;
-    //}
-}
-
-void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
-{
+void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med) {
 
     pjmedia_sdp_media* med;
     pjmedia_sdp_rtpmap rtpmap;
@@ -140,19 +124,20 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
             throw;
         }
     } else {
-        _debug ("No hash specified");
+        _warn ("No hash specified");
     }
 
     *p_med = med;
 }
 
-int Sdp::create_local_offer ()
-{
+int Sdp::create_local_offer (CodecOrder selectedCodecs) {
+
     pj_status_t status;
 
     _debug ("Create local offer");
+
     // Build local media capabilities
-    set_local_media_capabilities ();
+    set_local_media_capabilities (selectedCodecs);
 
     // Reference: RFC 4566 [5]
 
@@ -166,7 +151,6 @@ int Sdp::create_local_offer ()
     sdp_add_session_name();
     sdp_add_connection_info();
     sdp_add_timing();
-    //sdp_addAttributes( _pool );
     sdp_add_media_description();
 
     if(!_srtp_crypto.empty()) {
@@ -184,17 +168,17 @@ int Sdp::create_local_offer ()
     return PJ_SUCCESS;
 }
 
-int Sdp::create_initial_offer()
-{
+int Sdp::create_initial_offer (CodecOrder selectedCodecs) {
+
     pj_status_t status;
     pjmedia_sdp_neg_state state;
 
     _debug ("Create initial offer");
     // Build the SDP session descriptor
-    status = create_local_offer();
+    status = create_local_offer (selectedCodecs);
 
     if (status != PJ_SUCCESS) {
-        _debug ("    Error: Failled to create initial offer");
+        _warn ("    Error: Failed to create initial offer");
         return status;
     }
 
@@ -202,7 +186,7 @@ int Sdp::create_initial_offer()
     status = pjmedia_sdp_neg_create_w_local_offer (_pool, get_local_sdp_session(), &_negociator);
 
     if (status != PJ_SUCCESS) {
-        _debug ("    Error: Failled to create an initial SDP negociator");
+        _error ("    Error: Failed to create an initial SDP negociator");
         return status;
     }
 
@@ -215,8 +199,8 @@ int Sdp::create_initial_offer()
     return PJ_SUCCESS;
 }
 
-int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
-{
+int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder selectedCodecs) {
+
     // Create the SDP negociator instance by calling
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
 
@@ -226,7 +210,7 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
 
     // Build the local offer to respond
-    status = create_local_offer();
+    status = create_local_offer (selectedCodecs);
 
     if (status != PJ_SUCCESS) {
         return status;
@@ -243,8 +227,8 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote)
     return PJ_SUCCESS;
 }
 
-pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
-{
+pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata) {
+
     static const pj_str_t str_application = { (char*) "application", 11 };
     static const pj_str_t str_sdp = { (char*) "sdp", 3 };
     pj_status_t status;
@@ -256,17 +240,17 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         message = rdata->msg_info.msg;
 
         if (message == NULL) {
-            _debug ("No message");
+            _error ("No message");
             return PJMEDIA_SDP_EINSDP;
         }
 
         if (message->body == NULL) {
-            _debug ("Empty message body");
+            _error ("Empty message body");
             return PJMEDIA_SDP_EINSDP;
         }
 
         if (pj_stricmp (&message->body->content_type.type, &str_application) || pj_stricmp (&message->body->content_type.subtype, &str_sdp)) {
-            _debug ("Incoming Message does not contain SDP");
+            _error ("Incoming Message does not contain SDP");
             return PJMEDIA_SDP_EINSDP;
         }
 
@@ -306,13 +290,13 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     return status;
 }
 
-void Sdp::sdp_add_protocol (void)
-{
+void Sdp::sdp_add_protocol (void) {
+
     this->_local_offer->origin.version = 0;
 }
 
-void Sdp::sdp_add_origin (void)
-{
+void Sdp::sdp_add_origin (void) {
+
     pj_time_val tv;
     pj_gettimeofday (&tv);
 
@@ -327,22 +311,22 @@ void Sdp::sdp_add_origin (void)
     this->_local_offer->origin.addr = pj_str ( (char*) _ip_addr.c_str());
 }
 
-void Sdp::sdp_add_session_name (void)
-{
+void Sdp::sdp_add_session_name (void) {
+
     this->_local_offer->name = STR_SDP_NAME;
 }
 
 
-void Sdp::sdp_add_connection_info (void)
-{
+void Sdp::sdp_add_connection_info (void) {
+
     this->_local_offer->conn->net_type = _local_offer->origin.net_type;
     this->_local_offer->conn->addr_type = _local_offer->origin.addr_type;
     this->_local_offer->conn->addr = _local_offer->origin.addr;
 }
 
 
-void Sdp::sdp_add_timing (void)
-{
+void Sdp::sdp_add_timing (void) {
+
     // RFC 3264: An offer/answer model session description protocol
     // As the session is created and destroyed through an external signaling mean (SIP), the line
     // should have a value of "0 0".
@@ -350,8 +334,8 @@ void Sdp::sdp_add_timing (void)
     this->_local_offer->time.start = this->_local_offer->time.stop = 0;
 }
 
-void Sdp::sdp_add_attributes()
-{
+void Sdp::sdp_add_attributes() {
+
     pjmedia_sdp_attr *a;
     this->_local_offer->attr_count = 1;
     a =  PJ_POOL_ZALLOC_T (_pool, pjmedia_sdp_attr);
@@ -583,10 +567,8 @@ void Sdp::toString (void)
     _debug ("LOCAL SDP: \n%s", sdp.str().c_str());
 }
 
-void Sdp::set_local_media_capabilities ()
-{
+void Sdp::set_local_media_capabilities (CodecOrder selectedCodecs) {
 
-    CodecOrder selected_codecs;
     unsigned int i;
     sdpMedia *audio;
     CodecsMap codecs_list;
@@ -602,16 +584,18 @@ void Sdp::set_local_media_capabilities ()
     audio->set_port (get_local_extern_audio_port());
 
     /* We retrieve the codecs selected by the user */
-    selected_codecs = Manager::instance().getCodecDescriptorMap().getActiveCodecs();
     codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
 
-    for (i=0; i<selected_codecs.size(); i++) {
-        iter=codecs_list.find (selected_codecs[i]);
+    for (i=0; i<selectedCodecs.size(); i++) {
+        iter=codecs_list.find (selectedCodecs[i]);
 
         if (iter!=codecs_list.end()) {
             audio->add_codec (iter->second);
         }
-    }
+		else {
+			_warn ("Couldn't find audio codec");
+		}
+	}
 
     _local_media_cap.push_back (audio);
 }

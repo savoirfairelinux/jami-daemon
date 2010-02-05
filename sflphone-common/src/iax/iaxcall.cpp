@@ -19,6 +19,7 @@
  */
 
 #include "iaxcall.h"
+#include "manager.h"
 #include "global.h" // for _debug
 
 IAXCall::IAXCall (const CallID& id, Call::CallType type) : Call (id, type), _session (NULL)
@@ -27,157 +28,172 @@ IAXCall::IAXCall (const CallID& id, Call::CallType type) : Call (id, type), _ses
 
 IAXCall::~IAXCall()
 {
-    _session = NULL; // just to be sure to don't have unknown pointer, do not delete it!
+	_session = NULL; // just to be sure to don't have unknown pointer, do not delete it!
 }
 
-void
+	void
 IAXCall::setFormat (int format)
 {
-    _format = format;
+	_format = format;
 
-    _info ("IAX set supported format: ");
+	_info ("IAX set supported format: ");
 
-    switch (format) {
+	switch (format) {
 
-        case AST_FORMAT_ULAW:
-            _info("PCMU");
-            setAudioCodec (PAYLOAD_CODEC_ULAW);
-            break;
+		case AST_FORMAT_ULAW:
+			_info("PCMU");
+			setAudioCodec (PAYLOAD_CODEC_ULAW);
+			break;
 
-        case AST_FORMAT_GSM:
-            _info ("GSM");
-            setAudioCodec (PAYLOAD_CODEC_GSM);
-            break;
+		case AST_FORMAT_GSM:
+			_info ("GSM");
+			setAudioCodec (PAYLOAD_CODEC_GSM);
+			break;
 
-        case AST_FORMAT_ALAW:
-            _info ("ALAW");
-            setAudioCodec (PAYLOAD_CODEC_ALAW);
-            break;
+		case AST_FORMAT_ALAW:
+			_info ("ALAW");
+			setAudioCodec (PAYLOAD_CODEC_ALAW);
+			break;
 
-        case AST_FORMAT_ILBC:
-            _info ("ILBC");
-            setAudioCodec (PAYLOAD_CODEC_ILBC_20);
-            break;
+		case AST_FORMAT_ILBC:
+			_info ("ILBC");
+			setAudioCodec (PAYLOAD_CODEC_ILBC_20);
+			break;
 
-        case AST_FORMAT_SPEEX:
-            _info ("SPEEX");
-            setAudioCodec (PAYLOAD_CODEC_SPEEX_8000);
-            break;
+		case AST_FORMAT_SPEEX:
+			_info ("SPEEX");
+			setAudioCodec (PAYLOAD_CODEC_SPEEX_8000);
+			break;
 
-        default:
-            _info ("Error audio codec type %i not supported!", format);
-            setAudioCodec ( (AudioCodecType) -1);
-            break;
-    }
+		default:
+			_info ("Error audio codec type %i not supported!", format);
+			setAudioCodec ( (AudioCodecType) -1);
+			break;
+	}
 }
 
 
-int
-IAXCall::getSupportedFormat()
+	int
+IAXCall::getSupportedFormat (std::string accountID)
 {
-    CodecOrder map;
-    int format = 0;
-    unsigned int iter;
+	CodecOrder map;
+	int format = 0;
+	unsigned int iter;
+	Account *account;
 
-    _info ("IAX get supported format: ");
+	_info ("IAX get supported format: ");
 
-    map = getCodecMap().getActiveCodecs();
+	account = Manager::instance().getAccount (accountID);
+	if (account != NULL) {
+		map = account->getActiveCodecs();
+	}
+	else {
+		_error ("No IAx account could be found");
+	}
 
-    for (iter=0 ; iter < map.size() ; iter++) {
-        switch (map[iter]) {
+	for (iter=0 ; iter < map.size() ; iter++) {
+		switch (map[iter]) {
 
-            case PAYLOAD_CODEC_ULAW:
-                _info ("PCMU ");
-                format |= AST_FORMAT_ULAW;
-                break;
+			case PAYLOAD_CODEC_ULAW:
+				_info ("PCMU ");
+				format |= AST_FORMAT_ULAW;
+				break;
 
-            case PAYLOAD_CODEC_GSM:
-                _info ("GSM ");
-                format |= AST_FORMAT_GSM;
-                break;
+			case PAYLOAD_CODEC_GSM:
+				_info ("GSM ");
+				format |= AST_FORMAT_GSM;
+				break;
 
-            case PAYLOAD_CODEC_ALAW:
-                _info ("PCMA ");
-                format |= AST_FORMAT_ALAW;
-                break;
+			case PAYLOAD_CODEC_ALAW:
+				_info ("PCMA ");
+				format |= AST_FORMAT_ALAW;
+				break;
 
-            case PAYLOAD_CODEC_ILBC_20:
-                _info ("ILBC ");
-                format |= AST_FORMAT_ILBC;
-                break;
+			case PAYLOAD_CODEC_ILBC_20:
+				_info ("ILBC ");
+				format |= AST_FORMAT_ILBC;
+				break;
 
-            case PAYLOAD_CODEC_SPEEX_8000:
-                _info ("SPEEX ");
-                format |= AST_FORMAT_SPEEX;
-                break;
+			case PAYLOAD_CODEC_SPEEX_8000:
+				_info ("SPEEX ");
+				format |= AST_FORMAT_SPEEX;
+				break;
 
-            default:
-                break;
-        }
-    }
+			default:
+				break;
+		}
+	}
 
-    return format;
+	return format;
 
 }
 
-int
-IAXCall::getFirstMatchingFormat (int needles)
-{
-    CodecOrder map = getCodecMap().getActiveCodecs();
-    int format = 0;
-    unsigned int iter;
+int IAXCall::getFirstMatchingFormat (int needles, std::string accountID) {
 
-    _debug ("IAX get first matching codec: ");
+	Account *account;
+	CodecOrder map;
+	int format = 0;
+	unsigned int iter;
 
-    for (iter=0 ; iter < map.size() ; iter++) {
-        switch (map[iter]) {
+	_debug ("IAX get first matching codec: ");
 
-            case PAYLOAD_CODEC_ULAW:
-                _debug ("PCMU");
-                format = AST_FORMAT_ULAW;
-                break;
+	account = Manager::instance().getAccount (accountID);
+	if (account != NULL) {
+		map = account->getActiveCodecs();
+	}
+	else {
+		_error ("No IAx account could be found");
+	}
 
-            case PAYLOAD_CODEC_GSM:
-                _debug ("GSM");
-                format = AST_FORMAT_GSM;
-                break;
+	for (iter=0 ; iter < map.size() ; iter++) {
+		switch (map[iter]) {
 
-            case PAYLOAD_CODEC_ALAW:
-                _debug ("PCMA");
-                format = AST_FORMAT_ALAW;
-                break;
+			case PAYLOAD_CODEC_ULAW:
+				_debug ("PCMU");
+				format = AST_FORMAT_ULAW;
+				break;
 
-            case PAYLOAD_CODEC_ILBC_20:
-                _debug ("ILBC");
-                format = AST_FORMAT_ILBC;
-                break;
+			case PAYLOAD_CODEC_GSM:
+				_debug ("GSM");
+				format = AST_FORMAT_GSM;
+				break;
 
-            case PAYLOAD_CODEC_SPEEX_8000:
-                _debug ("SPEEX");
-                format = AST_FORMAT_SPEEX;
-                break;
+			case PAYLOAD_CODEC_ALAW:
+				_debug ("PCMA");
+				format = AST_FORMAT_ALAW;
+				break;
 
-            default:
-                break;
-        }
+			case PAYLOAD_CODEC_ILBC_20:
+				_debug ("ILBC");
+				format = AST_FORMAT_ILBC;
+				break;
 
-        // Return the first that matches
-        if (format & needles)
-            return format;
+			case PAYLOAD_CODEC_SPEEX_8000:
+				_debug ("SPEEX");
+				format = AST_FORMAT_SPEEX;
+				break;
 
-    }
+			default:
+				break;
+		}
 
-    return 0;
+		// Return the first that matches
+		if (format & needles)
+			return format;
+
+	}
+
+	return 0;
 }
 
 CodecDescriptor& IAXCall::getCodecMap()
 {
-    return _codecMap;
+	return _codecMap;
 }
 
 AudioCodecType IAXCall::getAudioCodec()
 {
-    return _audioCodec;
+	return _audioCodec;
 }
 
 
