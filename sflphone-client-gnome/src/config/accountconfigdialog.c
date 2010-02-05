@@ -107,17 +107,16 @@ static void show_password_cb (GtkWidget *widget, gpointer data)
 }
 
 /* Signal to protocolComboBox 'changed' */
-	void
-change_protocol_cb (account_t * currentAccount UNUSED)
-{
-	gchar * protocol = gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+void change_protocol_cb (account_t *currentAccount UNUSED) {
 
-	if (g_strcasecmp(protocol, "IAX") == 0) {
-		gtk_widget_hide(security_tab);
-		gtk_widget_hide(advanced_tab);
+	gchar *protocol = gtk_combo_box_get_active_text (GTK_COMBO_BOX (protocolComboBox));
+
+	if (g_strcasecmp (protocol, "IAX") == 0) {
+		gtk_widget_hide (security_tab);
+		gtk_widget_hide (advanced_tab);
 	} else {
-		gtk_widget_show(security_tab);
-		gtk_widget_show(advanced_tab);
+		gtk_widget_show (security_tab);
+		gtk_widget_show (advanced_tab);
 	}
 }
 
@@ -195,8 +194,8 @@ static void update_credential_cb(GtkWidget *widget, gpointer data UNUSED)
 	gtk_list_store_set (GTK_LIST_STORE (credentialStore), &iter, column, (gchar *) gtk_entry_get_text(GTK_ENTRY(widget)), -1);
 }
 
-static GtkWidget * create_basic_tab(account_t **a) 
-{
+static GtkWidget* create_basic_tab (account_t **a)  {
+
 	GtkWidget * frame;
 	GtkWidget * table;
 	account_t *currentAccount;
@@ -240,7 +239,7 @@ static GtkWidget * create_basic_tab(account_t **a)
 	table = gtk_table_new (7, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
 	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-	gtk_widget_show(table);
+	gtk_widget_show (table);
 	gtk_container_add( GTK_CONTAINER( frame) , table );
 
 	label = gtk_label_new_with_mnemonic (_("_Alias"));
@@ -510,8 +509,8 @@ static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 		gtk_widget_set_sensitive(GTK_WIDGET(useStunCheckBox), FALSE);
 		gtk_widget_set_sensitive(GTK_WIDGET(sameAsLocalRadioButton), TRUE);
 		gtk_widget_set_sensitive(GTK_WIDGET(publishedAddrRadioButton), TRUE);
-		gtk_widget_hide(stunServerLabel);
-		gtk_widget_hide(stunServerEntry);
+		gtk_widget_hide (stunServerLabel);
+		gtk_widget_hide (stunServerEntry);
 
 
 
@@ -583,32 +582,36 @@ static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 	}
 }
 
-static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
+static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 {
-	gchar * local_interface;
-	gchar * local_address;
+	gchar *local_interface;
+	gchar *local_address;
 
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
+
 		DEBUG("Showing stun options, hiding Local/Published info");
-		gtk_widget_show(stunServerLabel);
-		gtk_widget_show(stunServerEntry);
-		gtk_widget_set_sensitive(sameAsLocalRadioButton, FALSE);
-		gtk_widget_set_sensitive(publishedAddrRadioButton, FALSE);
+		gtk_widget_show (stunServerLabel);
+		gtk_widget_show (stunServerEntry);
+		gtk_widget_set_sensitive (sameAsLocalRadioButton, FALSE);
+		gtk_widget_set_sensitive (publishedAddrRadioButton, FALSE);
 		DEBUG("Problem occurs here");
-		gtk_widget_hide(publishedAddressLabel);
-		gtk_widget_hide(publishedPortLabel);
-		gtk_widget_hide(publishedAddressEntry);
-		gtk_widget_hide(publishedPortSpinBox);
+		gtk_widget_hide (publishedAddressLabel);
+		gtk_widget_hide (publishedPortLabel);
+		gtk_widget_hide (publishedAddressEntry);
+		gtk_widget_hide (publishedPortSpinBox);
+
 	} else {
-		gtk_widget_hide(stunServerLabel);
-		gtk_widget_hide(stunServerEntry);
-		gtk_widget_set_sensitive(sameAsLocalRadioButton, TRUE);
-		gtk_widget_set_sensitive(publishedAddrRadioButton, TRUE);
-		if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
-			gtk_widget_show(publishedAddressLabel);
-			gtk_widget_show(publishedPortLabel);
-			gtk_widget_show(publishedAddressEntry);
-			gtk_widget_show(publishedPortSpinBox);
+
+		gtk_widget_hide (stunServerLabel);
+		gtk_widget_hide (stunServerEntry);
+		gtk_widget_set_sensitive (sameAsLocalRadioButton, TRUE);
+		gtk_widget_set_sensitive (publishedAddrRadioButton, TRUE);
+
+		if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (sameAsLocalRadioButton))) {
+			gtk_widget_show (publishedAddressLabel);
+			gtk_widget_show (publishedPortLabel);
+			gtk_widget_show (publishedAddressEntry);
+			gtk_widget_show (publishedPortSpinBox);
 
 			// Since stun callback is called at initialization, we cannot reinit published address
 			// TODO: find a way so that if stun is unchecked, reinit published address entry 
@@ -619,7 +622,6 @@ static use_stun_cb(GtkWidget * widget, gpointer data UNUSED)
 			// gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), local_address);
 		}
 	}
-
 }
 
 
@@ -854,22 +856,22 @@ GtkWidget* create_registration_expire (account_t **a) {
 
 	gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-	gtk_table_set_row_spacings( GTK_TABLE(table), 5);	
+	gtk_table_set_row_spacings (GTK_TABLE (table), 5);	
 
 	label = gtk_label_new_with_mnemonic (_("Registration expire"));
-	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
-	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-	expireSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
-	gtk_label_set_mnemonic_widget(GTK_LABEL(label), expireSpinBox);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(expireSpinBox), g_ascii_strtod(account_expire, NULL));
-	gtk_table_attach_defaults(GTK_TABLE(table), expireSpinBox, 1, 2, 0, 1);
+	gtk_table_attach_defaults (GTK_TABLE (table), label, 0, 1, 0, 1);
+	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+	expireSpinBox = gtk_spin_button_new_with_range (1, 65535, 1);
+	gtk_label_set_mnemonic_widget (GTK_LABEL (label), expireSpinBox);
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (expireSpinBox), g_ascii_strtod (account_expire, NULL));
+	gtk_table_attach_defaults (GTK_TABLE (table), expireSpinBox, 1, 2, 0, 1);
 
 
-	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic(_("_Comply with RFC 3263"));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce),
-			g_strcasecmp(resolve_once,"false") == 0 ? TRUE: FALSE);
-	gtk_table_attach_defaults( GTK_TABLE( table ), entryResolveNameOnlyOnce, 0, 2, 1, 2);
-	gtk_widget_set_sensitive( GTK_WIDGET( entryResolveNameOnlyOnce ) , TRUE );
+	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic (_("_Comply with RFC 3263"));
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (entryResolveNameOnlyOnce),
+			g_strcasecmp (resolve_once,"false") == 0 ? TRUE: FALSE);
+	gtk_table_attach_defaults (GTK_TABLE (table), entryResolveNameOnlyOnce, 0, 2, 1, 2);
+	gtk_widget_set_sensitive (GTK_WIDGET (entryResolveNameOnlyOnce ) , TRUE );
 
 	return frame;
 }
@@ -993,11 +995,11 @@ GtkWidget* create_published_address (account_t **a) {
 	gtk_widget_set_sensitive (GTK_WIDGET(useStunCheckBox),
 			g_strcasecmp(use_tls,"true") == 0 ? FALSE: TRUE);
 
-	label = gtk_label_new_with_mnemonic (_("STUN server URL"));
-	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
-	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+	stunServerLabel = gtk_label_new_with_mnemonic (_("STUN server URL"));
+	gtk_table_attach_defaults(GTK_TABLE(table), stunServerLabel, 0, 1, 1, 2);
+	gtk_misc_set_alignment(GTK_MISC (stunServerLabel), 0, 0.5);
 	stunServerEntry = gtk_entry_new();
-	gtk_label_set_mnemonic_widget(GTK_LABEL(label), stunServerEntry);
+	gtk_label_set_mnemonic_widget (GTK_LABEL (stunServerLabel), stunServerEntry);
 	gtk_entry_set_text(GTK_ENTRY(stunServerEntry), stun_server);
 	gtk_table_attach_defaults(GTK_TABLE(table), stunServerEntry, 1, 2, 1, 2);
 
@@ -1013,20 +1015,20 @@ GtkWidget* create_published_address (account_t **a) {
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (publishedAddrRadioButton), TRUE);
 	}
 
-	label = gtk_label_new_with_mnemonic (_("Published address"));
-	gtk_table_attach_defaults( GTK_TABLE(table), label, 0, 1, 5, 6);
-	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+	publishedAddressLabel = gtk_label_new_with_mnemonic (_("Published address"));
+	gtk_table_attach_defaults( GTK_TABLE(table), publishedAddressLabel, 0, 1, 5, 6);
+	gtk_misc_set_alignment(GTK_MISC (publishedAddressLabel), 0, 0.5);
 	publishedAddressEntry = gtk_entry_new();
-	gtk_label_set_mnemonic_widget (GTK_LABEL (label), publishedAddressEntry);
+	gtk_label_set_mnemonic_widget (GTK_LABEL (publishedAddressLabel), publishedAddressEntry);
 
 	gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), published_address);
 	gtk_table_attach_defaults( GTK_TABLE(table), publishedAddressEntry, 1, 2, 5, 6);
 
-	label = gtk_label_new_with_mnemonic(_("Published port"));
-	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 6, 7);
-	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+	publishedPortLabel = gtk_label_new_with_mnemonic(_("Published port"));
+	gtk_table_attach_defaults(GTK_TABLE(table), publishedPortLabel, 0, 1, 6, 7);
+	gtk_misc_set_alignment(GTK_MISC (publishedPortLabel), 0, 0.5);
 	publishedPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
-	gtk_label_set_mnemonic_widget(GTK_LABEL (label), publishedPortSpinBox);
+	gtk_label_set_mnemonic_widget(GTK_LABEL (publishedPortLabel), publishedPortSpinBox);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(published_port, NULL));
 
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedPortSpinBox, 1, 2, 6, 7);
@@ -1045,14 +1047,14 @@ GtkWidget* create_published_address (account_t **a) {
 	return frame;
 }
 
-GtkWidget * create_advanced_tab(account_t **a) {
+GtkWidget* create_advanced_tab (account_t **a) {
 
 	// Build the advanced tab, to appear on the account configuration panel
 
 	GtkWidget *ret, *frame;
 
-	ret = gtk_vbox_new(FALSE, 10);
-	gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
+	ret = gtk_vbox_new (FALSE, 10);
+	gtk_container_set_border_width (GTK_CONTAINER(ret), 10);
 
 	frame = create_registration_expire (a);
 	gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
