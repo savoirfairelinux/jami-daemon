@@ -1276,7 +1276,28 @@ void sflphone_save_history (void)
 }
 
    void
-sflphone_srtp_on( callable_obj_t * c)
+sflphone_srtp_sdes_on(callable_obj_t * c)
+{
+    DEBUG("*************** Srtp SDES ON *************");
+
+    c->_srtp_state = SRTP_STATE_SDES_SUCCESS;
+
+    calltree_update_call(current_calls, c, NULL);
+    update_actions();
+}
+
+   void
+sflphone_srtp_sdes_off(callable_obj_t * c)
+{
+    c->_srtp_state = SRTP_STATE_UNLOCKED;
+
+    calltree_update_call(current_calls, c, NULL);
+    update_actions();
+}
+
+
+   void
+sflphone_srtp_zrtp_on( callable_obj_t * c)
 {
     c->_srtp_state = SRTP_STATE_ZRTP_SAS_UNCONFIRMED;
 
@@ -1285,7 +1306,7 @@ sflphone_srtp_on( callable_obj_t * c)
 }
 
     void
-sflphone_srtp_off( callable_obj_t * c )
+sflphone_srtp_zrtp_off( callable_obj_t * c )
 {
     c->_srtp_state = SRTP_STATE_UNLOCKED;
     calltree_update_call(current_calls, c, NULL);
@@ -1293,7 +1314,7 @@ sflphone_srtp_off( callable_obj_t * c )
 }
 
     void
-sflphone_srtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean verified)
+sflphone_srtp_zrtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean verified)
 {
     if(c == NULL) {
         DEBUG("Panic callable obj is NULL in %s at %d", __FILE__, __LINE__);
@@ -1309,7 +1330,7 @@ sflphone_srtp_show_sas( callable_obj_t * c, const gchar* sas, const gboolean ver
 }
 
     void 
-sflphone_zrtp_not_supported( callable_obj_t * c )
+sflphone_srtp_zrtp_not_supported( callable_obj_t * c )
 {
     DEBUG("ZRTP not supported");
     main_window_zrtp_not_supported(c);

@@ -347,36 +347,65 @@ transfer_failed_cb (DBusGProxy *proxy UNUSED,
     sflphone_display_transfer_status("Transfer failed");
 }
 
+static void 
+secure_sdes_on_cb(DBusGProxy *proxy UNUSED, 
+		  const gchar *callID,
+		  void *foo UNUSED)
+{
+    DEBUG("SRTP using SDES is on");
+    callable_obj_t *c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_srtp_sdes_on(c);
+	notify_secure_on(c);
+    }
+
+}
+
+
+static void
+secure_sdes_off_cb(DBusGProxy *proxy UNUSED,
+		   const gchar *callID,
+		   void *foo UNUSED)
+{
+    DEBUG("SRTP using SDES is off");
+    callable_obj_t *c = calllist_get(current_calls, callID);
+    if(c) {
+        sflphone_srtp_sdes_off(c);
+	notify_secure_off(c);
+    }
+}
+
     static void
-secure_on_cb (DBusGProxy *proxy UNUSED,
+secure_zrtp_on_cb (DBusGProxy *proxy UNUSED,
         const gchar* callID,
         const gchar* cipher,
         void * foo  UNUSED )
 {
-    DEBUG ("SRTP is ON secure_on_cb");
+    DEBUG ("SRTP using ZRTP is ON secure_on_cb");
     callable_obj_t * c = calllist_get(current_calls, callID);
     if(c) {
         c->_srtp_cipher = g_strdup(cipher);
-        sflphone_srtp_on (c);
+	
+        sflphone_srtp_zrtp_on (c);
         notify_secure_on(c);
     }
 }
 
     static void
-secure_off_cb (DBusGProxy *proxy UNUSED,
+secure_zrtp_off_cb (DBusGProxy *proxy UNUSED,
         const gchar* callID,
         void * foo  UNUSED )
 {
-    DEBUG ("SRTP is OFF");
+    DEBUG ("SRTP using ZRTP is OFF");
     callable_obj_t * c = calllist_get(current_calls, callID);
     if(c) {
-        sflphone_srtp_off (c);
+        sflphone_srtp_zrtp_off (c);
         notify_secure_off (c);
     }
 }
 
     static void
-show_sas_cb (DBusGProxy *proxy UNUSED,
+show_zrtp_sas_cb (DBusGProxy *proxy UNUSED,
         const gchar* callID,
         const gchar* sas,
         const gboolean verified,
@@ -385,7 +414,7 @@ show_sas_cb (DBusGProxy *proxy UNUSED,
     DEBUG ("Showing SAS");
     callable_obj_t * c = calllist_get(current_calls, callID);
     if(c) {
-        sflphone_srtp_show_sas (c, sas, verified);
+        sflphone_srtp_zrtp_show_sas (c, sas, verified);
     }
 }
 
@@ -409,7 +438,7 @@ zrtp_not_supported_cb (DBusGProxy *proxy UNUSED,
     DEBUG ("ZRTP not supported on the other end");
     callable_obj_t * c = calllist_get(current_calls, callID);
     if(c) {
-        sflphone_zrtp_not_supported (c);
+        sflphone_srtp_zrtp_not_supported (c);
         notify_zrtp_not_supported(c);
     }
 }
@@ -582,6 +611,16 @@ dbus_connect ()
             "conferenceRemoved", G_CALLBACK(conference_removed_cb), NULL, NULL);
 
     /* Security related callbacks */
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "secureSdesOn", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "secureSdesOn", G_CALLBACK(secure_sdes_on_cb), NULL, NULL);
+
+    dbus_g_proxy_add_signal (callManagerProxy,
+            "secureSdesOff", G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (callManagerProxy,
+            "secureSdesOff", G_CALLBACK(secure_sdes_off_cb), NULL, NULL);
     
     /* Register a marshaller for STRING,STRING,BOOL */
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_BOOL,
@@ -589,21 +628,21 @@ dbus_connect ()
     dbus_g_proxy_add_signal (callManagerProxy,
             "showSAS", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
-            "showSAS", G_CALLBACK(show_sas_cb), NULL, NULL);  
+            "showSAS", G_CALLBACK(show_zrtp_sas_cb), NULL, NULL);  
   
 
     dbus_g_proxy_add_signal (callManagerProxy,
-            "secureOn", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+            "secureZrtpOn", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
-            "secureOn", G_CALLBACK(secure_on_cb), NULL, NULL);
+            "secureZrtpOn", G_CALLBACK(secure_zrtp_on_cb), NULL, NULL);
 
     /* Register a marshaller for STRING*/
     dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING,
             G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_add_signal (callManagerProxy,
-            "secureOff", G_TYPE_STRING, G_TYPE_INVALID);
+            "secureZrtpOff", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,
-            "secureOff", G_CALLBACK(secure_off_cb), NULL, NULL);
+            "secureZrtpOff", G_CALLBACK(secure_zrtp_off_cb), NULL, NULL);
     dbus_g_proxy_add_signal (callManagerProxy,
             "zrtpNotSuppOther", G_TYPE_STRING, G_TYPE_INVALID);
     dbus_g_proxy_connect_signal (callManagerProxy,

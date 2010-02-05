@@ -115,14 +115,14 @@ void
 ZrtpSessionCallback::secureOn (std::string cipher)
 {
     _debug ("Secure mode is on with cipher %s", cipher.c_str());
-    DBusManager::instance().getCallManager()->secureOn (_sipcall->getCallId(), cipher);
+    DBusManager::instance().getCallManager()->secureZrtpOn (_sipcall->getCallId(), cipher);
 }
 
 void
 ZrtpSessionCallback::secureOff (void)
 {
     _debug ("Secure mode is off");
-    DBusManager::instance().getCallManager()->secureOff (_sipcall->getCallId());
+    DBusManager::instance().getCallManager()->secureZrtpOff (_sipcall->getCallId());
 }
 
 void

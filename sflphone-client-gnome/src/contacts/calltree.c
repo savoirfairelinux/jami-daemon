@@ -707,6 +707,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     gchar* srtp_enabled = "";
     gboolean display_sas = TRUE;
+    gboolean sdes_success = TRUE;
     account_t* account_details=NULL;
     gchar *audio_codec = "";
 
@@ -723,6 +724,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	    GHashTable * properties = NULL;
 	    sflphone_get_ip2ip_properties (&properties);
 	    if(properties != NULL) {
+	        srtp_enabled = g_hash_table_lookup(properties, ACCOUNT_SRTP_ENABLED);
 	        if(g_strcasecmp(g_hash_table_lookup(properties, ACCOUNT_ZRTP_DISPLAY_SAS),"false") == 0) 
 		  { display_sas = FALSE; }
 	    }
@@ -786,7 +788,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
 		    break;
 		case CALL_STATE_DIALING:
-	            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
+      	            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
 		    break;
 		case CALL_STATE_FAILURE:
 		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
@@ -805,6 +807,10 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 		}        
 
 		switch(c->_srtp_state) {
+		case SRTP_STATE_SDES_SUCCESS:
+		    DEBUG("SDES negotiation succes");
+		    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL); 
+		    break;
 		case SRTP_STATE_ZRTP_SAS_UNCONFIRMED:
 	            DEBUG("Secure is ON");
 		    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_unconfirmed.svg", NULL);

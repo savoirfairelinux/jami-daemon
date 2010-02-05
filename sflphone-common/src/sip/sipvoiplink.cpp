@@ -3208,17 +3208,11 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 		call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
             }
             catch(...) {}
-          
+
+	    DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
 	}
 	else {
-
-	    //@TODO Handle fallback mechanism here
-	    // - Call may Failed if SrtpOnly
-	    // - Call fallback to RTP (make sure PBX support it, if not ...)
-	    // - Ask (display a pop-up message)
-
-	    call->getAudioRtp()->getAudioRtpType();
-
+	    DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
 	}
     }
 

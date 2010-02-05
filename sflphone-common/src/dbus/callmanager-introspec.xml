@@ -191,14 +191,22 @@
 
     <signal name="transferFailed">
     </signal>
+
+    <signal name="secureSdesOn">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
+    
+    <signal name="secureSdesOff">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
     
     <!-- ZRTP Methods and Signals -->
-    <signal name="secureOn">
+    <signal name="secureZrtpOn">
       <arg type="s" name="callID"  direction="out" />
       <arg type="s" name="cipher"  direction="out" />
     </signal>
     
-    <signal name="secureOff">
+    <signal name="secureZrtpOff">
       <arg type="s" name="callID"  direction="out" />
     </signal>
     
