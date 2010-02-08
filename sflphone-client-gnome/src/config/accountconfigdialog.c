@@ -22,6 +22,7 @@
 #include <actions.h>
 #include <mainwindow.h>
 #include <accountlist.h>
+#include <audioconf.h>
 #include <accountconfigdialog.h>
 #include <zrtpadvanceddialog.h>
 #include <tlsadvanceddialog.h>
