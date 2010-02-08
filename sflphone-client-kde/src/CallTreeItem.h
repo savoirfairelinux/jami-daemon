@@ -38,8 +38,9 @@
 
 #include "Call.h"
 
-class CallTreeItem : QObject
+class CallTreeItem : public QObject
  {
+	Q_OBJECT
  public:
 	 CallTreeItem(const QVector<QVariant> &data, CallTreeItem *parent);
 	 ~CallTreeItem();
@@ -58,7 +59,6 @@ class CallTreeItem : QObject
 	 int childNumber() const;
 	 bool setData(int column, const QVariant &value);
 	 void setCall(Call *call);
-	 void updateItem();
 
 	static const char * callStateIcons[11];
  private:
@@ -80,6 +80,9 @@ class CallTreeItem : QObject
 	 QLabel * labelHistoryPeerName;
 	 QLabel * labelHistoryCallNumber;
 	 QLabel * labelHistoryTime;
+
+private slots:
+	 void updated();
  };
 
 #endif // CALLTREE_ITEM_H

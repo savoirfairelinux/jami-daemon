@@ -206,10 +206,14 @@ void CallTreeItem::setCall(Call *call)
 	mainLayout->addItem(horizontalSpacer);
 	
 	itemWidget->setLayout(mainLayout);
-	updateItem();
+	
+	connect(itemCall, SIGNAL(changed()),
+		this,     SLOT(updated()));
+
+	updated();	
 }
 
-void CallTreeItem::updateItem()
+void CallTreeItem::updated()
 {
 	call_state state = itemCall->getState();
 	bool recording = itemCall->getRecording();
@@ -233,9 +237,14 @@ void CallTreeItem::updateItem()
 		{
 			labelTransferNumber->setText("");
 		}
+		labelTransferNumber->setText(itemCall->getTransferNumber());
+		labelCallNumber->setText(itemCall->getCallNumber());
 	}
 	else
 	{
  		qDebug() << "Updating item of call of state OVER. Doing nothing.";
 	}
+
+	
 }
+

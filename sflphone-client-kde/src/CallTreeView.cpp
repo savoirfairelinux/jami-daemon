@@ -34,6 +34,7 @@ CallTreeView::CallTreeView(QWidget * parent)
 	setSelectionMode(QAbstractItemView::SingleSelection);
 	setDragEnabled(true);
 	setAcceptDrops(true);
+	setUniformRowHeights(true);
 	setDropIndicatorShown(true);
 }
 
@@ -94,8 +95,8 @@ CallTreeItem* CallTreeView::insert(CallTreeItem *parent, Call *call)
 
 void CallTreeView::remove(CallTreeItem *item)
 {
-	return;
-	// to implement
+	QModelIndex index = selectionModel()->currentIndex();
+	treeModel->removeRow(index.row(), index.parent());
 }
 
 CallTreeItem* CallTreeView::getItem(Call *call)

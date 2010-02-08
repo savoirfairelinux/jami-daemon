@@ -279,7 +279,7 @@ void SFLPhoneView::typeString(QString str)
 
 		if(!currentCall && candidate)
 		{
-			candidate->appendItemText(str);
+			candidate->appendText(str);
 		}
 	}
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
@@ -418,7 +418,7 @@ void SFLPhoneView::enter()
 				qDebug() << "pastCall null";
 			}
 			Call * call = callList->addDialingCall(pastCall->getPeerName(), pastCall->getAccountId());
-			call->appendItemText(pastCall->getPeerPhoneNumber());
+			call->appendText(pastCall->getPeerPhoneNumber());
 			addCallToCallList(call);
 			callTree->setCurrentRow(callTree->count() - 1);
 			action(call, CALL_ACTION_ACCEPT);
@@ -437,7 +437,7 @@ void SFLPhoneView::enter()
 			changeScreen(SCREEN_MAIN);
 			ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(item));
 			Call * call = callList->addDialingCall(w->getContactName());
-			call->appendItemText(w->getContactNumber());
+			call->appendText(w->getContactNumber());
 			addCallToCallList(call);
 			callTree->setCurrentRow(callTree->count() - 1);
 			action(call, CALL_ACTION_ACCEPT);
@@ -1052,7 +1052,7 @@ void SFLPhoneView::on_listWidget_callHistory_itemDoubleClicked(CallTreeItem * it
 	changeScreen(SCREEN_MAIN);
 	Call * pastCall = item->call();
 	Call * call = callList->addDialingCall(pastCall->getPeerName(), pastCall->getAccountId());
-	call->appendItemText(pastCall->getPeerPhoneNumber());
+	call->appendText(pastCall->getPeerPhoneNumber());
 	addCallToCallList(call);
 	callTree->setCurrentRow(callTree->count() - 1);
 	action(call, CALL_ACTION_ACCEPT);
@@ -1178,7 +1178,7 @@ void SFLPhoneView::editBeforeCall()
 	{
 		changeScreen(SCREEN_MAIN);
 		Call * call = callList->addDialingCall(name);
-		call->appendItemText(newNumber);
+		call->appendText(newNumber);
 		addCallToCallList(call);
 		callTree->setCurrentRow(callTree->count() - 1);
 		action(call, CALL_ACTION_ACCEPT);
@@ -1265,7 +1265,7 @@ void SFLPhoneView::accept()
 		changeScreen(SCREEN_MAIN);
 		Call * pastCall = historyTree->currentItem()->call();
 		Call * call = callList->addDialingCall(pastCall->getPeerName());
-		call->appendItemText(pastCall->getPeerPhoneNumber());
+		call->appendText(pastCall->getPeerPhoneNumber());
 		addCallToCallList(call);
 		callTree->setCurrentRow(callTree->count() - 1);
 		action(call, CALL_ACTION_ACCEPT);
@@ -1275,7 +1275,7 @@ void SFLPhoneView::accept()
 		changeScreen(SCREEN_MAIN);
 		ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
 		Call * call = callList->addDialingCall(w->getContactName());
-		call->appendItemText(w->getContactNumber());
+		call->appendText(w->getContactNumber());
 		addCallToCallList(call);
 		callTree->setCurrentRow(callTree->count() - 1);
 		action(call, CALL_ACTION_ACCEPT);
@@ -1350,7 +1350,7 @@ void SFLPhoneView::mailBox()
 	Account * account = accountInUse();
 	QString mailBoxNumber = account->getAccountDetail(ACCOUNT_MAILBOX);
 	Call * call = callList->addDialingCall();
-	call->appendItemText(mailBoxNumber);
+	call->appendText(mailBoxNumber);
 	addCallToCallList(call);
 	callTree->setCurrentRow(callTree->count() - 1);
 	action(call, CALL_ACTION_ACCEPT);

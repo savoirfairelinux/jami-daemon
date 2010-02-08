@@ -98,7 +98,7 @@ const function Call::stateChangedFunctionMap[11][6] =
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
 
-void Call::initCallItemWidget()
+/*void Call::initCallItemWidget()
 {
 	itemWidget = new QWidget();
 	labelIcon = new QLabel();
@@ -130,12 +130,12 @@ void Call::initCallItemWidget()
 	mainLayout->addItem(horizontalSpacer);
 
 	itemWidget->setLayout(mainLayout);
-}
+}*/
 
-void Call::setItemIcon(const QString pixmap)
+ /*void Call::setItemIcon(const QString pixmap)
 {
 	labelIcon->setPixmap(QPixmap(pixmap));
-}
+	}*/
 
 
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
@@ -146,10 +146,10 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	changeCurrentState(startState);
 	this->account = account;
 	this->recording = false;
-	this->historyItemWidget = NULL;
+	//	this->historyItemWidget = NULL;
 	this->startTime = NULL;
 	this->stopTime = NULL;
-	this->initCallItemWidget();
+	//	this->initCallItemWidget();
 }
 
 Call * Call::buildExistingCall(QString callId)
@@ -172,8 +172,6 @@ Call::~Call()
 {
 	delete startTime;
 	delete stopTime;
-	delete itemWidget;
-	//delete historyItemWidget;
 }
 	
 Call * Call::buildDialingCall(QString callId, const QString & peerName, QString account)
@@ -376,10 +374,10 @@ Contact * Call::findContactForNumberInKAddressBook(QString number)
 	return NULL;
 }
 
-QWidget * Call::getItemWidget()
+/*QWidget * Call::getItemWidget()
 {
 	return itemWidget;
-}
+	}*/
 
 QString Call::getStopTimeStamp() const
 {
@@ -395,7 +393,28 @@ QString Call::getStartTimeStamp() const
 	return QString::number(startTime->toTime_t());
 }
 
-QWidget * Call::getHistoryItemWidget()
+QString Call::getTransferNumber() const
+{
+	return transferNumber;
+}
+
+void Call::setTransferNumber(QString number)
+{
+	transferNumber = number;
+}
+
+QString Call::getCallNumber() const
+{
+	return callNumber;
+}
+
+void Call::setCallNumber(QString number)
+{
+	callNumber = number;
+}
+	
+
+/*QWidget * Call::getHistoryItemWidget()
 {
 	historyItemWidget = new QWidget();
 	labelHistoryIcon = new QLabel();
@@ -427,7 +446,7 @@ QWidget * Call::getHistoryItemWidget()
 	mainLayout->addItem(horizontalSpacer);
 	historyItemWidget->setLayout(mainLayout);
 	return historyItemWidget;
-}
+	}*/
 
 call_state Call::getState() const
 {
@@ -540,11 +559,10 @@ void Call::refuse()
 void Call::acceptTransf()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	QString number = labelTransferNumber->text();
-	qDebug() << "Accepting call and transfering it to number : " << number << ". callId : " << callId;
+	qDebug() << "Accepting call and transfering it to number : " << transferNumber << ". callId : " << callId;
 	callManager.accept(callId);
-	callManager.transfert(callId, number);
-	//this->historyState = TRANSFERED;
+	callManager.transfert(callId, transferNumber);
+//	historyState = TRANSFERED;
 }
 
 void Call::acceptHold()
@@ -581,7 +599,6 @@ void Call::hold()
 void Call::call()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	QString number = labelCallNumber->text();
 	qDebug() << "account = " << account;
 	if(account.isEmpty())
 	{
@@ -590,10 +607,10 @@ void Call::call()
 	}
 	if(!account.isEmpty())
 	{
-		qDebug() << "Calling " << number << " with account " << account << ". callId : " << callId;
-		callManager.placeCall(account, callId, number);
+		qDebug() << "Calling " << callNumber << " with account " << account << ". callId : " << callId;
+		callManager.placeCall(account, callId, callNumber);
 		this->account = account;
-		this->peerPhoneNumber = number;
+		this->peerPhoneNumber = callNumber;
 // 		Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber);
 // 		if(contact) this->peerName = contact->getNickName();
 		this->startTime = new QDateTime(QDateTime::currentDateTime());
@@ -601,7 +618,7 @@ void Call::call()
 	}
 	else
 	{
-		qDebug() << "Trying to call " << number << " with no account registered . callId : " << callId;
+		qDebug() << "Trying to call " << transferNumber << " with no account registered . callId : " << callId;
 		this->historyState = NONE;
 		throw "No account registered!";
 	}
@@ -610,9 +627,8 @@ void Call::call()
 void Call::transfer()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	QString number = labelTransferNumber->text();
-	qDebug() << "Transfering call to number : " << number << ". callId : " << callId;
-	callManager.transfert(callId, number);
+	qDebug() << "Transfering call to number : " << transferNumber << ". callId : " << callId;
+	callManager.transfert(callId, transferNumber);
 	this->stopTime = new QDateTime(QDateTime::currentDateTime());
 }
 
@@ -670,50 +686,53 @@ void Call::warning()
 	qDebug() << "Warning : call " << callId << " had an unexpected transition of state.";
 }
 
-void Call::appendItemText(QString text)
+void Call::appendText(QString str)
 {
-	QLabel * editNumber;
-	switch(currentState)
+	QString * editNumber;
+	
+	switch (currentState)
 	{
-		case CALL_STATE_TRANSFER:
-		case CALL_STATE_TRANSF_HOLD:
-			editNumber = labelTransferNumber;
-			break;
-		case CALL_STATE_DIALING:
-			editNumber = labelCallNumber;
-			break;
-		case CALL_STATE_CURRENT:
-			text = QString();
-			editNumber = labelCallNumber;
-			break;		
-		default:
-			qDebug() << "Type key on call not editable. Doing nothing.";
-			return;
+	case CALL_STATE_TRANSFER:
+	case CALL_STATE_TRANSF_HOLD:
+		editNumber = &transferNumber;
+		break;
+	case CALL_STATE_DIALING:
+		editNumber = &callNumber;
+		break;
+	default:
+		qDebug() << "Backspace on call not editable. Doing nothing.";
+		return;
 	}
-	editNumber->setText(editNumber->text() + text);
+
+	editNumber->append(str);
+
+	emit changed();
 }
 
 void Call::backspaceItemText()
 {
-	QLabel * editNumber;
+	QString * editNumber;
+
 	switch (currentState)
 	{
 		case CALL_STATE_TRANSFER:
 		case CALL_STATE_TRANSF_HOLD:
-			editNumber = labelTransferNumber;
+			editNumber = &transferNumber;
 			break;
 		case CALL_STATE_DIALING:
-			editNumber = labelCallNumber;
+			editNumber = &callNumber;
 			break;
 		default:
 			qDebug() << "Backspace on call not editable. Doing nothing.";
 			return;
 	}
-	QString text = editNumber->text();
+	QString text = *editNumber;
 	int textSize = text.size();
 	if(textSize > 0)
 	{
-		editNumber->setText(text.remove(textSize-1, 1));
+		*editNumber = text.remove(textSize-1, 1);
+
+		emit changed();
 	}
 	else
 	{
@@ -724,5 +743,7 @@ void Call::backspaceItemText()
 void Call::changeCurrentState(call_state newState)
 {
 	currentState = newState;
+
+	emit changed();
 }
 

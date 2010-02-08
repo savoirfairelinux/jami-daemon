@@ -137,8 +137,9 @@ typedef  void (Call::*function)();
  *  keeping the information gathered by the call and needed by the history
  *  call (history state, start time...).
 **/
-class Call
+class Call : public QObject
 {
+	Q_OBJECT
 private:
 
 	//Call attributes
@@ -149,21 +150,18 @@ private:
 	QString peerName;
 	history_state historyState;
 	QDateTime * startTime;
-	QDateTime * stopTime;
+	QDateTime * stopTime;       
 	
-	QWidget * itemWidget;
-	QLabel * labelIcon;
-	QLabel * labelPeerName;
-	QLabel * labelCallNumber;
-	QLabel * labelTransferPrefix;
-	QLabel * labelTransferNumber;
-	
+	/*
 	QWidget * historyItemWidget;
 	QLabel * labelHistoryIcon;
 	QLabel * labelHistoryPeerName;
 	QLabel * labelHistoryCallNumber;
 	QLabel * labelHistoryTime;
-	
+	*/
+
+	QString transferNumber;
+	QString callNumber;
 	
 	//Automate attributes
 	/**
@@ -233,7 +231,7 @@ public:
 	
 	//Constructors & Destructors
 	~Call();
-	void initCallItemWidget();
+//	void initCallItemWidget();
 	static Call * buildDialingCall(QString callId, const QString & peerName, QString account = "");
 	static Call * buildIncomingCall(const QString & callId);
 	static Call * buildRingingCall(const QString & callId);
@@ -246,8 +244,8 @@ public:
 	static history_state getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
 	
 	//Getters
-	QWidget * getItemWidget();
-	QWidget * getHistoryItemWidget();
+//	QWidget * getItemWidget();
+//	QWidget * getHistoryItemWidget();
 	call_state getState() const;
 	QString getCallId() const;
 	QString getPeerPhoneNumber() const;
@@ -259,21 +257,30 @@ public:
 	bool isHistory() const;
 	QString getStopTimeStamp() const;
 	QString getStartTimeStamp() const;
-	
+
+	QString getTransferNumber() const;
+	void setTransferNumber(QString number);
+
+	QString getCallNumber() const;
+	void setCallNumber(QString number);
+
 	//Automate calls
 	call_state stateChanged(const QString & newState);
 	call_state actionPerformed(call_action action);
 	
 	//Setters
-	void appendItemText(QString text);
+//	void appendItemText(QString text);
+	void appendText(QString str);
 	void backspaceItemText();
-	void setItemIcon(const QString pixmap);
+//	void setItemIcon(const QString pixmap);
 // 	void setPeerName(const QString peerName);
 	void changeCurrentState(call_state newState);
 	
 	//Utils
 	Contact * findContactForNumberInKAddressBook(QString number);
 
+signals:
+	void changed();
 };
 
 #endif
