@@ -425,6 +425,12 @@ class ManagerImpl {
     void setAccountsOrder (const std::string& order);
 
     /**
+     * Load the accounts order set by the user from the sflphonedrc config file
+     * @return std::vector<std::string> A vector containing the account ID's
+     */
+    std::vector<std::string> loadAccountOrder ();
+
+    /**
      * Retrieve details about a given account
      * @param accountID	  The account identifier
      * @return std::map< std::string, std::string > The account details
@@ -1211,12 +1217,6 @@ class ManagerImpl {
      * @return short Number of account
      */
     short loadAccountMap();
-
-    /**
-     * Load the accounts order set by the user from the sflphonedrc config file
-     * @return std::vector<std::string> A vector containing the account ID's
-     */
-    std::vector<std::string> loadAccountOrder ();
 
 
     /**

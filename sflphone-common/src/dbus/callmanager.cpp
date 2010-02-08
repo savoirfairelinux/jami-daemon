@@ -51,18 +51,19 @@ void
 CallManager::placeCallFirstAccount (const std::string& callID,
 				    const std::string& to)
 {
+
     if (to == "") {
         _warn("No number entered - Call stopped");
 	return;
     }
 
-    std::vector< std::string > accountIdList = Manager::instance().getAccountList();
-    std::vector< std::string >::iterator iter = accountIdList.begin();
+    std::vector< std::string > accountOrder = Manager::instance().loadAccountOrder();
+    std::vector< std::string >::iterator iter = accountOrder.begin();
 
     Account *account;
-    while(iter != accountIdList.end()) {
+    while(iter != accountOrder.end()) {
         account = Manager::instance().getAccount(*iter);
-	if(account->isEnabled()) {
+	if((*iter != IP2IP_PROFILE) && account->isEnabled()) {
 	    Manager::instance().outgoingCall (*iter, callID, to);
 	    return;
 	}

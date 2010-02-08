@@ -7,6 +7,11 @@
       <arg type="s" name="callID" direction="in"/>
       <arg type="s" name="to" direction="in"/>
     </method>
+
+    <method name="placeCallFirstAccount">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="to" direction="in"/>
+    </method>
     
     <method name="refuse">
       <arg type="s" name="callID" direction="in"/>
