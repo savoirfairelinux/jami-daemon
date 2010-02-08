@@ -439,7 +439,7 @@ std::vector<std::string> ConfigurationManager::getCodecDetails (const int32_t& p
 
 std::vector<std::string> ConfigurationManager::getActiveCodecList (const std::string& accountID) {
 
-    _warn ("Send active codec list for account %s", accountID.c_str ());
+    _debug("Send active codec list for account %s", accountID.c_str ());
 
     std::vector< std::string > v;
 	Account *acc;
@@ -449,11 +449,9 @@ std::vector<std::string> ConfigurationManager::getActiveCodecList (const std::st
 
 	acc = Manager::instance ().getAccount (accountID);
 	if (acc != NULL) {
-		_warn ("Et un compte, un !");
 		active = acc->getActiveCodecs ();
 		size = active.size();
 		while (i<size) {
-			_warn ("Et un codec, un !");
 			std::stringstream ss;
 			ss << active[i];
 			v.push_back ( (ss.str()).data());
@@ -468,11 +466,9 @@ std::vector<std::string> ConfigurationManager::getActiveCodecList (const std::st
 void ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID)
 {
 
-    _debug ("ConfigurationManager::setActiveCodecList received");
+        _debug ("ConfigurationManager::setActiveCodecList received");
 
 	Account *acc;
-    unsigned int i=0;
-	size_t size;
 
 	// Save the codecs list per account
 	acc = Manager::instance ().getAccount (accountID);

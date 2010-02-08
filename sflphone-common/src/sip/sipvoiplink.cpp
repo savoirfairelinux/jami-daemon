@@ -380,7 +380,6 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
 
     struct ifreq ifr;
     int fd;
-    int rval = 0;
     int err;
 
     struct sockaddr_in *saddr_in;
@@ -1806,7 +1805,6 @@ bool SIPVoIPLink::pjsip_init()
 {
     pj_status_t status;
     int errPjsip = 0;
-    int port;
     pjsip_inv_callback inv_cb;
     pj_str_t accepted;
     std::string name_mod;

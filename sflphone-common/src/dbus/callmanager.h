@@ -53,6 +53,8 @@ class CallManager
 
 	/* Call related methods */
         void placeCall( const std::string& accountID, const std::string& callID, const std::string& to );
+	void placeCallFirstAccount( const std::string& callID, const std::string& to );
+
         void refuse( const std::string& callID );
         void accept( const std::string& callID );
         void hangUp( const std::string& callID );

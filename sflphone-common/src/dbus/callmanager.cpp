@@ -18,6 +18,8 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <vector>
+
 #include "global.h"
 #include "callmanager.h"
 
@@ -43,6 +45,33 @@ CallManager::placeCall (const std::string& accountID,
 
     if (to == "")   _debug ("No number entered - Call stopped");
     else            Manager::instance().outgoingCall (accountID, callID, to);
+}
+
+void
+CallManager::placeCallFirstAccount (const std::string& callID,
+				    const std::string& to)
+{
+    if (to == "") {
+        _warn("No number entered - Call stopped");
+	return;
+    }
+
+    std::vector< std::string > accountIdList = Manager::instance().getAccountList();
+    std::vector< std::string >::iterator iter = accountIdList.begin();
+
+    Account *account;
+    while(iter != accountIdList.end()) {
+        account = Manager::instance().getAccount(*iter);
+	if(account->isEnabled()) {
+	    Manager::instance().outgoingCall (*iter, callID, to);
+	    return;
+	}
+
+	iter++;
+    }
+
+    _warn("No enabled account found - Call stopped\n");
+    
 }
 
 void
