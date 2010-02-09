@@ -112,9 +112,7 @@ void CallTreeView::removeCurrent() const
 
 CallTreeItem* CallTreeView::currentItem()
 {
-	QModelIndex index = selectionModel()->currentIndex();	
-
-	CallTreeModel * treeModel = static_cast<CallTreeModel*>(model());
+	QModelIndex index = selectionModel()->currentIndex();		
 
 	CallTreeItem *item = treeModel->getItem(index);
 
@@ -122,8 +120,12 @@ CallTreeItem* CallTreeView::currentItem()
 	{
 		return 0;
 	}
-	return item;
-		
+	return item;		
+}
+
+CallTreeItem* CallTreeView::getItem(const QModelIndex &index)
+{
+	return treeModel->getItem(index);
 }
 
 void CallTreeView::setCurrentRow(int row)

@@ -134,6 +134,13 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	        this,        SLOT(updateStatusMessage()));
 	connect(accountList, SIGNAL(accountListUpdated()),
 	        this,        SLOT(updateWindowCallState()));
+
+	connect(callTree,    SIGNAL(currentItemChanged()),
+		this,        SLOT(on_callTree_currentItemChanged()));
+	connect(callTree,    SIGNAL(itemChanged()),
+		this,        SLOT(on_callTree_itemChanged()));
+	connect(callTree,    SIGNAL(itemDoubleClicked(const QModelIndex &)),
+		this,        SLOT(on_callTree_itemDoubleClicked(const QModelIndex&)));
 	        
 } 
 
@@ -485,9 +492,11 @@ void SFLPhoneView::updateWindowCallState()
 	CallTreeItem * item;
 	
 	bool transfer = false;
-	//tells whether the call is in recording position
-	bool recordActivated = false;
+	bool recordActivated = false; 	//tells whether the call is in recording position
+
 	enabledActions[SFLPhone::Mailbox] = accountInUse() && ! accountInUse()->getAccountDetail(ACCOUNT_MAILBOX).isEmpty();
+
+
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
 		item = callTree->currentItem();
@@ -507,6 +516,7 @@ void SFLPhoneView::updateWindowCallState()
 			{
 				call_state state = call->getState();
 				recordActivated = call->getRecording();
+
 				switch (state)
 				{
 				case CALL_STATE_INCOMING:
@@ -552,7 +562,7 @@ void SFLPhoneView::updateWindowCallState()
 					enabledActions[SFLPhone::Hold] = false;
 					enabledActions[SFLPhone::Transfer] = false;
 					enabledActions[SFLPhone::Record] = false;
-				break;
+					break;
 				case CALL_STATE_TRANSFER:
 					qDebug() << "Reached CALL_STATE_TRANSFER with call " << call->getCallId();
 					buttonIconFiles[SFLPhone::Accept] = ICON_EXEC_TRANSF;
@@ -1002,21 +1012,22 @@ void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
 }
 
 
-void SFLPhoneView::on_listWidget_callList_currentItemChanged()
+void SFLPhoneView::on_callTree_currentItemChanged()
 {
-	qDebug() << "on_listWidget_callList_currentItemChanged";
+	qDebug() << "on_callTree_currentItemChanged";
 	updateWindowCallState();
 }
 
-void SFLPhoneView::on_listWidget_callList_itemChanged()
+void SFLPhoneView::on_callTree_itemChanged()
 {
-	qDebug() << "on_listWidget_callList_itemChanged";
+	qDebug() << "on_callTree_itemChanged";
 	stackedWidget_screen->setCurrentWidget(page_callList);
 }
 
-void SFLPhoneView::on_listWidget_callList_itemDoubleClicked(CallTreeItem * item)
+void SFLPhoneView::on_callTree_itemDoubleClicked(const QModelIndex &index)
 {
-	qDebug() << "on_listWidget_callList_itemDoubleClicked";
+	qDebug() << "on_callTree_itemDoubleClicked";
+	CallTreeItem *item = callTree->getItem(index);
 	Call * call = item->call();
 	call_state state = call->getCurrentState();
 	switch(state)

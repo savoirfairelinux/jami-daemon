@@ -47,6 +47,7 @@ public:
 	void remove(QModelIndex & index) const;
 	void removeCurrent() const;
 	CallTreeItem* currentItem();
+	CallTreeItem* getItem(const QModelIndex &index);
 	void setCurrentRow(int row);
 	int count();
 
@@ -55,6 +56,9 @@ public:
 	Qt::DropActions supportedDropActions () const;
 private:
 	CallTreeModel *treeModel;
+signals:
+	void currentItemChanged();
+	void itemChanged();
 };
 
 #endif // CALLTREE_VIEW_H

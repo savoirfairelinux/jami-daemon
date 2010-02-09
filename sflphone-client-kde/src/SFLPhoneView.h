@@ -170,21 +170,25 @@ private slots:
 	 * @param str the string sent by the user
 	 */
 	void typeString(QString str);
+
 	/**
 	 *   Handles the behaviour when the user types a backspace
 	 *   according to the current state (window, item selected...)
 	 */
 	void backspace();
+
 	/**
 	 *   Handles the behaviour when the user types escape
 	 *   according to the current state (window, item selected...)
 	 */
 	void escape();
+
 	/**
 	 *   Handles the behaviour when the user types enter
 	 *   according to the current state (window, item selected...)
 	 */
 	void enter();
+
 	/**
 	 *   Displays a message window with editable text of the selected
 	 *   phone number in history or address book.
@@ -206,12 +210,14 @@ private slots:
 	 * @param call the call to add to the call-list's listwidget
 	 */
 	CallTreeItem* addCallToCallList(Call * call);
+
 	/**
 	 * Adds the call's history-item to the call-history's listwidget.
 	 * This function doesn't add anything to the callList object.
 	 * @param call the past call to add to the call-history's listwidget
 	 */
 	CallTreeItem* addCallToCallHistory(Call * call);
+
 	/**
 	 * Adds the contact's item to the addressbook's listwidget.
 	 * @param contact the contact to add to the addressbook's listwidget
@@ -223,6 +229,7 @@ private slots:
 	 *   item's state.
 	 */
 	void updateWindowCallState();
+
 	/**
 	 * Updates the history's search bar's display according to the current
 	 * text searched. 
@@ -312,11 +319,13 @@ public slots:
 	void on_toolButton_recVol_clicked(bool checked);
 	void on_toolButton_sndVol_clicked(bool checked);
 	
-	void on_listWidget_callList_currentItemChanged();
-	void on_listWidget_callList_itemChanged();
-	void on_listWidget_callList_itemDoubleClicked(CallTreeItem * item);
+	void on_callTree_currentItemChanged();
+	void on_callTree_itemChanged();
+	void on_callTree_itemDoubleClicked(const QModelIndex &index);
+
 	void on_listWidget_callHistory_currentItemChanged();
 	void on_listWidget_callHistory_itemDoubleClicked(CallTreeItem * item);
+
 	void on_listWidget_addressBook_currentItemChanged();
 	void on_listWidget_addressBook_itemDoubleClicked(CallTreeItem * item);
 	
