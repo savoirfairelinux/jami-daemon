@@ -91,8 +91,9 @@ Qt::ItemFlags CallTreeModel::flags(const QModelIndex &index) const
 	{
 		return 0;
 	}
+	Qt::ItemFlags val = Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 
-	return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+	return val;
 }
 
 CallTreeItem *CallTreeModel::getItem(const QModelIndex &index) const

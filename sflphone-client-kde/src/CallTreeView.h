@@ -31,6 +31,9 @@
 class CallTreeModel;
 class CallTreeItem;
 class Call;
+class QModelIndex;
+class QTreeWidgetItem;
+class QMimeData;
 
 class CallTreeView : public QTreeView
 {
@@ -41,11 +44,15 @@ public:
 
 	CallTreeItem* insert(CallTreeItem *item, Call* call);
 	CallTreeItem* insert(Call* call);
-	CallTreeItem* getItem(Call *call);
-	void remove(CallTreeItem* item);
+	void remove(QModelIndex & index) const;
+	void removeCurrent() const;
 	CallTreeItem* currentItem();
 	void setCurrentRow(int row);
 	int count();
+
+	bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);    
+	QStringList mimeTypes() const;
+	Qt::DropActions supportedDropActions () const;
 private:
 	CallTreeModel *treeModel;
 };

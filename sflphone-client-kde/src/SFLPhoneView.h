@@ -219,13 +219,6 @@ private slots:
 	void addContactToContactList(Contact * contact);
 	
 	/**
-	 *   Updates call's item according to its state.
-	 *   (Actually it only deletes the item from the main window's
-	 *   list widget once the call is OVER.)
-	 * @param call the call to which update the item
-	 */
-	void updateCallItem(Call * call);
-	/**
 	 *   Updates the toolbar's actions' display according to the selected 
 	 *   item's state.
 	 */

@@ -185,6 +185,7 @@ void CallTreeItem::setCall(Call *call)
 	
 	QHBoxLayout * mainLayout = new QHBoxLayout();
 	mainLayout->setContentsMargins ( 3, 1, 2, 1);
+	
 	mainLayout->setSpacing(4);
 	QVBoxLayout * descr = new QVBoxLayout();
 	descr->setMargin(1);
@@ -206,7 +207,8 @@ void CallTreeItem::setCall(Call *call)
 	mainLayout->addItem(horizontalSpacer);
 	
 	itemWidget->setLayout(mainLayout);
-	
+	itemWidget->setMinimumSize(QSize(50, 30));
+
 	connect(itemCall, SIGNAL(changed()),
 		this,     SLOT(updated()));
 

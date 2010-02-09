@@ -1,3 +1,4 @@
+
 /***************************************************************************
  *   Copyright (C) 2009 by Savoir-Faire Linux                              *
  *   Author : Jérémy Quentin                                               *
@@ -68,10 +69,12 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	errorWindow = new QErrorMessage(this);
 
 	callList = new CallList(this);
+
 	callTree = new CallTreeView(page_callList);
 	historyTree = new CallTreeView(page_callHistory);
 
 	page_callList->layout()->addWidget(callTree);
+	page_callHistory->layout()->addWidget(historyTree);
 
 	historyLoaded = false;
 
@@ -202,20 +205,12 @@ QErrorMessage * SFLPhoneView::getErrorWindow()
 CallTreeItem* SFLPhoneView::addCallToCallList(Call * call)
 {	  
 	return callTree->insert(call);
-
-//		QWidget * widget = call->getItemWidget();
-//	}
 }
 
 CallTreeItem* SFLPhoneView::addCallToCallHistory(Call * call)
 {
 	return historyTree->insert(call);
 
-//	if(item)
-//	{
-//		QWidget * widget = call->getHistoryItemWidget();
-//		historyTree->setItemWidget(item, widget);
-//	}
 }
 
 void SFLPhoneView::addContactToContactList(Contact * contact)
@@ -317,7 +312,15 @@ void SFLPhoneView::backspace()
 			else
 			{
 				call->backspaceItemText();
-				updateCallItem(call);
+				if(call->getState() == CALL_STATE_OVER)
+				{
+					callTree->removeCurrent();
+
+					if(call->getHistoryState() != NONE)
+					{
+						historyTree->insert(call);
+					}
+				}
 			}
 		}
 	}
@@ -344,8 +347,7 @@ void SFLPhoneView::escape()
 			}
 			else
 			{
-				int state = call->getState();
-				if(state == CALL_STATE_TRANSFER || state == CALL_STATE_TRANSF_HOLD)
+				if(call->getState() == CALL_STATE_TRANSFER ||call->getState() == CALL_STATE_TRANSF_HOLD)
 				{
 					action(call, CALL_ACTION_TRANSFER);
 				}
@@ -461,7 +463,8 @@ void SFLPhoneView::action(Call * call, call_action action)
 		{
 			errorWindow->showMessage(QString(msg));
 		}
-		updateCallItem(call);
+		
+		//updateCallItem(call);
 		updateWindowCallState();
 	}
 }
@@ -470,23 +473,6 @@ void SFLPhoneView::action(Call * call, call_action action)
 /*******************************************
 ******** Update Display Functions **********
 *******************************************/
-
-void SFLPhoneView::updateCallItem(Call * call)
-{
-	if(!call) return;
-	call_state state = call->getState();
-	if(state == CALL_STATE_OVER)
-	{
-		CallTreeItem * item = callTree->getItem(call);
-		qDebug() << "Updating call with CALL_STATE_OVER. Deleting item " << call->getCallId();
-		callTree->remove(item);
-		if(call->getHistoryState() != NONE)
-		{
-			historyTree->insert(call);
-		}
-	}
-}
-
 
 void SFLPhoneView::updateWindowCallState()
 {
@@ -1377,7 +1363,7 @@ void SFLPhoneView::on1_callStateChanged(const QString &callID, const QString &st
 	{
 		call->stateChanged(state);
 	}
-	updateCallItem(call);
+	//	updateCallItem(call);
 	updateWindowCallState();
 }
 

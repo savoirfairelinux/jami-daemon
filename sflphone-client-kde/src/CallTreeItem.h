@@ -66,7 +66,6 @@ class CallTreeItem : public QObject
 	 QVector<QVariant> itemData;
 	 CallTreeItem *parentItem;
 	 Call *itemCall;
-
 	 QWidget *itemWidget;
 
 	 QLabel * labelIcon;
