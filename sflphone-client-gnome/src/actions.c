@@ -31,6 +31,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <linux/if.h>
+
+
+
 GHashTable * ip2ip_profile=NULL;
 
     void
@@ -1305,7 +1316,6 @@ void sflphone_save_history (void)
    void
 sflphone_srtp_sdes_on(callable_obj_t * c)
 {
-    DEBUG("*************** Srtp SDES ON *************");
 
     c->_srtp_state = SRTP_STATE_SDES_SUCCESS;
 
@@ -1403,3 +1413,39 @@ sflphone_call_state_changed( callable_obj_t * c, const gchar * description, cons
     calltree_update_call(current_calls, c, NULL);
     update_actions();
 }
+
+
+void sflphone_get_interface_addr_from_name(char *iface_name) {
+
+    struct ifreq ifr;
+    int fd;
+    int err;
+    static char iface_addr[18];
+    char *tmp_addr;
+
+    struct sockaddr_in *saddr_in;
+    struct in_addr *addr_in;
+
+    if((fd = socket (AF_INET, SOCK_DGRAM,0)) < 0)
+        DEBUG("getInterfaceAddrFromName error could not open socket\n");
+
+    memset (&ifr, 0, sizeof (struct ifreq));
+
+    strcpy (ifr.ifr_name, iface_name);
+    ifr.ifr_addr.sa_family = AF_INET;
+
+    if((err = ioctl(fd, SIOCGIFADDR, &ifr)) < 0)
+        DEBUG("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
+
+    
+    saddr_in = (struct sockaddr_in *)&ifr.ifr_addr;
+    addr_in = &(saddr_in->sin_addr);
+
+    tmp_addr = (char *)addr_in;
+
+    snprintf(iface_addr, sizeof(iface_addr), "%d.%d.%d.%d", 
+	     UC(tmp_addr[0]), UC(tmp_addr[1]), UC(tmp_addr[2]), UC(tmp_addr[3]));
+
+    printf("************************************* %s ****************************\n", iface_addr);
+}
+

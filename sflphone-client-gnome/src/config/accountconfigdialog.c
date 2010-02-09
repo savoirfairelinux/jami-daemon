@@ -566,6 +566,7 @@ static local_interface_changed_cb(GtkWidget * widget, gpointer data UNUSED) {
 		gchar *local_address;
 
 		local_interface = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
+		// sflphone_get_interface_addr_from_name((char *)local_interface);
 		local_address = dbus_get_address_from_interface_name (local_interface);
 
 		gtk_entry_set_text (GTK_ENTRY(publishedAddressEntry), local_address);
@@ -646,6 +647,7 @@ static same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
 		gchar * local_address;
 
 		local_interface = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
+		// sflphone_get_interface_addr_from_name((char *)local_interface);
 		local_address = dbus_get_address_from_interface_name(local_interface);
 
 		gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), local_address);

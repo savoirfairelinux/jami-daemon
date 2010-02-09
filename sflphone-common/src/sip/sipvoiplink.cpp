@@ -395,8 +395,6 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
 
     if((err = ioctl(fd, SIOCGIFADDR, &ifr)) < 0)
         _debug("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
-
-    // printf("Local address: %s\n", inet_ntos( ((struct sockaddr_in *) &ifr.ifr_ifru.ifru_addr)->sin_addr ));
     
     saddr_in = (struct sockaddr_in *)&ifr.ifr_addr;
     addr_in = &(saddr_in->sin_addr);
