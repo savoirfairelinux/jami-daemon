@@ -29,7 +29,7 @@ from gobject import GObject
 import getopt
 
 import time
-import md5
+import hashlib
 
 from threading import Thread
 
@@ -405,11 +405,12 @@ class SflPhoneCtrlSimple(object):
         if dest is None or dest == "":
             raise SflPhoneError("Invalid call destination")
 
-        # callid = str(random.randrange(2**32-1))
+        # Generate a call ID for this
+	m = hashlib.md5()
         t = long( time.time() * 1000 )
         r = long( random.random()*100000000000000000L )
-        data = str(t) + str(r)
-        callid = md5.md5(data).hexdigest()
+        m.update(str(t) + str(r))
+        callid = m.hexdigest()
 
         # Add the call to the list of active calls and set status to SENT
         self.activeCalls[callid] = {'Account': self.account, 'To': dest, 'State': 'SENT' }
