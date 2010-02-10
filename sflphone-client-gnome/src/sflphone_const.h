@@ -161,4 +161,13 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define ERROR(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_ERROR, __VA_ARGS__);
 #define FATAL(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_FATAL, __VA_ARGS__);
 
+/**
+ * Gconf
+ */
+#define CONF_PREFIX		"/apps/sflphone-client-gnome"
+#define CONF_MAIN_WINDOW_WIDTH		CONF_PREFIX "/state/window_width"
+#define CONF_MAIN_WINDOW_HEIGHT		CONF_PREFIX "/state/window_height"
+#define CONF_MAIN_WINDOW_POSITION_X		CONF_PREFIX "/state/window_x_position"
+#define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_y_position"
+
 #endif

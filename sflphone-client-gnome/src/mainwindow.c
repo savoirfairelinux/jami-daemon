@@ -33,6 +33,7 @@
 #include <widget/minidialog.h>
 
 #include <gtk/gtk.h>
+#include <eel-gconf-extensions.h>
 
 /** Local variables */
 GtkUIManager *ui_manager = NULL;
@@ -46,6 +47,22 @@ GtkWidget * mic_control = NULL;
 GtkWidget * statusBar = NULL;
 GtkWidget * filterEntry = NULL;
 PidginScrollBook *embedded_error_notebook;
+
+static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event) {
+
+	int pos_x, pos_y;
+
+	eel_gconf_set_integer (CONF_MAIN_WINDOW_WIDTH, event->width);
+	eel_gconf_set_integer (CONF_MAIN_WINDOW_HEIGHT, event->height);
+
+	gtk_window_get_position (GTK_WINDOW (window), &pos_x, &pos_y);
+	eel_gconf_set_integer (CONF_MAIN_WINDOW_POSITION_X, pos_x);
+	eel_gconf_set_integer (CONF_MAIN_WINDOW_POSITION_Y, pos_y);
+
+	return FALSE;
+}
+
+
 
 /**
  * Minimize the main window.
@@ -148,20 +165,24 @@ create_main_window ()
 	GError *error = NULL;
 	gboolean ret;
 	const char *window_title = "SFLphone VoIP Client";
+	int width, height, position_x, position_y;
 
 	focus_is_on_calltree = FALSE;
 	focus_is_on_searchbar = FALSE;
 
+	// Get configuration stored in gconf
+	width =  eel_gconf_get_integer (CONF_MAIN_WINDOW_WIDTH);
+	height =  eel_gconf_get_integer (CONF_MAIN_WINDOW_HEIGHT);
+	position_x =  eel_gconf_get_integer (CONF_MAIN_WINDOW_POSITION_X);
+	position_y =  eel_gconf_get_integer (CONF_MAIN_WINDOW_POSITION_Y);
+
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width (GTK_CONTAINER (window), 0);
 	gtk_window_set_title (GTK_WINDOW (window), window_title);
-	gtk_window_set_default_size (GTK_WINDOW (window), MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
+	gtk_window_set_default_size (GTK_WINDOW (window), width, height);
 	gtk_window_set_default_icon_from_file (LOGO,
 			NULL);
-	gtk_window_set_position( GTK_WINDOW( window ) , GTK_WIN_POS_MOUSE);
-
-	// GTK_WIDGET_SET_FLAGS (GTK_WIDGET(window),GTK_CAN_FOCUS);
-	// gtk_widget_grab_focus (GTK_WIDGET(window));
+	gtk_window_set_position (GTK_WINDOW(window) , GTK_WIN_POS_MOUSE);
 
 	/* Connect the destroy event of the window with our on_destroy function
 	 * When the window is about to be destroyed we get a notificaiton and
@@ -179,6 +200,8 @@ create_main_window ()
 	g_signal_connect_after (G_OBJECT (window), "focus-out-event",
 			G_CALLBACK (focus_on_mainwindow_out), NULL);
 
+	g_signal_connect_object (G_OBJECT (window), "configure-event",
+			                 G_CALLBACK (window_configure_cb), NULL, 0);
 
 	gtk_widget_set_name (window, "mainwindow");
 
@@ -270,6 +293,9 @@ create_main_window ()
 		}
 #endif
 	}
+
+	gtk_window_move (GTK_WINDOW (window), position_x, position_y);
+
 }
 
 	GtkAccelGroup *

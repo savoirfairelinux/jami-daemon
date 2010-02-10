@@ -32,6 +32,9 @@ AC_PROG_INSTALL
 AC_STDC_HEADERS
 AC_PROG_LIBTOOL
 
+dnl GCONF utilities
+AM_GCONF_SOURCE_2
+
 dnl Check for log4c
 AC_CHECK_HEADERS(log4c.h, have_log4c=true, have_log4c=false)
 if ! $have_log4c; then
