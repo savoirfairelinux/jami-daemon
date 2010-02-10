@@ -67,6 +67,7 @@ GtkWidget * advancedZrtpButton;
 GtkWidget * keyExchangeCombo;
 GtkWidget * useSipTlsCheckBox;
 
+GtkWidget * localAddressEntry;
 GtkWidget * publishedAddressEntry;
 GtkWidget * localAddressLabel;
 GtkWidget * localAddressCombo;
@@ -562,17 +563,20 @@ static local_interface_changed_cb(GtkWidget * widget, gpointer data UNUSED) {
 
 	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
 
-		gchar *local_interface;
-		gchar *local_address;
+		gchar *local_iface_name;
+		gchar *local_iface_addr;
+		local_iface_addr = g_malloc(36);
 
-		local_interface = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
+		local_iface_name = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
 		// sflphone_get_interface_addr_from_name((char *)local_interface);
-		local_address = dbus_get_address_from_interface_name (local_interface);
+		sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr);
 
-		gtk_entry_set_text (GTK_ENTRY(publishedAddressEntry), local_address);
+		gtk_entry_set_text(GTK_ENTRY(localAddressEntry), local_iface_addr);
+		gtk_entry_set_text (GTK_ENTRY(publishedAddressEntry), local_iface_addr);
 
 		// gchar * local_port = (gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
 		// gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(local_port, NULL));
+		g_free(local_iface_addr);
 	}
 
 }
@@ -860,118 +864,137 @@ GtkWidget * create_security_tab (account_t **a)
 
 GtkWidget* create_registration_expire (account_t **a) {
 
-	GtkWidget *table, *frame, *label;
+    GtkWidget *table, *frame, *label;
 
-	gchar *resolve_once=NULL, *account_expire=NULL;
+    gchar *resolve_once=NULL, *account_expire=NULL;
 
-	if (*a) {
-		resolve_once = g_hash_table_lookup ((*a)->properties, ACCOUNT_RESOLVE_ONCE);
-		account_expire = g_hash_table_lookup ((*a)->properties, ACCOUNT_REGISTRATION_EXPIRE);
-	}
+    if (*a) {
+        resolve_once = g_hash_table_lookup ((*a)->properties, ACCOUNT_RESOLVE_ONCE);
+	account_expire = g_hash_table_lookup ((*a)->properties, ACCOUNT_REGISTRATION_EXPIRE);
+    }
 
-	gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
-	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-	gtk_table_set_row_spacings (GTK_TABLE (table), 5);	
+    gnome_main_section_new_with_table (_("Registration"), &frame, &table, 2, 3);
+    gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+    gtk_table_set_row_spacings (GTK_TABLE (table), 5);	
+    
+    label = gtk_label_new_with_mnemonic (_("Registration expire"));
+    gtk_table_attach_defaults (GTK_TABLE (table), label, 0, 1, 0, 1);
+    gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+    expireSpinBox = gtk_spin_button_new_with_range (1, 65535, 1);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), expireSpinBox);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (expireSpinBox), g_ascii_strtod (account_expire, NULL));
+    gtk_table_attach_defaults (GTK_TABLE (table), expireSpinBox, 1, 2, 0, 1);
+	
 
-	label = gtk_label_new_with_mnemonic (_("Registration expire"));
-	gtk_table_attach_defaults (GTK_TABLE (table), label, 0, 1, 0, 1);
-	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-	expireSpinBox = gtk_spin_button_new_with_range (1, 65535, 1);
-	gtk_label_set_mnemonic_widget (GTK_LABEL (label), expireSpinBox);
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (expireSpinBox), g_ascii_strtod (account_expire, NULL));
-	gtk_table_attach_defaults (GTK_TABLE (table), expireSpinBox, 1, 2, 0, 1);
+    entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic (_("_Comply with RFC 3263"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (entryResolveNameOnlyOnce),
+				  g_strcasecmp (resolve_once,"false") == 0 ? TRUE: FALSE);
+    gtk_table_attach_defaults (GTK_TABLE (table), entryResolveNameOnlyOnce, 0, 2, 1, 2);
+    gtk_widget_set_sensitive (GTK_WIDGET (entryResolveNameOnlyOnce ) , TRUE );
 
-
-	entryResolveNameOnlyOnce = gtk_check_button_new_with_mnemonic (_("_Comply with RFC 3263"));
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (entryResolveNameOnlyOnce),
-			g_strcasecmp (resolve_once,"false") == 0 ? TRUE: FALSE);
-	gtk_table_attach_defaults (GTK_TABLE (table), entryResolveNameOnlyOnce, 0, 2, 1, 2);
-	gtk_widget_set_sensitive (GTK_WIDGET (entryResolveNameOnlyOnce ) , TRUE );
-
-	return frame;
+    return frame;
 }
 
 GtkWidget* create_network (account_t **a) {
+  
+    GtkWidget *table, *frame, *label;
+    gchar *local_interface, *local_port;
 
-	GtkWidget *table, *frame, *label;
-	gchar *local_interface, *local_port;
+    if (*a) {
+        local_interface = g_hash_table_lookup ((*a)->properties, LOCAL_INTERFACE);
+	local_port = g_hash_table_lookup ((*a)->properties, LOCAL_PORT);
+    }
 
-	if (*a) {
-		local_interface = g_hash_table_lookup ((*a)->properties, LOCAL_INTERFACE);
-		local_port = g_hash_table_lookup ((*a)->properties, LOCAL_PORT);
+    gnome_main_section_new_with_table (_("Network Interface"), &frame, &table, 2, 3);
+    gtk_container_set_border_width (GTK_CONTAINER(table), 10);
+    gtk_table_set_row_spacings( GTK_TABLE(table), 5);
+
+    /**
+     * Retreive the list of IP interface from the 
+     * the daemon and build the combo box.
+     */
+
+    GtkListStore * ipInterfaceListStore; 
+    GtkTreeIter iter;
+
+    ipInterfaceListStore =  gtk_list_store_new( 1, G_TYPE_STRING );
+    label = gtk_label_new_with_mnemonic (_("Local address"));    
+    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+
+    GtkTreeIter current_local_iface_iter = iter;   
+    gchar ** iface_list = NULL;
+    // iface_list = (gchar**) dbus_get_all_ip_interface();
+    iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
+    gchar ** iface = NULL;
+
+    // flag to determine if local_address is found 
+    gboolean iface_found = FALSE;
+
+    gchar *local_iface_addr;
+    gchar *local_iface_name; 
+
+    local_iface_addr= g_malloc(18);
+    
+    if (iface_list != NULL) {
+
+        // fill the iterface combo box
+        for (iface = iface_list; *iface; iface++) {         
+	    DEBUG("Interface %s", *iface);            
+	    gtk_list_store_append(ipInterfaceListStore, &iter );
+	    gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
+
+	    // set the current local address
+	    if (!iface_found && (g_strcmp0(*iface, local_interface) == 0)) {
+	        DEBUG("Setting active local address combo box");
+		current_local_iface_iter = iter;
+		iface_found = TRUE;
+	  }
 	}
-
-	gnome_main_section_new_with_table (_("Network Interface"), &frame, &table, 2, 2);
-	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-	gtk_table_set_row_spacings( GTK_TABLE(table), 5);
-
-	/**
-	 * Retreive the list of IP interface from the 
-	 * the daemon and build the combo box.
-	 */
-
-	GtkListStore * ipInterfaceListStore; 
-	GtkTreeIter iter;
-
-	ipInterfaceListStore =  gtk_list_store_new( 1, G_TYPE_STRING );
-	label = gtk_label_new_with_mnemonic (_("Local address"));    
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-
-	GtkTreeIter current_local_address_iter = iter;   
-	gchar ** iface_list = NULL;
-	// iface_list = (gchar**) dbus_get_all_ip_interface();
-	iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
-	gchar ** iface = NULL;
-
-	// flag to determine if local_address is found 
-	gboolean iface_found = FALSE;
-
-	if (iface_list != NULL) {
-
-		// fill the iterface combo box
-		for (iface = iface_list; *iface; iface++) {         
-			DEBUG("Interface %s", *iface);            
-			gtk_list_store_append(ipInterfaceListStore, &iter );
-			gtk_list_store_set(ipInterfaceListStore, &iter, 0, *iface, -1 );
-
-			// set the current local address
-			if (!iface_found && (g_strcmp0(*iface, local_interface) == 0)) {
-				DEBUG("Setting active local address combo box");
-				current_local_address_iter = iter;
-				iface_found = TRUE;
-			}
-		}
-
-		if(!iface_found) {
-			DEBUG("Did not find local ip address, take fisrt in the list");
-			gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ipInterfaceListStore), &current_local_address_iter);
-		}
-
+	    
+	if(!iface_found) {
+	  DEBUG("Did not find local ip address, take fisrt in the list");
+	  gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ipInterfaceListStore), &current_local_iface_iter);
 	}
+	
+    }
+  
+    
+    localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), localAddressCombo);
+    gtk_table_attach ( GTK_TABLE( table ), localAddressCombo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    g_object_unref(G_OBJECT(ipInterfaceListStore));	
 
-	localAddressCombo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ipInterfaceListStore));
-	gtk_label_set_mnemonic_widget (GTK_LABEL (label), localAddressCombo);
-	gtk_table_attach ( GTK_TABLE( table ), localAddressCombo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	g_object_unref(G_OBJECT(ipInterfaceListStore));	
+ 
+    GtkCellRenderer * ipInterfaceCellRenderer;
+    ipInterfaceCellRenderer = gtk_cell_renderer_text_new();
 
-	GtkCellRenderer * ipInterfaceCellRenderer;
-	ipInterfaceCellRenderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
-	gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_address_iter);
+    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, TRUE);
+    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(localAddressCombo), ipInterfaceCellRenderer, "text", 0, NULL);
+    gtk_combo_box_set_active_iter(GTK_COMBO_BOX(localAddressCombo), &current_local_iface_iter);
 
-	// Local port widget
-	label = gtk_label_new_with_mnemonic (_("Local port"));
-	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
-	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-	localPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
-	gtk_label_set_mnemonic_widget (GTK_LABEL (label), localPortSpinBox);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), g_ascii_strtod(local_port, NULL));
 
-	gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
+    // Fill the text entry with the ip address of local interface selected
+    localAddressEntry = gtk_entry_new();
+    local_iface_name = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
+    sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr);
+    gtk_entry_set_text(GTK_ENTRY(localAddressEntry), local_iface_addr);
+    gtk_widget_set_sensitive(localAddressEntry, FALSE); 
+    gtk_table_attach ( GTK_TABLE( table ), localAddressEntry, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-	return frame;
+    g_free(local_iface_addr);
+    
+    // Local port widget
+    label = gtk_label_new_with_mnemonic (_("Local port"));
+    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
+    gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+    localPortSpinBox = gtk_spin_button_new_with_range(1, 65535, 1);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), localPortSpinBox);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(localPortSpinBox), g_ascii_strtod(local_port, NULL));
+
+    gtk_table_attach_defaults(GTK_TABLE(table), localPortSpinBox, 1, 2, 1, 2);
+
+    return frame;
 }
 
 GtkWidget* create_published_address (account_t **a) {
