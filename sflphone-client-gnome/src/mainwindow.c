@@ -48,6 +48,10 @@ GtkWidget * statusBar = NULL;
 GtkWidget * filterEntry = NULL;
 PidginScrollBook *embedded_error_notebook;
 
+
+/**
+  * Handle main window resizing
+  */
 static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event) {
 
 	int pos_x, pos_y;
@@ -294,6 +298,7 @@ create_main_window ()
 #endif
 	}
 
+	// Restore position according to the configuration stored in gconf
 	gtk_window_move (GTK_WINDOW (window), position_x, position_y);
 
 }
