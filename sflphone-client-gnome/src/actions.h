@@ -289,5 +289,5 @@ void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, 
 /**
  * Resolve an interface address given its name
  */
-void sflphone_get_interface_addr_from_name(char *iface_name);
+void sflphone_get_interface_addr_from_name(char *iface_name, char **iface_addr);
 #endif
