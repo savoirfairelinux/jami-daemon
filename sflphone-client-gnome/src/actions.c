@@ -1415,12 +1415,12 @@ sflphone_call_state_changed( callable_obj_t * c, const gchar * description, cons
 }
 
 
-void sflphone_get_interface_addr_from_name(char *iface_name) {
+void sflphone_get_interface_addr_from_name(char *iface_name, char **iface_addr) {
 
     struct ifreq ifr;
     int fd;
     int err;
-    static char iface_addr[18];
+    // static char iface_addr[18];
     char *tmp_addr;
 
     struct sockaddr_in *saddr_in;
@@ -1443,9 +1443,7 @@ void sflphone_get_interface_addr_from_name(char *iface_name) {
 
     tmp_addr = (char *)addr_in;
 
-    snprintf(iface_addr, sizeof(iface_addr), "%d.%d.%d.%d", 
+    snprintf(*iface_addr, sizeof(*iface_addr), "%d.%d.%d.%d", 
 	     UC(tmp_addr[0]), UC(tmp_addr[1]), UC(tmp_addr[2]), UC(tmp_addr[3]));
 
-    printf("************************************* %s ****************************\n", iface_addr);
 }
-
