@@ -4,12 +4,78 @@
     
   <!-- Accounts-related methods -->  
     <method name="getAccountDetails">
+      <!--* Method that returns a hashtable containing the current
+            account configuration setting.
+
+	    CONFIG_ACCOUNT_ENABLE
+	    CONFIG_ACCOUNT_RESOLVE_ONCE
+	    CONFIG_ACCOUNT_TYPE
+	    HOSTNAME
+	    USERNAME
+	    PASSWORD
+	    REALM
+	    AUTHENTICATION_USERNAME
+	    CONFIG_ACCOUNT_MAILBOX
+	    CONFIG_ACCOUNT_REGISTRATION_EXPIRE
+	    LOCAL_INTERFACE
+	    PUBLISHED_SAMEAS_LOCAL
+	    PUBLISHED_ADDRESS
+	    LOCAL_PORT
+	    PUBLISHED_PORT
+	    DISPLAY_NAME
+	    STUN_ENABLE
+	    STUN_SERVER
+
+	    REGISTRATION_STATUS
+	    REGISTRATION_STATE_CODE
+	    REGISTRATION_STATE_DESCRIPTION
+	    SRTP_KEY_EXCHANGE
+	    SRTP_ENABLE
+	    
+	    SRTP_RTP_FALLBACK
+	    ZRTP_DISPLAY_SAS
+	    ZRTP_DISPLAY_SAS_ONCE
+	    ZRTP_HELLO_HASH
+	    ZRTP_NOT_SUPP_WARNING
+
+	    TLS_LISTENER_PORT
+	    TLS_ENABLE
+	    TLS_CA_LIST_FILE
+	    TLS_CERTIFICATE_FILE
+	    TLS_PRIVATE_KEY_FILE
+	    
+	    TLS_METHOD
+	    TLS_CIPHERS
+	    TLS_SERVER_NAME
+	    TLS_VERIFY_SERVER
+	    TLS_VERIFY_CLIENT
+	    TLS_REQUIRE_CLIENT_CERTIFICATE
+	    TLS_NEGOTIATION_TIMEOUT_SEC
+	    TLS_NEGOTIATION_TIMEOUT_MSEC
+
+
+            @param[in] input accountID
+            @param[out] output details
+        -->
       <arg type="s" name="accountID" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
       <arg type="a{ss}" name="details" direction="out"/>
     </method>
     
     <method name="setAccountDetails">
+      <!--* Modify the current accout parameter settings given an
+            accountID and a hash table containing the parameters to
+            update. The hash table is not required to be complete,
+            only the parameter to change may be specified. Only the
+            running parameters are updated dynamically, configuration
+            settings are stored in the configuration file when
+            SFLphone-daemon quit.
+
+	    For a complete list of account settings refer to getAccountDetails
+
+            @param[in] input accountID
+            @param[in] input details
+        -->
       <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
       <arg type="s" name="accountID" direction="in"/>
       <arg type="a{ss}" name="details" direction="in"/>
@@ -26,15 +92,59 @@
       <arg type="i" name="number" direction="in"/>
     </method>
        
-     <method name="deleteAllCredential">
-      <arg type="s" name="accountID" direction="in"/>
+    <method name="deleteAllCredential">
+       <arg type="s" name="accountID" direction="in"/>
     </method>
   
     <method name="getIp2IpDetails">
+      <!--* Specific call to get configuration settings of the
+	    IP2IP_PROFILE. Which are sligthly different since no VoIP
+	    Account parameters are envolved.
+
+	    ACCOUNT_ID
+	    SRTP_KEY_EXCHANGE
+	    SRTP_ENABLE
+	    SRTP_RTP_FALLBACK
+	    ZRTP_DISPLAY_SAS
+	    ZRTP_HELLO_HASH
+	    ZRTP_NOT_SUPP_WARNING
+	    ZRTP_DISPLAY_SAS_ONCE
+	    LOCAL_INTERFACE
+	    LOCAL_PORT
+
+	    TLS_LISTENER_PORT
+	    TLS_CA_LIST_FILE
+	    TLS_CERTIFICATE_FILE
+	    TLS_PRIVATE_KEY_FILE
+	    TLS_PASSWORD
+	    TLS_METHOD
+	    TLS_CIPHERS
+	    TLS_SERVER_NAME
+	    TLS_VERIFY_SERVER
+	    TLS_VERIFY_CLIENT
+	    TLS_REQUIRE_CLIENT_CERTIFICATE
+	    TLS_NEGOTIATION_TIMEOUT_SEC
+	    TLS_NEGOTIATION_TIMEOUT_MSEC
+
+            @param[in] input accountID
+            @param[out] output details
+        -->
       <arg type="a{ss}" name="details" direction="out"/>
     </method>
     
     <method name="setIp2IpDetails">
+      <!--* Modify the IP2IP_PROFILE parameter settings a hash table 
+	    containing the parameters to update. The hash table is not required to be complete,
+            only the parameters to be modified may be specified. Also,
+	    only the running configuration is updated dynamically, 
+            settings are stored in the configuration file when
+            SFLphone-daemon quit.
+
+	    For a complete list of account settings refer to getAccountDetails
+
+            @param[in] input accountID
+            @param[in] input details
+        -->
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
       
@@ -50,25 +160,50 @@
     </method>
         
     <method name="addAccount">
+      <!--* Add a new account to the SFLphone-daemon list. If no
+	    details are specified, default parameters are used.
+
+            @param[in] input details
+            @param[out] output accountID
+        -->
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
       <arg type="a{ss}" name="details" direction="in"/>
       <arg type="s" name="createdAccountId" direction="out"/>
     </method>
     
     <method name="setAccountsOrder">
+      <!--* Update the account list given a new list of accountID. If no account is specified
+	    for a call, the first one in the list will be used.
+
+            @param[in] input order
+        -->
       <arg type="s" name="order" direction="in"/>
     </method>
     
     <method name="removeAccount">
+      <!--* Delete an account from SFLphone-daemon list and erase
+	    account parameters from configuration file. 
+
+            @param[in] input accountID
+        -->
       <arg type="s" name="accoundID" direction="in"/>
     </method>
     
     <method name="getAccountList">
+      <!--* Get teh accountlist as stored in SFLphone-daemon.
+
+            @param[in] input accountID
+        -->
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
    
     <method name="sendRegister">
+      <!--* Send accout registration request to PBX server. Register
+	    the account if expire=1, unregister if expire=0.
+
+            @param[in] input accountID
+        -->
       <arg type="s" name="accountID" direction="in"/>
       <arg type="i" name="expire" direction="in"/>
     </method>
