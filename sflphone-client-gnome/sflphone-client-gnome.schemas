@@ -6,7 +6,7 @@
         <applyto>/apps/sflphone-client-gnome/state/window_width</applyto>
         <owner>sflphone-client-gnome</owner>
         <type>int</type>
-        <default>800</default>
+        <default>240</default>
         <locale name="C">
     <short>Main window width</short>
     <long>Main window width.</long>
@@ -44,7 +44,7 @@
         <applyto>/apps/sflphone-client-gnome/state/window_height</applyto>
         <owner>sflphone-client-gnome</owner>
         <type>int</type>
-        <default>550</default>
+        <default>320</default>
         <locale name="C">
     <short>Main window height</short>
     <long>Main window height.</long>
