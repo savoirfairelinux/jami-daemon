@@ -249,7 +249,7 @@ create_main_window ()
 		gtk_widget_show_all (mic_control);
 	}
 
-	if(SHOW_DIALPAD){
+	if (eel_gconf_get_boolean (CONF_SHOW_DIALPAD)){
 		dialpad = create_dialpad();
 		gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
 		gtk_widget_show_all (dialpad);

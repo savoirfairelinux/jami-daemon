@@ -297,11 +297,12 @@ static void volume_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 static void dialpad_bar_cb (GtkToggleAction *togglemenuitem, gpointer user_data)
 {
 	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
-	if (toggled == SHOW_DIALPAD)
+	gboolean conf_dialpad = eel_gconf_get_boolean (CONF_SHOW_DIALPAD);
+	if (toggled == conf_dialpad)
 		return;
 	main_window_dialpad (toggled);
-	if (toggled || SHOW_DIALPAD)
-		dbus_set_dialpad(toggled);
+	if (toggled || conf_dialpad)
+		eel_gconf_set_boolean (CONF_SHOW_DIALPAD, toggled); //dbus_set_dialpad (toggled);
 }
 
 static void help_contents_cb (GtkAction *action)
@@ -1318,7 +1319,7 @@ void create_menus (GtkUIManager *ui_manager, GtkWidget **widget)
 	volumeToggle = gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/VolumeControls");
 
 	// Set the toggle buttons
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")), (gboolean) SHOW_DIALPAD);
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean (CONF_SHOW_DIALPAD));
 	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (volumeToggle), (gboolean) SHOW_VOLUME);
 
 	gtk_action_set_sensitive (GTK_ACTION (volumeToggle), SHOW_ALSA_CONF);

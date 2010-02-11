@@ -123,8 +123,6 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define MINIMIZED	      TRUE
 /** Behaviour of the main window on incoming calls */
 #define __POPUP_WINDOW  ( dbus_popup_mode() )
-/** Show/Hide the dialpad */
-#define SHOW_DIALPAD	( dbus_get_dialpad() )
 /** Show/Hide the alsa configuration panel */
 #define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
 /** Show/Hide the volume controls */
@@ -169,5 +167,7 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define CONF_MAIN_WINDOW_HEIGHT		CONF_PREFIX "/state/window_height"
 #define CONF_MAIN_WINDOW_POSITION_X		CONF_PREFIX "/state/window_position_x"
 #define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
+/** Show/Hide the dialpad */
+#define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"	
 
 #endif

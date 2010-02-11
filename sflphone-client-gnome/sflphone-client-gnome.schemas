@@ -51,6 +51,19 @@
         </locale>
       </schema>
 	
+	<schema>
+        <key>/schemas/apps/sflphone-client-gnome/state/dialpad</key>
+        <applyto>/apps/sflphone-client-gnome/state/dialpad</applyto>
+        <owner>sflphone-client-gnome</owner>
+        <type>bool</type>
+        <default>true</default>
+        <locale name="C">
+    <short>Display dialpad</short>
+    <long>Display dialpad.</long>
+        </locale>
+      </schema>
+	
+
 
    </schemalist>
 </gconfschemafile>
