@@ -122,7 +122,7 @@ GtkWidget* create_menu()
                   NULL);
   
   hangup_menu_item = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
-  image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
+  image = gtk_image_new_from_file( ICONS_DIR "/icon_hangup.svg");
   gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(hangup_menu_item), image);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), hangup_menu_item);
   g_signal_connect(G_OBJECT (hangup_menu_item), "activate",
