@@ -597,5 +597,14 @@ gchar** dbus_get_supported_tls_method();
 
 gchar** dbus_get_participant_list (const char * confID);
 
+guint dbus_get_window_width (void);
+guint dbus_get_window_height (void);
+void dbus_set_window_height (const guint height);
+void dbus_set_window_width (const guint width);
+guint dbus_get_window_position_x (void);
+guint dbus_get_window_position_y (void);
+void dbus_set_window_position_x (const guint posx);
+void dbus_set_window_position_y (const guint posy);
+
 
 #endif

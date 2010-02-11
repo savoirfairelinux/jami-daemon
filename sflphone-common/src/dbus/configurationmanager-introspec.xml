@@ -427,7 +427,38 @@
     <method name="switchPopupMode">
     </method>
 
+	<method name="getWindowWidth">
+      <arg type="i" name="width" direction="out"/>
+	</method>
 
+	<method name="getWindowHeight">
+      <arg type="i" name="height" direction="out"/>
+	</method>
+
+	<method name="setWindowWidth">
+      <arg type="i" name="width" direction="in"/>
+	</method>
+
+	<method name="setWindowHeight">
+      <arg type="i" name="height" direction="in"/>
+	</method>
+
+	<method name="getWindowPositionX">
+      <arg type="i" name="posX" direction="out"/>
+	</method>
+		
+	<method name="setWindowPositionX">
+      <arg type="i" name="posX" direction="in"/>
+	</method>
+		
+	<method name="getWindowPositionY">
+      <arg type="i" name="posY" direction="out"/>
+	</method>
+		
+	<method name="setWindowPositionY">
+      <arg type="i" name="posY" direction="in"/>
+	</method>
+		
     <!-- Addressbook configuration -->
     <method name="getAddressbookSettings">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>

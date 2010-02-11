@@ -2464,3 +2464,115 @@ gchar ** dbus_get_all_ip_interface_by_name(void)
     }
 }
 
+guint dbus_get_window_width (void) {
+
+    GError *error = NULL;
+	guint value; 
+
+	org_sflphone_SFLphone_ConfigurationManager_get_window_width (configurationManagerProxy, &value, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call get_window_width() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+    return value;
+}
+
+guint dbus_get_window_height (void) {
+
+    GError *error = NULL;
+	guint value; 
+
+	org_sflphone_SFLphone_ConfigurationManager_get_window_height (configurationManagerProxy, &value, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call get_window_height() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+    return value;
+}
+
+void dbus_set_window_width (const guint width) {
+
+    GError *error = NULL;
+
+	org_sflphone_SFLphone_ConfigurationManager_set_window_width (configurationManagerProxy, width, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call set_window_width() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+
+void dbus_set_window_height (const guint height) {
+
+    GError *error = NULL;
+
+	org_sflphone_SFLphone_ConfigurationManager_set_window_height (configurationManagerProxy, height, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call set_window_height() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+guint dbus_get_window_position_x (void) {
+
+	GError *error = NULL;
+	guint value; 
+
+	org_sflphone_SFLphone_ConfigurationManager_get_window_position_x (configurationManagerProxy, &value, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call get_window_position_x() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+	return value;
+}
+
+guint dbus_get_window_position_y (void) {
+
+	GError *error = NULL;
+	guint value; 
+
+	org_sflphone_SFLphone_ConfigurationManager_get_window_position_y (configurationManagerProxy, &value, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call get_window_position_y() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+	return value;
+}
+
+void dbus_set_window_position_x (const guint posx) {
+
+	GError *error = NULL;
+
+	org_sflphone_SFLphone_ConfigurationManager_set_window_position_x (configurationManagerProxy, posx, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call set_window_position_x() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}
+
+void dbus_set_window_position_y (const guint posy) {
+
+	GError *error = NULL;
+
+	org_sflphone_SFLphone_ConfigurationManager_set_window_position_y (configurationManagerProxy, posy, &error);
+
+    if (error != NULL) {
+        ERROR ("Failed to call set_window_position_y() on ConfigurationManager: %s",
+                error->message);
+        g_error_free (error);
+    }
+}

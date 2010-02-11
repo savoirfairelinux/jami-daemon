@@ -2317,6 +2317,10 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_SIP_PORT, DFT_SIP_PORT), PREFERENCES);
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_ACCOUNTS_ORDER, EMPTY_FIELD), PREFERENCES);
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_MD5HASH, FALSE_STR), PREFERENCES);
+    _config.addDefaultValue (std::pair<std::string, std::string> (WINDOW_WIDTH, DFT_WINDOW_WIDTH), PREFERENCES);
+    _config.addDefaultValue (std::pair<std::string, std::string> (WINDOW_HEIGHT, DFT_WINDOW_HEIGHT), PREFERENCES);
+    _config.addDefaultValue (std::pair<std::string, std::string> (WINDOW_POSITION_X, "0"), PREFERENCES);
+    _config.addDefaultValue (std::pair<std::string, std::string> (WINDOW_POSITION_Y, "0"), PREFERENCES);
 
     // Addressbook settings
     _config.addDefaultValue (std::pair<std::string, std::string> (ADDRESSBOOK_ENABLE, TRUE_STR), ADDRESSBOOK);

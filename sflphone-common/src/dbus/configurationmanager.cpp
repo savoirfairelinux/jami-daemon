@@ -828,3 +828,45 @@ std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName(void)
 
     return vector;
 }
+
+int32_t ConfigurationManager::getWindowWidth (void) {
+
+	return Manager::instance ().getConfigInt (PREFERENCES, WINDOW_WIDTH);
+}
+
+int32_t ConfigurationManager::getWindowHeight (void) {
+
+	return Manager::instance ().getConfigInt (PREFERENCES, WINDOW_HEIGHT);
+}
+	
+void ConfigurationManager::setWindowWidth (const int32_t& width) {
+
+	Manager::instance ().setConfig (PREFERENCES, WINDOW_WIDTH, width);
+}
+	
+void ConfigurationManager::setWindowHeight (const int32_t& height){
+
+	Manager::instance ().setConfig (PREFERENCES, WINDOW_HEIGHT, height);
+}
+	
+int32_t ConfigurationManager::getWindowPositionX (void) {
+
+	return Manager::instance ().getConfigInt (PREFERENCES, WINDOW_POSITION_X);
+}
+
+int32_t ConfigurationManager::getWindowPositionY (void) {
+
+	return Manager::instance ().getConfigInt (PREFERENCES, WINDOW_POSITION_Y);
+}
+
+void ConfigurationManager::setWindowPositionX (const int32_t& posX) {
+
+	Manager::instance ().setConfig (PREFERENCES, WINDOW_POSITION_X, posX);
+}
+
+void ConfigurationManager::setWindowPositionY (const int32_t& posY) {
+
+	Manager::instance ().setConfig (PREFERENCES, WINDOW_POSITION_Y, posY);
+}
+
+

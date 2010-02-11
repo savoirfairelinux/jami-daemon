@@ -60,6 +60,10 @@
 #define CONFIG_PA_VOLUME_CTRL               "Pulseaudio.volumeCtrl"	    /** Whether or not PA should modify volume of other applications on the same sink */
 #define CONFIG_SIP_PORT                     "SIP.portNum"
 #define CONFIG_ACCOUNTS_ORDER               "Accounts.order"            /** To restore account order */
+#define WINDOW_WIDTH						"Window.width"
+#define WINDOW_HEIGHT						"Window.height"
+#define WINDOW_POSITION_X					"Window.positionX"
+#define WINDOW_POSITION_Y					"Window.positionY"
 
 #define IP2IP_PROFILE                       "IP2IP"    
 #define SIGNALISATION                       "VoIPLink"	                /** Section Signalisation */
@@ -110,5 +114,7 @@
 #define DFT_SIP_PORT                        "5060"
 #define DFT_STUN_ENABLE                     FALSE_STR
 #define DFT_RECORD_PATH                     HOMEDIR
+#define DFT_WINDOW_WIDTH					"240"
+#define DFT_WINDOW_HEIGHT					"320"
 
 #endif // __USER_CFG_H__

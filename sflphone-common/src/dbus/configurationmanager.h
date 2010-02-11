@@ -114,6 +114,15 @@ public:
     int32_t getMailNotify( void );
     void setMailNotify( void );
 
+	int32_t getWindowWidth (void);
+	int32_t getWindowHeight (void);
+	void setWindowWidth (const int32_t& width);
+	void setWindowHeight (const int32_t& height);
+	int32_t getWindowPositionX (void);
+	int32_t getWindowPositionY (void);
+	void setWindowPositionX (const int32_t& posX);
+	void setWindowPositionY (const int32_t& posY);
+
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
     std::vector< std::string > getAddressbookList ( void );
