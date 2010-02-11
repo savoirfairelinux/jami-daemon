@@ -395,8 +395,6 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
 
     if((err = ioctl(fd, SIOCGIFADDR, &ifr)) < 0)
         _debug("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
-
-    // printf("Local address: %s\n", inet_ntos( ((struct sockaddr_in *) &ifr.ifr_ifru.ifru_addr)->sin_addr ));
     
     saddr_in = (struct sockaddr_in *)&ifr.ifr_addr;
     addr_in = &(saddr_in->sin_addr);
@@ -2611,8 +2609,8 @@ pj_status_t SIPVoIPLink::createTlsTransport(const AccountID& accountID, std::str
 
     // Update TLS settings for account registration using the default listeners
     // Pjsip does not allow to create multiple listener
-    pjsip_tpmgr *mgr = pjsip_endpt_get_tpmgr(_endpt);
-    pjsip_tls_listener_update_settings(_endpt, _pool, mgr, _localTlsListener, account->getTlsSetting());
+    // pjsip_tpmgr *mgr = pjsip_endpt_get_tpmgr(_endpt);
+    // pjsip_tls_listener_update_settings(_endpt, _pool, mgr, _localTlsListener, account->getTlsSetting());
 
     // Create a new TLS connection from TLS listener
     pjsip_transport *tls;

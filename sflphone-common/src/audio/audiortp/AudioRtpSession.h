@@ -81,17 +81,17 @@ namespace sfl {
             void setDestinationIpAddress(void);
                 
             int processDataEncode(void);
-            void processDataDecode(unsigned char * spkrData, unsigned int size, int& countTime);
+            void processDataDecode(unsigned char * spkrData, unsigned int size);
             
             inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
                 return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
             }          
             int computeNbByteAudioLayer (float codecFrameSize) {
-                return (int) ( ((float) converterSamplingRate * codecFrameSize * sizeof(SFLDataFormat))/ 1000.0);
+                return (int) ( ((float) _converterSamplingRate * codecFrameSize * sizeof(SFLDataFormat))/ 1000.0);
             }
           
-            void sendMicData(int timestamp);
-            void receiveSpeakerData (int& countTime);
+            void sendMicData();
+            void receiveSpeakerData ();
             
             ost::Time * _time;
    
@@ -163,7 +163,20 @@ namespace sfl {
              */
              ManagerImpl * _manager;
 
-	     int converterSamplingRate;
+	     /**
+	      * Sampling rate of audio converter
+	      */
+	     int _converterSamplingRate;
+
+	     /**
+	      * Timestamp for this session
+	      */
+	     int _timestamp;
+
+	     /**
+	      * Time counter used to trigger incoming call notification
+	      */
+	     int _countNotificationTime;
             
         protected:
             SIPCall * _ca;
@@ -186,6 +199,9 @@ namespace sfl {
      _codecSampleRate(0), 
      _layerFrameSize(0),
      _manager(manager),
+     _converterSamplingRate(0),
+     _timestamp(0),
+     _countNotificationTime(0),
      _ca (sipcall)
     {
         setCancel (cancelDefault);
@@ -239,7 +255,7 @@ namespace sfl {
 
 	// may be different than one already setted
 	// converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-	converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
+	_converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
 	// initialize SampleRate converter using AudioLayer's sampling rate
 	// (internal buffers initialized with maximal sampling rate and frame size)
@@ -390,8 +406,7 @@ namespace sfl {
     }
     
     template <typename D>
-    void AudioRtpSession<D>::processDataDecode(unsigned char * spkrData, unsigned int size, int& countTime) 
-    {
+    void AudioRtpSession<D>::processDataDecode(unsigned char * spkrData, unsigned int size) {
 
         if (_audiocodec != NULL) {
 
@@ -429,26 +444,23 @@ namespace sfl {
             }
 
             // Notify (with a beep) an incoming call when there is already a call
-            countTime += _time->getSecond();
-
             if (_manager->incomingCallWaiting() > 0) {
-	        int countTime_modulo = countTime % 4000;
-		// _debug("countTime: %i\n", countTime);
-		// _debug("countTime_modulo: %i\n", countTime_modulo);
-                if ((countTime_modulo - countTime) < 0) {
+	        _countNotificationTime += _time->getSecond();
+	        int countTimeModulo = _countNotificationTime % 5000;
+		// _debug("countNotificationTime: %d\n", countNotificationTime);
+		// _debug("countTimeModulo: %d\n", countTimeModulo);
+                if ((countTimeModulo - _countNotificationTime) < 0) {
                     _manager->notificationIncomingCall();
                 }
 
-		countTime = countTime_modulo;
+		_countNotificationTime = countTimeModulo;
             }
 
-        } else {
-            countTime += _time->getSecond();
-        }
+        } 
     }
     
     template <typename D>
-    void AudioRtpSession<D>::sendMicData(int timestamp)
+    void AudioRtpSession<D>::sendMicData()
     {
         // STEP:
         //   1. get data from mic
@@ -456,7 +468,9 @@ namespace sfl {
         //   3. encode it
         //   4. send it
 
-        timestamp += _time->getSecond();
+        // Increment timestamp for outgoing packet
+        
+        _timestamp += _codecFrameSize;
 
         if (!_audiolayer) {
             _debug ("No audiolayer available for MIC\n");
@@ -471,12 +485,12 @@ namespace sfl {
         int compSize = processDataEncode();
 
         // putData put the data on RTP queue, sendImmediate bypass this queue
-        static_cast<D*>(this)->putData (timestamp, _micDataEncoded, compSize);
+        static_cast<D*>(this)->putData (_timestamp, _micDataEncoded, compSize);
     }
     
     
     template <typename D>
-    void AudioRtpSession<D>::receiveSpeakerData (int& countTime)
+    void AudioRtpSession<D>::receiveSpeakerData ()
     {
         if (!_audiolayer) {
             _debug ("No audiolayer available for speaker\n");
@@ -501,11 +515,9 @@ namespace sfl {
 
         unsigned int size = adu->getSize(); // size in char
 
-	// _debug("RTP size: %i\n", size);
-
-	// Size of DTMF over RTP
+	// DTMF over RTP, size must be over 4 in order to process it as voice data
 	if(size > 4) {
-	    processDataDecode (spkrData, size, countTime);
+	    processDataDecode (spkrData, size);
 	}
     }
     
@@ -526,10 +538,10 @@ namespace sfl {
 
 	initBuffers();
 
+	// Timestamp must be initialized randomly
+	_timestamp = static_cast<D*>(this)->getCurrentTimestamp();
+
         int sessionWaiting;
-        int timestep = _codecFrameSize;
-        int timestamp = static_cast<D*>(this)->getCurrentTimestamp(); // for mic
-        int countTime = 0; // for receive
         int threadSleep = 0;
 
         if (_codecSampleRate != 0)
@@ -551,9 +563,6 @@ namespace sfl {
         _manager->getAudioDriver()->startStream();
         static_cast<D*>(this)->startRunning();
 
-	// Already called in _audiolayer->startStream()
-	// _audiolayer->flushUrgent();
-	// _audiolayer->flushMain();
 
         _debug ("Entering RTP mainloop for callid %s\n",_ca->getCallId().c_str());
 
@@ -569,11 +578,10 @@ namespace sfl {
             // Send session
             sessionWaiting = static_cast<D*>(this)->isWaiting();
 
-            sendMicData (timestamp);
-            timestamp += timestep;
+            sendMicData ();
 
             // Recv session
-            receiveSpeakerData (countTime);
+            receiveSpeakerData ();
 
             // Let's wait for the next transmit cycle
             if (sessionWaiting == 1) {
@@ -589,8 +597,6 @@ namespace sfl {
 
             // Let's wait for the next transmit cycle
             Thread::sleep (TimerPort::getTimer());
-
-            // TimerPort::incTimer(20); // 'frameSize' ms
             TimerPort::incTimer (threadSleep);
         }
         

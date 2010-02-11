@@ -30,6 +30,8 @@
 #include <errors.h>
 #include <conference_obj.h>
 
+#define	UC(b)	(((int)b)&0xff)
+
 /** @file actions.h
   * @brief General functions that change the state of the application.
   * All of these functions are called when dbus signals are triggered.  Exceptions
@@ -284,5 +286,8 @@ void sflphone_request_go_clear(void);
  */
 void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, const guint code);
 
-
+/**
+ * Resolve an interface address given its name
+ */
+void sflphone_get_interface_addr_from_name(char *iface_name, char **iface_addr);
 #endif

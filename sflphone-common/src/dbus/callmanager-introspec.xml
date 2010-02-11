@@ -1,11 +1,49 @@
-<?xml version="1.0" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <node name="/org/sflphone/SFLphone">
+
+  <!--* The CallManager interface is used to manage any call related
+	actions. 
+
+	Since SFLphone-daemon support multiple incoming/outgoing
+	calls, any actions involving a specific call must address the
+	method by the means of a unique callID. SFLphone-clients is
+	responsible to generate the callID on outgoing call. On the
+	otehr hand, SFLphone-daemon will generate a unique callID on
+	incoming calls.
+
+	Actions are performed asynchronously, SFLphone-client should
+	subscribe to the callStateChanged signal in order to be
+	notified on updates in call status.
+    -->
   <interface name="org.sflphone.SFLphone.CallManager">
-  
+
     <method name="placeCall">
-      <arg type="s" name="accountID" direction="in"/>
-      <arg type="s" name="callID" direction="in"/>
-      <arg type="s" name="to" direction="in"/>
+      <!--* This is the main method in order to place a new call. The
+            call is registered to the daemon using this method
+            specified a unique identifier and VoIP Accout to be bound with.
+
+	    The account is specified by its accountID. 
+
+	    If the call is to be placed whithout any account by the
+	    means of a SIP URI (i.e. sip:num@server), the
+	    "IP2IP_PROFILE" is passed as the accountID. For more
+	    details about accounts see the configuration manager interface.
+
+	    The callID is a unique identifier that must be randomly
+	    generated on sflphone-client's side. Any subsequent
+	    actions refering to this call must use this callID.
+
+	    If bound to a VoIP account, the to argument is the phone
+	    number. In case of calls involving "IP2IP_PROFILE", a
+	    complete SIP URI must be specified.
+
+            @param[in] input accountID
+            @param[in] input callID
+	    @param[in] input to
+        -->
+      <arg type="s" name="accountID" direction="in" />
+      <arg type="s" name="callID" direction="in" />
+      <arg type="s" name="to" direction="in" />
     </method>
 
     <method name="placeCallFirstAccount">
@@ -14,84 +52,186 @@
     </method>
     
     <method name="refuse">
+      <!--* Method called to refuse an incoming call.
+
+            @param[in] input callID
+        -->
       <arg type="s" name="callID" direction="in"/>
     </method>
     
     <method name="accept">
+      <!--* Method called to answer an incoming call. Automatically put
+	    the current call on state HOLD.
+
+            @param[in] input callID
+        -->
       <arg type="s" name="callID" direction="in"/>
     </method>
     
     <method name="hangUp">
+      <!--* Method called to hangup a call in state "CURRENT" or "HOLD".
+
+            @param[in] input callID
+        -->
       <arg type="s" name="callID" direction="in"/>
     </method>
 
     <method name="hangUpConference">
+      <!--* This method will hangup a conference in state ""
+	    every call participating to the conference.
+
+            @param[in] input confID
+        -->
       <arg type="s" name="confID" direction="in"/>
     </method>
     
     <method name="hold">
+      <!--* Place this call on state HOLD.
+
+            @param[in] input confID
+        -->
       <arg type="s" name="callID" direction="in"/>
     </method>
     
     <method name="unhold">
+      <!--* Place this call on state CURRENT.
+
+            @param[in] input confID
+        -->
       <arg type="s" name="callID" direction="in"/>
     </method>
     
     <method name="transfert">
+      <!--* Transfer a call to given phone number.
+
+            @param[in] input confID
+	    @param[in] input to
+        -->
       <arg type="s" name="callID" direction="in"/>
       <arg type="s" name="to" direction="in"/>
     </method>
     
     <method name="playDTMF">
+      <!--* Dual-Tone multi-frequency. Tell SFLphone-daemon to play
+	    dial tones. A SIP INFO message is sent to notify the server.
+
+            @param[in] input Unicode charter for pressed key
+        -->
       <arg type="s" name="key" direction="in"/>
     </method>
     
     <method name="startTone">
+      <!--* This method is used to start audio stream and play tone.
+
+            @param[in] input confID
+        -->
       <arg type="i" name="start" direction="in"/>
       <arg type="i" name="type" direction="in"/>
     </method>
 
     <method name="setVolume">
+      <!--* This method sets the volume using a linear scale
+            [0,100]. Pulseaudio has its own mechanism to modify
+            application volume. This method is enabled only if the
+            ALSA API is used. 
+
+            @param[in] input device
+	    @param[in] input value
+        -->
       <arg type="s" name="device" direction="in"/>
       <arg type="d" name="value" direction="in"/>
     </method>
     
     <method name="getVolume">
+      <!--* This method is enabled only if the ALSA API is used, Pulseaudio 
+	    has its own mechanism to modify application volume. Return
+	    a value on a linear scale [0,100].
+
+            @param[in] input device
+	    @param[out] output value
+        -->
       <arg type="s" name="device" direction="in"/>
       <arg type="d" name="value" direction="out"/>
     </method>
 
     <method name="joinParticipant">
+      <!--* Join two participants together to create a 3-way
+            conference including current SFLphone-client.
+	    conferenceCreated signal is emited on success.
+
+            @param[in] input sel_callID
+	    @param[in] input drag_callID
+        -->
       <arg type="s" name="sel_callID" direction="in"/>
       <arg type="s" name="drag_callID" direction="in"/>
     </method>
 
     <method name="addParticipant">
+      <!--* Join a new particiant to an already created conference.
+            conferenceChaged signal is emited on success.
+
+            @param[in] input callID
+	    @param[in] input confID
+        -->
       <arg type="s" name="callID" direction="in"/>
       <arg type="s" name="confID" direction="in"/>
     </method>
 
     <method name="addMainParticipant">
+      <!--* As SFLphone-daemon can handle multiple calls and
+            conferences. It may happen that SFLphone-client's user
+            leave a conference to answer an incoming call or
+            send new ones. This method is used to reintroduce
+            SFLphone-client's user into the conference.
+
+	    It put the current call on state HOLD or detach
+	    SFLphone-client's user from the another conference.
+
+	    @param[in] input confID
+        -->
       <arg type="s" name="confID" direction="in"/>
     </method>
 
     <method name="detachParticipant">
+      <!--* Detach the given call from the conference. If only one
+            participant is left, the conference is deleted and the 
+	    "conferenceRemoved" signal is emited.
+
+            @param[in] input callID
+        -->
       <arg type="s" name="callID" direction="in"/>
     </method>
 
     <method name="joinConference">
+      <!--* Method used to join two conference together.
+
+            @param[in] input sel_confID
+	    @param[in] input drag_confID
+        -->
       <arg type="s" name="sel_confID" direction="in"/>
       <arg type="s" name="drag_confID" direction="in"/>
     </method>
 
     <method name="getConferenceDetails">
+      <!--* Returns a hashtable containing conference details.
+
+	    "CONFID"
+	    "CONF_STATE"
+
+            @param[in] input confID
+	    @param[out] output a infos
+        -->
       <arg type="s" name="callID" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
       <arg type="a{ss}" name="infos" direction="out"/>
     </method>
     
     <method name="getConferenceList">
-        <arg type="as" name="list" direction="out"/>
+      <!--* Returns a list containing all active confID in SFLphone-daemon.
+
+	    @param[out] output list
+        -->
+      <arg type="as" name="list" direction="out"/>
     </method>
 
     <method name="setRecording">
@@ -104,16 +244,36 @@
     </method>
     
     <method name="getCallDetails">
+      <!--* Returns a hashtable containing call details.
+
+	    "ACCOUNTID"
+            "PEER_NUMBER"
+            "PEER_NAME"
+            "DISPLAY_NAME"    Name to display
+            "CALL_STATE"      The state of the call
+            "CALL_TYPE"       SIP or IAX
+
+            @param[in] input callID
+	    @param[out] output a infos
+        -->
       <arg type="s" name="callID" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
       <arg type="a{ss}" name="infos" direction="out"/>
     </method>
     
     <method name="getCallList">
-        <arg type="as" name="list" direction="out"/>
+      <!--* Returns a list containing all active callID in SFLphone-daemon.
+
+	    @param[out] output list
+        -->
+      <arg type="as" name="list" direction="out"/>
     </method>
 
     <method name="getCurrentCallID">
+      <!--* Returns the CURRENT callID
+
+	    @param[out] output callID
+        -->
       <arg type="s" name="callID" direction="out"/>
     </method>
 
@@ -128,6 +288,16 @@
     </signal>
     
     <signal name="incomingCall">
+      <!--* Signal sent to notify incoming calls.
+
+	    The callID generated by the daemon and must be stored
+	    by SFLphone-client in order to address other action for
+	    this call.
+
+            @param[in] input accountID
+            @param[in] input callID
+	    @param[in] input from
+        -->
       <arg type="s" name="accountID" />
       <arg type="s" name="callID" />
       <arg type="s" name="from" />
@@ -139,33 +309,92 @@
     </signal>
     
     <signal name="callStateChanged">
+      <!--* Signal emited by SFLphone-daemon to notify of a chage in
+	    call state.
+ 
+	    The following is a liste of possible call state:
+
+	    "INCOMING"          Initial state of incoming calls
+	    "RINGING"           Initial state of received outgoing call
+	    "CURRENT"           The normal active state of an answered call
+            "HUNGUP"            Notify that the call has been hungup by peer
+	    "BUSY" 
+            "FAILURE"           Signal emited on failure to answer the call
+            "HOLD"              CAll state is now on hold
+            "UNHOLD_RECORD"     CAll state is now on CURRENT (pursue recording)
+            "UNHOLD_CURRENT"    CAll state is now on CURRENT
+
+            @param[in] input accountID
+            @param[in] input state
+        -->
       <arg type="s" name="callID"  direction="out"/>
       <arg type="s" name="state"  direction="out"/>
     </signal>
 
     <signal name="conferenceChanged">
+      <!--* Signal emited by SFLphone-daemon to notify of a chage in
+	    conference state.
+ 
+	    The following is a liste of possible conference state:
+
+	    "ACTIVE_ATACHED"    Conference state is active
+	    "ACTIVE_DETACHED"   Conference state is active  
+	    "HOLD"              Conference is on hold
+
+            @param[in] input accountID
+            @param[in] input state
+        -->
       <arg type="s" name="confID"  direction="out"/>
       <arg type="s" name="state"  direction="out"/>
     </signal>
 
     <method name="getParticipantList">
+      <!--* Return a vector (or a list) containig the callIP of every
+            participant to a given conference. SFLphone-client should
+            keep and update the list of participant.
+
+            @param[in] input accountID
+            @param[out] output List of callID
+        -->
       <arg type="s" name="confID" direction="in"/>
       <arg type="as" name="list" direction="out"/>
     </method>
 
     <signal name="conferenceCreated">
+      <!--* Emited when a new conference is created. SFLphone-client
+            is reponsible to store the confID and call
+            getParticipantList to update display.
+
+            param[out] output Newly generated confID
+        -->
       <arg type="s" name="confID"  direction="out"/>
     </signal>
 
     <signal name="conferenceRemoved">
+      <!--* Emited when a new conference is removed. SFLphone-client
+            should have kept a list of current participant in order to
+            display modification. 
+
+            @param[out] output confID
+        -->
       <arg type="s" name="confID"  direction="out"/>
     </signal>
 
     <method name="holdConference">
+      <!--* Put the hole conference on hold. Every call participating
+            to this conference will be update to state HOLD. 
+
+            @param[in] input confID
+        -->
       <arg type="s" name="confID" direction="in"/>
     </method>
 
     <method name="unholdConference">
+      <!--* Put the conference on state ACTIVE. Every call participating
+            to this conference will be updated to state UNHOLD.
+
+            @param[in] input confID
+        -->
       <arg type="s" name="confID" direction="in"/>
     </method>
     
