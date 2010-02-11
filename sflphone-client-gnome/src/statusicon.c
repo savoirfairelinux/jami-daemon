@@ -35,6 +35,7 @@ void popup_main_window (void)
 	if (__POPUP_WINDOW)
 	{
 		gtk_widget_show (get_main_window ());
+		gtk_window_move (GTK_WINDOW (get_main_window ()), dbus_get_window_position_x (), dbus_get_window_position_y ());
 		set_minimized (FALSE);
 	}
 }
@@ -61,6 +62,7 @@ void show_hide (void)
 	if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)))
 	{
 		gtk_widget_show(GTK_WIDGET(get_main_window()));
+		gtk_window_move (GTK_WINDOW (get_main_window ()), dbus_get_window_position_x (), dbus_get_window_position_y ());
 		set_minimized( !MINIMIZED );
 	}   
 	else
