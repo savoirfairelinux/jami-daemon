@@ -170,13 +170,40 @@ class SflPhoneCtrlSimple(object):
     #
     # Account management
     #
+    def addAccount(self, details=None):
+        """Add a new account account
+
+	Add a new account to the SFLphone-daemon. Default parameters are \ 
+	used for missing account configuration field.
+
+	Required parameters are type, alias, hostname, username and password
+
+	input details
+	
+	"""
+
+	if details is None:
+            raise SPaccountError("Must specifies type, alias, hostname, \
+                                  username and password in \
+                                  order to create a new account")
+
+	return self.configurationmanager.addAccount(details)
+
+    def removeAccount(self, accountID=None):
+        """Remove an account from internal list"""
+
+	if accountID is None:
+            raise SPaccountError("Account ID must be specified")
+
+        self.configurationmanager.removeAccount(accountID)
+
     def getAllAccounts(self):
-        """ Return a list with all accounts"""
+        """Return a list with all accounts"""
         return self.configurationmanager.getAccountList()
 
 
     def getAllEnabledAccounts(self):
-        """ Return a list with all enabled accounts"""
+        """Return a list with all enabled accounts"""
         accounts = self.getAllAccounts()
         activeaccounts = []
         for testedaccount in accounts:
@@ -222,11 +249,15 @@ class SflPhoneCtrlSimple(object):
         raise SPaccountError("No account matched with alias")
 
     def setAccount(self, account):
-        """Define the active account"""
+        """Define the active account
+
+	The active account will be used when sending a new call
+	"""
 
         if account in self.getAllAccounts():
             self.account = account
         else:
+            print account
             raise SflPhoneError("Not a valid account")
 
     def setFirstRegisteredAccount(self):
@@ -315,7 +346,6 @@ class SflPhoneCtrlSimple(object):
 
     def getAllSipAccounts(self):
         """Return a list of SIP accounts"""
-
         sipAccountsList = []
         for accountName in self.getAllAccounts(): 
             if  self.getAccountDetails(accountName)['Account.type'] == "SIP":
@@ -395,25 +425,36 @@ class SflPhoneCtrlSimple(object):
     # Action
     #
     def Call(self, dest):
-        """Start a call and return a CallID"""
-        if not self.account:
+        """Start a call and return a CallID
+
+	Use the current account previously set using setAccount().
+	If no account specified, first registered one in account list is used.
+
+	For phone number prefixed using SIP scheme (i.e. sip: or sips:),
+	IP2IP profile is automatically selected and set as the default account
+
+	return callID Newly generated callidentifier for this call
+	"""
+
+	if dest is None or dest == "":
+            raise SflPhoneError("Invalid call destination")
+	
+        # Set the account to be used for this call
+	if dest.find('sip:') is 0 or dest.find('sips:') is 0:
+            print "Ip 2 IP call"
+	    self.setAccount("IP2IP")
+	elif not self.account:
             self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
+        if self.account is "IP2IP" and self.isAccountRegistered():
             raise SflPhoneError("Can't place a call without a registered account")
 
-        if dest is None or dest == "":
-            raise SflPhoneError("Invalid call destination")
-
-        # Generate a call ID for this
-	m = hashlib.md5()
-        t = long( time.time() * 1000 )
-        r = long( random.random()*100000000000000000L )
-        m.update(str(t) + str(r))
-        callid = m.hexdigest()
+        # Generate a call ID for this call
+        callid = self.GenerateCallID()	
 
         # Add the call to the list of active calls and set status to SENT
         self.activeCalls[callid] = {'Account': self.account, 'To': dest, 'State': 'SENT' }
+
         # Send the request to the CallManager
         self.callmanager.placeCall(self.account, callid, dest)
 
@@ -425,14 +466,14 @@ class SflPhoneCtrlSimple(object):
         if not self.account:
             self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't hangup a call without a registered account")
+        # if not self.isAccountRegistered() and self.accout is not "IP2IP":
+        #    raise SflPhoneError("Can't hangup a call without a registered account")
 
         if callid is None or callid == "":
             pass # just to see
             #raise SflPhoneError("Invalid callID")
 
-            self.callmanager.hangUp(callid)
+	self.callmanager.hangUp(callid)
 
 
     def Transfert(self, callid, to):
@@ -510,4 +551,11 @@ class SflPhoneCtrlSimple(object):
         self.callmanager.playDTMF(key)
 
 
-
+    def GenerateCallID(self):
+        """Generate Call ID"""
+	m = hashlib.md5()
+        t = long( time.time() * 1000 )
+        r = long( random.random()*100000000000000000L )
+        m.update(str(t) + str(r))
+        callid = m.hexdigest()
+	return callid
