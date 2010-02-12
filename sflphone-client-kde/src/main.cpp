@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include <QApplication>
 #include <QtCore/QString>
 #include <QtGui/QMenu>

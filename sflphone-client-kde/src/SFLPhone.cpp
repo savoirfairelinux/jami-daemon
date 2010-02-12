@@ -21,6 +21,7 @@
  
 #include "SFLPhone.h"
 
+#include <unistd.h>
 #include <KApplication>
 #include <KStandardAction>
 #include <KMenuBar>
