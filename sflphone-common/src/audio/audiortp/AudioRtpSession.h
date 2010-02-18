@@ -208,7 +208,7 @@ namespace sfl {
 
         assert(_ca);
         
-        _debug ("Local audio port %i will be used\n", _ca->getLocalAudioPort());
+        _debug ("Local audio port %i will be used", _ca->getLocalAudioPort());
 
         //mic, we receive from soundcard in stereo, and we send encoded
         _audiolayer = _manager->getAudioDriver();
@@ -223,7 +223,7 @@ namespace sfl {
     template <typename D>
     AudioRtpSession<D>::~AudioRtpSession()
     {
-        _debug ("Delete AudioRtpSession instance\n");
+        _debug ("Delete AudioRtpSession instance");
 
         try {
             terminate();
@@ -232,7 +232,7 @@ namespace sfl {
             throw;
         }
 
-	_debug("Unbind audio RTP stream for call id %s\n", _ca->getCallId().c_str());
+	_debug("Unbind audio RTP stream for call id %s", _ca->getCallId().c_str());
 	// _audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
 	_manager->getAudioDriver()->getMainBuffer()->unBindAll(_ca->getCallId());
 
@@ -243,7 +243,7 @@ namespace sfl {
         delete [] _spkrDataConverted;
         delete _time;
         delete _converter;
-        _debug ("AudioRtpSession instance deleted\n");
+        _debug ("AudioRtpSession instance deleted");
     }
     
     template <typename D>
@@ -292,24 +292,24 @@ namespace sfl {
 	_audiocodec = _manager->getCodecDescriptorMap().instantiateCodec(pl);
 
         if (_audiocodec == NULL) {
-            _debug ("No audiocodec, can't init RTP media\n");
+            _debug ("No audiocodec, can't init RTP media");
             throw AudioRtpSessionException();
         }
 
-        _debug ("Init audio RTP session: codec payload %i\n", _audiocodec->getPayload());
+        _debug ("Init audio RTP session: codec payload %i", _audiocodec->getPayload());
 
         _codecSampleRate = _audiocodec->getClockRate();
         _codecFrameSize = _audiocodec->getFrameSize();
 
         //TODO: figure out why this is necessary.
         if (_audiocodec->getPayload() == 9) {
-            _debug ("Setting payload format to G722\n");
+            _debug ("Setting payload format to G722");
             static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
         } else if (_audiocodec->hasDynamicPayload()) {
-            _debug ("Setting a dynamic payload format\n");
+            _debug ("Setting a dynamic payload format");
             static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
         } else if (!_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
-            _debug ("Setting a static payload format\n");
+            _debug ("Setting a static payload format");
             static_cast<D*>(this)->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
         }
     }
@@ -318,18 +318,18 @@ namespace sfl {
     void AudioRtpSession<D>::setDestinationIpAddress(void)
     {
         if (_ca == NULL) {
-            _debug ("Sipcall is gone.\n");
+            _debug ("Sipcall is gone.");
             throw AudioRtpSessionException();
         }
         
-        _debug ("Setting IP address for the RTP session\n");
+        _debug ("Setting IP address for the RTP session");
 
 	// Store remote ip in case we would need to forget current destination
         _remote_ip = ost::InetHostAddress(_ca->getLocalSDP()->get_remote_ip().c_str());
-        _debug ("Init audio RTP session: remote ip %s\n", _ca->getLocalSDP()->get_remote_ip().data());
+        _debug ("Init audio RTP session: remote ip %s", _ca->getLocalSDP()->get_remote_ip().data());
 
         if (!_remote_ip) {
-            _debug ("Target IP address [%s] is not correct!\n", _ca->getLocalSDP()->get_remote_ip().data());
+            _debug ("Target IP address [%s] is not correct!", _ca->getLocalSDP()->get_remote_ip().data());
             return;
         }
 
@@ -337,7 +337,7 @@ namespace sfl {
 	_remote_port = (unsigned short) _ca->getLocalSDP()->get_remote_audio_port();
 
         if (! static_cast<D*>(this)->addDestination (_remote_ip, _remote_port)) {
-            _debug ("Can't add destination to session!\n");
+            _debug ("Can't add destination to session!");
             return;
         }
     }
@@ -347,6 +347,7 @@ namespace sfl {
     {
         // Destination address are stored in a list in ccrtp
         // This method clear off this entry
+        _debug("updateDestinationIpAddress: remove destination %s", _ca->getLocalSDP()->get_remote_ip().c_str());
         static_cast<D*>(this)->forgetDestination(_remote_ip, _remote_port);
 
 	// new destination is stored in call
@@ -473,12 +474,12 @@ namespace sfl {
         _timestamp += _codecFrameSize;
 
         if (!_audiolayer) {
-            _debug ("No audiolayer available for MIC\n");
+            _debug ("No audiolayer available for MIC");
             return;
         }
 
         if (!_audiocodec) {
-            _debug ("No audiocodec available for MIC\n");
+            _debug ("No audiocodec available for MIC");
             return;
         }
 
@@ -493,12 +494,12 @@ namespace sfl {
     void AudioRtpSession<D>::receiveSpeakerData ()
     {
         if (!_audiolayer) {
-            _debug ("No audiolayer available for speaker\n");
+            _debug ("No audiolayer available for speaker");
             return;
         }
 
         if (!_audiocodec) {
-            _debug ("No audiocodec available for speaker\n");
+            _debug ("No audiocodec available for speaker");
             return;
         }
 
@@ -524,7 +525,7 @@ namespace sfl {
     template <typename D>
     int AudioRtpSession<D>::startRtpThread ()
     {
-        _debug("Starting main thread\n");
+        _debug("Starting main thread");
         return start(_mainloopSemaphore);
     }
     
@@ -553,7 +554,7 @@ namespace sfl {
         
         if (_audiolayer == NULL) {
             _debug("For some unknown reason, audiolayer is null, just as \
-            we were about to start the audio stream\n");
+            we were about to start the audio stream");
             throw AudioRtpSessionException();
         }
 
@@ -564,7 +565,7 @@ namespace sfl {
         static_cast<D*>(this)->startRunning();
 
 
-        _debug ("Entering RTP mainloop for callid %s\n",_ca->getCallId().c_str());
+        _debug ("Entering RTP mainloop for callid %s",_ca->getCallId().c_str());
 
         while (!testCancel()) {
 
@@ -600,7 +601,7 @@ namespace sfl {
             TimerPort::incTimer (threadSleep);
         }
         
-        _debug ("Left RTP main loop for callid %s\n",_ca->getCallId().c_str());
+        _debug ("Left RTP main loop for callid %s",_ca->getCallId().c_str());
     }
     
 }

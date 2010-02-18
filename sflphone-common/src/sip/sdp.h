@@ -197,7 +197,7 @@ class Sdp {
          * Set remote's IP addr. [not protected]
          * @param ip  The remote IP address
          */
-        void set_remote_ip(const std::string& ip)    { _remote_ip_addr = ip; }
+        void set_remote_ip(const std::string& ip) { _remote_ip_addr = ip; }
         
         /** 
          * Return IP of destination [mutex protected]
