@@ -25,10 +25,9 @@
 #include <statusicon.h>
 
 #if GTK_CHECK_VERSION(2,10,0)
-GtkStatusIcon* status;
-GtkWidget * show_menu_item;
+GtkStatusIcon *status;
+GtkWidget *show_menu_item, *hangup_menu_item;
 gboolean __minimized = MINIMIZED;
-
 
 void popup_main_window (void)
 {
@@ -40,17 +39,38 @@ void popup_main_window (void)
 	}
 }
 
+void show_status_hangup_icon() {
+
+    DEBUG("Show Hangup in Systray");
+    gtk_widget_show(GTK_WIDGET(hangup_menu_item));
+
+}
+
+void hide_status_hangup_icon() {
+
+  DEBUG("Hide Hangup in Systray");
+    gtk_widget_hide(GTK_WIDGET(hangup_menu_item));
+}
+
+
 void 
 status_quit ( void * foo UNUSED)
 {
   sflphone_quit();
 }
 
+void
+status_hangup ()
+{
+  sflphone_hang_up();
+}	  
+
 void 
 status_icon_unminimize()
 {
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
 }
+
 
 gboolean main_widget_minimized()
 {
@@ -92,6 +112,7 @@ GtkWidget* create_menu()
 {
   GtkWidget * menu;
   GtkWidget * menu_items;
+  GtkWidget * image;
   
   menu      = gtk_menu_new ();
   
@@ -101,10 +122,18 @@ GtkWidget* create_menu()
   g_signal_connect(G_OBJECT (show_menu_item), "toggled",
                   G_CALLBACK (show_hide), 
                   NULL);
-                  
+  
+  hangup_menu_item = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
+  image = gtk_image_new_from_file( ICONS_DIR "/icon_hangup.svg");
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(hangup_menu_item), image);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu), hangup_menu_item);
+  g_signal_connect(G_OBJECT (hangup_menu_item), "activate",
+		   G_CALLBACK (status_hangup), 
+		   NULL);
+
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  
+
   menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_QUIT, get_accel_group());
   g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
                   G_CALLBACK (status_quit), 

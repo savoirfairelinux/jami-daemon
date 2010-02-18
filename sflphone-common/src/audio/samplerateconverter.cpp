@@ -20,7 +20,7 @@
 #include "manager.h"
 
 SamplerateConverter::SamplerateConverter (void)
-        : _frequence (Manager::instance().getConfigInt (AUDIO , ALSA_SAMPLE_RATE)) //44100
+        : _frequence (Manager::instance().getConfigInt (AUDIO , AUDIO_SAMPLE_RATE)) //44100
         , _framesize (Manager::instance().getConfigInt (AUDIO , ALSA_FRAME_SIZE))
         , _floatBufferDownMic (NULL)
         , _floatBufferUpMic (NULL)
