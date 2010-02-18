@@ -63,7 +63,7 @@ void AudioLayerTest::setUp()
 
 void AudioLayerTest::testAudioLayerConfig()
 {
-    int sampling_rate = Manager::instance().getConfigInt (AUDIO, ALSA_SAMPLE_RATE);
+    int sampling_rate = Manager::instance().getConfigInt (AUDIO, AUDIO_SAMPLE_RATE);
     int frame_size = Manager::instance().getConfigInt (AUDIO, ALSA_FRAME_SIZE);
     frame_size = 0; // frame size in config not used anymore
 
@@ -122,7 +122,7 @@ void AudioLayerTest::testPulseConnect()
     alsaPlugin = manager->getConfigString (AUDIO , ALSA_PLUGIN);
     numCardIn  = manager->getConfigInt (AUDIO , ALSA_CARD_ID_IN);
     numCardOut = manager->getConfigInt (AUDIO , ALSA_CARD_ID_OUT);
-    sampleRate = manager->getConfigInt (AUDIO , ALSA_SAMPLE_RATE);
+    sampleRate = manager->getConfigInt (AUDIO , AUDIO_SAMPLE_RATE);
     frameSize = manager->getConfigInt (AUDIO, ALSA_FRAME_SIZE);
 
     CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);

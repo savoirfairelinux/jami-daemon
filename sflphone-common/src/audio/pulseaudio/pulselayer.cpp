@@ -243,7 +243,7 @@ bool PulseLayer::createStreams (pa_context* c)
     playbackParam->volume = _manager->getSpkrVolume();
     playbackParam->mainloop = m;
 
-    playback = new AudioStream (playbackParam);
+    playback = new AudioStream (playbackParam, _audioSampleRate);
     playback->connectStream();
     pa_stream_set_write_callback (playback->pulseStream(), playback_callback, this);
     pa_stream_set_overflow_callback (playback->pulseStream(), playback_overflow_callback, this);
@@ -259,7 +259,7 @@ bool PulseLayer::createStreams (pa_context* c)
     recordParam->volume = _manager->getMicVolume();
     recordParam->mainloop = m;
 
-    record = new AudioStream (recordParam);
+    record = new AudioStream (recordParam, _audioSampleRate);
     record->connectStream();
     pa_stream_set_read_callback (record->pulseStream() , capture_callback, this);
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);

@@ -58,7 +58,7 @@ class AudioLayer {
          */
         AudioLayer( ManagerImpl* manager , int type )
             : _defaultVolume(100)
-			  , _layerType( type )
+	      , _layerType( type )
               , _manager(manager)
 	      , _urgentRingBuffer( SIZEBUF, default_id )
               , _indexIn ( 0 )

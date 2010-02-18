@@ -2293,7 +2293,7 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
     // Audio settings
     _config.addDefaultValue (std::pair<std::string, std::string> (ALSA_CARD_ID_IN, ALSA_DFT_CARD), AUDIO);
     _config.addDefaultValue (std::pair<std::string, std::string> (ALSA_CARD_ID_OUT, ALSA_DFT_CARD), AUDIO);
-    _config.addDefaultValue (std::pair<std::string, std::string> (ALSA_SAMPLE_RATE, DFT_SAMPLE_RATE), AUDIO);
+    _config.addDefaultValue (std::pair<std::string, std::string> (AUDIO_SAMPLE_RATE, DFT_SAMPLE_RATE), AUDIO);
     _config.addDefaultValue (std::pair<std::string, std::string> (ALSA_FRAME_SIZE, DFT_FRAME_SIZE), AUDIO);
     _config.addDefaultValue (std::pair<std::string, std::string> (ALSA_PLUGIN, PCM_DEFAULT), AUDIO);
     _config.addDefaultValue (std::pair<std::string, std::string> (RING_CHOICE, DFT_RINGTONE), AUDIO);
@@ -2954,7 +2954,7 @@ ManagerImpl::selectAudioDriver (void)
     alsaPlugin = getConfigString (AUDIO , ALSA_PLUGIN);
     numCardIn  = getConfigInt (AUDIO , ALSA_CARD_ID_IN);
     numCardOut = getConfigInt (AUDIO , ALSA_CARD_ID_OUT);
-    sampleRate = getConfigInt (AUDIO , ALSA_SAMPLE_RATE);
+    sampleRate = getConfigInt (AUDIO , AUDIO_SAMPLE_RATE);
 
     if (sampleRate <=0 || sampleRate > 48000) {
         sampleRate = 44100;
@@ -3003,7 +3003,7 @@ void ManagerImpl::switchAudioManager (void)
 
     type = _audiodriver->getLayerType();
 
-    samplerate = getConfigInt (AUDIO , ALSA_SAMPLE_RATE);
+    samplerate = getConfigInt (AUDIO , AUDIO_SAMPLE_RATE);
 
     framesize = getConfigInt (AUDIO , ALSA_FRAME_SIZE);
 
