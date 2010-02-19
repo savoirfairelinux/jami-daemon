@@ -46,6 +46,19 @@ void show_status_icon();
 void status_icon_unminimize();
 
 /**
+ * Show hangup icon 
+ */
+void show_status_hangup_icon();
+
+
+/**
+ * Show hangup icon 
+ */
+void hide_status_hangup_icon();
+
+
+
+/**
  * Tells if the main window if minimized or not
  * @return gboolean TRUE if the main window is minimized
  *		    FALSE otherwise

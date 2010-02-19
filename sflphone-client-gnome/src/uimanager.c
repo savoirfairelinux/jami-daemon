@@ -27,6 +27,7 @@
 #include <glib/gprintf.h>
 #include <libgnome/gnome-help.h>
 #include <uimanager.h>
+#include <statusicon.h>
 
 static GtkWidget *toolbar;
 static GtkWidget *toolbarWindows;
@@ -147,7 +148,9 @@ void update_actions()
 
 	if (selectedCall)
 	{
-	        // DEBUG("------------------------- selected call ---------------------------\n");
+	        // update icon in systray
+	        show_status_hangup_icon();
+
 		gtk_action_set_sensitive (GTK_ACTION (copyAction), TRUE);
 
 		switch(selectedCall->_state)
@@ -225,7 +228,8 @@ void update_actions()
 	}
 	else if (selectedConf){
 
-	        // DEBUG("------------------------- selected conf ---------------------------\n");
+	        // update icon in systray
+	        show_status_hangup_icon();
 
 	        switch(selectedConf->_state) {
 
@@ -265,6 +269,10 @@ void update_actions()
 	}  
 
 	else {
+
+	        // update icon in systray
+	        hide_status_hangup_icon();
+	      
 		if( account_list_get_size() > 0  && current_account_has_mailbox ())
 		{
 			gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (voicemailToolbar), -2);

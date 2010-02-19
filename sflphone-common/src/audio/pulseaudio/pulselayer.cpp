@@ -243,7 +243,7 @@ bool PulseLayer::createStreams (pa_context* c)
     playbackParam->volume = _manager->getSpkrVolume();
     playbackParam->mainloop = m;
 
-    playback = new AudioStream (playbackParam);
+    playback = new AudioStream (playbackParam, _audioSampleRate);
     playback->connectStream();
     pa_stream_set_write_callback (playback->pulseStream(), playback_callback, this);
     pa_stream_set_overflow_callback (playback->pulseStream(), playback_overflow_callback, this);
@@ -259,7 +259,7 @@ bool PulseLayer::createStreams (pa_context* c)
     recordParam->volume = _manager->getMicVolume();
     recordParam->mainloop = m;
 
-    record = new AudioStream (recordParam);
+    record = new AudioStream (recordParam, _audioSampleRate);
     record->connectStream();
     pa_stream_set_read_callback (record->pulseStream() , capture_callback, this);
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
@@ -494,8 +494,8 @@ void PulseLayer::writeToSpeaker (void)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
 
+    // available bytes to be written in pulseaudio internal buffer
     int writeableSize = pa_stream_writable_size (playback->pulseStream());
-    // _debug("PulseLayer writablesize : %i", writeableSize);
 
     if (writeableSize < 0)
         _debug ("PulseLayer playback error : %s", pa_strerror (writeableSize));
@@ -503,15 +503,10 @@ void PulseLayer::writeToSpeaker (void)
 
     if (urgentAvailBytes > writeableSize) {
 
-        // _debug("urgentAvailBytes: %i", urgentAvailBytes);
-
-        // _debug("Play Urgent!");
-
         out = (SFLDataFormat*) pa_xmalloc (writeableSize);
         _urgentRingBuffer.Get (out, writeableSize, 100);
-        // pa_threaded_mainloop_lock (m);
+
         pa_stream_write (playback->pulseStream(), out, writeableSize, NULL, 0, PA_SEEK_RELATIVE);
-        // pa_threaded_mainloop_unlock (m);
 
         pa_xfree (out);
 
@@ -529,17 +524,16 @@ void PulseLayer::writeToSpeaker (void)
 
         if (tone != 0) {
 
-            // _debug("PlayTone writeableSize: %i", writeableSize);
-
             if (playback->getStreamState() == PA_STREAM_READY) {
 
-                // _debug("Play Sine Tone!");
+	        // _debug("writeableSize %d\n", writeableSize);
 
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
-                // pa_threaded_mainloop_lock (m);
-                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
-                // pa_threaded_mainloop_unlock (m);
+		
+                int returnValue = pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+		// _debug("return value %d\n", returnValue);
 
                 pa_xfree (out);
 
@@ -549,15 +543,13 @@ void PulseLayer::writeToSpeaker (void)
         else if (file_tone != 0) {
 
             if (playback->getStreamState() == PA_STREAM_READY) {
-                // _debug("Play File Tone!");
 
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 int copied = file_tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
-                // pa_threaded_mainloop_lock (m);
+
                 pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
                 pa_xfree (out);
-                // pa_threaded_mainloop_unlock (m);
 
             }
 

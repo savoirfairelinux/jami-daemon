@@ -248,7 +248,7 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    _debug("SIPVoIPLink destructor called");
+    _debug("UserAgent: SIPVoIPLink destructor called");
 
     terminate();
 }
@@ -257,7 +257,7 @@ SIPVoIPLink* SIPVoIPLink::instance (const AccountID& id)
 {
 
     if (!_instance) {
-        _debug ("Create new SIPVoIPLink instance");
+        _debug ("UserAgent: Create new SIPVoIPLink instance");
         _instance = new SIPVoIPLink (id);
     }
 
@@ -270,7 +270,7 @@ void SIPVoIPLink::decrementClients (void)
 
     if (_clients == 0) {
 
-        _debug("No SIP account anymore, terminate SIPVoIPLink");
+        _debug("UserAgent: No SIP account anymore, terminate SIPVoIPLink");
         terminate();
         SIPVoIPLink::_instance=NULL;
     }
@@ -299,10 +299,10 @@ bool SIPVoIPLink::init()
 void
 SIPVoIPLink::terminate()
 {
-    _debug ("Terminating SIPVoIPLink");
+    _debug ("UserAgent: Terminating SIPVoIPLink");
 
     if (_evThread) {
-        _debug ("Deleting sip eventThread");
+        _debug ("UserAgent: Deleting sip eventThread");
         delete _evThread;
         _evThread = NULL;
     }
@@ -310,7 +310,7 @@ SIPVoIPLink::terminate()
 
     /* Clean shutdown of pjsip library */
     if (initDone()) {
-        _debug ("Shuting down PJSIP");
+        _debug ("UserAgent: Shuting down PJSIP");
         pjsip_shutdown();
     }
 
@@ -386,7 +386,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
     struct in_addr *addr_in;
 
     if((fd = socket (AF_INET, SOCK_DGRAM,0)) < 0)
-        _debug("getInterfaceAddrFromName error could not open socket\n");
+        _debug("UserAgent: getInterfaceAddrFromName error could not open socket\n");
 
     memset (&ifr, 0, sizeof (struct ifreq));
 
@@ -394,7 +394,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
     ifr.ifr_addr.sa_family = AF_INET;
 
     if((err = ioctl(fd, SIOCGIFADDR, &ifr)) < 0)
-        _debug("getInterfaceAddrFromName use default interface (0.0.0.0)\n");
+        _debug("UserAgent: getInterfaceAddrFromName use default interface (0.0.0.0)\n");
     
     saddr_in = (struct sockaddr_in *)&ifr.ifr_addr;
     addr_in = &(saddr_in->sin_addr);
@@ -445,7 +445,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
     if (account == NULL) {
-        _debug ("In sendRegister: account is null");
+        _debug ("UserAgent: In sendRegister: account is null");
         return false;
     }
 
@@ -1021,8 +1021,8 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
 	// TODO Restore Re-Invite
     // status = call->getLocalSDP()->create_initial_offer();
 
-    if (status != PJ_SUCCESS)
-        return 1;   // !PJ_SUCCESS
+    // if (status != PJ_SUCCESS)
+    // return 1;   // !PJ_SUCCESS
 
     pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendrecv");
 
@@ -1802,7 +1802,6 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
 bool SIPVoIPLink::pjsip_init()
 {
     pj_status_t status;
-    int errPjsip = 0;
     pjsip_inv_callback inv_cb;
     pj_str_t accepted;
     std::string name_mod;
@@ -2221,7 +2220,7 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 	int trns = remoteSipUri.find(";transport");
 	std::string remoteAddr = remoteSipUri.substr(sips, trns-sips);
 
-        // Nothing to do, TLS listener already created at pjsip's startup and TLS connection\
+        // Nothing to do, TLS listener already created at pjsip's startup and TLS connection
         // is automatically handled in pjsip when sending registration messages.
         if(createTlsTransport(id, remoteAddr) != PJ_SUCCESS)
 	    return false;
@@ -2749,9 +2748,7 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
 void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 {
 
-    _debug("Shutdown Sip Transport");
-
-    pj_status_t status = 0;
+    _debug("UserAgent: Shutdown Sip Transport");
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
@@ -2915,23 +2912,9 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 
 void SIPVoIPLink::handle_reinvite (SIPCall *call)
 {
-    /*
-    // Close the previous RTP session
-    call->getAudioRtp()->stop ();
-    call->setAudioStart (false);
 
-    _debug ("Create new rtp session from handle_reinvite : %s:%i", call->getLocalIp().c_str(), call->getLocalAudioPort());
+    _debug ("UserAgent: handle_reinvite");
 
-    try {
-        call->getAudioRtp()->initAudioRtpSession (call);
-    } catch (...) {
-        _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
-    }
-    */
-    
-    _debug("Handle reINVITE");
-
-    call->getAudioRtp()->updateDestinationIpAddress();
 }
 
 // This callback is called when the invite session state has changed
@@ -3134,7 +3117,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 // This callback is called after SDP offer/answer session has completed.
 void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 {
-    _debug ("call_on_media_update");
+    _debug ("UserAgent: call_on_media_update");
 
     const pjmedia_sdp_session *local_sdp;
     const pjmedia_sdp_session *remote_sdp;
@@ -3182,6 +3165,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     // Set remote ip / port
     call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
+    call->getAudioRtp()->updateDestinationIpAddress();
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;

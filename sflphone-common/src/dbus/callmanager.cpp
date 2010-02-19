@@ -40,8 +40,7 @@ void
 CallManager::placeCall (const std::string& accountID,
                         const std::string& callID,
                         const std::string& to)
-{
-    // Check if a destination number is available
+{    // Check if a destination number is available
 
     if (to == "")   _debug ("No number entered - Call stopped");
     else            Manager::instance().outgoingCall (accountID, callID, to);

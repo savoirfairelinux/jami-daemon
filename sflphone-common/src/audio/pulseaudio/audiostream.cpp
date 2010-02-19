@@ -24,20 +24,19 @@ static pa_channel_map channel_map;
 
 
 
-AudioStream::AudioStream (PulseLayerType * driver)
+AudioStream::AudioStream (PulseLayerType * driver, int smplrate)
         : _audiostream (NULL),
         _context (driver->context),
         _streamType (driver->type),
         _streamDescription (driver->description),
         _volume(),
-        flag (PA_STREAM_AUTO_TIMING_UPDATE),
-        sample_spec(),
+        _flag (PA_STREAM_AUTO_TIMING_UPDATE),
+        _sample_spec(),
         _mainloop (driver->mainloop)
 {
-    sample_spec.format = PA_SAMPLE_S16LE;
-    // sample_spec.format = PA_SAMPLE_FLOAT32LE;
-    sample_spec.rate = 44100;
-    sample_spec.channels = 1;
+    _sample_spec.format = PA_SAMPLE_S16LE; // PA_SAMPLE_FLOAT32LE;
+    _sample_spec.rate = smplrate;
+    _sample_spec.channels = 1;
     channel_map.channels = 1;
     pa_cvolume_set (&_volume , 1 , PA_VOLUME_NORM) ;  // * vol / 100 ;
 }
@@ -178,20 +177,13 @@ AudioStream::createStream (pa_context* c)
     ost::MutexLock guard (_mutex);
 
     pa_stream* s;
-    //pa_cvolume cv;
 
-    // pa_sample_spec ss;
-    // ss.format = PA_SAMPLE_S16LE;
-    // ss.rate = 44100;
-    // ss.channels = 1;
-
-
-    assert (pa_sample_spec_valid (&sample_spec));
+    assert (pa_sample_spec_valid (&_sample_spec));
     assert (pa_channel_map_valid (&channel_map));
 
     pa_buffer_attr* attributes = (pa_buffer_attr*) malloc (sizeof (pa_buffer_attr));
 
-    if (! (s = pa_stream_new (c, _streamDescription.c_str() , &sample_spec, &channel_map)))
+    if (! (s = pa_stream_new (c, _streamDescription.c_str() , &_sample_spec, &channel_map)))
         _debug ("%s: pa_stream_new() failed : %s" , _streamDescription.c_str(), pa_strerror (pa_context_errno (c)));
 
     assert (s);
@@ -202,7 +194,7 @@ AudioStream::createStream (pa_context* c)
 
         // 20 ms framesize TODO: take framesize value from config
         attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &sample_spec);
+        attributes->tlength = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
         attributes->minreq = (uint32_t) -1;
         attributes->fragsize = (uint32_t) -1;
@@ -215,7 +207,7 @@ AudioStream::createStream (pa_context* c)
         attributes->tlength = (uint32_t) -1;
         attributes->prebuf = (uint32_t) -1;
         attributes->minreq = (uint32_t) -1;
-        attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &sample_spec);
+        attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &_sample_spec);
 
 
 

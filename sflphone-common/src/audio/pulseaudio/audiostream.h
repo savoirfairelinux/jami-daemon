@@ -54,7 +54,7 @@ class AudioStream {
      * Constructor
      * @param context The PulseLayerType structure containing various information.
      */ 
-    AudioStream(PulseLayerType * driver);
+    AudioStream(PulseLayerType * driver, int smplrate);
     
     /**
      * Destructor
@@ -175,8 +175,8 @@ class AudioStream {
      * Streams parameters
      */
     pa_cvolume _volume;
-    pa_stream_flags_t flag;
-    pa_sample_spec sample_spec ;
+    pa_stream_flags_t _flag;
+    pa_sample_spec _sample_spec ;
 
     pa_threaded_mainloop * _mainloop;
     
