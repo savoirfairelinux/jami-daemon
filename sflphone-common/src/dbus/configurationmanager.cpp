@@ -396,7 +396,7 @@ ConfigurationManager::getRingtoneList()
 
 /**
  * Send the list of all codecs loaded to the client through DBus.
- * Can stay global, as only the active codecs will set per account
+ * Can stay global, as only the active codecs will be set per accounts
  */
 std::vector<std::string> ConfigurationManager::getCodecList (void) {
 
@@ -466,7 +466,7 @@ std::vector<std::string> ConfigurationManager::getActiveCodecList (const std::st
 void ConfigurationManager::setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID)
 {
 
-        _debug ("ConfigurationManager::setActiveCodecList received");
+    _debug ("ConfigurationManager::setActiveCodecList received");
 
 	Account *acc;
 

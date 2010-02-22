@@ -291,9 +291,6 @@ void sflphone_fill_account_list (void) {
         }
         g_free(a->protocol_state_description);
         a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
-
-		// Attach a codec list to each account
-		// account_create_codec_list (&a);
     }
 
 	// Set the current account message number
@@ -330,9 +327,6 @@ gboolean sflphone_init() {
         // Fetch the ip2ip profile 
         sflphone_fill_ip2ip_profile();
         
-        // Fetch the audio codecs at startup.
-        // sflphone_fill_codec_list();
-
 		// Fetch the conference list
 		// sflphone_fill_conference_list();
 
@@ -1132,7 +1126,7 @@ void sflphone_fill_codec_list_per_account (account_t **account) {
     }
 
 	// Test here if we just added some active codec.
-	active = (codeclist->length == 0) ? FALSE : FALSE;
+	active = (codeclist->length == 0) ? TRUE : FALSE;
 
 	guint caps_size = codec_list_get_size (), i=0;
 
@@ -1152,6 +1146,10 @@ void sflphone_fill_codec_list_per_account (account_t **account) {
 	}
 	
 	(*account)->codecs = codeclist; 
+	
+	// call dbus function with array of strings
+	codec_list_update_to_daemon (*account);
+	
 }
 
 void sflphone_fill_call_list (void)

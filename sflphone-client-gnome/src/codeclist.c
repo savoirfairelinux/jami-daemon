@@ -301,7 +301,7 @@ void codec_list_update_to_daemon (account_t *acc) {
 			// Save only if active
 			if(currentCodec->is_active)
 			{
-		g_print ("Codec %s\n", currentCodec->name);
+				g_print ("Codec %s\n", currentCodec->name);
 				// Reallocate memory each time more than one active codec is found
 				if(c!=0)
 					codecList = (void*)realloc(codecList, (c+1)*sizeof(void*));
