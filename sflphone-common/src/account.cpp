@@ -58,7 +58,7 @@ void Account::loadConfig() {
 void Account::setRegistrationState (RegistrationState state) {
 
 	if (state != _registrationState) {
-		_debug ("Account::setRegistrationState");
+		_debug ("Account: set registration state");
 		_registrationState = state;
 
 		// Notify the client
@@ -70,7 +70,7 @@ void Account::loadAudioCodecs (void) {
 
 	// if the user never set the codec list, use the default configuration for this account
 	if (Manager::instance ().getConfigString (_accountID, "ActiveCodecs") == "") {
-		_warn ("use the default order");
+		_info ("Account: use the default order");
 		Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
 	}
 
@@ -92,12 +92,11 @@ void Account::setActiveCodecs (const std::vector <std::string> &list) {
 	int payload;
 	size_t size = list.size();
 
-	_warn ("set the custom order %i", list.size ());
-	_warn ("Setting active codec list");
+	_info ("Account: Set the custom order %i", list.size ());
 
 	while ( (unsigned int) i < size) {
 		payload = std::atoi (list[i].data());
-		_warn ("Adding codec with RTP payload=%i", payload);
+		_info ("Account: Adding codec with RTP payload=%i", payload);
 		//if (Manager::instance ().getCodecDescriptorMap ().isCodecLoaded (payload)) {
 		_codecOrder.push_back ( (AudioCodecType) payload);
 		//}
@@ -106,7 +105,7 @@ void Account::setActiveCodecs (const std::vector <std::string> &list) {
 
     // setConfig
     std::string s = Manager::instance ().serialize (list);
-    _warn ("Setting codec with payload number %s to the active list", s.c_str());
+    _info ("Account: Setting codec with payload number %s to the active list", s.c_str());
 	// Set the config per account
 	Manager::instance().setConfig (_accountID, "ActiveCodecs", s);
 

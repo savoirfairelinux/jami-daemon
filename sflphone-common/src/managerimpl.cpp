@@ -2381,10 +2381,10 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 void
 ManagerImpl::initAudioCodec (void)
 {
-    _warn ("Init audio codecs");
+    _info("Manager: Init audio codecs");
 
     /* Init list of all supported codecs by the application. 
-	 * This is a global list. Every account will inherit it.
+     * This is a global list. Every account will inherit it.
      */
 	_codecDescriptorMap.init();
 }
@@ -2396,7 +2396,7 @@ std::vector<std::string> ManagerImpl::retrieveActiveCodecs() {
 
 	// This property is now set per account basis
     std::string s = getConfigString (AUDIO, "ActiveCodecs");
-	_warn ("ManagerImpl::retrieveActiveCodecs: %s", s.c_str ());
+    _info("Manager: Retrieve active codecs: %s", s.c_str ());
     return unserialize (s);
 }
 
