@@ -285,7 +285,8 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
     // _urgentRingBuffer.flushAll();
     flushUrgent();
 
-    _converter = new SamplerateConverter (_audioSampleRate, _frameSize*4);
+    // use 1 sec buffer for resampling
+    _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
     return true;
 }
