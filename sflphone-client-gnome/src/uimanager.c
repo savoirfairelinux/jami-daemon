@@ -33,6 +33,7 @@ static GtkWidget *toolbar;
 static GtkWidget *toolbarWindows;
 
 guint transfertButtonConnId; //The button toggled signal connection ID
+guint recordButtonConnId; //The button toggled signal connection ID
 
 GtkAction * pickUpAction;
 GtkWidget * pickUpWidget;
@@ -730,7 +731,6 @@ static const GtkActionEntry menu_entries[] = {
 	{ "HangUp", GTK_STOCK_HANGUP, N_("_Hang up"), "<control>S", N_("Finish the call"), G_CALLBACK (call_hang_up) },    
 	{ "OnHold", GTK_STOCK_ONHOLD, N_("O_n hold"), "<control>P", N_("Place the call on hold"), G_CALLBACK (call_hold) },    
 	{ "OffHold", GTK_STOCK_OFFHOLD, N_("O_ff hold"), "<control>P", N_("Place the call off hold"), G_CALLBACK (call_hold) },    
-	{ "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), G_CALLBACK (call_record) },        
 	{ "AccountAssistant", NULL, N_("Configuration _Assistant"), NULL, N_("Run the configuration assistant"), G_CALLBACK (call_configuration_assistant) },    
 	{ "Voicemail", "mail-read", N_("Voicemail"), NULL, N_("Call your voicemail"), G_CALLBACK (call_mailbox_cb) },    
 	{ "Close", GTK_STOCK_CLOSE, N_("_Close"), "<control>W", N_("Minimize to system tray"), G_CALLBACK (call_minimize) },
@@ -757,6 +757,7 @@ static const GtkActionEntry menu_entries[] = {
 static const GtkToggleActionEntry toggle_menu_entries[] = {
 
 	{ "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL }, //G_CALLBACK (call_transfer_cb) },        
+	{ "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL }, // G_CALLBACK (call_record) },        
 	{ "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL },
 	{ "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK (dialpad_bar_cb) },
 	{ "VolumeControls",NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK (volume_bar_cb) },
@@ -1358,6 +1359,7 @@ void create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget)
 
 	// Set the handler ID for the transfer
     transfertButtonConnId = g_signal_connect (G_OBJECT (transferToolbar), "toggled", G_CALLBACK (call_transfer_cb), NULL);
+	recordButtonConnId = g_signal_connect (G_OBJECT (recordWidget), "toggled", G_CALLBACK (call_record), NULL);
 	active_calltree = current_calls;
 
 	*widget = toolbar;
