@@ -2914,7 +2914,23 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
 {
 
     _debug ("UserAgent: handle_reinvite");
-
+    /*
+    // Close the previous RTP session
+    call->getAudioRtp()->stop ();
+    call->setAudioStart (false);
+    
+    _debug ("Create new rtp session from handle_reinvite : %s:%i", call->getLocalIp().c_str(), call->getLocalAudioPort());
+    _debug ("UserAgent: handle_reinvite");
+ 
+    try {
+        call->getAudioRtp()->initAudioRtpSession (call);
+    } catch (...) {
+        _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
+    }
+  
+    
+    _debug("Handle reINVITE");
+    */
 }
 
 // This callback is called when the invite session state has changed
@@ -3165,7 +3181,13 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     // Set remote ip / port
     call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
-    call->getAudioRtp()->updateDestinationIpAddress();
+
+    try {
+        call->getAudioRtp()->updateDestinationIpAddress();
+    }
+    catch(...) {
+        
+    }
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
