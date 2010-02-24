@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<node name="/org/sflphone/SFLphone">
+
+<!-- Comment -->
+<!--*< File comment -->
+
+<node name="/org/sflphone/SFLphone" xmlns:dx="http://psiamp.org/dtd/doxygen_dbusxml.dtd">
 
   <!--* The CallManager interface is used to manage any call related
 	actions. 
@@ -15,36 +19,37 @@
 	subscribe to the callStateChanged signal in order to be
 	notified on updates in call status.
     -->
-  <interface name="org.sflphone.SFLphone.CallManager">
-
-    <method name="placeCall">
-      <!--* This is the main method in order to place a new call. The
+	<interface name="org.sflphone.SFLphone.CallManager">
+	
+	<!--* This is the main method in order to place a new call. The
             call is registered to the daemon using this method
             specified a unique identifier and VoIP Accout to be bound with.
 
-	    The account is specified by its accountID. 
+			The account is specified by its accountID. 
 
-	    If the call is to be placed whithout any account by the
-	    means of a SIP URI (i.e. sip:num@server), the
-	    "IP2IP_PROFILE" is passed as the accountID. For more
-	    details about accounts see the configuration manager interface.
+			If the call is to be placed whithout any account by the
+			means of a SIP URI (i.e. sip:num@server), the
+			"IP2IP_PROFILE" is passed as the accountID. For more
+			details about accounts see the configuration manager interface.
 
-	    The callID is a unique identifier that must be randomly
-	    generated on sflphone-client's side. Any subsequent
-	    actions refering to this call must use this callID.
+			The callID is a unique identifier that must be randomly
+			generated on sflphone-client's side. Any subsequent
+			actions refering to this call must use this callID.
 
-	    If bound to a VoIP account, the to argument is the phone
-	    number. In case of calls involving "IP2IP_PROFILE", a
-	    complete SIP URI must be specified.
+			If bound to a VoIP account, the to argument is the phone
+			number. In case of calls involving "IP2IP_PROFILE", a
+			complete SIP URI must be specified.
 
-            @param[in] input accountID
-            @param[in] input callID
-	    @param[in] input to
+				@param[in] input accountID
+				@param[in] input callID
+			@param[in] input to
         -->
-      <arg type="s" name="accountID" direction="in" />
-      <arg type="s" name="callID" direction="in" />
-      <arg type="s" name="to" direction="in" />
-    </method>
+
+		<method name="placeCall">
+			<arg type="s" name="accountID" direction="in"/>
+			<arg type="s" name="callID" direction="in" />
+			<arg type="s" name="to" direction="in" />
+		</method>
 
     <method name="placeCallFirstAccount">
       <arg type="s" name="callID" direction="in"/>

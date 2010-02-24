@@ -606,5 +606,4 @@ guint dbus_get_window_position_y (void);
 void dbus_set_window_position_x (const guint posx);
 void dbus_set_window_position_y (const guint posy);
 
-
 #endif

@@ -116,5 +116,6 @@
 #define DFT_RECORD_PATH                     HOMEDIR
 #define DFT_WINDOW_WIDTH					"240"
 #define DFT_WINDOW_HEIGHT					"320"
+#define DFT_USERAGENT						"sflphone" //PROGNAME + "/" + SFLPHONED_VERSION	
 
 #endif // __USER_CFG_H__

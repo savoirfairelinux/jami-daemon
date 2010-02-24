@@ -57,6 +57,7 @@
 #define ACCOUNT_ALIAS		           "Account.alias"
 #define ACCOUNT_ENABLED		           "Account.enable"
 #define ACCOUNT_MAILBOX		           "Account.mailbox"
+#define ACCOUNT_USERAGENT	           "useragent"
 #define ACCOUNT_RESOLVE_ONCE               "Account.resolveOnce"
 #define ACCOUNT_REGISTRATION_EXPIRE        "Account.expire"
 #define ACCOUNT_SIP_STUN_SERVER	           "STUN.server"

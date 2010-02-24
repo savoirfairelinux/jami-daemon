@@ -2579,3 +2579,4 @@ void dbus_set_window_position_y (const guint posy) {
         g_error_free (error);
     }
 }
+

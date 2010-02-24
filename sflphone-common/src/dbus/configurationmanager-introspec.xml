@@ -460,7 +460,7 @@
 	<method name="setWindowPositionY">
       <arg type="i" name="posY" direction="in"/>
 	</method>
-		
+	
     <!-- Addressbook configuration -->
     <method name="getAddressbookSettings">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>

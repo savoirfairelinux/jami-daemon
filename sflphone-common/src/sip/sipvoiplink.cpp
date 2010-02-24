@@ -405,11 +405,19 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
 }
 
 
-std::string SIPVoIPLink::get_useragent_name (void)
+std::string SIPVoIPLink::get_useragent_name (const AccountID& id)
 {
-    std::ostringstream  useragent;
+	/*
     useragent << PROGNAME << "/" << SFLPHONED_VERSION;
     return useragent.str();
+	*/
+    std::ostringstream  useragent;
+	
+	useragent << Manager::instance ().getConfigString (id, USERAGENT);
+	if (useragent.str() == "sflphone" || useragent.str() == "")
+		useragent << "/" << SFLPHONED_VERSION;
+
+	return useragent.str ();
 }
 
 void
@@ -592,7 +600,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // Add User-Agent Header
     pj_list_init (&hdr_list);
 
-    useragent = pj_str ( (char*) get_useragent_name ().c_str());
+    useragent = pj_str ( (char*) get_useragent_name (id).c_str());
 
     h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 

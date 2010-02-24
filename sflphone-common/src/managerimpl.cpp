@@ -2358,6 +2358,8 @@ ManagerImpl::initConfigFile (bool load_user_value, std::string alternate)
 
     _config.addDefaultValue (std::pair<std::string, std::string> (REALM, DEFAULT_REALM));
 
+    _config.addDefaultValue (std::pair<std::string, std::string> (USERAGENT, DFT_USERAGENT));
+
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, DFT_EXPIRE_VALUE));
 
     _config.addDefaultValue (std::pair<std::string, std::string> (CONFIG_ACCOUNT_RESOLVE_ONCE, FALSE_STR));
@@ -3376,6 +3378,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails (const Accou
     a.insert (std::pair<std::string, std::string> (USERNAME, getConfigString (accountID, USERNAME)));
     a.insert (std::pair<std::string, std::string> (PASSWORD, getConfigString (accountID, PASSWORD)));
     a.insert (std::pair<std::string, std::string> (REALM, getConfigString (accountID, REALM)));
+    a.insert (std::pair<std::string, std::string> (USERAGENT, getConfigString (accountID, USERAGENT)));
     a.insert (std::pair<std::string, std::string> (AUTHENTICATION_USERNAME, getConfigString (accountID, AUTHENTICATION_USERNAME)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_MAILBOX, getConfigString (accountID, CONFIG_ACCOUNT_MAILBOX)));
     a.insert (std::pair<std::string, std::string> (CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString (accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
@@ -3572,6 +3575,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
     std::string password;
     std::string realm;
     std::string voicemail_count;
+	std::string ua_name;
 
     if ( (iter = map_cpy.find (AUTHENTICATION_USERNAME)) != map_cpy.end()) {
         authenticationName = iter->second;
@@ -3589,8 +3593,12 @@ void ManagerImpl::setAccountDetails (const std::string& accountID, const std::ma
         realm = iter->second;
     }
 
-    setConfig (accountID, REALM, realm);
+    if ( (iter = map_cpy.find (USERAGENT)) != map_cpy.end()) {
+        ua_name = iter->second;
+    }
 
+    setConfig (accountID, REALM, realm);
+	setConfig (accountID, USERAGENT, ua_name);
     setConfig (accountID, USERNAME, username);
     setConfig (accountID, AUTHENTICATION_USERNAME, authenticationName);
 
