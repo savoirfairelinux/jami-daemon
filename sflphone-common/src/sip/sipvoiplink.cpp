@@ -1025,6 +1025,7 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     // return 1;   // !PJ_SUCCESS
 
     pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendrecv");
+    pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendonly");
 
     attr = pjmedia_sdp_attr_create (_pool, direction.c_str(), NULL);
 
