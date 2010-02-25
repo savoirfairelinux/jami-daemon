@@ -327,6 +327,9 @@ accounts_changed_cb (DBusGProxy *proxy UNUSED,
     // Update the status bar in case something happened
     // Should fix ticket #1215
     status_bar_display_account();
+
+	// Update the tooltip on the status icon
+	statusicon_set_tooltip ();
 }
 
 
@@ -2576,3 +2579,4 @@ void dbus_set_window_position_y (const guint posy) {
         g_error_free (error);
     }
 }
+

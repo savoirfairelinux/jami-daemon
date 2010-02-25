@@ -72,6 +72,7 @@ typedef enum RegistrationState {
 #define PASSWORD                            "password"
 #define REALM                               "realm"
 #define DEFAULT_REALM                       "*"
+#define USERAGENT							"useragent"
 
 #define LOCAL_INTERFACE                     "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"

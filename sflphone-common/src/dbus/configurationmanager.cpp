@@ -868,5 +868,3 @@ void ConfigurationManager::setWindowPositionY (const int32_t& posY) {
 
 	Manager::instance ().setConfig (PREFERENCES, WINDOW_POSITION_Y, posY);
 }
-
-

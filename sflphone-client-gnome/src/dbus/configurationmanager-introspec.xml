@@ -162,6 +162,8 @@
     <method name="addAccount">
       <!--* Add a new account to the SFLphone-daemon list. If no
 	    details are specified, default parameters are used.
+	    A REGISTER is automatically sent and configuration is
+	    saved if account created successfully.
 
             @param[in] input details
             @param[out] output accountID
@@ -458,7 +460,7 @@
 	<method name="setWindowPositionY">
       <arg type="i" name="posY" direction="in"/>
 	</method>
-		
+	
     <!-- Addressbook configuration -->
     <method name="getAddressbookSettings">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>

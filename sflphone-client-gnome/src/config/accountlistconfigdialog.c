@@ -39,7 +39,6 @@ GtkListStore * accountStore;
 
 GtkDialog * accountListDialog = NULL;
 
-
 account_t * selectedAccount = NULL;      
 // Account properties
 enum {
@@ -54,9 +53,7 @@ enum {
 /**
  * Fills the treelist with accounts
  */
-	void
-account_list_config_dialog_fill()
-{
+void account_list_config_dialog_fill() {
 
 	if (accountListDialog == NULL) {
 		DEBUG("Dialog is not opened");
@@ -536,7 +533,7 @@ show_account_list_config_dialog(void)
 	gtk_widget_show(status_bar);
 	gtk_box_pack_start(GTK_BOX(accountListDialog->vbox ), status_bar, TRUE, TRUE, 0);
 
-	int number_accounts = account_list_get_size();
+	int number_accounts = account_list_get_registered_accounts ();
 	if (number_accounts) {
 		gchar * message = g_strdup_printf(n_("There is %d active account",
 					"There are %d active accounts", number_accounts),

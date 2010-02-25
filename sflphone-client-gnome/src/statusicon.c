@@ -156,14 +156,23 @@ show_status_icon()
 			  G_CALLBACK (menu),
 			  create_menu());			  
 
-  // Add a tooltip to the system tray icon
-  int count = account_list_get_size();
-  gchar *tip =  g_markup_printf_escaped ("%s - %s" , 
-                       _("SFLphone"), 
-                       g_markup_printf_escaped(n_("%i account configured", "%i accounts configured", count),count));
-  gtk_status_icon_set_tooltip( status , tip );
-  g_free(tip);
+  statusicon_set_tooltip ();
 }
+
+void statusicon_set_tooltip () {
+
+	int count;
+	gchar *tip;
+
+	// Add a tooltip to the system tray icon
+	count = account_list_get_registered_accounts ();
+	tip =  g_markup_printf_escaped ("%s - %s" ,
+									_("SFLphone"),
+									g_markup_printf_escaped(n_("%i active account", "%i active accounts", count),count));
+	gtk_status_icon_set_tooltip (status, tip);
+	g_free(tip);
+}
+
 
 void status_tray_icon_blink (gboolean active)
 {

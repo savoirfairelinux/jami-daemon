@@ -5,10 +5,10 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/libs/dbus-c++/include \
 	-I$(top_builddir)/libs/dbus-c++/include
 
-if ENABLE_GLIB
-GLIB_H = $(HEADER_DIR)/glib-integration.h
-GLIB_CPP = glib-integration.cpp
-endif
+#if ENABLE_GLIB
+#GLIB_H = $(HEADER_DIR)/glib-integration.h
+#GLIB_CPP = glib-integration.cpp
+#endif
 
 CONFIG_H = $(top_builddir)/libs/dbus-c++/include/dbus-c++/config.h
 

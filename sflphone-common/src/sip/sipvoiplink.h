@@ -280,7 +280,7 @@ class SIPVoIPLink : public VoIPLink
         
         bool new_ip_to_ip_call (const CallID& id, const std::string& to);
 
-        std::string get_useragent_name (void);
+        std::string get_useragent_name (const AccountID& id);
 
         /** 
          * List all the interfaces on the system and return 

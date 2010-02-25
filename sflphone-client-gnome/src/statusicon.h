@@ -85,6 +85,11 @@ void status_tray_icon_blink( gboolean active );
  */
 GtkStatusIcon* get_status_icon( void );
 
+/**
+ * Attach a tooltip to the status icon
+ */
+void statusicon_set_tooltip (void);
+
 #endif // GTK_CHECK_VERSION
 
 #endif
