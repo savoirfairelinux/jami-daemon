@@ -14,7 +14,7 @@ B<sflphoned> is the core of SFLphone; it communicates with the client side throu
 
 =head1 BUGS
 
-Please report bugs  at http://dev.savoirfairelinux.net/sflphone/newticket.
+Please report bugs at https://projects.savoirfairelinux.com/projects/sflphone/issues/new.
 
 =head1 AUTHORS
 
