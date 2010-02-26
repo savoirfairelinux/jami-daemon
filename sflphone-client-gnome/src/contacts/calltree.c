@@ -376,33 +376,26 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gch
 
 	    if(g_strcmp0("", c->_peer_name) == 0) {
 	        description = g_markup_printf_escaped("<b>%s</b><i>%s</i>",
-						      display_number, 
-						      c->_peer_name);
+						      display_number, c->_peer_name);
 	    }
 	    else {
 	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-						      c->_peer_name,
-						      display_number);
+						      c->_peer_name, display_number);
 	    }
 
 	}
 	else {
 	    if(g_strcmp0("", c->_peer_name) == 0) {
 	        description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>",
-						      display_number,
-						      c->_peer_name,
-						      c->_state_code_description,
-						      c->_state_code);
+						      display_number, c->_peer_name,
+						      c->_state_code_description, c->_state_code);
 	    }
 	    else {
 	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>",
-						      c->_peer_name,
-						      display_number,
-						      c->_state_code_description,
-						      c->_state_code);
+						      c->_peer_name, display_number,
+						      c->_state_code_description, c->_state_code);
 	    }
 	}
-
 	break;
 
 
@@ -412,17 +405,12 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gch
 
         if(g_strcmp0("",c->_peer_name) == 0){
 	    description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>Transfert to:%s</i> ",
-						  display_number,
-						  c->_peer_name,
-						  c->_trsft_to);
+						  display_number, c->_peer_name, c->_trsft_to);
 	}
 	else {
 	    description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Transfert to:%s</i> ",
-						  c->_peer_name,
-						  display_number,
-						  c->_trsft_to);
-	}
-	
+						  c->_peer_name, display_number, c->_trsft_to);
+	}	
 	break;
 
 
@@ -435,31 +423,23 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gch
 	    if (c->_state_code) {
 
 	        description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
-						      display_number,
-						      c->_peer_name,
-						      c->_state_code_description,
-						      c->_state_code,
+						      display_number, c->_peer_name,
+						      c->_state_code_description, c->_state_code,
 						      audio_codec);
 	    } else {
 	        description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>%s</i>",
-						      display_number,
-						      c->_peer_name,
-						      audio_codec);
+						      display_number, c->_peer_name, audio_codec);
 	    }
 	}
 	else {
 	    if (c->_state_code) {
 	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s (%d)</i>  <i>%s</i>",
-						      c->_peer_name,
-						      display_number,
-						      c->_state_code_description,
-						      c->_state_code,
+						      c->_peer_name, display_number, 
+						      c->_state_code_description, c->_state_code,
 						      audio_codec);
 	    } else {
 	        description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>%s</i>",
-						      c->_peer_name,
-						      display_number,
-						      audio_codec);
+						      c->_peer_name, display_number, audio_codec);
 	    }
 	}
 	break;
@@ -468,35 +448,27 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gch
 
         DEBUG("display a call with sas");
 
-        if(g_strcmp0("",c->_peer_name) == 0){
+        if(g_strcmp0("", c->_peer_name) == 0){
 	    description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
-						  display_number,
-						  c->_peer_name,
-						  c->_sas);
+						  display_number, c->_peer_name, c->_sas);
 	}
 	else {
-
 	  description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>\n<i>Confirm SAS <b>%s</b> ?</i> ",
-						c->_peer_name,
-						display_number,
-						c->_sas);
+						c->_peer_name, display_number, c->_sas);
 	}
+	break;
 
     case DISPLAY_TYPE_HISTORY :
 
         DEBUG("display history entry");
 
         if(g_strcmp0("", c->_peer_name) == 0) {
-
 	    description = g_markup_printf_escaped("<b>%s</b><i>%s</i>",
-			display_number,
-			c->_peer_name);
+						  display_number, c->_peer_name);
 	}
 	else {
-
 	  description = g_markup_printf_escaped("<b>%s</b>   <i>%s</i>",
-			c->_peer_name,
-			display_number);
+						c->_peer_name, display_number);
 	}
 	break;
 
@@ -764,11 +736,8 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	    else {
 
 	        if((c->_sas != NULL) && (display_sas == TRUE) && (c->_srtp_state == SRTP_STATE_ZRTP_SAS_UNCONFIRMED) && (c->_zrtp_confirmed == FALSE)) {
-
 		    calltree_display_call_info(c, DISPLAY_TYPE_SAS, NULL, &description);
-				  
 		} else {
-
 		    calltree_display_call_info(c, DISPLAY_TYPE_STATE_CODE, audio_codec, &description);		    
 		}
 	    }
@@ -839,9 +808,7 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 		}
 	
 	    }
-
-	    if(tab == history) {
-
+	    else if(tab == history) {
 	        switch(c->_history_state) {
 		case INCOMING:
 		    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
