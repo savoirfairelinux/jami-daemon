@@ -44,7 +44,7 @@ ZrtpSessionCallback::ZrtpSessionCallback (SIPCall *sipcall) :
         return;
     }
 
-    _debug ("Initialize callbacks");
+    _info("Zrtp: Initialize callbacks");
 
     /**
      * Information Map
@@ -114,30 +114,32 @@ ZrtpSessionCallback::ZrtpSessionCallback (SIPCall *sipcall) :
 void
 ZrtpSessionCallback::secureOn (std::string cipher)
 {
-    _debug ("Secure mode is on with cipher %s", cipher.c_str());
+    _debug ("Zrtp: Secure mode is on with cipher %s", cipher.c_str());
     DBusManager::instance().getCallManager()->secureZrtpOn (_sipcall->getCallId(), cipher);
 }
 
 void
 ZrtpSessionCallback::secureOff (void)
 {
-    _debug ("Secure mode is off");
+    _debug ("Zrtp: Secure mode is off");
     DBusManager::instance().getCallManager()->secureZrtpOff (_sipcall->getCallId());
 }
 
 void
 ZrtpSessionCallback::showSAS (std::string sas, bool verified)
 {
-    _debug ("SAS is: %s", sas.c_str());
+    _debug ("Zrtp: SAS is: %s", sas.c_str());
     DBusManager::instance().getCallManager()->showSAS (_sipcall->getCallId(), sas, verified);
 }
+
 
 void
 ZrtpSessionCallback::zrtpNotSuppOther()
 {
-    _debug ("Callee does not support ZRTP");
+    _debug ("Zrtp: Callee does not support ZRTP");
     DBusManager::instance().getCallManager()->zrtpNotSuppOther (_sipcall->getCallId());
 }
+
 
 void
 ZrtpSessionCallback::showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t subCode)
@@ -192,9 +194,9 @@ ZrtpSessionCallback::zrtpNegotiationFailed (MessageSeverity severity, int subCod
     if (severity == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
             subCode *= -1;
-            _debug ("Received error packet: ");
+            _debug ("Zrtp: Received error packet: ");
         } else {
-            _debug ("Sent error packet: ");
+            _debug ("Zrtp: Sent error packet: ");
         }
 
         msg = _zrtpMap[subCode];
@@ -213,7 +215,7 @@ ZrtpSessionCallback::zrtpNegotiationFailed (MessageSeverity severity, int subCod
 void
 ZrtpSessionCallback::confirmGoClear()
 {
-    _debug ("Received go clear message. Until confirmation, ZRTP won't send any data");
+    _debug ("Zrtp: Received go clear message. Until confirmation, ZRTP won't send any data");
     DBusManager::instance().getCallManager()->zrtpNotSuppOther (_sipcall->getCallId());
 }
 
