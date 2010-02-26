@@ -239,7 +239,7 @@
 			<title>Registration</title>
 				<para>You may set the expires header for a contact.</para>
 				<para>It basically represents the duration your registration will remain active. If you don't register again within that time, calls will no longer be routed to you. It should not be used as a keepalive mechanism though. The default value is 600 seconds (ten minutes).</para>
-				<note>Some VoIP services requires that you set this value at at least 1600 seconds (e.g. the French VoIP server freephonie.net).
+				<note><para>Some VoIP services requires that you set this value at at least 1600 seconds (e.g. the French VoIP server freephonie.net).</para>
 				</note>
 		</sect3>
 		<sect3 id="accounts_stun">
@@ -258,11 +258,11 @@
 						<term><guilabel>Set published address and port</guilabel></term>
 						<listitem>
 						<itemizedlist>
-							<listitem>Using STUN
+							<listitem><para>Using STUN</para>
 							<para>If enabled, the core will try to initialize an UDP transport on the mapped address/port number that the NAT (Network Address Translator) has allocated to <application>SFLphone</application>.</para></listitem>
-							<listitem>Same as local parameters
+							<listitem><para>Same as local parameters</para>
 							</listitem>
-							<listitem>Manually
+							<listitem><para>Manually</para>
 							</listitem>
 						</itemizedlist>
 						</listitem>
@@ -304,7 +304,7 @@
 
 	<para>The following features are available with both SIP and IAX2 accounts.</para>
 
-	<sect2 label="Dialing a number">
+	<sect2><title>Dialing a number</title>
 	<!-- ==== Figure ==== -->
         <figure id="dial-fig">
             <title>Dial button</title>
@@ -333,11 +333,11 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <accel>NUMPAD</accel> or almost any keys.</para>	
+		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>NUMPAD</accel></guimenuitem> or almost any keys.</para>	
 
 	</sect2>
 	
-	<sect2 label="Calling a number">
+	<sect2><title>Calling a number</title>
 
 	<!-- ==== Figure ==== -->
         <figure id="call-fig">
@@ -352,11 +352,11 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <accel>Enter</accel>.</para>	
+		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>Enter</accel></guimenuitem>.</para>	
 
 	</sect2>
 
-	<sect2 label="Answering a call">
+	<sect2><title>Answering a call</title>
 	<!-- ==== Figure ==== -->
         <figure id="answer-fig">
             <title>Answer button</title>
@@ -370,10 +370,10 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <accel>Enter</accel>.</para>	
+		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>Enter</accel></guimenuitem>.</para>	
 	</sect2>
 
-	<sect2 label="Hanging up a call">
+	<sect2><title>Hanging up a call</title>
 	<!-- ==== Figure ==== -->
         <figure id="hangup-fig">
             <title>Hangup button</title>
@@ -387,10 +387,10 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <accel>ESC</accel>.</para>	
+		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>ESC</accel></guimenuitem>.</para>	
 	</sect2>
 
-	<sect2 label="Refusing a call">
+	<sect2><title>Refusing a call</title>
 
 	<para>When you refuse a call, your caller is automatically redirected to your voicemail box, if applicable.</para>
 
@@ -407,11 +407,11 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-		<para>Keyboard shortcut to perform this action: <accel>ESC</accel>.</para>	
+		<para>Keyboard shortcut to perform this action: <guimenuitem><accel>ESC</accel></guimenuitem>.</para>	
     </sect2>
 
 
-	<sect2 label="Holding on/off a call">
+	<sect2><title>Holding on/off a call</title>
 		<!-- ==== Figure ==== -->
         <figure id="holdon-fig">
             <title>Hold on button</title>
@@ -438,7 +438,7 @@
         <!-- ==== End of Figure ==== -->
 	</sect2>
 
-	<sect2 label="Transfering a call">
+	<sect2><title>Transfering a call</title>
 	<!-- ==== Figure ==== -->
         <figure id="transfer-fig">
             <title>Transfer button</title>
@@ -466,11 +466,11 @@
         </figure>
         <!-- ==== End of Figure ==== -->
 
-	<para>And press <accel>Enter</accel>. Clicking again on the transfer button cancels the transfer.</para>
+	<para>And press <guimenuitem><accel>Enter</accel></guimenuitem>. Clicking again on the transfer button cancels the transfer.</para>
 
 	</sect2>
 
-	<sect2 label="Record a call">
+	<sect2><title>Record a call</title>
 	
 	<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Audio</guimenuitem></menuchoice> to configure the recordings destination folder.</para>
 
@@ -501,9 +501,9 @@
         <!-- ==== End of Figure ==== -->
     </sect2>
 
-	<sect2 label="Voicemail quick dial">
+	<sect2><title>Voicemail quick dial</title>
 	
-	<caution>This feature is available only if you fill out the voicemail number information for your default account.</caution>
+	<caution><para>This feature is available only if you fill out the voicemail number information for your default account.</para></caution>
 
     <!-- ==== Figure ==== -->
         <figure id="voicemail-fig">
@@ -520,7 +520,7 @@
     </sect2>
 
 
-	<sect2 id="directip" label="Direct IP calls">
+	<sect2 id="directip"><title>Direct IP calls</title>
 		<para>A direct IP call is a call established between two peers without any accounts. When dialing, such a call must prefixed with <guilabel>sip:</guilabel>.</para>
 
 		<para>Direct IP calls use SIP protocol to establish communication and RTP to transport data. It is right now not available with IAX2.</para>
@@ -528,14 +528,14 @@
 		<para>Go to <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>  <guimenuitem>Direct IP calls</guimenuitem></menuchoice> to configure the advanced security features for this kind of calls.</para>
 	</sect2>
 
-	<sect2 id="conferencecall" label="Conference calls">
+	<sect2 id="conferencecall"><title>Conference calls</title>
 	<para>SFLphone now supports conference call hosting
         integrating server like features in a simple GUI.
         </para>
         <para>
           <itemizedlist>
             <listitem>
-              <guilabel>Create a conference</guilabel>
+	      <para><guilabel>Create a conference</guilabel></para>
               <para>To host a conference, simply drag and drop one call
             on another. Additional participants are
             added the same way, dragging a call on the
@@ -567,7 +567,7 @@
                <!-- ==== End of Figure ==== -->
             </listitem>
             <listitem>
-              <guilabel>Leave a conference</guilabel>
+	      <para><guilabel>Leave a conference</guilabel></para>
               <para>
             SFLphone conference model let you leave a conference that
             you are currently hosting to answer any other incoming
@@ -601,7 +601,7 @@
                <!-- ==== End of Figure ==== -->
             </listitem>
             <listitem>
-              <guilabel>Multiple conference</guilabel>
+	      <para><guilabel>Multiple conference</guilabel></para>
               <para>
             SFLphone supports multiple conferences running
             simultaneously. Two conferences can be joined the same way
@@ -610,7 +610,7 @@
               </para>
             </listitem>
             <listitem>
-              <guilabel>Hangup/Hold a conference</guilabel>
+              <para><guilabel>Hangup/Hold a conference</guilabel></para>
               <para>
             Select the conference icon and press hangup/hold button
             on the toolbar. The selected action is applied on every
@@ -720,10 +720,11 @@
 								</varlistentry>
 							</variablelist>
                 </sect3>
-			</sect2>
-            <sect2 id="accounts_tls">
+		</sect2>
+		<sect2 id="accounts_tls">
                         <title>TLS</title>
-            </sect2>
+			<para>TODO</para>
+		</sect2>
 </sect1>
 
 
@@ -734,12 +735,12 @@
 		ALSA and PulseAudio native interfaces are available.
 	</para> 
 
-    <sect2 label="Pulseaudio">
+    <sect2><title>Pulseaudio</title>
         <para>
         </para>
     </sect2>
 
-    <sect2 label="ALSA">
+    <sect2><title>ALSA</title>
         <para>
         </para>
     </sect2>
@@ -751,27 +752,27 @@
         <para>
           <itemizedlist>
             <listitem>
-              <guilabel>PCMU/PCMA</guilabel>
+              <para><guilabel>PCMU/PCMA</guilabel></para>
                 <para>
 		  ITU-T telephony standard PCM formats, 8kHz, 64
 		  kbit/s, using logarithmic byte compression algorithm.
                 </para>
             </listitem>
             <listitem>
-              <guilabel>GSM</guilabel>
+              <para><guilabel>GSM</guilabel></para>
               <para>
 		Global System for Mobile communications (GSM)
 		narrowband 8kHz standard based on linear prediction encoding.
               </para>
             </listitem>
             <listitem>
-              <guilabel>G722</guilabel>
+              <para><guilabel>G722</guilabel></para>
               <para>
 		ITU-T standard wideband 16kHz standard based on linear prediction.
               </para>
             </listitem>
             <listitem>
-              <guilabel>SPEEX</guilabel>
+              <para><guilabel>SPEEX</guilabel></para>
               <para>
 		High quality voice encoding/decoding available
 		in narrowband 8kHz, wideband 16kHz (HD Voice), 
@@ -781,7 +782,7 @@
               </para>
             </listitem>
             <listitem>
-              <guilabel>CELT</guilabel>
+              <para><guilabel>CELT</guilabel></para>
               <para>
 		
               </para>
@@ -827,9 +828,9 @@
 				<listitem><para>
 					You may use one or all of these following information from your contact.</para>
 					<itemizedlist>
-						<listitem>Work phone number</listitem>
-						<listitem>Home phone number</listitem>
-						<listitem>Mobile phone number</listitem>
+						<listitem><para>Work phone number</para></listitem>
+						<listitem><para>Home phone number</para></listitem>
+						<listitem><para>Mobile phone number</para></listitem>
 					</itemizedlist>
 				</listitem>
 			</varlistentry>
@@ -876,7 +877,7 @@
 	<sect2>
 		<title>General</title>
 		<para>This section provides the user general settings regarding the application.</para>
-		<sect3 label="Desktop Notifications">
+		<sect3><title>Desktop Notifications</title>
 			<!-- ==== Figure ==== -->
         <figure id="desktop-notif-settings-fig">
             <title>Desktop notifications options</title>
@@ -931,7 +932,7 @@
 			</variablelist>
 		</sect3>
 
-		<sect3 label="System Tray Icon">
+		<sect3><title>System Tray Icon</title>
 			<!-- ==== Figure ==== -->
         <figure id="systemtray-settings-fig">
             <title>System tray options</title>
@@ -971,7 +972,7 @@
 		</sect3>
 
 
-		<sect3 label="Calls history">
+		<sect3><title>Calls history</title>
 			    <!-- ==== Figure ==== -->
         	<figure id="callshistory-settings-fig">
             	<title>Calls history options</title>
@@ -995,7 +996,7 @@
 			</variablelist>
 		</sect3>
 
-		<sect3 label="Configuration File">
+		<sect3><title>Configuration File</title>
 			   <!-- ==== Figure ==== -->
             <figure id="configfile-settings-fig">
                 <title>Configuration file options</title>
@@ -1024,6 +1025,7 @@
 
 	<sect2>
 		<title>Audio</title>
+		<para>TODO</para>
 	</sect2>
 
 	<sect2>
@@ -1034,10 +1036,12 @@
 
 	<sect2>
 		<title>Hooks</title>	
+		<para>TODO</para>
 	</sect2>
 
 	<sect2>
 		<title>Network</title>	
+		<para>TODO</para>
 	</sect2>
 
 	<sect2>
