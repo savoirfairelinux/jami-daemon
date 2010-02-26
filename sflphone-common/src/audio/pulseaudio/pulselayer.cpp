@@ -58,7 +58,7 @@ static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
 static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
 {
     _debug ("Audio: Buffer Underflow");
-
+    pa_stream_trigger (s, NULL, NULL);
 }
 
 
@@ -292,7 +292,6 @@ bool PulseLayer::disconnectAudioStream (void)
     _info("Audio: Disconnect audio stream");
 
     closePlaybackStream();
-
     closeCaptureStream();
 
     if (!playback && !record)
@@ -305,7 +304,6 @@ bool PulseLayer::disconnectAudioStream (void)
 void PulseLayer::closeCaptureStream (void)
 {
     if (record) {
-
         delete record;
         record=NULL;
     }
@@ -315,7 +313,6 @@ void PulseLayer::closeCaptureStream (void)
 void PulseLayer::closePlaybackStream (void)
 {
     if (playback) {
-
         delete playback;
         playback=NULL;
     }
@@ -360,8 +357,11 @@ PulseLayer::stopStream (void)
 {
 
 	_info("Audio: Stop audio stream");
-	pa_stream_flush (playback->pulseStream(), NULL, NULL);
-	pa_stream_flush (record->pulseStream(), NULL, NULL);
+	if(playback)
+	    pa_stream_flush (playback->pulseStream(), NULL, NULL);
+
+	if(record)
+	    pa_stream_flush (record->pulseStream(), NULL, NULL);
 
 	disconnectAudioStream();
 }
