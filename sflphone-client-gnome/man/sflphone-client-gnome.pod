@@ -18,7 +18,7 @@ Please report bugs at https://projects.savoirfairelinux.com/projects/sflphone/is
 
 =head1 AUTHORS
 
-B<sflphone-client-gnome> is developed in Montreal by Savoir-Faire Linux Inc. The active developers are Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> and Yun Liu <yun.liu@savoirfairelinux.com>.
+B<sflphone-client-gnome> is developed in Montreal by Savoir-Faire Linux Inc.
 
 This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>.
 
