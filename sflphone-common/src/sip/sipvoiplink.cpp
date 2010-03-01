@@ -1020,7 +1020,7 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     local_sdp = call->getLocalSDP()->get_local_sdp_session();
 
     if (local_sdp == NULL) {
-        _debug ("! SIP Failure: unable to find local_sdp");
+        _debug ("SIP: Error: unable to find local sdp");
         return !PJ_SUCCESS;
     }
 
@@ -3142,7 +3142,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 // This callback is called after SDP offer/answer session has completed.
 void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 {
-    _debug ("UserAgent: call_on_media_update");
+    _debug ("UserAgent: Call on media update");
 
     const pjmedia_sdp_session *local_sdp;
     const pjmedia_sdp_session *remote_sdp;
@@ -3153,19 +3153,19 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
 
     if (!call) {
-        _debug ("Call declined by peer, SDP negociation stopped");
+        _debug ("UserAgent: Call declined by peer, SDP negociation stopped");
         return;
     }
 
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
 
     if (link == NULL) {
-        _debug ("Failed to get sip link");
+        _warn ("UserAgent: Error: Failed to get sip link");
         return;
     }
 
     if (status != PJ_SUCCESS) {
-        _debug ("Error while negotiating the offer");
+        _warn ("UserAgent: Error: while negotiating the offer");
         link->hangup (call->getCallId());
         Manager::instance().callFailure (call->getCallId());
         return;
@@ -3198,39 +3198,39 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         
     }
 
+
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
     call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, crypto_offer);
 
-
     bool nego_success = false;
     if(!crypto_offer.empty()) {
 
-        _debug("Crypto attribute in SDP: init Srtp session");
+    	_debug("Crypto attribute in SDP: init Srtp session");
 
-	// init local cryptografic capabilities for negotiation
-	std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
-	for(int i = 0; i < 3; i++) {
-	    localCapabilities.push_back(sfl::CryptoSuites[i]);
-	}
+    	// init local cryptografic capabilities for negotiation
+    	std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+    	for(int i = 0; i < 3; i++) {
+    		localCapabilities.push_back(sfl::CryptoSuites[i]);
+		}
 
-	sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+		sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 	
-	if(sdesnego.negotiate()) {
-	    _debug("SDES negociation successfull \n");
-	    nego_success = true;
+		if(sdesnego.negotiate()) {
+			_debug("SDES negociation successfull \n");
+			nego_success = true;
 
             _debug("Set remote cryptographic context\n");
             try {
-		call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
+            	  call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
             }
             catch(...) {}
 
-	    DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
-	}
-	else {
-	    DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
-	}
+            DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
+		}
+		else {
+			DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
+		}
     }
 
     // We did not found any crypto context for this media
@@ -3255,6 +3255,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         // enabled for this call, make a try using RTP only...
         _debug("Sdes not initialized for this call\n");
     }
+
 
     try {
         call->setAudioStart (true);

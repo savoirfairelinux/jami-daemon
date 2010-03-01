@@ -150,7 +150,6 @@ ZrtpSessionCallback::showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t sub
         msg = _infoMap[subCode];
 
         if (msg != NULL) {
-            _debug ("ZRTP Debug:");
         }
     }
 
@@ -158,7 +157,6 @@ ZrtpSessionCallback::showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t sub
         msg = _warningMap[subCode];
 
         if (msg != NULL) {
-            _debug ("ZRTP Debug:");
         }
     }
 
@@ -166,9 +164,10 @@ ZrtpSessionCallback::showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t sub
         msg = _severeMap[subCode];
 
         if (msg != NULL) {
-            _debug ("ZRTP Debug:");
         }
     }
+
+
 
     if (sev == ZrtpError) {
         if (subCode < 0) {  // received an error packet from peer
@@ -181,7 +180,7 @@ ZrtpSessionCallback::showMessage (GnuZrtpCodes::MessageSeverity sev, int32_t sub
         msg = _zrtpMap[subCode];
 
         if (msg != NULL) {
-            _debug ("ZRTP Debug: %s", msg->c_str());
+
         }
     }
 }

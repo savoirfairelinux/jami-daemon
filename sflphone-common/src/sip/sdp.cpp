@@ -489,9 +489,6 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
 
             pjmedia_sdp_attr_to_rtpmap (_pool, attribute, &rtpmap);
 
-            // _debug("================== set_negociated_offer ===================== %i", pj_strtoul(&rtpmap->pt));
-            // _debug("================== set_negociated_offer ===================== %s", current->desc.fmt[j].ptr);
-            // _debug("================== set_negociated_offer ===================== %i", atoi(current->desc.fmt[j].ptr));
             iter = codecs_list.find ( (AudioCodecType) pj_strtoul (&rtpmap->pt));
 
             if (iter==codecs_list.end())
@@ -627,7 +624,7 @@ void Sdp::set_remote_ip_from_sdp (const pjmedia_sdp_session *r_sdp)
 {
 
     std::string remote_ip (r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
-    _debug ("            Remote IP from fetching SDP: %s", remote_ip.c_str());
+    _info ("SDP: Remote IP from fetching SDP: %s",  remote_ip.c_str());
     this->set_remote_ip (remote_ip);
 }
 
@@ -637,21 +634,21 @@ void Sdp::set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media)
     int remote_port;
 
     remote_port = r_media->desc.port;
-    _debug ("            Remote Audio Port from fetching SDP: %d", remote_port);
+    _info ("SDP: Remote Audio Port from fetching SDP: %d", remote_port);
     this->set_remote_audio_port (remote_port);
 }
 
 void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *remote_sdp)
 {
 
-    _debug ("Fetching media from sdp");
+    _info ("SDP: Fetching media from sdp");
 
     pjmedia_sdp_media *r_media;
 
     this->get_remote_sdp_media_from_offer (remote_sdp, &r_media);
 
     if (r_media==NULL) {
-        _debug ("SDP Failure: no remote sdp media found in the remote offer");
+        _warn ("SDP: Error: no remote sdp media found in the remote offer");
         return;
     }
 

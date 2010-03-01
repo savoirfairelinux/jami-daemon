@@ -38,7 +38,6 @@ AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, co
 {
     _debug ("AudioZrtpSession initialized");
     initializeZid();
-    // startZrtp();
 }
 
 void AudioZrtpSession::initializeZid (void)
