@@ -461,6 +461,15 @@
       <arg type="i" name="posY" direction="in"/>
 	</method>
 	
+	<method name="enableStatusIcon">
+      <arg type="s" name="value" direction="in"/>
+	</method>
+		
+	<method name="isStatusIconEnabled">
+      <arg type="s" name="value" direction="out"/>
+	</method>
+	
+	
     <!-- Addressbook configuration -->
     <method name="getAddressbookSettings">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>

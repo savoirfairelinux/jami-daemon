@@ -868,3 +868,13 @@ void ConfigurationManager::setWindowPositionY (const int32_t& posY) {
 
 	Manager::instance ().setConfig (PREFERENCES, WINDOW_POSITION_Y, posY);
 }
+
+void ConfigurationManager::enableStatusIcon (const std::string& value) {
+
+	Manager::instance ().setConfig (PREFERENCES, SHOW_STATUSICON, value);
+}
+
+std::string ConfigurationManager::isStatusIconEnabled (void) {
+
+	return Manager::instance ().getConfigString (PREFERENCES, SHOW_STATUSICON);
+}
