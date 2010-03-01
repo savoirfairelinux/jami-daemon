@@ -63,27 +63,27 @@ namespace sfl {
 
 	void initAudioRtpConfig(SIPCall *ca);
 
-        /**
-         * Lazy instantiation method. Create a new RTP session of a given 
-         * type according to the content of the configuration file. 
-         * @param ca A pointer on a SIP call
-         * @return A new AudioRtpSession object
-         */
-        void initAudioRtpSession(SIPCall *ca);
-        
-        /**
-         * Start the audio rtp thread of the type specified in the configuration
-         * file. initAudioRtpSession must have been called prior to that.
-         * @param None
-         */
-        void start();
-     
-         /**
-         * Stop the audio rtp thread of the type specified in the configuration
-         * file. initAudioRtpSession must have been called prior to that.
-         * @param None
-         */
-        void stop();
+	/**
+	 * 	Lazy instantiation method. Create a new RTP session of a given
+	 * type according to the content of the configuration file.
+	 * @param ca A pointer on a SIP call
+	 * @return A new AudioRtpSession object
+	 */
+	void initAudioRtpSession(SIPCall *ca);
+
+	/**
+	 * Start the audio rtp thread of the type specified in the configuration
+	 * file. initAudioRtpSession must have been called prior to that.
+	 * @param None
+	 */
+	void start();
+
+	/**
+	 * Stop the audio rtp thread of the type specified in the configuration
+	 * file. initAudioRtpSession must have been called prior to that.
+	 * @param None
+	 */
+	void stop();
 
 	/**
          * Update current RTP destination address with one stored in call 
