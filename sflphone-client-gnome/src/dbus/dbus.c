@@ -2580,3 +2580,32 @@ void dbus_set_window_position_y (const guint posy) {
     }
 }
 
+
+void dbus_enable_status_icon (const gchar *value) {
+
+       GError *error = NULL;
+
+       org_sflphone_SFLphone_ConfigurationManager_enable_status_icon (configurationManagerProxy, value, &error);
+
+       if (error != NULL) {
+           ERROR ("Failed to call enable_status_icon on ConfigurationManager: %s",
+           error->message);
+           g_error_free (error);
+       }
+}
+
+gchar* dbus_is_status_icon_enabled (void) {
+
+       GError *error = NULL;
+       gchar* value = TRUE;
+
+       org_sflphone_SFLphone_ConfigurationManager_is_status_icon_enabled (configurationManagerProxy, &value, &error);
+
+       if (error != NULL) {
+           ERROR ("Failed to call is_status_icon_enabled on ConfigurationManager: %s",
+           error->message);
+           g_error_free (error);
+       }
+       return value;
+}
+

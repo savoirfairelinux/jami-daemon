@@ -36,9 +36,15 @@
 void popup_main_window (void);
 
 /**
- * Create the status icon 
+ * Create the system tray icon
  */
-void show_status_icon();
+void show_status_icon ();
+
+
+/**
+ * Hide the system tray icon
+ */
+void hide_status_icon ();
 
 /**
  * Set the menu active 

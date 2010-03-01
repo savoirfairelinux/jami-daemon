@@ -1,4 +1,4 @@
-#Tue Feb 23 14:32:32 EST 2010
+#Fri Feb 26 15:32:40 EST 2010
 eclipse.preferences.version=1
 org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=16
 org.eclipse.cdt.core.formatter.alignment_for_base_clause_in_type_declaration=80
@@ -124,8 +124,8 @@ org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_catch=insert
 org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_exception_specification=insert
 org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_for=insert
 org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_if=insert
-org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_method_declaration=do not insert
-org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_method_invocation=do not insert
+org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_method_declaration=insert
+org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_method_invocation=insert
 org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_parenthesized_expression=do not insert
 org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_switch=insert
 org.eclipse.cdt.core.formatter.insert_space_before_opening_paren_in_while=insert

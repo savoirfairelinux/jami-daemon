@@ -64,6 +64,8 @@
 #define WINDOW_HEIGHT						"Window.height"
 #define WINDOW_POSITION_X					"Window.positionX"
 #define WINDOW_POSITION_Y					"Window.positionY"
+#define SHOW_STATUSICON						"Statusicon.show"
+
 
 #define IP2IP_PROFILE                       "IP2IP"    
 #define SIGNALISATION                       "VoIPLink"	                /** Section Signalisation */
