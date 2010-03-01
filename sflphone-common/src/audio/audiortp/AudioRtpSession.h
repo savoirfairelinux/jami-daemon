@@ -67,10 +67,10 @@ namespace sfl {
             
             int startRtpThread();
 
-	    /**
-	     * Used mostly when receiving a reinvite
-	     */
-	    void updateDestinationIpAddress(void);
+            /**
+             * Used mostly when receiving a reinvite
+             */
+            void updateDestinationIpAddress(void);
 
         private:
         
@@ -104,15 +104,16 @@ namespace sfl {
             // start() with no semaphore at all. 
             ost::Semaphore * _mainloopSemaphore;
 
-	    // Main destination address for this rtp session.
-	    // Stored in case or reINVITE, which may require to forget 
-	    // this destination and update a new one.
-	    ost::InetHostAddress _remote_ip;
+            // Main destination address for this rtp session.
+            // Stored in case or reINVITE, which may require to forget
+            // this destination and update a new one.
+            ost::InetHostAddress _remote_ip;
 
-	    // Main destination port for this rtp session.
-	    // Stored in case reINVITE, which may require to forget
-	    // this destination and update a new one
-	    unsigned short _remote_port;
+
+            // Main destination port for this rtp session.
+            // Stored in case reINVITE, which may require to forget
+            // this destination and update a new one
+            unsigned short _remote_port;
                      
             AudioCodec * _audiocodec;
             
@@ -163,23 +164,23 @@ namespace sfl {
              */
              ManagerImpl * _manager;
 
-	     /**
-	      * Sampling rate of audio converter
-	      */
-	     int _converterSamplingRate;
+             /**
+              * Sampling rate of audio converter
+              */
+             int _converterSamplingRate;
 
-	     /**
-	      * Timestamp for this session
-	      */
-	     int _timestamp;
+             /**
+              * Timestamp for this session
+              */
+             int _timestamp;
 
-	     /**
-	      * Time counter used to trigger incoming call notification
-	      */
-	     int _countNotificationTime;
+             /**
+              * Time counter used to trigger incoming call notification
+              */
+             int _countNotificationTime;
             
         protected:
-            SIPCall * _ca;
+             SIPCall * _ca;
             
     };    
     
@@ -208,7 +209,7 @@ namespace sfl {
 
         assert(_ca);
         
-        _debug ("Local audio port %i will be used", _ca->getLocalAudioPort());
+        _info ("Rtp: Local audio port %i will be used", _ca->getLocalAudioPort());
 
         //mic, we receive from soundcard in stereo, and we send encoded
         _audiolayer = _manager->getAudioDriver();
@@ -223,7 +224,7 @@ namespace sfl {
     template <typename D>
     AudioRtpSession<D>::~AudioRtpSession()
     {
-        _debug ("Delete AudioRtpSession instance");
+        _debug ("Rtp: Delete AudioRtpSession instance");
 
         try {
             terminate();
@@ -232,9 +233,7 @@ namespace sfl {
             throw;
         }
 
-	_debug("Unbind audio RTP stream for call id %s", _ca->getCallId().c_str());
-	// _audiolayer->getMainBuffer()->unBindAll(_ca->getCallId());
-	_manager->getAudioDriver()->getMainBuffer()->unBindAll(_ca->getCallId());
+        _manager->getAudioDriver()->getMainBuffer()->unBindAll(_ca->getCallId());
 
         delete [] _micData;
         delete [] _micDataConverted;
@@ -243,22 +242,21 @@ namespace sfl {
         delete [] _spkrDataConverted;
         delete _time;
         delete _converter;
-        _debug ("AudioRtpSession instance deleted");
     }
     
     template <typename D>
     void AudioRtpSession<D>::initBuffers() 
     {
-	// Set sampling rate, main buffer choose the highest one
-	// _audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
+    	// Set sampling rate, main buffer choose the highest one
+    	// _audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
         _manager->getAudioDriver()->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
 
-	// may be different than one already setted
-	// converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-	_converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
+        // may be different than one already setted
+        // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+        _converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
-	// initialize SampleRate converter using AudioLayer's sampling rate
-	// (internal buffers initialized with maximal sampling rate and frame size)
+        // initialize SampleRate converter using AudioLayer's sampling rate
+        // (internal buffers initialized with maximal sampling rate and frame size)
         _converter = new SamplerateConverter(_layerSampleRate, _layerFrameSize);
 
         int nbSamplesMax = (int)(_codecSampleRate * _layerFrameSize /1000)*2;
@@ -268,7 +266,7 @@ namespace sfl {
         _spkrDataConverted = new SFLDataFormat[nbSamplesMax];
         _spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 
-	_manager->addStream(_ca->getCallId());
+        _manager->addStream(_ca->getCallId());
     }
     
     template <typename D>
@@ -288,8 +286,8 @@ namespace sfl {
     {
         assert(_ca);
 
-	AudioCodecType pl = (AudioCodecType)_ca->getLocalSDP()->get_session_media()->getPayload();
-	_audiocodec = _manager->getCodecDescriptorMap().instantiateCodec(pl);
+        AudioCodecType pl = (AudioCodecType)_ca->getLocalSDP()->get_session_media()->getPayload();
+        _audiocodec = _manager->getCodecDescriptorMap().instantiateCodec(pl);
 
         if (_audiocodec == NULL) {
             _debug ("No audiocodec, can't init RTP media");
@@ -318,26 +316,29 @@ namespace sfl {
     void AudioRtpSession<D>::setDestinationIpAddress(void)
     {
         if (_ca == NULL) {
-            _debug ("Sipcall is gone.");
+            _warn ("Rtp: Sipcall is gone.");
             throw AudioRtpSessionException();
         }
         
-        _debug ("Setting IP address for the RTP session");
+        _info ("RTP: Setting IP address for the RTP session");
 
-	// Store remote ip in case we would need to forget current destination
+        // Store remote ip in case we would need to forget current destination
         _remote_ip = ost::InetHostAddress(_ca->getLocalSDP()->get_remote_ip().c_str());
-        _debug ("Init audio RTP session: remote ip %s", _ca->getLocalSDP()->get_remote_ip().data());
 
         if (!_remote_ip) {
-            _debug ("Target IP address [%s] is not correct!", _ca->getLocalSDP()->get_remote_ip().data());
+            _warn("Rtp: Target IP address (%s) is not correct!", 
+						_ca->getLocalSDP()->get_remote_ip().data());
             return;
         }
 
-	// Store remote port in case we would need to forget current destination
-	_remote_port = (unsigned short) _ca->getLocalSDP()->get_remote_audio_port();
+        // Store remote port in case we would need to forget current destination
+        _remote_port = (unsigned short) _ca->getLocalSDP()->get_remote_audio_port();
+
+        _info("RTP: New remote address for session: %s:%d",
+        _ca->getLocalSDP()->get_remote_ip().data(), _remote_port);
 
         if (! static_cast<D*>(this)->addDestination (_remote_ip, _remote_port)) {
-            _debug ("Can't add destination to session!");
+            _warn("Rtp: Can't add new destination to session!");
             return;
         }
     }
@@ -346,12 +347,13 @@ namespace sfl {
     void AudioRtpSession<D>::updateDestinationIpAddress(void)
     {
         // Destination address are stored in a list in ccrtp
-        // This method clear off this entry
-        _debug("updateDestinationIpAddress: remove destination %s", _ca->getLocalSDP()->get_remote_ip().c_str());
-        static_cast<D*>(this)->forgetDestination(_remote_ip, _remote_port);
+        // This method remove the current destination entry
 
-	// new destination is stored in call
-	// we just need to recall this method
+        if(!static_cast<D*>(this)->forgetDestination(_remote_ip, _remote_port, _remote_port+1))
+        	_warn("Rtp: Could not remove previous destination");
+
+        // new destination is stored in call
+        // we just need to recall this method
         setDestinationIpAddress();
     }
     
@@ -534,7 +536,6 @@ namespace sfl {
     {
 
         setSessionTimeouts();
-        setDestinationIpAddress();
         setSessionMedia();
 
 	initBuffers();
