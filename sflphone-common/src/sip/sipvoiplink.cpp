@@ -1497,20 +1497,20 @@ void
 SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata)
 {
 
-    _debug ("SIPCallAnswered");
+    _info ("UserAgent: SIP call answered");
 
     if (!call) {
-        _debug ("! SIP Failure: unknown call");
+        _warn ("UserAgent: Error: SIP failure, unknown call");
         return;
     }
 
     if (call->getConnectionState() != Call::Connected) {
-        _debug ("Update call state , id = %s", call->getCallId().c_str());
+        _debug ("UserAgent: Update call state , id = %s", call->getCallId().c_str());
         call->setConnectionState (Call::Connected);
         call->setState (Call::Active);
         Manager::instance().peerAnsweredCall (call->getCallId());
     } else {
-        _debug ("* SIP Info: Answering call (on/off hold to send ACK)");
+        _debug ("UserAgent: Answering call (on/off hold to send ACK)");
     }
 }
 
@@ -3076,7 +3076,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         status = call->getLocalSDP()->check_sdp_answer (inv, rdata);
 
         if (status != PJ_SUCCESS) {
-            _debug ("Failed to check_incoming_sdp in call_on_state_changed");
+            _warn ("UserAgent: Failed to check_incoming_sdp in call_on_state_changed");
             return;
         }
     }
@@ -3434,12 +3434,12 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // No need to go any further on incoming ACK
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD) {
-        _debug("UserAgent: received an ACK");
+        _info("UserAgent: received an ACK");
 	return true;
     }
 
     // Handle the incoming call invite in this function
-    _debug("UserAgent: Receiving REQUEST using transport: %s %s (refcnt=%d)",
+    _info("UserAgent: Receiving REQUEST using transport: %s %s (refcnt=%d)",
 	   rdata->tp_info.transport->obj_name,
 	   rdata->tp_info.transport->info,
 	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
@@ -3470,7 +3470,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /* If we can't find any voIP link to handle the incoming call */
     if (!link) {
-        _warn("ERROR: cannot retrieve the voiplink from the account ID...");
+        _warn("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
 	pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
 				       &reason, NULL, NULL);
@@ -3582,7 +3582,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /************************************************************************************************/
 
-    _debug ("UserAgent: Create a new call");
+    _info ("UserAgent: Create a new call");
 
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
@@ -3639,7 +3639,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Notify UI there is an incoming call
 
-    _debug ("Add call to account link");
+    _debug ("UserAgent: Add call to account link");
 
     if (Manager::instance().incomingCall (call, account_id)) {
         // Add this call to the callAccountMap in ManagerImpl
@@ -3672,7 +3672,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     if (status!=PJ_SUCCESS) {
         delete call; call = NULL;
-	pj_strdup2 (_pool, &reason, "fail in receiving local offer");
+        _warn("UserAgent: fail in receiving initial offer");
+        pj_strdup2 (_pool, &reason, "fail in receiving initial offer");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
 				       &reason, NULL, NULL);
         return false;
@@ -3683,6 +3684,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     status = pjsip_dlg_create_uas (pjsip_ua_instance(), rdata, NULL, &dialog);
     if (status != PJ_SUCCESS) {
         delete call; call = NULL;
+        _warn("UserAgent: Error: Failed to create uas dialog");
         pj_strdup2 (_pool, &reason, "fail to create uas dialog");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
 				       &reason, NULL, NULL);

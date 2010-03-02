@@ -240,17 +240,17 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         message = rdata->msg_info.msg;
 
         if (message == NULL) {
-            _error ("No message");
+            _error ("SDP: No message");
             return PJMEDIA_SDP_EINSDP;
         }
 
         if (message->body == NULL) {
-            _error ("Empty message body");
+            _error ("SDP: Empty message body");
             return PJMEDIA_SDP_EINSDP;
         }
 
         if (pj_stricmp (&message->body->content_type.type, &str_application) || pj_stricmp (&message->body->content_type.subtype, &str_sdp)) {
-            _error ("Incoming Message does not contain SDP");
+            _error ("SDP: Incoming Message does not contain SDP");
             return PJMEDIA_SDP_EINSDP;
         }
 
