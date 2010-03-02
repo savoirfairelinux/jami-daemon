@@ -738,7 +738,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
 
         if (account == NULL) {
-            _debug ("Error retrieving the account to the make the call with");
+            _error ("UserAgent: Error: Could not retrieving account to make call with");
             call->setConnectionState (Call::Disconnected);
             call->setState (Call::Error);
             delete call;
@@ -764,16 +764,17 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             loadSIPLocalIP (&addrSdp);
 
         try {
-            _debug ("Creating new rtp session in newOutgoingCall");
-	    call->getAudioRtp()->initAudioRtpConfig (call);
+            _info ("UserAgent: Creating new rtp session");
+            call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
-            _error ("Failed to create rtp thread from newOutGoingCall");
+            _error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
         }
 
         call->initRecFileName();
 
-        _debug ("Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
+        _debug ("UserAgent: Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
+
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address (addrSdp);
         status = call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
