@@ -162,6 +162,8 @@
     <method name="addAccount">
       <!--* Add a new account to the SFLphone-daemon list. If no
 	    details are specified, default parameters are used.
+	    A REGISTER is automatically sent and configuration is
+	    saved if account created successfully.
 
             @param[in] input details
             @param[out] output accountID
@@ -546,5 +548,12 @@
       <arg type="as" name="list" direction="out"/>
     </method>
     
+    <method name="getShortcuts">
+      <arg type="a{si}" name="shortcutsMap" direction="out"/>
+    </method>
+    
+    <method name="setShortcuts">
+      <arg type="a{si}" name="shortcutsMap" direction="in"/>
+    </method>
   </interface>
 </node>

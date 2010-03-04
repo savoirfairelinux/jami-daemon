@@ -29,6 +29,8 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
+#include "shortcuts.h"
+
 /**
  * Stop logging engine
  */
@@ -120,12 +122,16 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
 	// Update the GUI
 	update_actions ();
         
+	shortcuts_initialize_bindings();
+
     /* start the main loop */
     gtk_main();
     }
 
   // Cleanly stop logging
   shutdown_logging();
+
+  shortcuts_destroy_bindings();
 
   return 0;
 }
