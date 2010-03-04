@@ -1235,67 +1235,103 @@ SIPVoIPLink::getCurrentCodecName()
 bool
 SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 {
+    SIPCall *call = getSIPCall (id);
 
-    SIPCall *call;
-    int duration;
-    const int body_len = 1000;
-    char *dtmf_body;
-    pj_status_t status;
-    pjsip_tx_data *tdata;
-    pj_str_t methodName, content;
-    pjsip_method method;
-    pjsip_media_type ctype;
-
-    call = getSIPCall (id);
-
-    if (call==0) {
-        _debug ("Call doesn't exist");
+    if (!call) {
+        _error ("UserAgent: Error: Call doesn't exist while sending DTMF");
         return false;
     }
 
-    duration = Manager::instance().getConfigInt (SIGNALISATION, PULSE_LENGTH);
+    AccountID accountID = Manager::instance().getAccountFromCall(id);
+    SIPAccount *account = static_cast<SIPAccount *>(Manager::instance().getAccount(accountID));
 
-    dtmf_body = new char[body_len];
-
-    snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
-
-    pj_strdup2 (_pool, &methodName, "INFO");
-    pjsip_method_init_np (&method, &methodName);
-
-    /* Create request message. */
-    status = pjsip_dlg_create_request (call->getInvSession()->dlg, &method, -1, &tdata);
-
-    if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to create INFO request -- %d", status);
-        return false;
+    if(!account) {
+    	_error ("UserAgent: Error: Account not found while sending DTMF");
+    	return false;
     }
 
-    /* Get MIME type */
-    pj_strdup2 (_pool, &ctype.type, "application");
+    DtmfType type = account->getDtmfType();
 
-    pj_strdup2 (_pool, &ctype.subtype, "dtmf-relay");
-
-    /* Create "application/dtmf-relay" message body. */
-    pj_strdup2 (_pool, &content, dtmf_body);
-
-    tdata->msg->body = pjsip_msg_body_create (tdata->pool, &ctype.type, &ctype.subtype, &content);
-
-    if (tdata->msg->body == NULL) {
-        _debug ("UserAgent: Unable to create msg body!");
-        pjsip_tx_data_dec_ref (tdata);
-        return false;
-    }
-
-    /* Send the request. */
-    status = pjsip_dlg_send_request (call->getInvSession()->dlg, tdata, getModId(), NULL);
-
-    if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to send MESSAGE request -- %d", status);
-        return false;
+    if(type == OVERRTP)
+    	dtmfOverRtp(call, code);
+    else if(type == SIPINFO)
+    	dtmfSipInfo(call, code);
+    else {
+    	_error("UserAgent: Error: Dtmf type does not exist");
+    	return false;
     }
 
     return true;
 }
+
+
+bool
+SIPVoIPLink::dtmfSipInfo(SIPCall *call, char code)
+{
+
+	int duration;
+	const int body_len = 1000;
+	char *dtmf_body;
+	pj_status_t status;
+	pjsip_tx_data *tdata;
+	pj_str_t methodName, content;
+	pjsip_method method;
+	pjsip_media_type ctype;
+
+
+	duration = Manager::instance().getConfigInt (SIGNALISATION, PULSE_LENGTH);
+
+	dtmf_body = new char[body_len];
+
+	snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+
+	pj_strdup2 (_pool, &methodName, "INFO");
+	pjsip_method_init_np (&method, &methodName);
+
+	/* Create request message. */
+	status = pjsip_dlg_create_request (call->getInvSession()->dlg, &method, -1, &tdata);
+
+	if (status != PJ_SUCCESS) {
+		_debug ("UserAgent: Unable to create INFO request -- %d", status);
+		return false;
+	}
+
+	/* Get MIME type */
+	pj_strdup2 (_pool, &ctype.type, "application");
+
+	pj_strdup2 (_pool, &ctype.subtype, "dtmf-relay");
+
+	/* Create "application/dtmf-relay" message body. */
+	pj_strdup2 (_pool, &content, dtmf_body);
+
+	tdata->msg->body = pjsip_msg_body_create (tdata->pool, &ctype.type, &ctype.subtype, &content);
+
+	if (tdata->msg->body == NULL) {
+		_debug ("UserAgent: Unable to create msg body!");
+		pjsip_tx_data_dec_ref (tdata);
+		return false;
+	}
+
+	/* Send the request. */
+	status = pjsip_dlg_send_request (call->getInvSession()->dlg, tdata, getModId(), NULL);
+
+	if (status != PJ_SUCCESS) {
+		_debug ("UserAgent: Unable to send MESSAGE request -- %d", status);
+		return false;
+	}
+
+	return true;
+}
+
+bool
+SIPVoIPLink::dtmfOverRtp(SIPCall* call, char code)
+{
+	call->getAudioRtp()->sendDtmfDigit(atoi(&code));
+
+	return true;
+}
+
+
 
 bool
 SIPVoIPLink::SIPOutgoingInvite (SIPCall* call)
@@ -2781,6 +2817,7 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
     }
 
 }
+
 
 
 bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)

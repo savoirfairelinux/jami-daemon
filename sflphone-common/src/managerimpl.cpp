@@ -1461,22 +1461,8 @@ bool ManagerImpl::sendDtmf (const CallID& id, char code) {
 
 	bool returnValue = false;
 
-	switch (sendType) {
-
-	case 0: // SIP INFO
-		playDtmf(code);
-		returnValue = getAccountLink(accountid)->carryingDTMFdigits(id, code);
-		break;
-
-	case 1: // Audio way
-		break;
-
-	case 2: // rfc 2833
-		break;
-
-	default: // unknown - error config?
-		break;
-	}
+	playDtmf(code);
+	returnValue = getAccountLink(accountid)->carryingDTMFdigits(id, code);
 
 	return returnValue;
 }
