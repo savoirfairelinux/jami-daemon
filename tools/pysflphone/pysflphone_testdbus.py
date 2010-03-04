@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 import time
+import sys
+
+import getopt
 
 from sflphonectrlsimple import SflPhoneCtrlSimple
 
@@ -23,7 +26,7 @@ class SflPhoneTests(SflPhoneCtrlSimple):
     def test_make_iptoip_call(self):
         """Make a call to a server (sipp) on port 5062"""
         i = 0
-        while(i < 50):
+        while(i < 10):
 
             callid = self.Call("sip:test@127.0.0.1:5062")
             time.sleep(0.4)
@@ -72,12 +75,13 @@ class SflPhoneTests(SflPhoneCtrlSimple):
         self.removeAccount(accountID)
         print "Account with ID " + accountID + " removed"
 
+
 sflphone = SflPhoneTests()
 
-sflphone.test_get_allaccounts_methods()
+# sflphone.test_get_allaccounts_methods()
 
 sflphone.test_make_iptoip_call()
 
-sflphone.test_make_account_call()
+# sflphone.test_make_account_call()
 
-sflphone.test_create_account()
+# sflphone.test_create_account()
