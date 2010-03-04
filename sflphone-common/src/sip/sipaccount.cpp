@@ -363,6 +363,11 @@ void SIPAccount::loadConfig()
 
     setPublishedAddress (Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS));
 
+    if(Manager::instance().getConfigString (_accountID, ACCOUNT_DTMF_TYPE) == OVERRTPSTR)
+    	_dtmfType = OVERRTP;
+	else
+		_dtmfType = SIPINFO;
+
     // Init TLS settings if the user wants to use TLS
     bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
 

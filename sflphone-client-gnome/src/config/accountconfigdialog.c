@@ -90,6 +90,8 @@ GtkWidget * displayNameEntry;
 GtkWidget * security_tab;
 GtkWidget * advanced_tab;
 
+GtkWidget * overrtp;
+
 GHashTable * directIpCallsProperties = NULL;
 
 // Credentials
@@ -133,6 +135,25 @@ is_iax_enabled(void)
 		return FALSE;
 }
 
+
+        void
+select_dtmf_type( void )
+{
+
+        DEBUG("DTMF selection changed\n");
+
+        if( gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(overrtp) ) )
+        {
+                // dbus_set_audio_manager( ALSA );
+                DEBUG("Selected DTMF over RTP");
+        }
+        else {
+
+                // dbus_set_audio_manager( PULSEAUDIO );
+                DEBUG("Selected DTMF over SIP");
+        }
+
+}
 
 static GPtrArray* getNewCredential (GHashTable * properties) {
 
@@ -1119,6 +1140,53 @@ GtkWidget* create_advanced_tab (account_t **a) {
 	return ret;
 }
 
+GtkWidget* create_codecs_configuration (account_t **a) {
+
+        // Main widget
+        GtkWidget *ret, *codecs, *dtmf, *box, *frame, *sipinfo, *table;
+        account_t *currentAccount = *a;
+        gchar *currentDtmfType = "";
+        gboolean dtmf_are_rtp = TRUE;
+
+        ret = gtk_vbox_new(FALSE, 10);
+        gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
+
+        box = codecs_box (a);
+
+        // Box for the codecs
+        gnome_main_section_new (_("Codecs"), &codecs);
+        gtk_box_pack_start (GTK_BOX(ret), codecs, FALSE, FALSE, 0);
+        gtk_widget_set_size_request (GTK_WIDGET (codecs), -1, 200);
+        gtk_widget_show (codecs);
+        gtk_container_add (GTK_CONTAINER (codecs) , box);
+
+        // Box for dtmf
+        gnome_main_section_new_with_table (_("DTMF"), &dtmf, &table, 1, 2);
+        gtk_box_pack_start (GTK_BOX(ret), dtmf, FALSE, FALSE, 0);
+        gtk_widget_show (dtmf);
+
+
+        currentDtmfType = g_hash_table_lookup (currentAccount->properties, g_strdup(ACCOUNT_DTMF_TYPE));
+        if (g_strcasecmp(currentDtmfType, OVERRTP) != 0) {
+            dtmf_are_rtp = FALSE;
+        }
+
+        overrtp = gtk_radio_button_new_with_label( NULL, _("RTP") );
+        gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(overrtp), dtmf_are_rtp);
+        gtk_table_attach ( GTK_TABLE( table ), overrtp, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+       sipinfo = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(overrtp),  _("SIP"));
+        gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(sipinfo), !dtmf_are_rtp);
+        g_signal_connect(G_OBJECT(sipinfo), "clicked", G_CALLBACK(select_dtmf_type), NULL);
+        gtk_table_attach ( GTK_TABLE( table ), sipinfo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+
+        gtk_widget_show_all(ret);
+
+        return ret;
+
+}
+
 void show_account_window (account_t * a) {
 
 	GtkWidget * notebook;
@@ -1276,6 +1344,13 @@ void show_account_window (account_t * a) {
 				}
 			}
 
+
+			if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
+			    g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_DTMF_TYPE), g_strdup(OVERRTP));
+			}
+			else {
+			    g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_DTMF_TYPE), g_strdup(SIPINFO));
+			}
 
 			gchar* keyExchange = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(keyExchangeCombo));
 

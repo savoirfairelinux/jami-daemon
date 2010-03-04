@@ -33,6 +33,9 @@
 
 enum DtmfType { OVERRTP, SIPINFO};
 
+#define OVERRTPSTR "overrtp"
+#define SIPINFOSTR "sipinfo"
+
 class SIPVoIPLink;
 
 /**

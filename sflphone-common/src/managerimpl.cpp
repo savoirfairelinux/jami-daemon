@@ -3277,6 +3277,8 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 			accountID, STUN_ENABLE)));
 	a.insert(std::pair<std::string, std::string>(STUN_SERVER, getConfigString(
 			accountID, STUN_SERVER)));
+	a.insert(std::pair<std::string, std::string>(ACCOUNT_DTMF_TYPE, getConfigString(
+				accountID, ACCOUNT_DTMF_TYPE)));
 
 	RegistrationState state;
 	std::string registrationStateCode;
@@ -3561,6 +3563,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	std::string publishedPort;
 	std::string stunEnable;
 	std::string stunServer;
+	std::string dtmfType;
 	std::string srtpEnable;
 	std::string srtpRtpFallback;
 	std::string zrtpDisplaySas;
@@ -3618,6 +3621,10 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 
 	if ((iter = map_cpy.find(STUN_SERVER)) != map_cpy.end()) {
 		stunServer = iter->second;
+	}
+
+	if((iter = map_cpy.find(ACCOUNT_DTMF_TYPE)) != map_cpy.end()) {
+		dtmfType = iter->second;
 	}
 
 	if ((iter = map_cpy.find(SRTP_ENABLE)) != map_cpy.end()) {
@@ -3749,6 +3756,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 
 	setConfig(accountID, STUN_ENABLE, stunEnable);
 	setConfig(accountID, STUN_SERVER, stunServer);
+	setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
 
 	// The TLS listener is unique and globally defined through IP2IP_PROFILE
 	if (accountID == IP2IP_PROFILE)
