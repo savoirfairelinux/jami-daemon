@@ -35,9 +35,9 @@
  * Stop logging engine
  */
 static void
-shutdown_logging()
+shutdown_logging ()
 {
-  if (log4c_fini())
+  if (log4c_fini ())
     {
       ERROR("log4c_fini() failed");
     }
@@ -47,89 +47,90 @@ shutdown_logging()
  * Start loggin engine
  */
 static void
-startup_logging()
+startup_logging ()
 {
-  log4c_init();
-  if (log4c_load(DATA_DIR "/log4crc") == -1)
-    g_warning("Cannot load log4j configuration file : %s",DATA_DIR "/log4crc");
+  log4c_init ();
+  if (log4c_load (DATA_DIR "/log4crc") == -1)
+    g_warning ("Cannot load log4j configuration file : %s", DATA_DIR "/log4crc");
 
-  log4c_sfl_gtk_category = log4c_category_get("org.sflphone.gtk");
+  log4c_sfl_gtk_category = log4c_category_get ("org.sflphone.gtk");
 }
 
 int
-main(int argc, char *argv[])
+main (int argc, char *argv[])
 {
   // Handle logging
   int i;
+  gboolean statusicon = FALSE;
 
   // Startup logging
-  startup_logging();
+  startup_logging ();
 
   // Check arguments if debug mode is activated
   for (i = 0; i < argc; i++)
-    if (g_strcmp0(argv[i], "--debug") == 0)
-      log4c_category_set_priority(log4c_sfl_gtk_category, LOG4C_PRIORITY_DEBUG);
+    if (g_strcmp0 (argv[i], "--debug") == 0)
+      log4c_category_set_priority (log4c_sfl_gtk_category, LOG4C_PRIORITY_DEBUG);
 
   // Start GTK application
 
-  gtk_init(&argc, &argv);
+  gtk_init (&argc, &argv);
 
-  g_print("%s %s\n", PACKAGE, VERSION);
-  g_print("Copyright (c) 2005 2006 2007 2008 2009 Savoir-faire Linux Inc.\n");
-  g_print(
+  g_print ("%s %s\n", PACKAGE, VERSION);
+  g_print ("Copyright (c) 2005 2006 2007 2008 2009 Savoir-faire Linux Inc.\n");
+  g_print (
       "This is free software.  You may redistribute copies of it under the terms of\n\
 the GNU General Public License Version 3 <http://www.gnu.org/licenses/gpl.html>.\n\
 There is NO WARRANTY, to the extent permitted by law.\n\n");
 
   DEBUG("Logging Started");
 
-  srand(time(NULL));
+  srand (time (NULL));
 
   // Internationalization
-  bindtextdomain("sflphone-client-gnome", LOCALEDIR);
-  textdomain("sflphone-client-gnome");
+  bindtextdomain ("sflphone-client-gnome", LOCALEDIR);
+  textdomain ("sflphone-client-gnome");
 
   // Initialises the GNOME libraries
-  gnome_program_init (	"sflphone", VERSION,
-						LIBGNOMEUI_MODULE, argc, argv,
-						GNOME_PROGRAM_STANDARD_PROPERTIES,
-						NULL);
+  gnome_program_init ("sflphone", VERSION, LIBGNOMEUI_MODULE, argc, argv,
+      GNOME_PROGRAM_STANDARD_PROPERTIES,
+						NULL) ;
 
-  if (sflphone_init())
+  if (sflphone_init ())
     {
-#if GTK_CHECK_VERSION(2,10,0)
-      show_status_icon();
-#endif
-      create_main_window();
 
-#if GTK_CHECK_VERSION(2,10,0)
-      if (dbus_is_start_hidden())
+      if (g_strcasecmp (dbus_is_status_icon_enabled (), "true") == 0)
+          statusicon = TRUE;
+
+      if (statusicon)                   show_status_icon ();
+      create_main_window ();
+
+      if (statusicon && dbus_is_start_hidden ())
         {
-          gtk_widget_hide(GTK_WIDGET( get_main_window() ));
-          set_minimized(TRUE);
+          gtk_widget_hide (GTK_WIDGET( get_main_window() ));
+          set_minimized (TRUE);
         }
-#endif
 
-    status_bar_display_account();
 
-    // Load the history
-    sflphone_fill_history ();
+      status_bar_display_account ();
 
-    // Get the active calls and conferences at startup    
-    sflphone_fill_call_list ();
-    sflphone_fill_conference_list();
+      // Load the history
+      sflphone_fill_history ();
 
-	// Update the GUI
-	update_actions ();
-        
-	shortcuts_initialize_bindings();
+      // Get the active calls and conferences at startup
+      sflphone_fill_call_list ();
+      sflphone_fill_conference_list ();
 
-    /* start the main loop */
-    gtk_main();
+      // Update the GUI
+      update_actions ();
+
+      shortcuts_initialize_bindings();
+
+      /* start the main loop */
+      gtk_main ();
     }
 
   // Cleanly stop logging
-  shutdown_logging();
+  shutdown_logging ();
 
   shortcuts_destroy_bindings();
 

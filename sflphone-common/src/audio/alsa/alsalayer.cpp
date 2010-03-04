@@ -135,7 +135,8 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     std::string pcmc = buildDeviceTopo (plugin, indexIn, 0);
 
-    _converter = new SamplerateConverter (_audioSampleRate, _frameSize);
+    // use 1 sec buffer for resampling
+    _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
     // open_device (pcmp, pcmc, stream);
     return true; // open_device (pcmp, pcmc, stream);
@@ -383,12 +384,12 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     int err;
     int format;
     int periods = 4;
-    int periodsize = 1024;
+    int periodsize = 2048;
 
     /* Allocate the snd_pcm_hw_params_t struct */
     snd_pcm_hw_params_malloc (&hwparams);
 
-    _periodSize = 940;
+    _periodSize = 2048;
     /* Full configuration space */
 
     if ( (err = snd_pcm_hw_params_any (pcm_handle, hwparams)) < 0) {

@@ -838,3 +838,13 @@ void ConfigurationManager::setShortcuts(
 
 	Manager::instance().saveConfig();
 }
+
+void ConfigurationManager::enableStatusIcon (const std::string& value) {
+
+	Manager::instance ().setConfig (PREFERENCES, SHOW_STATUSICON, value);
+}
+
+std::string ConfigurationManager::isStatusIconEnabled (void) {
+
+	return Manager::instance ().getConfigString (PREFERENCES, SHOW_STATUSICON);
+}

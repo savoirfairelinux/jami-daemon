@@ -126,6 +126,9 @@ public:
 	void setWindowPositionX (const int32_t& posX);
 	void setWindowPositionY (const int32_t& posY);
 
+	void enableStatusIcon (const std::string&);
+	std::string isStatusIconEnabled (void);
+
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
     std::vector< std::string > getAddressbookList ( void );

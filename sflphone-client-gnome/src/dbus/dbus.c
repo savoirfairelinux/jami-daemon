@@ -306,6 +306,9 @@ accounts_changed_cb(DBusGProxy *proxy UNUSED, void * foo  UNUSED )
   // Update the status bar in case something happened
   // Should fix ticket #1215
   status_bar_display_account();
+
+  // Update the tooltip on the status icon
+  statusicon_set_tooltip ();
 }
 
 static void
@@ -2584,3 +2587,33 @@ dbus_set_shortcuts(GHashTable * shortcuts)
       g_error_free(error);
     }
 }
+
+
+void dbus_enable_status_icon (const gchar *value) {
+
+       GError *error = NULL;
+
+       org_sflphone_SFLphone_ConfigurationManager_enable_status_icon (configurationManagerProxy, value, &error);
+
+       if (error != NULL) {
+           ERROR ("Failed to call enable_status_icon on ConfigurationManager: %s",
+           error->message);
+           g_error_free (error);
+       }
+}
+
+gchar* dbus_is_status_icon_enabled (void) {
+
+       GError *error = NULL;
+       gchar* value = TRUE;
+
+       org_sflphone_SFLphone_ConfigurationManager_is_status_icon_enabled (configurationManagerProxy, &value, &error);
+
+       if (error != NULL) {
+           ERROR ("Failed to call is_status_icon_enabled on ConfigurationManager: %s",
+           error->message);
+           g_error_free (error);
+       }
+       return value;
+}
+

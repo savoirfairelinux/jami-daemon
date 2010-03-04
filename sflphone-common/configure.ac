@@ -19,7 +19,7 @@ AM_CONFIG_HEADER([config.h])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 	dnl Use this variable in the program
-	AC_SUBST(PACKAGE_VERSION)
+AC_SUBST(PACKAGE_VERSION)
 
 	AM_PROG_LIBTOOL
 
@@ -254,27 +254,9 @@ AC_SUBST(dbus_LIBS)
 	CXXFLAGS="-g -Wall -O2"
 	fi
 
-
-
-	if test "$enable_glib" = "yes" ; then
-	PKG_CHECK_MODULES([glib], glib-2.0)
-	AC_SUBST(glib_CFLAGS)
-	AC_SUBST(glib_LIBS)
-	AM_CONDITIONAL(ENABLE_GLIB, test 1 = 1)
-PKG_CHECK_MODULES([gtkmm], gtkmm-2.4,
-		AM_CONDITIONAL(HAVE_GTKMM, test 1 = 1),
-		AM_CONDITIONAL(HAVE_GTKMM, test 0 = 1)
-		)
-	AC_SUBST(gtkmm_CFLAGS)
-AC_SUBST(gtkmm_LIBS)
-	else
-	AM_CONDITIONAL(ENABLE_GLIB, test 0 = 1)
-AM_CONDITIONAL(HAVE_GTKMM, test 0 = 1)
-	fi
-
 AC_CHECK_LIB([expat], XML_ParserCreate_MM,
 		[AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
-		have_expat=false)
+	have_expat=false)
 
 if ! $have_expat; then
 AC_MSG_ERROR([You need the eXpat xml parser]
@@ -284,7 +266,7 @@ fi
 xml_CFLAGS=
 xml_LIBS=-lexpat
 
-AC_SUBST(xml_CFLAGS)
+	AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([pthread], pthread_create,
@@ -304,9 +286,9 @@ AC_CHECK_LIB([pcre], pcre_free,
 AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])	
 	fi
 
-PCRE_LIBS=-lpcre
-PCRE_CFLAGS=
-AC_SUBST(PCRE_LIBS)
+	PCRE_LIBS=-lpcre
+	PCRE_CFLAGS=
+	AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
 
@@ -377,15 +359,6 @@ AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
 	dnl Check for celt. Compile it only if a recent enough version is found
 	LIBCELT_MIN_VERSION=0.5.1
 PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, AM_CONDITIONAL(BUILD_CELT, test 1 = 1 ), AM_CONDITIONAL(BUILD_CELT, test 0 = 1 ))
-
-	dnl Check for ilbc support
-AC_ARG_WITH([ilbc],
-		[AS_HELP_STRING([--without-ilbc],
-			[disable support for the ilbc codec])],
-		[],
-		[with_ilbc=no])
-
-AM_CONDITIONAL(BUILD_ILBC, test "x$with_ilbc" = "xyes" )
 
 	dnl Check for IAX
 AC_ARG_WITH([iax2],

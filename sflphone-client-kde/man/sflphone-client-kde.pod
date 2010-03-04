@@ -14,7 +14,7 @@ B<sflphone-client-kde> is a KDE client for SFLphone; it communicates with the co
 
 =head1 BUGS
 
-Please report bugs  at http://dev.savoirfairelinux.net/sflphone/newticket.
+Please report bugs at https://projects.savoirfairelinux.com/projects/show/sflphone.
 
 =head1 AUTHORS
 

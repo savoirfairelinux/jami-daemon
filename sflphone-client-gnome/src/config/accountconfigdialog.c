@@ -57,6 +57,7 @@ GtkWidget * entryUsername;
 GtkWidget * entryHostname;
 GtkWidget * entryPassword;
 GtkWidget * entryMailbox;
+GtkWidget * entryUseragent;
 GtkWidget * entryResolveNameOnlyOnce;
 GtkWidget * expireSpinBox;
 GtkListStore * credentialStore;
@@ -208,15 +209,16 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 #endif
 
 	// Default settings
-	gchar * curAccountID = "";
-	gchar * curAccountEnabled = "true";
-	gchar * curAccountType = "SIP";
-	gchar * curAlias = "";
-	gchar * curUsername = "";
-	gchar * curHostname = "";
-	gchar * curPassword = "";
+	gchar *curAccountID = "";
+	gchar *curAccountEnabled = "true";
+	gchar *curAccountType = "SIP";
+	gchar *curAlias = "";
+	gchar *curUsername = "";
+	gchar *curHostname = "";
+	gchar *curPassword = "";
 	/* TODO: add curProxy, and add boxes for Proxy support */
-	gchar * curMailbox = "";
+	gchar *curMailbox = "";
+	gchar *curUseragent = "";
 
 	currentAccount = *a;
 
@@ -232,13 +234,14 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 		curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_PASSWORD);
 		curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERNAME);
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
+		curUseragent = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERAGENT);
 	}
 
 
 	gnome_main_section_new (_("Account Parameters"), &frame);
 	gtk_widget_show(frame);
 
-	table = gtk_table_new (7, 2  ,  FALSE/* homogeneous */);
+	table = gtk_table_new (8, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
 	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
 	gtk_widget_show (table);
@@ -336,6 +339,15 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryMailbox);
 	gtk_entry_set_text(GTK_ENTRY(entryMailbox), curMailbox);
 	gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+	label = gtk_label_new_with_mnemonic (_("_User-agent"));
+	gtk_table_attach (GTK_TABLE (table), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+	entryUseragent = gtk_entry_new ();
+	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUseragent);
+	gtk_entry_set_text (GTK_ENTRY (entryUseragent), curUseragent);
+	gtk_table_attach ( GTK_TABLE( table ), entryUseragent, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
 
 	gtk_widget_show_all( table );
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
@@ -1226,6 +1238,9 @@ void show_account_window (account_t * a) {
 		if (strcmp (proto, "SIP") == 0) {
 
 			if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
+
+				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_USERAGENT), 
+						g_strdup(gtk_entry_get_text (GTK_ENTRY(entryUseragent))));
 
 				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
 						g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useStunCheckBox)) ? "true":"false"));

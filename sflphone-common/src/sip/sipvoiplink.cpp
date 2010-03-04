@@ -405,11 +405,19 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
 }
 
 
-std::string SIPVoIPLink::get_useragent_name (void)
+std::string SIPVoIPLink::get_useragent_name (const AccountID& id)
 {
-    std::ostringstream  useragent;
+	/*
     useragent << PROGNAME << "/" << SFLPHONED_VERSION;
     return useragent.str();
+	*/
+    std::ostringstream  useragent;
+	
+	useragent << Manager::instance ().getConfigString (id, USERAGENT);
+	if (useragent.str() == "sflphone" || useragent.str() == "")
+		useragent << "/" << SFLPHONED_VERSION;
+
+	return useragent.str ();
 }
 
 void
@@ -592,7 +600,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // Add User-Agent Header
     pj_list_init (&hdr_list);
 
-    useragent = pj_str ( (char*) get_useragent_name ().c_str());
+    useragent = pj_str ( (char*) get_useragent_name (id).c_str());
 
     h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
@@ -1012,7 +1020,7 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     local_sdp = call->getLocalSDP()->get_local_sdp_session();
 
     if (local_sdp == NULL) {
-        _debug ("! SIP Failure: unable to find local_sdp");
+        _debug ("SIP: Error: unable to find local sdp");
         return !PJ_SUCCESS;
     }
 
@@ -1025,6 +1033,7 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     // return 1;   // !PJ_SUCCESS
 
     pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendrecv");
+    pjmedia_sdp_media_remove_all_attr (local_sdp->media[0], "sendonly");
 
     attr = pjmedia_sdp_attr_create (_pool, direction.c_str(), NULL);
 
@@ -2914,7 +2923,23 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
 {
 
     _debug ("UserAgent: handle_reinvite");
-
+    /*
+    // Close the previous RTP session
+    call->getAudioRtp()->stop ();
+    call->setAudioStart (false);
+    
+    _debug ("Create new rtp session from handle_reinvite : %s:%i", call->getLocalIp().c_str(), call->getLocalAudioPort());
+    _debug ("UserAgent: handle_reinvite");
+ 
+    try {
+        call->getAudioRtp()->initAudioRtpSession (call);
+    } catch (...) {
+        _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
+    }
+  
+    
+    _debug("Handle reINVITE");
+    */
 }
 
 // This callback is called when the invite session state has changed
@@ -3117,7 +3142,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 // This callback is called after SDP offer/answer session has completed.
 void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 {
-    _debug ("UserAgent: call_on_media_update");
+    _debug ("UserAgent: Call on media update");
 
     const pjmedia_sdp_session *local_sdp;
     const pjmedia_sdp_session *remote_sdp;
@@ -3128,19 +3153,19 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
 
     if (!call) {
-        _debug ("Call declined by peer, SDP negociation stopped");
+        _debug ("UserAgent: Call declined by peer, SDP negociation stopped");
         return;
     }
 
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
 
     if (link == NULL) {
-        _debug ("Failed to get sip link");
+        _warn ("UserAgent: Error: Failed to get sip link");
         return;
     }
 
     if (status != PJ_SUCCESS) {
-        _debug ("Error while negotiating the offer");
+        _warn ("UserAgent: Error: while negotiating the offer");
         link->hangup (call->getCallId());
         Manager::instance().callFailure (call->getCallId());
         return;
@@ -3165,41 +3190,47 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
     // Set remote ip / port
     call->getLocalSDP()->set_media_transport_info_from_remote_sdp (remote_sdp);
-    call->getAudioRtp()->updateDestinationIpAddress();
+
+    try {
+        call->getAudioRtp()->updateDestinationIpAddress();
+    }
+    catch(...) {
+        
+    }
+
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
     CryptoOffer crypto_offer;
     call->getLocalSDP()->get_remote_sdp_crypto_from_offer(remote_sdp, crypto_offer);
 
-
     bool nego_success = false;
     if(!crypto_offer.empty()) {
 
-        _debug("Crypto attribute in SDP: init Srtp session");
+    	_debug("Crypto attribute in SDP: init Srtp session");
 
-	// init local cryptografic capabilities for negotiation
-	std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
-	for(int i = 0; i < 3; i++) {
-	    localCapabilities.push_back(sfl::CryptoSuites[i]);
-	}
+    	// init local cryptografic capabilities for negotiation
+    	std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
+    	for(int i = 0; i < 3; i++) {
+    		localCapabilities.push_back(sfl::CryptoSuites[i]);
+		}
 
-	sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+		sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 	
-	if(sdesnego.negotiate()) {
-	    _debug("SDES negociation successfull \n");
-	    nego_success = true;
+		if(sdesnego.negotiate()) {
+			_debug("SDES negociation successfull \n");
+			nego_success = true;
 
             _debug("Set remote cryptographic context\n");
             try {
-		call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
+            	  call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
             }
             catch(...) {}
 
-	    DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
-	}
-	else {
-	    DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
-	}
+            DBusManager::instance().getCallManager()->secureSdesOn (call->getCallId());
+		}
+		else {
+			DBusManager::instance().getCallManager()->secureSdesOff (call->getCallId());
+		}
     }
 
     // We did not found any crypto context for this media
@@ -3224,6 +3255,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         // enabled for this call, make a try using RTP only...
         _debug("Sdes not initialized for this call\n");
     }
+
 
     try {
         call->setAudioStart (true);
@@ -3400,10 +3432,14 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     std::string method_name;
     std::string request;
 
-    // Handle the incoming call invite in this function
-    _debug ("UserAgent: Callback on_rx_request is involved! ");
+    // No need to go any further on incoming ACK
+    if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD) {
+        _debug("UserAgent: received an ACK");
+	return true;
+    }
 
-    _debug("Receiving REQUEST using transport: %s %s (refcnt=%d)",
+    // Handle the incoming call invite in this function
+    _debug("UserAgent: Receiving REQUEST using transport: %s %s (refcnt=%d)",
 	   rdata->tp_info.transport->obj_name,
 	   rdata->tp_info.transport->info,
 	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
@@ -3417,7 +3453,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     userName = std::string (sip_uri->user.ptr, sip_uri->user.slen);
     server = std::string (sip_uri->host.ptr, sip_uri->host.slen);
 
-    _debug ("mod_on_rx_request: %s@%s", userName.c_str(), server.c_str());
+    _debug ("UserAgent: mod_on_rx_request: %s@%s", userName.c_str(), server.c_str());
 
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
@@ -3425,8 +3461,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     /* If we don't find any account to receive the call */
 
     if (account_id == AccountNULL) {
-        _debug ("UserAgent: Username %s doesn't match any account!",userName.c_str());
-        //return false;
+        _debug ("UserAgent: Username %s doesn't match any account, using IP2IP!",userName.c_str());
     }
 
     /* Get the voip link associated to the incoming call */
@@ -3434,21 +3469,22 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (account_id));
 
     /* If we can't find any voIP link to handle the incoming call */
-    if (link == 0) {
-        _debug ("ERROR: can not retrieve the voiplink from the account ID...");
+    if (!link) {
+        _warn("ERROR: cannot retrieve the voiplink from the account ID...");
+	pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
+				       &reason, NULL, NULL);
+        return true;
         return false;
     }
 
-
+    // Parse the display name from "From" header
     char* from_header = strstr (rdata->msg_info.msg_buf, "From: ");
-
     if (from_header) {
-
         std::string temp (from_header);
         int begin_displayName = temp.find ("\"") + 1;
         int end_displayName = temp.rfind ("\"");
-        // _debug("The display name start at %i, end at %i", begin_displayName, end_displayName);
-        displayName = temp.substr (begin_displayName, end_displayName - begin_displayName);//display_name);
+        displayName = temp.substr (begin_displayName, end_displayName - begin_displayName);
 	if(displayName.size() > 25) {
 	    displayName = std::string ("");
 	}
@@ -3457,16 +3493,10 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     }
 
     _debug ("UserAgent: The receiver is : %s@%s", userName.data(), server.data());
-
     _debug ("UserAgent: The callee account id is %s", account_id.c_str());
 
     /* Now, it is the time to find the information of the caller */
     uri = rdata->msg_info.from->uri;
-
-
-    // display_name = rdata->msg_info.from->name;
-
-    // std::string temp("");///(char*)(&display_name));
 
     sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri (uri);
 
@@ -3479,7 +3509,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Get the server voicemail notification
     // Catch the NOTIFY message
-
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
         method_name = "NOTIFY";
         // Retrieve all the message. Should contains only the method name but ...
@@ -3507,19 +3536,29 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     if (rdata->msg_info.msg->line.req.method.id != PJSIP_INVITE_METHOD) {
         if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
             pj_strdup2 (_pool, &reason, "user agent unable to handle this request ");
-            pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, &reason, NULL,
-                                           NULL);
+            pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, 
+					   &reason, NULL, NULL);
             return true;
         }
     }
 
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
+
+    get_remote_sdp_from_offer (rdata, &r_sdp);
+    if(account->getActiveCodecs().empty()) {
+	_warn ("UserAgent: Error: No active codec");
+	pj_strdup2 (_pool, &reason, "no active codec");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE , 
+				       &reason, NULL, NULL);
+        return true;
+    }
+
     // Verify that we can handle the request
     status = pjsip_inv_verify_request (rdata, &options, NULL, NULL, _endpt, NULL);
-
     if (status != PJ_SUCCESS) {
-        pj_strdup2 (_pool, &reason, "user agent unable to handle this INVITE ");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, &reason, NULL,
-                                       NULL);
+        pj_strdup2 (_pool, &reason, "user agent unable to handle this INVITE");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, 
+				       &reason, NULL, NULL);
         return true;
     }
 
@@ -3537,32 +3576,30 @@ mod_on_rx_request (pjsip_rx_data *rdata)
                                     Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
             }
         } else
-            throw length_error ("Url exceeds std::string max_size");
+            throw length_error ("UserAgent: Url exceeds std::string max_size");
 
     }
 
     /************************************************************************************************/
 
-    _debug ("create a new call");
+    _debug ("UserAgent: Create a new call");
 
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
 
     call = new SIPCall (id, Call::Incoming, _pool);
-
     /* If an error occured at the call creation */
     if (!call) {
-        _debug ("UserAgent: unable to create an incoming call");
-        return false;
+        _warn("UserAgent: Error: Unable to create an incoming call");
+	pj_strdup2 (_pool, &reason, "unable to create an incoming call");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
+				       &reason, NULL, NULL);
+	return false;
     }
-
-
 
     std::string addrToUse, addrSdp ="0.0.0.0";
 
     pjsip_tpselector *tp;
-
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     if (account != NULL) {
 
@@ -3575,7 +3612,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 	if(account->getAccountTransport()) {
 
-	    _debug("Process INVITE request using transport: %s %s (refcnt=%i)",
+	    _debug("UserAgent: Process INVITE request using transport: %s %s (refcnt=%i)",
 		   account->getAccountTransport()->obj_name,
 		   account->getAccountTransport()->info,
 		   (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
@@ -3609,9 +3646,11 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         Manager::instance().getAccountLink (account_id)->addCall (call);
     } else {
         // Fail to notify UI
-        delete call;
-        call = NULL;
-        _debug ("UserAgent: Fail to notify UI!");
+        delete call; call = NULL;
+        _warn ("UserAgent: Fail to notify UI!");
+	pj_strdup2 (_pool, &reason, "fail to notify ui");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
+				       &reason, NULL, NULL);
         return false;
     }
 
@@ -3626,26 +3665,27 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         call->getAudioRtp()->initAudioRtpConfig (call);
         call->getAudioRtp()->initAudioRtpSession (call);
     } catch (...) {
-        _debug ("Failed to create rtp thread from answer");
+        _warn ("UserAgent: Error: Failed to create rtp thread from answer");
     }
-
-    get_remote_sdp_from_offer (rdata, &r_sdp);
 
     status = call->getLocalSDP()->receiving_initial_offer (r_sdp, account->getActiveCodecs ());
 
     if (status!=PJ_SUCCESS) {
-        delete call;
-        call=0;
+        delete call; call = NULL;
+	pj_strdup2 (_pool, &reason, "fail in receiving local offer");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
+				       &reason, NULL, NULL);
         return false;
     }
 
 
     /* Create the local dialog (UAS) */
     status = pjsip_dlg_create_uas (pjsip_ua_instance(), rdata, NULL, &dialog);
-
     if (status != PJ_SUCCESS) {
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, &reason, NULL,
-                                       NULL);
+        delete call; call = NULL;
+        pj_strdup2 (_pool, &reason, "fail to create uas dialog");
+        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
+				       &reason, NULL, NULL);
         return true;
     }
 
@@ -3654,9 +3694,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Explicitly set the transport, set_transport methods increment transport's reference counter
     status = pjsip_dlg_set_transport (dialog, tp);
-
-    // decrement transport's reference counter
-    // pjsip_transport_dec_ref(rdata->tp_info.transport);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
