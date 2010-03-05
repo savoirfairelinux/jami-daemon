@@ -25,7 +25,7 @@
 GtkWidget*
 create_shortcuts_settings()
 {
-  GtkWidget *vbox, *result_frame, *window, *treeview, *scrolled_window, *table;
+  GtkWidget *vbox, *result_frame, *window, *treeview, *scrolled_window, *label;
   GtkListStore *store;
   GtkTreeIter iter;
   guint i = 0;
@@ -34,6 +34,8 @@ create_shortcuts_settings()
   gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
   gnome_main_section_new(_("General"), &result_frame);
+
+  label = gtk_label_new(_("Be careful: these shortcuts might override system-wide shortcuts."));
 
   treeview = gtk_tree_view_new();
   setup_tree_view(treeview);
@@ -45,7 +47,7 @@ create_shortcuts_settings()
   while (list[i].action != NULL)
     {
       gtk_list_store_append(store, &iter);
-      gtk_list_store_set(store, &iter, ACTION, list[i].action, MASK,
+      gtk_list_store_set(store, &iter, ACTION, _(list[i].action), MASK,
           (gint) list[i].mask, VALUE, XKeycodeToKeysym(GDK_DISPLAY(),
               list[i].value, 0), -1);
       i++;
@@ -55,6 +57,7 @@ create_shortcuts_settings()
   g_object_unref(store);
 
   gtk_container_add(GTK_CONTAINER (result_frame), treeview);
+  gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), result_frame, FALSE, FALSE, 0);
 
   gtk_widget_show_all(vbox);
@@ -85,12 +88,15 @@ setup_tree_view(GtkWidget *treeview)
 
   gtk_tree_view_append_column(GTK_TREE_VIEW (treeview), column);
   g_signal_connect (G_OBJECT (renderer), "accel_edited", G_CALLBACK (accel_edited), (gpointer) treeview);
+  g_signal_connect (G_OBJECT (renderer), "accel_cleared", G_CALLBACK (accel_cleared), (gpointer) treeview);
 }
 
 static void
 accel_edited(GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
     GdkModifierType mask, guint hardware_keycode, GtkTreeView *treeview)
 {
+  DEBUG("Accel edited");
+
   GtkTreeModel *model;
   GtkTreeIter iter;
 
@@ -104,4 +110,21 @@ accel_edited(GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
 
   // Update GDK bindings
   shortcuts_update_bindings(atoi(path), code);
+}
+
+static void
+accel_cleared(GtkCellRendererAccel *renderer, gchar *path, GtkTreeView *treeview)
+{
+  DEBUG("Accel cleared");
+
+  GtkTreeModel *model;
+  GtkTreeIter iter;
+
+  // Update treeview
+  model = gtk_tree_view_get_model(treeview);
+  if (gtk_tree_model_get_iter_from_string(model, &iter, path))
+    gtk_list_store_set(GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0, -1);
+
+  // Update GDK bindings
+  shortcuts_update_bindings(atoi(path), 0);
 }
