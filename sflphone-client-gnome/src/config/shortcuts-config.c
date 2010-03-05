@@ -85,12 +85,15 @@ setup_tree_view(GtkWidget *treeview)
 
   gtk_tree_view_append_column(GTK_TREE_VIEW (treeview), column);
   g_signal_connect (G_OBJECT (renderer), "accel_edited", G_CALLBACK (accel_edited), (gpointer) treeview);
+  g_signal_connect (G_OBJECT (renderer), "accel_cleared", G_CALLBACK (accel_cleared), (gpointer) treeview);
 }
 
 static void
 accel_edited(GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
     GdkModifierType mask, guint hardware_keycode, GtkTreeView *treeview)
 {
+  DEBUG("Accel edited");
+
   GtkTreeModel *model;
   GtkTreeIter iter;
 
@@ -104,4 +107,21 @@ accel_edited(GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
 
   // Update GDK bindings
   shortcuts_update_bindings(atoi(path), code);
+}
+
+static void
+accel_cleared(GtkCellRendererAccel *renderer, gchar *path, GtkTreeView *treeview)
+{
+  DEBUG("Accel cleared");
+
+  GtkTreeModel *model;
+  GtkTreeIter iter;
+
+  // Update treeview
+  model = gtk_tree_view_get_model(treeview);
+  if (gtk_tree_model_get_iter_from_string(model, &iter, path))
+    gtk_list_store_set(GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0, -1);
+
+  // Update GDK bindings
+  shortcuts_update_bindings(atoi(path), 0);
 }
