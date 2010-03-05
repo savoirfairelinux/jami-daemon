@@ -738,7 +738,7 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (Manager::instance().getAccountFromCall (id)));
 
         if (account == NULL) {
-            _debug ("Error retrieving the account to the make the call with");
+            _error ("UserAgent: Error: Could not retrieving account to make call with");
             call->setConnectionState (Call::Disconnected);
             call->setState (Call::Error);
             delete call;
@@ -764,16 +764,17 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
             loadSIPLocalIP (&addrSdp);
 
         try {
-            _debug ("Creating new rtp session in newOutgoingCall");
-	    call->getAudioRtp()->initAudioRtpConfig (call);
+            _info ("UserAgent: Creating new rtp session");
+            call->getAudioRtp()->initAudioRtpConfig (call);
             call->getAudioRtp()->initAudioRtpSession (call);
         } catch (...) {
-            _error ("Failed to create rtp thread from newOutGoingCall");
+            _error ("UserAgent: Error: Failed to create rtp thread from newOutGoingCall");
         }
 
         call->initRecFileName();
 
-        _debug ("Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
+        _debug ("UserAgent: Try to make a call to: %s with call ID: %s", toUrl.data(), id.data());
+
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address (addrSdp);
         status = call->getLocalSDP()->create_initial_offer (account->getActiveCodecs ());
@@ -1234,67 +1235,103 @@ SIPVoIPLink::getCurrentCodecName()
 bool
 SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 {
+    SIPCall *call = getSIPCall (id);
 
-    SIPCall *call;
-    int duration;
-    const int body_len = 1000;
-    char *dtmf_body;
-    pj_status_t status;
-    pjsip_tx_data *tdata;
-    pj_str_t methodName, content;
-    pjsip_method method;
-    pjsip_media_type ctype;
-
-    call = getSIPCall (id);
-
-    if (call==0) {
-        _debug ("Call doesn't exist");
+    if (!call) {
+        _error ("UserAgent: Error: Call doesn't exist while sending DTMF");
         return false;
     }
 
-    duration = Manager::instance().getConfigInt (SIGNALISATION, PULSE_LENGTH);
+    AccountID accountID = Manager::instance().getAccountFromCall(id);
+    SIPAccount *account = static_cast<SIPAccount *>(Manager::instance().getAccount(accountID));
 
-    dtmf_body = new char[body_len];
-
-    snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
-
-    pj_strdup2 (_pool, &methodName, "INFO");
-    pjsip_method_init_np (&method, &methodName);
-
-    /* Create request message. */
-    status = pjsip_dlg_create_request (call->getInvSession()->dlg, &method, -1, &tdata);
-
-    if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to create INFO request -- %d", status);
-        return false;
+    if(!account) {
+    	_error ("UserAgent: Error: Account not found while sending DTMF");
+    	return false;
     }
 
-    /* Get MIME type */
-    pj_strdup2 (_pool, &ctype.type, "application");
+    DtmfType type = account->getDtmfType();
 
-    pj_strdup2 (_pool, &ctype.subtype, "dtmf-relay");
-
-    /* Create "application/dtmf-relay" message body. */
-    pj_strdup2 (_pool, &content, dtmf_body);
-
-    tdata->msg->body = pjsip_msg_body_create (tdata->pool, &ctype.type, &ctype.subtype, &content);
-
-    if (tdata->msg->body == NULL) {
-        _debug ("UserAgent: Unable to create msg body!");
-        pjsip_tx_data_dec_ref (tdata);
-        return false;
-    }
-
-    /* Send the request. */
-    status = pjsip_dlg_send_request (call->getInvSession()->dlg, tdata, getModId(), NULL);
-
-    if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to send MESSAGE request -- %d", status);
-        return false;
+    if(type == OVERRTP)
+    	dtmfOverRtp(call, code);
+    else if(type == SIPINFO)
+    	dtmfSipInfo(call, code);
+    else {
+    	_error("UserAgent: Error: Dtmf type does not exist");
+    	return false;
     }
 
     return true;
 }
+
+
+bool
+SIPVoIPLink::dtmfSipInfo(SIPCall *call, char code)
+{
+
+	int duration;
+	const int body_len = 1000;
+	char *dtmf_body;
+	pj_status_t status;
+	pjsip_tx_data *tdata;
+	pj_str_t methodName, content;
+	pjsip_method method;
+	pjsip_media_type ctype;
+
+
+	duration = Manager::instance().getConfigInt (SIGNALISATION, PULSE_LENGTH);
+
+	dtmf_body = new char[body_len];
+
+	snprintf (dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+
+	pj_strdup2 (_pool, &methodName, "INFO");
+	pjsip_method_init_np (&method, &methodName);
+
+	/* Create request message. */
+	status = pjsip_dlg_create_request (call->getInvSession()->dlg, &method, -1, &tdata);
+
+	if (status != PJ_SUCCESS) {
+		_debug ("UserAgent: Unable to create INFO request -- %d", status);
+		return false;
+	}
+
+	/* Get MIME type */
+	pj_strdup2 (_pool, &ctype.type, "application");
+
+	pj_strdup2 (_pool, &ctype.subtype, "dtmf-relay");
+
+	/* Create "application/dtmf-relay" message body. */
+	pj_strdup2 (_pool, &content, dtmf_body);
+
+	tdata->msg->body = pjsip_msg_body_create (tdata->pool, &ctype.type, &ctype.subtype, &content);
+
+	if (tdata->msg->body == NULL) {
+		_debug ("UserAgent: Unable to create msg body!");
+		pjsip_tx_data_dec_ref (tdata);
+		return false;
+	}
+
+	/* Send the request. */
+	status = pjsip_dlg_send_request (call->getInvSession()->dlg, tdata, getModId(), NULL);
+
+	if (status != PJ_SUCCESS) {
+		_debug ("UserAgent: Unable to send MESSAGE request -- %d", status);
+		return false;
+	}
+
+	return true;
+}
+
+bool
+SIPVoIPLink::dtmfOverRtp(SIPCall* call, char code)
+{
+	call->getAudioRtp()->sendDtmfDigit(atoi(&code));
+
+	return true;
+}
+
+
 
 bool
 SIPVoIPLink::SIPOutgoingInvite (SIPCall* call)
@@ -1497,20 +1534,20 @@ void
 SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata)
 {
 
-    _debug ("SIPCallAnswered");
+    _info ("UserAgent: SIP call answered");
 
     if (!call) {
-        _debug ("! SIP Failure: unknown call");
+        _warn ("UserAgent: Error: SIP failure, unknown call");
         return;
     }
 
     if (call->getConnectionState() != Call::Connected) {
-        _debug ("Update call state , id = %s", call->getCallId().c_str());
+        _debug ("UserAgent: Update call state , id = %s", call->getCallId().c_str());
         call->setConnectionState (Call::Connected);
         call->setState (Call::Active);
         Manager::instance().peerAnsweredCall (call->getCallId());
     } else {
-        _debug ("* SIP Info: Answering call (on/off hold to send ACK)");
+        _debug ("UserAgent: Answering call (on/off hold to send ACK)");
     }
 }
 
@@ -2367,7 +2404,10 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
     }
 
-
+    if(listeningAddress == "" || listeningPort == 0) {
+    	_error("UserAgent: Error invalid address for new udp transport");
+    	return !PJ_SUCCESS;
+    }
     //strcpy (tmpIP, listeningAddress.data());
     /* Init published name */
     pj_bzero (&a_name, sizeof (pjsip_host_port));
@@ -2782,6 +2822,7 @@ void SIPVoIPLink::shutdownSipTransport(const AccountID& accountID)
 }
 
 
+
 bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)
 {
 
@@ -3076,7 +3117,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         status = call->getLocalSDP()->check_sdp_answer (inv, rdata);
 
         if (status != PJ_SUCCESS) {
-            _debug ("Failed to check_incoming_sdp in call_on_state_changed");
+            _warn ("UserAgent: Failed to check_incoming_sdp in call_on_state_changed");
             return;
         }
     }
@@ -3434,12 +3475,12 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // No need to go any further on incoming ACK
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD) {
-        _debug("UserAgent: received an ACK");
+        _info("UserAgent: received an ACK");
 	return true;
     }
 
     // Handle the incoming call invite in this function
-    _debug("UserAgent: Receiving REQUEST using transport: %s %s (refcnt=%d)",
+    _info("UserAgent: Receiving REQUEST using transport: %s %s (refcnt=%d)",
 	   rdata->tp_info.transport->obj_name,
 	   rdata->tp_info.transport->info,
 	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
@@ -3470,7 +3511,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /* If we can't find any voIP link to handle the incoming call */
     if (!link) {
-        _warn("ERROR: cannot retrieve the voiplink from the account ID...");
+        _warn("UserAgent: Error: cannot retrieve the voiplink from the account ID...");
 	pj_strdup2 (_pool, &reason, "ERROR: cannot retrieve the voip link from account");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
 				       &reason, NULL, NULL);
@@ -3582,7 +3623,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /************************************************************************************************/
 
-    _debug ("UserAgent: Create a new call");
+    _info ("UserAgent: Create a new call");
 
     // Generate a new call ID for the incoming call!
     id = Manager::instance().getNewCallID();
@@ -3639,7 +3680,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Notify UI there is an incoming call
 
-    _debug ("Add call to account link");
+    _debug ("UserAgent: Add call to account link");
 
     if (Manager::instance().incomingCall (call, account_id)) {
         // Add this call to the callAccountMap in ManagerImpl
@@ -3672,7 +3713,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     if (status!=PJ_SUCCESS) {
         delete call; call = NULL;
-	pj_strdup2 (_pool, &reason, "fail in receiving local offer");
+        _warn("UserAgent: fail in receiving initial offer");
+        pj_strdup2 (_pool, &reason, "fail in receiving initial offer");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
 				       &reason, NULL, NULL);
         return false;
@@ -3683,6 +3725,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     status = pjsip_dlg_create_uas (pjsip_ua_instance(), rdata, NULL, &dialog);
     if (status != PJ_SUCCESS) {
         delete call; call = NULL;
+        _warn("UserAgent: Error: Failed to create uas dialog");
         pj_strdup2 (_pool, &reason, "fail to create uas dialog");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
 				       &reason, NULL, NULL);

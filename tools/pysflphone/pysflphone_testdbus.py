@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 import time
+import sys
+
+import getopt
+
+from threading import Event 
 
 from sflphonectrlsimple import SflPhoneCtrlSimple
 
 
 class SflPhoneTests(SflPhoneCtrlSimple):
+
 
     def test_get_allaccounts_methods(self):
 
@@ -23,7 +29,7 @@ class SflPhoneTests(SflPhoneCtrlSimple):
     def test_make_iptoip_call(self):
         """Make a call to a server (sipp) on port 5062"""
         i = 0
-        while(i < 50):
+        while(i < 10):
 
             callid = self.Call("sip:test@127.0.0.1:5062")
             time.sleep(0.4)
@@ -52,7 +58,7 @@ class SflPhoneTests(SflPhoneCtrlSimple):
 
 
     def test_create_account(self):
-        """Create a new sip fake account and remove it"""
+        """Create a new sip account"""
 
         CONFIG_ACCOUNT_TYPE = "Account.type"  
 	CONFIG_ACCOUNT_ALIAS = "Account.alias"
@@ -60,24 +66,45 @@ class SflPhoneTests(SflPhoneCtrlSimple):
 	USERNAME = "username"
 	PASSWORD = "password"
 	
-        accDetails = {CONFIG_ACCOUNT_TYPE:"SIP", CONFIG_ACCOUNT_ALIAS:"myNewAccount",
-                      HOSTNAME:"192.168.50.3", USERNAME:"431",
-                      PASSWORD:"alexandre"}
+        accDetails = {CONFIG_ACCOUNT_TYPE:"SIP", CONFIG_ACCOUNT_ALIAS:"testsuiteaccount",
+                      HOSTNAME:"192.168.50.79", USERNAME:"31416",
+                      PASSWORD:"1234"}
 
 
         accountID = self.addAccount(accDetails)
         print "New Account ID " + accountID
-        time.sleep(3)
+
+        return accountID
+
+
+    def test_remove_account(self, accountID):
+        """Remove test account"""
 
         self.removeAccount(accountID)
         print "Account with ID " + accountID + " removed"
 
+
+
+# Open sflphone and connect to sflphoned through dbus 
 sflphone = SflPhoneTests()
 
-sflphone.test_get_allaccounts_methods()
+sflphone.start()
 
-sflphone.test_make_iptoip_call()
+# Test 1: Makke approximately one IP2IP call per second 
+# to a sipp uas on local addrress
+#sflphone.test_make_iptoip_call()
 
-sflphone.test_make_account_call()
 
-sflphone.test_create_account()
+
+# Test 2: - Create an account on Asterisk
+#         - Wait for incoming calls
+#         - Once a call is received, answer
+#         - The call should then be hung up by caller  
+
+# accountID = sflphone.test_create_account()
+# sflphone.test_make_account_call()
+# time.sleep(0.3)
+
+
+
+# sflphone.test_remove_account(accountID)

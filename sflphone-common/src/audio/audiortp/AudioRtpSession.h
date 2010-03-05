@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <exception>
+#include <list>
 
 #include "global.h"
 
@@ -43,6 +44,7 @@ namespace sfl {
     static const int schedulingTimeout = 100000;
     static const int expireTimeout = 1000000;
     
+
     class AudioRtpSessionException: public std::exception
     {
       virtual const char* what() const throw()
@@ -51,6 +53,14 @@ namespace sfl {
       }
     };
     
+    typedef struct DtmfEvent {
+    	ost::RTPPacket::RFC2833Payload payload;
+    	int length;
+    	bool newevent;
+    } DtmfEvent;
+
+    typedef list<DtmfEvent *> EventQueue;
+
     template <typename D>
     class AudioRtpSession : public ost::Thread, public ost::TimerPort {
         public:
@@ -71,6 +81,16 @@ namespace sfl {
              * Used mostly when receiving a reinvite
              */
             void updateDestinationIpAddress(void);
+
+            void putDtmfEvent(int digit);
+
+            /**
+            	 * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
+            	 * incremented as if it was microphone audio. This function change the payload type of the rtp session,
+            	 * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
+            	 * back the codec payload for further audio processing.
+            	 */
+            void sendDtmfEvent(sfl::DtmfEvent *dtmf);
 
         private:
         
@@ -178,6 +198,11 @@ namespace sfl {
               * Time counter used to trigger incoming call notification
               */
              int _countNotificationTime;
+
+             /**
+              * EventQueue used to store list of DTMF-
+              */
+             EventQueue _eventQueue;
             
         protected:
              SIPCall * _ca;
@@ -316,8 +341,8 @@ namespace sfl {
     void AudioRtpSession<D>::setDestinationIpAddress(void)
     {
         if (_ca == NULL) {
-            _warn ("Rtp: Sipcall is gone.");
-            throw AudioRtpSessionException();
+        	_warn ("Rtp: Sipcall is gone.");
+			throw AudioRtpSessionException();
         }
         
         _info ("RTP: Setting IP address for the RTP session");
@@ -338,8 +363,8 @@ namespace sfl {
         _ca->getLocalSDP()->get_remote_ip().data(), _remote_port);
 
         if (! static_cast<D*>(this)->addDestination (_remote_ip, _remote_port)) {
-            _warn("Rtp: Can't add new destination to session!");
-            return;
+        	_warn("Rtp: Can't add new destination to session!");
+			return;
         }
     }
 
@@ -357,6 +382,68 @@ namespace sfl {
         setDestinationIpAddress();
     }
     
+    template<typename D>
+    void AudioRtpSession<D>::putDtmfEvent(int digit)
+    {
+
+    	sfl::DtmfEvent *dtmf = new sfl::DtmfEvent();
+
+		dtmf->payload.event = digit;
+    	dtmf->payload.ebit = false; 			// end of event bit
+    	dtmf->payload.rbit = false;  		// reserved bit
+    	dtmf->payload.duration = 1; 	        // duration for this event
+    	dtmf->newevent = true;
+    	dtmf->length = 1000;
+
+    	_eventQueue.push_back(dtmf);
+
+    	_debug("RTP: Put Dtmf Event %d", _eventQueue.size());
+
+    }
+
+    template<typename D>
+    void AudioRtpSession<D>::sendDtmfEvent(sfl::DtmfEvent *dtmf)
+    {
+		_debug("RTP: Send Dtmf %d", _eventQueue.size());
+
+		 _timestamp += 160;
+
+		 // discard equivalent size of audio
+		processDataEncode();
+
+		 // change Payload type for DTMF payload
+		 static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) 101, 8000));
+
+		 // Set marker in case this is a new Event
+		 if(dtmf->newevent)
+			 static_cast<D*>(this)->setMark (true);
+
+		 static_cast<D*>(this)->putData (_timestamp, (const unsigned char*)(&(dtmf->payload)), sizeof(ost::RTPPacket::RFC2833Payload));
+
+		 // This is no more a new event
+		 if(dtmf->newevent) {
+			 dtmf->newevent = false;
+			 static_cast<D*>(this)->setMark (false);
+		 }
+
+		 // get back the payload to audio
+		 static_cast<D*>(this)->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
+
+		 // decrease length remaining to process for this event
+		 dtmf->length -= 160;
+
+		 dtmf->payload.duration += 1;
+
+		 // next packet is going to be the last one
+		 if((dtmf->length - 160) < 160)
+			dtmf->payload.ebit = true;
+
+		 if(dtmf->length < 160) {
+			 delete dtmf;
+		     _eventQueue.pop_front();
+		 }
+    }
+
     template <typename D>
     int AudioRtpSession<D>::processDataEncode(void)
     {
@@ -364,7 +451,7 @@ namespace sfl {
         assert(_audiolayer);
 
 	
-	int _mainBufferSampleRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
+        int _mainBufferSampleRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
         // compute codec framesize in ms
         float fixed_codec_framesize = computeCodecFrameSize (_audiocodec->getFrameSize(), _audiocodec->getClockRate());
@@ -399,7 +486,7 @@ namespace sfl {
 
         } else {
 
-	    _nSamplesMic = nbSample; 
+        	_nSamplesMic = nbSample;
 
             // no resampling required
             compSize = _audiocodec->codecEncode (_micDataEncoded, _micData, nbSample*sizeof (int16));
@@ -472,7 +559,6 @@ namespace sfl {
         //   4. send it
 
         // Increment timestamp for outgoing packet
-        
         _timestamp += _codecFrameSize;
 
         if (!_audiolayer) {
@@ -518,10 +604,16 @@ namespace sfl {
 
         unsigned int size = adu->getSize(); // size in char
 
-	// DTMF over RTP, size must be over 4 in order to process it as voice data
-	if(size > 4) {
-	    processDataDecode (spkrData, size);
-	}
+        // DTMF over RTP, size must be over 4 in order to process it as voice data
+        if(size > 4) {
+        	processDataDecode (spkrData, size);
+        }
+        else {
+        	_debug("RTP: Received an RTP event with payload: %d", adu->getType());
+			ost::RTPPacket::RFC2833Payload *dtmf = (ost::RTPPacket::RFC2833Payload *)adu->getData();
+			_debug("RTP: Data received %d", dtmf->event);
+
+        }
     }
     
     template <typename D>
@@ -580,7 +672,12 @@ namespace sfl {
             // Send session
             sessionWaiting = static_cast<D*>(this)->isWaiting();
 
-            sendMicData ();
+            if(_eventQueue.size() > 0) {
+            	sendDtmfEvent(_eventQueue.front());
+            }
+            else {
+            	sendMicData ();
+            }
 
             // Recv session
             receiveSpeakerData ();
@@ -594,8 +691,7 @@ namespace sfl {
                 _ca->recAudio.recData (_micData,_nSamplesMic);
             }
 
-	    // ost::MutexLock unlock(*(_manager->getAudioLayerMutex()));
-	    _manager->getAudioLayerMutex()->leave();
+            _manager->getAudioLayerMutex()->leave();
 
             // Let's wait for the next transmit cycle
             Thread::sleep (TimerPort::getTimer());

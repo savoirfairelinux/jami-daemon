@@ -32,6 +32,7 @@ import time
 import hashlib
 
 from threading import Thread
+from threading import Event
 
 from Errors import *
 
@@ -42,21 +43,23 @@ except ImportError, e:
 	raise SflPhoneError("No python-dbus module found")
 
 
-class SflPhoneCtrlSimple(object):
+class SflPhoneCtrlSimple(Thread):
     """Simple class for controlling SflPhoned through DBUS"""
 
     # list of active calls (known by the client)
     activeCalls = {}
 
     def __init__(self, name=sys.argv[0]):
+        Thread.__init__(self)
        	# current active account
         self.account = None
         # client name
         self.name = name
         # client registered to sflphoned ?
         self.registered = False
-
         self.register()
+	self.event = Event()
+	self.currentCallId = ""
 
 
     def __del__(self):
@@ -139,6 +142,9 @@ class SflPhoneCtrlSimple(object):
     def onIncomingCall(self, account, callid, to):
         print "Incoming call: " + account + ", " + callid + ", " + to
         self.activeCalls[callid] = {'Account': account, 'To': to, 'State': '' }
+	self.currentCallId = callid
+	self.event.set()
+	Answer(callid)
 
     # On call state changed event, set the values for new calls, 
     # or delete the call from the list of active calls
@@ -559,3 +565,13 @@ class SflPhoneCtrlSimple(object):
         m.update(str(t) + str(r))
         callid = m.hexdigest()
 	return callid
+
+
+    def run(self):
+
+        while(True):
+            print "Waiting Event"
+	    self.event.wait()
+	    sflphone.Accept(sflphone.currentCallId)
+	    self.event.clear()
+	    print "Call Accepted"

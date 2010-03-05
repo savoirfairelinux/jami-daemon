@@ -33,7 +33,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _publishedIpAddress ("")
         , _localPort (atoi (DEFAULT_SIP_PORT))
         , _publishedPort (atoi (DEFAULT_SIP_PORT))
-	, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
+		, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
         , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
         , _transport (NULL)
         , _resolveOnce (false)
@@ -42,6 +42,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _realm (DEFAULT_REALM)
         , _authenticationUsername ("")
         , _tlsSetting (NULL)
+	    , _dtmfType(OVERRTP)
         , _displayName ("")
 {
     
@@ -361,6 +362,11 @@ void SIPAccount::loadConfig()
     setPublishedPort (atoi (publishedPort.c_str()));
 
     setPublishedAddress (Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS));
+
+    if(Manager::instance().getConfigString (_accountID, ACCOUNT_DTMF_TYPE) == OVERRTPSTR)
+    	_dtmfType = OVERRTP;
+	else
+		_dtmfType = SIPINFO;
 
     // Init TLS settings if the user wants to use TLS
     bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);

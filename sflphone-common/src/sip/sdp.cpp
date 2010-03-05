@@ -134,7 +134,7 @@ int Sdp::create_local_offer (CodecOrder selectedCodecs) {
 
     pj_status_t status;
 
-    _debug ("Create local offer");
+    _info("SDP: Create local offer");
 
     // Build local media capabilities
     set_local_media_capabilities (selectedCodecs);
@@ -173,12 +173,12 @@ int Sdp::create_initial_offer (CodecOrder selectedCodecs) {
     pj_status_t status;
     pjmedia_sdp_neg_state state;
 
-    _debug ("Create initial offer");
+    _info("SDP: Create initial offer");
     // Build the SDP session descriptor
     status = create_local_offer (selectedCodecs);
 
     if (status != PJ_SUCCESS) {
-        _warn ("    Error: Failed to create initial offer");
+        _error ("SDP: Error: Failed to create initial offer");
         return status;
     }
 
@@ -186,15 +186,13 @@ int Sdp::create_initial_offer (CodecOrder selectedCodecs) {
     status = pjmedia_sdp_neg_create_w_local_offer (_pool, get_local_sdp_session(), &_negociator);
 
     if (status != PJ_SUCCESS) {
-        _error ("    Error: Failed to create an initial SDP negociator");
+        _error ("SDP: Error: Failed to create an initial SDP negociator");
         return status;
     }
 
     state = pjmedia_sdp_neg_get_state (_negociator);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
-
-    _debug ("    Initial offer created succesfully");
 
     return PJ_SUCCESS;
 }
@@ -213,6 +211,7 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder select
     status = create_local_offer (selectedCodecs);
 
     if (status != PJ_SUCCESS) {
+    	_error ("SDP: Error: Failed to create initial offer");
         return status;
     }
 
@@ -220,7 +219,7 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder select
     this->set_media_transport_info_from_remote_sdp (remote);
 
     status = pjmedia_sdp_neg_create_w_remote_offer (_pool,
-             get_local_sdp_session(), remote, &_negociator);
+    get_local_sdp_session(), remote, &_negociator);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
@@ -240,17 +239,17 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         message = rdata->msg_info.msg;
 
         if (message == NULL) {
-            _error ("No message");
+            _error ("SDP: No message");
             return PJMEDIA_SDP_EINSDP;
         }
 
         if (message->body == NULL) {
-            _error ("Empty message body");
+            _error ("SDP: Empty message body");
             return PJMEDIA_SDP_EINSDP;
         }
 
         if (pj_stricmp (&message->body->content_type.type, &str_application) || pj_stricmp (&message->body->content_type.subtype, &str_sdp)) {
-            _error ("Incoming Message does not contain SDP");
+            _error ("SDP: Incoming Message does not contain SDP");
             return PJMEDIA_SDP_EINSDP;
         }
 
@@ -262,17 +261,17 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
         }
 
         if (status != PJ_SUCCESS) {
-            _debug ("SDP cannot be validated");
+            _warn ("SDP: cannot be validated");
             return PJMEDIA_SDP_EINSDP;
         }
 
         // This is an answer
-        _debug ("Got SDP answer %s", pjsip_rx_data_get_info (rdata));
+        _debug ("SDP: Got SDP answer %s", pjsip_rx_data_get_info (rdata));
 
         status = pjmedia_sdp_neg_set_remote_answer (inv->pool, inv->neg, remote_sdp);
 
         if (status != PJ_SUCCESS) {
-            _debug ("An error occured while processing remote answer %s", pjsip_rx_data_get_info (rdata));
+            _error ("SDP: Error: while processing remote answer %s", pjsip_rx_data_get_info (rdata));
             return PJMEDIA_SDP_EINSDP;
         }
 
@@ -359,7 +358,6 @@ void Sdp::sdp_add_media_description()
     }
 }
 
-// @TODO crypto should be a vector of string
 void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto)
 {
 

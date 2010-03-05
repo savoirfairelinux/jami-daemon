@@ -178,12 +178,22 @@ class SIPVoIPLink : public VoIPLink
         bool refuse (const CallID& id);
 
         /**
-         * Send DTMF
+         * Send DTMF refering to account configuration
          * @param id The call identifier
          * @param code  The char code
          * @return bool True on success
          */
         bool carryingDTMFdigits(const CallID& id, char code);
+
+        /**
+         * Send Dtmf using SIP INFO message
+         */
+        bool dtmfSipInfo(SIPCall *call, char code);
+
+        /**
+         * Send Dtmf over RTP
+         */
+        bool dtmfOverRtp(SIPCall* call, char code);
 
         /** 
          * Terminate every call not hangup | brutal | Protected by mutex 

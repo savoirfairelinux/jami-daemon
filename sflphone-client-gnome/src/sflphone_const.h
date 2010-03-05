@@ -62,6 +62,7 @@
 #define ACCOUNT_REGISTRATION_EXPIRE        "Account.expire"
 #define ACCOUNT_SIP_STUN_SERVER	           "STUN.server"
 #define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
+#define ACCOUNT_DTMF_TYPE                   "Account.dtmfType"
 #define ACCOUNT_HOSTNAME                   "hostname"
 #define ACCOUNT_USERNAME                   "username"
 #define ACCOUNT_PASSWORD                   "password"
@@ -134,6 +135,10 @@ log4c_category_t* log4c_sfl_gtk_category;
 /** Audio Managers */
 #define ALSA	      0
 #define PULSEAUDIO    1
+
+ /** DTMF type */
+#define OVERRTP "overrtp"
+#define SIPINFO "sipinfo"
 
 /** Notification levels */
 #define __NOTIF_LEVEL_MIN     0

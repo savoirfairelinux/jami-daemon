@@ -65,6 +65,7 @@ typedef enum RegistrationState {
 #define CONFIG_ACCOUNT_RESOLVE_ONCE         "Account.resolveOnce"
 #define CONFIG_ACCOUNT_REGISTRATION_EXPIRE  "Account.expire"
 #define CONFIG_CREDENTIAL_NUMBER            "Credential.count"
+#define ACCOUNT_DTMF_TYPE                   "Account.dtmfType"
 
 #define HOSTNAME                            "hostname"
 #define USERNAME                            "username"
@@ -116,6 +117,7 @@ typedef enum RegistrationState {
 #define REGISTRATION_STATUS                 "Status"
 #define REGISTRATION_STATE_CODE             "Registration.code" 
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
+
 
 class Account{
 

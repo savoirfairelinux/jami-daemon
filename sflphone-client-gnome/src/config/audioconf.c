@@ -900,7 +900,7 @@ GtkWidget* create_audio_configuration()
 
 	return ret;
 }
-
+/*
 GtkWidget* create_codecs_configuration (account_t **a) {
 
 	// Main widget
@@ -922,3 +922,4 @@ GtkWidget* create_codecs_configuration (account_t **a) {
 	return ret;
 
 }
+*/

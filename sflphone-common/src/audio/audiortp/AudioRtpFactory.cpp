@@ -229,6 +229,22 @@ void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
     }
 }
 
+void AudioRtpFactory::sendDtmfDigit(int digit) {
+	switch(_rtpSessionType) {
+
+	case Sdes:
+		static_cast<AudioSrtpSession *> (_rtpSession)->putDtmfEvent(digit);
+		break;
+
+	case Symmetric:
+		static_cast<AudioSymmetricRtpSession *> (_rtpSession)->putDtmfEvent(digit);
+		break;
+
+	case Zrtp:
+		static_cast<AudioZrtpSession *> (_rtpSession)->putDtmfEvent(digit);
+		break;
+	}
+}
 }
 
 
