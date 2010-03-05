@@ -557,5 +557,12 @@
       <arg type="as" name="list" direction="out"/>
     </method>
     
+    <method name="getShortcuts">
+      <arg type="a{si}" name="shortcutsMap" direction="out"/>
+    </method>
+    
+    <method name="setShortcuts">
+      <arg type="a{si}" name="shortcutsMap" direction="in"/>
+    </method>
   </interface>
 </node>

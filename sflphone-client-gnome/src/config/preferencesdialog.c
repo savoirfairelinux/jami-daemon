@@ -30,6 +30,7 @@
 #include <mainwindow.h>
 #include <audioconf.h>
 #include <addressbook-config.h>
+#include <shortcuts-config.h>
 #include <hooks-config.h>
 #include <utils.h>
 
@@ -308,6 +309,11 @@ show_preferences_dialog ()
   gtk_notebook_append_page (GTK_NOTEBOOK(notebook), tab, gtk_label_new (
       _("Hooks")));
   gtk_notebook_page_num (GTK_NOTEBOOK(notebook), tab);
+
+  // Shortcuts tab
+  tab = create_shortcuts_settings();
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Shortcuts")));
+  gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
   gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook), 0);
 

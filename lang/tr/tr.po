@@ -1,4 +1,4 @@
-# Traditional Chinese translation for sflphone
+# Turkish translation for sflphone
 # Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
 # This file is distributed under the same license as the sflphone package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: sflphone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-03-02 10:23-0500\n"
-"PO-Revision-Date: 2009-12-03 18:12+0000\n"
-"Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
-"Language-Team: Traditional Chinese <zh_TW@li.org>\n"
+"PO-Revision-Date: 2009-12-30 08:56+0000\n"
+"Last-Translator: zeugma <Unknown>\n"
+"Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/accountlist.c:170
 msgid "Registered"
-msgstr ""
+msgstr "Kayıtlı"
 
 #: ../sflphone-client-gnome/src/accountlist.c:173
 msgid "Not Registered"
@@ -34,15 +34,15 @@ msgstr ""
 #: ../sflphone-client-gnome/src/sflnotify.c:131
 #: ../sflphone-client-gnome/src/sflnotify.c:148
 msgid "Error"
-msgstr ""
+msgstr "Hata"
 
 #: ../sflphone-client-gnome/src/accountlist.c:182
 msgid "Authentication Failed"
-msgstr ""
+msgstr "Kimlik Doğrulama Başarısız"
 
 #: ../sflphone-client-gnome/src/accountlist.c:185
 msgid "Network unreachable"
-msgstr ""
+msgstr "Ağ erişilemez durumda"
 
 #: ../sflphone-client-gnome/src/accountlist.c:188
 msgid "Host unreachable"
@@ -62,7 +62,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/accountlist.c:200
 msgid "Invalid"
-msgstr ""
+msgstr "Geçersiz"
 
 #: ../sflphone-client-gnome/src/actions.c:114
 msgid "Using account"
@@ -148,7 +148,7 @@ msgstr ""
 #: ../sflphone-client-gnome/src/mainwindow.c:454
 #: ../sflphone-client-gnome/src/mainwindow.c:484
 msgid "Continue"
-msgstr ""
+msgstr "Devam et"
 
 #: ../sflphone-client-gnome/src/mainwindow.c:455
 #: ../sflphone-client-gnome/src/mainwindow.c:485
@@ -180,7 +180,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/mainwindow.c:504
 msgid "Confirm"
-msgstr ""
+msgstr "Onayla"
 
 #: ../sflphone-client-gnome/src/sflnotify.c:71
 #: ../sflphone-client-gnome/src/sflnotify.c:91
@@ -260,7 +260,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/statusicon.c:187
 msgid "SFLphone"
-msgstr ""
+msgstr "SFLphone"
 
 #: ../sflphone-client-gnome/src/statusicon.c:189
 #, c-format
@@ -272,7 +272,7 @@ msgstr[0] ""
 #: ../sflphone-client-gnome/src/uimanager.c:770
 #: ../sflphone-client-gnome/src/uimanager.c:814
 msgid "Voicemail"
-msgstr ""
+msgstr "Sesli mesaj"
 
 #: ../sflphone-client-gnome/src/uimanager.c:121
 msgid "No address book selected"
@@ -281,7 +281,7 @@ msgstr ""
 #: ../sflphone-client-gnome/src/uimanager.c:144
 #: ../sflphone-client-gnome/src/uimanager.c:862
 msgid "Address book"
-msgstr ""
+msgstr "Adres Defteri"
 
 #: ../sflphone-client-gnome/src/uimanager.c:327
 #, c-format
@@ -298,12 +298,12 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:800
 msgid "Call"
-msgstr ""
+msgstr "Çağrı"
 
 #: ../sflphone-client-gnome/src/uimanager.c:801
 #: ../sflphone-client-gnome/src/uimanager.c:1311
 msgid "_New call"
-msgstr ""
+msgstr "_Yeni çağrı"
 
 #: ../sflphone-client-gnome/src/uimanager.c:802
 msgid "Place a new call"
@@ -320,7 +320,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:806
 msgid "Finish the call"
-msgstr ""
+msgstr "Aramayı sonlandır"
 
 #: ../sflphone-client-gnome/src/uimanager.c:807
 msgid "O_n hold"
@@ -344,7 +344,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:812
 msgid "Run the configuration assistant"
-msgstr ""
+msgstr "Yapılandırma sihirbazını çalıştır"
 
 #: ../sflphone-client-gnome/src/uimanager.c:815
 msgid "Call your voicemail"
@@ -352,27 +352,27 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:816
 msgid "_Close"
-msgstr ""
+msgstr "_Kapat"
 
 #: ../sflphone-client-gnome/src/uimanager.c:817
 msgid "Minimize to system tray"
-msgstr ""
+msgstr "Sistem çubuğuna küçült"
 
 #: ../sflphone-client-gnome/src/uimanager.c:818
 msgid "_Quit"
-msgstr ""
+msgstr "_Çık"
 
 #: ../sflphone-client-gnome/src/uimanager.c:819
 msgid "Quit the program"
-msgstr ""
+msgstr "Programdan çık"
 
 #: ../sflphone-client-gnome/src/uimanager.c:822
 msgid "_Edit"
-msgstr ""
+msgstr "_Düzenle"
 
 #: ../sflphone-client-gnome/src/uimanager.c:823
 msgid "_Copy"
-msgstr ""
+msgstr "_Kopyala"
 
 #: ../sflphone-client-gnome/src/uimanager.c:824
 msgid "Copy the selection"
@@ -380,7 +380,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:825
 msgid "_Paste"
-msgstr ""
+msgstr "_Yapıştır"
 
 #: ../sflphone-client-gnome/src/uimanager.c:826
 msgid "Paste the clipboard"
@@ -396,31 +396,31 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:829
 msgid "_Accounts"
-msgstr ""
+msgstr "_Hesaplar"
 
 #: ../sflphone-client-gnome/src/uimanager.c:829
 msgid "Edit your accounts"
-msgstr ""
+msgstr "Hesaplarınızı düzenleyin"
 
 #: ../sflphone-client-gnome/src/uimanager.c:831
 msgid "_Preferences"
-msgstr ""
+msgstr "_Tercihler"
 
 #: ../sflphone-client-gnome/src/uimanager.c:832
 msgid "Change your preferences"
-msgstr ""
+msgstr "Tercihlerinizi değiştirin"
 
 #: ../sflphone-client-gnome/src/uimanager.c:835
 msgid "_View"
-msgstr ""
+msgstr "_Göster"
 
 #: ../sflphone-client-gnome/src/uimanager.c:838
 msgid "_Help"
-msgstr ""
+msgstr "_Yardım"
 
 #: ../sflphone-client-gnome/src/uimanager.c:839
 msgid "Contents"
-msgstr ""
+msgstr "İçerikler"
 
 #: ../sflphone-client-gnome/src/uimanager.c:840
 msgid "Open the manual"
@@ -428,11 +428,11 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:841
 msgid "About this application"
-msgstr ""
+msgstr "Bu uygulama hakkında"
 
 #: ../sflphone-client-gnome/src/uimanager.c:849
 msgid "_Transfer"
-msgstr ""
+msgstr "_Transfer"
 
 #: ../sflphone-client-gnome/src/uimanager.c:850
 msgid "Transfer the call"
@@ -441,7 +441,7 @@ msgstr ""
 #: ../sflphone-client-gnome/src/uimanager.c:851
 #: ../sflphone-client-gnome/src/uimanager.c:1143
 msgid "_Record"
-msgstr ""
+msgstr "_Kayıt"
 
 #: ../sflphone-client-gnome/src/uimanager.c:852
 msgid "Record the current conversation"
@@ -453,7 +453,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:854
 msgid "Show the toolbar"
-msgstr ""
+msgstr "Araç çubuğunu göster"
 
 #: ../sflphone-client-gnome/src/uimanager.c:855
 msgid "_Dialpad"
@@ -473,15 +473,15 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/uimanager.c:859
 msgid "_History"
-msgstr ""
+msgstr "_Geçmiş"
 
 #: ../sflphone-client-gnome/src/uimanager.c:860
 msgid "Calls history"
-msgstr ""
+msgstr "Arama geçmişi"
 
 #: ../sflphone-client-gnome/src/uimanager.c:861
 msgid "_Address book"
-msgstr ""
+msgstr "_Adres defteri"
 
 #: ../sflphone-client-gnome/src/uimanager.c:1131
 #: ../sflphone-client-gnome/src/uimanager.c:1173
@@ -516,7 +516,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:276
 msgid "Unknown"
-msgstr ""
+msgstr "Bilinmiyor"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:286
 #: ../sflphone-client-gnome/src/config/assistant.c:323
@@ -528,19 +528,19 @@ msgstr ""
 #: ../sflphone-client-gnome/src/config/assistant.c:331
 #: ../sflphone-client-gnome/src/config/assistant.c:444
 msgid "_User name"
-msgstr ""
+msgstr "_Kullanıcı adı"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:311
 #: ../sflphone-client-gnome/src/config/assistant.c:347
 #: ../sflphone-client-gnome/src/config/assistant.c:459
 msgid "_Password"
-msgstr ""
+msgstr "_Parola"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:331
 #: ../sflphone-client-gnome/src/config/assistant.c:364
 #: ../sflphone-client-gnome/src/config/assistant.c:474
 msgid "Show password"
-msgstr ""
+msgstr "Parolayı göster"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:335
 #: ../sflphone-client-gnome/src/config/assistant.c:369
@@ -549,16 +549,17 @@ msgid "_Voicemail number"
 msgstr ""
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:343
+#, fuzzy
 msgid "_User-agent"
-msgstr ""
+msgstr "_Kullanıcı adı"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:431
 msgid "Authentication"
-msgstr ""
+msgstr "Kimlik Doğrulama"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:432
 msgid "Secret"
-msgstr ""
+msgstr "Gizli"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:686
 msgid "Credential"
@@ -570,12 +571,12 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:731
 msgid "Password"
-msgstr ""
+msgstr "Parola"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:790
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1187
 msgid "Security"
-msgstr ""
+msgstr "Güvenlik"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:801
 msgid "Use TLS transport (sips)"
@@ -603,15 +604,15 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:920
 msgid "Network Interface"
-msgstr ""
+msgstr "Ağ Arayüzü"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:933
 msgid "Local address"
-msgstr ""
+msgstr "Yerel adres"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1000
 msgid "Local port"
-msgstr ""
+msgstr "Yerel port"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1037
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1068
@@ -640,20 +641,20 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1144
 msgid "Account settings"
-msgstr ""
+msgstr "Hesap ayarları"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1166
 msgid "Basic"
-msgstr ""
+msgstr "Basit"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1174
 #: ../sflphone-client-gnome/src/config/audioconf.c:913
 msgid "Codecs"
-msgstr ""
+msgstr "Çözücüler"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1182
 msgid "Advanced"
-msgstr ""
+msgstr "Gelişmiş"
 
 #: ../sflphone-client-gnome/src/config/accountconfigdialog.c:1195
 msgid "Network"
@@ -673,15 +674,15 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:421
 msgid "Protocol"
-msgstr ""
+msgstr "İletişim Kuralları"
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:429
 msgid "Status"
-msgstr ""
+msgstr "Durum"
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:511
 msgid "Accounts"
-msgstr ""
+msgstr "Hesaplar"
 
 #: ../sflphone-client-gnome/src/config/accountlistconfigdialog.c:521
 msgid "Configured Accounts"
@@ -701,7 +702,7 @@ msgstr ""
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:306
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:291
 msgid "General"
-msgstr ""
+msgstr "Genel"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:312
 msgid "_Use Evolution address books"
@@ -725,19 +726,19 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:345
 msgid "_Work"
-msgstr ""
+msgstr "_İş"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:351
 msgid "_Home"
-msgstr ""
+msgstr "_Başlangıç"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:357
 msgid "_Mobile"
-msgstr ""
+msgstr "_Hareketli"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:364
 msgid "Address Books"
-msgstr ""
+msgstr "Adres Defterleri"
 
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:368
 msgid "Select which Evolution address books to use"
@@ -746,7 +747,7 @@ msgstr ""
 #: ../sflphone-client-gnome/src/config/addressbook-config.c:404
 #: ../sflphone-client-gnome/src/config/audioconf.c:595
 msgid "Name"
-msgstr ""
+msgstr "İsim"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:75
 #, c-format
@@ -761,15 +762,15 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/assistant.c:80
 msgid "Alias"
-msgstr ""
+msgstr "Rumuz"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:84
 msgid "Server"
-msgstr ""
+msgstr "Sunucu"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:88
 msgid "Username"
-msgstr ""
+msgstr "Kullanıcı adı"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:92
 msgid "Security: "
@@ -781,7 +782,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/assistant.c:96
 msgid "None"
-msgstr ""
+msgstr "Hiçbiri"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:230
 msgid "SFLphone account creation wizard"
@@ -813,7 +814,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/assistant.c:289
 msgid "Account"
-msgstr ""
+msgstr "Hesap"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:289
 msgid "Please select one of the following options"
@@ -843,7 +844,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/assistant.c:390
 msgid "Optional email address"
-msgstr ""
+msgstr "isteğe bağlı e-posta adresi"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:390
 msgid "This email address will be used to send your voicemail messages."
@@ -851,7 +852,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/assistant.c:398
 msgid "_Email address"
-msgstr ""
+msgstr "_E-Posta adresi"
 
 #: ../sflphone-client-gnome/src/config/assistant.c:420
 msgid "IAX2 account settings"
@@ -879,19 +880,19 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/assistant.c:527
 msgid "Congratulations!"
-msgstr ""
+msgstr "Tebrikler!"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:600
 msgid "Frequency"
-msgstr ""
+msgstr "Frekans"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:605
 msgid "Bitrate"
-msgstr ""
+msgstr "Veri akış hızı"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:610
 msgid "Bandwidth"
-msgstr ""
+msgstr "Band Genişliği"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:688
 msgid "ALSA plugin"
@@ -899,11 +900,11 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:710
 msgid "Output"
-msgstr ""
+msgstr "Çıkış"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:732
 msgid "Input"
-msgstr ""
+msgstr "Giriş"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:767
 msgid "_Voice Activity Detection"
@@ -931,7 +932,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:853
 msgid "Recordings"
-msgstr ""
+msgstr "Kayıtlar"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:857
 msgid "Destination folder"
@@ -939,7 +940,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:861
 msgid "Select a folder"
-msgstr ""
+msgstr "Bir klasör seç"
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:867
 msgid "Ringtones"
@@ -955,7 +956,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/audioconf.c:885
 msgid "Audio Files"
-msgstr ""
+msgstr "Ses Dosyaları"
 
 #: ../sflphone-client-gnome/src/config/hooks-config.c:130
 msgid "URL Argument"
@@ -1000,7 +1001,7 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:158
 msgid "System Tray Icon"
-msgstr ""
+msgstr "Sistem Tepsisi Simgesi"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:168
 msgid "Show SFLphone in the system tray"
@@ -1028,19 +1029,19 @@ msgstr ""
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:224
 msgid "days"
-msgstr ""
+msgstr "gün"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:270
 msgid "Preferences"
-msgstr ""
+msgstr "Tercihler"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:297
 msgid "Audio"
-msgstr ""
+msgstr "Ses"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:303
 msgid "Address Book"
-msgstr ""
+msgstr "Adres Defteri"
 
 #: ../sflphone-client-gnome/src/config/preferencesdialog.c:309
 msgid "Hooks"
@@ -1156,7 +1157,7 @@ msgstr ""
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:84
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:96
 msgid "Click here to change the search type"
-msgstr ""
+msgstr "Arama türünü değiştirmek için buraya tıklayın"
 
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:71
 msgid "Search by missed call"
@@ -1169,17 +1170,3 @@ msgstr ""
 #: ../sflphone-client-gnome/src/contacts/searchbar.c:95
 msgid "Search by outgoing call"
 msgstr ""
-
-#~ msgctxt "NAME OF TRANSLATORS"
-#~ msgid "Your names"
-#~ msgstr ""
-#~ ",Launchpad Contributions:, ,Launchpad Contributions:,Emmanuel Milou, ,"
-#~ "Launchpad Contributions:,Emmanuel Milou, ,Launchpad Contributions:,"
-#~ "Emmanuel Milou, ,Launchpad Contributions:,Emmanuel Milou"
-
-#~ msgctxt "EMAIL OF TRANSLATORS"
-#~ msgid "Your emails"
-#~ msgstr ""
-#~ ",,,,emmanuel.milou@savoirfairelinux.com,,,emmanuel.milou@savoirfairelinux."
-#~ "com,,,emmanuel.milou@savoirfairelinux.com,,,emmanuel."
-#~ "milou@savoirfairelinux.com"

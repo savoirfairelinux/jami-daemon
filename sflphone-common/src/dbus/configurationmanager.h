@@ -37,6 +37,9 @@ public:
     ConfigurationManager(DBus::Connection& connection);
     static const char* SERVER_PATH;
 
+private:
+    std::vector<std::string> shortcutsKeys;
+
 public:
 
     std::map< std::string, std::string > getAccountDetails( const std::string& accountID );
@@ -146,6 +149,9 @@ public:
     
     std::vector<std::string> getAllIpInterface(void);
     std::vector<std::string> getAllIpInterfaceByName(void);
+
+    std::map< std::string, int32_t > getShortcuts ();
+    void setShortcuts (const std::map< std::string, int32_t >& shortcutsMap);
 };
 
 
