@@ -4,6 +4,8 @@ import sys
 
 import getopt
 
+from threading import Event 
+
 from sflphonectrlsimple import SflPhoneCtrlSimple
 
 
@@ -82,16 +84,27 @@ class SflPhoneTests(SflPhoneCtrlSimple):
         print "Account with ID " + accountID + " removed"
 
 
+
 # Open sflphone and connect to sflphoned through dbus 
 sflphone = SflPhoneTests()
+
+sflphone.start()
 
 # Test 1: Makke approximately one IP2IP call per second 
 # to a sipp uas on local addrress
 #sflphone.test_make_iptoip_call()
 
 
-# Test 2: 
-accountID = sflphone.test_create_account()
+
+# Test 2: - Create an account on Asterisk
+#         - Wait for incoming calls
+#         - Once a call is received, answer
+#         - The call should then be hung up by caller  
+
+# accountID = sflphone.test_create_account()
 # sflphone.test_make_account_call()
-time.sleep(0.3)
+# time.sleep(0.3)
+
+
+
 # sflphone.test_remove_account(accountID)
