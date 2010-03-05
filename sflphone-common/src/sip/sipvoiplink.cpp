@@ -2404,7 +2404,10 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
     }
 
-
+    if(listeningAddress == "" || listeningPort == 0) {
+    	_error("UserAgent: Error invalid address for new udp transport");
+    	return !PJ_SUCCESS;
+    }
     //strcpy (tmpIP, listeningAddress.data());
     /* Init published name */
     pj_bzero (&a_name, sizeof (pjsip_host_port));
