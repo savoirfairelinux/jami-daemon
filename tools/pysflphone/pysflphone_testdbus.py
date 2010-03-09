@@ -113,6 +113,7 @@ class SflPhoneTests():
         # Start Glib mainloop
         self.sflphone.start()
 
+
     def test_ip2ip_recv_peer_hungup(self):
         """Wait for calls, answer, peer hangup"""
         # Add callback for this test
@@ -120,6 +121,7 @@ class SflPhoneTests():
 
         # Start Glib mainloop
         self.sflphone.start()
+
 
     def test_account_send_hangup(self):
         """Send new account call, hangup once peer answered"""
@@ -134,11 +136,35 @@ class SflPhoneTests():
             time.sleep(0.5)
 
             i = i+1
-        print "account hangup done"
 
         del self.sflphone
 
-    def test_account_recv_call_peer_hungup(self):
+
+    def test_account_send_peer_hungup(self):
+        """Send new account call, hangup once peer answered"""
+        print "test account send hangup"
+        i = 0
+        while(i < 10):
+
+            callid = self.sflphone.Call("27182")
+            time.sleep(1.0)
+
+            i = i+1
+
+        del self.sflphone
+
+
+    def test_account_recv_hangup(self):
+        """Register an account and wait for incoming calls"""
+
+        # Add callback for this test
+        self.sflphone.onIncomingCall_cb = acceptOnIncomingCallHangup
+
+        # Start Glib mainloop
+        self.sflphone.start()
+
+
+    def test_account_recv_peer_hungup(self):
         """Register an account and wait for incoming calls"""
 
         # Add callback for this test
@@ -146,25 +172,6 @@ class SflPhoneTests():
 
         # Start Glib mainloop
         self.sflphone.start()
-
-    
-
-#    def test_account_send_call_peer_hungup(self):
-#        """Register an account on a remote server and make several calls"""
-#
-#        self.setAccount("Account:1258495784");
-#        time.sleep(3)
-#
-#        i = 0
-#        while(i < 50):
-#
-#            callid = self.Call("5000")
-#            time.sleep(0.4)
-#
-#            self.HangUp(callid)
-#            time.sleep(0.4)
-#
-#            i = i+1
 
 
 
@@ -195,6 +202,8 @@ sflphone.setFirstRegisteredAccount();
 #         - Wait for incoming calls
 #         - Answer
 #         - Call is hanged up by calle
-testsuite.test_account_send_hangup()
-# testsuite.test_account_recv_call_peer_hungup()
+# testsuite.test_account_send_hangup()
+# testsuite.test_account_send_peer_hungup()
+# testsuite.test_account_recv_hangup()
+testsuite.test_account_recv_peer_hungup()
 

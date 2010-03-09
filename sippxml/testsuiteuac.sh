@@ -93,8 +93,57 @@ function test_account_send_hangup {
     # wait some time to make sure client is bound
     # sleep 1;
 
+    # process only one registration
+    sipp -sf account_uas_register.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1 -m 1
+
     # start sipp client and send calls 
     sipp -sf account_uas_recv_peer_hungup.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1
+
+    # kill every one
+    # bashtrap
+}
+
+function test_account_send_peer_hungup {
+
+    # start sflphoned
+    # /usr/lib/sflphone/sflphoned& 
+
+    # wait some time to make sure sflphoned is started
+    # sleep 1;
+
+    # python ../tools/pysflphone/pysflphone_testdbus.py &
+
+    # wait some time to make sure client is bound
+    # sleep 1;
+
+    # process only one registration
+    sipp -sf account_uas_register.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1 -m 1
+
+    # start sipp client and send calls 
+    sipp -sf account_uas_recv_hangup.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1
+
+    # kill every one
+    # bashtrap
+}
+
+function test_account_recv_hangup {
+
+    # start sflphoned
+    # /usr/lib/sflphone/sflphoned& 
+
+    # wait some time to make sure sflphoned is started
+    # sleep 1;
+
+    # python ../tools/pysflphone/pysflphone_testdbus.py &
+
+    # wait some time to make sure client is bound
+    # sleep 1;
+
+    # process only one registration
+    sipp -sf account_uas_register.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1 -m 1
+
+    # start sipp client and send calls 
+    sipp -sf account_uac_send_peer_hungup.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1
 
     # kill every one
     # bashtrap
@@ -112,6 +161,9 @@ function test_account_recv_peer_hungup {
 
     # wait some time to make sure client is bound
     # sleep 1;
+
+    # process only one registration
+#    sipp -sf account_uas_register.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1 -m 1
 
     # start sipp client and send calls 
     sipp -sf account_uac_send_hangup.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1
@@ -137,5 +189,7 @@ bashtrap()
 # test_ip2ip_recv_peer_hungup
 
 # SCENARIO X: Normal flow calls (Account)
-test_account_send_hangup
-# test_account_recv_peer_hungup
+# test_account_send_hangup
+# test_account_send_peer_hungup
+# test_account_recv_hangup
+test_account_recv_peer_hungup
