@@ -23,8 +23,10 @@ import os
 import random
 from traceback import print_exc
 
+import gtk
 import gobject
 from gobject import GObject
+from gobject import MainLoop
 
 import getopt
 
@@ -44,13 +46,18 @@ except ImportError, e:
 
 
 class SflPhoneCtrlSimple(Thread):
-    """Simple class for controlling SflPhoned through DBUS"""
+    """ Simple class for controlling SflPhoned through DBUS
+
+        If option testSuite (ts) is put to true, 
+	simple actions are implemented on incoming call.
+    """ 
 
     # list of active calls (known by the client)
     activeCalls = {}
 
-    def __init__(self, name=sys.argv[0]):
-        Thread.__init__(self)
+    def __init__(self, test=False, name=sys.argv[0]):
+        print "Create SFLphone instance"
+	Thread.__init__(self)
        	# current active account
         self.account = None
         # client name
@@ -58,13 +65,19 @@ class SflPhoneCtrlSimple(Thread):
         # client registered to sflphoned ?
         self.registered = False
         self.register()
-	self.event = Event()
 	self.currentCallId = ""
+	self.loop = MainLoop()
+
+	self.test = test
+	self.onIncomingCall_cb = None
+	self.event = Event()
+	
 
 
     def __del__(self):
         if self.registered:
             self.unregister()
+	self.loop.quit()
 
 
     def register(self):
@@ -112,11 +125,13 @@ class SflPhoneCtrlSimple(Thread):
             raise SPdaemonError("Client registration failed")
 
         try:
+            print "Adding Incoming call method"
             proxy_callmgr.connect_to_signal('incomingCall', self.onIncomingCall)
             proxy_callmgr.connect_to_signal('callStateChanged', self.onCallStateChanged)
         except dbus.DBusException, e:
             print e
-			
+
+
 
     def unregister(self):
 
@@ -134,6 +149,21 @@ class SflPhoneCtrlSimple(Thread):
         return self.registered
 
 
+    def getEvent(self):
+        return self.event
+
+    def wait(self):
+        self.event.wait()
+
+    def isSet(self):
+        self.event.isSet()
+
+    def set(self):
+        self.event.set()
+
+    def clear(self):
+        self.event.clear()
+
     #
     # Signal handling
     #
@@ -143,8 +173,14 @@ class SflPhoneCtrlSimple(Thread):
         print "Incoming call: " + account + ", " + callid + ", " + to
         self.activeCalls[callid] = {'Account': account, 'To': to, 'State': '' }
 	self.currentCallId = callid
-	self.event.set()
-	Answer(callid)
+
+	if(self.test):
+            # TODO fix this bug in daemon, cannot answer too fast
+            time.sleep(0.5)
+	    if self.onIncomingCall_cb(self) is not None:
+                self.onIncomingCall_cb(self)
+	
+
 
     # On call state changed event, set the values for new calls, 
     # or delete the call from the list of active calls
@@ -520,7 +556,7 @@ class SflPhoneCtrlSimple(Thread):
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
-
+	
         self.callmanager.accept(callid)
 
 
@@ -566,12 +602,5 @@ class SflPhoneCtrlSimple(Thread):
         callid = m.hexdigest()
 	return callid
 
-
     def run(self):
-
-        while(True):
-            print "Waiting Event"
-	    self.event.wait()
-	    sflphone.Accept(sflphone.currentCallId)
-	    self.event.clear()
-	    print "Call Accepted"
+        self.loop.run()

@@ -1,16 +1,38 @@
 #!/usr/bin/env python
+import signal
+
 import time
 import sys
 
 import getopt
+import gtk
 
-from threading import Event 
+from threading import Thread
+from threading import Event
 
+print "Import SFLphone"
 from sflphonectrlsimple import SflPhoneCtrlSimple
 
+# def killhandler(signum, frame):
+#     raise IOError("Couldn't open device!")
 
-class SflPhoneTests(SflPhoneCtrlSimple):
+# signal.signal(signal.SIGKILL, killhandler)
 
+def acceptOnIncomingCall(sflphone):
+    time.sleep(0.2)
+    sflphone.Accept(sflphone.currentCallId)
+
+def acceptOnIncomingCallHangup(sflphone):
+    time.sleep(0.2)
+    sflphone.Accept(sflphone.currentCallId)
+    time.sleep(0.5)
+    sflphone.HangUp(sflphone.currentCallId)
+
+class SflPhoneTests():
+
+    def __init__(self, sfl):
+        print "Create test instance"
+        self.sflphone = sfl
 
     def test_get_allaccounts_methods(self):
 
@@ -26,37 +48,6 @@ class SflPhoneTests(SflPhoneCtrlSimple):
         for account in self.getAllIaxAccounts():
             print "  " + account
 
-    def test_make_iptoip_call(self):
-        """Make a call to a server (sipp) on port 5062"""
-        i = 0
-        while(i < 10):
-
-            callid = self.Call("sip:test@127.0.0.1:5062")
-            time.sleep(0.4)
-            
-            self.HangUp(callid)            
-            time.sleep(0.4)
-
-            i = i+1
-
-    def test_make_account_call(self):
-        """Register an account on a remote server and make several calls"""
-
-        self.setAccount("Account:1258495784");
-        time.sleep(3)
-
-        i = 0
-        while(i < 50):
-
-            callid = self.Call("5000")
-            time.sleep(0.4)
-
-            self.HangUp(callid)
-            time.sleep(0.4)
-
-            i = i+1
-
-
     def test_create_account(self):
         """Create a new sip account"""
 
@@ -71,7 +62,7 @@ class SflPhoneTests(SflPhoneCtrlSimple):
                       PASSWORD:"1234"}
 
 
-        accountID = self.addAccount(accDetails)
+        accountID = self.sflphone.addAccount(accDetails)
         print "New Account ID " + accountID
 
         return accountID
@@ -80,31 +71,130 @@ class SflPhoneTests(SflPhoneCtrlSimple):
     def test_remove_account(self, accountID):
         """Remove test account"""
 
-        self.removeAccount(accountID)
+        self.sflphone.removeAccount(accountID)
         print "Account with ID " + accountID + " removed"
 
 
+    def test_ip2ip_send_hangup(self):
+        """Make a call to a server (sipp) on port 5062"""
+        i = 0
+        while(i < 10):
 
-# Open sflphone and connect to sflphoned through dbus 
-sflphone = SflPhoneTests()
+            callid = self.sflphone.Call("sip:test@127.0.0.1:5062")
+            time.sleep(0.5)
+            
+            self.sflphone.HangUp(callid)            
+            time.sleep(0.5)
 
-sflphone.start()
+            i = i+1
 
-# Test 1: Makke approximately one IP2IP call per second 
-# to a sipp uas on local addrress
-#sflphone.test_make_iptoip_call()
+        del self.sflphone
 
 
+    def test_ip2ip_send_peer_hungup(self):
+        """Make a call to a server (sipp) on port 5062"""
+        i = 0
+        while(i < 1):
 
-# Test 2: - Create an account on Asterisk
+            callid = self.sflphone.Call("sip:test@127.0.0.1:5062")
+            time.sleep(1.0)
+
+            i = i+1
+
+        del self.sflphone
+
+
+    def test_ip2ip_recv_hangup(self):
+        """Wait for calls, answer then hangup"""
+
+        # Add callback for this test
+        self.sflphone.onIncomingCall_cb = acceptOnIncomingCallHangup
+
+        # Start Glib mainloop
+        self.sflphone.start()
+
+    def test_ip2ip_recv_peer_hungup(self):
+        """Wait for calls, answer, peer hangup"""
+        # Add callback for this test
+        self.sflphone.onIncomingCall_cb = acceptOnIncomingCall
+
+        # Start Glib mainloop
+        self.sflphone.start()
+
+    def test_account_send_hangup(self):
+        """Send new account call, hangup once peer answered"""
+        print "test account send hangup"
+        i = 0
+        while(i < 10):
+
+            callid = self.sflphone.Call("27182")
+            time.sleep(0.5)
+            
+            self.sflphone.HangUp(callid)            
+            time.sleep(0.5)
+
+            i = i+1
+        print "account hangup done"
+
+        del self.sflphone
+
+    def test_account_recv_call_peer_hungup(self):
+        """Register an account and wait for incoming calls"""
+
+        # Add callback for this test
+        self.sflphone.onIncomingCall_cb = acceptOnIncomingCall
+
+        # Start Glib mainloop
+        self.sflphone.start()
+
+    
+
+#    def test_account_send_call_peer_hungup(self):
+#        """Register an account on a remote server and make several calls"""
+#
+#        self.setAccount("Account:1258495784");
+#        time.sleep(3)
+#
+#        i = 0
+#        while(i < 50):
+#
+#            callid = self.Call("5000")
+#            time.sleep(0.4)
+#
+#            self.HangUp(callid)
+#            time.sleep(0.4)
+#
+#            i = i+1
+
+
+
+# Open sflphone and connect to sflphoned through dbus
+sflphone = SflPhoneCtrlSimple(True)
+
+# Init test suite 
+testsuite = SflPhoneTests(sflphone)
+
+# Register the first account available, should be the test account
+sflphone.setFirstRegisteredAccount();
+
+
+# SCENARIO 1: IP2IP Normal flow calls
+
+# Test 1: - Send an IP2IP call
+#         - Hangup
+# testsuite.test_ip2ip_send_hangup()
+# testsuite.test_ip2ip_send_peer_hungup()
+# testsuite.test_ip2ip_recv_hangup()
+# testsuite.test_ip2ip_recv_peer_hungup()
+
+
+
+# SCENARIO 2: IP2IP Normal flow calls
+
+# Test 1: - Create an account on Asterisk
 #         - Wait for incoming calls
-#         - Once a call is received, answer
-#         - The call should then be hung up by caller  
+#         - Answer
+#         - Call is hanged up by calle
+testsuite.test_account_send_hangup()
+# testsuite.test_account_recv_call_peer_hungup()
 
-# accountID = sflphone.test_create_account()
-# sflphone.test_make_account_call()
-# time.sleep(0.3)
-
-
-
-# sflphone.test_remove_account(accountID)
