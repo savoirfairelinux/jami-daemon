@@ -163,7 +163,7 @@ function test_account_recv_peer_hungup {
     # sleep 1;
 
     # process only one registration
-#    sipp -sf account_uas_register.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1 -m 1
+    sipp -sf account_uas_register.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1 -m 1
 
     # start sipp client and send calls 
     sipp -sf account_uac_send_hangup.xml 192.168.50.79 -i 192.168.50.182 -p ${SERVERPORT} -l 1

@@ -19,47 +19,6 @@
 
 <scenario name="accountcall_client">
 
-  <send retrans="500">
-    <![CDATA[
-
-      REGISTER sip:[remote_ip] SIP/2.0
-      Via: SIP/2.0/[transport] [local_ip]:[local_port];rport;branch=[branch]
-      Max-Forwards: 70
-      From: <sip:27182@[remote_ip]>;tag=[call_number]
-      To: <sip:27182@[remote_ip]>
-      Call-ID: REG///[call_id]
-      CSeq: 1 REGISTER
-      Contact: <sip:27182@[local_ip]:[local_port]>
-      Content-Length: 0
-      Expires: 300
-
-    ]]>
-  </send>
-
-  <recv response="401" auth="true">
-  </recv>
-
-  <send retrans="500">
-    <![CDATA[
-
-      REGISTER sip:[remote_ip] SIP/2.0
-      Via: SIP/2.0/[transport] [local_ip]:[local_port];rport;branch=[branch]
-      Max-Forwards: 70
-      From: <sip:27182@[remote_ip]>;tag=[call_number]
-      To: <sip:27182@[remote_ip]>
-      Call-ID: REG///[call_id]
-      CSeq: 2 REGISTER
-      Contact: <sip:27182@[local_ip]:[local_port]>
-      Content-Length: 0
-      Expires: 300
-      [authentication username=27182 password=1234]
-
-    ]]>
-  </send>
-
-  <recv response="200">
-  </recv>
-
   <pause milliseconds="200"/>
 
   <send retrans="500">
