@@ -6,7 +6,7 @@ SERVERPORT=5062
 function test_ip2ip_send_hangup {
 
     # start sipp server to receive calls from sflphone
-    sipp -sf ip2ip_uas_recv_peer_hungup.xml -p ${SERVERPORT}
+    sipp -sf ip2ip_uas_recv_peer_hungup.xml 127.0.0.1:5060 -i 127.0.0.1 -p ${SERVERPORT}
 
     # start sflphoned
     # /usr/lib/sflphone/sflphoned& 
@@ -24,7 +24,7 @@ function test_ip2ip_send_hangup {
 function test_ip2ip_send_peer_hungup {
 
     # start sipp server to receive calls from sflphone and then hangup
-    sipp -sf ip2ip_uas_recv_hangup.xml -p ${SERVERPORT}
+    sipp -sf ip2ip_uas_recv_hangup.xml 127.0.0.1:5060 -s 127.0.0.1:5060 -i 127.0.0.1 -p ${SERVERPORT}
 
     # start sflphoned
     # /usr/lib/sflphone/sflphoned& 
@@ -184,7 +184,7 @@ bashtrap()
 
 # SCENARIO 1: Normal flow calls (IP2IP)
 # test_ip2ip_send_hangup
-# test_ip2ip_send_peer_hungup
+test_ip2ip_send_peer_hungup
 # test_ip2ip_recv_hangup
 # test_ip2ip_recv_peer_hungup
 
@@ -192,4 +192,4 @@ bashtrap()
 # test_account_send_hangup
 # test_account_send_peer_hungup
 # test_account_recv_hangup
-test_account_recv_peer_hungup
+# test_account_recv_peer_hungup

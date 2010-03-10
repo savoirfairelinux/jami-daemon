@@ -16,7 +16,7 @@
      [last_To:];tag=[call_number]
      [last_Call-ID:]
      [last_CSeq:]
-     Contact: <sip:127.0.1.1:5062;transport=[transport]>
+     Contact: <sip:[local_ip]:[local_port];transport=[transport]>
      Content-Length: 0
 
    ]]>
@@ -48,20 +48,50 @@
 
 
  <recv request="ACK">
+   
+   <action>
+    <ereg regexp="tag=.*" search_in="hdr" header="From:" check_it="true" assign_to="1" />
+  </action>
+  
  </recv>
 
  <pause milliseconds="500"/>
 
+ <!--
  <send retrans="500">
     <![CDATA[
 
-      BYE sip:127.0.0.1:5060;transport=[transport] SIP/2.0
-      [last_Via:]
-      [last_From:]
-      [last_To:]
+      BYE sip:[service] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];rport;branch=[branch]
+      From: <sip:test@[local_ip]:[local_port]>;tag=[call_number]
+      To: <sip:alexandresavard@alexandresavard-desktop>;[$1]
       [last_Call-ID:]
       CSeq: [cseq] BYE
-      Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+      Contact: <sip:test@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      Subject: Functional Test
+      Content-Length: 0
+
+    ]]>
+  </send>
+  -->
+
+ <!-- [last_From:] -->
+ <!-- [last_To:] -->
+
+ <!-- From: <sip:test@[local_ip]:[local_port]>;tag=[call_number] -->
+ <!-- To: <sip:alexandresavard@alexandresavard-desktop>;[$1] -->
+ 
+ <send retrans="500">
+    <![CDATA[
+
+      BYE sip:[service] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];rport;branch=[branch]
+      From: <sip:[local_ip]:[local_port]>;tag=[call_number]
+      To: <sip:[remote_ip]:[remote_port]>;[$1]
+      [last_Call-ID:]
+      CSeq: [cseq] BYE
+      Contact: <sip:test@[local_ip]:[local_port]>
       Max-Forwards: 70
       Subject: Functional Test
       Content-Length: 0

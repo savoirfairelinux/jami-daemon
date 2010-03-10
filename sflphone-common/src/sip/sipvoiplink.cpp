@@ -921,6 +921,8 @@ SIPVoIPLink::peerHungup (const CallID& id)
     pjsip_tx_data *tdata = NULL;
     SIPCall* call;
 
+    _info("SIP: Peer hungup");
+
     call = getSIPCall (id);
 
     if (call==0) {

@@ -190,7 +190,7 @@ sflphone.setFirstRegisteredAccount();
 # Test 1: - Send an IP2IP call
 #         - Hangup
 # testsuite.test_ip2ip_send_hangup()
-# testsuite.test_ip2ip_send_peer_hungup()
+testsuite.test_ip2ip_send_peer_hungup()
 # testsuite.test_ip2ip_recv_hangup()
 # testsuite.test_ip2ip_recv_peer_hungup()
 
@@ -205,5 +205,5 @@ sflphone.setFirstRegisteredAccount();
 # testsuite.test_account_send_hangup()
 # testsuite.test_account_send_peer_hungup()
 # testsuite.test_account_recv_hangup()
-testsuite.test_account_recv_peer_hungup()
+# testsuite.test_account_recv_peer_hungup()
 
