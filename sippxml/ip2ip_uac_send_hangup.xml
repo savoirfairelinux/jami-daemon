@@ -53,15 +53,18 @@
 
 
   <recv response="200">
+    <action>
+      <ereg regexp="tag=.*" search_in="hdr" header="To:" check_it="true" assign_to="1" />
+    </action>
   </recv>
 
   <send>
     <![CDATA[
 
-      ACK sip:192.168.50.79 SIP/2.0
+      ACK sip:[remote_ip] SIP/2.0
       Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
       From: <sip:[local_ip]:[local_port]>;tag=[call_number]
-      To: <sip:192.168.50.79:[remote_port]>
+      To: <sip:[remote_ip]:[remote_port]>;tag=[$1]
       Call-ID: [call_id]
       CSeq: 2 ACK
       Contact: sip:[local_ip]:[local_port]
@@ -78,7 +81,7 @@
       BYE sip:192.168.50.79 SIP/2.0
       Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
       From: <sip:[local_ip]:[local_port]>;tag=[call_number]
-      To: <sip:192.168.50.79:[remote_port]>
+      To: <sip:[remote_ip]:[remote_port]>;tag=[$1]
       Call-ID: [call_id]
       CSeq: 3 BYE
       Contact: sip:[local_ip]:[local_port]

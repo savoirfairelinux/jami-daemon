@@ -127,17 +127,17 @@ class SflPhoneTests():
         """Send new account call, hangup once peer answered"""
         print "test account send hangup"
         i = 0
-        while(i < 10):
+        while(i < 1):
 
             callid = self.sflphone.Call("27182")
-            time.sleep(0.5)
+            time.sleep(1.0)
             
             self.sflphone.HangUp(callid)            
-            time.sleep(0.5)
+            time.sleep(1.0)
 
             i = i+1
 
-        del self.sflphone
+        # del self.sflphone
 
 
     def test_account_send_peer_hungup(self):
@@ -190,7 +190,7 @@ sflphone.setFirstRegisteredAccount();
 # Test 1: - Send an IP2IP call
 #         - Hangup
 # testsuite.test_ip2ip_send_hangup()
-testsuite.test_ip2ip_send_peer_hungup()
+# testsuite.test_ip2ip_send_peer_hungup()
 # testsuite.test_ip2ip_recv_hangup()
 # testsuite.test_ip2ip_recv_peer_hungup()
 
@@ -202,7 +202,7 @@ testsuite.test_ip2ip_send_peer_hungup()
 #         - Wait for incoming calls
 #         - Answer
 #         - Call is hanged up by calle
-# testsuite.test_account_send_hangup()
+testsuite.test_account_send_hangup()
 # testsuite.test_account_send_peer_hungup()
 # testsuite.test_account_recv_hangup()
 # testsuite.test_account_recv_peer_hungup()

@@ -37,8 +37,6 @@
    ]]>
   </send>
 
-  <pause milliseconds="200"/>
-
   <send retrans="500">
    <![CDATA[
 
@@ -67,6 +65,9 @@
   </recv>
 
   <recv request="INVITE">
+  </recv>
+
+  <pause milliseconds="200">
   </recv>
 
   <send retrans="500">

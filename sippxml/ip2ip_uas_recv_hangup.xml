@@ -46,41 +46,16 @@
    ]]>
  </send>
 
+ <!-- tag from From: header is required to build the To: header in 
+   -- Bye request. --> 
 
- <recv request="ACK">
-   
+ <recv request="ACK">   
    <action>
     <ereg regexp="tag=.*" search_in="hdr" header="From:" check_it="true" assign_to="1" />
   </action>
-  
  </recv>
 
  <pause milliseconds="500"/>
-
- <!--
- <send retrans="500">
-    <![CDATA[
-
-      BYE sip:[service] SIP/2.0
-      Via: SIP/2.0/[transport] [local_ip]:[local_port];rport;branch=[branch]
-      From: <sip:test@[local_ip]:[local_port]>;tag=[call_number]
-      To: <sip:alexandresavard@alexandresavard-desktop>;[$1]
-      [last_Call-ID:]
-      CSeq: [cseq] BYE
-      Contact: <sip:test@[local_ip]:[local_port]>
-      Max-Forwards: 70
-      Subject: Functional Test
-      Content-Length: 0
-
-    ]]>
-  </send>
-  -->
-
- <!-- [last_From:] -->
- <!-- [last_To:] -->
-
- <!-- From: <sip:test@[local_ip]:[local_port]>;tag=[call_number] -->
- <!-- To: <sip:alexandresavard@alexandresavard-desktop>;[$1] -->
  
  <send retrans="500">
     <![CDATA[

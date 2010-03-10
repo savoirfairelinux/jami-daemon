@@ -60,7 +60,7 @@
       ACK sip:192.168.50.79 SIP/2.0
       Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
       From: <sip:[local_ip]:[local_port]>;tag=[call_number]
-      To: <sip:192.168.50.79:[remote_port]>
+      To: <sip:[remote_ip]:[remote_port]>
       Call-ID: [call_id]
       CSeq: 2 ACK
       Contact: sip:[local_ip]:[local_port]

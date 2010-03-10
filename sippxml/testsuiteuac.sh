@@ -184,12 +184,12 @@ bashtrap()
 
 # SCENARIO 1: Normal flow calls (IP2IP)
 # test_ip2ip_send_hangup
-test_ip2ip_send_peer_hungup
+# test_ip2ip_send_peer_hungup
 # test_ip2ip_recv_hangup
 # test_ip2ip_recv_peer_hungup
 
 # SCENARIO X: Normal flow calls (Account)
-# test_account_send_hangup
+test_account_send_hangup
 # test_account_send_peer_hungup
 # test_account_recv_hangup
 # test_account_recv_peer_hungup
