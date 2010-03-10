@@ -172,6 +172,27 @@ function test_account_recv_peer_hungup {
     # bashtrap
 }
 
+
+function test_ip2ip_send_hold_offhold {
+
+    # start sflphoned
+    # /usr/lib/sflphone/sflphoned& 
+
+    # wait some time to make sure sflphoned is started
+    # sleep 1;
+
+    # python ../tools/pysflphone/pysflphone_testdbus.py &
+
+    # wait some time to make sure client is bound
+    # sleep 1;
+
+    # start sipp client and send calls 
+    sipp -sf ip2ip_uas_recv_hold_offhold.xml 127.0.0.1:5060 -i 127.0.0.1 -p ${SERVERPORT}
+    # kill every one
+    # bashtrap
+}
+
+
 # function called if CTRL-C detected 
 bashtrap()
 {
@@ -188,8 +209,11 @@ bashtrap()
 # test_ip2ip_recv_hangup
 # test_ip2ip_recv_peer_hungup
 
-# SCENARIO X: Normal flow calls (Account)
-test_account_send_hangup
+# SCENARIO 2: Normal flow calls (Account)
+# test_account_send_hangup
 # test_account_send_peer_hungup
 # test_account_recv_hangup
 # test_account_recv_peer_hungup
+
+# SCENARIO 3: Hold/offHoldcalls (Account)
+test_ip2ip_send_hold_offhold

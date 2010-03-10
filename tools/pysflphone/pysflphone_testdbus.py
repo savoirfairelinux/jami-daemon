@@ -174,6 +174,27 @@ class SflPhoneTests():
         self.sflphone.start()
 
 
+    def test_ip2ip_send_hold_offhold(self):
+        """Send new call, hold this call, offhold, hangup"""
+        i = 0
+        while(i < 10):
+
+            callid = self.sflphone.Call("sip:test@127.0.0.1:5062")
+            time.sleep(0.5)
+
+            self.sflphone.Hold(callid)
+            time.sleep(0.5)
+
+            self.sflphone.UnHold(callid)
+            time.sleep(0.5)
+            
+            self.sflphone.HangUp(callid)            
+            time.sleep(0.5)
+
+            i = i+1
+
+        del self.sflphone
+
 
 # Open sflphone and connect to sflphoned through dbus
 sflphone = SflPhoneCtrlSimple(True)
@@ -190,20 +211,44 @@ sflphone.setFirstRegisteredAccount();
 # Test 1: - Send an IP2IP call
 #         - Hangup
 # testsuite.test_ip2ip_send_hangup()
+
+# Test 2: - Send an IP2IP call
+#         - Peer Hangup
 # testsuite.test_ip2ip_send_peer_hungup()
+
+# Test 3: - Receive an IP2IP call
+#         - Hangup
 # testsuite.test_ip2ip_recv_hangup()
+
+# Test 4: - Receive an IP2IP call
+#         - Peer Hangup
 # testsuite.test_ip2ip_recv_peer_hungup()
 
 
 
-# SCENARIO 2: IP2IP Normal flow calls
+# SCENARIO 2: ACCOUNT Normal flow calls
 
-# Test 1: - Create an account on Asterisk
-#         - Wait for incoming calls
-#         - Answer
-#         - Call is hanged up by calle
-testsuite.test_account_send_hangup()
+# Test 1: - Send an ACCOUNT call
+#         - Hangup
+# testsuite.test_account_send_hangup()
+
+# Test 2: - Send an ACCOUNT call
+#         - Peer Hangup
 # testsuite.test_account_send_peer_hungup()
+
+# Test 3: - Receive an ACCOUNT call
+#         - Hangup
 # testsuite.test_account_recv_hangup()
+
+# Test 4: - Receive an ACCOUNT call
+#         - Peer Hangup
 # testsuite.test_account_recv_peer_hungup()
 
+
+# SCENARIO 3: IP2IP Call, HOLD/OFFHOLD
+
+# Test 1: - Send an IP2IP call
+#         - Put this call on HOLD
+#         - Off HOLD this call
+#         - Hangup
+testsuite.test_ip2ip_send_hold_offhold()
