@@ -26,7 +26,7 @@ GtkWidget*
 create_shortcuts_settings()
 {
   GtkWidget *vbox, *result_frame, *window, *treeview, *scrolled_window, *label;
-  GtkListStore *store;
+
   GtkTreeIter iter;
   guint i = 0;
 
@@ -40,7 +40,7 @@ create_shortcuts_settings()
   treeview = gtk_tree_view_new();
   setup_tree_view(treeview);
 
-  store = gtk_list_store_new(COLUMNS, G_TYPE_STRING, G_TYPE_INT, G_TYPE_UINT);
+  GtkListStore *store = gtk_list_store_new(COLUMNS, G_TYPE_STRING, G_TYPE_INT, G_TYPE_UINT);
 
   Accelerator* list = shortcuts_get_list();
 
@@ -100,13 +100,28 @@ accel_edited(GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
   GtkTreeModel *model;
   GtkTreeIter iter;
 
-  // Update treeview
+  Accelerator* list = shortcuts_get_list();
   model = gtk_tree_view_get_model(treeview);
+  gint code = XKeysymToKeycode(GDK_DISPLAY(), accel_key);
+
+  // Disable existing binding if key already used
+  int i = 0;
+  gtk_tree_model_get_iter_first(model, &iter);
+  while (list[i].action != NULL)
+      {
+          if(list[i].value == code)
+            {
+              gtk_list_store_set(GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0, -1);
+              WARN("This key was already affected");
+            }
+          gtk_tree_model_iter_next(model, &iter);
+          i++;
+      }
+
+  // Update treeview
   if (gtk_tree_model_get_iter_from_string(model, &iter, path))
     gtk_list_store_set(GTK_LIST_STORE (model), &iter, MASK, (gint) mask, VALUE,
         accel_key, -1);
-
-  gint code = XKeysymToKeycode(GDK_DISPLAY(), accel_key);
 
   // Update GDK bindings
   shortcuts_update_bindings(atoi(path), code);

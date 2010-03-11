@@ -225,6 +225,35 @@ initialize_accelerators_list ()
   accelerators_list[index].value = 0;
 }
 
+static void
+update_bindings_data(const guint index, const guint code)
+{
+    // we need to be sure this code is not already affected
+    // to another action
+    int i = 0;
+    while (accelerators_list[i].action != NULL)
+      {
+        if(accelerators_list[i].value == code)
+          {
+            // disable old binding
+            accelerators_list[i].value = 0;
+
+            // update config table
+            g_hash_table_replace (shortcutsMap,
+                  g_strdup (accelerators_list[i].action), GINT_TO_POINTER (0));
+          }
+        i++;
+      }
+
+  // store new value
+  accelerators_list[index].value = code;
+
+  // update value in hashtable (used for dbus calls)
+  g_hash_table_replace (shortcutsMap,
+      g_strdup (accelerators_list[index].action), GINT_TO_POINTER (
+          accelerators_list[index].value));
+}
+
 /*
  * "Public" functions
  */
@@ -238,13 +267,8 @@ shortcuts_update_bindings (const guint index, const guint code)
   // first remove all existing bindings
   remove_bindings ();
 
-  // store new value
-  accelerators_list[index].value = code;
-
-  // update value in hashtable (used for dbus calls)
-  g_hash_table_replace (shortcutsMap,
-      g_strdup (accelerators_list[index].action), GINT_TO_POINTER (
-          accelerators_list[index].value));
+  // update data
+  update_bindings_data(index, code);
 
   // recreate all bindings
   create_bindings ();
