@@ -125,7 +125,7 @@ class SflPhoneTests():
 
     def test_account_send_hangup(self):
         """Send new account call, hangup once peer answered"""
-        print "test account send hangup"
+
         i = 0
         while(i < 1):
 
@@ -142,7 +142,7 @@ class SflPhoneTests():
 
     def test_account_send_peer_hungup(self):
         """Send new account call, hangup once peer answered"""
-        print "test account send hangup"
+
         i = 0
         while(i < 10):
 
@@ -194,6 +194,23 @@ class SflPhoneTests():
             i = i+1
 
         del self.sflphone
+
+
+    def test_account_send_transfer(self):
+        """Send new calls, transfer it to a new instance"""
+
+        i = 0
+        while(i < 1):
+
+            callid = self.sflphone.Call("27182")
+            time.sleep(1.0)
+            
+            self.sflphone.Transfer(callid,"14142")
+            # self.sflphone.HangUp(callid)            
+            # time.sleep(1.0)
+
+            i = i+1
+
 
 
 # Open sflphone and connect to sflphoned through dbus
@@ -251,4 +268,12 @@ sflphone.setFirstRegisteredAccount();
 #         - Put this call on HOLD
 #         - Off HOLD this call
 #         - Hangup
-testsuite.test_ip2ip_send_hold_offhold()
+# testsuite.test_ip2ip_send_hold_offhold()
+
+
+# SCENARIO 4: IP2IP Call, HOLD/OFFHOLD
+
+# Test 1: - Send an IP2IP call
+#         - Transfer this call to another sipp instance
+#         - Hangup
+testsuite.test_account_send_transfer()
