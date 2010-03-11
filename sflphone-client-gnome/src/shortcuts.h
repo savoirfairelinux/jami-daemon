@@ -51,6 +51,12 @@ static void
 hang_up_callback ();
 
 static void
+toggle_pick_up_hang_up_callback ();
+
+static void
+toggle_hold_callback ();
+
+static void
 initialize_binding (const gchar* action, const guint code);
 
 static void

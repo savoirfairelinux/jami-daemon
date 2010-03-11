@@ -727,7 +727,7 @@ bool ManagerImpl::refuseCall (const CallID& id) {
 	// AudioLayer* audiolayer = getAudioDriver();
 
 	if (nbCalls <= 1) {
-		_debug ("    hangupCall: stop audio stream, ther is only %i call(s) remaining", nbCalls);
+		_debug ("    refuseCall: stop audio stream, ther is only %i call(s) remaining", nbCalls);
 
 		AudioLayer* audiolayer = getAudioDriver();
 		audiolayer->stopStream();
@@ -744,7 +744,7 @@ bool ManagerImpl::refuseCall (const CallID& id) {
 		accountid = getAccountFromCall(id);
 
 		if (accountid == AccountNULL) {
-			_debug ("! Manager OffHold Call: Call doesn't exists");
+			_debug ("! Manager refuseCall: Call doesn't exists");
 			return false;
 		}
 
