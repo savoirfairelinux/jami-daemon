@@ -357,11 +357,16 @@ PulseLayer::stopStream (void)
 {
 
 	_info("Audio: Stop audio stream");
+
+	pa_threaded_mainloop_lock (m);
+
 	if(playback)
 	    pa_stream_flush (playback->pulseStream(), NULL, NULL);
 
 	if(record)
 	    pa_stream_flush (record->pulseStream(), NULL, NULL);
+
+	pa_threaded_mainloop_unlock (m);
 
 	disconnectAudioStream();
 }
