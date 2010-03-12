@@ -3478,7 +3478,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // No need to go any further on incoming ACK
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD) {
         _info("UserAgent: received an ACK");
-	return true;
+        return true;
     }
 
     // Handle the incoming call invite in this function
