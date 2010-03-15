@@ -46,10 +46,7 @@
    ]]>
 </send>
 
- <recv request="ACK"
-       optional="true"
-       rtd="true"
-       crlf="true">
+ <recv request="ACK" optional="true" rtd="true" crlf="true">
  </recv>
 
  <recv request="BYE">
