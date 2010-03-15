@@ -1299,7 +1299,7 @@ class ManagerImpl {
     // 
     ConferenceMap _conferencemap;
 
-   
+
 
 private:
 
