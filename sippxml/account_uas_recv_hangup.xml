@@ -96,8 +96,6 @@
   <recv request="ACK">
   </recv>
 
-  <pause milliseconds="500"/>
-
   <send retrans="500">
     <![CDATA[
 
