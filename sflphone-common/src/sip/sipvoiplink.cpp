@@ -921,12 +921,12 @@ SIPVoIPLink::peerHungup (const CallID& id)
     pjsip_tx_data *tdata = NULL;
     SIPCall* call;
 
-    _info("SIP: Peer hungup");
+    _info("UserAgent: Peer hungup");
 
     call = getSIPCall (id);
 
     if (call==0) {
-        _debug ("! SIP Error: Call doesn't exist");
+        _warn ("UserAgent: Call doesn't exist");
         return false;
     }
 
@@ -949,7 +949,7 @@ SIPVoIPLink::peerHungup (const CallID& id)
 
     // Release RTP thread
     if (Manager::instance().isCurrentCall (id)) {
-        _debug ("* SIP Info: Stopping AudioRTP for hangup");
+        _debug ("UserAgent: Stopping AudioRTP for hangup");
         call->getAudioRtp()->stop();
     }
 
@@ -1110,7 +1110,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
     if (account == NULL) {
-        _debug ("SIPVoIPLink::transfer account is null. Returning.");
+        _warn ("UserAgent: Transfer account is null. Returning.");
         return false;
     }
 
@@ -1128,7 +1128,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
         pj_cstr (&pjDest, dest.c_str());
     }
 
-    _debug ("Transfering to %s", dest.c_str());
+    _info ("UserAgent: Transfering to %s", dest.c_str());
 
     /* Create xfer client subscription. */
     pj_bzero (&xfer_cb, sizeof (xfer_cb));
@@ -1137,7 +1137,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     status = pjsip_xfer_create_uac (call->getInvSession()->dlg, &xfer_cb, &sub);
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to create xfer -- %d", status);
+        _warn ("UserAgent: Unable to create xfer -- %d", status);
         return false;
     }
 
@@ -1171,7 +1171,13 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
 
 bool SIPVoIPLink::transferStep2 (SIPCall* call)
 {
+	_debug("================= TRansfer Step 2 =============");;
+
+	// Signal client to hangup
+	// DBusManager::instance().getCallManager()->callStateChanged(call->getCallId(), "HUNGUP");
+
     call->getAudioRtp()->stop();
+
     return true;
 }
 
@@ -1492,7 +1498,10 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
 void
 SIPVoIPLink::SIPCallClosed (SIPCall *call)
 {
+	_info("UserAgent: Closing call");
+
     if (!call) {
+		_warn("UserAgent: Error: CAll pointer is NULL\n");
         return;
     }
 
@@ -1500,16 +1509,14 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call)
 
     if (Manager::instance().isCurrentCall (id)) {
         call->setAudioStart (false);
-        _debug ("* SIP Info: Stopping AudioRTP when closing");
+        _debug ("UserAgent: Stopping AudioRTP when closing");
         call->getAudioRtp()->stop();
     }
-
-    _debug ("After close RTP");
 
     Manager::instance().peerHungupCall (id);
     terminateOneCall (id);
     removeCall (id);
-    _debug ("After remove call ID");
+
 }
 
 void
@@ -1520,7 +1527,7 @@ SIPVoIPLink::SIPCallReleased (SIPCall *call)
     }
 
     // if we are here.. something when wrong before...
-    _debug ("SIP call release");
+    _debug ("UserAgent: SIP call release");
 
     CallID id = call->getCallId();
 
@@ -3315,9 +3322,8 @@ void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
 
 void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
 {
-    _debug("call_on_tsx_changed to state %s", transactionStateMap[tsx->state]);
+    _debug("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
 
-    
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
             pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
@@ -3337,7 +3343,7 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
                 if (request.find (method_name) != (size_t)-1) {
 
-                    _debug ("%s", pjsip_rx_data_get_info (r_data));
+                    _debug ("UserAgent: %s", pjsip_rx_data_get_info (r_data));
 
                     pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
 
@@ -3817,8 +3823,7 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
      * request.
      */
     ref_by_hdr = (pjsip_hdr*)
-                 pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_ref_by,
-                                             NULL);
+    pjsip_msg_find_hdr_by_name (rdata->msg_info.msg, &str_ref_by, NULL);
 
     /* Notify callback */
     code = PJSIP_SC_ACCEPTED;
@@ -4004,7 +4009,6 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
      * When subscription is accepted (got 200/OK to REFER), check if
      * subscription suppressed.
      */
-
     if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACCEPTED) {
 
         _debug ("Transfer accepted! Waiting for notifications. ");
@@ -4059,22 +4063,14 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 
             rdata = event->body.tsx_state.src.rdata;
 
-
             /* Check if there's body */
             msg = rdata->msg_info.msg;
             body = msg->body;
 
             if (!body) {
-                // if (call->getCallConfiguration () == Call::IPtoIP) {
-                //   _debug("UserAgent: IptoIp NOTIFY without message body");
-                // }
-                // else{
                 _debug ("UserAgent: Warning! Received NOTIFY without message body");
                 return;
-                // }
             }
-
-
 
             /* Check for appropriate content */
             if (pj_stricmp2 (&body->content_type.type, "message") != 0 ||
@@ -4107,34 +4103,12 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         }
 
 
-        if (event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
-            request = event->body.rx_msg.rdata->msg_info.msg_buf;
-
-            if ( (int) request.find (noresource) != -1) {
-                _debug ("UserAgent: NORESOURCE for transfer!");
-                link->transferStep2 (call);
-                pjsip_evsub_terminate (sub, PJ_TRUE);
-
-                Manager::instance().transferFailed();
-                return;
-            }
-
-            if ( (int) request.find (ringing) != -1) {
-                _debug ("UserAgent: transfered call RINGING!");
-                link->transferStep2 (call);
-                pjsip_evsub_terminate (sub, PJ_TRUE);
-
-                Manager::instance().transferSucceded();
-                return;
-            }
-        }
-
-
         /* Notify application */
         is_last = (pjsip_evsub_get_state (sub) ==PJSIP_EVSUB_STATE_TERMINATED);
 
         cont = !is_last;
 
+		_debug("UserAgent: Notification status line: %d", status_line.code);
         if (status_line.code/100 == 2) {
 
             _debug ("UserAgent: Try to stop rtp!");
