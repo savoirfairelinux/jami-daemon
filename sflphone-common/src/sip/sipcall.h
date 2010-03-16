@@ -97,9 +97,11 @@ class SIPCall : public Call
     void setTid(int tid) { _tid = tid; } 
 
     void setXferSub(pjsip_evsub* sub) {_xferSub = sub;}
+
     pjsip_evsub *getXferSub() {return _xferSub;}
     
     void setInvSession(pjsip_inv_session* inv) {_invSession = inv;}
+
     pjsip_inv_session *getInvSession() {return _invSession;}
     
     Sdp* getLocalSDP (void) { return _local_sdp; }

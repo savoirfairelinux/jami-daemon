@@ -50,6 +50,8 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
+#include <map>
+
 #define CAN_REINVITE        1
 
 static char * invitationStateMap[] = {
@@ -79,8 +81,16 @@ struct result {
     pjsip_server_addresses  servers;
 };
 
+/** The default transport (5060) */
 pjsip_transport *_localUDPTransport = NULL;
+
+/** The local tls listener */
 pjsip_tpfactory *_localTlsListener = NULL;
+
+/** A map to retreive SFLphone internal call id
+ *  Given a SIP call ID (usefull for transaction sucha as transfer)*/
+std::map<std::string, CallID> transferCallID;
+
 
 const pj_str_t STR_USER_AGENT = { (char*) "User-Agent", 10 };
 
@@ -1109,13 +1119,13 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     account_id = Manager::instance().getAccountFromCall (id);
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (account_id));
 
-    if (account == NULL) {
-        _warn ("UserAgent: Transfer account is null. Returning.");
+    if (!account) {
+        _error("UserAgent: Error: Transfer account is null. Returning.");
         return false;
     }
 
-    if (call==0) {
-        _debug ("! SIP Failure: Call doesn't exist");
+    if (!call) {
+        _error ("UserAgent: Error: Call doesn't exist");
         return false;
     }
 
@@ -1143,7 +1153,7 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
 
     /* Associate this voiplink of call with the client subscription
      * We can not just associate call with the client subscription
-     * because after this function, we can not find the cooresponding
+     * because after this function, we can no find the cooresponding
      * voiplink from the call any more. But the voiplink is useful!
      */
     pjsip_evsub_set_mod_data (sub, getModId(), this);
@@ -1154,15 +1164,21 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
     status = pjsip_xfer_initiate (sub, &pjDest, &tdata);
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to create REFER request -- %d", status);
+        _error ("UserAgent: Unable to create REFER request -- %d", status);
         return false;
     }
+
+    // Put SIP call id in map in order to retrieve call during transfer callback
+    std::string callidtransfer(call->getInvSession()->dlg->call_id->id.ptr, call->getInvSession()->dlg->call_id->id.slen);
+    _debug("%s", callidtransfer.c_str());
+    transferCallID.insert(std::pair<std::string, CallID>(callidtransfer, call->getCallId()));
+
 
     /* Send. */
     status = pjsip_xfer_send_request (sub, tdata);
 
     if (status != PJ_SUCCESS) {
-        _debug ("UserAgent: Unable to send REFER request -- %d", status);
+        _error ("UserAgent: Unable to send REFER request -- %d", status);
         return false;
     }
 
@@ -4027,6 +4043,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
      */
     else if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACTIVE ||
              pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_TERMINATED) {
+
         pjsip_msg *msg;
         pjsip_msg_body *body;
         pjsip_status_line status_line;
@@ -4047,9 +4064,9 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 
         }
 
+        /* Application is not interested with call progress status */
         if (!link || !event) {
-            /* Application is not interested with call progress status */
-            _debug ("UserAgent: Either link or event is empty!");
+            _warn ("UserAgent: Either link or event is empty in transfer callback");
             return;
         }
 
@@ -4063,46 +4080,44 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD &&
         	 request.find(method_notify) != (size_t)-1) {
 
-            pjsip_rx_data *rdata;
-
-            rdata = event->body.tsx_state.src.rdata;
-
             /* Check if there's body */
-            msg = rdata->msg_info.msg;
+            msg = r_data->msg_info.msg;
             body = msg->body;
 
             if (!body) {
-                _debug ("UserAgent: Warning! Received NOTIFY without message body");
+                _warn ("UserAgent: Warning! Received NOTIFY without message body");
                 return;
             }
 
             /* Check for appropriate content */
             if (pj_stricmp2 (&body->content_type.type, "message") != 0 ||
                     pj_stricmp2 (&body->content_type.subtype, "sipfrag") != 0) {
-                _debug ("UserAgent: Warning! Received NOTIFY with non message/sipfrag content");
+                _warn ("UserAgent: Warning! Received NOTIFY without message/sipfrag content");
                 return;
             }
 
             /* Try to parse the content */
-            status = pjsip_parse_status_line ( (char*) body->data, body->len,
-                                               &status_line);
+            status = pjsip_parse_status_line ( (char*) body->data, body->len, &status_line);
 
             if (status != PJ_SUCCESS) {
-                _debug ("UserAgent: Warning! Received NOTIFY with invalid message/sipfrag content");
+                _warn ("UserAgent: Warning! Received NOTIFY with invalid message/sipfrag content");
                 return;
             }
 
         } else {
-            _debug ("UserAgent: Set code to 500!");
+            _error ("UserAgent: Error: Set code to 500 during transfer");
             status_line.code = 500;
             status_line.reason = *pjsip_get_status_text (500);
         }
 
-        // Get current call
-        SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (Manager::instance().getCurrentCallId()));
+        // Get call coresponding to this transaction
+        std::string transferID(r_data->msg_info.cid->id.ptr, r_data->msg_info.cid->id.slen);
+        std::map<std::string, CallID>::iterator it = transferCallID.find(transferID);
+        CallID cid = it->second;
+        SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (cid));
 
         if (!call) {
-            _warn ("UserAgent: Call doesn't exit!");
+            _warn ("UserAgent: Call with id %s doesn't exit!", Manager::instance().getCurrentCallId().c_str());
             return;
         }
 
@@ -4115,7 +4130,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 		_debug("UserAgent: Notification status line: %d", status_line.code);
         if (status_line.code/100 == 2) {
 
-            _debug ("UserAgent: Try to stop rtp!");
+        	_debug ("UserAgent: Received 200 OK, stop call!");
             pjsip_tx_data *tdata;
 
             status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_GONE, NULL, &tdata);
