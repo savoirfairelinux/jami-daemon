@@ -4018,7 +4018,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
      */
     if (pjsip_evsub_get_state (sub) == PJSIP_EVSUB_STATE_ACCEPTED) {
 
-        _debug ("Transfer accepted! Waiting for notifications. ");
+        _debug ("UserAgent: Transfer received, waiting for notifications. ");
 
     }
 
@@ -4033,13 +4033,6 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         pj_bool_t is_last;
         pj_bool_t cont;
         pj_status_t status;
-
-        std::string noresource;
-        std::string ringing;
-        std::string request;
-
-        noresource = "noresource";
-        ringing = "Ringing";
 
 
         SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data (sub, _mod_ua.id));
@@ -4061,10 +4054,14 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         }
 
 
+        pjsip_rx_data* r_data = event->body.rx_msg.rdata;
+
+        std::string method_notify = "NOTIFY";
+        std::string request =  pjsip_rx_data_get_info (r_data);
 
         /* This better be a NOTIFY request */
-        if (event->type == PJSIP_EVENT_TSX_STATE &&
-                event->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
+        if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD &&
+        	 request.find(method_notify) != (size_t)-1) {
 
             pjsip_rx_data *rdata;
 
@@ -4105,7 +4102,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (Manager::instance().getCurrentCallId()));
 
         if (!call) {
-            _debug ("UserAgent: Call doesn't exit!");
+            _warn ("UserAgent: Call doesn't exit!");
             return;
         }
 
