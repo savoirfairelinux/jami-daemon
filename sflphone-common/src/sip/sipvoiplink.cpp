@@ -1187,12 +1187,11 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to)
 
 bool SIPVoIPLink::transferStep2 (SIPCall* call)
 {
-	_debug("================= TRansfer Step 2 =============");;
 
-	// Signal client to hangup
-	// DBusManager::instance().getCallManager()->callStateChanged(call->getCallId(), "HUNGUP");
+	// TODO is this the best way to proceed?
+	Manager::instance().peerHungupCall(call->getCallId());
 
-    call->getAudioRtp()->stop();
+
 
     return true;
 }
@@ -3356,15 +3355,14 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
                 std::string method_info = "INFO";
                 std::string method_notify = "NOTIFY";
-                // std::string request =  r_data->msg_info.msg->line.req.method.name.ptr;
+
                 std::string request =  pjsip_rx_data_get_info (r_data);
 
 			    _debug("UserAgent: %s", request.c_str());
 
 			    if(request.find (method_notify) != (size_t)-1) {
-			    	_debug("We got a NOTIFY!!!!!!!!!!!!!!!!!!!");
-			    }
 
+			    }
 				// Must reply 200 OK on SIP INFO request
 			    else if (request.find (method_info) != (size_t)-1) {
 
@@ -4117,7 +4115,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
         SIPCall *call = dynamic_cast<SIPCall *> (link->getCall (cid));
 
         if (!call) {
-            _warn ("UserAgent: Call with id %s doesn't exit!", Manager::instance().getCurrentCallId().c_str());
+            _warn ("UserAgent:  Call with id %s doesn't exit!", cid.c_str());
             return;
         }
 
@@ -4130,7 +4128,7 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
 		_debug("UserAgent: Notification status line: %d", status_line.code);
         if (status_line.code/100 == 2) {
 
-        	_debug ("UserAgent: Received 200 OK, stop call!");
+        	_debug ("UserAgent: Received 200 OK on call transfered, stop call!");
             pjsip_tx_data *tdata;
 
             status = pjsip_inv_end_session (call->getInvSession(), PJSIP_SC_GONE, NULL, &tdata);
