@@ -3338,12 +3338,19 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
             if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
 
-                std::string method_name = "INFO";
-                std::string request =  r_data->msg_info.msg->line.req.method.name.ptr;
+                std::string method_info = "INFO";
+                std::string method_notify = "NOTIFY";
+                // std::string request =  r_data->msg_info.msg->line.req.method.name.ptr;
+                std::string request =  pjsip_rx_data_get_info (r_data);
 
-                if (request.find (method_name) != (size_t)-1) {
+			    _debug("UserAgent: %s", request.c_str());
 
-                    _debug ("UserAgent: %s", pjsip_rx_data_get_info (r_data));
+			    if(request.find (method_notify) != (size_t)-1) {
+			    	_debug("We got a NOTIFY!!!!!!!!!!!!!!!!!!!");
+			    }
+
+				// Must reply 200 OK on SIP INFO request
+			    else if (request.find (method_info) != (size_t)-1) {
 
                     pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
 
