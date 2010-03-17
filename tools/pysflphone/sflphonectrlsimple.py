@@ -534,11 +534,11 @@ class SflPhoneCtrlSimple(Thread):
 
     def Refuse(self, callid):
         """Refuse an incoming call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
+        # if not self.account:
+        #     self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't refuse a call without a registered account")
+        # if not self.isAccountRegistered():
+        #     raise SflPhoneError("Can't refuse a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
