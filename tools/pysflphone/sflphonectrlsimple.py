@@ -66,6 +66,7 @@ class SflPhoneCtrlSimple(Thread):
         self.registered = False
         self.register()
 	self.currentCallId = ""
+
 	self.loop = MainLoop()
 
 	self.test = test
@@ -603,4 +604,9 @@ class SflPhoneCtrlSimple(Thread):
 	return callid
 
     def run(self):
-        self.loop.run()
+        gobject.threads_init()
+        # self.loop.run()
+	context = self.loop.get_context()
+
+	while 1:
+            context.iteration(True)
