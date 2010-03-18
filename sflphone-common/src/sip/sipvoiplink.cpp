@@ -352,6 +352,7 @@ SIPVoIPLink::terminateSIPCall()
 void
 SIPVoIPLink::terminateOneCall (const CallID& id)
 {
+	_debug("UserAgent: Terminate call %s", id.c_str());
 
     SIPCall *call = getSIPCall (id);
 
@@ -396,7 +397,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
     struct in_addr *addr_in;
 
     if((fd = socket (AF_INET, SOCK_DGRAM,0)) < 0)
-        _debug("UserAgent: getInterfaceAddrFromName error could not open socket\n");
+        _error("UserAgent: Error: could not open socket");
 
     memset (&ifr, 0, sizeof (struct ifreq));
 
@@ -404,7 +405,7 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
     ifr.ifr_addr.sa_family = AF_INET;
 
     if((err = ioctl(fd, SIOCGIFADDR, &ifr)) < 0)
-        _debug("UserAgent: getInterfaceAddrFromName use default interface (0.0.0.0)\n");
+        _debug("UserAgent: Use default interface (0.0.0.0)");
     
     saddr_in = (struct sockaddr_in *)&ifr.ifr_addr;
     addr_in = &(saddr_in->sin_addr);
@@ -974,14 +975,14 @@ SIPVoIPLink::peerHungup (const CallID& id)
 bool
 SIPVoIPLink::cancel (const CallID& id)
 {
+	_info ("UserAgent: Cancel call %s", id.c_str());
+
     SIPCall* call = getSIPCall (id);
 
-    if (call==0) {
-        _debug ("! SIP Error: Call doesn't exist");
+    if (!call) {
+        _warn("UserAgent: Error: Call doesn't exist");
         return false;
     }
-
-    _debug ("- SIP Action: Cancel call %s [cid: %3d]", id.data(), call->getCid());
 
     terminateOneCall (id);
     removeCall (id);
@@ -1203,17 +1204,18 @@ SIPVoIPLink::refuse (const CallID& id)
     pj_status_t status;
     pjsip_tx_data *tdata;
 
+    _debug("UserAgent: Refuse call %s", id.c_str());
 
     call = getSIPCall (id);
 
     if (call==0) {
-        _debug ("Call doesn't exist");
+        _error ("UserAgent: Error: Call doesn't exist");
         return false;
     }
 
     // can't refuse outgoing call or connected
     if (!call->isIncoming() || call->getConnectionState() == Call::Connected) {
-        _debug ("It's not an incoming call, or it's already answered");
+        _debug ("UserAgent: Call %s is not in state incoming, or is already answered");
         return false;
     }
 
@@ -1231,6 +1233,8 @@ SIPVoIPLink::refuse (const CallID& id)
     call->getInvSession()->mod_data[getModId() ] = NULL;
 
     terminateOneCall (id);
+
+    _debug("UserAgent: Refuse call completed");
 
     return true;
 }
@@ -1499,7 +1503,7 @@ void
 SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
 {
     if (call != 0) {
-        _debug ("Server error!");
+        _error ("UserAgent: Error: Server error!");
         CallID id = call->getCallId();
         Manager::instance().callFailure (id);
         terminateOneCall (id);
@@ -2987,7 +2991,7 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body)
 void SIPVoIPLink::handle_reinvite (SIPCall *call)
 {
 
-    _debug ("UserAgent: handle_reinvite");
+    _debug ("UserAgent: Handle reinvite");
     /*
     // Close the previous RTP session
     call->getAudioRtp()->stop ();
@@ -3010,7 +3014,7 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call)
 // This callback is called when the invite session state has changed
 void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 {
-    _debug ("call_on_state_changed to state %s", invitationStateMap[inv->state]);
+    _debug ("UserAgent: Call state changed to %s", invitationStateMap[inv->state]);
 
     pjsip_rx_data *rdata;
     pj_status_t status;
@@ -3055,7 +3059,6 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         pjsip_evsub_state ev_state = PJSIP_EVSUB_STATE_ACTIVE;
 
         switch (call->getInvSession()->state) {
-                // switch (inv->state) {
 
             case PJSIP_INV_STATE_NULL:
 
@@ -3094,9 +3097,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             pjsip_tx_data *tdata;
             pj_status_t status;
 
-            status = pjsip_xfer_notify (call->getXferSub(),
-                                        ev_state, st_code,
-                                        NULL, &tdata);
+            status = pjsip_xfer_notify (call->getXferSub(), ev_state, st_code, NULL, &tdata);
 
             if (status != PJ_SUCCESS) {
                 _debug ("UserAgent: Unable to create NOTIFY -- %d", status);
@@ -3170,9 +3171,12 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
                 break;
 
-            case PJSIP_SC_NOT_FOUND:            /* peer not found */
+            case PJSIP_SC_DECLINE:
+            	_debug("UserAgent: Call %s is declined", call->getCallId().c_str());
+				// if (inv->role == PJSIP_ROLE_UAS)
+				break;
 
-            case PJSIP_SC_DECLINE:				/* We have been ignored */
+            case PJSIP_SC_NOT_FOUND:            /* peer not found */
 
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
 
@@ -3187,6 +3191,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             case PJSIP_SC_FORBIDDEN:
 
             case PJSIP_SC_REQUEST_PENDING:
+
                 accId = Manager::instance().getAccountFromCall (call->getCallId());
                 link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
 
@@ -3207,7 +3212,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 // This callback is called after SDP offer/answer session has completed.
 void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 {
-    _debug ("UserAgent: Call on media update");
+    _debug ("UserAgent: Call media update");
 
     const pjmedia_sdp_session *local_sdp;
     const pjmedia_sdp_session *remote_sdp;
@@ -3337,8 +3342,9 @@ void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
 
 void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
 {
-    _debug("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
+	assert(tsx);
 
+    _debug("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
 
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
             pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
@@ -3348,10 +3354,14 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
         if (e && e->body.rx_msg.rdata) {
 
+
+        	_debug("Event");
             pjsip_tx_data* t_data;
             pjsip_rx_data* r_data = e->body.rx_msg.rdata;
 
-            if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
+            if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
+
+            	_debug("R_data");
 
                 std::string method_info = "INFO";
                 std::string method_notify = "NOTIFY";
@@ -3373,6 +3383,8 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
             }
         }
     }
+
+    _debug("OK: ransaction changed to state");
 }
 
 void regc_cb (struct pjsip_regc_cbparam *param)
@@ -3502,17 +3514,17 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     std::string method_name;
     std::string request;
 
+
+    _info("UserAgent: Receiving REQUEST using transport: %s %s (refcnt=%d)",
+    	   rdata->tp_info.transport->obj_name,
+    	   rdata->tp_info.transport->info,
+    	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
+
     // No need to go any further on incoming ACK
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD) {
         _info("UserAgent: received an ACK");
         return true;
     }
-
-    // Handle the incoming call invite in this function
-    _info("UserAgent: Receiving REQUEST using transport: %s %s (refcnt=%d)",
-	   rdata->tp_info.transport->obj_name,
-	   rdata->tp_info.transport->info,
-	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
 
     /* First, let's got the username and server name from the invite.
      * We will use them to detect which account is the callee.
@@ -3523,13 +3535,10 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     userName = std::string (sip_uri->user.ptr, sip_uri->user.slen);
     server = std::string (sip_uri->host.ptr, sip_uri->host.slen);
 
-    _debug ("UserAgent: mod_on_rx_request: %s@%s", userName.c_str(), server.c_str());
-
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer (userName, server);
 
     /* If we don't find any account to receive the call */
-
     if (account_id == AccountNULL) {
         _debug ("UserAgent: Username %s doesn't match any account, using IP2IP!",userName.c_str());
     }
@@ -3562,7 +3571,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         displayName = std::string ("");
     }
 
-    _debug ("UserAgent: The receiver is : %s@%s", userName.data(), server.data());
+    _debug ("UserAgent: The receiver is: %s@%s", userName.data(), server.data());
     _debug ("UserAgent: The callee account id is %s", account_id.c_str());
 
     /* Now, it is the time to find the information of the caller */
@@ -3580,6 +3589,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Get the server voicemail notification
     // Catch the NOTIFY message
     if (rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
+
         method_name = "NOTIFY";
         // Retrieve all the message. Should contains only the method name but ...
         request =  rdata->msg_info.msg->line.req.method.name.ptr;
@@ -3616,10 +3626,10 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     get_remote_sdp_from_offer (rdata, &r_sdp);
     if(account->getActiveCodecs().empty()) {
-	_warn ("UserAgent: Error: No active codec");
-	pj_strdup2 (_pool, &reason, "no active codec");
+    	_warn ("UserAgent: Error: No active codec");
+    	pj_strdup2 (_pool, &reason, "no active codec");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE , 
-				       &reason, NULL, NULL);
+        		                                              &reason, NULL, NULL);
         return true;
     }
 
@@ -3658,13 +3668,14 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     id = Manager::instance().getNewCallID();
 
     call = new SIPCall (id, Call::Incoming, _pool);
-    /* If an error occured at the call creation */
+
+    // If an error occured at the call creation
     if (!call) {
         _warn("UserAgent: Error: Unable to create an incoming call");
-	pj_strdup2 (_pool, &reason, "unable to create an incoming call");
+        pj_strdup2 (_pool, &reason, "unable to create an incoming call");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
 				       &reason, NULL, NULL);
-	return false;
+        return false;
     }
 
     std::string addrToUse, addrSdp ="0.0.0.0";
@@ -3676,17 +3687,17 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         // May use the published address as well
 
         addrToUse = SIPVoIPLink::instance("")->getInterfaceAddrFromName(account->getLocalInterface ());
-	account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = addrToUse;		
-	// Set the appropriate transport to have the right VIA header
-	link->init_transport_selector (account->getAccountTransport (), &tp);
+        account->isStunEnabled () ? addrSdp = account->getPublishedAddress () : addrSdp = addrToUse;
+        // Set the appropriate transport to have the right VIA header
+        link->init_transport_selector (account->getAccountTransport (), &tp);
 
-	if(account->getAccountTransport()) {
+        if(account->getAccountTransport()) {
 
-	    _debug("UserAgent: Process INVITE request using transport: %s %s (refcnt=%i)",
-		   account->getAccountTransport()->obj_name,
-		   account->getAccountTransport()->info,
-		   (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
-	}
+        	_debug("UserAgent: SIP transport for this account: %s %s (refcnt=%i)",
+        	account->getAccountTransport()->obj_name,
+        	account->getAccountTransport()->info,
+        	(int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
+        }
 
     }
 
@@ -3707,22 +3718,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     call->initRecFileName();
 
-    // Notify UI there is an incoming call
-
-    _debug ("UserAgent: Add call to account link");
-
-    if (Manager::instance().incomingCall (call, account_id)) {
-        // Add this call to the callAccountMap in ManagerImpl
-        Manager::instance().getAccountLink (account_id)->addCall (call);
-    } else {
-        // Fail to notify UI
-        delete call; call = NULL;
-        _warn ("UserAgent: Fail to notify UI!");
-	pj_strdup2 (_pool, &reason, "fail to notify ui");
-        pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
-				       &reason, NULL, NULL);
-        return false;
-    }
 
     // Have to do some stuff with the SDP
     // Set the codec map, IP, peer number and so on... for the SIPCall object
@@ -3758,7 +3753,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         pj_strdup2 (_pool, &reason, "fail to create uas dialog");
         pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, 
 				       &reason, NULL, NULL);
-        return true;
+        return false;
     }
 
     // Specify media capability during invite session creation
@@ -3772,7 +3767,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Associate the call in the invite session
     inv->mod_data[_mod_ua.id] = call;
 
-    // Send a 180/Ringing response
+    // Send a 180 Ringing response
+    _info ("UserAgent: Send a 180 Ringing response");
     status = pjsip_inv_initial_answer (inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata);
 
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
@@ -3786,6 +3782,20 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Update the connection state
     call->setConnectionState (Call::Ringing);
+
+    _debug ("UserAgent: Add call to account link");
+    if (Manager::instance().incomingCall (call, account_id)) {
+    	// Add this call to the callAccountMap in ManagerImpl
+    	Manager::instance().getAccountLink (account_id)->addCall (call);
+	} else {
+		// Fail to notify UI
+		delete call; call = NULL;
+		_warn ("UserAgent: Fail to notify UI!");
+		pj_strdup2 (_pool, &reason, "fail to notify ui");
+		pjsip_endpt_respond_stateless (_endpt, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR,
+				&reason, NULL, NULL);
+		return false;
+	}
 
     /* Done */
     return true;

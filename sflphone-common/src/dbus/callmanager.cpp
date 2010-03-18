@@ -77,14 +77,14 @@ CallManager::placeCallFirstAccount (const std::string& callID,
 void
 CallManager::refuse (const std::string& callID)
 {
-    _debug ("CallManager::refuse received");
+    _debug ("CallManager: refuse received");
     Manager::instance().refuseCall (callID);
 }
 
 void
 CallManager::accept (const std::string& callID)
 {
-    _debug ("CallManager::accept received");
+    _debug ("CallManager: accept received");
     Manager::instance().answerCall (callID);
 }
 

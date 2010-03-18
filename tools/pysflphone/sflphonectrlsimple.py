@@ -535,6 +535,7 @@ class SflPhoneCtrlSimple(Thread):
 
     def Refuse(self, callid):
         """Refuse an incoming call identified by a CallID"""
+	print "Refuse call " + callid
         # if not self.account:
         #     self.setFirstRegisteredAccount()
 
@@ -549,6 +550,7 @@ class SflPhoneCtrlSimple(Thread):
 
     def Accept(self, callid):
         """Accept an incoming call identified by a CallID"""
+	print "Accept call " + callid
         if not self.account:
             self.setFirstRegisteredAccount()
 
