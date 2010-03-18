@@ -290,8 +290,6 @@ void codec_list_update_to_daemon (account_t *acc) {
 	int c = 0;
 	unsigned int i = 0;
 
-	g_print ("List of active codecs :\n");
-	
 	for(i = 0; i < length; i++)
 	{
 		codec_t* currentCodec = codec_list_get_nth (i, acc->codecs);
@@ -301,7 +299,6 @@ void codec_list_update_to_daemon (account_t *acc) {
 			// Save only if active
 			if(currentCodec->is_active)
 			{
-				g_print ("Codec %s\n", currentCodec->name);
 				// Reallocate memory each time more than one active codec is found
 				if(c!=0)
 					codecList = (void*)realloc(codecList, (c+1)*sizeof(void*));
@@ -311,7 +308,6 @@ void codec_list_update_to_daemon (account_t *acc) {
 				// Put payload string in char array
 				sprintf(payload, "%d", currentCodec->_payload);
 				strcpy((char*)*(codecList+c), payload);
-				g_print(" %s", *(codecList+c));
 				c++;
 			}
 		}

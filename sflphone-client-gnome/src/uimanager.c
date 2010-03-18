@@ -115,6 +115,7 @@ update_actions()
   gtk_widget_set_sensitive(GTK_WIDGET (holdToolbar), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET (offHoldToolbar), FALSE);
   gtk_action_set_sensitive(GTK_ACTION (recordAction), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET (recordWidget), FALSE);
   gtk_action_set_sensitive(GTK_ACTION (copyAction), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(contactButton), FALSE);
   gtk_widget_set_tooltip_text(GTK_WIDGET (contactButton),
@@ -145,9 +146,9 @@ update_actions()
         }
     }
 
-  // g_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
-  // gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
-  // g_signal_handler_unblock ( GTK_OBJECT (transferToolbar), transfertButtonConnId);
+  // g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
+  // gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
+  // g_signal_handler_unblock ( GTK_OBJECT (recordWidget), recordButtonConnId);
 
   callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
   conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
@@ -211,9 +212,7 @@ update_actions()
             1);
         gtk_widget_set_sensitive(GTK_WIDGET (holdMenu), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (holdToolbar), TRUE);
-        //gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (holdMenu), gtk_image_new_from_stock (GTK_STOCK_ONHOLD, GTK_ICON_SIZE_MENU));
         gtk_widget_set_sensitive(GTK_WIDGET (transferToolbar), TRUE);
-        //gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
         gtk_action_set_sensitive(GTK_ACTION (recordAction), TRUE);
         gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar),
             2);
@@ -225,6 +224,7 @@ update_actions()
         gtk_toggle_tool_button_set_active(
             GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
         gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
+
         break;
       case CALL_STATE_BUSY:
       case CALL_STATE_FAILURE:
@@ -546,7 +546,14 @@ call_pick_up(void * foo UNUSED)
 static void
 call_hang_up(void)
 {
-  sflphone_hang_up();
+	/* 
+	 * [#3020]	Restore the record toggle button 
+	 *			We set it to FALSE, as when we hang up a call, the recording is stopped.
+	 */
+	gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
+  
+	sflphone_hang_up();
+
 }
 
 static void

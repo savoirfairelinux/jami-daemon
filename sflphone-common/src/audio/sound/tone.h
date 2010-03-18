@@ -28,6 +28,8 @@
 #define TONE_NBTONE 4
 #define TONE_NBCOUNTRY 7
 
+#define TABLE_LENGTH 4096
+
 /**
  * @file tone.h
  * @brief Tone sample (dial, busy, ring, congestion)
@@ -65,6 +67,17 @@ public:
    */
   void genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb);
 
+  /**
+   *
+   */
+  void fillWavetable(void);
+
+  /**
+   *
+   */
+  double interpolate(double x);
+
+
 private:
 
   /**
@@ -75,6 +88,11 @@ private:
 
   /** Sample rate */
   unsigned int _sampleRate;
+
+  double _wavetable[TABLE_LENGTH];
+
+  double _xhigher;
+  double _xlower;
 };
 
 #endif // __TONE_H__

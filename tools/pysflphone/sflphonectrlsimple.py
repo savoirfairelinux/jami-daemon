@@ -518,13 +518,13 @@ class SflPhoneCtrlSimple(Thread):
 	self.callmanager.hangUp(callid)
 
 
-    def Transfert(self, callid, to):
+    def Transfer(self, callid, to):
         """Transfert a call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
+        # if not self.account:
+        #    self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't transfert a call without a registered account")
+        # if not self.isAccountRegistered():
+        #     raise SflPhoneError("Can't transfert a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
@@ -562,11 +562,11 @@ class SflPhoneCtrlSimple(Thread):
 
     def Hold(self, callid):
         """Hold a call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
+        # if not self.account:
+        #    self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't hold a call without a registered account")
+        # if not self.isAccountRegistered():
+        #    raise SflPhoneError("Can't hold a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
@@ -576,11 +576,11 @@ class SflPhoneCtrlSimple(Thread):
 
     def UnHold(self, callid):
         """Unhold an incoming call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
+        # if not self.account:
+        #    self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't unhold a call without a registered account")
+        # if not self.isAccountRegistered():
+        #    raise SflPhoneError("Can't unhold a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")

@@ -650,13 +650,15 @@ bool ManagerImpl::transferCall (const CallID& call_id, const std::string& to) {
 	AccountID accountid;
 	bool returnValue;
 
+	_info("Manager: Transfer Call\n");
+
 	stopTone();
 
 	CallID current_call_id = getCurrentCallId();
 
 	if (participToConference(call_id)) {
 
-		_debug("Particip to a conference\n");
+		_info("Manager: Particip to a conference\n");
 
 		Conference *conf = getConferenceFromCallID(call_id);
 
@@ -667,8 +669,6 @@ bool ManagerImpl::transferCall (const CallID& call_id, const std::string& to) {
 			processRemainingParticipant(current_call_id, conf);
 		}
 	} else {
-
-		_debug("Do not Particip to a conference\n");
 
 		// we are not participating to a conference, current call switched to ""
 		if (!isConference(current_call_id))
@@ -685,7 +685,7 @@ bool ManagerImpl::transferCall (const CallID& call_id, const std::string& to) {
 		accountid = getAccountFromCall(call_id);
 
 		if (accountid == AccountNULL) {
-			_debug ("! Manager Transfer Call: Call doesn't exists");
+			_warn ("Manager: Call doesn't exists");
 			return false;
 		}
 
@@ -696,18 +696,21 @@ bool ManagerImpl::transferCall (const CallID& call_id, const std::string& to) {
 
 	removeWaitingCall(call_id);
 
-	if (_dbus)
-		_dbus->getCallManager()->callStateChanged(call_id, "HUNGUP");
-
 	return returnValue;
 }
 
 void ManagerImpl::transferFailed () {
+
+	_debug("UserAgent: Transfer failed");
+
 	if (_dbus)
 		_dbus->getCallManager()->transferFailed();
 }
 
 void ManagerImpl::transferSucceded () {
+
+	_debug("UserAgent: Transfer succeded");
+
 	if (_dbus)
 		_dbus->getCallManager()->transferSucceded();
 
@@ -1713,7 +1716,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id) {
 	AccountID account_id;
 	bool returnValue;
 
-	_debug ("ManagerImpl::peerHungupCall(%s)", call_id.c_str());
+	_debug ("Manager: Peer hungup call %s", call_id.c_str());
 
 	// store the current call id
 	CallID current_call_id = getCurrentCallId();
@@ -1744,11 +1747,6 @@ void ManagerImpl::peerHungupCall (const CallID& call_id) {
 	else {
 
 		account_id = getAccountFromCall(call_id);
-
-		if (account_id == AccountNULL) {
-			_debug ("peerHungupCall: Call doesn't exists");
-			return;
-		}
 
 		returnValue = getAccountLink(account_id)->peerHungup(call_id);
 	}

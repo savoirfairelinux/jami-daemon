@@ -97,6 +97,9 @@
   <recv request="ACK">
   </recv>
 
+
+  <!-- 
+
   <recv request="BYE">
   </recv>
 
@@ -123,5 +126,7 @@
 
    ]]>
   </send>
+
+  -->
 
 </scenario>
