@@ -1399,25 +1399,18 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     // Creates URI
     std::string fromUri;
-
     std::string toUri;
-
     std::string contactUri;
 
     fromUri = account->getFromUri();
-
     toUri = call->getPeerNumber(); // expecting a fully well formed sip uri
 
     std::string address = findLocalAddressFromUri (toUri, account->getAccountTransport ());
-
     int port = findLocalPortFromUri (toUri, account->getAccountTransport ());
 
     std::stringstream ss;
-
     std::string portStr;
-
     ss << port;
-
     ss >> portStr;
 
     contactUri = account->getContactHeader (address, portStr);
@@ -1428,15 +1421,12 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
             contactUri.c_str());
 
     pj_str_t pjFrom;
-
     pj_cstr (&pjFrom, fromUri.c_str());
 
     pj_str_t pjContact;
-
     pj_cstr (&pjContact, contactUri.c_str());
 
     pj_str_t pjTo;
-
     pj_cstr (&pjTo, toUri.c_str());
 
     // Create the dialog (UAC)
@@ -1480,7 +1470,6 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     // decrement transport's ref count
     // pjsip_transport_dec_ref(account->getAccountTransport());
     
-
     status = pjsip_inv_send_msg (inv, tdata);
 
     if (status != PJ_SUCCESS) {
@@ -3156,49 +3145,35 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
         _debug ("State: %s. Cause: %.*s", invitationStateMap[inv->state], (int) inv->cause_text.slen, inv->cause_text.ptr);
 
+        accId = Manager::instance().getAccountFromCall (call->getCallId());
+        link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
+
+		// Make sure link is valid
+        assert(link);
+
         switch (inv->cause) {
-                /* The call terminates normally - BYE / CANCEL */
 
+            // The call terminates normally - BYE / CANCEL
             case PJSIP_SC_OK:
-
             case PJSIP_SC_REQUEST_TERMINATED:
-                accId = Manager::instance().getAccountFromCall (call->getCallId());
-                link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-
-                if (link) {
-                    link->SIPCallClosed (call);
-                }
-
+                link->SIPCallClosed (call);
                 break;
 
             case PJSIP_SC_DECLINE:
             	_debug("UserAgent: Call %s is declined", call->getCallId().c_str());
-				// if (inv->role == PJSIP_ROLE_UAS)
+				if (inv->role == PJSIP_ROLE_UAC)
+					link->SIPCallServerFailure (call);
 				break;
 
             case PJSIP_SC_NOT_FOUND:            /* peer not found */
-
             case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
-
             case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
-
             case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
-
             case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
-
             case PJSIP_SC_UNAUTHORIZED:
-
             case PJSIP_SC_FORBIDDEN:
-
             case PJSIP_SC_REQUEST_PENDING:
-
-                accId = Manager::instance().getAccountFromCall (call->getCallId());
-                link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
-
-                if (link) {
-                    link->SIPCallServerFailure (call);
-                }
-
+                link->SIPCallServerFailure (call);
                 break;
 
             default:
