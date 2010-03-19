@@ -49,7 +49,7 @@ CELT_LIB = libcodec_celt.so
 libcodec_celt_so_SOURCES = celtcodec.cpp
 libcodec_celt_so_CFLAGS = -fPIC -g -Wall
 libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_celt_so_LDFLAGS = --shared -lc -lcelt $(CELT_NIMP)
+libcodec_celt_so_LDFLAGS = --shared -lc -lcelt0 $(CELT_NIMP)
 INSTALL_CELT_RULE = install-libcodec_celt_so
 endif
 

@@ -39,7 +39,7 @@ class Speex : public AudioCodec
             _clockRate = 16000;
             _frameSize = 320; // 20 ms at 16 kHz
             _channel = 1;
-            _bitrate = 0;
+            _bitrate = 42;
             _bandwidth = 0;
             initSpeex();
         }
