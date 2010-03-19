@@ -89,6 +89,4 @@
    ]]>
  </send>
 
-  <pause milliseconds="1000"/>
-
 </scenario>

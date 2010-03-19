@@ -26,27 +26,59 @@ class Celt : public AudioCodec
 {
 
     public:
-        Celt (int payload=0)
-                : AudioCodec (payload, "celt") {
-            _clockRate = 44100;
-            _frameSize = 512; // fixed frameSize, TODO: support variable size from 64 to 512
+        Celt (int payload=0)	: AudioCodec (payload, "celt") {
+
+            _clockRate = 32000;
+            _frameSize = 320;  // fixed frameSize, TODO: support variable size from 64 to 512
             _channel = 1;
             _bitrate = 0;
             _bandwidth = 0;
+
             initCelt();
+
         }
 
         Celt (const Celt&);
         Celt& operator= (const Celt&);
 
         void initCelt() {
-            printf ("init celt");
+            printf ("Celt: Init Celt codec");
 
-            mode = celt_mode_create (_clockRate, _channel, _frameSize, NULL);
-            // celt_mode_info(mode, CELT_GET_LOOKAHEAD, &skip);
+            int error = 0;
 
-            if (mode == NULL) {
-                printf ("failed to create a mode");
+            _mode = celt_mode_create (_clockRate, _frameSize, &error);
+
+            if(error != CELT_OK) {
+            	switch(error) {
+            	case CELT_BAD_ARG:
+            		printf("Celt: Error: An (or more) invalid argument (e.g. out of range)\n");
+            		break;
+            	case CELT_INVALID_MODE:
+            		printf("Celt: Error: The mode struct passed is invalid\n");
+            		break;
+            	case CELT_INTERNAL_ERROR:
+            		printf("Celt: Error: An internal error was detected\n");
+            		break;
+            	case CELT_CORRUPTED_DATA:
+            		printf("Celt: Error: The data passed (e.g. compressed data to decoder) is corrupted\n");
+            		break;
+            	case CELT_UNIMPLEMENTED:
+            		printf("Celt: Error: Invalid/unsupported request numbe\n");
+            		break;
+            	case CELT_INVALID_STATE:
+            		printf("Celt: Error: An encoder or decoder structure is invalid or already freed\n");
+            		break;
+            	case CELT_ALLOC_FAIL:
+					printf("Celt: Error: Memory allocation has failed\n");
+					break;
+            	default:
+					printf("Celt: Error");
+            	}
+
+            }
+
+            if (_mode == NULL) {
+                printf ("Celt: Error: Failed to create Celt mode");
             }
 
             // bytes_per_packet = 1024;
@@ -58,11 +90,12 @@ class Celt : public AudioCodec
             // celt_mode_info(mode, CELT_GET_FRAME_SIZE, &frame_size);
             // celt_mode_info(mode, CELT_GET_NB_CHANNELS, &_channel);
 
-            enc = celt_encoder_create (mode);
+            _enc = celt_encoder_create (_mode, _channel, &error);
 
-            dec = celt_decoder_create (mode);
+            _dec = celt_decoder_create (_mode, _channel, &error);
 
-            celt_encoder_ctl (enc,CELT_SET_COMPLEXITY (10));
+            celt_encoder_ctl (_enc, CELT_SET_COMPLEXITY (10));
+            celt_decoder_ctl(_dec, CELT_SET_COMPLEXITY (10));
 
         }
 
@@ -72,32 +105,34 @@ class Celt : public AudioCodec
 
         void terminateCelt() {
 
-            celt_encoder_destroy (enc);
-            celt_decoder_destroy (dec);
+            celt_encoder_destroy (_enc);
+            celt_decoder_destroy (_dec);
+
+            celt_mode_destroy(_mode);
         }
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
             int err = 0;
-            err = celt_decode (dec, src, size, (celt_int16_t*) dst);
-            return _frameSize * sizeof (celt_int16_t);
+            err = celt_decode (_dec, src, size, (celt_int16*) dst);
+            return _frameSize * sizeof (celt_int16);
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
             int len = 0;
-            len = celt_encode (enc, (celt_int16_t *) src, (celt_int16_t *) src, dst, 512);
+            len = celt_encode (_enc, (celt_int16*) src, (celt_int16 *) src, dst, 512);
             // returns the number of bytes writen
             return len;
         }
 
     private:
 
-        CELTMode *mode;
+        CELTMode *_mode;
 
-        CELTEncoder *enc;
-        CELTDecoder *dec;
+        CELTEncoder *_enc;
+        CELTDecoder *_dec;
 
-        celt_int32_t _celt_frame_size;
-        celt_int32_t skip;
+        celt_int32 _celt_frame_size;
+        celt_int32 skip;
 
 };
 
