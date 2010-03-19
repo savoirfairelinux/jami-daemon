@@ -28,7 +28,7 @@ class Celt : public AudioCodec
     public:
         Celt (int payload=0)	: AudioCodec (payload, "celt") {
 
-            _clockRate =44100;
+            _clockRate = 32000;
             _frameSize = 512;  // fixed frameSize, TODO: support variable size from 64 to 512
             _channel = 1;
             _bitrate = 0;
