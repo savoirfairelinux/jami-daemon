@@ -21,19 +21,27 @@ PHONE1="27182"
 PHONE2="31416"
 PHONE3="14142"
 
+
 # Define function callback to emulate UA behavior on
-# recieving a call
+# recieving a call (peer hangup))
 def acceptOnIncomingCall(sflphone):
-    time.sleep(0.2)
+
     sflphone.Accept(sflphone.currentCallId)
+
 
 # Define function callback to emulate UA behavior on
 # receiving a call and hanging up
 def acceptOnIncomingCallHangup(sflphone):
-    time.sleep(0.2)
-    sflphone.Accept(sflphone.currentCallId)
-    time.sleep(0.5)
+    
+    sflphone.Accept(sflphone.currentCallId)    
     sflphone.HangUp(sflphone.currentCallId)
+
+
+# Define function callback to emulate UA behavior on
+# refusing a call
+def refuseOnIncomingCall(sflphone):
+    # time.sleep(0.5)
+    sflphone.Refuse(sflphone.currentCallId)
 
 
 class SflPhoneTests():
@@ -230,6 +238,17 @@ class SflPhoneTests():
             i = i+1
 
 
+    # SCENARIO 5 Test 1 
+    def test_ip2ip_recv_refuse(self):
+        """Receive an incoming IP2IP call, refuse it"""
+
+        # Add callback for this test
+        self.sflphone.onIncomingCall_cb = refuseOnIncomingCall
+
+        # Start Glib mainloop
+        self.sflphone.start()
+
+
 
 # Open sflphone and connect to sflphoned through dbus
 sflphone = SflPhoneCtrlSimple(True)
@@ -291,7 +310,7 @@ sflphone.setFirstRegisteredAccount();
 #         - Put this call on HOLD
 #         - Off HOLD this call
 #         - Hangup
-testsuite.test_ip2ip_send_hold_offhold()
+# testsuite.test_ip2ip_send_hold_offhold()
 
 
 
@@ -301,3 +320,11 @@ testsuite.test_ip2ip_send_hold_offhold()
 #         - Transfer this call to another sipp instance
 #         - Hangup
 # testsuite.test_account_send_transfer()
+
+
+
+# SCENARIO 5: IP2IP Call, Refuse
+
+# Test 1: - Receive an incoming call
+#         - Hangup without answer
+testsuite.test_ip2ip_recv_refuse()

@@ -249,7 +249,7 @@ namespace sfl {
     template <typename D>
     AudioRtpSession<D>::~AudioRtpSession()
     {
-        _debug ("Rtp: Delete AudioRtpSession instance");
+        _debug ("RTP: Delete AudioRtpSession instance");
 
         try {
             terminate();
@@ -273,11 +273,9 @@ namespace sfl {
     void AudioRtpSession<D>::initBuffers() 
     {
     	// Set sampling rate, main buffer choose the highest one
-    	// _audiolayer->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
         _manager->getAudioDriver()->getMainBuffer()->setInternalSamplingRate(_codecSampleRate);
 
         // may be different than one already setted
-        // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
         _converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
         // initialize SampleRate converter using AudioLayer's sampling rate
@@ -311,28 +309,33 @@ namespace sfl {
     {
         assert(_ca);
 
+        _debug("RTP: Get audio codec for call %s", _ca->getCallId().c_str());
+
         AudioCodecType pl = (AudioCodecType)_ca->getLocalSDP()->get_session_media()->getPayload();
         _audiocodec = _manager->getCodecDescriptorMap().instantiateCodec(pl);
 
-        if (_audiocodec == NULL) {
-            _debug ("No audiocodec, can't init RTP media");
+        if (!_audiocodec) {
+            _error ("RTP: Error: No audiocodec, can't init RTP media");
             throw AudioRtpSessionException();
         }
 
-        _debug ("Init audio RTP session: codec payload %i", _audiocodec->getPayload());
+        _debug ("RTP: Init codec payload %i", _audiocodec->getPayload());
 
         _codecSampleRate = _audiocodec->getClockRate();
         _codecFrameSize = _audiocodec->getFrameSize();
 
+        _debug("RTP: Codec sampling rate: %d", _codecSampleRate);
+        _debug("RTP: Codec frame size: %d", _codecFrameSize);
+
         //TODO: figure out why this is necessary.
         if (_audiocodec->getPayload() == 9) {
-            _debug ("Setting payload format to G722");
+            _debug ("RTP: Setting payload format to G722");
             static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
         } else if (_audiocodec->hasDynamicPayload()) {
-            _debug ("Setting a dynamic payload format");
+            _debug ("RTP: Setting a dynamic payload format");
             static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
         } else if (!_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
-            _debug ("Setting a static payload format");
+            _debug ("RTP: Setting a static payload format");
             static_cast<D*>(this)->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
         }
     }
@@ -341,7 +344,7 @@ namespace sfl {
     void AudioRtpSession<D>::setDestinationIpAddress(void)
     {
         if (_ca == NULL) {
-        	_warn ("Rtp: Sipcall is gone.");
+        	_error ("RTP: Sipcall is gone.");
 			throw AudioRtpSessionException();
         }
         
@@ -351,7 +354,7 @@ namespace sfl {
         _remote_ip = ost::InetHostAddress(_ca->getLocalSDP()->get_remote_ip().c_str());
 
         if (!_remote_ip) {
-            _warn("Rtp: Target IP address (%s) is not correct!", 
+            _warn("RTP: Target IP address (%s) is not correct!",
 						_ca->getLocalSDP()->get_remote_ip().data());
             return;
         }
@@ -363,7 +366,7 @@ namespace sfl {
         _ca->getLocalSDP()->get_remote_ip().data(), _remote_port);
 
         if (! static_cast<D*>(this)->addDestination (_remote_ip, _remote_port)) {
-        	_warn("Rtp: Can't add new destination to session!");
+        	_warn("RTP: Can't add new destination to session!");
 			return;
         }
     }
@@ -375,7 +378,7 @@ namespace sfl {
         // This method remove the current destination entry
 
         if(!static_cast<D*>(this)->forgetDestination(_remote_ip, _remote_port, _remote_port+1))
-        	_warn("Rtp: Could not remove previous destination");
+        	_warn("RTP: Could not remove previous destination");
 
         // new destination is stored in call
         // we just need to recall this method
@@ -619,7 +622,7 @@ namespace sfl {
     template <typename D>
     int AudioRtpSession<D>::startRtpThread ()
     {
-        _debug("Starting main thread");
+        _debug("RTP: Starting main thread");
         return start(_mainloopSemaphore);
     }
     
@@ -630,48 +633,50 @@ namespace sfl {
         setSessionTimeouts();
         setSessionMedia();
 
-	initBuffers();
+        initBuffers();
 
-	// Timestamp must be initialized randomly
-	_timestamp = static_cast<D*>(this)->getCurrentTimestamp();
+        // Timestamp must be initialized randomly
+        _timestamp = static_cast<D*>(this)->getCurrentTimestamp();
 
         int sessionWaiting;
         int threadSleep = 0;
 
-        if (_codecSampleRate != 0)
-            { threadSleep = (_codecFrameSize * 1000) / _codecSampleRate; }
-        else
-            { threadSleep = _layerFrameSize; }
+		if (_codecSampleRate != 0){
+			threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
+		}
+        else {
+        	threadSleep = _layerFrameSize;
+        }
 
         TimerPort::setTimer (threadSleep);
         
         if (_audiolayer == NULL) {
-            _debug("For some unknown reason, audiolayer is null, just as \
-            we were about to start the audio stream");
+            _error("RTP: Error: Audiolayer is null, cannot start the audio stream");
             throw AudioRtpSessionException();
         }
 
-	_ca->setRecordingSmplRate(_audiocodec->getClockRate());
+        _ca->setRecordingSmplRate(_audiocodec->getClockRate());
  
-	// Start audio stream (if not started) AND flush all buffers (main and urgent)
-        _manager->getAudioDriver()->startStream();
+        // Start audio stream (if not started) AND flush all buffers (main and urgent)
+		_manager->getAudioDriver()->startStream();
         static_cast<D*>(this)->startRunning();
 
 
-        _debug ("Entering RTP mainloop for callid %s",_ca->getCallId().c_str());
+        _debug ("RTP: Entering mainloop for call %s",_ca->getCallId().c_str());
 
         while (!testCancel()) {
 
-	    // ost::MutexLock lock(*(_manager->getAudioLayerMutex()));
+        	// ost::MutexLock lock(*(_manager->getAudioLayerMutex()));
 
-	    _manager->getAudioLayerMutex()->enter();
+        	_manager->getAudioLayerMutex()->enter();
 
-	    // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-	    _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
+        	// converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+        	_converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
+
+
+        	sessionWaiting = static_cast<D*>(this)->isWaiting();
 
             // Send session
-            sessionWaiting = static_cast<D*>(this)->isWaiting();
-
             if(_eventQueue.size() > 0) {
             	sendDtmfEvent(_eventQueue.front());
             }
@@ -698,7 +703,7 @@ namespace sfl {
             TimerPort::incTimer (threadSleep);
         }
         
-        _debug ("Left RTP main loop for callid %s",_ca->getCallId().c_str());
+        _debug ("RTP: Left main loop for call%s", _ca->getCallId().c_str());
     }
     
 }

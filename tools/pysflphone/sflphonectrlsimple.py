@@ -66,6 +66,7 @@ class SflPhoneCtrlSimple(Thread):
         self.registered = False
         self.register()
 	self.currentCallId = ""
+
 	self.loop = MainLoop()
 
 	self.test = test
@@ -534,11 +535,12 @@ class SflPhoneCtrlSimple(Thread):
 
     def Refuse(self, callid):
         """Refuse an incoming call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
+	print "Refuse call " + callid
+        # if not self.account:
+        #     self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't refuse a call without a registered account")
+        # if not self.isAccountRegistered():
+        #     raise SflPhoneError("Can't refuse a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
@@ -548,6 +550,7 @@ class SflPhoneCtrlSimple(Thread):
 
     def Accept(self, callid):
         """Accept an incoming call identified by a CallID"""
+	print "Accept call " + callid
         if not self.account:
             self.setFirstRegisteredAccount()
 
@@ -603,4 +606,9 @@ class SflPhoneCtrlSimple(Thread):
 	return callid
 
     def run(self):
-        self.loop.run()
+        gobject.threads_init()
+        # self.loop.run()
+	context = self.loop.get_context()
+
+	while 1:
+            context.iteration(True)
