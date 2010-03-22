@@ -228,6 +228,12 @@ pj_bool_t mod_on_rx_request (pjsip_rx_data *rdata);
  */
 pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata UNUSED) ;
 
+/**
+    * Send an ACK message inside a transaction. PJSIP send automatically, non-2xx ACK response.
+    * ACK for a 2xx response must be send using this method.
+    */
+static void sendAck(pjsip_dialog *dlg, pjsip_rx_data *rdata);
+
 /*
  * Transfer callbacks
  */
@@ -3490,13 +3496,14 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     std::string request;
 
 
-    _info("UserAgent: Receiving REQUEST using transport: %s %s (refcnt=%d)",
+    _info("UserAgent: Transaction REQUEST received using transport: %s %s (refcnt=%d)",
     	   rdata->tp_info.transport->obj_name,
     	   rdata->tp_info.transport->info,
     	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
 
     // No need to go any further on incoming ACK
-    if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD) {
+    if (rdata->msg_info.msg->line.req.method.id == PJSIP_ACK_METHOD && pjsip_rdata_get_dlg(rdata) != NULL) {
+    	pjsip_dialog *dlg = pjsip_rdata_get_dlg(rdata);
         _info("UserAgent: received an ACK");
         return true;
     }
@@ -3777,10 +3784,45 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
 }
 
-pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata UNUSED)
+pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata)
 {
-    _debug ("Mod on rx response");
+    _info ("SIP: Transaction response using transport: %s %s (refcnt=%d)",
+    	   rdata->tp_info.transport->obj_name,
+    	   rdata->tp_info.transport->info,
+    	   (int)pj_atomic_get(rdata->tp_info.transport->ref_cnt));
+
+    pjsip_dialog *dlg;
+    dlg = pjsip_rdata_get_dlg( rdata );
+
+	if(dlg != NULL) {
+		pjsip_transaction *tsx = pjsip_rdata_get_tsx( rdata );
+		if ( tsx != NULL && tsx->method.id == PJSIP_INVITE_METHOD) {
+			if (tsx->status_code < 200) {
+				_info("SIP: Received provisional response");
+			}
+			else if (tsx->status_code >= 300) {
+			    _warn("SIP: Dialog failed");
+				// pjsip_dlg_dec_session(dlg);
+				// ACK for non-2xx final response is sent by transaction.
+			}
+			else {
+				_info("SIP: Received 200 OK response");
+				sendAck(dlg, rdata);
+			}
+		}
+	}
+
     return PJ_SUCCESS;
+}
+
+static void sendAck(pjsip_dialog *dlg, pjsip_rx_data *rdata) {
+
+	pjsip_tx_data *tdata;
+
+	// Create ACK request
+	pjsip_dlg_create_request(dlg, &pjsip_ack_method, rdata->msg_info.cseq->cseq, &tdata);
+
+	pjsip_dlg_send_request( dlg, tdata,-1, NULL);
 }
 
 void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
