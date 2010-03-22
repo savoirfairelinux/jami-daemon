@@ -97,9 +97,16 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
         // connection, the rtpmap attribute will be useful to specify for which codec it is applicable
         rtpmap.pt = med->desc.fmt[i];
         rtpmap.enc_name = pj_str ( (char*) codec->getCodecName().c_str());
-        rtpmap.clock_rate = codec->getClockRate();
-        // Add the channel number only if different from 1
 
+        // G722 require G722/8000 media description even if it is 16000 codec
+        if(codec->getPayload () == 9) {
+        	  rtpmap.clock_rate = 8000;
+        }
+        else {
+        	rtpmap.clock_rate = codec->getClockRate();
+        }
+
+        // Add the channel number only if different from 1
         if (codec->getChannel() > 1)
             rtpmap.param = pj_str ( (char*) codec->getChannel());
         else

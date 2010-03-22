@@ -460,18 +460,19 @@ class SIPVoIPLink : public VoIPLink
          */
 	pj_status_t createAlternateUdpTransport (AccountID id);
 
+
 	/** 
 	 * UDP Transports are stored in this map in order to retreive them in case
 	 * several accounts would share the same port number.
 	 */
 	SipTransportMap _transportMap;
 
-        /** For registration use only */
-        int _regPort;
+	/** For registration use only */
+	int _regPort;
 
-        /** Threading object */
-        EventThread* _evThread;
-        ost::Mutex _mutexSIP;
+	/** Threading object */
+	EventThread* _evThread;
+	ost::Mutex _mutexSIP;
 
         /* Number of SIP accounts connected to the link */
         int _clients;

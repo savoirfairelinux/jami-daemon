@@ -2476,7 +2476,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     pjsip_transport_type_e transportType;
     pjsip_tpselector *tp_sel;
 
-    _debug ("SIPVoIPLink::findLocalAddressFromUri");
+    _debug ("SIP: Find local address from URI");
 
     // Find the transport that must be used with the given uri
     pj_str_t tmp;
@@ -2489,7 +2489,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     std::string machineName (pjMachineName.ptr, pjMachineName.slen);
 
     if (genericUri == NULL) {
-        _debug ("genericUri is NULL in findLocalAddressFromUri");
+        _warn ("SIP: generic URI is NULL in findLocalAddressFromUri");
         return machineName;
     }
 
@@ -2498,7 +2498,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     sip_uri = (pjsip_sip_uri*) pjsip_uri_get_uri (genericUri);
 
     if (sip_uri == NULL) {
-        _debug ("Invalid uri in findLocalAddressFromTransport");
+        _warn ("SIP: Invalid uri in findLocalAddressFromURI");
         return machineName;
     }
 
@@ -2507,7 +2507,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
 
     } else {
         if (transport == NULL) {
-            _debug ("transport is NULL in findLocalAddressFromUri. Try the local UDP transport");
+            _warn ("SIP: Transport is NULL in findLocalAddressFromUri. Try the local UDP transport");
             transport = _localUDPTransport;
         }
 
@@ -2521,7 +2521,7 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
     tpmgr = pjsip_endpt_get_tpmgr (_endpt);
 
     if (tpmgr == NULL) {
-        _debug ("Unexpected: Cannot get tpmgr from endpoint.");
+        _warn ("SIP: Unexpected: Cannot get tpmgr from endpoint.");
         return machineName;
     }
 
@@ -2537,23 +2537,23 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
         status = init_transport_selector (transport, &tp_sel);
 
         if (status == PJ_SUCCESS) {
-	    _debug("pjsip_tpmgr_find_local_addr, UDP, tpsel");
             status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, tp_sel, &localAddress, &port);
-	} else {
-	    _debug("pjsip_tpmgr_find_local_addr, UDP");
-            status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
-	}
-    } else {
-        _debug("pjsip_tpmgr_find_local_addr, TLS");
+        }
+        else {
+        	status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
+        }
+    }
+    else {
         status = pjsip_tpmgr_find_local_addr (tpmgr, _pool, transportType, NULL, &localAddress, &port);
     }
 
     if (status != PJ_SUCCESS) {
-        _debug ("Failed to find local address from transport");
+        _debug ("SIP: Failed to find local address from transport");
         return machineName;
     }
 
-    _debug ("Local address discovered from attached transport: %s", localAddress.ptr);
+	std::string localaddr(localAddress.ptr, localAddress.slen);
+    _debug ("SIP: Local address discovered from attached transport: %s", localaddr.c_str());
 
     return std::string (localAddress.ptr, localAddress.slen);
 }
