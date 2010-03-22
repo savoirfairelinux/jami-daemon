@@ -94,8 +94,14 @@ class Celt : public AudioCodec
 
             _dec = celt_decoder_create (_mode, _channel, &error);
 
-            celt_encoder_ctl (_enc, CELT_SET_COMPLEXITY (10));
-            celt_decoder_ctl(_dec, CELT_SET_COMPLEXITY (10));
+            celt_encoder_ctl (_enc, CELT_SET_COMPLEXITY (0));
+            celt_decoder_ctl(_dec, CELT_SET_COMPLEXITY (0));
+
+            celt_encoder_ctl (_enc, CELT_SET_PREDICTION(1));
+            celt_decoder_ctl(_dec, CELT_SET_PREDICTION(1));
+
+            celt_encoder_ctl (_enc, CELT_SET_VBR_RATE(0));
+            celt_decoder_ctl(_dec, CELT_SET_VBR_RATE(0));
 
         }
 
