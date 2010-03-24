@@ -111,8 +111,12 @@ void ConfigurationSkeleton::readConfig()
 	setAlsaPlugin(configurationManager.getCurrentAudioOutputPlugin());
 	bool ok;
 	QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
-	qDebug() << "inputDevice = " << devices[1];
-	int inputDevice = devices[1].toInt(& ok);
+        int inputDevice =0;
+        if (devices.size() > 1) {
+          qDebug() << "inputDevice = " << devices[1];
+          int inputDevice = devices[1].toInt(& ok);
+        }
+        else qDebug() << "Fatal: Too few audio devices";
 	if(!ok) qDebug() << "inputDevice is not a number";
 	setAlsaInputDevice(inputDevice);
 	
