@@ -1654,10 +1654,6 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         	_debug ("UserAgent: Unable to create RTP Session in new IP2IP call (%s:%d)", __FILE__, __LINE__);
         }
 
-        // Building the local SDP offer
-        call->getLocalSDP()->set_ip_address (addrSdp);
-        call->getLocalSDP()->create_initial_offer(account->getActiveCodecs ());
-
         // Init TLS transport if enabled
         if(account->isTlsEnabled()) {
 
@@ -1709,18 +1705,15 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 		pj_cstr (&pjTo, toUri.c_str());
 
 		pj_str_t pjContact;
-
 		pj_cstr (&pjContact, contactUri.c_str());
 
 		// Create the dialog (UAC)
 		// (Parameters are "strduped" inside this function)
 		status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
-
 		PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
 		// Create the invite session for this call
 		status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
-
 		PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
 		// Set the appropriate transport
@@ -3659,13 +3652,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
         addrSdp = addrToUse;
     }
 
-
     call->setConnectionState (Call::Progressing);
-
     call->setPeerNumber (peerNumber);
-
     call->setDisplayName (displayName);
-
     call->initRecFileName();
 
 
@@ -4213,7 +4202,45 @@ void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
 
 void on_create_offer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 {
-	_info("UserAgent: Create new SDP offer ");
+	_info("UserAgent: Create new SDP offer");
+
+	 /* Retrieve the call information */
+	SIPCall * call = NULL;
+	call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
+
+	CallID callid = call->getCallId();
+	AccountID accountid = Manager::instance().getAccountFromCall(callid);
+
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accountid));
+
+    SIPVoIPLink *link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accountid));
+
+	// Set the local address
+	std::string localAddress = link->getInterfaceAddrFromName(account->getLocalInterface ());
+	// Set SDP parameters - Set to local
+	std::string addrSdp = localAddress;
+
+	_debug ("UserAgent: Local Address for IP2IP call: %s", localAddress.c_str());
+
+	// If local address bound to ANY, reslove it using PJSIP
+	if (localAddress == "0.0.0.0") {
+		link->loadSIPLocalIP (&localAddress);
+	}
+
+	// Local address to appear in SDP
+	if (addrSdp == "0.0.0.0") {
+		addrSdp = localAddress;
+	}
+
+    // Set local address for RTP media
+    setCallAudioLocal (call, localAddress);
+
+    // Building the local SDP offer
+    call->getLocalSDP()->set_ip_address (addrSdp);
+    call->getLocalSDP()->create_initial_offer( account->getActiveCodecs() );
+
+    *p_offer = call->getLocalSDP()->get_local_sdp_session();
+
 }
 
 
