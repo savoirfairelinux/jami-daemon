@@ -40,33 +40,61 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	accountList = new AccountList(false);
 	loadAccountList();
 	accountListHasChanged = false;
-	toolButton_accountsApply->setEnabled(false);
+	//toolButton_accountsApply->setEnabled(false);
 	
-	connect(edit1_alias,           SIGNAL(textEdited(const QString &)),
-	        this,                  SLOT(changedAccountList()));
-	connect(edit2_protocol,        SIGNAL(activated(int)),
-	        this,                  SLOT(changedAccountList()));
-	connect(edit3_server,          SIGNAL(textEdited(const QString &)),
-	        this,                  SLOT(changedAccountList()));
-	connect(edit4_user,            SIGNAL(textEdited(const QString &)),
-	        this,                  SLOT(changedAccountList()));
-	connect(edit5_password,        SIGNAL(textEdited(const QString &)),
-	        this,                  SLOT(changedAccountList()));
-	connect(edit6_mailbox,         SIGNAL(textEdited(const QString &)),
-	        this,                  SLOT(changedAccountList()));
-	connect(checkbox_stun,         SIGNAL(toggled(bool)),
-		this,                  SLOT(changedAccountList()));
-	connect(checkbox_zrtp,         SIGNAL(toggled(bool)),
-		this,                  SLOT(changedAccountList()));       
-	connect(button_accountUp,      SIGNAL(clicked()),
-	        this,                  SLOT(changedAccountList()));
-	connect(button_accountDown,    SIGNAL(clicked()),
-	        this,                  SLOT(changedAccountList()));
-	connect(button_accountAdd,     SIGNAL(clicked()),
-	        this,                  SLOT(changedAccountList()));
-	connect(button_accountRemove,  SIGNAL(clicked()),
-	        this,                  SLOT(changedAccountList()));
-	        
+	connect(edit1_alias,                    SIGNAL(textEdited(const QString &)),
+	        this,                           SLOT(changedAccountList()));
+	connect(edit2_protocol,                 SIGNAL(activated(int)),
+	        this,                           SLOT(changedAccountList()));
+	connect(edit3_server,                   SIGNAL(textEdited(const QString &)),
+	        this,                           SLOT(changedAccountList()));
+	connect(edit4_user,                     SIGNAL(textEdited(const QString &)),
+	        this,                           SLOT(changedAccountList()));
+	connect(edit5_password,                 SIGNAL(textEdited(const QString &)),
+	        this,                           SLOT(changedAccountList()));
+	connect(edit6_mailbox,                  SIGNAL(textEdited(const QString &)),
+	        this,                           SLOT(changedAccountList()));
+	connect(checkbox_stun,                  SIGNAL(toggled(bool)),
+		this,                           SLOT(changedAccountList()));
+	connect(checkbox_zrtp,                  SIGNAL(toggled(bool)),
+		this,                           SLOT(changedAccountList()));       
+	connect(button_accountUp,               SIGNAL(clicked()),
+	        this,                           SLOT(changedAccountList()));
+	connect(button_accountDown,             SIGNAL(clicked()),
+	        this,                           SLOT(changedAccountList()));
+	connect(button_accountAdd,              SIGNAL(clicked()),
+	        this,                           SLOT(changedAccountList()));
+	connect(button_accountRemove,           SIGNAL(clicked()),
+	        this,                           SLOT(changedAccountList()));
+        connect(edit_tls_private_key_password_2,  SIGNAL(textEdited(const QString &)),
+                this,                           SLOT(changedAccountList()));
+        connect(spinbox_tls_listener_2,           SIGNAL(editingFinished()),
+                this,                           SLOT(changedAccountList()));
+        connect(file_tls_authority_2,             SIGNAL(textChanged(const QString &)),
+                this,                           SLOT(changedAccountList()));
+        connect(file_tls_endpoint_2,              SIGNAL(textChanged(const QString &)),
+                this,                           SLOT(changedAccountList()));
+        connect(file_tls_private_key_2,           SIGNAL(textChanged(const QString &)),
+                this,                           SLOT(changedAccountList()));
+        connect(combo_tls_method_2,               SIGNAL(currentIndexChanged(int)),
+                this,                           SLOT(changedAccountList()));
+        connect(edit_tls_cipher_2,                SIGNAL(textEdited(const QString &)),
+                this,                           SLOT(changedAccountList()));
+        connect(edit_tls_outgoing_2,              SIGNAL(textEdited(const QString &)),
+                this,                           SLOT(changedAccountList()));
+        connect(spinbox_tls_timeout_sec_2,        SIGNAL(editingFinished()),
+                this,                           SLOT(changedAccountList()));
+        connect(spinbox_tls_timeout_msec_2,       SIGNAL(editingFinished()),
+                this,                           SLOT(changedAccountList()));
+        connect(check_tls_incoming_2,             SIGNAL(clicked(bool)),
+                this,                           SLOT(changedAccountList()));
+        connect(check_tls_answer_2,               SIGNAL(clicked(bool)),
+                this,                           SLOT(changedAccountList()));
+        connect(check_tls_requier_cert_2,         SIGNAL(clicked(bool)),
+                this,                           SLOT(changedAccountList()));
+        connect(group_security_tls,             SIGNAL(clicked(bool)),
+                this,                           SLOT(changedAccountList()));
+                
 	connect(&configurationManager, SIGNAL(accountsChanged()),
 	        this,                  SLOT(updateAccountStates()));
 	        
@@ -169,6 +197,24 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
 	account->setAccountDetail(ACCOUNT_PASSWORD, edit5_password->text());
 	account->setAccountDetail(ACCOUNT_MAILBOX, edit6_mailbox->text());
 	account->setAccountDetail(ACCOUNT_ENABLED, account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
+        
+        //Security
+        account->setAccountDetail(TLS_PASSWORD,edit_tls_private_key_password_2->text());
+        account->setAccountDetail(TLS_LISTENER_PORT,QString::number(spinbox_tls_listener_2->value()));
+        account->setAccountDetail(TLS_CA_LIST_FILE,file_tls_authority_2->text());
+        account->setAccountDetail(TLS_CERTIFICATE_FILE,file_tls_endpoint_2->text());
+        account->setAccountDetail(TLS_PRIVATE_KEY_FILE,file_tls_private_key_2->text());
+        qDebug() << "\n\n\n\nSET: " << combo_tls_method_2->currentText() << "\n\n\n";
+        account->setAccountDetail(TLS_METHOD,combo_tls_method_2->currentText());
+        account->setAccountDetail(TLS_CIPHERS,edit_tls_cipher_2->text());
+        account->setAccountDetail(TLS_SERVER_NAME,edit_tls_outgoing_2->text());
+        account->setAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC,QString::number(spinbox_tls_timeout_sec_2->value()));
+        account->setAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC,QString::number(spinbox_tls_timeout_msec_2->value()));
+        account->setAccountDetail(TLS_VERIFY_SERVER,check_tls_incoming_2->isChecked()?"true":"false");
+        account->setAccountDetail(TLS_VERIFY_CLIENT,check_tls_answer_2->isChecked()?"true":"false");
+        account->setAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE,check_tls_requier_cert_2->isChecked()?"true":"false");
+        account->setAccountDetail(TLS_ENABLE,group_security_tls->isChecked()?"true":"false");
+        account->setAccountDetail(TLS_METHOD, QString::number(combo_security_STRP->currentIndex()));
 }
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
@@ -196,6 +242,26 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit5_password->setText( account->getAccountDetail(ACCOUNT_PASSWORD));
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
 	
+        //Security
+        edit_tls_private_key_password_2->setText( account->getAccountDetail(TLS_PASSWORD ));
+        spinbox_tls_listener_2->setValue( account->getAccountDetail(TLS_LISTENER_PORT ).toInt());
+        file_tls_authority_2->setText( account->getAccountDetail(TLS_CA_LIST_FILE ));
+        file_tls_endpoint_2->setText( account->getAccountDetail(TLS_CERTIFICATE_FILE ));
+        file_tls_private_key_2->setText( account->getAccountDetail(TLS_PRIVATE_KEY_FILE ));
+        qDebug() << "\n\n\n\nTHIS: " << account->getAccountDetail(TLS_METHOD ) << "\n\n\n";
+        combo_tls_method_2->setCurrentIndex( combo_tls_method_2->findText(account->getAccountDetail(TLS_METHOD )));
+        edit_tls_cipher_2->setText( account->getAccountDetail(TLS_CIPHERS ));
+        edit_tls_outgoing_2->setText( account->getAccountDetail(TLS_SERVER_NAME ));
+        spinbox_tls_timeout_sec_2->setValue( account->getAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC ).toInt());
+        spinbox_tls_timeout_msec_2->setValue( account->getAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC ).toInt());
+        check_tls_incoming_2->setChecked( (account->getAccountDetail(TLS_VERIFY_SERVER ) == "true")?1:0);
+        check_tls_answer_2->setChecked( (account->getAccountDetail(TLS_VERIFY_CLIENT ) == "true")?1:0);
+        check_tls_requier_cert_2->setChecked( (account->getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE ) == "true")?1:0);
+        group_security_tls->setChecked( (account->getAccountDetail(TLS_ENABLE ) == "true")?1:0);
+        
+        combo_security_STRP->setCurrentIndex(account->getAccountDetail(TLS_METHOD ).toInt());
+        
+        
 	if(protocolIndex == 0) // if sip selected
 	{
 		checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == ACCOUNT_ENABLED_TRUE);
@@ -247,7 +313,7 @@ void DlgAccounts::changedAccountList()
 	qDebug() << "changedAccountList";
 	accountListHasChanged = true;
 	emit updateButtons();
-	toolButton_accountsApply->setEnabled(true);
+	//toolButton_accountsApply->setEnabled(true);
 	
 	int currentIndex = edit2_protocol->currentIndex();
 
@@ -327,12 +393,12 @@ void DlgAccounts::on_button_accountRemove_clicked()
 	listWidget_accountList->setCurrentRow( (r >= listWidget_accountList->count()) ? r-1 : r );
 }
 
-void DlgAccounts::on_toolButton_accountsApply_clicked()
+/*void DlgAccounts::on_toolButton_accountsApply_clicked()
 {
 	qDebug() << "on_toolButton_accountsApply_clicked";
 	updateSettings();
 	updateWidgets();
-}
+}*/
 
 void DlgAccounts::on_edit1_alias_textChanged(const QString & text)
 {
@@ -404,7 +470,7 @@ void DlgAccounts::updateSettings()
 	if(accountListHasChanged)
 	{
 		saveAccountList();
-		toolButton_accountsApply->setEnabled(false);
+		//toolButton_accountsApply->setEnabled(false);
 		accountListHasChanged = false;
 	}
 }
@@ -413,7 +479,7 @@ void DlgAccounts::updateWidgets()
 {
 	qDebug() << "DlgAccounts::updateWidgets";
 	loadAccountList();
-	toolButton_accountsApply->setEnabled(false);
+	//toolButton_accountsApply->setEnabled(false);
 	accountListHasChanged = false;
 }
 

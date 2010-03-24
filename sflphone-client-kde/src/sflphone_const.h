@@ -132,6 +132,8 @@
 #define ZRTP                             "1"
 #define SDES                             "2"
 
+/** TLS */
+#define TLS_LISTENER_PORT                   "TLS.listenerPort"
 #define TLS_ENABLE                       "TLS.enable"
 #define TLS_PORT                         "TLS.port"
 #define TLS_CA_LIST_FILE                 "TLS.certificateListFile"
