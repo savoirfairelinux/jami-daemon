@@ -13,20 +13,36 @@ from threading import Event
 print "Import SFLphone"
 from sflphonectrlsimple import SflPhoneCtrlSimple
 
-# def killhandler(signum, frame):
-#     raise IOError("Couldn't open device!")
+# Define remote IP address constant
+REMOTEADDR_lo="127.0.0.1:5062"
 
-# signal.signal(signal.SIGKILL, killhandler)
+# Defines phone numbers
+PHONE1="27182"
+PHONE2="31416"
+PHONE3="14142"
 
+
+# Define function callback to emulate UA behavior on
+# recieving a call (peer hangup))
 def acceptOnIncomingCall(sflphone):
-    time.sleep(0.2)
+
     sflphone.Accept(sflphone.currentCallId)
 
+
+# Define function callback to emulate UA behavior on
+# receiving a call and hanging up
 def acceptOnIncomingCallHangup(sflphone):
-    time.sleep(0.2)
-    sflphone.Accept(sflphone.currentCallId)
-    time.sleep(0.5)
+    
+    sflphone.Accept(sflphone.currentCallId)    
     sflphone.HangUp(sflphone.currentCallId)
+
+
+# Define function callback to emulate UA behavior on
+# refusing a call
+def refuseOnIncomingCall(sflphone):
+    # time.sleep(0.5)
+    sflphone.Refuse(sflphone.currentCallId)
+
 
 class SflPhoneTests():
 
@@ -75,12 +91,13 @@ class SflPhoneTests():
         print "Account with ID " + accountID + " removed"
 
 
+    # SCENARIO 1 Test 1
     def test_ip2ip_send_hangup(self):
         """Make a call to a server (sipp) on port 5062"""
         i = 0
         while(i < 10):
 
-            callid = self.sflphone.Call("sip:test@127.0.0.1:5062")
+            callid = self.sflphone.Call("sip:test@" + REMOTEADDR_lo)
             time.sleep(0.5)
             
             self.sflphone.HangUp(callid)            
@@ -91,19 +108,21 @@ class SflPhoneTests():
         del self.sflphone
 
 
+    # SCENARIO 1 Test 2
     def test_ip2ip_send_peer_hungup(self):
         """Make a call to a server (sipp) on port 5062"""
         i = 0
-        while(i < 1):
+        while(i < 10):
 
-            callid = self.sflphone.Call("sip:test@127.0.0.1:5062")
+            callid = self.sflphone.Call("sip:test@" + REMOTEADDR_lo)
             time.sleep(1.0)
 
             i = i+1
 
         del self.sflphone
 
-
+    
+    # SCENARIO 1 Test 3
     def test_ip2ip_recv_hangup(self):
         """Wait for calls, answer then hangup"""
 
@@ -114,6 +133,7 @@ class SflPhoneTests():
         self.sflphone.start()
 
 
+    # SCENARIO 1 Test 4
     def test_ip2ip_recv_peer_hungup(self):
         """Wait for calls, answer, peer hangup"""
         # Add callback for this test
@@ -123,30 +143,32 @@ class SflPhoneTests():
         self.sflphone.start()
 
 
+    # SCENARIO 2 Test 1
     def test_account_send_hangup(self):
         """Send new account call, hangup once peer answered"""
 
         i = 0
-        while(i < 1):
+        while(i < 10):
 
-            callid = self.sflphone.Call("27182")
-            time.sleep(1.0)
+            callid = self.sflphone.Call(PHONE1)
+            time.sleep(0.2)
             
             self.sflphone.HangUp(callid)            
-            time.sleep(1.0)
+            time.sleep(0.2)
 
             i = i+1
 
         # del self.sflphone
 
 
+    # SCENARIO 2 Test 2
     def test_account_send_peer_hungup(self):
         """Send new account call, hangup once peer answered"""
 
         i = 0
         while(i < 10):
 
-            callid = self.sflphone.Call("27182")
+            callid = self.sflphone.Call(PHONE1)
             time.sleep(1.0)
 
             i = i+1
@@ -154,6 +176,7 @@ class SflPhoneTests():
         del self.sflphone
 
 
+    # SCENARIO 2 Test 3 
     def test_account_recv_hangup(self):
         """Register an account and wait for incoming calls"""
 
@@ -164,6 +187,7 @@ class SflPhoneTests():
         self.sflphone.start()
 
 
+    # SCENARIO 2 Test 4 
     def test_account_recv_peer_hungup(self):
         """Register an account and wait for incoming calls"""
 
@@ -174,12 +198,13 @@ class SflPhoneTests():
         self.sflphone.start()
 
 
+    # SCENARIO 3 Test 1
     def test_ip2ip_send_hold_offhold(self):
         """Send new call, hold this call, offhold, hangup"""
         i = 0
         while(i < 10):
 
-            callid = self.sflphone.Call("sip:test@127.0.0.1:5062")
+            callid = self.sflphone.Call("sip:test@" + REMOTEADDR_lo)
             time.sleep(0.5)
 
             self.sflphone.Hold(callid)
@@ -196,20 +221,32 @@ class SflPhoneTests():
         del self.sflphone
 
 
+    # SCENARIO 4 Test 1
     def test_account_send_transfer(self):
         """Send new calls, transfer it to a new instance"""
 
         i = 0
         while(i < 1):
 
-            callid = self.sflphone.Call("27182")
+            callid = self.sflphone.Call(PHONE1)
             time.sleep(1.0)
             
-            self.sflphone.Transfer(callid,"14142")
+            self.sflphone.Transfer(callid,PHONE3)
             # self.sflphone.HangUp(callid)            
             # time.sleep(1.0)
 
             i = i+1
+
+
+    # SCENARIO 5 Test 1 
+    def test_ip2ip_recv_refuse(self):
+        """Receive an incoming IP2IP call, refuse it"""
+
+        # Add callback for this test
+        self.sflphone.onIncomingCall_cb = refuseOnIncomingCall
+
+        # Start Glib mainloop
+        self.sflphone.start()
 
 
 
@@ -221,6 +258,10 @@ testsuite = SflPhoneTests(sflphone)
 
 # Register the first account available, should be the test account
 sflphone.setFirstRegisteredAccount();
+
+
+# ============================ Test Suite ============================
+
 
 
 # SCENARIO 1: IP2IP Normal flow calls
@@ -262,6 +303,7 @@ sflphone.setFirstRegisteredAccount();
 # testsuite.test_account_recv_peer_hungup()
 
 
+
 # SCENARIO 3: IP2IP Call, HOLD/OFFHOLD
 
 # Test 1: - Send an IP2IP call
@@ -271,9 +313,18 @@ sflphone.setFirstRegisteredAccount();
 # testsuite.test_ip2ip_send_hold_offhold()
 
 
+
 # SCENARIO 4: IP2IP Call, HOLD/OFFHOLD
 
 # Test 1: - Send an IP2IP call
 #         - Transfer this call to another sipp instance
 #         - Hangup
-testsuite.test_account_send_transfer()
+# testsuite.test_account_send_transfer()
+
+
+
+# SCENARIO 5: IP2IP Call, Refuse
+
+# Test 1: - Receive an incoming call
+#         - Hangup without answer
+testsuite.test_ip2ip_recv_refuse()

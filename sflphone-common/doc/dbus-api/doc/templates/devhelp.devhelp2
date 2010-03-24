@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<book xmlns="http://www.devhelp.net/book" title="$spec.title" name="$name" link="index.html">
+ <chapters>
+#for $interface in $spec.interfaces
+  <sub name="$interface.name" link="$interface.get_url()"/>
+#end for
+  <sub name="Generic Types" link="generic-types.html"/>
+  <sub name="Errors" link="errors.html"/>
+  <sub name="Full Index" link="fullindex.html"/>
+ </chapters>
+ <functions>
+#for $obj in $spec.everything.values() + $spec.types.values() + $spec.errors.values()
+  <keyword type="$obj.devhelp_name" name="$obj.get_title()" link="$obj.get_url()" #slurp
+#if $obj.deprecated: deprecated="true" #slurp
+/>
+#end for
+ </functions>
+</book>

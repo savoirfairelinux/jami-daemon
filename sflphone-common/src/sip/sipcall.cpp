@@ -33,17 +33,19 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call
         , _invSession (NULL)
         , _local_sdp (0)
 {
+	_debug ("SIPCall: Create new call %s", id.c_str());
+
     _local_sdp = new Sdp (pool);
-    _debug ("SIPCALL::Constructor for this class is called ");
 }
 
 SIPCall::~SIPCall()
 {
+	_debug ("SIPCall: Delete call");
+
     delete _audiortp;
     _audiortp = 0;
     delete _local_sdp;
     _local_sdp = 0;
-    _debug ("SIPCALL::Destructor for this class is called ");
 }
 
 

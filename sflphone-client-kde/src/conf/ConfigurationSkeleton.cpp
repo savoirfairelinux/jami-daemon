@@ -61,7 +61,7 @@ void ConfigurationSkeleton::readConfig()
 	////////////////////////
 	
 	//Call history settings
-	setEnableHistory(configurationManager.getHistoryEnabled());
+	//setEnableHistory(configurationManager.getHistoryEnabled()); //TODO uncomment
 	setHistoryMax(configurationManager.getHistoryLimit());
 
 	//SIP port settings
@@ -119,10 +119,10 @@ void ConfigurationSkeleton::readConfig()
 	setAlsaPlugin(configurationManager.getCurrentAudioOutputPlugin());
 	bool ok;
 	QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
-	qDebug() << "inputDevice = " << devices[1];
-	int inputDevice = devices[1].toInt(& ok);
-	if(!ok) qDebug() << "inputDevice is not a number";
-	setAlsaInputDevice(inputDevice);
+	//qDebug() << "inputDevice = " << devices[1]; //TODO uncomment
+	//int inputDevice = devices[1].toInt(& ok); //TODO uncomment
+	//if(!ok) qDebug() << "inputDevice is not a number"; //TODO uncomment
+	//setAlsaInputDevice(inputDevice); //TODO uncomment
 	
 	qDebug() << "outputDevice = " << devices[0];
 	int outputDevice = devices[0].toInt(& ok);
@@ -191,7 +191,7 @@ void ConfigurationSkeleton::writeConfig()
 	qDebug() << "Writing General settings";
 	
 	//Call history settings
-	if(enableHistory() != configurationManager.getHistoryEnabled()) configurationManager.setHistoryEnabled();
+	//TODO if(enableHistory() != configurationManager.getHistoryEnabled()) configurationManager.setHistoryEnabled();
 	configurationManager.setHistoryLimit(historyMax());
 	//SIP port settings
 	configurationManager.setSipPort(sIPPort());

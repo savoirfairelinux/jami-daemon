@@ -1,5 +1,5 @@
  
-SUBDIRS = doxygen
+SUBDIRS = doxygen dbus-api
 
 .PHONY: doc
 doc:
