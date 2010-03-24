@@ -24,9 +24,8 @@
 #include "logger.h"
 #include "validator.h"
 
-CPPUNIT_TEST_SUITE_REGISTRATION( AccountTest );
-
 void AccountTest::TestAddRemove(void) {
+	_debug ("-------------------- AccountTest::TestAddRemove --------------------\n");
 
 	std::map<std::string, std::string> details;
 	details[CONFIG_ACCOUNT_TYPE] = "SIP";

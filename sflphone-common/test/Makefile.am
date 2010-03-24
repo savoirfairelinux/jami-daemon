@@ -1,16 +1,33 @@
 include ../globals.mak
 
-TESTS = main
+TESTS = test
 check_PROGRAMS = $(TESTS)
-main_CXXFLAGS = $(CPPUNIT_CFLAGS)
-main_LDADD = $(LLIBS)
-main_LDFLAGS = -ldl
-main_SOURCES = main.cpp \
+test_CXXFLAGS = $(CPPUNIT_CFLAGS)
+test_LDADD = $(LLIBS)
+test_LDFLAGS = -ldl
+test_SOURCES = main.cpp \
 	validator.cpp \
 	validator.h \
 	accounttest.h \
-	accounttest.cpp
-
+	accounttest.cpp \
+	audiolayertest.h \
+	audiolayertest.cpp \
+	configurationtest.h \
+	configurationtest.cpp \
+	historytest.h \
+	historytest.cpp \
+	hookmanagertest.h \
+	hookmanagertest.cpp \
+	mainbuffertest.h \
+	mainbuffertest.cpp \
+	numbercleanertest.h \
+	numbercleanertest.cpp \
+	pluginmanagertest.h \
+	pluginmanagertest.cpp \
+	rtptest.h \
+	rtptest.cpp \
+	sdesnegotiatortest.h \
+	sdesnegotiatortest.cpp
 
 
 

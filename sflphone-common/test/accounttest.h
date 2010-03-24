@@ -32,5 +32,7 @@ class AccountTest : public CppUnit::TestFixture {
  public:
   void TestAddRemove(void);
 };
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AccountTest, "AccountTest");
+CPPUNIT_TEST_SUITE_REGISTRATION( AccountTest );
 
 #endif /* ACCOUNTTEST_H_ */

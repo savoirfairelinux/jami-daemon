@@ -20,3 +20,7 @@ bool Validator::isNotNull(std::string str) {
 	else
 		return false;
 }
+
+bool Validator::isEqual(std::string str1, std::string str2) {
+	return str1.compare(str2) == 0;
+}
