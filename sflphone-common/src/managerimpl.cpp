@@ -1430,14 +1430,8 @@ bool ManagerImpl::saveConfig (void) {
 
 //THREAD=Main
 bool ManagerImpl::sendDtmf (const CallID& id, char code) {
+
 	AccountID accountid = getAccountFromCall(id);
-
-	if (accountid == AccountNULL) {
-		playDtmf(code);
-		return false;
-	}
-
-	int sendType = getConfigInt(SIGNALISATION, SEND_DTMF_AS);
 
 	bool returnValue = false;
 
