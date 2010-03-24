@@ -75,7 +75,7 @@ namespace sfl {
             // Thread associated method
             virtual void run ();
             
-            int startRtpThread();
+            int startRtpThread(AudioCodec*);
 
             /**
              * Used mostly when receiving a reinvite
@@ -92,23 +92,24 @@ namespace sfl {
             	 */
             void sendDtmfEvent(sfl::DtmfEvent *dtmf);
 
+            inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
+                return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
+            }
+
+            int computeNbByteAudioLayer (float codecFrameSize) {
+                return (int) ( ((float) _converterSamplingRate * codecFrameSize * sizeof(SFLDataFormat))/ 1000.0);
+            }
+
         private:
         
             void initBuffers(void);
             
             void setSessionTimeouts(void);
-            void setSessionMedia(void);
+            void setSessionMedia(AudioCodec*);
             void setDestinationIpAddress(void);
                 
             int processDataEncode(void);
             void processDataDecode(unsigned char * spkrData, unsigned int size);
-            
-            inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
-                return ( (float) codecSamplePerFrame * 1000.0) / (float) codecClockRate;
-            }          
-            int computeNbByteAudioLayer (float codecFrameSize) {
-                return (int) ( ((float) _converterSamplingRate * codecFrameSize * sizeof(SFLDataFormat))/ 1000.0);
-            }
           
             void sendMicData();
             void receiveSpeakerData ();
@@ -206,7 +207,6 @@ namespace sfl {
             
         protected:
              SIPCall * _ca;
-            
     };    
     
     template <typename D>
@@ -307,17 +307,9 @@ namespace sfl {
     }
     
     template <typename D>
-    void AudioRtpSession<D>::setSessionMedia(void)
+    void AudioRtpSession<D>::setSessionMedia(AudioCodec* audiocodec)
     {
-        assert(_ca);
-
-        AudioCodecType pl = (AudioCodecType)_ca->getLocalSDP()->get_session_media()->getPayload();
-        _audiocodec = _manager->getCodecDescriptorMap().instantiateCodec(pl);
-
-        if (_audiocodec == NULL) {
-            _debug ("No audiocodec, can't init RTP media");
-            throw AudioRtpSessionException();
-        }
+        _audiocodec = audiocodec;
 
         _debug ("Init audio RTP session: codec payload %i", _audiocodec->getPayload());
 
@@ -617,23 +609,20 @@ namespace sfl {
     }
     
     template <typename D>
-    int AudioRtpSession<D>::startRtpThread ()
+    int AudioRtpSession<D>::startRtpThread (AudioCodec* audiocodec)
     {
         _debug("Starting main thread");
+        setSessionTimeouts();
+        setSessionMedia(audiocodec);
+		initBuffers();
         return start(_mainloopSemaphore);
     }
     
     template <typename D>
     void AudioRtpSession<D>::run ()
     {
-
-        setSessionTimeouts();
-        setSessionMedia();
-
-	initBuffers();
-
-	// Timestamp must be initialized randomly
-	_timestamp = static_cast<D*>(this)->getCurrentTimestamp();
+		// Timestamp must be initialized randomly
+		_timestamp = static_cast<D*>(this)->getCurrentTimestamp();
 
         int sessionWaiting;
         int threadSleep = 0;

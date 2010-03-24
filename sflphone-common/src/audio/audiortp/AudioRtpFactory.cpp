@@ -22,7 +22,6 @@
 #include "AudioZrtpSession.h"
 #include "AudioSrtpSession.h"
 #include "AudioSymmetricRtpSession.h"
-
 #include "manager.h"
 #include "account.h"
 #include "sip/sipcall.h"
@@ -122,7 +121,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
     }
 }
 
-void AudioRtpFactory::start (void)
+void AudioRtpFactory::start (AudioCodec* audiocodec)
 {
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to start audio thread");
@@ -131,7 +130,7 @@ void AudioRtpFactory::start (void)
     switch (_rtpSessionType) {
 
         case Sdes:
-	    if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread() != 0) {
+	    if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread(audiocodec) != 0) {
                 throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioSRtpSession thread");
             }
 	    break;
@@ -139,7 +138,7 @@ void AudioRtpFactory::start (void)
         case Symmetric:
             _debug ("Starting symmetric rtp thread");
 
-            if (static_cast<AudioSymmetricRtpSession *> (_rtpSession)->startRtpThread() != 0) {
+            if (static_cast<AudioSymmetricRtpSession *> (_rtpSession)->startRtpThread(audiocodec) != 0) {
                 throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioSymmetricRtpSession thread");
             }
 
@@ -147,7 +146,7 @@ void AudioRtpFactory::start (void)
 
         case Zrtp:
 
-            if (static_cast<AudioZrtpSession *> (_rtpSession)->startRtpThread() != 0) {
+            if (static_cast<AudioZrtpSession *> (_rtpSession)->startRtpThread(audiocodec) != 0) {
                 throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioZrtpSession thread");
             }
             break;
@@ -208,6 +207,15 @@ void AudioRtpFactory::updateDestinationIpAddress (void)
 	    static_cast<AudioZrtpSession *> (_rtpSession)->updateDestinationIpAddress();
             break;
     }
+}
+
+sfl::AudioSymmetricRtpSession * AudioRtpFactory::getAudioSymetricRtpSession()
+{
+	if ( (_rtpSessionType == Symmetric) && (_rtpSessionType != NULL)) {
+	        return static_cast<AudioSymmetricRtpSession *> (_rtpSession);
+	    } else {
+	        throw AudioRtpFactoryException("RTP: Error: _rtpSession is NULL in getAudioSymetricRtpSession");
+	    }
 }
 
 sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
