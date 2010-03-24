@@ -3113,6 +3113,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     }
 
 
+
     // After 2xx is sent/received.
     else if (inv->state == PJSIP_INV_STATE_CONNECTING) {
         status = call->getLocalSDP()->check_sdp_answer (inv, rdata);
@@ -3122,6 +3123,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             return;
         }
     }
+
 
 
     // After we sent or received a ACK - The connection is established
@@ -3239,7 +3241,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
     bool nego_success = false;
     if(!crypto_offer.empty()) {
 
-    	_debug("Crypto attribute in SDP: init Srtp session");
+    	_debug("UserAgent: Crypto attribute in SDP, init SRTP session");
 
     	// init local cryptografic capabilities for negotiation
     	std::vector<sfl::CryptoSuiteDefinition>localCapabilities;
@@ -3250,10 +3252,10 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 		sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 	
 		if(sdesnego.negotiate()) {
-			_debug("SDES negociation successfull \n");
+			_debug("UserAgent: SDES negociation successfull \n");
 			nego_success = true;
 
-            _debug("Set remote cryptographic context\n");
+            _debug("UserAgent: Set remote cryptographic context\n");
             try {
             	  call->getAudioRtp()->setRemoteCryptoInfo(sdesnego);
             }
@@ -3272,7 +3274,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         // We did not found any crypto context for this media
         // @TODO if SRTPONLY, CallFail
 
-        _debug("Did not found any crypto or negociation failed but Sdes enabled");
+        _debug("UserAgent: Did not found any crypto or negociation failed but Sdes enabled");
         call->getAudioRtp()->stop();
 	call->getAudioRtp()->setSrtpEnabled(false);
 
@@ -3286,7 +3288,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
        
         // We found a crypto context for this media but Sdes is not 
         // enabled for this call, make a try using RTP only...
-        _debug("Sdes not initialized for this call\n");
+        _debug("UserAgent: SDES not initialized for this call\n");
     }
 
 
@@ -3346,8 +3348,6 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
             }
         }
     }
-
-    _debug("OK: ransaction changed to state");
 }
 
 void regc_cb (struct pjsip_regc_cbparam *param)
