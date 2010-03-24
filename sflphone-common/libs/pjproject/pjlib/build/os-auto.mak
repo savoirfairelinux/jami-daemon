@@ -1,7 +1,7 @@
 # pjlib/build/os-auto.mak.  Generated from os-auto.mak.in by configure.
 
 # Determine OS specific files
-AC_OS_OBJS=ioqueue_select.o file_access_unistd.o file_io_ansi.o os_core_unix.o os_error_unix.o os_time_unix.o os_timestamp_posix.o guid_uuid.o
+AC_OS_OBJS=ioqueue_select.o file_access_unistd.o file_io_ansi.o os_core_unix.o os_error_unix.o os_time_unix.o os_timestamp_posix.o guid_simple.o
 
 #
 # PJLIB_OBJS specified here are object files to be included in PJLIB
@@ -23,7 +23,7 @@ export TEST_OBJS +=	main.o
 #
 # Additional LDFLAGS for pjlib-test
 #
-export TEST_LDFLAGS +=  -lm -luuid -lnsl -lrt -lpthread  -lasound -lssl -lcrypto
+export TEST_LDFLAGS +=  -lm -lnsl -lrt -lpthread  -lasound -lssl -lcrypto
 
 #
 # TARGETS are make targets in the Makefile, to be executed for this given
