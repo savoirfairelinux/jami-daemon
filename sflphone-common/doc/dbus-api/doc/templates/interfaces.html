@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+ <head>
+  <title>$spec.title &mdash v$spec.version</title>
+  <link rel="stylesheet" href="style.css" type="text/css"/>
+ </head>
+ <body>
+  <div class="header">
+   <h1>$spec.title</h1>
+   <a href="index.html">Full</a>
+   | <a href="generic-types.html">Generic Types</a>
+   | <a href="errors.html">Errors</a>
+   | <a href="fullindex.html">Full Index</a>
+  </div>
+
+  <div class="main">
+  <b>Version $spec.version</b>
+
+  <a name="interfaces"></a>
+  <h3>Interfaces</h3>
+  <ul>
+  #for $interface in $spec.interfaces
+   #if $interface.causes_havoc
+    <li class="causes-havoc">
+   #elif $interface.deprecated
+    <li class="deprecated">
+   #else
+    <li>
+   #end if
+    <a href="$interface.get_url()">$interface.name</a>
+    #if $interface.causes_havoc
+     (unstable)
+    #elif $interface.deprecated
+     (deprecated)
+    #end if
+   </li>
+  #end for
+  </ul>
+
+  <a name="other"></a>
+  <h3>Other</h3>
+  <ul>
+   <li><a href="generic-types.html">Generic Types</a></li>
+   <li><a href="errors.html">Errors</a></li>
+  </ul>
+
+  </div>
+ </body>
+</html>
