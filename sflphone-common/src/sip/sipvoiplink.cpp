@@ -3261,10 +3261,19 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         _debug("UserAgent: SDES not initialized for this call\n");
     }
 
+	assert(call->getLocalSDP());
+	assert(call->getLocalSDP()->get_session_media());
+
+	AudioCodecType pl = (AudioCodecType)call->getLocalSDP()->get_session_media()->getPayload();
+	AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec(pl);
+
+	if (audiocodec == NULL)
+		_error ("SIP: No audiocodec found");
+
 
     try {
         call->setAudioStart (true);
-        call->getAudioRtp()->start();
+        call->getAudioRtp()->start(audiocodec);
     } catch (exception& rtpException) {
         _debug ("%s", rtpException.what());
     }

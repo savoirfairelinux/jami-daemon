@@ -26,53 +26,62 @@ typedef struct
   GdkModifierType mask;
   guint value;
   void
-  (*callback)(void);
+  (*callback) (void);
 } Accelerator;
 
 static void
-grab_key(int key_code, GdkWindow *root);
+grab_key (int key_code, GdkWindow *root);
 
 static void
-ungrab_key(int key_code, GdkWindow *root);
+ungrab_key (int key_code, GdkWindow *root);
 
 static GdkFilterReturn
-filter_keys(GdkXEvent *xevent, GdkEvent *event, gpointer data);
+filter_keys (GdkXEvent *xevent, GdkEvent *event, gpointer data);
 
 static void
-remove_bindings();
+remove_bindings ();
 
 static void
-create_bindings();
+create_bindings ();
 
 static void
-pick_up_callback();
+pick_up_callback ();
 
 static void
-hang_up_callback();
+hang_up_callback ();
 
 static void
-initialize_binding(const gchar* action, const guint code);
+toggle_pick_up_hang_up_callback ();
 
 static void
-initialize_shortcuts_keys();
+toggle_hold_callback ();
+
+static void
+initialize_binding (const gchar* action, const guint code);
+
+static void
+initialize_shortcuts_keys ();
 
 static void*
-get_action_callback(const gchar* action);
+get_action_callback (const gchar* action);
+
+static void
+update_bindings_data (const guint index, const guint code);
 
 /*
  * "Public" functions
  */
 
 void
-shortcuts_initialize_bindings();
+shortcuts_initialize_bindings ();
 
 void
-shortcuts_update_bindings(const guint index, const guint code);
+shortcuts_update_bindings (const guint index, const guint code);
 
 void
-shortcuts_destroy_bindings();
+shortcuts_destroy_bindings ();
 
 Accelerator*
-shortcuts_get_list();
+shortcuts_get_list ();
 
 #endif /* SHORTCUTS_H_ */

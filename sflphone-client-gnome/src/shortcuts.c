@@ -43,6 +43,39 @@ static GHashTable* shortcutsMap;
  */
 
 static void
+toggle_pick_up_hang_up_callback ()
+{
+  callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
+  conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
+
+  g_print("toggle_pick_up_hang_up_callback\n");
+
+  if (selectedCall)
+    {
+      switch (selectedCall->_state)
+        {
+      case CALL_STATE_INCOMING:
+      case CALL_STATE_TRANSFERT:
+        sflphone_pick_up ();
+        break;
+      case CALL_STATE_DIALING:
+      case CALL_STATE_HOLD:
+      case CALL_STATE_CURRENT:
+      case CALL_STATE_RECORD:
+      case CALL_STATE_RINGING:
+        sflphone_hang_up ();
+        break;
+        }
+    }
+  else if (selectedConf)
+    {
+      dbus_hang_up_conference (selectedConf);
+    }
+  else
+    sflphone_pick_up ();
+}
+
+static void
 pick_up_callback ()
 {
   sflphone_pick_up ();
@@ -52,6 +85,33 @@ static void
 hang_up_callback ()
 {
   sflphone_hang_up ();
+}
+
+static void
+toggle_hold_callback ()
+{
+  callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
+  conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
+
+  if (selectedCall)
+    {
+      switch (selectedCall->_state)
+        {
+      case CALL_STATE_CURRENT:
+      case CALL_STATE_RECORD:
+        g_print("on hold\n");
+        sflphone_on_hold();
+        break;
+      case CALL_STATE_HOLD:
+        g_print("off hold\n");
+        sflphone_off_hold();
+        break;
+        }
+    }
+  else if (selectedConf)
+    dbus_hold_conference (selectedConf);
+  else
+    ERROR("Should not happen");
 }
 
 static void
@@ -83,6 +143,12 @@ get_action_callback (const gchar* action)
 
   if (strcmp (action, "popup_window") == 0)
     return popup_window_callback;
+
+  if (strcmp (action, "toggle_pick_up_hang_up") == 0)
+    return toggle_pick_up_hang_up_callback;
+
+  if (strcmp (action, "toggle_hold") == 0)
+    return toggle_hold_callback;
 
   return default_callback;
 }
@@ -225,6 +291,35 @@ initialize_accelerators_list ()
   accelerators_list[index].value = 0;
 }
 
+static void
+update_bindings_data (const guint index, const guint code)
+{
+  // we need to be sure this code is not already affected
+  // to another action
+  int i = 0;
+  while (accelerators_list[i].action != NULL)
+    {
+      if (accelerators_list[i].value == code)
+        {
+          // disable old binding
+          accelerators_list[i].value = 0;
+
+          // update config table
+          g_hash_table_replace (shortcutsMap, g_strdup (
+              accelerators_list[i].action), GINT_TO_POINTER (0));
+        }
+      i++;
+    }
+
+  // store new value
+  accelerators_list[index].value = code;
+
+  // update value in hashtable (used for dbus calls)
+  g_hash_table_replace (shortcutsMap,
+      g_strdup (accelerators_list[index].action), GINT_TO_POINTER (
+          accelerators_list[index].value));
+}
+
 /*
  * "Public" functions
  */
@@ -238,13 +333,8 @@ shortcuts_update_bindings (const guint index, const guint code)
   // first remove all existing bindings
   remove_bindings ();
 
-  // store new value
-  accelerators_list[index].value = code;
-
-  // update value in hashtable (used for dbus calls)
-  g_hash_table_replace (shortcutsMap,
-      g_strdup (accelerators_list[index].action), GINT_TO_POINTER (
-          accelerators_list[index].value));
+  // update data
+  update_bindings_data (index, code);
 
   // recreate all bindings
   create_bindings ();

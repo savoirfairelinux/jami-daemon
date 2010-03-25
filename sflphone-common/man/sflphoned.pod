@@ -4,7 +4,7 @@ sflphoned - SIP and IAX2 compatible voice over IP softphone core.
 
 =head1 SYNOPSIS
 
-sflphoned --help
+B<sflphoned> [OPTION]...
 
 =head1 DESCRIPTION
 
