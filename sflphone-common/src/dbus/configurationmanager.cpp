@@ -33,6 +33,8 @@ ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
 	shortcutsKeys.push_back("pick_up");
 	shortcutsKeys.push_back("hang_up");
 	shortcutsKeys.push_back("popup_window");
+	shortcutsKeys.push_back("toggle_pick_up_hang_up");
+	shortcutsKeys.push_back("toggle_hold");
 }
 
 std::map<std::string, std::string> ConfigurationManager::getAccountDetails(

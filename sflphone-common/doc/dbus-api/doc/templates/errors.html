@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+ <head>
+  <title>Errors</title>
+  <link rel="stylesheet" href="style.css" type="text/css"/>
+ </head>
+ <body>
+  <div class="header">
+  <h1>Errors</h1>
+   <a href="index.html">Interface Index</a>
+   (<a href="interfaces.html">Compact</a>)
+   | <a href="#summary">Summary</a>
+   | <a href="#errors">Errors</a>
+  </div>
+  <div class="main">
+   <div class="summary">
+    <a name="summary"></a>
+    <h3>Errors</h3>
+    <table class="summary">
+     #for $error in $spec.errors.values()
+      #if $error.deprecated
+       <tr class="deprecated">
+      #else
+       <tr>
+      #end if
+       <td><a href="$error.get_url()">$error.short_name</a></td>
+       <td>
+        #if $error.deprecated: (deprecated)
+       </td>
+      </tr>
+     #end for
+    </table>
+   </div>
+
+   <div class="outset errors error">
+    <a name="errors"></a>
+    <h1>Errors</h1>
+    #for $error in $spec.errors.values()
+     <div class="inset error">
+      <a name="$error.name"></a>
+      <span class="permalink">(<a href="$error.get_url()">Permalink</a>)</span>
+      <h2>
+       $error.short_name
+      </h2>
+
+      <div class="indent">
+        <code>$error.name</code>
+      </div>
+
+      $error.get_added()
+      $error.get_deprecated()
+      $error.get_docstring()
+     </div>
+    #end for
+   </div>
+   </div>
+
+ </body>
+</html>

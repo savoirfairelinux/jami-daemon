@@ -707,7 +707,7 @@ bool ManagerImpl::refuseCall (const CallID& id) {
 	// AudioLayer* audiolayer = getAudioDriver();
 
 	if (nbCalls <= 1) {
-		_debug ("Manager: Stop audio stream, ther is only %i  call(s) remaining", nbCalls);
+		_debug ("    refuseCall: stop audio stream, there is only %i call(s) remaining", nbCalls);
 
 		AudioLayer* audiolayer = getAudioDriver();
 		audiolayer->stopStream();
@@ -3814,7 +3814,7 @@ std::string ManagerImpl::addAccount (
 	if (_dbus)
 		_dbus->getConfigurationManager()->accountsChanged();
 
-	return newAccountID;
+	return accountID.str();
 }
 
 void ManagerImpl::deleteAllCredential (const AccountID& accountID) {

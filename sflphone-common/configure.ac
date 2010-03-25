@@ -3,7 +3,7 @@ dnl
 
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
-	AC_INIT([sflphone],[0.9.7~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
+	AC_INIT([sflphone],[0.9.8~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
 	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
@@ -70,12 +70,12 @@ AC_CONFIG_FILES([Makefile])
 	dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])
 
-
 AC_CONFIG_FILES([ringtones/Makefile])
 
 AC_CONFIG_FILES([man/Makefile])
 
 	AC_CONFIG_FILES([doc/Makefile \
+					doc/dbus-api/Makefile \
 			doc/doxygen/Makefile])
 
 	dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
