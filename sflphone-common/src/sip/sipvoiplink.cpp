@@ -820,30 +820,20 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 bool
 SIPVoIPLink::answer (const CallID& id)
 {
-    SIPCall *call;
     pj_status_t status;
     pjsip_tx_data *tdata;
-    Sdp *local_sdp;
     pjsip_inv_session *inv_session;
 
-    _debug ("SIPVoIPLink::answer: start answering ");
+    _debug ("UserAgent: Answering call %s", id.c_str());
 
-    call = getSIPCall (id);
+    SIPCall *call = getSIPCall (id);
 
     if (call==0) {
-        _debug ("! SIP Failure: SIPCall doesn't exists");
+        _debug ("UserAgent: SIPCall %s doesn't exists while answering", id.c_str());
         return false;
     }
 
-    local_sdp = call->getLocalSDP();
-
-    /*
-    try {
-        call->getAudioRtp()->initAudioRtpSession (call);
-    } catch (...) {
-        _debug ("Failed to create rtp thread from answer");
-    }
-    */
+    Sdp *local_sdp = call->getLocalSDP();
 
     inv_session = call->getInvSession();
 
@@ -3682,7 +3672,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 				       &reason, NULL, NULL);
         return false;
     }
-
 
     /* Create the local dialog (UAS) */
     status = pjsip_dlg_create_uas (pjsip_ua_instance(), rdata, NULL, &dialog);

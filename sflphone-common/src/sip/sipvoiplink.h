@@ -422,7 +422,7 @@ class SIPVoIPLink : public VoIPLink
 	 * General Sip transport creation method according to the 
 	 * transport type specified in account settings
 	 * @param id The account id for which a transport must
-         * be created.
+     * be created.
 	 */
 	bool createSipTransport(AccountID id);
 
@@ -436,28 +436,28 @@ class SIPVoIPLink : public VoIPLink
 	 */
 	bool addTransportToMap(std::string key, pjsip_transport* transport);
 
-        /** 
+     /**
 	 * Create SIP UDP transport from account's setting
 	 * @param id The account id for which a transport must
-         * be created.
+     * be created.
 	 * @return pj_status_t PJ_SUCCESS on success 
 	 */
         int createUdpTransport (AccountID = "");
 
-        /**
-         * Create a TLS transport from the default TLS listener from
-         * @param id The account id for which a transport must
-         * be created.
-         * @return pj_status_t PJ_SUCCESS on success 
-         */
-        pj_status_t createTlsTransport(const AccountID& id,  std::string remoteAddr);
+     /**
+      * Create a TLS transport from the default TLS listener from
+      * @param id The account id for which a transport must
+      * be created.
+      * @return pj_status_t PJ_SUCCESS on success
+      */
+     pj_status_t createTlsTransport(const AccountID& id,  std::string remoteAddr);
 
 	/**
-         * Create a UDP transport using stun server to resove public address
-         * @param id The account id for which a transport must
-         * be created.
-         * @return pj_status_t PJ_SUCCESS on success 
-         */
+     * Create a UDP transport using stun server to resove public address
+     * @param id The account id for which a transport must
+     * be created.
+     * @return pj_status_t PJ_SUCCESS on success
+     */
 	pj_status_t createAlternateUdpTransport (AccountID id);
 
 
@@ -474,11 +474,11 @@ class SIPVoIPLink : public VoIPLink
 	EventThread* _evThread;
 	ost::Mutex _mutexSIP;
 
-        /* Number of SIP accounts connected to the link */
-        int _clients;
+    /* Number of SIP accounts connected to the link */
+    int _clients;
         
-        /* 
-         * Get the correct address to use (ie advertised) from 
+    /*
+     * Get the correct address to use (ie advertised) from
          * a uri. The corresponding transport that should be used
          * with that uri will be discovered. 
          *
