@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"  [
 	<!ENTITY app "SFLphone">
-	<!ENTITY appversion "0.9.7">
+	<!ENTITY appversion "0.9.8~beta">
 	<!ENTITY docversion "1.0">
 ]>
 
@@ -17,6 +17,7 @@
       <year>2007</year>
       <year>2008</year>
       <year>2009</year>
+      <year>2010</year>
       <holder>Savoir-faire Linux</holder>
     </copyright>
 
@@ -73,6 +74,16 @@
 </authorgroup>
 
 <revhistory>
+		<revision>
+            <revnumber>SFLphone Manual v1.0.1</revnumber>
+            <date>March 2010</date>
+            <revdescription>
+                <para role="author">SFLphone team</para>
+                <para role="publisher">Savoir-faire Linux</para>
+				<para>Minor changes</para>
+            </revdescription>
+      </revision>
+
       <revision>
             <revnumber>SFLphone Manual v1.0</revnumber>
             <date>September 2009</date>
