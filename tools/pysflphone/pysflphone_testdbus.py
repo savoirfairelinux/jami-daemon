@@ -300,7 +300,7 @@ sflphone.setFirstRegisteredAccount();
 
 # Test 4: - Receive an ACCOUNT call
 #         - Peer Hangup
-# testsuite.test_account_recv_peer_hungup()
+testsuite.test_account_recv_peer_hungup()
 
 
 
@@ -327,4 +327,4 @@ sflphone.setFirstRegisteredAccount();
 
 # Test 1: - Receive an incoming call
 #         - Hangup without answer
-testsuite.test_ip2ip_recv_refuse()
+# testsuite.test_ip2ip_recv_refuse()
