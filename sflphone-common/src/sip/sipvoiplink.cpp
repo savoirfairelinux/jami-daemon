@@ -3261,10 +3261,16 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
         _debug("UserAgent: SDES not initialized for this call\n");
     }
 
-	assert(call->getLocalSDP());
-	assert(call->getLocalSDP()->get_session_media());
 
-	AudioCodecType pl = (AudioCodecType)call->getLocalSDP()->get_session_media()->getPayload();
+    Sdp  *sdpSession = call->getLocalSDP();
+    if(!sdpSession)
+		return;
+
+    AudioCodec *sessionMedia = sdpSession->get_session_media();
+	if(!sessionMedia)
+		return;
+
+	AudioCodecType pl = (AudioCodecType)sessionMedia->getPayload();
 	AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec(pl);
 
 	if (audiocodec == NULL)
