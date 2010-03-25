@@ -26,39 +26,35 @@
 #include <assert.h>
 
 // Application import
-#include "manager.h"
-
-#include "config/config.h"
-#include "user_cfg.h"
-
-#include "audio/audiolayer.h"
-#include "audio/alsa/alsalayer.h"
-#include "audio/pulseaudio/pulselayer.h"
+#include "plug-in/pluginmanager.h"
+#include "plug-in/librarymanager.h"
+#include "plug-in/plugin.h"
 
 /*
- * @file audiorecorderTest.cpp  
+ * @file pluginManagerTest.cpp  
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
-#ifndef _AUDIOLAYER_TEST_
-#define _AUDIOLAYER_TEST_
+#ifndef _PLUGINMANAGER_TEST_
+#define _PLUGINMANAGER_TEST_
 
+class PluginManagerTest : public CppUnit::TestCase {
 
-
-class AudioLayerTest : public CppUnit::TestCase {
-
-    /*
+   /**
      * Use cppunit library macros to add unit test the factory
      */
-    CPPUNIT_TEST_SUITE( AudioLayerTest );
-        CPPUNIT_TEST( testAudioLayerConfig );
-        // CPPUNIT_TEST( testAudioLayerSwitch );
-        CPPUNIT_TEST( testPulseConnect );
-        // CPPUNIT_TEST( testAlsaConnect );
+    CPPUNIT_TEST_SUITE( PluginManagerTest );
+        CPPUNIT_TEST( testLoadDynamicLibrary );
+        CPPUNIT_TEST( testUnloadDynamicLibrary );
+        CPPUNIT_TEST( testInstanciatePlugin );
+        CPPUNIT_TEST( testInitPlugin );
+        CPPUNIT_TEST( testRegisterPlugin );
+        CPPUNIT_TEST( testLoadPlugins );
+        CPPUNIT_TEST( testUnloadPlugins );
     CPPUNIT_TEST_SUITE_END();
 
     public:
-        AudioLayerTest() : CppUnit::TestCase("Audio Layer Tests") {}
+        PluginManagerTest() : CppUnit::TestCase("Plugin Manager Tests") {}
         
         /*
          * Code factoring - Common resources can be initialized here.
@@ -70,23 +66,30 @@ class AudioLayerTest : public CppUnit::TestCase {
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        inline void tearDown();
+        inline void tearDown ();
 
-        void testAudioLayerConfig();
-        void testAudioLayerSwitch();
-        void testPulseConnect();
-        void testAlsaConnect();
+        void testLoadDynamicLibrary ();
+        
+        void testUnloadDynamicLibrary ();
+
+        void testInstanciatePlugin ();
+
+        void testInitPlugin ();
+
+        void testRegisterPlugin ();
+
+        void testLoadPlugins ();
+
+        void testUnloadPlugins ();
 
     private:
-
-        ManagerImpl* manager;
-        
-        PulseLayer* _pulselayer;
-       
-        int layer;
+        PluginManager *_pm;
+        LibraryManager *library;
+        Plugin *plugin;
 };
 
 /* Register our test module */
-CPPUNIT_TEST_SUITE_REGISTRATION( AudioLayerTest );
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(PluginManagerTest, "PluginManagerTest");
+CPPUNIT_TEST_SUITE_REGISTRATION( PluginManagerTest );
 
 #endif

@@ -17,6 +17,14 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/*
+ * @file audiorecorderTest.cpp
+ * @brief       Regroups unitary tests related to the plugin manager.
+ */
+
+#ifndef _AUDIOLAYER_TEST_
+#define _AUDIOLAYER_TEST_
+
 // Cppunit import
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestCaller.h>
@@ -25,44 +33,40 @@
 
 #include <assert.h>
 
-/*
- * @file hooksTest.cpp  
- * @brief       Regroups unitary tests related to the hooks.
- */
+// Application import
+#include "manager.h"
 
-#ifndef _HOOKS_TEST_
-#define _HOOKS_TEST_
+#include "config/config.h"
+#include "user_cfg.h"
 
-class HooksTest : public CppUnit::TestCase {
+#include "audio/audiolayer.h"
+#include "audio/alsa/alsalayer.h"
+#include "audio/pulseaudio/pulselayer.h"
 
-   /**
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE (HooksTest);
-        CPPUNIT_TEST ();
-    CPPUNIT_TEST_SUITE_END();
+class AudioLayerTest: public CppUnit::TestFixture {
 
-    public:
-        HooksTest() : CppUnit::TestCase("Hooks implementation Tests") {}
-        
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp();
+CPPUNIT_TEST_SUITE( AudioLayerTest );
+		CPPUNIT_TEST( testAudioLayerConfig );
+		CPPUNIT_TEST( testPulseConnect );
+		//TODO: this test ends the test sequence when using on a alsa only system
+		//CPPUNIT_TEST(testAudioLayerSwitch);
+	CPPUNIT_TEST_SUITE_END();
 
-        /*
-         * Code factoring - Common resources can be released here.
-         * This method is called by unitcpp after each test
-         */
-        inline void tearDown ();
+public:
 
-        void testUnloadPlugins ();
+	void testAudioLayerConfig();
+	void testPulseConnect();
+	void testAudioLayerSwitch();
 
-    private:
+private:
+
+	ManagerImpl* manager;
+
+	PulseLayer* _pulselayer;
+
+	int layer;
 };
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");
+CPPUNIT_TEST_SUITE_REGISTRATION( AudioLayerTest );
 
-/* Register our test module */
-CPPUNIT_TEST_SUITE_REGISTRATION (HooksTest);
-
-#
+#endif

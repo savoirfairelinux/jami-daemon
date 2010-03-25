@@ -21,7 +21,7 @@
 #include <sstream>
 #include <dlfcn.h>
 
-#include "pluginmanagerTest.h"
+#include "pluginmanagertest.h"
 
 using std::cout;
 using std::endl;
@@ -41,11 +41,15 @@ void PluginManagerTest::setUp()
 
 void PluginManagerTest::testLoadDynamicLibrary()
 {
+	_debug ("-------------------- PluginManagerTest::testLoadDynamicLibrary --------------------\n");
+
     CPPUNIT_ASSERT (_pm->loadDynamicLibrary (PLUGIN_TEST_NAME) != NULL);
 }
 
 void PluginManagerTest::testUnloadDynamicLibrary()
 {
+	_debug ("-------------------- PluginManagerTest::testUnloadDynamicLibrary --------------------\n");
+
     library = _pm->loadDynamicLibrary (PLUGIN_TEST_NAME);
     CPPUNIT_ASSERT (library != NULL);
     CPPUNIT_ASSERT (_pm->unloadDynamicLibrary (library) == 0);
@@ -53,6 +57,8 @@ void PluginManagerTest::testUnloadDynamicLibrary()
 
 void PluginManagerTest::testInstanciatePlugin()
 {
+	_debug ("-------------------- PluginManagerTest::testInstanciatePlugin --------------------\n");
+
     library = _pm->loadDynamicLibrary (PLUGIN_TEST_NAME);
     CPPUNIT_ASSERT (library != NULL);
     CPPUNIT_ASSERT (_pm->instanciatePlugin (library, &plugin) == 0);
@@ -61,6 +67,7 @@ void PluginManagerTest::testInstanciatePlugin()
 
 void PluginManagerTest::testInitPlugin()
 {
+	_debug ("-------------------- PluginManagerTest::testInitPlugin --------------------\n");
 
     library = _pm->loadDynamicLibrary (PLUGIN_TEST_NAME);
     CPPUNIT_ASSERT (library != NULL);
@@ -71,6 +78,8 @@ void PluginManagerTest::testInitPlugin()
 
 void PluginManagerTest::testRegisterPlugin()
 {
+	_debug ("-------------------- PluginManagerTest::testRegisterPlugin --------------------\n");
+
     library = _pm->loadDynamicLibrary (PLUGIN_TEST_NAME);
     CPPUNIT_ASSERT (library != NULL);
     CPPUNIT_ASSERT (_pm->instanciatePlugin (library, &plugin) == 0);
@@ -81,12 +90,16 @@ void PluginManagerTest::testRegisterPlugin()
 
 void PluginManagerTest::testLoadPlugins ()
 {
+	_debug ("-------------------- PluginManagerTest::testLoadPlugins --------------------\n");
+
     CPPUNIT_ASSERT (_pm->loadPlugins (PLUGIN_TEST_DIR) == 0);
     CPPUNIT_ASSERT (_pm->isPluginLoaded (PLUGIN_TEST_DESC) == true);
 }
 
 void PluginManagerTest::testUnloadPlugins ()
 {
+	_debug ("-------------------- PluginManagerTest::testUnloadPlugins --------------------\n");
+
     CPPUNIT_ASSERT (_pm->loadPlugins (PLUGIN_TEST_DIR) == 0);
     CPPUNIT_ASSERT (_pm->isPluginLoaded (PLUGIN_TEST_DESC) == true);
     CPPUNIT_ASSERT (_pm->unloadPlugins () == 0);

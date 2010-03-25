@@ -17,6 +17,9 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef _RTP_TEST_
+#define _RTP_TEST_
+
 // Cppunit import
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestCaller.h>
@@ -29,7 +32,6 @@
 #include <sstream>
 #include <ccrtp/rtp.h>
 
-
 // pjsip import
 #include <pjsip.h>
 #include <pjlib.h>
@@ -38,9 +40,8 @@
 #include <pjnath/stun_config.h>
 
 // Application import
+#include "audio/audiortp/AudioRtpFactory.h"
 #include "manager.h"
-#include "audio/audiortp/AudioRtpSession.h"
-#include "audio/audiortp/AudioSymmetricRtpSession.h"
 #include "call.h"
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
@@ -50,74 +51,60 @@
 
 using namespace sfl;
 
-/*
- * @file audiorecorderTest.cpp  
- * @brief       Regroups unitary tests related to the plugin manager.
- */
-
-#ifndef _RTP_TEST_
-#define _RTP_TEST_
-
 class AudioSymmetricRtpSession;
 class AudioRtpSession;
-class AudioRtpRTX;
+//class AudioRtpFactory;
 class SIPVoIPLink;
 
-class RtpTest : public CppUnit::TestCase {
+class RtpTest: public CppUnit::TestCase {
 
-    /*
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE( RtpTest );
-        CPPUNIT_TEST( testRtpInitClose );
-	CPPUNIT_TEST( testRtpThread );
-	CPPUNIT_TEST( testRtpResampling );
-    CPPUNIT_TEST_SUITE_END();
+	/*
+	 * Use cppunit library macros to add unit test the factory
+	 */
+CPPUNIT_TEST_SUITE( RtpTest );
+		CPPUNIT_TEST( testRtpInitClose );
+	CPPUNIT_TEST_SUITE_END();
 
-    public:
+public:
 
-        RtpTest() : CppUnit::TestCase("Audio Layer Tests") {}
-        
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp();
+	RtpTest() :
+		CppUnit::TestCase("Audio Layer Tests") {
+	}
 
-        /*
-         * Code factoring - Common resources can be released here.
-         * This method is called by unitcpp after each test
-         */
-        inline void tearDown();
+	/*
+	 * Code factoring - Common resources can be initialized here.
+	 * This method is called by unitcpp before each test
+	 */
+	void setUp();
+
+	/*
+	 * Code factoring - Common resources can be released here.
+	 * This method is called by unitcpp after each test
+	 */
+	inline void tearDown();
 
 	bool pjsipInit();
 
-        void testRtpInitClose();
+	void testRtpInitClose();
 
-	void testRtpThread();
+private:
 
-	void testRtpResampling();
+	enum CallType {
+		Incoming, Outgoing
+	};
 
+	ManagerImpl* manager;
 
-    private:
-
-	enum CallType {Incoming, Outgoing};
-
-        ManagerImpl* manager;
-
-        AudioSymmetricRtpSession *audiortp;
-
-	AudioRtpRTX *rtpthread;
+	AudioRtpFactory *audiortp;
 
 	SIPCall *sipcall;
 
 	pj_caching_pool _cp;
 
 	pj_pool_t *_pool;
-
 };
-
 /* Register our test module */
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RtpTest, "RtpTest");
 CPPUNIT_TEST_SUITE_REGISTRATION( RtpTest );
 
 #endif

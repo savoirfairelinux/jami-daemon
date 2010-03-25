@@ -131,6 +131,7 @@ class MainBufferTest : public CppUnit::TestCase {
 };
 
 /* Register our test module */
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MainBufferTest, "MainBufferTest");
 CPPUNIT_TEST_SUITE_REGISTRATION( MainBufferTest );
 
 #endif

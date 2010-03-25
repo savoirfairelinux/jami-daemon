@@ -17,6 +17,14 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/*
+ * @file hookmanagerTest.cpp
+ * @brief       Regroups unitary tests related to the hook manager.
+ */
+
+#ifndef _HOOKMANAGER_TEST_
+#define _HOOKMANAGER_TEST_
+
 // Cppunit import
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestCaller.h>
@@ -26,68 +34,38 @@
 #include <assert.h>
 
 // Application import
-#include "history/historymanager.h"
+#include "hooks/urlhook.h"
 
-/*
- * @file historyTest.h  
- * @brief       Regroups unitary tests related to the phone number cleanup function.
- */
-
-#ifndef _HISTORY_TEST_
-#define _HISTORY_TEST_
-
-class HistoryTest : public CppUnit::TestCase {
+class HookManagerTest : public CppUnit::TestFixture {
 
    /**
      * Use cppunit library macros to add unit test the factory
      */
-    CPPUNIT_TEST_SUITE (HistoryTest);
-        CPPUNIT_TEST (test_create_history_path);
-        CPPUNIT_TEST (test_load_history_from_file);
-        CPPUNIT_TEST (test_load_history_items_map);
-        CPPUNIT_TEST (test_save_history_items_map);
-        CPPUNIT_TEST (test_save_history_to_file);
-        CPPUNIT_TEST (test_get_history_serialized);
-        CPPUNIT_TEST (test_set_serialized_history);
-        CPPUNIT_TEST (test_set_serialized_history_with_limit);
+    CPPUNIT_TEST_SUITE (HookManagerTest);
+        CPPUNIT_TEST (testAddAction);
+        CPPUNIT_TEST (testLargeUrl);
     CPPUNIT_TEST_SUITE_END ();
 
     public:
-        HistoryTest() : CppUnit::TestCase("History Tests") {}
-        
         /*
          * Code factoring - Common resources can be initialized here.
          * This method is called by unitcpp before each test
          */
         void setUp();
 
-        void test_create_history_path ();
+        void testAddAction ();
 
-        void test_load_history_from_file ();
-
-        void test_load_history_items_map ();
-
-        void test_save_history_items_map ();
-
-        void test_save_history_to_file ();
-    
-        void test_get_history_serialized ();
-
-        void test_set_serialized_history ();
-
-        void test_set_serialized_history_with_limit ();
-            
+        void testLargeUrl ();
         /*
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        inline void tearDown ();
+        void tearDown ();
 
     private:
-        HistoryManager *history;
+        UrlHook *urlhook;
 };
-
-/* Register our test module */
-CPPUNIT_TEST_SUITE_REGISTRATION( HistoryTest );
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HookManagerTest, "HookManagerTest");
+CPPUNIT_TEST_SUITE_REGISTRATION( HookManagerTest );
 
 #endif

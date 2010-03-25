@@ -3815,7 +3815,7 @@ std::string ManagerImpl::addAccount (
 	if (_dbus)
 		_dbus->getConfigurationManager()->accountsChanged();
 
-	return newAccountID;
+	return accountID.str();
 }
 
 void ManagerImpl::deleteAllCredential (const AccountID& accountID) {

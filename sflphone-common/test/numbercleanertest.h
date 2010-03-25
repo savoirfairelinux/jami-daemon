@@ -48,11 +48,7 @@ class NumberCleanerTest : public CppUnit::TestCase {
         CPPUNIT_TEST (test_format_4);
         CPPUNIT_TEST (test_format_5);
         CPPUNIT_TEST (test_format_6);
-        CPPUNIT_TEST (test_format_7);
-        CPPUNIT_TEST (test_format_8);
-        CPPUNIT_TEST (test_format_9);
         CPPUNIT_TEST (test_format_10);
-        CPPUNIT_TEST (test_format_11);
     CPPUNIT_TEST_SUITE_END ();
 
     public:
@@ -97,6 +93,7 @@ class NumberCleanerTest : public CppUnit::TestCase {
 };
 
 /* Register our test module */
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(NumberCleanerTest, "NumberCleanerTest");
 CPPUNIT_TEST_SUITE_REGISTRATION( NumberCleanerTest );
 
 #endif

@@ -23,6 +23,7 @@
 #include <cc++/thread.h>
 
 #include "sip/SdesNegotiator.h"
+#include "audio/codecs/audiocodec.h"
 
 class SdesNegotiator;
 class SIPCall;
@@ -30,6 +31,7 @@ class SIPCall;
 namespace sfl {
     class AudioZrtpSession;
     class AudioSrtpSession;
+    class AudioSymmetricRtpSession;
 }
 
 namespace sfl {
@@ -76,7 +78,7 @@ namespace sfl {
 	 * file. initAudioRtpSession must have been called prior to that.
 	 * @param None
 	 */
-	void start();
+	void start(AudioCodec*);
 
 	/**
 	 * Stop the audio rtp thread of the type specified in the configuration
@@ -97,6 +99,8 @@ namespace sfl {
 	 * file. initAudioRtpSession must have been called prior to that.
 	 */
 	inline void * getAudioRtpSession(void) { return _rtpSession; }
+
+	AudioSymmetricRtpSession * getAudioSymetricRtpSession();
 
 	/** 
 	 * @param None

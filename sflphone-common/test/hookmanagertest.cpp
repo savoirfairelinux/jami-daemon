@@ -20,8 +20,9 @@
 #include <stdio.h>
 #include <sstream>
 #include <dlfcn.h>
+#include "global.h"
 
-#include "hookmanagerTest.h"
+#include "hookmanagertest.h"
 
 using std::cout;
 using std::endl;
@@ -35,6 +36,7 @@ void HookManagerTest::setUp()
 
 void HookManagerTest::testAddAction ()
 {
+	_debug ("-------------------- HookManagerTest::testAddAction --------------------\n");
 
     int status;
 
@@ -44,6 +46,7 @@ void HookManagerTest::testAddAction ()
 
 void HookManagerTest::testLargeUrl ()
 {
+	_debug ("-------------------- HookManagerTest::testLargeUrl --------------------\n");
 
     std::string url;
     std::cout << url.max_size() << std::endl;

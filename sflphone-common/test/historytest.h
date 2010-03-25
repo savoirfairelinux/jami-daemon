@@ -26,28 +26,34 @@
 #include <assert.h>
 
 // Application import
-#include "plug-in/pluginmanager.h"
-#include "plug-in/audiorecorder/audiorecord.h"
+#include "history/historymanager.h"
 
 /*
- * @file audiorecorderTest.cpp  
- * @brief       Regroups unitary tests related to the plugin manager.
+ * @file historyTest.h  
+ * @brief       Regroups unitary tests related to the phone number cleanup function.
  */
 
-#ifndef _AUDIORECORDER_TEST_
-#define _AUDIORECORDER_TEST_
+#ifndef _HISTORY_TEST_
+#define _HISTORY_TEST_
 
-class AudioRecorderTest : public CppUnit::TestCase {
+class HistoryTest : public CppUnit::TestCase {
 
-    /*
+   /**
      * Use cppunit library macros to add unit test the factory
      */
-    CPPUNIT_TEST_SUITE( AudioRecorderTest );
-        CPPUNIT_TEST( testRecordData );
-    CPPUNIT_TEST_SUITE_END();
+    CPPUNIT_TEST_SUITE (HistoryTest);
+        CPPUNIT_TEST (test_create_history_path);
+        CPPUNIT_TEST (test_save_history_to_file);
+        CPPUNIT_TEST (test_save_history_items_map);
+        CPPUNIT_TEST (test_load_history_from_file);
+        CPPUNIT_TEST (test_load_history_items_map);
+        CPPUNIT_TEST (test_get_history_serialized);
+        CPPUNIT_TEST (test_set_serialized_history);
+        CPPUNIT_TEST (test_set_serialized_history_with_limit);
+    CPPUNIT_TEST_SUITE_END ();
 
     public:
-        AudioRecorderTest() : CppUnit::TestCase("Audio Recorder Tests") {}
+        HistoryTest() : CppUnit::TestCase("History Tests") {}
         
         /*
          * Code factoring - Common resources can be initialized here.
@@ -55,19 +61,34 @@ class AudioRecorderTest : public CppUnit::TestCase {
          */
         void setUp();
 
+        void test_create_history_path ();
+
+        void test_load_history_from_file ();
+
+        void test_load_history_items_map ();
+
+        void test_save_history_items_map ();
+
+        void test_save_history_to_file ();
+    
+        void test_get_history_serialized ();
+
+        void test_set_serialized_history ();
+
+        void test_set_serialized_history_with_limit ();
+            
         /*
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        inline void tearDown();
+        inline void tearDown ();
 
-        void testRecordData();
-        
     private:
-        AudioRecord *_ar;
+        HistoryManager *history;
 };
 
 /* Register our test module */
-CPPUNIT_TEST_SUITE_REGISTRATION( AudioRecorderTest );
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HistoryTest, "HistoryTest");
+CPPUNIT_TEST_SUITE_REGISTRATION( HistoryTest );
 
 #endif

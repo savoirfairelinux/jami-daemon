@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2009 Savoir-Faire Linux inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,70 +25,83 @@
 
 #include <assert.h>
 
+#include <stdio.h>
+#include <sstream>
+#include <ccrtp/rtp.h>
+
+#include <vector>
+
+// pjsip import
+#include <pjsip.h>
+#include <pjlib.h>
+#include <pjsip_ua.h>
+#include <pjlib-util.h>
+#include <pjnath/stun_config.h>
+
 // Application import
-#include "plug-in/pluginmanager.h"
-#include "plug-in/librarymanager.h"
-#include "plug-in/plugin.h"
+#include "sip/SdesNegotiator.h"
+#include "sip/Pattern.h"
+
 
 /*
- * @file pluginManagerTest.cpp  
+ * @file sdesnegotiationTest.cpp  
  * @brief       Regroups unitary tests related to the plugin manager.
  */
 
-#ifndef _PLUGINMANAGER_TEST_
-#define _PLUGINMANAGER_TEST_
+#ifndef _SDESNEGOTIATOR_TEST_
+#define _SDESNEGOTIATOR_TEST_
 
-class PluginManagerTest : public CppUnit::TestCase {
 
-   /**
+
+class SdesNegotiatorTest : public CppUnit::TestCase {
+
+    /*
      * Use cppunit library macros to add unit test the factory
      */
-    CPPUNIT_TEST_SUITE( PluginManagerTest );
-        CPPUNIT_TEST( testLoadDynamicLibrary );
-        CPPUNIT_TEST( testUnloadDynamicLibrary );
-        CPPUNIT_TEST( testInstanciatePlugin );
-        CPPUNIT_TEST( testInitPlugin );
-        CPPUNIT_TEST( testRegisterPlugin );
-        CPPUNIT_TEST( testLoadPlugins );
-        CPPUNIT_TEST( testUnloadPlugins );
+    CPPUNIT_TEST_SUITE( SdesNegotiatorTest );
+    CPPUNIT_TEST( testTagPattern );
+    CPPUNIT_TEST( testCryptoSuitePattern );
+    CPPUNIT_TEST( testKeyParamsPattern );
+    CPPUNIT_TEST( testKeyParamsPatternWithoutMKI );
+    CPPUNIT_TEST( testNegotiation );
+    CPPUNIT_TEST( testMostSimpleCase );
     CPPUNIT_TEST_SUITE_END();
 
     public:
-        PluginManagerTest() : CppUnit::TestCase("Plugin Manager Tests") {}
-        
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp();
 
         /*
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        inline void tearDown ();
+		void testTagPattern();
 
-        void testLoadDynamicLibrary ();
-        
-        void testUnloadDynamicLibrary ();
+		void testCryptoSuitePattern();
 
-        void testInstanciatePlugin ();
+		void testKeyParamsPattern();
+		
+        void testKeyParamsPatternCiscoStyle();
 
-        void testInitPlugin ();
+		void testKeyParamsPatternWithoutMKI();
 
-        void testRegisterPlugin ();
+		void testNegotiation();
+		
+		void testComponent();
 
-        void testLoadPlugins ();
-
-        void testUnloadPlugins ();
+		void testMostSimpleCase();
 
     private:
-        PluginManager *_pm;
-        LibraryManager *library;
-        Plugin *plugin;
+
+		sfl::Pattern *pattern;
+
+		sfl::SdesNegotiator *sdesnego;
+
+		std::vector<std::string> *remoteOffer;
+
+		std::vector<sfl::CryptoSuiteDefinition> *localCapabilities;
 };
 
 /* Register our test module */
-CPPUNIT_TEST_SUITE_REGISTRATION( PluginManagerTest );
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SdesNegotiatorTest, "SdesNegotiatorTest");
+CPPUNIT_TEST_SUITE_REGISTRATION( SdesNegotiatorTest );
 
 #endif
