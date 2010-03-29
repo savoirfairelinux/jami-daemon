@@ -93,12 +93,12 @@ void AudioRecord::initFileName (std::string peerNumber)
 
     if (fileType_ == FILE_RAW) {
         if (strstr (fileName_, ".raw") == NULL) {
-            printf ("AudioRecord::openFile::concatenate .raw file extension: name : %s ", fileName_);
+            _debug("AudioRecord: concatenate .raw file extension: name : %s", fileName_);
             fName.append (".raw");
         }
     } else if (fileType_ == FILE_WAV) {
         if (strstr (fileName_, ".wav") == NULL) {
-            printf ("AudioRecord::openFile::concatenate .wav file extension: name : %s ", fileName_);
+            _debug("AudioRecord: concatenate .wav file extension: name : %s", fileName_);
             fName.append (".wav");
         }
     }
@@ -109,15 +109,14 @@ void AudioRecord::initFileName (std::string peerNumber)
 void AudioRecord::openFile()
 {
 
-
-    _debug ("AudioRecord::openFile()");
+    _info ("AudioRecord: Open file()");
 
     bool result = false;
 
-    _debug ("AudioRecord::openFile()");
+    _debug ("AudioRecord: Open file()");
 
     if (isFileExist()) {
-        _debug ("AudioRecord::Filename does not exist, creating one ");
+        _debug ("AudioRecord: Filename does not exist, creating one");
         byteCounter_ = 0;
 
         if (fileType_ == FILE_RAW) {
@@ -126,7 +125,7 @@ void AudioRecord::openFile()
             result = setWavFile();
         }
     } else {
-        _debug ("AudioRecord::Filename already exist opening it ");
+        _debug ("AudioRecord: Filename already exist opening it");
 
         if (fileType_ == FILE_RAW) {
             result = openExistingRawFile();
@@ -156,10 +155,8 @@ bool AudioRecord::isOpenFile()
 {
 
     if (fp) {
-        _debug ("AudioRecord::isOpenFile(): file already openend");
         return true;
     } else {
-        _debug ("AudioRecord::isOpenFIle(): file not openend ");
         return false;
     }
 }
@@ -167,7 +164,7 @@ bool AudioRecord::isOpenFile()
 
 bool AudioRecord::isFileExist()
 {
-    _debug ("AudioRecord::isFileExist(): try to open name : %s ", fileName_);
+    _info ("AudioRecord: Try to open name : %s ", fileName_);
 
     if (fopen (fileName_,"rb") ==0) {
         return true;
@@ -178,8 +175,6 @@ bool AudioRecord::isFileExist()
 
 bool AudioRecord::isRecording()
 {
-    _debug ("AudioRecording::isRecording() %i ", recordingEnabled_);
-
 
     if (recordingEnabled_)
         return true;
@@ -190,19 +185,20 @@ bool AudioRecord::isRecording()
 
 bool AudioRecord::setRecording()
 {
-    _debug ("AudioRecord::setRecording() ");
 
     if (isOpenFile()) {
-        _debug ("AudioRecord::setRecording()::file already opened ");
-
-        if (!recordingEnabled_)
-            recordingEnabled_ = true;
-        else
-            recordingEnabled_ = false;
-    } else {
-        _debug ("AudioRecord::setRecording():Opening the wave file in call during call instantiation ");
+      if (!recordingEnabled_) {
+	  _info ("AudioRecording: Start recording");
+	  recordingEnabled_ = true;
+      }
+      else {
+	  recordingEnabled_ = false;
+	  _info ("AudioRecording: Stop recording");
+      }
+    } 
+    else {
         openFile();
-
+	
         recordingEnabled_ = true; // once opend file, start recording
     }
 
@@ -213,7 +209,7 @@ bool AudioRecord::setRecording()
 
 void AudioRecord::stopRecording()
 {
-    _debug ("AudioRecording::stopRecording() ");
+    _info ("AudioRecording: Stop recording");
 
     if (recordingEnabled_)
         recordingEnabled_ = false;
@@ -270,7 +266,7 @@ void AudioRecord::createFilename()
     // fileName_ = out.str();
     strncpy (fileName_, out.str().c_str(), 8192);
 
-    printf ("AudioRecord::createFilename::filename for this call %s ",fileName_);
+    _info("AudioRecord: create filename for this call %s ", fileName_);
 }
 
 bool AudioRecord::setRawFile()
@@ -279,7 +275,7 @@ bool AudioRecord::setRawFile()
     fp = fopen (savePath_.c_str(), "wb");
 
     if (!fp) {
-        _debug ("AudioRecord::setRawFile() : could not create RAW file!");
+        _warn ("AudioRecord::setRawFile() : could not create RAW file!");
         return false;
     }
 
@@ -300,7 +296,7 @@ bool AudioRecord::setWavFile()
     fp = fopen (savePath_.c_str(), "wb");
 
     if (!fp) {
-        _debug ("AudioRecord::setWavFile() : could not create WAV file.");
+        _warn("AudioRecord: Error: could not create WAV file.");
         return false;
     }
 
@@ -328,11 +324,11 @@ bool AudioRecord::setWavFile()
 
 
     if (fwrite (&hdr, 4, 11, fp) != 11) {
-        _debug ("AudioRecord::setWavFile() : could not write WAV header for file. ");
+        _warn("AudioRecord: Error: could not write WAV header for file. ");
         return false;
     }
 
-    _debug ("AudioRecord::setWavFile() : created WAV file. ");
+    _debug ("AudioRecord: created WAV file successfully.");
 
     return true;
 }
@@ -343,7 +339,7 @@ bool AudioRecord::openExistingRawFile()
     fp = fopen (fileName_, "ab+");
 
     if (!fp) {
-        _debug ("AudioRecord::openExistingRawFile() : could not create RAW file!");
+        _warn ("AudioRecord: could not create RAW file!");
         return false;
     }
 
@@ -353,42 +349,41 @@ bool AudioRecord::openExistingRawFile()
 
 bool AudioRecord::openExistingWavFile()
 {
-    _debug ("AudioRecord::openExistingWavFile() ");
+    _info ("AudioRecord: Open existing wave file");
 
     fp = fopen (fileName_, "rb+");
 
     if (!fp) {
-        _debug ("AudioRecord::openExistingWavFile() : could not open WAV file rb+!");
+        _warn("AudioRecord: Error: could not open WAV file!");
         return false;
     }
 
     printf ("AudioRecord::openExistingWavFile()::Tried to open %s ",fileName_);
 
     if (fseek (fp, 40, SEEK_SET) != 0) // jump to data length
-        _debug ("AudioRecord::OpenExistingWavFile: 1.Couldn't seek offset 40 in the file ");
+        _warn ("AudioRecord: Error: Couldn't seek offset 40 in the file ");
 
     if (fread (&byteCounter_, 4, 1, fp))
-        _debug ("AudioRecord::OpenExistingWavFile : bytecounter Read successfully ");
+        _warn("AudioRecord: Error: bytecounter Read successfully ");
 
     if (fseek (fp, 0 , SEEK_END) != 0)
-        _debug ("AudioRecors::OpenExistingWavFile : 2.Couldn't seek at the en of the file ");
+        _warn ("AudioRecord: Error: Couldn't seek at the en of the file ");
 
-    printf ("AudioRecord::OpenExistingWavFile : Byte counter after oppening : %d ", (int) byteCounter_);
 
     if (fclose (fp) != 0)
-        _debug ("AudioRecord::openExistingWavFile()::ERROR: can't close file r+ ");
+        _warn ("AudioRecord: Error: Can't close file r+ ");
 
 
 
     fp = fopen (fileName_, "ab+");
 
     if (!fp) {
-        _debug ("AudioRecord::openExistingWavFile() : could not createopen WAV file ab+!");
+        _warn ("AudioRecord: Error: Could not createopen WAV file ab+!");
         return false;
     }
 
     if (fseek (fp, 4 , SEEK_END) != 0)
-        _debug ("AudioRecors::OpenExistingWavFile : 2.Couldn't seek at the en of the file ");
+        _warn ("AudioRecord: Error: Couldn't seek at the en of the file ");
 
     return true;
 
@@ -398,7 +393,7 @@ bool AudioRecord::openExistingWavFile()
 void AudioRecord::closeWavFile()
 {
     if (fp == 0) {
-        _debug ("AudioRecord:: Can't closeWavFile, a file has not yet been opened!");
+        _debug ("AudioRecord: Can't closeWavFile, a file has not yet been opened!");
         return;
     }
 
@@ -406,29 +401,27 @@ void AudioRecord::closeWavFile()
     SINT32 bytes = byteCounter_ * channels_;
 
     fseek (fp, 40, SEEK_SET); // jump to data length
-
-    if (ferror (fp)) perror ("AudioRecord::closeWavFile()::ERROR: can't reach offset 40");
+    if (ferror (fp)) 
+        _warn ("AudioRecord: Error: can't reach offset 40 while closing");
 
     fwrite (&bytes, sizeof (SINT32), 1, fp);
+    if (ferror (fp)) 
+        _warn ("AudioRecord: Error: can't write bytes for data length ");
 
-    if (ferror (fp)) perror ("AudioRecord::closeWavFile()::ERROR: can't write bytes for data length ");
-
-    printf ("AudioRecord::closeWavFile : data bytes: %i ", (int) bytes);
 
     bytes = byteCounter_ * channels_ + 44; // + 44 for the wave header
 
     fseek (fp, 4, SEEK_SET); // jump to file size
-
-    if (ferror (fp)) perror ("AudioRecord::closeWavFile()::ERROR: can't reach offset 4");
+    if (ferror (fp)) 
+        _warn ("AudioRecord: Error: can't reach offset 4");
 
     fwrite (&bytes, 4, 1, fp);
+    if (ferror (fp)) 
+        _warn("AudioRecord: Error: can't reach offset 4");
 
-    if (ferror (fp)) perror ("AudioRecord::closeWavFile()::ERROR: can't reach offset 4");
-
-    printf ("AudioRecord::closeWavFile : bytes : %i ", (int) bytes);
 
     if (fclose (fp) != 0)
-        _debug ("AudioRecord::closeWavFile()::ERROR: can't close file");
+        _warn ("AudioRecord: Error: can't close file");
 
 
 }
@@ -478,7 +471,7 @@ void AudioRecord::recData (SFLDataFormat* buffer, int nSamples)
 
         if (sndFormat_ == INT16) {   // TODO change INT16 to SINT16
             if (fwrite (buffer, sizeof (SFLDataFormat), nSamples, fp) != (unsigned int) nSamples)
-                _debug ("AudioRecord: Could not record data! ");
+                _warn ("AudioRecord: Could not record data! ");
             else {
                 fflush (fp);
                 byteCounter_ += (unsigned long) (nSamples*sizeof (SFLDataFormat));
@@ -508,7 +501,7 @@ void AudioRecord::recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int
 
 
                 if (fwrite (&mixBuffer_[k], 2, 1, fp) != 1)
-                    _debug ("AudioRecord: Could not record data!");
+                    _warn ("AudioRecord: Could not record data!");
                 else {
                     fflush (fp);
                 }

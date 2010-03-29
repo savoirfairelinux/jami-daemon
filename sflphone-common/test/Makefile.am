@@ -1,9 +1,51 @@
 include ../globals.mak
 
+TESTS = test
+check_PROGRAMS = $(TESTS)
+test_CXXFLAGS = $(CPPUNIT_CFLAGS)
+test_LDADD = $(LLIBS)
+test_LDFLAGS = -ldl
+test_SOURCES = main.cpp \
+	validator.cpp \
+	validator.h \
+	accounttest.h \
+	accounttest.cpp \
+	audiolayertest.h \
+	audiolayertest.cpp \
+	configurationtest.h \
+	configurationtest.cpp \
+	historytest.h \
+	historytest.cpp \
+	hookmanagertest.h \
+	hookmanagertest.cpp \
+	mainbuffertest.h \
+	mainbuffertest.cpp \
+	numbercleanertest.h \
+	numbercleanertest.cpp \
+	pluginmanagertest.h \
+	pluginmanagertest.cpp \
+	rtptest.h \
+	rtptest.cpp \
+	sdesnegotiatortest.h \
+	sdesnegotiatortest.cpp
 
-noinst_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester audiolayerTester historyTester mainbufferTester sdesnegotiatorTester #rtpTester
 
-OBJECT_FILES= \
+
+
+LLIBS=$(CPPUNIT_LIBS) \
+	../src/libsflphone.la  \
+	$(ZEROCONFLIB) \
+	$(LIB_DNSSD) \
+	@ALSA_LIBS@ \
+	@PULSEAUDIO_LIBS@ \
+	@CPPUNIT_LIBS@ \
+	@CCEXT2_LIBS@ \
+	@CCGNU2_LIBS@ \
+	@CCRTP_LIBS@ \
+	@ZRTPCPP_LIBS@ \
+	@libssl_LIBS@ \
+	@SAMPLERATE_LIBS@ \
+	$(PJSIP_LIBS) \
 	../src/sflphoned-logger.o \
 	../src/sflphoned-managerimpl.o \
 	../src/sflphoned-account.o\
@@ -26,145 +68,4 @@ OBJECT_FILES= \
 	../src/plug-in/pluginmanager.o \
 	../src/plug-in/audiorecorder/audiorecord.o \
 	../src/audio/samplerateconverter.o \
-        ../src/history/historymanager.o
-	../
-
-numbercleanerTester_SOURCES = \
-		numbercleanerTest.h \
-		numbercleanerTest.cpp \
-		TestMain.cpp
-
-numbercleanerTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		@ZRTPCPP_LIBS@ \
-		@libssl_LIBS@ \
-		$(PJSIP_LIBS) \
-		$(OBJECT_FILES)
-
-pluginmanagerTester_SOURCES = \
-		pluginmanagerTest.h \
-		pluginmanagerTest.cpp \
-		TestMain.cpp
-
-pluginmanagerTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@ZRTPCPP_LIBS@ \
-		@libssl_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		$(PJSIP_LIBS) \
-		$(OBJECT_FILES)
-
-hookmanagerTester_SOURCES = \
-		hookmanagerTest.cpp \
-		TestMain.cpp
-
-hookmanagerTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@ZRTPCPP_LIBS@ \
-		@libssl_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		$(PJSIP_LIBS) \
-		$(OBJECT_FILES)
-
-audiolayerTester_SOURCES = \
-		audiolayerTest.h \
-		audiolayerTest.cpp \
-		TestMain.cpp
-
-audiolayerTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@ZRTPCPP_LIBS@ \
-		@libssl_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		$(PJSIP_LIBS) \
-		$(OBJECT_FILES)
-
-historyTester_SOURCES = \
-		historyTest.h \
-		historyTest.cpp \
-		TestMain.cpp
-
-historyTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@ZRTPCPP_LIBS@ \
-		@libssl_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		$(PJSIP_LIBS) \
-		$(OBJECT_FILES)
-
-
-mainbufferTester_SOURCES = \
-		mainbufferTest.h \
-		mainbufferTest.cpp \
-		TestMain.cpp
-
-mainbufferTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@ZRTPCPP_LIBS@ \
-		@libssl_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		$(PJSIP_LIBS) \
-		$(OBJECT_FILES)
-
-sdesnegotiatorTester_SOURCES = \
-		sdesnegotiatorTest.h \
-		sdesnegotiatorTest.cpp \
-		TestMain.cpp
-
-sdesnegotiatorTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@ZRTPCPP_LIBS@ \
-		@libssl_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		$(PJSIP_LIBS) \
-		$(OBJECT_FILES)
+    ../src/history/historymanager.o

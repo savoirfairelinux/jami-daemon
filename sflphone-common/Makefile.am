@@ -18,6 +18,12 @@ unittest:
 	@echo " -- You need the cppunit devel package to compile the unitary tests."
 endif
 
+doc:
+	@(cd doc; make)
+	@echo ""
+	@echo "D-Bus API HTML documentation has been generated in doc/dbus-api/doc/spec"
+	@echo ""
+
 indent:
 	@echo "Indenting code:"
 	if [ -f $(ASTYLERC) ] ; then \

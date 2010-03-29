@@ -1,4 +1,4 @@
-/* $Id: activesock.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: activesock.c 2980 2009-11-03 12:58:54Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -458,8 +458,15 @@ static void ioqueue_on_read_complete(pj_ioqueue_key_t *key,
 		 * connection.
 		 * If there is no remainder data, set the packet to NULL.
 		 */
-		ret = (*asock->cb.on_data_read)(asock, (r->size? r->pkt:NULL),
-						r->size, status, &remainder);
+
+		/* Shouldn't set the packet to NULL, as there may be active 
+		 * socket user, such as SSL socket, that needs to have access
+		 * to the read buffer packet.
+		 */
+		//ret = (*asock->cb.on_data_read)(asock, (r->size? r->pkt:NULL),
+		//				r->size, status, &remainder);
+		ret = (*asock->cb.on_data_read)(asock, r->pkt, r->size,
+						status, &remainder);
 
 	    } else if (asock->read_type == TYPE_RECV_FROM && 
 		       asock->cb.on_data_recvfrom) 
@@ -711,12 +718,14 @@ static void ioqueue_on_accept_complete(pj_ioqueue_key_t *key,
     pj_activesock_t *asock = (pj_activesock_t*) pj_ioqueue_get_user_data(key);
     struct accept_op *accept_op = (struct accept_op*) op_key;
 
+    PJ_UNUSED_ARG(new_sock);
+
     do {
 	if (status==PJ_SUCCESS && asock->cb.on_accept_complete) {
 	    pj_bool_t ret;
 
 	    /* Notify callback */
-	    ret = (*asock->cb.on_accept_complete)(asock, new_sock,
+	    ret = (*asock->cb.on_accept_complete)(asock, accept_op->new_sock,
 						  &accept_op->rem_addr,
 						  accept_op->rem_addr_len);
 

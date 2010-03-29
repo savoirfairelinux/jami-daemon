@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?> <!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+
+<scenario name="Basic UAS responder">
+
+ <recv request="INVITE" crlf="true">
+ </recv>
+
+
+ <send>
+   <![CDATA[
+
+     SIP/2.0 180 Ringing
+     [last_Via:]
+     [last_From:]
+     [last_To:];tag=[call_number]
+     [last_Call-ID:]
+     [last_CSeq:]
+     Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+     Content-Length: 0
+
+   ]]>
+ </send>
+
+ <send retrans="500">
+   <![CDATA[
+
+     SIP/2.0 200 OK
+     [last_Via:]
+     [last_From:]
+     [last_To:];tag=[call_number]
+     [last_Call-ID:]
+     [last_CSeq:]
+     Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+     Content-Type: application/sdp
+     Content-Length: [len]
+
+     v=0
+     o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+     s=-
+     c=IN IP[media_ip_type] [media_ip]
+     t=0 0
+     m=audio [media_port] RTP/AVP 0
+     a=rtpmap:0 PCMU/8000
+
+   ]]>
+ </send>
+
+ <!-- tag from From: header is required to build the To: header in 
+   -- Bye request. --> 
+
+ <recv request="ACK">   
+   <action>
+    <ereg regexp="tag=.*" search_in="hdr" header="From:" check_it="true" assign_to="1" />
+  </action>
+ </recv>
+
+ <pause milliseconds="500"/>
+ 
+ <send retrans="500">
+    <![CDATA[
+
+      BYE sip:[service] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];rport;branch=[branch]
+      From: <sip:[local_ip]:[local_port]>;tag=[call_number]
+      To: <sip:[remote_ip]:[remote_port]>;[$1]
+      [last_Call-ID:]
+      CSeq: [cseq] BYE
+      Contact: <sip:test@[local_ip]:[local_port]>
+      Max-Forwards: 70
+      Subject: Functional Test
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+ <recv response="200">
+ </recv>
+
+ <pause milliseconds="1000"/>
+
+
+ <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+ <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario> 

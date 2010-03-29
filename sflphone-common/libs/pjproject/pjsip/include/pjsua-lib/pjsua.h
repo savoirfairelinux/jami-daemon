@@ -1,4 +1,4 @@
-/* $Id: pjsua.h 2864 2009-08-12 11:03:23Z bennylp $ */
+/* $Id: pjsua.h 3021 2009-11-20 23:33:07Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -376,6 +376,17 @@ PJ_DECL(void) pjsua_logging_config_default(pjsua_logging_config *cfg);
 PJ_DECL(void) pjsua_logging_config_dup(pj_pool_t *pool,
 				       pjsua_logging_config *dst,
 				       const pjsua_logging_config *src);
+
+
+/**
+ * Structure to be passed on MWI callback.
+ */
+typedef struct pjsua_mwi_info
+{
+    pjsip_evsub	    *evsub;	/**< Event subscription session, for
+				     reference.				*/
+    pjsip_rx_data   *rdata;	/**< The received NOTIFY request.	*/
+} pjsua_mwi_info;
 
 
 /**
@@ -821,6 +832,17 @@ typedef struct pjsua_callback
 					    const pjsip_uri *target,
 					    const pjsip_event *e);
 
+    /**
+     * This callback is called when a NOTIFY request for message summary / 
+     * message waiting indication is received.
+     *
+     * @param acc_id	The account ID.
+     * @param mwi_info	Structure containing details of the event,
+     *			including the received NOTIFY request in the
+     *			\a rdata field.
+     */
+    void (*on_mwi_info)(pjsua_acc_id acc_id, pjsua_mwi_info *mwi_info);
+
 } pjsua_callback;
 
 
@@ -978,6 +1000,21 @@ typedef struct pjsua_config
      * Default: PJ_FALSE
      */
     pj_bool_t	    require_timer;
+
+    /**
+     * Handle unsolicited NOTIFY requests containing message waiting 
+     * indication (MWI) info. Unsolicited MWI is incoming NOTIFY requests 
+     * which are not requested by client with SUBSCRIBE request. 
+     *
+     * If this is enabled, the library will respond 200/OK to the NOTIFY
+     * request and forward the request to \a on_mwi_info() callback.
+     *
+     * See also \a mwi_enabled field #on pjsua_acc_config.
+     *
+     * Default: PJ_TRUE
+     *
+     */
+    pj_bool_t	    enable_unsolicited_mwi;
 
     /**
      * Specify Session Timer settings, see #pjsip_timer_setting. 
@@ -1397,6 +1434,32 @@ PJ_DECL(pj_status_t) pjsua_verify_sip_url(const char *url);
 
 
 /**
+ * Schedule a timer entry. Note that the timer callback may be executed
+ * by different thread, depending on whether worker thread is enabled or
+ * not.
+ *
+ * @param entry		Timer heap entry.
+ * @param delay     The interval to expire.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ *
+ * @see pjsip_endpt_schedule_timer()
+ */
+PJ_DECL(pj_status_t) pjsua_schedule_timer(pj_timer_entry *entry,
+					  const pj_time_val *delay);
+
+
+/**
+ * Cancel the previously scheduled timer.
+ *
+ * @param entry		Timer heap entry.
+ *
+ * @see pjsip_endpt_cancel_timer()
+ */
+PJ_DECL(void) pjsua_cancel_timer(pj_timer_entry *entry);
+
+
+/**
  * This is a utility function to display error message for the specified 
  * error code. The error message will be sent to the log.
  *
@@ -1490,6 +1553,24 @@ typedef struct pjsua_transport_config
      * transport.
      */
     pjsip_tls_setting	tls_setting;
+
+    /**
+     * QoS traffic type to be set on this transport. When application wants
+     * to apply QoS tagging to the transport, it's preferable to set this
+     * field rather than \a qos_param fields since this is more portable.
+     *
+     * Default is QoS not set.
+     */
+    pj_qos_type		qos_type;
+
+    /**
+     * Set the low level QoS parameters to the transport. This is a lower
+     * level operation than setting the \a qos_type field and may not be
+     * supported on all platforms.
+     *
+     * Default is QoS not set.
+     */
+    pj_qos_params	qos_params;
 
 } pjsua_transport_config;
 
@@ -1725,6 +1806,17 @@ PJ_DECL(pj_status_t) pjsua_transport_close( pjsua_transport_id id,
 
 
 /**
+ * Default maximum time to wait for account unregistration transactions to
+ * complete during library shutdown sequence.
+ *
+ * Default: 4000 (4 seconds)
+ */
+#ifndef PJSUA_UNREG_TIMEOUT
+#   define PJSUA_UNREG_TIMEOUT	    4000
+#endif
+
+
+/**
  * Default PUBLISH expiration
  */
 #ifndef PJSUA_PUBLISH_EXPIRATION
@@ -1747,6 +1839,22 @@ PJ_DECL(pj_status_t) pjsua_transport_close( pjsua_transport_id id,
  */
 #ifndef PJSUA_SECURE_SCHEME
 #   define PJSUA_SECURE_SCHEME		"sip"
+#endif
+
+
+/**
+ * Maximum time to wait for unpublication transaction(s) to complete
+ * during shutdown process, before sending unregistration. The library
+ * tries to wait for the unpublication (un-PUBLISH) to complete before
+ * sending REGISTER request to unregister the account, during library
+ * shutdown process. If the value is set too short, it is possible that
+ * the unregistration is sent before unpublication completes, causing
+ * unpublication request to fail.
+ *
+ * Default: 2000 (2 seconds)
+ */
+#ifndef PJSUA_UNPUBLISH_MAX_WAIT_TIME_MSEC
+#   define PJSUA_UNPUBLISH_MAX_WAIT_TIME_MSEC	2000
 #endif
 
 
@@ -1789,12 +1897,39 @@ typedef struct pjsua_acc_config
     pj_str_t	    reg_uri;
 
     /**
+     * Subscribe to message waiting indication events (RFC 3842).
+     *
+     * See also \a enable_unsolicited_mwi field on #pjsua_config.
+     *
+     * Default: no
+     */
+    pj_bool_t	    mwi_enabled;
+
+    /**
      * If this flag is set, the presence information of this account will
      * be PUBLISH-ed to the server where the account belongs.
      *
      * Default: PJ_FALSE
      */
     pj_bool_t	    publish_enabled;
+
+    /**
+     * Event publication options.
+     */
+    pjsip_publishc_opt	publish_opt;
+
+    /**
+     * Maximum time to wait for unpublication transaction(s) to complete
+     * during shutdown process, before sending unregistration. The library
+     * tries to wait for the unpublication (un-PUBLISH) to complete before
+     * sending REGISTER request to unregister the account, during library
+     * shutdown process. If the value is set too short, it is possible that
+     * the unregistration is sent before unpublication completes, causing
+     * unpublication request to fail.
+     *
+     * Default: PJSUA_UNPUBLISH_MAX_WAIT_TIME_MSEC
+     */
+    unsigned	    unpublish_max_wait_time_msec;
 
     /**
      * Authentication preference.
@@ -1884,6 +2019,14 @@ typedef struct pjsua_acc_config
      * default interval will be used (PJSUA_REG_INTERVAL, 300 seconds).
      */
     unsigned	    reg_timeout;
+
+    /**
+     * Specify the maximum time to wait for unregistration requests to
+     * complete during library shutdown sequence.
+     *
+     * Default: PJSUA_UNREG_TIMEOUT
+     */
+    unsigned	    unreg_timeout;
 
     /** 
      * Number of credentials in the credential array.
@@ -2958,9 +3101,12 @@ PJ_DECL(pj_status_t) pjsua_call_dump(pjsua_call_id call_id,
 
 
 /**
- * This specifies how long the library should retry resending SUBSCRIBE
- * if the previous SUBSCRIBE failed. This also controls the duration 
- * before failed PUBLISH request will be retried.
+ * This specifies how long the library should wait before retrying failed
+ * SUBSCRIBE request, and there is no rule to automatically resubscribe 
+ * (for example, no "retry-after" parameter in Subscription-State header).
+ *
+ * This also controls the duration  before failed PUBLISH request will be
+ * retried.
  *
  * Default: 300 seconds
  */
@@ -3075,7 +3221,16 @@ typedef struct pjsua_buddy_info
     const char	       *sub_state_name;
 
     /**
-     * Specifies the last presence subscription terminatino reason. If 
+     * Specifies the last presence subscription termination code. This would
+     * return the last status of the SUBSCRIBE request. If the subscription
+     * is terminated with NOTIFY by the server, this value will be set to
+     * 200, and subscription termination reason will be given in the
+     * \a sub_term_reason field.
+     */
+    unsigned		sub_term_code;
+
+    /**
+     * Specifies the last presence subscription termination reason. If 
      * presence subscription is currently active, the value will be empty.
      */
     pj_str_t		sub_term_reason;

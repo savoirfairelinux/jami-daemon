@@ -31,6 +31,11 @@
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
 
+enum DtmfType { OVERRTP, SIPINFO};
+
+#define OVERRTPSTR "overrtp"
+#define SIPINFOSTR "sipinfo"
+
 class SIPVoIPLink;
 
 /**
@@ -87,8 +92,23 @@ class SIPAccount : public Account
         
         inline bool isResolveOnce(void) { return _resolveOnce; }
         
-        inline std::string& getRegistrationExpire(void) { return _registrationExpire; }
-        
+
+	/**
+	 * A client sendings a REGISTER request MAY suggest an expiration
+	 * interval that indicates how long the client would like the
+	 * registration to be valid.
+	 *
+	 * @return A string describing the expiration value.
+	 */
+	inline std::string& getRegistrationExpire(void) { return _registrationExpire; }
+
+	/**
+	 * Setting the Expiration Interval of Contact Addresses.
+	 *
+	 * @param A string describing the expiration value.
+	 */ 
+	inline void setRegistrationExpire(std::string expr) { _registrationExpire = expr; }
+
         bool fullMatch(const std::string& username, const std::string& hostname);
         bool userMatch(const std::string& username);
         bool hostnameMatch(const std::string& hostname);
@@ -135,7 +155,7 @@ class SIPAccount : public Account
          * an alternate UDP transport.
          */
         inline pj_str_t getStunServerName(void) { return _stunServerName; }
-		inline void setStunServerName (pj_str_t srv) { _stunServerName = srv; }
+	inline void setStunServerName (pj_str_t srv) { _stunServerName = srv; }
 
 		/**
          * @return pj_uint8_t structure, filled from the configuration
@@ -143,7 +163,7 @@ class SIPAccount : public Account
          * an alternate UDP transport.
          */
         inline pj_uint16_t getStunPort (void) { return _stunPort; }
-		inline void setStunPort (pj_uint16_t port) { _stunPort = port; }
+	inline void setStunPort (pj_uint16_t port) { _stunPort = port; }
         
         /**
          * @return bool Tells if current transport for that 
@@ -248,6 +268,18 @@ class SIPAccount : public Account
          * @pram port The port used by this account.
          */
         inline void setPublishedPort(pj_uint16_t port) { _publishedPort = port; }
+
+	/**
+         * Get the local port for TLS listener.
+         * @return pj_uint16 The port used for that account
+         */   
+        inline pj_uint16_t getTlsListenerPort(void) { return (pj_uint16_t) _tlsListenerPort; }
+        
+        /** 
+         * Set the local port for TLS listener.
+         * @pram port The port used for TLS listener.
+         */
+        inline void setTlsListenerPort(pj_uint16_t port) { _tlsListenerPort = port; }
                 
         /**
          * Get the public IP address set by the user for this account.
@@ -270,11 +302,15 @@ class SIPAccount : public Account
          */
         inline pjsip_transport_type_e getTransportType(void) { return _transportType; }
         
-	inline pjsip_transport* getAccountTransport (void) { return _transport; }
+        inline pjsip_transport* getAccountTransport (void) { return _transport; }
 
-	inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
+        inline void setAccountTransport (pjsip_transport *transport) { _transport = transport; }
 
-	std::string getTransportMapKey(void);
+        std::string getTransportMapKey(void);
+
+        DtmfType getDtmfType(void) { return _dtmfType; }
+
+        void setDtmfType(DtmfType type) { _dtmfType = type; }
 
   private: 
 
@@ -326,17 +362,22 @@ class SIPAccount : public Account
         // Network settings
         std::string _registrationExpire;
 
-	// interface name on which this account is bound
-	std::string _interface;
+        // interface name on which this account is bound
+        std::string _interface;
 
-	// Flag which determine if _localIpAddress or _publishedIpAddress is used in 
+        // Flag which determine if _localIpAddress or _publishedIpAddress is used in
         // sip headers
-	bool _publishedSameasLocal;
+        bool _publishedSameasLocal;
                 
         std::string _publishedIpAddress;
         
         pj_uint16_t _localPort;
         pj_uint16_t _publishedPort;
+
+        /**
+         * The global TLS listener port which can be configured through the IP2IP_PROFILE
+         */
+        pj_uint16_t _tlsListenerPort;
         
         pjsip_transport_type_e _transportType;
 
@@ -359,8 +400,10 @@ class SIPAccount : public Account
         // The STUN server name, if applicable
         pj_str_t _stunServerName;	                                                  
 
-	// The STUN server port, if applicable
-	pj_uint16_t _stunPort;
+        // The STUN server port, if applicable
+        pj_uint16_t _stunPort;
+
+        DtmfType _dtmfType;
         
         // Display Name that can be used in  SIP URI.        
         std::string _displayName;        

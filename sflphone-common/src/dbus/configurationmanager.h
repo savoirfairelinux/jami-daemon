@@ -37,6 +37,9 @@ public:
     ConfigurationManager(DBus::Connection& connection);
     static const char* SERVER_PATH;
 
+private:
+    std::vector<std::string> shortcutsKeys;
+
 public:
 
     std::map< std::string, std::string > getAccountDetails( const std::string& accountID );
@@ -58,8 +61,8 @@ public:
     std::vector< std::string > getCodecList(void);
     std::vector< std::string > getSupportedTlsMethod(void);
     std::vector< std::string > getCodecDetails( const int32_t& payload );
-    std::vector< std::string > getActiveCodecList(  );
-    void setActiveCodecList( const std::vector< std::string >& list );
+    std::vector< std::string > getActiveCodecList (const std::string& accountID);
+    void setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID);
 
     std::vector< std::string > getInputAudioPluginList();
     std::vector< std::string > getOutputAudioPluginList();
@@ -114,6 +117,18 @@ public:
     int32_t getMailNotify( void );
     void setMailNotify( void );
 
+	int32_t getWindowWidth (void);
+	int32_t getWindowHeight (void);
+	void setWindowWidth (const int32_t& width);
+	void setWindowHeight (const int32_t& height);
+	int32_t getWindowPositionX (void);
+	int32_t getWindowPositionY (void);
+	void setWindowPositionX (const int32_t& posX);
+	void setWindowPositionY (const int32_t& posY);
+
+	void enableStatusIcon (const std::string&);
+	std::string isStatusIconEnabled (void);
+
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
     std::vector< std::string > getAddressbookList ( void );
@@ -134,6 +149,9 @@ public:
     
     std::vector<std::string> getAllIpInterface(void);
     std::vector<std::string> getAllIpInterfaceByName(void);
+
+    std::map< std::string, int32_t > getShortcuts ();
+    void setShortcuts (const std::map< std::string, int32_t >& shortcutsMap);
 };
 
 

@@ -50,8 +50,9 @@ typedef enum
    /** Stun server configuration error. The account is not registered */
    ACCOUNT_STATE_ERROR_CONF_STUN,
    /** Stun server is not existing. The account is not registered */
-   ACCOUNT_STATE_ERROR_EXIST_STUN
-
+   ACCOUNT_STATE_ERROR_EXIST_STUN,
+   /** IP profile status **/
+   IP2IP_PROFILE_STATUS
 } account_state_t;
 
 /** @struct account_t
@@ -71,6 +72,8 @@ typedef struct  {
   	GHashTable * properties;
   	GPtrArray * credential_information;
 
+	/* The codec list */
+	GQueue *codecs;
   	guint _messages_number;
 } account_t;
 

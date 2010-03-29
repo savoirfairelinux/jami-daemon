@@ -18,6 +18,8 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <vector>
+
 #include "global.h"
 #include "callmanager.h"
 
@@ -38,25 +40,51 @@ void
 CallManager::placeCall (const std::string& accountID,
                         const std::string& callID,
                         const std::string& to)
-{
-    _debug ("CallManager::placeCall received");
-    // Check if a destination number is available
+{    // Check if a destination number is available
 
     if (to == "")   _debug ("No number entered - Call stopped");
     else            Manager::instance().outgoingCall (accountID, callID, to);
 }
 
 void
+CallManager::placeCallFirstAccount (const std::string& callID,
+				    const std::string& to)
+{
+
+    if (to == "") {
+        _warn("No number entered - Call stopped");
+	return;
+    }
+
+    std::vector< std::string > accountOrder = Manager::instance().loadAccountOrder();
+    std::vector< std::string >::iterator iter = accountOrder.begin();
+
+    Account *account;
+    while(iter != accountOrder.end()) {
+        account = Manager::instance().getAccount(*iter);
+	if((*iter != IP2IP_PROFILE) && account->isEnabled()) {
+	    Manager::instance().outgoingCall (*iter, callID, to);
+	    return;
+	}
+
+	iter++;
+    }
+
+    _warn("No enabled account found - Call stopped\n");
+    
+}
+
+void
 CallManager::refuse (const std::string& callID)
 {
-    _debug ("CallManager::refuse received");
+    _debug ("CallManager: refuse received");
     Manager::instance().refuseCall (callID);
 }
 
 void
 CallManager::accept (const std::string& callID)
 {
-    _debug ("CallManager::accept received");
+    _debug ("CallManager: accept received");
     Manager::instance().answerCall (callID);
 }
 
@@ -104,7 +132,6 @@ CallManager::transfert (const std::string& callID, const std::string& to)
 void
 CallManager::setVolume (const std::string& device, const double& value)
 {
-    _debug ("CallManager::setVolume received");
 
     if (device == "speaker") {
         Manager::instance().setSpkrVolume ( (int) (value*100.0));
@@ -118,7 +145,6 @@ CallManager::setVolume (const std::string& device, const double& value)
 double
 CallManager::getVolume (const std::string& device)
 {
-    _debug ("CallManager::getVolume received ");
 
     if (device == "speaker") {
         _debug ("Current speaker = %d", Manager::instance().getSpkrVolume());
@@ -183,14 +209,12 @@ CallManager::unholdConference (const std::string& confID)
 std::map< std::string, std::string >
 CallManager::getConferenceDetails (const std::string& callID)
 {
-    _debug ("CallManager::getCallDetails received");
     return Manager::instance().getConferenceDetails (callID);
 }
 
 std::vector< std::string >
 CallManager::getConferenceList (void)
 {
-    _debug ("CallManager::getConferenceList");
     return Manager::instance().getConferenceList();
 }
 
@@ -203,14 +227,12 @@ CallManager::getParticipantList (const std::string& confID)
 void
 CallManager::setRecording (const std::string& callID)
 {
-    _debug ("CallManager::setRecording received");
     Manager::instance().setRecordingCall (callID);
 }
 
 bool
 CallManager::getIsRecording (const std::string& callID)
 {
-    _debug ("CallManager::getIsRecording received ");
     return Manager::instance().isRecording (callID);
 }
 
@@ -218,7 +240,6 @@ CallManager::getIsRecording (const std::string& callID)
 std::string
 CallManager::getCurrentCodecName (const std::string& callID)
 {
-    _debug ("CallManager::getCurrentCodecName received %s ",Manager::instance().getCurrentCodecName (callID).c_str());
     return Manager::instance().getCurrentCodecName (callID).c_str();
 }
 
@@ -226,7 +247,6 @@ CallManager::getCurrentCodecName (const std::string& callID)
 std::map< std::string, std::string >
 CallManager::getCallDetails (const std::string& callID)
 {
-    _debug ("CallManager::getCallDetails received");
     return Manager::instance().getCallDetails (callID);
 }
 
@@ -239,7 +259,6 @@ CallManager::getCallList (void)
 std::string
 CallManager::getCurrentCallID()
 {
-    _debug ("CallManager::getCurrentCallID received");
     return Manager::instance().getCurrentCallId();
 }
 
@@ -300,7 +319,6 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
 void
 CallManager::setSASVerified (const std::string& callID)
 {
-    _debug ("CallManager::setSASVerified received for account %s", callID.c_str());
 
     try {
         sfl::AudioZrtpSession * zSession;
@@ -315,7 +333,6 @@ CallManager::setSASVerified (const std::string& callID)
 void
 CallManager::resetSASVerified (const std::string& callID)
 {
-    _debug ("CallManager::resetSASVerified received for account %s", callID.c_str());
 
     try {
         sfl::AudioZrtpSession * zSession;

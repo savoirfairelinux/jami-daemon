@@ -47,7 +47,7 @@ class SIPCall;
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 6
+#define PJ_LOG_LEVEL 0
 
 #define SipTransportMap std::map<std::string, pjsip_transport*>
 
@@ -178,12 +178,22 @@ class SIPVoIPLink : public VoIPLink
         bool refuse (const CallID& id);
 
         /**
-         * Send DTMF
+         * Send DTMF refering to account configuration
          * @param id The call identifier
          * @param code  The char code
          * @return bool True on success
          */
         bool carryingDTMFdigits(const CallID& id, char code);
+
+        /**
+         * Send Dtmf using SIP INFO message
+         */
+        bool dtmfSipInfo(SIPCall *call, char code);
+
+        /**
+         * Send Dtmf over RTP
+         */
+        bool dtmfOverRtp(SIPCall* call, char code);
 
         /** 
          * Terminate every call not hangup | brutal | Protected by mutex 
@@ -280,7 +290,7 @@ class SIPVoIPLink : public VoIPLink
         
         bool new_ip_to_ip_call (const CallID& id, const std::string& to);
 
-        std::string get_useragent_name (void);
+        std::string get_useragent_name (const AccountID& id);
 
         /** 
          * List all the interfaces on the system and return 
@@ -332,10 +342,6 @@ class SIPVoIPLink : public VoIPLink
 	 */
         bool loadSIPLocalIP (std::string *addr);
 
-	/**
-	 * This method is used to create a new transport and attach it to the appropriate account
-	 */
-	void updateAccountInfo(const AccountID& accountID);
 
 	/**
 	 * This function unset the transport for a given account. It tests wether the 
@@ -375,7 +381,7 @@ class SIPVoIPLink : public VoIPLink
         bool pjsip_init();
 
         /**
-         * Delete link-related stuuf like calls
+         * Delete link-related stuff like calls
          */
         bool pjsip_shutdown(void);
 
@@ -386,69 +392,93 @@ class SIPVoIPLink : public VoIPLink
 	 * Function used to create a new sip transport or get an existing one from the map.
 	 * The SIP transport is "acquired" according to account's current settings.
 	 * This function should be called before registering an account
-	 * @param accountID            An account id for which transport is to be set
+	 * @param accountID An account id for which transport is to be set
 	 *
-	 * @return bool                True if the account is succesfully created or 
-	 *                             successfully obtained from the transport map
+	 * @return bool True if the account is succesfully created or successfully obtained 
+	 * from the transport map
 	 */
 	bool acquireTransport(const AccountID& accountID);
 
 
 	/**
-	 * Create a new sip transport according to the trasport type specified in account settings
+	 * Create the default UDP transport according ot Ip2Ip profile settings
+	 */
+	bool createDefaultSipUdpTransport();
+
+
+	/**
+	 * Create the default TLS litener using IP2IP_PROFILE settings
+	 */
+	void createDefaultSipTlsListener();
+
+
+	/**
+	 * Create the default TLS litener according to account settings.
+	 */
+	void createTlsListener(const AccountID& accountID);
+
+
+	/**
+	 * General Sip transport creation method according to the 
+	 * transport type specified in account settings
+	 * @param id The account id for which a transport must
+     * be created.
 	 */
 	bool createSipTransport(AccountID id);
 
 
+	/**
+	 * Method to store newly created UDP transport in internal transport map. 
+	 * Transports are stored in order to retreive them in case
+	 * several accounts would share the same port number for UDP transprt.
+	 * @param key The transport's port number
+	 * @param transport A pointer to the UDP transport
+	 */
 	bool addTransportToMap(std::string key, pjsip_transport* transport);
 
-        /** Create SIP UDP Listener */
-        int createUDPServer (AccountID = "");
+     /**
+	 * Create SIP UDP transport from account's setting
+	 * @param id The account id for which a transport must
+     * be created.
+	 * @return pj_status_t PJ_SUCCESS on success 
+	 */
+        int createUdpTransport (AccountID = "");
 
-        /**
-         * Try to create a new TLS transport
-         * with the settings defined in the corresponding
-         * SIPAccount with id "id". If creatation fails
-         * for whatever reason, it will try to start
-         * it again on a randomly chosen port.
-         *
-         * A better idea would be to list all the transports
-         * registered to the transport manager in order to find
-         * an available port. Note that creation might also fail
-         * for other reason than just a wrong port.
-         * 
-         * @param id The account id for which a tranport must
-         * be created.
-         * @return pj_status_t PJ_SUCCESS on success
-         */
-        pj_status_t createTlsTransportRetryOnFailure(AccountID id);
+     /**
+      * Create a TLS transport from the default TLS listener from
+      * @param id The account id for which a transport must
+      * be created.
+      * @return pj_status_t PJ_SUCCESS on success
+      */
+     pj_status_t createTlsTransport(const AccountID& id,  std::string remoteAddr);
 
-        /**
-         * Try to create a TLS transport with the settings
-         * defined in the corresponding SIPAccount with id
-         * "id". 
-         * @param id The account id for which a transport must
-         * be created.
-         * @return pj_status_t PJ_SUCCESS on success 
-         */
-        pj_status_t createTlsTransport(AccountID id);
-
+	/**
+     * Create a UDP transport using stun server to resove public address
+     * @param id The account id for which a transport must
+     * be created.
+     * @return pj_status_t PJ_SUCCESS on success
+     */
 	pj_status_t createAlternateUdpTransport (AccountID id);
 
+
+	/** 
+	 * UDP Transports are stored in this map in order to retreive them in case
+	 * several accounts would share the same port number.
+	 */
 	SipTransportMap _transportMap;
 
-        /** For registration use only */
-        int _regPort;
+	/** For registration use only */
+	int _regPort;
 
-        /** Threading object */
-        EventThread* _evThread;
-        ost::Mutex _mutexSIP;
+	/** Threading object */
+	EventThread* _evThread;
+	ost::Mutex _mutexSIP;
 
-        /* Number of SIP accounts connected to the link */
-        int _clients;
+    /* Number of SIP accounts connected to the link */
+    int _clients;
         
-        /* 
-         * Get the correct address to use (ie advertised) from 
+    /*
+     * Get the correct address to use (ie advertised) from
          * a uri. The corresponding transport that should be used
          * with that uri will be discovered. 
          *

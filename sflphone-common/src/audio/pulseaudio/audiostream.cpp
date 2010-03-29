@@ -24,20 +24,19 @@ static pa_channel_map channel_map;
 
 
 
-AudioStream::AudioStream (PulseLayerType * driver)
+AudioStream::AudioStream (PulseLayerType * driver, int smplrate)
         : _audiostream (NULL),
         _context (driver->context),
         _streamType (driver->type),
         _streamDescription (driver->description),
         _volume(),
-        flag (PA_STREAM_AUTO_TIMING_UPDATE),
-        sample_spec(),
+        _flag (PA_STREAM_AUTO_TIMING_UPDATE),
+        _sample_spec(),
         _mainloop (driver->mainloop)
 {
-    sample_spec.format = PA_SAMPLE_S16LE;
-    // sample_spec.format = PA_SAMPLE_FLOAT32LE;
-    sample_spec.rate = 44100;
-    sample_spec.channels = 1;
+    _sample_spec.format = PA_SAMPLE_S16LE; // PA_SAMPLE_FLOAT32LE;
+    _sample_spec.rate = smplrate;
+    _sample_spec.channels = 1;
     channel_map.channels = 1;
     pa_cvolume_set (&_volume , 1 , PA_VOLUME_NORM) ;  // * vol / 100 ;
 }
@@ -73,7 +72,7 @@ bool
 AudioStream::drainStream (void)
 {
     if (_audiostream) {
-        _debug ("Draining stream");
+        _info("Audio: Draining stream");
         pa_operation * operation;
 
         pa_threaded_mainloop_lock (_mainloop);
@@ -81,7 +80,7 @@ AudioStream::drainStream (void)
         if ( (operation = pa_stream_drain (_audiostream, success_cb, _mainloop))) {
             while (pa_operation_get_state (operation) != PA_OPERATION_DONE) {
                 if (!_context || pa_context_get_state (_context) != PA_CONTEXT_READY || !_audiostream || pa_stream_get_state (_audiostream) != PA_STREAM_READY) {
-                    _debug ("Connection died: %s", _context ? pa_strerror (pa_context_errno (_context)) : "NULL");
+                    _warn("Audio: Connection died: %s", _context ? pa_strerror (pa_context_errno (_context)) : "NULL");
                     pa_operation_unref (operation);
                     break;
                 } else {
@@ -99,7 +98,7 @@ AudioStream::drainStream (void)
 bool
 AudioStream::disconnectStream (void)
 {
-    _debug ("Destroy audio streams");
+    _info("Audio: Destroy audio streams");
 
     pa_threaded_mainloop_lock (_mainloop);
 
@@ -128,7 +127,7 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 {
     pa_threaded_mainloop *m;
 
-    _debug ("AudioStream::stream_state_callback :: The state of the stream changed");
+    _info("Audio: The state of the stream changed");
     assert (s);
 
     m = (pa_threaded_mainloop*) user_data;
@@ -137,26 +136,25 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
     switch (pa_stream_get_state (s)) {
 
         case PA_STREAM_CREATING:
-            _debug ("Stream is creating...");
+            _info("Audio: Stream is creating...");
             break;
 
         case PA_STREAM_TERMINATED:
-            _debug ("Stream is terminating...");
+            _info ("Audio: Stream is terminating...");
             break;
 
         case PA_STREAM_READY:
-            _debug ("Stream successfully created, connected to %s", pa_stream_get_device_name (s));
-            // pa_stream_cork( s, 0, NULL, NULL);
+            _info ("Audio: Stream successfully created, connected to %s", pa_stream_get_device_name (s));
             break;
 
         case PA_STREAM_UNCONNECTED:
-            _debug ("Stream unconnected");
+            _info ("Audio: Stream unconnected");
             break;
 
         case PA_STREAM_FAILED:
 
         default:
-            _debug ("Stream error - Sink/Source doesn't exists: %s" , pa_strerror (pa_context_errno (pa_stream_get_context (s))));
+            _warn("Audio: Error - Sink/Source doesn't exists: %s" , pa_strerror (pa_context_errno (pa_stream_get_context (s))));
             exit (0);
             break;
     }
@@ -178,55 +176,48 @@ AudioStream::createStream (pa_context* c)
     ost::MutexLock guard (_mutex);
 
     pa_stream* s;
-    //pa_cvolume cv;
 
-    // pa_sample_spec ss;
-    // ss.format = PA_SAMPLE_S16LE;
-    // ss.rate = 44100;
-    // ss.channels = 1;
-
-
-    assert (pa_sample_spec_valid (&sample_spec));
+    assert (pa_sample_spec_valid (&_sample_spec));
     assert (pa_channel_map_valid (&channel_map));
+
+    _info("Audio: Create pulseaudio stream");
 
     pa_buffer_attr* attributes = (pa_buffer_attr*) malloc (sizeof (pa_buffer_attr));
 
-    if (! (s = pa_stream_new (c, _streamDescription.c_str() , &sample_spec, &channel_map)))
-        _debug ("%s: pa_stream_new() failed : %s" , _streamDescription.c_str(), pa_strerror (pa_context_errno (c)));
+
+    if (! (s = pa_stream_new (c, _streamDescription.c_str() , &_sample_spec, &channel_map)))
+        _warn ("Audio: Error: %s: pa_stream_new() failed : %s" , _streamDescription.c_str(), pa_strerror (pa_context_errno (c)));
 
     assert (s);
 
-    // parameters are defined as number of bytes
-    // 2048 bytes (1024 int16) is 20 ms at 44100 Hz
     if (_streamType == PLAYBACK_STREAM) {
 
-        // 20 ms framesize TODO: take framesize value from config
         attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &sample_spec);
+        attributes->tlength = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
         attributes->minreq = (uint32_t) -1;
-        attributes->fragsize = (uint32_t) -1;
 
-        pa_stream_connect_playback (s , NULL , attributes, PA_STREAM_ADJUST_LATENCY, &_volume, NULL);
+		pa_threaded_mainloop_lock(_mainloop);
+        pa_stream_connect_playback (s , NULL , attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), &_volume, NULL);
+		pa_threaded_mainloop_unlock(_mainloop);
+
     } else if (_streamType == CAPTURE_STREAM) {
 
-        // 20 ms framesize TODO: take framesize value from config
         attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = (uint32_t) -1;
-        attributes->prebuf = (uint32_t) -1;
-        attributes->minreq = (uint32_t) -1;
-        attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &sample_spec);
+        attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &_sample_spec);
 
-
-
-        pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_PEAK_DETECT|PA_STREAM_ADJUST_LATENCY));
+		pa_threaded_mainloop_lock(_mainloop);
+        pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+        pa_threaded_mainloop_unlock(_mainloop);
+        
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);
     } else {
-        _debug ("Stream type unknown ");
+        _warn ("Audio: Error: Stream type unknown ");
     }
 
     pa_stream_set_state_callback (s , stream_state_callback, _mainloop);
+
 
     free (attributes);
 

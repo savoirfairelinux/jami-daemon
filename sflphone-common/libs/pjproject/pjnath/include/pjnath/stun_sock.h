@@ -1,4 +1,4 @@
-/* $Id: stun_sock.h 2642 2009-04-22 17:20:24Z bennylp $ */
+/* $Id: stun_sock.h 2966 2009-10-25 09:02:07Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -28,6 +28,7 @@
 #include <pjlib-util/resolver.h>
 #include <pj/ioqueue.h>
 #include <pj/sock.h>
+#include <pj/sock_qos.h>
 
 
 PJ_BEGIN_DECL
@@ -246,6 +247,32 @@ typedef struct pj_stun_sock_cfg
      * If the value is negative, it will disable STUN keep-alive.
      */
     int ka_interval;
+
+    /**
+     * QoS traffic type to be set on this transport. When application wants
+     * to apply QoS tagging to the transport, it's preferable to set this
+     * field rather than \a qos_param fields since this is more portable.
+     *
+     * Default value is PJ_QOS_TYPE_BEST_EFFORT.
+     */
+    pj_qos_type qos_type;
+
+    /**
+     * Set the low level QoS parameters to the transport. This is a lower
+     * level operation than setting the \a qos_type field and may not be
+     * supported on all platforms.
+     *
+     * By default all settings in this structure are disabled.
+     */
+    pj_qos_params qos_params;
+
+    /**
+     * Specify if STUN socket should ignore any errors when setting the QoS
+     * traffic type/parameters.
+     *
+     * Default: PJ_TRUE
+     */
+    pj_bool_t qos_ignore_error;
 
 } pj_stun_sock_cfg;
 

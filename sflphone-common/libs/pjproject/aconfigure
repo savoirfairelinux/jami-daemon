@@ -4590,6 +4590,13 @@ if test "x$ac_cv_header_netinet_ip_h" = x""yes; then :
 fi
 
 
+ac_fn_c_check_header_mongrel "$LINENO" "netinet/tcp.h" "ac_cv_header_netinet_tcp_h" "$ac_includes_default"
+if test "x$ac_cv_header_netinet_tcp_h" = x""yes; then :
+  $as_echo "#define PJ_HAS_NETINET_TCP_H 1" >>confdefs.h
+
+fi
+
+
 ac_fn_c_check_header_mongrel "$LINENO" "ifaddrs.h" "ac_cv_header_ifaddrs_h" "$ac_includes_default"
 if test "x$ac_cv_header_ifaddrs_h" = x""yes; then :
   $as_echo "#define PJ_HAS_IFADDRS_H 1" >>confdefs.h
@@ -5771,7 +5778,9 @@ fi
 		if test "x$openssl_h_present" = "x1" -a "x$libssl_present" = "x1" -a "x$libcrypto_present" = "x1"; then
 	        	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: OpenSSL library found, SSL support enabled" >&5
 $as_echo "OpenSSL library found, SSL support enabled" >&6; }
-			$as_echo "#define PJSIP_HAS_TLS_TRANSPORT 1" >>confdefs.h
+			# PJSIP_HAS_TLS_TRANSPORT setting follows PJ_HAS_SSL_SOCK
+			#AC_DEFINE(PJSIP_HAS_TLS_TRANSPORT, 1)
+			$as_echo "#define PJ_HAS_SSL_SOCK 1" >>confdefs.h
 
 		else
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ** OpenSSL libraries not found, disabling SSL support **" >&5

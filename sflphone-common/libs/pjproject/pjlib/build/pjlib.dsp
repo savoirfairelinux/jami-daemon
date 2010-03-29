@@ -240,28 +240,11 @@ SOURCE=..\src\pj\ioqueue_common_abs.h
 # Begin Source File
 
 SOURCE=..\src\pj\ioqueue_select.c
-
-!IF  "$(CFG)" == "pjlib - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "pjlib - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=..\src\pj\ioqueue_winnt.c
-
-!IF  "$(CFG)" == "pjlib - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "pjlib - Win32 Debug"
-
 # PROP Exclude_From_Build 1
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
@@ -341,7 +324,23 @@ SOURCE=..\src\pj\sock_common.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\pj\sock_qos_bsd.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\pj\sock_qos_common.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\pj\sock_select.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\pj\ssl_sock_common.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\pj\ssl_sock_ossl.c
 # End Source File
 # Begin Source File
 
@@ -589,7 +588,15 @@ SOURCE=..\include\pj\sock.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\pj\sock_qos.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\pj\sock_select.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\pj\ssl_sock.h
 # End Source File
 # Begin Source File
 

@@ -1,4 +1,4 @@
-/* $Id: pjsua_app.c 2897 2009-08-17 20:28:47Z nanang $ */
+/* $Id: pjsua_app.c 3039 2009-12-30 06:35:20Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -59,6 +59,7 @@ static struct app_config
     pjsua_media_config	    media_cfg;
     pj_bool_t		    no_refersub;
     pj_bool_t		    ipv6;
+    pj_bool_t		    enable_qos;
     pj_bool_t		    no_tcp;
     pj_bool_t		    no_udp;
     pj_bool_t		    use_tls;
@@ -103,6 +104,8 @@ static struct app_config
 
 #ifdef STEREO_DEMO
     pjmedia_snd_port	   *snd;
+    pjmedia_port	   *sc, *sc_ch1;
+    pjsua_conf_port_id	    sc_ch1_slot;
 #endif
 
     float		    mic_level,
@@ -190,6 +193,7 @@ static void usage(void)
     puts  ("  --username=string   Set authentication username");
     puts  ("  --password=string   Set authentication password");
     puts  ("  --publish           Send presence PUBLISH for this account");
+    puts  ("  --mwi               Subscribe to message summary/waiting indication");
     puts  ("  --use-100rel        Require reliable provisional response (100rel)");
     puts  ("  --use-timer         Require SIP session timers");
     puts  ("  --timer-se=N        Session timers expiration period, in secs (def:1800)");
@@ -205,6 +209,7 @@ static void usage(void)
 #if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6
     puts  ("  --ipv6              Use IPv6 instead for SIP and media.");
 #endif
+    puts  ("  --set-qos           Enable QoS tagging for SIP and media.");
     puts  ("  --local-port=port   Set TCP/UDP port. This implicitly enables both ");
     puts  ("                      TCP and UDP transports on the specified port, unless");
     puts  ("                      if TCP or UDP is disabled.");
@@ -479,7 +484,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 	   OPT_REGISTRAR, OPT_REG_TIMEOUT, OPT_PUBLISH, OPT_ID, OPT_CONTACT,
 	   OPT_BOUND_ADDR, OPT_CONTACT_PARAMS, OPT_CONTACT_URI_PARAMS,
 	   OPT_100REL, OPT_USE_IMS, OPT_REALM, OPT_USERNAME, OPT_PASSWORD,
-	   OPT_NAMESERVER, OPT_STUN_SRV,
+	   OPT_MWI, OPT_NAMESERVER, OPT_STUN_SRV,
 	   OPT_ADD_BUDDY, OPT_OFFER_X_MS_MSG, OPT_NO_PRESENCE,
 	   OPT_AUTO_ANSWER, OPT_AUTO_PLAY, OPT_AUTO_PLAY_HANGUP, OPT_AUTO_LOOP,
 	   OPT_AUTO_CONF, OPT_CLOCK_RATE, OPT_SND_CLOCK_RATE, OPT_STEREO,
@@ -498,7 +503,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 	   OPT_TLS_NEG_TIMEOUT, OPT_TLS_SRV_NAME,
 	   OPT_CAPTURE_DEV, OPT_PLAYBACK_DEV,
 	   OPT_CAPTURE_LAT, OPT_PLAYBACK_LAT, OPT_NO_TONES, OPT_JB_MAX_SIZE,
-	   OPT_STDOUT_REFRESH, OPT_STDOUT_REFRESH_TEXT, OPT_IPV6,
+	   OPT_STDOUT_REFRESH, OPT_STDOUT_REFRESH_TEXT, OPT_IPV6, OPT_QOS,
 #ifdef _IONBF
 	   OPT_STDOUT_NO_BUF,
 #endif
@@ -531,6 +536,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 	{ "registrar",	1, 0, OPT_REGISTRAR},
 	{ "reg-timeout",1, 0, OPT_REG_TIMEOUT},
 	{ "publish",    0, 0, OPT_PUBLISH},
+	{ "mwi",	0, 0, OPT_MWI},
 	{ "use-100rel", 0, 0, OPT_100REL},
 	{ "use-ims",    0, 0, OPT_USE_IMS},
 	{ "id",		1, 0, OPT_ID},
@@ -614,6 +620,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 #if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6
 	{ "ipv6",	 0, 0, OPT_IPV6},
 #endif
+	{ "set-qos",	 0, 0, OPT_QOS},
 	{ "use-timer",  0, 0, OPT_TIMER},
 	{ "timer-se",   1, 0, OPT_TIMER_SE},
 	{ "timer-min-se", 1, 0, OPT_TIMER_MIN_SE},
@@ -826,6 +833,10 @@ static pj_status_t parse_args(int argc, char *argv[],
 
 	case OPT_PUBLISH:   /* publish */
 	    cur_acc->publish_enabled = PJ_TRUE;
+	    break;
+
+	case OPT_MWI:	/* mwi */
+	    cur_acc->mwi_enabled = PJ_TRUE;
 	    break;
 
 	case OPT_100REL: /** 100rel */
@@ -1268,6 +1279,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 
 	case OPT_TLS_VERIFY_CLIENT:
 	    cfg->udp_cfg.tls_setting.verify_client = PJ_TRUE;
+	    cfg->udp_cfg.tls_setting.require_client_cert = PJ_TRUE;
 	    break;
 
 	case OPT_TLS_NEG_TIMEOUT:
@@ -1325,7 +1337,17 @@ static pj_status_t parse_args(int argc, char *argv[],
 	    cfg->ipv6 = PJ_TRUE;
 	    break;
 #endif
-
+	case OPT_QOS:
+	    cfg->enable_qos = PJ_TRUE;
+	    /* Set RTP traffic type to Voice */
+	    cfg->rtp_cfg.qos_type = PJ_QOS_TYPE_VOICE;
+	    /* Directly apply DSCP value to SIP traffic. Say lets
+	     * set it to CS3 (DSCP 011000). Note that this will not 
+	     * work on all platforms.
+	     */
+	    cfg->udp_cfg.qos_params.flags = PJ_QOS_PARAM_HAS_DSCP;
+	    cfg->udp_cfg.qos_params.dscp_val = 0x18;
+	    break;
 	default:
 	    PJ_LOG(1,(THIS_FILE, 
 		      "Argument \"%s\" is not valid. Use --help to see help",
@@ -1535,6 +1557,13 @@ static void write_account_settings(int acc_index, pj_str_t *result)
 	pj_strcat2(result, line);
     }
 
+    /* Publish */
+    if (acc_cfg->publish_enabled)
+	pj_strcat2(result, "--publish\n");
+
+    /* MWI */
+    if (acc_cfg->mwi_enabled)
+	pj_strcat2(result, "--mwi\n");
 }
 
 
@@ -1604,6 +1633,9 @@ static int write_settings(const struct app_config *config,
     /* Transport options */
     if (config->ipv6) {
 	pj_strcat2(&cfg, "--ipv6\n");
+    }
+    if (config->enable_qos) {
+	pj_strcat2(&cfg, "--set-qos\n");
     }
 
     /* UDP Transport. */
@@ -2617,12 +2649,16 @@ static void on_buddy_state(pjsua_buddy_id buddy_id)
     pjsua_buddy_info info;
     pjsua_buddy_get_info(buddy_id, &info);
 
-    PJ_LOG(3,(THIS_FILE, "%.*s status is %.*s (subscription state is %s)",
+    PJ_LOG(3,(THIS_FILE, "%.*s status is %.*s, subscription state is %s "
+			 "(last termination reason code=%d %.*s)",
 	      (int)info.uri.slen,
 	      info.uri.ptr,
 	      (int)info.status_text.slen,
 	      info.status_text.ptr,
-	      info.sub_state_name));
+	      info.sub_state_name,
+	      info.sub_term_code,
+	      (int)info.sub_term_reason.slen,
+	      info.sub_term_reason.ptr));
 }
 
 
@@ -2717,6 +2753,37 @@ static void on_nat_detect(const pj_stun_nat_detect_result *res)
     } else {
 	PJ_LOG(3, (THIS_FILE, "NAT detected as %s", res->nat_type_name));
     }
+}
+
+
+/*
+ * MWI indication
+ */
+static void on_mwi_info(pjsua_acc_id acc_id, pjsua_mwi_info *mwi_info)
+{
+    pj_str_t body;
+    
+    PJ_LOG(3,(THIS_FILE, "Received MWI for acc %d:", acc_id));
+
+    if (mwi_info->rdata->msg_info.ctype) {
+	const pjsip_ctype_hdr *ctype = mwi_info->rdata->msg_info.ctype;
+
+	PJ_LOG(3,(THIS_FILE, " Content-Type: %.*s/%.*s",
+	          (int)ctype->media.type.slen,
+		  ctype->media.type.ptr,
+		  (int)ctype->media.subtype.slen,
+		  ctype->media.subtype.ptr));
+    }
+
+    if (!mwi_info->rdata->msg_info.msg->body) {
+	PJ_LOG(3,(THIS_FILE, "  no message body"));
+	return;
+    }
+
+    body.ptr = mwi_info->rdata->msg_info.msg->body->data;
+    body.slen = mwi_info->rdata->msg_info.msg->body->len;
+
+    PJ_LOG(3,(THIS_FILE, " Body:\n%.*s", (int)body.slen, body.ptr));
 }
 
 
@@ -4315,6 +4382,7 @@ pj_status_t app_init(int argc, char *argv[])
     app_config.cfg.cb.on_call_transfer_status = &on_call_transfer_status;
     app_config.cfg.cb.on_call_replaced = &on_call_replaced;
     app_config.cfg.cb.on_nat_detect = &on_nat_detect;
+    app_config.cfg.cb.on_mwi_info = &on_mwi_info;
 
     /* Set sound device latency */
     if (app_config.capture_lat > 0)
@@ -4533,6 +4601,11 @@ pj_status_t app_init(int argc, char *argv[])
 
 	pjsua_acc_id acc_id;
 
+	/* Copy the QoS settings */
+	tcp_cfg.tls_setting.qos_type = tcp_cfg.qos_type;
+	pj_memcpy(&tcp_cfg.tls_setting.qos_params, &tcp_cfg.qos_params, 
+		  sizeof(tcp_cfg.qos_params));
+
 	/* Set TLS port as TCP port+1 */
 	tcp_cfg.port++;
 	status = pjsua_transport_create(PJSIP_TRANSPORT_TLS,
@@ -4678,6 +4751,16 @@ pj_status_t app_destroy(void)
 	pjmedia_snd_port_destroy(app_config.snd);
 	app_config.snd = NULL;
     }
+    if (app_config.sc_ch1) {
+	pjsua_conf_remove_port(app_config.sc_ch1_slot);
+	app_config.sc_ch1_slot = PJSUA_INVALID_ID;
+	pjmedia_port_destroy(app_config.sc_ch1);
+	app_config.sc_ch1 = NULL;
+    }
+    if (app_config.sc) {
+	pjmedia_port_destroy(app_config.sc);
+	app_config.sc = NULL;
+    }
 #endif
 
     /* Close ringback port */
@@ -4717,9 +4800,25 @@ pj_status_t app_destroy(void)
 
 
 #ifdef STEREO_DEMO
+/*
+ * In this stereo demo, we open the sound device in stereo mode and
+ * arrange the attachment to the PJSUA-LIB conference bridge as such
+ * so that channel0/left channel of the sound device corresponds to
+ * slot 0 in the bridge, and channel1/right channel of the sound
+ * device corresponds to slot 1 in the bridge. Then user can independently
+ * feed different media to/from the speakers/microphones channels, by
+ * connecting them to slot 0 or 1 respectively.
+ *
+ * Here's how the connection looks like:
+ *
+   +-----------+ stereo +-----------------+ 2x mono +-----------+
+   | AUDIO DEV |<------>| SPLITCOMB   left|<------->|#0  BRIDGE |
+   +-----------+        |            right|<------->|#1         |
+                        +-----------------+         +-----------+
+ */
 static void stereo_demo()
 {
-    pjmedia_port *conf, *splitter, *ch1;
+    pjmedia_port *conf;
     pj_status_t status;
 
     /* Disable existing sound device */
@@ -4732,27 +4831,28 @@ static void stereo_demo()
 				      2 * conf->info.samples_per_frame,
 				      conf->info.bits_per_sample,
 				      0	    /* options */,
-				      &splitter);
+				      &app_config.sc);
     pj_assert(status == PJ_SUCCESS);
 
     /* Connect channel0 (left channel?) to conference port slot0 */
-    status = pjmedia_splitcomb_set_channel(splitter, 0 /* ch0 */, 
+    status = pjmedia_splitcomb_set_channel(app_config.sc, 0 /* ch0 */, 
 					   0 /*options*/,
 					   conf);
     pj_assert(status == PJ_SUCCESS);
 
     /* Create reverse channel for channel1 (right channel?)... */
     status = pjmedia_splitcomb_create_rev_channel(app_config.pool,
-						  splitter,
+						  app_config.sc,
 						  1  /* ch1 */,
 						  0  /* options */,
-						  &ch1);
+						  &app_config.sc_ch1);
     pj_assert(status == PJ_SUCCESS);
 
     /* .. and register it to conference bridge (it would be slot1
      * if there's no other devices connected to the bridge)
      */
-    status = pjsua_conf_add_port(app_config.pool, ch1, NULL);
+    status = pjsua_conf_add_port(app_config.pool, app_config.sc_ch1, 
+				 &app_config.sc_ch1_slot);
     pj_assert(status == PJ_SUCCESS);
     
     /* Create sound device */
@@ -4766,7 +4866,7 @@ static void stereo_demo()
 
 
     /* Connect the splitter to the sound device */
-    status = pjmedia_snd_port_connect(app_config.snd, splitter);
+    status = pjmedia_snd_port_connect(app_config.snd, app_config.sc);
     pj_assert(status == PJ_SUCCESS);
 
 }
@@ -4899,3 +4999,4 @@ static pj_status_t create_ipv6_media_transports(void)
 
     return pjsua_media_transports_attach(tp, i, PJ_TRUE);
 }
+

@@ -1,4 +1,4 @@
-/* $Id: sip_dialog.c 2860 2009-08-11 18:10:15Z nanang $ */
+/* $Id: sip_dialog.c 3031 2009-12-10 05:16:23Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -854,6 +854,8 @@ PJ_DEF(pj_status_t) pjsip_dlg_try_inc_lock(pjsip_dialog *dlg)
  */
 PJ_DEF(void) pjsip_dlg_dec_lock(pjsip_dialog *dlg)
 {
+    PJ_ASSERT_ON_FAIL(dlg!=NULL, return);
+
     PJ_LOG(6,(dlg->obj_name, "Entering pjsip_dlg_dec_lock(), sess_count=%d", 
 	      dlg->sess_count));
 
@@ -1532,7 +1534,18 @@ void pjsip_dlg_on_rx_request( pjsip_dialog *dlg, pjsip_rx_data *rdata )
 	rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) 
     {
 	status = pjsip_tsx_create_uas(dlg->ua, rdata, &tsx);
-	PJ_ASSERT_ON_FAIL(status==PJ_SUCCESS,{goto on_return;});
+	if (status != PJ_SUCCESS) {
+	    /* Once case for this is when re-INVITE contains same
+	     * Via branch value as previous INVITE (ticket #965).
+	     */
+	    char errmsg[PJ_ERR_MSG_SIZE];
+	    pj_str_t reason;
+
+	    reason = pj_strerror(status, errmsg, sizeof(errmsg));
+	    pjsip_endpt_respond_stateless(dlg->endpt, rdata, 500, &reason,
+					  NULL, NULL);
+	    goto on_return;
+	}
 
 	/* Put this dialog in the transaction data. */
 	tsx->mod_data[dlg->ua->id] = dlg;

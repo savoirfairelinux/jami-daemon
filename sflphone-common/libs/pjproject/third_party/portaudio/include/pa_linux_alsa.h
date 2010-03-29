@@ -2,7 +2,7 @@
 #define PA_LINUX_ALSA_H
 
 /*
- * $Id: pa_linux_alsa.h 1337 2008-02-15 07:32:09Z rossb $
+ * $Id: pa_linux_alsa.h 1414 2009-05-24 17:02:10Z aknudsen $
  * PortAudio Portable Real-Time Audio Library
  * ALSA-specific extensions
  *
@@ -86,6 +86,11 @@ PaError PaAlsa_GetStreamOutputCard( PaStream *s, int *card );
  * @param numPeriods The number of periods.
  */
 PaError PaAlsa_SetNumPeriods( int numPeriods );
+
+/** Set the maximum number of times to retry opening busy device (sleeping for a
+ * short interval inbetween).
+ */
+PaError PaAlsa_SetRetriesBusy( int retries );
 
 #ifdef __cplusplus
 }

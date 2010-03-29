@@ -9,6 +9,8 @@ UID			0x0 0xA000000D
 
 SOURCEPATH		..\pjsip-apps\src\symbian_ua
 
+OPTION			ARMCC --gnu
+
 MACRO			PJ_M_I386=1
 MACRO			PJ_SYMBIAN=1
 
@@ -69,7 +71,7 @@ STATICLIBRARY		libresample.lib
 	STATICLIBRARY   eexe.lib ecrt0.lib
 #endif
 
-LIBRARY			esock.lib insock.lib charconv.lib euser.lib estlib.lib commdb.lib apengine.lib 
+LIBRARY			esock.lib insock.lib charconv.lib euser.lib estlib.lib commdb.lib apengine.lib securesocket.lib 
 
 // The default 8KB seems to be insufficient with all bells and
 // whistles turned on

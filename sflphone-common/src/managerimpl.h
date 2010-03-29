@@ -425,6 +425,12 @@ class ManagerImpl {
     void setAccountsOrder (const std::string& order);
 
     /**
+     * Load the accounts order set by the user from the sflphonedrc config file
+     * @return std::vector<std::string> A vector containing the account ID's
+     */
+    std::vector<std::string> loadAccountOrder ();
+
+    /**
      * Retrieve details about a given account
      * @param accountID	  The account identifier
      * @return std::map< std::string, std::string > The account details
@@ -496,37 +502,11 @@ class ManagerImpl {
     void deleteAllCredential(const AccountID& accountID);
     
     /**
-     * Get the list of codecs we supports, not ordered
-     * @return The list of the codecs
-     */
-    std::vector< ::std::string > getCodecList( void );
-
-    /**
-     * Get the info about one codec
-     * Name / Clock rate / bitrate / bandwidth
-     * @param payload The payload of the codec
-     * @return std::vector<::DBus::string> The information
-     */
-    std::vector< ::std::string > getCodecDetails( const int32_t& payload);
-
-    /**
      * Get current codec name
      * @param call id
      * @return std::string The codec name
      */
     std::string getCurrentCodecName(const CallID& id);
-
-    /**
-     * Get a list of supported input audio plugin
-     * @return std::vector<std::string> List of names
-     */
-    std::vector< std::string> getInputAudioPluginList(void);
-
-    /**
-     * Get a list of supported output audio plugin
-     * @return std::vector<std::string> List of names
-     */
-    std::vector< std::string> getOutputAudioPluginList(void);
 
     /**
      * Set input audio plugin
@@ -820,12 +800,6 @@ class ManagerImpl {
      * @return std::vector< ::std::string >  The list of active codecs
      */
     std::vector< ::std::string > getActiveCodecList( void );
-
-    /**
-     * Set the list of the active codecs
-     * @param list  The new list of active codecs
-     */
-    void setActiveCodecList( const std::vector< ::std::string >& list);
 
     /*
      * Notify the client that an error occured
@@ -1244,12 +1218,6 @@ class ManagerImpl {
      */
     short loadAccountMap();
 
-    /**
-     * Load the accounts order set by the user from the sflphonedrc config file
-     * @return std::vector<std::string> A vector containing the account ID's
-     */
-    std::vector<std::string> loadAccountOrder ();
-
 
     /**
      * Unload the account (delete them)
@@ -1331,7 +1299,7 @@ class ManagerImpl {
     // 
     ConferenceMap _conferencemap;
 
-   
+
 
 private:
 

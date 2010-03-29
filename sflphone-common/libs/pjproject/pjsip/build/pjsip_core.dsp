@@ -156,7 +156,12 @@ SOURCE=..\src\pjsip\sip_transport_tcp.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\pjsip\sip_transport_tls.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\pjsip\sip_transport_tls_ossl.c
+# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 

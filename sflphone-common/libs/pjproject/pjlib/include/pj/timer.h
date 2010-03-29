@@ -1,4 +1,4 @@
-/* $Id: timer.h 2512 2009-03-13 15:49:06Z bennylp $ */
+/* $Id: timer.h 3034 2009-12-16 13:30:34Z bennylp $ */
 /* 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,11 +64,7 @@ PJ_BEGIN_DECL
 /**
  * The type for internal timer ID.
  */
-#if defined(PJ_SYMBIAN) && PJ_SYMBIAN!=0
-typedef void *pj_timer_id_t;
-#else
 typedef int pj_timer_id_t;
-#endif
 
 /** 
  * Forward declaration for pj_timer_entry. 

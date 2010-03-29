@@ -36,14 +36,33 @@
 void popup_main_window (void);
 
 /**
- * Create the status icon 
+ * Create the system tray icon
  */
-void show_status_icon();
+void show_status_icon ();
+
+
+/**
+ * Hide the system tray icon
+ */
+void hide_status_icon ();
 
 /**
  * Set the menu active 
  */  
 void status_icon_unminimize();
+
+/**
+ * Show hangup icon 
+ */
+void show_status_hangup_icon();
+
+
+/**
+ * Show hangup icon 
+ */
+void hide_status_hangup_icon();
+
+
 
 /**
  * Tells if the main window if minimized or not
@@ -71,6 +90,11 @@ void status_tray_icon_blink( gboolean active );
  * @return GtkStatusIcon* The status icon
  */
 GtkStatusIcon* get_status_icon( void );
+
+/**
+ * Attach a tooltip to the status icon
+ */
+void statusicon_set_tooltip (void);
 
 #endif // GTK_CHECK_VERSION
 

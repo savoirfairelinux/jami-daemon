@@ -20,7 +20,7 @@
 #include "manager.h"
 
 SamplerateConverter::SamplerateConverter (void)
-        : _frequence (Manager::instance().getConfigInt (AUDIO , ALSA_SAMPLE_RATE)) //44100
+        : _frequence (Manager::instance().getConfigInt (AUDIO , AUDIO_SAMPLE_RATE)) //44100
         , _framesize (Manager::instance().getConfigInt (AUDIO , ALSA_FRAME_SIZE))
         , _floatBufferDownMic (NULL)
         , _floatBufferUpMic (NULL)
@@ -77,8 +77,7 @@ void SamplerateConverter::init (void)
     _src_state_spkr = src_new (SRC_LINEAR, 1, &_src_err);
 
     int nbSamplesMax = (int) (getFrequence() * getFramesize() / 1000);
-    // TODO: fix this hack that make sure we have enought place in buffers to upsample
-    nbSamplesMax = nbSamplesMax*4;
+
     _floatBufferDownMic  = new float32[nbSamplesMax];
     _floatBufferUpMic = new float32[nbSamplesMax];
     _floatBufferDownSpkr  = new float32[nbSamplesMax];
@@ -104,9 +103,8 @@ int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* da
 {
 
     double upsampleFactor = (double) samplerate2 / samplerate1 ;
-    //_debug("factor = %f" , upsampleFactor);
+
     int nbSamplesMax = (int) (samplerate2 * getFramesize() / 1000);
-    nbSamplesMax = nbSamplesMax*4;
 
     if (upsampleFactor != 1 && dataIn != NULL) {
         SRC_DATA src_data;
@@ -136,10 +134,8 @@ int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* 
 {
 
     double downsampleFactor = (double) samplerate1 / samplerate2;
-    //_debug("factor = %f" , downsampleFactor);
-    int nbSamplesMax = (int) (samplerate1 * getFramesize() / 1000);
 
-    nbSamplesMax = nbSamplesMax*4;
+    int nbSamplesMax = (int) (samplerate1 * getFramesize() / 1000);
 
     if (downsampleFactor != 1) {
         SRC_DATA src_data;

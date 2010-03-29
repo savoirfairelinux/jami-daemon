@@ -1,4 +1,4 @@
-/* $Id: pool.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: pool.c 2963 2009-10-24 02:06:40Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -66,9 +66,14 @@ static pj_pool_block *pj_pool_create_block( pj_pool_t *pool, pj_size_t size)
     /* Add capacity. */
     pool->capacity += size;
 
-    /* Set block attribytes. */
-    block->cur = block->buf = ((unsigned char*)block) + sizeof(pj_pool_block);
+    /* Set start and end of buffer. */
+    block->buf = ((unsigned char*)block) + sizeof(pj_pool_block);
     block->end = ((unsigned char*)block) + size;
+
+    /* Set the start pointer, aligning it as needed */
+    block->cur = (unsigned char*)
+                 (((unsigned long)block->buf + PJ_POOL_ALIGNMENT - 1) & 
+                  ~(PJ_POOL_ALIGNMENT - 1));
 
     /* Insert in the front of the list. */
     pj_list_insert_after(&pool->block_list, block);
@@ -111,11 +116,15 @@ PJ_DEF(void*) pj_pool_allocate_find(pj_pool_t *pool, unsigned size)
 
     /* If pool is configured to expand, but the increment size
      * is less than the required size, expand the pool by multiple
-     * increment size
+     * increment size. Also count the size wasted due to aligning
+     * the block.
      */
-    if (pool->increment_size < size + sizeof(pj_pool_block)) {
+    if (pool->increment_size < 
+	    size + sizeof(pj_pool_block) + PJ_POOL_ALIGNMENT) 
+    {
         unsigned count;
-        count = (size + pool->increment_size + sizeof(pj_pool_block)) / 
+        count = (size + pool->increment_size + sizeof(pj_pool_block) +
+                 PJ_POOL_ALIGNMENT) / 
                 pool->increment_size;
         block_size = count * pool->increment_size;
 

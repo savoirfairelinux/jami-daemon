@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +42,8 @@ class PulseLayer : public AudioLayer {
     PulseLayer(ManagerImpl* manager);
     ~PulseLayer(void);
 
+    void openLayer( void );
+    
     bool closeLayer( void );
 
     /**

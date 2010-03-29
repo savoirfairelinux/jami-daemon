@@ -1,10 +1,11 @@
 [Desktop Entry]
-Name=VoIP Client SFLphone
-GenericName=Telephone
+Name=SFLphone
+GenericName=VoIP Client
+X-GNOME-FullName=SFLphone VoIP Client
 Comment=Call and receive calls with SIP or IAX protocols
 Exec=sflphone-client-gnome
 Icon=sflphone.svg
 StartupNotify=true
 Terminal=false
 Type=Application
-Categories=Network;Telephony;
+Categories=Network;Gnome;Telephony;

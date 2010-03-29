@@ -1,4 +1,4 @@
-/* $Id: os_auto.h.in 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: os_auto.h.in 2970 2009-10-26 15:47:52Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -54,6 +54,7 @@
 #undef PJ_HAS_NETINET_IN_SYSTM_H
 #undef PJ_HAS_NETINET_IN_H
 #undef PJ_HAS_NETINET_IP_H
+#undef PJ_HAS_NETINET_TCP_H
 #undef PJ_HAS_NET_IF_H
 #undef PJ_HAS_IFADDRS_H
 #undef PJ_HAS_SEMAPHORE_H
@@ -179,6 +180,12 @@
  * Default: 0 (let OS allocate memory for thread's stack).
  */
 #undef PJ_THREAD_ALLOCATE_STACK
+
+/* SSL socket availability. */
+#ifndef PJ_HAS_SSL_SOCK
+#undef PJ_HAS_SSL_SOCK
+#endif
+
 
 #endif	/* __PJ_COMPAT_OS_AUTO_H__ */
 

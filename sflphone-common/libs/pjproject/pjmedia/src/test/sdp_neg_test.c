@@ -1,4 +1,4 @@
-/* $Id: sdp_neg_test.c 2675 2009-05-06 14:34:13Z bennylp $ */
+/* $Id: sdp_neg_test.c 3014 2009-11-11 04:18:58Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -129,7 +129,7 @@ static struct test
 	    "m=audio 49170 RTP/AVP 0\r\n"
 	    "a=rtpmap:0 PCMU/8000\r\n"
 	    "m=video 0 RTP/AVP 31\r\n"
-	    "a=rtpmap:31 H261/90000\r\n"	/* <-- this is not necessary */
+	    //"a=rtpmap:31 H261/90000\r\n"	/* <-- this is not necessary */
 	    "m=video 53000 RTP/AVP 32\r\n"
 	    "a=rtpmap:32 MPV/90000\r\n"
 	    "m=audio 0 RTP/AVP 110\r\n"

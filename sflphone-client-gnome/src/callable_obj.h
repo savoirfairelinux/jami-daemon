@@ -62,8 +62,7 @@ typedef enum
 /** @enum call_state_t
   * This enum have all the states a call can take.
   */
-typedef enum
-{
+typedef enum {
    CALL_STATE_INVALID = 0,
    CALL_STATE_INCOMING,
    CALL_STATE_RINGING,
@@ -73,16 +72,17 @@ typedef enum
    CALL_STATE_FAILURE,
    CALL_STATE_BUSY,
    CALL_STATE_TRANSFERT,
-   CALL_STATE_RECORD
+   CALL_STATE_RECORD,
 } call_state_t;
 
-typedef enum
-{
-   SRTP_STATE_UNLOCKED = 0,
-   SRTP_STATE_SAS_CONFIRMED,
-   SRTP_STATE_SAS_UNCONFIRMED,
-   SRTP_STATE_SAS_SIGNED,
+typedef enum {
+    SRTP_STATE_UNLOCKED = 0,
+    SRTP_STATE_SDES_SUCCESS,
+    SRTP_STATE_ZRTP_SAS_CONFIRMED,
+    SRTP_STATE_ZRTP_SAS_UNCONFIRMED,
+    SRTP_STATE_ZRTP_SAS_SIGNED,
 } srtp_state_t;
+
 
 /** @struct callable_obj_t
   * @brief Call information.
@@ -105,7 +105,7 @@ typedef struct  {
     gchar* _sas;                    // The Short Authentication String that should be displayed
     gboolean _zrtp_confirmed;       // Override real state. Used for hold/unhold 
                                     // since rtp session is killed each time and 
-                                    // libzrtpcpp does not remember state (yet?).
+                                    // libzrtpcpp does not remember state (yet?)
     /**
      * The information about the person we are talking
      */
@@ -135,8 +135,8 @@ typedef struct  {
      */
     GPtrArray * _error_dialogs;
 
-	/* The audio codec used for this call, if applicable */
-	gchar *_audio_codec;
+    /* The audio codec used for this call, if applicable */
+    gchar *_audio_codec;
 
 } callable_obj_t;
 

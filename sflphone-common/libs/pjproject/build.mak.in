@@ -59,29 +59,29 @@ export APP_LDFLAGS := -L$(PJDIR)/pjlib/lib\
 	-L$(PJDIR)/pjsip/lib\
 	-L$(PJDIR)/third_party/lib\
 	@LDFLAGS@
-export APP_LDLIBS := -lpjsua-sfl-$(TARGET_NAME)\
-	-lpjsip-ua-sfl-$(TARGET_NAME)\
-	-lpjsip-simple-sfl-$(TARGET_NAME)\
-	-lpjsip-sfl-$(TARGET_NAME)\
-	-lpjmedia-codec-sfl-$(TARGET_NAME)\
-	-lpjmedia-sfl-$(TARGET_NAME)\
-	-lpjmedia-audiodev-sfl-$(TARGET_NAME)\
-	-lpjnath-sfl-$(TARGET_NAME)\
-	-lpjlib-util-sfl-$(TARGET_NAME)\
+export APP_LDLIBS := -lpjsua-$(TARGET_NAME)\
+	-lpjsip-ua-$(TARGET_NAME)\
+	-lpjsip-simple-$(TARGET_NAME)\
+	-lpjsip-$(TARGET_NAME)\
+	-lpjmedia-codec-$(TARGET_NAME)\
+	-lpjmedia-$(TARGET_NAME)\
+	-lpjmedia-audiodev-$(TARGET_NAME)\
+	-lpjnath-$(TARGET_NAME)\
+	-lpjlib-util-$(TARGET_NAME)\
 	$(APP_THIRD_PARTY_LIBS)\
-	-lpj-sfl-$(TARGET_NAME)\
+	-lpj-$(TARGET_NAME)\
 	@LIBS@
-export APP_LIB_FILES = $(PJ_DIR)/pjsip/lib/libpjsua-sfl-$(LIB_SUFFIX) \
-	$(PJ_DIR)/pjsip/lib/libpjsip-ua-sfl-$(LIB_SUFFIX) \
-	$(PJ_DIR)/pjsip/lib/libpjsip-simple-sfl-$(LIB_SUFFIX) \
-	$(PJ_DIR)/pjsip/lib/libpjsip-sfl-$(LIB_SUFFIX) \
-	$(PJ_DIR)/pjmedia/lib/libpjmedia-codec-sfl-$(LIB_SUFFIX) \
-	$(PJ_DIR)/pjmedia/lib/libpjmedia-sfl-$(LIB_SUFFIX) \
-	$(PJ_DIR)/pjmedia/lib/libpjmedia-audiodev-sfl-$(LIB_SUFFIX) \
-	$(PJ_DIR)/pjnath/lib/libpjnath-sfl-$(LIB_SUFFIX) \
-	$(PJ_DIR)/pjlib-util/lib/libpjlib-util-sfl-$(LIB_SUFFIX) \
+export APP_LIB_FILES = $(PJ_DIR)/pjsip/lib/libpjsua-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjsip/lib/libpjsip-ua-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjsip/lib/libpjsip-simple-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjsip/lib/libpjsip-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjmedia/lib/libpjmedia-codec-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjmedia/lib/libpjmedia-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjmedia/lib/libpjmedia-audiodev-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjnath/lib/libpjnath-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjlib-util/lib/libpjlib-util-$(LIB_SUFFIX) \
 	$(APP_THIRD_PARTY_LIB_FILES) \
-	$(PJ_DIR)/pjlib/lib/libpj-sfl-$(LIB_SUFFIX)
+	$(PJ_DIR)/pjlib/lib/libpj-$(LIB_SUFFIX)
 
 export PJ_DIR := $(PJDIR)
 export PJ_CC := $(APP_CC)

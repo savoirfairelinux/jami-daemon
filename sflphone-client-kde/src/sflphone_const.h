@@ -246,6 +246,35 @@
 #define CONST_ALSA                        0
 #define CONST_PULSEAUDIO                  1
 
+/** TLS */
+#define TLS_LISTENER_PORT                   "TLS.listenerPort"
+#define TLS_ENABLE                          "TLS.enable"
+#define TLS_PORT                            "TLS.port"
+#define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
+#define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
+#define TLS_PRIVATE_KEY_FILE                "TLS.privateKeyFile"
+#define TLS_PASSWORD                        "TLS.password"
+#define TLS_METHOD                          "TLS.method"
+#define TLS_CIPHERS                         "TLS.ciphers"
+#define TLS_SERVER_NAME                     "TLS.serverName"
+#define TLS_VERIFY_SERVER                   "TLS.verifyServer"
+#define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
+#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
+#define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
+#define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
+#define ACCOUNT_PASSWORD                   "password"
+#define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
+#define ACCOUNT_REALM                      "realm"
+#define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
+#define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
+#define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
+#define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
+#define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
+#define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
+#define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
+#define KEY_EXCHANGE_NONE                  "0"
+#define ZRTP                               "1"
+#define SDES                               "2"
 
 #endif

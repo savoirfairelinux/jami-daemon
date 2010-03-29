@@ -33,12 +33,6 @@
 #include <cstring>
 #include <cerrno>
 
-static uint8 mk[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		      0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-
-static uint8 ms[] = { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-		      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d };
-
 
 namespace sfl
 {
@@ -75,10 +69,11 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo() {
     std::string crypto_suite = sfl::CryptoSuites[_localCryptoSuite].name;
 
     // srtp keys formated as the following  as the following
+    // inline:keyParameters|keylifetime|MasterKeyIdentifier
     // inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32
     std::string srtp_keys = "inline:";
     srtp_keys += getBase64ConcatenatedKeys();
-    srtp_keys.append("|2^20|1:32");
+    // srtp_keys.append("|2^20|1:32");
 
     // generate crypto attribute
     std::string crypto_attr = tag.append(" ");
@@ -95,7 +90,7 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo() {
 
 void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego) {
 
-    _debug("Set remote Cryptographic info for Srtp session");
+    _debug("Set remote Cryptographic info for Srtp");
 
     // decode keys
     unBase64ConcatenatedKeys(nego.getKeyInfo());
@@ -122,12 +117,13 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
 
     memcpy(_localMasterKey, random_key, _localMasterKeyLength);
 
+    /*
     printf("Local Master: ");
     for(int i = 0; i < _localMasterKeyLength; i++){
         printf("%d", _localMasterKey[i]);
     }
     printf("\n");
-
+    */
     return;
 }
 
@@ -180,7 +176,6 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
 void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 {
 
-    
     _remoteMasterKeyLength = sfl::CryptoSuites[1].masterKeyLength / 8;
     _remoteMasterSaltLength = sfl::CryptoSuites[1].masterSaltLength / 8;
 
@@ -203,41 +198,41 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
 
 void AudioSrtpSession::initializeRemoteCryptoContext(void)
 {
+    CryptoSuiteDefinition crypto = sfl::CryptoSuites[_localCryptoSuite];
 
     _remoteCryptoCtx = new ost::CryptoContext(0x0,
-					     0,                           // roc,
-					     0L,                          // keydr,
-					     SrtpEncryptionAESCM,         // encryption algo
-					     SrtpAuthenticationSha1Hmac,  // authtication algo
-					     _remoteMasterKey,            // Master Key
-					     _remoteMasterKeyLength,      // Master Key length
-					     _remoteMasterSalt,           // Master Salt
-					     _remoteMasterSaltLength,     // Master Salt length
-					     128 / 8,                     // encryption keyl
-					     160 / 8,                     // authentication key len
-					     112 / 8,                     // session salt len
-					     80 / 8);                     // authentication tag len
-
+					     0,                               // roc,
+					     0L,                              // keydr,
+					     SrtpEncryptionAESCM,             // encryption algo
+					     SrtpAuthenticationSha1Hmac,      // authtication algo
+					     _remoteMasterKey,            
+					     _remoteMasterKeyLength,      
+					     _remoteMasterSalt,           
+					     _remoteMasterSaltLength,       
+					     crypto.encryptionKeyLength / 8, 
+					     crypto.srtpAuthKeyLength / 8,
+					     112 / 8,                         // session salt len
+					     crypto.srtpAuthTagLength / 8);
     
 }
 
 void AudioSrtpSession::initializeLocalCryptoContext(void)
 {
+    CryptoSuiteDefinition crypto = sfl::CryptoSuites[_localCryptoSuite];
 
     _localCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
-					      0,                           // roc,
-					      0L,                          // keydr,
-					      SrtpEncryptionAESCM,         // encryption algo
-					      SrtpAuthenticationSha1Hmac,  // authtication algo
-					      _localMasterKey,             // Master Key
-					      _localMasterKeyLength,       // Master Key length
-					      _localMasterSalt,            // Master Salt
-					      _localMasterSaltLength,      // Master Salt length
-					      128 / 8,                     // encryption keyl
-					      160 / 8,                     // authentication key len
-					      112 / 8,                     // session salt len
-					      80 / 8);                     // authentication tag len
-
+					      0,                               // roc,
+					      0L,                              // keydr,
+					      SrtpEncryptionAESCM,             // encryption algo
+					      SrtpAuthenticationSha1Hmac,      // authtication algo
+					      _localMasterKey,             
+					      _localMasterKeyLength,       
+					      _localMasterSalt,            
+					      _localMasterSaltLength,      
+					      crypto.encryptionKeyLength / 8,
+					      crypto.srtpAuthKeyLength / 8,
+					      112 / 8,                         // session salt len
+					      crypto.srtpAuthTagLength / 8);
 
 }
 

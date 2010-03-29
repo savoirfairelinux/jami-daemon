@@ -22,6 +22,10 @@
 #include <sflphone_const.h>
 #include <time.h>
 
+#define UNIX_DAY			86400
+#define UNIX_WEEK			86400 * 6
+#define UNIX_TWO_DAYS		86400 * 2
+
 gint is_callID_callstruct ( gconstpointer a, gconstpointer b)
 {
     callable_obj_t * c = (callable_obj_t*)a;
@@ -89,7 +93,7 @@ gchar* call_get_audio_codec (callable_obj_t *obj)
 	if (obj)
 	{
 		audio_codec = dbus_get_current_codec_name (obj);	
-		codec = codec_list_get_by_name (audio_codec);
+		codec = codec_list_get_by_name (audio_codec, NULL);
 		if (codec){
 			samplerate = codec->sample_rate;
 			format = g_markup_printf_escaped ("%s/%i", audio_codec, samplerate);
@@ -356,19 +360,35 @@ gchar* get_history_id_from_state (history_state_t state)
     }
 }
 
-gchar* get_formatted_start_timestamp (callable_obj_t *obj)
-{ 
+gchar* get_formatted_start_timestamp (callable_obj_t *obj) { 
+	
     struct tm* ptr;
-    time_t lt;
+    time_t lt, now;
     unsigned char str[100];
 
     if (obj)
     {
+		// Fetch the current timestamp
+		(void) time (&now);
         lt = obj->_time_start;
-        ptr = localtime(&lt);
+
+        ptr = localtime (&lt);
+
+		if (now - lt < UNIX_WEEK) {
+			if (now-lt < UNIX_DAY) {
+				strftime((char *)str, 100, N_("today at %R"), (const struct tm *)ptr);
+			} else {
+				if (now - lt < UNIX_TWO_DAYS) {
+					strftime((char *)str, 100, N_("yesterday at %R"), (const struct tm *)ptr);
+				} else {
+					strftime((char *)str, 100, N_("%A at %R"), (const struct tm *)ptr);
+				}
+			}
+		} else {
+			strftime((char *)str, 100, N_("%x at %R"), (const struct tm *)ptr);
+		}
 
         // result function of the current locale
-        strftime((char *)str, 100, "%x %X", (const struct tm *)ptr);
         return g_markup_printf_escaped("\n%s\n" , str);
     }
     return "";

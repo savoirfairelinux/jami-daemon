@@ -87,7 +87,7 @@ class Sdp {
         /*
          * Build the local SDP offer
          */
-        int create_local_offer( );
+        int create_local_offer (CodecOrder selectedCodecs);
 
         /*
          * Build the sdp media section
@@ -114,7 +114,7 @@ class Sdp {
          * On building an invite outside a dialog, build the local offer and create the
          * SDP negociator instance with it.
          */
-        int create_initial_offer( );
+        int create_initial_offer (CodecOrder selectedCodecs);
 
          /*
          * On receiving an invite outside a dialog, build the local offer and create the
@@ -122,7 +122,7 @@ class Sdp {
          *
          * @param remote    The remote offer
          */
-        int receiving_initial_offer( pjmedia_sdp_session* remote );
+        int receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder selectedCodecs);
         
         /*
          * On receiving a message, check if it contains SDP and negotiate. Should be used for
@@ -166,10 +166,7 @@ class Sdp {
          * @return pj_status_t  0 on success
          *                      1 otherwise
          */
-        pj_status_t start_negociation( void ){
-            return pjmedia_sdp_neg_negotiate(
-                       _pool, _negociator, 0);
-        }
+        pj_status_t start_negociation( void );
 
          /*
          * Retrieve the negociated sdp offer from the sip payload.
@@ -197,7 +194,7 @@ class Sdp {
          * Set remote's IP addr. [not protected]
          * @param ip  The remote IP address
          */
-        void set_remote_ip(const std::string& ip)    { _remote_ip_addr = ip; }
+        void set_remote_ip(const std::string& ip) { _remote_ip_addr = ip; }
         
         /** 
          * Return IP of destination [mutex protected]
@@ -221,7 +218,7 @@ class Sdp {
 
         std::vector<sdpMedia*> get_session_media_list (void) { return _session_media; }
 
-	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
+        void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
 
     private:
         /** Codec Map */
@@ -253,18 +250,18 @@ class Sdp {
         /** Local audio port */
         int _local_extern_audio_port;
 
-        /** Remote's audio port */
+        /** Remote audio port */
         unsigned int _remote_audio_port;
 
         std::string _zrtp_hello_hash;
 
-	/** "a=crypto" sdes local attributes obtained from AudioSrtpSession */
-	std::vector<std::string> _srtp_crypto;
+        /** "a=crypto" sdes local attributes obtained from AudioSrtpSession */
+        std::vector<std::string> _srtp_crypto;
         
         Sdp(const Sdp&); //No Copy Constructor
         Sdp& operator=(const Sdp&); //No Assignment Operator
 
-        void set_local_media_capabilities ();
+        void set_local_media_capabilities (CodecOrder selectedCodecs);
 
         /*
          *  Mandatory field: Origin ("o=")
@@ -350,12 +347,12 @@ class Sdp {
         void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
 	
-	/* 
+        /*
          * Adds a sdes attribute to the given media section.
          *
          * @param media The media to add the srtp attribute to 
-	 */
-	void sdp_add_sdes_attribute(std::vector<std::string>& crypto);
+         */
+        void sdp_add_sdes_attribute(std::vector<std::string>& crypto);
 
         /* 
          * Adds a zrtp-hash  attribute to 

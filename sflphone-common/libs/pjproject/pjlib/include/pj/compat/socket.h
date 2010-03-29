@@ -1,4 +1,4 @@
-/* $Id: socket.h 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: socket.h 2962 2009-10-24 00:00:40Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -102,6 +102,11 @@
 #if defined(PJ_HAS_NETINET_IP_H) && PJ_HAS_NETINET_IP_H != 0
 /* To pull in IPTOS_* constants */
 #  include <netinet/ip.h>
+#endif
+
+#if defined(PJ_HAS_NETINET_TCP_H) && PJ_HAS_NETINET_TCP_H != 0
+/* To pull in TCP_NODELAY constants */
+#  include <netinet/tcp.h>
 #endif
 
 #if defined(PJ_HAS_NET_IF_H) && PJ_HAS_NET_IF_H != 0

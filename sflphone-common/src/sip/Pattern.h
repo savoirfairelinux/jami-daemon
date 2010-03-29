@@ -143,10 +143,8 @@ namespace sfl  {
 	  * Get the start position of the specified match.
 	  * 
 	  * @param groupName The capturing group name.
-	  * 
-	  * @return the start position of the specified match.  
 	  */
-	 size_t start(const std::string& groupName) const;
+	 void start(const std::string& groupName) const;
 			
 	 /**
 	  * Get the end position of the overall match.
@@ -171,7 +169,7 @@ namespace sfl  {
 	  * 
 	  * @return the end position of the specified match.  
 	  */			
-	 size_t end(const std::string& groupName) const;
+	 void end(const std::string& groupName) const;
 			
 	 /**
 	  * Get the number of capturing groups in the 

@@ -1,4 +1,4 @@
-/* $Id: passthrough.c 2834 2009-07-15 17:55:16Z nanang $ */
+/* $Id: passthrough.c 2997 2009-11-09 08:49:32Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -719,6 +719,8 @@ static pj_status_t codec_open( pjmedia_codec *codec,
 #endif
 
 #if PJMEDIA_HAS_PASSTHROUGH_CODEC_ILBC
+    /* Init iLBC settings */
+    if (desc->pt == PJMEDIA_RTP_PT_ILBC)
     {
 	enum { DEFAULT_MODE = 30 };
 	static pj_str_t STR_MODE = {"mode", 4};
@@ -915,7 +917,9 @@ static pj_status_t codec_decode( pjmedia_codec *codec,
 				 struct pjmedia_frame *output)
 {
     codec_private_t *codec_data = (codec_private_t*) codec->codec_data;
+#if PJMEDIA_HAS_PASSTHROUGH_CODEC_AMR
     struct codec_desc *desc = &codec_desc[codec_data->codec_idx];
+#endif
     pjmedia_frame_ext *output_ = (pjmedia_frame_ext*) output;
 
     pj_assert(input);
@@ -960,7 +964,6 @@ static pj_status_t codec_recover( pjmedia_codec *codec,
 				  struct pjmedia_frame *output)
 {
     codec_private_t *codec_data = (codec_private_t*) codec->codec_data;
-    struct codec_desc *desc = &codec_desc[codec_data->codec_idx];
     pjmedia_frame_ext *output_ = (pjmedia_frame_ext*) output;
 
     PJ_UNUSED_ARG(output_buf_len);

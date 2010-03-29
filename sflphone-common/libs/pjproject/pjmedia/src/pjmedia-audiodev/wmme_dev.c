@@ -1,4 +1,4 @@
-/* $Id: wmme_dev.c 2841 2009-07-18 09:21:09Z bennylp $ */
+/* $Id: wmme_dev.c 2941 2009-10-13 11:19:57Z nanang $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -283,7 +283,15 @@ static pj_status_t factory_init(pjmedia_aud_dev_factory *f)
 
     if (devCount==0) {
 	PJ_LOG(4,(THIS_FILE, "WMME found no sound devices"));
+	/* Enabling this will cause pjsua-lib initialization to fail when there
+	 * is no sound device installed in the system, even when pjsua has been
+	 * run with --null-audio. Moreover, it might be better to think that
+	 * the WMME backend initialization is successfull, regardless there is
+	 * no audio device installed, as later application can check it using 
+	 * get_dev_count().
 	return PJMEDIA_EAUD_NODEV;
+	 */
+	return PJ_SUCCESS;
     }
 
     wf->dev_info = (struct wmme_dev_info*)
@@ -450,7 +458,7 @@ static pj_status_t init_waveformatex(LPWAVEFORMATEX wfx,
 				     const pjmedia_aud_param *prm)
 {
 
-    pj_bzero(wfx, sizeof(PCMWAVEFORMAT)); 
+    pj_bzero(wfx, sizeof(WAVEFORMATEX));
     if (prm->ext_fmt.id == PJMEDIA_FORMAT_L16) {
 	enum { BYTES_PER_SAMPLE = 2 };
 	wfx->wFormatTag = WAVE_FORMAT_PCM; 

@@ -33,7 +33,7 @@
 #include <vector>
 #include "logger.h"
 
-#define SFLPHONED_VERSION "0.9.6"		/** Version number */
+#define SFLPHONED_VERSION "0.9.8~beta"		/** Version number */
 
 #define HOMEDIR					(getenv ("HOME"))				/** Home directory */
 #define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
@@ -130,6 +130,35 @@ static const SOUND_FORMAT INT32 = 0x8;
 
 #define HOOK_DEFAULT_SIP_FIELD      "X-sflphone-url"
 #define HOOK_DEFAULT_URL_COMMAND    "x-www-browser"
+
+/** Enumeration that contains known audio payloads */
+typedef enum {
+  // http://www.iana.org/assignments/rtp-parameters
+  // http://www.gnu.org/software/ccrtp/doc/refman/html/formats_8h.html#a0
+  // 0 PCMU A 8000 1 [RFC3551]
+  PAYLOAD_CODEC_ULAW = 0, 
+  // 3 GSM  A 8000 1 [RFC3551]
+  PAYLOAD_CODEC_GSM = 3,
+  // 8 PCMA A 8000 1 [RFC3551]
+  PAYLOAD_CODEC_ALAW = 8,
+  // 9 G722 A 8000 1 [RFC3551]
+  PAYLOAD_CODEC_G722 = 9,
+  // http://www.ietf.org/rfc/rfc3952.txt
+  // 97 iLBC/8000
+  PAYLOAD_CODEC_ILBC_20 = 97,
+  PAYLOAD_CODEC_ILBC_30 = 98,
+  // http://www.speex.org/drafts/draft-herlein-speex-rtp-profile-00.txt
+  //  97 speex/8000
+  // http://support.xten.com/viewtopic.php?p=8684&sid=3367a83d01fdcad16c7459a79859b08e
+  // 100 speex/16000
+  PAYLOAD_CODEC_SPEEX_8000 = 110,
+  PAYLOAD_CODEC_SPEEX_16000 = 111,
+  PAYLOAD_CODEC_SPEEX_32000 = 112
+} AudioCodecType;
+
+/** The struct to reflect the order the user wants to use the codecs */
+typedef std::vector<AudioCodecType> CodecOrder;
+
 
 
 #endif	// __GLOBAL_H__

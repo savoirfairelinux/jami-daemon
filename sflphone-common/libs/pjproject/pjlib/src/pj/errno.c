@@ -1,4 +1,4 @@
-/* $Id: errno.c 2394 2008-12-23 17:27:53Z bennylp $ */
+/* $Id: errno.c 2992 2009-11-09 04:09:13Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -18,8 +18,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 #include <pj/errno.h>
+#include <pj/log.h>
 #include <pj/string.h>
 #include <pj/compat/string.h>
+#include <pj/compat/stdarg.h>
 #include <pj/assert.h>
 
 /* Prototype for platform specific error message, which will be defined 
@@ -195,4 +197,114 @@ PJ_DEF(pj_str_t) pj_strerror( pj_status_t statcode,
 
     return errstr;
 }
+
+#if PJ_LOG_MAX_LEVEL >= 1
+static void invoke_log(const char *sender, int level, const char *format, ...)
+{
+    va_list arg;
+    va_start(arg, format);
+    pj_log(sender, level, format, arg);
+    va_end(arg);
+}
+
+static void pj_perror_imp(int log_level, const char *sender, 
+			  pj_status_t status,
+		          const char *title_fmt, va_list marker)
+{
+    char titlebuf[PJ_PERROR_TITLE_BUF_SIZE];
+    char errmsg[PJ_ERR_MSG_SIZE];
+    int len;
+
+    /* Build the title */
+    len = pj_ansi_vsnprintf(titlebuf, sizeof(titlebuf), title_fmt, marker);
+    if (len < 0 || len >= sizeof(titlebuf))
+	pj_ansi_strcpy(titlebuf, "Error");
+
+    /* Get the error */
+    pj_strerror(status, errmsg, sizeof(errmsg));
+
+    /* Send to log */
+    invoke_log(sender, log_level, "%s: %s", titlebuf, errmsg);
+}
+
+PJ_DEF(void) pj_perror(int log_level, const char *sender, pj_status_t status,
+		       const char *title_fmt, ...)
+{
+    va_list marker;
+    va_start(marker, title_fmt);
+    pj_perror_imp(log_level, sender, status, title_fmt, marker);
+    va_end(marker);
+}
+
+PJ_DEF(void) pj_perror_1(const char *sender, pj_status_t status,
+			 const char *title_fmt, ...)
+{
+    va_list marker;
+    va_start(marker, title_fmt);
+    pj_perror_imp(1, sender, status, title_fmt, marker);
+    va_end(marker);
+}
+
+#else /* #if PJ_LOG_MAX_LEVEL >= 1 */
+PJ_DEF(void) pj_perror(int log_level, const char *sender, pj_status_t status,
+		       const char *title_fmt, ...)
+{
+}
+#endif	/* #if PJ_LOG_MAX_LEVEL >= 1 */
+
+
+#if PJ_LOG_MAX_LEVEL >= 2
+PJ_DEF(void) pj_perror_2(const char *sender, pj_status_t status,
+			 const char *title_fmt, ...)
+{
+    va_list marker;
+    va_start(marker, title_fmt);
+    pj_perror_imp(2, sender, status, title_fmt, marker);
+    va_end(marker);
+}
+#endif
+
+#if PJ_LOG_MAX_LEVEL >= 3
+PJ_DEF(void) pj_perror_3(const char *sender, pj_status_t status,
+			 const char *title_fmt, ...)
+{
+    va_list marker;
+    va_start(marker, title_fmt);
+    pj_perror_imp(3, sender, status, title_fmt, marker);
+    va_end(marker);
+}
+#endif
+
+#if PJ_LOG_MAX_LEVEL >= 4
+PJ_DEF(void) pj_perror_4(const char *sender, pj_status_t status,
+			 const char *title_fmt, ...)
+{
+    va_list marker;
+    va_start(marker, title_fmt);
+    pj_perror_imp(4, sender, status, title_fmt, marker);
+    va_end(marker);
+}
+#endif
+
+#if PJ_LOG_MAX_LEVEL >= 5
+PJ_DEF(void) pj_perror_5(const char *sender, pj_status_t status,
+			 const char *title_fmt, ...)
+{
+    va_list marker;
+    va_start(marker, title_fmt);
+    pj_perror_imp(5, sender, status, title_fmt, marker);
+    va_end(marker);
+}
+#endif
+
+#if PJ_LOG_MAX_LEVEL >= 6
+PJ_DEF(void) pj_perror_6(const char *sender, pj_status_t status,
+			 const char *title_fmt, ...)
+{
+    va_list marker;
+    va_start(marker, title_fmt);
+    pj_perror_imp(6, sender, status, title_fmt, marker);
+    va_end(marker);
+}
+#endif
 

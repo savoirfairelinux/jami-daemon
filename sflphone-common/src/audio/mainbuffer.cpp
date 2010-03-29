@@ -563,7 +563,7 @@ void MainBuffer::stateInfo()
             iter_call_id++;
         }
 
-        _debug ("%s\n", dbg_str.c_str());
+        _debug ("%s", dbg_str.c_str());
 
         iter_call++;
     }
@@ -597,7 +597,7 @@ void MainBuffer::stateInfo()
             }
         }
 
-        _debug ("%s\n", dbg_str.c_str());
+        _debug ("%s", dbg_str.c_str());
 
         iter_buffer++;
     }

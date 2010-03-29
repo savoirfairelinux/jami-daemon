@@ -54,6 +54,9 @@ typedef enum RegistrationState {
 
 #define AccountNULL ""
 
+// Account identifier                       
+#define ACCOUNT_ID                          "Account.id"
+
 // Common account parameters
 #define CONFIG_ACCOUNT_TYPE                 "Account.type"  
 #define CONFIG_ACCOUNT_ALIAS                "Account.alias"
@@ -62,6 +65,7 @@ typedef enum RegistrationState {
 #define CONFIG_ACCOUNT_RESOLVE_ONCE         "Account.resolveOnce"
 #define CONFIG_ACCOUNT_REGISTRATION_EXPIRE  "Account.expire"
 #define CONFIG_CREDENTIAL_NUMBER            "Credential.count"
+#define ACCOUNT_DTMF_TYPE                   "Account.dtmfType"
 
 #define HOSTNAME                            "hostname"
 #define USERNAME                            "username"
@@ -69,6 +73,7 @@ typedef enum RegistrationState {
 #define PASSWORD                            "password"
 #define REALM                               "realm"
 #define DEFAULT_REALM                       "*"
+#define USERAGENT							"useragent"
 
 #define LOCAL_INTERFACE                     "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
@@ -88,11 +93,13 @@ typedef enum RegistrationState {
 #define SRTP_ENABLE                         "SRTP.enable"
 #define SRTP_KEY_EXCHANGE                   "SRTP.keyExchange"
 #define SRTP_ENCRYPTION_ALGO                "SRTP.encryptionAlgorithm"  // Provided by ccRTP,0=NULL,1=AESCM,2=AESF8 
+#define SRTP_RTP_FALLBACK                   "SRTP.rtpFallback"
 #define ZRTP_HELLO_HASH                     "ZRTP.helloHashEnable"
 #define ZRTP_DISPLAY_SAS                    "ZRTP.displaySAS"
 #define ZRTP_NOT_SUPP_WARNING               "ZRTP.notSuppWarning"
 #define ZRTP_DISPLAY_SAS_ONCE               "ZRTP.displaySasOnce"
 
+#define TLS_LISTENER_PORT                   "TLS.listenerPort"
 #define TLS_ENABLE                          "TLS.enable"
 #define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
 #define TLS_CERTIFICATE_FILE                "TLS.certificateFile"
@@ -110,6 +117,7 @@ typedef enum RegistrationState {
 #define REGISTRATION_STATUS                 "Status"
 #define REGISTRATION_STATE_CODE             "Registration.code" 
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
+
 
 class Account{
 
@@ -207,6 +215,14 @@ class Account{
 
         inline std::string getType( void ) { return _type; }
         inline void setType( std::string type ) { _type = type; }
+	
+		/**
+		 * Accessor to data structures
+		 * @return CodecOrder& The list that reflects the user's choice
+		 */
+		inline CodecOrder& getActiveCodecs() { return _codecOrder; }
+
+		void setActiveCodecs (const std::vector <std::string>& list);
 
     private:
         // copy constructor
@@ -214,6 +230,8 @@ class Account{
 
         // assignment operator
         Account& operator=(const Account& rh);
+
+		void loadAudioCodecs (void);
 
     protected:
         /**
@@ -270,6 +288,11 @@ class Account{
          * This is a protocol Code:Description pair. 
          */
         std::pair<int, std::string> _registrationStateDetailed;
+
+		/**
+		 * Vector containing the order of the codecs
+		 */
+		CodecOrder _codecOrder;
 
 };
 

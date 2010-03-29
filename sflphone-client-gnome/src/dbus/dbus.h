@@ -227,13 +227,13 @@ gchar** dbus_default_codec_list();
  * ConfigurationManager - Get the list of the codecs used for media negociation
  * @return gchar** The list of codecs
  */
-gchar** dbus_get_active_codec_list( void );
+gchar** dbus_get_active_codec_list (gchar *accountID);
 
 /**
  * ConfigurationManager - Set the list of codecs used for media negociation
  * @param list The list of codecs
  */
-void dbus_set_active_codec_list( const gchar** list );
+void dbus_set_active_codec_list (const gchar** list, const gchar*);
 
 /**
  * CallManager - return the codec name
@@ -597,5 +597,19 @@ gchar** dbus_get_supported_tls_method();
 
 gchar** dbus_get_participant_list (const char * confID);
 
+guint dbus_get_window_width (void);
+guint dbus_get_window_height (void);
+void dbus_set_window_height (const guint height);
+void dbus_set_window_width (const guint width);
+guint dbus_get_window_position_x (void);
+guint dbus_get_window_position_y (void);
+void dbus_set_window_position_x (const guint posx);
+void dbus_set_window_position_y (const guint posy);
+
+GHashTable* dbus_get_shortcuts(void);
+void dbus_set_shortcuts(GHashTable * shortcuts);
+
+void dbus_enable_status_icon (const gchar*);
+gchar* dbus_is_status_icon_enabled (void);
 
 #endif

@@ -43,21 +43,26 @@
 #define c_(COMMENT,STRING)    gettext(STRING) 
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
-
+#define IP2IP	"IP2IP"
 
 /** Warnings unused variables **/
 #define UNUSED_VAR(var)      (void*)var
 
 #define UNUSED  __attribute__((__unused__))
 
+#define IP2IP_PROFILE                      "IP2IP"
+
+#define ACCOUNT_ID                         "Account.id"
 #define ACCOUNT_TYPE                       "Account.type"
 #define ACCOUNT_ALIAS		           "Account.alias"
 #define ACCOUNT_ENABLED		           "Account.enable"
 #define ACCOUNT_MAILBOX		           "Account.mailbox"
+#define ACCOUNT_USERAGENT	           "useragent"
 #define ACCOUNT_RESOLVE_ONCE               "Account.resolveOnce"
 #define ACCOUNT_REGISTRATION_EXPIRE        "Account.expire"
 #define ACCOUNT_SIP_STUN_SERVER	           "STUN.server"
 #define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
+#define ACCOUNT_DTMF_TYPE                   "Account.dtmfType"
 #define ACCOUNT_HOSTNAME                   "hostname"
 #define ACCOUNT_USERNAME                   "username"
 #define ACCOUNT_PASSWORD                   "password"
@@ -65,6 +70,7 @@
 #define ACCOUNT_REALM                      "realm"
 #define ACCOUNT_KEY_EXCHANGE               "SRTP.keyExchange"
 #define ACCOUNT_SRTP_ENABLED               "SRTP.enable"
+#define ACCOUNT_SRTP_RTP_FALLBACK          "SRTP.rtpFallback"
 #define ACCOUNT_ZRTP_DISPLAY_SAS           "ZRTP.displaySAS"
 #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
 #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
@@ -73,6 +79,7 @@
 #define ZRTP                               "1"
 #define SDES                               "2"
 
+#define TLS_LISTENER_PORT                   "TLS.listenerPort"
 #define TLS_ENABLE                          "TLS.enable"
 #define TLS_PORT                            "TLS.port"
 #define TLS_CA_LIST_FILE                    "TLS.certificateListFile"
@@ -128,6 +135,10 @@ log4c_category_t* log4c_sfl_gtk_category;
 /** Audio Managers */
 #define ALSA	      0
 #define PULSEAUDIO    1
+
+ /** DTMF type */
+#define OVERRTP "overrtp"
+#define SIPINFO "sipinfo"
 
 /** Notification levels */
 #define __NOTIF_LEVEL_MIN     0

@@ -78,7 +78,7 @@ private slots:
 	void on_button_accountRemove_clicked();
 	void on_edit1_alias_textChanged(const QString & text);
 	void on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous );
-	//void on_toolButton_accountsApply_clicked();
+// 	//void on_toolButton_accountsApply_clicked(); //Disabled for future removal
 	void updateAccountStates();
 	void addAccountToAccountList(Account * account);
 	void updateAccountListCommands();

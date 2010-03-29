@@ -202,13 +202,21 @@
     <method name="requestGoClear">
         <arg type="s" name="callID" direction="in"/>
     </method>
-    
-         <signal name="secureOn">
+
+    <signal name="secureSdesOn">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
+
+    <signal name="secureSdesOff">
+      <arg type="s" name="callID"  direction="out" />
+    </signal>
+
+    <signal name="secureZrtpOn">
       <arg type="s" name="callID"  direction="out" />
       <arg type="s" name="cipher"  direction="out" />
     </signal>
     
-    <signal name="secureOff">
+    <signal name="secureZrtpOff">
       <arg type="s" name="callID"  direction="out" />
     </signal>
     
