@@ -62,7 +62,6 @@ private:
 	DlgAccounts    * dlgAccounts;
 	DlgAudio       * dlgAudio;
 	DlgAddressBook * dlgAddressBook;
-	//DlgRecord      * dlgRecord;
 	DlgHooks       * dlgHooks;
 
 public:

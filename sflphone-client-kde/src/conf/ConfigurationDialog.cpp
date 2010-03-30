@@ -27,7 +27,6 @@
 #include "dlgaccounts.h"
 #include "dlgaudio.h"
 #include "dlgaddressbook.h"
-#include "dlgrecord.h"
 #include "dlghooks.h"
 
 #include "sflphone_const.h"
@@ -42,15 +41,13 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 	dlgAccounts    = new DlgAccounts(this);
 	dlgAudio       = new DlgAudio(this);
 	dlgAddressBook = new DlgAddressBook(this);
-	//dlgRecord      = new DlgRecord(this);
 	dlgHooks       = new DlgHooks(this);
 	
 	addPage( dlgGeneral      , i18n("General")      , "sflphone-client-kde" ); 
 	addPage( dlgDisplay      , i18n("Display")      , "applications-graphics" ); 
 	addPage( dlgAccounts     , i18n("Accounts")     , "personal" ); 
 	addPage( dlgAudio        , i18n("Audio")        , "voicecall" ); 
-	addPage( dlgAddressBook  , i18n("Address Book") , "x-office-address-book" ); 
-	//addPage( dlgRecord       , i18n("Recordings")   , "media-record" ); 
+	addPage( dlgAddressBook  , i18n("Address Book") , "x-office-address-book" );
 	addPage( dlgHooks        , i18n("Hooks")        , "insert-link" );
 	
 	connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));
@@ -89,18 +86,16 @@ void ConfigurationDialog::updateButtons()
 {
 	bool changed = hasChanged();
 	qDebug() << "updateButtons , hasChanged = " << changed;
-// 	if(hasChanged())
-// 		enableButtonApply( true );
 	enableButtonApply( changed );
 }
 
 void ConfigurationDialog::applyCustomSettings()
 {
 	qDebug() << "\napplyCustomSettings";
-// 	if(hasChanged())
-// 	{
-		ConfigurationSkeleton::self()->writeConfig();
-// 	}
+	if(hasChanged())
+	{
+          ConfigurationSkeleton::self()->writeConfig();
+	}
 	updateSettings();
 	updateWidgets();
 	updateButtons();

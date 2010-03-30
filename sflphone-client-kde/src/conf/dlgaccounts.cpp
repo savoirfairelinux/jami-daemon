@@ -233,20 +233,18 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
         account->setAccountDetail(TLS_ENABLE,group_security_tls->isChecked()?"true":"false");
         account->setAccountDetail(TLS_METHOD, QString::number(combo_security_STRP->currentIndex()));
         
-        QStringList test;
-        //QString test2;
+        QStringList _codecList;
         foreach (QString aCodec, keditlistbox_codec->items()) {
           foreach (StringHash _aCodec, codecList) {
             if (_aCodec["alias"] == aCodec) {
-              test << _aCodec["id"];
-              //test2 += _aCodec["id"] + "/";
+              _codecList << _aCodec["id"];
             }
           }
         }
         
         ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-        configurationManager.setActiveCodecList(test, account->getAccountDetail(ACCOUNT_ID));
-        qDebug() << "Account codec have been saved" << test << account->getAccountDetail(ACCOUNT_ID);
+        configurationManager.setActiveCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
+        qDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
 }
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
@@ -543,7 +541,8 @@ void DlgAccounts::updateWidgets()
 	accountListHasChanged = false;
 }
 
-void DlgAccounts::loadCodecList() {
+void DlgAccounts::loadCodecList() 
+{
   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
   QStringList codecIdList = configurationManager.getCodecList();
   QStringList tmpNameList;
@@ -574,7 +573,8 @@ void DlgAccounts::loadCodecList() {
 }
 
 
-void DlgAccounts::codecClicked(const QModelIndex & model) {
+void DlgAccounts::codecClicked(const QModelIndex & model) 
+{
   foreach (StringHash aCodec, codecList) {
     if (aCodec["alias"] == keditlistbox_codec->currentText()) {
       label_bandwidth_value->setText(aCodec["bandwidth"]);
@@ -588,7 +588,8 @@ void DlgAccounts::codecClicked(const QModelIndex & model) {
     keditlistbox_codec->addButton()->setEnabled(true);
 }
 
-void DlgAccounts::addCodec(QString name) {
+void DlgAccounts::addCodec(QString name) 
+{
   if (name.isEmpty()) {
     Private_AddCodecDialog* aDialog = new Private_AddCodecDialog(codecList, keditlistbox_codec->items(), this);
     aDialog->show();
@@ -601,7 +602,8 @@ void DlgAccounts::addCodec(QString name) {
   }
 }
 
-void DlgAccounts::codecChanged() {
+void DlgAccounts::codecChanged() 
+{
   if (keditlistbox_codec->items().size() == codecList.size())
     keditlistbox_codec->addButton()->setEnabled(false);
   else
