@@ -153,12 +153,14 @@
 		
     <method name="getActiveCodecList">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
+          <arg type="s" name="accountID" direction="in"/>
       <arg type="as" name="list" direction="out"/>
     </method>
 		
     <method name="setActiveCodecList">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
       <arg type="as" name="list" direction="in"/>
+      <arg type="s" name="accountID" direction="in"/>
     </method>
 		
 		

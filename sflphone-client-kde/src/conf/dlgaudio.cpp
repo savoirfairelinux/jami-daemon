@@ -36,12 +36,17 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
 	KUrlRequester_ringtone->setMode(KFile::File | KFile::ExistingOnly);
 	KUrlRequester_ringtone->lineEdit()->setObjectName("kcfg_ringtone"); 
 	KUrlRequester_ringtone->lineEdit()->setReadOnly(true); 
+        
+        KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
+        KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
+        KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
+        KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
 	
-	codecTableHasChanged = false;
+	//codecTableHasChanged = false;
 	
 	ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
-	CodecListModel * model = skeleton->getCodecListModel();
-	sortableCodecList->setModel(model);
+	//CodecListModel * model = skeleton->getCodecListModel();
+	//sortableCodecList->setModel(model);
 	
 // 	loadAlsaSettings();
 	connect(box_alsaPlugin,        SIGNAL(activated(int)),   
@@ -50,8 +55,8 @@ DlgAudio::DlgAudio(KConfigDialog *parent)
 	connect(this,                  SIGNAL(updateButtons()),
 	        parent,                SLOT(updateButtons()));
 	
-	connect(sortableCodecList,     SIGNAL(dataChanged()),
-	        this,                  SLOT(codecTableChanged()));
+	//connect(sortableCodecList,     SIGNAL(dataChanged()),
+	        //this,                  SLOT(codecTableChanged()));
 	
 }
 
@@ -64,7 +69,7 @@ void DlgAudio::updateWidgets()
 {
 	loadAlsaSettings();
 	
-	codecTableHasChanged = false;
+	//codecTableHasChanged = false;
 }
 
 
@@ -75,7 +80,7 @@ void DlgAudio::updateSettings()
 	ConfigurationSkeleton * skeleton = ConfigurationSkeleton::self();
 	skeleton->setAlsaPlugin(box_alsaPlugin->currentText());
 	
-	codecTableHasChanged = false;
+	//codecTableHasChanged = false;
 }
 
 bool DlgAudio::hasChanged()
@@ -85,7 +90,7 @@ bool DlgAudio::hasChanged()
 	bool alsaPluginHasChanged = 
 	           skeleton->interface() == ConfigurationSkeleton::EnumInterface::ALSA 
 	       &&  skeleton->alsaPlugin() != box_alsaPlugin->currentText();
-	return alsaPluginHasChanged || codecTableHasChanged;
+	return alsaPluginHasChanged ;//|| codecTableHasChanged;
 }
 
 void DlgAudio::loadAlsaSettings()
@@ -120,9 +125,9 @@ void DlgAudio::loadAlsaSettings()
 	}
 }
 
-void DlgAudio::codecTableChanged()
-{
-	qDebug() << "codecTableChanged";
-	codecTableHasChanged = true;
-	emit updateButtons();
-}
+// void DlgAudio::codecTableChanged()
+// {
+// 	qDebug() << "codecTableChanged";
+// 	codecTableHasChanged = true;
+// 	emit updateButtons();
+// }

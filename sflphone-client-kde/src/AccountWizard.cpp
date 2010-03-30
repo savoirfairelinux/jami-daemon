@@ -171,6 +171,7 @@ AccountWizard::AccountWizard(QWidget * parent)
 	setWindowTitle(i18n("Account creation wizard"));
 	setWindowIcon(QIcon(ICON_SFLPHONE));
 	setMinimumHeight(350);
+        setMinimumWidth(500);
 	setPixmap(QWizard::WatermarkPixmap, QPixmap(ICON_SFLPHONE));
 }
 
@@ -644,6 +645,7 @@ WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
 	checkBox_enableStun = new QCheckBox(i18n("Enable STUN"));
 	label_StunServer = new QLabel(i18n("Stun Server"));
 	lineEdit_StunServer = new QLineEdit();
+        lineEdit_StunServer->setDisabled(true);
 	
 	registerField(FIELD_SIP_ENABLE_STUN, checkBox_enableStun);
 	registerField(FIELD_SIP_STUN_SERVER, lineEdit_StunServer);
@@ -653,6 +655,8 @@ WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
 	layout->addWidget(label_StunServer);
 	layout->addWidget(lineEdit_StunServer);
 	setLayout(layout);
+        
+        connect(checkBox_enableStun, SIGNAL(toggled(bool)), lineEdit_StunServer, SLOT(setEnabled(bool)));
 }
 
 

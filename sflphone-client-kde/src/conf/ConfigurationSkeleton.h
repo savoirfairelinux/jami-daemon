@@ -24,7 +24,7 @@
 #include <QWidget>
 
 #include "kcfg_settings.h"
-#include "CodecListModel.h"
+//#include "CodecListModel.h"
 #include "AccountListModel.h"
 
 /**
@@ -45,7 +45,7 @@ Q_OBJECT
 private:
 	static ConfigurationSkeleton * instance;
 	
-	CodecListModel * codecListModel;
+	//CodecListModel * codecListModel;
 
 public:
 	ConfigurationSkeleton();
@@ -65,10 +65,10 @@ public:
 	
 	static ConfigurationSkeleton * self();
 	
-	QStringList activeCodecList() const;
-	void setActiveCodecList(const QStringList & v);
+	//QStringList activeCodecList() const;
+	//void setActiveCodecList(const QStringList & v);
 	
-	CodecListModel * getCodecListModel();
+	//CodecListModel * getCodecListModel();
 
 };
 

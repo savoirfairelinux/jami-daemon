@@ -39,7 +39,7 @@ public:
     ~DlgAudio();
 
 private:
-	bool codecTableHasChanged;
+	//bool codecTableHasChanged;
 
 public slots:
 	void updateWidgets();
@@ -56,7 +56,7 @@ public slots:
 	void loadAlsaSettings();
 	
 private slots:
-	void codecTableChanged();
+	//void codecTableChanged();
 	
 signals:
 	void updateButtons();

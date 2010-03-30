@@ -27,7 +27,7 @@ ConfigurationSkeleton::ConfigurationSkeleton()
  : ConfigurationSkeletonBase()
 {
 	qDebug() << "Building ConfigurationSkeleton";
-	codecListModel = new CodecListModel();
+	//codecListModel = new CodecListModel();
 	readConfig();
 }
 
@@ -45,10 +45,10 @@ ConfigurationSkeleton::~ConfigurationSkeleton()
 {
 }
 
-CodecListModel * ConfigurationSkeleton::getCodecListModel()
-{
-	return codecListModel;
-}
+// CodecListModel * ConfigurationSkeleton::getCodecListModel()
+// {
+// 	return codecListModel;
+// }
 
 void ConfigurationSkeleton::readConfig()
 {
@@ -105,7 +105,7 @@ void ConfigurationSkeleton::readConfig()
 	}
 
 	//codecs settings
-	setActiveCodecList(configurationManager.getActiveCodecList());
+	//setActiveCodecList(configurationManager.getActiveCodecList()); //Outdated
 
 	qDebug() << "configurationManager.getCurrentAudioOutputPlugin() = " << configurationManager.getCurrentAudioOutputPlugin();
 	setAlsaPlugin(configurationManager.getCurrentAudioOutputPlugin());
@@ -231,8 +231,8 @@ void ConfigurationSkeleton::writeConfig()
 	configurationManager.setRingtoneChoice(ringtone());
 
 	//codecs settings
-	qDebug() << "activeCodecList = " << activeCodecList();
-	configurationManager.setActiveCodecList(activeCodecList());
+	//qDebug() << "activeCodecList = " << activeCodecList();
+	//configurationManager.setActiveCodecList(activeCodecList());
 	
 
 	//alsa settings
@@ -290,12 +290,12 @@ void ConfigurationSkeleton::writeConfig()
 	readConfig();
 }
 
-QStringList ConfigurationSkeleton::activeCodecList() const
-{
-	return codecListModel->getActiveCodecList();
-}
-
-void ConfigurationSkeleton::setActiveCodecList(const QStringList & v)
-{
-	codecListModel->setActiveCodecList(v);
-}
+// QStringList ConfigurationSkeleton::activeCodecList() const
+// {
+// 	return codecListModel->getActiveCodecList();
+// }
+// 
+// void ConfigurationSkeleton::setActiveCodecList(const QStringList & v)
+// {
+// 	codecListModel->setActiveCodecList(v);
+// }

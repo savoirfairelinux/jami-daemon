@@ -43,14 +43,14 @@ SET(	sflphone_client_kde_SRCS
 	conf/dlgdisplay.cpp
 	conf/dlgaccounts.cpp
 	conf/dlgaudio.cpp
-	conf/dlgrecord.cpp
+	#conf/dlgrecord.cpp
 	conf/dlgaddressbook.cpp
 	conf/dlghooks.cpp
 	conf/ConfigurationSkeleton.cpp
 	Dialpad.cpp
 	Codec.cpp
-	CodecListModel.cpp
-	SortableCodecListWidget.cpp
+	#CodecListModel.cpp
+	#SortableCodecListWidget.cpp
 	Item.cpp
 	AccountListModel.cpp
 )

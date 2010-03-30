@@ -2,6 +2,7 @@
  *   Copyright (C) 2009 by Savoir-Faire Linux                              *
  *   Author : Jérémy Quentin                                               *
  *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   emmanuel.lepage@savoirfairelinux.com                                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,10 +24,54 @@
 
 #include <QWidget>
 #include <kconfigdialog.h>
+#include <QTableWidget>
 
 #include "ui_dlgaccountsbase.h"
 #include "Account.h"
 #include "AccountList.h"
+#include <QDebug>
+
+typedef QHash<QString, QString> StringHash; //Needed to fix a Qt foreach macro argument parsing bug
+
+class Private_AddCodecDialog : public KDialog {
+  Q_OBJECT
+  public:
+    Private_AddCodecDialog(QList< StringHash > itemList, QStringList currentItems ,QWidget* parent = 0) : KDialog(parent) {
+      codecTable = new QTableWidget(this);
+      codecTable->verticalHeader()->setVisible(false);
+      codecTable->setColumnCount(5);
+      codecTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+      int i =0;
+      foreach (StringHash aCodec, itemList) {
+        if ( currentItems.indexOf(aCodec["alias"]) == -1) {
+          codecTable->setRowCount(i+1);
+          QTableWidgetItem* cName = new  QTableWidgetItem(aCodec["name"]);
+          codecTable->setItem(i,0,cName);
+          QTableWidgetItem* cBitrate = new  QTableWidgetItem(aCodec["bitrate"]);
+          codecTable->setItem(i,1,cBitrate);
+          QTableWidgetItem* cFrequency = new  QTableWidgetItem(aCodec["frequency"]);
+          codecTable->setItem(i,2,cFrequency);
+          QTableWidgetItem* cBandwidth = new  QTableWidgetItem(aCodec["bandwidth"]);
+          codecTable->setItem(i,3,cBandwidth);
+          QTableWidgetItem* cAlias = new  QTableWidgetItem(aCodec["alias"]);
+          codecTable->setItem(i,4,cAlias);
+          i++;
+        }
+      }
+      setMainWidget(codecTable);
+      resize(400,300);
+      
+      connect(this, SIGNAL(okClicked()), this, SLOT(emitNewCodec()));
+    }
+  private:
+    QTableWidget* codecTable;
+  private slots:
+    void emitNewCodec() {
+      emit addCodec(codecTable->item(codecTable->currentRow(),4)->text());
+    }
+  signals:
+    void addCodec(QString alias);
+};
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
@@ -58,7 +103,9 @@ public:
 	
 private:
 	AccountList * accountList;
+        QList< StringHash > codecList;
 	bool accountListHasChanged;
+        void loadCodecList();
 
 public slots:
 	void saveAccountList();
@@ -84,6 +131,9 @@ private slots:
 	void updateAccountListCommands();
 	void updateStatusLabel(QListWidgetItem * item);
 	void updateStatusLabel(Account * account);
+        void codecClicked(const QModelIndex & model);
+        void addCodec(QString name = "");
+        void codecChanged();
 	
 	
 signals:

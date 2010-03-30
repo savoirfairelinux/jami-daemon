@@ -42,7 +42,7 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 	dlgAccounts    = new DlgAccounts(this);
 	dlgAudio       = new DlgAudio(this);
 	dlgAddressBook = new DlgAddressBook(this);
-	dlgRecord      = new DlgRecord(this);
+	//dlgRecord      = new DlgRecord(this);
 	dlgHooks       = new DlgHooks(this);
 	
 	addPage( dlgGeneral      , i18n("General")      , "sflphone-client-kde" ); 
@@ -50,7 +50,7 @@ ConfigurationDialog::ConfigurationDialog(SFLPhoneView *parent)
 	addPage( dlgAccounts     , i18n("Accounts")     , "personal" ); 
 	addPage( dlgAudio        , i18n("Audio")        , "voicecall" ); 
 	addPage( dlgAddressBook  , i18n("Address Book") , "x-office-address-book" ); 
-	addPage( dlgRecord       , i18n("Recordings")   , "media-record" ); 
+	//addPage( dlgRecord       , i18n("Recordings")   , "media-record" ); 
 	addPage( dlgHooks        , i18n("Hooks")        , "insert-link" );
 	
 	connect(this, SIGNAL(applyClicked()), this,     SLOT(applyCustomSettings()));

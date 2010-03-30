@@ -263,6 +263,7 @@
 #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
+#define ACCOUNT_ID                         "Account.id"
 #define ACCOUNT_PASSWORD                   "password"
 #define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
 #define ACCOUNT_REALM                      "realm"

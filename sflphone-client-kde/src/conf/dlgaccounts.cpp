@@ -2,6 +2,7 @@
  *   Copyright (C) 2009 by Savoir-Faire Linux                              *
  *   Author : Jérémy Quentin                                               *
  *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   emmanuel.lepage@savoirfairelinux.com                                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -26,6 +27,8 @@
 #include "SFLPhoneView.h"
 #include "sflphone_const.h"
 #include "conf/ConfigurationDialog.h"
+#include <vector>
+#include <string>
 
 DlgAccounts::DlgAccounts(KConfigDialog *parent)
  : QWidget(parent)
@@ -39,6 +42,7 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
 	button_accountRemove->setIcon(KIcon("list-remove"));
 	accountList = new AccountList(false);
 	loadAccountList();
+        loadCodecList();
 	accountListHasChanged = false;
 	//toolButton_accountsApply->setEnabled(false);
 	
@@ -100,9 +104,19 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
                 
         connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &)),
                 this,                  SLOT(changedAccountList()));
-	        
-	
+
+
 	connect(this,     SIGNAL(updateButtons()), parent, SLOT(updateButtons()));
+        
+
+        connect(keditlistbox_codec->listView(), SIGNAL(clicked(QModelIndex)),
+                this,                  SLOT(codecClicked(QModelIndex)));
+                
+        connect(keditlistbox_codec->addButton(), SIGNAL(clicked()),
+                this,                  SLOT(addCodec()));
+                
+        connect(keditlistbox_codec, SIGNAL(changed()),
+                this,                  SLOT(codecChanged()));
 }
 
 void DlgAccounts::saveAccountList()
@@ -218,6 +232,21 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
         account->setAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE,check_tls_requier_cert->isChecked()?"true":"false");
         account->setAccountDetail(TLS_ENABLE,group_security_tls->isChecked()?"true":"false");
         account->setAccountDetail(TLS_METHOD, QString::number(combo_security_STRP->currentIndex()));
+        
+        QStringList test;
+        //QString test2;
+        foreach (QString aCodec, keditlistbox_codec->items()) {
+          foreach (StringHash _aCodec, codecList) {
+            if (_aCodec["alias"] == aCodec) {
+              test << _aCodec["id"];
+              //test2 += _aCodec["id"] + "/";
+            }
+          }
+        }
+        
+        ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+        configurationManager.setActiveCodecList(test, account->getAccountDetail(ACCOUNT_ID));
+        qDebug() << "Account codec have been saved" << test << account->getAccountDetail(ACCOUNT_ID);
 }
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
@@ -244,24 +273,6 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 	edit4_user->setText( account->getAccountDetail(ACCOUNT_USERNAME));
 	edit5_password->setText( account->getAccountDetail(ACCOUNT_PASSWORD));
 	edit6_mailbox->setText( account->getAccountDetail(ACCOUNT_MAILBOX));
-// <<<<<<< HEAD
-// 	
-//         //Security
-//         edit_tls_private_key_password_2->setText( account->getAccountDetail(TLS_PASSWORD ));
-//         spinbox_tls_listener_2->setValue( account->getAccountDetail(TLS_LISTENER_PORT ).toInt());
-//         file_tls_authority_2->setText( account->getAccountDetail(TLS_CA_LIST_FILE ));
-//         file_tls_endpoint_2->setText( account->getAccountDetail(TLS_CERTIFICATE_FILE ));
-//         file_tls_private_key_2->setText( account->getAccountDetail(TLS_PRIVATE_KEY_FILE ));
-//         qDebug() << "\n\n\n\nTHIS: " << account->getAccountDetail(TLS_METHOD ) << "\n\n\n";
-//         combo_tls_method_2->setCurrentIndex( combo_tls_method_2->findText(account->getAccountDetail(TLS_METHOD )));
-//         edit_tls_cipher_2->setText( account->getAccountDetail(TLS_CIPHERS ));
-//         edit_tls_outgoing_2->setText( account->getAccountDetail(TLS_SERVER_NAME ));
-//         spinbox_tls_timeout_sec_2->setValue( account->getAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC ).toInt());
-//         spinbox_tls_timeout_msec_2->setValue( account->getAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC ).toInt());
-//         check_tls_incoming_2->setChecked( (account->getAccountDetail(TLS_VERIFY_SERVER ) == "true")?1:0);
-//         check_tls_answer_2->setChecked( (account->getAccountDetail(TLS_VERIFY_CLIENT ) == "true")?1:0);
-//         check_tls_requier_cert_2->setChecked( (account->getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE ) == "true")?1:0);
-// =======
 	checkBox_conformRFC->setChecked( account->getAccountDetail(ACCOUNT_RESOLVE_ONCE) != "TRUE" );
 	bool ok;
 	int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(&ok);
@@ -282,33 +293,41 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
         check_tls_incoming->setChecked( (account->getAccountDetail(TLS_VERIFY_SERVER ) == "true")?1:0);
         check_tls_answer->setChecked( (account->getAccountDetail(TLS_VERIFY_CLIENT ) == "true")?1:0);
         check_tls_requier_cert->setChecked( (account->getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE ) == "true")?1:0);
-// >>>>>>> master
+
         group_security_tls->setChecked( (account->getAccountDetail(TLS_ENABLE ) == "true")?1:0);
         
         combo_security_STRP->setCurrentIndex(account->getAccountDetail(TLS_METHOD ).toInt());
         
+        keditlistbox_codec->clear();
+        ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+        QStringList activeCodecList = configurationManager.getActiveCodecList(account->getAccountDetail(ACCOUNT_ID));
+        foreach (QString aCodec, activeCodecList) {
+          foreach (StringHash _aCodec, codecList) {
+            if (_aCodec["id"] == aCodec)
+              keditlistbox_codec->insertItem(_aCodec["alias"]);
+          }
+        }
         
-// <<<<<<< HEAD
-//	if(protocolIndex == 0) // if sip selected
-//	{
-//		checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == ACCOUNT_ENABLED_TRUE);
-//		edit_stunServer->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
-//		checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == ACCOUNT_ENABLED_TRUE);
-//
-//		tab_advanced->setEnabled(true);
-//		edit_stunServer->setEnabled(checkbox_stun->isChecked());
-//	}
-//	else
-//	{
-//		checkbox_stun->setChecked(false);
-//		edit_stunServer->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
-//		checkbox_zrtp->setChecked(false);
-//
-//		tab_advanced->setEnabled(false);
-//	}
+        
 
-// =======
-// >>>>>>> master
+	if(protocolIndex == 0) // if sip selected
+	{
+		checkbox_stun->setChecked(account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED) == ACCOUNT_ENABLED_TRUE);
+		line_stun->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
+		//checkbox_zrtp->setChecked(account->getAccountDetail(ACCOUNT_SRTP_ENABLED) == ACCOUNT_ENABLED_TRUE);
+
+		tab_advanced->setEnabled(true);
+		line_stun->setEnabled(checkbox_stun->isChecked());
+	}
+	else
+	{
+		checkbox_stun->setChecked(false);
+		line_stun->setText( account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER) );
+		//checkbox_zrtp->setChecked(false);
+
+		tab_advanced->setEnabled(false);
+	}
+
 	updateStatusLabel(account);
 	frame2_editAccounts->setEnabled(true);
 }
@@ -350,7 +369,7 @@ void DlgAccounts::changedAccountList()
 //	if(currentIndex==0)
 //	{
 //		tab_advanced->setEnabled(true);
-//		edit_stunServer->setEnabled(checkbox_stun->isChecked());
+//		line_stun->setEnabled(checkbox_stun->isChecked());
 //	}
 //	else
 //	{
@@ -524,3 +543,70 @@ void DlgAccounts::updateWidgets()
 	accountListHasChanged = false;
 }
 
+void DlgAccounts::loadCodecList() {
+  ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+  QStringList codecIdList = configurationManager.getCodecList();
+  QStringList tmpNameList;
+  
+  foreach (QString aCodec, codecIdList) {
+    QStringList codec = configurationManager.getCodecDetails(aCodec.toInt());
+    QHash<QString, QString> _codec;
+    _codec["name"] = codec[0];
+    _codec["frequency"] = codec[1];
+    _codec["bitrate"] = codec[2];
+    _codec["bandwidth"] = codec[3];
+    _codec["id"] = aCodec;
+    
+    tmpNameList << _codec["name"];
+    
+    codecList.push_back(_codec);
+  }
+  
+  //Generate a relative alias for each codec
+  for (int i =0; i < codecList.size();i++) {
+    if (tmpNameList.indexOf(codecList[i]["name"]) == tmpNameList.lastIndexOf(codecList[i]["name"])) {
+      codecList[i]["alias"] = codecList[i]["name"];
+    }
+    else {
+      codecList[i]["alias"] = codecList[i]["name"] + " (" + codecList[i]["frequency"] + ")";
+    }
+  }
+}
+
+
+void DlgAccounts::codecClicked(const QModelIndex & model) {
+  foreach (StringHash aCodec, codecList) {
+    if (aCodec["alias"] == keditlistbox_codec->currentText()) {
+      label_bandwidth_value->setText(aCodec["bandwidth"]);
+      label_bitrate_value->setText(aCodec["bitrate"]);
+      label_frequency_value->setText(aCodec["frequency"]);
+    }
+  }
+  if (keditlistbox_codec->items().size() == codecList.size())
+    keditlistbox_codec->addButton()->setEnabled(false);
+  else
+    keditlistbox_codec->addButton()->setEnabled(true);
+}
+
+void DlgAccounts::addCodec(QString name) {
+  if (name.isEmpty()) {
+    Private_AddCodecDialog* aDialog = new Private_AddCodecDialog(codecList, keditlistbox_codec->items(), this);
+    aDialog->show();
+    connect(aDialog, SIGNAL(addCodec(QString)), this, SLOT(addCodec(QString)));
+  }
+  else {
+    keditlistbox_codec->insertItem(name);
+    accountListHasChanged = true;
+    emit updateButtons();
+  }
+}
+
+void DlgAccounts::codecChanged() {
+  if (keditlistbox_codec->items().size() == codecList.size())
+    keditlistbox_codec->addButton()->setEnabled(false);
+  else
+    keditlistbox_codec->addButton()->setEnabled(true);
+  
+  accountListHasChanged = true;
+  emit updateButtons();
+}
