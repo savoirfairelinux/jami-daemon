@@ -639,7 +639,9 @@ process_dialing(callable_obj_t * c, guint keyval, gchar * key)
 
 					if (c->_state == CALL_STATE_TRANSFERT)
 					{
-						c->_trsft_to = g_strndup (c->_trsft_to, strlen(c->_trsft_to) - 1);
+                                                // Process backspace if and only if string not NULL
+                                                if(strlen(c->_trsft_to) > 0)
+                                                     c->_trsft_to = g_strndup (c->_trsft_to, strlen(c->_trsft_to) - 1);
 					}
 					else
 					{
