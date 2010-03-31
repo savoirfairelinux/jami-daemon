@@ -297,10 +297,12 @@
 
 	   <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
 		   <tp:docstring>
+				Get the list of available ringtones.
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
+					A list of path.
 			   </tp:docstring>
 		   </arg>
 	   </method>
@@ -327,9 +329,11 @@
 
 	   <method name="isRingtoneEnabled" tp:name-for-bindings="isRingtoneEnabled">
 		   <tp:docstring>
+				Whether or not to play a custom ringtone.
 		   </tp:docstring>
 		   <arg type="i" name="bool" direction="out">
-			   <tp:docstring>
+			   <tp:docstring>	
+					If false, the standart tone is played on incoming calls.
 			   </tp:docstring>
 		   </arg>
 	   </method>
@@ -359,50 +363,60 @@
 
 	   <method name="getAudioManager" tp:name-for-bindings="getAudioManager">
 		   <tp:docstring>
+				Get the current audio manager.
 		   </tp:docstring>
 		   <arg type="i" name="api" direction="out">
 			   <tp:docstring>
+					<ul>
+						<li>0: ALSA </li>
+						<li>1: Pulseaudio </li>
+					</ul>
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setAudioManager" tp:name-for-bindings="setAudioManager">
 		   <tp:docstring>
+				Switch audio manager.
 		   </tp:docstring>
 		   <arg type="i" name="api" direction="in">
 			   <tp:docstring>
+					<p>The ID of the audio manager to use.</p>
+					<p>Refer to <tp:member-ref>getAudioManager</tp:member-ref> for possible values.</p>
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getRecordPath" tp:name-for-bindings="getRecordPath">
 		   <tp:docstring>
+				Get the path where to save the recorded calls.
 		   </tp:docstring>
 		   <arg type="s" name="rec" direction="out">
 			   <tp:docstring>
+					A path.	
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setRecordPath" tp:name-for-bindings="setRecordPath">
 		   <tp:docstring>
+				Change the path where save recorded calls.
 		   </tp:docstring>
 		   <arg type="s" name="rec" direction="in">
 			   <tp:docstring>
+					The new path.
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
-	   <!--      ///////////////////////               -->
-
-	   <!-- Codecs-related methods -->
-
 	   <method name="getCodecList" tp:name-for-bindings="getCodecList">
 		   <tp:docstring>
+				Get the core audio codec capabilities.
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
+					A list of codecs, identified by their RTP payload, delimited by '/'
 			   </tp:docstring>
 		   </arg>
 	   </method>
