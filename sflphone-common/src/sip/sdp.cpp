@@ -97,9 +97,16 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
         // connection, the rtpmap attribute will be useful to specify for which codec it is applicable
         rtpmap.pt = med->desc.fmt[i];
         rtpmap.enc_name = pj_str ( (char*) codec->getCodecName().c_str());
-        rtpmap.clock_rate = codec->getClockRate();
-        // Add the channel number only if different from 1
 
+        // G722 require G722/8000 media description even if it is 16000 codec
+        if(codec->getPayload () == 9) {
+        	  rtpmap.clock_rate = 8000;
+        }
+        else {
+        	rtpmap.clock_rate = codec->getClockRate();
+        }
+
+        // Add the channel number only if different from 1
         if (codec->getChannel() > 1)
             rtpmap.param = pj_str ( (char*) codec->getChannel());
         else
@@ -203,6 +210,10 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder select
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
 
     pj_status_t status;
+
+	if (!remote) {
+		return !PJ_SUCCESS;
+	}
 
     // Create the SDP negociator instance by calling
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
@@ -524,6 +535,19 @@ AudioCodec* Sdp::get_session_media (void)
 }
 
 
+pj_status_t Sdp::start_negociation()
+{
+	pj_status_t status;
+
+	if (_negociator) {
+		status = pjmedia_sdp_neg_negotiate(_pool, _negociator, 0);
+	}
+	else {
+		status = !PJ_SUCCESS;
+	}
+
+	return status;
+}
 
 void Sdp::toString (void)
 {
@@ -641,6 +665,9 @@ void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *r
 
     _info ("SDP: Fetching media from sdp");
 
+    if(!remote_sdp)
+    	return;
+
     pjmedia_sdp_media *r_media;
 
     this->get_remote_sdp_media_from_offer (remote_sdp, &r_media);
@@ -659,6 +686,9 @@ void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *r
 void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)
 {
     int count, i;
+
+    if(!remote_sdp)
+    	return;
 
     count = remote_sdp->media_count;
     *r_media =  NULL;

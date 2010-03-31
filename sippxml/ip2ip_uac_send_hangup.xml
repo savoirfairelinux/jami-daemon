@@ -78,7 +78,7 @@
   <send retrans="500">
     <![CDATA[
 
-      BYE sip:192.168.50.79 SIP/2.0
+      BYE sip:[remote_ip] SIP/2.0
       Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
       From: <sip:[local_ip]:[local_port]>;tag=[call_number]
       To: <sip:[remote_ip]:[remote_port]>;tag=[$1]

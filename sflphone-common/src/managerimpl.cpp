@@ -1430,19 +1430,18 @@ bool ManagerImpl::saveConfig (void) {
 
 //THREAD=Main
 bool ManagerImpl::sendDtmf (const CallID& id, char code) {
+
 	AccountID accountid = getAccountFromCall(id);
-
-	if (accountid == AccountNULL) {
-		playDtmf(code);
-		return false;
-	}
-
-	int sendType = getConfigInt(SIGNALISATION, SEND_DTMF_AS);
 
 	bool returnValue = false;
 
 	playDtmf(code);
-	returnValue = getAccountLink(accountid)->carryingDTMFdigits(id, code);
+
+	CallAccountMap::iterator iter = _callAccountMap.find(id);
+
+	// Make sure the call exist before sending DTMF, ths could be simply call dialing
+	if(iter != _callAccountMap.end())
+		returnValue = getAccountLink(accountid)->carryingDTMFdigits(id, code);
 
 	return returnValue;
 }
