@@ -282,7 +282,7 @@ create_main_window ()
   gtk_widget_hide (waitingLayer);
 
   // Configuration wizard
-  if (account_list_get_size () == 0)
+  if (account_list_get_size () == 1)
     {
 #if GTK_CHECK_VERSION(2,10,0)
       build_wizard ();
