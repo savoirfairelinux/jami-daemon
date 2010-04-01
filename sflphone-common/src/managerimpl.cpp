@@ -220,11 +220,12 @@ void ManagerImpl::switchCall (const CallID& id) {
 
 bool ManagerImpl::outgoingCall (const std::string& account_id,
 		const CallID& call_id, const std::string& to) {
+
 	std::string pattern, to_cleaned;
 	Call::CallConfiguration callConfig;
 	SIPVoIPLink *siplink;
 
-	_debug ("ManagerImpl::outgoingCall(%s)", call_id.c_str());
+	_debug ("Manager: New outgoing call %s", call_id.c_str());
 
 	CallID current_call_id = getCurrentCallId();
 
@@ -258,7 +259,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 	}
 
 	if (callConfig == Call::IPtoIP) {
-		_debug ("    outgoingCall: Start IP to IP call");
+		_debug ("Manager: Start IP to IP call");
 		/* We need to retrieve the sip voiplink instance */
 		siplink = SIPVoIPLink::instance("");
 
@@ -273,16 +274,16 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 	}
 
 	if (!accountExists(account_id)) {
-		_debug ("! Manager Error: Outgoing Call: account doesn't exist");
+		_error ("Manager: Error: Account doesn't exist in new outgoing call");
 		return false;
 	}
 
 	if (getAccountFromCall(call_id) != AccountNULL) {
-		_debug ("! Manager Error: Outgoing Call: call id already exists");
+		_error ("Manager: Error: Call id already exists in outgoing call");
 		return false;
 	}
 
-	_debug ("- Manager Action: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
+	_debug ("Manager: Action: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
 
 	associateCallToAccount(call_id, account_id);
 
@@ -291,7 +292,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 		return true;
 	} else {
 		callFailure(call_id);
-		_debug ("! Manager Error: An error occur, the call was not created");
+		_debug ("Manager: Error: An error occur, the call was not created");
 	}
 
 	return false;
@@ -1784,12 +1785,11 @@ void ManagerImpl::connectionStatusNotification () {
  * Multi Thread
  */
 bool ManagerImpl::playATone (Tone::TONEID toneId) {
-	bool hasToPlayTone;
-	// AudioLoop *audioloop;
-	AudioLayer *audiolayer;
-	// unsigned int nbSamples;
 
-	_debug ("ManagerImpl::playATone");
+	bool hasToPlayTone;
+	AudioLayer *audiolayer;
+
+	// _debug ("Manager: Play tone %d", toneId);
 
 	hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_TONES);
 
@@ -1808,17 +1808,6 @@ bool ManagerImpl::playATone (Tone::TONEID toneId) {
 		_toneMutex.enterMutex();
 		_telephoneTone->setCurrentTone(toneId);
 		_toneMutex.leaveMutex();
-		/*
-		 audioloop = getTelephoneTone();
-		 nbSamples = audioloop->getSize();
-		 SFLDataFormat buf[nbSamples];
-
-
-		 if (audiolayer) {
-		 audiolayer->putUrgent (buf, nbSamples);
-		 } else
-		 return false;
-		 */
 	}
 
 	return true;
@@ -1841,10 +1830,6 @@ void ManagerImpl::stopTone () {
 		_telephoneTone->setCurrentTone(Tone::TONE_NULL);
 	}
 
-	_toneMutex.leaveMutex();
-
-	// for ringing tone..
-	_toneMutex.enterMutex();
 	_audiofile.stop();
 	_toneMutex.leaveMutex();
 }
@@ -1876,8 +1861,6 @@ void ManagerImpl::congestion () {
  * Multi Thread
  */
 void ManagerImpl::ringback () {
-	_debug ("ManagerImpl::ringback");
-
 	playATone(Tone::TONE_RINGTONE);
 }
 
@@ -1885,13 +1868,13 @@ void ManagerImpl::ringback () {
  * Multi Thread
  */
 void ManagerImpl::ringtone () {
-
-	_debug ("Manager: Start ringtone");
 	std::string ringchoice;
 	AudioLayer *audiolayer;
 	AudioCodec *codecForTone;
 	int layer, samplerate;
 	bool loadFile;
+
+	_debug("Manager: Ringtone");
 
 	if (isRingtoneEnabled()) {
 
