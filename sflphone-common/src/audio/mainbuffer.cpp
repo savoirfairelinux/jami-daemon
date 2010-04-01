@@ -146,13 +146,14 @@ bool MainBuffer::removeRingBuffer (CallID call_id)
 
     if (ring_buffer != NULL) {
         if (_ringBufferMap.erase (call_id) != 0) {
+        	delete ring_buffer;
             return true;
         } else {
-            _debug ("removeRingBuffer error while deleting ringbuffer %s!", call_id.c_str());
+            _error ("BufferManager: Error: Fail to delete ringbuffer %s!", call_id.c_str());
             return false;
         }
     } else {
-        _debug ("removeRingBuffer error ringbuffer %s does not exist!", call_id.c_str());
+        _debug ("BufferManager: Error: Ringbuffer %s does not exist!", call_id.c_str());
         return true;
     }
 }
