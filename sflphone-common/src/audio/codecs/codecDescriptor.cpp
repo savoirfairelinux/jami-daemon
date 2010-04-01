@@ -221,8 +221,6 @@ AudioCodec* CodecDescriptor::loadCodec (std::string path) {
 
 void CodecDescriptor::unloadCodec (CodecHandlePointer p) {
 
-	_debug("CodecDescriptor: Unload codec");
-
     using std::cerr;
     destroy_t* destroyCodec = (destroy_t*) dlsym (p.second , "destroy");
 
@@ -250,14 +248,14 @@ AudioCodec* CodecDescriptor::instantiateCodec (AudioCodecType payload) {
             AudioCodec* a = createCodec();
 
             return a;
-
         }
-
         iter++;
     }
 
     return NULL;
 }
+
+
 
 AudioCodec* CodecDescriptor::getFirstCodecAvailable (void) {
 

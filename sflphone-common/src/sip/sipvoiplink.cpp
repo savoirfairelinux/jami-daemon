@@ -3276,14 +3276,14 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 	AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec(pl);
 
 	if (audiocodec == NULL)
-		_error ("SIP: No audiocodec found");
+		_error ("UserAgent: No audiocodec found");
 
 
     try {
         call->setAudioStart (true);
         call->getAudioRtp()->start(audiocodec);
     } catch (exception& rtpException) {
-        _debug ("%s", rtpException.what());
+        _error ("UserAgent: Error: %s", rtpException.what());
     }
 
 }
