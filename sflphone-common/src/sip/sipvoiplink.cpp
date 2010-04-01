@@ -420,6 +420,8 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
 
     std::string addr(pj_inet_ntoa(*((pj_in_addr*)addr_in)));
 
+    close(fd);
+
     return addr;
 }
 
