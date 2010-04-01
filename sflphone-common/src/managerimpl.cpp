@@ -1066,10 +1066,25 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
 
 	_debug ("Manager: Join participants %s, %s", call_id1.c_str(), call_id2.c_str());
 
+
+
 	std::map<std::string, std::string> call1_details = getCallDetails(call_id1);
 	std::map<std::string, std::string> call2_details = getCallDetails(call_id2);
 
 	std::map<std::string, std::string>::iterator iter_details;
+
+	// Test if we have valid call ids
+	iter_details = call1_details.find("PEER_NUMBER");
+	if(iter_details->second == "Unknown") {
+		_error("Manager: Error: Id %s is not a valid call", call_id1.c_str());
+		return;
+	}
+
+	iter_details = call2_details.find("PEER_NUMBER");
+	if(iter_details->second == "Unknown") {
+		_error("Manager: Error: Id %s is not a valid call", call_id2.c_str());
+		return;
+	}
 
 	AccountID currentAccountId;
 	Call* call = NULL;
