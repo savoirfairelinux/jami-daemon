@@ -65,7 +65,6 @@ bool MainBuffer::createCallIDSet (CallID set_id)
     CallIDSet* newCallIDSet = new CallIDSet;
 
     _callIDMap.insert (pair<CallID, CallIDSet*> (set_id, newCallIDSet));
-    // _callIDMap[set_id] = new CallIDSet;
 
     return true;
 
@@ -79,6 +78,7 @@ bool MainBuffer::removeCallIDSet (CallID set_id)
 
     if (callid_set != NULL) {
         if (_callIDMap.erase (set_id) != 0) {
+        	delete callid_set; callid_set = NULL;
             return true;
         } else {
             _debug ("removeCallIDSet error while removing callid set %s!", set_id.c_str());
