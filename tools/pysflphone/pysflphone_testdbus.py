@@ -97,7 +97,7 @@ class SflPhoneTests():
     def test_ip2ip_send_hangup(self):
         """Make a call to a server (sipp) on port 5062"""
         i = 0
-        while(i < 10):
+        while(i < 200):
 
             callid = self.sflphone.Call("sip:test@" + REMOTEADDR_lo)
             time.sleep(0.5)
@@ -107,6 +107,7 @@ class SflPhoneTests():
 
             i = i+1
 
+        self.sflphone.unregister()
         del self.sflphone
 
 
