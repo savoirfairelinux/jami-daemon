@@ -420,12 +420,11 @@ bool ManagerImpl::hangupCall (const CallID& call_id) {
 	else {
 		account_id = getAccountFromCall(call_id);
 
+		// Account may be NULL if call have not been sent yet
 		if (account_id == AccountNULL) {
-
 			_error ("Manager: Error: account id is NULL in hangup");
 			returnValue = false;
 		} else {
-
 			returnValue = getAccountLink(account_id)->hangup(call_id);
 			removeCallAccount(call_id);
 		}
@@ -1222,7 +1221,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 }
 
 void ManagerImpl::removeParticipant (const CallID& call_id) {
-	_debug ("ManagerImpl::removeParticipant(%s)", call_id.c_str());
+	_debug ("Manager: Remove participant %s", call_id.c_str());
 
 	// TODO: add conference_id as a second parameter
 	Conference* conf;
@@ -1311,7 +1310,7 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 
 void ManagerImpl::joinConference (const CallID& conf_id1,
 		const CallID& conf_id2) {
-	_debug ("ManagerImpl::joinConference(%s, %s)", conf_id1.c_str(), conf_id2.c_str());
+	_debug ("Manager: Join conference %s, %s", conf_id1.c_str(), conf_id2.c_str());
 
 	ConferenceMap::iterator iter;
 
@@ -1320,13 +1319,23 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 
 	iter = _conferencemap.find(conf_id1);
 
-	if (iter != _conferencemap.end())
+	if (iter != _conferencemap.end()) {
 		conf1 = iter->second;
+	}
+	else {
+		_error("Manager: Error: Not a valid conference ID");
+		return;
+	}
 
 	iter = _conferencemap.find(conf_id2);
 
-	if (iter != _conferencemap.end())
+	if (iter != _conferencemap.end()) {
 		conf2 = iter->second;
+	}
+	else {
+		_error("Manager: Error: Not a valid conference ID");
+		return;
+	}
 
 	ParticipantSet participants = conf1->getParticipantList();
 
