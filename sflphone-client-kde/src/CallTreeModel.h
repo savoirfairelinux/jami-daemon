@@ -61,12 +61,21 @@ public:
 	bool removeColumns(int position, int columns, const QModelIndex &parent = QModelIndex());
 	bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex());
 	bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex());
+        
+        Qt::DropActions supportedDropActions();
+        virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+        QStringList mimeTypes() const;
+        QMimeData* mimeData(const QModelIndexList &indexes) const;
 
 	CallTreeItem *getItem(const QModelIndex &index) const;
 
 private:
 	void setupModelData(const QStringList &lines, CallTreeItem *parent);
 	CallTreeItem *rootItem;
+        
+signals:
+        void joinCall(QString callId1, QString callId2);
+        void over(Call*);
 };
 
 #endif // CALLTREE_MODEL_H

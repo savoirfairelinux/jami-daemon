@@ -230,19 +230,21 @@ void SFLPhone::quitButton()
 }
 
 void SFLPhone::sendNotif(QString caller)
-{/*
-    notification = new KNotification ( QString("test_notification"), this );
-    notification->setText("messageText")    ;
-    notification->setPixmap( QPixmap( this->windowIcon().pixmap(32, 32) ));
-    notification->setActions( QStringList( i18n( "Open chat" ) ) );
-    notification->addContext(  QString::fromLatin1("call") , "caller" )  ;
-    notification->sendEvent();*/
-   /* KNotification::event(QString("test_notification"),
-                         QString("Allo"),
-                         this->windowIcon().pixmap(32, 32),
-                         parentWidget(),
-                         KNotification::CloseOnTimeout,
-                         KGlobal::mainComponent());*/
+{
+//     notification = new KNotification ( QString("test_notification"), this );
+//     notification->setText("messageText")    ;
+//     notification->setPixmap( QPixmap( this->windowIcon().pixmap(32, 32) ));
+//     notification->setActions( QStringList( i18n( "Open chat" ) ) );
+//     notification->addContext(  QString::fromLatin1("call") , "caller" )  ;
+//     notification->sendEvent();
+//     KNotification::event(QString("test_notification"),
+//                          QString("Allo"),
+//                          this->windowIcon().pixmap(32, 32),
+//                          parentWidget(),
+//                          KNotification::CloseOnTimeout,
+//                          KGlobal::mainComponent());
+
+KNotification::event(KNotification::Notification, "New incomming call", "New call from: \n" + caller);       
 }
 
 void SFLPhone::changeEvent(QEvent * event)

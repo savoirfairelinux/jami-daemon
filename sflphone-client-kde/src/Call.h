@@ -244,8 +244,6 @@ public:
 	static history_state getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
 	
 	//Getters
-//	QWidget * getItemWidget();
-//	QWidget * getHistoryItemWidget();
 	call_state getState() const;
 	QString getCallId() const;
 	QString getPeerPhoneNumber() const;

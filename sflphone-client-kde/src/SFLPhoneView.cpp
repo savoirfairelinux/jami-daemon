@@ -41,6 +41,7 @@
 #include "sflphone_const.h"
 #include "conf/ConfigurationSkeleton.h"
 #include "configurationmanager_interface_singleton.h"
+#include "calllist_interface_singleton.h"
 #include "callmanager_interface_singleton.h"
 #include "instance_interface_singleton.h"
 #include "ActionSetAccountFirst.h"
@@ -68,7 +69,7 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	
 	errorWindow = new QErrorMessage(this);
 
-	callList = new CallList(this);
+	callList = & CallListInterfaceSingleton::getInstance(); //CallList(this);
 
 	callTree = new CallTreeView(page_callList);
 	historyTree = new CallTreeView(page_callHistory);
@@ -135,12 +136,13 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
 	connect(accountList, SIGNAL(accountListUpdated()),
 	        this,        SLOT(updateWindowCallState()));
 
-	connect(callTree,    SIGNAL(currentItemChanged()),
+	connect(callTree,    SIGNAL(itemChanged()), //currentItemChanged
 		this,        SLOT(on_callTree_currentItemChanged()));
-	connect(callTree,    SIGNAL(itemChanged()),
+	connect(callTree,    SIGNAL(itemChanged()), //ITem changed
 		this,        SLOT(on_callTree_itemChanged()));
-	connect(callTree,    SIGNAL(itemDoubleClicked(const QModelIndex &)),
+	connect(callTree,    SIGNAL(doubleClicked(const QModelIndex &)),
 		this,        SLOT(on_callTree_itemDoubleClicked(const QModelIndex&)));
+                
 	        
 } 
 
@@ -1011,7 +1013,7 @@ void SFLPhoneView::on_toolButton_sndVol_clicked(bool checked)
 	updateVolumeButton();
 }
 
-
+#include <unistd.h>
 void SFLPhoneView::on_callTree_currentItemChanged()
 {
 	qDebug() << "on_callTree_currentItemChanged";
@@ -1491,5 +1493,7 @@ void SFLPhoneView::changeScreen(int screen)
 	updateWindowCallState();
 	emit screenChanged(screen);
 }
+
+
 
 #include "SFLPhoneView.moc"

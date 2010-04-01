@@ -43,6 +43,7 @@ class CallTreeItem : public QObject
 	Q_OBJECT
  public:
 	 CallTreeItem(const QVector<QVariant> &data, CallTreeItem *parent);
+         CallTreeItem(const CallTreeItem *toCopy, CallTreeItem *parent);
 	 ~CallTreeItem();
      
 	 CallTreeItem *child(int number);
@@ -70,7 +71,7 @@ class CallTreeItem : public QObject
 
 	 QLabel * labelIcon;
 	 QLabel * labelPeerName;
-	 QLabel * labelCallNumber;
+	 QLabel * labelCallNumber2;
 	 QLabel * labelTransferPrefix;
 	 QLabel * labelTransferNumber;
 	 
@@ -79,9 +80,12 @@ class CallTreeItem : public QObject
 	 QLabel * labelHistoryPeerName;
 	 QLabel * labelHistoryCallNumber;
 	 QLabel * labelHistoryTime;
+         friend class CallTreeItem;
 
-private slots:
+public slots:
 	 void updated();
+signals:
+   void over(Call*);  
  };
 
 #endif // CALLTREE_ITEM_H

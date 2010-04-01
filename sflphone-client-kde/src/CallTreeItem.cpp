@@ -37,6 +37,15 @@ CallTreeItem::CallTreeItem(const QVector<QVariant> &data, CallTreeItem *parent)
  {
 	 
  }
+ 
+CallTreeItem::CallTreeItem(const CallTreeItem *toCopy, CallTreeItem *parent)
+    : parentItem(parent),
+      itemCall(toCopy->itemCall),
+      itemWidget(toCopy->itemWidget),
+      itemData(toCopy->itemData)
+{
+  
+}
 
  CallTreeItem::~CallTreeItem()
  {
@@ -161,8 +170,10 @@ QWidget* CallTreeItem::widget() const
 
  bool CallTreeItem::setData(int column, const QVariant &value)
  {
+   itemData.resize(10);
      if (column < 0 || column >= itemData.size())
      {
+        qDebug() << "Je suis ici!!!! " << itemData;
          return false;
      }
 
@@ -178,10 +189,12 @@ void CallTreeItem::setCall(Call *call)
 	itemWidget = new QWidget();
 
 	labelIcon = new QLabel();
-	labelCallNumber = new QLabel(itemCall->getPeerPhoneNumber());
+	//labelCallNumber = new QLabel("123"/*itemCall->getPeerPhoneNumber()*/);
+        labelCallNumber2 = new QLabel(itemCall->getPeerPhoneNumber());
 	labelTransferPrefix = new QLabel(i18n("Transfer to : "));
 	labelTransferNumber = new QLabel();
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+        QSpacerItem * verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
 	
 	QHBoxLayout * mainLayout = new QHBoxLayout();
 	mainLayout->setContentsMargins ( 3, 1, 2, 1);
@@ -194,17 +207,20 @@ void CallTreeItem::setCall(Call *call)
 	transfer->setMargin(0);
 	transfer->setSpacing(0);
 	mainLayout->addWidget(labelIcon);
+        
 	if(! itemCall->getPeerName().isEmpty())
 	{
 		labelPeerName = new QLabel(itemCall->getPeerName());
 		descr->addWidget(labelPeerName);
 	}
-	descr->addWidget(labelCallNumber);
+
+	descr->addWidget(labelCallNumber2);
 	transfer->addWidget(labelTransferPrefix);
 	transfer->addWidget(labelTransferNumber);
 	descr->addLayout(transfer);
+        descr->addItem(verticalSpacer);
 	mainLayout->addLayout(descr);
-	mainLayout->addItem(horizontalSpacer);
+	//mainLayout->addItem(horizontalSpacer);
 	
 	itemWidget->setLayout(mainLayout);
 	itemWidget->setMinimumSize(QSize(50, 30));
@@ -239,11 +255,18 @@ void CallTreeItem::updated()
 		{
 			labelTransferNumber->setText("");
 		}
-		labelTransferNumber->setText(itemCall->getTransferNumber());
-		labelCallNumber->setText(itemCall->getCallNumber());
+		//labelTransferNumber->setText(itemCall->getTransferNumber());
+		labelCallNumber2->setText(itemCall->getPeerPhoneNumber());
+                
+                if(state == CALL_STATE_DIALING)
+                {
+                  labelCallNumber2->setText(itemCall->getCallNumber());
+                }
 	}
 	else
 	{
+                emit over(itemCall);
+                itemWidget->setVisible(false);
  		qDebug() << "Updating item of call of state OVER. Doing nothing.";
 	}
 

@@ -150,8 +150,9 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
 	this->startTime = NULL;
 	this->stopTime = NULL;
 	//	this->initCallItemWidget();
+        emit changed();
 }
-
+#include <unistd.h>
 Call * Call::buildExistingCall(QString callId)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
@@ -746,4 +747,3 @@ void Call::changeCurrentState(call_state newState)
 
 	emit changed();
 }
-

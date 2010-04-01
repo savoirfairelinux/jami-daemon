@@ -186,7 +186,8 @@
 #define ACCOUNT_STATE_ERROR_EXIST_STUN    "ERROR_EXIST_STUN"
 
 /** Calls details */
-#define CALL_PEER_NAME                    "PEER_NAME"
+#define CALL_PEER_NAME                    "DISPLAY_NAME"
+//#define CALL_PEER_NAME                    "PEER_NAME"
 #define CALL_PEER_NUMBER                  "PEER_NUMBER"
 #define CALL_ACCOUNTID                    "ACCOUNTID"
 #define CALL_STATE                        "CALL_STATE"

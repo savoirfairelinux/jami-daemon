@@ -25,12 +25,15 @@
 #include "CallTreeModel.h"
 #include "CallTreeItem.h"
 #include "Call.h"
+#include <QDebug>
 
 CallTreeView::CallTreeView(QWidget * parent)
 	: QTreeView(parent)
 {	 
 	treeModel = new CallTreeModel(this);
 	setModel(treeModel);
+        CallTreeItemDelegate *delegate = new CallTreeItemDelegate();
+        setItemDelegate(delegate); 
 	setHeaderHidden(true);
 	setRootIsDecorated(false);
 	setSelectionMode(QAbstractItemView::SingleSelection);
@@ -38,6 +41,17 @@ CallTreeView::CallTreeView(QWidget * parent)
 	setAcceptDrops(true);
 	setUniformRowHeights(true);
 	setDropIndicatorShown(true);
+        //setDragDropMode(QAbstractItemView::DragDrop);
+        setSelectionMode(QAbstractItemView::ExtendedSelection);
+        
+        setDragEnabled(TRUE);
+        setAcceptDrops(TRUE);
+        setDropIndicatorShown(TRUE);
+        
+        connect(this , SIGNAL(clicked(QModelIndex)), this, SLOT(itemClicked(QModelIndex)));
+        connect(treeModel, SIGNAL(joinCall(QString,QString)), this, SLOT(joinCall(QString, QString)));
+        connect(treeModel, SIGNAL(joinCall(QString,QString)), this, SLOT(expandAll()));
+        connect(treeModel, SIGNAL(dataChanged(const QModelIndex &, const QModelIndex& ) ), this, SLOT(adaptColumns(const QModelIndex &, const QModelIndex&) ) );
 }
 
 CallTreeView::~CallTreeView()
@@ -56,12 +70,27 @@ CallTreeItem* CallTreeView::insert(Call *call)
 	{
 		return 0;
 	}
-
-	QModelIndex child = model()->index(index.row()+1, 0, index.parent());
-	treeModel->setData(child, QVariant(""), Qt::EditRole);
-
+        
+        QModelIndex child = model()->index(index.row()+1, 0, index.parent());
+        treeModel->setData(child, QVariant(""), Qt::EditRole);
+        
+        for (int column = 1; column < treeModel->columnCount(index); ++column) 
+        {
+                QModelIndex child2 = treeModel->index(index.row()+1, column, index.parent());
+                treeModel->setData(child2, QString("test"), Qt::EditRole);
+        }
+        
 	item = treeModel->getItem(child);
-	item->setCall(call);
+ 	item->setCall(call);
+//         qDebug() << "Will connect, id " << call << ", " << call->getPeerPhoneNumber();
+//         connect(call, SIGNAL(changed()), item, SLOT(updated()));
+//         item->setCall(call);
+//         item->setData(1,call->getPeerPhoneNumber());
+//         item->setData(2,call->getPeerName());
+//         resizeColumnToContents(0);
+//         resizeColumnToContents(1);
+//         resizeColumnToContents(2);
+//         //item->updated();
 	setIndexWidget(child, item->widget());
 }
 
@@ -88,7 +117,8 @@ CallTreeItem* CallTreeView::insert(CallTreeItem *parent, Call *call)
 	for (int column = 0; column < treeModel->columnCount(index); ++column) 
 	{
 		QModelIndex child = treeModel->index(0, column, index);
-		treeModel->setData(child, QVariant(""), Qt::EditRole);	       
+                qDebug() << "I just added data: 0, " << column << " \n\n\n\n";
+		treeModel->setData(child, QVariant(""), Qt::EditRole);      
 	}
 
 	item->setCall(call);
@@ -102,6 +132,16 @@ CallTreeItem* CallTreeView::insert(CallTreeItem *parent, Call *call)
 void CallTreeView::remove(QModelIndex & index) const
 {
 	treeModel->removeRow(index.row(), index.parent());
+}
+#include <unistd.h>
+void CallTreeView::remove(Call* call) const //BUG not used
+{
+  for(int i=0; i < 15/* model.rowCount()*/;i++) { //TODO anything better
+    QModelIndex anIndex = this->indexAt(QPoint(0,i));
+    if (anIndex.isValid()) {
+      qDebug() << "This index is valid";
+    }
+  }
 }
 
 void CallTreeView::removeCurrent() const
@@ -137,43 +177,35 @@ void CallTreeView::setCurrentRow(int row)
 	selectionModel()->setCurrentIndex(index,  QItemSelectionModel::Current);
 }
 
-
 int CallTreeView::count()
 {
 	return model()->rowCount();
 }
 
-bool CallTreeView::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action)
-{/*
-	 = data->data("items/index");
- 
-	foreach(QModelIndex index, callList) // iterate over list
-	{
-		CallTreeItem *item = static_cast<CallTreeItem*>(index.internalPointer());
-
-		if (parent == NULL)
-		{
-			// make new QTreeWidgetItem and set its text
-			// if parent is null - add top level item (this parent)
-			insert(item->call());
-		}
-		else 
-		{    
-			// else add QTreeWidgetItem with parent and expand parent
-			insert(parent, item->call());
-			parent->setExpanded( true );
-		}
-	}	*/
-	return true;    
-}
-
 QStringList CallTreeView::mimeTypes() const
 {
-
+  
 }
-
 
 Qt::DropActions CallTreeView::supportedDropActions () const
 {
+  return Qt::CopyAction | Qt::MoveAction;
+}
 
+void CallTreeView::itemClicked(const QModelIndex& anIndex) 
+{
+  if (currentModel != anIndex)
+    emit itemChanged();
+  currentModel = anIndex;
+}
+
+void CallTreeView::adaptColumns (const QModelIndex & topleft, const QModelIndex& bottomRight)
+{
+  int firstColumn= topleft.column();
+  int lastColumn = bottomRight.column();
+  do {
+    //if (firstColumn) //TODO remove this and fix the resulting bug
+      resizeColumnToContents(firstColumn);
+    firstColumn++;
+  } while (firstColumn < lastColumn);
 }

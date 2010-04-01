@@ -24,6 +24,7 @@
 
 #include "CallTreeModel.h"
 #include "CallTreeItem.h"
+#include "calllist_interface_singleton.h"
 
 CallTreeModel::CallTreeModel(QObject *parent)
 	: QAbstractItemModel(parent),
@@ -91,7 +92,7 @@ Qt::ItemFlags CallTreeModel::flags(const QModelIndex &index) const
 	{
 		return 0;
 	}
-	Qt::ItemFlags val = Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+	Qt::ItemFlags val = Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
 
 	return val;
 }
@@ -223,6 +224,9 @@ bool CallTreeModel::setData(const QModelIndex &index, const QVariant &value, int
 
 	CallTreeItem *item = getItem(index);
 	bool result = item->setData(index.column(), value);
+        
+        //item->setData(1, QString("test"));
+        //item->setData(2, QString("test2"));
 
 	if (result)
 	{
@@ -314,4 +318,85 @@ void CallTreeModel::setupModelData(const QStringList &lines, CallTreeItem *paren
 		}		
 		number++;
 	}
+}
+
+Qt::DropActions CallTreeModel::supportedDropActions() 
+{
+  return Qt::MoveAction;// | Qt::CopyAction ;
+}
+
+bool CallTreeModel::dropMimeData( const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent ) {  
+  
+  if (action == Qt::IgnoreAction)
+      return true;
+
+  if (!data->hasFormat("application/vnd.text.list"))
+      return false;
+
+  if (column > 0)
+      return false;
+  
+  int beginRow;
+
+  if (row != -1)
+      beginRow = row;
+  else if (parent.isValid())
+      beginRow = parent.row();
+  else
+      beginRow = rowCount(QModelIndex());
+  
+  CallTreeItem *item = getItem(parent);
+  QByteArray encodedData = data->data("application/vnd.text.list");
+  QDataStream stream(&encodedData, QIODevice::ReadOnly);
+  QStringList newItems;
+  int rows = 0;
+
+  while (!stream.atEnd()) {
+      QString text;
+      stream >> text;
+      newItems << text;
+      ++rows;
+  }
+  
+  if (rows) {
+    Call* secondCall = CallListInterfaceSingleton::getInstance().findCallByCallId(newItems[0]);
+    Call* conVersation = CallListInterfaceSingleton::getInstance().createConversationFromCall(item->call(), secondCall);
+    emit joinCall(newItems[0], item->call()->getCallId());
+    
+     insertRows(beginRow, rows, parent);
+     foreach (QString text, newItems) {
+         QModelIndex idx = index(beginRow, 0, parent);
+         setData(idx, "test");
+         beginRow++;
+     }
+  }
+  else
+    qDebug() << "Unknow drop";
+
+  return true;
+}
+
+//This can be modified later to implement an universal drag and drop
+QStringList CallTreeModel::mimeTypes() const
+{
+    QStringList types;
+    types << "application/vnd.text.list";
+    return types;
+}
+
+QMimeData* CallTreeModel::mimeData(const QModelIndexList &indexes) const
+{
+     QMimeData *mimeData = new QMimeData();
+     QByteArray encodedData;
+     QDataStream stream(&encodedData, QIODevice::WriteOnly);
+
+     foreach (QModelIndex index, indexes) {
+         if (index.isValid()) {
+             CallTreeItem *item = getItem(index);
+             stream << item->call()->getCallId();
+         }
+     }
+
+     mimeData->setData("application/vnd.text.list", encodedData);
+     return mimeData;
 }

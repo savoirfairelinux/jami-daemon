@@ -27,6 +27,7 @@
 #define CALLTREE_VIEW_H
 
 #include <QTreeView>
+#include <QItemDelegate>
 
 class CallTreeModel;
 class CallTreeItem;
@@ -35,27 +36,43 @@ class QModelIndex;
 class QTreeWidgetItem;
 class QMimeData;
 
+class CallTreeItemDelegate : public QItemDelegate
+{
+public:
+        CallTreeItemDelegate() { }
+        QSize sizeHint ( const QStyleOptionViewItem & option, const QModelIndex & index ) const { return QSize(0,50); }
+};
+
 class CallTreeView : public QTreeView
 {
 	Q_OBJECT
 public:
 	CallTreeView(QWidget *parent);
 	~CallTreeView();
-
-	CallTreeItem* insert(CallTreeItem *item, Call* call);
-	CallTreeItem* insert(Call* call);
 	void remove(QModelIndex & index) const;
 	void removeCurrent() const;
 	CallTreeItem* currentItem();
 	CallTreeItem* getItem(const QModelIndex &index);
 	void setCurrentRow(int row);
 	int count();
-
-	bool dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData *data, Qt::DropAction action);    
 	QStringList mimeTypes() const;
 	Qt::DropActions supportedDropActions () const;
+        CallTreeItem* insert(Call* call);
+        CallTreeItem* insert(CallTreeItem *item, Call* call);
+        
+// protected:
+//         void dropEvent(QDropEvent* event);
+//         
 private:
 	CallTreeModel *treeModel;
+        QModelIndex currentModel;
+public slots:
+        void remove(Call* call) const;
+    
+private slots:
+        void itemClicked(const QModelIndex& anIndex);
+        void adaptColumns(const QModelIndex & topleft, const QModelIndex& bottomRight);
+        
 signals:
 	void currentItemChanged();
 	void itemChanged();
