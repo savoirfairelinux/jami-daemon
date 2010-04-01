@@ -36,9 +36,9 @@ CodecDescriptor::~CodecDescriptor()
 void
 CodecDescriptor::deleteHandlePointer (void)
 {
-    int i;
+	_debug("CodecDesccriptor: Delete codec handle pointers");
 
-    for (i = 0 ; (unsigned int) i < _CodecInMemory.size() ; i++) {
+    for (int i = 0 ; (unsigned int) i < _CodecInMemory.size() ; i++) {
         unloadCodec (_CodecInMemory[i]);
     }
 
@@ -220,6 +220,8 @@ AudioCodec* CodecDescriptor::loadCodec (std::string path) {
 
 
 void CodecDescriptor::unloadCodec (CodecHandlePointer p) {
+
+	_debug("CodecDescriptor: Unload codec");
 
     using std::cerr;
     destroy_t* destroyCodec = (destroy_t*) dlsym (p.second , "destroy");
