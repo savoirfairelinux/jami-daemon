@@ -2342,7 +2342,7 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
 
 	int res;
 
-	_debug ("Set output audio plugin");
+	_debug ("Manager: Set output audio plugin");
 	_audiodriver -> setErrorMessage(-1);
 	res = _audiodriver -> openDevice(_audiodriver -> getIndexIn(),
 			_audiodriver -> getIndexOut(), _audiodriver -> getSampleRate(),
@@ -2360,7 +2360,7 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
  * Get list of supported audio output device
  */
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void) {
-	_debug ("Get audio output device list");
+	_debug ("Manager: Get audio output device list");
 	AlsaLayer *layer;
 	std::vector<std::string> devices;
 

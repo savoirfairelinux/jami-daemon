@@ -51,7 +51,7 @@ CodecDescriptor::init()
     _nbCodecs = CodecDynamicList.size();
 
     if (_nbCodecs <= 0) {
-        _debug (" Error - No codecs available in directory %s" , CODECS_DIR);
+        _error ("CodecDescriptro: Error - No codecs available in directory %s" , CODECS_DIR);
     }
 
     int i;
@@ -97,7 +97,7 @@ CodecDescriptor::getCodec (AudioCodecType payload)
         return (iter->second);
     }
 
-    _debug ("Error cannont found codec %i in _CodecsMap from codec descriptor", payload);
+    _error ("CodecDescriptor: Error cannont found codec %i in _CodecsMap from codec descriptor", payload);
 
     return NULL;
 }
@@ -167,7 +167,7 @@ std::vector<AudioCodec*> CodecDescriptor::scanCodecDirectory (void) {
 
     for (i = 0 ; (unsigned int) i < dirToScan.size() ; i++) {
         std::string dirStr = dirToScan[i];
-        _debug ("Scanning %s to find audio codecs....",  dirStr.c_str());
+        _debug ("CodecDescriptor: Scanning %s to find audio codecs....",  dirStr.c_str());
         DIR *dir = opendir (dirStr.c_str());
         AudioCodec* audioCodec;
 
@@ -349,7 +349,7 @@ bool CodecDescriptor::isCodecLoaded (int payload) {
 
 std::vector <std::string> CodecDescriptor::getCodecSpecifications (const int32_t& payload) {
 
-	_warn ("Gathering codec specifications for payload %i", payload);
+	_debug ("CodecDescriptor: Gathering codec specifications for payload %i", payload);
 
 	std::vector<std::string> v;
     std::stringstream ss;
