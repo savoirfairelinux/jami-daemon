@@ -53,6 +53,7 @@ Sdp::Sdp (pj_pool_t *pool)
 Sdp::~Sdp()
 {
 	clean_session_media();
+	clean_local_media_capabilities();
 }
 
 void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med) {
@@ -476,6 +477,25 @@ void Sdp::clean_session_media()
 	}
 }
 
+
+void Sdp::clean_local_media_capabilities()
+{
+	_info("SDP: Clean local media capabilities");
+
+	if(_local_media_cap.size() > 0) {
+
+		std::vector<sdpMedia *>::iterator iter = _local_media_cap.begin();
+			sdpMedia *media;
+
+			while(iter != _local_media_cap.end()) {
+				media = *iter;
+				delete media;
+				iter++;
+			}
+			_local_media_cap.clear();
+	}
+}
+
 void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
 {
 
@@ -612,7 +632,7 @@ void Sdp::set_local_media_capabilities (CodecOrder selectedCodecs) {
     // Clean it first
     _local_media_cap.clear();
 
-    _debug ("Fetch local media capabilities. Local extern audio port: %i" , get_local_extern_audio_port());
+    _debug ("SDP: Fetch local media capabilities. Local extern audio port: %i" , get_local_extern_audio_port());
 
     /* Only one audio media used right now */
     audio = new sdpMedia (MIME_TYPE_AUDIO);
@@ -628,7 +648,7 @@ void Sdp::set_local_media_capabilities (CodecOrder selectedCodecs) {
             audio->add_codec (iter->second);
         }
 		else {
-			_warn ("Couldn't find audio codec");
+			_warn ("SDP: Couldn't find audio codec");
 		}
 	}
 
