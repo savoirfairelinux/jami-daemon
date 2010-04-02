@@ -41,7 +41,6 @@ HistoryManager::~HistoryManager ()
 		 iter++;
 	 }
 
-
     // Clear the history map
     _history_items.clear ();
 
