@@ -289,8 +289,8 @@ void SIPVoIPLink::decrementClients (void)
     if (_clients == 0) {
 
         _debug("UserAgent: No SIP account anymore, terminate SIPVoIPLink");
-        terminate();
-        SIPVoIPLink::_instance=NULL;
+        // terminate();
+        delete SIPVoIPLink::_instance;
     }
 }
 
@@ -321,8 +321,7 @@ SIPVoIPLink::terminate()
 
     if (_evThread) {
         _debug ("UserAgent: Deleting sip eventThread");
-        delete _evThread;
-        _evThread = NULL;
+        delete _evThread; _evThread = NULL;
     }
 
 
