@@ -2976,7 +2976,6 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     _debug ("UserAgent: Call state changed to %s", invitationStateMap[inv->state]);
 
     pjsip_rx_data *rdata;
-    pj_status_t status = PJ_SUCCESS;
 
     /* Retrieve the call information */
     SIPCall * call = NULL;

@@ -182,38 +182,6 @@ void ManagerImpl::switchCall (const CallID& id) {
 	ost::MutexLock m(_currentCallMutex);
 	_debug ("----- Switch current call id to %s -----", id.c_str());
 	_currentCallId2 = id;
-
-	/*
-	 AudioLayer *al = getAudioDriver();
-
-	 if (id != "") {
-
-	 if(isConference(id)) {
-
-	 Conference *conf;
-
-	 ConferenceMap::iterator iter = _conferencemap.find(id);
-	 if(iter != _conferencemap.end())
-	 {
-	 _debug("    set call recordable in audio layer");
-	 conf = iter->second;
-	 al->setRecorderInstance((Recordable*)conf);
-	 }
-	 }
-	 else {
-
-	 // set the recordable instance in audiolayer
-	 AccountID account_id = getAccountFromCall(id);
-
-
-	 Call *call = NULL;
-	 call = getAccountLink (account_id)->getCall(id);
-
-	 _debug("    set call recordable in audio layer");
-	 al->setRecorderInstance((Recordable*)call);
-	 }
-	 }
-	 */
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3218,7 +3186,7 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 	a.insert(std::pair<std::string, std::string>(ACCOUNT_DTMF_TYPE, getConfigString(
 				accountID, ACCOUNT_DTMF_TYPE)));
 
-	RegistrationState state;
+	RegistrationState state = Unregistered;
 	std::string registrationStateCode;
 	std::string registrationStateDescription;
 
@@ -3235,8 +3203,6 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 			registrationStateDescription
 					= account->getRegistrationStateDetailed().second;
 		}
-	} else {
-		state = Unregistered;
 	}
 
 	(accountID == IP2IP_PROFILE) ? a.insert(
