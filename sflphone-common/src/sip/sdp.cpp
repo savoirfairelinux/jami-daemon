@@ -50,7 +50,10 @@ Sdp::Sdp (pj_pool_t *pool)
     _pool = pool;
 }
 
-Sdp::~Sdp() { }
+Sdp::~Sdp()
+{
+	clean_session_media();
+}
 
 void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med) {
 
@@ -457,7 +460,20 @@ std::string Sdp::media_to_string (void)
 
 void Sdp::clean_session_media()
 {
-    _session_media.clear();
+	_info("SDP: Clean session media");
+
+	if(_session_media.size() > 0) {
+
+		std::vector<sdpMedia *>::iterator iter = _session_media.begin();
+	    sdpMedia *media;
+
+		while(iter != _session_media.end()) {
+			media = *iter;
+			delete media;
+			iter++;
+		}
+		_session_media.clear();
+	}
 }
 
 void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
@@ -518,7 +534,7 @@ AudioCodec* Sdp::get_session_media (void)
     AudioCodec *codec = NULL;
     std::vector<sdpMedia*> media_list;
 
-    _debug ("Executing sdp line %d - get_session_media ()", __LINE__);
+    _debug ("SDP: Executing sdp line %d - get_session_media()", __LINE__);
 
     media_list = get_session_media_list ();
     nb_media = media_list.size();
