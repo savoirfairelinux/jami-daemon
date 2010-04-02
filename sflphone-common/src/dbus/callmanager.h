@@ -51,9 +51,9 @@ class CallManager
          * you will have to implement them in your ObjectAdaptor
          */
 
-	/* Call related methods */
+        /* Call related methods */
         void placeCall( const std::string& accountID, const std::string& callID, const std::string& to );
-	void placeCallFirstAccount( const std::string& callID, const std::string& to );
+        void placeCallFirstAccount( const std::string& callID, const std::string& to );
 
         void refuse( const std::string& callID );
         void accept( const std::string& callID );
@@ -61,12 +61,12 @@ class CallManager
         void hold( const std::string& callID );
         void unhold( const std::string& callID );
         void transfert( const std::string& callID, const std::string& to );
-	std::map< std::string, std::string > getCallDetails( const std::string& callID );
+        std::map< std::string, std::string > getCallDetails( const std::string& callID );
         std::vector< std::string > getCallList (void);
-	std::string getCurrentCallID(  );
+        std::string getCurrentCallID(  );
 
-	/* Conference related methods */
-	void joinParticipant( const std::string& sel_callID, const std::string& drag_callID );
+        /* Conference related methods */
+        void joinParticipant( const std::string& sel_callID, const std::string& drag_callID );
 	void addParticipant( const std::string& callID, const std::string& confID );
 	void addMainParticipant( const std::string& confID );
 	void detachParticipant( const std::string& callID );
