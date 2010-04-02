@@ -91,9 +91,10 @@ ManagerImpl::ManagerImpl (void) :
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) {
 	// terminate();
-	delete _cleaner;
-	_cleaner = 0;
-	_debug ("%s stop correctly.", PROGNAME);
+	delete _cleaner; _cleaner = NULL;
+	delete _history; _history = NULL;
+
+	_debug ("Manager: %s stop correctly.", PROGNAME);
 }
 
 void ManagerImpl::init () {
@@ -104,7 +105,7 @@ void ManagerImpl::init () {
 	initVolume();
 
 	if (_exist == 0) {
-		_debug ("Cannot create config file in your home directory");
+		_warn ("Manager: Cannot create config file in your home directory");
 	}
 
 	initAudioDriver();
@@ -119,11 +120,11 @@ void ManagerImpl::init () {
 	if (audiolayer != 0) {
 		unsigned int sampleRate = audiolayer->getSampleRate();
 
-		_debugInit ("Load Telephone Tone");
+		_debugInit ("Manager: Load telephone tone");
 		std::string country = getConfigString(PREFERENCES, ZONE_TONE);
 		_telephoneTone = new TelephoneTone(country, sampleRate);
 
-		_debugInit ("Loading DTMF key");
+		_debugInit ("Manager: Loading DTMF key");
 		_dtmfKey = new DTMF(sampleRate);
 	}
 
@@ -135,23 +136,25 @@ void ManagerImpl::init () {
 }
 
 void ManagerImpl::terminate () {
-	_debug ("ManagerImpl::terminate ");
+
+	_debug ("Manager: Terminate ");
 	saveConfig();
 
 	unloadAccountMap();
 
-	_debug ("Unload DTMF Key ");
+	_debug ("Manager: Unload DTMF key");
 	delete _dtmfKey;
 
-	_debug ("Unload Audio Driver ");
-	delete _audiodriver;
-	_audiodriver = NULL;
+	_debug("Manager: Unload telephone tone");
+	delete _telephoneTone; _telephoneTone = NULL;
 
-	_debug ("Unload Telephone Tone ");
-	delete _telephoneTone;
-	_telephoneTone = NULL;
+	_debug ("Manager: Unload audio driver");
+	delete _audiodriver; _audiodriver = NULL;
 
-	_debug ("Unload Audio Codecs ");
+	_debug ("Manager: Unload telephone tone");
+	delete _telephoneTone; _telephoneTone = NULL;
+
+	_debug ("Manager: Unload audio codecs ");
 	_codecDescriptorMap.deleteHandlePointer();
 
 }
