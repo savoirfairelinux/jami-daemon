@@ -31,6 +31,7 @@ CodecDescriptor::CodecDescriptor() : _CodecsMap(), _defaultCodecOrder(), _Cache(
 
 CodecDescriptor::~CodecDescriptor()
 {
+
 }
 
 void
@@ -42,6 +43,7 @@ CodecDescriptor::deleteHandlePointer (void)
         unloadCodec (_CodecInMemory[i]);
     }
 
+    _CodecInMemory.clear();
 }
 
 void
