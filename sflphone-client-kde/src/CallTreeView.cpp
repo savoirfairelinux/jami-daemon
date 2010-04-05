@@ -133,7 +133,7 @@ void CallTreeView::remove(QModelIndex & index) const
 {
 	treeModel->removeRow(index.row(), index.parent());
 }
-#include <unistd.h>
+
 void CallTreeView::remove(Call* call) const //BUG not used
 {
   for(int i=0; i < 15/* model.rowCount()*/;i++) { //TODO anything better
