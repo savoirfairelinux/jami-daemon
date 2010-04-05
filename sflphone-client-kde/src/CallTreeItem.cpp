@@ -2,6 +2,8 @@
  *   Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).     *
  *   All rights reserved.                                                  *
  *   Contact: Nokia Corporation (qt-info@nokia.com)                        *
+ *   Author : Mathieu Leduc-Hamel mathieu.leduc-hamel@savoirfairelinux.com *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *

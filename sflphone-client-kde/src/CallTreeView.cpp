@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2010 by Savoir-Faire Linux                              *
- *   Author : Mathieu Leduc-Hamel                                          *
- *   mathieu.leduc-hamel@savoirfairelinux.com                              *
+ *   Author : Mathieu Leduc-Hamel mathieu.leduc-hamel@savoirfairelinux.com *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
