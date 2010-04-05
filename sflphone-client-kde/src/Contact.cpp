@@ -28,72 +28,70 @@
 
 Contact::Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto)
 {
-	this->firstName = addressee.name();
-	this->secondName = addressee.familyName();
-	this->nickName = addressee.nickName();
-	this->phoneNumber = number.number();
-	this->type = number.type();
-	this->displayPhoto = displayPhoto;
-	if(displayPhoto)
-	{
-		this->photo = new Picture(addressee.photo());
-	}
-	else
-	{
-		this->photo = NULL;
-	}
-	
-	initItem();
+   this->firstName = addressee.name();
+   this->secondName = addressee.familyName();
+   this->nickName = addressee.nickName();
+   this->phoneNumber = number.number();
+   this->type = number.type();
+   this->displayPhoto = displayPhoto;
+   if(displayPhoto) {
+      this->photo = new Picture(addressee.photo());
+   }
+   else {
+      this->photo = NULL;
+   }
+   
+   initItem();
 }
 
 
 Contact::~Contact()
 {
-	delete item;
-	delete itemWidget;
-	delete photo;
+   delete item;
+   delete itemWidget;
+   delete photo;
 }
 
 void Contact::initItem()
 {
-	this->item = new QListWidgetItem();
-	this->item->setSizeHint(QSize(140,CONTACT_ITEM_HEIGHT));
-	initItemWidget();
+   this->item = new QListWidgetItem();
+   this->item->setSizeHint(QSize(140,CONTACT_ITEM_HEIGHT));
+   initItemWidget();
 }
 
 void Contact::initItemWidget()
 {
-	this->itemWidget = new ContactItemWidget(this, displayPhoto);
+   this->itemWidget = new ContactItemWidget(this, displayPhoto);
 }
 
 QString Contact::getPhoneNumber() const
 {
-	return phoneNumber;
+   return phoneNumber;
 }
 
 QString Contact::getNickName() const
 {
-	return nickName;
+   return nickName;
 }
 
 QString Contact::getFirstName() const
 {
-	return firstName;
+   return firstName;
 }
 
 QString Contact::getSecondName() const
 {
-	return secondName;
+   return secondName;
 }
 
 const Picture * Contact::getPhoto() const
 {
-	return photo;
+   return photo;
 }
 
 PhoneNumber::Type Contact::getType() const
 {
-	return type;
+   return type;
 }
 
 

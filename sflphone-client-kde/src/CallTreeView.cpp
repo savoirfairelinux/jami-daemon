@@ -28,19 +28,19 @@
 #include <QDebug>
 
 CallTreeView::CallTreeView(QWidget * parent)
-	: QTreeView(parent)
-{	 
-	treeModel = new CallTreeModel(this);
-	setModel(treeModel);
+   : QTreeView(parent)
+{    
+   treeModel = new CallTreeModel(this);
+   setModel(treeModel);
         CallTreeItemDelegate *delegate = new CallTreeItemDelegate();
         setItemDelegate(delegate); 
-	setHeaderHidden(true);
-	setRootIsDecorated(false);
-	setSelectionMode(QAbstractItemView::SingleSelection);
-	setDragEnabled(true);
-	setAcceptDrops(true);
-	setUniformRowHeights(true);
-	setDropIndicatorShown(true);
+   setHeaderHidden(true);
+   setRootIsDecorated(false);
+   setSelectionMode(QAbstractItemView::SingleSelection);
+   setDragEnabled(true);
+   setAcceptDrops(true);
+   setUniformRowHeights(true);
+   setDropIndicatorShown(true);
         //setDragDropMode(QAbstractItemView::DragDrop);
         setSelectionMode(QAbstractItemView::ExtendedSelection);
         
@@ -56,32 +56,29 @@ CallTreeView::CallTreeView(QWidget * parent)
 
 CallTreeView::~CallTreeView()
 {
-	delete treeModel;
+   delete treeModel;
 }
 
 CallTreeItem* CallTreeView::insert(Call *call)
 {
-	QModelIndex index = selectionModel()->currentIndex();
-	int position = index.row()+1;
-	QModelIndex parent = index.parent();
-	CallTreeItem *item;
+   QModelIndex index = selectionModel()->currentIndex();
+   int position = index.row()+1;
+   QModelIndex parent = index.parent();
+   CallTreeItem *item;
 
-	if (!treeModel->insertRow(position, parent))
-	{
-		return 0;
-	}
+   if (!treeModel->insertRow(position, parent))
+      return 0;
         
         QModelIndex child = model()->index(index.row()+1, 0, index.parent());
         treeModel->setData(child, QVariant(""), Qt::EditRole);
         
-        for (int column = 1; column < treeModel->columnCount(index); ++column) 
-        {
+        for (int column = 1; column < treeModel->columnCount(index); ++column) {
                 QModelIndex child2 = treeModel->index(index.row()+1, column, index.parent());
                 treeModel->setData(child2, QString("test"), Qt::EditRole);
         }
         
-	item = treeModel->getItem(child);
- 	item->setCall(call);
+   item = treeModel->getItem(child);
+    item->setCall(call);
 //         qDebug() << "Will connect, id " << call << ", " << call->getPeerPhoneNumber();
 //         connect(call, SIGNAL(changed()), item, SLOT(updated()));
 //         item->setCall(call);
@@ -91,47 +88,43 @@ CallTreeItem* CallTreeView::insert(Call *call)
 //         resizeColumnToContents(1);
 //         resizeColumnToContents(2);
 //         //item->updated();
-	setIndexWidget(child, item->widget());
+   setIndexWidget(child, item->widget());
 }
 
 CallTreeItem* CallTreeView::insert(CallTreeItem *parent, Call *call)
 {
-	QModelIndex index = selectionModel()->currentIndex();
+   QModelIndex index = selectionModel()->currentIndex();
 
-	if (treeModel->columnCount(index) == 0) 
-	{
-		if (!model()->insertColumn(0, index))
-		{
-			return 0; 
-		}
-			
-	}
-		
-	if (!treeModel->insertRow(0, index))
-	{
-		return 0;
-	}
+   if (treeModel->columnCount(index) == 0) {
+      if (!model()->insertColumn(0, index)) {
+         return 0; 
+      }
+         
+   }
+      
+   if (!treeModel->insertRow(0, index)) {
+      return 0;
+   }
 
-	CallTreeItem *item = treeModel->getItem(index);
-	
-	for (int column = 0; column < treeModel->columnCount(index); ++column) 
-	{
-		QModelIndex child = treeModel->index(0, column, index);
+   CallTreeItem *item = treeModel->getItem(index);
+   
+   for (int column = 0; column < treeModel->columnCount(index); ++column) {
+      QModelIndex child = treeModel->index(0, column, index);
                 qDebug() << "I just added data: 0, " << column << " \n\n\n\n";
-		treeModel->setData(child, QVariant(""), Qt::EditRole);      
-	}
+      treeModel->setData(child, QVariant(""), Qt::EditRole);      
+   }
 
-	item->setCall(call);
-	selectionModel()->setCurrentIndex(model()->index(0, 0, index), QItemSelectionModel::ClearAndSelect);
+   item->setCall(call);
+   selectionModel()->setCurrentIndex(model()->index(0, 0, index), QItemSelectionModel::ClearAndSelect);
 
-	QModelIndex newIndex = selectionModel()->currentIndex();
+   QModelIndex newIndex = selectionModel()->currentIndex();
 
-	return treeModel->getItem(newIndex);
+   return treeModel->getItem(newIndex);
 }
 
 void CallTreeView::remove(QModelIndex & index) const
 {
-	treeModel->removeRow(index.row(), index.parent());
+   treeModel->removeRow(index.row(), index.parent());
 }
 
 void CallTreeView::remove(Call* call) const //BUG not used
@@ -146,40 +139,39 @@ void CallTreeView::remove(Call* call) const //BUG not used
 
 void CallTreeView::removeCurrent() const
 {
-	QModelIndex index = selectionModel()->currentIndex();
-	treeModel->removeRow(index.row(), index.parent());
+   QModelIndex index = selectionModel()->currentIndex();
+   treeModel->removeRow(index.row(), index.parent());
 }
 
 CallTreeItem* CallTreeView::currentItem()
 {
-	QModelIndex index = selectionModel()->currentIndex();		
+   QModelIndex index = selectionModel()->currentIndex();      
 
-	CallTreeItem *item = treeModel->getItem(index);
+   CallTreeItem *item = treeModel->getItem(index);
 
-	if (!item->call())
-	{
-		return 0;
-	}
-	return item;		
+   if (!item->call()) {
+      return 0;
+   }
+   return item;      
 }
 
 CallTreeItem* CallTreeView::getItem(const QModelIndex &index)
 {
-	return treeModel->getItem(index);
+   return treeModel->getItem(index);
 }
 
 void CallTreeView::setCurrentRow(int row)
 {
-	CallTreeModel * treeModel = static_cast<CallTreeModel*>(model());
+   CallTreeModel * treeModel = static_cast<CallTreeModel*>(model());
 
-	QModelIndex currentIndex = selectionModel()->currentIndex();
-	QModelIndex index = treeModel->index(row, 0, currentIndex);
-	selectionModel()->setCurrentIndex(index,  QItemSelectionModel::Current);
+   QModelIndex currentIndex = selectionModel()->currentIndex();
+   QModelIndex index = treeModel->index(row, 0, currentIndex);
+   selectionModel()->setCurrentIndex(index,  QItemSelectionModel::Current);
 }
 
 int CallTreeView::count()
 {
-	return model()->rowCount();
+   return model()->rowCount();
 }
 
 QStringList CallTreeView::mimeTypes() const

@@ -29,19 +29,19 @@
 
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class AccountWizard : public QWizard
 {
 Q_OBJECT
 
 public:
-	
-	enum { Page_Intro, Page_AutoMan, Page_Type, Page_Email, Page_SIPForm, Page_IAXForm, Page_Stun, Page_Conclusion };
-	
-	AccountWizard(QWidget * parent = 0);
-	~AccountWizard();
-	void accept();
+   
+   enum { Page_Intro, Page_AutoMan, Page_Type, Page_Email, Page_SIPForm, Page_IAXForm, Page_Stun, Page_Conclusion };
+   
+   AccountWizard(QWidget * parent = 0);
+   ~AccountWizard();
+   void accept();
 
 };
 
@@ -52,15 +52,15 @@ public:
 
 class WizardIntroPage : public QWizardPage
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	WizardIntroPage(QWidget *parent = 0);
-	~WizardIntroPage();
-	int nextId() const;
+   WizardIntroPage(QWidget *parent = 0);
+   ~WizardIntroPage();
+   int nextId() const;
 
 private:
-	QLabel * introLabel;
+   QLabel * introLabel;
 };
 
 /***************************************************************************
@@ -71,16 +71,16 @@ private:
 
 class WizardAccountAutoManualPage : public QWizardPage
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	WizardAccountAutoManualPage(QWidget *parent = 0);
-	~WizardAccountAutoManualPage();
-	int nextId() const;
+   WizardAccountAutoManualPage(QWidget *parent = 0);
+   ~WizardAccountAutoManualPage();
+   int nextId() const;
 
 private:
-	QRadioButton * radioButton_SFL;
-	QRadioButton * radioButton_manual;
+   QRadioButton * radioButton_SFL;
+   QRadioButton * radioButton_manual;
 };
 
 /***************************************************************************
@@ -90,16 +90,16 @@ private:
 
 class WizardAccountTypePage : public QWizardPage
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	WizardAccountTypePage(QWidget *parent = 0);
-	~WizardAccountTypePage();
-	int nextId() const;
+   WizardAccountTypePage(QWidget *parent = 0);
+   ~WizardAccountTypePage();
+   int nextId() const;
 
 private:
-	QRadioButton * radioButton_SIP;
-	QRadioButton * radioButton_IAX;
+   QRadioButton * radioButton_SIP;
+   QRadioButton * radioButton_IAX;
 };
 
 /***************************************************************************
@@ -109,18 +109,18 @@ private:
 
 class WizardAccountEmailAddressPage : public QWizardPage
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	WizardAccountEmailAddressPage(QWidget *parent = 0);
-	~WizardAccountEmailAddressPage();
-	int nextId() const;
+   WizardAccountEmailAddressPage(QWidget *parent = 0);
+   ~WizardAccountEmailAddressPage();
+   int nextId() const;
 
 private:
-	QLabel * label_emailAddress;
-	QLineEdit * lineEdit_emailAddress;
-	QLabel * label_enableZrtp;
-	QCheckBox * checkBox_enableZrtp;
+   QLabel * label_emailAddress;
+   QLineEdit * lineEdit_emailAddress;
+   QLabel * label_enableZrtp;
+   QCheckBox * checkBox_enableZrtp;
 };
 
 /***************************************************************************
@@ -130,30 +130,30 @@ private:
 
 class WizardAccountSIPFormPage : public QWizardPage
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	
-	WizardAccountSIPFormPage(QWidget *parent = 0);
-	~WizardAccountSIPFormPage();
-	int nextId() const;
+   
+   WizardAccountSIPFormPage(QWidget *parent = 0);
+   ~WizardAccountSIPFormPage();
+   int nextId() const;
 
 private:
-	int type;
+   int type;
 
-	QLabel * label_alias;
-	QLabel * label_server;
-	QLabel * label_user;
-	QLabel * label_password;
-	QLabel * label_voicemail;
-	QLabel * label_enableZrtp;
+   QLabel * label_alias;
+   QLabel * label_server;
+   QLabel * label_user;
+   QLabel * label_password;
+   QLabel * label_voicemail;
+   QLabel * label_enableZrtp;
 
-	QLineEdit * lineEdit_alias;
-	QLineEdit * lineEdit_server;
-	QLineEdit * lineEdit_user;
-	QLineEdit * lineEdit_password;
-	QLineEdit * lineEdit_voicemail;
-	QCheckBox * checkBox_enableZrtp;
+   QLineEdit * lineEdit_alias;
+   QLineEdit * lineEdit_server;
+   QLineEdit * lineEdit_user;
+   QLineEdit * lineEdit_password;
+   QLineEdit * lineEdit_voicemail;
+   QCheckBox * checkBox_enableZrtp;
 };
 
 /***************************************************************************
@@ -163,28 +163,28 @@ private:
 
 class WizardAccountIAXFormPage : public QWizardPage
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	
-	WizardAccountIAXFormPage(QWidget *parent = 0);
-	~WizardAccountIAXFormPage();
-	int nextId() const;
+   
+   WizardAccountIAXFormPage(QWidget *parent = 0);
+   ~WizardAccountIAXFormPage();
+   int nextId() const;
 
 private:
-	int type;
+   int type;
 
-	QLabel * label_alias;
-	QLabel * label_server;
-	QLabel * label_user;
-	QLabel * label_password;
-	QLabel * label_voicemail;
+   QLabel * label_alias;
+   QLabel * label_server;
+   QLabel * label_user;
+   QLabel * label_password;
+   QLabel * label_voicemail;
 
-	QLineEdit * lineEdit_alias;
-	QLineEdit * lineEdit_server;
-	QLineEdit * lineEdit_user;
-	QLineEdit * lineEdit_password;
-	QLineEdit * lineEdit_voicemail;
+   QLineEdit * lineEdit_alias;
+   QLineEdit * lineEdit_server;
+   QLineEdit * lineEdit_user;
+   QLineEdit * lineEdit_password;
+   QLineEdit * lineEdit_voicemail;
 };
 
 /***************************************************************************
@@ -194,17 +194,17 @@ private:
 
 class WizardAccountStunPage : public QWizardPage
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	WizardAccountStunPage(QWidget *parent = 0);
-	~WizardAccountStunPage();
-	int nextId() const;
+   WizardAccountStunPage(QWidget *parent = 0);
+   ~WizardAccountStunPage();
+   int nextId() const;
 
 private:
-	QCheckBox * checkBox_enableStun;
-	QLabel * label_StunServer;
-	QLineEdit * lineEdit_StunServer;
+   QCheckBox * checkBox_enableStun;
+   QLabel * label_StunServer;
+   QLineEdit * lineEdit_StunServer;
 };
 
 /***************************************************************************
@@ -214,12 +214,12 @@ private:
 
 class WizardAccountConclusionPage : public QWizardPage
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	WizardAccountConclusionPage(QWidget *parent = 0);
-	~WizardAccountConclusionPage();
-	int nextId() const;
+   WizardAccountConclusionPage(QWidget *parent = 0);
+   ~WizardAccountConclusionPage();
+   int nextId() const;
 
 private:
 };

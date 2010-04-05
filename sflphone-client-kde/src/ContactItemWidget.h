@@ -28,27 +28,27 @@
 class Contact;
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class ContactItemWidget : public QWidget
 {
 Q_OBJECT
 
 private:
-	QLabel * contactName;
-	QLabel * contactNumber;
-	QLabel * contactPhoto;
-	QLabel * contactType;
-	
+   QLabel * contactName;
+   QLabel * contactNumber;
+   QLabel * contactPhoto;
+   QLabel * contactType;
+   
 public:
 
-	//Constructors & Destructors
-	ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent = 0);
-	~ContactItemWidget();
-	
-	//Getters
-	QString getContactName();
-	QString getContactNumber();
+   //Constructors & Destructors
+   ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent = 0);
+   ~ContactItemWidget();
+   
+   //Getters
+   QString getContactName();
+   QString getContactNumber();
 
 };
 

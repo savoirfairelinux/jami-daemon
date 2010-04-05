@@ -26,34 +26,34 @@
 #include "AccountList.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+   @author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
 class AccountListModel : public QAbstractListModel
 {
 Q_OBJECT
 private:
-	AccountList * accounts;
+   AccountList * accounts;
 
 public:
-	AccountListModel(QObject *parent = 0);
+   AccountListModel(QObject *parent = 0);
 
-	~AccountListModel();
-	
-	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
-	int rowCount(const QModelIndex & parent = QModelIndex()) const;
-// 	int columnCount(const QModelIndex & parent = QModelIndex()) const;
-// 	QVariant headerData(int section , Qt::Orientation orientation, int role) const;
-	Qt::ItemFlags flags(const QModelIndex & index) const;
-	virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
-	
-	bool accountUp( int index );
-	bool accountDown( int index );
-	bool removeAccount( int index );
-	bool addAccount( QString alias );
-	
-	QString getOrderedList() const;
-// 	QStringList getActiveCodecList() const ;
-// 	void setActiveCodecList(const QStringList & activeCodecListToSet);
+   ~AccountListModel();
+   
+   QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
+   int rowCount(const QModelIndex & parent = QModelIndex()) const;
+//    int columnCount(const QModelIndex & parent = QModelIndex()) const;
+//    QVariant headerData(int section , Qt::Orientation orientation, int role) const;
+   Qt::ItemFlags flags(const QModelIndex & index) const;
+   virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
+   
+   bool accountUp( int index );
+   bool accountDown( int index );
+   bool removeAccount( int index );
+   bool addAccount( QString alias );
+   
+   QString getOrderedList() const;
+//    QStringList getActiveCodecList() const ;
+//    void setActiveCodecList(const QStringList & activeCodecListToSet);
 
 };
 

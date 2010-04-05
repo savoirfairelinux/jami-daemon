@@ -13,14 +13,14 @@ class SFLPhoneApplication : public KApplication
   Q_OBJECT
 
   public:
-    // Constructor
-                SFLPhoneApplication();
+   // Constructor
+   SFLPhoneApplication();
 
-    // Destructor
-    virtual    ~SFLPhoneApplication();
+   // Destructor
+   virtual    ~SFLPhoneApplication();
 
-    // Return the contact list window
-    SFLPhone*       getSFLPhoneWindow() const;
+   // Return the contact list window
+   SFLPhone*       getSFLPhoneWindow() const;
 
   private:  // private methods
     void         initializeMainWindow();

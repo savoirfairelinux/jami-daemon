@@ -30,78 +30,70 @@
 ContactItemWidget::ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent)
  : QWidget(parent)
 {
-	if(!contact->getNickName().isEmpty())
-	{
-		contactName = new QLabel(contact->getNickName());
-	}
-	else
-	{
-		contactName = new QLabel(contact->getFirstName());
-	}
-	if(displayPhoto)
-	{
-		if(!contact->getPhoto()->isEmpty())
-		{
-			QPixmap pixmap;
-			if(contact->getPhoto()->isIntern())
-			{
-				contactPhoto = new QLabel();
-				pixmap = QPixmap::fromImage(contact->getPhoto()->data());
-			}
-			else
-			{
-				contactPhoto = new QLabel();
-				pixmap = QPixmap(contact->getPhoto()->url());
-			}
-			if(pixmap.height() > pixmap.width())
-				contactPhoto->setPixmap(pixmap.scaledToHeight(CONTACT_ITEM_HEIGHT-4));
-			else
-				contactPhoto->setPixmap(pixmap.scaledToWidth(CONTACT_ITEM_HEIGHT-4));
-		}
-		else
-		{
-			contactPhoto = new QLabel();
-			contactPhoto->setMinimumSize(CONTACT_ITEM_HEIGHT-4, 0);
-		}
-	}
-	contactType = new QLabel(PhoneNumber::typeLabel(contact->getType()));
-	contactNumber = new QLabel(contact->getPhoneNumber());
-	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
-	QHBoxLayout * hlayout = new QHBoxLayout(this);
-	QVBoxLayout * vlayout = new QVBoxLayout();
-	hlayout->setMargin(1);
-	hlayout->setSpacing(4);
-	vlayout->setMargin(1);
-	vlayout->setSpacing(2);
-	vlayout->addWidget(contactName);
-	vlayout->addWidget(contactNumber);
-	if(displayPhoto)
-	{
-		hlayout->addWidget(contactPhoto);
-	}
-	hlayout->addLayout(vlayout);
-	hlayout->addItem(horizontalSpacer);
-	hlayout->addWidget(contactType);
-	this->setLayout(hlayout);
+   if(!contact->getNickName().isEmpty()) {
+      contactName = new QLabel(contact->getNickName());
+   }
+   else {
+      contactName = new QLabel(contact->getFirstName());
+   }
+   if(displayPhoto) {
+      if(!contact->getPhoto()->isEmpty()) {
+         QPixmap pixmap;
+         if(contact->getPhoto()->isIntern()) {
+            contactPhoto = new QLabel();
+            pixmap = QPixmap::fromImage(contact->getPhoto()->data());
+         }
+         else {
+            contactPhoto = new QLabel();
+            pixmap = QPixmap(contact->getPhoto()->url());
+         }
+         if(pixmap.height() > pixmap.width())
+            contactPhoto->setPixmap(pixmap.scaledToHeight(CONTACT_ITEM_HEIGHT-4));
+         else
+            contactPhoto->setPixmap(pixmap.scaledToWidth(CONTACT_ITEM_HEIGHT-4));
+      }
+      else {
+         contactPhoto = new QLabel();
+         contactPhoto->setMinimumSize(CONTACT_ITEM_HEIGHT-4, 0);
+      }
+   }
+   contactType = new QLabel(PhoneNumber::typeLabel(contact->getType()));
+   contactNumber = new QLabel(contact->getPhoneNumber());
+   QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+   QHBoxLayout * hlayout = new QHBoxLayout(this);
+   QVBoxLayout * vlayout = new QVBoxLayout();
+   hlayout->setMargin(1);
+   hlayout->setSpacing(4);
+   vlayout->setMargin(1);
+   vlayout->setSpacing(2);
+   vlayout->addWidget(contactName);
+   vlayout->addWidget(contactNumber);
+   if(displayPhoto) {
+      hlayout->addWidget(contactPhoto);
+   }
+   hlayout->addLayout(vlayout);
+   hlayout->addItem(horizontalSpacer);
+   hlayout->addWidget(contactType);
+   this->setLayout(hlayout);
 }
 
 
 ContactItemWidget::~ContactItemWidget()
 {
-	delete contactName;
-	delete contactNumber;
-// 	delete contactPhoto;
-	delete contactType;
+   delete contactName;
+   delete contactNumber;
+//    delete contactPhoto;
+   delete contactType;
 }
 
 
 QString ContactItemWidget::getContactName()
 {
-	return contactName->text();
+   return contactName->text();
 }
 
 QString ContactItemWidget::getContactNumber()
 {
-	return contactNumber->text();
+   return contactNumber->text();
 }
 

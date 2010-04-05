@@ -27,26 +27,26 @@
 #include "Account.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class ActionSetAccountFirst : public QAction
 {
 Q_OBJECT
 
 private:
-	
-	Account * account;
+   
+   Account * account;
 
 public:
 
-	ActionSetAccountFirst(Account * account, QObject *parent = 0);
-	~ActionSetAccountFirst();
+   ActionSetAccountFirst(Account * account, QObject *parent = 0);
+   ~ActionSetAccountFirst();
 
 private slots:
-	void emitSetFirst();
-	
+   void emitSetFirst();
+   
 signals:
-	void setFirst(Account * account);
+   void setFirst(Account * account);
 
 };
 

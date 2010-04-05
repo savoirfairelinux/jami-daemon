@@ -36,35 +36,35 @@ using namespace KABC;
 class ContactItemWidget;
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class Contact : public QObject, public Item<ContactItemWidget>{
 private:
-	QString firstName;
-	QString secondName;
-	QString nickName;
-	QString phoneNumber;
-	Picture * photo;
-	PhoneNumber::Type type;
-	bool displayPhoto;
-	
+   QString firstName;
+   QString secondName;
+   QString nickName;
+   QString phoneNumber;
+   Picture * photo;
+   PhoneNumber::Type type;
+   bool displayPhoto;
+   
 public:
 
-	//Constructors & Destructors
-	Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto);
-	~Contact();
-	
-	//Getters
-	QString getPhoneNumber() const;
-	QString getNickName() const;
-	QString getFirstName() const;
-	QString getSecondName() const;
-	const Picture * getPhoto() const;
-	PhoneNumber::Type getType() const;
-	void initItem();
-	
+   //Constructors & Destructors
+   Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto);
+   ~Contact();
+   
+   //Getters
+   QString getPhoneNumber() const;
+   QString getNickName() const;
+   QString getFirstName() const;
+   QString getSecondName() const;
+   const Picture * getPhoto() const;
+   PhoneNumber::Type getType() const;
+   void initItem();
+   
 protected:
-	void initItemWidget();
+   void initItemWidget();
 
 };
 

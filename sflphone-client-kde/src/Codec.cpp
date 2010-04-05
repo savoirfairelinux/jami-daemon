@@ -25,40 +25,74 @@
 
 Codec::Codec(int payload, bool enabled)
 {
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	QStringList details = configurationManager.getCodecDetails(payload);
-	this->payload = QString::number(payload);
-	this->enabled = enabled;
-	this->name = details[CODEC_NAME];
-	this->frequency = details[CODEC_SAMPLE_RATE];
-	this->bitrate = details[CODEC_BIT_RATE];
-	this->bandwidth = details[CODEC_BANDWIDTH];
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QStringList details = configurationManager.getCodecDetails(payload);
+   this->payload = QString::number(payload);
+   this->enabled = enabled;
+   this->name = details[CODEC_NAME];
+   this->frequency = details[CODEC_SAMPLE_RATE];
+   this->bitrate = details[CODEC_BIT_RATE];
+   this->bandwidth = details[CODEC_BANDWIDTH];
 }
 
 QString Codec::getPayload() const
-{	return payload;	}
+{
+  return payload;
+}
+
 QString Codec::getName() const
-{	return name;	}
+{
+  return name;
+}
+
 QString Codec::getFrequency() const
-{	return frequency;	}
+{
+  return frequency;
+}
+
 QString Codec::getBitrate() const
-{	return bitrate;	}
+{
+  return bitrate;
+}
+
 QString Codec::getBandwidth() const
-{	return bandwidth;	}
+{
+  return bandwidth;
+}
+
 bool Codec::isEnabled() const
-{	return enabled;	}
+{
+  return enabled;
+}
 
 void Codec::setPayload(QString payload)
-{	this->payload = payload;	}
+{
+  this->payload = payload;
+}
+
 void Codec::setName(QString name)
-{	this->name = name;	}
+{
+  this->name = name;
+}
+
 void Codec::setFrequency(QString frequency)
-{	this->frequency = frequency;	}
+{
+  this->frequency = frequency;
+}
+
 void Codec::setBitrate(QString bitrate)
-{	this->bitrate = bitrate;	}
+{
+  this->bitrate = bitrate;
+}
+
 void Codec::setBandwidth(QString bandwidth)
-{	this->bandwidth = bandwidth;	}
+{
+  this->bandwidth = bandwidth;
+}
+
 void Codec::setEnabled(bool enabled)
-{	this->enabled = enabled;	}
+{
+  this->enabled = enabled;
+}
 
 

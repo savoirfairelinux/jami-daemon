@@ -25,10 +25,10 @@
 ActionSetAccountFirst::ActionSetAccountFirst(Account * account, QObject *parent)
  : QAction((account == NULL) ? i18n("Default account") : account->getAlias(), parent)
 {
-	setCheckable(true);
-	this->account = account;
-	connect(this,    SIGNAL(triggered()),
-	        this,    SLOT(emitSetFirst()));
+   setCheckable(true);
+   this->account = account;
+   connect(this,    SIGNAL(triggered()),
+           this,    SLOT(emitSetFirst()));
 }
 
 
@@ -38,5 +38,5 @@ ActionSetAccountFirst::~ActionSetAccountFirst()
 
 void ActionSetAccountFirst::emitSetFirst()
 {
-	emit setFirst(account);
+   emit setFirst(account);
 }

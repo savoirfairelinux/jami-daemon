@@ -139,146 +139,146 @@ typedef  void (Call::*function)();
 **/
 class Call : public QObject
 {
-	Q_OBJECT
+   Q_OBJECT
 private:
 
-	//Call attributes
-	
-	QString account;
-	QString callId;
-	QString peerPhoneNumber;
-	QString peerName;
-	history_state historyState;
-	QDateTime * startTime;
-	QDateTime * stopTime;       
-	
-	/*
-	QWidget * historyItemWidget;
-	QLabel * labelHistoryIcon;
-	QLabel * labelHistoryPeerName;
-	QLabel * labelHistoryCallNumber;
-	QLabel * labelHistoryTime;
-	*/
+   //Call attributes
+   
+   QString account;
+   QString callId;
+   QString peerPhoneNumber;
+   QString peerName;
+   history_state historyState;
+   QDateTime * startTime;
+   QDateTime * stopTime;       
+   
+   /*
+   QWidget * historyItemWidget;
+   QLabel * labelHistoryIcon;
+   QLabel * labelHistoryPeerName;
+   QLabel * labelHistoryCallNumber;
+   QLabel * labelHistoryTime;
+   */
 
-	QString transferNumber;
-	QString callNumber;
-	
-	//Automate attributes
-	/**
-	 *  actionPerformedStateMap[orig_state][action]
-	 *  Map of the states to go to when the action action is 
-	 *  performed on a call in state orig_state.
-	**/
-	static const call_state actionPerformedStateMap [11][5];
-	
-	/**
-	 *  actionPerformedFunctionMap[orig_state][action]
-	 *  Map of the functions to call when the action action is 
-	 *  performed on a call in state orig_state.
-	**/
-	static const function actionPerformedFunctionMap [11][5];
-	
-	/**
-	 *  stateChangedStateMap[orig_state][daemon_new_state]
-	 *  Map of the states to go to when the daemon sends the signal 
-	 *  callStateChanged with arg daemon_new_state
-	 *  on a call in state orig_state.
-	**/
-	static const call_state stateChangedStateMap [11][6];
-	
-	/**
-	 *  stateChangedFunctionMap[orig_state][daemon_new_state]
-	 *  Map of the functions to call when the daemon sends the signal 
-	 *  callStateChanged with arg daemon_new_state
-	 *  on a call in state orig_state.
-	**/
-	static const function stateChangedFunctionMap [11][6];
-	
-	static const char * historyIcons[3];
-	
-	call_state currentState;
-	bool recording;
-	
-	static const char * callStateIcons[11];
+   QString transferNumber;
+   QString callNumber;
+   
+   //Automate attributes
+   /**
+    *  actionPerformedStateMap[orig_state][action]
+    *  Map of the states to go to when the action action is 
+    *  performed on a call in state orig_state.
+   **/
+   static const call_state actionPerformedStateMap [11][5];
+   
+   /**
+    *  actionPerformedFunctionMap[orig_state][action]
+    *  Map of the functions to call when the action action is 
+    *  performed on a call in state orig_state.
+   **/
+   static const function actionPerformedFunctionMap [11][5];
+   
+   /**
+    *  stateChangedStateMap[orig_state][daemon_new_state]
+    *  Map of the states to go to when the daemon sends the signal 
+    *  callStateChanged with arg daemon_new_state
+    *  on a call in state orig_state.
+   **/
+   static const call_state stateChangedStateMap [11][6];
+   
+   /**
+    *  stateChangedFunctionMap[orig_state][daemon_new_state]
+    *  Map of the functions to call when the daemon sends the signal 
+    *  callStateChanged with arg daemon_new_state
+    *  on a call in state orig_state.
+   **/
+   static const function stateChangedFunctionMap [11][6];
+   
+   static const char * historyIcons[3];
+   
+   call_state currentState;
+   bool recording;
+   
+   static const char * callStateIcons[11];
 
-	Call(call_state startState, QString callId, QString peerNumber = "", QString account = "", QString peerName = "");
-	
-	static daemon_call_state toDaemonCallState(const QString & stateName);
-	
-	//Automate functions
-	// See actionPerformedFunctionMap and stateChangedFunctionMap
-	// to know when it is called.
-	void nothing();
-	void accept();
-	void refuse();
-	void acceptTransf();
-	void acceptHold();
-	void hangUp();
-	void cancel();
-	void hold();
-	void call();
-	void transfer();
-	void unhold();
-	void switchRecord();
-	void setRecord();
-	void start();
-	void startStop();
-	void stop();
-	void startWeird();
-	void warning();
+   Call(call_state startState, QString callId, QString peerNumber = "", QString account = "", QString peerName = "");
+   
+   static daemon_call_state toDaemonCallState(const QString & stateName);
+   
+   //Automate functions
+   // See actionPerformedFunctionMap and stateChangedFunctionMap
+   // to know when it is called.
+   void nothing();
+   void accept();
+   void refuse();
+   void acceptTransf();
+   void acceptHold();
+   void hangUp();
+   void cancel();
+   void hold();
+   void call();
+   void transfer();
+   void unhold();
+   void switchRecord();
+   void setRecord();
+   void start();
+   void startStop();
+   void stop();
+   void startWeird();
+   void warning();
 
 public:
-	
-	//Constructors & Destructors
-	~Call();
-//	void initCallItemWidget();
-	static Call * buildDialingCall(QString callId, const QString & peerName, QString account = "");
-	static Call * buildIncomingCall(const QString & callId);
-	static Call * buildRingingCall(const QString & callId);
-	static Call * buildHistoryCall(const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type);
-	static Call * buildExistingCall(QString callId);
-	
-	static history_state getHistoryStateFromType(QString type);
-	static QString getTypeFromHistoryState(history_state historyState);
-	static call_state getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
-	static history_state getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
-	
-	//Getters
-	call_state getState() const;
-	QString getCallId() const;
-	QString getPeerPhoneNumber() const;
-	QString getPeerName() const;
-	call_state getCurrentState() const;
-	history_state getHistoryState() const;
-	bool getRecording() const;
-	QString getAccountId() const;
-	bool isHistory() const;
-	QString getStopTimeStamp() const;
-	QString getStartTimeStamp() const;
+   
+   //Constructors & Destructors
+   ~Call();
+//   void initCallItemWidget();
+   static Call * buildDialingCall(QString callId, const QString & peerName, QString account = "");
+   static Call * buildIncomingCall(const QString & callId);
+   static Call * buildRingingCall(const QString & callId);
+   static Call * buildHistoryCall(const QString & callId, uint startTimeStamp, uint stopTimeStamp, QString account, QString name, QString number, QString type);
+   static Call * buildExistingCall(QString callId);
+   
+   static history_state getHistoryStateFromType(QString type);
+   static QString getTypeFromHistoryState(history_state historyState);
+   static call_state getStartStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
+   static history_state getHistoryStateFromDaemonCallState(QString daemonCallState, QString daemonCallType);
+   
+   //Getters
+   call_state getState() const;
+   QString getCallId() const;
+   QString getPeerPhoneNumber() const;
+   QString getPeerName() const;
+   call_state getCurrentState() const;
+   history_state getHistoryState() const;
+   bool getRecording() const;
+   QString getAccountId() const;
+   bool isHistory() const;
+   QString getStopTimeStamp() const;
+   QString getStartTimeStamp() const;
 
-	QString getTransferNumber() const;
-	void setTransferNumber(QString number);
+   QString getTransferNumber() const;
+   void setTransferNumber(QString number);
 
-	QString getCallNumber() const;
-	void setCallNumber(QString number);
+   QString getCallNumber() const;
+   void setCallNumber(QString number);
 
-	//Automate calls
-	call_state stateChanged(const QString & newState);
-	call_state actionPerformed(call_action action);
-	
-	//Setters
-//	void appendItemText(QString text);
-	void appendText(QString str);
-	void backspaceItemText();
-//	void setItemIcon(const QString pixmap);
-// 	void setPeerName(const QString peerName);
-	void changeCurrentState(call_state newState);
-	
-	//Utils
-	Contact * findContactForNumberInKAddressBook(QString number);
+   //Automate calls
+   call_state stateChanged(const QString & newState);
+   call_state actionPerformed(call_action action);
+   
+   //Setters
+//   void appendItemText(QString text);
+   void appendText(QString str);
+   void backspaceItemText();
+//   void setItemIcon(const QString pixmap);
+//    void setPeerName(const QString peerName);
+   void changeCurrentState(call_state newState);
+   
+   //Utils
+   Contact * findContactForNumberInKAddressBook(QString number);
 
 signals:
-	void changed();
+   void changed();
 };
 
 #endif

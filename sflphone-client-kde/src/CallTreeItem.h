@@ -40,50 +40,50 @@
 
 class CallTreeItem : public QObject
  {
-	Q_OBJECT
+   Q_OBJECT
  public:
-	 CallTreeItem(const QVector<QVariant> &data, CallTreeItem *parent);
+    CallTreeItem(const QVector<QVariant> &data, CallTreeItem *parent);
          CallTreeItem(const CallTreeItem *toCopy, CallTreeItem *parent);
-	 ~CallTreeItem();
+    ~CallTreeItem();
      
-	 CallTreeItem *child(int number);
-	 int childCount() const;
-	 int columnCount() const;
-	 QVariant data(int column) const;
-	 Call* call() const;
-	 QWidget* widget() const;
-	 bool insertChildren(int position, int count, int columns);
-	 bool insertColumns(int position, int columns);
-	 CallTreeItem *parent();
-	 bool removeChildren(int position, int count);
-	 bool removeColumns(int position, int columns);
-	 int childNumber() const;
-	 bool setData(int column, const QVariant &value);
-	 void setCall(Call *call);
+    CallTreeItem *child(int number);
+    int childCount() const;
+    int columnCount() const;
+    QVariant data(int column) const;
+    Call* call() const;
+    QWidget* widget() const;
+    bool insertChildren(int position, int count, int columns);
+    bool insertColumns(int position, int columns);
+    CallTreeItem *parent();
+    bool removeChildren(int position, int count);
+    bool removeColumns(int position, int columns);
+    int childNumber() const;
+    bool setData(int column, const QVariant &value);
+    void setCall(Call *call);
 
-	static const char * callStateIcons[11];
+   static const char * callStateIcons[11];
  private:
-	 QList<CallTreeItem*> childItems;
-	 QVector<QVariant> itemData;
-	 CallTreeItem *parentItem;
-	 Call *itemCall;
-	 QWidget *itemWidget;
+    QList<CallTreeItem*> childItems;
+    QVector<QVariant> itemData;
+    CallTreeItem *parentItem;
+    Call *itemCall;
+    QWidget *itemWidget;
 
-	 QLabel * labelIcon;
-	 QLabel * labelPeerName;
-	 QLabel * labelCallNumber2;
-	 QLabel * labelTransferPrefix;
-	 QLabel * labelTransferNumber;
-	 
-	 QWidget * historyItemWidget;
-	 QLabel * labelHistoryIcon;
-	 QLabel * labelHistoryPeerName;
-	 QLabel * labelHistoryCallNumber;
-	 QLabel * labelHistoryTime;
+    QLabel * labelIcon;
+    QLabel * labelPeerName;
+    QLabel * labelCallNumber2;
+    QLabel * labelTransferPrefix;
+    QLabel * labelTransferNumber;
+    
+    QWidget * historyItemWidget;
+    QLabel * labelHistoryIcon;
+    QLabel * labelHistoryPeerName;
+    QLabel * labelHistoryCallNumber;
+    QLabel * labelHistoryTime;
          friend class CallTreeItem;
 
 public slots:
-	 void updated();
+    void updated();
 signals:
    void over(Call*);  
  };

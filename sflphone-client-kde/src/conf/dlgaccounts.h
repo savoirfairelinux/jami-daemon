@@ -74,70 +74,70 @@ class Private_AddCodecDialog : public KDialog {
 };
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
-	
-	\note see ticket #1309 for advices about how to improve this class.
+   @author Jérémy Quentin <jeremy.quentin@gmail.com>
+   
+   \note see ticket #1309 for advices about how to improve this class.
 */
 class DlgAccounts : public QWidget, public Ui_DlgAccountsBase
 {
 Q_OBJECT
 public:
-	DlgAccounts(KConfigDialog *parent = 0);
+   DlgAccounts(KConfigDialog *parent = 0);
 
-	void saveAccount(QListWidgetItem * item);
-	
-	/**
-	 *   Fills the settings form in the right side with the
-	 *   settings of @p item.
-	 *
-	 *   \note When the user creates a new account, its accountDetails
-	 *   map is empty, so the form is filled with blank strings,
-	 *   zeros... And when the user clicks \e Apply , these settings are
-	 *   saved just after the account is created. So be careful the form
-	 *   is filled with the right default settings if blank (as 600 for
-	 *   registration expire).
-	 *
-	 * @param item the item with which to fill the settings form
-	 */
-	void loadAccount(QListWidgetItem * item);
-	
+   void saveAccount(QListWidgetItem * item);
+   
+   /**
+    *   Fills the settings form in the right side with the
+    *   settings of @p item.
+    *
+    *   \note When the user creates a new account, its accountDetails
+    *   map is empty, so the form is filled with blank strings,
+    *   zeros... And when the user clicks \e Apply , these settings are
+    *   saved just after the account is created. So be careful the form
+    *   is filled with the right default settings if blank (as 600 for
+    *   registration expire).
+    *
+    * @param item the item with which to fill the settings form
+    */
+   void loadAccount(QListWidgetItem * item);
+   
 private:
-	AccountList * accountList;
+   AccountList * accountList;
         QList< StringHash > codecList;
-	bool accountListHasChanged;
+   bool accountListHasChanged;
         void loadCodecList();
 
 public slots:
-	void saveAccountList();
-	void loadAccountList();
-	
-	bool hasChanged();
-	void updateSettings();
-	void updateWidgets();
-	
+   void saveAccountList();
+   void loadAccountList();
+   
+   bool hasChanged();
+   void updateSettings();
+   void updateWidgets();
+   
 private slots:
-	void changedAccountList();
-	void connectAccountsChangedSignal();
-	void disconnectAccountsChangedSignal();
-	void on_button_accountUp_clicked();
-	void on_button_accountDown_clicked();
-	void on_button_accountAdd_clicked();
-	void on_button_accountRemove_clicked();
-	void on_edit1_alias_textChanged(const QString & text);
-	void on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous );
-// 	//void on_toolButton_accountsApply_clicked(); //Disabled for future removal
-	void updateAccountStates();
-	void addAccountToAccountList(Account * account);
-	void updateAccountListCommands();
-	void updateStatusLabel(QListWidgetItem * item);
-	void updateStatusLabel(Account * account);
+   void changedAccountList();
+   void connectAccountsChangedSignal();
+   void disconnectAccountsChangedSignal();
+   void on_button_accountUp_clicked();
+   void on_button_accountDown_clicked();
+   void on_button_accountAdd_clicked();
+   void on_button_accountRemove_clicked();
+   void on_edit1_alias_textChanged(const QString & text);
+   void on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous );
+//    //void on_toolButton_accountsApply_clicked(); //Disabled for future removal
+   void updateAccountStates();
+   void addAccountToAccountList(Account * account);
+   void updateAccountListCommands();
+   void updateStatusLabel(QListWidgetItem * item);
+   void updateStatusLabel(Account * account);
         void codecClicked(const QModelIndex & model);
         void addCodec(QString name = "");
         void codecChanged();
-	
-	
+   
+   
 signals:
-	void updateButtons();
+   void updateButtons();
 
 };
 

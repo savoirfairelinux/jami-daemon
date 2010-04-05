@@ -28,172 +28,160 @@
 CallList::CallList(QObject * parent)
  : QObject(parent)
 {
-	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	QStringList callList = callManager.getCallList();
-	qDebug() << "Call List = " << callList;
-	calls = new QVector<Call *>();
-	for(int i = 0 ; i < callList.size() ; i++)
-	{
-		calls->append(Call::buildExistingCall(callList[i]));
-	}
+   CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QStringList callList = callManager.getCallList();
+   qDebug() << "Call List = " << callList;
+   calls = new QVector<Call *>();
+   for(int i = 0 ; i < callList.size() ; i++) {
+      calls->append(Call::buildExistingCall(callList[i]));
+   }
         MapStringString historyMap = configurationManager.getHistory().value();
-	qDebug() << "Call History = " << historyMap;
-	QMapIterator<QString, QString> i(historyMap);
-	while (i.hasNext()) {
-		i.next();
-		uint startTimeStamp = i.key().toUInt();
-		QStringList param = i.value().split("|");
-		QString type = param[0];
-		QString number = param[1];
-		QString name = param[2];
-		uint stopTimeStamp = param[3].toUInt();
-		QString account = param[4];
-		calls->insert(0, Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type));
+   qDebug() << "Call History = " << historyMap;
+   QMapIterator<QString, QString> i(historyMap);
+   while (i.hasNext()) {
+      i.next();
+      uint startTimeStamp = i.key().toUInt();
+      QStringList param = i.value().split("|");
+      QString type = param[0];
+      QString number = param[1];
+      QString name = param[2];
+      uint stopTimeStamp = param[3].toUInt();
+      QString account = param[4];
+      calls->insert(0, Call::buildHistoryCall(generateCallId(), startTimeStamp, stopTimeStamp, account, name, number, type));
     }
 }
 
 MapStringString CallList::getHistoryMap()
 {
-	MapStringString res;
-	for(int i = 0 ; i < size() ; i++)
-	{
-		Call * call = (*calls)[i];
-		if(
-		     call->getState() == CALL_STATE_OVER && 
-		     call->getHistoryState() != NONE
-		  )
-		{
-			QString key = call->getStartTimeStamp();
-			QString val = Call::getTypeFromHistoryState(call->getHistoryState()) + "|" + call->getPeerPhoneNumber() + "|" + call->getPeerName() + "|" + call->getStopTimeStamp() + "|" + call->getAccountId();
-			res[key] = val;
-		}
-	}
-	qDebug() << res;
-	return res;
+   MapStringString res;
+   for(int i = 0 ; i < size() ; i++) {
+      Call * call = (*calls)[i];
+      if(call->getState() == CALL_STATE_OVER && call->getHistoryState() != NONE ) {
+         QString key = call->getStartTimeStamp();
+         QString val = Call::getTypeFromHistoryState(call->getHistoryState()) + "|" + call->getPeerPhoneNumber() + "|" + call->getPeerName() + "|" + call->getStopTimeStamp() + "|" + call->getAccountId();
+         res[key] = val;
+      }
+   }
+   qDebug() << res;
+   return res;
 }
 
 CallList::~CallList()
 {
-	for(int i=0 ; i<size() ; i++)
-	{
-		delete (*calls)[i];
-	}
-	delete calls;
+   for(int i=0 ; i<size() ; i++) {
+      delete (*calls)[i];
+   }
+   delete calls;
 }
 
 /*
 
 Call * CallList::operator[](const QListWidgetItem * item)
 {
-	for(int i = 0 ; i < size() ; i++)
-	{
-		if ((*calls)[i]->getItem() == item)
-		{
-			return (*calls)[i];
-		}
-	}
-	return NULL;
+   for(int i = 0 ; i < size() ; i++)
+   {
+      if ((*calls)[i]->getItem() == item)
+      {
+         return (*calls)[i];
+      }
+   }
+   return NULL;
 }
 
 Call * CallList::findCallByItem(const QListWidgetItem * item)
 {
-	for(int i = 0 ; i < size() ; i++)
-	{
-		if ((*calls)[i]->getItem() == item)
-		{
-			return (*calls)[i];
-		}
-	}
-	return NULL;
+   for(int i = 0 ; i < size() ; i++)
+   {
+      if ((*calls)[i]->getItem() == item)
+      {
+         return (*calls)[i];
+      }
+   }
+   return NULL;
 }
 
 Call * CallList::findCallByHistoryItem(const QListWidgetItem * item)
 {
-	for(int i = 0 ; i < size() ; i++)
-	{
-		if ((*calls)[i]->getHistoryItem() == item)
-		{
-			return (*calls)[i];
-		}
-	}
-	return NULL;
-	}*/
+   for(int i = 0 ; i < size() ; i++)
+   {
+      if ((*calls)[i]->getHistoryItem() == item)
+      {
+         return (*calls)[i];
+      }
+   }
+   return NULL;
+   }*/
 
 Call * CallList::findCallByCallId(const QString & callId)
 {
-	for(int i = 0 ; i < size() ; i++)
-	{
-		if ((*calls)[i]->getCallId() == callId)
-		{
-			return (*calls)[i];
-		}
-	}
-	return NULL;
+   for(int i = 0 ; i < size() ; i++) {
+      if ((*calls)[i]->getCallId() == callId) {
+         return (*calls)[i];
+      }
+   }
+   return NULL;
 }
 
 Call * CallList::operator[](const QString & callId)
 {
-	for(int i = 0 ; i < size() ; i++)
-	{
-		if ((*calls)[i]->getCallId() == callId)
-		{
-			return (*calls)[i];
-		}
-	}
-	return NULL;
+   for(int i = 0 ; i < size() ; i++) {
+      if ((*calls)[i]->getCallId() == callId) {
+         return (*calls)[i];
+      }
+   }
+   return NULL;
 }
 
 Call * CallList::operator[](int ind)
 {
-	return (*calls)[ind];
+   return (*calls)[ind];
 }
 
 
 QString CallList::generateCallId()
 {
-	int id = qrand();
-	QString res = QString::number(id);
-	return res;
+   int id = qrand();
+   QString res = QString::number(id);
+   return res;
 }
 
 int CallList::size()
 {
-	return calls->size();
+   return calls->size();
 }
 
 Call * CallList::addDialingCall(const QString & peerName, QString account)
 {
-	Call * call = Call::buildDialingCall(generateCallId(), peerName, account);
-	calls->insert(0, call);
-	return call;
+   Call * call = Call::buildDialingCall(generateCallId(), peerName, account);
+   calls->insert(0, call);
+   return call;
 }
 
 Call * CallList::addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/)
 {
-	Call * call = Call::buildIncomingCall(callId/*, from, account*/);
-	calls->insert(0, call);
-	return call;
+   Call * call = Call::buildIncomingCall(callId/*, from, account*/);
+   calls->insert(0, call);
+   return call;
 }
 
 Call * CallList::addRingingCall(const QString & callId)
 {
-	Call * call = Call::buildRingingCall(callId);
-	calls->insert(0, call);
-	return call;
+   Call * call = Call::buildRingingCall(callId);
+   calls->insert(0, call);
+   return call;
 }
 
 void CallList::clearHistory()
 {
-	qDebug() << "clearHistory";
-	Call * call;
-	QMutableVectorIterator<Call *> i(*calls);
-	while (i.hasNext()) 
-	{
-		call = i.next();
-		if (call->isHistory()) 
-		{	i.remove();	}
-	}
+   qDebug() << "clearHistory";
+   Call * call;
+   QMutableVectorIterator<Call *> i(*calls);
+   while (i.hasNext()) {
+      call = i.next();
+      if (call->isHistory()) 
+                  i.remove();
+   }
 }
 
 Call * CallList::createConversationFromCall(Call* call1, Call* call2) {

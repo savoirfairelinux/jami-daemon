@@ -32,9 +32,9 @@ class DlgAddressBook : public QWidget, public Ui_DlgAddressBookBase
 {
 Q_OBJECT
 public:
-    DlgAddressBook(QWidget *parent = 0);
+   DlgAddressBook(QWidget *parent = 0);
 
-    ~DlgAddressBook();
+   ~DlgAddressBook();
 
 };
 

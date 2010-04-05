@@ -36,54 +36,54 @@ class Account : public QObject, public Item<AccountItemWidget>{
 Q_OBJECT
 private:
 
-	QString * accountId;
-	MapStringString * accountDetails;
-// 	QListWidgetItem * item;
-// 	AccountItemWidget * itemWidget;
+   QString * accountId;
+   MapStringString * accountDetails;
+//    QListWidgetItem * item;
+//    AccountItemWidget * itemWidget;
 
-	Account();
+   Account();
 
 public:
-	
-	~Account();
-	
-	//Constructors
-	static Account * buildExistingAccountFromId(QString _accountId);
-	static Account * buildNewAccountFromAlias(QString alias);
-	
-	//Getters
-	bool isNew() const;
-	bool isChecked() const;
-	const QString & getAccountId() const;
-	MapStringString & getAccountDetails() const;
-	QListWidgetItem * getItem();
-	AccountItemWidget * getItemWidget();
-	QString getStateName(QString & state);
-	QColor getStateColor();
-	QString getStateColorName();
-	QString getAccountDetail(QString param) const;
-	QString getAlias() const;
-	bool isEnabled() const;
-	bool isRegistered() const;
-	
-	//Setters
-	void setAccountId(QString id);
-	void setAccountDetails(MapStringString m);
-	void setAccountDetail(QString param, QString val);
-	
-	//Updates
-	void initItem();
-	void initItemWidget();
-	void updateState();
-	
-	//Operators
-	bool operator==(const Account&)const;
-	
+   
+   ~Account();
+   
+   //Constructors
+   static Account * buildExistingAccountFromId(QString _accountId);
+   static Account * buildNewAccountFromAlias(QString alias);
+   
+   //Getters
+   bool isNew() const;
+   bool isChecked() const;
+   const QString & getAccountId() const;
+   MapStringString & getAccountDetails() const;
+   QListWidgetItem * getItem();
+   AccountItemWidget * getItemWidget();
+   QString getStateName(QString & state);
+   QColor getStateColor();
+   QString getStateColorName();
+   QString getAccountDetail(QString param) const;
+   QString getAlias() const;
+   bool isEnabled() const;
+   bool isRegistered() const;
+   
+   //Setters
+   void setAccountId(QString id);
+   void setAccountDetails(MapStringString m);
+   void setAccountDetail(QString param, QString val);
+   
+   //Updates
+   void initItem();
+   void initItemWidget();
+   void updateState();
+   
+   //Operators
+   bool operator==(const Account&)const;
+   
 public slots:
-	void setEnabled(bool checked);
-	
-	
-	
+   void setEnabled(bool checked);
+   
+   
+   
 };
 
 

@@ -29,88 +29,87 @@
 AccountItemWidget::AccountItemWidget(QWidget *parent)
  : QWidget(parent)
 {
-	checkBox = new QCheckBox(this);
-	checkBox->setObjectName("checkBox");
-	led = new QLabel();
-	led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-	textLabel = new QLabel();
-	
-	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
-	QHBoxLayout* hlayout = new QHBoxLayout();
-	hlayout->setContentsMargins(0,0,0,0);
-	hlayout->addWidget(checkBox);
-	hlayout->addWidget(textLabel);
-	hlayout->addItem(horizontalSpacer);
-	hlayout->addWidget(led);
-	this->setLayout(hlayout);
-	state = Unregistered;
-	enabled = false;
-	updateDisplay();
-	
-	QMetaObject::connectSlotsByName(this);
+   checkBox = new QCheckBox(this);
+   checkBox->setObjectName("checkBox");
+   led = new QLabel();
+   led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+   textLabel = new QLabel();
+   
+   QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+   QHBoxLayout* hlayout = new QHBoxLayout();
+   hlayout->setContentsMargins(0,0,0,0);
+   hlayout->addWidget(checkBox);
+   hlayout->addWidget(textLabel);
+   hlayout->addItem(horizontalSpacer);
+   hlayout->addWidget(led);
+   this->setLayout(hlayout);
+   state = Unregistered;
+   enabled = false;
+   updateDisplay();
+   
+   QMetaObject::connectSlotsByName(this);
 }
 
 
 AccountItemWidget::~AccountItemWidget()
 {
-	delete led;
-	delete checkBox;
-	delete textLabel;
+   delete led;
+   delete checkBox;
+   delete textLabel;
 }
 
 
 void AccountItemWidget::updateStateDisplay()
 {
-	switch(state)
-	{
-		case Registered:
-			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_GREEN));
-			break;
-		case Unregistered:
-			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_GRAY));
-			break;
-		case NotWorking:
-			led->setPixmap(QPixmap(ICON_ACCOUNT_LED_RED));
-			break;
-		default:
-			qDebug() << "Calling AccountItemWidget::setState with value " << state << ", not part of enum AccountItemWidget::State.";
-	}
+   switch(state) {
+      case Registered:
+         led->setPixmap(QPixmap(ICON_ACCOUNT_LED_GREEN));
+         break;
+      case Unregistered:
+         led->setPixmap(QPixmap(ICON_ACCOUNT_LED_GRAY));
+         break;
+      case NotWorking:
+         led->setPixmap(QPixmap(ICON_ACCOUNT_LED_RED));
+         break;
+      default:
+         qDebug() << "Calling AccountItemWidget::setState with value " << state << ", not part of enum AccountItemWidget::State.";
+   }
 }
-	
+   
 void AccountItemWidget::updateEnabledDisplay()
 {
-	checkBox->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
+   checkBox->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
 }
-	
+   
 void AccountItemWidget::updateDisplay()
 {
-	updateStateDisplay();
-	updateEnabledDisplay();
+   updateStateDisplay();
+   updateEnabledDisplay();
 }
 
 void AccountItemWidget::setState(int state)
 {
-	this->state = state;
-	updateStateDisplay();
+   this->state = state;
+   updateStateDisplay();
 }
 
 void AccountItemWidget::setEnabled(bool enabled)
 {
-	this->enabled = enabled;
-	updateEnabledDisplay();
+   this->enabled = enabled;
+   updateEnabledDisplay();
 }
 
 void AccountItemWidget::setAccountText(QString text)
 {
-	this->textLabel->setText(text);
+   this->textLabel->setText(text);
 }
-	
+   
 bool AccountItemWidget::getEnabled()
 {
-	return checkBox->checkState();
+   return checkBox->checkState();
 }
 
 void AccountItemWidget::on_checkBox_stateChanged(int state)
 {
-	emit checkStateChanged(state == Qt::Checked);
+   emit checkStateChanged(state == Qt::Checked);
 }

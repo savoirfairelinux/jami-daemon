@@ -27,37 +27,37 @@
 #include "CodecListModel.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+   @author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
 class SortableCodecListWidget : public QWidget
 {
 Q_OBJECT
 private:
-	KPushButton * codecUpButton;
-	KPushButton * codecDownButton;
-	QTableView * codecTable;
+   KPushButton * codecUpButton;
+   KPushButton * codecDownButton;
+   QTableView * codecTable;
 
 public:
-	SortableCodecListWidget(QWidget *parent = 0);
-	
-	virtual void setModel(CodecListModel * model);
-	virtual CodecListModel * model();
-	
+   SortableCodecListWidget(QWidget *parent = 0);
+   
+   virtual void setModel(CodecListModel * model);
+   virtual CodecListModel * model();
+   
 private slots:
-	void on_codecUpButton_clicked();
-	void on_codecDownButton_clicked();
-	
+   void on_codecUpButton_clicked();
+   void on_codecDownButton_clicked();
+   
 public slots:
-	void updateCommands();
-	
+   void updateCommands();
+   
 private:
-	QModelIndex selectedIndex();
-	int selectedRow();
+   QModelIndex selectedIndex();
+   int selectedRow();
 
-	void setSelectedRow(int row);
-	
+   void setSelectedRow(int row);
+   
 signals:
-	void dataChanged();
+   void dataChanged();
 
 };
 

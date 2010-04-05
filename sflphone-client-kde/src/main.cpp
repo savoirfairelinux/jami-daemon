@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <QtCore/QString>
 #include <QtGui/QMenu>
-#include <QtGui/QMenuBar>
+//#include <QtGui/QMenuBar>
 #include <QtGui/QAction>
 
 #include <kcmdlineargs.h>
@@ -27,45 +27,45 @@ static const char version[] = "0.9.6";
 
 int main(int argc, char **argv)
 {
-	
-	try
-	{
-		KLocale::setMainCatalog("sflphone-client-kde");
-		
-		KAboutData about(
-		   "sflphone-client-kde", 
-		   "sflphone-client-kde", 
-		   ki18n("SFLphone KDE Client"), 
-		   version, 
-		   ki18n(description),
-		   KAboutData::License_GPL_V3, 
-		   ki18n("(C) 2009 Savoir-faire Linux"), 
-		   KLocalizedString(), 
-		   "http://www.sflphone.org.", 
-		   "sflphone@lists.savoirfairelinux.net");
-		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
-		about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
-		KCmdLineArgs::init(argc, argv, &about);
-		KCmdLineOptions options;
-		KCmdLineArgs::addCmdLineOptions(options);
-		
+   
+   try
+   {
+      KLocale::setMainCatalog("sflphone-client-kde");
+      
+      KAboutData about(
+         "sflphone-client-kde", 
+         "sflphone-client-kde", 
+         ki18n("SFLphone KDE Client"), 
+         version, 
+         ki18n(description),
+         KAboutData::License_GPL_V3, 
+         ki18n("(C) 2009 Savoir-faire Linux"), 
+         KLocalizedString(), 
+         "http://www.sflphone.org.", 
+         "sflphone@lists.savoirfairelinux.net");
+      about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@savoirfairelinux.com" );
+      about.setTranslator( ki18nc("NAME OF TRANSLATORS","Your names"), ki18nc("EMAIL OF TRANSLATORS","Your emails") );
+      KCmdLineArgs::init(argc, argv, &about);
+      KCmdLineOptions options;
+      KCmdLineArgs::addCmdLineOptions(options);
+      
         //configuration dbus
         registerCommTypes();
 
-		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-		instance.Register(getpid(), APP_NAME);
+      InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
+      instance.Register(getpid(), APP_NAME);
 
         SFLPhoneApplication app;
 
         return app.exec();
-		
-	}
-	catch(const char * msg)
-	{
-		printf("%s\n",msg);
-	}
-	catch(QString msg)
-	{
-		qDebug() << msg;
-	}
+      
+   }
+   catch(const char * msg)
+   {
+      qDebug() << msg;
+   }
+   catch(QString msg)
+   {
+      qDebug() << msg;
+   }
 } 

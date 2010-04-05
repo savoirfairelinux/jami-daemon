@@ -56,13 +56,10 @@ void SFLPhoneApplication::initializeMainWindow()
 
   // Enable KDE session restore.
   int restoredWindow = -1;
-  if( kapp->isSessionRestored() )
-  {
+  if( kapp->isSessionRestored() ) {
     int n = 0;
-    while( KMainWindow::canBeRestored( ++n ) )
-    {
-      if( KMainWindow::classNameOfToplevel( n ) != QLatin1String( "SFLPhone" ) )
-      {
+    while( KMainWindow::canBeRestored( ++n ) ) {
+      if( KMainWindow::classNameOfToplevel( n ) != QLatin1String( "SFLPhone" ) ) {
         continue;
       }
 
@@ -73,8 +70,7 @@ void SFLPhoneApplication::initializeMainWindow()
 
   // Create the main window and initialize it
   sflphoneWindow_ = new SFLPhone();
-  if( ! sflphoneWindow_->initialize() )
-  {
+  if( ! sflphoneWindow_->initialize() ) {
     exit(1);
     return;
   }
@@ -98,8 +94,7 @@ void SFLPhoneApplication::initializePaths()
   qDebug() << "KGlobal::dirs" << QString(DATA_INSTALL_DIR);
 
   // Test whether the prefix is correct.
-  if( KGlobal::dirs()->findResource( "appdata", "icons/hi128-apps-sflphone-client-kde.png" ).isNull() )
-  {
+  if( KGlobal::dirs()->findResource( "appdata", "icons/hi128-apps-sflphone-client-kde.png" ).isNull() ) {
     kWarning() << "SFLPhone could not find resources in the search paths: "
                << KGlobal::dirs()->findDirs( "appdata", QString::null ).join(", ") << endl;
   }

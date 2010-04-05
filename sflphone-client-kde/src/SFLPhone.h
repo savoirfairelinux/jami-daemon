@@ -74,66 +74,66 @@ enum CallAction {
 private:
         // Whether or not the object has been initialized
         bool   initialized_;
-	KAction * action_accept;
-	KAction * action_refuse;
-	KAction * action_hold;
-	KAction * action_transfer;
-	KAction * action_record;
-	QActionGroup * action_screen;
-	KAction * action_main;
-	KAction * action_history;
-	KAction * action_addressBook;
-	KAction * action_mailBox;
-	KAction * action_close;
-	KAction * action_quit;
-	KAction * action_displayVolumeControls;
-	KAction * action_displayDialpad;
-	KAction * action_configureSflPhone;
-	KAction * action_accountCreationWizard;
+   KAction * action_accept;
+   KAction * action_refuse;
+   KAction * action_hold;
+   KAction * action_transfer;
+   KAction * action_record;
+   QActionGroup * action_screen;
+   KAction * action_main;
+   KAction * action_history;
+   KAction * action_addressBook;
+   KAction * action_mailBox;
+   KAction * action_close;
+   KAction * action_quit;
+   KAction * action_displayVolumeControls;
+   KAction * action_displayDialpad;
+   KAction * action_configureSflPhone;
+   KAction * action_accountCreationWizard;
 
-	SFLPhoneView * view;
-	QMenu *trayIconMenu;
-	bool iconChanged;
-	SFLPhoneTray *trayIcon;
-	KNotification *notification;
-	QLabel * statusBarWidget;
-	
+   SFLPhoneView * view;
+   QMenu *trayIconMenu;
+   bool iconChanged;
+   SFLPhoneTray *trayIcon;
+   KNotification *notification;
+   QLabel * statusBarWidget;
+   
 private:
-	void setObjectNames();
+   void setObjectNames();
 
 protected:
-	virtual bool queryClose();
-	virtual void changeEvent(QEvent * event);
-	
+   virtual bool queryClose();
+   virtual void changeEvent(QEvent * event);
+   
 
 public:
-	SFLPhone(QWidget *parent = 0);
-	~SFLPhone();
+   SFLPhone(QWidget *parent = 0);
+   ~SFLPhone();
         bool initialize();
-	void setupActions();
-	void sendNotif(QString caller);
-	void trayIconSignal();
-	SFLPhoneView * getView();
-	QList<QAction *> getCallActions();
+   void setupActions();
+   void sendNotif(QString caller);
+   void trayIconSignal();
+   SFLPhoneView * getView();
+   QList<QAction *> getCallActions();
 
-	friend class SFLPhoneView;
-	
-	
+   friend class SFLPhoneView;
+   
+   
 private slots:
-	void on_view_statusMessageChangeAsked(const QString & message);
-	void on_view_windowTitleChangeAsked(const QString & message);
-	void on_view_enabledActionsChangeAsked(const bool * enabledActions);
-	void on_view_actionIconsChangeAsked(const QString * actionIcons);
-	void on_view_actionTextsChangeAsked(const QString * actionTexts);
-	void on_view_transferCheckStateChangeAsked(bool transferCheckState);
-	void on_view_recordCheckStateChangeAsked(bool recordCheckState);
-	void on_view_addressBookEnableAsked(bool enabled);
-	void on_view_screenChanged(int screen);
-	void on_view_incomingCall(const Call * call);      
+   void on_view_statusMessageChangeAsked(const QString & message);
+   void on_view_windowTitleChangeAsked(const QString & message);
+   void on_view_enabledActionsChangeAsked(const bool * enabledActions);
+   void on_view_actionIconsChangeAsked(const QString * actionIcons);
+   void on_view_actionTextsChangeAsked(const QString * actionTexts);
+   void on_view_transferCheckStateChangeAsked(bool transferCheckState);
+   void on_view_recordCheckStateChangeAsked(bool recordCheckState);
+   void on_view_addressBookEnableAsked(bool enabled);
+   void on_view_screenChanged(int screen);
+   void on_view_incomingCall(const Call * call);      
 
-	void updateScreen(QAction * action);
+   void updateScreen(QAction * action);
 
-	void quitButton();
+   void quitButton();
 
 };
 

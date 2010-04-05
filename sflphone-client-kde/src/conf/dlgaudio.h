@@ -28,7 +28,7 @@
 #include "conf/ConfigurationSkeleton.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+   @author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
 class DlgAudio : public QWidget, public Ui_DlgAudioBase
 {
@@ -39,27 +39,27 @@ public:
     ~DlgAudio();
 
 private:
-	//bool codecTableHasChanged;
+   //bool codecTableHasChanged;
 
 public slots:
-	void updateWidgets();
-	void updateSettings();
-	bool hasChanged();
-	/**
-	 *   Loads the ALSA settings to fill the combo boxes
-	 *   of the ALSA settings.
-	 *   ALSA choices for input, output... can be load only
-	 *   when the daemon has set ALSA as sound manager.
-	 *   So we have to load these settings once the user choses
-	 *   ALSA.
-	 */
-	void loadAlsaSettings();
-	
+   void updateWidgets();
+   void updateSettings();
+   bool hasChanged();
+   /**
+    *   Loads the ALSA settings to fill the combo boxes
+    *   of the ALSA settings.
+    *   ALSA choices for input, output... can be load only
+    *   when the daemon has set ALSA as sound manager.
+    *   So we have to load these settings once the user choses
+    *   ALSA.
+    */
+   void loadAlsaSettings();
+   
 private slots:
-	//void codecTableChanged();
-	
+   //void codecTableChanged();
+   
 signals:
-	void updateButtons();
+   void updateButtons();
 };
 
 #endif

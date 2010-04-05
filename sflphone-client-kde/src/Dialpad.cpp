@@ -26,96 +26,95 @@
 Dialpad::Dialpad(QWidget *parent)
  : QWidget(parent)
 {
-	gridLayout = new QGridLayout(this);
-	gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
+   gridLayout = new QGridLayout(this);
+   gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
    
-	pushButton_0      = new QPushButton(this);
-	pushButton_1      = new QPushButton(this);
-	pushButton_2      = new QPushButton(this);
-	pushButton_3      = new QPushButton(this);
-	pushButton_4      = new QPushButton(this);
-	pushButton_5      = new QPushButton(this);
-	pushButton_6      = new QPushButton(this);
-	pushButton_7      = new QPushButton(this);
-	pushButton_8      = new QPushButton(this);
-	pushButton_9      = new QPushButton(this);
-	pushButton_diese  = new QPushButton(this);
-	pushButton_etoile = new QPushButton(this);
-		
-	pushButton_0->setObjectName(QString::fromUtf8("pushButton_0"));
-	pushButton_1->setObjectName(QString::fromUtf8("pushButton_1"));
-	pushButton_2->setObjectName(QString::fromUtf8("pushButton_2"));
-	pushButton_3->setObjectName(QString::fromUtf8("pushButton_3"));
-	pushButton_4->setObjectName(QString::fromUtf8("pushButton_4"));
-	pushButton_5->setObjectName(QString::fromUtf8("pushButton_5"));
-	pushButton_6->setObjectName(QString::fromUtf8("pushButton_6"));
-	pushButton_7->setObjectName(QString::fromUtf8("pushButton_7"));
-	pushButton_8->setObjectName(QString::fromUtf8("pushButton_8"));
-	pushButton_9->setObjectName(QString::fromUtf8("pushButton_9"));
-	pushButton_diese->setObjectName(QString::fromUtf8("pushButton_diese"));
-	pushButton_etoile->setObjectName(QString::fromUtf8("pushButton_etoile"));
-	
-	gridLayout->addWidget(pushButton_1, 0, 0);
-	gridLayout->addWidget(pushButton_2, 0, 1);
-	gridLayout->addWidget(pushButton_3, 0, 2);
-	gridLayout->addWidget(pushButton_4, 1, 0);
-	gridLayout->addWidget(pushButton_5, 1, 1);
-	gridLayout->addWidget(pushButton_6, 1, 2);
-	gridLayout->addWidget(pushButton_7, 2, 0);
-	gridLayout->addWidget(pushButton_8, 2, 1);
-	gridLayout->addWidget(pushButton_9, 2, 2);
-	gridLayout->addWidget(pushButton_etoile, 3, 0);
-	gridLayout->addWidget(pushButton_0, 3, 1);
-	gridLayout->addWidget(pushButton_diese, 3, 2);
-	
-	fillButtons();
-	
-	QMetaObject::connectSlotsByName(this);
+   pushButton_0      = new QPushButton(this);
+   pushButton_1      = new QPushButton(this);
+   pushButton_2      = new QPushButton(this);
+   pushButton_3      = new QPushButton(this);
+   pushButton_4      = new QPushButton(this);
+   pushButton_5      = new QPushButton(this);
+   pushButton_6      = new QPushButton(this);
+   pushButton_7      = new QPushButton(this);
+   pushButton_8      = new QPushButton(this);
+   pushButton_9      = new QPushButton(this);
+   pushButton_diese  = new QPushButton(this);
+   pushButton_etoile = new QPushButton(this);
+      
+   pushButton_0->setObjectName(QString::fromUtf8("pushButton_0"));
+   pushButton_1->setObjectName(QString::fromUtf8("pushButton_1"));
+   pushButton_2->setObjectName(QString::fromUtf8("pushButton_2"));
+   pushButton_3->setObjectName(QString::fromUtf8("pushButton_3"));
+   pushButton_4->setObjectName(QString::fromUtf8("pushButton_4"));
+   pushButton_5->setObjectName(QString::fromUtf8("pushButton_5"));
+   pushButton_6->setObjectName(QString::fromUtf8("pushButton_6"));
+   pushButton_7->setObjectName(QString::fromUtf8("pushButton_7"));
+   pushButton_8->setObjectName(QString::fromUtf8("pushButton_8"));
+   pushButton_9->setObjectName(QString::fromUtf8("pushButton_9"));
+   pushButton_diese->setObjectName(QString::fromUtf8("pushButton_diese"));
+   pushButton_etoile->setObjectName(QString::fromUtf8("pushButton_etoile"));
+   
+   gridLayout->addWidget(pushButton_1, 0, 0);
+   gridLayout->addWidget(pushButton_2, 0, 1);
+   gridLayout->addWidget(pushButton_3, 0, 2);
+   gridLayout->addWidget(pushButton_4, 1, 0);
+   gridLayout->addWidget(pushButton_5, 1, 1);
+   gridLayout->addWidget(pushButton_6, 1, 2);
+   gridLayout->addWidget(pushButton_7, 2, 0);
+   gridLayout->addWidget(pushButton_8, 2, 1);
+   gridLayout->addWidget(pushButton_9, 2, 2);
+   gridLayout->addWidget(pushButton_etoile, 3, 0);
+   gridLayout->addWidget(pushButton_0, 3, 1);
+   gridLayout->addWidget(pushButton_diese, 3, 2);
+   
+   fillButtons();
+   
+   QMetaObject::connectSlotsByName(this);
 }
 
 
 void Dialpad::fillButtons()
 {
-	QHBoxLayout * layout;
-	QLabel * number;
-	QLabel * text;
-	int spacing = 5;
-	int numberSize = 14;
-	int textSize = 8;
-	
-	QPushButton * buttons[12] = 
-	    {pushButton_1,      pushButton_2,   pushButton_3, 
-	     pushButton_4,      pushButton_5,   pushButton_6, 
-	     pushButton_7,      pushButton_8,   pushButton_9, 
-	     pushButton_etoile, pushButton_0,   pushButton_diese};
-	     
-	QString numbers[12] = 
-	    {"1", "2", "3", 
-	     "4", "5", "6", 
-	     "7", "8", "9", 
-	     "*", "0", "#"};
-	
-	QString texts[12] = 
-	    {  ""  ,  "abc",  "def" , 
-	     "ghi" ,  "jkl",  "mno" , 
-	     "pqrs",  "tuv",  "wxyz", 
-	       ""  ,   ""  ,   ""   };
-	
-	for(int i = 0 ; i < 12 ; i++)
-	{
-		layout = new QHBoxLayout();
-		layout->setSpacing(spacing);
-		number = new QLabel(numbers[i]);
-		number->setFont(QFont("", numberSize));
-		layout->addWidget(number);
-		number->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-		text = new QLabel(texts[i]);
-		text->setFont(QFont("", textSize));
-		layout->addWidget(text);
-		buttons[i]->setLayout(layout);
-		buttons[i]->setMinimumHeight(30);
-		buttons[i]->setText("");
-	}
+   QHBoxLayout * layout;
+   QLabel * number;
+   QLabel * text;
+   int spacing = 5;
+   int numberSize = 14;
+   int textSize = 8;
+   
+   QPushButton * buttons[12] = 
+       {pushButton_1,      pushButton_2,   pushButton_3, 
+        pushButton_4,      pushButton_5,   pushButton_6, 
+        pushButton_7,      pushButton_8,   pushButton_9, 
+        pushButton_etoile, pushButton_0,   pushButton_diese};
+        
+   QString numbers[12] = 
+       {"1", "2", "3", 
+        "4", "5", "6", 
+        "7", "8", "9", 
+        "*", "0", "#"};
+   
+   QString texts[12] = 
+       {  ""  ,  "abc",  "def" , 
+        "ghi" ,  "jkl",  "mno" , 
+        "pqrs",  "tuv",  "wxyz", 
+          ""  ,   ""  ,   ""   };
+   
+   for(int i = 0 ; i < 12 ; i++) {
+      layout = new QHBoxLayout();
+      layout->setSpacing(spacing);
+      number = new QLabel(numbers[i]);
+      number->setFont(QFont("", numberSize));
+      layout->addWidget(number);
+      number->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+      text = new QLabel(texts[i]);
+      text->setFont(QFont("", textSize));
+      layout->addWidget(text);
+      buttons[i]->setLayout(layout);
+      buttons[i]->setMinimumHeight(30);
+      buttons[i]->setText("");
+   }
 }
 
 

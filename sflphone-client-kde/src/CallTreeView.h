@@ -45,18 +45,18 @@ public:
 
 class CallTreeView : public QTreeView
 {
-	Q_OBJECT
+   Q_OBJECT
 public:
-	CallTreeView(QWidget *parent);
-	~CallTreeView();
-	void remove(QModelIndex & index) const;
-	void removeCurrent() const;
-	CallTreeItem* currentItem();
-	CallTreeItem* getItem(const QModelIndex &index);
-	void setCurrentRow(int row);
-	int count();
-	QStringList mimeTypes() const;
-	Qt::DropActions supportedDropActions () const;
+   CallTreeView(QWidget *parent);
+   ~CallTreeView();
+   void remove(QModelIndex & index) const;
+   void removeCurrent() const;
+   CallTreeItem* currentItem();
+   CallTreeItem* getItem(const QModelIndex &index);
+   void setCurrentRow(int row);
+   int count();
+   QStringList mimeTypes() const;
+   Qt::DropActions supportedDropActions () const;
         CallTreeItem* insert(Call* call);
         CallTreeItem* insert(CallTreeItem *item, Call* call);
         
@@ -64,7 +64,7 @@ public:
 //         void dropEvent(QDropEvent* event);
 //         
 private:
-	CallTreeModel *treeModel;
+   CallTreeModel *treeModel;
         QModelIndex currentModel;
 public slots:
         void remove(Call* call) const;
@@ -74,8 +74,8 @@ private slots:
         void adaptColumns(const QModelIndex & topleft, const QModelIndex& bottomRight);
         
 signals:
-	void currentItemChanged();
-	void itemChanged();
+   void currentItemChanged();
+   void itemChanged();
 };
 
 #endif // CALLTREE_VIEW_H
