@@ -315,9 +315,13 @@ public slots:
 	
 	void on_slider_recVol_valueChanged(int value);
 	void on_slider_sndVol_valueChanged(int value);
+        void on_slider_recVol_2_valueChanged(int value);
+        void on_slider_sndVol_2_valueChanged(int value);
 	
 	void on_toolButton_recVol_clicked(bool checked);
 	void on_toolButton_sndVol_clicked(bool checked);
+        void on_toolButton_recVol_2_clicked(bool checked);
+        void on_toolButton_sndVol_2_clicked(bool checked);
 	
 	void on_callTree_currentItemChanged();
 	void on_callTree_itemChanged();
