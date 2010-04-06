@@ -69,53 +69,57 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
            this,                           SLOT(changedAccountList()));
    connect(button_accountRemove,           SIGNAL(clicked()),
            this,                           SLOT(changedAccountList()));
-        connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &)),
-                this,                           SLOT(changedAccountList()));
-        connect(spinbox_tls_listener,           SIGNAL(editingFinished()),
-                this,                           SLOT(changedAccountList()));
-        connect(file_tls_authority,             SIGNAL(textChanged(const QString &)),
-                this,                           SLOT(changedAccountList()));
-        connect(file_tls_endpoint,              SIGNAL(textChanged(const QString &)),
-                this,                           SLOT(changedAccountList()));
-        connect(file_tls_private_key,           SIGNAL(textChanged(const QString &)),
-                this,                           SLOT(changedAccountList()));
-        connect(combo_tls_method,               SIGNAL(currentIndexChanged(int)),
-                this,                           SLOT(changedAccountList()));
-        connect(edit_tls_cipher,                SIGNAL(textEdited(const QString &)),
-                this,                           SLOT(changedAccountList()));
-        connect(edit_tls_outgoing,              SIGNAL(textEdited(const QString &)),
-                this,                           SLOT(changedAccountList()));
-        connect(spinbox_tls_timeout_sec,        SIGNAL(editingFinished()),
-                this,                           SLOT(changedAccountList()));
-        connect(spinbox_tls_timeout_msec,       SIGNAL(editingFinished()),
-                this,                           SLOT(changedAccountList()));
-        connect(check_tls_incoming,             SIGNAL(clicked(bool)),
-                this,                           SLOT(changedAccountList()));
-        connect(check_tls_answer,               SIGNAL(clicked(bool)),
-                this,                           SLOT(changedAccountList()));
-        connect(check_tls_requier_cert,         SIGNAL(clicked(bool)),
-                this,                           SLOT(changedAccountList()));
-        connect(group_security_tls,             SIGNAL(clicked(bool)),
-                this,                           SLOT(changedAccountList()));
+   connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &)),
+            this,                           SLOT(changedAccountList()));
+   connect(spinbox_tls_listener,           SIGNAL(editingFinished()),
+            this,                           SLOT(changedAccountList()));
+   connect(file_tls_authority,             SIGNAL(textChanged(const QString &)),
+            this,                           SLOT(changedAccountList()));
+   connect(file_tls_endpoint,              SIGNAL(textChanged(const QString &)),
+            this,                           SLOT(changedAccountList()));
+   connect(file_tls_private_key,           SIGNAL(textChanged(const QString &)),
+            this,                           SLOT(changedAccountList()));
+   connect(combo_tls_method,               SIGNAL(currentIndexChanged(int)),
+            this,                           SLOT(changedAccountList()));
+   connect(edit_tls_cipher,                SIGNAL(textEdited(const QString &)),
+            this,                           SLOT(changedAccountList()));
+   connect(edit_tls_outgoing,              SIGNAL(textEdited(const QString &)),
+            this,                           SLOT(changedAccountList()));
+   connect(spinbox_tls_timeout_sec,        SIGNAL(editingFinished()),
+            this,                           SLOT(changedAccountList()));
+   connect(spinbox_tls_timeout_msec,       SIGNAL(editingFinished()),
+            this,                           SLOT(changedAccountList()));
+   connect(check_tls_incoming,             SIGNAL(clicked(bool)),
+            this,                           SLOT(changedAccountList()));
+   connect(check_tls_answer,               SIGNAL(clicked(bool)),
+            this,                           SLOT(changedAccountList()));
+   connect(check_tls_requier_cert,         SIGNAL(clicked(bool)),
+            this,                           SLOT(changedAccountList()));
+   connect(group_security_tls,             SIGNAL(clicked(bool)),
+            this,                           SLOT(changedAccountList()));
            
    connect(&configurationManager,          SIGNAL(accountsChanged()),
            this,                           SLOT(updateAccountStates()));
-                
-        connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &)),
-                this,                  SLOT(changedAccountList()));
+            
+   connect(edit_tls_private_key_password,  SIGNAL(textEdited(const QString &)),
+            this,                  SLOT(changedAccountList()));
 
 
    connect(this,     SIGNAL(updateButtons()), parent, SLOT(updateButtons()));
         
 
-        connect(keditlistbox_codec->listView(), SIGNAL(clicked(QModelIndex)),
-                this,                  SLOT(codecClicked(QModelIndex)));
-                
-        connect(keditlistbox_codec->addButton(), SIGNAL(clicked()),
-                this,                  SLOT(addCodec()));
-                
-        connect(keditlistbox_codec, SIGNAL(changed()),
-                this,                  SLOT(codecChanged()));
+   connect(keditlistbox_codec->listView(), SIGNAL(clicked(QModelIndex)),
+            this,                  SLOT(codecClicked(QModelIndex)));
+            
+   connect(keditlistbox_codec->addButton(), SIGNAL(clicked()),
+            this,                  SLOT(addCodec()));
+            
+   connect(keditlistbox_codec, SIGNAL(changed()),
+            this,                  SLOT(codecChanged()));
+             
+   connect(combo_security_STRP, SIGNAL(currentIndexChanged(int)), 
+           this, SLOT(updateCombo(int)));
+   
 }
 
 void DlgAccounts::saveAccountList()
@@ -204,50 +208,59 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    account->setAccountDetail(ACCOUNT_MAILBOX, edit6_mailbox->text());
    account->setAccountDetail(ACCOUNT_ENABLED, account->isChecked() ? ACCOUNT_ENABLED_TRUE : ACCOUNT_ENABLED_FALSE);
         
-        //Security
-        account->setAccountDetail(TLS_PASSWORD,edit_tls_private_key_password->text());
-        account->setAccountDetail(TLS_LISTENER_PORT,QString::number(spinbox_tls_listener->value()));
-        account->setAccountDetail(TLS_CA_LIST_FILE,file_tls_authority->text());
-        account->setAccountDetail(TLS_CERTIFICATE_FILE,file_tls_endpoint->text());
-        account->setAccountDetail(TLS_PRIVATE_KEY_FILE,file_tls_private_key->text());
-        //qDebug() << "\n\n\n\nSET: " << combo_tls_method->currentText() << "\n\n\n";
-        account->setAccountDetail(TLS_METHOD,combo_tls_method->currentText());
-        account->setAccountDetail(TLS_CIPHERS,edit_tls_cipher->text());
-        account->setAccountDetail(TLS_SERVER_NAME,edit_tls_outgoing->text());
-        account->setAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC,QString::number(spinbox_tls_timeout_sec->value()));
-        account->setAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC,QString::number(spinbox_tls_timeout_msec->value()));
-        account->setAccountDetail(TLS_VERIFY_SERVER,check_tls_incoming->isChecked()?"true":"false");
-        account->setAccountDetail(TLS_VERIFY_CLIENT,check_tls_answer->isChecked()?"true":"false");
-        account->setAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE,check_tls_requier_cert->isChecked()?"true":"false");
-        account->setAccountDetail(TLS_ENABLE,group_security_tls->isChecked()?"true":"false");
-        account->setAccountDetail(TLS_METHOD, QString::number(combo_security_STRP->currentIndex()));
-        
-        QStringList _codecList;
-        foreach (QString aCodec, keditlistbox_codec->items()) {
-          foreach (StringHash _aCodec, codecList) {
-            if (_aCodec["alias"] == aCodec) {
-              _codecList << _aCodec["id"];
-            }
-          }
-        }
-        
-        ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-        configurationManager.setActiveCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
-        qDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
+   //Security
+   account->setAccountDetail(TLS_PASSWORD,edit_tls_private_key_password->text());
+   account->setAccountDetail(TLS_LISTENER_PORT,QString::number(spinbox_tls_listener->value()));
+   account->setAccountDetail(TLS_CA_LIST_FILE,file_tls_authority->text());
+   account->setAccountDetail(TLS_CERTIFICATE_FILE,file_tls_endpoint->text());
+   account->setAccountDetail(TLS_PRIVATE_KEY_FILE,file_tls_private_key->text());
+   //qDebug() << "\n\n\n\nSET: " << combo_tls_method->currentText() << "\n\n\n";
+   account->setAccountDetail(TLS_METHOD,combo_tls_method->currentText());
+   account->setAccountDetail(TLS_CIPHERS,edit_tls_cipher->text());
+   account->setAccountDetail(TLS_SERVER_NAME,edit_tls_outgoing->text());
+   account->setAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC,QString::number(spinbox_tls_timeout_sec->value()));
+   account->setAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC,QString::number(spinbox_tls_timeout_msec->value()));
+   account->setAccountDetail(TLS_VERIFY_SERVER,check_tls_incoming->isChecked()?"true":"false");
+   account->setAccountDetail(TLS_VERIFY_CLIENT,check_tls_answer->isChecked()?"true":"false");
+   account->setAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE,check_tls_requier_cert->isChecked()?"true":"false");
+   account->setAccountDetail(TLS_ENABLE,group_security_tls->isChecked()?"true":"false");
+   qDebug() << "ZRTP: " << combo_security_STRP->currentIndex();
+   account->setAccountDetail(TLS_METHOD, QString::number(combo_security_STRP->currentIndex()));
+   
+   account->setAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE, checkbox_ZRTP_Ask_user->isChecked()?"true":"false");
+   account->setAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK, checkbox_SDES_fallback_rtp->isChecked()?"true":"false");
+   account->setAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS, checkbox_ZRTP_display_SAS->isChecked()?"true":"false");
+   account->setAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING, checkbox_ZRTP_warn_supported->isChecked()?"true":"false");
+   account->setAccountDetail(ACCOUNT_ZRTP_HELLO_HASH, checkbox_ZTRP_send_hello->isChecked()?"true":"false");
+
+   
+   
+   QStringList _codecList;
+   foreach (QString aCodec, keditlistbox_codec->items()) {
+      foreach (StringHash _aCodec, codecList) {
+         if (_aCodec["alias"] == aCodec) {
+            _codecList << _aCodec["id"];
+         }
+      }
+   }
+   
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   configurationManager.setActiveCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
+   qDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
 }
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
 {
    if(! item ) { 
-          qDebug() << "Attempting to load details of an account from a NULL item";  
-          return;  
-        }
+      qDebug() << "Attempting to load details of an account from a NULL item";  
+      return;  
+   }
 
    Account * account = accountList->getAccountByItem(item);
    if(! account ) {  
-          qDebug() << "Attempting to load details of an unexisting account";  
-          return;  
-        }
+      qDebug() << "Attempting to load details of an unexisting account";  
+      return;  
+   }
 
    edit1_alias->setText( account->getAccountDetail(ACCOUNT_ALIAS));
    
@@ -270,36 +283,66 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    bool ok;
    int val = account->getAccountDetail(ACCOUNT_EXPIRE).toInt(&ok);
    spinbox_regExpire->setValue(ok ? val : ACCOUNT_EXPIRE_DEFAULT);
-        
-        //Security
-        edit_tls_private_key_password->setText( account->getAccountDetail(TLS_PASSWORD ));
-        spinbox_tls_listener->setValue( account->getAccountDetail(TLS_LISTENER_PORT ).toInt());
-        file_tls_authority->setText( account->getAccountDetail(TLS_CA_LIST_FILE ));
-        file_tls_endpoint->setText( account->getAccountDetail(TLS_CERTIFICATE_FILE ));
-        file_tls_private_key->setText( account->getAccountDetail(TLS_PRIVATE_KEY_FILE ));
-        //qDebug() << "\n\n\n\nTHIS: " << account->getAccountDetail(TLS_METHOD ) << "\n\n\n";
-        combo_tls_method->setCurrentIndex( combo_tls_method->findText(account->getAccountDetail(TLS_METHOD )));
-        edit_tls_cipher->setText( account->getAccountDetail(TLS_CIPHERS ));
-        edit_tls_outgoing->setText( account->getAccountDetail(TLS_SERVER_NAME ));
-        spinbox_tls_timeout_sec->setValue( account->getAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC ).toInt());
-        spinbox_tls_timeout_msec->setValue( account->getAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC ).toInt());
-        check_tls_incoming->setChecked( (account->getAccountDetail(TLS_VERIFY_SERVER ) == "true")?1:0);
-        check_tls_answer->setChecked( (account->getAccountDetail(TLS_VERIFY_CLIENT ) == "true")?1:0);
-        check_tls_requier_cert->setChecked( (account->getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE ) == "true")?1:0);
 
-        group_security_tls->setChecked( (account->getAccountDetail(TLS_ENABLE ) == "true")?1:0);
-        
-        combo_security_STRP->setCurrentIndex(account->getAccountDetail(TLS_METHOD ).toInt());
-        
-        keditlistbox_codec->clear();
-        ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-        QStringList activeCodecList = configurationManager.getActiveCodecList(account->getAccountDetail(ACCOUNT_ID));
-        foreach (QString aCodec, activeCodecList) {
-          foreach (StringHash _aCodec, codecList) {
-            if (_aCodec["id"] == aCodec)
-              keditlistbox_codec->insertItem(_aCodec["alias"]);
-          }
-        }
+   //Security
+   edit_tls_private_key_password->setText( account->getAccountDetail(TLS_PASSWORD ));
+   spinbox_tls_listener->setValue( account->getAccountDetail(TLS_LISTENER_PORT ).toInt());
+   file_tls_authority->setText( account->getAccountDetail(TLS_CA_LIST_FILE ));
+   file_tls_endpoint->setText( account->getAccountDetail(TLS_CERTIFICATE_FILE ));
+   file_tls_private_key->setText( account->getAccountDetail(TLS_PRIVATE_KEY_FILE ));
+   //qDebug() << "\n\n\n\nTHIS: " << account->getAccountDetail(TLS_METHOD ) << "\n\n\n";
+   combo_tls_method->setCurrentIndex( combo_tls_method->findText(account->getAccountDetail(TLS_METHOD )));
+   edit_tls_cipher->setText( account->getAccountDetail(TLS_CIPHERS ));
+   edit_tls_outgoing->setText( account->getAccountDetail(TLS_SERVER_NAME ));
+   spinbox_tls_timeout_sec->setValue( account->getAccountDetail(TLS_NEGOTIATION_TIMEOUT_SEC ).toInt());
+   spinbox_tls_timeout_msec->setValue( account->getAccountDetail(TLS_NEGOTIATION_TIMEOUT_MSEC ).toInt());
+   check_tls_incoming->setChecked( (account->getAccountDetail(TLS_VERIFY_SERVER ) == "true")?1:0);
+   check_tls_answer->setChecked( (account->getAccountDetail(TLS_VERIFY_CLIENT ) == "true")?1:0);
+   check_tls_requier_cert->setChecked( (account->getAccountDetail(TLS_REQUIRE_CLIENT_CERTIFICATE ) == "true")?1:0);
+
+   group_security_tls->setChecked( (account->getAccountDetail(TLS_ENABLE ) == "true")?1:0);
+
+   combo_security_STRP->setCurrentIndex(account->getAccountDetail(TLS_METHOD ).toInt());
+   
+   switch (account->getAccountDetail(TLS_METHOD ).toInt()) {
+      case 0: //KEY_EXCHANGE_NONE
+         checkbox_SDES_fallback_rtp->setVisible(false);
+         checkbox_ZRTP_Ask_user->setVisible(false);
+         checkbox_ZRTP_display_SAS->setVisible(false);
+         checkbox_ZRTP_warn_supported->setVisible(false);
+         checkbox_ZTRP_send_hello->setVisible(false);
+         break;
+      case 1: //ZRTP
+         checkbox_SDES_fallback_rtp->setVisible(false);
+         checkbox_ZRTP_Ask_user->setVisible(true);
+         checkbox_ZRTP_display_SAS->setVisible(true);
+         checkbox_ZRTP_warn_supported->setVisible(true);
+         checkbox_ZTRP_send_hello->setVisible(true);
+         break;
+      case 2: //SDES
+         checkbox_SDES_fallback_rtp->setVisible(true);
+         checkbox_ZRTP_Ask_user->setVisible(false);
+         checkbox_ZRTP_display_SAS->setVisible(false);
+         checkbox_ZRTP_warn_supported->setVisible(false);
+         checkbox_ZTRP_send_hello->setVisible(false);
+         break;
+   }
+         
+   checkbox_ZRTP_Ask_user->setChecked((account->getAccountDetail(ACCOUNT_DISPLAY_SAS_ONCE)  == "true")?1:0);
+   checkbox_SDES_fallback_rtp->setChecked((account->getAccountDetail(ACCOUNT_SRTP_RTP_FALLBACK)  == "true")?1:0);
+   checkbox_ZRTP_display_SAS->setChecked((account->getAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS)  == "true")?1:0);
+   checkbox_ZRTP_warn_supported->setChecked((account->getAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING)  == "true")?1:0);
+   checkbox_ZTRP_send_hello->setChecked((account->getAccountDetail(ACCOUNT_ZRTP_HELLO_HASH)  == "true")?1:0);
+
+   keditlistbox_codec->clear();
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   QStringList activeCodecList = configurationManager.getActiveCodecList(account->getAccountDetail(ACCOUNT_ID));
+   foreach (QString aCodec, activeCodecList) {
+      foreach (StringHash _aCodec, codecList) {
+      if (_aCodec["id"] == aCodec)
+         keditlistbox_codec->insertItem(_aCodec["alias"]);
+      }
+   }
         
         
 
@@ -604,4 +647,31 @@ void DlgAccounts::codecChanged()
   
   accountListHasChanged = true;
   emit updateButtons();
+}
+
+void DlgAccounts::updateCombo(int value) {
+   
+   switch (combo_security_STRP->currentIndex()) {
+      case 0: //KEY_EXCHANGE_NONE
+         checkbox_SDES_fallback_rtp->setVisible(false);
+         checkbox_ZRTP_Ask_user->setVisible(false);
+         checkbox_ZRTP_display_SAS->setVisible(false);
+         checkbox_ZRTP_warn_supported->setVisible(false);
+         checkbox_ZTRP_send_hello->setVisible(false);
+         break;
+      case 1: //ZRTP
+         checkbox_SDES_fallback_rtp->setVisible(false);
+         checkbox_ZRTP_Ask_user->setVisible(true);
+         checkbox_ZRTP_display_SAS->setVisible(true);
+         checkbox_ZRTP_warn_supported->setVisible(true);
+         checkbox_ZTRP_send_hello->setVisible(true);
+         break;
+      case 2: //SDES
+         checkbox_SDES_fallback_rtp->setVisible(true);
+         checkbox_ZRTP_Ask_user->setVisible(false);
+         checkbox_ZRTP_display_SAS->setVisible(false);
+         checkbox_ZRTP_warn_supported->setVisible(false);
+         checkbox_ZTRP_send_hello->setVisible(false);
+         break;
+   }
 }

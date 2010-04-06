@@ -130,9 +130,10 @@ private slots:
    void updateAccountListCommands();
    void updateStatusLabel(QListWidgetItem * item);
    void updateStatusLabel(Account * account);
-        void codecClicked(const QModelIndex & model);
-        void addCodec(QString name = "");
-        void codecChanged();
+   void codecClicked(const QModelIndex & model);
+   void addCodec(QString name = "");
+   void codecChanged();
+   void updateCombo(int value);
    
    
 signals:

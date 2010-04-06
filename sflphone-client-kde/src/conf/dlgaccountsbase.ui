@@ -233,7 +233,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>5</number>
         </property>
         <widget class="QWidget" name="tab_basic">
          <attribute name="title">
@@ -635,51 +635,12 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>386</width>
-               <height>588</height>
+               <width>536</width>
+               <height>758</height>
               </rect>
              </property>
              <layout class="QGridLayout" name="gridLayout_5">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_security_STRP">
-                <property name="text">
-                 <string>STRP key exchange</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QComboBox" name="combo_security_STRP">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <item>
-                 <property name="text">
-                  <string>Disabled</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>ZRTP</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>SDES</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-              <item row="0" column="2">
-               <widget class="QToolButton" name="button_security_STRP">
-                <property name="text">
-                 <string>Edit</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="3">
+              <item row="2" column="0" colspan="2">
                <widget class="QLabel" name="label_tls_info">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -695,7 +656,7 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="0" colspan="3">
+              <item row="3" column="0" colspan="2">
                <widget class="QGroupBox" name="group_security_tls">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -964,6 +925,75 @@
                    </property>
                    <property name="text">
                     <string>&lt;center&gt;:&lt;/center&gt;</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item row="0" column="0" colspan="2">
+               <widget class="QGroupBox" name="groupbox_STRP_keyexchange">
+                <property name="title">
+                 <string>SRTP key exchange</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_2">
+                 <item>
+                  <widget class="QComboBox" name="combo_security_STRP">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>Disabled</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>ZRTP</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>SDES</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkbox_ZTRP_send_hello">
+                   <property name="text">
+                    <string>Send Hello Hash in SDP</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkbox_ZRTP_warn_supported">
+                   <property name="text">
+                    <string>Ask user to confirm SAS</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkbox_ZRTP_Ask_user">
+                   <property name="text">
+                    <string>Warn if ZRTP is not supported</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkbox_ZRTP_display_SAS">
+                   <property name="text">
+                    <string>Display SAS once for hold events</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkbox_SDES_fallback_rtp">
+                   <property name="text">
+                    <string>Fallback on RTP on SDES failure</string>
                    </property>
                   </widget>
                  </item>
