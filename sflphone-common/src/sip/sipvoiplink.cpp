@@ -3520,7 +3520,7 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     }
 
     _debug ("UserAgent: The receiver is: %s@%s", userName.data(), server.data());
-    _debug ("UserAgent: The callee account id is %s", account_id.c_str());
+    _debug ("UserAgent: The callee account is %s", account_id.c_str());
 
     /* Now, it is the time to find the information of the caller */
     uri = rdata->msg_info.from->uri;
@@ -3533,6 +3533,13 @@ mod_on_rx_request (pjsip_rx_data *rdata)
                                   sip_uri, tmp, PJSIP_MAX_URL_SIZE);
 
     std::string peerNumber (tmp, length);
+
+    //Remove sip: prefix
+    size_t found = peerNumber.find("sip:");
+    if (found!=std::string::npos)
+        peerNumber.erase(found, found+4);
+
+    _debug("UserAgent: Peer number: %s", peerNumber.c_str());
 
     // Get the server voicemail notification
     // Catch the NOTIFY message
@@ -3662,6 +3669,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     call->setDisplayName (displayName);
     call->initRecFileName();
 
+    _debug("UserAgent: DisplayName: %s", displayName.c_str());
+
 
     // Have to do some stuff with the SDP
     // Set the codec map, IP, peer number and so on... for the SIPCall object
@@ -3704,7 +3713,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     // Explicitly set the transport, set_transport methods increment transport's reference counter
     status = pjsip_dlg_set_transport (dialog, tp);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Associate the call in the invite session
@@ -3713,11 +3721,9 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     // Send a 180 Ringing response
     _info ("UserAgent: Send a 180 Ringing response");
     status = pjsip_inv_initial_answer (inv, rdata, PJSIP_SC_RINGING, NULL, NULL, &tdata);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     status = pjsip_inv_send_msg (inv, tdata);
-
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, 1);
 
     // Associate invite session to the current call
