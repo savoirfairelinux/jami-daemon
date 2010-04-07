@@ -182,13 +182,20 @@ statusicon_set_tooltip()
   int count;
   gchar *tip;
 
-  // Add a tooltip to the system tray icon
-  count = account_list_get_registered_accounts();
-  tip = g_markup_printf_escaped("%s - %s", _("SFLphone"),
-      g_markup_printf_escaped(
-          n_("%i active account", "%i active accounts", count), count));
-  gtk_status_icon_set_tooltip(status, tip);
-  g_free(tip);
+  DEBUG("statusicon_set_tooltip 1");
+
+  if(status) {
+
+    // Add a tooltip to the system tray icon
+    count = account_list_get_registered_accounts();
+    tip = g_markup_printf_escaped("%s - %s", _("SFLphone"),
+        g_markup_printf_escaped(n_("%i active account", "%i active accounts", count), count));
+    gtk_status_icon_set_tooltip(status, tip);
+    g_free(tip);
+
+  }
+
+  DEBUG("statusicon_set_tooltip 2");
 }
 
 void
