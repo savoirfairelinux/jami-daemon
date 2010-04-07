@@ -116,12 +116,16 @@ void change_protocol_cb (account_t *currentAccount UNUSED) {
 
 	gchar *protocol = gtk_combo_box_get_active_text (GTK_COMBO_BOX (protocolComboBox));
 
-	if (g_strcasecmp (protocol, "IAX") == 0) {
-		gtk_widget_hide (security_tab);
-		gtk_widget_hide (advanced_tab);
-	} else {
-		gtk_widget_show (security_tab);
-		gtk_widget_show (advanced_tab);
+	// Only if tabs are not NULL
+	if(security_tab && advanced_tab) {
+
+	    if (g_strcasecmp (protocol, "IAX") == 0) {
+		gtk_widget_hide (GTK_WIDGET(security_tab));
+		gtk_widget_hide (GTK_WIDGET(advanced_tab));
+	    } else {
+                gtk_widget_show (GTK_WIDGET(security_tab));
+		gtk_widget_show (GTK_WIDGET(advanced_tab));
+	    }
 	}
 }
 
@@ -548,6 +552,7 @@ static void key_exchange_changed_cb(GtkWidget *widget, gpointer data)
 
 static void use_sip_tls_cb(GtkWidget *widget, gpointer data)
 {
+
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
 		DEBUG("Using sips");
 		gtk_widget_set_sensitive(GTK_WIDGET(data), TRUE);
@@ -616,7 +621,6 @@ static local_interface_changed_cb(GtkWidget * widget, gpointer data UNUSED) {
 
 static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 {
-	DEBUG("set_published_addr_manually_cb");
 
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
 		DEBUG("Showing manual options");    
@@ -645,7 +649,7 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 		gtk_widget_show (stunServerEntry);
 		gtk_widget_set_sensitive (sameAsLocalRadioButton, FALSE);
 		gtk_widget_set_sensitive (publishedAddrRadioButton, FALSE);
-		DEBUG("Problem occurs here");
+
 		gtk_widget_hide (publishedAddressLabel);
 		gtk_widget_hide (publishedPortLabel);
 		gtk_widget_hide (publishedAddressEntry);
@@ -658,7 +662,7 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 		gtk_widget_set_sensitive (sameAsLocalRadioButton, TRUE);
 		gtk_widget_set_sensitive (publishedAddrRadioButton, TRUE);
 
-		if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (sameAsLocalRadioButton))) {
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (publishedAddrRadioButton))) {
 			gtk_widget_show (publishedAddressLabel);
 			gtk_widget_show (publishedPortLabel);
 			gtk_widget_show (publishedAddressEntry);
@@ -678,6 +682,7 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 
 static same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
 {
+
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
 		DEBUG("Same as local");
 		gchar * local_interface;
@@ -692,6 +697,7 @@ static same_as_local_cb(GtkWidget * widget, gpointer data UNUSED)
 		gchar * local_port = (gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
 		gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(local_port, NULL));
 	} 
+
 }
 
 
@@ -1082,7 +1088,9 @@ GtkWidget* create_published_address (account_t **a) {
 
 	if (g_strcasecmp (published_sameas_local, "true") == 0) {
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (sameAsLocalRadioButton), TRUE);
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (publishedAddrRadioButton), FALSE);
 	} else {
+	        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (sameAsLocalRadioButton), FALSE);
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (publishedAddrRadioButton), TRUE);
 	}
 
@@ -1115,6 +1123,8 @@ GtkWidget* create_published_address (account_t **a) {
 	g_signal_connect(sameAsLocalRadioButton, "toggled", G_CALLBACK(same_as_local_cb), sameAsLocalRadioButton);   
 	g_signal_connect(publishedAddrRadioButton, "toggled", G_CALLBACK(set_published_addr_manually_cb), publishedAddrRadioButton);
 
+	set_published_addr_manually_cb(publishedAddrRadioButton, NULL);
+
 	return frame;
 }
 
@@ -1137,6 +1147,7 @@ GtkWidget* create_advanced_tab (account_t **a) {
 	gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
 	gtk_widget_show_all (ret);
+
 	return ret;
 }
 
@@ -1231,9 +1242,10 @@ void show_account_window (account_t * a) {
 
 		/* General Settings */
 		tab = create_basic_tab(&currentAccount);
+
 		gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
 		gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-		g_signal_emit_by_name (protocolComboBox, "changed", NULL);
+		g_signal_emit_by_name ((gpointer)protocolComboBox, "changed", NULL);
 
 	}
 
@@ -1415,7 +1427,7 @@ void show_account_window (account_t * a) {
 		codec_list_update_to_daemon (currentAccount);
 	}
 	else {
-		g_print ("IP to IP call\n");
+		DEBUG("IP to IP call\n");
 		// Direct IP calls config
 		// dbus_set_ip2ip_details (directIpCallsProperties);
 	}

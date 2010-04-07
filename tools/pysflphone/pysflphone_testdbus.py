@@ -135,10 +135,13 @@ class SflPhoneTests():
         # Start Glib mainloop
         self.sflphone.start()
 
+        
+
 
     # SCENARIO 1 Test 4
     def test_ip2ip_recv_peer_hungup(self):
         """Wait for calls, answer, peer hangup"""
+
         # Add callback for this test
         self.sflphone.onIncomingCall_cb = acceptOnIncomingCall
 

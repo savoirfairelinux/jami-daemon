@@ -2605,7 +2605,7 @@ void dbus_enable_status_icon (const gchar *value) {
 gchar* dbus_is_status_icon_enabled (void) {
 
        GError *error = NULL;
-       gchar* value = TRUE;
+       gchar *value = NULL;
 
        org_sflphone_SFLphone_ConfigurationManager_is_status_icon_enabled (configurationManagerProxy, &value, &error);
 

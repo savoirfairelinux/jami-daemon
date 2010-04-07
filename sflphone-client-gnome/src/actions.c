@@ -1101,12 +1101,12 @@ void sflphone_fill_codec_list () {
 
 void sflphone_fill_codec_list_per_account (account_t **account) {
 
-	gchar **order;
+    gchar **order;
     gchar** details;
     gchar** pl;
-	gchar *accountID;
-	GQueue *codeclist;
-	gboolean active = FALSE;
+    gchar *accountID;
+    GQueue *codeclist;
+    gboolean active = FALSE;
 
     order = (gchar**) dbus_get_active_codec_list ((*account)->accountID);
     codeclist = (*account)->codecs;
@@ -1118,7 +1118,7 @@ void sflphone_fill_codec_list_per_account (account_t **account) {
     {
 		codec_t * cpy;
 		// Each account will have a copy of the system-wide capabilities
-		codec_create_new_from_caps (codec_list_get_by_payload ((gconstpointer) atoi (*order), NULL), &cpy);
+		codec_create_new_from_caps (codec_list_get_by_payload ((gconstpointer) (size_t)atoi (*order), NULL), &cpy);
 		if (cpy) {
 			cpy->is_active = TRUE;
 			codec_list_add (cpy, &codeclist);
@@ -1136,7 +1136,7 @@ void sflphone_fill_codec_list_per_account (account_t **account) {
 			
 		codec_t * current_cap = capabilities_get_nth (i);
 		// Check if this codec has already been enabled for this account
-		if (codec_list_get_by_payload ( (gconstpointer) current_cap->_payload, codeclist) == NULL) {
+		if (codec_list_get_by_payload ( (gconstpointer) (size_t)(current_cap->_payload), codeclist) == NULL) {
 			// codec_t *cpy;
 			// codec_create_new_from_caps (current_cap, &cpy);
 			current_cap->is_active = active;

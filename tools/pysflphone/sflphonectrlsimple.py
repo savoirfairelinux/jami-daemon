@@ -71,9 +71,13 @@ class SflPhoneCtrlSimple(Thread):
 
 	self.loop = MainLoop()
 
+	self.isStop = False
+
 	self.test = test
 	self.onIncomingCall_cb = None
 	self.event = Event()
+
+	gobject.threads_init()
 	
 
 
@@ -81,6 +85,12 @@ class SflPhoneCtrlSimple(Thread):
         if self.registered:
             self.unregister()
 	self.loop.quit()
+
+
+    def stopThread(self):
+        print "Stop PySFLphone"
+        self.isStop = True
+	
 
 
     def register(self):
@@ -614,9 +624,11 @@ class SflPhoneCtrlSimple(Thread):
 
     def run(self):
         """Processing method for this thread"""
-        gobject.threads_init()
-        # self.loop.run()
+
 	context = self.loop.get_context()
 
-	while 1:
+	while True:
             context.iteration(True)
+
+	    if self.isStop: 
+	        return
