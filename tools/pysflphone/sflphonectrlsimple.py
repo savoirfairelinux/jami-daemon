@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2009 by the Free Software Foundation, Inc.
 #
+# Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -201,7 +203,8 @@ class SflPhoneCtrlSimple(Thread):
             except KeyError, e:
                 print "This call didn't exist!: " + callid + ". Adding it to the list."
                 callDetails = self.getCallDetails(callid)
-                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 'To': callDetails['PEER_NUMBER'], 'State': state }
+                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 
+					    'To': callDetails['PEER_NUMBER'], 'State': state }
         elif state in [ "BUSY", "FAILURE" ]:
             try:
                 del self.activeCalls[callid]
@@ -537,7 +540,9 @@ class SflPhoneCtrlSimple(Thread):
 
     def Refuse(self, callid):
         """Refuse an incoming call identified by a CallID"""
+
 	print "Refuse call " + callid
+
         # if not self.account:
         #     self.setFirstRegisteredAccount()
 
@@ -608,6 +613,7 @@ class SflPhoneCtrlSimple(Thread):
 	return callid
 
     def run(self):
+        """Processing method for this thread"""
         gobject.threads_init()
         # self.loop.run()
 	context = self.loop.get_context()
