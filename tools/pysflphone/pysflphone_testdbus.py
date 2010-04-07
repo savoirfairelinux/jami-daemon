@@ -97,7 +97,7 @@ class SflPhoneTests():
     def test_ip2ip_send_hangup(self):
         """Make a call to a server (sipp) on port 5062"""
         i = 0
-        while(i < 200):
+        while(i < 500):
 
             callid = self.sflphone.Call("sip:test@" + REMOTEADDR_lo)
             time.sleep(0.5)
@@ -313,7 +313,7 @@ sflphone.setFirstRegisteredAccount();
 
 # Test 1: - Send an IP2IP call
 #         - Hangup
-testsuite.test_ip2ip_send_hangup()
+# testsuite.test_ip2ip_send_hangup()
 
 # Test 2: - Send an IP2IP call
 #         - Peer Hangup
@@ -321,7 +321,7 @@ testsuite.test_ip2ip_send_hangup()
 
 # Test 3: - Receive an IP2IP call
 #         - Hangup
-# testsuite.test_ip2ip_recv_hangup()
+testsuite.test_ip2ip_recv_hangup()
 
 # Test 4: - Receive an IP2IP call
 #         - Peer Hangup

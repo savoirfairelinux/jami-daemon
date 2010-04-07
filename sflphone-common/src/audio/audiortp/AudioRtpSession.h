@@ -607,7 +607,7 @@ namespace sfl {
         }
         else {
         	// _debug("RTP: Received an RTP event with payload: %d", adu->getType());
-			ost::RTPPacket::RFC2833Payload *dtmf = (ost::RTPPacket::RFC2833Payload *)adu->getData();
+			// ost::RTPPacket::RFC2833Payload *dtmf = (ost::RTPPacket::RFC2833Payload *)adu->getData();
 			// _debug("RTP: Data received %d", dtmf->event);
 
         }

@@ -821,7 +821,7 @@ std::map<std::string, int32_t> ConfigurationManager::getShortcuts() {
 	std::map<std::string, int> shortcutsMap;
 	int shortcut;
 
-	for (int i = 0; i < shortcutsKeys.size(); i++) {
+	for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
 		std::string key = shortcutsKeys.at(i);
 		shortcut = Manager::instance().getConfigInt("Shortcuts", key);
 		shortcutsMap.insert(std::pair<std::string, int>(key, shortcut));
@@ -836,7 +836,7 @@ void ConfigurationManager::setShortcuts(
 	std::map<std::string, int> map_cpy = shortcutsMap;
 	std::map<std::string, int>::iterator it;
 
-	for (int i = 0; i < shortcutsKeys.size(); i++) {
+	for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
 		std::string key = shortcutsKeys.at(i);
 		it = map_cpy.find(key);
 		if (it != shortcutsMap.end()) {

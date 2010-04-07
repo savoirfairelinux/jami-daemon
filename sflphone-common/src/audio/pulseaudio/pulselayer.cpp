@@ -469,7 +469,7 @@ void PulseLayer::writeToSpeaker (void)
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
 		
-                int returnValue = pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
                 pa_xfree (out);
 
