@@ -60,5 +60,13 @@ DBusManagerImpl::exit()
 
     _dispatcher.leave();
 
+    delete _callManager;
+    delete _configurationManager;
+    delete _instanceManager;
+
+#ifdef USE_NETWORKMANAGER
+    delete _networkManager;
+#endif
+
 }
 

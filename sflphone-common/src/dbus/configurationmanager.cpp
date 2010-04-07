@@ -493,7 +493,7 @@ std::vector<std::string> ConfigurationManager::getActiveCodecList(
 void ConfigurationManager::setActiveCodecList(
 		const std::vector<std::string>& list, const std::string& accountID) {
 
-	_debug ("ConfigurationManager::setActiveCodecList received");
+	_debug ("ConfigurationManager: Active codec list received");
 
 	Account *acc;
 
@@ -504,8 +504,11 @@ void ConfigurationManager::setActiveCodecList(
 	}
 }
 
+
 // Audio devices related methods
 std::vector<std::string> ConfigurationManager::getInputAudioPluginList() {
+
+	_debug("ConfigurationManager: Active codec list received");
 
 	std::vector<std::string> v;
 
@@ -516,6 +519,8 @@ std::vector<std::string> ConfigurationManager::getInputAudioPluginList() {
 	return v;
 }
 
+
+
 std::vector<std::string> ConfigurationManager::getOutputAudioPluginList() {
 
 	std::vector<std::string> v;
@@ -525,6 +530,7 @@ std::vector<std::string> ConfigurationManager::getOutputAudioPluginList() {
 
 	return v;
 }
+
 
 void ConfigurationManager::setInputAudioPlugin(const std::string& audioPlugin) {
 	return Manager::instance().setInputAudioPlugin(audioPlugin);

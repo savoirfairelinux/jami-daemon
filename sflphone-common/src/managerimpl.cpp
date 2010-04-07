@@ -91,9 +91,10 @@ ManagerImpl::ManagerImpl (void) :
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) {
 	// terminate();
-	delete _cleaner;
-	_cleaner = 0;
-	_debug ("%s stop correctly.", PROGNAME);
+	delete _cleaner; _cleaner = NULL;
+	delete _history; _history = NULL;
+
+	_debug ("Manager: %s stop correctly.", PROGNAME);
 }
 
 void ManagerImpl::init () {
@@ -104,7 +105,7 @@ void ManagerImpl::init () {
 	initVolume();
 
 	if (_exist == 0) {
-		_debug ("Cannot create config file in your home directory");
+		_warn ("Manager: Cannot create config file in your home directory");
 	}
 
 	initAudioDriver();
@@ -119,11 +120,11 @@ void ManagerImpl::init () {
 	if (audiolayer != 0) {
 		unsigned int sampleRate = audiolayer->getSampleRate();
 
-		_debugInit ("Load Telephone Tone");
+		_debugInit ("Manager: Load telephone tone");
 		std::string country = getConfigString(PREFERENCES, ZONE_TONE);
 		_telephoneTone = new TelephoneTone(country, sampleRate);
 
-		_debugInit ("Loading DTMF key");
+		_debugInit ("Manager: Loading DTMF key");
 		_dtmfKey = new DTMF(sampleRate);
 	}
 
@@ -135,23 +136,25 @@ void ManagerImpl::init () {
 }
 
 void ManagerImpl::terminate () {
-	_debug ("ManagerImpl::terminate ");
+
+	_debug ("Manager: Terminate ");
 	saveConfig();
 
 	unloadAccountMap();
 
-	_debug ("Unload DTMF Key ");
+	_debug ("Manager: Unload DTMF key");
 	delete _dtmfKey;
 
-	_debug ("Unload Audio Driver ");
-	delete _audiodriver;
-	_audiodriver = NULL;
+	_debug("Manager: Unload telephone tone");
+	delete _telephoneTone; _telephoneTone = NULL;
 
-	_debug ("Unload Telephone Tone ");
-	delete _telephoneTone;
-	_telephoneTone = NULL;
+	_debug ("Manager: Unload audio driver");
+	delete _audiodriver; _audiodriver = NULL;
 
-	_debug ("Unload Audio Codecs ");
+	_debug ("Manager: Unload telephone tone");
+	delete _telephoneTone; _telephoneTone = NULL;
+
+	_debug ("Manager: Unload audio codecs ");
 	_codecDescriptorMap.deleteHandlePointer();
 
 }
@@ -179,38 +182,6 @@ void ManagerImpl::switchCall (const CallID& id) {
 	ost::MutexLock m(_currentCallMutex);
 	_debug ("----- Switch current call id to %s -----", id.c_str());
 	_currentCallId2 = id;
-
-	/*
-	 AudioLayer *al = getAudioDriver();
-
-	 if (id != "") {
-
-	 if(isConference(id)) {
-
-	 Conference *conf;
-
-	 ConferenceMap::iterator iter = _conferencemap.find(id);
-	 if(iter != _conferencemap.end())
-	 {
-	 _debug("    set call recordable in audio layer");
-	 conf = iter->second;
-	 al->setRecorderInstance((Recordable*)conf);
-	 }
-	 }
-	 else {
-
-	 // set the recordable instance in audiolayer
-	 AccountID account_id = getAccountFromCall(id);
-
-
-	 Call *call = NULL;
-	 call = getAccountLink (account_id)->getCall(id);
-
-	 _debug("    set call recordable in audio layer");
-	 al->setRecorderInstance((Recordable*)call);
-	 }
-	 }
-	 */
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -220,11 +191,12 @@ void ManagerImpl::switchCall (const CallID& id) {
 
 bool ManagerImpl::outgoingCall (const std::string& account_id,
 		const CallID& call_id, const std::string& to) {
+
 	std::string pattern, to_cleaned;
 	Call::CallConfiguration callConfig;
 	SIPVoIPLink *siplink;
 
-	_debug ("ManagerImpl::outgoingCall(%s)", call_id.c_str());
+	_debug ("Manager: New outgoing call %s", call_id.c_str());
 
 	CallID current_call_id = getCurrentCallId();
 
@@ -258,7 +230,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 	}
 
 	if (callConfig == Call::IPtoIP) {
-		_debug ("    outgoingCall: Start IP to IP call");
+		_debug ("Manager: Start IP to IP call");
 		/* We need to retrieve the sip voiplink instance */
 		siplink = SIPVoIPLink::instance("");
 
@@ -273,16 +245,16 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 	}
 
 	if (!accountExists(account_id)) {
-		_debug ("! Manager Error: Outgoing Call: account doesn't exist");
+		_error ("Manager: Error: Account doesn't exist in new outgoing call");
 		return false;
 	}
 
 	if (getAccountFromCall(call_id) != AccountNULL) {
-		_debug ("! Manager Error: Outgoing Call: call id already exists");
+		_error ("Manager: Error: Call id already exists in outgoing call");
 		return false;
 	}
 
-	_debug ("- Manager Action: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
+	_debug ("Manager: Action: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
 
 	associateCallToAccount(call_id, account_id);
 
@@ -291,7 +263,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 		return true;
 	} else {
 		callFailure(call_id);
-		_debug ("! Manager Error: An error occur, the call was not created");
+		_debug ("Manager: Error: An error occur, the call was not created");
 	}
 
 	return false;
@@ -419,12 +391,11 @@ bool ManagerImpl::hangupCall (const CallID& call_id) {
 	else {
 		account_id = getAccountFromCall(call_id);
 
+		// Account may be NULL if call have not been sent yet
 		if (account_id == AccountNULL) {
-
 			_error ("Manager: Error: account id is NULL in hangup");
 			returnValue = false;
 		} else {
-
 			returnValue = getAccountLink(account_id)->hangup(call_id);
 			removeCallAccount(call_id);
 		}
@@ -1066,10 +1037,25 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
 
 	_debug ("Manager: Join participants %s, %s", call_id1.c_str(), call_id2.c_str());
 
+
+
 	std::map<std::string, std::string> call1_details = getCallDetails(call_id1);
 	std::map<std::string, std::string> call2_details = getCallDetails(call_id2);
 
 	std::map<std::string, std::string>::iterator iter_details;
+
+	// Test if we have valid call ids
+	iter_details = call1_details.find("PEER_NUMBER");
+	if(iter_details->second == "Unknown") {
+		_error("Manager: Error: Id %s is not a valid call", call_id1.c_str());
+		return;
+	}
+
+	iter_details = call2_details.find("PEER_NUMBER");
+	if(iter_details->second == "Unknown") {
+		_error("Manager: Error: Id %s is not a valid call", call_id2.c_str());
+		return;
+	}
 
 	AccountID currentAccountId;
 	Call* call = NULL;
@@ -1206,7 +1192,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 }
 
 void ManagerImpl::removeParticipant (const CallID& call_id) {
-	_debug ("ManagerImpl::removeParticipant(%s)", call_id.c_str());
+	_debug ("Manager: Remove participant %s", call_id.c_str());
 
 	// TODO: add conference_id as a second parameter
 	Conference* conf;
@@ -1295,7 +1281,7 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 
 void ManagerImpl::joinConference (const CallID& conf_id1,
 		const CallID& conf_id2) {
-	_debug ("ManagerImpl::joinConference(%s, %s)", conf_id1.c_str(), conf_id2.c_str());
+	_debug ("Manager: Join conference %s, %s", conf_id1.c_str(), conf_id2.c_str());
 
 	ConferenceMap::iterator iter;
 
@@ -1304,13 +1290,23 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 
 	iter = _conferencemap.find(conf_id1);
 
-	if (iter != _conferencemap.end())
+	if (iter != _conferencemap.end()) {
 		conf1 = iter->second;
+	}
+	else {
+		_error("Manager: Error: Not a valid conference ID");
+		return;
+	}
 
 	iter = _conferencemap.find(conf_id2);
 
-	if (iter != _conferencemap.end())
+	if (iter != _conferencemap.end()) {
 		conf2 = iter->second;
+	}
+	else {
+		_error("Manager: Error: Not a valid conference ID");
+		return;
+	}
 
 	ParticipantSet participants = conf1->getParticipantList();
 
@@ -1769,12 +1765,11 @@ void ManagerImpl::connectionStatusNotification () {
  * Multi Thread
  */
 bool ManagerImpl::playATone (Tone::TONEID toneId) {
-	bool hasToPlayTone;
-	// AudioLoop *audioloop;
-	AudioLayer *audiolayer;
-	// unsigned int nbSamples;
 
-	_debug ("ManagerImpl::playATone");
+	bool hasToPlayTone;
+	AudioLayer *audiolayer;
+
+	// _debug ("Manager: Play tone %d", toneId);
 
 	hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_TONES);
 
@@ -1793,17 +1788,6 @@ bool ManagerImpl::playATone (Tone::TONEID toneId) {
 		_toneMutex.enterMutex();
 		_telephoneTone->setCurrentTone(toneId);
 		_toneMutex.leaveMutex();
-		/*
-		 audioloop = getTelephoneTone();
-		 nbSamples = audioloop->getSize();
-		 SFLDataFormat buf[nbSamples];
-
-
-		 if (audiolayer) {
-		 audiolayer->putUrgent (buf, nbSamples);
-		 } else
-		 return false;
-		 */
 	}
 
 	return true;
@@ -1826,10 +1810,6 @@ void ManagerImpl::stopTone () {
 		_telephoneTone->setCurrentTone(Tone::TONE_NULL);
 	}
 
-	_toneMutex.leaveMutex();
-
-	// for ringing tone..
-	_toneMutex.enterMutex();
 	_audiofile.stop();
 	_toneMutex.leaveMutex();
 }
@@ -1861,8 +1841,6 @@ void ManagerImpl::congestion () {
  * Multi Thread
  */
 void ManagerImpl::ringback () {
-	_debug ("ManagerImpl::ringback");
-
 	playATone(Tone::TONE_RINGTONE);
 }
 
@@ -1870,13 +1848,13 @@ void ManagerImpl::ringback () {
  * Multi Thread
  */
 void ManagerImpl::ringtone () {
-
-	_debug ("Manager: Start ringtone");
 	std::string ringchoice;
 	AudioLayer *audiolayer;
 	AudioCodec *codecForTone;
 	int layer, samplerate;
 	bool loadFile;
+
+	_debug("Manager: Ringtone");
 
 	if (isRingtoneEnabled()) {
 
@@ -2342,7 +2320,7 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
 
 	int res;
 
-	_debug ("Set output audio plugin");
+	_debug ("Manager: Set output audio plugin");
 	_audiodriver -> setErrorMessage(-1);
 	res = _audiodriver -> openDevice(_audiodriver -> getIndexIn(),
 			_audiodriver -> getIndexOut(), _audiodriver -> getSampleRate(),
@@ -2360,7 +2338,7 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
  * Get list of supported audio output device
  */
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void) {
-	_debug ("Get audio output device list");
+	_debug ("Manager: Get audio output device list");
 	AlsaLayer *layer;
 	std::vector<std::string> devices;
 
@@ -3208,7 +3186,7 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 	a.insert(std::pair<std::string, std::string>(ACCOUNT_DTMF_TYPE, getConfigString(
 				accountID, ACCOUNT_DTMF_TYPE)));
 
-	RegistrationState state;
+	RegistrationState state = Unregistered;
 	std::string registrationStateCode;
 	std::string registrationStateDescription;
 
@@ -3225,8 +3203,6 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 			registrationStateDescription
 					= account->getRegistrationStateDetailed().second;
 		}
-	} else {
-		state = Unregistered;
 	}
 
 	(accountID == IP2IP_PROFILE) ? a.insert(

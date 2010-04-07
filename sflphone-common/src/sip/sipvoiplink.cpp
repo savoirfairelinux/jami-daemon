@@ -289,8 +289,8 @@ void SIPVoIPLink::decrementClients (void)
     if (_clients == 0) {
 
         _debug("UserAgent: No SIP account anymore, terminate SIPVoIPLink");
-        terminate();
-        SIPVoIPLink::_instance=NULL;
+        // terminate();
+        delete SIPVoIPLink::_instance;
     }
 }
 
@@ -321,8 +321,7 @@ SIPVoIPLink::terminate()
 
     if (_evThread) {
         _debug ("UserAgent: Deleting sip eventThread");
-        delete _evThread;
-        _evThread = NULL;
+        delete _evThread; _evThread = NULL;
     }
 
 
@@ -419,6 +418,8 @@ std::string SIPVoIPLink::getInterfaceAddrFromName(std::string ifaceName) {
     addr_in = &(saddr_in->sin_addr);
 
     std::string addr(pj_inet_ntoa(*((pj_in_addr*)addr_in)));
+
+    close(fd);
 
     return addr;
 }
@@ -2975,7 +2976,6 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
     _debug ("UserAgent: Call state changed to %s", invitationStateMap[inv->state]);
 
     pjsip_rx_data *rdata;
-    pj_status_t status = PJ_SUCCESS;
 
     /* Retrieve the call information */
     SIPCall * call = NULL;
@@ -3274,14 +3274,14 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 	AudioCodec* audiocodec = Manager::instance().getCodecDescriptorMap().instantiateCodec(pl);
 
 	if (audiocodec == NULL)
-		_error ("SIP: No audiocodec found");
+		_error ("UserAgent: No audiocodec found");
 
 
     try {
         call->setAudioStart (true);
         call->getAudioRtp()->start(audiocodec);
     } catch (exception& rtpException) {
-        _debug ("%s", rtpException.what());
+        _error ("UserAgent: Error: %s", rtpException.what());
     }
 
 }

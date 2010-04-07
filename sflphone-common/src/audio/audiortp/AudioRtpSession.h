@@ -267,6 +267,10 @@ namespace sfl {
         delete [] _spkrDataConverted;
         delete _time;
         delete _converter;
+
+        if (_audiocodec) {
+        	delete _audiocodec; _audiocodec = NULL;
+        }
     }
     
     template <typename D>
@@ -615,7 +619,7 @@ namespace sfl {
         _debug("RTP: Starting main thread");
         setSessionTimeouts();
         setSessionMedia(audiocodec);
-	initBuffers();
+        initBuffers();
         return start(_mainloopSemaphore);
     }
     

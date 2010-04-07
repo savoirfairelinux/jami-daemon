@@ -136,6 +136,8 @@ class SflPhoneCtrlSimple(Thread):
 
     def unregister(self):
 
+        print "Unregister"
+
         if not self.registered:
             return
             #raise SflPhoneError("Not registered !")
