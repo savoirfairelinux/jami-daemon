@@ -182,8 +182,6 @@ statusicon_set_tooltip()
   int count;
   gchar *tip;
 
-  DEBUG("statusicon_set_tooltip 1");
-
   if(status) {
 
     // Add a tooltip to the system tray icon
@@ -195,7 +193,6 @@ statusicon_set_tooltip()
 
   }
 
-  DEBUG("statusicon_set_tooltip 2");
 }
 
 void
