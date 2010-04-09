@@ -233,7 +233,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>5</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab_basic">
          <attribute name="title">
@@ -385,33 +385,163 @@
          <attribute name="title">
           <string>Advanced</string>
          </attribute>
-         <layout class="QFormLayout" name="formLayout_2">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::ExpandingFieldsGrow</enum>
-          </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_regExpire">
-            <property name="text">
-             <string>Registration expire</string>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QGroupBox" name="groupBox">
+            <property name="title">
+             <string>Resgistration</string>
             </property>
-            <property name="buddy">
-             <cstring>spinbox_regExpire</cstring>
-            </property>
+            <layout class="QGridLayout" name="gridLayout_8">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_regExpire">
+               <property name="text">
+                <string>Registration expire</string>
+               </property>
+               <property name="buddy">
+                <cstring>spinbox_regExpire</cstring>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="KIntSpinBox" name="spinbox_regExpire">
+               <property name="maximum">
+                <number>16777215</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0" colspan="2">
+              <widget class="QCheckBox" name="checkBox_conformRFC">
+               <property name="text">
+                <string>Conform to RFC 3263</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <spacer name="horizontalSpacer_7">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="KIntSpinBox" name="spinbox_regExpire">
-            <property name="maximum">
-             <number>16777215</number>
+          <item>
+           <widget class="QGroupBox" name="groupBox_2">
+            <property name="title">
+             <string>Network Interface</string>
             </property>
+            <layout class="QGridLayout" name="gridLayout_9">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_ni_local_address">
+               <property name="text">
+                <string>Local address</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="comboBox_ni_local_address"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_ni_local_port">
+               <property name="text">
+                <string>Local port</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="spinBox_ni_local_port"/>
+             </item>
+             <item row="0" column="2">
+              <spacer name="horizontalSpacer_8">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
            </widget>
           </item>
-          <item row="3" column="0" colspan="2">
-           <widget class="QCheckBox" name="checkBox_conformRFC">
-            <property name="text">
-             <string>Conform to RFC 3263</string>
+          <item>
+           <widget class="QGroupBox" name="groupBox_3">
+            <property name="title">
+             <string>Published address</string>
             </property>
+            <layout class="QGridLayout" name="gridLayout_10">
+             <item row="0" column="0" colspan="3">
+              <widget class="QRadioButton" name="radioButton_pa_same_as_local">
+               <property name="text">
+                <string>Same as local parameters</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0" rowspan="2" colspan="3">
+              <widget class="QRadioButton" name="radioButton_pa_custom">
+               <property name="text">
+                <string>Set published address and port</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_published_address">
+               <property name="text">
+                <string>Published address</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_pa_published_port">
+               <property name="text">
+                <string>Published port</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1" colspan="2">
+              <widget class="QSpinBox" name="spinBox_pa_published_port"/>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLineEdit" name="lineEdit_pa_published_address"/>
+             </item>
+             <item row="3" column="3">
+              <spacer name="horizontalSpacer_9">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
            </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>138</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>
@@ -593,13 +723,25 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="KLineEdit" name="edit_credential_realm"/>
+              <widget class="KLineEdit" name="edit_credential_realm">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
              </item>
              <item row="1" column="1">
-              <widget class="KLineEdit" name="edit_credential_auth"/>
+              <widget class="KLineEdit" name="edit_credential_auth">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
              </item>
              <item row="2" column="1">
-              <widget class="KLineEdit" name="edit_credential_password"/>
+              <widget class="KLineEdit" name="edit_credential_password">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>

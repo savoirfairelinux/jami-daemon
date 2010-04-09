@@ -119,6 +119,15 @@ DlgAccounts::DlgAccounts(KConfigDialog *parent)
              
    connect(combo_security_STRP, SIGNAL(currentIndexChanged(int)), 
            this, SLOT(updateCombo(int)));
+           
+   connect(button_add_credential, SIGNAL(clicked()), 
+           this, SLOT(addCredential()));
+           
+   connect(button_remove_credential, SIGNAL(clicked()), 
+           this, SLOT(removeCredential()));
+           
+   connect(list_credential, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),
+           this,SLOT( selectCredential(QListWidgetItem*, QListWidgetItem*)));
    
 }
 
@@ -233,7 +242,15 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    account->setAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING, checkbox_ZRTP_warn_supported->isChecked()?"true":"false");
    account->setAccountDetail(ACCOUNT_ZRTP_HELLO_HASH, checkbox_ZTRP_send_hello->isChecked()?"true":"false");
 
+   account->setAccountDetail(ACCOUNT_SIP_STUN_ENABLED, checkbox_stun->isChecked()?"true":"false");
+   account->setAccountDetail(ACCOUNT_SIP_STUN_SERVER, line_stun->text());
    
+   account->setAccountDetail(PUBLISHED_SAMEAS_LOCAL, radioButton_pa_same_as_local->isChecked()?"true":"false");
+   //account->setAccountDetail(PUBLISHED_PORT, spinBox_pa_published_port->value()); //TODO fix
+   account->setAccountDetail(PUBLISHED_ADDRESS, lineEdit_pa_published_address ->text());
+   
+   account->setAccountDetail(LOCAL_PORT,QString::number(spinBox_pa_published_port->value()));
+   account->setAccountDetail(LOCAL_INTERFACE,comboBox_ni_local_address->currentText());
    
    QStringList _codecList;
    foreach (QString aCodec, keditlistbox_codec->items()) {
@@ -247,6 +264,8 @@ void DlgAccounts::saveAccount(QListWidgetItem * item)
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
    configurationManager.setActiveCodecList(_codecList, account->getAccountDetail(ACCOUNT_ID));
    qDebug() << "Account codec have been saved" << _codecList << account->getAccountDetail(ACCOUNT_ID);
+   
+   saveCredential(account->getAccountDetail(ACCOUNT_ID));
 }
 
 void DlgAccounts::loadAccount(QListWidgetItem * item)
@@ -304,6 +323,7 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
    combo_security_STRP->setCurrentIndex(account->getAccountDetail(TLS_METHOD ).toInt());
    
+   
    switch (account->getAccountDetail(TLS_METHOD ).toInt()) {
       case 0: //KEY_EXCHANGE_NONE
          checkbox_SDES_fallback_rtp->setVisible(false);
@@ -333,6 +353,17 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
    checkbox_ZRTP_display_SAS->setChecked((account->getAccountDetail(ACCOUNT_ZRTP_DISPLAY_SAS)  == "true")?1:0);
    checkbox_ZRTP_warn_supported->setChecked((account->getAccountDetail(ACCOUNT_ZRTP_NOT_SUPP_WARNING)  == "true")?1:0);
    checkbox_ZTRP_send_hello->setChecked((account->getAccountDetail(ACCOUNT_ZRTP_HELLO_HASH)  == "true")?1:0);
+   
+   checkbox_stun->setChecked((account->getAccountDetail(ACCOUNT_SIP_STUN_ENABLED)  == "true")?1:0);
+   line_stun->setText(account->getAccountDetail(ACCOUNT_SIP_STUN_SERVER));
+   
+   radioButton_pa_same_as_local->setChecked((account->getAccountDetail(PUBLISHED_SAMEAS_LOCAL)  == "true")?1:0);
+   radioButton_pa_custom->setChecked((account->getAccountDetail(PUBLISHED_SAMEAS_LOCAL)  == "true")?1:0);
+   //spinBox_pa_published_port->setValue(account->getAccountDetail(PUBLISHED_PORT)); //TODO fix
+   lineEdit_pa_published_address->setText(account->getAccountDetail(PUBLISHED_ADDRESS));
+   
+   spinBox_pa_published_port->setValue(account->getAccountDetail(LOCAL_PORT).toInt());
+   //comboBox_ni_local_address->setCurentText(account->getAccountDetail(LOCAL_INTERFACE)); //TODO need to load the list first
 
    keditlistbox_codec->clear();
    ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
@@ -364,6 +395,8 @@ void DlgAccounts::loadAccount(QListWidgetItem * item)
 
    updateStatusLabel(account);
    frame2_editAccounts->setEnabled(true);
+   
+   loadCredentails(account->getAccountDetail(ACCOUNT_ID));
 }
 
 void DlgAccounts::loadAccountList()
@@ -674,4 +707,64 @@ void DlgAccounts::updateCombo(int value) {
          checkbox_ZTRP_send_hello->setVisible(false);
          break;
    }
+}
+
+void DlgAccounts::loadCredentails(QString accountId) {
+   credentialInfo.clear();
+   list_credential->clear();
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   int credentialCount = configurationManager.getNumberOfCredential(accountId);
+   for (int i=0; i < credentialCount; i++) {
+      QMap<QString, QString> credentialData = configurationManager.getCredential(accountId,i);
+      qDebug() << "Credential: " << credentialData;
+      QListWidgetItem* newItem = new QListWidgetItem();
+      newItem->setText(credentialData["username"]);
+      credentialInfo[newItem] = {newItem, credentialData["username"], credentialData["password"],credentialData["realm"]};
+      list_credential->addItem(newItem);
+   }
+}
+
+void DlgAccounts::saveCredential(QString accountId) {
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   configurationManager.setNumberOfCredential(accountId, list_credential->count());
+   
+   for (int i=0; i < list_credential->count();i++) {
+      QListWidgetItem* currentItem = list_credential->item(i);
+      MapStringString credentialData;
+      credentialData["username"] = credentialInfo[currentItem].name;
+      credentialData["password"] = credentialInfo[currentItem].password;
+      credentialData["realm"] = credentialInfo[currentItem].realm;
+      configurationManager.setCredential(accountId, i,credentialData);
+   }
+}
+
+void DlgAccounts::addCredential() {
+   QListWidgetItem* newItem = new QListWidgetItem();
+   newItem->setText("New credential");
+   credentialInfo[newItem] = {newItem, "New credential", "",""};
+
+   selectCredential(newItem,list_credential->currentItem());
+   list_credential->addItem(newItem);
+   list_credential->setCurrentItem(newItem);
+}
+
+void DlgAccounts::selectCredential(QListWidgetItem* item, QListWidgetItem* previous) {
+   if (previous) {
+      credentialInfo[previous].realm = edit_credential_realm->text();
+      credentialInfo[previous].name = edit_credential_auth->text();
+      credentialInfo[previous].password = edit_credential_password->text();
+      previous->setText(edit_credential_auth->text());
+   }
+   list_credential->setCurrentItem(item);
+   edit_credential_realm->setText(credentialInfo[item].realm);
+   edit_credential_auth->setText(credentialInfo[item].name);
+   edit_credential_password->setText(credentialInfo[item].password);
+   edit_credential_realm->setEnabled(true);
+   edit_credential_auth->setEnabled(true);
+   edit_credential_password->setEnabled(true);
+}
+
+void DlgAccounts::removeCredential() {
+   qDebug() << "I am here";
+   list_credential->takeItem(list_credential->currentRow());
 }

@@ -24,6 +24,7 @@
 #include <QWidget>
 #include <kconfigdialog.h>
 #include <QTableWidget>
+#include <QListWidgetItem>
 
 #include "ui_dlgaccountsbase.h"
 #include "Account.h"
@@ -31,6 +32,15 @@
 #include <QDebug>
 
 typedef QHash<QString, QString> StringHash; //Needed to fix a Qt foreach macro argument parsing bug
+
+struct CredentialData {
+   QListWidgetItem* pointer;
+   QString name;
+   QString password;
+   QString realm;
+};
+
+typedef QHash<QListWidgetItem*, CredentialData> QListWidgetItemHash; //Needed to fix a Qt foreach macro argument parsing bug
 
 class Private_AddCodecDialog : public KDialog {
   Q_OBJECT
@@ -102,9 +112,10 @@ public:
    
 private:
    AccountList * accountList;
-        QList< StringHash > codecList;
+   QList< StringHash > codecList;
+   QListWidgetItemHash credentialInfo;
    bool accountListHasChanged;
-        void loadCodecList();
+   void loadCodecList();
 
 public slots:
    void saveAccountList();
@@ -134,6 +145,11 @@ private slots:
    void addCodec(QString name = "");
    void codecChanged();
    void updateCombo(int value);
+   void addCredential();
+   void removeCredential();
+   void selectCredential(QListWidgetItem* item, QListWidgetItem* previous);
+   void loadCredentails(QString accountId);
+   void saveCredential(QString accountId);
    
    
 signals:
