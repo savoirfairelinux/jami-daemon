@@ -105,15 +105,10 @@ main_window_ask_quit ()
   response = gtk_dialog_run (GTK_DIALOG (dialog));
 
   gtk_widget_destroy (dialog);
-  if (response == GTK_RESPONSE_YES)
-    {
-      return TRUE;
-    }
-  else if (response == GTK_RESPONSE_NO)
-    {
-      return FALSE;
-    }
-  return TRUE;
+
+  return (response == GTK_RESPONSE_NO)? FALSE : TRUE ;
+
+
 }
 
 static gboolean

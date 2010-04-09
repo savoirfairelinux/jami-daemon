@@ -560,11 +560,8 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     // Creates URI
     std::string fromUri;
-
     std::string contactUri;
-
     std::string srvUri;
-
     std::string address;
 
     fromUri = account->getFromUri();
@@ -1772,7 +1769,7 @@ bool get_dns_server_addresses (std::vector<std::string> *servers)
     // Read configuration files
 
     if (res_init () != 0) {
-        _debug ("Resolver initialization failed");
+        _debug ("UserAgent: Resolver initialization failed");
         return false;
     }
 
@@ -1797,44 +1794,43 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
     std::vector <std::string> dns_servers;
     int scount, i;
 
+    _debug("UserAgent: Enable DNS SRV resolver");
+
     // Create the DNS resolver instance
     status = pjsip_endpt_create_resolver (endpt, &resv);
-
     if (status != PJ_SUCCESS) {
-        _debug ("Error creating the DNS resolver instance");
+        _error ("UserAgent: Error: Creating the DNS resolver instance");
         return status;
     }
 
     if (!get_dns_server_addresses (&dns_servers)) {
-        _debug ("Error  while fetching DNS information");
+        _error ("UserAgent: Error: while fetching DNS information");
         return -1;
     }
 
     // Build the nameservers list needed by pjsip
     if ( (scount = dns_servers.size ()) <= 0) {
-        _debug ("No server detected while fetching DNS information, stop dns resolution");
+        _warn ("UserAgent: No server detected while fetching DNS information, stop dns resolution");
         return 0;
     }
 
     pj_str_t nameservers[scount];
-
     for (i = 0; i<scount; i++) {
-        nameservers[i] = pj_str ( (char*) dns_servers[i].c_str());
+		_debug("UserAgent: Server: %s", (char *)dns_servers[i].c_str());
+        nameservers[i] = pj_str ( (char *) dns_servers[i].c_str());
     }
 
     // Update the name servers for the DNS resolver
     status = pj_dns_resolver_set_ns (resv, scount, nameservers, NULL);
-
     if (status != PJ_SUCCESS) {
-        _debug ("Error updating the name servers for the DNS resolver");
+        _debug ("UserAgent: Error updating the name servers for the DNS resolver");
         return status;
     }
 
     // Set the DNS resolver instance of the SIP resolver engine
     status = pjsip_endpt_set_resolver (endpt, resv);
-
     if (status != PJ_SUCCESS) {
-        _debug ("Error setting the DNS resolver instance of the SIP resolver engine");
+        _debug ("UserAgent: Error setting the DNS resolver instance of the SIP resolver engine");
         return status;
     }
 
