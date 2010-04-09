@@ -77,21 +77,21 @@ CallManager::placeCallFirstAccount (const std::string& callID,
 void
 CallManager::refuse (const std::string& callID)
 {
-    _debug ("CallManager: refuse received");
+    _debug ("CallManager: Refuse %s", callID.c_str());
     Manager::instance().refuseCall (callID);
 }
 
 void
 CallManager::accept (const std::string& callID)
 {
-    _debug ("CallManager: accept received");
+    _debug ("CallManager: Accept received");
     Manager::instance().answerCall (callID);
 }
 
 void
 CallManager::hangUp (const std::string& callID)
 {
-    _debug ("CallManager::hangUp received %s", callID.c_str());
+    _debug ("CallManager: HangUp received %s", callID.c_str());
     Manager::instance().hangupCall (callID);
 
 }
@@ -202,7 +202,7 @@ CallManager::holdConference (const std::string& confID)
 void
 CallManager::unholdConference (const std::string& confID)
 {
-    _debug ("CallManager::unHoldConference received %s", confID.c_str());
+    _debug ("CallManager: Unhold Conference %s", confID.c_str());
     Manager::instance().unHoldConference (confID);
 }
 
@@ -221,6 +221,7 @@ CallManager::getConferenceList (void)
 std::vector< std::string >
 CallManager::getParticipantList (const std::string& confID)
 {
+    _debug("CallManager: Get Participant list for conference %s", confID.c_str());
     return Manager::instance().getParticipantList (confID);
 }
 

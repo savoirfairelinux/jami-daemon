@@ -725,6 +725,9 @@ ManagerImpl::createConference (const CallID& id1, const CallID& id2) {
 	conf->add(id1);
 	conf->add(id2);
 
+	// Add conference to map
+	_conferencemap.insert( std::pair<CallID, Conference*>(conf->getConfID(), conf));
+
 	// broadcast a signal over dbus
 	_dbus->getCallManager()->conferenceCreated(conf->getConfID());
 
@@ -793,7 +796,7 @@ ManagerImpl::getConferenceFromCallID (const CallID& call_id) {
 }
 
 void ManagerImpl::holdConference (const CallID& id) {
-	_debug ("ManagerImpl: holdConference()");
+	_debug ("Manager: Hold conference()");
 
 	Conference *conf;
 	ConferenceMap::iterator iter_conf = _conferencemap.find(id);
@@ -831,7 +834,7 @@ void ManagerImpl::holdConference (const CallID& id) {
 
 void ManagerImpl::unHoldConference (const CallID& id) {
 
-	_debug ("ManagerImpl::unHoldConference()");
+	_debug ("Manager: Unhold conference()");
 
 	Conference *conf;
 	ConferenceMap::iterator iter_conf = _conferencemap.find(id);
@@ -898,9 +901,8 @@ bool ManagerImpl::participToConference (const CallID& call_id) {
 	}
 }
 
-void ManagerImpl::addParticipant (const CallID& call_id,
-		const CallID& conference_id) {
-	_debug ("ManagerImpl::addParticipant(%s, %s)", call_id.c_str(), conference_id.c_str());
+void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conference_id) {
+	_debug ("ManagerImpl: Add participant %s to %s", call_id.c_str(), conference_id.c_str());
 
 	std::map<std::string, std::string> call_details = getCallDetails(call_id);
 
@@ -1037,8 +1039,6 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
 
 	_debug ("Manager: Join participants %s, %s", call_id1.c_str(), call_id2.c_str());
 
-
-
 	std::map<std::string, std::string> call1_details = getCallDetails(call_id1);
 	std::map<std::string, std::string> call2_details = getCallDetails(call_id2);
 
@@ -1127,7 +1127,7 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
 
 void ManagerImpl::detachParticipant (const CallID& call_id,
 		const CallID& current_id) {
-	_debug ("ManagerImpl::detachParticipant(%s)", call_id.c_str());
+	_debug ("Manager: Detach participant %s", call_id.c_str());
 
 	CallID current_call_id = current_id;
 
@@ -4302,7 +4302,8 @@ std::vector<std::string> ManagerImpl::getConferenceList (void) {
 
 std::vector<std::string> ManagerImpl::getParticipantList (
 		const std::string& confID) {
-	_debug ("ManagerImpl::getParticipantList");
+
+        _debug ("ManagerImpl: Get participant list %s", confID.c_str());
 	std::vector<std::string> v;
 
 	ConferenceMap::iterator iter_conf = _conferencemap.find(confID);
@@ -4321,6 +4322,9 @@ std::vector<std::string> ManagerImpl::getParticipantList (
 
 			iter_participant++;
 		}
+	}
+	else {
+	  _warn("Manager: Warning: Did not found conference %s", confID.c_str());
 	}
 
 	return v;

@@ -1042,7 +1042,7 @@ void calltree_add_history_entry (callable_obj_t * c)
 void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 {
 
-    DEBUG("calltree_add_conference conf->_confID %s\n", conf->_confID);
+    DEBUG("Calltree: Add conference %s", conf->_confID);
 
     GdkPixbuf *pixbuf=NULL;
     GdkPixbuf *pixbuf_security=NULL;
@@ -1066,8 +1066,8 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
 
     if(!conf) {
-      DEBUG("Error conference is null!!");
-        return;
+      ERROR("Calltree: Error: Conference is null!!");
+      return;
     }
 
     // description = g_markup_printf_escaped("<b>%s</b>", conf->_confID);
@@ -1075,13 +1075,8 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
     gtk_tree_store_append (tab->store, &iter, NULL);
 
-    // _debug
-
     if( tab == current_calls )
     {	
-
-        if(!(conf->_state))
-	    DEBUG("Error conf->_state is NULL");
 
         switch(conf->_state)
 	{
@@ -1127,14 +1122,14 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
     // Every participant to a conference must be secured, the conference is not secured elsewhere
     conf->_conference_secured = TRUE;
 
-    DEBUG("Determine if conference is secured");
+    DEBUG("Calltree: Determine if conference is secured");
     
     // participant = conf->participant;
     // participant = dbus_get_participant_list(conf->_confID);
     conference_participant = conf->participant_list;
     if(conference_participant) {
 
-        DEBUG("    determine if at least one participant uses srtp");
+        DEBUG("Calltree: Determine if at least one participant uses SRTP");
 	
 	// participant = conf->participant;
 	// participant = dbus_get_participant_list(conf->_confID);
@@ -1153,12 +1148,12 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	      }
 	      
 	      if(g_strcasecmp(srtp_enabled,"true") == 0) {
-		DEBUG("    srtp enabled for participant %s\n", call_id);
+		DEBUG("Calltree: SRTP enabled for participant %s", call_id);
 		conf->_conf_srtp_enabled = TRUE;
 		break;
 	      } 
 	      else {
-		DEBUG("    srtp is not enabled for participant %s\n", call_id);
+		DEBUG("Calltree: SRTP is not enabled for participant %s", call_id);
 	      }
 	      
 	    }
@@ -1167,7 +1162,7 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	    
 	  }
 
-	DEBUG("    determine if all conference participant are secured");
+	DEBUG("Calltree: Determine if all conference participant are secured");
 	
 	if(conf->_conf_srtp_enabled) {
 	    // participant = conf->participant;
@@ -1181,12 +1176,12 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 		if(call != NULL) {
 		  
 		  if(call->_srtp_state == 0) {
-		      DEBUG("    participant %s is not secured", call_id);
+		      DEBUG("Calltree: Participant %s is not secured", call_id);
 							conf->_conference_secured = FALSE;
 							break;
 		  }
 		  else {
-		      DEBUG("    participant %s is secured", call_id);
+		      DEBUG("Calltree: Participant %s is secured", call_id);
 		  }
 		}
 		conference_participant = conference_next_participant(conference_participant);
@@ -1196,21 +1191,21 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 
     if(conf->_conf_srtp_enabled) {
 	if(conf->_conference_secured) {
-	    DEBUG("Conference is secured");
+	    DEBUG("Calltree: Conference is secured");
 	    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_confirmed.svg", NULL);
 	}
 	else {
-	    DEBUG("Conference is not secured");
+	    DEBUG("Calltree: Conference is not secured");
 	    pixbuf_security = gdk_pixbuf_new_from_file(ICONS_DIR "/lock_off.svg", NULL);
 	}
     }
     
-    DEBUG("add conference to tree store");
+    DEBUG("Calltree: Add conference to tree store");
     
     gtk_tree_store_set(tab->store, &iter,
 		       0, pixbuf, // Icon
 		       1, description, // Description
-				2, pixbuf_security,
+		       2, pixbuf_security,
 		       3, conf, // Pointer
 		       -1);
 
@@ -1218,15 +1213,15 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
       g_object_unref(G_OBJECT(pixbuf));
     
     // participant = conf->participant;
-		// participant = dbus_get_participant_list(conf->_confID);
+    // participant = dbus_get_participant_list(conf->_confID);
     conference_participant = conf->participant_list;
     if(conference_participant) {
 
-        DEBUG("Add conference participants\n");
+        DEBUG("Calltre: Adding conference participant");
 	// for (pl = participant; *pl; pl++)
 	while(conference_participant) {
 	    
-	    
+	    DEBUG("OK");
 	    call_id = (gchar*)(conference_participant->data);
 	    call = calllist_get (tab, call_id);
 	    // create_new_call_from_details (conf_id, conference_details, &c);
@@ -1244,14 +1239,13 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 	  }
     */
 
-gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tab->view), GTK_TREE_MODEL(tab->store));
 
-path = gtk_tree_model_get_path(model, &iter);
+    path = gtk_tree_model_get_path(model, &iter);
 
-	gtk_tree_view_expand_row(GTK_TREE_VIEW(tab->view), path, FALSE);
+    gtk_tree_view_expand_row(GTK_TREE_VIEW(tab->view), path, FALSE);
 
-update_actions();
-
+    update_actions();
 
 }
 

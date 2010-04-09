@@ -258,7 +258,7 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar* confID,
 static void
 conference_created_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED )
 {
-  DEBUG ("Conference added %s\n", confID);
+  DEBUG ("DBUS: Conference %s added", confID);
 
   conference_obj_t* new_conf;
   callable_obj_t* call;
@@ -267,19 +267,18 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
   gchar** part;
 
   create_new_conference(CONFERENCE_STATE_ACTIVE_ATACHED, confID, &new_conf);
-  // new_conf->_confID = g_strdup(confID);
 
   participants = (gchar**) dbus_get_participant_list(new_conf->_confID);
 
+  // Update conference list
   conference_participant_list_update(participants, new_conf);
 
-  // participant = new_conf->participant;
-  for (part = participants; *part; part++)
-    {
+  // Add conference ID in in each calls
+  for (part = participants; *part; part++) {
       call_id = (gchar*) (*part);
       call = calllist_get(current_calls, call_id);
       call->_confID = g_strdup(confID);
-    }
+  }
 
   conferencelist_add(new_conf);
   calltree_add_conference(current_calls, new_conf);
@@ -2159,12 +2158,12 @@ dbus_get_conference_list(void)
 }
 
 gchar**
-dbus_get_participant_list(const char * confID)
+dbus_get_participant_list(const char *confID)
 {
   GError *error = NULL;
   gchar **list = NULL;
 
-  DEBUG("get participant list")
+  DEBUG("DBUS: Get conference %s participant list", confID);
 
   org_sflphone_SFLphone_CallManager_get_participant_list(callManagerProxy,
       confID, &list, &error);
