@@ -54,6 +54,7 @@ GtkWidget * entryID;
 GtkWidget * entryAlias;
 GtkWidget * protocolComboBox;
 GtkWidget * entryUsername;
+GtkWidget * entryDomainName;
 GtkWidget * entryHostname;
 GtkWidget * entryPassword;
 GtkWidget * entryMailbox;
@@ -239,6 +240,7 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gchar *curAccountType = "SIP";
 	gchar *curAlias = "";
 	gchar *curUsername = "";
+	gchar *curDomainName = "";
 	gchar *curHostname = "";
 	gchar *curPassword = "";
 	/* TODO: add curProxy, and add boxes for Proxy support */
@@ -246,6 +248,8 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gchar *curUseragent = "";
 
 	currentAccount = *a;
+
+	int row = 0;
 
 	// Load from SIP/IAX/Unknown ?
 	if(currentAccount)
@@ -258,6 +262,7 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 		curHostname = g_hash_table_lookup(currentAccount->properties, ACCOUNT_HOSTNAME);
 		curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_PASSWORD);
 		curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERNAME);
+		curDomainName = g_hash_table_lookup(currentAccount->properties, ACCOUNT_DOMAIN);
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
 		curUseragent = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERAGENT);
 	}
@@ -266,22 +271,30 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gnome_main_section_new (_("Account Parameters"), &frame);
 	gtk_widget_show(frame);
 
-	table = gtk_table_new (8, 2  ,  FALSE/* homogeneous */);
+	if(strcmp(curAccountType, "SIP") == 0) {
+	  table = gtk_table_new (9, 2,  FALSE/* homogeneous */);
+	}
+	else if(strcmp(curAccountType, "IAX") == 0) {
+	  table = gtk_table_new (8, 2, FALSE);
+	}
+
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
 	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
 	gtk_widget_show (table);
 	gtk_container_add( GTK_CONTAINER( frame) , table );
 
 	label = gtk_label_new_with_mnemonic (_("_Alias"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryAlias = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryAlias);
 	gtk_entry_set_text(GTK_ENTRY(entryAlias), curAlias);
-	gtk_table_attach ( GTK_TABLE( table ), entryAlias, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryAlias, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+
+	row++;
 	label = gtk_label_new_with_mnemonic (_("_Protocol"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	protocolComboBox = gtk_combo_box_new_text();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), protocolComboBox);
@@ -301,23 +314,25 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 		gtk_combo_box_append_text(GTK_COMBO_BOX(protocolComboBox), _("Unknown"));
 		gtk_combo_box_set_active(GTK_COMBO_BOX(protocolComboBox),2);
 	}
-	gtk_table_attach ( GTK_TABLE( table ), protocolComboBox, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), protocolComboBox, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	/* Link signal 'changed' */
 	g_signal_connect (G_OBJECT (GTK_COMBO_BOX(protocolComboBox)), "changed",
 			G_CALLBACK (change_protocol_cb),
 			currentAccount);
 
+	row++;
 	label = gtk_label_new_with_mnemonic (_("_Host name"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryHostname = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryHostname);
 	gtk_entry_set_text(GTK_ENTRY(entryHostname), curHostname);
-	gtk_table_attach ( GTK_TABLE( table ), entryHostname, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryHostname, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+	row++;
 	label = gtk_label_new_with_mnemonic (_("_User name"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);	
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);	
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
 	entryUsername = gtk_entry_new();
@@ -329,12 +344,25 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 #endif
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
 	gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
-	gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	g_signal_connect(G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
 	g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
 
+	// Domain name can be update only for SIP account
+	if(strcmp(curAccountType, "SIP") == 0) {
+	  row++;
+	  label = gtk_label_new_with_mnemonic(_("_Domain name"));
+	  gtk_table_attach(GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	  gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+	  entryDomainName = gtk_entry_new();
+	  gtk_label_set_mnemonic_widget(GTK_LABEL(label), entryDomainName);
+	  gtk_entry_set_text(GTK_ENTRY(entryDomainName), curDomainName);
+	  gtk_table_attach (GTK_TABLE(table), entryDomainName, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	}
+
+	row++;
 	label = gtk_label_new_with_mnemonic (_("_Password"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
 	entryPassword = gtk_entry_new();
@@ -349,29 +377,32 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gtk_entry_set_visibility(GTK_ENTRY(entryPassword), FALSE);
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
 	gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
-	gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	g_signal_connect (G_OBJECT (entryPassword), "changed", G_CALLBACK (update_credential_cb), NULL);
 	g_object_set_data (G_OBJECT (entryPassword), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
 
+	row++;
 	clearTextCheckbox = gtk_check_button_new_with_mnemonic (_("Show password"));
 	g_signal_connect (clearTextCheckbox, "toggled", G_CALLBACK (show_password_cb), entryPassword);
-	gtk_table_attach (GTK_TABLE (table), clearTextCheckbox, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach (GTK_TABLE (table), clearTextCheckbox, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+	row++;
 	label = gtk_label_new_with_mnemonic (_("_Voicemail number"));
-	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	entryMailbox = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryMailbox);
 	gtk_entry_set_text(GTK_ENTRY(entryMailbox), curMailbox);
-	gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+	row++;
 	label = gtk_label_new_with_mnemonic (_("_User-agent"));
-	gtk_table_attach (GTK_TABLE (table), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	entryUseragent = gtk_entry_new ();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUseragent);
 	gtk_entry_set_text (GTK_ENTRY (entryUseragent), curUseragent);
-	gtk_table_attach ( GTK_TABLE( table ), entryUseragent, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	gtk_table_attach ( GTK_TABLE( table ), entryUseragent, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 
 	gtk_widget_show_all( table );
@@ -782,7 +813,7 @@ GtkWidget* create_credential_widget (account_t **a) {
 	GtkRequisition requisitionTreeView;
 	gtk_widget_size_request (GTK_WIDGET(treeViewCredential), &requisitionTreeView);
 	gtk_widget_size_request (GTK_WIDGET(table), &requisitionTable);
-	gtk_widget_set_size_request (GTK_WIDGET(scrolledWindowCredential), 400, /*requisitionTable.width,*/ 120);
+	gtk_widget_set_size_request (GTK_WIDGET(scrolledWindowCredential), 400, 120);
 	// same_as_local_cb (sameAsLocalRadioButton, NULL);
 	// set_published_addr_manually_cb (publishedAddrRadioButton, NULL);
 
@@ -886,7 +917,7 @@ GtkWidget * create_security_tab (account_t **a)
 	   published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
 
 	   DEBUG("TLS is enabled to %s", curTLSEnabled);       
-	   } */
+	} */
 
 	// Credentials frame
 	frame = create_credential_widget (a);

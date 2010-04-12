@@ -1988,7 +1988,7 @@ int ManagerImpl::createSettingsPath (void) {
  * Initialization: Main Thread
  */
 void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
-	_debug ("ManagerImpl::InitConfigFile");
+	_debug ("Manager: InitConfigFile");
 
 	// Default values, that will be overwritten by the call to
 	// 'populateFromFile' below.
