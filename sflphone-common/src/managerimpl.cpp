@@ -196,7 +196,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 	Call::CallConfiguration callConfig;
 	SIPVoIPLink *siplink;
 
-	_debug ("Manager: New outgoing call %s", call_id.c_str());
+	_debug ("Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
 
 	CallID current_call_id = getCurrentCallId();
 
@@ -214,23 +214,17 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 	// in any cases we have to detach from current communication
 	if (hasCurrentCall()) {
 
-		_debug ("    outgoingCall: Has current call (%s) put it onhold", current_call_id.c_str());
-
+		_debug ("Manager: Has current call (%s) put it onhold", current_call_id.c_str());
 		// if this is not a conferenceand this and is not a conference participant
-
-		if (!isConference(current_call_id) && !participToConference(
-				current_call_id)) {
-			_debug ("    outgoingCall: Put the current call (%s) on hold", current_call_id.c_str());
+		if (!isConference(current_call_id) && !participToConference(current_call_id)) {
 			onHoldCall(current_call_id);
-		} else if (isConference(current_call_id) && !participToConference(
-				call_id)) {
-			_debug ("    outgoingCall: detach main participant from conference");
+		} else if (isConference(current_call_id) && !participToConference(call_id)) {
 			detachParticipant(default_id, current_call_id);
 		}
 	}
 
 	if (callConfig == Call::IPtoIP) {
-		_debug ("Manager: Start IP to IP call");
+		_debug ("Manager: Start IP2IP call");
 		/* We need to retrieve the sip voiplink instance */
 		siplink = SIPVoIPLink::instance("");
 
@@ -244,6 +238,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 		return false;
 	}
 
+	_debug("Manager: Selecting account %s", account_id.c_str());
 	if (!accountExists(account_id)) {
 		_error ("Manager: Error: Account doesn't exist in new outgoing call");
 		return false;
@@ -254,16 +249,15 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 		return false;
 	}
 
-	_debug ("Manager: Action: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
-
+	_debug ("Manager: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
 	associateCallToAccount(call_id, account_id);
 
 	if (getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned)) {
-		switchCall(call_id);
-		return true;
+	    switchCall(call_id);
+	    return true;
 	} else {
-		callFailure(call_id);
-		_debug ("Manager: Error: An error occur, the call was not created");
+	    callFailure(call_id);
+	    _debug ("Manager: Error: An error occur, the call was not created");
 	}
 
 	return false;
@@ -272,7 +266,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 //THREAD=Main : for outgoing Call
 bool ManagerImpl::answerCall (const CallID& call_id) {
 
-	_debug ("ManagerImpl::answerCall(%s)", call_id.c_str());
+	_debug ("ManagerImpl: Answer call %s", call_id.c_str());
 
 	stopTone();
 
@@ -494,7 +488,7 @@ bool ManagerImpl::onHoldCall (const CallID& call_id) {
 	AccountID account_id;
 	bool returnValue;
 
-	_debug ("Manager:  Put call %s on hold", call_id.c_str());
+	_debug ("Manager: Put call %s on hold", call_id.c_str());
 
 	stopTone();
 
@@ -1127,7 +1121,7 @@ void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id
 
 void ManagerImpl::detachParticipant (const CallID& call_id,
 		const CallID& current_id) {
-	_debug ("ManagerImpl::detachParticipant(%s)", call_id.c_str());
+	_debug ("Manager: Detach participant %s from conference", call_id.c_str());
 
 	CallID current_call_id = current_id;
 
@@ -1147,8 +1141,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 
 		if (conf != NULL) {
 
-			_debug ("    detachParticipant: detaching participant %s", call_id.c_str());
-
+			_debug ("Manager: Detaching participant %s", call_id.c_str());
 			std::map<std::string, std::string> call_details = getCallDetails(
 					call_id);
 			std::map<std::string, std::string>::iterator iter_details;
@@ -1167,11 +1160,11 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 			}
 		} else {
 
-			_debug ("    detachParticipant: call is not conferencing, cannot detach");
+			_debug ("Manager: Call is not conferencing, cannot detach");
 
 		}
 	} else {
-		_debug ("    detachParticipant: unbind main participant from all");
+		_debug ("Manager: Unbind main participant from all");
 		_audiodriver->getMainBuffer()->unBindAll(default_id);
 
 		if (isConference(current_call_id)) {
@@ -4152,7 +4145,7 @@ void ManagerImpl::check_call_configuration (const CallID& id,
 	Call::CallConfiguration config;
 
 	if (to.find(SIP_SCHEME) == 0 || to.find(SIPS_SCHEME) == 0) {
-		_debug ("Sending Sip Call ");
+		_debug ("Manager: Sip scheme detected (sip: or sips:), sending IP2IP Call");
 		config = Call::IPtoIP;
 	} else {
 		config = Call::Classic;

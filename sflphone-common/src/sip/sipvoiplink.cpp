@@ -749,6 +749,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
     pj_status_t status;
     std::string localAddr, addrSdp;
 
+    _debug("UserAgent: New outgoing call %s to %s", id.c_str(), toUrl.c_str());
+
     SIPCall* call = new SIPCall (id, Call::Outgoing, _pool);
 
     if (call) {
@@ -768,6 +770,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
         call->setPeerNumber (toUri);
 
         localAddr = getInterfaceAddrFromName(account->getLocalInterface ());
+
+	_debug("UserAgent: Local address for call: %s", localAddr.c_str());
 
         if (localAddr == "0.0.0.0")
             loadSIPLocalIP (&localAddr);
@@ -1378,6 +1382,8 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     AccountID id;
 
+    _debug("UserAgent: Start sip call");
+
     if (call == NULL)
         return false;
 
@@ -1389,7 +1395,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
     if (account == NULL) {
-        _debug ("Account is null in SIPStartCall");
+        _debug ("UserAgent: Error: Account is null in SIPStartCall");
         return false;
     }
 
@@ -1411,7 +1417,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
 
     contactUri = account->getContactHeader (address, portStr);
 
-    _debug ("SIPStartCall: fromUri: %s toUri: %s contactUri: %s",
+    _debug ("UserAgent: FROM uri: %s, TO uri: %s, CONTACT uri: %s",
             fromUri.c_str(),
             toUri.c_str(),
             contactUri.c_str());
@@ -1433,7 +1439,7 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
                                    &dialog);
 
     if (status != PJ_SUCCESS) {
-        _debug ("UAC creation failed");
+        _error ("UserAgent: Error: UAC creation failed");
         return false;
     }
 
@@ -1469,13 +1475,13 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     status = pjsip_inv_send_msg (inv, tdata);
 
     if (status != PJ_SUCCESS) {
-        _debug ("    SIPStartCall: failed to send invite");
+        _error ("UserAgent: Error: failed to send invite");
         return false;
     }
 
     if(account->getAccountTransport()) {
 
-    _debug("Sent invite request using transport: %s %s (refcnt=%d)",
+    _debug("UserAgent: Sent invite request using transport: %s %s (refcnt=%d)",
 	               account->getAccountTransport()->obj_name,
 		       account->getAccountTransport()->info,
 	               (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));
@@ -1586,6 +1592,8 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
     pjsip_tx_data *tdata;
     std::string localAddress, addrSdp;
 
+    _debug("UserAgent: New IP2IP call %s to %s", id.c_str(), to.c_str());
+
     /* Create the call */
     call = new SIPCall (id, Call::Outgoing, _pool);
 
@@ -1594,13 +1602,12 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         call->setCallConfiguration (Call::IPtoIP);
         call->initRecFileName();
 
-        // AccountID accountId = Manager::instance().getAccountFromCall (id);
         SIPAccount * account = NULL;
         account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
 
         if (account == NULL) {
-        	_debug ("UserAgent: Account %s is null. Returning", IP2IP_PROFILE);
-        	return !PJ_SUCCESS;
+            _error ("UserAgent: Error: Account %s is null. Returning", IP2IP_PROFILE);
+	    return !PJ_SUCCESS;
         }
 
         // Set the local address
@@ -1608,17 +1615,19 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         // Set SDP parameters - Set to local
         addrSdp = localAddress;
 
-        _debug ("UserAgent: Local Address for IP2IP call: %s", localAddress.c_str());
-
         // If local address bound to ANY, reslove it using PJSIP
         if (localAddress == "0.0.0.0") {
             loadSIPLocalIP (&localAddress);
         }
 
+	_debug ("UserAgent: Local Address for IP2IP call: %s", localAddress.c_str());
+
         // Local address to appear in SDP
         if (addrSdp == "0.0.0.0") {
         	addrSdp = localAddress;
         }
+
+	_debug ("UserAgent: Media Address for IP2IP call: %s", localAddress.c_str());
 
         // Set local address for RTP media
         setCallAudioLocal (call, localAddress);
@@ -1626,7 +1635,7 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         std::string toUri = account->getToUri (to);
         call->setPeerNumber (toUri);
 
-        _debug ("UserAgent: TO uri:  %s", toUri.c_str());
+        _debug ("UserAgent: TO uri for IP2IP call: %s", toUri.c_str());
 
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address (addrSdp);
@@ -1645,13 +1654,13 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         // Init TLS transport if enabled
         if(account->isTlsEnabled()) {
 
-        	_debug("UserAgent: TLS enabled for IP to IP calls");
+        	_debug("UserAgent: TLS enabled for IP2IP calls");
         	int at = toUri.find("@");
         	int trns = toUri.find(";transport");
         	std::string remoteAddr = toUri.substr(at+1, trns-at-1);
 
         	if(toUri.find("sips:") != 1) {
-        		_debug("UserAgent: Error \"sips\" scheme required TLS call");
+        		_debug("UserAgent: Error \"sips\" scheme required for TLS call");
         		return false;
         	}
 
@@ -1665,91 +1674,90 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
         	account->setAccountTransport (_localUDPTransport);
         }
 
-        _debug ("UserAgent: new IP2IP local port %i", account->getLocalPort());
+        _debug ("UserAgent: Local port %i for IP2IP call", account->getLocalPort());
 
-        _debug ("UserAgent: new IP2IP local address in sdp %s", localAddress.c_str());
+        _debug ("UserAgent: Local address in sdp %s for IP2IP call", localAddress.c_str());
 
         // Create URI
         std::string fromUri = account->getFromUri();
-
         std::string address = findLocalAddressFromUri (toUri, account->getAccountTransport());
 
         int port = findLocalPortFromUri (toUri, account->getAccountTransport());
 
         std::stringstream ss;
-		std::string portStr;
-		ss << port;
-		ss >> portStr;
+	std::string portStr;
+	ss << port;
+	ss >> portStr;
+	
+	std::string contactUri = account->getContactHeader (address, portStr);
 
-		std::string contactUri = account->getContactHeader (address, portStr);
+	_debug ("UserAgent:  FROM uri: %s, TO uri: %s, CONTACT uri: %s",
+		fromUri.c_str(), toUri.c_str(), contactUri.c_str());
 
-		_debug ("UserAgent:  FROM uri: %s TO uri: %s CONTACT uri: %s",
-				fromUri.c_str(), toUri.c_str(), contactUri.c_str());
+	pj_str_t pjFrom;
+	pj_cstr (&pjFrom, fromUri.c_str());
 
-		pj_str_t pjFrom;
-		pj_cstr (&pjFrom, fromUri.c_str());
+	pj_str_t pjTo;
+	pj_cstr (&pjTo, toUri.c_str());
 
-		pj_str_t pjTo;
-		pj_cstr (&pjTo, toUri.c_str());
+	pj_str_t pjContact;
+	pj_cstr (&pjContact, contactUri.c_str());
 
-		pj_str_t pjContact;
-		pj_cstr (&pjContact, contactUri.c_str());
+	// Create the dialog (UAC)
+	// (Parameters are "strduped" inside this function)
+	status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
+	PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+	
+	// Create the invite session for this call
+	status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
+	PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+	
+	// Set the appropriate transport
+	pjsip_tpselector *tp;
 
-		// Create the dialog (UAC)
-		// (Parameters are "strduped" inside this function)
-		status = pjsip_dlg_create_uac (pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, NULL, &dialog);
-		PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+	init_transport_selector (account->getAccountTransport(), &tp);
 
-		// Create the invite session for this call
-		status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
-		PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+	if(!account->getAccountTransport()) {
+	  _error("UserAgent: Error: Transport is NULL in IP2IP call");
+	}
 
-		// Set the appropriate transport
-		pjsip_tpselector *tp;
+	// set_transport methods increment transport's ref_count
+	status = pjsip_dlg_set_transport (dialog, tp);
 
-		init_transport_selector (account->getAccountTransport(), &tp);
+	// decrement transport's ref count
+	// pjsip_transport_dec_ref(account->getAccountTransport());
 
-		if(!account->getAccountTransport()) {
-			_error("UserAgent: Error: Transport is NULL in ip to ip call");
-		}
+	if (status != PJ_SUCCESS) {
+	  _error ("UserAgent: Error: Failed to set the transport for an IP2IP call");
+	  return status;
+	}
 
-		// set_transport methods increment transport's ref_count
-		status = pjsip_dlg_set_transport (dialog, tp);
+	// Associate current call in the invite session
+	inv->mod_data[getModId() ] = call;
 
-		// decrement transport's ref count
-		// pjsip_transport_dec_ref(account->getAccountTransport());
+	status = pjsip_inv_invite (inv, &tdata);
+	
+	PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+		
+	// Associate current invite session in the call
+	call->setInvSession (inv);
 
-		if (status != PJ_SUCCESS) {
-			_error ("UserAgent: Error: Failed to set the transport for an IP2IP call");
-			return status;
-		}
+	status = pjsip_inv_send_msg (inv, tdata);
 
-		// Associate current call in the invite session
-		inv->mod_data[getModId() ] = call;
+	if (status != PJ_SUCCESS) {
+	    delete call;
+	    call = 0;
+	    return false;
+	}
 
-		status = pjsip_inv_invite (inv, &tdata);
+	call->setConnectionState (Call::Progressing);
 
-		PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+	call->setState (Call::Active);
+	addCall (call);
 
-		// Associate current invite session in the call
-		call->setInvSession (inv);
-
-		status = pjsip_inv_send_msg (inv, tdata);
-
-		if (status != PJ_SUCCESS) {
-			delete call;
-			call = 0;
-			return false;
-		}
-
-		call->setConnectionState (Call::Progressing);
-
-		call->setState (Call::Active);
-		addCall (call);
-
-		return true;
-	} else
-        return false;
+	return true;
+    } else
+      return false;
 }
 
 
@@ -3596,6 +3604,8 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     /******************************************* URL HOOK *********************************************/
 
     if (Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_ENABLED) == "1") {
+
+        _debug("UserAgent: Set sip url hooks");
 
         std::string header_value;
 
