@@ -69,6 +69,7 @@ typedef enum RegistrationState {
 
 #define HOSTNAME                            "hostname"
 #define USERNAME                            "username"
+#define DOMAINNAME                          "domainname"
 #define AUTHENTICATION_USERNAME             "authenticationUsername"
 #define PASSWORD                            "password"
 #define REALM                               "realm"

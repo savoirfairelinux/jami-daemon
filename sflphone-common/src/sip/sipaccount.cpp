@@ -26,6 +26,7 @@
 
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
+	, _domainName("")
         , _regc (NULL)
         , _bRegister (false)
         , _registrationExpire ("")
@@ -33,7 +34,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _publishedIpAddress ("")
         , _localPort (atoi (DEFAULT_SIP_PORT))
         , _publishedPort (atoi (DEFAULT_SIP_PORT))
-		, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
+	, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
         , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
         , _transport (NULL)
         , _resolveOnce (false)
@@ -42,7 +43,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _realm (DEFAULT_REALM)
         , _authenticationUsername ("")
         , _tlsSetting (NULL)
-	    , _dtmfType(OVERRTP)
+	, _dtmfType(OVERRTP)
         , _displayName ("")
 {
     
@@ -330,6 +331,7 @@ void SIPAccount::loadConfig()
 {
     // Load primary credential
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
+    setDomainName(Manager::instance().getConfigString(_accountID, DOMAINNAME));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
     _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
     _realm = Manager::instance().getConfigString (_accountID, REALM);

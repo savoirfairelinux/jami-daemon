@@ -3148,6 +3148,8 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 			accountID, HOSTNAME)));
 	a.insert(std::pair<std::string, std::string>(USERNAME, getConfigString(
 			accountID, USERNAME)));
+	a.insert(std::pair<std::string, std::string>(DOMAINNAME, getConfigString(
+										 accountID, DOMAINNAME)));
 	a.insert(std::pair<std::string, std::string>(PASSWORD, getConfigString(
 			accountID, PASSWORD)));
 	a.insert(std::pair<std::string, std::string>(REALM, getConfigString(
@@ -3391,6 +3393,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	map_cpy = details;
 
 	std::string username;
+	std::string domain;
 	std::string authenticationName;
 	std::string password;
 	std::string realm;
@@ -3403,6 +3406,14 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 
 	if ((iter = map_cpy.find(USERNAME)) != map_cpy.end()) {
 		username = iter->second;
+	}
+
+	if ((iter = map_cpy.find(DOMAINNAME)) != map_cpy.end()) {
+	        domain = iter->second;
+		_error("DOMAINNAME is %s", domain.c_str());
+	}
+	else {
+	  _error("DOMAINNAME is empty");
 	}
 
 	if ((iter = map_cpy.find(PASSWORD)) != map_cpy.end()) {
@@ -3420,6 +3431,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	setConfig(accountID, REALM, realm);
 	setConfig(accountID, USERAGENT, ua_name);
 	setConfig(accountID, USERNAME, username);
+	setConfig(accountID, DOMAINNAME, domain);
 	setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
 
 	if (!getMd5CredentialHashing()) {

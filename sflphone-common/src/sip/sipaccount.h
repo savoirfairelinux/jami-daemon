@@ -64,6 +64,16 @@ class SIPAccount : public Account
         virtual ~SIPAccount();
 
 	/**
+	 * Set domain to appears in sip messages for this account
+	 */ 
+	void setDomainName(std::string domain) { _domainName = domain; }
+
+	/**
+	 * Get domain name to appear in sip messages for this account
+	 */ 
+	std::string getDomainName(void) { return _domainName; }
+
+	/**
 	 * Special setVoIPLink which increment SipVoIPLink's number of client. 
 	 */
 	// void setVoIPLink(VoIPLink *link);
@@ -352,6 +362,8 @@ class SIPAccount : public Account
          * @return std::string The login name under which SFLPhone is running.
          */ 
         std::string getLoginName(void);
+
+	std::string _domainName;
               
 
         // The pjsip client registration information

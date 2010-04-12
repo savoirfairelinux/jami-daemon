@@ -1334,6 +1334,12 @@ void show_account_window (account_t * a) {
 			g_hash_table_replace(currentAccount->properties,
 					g_strdup(ACCOUNT_USERNAME),
 					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryUsername))));
+			if(strcmp(proto, "SIP") == 0) {
+			  g_hash_table_replace(currentAccount->properties,
+					g_strdup(ACCOUNT_DOMAIN),
+					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryDomainName))));
+			}
+
 			g_hash_table_replace(currentAccount->properties,
 					g_strdup(ACCOUNT_PASSWORD),
 					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryPassword))));
@@ -1350,8 +1356,9 @@ void show_account_window (account_t * a) {
 
 			if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
-				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_USERAGENT), 
-						g_strdup(gtk_entry_get_text (GTK_ENTRY(entryUseragent))));
+				g_hash_table_replace(currentAccount->properties, 
+						     g_strdup(ACCOUNT_USERAGENT), 
+						     g_strdup(gtk_entry_get_text (GTK_ENTRY(entryUseragent))));
 
 				g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
 						g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useStunCheckBox)) ? "true":"false"));
