@@ -351,7 +351,7 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	// Domain name can be update only for SIP account
 	if(strcmp(curAccountType, "SIP") == 0) {
 	  row++;
-	  label = gtk_label_new_with_mnemonic(_("_Domain name"));
+	  label = gtk_label_new_with_mnemonic(_("_Domain name (optional)"));
 	  gtk_table_attach(GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	  gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
 	  entryDomainName = gtk_entry_new();
