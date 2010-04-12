@@ -559,28 +559,19 @@ int SIPVoIPLink::sendRegister (AccountID id)
     }
 
     // Creates URI
-    std::string fromUri;
-    std::string contactUri;
-    std::string srvUri;
-    std::string address;
+    std::string fromUri = account->getFromUri();
+    std::string srvUri = account->getServerUri();
 
-    fromUri = account->getFromUri();
-
-    srvUri = account->getServerUri();
-
-    address = findLocalAddressFromUri (srvUri, account->getAccountTransport ());
+    std::string address = findLocalAddressFromUri (srvUri, account->getAccountTransport ());
 
     int port = findLocalPortFromUri (srvUri, account->getAccountTransport ());
 
     std::stringstream ss;
-
     std::string portStr;
-
     ss << port;
-
     ss >> portStr;
 
-    contactUri = account->getContactHeader (address, portStr);
+    std::string contactUri = account->getContactHeader (address, portStr);
 
     _debug ("sendRegister: fromUri: %s serverUri: %s contactUri: %s",
             fromUri.c_str(),

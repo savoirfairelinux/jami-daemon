@@ -461,9 +461,14 @@ std::string SIPAccount::getFromUri (void)
         username = getLoginName();
     }
 
-    // Get machine hostname if not provided
-    if (_hostname.empty()) {
-        hostname = getMachineName();
+    if(!getDomainName().empty()) {
+      hostname = getDomainName();
+    }
+    else {
+      // Get machine hostname if not provided
+      if (_hostname.empty()) {
+          hostname = getMachineName();
+      }
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
@@ -483,7 +488,7 @@ std::string SIPAccount::getToUri (const std::string& username)
 
     std::string scheme;
     std::string transport;
-    std::string hostname = _hostname;
+    std::string hostname = "";
 
     // UDP does not require the transport specification
 
@@ -501,8 +506,12 @@ std::string SIPAccount::getToUri (const std::string& username)
     }
 
     // Check if hostname is already specified
-    if (username.find ("@") != std::string::npos) {
-        hostname = "";
+    if (username.find ("@") == std::string::npos) {
+      // hostname not specified
+      if(getDomainName().empty())
+	hostname = _hostname;
+      else
+	hostname = getDomainName();
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
