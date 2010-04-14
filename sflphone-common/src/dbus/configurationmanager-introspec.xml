@@ -1,5 +1,4 @@
 <?xml version="1.0" ?>
-
 <node name="/configurationmanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
 	<interface name="org.sflphone.SFLphone.ConfigurationManager">
 
@@ -87,7 +86,7 @@
 		<method name="setCredential" tp:name-for-bindings="setCredential">
 			<tp:docstring>
 			</tp:docstring>
-
+                        <annotation name="com.trolltech.QtDBus.QtTypeName.In2" value="MapStringString"/>
 			<arg type="s" name="accountID" direction="in">
 				<tp:docstring>
 				</tp:docstring>
@@ -128,6 +127,8 @@
 			<tp:docstring>
 				Get configuration settings of the IP2IP_PROFILE. They are sligthly different from account settings since no VoIP accounts are involved.
 			</tp:docstring>
+			<annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+			<!--<annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>-->
 			<arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
 				<tp:docstring>
 					Available parameters are:
@@ -161,10 +162,11 @@
 			</method>
 
 			<method name="setIp2IpDetails" tp:name-for-bindings="setIp2IpDetails">
+                                 <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 				<tp:docstring>
 					Same as <tp:member-ref>getAccountDetails</tp:member-ref>, but for the IP-to-IP profile.
 				</tp:docstring>
-		   <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
+                              <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
 			   <tp:docstring>
 				   The map of parameters. See <tp:member-ref>getIp2IpDetails</tp:member-ref> for complete reference.
 			   </tp:docstring>
@@ -174,6 +176,7 @@
 	   <method name="getCredential" tp:name-for-bindings="getCredential">
 		   <tp:docstring>
 		   </tp:docstring>
+		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="s" name="accountID" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -297,12 +300,10 @@
 
 	   <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
 		   <tp:docstring>
-				Get the list of available ringtones.
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
-					A list of path.
 			   </tp:docstring>
 		   </arg>
 	   </method>
@@ -329,11 +330,9 @@
 
 	   <method name="isRingtoneEnabled" tp:name-for-bindings="isRingtoneEnabled">
 		   <tp:docstring>
-				Whether or not to play a custom ringtone.
 		   </tp:docstring>
 		   <arg type="i" name="bool" direction="out">
-			   <tp:docstring>	
-					If false, the standart tone is played on incoming calls.
+			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
 	   </method>
@@ -363,73 +362,59 @@
 
 	   <method name="getAudioManager" tp:name-for-bindings="getAudioManager">
 		   <tp:docstring>
-				Get the current audio manager.
 		   </tp:docstring>
 		   <arg type="i" name="api" direction="out">
 			   <tp:docstring>
-					<ul>
-						<li>0: ALSA </li>
-						<li>1: Pulseaudio </li>
-					</ul>
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setAudioManager" tp:name-for-bindings="setAudioManager">
 		   <tp:docstring>
-				Switch audio manager.
 		   </tp:docstring>
 		   <arg type="i" name="api" direction="in">
 			   <tp:docstring>
-					<p>The ID of the audio manager to use.</p>
-					<p>Refer to <tp:member-ref>getAudioManager</tp:member-ref> for possible values.</p>
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getRecordPath" tp:name-for-bindings="getRecordPath">
 		   <tp:docstring>
-				Get the path where to save the recorded calls.
 		   </tp:docstring>
 		   <arg type="s" name="rec" direction="out">
 			   <tp:docstring>
-					A path.	
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setRecordPath" tp:name-for-bindings="setRecordPath">
 		   <tp:docstring>
-				Change the path where save recorded calls.
 		   </tp:docstring>
 		   <arg type="s" name="rec" direction="in">
 			   <tp:docstring>
-					The new path.
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
+	   <!--      ///////////////////////               -->
+
+	   <!-- Codecs-related methods -->
+
 	   <method name="getCodecList" tp:name-for-bindings="getCodecList">
 		   <tp:docstring>
-				Get the core audio codec capabilities.
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
-					A list of codecs, identified by their RTP payload, delimited by '/'
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getCodecDetails" tp:name-for-bindings="getCodecDetails">
 		   <tp:docstring>
-		              Get specification details provided
-		              codec's RTP payload.
 		   </tp:docstring>
 		   <arg type="i" name="payload" direction="in">
 			   <tp:docstring>
-			       A list of codec specification details:
-			       Name, Samplerate, Bit rate, Bandwidth. 
 			   </tp:docstring>
 		   </arg>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
@@ -445,14 +430,10 @@
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="s" name="accountID" direction="in">
 			   <tp:docstring>
-			     Currently activated codec listed as there
-			     preference. This is the list used for
-			     codec negotiation. 
 			   </tp:docstring>
 		   </arg>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
-			      A list of codecs, identified by their RTP payload, delimited by '/'
 			   </tp:docstring>
 		   </arg>
 	   </method>
@@ -463,25 +444,23 @@
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
 		   <arg type="as" name="list" direction="in">
 			   <tp:docstring>
-			     Set the active codec list used for codec negotiation.
 			   </tp:docstring>
 		   </arg>
 		   <arg type="s" name="accountID" direction="in">
 			   <tp:docstring>
-			     A list of codecs, identified by their RTP payload, delimited by '/'
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 
 	   <!-- Audio devices methods -->
+
 	   <method name="getInputAudioPluginList" tp:name-for-bindings="getInputAudioPluginList">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
 			   <tp:docstring>
-			     
 			   </tp:docstring>
 		   </arg>
 	   </method>
@@ -947,6 +926,7 @@
 	   </method>
 
 	   <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
 		   <arg type="a{ss}" name="details" direction="out">
@@ -1017,6 +997,7 @@
 	   </method>
 
 	   <method name="getShortcuts" tp:name-for-bindings="getShortcuts">
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>
 		   <tp:docstring>
 		   </tp:docstring>
 		   <arg type="a{si}" name="shortcutsMap" direction="out">
@@ -1026,6 +1007,7 @@
 	   </method>
 
 	   <method name="setShortcuts" tp:name-for-bindings="setShortcuts">
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringInt"/>
 		   <tp:docstring>
 		   </tp:docstring>
 		   <arg type="a{si}" name="shortcutsMap" direction="in">
