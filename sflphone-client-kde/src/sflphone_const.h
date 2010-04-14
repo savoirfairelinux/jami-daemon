@@ -63,6 +63,7 @@
 #define ICON_BUSY                         ":/images/icons/busy.svg"
 #define ICON_TRANSFER                     ":/images/icons/transfert.svg"
 #define ICON_TRANSF_HOLD                  ":/images/icons/transfert.svg"
+#define ICON_CONFERENCE                   ":/images/icons/user-group-properties.svg"
 
 #define ICON_CALL                         ":/images/icons/call.svg"
 #define ICON_HANGUP                       ":/images/icons/hang_up.svg"

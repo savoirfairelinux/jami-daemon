@@ -36,7 +36,8 @@ CallList::CallList(QObject * parent)
    for(int i = 0 ; i < callList.size() ; i++) {
       calls->append(Call::buildExistingCall(callList[i]));
    }
-        MapStringString historyMap = configurationManager.getHistory().value();
+   
+   MapStringString historyMap = configurationManager.getHistory().value();
    qDebug() << "Call History = " << historyMap;
    QMapIterator<QString, QString> i(historyMap);
    while (i.hasNext()) {
@@ -184,7 +185,7 @@ void CallList::clearHistory()
    }
 }
 
-Call * CallList::createConversationFromCall(Call* call1, Call* call2) {
+Call* CallList::createConversationFromCall(Call* call1, Call* call2) {
   qDebug() << "Need to join calls";
   CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
   //callManager.joinConference(call1->getCallId(),call2->getCallId());

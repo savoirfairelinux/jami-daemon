@@ -220,11 +220,11 @@ bool SFLPhone::queryClose()
 void SFLPhone::quitButton()
 {
    InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-   qDebug() << "quitButton : " << view->callTree->count() << " calls open.";
+   //qDebug() << "quitButton : " << view->callTree->count() << " calls open.";
 
-   if(view->callTree->count() > 0 && instance.getRegistrationCount() <= 1) {
-      qDebug() << "Attempting to quit when still having some calls open.";
-   }
+   //if(view->callTree->count() > 0 && instance.getRegistrationCount() <= 1) {
+      //qDebug() << "Attempting to quit when still having some calls open.";
+   //}
    view->saveState();
    instance.Unregister(getpid());
    qApp->quit();

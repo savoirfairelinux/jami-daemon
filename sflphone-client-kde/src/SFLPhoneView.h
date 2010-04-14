@@ -33,10 +33,13 @@
 #include "ui_SFLPhoneView_base.h"
 #include "conf/ConfigurationDialog.h"
 #include "CallList.h"
+#include "CallTreeItem.h"
 #include "CallTreeView.h"
+#include "CallTreeWidget.h"
 #include "AccountWizard.h"
 #include "Contact.h"
 #include "AccountList.h"
+#include "CallModel.h"
 
 class ConfigurationDialog;
 
@@ -136,9 +139,14 @@ public:
     */
    void saveState();
    
-   CallTreeView *callTree;
-   CallTreeView *historyTree;
-   CallTreeView *addressBookTree;
+   //CallTreeView *callTree;
+   //CallTreeView *historyTree;
+   //CallTreeView *addressBookTree;
+   //CallTreeWidget *callTree;
+   //CallTreeWidget *historyTree;
+   CallTreeWidget *addressBookTree;
+   CallModel callTreeModel;
+   CallModel historyTreeModel;
 
 private slots:
    /**
@@ -209,14 +217,14 @@ private slots:
     *   This function doesn't add anything to the callList object.
     * @param call the call to add to the call-list's listwidget
     */
-   CallTreeItem* addCallToCallList(Call * call);
+   //Call* addCallToCallList(Call * call);
 
    /**
     * Adds the call's history-item to the call-history's listwidget.
     * This function doesn't add anything to the callList object.
     * @param call the past call to add to the call-history's listwidget
     */
-   CallTreeItem* addCallToCallHistory(Call * call);
+   //Call* addCallToCallHistory(Call * call);
 
    /**
     * Adds the contact's item to the addressbook's listwidget.
@@ -325,10 +333,10 @@ public slots:
    
    void on_callTree_currentItemChanged();
    void on_callTree_itemChanged();
-   void on_callTree_itemDoubleClicked(const QModelIndex &index);
+   void on_callTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
 
    void on_listWidget_callHistory_currentItemChanged();
-   void on_listWidget_callHistory_itemDoubleClicked(CallTreeItem * item);
+   void on_listWidget_callHistory_itemDoubleClicked(Call* item);
 
    void on_listWidget_addressBook_currentItemChanged();
    void on_listWidget_addressBook_itemDoubleClicked(CallTreeItem * item);
@@ -342,6 +350,7 @@ public slots:
    void on1_voiceMailNotify(const QString &accountID, int count);
    void on1_volumeChanged(const QString &device, double value);
    void on1_audioManagerChanged();
+   void on1_incommingConference(const QString &confID);
    void changeScreen(int screen);
    
 signals:

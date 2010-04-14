@@ -34,7 +34,7 @@ Q_OBJECT
 
 private:
 
-   QVector<Call *> * calls;
+   QVector<Call*>* calls;
 
 public:
 
@@ -53,10 +53,10 @@ public:
    MapStringString getHistoryMap();
 
    //Setters
-   Call * addDialingCall(const QString & peerName = "", QString account = "");
-   Call * addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
-   Call * addRingingCall(const QString & callId);
-        Call * createConversationFromCall(Call* call1, Call* call2);
+   Call* addDialingCall(const QString & peerName = "", QString account = "");
+   Call* addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
+   Call* addRingingCall(const QString & callId);
+   Call* createConversationFromCall(Call* call1, Call* call2);
 
    //GSetter
    QString generateCallId();

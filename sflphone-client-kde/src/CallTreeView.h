@@ -36,12 +36,12 @@ class QModelIndex;
 class QTreeWidgetItem;
 class QMimeData;
 
-class CallTreeItemDelegate : public QItemDelegate
-{
-public:
-        CallTreeItemDelegate() { }
-        QSize sizeHint ( const QStyleOptionViewItem & option, const QModelIndex & index ) const { return QSize(0,50); }
-};
+// class CallTreeItemDelegate : public QItemDelegate
+// {
+// public:
+//         CallTreeItemDelegate() { }
+//         QSize sizeHint ( const QStyleOptionViewItem & option, const QModelIndex & index ) const { return QSize(0,50); }
+// };
 
 class CallTreeView : public QTreeView
 {
@@ -57,8 +57,8 @@ public:
    int count();
    QStringList mimeTypes() const;
    Qt::DropActions supportedDropActions () const;
-        CallTreeItem* insert(Call* call);
-        CallTreeItem* insert(CallTreeItem *item, Call* call);
+   CallTreeItem* insert(Call* call);
+   CallTreeItem* insert(CallTreeItem *item, Call* call);
         
 // protected:
 //         void dropEvent(QDropEvent* event);

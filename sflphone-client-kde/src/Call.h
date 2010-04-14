@@ -279,6 +279,7 @@ public:
 
 signals:
    void changed();
+   void isOver(Call*);
 };
 
 #endif

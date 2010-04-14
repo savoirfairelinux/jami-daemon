@@ -26,13 +26,13 @@ SET(	sflphone_client_kde_SRCS
 	Account.cpp
 	AccountList.cpp
 	Call.cpp
-	CallList.cpp
-	CallTreeView.cpp
-	CallTreeModel.cpp
+	#CallList.cpp
+	#CallTreeView.cpp
+	#CallTreeModel.cpp
 	CallTreeItem.cpp
 	configurationmanager_interface_singleton.cpp
 	callmanager_interface_singleton.cpp
-        calllist_interface_singleton.cpp
+        #calllist_interface_singleton.cpp
 	instance_interface_singleton.cpp
 	AccountWizard.cpp
 	AccountItemWidget.cpp
@@ -51,6 +51,8 @@ SET(	sflphone_client_kde_SRCS
 	Codec.cpp
 	Item.cpp
 	AccountListModel.cpp
+        CallModel.cpp
+        #CallTreeWidget.cpp
 )
  
 

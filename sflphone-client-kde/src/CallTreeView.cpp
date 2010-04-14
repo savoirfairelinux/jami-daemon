@@ -32,8 +32,8 @@ CallTreeView::CallTreeView(QWidget * parent)
 {    
    treeModel = new CallTreeModel(this);
    setModel(treeModel);
-        CallTreeItemDelegate *delegate = new CallTreeItemDelegate();
-        setItemDelegate(delegate); 
+//    CallTreeItemDelegate *delegate = new CallTreeItemDelegate();
+//    setItemDelegate(delegate); 
    setHeaderHidden(true);
    setRootIsDecorated(false);
    setSelectionMode(QAbstractItemView::SingleSelection);
@@ -41,17 +41,17 @@ CallTreeView::CallTreeView(QWidget * parent)
    setAcceptDrops(true);
    setUniformRowHeights(true);
    setDropIndicatorShown(true);
-        //setDragDropMode(QAbstractItemView::DragDrop);
-        setSelectionMode(QAbstractItemView::ExtendedSelection);
-        
-        setDragEnabled(TRUE);
-        setAcceptDrops(TRUE);
-        setDropIndicatorShown(TRUE);
-        
-        connect(this , SIGNAL(clicked(QModelIndex)), this, SLOT(itemClicked(QModelIndex)));
-        connect(treeModel, SIGNAL(joinCall(QString,QString)), this, SLOT(joinCall(QString, QString)));
-        connect(treeModel, SIGNAL(joinCall(QString,QString)), this, SLOT(expandAll()));
-        connect(treeModel, SIGNAL(dataChanged(const QModelIndex &, const QModelIndex& ) ), this, SLOT(adaptColumns(const QModelIndex &, const QModelIndex&) ) );
+   //setDragDropMode(QAbstractItemView::DragDrop);
+   setSelectionMode(QAbstractItemView::ExtendedSelection);
+   
+   setDragEnabled(TRUE);
+   setAcceptDrops(TRUE);
+   setDropIndicatorShown(TRUE);
+   
+   connect(this , SIGNAL(clicked(QModelIndex)), this, SLOT(itemClicked(QModelIndex)));
+   connect(treeModel, SIGNAL(joinCall(QString,QString)), this, SLOT(joinCall(QString, QString)));
+   connect(treeModel, SIGNAL(joinCall(QString,QString)), this, SLOT(expandAll()));
+   connect(treeModel, SIGNAL(dataChanged(const QModelIndex &, const QModelIndex& ) ), this, SLOT(adaptColumns(const QModelIndex &, const QModelIndex&) ) );
 }
 
 CallTreeView::~CallTreeView()

@@ -64,10 +64,10 @@ public:
    bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex());
    bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex());
         
-        Qt::DropActions supportedDropActions();
-        virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
-        QStringList mimeTypes() const;
-        QMimeData* mimeData(const QModelIndexList &indexes) const;
+   Qt::DropActions supportedDropActions();
+   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+   QStringList mimeTypes() const;
+   QMimeData* mimeData(const QModelIndexList &indexes) const;
 
    CallTreeItem *getItem(const QModelIndex &index) const;
 
