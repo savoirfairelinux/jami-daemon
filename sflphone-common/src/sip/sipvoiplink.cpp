@@ -563,7 +563,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
     std::string srvUri = account->getServerUri();
 
     std::string address = findLocalAddressFromUri (srvUri, account->getAccountTransport ());
-
     int port = findLocalPortFromUri (srvUri, account->getAccountTransport ());
 
     std::stringstream ss;
@@ -579,19 +578,42 @@ int SIPVoIPLink::sendRegister (AccountID id)
             contactUri.c_str());
 
     pj_str_t pjFrom;
-
     pj_cstr (&pjFrom, fromUri.c_str());
 
     pj_str_t pjContact;
-
     pj_cstr (&pjContact, contactUri.c_str());
 
     pj_str_t pjSrv;
-
     pj_cstr (&pjSrv, srvUri.c_str());
 
     // Initializes registration
+
+    // Set Route for registration passing throught one or several proxies
     status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
+
+    /*
+    if(!(account->getDomainName().empty())) {
+
+        _error("Set route with %s", account->getHostname().c_str());
+
+        pjsip_route_hdr *route_set = pjsip_route_hdr_create(_pool);
+        pjsip_route_hdr *routing = pjsip_route_hdr_create(_pool);
+        pjsip_sip_uri *url = pjsip_sip_uri_create(_pool, 0);
+        routing->name_addr.uri = (pjsip_uri*)url;
+        pj_strdup2(_pool, &url->host, account->getHostname().c_str());
+
+        pj_list_push_back(&route_set, pjsip_hdr_clone(_pool, routing));
+
+	status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
+
+        pjsip_regc_set_route_set(regc, route_set);
+    }
+    else {
+
+        status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
+    }
+    */
+
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to initialize account %d in sendRegister", status);
@@ -613,9 +635,10 @@ int SIPVoIPLink::sendRegister (AccountID id)
     h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
     pj_list_push_back (&hdr_list, (pjsip_hdr*) h);
+    // pj_list_push_back (&hdr_list, (pjsip_hdr*) routing);
 
     pjsip_regc_add_headers (regc, &hdr_list);
-
+    
     status = pjsip_regc_register (regc, PJ_TRUE, &tdata);
 
     if (status != PJ_SUCCESS) {

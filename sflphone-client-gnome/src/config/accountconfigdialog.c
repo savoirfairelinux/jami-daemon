@@ -54,7 +54,7 @@ GtkWidget * entryID;
 GtkWidget * entryAlias;
 GtkWidget * protocolComboBox;
 GtkWidget * entryUsername;
-GtkWidget * entryDomainName;
+GtkWidget * entryRouteSet;
 GtkWidget * entryHostname;
 GtkWidget * entryPassword;
 GtkWidget * entryMailbox;
@@ -240,7 +240,7 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gchar *curAccountType = "SIP";
 	gchar *curAlias = "";
 	gchar *curUsername = "";
-	gchar *curDomainName = "";
+	gchar *curRouteSet = "";
 	gchar *curHostname = "";
 	gchar *curPassword = "";
 	/* TODO: add curProxy, and add boxes for Proxy support */
@@ -262,7 +262,7 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 		curHostname = g_hash_table_lookup(currentAccount->properties, ACCOUNT_HOSTNAME);
 		curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_PASSWORD);
 		curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERNAME);
-		curDomainName = g_hash_table_lookup(currentAccount->properties, ACCOUNT_DOMAIN);
+		curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
 		curUseragent = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERAGENT);
 	}
@@ -348,17 +348,20 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	g_signal_connect(G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
 	g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
 
-	// Domain name can be update only for SIP account
+	// Route set can be update only for SIP account
+	// TODO: uncomment this code and implement route 
+	/*
 	if(strcmp(curAccountType, "SIP") == 0) {
 	  row++;
-	  label = gtk_label_new_with_mnemonic(_("_Domain name (optional)"));
+	  label = gtk_label_new_with_mnemonic(_("_Route (optional)"));
 	  gtk_table_attach(GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	  gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-	  entryDomainName = gtk_entry_new();
-	  gtk_label_set_mnemonic_widget(GTK_LABEL(label), entryDomainName);
-	  gtk_entry_set_text(GTK_ENTRY(entryDomainName), curDomainName);
-	  gtk_table_attach (GTK_TABLE(table), entryDomainName, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	  entryRouteSet = gtk_entry_new();
+	  gtk_label_set_mnemonic_widget(GTK_LABEL(label), entryRouteSet);
+	  gtk_entry_set_text(GTK_ENTRY(entryRouteSet), curRouteSet);
+	  gtk_table_attach (GTK_TABLE(table), entryRouteSet, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	}
+	*/
 
 	row++;
 	label = gtk_label_new_with_mnemonic (_("_Password"));
@@ -1336,8 +1339,8 @@ void show_account_window (account_t * a) {
 					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryUsername))));
 			if(strcmp(proto, "SIP") == 0) {
 			  g_hash_table_replace(currentAccount->properties,
-					g_strdup(ACCOUNT_DOMAIN),
-					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryDomainName))));
+					g_strdup(ACCOUNT_ROUTE),
+					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryRouteSet))));
 			}
 
 			g_hash_table_replace(currentAccount->properties,
