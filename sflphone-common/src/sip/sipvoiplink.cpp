@@ -3557,6 +3557,10 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     if (found!=std::string::npos)
         peerNumber.erase(found, found+4);
 
+    found = peerNumber.find("@");
+    if (found!=std::string::npos)
+        peerNumber.erase(found);
+
     _debug("UserAgent: Peer number: %s", peerNumber.c_str());
 
     // Get the server voicemail notification
