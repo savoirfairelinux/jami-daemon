@@ -1111,10 +1111,13 @@ void sflphone_fill_codec_list_per_account (account_t **account) {
     order = (gchar**) dbus_get_active_codec_list ((*account)->accountID);
     codeclist = (*account)->codecs;
 
-	// First clean the list
-	codec_list_clear (&codeclist);	
+    // First clean the list
+    codec_list_clear (&codeclist);
 
-	for (pl=order; *order; order++)
+    if(!(*order))
+      ERROR("No codec list provided");
+
+    for (pl=order; *order; order++)
     {
 		codec_t * cpy;
 		// Each account will have a copy of the system-wide capabilities
