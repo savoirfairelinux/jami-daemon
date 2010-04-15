@@ -1202,14 +1202,17 @@ void ManagerImpl::removeParticipant (const CallID& call_id) {
 	ConferenceMap::iterator iter = conf_map.find(call->getConfId());
 
 	if (iter == conf_map.end()) {
-		_debug ("    no conference created, cannot remove participant ");
+		_debug ("Manager: Error: No conference created, cannot remove participant");
 	} else {
 
 		conf = iter->second;
 
-		_debug ("    removeParticipant %s", call_id.c_str());
+		_debug ("Manager: Remove participant %s", call_id.c_str());
 		conf->remove(call_id);
 		call->setConfId("");
+
+		_dbus->getCallManager()->conferenceChanged(conf->getConfID(),
+		 					   conf->getStateStr());	
 
 	}
 
