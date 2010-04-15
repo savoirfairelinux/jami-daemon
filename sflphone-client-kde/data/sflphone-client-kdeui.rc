@@ -7,7 +7,6 @@
 	  http://www.kde.org/standards/kxmlgui/1.0/kxmlgui.xsd" >
 	-->	
 <gui name="sflphone-client-kde" version="1">
-		
 	<MenuBar>
 		<Menu name="Actions" >
 			<text>Actions</text>
@@ -37,18 +36,13 @@
 		</Menu>
 	</MenuBar>
 	
-        <ToolBar name="mainToolBar" iconText="icononly" position="Top" noMerge="1" fullWidth="true" newline="true" >
+        <ToolBar name="mainToolBar" position="Top" noMerge="1" fullWidth="true" newline="true" >
                 <Action name="action_accept" />
                 <Action name="action_mailBox" />
-	</ToolBar>
-        <ToolBar name="callsToolBar" iconText="icononly" position="Top" noMerge="1" fullWidth="true" newline="true" >
                 <Action name="action_refuse" />
                 <Action name="action_hold" />
                 <Action name="action_transfer" />
                 <Action name="action_record" />
-        </ToolBar>
-	
-	<ToolBar name="screenToolBar" iconText="icononly" position="Top" noMerge="1" fullWidth="true" newline="true" >
 		<Action name="action_main" />
 		<Action name="action_history" />
 		<Action name="action_addressBook" />

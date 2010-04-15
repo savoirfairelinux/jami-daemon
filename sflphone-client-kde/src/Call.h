@@ -146,6 +146,7 @@ private:
    
    QString account;
    QString callId;
+   QString confId;
    QString peerPhoneNumber;
    QString peerName;
    history_state historyState;
@@ -162,6 +163,8 @@ private:
 
    QString transferNumber;
    QString callNumber;
+   
+   bool conference;
    
    //Automate attributes
    /**
@@ -228,7 +231,7 @@ private:
    void warning();
 
 public:
-   
+   Call(QString confId, QString account);
    //Constructors & Destructors
    ~Call();
 //   void initCallItemWidget();
@@ -255,6 +258,12 @@ public:
    bool isHistory() const;
    QString getStopTimeStamp() const;
    QString getStartTimeStamp() const;
+   bool isConference() const;
+   
+   void setConference(bool value);
+   
+   QString getConfId() const;
+   void setConfId(QString value);
 
    QString getTransferNumber() const;
    void setTransferNumber(QString number);

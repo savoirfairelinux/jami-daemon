@@ -46,6 +46,7 @@ struct InternalCallModelStruct {
    Call* call_real;
    QTreeWidgetItem* currentItem;
    QList<InternalCallModelStruct*> children;
+   bool conference;
 };
 
 struct InternalCallModelStruct;
@@ -72,12 +73,7 @@ class CallModel : private QTreeWidget {
       Call* addCall(Call* call, Call* parent =0);
       int size();
       Call* findCallByCallId(QString callId);
-      void mergeCall(Call* call1, Call* call2);
-      uint countChild(Call* call);
-      bool isConference(Call* call);
-      QList<Call*> children(Call* call);
       QList<Call*> getCallList();
-      bool endCall(Call* call, Call* endConference = false);
       bool selectItem(Call* item);
       Call* getCurrentItem();
       bool removeItem(Call* item);
@@ -89,9 +85,12 @@ class CallModel : private QTreeWidget {
       Call* addDialingCall(const QString & peerName = "", QString account = "");
       Call* addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
       Call* addRingingCall(const QString & callId);
-      Call* createConferenceFromCall(Call* call1, Call* call2);
+      bool createConferenceFromCall(Call* call1, Call* call2);
       Call* addConference(const QString &confID);
-      Call* addParticipant(Call* call2, Call* conference);
+      bool mergeConferences(Call* conf1, Call* conf2);
+      bool addParticipant(Call* call2, Call* conference);
+      bool detachParticipant(Call* call);
+      void conferenceChanged(const QString &confId, const QString &state);
       
       MapStringString getHistoryMap();
       

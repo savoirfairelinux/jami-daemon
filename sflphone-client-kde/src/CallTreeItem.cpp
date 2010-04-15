@@ -92,6 +92,9 @@ void CallTreeItem::setCall(Call *call)
 
 void CallTreeItem::updated()
 {
+   if (itemCall->isConference())
+      return;
+   
    call_state state = itemCall->getState();
    bool recording = itemCall->getRecording();
    if(state != CALL_STATE_OVER) {

@@ -139,6 +139,7 @@ const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOI
 
 
 Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
+   : conference(false)
 {
    this->callId = callId;
    this->peerPhoneNumber = peerNumber;
@@ -152,7 +153,14 @@ Call::Call(call_state startState, QString callId, QString peerName, QString peer
    //   this->initCallItemWidget();
         emit changed();
 }
-#include <unistd.h>
+
+Call::Call(QString confId, QString account) 
+   : conference(true)
+{
+   this->confId = confId;
+   this->account = account;
+}
+
 Call * Call::buildExistingCall(QString callId)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
@@ -687,4 +695,20 @@ void Call::changeCurrentState(call_state newState)
    
    if (currentState == CALL_STATE_OVER)
       emit isOver(this);
+}
+
+bool Call::isConference() const {
+   return conference;
+}
+   
+void Call::setConference(bool value) {
+   conference = value;
+}
+
+QString Call::getConfId() const {
+   return confId;
+}
+
+void Call::setConfId(QString value) {
+   confId = value;
 }

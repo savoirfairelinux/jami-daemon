@@ -116,7 +116,9 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
    connect(&callManager, SIGNAL(incomingCall(const QString &, const QString &, const QString &)),
            this,         SLOT(on1_incomingCall(const QString &, const QString &)));
    connect(&callManager, SIGNAL(conferenceCreated(const QString &)),
-           this,         SLOT(on1_incommingConference(const QString &)));
+           this,         SLOT(on1_incomingConference(const QString &)));
+   connect(&callManager, SIGNAL(conferenceChanged(const QString &, const QString &)),
+           this,         SLOT(on1_changingConference(const QString &, const QString &)));
    connect(&callManager, SIGNAL(incomingMessage(const QString &, const QString &)),
            this,         SLOT(on1_incomingMessage(const QString &, const QString &)));
    connect(&callManager, SIGNAL(voiceMailNotify(const QString &, int)),
@@ -789,6 +791,11 @@ void SFLPhoneView::updateVolumeControls()
    toolButton_sndVol->setVisible(display);
    slider_recVol->setVisible(display);
    slider_sndVol->setVisible(display);
+   
+   slider_sndVol_2->setVisible(display);
+   slider_recVol_2->setVisible(display);
+   toolButton_recVol_2->setVisible(display);
+   toolButton_sndVol_2->setVisible(display);
 }
 
 void SFLPhoneView::updateDialpad()
@@ -1279,8 +1286,12 @@ void SFLPhoneView::on1_incomingCall(const QString & /*accountID*/, const QString
    emit incomingCall(call);
 }
 
-void SFLPhoneView::on1_incommingConference(const QString &confID) {
+void SFLPhoneView::on1_incomingConference(const QString &confID) {
    callTreeModel.addConference(confID);
+}
+
+void SFLPhoneView::on1_changingConference(const QString &confID, const QString &state) {
+   callTreeModel.conferenceChanged(confID, state);
 }
 
 void SFLPhoneView::on1_incomingMessage(const QString &accountID, const QString &message)

@@ -270,12 +270,12 @@ void SFLPhone::on_view_windowTitleChangeAsked(const QString & message)
 void SFLPhone::on_view_enabledActionsChangeAsked(const bool * enabledActions)
 {
    qDebug() << "on_view_enabledActionsChangeAsked";
-   action_accept->setEnabled(enabledActions[SFLPhone::Accept]);
-   action_refuse->setEnabled(enabledActions[SFLPhone::Refuse]);
-   action_hold->setEnabled(enabledActions[SFLPhone::Hold]);
-   action_transfer->setEnabled(enabledActions[SFLPhone::Transfer]);
-   action_record->setEnabled(enabledActions[SFLPhone::Record]);
-   action_mailBox->setEnabled(enabledActions[SFLPhone::Mailbox]);
+   action_accept->setVisible(enabledActions[SFLPhone::Accept]);
+   action_refuse->setVisible(enabledActions[SFLPhone::Refuse]);
+   action_hold->setVisible(enabledActions[SFLPhone::Hold]);
+   action_transfer->setVisible(enabledActions[SFLPhone::Transfer]);
+   action_record->setVisible(enabledActions[SFLPhone::Record]);
+   action_mailBox->setVisible(enabledActions[SFLPhone::Mailbox]);
 }
 
 void SFLPhone::on_view_actionIconsChangeAsked(const QString * actionIcons)
