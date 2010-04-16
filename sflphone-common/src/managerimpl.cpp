@@ -1225,7 +1225,7 @@ void ManagerImpl::removeParticipant (const CallID& call_id) {
 void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		Conference *conf) {
 
-	_debug ("ManagerImpl::processRemainingParticipant()");
+	_debug ("Manager: Process remaining participant");
 
 	if (conf->getNbParticipants() > 1) {
 
@@ -1244,6 +1244,9 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		_audiodriver->getMainBuffer()->flush(default_id);
 
 	} else if (conf->getNbParticipants() == 1) {
+
+	       _debug ("Manager: Only one remaining participant"); 
+
 		AccountID currentAccountId;
 		Call* call = NULL;
 
@@ -1270,6 +1273,9 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 
 		removeConference(conf->getConfID());
 	} else {
+
+	        _debug ("Manager: No remaining participant, remove conference"); 
+
 		removeConference(conf->getConfID());
 
 		switchCall("");
@@ -1322,7 +1328,7 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 }
 
 void ManagerImpl::addStream (const CallID& call_id) {
-	_debug ("ManagerImpl::addStream %s", call_id.c_str());
+	_debug ("Manager: Add audio stream %s", call_id.c_str());
 
 	AccountID currentAccountId;
 	Call* call = NULL;
@@ -1372,7 +1378,7 @@ void ManagerImpl::addStream (const CallID& call_id) {
 }
 
 void ManagerImpl::removeStream (const CallID& call_id) {
-	_debug ("ManagerImpl::removeStream %s", call_id.c_str());
+	_debug ("Manager: Remove audio stream %s", call_id.c_str());
 
 	getAudioDriver()->getMainBuffer()->unBindAll(call_id);
 
@@ -1424,7 +1430,7 @@ bool ManagerImpl::playDtmf (char code) {
 	bool hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_DTMF);
 
 	if (!hasToPlayTone) {
-		_debug ("    playDtmf: Do not have to play a tone...");
+		_debug ("Manager: playDtmf: Do not have to play a tone...");
 		return false;
 	}
 
@@ -1432,7 +1438,7 @@ bool ManagerImpl::playDtmf (char code) {
 	pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
 
 	if (!pulselen) {
-		_debug ("    playDtmf: Pulse length is not set...");
+		_debug ("Manager: playDtmf: Pulse length is not set...");
 		return false;
 	}
 
@@ -1444,7 +1450,7 @@ bool ManagerImpl::playDtmf (char code) {
 
 	// fast return, no sound, so no dtmf
 	if (audiolayer == 0 || _dtmfKey == 0) {
-		_debug ("    playDtmf: Error no audio layer...");
+		_debug ("Manager: playDtmf: Error no audio layer...");
 		return false;
 	}
 
@@ -1488,14 +1494,16 @@ bool ManagerImpl::incomingCallWaiting () {
 
 void ManagerImpl::addWaitingCall (const CallID& id) {
 
+        _info("Manager: Add waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
+
 	ost::MutexLock m(_waitingCallMutex);
 	_waitingCall.insert(id);
 	_nbIncomingWaitingCall++;
-
-	_info("Manager: Add waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
 }
 
 void ManagerImpl::removeWaitingCall (const CallID& id) {
+
+        _info("Manager: Remove waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
 
 	ost::MutexLock m(_waitingCallMutex);
 	// should return more than 1 if it erase a call
@@ -1503,8 +1511,6 @@ void ManagerImpl::removeWaitingCall (const CallID& id) {
 	if (_waitingCall.erase(id)) {
 		_nbIncomingWaitingCall--;
 	}
-
-	_info("Manager: Remove waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
 }
 
 bool ManagerImpl::isWaitingCall (const CallID& id) {
@@ -1594,7 +1600,7 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId) {
 
 //THREAD=VoIP
 void ManagerImpl::incomingMessage (const AccountID& accountId,
-		const std::string& message) {
+				   const std::string& message) {
 	if (_dbus) {
 		_dbus->getCallManager()->incomingMessage(accountId, message);
 	}
@@ -1602,6 +1608,9 @@ void ManagerImpl::incomingMessage (const AccountID& accountId,
 
 //THREAD=VoIP CALL=Outgoing
 void ManagerImpl::peerAnsweredCall (const CallID& id) {
+
+        _debug ("Manager: Peer answered call %s", id.c_str());
+
 	// The if statement is usefull only if we sent two calls at the same time.
 	if (isCurrentCall(id)) {
 		stopTone();
@@ -1610,12 +1619,6 @@ void ManagerImpl::peerAnsweredCall (const CallID& id) {
 	if (_dbus)
 		_dbus->getCallManager()->callStateChanged(id, "CURRENT");
 
-	// std::string codecName = getCurrentCodecName (id);
-
-	// _debug("ManagerImpl::hangupCall(): broadcast codec name %s ",codecName.c_str());
-	// if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
-
-	// Required if there have been no sip reinvite, in this case we must reinit buffers since the
 	_audiodriver->flushMain();
 
 	_audiodriver->flushUrgent();
@@ -1623,6 +1626,9 @@ void ManagerImpl::peerAnsweredCall (const CallID& id) {
 
 //THREAD=VoIP Call=Outgoing
 void ManagerImpl::peerRingingCall (const CallID& id) {
+
+        _debug ("Manager: Peer call %s ringing", id.c_str());
+
 	if (isCurrentCall(id)) {
 		ringback();
 	}
@@ -1685,7 +1691,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id) {
 	// stop streams
 
 	if (nbCalls <= 0) {
-		_debug ("    hangupCall: stop audio stream, ther is only %i call(s) remaining", nbCalls);
+		_debug ("Manager: Stop audio stream, ther is only %i call(s) remaining", nbCalls);
 
 		AudioLayer* audiolayer = getAudioDriver();
 		audiolayer->stopStream();
@@ -1698,7 +1704,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id) {
 
 //THREAD=VoIP
 void ManagerImpl::callBusy (const CallID& id) {
-	_debug ("Call busy");
+        _debug ("Manager: Call %s busy", id.c_str());
 
 	if (_dbus)
 		_dbus->getCallManager()->callStateChanged(id, "BUSY");
@@ -1727,7 +1733,7 @@ void ManagerImpl::callFailure (const CallID& call_id) {
 
 	if (participToConference(call_id)) {
 
-		_debug ("Call %s participating to a conference failed\n", call_id.c_str());
+		_debug ("Manager: Call %s participating to a conference failed", call_id.c_str());
 
 		Conference *conf = getConferenceFromCallID(call_id);
 
