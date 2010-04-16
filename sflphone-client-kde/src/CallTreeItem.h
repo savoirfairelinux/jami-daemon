@@ -62,14 +62,15 @@ class CallTreeItem : public QWidget
     QLabel* labelCallNumber2;
     QLabel* labelTransferPrefix;
     QLabel* labelTransferNumber;
+    QLabel* labelCodec;
     
     QWidget* historyItemWidget;
     QLabel* labelHistoryIcon;
     QLabel* labelHistoryPeerName;
     QLabel* labelHistoryCallNumber;
     QLabel* labelHistoryTime;
-    friend class CallTreeItem;
     bool conference;
+    bool init;
 
 public slots:
    void updated();

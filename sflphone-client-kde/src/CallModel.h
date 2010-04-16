@@ -33,7 +33,7 @@
 
 /** Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible 
  *  with the MVC model. The MVC never got to a point were it was bug-free and the code was getting dirty. The QTreeWidget
- *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve.
+ *  solution may be less "clean" than MVC, but is 3 time smaller and easier to improve (in fact, possible to improve).
  *  
  *  This model is the view itself (private inheritance) so drag and drop can interact directly with the model without cross
  *  layer hack. This call merge the content of 4 previous classes (CallTreeModel, CallTreeView, CallList and most of the 
@@ -55,8 +55,8 @@ struct InternalCallModelStruct;
 class CallTreeItemDelegate : public QItemDelegate
 {
    public:
-        CallTreeItemDelegate() { }
-        QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index ) const { return QSize(0,60); }
+      CallTreeItemDelegate() { }
+      QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index ) const { return QSize(0,60); }
 };
 
 
@@ -91,6 +91,7 @@ class CallModel : private QTreeWidget {
       bool addParticipant(Call* call2, Call* conference);
       bool detachParticipant(Call* call);
       void conferenceChanged(const QString &confId, const QString &state);
+      void conferenceRemoved(const QString &confId);
       
       MapStringString getHistoryMap();
       

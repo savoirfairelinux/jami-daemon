@@ -119,6 +119,8 @@ SFLPhoneView::SFLPhoneView(QWidget *parent)
            this,         SLOT(on1_incomingConference(const QString &)));
    connect(&callManager, SIGNAL(conferenceChanged(const QString &, const QString &)),
            this,         SLOT(on1_changingConference(const QString &, const QString &)));
+           connect(&callManager, SIGNAL(conferenceRemoved(const QString &)),
+           this,         SLOT(on1_conferenceRemoved(const QString &)));
    connect(&callManager, SIGNAL(incomingMessage(const QString &, const QString &)),
            this,         SLOT(on1_incomingMessage(const QString &, const QString &)));
    connect(&callManager, SIGNAL(voiceMailNotify(const QString &, int)),
@@ -1292,6 +1294,10 @@ void SFLPhoneView::on1_incomingConference(const QString &confID) {
 
 void SFLPhoneView::on1_changingConference(const QString &confID, const QString &state) {
    callTreeModel.conferenceChanged(confID, state);
+}
+
+void SFLPhoneView::on1_conferenceRemoved(const QString &confId) {
+   callTreeModel.conferenceRemoved(confId);
 }
 
 void SFLPhoneView::on1_incomingMessage(const QString &accountID, const QString &message)

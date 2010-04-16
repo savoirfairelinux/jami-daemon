@@ -160,7 +160,7 @@ Call::Call(QString confId, QString account)
    this->confId = confId;
    this->account = account;
 }
-
+#include <unistd.h>
 Call * Call::buildExistingCall(QString callId)
 {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
@@ -711,4 +711,10 @@ QString Call::getConfId() const {
 
 void Call::setConfId(QString value) {
    confId = value;
+}
+
+QString Call::getCurrentCodecName() {
+   CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+   qDebug() << "Codec name: " << callManager.getCurrentCodecName(callId); sleep(5);
+   return callManager.getCurrentCodecName(callId);
 }

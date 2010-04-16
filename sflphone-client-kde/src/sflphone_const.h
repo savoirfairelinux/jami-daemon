@@ -63,7 +63,7 @@
 #define ICON_BUSY                         ":/images/icons/busy.svg"
 #define ICON_TRANSFER                     ":/images/icons/transfert.svg"
 #define ICON_TRANSF_HOLD                  ":/images/icons/transfert.svg"
-#define ICON_CONFERENCE                   ":/images/icons/user-group-properties.svg"
+#define ICON_CONFERENCE                   ":/images/icons/user-group-properties.svgz"
 
 #define ICON_CALL                         ":/images/icons/call.svg"
 #define ICON_HANGUP                       ":/images/icons/hang_up.svg"
@@ -280,4 +280,7 @@
 #define ZRTP                               "1"
 #define SDES                               "2"
 
+/** MIME API */
+#define MIME_CALLID "text/sflphone.call.id"
+#define MIME_PLAIN_TEXT "text/plain"
 #endif

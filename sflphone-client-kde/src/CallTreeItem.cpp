@@ -25,6 +25,7 @@
 
 #include <klocale.h>
 #include <kdebug.h>
+#include <unistd.h>
 
 #include "sflphone_const.h"
 #include "CallTreeItem.h"
@@ -32,7 +33,7 @@
 const char * CallTreeItem::callStateIcons[12] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", "", ICON_CONFERENCE};
 
 CallTreeItem::CallTreeItem(QWidget *parent)
-   : itemCall(0), QWidget(parent)
+   : itemCall(0), QWidget(parent), init(false)
 {
    
 }
@@ -50,6 +51,22 @@ Call* CallTreeItem::call() const
 void CallTreeItem::setCall(Call *call)
 {
    itemCall = call;
+   
+   if (itemCall->isConference()) {
+      if (!init) {
+         labelHistoryPeerName = new QLabel("Conference",this);
+         labelIcon = new QLabel("Icn",this);
+         QHBoxLayout* mainLayout = new QHBoxLayout();
+         mainLayout->addWidget(labelIcon);
+         mainLayout->addWidget(labelHistoryPeerName);
+         setLayout(mainLayout);
+         init = true;
+      }
+      labelIcon->setPixmap(QPixmap(ICON_CONFERENCE));
+      labelIcon->setVisible(true);
+      labelHistoryPeerName->setVisible(true);
+      return;
+   }
 
    labelIcon = new QLabel();
    labelCallNumber2 = new QLabel(itemCall->getPeerPhoneNumber());
@@ -59,6 +76,9 @@ void CallTreeItem::setCall(Call *call)
    
    QHBoxLayout * mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
+   
+   labelCodec = new QLabel(this);
+   labelCodec->setText("Codec: "+itemCall->getCurrentCodecName());
    
    mainLayout->setSpacing(4);
    QVBoxLayout * descr = new QVBoxLayout();
@@ -75,6 +95,7 @@ void CallTreeItem::setCall(Call *call)
    }
 
    descr->addWidget(labelCallNumber2);
+   descr->addWidget(labelCodec);
    transfer->addWidget(labelTransferPrefix);
    transfer->addWidget(labelTransferNumber);
    descr->addLayout(transfer);
@@ -92,9 +113,6 @@ void CallTreeItem::setCall(Call *call)
 
 void CallTreeItem::updated()
 {
-   if (itemCall->isConference())
-      return;
-   
    call_state state = itemCall->getState();
    bool recording = itemCall->getRecording();
    if(state != CALL_STATE_OVER) {
@@ -122,10 +140,14 @@ void CallTreeItem::updated()
    else {
       qDebug() << "Updating item of call of state OVER. Doing nothing.";
    }
+   
 }
 
 void CallTreeItem::setConference(bool value) {
    conference = value;
+   labelIcon->setPixmap(QPixmap(ICON_CONFERENCE));
+   //labelTransferNumber->setVisible(false);
+   //labelTransferPrefix->setVisible(false);
 }
 
 bool CallTreeItem::isConference() {

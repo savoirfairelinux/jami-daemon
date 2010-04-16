@@ -258,6 +258,7 @@ public:
    bool isHistory() const;
    QString getStopTimeStamp() const;
    QString getStartTimeStamp() const;
+   QString getCurrentCodecName();
    bool isConference() const;
    
    void setConference(bool value);
