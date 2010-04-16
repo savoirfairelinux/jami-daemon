@@ -1425,23 +1425,55 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 
 
     // Make sure that drag n drop does not imply a dialing call
-    if(selected_type == A_CALL && selected_call->_state == CALL_STATE_DIALING) {
+    if(selected_type == A_CALL) {
+
+      DEBUG("Selected a call");
+      if(selected_call->_state == CALL_STATE_DIALING || 
+	 selected_call->_state == CALL_STATE_INVALID ||
+	 selected_call->_state == CALL_STATE_FAILURE ||
+	 selected_call->_state == CALL_STATE_BUSY ||
+	 selected_call->_state == CALL_STATE_TRANSFERT) {
  
-        DEBUG("Dragged a call on a dialing call");
+          DEBUG("Selected an invalid call");
 
 	calltree_remove_call(current_calls, selected_call, NULL);
 	calltree_add_call(current_calls, selected_call, NULL);
 	return;
+      }
+    
+
+      if(dragged_type == A_CALL) {
+
+	DEBUG("Dragged on a call");
+	if(dragged_call->_state == CALL_STATE_DIALING || 
+	   dragged_call->_state == CALL_STATE_INVALID ||
+	   dragged_call->_state == CALL_STATE_FAILURE ||
+	   dragged_call->_state == CALL_STATE_BUSY ||
+	   dragged_call->_state == CALL_STATE_TRANSFERT) {
+ 
+	  DEBUG("Dragged on an invalid call");
+
+	  if(selected_call->_confID != NULL) {
+	    
+	  }
+	  else {
+	    calltree_remove_call(current_calls, selected_call, NULL);
+	    calltree_add_call(current_calls, selected_call, NULL);
+	  }
+	  return;
+	}
+      }
     }
-	
+    /*
     else if(selected_type == A_CALL) {
 
+      
         // user may have dragged it outside the conference
       if(dragged_call && dragged_call->_state == CALL_STATE_DIALING) {
 
 	  calltree_remove_call(current_calls, dragged_call, NULL);
 
-	  DEBUG("Dragged a call on a dialing call");
+	  DEBUG("-------------------------------------- Dragged a call on a dialing call");
 	  
 	  // test if call participate to a conference
 	  if(selected_call->_confID) {
@@ -1459,20 +1491,34 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 	  return;
 	  
       }
+      
 
     }
-    else if(selected_type == A_CONFERENCE) {
+    */
 
-        DEBUG("Dragged a conference on a dialing call");
+    if(selected_type == A_CONFERENCE) {
 
-	if(dragged_call && dragged_call->_state == CALL_STATE_DIALING) {
+        DEBUG("Selected a conference");
+
+	if(dragged_type == A_CALL) {
+
+	  DEBUG("Dragged on a call");
+
+	  if(dragged_call->_state == CALL_STATE_DIALING ||
+	     dragged_call->_state == CALL_STATE_INVALID ||
+	     dragged_call->_state == CALL_STATE_FAILURE ||
+	     dragged_call->_state == CALL_STATE_BUSY ||
+	     dragged_call->_state == CALL_STATE_TRANSFERT) {
+
+	    DEBUG("Dragged on an invalid call");
 
 	    conf = selected_conf;
 
 	    calltree_remove_conference(current_calls, conf, NULL);
 	    calltree_add_conference(current_calls, conf);
 	    return;
-	} 
+	  } 
+	}
     }
 
 
