@@ -1156,15 +1156,19 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 				onHoldCall(call_id);
 
 				removeParticipant(call_id);
-
 				processRemainingParticipant(current_call_id, conf);
+
+				_dbus->getCallManager()->conferenceChanged(conf->getConfID(),
+				conf->getStateStr());
 			}
-		} else {
+		} 
+		else {
 
 			_debug ("Manager: Call is not conferencing, cannot detach");
 
 		}
-	} else {
+	} 
+	else {
 		_debug ("Manager: Unbind main participant from all");
 		_audiodriver->getMainBuffer()->unBindAll(default_id);
 
@@ -1210,9 +1214,6 @@ void ManagerImpl::removeParticipant (const CallID& call_id) {
 		_debug ("Manager: Remove participant %s", call_id.c_str());
 		conf->remove(call_id);
 		call->setConfId("");
-
-		_dbus->getCallManager()->conferenceChanged(conf->getConfID(),
-		 					   conf->getStateStr());	
 
 	}
 
@@ -1648,8 +1649,8 @@ void ManagerImpl::peerHungupCall (const CallID& call_id) {
 		if (conf != NULL) {
 
 			removeParticipant(call_id);
-
 			processRemainingParticipant(current_call_id, conf);
+
 		}
 	} else {
 		if (isCurrentCall(call_id)) {
