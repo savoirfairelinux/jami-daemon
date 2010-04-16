@@ -3121,7 +3121,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
 
-        _debug ("State: %s. Cause: %.*s", invitationStateMap[inv->state], (int) inv->cause_text.slen, inv->cause_text.ptr);
+        _debug ("UserAgent: State: %s. Cause: %.*s", invitationStateMap[inv->state], (int) inv->cause_text.slen, inv->cause_text.ptr);
 
         accId = Manager::instance().getAccountFromCall (call->getCallId());
         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
@@ -3150,12 +3150,14 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
             case PJSIP_SC_UNAUTHORIZED:
             case PJSIP_SC_FORBIDDEN:
-            case PJSIP_SC_REQUEST_PENDING:
+	    case PJSIP_SC_REQUEST_PENDING:
+	    case PJSIP_SC_ADDRESS_INCOMPLETE:
                 link->SIPCallServerFailure (call);
                 break;
 
             default:
-                _debug ("sipvoiplink.cpp - line %d : Unhandled call state. This is probably a bug.", __LINE__);
+	        link->SIPCallServerFailure (call);
+                _error ("UserAgent: Unhandled call state. This is probably a bug.");
                 break;
         }
     }
@@ -3390,15 +3392,12 @@ void regc_cb (struct pjsip_regc_cbparam *param)
                     break;
 
                 case 503:
-
                 case 408:
                     account->setRegistrationState (ErrorHost);
                     break;
 
                 case 401:
-
                 case 403:
-
                 case 404:
                     account->setRegistrationState (ErrorAuth);
                     break;
