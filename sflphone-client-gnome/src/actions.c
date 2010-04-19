@@ -950,13 +950,16 @@ sflphone_place_call ( callable_obj_t * c )
     void
 sflphone_detach_participant(const gchar* callID)
 {
-    DEBUG("sflphone detach participant from conference");
-
-    
+    DEBUG("Action: Detach participant from conference");
 
     if(callID == NULL) {
         callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-	DEBUG("    sflphone_detach_participant %s\n", selectedCall->_callID);
+	DEBUG("Action: Detach participant %s", selectedCall->_callID);
+
+	if(selectedCall->_confID) {
+	    g_free(selectedCall->_confID);
+	    selectedCall->_confID = NULL;
+	}
 
 	calltree_remove_call(current_calls, selectedCall, NULL);
 	calltree_add_call(current_calls, selectedCall, NULL);
@@ -964,7 +967,12 @@ sflphone_detach_participant(const gchar* callID)
     }
     else {
 	callable_obj_t * selectedCall = calllist_get(current_calls, callID);
-	DEBUG("    sflphone_detach_participant %s\n", callID);
+	DEBUG("Action: Darticipant %s", callID);
+
+	if(selectedCall->_confID) {
+	    g_free(selectedCall->_confID); 
+	    selectedCall->_confID = NULL;
+	}
 
 	calltree_remove_call(current_calls, selectedCall, NULL);
 	calltree_add_call(current_calls, selectedCall, NULL);
