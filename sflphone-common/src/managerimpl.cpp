@@ -1150,16 +1150,16 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 			iter_details = call_details.find("CALL_STATE");
 
 			if (iter_details->second == "RINGING") {
-				removeParticipant(call_id);
-			} else {
-				_debug ("    ONHOLD %s", call_id.c_str());
-				onHoldCall(call_id);
 
-				removeParticipant(call_id);
-				processRemainingParticipant(current_call_id, conf);
+			    removeParticipant(call_id);
+			} 
+			else {
+			    onHoldCall(call_id);
+			    removeParticipant(call_id);
+			    processRemainingParticipant(current_call_id, conf);
 
-				_dbus->getCallManager()->conferenceChanged(conf->getConfID(),
-				conf->getStateStr());
+			    _dbus->getCallManager()->conferenceChanged(conf->getConfID(),
+								       conf->getStateStr());
 			}
 		} 
 		else {
@@ -1225,7 +1225,8 @@ void ManagerImpl::removeParticipant (const CallID& call_id) {
 void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		Conference *conf) {
 
-	_debug ("Manager: Process remaining participant");
+        _debug ("Manager: Process remaining %d participant(s) from conference %s", 
+		conf->getNbParticipants(), conf->getConfID().c_str());
 
 	if (conf->getNbParticipants() > 1) {
 
@@ -1254,7 +1255,6 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		ParticipantSet::iterator iter_participant = participants.begin();
 
 		// bind main participant to remaining conference call
-
 		if (iter_participant != participants.end()) {
 
 			// this call is no more a conference participant
@@ -1272,6 +1272,7 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		}
 
 		removeConference(conf->getConfID());
+
 	} else {
 
 	        _debug ("Manager: No remaining participant, remove conference"); 

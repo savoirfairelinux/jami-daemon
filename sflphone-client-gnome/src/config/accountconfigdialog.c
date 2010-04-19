@@ -641,7 +641,7 @@ static local_interface_changed_cb(GtkWidget * widget, gpointer data UNUSED) {
 
 		local_iface_name = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
 		// sflphone_get_interface_addr_from_name((char *)local_interface);
-		sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr);
+		sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr, 36);
 
 		gtk_entry_set_text(GTK_ENTRY(localAddressEntry), local_iface_addr);
 		gtk_entry_set_text (GTK_ENTRY(publishedAddressEntry), local_iface_addr);
@@ -1007,7 +1007,7 @@ GtkWidget* create_network (account_t **a) {
     gchar *local_iface_addr;
     gchar *local_iface_name; 
 
-    local_iface_addr= g_malloc(18);
+    local_iface_addr= g_malloc(36);
     
     if (iface_list != NULL) {
 
@@ -1050,7 +1050,7 @@ GtkWidget* create_network (account_t **a) {
     // Fill the text entry with the ip address of local interface selected
     localAddressEntry = gtk_entry_new();
     local_iface_name = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
-    sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr);
+    sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr, 36);
     gtk_entry_set_text(GTK_ENTRY(localAddressEntry), local_iface_addr);
     gtk_widget_set_sensitive(localAddressEntry, FALSE); 
     gtk_table_attach ( GTK_TABLE( table ), localAddressEntry, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
