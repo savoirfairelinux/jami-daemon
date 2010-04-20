@@ -461,12 +461,12 @@ std::string SIPAccount::getFromUri (void)
         username = getLoginName();
     }
 
-    else {
-      // Get machine hostname if not provided
-      if (_hostname.empty()) {
-          hostname = getMachineName();
-      }
+
+    // Get machine hostname if not provided
+    if (_hostname.empty()) {
+      hostname = getMachineName();
     }
+
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
 
