@@ -657,13 +657,13 @@ static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 {
 
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-		DEBUG("Showing manual options");    
+		DEBUG("Config: Showing manual publishing options");    
 		gtk_widget_show(publishedPortLabel);            
 		gtk_widget_show(publishedPortSpinBox);
 		gtk_widget_show(publishedAddressLabel);                	
 		gtk_widget_show(publishedAddressEntry);
 	} else {
-		DEBUG("Hiding manual options");   
+		DEBUG("Config: Hiding manual publishing options");   
 		gtk_widget_hide(publishedPortLabel);            
 		gtk_widget_hide(publishedPortSpinBox);
 		gtk_widget_hide(publishedAddressLabel);                	
@@ -678,7 +678,7 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 
 	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
 
-		DEBUG("Showing stun options, hiding Local/Published info");
+		DEBUG("Config: Showing stun options, hiding Local/Published info");
 		gtk_widget_show (stunServerLabel);
 		gtk_widget_show (stunServerEntry);
 		gtk_widget_set_sensitive (sameAsLocalRadioButton, FALSE);
@@ -691,6 +691,8 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 
 	} else {
 
+	        DEBUG("Config: hiding stun options, showing Local/Published info");
+
 		gtk_widget_hide (stunServerLabel);
 		gtk_widget_hide (stunServerEntry);
 		gtk_widget_set_sensitive (sameAsLocalRadioButton, TRUE);
@@ -701,14 +703,6 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 			gtk_widget_show (publishedPortLabel);
 			gtk_widget_show (publishedAddressEntry);
 			gtk_widget_show (publishedPortSpinBox);
-
-			// Since stun callback is called at initialization, we cannot reinit published address
-			// TODO: find a way so that if stun is unchecked, reinit published address entry 
-			//       in case local address changedd
-
-			// local_interface = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
-			// local_address = dbus_get_address_from_interface_name(local_interface);
-			// gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), local_address);
 		}
 	}
 }
@@ -1146,8 +1140,6 @@ GtkWidget* create_published_address (account_t **a) {
 
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedPortSpinBox, 1, 2, 6, 7);
 
-	use_stun_cb (GTK_WIDGET (useStunCheckBox), NULL);
-
 	// This will trigger a signal, and the above two
 	// widgets need to be instanciated before that.
 	g_signal_connect(localAddressCombo, "changed", G_CALLBACK(local_interface_changed_cb), localAddressCombo);   
@@ -1165,6 +1157,7 @@ GtkWidget* create_published_address (account_t **a) {
 GtkWidget* create_advanced_tab (account_t **a) {
 
 	// Build the advanced tab, to appear on the account configuration panel
+        DEBUG("Config: Build advanced tab")
 
 	GtkWidget *ret, *frame;
 
@@ -1181,6 +1174,10 @@ GtkWidget* create_advanced_tab (account_t **a) {
 	gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
 	gtk_widget_show_all (ret);
+
+	use_stun_cb (GTK_WIDGET (useStunCheckBox), NULL);
+
+	set_published_addr_manually_cb(GTK_WIDGET (publishedAddrRadioButton), NULL);
 
 	return ret;
 }
