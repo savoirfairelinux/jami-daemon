@@ -297,12 +297,13 @@ conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
   while(participant) {
 
       call = calllist_get(current_calls, (const gchar *)(participant->data));
-      DEBUG("DBUS: Remove participant %s", call->_callID);
-      if(call->_confID){
-	 g_free(call->_confID);
-	 call->_confID = NULL;
+      if(call) {
+	DEBUG("DBUS: Remove participant %s", call->_callID);
+	if(call->_confID){
+	  g_free(call->_confID);
+	  call->_confID = NULL;
+	}
       }
-
       participant = conference_next_participant(participant);
   }
   
