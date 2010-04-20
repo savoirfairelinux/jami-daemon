@@ -671,6 +671,8 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	if(selectedCall == c)
 		calltab_select_call(tab, NULL);
 	update_actions();
+
+	DEBUG("Calltre remove call ended");
 }
 
 	void
@@ -1300,7 +1302,7 @@ void calltree_remove_conference (calltab_t* tab, const conference_obj_t* conf, G
 		if(tempconf == conf) {
 		    
 		    nbParticipant = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), &iter_parent);
-		    DEBUG("nbParticipant: %i\n", nbParticipant);
+		    DEBUG("nbParticipant: %i", nbParticipant);
 		    for( j = 0; j < nbParticipant; j++) {
 		        call = NULL;
 			if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter_child, &iter_parent, j)){
