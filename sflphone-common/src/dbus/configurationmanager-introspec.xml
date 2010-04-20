@@ -105,8 +105,8 @@
 			<tp:docstring>
 			</tp:docstring>
 			<arg type="s" name="accountID" direction="in">
-				<tp:docstring>
-				</tp:docstring>
+			  <tp:docstring>
+			  </tp:docstring>
 			</arg>
 			<arg type="i" name="number" direction="in">
 				<tp:docstring>
@@ -732,6 +732,7 @@
 
 	   <method name="getWindowWidth" tp:name-for-bindings="getWindowWidth">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 		   <arg type="i" name="width" direction="out">
 			   <tp:docstring>
@@ -741,6 +742,7 @@
 
 	   <method name="getWindowHeight" tp:name-for-bindings="getWindowHeight">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 		   <arg type="i" name="height" direction="out">
 			   <tp:docstring>
@@ -750,6 +752,7 @@
 
 	   <method name="setWindowWidth" tp:name-for-bindings="setWindowWidth">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 		   <arg type="i" name="width" direction="in">
 			   <tp:docstring>
@@ -759,6 +762,7 @@
 
 	   <method name="setWindowHeight" tp:name-for-bindings="setWindowHeight">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 		   <arg type="i" name="height" direction="in">
 			   <tp:docstring>
@@ -768,6 +772,7 @@
 
 	   <method name="getWindowPositionX" tp:name-for-bindings="getWindowPositionX">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 		   <arg type="i" name="posX" direction="out">
 			   <tp:docstring>
@@ -777,6 +782,7 @@
 
 	   <method name="setWindowPositionX" tp:name-for-bindings="setWindowPositionX">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 		   <arg type="i" name="posX" direction="in">
 			   <tp:docstring>
@@ -786,6 +792,7 @@
 
 	   <method name="getWindowPositionY" tp:name-for-bindings="getWindowPositionY">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 		   <arg type="i" name="posY" direction="out">
 			   <tp:docstring>
@@ -795,28 +802,33 @@
 
 	   <method name="setWindowPositionY" tp:name-for-bindings="setWindowPositionY">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 		   <arg type="i" name="posY" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="enableStatusIcon" tp:name-for-bindings="enableStatusIcon">
 		   <tp:docstring>
+		     Allow SFLphone icon to be displayed in system tray
 		   </tp:docstring>
 		   <arg type="s" name="value" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       true/false
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="isStatusIconEnabled" tp:name-for-bindings="isStatusIconEnabled">
 		   <tp:docstring>
+		     Test if SFLphone icon is displayed in system tray.
 		   </tp:docstring>
 		   <arg type="s" name="value" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       true/false
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
@@ -899,100 +911,144 @@
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <arg type="a{ss}" name="entries" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
+	           <tp:docstring>
+		     Signal emited on account changes. Clients should update
+		     all account status with <tp:member-ref>getAccountDetails</tp:member-ref>
+		     iterating over the list provided by <tp:member-ref>getAccountList</tp:member-ref>
+		   </tp:docstring>
 	   </signal>  
 
 	   <signal name="errorAlert" tp:name-for-bindings="errorAlert">
 		   <arg type="i" name="code">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		     </tp:docstring>
 		   </arg>
 	   </signal> 
 
 	   <!-- TLS Methods -->
 	   <method name="getSupportedTlsMethod" tp:name-for-bindings="getSupportedTlsMethod">
 		   <tp:docstring>
+		     Provide a list of supported TLS method
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       A list of TLS method: (TLSv1, SSLv1, SSLv2,
+		       SSLv3, SSLv23)
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
                    <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <tp:docstring>
+		     Get default TLS setting for new accounts
 		   </tp:docstring>
 		   <arg type="a{ss}" name="details" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       A hash table containing details. Refer
+		       to <tp:member-ref>getTlsSettings</tp:member-ref>
+		       for possible keys
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getTlsSettings" tp:name-for-bindings="getTlsSettings">
 		   <tp:docstring>
+		     Get current TLS setting for a specific account
 		   </tp:docstring>
 		   <arg type="s" name="accountID" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       The account ID
+		     </tp:docstring>
 		   </arg>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="a{ss}" name="details" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+			 A hash table containing details with key:
+			 <ul>
+			   <li>"TLS.listenerPort": valid numerical port</li>
+			   <li>"TLS.enable": true/false</li>
+			   <li>"TLS.certificateListFile": A valid path to
+			     a .pem file containing CA certificate</li>
+			   <li>"TLS.certificateFile": A valid path to a
+			     file containing the public end-point
+			     certificate (optional)</li>
+			   <li>"TLS.privateKeyFile": A valid path to a
+			     file containing the public end-point private
+			     key (optional)</li>
+			   <li>"TLS.password": Public end-point private
+			     key password (optional)</li>
+			   <li>"TLS.method": (TLSv1, SSLv1, SSLv2,
+			     SSLv3, SSLv23)</li>
+		       </ul>  
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
 		   <tp:docstring>
+		     Update TLS setting for a specific account
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
 		   <arg type="s" name="accountID" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       The account ID
+		     </tp:docstring>
 		   </arg>
 		   <arg type="a{ss}" name="details" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       A hash table containing details. Refer
+		       to <tp:member-ref>getTlsSettings</tp:member-ref>
+		       for possible keys.  
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
 		   <tp:docstring>
+		     Resolve interface IPv4 address provided its name. 
 		   </tp:docstring>
 		   <arg type="s" name="interface" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       Interface name
+		     </tp:docstring>
 		   </arg>
 		   <arg type="s" name="address" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       Interface IPv4 address
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getAllIpInterface" tp:name-for-bindings="getAllIpInterface">
 		   <tp:docstring>
+		     Provide a list of IP interface's IPv4 address.
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       A list of interface's IPv4 address
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getAllIpInterfaceByName" tp:name-for-bindings="getAllIpInterfaceByName">
 		   <tp:docstring>
+		     Provide a list of IP interface's name: default
+		     (0.0.0.0), lo, eth0 ...
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       A list of interface's name
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
