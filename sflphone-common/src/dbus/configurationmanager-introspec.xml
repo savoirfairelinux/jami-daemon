@@ -118,8 +118,9 @@
 			<tp:docstring>
 			</tp:docstring>
 			<arg type="s" name="accountID" direction="in">
-				<tp:docstring>
-				</tp:docstring>
+			  <tp:docstring>
+			    Account ID
+			  </tp:docstring>
 			</arg>
 		</method>
 
@@ -206,55 +207,55 @@
 
 	   <method name="addAccount" tp:name-for-bindings="addAccount">
 		   <tp:docstring>
-			   Add a new account. When created, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
-			   <tp:rationale>If no details are specified, the default parameters are used.</tp:rationale>
-			   <tp:rationale>The core tries to register the account as soon it is created.</tp:rationale>
+		     Add a new account. When created, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
+		     <tp:rationale>If no details are specified, the default parameters are used.</tp:rationale>
+		     <tp:rationale>The core tries to register the account as soon it is created.</tp:rationale>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <arg type="a{ss}" name="details" direction="in"  tp:type="String_String_Map">
-			   <tp:docstring>
-					The new account settings
-			   </tp:docstring>
+		     <tp:docstring>
+		       The new account settings
+		     </tp:docstring>
 		   </arg>
 		   <arg type="s" name="createdAccountId" direction="out">
-			   <tp:docstring>
-					A new account ID
-			   </tp:docstring>
+		     <tp:docstring>
+		       A new account ID
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setAccountsOrder" tp:name-for-bindings="setAccountsOrder">
 		   <tp:docstring>
-				Update the accounts order.
-				<tp:rationale>When placing a call, the first registered account in the list is used.</tp:rationale>
+		     Update the accounts order.
+		     <tp:rationale>When placing a call, the first registered account in the list is used.</tp:rationale>
 		   </tp:docstring>
 		   <arg type="s" name="order" direction="in">
-			   <tp:docstring>
-				   An ordered list of account IDs, delimited by '/'
-			   </tp:docstring>
+		     <tp:docstring>
+		       An ordered list of account IDs, delimited by '/'
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="removeAccount" tp:name-for-bindings="removeAccount">
-		   <tp:docstring>
-			   Remove an existing account. When removed, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
-		   </tp:docstring>
-		   <arg type="s" name="accoundID" direction="in">
-			   <tp:docstring>
-					The account to remove, identified by its ID
-			   </tp:docstring>
-		   </arg>
+	     <tp:docstring>
+	       Remove an existing account. When removed, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
+	     </tp:docstring>
+	     <arg type="s" name="accoundID" direction="in">
+	       <tp:docstring>
+		 The account to remove, identified by its ID
+	       </tp:docstring>
+	     </arg>
 	   </method>
 
 	   <method name="getAccountList" tp:name-for-bindings="getAccountList">
-		   <tp:docstring>
-				Get a list of all created accounts, as stored by the core.
-		   </tp:docstring>
+	     <tp:docstring>
+	       Get a list of all created accounts, as stored by the core.
+	     </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-				   A list of account IDs
-			   </tp:docstring>
+		     <tp:docstring>
+		       A list of account IDs
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
@@ -300,16 +301,19 @@
 
 	   <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
 		   <tp:docstring>
+		     Return a list of valid Sun's .au sound file used
+		     as ringtones
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getPlaybackDeviceList" tp:name-for-bindings="getPlaybackDeviceList">
 		   <tp:docstring>
+		     Provide a list of playback device 
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
