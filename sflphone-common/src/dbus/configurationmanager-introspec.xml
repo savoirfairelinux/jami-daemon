@@ -268,15 +268,15 @@
 		   @param[in] input accountID
 		   -->
 		   <arg type="s" name="accountID" direction="in">
-			   <tp:docstring>
-					The account ID
-			   </tp:docstring>
+		     <tp:docstring>
+		       The account ID
+		     </tp:docstring>
 		   </arg>
 		   <arg type="i" name="expire" direction="in">
-			   <tp:docstring>
-					<p>To register, expire must be 1.</p>
-					<p>To un-register, expire must be 0.</p>
-			   </tp:docstring>
+		     <tp:docstring>
+		       <p>To register, expire must be 1.</p>
+		       <p>To un-register, expire must be 0.</p>
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
@@ -285,13 +285,14 @@
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="getVersion" tp:name-for-bindings="getVersion">
 		   <tp:docstring>
+		     Return SFLphone-daemon version
 		   </tp:docstring>
 		   <arg type="s" name="version" direction="out">
 			   <tp:docstring>
@@ -302,7 +303,7 @@
 	   <method name="getRingtoneList" tp:name-for-bindings="getRingtoneList">
 		   <tp:docstring>
 		     Return a list of valid Sun's .au sound file used
-		     as ringtones
+		     as ringtones.
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
@@ -313,7 +314,7 @@
 
 	   <method name="getPlaybackDeviceList" tp:name-for-bindings="getPlaybackDeviceList">
 		   <tp:docstring>
-		     Provide a list of playback device 
+		     Provide a list of playback device from ALSA
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
@@ -324,6 +325,7 @@
 
 	   <method name="getRecordDeviceList" tp:name-for-bindings="getRecordDeviceList">
 		   <tp:docstring>
+		     Provide a list of record device from ALSA
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
 		   <arg type="as" name="list" direction="out">
@@ -334,6 +336,7 @@
 
 	   <method name="isRingtoneEnabled" tp:name-for-bindings="isRingtoneEnabled">
 		   <tp:docstring>
+		     Return true if ringtone is enabled, false otherwise
 		   </tp:docstring>
 		   <arg type="i" name="bool" direction="out">
 			   <tp:docstring>
@@ -343,24 +346,28 @@
 
 	   <method name="ringtoneEnabled" tp:name-for-bindings="ringtoneEnabled">
 		   <tp:docstring>
+		     Unused
 		   </tp:docstring>
 	   </method>
 
 	   <method name="getRingtoneChoice" tp:name-for-bindings="getRingtoneChoice">
 		   <tp:docstring>
+		     Get current ringtone .au file selected
 		   </tp:docstring>
 		   <arg type="s" name="tone" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setRingtoneChoice" tp:name-for-bindings="setRingtoneChoice">
 		   <tp:docstring>
+		     Set current ringtone .au file from list acquired using <tp:member-ref>getAccountList</tp:member-ref>
 		   </tp:docstring>
 		   <arg type="s" name="tone" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
+		     <tp:docstring>
+		       A valid .au file path
+		     </tp:docstring>
 		   </arg>
 	   </method>
 
