@@ -29,6 +29,6 @@ AudioProcessing::~AudioProcessing(void){}
 
 
 void AudioProcessing::processAudio(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
-
-  _algorithm->process(micData, spkrData, outputData);
+  if(_algorithm)
+    _algorithm->process(micData, spkrData, outputData);
 }

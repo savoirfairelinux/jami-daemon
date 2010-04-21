@@ -17,10 +17,15 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef ECHOCANCEL_H
+#define ECHOCANCEL_H
+
 #include "audioprocessing.h"
 #include <speex/speex_echo.h>
 
-class EchoCancel : Algorithm {
+class EchoCancel : public Algorithm {
+
+ public:
 
     EchoCancel();
 
@@ -34,3 +39,5 @@ class EchoCancel : Algorithm {
      */
     virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData);
 };
+
+#endif

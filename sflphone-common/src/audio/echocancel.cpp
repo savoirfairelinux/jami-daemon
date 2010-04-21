@@ -25,6 +25,6 @@ EchoCancel::EchoCancel() {}
 EchoCancel::~EchoCancel() {}
 
 void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
-
   
+
 }

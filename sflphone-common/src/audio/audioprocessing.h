@@ -17,6 +17,10 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+
+#ifndef AUDIOPROCESSING_H
+#define AUDIOPROCESSING_H
+
 #include "algorithm.h"
 
 /**
@@ -49,3 +53,5 @@ private:
   Algorithm *_algorithm;
 
 };
+
+#endif

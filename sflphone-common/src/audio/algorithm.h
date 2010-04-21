@@ -17,6 +17,9 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef ALGORITHM_H
+#define ALGORITHM_H
+
 #include "global.h"
 
 /**
@@ -29,14 +32,11 @@ class Algorithm {
  public:
 
   /**
-   * Constructor for this class
-   */ 
-  Algorithm();
-
-  /**
    * Class implementing this interface must define this function
    * \param micData 
    */
   virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) = 0;
 
 };
+
+#endif

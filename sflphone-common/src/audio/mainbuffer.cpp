@@ -20,17 +20,25 @@
 
 #include "mainbuffer.h"
 
+#include "audioprocessing.h"
+
+
 MainBuffer::MainBuffer() : _internalSamplingRate (0)
 {
     mixBuffer = new SFLDataFormat[STATIC_BUFSIZE];
+
+    _echoCancel = new EchoCancel();
+    _audioProcessing = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
 }
 
 
 MainBuffer::~MainBuffer()
 {
 
-    delete [] mixBuffer;
-    mixBuffer = NULL;
+    delete [] mixBuffer; mixBuffer = NULL;
+
+    delete _echoCancel; _echoCancel = NULL;
+    delete _audioProcessing; _audioProcessing = NULL;
 }
 
 
