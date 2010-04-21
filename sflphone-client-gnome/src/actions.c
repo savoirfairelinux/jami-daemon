@@ -195,6 +195,8 @@ void sflphone_fill_account_list (void) {
 	int count;
 	GQueue *codeclist;
 
+	DEBUG("SFLphone: Fill account list");
+
 	count = current_account_get_message_number ();
 
     account_list_clear ();
@@ -1085,7 +1087,9 @@ void sflphone_fill_codec_list () {
 	guint account_list_size;
 	guint i;
 	account_t *current = NULL;
-    gchar** codecs = NULL;
+	gchar** codecs = NULL;
+
+	DEBUG("SFLphone: Fill codec list");
 
 	account_list_size = account_list_get_size ();
 
@@ -1117,25 +1121,27 @@ void sflphone_fill_codec_list_per_account (account_t **account) {
     gboolean active = FALSE;
 
     order = (gchar**) dbus_get_active_codec_list ((*account)->accountID);
+
     codeclist = (*account)->codecs;
 
     // First clean the list
     codec_list_clear (&codeclist);
 
     if(!(*order))
-      ERROR("No codec list provided");
+      ERROR("SFLphone: No codec list provided");
 
-    for (pl=order; *order; order++)
+    for (pl=order; *pl; pl++)
     {
-		codec_t * cpy;
-		// Each account will have a copy of the system-wide capabilities
-		codec_create_new_from_caps (codec_list_get_by_payload ((gconstpointer) (size_t)atoi (*order), NULL), &cpy);
-		if (cpy) {
-			cpy->is_active = TRUE;
-			codec_list_add (cpy, &codeclist);
-		}
-		else
-			ERROR ("Couldn't find codec \n");
+      codec_t * cpy = NULL;
+		
+      // Each account will have a copy of the system-wide capabilities
+      codec_create_new_from_caps (codec_list_get_by_payload ((gconstpointer) (size_t)atoi (*pl), NULL), &cpy);
+      if (cpy) {
+	  cpy->is_active = TRUE;
+	  codec_list_add (cpy, &codeclist);
+      }
+      else
+	ERROR ("SFLphone: Couldn't find codec");
     }
 
 	// Test here if we just added some active codec.
