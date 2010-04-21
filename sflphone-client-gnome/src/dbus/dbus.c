@@ -287,10 +287,26 @@ conference_created_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo 
 static void
 conference_removed_cb(DBusGProxy *proxy UNUSED, const gchar* confID, void * foo  UNUSED )
 {
-  DEBUG ("Conference removed %s\n", confID);
+  DEBUG ("DBUS: Conference removed %s", confID);
 
   conference_obj_t * c = conferencelist_get(confID);
   calltree_remove_conference(current_calls, c, NULL);
+
+  GSList *participant = c->participant_list;
+  callable_obj_t *call;
+  while(participant) {
+
+      call = calllist_get(current_calls, (const gchar *)(participant->data));
+      if(call) {
+	DEBUG("DBUS: Remove participant %s", call->_callID);
+	if(call->_confID){
+	  g_free(call->_confID);
+	  call->_confID = NULL;
+	}
+      }
+      participant = conference_next_participant(participant);
+  }
+  
   conferencelist_remove(c->_confID);
 }
 

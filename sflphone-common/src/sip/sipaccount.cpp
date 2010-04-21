@@ -26,7 +26,7 @@
 
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
-	, _domainName("")
+	, _routeSet("")
         , _regc (NULL)
         , _bRegister (false)
         , _registrationExpire ("")
@@ -331,7 +331,7 @@ void SIPAccount::loadConfig()
 {
     // Load primary credential
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
-    setDomainName(Manager::instance().getConfigString(_accountID, DOMAINNAME));
+    setRouteSet(Manager::instance().getConfigString(_accountID, ROUTESET));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
     _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
     _realm = Manager::instance().getConfigString (_accountID, REALM);
@@ -461,15 +461,12 @@ std::string SIPAccount::getFromUri (void)
         username = getLoginName();
     }
 
-    if(!getDomainName().empty()) {
-      hostname = getDomainName();
+
+    // Get machine hostname if not provided
+    if (_hostname.empty()) {
+      hostname = getMachineName();
     }
-    else {
-      // Get machine hostname if not provided
-      if (_hostname.empty()) {
-          hostname = getMachineName();
-      }
-    }
+
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
 
@@ -507,11 +504,8 @@ std::string SIPAccount::getToUri (const std::string& username)
 
     // Check if hostname is already specified
     if (username.find ("@") == std::string::npos) {
-      // hostname not specified
-      if(getDomainName().empty())
+        // hostname not specified
 	hostname = _hostname;
-      else
-	hostname = getDomainName();
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
@@ -532,6 +526,7 @@ std::string SIPAccount::getServerUri (void)
 
     std::string scheme;
     std::string transport;
+    std::string hostname = _hostname;
 
     // UDP does not require the transport specification
 
@@ -544,10 +539,9 @@ std::string SIPAccount::getServerUri (void)
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
-
                                 "<%s%s%s>",
                                 scheme.c_str(),
-                                _hostname.c_str(),
+                                hostname.c_str(),
                                 transport.c_str());
 
     return std::string (uri, len);

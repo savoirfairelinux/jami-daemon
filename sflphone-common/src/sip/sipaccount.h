@@ -64,14 +64,14 @@ class SIPAccount : public Account
         virtual ~SIPAccount();
 
 	/**
-	 * Set domain to appears in sip messages for this account
+	 * Set route header to appears in sip messages for this account
 	 */ 
-	void setDomainName(std::string domain) { _domainName = domain; }
+	void setRouteSet(std::string route) { _routeSet = route; }
 
 	/**
-	 * Get domain name to appear in sip messages for this account
+	 * Get route header to appear in sip messages for this account
 	 */ 
-	std::string getDomainName(void) { return _domainName; }
+	std::string getRouteSet(void) { return _routeSet; }
 
 	/**
 	 * Special setVoIPLink which increment SipVoIPLink's number of client. 
@@ -363,7 +363,7 @@ class SIPAccount : public Account
          */ 
         std::string getLoginName(void);
 
-	std::string _domainName;
+	std::string _routeSet;
               
 
         // The pjsip client registration information

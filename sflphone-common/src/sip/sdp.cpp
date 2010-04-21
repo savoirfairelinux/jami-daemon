@@ -52,8 +52,8 @@ Sdp::Sdp (pj_pool_t *pool)
 
 Sdp::~Sdp()
 {
-	clean_session_media();
-	clean_local_media_capabilities();
+  // clean_session_media();
+  // clean_local_media_capabilities();
 }
 
 void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med) {

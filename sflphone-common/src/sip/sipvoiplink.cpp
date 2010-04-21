@@ -563,7 +563,6 @@ int SIPVoIPLink::sendRegister (AccountID id)
     std::string srvUri = account->getServerUri();
 
     std::string address = findLocalAddressFromUri (srvUri, account->getAccountTransport ());
-
     int port = findLocalPortFromUri (srvUri, account->getAccountTransport ());
 
     std::stringstream ss;
@@ -579,19 +578,42 @@ int SIPVoIPLink::sendRegister (AccountID id)
             contactUri.c_str());
 
     pj_str_t pjFrom;
-
     pj_cstr (&pjFrom, fromUri.c_str());
 
     pj_str_t pjContact;
-
     pj_cstr (&pjContact, contactUri.c_str());
 
     pj_str_t pjSrv;
-
     pj_cstr (&pjSrv, srvUri.c_str());
 
     // Initializes registration
+
+    // Set Route for registration passing throught one or several proxies
     status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
+
+    /*
+    if(!(account->getDomainName().empty())) {
+
+        _error("Set route with %s", account->getHostname().c_str());
+
+        pjsip_route_hdr *route_set = pjsip_route_hdr_create(_pool);
+        pjsip_route_hdr *routing = pjsip_route_hdr_create(_pool);
+        pjsip_sip_uri *url = pjsip_sip_uri_create(_pool, 0);
+        routing->name_addr.uri = (pjsip_uri*)url;
+        pj_strdup2(_pool, &url->host, account->getHostname().c_str());
+
+        pj_list_push_back(&route_set, pjsip_hdr_clone(_pool, routing));
+
+	status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
+
+        pjsip_regc_set_route_set(regc, route_set);
+    }
+    else {
+
+        status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
+    }
+    */
+
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to initialize account %d in sendRegister", status);
@@ -613,9 +635,10 @@ int SIPVoIPLink::sendRegister (AccountID id)
     h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
 
     pj_list_push_back (&hdr_list, (pjsip_hdr*) h);
+    // pj_list_push_back (&hdr_list, (pjsip_hdr*) routing);
 
     pjsip_regc_add_headers (regc, &hdr_list);
-
+    
     status = pjsip_regc_register (regc, PJ_TRUE, &tdata);
 
     if (status != PJ_SUCCESS) {
@@ -3098,7 +3121,7 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
 
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
 
-        _debug ("State: %s. Cause: %.*s", invitationStateMap[inv->state], (int) inv->cause_text.slen, inv->cause_text.ptr);
+        _debug ("UserAgent: State: %s. Cause: %.*s", invitationStateMap[inv->state], (int) inv->cause_text.slen, inv->cause_text.ptr);
 
         accId = Manager::instance().getAccountFromCall (call->getCallId());
         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (accId));
@@ -3127,12 +3150,14 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
             case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
             case PJSIP_SC_UNAUTHORIZED:
             case PJSIP_SC_FORBIDDEN:
-            case PJSIP_SC_REQUEST_PENDING:
+	    case PJSIP_SC_REQUEST_PENDING:
+	    case PJSIP_SC_ADDRESS_INCOMPLETE:
                 link->SIPCallServerFailure (call);
                 break;
 
             default:
-                _debug ("sipvoiplink.cpp - line %d : Unhandled call state. This is probably a bug.", __LINE__);
+	        link->SIPCallServerFailure (call);
+                _error ("UserAgent: Unhandled call state. This is probably a bug.");
                 break;
         }
     }
@@ -3367,15 +3392,12 @@ void regc_cb (struct pjsip_regc_cbparam *param)
                     break;
 
                 case 503:
-
                 case 408:
                     account->setRegistrationState (ErrorHost);
                     break;
 
                 case 401:
-
                 case 403:
-
                 case 404:
                     account->setRegistrationState (ErrorAuth);
                     break;
@@ -3533,6 +3555,10 @@ mod_on_rx_request (pjsip_rx_data *rdata)
     size_t found = peerNumber.find("sip:");
     if (found!=std::string::npos)
         peerNumber.erase(found, found+4);
+
+    found = peerNumber.find("@");
+    if (found!=std::string::npos)
+        peerNumber.erase(found);
 
     _debug("UserAgent: Peer number: %s", peerNumber.c_str());
 

@@ -54,7 +54,7 @@ GtkWidget * entryID;
 GtkWidget * entryAlias;
 GtkWidget * protocolComboBox;
 GtkWidget * entryUsername;
-GtkWidget * entryDomainName;
+GtkWidget * entryRouteSet;
 GtkWidget * entryHostname;
 GtkWidget * entryPassword;
 GtkWidget * entryMailbox;
@@ -240,7 +240,7 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gchar *curAccountType = "SIP";
 	gchar *curAlias = "";
 	gchar *curUsername = "";
-	gchar *curDomainName = "";
+	gchar *curRouteSet = "";
 	gchar *curHostname = "";
 	gchar *curPassword = "";
 	/* TODO: add curProxy, and add boxes for Proxy support */
@@ -262,7 +262,7 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 		curHostname = g_hash_table_lookup(currentAccount->properties, ACCOUNT_HOSTNAME);
 		curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_PASSWORD);
 		curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERNAME);
-		curDomainName = g_hash_table_lookup(currentAccount->properties, ACCOUNT_DOMAIN);
+		curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
 		curUseragent = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERAGENT);
 	}
@@ -348,17 +348,20 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	g_signal_connect(G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
 	g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
 
-	// Domain name can be update only for SIP account
+	// Route set can be update only for SIP account
+	// TODO: uncomment this code and implement route 
+	/*
 	if(strcmp(curAccountType, "SIP") == 0) {
 	  row++;
-	  label = gtk_label_new_with_mnemonic(_("_Domain name (optional)"));
+	  label = gtk_label_new_with_mnemonic(_("_Route (optional)"));
 	  gtk_table_attach(GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	  gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-	  entryDomainName = gtk_entry_new();
-	  gtk_label_set_mnemonic_widget(GTK_LABEL(label), entryDomainName);
-	  gtk_entry_set_text(GTK_ENTRY(entryDomainName), curDomainName);
-	  gtk_table_attach (GTK_TABLE(table), entryDomainName, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	  entryRouteSet = gtk_entry_new();
+	  gtk_label_set_mnemonic_widget(GTK_LABEL(label), entryRouteSet);
+	  gtk_entry_set_text(GTK_ENTRY(entryRouteSet), curRouteSet);
+	  gtk_table_attach (GTK_TABLE(table), entryRouteSet, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	}
+	*/
 
 	row++;
 	label = gtk_label_new_with_mnemonic (_("_Password"));
@@ -638,7 +641,7 @@ static local_interface_changed_cb(GtkWidget * widget, gpointer data UNUSED) {
 
 		local_iface_name = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
 		// sflphone_get_interface_addr_from_name((char *)local_interface);
-		sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr);
+		sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr, 36);
 
 		gtk_entry_set_text(GTK_ENTRY(localAddressEntry), local_iface_addr);
 		gtk_entry_set_text (GTK_ENTRY(publishedAddressEntry), local_iface_addr);
@@ -654,13 +657,13 @@ static set_published_addr_manually_cb(GtkWidget * widget, gpointer data UNUSED)
 {
 
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-		DEBUG("Showing manual options");    
+		DEBUG("Config: Showing manual publishing options");    
 		gtk_widget_show(publishedPortLabel);            
 		gtk_widget_show(publishedPortSpinBox);
 		gtk_widget_show(publishedAddressLabel);                	
 		gtk_widget_show(publishedAddressEntry);
 	} else {
-		DEBUG("Hiding manual options");   
+		DEBUG("Config: Hiding manual publishing options");   
 		gtk_widget_hide(publishedPortLabel);            
 		gtk_widget_hide(publishedPortSpinBox);
 		gtk_widget_hide(publishedAddressLabel);                	
@@ -675,7 +678,7 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 
 	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
 
-		DEBUG("Showing stun options, hiding Local/Published info");
+		DEBUG("Config: Showing stun options, hiding Local/Published info");
 		gtk_widget_show (stunServerLabel);
 		gtk_widget_show (stunServerEntry);
 		gtk_widget_set_sensitive (sameAsLocalRadioButton, FALSE);
@@ -688,6 +691,8 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 
 	} else {
 
+	        DEBUG("Config: hiding stun options, showing Local/Published info");
+
 		gtk_widget_hide (stunServerLabel);
 		gtk_widget_hide (stunServerEntry);
 		gtk_widget_set_sensitive (sameAsLocalRadioButton, TRUE);
@@ -698,14 +703,6 @@ static use_stun_cb(GtkWidget *widget, gpointer data UNUSED)
 			gtk_widget_show (publishedPortLabel);
 			gtk_widget_show (publishedAddressEntry);
 			gtk_widget_show (publishedPortSpinBox);
-
-			// Since stun callback is called at initialization, we cannot reinit published address
-			// TODO: find a way so that if stun is unchecked, reinit published address entry 
-			//       in case local address changedd
-
-			// local_interface = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(localAddressCombo));
-			// local_address = dbus_get_address_from_interface_name(local_interface);
-			// gtk_entry_set_text(GTK_ENTRY(publishedAddressEntry), local_address);
 		}
 	}
 }
@@ -1004,7 +1001,7 @@ GtkWidget* create_network (account_t **a) {
     gchar *local_iface_addr;
     gchar *local_iface_name; 
 
-    local_iface_addr= g_malloc(18);
+    local_iface_addr= g_malloc(36);
     
     if (iface_list != NULL) {
 
@@ -1047,7 +1044,7 @@ GtkWidget* create_network (account_t **a) {
     // Fill the text entry with the ip address of local interface selected
     localAddressEntry = gtk_entry_new();
     local_iface_name = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
-    sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr);
+    sflphone_get_interface_addr_from_name(local_iface_name, &local_iface_addr, 36);
     gtk_entry_set_text(GTK_ENTRY(localAddressEntry), local_iface_addr);
     gtk_widget_set_sensitive(localAddressEntry, FALSE); 
     gtk_table_attach ( GTK_TABLE( table ), localAddressEntry, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -1143,8 +1140,6 @@ GtkWidget* create_published_address (account_t **a) {
 
 	gtk_table_attach_defaults(GTK_TABLE(table), publishedPortSpinBox, 1, 2, 6, 7);
 
-	use_stun_cb (GTK_WIDGET (useStunCheckBox), NULL);
-
 	// This will trigger a signal, and the above two
 	// widgets need to be instanciated before that.
 	g_signal_connect(localAddressCombo, "changed", G_CALLBACK(local_interface_changed_cb), localAddressCombo);   
@@ -1162,6 +1157,7 @@ GtkWidget* create_published_address (account_t **a) {
 GtkWidget* create_advanced_tab (account_t **a) {
 
 	// Build the advanced tab, to appear on the account configuration panel
+        DEBUG("Config: Build advanced tab")
 
 	GtkWidget *ret, *frame;
 
@@ -1178,6 +1174,10 @@ GtkWidget* create_advanced_tab (account_t **a) {
 	gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
 
 	gtk_widget_show_all (ret);
+
+	use_stun_cb (GTK_WIDGET (useStunCheckBox), NULL);
+
+	set_published_addr_manually_cb(GTK_WIDGET (publishedAddrRadioButton), NULL);
 
 	return ret;
 }
@@ -1336,8 +1336,8 @@ void show_account_window (account_t * a) {
 					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryUsername))));
 			if(strcmp(proto, "SIP") == 0) {
 			  g_hash_table_replace(currentAccount->properties,
-					g_strdup(ACCOUNT_DOMAIN),
-					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryDomainName))));
+					g_strdup(ACCOUNT_ROUTE),
+					g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryRouteSet))));
 			}
 
 			g_hash_table_replace(currentAccount->properties,
