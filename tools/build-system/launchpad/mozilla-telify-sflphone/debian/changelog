@@ -1,3 +1,10 @@
+mozilla-telify-sflphone (1.0) unstable; urgency=low
+
+  [ Julien Bonjean ]
+  * Package update
+
+ -- Julien Bonjean <julien.bonjean@savoirfairelinux.com>  Fri, 21 Avr 2010 19:51:54 +0100
+
 mozilla-telify-sflphone (0.4.7.3) unstable; urgency=low
 
   [ Julien Bonjean ]
