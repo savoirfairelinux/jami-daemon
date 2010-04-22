@@ -29,6 +29,10 @@
 
 #include <cc++/thread.h> // for ost::Mutex
 
+#include "echocancel.h"
+#include "algorithm.h"
+
+
 #define FRAME_PER_BUFFER	160
 
 /**
@@ -294,6 +298,10 @@ class AudioLayer {
 	 * Lock for the entire audio layer
 	 */ 
         ost::Mutex _mutex;
+
+	EchoCancel *_echoCancel;
+
+	AudioProcessing *_audioProcessing; 
 
 };
 

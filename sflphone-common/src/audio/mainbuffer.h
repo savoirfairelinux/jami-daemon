@@ -29,8 +29,6 @@
 #include "../global.h"
 #include "../call.h"
 #include "ringbuffer.h"
-#include "echocancel.h"
-#include "algorithm.h"
 
 
 
@@ -111,10 +109,6 @@ public:
 	ost::Mutex _mutex;
 
 	int _internalSamplingRate;
-
-	EchoCancel *_echoCancel;
-
-	AudioProcessing *_audioProcessing; 
 
     public:
 
