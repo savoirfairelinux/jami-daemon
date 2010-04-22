@@ -145,6 +145,11 @@ void codec_create_new_from_caps (codec_t *original, codec_t **copy) {
 
 	codec_t *codec;
 
+	if(!original) {
+	  *copy = NULL;
+	  return;
+	}
+
 	codec = g_new0 (codec_t, 1);
 	codec->_payload = original->_payload;
 	codec->name = original->name;
