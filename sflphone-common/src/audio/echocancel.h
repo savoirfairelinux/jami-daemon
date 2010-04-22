@@ -32,7 +32,20 @@ class EchoCancel : public Algorithm {
     ~EchoCancel();
 
     /**
-     * Perform echo cancellation
+     * Add speaker data into internal buffer
+     * \param inputData containing far-end voice data to be sent to speakers 
+     */
+    virtual void putData(SFLDataFormat *inputData);
+
+    /**
+     * Perform echo cancellation using internal buffers
+     * \param inputData containing mixed echo and voice data
+     * \param outputData containing 
+     */
+    virtual void process(SFLDataFormat *inputData, SFLDataFormat *outputData);
+
+    /**
+     * Perform echo cancellation, application must provide its own buffer
      * \param micData containing mixed echo and voice data
      * \param spkrData containing far-end voice data to be sent to speakers
      * \param outputData containing the processed data

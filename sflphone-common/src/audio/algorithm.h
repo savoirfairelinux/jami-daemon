@@ -32,8 +32,22 @@ class Algorithm {
  public:
 
   /**
-   * Class implementing this interface must define this function
-   * \param micData 
+   * Put data to be processed
+   */
+  virtual void putData(SFLDataFormat *inputData) = 0;
+
+  /**
+   * Class implementing this interface must define this function 
+   * for audio processing that require synchronization between spkrdata and
+   */
+  virtual void process(SFLDataFormat *inputData, SFLDataFormat *outputData) = 0;
+
+  /**
+   * Class implementing this interface must define this function 
+   * for audio processing that require synchronization between spkr and mic 
+   * \param micData
+   * \param spkrData
+   * \param outputData
    */
   virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) = 0;
 

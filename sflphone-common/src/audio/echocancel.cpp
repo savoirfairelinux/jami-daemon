@@ -23,15 +23,29 @@
 #define FRAME_SIZE 160
 #define FILTER_LENGTH 2000
 
-EchoCancel::EchoCancel() {
+EchoCancel::EchoCancel() 
+{
   _echoState = speex_echo_state_init(FRAME_SIZE, FILTER_LENGTH);
 }
 
-EchoCancel::~EchoCancel() {
+EchoCancel::~EchoCancel() 
+{
   speex_echo_state_destroy(_echoState);
+  _echoState = NULL;
 }
 
-void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
-  
+void EchoCancel::putData(SFLDataFormat *inputData) 
+{
+  speex_echo_playback(_echoState, inputData);
+}
+
+void EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData)
+{
+  speex_echo_capture(_echoState, inputData, outputData);
+}
+
+void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData){
+
+  speex_echo_cancellation(_echoState, micData, spkrData, outputData);
 
 }
