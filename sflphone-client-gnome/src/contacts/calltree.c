@@ -91,7 +91,6 @@ call_selected_cb(GtkTreeSelection *sel, void* data UNUSED )
 
 
     if (! gtk_tree_selection_get_selected (sel, &model, &iter)) {
-        ERROR("CallTree: Not a valid selection, returning");
         return;
     }
 
