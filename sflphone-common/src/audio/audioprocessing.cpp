@@ -27,6 +27,18 @@ AudioProcessing::AudioProcessing(Algorithm *_algo) : _algorithm(_algo){}
 
 AudioProcessing::~AudioProcessing(void){}
 
+void AudioProcessing::putData(SFLDataFormat *inputData)
+{
+  if(_algorithm)
+    _algorithm->putData(inputData);
+}
+
+void AudioProcessing::processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData)
+{
+  if(_algorithm)
+    _algorithm->process(inputData, outputData);
+}
+
 
 void AudioProcessing::processAudio(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
   if(_algorithm)

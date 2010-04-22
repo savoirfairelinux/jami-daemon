@@ -44,6 +44,16 @@ public:
   void setAlgorithm(Algorithm *_algo) { _algorithm = _algo; }
 
   /**
+   * Put data in internal buffer
+   */
+  void putData(SFLDataFormat *inputData);
+
+  /**
+   * Process dome audio data
+   */
+  void processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData);
+
+  /**
    * Process some audio data.
    */
   void processAudio(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData);
