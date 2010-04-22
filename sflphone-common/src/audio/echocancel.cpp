@@ -20,9 +20,16 @@
 #include "echocancel.h"
 
 
-EchoCancel::EchoCancel() {}
+#define FRAME_SIZE 160
+#define FILTER_LENGTH 2000
 
-EchoCancel::~EchoCancel() {}
+EchoCancel::EchoCancel() {
+  _echoState = speex_echo_state_init(FRAME_SIZE, FILTER_LENGTH);
+}
+
+EchoCancel::~EchoCancel() {
+  speex_echo_state_destroy(_echoState);
+}
 
 void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
   

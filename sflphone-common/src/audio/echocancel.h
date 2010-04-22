@@ -38,6 +38,9 @@ class EchoCancel : public Algorithm {
      * \param outputData containing the processed data
      */
     virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData);
+ private:
+
+    SpeexEchoState *_echoState;
 };
 
 #endif
