@@ -621,10 +621,11 @@ void PulseLayer::readFromMic (void)
             // remove dc offset
             dcblocker->filter_signal (rsmpl_out, nbSample);
 
-	    // here should be some echo processing
-	    _audioProcessing->processAudio(rsmpl_out, (SFLDataFormat*)(&echoCancelledMic), nbSample*sizeof(SFLDataFormat));
+	    // echo cancellation processing
+	    int sampleready = _audioProcessing->processAudio(rsmpl_out, (SFLDataFormat*)(&echoCancelledMic), nbSample*sizeof(SFLDataFormat));
 
-            getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
+            // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
+	    getMainBuffer()->putData ( (void*) rsmpl_out, sampleready*sizeof (SFLDataFormat), 100);
 
             pa_xfree (rsmpl_out);
 

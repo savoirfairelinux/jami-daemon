@@ -40,7 +40,7 @@ class Algorithm {
    * Class implementing this interface must define this function 
    * for audio processing that require synchronization between spkrdata and
    */
-  virtual void process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) = 0;
+  virtual int process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) = 0;
 
   /**
    * Class implementing this interface must define this function 

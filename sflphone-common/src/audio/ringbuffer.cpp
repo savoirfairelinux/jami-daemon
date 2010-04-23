@@ -97,6 +97,8 @@ RingBuffer::getLen (CallID call_id)
     int mStart = getReadPointer (call_id);
 
     int length = (mEnd + mBufferSize - mStart) % mBufferSize;
+
+    
     // _debug("    *RingBuffer::getLen: buffer_id %s, call_id %s, mStart %i, mEnd %i, length %i, buffersie %i", buffer_id.c_str(), call_id.c_str(), mStart, mEnd, length, mBufferSize);
     return length;
 
@@ -209,7 +211,7 @@ RingBuffer::AvailForPut()
 {
     // Always keep 4 bytes safe (?)
 
-    return (mBufferSize-4) - putLen();
+    return mBufferSize - putLen();
 }
 
 // This one puts some data inside the ring buffer.
@@ -225,8 +227,8 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
     int len = putLen();
 
 
-    if (toCopy > (mBufferSize-4) - len)
-        toCopy = (mBufferSize-4) - len;
+    if (toCopy > mBufferSize - len)
+        toCopy = mBufferSize - len;
 
     src = (samplePtr) buffer;
 
@@ -239,7 +241,6 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
         block = toCopy;
 
         // Wrap block around ring ?
-
         if (block > (mBufferSize - pos)) {
             // Fill in to the end of the buffer
             block = mBufferSize - pos;
@@ -283,7 +284,7 @@ RingBuffer::AvailForGet (CallID call_id)
 {
     // Used space
 
-    return getLen (call_id);
+    return getLen(call_id);
 }
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
@@ -302,7 +303,6 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
     int block;
 
     int copied;
-
 
     int len = getLen (call_id);
 

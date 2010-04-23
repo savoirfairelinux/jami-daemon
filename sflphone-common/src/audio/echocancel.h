@@ -22,6 +22,7 @@
 
 #include "audioprocessing.h"
 #include <speex/speex_echo.h>
+#include "speex/speex_preprocess.h"
 
 #include "ringbuffer.h"
 
@@ -44,7 +45,7 @@ class EchoCancel : public Algorithm {
      * \param inputData containing mixed echo and voice data
      * \param outputData containing 
      */
-    virtual void process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+    virtual int process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
     /**
      * Perform echo cancellation, application must provide its own buffer
@@ -57,8 +58,12 @@ class EchoCancel : public Algorithm {
 
     SpeexEchoState *_echoState;
 
+    SpeexPreprocessState *_preState;
+
     RingBuffer *_micData; 
     RingBuffer *_spkrData; 
+
+    bool _spkrStoped;
 };
 
 #endif

@@ -33,10 +33,12 @@ void AudioProcessing::putData(SFLDataFormat *inputData, int nbBytes)
     _algorithm->putData(inputData, nbBytes);
 }
 
-void AudioProcessing::processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
+int AudioProcessing::processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
   if(_algorithm)
-    _algorithm->process(inputData, outputData, nbBytes);
+    return _algorithm->process(inputData, outputData, nbBytes);
+  else
+    return 0;
 }
 
 
