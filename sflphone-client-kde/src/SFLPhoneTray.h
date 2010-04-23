@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,40 +18,29 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef CODECLISTMODEL_H
-#define CODECLISTMODEL_H
 
-#include <QAbstractItemModel>
-#include "Codec.h"
+#ifndef SFLPHONETRAY_H
+#define SFLPHONETRAY_H
 
-/**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
-*/
-class CodecListModel : public QAbstractTableModel
+#include <KSystemTrayIcon>
+#include <KAction>
+#include <QMenu>
+#include <QIcon>
+
+class SFLPhoneTray : public KSystemTrayIcon
 {
 Q_OBJECT
-private:
-	QList<Codec *> codecs;
 
 public:
-	CodecListModel(QObject *parent = 0);
+   SFLPhoneTray(QIcon icon, QWidget *parent = 0);
+   ~SFLPhoneTray();
+   bool initialize();
+   void setupActions();
+   void addAction(KAction *action);
 
-	~CodecListModel();
-
-	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
-	int rowCount(const QModelIndex & parent = QModelIndex()) const;
-	int columnCount(const QModelIndex & parent = QModelIndex()) const;
-	QVariant headerData(int section , Qt::Orientation orientation, int role) const;
-	Qt::ItemFlags flags(const QModelIndex & index) const;
-	virtual bool setData ( const QModelIndex & index, const QVariant &value, int role);
-	
-	bool codecUp( int index );
-	bool codecDown( int index );
-	QStringList getActiveCodecList() const ;
-	void setActiveCodecList(const QStringList & activeCodecListToSet);
-
-signals:
-// 	void dataChanged(const QModelIndex &, const QModelIndex &);
+private:
+   QMenu *trayIconMenu;
+   bool initialized_;
 };
 
-#endif
+#endif // SFLPHONETRAY_H

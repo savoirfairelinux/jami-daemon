@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Valle <emmanuel.lepage@savoirfairelinux.com >*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,7 +24,6 @@
 
 #include <QtCore/QVector>
 #include <QtCore/QString>
-#include <QtGui/QListWidgetItem>
 
 #include "Call.h"
 #include "dbus/metatypes.h"
@@ -35,34 +34,35 @@ Q_OBJECT
 
 private:
 
-	QVector<Call *> * calls;
+   QVector<Call*>* calls;
 
 public:
 
-	//Constructors & Destructors
-	CallList(QObject * parent = 0);
-	~CallList();
+   //Constructors & Destructors
+   CallList(QObject * parent = 0);
+   ~CallList();
 
-	//Getters
-	Call * findCallByItem(const QListWidgetItem * item);
-	Call * findCallByHistoryItem(const QListWidgetItem * item);
-	Call * findCallByCallId(const QString & callId);
-	Call * operator[](const QListWidgetItem * item);
-	Call * operator[](const QString & callId);
-	Call * operator[](int ind);
-	int size();
-	MapStringString getHistoryMap();
+   //Getters
+   //   Call * findCallByItem(const QListWidgetItem * item);
+   //   Call * findCallByHistoryItem(const QListWidgetItem * item);
+   Call * findCallByCallId(const QString & callId);
+   //   Call * operator[](const QListWidgetItem * item);
+   Call * operator[](const QString & callId);
+   Call * operator[](int ind);
+   int size();
+   MapStringString getHistoryMap();
 
-	//Setters
-	Call * addDialingCall(const QString & peerName = "", QString account = "");
-	Call * addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
-	Call * addRingingCall(const QString & callId);
+   //Setters
+   Call* addDialingCall(const QString & peerName = "", QString account = "");
+   Call* addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
+   Call* addRingingCall(const QString & callId);
+   Call* createConversationFromCall(Call* call1, Call* call2);
 
-	//GSetter
-	QString generateCallId();
-	
+   //GSetter
+   QString generateCallId();
+   
 public slots:
-	void clearHistory();
+   void clearHistory();
 
 };
 

@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,7 +28,7 @@
 #include <kled.h>
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class AccountItemWidget : public QWidget
 {
@@ -36,40 +36,40 @@ Q_OBJECT
 
 private:
 
-	int state;
-	bool enabled;
-	QLabel * led;
-	QCheckBox * checkBox;
-	QLabel * textLabel;
+   int state;
+   bool enabled;
+   QLabel * led;
+   QCheckBox * checkBox;
+   QLabel * textLabel;
 
 public:
 
-	enum State {Registered, Unregistered, NotWorking};
+   enum State {Registered, Unregistered, NotWorking};
 
-	//Constructors & Destructors
-	AccountItemWidget(QWidget *parent = 0);
-	~AccountItemWidget();
+   //Constructors & Destructors
+   AccountItemWidget(QWidget *parent = 0);
+   ~AccountItemWidget();
 
-	//Getters
-	int getState();
-	bool getEnabled();
-	
-	//Setters
-	void setState(int state);
-	void setEnabled(bool enabled);
-	void setAccountText(QString text);
-	
-	//Updates
-	void updateStateDisplay();
-	void updateEnabledDisplay();
-	void updateDisplay();
-	
-private slots:	
-	void on_checkBox_stateChanged(int state);
-	
-	
+   //Getters
+   int getState();
+   bool getEnabled();
+   
+   //Setters
+   void setState(int state);
+   void setEnabled(bool enabled);
+   void setAccountText(QString text);
+   
+   //Updates
+   void updateStateDisplay();
+   void updateEnabledDisplay();
+   void updateDisplay();
+   
+private slots:   
+   void on_checkBox_stateChanged(int state);
+   
+   
 signals:
-	void checkStateChanged(bool checked);
+   void checkStateChanged(bool checked);
 
 };
 

@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -29,59 +29,59 @@
 
 class AccountList : public QObject{
 
-	Q_OBJECT
-	
+   Q_OBJECT
+   
 private:
 
-	QVector<Account *> * accounts;
+   QVector<Account *> * accounts;
 
 public:
 
-	//Constructors & Destructors
-	AccountList(QStringList & _accountIds);
-	/**
-	 *   Constructs a new accountList, empty if fill = false
-	 *   filled with accounts from configurationManager.getAccountList() if true
-	 * @param fill Whether to fill the list with accounts from configurationManager or not.
-	 */
-	AccountList(bool fill = true);
-	~AccountList();
-	
-	//Getters
-	QVector<Account *> & getAccounts();
-	Account * getAccountAt (int i);
-	const Account * getAccountAt (int i) const;
-	Account * getAccountById(const QString & id) const;
-	QVector<Account *>  getAccountByState(QString & state);
-	Account * getAccountByItem(QListWidgetItem * item);
-	int size() const;
-	Account * firstRegisteredAccount() const;
-	QString getOrderedList() const;
-	
-	//Setters
-	Account * addAccount(QString & alias);
-	void removeAccount(Account * account);
-	void removeAccount(QListWidgetItem * item);
-	void upAccount(int index);
-	void downAccount(int index);
+   //Constructors & Destructors
+   AccountList(QStringList & _accountIds);
+   /**
+    *   Constructs a new accountList, empty if fill = false
+    *   filled with accounts from configurationManager.getAccountList() if true
+    * @param fill Whether to fill the list with accounts from configurationManager or not.
+    */
+   AccountList(bool fill = true);
+   ~AccountList();
+   
+   //Getters
+   QVector<Account *> & getAccounts();
+   Account * getAccountAt (int i);
+   const Account * getAccountAt (int i) const;
+   Account * getAccountById(const QString & id) const;
+   QVector<Account *>  getAccountByState(QString & state);
+   Account * getAccountByItem(QListWidgetItem * item);
+   int size() const;
+   Account * firstRegisteredAccount() const;
+   QString getOrderedList() const;
+   
+   //Setters
+   Account * addAccount(QString & alias);
+   void removeAccount(Account * account);
+   void removeAccount(QListWidgetItem * item);
+   void upAccount(int index);
+   void downAccount(int index);
 
-	//Operators
-	Account * operator[] (int i);
-	const Account * operator[] (int i) const;
-	QVector<Account *> registeredAccounts() const;
-	
-public slots:	
-	/**
-	 *   updates the list of accounts (removed, added, order...) with the configurationManager's list
-	 */
-	void update();
-	/**
-	 *   updates the list and the details of accounts with the configurationManager's list
-	 */
-	void updateAccounts();
-	
+   //Operators
+   Account * operator[] (int i);
+   const Account * operator[] (int i) const;
+   QVector<Account *> registeredAccounts() const;
+   
+public slots:   
+   /**
+    *   updates the list of accounts (removed, added, order...) with the configurationManager's list
+    */
+   void update();
+   /**
+    *   updates the list and the details of accounts with the configurationManager's list
+    */
+   void updateAccounts();
+   
 signals:
-	void accountListUpdated();
+   void accountListUpdated();
 };
 
 

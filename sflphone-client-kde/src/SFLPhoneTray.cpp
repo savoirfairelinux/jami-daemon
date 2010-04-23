@@ -1,7 +1,7 @@
-/***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+/************************************** *************************************
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,23 +18,45 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "dlgrecord.h"
 
-#include <KLineEdit>
+#include <QDebug>
 
-DlgRecord::DlgRecord(QWidget *parent)
- : QWidget(parent)
-{
-	setupUi(this);
-	KUrlRequester_destinationFolder->setMode(KFile::Directory|KFile::ExistingOnly|KFile::LocalOnly);
-	KUrlRequester_destinationFolder->setUrl(KUrl(QDir::home().path()));
-	KUrlRequester_destinationFolder->lineEdit()->setObjectName("kcfg_destinationFolder"); 
-	KUrlRequester_destinationFolder->lineEdit()->setReadOnly(true); 
-}
+#include "SFLPhoneTray.h"
 
-
-DlgRecord::~DlgRecord()
+SFLPhoneTray::SFLPhoneTray(QIcon icon, QWidget *parent)
+      : KSystemTrayIcon(icon, parent),
+         initialized_(false),
+         trayIconMenu(0)
 {
 }
 
+SFLPhoneTray::~SFLPhoneTray()
+{
+}
 
+bool SFLPhoneTray::initialize()
+{
+   if ( initialized_ ) {
+      qDebug() << "Already initialized.";
+      return false;
+   }
+
+   trayIconMenu = new QMenu(parentWidget());
+   setContextMenu(trayIconMenu);
+
+   setupActions();
+
+   initialized_ = true;
+
+   return true;
+}
+
+void SFLPhoneTray::addAction(KAction *action)
+{
+   trayIconMenu->addAction(action);
+}
+
+void SFLPhoneTray::setupActions()
+{
+   qDebug() << "setupActions";
+}
