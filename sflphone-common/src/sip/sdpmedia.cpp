@@ -75,10 +75,7 @@ sdpMedia::sdpMedia (std::string type, int port, std::string dir)
 
 sdpMedia::~sdpMedia()
 {
-    int i;
-
-    for (i=0; i< (int) _codec_list.size(); i++)
-        delete _codec_list[i];
+	clear_codec_list();
 }
 
 
@@ -99,7 +96,6 @@ std::string sdpMedia::get_media_type_str (void)
 
 void sdpMedia::add_codec (AudioCodec* codec)
 {
-
     _codec_list.push_back (codec);
 }
 

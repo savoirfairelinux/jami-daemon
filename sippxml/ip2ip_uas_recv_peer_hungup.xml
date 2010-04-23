@@ -49,6 +49,9 @@
  <recv request="ACK" optional="true" rtd="true" crlf="true">
  </recv>
 
+ <recv request="INVITE" optional="true">
+ </recv>
+
  <recv request="BYE">
  </recv>
 
@@ -66,8 +69,6 @@
 
    ]]>
  </send>
-
- <pause milliseconds="4000"/>
 
 
  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>

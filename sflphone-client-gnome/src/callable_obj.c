@@ -183,7 +183,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     else
         state = CALL_STATE_FAILURE;
 
-    create_new_call (CALL, state, (gchar*)call_id, accountID, peer_name, peer_number, &new_call);
+    create_new_call (CALL, state, (gchar*)call_id, accountID, peer_name, call_get_peer_number(peer_number), &new_call);
     *call = new_call;
 }
 

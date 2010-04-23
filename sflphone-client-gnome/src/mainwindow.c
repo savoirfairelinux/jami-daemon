@@ -105,15 +105,10 @@ main_window_ask_quit ()
   response = gtk_dialog_run (GTK_DIALOG (dialog));
 
   gtk_widget_destroy (dialog);
-  if (response == GTK_RESPONSE_YES)
-    {
-      return TRUE;
-    }
-  else if (response == GTK_RESPONSE_NO)
-    {
-      return FALSE;
-    }
-  return TRUE;
+
+  return (response == GTK_RESPONSE_NO)? FALSE : TRUE ;
+
+
 }
 
 static gboolean
@@ -282,7 +277,7 @@ create_main_window ()
   gtk_widget_hide (waitingLayer);
 
   // Configuration wizard
-  if (account_list_get_size () == 0)
+  if (account_list_get_size () == 1)
     {
 #if GTK_CHECK_VERSION(2,10,0)
       build_wizard ();

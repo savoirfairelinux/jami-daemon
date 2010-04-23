@@ -362,11 +362,10 @@ help_contents_cb(GtkAction *action)
   GError *error = NULL;
 
   gnome_help_display("sflphone.xml", NULL, &error);
-  if (error != NULL)
-    {
+  if (error != NULL) {
       g_warning("%s", error->message);
       g_error_free(error);
-    }
+  }
 }
 
 static void

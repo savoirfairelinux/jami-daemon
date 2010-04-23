@@ -26,6 +26,7 @@
 
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
+	, _routeSet("")
         , _regc (NULL)
         , _bRegister (false)
         , _registrationExpire ("")
@@ -33,7 +34,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _publishedIpAddress ("")
         , _localPort (atoi (DEFAULT_SIP_PORT))
         , _publishedPort (atoi (DEFAULT_SIP_PORT))
-		, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
+	, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
         , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
         , _transport (NULL)
         , _resolveOnce (false)
@@ -42,7 +43,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _realm (DEFAULT_REALM)
         , _authenticationUsername ("")
         , _tlsSetting (NULL)
-	    , _dtmfType(OVERRTP)
+	, _dtmfType(OVERRTP)
         , _displayName ("")
 {
     
@@ -330,6 +331,7 @@ void SIPAccount::loadConfig()
 {
     // Load primary credential
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
+    setRouteSet(Manager::instance().getConfigString(_accountID, ROUTESET));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
     _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
     _realm = Manager::instance().getConfigString (_accountID, REALM);
@@ -459,10 +461,12 @@ std::string SIPAccount::getFromUri (void)
         username = getLoginName();
     }
 
+
     // Get machine hostname if not provided
     if (_hostname.empty()) {
-        hostname = getMachineName();
+      hostname = getMachineName();
     }
+
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
 
@@ -481,7 +485,7 @@ std::string SIPAccount::getToUri (const std::string& username)
 
     std::string scheme;
     std::string transport;
-    std::string hostname = _hostname;
+    std::string hostname = "";
 
     // UDP does not require the transport specification
 
@@ -499,8 +503,9 @@ std::string SIPAccount::getToUri (const std::string& username)
     }
 
     // Check if hostname is already specified
-    if (username.find ("@") != std::string::npos) {
-        hostname = "";
+    if (username.find ("@") == std::string::npos) {
+        // hostname not specified
+	hostname = _hostname;
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
@@ -521,6 +526,7 @@ std::string SIPAccount::getServerUri (void)
 
     std::string scheme;
     std::string transport;
+    std::string hostname = _hostname;
 
     // UDP does not require the transport specification
 
@@ -533,10 +539,9 @@ std::string SIPAccount::getServerUri (void)
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
-
                                 "<%s%s%s>",
                                 scheme.c_str(),
-                                _hostname.c_str(),
+                                hostname.c_str(),
                                 transport.c_str());
 
     return std::string (uri, len);

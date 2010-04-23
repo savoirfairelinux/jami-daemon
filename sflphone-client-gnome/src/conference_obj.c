@@ -140,11 +140,11 @@ GSList* conference_participant_list_update(gchar** participants, conference_obj_
 	conf->participant_list = NULL;
     }
 
-    DEBUG("conference_participant_list_update\n");
+    DEBUG("Conference: Participant list update");
 
     for (part = participants; *part; part++) {
         call_id = (gchar*)(*part);
-	DEBUG("   adding %s", call_id);
+	DEBUG("Adding %s", call_id);
 	conference_add_participant(call_id, conf);
     }
 

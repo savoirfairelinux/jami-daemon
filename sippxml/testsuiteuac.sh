@@ -251,6 +251,52 @@ function test_ip2ip_send_refused {
 }
 
 
+# SCENARIO 6 Test 1
+function test_mult_ip2ip_send_hangup {
+
+    # start sflphoned
+    # /usr/lib/sflphone/sflphoned& 
+
+    # start sipp server to receive calls from sflphone
+    sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1:5060 -i 127.0.0.1 -p 5062 -l 1 -m 10 
+    sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1:5060 -i 127.0.0.1 -p 5064 -l 1 -m 10
+    sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1:5060 -i 127.0.0.1 -p 5066 -l 1 -m 10
+    # sipp -sf ip2ip_uac_send_hangup.xml ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT} -l 1 -m 10
+
+    # wait some time to make sure sflphoned is started
+    # sleep 1;
+
+    # run python client and script to make calls
+    # python ../tools/pysflphone/pysflphone_testdbus.py &
+
+    # kill every one
+    # bashtrap
+}
+
+
+# SCENARIO 6 Test 2
+function test_mult_ip2ip_recv_peer_hangup {
+
+    # start sflphoned
+    # /usr/lib/sflphone/sflphoned& 
+
+    # start sipp server to receive calls from sflphone
+    sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1 -i 127.0.0.1:5060 -p 5062
+    sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1 -i 127.0.0.1:5060 -p 5064
+    sipp -sf ip2ip_uac_send_hangup.xml 127.0.0.1 -i 127.0.0.1:5060 -p 5066
+    # sipp -sf ip2ip_uas_recv_peer_hungup.xml ${REMOTEADDR_lo} -i ${LOCALIP_lo} -p ${LOCALPORT}
+
+    # wait some time to make sure sflphoned is started
+    # sleep 1;
+
+    # run python client and script to make calls
+    # python ../tools/pysflphone/pysflphone_testdbus.py &
+
+    # kill every one
+    # bashtrap
+}
+
+
 # function called if CTRL-C detected 
 bashtrap()
 {
@@ -267,7 +313,7 @@ bashtrap()
 
 # Test 1: - Send an IP2IP call
 #         - Hangup
-# test_ip2ip_send_hangup
+test_ip2ip_send_hangup
 
 # Test 2: - Send an IP2IP call
 #         - Peer Hangup
@@ -299,7 +345,7 @@ bashtrap()
 
 # Test 4: - Receive an ACCOUNT call
 #         - Peer Hangup
-test_account_recv_peer_hungup
+# test_account_recv_peer_hungup
 
 
 
@@ -313,7 +359,7 @@ test_account_recv_peer_hungup
 
 
 
-# SCENARIO 4:  Transfer calls (Account)
+# SCENARIO 4: Transfer calls (Account)
 
 # Test 1: - Send an IP2IP call
 #         - Transfer this call to another sipp instance
@@ -326,3 +372,12 @@ test_account_recv_peer_hungup
 # Test 1: - Receive a call
 #         - Refuse (hangup without answer)
 # test_ip2ip_send_refused
+
+
+#SCENARIO 6: Multiple simultaneous Call
+
+# Test 1: -
+# test_mult_ip2ip_send_hangup
+
+# Test 2: -
+# test_mult_ip2ip_recv_peer_hangup

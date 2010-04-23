@@ -57,14 +57,14 @@ static void stream_moved_callback(pa_stream *s UNUSED, void *userdata UNUSED)
 
 static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
 {
-    _debug ("Audio: Buffer Underflow");
-    pa_stream_trigger (s, NULL, NULL);
+    // _debug ("Audio: Buffer Underflow");
+    // pa_stream_trigger (s, NULL, NULL);
 }
 
 
 static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
 {
-    _debug ("Audio: Buffer OverFlow");
+    // _debug ("Audio: Buffer OverFlow");
 
 }
 
@@ -469,7 +469,7 @@ void PulseLayer::writeToSpeaker (void)
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
                 int copied = tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
 		
-                int returnValue = pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
                 pa_xfree (out);
 

@@ -78,6 +78,7 @@ noinst_HEADERS = \
 libsflphone_la_LIBADD = \
 	$(src)/libs/utilspp/libutilspp.la \
 	$(src)/libs/iax2/libiax2.la \
+	$(src)/libs/dbus-c++/src/libdbus-c++-1.la \
 	$(IAX_LIB) \
 	./sip/libsiplink.la \
 	./audio/libaudio.la \

@@ -32,7 +32,7 @@ void
 addressbook_search(GtkEntry* entry)
 {
 
-    gchar* query = gtk_entry_get_text(GTK_ENTRY (entry));
+    const gchar* query = gtk_entry_get_text(GTK_ENTRY (entry));
     if (strlen(query) >= 3) {
 
         AddressBook_Config *addressbook_config;
