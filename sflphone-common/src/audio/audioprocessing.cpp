@@ -27,10 +27,10 @@ AudioProcessing::AudioProcessing(Algorithm *_algo) : _algorithm(_algo){}
 
 AudioProcessing::~AudioProcessing(void){}
 
-void AudioProcessing::putData(SFLDataFormat *inputData)
+void AudioProcessing::putData(SFLDataFormat *inputData, int nbBytes)
 {
   if(_algorithm)
-    _algorithm->putData(inputData);
+    _algorithm->putData(inputData, nbBytes);
 }
 
 void AudioProcessing::processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData)

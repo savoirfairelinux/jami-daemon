@@ -34,7 +34,7 @@ class Algorithm {
   /**
    * Put data to be processed
    */
-  virtual void putData(SFLDataFormat *inputData) = 0;
+  virtual void putData(SFLDataFormat *inputData, int nbBytes) = 0;
 
   /**
    * Class implementing this interface must define this function 

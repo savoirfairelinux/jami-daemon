@@ -536,6 +536,9 @@ void PulseLayer::writeToSpeaker (void)
 
                 getMainBuffer()->getData (out, byteToGet, 100);
 
+		// Copy far-end signal in echo canceller to adapt filter coefficient
+		AudioLayer::_audioProcessing->putData(out, byteToGet);
+
                 // test if resampling is required
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
@@ -616,6 +619,9 @@ void PulseLayer::readFromMic (void)
 
             // remove dc offset
             dcblocker->filter_signal (rsmpl_out, nbSample);
+
+
+	    // here should be some echo processing
 
             getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 

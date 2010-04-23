@@ -46,7 +46,7 @@ public:
   /**
    * Put data in internal buffer
    */
-  void putData(SFLDataFormat *inputData);
+  void putData(SFLDataFormat *inputData, int nbBytes);
 
   /**
    * Process dome audio data

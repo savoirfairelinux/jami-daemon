@@ -34,7 +34,7 @@ EchoCancel::~EchoCancel()
   _echoState = NULL;
 }
 
-void EchoCancel::putData(SFLDataFormat *inputData) 
+void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
 {
   speex_echo_playback(_echoState, inputData);
 }

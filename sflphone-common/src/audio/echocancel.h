@@ -35,7 +35,7 @@ class EchoCancel : public Algorithm {
      * Add speaker data into internal buffer
      * \param inputData containing far-end voice data to be sent to speakers 
      */
-    virtual void putData(SFLDataFormat *inputData);
+    virtual void putData(SFLDataFormat *inputData, int nbBytes);
 
     /**
      * Perform echo cancellation using internal buffers
