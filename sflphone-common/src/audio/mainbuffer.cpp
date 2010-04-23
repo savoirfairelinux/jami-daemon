@@ -20,8 +20,6 @@
 
 #include "mainbuffer.h"
 
-#include "audioprocessing.h"
-
 
 MainBuffer::MainBuffer() : _internalSamplingRate (0)
 {

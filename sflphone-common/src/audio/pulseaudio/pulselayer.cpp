@@ -21,6 +21,7 @@
 #include "pulselayer.h"
 #include "managerimpl.h"
 
+
 int framesPerBuffer = 2048;
 
 static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
@@ -79,6 +80,9 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     _urgentRingBuffer.createReadPointer();
     dcblocker = new DcBlocker();
     is_started = false;
+
+    AudioLayer::_echoCancel = new EchoCancel();
+    AudioLayer::_audioProcessing = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
     
     openLayer();
 }
@@ -94,8 +98,13 @@ PulseLayer::~PulseLayer (void)
     }
 
     delete dcblocker;
-
     dcblocker = NULL;
+
+    delete AudioLayer::_echoCancel;
+    AudioLayer::_echoCancel = NULL;
+    
+    delete AudioLayer::_audioProcessing;
+    AudioLayer::_audioProcessing = NULL;
 }
 
 void

@@ -204,7 +204,7 @@ AudioStream::createStream (pa_context* c)
     } else if (_streamType == CAPTURE_STREAM) {
 
         attributes->maxlength = (uint32_t) -1;
-        attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->fragsize = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &_sample_spec);
 
 		pa_threaded_mainloop_lock(_mainloop);
         pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
