@@ -622,6 +622,7 @@ void PulseLayer::readFromMic (void)
 
 
 	    // here should be some echo processing
+	    _audioProcessing->processAudio(rsmpl_out, rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
             getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 

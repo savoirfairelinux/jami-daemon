@@ -51,12 +51,12 @@ public:
   /**
    * Process dome audio data
    */
-  void processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData);
+  void processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
   /**
    * Process some audio data.
    */
-  void processAudio(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData);
+  void processAudio(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
 
 private:
 

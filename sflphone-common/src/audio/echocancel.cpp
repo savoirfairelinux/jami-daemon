@@ -19,33 +19,51 @@
 
 #include "echocancel.h"
 
+#include <iostream>
+
 
 #define FRAME_SIZE 160
 #define FILTER_LENGTH 2000
 
 EchoCancel::EchoCancel() 
 {
+  _debug("EchoCancel: Instantiate echo canceller");
+
   _echoState = speex_echo_state_init(FRAME_SIZE, FILTER_LENGTH);
+
+  _micData = new RingBuffer(5000);
+  _spkrData = new RingBuffer(5000);
 }
 
 EchoCancel::~EchoCancel() 
 {
+  _debug("EchoCancel: Delete echo canceller");
+
   speex_echo_state_destroy(_echoState);
   _echoState = NULL;
+
+  delete _micData;
+  _micData = NULL;
+
+  delete _spkrData;
+  _spkrData = NULL;
 }
 
 void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
 {
-  speex_echo_playback(_echoState, inputData);
+  std::cout << "putData " << nbBytes << std::endl;
+
+  // speex_echo_playback(_echoState, inputData);
 }
 
-void EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData)
+void EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
-  speex_echo_capture(_echoState, inputData, outputData);
+  std::cout << "process " << nbBytes << std::endl;
+  // speex_echo_capture(_echoState, inputData, outputData);
 }
 
-void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData){
+void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes){
 
-  speex_echo_cancellation(_echoState, micData, spkrData, outputData);
+  // speex_echo_cancellation(_echoState, micData, spkrData, outputData);
 
 }
