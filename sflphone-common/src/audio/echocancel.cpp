@@ -22,7 +22,7 @@
 #include <iostream>
 
 
-#define FRAME_SIZE 160
+#define FRAME_SIZE 320
 #define FILTER_LENGTH 2000
 
 EchoCancel::EchoCancel() 
@@ -33,6 +33,9 @@ EchoCancel::EchoCancel()
 
   _micData = new RingBuffer(5000);
   _spkrData = new RingBuffer(5000);
+
+  _micData->createReadPointer();
+  _spkrData->createReadPointer();
 }
 
 EchoCancel::~EchoCancel() 
@@ -51,14 +54,49 @@ EchoCancel::~EchoCancel()
 
 void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
 {
-  std::cout << "putData " << nbBytes << std::endl;
+  std::cout << "putData nbBytes: " << nbBytes << std::endl;
+
+  // Put data in speaker ring buffer
+  _spkrData->Put(inputData, nbBytes);
 
   // speex_echo_playback(_echoState, inputData);
 }
 
 void EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
-  std::cout << "process " << nbBytes << std::endl;
+
+  SFLDataFormat tmpSpkr[5000];
+  SFLDataFormat tmpMic[5000];
+
+  std::cout << "process nbBytes: " << nbBytes << std::endl;
+
+  // Put data in microphone ring buffer
+  _micData->Put(inputData, nbBytes);
+
+  int spkrAvail = _spkrData->AvailForGet();
+  int micAvail = _micData->AvailForGet();
+
+  std::cout << "process spkrData AvailForGet: " << spkrAvail << std::endl;  
+  std::cout << "process micData AvailForGet: " << micAvail << std::endl; 
+
+  // Number of frame processed
+  int nbFrame = 0;
+
+  // Get data from mic and speaker
+  while((spkrAvail > 320) && (micAvail > 320)) {
+
+    _spkrData->Get(&tmpSpkr, FRAME_SIZE);
+    _micData->Get(&tmpMic, FRAME_SIZE);
+    
+    speex_echo_cancellation(_echoState, (const spx_int16_t*)(&tmpMic), (const spx_int16_t*)&tmpSpkr, outputData);
+
+    spkrAvail = _spkrData->AvailForGet();
+    micAvail = _micData->AvailForGet();
+
+    ++nbFrame;
+
+  }
+
   // speex_echo_capture(_echoState, inputData, outputData);
 }
 

@@ -593,6 +593,8 @@ void PulseLayer::readFromMic (void)
     const char* data = NULL;
     size_t r;
 
+    SFLDataFormat echoCancelledMic[5000];
+
     int readableSize = pa_stream_readable_size (record->pulseStream());
 
 
@@ -614,15 +616,13 @@ void PulseLayer::readFromMic (void)
 
             int nb_sample_up = nbSample;
 
-
             nbSample = _converter->downsampleData ( (SFLDataFormat*) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
             // remove dc offset
             dcblocker->filter_signal (rsmpl_out, nbSample);
 
-
 	    // here should be some echo processing
-	    _audioProcessing->processAudio(rsmpl_out, rsmpl_out, nbSample*sizeof(SFLDataFormat));
+	    _audioProcessing->processAudio(rsmpl_out, (SFLDataFormat*)(&echoCancelledMic), nbSample*sizeof(SFLDataFormat));
 
             getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 
