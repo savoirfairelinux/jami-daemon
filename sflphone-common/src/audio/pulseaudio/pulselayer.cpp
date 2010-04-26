@@ -112,7 +112,7 @@ PulseLayer::openLayer (void)
 {
 	if (!is_started) {
 
-		_info("Audio: Open layer");
+		_info("Audio: Open Pulseaudio layer");
 
 		if (!m) {
 
@@ -152,7 +152,7 @@ PulseLayer::openLayer (void)
 bool
 PulseLayer::closeLayer (void)
 {
-    _info("Audio: Destroy pulselayer");
+    _info("Audio: Close Pulseaudio layer");
 
     disconnectAudioStream();
 	
@@ -178,7 +178,7 @@ PulseLayer::closeLayer (void)
 void
 PulseLayer::connectPulseAudioServer (void)
 {
-    _info("Audio: connect to pulseaudio server");
+    _info("Audio: Connect to Pulseaudio server");
 
     setenv ("PULSE_PROP_media.role", "phone", 1);
 
