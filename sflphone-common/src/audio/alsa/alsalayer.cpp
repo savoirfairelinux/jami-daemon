@@ -48,6 +48,9 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     _urgentRingBuffer.createReadPointer();
 
     dcblocker = new DcBlocker();
+
+    AudioLayer::_echoCancel = new EchoCancel();
+    AudioLayer::_audioProcessing = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
 }
 
 // Destructor
@@ -65,6 +68,12 @@ AlsaLayer::~AlsaLayer (void)
         delete dcblocker;
         dcblocker = NULL;
     }
+
+    delete AudioLayer::_echoCancel;
+    AudioLayer::_echoCancel = NULL;
+
+    delete AudioLayer::_audioProcessing;
+    AudioLayer::_audioProcessing = NULL;
 }
 
 bool
