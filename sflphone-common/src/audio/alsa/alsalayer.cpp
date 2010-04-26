@@ -917,6 +917,9 @@ void AlsaLayer::audioCallback (void)
 
                 getMainBuffer()->getData (out, toGet, spkrVolume);
 
+		// Copy far-end signal in echo canceller to adapt filter coefficient
+		AudioLayer::_audioProcessing->putData(out, toGet);	
+
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
 
@@ -964,12 +967,12 @@ void AlsaLayer::audioCallback (void)
 
     // Additionally handle the mic's audio stream
     int micAvailBytes;
-
     int micAvailPut;
-
     int toPut;
 
     SFLDataFormat* in;
+    SFLDataFormat echoCancelledMic[5000];
+    memset(echoCancelledMic, 0, 5000);
 
 
     // snd_pcm_sframes_t micAvailAlsa;
@@ -1003,7 +1006,11 @@ void AlsaLayer::audioCallback (void)
 
                     dcblocker->filter_signal (rsmpl_out, nbSample);
 
-                    getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
+		    // echo cancellation processing
+		    int sampleready = _audioProcessing->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat)); 
+
+                    // getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
+		    getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
 
                     free (rsmpl_out);
                     rsmpl_out = 0;
