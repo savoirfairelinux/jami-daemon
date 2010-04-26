@@ -64,6 +64,10 @@ class EchoCancel : public Algorithm {
     RingBuffer *_spkrData; 
 
     bool _spkrStoped;
+
+    SFLDataFormat _tmpSpkr[5000];
+    SFLDataFormat _tmpMic[5000];
+    SFLDataFormat _tmpOut[5000];
 };
 
 #endif

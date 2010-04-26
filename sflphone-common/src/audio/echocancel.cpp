@@ -20,23 +20,20 @@
 #include "echocancel.h"
 
 #include <iostream>
+#include <stdlib.h>
 
-
+// number of samples (20 ms)
 #define FRAME_SIZE 160
-#define FILTER_LENGTH 500
+// number of sample to process, (800 à 4000 samples, 100 to 500 ms
+#define FILTER_LENGTH 4000
+
 
 EchoCancel::EchoCancel() 
 {
   _debug("EchoCancel: Instantiate echo canceller");
 
   _echoState = speex_echo_state_init(FRAME_SIZE, FILTER_LENGTH);
-
-  int sampleRate = 8000;
-
-  _preState = speex_preprocess_state_init(FRAME_SIZE, sampleRate);
-
-  speex_echo_ctl(_echoState, SPEEX_ECHO_SET_SAMPLING_RATE, &sampleRate);
-
+  // _preState = speex_preprocess_state_init(NN, 8000);
 
   _micData = new RingBuffer(5000);
   _spkrData = new RingBuffer(5000);
@@ -63,7 +60,7 @@ EchoCancel::~EchoCancel()
 
 void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
 {
-  std::cout << "putData nbBytes: " << nbBytes << std::endl;
+  // std::cout << "putData nbBytes: " << nbBytes << std::endl;
 
   if(_spkrStoped) {
       _micData->flushAll();
@@ -79,39 +76,47 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
 int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
 
-  SFLDataFormat tmpSpkr[5000];
-  SFLDataFormat tmpMic[5000];
+  if(_spkrStoped) {
+    return 0;
+  }
 
-  std::cout << "process nbBytes: " << nbBytes << std::endl;
+  int byteSize = FRAME_SIZE*2;
 
-  // Put data in microphone ring buffer
+  // init temporary buffers
+  memset(_tmpSpkr, 0, 5000);
+  memset(_tmpMic, 0, 5000);
+  memset(_tmpOut, 0, 5000);
+
+  // Put mic data in ringbuffer
   _micData->Put(inputData, nbBytes);
 
+  // Store data for synchronization
   int spkrAvail = _spkrData->AvailForGet();
   int micAvail = _micData->AvailForGet();
 
-  std::cout << "process spkrData AvailForGet: " << spkrAvail << std::endl;  
-  std::cout << "process micData AvailForGet: " << micAvail << std::endl; 
-
-  // Number of frame processed
+  // Init number of frame processed
   int nbFrame = 0;
 
   // Get data from mic and speaker
-  while((spkrAvail > (FRAME_SIZE*2)) && (micAvail > (FRAME_SIZE*2))) {
+  while((spkrAvail > byteSize) && (micAvail > byteSize)) {
 
-    _spkrData->Get(&tmpSpkr, (FRAME_SIZE*2));
-    _micData->Get(&tmpMic, (FRAME_SIZE*2));
+    // get synchronized data
+    _spkrData->Get(_tmpSpkr, byteSize);
+    _micData->Get(_tmpMic, byteSize);
     
-    speex_echo_cancellation(_echoState, (const spx_int16_t*)(&tmpMic), (const spx_int16_t*)&tmpSpkr, outputData);
-     speex_preprocess_run(_preState, (spx_int16_t*)(outputData));
+    // Processed echo cancellation
+    speex_echo_cancellation(_echoState, _tmpMic, _tmpSpkr, _tmpOut);
+
+    bcopy(_tmpOut, outputData+(nbFrame*FRAME_SIZE), FRAME_SIZE*2);
 
     spkrAvail = _spkrData->AvailForGet();
     micAvail = _micData->AvailForGet();
 
+    // increment nb of frame processed
     ++nbFrame;
   }
 
-  return nbFrame*(FRAME_SIZE);
+  return nbFrame * FRAME_SIZE;
 }
 
 void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes){

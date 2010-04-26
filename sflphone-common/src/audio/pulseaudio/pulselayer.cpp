@@ -594,6 +594,7 @@ void PulseLayer::readFromMic (void)
     size_t r;
 
     SFLDataFormat echoCancelledMic[5000];
+    memset(echoCancelledMic, 0, 5000);
 
     int readableSize = pa_stream_readable_size (record->pulseStream());
 
@@ -622,10 +623,10 @@ void PulseLayer::readFromMic (void)
             dcblocker->filter_signal (rsmpl_out, nbSample);
 
 	    // echo cancellation processing
-	    int sampleready = _audioProcessing->processAudio(rsmpl_out, (SFLDataFormat*)(&echoCancelledMic), nbSample*sizeof(SFLDataFormat));
+	    int sampleready = _audioProcessing->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
 
             // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
-	    getMainBuffer()->putData ( (void*) rsmpl_out, sampleready*sizeof (SFLDataFormat), 100);
+	    getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
 
             pa_xfree (rsmpl_out);
 
