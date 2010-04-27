@@ -51,6 +51,7 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 #include <pwd.h>       // getpwuid
+
 #define DIRECT_IP_CALL	"IP CALL"
 
 #define fill_config_str(name, value) \
@@ -59,6 +60,8 @@
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
 
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
+
+#define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
 
 ManagerImpl::ManagerImpl (void) :
 	_hasTriedToRegister(false), _config(), _currentCallId2(),
@@ -3396,85 +3399,53 @@ void ManagerImpl::setCredential (const std::string& accountID,
 void ManagerImpl::setAccountDetails (const std::string& accountID,
 		const std::map<std::string, std::string>& details) {
 
-	std::string accountType;
-	std::map<std::string, std::string> map_cpy;
-	std::map<std::string, std::string>::iterator iter;
+    std::map<std::string, std::string> map_cpy;
+    std::map<std::string, std::string>::iterator iter;
 
-	// Work on a copy
-	map_cpy = details;
+    // Work on a copy
+    map_cpy = details;
 
-	std::string username;
-	std::string routeset;
+    // Get the account type
+    std::string accountType;
+    find_in_map(CONFIG_ACCOUNT_TYPE, accountType)
+    
+    std::string alias;
+    std::string type;
+    std::string hostname;
+    std::string username;
+    std::string password;
+    std::string mailbox;
+    std::string accountEnable;
+
+
+    // Account setting common to SIP and IAX
+    find_in_map(CONFIG_ACCOUNT_ALIAS, alias)
+    find_in_map(CONFIG_ACCOUNT_TYPE, type)
+    find_in_map(HOSTNAME, hostname)
+    find_in_map(USERNAME, username)
+    find_in_map(PASSWORD, password)
+    find_in_map(CONFIG_ACCOUNT_MAILBOX, mailbox);
+    find_in_map(CONFIG_ACCOUNT_ENABLE, accountEnable);
+
+    setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
+    setConfig(accountID, CONFIG_ACCOUNT_TYPE, type);
+    setConfig(accountID, HOSTNAME, hostname);
+    setConfig(accountID, USERNAME, username);
+    setConfig(accountID, PASSWORD, password);
+    setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, mailbox);
+    setConfig(accountID, CONFIG_ACCOUNT_ENABLE, accountEnable);
+	       
+    // SIP specific account settings
+    if(accountType == "SIP") {
+
+        std::string ua_name;
+        std::string realm;
+        std::string routeset;
 	std::string authenticationName;
-	std::string password;
-	std::string realm;
-	std::string voicemail_count;
-	std::string ua_name;
 
-	if ((iter = map_cpy.find(AUTHENTICATION_USERNAME)) != map_cpy.end()) {
-		authenticationName = iter->second;
-	}
-
-	if ((iter = map_cpy.find(USERNAME)) != map_cpy.end()) {
-		username = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ROUTESET)) != map_cpy.end()) {
-	        routeset = iter->second;
-		_error("ROUTESET is %s", routeset.c_str());
-	}
-	else {
-	  _error("ROUTESET is empty");
-	}
-
-	if ((iter = map_cpy.find(PASSWORD)) != map_cpy.end()) {
-		password = iter->second;
-	}
-
-	if ((iter = map_cpy.find(REALM)) != map_cpy.end()) {
-		realm = iter->second;
-	}
-
-	if ((iter = map_cpy.find(USERAGENT)) != map_cpy.end()) {
-		ua_name = iter->second;
-	}
-
-	setConfig(accountID, REALM, realm);
-	setConfig(accountID, USERAGENT, ua_name);
-	setConfig(accountID, USERNAME, username);
-	setConfig(accountID, ROUTESET, routeset);
-	setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
-
-	if (!getMd5CredentialHashing()) {
-		setConfig(accountID, PASSWORD, password);
-	} else {
-		// Make sure not to re-hash the password field if
-		// it is already saved as a MD5 Hash.
-		// TODO: This test is weak. Fix this.
-		if ((password.compare(getConfigString(accountID, PASSWORD)) != 0)) {
-			_debug ("Password sent and password from config are different. Re-hashing");
-			std::string hash;
-
-			if (authenticationName.empty()) {
-				hash = computeMd5HashFromCredential(username, password, realm);
-			} else {
-				hash = computeMd5HashFromCredential(authenticationName,
-						password, realm);
-			}
-
-			setConfig(accountID, PASSWORD, hash);
-		}
-	}
-
-	std::string alias;
-
-	std::string mailbox;
-	std::string accountEnable;
-	std::string type;
-	std::string resolveOnce;
+        std::string resolveOnce;
 	std::string registrationExpire;
 
-	std::string hostname;
 	std::string displayName;
 	std::string localInterface;
 	std::string publishedSameasLocal;
@@ -3508,165 +3479,51 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	std::string tlsNegotiationTimeoutSec;
 	std::string tlsNegotiationTimeoutMsec;
 
-	if ((iter = map_cpy.find(HOSTNAME)) != map_cpy.end()) {
-		hostname = iter->second;
-	}
+	// general sip settings
+	find_in_map(DISPLAY_NAME, displayName)
+	find_in_map(ROUTESET, routeset)
+	find_in_map(LOCAL_INTERFACE, localInterface)
+	find_in_map(PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal)
+	find_in_map(PUBLISHED_ADDRESS, publishedAddress)
+	find_in_map(LOCAL_PORT, localPort)
+	find_in_map(PUBLISHED_PORT, publishedPort)
+	find_in_map(STUN_ENABLE, stunEnable)
+	find_in_map(STUN_SERVER, stunServer)
+	find_in_map(ACCOUNT_DTMF_TYPE, dtmfType)
+	find_in_map(CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce)
+	find_in_map(CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire)
 
-	if ((iter = map_cpy.find(DISPLAY_NAME)) != map_cpy.end()) {
-		displayName = iter->second;
-	}
-
-	if ((iter = map_cpy.find(LOCAL_INTERFACE)) != map_cpy.end()) {
-		localInterface = iter->second;
-	}
-
-	if ((iter = map_cpy.find(PUBLISHED_SAMEAS_LOCAL)) != map_cpy.end()) {
-		publishedSameasLocal = iter->second;
-	}
-
-	if ((iter = map_cpy.find(PUBLISHED_ADDRESS)) != map_cpy.end()) {
-		publishedAddress = iter->second;
-	}
-
-	if ((iter = map_cpy.find(LOCAL_PORT)) != map_cpy.end()) {
-		localPort = iter->second;
-	}
-
-	if ((iter = map_cpy.find(PUBLISHED_PORT)) != map_cpy.end()) {
-		publishedPort = iter->second;
-	}
-
-	if ((iter = map_cpy.find(STUN_ENABLE)) != map_cpy.end()) {
-		stunEnable = iter->second;
-	}
-
-	if ((iter = map_cpy.find(STUN_SERVER)) != map_cpy.end()) {
-		stunServer = iter->second;
-	}
-
-	if((iter = map_cpy.find(ACCOUNT_DTMF_TYPE)) != map_cpy.end()) {
-		dtmfType = iter->second;
-	}
-
-	if ((iter = map_cpy.find(SRTP_ENABLE)) != map_cpy.end()) {
-		srtpEnable = iter->second;
-	}
-
-	if ((iter = map_cpy.find(SRTP_RTP_FALLBACK)) != map_cpy.end()) {
-		srtpRtpFallback = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ZRTP_DISPLAY_SAS)) != map_cpy.end()) {
-		zrtpDisplaySas = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ZRTP_DISPLAY_SAS_ONCE)) != map_cpy.end()) {
-		zrtpDisplaySasOnce = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ZRTP_NOT_SUPP_WARNING)) != map_cpy.end()) {
-		zrtpNotSuppWarning = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ZRTP_HELLO_HASH)) != map_cpy.end()) {
-		zrtpHelloHash = iter->second;
-	}
-
-	if ((iter = map_cpy.find(SRTP_KEY_EXCHANGE)) != map_cpy.end()) {
-		srtpKeyExchange = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_ALIAS)) != map_cpy.end()) {
-		alias = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_MAILBOX)) != map_cpy.end()) {
-		mailbox = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_ENABLE)) != map_cpy.end()) {
-		accountEnable = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_TYPE)) != map_cpy.end()) {
-		type = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_RESOLVE_ONCE)) != map_cpy.end()) {
-		resolveOnce = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_REGISTRATION_EXPIRE))
-			!= map_cpy.end()) {
-		registrationExpire = iter->second;
-	}
-
-	// The TLS listener is unique and globally defined through IP2IP_PROFILE
-	if ((accountID == IP2IP_PROFILE)
-			&& (iter = map_cpy.find(TLS_LISTENER_PORT)) != map_cpy.end()) {
-		tlsListenerPort = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_ENABLE)) != map_cpy.end()) {
-		tlsEnable = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_CA_LIST_FILE)) != map_cpy.end()) {
-		tlsCaListFile = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_CERTIFICATE_FILE)) != map_cpy.end()) {
-		tlsCertificateFile = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_PRIVATE_KEY_FILE)) != map_cpy.end()) {
-		tlsPrivateKeyFile = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_PASSWORD)) != map_cpy.end()) {
-		tlsPassword = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_METHOD)) != map_cpy.end()) {
-		tlsMethod = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_CIPHERS)) != map_cpy.end()) {
-		tlsCiphers = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_SERVER_NAME)) != map_cpy.end()) {
-		tlsServerName = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_VERIFY_SERVER)) != map_cpy.end()) {
-		tlsVerifyServer = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_VERIFY_CLIENT)) != map_cpy.end()) {
-		tlsVerifyClient = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_REQUIRE_CLIENT_CERTIFICATE)) != map_cpy.end()) {
-		tlsRequireClientCertificate = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_SEC)) != map_cpy.end()) {
-		tlsNegotiationTimeoutSec = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_MSEC)) != map_cpy.end()) {
-		tlsNegotiationTimeoutMsec = iter->second;
-	}
-
-	setConfig(accountID, HOSTNAME, hostname);
-
+	setConfig(accountID, DISPLAY_NAME, displayName);
+	setConfig(accountID, ROUTESET, routeset);
 	setConfig(accountID, LOCAL_INTERFACE, localInterface);
 	setConfig(accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
 	setConfig(accountID, PUBLISHED_ADDRESS, publishedAddress);
 	setConfig(accountID, LOCAL_PORT, localPort);
 	setConfig(accountID, PUBLISHED_PORT, publishedPort);
-	setConfig(accountID, DISPLAY_NAME, displayName);
+	setConfig(accountID, STUN_ENABLE, stunEnable);
+	setConfig(accountID, STUN_SERVER, stunServer);
+	setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
+	setConfig(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce);
+        setConfig(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
+
+	// sip credential
+	find_in_map(REALM, realm)
+	find_in_map(AUTHENTICATION_USERNAME, authenticationName)
+	find_in_map(USERAGENT, ua_name)
+
+	setConfig(accountID, REALM, realm);
+	setConfig(accountID, USERAGENT, ua_name);
+	setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
+
+        // srtp settings
+	find_in_map(SRTP_ENABLE, srtpEnable)
+	find_in_map(SRTP_RTP_FALLBACK, srtpRtpFallback)
+	find_in_map(ZRTP_DISPLAY_SAS, zrtpDisplaySas)
+	find_in_map(ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce)
+	find_in_map(ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning)
+	find_in_map(ZRTP_HELLO_HASH, zrtpHelloHash)
+	find_in_map(SRTP_KEY_EXCHANGE, srtpKeyExchange)
+
 	setConfig(accountID, SRTP_ENABLE, srtpEnable);
 	setConfig(accountID, SRTP_RTP_FALLBACK, srtpRtpFallback);
 	setConfig(accountID, ZRTP_DISPLAY_SAS, zrtpDisplaySas);
@@ -3674,15 +3531,31 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	setConfig(accountID, ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning);
 	setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);
 	setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);
+	
+	// TLS settings
+	// The TLS listener is unique and globally defined through IP2IP_PROFILE
+	if(accountID == IP2IP_PROFILE) {
+	    find_in_map(TLS_LISTENER_PORT, tlsListenerPort)
+        }
+	find_in_map(TLS_ENABLE, tlsEnable)
+	find_in_map(TLS_CA_LIST_FILE, tlsCaListFile)
+	find_in_map(TLS_CERTIFICATE_FILE, tlsCertificateFile)
+	find_in_map(TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile)
+	find_in_map(TLS_PASSWORD, tlsPassword)
+	find_in_map(TLS_METHOD, tlsMethod)
+	find_in_map(TLS_CIPHERS, tlsCiphers)
+	find_in_map(TLS_SERVER_NAME, tlsServerName)
+	find_in_map(TLS_VERIFY_SERVER, tlsVerifyServer)
+	find_in_map(TLS_VERIFY_CLIENT, tlsVerifyClient)
+	find_in_map(TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate)
+	find_in_map(TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec)
+	find_in_map(TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec)
 
-	setConfig(accountID, STUN_ENABLE, stunEnable);
-	setConfig(accountID, STUN_SERVER, stunServer);
-	setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
 
 	// The TLS listener is unique and globally defined through IP2IP_PROFILE
-	if (accountID == IP2IP_PROFILE)
-		setConfig(accountID, TLS_LISTENER_PORT, tlsListenerPort);
-
+	if (accountID == IP2IP_PROFILE){
+	    setConfig(accountID, TLS_LISTENER_PORT, tlsListenerPort);
+	}
 	setConfig(accountID, TLS_ENABLE, tlsEnable);
 	setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);
 	setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);
@@ -3693,39 +3566,53 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	setConfig(accountID, TLS_SERVER_NAME, tlsServerName);
 	setConfig(accountID, TLS_VERIFY_SERVER, tlsVerifyServer);
 	setConfig(accountID, TLS_VERIFY_CLIENT, tlsVerifyClient);
-	setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE,
-			tlsRequireClientCertificate);
+	setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate);
 	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec);
-	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC,
-			tlsNegotiationTimeoutMsec);
+	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC,tlsNegotiationTimeoutMsec);
 
-	setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
-	setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, mailbox);
-	setConfig(accountID, CONFIG_ACCOUNT_ENABLE, accountEnable);
-	setConfig(accountID, CONFIG_ACCOUNT_TYPE, type);
-	setConfig(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce);
-	setConfig(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
-
-	saveConfig();
-
-	Account * acc = NULL;
-	acc = getAccount(accountID);
-
-	if (acc != NULL) {
-		acc->loadConfig();
-
-		if (acc->isEnabled()) {
-			acc->registerVoIPLink();
-		} else {
-			acc->unregisterVoIPLink();
-		}
+	if (!getMd5CredentialHashing()) {
+	  setConfig(accountID, PASSWORD, password);
 	} else {
-		_debug ("ManagerImpl::setAccountDetails: account is NULL");
+	  // Make sure not to re-hash the password field if
+	  // it is already saved as a MD5 Hash.
+	  // TODO: This test is weak. Fix this.
+	  if ((password.compare(getConfigString(accountID, PASSWORD)) != 0)) {
+	    _debug ("Password sent and password from config are different. Re-hashing");
+	    std::string hash;
+
+	    if (authenticationName.empty()) {
+	      hash = computeMd5HashFromCredential(username, password, realm);
+	    } else {
+	      hash = computeMd5HashFromCredential(authenticationName,
+						  password, realm);
+	    }
+	    
+	    setConfig(accountID, PASSWORD, hash);
+	  }
 	}
 
-	// Update account details to the client side
-	if (_dbus)
-		_dbus->getConfigurationManager()->accountsChanged();
+    }
+
+    saveConfig();
+    
+    Account * acc = NULL;
+    acc = getAccount(accountID);
+    
+    if (acc != NULL) {
+        acc->loadConfig();
+		
+	if (acc->isEnabled()) {
+	  acc->registerVoIPLink();
+	} else {
+	  acc->unregisterVoIPLink();
+	}
+    } else {
+      _debug ("ManagerImpl::setAccountDetails: account is NULL");
+    }
+    
+    // Update account details to the client side
+    if (_dbus)
+        _dbus->getConfigurationManager()->accountsChanged();
 
 }
 
