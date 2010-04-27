@@ -3062,7 +3062,7 @@ std::string ManagerImpl::getConfigString (const std::string& section,
 //THREAD=Main
 bool ManagerImpl::setConfig (const std::string& section,
 		const std::string& name, const std::string& value) {
-	_debug ("ManagerImpl::setConfig %s %s %s", section.c_str(), name.c_str(), value.c_str());
+        // _debug ("ManagerImpl::setConfig %s %s %s", section.c_str(), name.c_str(), value.c_str());
 	return _config.setConfigTreeItem(section, name, value);
 }
 
