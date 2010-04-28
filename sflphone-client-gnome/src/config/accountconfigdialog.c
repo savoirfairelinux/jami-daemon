@@ -905,16 +905,9 @@ GtkWidget * create_security_tab (account_t **a)
 	GtkWidget * ret;
 	GtkWidget * hbox;
 
+
 	ret = gtk_vbox_new(FALSE, 10);
 	gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
-
-	/*
-	   published_address = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_ADDRESS);
-
-	   published_port = g_hash_table_lookup(currentAccount->properties,  PUBLISHED_PORT);
-
-	   DEBUG("TLS is enabled to %s", curTLSEnabled);       
-	} */
 
 	// Credentials frame
 	frame = create_credential_widget (a);
@@ -1189,6 +1182,7 @@ GtkWidget* create_codecs_configuration (account_t **a) {
         account_t *currentAccount = *a;
         gchar *currentDtmfType = "";
         gboolean dtmf_are_rtp = TRUE;
+	gpointer p;
 
         ret = gtk_vbox_new(FALSE, 10);
         gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -1202,26 +1196,31 @@ GtkWidget* create_codecs_configuration (account_t **a) {
         gtk_widget_show (codecs);
         gtk_container_add (GTK_CONTAINER (codecs) , box);
 
-        // Box for dtmf
-        gnome_main_section_new_with_table (_("DTMF"), &dtmf, &table, 1, 2);
-        gtk_box_pack_start (GTK_BOX(ret), dtmf, FALSE, FALSE, 0);
-        gtk_widget_show (dtmf);
+
+	p = g_hash_table_lookup(currentAccount->properties, g_strdup(ACCOUNT_TYPE));
+	if(g_strcmp0(p, "SIP") == 0) {
+	
+
+	  // Box for dtmf
+	  gnome_main_section_new_with_table (_("DTMF"), &dtmf, &table, 1, 2);
+	  gtk_box_pack_start (GTK_BOX(ret), dtmf, FALSE, FALSE, 0);
+	  gtk_widget_show (dtmf);
 
 
-        currentDtmfType = g_hash_table_lookup (currentAccount->properties, g_strdup(ACCOUNT_DTMF_TYPE));
-        if (g_strcasecmp(currentDtmfType, OVERRTP) != 0) {
+	  currentDtmfType = g_hash_table_lookup (currentAccount->properties, g_strdup(ACCOUNT_DTMF_TYPE));
+	  if (g_strcasecmp(currentDtmfType, OVERRTP) != 0) {
             dtmf_are_rtp = FALSE;
-        }
+	  }
 
-        overrtp = gtk_radio_button_new_with_label( NULL, _("RTP") );
-        gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(overrtp), dtmf_are_rtp);
-        gtk_table_attach ( GTK_TABLE( table ), overrtp, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	  overrtp = gtk_radio_button_new_with_label( NULL, _("RTP") );
+	  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(overrtp), dtmf_are_rtp);
+	  gtk_table_attach ( GTK_TABLE( table ), overrtp, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-       sipinfo = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(overrtp),  _("SIP"));
-        gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(sipinfo), !dtmf_are_rtp);
-        g_signal_connect(G_OBJECT(sipinfo), "clicked", G_CALLBACK(select_dtmf_type), NULL);
-        gtk_table_attach ( GTK_TABLE( table ), sipinfo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
+	  sipinfo = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(overrtp),  _("SIP"));
+	  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(sipinfo), !dtmf_are_rtp);
+	  g_signal_connect(G_OBJECT(sipinfo), "clicked", G_CALLBACK(select_dtmf_type), NULL);
+	  gtk_table_attach ( GTK_TABLE( table ), sipinfo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+	}
 
         gtk_widget_show_all(ret);
 
