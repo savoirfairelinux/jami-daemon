@@ -345,8 +345,10 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
 	gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
 	gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	g_signal_connect(G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
-	g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
+	if(strcmp(curAccountType, "SIP") == 0) {
+	  g_signal_connect(G_OBJECT (entryUsername), "changed", G_CALLBACK (update_credential_cb), NULL);
+	  g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
+	}
 
 	// Route set can be update only for SIP account
 	// TODO: uncomment this code and implement route 
@@ -381,8 +383,10 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
 	gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
 	gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	g_signal_connect (G_OBJECT (entryPassword), "changed", G_CALLBACK (update_credential_cb), NULL);
-	g_object_set_data (G_OBJECT (entryPassword), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
+	if(strcmp(curAccountType, "SIP") == 0) {
+	  g_signal_connect (G_OBJECT (entryPassword), "changed", G_CALLBACK (update_credential_cb), NULL);
+	  g_object_set_data (G_OBJECT (entryPassword), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_PASSWORD));
+	}
 
 	row++;
 	clearTextCheckbox = gtk_check_button_new_with_mnemonic (_("Show password"));
@@ -1197,10 +1201,10 @@ GtkWidget* create_codecs_configuration (account_t **a) {
         gtk_container_add (GTK_CONTAINER (codecs) , box);
 
 
+	// Add DTMF type selection for SIP account only
 	p = g_hash_table_lookup(currentAccount->properties, g_strdup(ACCOUNT_TYPE));
 	if(g_strcmp0(p, "SIP") == 0) {
 	
-
 	  // Box for dtmf
 	  gnome_main_section_new_with_table (_("DTMF"), &dtmf, &table, 1, 2);
 	  gtk_box_pack_start (GTK_BOX(ret), dtmf, FALSE, FALSE, 0);
