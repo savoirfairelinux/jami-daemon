@@ -119,15 +119,14 @@ void change_protocol_cb (account_t *currentAccount UNUSED) {
 
 	// Only if tabs are not NULL
 	if(security_tab && advanced_tab) {
-	    DEBUG("------------------------------------");
 	    if (g_strcasecmp (protocol, "IAX") == 0) {
 		gtk_widget_hide (GTK_WIDGET(security_tab));
 		gtk_widget_hide (GTK_WIDGET(advanced_tab));
-	    } else {
+	    }
+	    else {
                 gtk_widget_show (GTK_WIDGET(security_tab));
 		gtk_widget_show (GTK_WIDGET(advanced_tab));
 	    }
-	    DEBUG("------------------------------------");
 	}
 }
 
@@ -1277,28 +1276,20 @@ void show_account_window (account_t * a) {
       
       gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
       gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-      // TODO: Fix this GTK critical (when opening account config dialog twice) 
-      // DEBUG("---------------------------");
-      g_signal_emit_by_name (GTK_WIDGET(protocolComboBox), "changed", NULL);
-      // DEBUG("---------------------------"); 
+
 
     }
     /* Codecs */
     codecs_tab = create_codecs_configuration (&currentAccount);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), codecs_tab, gtk_label_new(_("Codecs")));
-    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), codecs_tab);
-    
-    
+    gtk_notebook_page_num (GTK_NOTEBOOK (notebook), codecs_tab);    
 
-    // Get protocol
-    gchar *proto = "SIP";
-    proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    // Get current protocol for this account protocol
+    gchar *currentProtocol = "SIP";
+    currentProtocol = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
 
     // Do not need advanced or security one for the IP2IP account
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
-
-      // Do not need advanced or Security tab for IAX either
-      if (strcmp(proto, "SIP") == 0) {	
 
 	/* Advanced */
 	advanced_tab = create_advanced_tab(&currentAccount);
@@ -1309,8 +1300,7 @@ void show_account_window (account_t * a) {
 	security_tab = create_security_tab (&currentAccount);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), security_tab, gtk_label_new(_("Security")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook),security_tab);
-	
-      }
+
     }
     else {
 
@@ -1320,6 +1310,9 @@ void show_account_window (account_t * a) {
       gtk_notebook_page_num (GTK_NOTEBOOK (notebook), ip_tab);
     }
 
+    // Emit signal to hide advanced and security tabs in case of IAX
+    g_signal_emit_by_name (GTK_WIDGET(protocolComboBox), "changed", NULL);
+
     gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook) ,  0);
 
     /**************/
@@ -1328,7 +1321,7 @@ void show_account_window (account_t * a) {
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     
     // Update protocol in case it changed
-    proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    gchar *proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
 
     // If cancel button is pressed
     if(response == GTK_RESPONSE_CANCEL) {
@@ -1451,6 +1444,9 @@ void show_account_window (account_t * a) {
 			   g_strdup(LOCAL_PORT),
 			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
 
+    }
+    
+    if (strcmp(currentProtocol, "SIP") == 0) {
 
       /* Set new credentials if any */
       DEBUG("Config: Setting credentials"); 
