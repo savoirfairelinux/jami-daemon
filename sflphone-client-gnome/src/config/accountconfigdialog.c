@@ -119,7 +119,7 @@ void change_protocol_cb (account_t *currentAccount UNUSED) {
 
 	// Only if tabs are not NULL
 	if(security_tab && advanced_tab) {
-
+	    DEBUG("------------------------------------");
 	    if (g_strcasecmp (protocol, "IAX") == 0) {
 		gtk_widget_hide (GTK_WIDGET(security_tab));
 		gtk_widget_hide (GTK_WIDGET(advanced_tab));
@@ -127,6 +127,7 @@ void change_protocol_cb (account_t *currentAccount UNUSED) {
                 gtk_widget_show (GTK_WIDGET(security_tab));
 		gtk_widget_show (GTK_WIDGET(advanced_tab));
 	    }
+	    DEBUG("------------------------------------");
 	}
 }
 
@@ -256,17 +257,16 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	{
 		curAccountID = currentAccount->accountID;
 		curAccountType = g_hash_table_lookup(currentAccount->properties, ACCOUNT_TYPE);
-		DEBUG("Config: CuraccountType %s", curAccountType);
+		DEBUG("Config: Current accountType %s", curAccountType);
 		curAccountEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED);
 		curAlias = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ALIAS);
 		curHostname = g_hash_table_lookup(currentAccount->properties, ACCOUNT_HOSTNAME);
 		curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_PASSWORD);
 		curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERNAME);
-		curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
+		// curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
 		curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
 		curUseragent = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERAGENT);
 	}
-
 
 	gnome_main_section_new (_("Account Parameters"), &frame);
 	gtk_widget_show(frame);
@@ -310,6 +310,7 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	}
 	else
 	{
+	        DEBUG("Config: Error: Account protocol not valid");
 		/* Should never come here, add debug message. */
 		gtk_combo_box_append_text(GTK_COMBO_BOX(protocolComboBox), _("Unknown"));
 		gtk_combo_box_set_active(GTK_COMBO_BOX(protocolComboBox),2);
@@ -410,7 +411,6 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUseragent);
 	gtk_entry_set_text (GTK_ENTRY (entryUseragent), curUseragent);
 	gtk_table_attach ( GTK_TABLE( table ), entryUseragent, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
 
 	gtk_widget_show_all( table );
 	gtk_container_set_border_width (GTK_CONTAINER(table), 10);
@@ -818,7 +818,6 @@ GtkWidget* create_credential_widget (account_t **a) {
 	// same_as_local_cb (sameAsLocalRadioButton, NULL);
 	// set_published_addr_manually_cb (publishedAddrRadioButton, NULL);
 
-
 	return frame;
 }
 
@@ -1200,7 +1199,6 @@ GtkWidget* create_codecs_configuration (account_t **a) {
         gtk_widget_show (codecs);
         gtk_container_add (GTK_CONTAINER (codecs) , box);
 
-
 	// Add DTMF type selection for SIP account only
 	p = g_hash_table_lookup(currentAccount->properties, g_strdup(ACCOUNT_TYPE));
 	if(g_strcmp0(p, "SIP") == 0) {
@@ -1270,7 +1268,7 @@ void show_account_window (account_t * a) {
     gtk_box_pack_start(GTK_BOX (dialog->vbox), notebook, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
     gtk_widget_show(notebook);
-    
+
     // We do not need the global settings for the IP2IP account
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
       
@@ -1279,14 +1277,17 @@ void show_account_window (account_t * a) {
       
       gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Basic")));
       gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
-      g_signal_emit_by_name ((gpointer)protocolComboBox, "changed", NULL);
+      // TODO: Fix this GTK critical (when opening account config dialog twice) 
+      // DEBUG("---------------------------");
+      g_signal_emit_by_name (GTK_WIDGET(protocolComboBox), "changed", NULL);
+      // DEBUG("---------------------------"); 
 
     }
-
     /* Codecs */
     codecs_tab = create_codecs_configuration (&currentAccount);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), codecs_tab, gtk_label_new(_("Codecs")));
     gtk_notebook_page_num (GTK_NOTEBOOK (notebook), codecs_tab);
+    
     
 
     // Get protocol
@@ -1371,10 +1372,13 @@ void show_account_window (account_t * a) {
 	g_hash_table_replace(currentAccount->properties,
 			   g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
 			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox))));
-
+	
+	/*
+	// TODO: uncomment this code and implement route 
 	g_hash_table_replace(currentAccount->properties,
 			     g_strdup(ACCOUNT_ROUTE),
 			     g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryRouteSet))));
+	*/
 	
 	g_hash_table_replace(currentAccount->properties, 
 			     g_strdup(ACCOUNT_USERAGENT), 
@@ -1387,7 +1391,7 @@ void show_account_window (account_t * a) {
 			     g_strdup(gtk_entry_get_text(GTK_ENTRY(stunServerEntry))));
 	
 	g_hash_table_replace(currentAccount->properties, g_strdup(PUBLISHED_SAMEAS_LOCAL), g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton)) ? "true":"false"));	
-	    
+
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sameAsLocalRadioButton))) {
 	  
 	  g_hash_table_replace(currentAccount->properties,
@@ -1411,8 +1415,6 @@ void show_account_window (account_t * a) {
 			       g_strdup(PUBLISHED_ADDRESS),
 			       published_address);
 	}
-	    
-	    
 
 	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(overrtp))) {
 	  g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_DTMF_TYPE), g_strdup(OVERRTP));
@@ -1440,7 +1442,6 @@ void show_account_window (account_t * a) {
 	g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
 			     g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
       }
-      
       
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(LOCAL_INTERFACE),
