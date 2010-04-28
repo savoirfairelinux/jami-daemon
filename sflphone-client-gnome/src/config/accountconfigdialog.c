@@ -1294,7 +1294,7 @@ void show_account_window (account_t * a) {
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
       // Do not need advanced or Security tab for IAX either
-      if (strcmp(proto, "SIP") == 0) {
+      if (strcmp(proto, "SIP") == 0) {	
 
 	/* Advanced */
 	advanced_tab = create_advanced_tab(&currentAccount);
@@ -1323,8 +1323,11 @@ void show_account_window (account_t * a) {
     /**************/
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     
+    // Update protocol in case it changed
+    proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+
     // If cancel button is pressed
-    if(response != GTK_RESPONSE_ACCEPT) {
+    if(response == GTK_RESPONSE_CANCEL) {
       gtk_widget_destroy (GTK_WIDGET(dialog));
       return;
     }
@@ -1332,9 +1335,7 @@ void show_account_window (account_t * a) {
     // If accept button is 
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
       
-      g_hash_table_replace(currentAccount->properties,
-			   g_strdup(ACCOUNT_RESOLVE_ONCE),
-			   g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "false": "true"));
+
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(ACCOUNT_ALIAS),
 			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryAlias))));
@@ -1352,16 +1353,21 @@ void show_account_window (account_t * a) {
 			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryPassword))));
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(ACCOUNT_MAILBOX),
-			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
-      g_hash_table_replace(currentAccount->properties,
-			   g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
-			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox))));   
+			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));   
     }
 
 
     if (strcmp (proto, "SIP") == 0) {
       
       if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
+
+	g_hash_table_replace(currentAccount->properties,
+			   g_strdup(ACCOUNT_RESOLVE_ONCE),
+			   g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryResolveNameOnlyOnce)) ? "false": "true"));
+
+	g_hash_table_replace(currentAccount->properties,
+			   g_strdup(ACCOUNT_REGISTRATION_EXPIRE),
+			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(expireSpinBox))));
 
 	g_hash_table_replace(currentAccount->properties,
 			     g_strdup(ACCOUNT_ROUTE),
@@ -1440,30 +1446,31 @@ void show_account_window (account_t * a) {
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(LOCAL_PORT),
 			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(localPortSpinBox))));
-      
-    }
 
-    /* Set new credentials if any */
-    DEBUG("Config: Setting credentials"); 
-    if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
+
+      /* Set new credentials if any */
+      DEBUG("Config: Setting credentials"); 
+      if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
       
-      /* This hack is necessary because of the way the 
-       * configuration file is made (.ini at that time).
-       * and deleting account per account is too much 
-       * of a trouble. 
-       */
-      dbus_delete_all_credential(currentAccount);
+	/* This hack is necessary because of the way the 
+	 * configuration file is made (.ini at that time).
+	 * and deleting account per account is too much 
+	 * of a trouble. 
+	 */
+	dbus_delete_all_credential(currentAccount);
       
-      GPtrArray * credential = getNewCredential(currentAccount->properties);         
-      currentAccount->credential_information = credential;
-      if(currentAccount->credential_information != NULL) {
-	int i;
-	for(i = 0; i < currentAccount->credential_information->len; i++) {
-	      dbus_set_credential(currentAccount, i);
+	GPtrArray * credential = getNewCredential(currentAccount->properties);         
+	currentAccount->credential_information = credential;
+	if(currentAccount->credential_information != NULL) {
+	  int i;
+	  for(i = 0; i < currentAccount->credential_information->len; i++) {
+	    dbus_set_credential(currentAccount, i);
+	  }
+	  dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
 	}
-	dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
       }
     }
+
     /** @todo Verify if it's the best condition to check */
     if (g_strcasecmp(currentAccount->accountID, "new") == 0) {
       dbus_add_account(currentAccount);
@@ -1475,9 +1482,7 @@ void show_account_window (account_t * a) {
     // Perpetuate changes to the deamon
     codec_list_update_to_daemon (currentAccount);
     
-    
     gtk_widget_destroy (GTK_WIDGET(dialog));
-
 } 
 
 GtkWidget* create_direct_ip_calls_tab (account_t **a) {
