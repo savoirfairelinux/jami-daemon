@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,26 +27,26 @@
 #include "Account.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class ActionSetAccountFirst : public QAction
 {
 Q_OBJECT
 
 private:
-	
-	Account * account;
+   
+   Account * account;
 
 public:
 
-	ActionSetAccountFirst(Account * account, QObject *parent = 0);
-	~ActionSetAccountFirst();
+   ActionSetAccountFirst(Account * account, QObject *parent = 0);
+   ~ActionSetAccountFirst();
 
 private slots:
-	void emitSetFirst();
-	
+   void emitSetFirst();
+   
 signals:
-	void setFirst(Account * account);
+   void setFirst(Account * account);
 
 };
 

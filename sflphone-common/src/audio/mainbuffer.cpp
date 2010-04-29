@@ -20,6 +20,9 @@
 
 #include "mainbuffer.h"
 
+#include "audioprocessing.h"
+
+
 MainBuffer::MainBuffer() : _internalSamplingRate (0)
 {
     mixBuffer = new SFLDataFormat[STATIC_BUFSIZE];
@@ -29,8 +32,7 @@ MainBuffer::MainBuffer() : _internalSamplingRate (0)
 MainBuffer::~MainBuffer()
 {
 
-    delete [] mixBuffer;
-    mixBuffer = NULL;
+    delete [] mixBuffer; mixBuffer = NULL;
 }
 
 
@@ -352,15 +354,11 @@ int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, Ca
 
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
-    if (ring_buffer == NULL) {
-
+    if (!ring_buffer) {
         return 0;
     }
 
     return ring_buffer->Get (buffer, toCopy, volume, reader_id);
-
-    return 0;
-
 }
 
 
@@ -375,7 +373,7 @@ int MainBuffer::availForGet (CallID call_id)
         return 0;
 
     if (callid_set->empty()) {
-        _debug ("CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
+        _debug ("MainBuffer: CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
         return 0;
     }
 
@@ -411,15 +409,13 @@ int MainBuffer::availForGetByID (CallID call_id, CallID reader_id)
 {
 
     if ( (call_id != default_id) && (reader_id == call_id)) {
-
-        _debug ("**********************************************************************");
-        _debug ("Error an RTP session ring buffer is not supposed to have a readpointer on tiself");
+        _error("MainBuffer: Error: RingBuffer has a readpointer on tiself");
     }
 
     RingBuffer* ringbuffer = getRingBuffer (call_id);
 
     if (ringbuffer == NULL) {
-        _debug ("Error: ring buffer does not exist");
+        _error("MainBuffer: Error: RingBuffer does not exist");
         return 0;
     } else
         return ringbuffer->AvailForGet (reader_id);
@@ -540,7 +536,7 @@ void MainBuffer::flushAllBuffers()
 
 void MainBuffer::stateInfo()
 {
-    _debug ("MainBuffer state info");
+    _debug ("MainBuffer: State info");
 
     CallIDMap::iterator iter_call = _callIDMap.begin();
 

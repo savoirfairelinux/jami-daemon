@@ -92,14 +92,13 @@ int SIPAccount::initCredential (void)
     pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (credentialCount));
 
     if (cred_info == NULL) {
-        _debug ("Failed to set cred_info for account %s", _accountID.c_str());
+        _error ("SipAccount: Error: Failed to set cred_info for account %s", _accountID.c_str());
         return !SUCCESS;
     }
 
     pj_bzero (cred_info, sizeof (pjsip_cred_info) *credentialCount);
 
     // Use authentication username if provided
-
     if (!_authenticationUsername.empty()) {
         cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
     } else {

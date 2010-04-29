@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,24 +17,20 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef DLGRECORD_H
-#define DLGRECORD_H
+#ifndef CALLLIST_S_H
+#define CALLLIST_S_H
 
-#include <QWidget>
-
-#include "ui_dlgrecordbase.h"
+#include "CallList.h"
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+        @author Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
 */
-class DlgRecord : public QWidget, public Ui_DlgRecordBase
+class CallListInterfaceSingleton
 {
-Q_OBJECT
 public:
-    DlgRecord(QWidget *parent = 0);
-
-    ~DlgRecord();
-
+  static CallList& getInstance();
+//private:
+  static CallList* callListInstance;
 };
 
 #endif
