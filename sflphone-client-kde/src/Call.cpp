@@ -715,6 +715,18 @@ void Call::setConfId(QString value) {
 
 QString Call::getCurrentCodecName() {
    CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-   qDebug() << "Codec name: " << callManager.getCurrentCodecName(callId); sleep(5);
    return callManager.getCurrentCodecName(callId);
+}
+
+//This function could also be called mayBeSecure or haveChancesToBeEncryptedButWeCantTell.
+bool Call::isSecure() {
+   ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+   //MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
+   AccountList accountList;
+   Account* currentAccount = accountList.getAccountById(account);
+
+   if ((currentAccount->getAccountDetail(TLS_ENABLE ) == "true") || (currentAccount->getAccountDetail(TLS_METHOD).toInt())) {
+      return true;
+   }
+   return false;
 }

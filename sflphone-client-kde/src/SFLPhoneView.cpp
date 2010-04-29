@@ -41,7 +41,6 @@
 #include "sflphone_const.h"
 #include "conf/ConfigurationSkeleton.h"
 #include "configurationmanager_interface_singleton.h"
-#include "calllist_interface_singleton.h"
 #include "callmanager_interface_singleton.h"
 #include "instance_interface_singleton.h"
 #include "ActionSetAccountFirst.h"
@@ -49,7 +48,6 @@
 #include "SFLPhone.h"
 #include "typedefs.h"
 #include "Dialpad.h"
-#include "CallTreeView.h"
 #include "CallTreeItem.h"
 
 
@@ -62,7 +60,8 @@ QString SFLPhoneView::priorAccountId;
 SFLPhoneView::SFLPhoneView(QWidget *parent)
    : QWidget(parent),
      callTreeModel(CallModel::ActiveCall),
-     historyTreeModel(CallModel::History)
+     historyTreeModel(CallModel::History),
+     addressBookTree(CallModel::Address)
 {
    setupUi(this);
    
@@ -308,7 +307,8 @@ void SFLPhoneView::backspace()
       else {
          call->backspaceItemText();
          if(call->getState() == CALL_STATE_OVER) {
-            callTreeModel.removeItem(callTreeModel.getCurrentItem());
+            if (callTreeModel.getCurrentItem())
+               callTreeModel.removeItem(callTreeModel.getCurrentItem());
 
             if(call->getHistoryState() != NONE) {
                //historyTree->insert(call);
