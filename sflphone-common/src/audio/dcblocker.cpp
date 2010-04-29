@@ -19,6 +19,31 @@
 
 #include "dcblocker.h"
 
+FirFilter::FirFilter(std::vector<double> ir) : _impulseResponse(ir), 
+					       _length(ir.size()),
+					       _count(0)
+{}
+
+FirFilter::~FirFilter() {}
+
+int FirFilter::getOutputSample(int inputSample) 
+{
+  _delayLine[_count] = (double)inputSample;
+  double result = 0.0;
+  int index = _count;
+  for(int i = 0; i < _length; i++) {
+    result = result + _impulseResponse[i] * _delayLine[index--];
+    if(index < 0)
+      index = _length-1;
+  }
+  _count++;
+  if(_count >= _length)
+    _count = 0;
+
+  return (int)result;
+}
+
+
 DcBlocker::DcBlocker() : _y(0), _x(0), _xm1(0), _ym1(0) {}
 
 DcBlocker::~DcBlocker() {}
