@@ -208,8 +208,6 @@ class PulseLayer : public AudioLayer {
     int spkrVolume;
     int micVolume;
 
-    DcBlocker* dcblocker;
-
     // private:
 
 public: 

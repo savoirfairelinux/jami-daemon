@@ -92,6 +92,8 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
   // speex_echo_playback(_echoState, inputData);
 }
 
+void EchoCancel::process(SFLDataFormat *data, int nbBytes) {}
+
 int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
 

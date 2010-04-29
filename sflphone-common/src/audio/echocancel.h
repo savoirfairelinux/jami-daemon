@@ -41,6 +41,11 @@ class EchoCancel : public Algorithm {
     virtual void putData(SFLDataFormat *inputData, int nbBytes);
 
     /**
+     * Unused
+     */
+    virtual void process(SFLDataFormat *data, int nbBytes);
+
+    /**
      * Perform echo cancellation using internal buffers
      * \param inputData containing mixed echo and voice data
      * \param outputData containing 
@@ -54,6 +59,7 @@ class EchoCancel : public Algorithm {
      * \param outputData containing the processed data
      */
     virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+
  private:
 
     SpeexEchoState *_echoState;

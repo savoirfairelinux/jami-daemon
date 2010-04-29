@@ -29,8 +29,8 @@
 
 #include <cc++/thread.h> // for ost::Mutex
 
+#include "dcblocker.h"
 #include "echocancel.h"
-#include "algorithm.h"
 
 
 #define FRAME_PER_BUFFER	160
@@ -300,8 +300,10 @@ class AudioLayer {
         ost::Mutex _mutex;
 
 	EchoCancel *_echoCancel;
+	AudioProcessing *_echoCanceller; 
 
-	AudioProcessing *_audioProcessing; 
+	DcBlocker *_dcblocker;
+	AudioProcessing *_audiofilter;
 
 };
 

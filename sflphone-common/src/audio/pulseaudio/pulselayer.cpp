@@ -78,11 +78,15 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         , record()
 {
     _urgentRingBuffer.createReadPointer();
-    dcblocker = new DcBlocker();
+    
     is_started = false;
 
+    // Instantiate the algorithm
     AudioLayer::_echoCancel = new EchoCancel();
-    AudioLayer::_audioProcessing = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
+    AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
+
+    AudioLayer::_dcblocker = new DcBlocker();
+    AudioLayer::_audiofilter = new AudioProcessing(static_cast<Algorithm *>(_dcblocker));
     
     openLayer();
 }
@@ -97,14 +101,17 @@ PulseLayer::~PulseLayer (void)
         _converter = NULL;
     }
 
-    delete dcblocker;
-    dcblocker = NULL;
-
     delete AudioLayer::_echoCancel;
     AudioLayer::_echoCancel = NULL;
     
-    delete AudioLayer::_audioProcessing;
-    AudioLayer::_audioProcessing = NULL;
+    delete AudioLayer::_echoCanceller;
+    AudioLayer::_echoCanceller = NULL;
+
+    delete AudioLayer::_dcblocker;
+    AudioLayer::_dcblocker = NULL;
+
+    delete AudioLayer::_audiofilter;
+    AudioLayer::_audiofilter = NULL;
 }
 
 void
@@ -537,7 +544,7 @@ void PulseLayer::writeToSpeaker (void)
                 getMainBuffer()->getData (out, byteToGet, 100);
 
 		// Copy far-end signal in echo canceller to adapt filter coefficient
-		AudioLayer::_audioProcessing->putData(out, byteToGet);
+		AudioLayer::_echoCanceller->putData(out, byteToGet);
 
                 // test if resampling is required
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
@@ -620,10 +627,10 @@ void PulseLayer::readFromMic (void)
             nbSample = _converter->downsampleData ( (SFLDataFormat*) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
             // remove dc offset
-            dcblocker->filter_signal (rsmpl_out, nbSample);
+            _audiofilter->processAudio(rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
 	    // echo cancellation processing
-	    int sampleready = _audioProcessing->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
+	    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
 
             // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 	    getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);

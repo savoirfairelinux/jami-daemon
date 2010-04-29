@@ -47,10 +47,8 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     // _audioThread = NULL;
     _urgentRingBuffer.createReadPointer();
 
-    dcblocker = new DcBlocker();
-
     AudioLayer::_echoCancel = new EchoCancel();
-    AudioLayer::_audioProcessing = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
+    AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
 }
 
 // Destructor
@@ -64,16 +62,11 @@ AlsaLayer::~AlsaLayer (void)
         _converter = NULL;
     }
 
-    if (dcblocker) {
-        delete dcblocker;
-        dcblocker = NULL;
-    }
-
     delete AudioLayer::_echoCancel;
     AudioLayer::_echoCancel = NULL;
 
-    delete AudioLayer::_audioProcessing;
-    AudioLayer::_audioProcessing = NULL;
+    delete AudioLayer::_echoCanceller;
+    AudioLayer::_echoCanceller = NULL;
 }
 
 bool
@@ -918,7 +911,7 @@ void AlsaLayer::audioCallback (void)
                 getMainBuffer()->getData (out, toGet, spkrVolume);
 
 		// Copy far-end signal in echo canceller to adapt filter coefficient
-		AudioLayer::_audioProcessing->putData(out, toGet);	
+		AudioLayer::_echoCanceller->putData(out, toGet);	
 
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
@@ -1004,10 +997,10 @@ void AlsaLayer::audioCallback (void)
                     // _debug("nb_sample_up %i", nb_sample_up);
                     nbSample = _converter->downsampleData ( (SFLDataFormat*) in, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
-                    dcblocker->filter_signal (rsmpl_out, nbSample);
+                    _audiofilter->processAudio (rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
 		    // echo cancellation processing
-		    int sampleready = _audioProcessing->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat)); 
+		    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat)); 
 
                     // getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
 		    getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);

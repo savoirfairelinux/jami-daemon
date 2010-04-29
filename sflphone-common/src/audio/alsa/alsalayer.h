@@ -22,7 +22,6 @@
 
 #include "audio/audiolayer.h"
 #include "audio/samplerateconverter.h"
-#include "audio/dcblocker.h"
 #include "eventthread.h"
 #include <alsa/asoundlib.h>
 
@@ -269,9 +268,6 @@ class AlsaLayer : public AudioLayer {
 
     /** Sample rate converter object */
     SamplerateConverter* _converter;
-
-    // Allpass filter to remove DC offset
-    DcBlocker* dcblocker;
 
 };
 

@@ -49,7 +49,12 @@ public:
   void putData(SFLDataFormat *inputData, int nbBytes);
 
   /**
-   * Process dome audio data
+   * Process some audio data
+   */
+  void processAudio(SFLDataFormat *inputData, int nbBytes);
+
+  /**
+   * Process some audio data
    */
   int processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
