@@ -477,7 +477,7 @@ filter_keys (const GdkXEvent *xevent, const GdkEvent *event, gpointer data)
       if (accelerators_list[i].key == key->keycode && accelerators_list[i].mask
           == keystate)
         {
-          DEBUG("catched key for action: %s (%d)", accelerators_list[i].action,
+          DEBUG("catched key for action: %s", accelerators_list[i].action,
               accelerators_list[i].key);
 
           // call associated callback function

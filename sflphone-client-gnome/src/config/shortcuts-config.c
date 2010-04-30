@@ -126,7 +126,6 @@ accel_edited (GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
         VALUE, accel_key, -1);
 
   // Update GDK bindings
-  DEBUG("%d %d", hardware_keycode, code);
   shortcuts_update_bindings (atoi (path), code, mask);
 }
 
