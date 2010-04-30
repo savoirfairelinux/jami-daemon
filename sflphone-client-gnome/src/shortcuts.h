@@ -30,10 +30,10 @@ typedef struct
 } Accelerator;
 
 static void
-grab_key (int key_code, GdkWindow *root);
+grab_key (int key_code, GdkModifierType mask, GdkWindow *root);
 
 static void
-ungrab_key (int key_code, GdkWindow *root);
+ungrab_key (int key_code, GdkModifierType mask, GdkWindow *root);
 
 static GdkFilterReturn
 filter_keys (GdkXEvent *xevent, GdkEvent *event, gpointer data);
@@ -57,7 +57,7 @@ static void
 toggle_hold_callback ();
 
 static void
-initialize_binding (const gchar* action, const guint code);
+initialize_binding (const gchar* action, const guint code, const GdkModifierType mask);
 
 static void
 initialize_shortcuts_keys ();
@@ -66,7 +66,10 @@ static void*
 get_action_callback (const gchar* action);
 
 static void
-update_bindings_data (const guint index, const guint code);
+update_bindings_data (const guint index, const guint code, GdkModifierType mask);
+
+static void
+update_shortcuts_map (const gchar* action, guint value, GdkModifierType mask);
 
 /*
  * "Public" functions
@@ -76,7 +79,7 @@ void
 shortcuts_initialize_bindings ();
 
 void
-shortcuts_update_bindings (const guint index, const guint code);
+shortcuts_update_bindings (const guint index, const guint code, GdkModifierType mask);
 
 void
 shortcuts_destroy_bindings ();

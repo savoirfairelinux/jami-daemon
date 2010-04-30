@@ -150,8 +150,8 @@ public:
     std::vector<std::string> getAllIpInterface(void);
     std::vector<std::string> getAllIpInterfaceByName(void);
 
-    std::map< std::string, int32_t > getShortcuts ();
-    void setShortcuts (const std::map< std::string, int32_t >& shortcutsMap);
+    std::map< std::string, std::string > getShortcuts ();
+    void setShortcuts (const std::map< std::string, std::string >& shortcutsMap);
 };
 
 

@@ -816,25 +816,24 @@ void ConfigurationManager::setWindowPositionY(const int32_t& posY) {
 	Manager::instance().setConfig(PREFERENCES, WINDOW_POSITION_Y, posY);
 }
 
-std::map<std::string, int32_t> ConfigurationManager::getShortcuts() {
+std::map<std::string, std::string> ConfigurationManager::getShortcuts() {
 
-	std::map<std::string, int> shortcutsMap;
-	int shortcut;
+	std::map<std::string, std::string> shortcutsMap;
 
 	for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
 		std::string key = shortcutsKeys.at(i);
-		shortcut = Manager::instance().getConfigInt("Shortcuts", key);
-		shortcutsMap.insert(std::pair<std::string, int>(key, shortcut));
+		std::string shortcut = Manager::instance().getConfigString("Shortcuts", key);
+		shortcutsMap.insert(std::pair<std::string, std::string>(key, shortcut));
 	}
 
 	return shortcutsMap;
 }
 
 void ConfigurationManager::setShortcuts(
-		const std::map<std::string, int32_t>& shortcutsMap) {
+		const std::map<std::string, std::string>& shortcutsMap) {
 
-	std::map<std::string, int> map_cpy = shortcutsMap;
-	std::map<std::string, int>::iterator it;
+	std::map<std::string, std::string> map_cpy = shortcutsMap;
+	std::map<std::string, std::string>::iterator it;
 
 	for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
 		std::string key = shortcutsKeys.at(i);

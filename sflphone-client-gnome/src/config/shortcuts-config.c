@@ -36,7 +36,6 @@ create_shortcuts_settings()
   gnome_main_section_new(_("General"), &result_frame);
 
   label = gtk_label_new(_("Be careful: these shortcuts might override system-wide shortcuts."));
-
   treeview = gtk_tree_view_new();
   setup_tree_view(treeview);
 
@@ -109,7 +108,7 @@ accel_edited(GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
   gtk_tree_model_get_iter_first(model, &iter);
   while (list[i].action != NULL)
       {
-          if(list[i].value == code)
+          if(list[i].value == code && list[i].mask == mask)
             {
               gtk_list_store_set(GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0, -1);
               WARN("This key was already affected");
@@ -124,7 +123,8 @@ accel_edited(GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
         accel_key, -1);
 
   // Update GDK bindings
-  shortcuts_update_bindings(atoi(path), code);
+  DEBUG("%d %d", hardware_keycode, code);
+  shortcuts_update_bindings(atoi(path), code, mask);
 }
 
 static void
@@ -141,5 +141,5 @@ accel_cleared(GtkCellRendererAccel *renderer, gchar *path, GtkTreeView *treeview
     gtk_list_store_set(GTK_LIST_STORE (model), &iter, MASK, 0, VALUE, 0, -1);
 
   // Update GDK bindings
-  shortcuts_update_bindings(atoi(path), 0);
+  shortcuts_update_bindings(atoi(path), 0, 0);
 }
