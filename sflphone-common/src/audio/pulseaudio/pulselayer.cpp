@@ -82,11 +82,15 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     is_started = false;
 
     // Instantiate the algorithm
-    AudioLayer::_echoCancel = new EchoCancel();
+    AudioLayer::_echoCancel = new SpeexEchoCancel();
     AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
 
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing(static_cast<Algorithm *>(_dcblocker));
+
+    captureFile = new ofstream("captureFile", ofstream::binary);
+    captureRsmplFile = new ofstream("captureRsmplFile", ofstream::binary);
+    captureFilterFile = new ofstream("captureFilterFile", ofstream::binary);
     
     openLayer();
 }
@@ -112,6 +116,14 @@ PulseLayer::~PulseLayer (void)
 
     delete AudioLayer::_audiofilter;
     AudioLayer::_audiofilter = NULL;
+
+    captureFile->close();
+    captureRsmplFile->close();
+    captureFilterFile->close();
+
+    delete captureFile;
+    delete captureRsmplFile;
+    delete captureFilterFile;
 }
 
 void
@@ -624,10 +636,16 @@ void PulseLayer::readFromMic (void)
 
             int nb_sample_up = nbSample;
 
+	    captureFile->write ((const char *)data, nbSample*sizeof(SFLDataFormat));
+
             nbSample = _converter->downsampleData ( (SFLDataFormat*) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
+
+	    captureRsmplFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
             // remove dc offset
             _audiofilter->processAudio(rsmpl_out, nbSample*sizeof(SFLDataFormat));
+
+	    captureFilterFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
 	    // echo cancellation processing
 	    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));

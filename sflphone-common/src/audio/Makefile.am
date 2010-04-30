@@ -12,7 +12,7 @@ libaudio_la_SOURCES = \
 		audiolayer.cpp \
 		audiodevice.cpp \
 		samplerateconverter.cpp \
-		echocancel.cpp \
+		speexechocancel.cpp \
 		audioprocessing.cpp \
 		dcblocker.cpp \
 		$(SPEEX_SOURCES_CPP)
@@ -26,7 +26,7 @@ noinst_HEADERS = \
 		mainbuffer.h \
 	 	recordable.h \
 		algorithm.h \
-		echocancel.h \
+		speexechocancel.h \
 		audioprocessing.h \
 		dcblocker.h \
 		samplerateconverter.h

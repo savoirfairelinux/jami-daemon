@@ -26,13 +26,13 @@
 
 #include "ringbuffer.h"
 
-class EchoCancel : public Algorithm {
+class SpeexEchoCancel : public Algorithm {
 
  public:
 
-    EchoCancel();
+    SpeexEchoCancel();
 
-    ~EchoCancel();
+    ~SpeexEchoCancel();
 
     /**
      * Add speaker data into internal buffer
@@ -76,6 +76,7 @@ class EchoCancel : public Algorithm {
     SFLDataFormat _tmpOut[5000];
 
     ofstream *micFile;
+    ofstream *spkrFile;
     ofstream *echoFile;
 };
 

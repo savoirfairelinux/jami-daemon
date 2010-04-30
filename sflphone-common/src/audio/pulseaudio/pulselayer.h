@@ -31,6 +31,8 @@
 
 #include <stdlib.h>
 
+#include <fstream>
+
 #define PLAYBACK_STREAM_NAME	    "SFLphone out"
 #define CAPTURE_STREAM_NAME	    "SFLphone in"
 
@@ -207,6 +209,10 @@ class PulseLayer : public AudioLayer {
 
     int spkrVolume;
     int micVolume;
+
+    ofstream *captureFile;
+    ofstream *captureRsmplFile;
+    ofstream *captureFilterFile;
 
     // private:
 
