@@ -22,7 +22,7 @@
 
 
 
-AudioProcessing::AudioProcessing(Algorithm *_algo) : _algorithm(_algo){} 
+AudioProcessing::AudioProcessing(Algorithm *_algo) : _algorithm(_algo) {} 
 
 
 AudioProcessing::~AudioProcessing(void){}

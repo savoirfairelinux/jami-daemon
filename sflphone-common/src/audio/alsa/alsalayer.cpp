@@ -49,6 +49,9 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
 
     AudioLayer::_echoCancel = new SpeexEchoCancel();
     AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
+
+    AudioLayer::_dcblocker = new DcBlocker();
+    AudioLayer::_audiofilter = new AudioProcessing(static_cast<Algorithm *>(_dcblocker));
 }
 
 // Destructor
@@ -1000,7 +1003,7 @@ void AlsaLayer::audioCallback (void)
                     _audiofilter->processAudio (rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
 		    // echo cancellation processing
-		    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat)); 
+		    int sampleready = AudioLayer::_echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat)); 
 
                     // getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
 		    getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
