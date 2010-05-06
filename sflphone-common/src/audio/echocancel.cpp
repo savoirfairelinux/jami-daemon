@@ -168,23 +168,21 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     _spkrLevel = getMaxAmplitude(_avgSpkrLevelHist);
     _micLevel = getMaxAmplitude(_avgMicLevelHist);
 
-    if(_micLevel > MIN_MIC_LEVEL) {
-      if(_spkrLevel < MIN_SPKR_LEVEL) {
-	// near-end is talking, far-end silent
-	_amplFactor = 1.0;
-      }
-      else {
-	// near-end is talking, far-end too
-	_amplFactor = 0.8;
-      }
-    }
-    else {
-      if(_spkrLevel < MIN_SPKR_LEVEL) {
-	// nobody's talking
+    if(_spkrLevel > MIN_SPKR_LEVEL) {
+      if(_micLevel < MIN_MIC_LEVEL) {
+	// far-end is talking, near-end silent reduce echo
 	_amplFactor = 0.0;
       }
       else {
-	// far-end is talking, REDUCE ECHO
+	// near-end is talking, far-end too
+	_amplFactor = 0.5;
+      }
+    }
+    else {
+      if(_micLevel < MIN_MIC_LEVEL) {
+	_amplFactor = 1.0;
+      }
+      else {
 	_amplFactor = 1.0;
       }
     }
@@ -197,7 +195,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 
     _amplify = 0.0;
     for(int m = 0; m < 10; m++) {
-      _amplify = _factorFilter[m];
+      _amplify += _factorFilter[m];
     }
     _amplify = _amplify / 10.0;
 

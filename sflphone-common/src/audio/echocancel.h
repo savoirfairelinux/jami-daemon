@@ -31,11 +31,11 @@
 #define MS_PER_SEC 1000
 
 // Length of the echo tail in ms
-#define ECHO_LENGTH 150
+#define ECHO_LENGTH 100
 
 // Voice Threashold
-#define MIN_MIC_LEVEL 1000
-#define MIN_SPKR_LEVEL 1000
+#define MIN_MIC_LEVEL 300
+#define MIN_SPKR_LEVEL 500
 
 // Smoothing factor
 #define FACTOR_LENGTH = 5
