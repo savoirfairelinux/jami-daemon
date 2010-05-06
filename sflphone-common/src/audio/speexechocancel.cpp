@@ -128,13 +128,15 @@ int SpeexEchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData
     _spkrData->Get(_tmpSpkr, byteSize);
     _micData->Get(_tmpMic, byteSize);
 
+    speex_preprocess_run(_preState, _tmpMic);    
+
     micFile->write ((const char *)_tmpMic, byteSize);
     spkrFile->write ((const char *)_tmpSpkr, byteSize);
 
     // Processed echo cancellation
     speex_echo_cancellation(_echoState, _tmpMic, _tmpSpkr, _tmpOut);
 
-    speex_preprocess_run(_preState, _tmpOut);    
+    // speex_preprocess_run(_preState, _tmpOut);    
 
     bcopy(_tmpOut, outputData+(nbFrame*FRAME_SIZE), byteSize);
 

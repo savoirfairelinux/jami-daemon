@@ -17,22 +17,36 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SPEEXECHOCANCEL_H
-#define SPEEXECHOCANCEL_H
+#ifndef ECHOCANCEL_H
+#define ECHOCANCEL_H
 
 #include "audioprocessing.h"
-#include <speex/speex_echo.h>
-#include "speex/speex_preprocess.h"
 
 #include "ringbuffer.h"
 
-class SpeexEchoCancel : public Algorithm {
+// length of audio segment in ms
+#define SEGMENT_LENGTH 10
+
+// number of ms in sec
+#define MS_PER_SEC 1000
+
+// Length of the echo tail in ms
+#define ECHO_LENGTH 150
+
+// Voice Threashold
+#define MIN_MIC_LEVEL 1000
+#define MIN_SPKR_LEVEL 1000
+
+// Smoothing factor
+#define FACTOR_LENGTH = 5
+
+class EchoCancel : public Algorithm {
 
  public:
 
-    SpeexEchoCancel();
+    EchoCancel();
 
-    ~SpeexEchoCancel();
+    ~EchoCancel();
 
     /**
      * Add speaker data into internal buffer
@@ -62,22 +76,69 @@ class SpeexEchoCancel : public Algorithm {
 
  private:
 
-    SpeexEchoState *_echoState;
+    /**
+     * Actual method calld to supress echo from mic, micData and spkrData must be synchronized
+     */
+    void performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData);
 
-    SpeexPreprocessState *_preState;
+    /**
+     * Update speaker level array for both micData and spkrData
+     */
+    void updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData);
 
-    RingBuffer *_micData; 
+    int computeAmplitudeLevel(SFLDataFormat *data);
+
+
+    int getMaxAmplitude(int *data);
+
+    void amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData);
+
+    /**
+     * Internal buffer for mic data synchronization
+     */
+    RingBuffer *_micData;
+
+    /**
+     * Internal buffer for speaker data synchronization
+     */
     RingBuffer *_spkrData; 
 
+    /**
+     * Boolean value 
+     */
     bool _spkrStoped;
 
+    /**
+     * Temp buffer
+     */
     SFLDataFormat _tmpSpkr[5000];
     SFLDataFormat _tmpMic[5000];
     SFLDataFormat _tmpOut[5000];
 
+
+    int _samplingRate;
+    int _smplPerFrame;
+    int _smplPerSeg;
+    int _historyLength;
+
+    int _spkrLevel;
+    int _micLevel;
+
+    int _spkrHistCnt;
+    int _micHistCnt;
+
+    int _avgSpkrLevelHist[5000];
+    int _avgMicLevelHist[5000];
+
+    float _amplFactor;
+    float _amplify;
+    float _factorFilter[10];
+    int _factorCnt;
+
     ofstream *micFile;
     ofstream *spkrFile;
     ofstream *echoFile;
+    
 };
 
 #endif

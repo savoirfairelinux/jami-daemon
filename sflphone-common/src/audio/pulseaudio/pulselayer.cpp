@@ -82,7 +82,7 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     is_started = false;
 
     // Instantiate the algorithm
-    AudioLayer::_echoCancel = new SpeexEchoCancel();
+    AudioLayer::_echoCancel = new EchoCancel();
     AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
 
     AudioLayer::_dcblocker = new DcBlocker();
