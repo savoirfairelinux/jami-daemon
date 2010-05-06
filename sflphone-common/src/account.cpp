@@ -92,8 +92,6 @@ void Account::setActiveCodecs (const std::vector <std::string> &list) {
 	int payload;
 	size_t size = list.size();
 
-	_info ("Account: Set the custom order %i", list.size ());
-
 	while ( (unsigned int) i < size) {
 		payload = std::atoi (list[i].data());
 		_info ("Account: Adding codec with RTP payload=%i", payload);
@@ -103,9 +101,9 @@ void Account::setActiveCodecs (const std::vector <std::string> &list) {
 		i++;
 	}
 
-    // setConfig
-    std::string s = Manager::instance ().serialize (list);
-    _info ("Account: Setting codec with payload number %s to the active list", s.c_str());
+	// setConfig
+	std::string s = Manager::instance ().serialize (list);
+
 	// Set the config per account
 	Manager::instance().setConfig (_accountID, "ActiveCodecs", s);
 
