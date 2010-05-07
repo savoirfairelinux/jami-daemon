@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+X-DocPath=sflphone-client-kde/index.html
+Terminal=false
+
+Name=SFLphone VoIP KDE4 client
+GenericName=Telephone
+Comment=Call and receive calls with SIP or IAX protocols
+Exec=sflphone-client-kde
+Icon=sflphone.svg
+StartupNotify=true
+Categories=Network;Telephony;
