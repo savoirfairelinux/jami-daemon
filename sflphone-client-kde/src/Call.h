@@ -259,6 +259,7 @@ public:
    QString getStopTimeStamp() const;
    QString getStartTimeStamp() const;
    QString getCurrentCodecName();
+   bool isSecure();
    bool isConference() const;
    
    void setConference(bool value);

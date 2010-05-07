@@ -87,11 +87,11 @@ bool CallModel::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData
    QByteArray encodedData = data->data(MIME_CALLID);
    
    if (!QString(encodedData).isEmpty()) {
-   clearArtefact(privateCallList_callId[encodedData]->currentItem);
+   clearArtefact(privateCallList_callId[encodedData]->treeItem);
    
    if (!parent) {
          qDebug() << "Call dropped on empty space";
-         if (privateCallList_callId[encodedData]->currentItem->parent())
+         if (privateCallList_callId[encodedData]->treeItem->parent())
             detachParticipant(privateCallList_callId[encodedData]->call_real);
          else
             qDebug() << "The call is not in a conversation (doing nothing)";
@@ -106,12 +106,12 @@ bool CallModel::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData
       if ((parent->parent()) || (parent->childCount())) {
          qDebug() << "Call dropped on a conference";
          
-         if ((privateCallList_callId[encodedData]->currentItem->childCount()) && (!parent->childCount())) {
+         if ((privateCallList_callId[encodedData]->treeItem->childCount()) && (!parent->childCount())) {
             qDebug() << "Conference dropped on a call (doing nothing)";
             return true;
          }
          
-         QTreeWidgetItem* call1 = privateCallList_callId[encodedData]->currentItem;
+         QTreeWidgetItem* call1 = privateCallList_callId[encodedData]->treeItem;
          QTreeWidgetItem* call2 = (parent->parent())?parent->parent():parent;
          
          if (call1->parent()) {
@@ -119,7 +119,7 @@ bool CallModel::dropMimeData(QTreeWidgetItem *parent, int index, const QMimeData
                qDebug() << "Call dropped on it's own conversation (doing nothing)";
                return true;
             }
-            else if (privateCallList_item[call1]->currentItem->childCount()) {
+            else if (privateCallList_item[call1]->treeItem->childCount()) {
                qDebug() << "Merging two conferences";
                mergeConferences(privateCallList_item[call1]->call_real,privateCallList_item[call2]->call_real);
             }
@@ -208,8 +208,8 @@ void CallModel::setTitle(QString title)
 ///Select an item in the TreeView
 bool CallModel::selectItem(Call* item) 
 {
-   if (privateCallList_call[item]->currentItem) {
-      setCurrentItem(privateCallList_call[item]->currentItem);
+   if (privateCallList_call[item]->treeItem) {
+      setCurrentItem(privateCallList_call[item]->treeItem);
       return true;
    }
    else
@@ -228,8 +228,8 @@ Call* CallModel::getCurrentItem()
 ///Remove a TreeView item and delete it
 bool CallModel::removeItem(Call* item) 
 {
-   if (indexOfTopLevelItem(privateCallList_call[item]->currentItem) != -1) {//TODO To remove once safe
-     removeItemWidget(privateCallList_call[item]->currentItem,0);
+   if (indexOfTopLevelItem(privateCallList_call[item]->treeItem) != -1) {//TODO To remove once safe
+     removeItemWidget(privateCallList_call[item]->treeItem,0);
      return true;
    }
    else
@@ -245,7 +245,7 @@ QWidget* CallModel::getWidget()
 ///Convenience wrapper around extractItem(QTreeWidgetItem*)
 QTreeWidgetItem* CallModel::extractItem(QString callId) 
 {
-   QTreeWidgetItem* currentItem = privateCallList_callId[callId]->currentItem;
+   QTreeWidgetItem* currentItem = privateCallList_callId[callId]->treeItem;
    return extractItem(currentItem);
 }
 
@@ -271,7 +271,7 @@ QTreeWidgetItem* CallModel::extractItem(QTreeWidgetItem* item)
 ///Convenience wrapper around insertItem(QTreeWidgetItem*, QTreeWidgetItem*)
 CallTreeItem* CallModel::insertItem(QTreeWidgetItem* item, Call* parent) 
 {
-   return insertItem(item,(parent)?privateCallList_call[parent]->currentItem:0);
+   return insertItem(item,(parent)?privateCallList_call[parent]->treeItem:0);
 }
 
 ///Insert a TreeView item in the TreeView as child of parent or as a top level item, also restore the item Widget
@@ -301,13 +301,13 @@ CallTreeItem* CallModel::insertItem(QTreeWidgetItem* item, QTreeWidgetItem* pare
 ///Remove a call from the interface
 void CallModel::destroyCall(Call* toDestroy) 
 {
-   if (privateCallList_call[toDestroy]->currentItem == currentItem())
+   if (privateCallList_call[toDestroy]->treeItem == currentItem())
       setCurrentItem(0);
    
-   if (indexOfTopLevelItem(privateCallList_call[toDestroy]->currentItem) != -1)
-      takeTopLevelItem(indexOfTopLevelItem(privateCallList_call[toDestroy]->currentItem));
-   else if (privateCallList_call[toDestroy]->currentItem->parent())
-      privateCallList_call[toDestroy]->currentItem->parent()->removeChild(privateCallList_call[toDestroy]->currentItem);
+   if (indexOfTopLevelItem(privateCallList_call[toDestroy]->treeItem) != -1)
+      takeTopLevelItem(indexOfTopLevelItem(privateCallList_call[toDestroy]->treeItem));
+   else if (privateCallList_call[toDestroy]->treeItem->parent())
+      privateCallList_call[toDestroy]->treeItem->parent()->removeChild(privateCallList_call[toDestroy]->treeItem);
    else
       qDebug() << "Call not found";
 }
@@ -333,7 +333,7 @@ Call* CallModel::addCall(Call* call, Call* parent)
    aNewStruct->call_real = call;
    
    QTreeWidgetItem* callItem = new QTreeWidgetItem();
-   aNewStruct->currentItem = callItem;
+   aNewStruct->treeItem = callItem;
    aNewStruct->conference = false;
    
    privateCallList_item[callItem] = aNewStruct;
@@ -419,7 +419,7 @@ Call* CallModel::addConference(const QString & confID)
    aNewStruct->conference = true;
    
    QTreeWidgetItem* confItem = new QTreeWidgetItem();
-   aNewStruct->currentItem = confItem;
+   aNewStruct->treeItem = confItem;
    
    privateCallList_item[confItem] = aNewStruct;
    privateCallList_call[newConf] = aNewStruct;
@@ -431,7 +431,7 @@ Call* CallModel::addConference(const QString & confID)
    setCurrentItem(confItem);
 
    foreach (QString callId, callList) {
-     insertItem(extractItem(privateCallList_callId[callId]->currentItem),confItem);
+     insertItem(extractItem(privateCallList_callId[callId]->treeItem),confItem);
    }
    return newConf;
 }
@@ -487,7 +487,7 @@ void CallModel::conferenceChanged(const QString &confId, const QString &state)
       return;
    }
    
-   if (!privateCallList_callId[confId]->currentItem) {
+   if (!privateCallList_callId[confId]->treeItem) {
       qDebug() << "The conference item does not exist";
       return;
    }
@@ -495,32 +495,32 @@ void CallModel::conferenceChanged(const QString &confId, const QString &state)
    QList<QTreeWidgetItem*> buffer;
    foreach (QString callId, callList) {
       if (privateCallList_callId[callId]) {
-         QTreeWidgetItem* item3 = extractItem(privateCallList_callId[callId]->currentItem);
-         insertItem(item3, privateCallList_callId[confId]->currentItem);
-         buffer << privateCallList_callId[callId]->currentItem;
+         QTreeWidgetItem* item3 = extractItem(privateCallList_callId[callId]->treeItem);
+         insertItem(item3, privateCallList_callId[confId]->treeItem);
+         buffer << privateCallList_callId[callId]->treeItem;
       }
       else
          qDebug() << "Call " << callId << " does not exist";
    }
 
-   for (int j =0; j < privateCallList_callId[confId]->currentItem->childCount();j++) {
-      if (buffer.indexOf(privateCallList_callId[confId]->currentItem->child(j)) == -1)
-         insertItem(extractItem(privateCallList_callId[confId]->currentItem->child(j)));
+   for (int j =0; j < privateCallList_callId[confId]->treeItem->childCount();j++) {
+      if (buffer.indexOf(privateCallList_callId[confId]->treeItem->child(j)) == -1)
+         insertItem(extractItem(privateCallList_callId[confId]->treeItem->child(j)));
    }
 }
 
 ///Remove a conference from the model and the TreeView
 void CallModel::conferenceRemoved(const QString &confId) 
 {
-   qDebug() << "Ending conversation containing " << privateCallList_callId[confId]->currentItem->childCount() << " participants";
-   for (int j =0; j < privateCallList_callId[confId]->currentItem->childCount();j++) {
-      insertItem(extractItem(privateCallList_callId[confId]->currentItem->child(j)));
+   qDebug() << "Ending conversation containing " << privateCallList_callId[confId]->treeItem->childCount() << " participants";
+   for (int j =0; j < privateCallList_callId[confId]->treeItem->childCount();j++) {
+      insertItem(extractItem(privateCallList_callId[confId]->treeItem->child(j)));
    }
    privateCallList_call.remove(privateCallList_callId[confId]->call_real);
    privateCallList_widget.remove(privateCallList_callId[confId]->call);
-   privateCallList_item.remove(privateCallList_callId[confId]->currentItem);
-   takeTopLevelItem(indexOfTopLevelItem(privateCallList_callId[confId]->currentItem));
-   delete privateCallList_callId[confId]->currentItem;
+   privateCallList_item.remove(privateCallList_callId[confId]->treeItem);
+   takeTopLevelItem(indexOfTopLevelItem(privateCallList_callId[confId]->treeItem));
+   delete privateCallList_callId[confId]->treeItem;
    privateCallList_callId.remove(confId);
 }
 

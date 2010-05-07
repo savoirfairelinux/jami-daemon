@@ -32,7 +32,6 @@ SET(	sflphone_client_kde_SRCS
 	CallTreeItem.cpp
 	configurationmanager_interface_singleton.cpp
 	callmanager_interface_singleton.cpp
-        #calllist_interface_singleton.cpp
 	instance_interface_singleton.cpp
 	AccountWizard.cpp
 	AccountItemWidget.cpp
