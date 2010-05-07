@@ -107,6 +107,9 @@ class Speex : public AudioCodec
             speex_bits_destroy (&_speex_enc_bits);
             speex_encoder_destroy (_speex_enc_state);
             _speex_enc_state = 0;
+
+            speex_preprocess_state_destroy( _preprocess_state);
+            _preprocess_state = NULL;
         }
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {

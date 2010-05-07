@@ -64,6 +64,16 @@ class SIPAccount : public Account
         virtual ~SIPAccount();
 
 	/**
+	 * Set route header to appears in sip messages for this account
+	 */ 
+	void setRouteSet(std::string route) { _routeSet = route; }
+
+	/**
+	 * Get route header to appear in sip messages for this account
+	 */ 
+	std::string getRouteSet(void) { return _routeSet; }
+
+	/**
 	 * Special setVoIPLink which increment SipVoIPLink's number of client. 
 	 */
 	// void setVoIPLink(VoIPLink *link);
@@ -352,6 +362,8 @@ class SIPAccount : public Account
          * @return std::string The login name under which SFLPhone is running.
          */ 
         std::string getLoginName(void);
+
+	std::string _routeSet;
               
 
         // The pjsip client registration information

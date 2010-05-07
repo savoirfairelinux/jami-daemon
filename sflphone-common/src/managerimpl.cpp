@@ -51,6 +51,7 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 #include <pwd.h>       // getpwuid
+
 #define DIRECT_IP_CALL	"IP CALL"
 
 #define fill_config_str(name, value) \
@@ -59,6 +60,8 @@
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
 
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
+
+#define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
 
 ManagerImpl::ManagerImpl (void) :
 	_hasTriedToRegister(false), _config(), _currentCallId2(),
@@ -91,9 +94,10 @@ ManagerImpl::ManagerImpl (void) :
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) {
 	// terminate();
-	delete _cleaner;
-	_cleaner = 0;
-	_debug ("%s stop correctly.", PROGNAME);
+	delete _cleaner; _cleaner = NULL;
+	delete _history; _history = NULL;
+
+	_debug ("Manager: %s stop correctly.", PROGNAME);
 }
 
 void ManagerImpl::init () {
@@ -104,7 +108,7 @@ void ManagerImpl::init () {
 	initVolume();
 
 	if (_exist == 0) {
-		_debug ("Cannot create config file in your home directory");
+		_warn ("Manager: Cannot create config file in your home directory");
 	}
 
 	initAudioDriver();
@@ -119,11 +123,11 @@ void ManagerImpl::init () {
 	if (audiolayer != 0) {
 		unsigned int sampleRate = audiolayer->getSampleRate();
 
-		_debugInit ("Load Telephone Tone");
+		_debugInit ("Manager: Load telephone tone");
 		std::string country = getConfigString(PREFERENCES, ZONE_TONE);
 		_telephoneTone = new TelephoneTone(country, sampleRate);
 
-		_debugInit ("Loading DTMF key");
+		_debugInit ("Manager: Loading DTMF key");
 		_dtmfKey = new DTMF(sampleRate);
 	}
 
@@ -135,23 +139,25 @@ void ManagerImpl::init () {
 }
 
 void ManagerImpl::terminate () {
-	_debug ("ManagerImpl::terminate ");
+
+	_debug ("Manager: Terminate ");
 	saveConfig();
 
 	unloadAccountMap();
 
-	_debug ("Unload DTMF Key ");
+	_debug ("Manager: Unload DTMF key");
 	delete _dtmfKey;
 
-	_debug ("Unload Audio Driver ");
-	delete _audiodriver;
-	_audiodriver = NULL;
+	_debug("Manager: Unload telephone tone");
+	delete _telephoneTone; _telephoneTone = NULL;
 
-	_debug ("Unload Telephone Tone ");
-	delete _telephoneTone;
-	_telephoneTone = NULL;
+	_debug ("Manager: Unload audio driver");
+	delete _audiodriver; _audiodriver = NULL;
 
-	_debug ("Unload Audio Codecs ");
+	_debug ("Manager: Unload telephone tone");
+	delete _telephoneTone; _telephoneTone = NULL;
+
+	_debug ("Manager: Unload audio codecs ");
 	_codecDescriptorMap.deleteHandlePointer();
 
 }
@@ -179,38 +185,6 @@ void ManagerImpl::switchCall (const CallID& id) {
 	ost::MutexLock m(_currentCallMutex);
 	_debug ("----- Switch current call id to %s -----", id.c_str());
 	_currentCallId2 = id;
-
-	/*
-	 AudioLayer *al = getAudioDriver();
-
-	 if (id != "") {
-
-	 if(isConference(id)) {
-
-	 Conference *conf;
-
-	 ConferenceMap::iterator iter = _conferencemap.find(id);
-	 if(iter != _conferencemap.end())
-	 {
-	 _debug("    set call recordable in audio layer");
-	 conf = iter->second;
-	 al->setRecorderInstance((Recordable*)conf);
-	 }
-	 }
-	 else {
-
-	 // set the recordable instance in audiolayer
-	 AccountID account_id = getAccountFromCall(id);
-
-
-	 Call *call = NULL;
-	 call = getAccountLink (account_id)->getCall(id);
-
-	 _debug("    set call recordable in audio layer");
-	 al->setRecorderInstance((Recordable*)call);
-	 }
-	 }
-	 */
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -220,11 +194,12 @@ void ManagerImpl::switchCall (const CallID& id) {
 
 bool ManagerImpl::outgoingCall (const std::string& account_id,
 		const CallID& call_id, const std::string& to) {
+
 	std::string pattern, to_cleaned;
 	Call::CallConfiguration callConfig;
 	SIPVoIPLink *siplink;
 
-	_debug ("ManagerImpl::outgoingCall(%s)", call_id.c_str());
+	_debug ("Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
 
 	CallID current_call_id = getCurrentCallId();
 
@@ -242,23 +217,17 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 	// in any cases we have to detach from current communication
 	if (hasCurrentCall()) {
 
-		_debug ("    outgoingCall: Has current call (%s) put it onhold", current_call_id.c_str());
-
+		_debug ("Manager: Has current call (%s) put it onhold", current_call_id.c_str());
 		// if this is not a conferenceand this and is not a conference participant
-
-		if (!isConference(current_call_id) && !participToConference(
-				current_call_id)) {
-			_debug ("    outgoingCall: Put the current call (%s) on hold", current_call_id.c_str());
+		if (!isConference(current_call_id) && !participToConference(current_call_id)) {
 			onHoldCall(current_call_id);
-		} else if (isConference(current_call_id) && !participToConference(
-				call_id)) {
-			_debug ("    outgoingCall: detach main participant from conference");
+		} else if (isConference(current_call_id) && !participToConference(call_id)) {
 			detachParticipant(default_id, current_call_id);
 		}
 	}
 
 	if (callConfig == Call::IPtoIP) {
-		_debug ("    outgoingCall: Start IP to IP call");
+		_debug ("Manager: Start IP2IP call");
 		/* We need to retrieve the sip voiplink instance */
 		siplink = SIPVoIPLink::instance("");
 
@@ -272,26 +241,26 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 		return false;
 	}
 
+	_debug("Manager: Selecting account %s", account_id.c_str());
 	if (!accountExists(account_id)) {
-		_debug ("! Manager Error: Outgoing Call: account doesn't exist");
+		_error ("Manager: Error: Account doesn't exist in new outgoing call");
 		return false;
 	}
 
 	if (getAccountFromCall(call_id) != AccountNULL) {
-		_debug ("! Manager Error: Outgoing Call: call id already exists");
+		_error ("Manager: Error: Call id already exists in outgoing call");
 		return false;
 	}
 
-	_debug ("- Manager Action: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
-
+	_debug ("Manager: Adding Outgoing Call %s on account %s", call_id.data(), account_id.data());
 	associateCallToAccount(call_id, account_id);
 
 	if (getAccountLink(account_id)->newOutgoingCall(call_id, to_cleaned)) {
-		switchCall(call_id);
-		return true;
+	    switchCall(call_id);
+	    return true;
 	} else {
-		callFailure(call_id);
-		_debug ("! Manager Error: An error occur, the call was not created");
+	    callFailure(call_id);
+	    _debug ("Manager: Error: An error occur, the call was not created");
 	}
 
 	return false;
@@ -300,7 +269,7 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 //THREAD=Main : for outgoing Call
 bool ManagerImpl::answerCall (const CallID& call_id) {
 
-	_debug ("ManagerImpl::answerCall(%s)", call_id.c_str());
+	_debug ("ManagerImpl: Answer call %s", call_id.c_str());
 
 	stopTone();
 
@@ -419,12 +388,11 @@ bool ManagerImpl::hangupCall (const CallID& call_id) {
 	else {
 		account_id = getAccountFromCall(call_id);
 
+		// Account may be NULL if call have not been sent yet
 		if (account_id == AccountNULL) {
-
 			_error ("Manager: Error: account id is NULL in hangup");
 			returnValue = false;
 		} else {
-
 			returnValue = getAccountLink(account_id)->hangup(call_id);
 			removeCallAccount(call_id);
 		}
@@ -523,7 +491,7 @@ bool ManagerImpl::onHoldCall (const CallID& call_id) {
 	AccountID account_id;
 	bool returnValue;
 
-	_debug ("Manager:  Put call %s on hold", call_id.c_str());
+	_debug ("Manager: Put call %s on hold", call_id.c_str());
 
 	stopTone();
 
@@ -713,8 +681,6 @@ bool ManagerImpl::refuseCall (const CallID& id) {
 		audiolayer->stopStream();
 	}
 
-	_debug("OK");
-
 	/* Direct IP to IP call */
 
 	if (getConfigFromCall(id) == Call::IPtoIP) {
@@ -734,7 +700,6 @@ bool ManagerImpl::refuseCall (const CallID& id) {
 
 		removeCallAccount(id);
 	}
-	_debug("OK");
 
 	// if the call was outgoing or established, we didn't refuse it
 	// so the method did nothing
@@ -750,16 +715,15 @@ bool ManagerImpl::refuseCall (const CallID& id) {
 
 Conference*
 ManagerImpl::createConference (const CallID& id1, const CallID& id2) {
-	_debug ("ManagerImpl::createConference()");
+	_debug ("Manager: Create conference with call %s and %s", id1.c_str(), id2.c_str());
 
 	Conference* conf = new Conference();
 
-	// _conferencecall.insert(pair<CallID, Conference*>(id1, conf));
-	// _conferencecall.insert(pair<CallID, Conference*>(id2, conf));
-	_conferencemap.insert(pair<CallID, Conference*> (conf->getConfID(), conf));
-
 	conf->add(id1);
 	conf->add(id2);
+
+	// Add conference to map
+	_conferencemap.insert( std::pair<CallID, Conference*>(conf->getConfID(), conf));
 
 	// broadcast a signal over dbus
 	_dbus->getCallManager()->conferenceCreated(conf->getConfID());
@@ -769,52 +733,44 @@ ManagerImpl::createConference (const CallID& id1, const CallID& id2) {
 
 void ManagerImpl::removeConference (const ConfID& conference_id) {
 
-	_debug ("ManagerImpl::removeConference(%s)", conference_id.c_str());
+	_debug ("Manager: Remove conference %s", conference_id.c_str());
 
 	Conference* conf = NULL;
 
-	_debug ("    removeConference: _conferencemap.size: %i", (int) _conferencemap.size());
+	_debug ("Manager: number of participant: %d", (int) _conferencemap.size());
 	ConferenceMap::iterator iter = _conferencemap.find(conference_id);
 
 	if (iter != _conferencemap.end()) {
-		_debug ("    removeConference: Found conference id %s in conferencemap", conference_id.c_str());
 		conf = iter->second;
 	}
 
 	if (conf == NULL) {
-
-		_debug ("    removeConference: Error conference not found");
+		_error ("Manager: Error: Conference not found");
 		return;
 	}
 
 	// We now need to bind the audio to the remain participant
 
-	// unbind main participant from conference (just to be sure)
+	// Unbind main participant audio from conference
 	_audiodriver->getMainBuffer()->unBindAll(default_id);
 
 	ParticipantSet participants = conf->getParticipantList();
 
-	// bind main participant to remaining conference call
+	// bind main participant audio to remaining conference call
 	ParticipantSet::iterator iter_p = participants.begin();
 
 	if (iter_p != participants.end()) {
 
-		// to avoid puting onhold the call
-		// switchCall("");
 		_audiodriver->getMainBuffer()->bindCallID(*iter_p, default_id);
 	}
 
 	// Then remove the conference from the conference map
-	_debug ("ManagerImpl:: remove conference %s", conference_id.c_str());
-
 	if (_conferencemap.erase(conference_id) == 1)
-		_debug ("ManagerImpl:: conference %s removed succesfully", conference_id.c_str());
+		_debug ("Manager: Conference %s removed succesfully", conference_id.c_str());
 	else
-		_debug ("ManagerImpl:: error cannot remove conference id: %s", conference_id.c_str());
+		_error ("Manager: Error: Cannot remove conference: %s", conference_id.c_str());
 
 	// broadcast a signal over dbus
-	_debug ("ManagerImpl::removeConference broadcast call removed on dbus: %s", conference_id.c_str());
-
 	_dbus->getCallManager()->conferenceRemoved(conference_id);
 
 }
@@ -837,7 +793,7 @@ ManagerImpl::getConferenceFromCallID (const CallID& call_id) {
 }
 
 void ManagerImpl::holdConference (const CallID& id) {
-	_debug ("ManagerImpl::holdConference()");
+	_debug ("Manager: Hold conference()");
 
 	Conference *conf;
 	ConferenceMap::iterator iter_conf = _conferencemap.find(id);
@@ -875,7 +831,7 @@ void ManagerImpl::holdConference (const CallID& id) {
 
 void ManagerImpl::unHoldConference (const CallID& id) {
 
-	_debug ("ManagerImpl::unHoldConference()");
+	_debug ("Manager: Unhold conference()");
 
 	Conference *conf;
 	ConferenceMap::iterator iter_conf = _conferencemap.find(id);
@@ -942,9 +898,8 @@ bool ManagerImpl::participToConference (const CallID& call_id) {
 	}
 }
 
-void ManagerImpl::addParticipant (const CallID& call_id,
-		const CallID& conference_id) {
-	_debug ("ManagerImpl::addParticipant(%s, %s)", call_id.c_str(), conference_id.c_str());
+void ManagerImpl::addParticipant (const CallID& call_id, const CallID& conference_id) {
+	_debug ("ManagerImpl: Add participant %s to %s", call_id.c_str(), conference_id.c_str());
 
 	std::map<std::string, std::string> call_details = getCallDetails(call_id);
 
@@ -1077,32 +1032,46 @@ void ManagerImpl::addMainParticipant (const CallID& conference_id) {
 	switchCall(conference_id);
 }
 
-void ManagerImpl::joinParticipant (const CallID& call_id1,
-		const CallID& call_id2) {
-	_debug ("ManagerImpl::joinParticipant(%s, %s)", call_id1.c_str(), call_id2.c_str());
-	// _debug("    Current call ID %s", getCurrentCallId().c_str());
+void ManagerImpl::joinParticipant (const CallID& call_id1, const CallID& call_id2) {
+
+	_debug ("Manager: Join participants %s, %s", call_id1.c_str(), call_id2.c_str());
 
 	std::map<std::string, std::string> call1_details = getCallDetails(call_id1);
 	std::map<std::string, std::string> call2_details = getCallDetails(call_id2);
 
 	std::map<std::string, std::string>::iterator iter_details;
 
+	// Test if we have valid call ids
+	iter_details = call1_details.find("PEER_NUMBER");
+	if(iter_details->second == "Unknown") {
+		_error("Manager: Error: Id %s is not a valid call", call_id1.c_str());
+		return;
+	}
+
+	iter_details = call2_details.find("PEER_NUMBER");
+	if(iter_details->second == "Unknown") {
+		_error("Manager: Error: Id %s is not a valid call", call_id2.c_str());
+		return;
+	}
+
 	AccountID currentAccountId;
 	Call* call = NULL;
 
 	CallID current_call_id = getCurrentCallId();
-	_debug ("    joinParticipant: current_call_id %s", current_call_id.c_str());
+	_debug ("Manager: current_call_id %s", current_call_id.c_str());
 
 	// detach from the conference and switch to this conference
-
 	if ((current_call_id != call_id1) && (current_call_id != call_id2)) {
+
+		// If currently in a conference
 		if (isConference(current_call_id))
 			detachParticipant(default_id, current_call_id);
+		// If currently in a call
 		else
 			onHoldCall(current_call_id);
 	}
 
-	_debug ("    joinParticipant: create a conference");
+	_debug ("Manager: Create a conference");
 
 	Conference *conf = createConference(call_id1, call_id2);
 	switchCall(conf->getConfID());
@@ -1112,23 +1081,19 @@ void ManagerImpl::joinParticipant (const CallID& call_id1,
 	call->setConfId(conf->getConfID());
 
 	iter_details = call1_details.find("CALL_STATE");
-	_debug ("    joinParticipant: call1 %s state: %s", call_id1.c_str(), iter_details->second.c_str());
+	_debug ("Manager: Process call %s state: %s", call_id1.c_str(), iter_details->second.c_str());
 
 	if (iter_details->second == "HOLD") {
-		_debug ("    OFFHOLD %s", call_id1.c_str());
 		offHoldCall(call_id1);
 	} else if (iter_details->second == "INCOMING") {
-		_debug ("    ANSWER %s", call_id1.c_str());
 		answerCall(call_id1);
 	} else if (iter_details->second == "CURRENT") {
-		_debug ("    CURRENT %s", call_id1.c_str());
 		_audiodriver->getMainBuffer()->unBindAll(call_id1);
 		conf->bindParticipant(call_id1);
 	} else if (iter_details->second == "INACTIVE") {
-		_debug ("    INACTIVE %s", call_id1.c_str());
 		answerCall(call_id1);
 	} else {
-		_debug ("    CAll State not recognized");
+		_warn ("Manager: Call state not recognized");
 	}
 
 	currentAccountId = getAccountFromCall(call_id2);
@@ -1137,30 +1102,20 @@ void ManagerImpl::joinParticipant (const CallID& call_id1,
 	call->setConfId(conf->getConfID());
 
 	iter_details = call2_details.find("CALL_STATE");
-	_debug ("    joinParticipant: call2 %s state: %s", call_id2.c_str(), iter_details->second.c_str());
+	_debug ("Manager: Process call %s state: %s", call_id2.c_str(), iter_details->second.c_str());
 
 	if (iter_details->second == "HOLD") {
-		_debug ("    OFFHOLD %s", call_id2.c_str());
 		offHoldCall(call_id2);
 	} else if (iter_details->second == "INCOMING") {
-		_debug ("    ANSWER %s", call_id2.c_str());
 		answerCall(call_id2);
 	} else if (iter_details->second == "CURRENT") {
-		_debug ("    CURRENT %s", call_id2.c_str());
 		_audiodriver->getMainBuffer()->unBindAll(call_id2);
 		conf->bindParticipant(call_id2);
 	} else if (iter_details->second == "INACTIVE") {
-		_debug ("    INACTIVE %s", call_id2.c_str());
 		answerCall(call_id2);
 	} else {
-		_debug ("    CAll State not recognized");
+		_warn ("Manager: Call state not recognized");
 	}
-
-	// finally bind main participant to conference
-	// addMainParticipant(default_conf);
-
-
-	// switchCall(conf->getConfID());
 
 	if (_audiodriver)
 		_audiodriver->getMainBuffer()->stateInfo();
@@ -1169,7 +1124,8 @@ void ManagerImpl::joinParticipant (const CallID& call_id1,
 
 void ManagerImpl::detachParticipant (const CallID& call_id,
 		const CallID& current_id) {
-	_debug ("ManagerImpl::detachParticipant(%s)", call_id.c_str());
+
+	_debug ("Manager: Detach participant %s from conference", call_id.c_str());
 
 	CallID current_call_id = current_id;
 
@@ -1189,8 +1145,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 
 		if (conf != NULL) {
 
-			_debug ("    detachParticipant: detaching participant %s", call_id.c_str());
-
+			_debug ("Manager: Detaching participant %s", call_id.c_str());
 			std::map<std::string, std::string> call_details = getCallDetails(
 					call_id);
 			std::map<std::string, std::string>::iterator iter_details;
@@ -1198,22 +1153,26 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 			iter_details = call_details.find("CALL_STATE");
 
 			if (iter_details->second == "RINGING") {
-				removeParticipant(call_id);
-			} else {
-				_debug ("    ONHOLD %s", call_id.c_str());
-				onHoldCall(call_id);
 
-				removeParticipant(call_id);
+			    removeParticipant(call_id);
+			} 
+			else {
+			    onHoldCall(call_id);
+			    removeParticipant(call_id);
+			    processRemainingParticipant(current_call_id, conf);
 
-				processRemainingParticipant(current_call_id, conf);
+			    _dbus->getCallManager()->conferenceChanged(conf->getConfID(),
+								       conf->getStateStr());
 			}
-		} else {
+		} 
+		else {
 
-			_debug ("    detachParticipant: call is not conferencing, cannot detach");
+			_debug ("Manager: Call is not conferencing, cannot detach");
 
 		}
-	} else {
-		_debug ("    detachParticipant: unbind main participant from all");
+	} 
+	else {
+		_debug ("Manager: Unbind main participant from all");
 		_audiodriver->getMainBuffer()->unBindAll(default_id);
 
 		if (isConference(current_call_id)) {
@@ -1234,7 +1193,7 @@ void ManagerImpl::detachParticipant (const CallID& call_id,
 }
 
 void ManagerImpl::removeParticipant (const CallID& call_id) {
-	_debug ("ManagerImpl::removeParticipant(%s)", call_id.c_str());
+	_debug ("Manager: Remove participant %s", call_id.c_str());
 
 	// TODO: add conference_id as a second parameter
 	Conference* conf;
@@ -1250,12 +1209,12 @@ void ManagerImpl::removeParticipant (const CallID& call_id) {
 	ConferenceMap::iterator iter = conf_map.find(call->getConfId());
 
 	if (iter == conf_map.end()) {
-		_debug ("    no conference created, cannot remove participant ");
+		_debug ("Manager: Error: No conference created, cannot remove participant");
 	} else {
 
 		conf = iter->second;
 
-		_debug ("    removeParticipant %s", call_id.c_str());
+		_debug ("Manager: Remove participant %s", call_id.c_str());
 		conf->remove(call_id);
 		call->setConfId("");
 
@@ -1269,7 +1228,8 @@ void ManagerImpl::removeParticipant (const CallID& call_id) {
 void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		Conference *conf) {
 
-	_debug ("ManagerImpl::processRemainingParticipant()");
+        _debug ("Manager: Process remaining %d participant(s) from conference %s", 
+		conf->getNbParticipants(), conf->getConfID().c_str());
 
 	if (conf->getNbParticipants() > 1) {
 
@@ -1288,6 +1248,9 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		_audiodriver->getMainBuffer()->flush(default_id);
 
 	} else if (conf->getNbParticipants() == 1) {
+
+	       _debug ("Manager: Only one remaining participant"); 
+
 		AccountID currentAccountId;
 		Call* call = NULL;
 
@@ -1295,7 +1258,6 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		ParticipantSet::iterator iter_participant = participants.begin();
 
 		// bind main participant to remaining conference call
-
 		if (iter_participant != participants.end()) {
 
 			// this call is no more a conference participant
@@ -1313,7 +1275,11 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 		}
 
 		removeConference(conf->getConfID());
+
 	} else {
+
+	        _debug ("Manager: No remaining participant, remove conference"); 
+
 		removeConference(conf->getConfID());
 
 		switchCall("");
@@ -1323,7 +1289,7 @@ void ManagerImpl::processRemainingParticipant (CallID current_call_id,
 
 void ManagerImpl::joinConference (const CallID& conf_id1,
 		const CallID& conf_id2) {
-	_debug ("ManagerImpl::joinConference(%s, %s)", conf_id1.c_str(), conf_id2.c_str());
+	_debug ("Manager: Join conference %s, %s", conf_id1.c_str(), conf_id2.c_str());
 
 	ConferenceMap::iterator iter;
 
@@ -1332,13 +1298,23 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 
 	iter = _conferencemap.find(conf_id1);
 
-	if (iter != _conferencemap.end())
+	if (iter != _conferencemap.end()) {
 		conf1 = iter->second;
+	}
+	else {
+		_error("Manager: Error: Not a valid conference ID");
+		return;
+	}
 
 	iter = _conferencemap.find(conf_id2);
 
-	if (iter != _conferencemap.end())
+	if (iter != _conferencemap.end()) {
 		conf2 = iter->second;
+	}
+	else {
+		_error("Manager: Error: Not a valid conference ID");
+		return;
+	}
 
 	ParticipantSet participants = conf1->getParticipantList();
 
@@ -1356,7 +1332,7 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 }
 
 void ManagerImpl::addStream (const CallID& call_id) {
-	_debug ("ManagerImpl::addStream %s", call_id.c_str());
+	_debug ("Manager: Add audio stream %s", call_id.c_str());
 
 	AccountID currentAccountId;
 	Call* call = NULL;
@@ -1406,7 +1382,7 @@ void ManagerImpl::addStream (const CallID& call_id) {
 }
 
 void ManagerImpl::removeStream (const CallID& call_id) {
-	_debug ("ManagerImpl::removeStream %s", call_id.c_str());
+	_debug ("Manager: Remove audio stream %s", call_id.c_str());
 
 	getAudioDriver()->getMainBuffer()->unBindAll(call_id);
 
@@ -1458,7 +1434,7 @@ bool ManagerImpl::playDtmf (char code) {
 	bool hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_DTMF);
 
 	if (!hasToPlayTone) {
-		_debug ("    playDtmf: Do not have to play a tone...");
+		_debug ("Manager: playDtmf: Do not have to play a tone...");
 		return false;
 	}
 
@@ -1466,7 +1442,7 @@ bool ManagerImpl::playDtmf (char code) {
 	pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
 
 	if (!pulselen) {
-		_debug ("    playDtmf: Pulse length is not set...");
+		_debug ("Manager: playDtmf: Pulse length is not set...");
 		return false;
 	}
 
@@ -1478,7 +1454,7 @@ bool ManagerImpl::playDtmf (char code) {
 
 	// fast return, no sound, so no dtmf
 	if (audiolayer == 0 || _dtmfKey == 0) {
-		_debug ("    playDtmf: Error no audio layer...");
+		_debug ("Manager: playDtmf: Error no audio layer...");
 		return false;
 	}
 
@@ -1522,14 +1498,16 @@ bool ManagerImpl::incomingCallWaiting () {
 
 void ManagerImpl::addWaitingCall (const CallID& id) {
 
+        _info("Manager: Add waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
+
 	ost::MutexLock m(_waitingCallMutex);
 	_waitingCall.insert(id);
 	_nbIncomingWaitingCall++;
-
-	_info("Manager: Add waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
 }
 
 void ManagerImpl::removeWaitingCall (const CallID& id) {
+
+        _info("Manager: Remove waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
 
 	ost::MutexLock m(_waitingCallMutex);
 	// should return more than 1 if it erase a call
@@ -1537,8 +1515,6 @@ void ManagerImpl::removeWaitingCall (const CallID& id) {
 	if (_waitingCall.erase(id)) {
 		_nbIncomingWaitingCall--;
 	}
-
-	_info("Manager: Remove waiting call %s (%d calls)", id.c_str(), _nbIncomingWaitingCall);
 }
 
 bool ManagerImpl::isWaitingCall (const CallID& id) {
@@ -1628,7 +1604,7 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId) {
 
 //THREAD=VoIP
 void ManagerImpl::incomingMessage (const AccountID& accountId,
-		const std::string& message) {
+				   const std::string& message) {
 	if (_dbus) {
 		_dbus->getCallManager()->incomingMessage(accountId, message);
 	}
@@ -1636,6 +1612,9 @@ void ManagerImpl::incomingMessage (const AccountID& accountId,
 
 //THREAD=VoIP CALL=Outgoing
 void ManagerImpl::peerAnsweredCall (const CallID& id) {
+
+        _debug ("Manager: Peer answered call %s", id.c_str());
+
 	// The if statement is usefull only if we sent two calls at the same time.
 	if (isCurrentCall(id)) {
 		stopTone();
@@ -1644,12 +1623,6 @@ void ManagerImpl::peerAnsweredCall (const CallID& id) {
 	if (_dbus)
 		_dbus->getCallManager()->callStateChanged(id, "CURRENT");
 
-	// std::string codecName = getCurrentCodecName (id);
-
-	// _debug("ManagerImpl::hangupCall(): broadcast codec name %s ",codecName.c_str());
-	// if (_dbus) _dbus->getCallManager()->currentSelectedCodec (id,codecName.c_str());
-
-	// Required if there have been no sip reinvite, in this case we must reinit buffers since the
 	_audiodriver->flushMain();
 
 	_audiodriver->flushUrgent();
@@ -1657,6 +1630,9 @@ void ManagerImpl::peerAnsweredCall (const CallID& id) {
 
 //THREAD=VoIP Call=Outgoing
 void ManagerImpl::peerRingingCall (const CallID& id) {
+
+        _debug ("Manager: Peer call %s ringing", id.c_str());
+
 	if (isCurrentCall(id)) {
 		ringback();
 	}
@@ -1683,8 +1659,8 @@ void ManagerImpl::peerHungupCall (const CallID& call_id) {
 		if (conf != NULL) {
 
 			removeParticipant(call_id);
-
 			processRemainingParticipant(current_call_id, conf);
+
 		}
 	} else {
 		if (isCurrentCall(call_id)) {
@@ -1719,7 +1695,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id) {
 	// stop streams
 
 	if (nbCalls <= 0) {
-		_debug ("    hangupCall: stop audio stream, ther is only %i call(s) remaining", nbCalls);
+		_debug ("Manager: Stop audio stream, ther is only %i call(s) remaining", nbCalls);
 
 		AudioLayer* audiolayer = getAudioDriver();
 		audiolayer->stopStream();
@@ -1732,7 +1708,7 @@ void ManagerImpl::peerHungupCall (const CallID& call_id) {
 
 //THREAD=VoIP
 void ManagerImpl::callBusy (const CallID& id) {
-	_debug ("Call busy");
+        _debug ("Manager: Call %s busy", id.c_str());
 
 	if (_dbus)
 		_dbus->getCallManager()->callStateChanged(id, "BUSY");
@@ -1761,7 +1737,7 @@ void ManagerImpl::callFailure (const CallID& call_id) {
 
 	if (participToConference(call_id)) {
 
-		_debug ("Call %s participating to a conference failed\n", call_id.c_str());
+		_debug ("Manager: Call %s participating to a conference failed", call_id.c_str());
 
 		Conference *conf = getConferenceFromCallID(call_id);
 
@@ -1797,12 +1773,11 @@ void ManagerImpl::connectionStatusNotification () {
  * Multi Thread
  */
 bool ManagerImpl::playATone (Tone::TONEID toneId) {
-	bool hasToPlayTone;
-	// AudioLoop *audioloop;
-	AudioLayer *audiolayer;
-	// unsigned int nbSamples;
 
-	_debug ("ManagerImpl::playATone");
+	bool hasToPlayTone;
+	AudioLayer *audiolayer;
+
+	// _debug ("Manager: Play tone %d", toneId);
 
 	hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_TONES);
 
@@ -1821,17 +1796,6 @@ bool ManagerImpl::playATone (Tone::TONEID toneId) {
 		_toneMutex.enterMutex();
 		_telephoneTone->setCurrentTone(toneId);
 		_toneMutex.leaveMutex();
-		/*
-		 audioloop = getTelephoneTone();
-		 nbSamples = audioloop->getSize();
-		 SFLDataFormat buf[nbSamples];
-
-
-		 if (audiolayer) {
-		 audiolayer->putUrgent (buf, nbSamples);
-		 } else
-		 return false;
-		 */
 	}
 
 	return true;
@@ -1854,10 +1818,6 @@ void ManagerImpl::stopTone () {
 		_telephoneTone->setCurrentTone(Tone::TONE_NULL);
 	}
 
-	_toneMutex.leaveMutex();
-
-	// for ringing tone..
-	_toneMutex.enterMutex();
 	_audiofile.stop();
 	_toneMutex.leaveMutex();
 }
@@ -1889,8 +1849,6 @@ void ManagerImpl::congestion () {
  * Multi Thread
  */
 void ManagerImpl::ringback () {
-	_debug ("ManagerImpl::ringback");
-
 	playATone(Tone::TONE_RINGTONE);
 }
 
@@ -1898,13 +1856,13 @@ void ManagerImpl::ringback () {
  * Multi Thread
  */
 void ManagerImpl::ringtone () {
-
-	_debug ("Manager: Start ringtone");
 	std::string ringchoice;
 	AudioLayer *audiolayer;
 	AudioCodec *codecForTone;
 	int layer, samplerate;
 	bool loadFile;
+
+	_debug("Manager: Ringtone");
 
 	if (isRingtoneEnabled()) {
 
@@ -2044,7 +2002,7 @@ int ManagerImpl::createSettingsPath (void) {
  * Initialization: Main Thread
  */
 void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
-	_debug ("ManagerImpl::InitConfigFile");
+	_debug ("Manager: InitConfigFile");
 
 	// Default values, that will be overwritten by the call to
 	// 'populateFromFile' below.
@@ -2370,7 +2328,7 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
 
 	int res;
 
-	_debug ("Set output audio plugin");
+	_debug ("Manager: Set output audio plugin");
 	_audiodriver -> setErrorMessage(-1);
 	res = _audiodriver -> openDevice(_audiodriver -> getIndexIn(),
 			_audiodriver -> getIndexOut(), _audiodriver -> getSampleRate(),
@@ -2388,7 +2346,7 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
  * Get list of supported audio output device
  */
 std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void) {
-	_debug ("Get audio output device list");
+	_debug ("Manager: Get audio output device list");
 	AlsaLayer *layer;
 	std::vector<std::string> devices;
 
@@ -3107,7 +3065,7 @@ std::string ManagerImpl::getConfigString (const std::string& section,
 //THREAD=Main
 bool ManagerImpl::setConfig (const std::string& section,
 		const std::string& name, const std::string& value) {
-	_debug ("ManagerImpl::setConfig %s %s %s", section.c_str(), name.c_str(), value.c_str());
+        // _debug ("ManagerImpl::setConfig %s %s %s", section.c_str(), name.c_str(), value.c_str());
 	return _config.setConfigTreeItem(section, name, value);
 }
 
@@ -3204,6 +3162,8 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 			accountID, HOSTNAME)));
 	a.insert(std::pair<std::string, std::string>(USERNAME, getConfigString(
 			accountID, USERNAME)));
+	a.insert(std::pair<std::string, std::string>(ROUTESET, getConfigString(
+			accountID, ROUTESET)));
 	a.insert(std::pair<std::string, std::string>(PASSWORD, getConfigString(
 			accountID, PASSWORD)));
 	a.insert(std::pair<std::string, std::string>(REALM, getConfigString(
@@ -3236,7 +3196,7 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 	a.insert(std::pair<std::string, std::string>(ACCOUNT_DTMF_TYPE, getConfigString(
 				accountID, ACCOUNT_DTMF_TYPE)));
 
-	RegistrationState state;
+	RegistrationState state = Unregistered;
 	std::string registrationStateCode;
 	std::string registrationStateDescription;
 
@@ -3253,8 +3213,6 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 			registrationStateDescription
 					= account->getRegistrationStateDetailed().second;
 		}
-	} else {
-		state = Unregistered;
 	}
 
 	(accountID == IP2IP_PROFILE) ? a.insert(
@@ -3441,75 +3399,53 @@ void ManagerImpl::setCredential (const std::string& accountID,
 void ManagerImpl::setAccountDetails (const std::string& accountID,
 		const std::map<std::string, std::string>& details) {
 
-	std::string accountType;
-	std::map<std::string, std::string> map_cpy;
-	std::map<std::string, std::string>::iterator iter;
+    std::map<std::string, std::string> map_cpy;
+    std::map<std::string, std::string>::iterator iter;
 
-	// Work on a copy
-	map_cpy = details;
+    // Work on a copy
+    map_cpy = details;
 
-	std::string username;
+    // Get the account type
+    std::string accountType;
+    find_in_map(CONFIG_ACCOUNT_TYPE, accountType)
+    
+    std::string alias;
+    std::string type;
+    std::string hostname;
+    std::string username;
+    std::string password;
+    std::string mailbox;
+    std::string accountEnable;
+
+
+    // Account setting common to SIP and IAX
+    find_in_map(CONFIG_ACCOUNT_ALIAS, alias)
+    find_in_map(CONFIG_ACCOUNT_TYPE, type)
+    find_in_map(HOSTNAME, hostname)
+    find_in_map(USERNAME, username)
+    find_in_map(PASSWORD, password)
+    find_in_map(CONFIG_ACCOUNT_MAILBOX, mailbox);
+    find_in_map(CONFIG_ACCOUNT_ENABLE, accountEnable);
+
+    setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
+    setConfig(accountID, CONFIG_ACCOUNT_TYPE, type);
+    setConfig(accountID, HOSTNAME, hostname);
+    setConfig(accountID, USERNAME, username);
+    setConfig(accountID, PASSWORD, password);
+    setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, mailbox);
+    setConfig(accountID, CONFIG_ACCOUNT_ENABLE, accountEnable);
+	       
+    // SIP specific account settings
+    if(accountType == "SIP") {
+
+        std::string ua_name;
+        std::string realm;
+        std::string routeset;
 	std::string authenticationName;
-	std::string password;
-	std::string realm;
-	std::string voicemail_count;
-	std::string ua_name;
 
-	if ((iter = map_cpy.find(AUTHENTICATION_USERNAME)) != map_cpy.end()) {
-		authenticationName = iter->second;
-	}
-
-	if ((iter = map_cpy.find(USERNAME)) != map_cpy.end()) {
-		username = iter->second;
-	}
-
-	if ((iter = map_cpy.find(PASSWORD)) != map_cpy.end()) {
-		password = iter->second;
-	}
-
-	if ((iter = map_cpy.find(REALM)) != map_cpy.end()) {
-		realm = iter->second;
-	}
-
-	if ((iter = map_cpy.find(USERAGENT)) != map_cpy.end()) {
-		ua_name = iter->second;
-	}
-
-	setConfig(accountID, REALM, realm);
-	setConfig(accountID, USERAGENT, ua_name);
-	setConfig(accountID, USERNAME, username);
-	setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
-
-	if (!getMd5CredentialHashing()) {
-		setConfig(accountID, PASSWORD, password);
-	} else {
-		// Make sure not to re-hash the password field if
-		// it is already saved as a MD5 Hash.
-		// TODO: This test is weak. Fix this.
-		if ((password.compare(getConfigString(accountID, PASSWORD)) != 0)) {
-			_debug ("Password sent and password from config are different. Re-hashing");
-			std::string hash;
-
-			if (authenticationName.empty()) {
-				hash = computeMd5HashFromCredential(username, password, realm);
-			} else {
-				hash = computeMd5HashFromCredential(authenticationName,
-						password, realm);
-			}
-
-			setConfig(accountID, PASSWORD, hash);
-		}
-	}
-
-	std::string alias;
-
-	std::string mailbox;
-	std::string accountEnable;
-	std::string type;
-	std::string resolveOnce;
+        std::string resolveOnce;
 	std::string registrationExpire;
 
-	std::string hostname;
 	std::string displayName;
 	std::string localInterface;
 	std::string publishedSameasLocal;
@@ -3543,165 +3479,51 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	std::string tlsNegotiationTimeoutSec;
 	std::string tlsNegotiationTimeoutMsec;
 
-	if ((iter = map_cpy.find(HOSTNAME)) != map_cpy.end()) {
-		hostname = iter->second;
-	}
+	// general sip settings
+	find_in_map(DISPLAY_NAME, displayName)
+	find_in_map(ROUTESET, routeset)
+	find_in_map(LOCAL_INTERFACE, localInterface)
+	find_in_map(PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal)
+	find_in_map(PUBLISHED_ADDRESS, publishedAddress)
+	find_in_map(LOCAL_PORT, localPort)
+	find_in_map(PUBLISHED_PORT, publishedPort)
+	find_in_map(STUN_ENABLE, stunEnable)
+	find_in_map(STUN_SERVER, stunServer)
+	find_in_map(ACCOUNT_DTMF_TYPE, dtmfType)
+	find_in_map(CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce)
+	find_in_map(CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire)
 
-	if ((iter = map_cpy.find(DISPLAY_NAME)) != map_cpy.end()) {
-		displayName = iter->second;
-	}
-
-	if ((iter = map_cpy.find(LOCAL_INTERFACE)) != map_cpy.end()) {
-		localInterface = iter->second;
-	}
-
-	if ((iter = map_cpy.find(PUBLISHED_SAMEAS_LOCAL)) != map_cpy.end()) {
-		publishedSameasLocal = iter->second;
-	}
-
-	if ((iter = map_cpy.find(PUBLISHED_ADDRESS)) != map_cpy.end()) {
-		publishedAddress = iter->second;
-	}
-
-	if ((iter = map_cpy.find(LOCAL_PORT)) != map_cpy.end()) {
-		localPort = iter->second;
-	}
-
-	if ((iter = map_cpy.find(PUBLISHED_PORT)) != map_cpy.end()) {
-		publishedPort = iter->second;
-	}
-
-	if ((iter = map_cpy.find(STUN_ENABLE)) != map_cpy.end()) {
-		stunEnable = iter->second;
-	}
-
-	if ((iter = map_cpy.find(STUN_SERVER)) != map_cpy.end()) {
-		stunServer = iter->second;
-	}
-
-	if((iter = map_cpy.find(ACCOUNT_DTMF_TYPE)) != map_cpy.end()) {
-		dtmfType = iter->second;
-	}
-
-	if ((iter = map_cpy.find(SRTP_ENABLE)) != map_cpy.end()) {
-		srtpEnable = iter->second;
-	}
-
-	if ((iter = map_cpy.find(SRTP_RTP_FALLBACK)) != map_cpy.end()) {
-		srtpRtpFallback = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ZRTP_DISPLAY_SAS)) != map_cpy.end()) {
-		zrtpDisplaySas = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ZRTP_DISPLAY_SAS_ONCE)) != map_cpy.end()) {
-		zrtpDisplaySasOnce = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ZRTP_NOT_SUPP_WARNING)) != map_cpy.end()) {
-		zrtpNotSuppWarning = iter->second;
-	}
-
-	if ((iter = map_cpy.find(ZRTP_HELLO_HASH)) != map_cpy.end()) {
-		zrtpHelloHash = iter->second;
-	}
-
-	if ((iter = map_cpy.find(SRTP_KEY_EXCHANGE)) != map_cpy.end()) {
-		srtpKeyExchange = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_ALIAS)) != map_cpy.end()) {
-		alias = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_MAILBOX)) != map_cpy.end()) {
-		mailbox = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_ENABLE)) != map_cpy.end()) {
-		accountEnable = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_TYPE)) != map_cpy.end()) {
-		type = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_RESOLVE_ONCE)) != map_cpy.end()) {
-		resolveOnce = iter->second;
-	}
-
-	if ((iter = map_cpy.find(CONFIG_ACCOUNT_REGISTRATION_EXPIRE))
-			!= map_cpy.end()) {
-		registrationExpire = iter->second;
-	}
-
-	// The TLS listener is unique and globally defined through IP2IP_PROFILE
-	if ((accountID == IP2IP_PROFILE)
-			&& (iter = map_cpy.find(TLS_LISTENER_PORT)) != map_cpy.end()) {
-		tlsListenerPort = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_ENABLE)) != map_cpy.end()) {
-		tlsEnable = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_CA_LIST_FILE)) != map_cpy.end()) {
-		tlsCaListFile = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_CERTIFICATE_FILE)) != map_cpy.end()) {
-		tlsCertificateFile = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_PRIVATE_KEY_FILE)) != map_cpy.end()) {
-		tlsPrivateKeyFile = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_PASSWORD)) != map_cpy.end()) {
-		tlsPassword = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_METHOD)) != map_cpy.end()) {
-		tlsMethod = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_CIPHERS)) != map_cpy.end()) {
-		tlsCiphers = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_SERVER_NAME)) != map_cpy.end()) {
-		tlsServerName = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_VERIFY_SERVER)) != map_cpy.end()) {
-		tlsVerifyServer = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_VERIFY_CLIENT)) != map_cpy.end()) {
-		tlsVerifyClient = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_REQUIRE_CLIENT_CERTIFICATE)) != map_cpy.end()) {
-		tlsRequireClientCertificate = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_SEC)) != map_cpy.end()) {
-		tlsNegotiationTimeoutSec = iter->second;
-	}
-
-	if ((iter = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_MSEC)) != map_cpy.end()) {
-		tlsNegotiationTimeoutMsec = iter->second;
-	}
-
-	setConfig(accountID, HOSTNAME, hostname);
-
+	setConfig(accountID, DISPLAY_NAME, displayName);
+	setConfig(accountID, ROUTESET, routeset);
 	setConfig(accountID, LOCAL_INTERFACE, localInterface);
 	setConfig(accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
 	setConfig(accountID, PUBLISHED_ADDRESS, publishedAddress);
 	setConfig(accountID, LOCAL_PORT, localPort);
 	setConfig(accountID, PUBLISHED_PORT, publishedPort);
-	setConfig(accountID, DISPLAY_NAME, displayName);
+	setConfig(accountID, STUN_ENABLE, stunEnable);
+	setConfig(accountID, STUN_SERVER, stunServer);
+	setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
+	setConfig(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce);
+        setConfig(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
+
+	// sip credential
+	find_in_map(REALM, realm)
+	find_in_map(AUTHENTICATION_USERNAME, authenticationName)
+	find_in_map(USERAGENT, ua_name)
+
+	setConfig(accountID, REALM, realm);
+	setConfig(accountID, USERAGENT, ua_name);
+	setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
+
+        // srtp settings
+	find_in_map(SRTP_ENABLE, srtpEnable)
+	find_in_map(SRTP_RTP_FALLBACK, srtpRtpFallback)
+	find_in_map(ZRTP_DISPLAY_SAS, zrtpDisplaySas)
+	find_in_map(ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce)
+	find_in_map(ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning)
+	find_in_map(ZRTP_HELLO_HASH, zrtpHelloHash)
+	find_in_map(SRTP_KEY_EXCHANGE, srtpKeyExchange)
+
 	setConfig(accountID, SRTP_ENABLE, srtpEnable);
 	setConfig(accountID, SRTP_RTP_FALLBACK, srtpRtpFallback);
 	setConfig(accountID, ZRTP_DISPLAY_SAS, zrtpDisplaySas);
@@ -3709,15 +3531,31 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	setConfig(accountID, ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning);
 	setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);
 	setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);
+	
+	// TLS settings
+	// The TLS listener is unique and globally defined through IP2IP_PROFILE
+	if(accountID == IP2IP_PROFILE) {
+	    find_in_map(TLS_LISTENER_PORT, tlsListenerPort)
+        }
+	find_in_map(TLS_ENABLE, tlsEnable)
+	find_in_map(TLS_CA_LIST_FILE, tlsCaListFile)
+	find_in_map(TLS_CERTIFICATE_FILE, tlsCertificateFile)
+	find_in_map(TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile)
+	find_in_map(TLS_PASSWORD, tlsPassword)
+	find_in_map(TLS_METHOD, tlsMethod)
+	find_in_map(TLS_CIPHERS, tlsCiphers)
+	find_in_map(TLS_SERVER_NAME, tlsServerName)
+	find_in_map(TLS_VERIFY_SERVER, tlsVerifyServer)
+	find_in_map(TLS_VERIFY_CLIENT, tlsVerifyClient)
+	find_in_map(TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate)
+	find_in_map(TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec)
+	find_in_map(TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec)
 
-	setConfig(accountID, STUN_ENABLE, stunEnable);
-	setConfig(accountID, STUN_SERVER, stunServer);
-	setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
 
 	// The TLS listener is unique and globally defined through IP2IP_PROFILE
-	if (accountID == IP2IP_PROFILE)
-		setConfig(accountID, TLS_LISTENER_PORT, tlsListenerPort);
-
+	if (accountID == IP2IP_PROFILE){
+	    setConfig(accountID, TLS_LISTENER_PORT, tlsListenerPort);
+	}
 	setConfig(accountID, TLS_ENABLE, tlsEnable);
 	setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);
 	setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);
@@ -3728,39 +3566,53 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	setConfig(accountID, TLS_SERVER_NAME, tlsServerName);
 	setConfig(accountID, TLS_VERIFY_SERVER, tlsVerifyServer);
 	setConfig(accountID, TLS_VERIFY_CLIENT, tlsVerifyClient);
-	setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE,
-			tlsRequireClientCertificate);
+	setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate);
 	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec);
-	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC,
-			tlsNegotiationTimeoutMsec);
+	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC,tlsNegotiationTimeoutMsec);
 
-	setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
-	setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, mailbox);
-	setConfig(accountID, CONFIG_ACCOUNT_ENABLE, accountEnable);
-	setConfig(accountID, CONFIG_ACCOUNT_TYPE, type);
-	setConfig(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce);
-	setConfig(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
-
-	saveConfig();
-
-	Account * acc = NULL;
-	acc = getAccount(accountID);
-
-	if (acc != NULL) {
-		acc->loadConfig();
-
-		if (acc->isEnabled()) {
-			acc->registerVoIPLink();
-		} else {
-			acc->unregisterVoIPLink();
-		}
+	if (!getMd5CredentialHashing()) {
+	  setConfig(accountID, PASSWORD, password);
 	} else {
-		_debug ("ManagerImpl::setAccountDetails: account is NULL");
+	  // Make sure not to re-hash the password field if
+	  // it is already saved as a MD5 Hash.
+	  // TODO: This test is weak. Fix this.
+	  if ((password.compare(getConfigString(accountID, PASSWORD)) != 0)) {
+	    _debug ("Password sent and password from config are different. Re-hashing");
+	    std::string hash;
+
+	    if (authenticationName.empty()) {
+	      hash = computeMd5HashFromCredential(username, password, realm);
+	    } else {
+	      hash = computeMd5HashFromCredential(authenticationName,
+						  password, realm);
+	    }
+	    
+	    setConfig(accountID, PASSWORD, hash);
+	  }
 	}
 
-	// Update account details to the client side
-	if (_dbus)
-		_dbus->getConfigurationManager()->accountsChanged();
+    }
+
+    saveConfig();
+    
+    Account * acc = NULL;
+    acc = getAccount(accountID);
+    
+    if (acc != NULL) {
+        acc->loadConfig();
+		
+	if (acc->isEnabled()) {
+	  acc->registerVoIPLink();
+	} else {
+	  acc->unregisterVoIPLink();
+	}
+    } else {
+      _debug ("ManagerImpl::setAccountDetails: account is NULL");
+    }
+    
+    // Update account details to the client side
+    if (_dbus)
+        _dbus->getConfigurationManager()->accountsChanged();
 
 }
 
@@ -4204,7 +4056,7 @@ void ManagerImpl::check_call_configuration (const CallID& id,
 	Call::CallConfiguration config;
 
 	if (to.find(SIP_SCHEME) == 0 || to.find(SIPS_SCHEME) == 0) {
-		_debug ("Sending Sip Call ");
+		_debug ("Manager: Sip scheme detected (sip: or sips:), sending IP2IP Call");
 		config = Call::IPtoIP;
 	} else {
 		config = Call::Classic;
@@ -4247,8 +4099,7 @@ bool ManagerImpl::removeCallConfig (const CallID& callID) {
 	return false;
 }
 
-std::map<std::string, std::string> ManagerImpl::getCallDetails (
-		const CallID& callID) {
+std::map<std::string, std::string> ManagerImpl::getCallDetails (const CallID& callID) {
 
 	std::map<std::string, std::string> call_details;
 	AccountID accountid;
@@ -4263,9 +4114,8 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (
 
 	// So first we fetch the account
 	accountid = getAccountFromCall(callID);
-	_debug ("%s",callID.c_str());
-	// Then the VoIP link this account is linked with (IAX2 or SIP)
 
+	// Then the VoIP link this account is linked with (IAX2 or SIP)
 	if ((account = getAccount(accountid)) != 0) {
 		link = account->getVoIPLink();
 
@@ -4276,30 +4126,19 @@ std::map<std::string, std::string> ManagerImpl::getCallDetails (
 
 	if (call) {
 		type << call->getCallType();
-		call_details.insert(std::pair<std::string, std::string>("ACCOUNTID",
-				accountid));
-		call_details.insert(std::pair<std::string, std::string>("PEER_NUMBER",
-				call->getPeerNumber()));
-		call_details.insert(std::pair<std::string, std::string>("PEER_NAME",
-				call->getPeerName()));
-		call_details.insert(std::pair<std::string, std::string>("DISPLAY_NAME",
-				call->getDisplayName()));
-		call_details.insert(std::pair<std::string, std::string>("CALL_STATE",
-				call->getStateStr()));
-		call_details.insert(std::pair<std::string, std::string>("CALL_TYPE",
-				type.str()));
+		call_details.insert(std::pair<std::string, std::string>("ACCOUNTID", accountid));
+		call_details.insert(std::pair<std::string, std::string>("PEER_NUMBER", call->getPeerNumber()));
+		call_details.insert(std::pair<std::string, std::string>("PEER_NAME", call->getPeerName()));
+		call_details.insert(std::pair<std::string, std::string>("DISPLAY_NAME", call->getDisplayName()));
+		call_details.insert(std::pair<std::string, std::string>("CALL_STATE", call->getStateStr()));
+		call_details.insert(std::pair<std::string, std::string>("CALL_TYPE", type.str()));
 	} else {
-		_debug ("Error: Managerimpl - getCallDetails ()");
-		call_details.insert(std::pair<std::string, std::string>("ACCOUNTID",
-				AccountNULL));
-		call_details.insert(std::pair<std::string, std::string>("PEER_NUMBER",
-				"Unknown"));
-		call_details.insert(std::pair<std::string, std::string>("PEER_NAME",
-				"Unknown"));
-		call_details.insert(std::pair<std::string, std::string>("CALL_STATE",
-				"UNKNOWN"));
-		call_details.insert(std::pair<std::string, std::string>("CALL_TYPE",
-				"0"));
+		_error ("Manager: Error: getCallDetails()");
+		call_details.insert(std::pair<std::string, std::string>("ACCOUNTID", AccountNULL));
+		call_details.insert(std::pair<std::string, std::string>("PEER_NUMBER", "Unknown"));
+		call_details.insert(std::pair<std::string, std::string>("PEER_NAME", "Unknown"));
+		call_details.insert(std::pair<std::string, std::string>("CALL_STATE", "UNKNOWN"));
+		call_details.insert(std::pair<std::string, std::string>("CALL_TYPE", "0"));
 	}
 
 	return call_details;
@@ -4367,7 +4206,8 @@ std::vector<std::string> ManagerImpl::getConferenceList (void) {
 
 std::vector<std::string> ManagerImpl::getParticipantList (
 		const std::string& confID) {
-	_debug ("ManagerImpl::getParticipantList");
+
+        _debug ("ManagerImpl: Get participant list %s", confID.c_str());
 	std::vector<std::string> v;
 
 	ConferenceMap::iterator iter_conf = _conferencemap.find(confID);
@@ -4386,6 +4226,9 @@ std::vector<std::string> ManagerImpl::getParticipantList (
 
 			iter_participant++;
 		}
+	}
+	else {
+	  _warn("Manager: Warning: Did not found conference %s", confID.c_str());
 	}
 
 	return v;

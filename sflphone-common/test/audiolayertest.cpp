@@ -36,8 +36,8 @@ void AudioLayerTest::testAudioLayerConfig() {
 
 	int layer = Manager::instance().getAudioDriver()->getLayerType();
 
-	if (layer != ALSA)
-		Manager::instance().switchAudioManager();
+	// if (layer != ALSA)
+	// 	Manager::instance().switchAudioManager();
 
 	// TODO: Fix tests
 	//CPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);

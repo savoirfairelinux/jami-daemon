@@ -1,0 +1,363 @@
+/****************************************************************************
+** Meta object code from reading C++ file 'SFLPhoneView.h'
+**
+** Created: Tue Apr 20 16:41:47 2010
+**      by: The Qt Meta Object Compiler version 62 (Qt 4.6.2)
+**
+** WARNING! All changes made in this file will be lost!
+*****************************************************************************/
+
+#include "../../src/SFLPhoneView.h"
+#if !defined(Q_MOC_OUTPUT_REVISION)
+#error "The header file 'SFLPhoneView.h' doesn't include <QObject>."
+#elif Q_MOC_OUTPUT_REVISION != 62
+#error "This file was generated using the moc from 4.6.2. It"
+#error "cannot be used with the include files from this version of Qt."
+#error "(The moc has changed too much.)"
+#endif
+
+QT_BEGIN_MOC_NAMESPACE
+static const uint qt_meta_data_SFLPhoneView[] = {
+
+ // content:
+       4,       // revision
+       0,       // classname
+       0,    0, // classinfo
+      75,   14, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+      10,       // signalCount
+
+ // signals: signature, parameters, type, tag, flags
+      22,   14,   13,   13, 0x05,
+      62,   56,   13,   13, 0x05,
+     109,   94,   13,   13, 0x05,
+     160,  148,   13,   13, 0x05,
+     211,  199,   13,   13, 0x05,
+     269,  250,   13,   13, 0x05,
+     322,  305,   13,   13, 0x05,
+     374,  356,   13,   13, 0x05,
+     410,  403,   13,   13, 0x05,
+     434,  429,   13,   13, 0x05,
+
+ // slots: signature, parameters, type, tag, flags
+     472,  460,   13,   13, 0x08,
+     506,  498,   13,   13, 0x08,
+     536,  532,   13,   13, 0x08,
+     556,   13,   13,   13, 0x08,
+     568,   13,   13,   13, 0x08,
+     577,   13,   13,   13, 0x08,
+     585,   13,   13,   13, 0x08,
+     613,  602,   13,   13, 0x08,
+     651,  643,   13,   13, 0x08,
+     685,   13,   13,   13, 0x08,
+     709,   13,   13,   13, 0x08,
+     731,   13,   13,   13, 0x08,
+     751,   13,   13,   13, 0x08,
+     771,   13,   13,   13, 0x08,
+     792,   13,   13,   13, 0x08,
+     813,   13,   13,   13, 0x08,
+     831,   13,   13,   13, 0x08,
+     849,   13,   13,   13, 0x08,
+     872,   13,   13,   13, 0x08,
+     888,   13,   13,   13, 0x0a,
+     901,   13,   13,   13, 0x0a,
+     923,   13,   13,   13, 0x0a,
+     948,   13,  943,   13, 0x0a,
+     966,   13,   13,   13, 0x0a,
+     999,  993,   13,   13, 0x0a,
+    1025,   13,   13,   13, 0x0a,
+    1049,   13,   13,   13, 0x0a,
+    1066,   13,   13,   13, 0x0a,
+    1086,   13,   13,   13, 0x0a,
+    1110,   13,   13,   13, 0x0a,
+    1119,   13,   13,   13, 0x0a,
+    1128,   13,   13,   13, 0x0a,
+    1135,   13,   13,   13, 0x0a,
+    1146,   13,   13,   13, 0x0a,
+    1155,   13,   13,   13, 0x0a,
+    1170, 1165,   13,   13, 0x0a,
+    1203,   13,   13,   13, 0x0a,
+    1243,   13,   13,   13, 0x0a,
+    1287, 1281,   13,   13, 0x0a,
+    1322, 1281,   13,   13, 0x0a,
+    1357, 1281,   13,   13, 0x0a,
+    1394, 1281,   13,   13, 0x0a,
+    1439, 1431,   13,   13, 0x0a,
+    1474, 1431,   13,   13, 0x0a,
+    1509, 1431,   13,   13, 0x0a,
+    1546, 1431,   13,   13, 0x0a,
+    1583,   13,   13,   13, 0x0a,
+    1616,   13,   13,   13, 0x0a,
+    1654, 1642,   13,   13, 0x0a,
+    1706,   13,   13,   13, 0x0a,
+    1758, 1753,   13,   13, 0x0a,
+    1809,   13,   13,   13, 0x0a,
+    1856, 1753,   13,   13, 0x0a,
+    1921, 1915,   13,   13, 0x0a,
+    1978, 1965,   13,   13, 0x0a,
+    2024, 2016,   13,   13, 0x0a,
+    2068, 2051,   13,   13, 0x0a,
+    2120, 2102,   13,   13, 0x0a,
+    2173, 2157,   13,   13, 0x0a,
+    2219, 2206,   13,   13, 0x0a,
+    2253,   13,   13,   13, 0x0a,
+    2286, 2279,   13,   13, 0x0a,
+    2331, 2318,   13,   13, 0x0a,
+    2378, 2371,   13,   13, 0x0a,
+    2409,  403,   13,   13, 0x0a,
+
+       0        // eod
+};
+
+static const char qt_meta_stringdata_SFLPhoneView[] = {
+    "SFLPhoneView\0\0message\0"
+    "statusMessageChangeAsked(QString)\0"
+    "title\0windowTitleChangeAsked(QString)\0"
+    "enabledActions\0enabledActionsChangeAsked(const bool*)\0"
+    "actionIcons\0actionIconsChangeAsked(const QString*)\0"
+    "actionTexts\0actionTextsChangeAsked(const QString*)\0"
+    "transferCheckState\0"
+    "transferCheckStateChangeAsked(bool)\0"
+    "recordCheckState\0recordCheckStateChangeAsked(bool)\0"
+    "enableAddressBook\0addressBookEnableAsked(bool)\0"
+    "screen\0screenChanged(int)\0call\0"
+    "incomingCall(const Call*)\0call,action\0"
+    "action(Call*,call_action)\0account\0"
+    "setAccountFirst(Account*)\0str\0"
+    "typeString(QString)\0backspace()\0"
+    "escape()\0enter()\0editBeforeCall()\0"
+    "listWidget\0alternateColors(QListWidget*)\0"
+    "contact\0addContactToContactList(Contact*)\0"
+    "updateWindowCallState()\0updateSearchHistory()\0"
+    "updateCallHistory()\0updateAddressBook()\0"
+    "updateRecordButton()\0updateVolumeButton()\0"
+    "updateRecordBar()\0updateVolumeBar()\0"
+    "updateVolumeControls()\0updateDialpad()\0"
+    "loadWindow()\0updateStatusMessage()\0"
+    "enableAddressBook()\0bool\0loadAddressBook()\0"
+    "updateAddressBookEnabled()\0event\0"
+    "keyPressEvent(QKeyEvent*)\0"
+    "displayVolumeControls()\0displayDialpad()\0"
+    "configureSflPhone()\0accountCreationWizard()\0"
+    "accept()\0refuse()\0hold()\0transfer()\0"
+    "record()\0mailBox()\0text\0"
+    "on_widget_dialpad_typed(QString)\0"
+    "on_lineEdit_searchHistory_textChanged()\0"
+    "on_lineEdit_addressBook_textChanged()\0"
+    "value\0on_slider_recVol_valueChanged(int)\0"
+    "on_slider_sndVol_valueChanged(int)\0"
+    "on_slider_recVol_2_valueChanged(int)\0"
+    "on_slider_sndVol_2_valueChanged(int)\0"
+    "checked\0on_toolButton_recVol_clicked(bool)\0"
+    "on_toolButton_sndVol_clicked(bool)\0"
+    "on_toolButton_recVol_2_clicked(bool)\0"
+    "on_toolButton_sndVol_2_clicked(bool)\0"
+    "on_callTree_currentItemChanged()\0"
+    "on_callTree_itemChanged()\0item,column\0"
+    "on_callTree_itemDoubleClicked(QTreeWidgetItem*,int)\0"
+    "on_listWidget_callHistory_currentItemChanged()\0"
+    "item\0on_listWidget_callHistory_itemDoubleClicked(Call*)\0"
+    "on_listWidget_addressBook_currentItemChanged()\0"
+    "on_listWidget_addressBook_itemDoubleClicked(CallTreeItem*)\0"
+    "index\0on_stackedWidget_screen_currentChanged(int)\0"
+    "callID,state\0on1_callStateChanged(QString,QString)\0"
+    "details\0on1_error(MapStringString)\0"
+    "accountID,callID\0on1_incomingCall(QString,QString)\0"
+    "accountID,message\0"
+    "on1_incomingMessage(QString,QString)\0"
+    "accountID,count\0on1_voiceMailNotify(QString,int)\0"
+    "device,value\0on1_volumeChanged(QString,double)\0"
+    "on1_audioManagerChanged()\0confID\0"
+    "on1_incomingConference(QString)\0"
+    "confID,state\0on1_changingConference(QString,QString)\0"
+    "confId\0on1_conferenceRemoved(QString)\0"
+    "changeScreen(int)\0"
+};
+
+const QMetaObject SFLPhoneView::staticMetaObject = {
+    { &QWidget::staticMetaObject, qt_meta_stringdata_SFLPhoneView,
+      qt_meta_data_SFLPhoneView, 0 }
+};
+
+#ifdef Q_NO_DATA_RELOCATION
+const QMetaObject &SFLPhoneView::getStaticMetaObject() { return staticMetaObject; }
+#endif //Q_NO_DATA_RELOCATION
+
+const QMetaObject *SFLPhoneView::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
+}
+
+void *SFLPhoneView::qt_metacast(const char *_clname)
+{
+    if (!_clname) return 0;
+    if (!strcmp(_clname, qt_meta_stringdata_SFLPhoneView))
+        return static_cast<void*>(const_cast< SFLPhoneView*>(this));
+    if (!strcmp(_clname, "Ui::SFLPhone_view"))
+        return static_cast< Ui::SFLPhone_view*>(const_cast< SFLPhoneView*>(this));
+    return QWidget::qt_metacast(_clname);
+}
+
+int SFLPhoneView::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QWidget::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        switch (_id) {
+        case 0: statusMessageChangeAsked((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 1: windowTitleChangeAsked((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 2: enabledActionsChangeAsked((*reinterpret_cast< const bool*(*)>(_a[1]))); break;
+        case 3: actionIconsChangeAsked((*reinterpret_cast< const QString*(*)>(_a[1]))); break;
+        case 4: actionTextsChangeAsked((*reinterpret_cast< const QString*(*)>(_a[1]))); break;
+        case 5: transferCheckStateChangeAsked((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 6: recordCheckStateChangeAsked((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 7: addressBookEnableAsked((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 8: screenChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 9: incomingCall((*reinterpret_cast< const Call*(*)>(_a[1]))); break;
+        case 10: action((*reinterpret_cast< Call*(*)>(_a[1])),(*reinterpret_cast< call_action(*)>(_a[2]))); break;
+        case 11: setAccountFirst((*reinterpret_cast< Account*(*)>(_a[1]))); break;
+        case 12: typeString((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 13: backspace(); break;
+        case 14: escape(); break;
+        case 15: enter(); break;
+        case 16: editBeforeCall(); break;
+        case 17: alternateColors((*reinterpret_cast< QListWidget*(*)>(_a[1]))); break;
+        case 18: addContactToContactList((*reinterpret_cast< Contact*(*)>(_a[1]))); break;
+        case 19: updateWindowCallState(); break;
+        case 20: updateSearchHistory(); break;
+        case 21: updateCallHistory(); break;
+        case 22: updateAddressBook(); break;
+        case 23: updateRecordButton(); break;
+        case 24: updateVolumeButton(); break;
+        case 25: updateRecordBar(); break;
+        case 26: updateVolumeBar(); break;
+        case 27: updateVolumeControls(); break;
+        case 28: updateDialpad(); break;
+        case 29: loadWindow(); break;
+        case 30: updateStatusMessage(); break;
+        case 31: enableAddressBook(); break;
+        case 32: { bool _r = loadAddressBook();
+            if (_a[0]) *reinterpret_cast< bool*>(_a[0]) = _r; }  break;
+        case 33: updateAddressBookEnabled(); break;
+        case 34: keyPressEvent((*reinterpret_cast< QKeyEvent*(*)>(_a[1]))); break;
+        case 35: displayVolumeControls(); break;
+        case 36: displayDialpad(); break;
+        case 37: configureSflPhone(); break;
+        case 38: accountCreationWizard(); break;
+        case 39: accept(); break;
+        case 40: refuse(); break;
+        case 41: hold(); break;
+        case 42: transfer(); break;
+        case 43: record(); break;
+        case 44: mailBox(); break;
+        case 45: on_widget_dialpad_typed((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 46: on_lineEdit_searchHistory_textChanged(); break;
+        case 47: on_lineEdit_addressBook_textChanged(); break;
+        case 48: on_slider_recVol_valueChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 49: on_slider_sndVol_valueChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 50: on_slider_recVol_2_valueChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 51: on_slider_sndVol_2_valueChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 52: on_toolButton_recVol_clicked((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 53: on_toolButton_sndVol_clicked((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 54: on_toolButton_recVol_2_clicked((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 55: on_toolButton_sndVol_2_clicked((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 56: on_callTree_currentItemChanged(); break;
+        case 57: on_callTree_itemChanged(); break;
+        case 58: on_callTree_itemDoubleClicked((*reinterpret_cast< QTreeWidgetItem*(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 59: on_listWidget_callHistory_currentItemChanged(); break;
+        case 60: on_listWidget_callHistory_itemDoubleClicked((*reinterpret_cast< Call*(*)>(_a[1]))); break;
+        case 61: on_listWidget_addressBook_currentItemChanged(); break;
+        case 62: on_listWidget_addressBook_itemDoubleClicked((*reinterpret_cast< CallTreeItem*(*)>(_a[1]))); break;
+        case 63: on_stackedWidget_screen_currentChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 64: on1_callStateChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 65: on1_error((*reinterpret_cast< MapStringString(*)>(_a[1]))); break;
+        case 66: on1_incomingCall((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 67: on1_incomingMessage((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 68: on1_voiceMailNotify((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 69: on1_volumeChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< double(*)>(_a[2]))); break;
+        case 70: on1_audioManagerChanged(); break;
+        case 71: on1_incomingConference((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 72: on1_changingConference((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 73: on1_conferenceRemoved((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 74: changeScreen((*reinterpret_cast< int(*)>(_a[1]))); break;
+        default: ;
+        }
+        _id -= 75;
+    }
+    return _id;
+}
+
+// SIGNAL 0
+void SFLPhoneView::statusMessageChangeAsked(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 0, _a);
+}
+
+// SIGNAL 1
+void SFLPhoneView::windowTitleChangeAsked(const QString & _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 1, _a);
+}
+
+// SIGNAL 2
+void SFLPhoneView::enabledActionsChangeAsked(const bool * _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 2, _a);
+}
+
+// SIGNAL 3
+void SFLPhoneView::actionIconsChangeAsked(const QString * _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 3, _a);
+}
+
+// SIGNAL 4
+void SFLPhoneView::actionTextsChangeAsked(const QString * _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 4, _a);
+}
+
+// SIGNAL 5
+void SFLPhoneView::transferCheckStateChangeAsked(bool _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 5, _a);
+}
+
+// SIGNAL 6
+void SFLPhoneView::recordCheckStateChangeAsked(bool _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 6, _a);
+}
+
+// SIGNAL 7
+void SFLPhoneView::addressBookEnableAsked(bool _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 7, _a);
+}
+
+// SIGNAL 8
+void SFLPhoneView::screenChanged(int _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 8, _a);
+}
+
+// SIGNAL 9
+void SFLPhoneView::incomingCall(const Call * _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 9, _a);
+}
+QT_END_MOC_NAMESPACE

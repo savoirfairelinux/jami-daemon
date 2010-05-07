@@ -135,10 +135,15 @@ class Sdp {
         
         pj_status_t check_sdp_answer(pjsip_inv_session *inv, pjsip_rx_data *rdata);
         
-        /*
+        /**
          * Remove all media in the session media vector.
          */
-        void clean_session_media();
+        void clean_session_media(void);
+
+        /**
+         * Remove all media in local media capability vector
+         */
+		void clean_local_media_capabilities(void);
 
         /*
          * Return a string description of the media added to the session,

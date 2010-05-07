@@ -21,6 +21,7 @@
 #ifndef _NUMBER_CLEANER_H
 #define _NUMBER_CLEANER_H
 
+#include "logger.h"
 #include <string>
 
 class NumberCleaner {
@@ -31,7 +32,8 @@ class NumberCleaner {
 
         std::string clean (std::string to_clean);
 
-        inline void set_phone_number_prefix (std::string prefix) { _prefix = prefix; }
+        inline void set_phone_number_prefix (std::string prefix) {  
+	  _debug("Number: Set phone number prefix %s", _prefix.c_str()); _prefix = prefix; }
 
         inline std::string get_phone_number_prefix (void) { return _prefix; }
 

@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2009 by the Free Software Foundation, Inc.
 #
+# Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -69,9 +71,13 @@ class SflPhoneCtrlSimple(Thread):
 
 	self.loop = MainLoop()
 
+	self.isStop = False
+
 	self.test = test
 	self.onIncomingCall_cb = None
 	self.event = Event()
+
+	gobject.threads_init()
 	
 
 
@@ -79,6 +85,12 @@ class SflPhoneCtrlSimple(Thread):
         if self.registered:
             self.unregister()
 	self.loop.quit()
+
+
+    def stopThread(self):
+        print "Stop PySFLphone"
+        self.isStop = True
+	
 
 
     def register(self):
@@ -135,6 +147,8 @@ class SflPhoneCtrlSimple(Thread):
 
 
     def unregister(self):
+
+        print "Unregister"
 
         if not self.registered:
             return
@@ -199,7 +213,8 @@ class SflPhoneCtrlSimple(Thread):
             except KeyError, e:
                 print "This call didn't exist!: " + callid + ". Adding it to the list."
                 callDetails = self.getCallDetails(callid)
-                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 'To': callDetails['PEER_NUMBER'], 'State': state }
+                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 
+					    'To': callDetails['PEER_NUMBER'], 'State': state }
         elif state in [ "BUSY", "FAILURE" ]:
             try:
                 del self.activeCalls[callid]
@@ -535,7 +550,9 @@ class SflPhoneCtrlSimple(Thread):
 
     def Refuse(self, callid):
         """Refuse an incoming call identified by a CallID"""
+
 	print "Refuse call " + callid
+
         # if not self.account:
         #     self.setFirstRegisteredAccount()
 
@@ -606,9 +623,12 @@ class SflPhoneCtrlSimple(Thread):
 	return callid
 
     def run(self):
-        gobject.threads_init()
-        # self.loop.run()
+        """Processing method for this thread"""
+
 	context = self.loop.get_context()
 
-	while 1:
+	while True:
             context.iteration(True)
+
+	    if self.isStop: 
+	        return

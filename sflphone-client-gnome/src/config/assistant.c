@@ -157,7 +157,7 @@ static void sip_apply_callback( void ) {
 
 	// Add default interface info
 	gchar ** iface_list = NULL;
-	iface_list = (gchar**) dbus_get_all_ip_interface();
+	iface_list = (gchar**) dbus_get_all_ip_interface_by_name();
         gchar ** iface = NULL;
 
 	// select the first interface available
