@@ -1,0 +1,5 @@
+These are translation files for both Gnome and KDE clients.
+
+If you want to update the translations, refere to the lang folder at the root directory of git repository, where the po files to edit are gathered.
+
+DO NOT EDIT THESE PO FILES since they are to be replaced by the new ones from lang folder. All changes might be lost.

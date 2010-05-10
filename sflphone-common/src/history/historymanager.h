@@ -45,7 +45,7 @@ class HistoryManager {
         /**
          *@param path  A specific file to use; if empty, use the global one
          *
-         *@return int The number of history items succesfully loaded
+         *@return int The number of history items successfully loaded
          */
         int load_history (int limit, std::string path="");
 

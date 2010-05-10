@@ -394,7 +394,7 @@ class SIPVoIPLink : public VoIPLink
 	 * This function should be called before registering an account
 	 * @param accountID An account id for which transport is to be set
 	 *
-	 * @return bool True if the account is succesfully created or successfully obtained 
+	 * @return bool True if the account is successfully created or successfully obtained 
 	 * from the transport map
 	 */
 	bool acquireTransport(const AccountID& accountID);

@@ -54,8 +54,8 @@ class AlsaLayer : public AudioLayer {
     /**
      * Check if no devices are opened, otherwise close them.
      * Then open the specified devices by calling the private functions open_device
-     * @param indexIn	The number of the card choosen for capture
-     * @param indexOut	The number of the card choosen for playback
+     * @param indexIn	The number of the card chosen for capture
+     * @param indexOut	The number of the card chosen for playback
      * @param sampleRate  The sample rate 
      * @param frameSize	  The frame size
      * @param stream	  To indicate which kind of stream you want to open

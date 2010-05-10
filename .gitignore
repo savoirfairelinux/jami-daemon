@@ -125,11 +125,11 @@ sflphone-client-gnome/stamp-h1
 /sflphone-client-kde/*.moc
 /sflphone-client-kde/src/moc_*.cpp
 /sflphone-client-kde/src/ui_*.h
-/sflphone-client-kde/po/
-/sflphone-client-kde/po/* 
-/sflphone-client-kde/doc/
-/sflphone-client-kde/man/
-/sflphone-client-kde/data/
+#/sflphone-client-kde/po/
+#/sflphone-client-kde/po/* 
+#/sflphone-client-kde/doc/
+#/sflphone-client-kde/man/
+#/sflphone-client-kde/data/
 /sflphone-client-kde/CMakeCache.txt
 /sflphone-client-kde/CMakeLists.txt.user
 /sflphone-client-kde/CTestTestfile.cmake
