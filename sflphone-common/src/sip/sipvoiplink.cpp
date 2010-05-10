@@ -2309,7 +2309,7 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 	    }
 	    else {
 
-	        // If transport succesfully created, store it in the internal map.
+	        // If transport successfully created, store it in the internal map.
 	        // STUN aware transport are account specific and should not be stored in map.
 	        // TLS transport is ephemeral and is managed by PJSIP, should not be stored either.
 	        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
@@ -2906,7 +2906,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
     /* Shutdown PJLIB */
     pj_shutdown();
 
-    _debug ("UserAgent: Shutted down succesfully");
+    _debug ("UserAgent: Shutted down successfully");
 
     /* Done. */
     return true;

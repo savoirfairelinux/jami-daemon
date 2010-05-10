@@ -766,7 +766,7 @@ void ManagerImpl::removeConference (const ConfID& conference_id) {
 
 	// Then remove the conference from the conference map
 	if (_conferencemap.erase(conference_id) == 1)
-		_debug ("Manager: Conference %s removed succesfully", conference_id.c_str());
+		_debug ("Manager: Conference %s removed successfully", conference_id.c_str());
 	else
 		_error ("Manager: Error: Cannot remove conference: %s", conference_id.c_str());
 

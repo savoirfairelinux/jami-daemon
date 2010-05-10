@@ -80,7 +80,7 @@ class SIPAccount : public Account
 	void setVoIPLink();
 
         /** 
-         * Actually unuseful, since config loading is done in init() 
+         * Actually useless, since config loading is done in init() 
          */
         void loadConfig();
 
