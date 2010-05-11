@@ -77,6 +77,11 @@ SpeexEchoCancel::~SpeexEchoCancel()
   delete echoFile;
 }
 
+void SpeexEchoCancel::reset()
+{
+
+}
+
 void SpeexEchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
 {
   // std::cout << "putData nbBytes: " << nbBytes << std::endl;

@@ -48,6 +48,14 @@ DcBlocker::DcBlocker() : _y(0), _x(0), _xm1(0), _ym1(0) {}
 
 DcBlocker::~DcBlocker() {}
 
+void DcBlocker::reset()
+{
+  _y = 0;
+  _x = 0;
+  _xm1 = 0;
+  _ym1 = 0;
+}
+
 void DcBlocker::putData(SFLDataFormat *inputData, int nbBytes) {}
 
 void DcBlocker::process (SFLDataFormat *data, int nbBytes)

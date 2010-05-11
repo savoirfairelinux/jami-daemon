@@ -27,6 +27,12 @@ AudioProcessing::AudioProcessing(Algorithm *_algo) : _algorithm(_algo) {}
 
 AudioProcessing::~AudioProcessing(void){}
 
+void AudioProcessing::resetAlgorithm(void)
+{
+  if(_algorithm)
+    _algorithm->reset();
+}
+
 void AudioProcessing::putData(SFLDataFormat *inputData, int nbBytes)
 {
   if(_algorithm)

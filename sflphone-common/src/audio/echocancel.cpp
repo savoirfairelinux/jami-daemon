@@ -100,6 +100,20 @@ EchoCancel::~EchoCancel()
   speex_preprocess_state_destroy(noiseState);
 }
 
+void EchoCancel::reset()
+{
+  memset(_avgSpkrLevelHist, 0, 5000*sizeof(int));
+  memset(_avgMicLevelHist, 0, 5000*sizeof(int));
+
+  _spkrLevel = 0;
+  _micLevel = 0;
+  _spkrHistCnt = 0;
+  _micHistCnt = 0;
+  _amplFactor = 0.0;
+  _amplify = 0.0;
+  _lastAmplFactor = 0.0;
+}
+
 void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
 {
   // std::cout << "putData nbBytes: " << nbBytes << std::endl;

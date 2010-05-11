@@ -43,6 +43,12 @@ public:
    */
   void setAlgorithm(Algorithm *_algo) { _algorithm = _algo; }
 
+
+  /**
+   * Reset parameters for the algorithm
+   */
+  void resetAlgorithm();
+
   /**
    * Put data in internal buffer
    */

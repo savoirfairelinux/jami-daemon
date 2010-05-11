@@ -47,6 +47,8 @@ class EchoCancel : public Algorithm {
 
     ~EchoCancel();
 
+    virtual void reset(void);
+
     /**
      * Add speaker data into internal buffer
      * \param inputData containing far-end voice data to be sent to speakers 

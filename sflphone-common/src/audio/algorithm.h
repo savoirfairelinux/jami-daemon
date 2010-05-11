@@ -31,6 +31,8 @@ class Algorithm {
 
  public:
 
+  virtual void reset(void) = 0;
+
   /**
    * Put data to be processed
    */

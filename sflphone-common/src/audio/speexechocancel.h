@@ -34,6 +34,8 @@ class SpeexEchoCancel : public Algorithm {
 
     ~SpeexEchoCancel();
 
+    virtual void reset(void);
+
     /**
      * Add speaker data into internal buffer
      * \param inputData containing far-end voice data to be sent to speakers 

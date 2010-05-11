@@ -79,6 +79,8 @@ public:
 
     ~DcBlocker();
 
+    virtual void reset(void);
+
     /**
      * Unused
      */
