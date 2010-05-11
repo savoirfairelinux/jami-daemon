@@ -23,6 +23,8 @@
 
 // number of samples (20 ms)
 #define FRAME_SIZE 160
+#define FRAME_LENGTH 20
+
 // number of sample to process, (800 à 4000 samples, 100 to 500 ms)
 #define FILTER_LENGTH 800
 
@@ -30,6 +32,7 @@
 EchoCancel::EchoCancel() : _samplingRate(8000),
 			   _smplPerFrame(160),
 			   _smplPerSeg(0),
+			   _nbSegment(0),
 			   _historyLength(0),
                            _spkrLevel(0),
 			   _micLevel(0),
@@ -37,7 +40,7 @@ EchoCancel::EchoCancel() : _samplingRate(8000),
 			   _micHistCnt(0),
 			   _amplFactor(0.0),
 			   _amplify(0.0),
-			   _factorCnt(0)
+			   _lastAmplFactor(0.0)
 {
   _debug("EchoCancel: Instantiate echo canceller");
 
@@ -55,10 +58,24 @@ EchoCancel::EchoCancel() : _samplingRate(8000),
 
   _smplPerSeg = (_samplingRate * SEGMENT_LENGTH) / MS_PER_SEC;
   _historyLength = ECHO_LENGTH / SEGMENT_LENGTH;
+  _nbSegment =  FRAME_LENGTH / SEGMENT_LENGTH;
+
+  noiseState = speex_preprocess_state_init(FRAME_SIZE, 8000);
+  int i=1;
+  speex_preprocess_ctl(noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
+  i=0;
+  speex_preprocess_ctl(noiseState, SPEEX_PREPROCESS_SET_AGC, &i);
+  i=8000;
+  speex_preprocess_ctl(noiseState, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
+  i=0;
+  speex_preprocess_ctl(noiseState, SPEEX_PREPROCESS_SET_DEREVERB, &i);
+  float f=.0;
+  speex_preprocess_ctl(noiseState, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
+  f=.0;
+  speex_preprocess_ctl(noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
 
   memset(_avgSpkrLevelHist, 0, 5000*sizeof(int));
   memset(_avgMicLevelHist, 0, 5000*sizeof(int));
-  memset(_factorFilter, 0, 10*sizeof(float));
   
 }
 
@@ -79,6 +96,8 @@ EchoCancel::~EchoCancel()
   delete micFile;
   delete spkrFile;
   delete echoFile;
+
+  speex_preprocess_state_destroy(noiseState);
 }
 
 void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
@@ -138,7 +157,8 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     // Processed echo cancellation
     performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
 
-    // speex_preprocess_run(_preState, _tmpOut);    
+    // Remove noise
+    speex_preprocess_run(noiseState, _tmpOut);
 
     bcopy(_tmpOut, outputData+(nbFrame*FRAME_SIZE), byteSize);
 
@@ -161,7 +181,7 @@ void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDat
 
 void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
 
-  for(int k = 0; k < 2; k++) {
+  for(int k = 0; k < _nbSegment; k++) {
 
     updateEchoCancel(micData+(k*_smplPerSeg), spkrData+(k*_smplPerSeg));
 
@@ -187,7 +207,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     else {
       if(_spkrLevel < MIN_SIG_LEVEL) {
 	// std::cout << "micLevel < MIN_SIG_LEVEL && spkrLevel < MIN_SIG_LEVEL" << std::endl;
-	_amplFactor = 0.5;
+	_amplFactor = 0.0;
       }
       else {
 	// std::cout << "micLevel < MIN_SIG_LEVEL && spkrLevel > MIN_SIG_LEVEL" << std::endl;
@@ -195,17 +215,10 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
       }
     }
 
-    _factorFilter[_factorCnt++] = _amplFactor;
-    if(_factorCnt >= 10) {
-      _factorCnt = 0;
-    }
+    // filter ampl factor
+    _amplify = (_lastAmplFactor + _amplFactor) / 2;
 
-
-    _amplify = 0.0;
-    for(int m = 0; m < 10; m++) {
-      _amplify += _factorFilter[m];
-    }
-    _amplify = _amplify / 10.0;
+    _lastAmplFactor = _amplFactor;
 
     // std::cout << "Amplitude: " << _amplify << ", spkrLevel: " << _spkrLevel << ", micLevel: " << _micLevel << std::endl;
 

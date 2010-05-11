@@ -21,6 +21,7 @@
 #define ECHOCANCEL_H
 
 #include "audioprocessing.h"
+#include <speex/speex_preprocess.h>
 
 #include "ringbuffer.h"
 
@@ -31,15 +32,12 @@
 #define MS_PER_SEC 1000
 
 // Length of the echo tail in ms
-#define ECHO_LENGTH 50
+#define ECHO_LENGTH 100
 
 // Voice Threashold
 #define MIN_MIC_LEVEL 300
 #define MIN_SPKR_LEVEL 500
 #define MIN_SIG_LEVEL 100
-
-// Smoothing factor
-#define FACTOR_LENGTH = 5
 
 class EchoCancel : public Algorithm {
 
@@ -102,7 +100,7 @@ class EchoCancel : public Algorithm {
     /**
      * Internal buffer for speaker data synchronization
      */
-    RingBuffer *_spkrData; 
+    RingBuffer *_spkrData;
 
     /**
      * Boolean value 
@@ -120,6 +118,7 @@ class EchoCancel : public Algorithm {
     int _samplingRate;
     int _smplPerFrame;
     int _smplPerSeg;
+    int _nbSegment;
     int _historyLength;
 
     int _spkrLevel;
@@ -133,12 +132,13 @@ class EchoCancel : public Algorithm {
 
     float _amplFactor;
     float _amplify;
-    float _factorFilter[10];
-    int _factorCnt;
+    float _lastAmplFactor;
 
     ofstream *micFile;
     ofstream *spkrFile;
     ofstream *echoFile;
+
+    SpeexPreprocessState *noiseState;
     
 };
 
