@@ -76,6 +76,10 @@ EchoCancel::EchoCancel() : _samplingRate(8000),
 
   memset(_avgSpkrLevelHist, 0, 5000*sizeof(int));
   memset(_avgMicLevelHist, 0, 5000*sizeof(int));
+
+  memset(_delayedAmplify, 0, 10*sizeof(float));
+  _amplIndexIn = 0;
+  _amplIndexOut = DELAY_AMPLIFY / SEGMENT_LENGTH;
   
 }
 
@@ -204,10 +208,10 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 
     if(_micLevel >= MIN_SIG_LEVEL) {
       if(_spkrLevel < MIN_SIG_LEVEL) {
-	increaseFactor();
+	increaseFactor(0.02);
       }
       else if(_micLevel > _spkrLevel) {
-	increaseFactor();
+	increaseFactor(0.05);
       }
       else {
 	decreaseFactor();
@@ -215,7 +219,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     }
     else {
       if(_spkrLevel < MIN_SIG_LEVEL) {
-	decreaseFactor();
+	increaseFactor(0.02);
       }
       else {
 	decreaseFactor();
@@ -286,17 +290,28 @@ int EchoCancel::getMaxAmplitude(int *data) {
 
 void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData) {
 
+
+  // Use delayed amplification factor due to sound card latency 
   for(int i = 0; i < _smplPerSeg; i++) {
-    outputData[i] = (SFLDataFormat)(((float)micData[i])*_amplify);
-    // std::cout << "input: " << micData[i] << ", output: " << outputData[i] << std::endl;
+    outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayedAmplify[_amplIndexOut]);
   }
+
+  _amplIndexOut++;
+  _delayedAmplify[_amplIndexIn++] = _amplify;
+
+  if(_amplIndexOut >= 10)
+    _amplIndexOut = 0;
+
+  if(_amplIndexIn >= 10)
+    _amplIndexIn = 0;
 }
 
 
 
-void EchoCancel::increaseFactor() {
+void EchoCancel::increaseFactor(float factor) {
 
-  _amplFactor += 0.01;
+  // Get 200 ms to get back to full amplitude
+  _amplFactor += factor;
 
   if(_amplFactor > 1.0)
     _amplFactor = 1.0;
@@ -306,6 +321,7 @@ void EchoCancel::increaseFactor() {
 
 void EchoCancel::decreaseFactor() {
 
+  // Takes about 50 ms to react
   _amplFactor -= 0.2;
 
   if(_amplFactor < 0.0)

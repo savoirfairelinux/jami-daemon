@@ -25,19 +25,20 @@
 
 #include "ringbuffer.h"
 
-// length of audio segment in ms
-#define SEGMENT_LENGTH 10
-
-// number of ms in sec
+// Number of ms in sec
 #define MS_PER_SEC 1000
+
+// Length of audio segment in ms
+#define SEGMENT_LENGTH 10
 
 // Length of the echo tail in ms
 #define ECHO_LENGTH 100
 
-// Voice Threashold
-#define MIN_MIC_LEVEL 300
-#define MIN_SPKR_LEVEL 500
+// Voice level threashold 
 #define MIN_SIG_LEVEL 100
+
+// Delay between mic and speaker
+#define DELAY_AMPLIFY 60
 
 class EchoCancel : public Algorithm {
 
@@ -94,7 +95,7 @@ class EchoCancel : public Algorithm {
 
     void amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData);
 
-    void increaseFactor();
+    void increaseFactor(float factor);
 
     void decreaseFactor();
 
@@ -138,7 +139,11 @@ class EchoCancel : public Algorithm {
 
     float _amplFactor;
     float _amplify;
+    float _delayedAmplify[10];
     float _lastAmplFactor;
+
+    int _amplIndexIn;
+    int _amplIndexOut;
 
     ofstream *micFile;
     ofstream *spkrFile;

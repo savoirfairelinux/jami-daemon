@@ -152,6 +152,12 @@ AlsaLayer::startStream (void)
 {
     _debug ("Audio: Start stream");
 
+    if(_audiofilter)
+      _audiofilter->resetAlgorithm();
+
+    if(_echoCanceller)
+      _echoCanceller->resetAlgorithm();
+
     std::string pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
     std::string pcmc = buildDeviceTopo (_audioPlugin, _indexIn, 0);
 

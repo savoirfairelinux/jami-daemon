@@ -367,9 +367,15 @@ int PulseLayer::getMic (void *buffer, int toCopy)
 
 void PulseLayer::startStream (void)
 {
+    if(_audiofilter)
+      _audiofilter->resetAlgorithm();
+
+    if(_echoCanceller)
+      _echoCanceller->resetAlgorithm();
+
     // Create Streams
-	if(!playback || !record)
-		createStreams(context);
+    if(!playback || !record)
+      createStreams(context);
 
     // Flush outside the if statement: every time start stream is
     // called is to notify a new event
