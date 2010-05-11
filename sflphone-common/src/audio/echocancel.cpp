@@ -190,28 +190,21 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 
     if(_micLevel >= MIN_SIG_LEVEL) {
       if(_spkrLevel < MIN_SIG_LEVEL) {
-	// std::cout << "micLevel >= MIN_SIG_LEVEL && spkrLevel < MIN_SIG_LEVEL" << std::endl;
-	// far-end is talking, near-end silent reduce echo
-	_amplFactor = 1.0;
+	increaseFactor();
       }
       else if(_micLevel > _spkrLevel) {
-	// std::cout << "micLevel >= MIN_SIG_LEVEL && micLevel > spkrLevel" << std::endl;
-	_amplFactor = 1.0;
+	increaseFactor();
       }
       else {
-	// std::cout << "micLevel >= MIN_SIG_LEVEL && (micLevel > spkrLevel < MIN_SIG_LEVEL)" << std::endl;
-	// near-end is talking, far-end too
-	_amplFactor = 0.0;
+	decreaseFactor();
       }
     }
     else {
       if(_spkrLevel < MIN_SIG_LEVEL) {
-	// std::cout << "micLevel < MIN_SIG_LEVEL && spkrLevel < MIN_SIG_LEVEL" << std::endl;
-	_amplFactor = 0.0;
+	decreaseFactor();
       }
       else {
-	// std::cout << "micLevel < MIN_SIG_LEVEL && spkrLevel > MIN_SIG_LEVEL" << std::endl;
-	_amplFactor = 0.0;
+	decreaseFactor();
       }
     }
 
@@ -220,7 +213,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 
     _lastAmplFactor = _amplFactor;
 
-    // std::cout << "Amplitude: " << _amplify << ", spkrLevel: " << _spkrLevel << ", micLevel: " << _micLevel << std::endl;
+    std::cout << "Amplitude: " << _amplify << ", spkrLevel: " << _spkrLevel << ", micLevel: " << _micLevel << std::endl;
 
     amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg));
     
@@ -283,4 +276,24 @@ void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData
     outputData[i] = (SFLDataFormat)(((float)micData[i])*_amplify);
     // std::cout << "input: " << micData[i] << ", output: " << outputData[i] << std::endl;
   }
+}
+
+
+
+void EchoCancel::increaseFactor() {
+
+  _amplFactor += 0.01;
+
+  if(_amplFactor > 1.0)
+    _amplFactor = 1.0;
+
+}
+
+
+void EchoCancel::decreaseFactor() {
+
+  _amplFactor -= 0.2;
+
+  if(_amplFactor < 0.0)
+    _amplFactor = 0.0;
 }

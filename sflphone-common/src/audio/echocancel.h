@@ -92,6 +92,10 @@ class EchoCancel : public Algorithm {
 
     void amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData);
 
+    void increaseFactor();
+
+    void decreaseFactor();
+
     /**
      * Internal buffer for mic data synchronization
      */
