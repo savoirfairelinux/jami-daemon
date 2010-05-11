@@ -168,22 +168,30 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     _spkrLevel = getMaxAmplitude(_avgSpkrLevelHist);
     _micLevel = getMaxAmplitude(_avgMicLevelHist);
 
-    if(_spkrLevel > MIN_SPKR_LEVEL) {
-      if(_micLevel < MIN_MIC_LEVEL) {
+    if(_micLevel >= MIN_SIG_LEVEL) {
+      if(_spkrLevel < MIN_SIG_LEVEL) {
+	// std::cout << "micLevel >= MIN_SIG_LEVEL && spkrLevel < MIN_SIG_LEVEL" << std::endl;
 	// far-end is talking, near-end silent reduce echo
-	_amplFactor = 0.0;
+	_amplFactor = 1.0;
+      }
+      else if(_micLevel > _spkrLevel) {
+	// std::cout << "micLevel >= MIN_SIG_LEVEL && micLevel > spkrLevel" << std::endl;
+	_amplFactor = 1.0;
       }
       else {
+	// std::cout << "micLevel >= MIN_SIG_LEVEL && (micLevel > spkrLevel < MIN_SIG_LEVEL)" << std::endl;
 	// near-end is talking, far-end too
-	_amplFactor = 0.5;
+	_amplFactor = 0.0;
       }
     }
     else {
-      if(_micLevel < MIN_MIC_LEVEL) {
-	_amplFactor = 1.0;
+      if(_spkrLevel < MIN_SIG_LEVEL) {
+	// std::cout << "micLevel < MIN_SIG_LEVEL && spkrLevel < MIN_SIG_LEVEL" << std::endl;
+	_amplFactor = 0.5;
       }
       else {
-	_amplFactor = 1.0;
+	// std::cout << "micLevel < MIN_SIG_LEVEL && spkrLevel > MIN_SIG_LEVEL" << std::endl;
+	_amplFactor = 0.0;
       }
     }
 
@@ -199,7 +207,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     }
     _amplify = _amplify / 10.0;
 
-    std::cout << "Amplitude: " << _amplify << ", spkrLevel: " << _spkrLevel << ", micLevel: " << _micLevel << std::endl;
+    // std::cout << "Amplitude: " << _amplify << ", spkrLevel: " << _spkrLevel << ", micLevel: " << _micLevel << std::endl;
 
     amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg));
     
