@@ -40,6 +40,12 @@
 // Delay between mic and speaker
 #define DELAY_AMPLIFY 60
 
+// maximum in segment size (segment are SEGMENT_LENGTH long)
+#define MAX_DELAY 10
+
+// Internal buffer size
+#define BUFF_SIZE 5000
+
 class EchoCancel : public Algorithm {
 
  public:
@@ -48,6 +54,9 @@ class EchoCancel : public Algorithm {
 
     ~EchoCancel();
 
+    /**
+     * Reset echocanceller internal state at runtime. Usefull when making a new call
+     */ 
     virtual void reset(void);
 
     /**
@@ -88,15 +97,33 @@ class EchoCancel : public Algorithm {
      */
     void updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData);
 
+    /**
+     * Compute the average amplitude of the signal.
+     * \param data must be of SEGMENT_LENGTH long.
+     */ 
     int computeAmplitudeLevel(SFLDataFormat *data);
 
-
+    /**
+     * Return the max amplitude provided any of _avgSpkrLevelHist or _avgMicLevelHist
+     */
     int getMaxAmplitude(int *data);
 
-    void amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData);
+    /**
+     * Apply gain factor on input buffer and copy result in output buffer.
+     * Buffers must be of SEGMENT_LENGTH long. 
+     * \param input buffer
+     * \param output buffer
+     */
+    void amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData, float amplify);
 
+    /**
+     * Increase microphone gain by the provided factor. Sanity check are done internally.
+     */
     void increaseFactor(float factor);
 
+    /**
+     * Decrease microphone gain.
+     */
     void decreaseFactor();
 
     /**
@@ -115,40 +142,93 @@ class EchoCancel : public Algorithm {
     bool _spkrStoped;
 
     /**
-     * Temp buffer
+     * Internal buffer for audio processing
      */
-    SFLDataFormat _tmpSpkr[5000];
-    SFLDataFormat _tmpMic[5000];
-    SFLDataFormat _tmpOut[5000];
+    SFLDataFormat _tmpSpkr[BUFF_SIZE];
+    SFLDataFormat _tmpMic[BUFF_SIZE];
+    SFLDataFormat _tmpOut[BUFF_SIZE];
 
-
+    /**
+     * Audio stream sampling rate
+     */
     int _samplingRate;
+
+    /**
+     * Number of sample per frame
+     */
     int _smplPerFrame;
+
+    /**
+     * Number of samples per segment
+     */
     int _smplPerSeg;
+    
+    /**
+     * Number of segment per frame
+     */
     int _nbSegment;
+
+    /**
+     * Number of segment considered in history 
+     * Mainly used to compute signal level
+     */
     int _historyLength;
 
+    /**
+     * Current playback level
+     */ 
     int _spkrLevel;
+
+    /**
+     * Current capture level
+     */
     int _micLevel;
 
+    /**
+     * Current index to store level in speaker history
+     */
     int _spkrHistCnt;
+
+    /**
+     * Current index to store level in microphone history
+     */
     int _micHistCnt;
 
-    int _avgSpkrLevelHist[5000];
-    int _avgMicLevelHist[5000];
+    /**
+     * Average speaker/microphone level history. Each value corespond to
+     * the averaged amplitude value over a segment (SEGMENT_LENGTH long)
+     */
+    int _avgSpkrLevelHist[BUFF_SIZE];
+    int _avgMicLevelHist[BUFF_SIZE];
 
+    /**
+     * Current linear gain factor to be applied on microphone 
+     */
     float _amplFactor;
-    float _amplify;
-    float _delayedAmplify[10];
+
+    /**
+     * Stored linea gain factor for lowpass filtering
+     */
     float _lastAmplFactor;
 
+    /**
+     * Linear gain factor buffer to adjust to system's latency 
+     */
+    float _delayedAmplify[MAX_DELAY];
+
+    /**
+     * read/write for mic gain delay 
+     */
     int _amplIndexIn;
     int _amplIndexOut;
 
-    ofstream *micFile;
-    ofstream *spkrFile;
-    ofstream *echoFile;
+    // ofstream *micFile;
+    // ofstream *spkrFile;
+    // ofstream *echoFile;
 
+    /**
+     * Noise reduction processing state
+     */
     SpeexPreprocessState *noiseState;
     
 };

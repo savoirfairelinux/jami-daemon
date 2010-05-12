@@ -19,14 +19,11 @@
 
 #include "echocancel.h"
 
-#include <fstream>
+// #include <fstream>
 
 // number of samples (20 ms)
 #define FRAME_SIZE 160
 #define FRAME_LENGTH 20
-
-// number of sample to process, (800 à 4000 samples, 100 to 500 ms)
-#define FILTER_LENGTH 800
 
 
 EchoCancel::EchoCancel() : _samplingRate(8000),
@@ -39,14 +36,13 @@ EchoCancel::EchoCancel() : _samplingRate(8000),
 			   _spkrHistCnt(0),
 			   _micHistCnt(0),
 			   _amplFactor(0.0),
-			   _amplify(0.0),
 			   _lastAmplFactor(0.0)
 {
   _debug("EchoCancel: Instantiate echo canceller");
 
-  micFile = new ofstream("micData", ofstream::binary);
-  echoFile = new ofstream("echoData", ofstream::binary);
-  spkrFile = new ofstream("spkrData", ofstream::binary);
+  // micFile = new ofstream("micData", ofstream::binary);
+  // echoFile = new ofstream("echoData", ofstream::binary);
+  // spkrFile = new ofstream("spkrData", ofstream::binary);
 
   _micData = new RingBuffer(10000);
   _spkrData = new RingBuffer(10000);
@@ -93,15 +89,16 @@ EchoCancel::~EchoCancel()
   delete _spkrData;
   _spkrData = NULL;
 
-  micFile->close();
-  spkrFile->close();
-  echoFile->close();
-
-  delete micFile;
-  delete spkrFile;
-  delete echoFile;
-
   speex_preprocess_state_destroy(noiseState);
+
+  // micFile->close();
+  // spkrFile->close();
+  // echoFile->close();
+
+  // delete micFile;
+  // delete spkrFile;
+  // delete echoFile;
+
 }
 
 void EchoCancel::reset()
@@ -114,7 +111,6 @@ void EchoCancel::reset()
   _spkrHistCnt = 0;
   _micHistCnt = 0;
   _amplFactor = 0.0;
-  _amplify = 0.0;
   _lastAmplFactor = 0.0;
 }
 
@@ -169,8 +165,8 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     _spkrData->Get(_tmpSpkr, byteSize);
     _micData->Get(_tmpMic, byteSize);
 
-    micFile->write ((const char *)_tmpMic, byteSize);
-    spkrFile->write ((const char *)_tmpSpkr, byteSize);
+    // micFile->write ((const char *)_tmpMic, byteSize);
+    // spkrFile->write ((const char *)_tmpSpkr, byteSize);
 
     // Processed echo cancellation
     performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
@@ -180,7 +176,7 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
 
     bcopy(_tmpOut, outputData+(nbFrame*FRAME_SIZE), byteSize);
 
-    echoFile->write ((const char *)_tmpOut, byteSize);
+    // echoFile->write ((const char *)_tmpOut, byteSize);
 
     spkrAvail = _spkrData->AvailForGet();
     micAvail = _micData->AvailForGet();
@@ -226,14 +222,14 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
       }
     }
 
-    // filter ampl factor
-    _amplify = (_lastAmplFactor + _amplFactor) / 2;
+    // lowpass filtering
+    float amplify = (_lastAmplFactor + _amplFactor) / 2;
 
     _lastAmplFactor = _amplFactor;
 
-    std::cout << "Amplitude: " << _amplify << ", spkrLevel: " << _spkrLevel << ", micLevel: " << _micLevel << std::endl;
+    std::cout << "Amplitude: " << amplify << ", spkrLevel: " << _spkrLevel << ", micLevel: " << _micLevel << std::endl;
 
-    amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg));
+    amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), amplify);
     
   }
   
@@ -288,7 +284,7 @@ int EchoCancel::getMaxAmplitude(int *data) {
 }
 
 
-void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData) {
+void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData, float amplify) {
 
 
   // Use delayed amplification factor due to sound card latency 
@@ -297,12 +293,12 @@ void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData
   }
 
   _amplIndexOut++;
-  _delayedAmplify[_amplIndexIn++] = _amplify;
+  _delayedAmplify[_amplIndexIn++] = amplify;
 
-  if(_amplIndexOut >= 10)
+  if(_amplIndexOut >= MAX_DELAY)
     _amplIndexOut = 0;
 
-  if(_amplIndexIn >= 10)
+  if(_amplIndexIn >= MAX_DELAY)
     _amplIndexIn = 0;
 }
 
