@@ -210,9 +210,11 @@ class PulseLayer : public AudioLayer {
     int spkrVolume;
     int micVolume;
 
+    /*
     ofstream *captureFile;
     ofstream *captureRsmplFile;
     ofstream *captureFilterFile;
+    */
 
     // private:
 

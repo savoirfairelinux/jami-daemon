@@ -50,7 +50,7 @@ class EchoCancel : public Algorithm {
 
  public:
 
-    EchoCancel();
+    EchoCancel(int smplRate, int frameSize);
 
     ~EchoCancel();
 
@@ -229,7 +229,7 @@ class EchoCancel : public Algorithm {
     /**
      * Noise reduction processing state
      */
-    SpeexPreprocessState *noiseState;
+    SpeexPreprocessState *_noiseState;
     
 };
 

@@ -47,7 +47,7 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     // _audioThread = NULL;
     _urgentRingBuffer.createReadPointer();
 
-    AudioLayer::_echoCancel = new EchoCancel();
+    AudioLayer::_echoCancel = new EchoCancel(8000, 160);
     AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
 
     AudioLayer::_dcblocker = new DcBlocker();
