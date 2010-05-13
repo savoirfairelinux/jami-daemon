@@ -1950,7 +1950,7 @@ void ManagerImpl::notificationIncomingCall (void) {
 
 	if (audiolayer != 0) {
 		samplerate = audiolayer->getSampleRate();
-		frequency << "440/" << FRAME_PER_BUFFER;
+		frequency << "440/" << 160;
 		Tone tone(frequency.str(), samplerate);
 		nbSampling = tone.getSize();
 		SFLDataFormat buf[nbSampling];

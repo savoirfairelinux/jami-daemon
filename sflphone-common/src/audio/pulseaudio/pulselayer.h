@@ -31,8 +31,9 @@
 
 #include <stdlib.h>
 
-#define PLAYBACK_STREAM_NAME	    "SFLphone out"
-#define CAPTURE_STREAM_NAME	    "SFLphone in"
+#define PLAYBACK_STREAM_NAME	    "SFLphone playback"
+#define CAPTURE_STREAM_NAME	    "SFLphone capture"
+#define RINGTONE_STREAM_NAME        "SFLphone ringtone"
 
 class RingBuffer;
 class ManagerImpl;
@@ -199,6 +200,11 @@ class PulseLayer : public AudioLayer {
      * A stream object to handle the pulseaudio capture stream
      */
     AudioStream* record;
+
+    /**
+     * A special stream object to handle specific playback stream for ringtone
+     */
+    AudioStream* ringtone;
 
     /** Sample rate converter object */
     SamplerateConverter * _converter;

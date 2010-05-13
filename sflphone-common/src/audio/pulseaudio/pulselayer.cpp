@@ -73,8 +73,9 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         : AudioLayer (manager , PULSEAUDIO)
         , context (NULL)
         , m (NULL)
-        , playback()
-        , record()
+        , playback(NULL)
+        , record(NULL)
+	, ringtone(NULL)
 {
     _urgentRingBuffer.createReadPointer();
     dcblocker = new DcBlocker();
@@ -277,6 +278,18 @@ bool PulseLayer::createStreams (pa_context* c)
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
     // pa_stream_set_moved_callback(record->pulseStream(), stream_moved_callback, this);
     delete recordParam;
+
+    PulseLayerType * ringtoneParam = new PulseLayerType();
+    ringtoneParam->context = c;
+    ringtoneParam->type = RINGTONE_STREAM;
+    ringtoneParam->description = RINGTONE_STREAM_NAME;
+    ringtoneParam->volume = _manager->getSpkrVolume();
+    ringtoneParam->mainloop = m;
+
+    ringtone = new AudioStream (ringtoneParam, _audioSampleRate);
+    ringtone->connectStream();
+    pa_stream_set_write_callback(ringtone->pulseStream(), playback_callback, this);
+    delete ringtoneParam;
 
     pa_threaded_mainloop_signal (m , 0);
 
