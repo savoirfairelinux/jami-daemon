@@ -44,13 +44,17 @@
 #define MAX_DELAY 10
 
 // Internal buffer size
-#define BUFF_SIZE 5000
+#define BUFF_SIZE 10000
+
+#define DEFAULT_SAMPLRATE 8000
+
+#define DEFAULT_FRAME_LENGTH 20
 
 class EchoCancel : public Algorithm {
 
  public:
 
-    EchoCancel(int smplRate, int frameSize);
+    EchoCancel(int smplRate = DEFAULT_SAMPLRATE, int frameLength = DEFAULT_FRAME_LENGTH);
 
     ~EchoCancel();
 
@@ -84,6 +88,11 @@ class EchoCancel : public Algorithm {
      * \param outputData containing the processed data
      */
     virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+
+    /**
+     * Set echo canceller internal sampling rate, reset if sampling rate changed
+     */
+    void setSamplingRate(int smplRate);
 
  private:
 
@@ -154,6 +163,11 @@ class EchoCancel : public Algorithm {
     int _samplingRate;
 
     /**
+     * Audio frame size in ms
+     */
+    int _frameLength;
+
+    /**
      * Number of sample per frame
      */
     int _smplPerFrame;
@@ -166,7 +180,7 @@ class EchoCancel : public Algorithm {
     /**
      * Number of segment per frame
      */
-    int _nbSegment;
+    int _nbSegmentPerFrame;
 
     /**
      * Number of segment considered in history 
@@ -222,9 +236,11 @@ class EchoCancel : public Algorithm {
     int _amplIndexIn;
     int _amplIndexOut;
 
-    // ofstream *micFile;
-    // ofstream *spkrFile;
-    // ofstream *echoFile;
+    /*
+    ofstream *micFile;
+    ofstream *spkrFile;
+    ofstream *echoFile;
+    */
 
     /**
      * Noise reduction processing state
