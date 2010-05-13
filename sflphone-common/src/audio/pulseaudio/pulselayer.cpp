@@ -81,13 +81,6 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     
     is_started = false;
 
-    // Instantiate the algorithm
-    AudioLayer::_echoCancel = new EchoCancel(8000, 160);
-    AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
-
-    AudioLayer::_dcblocker = new DcBlocker();
-    AudioLayer::_audiofilter = new AudioProcessing(static_cast<Algorithm *>(_dcblocker));
-
     /*
     captureFile = new ofstream("captureFile", ofstream::binary);
     captureRsmplFile = new ofstream("captureRsmplFile", ofstream::binary);
@@ -270,6 +263,13 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
 
     // use 1 sec buffer for resampling
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
+
+    // Instantiate the algorithm
+    AudioLayer::_echoCancel = new EchoCancel();
+    AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
+
+    AudioLayer::_dcblocker = new DcBlocker();
+    AudioLayer::_audiofilter = new AudioProcessing(static_cast<Algorithm *>(_dcblocker));
 
     return true;
 }
@@ -564,6 +564,10 @@ void PulseLayer::writeToSpeaker (void)
 
                 getMainBuffer()->getData (out, byteToGet, 100);
 
+		// TODO: Audio processing should be performed inside mainbuffer
+		// to avoid such problem
+		AudioLayer::_echoCancel->setSamplingRate(_mainBufferSampleRate);
+
 		// Copy far-end signal in echo canceller to adapt filter coefficient
 		AudioLayer::_echoCanceller->putData(out, byteToGet);
 
@@ -621,8 +625,8 @@ void PulseLayer::readFromMic (void)
     const char* data = NULL;
     size_t r;
 
-    SFLDataFormat echoCancelledMic[5000];
-    memset(echoCancelledMic, 0, 5000);
+    SFLDataFormat echoCancelledMic[10000];
+    memset(echoCancelledMic, 0, 10000*sizeof(SFLDataFormat));
 
     int readableSize = pa_stream_readable_size (record->pulseStream());
 
@@ -631,6 +635,7 @@ void PulseLayer::readFromMic (void)
         _warn("Audio: Error capture stream peek failed: %s" , pa_strerror (pa_context_errno (context)));
     }
 
+    _debug("*********************** Read from mic: %d **************************", readableSize);
 
     if (data != 0) {
 
@@ -659,8 +664,11 @@ void PulseLayer::readFromMic (void)
 	    // echo cancellation processing
 	    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
 
+	    _debug("Read from mic: sampleReady %d", sampleready);
+
             // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
-	    getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+	    if(sampleready)
+	      getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
 
             pa_xfree (rsmpl_out);
 

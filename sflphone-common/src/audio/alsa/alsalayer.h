@@ -231,7 +231,7 @@ class AlsaLayer : public AudioLayer {
     
     void* adjustVolume( void* buffer , int len, int stream );
     
-/**
+    /**
      * Handles to manipulate playback stream
      * ALSA Library API
      */

@@ -46,12 +46,6 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     // _audioThread = new AudioThread (this);
     // _audioThread = NULL;
     _urgentRingBuffer.createReadPointer();
-
-    AudioLayer::_echoCancel = new EchoCancel(8000, 160);
-    AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
-
-    AudioLayer::_dcblocker = new DcBlocker();
-    AudioLayer::_audiofilter = new AudioProcessing(static_cast<Algorithm *>(_dcblocker));
 }
 
 // Destructor
@@ -142,6 +136,12 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     // use 1 sec buffer for resampling
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
+
+    AudioLayer::_echoCancel = new EchoCancel();
+    AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
+
+    AudioLayer::_dcblocker = new DcBlocker();
+    AudioLayer::_audiofilter = new AudioProcessing(static_cast<Algorithm *>(_dcblocker));
 
     // open_device (pcmp, pcmc, stream);
     return true; // open_device (pcmp, pcmc, stream);
@@ -819,7 +819,7 @@ AlsaLayer::soundCardGetIndex (std::string description)
     return 0;
 }
 
-void AlsaLayer::audioCallback (void)
+void AlsaLayer::audioCallback(void)
 {
 
     int toGet, urgentAvailBytes, normalAvailBytes, maxBytes;
@@ -842,6 +842,7 @@ void AlsaLayer::audioCallback (void)
     // framePerBuffer are the number of data for one channel (left)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
+    // 
     if (urgentAvailBytes > 0) {
 
         // Urgent data (dtmf, incoming call signal) come first.
@@ -918,6 +919,10 @@ void AlsaLayer::audioCallback (void)
             if (normalAvailBytes) {
 
                 getMainBuffer()->getData (out, toGet, spkrVolume);
+
+		// TODO: Audio processing should be performed inside mainbuffer
+		// to avoid such problem
+		AudioLayer::_echoCancel->setSamplingRate(_mainBufferSampleRate);
 
 		// Copy far-end signal in echo canceller to adapt filter coefficient
 		AudioLayer::_echoCanceller->putData(out, toGet);	
