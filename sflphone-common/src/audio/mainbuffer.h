@@ -106,7 +106,7 @@ public:
 
 	SFLDataFormat* mixBuffer;
 
-	ost::Mutex _mutex;
+	// ost::Mutex _mutex;
 
 	int _internalSamplingRate;
 

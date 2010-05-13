@@ -1332,6 +1332,7 @@ void ManagerImpl::joinConference (const CallID& conf_id1,
 }
 
 void ManagerImpl::addStream (const CallID& call_id) {
+
 	_debug ("Manager: Add audio stream %s", call_id.c_str());
 
 	AccountID currentAccountId;
