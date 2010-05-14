@@ -41,6 +41,15 @@ static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
     
 }
 
+static void ringtone_callback (pa_stream* s, size_t bytes, void* userdata)
+{
+
+    assert(s && bytes);
+    assert(bytes > 0);
+    static_cast<PulseLayer*> (userdata)->processRingtoneData();
+
+}
+
 /*
 static void stream_suspended_callback (pa_stream *s UNUSED, void *userdata UNUSED)
 {
@@ -278,7 +287,7 @@ bool PulseLayer::createStreams (pa_context* c)
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
     // pa_stream_set_moved_callback(record->pulseStream(), stream_moved_callback, this);
     delete recordParam;
-
+    
     PulseLayerType * ringtoneParam = new PulseLayerType();
     ringtoneParam->context = c;
     ringtoneParam->type = RINGTONE_STREAM;
@@ -288,7 +297,7 @@ bool PulseLayer::createStreams (pa_context* c)
 
     ringtone = new AudioStream (ringtoneParam, _audioSampleRate);
     ringtone->connectStream();
-    pa_stream_set_write_callback(ringtone->pulseStream(), playback_callback, this);
+    pa_stream_set_write_callback(ringtone->pulseStream(), ringtone_callback, this);
     delete ringtoneParam;
 
     pa_threaded_mainloop_signal (m , 0);
@@ -329,6 +338,13 @@ void PulseLayer::closePlaybackStream (void)
         delete playback;
         playback=NULL;
     }
+
+    if(ringtone) {
+        delete ringtone;
+	ringtone  = NULL;
+    }
+
+    _debug("ringtone is dead");
 }
 
 
@@ -353,8 +369,8 @@ int PulseLayer::getMic (void *buffer, int toCopy)
 void PulseLayer::startStream (void)
 {
     // Create Streams
-	if(!playback || !record)
-		createStreams(context);
+    if(!playback || !record)
+        createStreams(context);
 
     // Flush outside the if statement: every time start stream is
     // called is to notify a new event
@@ -409,6 +425,19 @@ void PulseLayer::processCaptureData (void)
     if (record && (record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
         readFromMic();
 
+}
+
+void PulseLayer::processRingtoneData (void)
+{
+    // handle ringtone playback
+  if(ringtone && (ringtone)->pulseStream() && (pa_stream_get_state(ringtone->pulseStream()) == PA_STREAM_READY)) {
+    
+    // If the playback buffer is full, we don't overflow it; wait for it to have free space
+    if(pa_stream_writable_size(ringtone->pulseStream()) == 0)
+      return;
+
+    ringtoneToSpeaker();
+  }
 }
 
 
@@ -487,10 +516,11 @@ void PulseLayer::writeToSpeaker (void)
                 pa_xfree (out);
 
             }
-        }
+	    //}
 
-        else if (file_tone != 0) {
+        // else if (file_tone != 0) {
 
+	  /*
             if (playback->getStreamState() == PA_STREAM_READY) {
 
                 out = (SFLDataFormat*) pa_xmalloc (writeableSize);
@@ -501,6 +531,7 @@ void PulseLayer::writeToSpeaker (void)
                 pa_xfree (out);
 
             }
+	  */
 
         } else {
 
@@ -638,6 +669,43 @@ void PulseLayer::readFromMic (void)
     if (pa_stream_drop (record->pulseStream()) < 0) {
         _warn("Audio: Error: capture stream drop failed: %s" , pa_strerror( pa_context_errno( context) ));
     }
+
+}
+
+
+void PulseLayer::ringtoneToSpeaker(void)
+{
+  int availBytes;
+
+  AudioLoop* file_tone = _manager->getTelephoneFile();
+
+  SFLDataFormat* out;
+
+  int writableSize = pa_stream_writable_size(ringtone->pulseStream());
+
+  _debug("writable size: %d", writableSize);
+
+  if (file_tone) {
+
+    if(ringtone->getStreamState() == PA_STREAM_READY) {
+      
+      out = (SFLDataFormat*)pa_xmalloc(writableSize);
+      int copied = file_tone->getNext(out, writableSize/sizeof(SFLDataFormat), 100);
+      pa_stream_write(ringtone->pulseStream(), out, copied*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
+
+      pa_xfree(out);
+
+    }
+  }
+  else {
+
+    out = (SFLDataFormat*)pa_xmalloc(writableSize);
+    memset(out, 0, writableSize);
+    pa_stream_write(ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
+    
+    pa_xfree(out);
+  }
+    
 
 }
 

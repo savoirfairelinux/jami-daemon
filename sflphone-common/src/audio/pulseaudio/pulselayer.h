@@ -140,6 +140,8 @@ class PulseLayer : public AudioLayer {
 
     void processCaptureData( void );
 
+    void processRingtoneData( void );
+
     void processData(void);
     
   private:
@@ -160,6 +162,7 @@ class PulseLayer : public AudioLayer {
      */
     void readFromMic( void );
     void writeToSpeaker( void );
+    void ringtoneToSpeaker( void );
     
     /**
      * Create the audio streams into the given context

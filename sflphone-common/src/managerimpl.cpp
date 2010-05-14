@@ -3864,15 +3864,19 @@ void ManagerImpl::unloadAccountMap () {
 
 	while (iter != _accountMap.end()) {
 
-		_debug ("Unloading account %s\n", iter->first.c_str());
+		_debug ("Unloading account %s", iter->first.c_str());
 
 		delete iter->second;
-		iter->second = 0;
+		iter->second = NULL;
 
 		iter++;
 	}
 
+	_debug("Manager: Clear account map");
 	_accountMap.clear();
+	_debug("Manager: Unload account map");
+
+	
 }
 
 bool ManagerImpl::accountExists (const AccountID& accountID) {
