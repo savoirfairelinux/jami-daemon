@@ -23,6 +23,23 @@
 
 int framesPerBuffer = 2048;
 
+/*
+  PA_SUBSCRIPTION_EVENT_SINK = 0x0000U,
+  PA_SUBSCRIPTION_EVENT_SOURCE = 0x0001U,
+  PA_SUBSCRIPTION_EVENT_SINK_INPUT = 0x0002U,
+  PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT = 0x0003U,
+  PA_SUBSCRIPTION_EVENT_MODULE = 0x0004U,
+  PA_SUBSCRIPTION_EVENT_CLIENT = 0x0005U,
+  PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE = 0x0006U,
+  PA_SUBSCRIPTION_EVENT_SERVER = 0x0007U,
+  PA_SUBSCRIPTION_EVENT_CARD = 0x0009U,
+  PA_SUBSCRIPTION_EVENT_FACILITY_MASK = 0x000FU,
+  PA_SUBSCRIPTION_EVENT_NEW = 0x0000U,
+  PA_SUBSCRIPTION_EVENT_CHANGE = 0x0010U,
+  PA_SUBSCRIPTION_EVENT_REMOVE = 0x0020U,
+  PA_SUBSCRIPTION_EVENT_TYPE_MASK = 0x0030U 
+*/
+
 static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
 {
 
@@ -48,6 +65,73 @@ static void ringtone_callback (pa_stream* s, size_t bytes, void* userdata)
     assert(bytes > 0);
     static_cast<PulseLayer*> (userdata)->processRingtoneData();
 
+}
+
+/*
+  PA_SUBSCRIPTION_EVENT_SINK = 0x0000U,
+  PA_SUBSCRIPTION_EVENT_SOURCE = 0x0001U,
+  PA_SUBSCRIPTION_EVENT_SINK_INPUT = 0x0002U,
+  PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT = 0x0003U,
+  PA_SUBSCRIPTION_EVENT_MODULE = 0x0004U,
+  PA_SUBSCRIPTION_EVENT_CLIENT = 0x0005U,
+  PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE = 0x0006U,
+  PA_SUBSCRIPTION_EVENT_SERVER = 0x0007U,
+  PA_SUBSCRIPTION_EVENT_CARD = 0x0009U,
+  PA_SUBSCRIPTION_EVENT_FACILITY_MASK = 0x000FU,
+  PA_SUBSCRIPTION_EVENT_NEW = 0x0000U,
+  PA_SUBSCRIPTION_EVENT_CHANGE = 0x0010U,
+  PA_SUBSCRIPTION_EVENT_REMOVE = 0x0020U,
+  PA_SUBSCRIPTION_EVENT_TYPE_MASK = 0x0030U 
+*/
+
+static void stream_changed_callback(pa_context* s, pa_subscription_event_type_t t, uint32_t idx, void* userdata)
+{
+
+  switch(t) {
+
+  case PA_SUBSCRIPTION_EVENT_SINK:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_SINK");
+    break;
+  case PA_SUBSCRIPTION_EVENT_SOURCE:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_SOURCE");
+    break;
+  case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_SINK_INPUT");
+    break;
+  case PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT");
+    break;
+  case PA_SUBSCRIPTION_EVENT_MODULE:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_MODULE");
+    break;
+  case PA_SUBSCRIPTION_EVENT_CLIENT:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_CLIENT");
+    break;
+  case PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE");
+    break;
+  case PA_SUBSCRIPTION_EVENT_SERVER:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_SERVER");
+    break;
+  case PA_SUBSCRIPTION_EVENT_CARD:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_CARD");
+    break;
+  case PA_SUBSCRIPTION_EVENT_FACILITY_MASK:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_FACILITY_MASK");
+    break;
+  case PA_SUBSCRIPTION_EVENT_CHANGE:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_CHANGE");
+    break;
+  case PA_SUBSCRIPTION_EVENT_REMOVE:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_REMOVE");
+    break;
+  case PA_SUBSCRIPTION_EVENT_TYPE_MASK:
+    _debug("Audio: PA_SUBSCRIPTION_EVENT_TYPE_MASK");
+    break;
+  default:
+    _debug("Audio: Unknown event type");
+    
+  }
 }
 
 /*
@@ -299,6 +383,9 @@ bool PulseLayer::createStreams (pa_context* c)
     ringtone->connectStream();
     pa_stream_set_write_callback(ringtone->pulseStream(), ringtone_callback, this);
     delete ringtoneParam;
+
+    pa_context_subscribe (c, PA_SUBSCRIPTION_MASK_SINK, NULL, this);
+    pa_context_set_subscribe_callback (c, stream_changed_callback, this);
 
     pa_threaded_mainloop_signal (m , 0);
 
@@ -683,7 +770,7 @@ void PulseLayer::ringtoneToSpeaker(void)
 
   int writableSize = pa_stream_writable_size(ringtone->pulseStream());
 
-  _debug("writable size: %d", writableSize);
+  // _debug("writable size: %d", writableSize);
 
   if (file_tone) {
 
