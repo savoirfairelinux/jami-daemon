@@ -42,7 +42,6 @@ class Celt : public AudioCodec
         Celt& operator= (const Celt&);
 
         void initCelt() {
-            printf ("Celt: Init Celt codec");
 
             int error = 0;
 

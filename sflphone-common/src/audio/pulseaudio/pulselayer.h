@@ -31,12 +31,17 @@
 
 #include <stdlib.h>
 
+#include <list>
+#include <string>
+
 #define PLAYBACK_STREAM_NAME	    "SFLphone playback"
 #define CAPTURE_STREAM_NAME	    "SFLphone capture"
 #define RINGTONE_STREAM_NAME        "SFLphone ringtone"
 
 class RingBuffer;
 class ManagerImpl;
+
+typedef std::list<std::string> DeviceList;
 
 class PulseLayer : public AudioLayer {
   public:
@@ -61,6 +66,8 @@ class PulseLayer : public AudioLayer {
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
     bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) ;
+
+    void updateDeviceList(void);
 
     void startStream(void);
 
@@ -129,6 +136,12 @@ class PulseLayer : public AudioLayer {
      * @return AudioStream* The pointer on the record AudioStream object
      */
     AudioStream* getRecordStream(){ return record;}
+
+    /**
+     * Accessor
+     * @return AudioStream* The pointer on the ringtone AudioStream object
+     */
+    AudioStream* getRingtoneStream(){ return ringtone;}
 
     int getSpkrVolume( void ) { return spkrVolume; }
     void setSpkrVolume( int value ) { spkrVolume = value; }
@@ -218,6 +231,8 @@ class PulseLayer : public AudioLayer {
     int micVolume;
 
     DcBlocker* dcblocker;
+
+    DeviceList _deviceList;
 
     // private:
 
