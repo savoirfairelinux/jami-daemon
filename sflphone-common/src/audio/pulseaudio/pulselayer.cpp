@@ -496,8 +496,8 @@ bool PulseLayer::createStreams (pa_context* c)
     recordParam->mainloop = m;
 
     record = new AudioStream (recordParam, _audioSampleRate);
-    if(inSinkList(recordDevice)) {
-      record->connectStream(NULL);
+    if(inSourceList(recordDevice)) {
+      record->connectStream(&recordDevice);
     }
     else {
       record->connectStream(NULL);
