@@ -2102,6 +2102,8 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
 	_config.addDefaultValue(std::pair<std::string, std::string>(
 			ALSA_CARD_ID_OUT, ALSA_DFT_CARD), AUDIO);
 	_config.addDefaultValue(std::pair<std::string, std::string>(
+			ALSA_CARD_ID_RING, ALSA_DFT_CARD), AUDIO);
+	_config.addDefaultValue(std::pair<std::string, std::string>(
 			AUDIO_SAMPLE_RATE, DFT_SAMPLE_RATE), AUDIO);
 	_config.addDefaultValue(std::pair<std::string, std::string>(
 			ALSA_FRAME_SIZE, DFT_FRAME_SIZE), AUDIO);
@@ -2786,6 +2788,8 @@ void ManagerImpl::selectAudioDriver (void) {
 
 	    if (!alsalayer->soundCardIndexExist(numCardRing, SFL_PCM_RINGTONE)) {
 	        _debug(" Card with index %i doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
+		numCardRing = ALSA_DFT_CARD_ID;
+		setConfig(AUDIO, ALSA_CARD_ID_RING, ALSA_DFT_CARD_ID);
 	    }
 	}
 
@@ -2858,14 +2862,13 @@ void ManagerImpl::switchAudioManager (void) {
 			SFL_PCM_BOTH, alsaPlugin);
 
 	if (_audiodriver -> getErrorMessage() != -1)
-		notifyErrClient(_audiodriver -> getErrorMessage());
+	    notifyErrClient(_audiodriver -> getErrorMessage());
 
 	_debug ("Manager: Current device: %i ", type);
-
 	_debug ("Manager: Has current call: %i ", hasCurrentCall());
 
 	if (hasCurrentCall())
-		_audiodriver->startStream();
+	    _audiodriver->startStream();
 
 	// ost::MutexLock unlock (*getAudioLayerMutex());
 	getAudioLayerMutex()->leave();
