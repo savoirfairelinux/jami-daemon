@@ -975,8 +975,6 @@ void AlsaLayer::audioCallback (void)
 
     if (file_tone != NULL) {
 
-        _debug("!!!!!!!");
-
         out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
 	file_tone->getNext (out, toGet, spkrVolume);
 	write (out, maxBytes, _RingtoneHandle);
@@ -985,8 +983,6 @@ void AlsaLayer::audioCallback (void)
 	out = NULL;
 
     } else {
-
-        _debug("?????");
 
         out = (SFLDataFormat*) malloc ( maxBytes * sizeof (SFLDataFormat));
 	memset(out, 0, maxBytes * sizeof (SFLDataFormat));
