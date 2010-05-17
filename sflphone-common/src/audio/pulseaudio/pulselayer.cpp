@@ -84,8 +84,6 @@ static void pa_success_callback(pa_context *c, int success, void *userdata) {
 static void sink_input_info_callback(pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
   char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
-  _debug("******** sink_input_info_callback");
-
   if(!eol) {
 
     printf("Sink %u\n"
@@ -123,8 +121,6 @@ static void sink_input_info_callback(pa_context *c, const pa_sink_info *i, int e
 static void source_input_info_callback(pa_context *c, const pa_source_info *i, int eol, void *userdata) {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
-    _debug("******** source_input_info_callback");
-
     if(!eol) {
 
     printf("Sink %u\n"
@@ -161,8 +157,6 @@ static void source_input_info_callback(pa_context *c, const pa_source_info *i, i
 
 static void context_changed_callback(pa_context* c, pa_subscription_event_type_t t, uint32_t idx, void* userdata)
 {
-
-  _debug("---------------------- context_changed_callback %d ----------------------------", idx);
 
   switch(t) {
 
