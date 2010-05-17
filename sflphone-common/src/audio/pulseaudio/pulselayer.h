@@ -67,11 +67,17 @@ class PulseLayer : public AudioLayer {
      */
     bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) ;
 
-    DeviceList* getDevicelist(void) { return &_deviceList; }
+    DeviceList* getSinkList(void) { return &_sinkList; }
 
-    void updateDeviceList(void);
+    DeviceList* getSourceList(void) { return &_sourceList; }
 
-    bool inDevicelist(std::string deviceName);
+    void updateSinkList(void);
+
+    void updateSourceList(void);
+
+    bool inSinkList(std::string deviceName);
+
+    bool inSourceList(std::string deviceName);
 
     void startStream(void);
 
@@ -236,7 +242,9 @@ class PulseLayer : public AudioLayer {
 
     DcBlocker* dcblocker;
 
-    DeviceList _deviceList;
+    DeviceList _sinkList;
+
+    DeviceList _sourceList;
 
     // private:
 

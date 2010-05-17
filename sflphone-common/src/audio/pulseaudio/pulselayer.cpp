@@ -76,23 +76,6 @@ static void stream_moved_callback(pa_stream *s, void *userdata) {
 
 }
 
-/*
-  PA_SUBSCRIPTION_EVENT_SINK = 0x0000U,
-  PA_SUBSCRIPTION_EVENT_SOURCE = 0x0001U,
-  PA_SUBSCRIPTION_EVENT_SINK_INPUT = 0x0002U,
-  PA_SUBSCRIPTION_EVENT_SOURCE_OUTPUT = 0x0003U,
-  PA_SUBSCRIPTION_EVENT_MODULE = 0x0004U,
-  PA_SUBSCRIPTION_EVENT_CLIENT = 0x0005U,
-  PA_SUBSCRIPTION_EVENT_SAMPLE_CACHE = 0x0006U,
-  PA_SUBSCRIPTION_EVENT_SERVER = 0x0007U,
-  PA_SUBSCRIPTION_EVENT_CARD = 0x0009U,
-  PA_SUBSCRIPTION_EVENT_FACILITY_MASK = 0x000FU,
-  PA_SUBSCRIPTION_EVENT_NEW = 0x0000U,
-  PA_SUBSCRIPTION_EVENT_CHANGE = 0x0010U,
-  PA_SUBSCRIPTION_EVENT_REMOVE = 0x0020U,
-  PA_SUBSCRIPTION_EVENT_TYPE_MASK = 0x0030U 
-*/
-
 static void pa_success_callback(pa_context *c, int success, void *userdata) {
 
   _debug("Audio: Success callback");
@@ -101,14 +84,11 @@ static void pa_success_callback(pa_context *c, int success, void *userdata) {
 static void sink_input_info_callback(pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
   char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
+  _debug("******** sink_input_info_callback");
+
   if(!eol) {
 
-    _debug("Sink_input_info_callback: %d", eol);
-
-    // _debug("Audio: Sink info name: %s", i->name);
-    // _debug("Audio: Sing info index: %d", i->index);
-
-    printf("Sink #%u\n"
+    printf("Sink %u\n"
            "    Name: %s\n"
            "    Driver: %s\n"
            "    Description: %s\n"
@@ -134,10 +114,48 @@ static void sink_input_info_callback(pa_context *c, const pa_sink_info *i, int e
            i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 
     std::string deviceName(i->name);
-    ((PulseLayer *)userdata)->getDevicelist()->push_back(deviceName);
+    ((PulseLayer *)userdata)->getSinkList()->push_back(deviceName);
 
   }
 
+}
+
+static void source_input_info_callback(pa_context *c, const pa_source_info *i, int eol, void *userdata) {
+    char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
+
+    _debug("******** source_input_info_callback");
+
+    if(!eol) {
+
+    printf("Sink %u\n"
+           "    Name: %s\n"
+           "    Driver: %s\n"
+           "    Description: %s\n"
+           "    Sample Specification: %s\n"
+           "    Channel Map: %s\n"
+           "    Owner Module: %u\n"
+           "    Volume: %s\n"
+           "    Monitor if Sink: %u\n"
+           "    Latency: %0.0f usec\n"
+           "    Flags: %s%s%s\n",
+           i->index,
+           i->name,
+           i->driver,
+           i->description,
+           pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+           pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+           i->owner_module,
+           i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+           i->monitor_of_sink,
+           (double) i->latency,
+           i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+           i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
+           i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
+
+    std::string deviceName(i->name);
+    ((PulseLayer *)userdata)->getSourceList()->push_back(deviceName);
+
+  }
 }
 
 
@@ -146,17 +164,17 @@ static void context_changed_callback(pa_context* c, pa_subscription_event_type_t
 
   _debug("---------------------- context_changed_callback %d ----------------------------", idx);
 
-  // AudioStream* ringtone = ((PulseLayer *)userdata)->getRingtoneStream();
-
   switch(t) {
 
   case PA_SUBSCRIPTION_EVENT_SINK:
-    pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
     _debug("Audio: PA_SUBSCRIPTION_EVENT_SINK");
+    ((PulseLayer *)userdata)->getSinkList()->clear();
+    pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
     break;
   case PA_SUBSCRIPTION_EVENT_SOURCE:
-    pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
     _debug("Audio: PA_SUBSCRIPTION_EVENT_SOURCE");
+    ((PulseLayer *)userdata)->getSourceList()->clear();
+    pa_context_get_source_info_list(c, source_input_info_callback,  userdata);
     break;
   case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
     _debug("Audio: PA_SUBSCRIPTION_EVENT_SINK_INPUT");
@@ -183,13 +201,14 @@ static void context_changed_callback(pa_context* c, pa_subscription_event_type_t
     _debug("Audio: PA_SUBSCRIPTION_EVENT_FACILITY_MASK");
     break;
   case PA_SUBSCRIPTION_EVENT_CHANGE:
-    // pa_context_get_sink_info_by_index(c, idx, sink_input_info_callback, userdata);
-    // pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
     _debug("Audio: PA_SUBSCRIPTION_EVENT_CHANGE");
     break;
   case PA_SUBSCRIPTION_EVENT_REMOVE:
-    // pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
     _debug("Audio: PA_SUBSCRIPTION_EVENT_REMOVE");
+    ((PulseLayer *)userdata)->getSinkList()->clear();
+    ((PulseLayer *)userdata)->getSourceList()->clear();
+    pa_context_get_sink_info_list(c, sink_input_info_callback,  userdata);
+    pa_context_get_source_info_list(c, source_input_info_callback,  userdata);
     break;
   case PA_SUBSCRIPTION_EVENT_TYPE_MASK:
     _debug("Audio: PA_SUBSCRIPTION_EVENT_TYPE_MASK");
@@ -375,7 +394,7 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
 	    pa_context_subscribe (c, (pa_subscription_mask_t)(PA_SUBSCRIPTION_MASK_SINK|
 							      PA_SUBSCRIPTION_MASK_SOURCE), NULL, pulse);
 	    pa_context_set_subscribe_callback (c, context_changed_callback, pulse);
-	    pulse->updateDeviceList();
+	    pulse->updateSinkList();
             break;
 
         case PA_CONTEXT_TERMINATED:
@@ -406,25 +425,51 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sample
 }
 
 
-void PulseLayer::updateDeviceList(void) {
+void PulseLayer::updateSinkList(void) {
 
-  _debug("Audio: Update device list");
+  _debug("Audio: Update sink list");
 
-  getDevicelist()->clear();
+  getSinkList()->clear();
 
   pa_context_get_sink_info_list(context, sink_input_info_callback,  this);
 }
 
-bool PulseLayer::inDevicelist(std::string deviceName) {
-  _debug("Audio: in device list %s", deviceName.c_str());
+void PulseLayer::updateSourceList(void) {
+  _debug("Audio: Update source list");
 
-  DeviceList::iterator iter = _deviceList.begin();
+  getSourceList()->clear();
 
-  _debug("_deviceList.size() %d", _deviceList.size());
+  pa_context_get_source_info_list(context, source_input_info_callback, this);
 
-  while(iter != _deviceList.end()) {
+}
+
+bool PulseLayer::inSinkList(std::string deviceName) {
+  //   _debug("Audio: in device list %s", deviceName.c_str());
+
+  DeviceList::iterator iter = _sinkList.begin();
+
+  // _debug("_deviceList.size() %d", _sinkList.size());
+
+  while(iter != _sinkList.end()) {
     if (*iter == deviceName) {
-      _debug("device name in list: %s", (*iter).c_str());
+      // _debug("device name in list: %s", (*iter).c_str());
+      return true;
+    }
+
+    iter++;
+  }
+
+  return false;
+}
+
+
+bool PulseLayer::inSourceList(std::string deviceName) {
+  
+  DeviceList::iterator iter = _sourceList.begin();
+
+  while(iter != _sourceList.end()) {
+
+    if(*iter == deviceName) {
       return true;
     }
 
@@ -457,7 +502,7 @@ bool PulseLayer::createStreams (pa_context* c)
     playbackParam->mainloop = m;
    
     playback = new AudioStream(playbackParam, _audioSampleRate);
-    if(inDevicelist(playbackDevice)) {
+    if(inSinkList(playbackDevice)) {
       playback->connectStream(&playbackDevice);
     }
     else {
@@ -478,7 +523,7 @@ bool PulseLayer::createStreams (pa_context* c)
     recordParam->mainloop = m;
 
     record = new AudioStream (recordParam, _audioSampleRate);
-    if(inDevicelist(recordDevice)) {
+    if(inSinkList(recordDevice)) {
       record->connectStream(NULL);
     }
     else {
@@ -497,7 +542,7 @@ bool PulseLayer::createStreams (pa_context* c)
     ringtoneParam->mainloop = m;
 
     ringtone = new AudioStream (ringtoneParam, _audioSampleRate);
-    if(inDevicelist(ringtoneDevice)) {
+    if(inSourceList(ringtoneDevice)) {
       ringtone->connectStream(&ringtoneDevice);
     }
     else {
