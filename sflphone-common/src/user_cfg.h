@@ -38,6 +38,9 @@
 #define ALSA_FRAME_SIZE	                    "Alsa.framesize"            /** Audio layer frame size */
 #define ALSA_PLUGIN	                    "Alsa.plugin"	        /** Alsa plugin */
 #define AUDIO_SAMPLE_RATE                   "Alsa.sampleRate"          /** Audio layer sample rate */
+#define PULSE_DEVICE_PLAYBACK               "Pulse.devicePlayback"
+#define PULSE_DEVICE_RECORD                 "Pulse.deviceRecord"
+#define PULSE_DEVICE_RINGTONE               "Pulse.deviceRingtone"
 #define RING_CHOICE	                    "Rings.ringChoice"          /** Ringtone */
 #define VOLUME_SPKR	                    "Volume.speakers"           /** Speaker volume */
 #define VOLUME_MICRO                        "Volume.micro"	            /** Mic volume */

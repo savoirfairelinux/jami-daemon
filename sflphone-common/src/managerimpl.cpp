@@ -2116,6 +2116,12 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
 	_config.addDefaultValue(std::pair<std::string, std::string>(RECORD_PATH,
 			DFT_RECORD_PATH), AUDIO);
 
+	// Pulseaudio stream device
+	_config.addDefaultValue(std::pair<std::string, std::string>(PULSE_DEVICE_PLAYBACK, ""), AUDIO);
+	_config.addDefaultValue(std::pair<std::string, std::string>(PULSE_DEVICE_RECORD, ""), AUDIO);
+	_config.addDefaultValue(std::pair<std::string, std::string>(PULSE_DEVICE_RINGTONE, ""), AUDIO);
+
+
 	// General settings
 	_config.addDefaultValue(std::pair<std::string, std::string>(ZONE_TONE,
 			DFT_ZONE), PREFERENCES);

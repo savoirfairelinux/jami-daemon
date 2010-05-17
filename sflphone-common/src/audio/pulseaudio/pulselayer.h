@@ -67,7 +67,11 @@ class PulseLayer : public AudioLayer {
      */
     bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) ;
 
+    DeviceList* getDevicelist(void) { return &_deviceList; }
+
     void updateDeviceList(void);
+
+    bool inDevicelist(std::string deviceName);
 
     void startStream(void);
 
