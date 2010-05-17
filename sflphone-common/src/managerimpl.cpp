@@ -1951,7 +1951,7 @@ void ManagerImpl::notificationIncomingCall (void) {
 
 	if (audiolayer != 0) {
 		samplerate = audiolayer->getSampleRate();
-		frequency << "440/" << FRAME_PER_BUFFER;
+		frequency << "440/" << 160;
 		Tone tone(frequency.str(), samplerate);
 		nbSampling = tone.getSize();
 		SFLDataFormat buf[nbSampling];
@@ -2116,6 +2116,12 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
 			DFT_VOL_MICRO_STR), AUDIO);
 	_config.addDefaultValue(std::pair<std::string, std::string>(RECORD_PATH,
 			DFT_RECORD_PATH), AUDIO);
+
+	// Pulseaudio stream device
+	_config.addDefaultValue(std::pair<std::string, std::string>(PULSE_DEVICE_PLAYBACK, ""), AUDIO);
+	_config.addDefaultValue(std::pair<std::string, std::string>(PULSE_DEVICE_RECORD, ""), AUDIO);
+	_config.addDefaultValue(std::pair<std::string, std::string>(PULSE_DEVICE_RINGTONE, ""), AUDIO);
+
 
 	// General settings
 	_config.addDefaultValue(std::pair<std::string, std::string>(ZONE_TONE,
@@ -3865,15 +3871,19 @@ void ManagerImpl::unloadAccountMap () {
 
 	while (iter != _accountMap.end()) {
 
-		_debug ("Unloading account %s\n", iter->first.c_str());
+		_debug ("Unloading account %s", iter->first.c_str());
 
 		delete iter->second;
-		iter->second = 0;
+		iter->second = NULL;
 
 		iter++;
 	}
 
+	_debug("Manager: Clear account map");
 	_accountMap.clear();
+	_debug("Manager: Unload account map");
+
+	
 }
 
 bool ManagerImpl::accountExists (const AccountID& accountID) {

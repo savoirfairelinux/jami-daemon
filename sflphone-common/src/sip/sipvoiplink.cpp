@@ -332,6 +332,8 @@ SIPVoIPLink::terminate()
     }
 
     initDone (false);
+
+    _debug("Terminating");
 }
 
 void

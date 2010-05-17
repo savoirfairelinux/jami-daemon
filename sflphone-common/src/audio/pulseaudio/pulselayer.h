@@ -31,13 +31,17 @@
 
 #include <stdlib.h>
 
-#include <fstream>
+#include <list>
+#include <string>
 
-#define PLAYBACK_STREAM_NAME	    "SFLphone out"
-#define CAPTURE_STREAM_NAME	    "SFLphone in"
+#define PLAYBACK_STREAM_NAME	    "SFLphone playback"
+#define CAPTURE_STREAM_NAME	    "SFLphone capture"
+#define RINGTONE_STREAM_NAME        "SFLphone ringtone"
 
 class RingBuffer;
 class ManagerImpl;
+
+typedef std::list<std::string> DeviceList;
 
 class PulseLayer : public AudioLayer {
   public:
@@ -62,6 +66,18 @@ class PulseLayer : public AudioLayer {
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
     bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) ;
+
+    DeviceList* getSinkList(void) { return &_sinkList; }
+
+    DeviceList* getSourceList(void) { return &_sourceList; }
+
+    void updateSinkList(void);
+
+    void updateSourceList(void);
+
+    bool inSinkList(std::string deviceName);
+
+    bool inSourceList(std::string deviceName);
 
     void startStream(void);
 
@@ -131,6 +147,12 @@ class PulseLayer : public AudioLayer {
      */
     AudioStream* getRecordStream(){ return record;}
 
+    /**
+     * Accessor
+     * @return AudioStream* The pointer on the ringtone AudioStream object
+     */
+    AudioStream* getRingtoneStream(){ return ringtone;}
+
     int getSpkrVolume( void ) { return spkrVolume; }
     void setSpkrVolume( int value ) { spkrVolume = value; }
 
@@ -140,6 +162,8 @@ class PulseLayer : public AudioLayer {
     void processPlaybackData( void );
 
     void processCaptureData( void );
+
+    void processRingtoneData( void );
 
     void processData(void);
     
@@ -161,6 +185,7 @@ class PulseLayer : public AudioLayer {
      */
     void readFromMic( void );
     void writeToSpeaker( void );
+    void ringtoneToSpeaker( void );
     
     /**
      * Create the audio streams into the given context
@@ -202,6 +227,11 @@ class PulseLayer : public AudioLayer {
      */
     AudioStream* record;
 
+    /**
+     * A special stream object to handle specific playback stream for ringtone
+     */
+    AudioStream* ringtone;
+
     /** Sample rate converter object */
     SamplerateConverter * _converter;
 
@@ -215,6 +245,10 @@ class PulseLayer : public AudioLayer {
     ofstream *captureRsmplFile;
     ofstream *captureFilterFile;
     */
+
+    DeviceList _sinkList;
+
+    DeviceList _sourceList;
 
     // private:
 

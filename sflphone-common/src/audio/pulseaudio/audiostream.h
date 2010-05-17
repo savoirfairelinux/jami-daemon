@@ -35,6 +35,7 @@
 enum STREAM_TYPE {
   PLAYBACK_STREAM,
   CAPTURE_STREAM,
+  RINGTONE_STREAM, 
   UPLOAD_STREAM
 };
 
@@ -80,7 +81,7 @@ class AudioStream {
     /**
      * Connect the pulse audio stream
      */
-    bool connectStream();
+    bool connectStream(std::string* deviceName);
 
     /**
      * Drain the given stream. 
@@ -134,7 +135,7 @@ class AudioStream {
      * @param c	The pulseaudio context
      * @return pa_stream* The newly created audio stream
      */
-    pa_stream* createStream( pa_context* c); 
+    pa_stream* createStream( pa_context* c, std::string* deviceName); 
 
     /**
      * Mandatory asynchronous callback on the audio stream state

@@ -34,8 +34,6 @@
 #include "echocancel.h"
 
 
-#define FRAME_PER_BUFFER	160
-
 /**
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware. 
