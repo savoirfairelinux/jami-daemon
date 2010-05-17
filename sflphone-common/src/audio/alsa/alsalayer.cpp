@@ -97,7 +97,7 @@ AlsaLayer::closeLayer()
 }
 
 bool
-AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin)
+AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin)
 {
     /* Close the devices before open it */
     if (stream == SFL_PCM_BOTH && is_capture_open() == true && is_playback_open() == true) {
@@ -110,21 +110,16 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
 
     _indexIn = indexIn;
-
     _indexOut = indexOut;
 
     _audioSampleRate = sampleRate;
-
     _frameSize = frameSize;
 
     _audioPlugin = std::string (plugin);
 
     _debugAlsa (" Setting AlsaLayer: device     in=%2d, out=%2d", _indexIn, _indexOut);
-
     _debugAlsa ("                   : alsa plugin=%s", _audioPlugin.c_str());
-
     _debugAlsa ("                   : nb channel in=%2d, out=%2d", _inChannel, _outChannel);
-
     _debugAlsa ("                   : sample rate=%5d, format=%s", _audioSampleRate, SFLDataFormatString);
 
     _audioThread = NULL;
@@ -132,14 +127,12 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     ost::MutexLock lock (_mutex);
 
     std::string pcmp = buildDeviceTopo (plugin, indexOut, 0);
-
     std::string pcmc = buildDeviceTopo (plugin, indexIn, 0);
 
     // use 1 sec buffer for resampling
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
-    // open_device (pcmp, pcmc, stream);
-    return true; // open_device (pcmp, pcmc, stream);
+    return true;
 }
 
 void
@@ -159,8 +152,8 @@ AlsaLayer::startStream (void)
     }
 
     prepareCaptureStream ();
-
     preparePlaybackStream ();
+
     startCaptureStream ();
     startPlaybackStream ();
 
@@ -712,6 +705,8 @@ AlsaLayer::buildDeviceTopo (std::string plugin, int card, int subdevice)
         pcm.append (ss1.str());
     }
 
+    _debug("Audio: Device topo: %s", pcm.c_str());
+
     return pcm;
 }
 
@@ -720,6 +715,8 @@ AlsaLayer::getSoundCardsInfo (int stream)
 {
     std::vector<std::string> cards_id;
     HwIDPair p;
+
+    _debug("Audio: Get sound cards info: ");
 
     snd_ctl_t* handle;
     snd_ctl_card_info_t *info;
@@ -746,10 +743,10 @@ AlsaLayer::getSoundCardsInfo (int stream)
 
                 if (snd_ctl_pcm_info (handle ,pcminfo) < 0) _debugAlsa (" Cannot get info");
                 else {
-                    _debugAlsa ("card %i : %s [%s]",
+                    _debugAlsa ("card %i : %s [%s] (%s)",
                                 numCard,
                                 snd_ctl_card_info_get_id (info),
-                                snd_ctl_card_info_get_name (info));
+                                snd_ctl_card_info_get_longname (info));
                     description = snd_ctl_card_info_get_name (info);
                     description.append (" - ");
                     description.append (snd_pcm_info_get_name (pcminfo));
@@ -757,6 +754,7 @@ AlsaLayer::getSoundCardsInfo (int stream)
                     // The number of the sound card is associated with a string description
                     p = HwIDPair (numCard , description);
                     IDSoundCards.push_back (p);
+
                 }
             }
 

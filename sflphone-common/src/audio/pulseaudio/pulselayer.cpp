@@ -384,7 +384,7 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
     }
 }
 
-bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
+bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
 {
     _audioSampleRate = sampleRate;
     _frameSize = frameSize;

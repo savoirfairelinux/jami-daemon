@@ -1406,6 +1406,38 @@ dbus_set_audio_output_device(const int index)
 }
 
 /**
+ * Set audio input device from its index
+ */
+void
+dbus_set_audio_input_device(const int index)
+{
+  GError* error = NULL;
+  org_sflphone_SFLphone_ConfigurationManager_set_audio_input_device(
+      configurationManagerProxy, index, &error);
+  if (error)
+    {
+      ERROR("Failed to call set_audio_input_device() on ConfigurationManager: %s", error->message);
+      g_error_free(error);
+    }
+}
+
+/**
+ * Set adio ringtone device from its index
+ */
+void
+dbus_set_audio_ringtone_device(const int index) 
+{
+  GError* error = NULL;
+  org_sflphone_SFLphone_ConfigurationManager_set_audio_ringtone_device(
+      configurationManagerProxy, index, &error);
+  if(error) 
+    {
+      ERROR("Failed to call set_audio_ringtone_device() on ConfigurationManager: %s", error->message);
+      g_error_free(error);
+    }
+}
+
+/**
  * Get all input devices index supported by current audio manager
  */
 gchar**
@@ -1421,22 +1453,6 @@ dbus_get_audio_input_device_list()
       g_error_free(error);
     }
   return array;
-}
-
-/**
- * Set audio input device from its index
- */
-void
-dbus_set_audio_input_device(const int index)
-{
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_set_audio_input_device(
-      configurationManagerProxy, index, &error);
-  if (error)
-    {
-      ERROR("Failed to call set_audio_input_device() on ConfigurationManager: %s", error->message);
-      g_error_free(error);
-    }
 }
 
 /**

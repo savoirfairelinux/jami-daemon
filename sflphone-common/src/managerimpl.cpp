@@ -2316,8 +2316,8 @@ void ManagerImpl::setInputAudioPlugin (const std::string& audioPlugin) {
 	if (CHECK_INTERFACE (layer , ALSA)) {
 		_debug ("Set input audio plugin");
 		_audiodriver -> setErrorMessage(-1);
-		_audiodriver -> openDevice(_audiodriver -> getIndexIn(),
-				_audiodriver -> getIndexOut(), _audiodriver -> getSampleRate(),
+		_audiodriver -> openDevice(_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
+				_audiodriver->getIndexRing(), _audiodriver -> getSampleRate(),
 				_audiodriver -> getFrameSize(), SFL_PCM_CAPTURE, audioPlugin);
 
 		if (_audiodriver -> getErrorMessage() != -1)
@@ -2336,9 +2336,9 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
 
 	_debug ("Manager: Set output audio plugin");
 	_audiodriver -> setErrorMessage(-1);
-	res = _audiodriver -> openDevice(_audiodriver -> getIndexIn(),
-			_audiodriver -> getIndexOut(), _audiodriver -> getSampleRate(),
-			_audiodriver -> getFrameSize(), SFL_PCM_BOTH, audioPlugin);
+	res = _audiodriver -> openDevice(_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
+					 _audiodriver->getIndexRing(), _audiodriver -> getSampleRate(),
+					 _audiodriver -> getFrameSize(), SFL_PCM_BOTH, audioPlugin);
 
 	if (_audiodriver -> getErrorMessage() != -1)
 		notifyErrClient(_audiodriver -> getErrorMessage());
@@ -2367,27 +2367,50 @@ std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void) {
 /**
  * Set audio output device
  */
-void ManagerImpl::setAudioOutputDevice (const int index) {
-	AlsaLayer *alsalayer;
-	std::string alsaplugin;
-	_debug ("Set audio output device: %i", index);
+void ManagerImpl::setAudioDevice (const int index, int streamType) {
+	
+    AlsaLayer *alsalayer = NULL;
+    std::string alsaplugin;
+    _debug ("Manager: Set audio device: %i", index);
 
-	_audiodriver -> setErrorMessage(-1);
+    _audiodriver -> setErrorMessage(-1);
 
-	alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver());
-	alsaplugin = alsalayer->getAudioPlugin();
+    if(!(alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver()))) {
+      _warn("Manager: Error: No audio driver");
+      return;
+    }
+	 
+    alsaplugin = alsalayer->getAudioPlugin();
 
-	_debug ("  set output plugin: %s", alsaplugin.c_str());
+    _debug ("Manager: Set ALSA plugin: %s", alsaplugin.c_str());
 
-	_audiodriver->openDevice(_audiodriver->getIndexIn(), index,
-			_audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
-			SFL_PCM_PLAYBACK, alsaplugin);
 
-	if (_audiodriver -> getErrorMessage() != -1)
-		notifyErrClient(_audiodriver -> getErrorMessage());
+    switch(streamType) {
+    case SFL_PCM_PLAYBACK:
+         _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getIndexRing(),
+				  _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
+				  SFL_PCM_PLAYBACK, alsaplugin);
+	 setConfig(AUDIO, ALSA_CARD_ID_OUT, index);
+        break;
+    case SFL_PCM_CAPTURE:
+        _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getIndexRing(),
+				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
+				 SFL_PCM_CAPTURE, alsaplugin);
+	setConfig(AUDIO, ALSA_CARD_ID_IN, index);
+        break;
+    case SFL_PCM_RINGTONE:
+        _audiodriver->openDevice(_audiodriver->getIndexOut(), _audiodriver->getIndexOut(), index,
+				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
+				 SFL_PCM_RINGTONE, alsaplugin);
+	setConfig(AUDIO, ALSA_CARD_ID_RING, index);
+        break;
+    default:
+        _warn("Unknown stream type");
+    }
 
-	// set config
-	setConfig(AUDIO, ALSA_CARD_ID_OUT, index);
+    if (_audiodriver -> getErrorMessage() != -1)
+        notifyErrClient(_audiodriver -> getErrorMessage());
+
 }
 
 /**
@@ -2403,33 +2426,6 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList (void) {
 		devices = audiolayer->getSoundCardsInfo(SFL_PCM_CAPTURE);
 
 	return devices;
-}
-
-/**
- * Set audio input device
- */
-void ManagerImpl::setAudioInputDevice (const int index) {
-	AlsaLayer *alsalayer;
-	std::string alsaplugin;
-
-	_debug ("Set audio input device %i", index);
-
-	_audiodriver -> setErrorMessage(-1);
-
-	alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver());
-	alsaplugin = alsalayer->getAudioPlugin();
-
-	_debug ("  set input plugin: %s", alsaplugin.c_str());
-
-	_audiodriver->openDevice(index, _audiodriver->getIndexOut(),
-			_audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
-			SFL_PCM_CAPTURE, alsaplugin);
-
-	if (_audiodriver -> getErrorMessage() != -1)
-		notifyErrClient(_audiodriver -> getErrorMessage());
-
-	// set config
-	setConfig(AUDIO, ALSA_CARD_ID_IN, index);
 }
 
 /**
@@ -2750,7 +2746,7 @@ bool ManagerImpl::initAudioDriver (void) {
  * Initialization: Main Thread and gui
  */
 void ManagerImpl::selectAudioDriver (void) {
-	int layer, numCardIn, numCardOut, sampleRate, frameSize;
+        int layer, numCardIn, numCardOut, numCardRing, sampleRate, frameSize;
 	std::string alsaPlugin;
 	AlsaLayer *alsalayer;
 
@@ -2761,6 +2757,8 @@ void ManagerImpl::selectAudioDriver (void) {
 	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
 	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
 	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
+	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
+
 	sampleRate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
 
 	if (sampleRate <= 0 || sampleRate > 48000) {
@@ -2772,25 +2770,29 @@ void ManagerImpl::selectAudioDriver (void) {
 	/* Only for the ALSA layer, we check the sound card information */
 
 	if (layer == ALSA) {
-		alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver());
+	    alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver());
+	    
+	    if (!alsalayer -> soundCardIndexExist(numCardIn, SFL_PCM_CAPTURE)) {
+	        _debug (" Card with index %i doesn't exist or cannot capture. Switch to 0.", numCardIn);
+		numCardIn = ALSA_DFT_CARD_ID;
+		setConfig(AUDIO, ALSA_CARD_ID_IN, ALSA_DFT_CARD_ID);
+	    }
 
-		if (!alsalayer -> soundCardIndexExist(numCardIn, SFL_PCM_CAPTURE)) {
-			_debug (" Card with index %i doesn't exist or cannot capture. Switch to 0.", numCardIn);
-			numCardIn = ALSA_DFT_CARD_ID;
-			setConfig(AUDIO, ALSA_CARD_ID_IN, ALSA_DFT_CARD_ID);
-		}
+	    if (!alsalayer -> soundCardIndexExist(numCardOut, SFL_PCM_PLAYBACK)) {
+	        _debug (" Card with index %i doesn't exist or cannot playback. Switch to 0.", numCardOut);
+		numCardOut = ALSA_DFT_CARD_ID;
+		setConfig(AUDIO, ALSA_CARD_ID_OUT, ALSA_DFT_CARD_ID);
+	    }
 
-		if (!alsalayer -> soundCardIndexExist(numCardOut, SFL_PCM_PLAYBACK)) {
-			_debug (" Card with index %i doesn't exist or cannot playback . Switch to 0.", numCardOut);
-			numCardOut = ALSA_DFT_CARD_ID;
-			setConfig(AUDIO, ALSA_CARD_ID_OUT, ALSA_DFT_CARD_ID);
-		}
+	    if (!alsalayer->soundCardIndexExist(numCardRing, SFL_PCM_RINGTONE)) {
+	        _debug(" Card with index %i doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
+	    }
 	}
 
 	_audiodriver->setErrorMessage(-1);
 
 	/* Open the audio devices */
-	_audiodriver->openDevice(numCardIn, numCardOut, sampleRate, frameSize,
+	_audiodriver->openDevice(numCardIn, numCardOut, numCardRing, sampleRate, frameSize,
 			SFL_PCM_BOTH, alsaPlugin);
 	/* Notify the error if there is one */
 
@@ -2800,10 +2802,10 @@ void ManagerImpl::selectAudioDriver (void) {
 }
 
 void ManagerImpl::switchAudioManager (void) {
-	int type, samplerate, framesize, numCardIn, numCardOut;
+  int type, samplerate, framesize, numCardIn, numCardOut, numCardRing;
 	std::string alsaPlugin;
 
-	_debug ("Switching audio manager ");
+	_debug ("Manager: Switching audio manager ");
 
 	if (!_audiodriver)
 		return;
@@ -2811,18 +2813,17 @@ void ManagerImpl::switchAudioManager (void) {
 	type = _audiodriver->getLayerType();
 
 	samplerate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
-
 	framesize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
 
-	_debug ("samplerate: %i, framesize %i\n", samplerate, framesize);
+	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
 
 	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
 
 	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-
 	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
+	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
 
-	_debug ("Deleting current layer... ");
+	_debug ("Manager: Deleting current layer... ");
 
 	// ost::MutexLock lock (*getAudioLayerMutex());
 	getAudioLayerMutex()->enter();
@@ -2835,33 +2836,33 @@ void ManagerImpl::switchAudioManager (void) {
 	switch (type) {
 
 	case ALSA:
-		_debug ("Creating Pulseaudio layer...");
+		_debug ("Manager: Creating Pulseaudio layer...");
 		_audiodriver = new PulseLayer(this);
 		_audiodriver->setMainBuffer(&_mainBuffer);
 		break;
 
 	case PULSEAUDIO:
-		_debug ("Creating ALSA layer...");
+		_debug ("Manager: Creating ALSA layer...");
 		_audiodriver = new AlsaLayer(this);
 		_audiodriver->setMainBuffer(&_mainBuffer);
 		break;
 
 	default:
-		_debug ("Error: audio layer unknown");
+		_warn("Manager: Error: audio layer unknown");
 		break;
 	}
 
 	_audiodriver->setErrorMessage(-1);
 
-	_audiodriver->openDevice(numCardIn, numCardOut, samplerate, framesize,
+	_audiodriver->openDevice(numCardIn, numCardOut, numCardRing, samplerate, framesize,
 			SFL_PCM_BOTH, alsaPlugin);
 
 	if (_audiodriver -> getErrorMessage() != -1)
 		notifyErrClient(_audiodriver -> getErrorMessage());
 
-	_debug ("Current device: %i ", type);
+	_debug ("Manager: Current device: %i ", type);
 
-	_debug ("has current call: %i ", hasCurrentCall());
+	_debug ("Manager: Has current call: %i ", hasCurrentCall());
 
 	if (hasCurrentCall())
 		_audiodriver->startStream();

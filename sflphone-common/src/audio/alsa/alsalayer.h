@@ -65,7 +65,7 @@ class AlsaLayer : public AudioLayer {
      *			  SFL_PCM_BOTH
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
-    bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream, std::string plugin);
+    bool openDevice(int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream, std::string plugin);
 
     /**
      * Start the capture stream and prepare the playback stream. 
@@ -232,7 +232,7 @@ class AlsaLayer : public AudioLayer {
     
     void* adjustVolume( void* buffer , int len, int stream );
     
-/**
+    /**
      * Handles to manipulate playback stream
      * ALSA Library API
      */
