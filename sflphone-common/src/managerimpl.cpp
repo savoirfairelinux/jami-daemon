@@ -2389,18 +2389,21 @@ void ManagerImpl::setAudioDevice (const int index, int streamType) {
 
     switch(streamType) {
     case SFL_PCM_PLAYBACK:
+         _debug("Manager: Set output device");
          _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getIndexRing(),
 				  _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				  SFL_PCM_PLAYBACK, alsaplugin);
 	 setConfig(AUDIO, ALSA_CARD_ID_OUT, index);
         break;
     case SFL_PCM_CAPTURE:
+        _debug("Manager: Set input device");
         _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getIndexRing(),
 				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				 SFL_PCM_CAPTURE, alsaplugin);
 	setConfig(AUDIO, ALSA_CARD_ID_IN, index);
         break;
     case SFL_PCM_RINGTONE:
+        _debug("Manager: Set ringtone device");
         _audiodriver->openDevice(_audiodriver->getIndexOut(), _audiodriver->getIndexOut(), index,
 				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				 SFL_PCM_RINGTONE, alsaplugin);
