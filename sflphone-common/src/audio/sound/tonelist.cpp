@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2005 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *

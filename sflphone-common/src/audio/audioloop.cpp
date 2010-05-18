@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2005 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
@@ -20,6 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include "audioloop.h"
 #include <math.h>
 #include <strings.h>

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  * Author:  Yan Morin <yan.morin@savoirfairelinux.com>
  * Author:  Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- **/
+ */
 
 
 
