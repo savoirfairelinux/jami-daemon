@@ -95,6 +95,7 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define SFL_PCM_BOTH		0x0021		/** To open both playback and capture devices */ 
 #define SFL_PCM_PLAYBACK	0x0022		/** To open playback device only */
 #define SFL_PCM_CAPTURE		0x0023		/** To open capture device only */
+#define SFL_PCM_RINGTONE        0x0024
 
 #ifdef USE_IAX
 #define	IAX2_ENABLED  true			/** IAX2 support */

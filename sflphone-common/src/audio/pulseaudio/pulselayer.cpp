@@ -275,42 +275,15 @@ PulseLayer::~PulseLayer (void)
 void
 PulseLayer::openLayer (void)
 {
-	if (!is_started) {
+    if (!is_started) {
 
-		_info("Audio: Open Pulseaudio layer");
+	_info("Audio: Open Pulseaudio layer");
 
-		if (!m) {
+	connectPulseAudioServer();
 
-			_info("Audio: Creating PulseAudio mainloop");
-			if (!(m = pa_threaded_mainloop_new()))
-				_warn ("Audio: Error: while creating pulseaudio mainloop");
+	is_started = true;
 
-			if (pa_threaded_mainloop_start (m) < 0) {
-				_warn("Audio: Error: Failed to start pulseaudio mainloop");
-			}
-			
-			assert(m);
-		}
-
-		if (!context) {
-			
-			_info("Audio: Creating new PulseAudio Context");
-			pa_threaded_mainloop_lock (m);
-
-			// Instanciate a context
-			if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
-				_warn ("Audio: Error: while creating pulseaudio context");
-
-			pa_threaded_mainloop_unlock (m);
-
-			assert (context);
-		}
-
-		// Create Streams
-		connectPulseAudioServer();
-
-		is_started = true;
-	}
+    }
 
 }
 
@@ -349,12 +322,39 @@ PulseLayer::connectPulseAudioServer (void)
 
     pa_context_flags_t flag = PA_CONTEXT_NOAUTOSPAWN ;
 
-    pa_threaded_mainloop_lock (m);
+    if (!m) {
+      
+      // Instantiate a mainloop
+        _info("Audio: Creating PulseAudio mainloop");
+	if (!(m = pa_threaded_mainloop_new()))
+	    _warn ("Audio: Error: while creating pulseaudio mainloop");
+		
+	assert(m);
+    }
+
+    if(!context) {
+
+        // Instantiate a context
+        if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
+	    _warn ("Audio: Error: while creating pulseaudio context");
+
+	assert(context);
+    }
+
+    // set context state callback before starting the mainloop
+    pa_context_set_state_callback (context, context_state_callback, this);
 
     _info("Audio: Connect the context to the server");
-    pa_context_connect (context, NULL , flag , NULL);
+    if (pa_context_connect (context, NULL , flag , NULL) < 0) {
+        _warn("Audio: Error: Could not connect context to the server");
+    }
 
-    pa_context_set_state_callback (context, context_state_callback, this);
+    // Lock the loop before starting it
+    pa_threaded_mainloop_lock (m);
+
+    if (pa_threaded_mainloop_start (m) < 0)
+        _warn("Audio: Error: Failed to start pulseaudio mainloop");
+
     pa_threaded_mainloop_wait(m);
     
     
@@ -408,7 +408,7 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
     }
 }
 
-bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
+bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
 {
     _audioSampleRate = sampleRate;
     _frameSize = frameSize;

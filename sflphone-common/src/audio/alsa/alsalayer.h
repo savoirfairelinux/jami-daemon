@@ -64,7 +64,7 @@ class AlsaLayer : public AudioLayer {
      *			  SFL_PCM_BOTH
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
-    bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream, std::string plugin);
+    bool openDevice(int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream, std::string plugin);
 
     /**
      * Start the capture stream and prepare the playback stream. 
@@ -193,7 +193,7 @@ class AlsaLayer : public AudioLayer {
      * @return true if successful
      *	       false otherwise
      */
-    bool open_device( std::string pcm_p, std::string pcm_c, int flag); 
+    bool open_device( std::string pcm_p, std::string pcm_c, std::string pcm_r,  int flag); 
 
     bool alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate );
 
@@ -204,7 +204,7 @@ class AlsaLayer : public AudioLayer {
      * @param length The size of the buffer
      * @return int The number of frames actually copied
      */
-    int write( void* buffer, int length);
+    int write( void* buffer, int length, snd_pcm_t *handle);
     
     /**
      * Read data from the internal ring buffer
@@ -236,6 +236,12 @@ class AlsaLayer : public AudioLayer {
      * ALSA Library API
      */
     snd_pcm_t* _PlaybackHandle;
+
+    /**
+     * Handles to manipulate ringtone stream
+     *
+     */
+    snd_pcm_t *_RingtoneHandle;
 
     /**
      * Handles to manipulate capture stream

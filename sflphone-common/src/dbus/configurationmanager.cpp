@@ -544,16 +544,20 @@ std::vector<std::string> ConfigurationManager::getAudioOutputDeviceList() {
 	return Manager::instance().getAudioOutputDeviceList();
 }
 
-void ConfigurationManager::setAudioOutputDevice(const int32_t& index) {
-	return Manager::instance().setAudioOutputDevice(index);
-}
-
 std::vector<std::string> ConfigurationManager::getAudioInputDeviceList() {
 	return Manager::instance().getAudioInputDeviceList();
 }
 
+void ConfigurationManager::setAudioOutputDevice(const int32_t& index) {
+        return Manager::instance().setAudioDevice(index, SFL_PCM_PLAYBACK);
+}
+
 void ConfigurationManager::setAudioInputDevice(const int32_t& index) {
-	return Manager::instance().setAudioInputDevice(index);
+        return Manager::instance().setAudioDevice(index, SFL_PCM_CAPTURE);
+}
+
+void ConfigurationManager::setAudioRingtoneDevice(const int32_t& index) {
+        return Manager::instance().setAudioDevice(index, SFL_PCM_RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex() {

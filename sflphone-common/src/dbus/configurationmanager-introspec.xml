@@ -523,6 +523,24 @@
 		   </arg>
 	   </method>
 
+	   <method name="setAudioInputDevice" tp:name-for-bindings="setAudioInputDevice">
+		   <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+			   <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setAudioRingtoneDevice" tp:name-for-binding="setAudioRingtoneDevice">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="i" name="index" direction="in">
+		     <tp:docstring>
+		     </tp:docstring>
+		   </arg>
+	   </method>
+
 	   <method name="getAudioInputDeviceList" tp:name-for-bindings="getAudioInputDeviceList">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -533,14 +551,6 @@
 		   </arg>
 	   </method>
 
-	   <method name="setAudioInputDevice" tp:name-for-bindings="setAudioInputDevice">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="i" name="index" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
 
 	   <method name="getCurrentAudioDevicesIndex" tp:name-for-bindings="getCurrentAudioDevicesIndex">
 		   <tp:docstring>
