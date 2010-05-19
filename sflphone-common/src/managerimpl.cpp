@@ -2439,11 +2439,13 @@ std::vector<std::string> ManagerImpl::getAudioInputDeviceList (void) {
 std::vector<std::string> ManagerImpl::getCurrentAudioDevicesIndex () {
 	_debug ("Get current audio devices index");
 	std::vector<std::string> v;
-	std::stringstream ssi, sso;
+	std::stringstream ssi, sso, ssr;
 	sso << _audiodriver->getIndexOut();
 	v.push_back(sso.str());
 	ssi << _audiodriver->getIndexIn();
 	v.push_back(ssi.str());
+	ssr << _audiodriver->getIndexRing();
+	v.push_back(ssr.str());
 	return v;
 }
 

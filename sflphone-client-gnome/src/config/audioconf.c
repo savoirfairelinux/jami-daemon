@@ -235,7 +235,7 @@ select_active_ringtone_audio_device()
 
 		// Select active ringtone device on server
 		devices = dbus_get_current_audio_devices_index();
-		currentDeviceIndex = atoi(devices[0]);
+		currentDeviceIndex = atoi(devices[2]);
 		DEBUG("audio device index for ringtone = %d", currentDeviceIndex);
 		model = gtk_combo_box_get_model(GTK_COMBO_BOX(ringtone));
 
