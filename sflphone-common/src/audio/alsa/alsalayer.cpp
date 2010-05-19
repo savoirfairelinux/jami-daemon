@@ -950,7 +950,7 @@ void AlsaLayer::audioCallback (void)
 
             } else {
 
-	      if ((!tone) && (!file_tone && (getIndexOut() != getIndexRing()))) {
+	      if (!tone && !file_tone) {
 
                     SFLDataFormat* zeros = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
