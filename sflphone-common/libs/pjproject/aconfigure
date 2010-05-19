@@ -5368,8 +5368,11 @@ if test "${enable_g7221_codec+set}" = set; then :
 $as_echo "Checking if G.722.1 codec is disabled...yes" >&6; }
 	       fi
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: Checking if G.722.1 codec is disabled...no" >&5
-$as_echo "Checking if G.722.1 codec is disabled...no" >&6; }
+  ac_no_g7221_codec=1
+	       $as_echo "#define PJMEDIA_HAS_G7221_CODEC 0" >>confdefs.h
+
+	      { $as_echo "$as_me:${as_lineno-$LINENO}: result: Checking if G.722.1 codec is disabled...yes" >&5
+$as_echo "Checking if G.722.1 codec is disabled...yes" >&6; }
 fi
 
 
