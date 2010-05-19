@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2008 2009 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -846,6 +847,11 @@ void AlsaLayer::audioCallback (void)
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
+    tone = _manager->getTelephoneTone();
+    file_tone = _manager->getTelephoneFile();
+
+    toGet = framesPerBufferAlsa;
+    maxBytes = toGet * sizeof (SFLDataFormat);
 
     if (urgentAvailBytes > 0) {
 
@@ -865,12 +871,7 @@ void AlsaLayer::audioCallback (void)
 
     } else {
 
-        tone = _manager->getTelephoneTone();
-
-        toGet = framesPerBufferAlsa;
-        maxBytes = toGet * sizeof (SFLDataFormat);
-
-        if (tone != 0) {
+        if (tone) {
 
             out = (SFLDataFormat *) malloc (maxBytes);
             tone->getNext (out, toGet, spkrVolume);
@@ -878,6 +879,16 @@ void AlsaLayer::audioCallback (void)
 
             free (out);
             out = 0;
+	   
+	}
+	else if (file_tone && !_RingtoneHandle) {
+
+	    out = (SFLDataFormat *) malloc (maxBytes);
+	    file_tone->getNext (out, toGet, spkrVolume);
+	    write (out, maxBytes, _PlaybackHandle);
+
+	    free (out);
+	    out = NULL;
 
 	} else {
 
@@ -939,7 +950,7 @@ void AlsaLayer::audioCallback (void)
 
             } else {
 
-                if (tone == 0) {
+	      if ((!tone) && (!file_tone && (getIndexOut() != getIndexRing()))) {
 
                     SFLDataFormat* zeros = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
@@ -959,13 +970,7 @@ void AlsaLayer::audioCallback (void)
 
     }
 
-    // Playback ringtone
-    file_tone = _manager->getTelephoneFile();
-
-    toGet = framesPerBufferAlsa;
-    maxBytes = toGet * sizeof (SFLDataFormat);
-
-    if (file_tone != NULL) {
+    if (file_tone && _RingtoneHandle) {
 
         out = (SFLDataFormat *) malloc (maxBytes);
 	file_tone->getNext (out, toGet, spkrVolume);
@@ -974,7 +979,7 @@ void AlsaLayer::audioCallback (void)
 	free (out);
 	out = NULL;
 
-    } else {
+    } else if (_RingtoneHandle) {
 
         out = (SFLDataFormat *) malloc ( maxBytes);
 	memset(out, 0, maxBytes);
