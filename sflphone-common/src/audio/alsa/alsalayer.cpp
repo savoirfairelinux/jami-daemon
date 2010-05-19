@@ -316,9 +316,11 @@ void AlsaLayer::closePlaybackStream (void)
     if (is_playback_open()) {
         _debug("Audio: Close ALSA playback");
 
-	if((err = snd_pcm_close(_RingtoneHandle)) < 0) {
-	  _warn("Audio: Error: Closing ALSA ringtone: %s", snd_strerror(err));
-	}
+	if(_RingtoneHandle) {
+	  if((err = snd_pcm_close(_RingtoneHandle)) < 0) {
+	    _warn("Audio: Error: Closing ALSA ringtone: %s", snd_strerror(err));
+	  }
+        }
 
         if ( (err = snd_pcm_close (_PlaybackHandle)) < 0)
             _warn("Audio: Error: Closing ALSA playback: %s", snd_strerror (err));
@@ -532,15 +534,18 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r,
             return false;
         }
 
-	if((err = snd_pcm_open(&_RingtoneHandle, pcm_r.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-	    _warn("Audio: Error: Opening ringtone device %s", pcm_r.c_str());
-	    // setErrorMessage(ALSA_RINGTONE_DEVICE);
-	}
+	if (getIndexOut() != getIndexRing()) {
 
-	if(!alsa_set_params(_RingtoneHandle, 1, getSampleRate())) {
-	    _warn("Audio: Error: Ringtone failed");
-	    snd_pcm_close(_RingtoneHandle);
+	    if((err = snd_pcm_open(&_RingtoneHandle, pcm_r.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+	        _warn("Audio: Error: Opening ringtone device %s", pcm_r.c_str());
+		// setErrorMessage(ALSA_RINGTONE_DEVICE);
+	    }
+
+	    if(!alsa_set_params(_RingtoneHandle, 1, getSampleRate())) {
+	        _warn("Audio: Error: Ringtone failed");
+		snd_pcm_close(_RingtoneHandle);
 	    
+	    }
 	}
 
         open_playback ();
