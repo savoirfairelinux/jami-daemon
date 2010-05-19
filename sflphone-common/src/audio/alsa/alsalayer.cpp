@@ -137,7 +137,12 @@ AlsaLayer::startStream (void)
 
     std::string pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
     std::string pcmc = buildDeviceTopo (_audioPlugin, _indexIn, 0);
-    std::string pcmr = buildDeviceTopo (_audioPlugin, _indexRing, 0);
+
+    std::string pcmr;
+    if(_audioPlugin != "plug:dmix")
+        pcmr = buildDeviceTopo (_audioPlugin, _indexRing, 0);
+    else
+        pcmr = buildDeviceTopo("default", _indexRing, 0);
 
     if (!is_playback_open()) {
         open_device (pcmp, pcmc, pcmr, SFL_PCM_PLAYBACK);

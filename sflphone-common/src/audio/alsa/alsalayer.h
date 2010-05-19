@@ -263,7 +263,7 @@ class AlsaLayer : public AudioLayer {
     /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;
 
-	bool _is_prepared_playback;
+    bool _is_prepared_playback;
     bool _is_prepared_capture;
     bool _is_running_playback;
     bool _is_running_capture;
