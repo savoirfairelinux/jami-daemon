@@ -269,6 +269,7 @@ SIPVoIPLink::~SIPVoIPLink()
     _debug("UserAgent: SIPVoIPLink destructor called");
 
     terminate();
+
 }
 
 SIPVoIPLink* SIPVoIPLink::instance (const AccountID& id)
@@ -333,7 +334,6 @@ SIPVoIPLink::terminate()
 
     initDone (false);
 
-    _debug("Terminating");
 }
 
 void
@@ -1247,6 +1247,8 @@ SIPVoIPLink::refuse (const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId() ] = NULL;
+
+    removeCall(id);
 
     terminateOneCall (id);
 

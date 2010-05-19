@@ -861,32 +861,19 @@ void AlsaLayer::audioCallback (void)
     } else {
 
         tone = _manager->getTelephoneTone();
-        file_tone = _manager->getTelephoneFile();
 
         toGet = framesPerBufferAlsa;
         maxBytes = toGet * sizeof (SFLDataFormat);
 
         if (tone != 0) {
 
-            out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
+            out = (SFLDataFormat *) malloc (maxBytes);
             tone->getNext (out, toGet, spkrVolume);
             write (out , maxBytes, _PlaybackHandle);
 
             free (out);
             out = 0;
 
-	    /*
-        } else if (file_tone != 0) {
-
-            out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
-            file_tone->getNext (out, toGet, spkrVolume);
-            write (out , maxBytes, _PlaybackHandle);
-
-            free (out);
-            out = 0;
-
-        } else {
-	*/
 	} else {
 
 
@@ -947,7 +934,7 @@ void AlsaLayer::audioCallback (void)
 
             } else {
 
-                if ( (tone == 0) && (file_tone == 0)) {
+                if (tone == 0) {
 
                     SFLDataFormat* zeros = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
 
@@ -975,7 +962,7 @@ void AlsaLayer::audioCallback (void)
 
     if (file_tone != NULL) {
 
-        out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
+        out = (SFLDataFormat *) malloc (maxBytes);
 	file_tone->getNext (out, toGet, spkrVolume);
 	write (out, maxBytes, _RingtoneHandle);
 
@@ -984,8 +971,8 @@ void AlsaLayer::audioCallback (void)
 
     } else {
 
-        out = (SFLDataFormat*) malloc ( maxBytes * sizeof (SFLDataFormat));
-	memset(out, 0, maxBytes * sizeof (SFLDataFormat));
+        out = (SFLDataFormat *) malloc ( maxBytes);
+	memset(out, 0, maxBytes);
 	write(out, maxBytes, _RingtoneHandle);
 
 	free(out);
