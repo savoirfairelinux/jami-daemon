@@ -1,4 +1,4 @@
-AC_INIT([SFLphone],[0.9.8~rc1],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
+AC_INIT([SFLphone],[0.9.8],[sflphoneteam@savoirfairelinux.com],[sflphone-client-gnome])
 AM_CONFIG_HEADER(config.h)
 
 LT_INIT
