@@ -216,8 +216,6 @@ class AlsaLayer : public AudioLayer {
      * @return int The number of frames actually read
      */
     int read( void* buffer, int toCopy);
-    
-    
 
     /**
      * Recover from XRUN state for capture
@@ -229,8 +227,8 @@ class AlsaLayer : public AudioLayer {
      * Recover from XRUN state for playback
      * ALSA Library API
      */
-    void handle_xrun_playback( void );
-    
+    void handle_xrun_playback( snd_pcm_t *handle );
+
     void* adjustVolume( void* buffer , int len, int stream );
     
     /**

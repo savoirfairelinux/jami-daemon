@@ -136,10 +136,17 @@ AlsaLayer::startStream (void)
 {
     _debug ("AlsaLayer:: startStream");
 
+    if(is_playback_running() && is_capture_running() )
+        return;
+
+
     std::string pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
     std::string pcmr = buildDeviceTopo (_audioPlugin, _indexRing, 0);
-
     std::string pcmc = buildDeviceTopo("default", _indexIn, 0);
+
+    _debug("pcmp: %s, index %d", pcmp.c_str(), _indexOut);
+    _debug("pcmr: %s, index %d", pcmr.c_str(), _indexRing);
+    _debug("pcmc: %s, index %d", pcmc.c_str(), _indexIn);
 
     if (!is_playback_open()) {
         open_device (pcmp, pcmc, pcmr, SFL_PCM_PLAYBACK);
@@ -597,17 +604,17 @@ AlsaLayer::write (void* buffer, int length, snd_pcm_t * handle)
 
             case -EIO:
                 //_debugAlsa(" XRUN playback ignored (%s)", snd_strerror(err));
-                handle_xrun_playback();
+                handle_xrun_playback(handle);
 
                 if (snd_pcm_writei (handle, buffer , frames) <0)
-                    _debugAlsa ("XRUN handling failed");
+                    _debugAlsa ("Audio: XRUN handling failed");
 
                 _trigger_request = true;
 
                 break;
 
             default:
-                _debugAlsa ("Write error unknown - dropping frames **********************************: %s", snd_strerror (err));
+                _debugAlsa ("Audio: Write error unknown - dropping frames: %s", snd_strerror (err));
 
                 stopPlaybackStream ();
 
@@ -667,7 +674,7 @@ AlsaLayer::read (void* buffer, int toCopy)
 void
 AlsaLayer::handle_xrun_capture (void)
 {
-    _debugAlsa ("handle_xrun_capture");
+    _debugAlsa ("Audio: Handle xrun capture");
 
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
@@ -681,23 +688,25 @@ AlsaLayer::handle_xrun_capture (void)
             startCaptureStream ();
         }
     } else
-        _debugAlsa (" Get status failed");
+        _debugAlsa ("Audio: Get status failed");
 }
 
 void
-AlsaLayer::handle_xrun_playback (void)
+AlsaLayer::handle_xrun_playback (snd_pcm_t *handle)
 {
-    _debugAlsa ("AlsaLayer:: handle_xrun_playback");
+    _debugAlsa ("Audio: Handle xrun playback");
 
     int state;
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
 
-    if ( (state = snd_pcm_status (_PlaybackHandle, status)) < 0)   _debugAlsa (" Error: Cannot get playback handle status (%s)" , snd_strerror (state));
+    if ( (state = snd_pcm_status (handle, status)) < 0)   
+      _debugAlsa ("Audio: Error: Cannot get playback handle status (%s)" , snd_strerror (state));
     else {
         state = snd_pcm_status_get_state (status);
 
         if (state  == SND_PCM_STATE_XRUN) {
+	    _debug("Audio: audio device in state SND_PCM_STATE_XRUN, restart device");
             stopPlaybackStream ();
             preparePlaybackStream ();
 
