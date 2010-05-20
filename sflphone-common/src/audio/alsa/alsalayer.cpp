@@ -139,10 +139,20 @@ AlsaLayer::startStream (void)
     if(is_playback_running() && is_capture_running() )
         return;
 
+    std::string pcmp;
+    std::string pcmr;
+    std::string pcmc;
 
-    std::string pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
-    std::string pcmr = buildDeviceTopo (_audioPlugin, _indexRing, 0);
-    std::string pcmc = buildDeviceTopo("default", _indexIn, 0);
+    if(_audioPlugin == PCM_DMIX_DSNOOP) {
+       pcmp = buildDeviceTopo (PCM_DMIX, _indexOut, 0);
+       pcmr = buildDeviceTopo (PCM_DMIX, _indexRing, 0);
+       pcmc = buildDeviceTopo(PCM_DSNOOP, _indexIn, 0);
+    }
+    else {
+      pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
+      pcmr = buildDeviceTopo (_audioPlugin, _indexRing, 0);
+      pcmc = buildDeviceTopo(_audioPlugin, _indexIn, 0);
+    }
 
     _debug("pcmp: %s, index %d", pcmp.c_str(), _indexOut);
     _debug("pcmr: %s, index %d", pcmr.c_str(), _indexRing);
@@ -647,14 +657,14 @@ AlsaLayer::read (void* buffer, int toCopy)
             case -ESTRPIPE:
 
             case -EIO:
-                _debugAlsa (" XRUN capture ignored (%s)", snd_strerror (samples));
+                _debugAlsa ("Audio: XRUN capture ignored (%s)", snd_strerror (samples));
                 handle_xrun_capture();
                 //samples = snd_pcm_readi( _CaptureHandle, buffer, frames);
                 //if (samples<0)  samples=0;
                 break;
 
             case EPERM:
-                _debugAlsa (" Capture EPERM (%s)", snd_strerror (samples));
+                _debugAlsa ("Audio: Capture EPERM (%s)", snd_strerror (samples));
                 prepareCaptureStream ();
                 startCaptureStream ();
                 break;
@@ -719,10 +729,10 @@ AlsaLayer::handle_xrun_playback (snd_pcm_t *handle)
 std::string
 AlsaLayer::buildDeviceTopo (std::string plugin, int card, int subdevice)
 {
-    std::string pcm = plugin;
     std::stringstream ss,ss1;
+    std::string pcm = plugin;
 
-    if (pcm == "default" || pcm == "pulse")
+    if (pcm == PCM_DEFAULT)
         return pcm;
 
     ss << card;
@@ -864,6 +874,8 @@ void AlsaLayer::audioCallback (void)
     // toGet = framesPerBufferAlsa;
     // maxBytes = toGet * sizeof (SFLDataFormat);
 
+    if(!_PlaybackHandle)
+      return;
 
     int playbackAvailSmpl = snd_pcm_avail_update(_PlaybackHandle);
     int playbackAvailBytes = playbackAvailSmpl*sizeof(SFLDataFormat);

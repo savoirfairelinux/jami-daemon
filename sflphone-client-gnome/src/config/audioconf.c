@@ -94,7 +94,7 @@ void preferences_dialog_fill_codec_list (account_t **a) {
  * Fill store with output audio plugins
  */
 	void
-preferences_dialog_fill_output_audio_plugin_list()
+preferences_dialog_fill_audio_plugin_list()
 {
 	GtkTreeIter iter;
 	gchar** list;
@@ -103,7 +103,7 @@ preferences_dialog_fill_output_audio_plugin_list()
 	gtk_list_store_clear(pluginlist);
 
 	// Call dbus to retreive list
-	list = dbus_get_output_audio_plugin_list();
+	list = dbus_get_audio_plugin_list();
 	// For each API name included in list
 	int c = 0;
 
@@ -787,7 +787,7 @@ GtkWidget* alsa_box()
 	gtk_widget_show( item );
 	// Set choices of audio managers
 	pluginlist = gtk_list_store_new(1, G_TYPE_STRING);
-	preferences_dialog_fill_output_audio_plugin_list();
+	preferences_dialog_fill_audio_plugin_list();
 	plugin = gtk_combo_box_new_with_model(GTK_TREE_MODEL(pluginlist));
 	select_active_output_audio_plugin();
 	gtk_label_set_mnemonic_widget(GTK_LABEL(item), plugin);
