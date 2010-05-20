@@ -879,7 +879,7 @@ void AlsaLayer::audioCallback (void)
 
     int playbackAvailSmpl = snd_pcm_avail_update(_PlaybackHandle);
     int playbackAvailBytes = playbackAvailSmpl*sizeof(SFLDataFormat);
-    _debug("PLAYBACK: %d", playbackAvailSmpl);
+    // _debug("PLAYBACK: %d", playbackAvailSmpl);
 
     if (urgentAvailBytes > 0) {
 
@@ -997,7 +997,7 @@ void AlsaLayer::audioCallback (void)
         int ringtoneAvailSmpl = snd_pcm_avail_update(_RingtoneHandle);
         int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof(SFLDataFormat);
 
-	_debug("RINGTONE: %d", ringtoneAvailSmpl);
+	// _debug("RINGTONE: %d", ringtoneAvailSmpl);
 
         out = (SFLDataFormat *) malloc(ringtoneAvailBytes);
 	file_tone->getNext (out, ringtoneAvailSmpl, spkrVolume);
