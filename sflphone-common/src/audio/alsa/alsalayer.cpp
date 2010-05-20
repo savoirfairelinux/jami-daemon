@@ -861,16 +861,19 @@ void AlsaLayer::audioCallback (void)
     // framePerBuffer are the number of data for one channel (left)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
-    toGet = framesPerBufferAlsa;
-    maxBytes = toGet * sizeof (SFLDataFormat);
+    // toGet = framesPerBufferAlsa;
+    // maxBytes = toGet * sizeof (SFLDataFormat);
 
-    _debug("PLAYBACK: %d", snd_pcm_avail_update(_PlaybackHandle));
+
+    int playbackAvailSmpl = snd_pcm_avail_update(_PlaybackHandle);
+    int playbackAvailBytes = playbackAvailSmpl*sizeof(SFLDataFormat);
+    _debug("PLAYBACK: %d", playbackAvailSmpl);
 
     if (urgentAvailBytes > 0) {
 
         // Urgent data (dtmf, incoming call signal) come first.
-        toGet = (urgentAvailBytes < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBufferAlsa * sizeof (SFLDataFormat);
-        out = (SFLDataFormat*) malloc (toGet * sizeof (SFLDataFormat));
+        toGet = (urgentAvailBytes < (int) (playbackAvailBytes)) ? urgentAvailBytes : playbackAvailBytes;
+        out = (SFLDataFormat*) malloc (toGet);
         _urgentRingBuffer.Get (out, toGet, spkrVolume);
 
         /* Play the sound */
@@ -886,9 +889,9 @@ void AlsaLayer::audioCallback (void)
 
         if (tone) {
 
-            out = (SFLDataFormat *) malloc (maxBytes);
-            tone->getNext (out, toGet, spkrVolume);
-            write (out , maxBytes, _PlaybackHandle);
+            out = (SFLDataFormat *) malloc (playbackAvailBytes);
+            tone->getNext (out, playbackAvailSmpl, spkrVolume);
+            write (out , playbackAvailBytes, _PlaybackHandle);
 
             free (out);
             out = 0;
@@ -896,9 +899,9 @@ void AlsaLayer::audioCallback (void)
 	}
 	else if (file_tone && !_RingtoneHandle) {
 
-	    out = (SFLDataFormat *) malloc (maxBytes);
-	    file_tone->getNext (out, toGet, spkrVolume);
-	    write (out, maxBytes, _PlaybackHandle);
+	    out = (SFLDataFormat *) malloc (playbackAvailBytes);
+	    file_tone->getNext (out, playbackAvailSmpl, spkrVolume);
+	    write (out, playbackAvailBytes, _PlaybackHandle);
 
 	    free (out);
 	    out = NULL;
@@ -909,25 +912,19 @@ void AlsaLayer::audioCallback (void)
             // If nothing urgent, play the regular sound samples
 
             int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-            int maxNbSamplesToGet = 0;
-            int maxNbBytesToGet = 0;
+            int maxNbSamplesToGet = playbackAvailSmpl;
+            int maxNbBytesToGet = playbackAvailBytes;
 
             // Compute maximal value to get into the ring buffer
 
             if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
                 double upsampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
+                maxNbSamplesToGet = (int) ( (double) playbackAvailSmpl  / upsampleFactor);
+		maxNbBytesToGet = maxNbSamplesToGet * sizeof (SFLDataFormat);
 
-                maxNbSamplesToGet = (int) ( (double) framesPerBufferAlsa / upsampleFactor);
+            } 
 
-
-            } else {
-
-                maxNbSamplesToGet = framesPerBufferAlsa;
-
-            }
-
-            maxNbBytesToGet = maxNbSamplesToGet * sizeof (SFLDataFormat);
 
             normalAvailBytes = getMainBuffer()->availForGet();
             toGet = (normalAvailBytes < (int) maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
@@ -941,7 +938,7 @@ void AlsaLayer::audioCallback (void)
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
 
-                    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+                    rsmpl_out = (SFLDataFormat*) malloc (playbackAvailBytes*2);
 
                     // Do sample rate conversion
                     int nb_sample_down = toGet / sizeof (SFLDataFormat);
@@ -965,10 +962,10 @@ void AlsaLayer::audioCallback (void)
 
 	      if (!tone && !file_tone) {
 
-                    SFLDataFormat* zeros = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+                    SFLDataFormat *zeros = (SFLDataFormat*)malloc(playbackAvailBytes);
 
-                    bzero (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat));
-                    write (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat), _PlaybackHandle);
+                    bzero (zeros, playbackAvailBytes);
+                    write (zeros, playbackAvailBytes, _PlaybackHandle);
 
                     free (zeros);
                 }
@@ -985,10 +982,10 @@ void AlsaLayer::audioCallback (void)
 
     if (file_tone && _RingtoneHandle) {
 
-        _debug("RINGTONE: %d", snd_pcm_avail_update(_RingtoneHandle));
-
         int ringtoneAvailSmpl = snd_pcm_avail_update(_RingtoneHandle);
         int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof(SFLDataFormat);
+
+	_debug("RINGTONE: %d", ringtoneAvailSmpl);
 
         out = (SFLDataFormat *) malloc(ringtoneAvailBytes);
 	file_tone->getNext (out, ringtoneAvailSmpl, spkrVolume);
