@@ -845,11 +845,12 @@ void AlsaLayer::audioCallback (void)
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
 
+    tone = _manager->getTelephoneTone();
+    file_tone = _manager->getTelephoneFile();
+
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
-    tone = _manager->getTelephoneTone();
-    file_tone = _manager->getTelephoneFile();
 
     toGet = framesPerBufferAlsa;
     maxBytes = toGet * sizeof (SFLDataFormat);
@@ -973,18 +974,24 @@ void AlsaLayer::audioCallback (void)
 
     if (file_tone && _RingtoneHandle) {
 
-        out = (SFLDataFormat *) malloc (maxBytes);
-	file_tone->getNext (out, toGet, spkrVolume);
-	write (out, maxBytes, _RingtoneHandle);
+        int ringtoneAvailSmpl = snd_pcm_avail_update(_RingtoneHandle);
+        int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof(SFLDataFormat);
+
+        out = (SFLDataFormat *) malloc(ringtoneAvailBytes);
+	file_tone->getNext (out, ringtoneAvailSmpl, spkrVolume);
+	write (out, ringtoneAvailBytes, _RingtoneHandle);
 
 	free (out);
 	out = NULL;
 
     } else if (_RingtoneHandle) {
 
-        out = (SFLDataFormat *) malloc ( maxBytes);
-	memset(out, 0, maxBytes);
-	write(out, maxBytes, _RingtoneHandle);
+        int ringtoneAvailSmpl = snd_pcm_avail_update(_RingtoneHandle);
+	int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof(SFLDataFormat);
+
+        out = (SFLDataFormat *) malloc(ringtoneAvailBytes);
+	memset(out, 0, ringtoneAvailBytes);
+	write(out, ringtoneAvailBytes, _RingtoneHandle);
 
 	free(out);
 	out = NULL;
