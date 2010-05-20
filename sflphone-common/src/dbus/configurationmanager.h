@@ -75,14 +75,14 @@ public:
     std::vector< std::string > getActiveCodecList (const std::string& accountID);
     void setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID);
 
-    std::vector< std::string > getInputAudioPluginList();
-    std::vector< std::string > getOutputAudioPluginList();
+    std::vector< std::string > getAudioPluginList();
     void setInputAudioPlugin(const std::string& audioPlugin);
     void setOutputAudioPlugin(const std::string& audioPlugin);
     std::vector< std::string > getAudioOutputDeviceList();
     void setAudioOutputDevice(const int32_t& index);
-    std::vector< std::string > getAudioInputDeviceList();
     void setAudioInputDevice(const int32_t& index);
+    void setAudioRingtoneDevice(const int32_t& index);
+    std::vector< std::string > getAudioInputDeviceList();
     std::vector< std::string > getCurrentAudioDevicesIndex();
     int32_t getAudioDeviceIndex(const std::string& name);
     std::string getCurrentAudioOutputPlugin( void );

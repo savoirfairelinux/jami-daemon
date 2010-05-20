@@ -516,28 +516,13 @@ void ConfigurationManager::setActiveCodecList(
 }
 
 
-// Audio devices related methods
-std::vector<std::string> ConfigurationManager::getInputAudioPluginList() {
-
-	_debug("ConfigurationManager: Active codec list received");
-
-	std::vector<std::string> v;
-
-	v.push_back("default");
-	v.push_back("surround40");
-	v.push_back("plug:hw");
-
-	return v;
-}
-
-
-
-std::vector<std::string> ConfigurationManager::getOutputAudioPluginList() {
+std::vector<std::string> ConfigurationManager::getAudioPluginList() {
 
 	std::vector<std::string> v;
 
 	v.push_back(PCM_DEFAULT);
-	v.push_back(PCM_DMIX);
+	// v.push_back(PCM_DMIX);
+	v.push_back(PCM_DMIX_DSNOOP);
 
 	return v;
 }
@@ -555,16 +540,20 @@ std::vector<std::string> ConfigurationManager::getAudioOutputDeviceList() {
 	return Manager::instance().getAudioOutputDeviceList();
 }
 
-void ConfigurationManager::setAudioOutputDevice(const int32_t& index) {
-	return Manager::instance().setAudioOutputDevice(index);
-}
-
 std::vector<std::string> ConfigurationManager::getAudioInputDeviceList() {
 	return Manager::instance().getAudioInputDeviceList();
 }
 
+void ConfigurationManager::setAudioOutputDevice(const int32_t& index) {
+        return Manager::instance().setAudioDevice(index, SFL_PCM_PLAYBACK);
+}
+
 void ConfigurationManager::setAudioInputDevice(const int32_t& index) {
-	return Manager::instance().setAudioInputDevice(index);
+        return Manager::instance().setAudioDevice(index, SFL_PCM_CAPTURE);
+}
+
+void ConfigurationManager::setAudioRingtoneDevice(const int32_t& index) {
+        return Manager::instance().setAudioDevice(index, SFL_PCM_RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex() {

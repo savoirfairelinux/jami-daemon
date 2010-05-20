@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -76,7 +77,7 @@ class AlsaLayer : public AudioLayer {
      *			  SFL_PCM_BOTH
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
-    bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream, std::string plugin);
+    bool openDevice(int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream, std::string plugin);
 
     /**
      * Start the capture stream and prepare the playback stream. 
@@ -205,7 +206,7 @@ class AlsaLayer : public AudioLayer {
      * @return true if successful
      *	       false otherwise
      */
-    bool open_device( std::string pcm_p, std::string pcm_c, int flag); 
+    bool open_device( std::string pcm_p, std::string pcm_c, std::string pcm_r,  int flag); 
 
     bool alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate );
 
@@ -216,7 +217,7 @@ class AlsaLayer : public AudioLayer {
      * @param length The size of the buffer
      * @return int The number of frames actually copied
      */
-    int write( void* buffer, int length);
+    int write( void* buffer, int length, snd_pcm_t *handle);
     
     /**
      * Read data from the internal ring buffer
@@ -226,8 +227,6 @@ class AlsaLayer : public AudioLayer {
      * @return int The number of frames actually read
      */
     int read( void* buffer, int toCopy);
-    
-    
 
     /**
      * Recover from XRUN state for capture
@@ -239,15 +238,21 @@ class AlsaLayer : public AudioLayer {
      * Recover from XRUN state for playback
      * ALSA Library API
      */
-    void handle_xrun_playback( void );
-    
+    void handle_xrun_playback( snd_pcm_t *handle );
+
     void* adjustVolume( void* buffer , int len, int stream );
     
-/**
+    /**
      * Handles to manipulate playback stream
      * ALSA Library API
      */
     snd_pcm_t* _PlaybackHandle;
+
+    /**
+     * Handles to manipulate ringtone stream
+     *
+     */
+    snd_pcm_t *_RingtoneHandle;
 
     /**
      * Handles to manipulate capture stream
@@ -268,7 +273,7 @@ class AlsaLayer : public AudioLayer {
     /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;
 
-	bool _is_prepared_playback;
+    bool _is_prepared_playback;
     bool _is_prepared_capture;
     bool _is_running_playback;
     bool _is_running_capture;

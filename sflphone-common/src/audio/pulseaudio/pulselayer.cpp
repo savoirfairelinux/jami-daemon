@@ -262,42 +262,15 @@ PulseLayer::~PulseLayer (void)
 void
 PulseLayer::openLayer (void)
 {
-	if (!is_started) {
+    if (!is_started) {
 
-		_info("Audio: Open layer");
+        _info("Audio: Open layer");
 
-		if (!m) {
+	connectPulseAudioServer();
 
-			_info("Audio: Creating PulseAudio mainloop");
-			if (!(m = pa_threaded_mainloop_new()))
-				_warn ("Audio: Error: while creating pulseaudio mainloop");
+	is_started = true;
 
-			if (pa_threaded_mainloop_start (m) < 0) {
-				_warn("Audio: Error: Failed to start pulseaudio mainloop");
-			}
-			
-			assert(m);
-		}
-
-		if (!context) {
-			
-			_info("Audio: Creating new PulseAudio Context");
-			pa_threaded_mainloop_lock (m);
-
-			// Instanciate a context
-			if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
-				_warn ("Audio: Error: while creating pulseaudio context");
-
-			pa_threaded_mainloop_unlock (m);
-
-			assert (context);
-		}
-
-		// Create Streams
-		connectPulseAudioServer();
-
-		is_started = true;
-	}
+    }
 
 }
 
@@ -336,12 +309,39 @@ PulseLayer::connectPulseAudioServer (void)
 
     pa_context_flags_t flag = PA_CONTEXT_NOAUTOSPAWN ;
 
-    pa_threaded_mainloop_lock (m);
+    if (!m) {
+      
+      // Instantiate a mainloop
+        _info("Audio: Creating PulseAudio mainloop");
+	if (!(m = pa_threaded_mainloop_new()))
+	    _warn ("Audio: Error: while creating pulseaudio mainloop");
+		
+	assert(m);
+    }
+
+    if(!context) {
+
+        // Instantiate a context
+        if (! (context = pa_context_new (pa_threaded_mainloop_get_api (m) , "SFLphone")))
+	    _warn ("Audio: Error: while creating pulseaudio context");
+
+	assert(context);
+    }
+
+    // set context state callback before starting the mainloop
+    pa_context_set_state_callback (context, context_state_callback, this);
 
     _info("Audio: Connect the context to the server");
-    pa_context_connect (context, NULL , flag , NULL);
+    if (pa_context_connect (context, NULL , flag , NULL) < 0) {
+        _warn("Audio: Error: Could not connect context to the server");
+    }
 
-    pa_context_set_state_callback (context, context_state_callback, this);
+    // Lock the loop before starting it
+    pa_threaded_mainloop_lock (m);
+
+    if (pa_threaded_mainloop_start (m) < 0)
+        _warn("Audio: Error: Failed to start pulseaudio mainloop");
+
     pa_threaded_mainloop_wait(m);
     
     
@@ -395,7 +395,7 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data)
     }
 }
 
-bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
+bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
 {
     _audioSampleRate = sampleRate;
     _frameSize = frameSize;
@@ -743,7 +743,6 @@ void PulseLayer::writeToSpeaker (void)
     } else {
 
         AudioLoop* tone = _manager->getTelephoneTone();
-        AudioLoop* file_tone = _manager->getTelephoneFile();
 
         // flush remaining samples in _urgentRingBuffer
         flushUrgent();
@@ -760,22 +759,6 @@ void PulseLayer::writeToSpeaker (void)
                 pa_xfree (out);
 
             }
-	    //}
-
-        // else if (file_tone != 0) {
-
-	  /*
-            if (playback->getStreamState() == PA_STREAM_READY) {
-
-                out = (SFLDataFormat*) pa_xmalloc (writeableSize);
-                int copied = file_tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
-
-                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
-
-                pa_xfree (out);
-
-            }
-	  */
 
         } else {
 
@@ -842,7 +825,7 @@ void PulseLayer::writeToSpeaker (void)
 
             } else {
 
-                if ( (tone == 0) && (file_tone == 0)) {
+                if (tone == 0) {
 
                     SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc (writeableSize);
 
@@ -927,27 +910,29 @@ void PulseLayer::ringtoneToSpeaker(void)
 
   int writableSize = pa_stream_writable_size(ringtone->pulseStream());
 
-  // _debug("writable size: %d", writableSize);
+  _debug("writable size: %d", writableSize);
 
   if (file_tone) {
 
     if(ringtone->getStreamState() == PA_STREAM_READY) {
       
-      out = (SFLDataFormat*)pa_xmalloc(writableSize);
+      out = (SFLDataFormat *)pa_xmalloc(writableSize);
       int copied = file_tone->getNext(out, writableSize/sizeof(SFLDataFormat), 100);
       pa_stream_write(ringtone->pulseStream(), out, copied*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
       pa_xfree(out);
-
     }
   }
   else {
 
-    out = (SFLDataFormat*)pa_xmalloc(writableSize);
-    memset(out, 0, writableSize);
-    pa_stream_write(ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
+    if(ringtone->getStreamState() == PA_STREAM_READY) {
+
+      out = (SFLDataFormat*)pa_xmalloc(writableSize);
+      memset(out, 0, writableSize);
+      pa_stream_write(ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
     
-    pa_xfree(out);
+      pa_xfree(out);
+    }
   }
     
 

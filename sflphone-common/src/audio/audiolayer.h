@@ -49,10 +49,8 @@
  * @brief Main sound class. Manages the data transfers between the application and the hardware. 
  */
 
-
 class Recordable;
 class ManagerImpl;
-
 
 class AudioLayer {
 
@@ -106,7 +104,7 @@ class AudioLayer {
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        virtual bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin) = 0;
+        virtual bool openDevice(int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin) = 0;
 
         /**
          * Start the capture stream and prepare the playback stream. 
@@ -173,6 +171,13 @@ class AudioLayer {
          *			0 for the first available card on the system, 1 ...
          */
         int getIndexOut() { return _indexOut; }
+
+	/**
+         * Get the index of the audio card for ringtone (could be differnet from playback)
+         * @return int The index of the card used for ringtone
+         *			0 for the first available card on the system, 1 ...
+         */
+	int getIndexRing() {return _indexRing; }
 
         /**
          * Get the sample rate of the audio layer
@@ -277,6 +282,11 @@ class AudioLayer {
          * Number of audio cards on which playback stream has been opened 
          */
         int _indexOut;
+
+	/**
+	 * Number of audio cards on which ringtone stream has been opened
+	 */
+	int _indexRing;
 
         /**
          * Sample Rate SFLphone should send sound data to the sound card 

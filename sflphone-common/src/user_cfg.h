@@ -46,6 +46,7 @@
 #define CODECS                              "ActiveCodecs"	        /** List of active codecs */
 #define ALSA_CARD_ID_IN	                    "Alsa.cardID_In"            /** Soundcard index to use for capture */
 #define ALSA_CARD_ID_OUT                    "Alsa.cardID_Out"           /** Soundcard index to use for playback */
+#define ALSA_CARD_ID_RING                   "Alsa.cardID_Ring"           /** Soundcard index to use for ringtone */
 #define ALSA_FRAME_SIZE	                    "Alsa.framesize"            /** Audio layer frame size */
 #define ALSA_PLUGIN	                    "Alsa.plugin"	        /** Alsa plugin */
 #define AUDIO_SAMPLE_RATE                   "Alsa.sampleRate"          /** Audio layer sample rate */

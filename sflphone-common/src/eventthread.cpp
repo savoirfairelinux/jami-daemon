@@ -65,7 +65,7 @@ void AudioThread::run (void)
 {
     while (!testCancel()) {
         _alsa->audioCallback();
-        Thread::sleep (3);
+        Thread::sleep (20);
     }
 }
 
