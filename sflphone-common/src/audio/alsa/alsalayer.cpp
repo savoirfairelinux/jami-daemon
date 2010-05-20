@@ -864,6 +864,8 @@ void AlsaLayer::audioCallback (void)
     toGet = framesPerBufferAlsa;
     maxBytes = toGet * sizeof (SFLDataFormat);
 
+    _debug("PLAYBACK: %d", snd_pcm_avail_update(_PlaybackHandle));
+
     if (urgentAvailBytes > 0) {
 
         // Urgent data (dtmf, incoming call signal) come first.
@@ -982,6 +984,8 @@ void AlsaLayer::audioCallback (void)
     }
 
     if (file_tone && _RingtoneHandle) {
+
+        _debug("RINGTONE: %d", snd_pcm_avail_update(_RingtoneHandle));
 
         int ringtoneAvailSmpl = snd_pcm_avail_update(_RingtoneHandle);
         int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof(SFLDataFormat);
