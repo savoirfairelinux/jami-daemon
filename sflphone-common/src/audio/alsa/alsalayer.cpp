@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2008 2009 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -147,9 +148,27 @@ AlsaLayer::startStream (void)
     if(_echoCanceller)
       _echoCanceller->resetAlgorithm();
 
-    std::string pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
-    std::string pcmc = buildDeviceTopo (_audioPlugin, _indexIn, 0);
-    std::string pcmr = buildDeviceTopo (_audioPlugin, _indexRing, 0);
+    if(is_playback_running() && is_capture_running() )
+        return;
+
+    std::string pcmp;
+    std::string pcmr;
+    std::string pcmc;
+
+    if(_audioPlugin == PCM_DMIX_DSNOOP) {
+       pcmp = buildDeviceTopo (PCM_DMIX, _indexOut, 0);
+       pcmr = buildDeviceTopo (PCM_DMIX, _indexRing, 0);
+       pcmc = buildDeviceTopo(PCM_DSNOOP, _indexIn, 0);
+    }
+    else {
+      pcmp = buildDeviceTopo (_audioPlugin, _indexOut, 0);
+      pcmr = buildDeviceTopo (_audioPlugin, _indexRing, 0);
+      pcmc = buildDeviceTopo(_audioPlugin, _indexIn, 0);
+    }
+
+    _debug("pcmp: %s, index %d", pcmp.c_str(), _indexOut);
+    _debug("pcmr: %s, index %d", pcmr.c_str(), _indexRing);
+    _debug("pcmc: %s, index %d", pcmc.c_str(), _indexIn);
 
     if (!is_playback_open()) {
         open_device (pcmp, pcmc, pcmr, SFL_PCM_PLAYBACK);
@@ -323,9 +342,11 @@ void AlsaLayer::closePlaybackStream (void)
 
         _debug("Audio: Close ALSA playback");
 
-	if((err = snd_pcm_close(_RingtoneHandle)) < 0) {
-	  _warn("Audio: Error: Closing ALSA ringtone: %s", snd_strerror(err));
-	}
+	if(_RingtoneHandle) {
+	  if((err = snd_pcm_close(_RingtoneHandle)) < 0) {
+	    _warn("Audio: Error: Closing ALSA ringtone: %s", snd_strerror(err));
+	  }
+        }
 
         if ( (err = snd_pcm_close (_PlaybackHandle)) < 0)
             _warn("Audio: Error: Closing ALSA playback: %s", snd_strerror (err));
@@ -539,15 +560,18 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r,
             return false;
         }
 
-	if((err = snd_pcm_open(&_RingtoneHandle, pcm_r.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-	    _warn("Audio: Error: Opening ringtone device %s", pcm_r.c_str());
-	    // setErrorMessage(ALSA_RINGTONE_DEVICE);
-	}
+	if (getIndexOut() != getIndexRing()) {
 
-	if(!alsa_set_params(_RingtoneHandle, 1, getSampleRate())) {
-	    _warn("Audio: Error: Ringtone failed");
-	    snd_pcm_close(_RingtoneHandle);
+	    if((err = snd_pcm_open(&_RingtoneHandle, pcm_r.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+	        _warn("Audio: Error: Opening ringtone device %s", pcm_r.c_str());
+		// setErrorMessage(ALSA_RINGTONE_DEVICE);
+	    }
+
+	    if(!alsa_set_params(_RingtoneHandle, 1, getSampleRate())) {
+	        _warn("Audio: Error: Ringtone failed");
+		snd_pcm_close(_RingtoneHandle);
 	    
+	    }
 	}
 
         open_playback ();
@@ -604,9 +628,9 @@ AlsaLayer::write (void* buffer, int length, snd_pcm_t * handle)
 
             case -EIO:
                 //_debugAlsa(" XRUN playback ignored (%s)", snd_strerror(err));
-                handle_xrun_playback();
+                handle_xrun_playback(handle);
 
-                if (snd_pcm_writei (_PlaybackHandle , buffer , frames) <0)
+                if (snd_pcm_writei (handle, buffer , frames) <0)
                     _debugAlsa ("Audio: XRUN handling failed");
 
                 _trigger_request = true;
@@ -674,6 +698,7 @@ AlsaLayer::read (void* buffer, int toCopy)
 void
 AlsaLayer::handle_xrun_capture (void)
 {
+    _debugAlsa ("Audio: Handle xrun capture");
 
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
@@ -687,22 +712,25 @@ AlsaLayer::handle_xrun_capture (void)
             startCaptureStream ();
         }
     } else
-        _debugAlsa (" Get status failed");
+        _debugAlsa ("Audio: Get status failed");
 }
 
 void
-AlsaLayer::handle_xrun_playback (void)
+AlsaLayer::handle_xrun_playback (snd_pcm_t *handle)
 {
-    
+    _debugAlsa ("Audio: Handle xrun playback");
+
     int state;
     snd_pcm_status_t* status;
     snd_pcm_status_alloca (&status);
 
-    if ( (state = snd_pcm_status (_PlaybackHandle, status)) < 0)   _debugAlsa ("Audio: Error: Cannot get playback handle status (%s)" , snd_strerror (state));
+    if ( (state = snd_pcm_status (handle, status)) < 0)   
+      _debugAlsa ("Audio: Error: Cannot get playback handle status (%s)" , snd_strerror (state));
     else {
         state = snd_pcm_status_get_state (status);
 
         if (state  == SND_PCM_STATE_XRUN) {
+	    _debug("Audio: audio device in state SND_PCM_STATE_XRUN, restart device");
             stopPlaybackStream ();
             preparePlaybackStream ();
 
@@ -715,10 +743,10 @@ AlsaLayer::handle_xrun_playback (void)
 std::string
 AlsaLayer::buildDeviceTopo (std::string plugin, int card, int subdevice)
 {
-    std::string pcm = plugin;
     std::stringstream ss,ss1;
+    std::string pcm = plugin;
 
-    if (pcm == "default" || pcm == "pulse")
+    if (pcm == PCM_DEFAULT)
         return pcm;
 
     ss << card;
@@ -850,16 +878,25 @@ void AlsaLayer::audioCallback(void)
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
 
+    tone = _manager->getTelephoneTone();
+    file_tone = _manager->getTelephoneFile();
+
     // AvailForGet tell the number of chars inside the buffer
     // framePerBuffer are the number of data for one channel (left)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
-    // 
+    if(!_PlaybackHandle)
+      return;
+
+    int playbackAvailSmpl = snd_pcm_avail_update(_PlaybackHandle);
+    int playbackAvailBytes = playbackAvailSmpl*sizeof(SFLDataFormat);
+    // _debug("PLAYBACK: %d", playbackAvailSmpl);
+
     if (urgentAvailBytes > 0) {
 
         // Urgent data (dtmf, incoming call signal) come first.
-        toGet = (urgentAvailBytes < (int) (framesPerBufferAlsa * sizeof (SFLDataFormat))) ? urgentAvailBytes : framesPerBufferAlsa * sizeof (SFLDataFormat);
-        out = (SFLDataFormat*) malloc (toGet * sizeof (SFLDataFormat));
+        toGet = (urgentAvailBytes < (int) (playbackAvailBytes)) ? urgentAvailBytes : playbackAvailBytes;
+        out = (SFLDataFormat*) malloc (toGet);
         _urgentRingBuffer.Get (out, toGet, spkrVolume);
 
         /* Play the sound */
@@ -873,58 +910,44 @@ void AlsaLayer::audioCallback(void)
 
     } else {
 
-        tone = _manager->getTelephoneTone();
-        file_tone = _manager->getTelephoneFile();
+        if (tone) {
 
-        toGet = framesPerBufferAlsa;
-        maxBytes = toGet * sizeof (SFLDataFormat);
-
-        if (tone != 0) {
-
-            out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
-            tone->getNext (out, toGet, spkrVolume);
-            write (out , maxBytes, _PlaybackHandle);
+            out = (SFLDataFormat *) malloc (playbackAvailBytes);
+            tone->getNext (out, playbackAvailSmpl, spkrVolume);
+            write (out , playbackAvailBytes, _PlaybackHandle);
 
             free (out);
             out = 0;
+	   
+	}
+	else if (file_tone && !_RingtoneHandle) {
 
-	    /*
-        } else if (file_tone != 0) {
+	    out = (SFLDataFormat *) malloc (playbackAvailBytes);
+	    file_tone->getNext (out, playbackAvailSmpl, spkrVolume);
+	    write (out, playbackAvailBytes, _PlaybackHandle);
 
-            out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
-            file_tone->getNext (out, toGet, spkrVolume);
-            write (out , maxBytes, _PlaybackHandle);
+	    free (out);
+	    out = NULL;
 
-            free (out);
-            out = 0;
-
-        } else {
-	*/
 	} else {
 
 
             // If nothing urgent, play the regular sound samples
 
             int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
-            int maxNbSamplesToGet = 0;
-            int maxNbBytesToGet = 0;
+            int maxNbSamplesToGet = playbackAvailSmpl;
+            int maxNbBytesToGet = playbackAvailBytes;
 
             // Compute maximal value to get into the ring buffer
 
             if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
                 double upsampleFactor = (double) _audioSampleRate / _mainBufferSampleRate;
+                maxNbSamplesToGet = (int) ( (double) playbackAvailSmpl  / upsampleFactor);
+		maxNbBytesToGet = maxNbSamplesToGet * sizeof (SFLDataFormat);
 
-                maxNbSamplesToGet = (int) ( (double) framesPerBufferAlsa / upsampleFactor);
+            } 
 
-
-            } else {
-
-                maxNbSamplesToGet = framesPerBufferAlsa;
-
-            }
-
-            maxNbBytesToGet = maxNbSamplesToGet * sizeof (SFLDataFormat);
 
             normalAvailBytes = getMainBuffer()->availForGet();
             toGet = (normalAvailBytes < (int) maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
@@ -945,7 +968,7 @@ void AlsaLayer::audioCallback(void)
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
 
-                    rsmpl_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+                    rsmpl_out = (SFLDataFormat*) malloc (playbackAvailBytes*2);
 
                     // Do sample rate conversion
                     int nb_sample_down = toGet / sizeof (SFLDataFormat);
@@ -967,12 +990,12 @@ void AlsaLayer::audioCallback(void)
 
             } else {
 
-                if ( (tone == 0) && (file_tone == 0)) {
+	      if (!tone && !file_tone) {
 
-                    SFLDataFormat* zeros = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+                    SFLDataFormat *zeros = (SFLDataFormat*)malloc(playbackAvailBytes);
 
-                    bzero (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat));
-                    write (zeros, framesPerBufferAlsa * sizeof (SFLDataFormat), _PlaybackHandle);
+                    bzero (zeros, playbackAvailBytes);
+                    write (zeros, playbackAvailBytes, _PlaybackHandle);
 
                     free (zeros);
                 }
@@ -987,26 +1010,28 @@ void AlsaLayer::audioCallback(void)
 
     }
 
-    // Playback ringtone
-    file_tone = _manager->getTelephoneFile();
+    if (file_tone && _RingtoneHandle) {
 
-    toGet = framesPerBufferAlsa;
-    maxBytes = toGet * sizeof (SFLDataFormat);
+        int ringtoneAvailSmpl = snd_pcm_avail_update(_RingtoneHandle);
+        int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof(SFLDataFormat);
 
-    if (file_tone != NULL) {
+	// _debug("RINGTONE: %d", ringtoneAvailSmpl);
 
-        out = (SFLDataFormat*) malloc (maxBytes * sizeof (SFLDataFormat));
-	file_tone->getNext (out, toGet, spkrVolume);
-	write (out, maxBytes, _RingtoneHandle);
+        out = (SFLDataFormat *) malloc(ringtoneAvailBytes);
+	file_tone->getNext (out, ringtoneAvailSmpl, spkrVolume);
+	write (out, ringtoneAvailBytes, _RingtoneHandle);
 
 	free (out);
 	out = NULL;
 
-    } else {
+    } else if (_RingtoneHandle) {
 
-        out = (SFLDataFormat*) malloc ( maxBytes * sizeof (SFLDataFormat));
-	memset(out, 0, maxBytes * sizeof (SFLDataFormat));
-	write(out, maxBytes, _RingtoneHandle);
+        int ringtoneAvailSmpl = snd_pcm_avail_update(_RingtoneHandle);
+	int ringtoneAvailBytes = ringtoneAvailSmpl*sizeof(SFLDataFormat);
+
+        out = (SFLDataFormat *) malloc(ringtoneAvailBytes);
+	memset(out, 0, ringtoneAvailBytes);
+	write(out, ringtoneAvailBytes, _RingtoneHandle);
 
 	free(out);
 	out = NULL;

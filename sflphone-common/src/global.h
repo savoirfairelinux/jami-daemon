@@ -86,6 +86,8 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define PCM_PLUGHW	"plughw"		/** Alsa plugin */ 
 #define PCM_DEFAULT	"default"		/** Default ALSA plugin */
 #define PCM_DMIX	"plug:dmix"		/** Alsa plugin for software mixing */
+#define PCM_DSNOOP	"plug:dsnoop"		/** Alsa plugin for microphone sharing */
+#define PCM_DMIX_DSNOOP "dmix/dsnoop"           /** Audio profile using Alsa dmix/dsnoop */
 
 #define SFL_CODEC_VALID_PREFIX	"libcodec_"	/** Valid prefix for codecs shared library */ 
 #define SFL_CODEC_VALID_EXTEN	".so"		/** Valid extension for codecs shared library */

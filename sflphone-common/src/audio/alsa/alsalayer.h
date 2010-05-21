@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2007 - 2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -214,8 +215,6 @@ class AlsaLayer : public AudioLayer {
      * @return int The number of frames actually read
      */
     int read( void* buffer, int toCopy);
-    
-    
 
     /**
      * Recover from XRUN state for capture
@@ -227,8 +226,8 @@ class AlsaLayer : public AudioLayer {
      * Recover from XRUN state for playback
      * ALSA Library API
      */
-    void handle_xrun_playback( void );
-    
+    void handle_xrun_playback( snd_pcm_t *handle );
+
     void* adjustVolume( void* buffer , int len, int stream );
     
     /**
@@ -262,7 +261,7 @@ class AlsaLayer : public AudioLayer {
     /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;
 
-	bool _is_prepared_playback;
+    bool _is_prepared_playback;
     bool _is_prepared_capture;
     bool _is_running_playback;
     bool _is_running_capture;

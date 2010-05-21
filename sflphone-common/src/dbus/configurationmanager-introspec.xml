@@ -466,17 +466,7 @@
 
 	   <!-- Audio devices methods -->
 
-	   <method name="getInputAudioPluginList" tp:name-for-bindings="getInputAudioPluginList">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
-		   <arg type="as" name="list" direction="out">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="getOutputAudioPluginList" tp:name-for-bindings="getOutputAudioPluginList">
+	   <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>

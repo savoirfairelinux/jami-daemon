@@ -770,7 +770,6 @@ void PulseLayer::writeToSpeaker (void)
     } else {
 
         AudioLoop* tone = _manager->getTelephoneTone();
-        AudioLoop* file_tone = _manager->getTelephoneFile();
 
         // flush remaining samples in _urgentRingBuffer
         flushUrgent();
@@ -787,22 +786,6 @@ void PulseLayer::writeToSpeaker (void)
                 pa_xfree (out);
 
             }
-	    //}
-
-        // else if (file_tone != 0) {
-
-	  /*
-            if (playback->getStreamState() == PA_STREAM_READY) {
-
-                out = (SFLDataFormat*) pa_xmalloc (writeableSize);
-                int copied = file_tone->getNext (out, writeableSize / sizeof (SFLDataFormat), 100);
-
-                pa_stream_write (playback->pulseStream(), out, copied * sizeof (SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
-
-                pa_xfree (out);
-
-            }
-	  */
 
         } else {
 
@@ -876,7 +859,7 @@ void PulseLayer::writeToSpeaker (void)
 
             } else {
 
-                if ( (tone == 0) && (file_tone == 0)) {
+                if (tone == 0) {
 
                     SFLDataFormat* zeros = (SFLDataFormat*) pa_xmalloc (writeableSize);
 
@@ -977,27 +960,29 @@ void PulseLayer::ringtoneToSpeaker(void)
 
   int writableSize = pa_stream_writable_size(ringtone->pulseStream());
 
-  // _debug("writable size: %d", writableSize);
+  _debug("writable size: %d", writableSize);
 
   if (file_tone) {
 
     if(ringtone->getStreamState() == PA_STREAM_READY) {
       
-      out = (SFLDataFormat*)pa_xmalloc(writableSize);
+      out = (SFLDataFormat *)pa_xmalloc(writableSize);
       int copied = file_tone->getNext(out, writableSize/sizeof(SFLDataFormat), 100);
       pa_stream_write(ringtone->pulseStream(), out, copied*sizeof(SFLDataFormat), NULL, 0, PA_SEEK_RELATIVE);
 
       pa_xfree(out);
-
     }
   }
   else {
 
-    out = (SFLDataFormat*)pa_xmalloc(writableSize);
-    memset(out, 0, writableSize);
-    pa_stream_write(ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
+    if(ringtone->getStreamState() == PA_STREAM_READY) {
+
+      out = (SFLDataFormat*)pa_xmalloc(writableSize);
+      memset(out, 0, writableSize);
+      pa_stream_write(ringtone->pulseStream(), out, writableSize, NULL, 0, PA_SEEK_RELATIVE);
     
-    pa_xfree(out);
+      pa_xfree(out);
+    }
   }
     
 
