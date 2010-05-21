@@ -41,7 +41,7 @@
 #define DELAY_AMPLIFY 60
 
 // maximum in segment size (segment are SEGMENT_LENGTH long)
-#define MAX_DELAY 10
+#define MAX_DELAY_LINE_AMPL 100
 
 // Internal buffer size
 #define BUFF_SIZE 10000
@@ -49,6 +49,9 @@
 #define DEFAULT_SAMPLRATE 8000
 
 #define DEFAULT_FRAME_LENGTH 20
+
+#define MIC_ADAPT_SIZE 100
+#define SPKR_ADAPT_SIZE 50
 
 class EchoCancel : public Algorithm {
 
@@ -228,13 +231,44 @@ class EchoCancel : public Algorithm {
     /**
      * Linear gain factor buffer to adjust to system's latency 
      */
-    float _delayedAmplify[MAX_DELAY];
+    float _delayLineAmplify[MAX_DELAY_LINE_AMPL];
 
     /**
      * read/write for mic gain delay 
      */
-    int _amplIndexIn;
-    int _amplIndexOut;
+    int _amplDelayIndexIn;
+    int _amplDelayIndexOut;
+
+    /**
+     * State variable to determine if adaptation must be performed
+     */
+    bool _adaptDone;
+
+    /**
+     * State variable to specify if adaptation is started
+     */
+    bool _adaptStarted;
+
+    /**
+     * Adaptation index
+     */
+    int _adaptCnt;
+
+    int _spkrAdaptCnt;
+
+    int _micAdaptCnt;
+    
+    int _spkrAdaptSize;
+
+    int _micAdaptSize;
+
+    int _spkrAdaptArray[BUFF_SIZE];
+
+    int _micAdaptArray[BUFF_SIZE];
+
+    int _correlationSize;
+
+    int _correlationArray[BUFF_SIZE];
 
     /*
     ofstream *micFile;

@@ -32,7 +32,17 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 							_spkrHistCnt(0),
 							_micHistCnt(0),
 							_amplFactor(0.0),
-							_lastAmplFactor(0.0)
+							_lastAmplFactor(0.0),
+							_amplDelayIndexIn(0),
+							_amplDelayIndexOut(0),
+							_adaptDone(false),
+							_adaptStarted(false),
+							_adaptCnt(0),
+							_spkrAdaptCnt(0),
+							_micAdaptCnt(0),
+							_spkrAdaptSize(SPKR_ADAPT_SIZE),
+							_micAdaptSize(MIC_ADAPT_SIZE),
+							_correlationSize(0)
 {
   _debug("EchoCancel: Instantiate echo canceller");
 
@@ -48,12 +58,14 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   _micData->createReadPointer();
   _spkrData->createReadPointer();
 
+  // variable used to sync mic and spkr
   _spkrStoped = true;
 
   _smplPerFrame = (_samplingRate * _frameLength) / MS_PER_SEC;
   _smplPerSeg = (_samplingRate * SEGMENT_LENGTH) / MS_PER_SEC;
   _historyLength = ECHO_LENGTH / SEGMENT_LENGTH;
   _nbSegmentPerFrame =  _frameLength / SEGMENT_LENGTH;
+
 
   _noiseState = speex_preprocess_state_init(_smplPerFrame, _samplingRate);
   int i=1;
@@ -72,10 +84,10 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   memset(_avgSpkrLevelHist, 0, BUFF_SIZE*sizeof(int));
   memset(_avgMicLevelHist, 0, BUFF_SIZE*sizeof(int));
 
-  memset(_delayedAmplify, 0, MAX_DELAY*sizeof(float));
+  memset(_delayLineAmplify, 0, MAX_DELAY_LINE_AMPL*sizeof(float));
 
-  _amplIndexIn = 0;
-  _amplIndexOut = DELAY_AMPLIFY / SEGMENT_LENGTH;
+  _amplDelayIndexIn = 0;
+  _amplDelayIndexOut = 0;;
   
 }
 
@@ -122,10 +134,10 @@ void EchoCancel::reset()
   _historyLength = ECHO_LENGTH / SEGMENT_LENGTH;
   _nbSegmentPerFrame =  _frameLength / SEGMENT_LENGTH;
 
-  memset(_delayedAmplify, 0, MAX_DELAY*sizeof(float));
+  memset(_delayLineAmplify, 0, MAX_DELAY_LINE_AMPL*sizeof(float));
 
-  _amplIndexIn = 0;
-  _amplIndexOut = DELAY_AMPLIFY / SEGMENT_LENGTH;
+  _amplDelayIndexIn = 0;
+  _amplDelayIndexOut = DELAY_AMPLIFY / SEGMENT_LENGTH;
 
   _micData->flushAll();
   _spkrData->flushAll();
@@ -146,12 +158,6 @@ void EchoCancel::reset()
   f=.0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
 
-  /*
-  std::cout << "EchoCancel: _smplPerFrame " << _smplPerFrame 
-            << ", _smplPerSeg " << _smplPerSeg
-	    << ", _historyLength " << _historyLength
-            << ", _nbSegmentPerFrame " << _nbSegmentPerFrame << std::endl;
-  */
 
   _spkrStoped = true;
 }
@@ -169,11 +175,6 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
   // Put data in speaker ring buffer
   _spkrData->Put(inputData, nbBytes);
 
-  // std::cout << "EchoCancel: spkrDataAvail " << _spkrData->AvailForGet() << std::endl;
-
-  // In case we use libspeex internal buffer 
-  // (require capture and playback stream to be synchronized)
-  // speex_echo_playback(_echoState, inputData);
 }
 
 void EchoCancel::process(SFLDataFormat *data, int nbBytes) {}
@@ -199,22 +200,15 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   int spkrAvail = _spkrData->AvailForGet();
   int micAvail = _micData->AvailForGet();
 
-  // std::cout << "Process echo: spkrAvail " << spkrAvail << ", micAvail " << micAvail << ", byteSize " << byteSize << std::endl;
-
   // Init number of frame processed
   int nbFrame = 0;
 
   // Get data from mic and speaker internal buffer
   while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
 
-    // std::cout << "perform echocancel" << std::endl;
-
     // get synchronized data
     _spkrData->Get(_tmpSpkr, byteSize);
     _micData->Get(_tmpMic, byteSize);
-
-    // micFile->write ((const char *)_tmpMic, byteSize);
-    // spkrFile->write ((const char *)_tmpSpkr, byteSize);
 
     // Processed echo cancellation
     performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
@@ -228,8 +222,6 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
 
     spkrAvail = _spkrData->AvailForGet();
     micAvail = _micData->AvailForGet();
-
-    // std::cout << "Process echo remaining: spkrAvail " << spkrAvail << ", micAvail " << micAvail << std::endl;
 
     // increment nb of frame processed
     ++nbFrame;
@@ -246,13 +238,6 @@ void EchoCancel::setSamplingRate(int smplRate) {
   
   if (smplRate != _samplingRate) {
     _samplingRate = smplRate;
-
-    /*
-    if(smplRate == 16000)
-      _frameLength = 10;
-    else 
-      _frameLength = 20;
-    */
 
     reset();
   }
@@ -293,8 +278,6 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 
     _lastAmplFactor = _amplFactor;
 
-    // std::cout << "Amplitude: " << amplify << ", spkrLevel: " << _spkrLevel << ", micLevel: " << _micLevel << std::endl;
-
     amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), amplify);
     
   }
@@ -317,6 +300,8 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
   if(_spkrHistCnt >= _historyLength)
     _spkrHistCnt = 0;
     
+
+  
 }
 
 
@@ -355,17 +340,17 @@ void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData
 
   // Use delayed amplification factor due to sound card latency 
   for(int i = 0; i < _smplPerSeg; i++) {
-    outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayedAmplify[_amplIndexOut]);
+    outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayLineAmplify[_amplDelayIndexOut]);
   }
 
-  _amplIndexOut++;
-  _delayedAmplify[_amplIndexIn++] = amplify;
+  _amplDelayIndexOut++;
+  _delayLineAmplify[_amplDelayIndexIn++] = amplify;
 
-  if(_amplIndexOut >= MAX_DELAY)
-    _amplIndexOut = 0;
+  if(_amplDelayIndexOut >= MAX_DELAY_LINE_AMPL)
+    _amplDelayIndexOut = 0;
 
-  if(_amplIndexIn >= MAX_DELAY)
-    _amplIndexIn = 0;
+  if(_amplDelayIndexIn >= MAX_DELAY_LINE_AMPL)
+    _amplDelayIndexIn = 0;
 }
 
 
