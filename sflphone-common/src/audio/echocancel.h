@@ -35,7 +35,7 @@
 #define ECHO_LENGTH 50
 
 // Voice level threashold 
-#define MIN_SIG_LEVEL 100
+#define MIN_SIG_LEVEL 1000
 
 // Delay between mic and speaker
 #define DELAY_AMPLIFY 60

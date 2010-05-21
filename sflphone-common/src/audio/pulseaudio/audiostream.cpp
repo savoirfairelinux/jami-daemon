@@ -145,6 +145,13 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 
         case PA_STREAM_READY:
             _info ("Audio: Stream successfully created, connected to %s", pa_stream_get_device_name (s));
+	    // pa_buffer_attr *buffattr = (pa_buffer_attr *)pa_xmalloc (sizeof(pa_buffer_attr));
+	    _debug("Audio: maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
+	    _debug("Audio: tlength %u", pa_stream_get_buffer_attr(s)->tlength);
+	    _debug("Audio: prebug %u", pa_stream_get_buffer_attr(s)->prebuf);
+	    _debug("Audio: minreq %u", pa_stream_get_buffer_attr(s)->minreq);
+	    _debug("Audio: fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
+	    // pa_xfree (buffattr);
             break;
 
         case PA_STREAM_UNCONNECTED:
@@ -210,7 +217,9 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
     } else if (_streamType == CAPTURE_STREAM) {
 
         attributes->maxlength = (uint32_t) -1;
-        attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+	attributes->tlength = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+	attributes->prebuf = 0;
+        attributes->fragsize = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &_sample_spec);
 
 	pa_threaded_mainloop_lock(_mainloop);
 

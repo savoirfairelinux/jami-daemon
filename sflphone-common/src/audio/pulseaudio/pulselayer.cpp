@@ -66,19 +66,16 @@ static void pa_success_callback(pa_context *c, int success, void *userdata) {
 
 static void latency_update_callback(pa_stream *p, void *userdata) {
 
-  pa_usec_t r_usec;
-  pa_buffer_attr *buffattr;
+    pa_usec_t r_usec;
 
-  pa_stream_get_latency (p, &r_usec, NULL);	
+    pa_stream_get_latency (p, &r_usec, NULL);	
 
-  // buffattr = pa_stream_get_buffer_attr(p);   	
-  
     _debug("Audio: Stream letency update %0.0f ms for device %s", (float)r_usec/1000, pa_stream_get_device_name(p));
-  // _debug("Audio: maxlength %d", buffattr->maxlength);
-  // _debug("Audio: tlength %d", buffattr->tlength);
-  // _debug("Audio: prebug %d", buffattr->prebuf);
-  // _debug("Audio: minreq %d", buffattr->minreq);
-  // _debug("Audio: fragsize %d", buffattr->fragsize);
+    _debug("Audio: maxlength %u", pa_stream_get_buffer_attr(p)->maxlength);
+    _debug("Audio: tlength %u", pa_stream_get_buffer_attr(p)->tlength);
+    _debug("Audio: prebuf %u", pa_stream_get_buffer_attr(p)->prebuf);
+    _debug("Audio: minreq %u", pa_stream_get_buffer_attr(p)->minreq);
+    _debug("Audio: fragsize %u", pa_stream_get_buffer_attr(p)->fragsize);
   
 }
 
@@ -558,6 +555,7 @@ bool PulseLayer::createStreams (pa_context* c)
     pa_stream_set_latency_update_callback(record->pulseStream(), latency_update_callback, this);
     delete recordParam;
   
+    /*
     PulseLayerType * ringtoneParam = new PulseLayerType();
     ringtoneParam->context = c;
     ringtoneParam->type = RINGTONE_STREAM;
@@ -575,7 +573,7 @@ bool PulseLayer::createStreams (pa_context* c)
     pa_stream_set_write_callback(ringtone->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone->pulseStream(), stream_moved_callback, this);
     delete ringtoneParam;
-
+    */
     pa_threaded_mainloop_signal (m , 0);
 
     flushMain();
@@ -943,6 +941,7 @@ void PulseLayer::readFromMic (void)
 	    // echo cancellation processing
 	    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
 
+	    _debug("sampleready: %d", sampleready);
             // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 	    if(sampleready)
 	      getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);

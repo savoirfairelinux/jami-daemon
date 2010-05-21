@@ -188,12 +188,14 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
 {
   // std::cout << "putData nbBytes: " << nbBytes << std::endl;
 
+  /*
   if(_spkrStoped) {
       _debug("EchoCancel: Flush data");
       _micData->flushAll();
       _spkrData->flushAll();
       _spkrStoped = false;
   }
+  */
 
   // Put data in speaker ring buffer
   _spkrData->Put(inputData, nbBytes);
@@ -204,10 +206,11 @@ void EchoCancel::process(SFLDataFormat *data, int nbBytes) {}
 
 int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
-
+  /*
   if(_spkrStoped) {
     return 0;
   }
+  */
 
   int byteSize = _smplPerFrame*sizeof(SFLDataFormat);
 
@@ -357,7 +360,7 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
   if(_adaptCnt == _micAdaptSize) {
     _debug("EchoCancel: Echo path adaptation completed");
     _adaptDone = true;
-    _amplDelayIndexOut = getMaximumIndex(_correlationArray, _correlationSize);
+    _amplDelayIndexOut = 0;// getMaximumIndex(_correlationArray, _correlationSize);
     _debug("EchoCancel: Echo length %d", _amplDelayIndexOut);
     spkrLearningData->write((const char *)_spkrAdaptArray, _spkrAdaptSize*sizeof(int));
     micLearningData->write((const char *)_micAdaptArray, _micAdaptSize*sizeof(int));
