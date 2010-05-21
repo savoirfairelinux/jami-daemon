@@ -138,6 +138,10 @@ class EchoCancel : public Algorithm {
      */
     void decreaseFactor();
 
+    int performCorrelation(int *data1, int *data2, int size);
+
+    int getMaximumIndex(int *data, int size);
+
     /**
      * Internal buffer for mic data synchronization
      */

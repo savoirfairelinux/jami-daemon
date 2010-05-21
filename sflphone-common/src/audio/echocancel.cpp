@@ -87,7 +87,9 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   memset(_delayLineAmplify, 0, MAX_DELAY_LINE_AMPL*sizeof(float));
 
   _amplDelayIndexIn = 0;
-  _amplDelayIndexOut = 0;;
+  _amplDelayIndexOut = 0;
+
+  _correlationSize = _spkrAdaptSize;
   
 }
 
@@ -300,8 +302,39 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
   if(_spkrHistCnt >= _historyLength)
     _spkrHistCnt = 0;
     
+  // if adaptation done, stop here
+  if(_adaptDone)
+    return;
 
-  
+  // start learning only if there is data played through speaker
+  if(!_adaptStarted) {
+    if(spkrLvl > MIN_SIG_LEVEL)
+      _adaptStarted = true;
+    else
+      return;
+  }
+
+  if(_spkrAdaptCnt < _spkrAdaptSize)
+      _spkrAdaptArray[_spkrAdaptCnt++] = spkrLvl;
+
+  if(_micAdaptCnt < _micAdaptSize)
+      _micAdaptArray[_micAdaptCnt++] = micLvl;
+
+  // perform correlation if spkr size is reached
+  if(_adaptCnt > _spkrAdaptSize) {
+      int k = _adaptCnt - _spkrAdaptSize;
+      _correlationArray[k] = performCorrelation(_spkrAdaptArray, _micAdaptArray+k, _correlationSize);   
+  }
+
+  _adaptCnt++;
+
+  // if we captured a full echo
+  if(_adaptCnt == _micAdaptSize) {
+    _debug("EchoCancel: Echo path adaptation completed");
+    _adaptDone = true;
+    _amplDelayIndexOut = getMaximumIndex(_correlationArray, _correlationSize);
+  }
+    
 }
 
 
@@ -373,4 +406,32 @@ void EchoCancel::decreaseFactor() {
 
   if(_amplFactor < 0.0)
     _amplFactor = 0.0;
+}
+
+
+int EchoCancel::performCorrelation(int *data1, int *data2, int size) {
+
+  int correlation = 0;
+  while(size) {
+    size--;
+    correlation += data1[size] * data2[size];
+  }
+  return correlation;
+}
+
+
+int EchoCancel::getMaximumIndex(int *data, int size) {
+
+  int index = size;
+  int max = data[size-1];
+ 
+  while(size) {
+    size--;
+    if(data[size] > max) {
+        index = size;
+	max = data[size];
+    }
+  }
+
+  return index;
 }
