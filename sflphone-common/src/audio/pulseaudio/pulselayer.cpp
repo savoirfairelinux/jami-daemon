@@ -64,6 +64,24 @@ static void pa_success_callback(pa_context *c, int success, void *userdata) {
   _debug("Audio: Success callback");
 }
 
+static void latency_update_callback(pa_stream *p, void *userdata) {
+
+  pa_usec_t r_usec;
+  pa_buffer_attr *buffattr;
+
+  pa_stream_get_latency (p, &r_usec, NULL);	
+
+  // buffattr = pa_stream_get_buffer_attr(p);   	
+  
+    _debug("Audio: Stream letency update %0.0f ms for device %s", (float)r_usec/1000, pa_stream_get_device_name(p));
+  // _debug("Audio: maxlength %d", buffattr->maxlength);
+  // _debug("Audio: tlength %d", buffattr->tlength);
+  // _debug("Audio: prebug %d", buffattr->prebuf);
+  // _debug("Audio: minreq %d", buffattr->minreq);
+  // _debug("Audio: fragsize %d", buffattr->fragsize);
+  
+}
+
 static void sink_input_info_callback(pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
   char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
@@ -517,6 +535,7 @@ bool PulseLayer::createStreams (pa_context* c)
     pa_stream_set_underflow_callback (playback->pulseStream(), playback_underflow_callback, this);
     // pa_stream_set_suspended_callback(playback->pulseStream(), stream_suspended_callback, this);
     pa_stream_set_moved_callback(playback->pulseStream(), stream_moved_callback, this);
+    pa_stream_set_latency_update_callback(playback->pulseStream(), latency_update_callback, this);
     delete playbackParam;
 
     PulseLayerType * recordParam = new PulseLayerType();
@@ -536,6 +555,7 @@ bool PulseLayer::createStreams (pa_context* c)
     pa_stream_set_read_callback (record->pulseStream() , capture_callback, this);
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
     pa_stream_set_moved_callback(record->pulseStream(), stream_moved_callback, this);
+    pa_stream_set_latency_update_callback(record->pulseStream(), latency_update_callback, this);
     delete recordParam;
     
     PulseLayerType * ringtoneParam = new PulseLayerType();
@@ -896,8 +916,6 @@ void PulseLayer::readFromMic (void)
         _warn("Audio: Error capture stream peek failed: %s" , pa_strerror (pa_context_errno (context)));
     }
 
-    _debug("*********************** Read from mic: %d **************************", readableSize);
-
     if (data != 0) {
 
         int _mainBufferSampleRate = getMainBuffer()->getInternalSamplingRate();
@@ -924,8 +942,6 @@ void PulseLayer::readFromMic (void)
 
 	    // echo cancellation processing
 	    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
-
-	    _debug("Read from mic: sampleReady %d", sampleready);
 
             // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 	    if(sampleready)
@@ -959,8 +975,6 @@ void PulseLayer::ringtoneToSpeaker(void)
   SFLDataFormat* out;
 
   int writableSize = pa_stream_writable_size(ringtone->pulseStream());
-
-  _debug("writable size: %d", writableSize);
 
   if (file_tone) {
 

@@ -32,7 +32,7 @@
 #define SEGMENT_LENGTH 10
 
 // Length of the echo tail in ms
-#define ECHO_LENGTH 100
+#define ECHO_LENGTH 50
 
 // Voice level threashold 
 #define MIN_SIG_LEVEL 100
@@ -41,7 +41,7 @@
 #define DELAY_AMPLIFY 60
 
 // maximum in segment size (segment are SEGMENT_LENGTH long)
-#define MAX_DELAY_LINE_AMPL 100
+#define MAX_DELAY_LINE_AMPL 100 // 1 sec
 
 // Internal buffer size
 #define BUFF_SIZE 10000
@@ -50,8 +50,8 @@
 
 #define DEFAULT_FRAME_LENGTH 20
 
-#define MIC_ADAPT_SIZE 100
-#define SPKR_ADAPT_SIZE 50
+#define MIC_ADAPT_SIZE 100 // 1 sec
+#define SPKR_ADAPT_SIZE 20 // 200 ms
 
 class EchoCancel : public Algorithm {
 
@@ -279,6 +279,9 @@ class EchoCancel : public Algorithm {
     ofstream *spkrFile;
     ofstream *echoFile;
     */
+
+    ofstream *micLearningData;
+    ofstream *spkrLearningData;
 
     /**
      * Noise reduction processing state

@@ -52,6 +52,9 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   spkrFile = new ofstream("spkrData", ofstream::binary);
   */
 
+  micLearningData = new ofstream("micLearningData", ofstream::binary);
+  spkrLearningData = new ofstream("spkrLearningData", ofstream::binary);
+
   _micData = new RingBuffer(50000);
   _spkrData = new RingBuffer(50000);
 
@@ -115,11 +118,17 @@ EchoCancel::~EchoCancel()
   delete echoFile;
   */
 
+  micLearningData->close();
+  spkrLearningData->close();
+  delete micLearningData;
+  delete spkrLearningData;
+
 }
 
 void EchoCancel::reset()
 {
   _debug("EchoCancel: Reset internal state, Sampling rate %d, Frame size %d", _samplingRate, _smplPerFrame);
+  _debug("SIZEOF INT %d", sizeof(int));
   
   memset(_avgSpkrLevelHist, 0, BUFF_SIZE*sizeof(int));
   memset(_avgMicLevelHist, 0, BUFF_SIZE*sizeof(int));
@@ -139,10 +148,21 @@ void EchoCancel::reset()
   memset(_delayLineAmplify, 0, MAX_DELAY_LINE_AMPL*sizeof(float));
 
   _amplDelayIndexIn = 0;
-  _amplDelayIndexOut = DELAY_AMPLIFY / SEGMENT_LENGTH;
+  _amplDelayIndexOut = 0;
+
+  _adaptDone = false;
+  _adaptStarted = false;
+  _adaptCnt = 0;
+  _spkrAdaptCnt = 0;
+  _micAdaptCnt = 0;
 
   _micData->flushAll();
   _spkrData->flushAll();
+
+  // SFLDataFormat delay[960];
+  // memset(delay, 0, sizeof(SFLDataFormat));
+
+  // _micData->Put(delay, 960*2);
 
   speex_preprocess_state_destroy(_noiseState);
 
@@ -169,6 +189,7 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
   // std::cout << "putData nbBytes: " << nbBytes << std::endl;
 
   if(_spkrStoped) {
+      _debug("EchoCancel: Flush data");
       _micData->flushAll();
       _spkrData->flushAll();
       _spkrStoped = false;
@@ -201,6 +222,8 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   // Store data for synchronization
   int spkrAvail = _spkrData->AvailForGet();
   int micAvail = _micData->AvailForGet();
+
+  _debug("EchoCancel: speaker avail %d, mic avail %d", spkrAvail, micAvail);
 
   // Init number of frame processed
   int nbFrame = 0;
@@ -263,7 +286,8 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 	increaseFactor(0.05);
       }
       else {
-	decreaseFactor();
+	// decreaseFactor();
+	_amplFactor = 0.0;
       }
     }
     else {
@@ -271,13 +295,13 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 	increaseFactor(0.02);
       }
       else {
-	decreaseFactor();
+	// decreaseFactor();
+	_amplFactor = 0.0;
       }
     }
 
     // lowpass filtering
     float amplify = (_lastAmplFactor + _amplFactor) / 2;
-
     _lastAmplFactor = _amplFactor;
 
     amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), amplify);
@@ -323,7 +347,8 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
   // perform correlation if spkr size is reached
   if(_adaptCnt > _spkrAdaptSize) {
       int k = _adaptCnt - _spkrAdaptSize;
-      _correlationArray[k] = performCorrelation(_spkrAdaptArray, _micAdaptArray+k, _correlationSize);   
+      _correlationArray[k] = performCorrelation(_spkrAdaptArray, _micAdaptArray+k, _correlationSize); 
+      _debug("EchoCancel: Correlation: %d", _correlationArray[k]);
   }
 
   _adaptCnt++;
@@ -333,6 +358,9 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
     _debug("EchoCancel: Echo path adaptation completed");
     _adaptDone = true;
     _amplDelayIndexOut = getMaximumIndex(_correlationArray, _correlationSize);
+    _debug("EchoCancel: Echo length %d", _amplDelayIndexOut);
+    spkrLearningData->write((const char *)_spkrAdaptArray, _spkrAdaptSize*sizeof(int));
+    micLearningData->write((const char *)_micAdaptArray, _micAdaptSize*sizeof(int));
   }
     
 }
@@ -373,8 +401,22 @@ void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData
 
   // Use delayed amplification factor due to sound card latency 
   for(int i = 0; i < _smplPerSeg; i++) {
-    outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayLineAmplify[_amplDelayIndexOut]);
+      outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayLineAmplify[_amplDelayIndexOut]);
   }
+
+  // do not increment amplitude array if adaptation is not done 
+  if (_adaptDone) {
+    for(int i = 0; i < _smplPerSeg; i++) {
+        outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayLineAmplify[_amplDelayIndexOut]);
+    }
+  }
+  else {
+    for(int i = 0; i < _smplPerSeg; i++) {
+        outputData[i] = micData[i];
+    }
+    return;
+  }
+
 
   _amplDelayIndexOut++;
   _delayLineAmplify[_amplDelayIndexIn++] = amplify;

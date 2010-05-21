@@ -204,6 +204,7 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 	else
 	  pa_stream_connect_playback (s , NULL, attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
 
+
 	pa_threaded_mainloop_unlock(_mainloop);
 
     } else if (_streamType == CAPTURE_STREAM) {
@@ -217,6 +218,7 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 	  pa_stream_connect_record (s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
 	else 
 	  pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+
 
         pa_threaded_mainloop_unlock(_mainloop);
         
