@@ -130,6 +130,8 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
     _info("Audio: The state of the stream changed");
     assert (s);
 
+    char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
+
     m = (pa_threaded_mainloop*) user_data;
     assert (m);
 
@@ -151,6 +153,7 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 	    _debug("Audio: prebug %u", pa_stream_get_buffer_attr(s)->prebuf);
 	    _debug("Audio: minreq %u", pa_stream_get_buffer_attr(s)->minreq);
 	    _debug("Audio: fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
+	    _debug("Audio: samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
 	    // pa_xfree (buffattr);
             break;
 
