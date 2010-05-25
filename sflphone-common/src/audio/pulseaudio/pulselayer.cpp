@@ -555,7 +555,6 @@ bool PulseLayer::createStreams (pa_context* c)
     pa_stream_set_latency_update_callback(record->pulseStream(), latency_update_callback, this);
     delete recordParam;
   
-    /*
     PulseLayerType * ringtoneParam = new PulseLayerType();
     ringtoneParam->context = c;
     ringtoneParam->type = RINGTONE_STREAM;
@@ -573,7 +572,7 @@ bool PulseLayer::createStreams (pa_context* c)
     pa_stream_set_write_callback(ringtone->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone->pulseStream(), stream_moved_callback, this);
     delete ringtoneParam;
-    */
+
     pa_threaded_mainloop_signal (m , 0);
 
     flushMain();
