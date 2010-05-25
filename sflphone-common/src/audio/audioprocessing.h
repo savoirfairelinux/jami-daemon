@@ -55,6 +55,11 @@ public:
   void putData(SFLDataFormat *inputData, int nbBytes);
 
   /**
+   * Get data from internal buffer
+   */
+  int getData(SFLDataFormat *outputData);
+
+  /**
    * Process some audio data
    */
   void processAudio(SFLDataFormat *inputData, int nbBytes);

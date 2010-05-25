@@ -39,6 +39,11 @@ class Algorithm {
   virtual void putData(SFLDataFormat *inputData, int nbBytes) = 0;
 
   /**
+   *
+   */
+  virtual int getData(SFLDataFormat *outputData) = 0;
+
+  /**
    * Class implementing this interface must define this function 
    * for audio processing that require synchronization between spkrdata and
    */

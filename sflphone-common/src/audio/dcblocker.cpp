@@ -58,6 +58,8 @@ void DcBlocker::reset()
 
 void DcBlocker::putData(SFLDataFormat *inputData, int nbBytes) {}
 
+int DcBlocker::getData(SFLDataFormat *outputData) { return 0; }
+
 void DcBlocker::process (SFLDataFormat *data, int nbBytes)
 {
     // y(n) = x(n) - x(n-1) + R y(n-1) , R = 0.9999

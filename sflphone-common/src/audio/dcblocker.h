@@ -87,6 +87,11 @@ public:
     virtual void putData(SFLDataFormat *inputData, int nbBytes);
 
     /**
+     * Unused
+     */
+    virtual int getData(SFLDataFormat *outputData);
+
+    /**
      * Perform dc blocking given the input data
      */
     virtual void process(SFLDataFormat *data, int nbBytes);

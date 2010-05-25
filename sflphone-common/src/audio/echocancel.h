@@ -73,6 +73,11 @@ class EchoCancel : public Algorithm {
     virtual void putData(SFLDataFormat *inputData, int nbBytes);
 
     /**
+     * Get data ready to be played by speakers
+     */
+    virtual int getData(SFLDataFormat *outputData);
+
+    /**
      * Unused
      */
     virtual void process(SFLDataFormat *data, int nbBytes);
@@ -151,6 +156,8 @@ class EchoCancel : public Algorithm {
      * Internal buffer for speaker data synchronization
      */
     RingBuffer *_spkrData;
+
+    RingBuffer *_spkrDataOut;
 
     /**
      * Boolean value 
@@ -274,6 +281,8 @@ class EchoCancel : public Algorithm {
 
     int _correlationArray[BUFF_SIZE];
 
+    int _processedByte;
+
     /*
     ofstream *micFile;
     ofstream *spkrFile;
@@ -287,7 +296,7 @@ class EchoCancel : public Algorithm {
      * Noise reduction processing state
      */
     SpeexPreprocessState *_noiseState;
-    
+
 };
 
 #endif

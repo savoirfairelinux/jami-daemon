@@ -42,7 +42,8 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 							_micAdaptCnt(0),
 							_spkrAdaptSize(SPKR_ADAPT_SIZE),
 							_micAdaptSize(MIC_ADAPT_SIZE),
-							_correlationSize(0)
+							_correlationSize(0),
+							_processedByte(0)
 {
   _debug("EchoCancel: Instantiate echo canceller");
 
@@ -57,9 +58,11 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 
   _micData = new RingBuffer(50000);
   _spkrData = new RingBuffer(50000);
+  _spkrDataOut = new RingBuffer(50000);
 
   _micData->createReadPointer();
   _spkrData->createReadPointer();
+  _spkrDataOut->createReadPointer();
 
   // variable used to sync mic and spkr
   _spkrStoped = true;
@@ -158,6 +161,7 @@ void EchoCancel::reset()
 
   _micData->flushAll();
   _spkrData->flushAll();
+  _spkrDataOut->flushAll();
 
   // SFLDataFormat delay[960];
   // memset(delay, 0, sizeof(SFLDataFormat));
@@ -180,7 +184,6 @@ void EchoCancel::reset()
   f=.0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
 
-
   _spkrStoped = true;
 }
 
@@ -199,7 +202,22 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
 
   // Put data in speaker ring buffer
   _spkrData->Put(inputData, nbBytes);
+  _spkrDataOut->Put(inputData, nbBytes);
 
+}
+
+int EchoCancel::getData(SFLDataFormat *outputData)
+{
+   // int availForGet = _spkrData->AvailForGet();
+
+  int copied = 0;
+
+  if(_processedByte > 0) {
+       copied = _spkrDataOut->Get(outputData, _processedByte);
+       _processedByte = 0;
+  }
+
+   return copied;
 }
 
 void EchoCancel::process(SFLDataFormat *data, int nbBytes) {}
@@ -226,7 +244,7 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   int spkrAvail = _spkrData->AvailForGet();
   int micAvail = _micData->AvailForGet();
 
-  _debug("EchoCancel: speaker avail %d, mic avail %d", spkrAvail, micAvail);
+  _debug("EchoCancel: speaker avail %d, mic avail %d, processed: %d", spkrAvail/320, micAvail/320, _processedByte);
 
   // Init number of frame processed
   int nbFrame = 0;
@@ -245,6 +263,9 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     speex_preprocess_run(_noiseState, _tmpOut);
 
     bcopy(_tmpOut, outputData+(nbFrame*_smplPerFrame), byteSize);
+
+    // used to sync with speaker 
+    _processedByte += byteSize;
 
     // echoFile->write ((const char *)_tmpOut, byteSize);
 

@@ -33,6 +33,14 @@ void AudioProcessing::resetAlgorithm(void)
     _algorithm->reset();
 }
 
+int AudioProcessing::getData(SFLDataFormat *outputData)
+{
+  if(_algorithm)
+    return _algorithm->getData(outputData);
+  else
+    return 0;
+}
+
 void AudioProcessing::putData(SFLDataFormat *inputData, int nbBytes)
 {
   if(_algorithm)
