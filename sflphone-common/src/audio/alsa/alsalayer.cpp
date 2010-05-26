@@ -971,10 +971,7 @@ void AlsaLayer::audioCallback(void)
 
 		// TODO: Audio processing should be performed inside mainbuffer
 		// to avoid such problem
-		AudioLayer::_echoCancel->setSamplingRate(_mainBufferSampleRate);
-
-		// Copy far-end signal in echo canceller to adapt filter coefficient
-		AudioLayer::_echoCanceller->putData(out, toGet);	
+		AudioLayer::_echoCancel->setSamplingRate(_mainBufferSampleRate);	
 
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
@@ -998,6 +995,9 @@ void AlsaLayer::audioCallback(void)
 		  write (out, toGet, _PlaybackHandle);
 
                 }
+
+		// Copy far-end signal in echo canceller to adapt filter coefficient
+		AudioLayer::_echoCanceller->putData(out, toGet);
 
             } else {
 
@@ -1099,7 +1099,9 @@ void AlsaLayer::audioCallback(void)
 
                 } else {
 
-                    getMainBuffer()->putData (in, toPut, 100);
+		    int sampleready = AudioLayer::_echoCanceller->processAudio(in, echoCancelledMic, toPut);
+
+                    getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof(SFLDataFormat), 100);
                 }
             }
 
