@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -18,6 +18,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef __SFL_MANAGER_H__
@@ -527,22 +538,17 @@ class ManagerImpl {
     std::vector<std::string> getAudioOutputDeviceList(void);
 
     /**
-     * Set audio output device
+     * Set audio device
      * @param index The index of the soundcard
+     * @param the type of stream, either SFL_PCM_PLAYBACK, SFL_PCM_CAPTURE, SFL_PCM_RINGTONE
      */
-    void setAudioOutputDevice(const int index);
+    void setAudioDevice(const int index, const int streamType);
 
     /**
      * Get list of supported audio input device
      * @return std::vector<std::string> A list of the audio devices supporting capture
      */
     std::vector<std::string> getAudioInputDeviceList(void);
-
-    /**
-     * Set audio input device
-     * @param index The index of the soundcard
-     */
-    void setAudioInputDevice(const int index);
 
     /**
      * Get string array representing integer indexes of output and input device

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -17,6 +17,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef __GLOBAL_H__
@@ -33,7 +44,7 @@
 #include <vector>
 #include "logger.h"
 
-#define SFLPHONED_VERSION "0.9.8~rc1"		/** Version number */
+#define SFLPHONED_VERSION "0.9.8"		/** Version number */
 
 #define HOMEDIR					(getenv ("HOME"))				/** Home directory */
 #define XDG_DATA_HOME			(getenv ("XDG_DATA_HOME"))
@@ -86,6 +97,8 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define PCM_PLUGHW	"plughw"		/** Alsa plugin */ 
 #define PCM_DEFAULT	"default"		/** Default ALSA plugin */
 #define PCM_DMIX	"plug:dmix"		/** Alsa plugin for software mixing */
+#define PCM_DSNOOP	"plug:dsnoop"		/** Alsa plugin for microphone sharing */
+#define PCM_DMIX_DSNOOP "dmix/dsnoop"           /** Audio profile using Alsa dmix/dsnoop */
 
 #define SFL_CODEC_VALID_PREFIX	"libcodec_"	/** Valid prefix for codecs shared library */ 
 #define SFL_CODEC_VALID_EXTEN	".so"		/** Valid extension for codecs shared library */
@@ -95,6 +108,7 @@ static const SOUND_FORMAT INT32 = 0x8;
 #define SFL_PCM_BOTH		0x0021		/** To open both playback and capture devices */ 
 #define SFL_PCM_PLAYBACK	0x0022		/** To open playback device only */
 #define SFL_PCM_CAPTURE		0x0023		/** To open capture device only */
+#define SFL_PCM_RINGTONE        0x0024
 
 #ifdef USE_IAX
 #define	IAX2_ENABLED  true			/** IAX2 support */

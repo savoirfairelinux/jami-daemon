@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2007 - 2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef _ALSA_LAYER_H
@@ -55,8 +67,8 @@ class AlsaLayer : public AudioLayer {
     /**
      * Check if no devices are opened, otherwise close them.
      * Then open the specified devices by calling the private functions open_device
-     * @param indexIn	The number of the card choosen for capture
-     * @param indexOut	The number of the card choosen for playback
+     * @param indexIn	The number of the card chosen for capture
+     * @param indexOut	The number of the card chosen for playback
      * @param sampleRate  The sample rate 
      * @param frameSize	  The frame size
      * @param stream	  To indicate which kind of stream you want to open
@@ -65,7 +77,7 @@ class AlsaLayer : public AudioLayer {
      *			  SFL_PCM_BOTH
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
-    bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream, std::string plugin);
+    bool openDevice(int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream, std::string plugin);
 
     /**
      * Start the capture stream and prepare the playback stream. 
@@ -194,7 +206,7 @@ class AlsaLayer : public AudioLayer {
      * @return true if successful
      *	       false otherwise
      */
-    bool open_device( std::string pcm_p, std::string pcm_c, int flag); 
+    bool open_device( std::string pcm_p, std::string pcm_c, std::string pcm_r,  int flag); 
 
     bool alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate );
 
@@ -205,7 +217,7 @@ class AlsaLayer : public AudioLayer {
      * @param length The size of the buffer
      * @return int The number of frames actually copied
      */
-    int write( void* buffer, int length);
+    int write( void* buffer, int length, snd_pcm_t *handle);
     
     /**
      * Read data from the internal ring buffer
@@ -215,8 +227,6 @@ class AlsaLayer : public AudioLayer {
      * @return int The number of frames actually read
      */
     int read( void* buffer, int toCopy);
-    
-    
 
     /**
      * Recover from XRUN state for capture
@@ -228,15 +238,21 @@ class AlsaLayer : public AudioLayer {
      * Recover from XRUN state for playback
      * ALSA Library API
      */
-    void handle_xrun_playback( void );
-    
+    void handle_xrun_playback( snd_pcm_t *handle );
+
     void* adjustVolume( void* buffer , int len, int stream );
     
-/**
+    /**
      * Handles to manipulate playback stream
      * ALSA Library API
      */
     snd_pcm_t* _PlaybackHandle;
+
+    /**
+     * Handles to manipulate ringtone stream
+     *
+     */
+    snd_pcm_t *_RingtoneHandle;
 
     /**
      * Handles to manipulate capture stream
@@ -257,7 +273,7 @@ class AlsaLayer : public AudioLayer {
     /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;
 
-	bool _is_prepared_playback;
+    bool _is_prepared_playback;
     bool _is_prepared_capture;
     bool _is_running_playback;
     bool _is_running_capture;

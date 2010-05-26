@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include <audiostream.h>
@@ -47,12 +58,12 @@ AudioStream::~AudioStream()
 }
 
 bool
-AudioStream::connectStream()
+AudioStream::connectStream(std::string* deviceName)
 {
     ost::MutexLock guard (_mutex);
 
     if (!_audiostream)
-        _audiostream = createStream (_context);
+      _audiostream = createStream (_context, deviceName);
 
     return true;
 }
@@ -171,7 +182,7 @@ AudioStream::getStreamState (void)
 
 
 pa_stream*
-AudioStream::createStream (pa_context* c)
+AudioStream::createStream (pa_context* c, std::string *deviceName)
 {
     ost::MutexLock guard (_mutex);
 
@@ -196,20 +207,43 @@ AudioStream::createStream (pa_context* c)
         attributes->tlength = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
         attributes->minreq = (uint32_t) -1;
+	
+	pa_threaded_mainloop_lock(_mainloop);
+	if(deviceName)
+	  pa_stream_connect_playback (s , deviceName->c_str(), attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+	else
+	  pa_stream_connect_playback (s , NULL, attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
 
-		pa_threaded_mainloop_lock(_mainloop);
-        pa_stream_connect_playback (s , NULL , attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
-		pa_threaded_mainloop_unlock(_mainloop);
+	pa_threaded_mainloop_unlock(_mainloop);
 
     } else if (_streamType == CAPTURE_STREAM) {
 
         attributes->maxlength = (uint32_t) -1;
         attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &_sample_spec);
 
-		pa_threaded_mainloop_lock(_mainloop);
-        pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+	pa_threaded_mainloop_lock(_mainloop);
+	if(deviceName)
+	  pa_stream_connect_record (s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+	else 
+	  pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+
         pa_threaded_mainloop_unlock(_mainloop);
         
+    } else if (_streamType == RINGTONE_STREAM) {
+
+      attributes->maxlength = (uint32_t) -1;
+      attributes->tlength = pa_usec_to_bytes(100 * PA_USEC_PER_MSEC, &_sample_spec);
+      attributes->prebuf = 0;
+      attributes->minreq = (uint32_t) -1;
+
+      pa_threaded_mainloop_lock(_mainloop);
+      if(deviceName)
+	pa_stream_connect_playback(s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+      else
+	pa_stream_connect_playback(s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+
+      pa_threaded_mainloop_unlock(_mainloop);
+
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);
     } else {

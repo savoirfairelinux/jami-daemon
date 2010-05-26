@@ -25,10 +25,12 @@
 #include <QHash>
 #include <QTreeWidgetItem>
 #include <QVector>
+#include <QTreeWidget>
+#include <QItemDelegate>
+#include <QDragEnterEvent>
 
 #include "CallTreeItem.h"
 #include "Call.h"
-#include "CallTreeWidget.h"
 #include "dbus/metatypes.h"
 
 /** Note from the author: It was previously done by a QAbstractModel + QTreeView, but the sip-call use case is incompatible 
@@ -44,7 +46,7 @@ struct InternalCallModelStruct {
    InternalCallModelStruct* parent;
    CallTreeItem* call;
    Call* call_real;
-   QTreeWidgetItem* currentItem;
+   QTreeWidgetItem* treeItem;
    QList<InternalCallModelStruct*> children;
    bool conference;
 };
@@ -66,7 +68,8 @@ class CallModel : private QTreeWidget {
       public:
       enum ModelType {
          ActiveCall,
-         History
+         History,
+         Address
       };
       
       CallModel(ModelType type, QWidget* parent =0);

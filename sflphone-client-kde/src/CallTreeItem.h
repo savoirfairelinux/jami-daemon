@@ -63,6 +63,7 @@ class CallTreeItem : public QWidget
     QLabel* labelTransferPrefix;
     QLabel* labelTransferNumber;
     QLabel* labelCodec;
+    QLabel* labelSecure;
     
     QWidget* historyItemWidget;
     QLabel* labelHistoryIcon;

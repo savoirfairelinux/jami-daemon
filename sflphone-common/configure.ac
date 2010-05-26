@@ -4,7 +4,7 @@ dnl
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
 	AC_INIT([sflphone],[0.9.8~rc1],[sflphoneteam@savoirfairelinux.com],[sflphone])
-	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
+	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010]])
 AC_REVISION([$Revision$])
 
 	AC_CANONICAL_SYSTEM
@@ -177,7 +177,7 @@ AC_SUBST(UUID_LIBS)
 AC_SUBST(ALSA_LIBS)
 
 	dnl Check for pulseaudio development package - name: libpulse-dev 
-	LIBPULSE_MIN_VERSION=0.9.6
+	LIBPULSE_MIN_VERSION=0.9.15
 	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION})
 	AC_SUBST(PULSEAUDIO_LIBS)
 AC_SUBST(PULSEAUDIO_CFLAGS)

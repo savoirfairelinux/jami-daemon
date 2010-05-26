@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -17,8 +17,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
-
 
 #ifndef __DBUS_H__
 #define __DBUS_H__
@@ -242,16 +252,10 @@ void dbus_set_active_codec_list (const gchar** list, const gchar*);
 gchar* dbus_get_current_codec_name(const callable_obj_t * c);
 
 /**
- * ConfigurationManager - Get the list of available input audio plugins
- * @return gchar** The list of plugins
- */
-gchar** dbus_get_input_audio_plugin_list();
-
-/**
  * ConfigurationManager - Get the list of available output audio plugins
  * @return gchar** The list of plugins
  */
-gchar** dbus_get_output_audio_plugin_list();
+gchar** dbus_get_audio_plugin_list();
 
 /**
  * ConfigurationManager - Select an input audio plugin

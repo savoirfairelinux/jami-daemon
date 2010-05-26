@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
@@ -19,6 +19,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include "sipvoiplink.h"
@@ -269,6 +280,7 @@ SIPVoIPLink::~SIPVoIPLink()
     _debug("UserAgent: SIPVoIPLink destructor called");
 
     terminate();
+
 }
 
 SIPVoIPLink* SIPVoIPLink::instance (const AccountID& id)
@@ -332,6 +344,7 @@ SIPVoIPLink::terminate()
     }
 
     initDone (false);
+
 }
 
 void
@@ -1245,6 +1258,8 @@ SIPVoIPLink::refuse (const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId() ] = NULL;
+
+    removeCall(id);
 
     terminateOneCall (id);
 
@@ -2309,7 +2324,7 @@ bool SIPVoIPLink::createSipTransport(AccountID id)
 	    }
 	    else {
 
-	        // If transport succesfully created, store it in the internal map.
+	        // If transport successfully created, store it in the internal map.
 	        // STUN aware transport are account specific and should not be stored in map.
 	        // TLS transport is ephemeral and is managed by PJSIP, should not be stored either.
 	        addTransportToMap(account->getTransportMapKey(), account->getAccountTransport());
@@ -2906,7 +2921,7 @@ bool SIPVoIPLink::pjsip_shutdown (void)
     /* Shutdown PJLIB */
     pj_shutdown();
 
-    _debug ("UserAgent: Shutted down succesfully");
+    _debug ("UserAgent: Shutted down successfully");
 
     /* Done. */
     return true;

@@ -72,19 +72,21 @@ void CallTreeItem::setCall(Call *call)
    labelCallNumber2 = new QLabel(itemCall->getPeerPhoneNumber());
    labelTransferPrefix = new QLabel(i18n("Transfer to : "));
    labelTransferNumber = new QLabel();
-   QSpacerItem * verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
+   QSpacerItem* verticalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
    
-   QHBoxLayout * mainLayout = new QHBoxLayout();
+   QHBoxLayout* mainLayout = new QHBoxLayout();
    mainLayout->setContentsMargins ( 3, 1, 2, 1);
    
    labelCodec = new QLabel(this);
-   labelCodec->setText("Codec: "+itemCall->getCurrentCodecName());
+   //labelCodec->setText("Codec: "+itemCall->getCurrentCodecName());
+
+   labelSecure = new QLabel(this);
    
    mainLayout->setSpacing(4);
-   QVBoxLayout * descr = new QVBoxLayout();
+   QVBoxLayout* descr = new QVBoxLayout();
    descr->setMargin(1);
    descr->setSpacing(1);
-   QHBoxLayout * transfer = new QHBoxLayout();
+   QHBoxLayout* transfer = new QHBoxLayout();
    transfer->setMargin(0);
    transfer->setSpacing(0);
    mainLayout->addWidget(labelIcon);
@@ -95,6 +97,7 @@ void CallTreeItem::setCall(Call *call)
    }
 
    descr->addWidget(labelCallNumber2);
+   descr->addWidget(labelSecure);
    descr->addWidget(labelCodec);
    transfer->addWidget(labelTransferPrefix);
    transfer->addWidget(labelTransferNumber);
@@ -135,6 +138,11 @@ void CallTreeItem::updated()
                 
       if(state == CALL_STATE_DIALING) {
          labelCallNumber2->setText(itemCall->getCallNumber());
+      }
+      else {
+         labelCodec->setText("Codec: "+itemCall->getCurrentCodecName());
+         if (itemCall->isSecure())
+            labelSecure->setText("⚷");
       }
    }
    else {
