@@ -36,6 +36,7 @@ BuildRequires:	log4c-devel
 BuildRequires:	dbus-glib-devel
 BuildRequires:	gnome-doc-utils
 BuildRequires:	libgnomeui-devel
+BuildRequires:  gettext
 # fix libproxy-pac expansion error
 BuildRequires:	libproxy-webkit
 # fix PolicyKit-authentication-agent expansion error
