@@ -32,12 +32,15 @@
 
 // #include <fstream>
 
+#define MICDELAY 32000
+
 EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 							_frameLength(frameLength),
 							_smplPerFrame(0),
 							_smplPerSeg(0),
 							_nbSegmentPerFrame(0),
-							_historyLength(0),
+							_micHistoryLength(0),
+							_spkrHistoryLength(0),
 							_spkrLevel(0),
 							_micLevel(0),
 							_spkrHistCnt(0),
@@ -62,10 +65,10 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   micFile = new ofstream("micData", ofstream::binary);
   echoFile = new ofstream("echoData", ofstream::binary);
   spkrFile = new ofstream("spkrData", ofstream::binary);
+  
+  micLevelData = new ofstream("micLevelData", ofstream::binary);
+  spkrLevelData = new ofstream("spkrLevelData", ofstream::binary);
   */
-
-  micLearningData = new ofstream("micLearningData", ofstream::binary);
-  spkrLearningData = new ofstream("spkrLearningData", ofstream::binary);
 
   _micData = new RingBuffer(50000);
   _spkrData = new RingBuffer(50000);
@@ -80,7 +83,8 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 
   _smplPerFrame = (_samplingRate * _frameLength) / MS_PER_SEC;
   _smplPerSeg = (_samplingRate * SEGMENT_LENGTH) / MS_PER_SEC;
-  _historyLength = ECHO_LENGTH / SEGMENT_LENGTH;
+  _micHistoryLength = MIC_LENGTH / SEGMENT_LENGTH;
+  _spkrHistoryLength = SPKR_LENGTH / SEGMENT_LENGTH;
   _nbSegmentPerFrame =  _frameLength / SEGMENT_LENGTH;
 
 
@@ -130,12 +134,13 @@ EchoCancel::~EchoCancel()
   delete micFile;
   delete spkrFile;
   delete echoFile;
+
+  micLevelData->close();
+  spkrLevelData->close();
+  delete micLevelData;
+  delete spkrLevelData;
   */
 
-  micLearningData->close();
-  spkrLearningData->close();
-  delete micLearningData;
-  delete spkrLearningData;
 
 }
 
@@ -156,7 +161,8 @@ void EchoCancel::reset()
 
   _smplPerFrame = (_samplingRate * _frameLength) / MS_PER_SEC;
   _smplPerSeg = (_samplingRate * SEGMENT_LENGTH) / MS_PER_SEC;
-  _historyLength = ECHO_LENGTH / SEGMENT_LENGTH;
+  _micHistoryLength = MIC_LENGTH / SEGMENT_LENGTH;
+  _spkrHistoryLength = SPKR_LENGTH / SEGMENT_LENGTH;
   _nbSegmentPerFrame =  _frameLength / SEGMENT_LENGTH;
 
   memset(_delayLineAmplify, 0, MAX_DELAY_LINE_AMPL*sizeof(float));
@@ -174,10 +180,12 @@ void EchoCancel::reset()
   _spkrData->flushAll();
   _spkrDataOut->flushAll();
 
-  // SFLDataFormat delay[960];
-  // memset(delay, 0, sizeof(SFLDataFormat));
+  /*
+  SFLDataFormat delay[MICDELAY];
+  memset(delay, 0, sizeof(SFLDataFormat));
 
-  // _micData->Put(delay, 960*2);
+  _micData->Put(delay, MICDELAY*2);
+  */
 
   speex_preprocess_state_destroy(_noiseState);
 
@@ -202,18 +210,20 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
 {
   // std::cout << "putData nbBytes: " << nbBytes << std::endl;
 
-  /*
+
   if(_spkrStoped) {
       _debug("EchoCancel: Flush data");
       _micData->flushAll();
       _spkrData->flushAll();
       _spkrStoped = false;
   }
-  */
 
   // Put data in speaker ring buffer
   _spkrData->Put(inputData, nbBytes);
   _spkrDataOut->Put(inputData, nbBytes);
+
+  // _debug("********************** signal event *****************");
+  // _event.signal();
 
 }
 
@@ -235,11 +245,16 @@ void EchoCancel::process(SFLDataFormat *data, int nbBytes) {}
 
 int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
-  /*
+
   if(_spkrStoped) {
     return 0;
   }
-  */
+
+  // _debug("****************************** wait signal ********************************");
+
+  // _event.wait();
+
+  // _debug("****************************** process ************************ ********");
 
   int byteSize = _smplPerFrame*sizeof(SFLDataFormat);
 
@@ -260,15 +275,31 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   // Init number of frame processed
   int nbFrame = 0;
 
+
   // Get data from mic and speaker internal buffer
-  while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
+  // while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
+  if ((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
+
+    _debug("----------- ProcessData ----------");
 
     // get synchronized data
     _spkrData->Get(_tmpSpkr, byteSize);
     _micData->Get(_tmpMic, byteSize);
 
+    // micFile->write((const char *)_tmpMic, byteSize);
+    // spkrFile->write((const char *)_tmpSpkr, byteSize);
+
+    /*
+    while((computeAmplitudeLevel(_tmpSpkr, _smplPerFrame) < MIN_SIG_LEVEL) && (spkrAvail >= byteSize)) {
+      _spkrData->Get(_tmpSpkr, byteSize);
+      spkrAvail = _spkrData->AvailForGet();
+    }
+    */
+
     // Processed echo cancellation
     performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
+
+    // echoFile->write((const char *)_tmpOut, byteSize);
 
     // Remove noise
     speex_preprocess_run(_noiseState, _tmpOut);
@@ -286,6 +317,10 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     // increment nb of frame processed
     ++nbFrame;
   }
+
+  
+
+  // _event.reset();
 
   return nbFrame * _smplPerFrame;
 }
@@ -306,13 +341,23 @@ void EchoCancel::setSamplingRate(int smplRate) {
 
 void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
 
-  for(int k = 0; k < _nbSegmentPerFrame; k++) {
+  // int tempmiclevel[_nbSegmentPerFrame];
+  // int tempspkrlevel[_nbSegmentPerFrame];
 
+  for(int k = 0; k < _nbSegmentPerFrame; k++) {
+    /*
     updateEchoCancel(micData+(k*_smplPerSeg), spkrData+(k*_smplPerSeg));
 
-    _spkrLevel = getMaxAmplitude(_avgSpkrLevelHist);
-    _micLevel = getMaxAmplitude(_avgMicLevelHist);
+    _spkrLevel = getMaxAmplitude(_avgSpkrLevelHist, _spkrHistoryLength);
+    _micLevel = getMaxAmplitude(_avgMicLevelHist, _micHistoryLength);
 
+    // _debug("_spkrLevel: (max): %d", _spkrLevel);
+    // _debug("_micLevel: (min): %d", _micLevel);
+
+    tempspkrlevel[k] = _spkrLevel;
+    tempmiclevel[k] = _micLevel;
+    */
+    /*
     if(_micLevel >= MIN_SIG_LEVEL) {
       if(_spkrLevel < MIN_SIG_LEVEL) {
 	increaseFactor(0.02);
@@ -323,46 +368,73 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
       else {
 	// decreaseFactor();
 	_amplFactor = 0.0;
+	_debug("CANCELECHO AAAAAA");
       }
     }
     else {
       if(_spkrLevel < MIN_SIG_LEVEL) {
 	increaseFactor(0.02);
+	// _amplFactor = 0.0;
+	// _debug("CANCELECHO BBBBBBB");
       }
       else {
 	// decreaseFactor();
 	_amplFactor = 0.0;
+	_debug("CANCELECHO CCCCCCCC");
       }
+    }
+    */
+    /*
+    if(_spkrLevel >= MIN_SIG_LEVEL) {
+      _amplFactor = 0.0;
+      // _debug("------------------------------------------ echocancel");
+    }
+    else {
+      increaseFactor(0.02);
     }
 
     // lowpass filtering
     float amplify = (_lastAmplFactor + _amplFactor) / 2;
     _lastAmplFactor = _amplFactor;
-
     amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), amplify);
+
+    */
+    amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), 1.0);
     
   }
+
+  // micLevelData->write((const char *)tempmiclevel, sizeof(int)*_nbSegmentPerFrame);
+  // spkrLevelData->write((const char *)tempspkrlevel, sizeof(int)*_nbSegmentPerFrame);
   
 }
 
 
 void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData) {
 
-  int micLvl = computeAmplitudeLevel(micData);
-  int spkrLvl = computeAmplitudeLevel(spkrData);
+  int micLvl = computeAmplitudeLevel(micData, _smplPerSeg);
+  int spkrLvl = computeAmplitudeLevel(spkrData, _smplPerSeg);
 
   // Add 1 to make sure we are not dividing by 0
   _avgMicLevelHist[_micHistCnt++] = micLvl+1;
   _avgSpkrLevelHist[_spkrHistCnt++] = spkrLvl+1;
+  
+  // spkrLevelData->write((const char *)_spkrAdaptArray, _spkrAdaptSize*sizeof(int));
+  // micLevelData->write((const char *)_micAdaptArray, _micAdaptSize*sizeof(int));
 
-  if(_micHistCnt >= _historyLength)
+
+  // _debug("micLevel: %d", micLvl);
+  // _debug("spkrLevel: %d", spkrLvl);
+
+  if(_micHistCnt >= _micHistoryLength)
     _micHistCnt = 0;
 
-  if(_spkrHistCnt >= _historyLength)
+  if(_spkrHistCnt >= _spkrHistoryLength)
     _spkrHistCnt = 0;
     
+  /*
   // if adaptation done, stop here
-  if(_adaptDone)
+  // if(_adaptDone)
+  if(true)
     return;
 
   // start learning only if there is data played through speaker
@@ -383,7 +455,7 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
   if(_adaptCnt > _spkrAdaptSize) {
       int k = _adaptCnt - _spkrAdaptSize;
       _correlationArray[k] = performCorrelation(_spkrAdaptArray, _micAdaptArray+k, _correlationSize); 
-      _debug("EchoCancel: Correlation: %d", _correlationArray[k]);
+      // _debug("EchoCancel: Correlation: %d", _correlationArray[k]);
   }
 
   _adaptCnt++;
@@ -394,18 +466,16 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
     _adaptDone = true;
     _amplDelayIndexOut = 0;// getMaximumIndex(_correlationArray, _correlationSize);
     _debug("EchoCancel: Echo length %d", _amplDelayIndexOut);
-    spkrLearningData->write((const char *)_spkrAdaptArray, _spkrAdaptSize*sizeof(int));
-    micLearningData->write((const char *)_micAdaptArray, _micAdaptSize*sizeof(int));
   }
-    
+  */
 }
 
 
-int EchoCancel::computeAmplitudeLevel(SFLDataFormat *data) {
+int EchoCancel::computeAmplitudeLevel(SFLDataFormat *data, int size) {
   
   int level = 0;
 
-  for(int i = 0; i < _smplPerSeg; i++) {
+  for(int i = 0; i < size; i++) {
     if(data[i] >= 0.0)
       level += (int)data[i];
     else
@@ -418,11 +488,11 @@ int EchoCancel::computeAmplitudeLevel(SFLDataFormat *data) {
 }
 
 
-int EchoCancel::getMaxAmplitude(int *data) {
+int EchoCancel::getMaxAmplitude(int *data, int size) {
 
   SFLDataFormat level = 0.0;
 
-  for(int i = 0; i < _historyLength; i++) {
+  for(int i = 0; i < size; i++) {
     if(data[i] >= level)
       level = data[i];
   }
@@ -433,17 +503,19 @@ int EchoCancel::getMaxAmplitude(int *data) {
 
 void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData, float amplify) {
 
+  for(int i = 0; i < _smplPerSeg; i++)
+      outputData[i] = micData[i];
 
   // Use delayed amplification factor due to sound card latency 
-  for(int i = 0; i < _smplPerSeg; i++) {
-      outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayLineAmplify[_amplDelayIndexOut]);
-  }
-
   // do not increment amplitude array if adaptation is not done 
-  if (_adaptDone) {
+  // if (_adaptDone) {
+  /*
+  if (true) {
     for(int i = 0; i < _smplPerSeg; i++) {
         outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayLineAmplify[_amplDelayIndexOut]);
     }
+    _amplDelayIndexOut++;
+    _delayLineAmplify[_amplDelayIndexIn++] = amplify;
   }
   else {
     for(int i = 0; i < _smplPerSeg; i++) {
@@ -452,15 +524,12 @@ void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData
     return;
   }
 
-
-  _amplDelayIndexOut++;
-  _delayLineAmplify[_amplDelayIndexIn++] = amplify;
-
   if(_amplDelayIndexOut >= MAX_DELAY_LINE_AMPL)
     _amplDelayIndexOut = 0;
 
   if(_amplDelayIndexIn >= MAX_DELAY_LINE_AMPL)
     _amplDelayIndexIn = 0;
+  */
 }
 
 

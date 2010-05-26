@@ -951,7 +951,6 @@ void PulseLayer::readFromMic (void)
 	    // echo cancellation processing
 	    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
 
-	    _debug("sampleready: %d", sampleready);
             // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 	    if(sampleready)
 	      getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);

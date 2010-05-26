@@ -31,9 +31,10 @@
 #ifndef ECHOCANCEL_H
 #define ECHOCANCEL_H
 
-#include "audioprocessing.h"
+#include <cc++/thread.h>
 #include <speex/speex_preprocess.h>
 
+#include "audioprocessing.h"
 #include "ringbuffer.h"
 
 // Number of ms in sec
@@ -44,9 +45,11 @@
 
 // Length of the echo tail in ms
 #define ECHO_LENGTH 50
+#define SPKR_LENGTH 50
+#define MIC_LENGTH 50
 
 // Voice level threashold 
-#define MIN_SIG_LEVEL 1000
+#define MIN_SIG_LEVEL 75
 
 // Delay between mic and speaker
 #define DELAY_AMPLIFY 60
@@ -129,12 +132,12 @@ class EchoCancel : public Algorithm {
      * Compute the average amplitude of the signal.
      * \param data must be of SEGMENT_LENGTH long.
      */ 
-    int computeAmplitudeLevel(SFLDataFormat *data);
+    int computeAmplitudeLevel(SFLDataFormat *data, int size);
 
     /**
      * Return the max amplitude provided any of _avgSpkrLevelHist or _avgMicLevelHist
      */
-    int getMaxAmplitude(int *data);
+    int getMaxAmplitude(int *data, int size);
 
     /**
      * Apply gain factor on input buffer and copy result in output buffer.
@@ -211,7 +214,9 @@ class EchoCancel : public Algorithm {
      * Number of segment considered in history 
      * Mainly used to compute signal level
      */
-    int _historyLength;
+    int _micHistoryLength;
+
+    int _spkrHistoryLength;
 
     /**
      * Current playback level
@@ -294,19 +299,19 @@ class EchoCancel : public Algorithm {
 
     int _processedByte;
 
-    /*
     ofstream *micFile;
     ofstream *spkrFile;
     ofstream *echoFile;
-    */
 
-    ofstream *micLearningData;
-    ofstream *spkrLearningData;
+    ofstream *micLevelData;
+    ofstream *spkrLevelData;
 
     /**
      * Noise reduction processing state
      */
     SpeexPreprocessState *_noiseState;
+
+    ost::Event _event;
 
 };
 
