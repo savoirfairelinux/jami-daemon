@@ -40,6 +40,9 @@ BuildRequires:	libcppunit-devel
 BuildRequires:	libuuid-devel
 BuildRequires:	libopenssl-devel
 BuildRequires:	libexpat0
+BuildRequires:  alsa-devel
+BuildRequires:  dbus-1-devel
+BuildRequires:  pcre-devel
 %endif
 
 %if %{defined fedora_version}
@@ -51,6 +54,9 @@ BuildRequires:	ccrtp-devel
 BuildRequires:	cppunit-devel
 BuildRequires:	uuid-devel
 BuildRequires:	gsm-devel
+BuildRequires:  alsa-lib-devel
+BuildRequires:  dbus-devel
+BuildRequires:	pcre-devel
 %endif
 
 Requires:	libsamplerate
