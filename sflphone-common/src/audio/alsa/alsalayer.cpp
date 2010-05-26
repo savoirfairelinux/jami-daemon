@@ -472,6 +472,8 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
         _debugAlsa ("Audio: Error: Cannot set sample rate (%s)", snd_strerror (err));
         return false;
     }
+    else
+      _debug("Audio: Set audio rate to %d", rate);
 
     if (dir!= 0) {
         _debugAlsa ("Audio: Error: (%i) The choosen rate %d Hz is not supported by your hardware.Using %d Hz instead. ",type ,rate, exact_ivalue);

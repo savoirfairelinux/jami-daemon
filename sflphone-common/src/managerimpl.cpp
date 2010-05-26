@@ -2777,13 +2777,8 @@ void ManagerImpl::selectAudioDriver (void) {
 	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
 	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
 	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
-
-	sampleRate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
-
-	if (sampleRate <= 0 || sampleRate > 48000) {
-		sampleRate = 44100;
-	}
-
+	// sampleRate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
+	sampleRate = _mainBuffer.getInternalSamplingRate();
 	frameSize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
 
 	/* Only for the ALSA layer, we check the sound card information */
@@ -2815,6 +2810,7 @@ void ManagerImpl::selectAudioDriver (void) {
 	/* Open the audio devices */
 	_audiodriver->openDevice(numCardIn, numCardOut, numCardRing, sampleRate, frameSize,
 			SFL_PCM_BOTH, alsaPlugin);
+
 	/* Notify the error if there is one */
 
 	if (_audiodriver -> getErrorMessage() != -1)
@@ -2833,7 +2829,8 @@ void ManagerImpl::switchAudioManager (void) {
 
 	type = _audiodriver->getLayerType();
 
-	samplerate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
+	// samplerate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
+	samplerate = _mainBuffer.getInternalSamplingRate();
 	framesize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
 
 	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
