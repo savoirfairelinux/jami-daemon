@@ -237,7 +237,11 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
       attributes->minreq = (uint32_t) -1;
 
       pa_threaded_mainloop_lock(_mainloop);
-      pa_stream_connect_playback(s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+      if(deviceName)
+	pa_stream_connect_playback(s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+      else
+	pa_stream_connect_playback(s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+
       pa_threaded_mainloop_unlock(_mainloop);
 
     } else if (_streamType == UPLOAD_STREAM) {
