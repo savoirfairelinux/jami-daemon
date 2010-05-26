@@ -66,7 +66,7 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   echoFile = new ofstream("echoData", ofstream::binary);
   spkrFile = new ofstream("spkrData", ofstream::binary);
   
-  micLevelData = new ofstream("micLevelData", ofstream::binary);
+  micLevelData = new ofstream("micLevelData", ofstream:binary);
   spkrLevelData = new ofstream("spkrLevelData", ofstream::binary);
   */
 
@@ -168,7 +168,7 @@ void EchoCancel::reset()
   memset(_delayLineAmplify, 0, MAX_DELAY_LINE_AMPL*sizeof(float));
 
   _amplDelayIndexIn = 0;
-  _amplDelayIndexOut = 0;
+  _amplDelayIndexOut = 100;
 
   _adaptDone = false;
   _adaptStarted = false;
@@ -204,6 +204,8 @@ void EchoCancel::reset()
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
 
   _spkrStoped = true;
+
+  _processedByte = 0;
 }
 
 void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
@@ -270,17 +272,15 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   int spkrAvail = _spkrData->AvailForGet();
   int micAvail = _micData->AvailForGet();
 
-  _debug("EchoCancel: speaker avail %d, mic avail %d, processed: %d", spkrAvail/320, micAvail/320, _processedByte);
+  _debug("EchoCancel: speaker avail %d, mic avail %d, processed: %d", spkrAvail/320, micAvail/320, _processedByte/320);
 
   // Init number of frame processed
   int nbFrame = 0;
 
 
   // Get data from mic and speaker internal buffer
-  // while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
-  if ((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
-
-    _debug("----------- ProcessData ----------");
+  while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
+  // if ((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
 
     // get synchronized data
     _spkrData->Get(_tmpSpkr, byteSize);
@@ -318,8 +318,6 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     ++nbFrame;
   }
 
-  
-
   // _event.reset();
 
   return nbFrame * _smplPerFrame;
@@ -345,7 +343,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
   // int tempspkrlevel[_nbSegmentPerFrame];
 
   for(int k = 0; k < _nbSegmentPerFrame; k++) {
-    /*
+
     updateEchoCancel(micData+(k*_smplPerSeg), spkrData+(k*_smplPerSeg));
 
     _spkrLevel = getMaxAmplitude(_avgSpkrLevelHist, _spkrHistoryLength);
@@ -354,9 +352,9 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     // _debug("_spkrLevel: (max): %d", _spkrLevel);
     // _debug("_micLevel: (min): %d", _micLevel);
 
-    tempspkrlevel[k] = _spkrLevel;
-    tempmiclevel[k] = _micLevel;
-    */
+    // tempspkrlevel[k] = _spkrLevel;
+    // tempmiclevel[k] = _micLevel;
+
     /*
     if(_micLevel >= MIN_SIG_LEVEL) {
       if(_spkrLevel < MIN_SIG_LEVEL) {
@@ -384,10 +382,10 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
       }
     }
     */
-    /*
+
+
     if(_spkrLevel >= MIN_SIG_LEVEL) {
       _amplFactor = 0.0;
-      // _debug("------------------------------------------ echocancel");
     }
     else {
       increaseFactor(0.02);
@@ -398,8 +396,8 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     _lastAmplFactor = _amplFactor;
     amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), amplify);
 
-    */
-    amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), 1.0);
+
+    // amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), 1.0);
     
   }
 
@@ -503,13 +501,12 @@ int EchoCancel::getMaxAmplitude(int *data, int size) {
 
 void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData, float amplify) {
 
-  for(int i = 0; i < _smplPerSeg; i++)
-      outputData[i] = micData[i];
+  // for(int i = 0; i < _smplPerSeg; i++)
+  //  outputData[i] = micData[i];
 
   // Use delayed amplification factor due to sound card latency 
   // do not increment amplitude array if adaptation is not done 
   // if (_adaptDone) {
-  /*
   if (true) {
     for(int i = 0; i < _smplPerSeg; i++) {
         outputData[i] = (SFLDataFormat)(((float)micData[i])*_delayLineAmplify[_amplDelayIndexOut]);
@@ -529,7 +526,7 @@ void EchoCancel::amplifySignal(SFLDataFormat *micData, SFLDataFormat *outputData
 
   if(_amplDelayIndexIn >= MAX_DELAY_LINE_AMPL)
     _amplDelayIndexIn = 0;
-  */
+
 }
 
 

@@ -857,9 +857,6 @@ void PulseLayer::writeToSpeaker (void)
 		// to avoid such problem
 		AudioLayer::_echoCancel->setSamplingRate(_mainBufferSampleRate);
 
-		// Copy far-end signal in echo canceller to adapt filter coefficient
-		AudioLayer::_echoCanceller->putData(out, byteToGet);
-
                 // test if resampling is required
                 if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
@@ -882,6 +879,9 @@ void PulseLayer::writeToSpeaker (void)
                     pa_stream_write (playback->pulseStream(), out, byteToGet, NULL, 0, PA_SEEK_RELATIVE);
 
                 }
+
+		// Copy far-end signal in echo canceller to adapt filter coefficient
+		AudioLayer::_echoCanceller->putData(out, byteToGet);
 
                 pa_xfree (out);
 
@@ -939,7 +939,7 @@ void PulseLayer::readFromMic (void)
 
 	    // captureFile->write ((const char *)data, nbSample*sizeof(SFLDataFormat));
 
-            nbSample = _converter->downsampleData ( (SFLDataFormat*) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
+            nbSample = _converter->downsampleData ( (SFLDataFormat *) data, rsmpl_out, _mainBufferSampleRate, _audioSampleRate, nb_sample_up);
 
 	    // captureRsmplFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
@@ -959,8 +959,11 @@ void PulseLayer::readFromMic (void)
 
         } else {
 
+	    // echo cancellation processing
+	  int sampleready = _echoCanceller->processAudio((SFLDataFormat *)data, echoCancelledMic, r);
+
             // no resampling required
-            getMainBuffer()->putData ( (void*) data, r, 100);
+            getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
         }
 
 
