@@ -59,12 +59,14 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 {
   _debug("EchoCancel: Instantiate echo canceller");
 
+  /*
   micFile = new ofstream("micData", ofstream::binary);
   echoFile = new ofstream("echoData", ofstream::binary);
   spkrFile = new ofstream("spkrData", ofstream::binary);
   
   micLevelData = new ofstream("micLevelData", ofstream::binary);
   spkrLevelData = new ofstream("spkrLevelData", ofstream::binary);
+  */
 
   _micData = new RingBuffer(50000);
   _spkrData = new RingBuffer(50000);
@@ -121,6 +123,7 @@ EchoCancel::~EchoCancel()
 
   speex_preprocess_state_destroy(_noiseState);
 
+  /*
   micFile->close();
   spkrFile->close();
   echoFile->close();
@@ -133,7 +136,7 @@ EchoCancel::~EchoCancel()
   spkrLevelData->close();
   delete micLevelData;
   delete spkrLevelData;
-
+  */
 
 
 }
@@ -179,6 +182,8 @@ void EchoCancel::reset()
   _noiseState = speex_preprocess_state_init(_smplPerFrame, _samplingRate);
   int i=1;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
+  i=-30;
+  speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
   i=0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_AGC, &i);
   i=8000;
@@ -197,8 +202,6 @@ void EchoCancel::reset()
 
 void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
 {
-  // std::cout << "putData nbBytes: " << nbBytes << std::endl;
-
 
   if(_spkrStoped) {
       _debug("EchoCancel: Flush data");
@@ -209,16 +212,10 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
 
   // Put data in speaker ring buffer
   _spkrData->Put(inputData, nbBytes);
-  _spkrDataOut->Put(inputData, nbBytes);
-
-  // _debug("********************** signal event *****************");
-  // _event.signal();
-
 }
 
 int EchoCancel::getData(SFLDataFormat *outputData)
 {
-   // int availForGet = _spkrData->AvailForGet();
 
   int copied = 0;
 
@@ -238,12 +235,6 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   if(_spkrStoped) {
     return 0;
   }
-
-  // _debug("****************************** wait signal ********************************");
-
-  // _event.wait();
-
-  // _debug("****************************** process ************************ ********");
 
   int byteSize = _smplPerFrame*sizeof(SFLDataFormat);
 
@@ -267,29 +258,26 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
 
   // Get data from mic and speaker internal buffer
   while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
-  // if ((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
 
     // get synchronized data
     _spkrData->Get(_tmpSpkr, byteSize);
     _micData->Get(_tmpMic, byteSize);
-
-    micFile->write((const char *)_tmpMic, byteSize);
-    spkrFile->write((const char *)_tmpSpkr, byteSize);
-
+    
+    // micFile->write((const char *)_tmpMic, byteSize);
+    // spkrFile->write((const char *)_tmpSpkr, byteSize);
+    
     // Remove noise
     speex_preprocess_run(_noiseState, _tmpMic);
 
     // Processed echo cancellation
     performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
 
-    echoFile->write((const char *)_tmpOut, byteSize);
+    // echoFile->write((const char *)_tmpOut, byteSize);
 
     bcopy(_tmpOut, outputData+(nbFrame*_smplPerFrame), byteSize);
 
     // used to sync with speaker 
     _processedByte += byteSize;
-
-    // echoFile->write ((const char *)_tmpOut, byteSize);
 
     spkrAvail = _spkrData->AvailForGet();
     micAvail = _micData->AvailForGet();
@@ -319,8 +307,8 @@ void EchoCancel::setSamplingRate(int smplRate) {
 
 void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
 
-  int tempmiclevel[_nbSegmentPerFrame];
-  int tempspkrlevel[_nbSegmentPerFrame];
+  // int tempmiclevel[_nbSegmentPerFrame];
+  // int tempspkrlevel[_nbSegmentPerFrame];
 
   for(int k = 0; k < _nbSegmentPerFrame; k++) {
 
@@ -332,8 +320,8 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     // _debug("_spkrLevel: (max): %d", _spkrLevel);
     // _debug("_micLevel: (min): %d", _micLevel);
 
-    tempspkrlevel[k] = _spkrLevel;
-    tempmiclevel[k] = _micLevel;
+    // tempspkrlevel[k] = _spkrLevel;
+    // tempmiclevel[k] = _micLevel;
 
     if(_spkrLevel >= MIN_SIG_LEVEL) {
         if(_micLevel > _spkrLevel) {
@@ -358,8 +346,8 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     
   }
 
-  micLevelData->write((const char *)tempmiclevel, sizeof(int)*_nbSegmentPerFrame);
-  spkrLevelData->write((const char *)tempspkrlevel, sizeof(int)*_nbSegmentPerFrame);
+  // micLevelData->write((const char *)tempmiclevel, sizeof(int)*_nbSegmentPerFrame);
+  // spkrLevelData->write((const char *)tempspkrlevel, sizeof(int)*_nbSegmentPerFrame);
   
 }
 
