@@ -50,6 +50,9 @@
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h> // ost::Time
 
+// Frequency (in packet number)
+#define RTP_TIMESTAMP_RESET_FREQ 100
+
 namespace sfl {
 
     static const int schedulingTimeout = 100000;
@@ -96,11 +99,11 @@ namespace sfl {
             void putDtmfEvent(int digit);
 
             /**
-            	 * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
-            	 * incremented as if it was microphone audio. This function change the payload type of the rtp session,
-            	 * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
-            	 * back the codec payload for further audio processing.
-            	 */
+	     * Send DTMF over RTP (RFC2833). The timestamp and sequence number must be
+	     * incremented as if it was microphone audio. This function change the payload type of the rtp session,
+	     * send the appropriate DTMF digit using this payload, discard coresponding data from mainbuffer and get
+	     * back the codec payload for further audio processing.
+	     */
             void sendDtmfEvent(sfl::DtmfEvent *dtmf);
 
             inline float computeCodecFrameSize (int codecSamplePerFrame, int codecClockRate) {
@@ -206,6 +209,17 @@ namespace sfl {
               */
              int _timestamp;
 
+	     /**
+	      * Timestamp incrementation value based on codec period length (framesize) 
+	      * except for G722 which require a 8 kHz incrementation.
+	      */
+	     int _timestampIncrement;
+
+	     /**
+	      * Timestamp reset freqeuncy specified in number of packet sent
+	      */
+	     short _timestampCount;
+
              /**
               * Time counter used to trigger incoming call notification
               */
@@ -215,7 +229,7 @@ namespace sfl {
               * EventQueue used to store list of DTMF-
               */
              EventQueue _eventQueue;
-            
+	     
         protected:
              SIPCall * _ca;
     };    
@@ -238,6 +252,8 @@ namespace sfl {
      _manager(manager),
      _converterSamplingRate(0),
      _timestamp(0),
+     _timestampIncrement(0),
+     _timestampCount(0),
      _countNotificationTime(0),
      _ca (sipcall)
     {
@@ -329,18 +345,26 @@ namespace sfl {
         _codecSampleRate = _audiocodec->getClockRate();
         _codecFrameSize = _audiocodec->getFrameSize();
 
+	// G722 requires timestamp to be incremented at 8 kHz
+	if (_audiocodec->getPayload() == 9)
+	    _timestampIncrement = 160;
+	else
+	    _timestampIncrement = _codecFrameSize;
+	  
+
         _debug("RTP: Codec sampling rate: %d", _codecSampleRate);
         _debug("RTP: Codec frame size: %d", _codecFrameSize);
+	_debug("RTP: RTP timestamp increment: %d", _timestampIncrement);
 
-        //TODO: figure out why this is necessary.
+        // Even if specified as a 16 kHz codec, G722 requires rtp sending rate to be 8 kHz
         if (_audiocodec->getPayload() == 9) {
-            _debug ("RTP: Setting payload format to G722");
+            _debug ("RTP: Setting G722 payload format");
             static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
         } else if (_audiocodec->hasDynamicPayload()) {
-            _debug ("RTP: Setting a dynamic payload format");
+            _debug ("RTP: Setting dynamic payload format");
             static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
         } else if (!_audiocodec->hasDynamicPayload() && _audiocodec->getPayload() != 9) {
-            _debug ("RTP: Setting a static payload format");
+            _debug ("RTP: Setting static payload format");
             static_cast<D*>(this)->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
         }
     }
@@ -412,44 +436,44 @@ namespace sfl {
     template<typename D>
     void AudioRtpSession<D>::sendDtmfEvent(sfl::DtmfEvent *dtmf)
     {
-		_debug("RTP: Send Dtmf %d", _eventQueue.size());
+        _debug("RTP: Send Dtmf %d", _eventQueue.size());
 
-		 _timestamp += 160;
+	_timestamp += 160;
 
-		 // discard equivalent size of audio
-		processDataEncode();
+	// discard equivalent size of audio
+	processDataEncode();
 
-		 // change Payload type for DTMF payload
-		 static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) 101, 8000));
+	// change Payload type for DTMF payload
+	static_cast<D*>(this)->setPayloadFormat (ost::DynamicPayloadFormat ( (ost::PayloadType) 101, 8000));
+	
+	// Set marker in case this is a new Event
+	if(dtmf->newevent)
+	    static_cast<D*>(this)->setMark (true);
+	
+	static_cast<D*>(this)->putData (_timestamp, (const unsigned char*)(&(dtmf->payload)), sizeof(ost::RTPPacket::RFC2833Payload));
 
-		 // Set marker in case this is a new Event
-		 if(dtmf->newevent)
-			 static_cast<D*>(this)->setMark (true);
+	// This is no more a new event
+	if(dtmf->newevent) {
+	    dtmf->newevent = false;
+	    static_cast<D*>(this)->setMark (false);
+	}
 
-		 static_cast<D*>(this)->putData (_timestamp, (const unsigned char*)(&(dtmf->payload)), sizeof(ost::RTPPacket::RFC2833Payload));
+	// get back the payload to audio
+	static_cast<D*>(this)->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
 
-		 // This is no more a new event
-		 if(dtmf->newevent) {
-			 dtmf->newevent = false;
-			 static_cast<D*>(this)->setMark (false);
-		 }
+	// decrease length remaining to process for this event
+	dtmf->length -= 160;
+	
+	dtmf->payload.duration += 1;
+	
+	// next packet is going to be the last one
+	if((dtmf->length - 160) < 160)
+	    dtmf->payload.ebit = true;
 
-		 // get back the payload to audio
-		 static_cast<D*>(this)->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
-
-		 // decrease length remaining to process for this event
-		 dtmf->length -= 160;
-
-		 dtmf->payload.duration += 1;
-
-		 // next packet is going to be the last one
-		 if((dtmf->length - 160) < 160)
-			dtmf->payload.ebit = true;
-
-		 if(dtmf->length < 160) {
-			 delete dtmf;
-		     _eventQueue.pop_front();
-		 }
+	if(dtmf->length < 160) {
+	    delete dtmf;
+	    _eventQueue.pop_front();
+	}
     }
 
     template <typename D>
@@ -567,7 +591,7 @@ namespace sfl {
         //   4. send it
 
         // Increment timestamp for outgoing packet
-        _timestamp += _codecFrameSize;
+        _timestamp += _timestampIncrement;
 
         if (!_audiolayer) {
             _debug ("No audiolayer available for MIC");
@@ -643,11 +667,11 @@ namespace sfl {
         int sessionWaiting;
         int threadSleep = 0;
 
-		if (_codecSampleRate != 0){
-			threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
-		}
+	if (_codecSampleRate != 0){
+	    threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
+	}
         else {
-        	threadSleep = _layerFrameSize;
+	    threadSleep = _layerFrameSize;
         }
 
         TimerPort::setTimer (threadSleep);
@@ -668,15 +692,20 @@ namespace sfl {
 
         while (!testCancel()) {
 
-        	// ost::MutexLock lock(*(_manager->getAudioLayerMutex()));
+	    // Reset timestamp to make sure the timing information are up to date
+	    if(_timestampCount > RTP_TIMESTAMP_RESET_FREQ) {
+	        _timestamp = static_cast<D*>(this)->getCurrentTimestamp();
+		_timestampCount = 0;
+	    }
+	    _timestampCount++;
 
-        	_manager->getAudioLayerMutex()->enter();
+	  
+	    _manager->getAudioLayerMutex()->enter();
 
-        	// converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
-        	_converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
+	    // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
+	    _converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
-
-        	sessionWaiting = static_cast<D*>(this)->isWaiting();
+	    sessionWaiting = static_cast<D*>(this)->isWaiting();
 
             // Send session
             if(_eventQueue.size() > 0) {
