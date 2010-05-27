@@ -7,23 +7,21 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-11-02
-# Last Modified:
+# Last Modified: 2010-05-27 17:39:58 -0400
 #####################################################
 
 ROOT_DIR=${HOME}
 
 OSC_REPOSITORY="${ROOT_DIR}/sflphone-osc/home:jbonjean:sflphone"
 
-WORKING_DIR="${ROOT_DIR}/sflphone-build-repository/tools/build-system"
-OSC_DIR="${WORKING_DIR}/osc"
-
 LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
 #LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" )
 #LAUNCHPAD_PACKAGES=( "sflphone-common" )
 
 REFERENCE_REPOSITORY="${ROOT_DIR}/sflphone-source-repository"
+OSC_DIR="${REFERENCE_REPOSITORY}/tools/build-system/osc"
 
-SOFTWARE_VERSION="0.9.7.rc2"
+SOFTWARE_VERSION="0.9.8.3"
 
 VERSION_INDEX=1
 
