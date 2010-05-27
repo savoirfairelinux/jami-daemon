@@ -6,7 +6,7 @@ SUBDIRS = config contacts dbus widget icons
   
 NOFIFY_LIBS = -lnotify
 LOG4C = -llog4c
-
+X11_LIBS = -lX11
 
 SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la ./dbus/libdbus.la ./widget/libwidget.la ./icons/libicons.la
 
@@ -32,7 +32,7 @@ noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
                   accountlist.h sliders.h statusicon.h callable_obj.h conference_obj.h \
                   shortcuts.h
 
-sflphone_client_gnome_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(LIBSEXY_LIBS) $(LOG4C)
+sflphone_client_gnome_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(LIBSEXY_LIBS) $(LOG4C) $(X11_LIBS)
 
 # add symbolic link	     
 install-exec-local:

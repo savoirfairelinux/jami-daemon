@@ -13,8 +13,8 @@ Name:           sflphone-common
 License:        GNU General Public License (GPL)
 Group:          System Environment/Daemons
 Summary:        SIP and IAX2 compatible softphone - Core
-Version:	VERSION
-Release:	VERSION_INDEX%{?dist}
+Version:	0.9.8.3
+Release:	1%{?dist}
 URL:            http://www.sflphone.org/
 Vendor:         Savoir-faire Linux
 Packager:	Julien Bonjean <julien.bonjean@savoirfairelinux.com>
@@ -24,8 +24,6 @@ Source0:        sflphone-common-%{version}.tar.gz
 BuildRequires:	speex-devel
 BuildRequires:	gcc-c++
 BuildRequires:	expat
-BuildRequires:	alsa-devel
-BuildRequires:	dbus-1-devel
 BuildRequires:	libzrtpcpp-devel
 BuildRequires:	commoncpp2-devel
 BuildRequires:	libsamplerate-devel
@@ -52,7 +50,7 @@ BuildRequires:	openssl
 BuildRequires:	expat-devel
 BuildRequires:	ccrtp-devel
 BuildRequires:	cppunit-devel
-BuildRequires:	uuid-devel
+BuildRequires:	libuuid-devel
 BuildRequires:	gsm-devel
 BuildRequires:  alsa-lib-devel
 BuildRequires:  dbus-devel
@@ -131,7 +129,6 @@ make clean
 %dir %{_libdir}/sflphone/plugins
 %dir %{_prefix}/share/sflphone
 %dir %{_prefix}/share/sflphone/ringtones
-%{_libdir}/sflphone/libdbus-*
 %{_libdir}/sflphone/codecs/*
 %{_libdir}/sflphone/plugins/*
 %{_prefix}/share/dbus-1/services/org.sflphone.*
