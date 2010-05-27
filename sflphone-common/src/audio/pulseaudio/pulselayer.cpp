@@ -445,7 +445,7 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
     _converter = new SamplerateConverter (_audioSampleRate, 1000);
 
     // Instantiate the algorithm
-    AudioLayer::_echoCancel = new EchoCancel();
+    AudioLayer::_echoCancel = new EchoCancel(_audioSampleRate, _frameSize);
     AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
 
     AudioLayer::_dcblocker = new DcBlocker();
