@@ -13,8 +13,8 @@ Name:           sflphone-client-kde
 License:        GNU General Public License (GPL)
 Group:          Productivity/Networking/System
 Summary:        KDE client for SFLphone
-Version:        0.9.6
-Release:        opensuse
+Version:        VERSION
+Release:        VERSION_INDEX%{?dist}
 URL:            http://www.sflphone.org/
 Vendor:		Savoir-faire Linux
 Packager:       Julien Bonjean <julien.bonjean@savoirfairelinux.com>
