@@ -32,8 +32,6 @@
 
 // #include <fstream>
 
-#define MICDELAY 32000
-
 EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 							_frameLength(frameLength),
 							_smplPerFrame(0),
@@ -61,14 +59,12 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 {
   _debug("EchoCancel: Instantiate echo canceller");
 
-  /*
   micFile = new ofstream("micData", ofstream::binary);
   echoFile = new ofstream("echoData", ofstream::binary);
   spkrFile = new ofstream("spkrData", ofstream::binary);
   
-  micLevelData = new ofstream("micLevelData", ofstream:binary);
+  micLevelData = new ofstream("micLevelData", ofstream::binary);
   spkrLevelData = new ofstream("spkrLevelData", ofstream::binary);
-  */
 
   _micData = new RingBuffer(50000);
   _spkrData = new RingBuffer(50000);
@@ -87,7 +83,6 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   _spkrHistoryLength = SPKR_LENGTH / SEGMENT_LENGTH;
   _nbSegmentPerFrame =  _frameLength / SEGMENT_LENGTH;
 
-
   _noiseState = speex_preprocess_state_init(_smplPerFrame, _samplingRate);
   int i=1;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
@@ -97,9 +92,9 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
   i=0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB, &i);
-  float f=.0;
+  float f=0.0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
-  f=.0;
+  f=0.0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
 
   memset(_avgSpkrLevelHist, 0, BUFF_SIZE*sizeof(int));
@@ -126,7 +121,6 @@ EchoCancel::~EchoCancel()
 
   speex_preprocess_state_destroy(_noiseState);
 
-  /*
   micFile->close();
   spkrFile->close();
   echoFile->close();
@@ -139,7 +133,7 @@ EchoCancel::~EchoCancel()
   spkrLevelData->close();
   delete micLevelData;
   delete spkrLevelData;
-  */
+
 
 
 }
@@ -168,7 +162,7 @@ void EchoCancel::reset()
   memset(_delayLineAmplify, 0, MAX_DELAY_LINE_AMPL*sizeof(float));
 
   _amplDelayIndexIn = 0;
-  _amplDelayIndexOut = 100;
+  _amplDelayIndexOut = ECHO_LENGTH / SEGMENT_LENGTH;
 
   _adaptDone = false;
   _adaptStarted = false;
@@ -179,13 +173,6 @@ void EchoCancel::reset()
   _micData->flushAll();
   _spkrData->flushAll();
   _spkrDataOut->flushAll();
-
-  /*
-  SFLDataFormat delay[MICDELAY];
-  memset(delay, 0, sizeof(SFLDataFormat));
-
-  _micData->Put(delay, MICDELAY*2);
-  */
 
   speex_preprocess_state_destroy(_noiseState);
 
@@ -286,23 +273,16 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     _spkrData->Get(_tmpSpkr, byteSize);
     _micData->Get(_tmpMic, byteSize);
 
-    // micFile->write((const char *)_tmpMic, byteSize);
-    // spkrFile->write((const char *)_tmpSpkr, byteSize);
+    micFile->write((const char *)_tmpMic, byteSize);
+    spkrFile->write((const char *)_tmpSpkr, byteSize);
 
-    /*
-    while((computeAmplitudeLevel(_tmpSpkr, _smplPerFrame) < MIN_SIG_LEVEL) && (spkrAvail >= byteSize)) {
-      _spkrData->Get(_tmpSpkr, byteSize);
-      spkrAvail = _spkrData->AvailForGet();
-    }
-    */
+    // Remove noise
+    speex_preprocess_run(_noiseState, _tmpMic);
 
     // Processed echo cancellation
     performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
 
-    // echoFile->write((const char *)_tmpOut, byteSize);
-
-    // Remove noise
-    speex_preprocess_run(_noiseState, _tmpOut);
+    echoFile->write((const char *)_tmpOut, byteSize);
 
     bcopy(_tmpOut, outputData+(nbFrame*_smplPerFrame), byteSize);
 
@@ -339,8 +319,8 @@ void EchoCancel::setSamplingRate(int smplRate) {
 
 void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
 
-  // int tempmiclevel[_nbSegmentPerFrame];
-  // int tempspkrlevel[_nbSegmentPerFrame];
+  int tempmiclevel[_nbSegmentPerFrame];
+  int tempspkrlevel[_nbSegmentPerFrame];
 
   for(int k = 0; k < _nbSegmentPerFrame; k++) {
 
@@ -352,43 +332,20 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     // _debug("_spkrLevel: (max): %d", _spkrLevel);
     // _debug("_micLevel: (min): %d", _micLevel);
 
-    // tempspkrlevel[k] = _spkrLevel;
-    // tempmiclevel[k] = _micLevel;
-
-    /*
-    if(_micLevel >= MIN_SIG_LEVEL) {
-      if(_spkrLevel < MIN_SIG_LEVEL) {
-	increaseFactor(0.02);
-      }
-      else if(_micLevel > _spkrLevel) {
-	increaseFactor(0.05);
-      }
-      else {
-	// decreaseFactor();
-	_amplFactor = 0.0;
-	_debug("CANCELECHO AAAAAA");
-      }
-    }
-    else {
-      if(_spkrLevel < MIN_SIG_LEVEL) {
-	increaseFactor(0.02);
-	// _amplFactor = 0.0;
-	// _debug("CANCELECHO BBBBBBB");
-      }
-      else {
-	// decreaseFactor();
-	_amplFactor = 0.0;
-	_debug("CANCELECHO CCCCCCCC");
-      }
-    }
-    */
-
+    tempspkrlevel[k] = _spkrLevel;
+    tempmiclevel[k] = _micLevel;
 
     if(_spkrLevel >= MIN_SIG_LEVEL) {
-      _amplFactor = 0.0;
+        if(_micLevel > _spkrLevel) {
+	  increaseFactor(0.2);
+	  // _amplFactor = 0.0;
+	}
+	else {
+	    _amplFactor = 0.0;
+	}
     }
     else {
-      increaseFactor(0.02);
+      increaseFactor(0.01);
     }
 
     // lowpass filtering
@@ -401,24 +358,21 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     
   }
 
-  // micLevelData->write((const char *)tempmiclevel, sizeof(int)*_nbSegmentPerFrame);
-  // spkrLevelData->write((const char *)tempspkrlevel, sizeof(int)*_nbSegmentPerFrame);
+  micLevelData->write((const char *)tempmiclevel, sizeof(int)*_nbSegmentPerFrame);
+  spkrLevelData->write((const char *)tempspkrlevel, sizeof(int)*_nbSegmentPerFrame);
   
 }
 
 
 void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData) {
 
-  int micLvl = computeAmplitudeLevel(micData, _smplPerSeg);
+  // TODO: we should find a way to normalize signal at this point
+  int micLvl = computeAmplitudeLevel(micData, _smplPerSeg) / 10;
   int spkrLvl = computeAmplitudeLevel(spkrData, _smplPerSeg);
 
   // Add 1 to make sure we are not dividing by 0
   _avgMicLevelHist[_micHistCnt++] = micLvl+1;
   _avgSpkrLevelHist[_spkrHistCnt++] = spkrLvl+1;
-  
-  // spkrLevelData->write((const char *)_spkrAdaptArray, _spkrAdaptSize*sizeof(int));
-  // micLevelData->write((const char *)_micAdaptArray, _micAdaptSize*sizeof(int));
-
 
   // _debug("micLevel: %d", micLvl);
   // _debug("spkrLevel: %d", spkrLvl);

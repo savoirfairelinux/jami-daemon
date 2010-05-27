@@ -44,15 +44,15 @@
 #define SEGMENT_LENGTH 10
 
 // Length of the echo tail in ms
-#define ECHO_LENGTH 50
-#define SPKR_LENGTH 50
-#define MIC_LENGTH 50
+#define ECHO_LENGTH 1000
+#define SPKR_LENGTH 80
+#define MIC_LENGTH 80
 
 // Voice level threashold 
 #define MIN_SIG_LEVEL 75
 
 // Delay between mic and speaker
-#define DELAY_AMPLIFY 60
+// #define DELAY_AMPLIFY 60
 
 // maximum in segment size (segment are SEGMENT_LENGTH long)
 #define MAX_DELAY_LINE_AMPL 100 // 1 sec
