@@ -131,7 +131,7 @@ void ManagerImpl::init () {
 
 	AudioLayer *audiolayer = getAudioDriver();
 
-	if (audiolayer != 0) {
+	if (audiolayer) {
 		unsigned int sampleRate = audiolayer->getSampleRate();
 
 		_debugInit ("Manager: Load telephone tone");
@@ -141,9 +141,6 @@ void ManagerImpl::init () {
 		_debugInit ("Manager: Loading DTMF key");
 		_dtmfKey = new DTMF(sampleRate);
 	}
-
-	if (audiolayer == 0)
-		audiolayer->stopStream();
 
 	// Load the history
 	_history->load_history(getConfigInt(PREFERENCES, CONFIG_HISTORY_LIMIT));
@@ -2957,6 +2954,22 @@ void ManagerImpl::audioSamplingRateChanged (void) {
 
 	_debug ("Manager: Current device: %i ", type);
 	_debug ("Manager: Has current call: %i ", hasCurrentCall());
+
+	if (_audiodriver) {
+		unsigned int sampleRate = _audiodriver->getSampleRate();
+
+		delete _telephoneTone;
+
+		_debugInit ("Manager: Load telephone tone");
+		std::string country = getConfigString(PREFERENCES, ZONE_TONE);
+		_telephoneTone = new TelephoneTone(country, sampleRate);
+
+
+		delete _dtmfKey;
+
+		_debugInit ("Manager: Loading DTMF key");
+		_dtmfKey = new DTMF(sampleRate);
+	}
 
 	if (hasCurrentCall())
 	    _audiodriver->startStream();
