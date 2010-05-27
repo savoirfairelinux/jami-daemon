@@ -788,6 +788,8 @@ class ManagerImpl {
 
     void switchAudioManager( void );
 
+    void audioSamplingRateChanged( void );
+
     /**
      * Get the desktop mail notification level
      * @return int The mail notification level

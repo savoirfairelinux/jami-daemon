@@ -2895,6 +2895,83 @@ void ManagerImpl::switchAudioManager (void) {
 	// }
 }
 
+void ManagerImpl::audioSamplingRateChanged (void) {
+
+        int type, samplerate, framesize, numCardIn, numCardOut, numCardRing;
+	std::string alsaPlugin;
+
+	_debug ("Manager: Audio Sampling Rate");
+
+	if (!_audiodriver)
+		return;
+
+	type = _audiodriver->getLayerType();
+
+	samplerate = _mainBuffer.getInternalSamplingRate();
+	framesize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+
+	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
+
+	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
+
+	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
+	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
+	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
+
+	_debug ("Manager: Deleting current layer... ");
+
+	// ost::MutexLock lock (*getAudioLayerMutex());
+	getAudioLayerMutex()->enter();
+
+	// _audiodriver->closeLayer();
+	delete _audiodriver;
+
+	_audiodriver = NULL;
+
+	switch (type) {
+
+	case PULSEAUDIO:
+		_debug ("Manager: Creating Pulseaudio layer...");
+		_audiodriver = new PulseLayer(this);
+		_audiodriver->setMainBuffer(&_mainBuffer);
+		break;
+
+	case ALSA:
+		_debug ("Manager: Creating ALSA layer...");
+		_audiodriver = new AlsaLayer(this);
+		_audiodriver->setMainBuffer(&_mainBuffer);
+		break;
+
+	default:
+		_warn("Manager: Error: audio layer unknown");
+		break;
+	}
+
+	_audiodriver->setErrorMessage(-1);
+
+	_audiodriver->openDevice(numCardIn, numCardOut, numCardRing, samplerate, framesize,
+			SFL_PCM_BOTH, alsaPlugin);
+
+	if (_audiodriver -> getErrorMessage() != -1)
+	    notifyErrClient(_audiodriver -> getErrorMessage());
+
+	_debug ("Manager: Current device: %i ", type);
+	_debug ("Manager: Has current call: %i ", hasCurrentCall());
+
+	if (hasCurrentCall())
+	    _audiodriver->startStream();
+
+	// ost::MutexLock unlock (*getAudioLayerMutex());
+	getAudioLayerMutex()->leave();
+
+	// need to stop audio streams if there is currently no call
+	// if ( (type != PULSEAUDIO) && (!hasCurrentCall())) {
+	// _debug("There is currently a call!!");
+	// _audiodriver->stopStream();
+
+	// }
+}
+
 /**
  * Init the volume for speakers/micro from 0 to 100 value
  * Initialization: Main Thread

@@ -144,7 +144,6 @@ EchoCancel::~EchoCancel()
 void EchoCancel::reset()
 {
   _debug("EchoCancel: Reset internal state, Sampling rate %d, Frame size %d", _samplingRate, _smplPerFrame);
-  _debug("SIZEOF INT %d", sizeof(int));
   
   memset(_avgSpkrLevelHist, 0, BUFF_SIZE*sizeof(int));
   memset(_avgMicLevelHist, 0, BUFF_SIZE*sizeof(int));
@@ -250,11 +249,10 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   int spkrAvail = _spkrData->AvailForGet();
   int micAvail = _micData->AvailForGet();
 
-  _debug("EchoCancel: speaker avail %d, mic avail %d, processed: %d", spkrAvail/320, micAvail/320, _processedByte/320);
+  // _debug("EchoCancel: speaker avail %d, mic avail %d, processed: %d", spkrAvail/320, micAvail/320, _processedByte/320);
 
   // Init number of frame processed
   int nbFrame = 0;
-
 
   // Get data from mic and speaker internal buffer
   while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {

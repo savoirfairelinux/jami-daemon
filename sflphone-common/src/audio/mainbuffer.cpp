@@ -31,6 +31,7 @@
 
 #include "mainbuffer.h"
 
+#include "manager.h"
 
 MainBuffer::MainBuffer() : _internalSamplingRate (8000)
 {
@@ -54,6 +55,8 @@ void MainBuffer::setInternalSamplingRate (int sr)
         _internalSamplingRate = sr;
 
         flushAllBuffers();
+
+	Manager::instance().audioSamplingRateChanged();
 
     }
 }
