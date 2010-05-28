@@ -100,6 +100,7 @@ Authors:
 
 
 %build
+export SUSE_ASNEEDED=0 # fix opensuse linking issue (Since 11.2 uses default --as-needed for linking, the order of libraries is important)
 ./autogen.sh
 ./configure --prefix=%{_prefix}
 make -j
