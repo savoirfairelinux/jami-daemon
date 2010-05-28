@@ -68,6 +68,8 @@ static int worker_thread(void *arg)
         }
     }
     PJ_UNREACHED(return 0;)
+
+    return 0;
 }
 
 
