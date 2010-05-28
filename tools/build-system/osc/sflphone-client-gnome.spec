@@ -24,6 +24,7 @@ BuildRoot:      %{_tmppath}/%{name}
 Source0:        sflphone-client-gnome-%{version}.tar.gz
 
 %if %{defined suse_version}
+BuildRequires:  scrollkeeper
 BuildRequires:	update-desktop-files
 BuildRequires:	liblog4c-devel
 BuildRequires:	dbus-1-glib-devel
@@ -32,6 +33,7 @@ BuildRequires:	libgnomeui-devel
 %endif
 
 %if %{defined fedora_version}
+BuildRequires:  rarian-compat
 BuildRequires:	log4c-devel
 BuildRequires:	dbus-glib-devel
 BuildRequires:	gnome-doc-utils

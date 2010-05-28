@@ -28,7 +28,6 @@ BuildRequires:	libzrtpcpp-devel
 BuildRequires:	commoncpp2-devel
 BuildRequires:	libsamplerate-devel
 
-
 %if %{defined suse_version}
 BuildRequires:	libpulse-devel
 BuildRequires:	libccrtp-devel
