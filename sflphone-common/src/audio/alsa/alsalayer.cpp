@@ -59,6 +59,9 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     // _audioThread = new AudioThread (this);
     // _audioThread = NULL;
     _urgentRingBuffer.createReadPointer();
+    
+    AudioLayer::_echocancelstate = true;
+    AudioLayer::_noisesuppressstate = true;
 }
 
 // Destructor
@@ -71,12 +74,6 @@ AlsaLayer::~AlsaLayer (void)
         delete _converter;
         _converter = NULL;
     }
-
-    delete AudioLayer::_echoCancel;
-    AudioLayer::_echoCancel = NULL;
-
-    delete AudioLayer::_echoCanceller;
-    AudioLayer::_echoCanceller = NULL;
 }
 
 bool
@@ -140,6 +137,9 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
 
     AudioLayer::_echoCancel = new EchoCancel();
     AudioLayer::_echoCanceller = new AudioProcessing(static_cast<Algorithm *>(_echoCancel));
+
+    AudioLayer::_echoCancel->setEchoCancelState(AudioLayer::_echocancelstate);
+    AudioLayer::_echoCancel->setNoiseSuppressState(AudioLayer::_noisesuppressstate);
 
     AudioLayer::_dcblocker = new DcBlocker();
     AudioLayer::_audiofilter = new AudioProcessing(static_cast<Algorithm *>(_dcblocker));
@@ -253,6 +253,27 @@ bool AlsaLayer::isCaptureActive (void)
     else
         return false;
 }
+
+
+void AlsaLayer::setEchoCancelState(bool state)
+{
+  // if a stream already running
+  if(AudioLayer::_echoCancel)
+      _echoCancel->setEchoCancelState(state);
+
+  AudioLayer::_echocancelstate = state;
+}
+
+void AlsaLayer::setNoiseSuppressState(bool state)
+{
+  // if a stream already opened
+  if(AudioLayer::_echoCancel)
+      _echoCancel->setNoiseSuppressState(state);
+
+  AudioLayer::_noisesuppressstate = state;
+
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////

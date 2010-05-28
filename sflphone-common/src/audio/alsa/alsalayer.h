@@ -154,6 +154,30 @@ class AlsaLayer : public AudioLayer {
 
     bool isCaptureActive (void);
 
+    /**
+     * Get the echo canceller state
+     * @return true if echo cancel activated
+     */
+    virtual bool getEchoCancelState(void) { return AudioLayer::_echocancelstate; }
+
+    /**
+     * Set the echo canceller state
+     * @param state true if echocancel active, false elsewhere 
+     */
+    virtual void setEchoCancelState(bool state);
+    
+    /**
+     * Get the noise suppressor state
+     * @return true if noise suppressor activated
+     */
+    virtual bool getNoiseSuppressState(void) { return AudioLayer::_noisesuppressstate; }
+
+    /**
+     * Set the noise suppressor state
+     * @param state true if noise suppressor active, false elsewhere
+     */
+    virtual void setNoiseSuppressState(bool state);
+
   private:
   
     // Copy Constructor

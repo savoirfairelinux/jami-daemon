@@ -55,7 +55,9 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
 							_spkrAdaptSize(SPKR_ADAPT_SIZE),
 							_micAdaptSize(MIC_ADAPT_SIZE),
 							_correlationSize(0),
-							_processedByte(0)
+							_processedByte(0),
+							_echoActive(true),
+							_noiseActive(true)
 {
   _debug("EchoCancel: Instantiate echo canceller");
 
@@ -265,7 +267,8 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     // spkrFile->write((const char *)_tmpSpkr, byteSize);
     
     // Remove noise
-    speex_preprocess_run(_noiseState, _tmpMic);
+    if(_noiseActive)
+        speex_preprocess_run(_noiseState, _tmpMic);
 
     // Processed echo cancellation
     performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
@@ -283,8 +286,6 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     // increment nb of frame processed
     ++nbFrame;
   }
-
-  // _event.reset();
 
   return nbFrame * _smplPerFrame;
 }
@@ -337,10 +338,11 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     // lowpass filtering
     float amplify = (_lastAmplFactor + _amplFactor) / 2;
     _lastAmplFactor = _amplFactor;
+
+    if(!_echoActive)
+        amplify = 1.0;
+
     amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), amplify);
-
-
-    // amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), 1.0);
     
   }
 
@@ -353,7 +355,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData) {
 
   // TODO: we should find a way to normalize signal at this point
-  int micLvl = computeAmplitudeLevel(micData, _smplPerSeg) / 10;
+  int micLvl = computeAmplitudeLevel(micData, _smplPerSeg) / 6;
   int spkrLvl = computeAmplitudeLevel(spkrData, _smplPerSeg);
 
   // Add 1 to make sure we are not dividing by 0

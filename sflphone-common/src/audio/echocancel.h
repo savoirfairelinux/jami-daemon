@@ -116,6 +116,14 @@ class EchoCancel : public Algorithm {
      */
     void setSamplingRate(int smplRate);
 
+    void setEchoCancelState(bool state) { _echoActive = state; }
+
+    bool getEchoCancelState(void) { return _echoActive; }
+
+    void setNoiseSuppressState(bool state) { _noiseActive = state; }
+
+    bool getNoiseSuppressState(void) { return _noiseActive; }
+
  private:
 
     /**
@@ -311,7 +319,15 @@ class EchoCancel : public Algorithm {
      */
     SpeexPreprocessState *_noiseState;
 
-    ost::Event _event;
+    /**
+     * true if noise suppressor is active, false elsewhere
+     */
+    bool _echoActive;
+
+    /**
+     * true if noise suppressor is active, false elsewhere
+     */
+    bool _noiseActive;  
 
 };
 

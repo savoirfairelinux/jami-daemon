@@ -257,6 +257,9 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     
     is_started = false;
 
+    AudioLayer::_echocancelstate = true;
+    AudioLayer::_noisesuppressstate = true;
+
     /*
     captureFile = new ofstream("captureFile", ofstream::binary);
     captureRsmplFile = new ofstream("captureRsmplFile", ofstream::binary);
@@ -757,6 +760,25 @@ void PulseLayer::processData (void)
     // We check if the stream is ready
     if (record && (record->pulseStream()) && (pa_stream_get_state (record->pulseStream()) == PA_STREAM_READY))
         readFromMic();
+
+}
+
+void PulseLayer::setEchoCancelState(bool state)
+{
+  // if a stream already running
+  if(AudioLayer::_echoCancel)
+      _echoCancel->setEchoCancelState(state);
+
+  AudioLayer::_echocancelstate = state;
+}
+
+void PulseLayer::setNoiseSuppressState(bool state)
+{
+  // if a stream already opened
+  if(AudioLayer::_echoCancel)
+      _echoCancel->setNoiseSuppressState(state);
+
+  AudioLayer::_noisesuppressstate = state;
 
 }
 

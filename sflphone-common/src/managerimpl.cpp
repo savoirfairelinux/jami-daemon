@@ -2711,6 +2711,74 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin (void) {
 		return getConfigString(AUDIO, ALSA_PLUGIN);
 }
 
+
+std::string ManagerImpl::getEchoCancelState(void) {
+
+    // echo canceller is disabled by default
+    bool isEnabled = false;
+
+    if(_audiodriver) {
+        isEnabled = _audiodriver->getEchoCancelState();
+    }
+
+    std::string state("");
+    if(isEnabled)
+      state = "enabled";
+    else
+      state = "disabled";
+
+    return state;
+}
+
+void ManagerImpl::setEchoCancelState(std::string state) {
+    _debug("Manager: Set echo suppress state: %s", state.c_str());
+
+    bool isEnabled = false;
+
+    if(state.compare("enabled") == 0)
+        isEnabled = true;
+    else
+        isEnabled = false;
+
+    if(_audiodriver) {
+        _audiodriver->setEchoCancelState(isEnabled);
+    }
+}
+
+
+std::string ManagerImpl::getNoiseSuppressState(void) {
+    
+    // noise suppress disabled by default
+    bool isEnabled = false;
+
+    if(_audiodriver) {
+        isEnabled = _audiodriver->getNoiseSuppressState();
+    }
+
+    std::string state("");
+    if(isEnabled)
+        state = "enabled";
+    else
+        state = "disabled";
+
+    return state;
+}
+
+void ManagerImpl::setNoiseSuppressState(std::string state) {
+    _debug("Manager: Set noise suppress state: %s", state.c_str());
+
+    bool isEnabled = false;
+
+    if(state.compare("enabled") == 0)
+      isEnabled = true;
+    else
+      isEnabled = false;
+
+    if(_audiodriver) {
+        _audiodriver->setNoiseSuppressState(isEnabled);
+    }
+}
+
 int ManagerImpl::app_is_running (std::string process) {
 	std::ostringstream cmd;
 

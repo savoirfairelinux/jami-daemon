@@ -563,11 +563,19 @@ class ManagerImpl {
      */
     int getAudioDeviceIndex( const std::string name );
 
-    /*
+    /**
      * Get current alsa plugin
      * @return std::string  The Alsa plugin
      */
     std::string getCurrentAudioOutputPlugin( void );
+
+    std::string getEchoCancelState(void);
+
+    void setEchoCancelState(std::string state);
+
+    std::string getNoiseSuppressState(void);
+
+    void setNoiseSuppressState(std::string state);
 
     /**
      * Convert a list of payload in a special format, readable by the server.

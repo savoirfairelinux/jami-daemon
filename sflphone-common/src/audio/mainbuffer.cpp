@@ -244,7 +244,7 @@ void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
 void MainBuffer::unBindAll (CallID call_id)
 {
 
-  // ost::MutexLock guard (_mutex);
+    // ost::MutexLock guard (_mutex);
 
     CallIDSet* callid_set = getCallIDSet (call_id);
 
@@ -271,7 +271,7 @@ void MainBuffer::unBindAll (CallID call_id)
 int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
 
-  // ost::MutexLock guard (_mutex);
+    // ost::MutexLock guard (_mutex);
 
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
@@ -298,7 +298,7 @@ int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, CallID
 int MainBuffer::availForPut (CallID call_id)
 {
 
-  // ost::MutexLock guard (_mutex);
+    // ost::MutexLock guard (_mutex);
 
     RingBuffer* ringbuffer = getRingBuffer (call_id);
 

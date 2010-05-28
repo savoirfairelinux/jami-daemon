@@ -233,6 +233,30 @@ class AudioLayer {
 	inline Recordable* getRecorderInstance (void) {return _recorder;}
 
 	/**
+	 * Get the echo canceller state
+	 * @return true if echo cancel activated
+         */
+	virtual bool getEchoCancelState(void) = 0;
+
+	/**
+	 * Set the echo canceller state
+	 * @param state true if echocancel active, false elsewhere 
+	 */
+	virtual void setEchoCancelState(bool state) = 0;
+
+	/**
+	 * Get the noise suppressor state
+	 * @return true if noise suppressor activated
+	 */
+	virtual bool getNoiseSuppressState(void) = 0;
+
+	/**
+	 * Set the noise suppressor state
+	 * @param state true if noise suppressor active, false elsewhere
+	 */
+	virtual void setNoiseSuppressState(bool state) = 0;
+
+	/**
 	 * Get the mutex lock for the entire audio layer 
 	 */
 	inline ost::Mutex* getMutexLock(void) { return &_mutex; }
@@ -324,6 +348,10 @@ class AudioLayer {
 
 	DcBlocker *_dcblocker;
 	AudioProcessing *_audiofilter;
+
+	bool _echocancelstate;
+
+	bool _noisesuppressstate;
 
 };
 
