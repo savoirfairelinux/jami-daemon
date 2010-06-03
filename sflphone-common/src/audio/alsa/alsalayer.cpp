@@ -1125,9 +1125,15 @@ void AlsaLayer::audioCallback(void)
 
                 } else {
 
-		    int sampleready = AudioLayer::_echoCanceller->processAudio(in, echoCancelledMic, toPut);
+		  
+		    SFLDataFormat* filter_out = (SFLDataFormat*) malloc (framesPerBufferAlsa * sizeof (SFLDataFormat));
+
+		    _audiofilter->processAudio (in, filter_out, toPut);
+		  
+		    int sampleready = AudioLayer::_echoCanceller->processAudio(filter_out, echoCancelledMic, toPut);
 
                     getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof(SFLDataFormat), 100);
+		    free(rsmpl_out);
                 }
             }
 

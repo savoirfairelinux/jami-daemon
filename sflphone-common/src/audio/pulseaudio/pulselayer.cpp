@@ -981,11 +981,18 @@ void PulseLayer::readFromMic (void)
 
         } else {
 
+	    SFLDataFormat* filter_out = (SFLDataFormat*) pa_xmalloc (r);
+
+	    // remove dc offset
+            _audiofilter->processAudio((SFLDataFormat *)data, filter_out, r);
+
 	    // echo cancellation processing
-	  int sampleready = _echoCanceller->processAudio((SFLDataFormat *)data, echoCancelledMic, r);
+	    int sampleready = _echoCanceller->processAudio((SFLDataFormat *)data, echoCancelledMic, r);
 
             // no resampling required
             getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+
+	    pa_xfree(filter_out);
         }
 
 
