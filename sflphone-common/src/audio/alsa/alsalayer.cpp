@@ -456,12 +456,13 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
     int err;
     int format;
     int periods = 4;
-    int periodsize = 2048;
+    int periodsize = 160;
 
     /* Allocate the snd_pcm_hw_params_t struct */
     snd_pcm_hw_params_malloc (&hwparams);
 
-    _periodSize = 2048;
+    // _periodSize = periodsize;
+    _periodSize = periodsize;
     /* Full configuration space */
 
     if ( (err = snd_pcm_hw_params_any (pcm_handle, hwparams)) < 0) {
@@ -553,7 +554,7 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
 
     /* Set the start threshold */
 
-    if ( (err = snd_pcm_sw_params_set_start_threshold (pcm_handle, swparams, 2700 /*periodsize*2*/)) < 0) {
+    if ( (err = snd_pcm_sw_params_set_start_threshold (pcm_handle, swparams, _periodSize*2)) < 0) {
         _debugAlsa ("Audio: Error: Cannot set start threshold (%s)", snd_strerror (err));
         return false;
     }
@@ -919,8 +920,10 @@ void AlsaLayer::audioCallback(void)
     // framePerBuffer are the number of data for one channel (left)
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
-    if(!_PlaybackHandle)
+    if(!_PlaybackHandle || !_CaptureHandle)
       return;
+
+    snd_pcm_wait(_PlaybackHandle, 20);
 
     int playbackAvailSmpl = snd_pcm_avail_update(_PlaybackHandle);
     int playbackAvailBytes = playbackAvailSmpl*sizeof(SFLDataFormat);
@@ -1086,7 +1089,7 @@ void AlsaLayer::audioCallback(void)
     if (is_capture_running()) {
 
         micAvailBytes = snd_pcm_avail_update (_CaptureHandle);
-        // _debug("micAvailBytes %i", micAvailBytes);
+        // _debug("CAPTURE: %i", micAvailBytes);
 
         if (micAvailBytes > 0) {
             micAvailPut = getMainBuffer()->availForPut();
