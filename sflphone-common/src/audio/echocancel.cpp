@@ -90,6 +90,7 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   _spkrHistoryLength = SPKR_LENGTH / SEGMENT_LENGTH;
   _nbSegmentPerFrame =  _frameLength / SEGMENT_LENGTH;
 
+#ifdef HAVE_SPEEXDSP_LIB
   _noiseState = speex_preprocess_state_init(_smplPerFrame, _samplingRate);
   int i=1;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
@@ -105,6 +106,7 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
   f=0.0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
+#endif
 
   memset(_avgSpkrLevelHist, 0, BUFF_SIZE*sizeof(int));
   memset(_avgMicLevelHist, 0, BUFF_SIZE*sizeof(int));
@@ -128,8 +130,9 @@ EchoCancel::~EchoCancel()
   delete _spkrData;
   _spkrData = NULL;
 
+#ifdef HAVE_SPEEXDSP_LIB
   speex_preprocess_state_destroy(_noiseState);
-
+#endif
   
   micFile->close();
   spkrFile->close();
@@ -183,6 +186,7 @@ void EchoCancel::reset()
   _spkrData->flushAll();
   _spkrDataOut->flushAll();
 
+#ifdef HAVE_SPEEXDSP_LIB
   speex_preprocess_state_destroy(_noiseState);
 
   _noiseState = speex_preprocess_state_init(_smplPerFrame, _samplingRate);
@@ -200,6 +204,7 @@ void EchoCancel::reset()
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
   f=0.0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
+#endif
 
   _spkrStoped = true;
 
@@ -270,10 +275,12 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     
     micFile->write((const char *)_tmpMic, byteSize);
     spkrFile->write((const char *)_tmpSpkr, byteSize);
-    
+
+#ifdef HAVE_SPEEXDSP_LIB  
     // Remove noise
     if(_noiseActive)
         speex_preprocess_run(_noiseState, _tmpMic);
+#endif
 
     // Processed echo cancellation
     performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
