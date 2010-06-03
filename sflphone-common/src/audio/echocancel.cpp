@@ -93,6 +93,8 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   _noiseState = speex_preprocess_state_init(_smplPerFrame, _samplingRate);
   int i=1;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
+  i=-30;
+  speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
   i=0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_AGC, &i);
   i=8000;
@@ -194,9 +196,9 @@ void EchoCancel::reset()
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
   i=0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB, &i);
-  float f=.0;
+  float f=0.0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
-  f=.0;
+  f=0.0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
 
   _spkrStoped = true;
@@ -314,7 +316,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     updateEchoCancel(micData+(k*_smplPerSeg), spkrData+(k*_smplPerSeg));
 
     _spkrLevel = getMaxAmplitude(_avgSpkrLevelHist, _spkrHistoryLength);
-    _micLevel = getMaxAmplitude(_avgMicLevelHist, _micHistoryLength);
+    _micLevel = getMaxAmplitude(_avgMicLevelHist, _micHistoryLength)/2;
 
     // _debug("_spkrLevel: (max): %d", _spkrLevel);
     // _debug("_micLevel: (min): %d", _micLevel);
