@@ -49,7 +49,7 @@
 #define MIC_LENGTH 80
 
 // Voice level threashold 
-#define MIN_SIG_LEVEL 75
+#define MIN_SIG_LEVEL 250
 
 // Delay between mic and speaker
 // #define DELAY_AMPLIFY 60
@@ -141,6 +141,11 @@ class EchoCancel : public Algorithm {
      * \param data must be of SEGMENT_LENGTH long.
      */ 
     int computeAmplitudeLevel(SFLDataFormat *data, int size);
+
+    /**
+     * Compute amplitude signal
+     */
+    SFLDataFormat estimatePower(SFLDataFormat *data, SFLDataFormat *ampl, int size, SFLDataFormat mem);
 
     /**
      * Return the max amplitude provided any of _avgSpkrLevelHist or _avgMicLevelHist
@@ -288,6 +293,11 @@ class EchoCancel : public Algorithm {
      * Adaptation index
      */
     int _adaptCnt;
+
+    float _alpha;
+
+    SFLDataFormat _spkrLevelMem;
+    SFLDataFormat _micLevelMem;
 
     int _spkrAdaptCnt;
 
