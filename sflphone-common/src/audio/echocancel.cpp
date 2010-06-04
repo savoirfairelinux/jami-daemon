@@ -323,7 +323,7 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     updateEchoCancel(micData+(k*_smplPerSeg), spkrData+(k*_smplPerSeg));
 
     _spkrLevel = getMaxAmplitude(_avgSpkrLevelHist, _spkrHistoryLength);
-    _micLevel = getMaxAmplitude(_avgMicLevelHist, _micHistoryLength)/2;
+    _micLevel = getMaxAmplitude(_avgMicLevelHist, _micHistoryLength)/6;
 
     // _debug("_spkrLevel: (max): %d", _spkrLevel);
     // _debug("_micLevel: (min): %d", _micLevel);
