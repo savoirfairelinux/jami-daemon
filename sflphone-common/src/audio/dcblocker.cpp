@@ -77,7 +77,6 @@ void DcBlocker::process (SFLDataFormat *data, int nbBytes)
 
     int nbSamples = nbBytes / sizeof(SFLDataFormat); 
     for (int i = 0; i < nbSamples; i++) {
-        _debug("i: %d", i);
         _x = data[i];
 
         _y = (SFLDataFormat) ( (float) _x - (float) _xm1 + 0.9999 * (float) _ym1);
