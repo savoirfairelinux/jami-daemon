@@ -244,7 +244,8 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
 {
 
   if(_spkrStoped) {
-    return 0;
+      bcopy(inputData, outputData, nbBytes);
+      return nbBytes;
   }
 
   int byteSize = _smplPerFrame*sizeof(SFLDataFormat);
