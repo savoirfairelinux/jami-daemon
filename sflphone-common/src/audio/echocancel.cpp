@@ -262,8 +262,6 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   int spkrAvail = _spkrData->AvailForGet();
   int micAvail = _micData->AvailForGet();
 
-  // _debug("EchoCancel: speaker avail %d, mic avail %d, processed: %d", spkrAvail/320, micAvail/320, _processedByte/320);
-
   // Init number of frame processed
   int nbFrame = 0;
 
@@ -326,13 +324,9 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
     _spkrLevel = getMaxAmplitude(_avgSpkrLevelHist, _spkrHistoryLength);
     _micLevel = getMaxAmplitude(_avgMicLevelHist, _micHistoryLength)/6;
 
-    // _debug("_spkrLevel: (max): %d", _spkrLevel);
-    // _debug("_micLevel: (min): %d", _micLevel);
-
     if(_spkrLevel >= MIN_SIG_LEVEL) {
         if(_micLevel > _spkrLevel) {
 	  increaseFactor(0.2);
-	  // _amplFactor = 0.0;
 	}
 	else {
 	    _amplFactor = 0.0;
@@ -372,9 +366,6 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
   _avgMicLevelHist[_micHistCnt++] = micLvl+1;
   _avgSpkrLevelHist[_spkrHistCnt++] = spkrLvl+1;
 
-  // _debug("micLevel: %d", micLvl);
-  // _debug("spkrLevel: %d", spkrLvl);
-
   if(_micHistCnt >= _micHistoryLength)
     _micHistCnt = 0;
 
@@ -407,18 +398,15 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
   // perform correlation if spkr size is reached
   if(_adaptCnt > _spkrAdaptSize) {
       int k = _adaptCnt - _spkrAdaptSize;
-      _correlationArray[k] = performCorrelation(_spkrAdaptArray, _micAdaptArray+k, _correlationSize); 
-      // _debug("EchoCancel: Correlation: %d", _correlationArray[k]);
+      _correlationArray[k] = performCorrelation(_spkrAdaptArray, _micAdaptArray+k, _correlationSize);
   }
 
   _adaptCnt++;
 
   // if we captured a full echo
   if(_adaptCnt == _micAdaptSize) {
-    _debug("EchoCancel: Echo path adaptation completed");
     _adaptDone = true;
     _amplDelayIndexOut = 0;// getMaximumIndex(_correlationArray, _correlationSize);
-    _debug("EchoCancel: Echo length %d", _amplDelayIndexOut);
   }
   */
 }
@@ -447,7 +435,6 @@ SFLDataFormat EchoCancel::estimatePower(SFLDataFormat *data, SFLDataFormat *ampl
 
   for (int i = 0; i < size; i++) {
     mem = (SFLDataFormat)(memFactor*(float)mem + abs(_alpha*(float)data[i]));
-    // _debug("ampl: %d, memfactor: %f, alpha: %f, data: %d", mem, memFactor, _alpha, data[i]);
     ampl[i] = mem;
   }
 
