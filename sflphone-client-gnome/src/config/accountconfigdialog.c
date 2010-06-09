@@ -1297,7 +1297,8 @@ void show_account_window (account_t * a) {
 
     // Get current protocol for this account protocol
     gchar *currentProtocol = "SIP";
-    currentProtocol = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    if(protocolComboBox)
+        currentProtocol = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
 
     // Do not need advanced or security one for the IP2IP account
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
@@ -1322,7 +1323,8 @@ void show_account_window (account_t * a) {
     }
 
     // Emit signal to hide advanced and security tabs in case of IAX
-    g_signal_emit_by_name (GTK_WIDGET(protocolComboBox), "changed", NULL);
+    if(protocolComboBox)
+        g_signal_emit_by_name (GTK_WIDGET(protocolComboBox), "changed", NULL);
 
     gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook) ,  0);
 
@@ -1332,7 +1334,11 @@ void show_account_window (account_t * a) {
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     
     // Update protocol in case it changed
-    gchar *proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    gchar *proto = NULL;
+    if(protocolComboBox)
+        proto = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    else
+      proto = "SIP";
 
     // If cancel button is pressed
     if(response == GTK_RESPONSE_CANCEL) {
@@ -1363,7 +1369,6 @@ void show_account_window (account_t * a) {
 			   g_strdup(ACCOUNT_MAILBOX),
 			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));   
     }
-
 
     if (proto && strcmp (proto, "SIP") == 0) {
       
