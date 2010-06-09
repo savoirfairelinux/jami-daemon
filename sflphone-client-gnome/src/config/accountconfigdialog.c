@@ -1365,7 +1365,7 @@ void show_account_window (account_t * a) {
     }
 
 
-    if (strcmp (proto, "SIP") == 0) {
+    if (proto && strcmp (proto, "SIP") == 0) {
       
       if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
@@ -1457,7 +1457,7 @@ void show_account_window (account_t * a) {
 
     }
     
-    if (strcmp(currentProtocol, "SIP") == 0) {
+    if (currentProtocol && strcmp(currentProtocol, "SIP") == 0) {
 
       /* Set new credentials if any */
       DEBUG("Config: Setting credentials"); 
