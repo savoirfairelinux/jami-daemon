@@ -636,9 +636,10 @@ is_ringtone_enabled( void )
 }
 
 	void
-ringtone_enabled( void )
+ringtone_enabled(GtkWidget *widget UNUSED, gpointer fileChooser)
 {
 	dbus_ringtone_enabled();
+	gtk_widget_set_sensitive(GTK_WIDGET(fileChooser), dbus_is_ringtone_enabled());
 }
 
 	void
@@ -1046,17 +1047,17 @@ GtkWidget* create_audio_configuration()
 	gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0); 
 
 	GtkWidget *enableTone;
-	GtkWidget *fileChooser;
+	GtkWidget *fileChooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
 
 	enableTone = gtk_check_button_new_with_mnemonic( _("_Enable ringtones"));
 	gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
-	g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
+	g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , fileChooser);
 	gtk_table_attach ( GTK_TABLE( table ), enableTone, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	// file chooser button
-	fileChooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , get_ringtone_choice());
+	gtk_widget_set_sensitive(GTK_WIDGET(fileChooser), dbus_is_ringtone_enabled());
 	g_signal_connect( G_OBJECT( fileChooser ) , "selection_changed" , G_CALLBACK( ringtone_changed ) , NULL );
 
 	GtkFileFilter *filter = gtk_file_filter_new();
