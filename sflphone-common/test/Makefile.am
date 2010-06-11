@@ -27,7 +27,9 @@ test_SOURCES = main.cpp \
 	rtptest.h \
 	rtptest.cpp \
 	sdesnegotiatortest.h \
-	sdesnegotiatortest.cpp
+	sdesnegotiatortest.cpp \
+	delaydetectiontest.h \
+	delaydetectiontest.cpp
 
 
 
@@ -68,4 +70,5 @@ LLIBS=$(CPPUNIT_LIBS) \
 	../src/plug-in/pluginmanager.o \
 	../src/plug-in/audiorecorder/audiorecord.o \
 	../src/audio/samplerateconverter.o \
-    ../src/history/historymanager.o
+	../src/audio/delaydetection.o \
+        ../src/history/historymanager.o
