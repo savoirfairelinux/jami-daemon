@@ -31,6 +31,7 @@
 
 
 #include "delaydetection.h"
+#include "math.h"
 
 DelayDetection::DelayDetection(){}
 
@@ -47,3 +48,76 @@ void DelayDetection::process(SFLDataFormat *inputData, int nbBytes) {}
 int DelayDetection::process(SFLDataFormat *intputData, SFLDataFormat *outputData, int nbBytes) { return 0; }
 
 void DelayDetection::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {}
+
+void DelayDetection::crossCorrelate(double *ref, double *seg, double *res, short refSize, short segSize)
+{
+
+  _debug("CrossCorrelate");
+
+  // Output has same size as the 
+  short rsize = refSize;
+  short ssize = segSize;
+  short tmpsize = segSize-refSize+1;
+
+  // perform autocorrelation on reference signal
+  double acref  = correlate(ref, ref, rsize);
+
+  double acseg = 0.0;
+  double r;
+  while(--tmpsize) {
+      acseg = correlate(seg+tmpsize, seg+tmpsize, rsize);
+      res[ssize] = correlate(ref, seg+tmpsize, rsize);
+      r = sqrt(acref*acseg);
+      if(r < 0.0001)
+	res[ssize] = 0.0;
+      else
+	res[ssize] = res[ssize] / r;
+      --ssize;
+  }
+
+
+  _debug("----------------start------------------");
+
+  for (int j = 0; j < 10; j++)
+      _debug("segment: %f", seg[j]);
+
+  seg[0] = 0.0;
+  // zerro padded region
+  int i = 0;
+  while(rsize) {
+      _debug("rsize: %i, ssize: %i", rsize, ssize);
+      acref = correlate(ref, ref, refSize);
+      _debug("acref: %f", acref);
+      acseg = correlate(seg, seg, rsize);
+      _debug("acseg: %f", acseg);
+      res[ssize] = correlate(ref+rsize, seg, rsize);
+      _debug("res[ssize]: %f", res[ssize]);
+      r = sqrt(acref*acseg);
+      _debug("r: %f", r);
+      if(r < 0.0001)
+          res[ssize] = 0.0;
+      else
+          res[ssize] = res[ssize] / r;
+      --ssize;
+      --rsize;
+      ++i;
+  }
+  
+}
+
+double DelayDetection::correlate(double *sig1, double *sig2, short size) {
+
+  _debug("Correlate");
+
+  short s = size;
+
+  double ac = 0.0;
+
+  for(int i = size-1; i >= 0; i--) {
+    _debug("     %i:  s1, %f, s2 %f", i, sig1[i], sig2[i]);
+  }
+  while(s--)
+      ac += sig1[s]*sig2[s];
+
+  return ac;
+}

@@ -58,6 +58,7 @@
 // #include "user_cfg.h"
 
 
+#include "audio/delaydetection.h"
 
 #ifndef _DELAYDETECTION_TEST_
 #define _DELAYDETECTION_TEST_
@@ -82,6 +83,10 @@ class DelayDetectionTest : public CppUnit::TestCase {
     inline void tearDown();
 
     void testCrossCorrelation();
+
+ private:
+
+    DelayDetection _delaydetect;
     
 };
 

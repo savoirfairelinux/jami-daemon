@@ -34,6 +34,12 @@
 
 #include "algorithm.h"
 
+// Template size in samples for correlation
+#define WINDOW_SIZE 256
+
+// Segment length in ms for correlation
+#define MAX_DELAY 150
+
 class DelayDetection : public Algorithm {
 
  public:
@@ -56,6 +62,30 @@ class DelayDetection : public Algorithm {
 
  private:
 
- };
+    /**
+     * Perform a normalized crosscorrelation between template and segment
+     */
+    void crossCorrelate(double *ref, double *seg, double *res, short refSize, short segSize);
+
+    /**
+     * Perform a correlation on specified signals (mac)
+     */
+    double correlate(double *sig1, double *sig2, short size);
+
+    /**
+     * Segment size in samples for correlation
+     */
+    short _segmentSize;
+
+    /**
+     * Resulting correlation size (s + w -1)
+     */
+    short _correlationSize;
+
+
+ public:
+
+    friend class DelayDetectionTest;
+};
 
 #endif
