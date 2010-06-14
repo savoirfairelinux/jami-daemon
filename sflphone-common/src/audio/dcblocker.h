@@ -36,52 +36,6 @@
 
 #include <vector>
 
-#define MAXFILTERSIZE 100
-
-class FirFilter {
-
- public:
-
-  /**
-   * Constructor for this class
-   */
-  FirFilter(std::vector<double> ir);
-
-  /**
-   * SDestructor for this class
-   */
-  ~FirFilter();
-  
-
- private:
-
-  /**
-   * Length of the filter
-   */
-  int _length;
-
-  /**
-   * Coefficient of the filter
-   */
-  std::vector<double> _impulseResponse;
-
-  /**
-   * Circular buffer
-   */
-  double _delayLine[MAXFILTERSIZE];
-
-  /**
-   * Counter
-   */
-  int _count;
-
-  /**
-   * Perform filtering on one sample
-   */
-  int getOutputSample(int inputSample);
-  
-};
-
 class DcBlocker : public Algorithm {
 
 public:

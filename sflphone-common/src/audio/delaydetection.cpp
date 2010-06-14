@@ -33,6 +33,31 @@
 #include "delaydetection.h"
 #include "math.h"
 
+FirFilter::FirFilter(std::vector<double> ir) : _impulseResponse(ir), 
+					       _length(ir.size()),
+					       _count(0)
+{}
+
+FirFilter::~FirFilter() {}
+
+int FirFilter::getOutputSample(int inputSample) 
+{
+  _delayLine[_count] = (double)inputSample;
+  double result = 0.0;
+  int index = _count;
+  for(int i = 0; i < _length; i++) {
+    result = result + _impulseResponse[i] * _delayLine[index--];
+    if(index < 0)
+      index = _length-1;
+  }
+  _count++;
+  if(_count >= _length)
+    _count = 0;
+
+  return (int)result;
+}
+
+
 DelayDetection::DelayDetection(){}
 
 DelayDetection::~DelayDetection(){}
@@ -43,7 +68,9 @@ void DelayDetection::putData(SFLDataFormat *inputData, int nbBytes) {}
 
 int DelayDetection::getData(SFLDataFormat *outputData) { return 0; }
 
-void DelayDetection::process(SFLDataFormat *inputData, int nbBytes) {}
+void DelayDetection::process(SFLDataFormat *inputData, int nbBytes) {
+  
+}
 
 int DelayDetection::process(SFLDataFormat *intputData, SFLDataFormat *outputData, int nbBytes) { return 0; }
 
@@ -53,44 +80,44 @@ void DelayDetection::crossCorrelate(double *ref, double *seg, double *res, short
 
   int counter = 0;
 
-  // Output has same size as the                                                                                                                                                                                                            
-  short rsize = refSize;                                                                                                                                                                                                                    
-  short ssize = segSize;                                                                                                                                                                                                                    
+  // Output has same size as the
+  short rsize = refSize;
+  short ssize = segSize;
   short tmpsize = segSize-refSize+1;
 
-  // perform autocorrelation on reference signal                                                                                                                                                                                            
+  // perform autocorrelation on reference signal
   double acref  = correlate(ref, ref, rsize);
 
-  // perform crossrelation on signal                                                                                                                                                                                                        
-  double acseg = 0.0;                                                                                                                                                                                                                       
-  double r;                                                                                                                                                                                                                                 
-  while(--tmpsize) { 
-    --ssize;                                                                                                                                                                                                                              
-    acseg = correlate(seg+tmpsize, seg+tmpsize, rsize);                                                                                                                                                                                   
-    res[ssize] = correlate(ref, seg+tmpsize, rsize);                                                                                                                                                                                      
+  // perform crossrelation on signal
+  double acseg = 0.0;
+  double r;
+  while(--tmpsize) {
+    --ssize;
+    acseg = correlate(seg+tmpsize, seg+tmpsize, rsize);
+    res[ssize] = correlate(ref, seg+tmpsize, rsize);
     r = sqrt(acref*acseg);
 
-    if(r < 0.0001)                                                                                                                                                                                                                        
-      res[ssize] = 0.0;                                                                                                                                                                                                                   
-    else                                                                                                                                                                                                                                  
-      res[ssize] = res[ssize] / r;                                                                                                                                                                                                        
+    if(r < 0.0001)
+      res[ssize] = 0.0;
+    else
+      res[ssize] = res[ssize] / r;
   }
 
-  // perform crosscorrelation on zerro padded region                                                                                                                                                                                        
-  int i = 0;                                                                                                                                                                                                                                
-  while(rsize) {                                                                                                                                                                                                                            
-    acseg = correlate(seg, seg, rsize);                                                                                                                                                                                                   
-    res[ssize-1] = correlate(ref+i, seg, rsize);                                                                                                                                                                                          
-    r = sqrt(acref*acseg);                                                                                                                                                                                                                
+  // perform crosscorrelation on zerro padded region
+  int i = 0;
+  while(rsize) {
+    acseg = correlate(seg, seg, rsize);
+    res[ssize-1] = correlate(ref+i, seg, rsize);
+    r = sqrt(acref*acseg);
+
+    if(r < 0.0001)
+      res[ssize-1] = 0.0;
+    else
+      res[ssize-1] = res[ssize-1] / r;
                                                                                                                                                                                                                                             
-    if(r < 0.0001)                                                                                                                                                                                                                        
-      res[ssize-1] = 0.0;                                                                                                                                                                                                               
-    else                                                                                                                                                                                                                                  
-      res[ssize-1] = res[ssize-1] / r;                                                                                                                                                                                                  
-                                                                                                                                                                                                                                            
-    --rsize;                                                                                                                                                                                                                              
-    --ssize;                                                                                                                                                                                                                              
-    ++i;                                                                                                                                                                                                                                  
+    --rsize;
+    --ssize;
+    ++i;
   }
 }
 double DelayDetection::correlate(double *sig1, double *sig2, short size) {
