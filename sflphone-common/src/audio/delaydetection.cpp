@@ -40,13 +40,13 @@ FirFilter::FirFilter(std::vector<double> ir) : _impulseResponse(ir),
 
 FirFilter::~FirFilter() {}
 
-int FirFilter::getOutputSample(int inputSample) 
+float FirFilter::getOutputSample(float inputSample) 
 {
-  _delayLine[_count] = (double)inputSample;
+  _taps[_count] = inputSample;
   double result = 0.0;
   int index = _count;
   for(int i = 0; i < _length; i++) {
-    result = result + _impulseResponse[i] * _delayLine[index--];
+    result = result + _impulseResponse[i] * _taps[index--];
     if(index < 0)
       index = _length-1;
   }
@@ -54,17 +54,28 @@ int FirFilter::getOutputSample(int inputSample)
   if(_count >= _length)
     _count = 0;
 
-  return (int)result;
+  return result;
 }
 
 
-DelayDetection::DelayDetection(){}
+DelayDetection::DelayDetection(std::vector<double> ir) : _decimationFilter(ir) {}
 
 DelayDetection::~DelayDetection(){}
 
 void DelayDetection::reset() {}
 
-void DelayDetection::putData(SFLDataFormat *inputData, int nbBytes) {}
+void DelayDetection::putData(SFLDataFormat *inputData, int nbBytes) 
+{
+  int nbSamples = nbBytes/sizeof(SFLDataFormat);
+  
+  float tmp[nbSamples];
+
+  float down[nbSamples];
+
+  convertInt16ToFloat32(inputData, tmp, nbSamples);
+
+  downsampleData(tmp, down, nbSamples, 8);
+}
 
 int DelayDetection::getData(SFLDataFormat *outputData) { return 0; }
 
@@ -120,6 +131,7 @@ void DelayDetection::crossCorrelate(double *ref, double *seg, double *res, short
     ++i;
   }
 }
+
 double DelayDetection::correlate(double *sig1, double *sig2, short size) {
 
   short s = size;
@@ -129,4 +141,34 @@ double DelayDetection::correlate(double *sig1, double *sig2, short size) {
       ac += sig1[s]*sig2[s];
 
   return ac;
+}
+
+
+void DelayDetection::convertInt16ToFloat32(SFLDataFormat *input, float *output, int nbSamples) {
+
+    // factor is 1/(2^15), used to rescale the short int range to the
+    // [-1.0 - 1.0] float range.
+#define S2F_FACTOR .000030517578125f;
+  int len = nbSamples;
+
+  while(len) {
+    len--;
+    output[len] = (float)input[len] * S2F_FACTOR;
+  }
+}
+
+
+
+void DelayDetection::downsampleData(float *input, float *output, int nbSamples, int factor) {
+
+  
+    float tmp[nbSamples];
+
+    for(int i = 0; i < nbSamples; i++) {
+        tmp[i] = _decimationFilter.getOutputSample(input[i]);
+    }
+
+    for(int i = 0; i < nbSamples; i+=factor) {
+        output[i] = tmp[i];
+    }
 }

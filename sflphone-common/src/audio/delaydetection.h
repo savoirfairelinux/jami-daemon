@@ -40,6 +40,9 @@
 // Segment length in ms for correlation
 #define MAX_DELAY 150
 
+// Size of internal buffers in samples
+#define DELAY_BUFF_SIZE 150*8000/1000 
+
 #define MAXFILTERSIZE 100
 
 class FirFilter {
@@ -56,6 +59,11 @@ class FirFilter {
    */
   ~FirFilter();
   
+  /**
+   * Perform filtering on one sample
+   */
+  float getOutputSample(float inputSample);
+
 
  private:
 
@@ -72,17 +80,12 @@ class FirFilter {
   /**
    * Circular buffer
    */
-  double _delayLine[MAXFILTERSIZE];
+  double _taps[MAXFILTERSIZE];
 
   /**
    * Counter
    */
   int _count;
-
-  /**
-   * Perform filtering on one sample
-   */
-  int getOutputSample(int inputSample);
   
 };
 
@@ -91,7 +94,7 @@ class DelayDetection : public Algorithm {
 
  public:
 
-    DelayDetection();
+    DelayDetection(std::vector<double> ir);
 
     ~DelayDetection();
 
@@ -119,6 +122,10 @@ class DelayDetection : public Algorithm {
      */
     double correlate(double *sig1, double *sig2, short size);
 
+    void convertInt16ToFloat32(SFLDataFormat *input, float *ouput, int nbSamples);
+
+    void downsampleData(float *input, float *output, int nbSamples, int factor);
+
     /**
      * Segment size in samples for correlation
      */
@@ -129,6 +136,22 @@ class DelayDetection : public Algorithm {
      */
     short _correlationSize;
 
+    float _spkrReference[DELAY_BUFF_SIZE];
+
+    float _capturedData[DELAY_BUFF_SIZE];
+
+    float _spkrReferenceDown[DELAY_BUFF_SIZE];
+
+    float _captureDataDown[DELAY_BUFF_SIZE];
+
+    float _spkrReferenceFilter[DELAY_BUFF_SIZE];
+
+    float _captureDataFilter[DELAY_BUFF_SIZE];
+
+    //     int myints[] = {16,2,77,29};
+    // vector<int> fifth (myints, myints + sizeof(myints) / sizeof(int) );
+
+    FirFilter _decimationFilter;
 
  public:
 
