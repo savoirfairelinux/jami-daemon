@@ -46,8 +46,8 @@ void DelayDetectionTest::testCrossCorrelation()
     double result[10];
     double expected[10] = {0.0, 0.89442719, 1.0, 0.95618289, 0.91350028, 0.88543774, 0.86640023, 0.85280287, 0.8426548, 0.83480969};
 
-    // CPPUNIT_ASSERT(_delaydetect.correlate(ref, ref, 3) == 5.0);
-    // CPPUNIT_ASSERT(_delaydetect.correlate(signal, signal, 10) == 285.0);
+    CPPUNIT_ASSERT(_delaydetect.correlate(ref, ref, 3) == 5.0);
+    CPPUNIT_ASSERT(_delaydetect.correlate(signal, signal, 10) == 285.0);
     
     _delaydetect.crossCorrelate(ref, signal, result, 3, 10);
 
@@ -56,11 +56,10 @@ void DelayDetectionTest::testCrossCorrelation()
     double tmp;
     for (int i = 0; i < 10; i++) {
         tmp = result[i]-expected[i];
-        std::cout << "Result: " << result[i] << ", Expected: " << expected[i] << ", Delta: " << tmp << std::endl;
-        //delayif(tmp < 0.0)
-	  // CPPUNIT_ASSERT (tmp > -0.1);
-	  //else
-	  // CPPUNIT_ASSERT(tmp < 0.1);
+        if(tmp < 0.0)
+	  CPPUNIT_ASSERT (tmp > -0.001);
+	else
+	  CPPUNIT_ASSERT(tmp < 0.001);
     }
 
 
