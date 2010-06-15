@@ -65,9 +65,9 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   _debug("EchoCancel: Instantiate echo canceller");
 
  
-  micFile = new ofstream("micData", ofstream::binary);
-  echoFile = new ofstream("echoData", ofstream::binary);
-  spkrFile = new ofstream("spkrData", ofstream::binary);
+  // micFile = new ofstream("micData", ofstream::binary);
+  // echoFile = new ofstream("echoData", ofstream::binary);
+  // spkrFile = new ofstream("spkrData", ofstream::binary);
 
   micLevelData = new ofstream("micLevelData", ofstream::binary);
   spkrLevelData = new ofstream("spkrLevelData", ofstream::binary);
@@ -120,6 +120,7 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   
 }
 
+
 EchoCancel::~EchoCancel() 
 {
   _debug("EchoCancel: Delete echo canceller");
@@ -134,22 +135,20 @@ EchoCancel::~EchoCancel()
   speex_preprocess_state_destroy(_noiseState);
 #endif
   
-  micFile->close();
-  spkrFile->close();
-  echoFile->close();
+  // micFile->close();
+  // spkrFile->close();
+  // echoFile->close();
 
-  delete micFile;
-  delete spkrFile;
-  delete echoFile;
+  // delete micFile;
+  // delete spkrFile;
+  // delete echoFile;
 
   micLevelData->close();
   spkrLevelData->close();
   delete micLevelData;
   delete spkrLevelData;
-  
-
-
 }
+
 
 void EchoCancel::reset()
 {
@@ -225,6 +224,7 @@ void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
   _spkrData->Put(inputData, nbBytes);
 }
 
+
 int EchoCancel::getData(SFLDataFormat *outputData)
 {
 
@@ -239,6 +239,7 @@ int EchoCancel::getData(SFLDataFormat *outputData)
 }
 
 void EchoCancel::process(SFLDataFormat *data, int nbBytes) {}
+
 
 int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
@@ -266,38 +267,51 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   int nbFrame = 0;
 
   // Get data from mic and speaker internal buffer
-  while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
+  // while((spkrAvail >= byteSize) && (micAvail >= byteSize)) {
+  while(micAvail >= byteSize) {
 
-    // get synchronized data
-    _spkrData->Get(_tmpSpkr, byteSize);
-    _micData->Get(_tmpMic, byteSize);
+    if(spkrAvail >= byteSize) {
+
+      // get synchronized data
+      _spkrData->Get(_tmpSpkr, byteSize);
+      _micData->Get(_tmpMic, byteSize);
     
-    micFile->write((const char *)_tmpMic, byteSize);
-    spkrFile->write((const char *)_tmpSpkr, byteSize);
+      // micFile->write((const char *)_tmpMic, byteSize);
+      // spkrFile->write((const char *)_tmpSpkr, byteSize);
 
 #ifdef HAVE_SPEEXDSP_LIB  
-    // Remove noise
-    if(_noiseActive)
-        speex_preprocess_run(_noiseState, _tmpMic);
+      // Remove noise
+      if(_noiseActive)
+          speex_preprocess_run(_noiseState, _tmpMic);
 #endif
 
-    // Processed echo cancellation
-    performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
+      // Processed echo cancellation
+      performEchoCancel(_tmpMic, _tmpSpkr, _tmpOut);
 
-    echoFile->write((const char *)_tmpOut, byteSize);
+      // echoFile->write((const char *)_tmpOut, byteSize);
 
-    bcopy(_tmpOut, outputData+(nbFrame*_smplPerFrame), byteSize);
+      bcopy(_tmpOut, outputData+(nbFrame*_smplPerFrame), byteSize);
 
-    // used to sync with speaker 
-    _processedByte += byteSize;
+      // used to sync with speaker 
+      _processedByte += byteSize;
 
-    spkrAvail = _spkrData->AvailForGet();
-    micAvail = _micData->AvailForGet();
+      spkrAvail = _spkrData->AvailForGet();
+      micAvail = _micData->AvailForGet();
 
-    // increment nb of frame processed
-    ++nbFrame;
+      // increment nb of frame processed
+      ++nbFrame;
+    }
+    else {
+      _micData->Get(_tmpMic, byteSize);
+      bcopy(_tmpOut, outputData+(nbFrame*_smplPerFrame), byteSize);
+      ++nbFrame;
+
+      spkrAvail = _spkrData->AvailForGet();
+      micAvail = _micData->AvailForGet();
+
+    }
+
   }
-
   return nbFrame * _smplPerFrame;
 }
 
