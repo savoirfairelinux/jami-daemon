@@ -213,6 +213,8 @@ void EchoCancel::reset()
 void EchoCancel::putData(SFLDataFormat *inputData, int nbBytes) 
 {
 
+  _delayDetector.putData(inputData, nbBytes);
+
   if(_spkrStoped) {
       _debug("EchoCancel: Flush data");
       _micData->flushAll();
@@ -243,6 +245,8 @@ void EchoCancel::process(SFLDataFormat *data, int nbBytes) {}
 
 int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
+
+  _delayDetector.process(inputData, nbBytes);
 
   if(_spkrStoped) {
       bcopy(inputData, outputData, nbBytes);

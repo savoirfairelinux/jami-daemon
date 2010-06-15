@@ -41,9 +41,11 @@
 #define MAX_DELAY 150
 
 // Size of internal buffers in samples
-#define DELAY_BUFF_SIZE 150*8000/1000 
+#define  DELAY_BUFF_SIZE MAX_DELAY*8000/1000 
 
 #define MAXFILTERSIZE 100
+
+
 
 class FirFilter {
 
@@ -63,6 +65,8 @@ class FirFilter {
    * Perform filtering on one sample
    */
   float getOutputSample(float inputSample);
+
+  void reset(void);
 
 
  private:
@@ -112,15 +116,22 @@ class DelayDetection : public Algorithm {
 
  private:
 
+    enum State {
+      WaitForSpeaker,
+      WaitForMic,
+      ComputeCorrelation
+    };
+
+
     /**
      * Perform a normalized crosscorrelation between template and segment
      */
-    void crossCorrelate(double *ref, double *seg, double *res, short refSize, short segSize);
+    void crossCorrelate(float *ref, float *seg, float *res, int refSize, int segSize);
 
     /**
      * Perform a correlation on specified signals (mac)
      */
-    double correlate(double *sig1, double *sig2, short size);
+    double correlate(float *sig1, float *sig2, short size);
 
     void convertInt16ToFloat32(SFLDataFormat *input, float *ouput, int nbSamples);
 
@@ -128,36 +139,49 @@ class DelayDetection : public Algorithm {
 
     void bandpassFilter(float *input, int nbSamples);
 
+    int getMaxIndex(float *data, int size);
+
+    State _internalState;
+
+    FirFilter _decimationFilter;
+
+    FirFilter _bandpassFilter;
+
     /**
      * Segment size in samples for correlation
      */
     short _segmentSize;
+
+    int _downsamplingFactor;
 
     /**
      * Resulting correlation size (s + w -1)
      */
     short _correlationSize;
 
-    float _spkrReference[DELAY_BUFF_SIZE];
+    float _spkrReference[WINDOW_SIZE*2];
 
-    float _capturedData[DELAY_BUFF_SIZE];
+    float _capturedData[DELAY_BUFF_SIZE*2];
 
-    float _spkrReferenceDown[DELAY_BUFF_SIZE];
+    float _spkrReferenceDown[WINDOW_SIZE*2];
 
-    float _captureDataDown[DELAY_BUFF_SIZE];
+    float _captureDataDown[DELAY_BUFF_SIZE*2];
 
-    float _spkrReferenceFilter[DELAY_BUFF_SIZE];
+    float _spkrReferenceFilter[WINDOW_SIZE*2];
 
-    float _captureDataFilter[DELAY_BUFF_SIZE];
+    float _captureDataFilter[DELAY_BUFF_SIZE*2];
 
-    //     int myints[] = {16,2,77,29};
-    // vector<int> fifth (myints, myints + sizeof(myints) / sizeof(int) );
-
-    FirFilter _decimationFilter;
-
-    FirFilter _bandpassFilter;
+    float _correlationResult[DELAY_BUFF_SIZE*2];
 
     int _remainingIndex;
+
+    int _spkrDownSize;
+
+    int _micDownSize;
+
+    int _nbMicSampleStored;
+
+    int _nbSpkrSampleStored;
 
  public:
 

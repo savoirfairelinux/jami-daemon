@@ -72,6 +72,9 @@ class DelayDetectionTest : public CppUnit::TestCase {
   
     CPPUNIT_TEST_SUITE( DelayDetectionTest );
       CPPUNIT_TEST( testCrossCorrelation );
+      CPPUNIT_TEST( testCrossCorrelationDelay );
+      CPPUNIT_TEST( testFirFilter );
+      CPPUNIT_TEST( testDelayDetection );
     CPPUNIT_TEST_SUITE_END();
 
  public: 
@@ -83,6 +86,12 @@ class DelayDetectionTest : public CppUnit::TestCase {
     inline void tearDown();
 
     void testCrossCorrelation();
+
+    void testCrossCorrelationDelay();
+
+    void testFirFilter();
+
+    void testDelayDetection();
 
  private:
 

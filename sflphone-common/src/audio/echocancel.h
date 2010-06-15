@@ -36,6 +36,7 @@
 
 #include "audioprocessing.h"
 #include "ringbuffer.h"
+#include "delaydetection.h"
 
 // Number of ms in sec
 #define MS_PER_SEC 1000
@@ -378,7 +379,9 @@ class EchoCancel : public Algorithm {
     /**
      * true if noise suppressor is active, false elsewhere
      */
-    bool _noiseActive;  
+    bool _noiseActive;
+
+    DelayDetection _delayDetector;
 
 };
 
