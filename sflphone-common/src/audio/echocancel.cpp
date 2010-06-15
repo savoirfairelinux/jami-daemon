@@ -303,15 +303,23 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
     }
     else {
       _micData->Get(_tmpMic, byteSize);
+
+      performEchoCancelNoSpkr(_tmpMic, _tmpOut);
+
       bcopy(_tmpOut, outputData+(nbFrame*_smplPerFrame), byteSize);
       ++nbFrame;
+    }
 
       spkrAvail = _spkrData->AvailForGet();
       micAvail = _micData->AvailForGet();
-
-    }
-
   }
+
+  // if spkrAvail is twice the size of a frame discard it, this data is late and won't be used
+  if(spkrAvail > (2*byteSize)) {
+      _debug("EchoCancel: Discard echo cancel");
+      _spkrData->Discard(spkrAvail-(2*byteSize));
+  }
+
   return nbFrame * _smplPerFrame;
 }
 
@@ -363,32 +371,69 @@ void EchoCancel::performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDa
 
 }
 
+void EchoCancel::performEchoCancelNoSpkr(SFLDataFormat *micData, SFLDataFormat *outputData) {
 
-void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData) {
+  for(int k = 0; k < _nbSegmentPerFrame; k++) {
 
-  // TODO: we should find a way to normalize signal at this point
+    updateMicLevel(micData);
+
+    _micLevel = getMaxAmplitude(_avgMicLevelHist, _micHistoryLength)/6;
+    if(_micLevel > MIN_SIG_LEVEL) {
+        increaseFactor(0.2);
+    }
+
+    // lowpass filtering
+    float amplify = (_lastAmplFactor + _amplFactor) / 2;
+    _lastAmplFactor = _amplFactor;
+
+    if(!_echoActive)
+        amplify = 1.0;
+
+    amplifySignal(micData+(k*_smplPerSeg), outputData+(k*_smplPerSeg), amplify);
+  }
+
+}
+
+void EchoCancel::updateMicLevel(SFLDataFormat *micData) {
+
   int micLvl = computeAmplitudeLevel(micData, _smplPerSeg);
-  int spkrLvl = computeAmplitudeLevel(spkrData, _smplPerSeg);
 
-  SFLDataFormat tempSpkrLevel[_smplPerSeg];
   SFLDataFormat tempMicLevel[_smplPerSeg];
 
-  _spkrLevelMem = estimatePower(spkrData, tempSpkrLevel, _smplPerSeg, _spkrLevelMem);
   _micLevelMem = estimatePower(micData, tempMicLevel, _smplPerSeg, _micLevelMem);
 
-  // Add 1 to make sure we are not dividing by 0
   _avgMicLevelHist[_micHistCnt++] = micLvl+1;
-  _avgSpkrLevelHist[_spkrHistCnt++] = spkrLvl+1;
 
   if(_micHistCnt >= _micHistoryLength)
     _micHistCnt = 0;
 
+  micLevelData->write((const char*)tempMicLevel, sizeof(SFLDataFormat)*_smplPerSeg);
+}
+
+
+void EchoCancel::updateSpkrLevel(SFLDataFormat *spkrData) {
+
+  int spkrLvl = computeAmplitudeLevel(spkrData, _smplPerSeg);
+
+  SFLDataFormat tempSpkrLevel[_smplPerSeg];
+
+  _spkrLevelMem = estimatePower(spkrData, tempSpkrLevel, _smplPerSeg, _spkrLevelMem);
+
+  _avgSpkrLevelHist[_spkrHistCnt++] = spkrLvl+1;
+
   if(_spkrHistCnt >= _spkrHistoryLength)
     _spkrHistCnt = 0;
 
-
-  micLevelData->write((const char*)tempMicLevel, sizeof(SFLDataFormat)*_smplPerSeg);
   spkrLevelData->write((const char*)tempSpkrLevel, sizeof(SFLDataFormat)*_smplPerSeg);
+}
+
+
+void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData) {
+
+  // Add 1 to make sure we are not dividing by 0
+  updateMicLevel(micData);
+  updateSpkrLevel(spkrData);
+
   /*
   // if adaptation done, stop here
   // if(_adaptDone)
@@ -424,6 +469,8 @@ void EchoCancel::updateEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrDat
   }
   */
 }
+
+
 
 
 int EchoCancel::computeAmplitudeLevel(SFLDataFormat *data, int size) {

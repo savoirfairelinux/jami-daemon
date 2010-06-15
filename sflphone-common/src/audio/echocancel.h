@@ -131,6 +131,12 @@ class EchoCancel : public Algorithm {
      */
     void performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData);
 
+    void performEchoCancelNoSpkr(SFLDataFormat *micData, SFLDataFormat *outputData);
+
+    void updateMicLevel(SFLDataFormat *micData);
+
+    void updateSpkrLevel(SFLDataFormat *spkrData);
+
     /**
      * Update speaker level array for both micData and spkrData
      */
