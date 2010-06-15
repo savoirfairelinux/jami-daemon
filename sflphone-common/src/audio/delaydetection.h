@@ -94,7 +94,7 @@ class DelayDetection : public Algorithm {
 
  public:
 
-    DelayDetection(std::vector<double> ir);
+    DelayDetection();
 
     ~DelayDetection();
 
@@ -126,6 +126,8 @@ class DelayDetection : public Algorithm {
 
     void downsampleData(float *input, float *output, int nbSamples, int factor);
 
+    void bandpassFilter(float *input, int nbSamples);
+
     /**
      * Segment size in samples for correlation
      */
@@ -152,6 +154,10 @@ class DelayDetection : public Algorithm {
     // vector<int> fifth (myints, myints + sizeof(myints) / sizeof(int) );
 
     FirFilter _decimationFilter;
+
+    FirFilter _bandpassFilter;
+
+    int _remainingIndex;
 
  public:
 

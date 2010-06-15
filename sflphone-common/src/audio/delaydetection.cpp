@@ -33,7 +33,18 @@
 #include "delaydetection.h"
 #include "math.h"
 
-FirFilter::FirFilter(std::vector<double> ir) : _impulseResponse(ir), 
+
+// decimation filter coefficient
+float decimationCoefs[] = {0.1, 0.1, 0.1, 0.1, 0.1};
+std::vector<double> ird(decimationCoefs, decimationCoefs + sizeof(decimationCoefs)/sizeof(float));
+
+
+// decimation filter coefficient
+float bandpassCoefs[] = {0.1, 0.1, 0.1, 0.1, 0.1};
+std::vector<double> irb(bandpassCoefs, bandpassCoefs + sizeof(bandpassCoefs)/sizeof(float));
+
+
+FirFilter::FirFilter(std::vector<double> ir) : _impulseResponse(ir),
 					       _length(ir.size()),
 					       _count(0)
 {}
@@ -58,7 +69,7 @@ float FirFilter::getOutputSample(float inputSample)
 }
 
 
-DelayDetection::DelayDetection(std::vector<double> ir) : _decimationFilter(ir) {}
+DelayDetection::DelayDetection() : _decimationFilter(ird), _bandpassFilter(irb) {}
 
 DelayDetection::~DelayDetection(){}
 
@@ -69,18 +80,25 @@ void DelayDetection::putData(SFLDataFormat *inputData, int nbBytes)
   int nbSamples = nbBytes/sizeof(SFLDataFormat);
   
   float tmp[nbSamples];
-
   float down[nbSamples];
 
   convertInt16ToFloat32(inputData, tmp, nbSamples);
-
   downsampleData(tmp, down, nbSamples, 8);
+  bandpassFilter(down, nbSamples/8);
 }
 
 int DelayDetection::getData(SFLDataFormat *outputData) { return 0; }
 
 void DelayDetection::process(SFLDataFormat *inputData, int nbBytes) {
-  
+
+  int nbSamples = nbBytes/sizeof(SFLDataFormat);
+
+  float tmp[nbSamples];
+  float down[nbSamples];
+
+  convertInt16ToFloat32(inputData, tmp, nbSamples);
+  downsampleData(tmp, down, nbSamples, 8);
+  bandpassFilter(down, nbSamples/8);
 }
 
 int DelayDetection::process(SFLDataFormat *intputData, SFLDataFormat *outputData, int nbBytes) { return 0; }
@@ -158,9 +176,7 @@ void DelayDetection::convertInt16ToFloat32(SFLDataFormat *input, float *output, 
 }
 
 
-
 void DelayDetection::downsampleData(float *input, float *output, int nbSamples, int factor) {
-
   
     float tmp[nbSamples];
 
@@ -168,7 +184,18 @@ void DelayDetection::downsampleData(float *input, float *output, int nbSamples, 
         tmp[i] = _decimationFilter.getOutputSample(input[i]);
     }
 
-    for(int i = 0; i < nbSamples; i+=factor) {
-        output[i] = tmp[i];
+    int j;
+    for(j=_remainingIndex; j<nbSamples; j+=factor) {
+        output[j] = tmp[j];
+    }
+    _remainingIndex = j - nbSamples;
+    
+}
+
+
+void DelayDetection::bandpassFilter(float *input, int nbSamples) {
+
+    for(int i = 0; i < nbSamples; i++) {
+        input[i] = _bandpassFilter.getOutputSample(input[i]);
     }
 }
