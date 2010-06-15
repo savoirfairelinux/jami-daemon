@@ -116,12 +116,24 @@ class EchoCancel : public Algorithm {
      */
     void setSamplingRate(int smplRate);
 
+    /**
+     * Set echo canceller state to active/deactive
+     */ 
     void setEchoCancelState(bool state) { _echoActive = state; }
 
+    /**
+     * Return the echo canceller state
+     */
     bool getEchoCancelState(void) { return _echoActive; }
 
+    /**
+     * Set the noise suppression state to active/deactive
+     */
     void setNoiseSuppressState(bool state) { _noiseActive = state; }
 
+    /**
+     * Return the noise suppression state
+     */
     bool getNoiseSuppressState(void) { return _noiseActive; }
 
  private:
@@ -131,10 +143,19 @@ class EchoCancel : public Algorithm {
      */
     void performEchoCancel(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData);
 
+    /**
+     * This is the fall back method in case there is no spkr data available
+     */
     void performEchoCancelNoSpkr(SFLDataFormat *micData, SFLDataFormat *outputData);
 
+    /**
+     * Compute current instantaneous microphone signal power and store it in internal array 
+     */
     void updateMicLevel(SFLDataFormat *micData);
 
+    /**
+     * Compute current instantaneous spkeaker signal power and store uit in internal array
+     */
     void updateSpkrLevel(SFLDataFormat *spkrData);
 
     /**
@@ -176,8 +197,14 @@ class EchoCancel : public Algorithm {
      */
     void decreaseFactor();
 
+    /**
+     * Perform simple correlation between data1 and data2
+     */
     int performCorrelation(int *data1, int *data2, int size);
 
+    /**
+     * Return maximum in data index
+     */
     int getMaximumIndex(int *data, int size);
 
     /**
@@ -300,8 +327,14 @@ class EchoCancel : public Algorithm {
      */
     int _adaptCnt;
 
+    /**
+     * Factor for power estimation
+     */
     float _alpha;
 
+    /**
+     * Termporary spkr level memories
+     */
     SFLDataFormat _spkrLevelMem;
     SFLDataFormat _micLevelMem;
 
