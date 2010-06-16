@@ -213,9 +213,10 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 
     if (_streamType == PLAYBACK_STREAM) {
 
-        attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec); // -1;
+        attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
+	attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->minreq = (uint32_t) -1;
 	
 	pa_threaded_mainloop_lock(_mainloop);
@@ -230,10 +231,11 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 
     } else if (_streamType == CAPTURE_STREAM) {
 
-        attributes->maxlength = (uint32_t) -1;
-	attributes->tlength = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &_sample_spec);
+      attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);// (uint32_t) -1;
+      attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);// pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
 	attributes->prebuf = 0;
-        attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec); // pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+	attributes->minreq = (uint32_t) -1;
 
 	pa_threaded_mainloop_lock(_mainloop);
 
@@ -247,16 +249,17 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
         
     } else if (_streamType == RINGTONE_STREAM) {
 
-      attributes->maxlength = (uint32_t) -1;
-      attributes->tlength = pa_usec_to_bytes(50 * PA_USEC_PER_MSEC, &_sample_spec);
+      attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);;
+      attributes->tlength = pa_usec_to_bytes(40 * PA_USEC_PER_MSEC, &_sample_spec);
       attributes->prebuf = 0;
+      attributes->fragsize = pa_usec_to_bytes(20 * PA_USEC_PER_MSEC, &_sample_spec);
       attributes->minreq = (uint32_t) -1;
 
       pa_threaded_mainloop_lock(_mainloop);
       if(deviceName)
 	pa_stream_connect_playback(s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
       else
-	pa_stream_connect_playback(s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+	pa_stream_connect_playback(s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY), NULL, NULL);
 
       pa_threaded_mainloop_unlock(_mainloop);
 
