@@ -364,12 +364,12 @@ class EchoCancel : public Algorithm {
     ofstream *micLevelData;
     ofstream *spkrLevelData;
 
-#ifdef HAVE_SPEEXDSP_LIB
+    // #ifdef HAVE_SPEEXDSP_LIB
     /**
      * Noise reduction processing state
      */
     SpeexPreprocessState *_noiseState;
-#endif
+    // #endif
 
     /**
      * true if noise suppressor is active, false elsewhere

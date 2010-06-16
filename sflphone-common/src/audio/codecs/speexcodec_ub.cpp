@@ -79,6 +79,7 @@ class Speex : public AudioCodec
 
             speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
 
+	    /*
 #ifdef HAVE_SPEEXDSP_LIB
 
             int enable = 1;
@@ -100,7 +101,7 @@ class Speex : public AudioCodec
             speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &enable);
             speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_AGC, &enable);
 #endif
-
+	    */
         }
 
         ~Speex() {
@@ -135,11 +136,12 @@ class Speex : public AudioCodec
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
             speex_bits_reset (&_speex_enc_bits);
 
+	    /*
 #ifdef HAVE_SPEEXDSP_LIB
 
             speex_preprocess_run (_preprocess_state, src);
 #endif
-
+	    */
 
             speex_encode_int (_speex_enc_state, src, &_speex_enc_bits);
             speex_bits_nbytes (&_speex_enc_bits);

@@ -223,7 +223,7 @@ void DelayDetection::process(SFLDataFormat *inputData, int nbBytes) {
 
   _debug("MaxIndex: %d", maxIndex);
 
-  reset();
+  // reset();
 }
 
 int DelayDetection::process(SFLDataFormat *intputData, SFLDataFormat *outputData, int nbBytes) { return 0; }
