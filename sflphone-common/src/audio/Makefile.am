@@ -4,6 +4,10 @@ noinst_LTLIBRARIES = libaudio.la
 
 SUBDIRS = codecs audiortp sound alsa pulseaudio 
 
+# if ENABLE_SPEEXDSP
+# SPEEXDSP=-DHAVE_SPEEXDSP_LIB
+# endif
+
 libaudio_la_SOURCES = \
 		audioloop.cpp \
 		ringbuffer.cpp \
