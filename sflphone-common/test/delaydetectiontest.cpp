@@ -137,20 +137,75 @@ void DelayDetectionTest::testFirFilter()
     
 }
 
+void DelayDetectionTest::testIntToFloatConversion() {
+
+  SFLDataFormat data[32768*2];
+  float converted[32768*2];
+
+  for(int i = -32768; i < 32768; i++)
+      data[i+32768] = i;
+  
+  _delaydetect.convertInt16ToFloat32(data, converted, 32768*2);
+
+  for(int i = -32768; i < 0; i++) {
+    CPPUNIT_ASSERT(converted[i+32768] >= -1.0);
+    CPPUNIT_ASSERT(converted[i+32768] <= 0.0);
+  }
+
+  for(int i = 0; i < 32768; i++) {
+    CPPUNIT_ASSERT(converted[i+32768] >= 0.0);
+    CPPUNIT_ASSERT(converted[i+32768] <= 1.0);
+  }
+}
+
+void DelayDetectionTest::testDownSamplingData() {
+
+  SFLDataFormat data[32768*2];
+  float converted[32768*2];
+  float resampled[32768*2];
+
+  for(int i = -32768; i < 32768; i++)
+      data[i+32768] = i;
+
+  _delaydetect.convertInt16ToFloat32(data, converted, 32768*2);
+
+  _delaydetect.downsampleData(converted, resampled, 32768*2, 8);
+
+  for(int i = 0; i < 32768/8; i++) {
+    CPPUNIT_ASSERT(resampled[i] >= -1.0);
+    CPPUNIT_ASSERT(resampled[i] <= 0.0);
+  }
+
+  for(int i = 32768/8+1; i < 32768/4; i++) {
+    CPPUNIT_ASSERT(resampled[i] >= 0.0);
+    CPPUNIT_ASSERT(resampled[i] <= 1.0);
+  }
+
+  
+}
 
 
 void DelayDetectionTest::testDelayDetection() {
 
-  int delay = 3;
+  int delay = 100;
 
   SFLDataFormat spkr[WINDOW_SIZE];
   memset(spkr, 0, sizeof(SFLDataFormat)*WINDOW_SIZE);
   spkr[0] = 32000;
-  
+  spkr[1] = 32000;
+  spkr[2] = 32000;
+  spkr[3] = 32000;
+  spkr[4] = 32000;
+
   SFLDataFormat mic[DELAY_BUFF_SIZE];
   memset(mic, 0, sizeof(SFLDataFormat)*DELAY_BUFF_SIZE);
   mic[delay] = 32000;
+  mic[delay+1] = 32000;
+  mic[delay+2] = 32000;
+  mic[delay+3] = 32000;
+  mic[delay+4] = 32000;
   
   _delaydetect.putData(spkr, WINDOW_SIZE*sizeof(SFLDataFormat));
   _delaydetect.process(mic, DELAY_BUFF_SIZE*sizeof(SFLDataFormat));
+
 }

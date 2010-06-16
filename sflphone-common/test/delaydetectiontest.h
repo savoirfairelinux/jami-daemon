@@ -74,6 +74,8 @@ class DelayDetectionTest : public CppUnit::TestCase {
       CPPUNIT_TEST( testCrossCorrelation );
       CPPUNIT_TEST( testCrossCorrelationDelay );
       CPPUNIT_TEST( testFirFilter );
+      CPPUNIT_TEST( testIntToFloatConversion );
+      CPPUNIT_TEST( testDownSamplingData );
       CPPUNIT_TEST( testDelayDetection );
     CPPUNIT_TEST_SUITE_END();
 
@@ -90,6 +92,10 @@ class DelayDetectionTest : public CppUnit::TestCase {
     void testCrossCorrelationDelay();
 
     void testFirFilter();
+
+    void testIntToFloatConversion();
+
+    void testDownSamplingData();
 
     void testDelayDetection();
 
