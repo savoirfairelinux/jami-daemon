@@ -50,6 +50,8 @@
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h> // ost::Time
 
+#include <speex/speex_jitter.h>
+
 // Frequency (in packet number)
 #define RTP_TIMESTAMP_RESET_FREQ 100
 
@@ -229,9 +231,16 @@ namespace sfl {
               * EventQueue used to store list of DTMF-
               */
              EventQueue _eventQueue;
+
+	     JitterBuffer *_jbuffer;
+
+	     int _ts;
 	     
         protected:
+
              SIPCall * _ca;
+
+	     bool onRTPPacketRecv(ost::IncomingRTPPkt&);
     };    
     
     template <typename D>
@@ -255,6 +264,7 @@ namespace sfl {
      _timestampIncrement(0),
      _timestampCount(0),
      _countNotificationTime(0),
+     _jbuffer(NULL),
      _ca (sipcall)
     {
         setCancel (cancelDefault);
@@ -271,6 +281,12 @@ namespace sfl {
         _layerFrameSize = _audiolayer->getFrameSize(); // in ms
         _layerSampleRate = _audiolayer->getSampleRate();
 
+	_jbuffer = jitter_buffer_init(20);
+	_ts = 0;
+
+	int i = 160;
+	jitter_buffer_ctl(_jbuffer, JITTER_BUFFER_SET_MARGIN, &i);
+	jitter_buffer_ctl(_jbuffer, JITTER_BUFFER_SET_CONCEALMENT_SIZE, &i);
     }
     
     template <typename D>
@@ -296,8 +312,10 @@ namespace sfl {
         delete _converter;
 
         if (_audiocodec) {
-        	delete _audiocodec; _audiocodec = NULL;
+	    delete _audiocodec; _audiocodec = NULL;
         }
+
+	jitter_buffer_destroy(_jbuffer);
     }
     
     template <typename D>
@@ -477,12 +495,20 @@ namespace sfl {
     }
 
     template <typename D>
+    bool onRTPPacketRecv(ost::IncomingRTPPkt&)
+    {
+        _debug("AudioRtpSession: onRTPPacketRecv");
+
+	return true;
+    }
+
+
+    template <typename D>
     int AudioRtpSession<D>::processDataEncode(void)
     {
         assert(_audiocodec);
         assert(_audiolayer);
 
-	
         int _mainBufferSampleRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
         // compute codec framesize in ms
@@ -626,6 +652,7 @@ namespace sfl {
         const ost::AppDataUnit* adu = NULL;
 
         adu = static_cast<D*>(this)->getData(static_cast<D*>(this)->getFirstTimestamp());
+	// adu = static_cast<D*>(this)->getData(_ts);
 
         if (adu == NULL) {
             // _debug("No RTP audio stream\n");
@@ -633,12 +660,41 @@ namespace sfl {
         }
 
         unsigned char* spkrData  = (unsigned char*) adu->getData(); // data in char
-
         unsigned int size = adu->getSize(); // size in char
+
+	_debug("RTP: size %d", size);
+	_debug("RTP: timestamp %d", static_cast<D*>(this)->getFirstTimestamp());
+	_debug("RTP: timestamp %d", _ts);
+	_debug("RTP: sequence number %d", adu->getSeqNum());
+
+	JitterBufferPacket jPacketIn;
+	jPacketIn.data = (char *)spkrData;
+	jPacketIn.len = size;
+	//  jPacketIn.timestamp = static_cast<D*>(this)->getFirstTimestamp();
+	jPacketIn.timestamp = _ts+=20;
+	jPacketIn.span = 20;
+	jPacketIn.sequence = adu->getSeqNum();
+
+	_debug("RTP: jitter buffer put");
+	jitter_buffer_put(_jbuffer, &jPacketIn);
+
+	JitterBufferPacket jPacketOut;
+	jPacketOut.data = new char[size];
+	jPacketOut.len = size;
+	jPacketOut.span = 20;
+	jPacketOut.sequence = 0;
+
+	int desiredSpan = 20;
+	spx_int32_t offs;
+
+	_debug("RTP: jitter buffer get");
+	jitter_buffer_get(_jbuffer, &jPacketOut, desiredSpan, &offs);
+	jitter_buffer_tick(_jbuffer);
 
         // DTMF over RTP, size must be over 4 in order to process it as voice data
         if(size > 4) {
-        	processDataDecode (spkrData, size);
+	  processDataDecode(spkrData, size);
+	  // processDataDecode ((unsigned char *)jPacketOut.data, jPacketOut.len);
         }
         else {
         	// _debug("RTP: Received an RTP event with payload: %d", adu->getType());
@@ -646,6 +702,10 @@ namespace sfl {
 			// _debug("RTP: Data received %d", dtmf->event);
 
         }
+
+	delete jPacketOut.data;
+
+	delete adu;
     }
     
     template <typename D>
