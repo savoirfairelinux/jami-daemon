@@ -690,6 +690,7 @@ namespace sfl {
 	result = jitter_buffer_get(_jbuffer, &jPacketOut, desiredSpan, &offs);
 	jitter_buffer_tick(_jbuffer);
 
+	/*
 	switch(result) {
 	  case JITTER_BUFFER_OK:
 	    _debug("JITTER_BUFFER_OK");
@@ -707,6 +708,7 @@ namespace sfl {
 	    _debug("Unknown error");
 	    break;
 	}
+	*/
 
         // DTMF over RTP, size must be over 4 in order to process it as voice data
         if(size > 4) {
