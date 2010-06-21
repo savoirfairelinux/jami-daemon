@@ -275,6 +275,48 @@
 #   define PJ_HAS_PENTIUM	0
 #   define PJ_IS_LITTLE_ENDIAN	1
 #   define PJ_IS_BIG_ENDIAN	0
+
+#elif defined (PJ_M_SH) || defined(__sh) || defined(__sh__) || \
+      defined(__SH__) || defined(__M_SH) || defined(_ARCH_SH)
+    /*
+     * Renesas SH, little endian and big endian
+     */
+#   undef PJ_M_SH
+#   define PJ_M_SH              1
+#   define PJ_M_NAME            "sh"
+#   define PJ_HAS_PENTIUM       0
+# if defined(__LITTLE_ENDIAN__)
+#   define PJ_IS_LITTLE_ENDIAN  1
+#   define PJ_IS_BIG_ENDIAN     0
+# elif defined(__BIG_ENDIAN__)
+#   define PJ_IS_LITTLE_ENDIAN  0
+#   define PJ_IS_BIG_ENDIAN     1
+# endif
+
+#elif defined (PJ_M_HPPA) || defined(__hppa) || defined(__hppa__) || \
+      defined(__HPPA__) || defined(__M_HPPA) || defined(_ARCH_HPPA)
+    /*
+     * HP/PA, big endian
+     */
+#   undef PJ_M_HPPA
+#   define PJ_M_HPPA            1
+#   define PJ_M_NAME            "hppa"
+#   define PJ_HAS_PENTIUM       0
+#   define PJ_IS_LITTLE_ENDIAN  0
+#   define PJ_IS_BIG_ENDIAN     1
+
+#elif defined (PJ_M_S390) || defined(__s390) || defined(__s390__) || defined(__s390x) || \
+      defined(__s390x__) || defined(__M_s390) || defined(_ARCH_s390)
+    /*
+     * System 390, big endian
+     */
+#   undef PJ_M_S390
+#   define PJ_M_S390            1
+#   define PJ_M_NAME            "s390"
+#   define PJ_HAS_PENTIUM       0
+#   define PJ_IS_LITTLE_ENDIAN  0
+#   define PJ_IS_BIG_ENDIAN     1
+
 		
 #else
 #   error "Please specify target machine."
