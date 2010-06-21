@@ -235,6 +235,8 @@ namespace sfl {
 	     JitterBuffer *_jbuffer;
 
 	     int _ts;
+
+	     int jitterSeqNum;
 	     
         protected:
 
@@ -283,10 +285,11 @@ namespace sfl {
 
 	_jbuffer = jitter_buffer_init(20);
 	_ts = 0;
+	jitterSeqNum = 0;
 
-	int i = 160;
-	jitter_buffer_ctl(_jbuffer, JITTER_BUFFER_SET_MARGIN, &i);
-	jitter_buffer_ctl(_jbuffer, JITTER_BUFFER_SET_CONCEALMENT_SIZE, &i);
+	// int i = 160;
+	// jitter_buffer_ctl(_jbuffer, JITTER_BUFFER_SET_MARGIN, &i);
+	// jitter_buffer_ctl(_jbuffer, JITTER_BUFFER_SET_CONCEALMENT_SIZE, &i);
     }
     
     template <typename D>
@@ -651,8 +654,9 @@ namespace sfl {
 
         const ost::AppDataUnit* adu = NULL;
 
-        adu = static_cast<D*>(this)->getData(static_cast<D*>(this)->getFirstTimestamp());
-	// adu = static_cast<D*>(this)->getData(_ts);
+	int packetTimestamp = static_cast<D*>(this)->getFirstTimestamp();
+        adu = static_cast<D*>(this)->getData(packetTimestamp);
+	// packetTimestamp = adu->getgetTimestamp();
 
         if (adu == NULL) {
             // _debug("No RTP audio stream\n");
@@ -662,49 +666,61 @@ namespace sfl {
         unsigned char* spkrData  = (unsigned char*) adu->getData(); // data in char
         unsigned int size = adu->getSize(); // size in char
 
-	_debug("RTP: size %d", size);
-	_debug("RTP: timestamp %d", static_cast<D*>(this)->getFirstTimestamp());
-	_debug("RTP: timestamp %d", _ts);
-	_debug("RTP: sequence number %d", adu->getSeqNum());
-
 	JitterBufferPacket jPacketIn;
 	jPacketIn.data = (char *)spkrData;
 	jPacketIn.len = size;
-	//  jPacketIn.timestamp = static_cast<D*>(this)->getFirstTimestamp();
-	jPacketIn.timestamp = _ts+=20;
-	jPacketIn.span = 20;
-	jPacketIn.sequence = adu->getSeqNum();
+	// jPacketIn.timestamp = static_cast<D*>(this)->getFirstTimestamp();
+	jPacketIn.timestamp = jitterSeqNum * _timestampIncrement;
+	jPacketIn.span = _timestampIncrement;
+	jPacketIn.sequence = ++jitterSeqNum;
 
-	_debug("RTP: jitter buffer put");
 	jitter_buffer_put(_jbuffer, &jPacketIn);
 
 	JitterBufferPacket jPacketOut;
 	jPacketOut.data = new char[size];
 	jPacketOut.len = size;
-	jPacketOut.span = 20;
-	jPacketOut.sequence = 0;
+	jPacketIn.timestamp = 0;
+	jPacketIn.span = 0;
+	jPacketIn.sequence = 0;
 
-	int desiredSpan = 20;
-	spx_int32_t offs;
+	int desiredSpan = _timestampIncrement;
+	spx_int32_t offs = 0;
 
-	_debug("RTP: jitter buffer get");
-	jitter_buffer_get(_jbuffer, &jPacketOut, desiredSpan, &offs);
+	int result = JITTER_BUFFER_INTERNAL_ERROR;
+	result = jitter_buffer_get(_jbuffer, &jPacketOut, desiredSpan, &offs);
 	jitter_buffer_tick(_jbuffer);
+
+	switch(result) {
+	  case JITTER_BUFFER_OK:
+	    _debug("JITTER_BUFFER_OK");
+	    break;
+	  case JITTER_BUFFER_MISSING:
+	    _debug("JITTER_BUFFER_MISSING");
+	    break;
+	  case JITTER_BUFFER_INTERNAL_ERROR:
+	    _debug("JITTER_BUFFER_INTERNAL_ERROR");
+	    break;
+	  case JITTER_BUFFER_BAD_ARGUMENT:
+	    _debug("JITTER_BUFFER_BAD_ARGUMENT");
+	    break;
+	  default:
+	    _debug("Unknown error");
+	    break;
+	}
 
         // DTMF over RTP, size must be over 4 in order to process it as voice data
         if(size > 4) {
-	  processDataDecode(spkrData, size);
-	  // processDataDecode ((unsigned char *)jPacketOut.data, jPacketOut.len);
+	    // processDataDecode(spkrData, size);
+	    if(result == JITTER_BUFFER_OK)
+	        processDataDecode ((unsigned char *)jPacketOut.data, jPacketOut.len);
         }
         else {
-        	// _debug("RTP: Received an RTP event with payload: %d", adu->getType());
-			// ost::RTPPacket::RFC2833Payload *dtmf = (ost::RTPPacket::RFC2833Payload *)adu->getData();
-			// _debug("RTP: Data received %d", dtmf->event);
-
+	    // _debug("RTP: Received an RTP event with payload: %d", adu->getType());
+	    // ost::RTPPacket::RFC2833Payload *dtmf = (ost::RTPPacket::RFC2833Payload *)adu->getData();
+	    // _debug("RTP: Data received %d", dtmf->event);
         }
 
 	delete jPacketOut.data;
-
 	delete adu;
     }
     
@@ -724,6 +740,8 @@ namespace sfl {
 	// Timestamp must be initialized randomly
 	_timestamp = static_cast<D*>(this)->getCurrentTimestamp();
 
+	_ts = 0;
+
         int sessionWaiting;
         int threadSleep = 0;
 
@@ -742,9 +760,9 @@ namespace sfl {
         }
 
         _ca->setRecordingSmplRate(_audiocodec->getClockRate());
- 
+
         // Start audio stream (if not started) AND flush all buffers (main and urgent)
-		_manager->getAudioDriver()->startStream();
+	_manager->getAudioDriver()->startStream();
         static_cast<D*>(this)->startRunning();
 
 
