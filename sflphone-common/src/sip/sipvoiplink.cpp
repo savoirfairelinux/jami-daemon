@@ -349,7 +349,7 @@ SIPVoIPLink::terminate()
 
     /* Clean shutdown of pjsip library */
     if (initDone()) {
-        _debug ("UserAgent: Shuting down PJSIP");
+        _debug ("UserAgent: Shutting down PJSIP");
         pjsip_shutdown();
     }
 
