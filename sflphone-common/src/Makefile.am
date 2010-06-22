@@ -90,7 +90,6 @@ libsflphone_la_LIBADD = \
 	./audio/codecs/libcodecdescriptor.la \
 	./audio/alsa/libalsalayer.la \
 	./audio/pulseaudio/libpulselayer.la \
-	./video/libvideo.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./plug-in/libplugin.la \
