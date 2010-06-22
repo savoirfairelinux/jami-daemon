@@ -39,4 +39,12 @@ noinst_HEADERS = \
 		dcblocker.h \
 		samplerateconverter.h
 
+libaudio_la_LIBADD = \
+	./audiortp/libaudiortp.la \
+	./codecs/libcodecdescriptor.la \
+	./alsa/libalsalayer.la \
+	./pulseaudio/libpulselayer.la \
+	./sound/libsound.la 
+
+
 
