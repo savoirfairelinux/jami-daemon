@@ -30,10 +30,12 @@ rm -rf $BUILDDIR
 rm -f *.tar.gz
 
 rm -rf lang/
-rm -rf tools/build-system/
-rm -f tools/pysflphone/*.pyc
-rm -f tools/build-package.sh tools/bleach.sh tools/autotoolize.sh
-rm -rf sflphone-client-kde/build
+rm -rf tools/
+rm -rf sflphone-client-kde/
+rm -rf sippxml
+
+rm -rf .git/
+rm -f .gitignore
 
 find -name .project -type f -exec rm {} \;
 find -name .cproject -type f -exec rm {} \;
@@ -55,6 +57,9 @@ rm -f pjnath/bin/pjturn-client-x86_64-unknown-linux-gnu
 rm -f pjlib-util/bin/pjlib-util-test-x86_64-unknown-linux-gnu
 rm -f pjnath/bin/pjturn-srv-x86_64-unknown-linux-gnu
 rm -f pjmedia/bin/pjmedia-test-x86_64-unknown-linux-gnu
+
+rm -f third_party/portaudio/src/hostapi/asio/Pa_ASIO.pdf
+rm -f third_party/portaudio/src/hostapi/asio/Callback_adaptation_.pdf
 
 # Put actual files in the tarball
 rm -f config.guess config.sub

@@ -1889,17 +1889,17 @@ static int iax_send_txready(struct iax_session *session)
 int iax_auth_reply(struct iax_session *session, char *password, char *challenge, int methods)
 {
 	char reply[16];
-	struct MD5Context md5;
+	struct IAX_MD5Context md5;
 	char realreply[256];
 	struct iax_ie_data ied;
 	memset(&ied, 0, sizeof(ied));
 	if ((methods & IAX_AUTH_MD5) && challenge) {
-		MD5Init(&md5);
-		MD5Update(&md5, (const unsigned char *) challenge,
+		IAX_MD5Init(&md5);
+		IAX_MD5Update(&md5, (const unsigned char *) challenge,
 				(unsigned int)strlen(challenge));
-		MD5Update(&md5, (const unsigned char *) password,
+		IAX_MD5Update(&md5, (const unsigned char *) password,
 				(unsigned int)strlen(password));
-		MD5Final((unsigned char *) reply, &md5);
+		IAX_MD5Final((unsigned char *) reply, &md5);
 		memset(realreply, 0, sizeof(realreply));
 		convert_reply(realreply, (unsigned char *) reply);
 		iax_ie_append_str(&ied, IAX_IE_MD5_RESULT, realreply);
@@ -1912,19 +1912,19 @@ int iax_auth_reply(struct iax_session *session, char *password, char *challenge,
 static int iax_regauth_reply(struct iax_session *session, char *password, char *challenge, int methods)
 {
 	char reply[16];
-	struct MD5Context md5;
+	struct IAX_MD5Context md5;
 	char realreply[256];
 	struct iax_ie_data ied;
 	memset(&ied, 0, sizeof(ied));
 	iax_ie_append_str(&ied, IAX_IE_USERNAME, session->username);
 	iax_ie_append_short(&ied, IAX_IE_REFRESH, session->refresh);
 	if ((methods & IAX_AUTHMETHOD_MD5) && challenge) {
-		MD5Init(&md5);
-		MD5Update(&md5, (const unsigned char *) challenge,
+		IAX_MD5Init(&md5);
+		IAX_MD5Update(&md5, (const unsigned char *) challenge,
 				(unsigned int)strlen(challenge));
-		MD5Update(&md5, (const unsigned char *) password,
+		IAX_MD5Update(&md5, (const unsigned char *) password,
 				(unsigned int)strlen(password));
-		MD5Final((unsigned char *) reply, &md5);
+		IAX_MD5Final((unsigned char *) reply, &md5);
 		memset(realreply, 0, sizeof(realreply));
 		convert_reply(realreply, (unsigned char *) reply);
 		iax_ie_append_str(&ied, IAX_IE_MD5_RESULT, realreply);
