@@ -52,6 +52,8 @@
 
 #include <speex/speex_jitter.h>
 
+#include "audio/jitterbuf.h"
+
 // Frequency (in packet number)
 #define RTP_TIMESTAMP_RESET_FREQ 100
 
@@ -232,11 +234,22 @@ namespace sfl {
               */
              EventQueue _eventQueue;
 
-	     JitterBuffer *_jbuffer;
+	     /**
+	      * Adaptive jitter buffer
+	      */
+	     jitterbuf * _jbuffer;
+
+	     /**
+	      * Packet size in ms
+	      */
+	     int _packetLength;
 
 	     int _ts;
 
-	     int jitterSeqNum;
+	     /**
+	      * Current time in ms
+	      */
+	     int _currentTime;
 	     
         protected:
 
@@ -283,13 +296,15 @@ namespace sfl {
         _layerFrameSize = _audiolayer->getFrameSize(); // in ms
         _layerSampleRate = _audiolayer->getSampleRate();
 
-	_jbuffer = jitter_buffer_init(20);
-	_ts = 0;
-	jitterSeqNum = 0;
+	_jbuffer = jb_new();
 
-	// int i = 160;
-	// jitter_buffer_ctl(_jbuffer, JITTER_BUFFER_SET_MARGIN, &i);
-	// jitter_buffer_ctl(_jbuffer, JITTER_BUFFER_SET_CONCEALMENT_SIZE, &i);
+	_jbuffer->info.conf.max_jitterbuf = 1000;
+	_jbuffer->info.conf.target_extra = 100;
+	_jbuffer->info.silence_begin_ts = 0;
+
+	_ts= 0;
+	_packetLength = 20;
+	_currentTime = 0;
     }
     
     template <typename D>
@@ -318,7 +333,7 @@ namespace sfl {
 	    delete _audiocodec; _audiocodec = NULL;
         }
 
-	jitter_buffer_destroy(_jbuffer);
+	jb_destroy(_jbuffer);
     }
     
     template <typename D>
@@ -653,68 +668,51 @@ namespace sfl {
         }
 
         const ost::AppDataUnit* adu = NULL;
-
 	int packetTimestamp = static_cast<D*>(this)->getFirstTimestamp();
         adu = static_cast<D*>(this)->getData(packetTimestamp);
-	// packetTimestamp = adu->getgetTimestamp();
 
-        if (adu == NULL) {
-            // _debug("No RTP audio stream\n");
-            return;
-        }
+	if(!adu)
+	  return;
 
-        unsigned char* spkrData  = (unsigned char*) adu->getData(); // data in char
-        unsigned int size = adu->getSize(); // size in char
+	unsigned char* spkrDataIn = NULL;
+	unsigned int size = 0;
+	int result;
 
-	JitterBufferPacket jPacketIn;
-	jPacketIn.data = (char *)spkrData;
-	jPacketIn.len = size;
-	// jPacketIn.timestamp = static_cast<D*>(this)->getFirstTimestamp();
-	jPacketIn.timestamp = jitterSeqNum * _timestampIncrement;
-	jPacketIn.span = _timestampIncrement;
-	jPacketIn.sequence = ++jitterSeqNum;
+	jb_frame frame;
 
-	jitter_buffer_put(_jbuffer, &jPacketIn);
+	if (adu) {
+        
+	  spkrDataIn  = (unsigned char*) adu->getData(); // data in char
+	  size = adu->getSize(); // size in char
+	  result = jb_put(_jbuffer, spkrDataIn, JB_TYPE_VOICE, _packetLength, _ts+=20, _currentTime);
+	  // result = jb_get(_jbuffer, &frame, _currentTime+=20, _packetLength);
+	}
+	else {
+	    _debug("No RTP packet available !!!!!!!!!!!!!!!!!!!!!!!\n");
+	}
 
-	JitterBufferPacket jPacketOut;
-	jPacketOut.data = new char[size];
-	jPacketOut.len = size;
-	jPacketIn.timestamp = 0;
-	jPacketIn.span = 0;
-	jPacketIn.sequence = 0;
-
-	int desiredSpan = _timestampIncrement;
-	spx_int32_t offs = 0;
-
-	int result = JITTER_BUFFER_INTERNAL_ERROR;
-	result = jitter_buffer_get(_jbuffer, &jPacketOut, desiredSpan, &offs);
-	jitter_buffer_tick(_jbuffer);
+	result = jb_get(_jbuffer, &frame, _currentTime+=20, _packetLength);
 
 	/*
 	switch(result) {
-	  case JITTER_BUFFER_OK:
-	    _debug("JITTER_BUFFER_OK");
-	    break;
-	  case JITTER_BUFFER_MISSING:
-	    _debug("JITTER_BUFFER_MISSING");
-	    break;
-	  case JITTER_BUFFER_INTERNAL_ERROR:
-	    _debug("JITTER_BUFFER_INTERNAL_ERROR");
-	    break;
-	  case JITTER_BUFFER_BAD_ARGUMENT:
-	    _debug("JITTER_BUFFER_BAD_ARGUMENT");
-	    break;
-	  default:
-	    _debug("Unknown error");
-	    break;
+	case 0: printf("You\'ve got frame!\n"); break;
+	case 1: printf("Here\'s an audio frame you should just drop.  Ask me again for this time..\n"); break;
+	case 2: printf("There\'s no frame scheduled for this time.\n"); break;
+	case 3: printf("Please interpolate an interpl-length frame for this time (either we need to grow, or there was a lost frame)\n"); break;
+	case 4: printf("Empty\n"); break;
+	default: printf("Unknown returned value\n"); break;
 	}
 	*/
 
         // DTMF over RTP, size must be over 4 in order to process it as voice data
         if(size > 4) {
-	    // processDataDecode(spkrData, size);
-	    if(result == JITTER_BUFFER_OK)
-	        processDataDecode ((unsigned char *)jPacketOut.data, jPacketOut.len);
+	    // processDataDecode(spkrDataIn, size);
+	    if(result == 0) {
+	      processDataDecode((unsigned char *)(frame.data), 160);
+	    }
+	    else {
+	      _debug("bad data");
+	    }
         }
         else {
 	    // _debug("RTP: Received an RTP event with payload: %d", adu->getType());
@@ -722,8 +720,7 @@ namespace sfl {
 	    // _debug("RTP: Data received %d", dtmf->event);
         }
 
-	delete jPacketOut.data;
-	delete adu;
+	// delete adu;
     }
     
     template <typename D>
@@ -741,8 +738,6 @@ namespace sfl {
     {
 	// Timestamp must be initialized randomly
 	_timestamp = static_cast<D*>(this)->getCurrentTimestamp();
-
-	_ts = 0;
 
         int sessionWaiting;
         int threadSleep = 0;
