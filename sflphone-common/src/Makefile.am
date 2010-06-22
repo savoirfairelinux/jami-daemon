@@ -81,6 +81,7 @@ libsflphone_la_LIBADD = \
 	$(src)/libs/dbus-c++/src/libdbus-c++-1.la \
 	$(IAX_LIB) \
 	./sip/libsiplink.la \
+	./sip/im/libim.la \
 	./audio/libaudio.la \
 	./audio/audiortp/libaudiortp.la \
 	./audio/sound/libsound.la \

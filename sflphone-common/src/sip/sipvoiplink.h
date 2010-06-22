@@ -37,7 +37,7 @@
 
 #include "voiplink.h"
 #include "hooks/urlhook.h"
-
+#include "im/InstantMessaging.h"
 
 //////////////////////////////
 /* PJSIP imports */

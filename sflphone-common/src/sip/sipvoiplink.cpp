@@ -65,6 +65,8 @@
 
 #define CAN_REINVITE        1
 
+using namespace sfl;
+
 static char * invitationStateMap[] = {
     (char*) "PJSIP_INV_STATE_NULL",
     (char*) "PJSIP_INV_STATE_CALLING",
@@ -162,6 +164,11 @@ pj_thread_desc desc;
  * Url hook instance
  */
 UrlHook *urlhook;
+
+/*
+ * Instant Messaging module
+ */
+InstantMessaging *imModule;
 
 /**
  * Get the number of voicemail waiting in a SIP message
@@ -270,6 +277,7 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
     srand (time (NULL));
 
     urlhook = new UrlHook ();
+	imModule = new InstantMessaging ();
 
     /* Start pjsip initialization step */
     init();
@@ -3331,18 +3339,21 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 
     _debug("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
 
+	pjsip_rx_data* r_data;
+	pjsip_tx_data* t_data;
+
     if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
             pjsip_method_cmp (&tsx->method, &pjsip_refer_method) ==0) {
         /** Handle the refer method **/
         onCallTransfered (inv, e->body.tsx_state.src.rdata);
+
     } else if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING) {
 
         if (e && e->body.rx_msg.rdata) {
 
 
         	_debug("Event");
-            pjsip_tx_data* t_data;
-            pjsip_rx_data* r_data = e->body.rx_msg.rdata;
+            r_data = e->body.rx_msg.rdata;
 
             if (r_data && r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
 
@@ -3360,13 +3371,38 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 			    }
 				// Must reply 200 OK on SIP INFO request
 			    else if (request.find (method_info) != (size_t)-1) {
-
                     pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
-
                     pjsip_dlg_send_response (inv->dlg, tsx, t_data);
                 }
             }
         }
+
+		// Incoming TEXT message
+		if (e && e->body.tsx_state.src.rdata) {
+			
+			std::string message;
+    		SIPCall * call;
+		
+			// Get the message inside the transaction
+			r_data = e->body.tsx_state.src.rdata;
+			message = (char*) r_data->msg_info.msg->body->data;
+
+			// Try to determine who is the recipient of the message
+    		call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId() ]);
+    		if (!call) {
+        		_debug ("Incoming TEXT message: Can't find the recipient of the message");
+        		return;
+    		}
+
+			// Respond with a 200/OK
+			pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
+			pjsip_dlg_send_response (inv->dlg, tsx, t_data);
+
+			imModule->receive (message, call->getCallId ());
+
+		}
+
+			
     }
 }
 
