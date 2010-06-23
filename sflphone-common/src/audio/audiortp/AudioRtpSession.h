@@ -680,38 +680,56 @@ namespace sfl {
 
 	jb_frame frame;
 
+	_jbuffer->info.conf.resync_threshold = 0;
+
 	if (adu) {
-        
+
+	  if(_jbuffer->frames) {
+	    // _debug("_jbuffer->frames->prev->ts %d, _jbuffer->frames->ts %d", _jbuffer->frames->prev->ts, _jbuffer->frames->ts);
+	    // _debug("_jbuffer->info.conf.max_jitterbuf %d", _jbuffer->info.conf.max_jitterbuf);
+	  }
+
+	  // _debug("PUT_DATA: _ts %d, _currentTime %d", _ts, _currentTime);
 	  spkrDataIn  = (unsigned char*) adu->getData(); // data in char
 	  size = adu->getSize(); // size in char
 	  result = jb_put(_jbuffer, spkrDataIn, JB_TYPE_VOICE, _packetLength, _ts+=20, _currentTime);
-	  // result = jb_get(_jbuffer, &frame, _currentTime+=20, _packetLength);
+	  /*
+	  switch(result) {
+	  case JB_OK: printf("JB_OK\n"); break;
+	  case JB_EMPTY: printf("JB_EMPTY\n"); break;
+	  case JB_NOFRAME: printf("JB_NOFRAME\n"); break;
+	  case JB_INTERP: printf("JB_INTERP\n"); break;
+	  case JB_DROP: printf("JB_DROP\n"); break;
+	  case JB_SCHED: printf("JB_SCHED\n"); break;
+	  default: printf("Unknown returned value\n"); break;
+	  }
+	  */
 	}
 	else {
 	    _debug("No RTP packet available !!!!!!!!!!!!!!!!!!!!!!!\n");
 	}
 
+	// _debug("GET_DATA: _currentTime %d", _currentTime);
 	result = jb_get(_jbuffer, &frame, _currentTime+=20, _packetLength);
-
 	/*
 	switch(result) {
-	case 0: printf("You\'ve got frame!\n"); break;
-	case 1: printf("Here\'s an audio frame you should just drop.  Ask me again for this time..\n"); break;
-	case 2: printf("There\'s no frame scheduled for this time.\n"); break;
-	case 3: printf("Please interpolate an interpl-length frame for this time (either we need to grow, or there was a lost frame)\n"); break;
-	case 4: printf("Empty\n"); break;
+	case JB_OK: printf("JB_OK\n"); break;
+	case JB_EMPTY: printf("JB_EMPTY\n"); break;
+	case JB_NOFRAME: printf("JB_NOFRAME\n"); break;
+	case JB_INTERP: printf("JB_INTERP\n"); break;
+	case JB_DROP: printf("JB_DROP\n"); break;
+	case JB_SCHED: printf("JB_SCHED\n"); break;
 	default: printf("Unknown returned value\n"); break;
 	}
 	*/
+
+	// _debug("packetMisorder %d", static_cast<D*>(this)->getMaxPacketMisorder());
 
         // DTMF over RTP, size must be over 4 in order to process it as voice data
         if(size > 4) {
 	    // processDataDecode(spkrDataIn, size);
 	    if(result == 0) {
 	      processDataDecode((unsigned char *)(frame.data), 160);
-	    }
-	    else {
-	      _debug("bad data");
 	    }
         }
         else {

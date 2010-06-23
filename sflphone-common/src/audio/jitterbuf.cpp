@@ -28,9 +28,12 @@
  */
 
 #include "jitterbuf.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "global.h"
 
 /*! define these here, just for ancient compiler systems */
 #define JB_LONGMAX 2147483647L
@@ -258,14 +261,14 @@ static void history_calc_maxbuf(jitterbuf *jb)
 
 		if (0) { 
 			int k;
-			fprintf(stderr, "toins = %ld\n", toins);
-			fprintf(stderr, "maxbuf =");
+			_debug("toins = %ld\n", toins);
+			_debug("maxbuf =");
 			for (k=0;k<JB_HISTORY_MAXBUF_SZ;k++) 
-				fprintf(stderr, "%ld ", jb->hist_maxbuf[k]);
-			fprintf(stderr, "\nminbuf =");
+				_debug("%ld ", jb->hist_maxbuf[k]);
+			_debug("\nminbuf =");
 			for (k=0;k<JB_HISTORY_MAXBUF_SZ;k++) 
-				fprintf(stderr, "%ld ", jb->hist_minbuf[k]);
-			fprintf(stderr, "\n");
+				_debug("%ld ", jb->hist_minbuf[k]);
+			_debug("\n");
 		}
 	}
 
@@ -397,7 +400,7 @@ static jb_frame *_queue_get(jitterbuf *jb, long ts, int all)
 	if (!frame)
 		return NULL;
 
-	printf("queue_get: ASK %ld FIRST %ld\n", ts, frame->ts);
+	_debug("queue_get: ASK %ld FIRST %ld\n", ts, frame->ts);
 
 	if (all || ts >= frame->ts) {
 		/* remove this frame */
@@ -438,17 +441,17 @@ static jb_frame *queue_getall(jitterbuf *jb)
 void jb_dbginfo(jitterbuf *jb) 
 {
 
-	printf("\njb info: fin=%ld fout=%ld flate=%ld flost=%ld fdrop=%ld fcur=%ld\n",
+	_debug("\njb info: fin=%ld fout=%ld flate=%ld flost=%ld fdrop=%ld fcur=%ld\n",
 		jb->info.frames_in, jb->info.frames_out, jb->info.frames_late, jb->info.frames_lost, jb->info.frames_dropped, jb->info.frames_cur);
 	
-	printf("jitter=%ld current=%ld target=%ld min=%ld sil=%ld len=%ld len/fcur=%ld\n",
+	_debug("jitter=%ld current=%ld target=%ld min=%ld sil=%ld len=%ld len/fcur=%ld\n",
 		jb->info.jitter, jb->info.current, jb->info.target, jb->info.min, jb->info.silence_begin_ts, jb->info.current - jb->info.min, 
 		jb->info.frames_cur ? (jb->info.current - jb->info.min)/jb->info.frames_cur : -8);
 	if (jb->info.frames_in > 0) 
-		printf("jb info: Loss PCT = %ld%%, Late PCT = %ld%%\n",
+		_debug("jb info: Loss PCT = %ld%%, Late PCT = %ld%%\n",
 			jb->info.frames_lost * 100/(jb->info.frames_in + jb->info.frames_lost), 
 			jb->info.frames_late * 100/jb->info.frames_in);
-	printf("jb info: queue %ld -> %ld.  last_ts %ld (queue len: %ld) last_ms %ld\n\n",
+        _debug("jb info: queue %ld -> %ld.  last_ts %ld (queue len: %ld) last_ms %ld\n\n",
 		queue_next(jb), 
 		queue_last(jb),
 		jb->info.next_voice_ts, 
@@ -497,21 +500,21 @@ static void jb_dbgqueue(jitterbuf *jb)
 }
 #endif
 
-enum jb_return_code jb_put(jitterbuf *jb, void *data, const enum jb_frame_type type, long ms, long ts, long now) 
+jb_return_code jb_put(jitterbuf *jb, void *data, const enum jb_frame_type type, long ms, long ts, long now) 
 {
 	long numts;
 
-	printf("jb_put(%p,%p,%ld,%ld,%ld)\n", jb, data, ms, ts, now);
+	_debug("jb_put(%p,%p,%ld,%ld,%ld)\n", jb, data, ms, ts, now);
 
 	numts = 0;
 	if (jb->frames)
 		numts = jb->frames->prev->ts - jb->frames->ts;
 
-	printf("numts %ld\n", numts);
+	_debug("numts %ld\n", numts);
 
 	if (numts >= jb->info.conf.max_jitterbuf) {
 		if (!jb->dropem) {
-			printf("Attempting to exceed Jitterbuf max %ld timeslots\n",
+			_debug("Attempting to exceed Jitterbuf max %ld timeslots\n",
 				jb->info.conf.max_jitterbuf);
 			jb->dropem = 1;
 		}
@@ -546,7 +549,7 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 	long diff;
 	static int dbg_cnt = 0;
 
-	printf("_jb_get\n");
+	_debug("_jb_get\n");
 
 	/*if ((now - jb_next(jb)) > 2 * jb->info.last_voice_ms) jb_warn("SCHED: %ld", (now - jb_next(jb))); */
 	/* get jitter info */
@@ -562,13 +565,13 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 
 	/* if a hard clamp was requested, use it */
 	if ((jb->info.conf.max_jitterbuf) && ((jb->info.target - jb->info.min) > jb->info.conf.max_jitterbuf)) {
-		printf("clamping target from %ld to %ld\n", (jb->info.target - jb->info.min), jb->info.conf.max_jitterbuf);
+		_debug("clamping target from %ld to %ld\n", (jb->info.target - jb->info.min), jb->info.conf.max_jitterbuf);
 		jb->info.target = jb->info.min + jb->info.conf.max_jitterbuf;
 	}
 
 	diff = jb->info.target - jb->info.current;
 
-	printf("diff = %ld lms=%ld last = %ld now = %ld, djust delay = %ld\n", diff,
+	_debug("diff = %ld lms=%ld last = %ld now = %ld, djust delay = %ld\n", diff,
 		jb->info.last_voice_ms, jb->info.last_adjustment, now);
 
 	/* let's work on non-silent case first */
@@ -584,11 +587,11 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 		if((diff > queue_last(jb)  - queue_next(jb)))
 		    printf("diff > queue_last(jb)  - queue_next(jb)\n");
 	  */
-	  printf("** Non-silent case update timing info **\n");
-	  printf("diff %ld\n", diff);
-	  printf("jb->info.last_adjustment %ld\n", jb->info.last_adjustment);
-	  printf("JB_ADJUST_DELAY %ld\n", JB_ADJUST_DELAY);
-	  printf("now %ld\n", now);
+	  _debug("** Non-silent case update timing info **\n");
+	  _debug("diff %ld\n", diff);
+	  _debug("jb->info.last_adjustment %ld\n", jb->info.last_adjustment);
+	  _debug("JB_ADJUST_DELAY %ld\n", JB_ADJUST_DELAY);
+	  _debug("now %ld\n", now);
 
 		/* we want to grow */
 		if ((diff > 0) && 
@@ -610,16 +613,16 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 				jb->info.silence_begin_ts = jb->info.next_voice_ts - jb->info.current;
 			}
 
-			printf("Non silent case\n");
+			_debug("Non silent case\n");
 			return JB_INTERP;
 		}
 
-		printf("queue get\n");
+	        _debug("queue get\n");
 
 		frame = queue_get(jb, jb->info.next_voice_ts - jb->info.current);
 
 		if(!frame)
-		  printf("frame not valid\n");
+		  _debug("frame not valid\n");
 
 		/* not a voice frame; just return it. */
 		if (frame && frame->type != JB_TYPE_VOICE) {
@@ -630,7 +633,7 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 
 			*frameout = *frame;
 			jb->info.frames_out++;
-			printf("Not a voice packet\n");
+			_debug("Not a voice packet\n");
 			return JB_OK;
 		}
 
@@ -646,7 +649,7 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 				jb->info.frames_out++;
 				decrement_losspct(jb);
 				jb->info.cnt_contig_interp = 0;
-				printf("Either we interpolated past this frame in the last jb_get" \
+				_debug("Either we interpolated past this frame in the last jb_get" \
 				       "or the frame is still in order, but came a little too quick\n");
 				return JB_OK;
 			} else {
@@ -656,8 +659,8 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 				decrement_losspct(jb);
 				jb->info.frames_late++;
 				jb->info.frames_lost--;
-				printf("Voice frame is late\n");
-				printf("late: wanted=%ld, this=%ld, next=%ld\n", jb->info.next_voice_ts - jb->info.current, frame->ts, queue_next(jb));
+				_debug("Voice frame is late\n");
+				_debug("late: wanted=%ld, this=%ld, next=%ld\n", jb->info.next_voice_ts - jb->info.current, frame->ts, queue_next(jb));
 				return JB_DROP;
 			}
 		}
@@ -685,7 +688,7 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 				jb->info.frames_out++;
 				decrement_losspct(jb);
 				jb->info.frames_dropped++;
-				printf("Shrink by frame size we're throwing out");
+				_debug("Shrink by frame size we're throwing out");
 				return JB_DROP;
 			} else {
 				/* shrink by last_voice_ms */
@@ -693,7 +696,7 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 				jb->info.frames_lost++;
 				increment_losspct(jb);
 				jb_dbg("S");
-				printf("No frames, shrink by last_voice_ms");
+				_debug("No frames, shrink by last_voice_ms");
 				return JB_NOFRAME;
 			}
 		}
@@ -743,7 +746,7 @@ static enum jb_return_code _jb_get(jitterbuf *jb, jb_frame *frameout, long now, 
 		return JB_OK;
 	} else {     
 
-	        printf("Silence???\n");
+	        _debug("Silence???\n");
 		/* TODO: after we get the non-silent case down, we'll make the
 		 * silent case -- basically, we'll just grow and shrink faster
 		 * here, plus handle next_voice_ts a bit differently */
@@ -814,6 +817,8 @@ long jb_next(jitterbuf *jb)
 
 enum jb_return_code jb_get(jitterbuf *jb, jb_frame *frameout, long now, long interpl) 
 {
+        _debug("\n***** JB_GET *****\n\n");
+
 	enum jb_return_code ret = _jb_get(jb, frameout, now, interpl);
 #if 0
 	static int lastts=0;
