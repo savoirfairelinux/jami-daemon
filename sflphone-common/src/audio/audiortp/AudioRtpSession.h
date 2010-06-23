@@ -250,7 +250,9 @@ namespace sfl {
 	      * Current time in ms
 	      */
 	     int _currentTime;
-	     
+
+	     SpeexPreprocessState *_noiseState;
+
         protected:
 
              SIPCall * _ca;
@@ -280,6 +282,7 @@ namespace sfl {
      _timestampCount(0),
      _countNotificationTime(0),
      _jbuffer(NULL),
+     _noiseState(NULL),
      _ca (sipcall)
     {
         setCancel (cancelDefault);
@@ -333,7 +336,14 @@ namespace sfl {
 	    delete _audiocodec; _audiocodec = NULL;
         }
 
-	jb_destroy(_jbuffer);
+	if(_jbuffer) {
+	    jb_destroy(_jbuffer);
+	}
+
+	if(_noiseState) {
+	    speex_preprocess_state_destroy(_noiseState);
+	}
+	
     }
     
     template <typename D>
@@ -403,6 +413,29 @@ namespace sfl {
             _debug ("RTP: Setting static payload format");
             static_cast<D*>(this)->setPayloadFormat (ost::StaticPayloadFormat ( (ost::StaticPayloadType) _audiocodec->getPayload()));
         }
+
+	if(_noiseState) {
+	    speex_preprocess_state_destroy(_noiseState);
+	    _noiseState = NULL;
+	}
+
+	_noiseState = speex_preprocess_state_init(_codecSampleRate, _codecFrameSize);
+	int i=1;
+	speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
+	i=-20;
+	speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
+	i=0;
+	speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_AGC, &i);
+	i=8000;
+	speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_AGC_TARGET, &i);
+	i=16000;
+	speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_AGC_LEVEL, &i);
+	i=0;
+	speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB, &i);
+	float f=0.0;
+	speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_DECAY, &f);
+	f=0.0;
+	speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DEREVERB_LEVEL, &f);
     }
     
     template <typename D>
@@ -596,6 +629,8 @@ namespace sfl {
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
 
+		speex_preprocess_run(_noiseState, _spkrDataConverted);
+
                 // put data in audio layer, size in byte
 		_manager->getAudioDriver()->getMainBuffer()->putData (_spkrDataConverted, nbSample * sizeof (SFLDataFormat), 100, _ca->getCallId());
 
@@ -604,6 +639,7 @@ namespace sfl {
                 // Store the number of samples for recording
                 _nSamplesSpkr = nbSample;
 
+		// speex_preprocess_run(_noiseState, _spkrDataDecoded);
 
                 // put data in audio layer, size in byte
                 _manager->getAudioDriver()->getMainBuffer()->putData (_spkrDataDecoded, expandedSize, 100, _ca->getCallId());
@@ -684,14 +720,17 @@ namespace sfl {
 
 	if (adu) {
 
-	  if(_jbuffer->frames) {
+	  // if(_jbuffer->frames) {
 	    // _debug("_jbuffer->frames->prev->ts %d, _jbuffer->frames->ts %d", _jbuffer->frames->prev->ts, _jbuffer->frames->ts);
 	    // _debug("_jbuffer->info.conf.max_jitterbuf %d", _jbuffer->info.conf.max_jitterbuf);
-	  }
+	  // }
 
 	  // _debug("PUT_DATA: _ts %d, _currentTime %d", _ts, _currentTime);
 	  spkrDataIn  = (unsigned char*) adu->getData(); // data in char
 	  size = adu->getSize(); // size in char
+
+	  
+
 	  result = jb_put(_jbuffer, spkrDataIn, JB_TYPE_VOICE, _packetLength, _ts+=20, _currentTime);
 	  /*
 	  switch(result) {
@@ -710,6 +749,7 @@ namespace sfl {
 	}
 
 	// _debug("GET_DATA: _currentTime %d", _currentTime);
+
 	result = jb_get(_jbuffer, &frame, _currentTime+=20, _packetLength);
 	/*
 	switch(result) {
@@ -728,8 +768,8 @@ namespace sfl {
         // DTMF over RTP, size must be over 4 in order to process it as voice data
         if(size > 4) {
 	    // processDataDecode(spkrDataIn, size);
-	    if(result == 0) {
-	      processDataDecode((unsigned char *)(frame.data), 160);
+	    if(result == JB_OK) {
+	        processDataDecode((unsigned char *)(frame.data), 160);
 	    }
         }
         else {
