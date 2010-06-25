@@ -93,7 +93,6 @@ typedef std::map<CallID, Conference*> ConferenceMap;
 
 static CallID default_conf = "conf"; 
 
-
 static char * mapStateToChar[] = {
     (char*) "UNREGISTERED",
     (char*) "TRYING",
@@ -1241,6 +1240,7 @@ class ManagerImpl {
     void unloadAccountMap();
 
 
+ public:
     /**
      * Instance of the MainBuffer for the whole application
      *
@@ -1250,8 +1250,6 @@ class ManagerImpl {
      */ 
      MainBuffer _mainBuffer;
 
-    
-   public:
 
     /**
      * Tell if there is a current call processed
@@ -1309,13 +1307,11 @@ class ManagerImpl {
     int isStunEnabled (void);
     void enableStun (void);
 
-    // Map 
+    // Map containing reference between conferences and calls 
     ConferenceCallMap _conferencecall;
 
-    // 
+    // Map containing conference pointers
     ConferenceMap _conferencemap;
-
-
 
 private:
 

@@ -30,6 +30,7 @@
  */
 #include "call.h"
 #include "manager.h"
+#include "audio/mainbuffer.h"
 
 Call::Call (const CallID& id, Call::CallType type)
         : _callMutex()
@@ -184,3 +185,23 @@ Call::isAudioStarted()
     return _audioStarted;
 }
 
+
+bool
+Call::setRecording()
+{
+    bool recordStatus = Recordable::recAudio.setRecording();
+
+    if(!recordStatus)
+      return false;
+
+    MainBuffer *mbuffer = &(Manager::instance()._mainBuffer);
+
+    CallID process_id = Recordable::recorder.getRecorderID();
+
+    mbuffer->bindHalfDuplexOut(process_id, _id);
+    mbuffer->bindHalfDuplexOut(process_id);
+    
+    Recordable::recorder.start();
+  
+    return recordStatus;
+}

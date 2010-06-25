@@ -31,6 +31,7 @@
 #define RECORDABLE_H
 
 #include "../plug-in/audiorecorder/audiorecord.h"
+#include "../plug-in/audiorecorder/audiorecorder.h"
 
 class Recordable {
 
@@ -42,7 +43,7 @@ class Recordable {
 
 	bool isRecording(){ return recAudio.isRecording(); }
 
-	bool setRecording(){ return recAudio.setRecording(); }
+	virtual bool setRecording() = 0;
 
 	void stopRecording(){ recAudio.stopRecording(); }
 
@@ -61,13 +62,12 @@ class Recordable {
 	 */
          AudioRecord recAudio;
 
+	 AudioRecorder recorder;
 
     private:
 
 	/** File name for his call : time YY-MM-DD */
-        // std::string _filename;
-
-        
+        // std::string _filename;        
 
 };
 
