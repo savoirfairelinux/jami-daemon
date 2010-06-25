@@ -720,65 +720,29 @@ namespace sfl {
 
 	if (adu) {
 
-	  // if(_jbuffer->frames) {
-	    // _debug("_jbuffer->frames->prev->ts %d, _jbuffer->frames->ts %d", _jbuffer->frames->prev->ts, _jbuffer->frames->ts);
-	    // _debug("_jbuffer->info.conf.max_jitterbuf %d", _jbuffer->info.conf.max_jitterbuf);
-	  // }
-
-	  // _debug("PUT_DATA: _ts %d, _currentTime %d", _ts, _currentTime);
 	  spkrDataIn  = (unsigned char*) adu->getData(); // data in char
 	  size = adu->getSize(); // size in char
 
 	  
 
 	  result = jb_put(_jbuffer, spkrDataIn, JB_TYPE_VOICE, _packetLength, _ts+=20, _currentTime);
-	  /*
-	  switch(result) {
-	  case JB_OK: printf("JB_OK\n"); break;
-	  case JB_EMPTY: printf("JB_EMPTY\n"); break;
-	  case JB_NOFRAME: printf("JB_NOFRAME\n"); break;
-	  case JB_INTERP: printf("JB_INTERP\n"); break;
-	  case JB_DROP: printf("JB_DROP\n"); break;
-	  case JB_SCHED: printf("JB_SCHED\n"); break;
-	  default: printf("Unknown returned value\n"); break;
-	  }
-	  */
+
 	}
 	else {
 	    _debug("No RTP packet available !!!!!!!!!!!!!!!!!!!!!!!\n");
 	}
 
-	// _debug("GET_DATA: _currentTime %d", _currentTime);
-
 	result = jb_get(_jbuffer, &frame, _currentTime+=20, _packetLength);
-	/*
-	switch(result) {
-	case JB_OK: printf("JB_OK\n"); break;
-	case JB_EMPTY: printf("JB_EMPTY\n"); break;
-	case JB_NOFRAME: printf("JB_NOFRAME\n"); break;
-	case JB_INTERP: printf("JB_INTERP\n"); break;
-	case JB_DROP: printf("JB_DROP\n"); break;
-	case JB_SCHED: printf("JB_SCHED\n"); break;
-	default: printf("Unknown returned value\n"); break;
-	}
-	*/
-
-	// _debug("packetMisorder %d", static_cast<D*>(this)->getMaxPacketMisorder());
 
         // DTMF over RTP, size must be over 4 in order to process it as voice data
         if(size > 4) {
 	    // processDataDecode(spkrDataIn, size);
 	    if(result == JB_OK) {
-	        processDataDecode((unsigned char *)(frame.data), 160);
+	      processDataDecode((unsigned char *)(frame.data), 160);
 	    }
         }
-        else {
-	    // _debug("RTP: Received an RTP event with payload: %d", adu->getType());
-	    // ost::RTPPacket::RFC2833Payload *dtmf = (ost::RTPPacket::RFC2833Payload *)adu->getData();
-	    // _debug("RTP: Data received %d", dtmf->event);
-        }
 
-	// delete adu;
+	delete adu;
     }
     
     template <typename D>
