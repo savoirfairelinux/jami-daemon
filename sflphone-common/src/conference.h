@@ -75,6 +75,8 @@ class Conference: public Recordable{
 
 	std::string getRecFileId(){ return getConfID(); }
 
+	virtual bool setRecording();
+
     private:  
 
         /** Unique ID of the conference */

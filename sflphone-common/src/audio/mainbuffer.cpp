@@ -203,6 +203,22 @@ void MainBuffer::bindCallID (CallID call_id1, CallID call_id2)
 
 }
 
+void MainBuffer::bindHalfDuplexOut(CallID process_id, CallID call_id)
+{
+
+  // This method is used only for active calls, if this call does not exist, do nothing
+  if(!getRingBuffer(call_id))
+    return;
+  
+  if(!getCallIDSet(process_id))
+    createCallIDSet(process_id);
+
+  getRingBuffer(call_id)->createReadPointer(process_id);
+
+  addCallIDtoSet(process_id, call_id);
+
+}
+
 
 void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
 {
@@ -216,7 +232,7 @@ void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
 
     ringbuffer = getRingBuffer (call_id2);
 
-    if (ringbuffer != NULL) {
+    if (ringbuffer) {
 
         ringbuffer->removeReadPointer (call_id1);
 
@@ -229,17 +245,35 @@ void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
 
     ringbuffer = getRingBuffer (call_id1);
 
-    if (ringbuffer != NULL) {
-        ringbuffer->removeReadPointer (call_id2);
-
-        if (ringbuffer->getNbReadPointer() == 0) {
-            removeCallIDSet (call_id1);
-            removeRingBuffer (call_id1);
-        }
+    if (ringbuffer) {
+      ringbuffer->removeReadPointer (call_id2);
+      
+      if (ringbuffer->getNbReadPointer() == 0) {
+	removeCallIDSet (call_id1);
+	removeRingBuffer (call_id1);
+      }
     }
-
-
 }
+
+void MainBuffer::unBindHalfDuplexOut(CallID call_id, CallID process_id)
+{
+
+  removeCallIDfromSet(process_id, call_id);
+
+  RingBuffer* ringbuffer;
+
+  ringbuffer = getRingBuffer(process_id);
+
+  if(ringbuffer) {
+    ringbuffer->removeReadPointer(call_id);
+
+    if(ringbuffer->getNbReadPointer() == 0) {
+      removeCallIDSet(process_id);
+      removeRingBuffer(process_id);
+    }
+  }
+}
+
 
 void MainBuffer::unBindAll (CallID call_id)
 {
@@ -268,10 +302,32 @@ void MainBuffer::unBindAll (CallID call_id)
 }
 
 
-int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, CallID call_id)
+void MainBuffer::unBindAllHalfDuplexOut(CallID process_id)
 {
 
-    // ost::MutexLock guard (_mutex);
+  CallIDSet* callid_set = getCallIDSet(process_id);
+
+  if(!callid_set)
+    return;
+
+  if(callid_set->empty())
+    return;
+
+  CallIDSet temp_set = *callid_set;
+
+  CallIDSet::iterator iter_set = temp_set.begin();
+
+  while(iter_set != temp_set.end()) {
+    CallID call_id_in_set = *iter_set;
+    unBindCallID(process_id, call_id_in_set);
+
+    iter_set++;
+  }
+}
+
+
+int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, CallID call_id)
+{
 
     RingBuffer* ring_buffer = getRingBuffer (call_id);
 
@@ -281,7 +337,6 @@ int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, CallID
 
     int a;
 
-    // ost::MutexLock guard (_mutex);
     a = ring_buffer->AvailForPut();
 
     if (a >= toCopy) {
@@ -298,8 +353,6 @@ int MainBuffer::putData (void *buffer, int toCopy, unsigned short volume, CallID
 int MainBuffer::availForPut (CallID call_id)
 {
 
-    // ost::MutexLock guard (_mutex);
-
     RingBuffer* ringbuffer = getRingBuffer (call_id);
 
     if (ringbuffer == NULL)
@@ -312,7 +365,6 @@ int MainBuffer::availForPut (CallID call_id)
 
 int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, CallID call_id)
 {
-  // ost::MutexLock guard (_mutex);
 
     CallIDSet* callid_set = getCallIDSet (call_id);
 
@@ -377,8 +429,6 @@ int MainBuffer::getDataByID (void *buffer, int toCopy, unsigned short volume, Ca
 int MainBuffer::availForGet (CallID call_id)
 {
 
-  // ost::MutexLock guard (_mutex);
-
     CallIDSet* callid_set = getCallIDSet (call_id);
 
     if (callid_set == NULL)
@@ -396,10 +446,10 @@ int MainBuffer::availForGet (CallID call_id)
             _debug ("This problem should not occur since we have %i element", (int) callid_set->size());
         }
 
-        // else
         return availForGetByID (*iter_id, call_id);
+
     } else {
-        // _debug("CallIDSet with ID: \"%s\" is a conference!", call_id.c_str());
+
         int avail_bytes = 99999;
         int nb_bytes;
         CallIDSet::iterator iter_id = callid_set->begin();
@@ -437,9 +487,6 @@ int MainBuffer::availForGetByID (CallID call_id, CallID reader_id)
 
 int MainBuffer::discard (int toDiscard, CallID call_id)
 {
-    // _debug("MainBuffer::discard");
-
-    // ost::MutexLock guard (_mutex);
 
     CallIDSet* callid_set = getCallIDSet (call_id);
 
@@ -447,7 +494,6 @@ int MainBuffer::discard (int toDiscard, CallID call_id)
         return 0;
 
     if (callid_set->empty()) {
-        // _debug("CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
         return 0;
     }
 

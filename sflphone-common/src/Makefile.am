@@ -57,7 +57,10 @@ sflphoned_LDADD = \
 
 # sflphoned_LDFLAGS= -pg -luuid
 sflphoned_LDFLAGS= $(UUID_LIBS)
+		-DVERSION=\"$(VERSION)\"
+# libsflphone 
 
+sflphoned_LDADD = ./libsflphone.la
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
@@ -93,6 +96,36 @@ libsflphone_la_LIBADD = \
 	./plug-in/audiorecorder/libaudiorecorder.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la
+
+libsflphone_la_LDFLAGS = \
+		@CCGNU2_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@ZRTPCPP_LIBS@ \
+		@GSTREAMER_LIBS@ \
+		@LIBAVCODEC_LIBS@ \
+		@LIBSWSCALE_LIBS@ \
+		$(PJSIP_LIBS) \
+		@CCRTP_LIBS@ \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		@libssl_LIBS@ \
+		@UUID_LIBS@
+
+libsflphone_la_CFLAGS = \
+		@CCGNU2_CFLAGS@ \
+		@CCEXT2_CFLAGS@ \
+		@ZRTPCPP_CFLAGS@ \
+		@GSTREAMER_CFLAGS@ \
+		@LIBAVCODEC_CFLAGS@ \
+		@LIBSWSCALE_CFLAGS@ \
+		$(PJSIP_CFLAGS) \
+		@CCRTP_CFLAGS@ \
+		@ALSA_CFLAGS@ \
+		@PULSEAUDIO_CFLAGS@ \
+		@SAMPLERATE_CFLAGS@ \
+		@libssl_CFLAGS@ \
+		@UUID_CFLAGS@
 
 libsflphone_la_SOURCES =
 
