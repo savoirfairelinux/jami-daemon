@@ -815,6 +815,8 @@ namespace sfl {
             // Recv session
             receiveSpeakerData ();
 
+	    /*
+
             // Let's wait for the next transmit cycle
             if (sessionWaiting == 1) {
                 // Record mic and speaker during conversation
@@ -823,6 +825,7 @@ namespace sfl {
                 // Record mic only while leaving a message
                 _ca->recAudio.recData (_micData,_nSamplesMic);
             }
+	    */
 
             _manager->getAudioLayerMutex()->leave();
 

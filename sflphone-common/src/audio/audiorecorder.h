@@ -40,7 +40,7 @@ class MainBuffer;
 class AudioRecorder : public ost::Thread {
 
    public:
-      AudioRecorder(AudioRecord  *arec);
+      AudioRecorder(AudioRecord  *arec, MainBuffer *mb);
 
       ~AudioRecorder(void){ terminate(); }
 

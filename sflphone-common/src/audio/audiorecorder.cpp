@@ -29,13 +29,15 @@
  */
 
 #include "audiorecorder.h"
+#include "mainbuffer.h"
 
-AudioRecorder::AudioRecorder (AudioRecord  *arec)
+AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb)
   : Thread(), recorderId("recorder_id")
 {
     setCancel (cancelDeferred);
 
     arecord = arec;
+    mbuffer = mb;
 }
 
 
@@ -44,21 +46,27 @@ AudioRecorder::AudioRecorder (AudioRecord  *arec)
  */
 void AudioRecorder::run (void)
 {
-  /*
+    SFLDataFormat buffer[10000];
+
     while(true) {
 
-      _debug("Audiorecord");
-      sleep(1);
+      if(!mbuffer)
+	_warn("AudioRecorder: Error: No instance of ringbuffer");
+
+      int availBytes = mbuffer->availForGet(recorderId);
+
+      _debug("Audiorecord: avail for get (before) %d", availBytes);
+
+      mbuffer->getData(buffer, availBytes, 100, recorderId);
+
+      availBytes = mbuffer->availForGet(recorderId);
+
+      _debug("Audiorecord: avail for get (after) %d", availBytes);
+
+      // arecord->recData(buffer, availBytes/sizeof(SFLDataFormat));
+
+      sleep(20);
 
     }
-  */
-
-    // SFLDataFormat buffer[10000];
-
-    // int availBytes = mbuffer->availForGet(recorderId);
-
-    // mbuffer->getData(buffer, availBytes, 100, recorderId);
-
-    // arecord->recData(buffer, availBytes/sizeof(SFLDataFormat));
 
 }
