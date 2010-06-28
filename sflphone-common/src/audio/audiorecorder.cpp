@@ -57,13 +57,18 @@ void AudioRecorder::run (void)
 
       _debug("Audiorecord: avail for get (before) %d", availBytes);
 
-      mbuffer->getData(buffer, availBytes, 100, recorderId);
+      if(availBytes > 0) {
 
-      availBytes = mbuffer->availForGet(recorderId);
+	  int got = mbuffer->getData(buffer, availBytes, 100, recorderId);
 
-      _debug("Audiorecord: avail for get (after) %d", availBytes);
+	  _debug("Audiorecord: audio get from main buffer %d", got);
 
-      // arecord->recData(buffer, availBytes/sizeof(SFLDataFormat));
+	  int availBytesAfter = mbuffer->availForGet(recorderId);
+
+	  _debug("Audiorecord: avail for get (after) %d", availBytesAfter);
+
+	  arecord->recData(buffer, availBytes/sizeof(SFLDataFormat));
+      }
 
       sleep(20);
 
