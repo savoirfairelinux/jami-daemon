@@ -194,7 +194,7 @@ Call::setRecording()
     if(!recordStatus)
       return false;
 
-    MainBuffer *mbuffer = &(Manager::instance()._mainBuffer);
+    MainBuffer *mbuffer = Manager::instance().getMainBuffer();
 
     CallID process_id = Recordable::recorder.getRecorderID();
 

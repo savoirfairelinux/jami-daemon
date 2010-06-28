@@ -167,7 +167,7 @@ bool Conference::setRecording() {
   if(!recordStatus)
     return false;
 
-  MainBuffer *mbuffer = &(Manager::instance()._mainBuffer);
+  MainBuffer *mbuffer = Manager::instance().getMainBuffer();
 
   ParticipantSet::iterator iter = _participants.begin();
 

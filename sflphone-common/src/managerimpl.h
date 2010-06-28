@@ -1240,7 +1240,6 @@ class ManagerImpl {
     void unloadAccountMap();
 
 
- public:
     /**
      * Instance of the MainBuffer for the whole application
      *
@@ -1249,6 +1248,14 @@ class ManagerImpl {
      *
      */ 
      MainBuffer _mainBuffer;
+
+
+ public:
+
+     /**
+      * Return a pointer to the  instance of the mainbuffer
+      */
+     MainBuffer *getMainBuffer(void) { return &_mainBuffer; }
 
 
     /**
