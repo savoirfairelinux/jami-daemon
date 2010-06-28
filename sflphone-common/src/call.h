@@ -35,7 +35,6 @@
 #include <cc++/thread.h> // for mutex
 #include <sstream>
 
-// #include "plug-in/audiorecorder/audiorecord.h"
 #include "audio/recordable.h"
 
 #define SIP_SCHEME       "sip:"

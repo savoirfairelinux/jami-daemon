@@ -93,7 +93,6 @@ libsflphone_la_LIBADD = \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./plug-in/libplugin.la \
-	./plug-in/audiorecorder/libaudiorecorder.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la
 

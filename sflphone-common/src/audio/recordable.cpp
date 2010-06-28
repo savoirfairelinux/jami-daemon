@@ -29,7 +29,6 @@
 
 #include "recordable.h"
 #include "manager.h"
-#include "mainbuffer.h"
 
 Recordable::Recordable() : recorder(&recAudio)
 {

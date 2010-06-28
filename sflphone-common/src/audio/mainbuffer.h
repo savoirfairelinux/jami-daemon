@@ -37,11 +37,9 @@
 #include <cc++/thread.h> // for ost::Mutex
 #include <string>
 
-#include "../global.h"
-#include "../call.h"
+#include "global.h"
+#include "call.h"
 #include "ringbuffer.h"
-
-
 
 typedef std::map<CallID, RingBuffer*> RingBufferMap;
 

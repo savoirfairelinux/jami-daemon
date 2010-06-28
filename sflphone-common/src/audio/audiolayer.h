@@ -37,20 +37,17 @@
 #include "audiodevice.h"
 #include "ringbuffer.h"
 #include "mainbuffer.h"
-
-#include <cc++/thread.h> // for ost::Mutex
-
 #include "dcblocker.h"
 #include "speexechocancel.h"
 #include "echocancel.h"
 
+#include <cc++/thread.h> // for ost::Mutex
 
 /**
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware. 
  */
 
-class Recordable;
 class ManagerImpl;
 
 class AudioLayer {
