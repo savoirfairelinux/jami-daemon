@@ -255,23 +255,33 @@ void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
     }
 }
 
-void MainBuffer::unBindHalfDuplexOut(CallID call_id, CallID process_id)
+void MainBuffer::unBindHalfDuplexOut(CallID process_id, CallID call_id)
 {
 
   removeCallIDfromSet(process_id, call_id);
 
-  RingBuffer* ringbuffer;
-
-  ringbuffer = getRingBuffer(process_id);
+  RingBuffer* ringbuffer = getRingBuffer(call_id);
 
   if(ringbuffer) {
-    ringbuffer->removeReadPointer(call_id);
+    ringbuffer->removeReadPointer(process_id);
 
     if(ringbuffer->getNbReadPointer() == 0) {
-      removeCallIDSet(process_id);
-      removeRingBuffer(process_id);
+      removeCallIDSet(call_id);
+      removeRingBuffer(call_id);
     }
   }
+  else {
+    _debug("Error: did not found ringbuffer %s", process_id.c_str());
+    removeCallIDSet(process_id);
+  }
+
+  
+  CallIDSet* callid_set = getCallIDSet(process_id);
+  if(callid_set) {
+    if(callid_set->empty())
+      removeCallIDSet(process_id);
+  }
+
 }
 
 
@@ -387,9 +397,7 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, CallID
             return 0;
     } else {
 
-        for (int k = 0; k < nbSmplToCopy; k++) {
-            ( (SFLDataFormat*) (buffer)) [k] = 0;
-        }
+        memset(buffer, 0, nbSmplToCopy*sizeof(SFLDataFormat*));
 
         int size = 0;
 

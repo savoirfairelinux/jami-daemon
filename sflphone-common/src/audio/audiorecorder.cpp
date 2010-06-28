@@ -31,13 +31,26 @@
 #include "audiorecorder.h"
 #include "mainbuffer.h"
 
-AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb)
-  : Thread(), recorderId("recorder_id")
+int AudioRecorder::count = 0;
+
+AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
 {
     setCancel (cancelDeferred);
 
+    ++count;
+
+    std::string id("processid_");
+
+    // convert count into string
+    std::string s;
+    std::stringstream out;
+    out << count;
+    s = out.str();
+
+    recorderId = id.append(s);
+
     arecord = arec;
-    mbuffer = mb;
+    mbuffer = mb;    
 }
 
 
@@ -55,17 +68,11 @@ void AudioRecorder::run (void)
 
       int availBytes = mbuffer->availForGet(recorderId);
 
-      _debug("Audiorecord: avail for get (before) %d", availBytes);
-
       if(availBytes > 0) {
 
 	  int got = mbuffer->getData(buffer, availBytes, 100, recorderId);
 
-	  _debug("Audiorecord: audio get from main buffer %d", got);
-
 	  int availBytesAfter = mbuffer->availForGet(recorderId);
-
-	  _debug("Audiorecord: avail for get (after) %d", availBytesAfter);
 
 	  arecord->recData(buffer, availBytes/sizeof(SFLDataFormat));
       }

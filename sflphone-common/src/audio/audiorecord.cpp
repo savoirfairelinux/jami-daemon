@@ -471,9 +471,7 @@ void AudioRecord::recMicData (SFLDataFormat* buffer, int nSamples)
 void AudioRecord::recData (SFLDataFormat* buffer, int nSamples)
 {
 
-    if (recordingEnabled_) {
-
-        _debug("Recording enabled");
+  if (recordingEnabled_) {
 
         if (fp == 0) {
             _debug ("AudioRecord: Can't record data, a file has not yet been opened!");
@@ -488,7 +486,6 @@ void AudioRecord::recData (SFLDataFormat* buffer, int nSamples)
             else {
                 fflush (fp);
                 byteCounter_ += (unsigned long) (nSamples*sizeof (SFLDataFormat));
-		_debug("AudioRecord: wrote %d bytes", byteCounter_);
             }
         }
     }

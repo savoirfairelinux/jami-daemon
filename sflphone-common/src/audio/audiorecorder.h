@@ -44,6 +44,8 @@ class AudioRecorder : public ost::Thread {
 
       ~AudioRecorder(void){ terminate(); }
 
+      static int count;
+
       std::string getRecorderID() { return recorderId; }
 
       virtual void run();

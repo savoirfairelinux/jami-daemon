@@ -162,23 +162,45 @@ ParticipantSet Conference::getParticipantList()
 
 bool Conference::setRecording() {
 
-  bool recordStatus = Recordable::recAudio.setRecording();
+  bool recordStatus = Recordable::recAudio.isRecording();
 
-  if(!recordStatus)
-    return false;
+  Recordable::recAudio.setRecording();
 
-  MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+  // start recording
+  if(!recordStatus){
 
-  ParticipantSet::iterator iter = _participants.begin();
+    MainBuffer *mbuffer = Manager::instance().getMainBuffer();
 
-  CallID process_id = Recordable::recorder.getRecorderID();
+    ParticipantSet::iterator iter = _participants.begin();
 
-  while(iter != _participants.end()) {
+    CallID process_id = Recordable::recorder.getRecorderID();
+
+    while(iter != _participants.end()) {
       mbuffer->bindHalfDuplexOut(process_id, *iter);
       iter++;
+    }
+
+    mbuffer->bindHalfDuplexOut(process_id);
+
+  }
+  // stop recording
+  else {
+
+      MainBuffer *mbuffer = Manager::instance().getMainBuffer();      
+
+      ParticipantSet::iterator iter = _participants.begin();
+
+      CallID process_id = Recordable::recorder.getRecorderID();
+
+      while(iter != _participants.end()) {
+	mbuffer->unBindHalfDuplexOut(process_id, *iter);
+	iter++;
+      }
+
+      mbuffer->unBindHalfDuplexOut(process_id);
+
   }
 
-  mbuffer->bindHalfDuplexOut(process_id);
 
   Recordable::recorder.start();
 
