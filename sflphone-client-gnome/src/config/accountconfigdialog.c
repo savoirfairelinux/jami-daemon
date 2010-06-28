@@ -1251,6 +1251,9 @@ void show_account_window (account_t * a) {
     // we must resolve published address from interface name 
     gchar * local_interface;
     gchar * published_address;
+
+    gchar *previous_username, *current_username; 
+    gboolean username_changed = FALSE;
   
     currentAccount = a;   
 
@@ -1345,10 +1348,17 @@ void show_account_window (account_t * a) {
       gtk_widget_destroy (GTK_WIDGET(dialog));
       return;
     }
-    
+
+    gchar *key = g_strdup(ACCOUNT_USERNAME);
+
+    // Get username at loadtime to determine if it changed. If so, update authentication name accordingly
+    // if(g_hash_table_lookup_extended(currentAccount->properties, g_strdup(ACCOUNT_USERNAME), NULL, previous_username))
+
     // If accept button is 
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
       
+      previous_username = (gchar *)g_hash_table_lookup(currentAccount->properties, g_strdup(ACCOUNT_USERNAME));
+      DEBUG("------------------------------ USERNAME BEFORE %s", previous_username);
 
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(ACCOUNT_ALIAS),
@@ -1368,7 +1378,17 @@ void show_account_window (account_t * a) {
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(ACCOUNT_MAILBOX),
 			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));   
+
+      current_username = (gchar *)g_hash_table_lookup(currentAccount->properties, g_strdup(ACCOUNT_USERNAME));
+      DEBUG("------------------------------ USERNAME AFTER %s", current_username);
     }
+
+    if(strcmp(previous_username, current_username) != 0)
+        username_changed = TRUE;
+
+    if(username_changed)
+      DEBUG("--------------------------------- CHANGED");
+
 
     if (proto && strcmp (proto, "SIP") == 0) {
       
