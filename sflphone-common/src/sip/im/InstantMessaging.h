@@ -32,6 +32,11 @@ namespace sfl  {
 			~InstantMessaging();
 
 			/*
+			 * Register and initialize instant messaging support
+			 */
+			pj_status_t init ();
+
+			/*
 			 * Attach the instant messaging module to an existing SIP dialog
 			 *
 			 * @param dlg   A pointer on the current pjsip_dialog structure

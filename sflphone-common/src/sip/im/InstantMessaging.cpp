@@ -10,6 +10,12 @@ namespace sfl {
 		delete _current_dlg; _current_dlg = 0;
 	}
 
+	pj_status_t InstantMessaging::init () {
+
+		
+	
+	}
+
 
 	void InstantMessaging::set_text( std::string message ){
 		_message = pj_str((char*)message.c_str());

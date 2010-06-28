@@ -52,6 +52,7 @@ AC_CONFIG_FILES([Makefile])
 
 	AC_CONFIG_FILES([src/Makefile \
 			src/sip/Makefile \
+			src/sip/im/Makefile \
 			src/iax/Makefile \
 			src/audio/Makefile \
 			src/audio/audiortp/Makefile \
