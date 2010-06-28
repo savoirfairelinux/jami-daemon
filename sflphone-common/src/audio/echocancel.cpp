@@ -93,7 +93,7 @@ EchoCancel::EchoCancel(int smplRate, int frameLength) : _samplingRate(smplRate),
   _noiseState = speex_preprocess_state_init(_smplPerFrame, _samplingRate);
   int i=1;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_DENOISE, &i);
-  i=-10;
+  i=-20;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &i);
   i=0;
   speex_preprocess_ctl(_noiseState, SPEEX_PREPROCESS_SET_AGC, &i);

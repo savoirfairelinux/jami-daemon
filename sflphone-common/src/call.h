@@ -235,9 +235,11 @@ class Call: public Recordable{
          */
         unsigned int getLocalAudioPort();
 
-	std::string getRecFileId(){ return getPeerName(); }
+	std::string getRecFileId(void){ return getPeerName(); }
 
-	std::string getFileName() { return _filename; }
+	std::string getFileName(void) { return _filename; }
+
+	virtual bool setRecording(void);
 
     protected:
         /** Protect every attribute that can be changed by two threads */

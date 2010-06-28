@@ -28,10 +28,10 @@
  *  as that of the covered work.
  */
 
-#include "logger.h"
-#include "global.h"
-#include "manager.h"
-#include "constants.h"
+#include <logger.h>
+#include <manager.h>
+
+#define CONFIG_SAMPLE   "sflphonedrc-sample"
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>

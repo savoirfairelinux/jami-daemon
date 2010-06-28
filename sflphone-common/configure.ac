@@ -408,7 +408,7 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 
 	if test x$DOT = x; then
 	if test "x$enable_dot" = xyes; then
-AC_MSG_ERROR([could not find dot])
+	AC_MSG_ERROR([could not find dot])
 	fi
 	enable_dot=no
 	else
@@ -417,24 +417,22 @@ AC_MSG_ERROR([could not find dot])
 	AM_CONDITIONAL(ENABLE_DOXYGEN, test x$enable_doc = xtrue)
 	AC_SUBST(enable_dot)
 	AC_SUBST(enable_html_docs)
-AC_SUBST(enable_latex_docs)
+	AC_SUBST(enable_latex_docs)
 	])
-# Acutally perform the doxygen check
+	# Acutally perform the doxygen check
 	BB_ENABLE_DOXYGEN
 
 	dnl Datadir directory
 	sflphone_datadir=$datadir/sflphone
-AC_SUBST(sflphone_datadir)
+	AC_SUBST(sflphone_datadir)
 
 	dnl Dbus Service activation part
 	DBUS_SERVICES_DIR="$datadir/dbus-1/services"
-AC_SUBST(DBUS_SERVICES_DIR)
+	AC_SUBST(DBUS_SERVICES_DIR)
 	AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir for DBUS is])
 
 # Go!
 	AC_SUBST(SFLPHONE_CFLAGS)
-AC_SUBST(SFLPHONE_LIBS)
+	AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
 	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
-
-
