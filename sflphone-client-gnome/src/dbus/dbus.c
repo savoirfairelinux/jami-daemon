@@ -124,7 +124,14 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
     const gchar* msg, void * foo  UNUSED )
 {
 	DEBUG ("Message %s!",msg);
-	notify_incoming_message (callID, msg);
+
+	// Get the call information. Does this call exist?
+	callable_obj_t * c = calllist_get (current_calls, callID);
+	if (c) {
+		notify_incoming_message (callID, msg);
+	} else {
+		ERROR ("Message received, but no recipient found");
+	}
 }
 
 static void

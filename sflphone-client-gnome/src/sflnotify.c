@@ -74,11 +74,10 @@ notify_incoming_message (const gchar *callID, const gchar *msg)
         gchar* text;
         gchar* title;
 
-        title = g_markup_printf_escaped(_("New message"));
-		text = g_markup_printf_escaped (_("%s says: %s"), callID, msg);
+        title = g_markup_printf_escaped(_("%s says:"), callID);
 
         create_new_gnome_notification (title,
-                                        text, 
+										msg,
                                         NOTIFY_URGENCY_CRITICAL, 
                                         (g_strcasecmp(__TIMEOUT_MODE, "default") == 0 )? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
                                         &_gnome_notification); 
