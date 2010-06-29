@@ -39,6 +39,7 @@
 #include <libgnome/gnome-help.h>
 #include <uimanager.h>
 #include <statusicon.h>
+#include <widget/imwidget.h>
 
 static GtkWidget *toolbar;
 static GtkWidget *toolbarWindows;
@@ -505,6 +506,26 @@ call_hold(void* foo UNUSED)
 }
 
 static void
+call_im(void* foo UNUSED)
+{
+  callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
+
+  static GtkWidget *im = NULL;
+  if (!im) {
+	  im = im_widget_new();
+	  im_window_add(im);
+  } else {
+	  im_widget_add_message(im, "hello from call_im");
+  }
+
+  if (selectedCall)
+    {
+       printf("Call IM with call\n");
+       selectedCall->_im_widget = im_widget_new();
+    }
+}
+
+static void
 conference_hold(void* foo UNUSED)
 {
   conference_obj_t * selectedConf = calltab_get_selected_conf();
@@ -839,6 +860,8 @@ static const GtkActionEntry menu_entries[] =
             N_("Place the call on hold"), G_CALLBACK (call_hold) },
         { "OffHold", GTK_STOCK_OFFHOLD, N_("O_ff hold"), "<control>P",
             N_("Place the call off hold"), G_CALLBACK (call_hold) },
+        { "InstantMessaging", GTK_STOCK_IM, N_("Send _message"), "<control>M",
+            N_("Send message"), G_CALLBACK (call_im) },
         { "AccountAssistant", NULL, N_("Configuration _Assistant"), NULL,
             N_("Run the configuration assistant"),
             G_CALLBACK (call_configuration_assistant) },
@@ -1012,6 +1035,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
   gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record =
       FALSE, detach = FALSE;
   gboolean accounts = FALSE;
+  gboolean im = FALSE;
 
   // conference type boolean
   gboolean hangup_conf = FALSE, hold_conf = FALSE;
@@ -1054,6 +1078,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
             hold = TRUE;
             record = TRUE;
             detach = TRUE;
+	    im = TRUE;
             break;
           case CALL_STATE_BUSY:
           case CALL_STATE_FAILURE:
@@ -1178,6 +1203,22 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
           gtk_menu_shell_append(GTK_MENU_SHELL (menu), menu_items);
           g_signal_connect (G_OBJECT (menu_items), "activate",
               G_CALLBACK (call_record),
+              NULL);
+          gtk_widget_show(menu_items);
+        }
+
+      if (im)
+        {
+          menu_items = gtk_separator_menu_item_new();
+          gtk_menu_shell_append(GTK_MENU_SHELL (menu), menu_items);
+          gtk_widget_show(menu_items);
+
+          menu_items = gtk_image_menu_item_new_with_mnemonic(_("Send _message"));
+          image = gtk_image_new_from_stock(GTK_STOCK_IM, GTK_ICON_SIZE_MENU);
+          gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+          gtk_menu_shell_append(GTK_MENU_SHELL (menu), menu_items);
+          g_signal_connect (G_OBJECT (menu_items), "activate",
+              G_CALLBACK (call_im),
               NULL);
           gtk_widget_show(menu_items);
         }

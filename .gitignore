@@ -98,6 +98,7 @@ sflphone-client-gnome/stamp-h1
 /sflphone-client-gnome/src/widget/Makefile
 /sflphone-client-gnome/doc/Makefile
 /sflphone-client-gnome/po/Makefile
+/sflphone-client-gnome/webkit/Makefile
 
 
 # Ignore sflphone-client-gnome stuff

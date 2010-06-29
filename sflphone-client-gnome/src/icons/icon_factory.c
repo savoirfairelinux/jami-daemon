@@ -67,6 +67,7 @@ void register_sflphone_stock_icons (GtkIconFactory *factory)
 	add_icon (factory, GTK_STOCK_TRANSFER, gnome_stock_transfer, GTK_ICON_SIZE_SMALL_TOOLBAR);	
 	add_icon (factory, GTK_STOCK_ONHOLD, gnome_stock_onhold, GTK_ICON_SIZE_SMALL_TOOLBAR);	
 	add_icon (factory, GTK_STOCK_OFFHOLD, gnome_stock_offhold, GTK_ICON_SIZE_SMALL_TOOLBAR);	
+	add_icon (factory, GTK_STOCK_IM, gnome_stock_im, GTK_ICON_SIZE_SMALL_TOOLBAR);	
 	add_icon (factory, GTK_STOCK_CALL_CURRENT, gnome_stock_call_current, GTK_ICON_SIZE_SMALL_TOOLBAR);	
 	add_icon (factory, GTK_STOCK_ADDRESSBOOK, gnome_stock_addressbook, GTK_ICON_SIZE_SMALL_TOOLBAR);	
 	add_icon (factory, GTK_STOCK_CALLS, gnome_stock_calls, GTK_ICON_SIZE_SMALL_TOOLBAR);	

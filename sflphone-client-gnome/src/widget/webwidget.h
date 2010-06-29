@@ -1,6 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Copyright (C) 2010 Savoir-Faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,28 +27,42 @@
  *  as that of the covered work.
  */
 
-#ifndef ICON_FACTORY_H
-#define ICON_FACTORY_H
 
-#include <gtk/gtkiconfactory.h>
-#include "icons/pixmap_data.h"
-#include "sflphone_const.h"
+#ifndef __WEB_WIDGET_H__
+#define __WEB_WIDGET_H__
+
+#include <gtk/gtk.h>
+#include <webkit/webkit.h>
 
 G_BEGIN_DECLS
 
-#define GTK_STOCK_PICKUP				"gnome-stock-pickup"
-#define GTK_STOCK_HANGUP				"gnome-stock-hangup"
-#define GTK_STOCK_ONHOLD				"gnome-stock-onhold"
-#define GTK_STOCK_OFFHOLD				"gnome-stock-offhold"
-#define GTK_STOCK_IM					"gnome-stock-im"
-#define GTK_STOCK_TRANSFER				"gnome-stock-transfer"
-#define GTK_STOCK_DIAL					"gnome-stock-dial"
-#define GTK_STOCK_CALL_CURRENT			"gnome-stock-call-current"
-#define GTK_STOCK_ADDRESSBOOK			"gnome-stock-addressbook"
-#define GTK_STOCK_CALLS					"gnome-stock-calls"
+#define WEB_WIDGET_TYPE             (im_widget_get_type())
+#define WEB_WIDGET(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj), WEB_WIDGET_TYPE, WebWidget))
+#define IM_WIDGET_CLASS(vtable)    (G_TYPE_CHECK_CLASS_CAST((vtable), IM_WIDGET_TYPE, WebWidgetClass))
+#define IS_IM_WIDGET(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj), IM_WIDGET_TYPE))
+#define IS_IM_WIDGET_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE((vtable), IM_WIDGET_TYPE))
+#define IM_WIDGET_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS((inst), IM_WIDGET_TYPE, WebWidgetClass))
 
-void init_icon_factory (void);
+typedef struct _WebWidget      WebWidget;
+typedef struct _WebWidgetClass WebWidgetClass;
+
+struct _WebWidget {
+	WebKitWebView parent_instance;
+
+	/* Private */
+	WebKitWebFrame *web_frame;      // Our web frame
+	JSGlobalContextRef js_context;  // The frame's global JS context
+	JSObjectRef js_global;          // The frame's global context JS object
+};
+
+struct _WebWidgetClass {
+	WebKitWebViewClass parent_class;
+};
+
+
+GType         im_widget_get_type         (void) G_GNUC_CONST;
+GtkWidget    *im_widget_new              (void);
 
 G_END_DECLS
 
-#endif
+#endif  /* __IM_WIDGET_H__ */

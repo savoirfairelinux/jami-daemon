@@ -1,4 +1,4 @@
-SUBDIRS = src pixmaps tests man po doc
+SUBDIRS = src pixmaps webkit tests man po doc
 
 ACLOCAL_AMFLAGS = -I m4
 

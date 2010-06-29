@@ -1,6 +1,5 @@
 /*
- *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Copyright (C) 2010 Savoir-Faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,28 +27,33 @@
  *  as that of the covered work.
  */
 
-#ifndef ICON_FACTORY_H
-#define ICON_FACTORY_H
+#ifndef __IMWINDOW_H__
+#define __IMWINDOW_H__
 
-#include <gtk/gtkiconfactory.h>
-#include "icons/pixmap_data.h"
-#include "sflphone_const.h"
+#include <gtk/gtk.h>
+#include <gtk/gtk.h>
 
-G_BEGIN_DECLS
+#define IM_WINDOW_WIDTH 280
+#define IM_WINDOW_HEIGHT 320
 
-#define GTK_STOCK_PICKUP				"gnome-stock-pickup"
-#define GTK_STOCK_HANGUP				"gnome-stock-hangup"
-#define GTK_STOCK_ONHOLD				"gnome-stock-onhold"
-#define GTK_STOCK_OFFHOLD				"gnome-stock-offhold"
-#define GTK_STOCK_IM					"gnome-stock-im"
-#define GTK_STOCK_TRANSFER				"gnome-stock-transfer"
-#define GTK_STOCK_DIAL					"gnome-stock-dial"
-#define GTK_STOCK_CALL_CURRENT			"gnome-stock-call-current"
-#define GTK_STOCK_ADDRESSBOOK			"gnome-stock-addressbook"
-#define GTK_STOCK_CALLS					"gnome-stock-calls"
+/** @file imwindow.h
+  * @brief The IM window of the client.
+  */
 
-void init_icon_factory (void);
+/**
+ * Display the IM window
+ * @return GtkWidget* The IM window
+ */
+GtkWidget *im_window_get();
 
-G_END_DECLS
+/**
+ * Add IM widget to the IM window
+ */
+void im_window_add(GtkWidget *widget);
+
+/**
+ * Remove IM widget from the IM window
+ */
+void im_window_remove(GtkWidget *widget);
 
 #endif

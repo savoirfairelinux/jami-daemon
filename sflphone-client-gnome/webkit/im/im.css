@@ -1,0 +1,6 @@
+.message {
+	-webkit-border-radius: 5px;
+	background: green;
+	color: white;
+	padding: 1em;
+}

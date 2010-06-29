@@ -149,6 +149,9 @@ typedef struct  {
     /* The audio codec used for this call, if applicable */
     gchar *_audio_codec;
 
+    /* Associated IM widget */
+    GtkWidget *_im_widget;
+
 } callable_obj_t;
 
 void create_new_call (callable_type_t, call_state_t, gchar*, gchar*, gchar*, gchar*, callable_obj_t **);
