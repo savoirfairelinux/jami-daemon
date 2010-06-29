@@ -38,7 +38,7 @@ endif
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(IAX_CXXFLAG) $(NETWORKMANAGER) \
 		-DVERSION=\"$(VERSION)\"
-		
+
 # libsflphone 
 
 sflphoned_LDADD = ./libsflphone.la
@@ -69,7 +69,6 @@ libsflphone_la_LIBADD = \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./plug-in/libplugin.la \
-	./plug-in/audiorecorder/libaudiorecorder.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la
 
