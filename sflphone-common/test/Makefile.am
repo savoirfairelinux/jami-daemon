@@ -28,7 +28,8 @@ test_SOURCES = \
 	sdesnegotiatortest.h \
 	sdesnegotiatortest.cpp \
 	delaydetectiontest.h \
-	delaydetectiontest.cpp
+	delaydetectiontest.cpp \
+	instantmessagingtest.cpp
 
 
 

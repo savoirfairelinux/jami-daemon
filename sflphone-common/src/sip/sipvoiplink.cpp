@@ -277,6 +277,8 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
     srand (time (NULL));
 
     urlhook = new UrlHook ();
+
+	// Load the chat module
 	imModule = new InstantMessaging ();
 
     /* Start pjsip initialization step */
@@ -1097,6 +1099,9 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
 
     // Send it
     status = pjsip_inv_send_msg (call->getInvSession(), tdata);
+
+	// Test IM message
+	imModule->send (call->getInvSession (), "Salut! Click <a href='http://sflphone.org'>here</a>");
 
     if (status != PJ_SUCCESS)
         return 1;   // !PJ_SUCCESS
@@ -2021,7 +2026,7 @@ bool SIPVoIPLink::pjsip_init()
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ACCEPT, NULL, 1, &STR_MIME_TEXT_PLAIN);
 
 	// Registering and initializing IM module
-	// imModule->init ();
+	imModule->init ();
 
     // Register "application/sdp" in ACCEPT header
     pjsip_endpt_add_capability (_endpt, &_mod_ua, PJSIP_H_ACCEPT, NULL, 1, &accepted);
