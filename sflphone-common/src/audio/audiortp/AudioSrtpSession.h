@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
@@ -15,6 +15,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 #ifndef __SFL_AUDIO_SRTP_SESSION_H__
 #define __SFL_AUDIO_SRTP_SESSION_H__
@@ -69,57 +80,57 @@ namespace sfl {
 
             AudioSrtpSession(ManagerImpl * manager, SIPCall * sipcall);
 
-	    std::vector<std::string> getLocalCryptoInfo(void);
+            std::vector<std::string> getLocalCryptoInfo(void);
 
-	    void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
+            void setRemoteCryptoInfo(sfl::SdesNegotiator& nego);
 
         private:
 
             void initializeLocalMasterKey(void);
 
-	    void initializeLocalMasterSalt(void);
+            void initializeLocalMasterSalt(void);
 
-	    void initializeRemoteCryptoContext(void);
+            void initializeRemoteCryptoContext(void);
 
-	    void initializeLocalCryptoContext(void);
+            void initializeLocalCryptoContext(void);
 
-	    std::string getBase64ConcatenatedKeys();
+            std::string getBase64ConcatenatedKeys();
 
-	    void unBase64ConcatenatedKeys(std::string base64keys);
+            void unBase64ConcatenatedKeys(std::string base64keys);
 
-	    char* encodeBase64(unsigned char *input, int length);
+            char* encodeBase64(unsigned char *input, int length);
 
-	    char* decodeBase64(unsigned char *input, int length, int *length_out);
+            char* decodeBase64(unsigned char *input, int length, int *length_out);
 
-	    /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
-	    int _localCryptoSuite;
+            /** Default local crypto suite is AES_CM_128_HMAC_SHA1_80*/
+            int _localCryptoSuite;
 
-	    /** Remote crypto suite is initialized at AES_CM_128_HMAC_SHA1_80*/
-	    int _remoteCryptoSuite;
+            /** Remote crypto suite is initialized at AES_CM_128_HMAC_SHA1_80*/
+            int _remoteCryptoSuite;
 
             uint8 _localMasterKey[16];
 
-	    /** local master key length in byte */
-	    int _localMasterKeyLength;
+            /** local master key length in byte */
+            int _localMasterKeyLength;
 
-	    uint8 _localMasterSalt[14];
+            uint8 _localMasterSalt[14];
 
-	    /** local master salt length in byte */
-	    int _localMasterSaltLength;
+            /** local master salt length in byte */
+            int _localMasterSaltLength;
 
-	    uint8 _remoteMasterKey[16];
+            uint8 _remoteMasterKey[16];
 
-	    /** remote master key length in byte */
-	    int _remoteMasterKeyLength;
+            /** remote master key length in byte */
+            int _remoteMasterKeyLength;
 
-	    uint8 _remoteMasterSalt[14];
+            uint8 _remoteMasterSalt[14];
 
-	    /** remote master salt length in byte */
-	    int _remoteMasterSaltLength;
+            /** remote master salt length in byte */
+            int _remoteMasterSaltLength;
 
-	    ost::CryptoContext* _remoteCryptoCtx;
+            ost::CryptoContext* _remoteCryptoCtx;
 
-	    ost::CryptoContext* _localCryptoCtx;
+            ost::CryptoContext* _localCryptoCtx;
     };
    
 }

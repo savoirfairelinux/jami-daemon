@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -36,35 +36,35 @@ using namespace KABC;
 class ContactItemWidget;
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class Contact : public QObject, public Item<ContactItemWidget>{
 private:
-	QString firstName;
-	QString secondName;
-	QString nickName;
-	QString phoneNumber;
-	Picture * photo;
-	PhoneNumber::Type type;
-	bool displayPhoto;
-	
+   QString firstName;
+   QString secondName;
+   QString nickName;
+   QString phoneNumber;
+   Picture * photo;
+   PhoneNumber::Type type;
+   bool displayPhoto;
+   
 public:
 
-	//Constructors & Destructors
-	Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto);
-	~Contact();
-	
-	//Getters
-	QString getPhoneNumber() const;
-	QString getNickName() const;
-	QString getFirstName() const;
-	QString getSecondName() const;
-	const Picture * getPhoto() const;
-	PhoneNumber::Type getType() const;
-	void initItem();
-	
+   //Constructors & Destructors
+   Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto);
+   ~Contact();
+   
+   //Getters
+   QString getPhoneNumber() const;
+   QString getNickName() const;
+   QString getFirstName() const;
+   QString getSecondName() const;
+   const Picture * getPhoto() const;
+   PhoneNumber::Type getType() const;
+   void initItem();
+   
 protected:
-	void initItemWidget();
+   void initItemWidget();
 
 };
 

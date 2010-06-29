@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef _PULSE_LAYER_H
@@ -30,24 +42,32 @@
 
 #include <stdlib.h>
 
-#define PLAYBACK_STREAM_NAME	    "SFLphone out"
-#define CAPTURE_STREAM_NAME	    "SFLphone in"
+#include <list>
+#include <string>
+
+#define PLAYBACK_STREAM_NAME	    "SFLphone playback"
+#define CAPTURE_STREAM_NAME	    "SFLphone capture"
+#define RINGTONE_STREAM_NAME        "SFLphone ringtone"
 
 class RingBuffer;
 class ManagerImpl;
+
+typedef std::list<std::string> DeviceList;
 
 class PulseLayer : public AudioLayer {
   public:
     PulseLayer(ManagerImpl* manager);
     ~PulseLayer(void);
 
+    void openLayer( void );
+    
     bool closeLayer( void );
 
     /**
      * Check if no devices are opened, otherwise close them.
      * Then open the specified devices by calling the private functions open_device
-     * @param indexIn	The number of the card choosen for capture
-     * @param indexOut	The number of the card choosen for playback
+     * @param indexIn	The number of the card chosen for capture
+     * @param indexOut	The number of the card chosen for playback
      * @param sampleRate  The sample rate 
      * @param frameSize	  The frame size
      * @param stream	  To indicate which kind of stream you want to open
@@ -56,7 +76,19 @@ class PulseLayer : public AudioLayer {
      *			  SFL_PCM_BOTH
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
-    bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) ;
+    bool openDevice(int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize , int stream, std::string plugin) ;
+
+    DeviceList* getSinkList(void) { return &_sinkList; }
+
+    DeviceList* getSourceList(void) { return &_sourceList; }
+
+    void updateSinkList(void);
+
+    void updateSourceList(void);
+
+    bool inSinkList(std::string deviceName);
+
+    bool inSourceList(std::string deviceName);
 
     void startStream(void);
 
@@ -126,6 +158,12 @@ class PulseLayer : public AudioLayer {
      */
     AudioStream* getRecordStream(){ return record;}
 
+    /**
+     * Accessor
+     * @return AudioStream* The pointer on the ringtone AudioStream object
+     */
+    AudioStream* getRingtoneStream(){ return ringtone;}
+
     int getSpkrVolume( void ) { return spkrVolume; }
     void setSpkrVolume( int value ) { spkrVolume = value; }
 
@@ -136,7 +174,33 @@ class PulseLayer : public AudioLayer {
 
     void processCaptureData( void );
 
+    void processRingtoneData( void );
+
     void processData(void);
+
+    /**
+     * Get the echo canceller state
+     * @return true if echo cancel activated
+     */
+    bool getEchoCancelState(void) { return AudioLayer::_echocancelstate; }
+
+    /**
+     * Set the echo canceller state
+     * @param state true if echocancel active, false elsewhere 
+     */
+    void setEchoCancelState(bool state);
+    
+    /**
+     * Get the noise suppressor state
+     * @return true if noise suppressor activated
+     */
+    bool getNoiseSuppressState(void) { return AudioLayer::_noisesuppressstate; }
+
+    /**
+     * Set the noise suppressor state
+     * @param state true if noise suppressor active, false elsewhere
+     */
+    void setNoiseSuppressState(bool state);
     
   private:
     // Copy Constructor
@@ -156,6 +220,7 @@ class PulseLayer : public AudioLayer {
      */
     void readFromMic( void );
     void writeToSpeaker( void );
+    void ringtoneToSpeaker( void );
     
     /**
      * Create the audio streams into the given context
@@ -197,6 +262,11 @@ class PulseLayer : public AudioLayer {
      */
     AudioStream* record;
 
+    /**
+     * A special stream object to handle specific playback stream for ringtone
+     */
+    AudioStream* ringtone;
+
     /** Sample rate converter object */
     SamplerateConverter * _converter;
 
@@ -205,7 +275,15 @@ class PulseLayer : public AudioLayer {
     int spkrVolume;
     int micVolume;
 
-    DcBlocker* dcblocker;
+    /*
+    ofstream *captureFile;
+    ofstream *captureRsmplFile;
+    ofstream *captureFilterFile;
+    */
+
+    DeviceList _sinkList;
+
+    DeviceList _sourceList;
 
     // private:
 

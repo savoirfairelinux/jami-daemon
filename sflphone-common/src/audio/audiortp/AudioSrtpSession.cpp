@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
@@ -15,6 +15,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 #include "AudioSrtpSession.h"
 #include "user_cfg.h"
@@ -33,21 +44,20 @@
 #include <cstring>
 #include <cerrno>
 
-static uint8 mk[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		      0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-
-static uint8 ms[] = { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-		      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d };
-
 
 namespace sfl
 {
 
 AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
-	_localCryptoSuite(0),
-	_remoteCryptoSuite(0),
-        AudioRtpSession<AudioSrtpSession> (manager, sipcall)
+        AudioRtpSession<AudioSrtpSession> (manager, sipcall),
+        _localCryptoSuite(0),
+        _remoteCryptoSuite(0),
+        _localMasterKeyLength(0),
+        _localMasterSaltLength(0),
+        _remoteMasterKeyLength(0),
+        _remoteMasterSaltLength(0)
+
 {
 
     // Initialize local Crypto context

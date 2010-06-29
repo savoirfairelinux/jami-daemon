@@ -25,15 +25,15 @@
       <menuitem action="Preferences"/>
     </menu>
 	
-	<menu name="ViewMenu" action="View">
+    <menu name="ViewMenu" action="View">
       <menuitem action="Toolbar"/>
       <separator/>
       <menuitem action="Dialpad"/>
       <!--menuitem name="VolumeControlsToggle" action="VolumeControls"/-->
       <menuitem action="VolumeControls"/>
       <separator/>
-	  <menuitem action="History"/>
-	  <menuitem action="Addressbook"/>
+      <menuitem action="History"/>
+      <menuitem action="Addressbook"/>
     </menu>
 
     <menu name="HelpMenu" action="Help">
@@ -41,25 +41,25 @@
       <menuitem action="About"/>
     </menu>
 
-	</menubar>
+  </menubar>
 
-	<toolbar name="ToolbarActions">
-		<toolitem name="NewCallToolbar" action="NewCall"/>
-		<toolitem name="PickUpToolbar" action="PickUp"/>
-		<toolitem name="HangUpToolbar" action="HangUp"/>
-		<toolitem name="OnHoldToolbar" action="OnHold"/>
-		<toolitem name="OffHoldToolbar" action="OffHold"/>
-		<toolitem name="TransferToolbar" action="Transfer"/>
-		<toolitem name="RecordToolbar" action="Record"/>
-		<separator/>
-		<toolitem name="VoicemailToolbar" action="Voicemail"/>
-		<toolitem name="HistoryToolbar" action="History"/>
-		<toolitem name="AddressbookToolbar" action="Addressbook"/>
-	</toolbar>
+  <toolbar name="ToolbarActions">
+    <toolitem name="NewCallToolbar" action="NewCall"/>
+    <toolitem name="PickUpToolbar" action="PickUp"/>
+    <toolitem name="HangUpToolbar" action="HangUp"/>
+    <toolitem name="OnHoldToolbar" action="OnHold"/>
+    <toolitem name="OffHoldToolbar" action="OffHold"/>
+    <toolitem name="TransferToolbar" action="Transfer"/>
+    <toolitem name="RecordToolbar" action="Record"/>
+    <separator/>
+    <toolitem name="VoicemailToolbar" action="Voicemail"/>
+    <toolitem name="HistoryToolbar" action="History"/>
+    <toolitem name="AddressbookToolbar" action="Addressbook"/>
+  </toolbar>
 
-	<popup name="PopupMenu">
-		<menuitem action="Copy"/>
-		<menuitem action="Paste"/>
-		<separator/>
-	</popup>
+  <popup name="PopupMenu">
+    <menuitem action="Copy"/>
+    <menuitem action="Paste"/>
+    <separator/>
+  </popup>
 </ui>

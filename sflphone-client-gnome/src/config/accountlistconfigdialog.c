@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *                                                                              
@@ -16,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 
@@ -39,7 +50,6 @@ GtkListStore * accountStore;
 
 GtkDialog * accountListDialog = NULL;
 
-
 account_t * selectedAccount = NULL;      
 // Account properties
 enum {
@@ -54,9 +64,7 @@ enum {
 /**
  * Fills the treelist with accounts
  */
-	void
-account_list_config_dialog_fill()
-{
+void account_list_config_dialog_fill() {
 
 	if (accountListDialog == NULL) {
 		DEBUG("Dialog is not opened");
@@ -536,7 +544,7 @@ show_account_list_config_dialog(void)
 	gtk_widget_show(status_bar);
 	gtk_box_pack_start(GTK_BOX(accountListDialog->vbox ), status_bar, TRUE, TRUE, 0);
 
-	int number_accounts = account_list_get_size();
+	int number_accounts = account_list_get_registered_accounts ();
 	if (number_accounts) {
 		gchar * message = g_strdup_printf(n_("There is %d active account",
 					"There are %d active accounts", number_accounts),

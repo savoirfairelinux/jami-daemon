@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -18,6 +18,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include <iostream>
@@ -31,17 +42,19 @@ CodecDescriptor::CodecDescriptor() : _CodecsMap(), _defaultCodecOrder(), _Cache(
 
 CodecDescriptor::~CodecDescriptor()
 {
+
 }
 
 void
 CodecDescriptor::deleteHandlePointer (void)
 {
-    int i;
+	_debug("CodecDesccriptor: Delete codec handle pointers");
 
-    for (i = 0 ; (unsigned int) i < _CodecInMemory.size() ; i++) {
+    for (int i = 0 ; (unsigned int) i < _CodecInMemory.size() ; i++) {
         unloadCodec (_CodecInMemory[i]);
     }
 
+    _CodecInMemory.clear();
 }
 
 void
@@ -51,7 +64,7 @@ CodecDescriptor::init()
     _nbCodecs = CodecDynamicList.size();
 
     if (_nbCodecs <= 0) {
-        _debug (" Error - No codecs available in directory %s" , CODECS_DIR);
+        _error ("CodecDescriptro: Error - No codecs available in directory %s" , CODECS_DIR);
     }
 
     int i;
@@ -97,7 +110,7 @@ CodecDescriptor::getCodec (AudioCodecType payload)
         return (iter->second);
     }
 
-    _debug ("Error cannont found codec %i in _CodecsMap from codec descriptor", payload);
+    _error ("CodecDescriptor: Error cannont found codec %i in _CodecsMap from codec descriptor", payload);
 
     return NULL;
 }
@@ -167,7 +180,7 @@ std::vector<AudioCodec*> CodecDescriptor::scanCodecDirectory (void) {
 
     for (i = 0 ; (unsigned int) i < dirToScan.size() ; i++) {
         std::string dirStr = dirToScan[i];
-        _debug ("Scanning %s to find audio codecs....",  dirStr.c_str());
+        _debug ("CodecDescriptor: Scanning %s to find audio codecs....",  dirStr.c_str());
         DIR *dir = opendir (dirStr.c_str());
         AudioCodec* audioCodec;
 
@@ -248,14 +261,14 @@ AudioCodec* CodecDescriptor::instantiateCodec (AudioCodecType payload) {
             AudioCodec* a = createCodec();
 
             return a;
-
         }
-
         iter++;
     }
 
     return NULL;
 }
+
+
 
 AudioCodec* CodecDescriptor::getFirstCodecAvailable (void) {
 
@@ -349,7 +362,7 @@ bool CodecDescriptor::isCodecLoaded (int payload) {
 
 std::vector <std::string> CodecDescriptor::getCodecSpecifications (const int32_t& payload) {
 
-	_warn ("Gathering codec specifications for payload %i", payload);
+	_debug ("CodecDescriptor: Gathering codec specifications for payload %i", payload);
 
 	std::vector<std::string> v;
     std::stringstream ss;

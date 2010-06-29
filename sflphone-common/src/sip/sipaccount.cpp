@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
 *
 *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -17,6 +17,17 @@
 *  You should have received a copy of the GNU General Public License
 *  along with this program; if not, write to the Free Software
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
 */
 
 #include "sipaccount.h"
@@ -26,6 +37,7 @@
 
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
+	, _routeSet("")
         , _regc (NULL)
         , _bRegister (false)
         , _registrationExpire ("")
@@ -42,6 +54,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _realm (DEFAULT_REALM)
         , _authenticationUsername ("")
         , _tlsSetting (NULL)
+	, _dtmfType(OVERRTP)
         , _displayName ("")
 {
     
@@ -90,14 +103,13 @@ int SIPAccount::initCredential (void)
     pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (credentialCount));
 
     if (cred_info == NULL) {
-        _debug ("Failed to set cred_info for account %s", _accountID.c_str());
+        _error ("SipAccount: Error: Failed to set cred_info for account %s", _accountID.c_str());
         return !SUCCESS;
     }
 
     pj_bzero (cred_info, sizeof (pjsip_cred_info) *credentialCount);
 
     // Use authentication username if provided
-
     if (!_authenticationUsername.empty()) {
         cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
     } else {
@@ -329,6 +341,7 @@ void SIPAccount::loadConfig()
 {
     // Load primary credential
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
+    setRouteSet(Manager::instance().getConfigString(_accountID, ROUTESET));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
     _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
     _realm = Manager::instance().getConfigString (_accountID, REALM);
@@ -361,6 +374,11 @@ void SIPAccount::loadConfig()
     setPublishedPort (atoi (publishedPort.c_str()));
 
     setPublishedAddress (Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS));
+
+    if(Manager::instance().getConfigString (_accountID, ACCOUNT_DTMF_TYPE) == OVERRTPSTR)
+    	_dtmfType = OVERRTP;
+	else
+		_dtmfType = SIPINFO;
 
     // Init TLS settings if the user wants to use TLS
     bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
@@ -453,10 +471,12 @@ std::string SIPAccount::getFromUri (void)
         username = getLoginName();
     }
 
+
     // Get machine hostname if not provided
     if (_hostname.empty()) {
-        hostname = getMachineName();
+      hostname = getMachineName();
     }
+
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
 
@@ -475,7 +495,7 @@ std::string SIPAccount::getToUri (const std::string& username)
 
     std::string scheme;
     std::string transport;
-    std::string hostname = _hostname;
+    std::string hostname = "";
 
     // UDP does not require the transport specification
 
@@ -493,8 +513,9 @@ std::string SIPAccount::getToUri (const std::string& username)
     }
 
     // Check if hostname is already specified
-    if (username.find ("@") != std::string::npos) {
-        hostname = "";
+    if (username.find ("@") == std::string::npos) {
+        // hostname not specified
+	hostname = _hostname;
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
@@ -515,6 +536,7 @@ std::string SIPAccount::getServerUri (void)
 
     std::string scheme;
     std::string transport;
+    std::string hostname = _hostname;
 
     // UDP does not require the transport specification
 
@@ -527,10 +549,9 @@ std::string SIPAccount::getServerUri (void)
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
-
                                 "<%s%s%s>",
                                 scheme.c_str(),
-                                _hostname.c_str(),
+                                hostname.c_str(),
                                 transport.c_str());
 
     return std::string (uri, len);

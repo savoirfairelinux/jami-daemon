@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,27 +28,27 @@
 class Contact;
 
 /**
-	@author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
+   @author Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>
 */
 class ContactItemWidget : public QWidget
 {
 Q_OBJECT
 
 private:
-	QLabel * contactName;
-	QLabel * contactNumber;
-	QLabel * contactPhoto;
-	QLabel * contactType;
-	
+   QLabel * contactName;
+   QLabel * contactNumber;
+   QLabel * contactPhoto;
+   QLabel * contactType;
+   
 public:
 
-	//Constructors & Destructors
-	ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent = 0);
-	~ContactItemWidget();
-	
-	//Getters
-	QString getContactName();
-	QString getContactNumber();
+   //Constructors & Destructors
+   ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent = 0);
+   ~ContactItemWidget();
+   
+   //Getters
+   QString getContactName();
+   QString getContactNumber();
 
 };
 

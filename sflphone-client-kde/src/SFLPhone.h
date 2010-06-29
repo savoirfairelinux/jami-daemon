@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,17 +27,19 @@
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QKeyEvent>
 #include <QErrorMessage>
-#include <QSystemTrayIcon>
+#include <KSystemTrayIcon>
+#include <KNotification>
 
 #include <KXmlGuiWindow>
 #include <KAction>
 #include <QActionGroup>
 
 // #include "ui_SFLPhoneView_base.h"
-#include "CallList.h"
+//#include "CallList.h"
 #include "AccountWizard.h"
 #include "Contact.h"
 #include "SFLPhoneView.h"
+#include "SFLPhoneTray.h"
 
 class SFLPhoneView;
 
@@ -70,65 +72,68 @@ enum CallAction {
         NumberOfCallActions};
 
 private:
-	KAction * action_accept;
-	KAction * action_refuse;
-	KAction * action_hold;
-	KAction * action_transfer;
-	KAction * action_record;
-	QActionGroup * action_screen;
-	KAction * action_main;
-	KAction * action_history;
-	KAction * action_addressBook;
-	KAction * action_mailBox;
-	KAction * action_close;
-	KAction * action_quit;
-	KAction * action_displayVolumeControls;
-	KAction * action_displayDialpad;
-	KAction * action_configureSflPhone;
-	KAction * action_accountCreationWizard;
+        // Whether or not the object has been initialized
+        bool   initialized_;
+   KAction * action_accept;
+   KAction * action_refuse;
+   KAction * action_hold;
+   KAction * action_transfer;
+   KAction * action_record;
+   QActionGroup * action_screen;
+   KAction * action_main;
+   KAction * action_history;
+   KAction * action_addressBook;
+   KAction * action_mailBox;
+   KAction * action_close;
+   KAction * action_quit;
+   KAction * action_displayVolumeControls;
+   KAction * action_displayDialpad;
+   KAction * action_configureSflPhone;
+   KAction * action_accountCreationWizard;
 
-	SFLPhoneView * view;
-	QMenu *trayIconMenu;
-	bool iconChanged;
-	QSystemTrayIcon *trayIcon;
-	QLabel * statusBarWidget;
-	
+   SFLPhoneView * view;
+   QMenu *trayIconMenu;
+   bool iconChanged;
+   SFLPhoneTray *trayIcon;
+   KNotification *notification;
+   QLabel * statusBarWidget;
+   
 private:
-	void setObjectNames();
+   void setObjectNames();
 
 protected:
-	virtual bool queryClose();
-	virtual void changeEvent(QEvent * event);
-	
+   virtual bool queryClose();
+   virtual void changeEvent(QEvent * event);
+   
 
 public:
-	SFLPhone(QWidget *parent = 0);
-	~SFLPhone();
-	void setupActions();
-	void sendNotif(QString caller);
-	void putForeground();
-	void trayIconSignal();
-	SFLPhoneView * getView();
-	QList<QAction *> getCallActions();
-	
-	
-private slots:
-	void on_trayIcon_activated(QSystemTrayIcon::ActivationReason reason);
-	void on_trayIcon_messageClicked();
-	void on_view_statusMessageChangeAsked(const QString & message);
-	void on_view_windowTitleChangeAsked(const QString & message);
-	void on_view_enabledActionsChangeAsked(const bool * enabledActions);
-	void on_view_actionIconsChangeAsked(const QString * actionIcons);
-	void on_view_actionTextsChangeAsked(const QString * actionTexts);
-	void on_view_transferCheckStateChangeAsked(bool transferCheckState);
-	void on_view_recordCheckStateChangeAsked(bool recordCheckState);
-	void on_view_addressBookEnableAsked(bool enabled);
-	void on_view_screenChanged(int screen);
-	void on_view_incomingCall(const Call * call);
-	
-	void updateScreen(QAction * action);
+   SFLPhone(QWidget *parent = 0);
+   ~SFLPhone();
+        bool initialize();
+   void setupActions();
+   void sendNotif(QString caller);
+   void trayIconSignal();
+   SFLPhoneView * getView();
+   QList<QAction *> getCallActions();
 
-	void quitButton();
+   friend class SFLPhoneView;
+   
+   
+private slots:
+   void on_view_statusMessageChangeAsked(const QString & message);
+   void on_view_windowTitleChangeAsked(const QString & message);
+   void on_view_enabledActionsChangeAsked(const bool * enabledActions);
+   void on_view_actionIconsChangeAsked(const QString * actionIcons);
+   void on_view_actionTextsChangeAsked(const QString * actionTexts);
+   void on_view_transferCheckStateChangeAsked(bool transferCheckState);
+   void on_view_recordCheckStateChangeAsked(bool recordCheckState);
+   void on_view_addressBookEnableAsked(bool enabled);
+   void on_view_screenChanged(int screen);
+   void on_view_incomingCall(const Call * call);      
+
+   void updateScreen(QAction * action);
+
+   void quitButton();
 
 };
 

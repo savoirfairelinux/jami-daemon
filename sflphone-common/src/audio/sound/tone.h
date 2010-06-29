@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2005-2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of 
@@ -18,6 +18,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 #ifndef __TONE_H__
 #define __TONE_H__
@@ -27,6 +38,8 @@
 
 #define TONE_NBTONE 4
 #define TONE_NBCOUNTRY 7
+
+#define TABLE_LENGTH 4096
 
 /**
  * @file tone.h
@@ -65,6 +78,17 @@ public:
    */
   void genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb);
 
+  /**
+   *
+   */
+  void fillWavetable(void);
+
+  /**
+   *
+   */
+  double interpolate(double x);
+
+
 private:
 
   /**
@@ -75,6 +99,11 @@ private:
 
   /** Sample rate */
   unsigned int _sampleRate;
+
+  double _wavetable[TABLE_LENGTH];
+
+  double _xhigher;
+  double _xlower;
 };
 
 #endif // __TONE_H__

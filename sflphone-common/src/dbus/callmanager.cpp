@@ -1,6 +1,5 @@
-
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *
@@ -17,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 #include <vector>
 
@@ -40,8 +50,7 @@ void
 CallManager::placeCall (const std::string& accountID,
                         const std::string& callID,
                         const std::string& to)
-{
-    // Check if a destination number is available
+{    // Check if a destination number is available
 
     if (to == "")   _debug ("No number entered - Call stopped");
     else            Manager::instance().outgoingCall (accountID, callID, to);
@@ -53,15 +62,22 @@ CallManager::placeCallFirstAccount (const std::string& callID,
 {
 
     if (to == "") {
-        _warn("No number entered - Call stopped");
+        _warn("CallManager: Warning: No number entered, call stopped");
 	return;
     }
 
     std::vector< std::string > accountOrder = Manager::instance().loadAccountOrder();
-    std::vector< std::string >::iterator iter = accountOrder.begin();
+    std::vector< std::string >::iterator iter;
 
     Account *account;
-    while(iter != accountOrder.end()) {
+
+    _debug("AccountOrder size: %d", accountOrder.size());
+
+    if(accountOrder.size() > 0) {
+
+      iter = accountOrder.begin();
+
+      while(iter != accountOrder.end()) {
         account = Manager::instance().getAccount(*iter);
 	if((*iter != IP2IP_PROFILE) && account->isEnabled()) {
 	    Manager::instance().outgoingCall (*iter, callID, to);
@@ -69,30 +85,53 @@ CallManager::placeCallFirstAccount (const std::string& callID,
 	}
 
 	iter++;
+      }
     }
+    else {
+      _error("AccountOrder is empty");
+      // If accountOrder is empty fallback on accountList (which has no preference order)
+      std::vector< std::string > accountList = Manager::instance().getAccountList();
+      iter = accountList.begin();
+      
 
-    _warn("No enabled account found - Call stopped\n");
+      _error("AccountList size: %d", accountList.size());
+      if(accountList.size() > 0) {
+	while(iter != accountList.end()) {
+	  _error("iter");
+	  account = Manager::instance().getAccount(*iter);
+	  if((*iter != IP2IP_PROFILE) && account->isEnabled()) {
+	    _error("makecall");
+	    Manager::instance().outgoingCall(*iter, callID, to);
+	    return;
+	  }
+	  iter++;
+	}
+	
+      }
+    }
+    
+    _warn("CallManager: Warning: No enabled account found, call stopped");
     
 }
 
 void
 CallManager::refuse (const std::string& callID)
 {
-    _debug ("CallManager::refuse received");
+    _debug ("CallManager: Refuse %s", callID.c_str());
     Manager::instance().refuseCall (callID);
 }
 
 void
 CallManager::accept (const std::string& callID)
 {
-    _debug ("CallManager::accept received");
+    _debug ("CallManager: Accept received");
     Manager::instance().answerCall (callID);
 }
 
 void
 CallManager::hangUp (const std::string& callID)
 {
-    _debug ("CallManager::hangUp received %s", callID.c_str());
+    _debug ("CallManager: HangUp received %s", callID.c_str());
     Manager::instance().hangupCall (callID);
 
 }
@@ -203,7 +242,7 @@ CallManager::holdConference (const std::string& confID)
 void
 CallManager::unholdConference (const std::string& confID)
 {
-    _debug ("CallManager::unHoldConference received %s", confID.c_str());
+    _debug ("CallManager: Unhold Conference %s", confID.c_str());
     Manager::instance().unHoldConference (confID);
 }
 
@@ -222,6 +261,7 @@ CallManager::getConferenceList (void)
 std::vector< std::string >
 CallManager::getParticipantList (const std::string& confID)
 {
+    _debug("CallManager: Get Participant list for conference %s", confID.c_str());
     return Manager::instance().getParticipantList (confID);
 }
 

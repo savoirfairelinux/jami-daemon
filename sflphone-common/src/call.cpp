@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -16,9 +16,21 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 #include "call.h"
 #include "manager.h"
+#include "audio/mainbuffer.h"
 
 Call::Call (const CallID& id, Call::CallType type)
         : _callMutex()
@@ -173,3 +185,38 @@ Call::isAudioStarted()
     return _audioStarted;
 }
 
+
+bool
+Call::setRecording()
+{
+    bool recordStatus = Recordable::recAudio.isRecording();
+
+    Recordable::recAudio.setRecording();
+
+    // Start recording
+    if(!recordStatus) {
+
+      MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+      CallID process_id = Recordable::recorder.getRecorderID();
+
+      mbuffer->bindHalfDuplexOut(process_id, _id);
+      mbuffer->bindHalfDuplexOut(process_id);
+
+    }
+    // Stop recording
+    else {
+
+      MainBuffer *mbuffer = Manager::instance().getMainBuffer();      
+      CallID process_id = Recordable::recorder.getRecorderID();
+
+      mbuffer->unBindHalfDuplexOut(process_id, _id);
+      mbuffer->unBindHalfDuplexOut(process_id);
+
+    }
+
+    Manager::instance().getMainBuffer()->stateInfo();
+
+    Recordable::recorder.start();
+  
+    return recordStatus;
+}

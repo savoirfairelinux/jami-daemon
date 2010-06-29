@@ -16,6 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 #ifndef __PJLIB_UTIL_SRV_RESOLVER_H__
 #define __PJLIB_UTIL_SRV_RESOLVER_H__
@@ -104,7 +115,19 @@ typedef enum pj_dns_srv_option
      * this option is not specified, the SRV resolver will query
      * the DNS A record for the target instead.
      */
-    PJ_DNS_SRV_RESOLVE_AAAA	= 4
+    PJ_DNS_SRV_RESOLVE_AAAA	= 4,
+
+    /**
+     * Specify if the resolver should fallback to getaddrinfo
+     * under IPV4 mode if DNS A fails after DNS SRV.
+     */
+     PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV4 = 8,
+
+    /**
+     * Specify if the resolver should fallback to getaddrinfo
+     * under IPV6 mode if DNS A fails after DNS SRV.
+     */
+    PJ_DNS_SRV_FALLBACK_GETADDRINFO_IPV6 = 16,
 
 } pj_dns_srv_option;
 

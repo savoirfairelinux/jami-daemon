@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Savoir-Faire Linux                              *
- *   Author : Jérémy Quentin                                               *
- *   jeremy.quentin@savoirfairelinux.com                                   *
+ *   Copyright (C) 2009-2010 by Savoir-Faire Linux                         *
+ *   Author : Jérémy Quentin <jeremy.quentin@savoirfairelinux.com>         *
+ *            Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com>*
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,10 +25,10 @@
 ActionSetAccountFirst::ActionSetAccountFirst(Account * account, QObject *parent)
  : QAction((account == NULL) ? i18n("Default account") : account->getAlias(), parent)
 {
-	setCheckable(true);
-	this->account = account;
-	connect(this,    SIGNAL(triggered()),
-	        this,    SLOT(emitSetFirst()));
+   setCheckable(true);
+   this->account = account;
+   connect(this,    SIGNAL(triggered()),
+           this,    SLOT(emitSetFirst()));
 }
 
 
@@ -38,5 +38,5 @@ ActionSetAccountFirst::~ActionSetAccountFirst()
 
 void ActionSetAccountFirst::emitSetFirst()
 {
-	emit setFirst(account);
+   emit setFirst(account);
 }

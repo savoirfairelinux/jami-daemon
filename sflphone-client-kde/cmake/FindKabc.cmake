@@ -1,5 +1,5 @@
 FIND_LIBRARY(KABC_LIBRARY NAMES kabc)
-FIND_PATH(KABC_INCLUDE_DIR kabc_export.h /usr/include/kabc /usr/local/include/kabc )
+FIND_PATH(KABC_INCLUDE_DIR kabc_export.h /usr/include/kabc /usr/local/include/kabc $ENV{KDEDIR}/include/kabc )
 
 
 IF (KABC_INCLUDE_DIR AND KABC_LIBRARY)

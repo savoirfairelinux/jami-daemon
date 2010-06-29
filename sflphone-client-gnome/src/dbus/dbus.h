@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -17,8 +17,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
-
 
 #ifndef __DBUS_H__
 #define __DBUS_H__
@@ -242,16 +252,10 @@ void dbus_set_active_codec_list (const gchar** list, const gchar*);
 gchar* dbus_get_current_codec_name(const callable_obj_t * c);
 
 /**
- * ConfigurationManager - Get the list of available input audio plugins
- * @return gchar** The list of plugins
- */
-gchar** dbus_get_input_audio_plugin_list();
-
-/**
  * ConfigurationManager - Get the list of available output audio plugins
  * @return gchar** The list of plugins
  */
-gchar** dbus_get_output_audio_plugin_list();
+gchar** dbus_get_audio_plugin_list();
 
 /**
  * ConfigurationManager - Select an input audio plugin
@@ -310,6 +314,32 @@ int dbus_get_audio_device_index(const gchar* name);
  *		  dmix
  */
 gchar* dbus_get_current_audio_output_plugin();
+
+
+/**
+ * ConfigurationManager - Get the current state of echo canceller
+ * @return gchar* The state (enabled/disabled)
+ */
+gchar *dbus_get_echo_cancel_state(void);
+
+/**
+ * ConfigurationManager - Set the crrent state of echo canceller
+ * @param gchar* The state (enabled/disabled)
+ */
+void dbus_set_echo_cancel_state(gchar *state);
+
+/**
+ * ConfigurationManager - Get the current noise suppressor state
+ * @return gchar* The state (enabled/disabled)
+ */
+gchar *dbus_get_noise_suppress_state(void);
+
+/**
+ * ConfigurationManager - Set the current noise suppressor state
+ * @param gchar* The state (enabled/disabled)
+ */
+void dbus_set_noise_suppress_state(gchar *state);
+
 
 /**
  * ConfigurationManager - Query to server to 
@@ -597,5 +627,19 @@ gchar** dbus_get_supported_tls_method();
 
 gchar** dbus_get_participant_list (const char * confID);
 
+guint dbus_get_window_width (void);
+guint dbus_get_window_height (void);
+void dbus_set_window_height (const guint height);
+void dbus_set_window_width (const guint width);
+guint dbus_get_window_position_x (void);
+guint dbus_get_window_position_y (void);
+void dbus_set_window_position_x (const guint posx);
+void dbus_set_window_position_y (const guint posy);
+
+GHashTable* dbus_get_shortcuts(void);
+void dbus_set_shortcuts(GHashTable * shortcuts);
+
+void dbus_enable_status_icon (const gchar*);
+gchar* dbus_is_status_icon_enabled (void);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -17,6 +17,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef _AUDIO_LAYER_H
@@ -26,20 +37,18 @@
 #include "audiodevice.h"
 #include "ringbuffer.h"
 #include "mainbuffer.h"
+#include "dcblocker.h"
+#include "speexechocancel.h"
+#include "echocancel.h"
 
 #include <cc++/thread.h> // for ost::Mutex
-
-#define FRAME_PER_BUFFER	160
 
 /**
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware. 
  */
 
-
-class Recordable;
 class ManagerImpl;
-
 
 class AudioLayer {
 
@@ -58,7 +67,7 @@ class AudioLayer {
          */
         AudioLayer( ManagerImpl* manager , int type )
             : _defaultVolume(100)
-			  , _layerType( type )
+	      , _layerType( type )
               , _manager(manager)
 	      , _urgentRingBuffer( SIZEBUF, default_id )
               , _indexIn ( 0 )
@@ -83,8 +92,8 @@ class AudioLayer {
         /**
          * Check if no devices are opened, otherwise close them.
          * Then open the specified devices by calling the private functions open_device
-         * @param indexIn	The number of the card choosen for capture
-         * @param indexOut	The number of the card choosen for playback
+         * @param indexIn	The number of the card chosen for capture
+         * @param indexOut	The number of the card chosen for playback
          * @param sampleRate  The sample rate 
          * @param frameSize	  The frame size
          * @param stream	  To indicate which kind of stream you want to open
@@ -93,7 +102,7 @@ class AudioLayer {
          *			  SFL_PCM_BOTH
          * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
          */
-        virtual bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin) = 0;
+        virtual bool openDevice(int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin) = 0;
 
         /**
          * Start the capture stream and prepare the playback stream. 
@@ -161,6 +170,13 @@ class AudioLayer {
          */
         int getIndexOut() { return _indexOut; }
 
+	/**
+         * Get the index of the audio card for ringtone (could be differnet from playback)
+         * @return int The index of the card used for ringtone
+         *			0 for the first available card on the system, 1 ...
+         */
+	int getIndexRing() {return _indexRing; }
+
         /**
          * Get the sample rate of the audio layer
          * @return unsigned int The sample rate
@@ -214,6 +230,30 @@ class AudioLayer {
 	inline Recordable* getRecorderInstance (void) {return _recorder;}
 
 	/**
+	 * Get the echo canceller state
+	 * @return true if echo cancel activated
+         */
+	virtual bool getEchoCancelState(void) = 0;
+
+	/**
+	 * Set the echo canceller state
+	 * @param state true if echocancel active, false elsewhere 
+	 */
+	virtual void setEchoCancelState(bool state) = 0;
+
+	/**
+	 * Get the noise suppressor state
+	 * @return true if noise suppressor activated
+	 */
+	virtual bool getNoiseSuppressState(void) = 0;
+
+	/**
+	 * Set the noise suppressor state
+	 * @param state true if noise suppressor active, false elsewhere
+	 */
+	virtual void setNoiseSuppressState(bool state) = 0;
+
+	/**
 	 * Get the mutex lock for the entire audio layer 
 	 */
 	inline ost::Mutex* getMutexLock(void) { return &_mutex; }
@@ -265,6 +305,11 @@ class AudioLayer {
          */
         int _indexOut;
 
+	/**
+	 * Number of audio cards on which ringtone stream has been opened
+	 */
+	int _indexRing;
+
         /**
          * Sample Rate SFLphone should send sound data to the sound card 
          * The value can be set in the user config file- now: 44100HZ
@@ -294,6 +339,16 @@ class AudioLayer {
 	 * Lock for the entire audio layer
 	 */ 
         ost::Mutex _mutex;
+
+	EchoCancel *_echoCancel;
+	AudioProcessing *_echoCanceller; 
+
+	DcBlocker *_dcblocker;
+	AudioProcessing *_audiofilter;
+
+	bool _echocancelstate;
+
+	bool _noisesuppressstate;
 
 };
 

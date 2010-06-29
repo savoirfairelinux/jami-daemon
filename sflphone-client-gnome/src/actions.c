@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
@@ -16,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include <actions.h>
@@ -195,6 +206,8 @@ void sflphone_fill_account_list (void) {
 	int count;
 	GQueue *codeclist;
 
+	DEBUG("SFLphone: Fill account list");
+
 	count = current_account_get_message_number ();
 
     account_list_clear ();
@@ -291,9 +304,6 @@ void sflphone_fill_account_list (void) {
         }
         g_free(a->protocol_state_description);
         a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
-
-		// Attach a codec list to each account
-		// account_create_codec_list (&a);
     }
 
 	// Set the current account message number
@@ -330,9 +340,6 @@ gboolean sflphone_init() {
         // Fetch the ip2ip profile 
         sflphone_fill_ip2ip_profile();
         
-        // Fetch the audio codecs at startup.
-        // sflphone_fill_codec_list();
-
 		// Fetch the conference list
 		// sflphone_fill_conference_list();
 
@@ -645,7 +652,9 @@ process_dialing(callable_obj_t * c, guint keyval, gchar * key)
 
 					if (c->_state == CALL_STATE_TRANSFERT)
 					{
-						c->_trsft_to = g_strndup (c->_trsft_to, strlen(c->_trsft_to) - 1);
+                                                // Process backspace if and only if string not NULL
+                                                if(strlen(c->_trsft_to) > 0)
+                                                     c->_trsft_to = g_strndup (c->_trsft_to, strlen(c->_trsft_to) - 1);
 					}
 					else
 					{
@@ -954,13 +963,16 @@ sflphone_place_call ( callable_obj_t * c )
     void
 sflphone_detach_participant(const gchar* callID)
 {
-    DEBUG("sflphone detach participant from conference");
-
-    
+    DEBUG("Action: Detach participant from conference");
 
     if(callID == NULL) {
         callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-	DEBUG("    sflphone_detach_participant %s\n", selectedCall->_callID);
+	DEBUG("Action: Detach participant %s", selectedCall->_callID);
+
+	if(selectedCall->_confID) {
+	    g_free(selectedCall->_confID);
+	    selectedCall->_confID = NULL;
+	}
 
 	calltree_remove_call(current_calls, selectedCall, NULL);
 	calltree_add_call(current_calls, selectedCall, NULL);
@@ -968,7 +980,12 @@ sflphone_detach_participant(const gchar* callID)
     }
     else {
 	callable_obj_t * selectedCall = calllist_get(current_calls, callID);
-	DEBUG("    sflphone_detach_participant %s\n", callID);
+	DEBUG("Action: Darticipant %s", callID);
+
+	if(selectedCall->_confID) {
+	    g_free(selectedCall->_confID); 
+	    selectedCall->_confID = NULL;
+	}
 
 	calltree_remove_call(current_calls, selectedCall, NULL);
 	calltree_add_call(current_calls, selectedCall, NULL);
@@ -1081,7 +1098,9 @@ void sflphone_fill_codec_list () {
 	guint account_list_size;
 	guint i;
 	account_t *current = NULL;
-    gchar** codecs = NULL;
+	gchar** codecs = NULL;
+
+	DEBUG("SFLphone: Fill codec list");
 
 	account_list_size = account_list_get_size ();
 
@@ -1105,34 +1124,39 @@ void sflphone_fill_codec_list () {
 
 void sflphone_fill_codec_list_per_account (account_t **account) {
 
-	gchar **order;
+    gchar **order;
     gchar** details;
     gchar** pl;
-	gchar *accountID;
-	GQueue *codeclist;
-	gboolean active = FALSE;
+    gchar *accountID;
+    GQueue *codeclist;
+    gboolean active = FALSE;
 
     order = (gchar**) dbus_get_active_codec_list ((*account)->accountID);
+
     codeclist = (*account)->codecs;
 
-	// First clean the list
-	codec_list_clear (&codeclist);	
+    // First clean the list
+    codec_list_clear (&codeclist);
 
-	for (pl=order; *order; order++)
+    if(!(*order))
+      ERROR("SFLphone: No codec list provided");
+
+    for (pl=order; *pl; pl++)
     {
-		codec_t * cpy;
-		// Each account will have a copy of the system-wide capabilities
-		codec_create_new_from_caps (codec_list_get_by_payload ((gconstpointer) atoi (*order), NULL), &cpy);
-		if (cpy) {
-			cpy->is_active = TRUE;
-			codec_list_add (cpy, &codeclist);
-		}
-		else
-			ERROR ("Couldn't find codec \n");
+      codec_t * cpy = NULL;
+		
+      // Each account will have a copy of the system-wide capabilities
+      codec_create_new_from_caps (codec_list_get_by_payload ((gconstpointer) (size_t)atoi (*pl), NULL), &cpy);
+      if (cpy) {
+	  cpy->is_active = TRUE;
+	  codec_list_add (cpy, &codeclist);
+      }
+      else
+	ERROR ("SFLphone: Couldn't find codec");
     }
 
 	// Test here if we just added some active codec.
-	active = (codeclist->length == 0) ? FALSE : FALSE;
+	active = (codeclist->length == 0) ? TRUE : FALSE;
 
 	guint caps_size = codec_list_get_size (), i=0;
 
@@ -1140,7 +1164,7 @@ void sflphone_fill_codec_list_per_account (account_t **account) {
 			
 		codec_t * current_cap = capabilities_get_nth (i);
 		// Check if this codec has already been enabled for this account
-		if (codec_list_get_by_payload ( (gconstpointer) current_cap->_payload, codeclist) == NULL) {
+		if (codec_list_get_by_payload ( (gconstpointer) (size_t)(current_cap->_payload), codeclist) == NULL) {
 			// codec_t *cpy;
 			// codec_create_new_from_caps (current_cap, &cpy);
 			current_cap->is_active = active;
@@ -1152,6 +1176,10 @@ void sflphone_fill_codec_list_per_account (account_t **account) {
 	}
 	
 	(*account)->codecs = codeclist; 
+	
+	// call dbus function with array of strings
+	codec_list_update_to_daemon (*account);
+	
 }
 
 void sflphone_fill_call_list (void)
@@ -1415,7 +1443,7 @@ sflphone_call_state_changed( callable_obj_t * c, const gchar * description, cons
 }
 
 
-void sflphone_get_interface_addr_from_name(char *iface_name, char **iface_addr) {
+void sflphone_get_interface_addr_from_name(char *iface_name, char **iface_addr, int size) {
 
     struct ifreq ifr;
     int fd;
@@ -1443,7 +1471,9 @@ void sflphone_get_interface_addr_from_name(char *iface_name, char **iface_addr) 
 
     tmp_addr = (char *)addr_in;
 
-    snprintf(*iface_addr, sizeof(*iface_addr), "%d.%d.%d.%d", 
+    snprintf(*iface_addr, size, "%d.%d.%d.%d", 
 	     UC(tmp_addr[0]), UC(tmp_addr[1]), UC(tmp_addr[2]), UC(tmp_addr[3]));
+
+    close(fd);
 
 }

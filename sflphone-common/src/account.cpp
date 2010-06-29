@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -17,6 +17,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include "account.h"
@@ -58,7 +69,7 @@ void Account::loadConfig() {
 void Account::setRegistrationState (RegistrationState state) {
 
 	if (state != _registrationState) {
-		_debug ("Account::setRegistrationState");
+		_debug ("Account: set registration state");
 		_registrationState = state;
 
 		// Notify the client
@@ -70,7 +81,7 @@ void Account::loadAudioCodecs (void) {
 
 	// if the user never set the codec list, use the default configuration for this account
 	if (Manager::instance ().getConfigString (_accountID, "ActiveCodecs") == "") {
-		_warn ("use the default order");
+		_info ("Account: use the default order");
 		Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
 	}
 
@@ -92,21 +103,18 @@ void Account::setActiveCodecs (const std::vector <std::string> &list) {
 	int payload;
 	size_t size = list.size();
 
-	_warn ("set the custom order %i", list.size ());
-	_warn ("Setting active codec list");
-
 	while ( (unsigned int) i < size) {
 		payload = std::atoi (list[i].data());
-		_warn ("Adding codec with RTP payload=%i", payload);
+		_info ("Account: Adding codec with RTP payload=%i", payload);
 		//if (Manager::instance ().getCodecDescriptorMap ().isCodecLoaded (payload)) {
 		_codecOrder.push_back ( (AudioCodecType) payload);
 		//}
 		i++;
 	}
 
-    // setConfig
-    std::string s = Manager::instance ().serialize (list);
-    _warn ("Setting codec with payload number %s to the active list", s.c_str());
+	// setConfig
+	std::string s = Manager::instance ().serialize (list);
+
 	// Set the config per account
 	Manager::instance().setConfig (_accountID, "ActiveCodecs", s);
 

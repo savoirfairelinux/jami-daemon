@@ -16,6 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Teluu Inc. (http://www.teluu.com)
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 #ifndef __PJ_CONFIG_H__
 #define __PJ_CONFIG_H__
@@ -264,6 +275,48 @@
 #   define PJ_HAS_PENTIUM	0
 #   define PJ_IS_LITTLE_ENDIAN	1
 #   define PJ_IS_BIG_ENDIAN	0
+
+#elif defined (PJ_M_SH) || defined(__sh) || defined(__sh__) || \
+      defined(__SH__) || defined(__M_SH) || defined(_ARCH_SH)
+    /*
+     * Renesas SH, little endian and big endian
+     */
+#   undef PJ_M_SH
+#   define PJ_M_SH              1
+#   define PJ_M_NAME            "sh"
+#   define PJ_HAS_PENTIUM       0
+# if defined(__LITTLE_ENDIAN__)
+#   define PJ_IS_LITTLE_ENDIAN  1
+#   define PJ_IS_BIG_ENDIAN     0
+# elif defined(__BIG_ENDIAN__)
+#   define PJ_IS_LITTLE_ENDIAN  0
+#   define PJ_IS_BIG_ENDIAN     1
+# endif
+
+#elif defined (PJ_M_HPPA) || defined(__hppa) || defined(__hppa__) || \
+      defined(__HPPA__) || defined(__M_HPPA) || defined(_ARCH_HPPA)
+    /*
+     * HP/PA, big endian
+     */
+#   undef PJ_M_HPPA
+#   define PJ_M_HPPA            1
+#   define PJ_M_NAME            "hppa"
+#   define PJ_HAS_PENTIUM       0
+#   define PJ_IS_LITTLE_ENDIAN  0
+#   define PJ_IS_BIG_ENDIAN     1
+
+#elif defined (PJ_M_S390) || defined(__s390) || defined(__s390__) || defined(__s390x) || \
+      defined(__s390x__) || defined(__M_s390) || defined(_ARCH_s390)
+    /*
+     * System 390, big endian
+     */
+#   undef PJ_M_S390
+#   define PJ_M_S390            1
+#   define PJ_M_NAME            "s390"
+#   define PJ_HAS_PENTIUM       0
+#   define PJ_IS_LITTLE_ENDIAN  0
+#   define PJ_IS_BIG_ENDIAN     1
+
 		
 #else
 #   error "Please specify target machine."

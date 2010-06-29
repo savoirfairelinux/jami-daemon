@@ -61,7 +61,8 @@ def printHelp():
 	--gaia                             Get all IAX accounts.         \n\
 	--gcc                              Get current callid.           \n\
 	--gacl                             Get active codec list.        \n\
-                                                                     \n\
+        --sac                              Set accout for next call      \n\
+                                                                         \n\
 	--gad        <account>             Get account details .         \n\
 	--enable     <account>             Enable the account.           \n\
 	--disable    <account>             Disable the account.          \n\
@@ -83,9 +84,12 @@ def printHelp():
 
 # Option definition
 try:
-    opts, args =  getopt.getopt(sys.argv[1:],"", [  "help", "gaa", "gal", "gara", "gaea", "gasa", "gaia", "gacl", "gac", "gcc", 
-                                                    "hangup=", "refuse=", "hold", "unhold=", "transfer=","dtmf=", "accept=",
-                                                    "gcd=", "gad=", "register=", "unregister=", "enable=", "disable=", "call=" ])
+    opts, args =  getopt.getopt(sys.argv[1:],"", 
+				[  "help", "gaa", "gal", "gara", "gaea", "gasa", "gaia", 
+				   "gacl", "gac", "gcc", "hangup=", "refuse=", "hold", 
+				   "unhold=", "transfer=","dtmf=", "accept=", "gcd=", 
+				   "gad=", "register=", "unregister=", "enable=", "disable=", 
+				   "call=", "sac=" ])
 except getopt.GetoptError,err:
     print str(err)
     sys.exit(2)
@@ -165,6 +169,12 @@ else:
 				print "Call: " + arg
 				print "Account: " + details['ACCOUNTID']
 				print "Peer: " + details['PEER_NAME'] + "<" + details['PEER_NUMBER'] + ">"
+
+		elif opt == "--sac":
+			if arg is "":
+			    print "Must specifies the accout to be set"
+			else: 
+                            sflphone.setAccount(arg)
 
 
 		#

@@ -37,20 +37,6 @@
     	<label>Defines whether the main window should be displayed when receiving a message.</label>
     </entry>
     
-    <!-- Accounts Settings -->
-    
-    <!--
-    <entry name="accountList" type="StringList">
-    	<label>Defines the list of accounts to register, in order of preference (first registered used by default).</label>
-    </entry> 
-    -->
-    <entry name="enableStun" type="Bool">
-    	<label>Defines the SIP accounts must use Stun.</label>
-    </entry> 
-    <entry name="stunServer" type="String">
-    	<label>Defines the Stun server to use.</label>
-    </entry> 
-    
     <!-- Audio Settings -->
     
     <entry name="interface" type="Enum">

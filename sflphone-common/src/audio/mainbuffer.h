@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  * 
  *                                                                              
@@ -16,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef __MAIN_BUFFER__
@@ -26,11 +37,9 @@
 #include <cc++/thread.h> // for ost::Mutex
 #include <string>
 
-#include "../global.h"
-#include "../call.h"
+#include "global.h"
+#include "call.h"
 #include "ringbuffer.h"
-
-
 
 typedef std::map<CallID, RingBuffer*> RingBufferMap;
 
@@ -40,7 +49,7 @@ typedef std::map<CallID, CallIDSet*> CallIDMap;
 
 class MainBuffer {
 
-public:
+ public:
 
         MainBuffer();
 
@@ -56,19 +65,39 @@ public:
 
 	bool removeCallIDSet(CallID set_id);
 
+	/**
+	 * Add a new call id to this set
+	 */
 	void addCallIDtoSet(CallID set_id, CallID call_id);
 
 	void removeCallIDfromSet(CallID set_id, CallID call_id);
 
+	/**
+	 * Create a new ringbuffer with default readpointer
+	 */
 	RingBuffer* createRingBuffer(CallID call_id);
 
 	bool removeRingBuffer(CallID call_id);
 
 	void bindCallID(CallID call_id1, CallID call_id2 = default_id);
 
+	/**
+	 * Add a new call_id to unidirectional outgoing stream
+	 * \param call_id New call id to be added for this stream
+	 * \param process_id Process that require this stream
+	 */
+	void bindHalfDuplexOut(CallID process_id, CallID call_id = default_id);
+
+	/**
+	 * Unbind two calls
+	 */
 	void unBindCallID(CallID call_id1, CallID call_id2 = default_id);
 
+	void unBindHalfDuplexOut(CallID process_id, CallID call_id = default_id);
+
 	void unBindAll(CallID call_id);
+
+	void unBindAllHalfDuplexOut(CallID process_id);
 
 	int putData(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 
@@ -106,7 +135,7 @@ public:
 
 	SFLDataFormat* mixBuffer;
 
-	ost::Mutex _mutex;
+	// ost::Mutex _mutex;
 
 	int _internalSamplingRate;
 

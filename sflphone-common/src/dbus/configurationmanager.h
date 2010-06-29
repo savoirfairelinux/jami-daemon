@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -18,6 +18,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef CONFIGURATIONMANAGER_H
@@ -36,6 +47,9 @@ public:
 
     ConfigurationManager(DBus::Connection& connection);
     static const char* SERVER_PATH;
+
+private:
+    std::vector<std::string> shortcutsKeys;
 
 public:
 
@@ -61,17 +75,21 @@ public:
     std::vector< std::string > getActiveCodecList (const std::string& accountID);
     void setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID);
 
-    std::vector< std::string > getInputAudioPluginList();
-    std::vector< std::string > getOutputAudioPluginList();
+    std::vector< std::string > getAudioPluginList();
     void setInputAudioPlugin(const std::string& audioPlugin);
     void setOutputAudioPlugin(const std::string& audioPlugin);
     std::vector< std::string > getAudioOutputDeviceList();
     void setAudioOutputDevice(const int32_t& index);
-    std::vector< std::string > getAudioInputDeviceList();
     void setAudioInputDevice(const int32_t& index);
+    void setAudioRingtoneDevice(const int32_t& index);
+    std::vector< std::string > getAudioInputDeviceList();
     std::vector< std::string > getCurrentAudioDevicesIndex();
     int32_t getAudioDeviceIndex(const std::string& name);
     std::string getCurrentAudioOutputPlugin( void );
+    std::string getEchoCancelState(void);
+    void setEchoCancelState(const std::string& state);
+    std::string getNoiseSuppressState(void);
+    void setNoiseSuppressState(const std::string& state);
 
 
     std::vector< std::string > getToneLocaleList(  );
@@ -114,6 +132,18 @@ public:
     int32_t getMailNotify( void );
     void setMailNotify( void );
 
+	int32_t getWindowWidth (void);
+	int32_t getWindowHeight (void);
+	void setWindowWidth (const int32_t& width);
+	void setWindowHeight (const int32_t& height);
+	int32_t getWindowPositionX (void);
+	int32_t getWindowPositionY (void);
+	void setWindowPositionX (const int32_t& posX);
+	void setWindowPositionY (const int32_t& posY);
+
+	void enableStatusIcon (const std::string&);
+	std::string isStatusIconEnabled (void);
+
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
     std::vector< std::string > getAddressbookList ( void );
@@ -134,6 +164,9 @@ public:
     
     std::vector<std::string> getAllIpInterface(void);
     std::vector<std::string> getAllIpInterfaceByName(void);
+
+    std::map< std::string, int32_t > getShortcuts ();
+    void setShortcuts (const std::map< std::string, int32_t >& shortcutsMap);
 };
 
 

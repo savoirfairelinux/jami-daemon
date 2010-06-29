@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
@@ -16,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef ACCOUNT_H
@@ -65,13 +76,16 @@ typedef enum RegistrationState {
 #define CONFIG_ACCOUNT_RESOLVE_ONCE         "Account.resolveOnce"
 #define CONFIG_ACCOUNT_REGISTRATION_EXPIRE  "Account.expire"
 #define CONFIG_CREDENTIAL_NUMBER            "Credential.count"
+#define ACCOUNT_DTMF_TYPE                   "Account.dtmfType"
 
 #define HOSTNAME                            "hostname"
 #define USERNAME                            "username"
+#define ROUTESET                            "routeset"
 #define AUTHENTICATION_USERNAME             "authenticationUsername"
 #define PASSWORD                            "password"
 #define REALM                               "realm"
 #define DEFAULT_REALM                       "*"
+#define USERAGENT							"useragent"
 
 #define LOCAL_INTERFACE                     "Account.localInterface"
 #define PUBLISHED_SAMEAS_LOCAL              "Account.publishedSameAsLocal"
@@ -115,6 +129,7 @@ typedef enum RegistrationState {
 #define REGISTRATION_STATUS                 "Status"
 #define REGISTRATION_STATE_CODE             "Registration.code" 
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
+
 
 class Account{
 

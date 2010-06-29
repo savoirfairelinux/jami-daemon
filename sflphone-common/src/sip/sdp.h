@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
@@ -16,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef _SDP_H
@@ -135,10 +146,15 @@ class Sdp {
         
         pj_status_t check_sdp_answer(pjsip_inv_session *inv, pjsip_rx_data *rdata);
         
-        /*
+        /**
          * Remove all media in the session media vector.
          */
-        void clean_session_media();
+        void clean_session_media(void);
+
+        /**
+         * Remove all media in local media capability vector
+         */
+		void clean_local_media_capabilities(void);
 
         /*
          * Return a string description of the media added to the session,
@@ -166,10 +182,7 @@ class Sdp {
          * @return pj_status_t  0 on success
          *                      1 otherwise
          */
-        pj_status_t start_negociation( void ){
-            return pjmedia_sdp_neg_negotiate(
-                       _pool, _negociator, 0);
-        }
+        pj_status_t start_negociation( void );
 
          /*
          * Retrieve the negociated sdp offer from the sip payload.
@@ -197,7 +210,7 @@ class Sdp {
          * Set remote's IP addr. [not protected]
          * @param ip  The remote IP address
          */
-        void set_remote_ip(const std::string& ip)    { _remote_ip_addr = ip; }
+        void set_remote_ip(const std::string& ip) { _remote_ip_addr = ip; }
         
         /** 
          * Return IP of destination [mutex protected]
@@ -221,7 +234,7 @@ class Sdp {
 
         std::vector<sdpMedia*> get_session_media_list (void) { return _session_media; }
 
-	void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
+        void get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
 
     private:
         /** Codec Map */
@@ -253,13 +266,13 @@ class Sdp {
         /** Local audio port */
         int _local_extern_audio_port;
 
-        /** Remote's audio port */
+        /** Remote audio port */
         unsigned int _remote_audio_port;
 
         std::string _zrtp_hello_hash;
 
-	/** "a=crypto" sdes local attributes obtained from AudioSrtpSession */
-	std::vector<std::string> _srtp_crypto;
+        /** "a=crypto" sdes local attributes obtained from AudioSrtpSession */
+        std::vector<std::string> _srtp_crypto;
         
         Sdp(const Sdp&); //No Copy Constructor
         Sdp& operator=(const Sdp&); //No Assignment Operator
@@ -350,12 +363,12 @@ class Sdp {
         void get_remote_sdp_media_from_offer (const pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
 	
-	/* 
+        /*
          * Adds a sdes attribute to the given media section.
          *
          * @param media The media to add the srtp attribute to 
-	 */
-	void sdp_add_sdes_attribute(std::vector<std::string>& crypto);
+         */
+        void sdp_add_sdes_attribute(std::vector<std::string>& crypto);
 
         /* 
          * Adds a zrtp-hash  attribute to 

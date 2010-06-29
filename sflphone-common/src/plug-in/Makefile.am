@@ -1,6 +1,6 @@
 include ../../globals.mak
 
-SUBDIRS=audiorecorder test
+SUBDIRS=test
 
 noinst_LTLIBRARIES = libplugin.la
 

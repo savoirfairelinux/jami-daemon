@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
@@ -19,6 +19,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef SIPVOIPLINK_H
@@ -178,12 +189,22 @@ class SIPVoIPLink : public VoIPLink
         bool refuse (const CallID& id);
 
         /**
-         * Send DTMF
+         * Send DTMF refering to account configuration
          * @param id The call identifier
          * @param code  The char code
          * @return bool True on success
          */
         bool carryingDTMFdigits(const CallID& id, char code);
+
+        /**
+         * Send Dtmf using SIP INFO message
+         */
+        bool dtmfSipInfo(SIPCall *call, char code);
+
+        /**
+         * Send Dtmf over RTP
+         */
+        bool dtmfOverRtp(SIPCall* call, char code);
 
         /** 
          * Terminate every call not hangup | brutal | Protected by mutex 
@@ -280,7 +301,7 @@ class SIPVoIPLink : public VoIPLink
         
         bool new_ip_to_ip_call (const CallID& id, const std::string& to);
 
-        std::string get_useragent_name (void);
+        std::string get_useragent_name (const AccountID& id);
 
         /** 
          * List all the interfaces on the system and return 
@@ -384,7 +405,7 @@ class SIPVoIPLink : public VoIPLink
 	 * This function should be called before registering an account
 	 * @param accountID An account id for which transport is to be set
 	 *
-	 * @return bool True if the account is succesfully created or successfully obtained 
+	 * @return bool True if the account is successfully created or successfully obtained 
 	 * from the transport map
 	 */
 	bool acquireTransport(const AccountID& accountID);
@@ -412,7 +433,7 @@ class SIPVoIPLink : public VoIPLink
 	 * General Sip transport creation method according to the 
 	 * transport type specified in account settings
 	 * @param id The account id for which a transport must
-         * be created.
+     * be created.
 	 */
 	bool createSipTransport(AccountID id);
 
@@ -426,29 +447,30 @@ class SIPVoIPLink : public VoIPLink
 	 */
 	bool addTransportToMap(std::string key, pjsip_transport* transport);
 
-        /** 
+     /**
 	 * Create SIP UDP transport from account's setting
 	 * @param id The account id for which a transport must
-         * be created.
+     * be created.
 	 * @return pj_status_t PJ_SUCCESS on success 
 	 */
         int createUdpTransport (AccountID = "");
 
-        /**
-         * Create a TLS transport from the default TLS listener from
-         * @param id The account id for which a transport must
-         * be created.
-         * @return pj_status_t PJ_SUCCESS on success 
-         */
-        pj_status_t createTlsTransport(const AccountID& id,  std::string remoteAddr);
+     /**
+      * Create a TLS transport from the default TLS listener from
+      * @param id The account id for which a transport must
+      * be created.
+      * @return pj_status_t PJ_SUCCESS on success
+      */
+     pj_status_t createTlsTransport(const AccountID& id,  std::string remoteAddr);
 
 	/**
-         * Create a UDP transport using stun server to resove public address
-         * @param id The account id for which a transport must
-         * be created.
-         * @return pj_status_t PJ_SUCCESS on success 
-         */
+     * Create a UDP transport using stun server to resove public address
+     * @param id The account id for which a transport must
+     * be created.
+     * @return pj_status_t PJ_SUCCESS on success
+     */
 	pj_status_t createAlternateUdpTransport (AccountID id);
+
 
 	/** 
 	 * UDP Transports are stored in this map in order to retreive them in case
@@ -456,18 +478,18 @@ class SIPVoIPLink : public VoIPLink
 	 */
 	SipTransportMap _transportMap;
 
-        /** For registration use only */
-        int _regPort;
+	/** For registration use only */
+	int _regPort;
 
-        /** Threading object */
-        EventThread* _evThread;
-        ost::Mutex _mutexSIP;
+	/** Threading object */
+	EventThread* _evThread;
+	ost::Mutex _mutexSIP;
 
-        /* Number of SIP accounts connected to the link */
-        int _clients;
+    /* Number of SIP accounts connected to the link */
+    int _clients;
         
-        /* 
-         * Get the correct address to use (ie advertised) from 
+    /*
+     * Get the correct address to use (ie advertised) from
          * a uri. The corresponding transport that should be used
          * with that uri will be discovered. 
          *

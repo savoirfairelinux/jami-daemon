@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author : Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *
@@ -16,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include <sstream>
@@ -23,6 +34,7 @@
 #include "conference.h"
 #include "manager.h"
 #include "audio/audiolayer.h"
+#include "audio/mainbuffer.h"
 
 int Conference::count = 0;
 
@@ -146,3 +158,52 @@ ParticipantSet Conference::getParticipantList()
     return _participants;
 }
 
+
+
+bool Conference::setRecording() {
+
+  bool recordStatus = Recordable::recAudio.isRecording();
+
+  Recordable::recAudio.setRecording();
+
+  // start recording
+  if(!recordStatus){
+
+    MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+
+    ParticipantSet::iterator iter = _participants.begin();
+
+    CallID process_id = Recordable::recorder.getRecorderID();
+
+    while(iter != _participants.end()) {
+      mbuffer->bindHalfDuplexOut(process_id, *iter);
+      iter++;
+    }
+
+    mbuffer->bindHalfDuplexOut(process_id);
+
+  }
+  // stop recording
+  else {
+
+      MainBuffer *mbuffer = Manager::instance().getMainBuffer();      
+
+      ParticipantSet::iterator iter = _participants.begin();
+
+      CallID process_id = Recordable::recorder.getRecorderID();
+
+      while(iter != _participants.end()) {
+	mbuffer->unBindHalfDuplexOut(process_id, *iter);
+	iter++;
+      }
+
+      mbuffer->unBindHalfDuplexOut(process_id);
+
+  }
+
+
+  Recordable::recorder.start();
+
+  return recordStatus;
+
+}

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,13 +14,24 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include "samplerateconverter.h"
 #include "manager.h"
 
 SamplerateConverter::SamplerateConverter (void)
-        : _frequence (Manager::instance().getConfigInt (AUDIO , ALSA_SAMPLE_RATE)) //44100
+        : _frequence (Manager::instance().getConfigInt (AUDIO , AUDIO_SAMPLE_RATE)) //44100
         , _framesize (Manager::instance().getConfigInt (AUDIO , ALSA_FRAME_SIZE))
         , _floatBufferDownMic (NULL)
         , _floatBufferUpMic (NULL)
@@ -77,8 +88,7 @@ void SamplerateConverter::init (void)
     _src_state_spkr = src_new (SRC_LINEAR, 1, &_src_err);
 
     int nbSamplesMax = (int) (getFrequence() * getFramesize() / 1000);
-    // TODO: fix this hack that make sure we have enought place in buffers to upsample
-    nbSamplesMax = nbSamplesMax*4;
+
     _floatBufferDownMic  = new float32[nbSamplesMax];
     _floatBufferUpMic = new float32[nbSamplesMax];
     _floatBufferDownSpkr  = new float32[nbSamplesMax];
@@ -104,9 +114,8 @@ int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* da
 {
 
     double upsampleFactor = (double) samplerate2 / samplerate1 ;
-    //_debug("factor = %f" , upsampleFactor);
+
     int nbSamplesMax = (int) (samplerate2 * getFramesize() / 1000);
-    nbSamplesMax = nbSamplesMax*4;
 
     if (upsampleFactor != 1 && dataIn != NULL) {
         SRC_DATA src_data;
@@ -136,10 +145,8 @@ int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* 
 {
 
     double downsampleFactor = (double) samplerate1 / samplerate2;
-    //_debug("factor = %f" , downsampleFactor);
-    int nbSamplesMax = (int) (samplerate1 * getFramesize() / 1000);
 
-    nbSamplesMax = nbSamplesMax*4;
+    int nbSamplesMax = (int) (samplerate1 * getFramesize() / 1000);
 
     if (downsampleFactor != 1) {
         SRC_DATA src_data;

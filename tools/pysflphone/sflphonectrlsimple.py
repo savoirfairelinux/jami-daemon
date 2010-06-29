@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2009 by the Free Software Foundation, Inc.
 #
+# Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -23,15 +25,18 @@ import os
 import random
 from traceback import print_exc
 
+import gtk
 import gobject
 from gobject import GObject
+from gobject import MainLoop
 
 import getopt
 
 import time
-import md5
+import hashlib
 
 from threading import Thread
+from threading import Event
 
 from Errors import *
 
@@ -42,26 +47,50 @@ except ImportError, e:
 	raise SflPhoneError("No python-dbus module found")
 
 
-class SflPhoneCtrlSimple(object):
-    """Simple class for controlling SflPhoned through DBUS"""
+class SflPhoneCtrlSimple(Thread):
+    """ Simple class for controlling SflPhoned through DBUS
+
+        If option testSuite (ts) is put to true, 
+	simple actions are implemented on incoming call.
+    """ 
 
     # list of active calls (known by the client)
     activeCalls = {}
 
-    def __init__(self, name=sys.argv[0]):
+    def __init__(self, test=False, name=sys.argv[0]):
+        print "Create SFLphone instance"
+	Thread.__init__(self)
        	# current active account
         self.account = None
         # client name
         self.name = name
         # client registered to sflphoned ?
         self.registered = False
-
         self.register()
+	self.currentCallId = ""
+
+	self.loop = MainLoop()
+
+	self.isStop = False
+
+	self.test = test
+	self.onIncomingCall_cb = None
+	self.event = Event()
+
+	gobject.threads_init()
+	
 
 
     def __del__(self):
         if self.registered:
             self.unregister()
+	self.loop.quit()
+
+
+    def stopThread(self):
+        print "Stop PySFLphone"
+        self.isStop = True
+	
 
 
     def register(self):
@@ -109,13 +138,17 @@ class SflPhoneCtrlSimple(object):
             raise SPdaemonError("Client registration failed")
 
         try:
+            print "Adding Incoming call method"
             proxy_callmgr.connect_to_signal('incomingCall', self.onIncomingCall)
             proxy_callmgr.connect_to_signal('callStateChanged', self.onCallStateChanged)
         except dbus.DBusException, e:
             print e
-			
+
+
 
     def unregister(self):
+
+        print "Unregister"
 
         if not self.registered:
             return
@@ -131,6 +164,21 @@ class SflPhoneCtrlSimple(object):
         return self.registered
 
 
+    def getEvent(self):
+        return self.event
+
+    def wait(self):
+        self.event.wait()
+
+    def isSet(self):
+        self.event.isSet()
+
+    def set(self):
+        self.event.set()
+
+    def clear(self):
+        self.event.clear()
+
     #
     # Signal handling
     #
@@ -139,6 +187,15 @@ class SflPhoneCtrlSimple(object):
     def onIncomingCall(self, account, callid, to):
         print "Incoming call: " + account + ", " + callid + ", " + to
         self.activeCalls[callid] = {'Account': account, 'To': to, 'State': '' }
+	self.currentCallId = callid
+
+	if(self.test):
+            # TODO fix this bug in daemon, cannot answer too fast
+            time.sleep(0.5)
+	    if self.onIncomingCall_cb(self) is not None:
+                self.onIncomingCall_cb(self)
+	
+
 
     # On call state changed event, set the values for new calls, 
     # or delete the call from the list of active calls
@@ -156,7 +213,8 @@ class SflPhoneCtrlSimple(object):
             except KeyError, e:
                 print "This call didn't exist!: " + callid + ". Adding it to the list."
                 callDetails = self.getCallDetails(callid)
-                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 'To': callDetails['PEER_NUMBER'], 'State': state }
+                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'], 
+					    'To': callDetails['PEER_NUMBER'], 'State': state }
         elif state in [ "BUSY", "FAILURE" ]:
             try:
                 del self.activeCalls[callid]
@@ -170,13 +228,40 @@ class SflPhoneCtrlSimple(object):
     #
     # Account management
     #
+    def addAccount(self, details=None):
+        """Add a new account account
+
+	Add a new account to the SFLphone-daemon. Default parameters are \ 
+	used for missing account configuration field.
+
+	Required parameters are type, alias, hostname, username and password
+
+	input details
+	
+	"""
+
+	if details is None:
+            raise SPaccountError("Must specifies type, alias, hostname, \
+                                  username and password in \
+                                  order to create a new account")
+
+	return self.configurationmanager.addAccount(details)
+
+    def removeAccount(self, accountID=None):
+        """Remove an account from internal list"""
+
+	if accountID is None:
+            raise SPaccountError("Account ID must be specified")
+
+        self.configurationmanager.removeAccount(accountID)
+
     def getAllAccounts(self):
-        """ Return a list with all accounts"""
+        """Return a list with all accounts"""
         return self.configurationmanager.getAccountList()
 
 
     def getAllEnabledAccounts(self):
-        """ Return a list with all enabled accounts"""
+        """Return a list with all enabled accounts"""
         accounts = self.getAllAccounts()
         activeaccounts = []
         for testedaccount in accounts:
@@ -222,11 +307,15 @@ class SflPhoneCtrlSimple(object):
         raise SPaccountError("No account matched with alias")
 
     def setAccount(self, account):
-        """Define the active account"""
+        """Define the active account
+
+	The active account will be used when sending a new call
+	"""
 
         if account in self.getAllAccounts():
             self.account = account
         else:
+            print account
             raise SflPhoneError("Not a valid account")
 
     def setFirstRegisteredAccount(self):
@@ -315,7 +404,6 @@ class SflPhoneCtrlSimple(object):
 
     def getAllSipAccounts(self):
         """Return a list of SIP accounts"""
-
         sipAccountsList = []
         for accountName in self.getAllAccounts(): 
             if  self.getAccountDetails(accountName)['Account.type'] == "SIP":
@@ -395,24 +483,36 @@ class SflPhoneCtrlSimple(object):
     # Action
     #
     def Call(self, dest):
-        """Start a call and return a CallID"""
-        if not self.account:
+        """Start a call and return a CallID
+
+	Use the current account previously set using setAccount().
+	If no account specified, first registered one in account list is used.
+
+	For phone number prefixed using SIP scheme (i.e. sip: or sips:),
+	IP2IP profile is automatically selected and set as the default account
+
+	return callID Newly generated callidentifier for this call
+	"""
+
+	if dest is None or dest == "":
+            raise SflPhoneError("Invalid call destination")
+	
+        # Set the account to be used for this call
+	if dest.find('sip:') is 0 or dest.find('sips:') is 0:
+            print "Ip 2 IP call"
+	    self.setAccount("IP2IP")
+	elif not self.account:
             self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
+        if self.account is "IP2IP" and self.isAccountRegistered():
             raise SflPhoneError("Can't place a call without a registered account")
 
-        if dest is None or dest == "":
-            raise SflPhoneError("Invalid call destination")
-
-        # callid = str(random.randrange(2**32-1))
-        t = long( time.time() * 1000 )
-        r = long( random.random()*100000000000000000L )
-        data = str(t) + str(r)
-        callid = md5.md5(data).hexdigest()
+        # Generate a call ID for this call
+        callid = self.GenerateCallID()	
 
         # Add the call to the list of active calls and set status to SENT
         self.activeCalls[callid] = {'Account': self.account, 'To': dest, 'State': 'SENT' }
+
         # Send the request to the CallManager
         self.callmanager.placeCall(self.account, callid, dest)
 
@@ -424,23 +524,23 @@ class SflPhoneCtrlSimple(object):
         if not self.account:
             self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't hangup a call without a registered account")
+        # if not self.isAccountRegistered() and self.accout is not "IP2IP":
+        #    raise SflPhoneError("Can't hangup a call without a registered account")
 
         if callid is None or callid == "":
             pass # just to see
             #raise SflPhoneError("Invalid callID")
 
-            self.callmanager.hangUp(callid)
+	self.callmanager.hangUp(callid)
 
 
-    def Transfert(self, callid, to):
+    def Transfer(self, callid, to):
         """Transfert a call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
+        # if not self.account:
+        #    self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't transfert a call without a registered account")
+        # if not self.isAccountRegistered():
+        #     raise SflPhoneError("Can't transfert a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
@@ -450,11 +550,14 @@ class SflPhoneCtrlSimple(object):
 
     def Refuse(self, callid):
         """Refuse an incoming call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't refuse a call without a registered account")
+	print "Refuse call " + callid
+
+        # if not self.account:
+        #     self.setFirstRegisteredAccount()
+
+        # if not self.isAccountRegistered():
+        #     raise SflPhoneError("Can't refuse a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
@@ -464,6 +567,7 @@ class SflPhoneCtrlSimple(object):
 
     def Accept(self, callid):
         """Accept an incoming call identified by a CallID"""
+	print "Accept call " + callid
         if not self.account:
             self.setFirstRegisteredAccount()
 
@@ -472,17 +576,17 @@ class SflPhoneCtrlSimple(object):
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
-
+	
         self.callmanager.accept(callid)
 
 
     def Hold(self, callid):
         """Hold a call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
+        # if not self.account:
+        #    self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't hold a call without a registered account")
+        # if not self.isAccountRegistered():
+        #    raise SflPhoneError("Can't hold a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
@@ -492,11 +596,11 @@ class SflPhoneCtrlSimple(object):
 
     def UnHold(self, callid):
         """Unhold an incoming call identified by a CallID"""
-        if not self.account:
-            self.setFirstRegisteredAccount()
+        # if not self.account:
+        #    self.setFirstRegisteredAccount()
 
-        if not self.isAccountRegistered():
-            raise SflPhoneError("Can't unhold a call without a registered account")
+        # if not self.isAccountRegistered():
+        #    raise SflPhoneError("Can't unhold a call without a registered account")
 
         if callid is None or callid == "":
             raise SflPhoneError("Invalid callID")
@@ -509,4 +613,22 @@ class SflPhoneCtrlSimple(object):
         self.callmanager.playDTMF(key)
 
 
+    def GenerateCallID(self):
+        """Generate Call ID"""
+	m = hashlib.md5()
+        t = long( time.time() * 1000 )
+        r = long( random.random()*100000000000000000L )
+        m.update(str(t) + str(r))
+        callid = m.hexdigest()
+	return callid
 
+    def run(self):
+        """Processing method for this thread"""
+
+	context = self.loop.get_context()
+
+	while True:
+            context.iteration(True)
+
+	    if self.isStop: 
+	        return

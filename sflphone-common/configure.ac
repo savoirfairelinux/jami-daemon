@@ -3,8 +3,8 @@ dnl
 
 	dnl Process this file with autoconf to produce a configure script.
 	AC_PREREQ(2.59)
-	AC_INIT([sflphone],[0.9.7~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
-	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
+	AC_INIT([sflphone],[0.9.8~rc1],[sflphoneteam@savoirfairelinux.com],[sflphone])
+	AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010]])
 AC_REVISION([$Revision$])
 
 	AC_CANONICAL_SYSTEM
@@ -19,7 +19,7 @@ AM_CONFIG_HEADER([config.h])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 	dnl Use this variable in the program
-	AC_SUBST(PACKAGE_VERSION)
+AC_SUBST(PACKAGE_VERSION)
 
 	AM_PROG_LIBTOOL
 
@@ -61,7 +61,6 @@ AC_CONFIG_FILES([Makefile])
 			src/audio/codecs/Makefile \
 			src/config/Makefile \
 			src/dbus/Makefile \
-			src/plug-in/audiorecorder/Makefile \
 			src/plug-in/Makefile \
 			src/plug-in/test/Makefile \
 			src/hooks/Makefile \
@@ -70,12 +69,12 @@ AC_CONFIG_FILES([Makefile])
 	dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])
 
-
 AC_CONFIG_FILES([ringtones/Makefile])
 
 AC_CONFIG_FILES([man/Makefile])
 
 	AC_CONFIG_FILES([doc/Makefile \
+					doc/dbus-api/Makefile \
 			doc/doxygen/Makefile])
 
 	dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
@@ -177,7 +176,7 @@ AC_SUBST(UUID_LIBS)
 AC_SUBST(ALSA_LIBS)
 
 	dnl Check for pulseaudio development package - name: libpulse-dev 
-	LIBPULSE_MIN_VERSION=0.9.6
+	LIBPULSE_MIN_VERSION=0.9.15
 	PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION})
 	AC_SUBST(PULSEAUDIO_LIBS)
 AC_SUBST(PULSEAUDIO_CFLAGS)
@@ -254,27 +253,9 @@ AC_SUBST(dbus_LIBS)
 	CXXFLAGS="-g -Wall -O2"
 	fi
 
-
-
-	if test "$enable_glib" = "yes" ; then
-	PKG_CHECK_MODULES([glib], glib-2.0)
-	AC_SUBST(glib_CFLAGS)
-	AC_SUBST(glib_LIBS)
-	AM_CONDITIONAL(ENABLE_GLIB, test 1 = 1)
-PKG_CHECK_MODULES([gtkmm], gtkmm-2.4,
-		AM_CONDITIONAL(HAVE_GTKMM, test 1 = 1),
-		AM_CONDITIONAL(HAVE_GTKMM, test 0 = 1)
-		)
-	AC_SUBST(gtkmm_CFLAGS)
-AC_SUBST(gtkmm_LIBS)
-	else
-	AM_CONDITIONAL(ENABLE_GLIB, test 0 = 1)
-AM_CONDITIONAL(HAVE_GTKMM, test 0 = 1)
-	fi
-
 AC_CHECK_LIB([expat], XML_ParserCreate_MM,
 		[AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
-		have_expat=false)
+	have_expat=false)
 
 if ! $have_expat; then
 AC_MSG_ERROR([You need the eXpat xml parser]
@@ -284,7 +265,7 @@ fi
 xml_CFLAGS=
 xml_LIBS=-lexpat
 
-AC_SUBST(xml_CFLAGS)
+	AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([pthread], pthread_create,
@@ -304,9 +285,9 @@ AC_CHECK_LIB([pcre], pcre_free,
 AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])	
 	fi
 
-PCRE_LIBS=-lpcre
-PCRE_CFLAGS=
-AC_SUBST(PCRE_LIBS)
+	PCRE_LIBS=-lpcre
+	PCRE_CFLAGS=
+	AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
 
@@ -359,33 +340,26 @@ AC_ARG_WITH([speex],
 
 AS_IF([test "x$with_speex" != xno],
 		[AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Unable to find the libspeex headers (you may need to install the dev package).  You may use --without-speex to compile without speex codec support.]))]
-		[AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package).  You may use --without-speex to compile without speex codec support.]))]
 		[AC_CHECK_LIB([speex], [speex_decode_int],
 			[],
 			[AC_MSG_FAILURE(
 				[libspeex link test failed.   You may use --without-speex to compile without speex codec support.])]
 			)
 		]
-		dnl More advanced check in case the libspeexdsp is not installed
-		AC_SEARCH_LIBS(speex_preprocess_run, speexdsp, HAVE_SPEEXDSP="yes", HAVE_SPEEXDSP="no", [])
+		# dnl More advanced check in case the libspeexdsp is not installed
+		# AC_SEARCH_LIBS(speex_preprocess_run, speexdsp, HAVE_SPEEXDSP="yes", HAVE_SPEEXDSP="no", [])
 	 )
 
+dnl check in case the libspeexdsp is not installed
+AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package) used for Noise Suppression and Automatic Gain Control.]))
+AC_CHECK_LIB(speexdsp, speex_preprocess_run, [], [], [])
 AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
 	AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
 
 	dnl Check for celt. Compile it only if a recent enough version is found
-	LIBCELT_MIN_VERSION=0.5.1
+	LIBCELT_MIN_VERSION=0.7.1
 PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, AM_CONDITIONAL(BUILD_CELT, test 1 = 1 ), AM_CONDITIONAL(BUILD_CELT, test 0 = 1 ))
-
-	dnl Check for ilbc support
-AC_ARG_WITH([ilbc],
-		[AS_HELP_STRING([--without-ilbc],
-			[disable support for the ilbc codec])],
-		[],
-		[with_ilbc=no])
-
-AM_CONDITIONAL(BUILD_ILBC, test "x$with_ilbc" = "xyes" )
 
 	dnl Check for IAX
 AC_ARG_WITH([iax2],
@@ -432,7 +406,7 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 
 	if test x$DOT = x; then
 	if test "x$enable_dot" = xyes; then
-AC_MSG_ERROR([could not find dot])
+	AC_MSG_ERROR([could not find dot])
 	fi
 	enable_dot=no
 	else
@@ -441,24 +415,22 @@ AC_MSG_ERROR([could not find dot])
 	AM_CONDITIONAL(ENABLE_DOXYGEN, test x$enable_doc = xtrue)
 	AC_SUBST(enable_dot)
 	AC_SUBST(enable_html_docs)
-AC_SUBST(enable_latex_docs)
+	AC_SUBST(enable_latex_docs)
 	])
-# Acutally perform the doxygen check
+	# Acutally perform the doxygen check
 	BB_ENABLE_DOXYGEN
 
 	dnl Datadir directory
 	sflphone_datadir=$datadir/sflphone
-AC_SUBST(sflphone_datadir)
+	AC_SUBST(sflphone_datadir)
 
 	dnl Dbus Service activation part
 	DBUS_SERVICES_DIR="$datadir/dbus-1/services"
-AC_SUBST(DBUS_SERVICES_DIR)
+	AC_SUBST(DBUS_SERVICES_DIR)
 	AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir for DBUS is])
 
 # Go!
 	AC_SUBST(SFLPHONE_CFLAGS)
-AC_SUBST(SFLPHONE_LIBS)
+	AC_SUBST(SFLPHONE_LIBS)
 	AC_OUTPUT
 	AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject) has already been compiled. Run `make' to build the software.]])
-
-

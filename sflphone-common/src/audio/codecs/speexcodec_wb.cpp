@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
@@ -16,12 +16,22 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include "audiocodec.h"
 #include <cstdio>
 #include <speex/speex.h>
-#include <speex/speex_preprocess.h>
 
 class Speex : public AudioCodec
 {
@@ -34,12 +44,11 @@ class Speex : public AudioCodec
                 _speex_enc_bits(),
                 _speex_dec_state(),
                 _speex_enc_state(),
-                _speex_frame_size(),
-                _preprocess_state() {
+		_speex_frame_size() {
             _clockRate = 16000;
             _frameSize = 320; // 20 ms at 16 kHz
             _channel = 1;
-            _bitrate = 0;
+            _bitrate = 42;
             _bandwidth = 0;
             initSpeex();
         }
@@ -66,29 +75,6 @@ class Speex : public AudioCodec
 
             speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
 
-#ifdef HAVE_SPEEXDSP_LIB
-
-            int enable = 1;
-            int quality = 10;
-            int complex = 10;
-            int attenuation = -10;
-
-            speex_encoder_ctl (_speex_enc_state, SPEEX_SET_VAD, &enable);
-            speex_encoder_ctl (_speex_enc_state, SPEEX_SET_DTX, &enable);
-            speex_encoder_ctl (_speex_enc_state, SPEEX_SET_VBR_QUALITY, &quality);
-            speex_encoder_ctl (_speex_enc_state, SPEEX_SET_COMPLEXITY, &complex);
-
-            // Init the decoder struct
-            speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
-
-            // Init the preprocess struct
-            _preprocess_state = speex_preprocess_state_init (_speex_frame_size,_clockRate);
-            speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
-            speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &attenuation);
-            speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &enable);
-            speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_AGC, &enable);
-#endif
-
         }
 
         ~Speex() {
@@ -105,6 +91,7 @@ class Speex : public AudioCodec
             speex_bits_destroy (&_speex_enc_bits);
             speex_encoder_destroy (_speex_enc_state);
             _speex_enc_state = 0;
+
         }
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
@@ -121,11 +108,6 @@ class Speex : public AudioCodec
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
             speex_bits_reset (&_speex_enc_bits);
 
-#ifdef HAVE_SPEEXDSP_LIB
-
-            speex_preprocess_run (_preprocess_state, src);
-#endif
-
             //printf ("Codec::codecEncode() size %i\n", size);
             speex_encode_int (_speex_enc_state, src, &_speex_enc_bits);
             int nbBytes = speex_bits_write (&_speex_enc_bits, (char*) dst, size);
@@ -140,7 +122,6 @@ class Speex : public AudioCodec
         void *_speex_dec_state;
         void *_speex_enc_state;
         int _speex_frame_size;
-        SpeexPreprocessState *_preprocess_state;
 };
 
 // the class factories

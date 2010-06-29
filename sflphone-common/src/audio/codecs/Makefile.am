@@ -13,10 +13,6 @@ libcodec_gsm_so_LDFLAGS = --shared -lc -lgsm
 INSTALL_GSM_RULE = install-libcodec_gsm_so
 endif
 
-if ENABLE_SPEEXDSP
-SPEEXDSP=-DHAVE_SPEEXDSP_LIB
-endif
-
 if BUILD_SPEEX
 SPEEX_NB_LIB = libcodec_speex_nb.so
 libcodec_speex_nb_so_SOURCES = speexcodec_nb.cpp
@@ -49,7 +45,7 @@ CELT_LIB = libcodec_celt.so
 libcodec_celt_so_SOURCES = celtcodec.cpp
 libcodec_celt_so_CFLAGS = -fPIC -g -Wall
 libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_celt_so_LDFLAGS = --shared -lc -lcelt $(CELT_NIMP)
+libcodec_celt_so_LDFLAGS = --shared -lc -lcelt0 $(CELT_NIMP)
 INSTALL_CELT_RULE = install-libcodec_celt_so
 endif
 

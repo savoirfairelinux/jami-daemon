@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2005-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
@@ -16,6 +16,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include "config.h"
@@ -199,12 +210,14 @@ ConfigTree::getConfigTreeItem (const std::string& section, const std::string& it
     SectionMap::iterator iter = _sections.find (section);
 
     if (iter == _sections.end()) {
+      // _error("ConfigTree: Error: Did not found section %s in config tree", section.c_str());
         return NULL;
     }
 
     ItemMap::iterator iterItem = iter->second->find (itemName);
 
     if (iterItem == iter->second->end()) {
+      // _error("ConfigTree: Error: Did not found item %s in config tree", itemName.c_str());
         return NULL;
     }
 
@@ -267,6 +280,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.open (fileName.data(), std::fstream::out);
 
     if (!file.is_open()) {
+        _error("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
         return false;
     }
 
@@ -290,7 +304,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _debug ("Failed to set permission on configuration file because: %s",strerror (errno));
+        _error("ConfigTree: Error: Failed to set permission on configuration: %s",strerror (errno));
     }
 
     return true;
@@ -364,6 +378,15 @@ ConfigTree::populateFromFile (const std::string& fileName)
                 if (key.length() > 0 && val.length() > 0) {
                     setConfigTreeItem (section, key, val);
                 }
+		/*
+		if (key.length() > 0) {
+
+		    if(val.length() > 0) 
+		        setConfigTreeItem (section, key, val);
+		    else
+		        setConfigTreeItem (section, key, "");
+                }
+		*/
             }
         }
     }

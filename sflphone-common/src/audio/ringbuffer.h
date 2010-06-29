@@ -1,21 +1,19 @@
 /*
- *  Copyright (C) 2004-2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- * 
- *  Portions Copyright (C) Dominic Mazzoni (Audacity)
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                              
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -41,7 +39,7 @@ class RingBuffer {
      * Constructor
      * @param size  Size of the buffer to create
      */
-    RingBuffer(int size, CallID call_id);
+    RingBuffer(int size, CallID call_id = default_id);
 
     /**
      * Destructor
@@ -51,24 +49,45 @@ class RingBuffer {
     CallID getBufferId(){ return buffer_id; }
 
     /**
-     * Reset the counters to 0
+     * Reset the counters to 0 for this read pointer
      */
     void flush (CallID call_id = default_id);
 
     void flushAll();
 
+    /**
+     * Get read pointer coresponding to this call
+     */ 
     int getReadPointer(CallID call_id = default_id);
 
+    /**
+     * Get the whole readpointer list for this ringbuffer
+     */
     ReadPointer* getReadPointerList() { return &_readpointer; }
 
+    /**
+     * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
+     */
     int getSmallestReadPointer();
 
+    /**
+     * Move readpointer forward by pointer_value
+     */
     void storeReadPointer(int pointer_value, CallID call_id = default_id);
 
+    /**
+     * Add a new readpointer for this ringbuffer
+     */
     void createReadPointer(CallID call_id = default_id);
 
+    /**
+     * Remove a readpointer for this ringbuffer
+     */
     void removeReadPointer(CallID call_id = default_id);
 
+    /**
+     * Test if readpointer coresponding to this call is still active
+     */
     bool hasThisReadPointer(CallID call_id);
 
     int getNbReadPointer();

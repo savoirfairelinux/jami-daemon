@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.net>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include <codeclist.h>
@@ -144,6 +155,11 @@ void codec_create_new_with_specs (gint payload, gchar **specs, gboolean active, 
 void codec_create_new_from_caps (codec_t *original, codec_t **copy) {
 
 	codec_t *codec;
+
+	if(!original) {
+	  *copy = NULL;
+	  return;
+	}
 
 	codec = g_new0 (codec_t, 1);
 	codec->_payload = original->_payload;
@@ -290,8 +306,6 @@ void codec_list_update_to_daemon (account_t *acc) {
 	int c = 0;
 	unsigned int i = 0;
 
-	g_print ("List of active codecs :\n");
-	
 	for(i = 0; i < length; i++)
 	{
 		codec_t* currentCodec = codec_list_get_nth (i, acc->codecs);
@@ -301,7 +315,6 @@ void codec_list_update_to_daemon (account_t *acc) {
 			// Save only if active
 			if(currentCodec->is_active)
 			{
-		g_print ("Codec %s\n", currentCodec->name);
 				// Reallocate memory each time more than one active codec is found
 				if(c!=0)
 					codecList = (void*)realloc(codecList, (c+1)*sizeof(void*));
@@ -311,7 +324,6 @@ void codec_list_update_to_daemon (account_t *acc) {
 				// Put payload string in char array
 				sprintf(payload, "%d", currentCodec->_payload);
 				strcpy((char*)*(codecList+c), payload);
-				g_print(" %s", *(codecList+c));
 				c++;
 			}
 		}

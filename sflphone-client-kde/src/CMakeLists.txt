@@ -16,15 +16,20 @@ ENDIF(${CMAKE_BUILD_TYPE} MATCHES Release)
 
 SET ( KDE4_KABC_LIBS  -lkabc )
 
-SET(	   sflphone_client_kde_SRCS
+SET(	sflphone_client_kde_SRCS
 	SFLPhoneView.cpp
 	SFLPhone.cpp
+        SFLPhoneapplication.cpp
+	SFLPhoneTray.cpp
 	main.cpp
 	sflphone_const.h
 	Account.cpp
 	AccountList.cpp
 	Call.cpp
-	CallList.cpp
+	#CallList.cpp
+	#CallTreeView.cpp
+	#CallTreeModel.cpp
+	CallTreeItem.cpp
 	configurationmanager_interface_singleton.cpp
 	callmanager_interface_singleton.cpp
 	instance_interface_singleton.cpp
@@ -38,16 +43,15 @@ SET(	   sflphone_client_kde_SRCS
 	conf/dlgdisplay.cpp
 	conf/dlgaccounts.cpp
 	conf/dlgaudio.cpp
-	conf/dlgrecord.cpp
 	conf/dlgaddressbook.cpp
 	conf/dlghooks.cpp
 	conf/ConfigurationSkeleton.cpp
 	Dialpad.cpp
 	Codec.cpp
-	CodecListModel.cpp
-	SortableCodecListWidget.cpp
 	Item.cpp
 	AccountListModel.cpp
+        CallModel.cpp
+        #CallTreeWidget.cpp
 )
  
 
@@ -108,7 +112,6 @@ SET(    config_ui_files
 	conf/dlgdisplaybase.ui
 	conf/dlgaccountsbase.ui
 	conf/dlgaudiobase.ui
-	conf/dlgrecordbase.ui
 	conf/dlgaddressbookbase.ui
 	conf/dlghooksbase.ui
 )

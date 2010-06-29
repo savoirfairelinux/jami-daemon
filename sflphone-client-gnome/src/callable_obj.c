@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,12 +15,27 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #include <callable_obj.h>
 #include <codeclist.h>
 #include <sflphone_const.h>
 #include <time.h>
+
+#define UNIX_DAY			86400
+#define UNIX_WEEK			86400 * 6
+#define UNIX_TWO_DAYS		86400 * 2
 
 gint is_callID_callstruct ( gconstpointer a, gconstpointer b)
 {
@@ -179,7 +194,7 @@ void create_new_call_from_details (const gchar *call_id, GHashTable *details, ca
     else
         state = CALL_STATE_FAILURE;
 
-    create_new_call (CALL, state, (gchar*)call_id, accountID, peer_name, peer_number, &new_call);
+    create_new_call (CALL, state, (gchar*)call_id, accountID, peer_name, call_get_peer_number(peer_number), &new_call);
     *call = new_call;
 }
 
@@ -356,19 +371,35 @@ gchar* get_history_id_from_state (history_state_t state)
     }
 }
 
-gchar* get_formatted_start_timestamp (callable_obj_t *obj)
-{ 
+gchar* get_formatted_start_timestamp (callable_obj_t *obj) { 
+	
     struct tm* ptr;
-    time_t lt;
+    time_t lt, now;
     unsigned char str[100];
 
     if (obj)
     {
+		// Fetch the current timestamp
+		(void) time (&now);
         lt = obj->_time_start;
-        ptr = localtime(&lt);
+
+        ptr = localtime (&lt);
+
+		if (now - lt < UNIX_WEEK) {
+			if (now-lt < UNIX_DAY) {
+				strftime((char *)str, 100, N_("today at %R"), (const struct tm *)ptr);
+			} else {
+				if (now - lt < UNIX_TWO_DAYS) {
+					strftime((char *)str, 100, N_("yesterday at %R"), (const struct tm *)ptr);
+				} else {
+					strftime((char *)str, 100, N_("%A at %R"), (const struct tm *)ptr);
+				}
+			}
+		} else {
+			strftime((char *)str, 100, N_("%x at %R"), (const struct tm *)ptr);
+		}
 
         // result function of the current locale
-        strftime((char *)str, 100, "%x %X", (const struct tm *)ptr);
         return g_markup_printf_escaped("\n%s\n" , str);
     }
     return "";

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *  Additional permission under GNU GPL version 3 section 7:
+ *
+ *  If you modify this program, or any covered work, by linking or
+ *  combining it with the OpenSSL project's OpenSSL library (or a
+ *  modified version of that library), containing parts covered by the
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  grants you additional permission to convey the resulting work.
+ *  Corresponding Source for a non-source form of such a combination
+ *  shall include the source code for the parts of OpenSSL used as well
+ *  as that of the covered work.
  */
 
 #ifndef __SFLPHONE_CONST_H
@@ -57,12 +68,15 @@
 #define ACCOUNT_ALIAS		           "Account.alias"
 #define ACCOUNT_ENABLED		           "Account.enable"
 #define ACCOUNT_MAILBOX		           "Account.mailbox"
+#define ACCOUNT_USERAGENT	           "useragent"
 #define ACCOUNT_RESOLVE_ONCE               "Account.resolveOnce"
 #define ACCOUNT_REGISTRATION_EXPIRE        "Account.expire"
 #define ACCOUNT_SIP_STUN_SERVER	           "STUN.server"
 #define ACCOUNT_SIP_STUN_ENABLED           "STUN.enable"
+#define ACCOUNT_DTMF_TYPE                  "Account.dtmfType"
 #define ACCOUNT_HOSTNAME                   "hostname"
 #define ACCOUNT_USERNAME                   "username"
+#define ACCOUNT_ROUTE                      "routeset"
 #define ACCOUNT_PASSWORD                   "password"
 #define ACCOUNT_AUTHENTICATION_USERNAME    "authenticationUsername"
 #define ACCOUNT_REALM                      "realm"
@@ -131,6 +145,10 @@ log4c_category_t* log4c_sfl_gtk_category;
 /** Audio Managers */
 #define ALSA	      0
 #define PULSEAUDIO    1
+
+ /** DTMF type */
+#define OVERRTP "overrtp"
+#define SIPINFO "sipinfo"
 
 /** Notification levels */
 #define __NOTIF_LEVEL_MIN     0
