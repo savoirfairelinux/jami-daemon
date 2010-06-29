@@ -12,6 +12,8 @@ libaudio_la_SOURCES = \
 		audioloop.cpp \
 		ringbuffer.cpp \
 		mainbuffer.cpp \
+		audiorecord.cpp \
+		audiorecorder.cpp \
 		recordable.cpp \
 		audiolayer.cpp \
 		audiodevice.cpp \
@@ -28,9 +30,11 @@ noinst_HEADERS = \
 		audioloop.h \
 		common.h \
 		ringbuffer.h \
+		mainbuffer.h \
+		audiorecord.h \
+		audiorecorder.h \
 		audiolayer.h \
 		audiodevice.h \
-		mainbuffer.h \
 	 	recordable.h \
 		algorithm.h \
 		delaydetection.h \

@@ -189,18 +189,33 @@ Call::isAudioStarted()
 bool
 Call::setRecording()
 {
-    bool recordStatus = Recordable::recAudio.setRecording();
+    bool recordStatus = Recordable::recAudio.isRecording();
 
-    if(!recordStatus)
-      return false;
+    Recordable::recAudio.setRecording();
 
-    MainBuffer *mbuffer = &(Manager::instance()._mainBuffer);
+    // Start recording
+    if(!recordStatus) {
 
-    CallID process_id = Recordable::recorder.getRecorderID();
+      MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+      CallID process_id = Recordable::recorder.getRecorderID();
 
-    mbuffer->bindHalfDuplexOut(process_id, _id);
-    mbuffer->bindHalfDuplexOut(process_id);
-    
+      mbuffer->bindHalfDuplexOut(process_id, _id);
+      mbuffer->bindHalfDuplexOut(process_id);
+
+    }
+    // Stop recording
+    else {
+
+      MainBuffer *mbuffer = Manager::instance().getMainBuffer();      
+      CallID process_id = Recordable::recorder.getRecorderID();
+
+      mbuffer->unBindHalfDuplexOut(process_id, _id);
+      mbuffer->unBindHalfDuplexOut(process_id);
+
+    }
+
+    Manager::instance().getMainBuffer()->stateInfo();
+
     Recordable::recorder.start();
   
     return recordStatus;

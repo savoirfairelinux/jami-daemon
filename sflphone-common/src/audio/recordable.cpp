@@ -29,9 +29,8 @@
 
 #include "recordable.h"
 #include "manager.h"
-#include "mainbuffer.h"
 
-Recordable::Recordable() : recorder(&recAudio)
+Recordable::Recordable() : recorder(&recAudio, Manager::instance().getMainBuffer())
 {
 
     FILE_TYPE fileType = FILE_WAV;

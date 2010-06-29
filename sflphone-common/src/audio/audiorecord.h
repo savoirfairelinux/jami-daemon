@@ -36,10 +36,7 @@
 #include <stdlib.h>
 #include <sstream>
 
-#include "plug-in/plugin.h"
-// #include "audiodsp.h"
-
-// class AudioDSP;
+#include "global.h"
 
 using namespace std;
 

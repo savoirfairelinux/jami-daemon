@@ -1,17 +1,17 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                              
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -28,33 +28,57 @@
  *  as that of the covered work.
  */
 
-#ifndef __AUDIORECORDER_H_
-#define __AUDIORECORDER_H_
+#include "audiorecorder.h"
+#include "mainbuffer.h"
 
-#include <cc++/thread.h>
-#include "audiorecord.h"
-#include <string>
+int AudioRecorder::count = 0;
 
-class AudioRecorder : public ost::Thread {
+AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
+{
+    setCancel (cancelDeferred);
 
-   public:
-      AudioRecorder(AudioRecord  *arec);
+    ++count;
 
-      ~AudioRecorder(void){ terminate(); }
+    std::string id("processid_");
 
-      std::string getRecorderID() { return recorderId; }
+    // convert count into string
+    std::string s;
+    std::stringstream out;
+    out << count;
+    s = out.str();
 
-      virtual void run();
+    recorderId = id.append(s);
 
-   private:
-      AudioRecorder (const AudioRecorder& ar);
-      AudioRecorder& operator=(const AudioRecorder& ar);
+    arecord = arec;
+    mbuffer = mb;    
+}
 
-      // MainBuffer *mbuffer;
 
-      std::string recorderId;
+/**
+ * Reimplementation of run()
+ */
+void AudioRecorder::run (void)
+{
+    SFLDataFormat buffer[10000];
 
-      AudioRecord *arecord;
-};
+    while(true) {
 
-#endif
+      if(!mbuffer)
+	_warn("AudioRecorder: Error: No instance of ringbuffer");
+
+      int availBytes = mbuffer->availForGet(recorderId);
+
+      if(availBytes > 0) {
+
+	  int got = mbuffer->getData(buffer, availBytes, 100, recorderId);
+
+	  int availBytesAfter = mbuffer->availForGet(recorderId);
+
+	  arecord->recData(buffer, availBytes/sizeof(SFLDataFormat));
+      }
+
+      sleep(20);
+
+    }
+
+}

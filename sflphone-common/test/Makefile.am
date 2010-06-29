@@ -31,18 +31,17 @@ test_SOURCES = \
 	delaydetectiontest.cpp \
 	instantmessagingtest.cpp
 
-
-
-
 LLIBS=$(CPPUNIT_LIBS) \
-	@ALSA_LIBS@ \
-	@PULSEAUDIO_LIBS@ \
-	@CPPUNIT_LIBS@ \
-	@CCEXT2_LIBS@ \
-	@CCGNU2_LIBS@ \
-	@CCRTP_LIBS@ \
-	@ZRTPCPP_LIBS@ \
-	@libssl_LIBS@ \
-	@SAMPLERATE_LIBS@ \
-	$(PJSIP_LIBS) \
+	../src/sflphoned-logger.o \
+	../src/sflphoned-managerimpl.o \
+	../src/sflphoned-account.o\
+	../src/sflphoned-accountcreator.o \
+	../src/sflphoned-call.o \
+	../src/sflphoned-conference.o \
+	../src/sflphoned-eventthread.o \
+	../src/sflphoned-managerimpl_registration.o \
+	../src/sflphoned-numbercleaner.o \
+	../src/sflphoned-observer.o \
+	../src/sflphoned-voiplink.o \
 	../src/libsflphone.la
+	
