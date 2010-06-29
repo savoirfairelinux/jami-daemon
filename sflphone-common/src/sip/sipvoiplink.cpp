@@ -3409,8 +3409,11 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 			pjsip_dlg_create_response (inv->dlg, r_data, PJSIP_SC_OK, NULL, &t_data);
 			pjsip_dlg_send_response (inv->dlg, tsx, t_data);
 
-			imModule->receive (message, call->getCallId ());
-
+			// Pass through the instant messaging module if needed
+			// Right now, it does do anything.
+			// And notify the clients
+			Manager::instance ().incomingMessage (	call->getCallId (), 
+													imModule->receive (message, call->getCallId ()));
 		}
 
 			

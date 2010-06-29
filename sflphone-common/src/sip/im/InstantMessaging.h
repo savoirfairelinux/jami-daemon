@@ -43,7 +43,7 @@ namespace sfl  {
   			 * @param message	The message contained in the TEXT message
 			 * @param id		The call recipient of the message
 			 */
-			pj_status_t receive (std::string message, CallID& id);
+			std::string receive (std::string message, CallID& id);
 
 			/*
 			 * Send a SIP string message inside a call 

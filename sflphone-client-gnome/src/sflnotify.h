@@ -63,6 +63,13 @@ void free_notification (GnomeNotification *g);
 void notify_incoming_call( callable_obj_t* c);
 
 /**
+ * Notify an incoming text message
+ * A dialog box is attached to the status icon
+ * @param c The incoming message
+ */
+void notify_incoming_message (const gchar *callID, const gchar *msg);
+
+/**
  * Notify voice mails count
  * An info box is attached to the status icon
  * @param count The number of voice mails

@@ -1611,11 +1611,12 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId) {
 	return true;
 }
 
+
 //THREAD=VoIP
-void ManagerImpl::incomingMessage (const AccountID& accountId,
+void ManagerImpl::incomingMessage (const CallID& callID,
 				   const std::string& message) {
 	if (_dbus) {
-		_dbus->getCallManager()->incomingMessage(accountId, message);
+		_dbus->getCallManager()->incomingMessage (callID, message);
 	}
 }
 

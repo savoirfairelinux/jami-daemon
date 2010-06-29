@@ -67,6 +67,24 @@ void create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urg
     }
 }
 
+    void
+notify_incoming_message (const gchar *callID, const gchar *msg)
+{
+
+        gchar* text;
+        gchar* title;
+
+        title = g_markup_printf_escaped(_("New message"));
+		text = g_markup_printf_escaped (_("%s says: %s"), callID, msg);
+
+        create_new_gnome_notification (title,
+                                        text, 
+                                        NOTIFY_URGENCY_CRITICAL, 
+                                        (g_strcasecmp(__TIMEOUT_MODE, "default") == 0 )? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER,
+                                        &_gnome_notification); 
+}
+
+
 
     void
 notify_incoming_call (callable_obj_t* c)

@@ -120,11 +120,11 @@ voice_mail_cb(DBusGProxy *proxy UNUSED, const gchar* accountID, const guint nb,
 }
 
 static void
-incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* accountID UNUSED,
+incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
     const gchar* msg, void * foo  UNUSED )
 {
-  DEBUG ("Message %s!",msg);
-
+	DEBUG ("Message %s!",msg);
+	notify_incoming_message (callID, msg);
 }
 
 static void

@@ -13,13 +13,26 @@ namespace sfl {
 		return PJ_SUCCESS;
 	}
 
-	pj_status_t InstantMessaging::receive (std::string message, CallID& id) {
+	std::string InstantMessaging::receive (std::string message, CallID& id) {
 
 		// We just receive a TEXT message. Before sent it to the recipient, we must assure that the message is complete.
 		// We should use a queue to push these messages in
 
+		_debug ("New message : %s", message.c_str ());
+
+		// TODO Archive the messages
+		// TODO Security check
+		// TODO String cleaning
+
+		return message;
+
 	}
 
+	pj_status_t InstantMessaging::notify (CallID& id) {
+		
+		// Notify the clients through a D-Bus signal
+
+	}
 
 	pj_status_t InstantMessaging::send (pjsip_inv_session *session, const std::string& text) {
 
