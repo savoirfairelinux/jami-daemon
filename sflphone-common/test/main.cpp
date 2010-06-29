@@ -37,40 +37,21 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TextTestRunner.h>
 
-// TODO: Why some header cannot be included ?
-#include "accounttest.h"
-#include "audiolayertest.h"
-#include "configurationtest.h"
-//#include "historytest.h"
-//#include "hookmanagertest.h"
-#include "mainbuffertest.h"
-#include "numbercleanertest.h"
-//#include "pluginmanagertest.h"
-//#include "rtptest.h"
-#include "sdesnegotiatortest.h"
-
-
 int main(int argc, char* argv[]) {
 
 	printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
-
 	Logger::setConsoleLog(true);
-
 	Logger::setDebugMode(true);
-	/*
-	Logger::setDebugMode(false);
-
+	
 	int argvIndex = 1;
 
 	if (argc > 1) {
 		if (strcmp("--help", argv[1]) == 0) {
 			argvIndex++;
 
-			CPPUNIT_NS::Test
-					*suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry(
-							"All Tests").makeTest();
+			CPPUNIT_NS::Test* suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry("All Tests").makeTest();
+			
 			int testSuiteCount = suite->getChildTestCount();
-
 			printf("Usage: test [OPTIONS] [TEST_SUITE]\n");
 			printf("\nOptions:\n");
 			printf(" --debug - Debug mode\n");
@@ -89,6 +70,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+	// Default test suite : all tests
 	std::string testSuiteName = "All Tests";
 	if(argvIndex < argc)
 	{
@@ -100,34 +82,28 @@ int main(int argc, char* argv[]) {
 	Manager::instance().initConfigFile(true, CONFIG_SAMPLE);
 	Manager::instance().init();
 
-	printf("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());
 	// Get the top level suite from the registry
+	printf("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());
 	CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry(testSuiteName).makeTest();
-	*/
-	CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry().makeTest();
 
-	/*
 	if(suite->getChildTestCount() == 0)
 	{
 		_error("Invalid test suite name: %s", testSuiteName.c_str());
 		exit(-1);
 	}
-	*/
-	Manager::instance().initConfigFile(true, CONFIG_SAMPLE);
-		Manager::instance().init();
-
+	
 	// Adds the test to the list of test to run
 	CppUnit::TextTestRunner runner;
 	runner.addTest(suite);
 
 	// Change the default outputter to a compiler error format outputter
-	runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(),
-			std::cerr));
+	runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
+	
 	// Run the tests.
 	bool wasSucessful = runner.run();
 
+	Manager::instance().terminate();
+
 	// Return error code 1 if the one of test failed.
 	return wasSucessful ? 0 : 1;
-
-	Manager::instance().terminate();
 }

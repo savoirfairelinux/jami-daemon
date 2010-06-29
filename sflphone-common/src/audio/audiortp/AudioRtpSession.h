@@ -736,10 +736,10 @@ namespace sfl {
 
         // DTMF over RTP, size must be over 4 in order to process it as voice data
         if(size > 4) {
-	    // processDataDecode(spkrDataIn, size);
-	    if(result == JB_OK) {
-	      processDataDecode((unsigned char *)(frame.data), 160);
-	    }
+	    processDataDecode(spkrDataIn, size);
+	  //if(result == JB_OK) {
+	  //   processDataDecode((unsigned char *)(frame.data), 160);
+	  //}
         }
 
 	delete adu;
@@ -815,6 +815,8 @@ namespace sfl {
             // Recv session
             receiveSpeakerData ();
 
+	    /*
+
             // Let's wait for the next transmit cycle
             if (sessionWaiting == 1) {
                 // Record mic and speaker during conversation
@@ -823,6 +825,7 @@ namespace sfl {
                 // Record mic only while leaving a message
                 _ca->recAudio.recData (_micData,_nSamplesMic);
             }
+	    */
 
             _manager->getAudioLayerMutex()->leave();
 
