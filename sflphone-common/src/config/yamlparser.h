@@ -28,22 +28,57 @@
  *  as that of the covered work.
  */
 
-#ifndef __ENGINE_H__
-#define __ENGINE_H__
+#ifndef __YAMLPARSER_H__
+#define __YAMLPARSER_H__
 
 #include <yaml.h>
+#include <stdio.h>
 
-class Engine {
+#define PARSER_BUFFERSIZE 65536
+#define PARSER_MAXEVENT 1024
+
+class YamlParser {
 
  public:
 
-  virtual void open() = 0;
+  YamlParser();
 
-  virtual void close() = 0;
+  ~YamlParsere();
 
-  virtual void write() = 0;
+  void open();
 
-  virtual void read() = 0;
+  void close();
+
+  void parse();
+
+ private:
+
+  /**
+   * Copy yaml parser event in event_to according to their type.
+   */
+  int copyEvent(yaml_event_t *event_to, yaml_event_t *event_from);
+
+  FILE *fd;
+
+  /**
+   * The parser structure. 
+   */
+  yaml_parser_t parser;
+
+  /**
+   * The event structure array.
+   */ 
+  yaml_event_t event[PARSER_MAXEVENT];
+
+  /**
+   * 
+   */
+  unsigned char buffer[PARSER_BUFFERSIZE];
+
+  /**
+   * Number of event actually parsed
+   */
+  int eventNumber;
 
 };
 

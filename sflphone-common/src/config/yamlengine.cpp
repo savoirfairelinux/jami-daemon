@@ -28,23 +28,16 @@
  *  as that of the covered work.
  */
 
-#ifndef __ENGINE_H__
-#define __ENGINE_H__
+#include "yamlengine.h"
 
-#include <yaml.h>
+YamlEngine::YamlEngine() {}
 
-class Engine {
+YamlEngine::~YamlEngine() {}
 
- public:
+void YamlEngine::open() {}
 
-  virtual void open() = 0;
+void YamlEngine::close() {}
 
-  virtual void close() = 0;
+void YamlEngine::read() {}
 
-  virtual void write() = 0;
-
-  virtual void read() = 0;
-
-};
-
-#endif
+void YamlEngine::write() {}

@@ -28,23 +28,29 @@
  *  as that of the covered work.
  */
 
-#ifndef __ENGINE_H__
-#define __ENGINE_H__
+#ifndef __YAMLEMITTER_H__
+#define __YAMLEMITTER_H__
 
-#include <yaml.h>
-
-class Engine {
+class YamlEmitter {
 
  public:
 
-  virtual void open() = 0;
+  YamlEmitter();
 
-  virtual void close() = 0;
+  ~YamlEmitter();
 
-  virtual void write() = 0;
+  void open();
 
-  virtual void read() = 0;
+  void close();
+
+  void read();
+
+  void write();
+
+
+ private:
 
 };
+
 
 #endif

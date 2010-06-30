@@ -28,59 +28,34 @@
  *  as that of the covered work.
  */
 
+#ifndef __YAMLENGINE_H__
+#define __YAMLENGINE_H__
 
-#include "engine.h"
+#include "yamlparser.h"
+#include "yamlemiter.h"
 
+class YamlEngine : Engine {
 
-/* Set a generic writer. */
-void *ext = ...;
-int write_handler(void *ext, char *buffer, int size) {
+ public:
 
-  int error = 0;
+  YamlEngine();
 
-  /*
-       ...
-       Write `size` bytes.
-       ...
-  */
-  return error ? 0 : 1;
-}
+  ~YamlEngine();
 
+  virtual void open();
 
-Engine::Engine() 
-{
-  open();
-}
+  virtual void close();
 
-Engine::~Engine() 
-{
-  close();
-}
+  virtual void write();
 
-void Engine::open() 
-{
+  virtual void read();
 
-  yaml_emitter_initialize(&emitter);
+ private:
 
-  yaml_emitter_set_output(&emitter, write_handler, ext);
+  YamlParser *parser;
 
-  yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
-  if (!yaml_emitter_emit(&emitter, &event))
-    return;
+  YamlEmiter *emiter;
 
-}
+};
 
-void Engine::close() {
-
-  /* Create and emit the STREAM-END event. */
-  yaml_stream_end_event_initialize(&event);
-  if (!yaml_emitter_emit(&emitter, &event))
-    return;
-
-  /* Destroy the Emitter object. */
-  yaml_emitter_delete(&emitter);
-
-}
-
-void Engine::write() {}
-
+#endif
