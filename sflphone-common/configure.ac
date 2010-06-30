@@ -265,8 +265,23 @@ fi
 xml_CFLAGS=
 xml_LIBS=-lexpat
 
-	AC_SUBST(xml_CFLAGS)
+AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
+
+AC_CHECK_LIB([yaml], yaml_parser_initialize,
+	       [AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
+	       have_yaml = false)
+
+if ! $have_yaml; then
+AC_MSG_ERROR([You need the eXpat xml parser]
+		[http://expat.sourceforge.net/])
+fi
+
+yaml_CFLAGS=
+yaml_LIBS=lyaml
+
+AC_SUBST(yaml_CFLAGS)
+AC_SUBST(yaml_LIBS)
 
 AC_CHECK_LIB([pthread], pthread_create,
 		[AC_CHECK_HEADERS(pthread.h, have_pthread=true, have_pthread=false)],
@@ -289,6 +304,7 @@ AC_MSG_ERROR([You need the Perl-Compatible Regular Expressions library (pcre)])
 	PCRE_CFLAGS=
 	AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
+
 
 
 

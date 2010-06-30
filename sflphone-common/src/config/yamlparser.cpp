@@ -34,7 +34,7 @@
 
 YamlParser::YamlParser() 
 {
-  memset(buffer, 0, BUFFER_SIZE);
+  memset(buffer, 0, PARSER_BUFFERSIZE);
 
   open();
 }
@@ -69,12 +69,12 @@ void YamlParser::close()
 
 void YamlParser::parse() 
 {
-  bool done;
+  bool done = false;
   yaml_event_t event;
 
   while(!done) {
 
-    if(!yaml_parser_parse(&parse, &event))
+    if(!yaml_parser_parse(&parser, &event))
       throw 20;
 
     done = (event.type == YAML_STREAM_END_EVENT);

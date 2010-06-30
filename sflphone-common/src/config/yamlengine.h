@@ -31,10 +31,11 @@
 #ifndef __YAMLENGINE_H__
 #define __YAMLENGINE_H__
 
+#include "engine.h"
 #include "yamlparser.h"
-#include "yamlemiter.h"
+#include "yamlemitter.h"
 
-class YamlEngine : Engine {
+class YamlEngine : public Engine {
 
  public:
 
@@ -54,7 +55,7 @@ class YamlEngine : Engine {
 
   YamlParser *parser;
 
-  YamlEmiter *emiter;
+  YamlEmitter *emitter;
 
 };
 

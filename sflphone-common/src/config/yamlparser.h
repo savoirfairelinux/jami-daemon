@@ -43,7 +43,7 @@ class YamlParser {
 
   YamlParser();
 
-  ~YamlParsere();
+  ~YamlParser();
 
   void open();
 
@@ -68,7 +68,7 @@ class YamlParser {
   /**
    * The event structure array.
    */ 
-  yaml_event_t event[PARSER_MAXEVENT];
+  yaml_event_t events[PARSER_MAXEVENT];
 
   /**
    * 
