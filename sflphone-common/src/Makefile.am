@@ -82,7 +82,8 @@ libsflphone_la_LDFLAGS = \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		@libssl_LIBS@ \
-		@UUID_LIBS@
+		@UUID_LIBS@ \
+		@yaml_LIBS@
 
 libsflphone_la_CFLAGS = \
 		@CCGNU2_CFLAGS@ \
@@ -94,7 +95,8 @@ libsflphone_la_CFLAGS = \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
 		@libssl_CFLAGS@ \
-		@UUID_CFLAGS@
+		@UUID_CFLAGS@ \
+		@yaml_CFLAGS@
 
 libsflphone_la_SOURCES =
 

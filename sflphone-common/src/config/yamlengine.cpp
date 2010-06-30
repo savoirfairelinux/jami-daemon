@@ -30,6 +30,8 @@
 
 #include "yamlengine.h"
 
+namespace Conf {
+
 YamlEngine::YamlEngine() {}
 
 YamlEngine::~YamlEngine() {}
@@ -41,3 +43,5 @@ void YamlEngine::close() {}
 void YamlEngine::read() {}
 
 void YamlEngine::write() {}
+
+}

@@ -50,6 +50,7 @@
 #include "audio/audiolayer.h"
 #include "global.h"
 #include "user_cfg.h"
+#include "config/yamlparser.h"
 
 class ConfigurationTest: public CppUnit::TestFixture {
 
@@ -62,6 +63,7 @@ CPPUNIT_TEST_SUITE( ConfigurationTest );
 		CPPUNIT_TEST( testDefaultValuePreferences );
 		CPPUNIT_TEST( testDefaultValueSignalisation );
 		CPPUNIT_TEST( testInitAudioDriver );
+		CPPUNIT_TEST( testYamlParser );
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -91,6 +93,8 @@ public:
 	void testInitVolume();
 
 	void testInitAudioDriver();
+
+	void testYamlParser();
 };
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConfigurationTest, "ConfigurationTest");

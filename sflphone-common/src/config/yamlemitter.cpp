@@ -30,6 +30,8 @@
 
 #include "yamlemitter.h"
 
+namespace Conf {
+
 YamlEmitter::YamlEmitter() {}
 
 YamlEmitter::~YamlEmitter() {}
@@ -41,3 +43,5 @@ void YamlEmitter::close() {}
 void YamlEmitter::read() {}
 
 void YamlEmitter::write() {}
+
+}

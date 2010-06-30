@@ -30,7 +30,11 @@
 
 #include "yamlparser.h"
 
-#include <assert.h>
+#include "../global.h"
+#include "config.h"
+#include <stdio.h>
+
+namespace Conf {
 
 YamlParser::YamlParser() 
 {
@@ -47,12 +51,15 @@ YamlParser::~YamlParser()
 void YamlParser::open() 
 {
 
-  fd = fopen("test.yaml", "rb");
+  std::string filename = "sequence.yml";
+
+  fd = fopen(filename.c_str(), "rb");
+
   if(!fd)
-    throw 20;
+    throw YamlParserException("Could not open file descriptor");
 
   if(!yaml_parser_initialize(&parser))
-    throw 20;
+    throw YamlParserException("Could not open file descriptor");
 
   yaml_parser_set_input_file(&parser, fd);
 }
@@ -62,8 +69,11 @@ void YamlParser::close()
 
   yaml_parser_delete(&parser);
 
+  if(!fd)
+    throw YamlParserException("File descriptor not valid");
+
   if(!fclose(fd))
-    throw 20;
+    throw YamlParserException("Error closing file descriptor");
 
 }
 
@@ -75,15 +85,15 @@ void YamlParser::parse()
   while(!done) {
 
     if(!yaml_parser_parse(&parser, &event))
-      throw 20;
+      throw YamlParserException("Error while parsing");
 
     done = (event.type == YAML_STREAM_END_EVENT);
     
     if(eventNumber > PARSER_MAXEVENT)
-      throw 20;
+      throw YamlParserException("Reached maximum of event");
 
     if(!copyEvent(&(events[eventNumber++]), &event))
-      throw 20;
+      throw YamlParserException("Error copying event");
 
   }
 }
@@ -91,30 +101,40 @@ void YamlParser::parse()
 
 int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from) 
 {
+
   switch (event_from->type) {
-  case YAML_STREAM_START_EVENT:
+  case YAML_STREAM_START_EVENT: {
+    // _debug("YAML_STREAM_START_EVENT");
     return yaml_stream_start_event_initialize(event_to,
-						event_from->data.stream_start.encoding);
+					      event_from->data.stream_start.encoding);
+  }
 
-  case YAML_STREAM_END_EVENT:
+  case YAML_STREAM_END_EVENT: {
+    // _debug("YAML_STREAM_END_EVENT");
     return yaml_stream_end_event_initialize(event_to);
+  }
 
-  case YAML_DOCUMENT_START_EVENT:
+  case YAML_DOCUMENT_START_EVENT: {
+    // _debug("YAML_DOCUMENT_START_EVENT");
     return yaml_document_start_event_initialize(event_to,
 						event_from->data.document_start.version_directive,
 						event_from->data.document_start.tag_directives.start,
 						event_from->data.document_start.tag_directives.end,
 						event_from->data.document_start.implicit);
+  }
 
-  case YAML_DOCUMENT_END_EVENT:
+  case YAML_DOCUMENT_END_EVENT: {
+    // _debug("YAML_DOCUMENT_END_EVENT");
     return yaml_document_end_event_initialize(event_to,
 					      event_from->data.document_end.implicit);
-
-  case YAML_ALIAS_EVENT:
+  }
+  case YAML_ALIAS_EVENT:{
+    // _debug("YAML_ALIAS_EVENT");
     return yaml_alias_event_initialize(event_to,
 				       event_from->data.alias.anchor);
-
-  case YAML_SCALAR_EVENT:
+  }
+  case YAML_SCALAR_EVENT: {
+    // _debug("YAML_SCALAR_EVENT");
     return yaml_scalar_event_initialize(event_to,
 					event_from->data.scalar.anchor,
 					event_from->data.scalar.tag,
@@ -123,31 +143,106 @@ int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 					event_from->data.scalar.plain_implicit,
 					event_from->data.scalar.quoted_implicit,
 					event_from->data.scalar.style);
-
-  case YAML_SEQUENCE_START_EVENT:
+  }
+  case YAML_SEQUENCE_START_EVENT: {
+    // _debug("YAML_SEQUENCE_START_EVENT");
     return yaml_sequence_start_event_initialize(event_to,
 						event_from->data.sequence_start.anchor,
 						event_from->data.sequence_start.tag,
 						event_from->data.sequence_start.implicit,
 						event_from->data.sequence_start.style);
-
-  case YAML_SEQUENCE_END_EVENT:
+  }
+  case YAML_SEQUENCE_END_EVENT: {
+    // _debug("YAML_SEQUENCE_END_EVENT");
     return yaml_sequence_end_event_initialize(event_to);
-
-  case YAML_MAPPING_START_EVENT:
+  }
+  case YAML_MAPPING_START_EVENT: {
+    // _debug("YAML_MAPPING_START_EVENT");
     return yaml_mapping_start_event_initialize(event_to,
 					       event_from->data.mapping_start.anchor,
 					       event_from->data.mapping_start.tag,
 					       event_from->data.mapping_start.implicit,
 					       event_from->data.mapping_start.style);
-
-  case YAML_MAPPING_END_EVENT:
+  }
+  case YAML_MAPPING_END_EVENT: {
+    // _debug("YAML_MAPPING_END_EVENT");
     return yaml_mapping_end_event_initialize(event_to);
 
+  }
   default:
     assert(1);
 
   }
 
   return 0;
+}
+
+
+void YamlParser::composeEvents() {
+
+  if(eventNumber == 0)
+    throw YamlParserException("No event available");
+
+  for (int i = 0; i < eventNumber;) {
+
+    switch(events[i].type) {
+    case YAML_STREAM_START_EVENT:
+      _debug("YAML_STREAM_START_EVENT");
+      break;
+    case YAML_STREAM_END_EVENT:
+      _debug("YAML_STREAM_END_EVENT");
+      break;
+    case YAML_DOCUMENT_START_EVENT:
+      _debug("YAML_DOCUMENT_START_EVENT");
+      break;
+    case YAML_DOCUMENT_END_EVENT:
+      _debug("YAML_DOCUMENT_END_EVENT");
+      break;
+    case YAML_ALIAS_EVENT:
+      _debug("YAML_ALIAS_EVENT");
+      break;
+    case YAML_SCALAR_EVENT: {
+      _debug("YAML_SCALAR_EVENT: anchor %s, tag %s, value %s", events[i].data.scalar.anchor, events[i].data.scalar.tag, events[i].data.scalar.value);
+      // std::string tmp(events[i].data.scalar.value);
+      std::string tmp("ok");
+      size_t found = tmp.find("account");
+      // if this is an account
+      if(found != std::string::npos)
+	composeAccount(i);
+    }
+      break;
+    case YAML_SEQUENCE_START_EVENT:
+      _debug("YAML_SEQUENCE_START_EVENT: anchor %s, tag %s", events[i].data.sequence_start.anchor, events[i].data.sequence_start.tag);
+      break;
+    case YAML_SEQUENCE_END_EVENT:
+      _debug("YAML_SEQUENCE_END_EVENT");
+      break;
+    case YAML_MAPPING_START_EVENT:
+      _debug("YAML_MAPPING_START_EVENT: anchor %s, tag %s", events[i].data.mapping_start.anchor, events[i].data.sequence_start.tag);
+      break;
+    case YAML_MAPPING_END_EVENT:
+      _debug("YAML_MAPPING_END_EVENT");
+      break;
+    default:
+      throw YamlParserException("Unknown Event");
+    }
+
+    i++;
+  }
+}
+
+int YamlParser::composeAccount(int index)
+{
+
+  // YamlScalar accid((const char*)(events[index].data.scalar.value));
+  YamlScalar accid("ok");
+  YamlSequence seq;
+  // YamlAccount acc(accid, seq);
+
+  // accountlist.insert(acc);
+
+  return index+1;
+}
+
+
 }

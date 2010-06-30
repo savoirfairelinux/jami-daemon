@@ -278,7 +278,7 @@ AC_MSG_ERROR([You need the eXpat xml parser]
 fi
 
 yaml_CFLAGS=
-yaml_LIBS=lyaml
+yaml_LIBS=-lyaml
 
 AC_SUBST(yaml_CFLAGS)
 AC_SUBST(yaml_LIBS)

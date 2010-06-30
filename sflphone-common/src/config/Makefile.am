@@ -16,8 +16,6 @@ noinst_HEADERS = \
 	yamlemitter.h \
 	yamlparser.h
 
-libconfig_la_LDFLAGS = \
-	${yaml_LIBS}
+libconfig_la_LDFLAGS = @yaml_LIBS@
 
-libconfig_la_CFLAGS = \
-	${yaml_CFLAGS}
+libconfig_la_CFLAGS = @yaml_CFLAGS@

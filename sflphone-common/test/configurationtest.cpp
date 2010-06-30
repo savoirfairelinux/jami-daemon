@@ -150,3 +150,13 @@ void ConfigurationTest::testInitAudioDriver() {
 	else
 		CPPUNIT_FAIL ("Wrong audio layer type");
 }
+
+
+void ConfigurationTest::testYamlParser() 
+{
+  YamlParser *parser = new YamlParser();
+
+  delete parser;
+  parser = NULL;
+  
+}

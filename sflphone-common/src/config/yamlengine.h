@@ -34,6 +34,16 @@
 #include "engine.h"
 #include "yamlparser.h"
 #include "yamlemitter.h"
+#include <exception>
+
+namespace Conf {
+
+class YamlEngineException : public std::exception {
+
+  virtual const char *what() const throw() {
+    return "YamlEngineException occured";
+  }
+}; 
 
 class YamlEngine : public Engine {
 
@@ -58,5 +68,7 @@ class YamlEngine : public Engine {
   YamlEmitter *emitter;
 
 };
+
+}
 
 #endif

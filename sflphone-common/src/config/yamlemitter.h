@@ -31,6 +31,17 @@
 #ifndef __YAMLEMITTER_H__
 #define __YAMLEMITTER_H__
 
+#include <exception>
+
+namespace Conf {
+
+class YamlEmitterException : public std::exception {
+
+    virtual const char *what() const throw() {
+      return "YamlEmitterException occured";
+    }
+};
+
 class YamlEmitter {
 
  public:
@@ -52,5 +63,6 @@ class YamlEmitter {
 
 };
 
+}
 
 #endif

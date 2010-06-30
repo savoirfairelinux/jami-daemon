@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <iostream>
 #include <string.h>
+#include "yamlparser.h"
 
 namespace Conf
 {
@@ -45,11 +46,44 @@ namespace Conf
 // ctor
 ConfigTree::ConfigTree() :_sections()
 {
+
+  YamlParser *parser;
+  try {
+    parser = new YamlParser();
+  }
+  catch (YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+
+  try {
+    parser->parse();
+  }
+  catch(YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    parser->composeEvents();
+  }
+  catch(YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    delete parser;
+    parser = NULL;
+  }
+  catch (YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
 }
 
 // dtor
 ConfigTree::~ConfigTree()
 {
+
+
     // erase every new ItemMap (by CreateSection)
     SectionMap::iterator iter = _sections.begin();
 
