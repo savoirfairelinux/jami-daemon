@@ -191,7 +191,7 @@ void ConfigurationTest::testYamlParser()
 
 void ConfigurationTest::testYamlComposition() 
 {
-  
+
   Conf::SequenceNode *seq = new Conf::SequenceNode();
   Conf::MappingNode *map = new Conf::MappingNode();
   Conf::ScalarNode *sclr = new Conf::ScalarNode();
@@ -217,5 +217,7 @@ void ConfigurationTest::testYamlComposition()
   delete seq;
   delete map;
   delete sclr;
+
+  
 
 }

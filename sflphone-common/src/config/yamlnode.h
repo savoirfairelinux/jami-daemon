@@ -46,7 +46,6 @@ typedef std::string Value;
 typedef std::list<YamlNode *> Sequence;
 typedef std::map<Key, YamlNode *> Mapping;
 
-
 class YamlNodeException : public std::exception
 {
 
@@ -66,9 +65,7 @@ class YamlNodeException : public std::exception
 
 };
 
-
 enum NodeType { DOCUMENT, SCALAR, MAPPING, SEQUENCE };
-
 
 class YamlNode {
   
@@ -86,6 +83,24 @@ class YamlNode {
 
 };
 
+
+class YamlDocument : YamlNode {
+
+ public:
+
+  YamlDocument() : YamlNode(DOCUMENT) {}
+
+  ~YamlDocument() {}
+
+  void addNode(YamlNode *node);
+
+  YamlNode *popNode();
+
+ private:
+
+  Sequence doc;
+
+ };
 
 class SequenceNode : public YamlNode {
 
@@ -146,6 +161,7 @@ class ScalarNode : public YamlNode {
   Value val;
 
 };
+
 
 }
 

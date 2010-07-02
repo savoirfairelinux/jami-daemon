@@ -33,6 +33,23 @@
 namespace Conf {
 
 
+void YamlDocument::addNode(YamlNode *node)
+{
+  Sequence::iterator it = doc.end();
+  doc.insert(it, node);
+}
+
+YamlNode *YamlDocument::popNode()
+{
+  Sequence::iterator it = doc.begin();
+  YamlNode *node = doc.front();
+
+  //removed element's destructor is called
+  doc.pop_front();
+
+  return node;
+}
+
 void MappingNode::setKeyValue(Key key, YamlNode *value) 
 {
   Mapping::iterator it = map.end();
@@ -50,7 +67,6 @@ void MappingNode::removeKeyValue(Key key)
 YamlNode *MappingNode::getValue(Key key) 
 {
   Mapping::iterator it = map.find(key);
-
   return it->second;
 }
 
@@ -58,11 +74,8 @@ YamlNode *MappingNode::getValue(Key key)
 void SequenceNode::addNode(YamlNode *node)
 {
   Sequence::iterator it = seq.end();
-
   seq.insert(it, node);
 }
-
-
 
 }
 
