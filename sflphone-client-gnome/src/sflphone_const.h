@@ -187,5 +187,6 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
 /** Show/Hide the dialpad */
 #define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"	
+#define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
 
 #endif

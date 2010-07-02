@@ -1993,44 +1993,6 @@ dbus_switch_popup_mode(void)
 }
 
 void
-dbus_set_notify(void)
-{
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_set_notify(
-      configurationManagerProxy, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-}
-
-guint
-dbus_get_notify(void)
-{
-  gint level;
-  GError* error = NULL;
-  if (!org_sflphone_SFLphone_ConfigurationManager_get_notify(
-      configurationManagerProxy, &level, &error))
-    {
-      if (error->domain == DBUS_GERROR && error->code
-          == DBUS_GERROR_REMOTE_EXCEPTION)
-        {
-          ERROR ("Caught remote method (get_notify) exception  %s: %s", dbus_g_error_get_name(error), error->message);
-        }
-      else
-        {
-          ERROR ("Error while calling get_notify: %s", error->message);
-        }
-      g_error_free(error);
-      return 0;
-    }
-  else
-    {
-      return (guint) level;
-    }
-}
-
-void
 dbus_set_audio_manager(int api)
 {
   GError* error = NULL;

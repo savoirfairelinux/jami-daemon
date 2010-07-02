@@ -96,7 +96,8 @@ set_popup_mode (GtkWidget *widget, gpointer *userdata)
 void
 set_notif_level ()
 {
-  dbus_set_notify ();
+	gboolean current_state = eel_gconf_get_integer (NOTIFY_ALL);
+	eel_gconf_set_integer (NOTIFY_ALL, !current_state);
 }
 
 static void
@@ -161,7 +162,7 @@ create_general_settings ()
 
   // Notification All
   notifAll = gtk_check_button_new_with_mnemonic (_("_Enable notifications"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify ());
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(notifAll), eel_gconf_get_integer (NOTIFY_ALL));
   g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
   gtk_table_attach (GTK_TABLE(table), notifAll, 0, 1, 0, 1, GTK_EXPAND
       | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
