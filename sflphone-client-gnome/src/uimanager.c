@@ -92,6 +92,7 @@ update_actions()
   g_object_ref(holdToolbar);
   g_object_ref(offHoldToolbar);
   g_object_ref(contactButton);
+  g_object_ref(historyButton);
   g_object_ref(transferToolbar);
   g_object_ref(voicemailToolbar);
 
@@ -109,6 +110,11 @@ update_actions()
     {
       gtk_container_remove(GTK_CONTAINER (toolbar),
           GTK_WIDGET (transferToolbar));
+    }
+
+  if (is_inserted(GTK_WIDGET(historyButton), GTK_WIDGET (toolbar)))
+    {
+      gtk_container_remove(GTK_CONTAINER (toolbar), GTK_WIDGET (historyButton));
     }
 
   if (is_inserted(GTK_WIDGET(contactButton), GTK_WIDGET (toolbar)))
@@ -129,6 +135,7 @@ update_actions()
   gtk_widget_set_sensitive(GTK_WIDGET (recordWidget), FALSE);
   gtk_action_set_sensitive(GTK_ACTION (copyAction), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(contactButton), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(historyButton), FALSE);
   gtk_widget_set_tooltip_text(GTK_WIDGET (contactButton),
       _("No address book selected"));
 
@@ -143,6 +150,11 @@ update_actions()
     gtk_container_remove(GTK_CONTAINER (toolbar), GTK_WIDGET (pickUpWidget));
   gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (newCallWidget), 0);
 
+
+	if (eel_gconf_get_integer (HISTORY_ENABLED)) {
+		gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (historyButton), -1);
+		gtk_widget_set_sensitive(GTK_WIDGET(historyButton), TRUE);
+	}
   // If addressbook support has been enabled and all addressbooks are loaded, display the icon
   if (addressbook_is_enabled() && addressbook_is_ready())
     {
@@ -353,18 +365,20 @@ volume_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
     return;
   main_window_volume_controls(toggled);
   if (toggled || SHOW_VOLUME)
-    dbus_set_volume_controls(toggled);
+	  eel_gconf_set_integer (SHOW_VOLUME_CONTROLS, toggled);
 }
 
 static void
 dialpad_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
 {
-  gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
-  if (toggled == SHOW_DIALPAD)
-    return;
-  main_window_dialpad(toggled);
-  if (toggled || SHOW_DIALPAD)
-    dbus_set_dialpad(toggled);
+	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
+	gboolean conf_dialpad = eel_gconf_get_boolean (CONF_SHOW_DIALPAD);
+	if (toggled == conf_dialpad)
+		return;
+	main_window_dialpad (toggled);
+	if (toggled || conf_dialpad)
+		eel_gconf_set_boolean (CONF_SHOW_DIALPAD, toggled); //dbus_set_dialpad (toggled);
+
 }
 
 static void
@@ -428,7 +442,7 @@ static void
 call_minimize(void * foo UNUSED)
 {
 
-    if (g_strcasecmp (dbus_is_status_icon_enabled (), "true") == 0) {
+	if (eel_gconf_get_integer (SHOW_STATUSICON)) {
         gtk_widget_hide(GTK_WIDGET( get_main_window() ));
         set_minimized(TRUE);
     }
@@ -1457,43 +1471,31 @@ void
 create_menus(GtkUIManager *ui_manager, GtkWidget **widget)
 {
 
-  GtkWidget * menu_bar;
+	GtkWidget * menu_bar;
 
-  menu_bar = gtk_ui_manager_get_widget(ui_manager, "/MenuBar");
-  pickUpAction = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/CallMenu/PickUp");
-  newCallAction = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/CallMenu/NewCall");
-  hangUpAction = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/CallMenu/HangUp");
-  holdMenu = gtk_ui_manager_get_widget(ui_manager,
-      "/MenuBar/CallMenu/OnHoldMenu");
-  recordAction = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/CallMenu/Record");
-  copyAction = gtk_ui_manager_get_action(ui_manager, "/MenuBar/EditMenu/Copy");
-  pasteAction
-      = gtk_ui_manager_get_action(ui_manager, "/MenuBar/EditMenu/Paste");
-  volumeToggle = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/ViewMenu/VolumeControls");
+	menu_bar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
+	pickUpAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/PickUp");
+	newCallAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/NewCall");
+	hangUpAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/HangUp");
+	holdMenu = gtk_ui_manager_get_widget (ui_manager, "/MenuBar/CallMenu/OnHoldMenu");
+	recordAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/Record");
+	copyAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/EditMenu/Copy");
+	pasteAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/EditMenu/Paste");
+	volumeToggle = gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/VolumeControls");
 
-  // Set the toggle buttons
-  gtk_toggle_action_set_active(
-      GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")),
-      (gboolean) SHOW_DIALPAD);
-  gtk_toggle_action_set_active(GTK_TOGGLE_ACTION (volumeToggle),
-      (gboolean) SHOW_VOLUME);
+	// Set the toggle buttons
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean (CONF_SHOW_DIALPAD));
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (volumeToggle), (gboolean) SHOW_VOLUME);
 
-  gtk_action_set_sensitive(GTK_ACTION (volumeToggle), SHOW_ALSA_CONF);
+	gtk_action_set_sensitive (GTK_ACTION (volumeToggle), SHOW_ALSA_CONF);
 
-  // Disable it right now
-  gtk_action_set_sensitive(
-      GTK_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Toolbar")),
-      FALSE);
+	// Disable it right now
+	gtk_action_set_sensitive (GTK_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Toolbar")), FALSE);
 
-  waitingLayer = create_waiting_icon();
-  gtk_menu_shell_append(GTK_MENU_SHELL (menu_bar), waitingLayer);
+	waitingLayer = create_waiting_icon ();
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), waitingLayer);
 
-  *widget = menu_bar;
+	*widget = menu_bar;
 }
 
 void

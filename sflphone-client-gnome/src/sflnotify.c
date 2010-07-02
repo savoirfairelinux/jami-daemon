@@ -36,7 +36,7 @@ void create_new_gnome_notification (gchar *title, gchar *body, NotifyUrgency urg
 {
     GnomeNotification *_notif;
 
-    if( dbus_get_notify()){
+	if (eel_gconf_get_integer (NOTIFY_ALL)){
 
         _notif = g_new0 (GnomeNotification, 1);
 

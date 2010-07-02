@@ -82,21 +82,24 @@ set_md5_hash_cb (GtkWidget *widget UNUSED, gpointer data UNUSED)
 static void
 start_hidden (void)
 {
-  dbus_start_hidden ();
+	gboolean currentstate = eel_gconf_get_integer (START_HIDDEN);
+	eel_gconf_set_integer (START_HIDDEN, !currentstate);
 }
 
 static void
 set_popup_mode (GtkWidget *widget, gpointer *userdata)
 {
-  if (dbus_popup_mode () || gtk_toggle_button_get_active (
-      GTK_TOGGLE_BUTTON (widget)))
-    dbus_switch_popup_mode ();
+	gboolean currentstate = eel_gconf_get_integer (POPUP_ON_CALL);
+	if (currentstate || gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
+		eel_gconf_set_integer (POPUP_ON_CALL, !currentstate);
+	}
 }
 
 void
 set_notif_level ()
 {
-  dbus_set_notify ();
+	gboolean current_state = eel_gconf_get_integer (NOTIFY_ALL);
+	eel_gconf_set_integer (NOTIFY_ALL, !current_state);
 }
 
 static void
@@ -112,7 +115,7 @@ history_enabled_cb (GtkWidget *widget)
   gtk_widget_set_sensitive (GTK_WIDGET (history_value), history_enabled);
 
   // Toggle it through D-Bus
-  dbus_set_history_enabled ();
+  eel_gconf_set_integer (HISTORY_ENABLED, !eel_gconf_get_integer (HISTORY_ENABLED));
 }
 
 void
@@ -135,8 +138,8 @@ void showstatusicon_cb (GtkWidget *widget, gpointer data) {
 
   currentstatus ?       show_status_icon () : hide_status_icon ();
 
-  // Update through D-Bus
-  dbus_enable_status_icon (currentstatus ? "true" : "false");
+	// Update through D-Bus
+	eel_gconf_set_integer (SHOW_STATUSICON, currentstatus);
 }
 
 
@@ -145,7 +148,7 @@ create_general_settings ()
 {
 
   GtkWidget *ret, *notifAll, *trayItem, *frame, *checkBoxWidget, *label, *table;
-  gboolean statusicon = FALSE;
+  gboolean statusicon;
 
   // Load history configuration
   history_load_configuration ();
@@ -161,7 +164,7 @@ create_general_settings ()
 
   // Notification All
   notifAll = gtk_check_button_new_with_mnemonic (_("_Enable notifications"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify ());
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(notifAll), eel_gconf_get_integer (NOTIFY_ALL));
   g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
   gtk_table_attach (GTK_TABLE(table), notifAll, 0, 1, 0, 1, GTK_EXPAND
       | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
@@ -171,10 +174,8 @@ create_general_settings ()
       1);
   gtk_box_pack_start (GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-  if (g_strcasecmp (dbus_is_status_icon_enabled (), "true") == 0)
-      statusicon = TRUE;
-  else
-    statusicon = FALSE;
+  // Whether or not displaying an icon in the system tray
+  statusicon = eel_gconf_get_integer (SHOW_STATUSICON);
 
   showstatusicon = gtk_check_button_new_with_mnemonic (
       _("Show SFLphone in the system tray"));
@@ -194,16 +195,19 @@ create_general_settings ()
   gtk_table_attach (GTK_TABLE(table), neverpopupwindow, 0, 1, 2, 3, GTK_EXPAND
       | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-  // Toggle according to the user configuration
-  dbus_popup_mode () ? gtk_toggle_button_set_active (
-      GTK_TOGGLE_BUTTON (popupwindow), TRUE) : gtk_toggle_button_set_active (
-      GTK_TOGGLE_BUTTON (neverpopupwindow), TRUE);
+	// Toggle according to the user configuration
+	eel_gconf_get_integer (POPUP_ON_CALL) ? gtk_toggle_button_set_active (
+												GTK_TOGGLE_BUTTON (popupwindow), 
+												TRUE) : 
+											gtk_toggle_button_set_active (
+												GTK_TOGGLE_BUTTON (neverpopupwindow), 
+												TRUE);
 
   starthidden = gtk_check_button_new_with_mnemonic (
       _("Hide SFLphone window on _startup"));
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(starthidden),
-      dbus_is_start_hidden ());
+      eel_gconf_get_integer (START_HIDDEN));
   g_signal_connect(G_OBJECT (starthidden) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
   gtk_table_attach (GTK_TABLE(table), starthidden, 0, 1, 3, 4, GTK_EXPAND
       | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
@@ -261,9 +265,7 @@ void
 history_load_configuration ()
 {
   history_limit = dbus_get_history_limit ();
-  history_enabled = TRUE;
-  if (g_strcasecmp (dbus_get_history_enabled (), "false") == 0)
-    history_enabled = FALSE;
+  history_enabled = eel_gconf_get_integer (HISTORY_ENABLED); 
 }
 
 /**

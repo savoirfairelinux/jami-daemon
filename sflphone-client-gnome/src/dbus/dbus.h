@@ -415,24 +415,6 @@ void dbus_set_searchbar(  );
 int dbus_get_searchbar( void );
 
 /**
- * ConfigurationManager - Set the volume controls visible or not
- */
-void dbus_set_volume_controls (gboolean display);
-
-/**
- * ConfigurationManager - Tells if the user wants to display the volume controls or not
- * @return int 1 if the controls have to be displayed
- *	       0 otherwise
- */
-int dbus_get_volume_controls( void );
-
-/**
- * ConfigurationManager - Configure the start-up option
- * At startup, SFLphone can be displayed or start hidden in the system tray
- */
-void dbus_start_hidden( void );
-
-/**
  * ConfigurationManager - Gives the maximum number of days the user wants to have in the history
  * @return double The maximum number of days
  */
@@ -442,31 +424,6 @@ guint dbus_get_history_limit( void );
  * ConfigurationManager - Gives the maximum number of days the user wants to have in the history
  */
 void dbus_set_history_limit (const guint days);
-
-void dbus_set_history_enabled (void);
-
-gchar* dbus_get_history_enabled (void);
-
-/**
- * ConfigurationManager - Configure the start-up option
- * @return int	1 if SFLphone should start in the system tray
- *	        0 otherwise
- */
-int dbus_is_start_hidden( void );
-
-/**
- * ConfigurationManager - Configure the popup behaviour
- * When SFLphone is in the system tray, you can configure when it popups
- * Never or only on incoming calls
- */
-void dbus_switch_popup_mode( void );
-
-/**
- * ConfigurationManager - Configure the popup behaviour
- * @return int	1 if it should popup on incoming calls
- *		0 if it should never popups
- */
-int dbus_popup_mode( void );
 
 /**
  * ConfigurationManager - Returns the selected audio manager
@@ -481,18 +438,6 @@ int dbus_get_audio_manager( void );
  *		1	PULSEAUDIO
  */
 void dbus_set_audio_manager( int api );
-
-/**
- * ConfigurationManager - Configure the notification level
- * @return int	0 disable
- *		1 enable
- */
-guint dbus_get_notify( void );
-
-/**
- * ConfigurationManager - Configure the notification level
- */
-void dbus_set_notify( void );
 
 /**
  * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed
@@ -638,8 +583,5 @@ void dbus_set_window_position_y (const guint posy);
 
 GHashTable* dbus_get_shortcuts(void);
 void dbus_set_shortcuts(GHashTable * shortcuts);
-
-void dbus_enable_status_icon (const gchar*);
-gchar* dbus_is_status_icon_enabled (void);
 
 #endif

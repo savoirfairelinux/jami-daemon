@@ -55,10 +55,12 @@ popup_main_window(void)
 void
 show_status_hangup_icon()
 {
-  if (status) {
-    DEBUG("Show Hangup in Systray");
-    gtk_widget_show(GTK_WIDGET(hangup_menu_item));
-  }
+	if (__POPUP_WINDOW)
+	{
+		gtk_widget_show (get_main_window ());
+		gtk_window_move (GTK_WINDOW (get_main_window ()), eel_gconf_get_integer (CONF_MAIN_WINDOW_POSITION_X), eel_gconf_get_integer (CONF_MAIN_WINDOW_POSITION_Y));
+		set_minimized (FALSE);
+	}
 }
 
 void
@@ -97,18 +99,17 @@ main_widget_minimized()
 void
 show_hide(void)
 {
-  if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)))
-    {
-      gtk_widget_show(GTK_WIDGET(get_main_window()));
-      gtk_window_move(GTK_WINDOW (get_main_window ()),
-          dbus_get_window_position_x(), dbus_get_window_position_y());
-      set_minimized(!MINIMIZED);
-    }
-  else
-    {
-      gtk_widget_hide(GTK_WIDGET(get_main_window()));
-      set_minimized(MINIMIZED);
-    }
+	if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)))
+	{
+		gtk_widget_show(GTK_WIDGET(get_main_window()));
+		gtk_window_move (GTK_WINDOW (get_main_window ()), eel_gconf_get_integer (CONF_MAIN_WINDOW_POSITION_X), eel_gconf_get_integer (CONF_MAIN_WINDOW_POSITION_Y));
+		set_minimized( !MINIMIZED );
+	}   
+	else
+	{
+		gtk_widget_hide(GTK_WIDGET(get_main_window()));
+		set_minimized( MINIMIZED );
+	}
 }
 
 void
@@ -203,7 +204,6 @@ statusicon_set_tooltip()
     g_free(tip);
 
   }
-
 }
 
 void
