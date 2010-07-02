@@ -28,47 +28,127 @@
  *  as that of the covered work.
  */
 
-#ifndef __YAMLENGINE_H__
-#define __YAMLENGINE_H__
+#ifndef __YAMLNODE_H__
+#define __YAMLNODE_H__
 
-#include "engine.h"
-#include "yamlparser.h"
-#include "yamlemitter.h"
+#include <string>
+#include <list>
+#include <map>
 #include <exception>
 
 namespace Conf {
 
-class YamlEngineException : public std::exception {
 
-  virtual const char *what() const throw() {
-    return "YamlEngineException occured";
-  }
-}; 
+class YamlNode;
 
-class YamlEngine : public Engine {
+typedef std::string Key;
+typedef std::string Value;
+typedef std::list<YamlNode *> Sequence;
+typedef std::map<Key, YamlNode *> Mapping;
+
+
+class YamlNodeException : public std::exception
+{
 
  public:
+  YamlNodeException(const std::string& str="") throw() : errstr(str) {}
 
-  YamlEngine();
+  virtual ~YamlNodeException() throw() {}
 
-  ~YamlEngine();
+  virtual const char *what() const throw() {
+    std::string expt("YamlNodeException occured: ");
+    expt.append(errstr);
 
-  virtual void open();
+    return expt.c_str();
+  }
+ private:
+  std::string errstr;
 
-  virtual void close();
+};
 
-  virtual void write();
 
-  virtual void read();
+enum NodeType { DOCUMENT, SCALAR, MAPPING, SEQUENCE };
+
+
+class YamlNode {
+  
+ public:
+
+  YamlNode(NodeType t) : type(t) {}
+
+  ~YamlNode() {}
+
+  NodeType getType() { return type; }
 
  private:
 
-  YamlParser *parser;
+  NodeType type;
 
-  YamlEmitter *emitter;
+};
+
+
+class SequenceNode : public YamlNode {
+
+ public:
+
+  SequenceNode() : YamlNode(SEQUENCE) {}
+
+  ~SequenceNode() {}
+
+  Sequence *getSequence() { return &seq; }
+
+  void addNode(YamlNode *node);
+
+ private:
+
+  Sequence seq;
+
+};
+
+
+class MappingNode : public YamlNode {
+
+ public:
+
+  MappingNode() : YamlNode(MAPPING) {}
+
+  ~MappingNode() {}
+
+  Mapping *getMapping() { return &map; }
+
+  void setKeyValue(Key key, YamlNode *value);
+
+  void removeKeyValue(Key key);
+
+  YamlNode *getValue(Key key);
+
+ private:
+
+  Mapping map;
+
+};
+
+
+class ScalarNode : public YamlNode {
+
+ public:
+
+  ScalarNode(Value v="") : YamlNode(SCALAR), val(v) {}
+
+  ~ScalarNode() {}
+
+  Value getValue() { return val; }
+
+  void setValue(Value v) { val = v; }
+
+ private:
+
+  Value val;
 
 };
 
 }
+
+
 
 #endif

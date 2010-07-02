@@ -6,7 +6,8 @@ libconfig_la_SOURCES = \
 	config.cpp \
 	yamlengine.cpp \
 	yamlemitter.cpp \
-	yamlparser.cpp
+	yamlparser.cpp \
+	yamlnode.cpp
 
 noinst_HEADERS = \
 	config.h \
@@ -14,7 +15,8 @@ noinst_HEADERS = \
 	serializable.h \
 	yamlengine.h \
 	yamlemitter.h \
-	yamlparser.h
+	yamlparser.h \
+	yamlnode.h
 
 libconfig_la_LDFLAGS = @yaml_LIBS@
 

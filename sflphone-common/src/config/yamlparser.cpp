@@ -32,11 +32,12 @@
 
 #include "../global.h"
 #include "config.h"
+#include "yamlnode.h"
 #include <stdio.h>
 
 namespace Conf {
 
-YamlParser::YamlParser() 
+YamlParser::YamlParser(const char *file) : filename(file)
 {
   memset(buffer, 0, PARSER_BUFFERSIZE);
 
@@ -50,8 +51,6 @@ YamlParser::~YamlParser()
 
 void YamlParser::open() 
 {
-
-  std::string filename = "sequence.yml";
 
   fd = fopen(filename.c_str(), "rb");
 
@@ -77,7 +76,7 @@ void YamlParser::close()
 
 }
 
-void YamlParser::parse() 
+void YamlParser::serializeEvents() 
 {
   bool done = false;
   yaml_event_t event;
@@ -203,12 +202,12 @@ void YamlParser::composeEvents() {
       break;
     case YAML_SCALAR_EVENT: {
       _debug("YAML_SCALAR_EVENT: anchor %s, tag %s, value %s", events[i].data.scalar.anchor, events[i].data.scalar.tag, events[i].data.scalar.value);
-      // std::string tmp(events[i].data.scalar.value);
-      std::string tmp("ok");
-      size_t found = tmp.find("account");
-      // if this is an account
-      if(found != std::string::npos)
-	composeAccount(i);
+      char buffer[1000];
+      snprintf(buffer, 1000, "%s", events[i].data.scalar.value);
+      _debug("----------------------------- THE BUFFER: %s", buffer);
+      ScalarNode *sclr = new ScalarNode(buffer);
+      _debug("----------------------------- THE VALUE: %s", (sclr->getValue()).c_str());
+      // ScalarNode *sclr = new ScalarNode("ok");
     }
       break;
     case YAML_SEQUENCE_START_EVENT:
@@ -229,19 +228,6 @@ void YamlParser::composeEvents() {
 
     i++;
   }
-}
-
-int YamlParser::composeAccount(int index)
-{
-
-  // YamlScalar accid((const char*)(events[index].data.scalar.value));
-  YamlScalar accid("ok");
-  YamlSequence seq;
-  // YamlAccount acc(accid, seq);
-
-  // accountlist.insert(acc);
-
-  return index+1;
 }
 
 

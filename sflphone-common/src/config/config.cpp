@@ -49,7 +49,7 @@ ConfigTree::ConfigTree() :_sections()
 
   YamlParser *parser;
   try {
-    parser = new YamlParser();
+    parser = new YamlParser("sequence.yml");
   }
   catch (YamlParserException &e) {
     _error("ConfigTree: %s", e.what());
@@ -57,7 +57,7 @@ ConfigTree::ConfigTree() :_sections()
 
 
   try {
-    parser->parse();
+    parser->serializeEvents();
   }
   catch(YamlParserException &e) {
     _error("ConfigTree: %s", e.what());

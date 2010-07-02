@@ -28,47 +28,41 @@
  *  as that of the covered work.
  */
 
-#ifndef __YAMLENGINE_H__
-#define __YAMLENGINE_H__
-
-#include "engine.h"
-#include "yamlparser.h"
-#include "yamlemitter.h"
-#include <exception>
+#include "yamlnode.h"
 
 namespace Conf {
 
-class YamlEngineException : public std::exception {
 
-  virtual const char *what() const throw() {
-    return "YamlEngineException occured";
-  }
-}; 
+void MappingNode::setKeyValue(Key key, YamlNode *value) 
+{
+  Mapping::iterator it = map.end();
+  map.insert(it, std::pair<Key, YamlNode *>(key, value)); 
+}
 
-class YamlEngine : public Engine {
+void MappingNode::removeKeyValue(Key key)
+{
 
- public:
+  Mapping::iterator it = map.find(key);
+  map.erase(it);
+}
 
-  YamlEngine();
 
-  ~YamlEngine();
+YamlNode *MappingNode::getValue(Key key) 
+{
+  Mapping::iterator it = map.find(key);
 
-  virtual void open();
+  return it->second;
+}
 
-  virtual void close();
 
-  virtual void write();
+void SequenceNode::addNode(YamlNode *node)
+{
+  Sequence::iterator it = seq.end();
 
-  virtual void read();
+  seq.insert(it, node);
+}
 
- private:
 
-  YamlParser *parser;
-
-  YamlEmitter *emitter;
-
-};
 
 }
 
-#endif

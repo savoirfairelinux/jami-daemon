@@ -35,19 +35,11 @@
 #include <stdio.h>
 #include <exception>
 #include <string>
-#include <map>
-#include <list>
 
 namespace Conf {
 
 #define PARSER_BUFFERSIZE 65536
 #define PARSER_MAXEVENT 1024
-
-typedef std::string YamlScalar;
-typedef std::map<YamlScalar, YamlScalar> YamlMapping;
-typedef std::list<YamlMapping> YamlSequence;
-typedef std::map<YamlScalar, YamlSequence> YamlAccount;
-typedef std::list<YamlAccount> AccountList;
 
 class YamlParserException : public std::exception
 {
@@ -71,7 +63,7 @@ class YamlParser {
 
  public:
 
-  YamlParser();
+  YamlParser(const char *file);
 
   ~YamlParser();
 
@@ -79,11 +71,9 @@ class YamlParser {
 
   void close();
 
-  void parse();
+  void serializeEvents();
 
   void composeEvents();
-
-  int composeAccount(int i);
 
  private:
 
@@ -91,6 +81,8 @@ class YamlParser {
    * Copy yaml parser event in event_to according to their type.
    */
   int copyEvent(yaml_event_t *event_to, yaml_event_t *event_from);
+
+  std::string filename;
 
   FILE *fd;
 
@@ -113,8 +105,6 @@ class YamlParser {
    * Number of event actually parsed
    */
   int eventNumber;
-
-  AccountList accountlist;
 
 };
 
