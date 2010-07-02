@@ -989,7 +989,7 @@ void calltree_add_history_entry (callable_obj_t * c)
 
 	DEBUG("calltree_add_history_entry %s", c->_callID);
 
-	if ( g_strcasecmp (dbus_get_history_enabled (), "false") == 0)
+	if (!eel_gconf_get_integer (HISTORY_ENABLED))
 		return;
 
 	GdkPixbuf *pixbuf=NULL;

@@ -425,10 +425,6 @@ guint dbus_get_history_limit( void );
  */
 void dbus_set_history_limit (const guint days);
 
-void dbus_set_history_enabled (void);
-
-gchar* dbus_get_history_enabled (void);
-
 /**
  * ConfigurationManager - Returns the selected audio manager
  * @return int	0	ALSA

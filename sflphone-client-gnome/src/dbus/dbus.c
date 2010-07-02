@@ -1874,32 +1874,6 @@ dbus_set_history_limit(const guint days)
     }
 }
 
-void
-dbus_set_history_enabled()
-{
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_set_history_enabled(
-      configurationManagerProxy, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-}
-
-gchar*
-dbus_get_history_enabled()
-{
-  gchar* state;
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_get_history_enabled(
-      configurationManagerProxy, &state, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-  return state;
-}
-
 guint
 dbus_get_history_limit(void)
 {

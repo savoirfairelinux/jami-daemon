@@ -115,7 +115,7 @@ history_enabled_cb (GtkWidget *widget)
   gtk_widget_set_sensitive (GTK_WIDGET (history_value), history_enabled);
 
   // Toggle it through D-Bus
-  dbus_set_history_enabled ();
+  eel_gconf_set_integer (HISTORY_ENABLED, !eel_gconf_get_integer (HISTORY_ENABLED));
 }
 
 void
@@ -265,9 +265,7 @@ void
 history_load_configuration ()
 {
   history_limit = dbus_get_history_limit ();
-  history_enabled = TRUE;
-  if (g_strcasecmp (dbus_get_history_enabled (), "false") == 0)
-    history_enabled = FALSE;
+  history_enabled = eel_gconf_get_integer (HISTORY_ENABLED); 
 }
 
 /**

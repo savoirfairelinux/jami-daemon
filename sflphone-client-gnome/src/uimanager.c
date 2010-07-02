@@ -92,6 +92,7 @@ update_actions()
   g_object_ref(holdToolbar);
   g_object_ref(offHoldToolbar);
   g_object_ref(contactButton);
+  g_object_ref(historyButton);
   g_object_ref(transferToolbar);
   g_object_ref(voicemailToolbar);
 
@@ -109,6 +110,11 @@ update_actions()
     {
       gtk_container_remove(GTK_CONTAINER (toolbar),
           GTK_WIDGET (transferToolbar));
+    }
+
+  if (is_inserted(GTK_WIDGET(historyButton), GTK_WIDGET (toolbar)))
+    {
+      gtk_container_remove(GTK_CONTAINER (toolbar), GTK_WIDGET (historyButton));
     }
 
   if (is_inserted(GTK_WIDGET(contactButton), GTK_WIDGET (toolbar)))
@@ -129,6 +135,7 @@ update_actions()
   gtk_widget_set_sensitive(GTK_WIDGET (recordWidget), FALSE);
   gtk_action_set_sensitive(GTK_ACTION (copyAction), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(contactButton), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(historyButton), FALSE);
   gtk_widget_set_tooltip_text(GTK_WIDGET (contactButton),
       _("No address book selected"));
 
@@ -143,6 +150,11 @@ update_actions()
     gtk_container_remove(GTK_CONTAINER (toolbar), GTK_WIDGET (pickUpWidget));
   gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (newCallWidget), 0);
 
+
+	if (eel_gconf_get_integer (HISTORY_ENABLED)) {
+		gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (historyButton), -1);
+		gtk_widget_set_sensitive(GTK_WIDGET(historyButton), TRUE);
+	}
   // If addressbook support has been enabled and all addressbooks are loaded, display the icon
   if (addressbook_is_enabled() && addressbook_is_ready())
     {

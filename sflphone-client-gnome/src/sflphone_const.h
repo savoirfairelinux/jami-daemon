@@ -192,5 +192,6 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
 #define START_HIDDEN				CONF_PREFIX "/state/start_hidden"
 #define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
+#define HISTORY_ENABLED				CONF_PREFIX "/state/history"
 
 #endif
