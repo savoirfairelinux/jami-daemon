@@ -135,6 +135,10 @@ class MappingNode : public YamlNode {
 
   Mapping *getMapping() { return &map; }
 
+  void addNode(YamlNode *node);
+
+  void setTmpKey(Key key) { tmpKey = key; }
+
   void  setKeyValue(Key key, YamlNode *value);
 
   void removeKeyValue(Key key);
@@ -144,6 +148,8 @@ class MappingNode : public YamlNode {
  private:
 
   Mapping map;
+
+  Key tmpKey;
 
 };
 

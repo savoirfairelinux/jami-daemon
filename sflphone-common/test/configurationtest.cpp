@@ -158,7 +158,7 @@ void ConfigurationTest::testYamlParser()
   Conf::YamlParser *parser;
   try {
 
-    parser = new Conf::YamlParser("sequence.yml");
+    parser = new Conf::YamlParser("sequence2.yml");
   
     parser->serializeEvents();
 

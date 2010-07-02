@@ -83,21 +83,15 @@ class YamlParser {
    */
   int copyEvent(yaml_event_t *event_to, yaml_event_t *event_from);
 
-  void startDocument(void);
+  void processStream(void);
 
-  void endDocument(void);
+  void processDocument(void);
 
-  void startSequence(void);
+  void processScalar(YamlNode *topNode);
 
-  void endSequence(void);
+  void processSequence(YamlNode *topNode);
 
-  void endMapping(void);
-
-  void composeScalarEvent(YamlNode *topNode, char *data);
-
-  void composeMappingEvent(MappingNode *map, Key key, YamlNode *node);
-
-  void composeSequenceEvent(YamlNode *topNode, YamlNode *node);
+  void processMapping(YamlNode *topNode);
 
   std::string filename;
 
@@ -123,9 +117,9 @@ class YamlParser {
    */
   int eventNumber;
 
-  YamlNode *topNode;
-
   YamlDocument *doc;
+
+  int eventIndex;
 
 };
 

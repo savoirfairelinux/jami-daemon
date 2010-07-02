@@ -50,6 +50,12 @@ YamlNode *YamlDocument::popNode()
   return node;
 }
 
+void MappingNode::addNode(YamlNode *node) 
+{
+  Mapping::iterator it = map.end();
+  map.insert(it, std::pair<Key, YamlNode *>(tmpKey, node)); 
+}
+
 void MappingNode::setKeyValue(Key key, YamlNode *value) 
 {
   Mapping::iterator it = map.end();
