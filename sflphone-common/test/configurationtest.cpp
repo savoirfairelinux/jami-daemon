@@ -154,9 +154,68 @@ void ConfigurationTest::testInitAudioDriver() {
 
 void ConfigurationTest::testYamlParser() 
 {
-  YamlParser *parser = new YamlParser();
 
-  delete parser;
-  parser = NULL;
+  Conf::YamlParser *parser;
+  try {
+    parser = new Conf::YamlParser("sequence.yml");
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+
+  try {
+    parser->serializeEvents();
+  }
+  catch(Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    parser->composeEvents();
+  }
+  catch(Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    delete parser;
+    parser = NULL;
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
   
+}
+
+
+void ConfigurationTest::testYamlComposition() 
+{
+  
+  Conf::SequenceNode *seq = new Conf::SequenceNode();
+  Conf::MappingNode *map = new Conf::MappingNode();
+  Conf::ScalarNode *sclr = new Conf::ScalarNode();
+
+  CPPUNIT_ASSERT(seq->getType() == Conf::SEQUENCE);
+  CPPUNIT_ASSERT(map->getType() == Conf::MAPPING);
+  CPPUNIT_ASSERT(sclr->getType() == Conf::SCALAR);
+
+  seq->addNode(map);
+  seq->addNode(sclr);
+
+  Conf::Key key("username");
+  Conf::ScalarNode *val = new Conf::ScalarNode("alexandre");
+
+  map->setKeyValue(key, val);
+
+  Conf::YamlNode *node = map->getValue(key);
+
+  CPPUNIT_ASSERT(node->getType() == Conf::SCALAR);
+
+  delete val;
+
+  delete seq;
+  delete map;
+  delete sclr;
+
 }
