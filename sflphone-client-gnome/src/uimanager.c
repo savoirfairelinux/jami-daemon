@@ -430,7 +430,7 @@ static void
 call_minimize(void * foo UNUSED)
 {
 
-    if (g_strcasecmp (dbus_is_status_icon_enabled (), "true") == 0) {
+	if (eel_gconf_get_integer (SHOW_STATUSICON)) {
         gtk_widget_hide(GTK_WIDGET( get_main_window() ));
         set_minimized(TRUE);
     }

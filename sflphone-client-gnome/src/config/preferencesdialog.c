@@ -136,8 +136,8 @@ void showstatusicon_cb (GtkWidget *widget, gpointer data) {
 
   currentstatus ?       show_status_icon () : hide_status_icon ();
 
-  // Update through D-Bus
-  dbus_enable_status_icon (currentstatus ? "true" : "false");
+	// Update through D-Bus
+	eel_gconf_set_integer (SHOW_STATUSICON, currentstatus);
 }
 
 
@@ -146,7 +146,7 @@ create_general_settings ()
 {
 
   GtkWidget *ret, *notifAll, *trayItem, *frame, *checkBoxWidget, *label, *table;
-  gboolean statusicon = FALSE;
+  gboolean statusicon;
 
   // Load history configuration
   history_load_configuration ();
@@ -172,10 +172,8 @@ create_general_settings ()
       1);
   gtk_box_pack_start (GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
-  if (g_strcasecmp (dbus_is_status_icon_enabled (), "true") == 0)
-      statusicon = TRUE;
-  else
-    statusicon = FALSE;
+  // Whether or not displaying an icon in the system tray
+  statusicon = eel_gconf_get_integer (SHOW_STATUSICON);
 
   showstatusicon = gtk_check_button_new_with_mnemonic (
       _("Show SFLphone in the system tray"));

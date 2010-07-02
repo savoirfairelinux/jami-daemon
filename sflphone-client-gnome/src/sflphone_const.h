@@ -188,6 +188,7 @@ log4c_category_t* log4c_sfl_gtk_category;
 /** Show/Hide the dialpad */
 #define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"	
 #define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"	
+#define SHOW_STATUSICON				CONF_PREFIX "/state/statusicon"	
 #define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
 
 #endif
