@@ -32,6 +32,7 @@
 #define __YAMLENGINE_H__
 
 #include "engine.h"
+#include "yamlnode.h"
 #include "yamlparser.h"
 #include "yamlemitter.h"
 #include <exception>
@@ -53,9 +54,9 @@ class YamlEngine : public Engine {
 
   ~YamlEngine();
 
-  virtual void open();
+  virtual void openConfigFile();
 
-  virtual void close();
+  virtual void closeConfigFile();
 
   virtual void write();
 
@@ -66,6 +67,8 @@ class YamlEngine : public Engine {
   YamlParser *parser;
 
   YamlEmitter *emitter;
+
+  YamlDocument *document;
 
 };
 

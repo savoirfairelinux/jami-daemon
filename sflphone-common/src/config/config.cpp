@@ -46,7 +46,7 @@ namespace Conf
 // ctor
 ConfigTree::ConfigTree() :_sections()
 {
-
+  /*
   YamlParser *parser;
   try {
     parser = new YamlParser("sequence.yml");
@@ -61,8 +61,8 @@ ConfigTree::ConfigTree() :_sections()
   }
   catch(YamlParserException &e) {
     _error("ConfigTree: %s", e.what());
-  }
 
+  }
   try {
     parser->composeEvents();
   }
@@ -77,6 +77,7 @@ ConfigTree::ConfigTree() :_sections()
   catch (YamlParserException &e) {
     _error("ConfigTree: %s", e.what());
   }
+  */
 }
 
 // dtor

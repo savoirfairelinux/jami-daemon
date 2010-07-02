@@ -157,30 +157,16 @@ void ConfigurationTest::testYamlParser()
 
   Conf::YamlParser *parser;
   try {
+
     parser = new Conf::YamlParser("sequence.yml");
-  }
-  catch (Conf::YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
-
-
-  try {
+  
     parser->serializeEvents();
-  }
-  catch(Conf::YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
 
-  try {
     parser->composeEvents();
-  }
-  catch(Conf::YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
-
-  try {
+  
     delete parser;
     parser = NULL;
+
   }
   catch (Conf::YamlParserException &e) {
     _error("ConfigTree: %s", e.what());
@@ -192,7 +178,10 @@ void ConfigurationTest::testYamlParser()
 void ConfigurationTest::testYamlComposition() 
 {
 
-  Conf::SequenceNode *seq = new Conf::SequenceNode();
+  /*
+  Conf::YamlDocument *doc = new Conf::YamlDocument();
+
+  Conf::SequenceNode *seq = new Conf::SequenceNode(doc);
   Conf::MappingNode *map = new Conf::MappingNode();
   Conf::ScalarNode *sclr = new Conf::ScalarNode();
 
@@ -217,7 +206,7 @@ void ConfigurationTest::testYamlComposition()
   delete seq;
   delete map;
   delete sclr;
+  */
 
-  
 
 }

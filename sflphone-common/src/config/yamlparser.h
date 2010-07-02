@@ -31,6 +31,7 @@
 #ifndef __YAMLPARSER_H__
 #define __YAMLPARSER_H__
 
+#include "yamlnode.h"
 #include <yaml.h>
 #include <stdio.h>
 #include <exception>
@@ -73,7 +74,7 @@ class YamlParser {
 
   void serializeEvents();
 
-  void composeEvents();
+  YamlDocument *composeEvents();
 
  private:
 
@@ -81,6 +82,22 @@ class YamlParser {
    * Copy yaml parser event in event_to according to their type.
    */
   int copyEvent(yaml_event_t *event_to, yaml_event_t *event_from);
+
+  void startDocument(void);
+
+  void endDocument(void);
+
+  void startSequence(void);
+
+  void endSequence(void);
+
+  void endMapping(void);
+
+  void composeScalarEvent(YamlNode *topNode, char *data);
+
+  void composeMappingEvent(MappingNode *map, Key key, YamlNode *node);
+
+  void composeSequenceEvent(YamlNode *topNode, YamlNode *node);
 
   std::string filename;
 
@@ -105,6 +122,10 @@ class YamlParser {
    * Number of event actually parsed
    */
   int eventNumber;
+
+  YamlNode *topNode;
+
+  YamlDocument *doc;
 
 };
 

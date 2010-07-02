@@ -71,15 +71,19 @@ class YamlNode {
   
  public:
 
-  YamlNode(NodeType t) : type(t) {}
+ YamlNode(NodeType t, YamlNode *top=NULL) : type(t), topNode(top) {}
 
   ~YamlNode() {}
 
   NodeType getType() { return type; }
 
+  YamlNode *getTopNode() { return topNode; }
+
  private:
 
   NodeType type;
+
+  YamlNode *topNode;
 
 };
 
@@ -88,7 +92,7 @@ class YamlDocument : YamlNode {
 
  public:
 
-  YamlDocument() : YamlNode(DOCUMENT) {}
+ YamlDocument(YamlNode* top=NULL) : YamlNode(DOCUMENT, top) {}
 
   ~YamlDocument() {}
 
@@ -106,7 +110,7 @@ class SequenceNode : public YamlNode {
 
  public:
 
-  SequenceNode() : YamlNode(SEQUENCE) {}
+ SequenceNode(YamlNode *top) : YamlNode(SEQUENCE, top) {}
 
   ~SequenceNode() {}
 
@@ -125,13 +129,13 @@ class MappingNode : public YamlNode {
 
  public:
 
-  MappingNode() : YamlNode(MAPPING) {}
+ MappingNode(YamlNode *top) : YamlNode(MAPPING, top) {}
 
   ~MappingNode() {}
 
   Mapping *getMapping() { return &map; }
 
-  void setKeyValue(Key key, YamlNode *value);
+  void  setKeyValue(Key key, YamlNode *value);
 
   void removeKeyValue(Key key);
 
@@ -148,7 +152,7 @@ class ScalarNode : public YamlNode {
 
  public:
 
-  ScalarNode(Value v="") : YamlNode(SCALAR), val(v) {}
+  ScalarNode(Value v="", YamlNode *top=NULL) : YamlNode(SCALAR, top), val(v) {}
 
   ~ScalarNode() {}
 

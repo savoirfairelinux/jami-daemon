@@ -177,10 +177,13 @@ int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 }
 
 
-void YamlParser::composeEvents() {
+YamlDocument *YamlParser::composeEvents() {
 
   if(eventNumber == 0)
     throw YamlParserException("No event available");
+
+  doc = NULL;
+  topNode = NULL;
 
   for (int i = 0; i < eventNumber;) {
 
@@ -191,44 +194,209 @@ void YamlParser::composeEvents() {
     case YAML_STREAM_END_EVENT:
       _debug("YAML_STREAM_END_EVENT");
       break;
-    case YAML_DOCUMENT_START_EVENT:
+    case YAML_DOCUMENT_START_EVENT: {
       _debug("YAML_DOCUMENT_START_EVENT");
+      // startDocument();
       break;
-    case YAML_DOCUMENT_END_EVENT:
+    }
+    case YAML_DOCUMENT_END_EVENT: {
       _debug("YAML_DOCUMENT_END_EVENT");
+      // topNode = NULL;
       break;
+    }
     case YAML_ALIAS_EVENT:
       _debug("YAML_ALIAS_EVENT");
       break;
-    case YAML_SCALAR_EVENT: {
+    case YAML_SCALAR_EVENT: {      
       _debug("YAML_SCALAR_EVENT: anchor %s, tag %s, value %s", events[i].data.scalar.anchor, events[i].data.scalar.tag, events[i].data.scalar.value);
       char buffer[1000];
       snprintf(buffer, 1000, "%s", events[i].data.scalar.value);
-      _debug("----------------------------- THE BUFFER: %s", buffer);
-      ScalarNode *sclr = new ScalarNode(buffer);
-      _debug("----------------------------- THE VALUE: %s", (sclr->getValue()).c_str());
-      // ScalarNode *sclr = new ScalarNode("ok");
+      composeScalarEvent(topNode, buffer);
+      break;
     }
-      break;
-    case YAML_SEQUENCE_START_EVENT:
+    case YAML_SEQUENCE_START_EVENT: {
       _debug("YAML_SEQUENCE_START_EVENT: anchor %s, tag %s", events[i].data.sequence_start.anchor, events[i].data.sequence_start.tag);
+      // startSequence();
       break;
-    case YAML_SEQUENCE_END_EVENT:
+    }
+    case YAML_SEQUENCE_END_EVENT: {
       _debug("YAML_SEQUENCE_END_EVENT");
+      // endSequence();
       break;
-    case YAML_MAPPING_START_EVENT:
+    }
+    case YAML_MAPPING_START_EVENT: {
       _debug("YAML_MAPPING_START_EVENT: anchor %s, tag %s", events[i].data.mapping_start.anchor, events[i].data.sequence_start.tag);
+
+      Key mapkey;
+      YamlNode *mapvalue;
+
+      MappingNode *map = new MappingNode(topNode);
+
+      if(events[i+1].type == YAML_SCALAR_EVENT) {
+	char buffer[1000];
+	snprintf(buffer, 1000, "%s", events[i+1].data.scalar.value);
+	mapkey = Key(buffer);
+	i++;
+      }
+      else
+	throw YamlParserException("Mapping event not followed by scalar");
+
+      if(events[i+1].type == YAML_SCALAR_EVENT) {
+	char buffer[1000];
+	snprintf(buffer, 1000, "%s", events[i+1].data.scalar.value);
+	ScalarNode *sclr = new ScalarNode(buffer, topNode);
+	mapvalue = (YamlNode *)sclr;
+	composeMappingEvent(map, mapkey, mapvalue);
+      }
+      else if(events[i+1].type == YAML_SEQUENCE_START_EVENT) {
+	SequenceNode *seq = new SequenceNode(topNode);
+	mapvalue = (YamlNode *)seq;
+	composeMappingEvent(map, mapkey, mapvalue);
+	topNode = (YamlNode *)seq;
+      }
+      else
+	throw YamlParserException("Not acceptable value for mapping");
+
       break;
-    case YAML_MAPPING_END_EVENT:
+    }
+    case YAML_MAPPING_END_EVENT: {
       _debug("YAML_MAPPING_END_EVENT");
+      // endMapping();
       break;
+    }
     default:
       throw YamlParserException("Unknown Event");
     }
 
     i++;
   }
+
+  return doc;
 }
 
+
+void YamlParser::startDocument()
+{
+  doc = new YamlDocument();
+
+  if(!doc)
+    throw YamlParserException("Not able to create new document");
+
+  topNode = (YamlNode *)(doc);
+}
+
+void YamlParser::endDocument()
+{
+  if(!doc || !topNode)
+    throw YamlParserException("No document to end");
+
+  if(topNode->getType() != DOCUMENT)
+    throw YamlParserException("Top node is not a document");
+
+  topNode = NULL;
+}
+
+void YamlParser::startSequence()
+{
+  if(!topNode)
+    throw YamlParserException("No container for sequence");
+
+  SequenceNode *seq = new SequenceNode(topNode);
+
+  composeSequence();
+  topNode = (YamlNode *)seq;
+}
+
+void YamlParser::endSequence()
+{
+  if(!topNode)
+    throw YamlParserException("No sequence to stop");
+
+  if(topNode->getType() != SEQUENCE)
+    throw YamlParserException("Top node is not a sequence");
+
+
+  topNode = topNode->getTopNode();
+}
+
+void YamlParser::endMapping() {
+
+  if(!topNode)
+    throw YamlParserException("No mapping to stop");
+
+  if(topNode->getType() != MAPPING)
+    throw YamlParserException("Top node is not a mapping");
+
+  topNode = topNode->getTopNode();
+
+}
+
+void YamlParser::composeScalarEvent(YamlNode *topNode, char *data) 
+{
+  if(!topNode)
+    throw YamlParserException("No container for scalar");
+
+  ScalarNode *sclr = new ScalarNode(data, topNode);
+
+  switch(topNode->getType()) {
+  case DOCUMENT:
+    ((YamlDocument *)(topNode))->addNode(sclr);
+    break;
+  case SEQUENCE:
+    ((SequenceNode *)(topNode))->addNode(sclr);
+    break;
+  case SCALAR:
+  case MAPPING:
+  default:
+    break;
+  }
+  
+}
+
+
+void YamlParser::composeMappingEvent(MappingNode *map, Key key, YamlNode *val)
+{
+  YamlNode *topNode = map->getTopNode();
+
+  if(!topNode)
+    throw YamlParserException("No container for mapping");
+
+  map->setKeyValue(key, val);
+
+  switch(topNode->getType()) {
+  case DOCUMENT:
+    ((YamlDocument *)(topNode))->addNode(map);
+    break;
+  case SEQUENCE:
+    ((SequenceNode *)(topNode))->addNode(map);
+    break;
+  case SCALAR:
+  case MAPPING:
+  default:
+    break;
+  }
+
+}
+
+void YamlParser::composeSequenceEvent(YamlNode *topNode, YamlNode *node) 
+{
+
+  if(!topNode)
+    throw YamlParserException("No container for sequence");
+
+  switch(topNode->getType()) {
+  case DOCUMENT:
+    ((YamlDocument *)(topNode))->addNode(node);
+    break;
+  case SEQUENCE:
+    ((SequenceNode *)(topNode))->addNode(node);
+    break;
+  case SCALAR:
+  case MAPPING:
+  default:
+    break;
+  }
+
+}
 
 }

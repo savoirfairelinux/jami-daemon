@@ -29,6 +29,8 @@
  */
 
 #include "yamlengine.h"
+#include "../global.h"
+
 
 namespace Conf {
 
@@ -36,9 +38,45 @@ YamlEngine::YamlEngine() {}
 
 YamlEngine::~YamlEngine() {}
 
-void YamlEngine::open() {}
+void YamlEngine::openConfigFile() 
+{
 
-void YamlEngine::close() {}
+  Conf::YamlParser *parser;
+
+  try {
+    parser = new Conf::YamlParser("sequence.yml");
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    parser->serializeEvents();
+  }
+  catch(Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    document = parser->composeEvents();
+  }
+  catch(Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    delete parser;
+    parser = NULL;
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+}
+
+void YamlEngine::closeConfigFile() 
+{
+  
+}
 
 void YamlEngine::read() {}
 
