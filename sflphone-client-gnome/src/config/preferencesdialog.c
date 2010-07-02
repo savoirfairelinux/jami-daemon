@@ -82,15 +82,17 @@ set_md5_hash_cb (GtkWidget *widget UNUSED, gpointer data UNUSED)
 static void
 start_hidden (void)
 {
-  dbus_start_hidden ();
+	gboolean currentstate = eel_gconf_get_integer (START_HIDDEN);
+	eel_gconf_set_integer (START_HIDDEN, !currentstate);
 }
 
 static void
 set_popup_mode (GtkWidget *widget, gpointer *userdata)
 {
-  if (dbus_popup_mode () || gtk_toggle_button_get_active (
-      GTK_TOGGLE_BUTTON (widget)))
-    dbus_switch_popup_mode ();
+	gboolean currentstate = eel_gconf_get_integer (POPUP_ON_CALL);
+	if (currentstate || gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
+		eel_gconf_set_integer (POPUP_ON_CALL, !currentstate);
+	}
 }
 
 void
@@ -193,16 +195,19 @@ create_general_settings ()
   gtk_table_attach (GTK_TABLE(table), neverpopupwindow, 0, 1, 2, 3, GTK_EXPAND
       | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
 
-  // Toggle according to the user configuration
-  dbus_popup_mode () ? gtk_toggle_button_set_active (
-      GTK_TOGGLE_BUTTON (popupwindow), TRUE) : gtk_toggle_button_set_active (
-      GTK_TOGGLE_BUTTON (neverpopupwindow), TRUE);
+	// Toggle according to the user configuration
+	eel_gconf_get_integer (POPUP_ON_CALL) ? gtk_toggle_button_set_active (
+												GTK_TOGGLE_BUTTON (popupwindow), 
+												TRUE) : 
+											gtk_toggle_button_set_active (
+												GTK_TOGGLE_BUTTON (neverpopupwindow), 
+												TRUE);
 
   starthidden = gtk_check_button_new_with_mnemonic (
       _("Hide SFLphone window on _startup"));
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(starthidden),
-      dbus_is_start_hidden ());
+      eel_gconf_get_integer (START_HIDDEN));
   g_signal_connect(G_OBJECT (starthidden) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
   gtk_table_attach (GTK_TABLE(table), starthidden, 0, 1, 3, 4, GTK_EXPAND
       | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);

@@ -204,7 +204,6 @@ statusicon_set_tooltip()
     g_free(tip);
 
   }
-
 }
 
 void

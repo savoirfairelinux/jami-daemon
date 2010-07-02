@@ -415,12 +415,6 @@ void dbus_set_searchbar(  );
 int dbus_get_searchbar( void );
 
 /**
- * ConfigurationManager - Configure the start-up option
- * At startup, SFLphone can be displayed or start hidden in the system tray
- */
-void dbus_start_hidden( void );
-
-/**
  * ConfigurationManager - Gives the maximum number of days the user wants to have in the history
  * @return double The maximum number of days
  */
@@ -434,27 +428,6 @@ void dbus_set_history_limit (const guint days);
 void dbus_set_history_enabled (void);
 
 gchar* dbus_get_history_enabled (void);
-
-/**
- * ConfigurationManager - Configure the start-up option
- * @return int	1 if SFLphone should start in the system tray
- *	        0 otherwise
- */
-int dbus_is_start_hidden( void );
-
-/**
- * ConfigurationManager - Configure the popup behaviour
- * When SFLphone is in the system tray, you can configure when it popups
- * Never or only on incoming calls
- */
-void dbus_switch_popup_mode( void );
-
-/**
- * ConfigurationManager - Configure the popup behaviour
- * @return int	1 if it should popup on incoming calls
- *		0 if it should never popups
- */
-int dbus_popup_mode( void );
 
 /**
  * ConfigurationManager - Returns the selected audio manager

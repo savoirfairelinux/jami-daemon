@@ -121,7 +121,7 @@ main (int argc, char *argv[])
 
       create_main_window ();
 
-      if (eel_gconf_get_integer (SHOW_STATUSICON) && dbus_is_start_hidden ())
+      if (eel_gconf_get_integer (SHOW_STATUSICON) && eel_gconf_get_integer (START_HIDDEN))
         {
           gtk_widget_hide (GTK_WIDGET( get_main_window() ));
           set_minimized (TRUE);

@@ -136,7 +136,7 @@ log4c_category_t* log4c_sfl_gtk_category;
 /** Tells if the main window is reduced to the system tray or not */
 #define MINIMIZED	      TRUE
 /** Behaviour of the main window on incoming calls */
-#define __POPUP_WINDOW  ( dbus_popup_mode() )
+#define __POPUP_WINDOW  (eel_gconf_get_integer (POPUP_ON_CALL))
 /** Show/Hide the alsa configuration panel */
 #define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
 /** Show/Hide the volume controls */
@@ -190,5 +190,7 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"	
 #define SHOW_STATUSICON				CONF_PREFIX "/state/statusicon"	
 #define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
+#define START_HIDDEN				CONF_PREFIX "/state/start_hidden"
+#define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
 
 #endif

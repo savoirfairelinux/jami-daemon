@@ -1915,58 +1915,6 @@ dbus_get_history_limit(void)
 }
 
 void
-dbus_start_hidden(void)
-{
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_start_hidden(
-      configurationManagerProxy, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-}
-
-int
-dbus_is_start_hidden(void)
-{
-  GError* error = NULL;
-  int state;
-  org_sflphone_SFLphone_ConfigurationManager_is_start_hidden(
-      configurationManagerProxy, &state, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-  return state;
-}
-
-int
-dbus_popup_mode(void)
-{
-  GError* error = NULL;
-  int state;
-  org_sflphone_SFLphone_ConfigurationManager_popup_mode(
-      configurationManagerProxy, &state, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-  return state;
-}
-
-void
-dbus_switch_popup_mode(void)
-{
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_switch_popup_mode(
-      configurationManagerProxy, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-}
-
-void
 dbus_set_audio_manager(int api)
 {
   GError* error = NULL;
