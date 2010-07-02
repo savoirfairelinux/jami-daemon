@@ -1726,32 +1726,6 @@ dbus_set_searchbar()
     }
 }
 
-int
-dbus_get_volume_controls()
-{
-  int state;
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_get_volume_controls(
-      configurationManagerProxy, &state, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-  return state;
-}
-
-void
-dbus_set_volume_controls(gboolean display)
-{
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_set_volume_controls(
-      configurationManagerProxy, display, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-}
-
 void
 dbus_join_participant(const gchar* sel_callID, const gchar* drag_callID)
 {

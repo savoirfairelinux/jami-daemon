@@ -767,7 +767,7 @@ select_audio_manager( void )
 		if (gtk_toggle_action_get_active ( GTK_TOGGLE_ACTION (volumeToggle)))
 		{
 			main_window_volume_controls(FALSE);
-			dbus_set_volume_controls (FALSE);
+			eel_gconf_set_integer (SHOW_VOLUME_CONTROLS, FALSE);
 			gtk_toggle_action_set_active ( GTK_TOGGLE_ACTION (volumeToggle), FALSE);
 		}
 		gtk_action_set_sensitive (GTK_ACTION (volumeToggle), FALSE);

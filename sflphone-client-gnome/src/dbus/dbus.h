@@ -415,18 +415,6 @@ void dbus_set_searchbar(  );
 int dbus_get_searchbar( void );
 
 /**
- * ConfigurationManager - Set the volume controls visible or not
- */
-void dbus_set_volume_controls (gboolean display);
-
-/**
- * ConfigurationManager - Tells if the user wants to display the volume controls or not
- * @return int 1 if the controls have to be displayed
- *	       0 otherwise
- */
-int dbus_get_volume_controls( void );
-
-/**
  * ConfigurationManager - Configure the start-up option
  * At startup, SFLphone can be displayed or start hidden in the system tray
  */

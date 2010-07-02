@@ -140,7 +140,7 @@ log4c_category_t* log4c_sfl_gtk_category;
 /** Show/Hide the alsa configuration panel */
 #define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
 /** Show/Hide the volume controls */
-#define SHOW_VOLUME	(dbus_get_volume_controls() && SHOW_ALSA_CONF)
+#define SHOW_VOLUME	(eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && SHOW_ALSA_CONF)
 
 /** Audio Managers */
 #define ALSA	      0
@@ -187,6 +187,7 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
 /** Show/Hide the dialpad */
 #define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"	
+#define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"	
 #define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
 
 #endif

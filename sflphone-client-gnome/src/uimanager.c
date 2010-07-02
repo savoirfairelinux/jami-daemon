@@ -353,7 +353,7 @@ volume_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
     return;
   main_window_volume_controls(toggled);
   if (toggled || SHOW_VOLUME)
-    dbus_set_volume_controls(toggled);
+	  eel_gconf_set_integer (SHOW_VOLUME_CONTROLS, toggled);
 }
 
 static void
