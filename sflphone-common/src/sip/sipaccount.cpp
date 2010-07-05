@@ -74,11 +74,10 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 	, _stunServer("")
 	, _tlsEnabled(false)
 	, _stunEnabled(false)
-	, _routeset("")
+	  // , _routeSet("")
 	  // , _realm("")
 	, _authenticationUsename("")
-	, _tlsListenerPort("5061")
-	, _dtmfType("")
+	  // , _tlsListenerPort("5061")
 	, _srtpEnabled(false)
 	, _srtpKeyExchange("")
 	, _srtpFallback(false)
@@ -134,7 +133,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(map->getValue(hostnameKey));
   _hostname = val->getValue();
   val = (Conf::ScalarNode *)(map->getValue(accountEnableKey));
-  _enabled = val->getValue().compare("true") ? true : false;
+  _enabled = (val->getValue().compare("true") == 0) ? true : false;
   //  val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
   
   val = (Conf::ScalarNode *)(map->getValue(codecsKey));
@@ -152,9 +151,9 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(map->getValue(publishPortKey));
   _publishedPort = atoi(val->getValue().data());
   val = (Conf::ScalarNode *)(map->getValue(sameasLocalKey));
-  _publishedSameasLocal = val->getValue().compare("true") ? true : false;
+  _publishedSameasLocal = (val->getValue().compare("true") == 0) ? true : false;
   val = (Conf::ScalarNode *)(map->getValue(resolveOnceKey));
-  _resolveOnce = val->getValue().compare("true") ? true : false;
+  _resolveOnce = (val->getValue().compare("true") == 0) ? true : false;
   val = (Conf::ScalarNode *)(map->getValue(dtmfTypeKey));
   // _dtmfType = atoi(val->getValue();
 
@@ -164,23 +163,23 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   srtpMap = (Conf::MappingNode *)(map->getValue(srtpKey));
 
   val = (Conf::ScalarNode *)(srtpMap->getValue(srtpEnableKey));
-  _srtpEnabled = val->getValue().compare("true") ? true : false;
+  _srtpEnabled = (val->getValue().compare("true") == 0) ? true : false;
   val = (Conf::ScalarNode *)(srtpMap->getValue(keyExchangeKey));
   _srtpKeyExchange = val->getValue();
   val = (Conf::ScalarNode *)(srtpMap->getValue(rtpFallbackKey));
-  _srtpFallback = val->getValue().compare("true") ? true : false;
+  _srtpFallback = (val->getValue().compare("true") == 0) ? true : false;
   
   // get zrtp submap
   zrtpMap = (Conf::MappingNode *)(map->getValue(zrtpKey));
 
   val = (Conf::ScalarNode *)(zrtpMap->getValue(displaySasKey));
-  _zrtpDisplaySas = val->getValue().compare("true") ? true : false;
+  _zrtpDisplaySas = (val->getValue().compare("true") == 0) ? true : false;
   val = (Conf::ScalarNode *)(zrtpMap->getValue(displaySasOnceKey));
-  _zrtpDisplaySasOnce = val->getValue().compare("true") ? true : false;
+  _zrtpDisplaySasOnce = (val->getValue().compare("true") == 0) ? true : false;
   val = (Conf::ScalarNode *)(zrtpMap->getValue(helloHashEnabledKey));
-  _zrtpHelloHash = val->getValue().compare("true") ? true : false;
+  _zrtpHelloHash = (val->getValue().compare("true") == 0) ? true : false;
   val = (Conf::ScalarNode *)(zrtpMap->getValue(notSuppWarningKey));
-  _zrtpNotSuppWarning = val->getValue().compare("true") ? true : false;
+  _zrtpNotSuppWarning = (val->getValue().compare("true") == 0) ? true : false;
 
   // get tls submap
   tlsMap = (Conf::MappingNode *)(map->getValue(tlsKey));
@@ -205,13 +204,13 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(tlsMap->getValue(privateKeyKey));
   _tlsPrivateKeyFile = val->getValue();
   val = (Conf::ScalarNode *)(tlsMap->getValue(requireCertifKey));
-  _tlsRequireClientCertificate = val->getValue().compare("true") ? true : false;
+  _tlsRequireClientCertificate = (val->getValue().compare("true") == 0) ? true : false;
   val = (Conf::ScalarNode *)(tlsMap->getValue(serverKey));
   _tlsServerName = val->getValue();
   val = (Conf::ScalarNode *)(tlsMap->getValue(verifyClientKey));
-  _tlsVerifyServer = val->getValue().compare("true") ? true : false;
+  _tlsVerifyServer = (val->getValue().compare("true") == 0) ? true : false;
   val = (Conf::ScalarNode *)(tlsMap->getValue(verifyServerKey));
-  _tlsVerifyClient = val->getValue().compare("true") ? true : false;
+  _tlsVerifyClient = (val->getValue().compare("true") == 0) ? true : false;
 }
 
 

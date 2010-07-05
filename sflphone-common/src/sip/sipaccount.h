@@ -157,6 +157,7 @@ class SIPAccount : public Account
         inline void setAuthenticationUsername(const std::string& username) { _authenticationUsername = username; }
         
         inline bool isResolveOnce(void) { return _resolveOnce; }
+	void setResolveOnce(bool reslv) { _resolveOnce = reslv; }
         
 
 	/**
@@ -242,7 +243,6 @@ class SIPAccount : public Account
          * account is set to OTHER.
          */
         inline bool isStunEnabled(void) { return (_transportType == PJSIP_TRANSPORT_START_OTHER) ? true: false; }
-         
                 
         /*
          * @return pj_str_t "From" uri based on account information.
@@ -375,8 +375,74 @@ class SIPAccount : public Account
         std::string getTransportMapKey(void);
 
         DtmfType getDtmfType(void) { return _dtmfType; }
-
         void setDtmfType(DtmfType type) { _dtmfType = type; }
+
+	std::string getDisplayName(void) { return _displayName; }
+	void setDisplayName(std::string name) { _displayName = name ;}
+
+	bool getSrtpEnable(void) { return _srtpEnabled; }
+	void setSrtpEnable(bool enabl) { _srtpEnabled = enabl; }
+
+	std::string getSrtpKeyExchange(void) { return _srtpKeyExchange; }
+	void setSrtpKeyExchange(std::string key) { _srtpKeyExchange = key; }
+
+	bool getSrtpFallback(void) { return _srtpFallback; }
+	void setSrtpFallback(bool fallback) { _srtpFallback = fallback; }
+	
+	bool getZrtpDisplaySas(void) { return _zrtpDisplaySas; }
+	void setZrtpDisplaySas(bool sas) { _zrtpDisplaySas = sas; }
+
+	bool getZrtpDiaplaySasOnce(void) { return _zrtpDisplaySasOnce; }
+	void setZrtpDiaplaySasOnce(bool sasonce) { _zrtpDisplaySasOnce = sasonce; }
+
+	bool getZrtpNotSuppWarning(void) { return _zrtpDisplaySasOnce; }
+	void setZrtpNotSuppWarning(bool warning) { _zrtpDisplaySasOnce = _zrtpNotSuppWarning; }
+
+	bool getZrtpHelloHash(void) { return _zrtpHelloHash; }
+	void setZrtpHelloHash(bool hellohash) { _zrtpHelloHash = hellohash; }
+	// void setSrtpKeyExchange
+
+	std::string getTlsEnable(void) {return _tlsEnable; }
+	void setTlsEnable(std::string enabl) { _tlsEnable = enabl; }
+
+	std::string getTlsCaListFile(void) { return _tlsCaListFile; }
+	void setTlsCaListFile(std::string calist) { _tlsCaListFile = calist; }
+ 
+	std::string getTlsCertificateFile(void) { return _tlsCertificateFile; }
+	void setTlsCertificateFile(std::string cert) { _tlsCertificateFile = cert; }
+
+	std::string getTlsPrivateKeyFile(void) { return _tlsPrivateKeyFile; }
+	void setTlsPrivateKeyFile(std::string priv) { _tlsPrivateKeyFile = priv; }
+
+	std::string getTlsPassword(void) { return _tlsPassword; }
+	void setTlsPassword(std::string pass) { _tlsPassword = pass; }
+
+	std::string getTlsMethod(void) { return _tlsMethod; }
+	void setTlsMethod(std::string meth) { _tlsMethod = meth; }
+
+	std::string getTlsCiphers(void) { return _tlsCiphers; }
+	void setTlsCiphers(std::string cipher) { _tlsCiphers = cipher; }
+
+	std::string getTlsServerName(void) { return _tlsServerName; }
+	void setTlsServerName(std::string name) { _tlsServerName = name; }
+
+	bool getTlsVerifyServer(void) { return _tlsVerifyServer; }
+	void setTlsVerifyServer(bool verif) { _tlsVerifyServer = verif; }
+
+	bool getTlsVerifyClient(void) { return _tlsVerifyClient; }
+	void setTlsVerifyClient(bool verif) { _tlsVerifyClient = verif; }
+
+	bool getTlsRequireClientCertificate(void) { return _tlsRequireClientCertificate; }
+	void setTlsRequireClientCertificate(bool require) { _tlsRequireClientCertificate = require; }
+
+	std::string getTlsNegotiationTimeoutSec(void) { return _tlsNegotiationTimeoutSec; }
+	void setTlsNegotiationTimeoutSec(std::string timeout) { _tlsNegotiationTimeoutSec = timeout; }
+
+	std::string getTlsNegotiationTimeoutMsec(void) { return _tlsNegotiationTimeoutMsec; }
+	void setTlsNegotiationTimeoutMsec(std::string timeout) { _tlsNegotiationTimeoutMsec = timeout; }
+
+	std::string getUseragent(void) { return _useragent; }
+	void setUseragent(std::string ua) { _useragent = ua; }
 
   private: 
 
@@ -477,26 +543,26 @@ class SIPAccount : public Account
         std::string _displayName;
 
 	std::string _tlsEnable;
-	std::string _tlsPortStr;// = Manager::instance().getConfigString(_accountID, TLS_LISTENER_PORT);
-	std::string _tlsCaListFile;//  = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
-	std::string _tlsCertificateFile;// = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
-	std::string _tlsPrivateKeyFile;// = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
-	std::string _tlsPassword;// = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
-	std::string _tlsMethod;// = Manager::instance().getConfigString (_accountID, TLS_METHOD);
-	std::string _tlsCiphers;// = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
-	std::string _tlsServerName;// = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
-	bool _tlsVerifyServer;// = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
-	bool _tlsVerifyClient;// = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
-	bool _tlsRequireClientCertificate;// = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
-	std::string _tlsNegotiationTimeoutSec;// = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_SEC);
-	std::string _tlsNegotiationTimeoutMsec;// = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_MSEC);
+	std::string _tlsPortStr;
+	std::string _tlsCaListFile;
+	std::string _tlsCertificateFile;
+	std::string _tlsPrivateKeyFile;
+	std::string _tlsPassword;
+	std::string _tlsMethod;
+	std::string _tlsCiphers;
+	std::string _tlsServerName;
+	bool _tlsVerifyServer;
+	bool _tlsVerifyClient;
+	bool _tlsRequireClientCertificate;
+	std::string _tlsNegotiationTimeoutSec;
+	std::string _tlsNegotiationTimeoutMsec;
 
-	std::string _stunServer; // = Manager::instance().getConfigString (_accountID, STUN_SERVER);
+	std::string _stunServer;
 
-	bool _tlsEnabled; // = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
-	bool _stunEnabled; // = Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
+	bool _tlsEnabled;
+	bool _stunEnabled;
 
-	std::string _routeset;
+	// std::string _routeset;
 
 	// std::string _realm;
 	std::string _authenticationUsename;
@@ -514,6 +580,8 @@ class SIPAccount : public Account
 	bool _zrtpDisplaySasOnce;
 	bool _zrtpHelloHash;
 	bool _zrtpNotSuppWarning;
+
+	std::string _useragent;
 
 
 };

@@ -3334,136 +3334,101 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 	(accountID == IP2IP_PROFILE) ? a.insert(
 			std::pair<std::string, std::string>(CONFIG_ACCOUNT_ALIAS,
 					DIRECT_IP_CALL)) : a.insert(std::pair<std::string,
-			std::string>(CONFIG_ACCOUNT_ALIAS, getConfigString(accountID,
-			CONFIG_ACCOUNT_ALIAS)));
+								    std::string>(CONFIG_ACCOUNT_ALIAS, account->getAlias()));
 
-	a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_ENABLE,
-			getConfigString(accountID, CONFIG_ACCOUNT_ENABLE)));
-	a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_RESOLVE_ONCE,
-			getConfigString(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE)));
-	a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_TYPE,
-			getConfigString(accountID, CONFIG_ACCOUNT_TYPE)));
-	a.insert(std::pair<std::string, std::string>(HOSTNAME, getConfigString(
-			accountID, HOSTNAME)));
-	a.insert(std::pair<std::string, std::string>(USERNAME, getConfigString(
-			accountID, USERNAME)));
-	a.insert(std::pair<std::string, std::string>(ROUTESET, getConfigString(
-			accountID, ROUTESET)));
-	a.insert(std::pair<std::string, std::string>(PASSWORD, getConfigString(
-			accountID, PASSWORD)));
-	a.insert(std::pair<std::string, std::string>(REALM, getConfigString(
-			accountID, REALM)));
-	a.insert(std::pair<std::string, std::string>(USERAGENT, getConfigString(
-			accountID, USERAGENT)));
-	a.insert(std::pair<std::string, std::string>(AUTHENTICATION_USERNAME,
-			getConfigString(accountID, AUTHENTICATION_USERNAME)));
-	a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_MAILBOX,
-			getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)));
-	a.insert(std::pair<std::string, std::string>(
-			CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString(accountID,
-					CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
-	a.insert(std::pair<std::string, std::string>(LOCAL_INTERFACE,
-			getConfigString(accountID, LOCAL_INTERFACE)));
-	a.insert(std::pair<std::string, std::string>(PUBLISHED_SAMEAS_LOCAL,
-			getConfigString(accountID, PUBLISHED_SAMEAS_LOCAL)));
-	a.insert(std::pair<std::string, std::string>(PUBLISHED_ADDRESS,
-			getConfigString(accountID, PUBLISHED_ADDRESS)));
-	a.insert(std::pair<std::string, std::string>(LOCAL_PORT, getConfigString(
-			accountID, LOCAL_PORT)));
-	a.insert(std::pair<std::string, std::string>(PUBLISHED_PORT,
-			getConfigString(accountID, PUBLISHED_PORT)));
-	a.insert(std::pair<std::string, std::string>(DISPLAY_NAME, getConfigString(
-			accountID, DISPLAY_NAME)));
-	a.insert(std::pair<std::string, std::string>(STUN_ENABLE, getConfigString(
-			accountID, STUN_ENABLE)));
-	a.insert(std::pair<std::string, std::string>(STUN_SERVER, getConfigString(
-			accountID, STUN_SERVER)));
-	a.insert(std::pair<std::string, std::string>(ACCOUNT_DTMF_TYPE, getConfigString(
-				accountID, ACCOUNT_DTMF_TYPE)));
+	  a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_ENABLE, account->isEnabled() ? "true" : "false"));
+	  a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_TYPE, account->getType()));
+	  a.insert(std::pair<std::string, std::string>(HOSTNAME, account->getHostname()));
+	  a.insert(std::pair<std::string, std::string>(USERNAME, account->getUsername()));
+	  a.insert(std::pair<std::string, std::string>(PASSWORD, account->getPassword()));
 
-	RegistrationState state = Unregistered;
-	std::string registrationStateCode;
-	std::string registrationStateDescription;
 
-	if (account != NULL) {
-		if (accountID == IP2IP_PROFILE) {
-			registrationStateCode = EMPTY_FIELD;
-			registrationStateDescription = "Direct IP call";
-		} else {
-			state = account->getRegistrationState();
-			int code = account->getRegistrationStateDetailed().first;
-			std::stringstream out;
-			out << code;
-			registrationStateCode = out.str();
-			registrationStateDescription
-					= account->getRegistrationStateDetailed().second;
-		}
-	}
+	  // a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_MAILBOX,
+	  // getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)));
+	  // a.insert(std::pair<std::string, std::string>(DISPLAY_NAME, getConfigString(
+	  // accountID, DISPLAY_NAME)));
 
-	(accountID == IP2IP_PROFILE) ? a.insert(
-			std::pair<std::string, std::string>(REGISTRATION_STATUS, "READY"))
-			: a.insert(std::pair<std::string, std::string>(REGISTRATION_STATUS,
-					mapStateNumberToString(state)));
+	  RegistrationState state = Unregistered;
+	  std::string registrationStateCode;
+	  std::string registrationStateDescription;
 
-	a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_CODE,
-			registrationStateCode));
-	a.insert(std::pair<std::string, std::string>(
-			REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
-	a.insert(std::pair<std::string, std::string>(SRTP_KEY_EXCHANGE,
-			getConfigString(accountID, SRTP_KEY_EXCHANGE)));
-	a.insert(std::pair<std::string, std::string>(SRTP_ENABLE, getConfigString(
-			accountID, SRTP_ENABLE)));
-	a.insert(std::pair<std::string, std::string>(SRTP_RTP_FALLBACK,
-			getConfigString(accountID, SRTP_RTP_FALLBACK)));
-	a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS,
-			getConfigString(accountID, ZRTP_DISPLAY_SAS)));
-	a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS_ONCE,
-			getConfigString(accountID, ZRTP_DISPLAY_SAS_ONCE)));
-	a.insert(std::pair<std::string, std::string>(ZRTP_HELLO_HASH,
-			getConfigString(accountID, ZRTP_HELLO_HASH)));
-	a.insert(std::pair<std::string, std::string>(ZRTP_NOT_SUPP_WARNING,
-			getConfigString(accountID, ZRTP_NOT_SUPP_WARNING)));
+	  if (account != NULL) {
+	    if (accountID == IP2IP_PROFILE) {
+	      registrationStateCode = EMPTY_FIELD;
+	      registrationStateDescription = "Direct IP call";
+	    } else {
+	      state = account->getRegistrationState();
+	      int code = account->getRegistrationStateDetailed().first;
+	      std::stringstream out;
+	      out << code;
+	      registrationStateCode = out.str();
+	      registrationStateDescription = account->getRegistrationStateDetailed().second;
+	    }
+	  }
 
-	// TLS listener is unique and parameters are modified through IP2IP_PROFILE
-	a.insert(std::pair<std::string, std::string>(TLS_LISTENER_PORT,
-			Manager::instance().getConfigString(IP2IP_PROFILE,
-					TLS_LISTENER_PORT)));
-	a.insert(std::pair<std::string, std::string>(TLS_ENABLE,
-			Manager::instance().getConfigString(accountID, TLS_ENABLE)));
-	a.insert(std::pair<std::string, std::string>(TLS_CA_LIST_FILE,
-			Manager::instance().getConfigString(accountID, TLS_CA_LIST_FILE)));
-	a.insert(
-			std::pair<std::string, std::string>(TLS_CERTIFICATE_FILE,
-					Manager::instance().getConfigString(accountID,
-							TLS_CERTIFICATE_FILE)));
-	a.insert(
-			std::pair<std::string, std::string>(TLS_PRIVATE_KEY_FILE,
-					Manager::instance().getConfigString(accountID,
-							TLS_PRIVATE_KEY_FILE)));
-	a.insert(std::pair<std::string, std::string>(TLS_PASSWORD,
-			Manager::instance().getConfigString(accountID, TLS_PASSWORD)));
-	a.insert(std::pair<std::string, std::string>(TLS_METHOD,
-			Manager::instance().getConfigString(accountID, TLS_METHOD)));
-	a.insert(std::pair<std::string, std::string>(TLS_CIPHERS,
-			Manager::instance().getConfigString(accountID, TLS_CIPHERS)));
-	a.insert(std::pair<std::string, std::string>(TLS_SERVER_NAME,
-			Manager::instance().getConfigString(accountID, TLS_SERVER_NAME)));
-	a.insert(std::pair<std::string, std::string>(TLS_VERIFY_SERVER,
-			Manager::instance().getConfigString(accountID, TLS_VERIFY_SERVER)));
-	a.insert(std::pair<std::string, std::string>(TLS_VERIFY_CLIENT,
-			Manager::instance().getConfigString(accountID, TLS_VERIFY_CLIENT)));
-	a.insert(std::pair<std::string, std::string>(
-			TLS_REQUIRE_CLIENT_CERTIFICATE,
-			Manager::instance().getConfigString(accountID,
-					TLS_REQUIRE_CLIENT_CERTIFICATE)));
-	a.insert(std::pair<std::string, std::string>(TLS_NEGOTIATION_TIMEOUT_SEC,
-			Manager::instance().getConfigString(accountID,
-					TLS_NEGOTIATION_TIMEOUT_SEC)));
-	a.insert(std::pair<std::string, std::string>(TLS_NEGOTIATION_TIMEOUT_MSEC,
-			Manager::instance().getConfigString(accountID,
-					TLS_NEGOTIATION_TIMEOUT_MSEC)));
+	  (accountID == IP2IP_PROFILE) ? a.insert(
+						    std::pair<std::string, std::string>(REGISTRATION_STATUS, "READY"))
+	    : a.insert(std::pair<std::string, std::string>(REGISTRATION_STATUS,
+							   mapStateNumberToString(state)));
+	    
+	  a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_CODE,
+						       registrationStateCode));
+	  a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
 
-	return a;
+	  // Add sip specific details
+	  if(account->getType().compare("SIP") == 0) {
+
+	    SIPAccount *sipaccount = (SIPAccount *)account;
+	    
+	    a.insert(std::pair<std::string, std::string>(ROUTESET, sipaccount->getRouteSet()));
+	    a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_RESOLVE_ONCE, sipaccount->isResolveOnce() ? "true" : "false"));
+	    // a.insert(std::pair<std::string, std::string>(REALM, account->
+	    a.insert(std::pair<std::string, std::string>(USERAGENT, sipaccount->getUseragent()));
+		     // a.insert(std::pair<std::string, std::string>(AUTHENTICATION_USERNAME, getConfigString(accountID, AUTHENTICATION_USERNAME)));
+	    a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_REGISTRATION_EXPIRE, sipaccount->getRegistrationExpire()));
+	    a.insert(std::pair<std::string, std::string>(LOCAL_INTERFACE, sipaccount->getLocalInterface()));				       
+	    a.insert(std::pair<std::string, std::string>(PUBLISHED_SAMEAS_LOCAL, sipaccount->getPublishedSameasLocal() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(PUBLISHED_ADDRESS, sipaccount->getPublishedAddress()));
+	    std::stringstream localport;
+	    localport << sipaccount->getLocalPort();
+	    a.insert(std::pair<std::string, std::string>(LOCAL_PORT, localport.str()));
+	    std::stringstream publishedport;
+	    publishedport << sipaccount->getPublishedPort();
+	    a.insert(std::pair<std::string, std::string>(PUBLISHED_PORT, publishedport.str()));
+	    a.insert(std::pair<std::string, std::string>(STUN_ENABLE, sipaccount->isStunEnabled() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(STUN_SERVER, std::string(sipaccount->getStunServerName().ptr, sipaccount->getStunServerName().slen)));
+	    a.insert(std::pair<std::string, std::string>(ACCOUNT_DTMF_TYPE, (sipaccount->getDtmfType() == 0) ? "0" : "1"));
+
+	    a.insert(std::pair<std::string, std::string>(SRTP_KEY_EXCHANGE, sipaccount->getSrtpKeyExchange()));
+	    a.insert(std::pair<std::string, std::string>(SRTP_ENABLE, sipaccount->getSrtpEnable() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(SRTP_RTP_FALLBACK, sipaccount->getSrtpFallback() ? "true" : "false"));
+ 
+	    a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS, sipaccount->getZrtpDisplaySas() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS_ONCE, sipaccount->getZrtpDiaplaySasOnce() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(ZRTP_HELLO_HASH, sipaccount->getZrtpHelloHash() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(ZRTP_NOT_SUPP_WARNING, sipaccount->getZrtpNotSuppWarning() ? "true" : "false"));
+	    
+	    // TLS listener is unique and parameters are modified through IP2IP_PROFILE
+	    std::stringstream tlslistenerport;
+	    tlslistenerport << sipaccount->getTlsListenerPort();
+	    a.insert(std::pair<std::string, std::string>(TLS_LISTENER_PORT, tlslistenerport.str()));
+	    a.insert(std::pair<std::string, std::string>(TLS_ENABLE, sipaccount->getTlsEnable()));
+	    a.insert(std::pair<std::string, std::string>(TLS_CA_LIST_FILE, sipaccount->getTlsCaListFile()));
+	    a.insert(std::pair<std::string, std::string>(TLS_CERTIFICATE_FILE, sipaccount->getTlsCertificateFile()));
+	    a.insert(std::pair<std::string, std::string>(TLS_PRIVATE_KEY_FILE, sipaccount->getTlsPrivateKeyFile()));
+	    a.insert(std::pair<std::string, std::string>(TLS_PASSWORD, sipaccount->getTlsPassword()));
+	    a.insert(std::pair<std::string, std::string>(TLS_METHOD, sipaccount->getTlsMethod()));
+	    a.insert(std::pair<std::string, std::string>(TLS_CIPHERS, sipaccount->getTlsCiphers()));
+	    a.insert(std::pair<std::string, std::string>(TLS_SERVER_NAME, sipaccount->getTlsServerName()));
+	    a.insert(std::pair<std::string, std::string>(TLS_VERIFY_SERVER, sipaccount->getTlsVerifyServer() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(TLS_VERIFY_CLIENT, sipaccount->getTlsVerifyClient() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(TLS_REQUIRE_CLIENT_CERTIFICATE, sipaccount->getTlsRequireClientCertificate() ? "true" : "false"));
+	    a.insert(std::pair<std::string, std::string>(TLS_NEGOTIATION_TIMEOUT_SEC, sipaccount->getTlsNegotiationTimeoutSec()));
+	    a.insert(std::pair<std::string, std::string>(TLS_NEGOTIATION_TIMEOUT_MSEC, sipaccount->getTlsNegotiationTimeoutMsec()));
+
+	  }
+
+	  return a;
 }
 
 /* Transform digest to string.
@@ -3593,7 +3558,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
     // Get the account type
     std::string accountType;
     find_in_map(CONFIG_ACCOUNT_TYPE, accountType)
-    
+
+    Account* account = getAccount(accountID);
+
     std::string alias;
     std::string type;
     std::string hostname;
@@ -3601,7 +3568,6 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
     std::string password;
     std::string mailbox;
     std::string accountEnable;
-
 
     // Account setting common to SIP and IAX
     find_in_map(CONFIG_ACCOUNT_ALIAS, alias)
@@ -3612,16 +3578,25 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
     find_in_map(CONFIG_ACCOUNT_MAILBOX, mailbox);
     find_in_map(CONFIG_ACCOUNT_ENABLE, accountEnable);
 
-    setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
-    setConfig(accountID, CONFIG_ACCOUNT_TYPE, type);
-    setConfig(accountID, HOSTNAME, hostname);
-    setConfig(accountID, USERNAME, username);
-    setConfig(accountID, PASSWORD, password);
-    setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, mailbox);
-    setConfig(accountID, CONFIG_ACCOUNT_ENABLE, accountEnable);
+    account->setAlias(alias);
+    account->setType(type);
+    account->setUsername(username);
+    account->setHostname(hostname);
+    account->setPassword(password);
+    account->setEnabled((accountEnable.compare("true") == 0) ? true : false);
+
+      // setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
+      // setConfig(accountID, CONFIG_ACCOUNT_TYPE, type);
+      // setConfig(accountID, HOSTNAME, hostname);
+      // setConfig(accountID, USERNAME, username);
+      // setConfig(accountID, PASSWORD, password);
+      // setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, mailbox);
+      // setConfig(accountID, CONFIG_ACCOUNT_ENABLE, accountEnable);
 	       
     // SIP specific account settings
     if(accountType == "SIP") {
+
+      SIPAccount *sipaccount = (SIPAccount *)account;
 
         std::string ua_name;
         std::string realm;
@@ -3678,18 +3653,29 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	find_in_map(CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce)
 	find_in_map(CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire)
 
-	setConfig(accountID, DISPLAY_NAME, displayName);
-	setConfig(accountID, ROUTESET, routeset);
-	setConfig(accountID, LOCAL_INTERFACE, localInterface);
-	setConfig(accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
-	setConfig(accountID, PUBLISHED_ADDRESS, publishedAddress);
-	setConfig(accountID, LOCAL_PORT, localPort);
-	setConfig(accountID, PUBLISHED_PORT, publishedPort);
+	sipaccount->setDisplayName(displayName);
+	sipaccount->setRouteSet(routeset);
+	sipaccount->setLocalInterface(localInterface);
+	sipaccount->setPublishedSameasLocal((publishedSameasLocal.compare("true") == 0) ? true : false);
+	sipaccount->setPublishedAddress(publishedAddress);
+	sipaccount->setLocalPort(atoi(localPort.data()));
+	sipaccount->setPublishedPort(atoi(publishedPort.data()));
+	// sipaccount->setStunServerName
+	sipaccount->setResolveOnce((resolveOnce.compare("true")==0) ? true : false);
+	sipaccount->setRegistrationExpire(registrationExpire);
+
+	// setConfig(accountID, DISPLAY_NAME, displayName);
+	// setConfig(accountID, ROUTESET, routeset);
+	// setConfig(accountID, LOCAL_INTERFACE, localInterface);
+	// setConfig(accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
+	// setConfig(accountID, PUBLISHED_ADDRESS, publishedAddress);
+	// setConfig(accountID, LOCAL_PORT, localPort);
+	// setConfig(accountID, PUBLISHED_PORT, publishedPort);
 	setConfig(accountID, STUN_ENABLE, stunEnable);
 	setConfig(accountID, STUN_SERVER, stunServer);
-	setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
-	setConfig(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce);
-        setConfig(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
+	// setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
+	// setConfig(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce);
+        // setConfig(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
 
 	// sip credential
 	find_in_map(REALM, realm)
@@ -3697,8 +3683,10 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	find_in_map(USERAGENT, ua_name)
 
 	setConfig(accountID, REALM, realm);
-	setConfig(accountID, USERAGENT, ua_name);
+	// setConfig(accountID, USERAGENT, ua_name);
 	setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
+
+	sipaccount->setUseragent(ua_name);
 
         // srtp settings
 	find_in_map(SRTP_ENABLE, srtpEnable)
@@ -3709,13 +3697,23 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	find_in_map(ZRTP_HELLO_HASH, zrtpHelloHash)
 	find_in_map(SRTP_KEY_EXCHANGE, srtpKeyExchange)
 
-	setConfig(accountID, SRTP_ENABLE, srtpEnable);
-	setConfig(accountID, SRTP_RTP_FALLBACK, srtpRtpFallback);
-	setConfig(accountID, ZRTP_DISPLAY_SAS, zrtpDisplaySas);
-	setConfig(accountID, ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce);
-	setConfig(accountID, ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning);
-	setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);
-	setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);
+	sipaccount->setSrtpEnable((srtpEnable.compare("true") == 0) ? true : false);
+	sipaccount->setSrtpFallback((srtpRtpFallback.compare("true") == 0) ? true : false);
+	sipaccount->setZrtpDisplaySas((zrtpDisplaySas.compare("true") == 0) ? true : false);
+	sipaccount->setZrtpDiaplaySasOnce((zrtpDisplaySasOnce.compare("true") == 0) ? true : false);
+	sipaccount->setZrtpNotSuppWarning((zrtpNotSuppWarning.compare("true") == 0) ? true : false);
+	sipaccount->setZrtpHelloHash((zrtpHelloHash.compare("true") == 0) ? true : false);
+	// sipaccount->setSrtpKeyExchange((srtpKeyExchange.compare("true") == 0) ? true : false);
+	sipaccount->setSrtpKeyExchange(srtpKeyExchange);
+
+	// setConfig(accountID, SRTP_ENABLE, srtpEnable);
+	// setConfig(accountID, SRTP_RTP_FALLBACK, srtpRtpFallback);
+	// setConfig(accountID, ZRTP_DISPLAY_SAS, zrtpDisplaySas);
+	// setConfig(accountID, ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce);
+	// setConfig(accountID, ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning);
+	// setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);
+	// setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);
+
 	
 	// TLS settings
 	// The TLS listener is unique and globally defined through IP2IP_PROFILE
@@ -3737,23 +3735,43 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	find_in_map(TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec)
 
 
-	// The TLS listener is unique and globally defined through IP2IP_PROFILE
+
 	if (accountID == IP2IP_PROFILE){
-	    setConfig(accountID, TLS_LISTENER_PORT, tlsListenerPort);
+	  sipaccount->setTlsListenerPort(atoi(tlsListenerPort.data()));
 	}
-	setConfig(accountID, TLS_ENABLE, tlsEnable);
-	setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);
-	setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);
-	setConfig(accountID, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile);
-	setConfig(accountID, TLS_PASSWORD, tlsPassword);
-	setConfig(accountID, TLS_METHOD, tlsMethod);
-	setConfig(accountID, TLS_CIPHERS, tlsCiphers);
-	setConfig(accountID, TLS_SERVER_NAME, tlsServerName);
-	setConfig(accountID, TLS_VERIFY_SERVER, tlsVerifyServer);
-	setConfig(accountID, TLS_VERIFY_CLIENT, tlsVerifyClient);
-	setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate);
-	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec);
-	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC,tlsNegotiationTimeoutMsec);
+	sipaccount->setTlsEnable(tlsEnable);
+	sipaccount->setTlsCaListFile(tlsCaListFile);
+	sipaccount->setTlsCertificateFile(tlsCertificateFile);
+	sipaccount->setTlsPrivateKeyFile(tlsPrivateKeyFile);
+	sipaccount->setTlsPassword(tlsPassword);
+	sipaccount->setTlsMethod(tlsMethod);
+	sipaccount->setTlsCiphers(tlsCiphers);
+	sipaccount->setTlsServerName(tlsServerName);
+	sipaccount->setTlsVerifyServer(tlsVerifyServer.compare("true") ? true : false);
+	sipaccount->setTlsVerifyClient(tlsVerifyServer.compare("true") ? true : false);
+	sipaccount->setTlsRequireClientCertificate(tlsRequireClientCertificate.compare("true") ? true : false);
+	sipaccount->setTlsNegotiationTimeoutSec(tlsNegotiationTimeoutSec);
+	sipaccount->setTlsNegotiationTimeoutMsec(tlsNegotiationTimeoutMsec);
+
+
+
+	// The TLS listener is unique and globally defined through IP2IP_PROFILE
+	// if (accountID == IP2IP_PROFILE){
+	//    setConfig(accountID, TLS_LISTENER_PORT, tlsListenerPort);
+	// }
+	// setConfig(accountID, TLS_ENABLE, tlsEnable);
+	// setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);
+	// setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);
+	// setConfig(accountID, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile);
+	// setConfig(accountID, TLS_PASSWORD, tlsPassword);
+	// setConfig(accountID, TLS_METHOD, tlsMethod);
+	// setConfig(accountID, TLS_CIPHERS, tlsCiphers);
+	// setConfig(accountID, TLS_SERVER_NAME, tlsServerName);
+	// setConfig(accountID, TLS_VERIFY_SERVER, tlsVerifyServer);
+	// setConfig(accountID, TLS_VERIFY_CLIENT, tlsVerifyClient);
+	// setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate);
+	// setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec);
+	// setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC,tlsNegotiationTimeoutMsec);
 
 	if (!getMd5CredentialHashing()) {
 	  setConfig(accountID, PASSWORD, password);

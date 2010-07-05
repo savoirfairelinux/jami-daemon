@@ -197,6 +197,8 @@ class Account : public Serializable{
          */
         bool isEnabled() { return _enabled; }
 
+	void setEnabled(bool enabl) { _enabled = enabl; }
+
         /**
          * Get the registration state of the specified link
          * @return RegistrationState	The registration state of underlying VoIPLink
