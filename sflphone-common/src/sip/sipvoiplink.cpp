@@ -266,6 +266,8 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
         , _regPort (atoi (DEFAULT_SIP_PORT))
         , _clients (0)
 {
+
+  _debug("SIPVOIPLINK");
     // to get random number for RANDOM_PORT
     srand (time (NULL));
 

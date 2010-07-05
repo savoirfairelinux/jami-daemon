@@ -113,8 +113,12 @@ ManagerImpl::~ManagerImpl (void) {
 
 void ManagerImpl::init () {
 
+  _debug("Manager: Init");
+
 	// Load accounts, init map
 	loadAccountMap();
+
+	_debug("Manager: account map loaded");
 
 	initVolume();
 
@@ -1773,6 +1777,9 @@ void ManagerImpl::startVoiceMessageNotification (const AccountID& accountId,
 }
 
 void ManagerImpl::connectionStatusNotification () {
+  
+        _debug("Manager: connectionStatusNotification");
+
 	if (_dbus != NULL) {
 		_dbus->getConfigurationManager()->accountsChanged();
 	}
@@ -3980,11 +3987,12 @@ std::vector<std::string> ManagerImpl::loadAccountOrder (void) {
 
 short ManagerImpl::loadAccountMap () {
 
-	_debug ("Loading account map");
+	_debug ("Manager: Loading account map");
 
 
-	buildAccounts();
+	int nbAccount = buildAccounts();
 
+	/*
 	short nbAccount = 0;
 	TokenList sections = _config.getSections();
 	std::string accountType;
@@ -4060,14 +4068,17 @@ short ManagerImpl::loadAccountMap () {
 	}
 
 	_debug ("nb account loaded %i \n", nbAccount);
-
+	*/
 	return nbAccount;
 }
 
-void ManagerImpl::buildAccounts() {
+short ManagerImpl::buildAccounts() {
+
+  _debug("Manager: Build Accounts");
 
   Conf::YamlParser *parser;
-  Account *tmpAccount = 0;
+  Account *tmpAccount = NULL;
+  int nbAccount = 0;
 
   try {
 
@@ -4084,15 +4095,56 @@ void ManagerImpl::buildAccounts() {
     _error("ConfigTree: %s", e.what());
   }
 
-   Conf::SequenceNode *seq = parser->getAccountSequence();
+  Conf::SequenceNode *seq = parser->getAccountSequence();
 
   // Each element in sequence is a new account to create
   Conf::Sequence::iterator iterSeq = seq->getSequence()->begin();
+  Conf::Sequence::iterator iterIP2IP = seq->getSequence()->begin();
 
   Conf::MappingNode *map;
 
   Conf::Key accTypeKey("type");
   Conf::Key accID("id");
+
+  // Build IP2IP first
+  Conf::Key iptoipID("IP2IP");
+
+  while(iterIP2IP != seq->getSequence()->end()) {
+
+    map = (Conf::MappingNode *)(*iterSeq);
+
+    Conf::ScalarNode * val = (Conf::ScalarNode *)(map->getValue(accID));
+    Conf::Value accountid = val->getValue();
+
+    if(accountid == "IP2IP") {
+      
+      _directIpAccount = AccountCreator::createAccount(AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
+
+      _debug ("Manager: Create default \"account\" (used as default UDP transport)");
+      if (_directIpAccount == NULL) {
+	_debug ("Manager: Failed to create default \"account\"");
+      } else {
+
+	_accountMap[IP2IP_PROFILE] = _directIpAccount;
+
+	// Force IP2IP settings to be loaded to be loaded
+	// No registration in the sense of the REGISTER method is performed.
+	_directIpAccount->registerVoIPLink();
+
+	// SIPVoIPlink is used as a singleton, it is the first call to instance here
+	// The SIP library initialization is done in the SIPVoIPLink constructor
+	// We need the IP2IP settings to be loaded at this time as they are used
+	// for default sip transport
+	
+	// _directIpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+	_directIpAccount->setVoIPLink();
+
+	break;
+      }
+    }
+
+    iterIP2IP++;
+  }
   while(iterSeq != seq->getSequence()->end()) {
 
     map = (Conf::MappingNode *)(*iterSeq);
@@ -4103,16 +4155,25 @@ void ManagerImpl::buildAccounts() {
     val = (Conf::ScalarNode *)(map->getValue(accID));
     Conf::Value accountid = val->getValue();
 
-    if (accountType == "sip") {
-      tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountid);
+    _debug("accountid: %s", accountid.c_str());
+    if (accountType == "SIP" && accountid != "IP2IP") {
       _debug("Account is SIP!!!");
+      tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountid);
     }
-    else if (accountType == "iax") {
+    else if (accountType == "IAX" && accountid != "IP2IP") {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountid);
     }
 
     tmpAccount->unserialize(map);
 
+    if (tmpAccount != NULL) {
+      _debug ("Manager: Loading account %s ", accountid.c_str());
+      _accountMap[accountid] = tmpAccount;
+      // tmpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+      tmpAccount->setVoIPLink();
+      nbAccount++;
+    }
+    
     iterSeq++;
   }
 
@@ -4124,6 +4185,8 @@ void ManagerImpl::buildAccounts() {
   }
 
   parser = NULL;
+
+  return nbAccount;
 
 }
 

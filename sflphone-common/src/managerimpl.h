@@ -113,7 +113,7 @@ class ManagerImpl {
     ~ManagerImpl (void);
 
 
-    void buildAccounts();
+    short buildAccounts();
 
     /**
      * Initialisation of thread (sound) and map.

@@ -209,7 +209,10 @@ void ConfigurationManager::setIp2IpDetails(const std::map<std::string,
 
 std::map<std::string, std::string> ConfigurationManager::getTlsSettings(
 		const std::string& section) {
+
 	std::map<std::string, std::string> tlsSettings;
+
+	// SIPAccount *sipaccount 
 
 	tlsSettings.insert(std::pair<std::string, std::string>(TLS_LISTENER_PORT,
 			Manager::instance().getConfigString(section, TLS_LISTENER_PORT)));

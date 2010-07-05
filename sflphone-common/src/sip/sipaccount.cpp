@@ -57,7 +57,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _tlsSetting (NULL)
 	, _dtmfType(OVERRTP)
         , _displayName ("")
-        , _tlsEnable(false)
+        , _tlsEnable("")
 	, _tlsPortStr("")
 	, _tlsCaListFile("")
 	, _tlsCertificateFile("")
@@ -85,8 +85,11 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 	, _zrtpDisplaySasOnce(false)
 	, _zrtpHelloHash(false)
 	, _zrtpNotSuppWarning(false)
+	, _useragent("SFLphone")
 {
     
+    _debug("Sip account constructor called");
+  
     // IP2IP settings must be loaded before singleton instanciation, cannot call it here... 
 
     // _link = SIPVoIPLink::instance ("");
@@ -119,6 +122,8 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   Conf::MappingNode *srtpMap;
   Conf::MappingNode *tlsMap;
   Conf::MappingNode *zrtpMap;
+
+  _debug("SipAccount: Unserialize");
 
   val = (Conf::ScalarNode *)(map->getValue(aliasKey));
   _alias = val->getValue();
