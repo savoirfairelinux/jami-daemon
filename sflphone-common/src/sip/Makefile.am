@@ -13,6 +13,7 @@ libsiplink_la_SOURCES = \
 		sipcall.cpp \
 		sipvoiplink.cpp
 
+libsiplink_la_LIBADD =	im/libim.la 
 
 noinst_HEADERS = \
 		Pattern.h \

@@ -1101,7 +1101,7 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
     status = pjsip_inv_send_msg (call->getInvSession(), tdata);
 
 	// Test IM message
-	imModule->send (call->getInvSession (), "Salut! Click <a href='http://sflphone.org'>here</a>");
+	imModule->send (call->getInvSession (), call->getCallId (), "Salut! Click <a href='http://sflphone.org'>here</a>");
 
     if (status != PJ_SUCCESS)
         return 1;   // !PJ_SUCCESS
@@ -3413,7 +3413,7 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
 			// Right now, it does do anything.
 			// And notify the clients
 			Manager::instance ().incomingMessage (	call->getCallId (), 
-													imModule->receive (message, call->getCallId ()));
+													imModule->receive (message, call->getPeerNumber (), call->getCallId ()));
 		}
 
 			

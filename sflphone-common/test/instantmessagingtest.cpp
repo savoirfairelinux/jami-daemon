@@ -29,30 +29,68 @@
  */
 
 #include <stdio.h>
-#include <sstream>
-#include <dlfcn.h>
+#include <iostream>
+#include <fstream>
 
 #include "instantmessagingtest.h"
 
 using std::cout;
 using std::endl;
-using namespace sfl;
 
 void InstantMessagingTest::setUp()
 {
-    _im = new InstantMessaging ();
+	_im = new sfl::InstantMessaging ();
 	_im->init ();
 }
 
-void InstantMessagingTest::testFunction()
+void InstantMessagingTest::testSaveSingleMessage ()
 {
-	_debug ("-------------------- InstantMessagingTest::testFunction --------------------\n");
+	_debug ("-------------------- InstantMessagingTest::testSaveSingleMessage --------------------\n");
 
-    CPPUNIT_ASSERT (1 == 1);
+	std::string input, tmp;
+	std::string callID = "testfile1.txt";
+
+	// Open a file stream and try to write in it
+	CPPUNIT_ASSERT (_im->saveMessage ("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
+
+	// Read it to check it has been successfully written
+	std::ifstream testfile (callID.c_str (), std::ios::in);
+	CPPUNIT_ASSERT (testfile.is_open () == true);
+
+	while (!testfile.eof ()) {
+		std::getline (testfile, tmp);
+		input.append (tmp);
+	}
+	testfile.close ();
+	CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message");
+}
+
+void InstantMessagingTest::testSaveMultipleMessage ()
+{
+	_debug ("-------------------- InstantMessagingTest::testSaveMultipleMessage --------------------\n");
+
+	std::string input, tmp;
+	std::string callID = "testfile2.txt";
+
+	// Open a file stream and try to write in it
+	CPPUNIT_ASSERT (_im->saveMessage ("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
+	CPPUNIT_ASSERT (_im->saveMessage ("Cool", "Alex", callID, std::ios::out || std::ios::app)  == true);
+
+	// Read it to check it has been successfully written
+	std::ifstream testfile (callID.c_str (), std::ios::in);
+	CPPUNIT_ASSERT (testfile.is_open () == true);
+
+	while (!testfile.eof ()) {
+		std::getline (testfile, tmp);
+		input.append (tmp);
+	}
+	testfile.close ();
+	printf ("%s\n", input.c_str());
+	CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message[Alex] Cool");
 }
 
 void InstantMessagingTest::tearDown()
 {
-    delete _im;
-    _im = 0;
+	delete _im;
+	_im = 0;
 }

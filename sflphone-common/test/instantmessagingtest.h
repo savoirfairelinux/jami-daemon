@@ -53,7 +53,8 @@ class InstantMessagingTest : public CppUnit::TestCase {
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE( InstantMessagingTest );
-        CPPUNIT_TEST( testFunction  );
+        CPPUNIT_TEST (testSaveSingleMessage);
+        CPPUNIT_TEST (testSaveMultipleMessage);
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -71,7 +72,9 @@ class InstantMessagingTest : public CppUnit::TestCase {
          */
         inline void tearDown ();
 
-        void testFunction ();
+        void testSaveSingleMessage ();
+		
+        void testSaveMultipleMessage ();
         
     private:
 		sfl::InstantMessaging *_im;

@@ -2,8 +2,8 @@
 #define _INSTANT_MESSAGING_H
 
 #include <string>
-#include <queue>
 #include <iostream>
+#include <fstream>
 #include <pjsip.h>
 #include <pjlib.h>
 #include <pjsip_ua.h>
@@ -16,6 +16,9 @@
 #define STR_TEXT        pj_str((char*)"text")
 #define STR_PLAIN       pj_str((char*)"plain")
 #define METHOD_NAME     pj_str((char*)"MESSAGE")
+
+#define MODE_APPEND			std::ios::out || std::ios::app
+#define MODE_TEST			std::ios::out
 
 namespace sfl  {
 
@@ -35,7 +38,33 @@ namespace sfl  {
 			/*
 			 * Register and initialize instant messaging support
 			 */
-			pj_status_t init ();
+			bool init ();
+
+			/*
+			 * Open an existing file if possible or create a new one.
+			 *
+			 * @param id	The current call
+			 * @return int	The number of currently open file stream  
+			 */
+			int openArchive (CallID& id);
+
+			/* 
+			 * Close the file corresponding to the specified call
+			 *
+			 * @param id	The current call
+			 * @return int	The number of remaining open file stream  
+			 */
+			int closeArchive (CallID& id);
+
+			/*
+			 * Write the text message to the right file
+			 * The call ID is associated to a file descriptor, so it is easy then to retrieve the right file
+			 *
+			 * @param message	The text message
+			 * @param id	The current call
+			 * @return True if the message could have been successfully saved, False otherwise
+			 */
+			bool saveMessage (const std::string& message, const std::string& author, CallID& id, int mode = MODE_APPEND);
 
 			/*
   			 * Receive a string SIP message, for a specific call
@@ -43,7 +72,7 @@ namespace sfl  {
   			 * @param message	The message contained in the TEXT message
 			 * @param id		The call recipient of the message
 			 */
-			std::string receive (std::string message, CallID& id);
+			std::string receive (const std::string& message, const std::string& author, CallID& id);
 
 			/*
 			 * Send a SIP string message inside a call 
@@ -54,7 +83,7 @@ namespace sfl  {
 			 * @return pj_status_t  0 on success
 			 *                      1 otherwise
 			 */
-			pj_status_t send (pjsip_inv_session*, const std::string&);
+			pj_status_t send (pjsip_inv_session*, CallID& id, const std::string&);
 
 			/**
  			 * Notify the clients, through D-Bus, that a new message has arrived
@@ -63,12 +92,30 @@ namespace sfl  {
 			 */
 			pj_status_t notify (CallID& id);
 
+			/*
+			 * Add a pair file stream / call ID to the private std::map
+			 */
+			inline int addFileStream (std::string key, std::ofstream &value)	{	
+				return (int)imFiles.size ();	
+			}
+
+			/*
+			 * Remove a pair file stream / call ID from the private std::map
+			 */
+			inline int removeFileStream (std::string key)	{	imFiles.erase (key); return (int)imFiles.size ();	}
+
 		private:
 
 			/**
 			 * A queue to handle messages
 			 */
-			std::queue<std::string> queuedMessages;
+			// std::queue<std::string> queuedMessages;
+
+			/**
+			 * A map to handle opened file descriptors
+			 * A file descriptor is associated to a call ID
+			 */
+			std::map<std::string, std::ofstream*> imFiles;
 
 			InstantMessaging(const InstantMessaging&); //No Copy Constructor
 			InstantMessaging& operator=(const InstantMessaging&); //No Assignment Operator
