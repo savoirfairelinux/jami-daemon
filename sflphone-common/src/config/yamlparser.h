@@ -76,6 +76,10 @@ class YamlParser {
 
   YamlDocument *composeEvents();
 
+  void constructNativeData();
+
+  SequenceNode *getAccountSequence(void) { return accountSequence; };
+
  private:
 
   /**
@@ -92,6 +96,10 @@ class YamlParser {
   void processSequence(YamlNode *topNode);
 
   void processMapping(YamlNode *topNode);
+
+  void mainNativeDataMapping(MappingNode *map);
+
+  //   void buildAccounts(SequenceNode *map);
 
   std::string filename;
 
@@ -120,6 +128,8 @@ class YamlParser {
   YamlDocument *doc;
 
   int eventIndex;
+
+  SequenceNode *accountSequence;
 
 };
 

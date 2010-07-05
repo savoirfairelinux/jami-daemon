@@ -32,18 +32,22 @@
 #define __SERIALIZABLE_H__
 
 
+#include "yamlparser.h"
+#include "yamlnode.h"
+
 class Engine;
+// class MappingNode;
 
 class Serializable {
 
  public:
 
-  Serializable();
+  virtual void serialize(Engine *engine) = 0;
 
-  ~Serializable();
-
-  virtual void Serialize(Engine *engine) = 0;
+  virtual void unserialize(Conf::MappingNode *map) = 0;
 
  private:
 
 };
+
+#endif

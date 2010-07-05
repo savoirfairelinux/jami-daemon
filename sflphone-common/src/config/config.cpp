@@ -46,44 +46,11 @@ namespace Conf
 // ctor
 ConfigTree::ConfigTree() :_sections()
 {
-  /*
-  YamlParser *parser;
-  try {
-    parser = new YamlParser("sequence.yml");
-  }
-  catch (YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
-
-
-  try {
-    parser->serializeEvents();
-  }
-  catch(YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-
-  }
-  try {
-    parser->composeEvents();
-  }
-  catch(YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
-
-  try {
-    delete parser;
-    parser = NULL;
-  }
-  catch (YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
-  */
 }
 
 // dtor
 ConfigTree::~ConfigTree()
 {
-
 
     // erase every new ItemMap (by CreateSection)
     SectionMap::iterator iter = _sections.begin();

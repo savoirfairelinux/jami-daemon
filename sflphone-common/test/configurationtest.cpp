@@ -163,6 +163,8 @@ void ConfigurationTest::testYamlParser()
     parser->serializeEvents();
 
     parser->composeEvents();
+
+    parser->constructNativeData();
   
     delete parser;
     parser = NULL;

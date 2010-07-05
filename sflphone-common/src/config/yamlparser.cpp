@@ -103,18 +103,18 @@ int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 
   switch (event_from->type) {
   case YAML_STREAM_START_EVENT: {
-    // _debug("YAML_STREAM_START_EVENT");
+    _debug("YAML_STREAM_START_EVENT");
     return yaml_stream_start_event_initialize(event_to,
 					      event_from->data.stream_start.encoding);
   }
 
   case YAML_STREAM_END_EVENT: {
-    // _debug("YAML_STREAM_END_EVENT");
+    _debug("YAML_STREAM_END_EVENT");
     return yaml_stream_end_event_initialize(event_to);
   }
 
   case YAML_DOCUMENT_START_EVENT: {
-    // _debug("YAML_DOCUMENT_START_EVENT");
+    _debug("YAML_DOCUMENT_START_EVENT");
     return yaml_document_start_event_initialize(event_to,
 						event_from->data.document_start.version_directive,
 						event_from->data.document_start.tag_directives.start,
@@ -123,17 +123,17 @@ int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
   }
 
   case YAML_DOCUMENT_END_EVENT: {
-    // _debug("YAML_DOCUMENT_END_EVENT");
+    _debug("YAML_DOCUMENT_END_EVENT");
     return yaml_document_end_event_initialize(event_to,
 					      event_from->data.document_end.implicit);
   }
   case YAML_ALIAS_EVENT:{
-    // _debug("YAML_ALIAS_EVENT");
+    _debug("YAML_ALIAS_EVENT");
     return yaml_alias_event_initialize(event_to,
 				       event_from->data.alias.anchor);
   }
   case YAML_SCALAR_EVENT: {
-    // _debug("YAML_SCALAR_EVENT");
+    _debug("YAML_SCALAR_EVENT");
     return yaml_scalar_event_initialize(event_to,
 					event_from->data.scalar.anchor,
 					event_from->data.scalar.tag,
@@ -144,7 +144,7 @@ int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 					event_from->data.scalar.style);
   }
   case YAML_SEQUENCE_START_EVENT: {
-    // _debug("YAML_SEQUENCE_START_EVENT");
+    _debug("YAML_SEQUENCE_START_EVENT");
     return yaml_sequence_start_event_initialize(event_to,
 						event_from->data.sequence_start.anchor,
 						event_from->data.sequence_start.tag,
@@ -152,11 +152,11 @@ int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 						event_from->data.sequence_start.style);
   }
   case YAML_SEQUENCE_END_EVENT: {
-    // _debug("YAML_SEQUENCE_END_EVENT");
+    _debug("YAML_SEQUENCE_END_EVENT");
     return yaml_sequence_end_event_initialize(event_to);
   }
   case YAML_MAPPING_START_EVENT: {
-    // _debug("YAML_MAPPING_START_EVENT");
+    _debug("YAML_MAPPING_START_EVENT");
     return yaml_mapping_start_event_initialize(event_to,
 					       event_from->data.mapping_start.anchor,
 					       event_from->data.mapping_start.tag,
@@ -164,7 +164,7 @@ int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 					       event_from->data.mapping_start.style);
   }
   case YAML_MAPPING_END_EVENT: {
-    // _debug("YAML_MAPPING_END_EVENT");
+    _debug("YAML_MAPPING_END_EVENT");
     return yaml_mapping_end_event_initialize(event_to);
 
   }
@@ -179,6 +179,8 @@ int YamlParser::copyEvent(yaml_event_t *event_to, yaml_event_t *event_from)
 
 YamlDocument *YamlParser::composeEvents() {
 
+  _debug("Compose Events");
+
   if(eventNumber == 0)
     throw YamlParserException("No event available");
 
@@ -189,88 +191,12 @@ YamlDocument *YamlParser::composeEvents() {
 
   processStream();
 
-  /*
-  for (int i = 0; i < eventNumber;) {
-
-    switch(events[i].type) {
-
-      _debug("YAML_DOCUMENT_END_EVENT");
-      // topNode = NULL;
-      break;
-    }
-    case YAML_ALIAS_EVENT:
-      _debug("YAML_ALIAS_EVENT");
-      break;
-    case YAML_SCALAR_EVENT: {      
-      _debug("YAML_SCALAR_EVENT: anchor %s, tag %s, value %s", events[i].data.scalar.anchor, events[i].data.scalar.tag, events[i].data.scalar.value);
-      
-      char buffer[1000];
-      snprintf(buffer, 1000, "%s", events[i].data.scalar.value);
-      composeScalarEvent(topNode, buffer);
-      
-      break;
-    }
-    case YAML_SEQUENCE_START_EVENT: {
-      _debug("YAML_SEQUENCE_START_EVENT: anchor %s, tag %s", events[i].data.sequence_start.anchor, events[i].data.sequence_start.tag);
-      // startSequence();
-      break;
-    }
-    case YAML_SEQUENCE_END_EVENT: {
-      _debug("YAML_SEQUENCE_END_EVENT");
-      // endSequence();
-      break;
-    }
-    case YAML_MAPPING_START_EVENT: {
-      _debug("YAML_MAPPING_START_EVENT: anchor %s, tag %s", events[i].data.mapping_start.anchor, events[i].data.sequence_start.tag);
-      
-      Key mapkey;
-      YamlNode *mapvalue;
-
-      MappingNode *map = new MappingNode(topNode);
-
-      if(events[i+1].type == YAML_SCALAR_EVENT) {
-	char buffer[1000];
-	snprintf(buffer, 1000, "%s", events[i+1].data.scalar.value);
-	mapkey = Key(buffer);
-	i++;
-      }
-      else
-	throw YamlParserException("Mapping event not followed by scalar");
-
-      if(events[i+1].type == YAML_SCALAR_EVENT) {
-	char buffer[1000];
-	snprintf(buffer, 1000, "%s", events[i+1].data.scalar.value);
-	ScalarNode *sclr = new ScalarNode(buffer, topNode);
-	mapvalue = (YamlNode *)sclr;
-	composeMappingEvent(map, mapkey, mapvalue);
-      }
-      else if(events[i+1].type == YAML_SEQUENCE_START_EVENT) {
-	SequenceNode *seq = new SequenceNode(topNode);
-	mapvalue = (YamlNode *)seq;
-	composeMappingEvent(map, mapkey, mapvalue);
-	topNode = (YamlNode *)seq;
-      }
-      else
-	throw YamlParserException("Not acceptable value for mapping");
-      
-      break;
-    }
-    case YAML_MAPPING_END_EVENT: {
-      _debug("YAML_MAPPING_END_EVENT");
-      // endMapping();
-      break;
-    }
-    default:
-      throw YamlParserException("Unknown Event");
-    }
-
-    i++;
-  }
-  */
   return doc;
 }
 
 void YamlParser::processStream () {
+
+  _debug("ProcessStream");
 
   while((eventIndex < eventNumber) && (events[eventIndex].type != YAML_STREAM_END_EVENT)) {
 
@@ -287,6 +213,8 @@ void YamlParser::processStream () {
 
 void YamlParser::processDocument()
 {
+  _debug("ProcessDocument");
+
   doc = new YamlDocument();
 
   if(!doc)
@@ -320,6 +248,8 @@ void YamlParser::processDocument()
 void YamlParser::processScalar(YamlNode *topNode)
 {
 
+  _debug("ProcessScalar");
+
   if(!topNode)
     throw YamlParserException("No container for scalar");
 
@@ -346,6 +276,8 @@ void YamlParser::processScalar(YamlNode *topNode)
 
 void YamlParser::processSequence(YamlNode *topNode)
 {
+  _debug("ProcessSequence");
+
   if(!topNode)
     throw YamlParserException("No container for sequence");
 
@@ -365,7 +297,9 @@ void YamlParser::processSequence(YamlNode *topNode)
     break;
   }
 
-  while((eventIndex < eventNumber) < (events[eventIndex].type != YAML_SEQUENCE_END_EVENT)) {
+  eventIndex++;
+
+  while((eventIndex < eventNumber) && (events[eventIndex].type != YAML_SEQUENCE_END_EVENT)) {
 
     switch(events[eventIndex].type){
     case YAML_SCALAR_EVENT:
@@ -391,6 +325,8 @@ void YamlParser::processSequence(YamlNode *topNode)
 
 void YamlParser::processMapping(YamlNode *topNode)
 {
+  _debug("ProcessMapping");
+
   if(!topNode)
     throw YamlParserException("No container for mapping");
 
@@ -410,11 +346,13 @@ void YamlParser::processMapping(YamlNode *topNode)
     break;
   }
 
-  while((eventIndex < eventNumber) < (events[eventIndex].type != YAML_MAPPING_END_EVENT)) {
+  eventIndex++;
+
+  while((eventIndex < eventNumber) && (events[eventIndex].type != YAML_MAPPING_END_EVENT)) {
 
     if(events[eventIndex].type != YAML_SCALAR_EVENT)
       throw YamlParserException("Mapping not followed by a key");
-    
+  
     char buffer[1000];
     snprintf(buffer, 1000, "%s", events[eventIndex].data.scalar.value);
     map->setTmpKey(Key(buffer));
@@ -442,4 +380,134 @@ void YamlParser::processMapping(YamlNode *topNode)
     throw YamlParserException("Did not found end of mapping");
 }
 
+void YamlParser::constructNativeData() {
+  
+  Sequence *seq;
+
+  seq = doc->getSequence();
+
+  Sequence::iterator iter = seq->begin();
+
+  while(iter != seq->end()) {
+
+    switch((*iter)->getType()){
+    case SCALAR:
+      _debug("construct scalar");
+      throw YamlParserException("No scalar allowed at document level, expect a mapping");
+      break;
+    case SEQUENCE:
+      _debug("construct sequence");
+      throw YamlParserException("No sequence allowed at document level, expect a mapping");
+      break;
+    case MAPPING: {
+      _debug("construct mapping");
+      MappingNode *map = (MappingNode *)(*iter);
+      mainNativeDataMapping(map);
+      break;
+    }
+    default:
+      throw YamlParserException("Unknown type in configuration file, expect a mapping");
+      break;
+    }
+    iter++;
+
+  }
+  
+}
+
+
+void YamlParser::mainNativeDataMapping(MappingNode *map) {
+
+  
+  Mapping::iterator iter = map->getMapping()->begin();
+
+  Key accounts("accounts");
+  Key addressbook("addressbook");
+  Key audio("audio");
+  Key hooks("hooks");
+  Key preferences("preferences");
+  Key voiplink("voiplink");
+
+  while(iter != map->getMapping()->end()) {
+
+    _debug("Iterating: %s", iter->first.c_str());
+    if(accounts.compare(iter->first) == 0) {
+      // buildAccounts((SequenceNode *)(iter->second));
+      accountSequence = (SequenceNode *)(iter->second);
+    }
+    else if(addressbook.compare(iter->first) == 0)
+      _debug("ok");
+    else if(audio.compare(iter->first) == 0)
+      _debug("ok");
+    else if(hooks.compare(iter->first) == 0)
+      _debug("ok");
+    else if(preferences.compare(iter->first) == 0)
+      _debug("ok");
+    else if(voiplink.compare(iter->first) == 0)
+      _debug("ok");
+    else
+      throw YamlParserException("Unknow map key in configuration");
+
+    iter++;
+  }
+}
+
+  /*
+void YamlParser::buildAccounts(SequenceNode *seq) {
+
+  // Each element in sequence is a new account to create
+  Sequence::iterator iterSeq = seq->getSequence()->begin();
+
+  MappingNode *map;
+
+  Key accTypeKey("type");
+  while(iterSeq != seq->getSequence()->end()) {
+
+    map = (MappingNode *)(*iterSeq);
+
+    ScalarNode * val = (ScalarNode *)(map->getValue(accTypeKey));
+    Value accountType = val->getValue();
+
+    iterSeq++;
+
+    if (accountType == "sip") {
+      // tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
+      _debug("Account is SIP!!!");
+    }
+    else if (accountType == "iax") {
+      // tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
+    }
+
+  /*
+  std::string accountType;
+
+  accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
+  
+  if (accountType == "SIP") {
+    tmpAccount = AccountCreator::createAccount(
+					       AccountCreator::SIP_ACCOUNT, *iter);
+  }
+
+  else if (accountType == "IAX") {
+    tmpAccount = AccountCreator::createAccount(
+					       AccountCreator::IAX_ACCOUNT, *iter);
+  }
+
+  else {
+    _error ("Unknown %s param in config file (%s)", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+  }
+  
+  if (tmpAccount != NULL) {
+    _debug ("Loading account %s ", iter->c_str());
+    _accountMap[iter->c_str()] = tmpAccount;
+    // tmpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+    tmpAccount->setVoIPLink();
+    nbAccount++;
+  }
+
+  iter++;
+  */
+//  }
+
+//}
 }

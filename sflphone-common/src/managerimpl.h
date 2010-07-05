@@ -55,6 +55,7 @@
 #include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
 
 #include "audio/mainbuffer.h"
+#include "yamlparser.h"
 
 class AudioLayer;
 class GuiFramework;
@@ -110,6 +111,9 @@ class ManagerImpl {
   public:
     ManagerImpl (void);
     ~ManagerImpl (void);
+
+
+    void buildAccounts();
 
     /**
      * Initialisation of thread (sound) and map.

@@ -58,7 +58,7 @@ ManagerImpl::registerAccounts()
     bool flag = true;
     AccountMap::iterator iter;
 
-    _debugInit ("Initiate VoIP Links Registration");
+    _debugInit ("Manager: Initiate VoIP Links Registration");
     iter = _accountMap.begin();
 
     /* Loop on the account map previously loaded */
@@ -98,7 +98,7 @@ ManagerImpl::initRegisterAccounts()
     bool flag = true;
     AccountMap::iterator iter;
 
-    _debugInit ("Initiate VoIP Links Registration");
+    _debugInit ("Manager: Initiate VoIP Links Registration");
     iter = _accountMap.begin();
 
     /* Loop on the account map previously loaded */

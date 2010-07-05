@@ -37,6 +37,7 @@
 
 #include "config/config.h"
 #include "voiplink.h"
+#include "config/serializable.h"
 
 class VoIPLink;
 
@@ -131,7 +132,19 @@ typedef enum RegistrationState {
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
 
 
-class Account{
+// General configuration keys for accounts
+const Conf::Key aliasKey("alias");
+const Conf::Key typeKey("type");
+const Conf::Key idKey("id");
+const Conf::Key usernameKey("username");
+const Conf::Key passwordKey("password");
+const Conf::Key hostnameKey("hostname");
+const Conf::Key accountEnableKey("enable");
+const Conf::Key mailboxKey("mailbox");
+
+const Conf::Key codecsKey("codecs");		// 0/9/110/111/112/
+
+class Account : public Serializable{
 
     public:
 
@@ -141,6 +154,10 @@ class Account{
          * Virtual destructor
          */
         virtual ~Account();
+
+	virtual void serialize(Engine *engine) = 0;
+
+	virtual void unserialize(Conf::MappingNode *map) = 0;
 
         /**
          * Load the settings for this account.

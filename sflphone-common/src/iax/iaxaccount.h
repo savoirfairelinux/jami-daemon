@@ -44,6 +44,10 @@ class IAXAccount : public Account
 
         ~IAXAccount();
 
+	virtual void serialize(Engine *engine);
+
+	virtual void unserialize(Conf::MappingNode *map);
+
 	void setVoIPLink ();
 
         /** 

@@ -41,11 +41,52 @@
 #include "sipvoiplink.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
+#include "config/serializable.h"
 
 enum DtmfType { OVERRTP, SIPINFO};
 
 #define OVERRTPSTR "overrtp"
 #define SIPINFOSTR "sipinfo"
+
+
+// SIP specific configuration keys
+const Conf::Key expireKey("expire");
+const Conf::Key interfaceKey("interface");
+const Conf::Key portKey("port");
+const Conf::Key publishAddrKey("publishAddr");
+const Conf::Key publishPortKey("publishPort");
+const Conf::Key sameasLocalKey("sameasLocal");
+const Conf::Key resolveOnceKey("resolveOnce");
+const Conf::Key dtmfTypeKey("dtmfType");
+
+// TODO: write an object to store credential which implement serializable
+const Conf::Key srtpKey("srtp");
+const Conf::Key srtpEnableKey("enable");
+const Conf::Key keyExchangeKey("keyExchange");
+const Conf::Key rtpFallbackKey("rtpFallback");
+
+// TODO: wirte an object to store zrtp params wich implement serializable
+const Conf::Key zrtpKey("zrtp");
+const Conf::Key displaySasKey("displaySas");
+const Conf::Key displaySasOnceKey("displaySasOnce");
+const Conf::Key helloHashEnabledKey("helloHashEnabled");
+const Conf::Key notSuppWarningKey("notSuppWarning");
+
+// TODO: write an object to store tls params which implement serializable
+const Conf::Key tlsKey("tls");
+const Conf::Key tlsPortKey("tlsPort");
+const Conf::Key certificateKey("certificate");
+const Conf::Key calistKey("calist");
+const Conf::Key ciphersKey("ciphers");
+const Conf::Key tlsEnableKey("enable");
+const Conf::Key methodKey("method");
+const Conf::Key timeoutKey("timeout");
+const Conf::Key tlsPasswordKey("password");
+const Conf::Key privateKeyKey("privateKey");
+const Conf::Key requireCertifKey("requireCertif");
+const Conf::Key serverKey("server");
+const Conf::Key verifyClientKey("verifyClient");
+const Conf::Key verifyServerKey("verifyServer");
 
 class SIPVoIPLink;
 
@@ -73,6 +114,10 @@ class SIPAccount : public Account
          * Virtual destructor
          */
         virtual ~SIPAccount();
+
+	virtual void serialize(Engine *engine);
+
+	virtual void unserialize(Conf::MappingNode *map);
 
 	/**
 	 * Set route header to appears in sip messages for this account
@@ -429,7 +474,48 @@ class SIPAccount : public Account
         DtmfType _dtmfType;
         
         // Display Name that can be used in  SIP URI.        
-        std::string _displayName;        
+        std::string _displayName;
+
+	std::string _tlsEnable;
+	std::string _tlsPortStr;// = Manager::instance().getConfigString(_accountID, TLS_LISTENER_PORT);
+	std::string _tlsCaListFile;//  = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
+	std::string _tlsCertificateFile;// = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
+	std::string _tlsPrivateKeyFile;// = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
+	std::string _tlsPassword;// = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
+	std::string _tlsMethod;// = Manager::instance().getConfigString (_accountID, TLS_METHOD);
+	std::string _tlsCiphers;// = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
+	std::string _tlsServerName;// = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
+	bool _tlsVerifyServer;// = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
+	bool _tlsVerifyClient;// = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
+	bool _tlsRequireClientCertificate;// = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
+	std::string _tlsNegotiationTimeoutSec;// = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_SEC);
+	std::string _tlsNegotiationTimeoutMsec;// = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_MSEC);
+
+	std::string _stunServer; // = Manager::instance().getConfigString (_accountID, STUN_SERVER);
+
+	bool _tlsEnabled; // = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
+	bool _stunEnabled; // = Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
+
+	std::string _routeset;
+
+	// std::string _realm;
+	std::string _authenticationUsename;
+
+	// std::string _tlsListenerPort;
+	// std::string _routeSet;
+	// std::string _dtmfType;
+
+
+	bool _srtpEnabled;
+	std::string _srtpKeyExchange;
+	bool _srtpFallback;
+
+	bool _zrtpDisplaySas;
+	bool _zrtpDisplaySasOnce;
+	bool _zrtpHelloHash;
+	bool _zrtpNotSuppWarning;
+
+
 };
 
 #endif

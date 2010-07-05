@@ -3964,6 +3964,9 @@ short ManagerImpl::loadAccountMap () {
 
 	_debug ("Loading account map");
 
+
+	buildAccounts();
+
 	short nbAccount = 0;
 	TokenList sections = _config.getSections();
 	std::string accountType;
@@ -4041,6 +4044,69 @@ short ManagerImpl::loadAccountMap () {
 	_debug ("nb account loaded %i \n", nbAccount);
 
 	return nbAccount;
+}
+
+void ManagerImpl::buildAccounts() {
+
+  Conf::YamlParser *parser;
+  Account *tmpAccount = 0;
+
+  try {
+
+    parser = new Conf::YamlParser("sequence2.yml");
+  
+    parser->serializeEvents();
+
+    parser->composeEvents();
+
+    parser->constructNativeData();
+  
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+   Conf::SequenceNode *seq = parser->getAccountSequence();
+
+  // Each element in sequence is a new account to create
+  Conf::Sequence::iterator iterSeq = seq->getSequence()->begin();
+
+  Conf::MappingNode *map;
+
+  Conf::Key accTypeKey("type");
+  Conf::Key accID("id");
+  while(iterSeq != seq->getSequence()->end()) {
+
+    map = (Conf::MappingNode *)(*iterSeq);
+
+    Conf::ScalarNode * val = (Conf::ScalarNode *)(map->getValue(accTypeKey));
+    Conf::Value accountType = val->getValue();
+
+    val = (Conf::ScalarNode *)(map->getValue(accID));
+    Conf::Value accountid = val->getValue();
+
+    if (accountType == "sip") {
+      tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountid);
+      _debug("Account is SIP!!!");
+    }
+    else if (accountType == "iax") {
+      tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountid);
+    }
+
+    tmpAccount->unserialize(map);
+
+    iterSeq++;
+  }
+
+  try {
+    delete parser;
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("AccountCreator: %s", e.what());
+  }
+
+  parser = NULL;
+
 }
 
 void ManagerImpl::unloadAccountMap () {

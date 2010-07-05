@@ -35,6 +35,7 @@
 #include "user_cfg.h"
 #include <pwd.h>
 
+
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
 	, _routeSet("")
@@ -56,6 +57,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _tlsSetting (NULL)
 	, _dtmfType(OVERRTP)
         , _displayName ("")
+        
 {
     
     // IP2IP settings must be loaded before singleton instanciation, cannot call it here... 
@@ -76,6 +78,112 @@ SIPAccount::~SIPAccount()
     _regc = NULL;
     free (_cred);
     free (_tlsSetting);
+}
+
+void SIPAccount::serialize(Engine *engine) {
+
+
+}
+
+
+void SIPAccount::unserialize(Conf::MappingNode *map) 
+{
+  Conf::ScalarNode *val;
+  Conf::MappingNode *srtpMap;
+  Conf::MappingNode *tlsMap;
+  Conf::MappingNode *zrtpMap;
+
+  val = (Conf::ScalarNode *)(map->getValue(aliasKey));
+  _alias = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(typeKey));
+  _type = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(idKey));
+  _accountID = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(usernameKey));
+  _username = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(passwordKey));
+  _password = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(hostnameKey));
+  _hostname = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(accountEnableKey));
+  _enabled = val->getValue().compare("true") ? true : false;
+  //  val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
+  
+  val = (Conf::ScalarNode *)(map->getValue(codecsKey));
+  // _codecOrder = val->getValue();
+
+  val = (Conf::ScalarNode *)(map->getValue(expireKey));
+  _registrationExpire = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(interfaceKey));
+  _interface = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(portKey));
+  _localPort = atoi(val->getValue().data());
+  // val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
+  val = (Conf::ScalarNode *)(map->getValue(publishAddrKey));
+  _publishedIpAddress = val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(publishPortKey));
+  _publishedPort = atoi(val->getValue().data());
+  val = (Conf::ScalarNode *)(map->getValue(sameasLocalKey));
+  _publishedSameasLocal = val->getValue().compare("true") ? true : false;
+  val = (Conf::ScalarNode *)(map->getValue(resolveOnceKey));
+  _resolveOnce = val->getValue().compare("true") ? true : false;
+  val = (Conf::ScalarNode *)(map->getValue(dtmfTypeKey));
+  // _dtmfType = atoi(val->getValue();
+
+  // stun enabled
+
+  // get srtp submap
+  srtpMap = (Conf::MappingNode *)(map->getValue(srtpKey));
+
+  val = (Conf::ScalarNode *)(srtpMap->getValue(srtpEnableKey));
+  _srtpEnabled = val->getValue().compare("true") ? true : false;
+  val = (Conf::ScalarNode *)(srtpMap->getValue(keyExchangeKey));
+  _srtpKeyExchange = val->getValue();
+  val = (Conf::ScalarNode *)(srtpMap->getValue(rtpFallbackKey));
+  _srtpFallback = val->getValue().compare("true") ? true : false;
+  
+  // get zrtp submap
+  zrtpMap = (Conf::MappingNode *)(map->getValue(zrtpKey));
+
+  val = (Conf::ScalarNode *)(zrtpMap->getValue(displaySasKey));
+  _zrtpDisplaySas = val->getValue().compare("true") ? true : false;
+  val = (Conf::ScalarNode *)(zrtpMap->getValue(displaySasOnceKey));
+  _zrtpDisplaySasOnce = val->getValue().compare("true") ? true : false;
+  val = (Conf::ScalarNode *)(zrtpMap->getValue(helloHashEnabledKey));
+  _zrtpHelloHash = val->getValue().compare("true") ? true : false;
+  val = (Conf::ScalarNode *)(zrtpMap->getValue(notSuppWarningKey));
+  _zrtpNotSuppWarning = val->getValue().compare("true") ? true : false;
+
+  // get tls submap
+  tlsMap = (Conf::MappingNode *)(map->getValue(tlsKey));
+
+  val = (Conf::ScalarNode *)(tlsMap->getValue(tlsEnableKey));
+  _tlsEnable = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(tlsPortKey));
+  _tlsPortStr = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(certificateKey));
+  _tlsCertificateFile = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(calistKey));
+  _tlsCaListFile = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(ciphersKey));
+  _tlsCiphers = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(methodKey));
+  _tlsMethod = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(timeoutKey));
+  _tlsNegotiationTimeoutSec = val->getValue();
+  _tlsNegotiationTimeoutMsec = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(tlsPasswordKey));
+  _tlsPassword = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(privateKeyKey));
+  _tlsPrivateKeyFile = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(requireCertifKey));
+  _tlsRequireClientCertificate = val->getValue().compare("true") ? true : false;
+  val = (Conf::ScalarNode *)(tlsMap->getValue(serverKey));
+  _tlsServerName = val->getValue();
+  val = (Conf::ScalarNode *)(tlsMap->getValue(verifyClientKey));
+  _tlsVerifyServer = val->getValue().compare("true") ? true : false;
+  val = (Conf::ScalarNode *)(tlsMap->getValue(verifyServerKey));
+  _tlsVerifyClient = val->getValue().compare("true") ? true : false;
 }
 
 
@@ -184,10 +292,10 @@ int SIPAccount::initCredential (void)
 
 int SIPAccount::registerVoIPLink()
 {
-    _debug ("Register account %s", getAccountID().c_str());
+    _debug ("Account: Register account %s", getAccountID().c_str());
 
     // Init general settings
-    loadConfig();
+    // loadConfig();
 
     if (_hostname.length() >= PJ_MAX_HOSTNAME) {
         return !SUCCESS;

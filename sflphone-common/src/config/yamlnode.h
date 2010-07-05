@@ -98,7 +98,9 @@ class YamlDocument : YamlNode {
 
   void addNode(YamlNode *node);
 
-  YamlNode *popNode();
+  YamlNode *popNode(void);
+
+  Sequence *getSequence(void) { return &doc; }
 
  private:
 

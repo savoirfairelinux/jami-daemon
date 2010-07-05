@@ -47,6 +47,16 @@ IAXAccount::~IAXAccount()
     _link = NULL;
 }
 
+void IAXAccount::serialize(Engine *engine) 
+{
+  
+}
+
+void IAXAccount::unserialize(Conf::MappingNode *map)
+{
+  
+}
+
 void IAXAccount::setVoIPLink()
 {
 
