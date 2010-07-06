@@ -178,10 +178,13 @@ void ConfigurationTest::testYamlParser()
 
 void ConfigurationTest::testYamlEmitter()
 {
-  Conf::YamlParser *emitter;
+  Conf::YamlEmitter *emitter;
 
+  
   try{
-    emitter = new Conf::YamlParser("sequenceEmiter.yml");
+    emitter = new Conf::YamlEmitter("/tmp/sequenceEmiter.txt");
+
+    emitter->writeDocument();
 
     delete emitter;
   }

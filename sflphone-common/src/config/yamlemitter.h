@@ -62,7 +62,7 @@ class YamlEmitter {
 
  public:
 
-  YamlEmitter();
+  YamlEmitter(const char *file);
 
   ~YamlEmitter();
 
@@ -74,8 +74,11 @@ class YamlEmitter {
 
   void write();
 
+  void writeDocument();
 
  private:
+
+  void serializeData();
 
   std::string filename;
 
@@ -98,7 +101,7 @@ class YamlEmitter {
 
   yaml_document_t document;
 
-  
+  int eventNumber;
 
 };
 

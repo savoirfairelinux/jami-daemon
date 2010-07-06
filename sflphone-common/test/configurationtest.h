@@ -65,7 +65,7 @@ CPPUNIT_TEST_SUITE( ConfigurationTest );
 //	CPPUNIT_TEST( testDefaultValuePreferences );
 //	CPPUNIT_TEST( testDefaultValueSignalisation );
 //	CPPUNIT_TEST( testInitAudioDriver );
-            CPPUNIT_TEST( testYamlParser );
+//      CPPUNIT_TEST( testYamlParser );
 	    CPPUNIT_TEST( testYamlEmitter );
 	CPPUNIT_TEST_SUITE_END();
 
@@ -99,9 +99,7 @@ public:
 
 	void testYamlParser();
 
-	void testYamlEmitter();
-
-	
+	void testYamlEmitter();	
 };
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConfigurationTest, "ConfigurationTest");

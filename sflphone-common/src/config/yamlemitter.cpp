@@ -29,10 +29,12 @@
  */
 
 #include "yamlemitter.h"
+#include <stdio.h>
+#include "../global.h"
 
 namespace Conf {
 
-YamlEmitter::YamlEmitter() 
+YamlEmitter::YamlEmitter(const char *file) : filename(file) 
 {
   open();
 }
@@ -50,7 +52,7 @@ void YamlEmitter::open()
     throw YamlEmitterException("Could not open file descriptor");
 
   if(!yaml_emitter_initialize(&emitter))
-    throw YamlEmitterException("Could not open file descriptor");
+    throw YamlEmitterException("Could not initialize emitter");
 
   // Use unicode format
   yaml_emitter_set_unicode(&emitter, 1);
@@ -62,19 +64,88 @@ void YamlEmitter::open()
 
 void YamlEmitter::close() 
 {
-  yaml_emitter_delete(&emitter);
+  // yaml_emitter_delete(&emitter);
 
   if(!fd)
     throw YamlEmitterException("File descriptor not valid");
-
+ 
+  fclose(fd);
+  /*
   if(!fclose(fd))
     throw YamlEmitterException("Error closing file descriptor");
+  */
 
   yaml_document_delete(&document);
 }
 
 void YamlEmitter::read() {}
 
-void YamlEmitter::write() {}
+void YamlEmitter::write() 
+{
+  serializeData();
+
+  for(int i = 0; i < eventNumber; i++) {
+    if(!yaml_emitter_emit(&emitter, &(events[i])))
+      throw YamlEmitterException("Falied to emit event");
+    
+     yaml_emitter_flush(&emitter);
+  }
+
+}
+
+void YamlEmitter::serializeData()
+{
+
+  unsigned char sclr[20];
+  snprintf((char *)sclr, 20, "%s", "value");
+  yaml_char_t *value = (yaml_char_t *)sclr;
+  
+
+  // yaml_document_add_scalar(&document, NULL, value, -1, YAML_PLAIN_SCALAR_STYLE);
+  // yaml_emitter_dump(&emitter, &document);
+  eventNumber = 0;
+
+  yaml_event_t event;
+
+  yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
+  events[eventNumber++] = event;
+
+  yaml_document_start_event_initialize(&event, NULL, NULL, NULL, 0);
+  events[eventNumber++] = event;
+
+  
+  yaml_document_end_event_initialize(&event, 0);
+  events[eventNumber++] = event;
+
+  // yaml_scalar_event_initialize(event, yaml_char_t  *anchor, yaml_char_t  *tag, yaml_char_t  *value, int length, int plain_implicit, int quoted_implicit, yaml_scalar_style_t  style)
+  yaml_scalar_event_initialize(&event, NULL, NULL, value, 5, 0, 0, YAML_PLAIN_SCALAR_STYLE);
+  events[eventNumber++] = event;
+
+  //  yaml_sequence_start_event_initialize
+
+  //  yaml_sequence_end_event_initialize  
+
+  //  yaml_mapping_start_event_initialize
+
+  //  yaml_mapping_end_event_initialize
+
+  //  yaml_event_delete
+
+  yaml_stream_end_event_initialize(&event);
+  events[eventNumber++] = event;
+
+}
+
+
+void YamlEmitter::writeDocument()
+{
+  unsigned char sclr[20];
+  snprintf((char *)sclr, 20, "%s", "value");
+  yaml_char_t *value = (yaml_char_t *)sclr;
+
+  yaml_document_add_scalar(&document, NULL, value, -1, YAML_PLAIN_SCALAR_STYLE);
+  yaml_emitter_dump(&emitter, &document);
+
+}
 
 }

@@ -71,8 +71,10 @@ void YamlParser::close()
   if(!fd)
     throw YamlParserException("File descriptor not valid");
 
-  if(!fclose(fd))
-    throw YamlParserException("Error closing file descriptor");
+  fclose(fd);
+  // if(!fclose(fd))
+    // throw YamlParserException("Error closing file descriptor");
+ 
 
 }
 
