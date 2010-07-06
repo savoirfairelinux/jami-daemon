@@ -1,6 +1,6 @@
 accounts:
  - id:			IP2IP
-   alias:               ip2ip
+   alias:
    username:
    password:
    hostname:
@@ -10,11 +10,13 @@ accounts:
    interface:		default
    port:		5060
    mailbox:
-   publishAddr:		127.0.0.1
+   publishAddr:		0.0.0.0
    publishPort:		5060
    sameasLocal:		true
    resolveOnce:		false      
    codecs:		0/9/110/111/112/
+   stunServer:		stun.sflphone.org
+   stunEnabled:		false
    credential:
      count:		0
    srtp:
@@ -41,7 +43,7 @@ accounts:
      verifyClient:      false
      verifyServer:      false
 
- - id:			Account:1278342101
+ - id:			Account:1278432417
    alias:   		sfl-181
    username:		181   
    password:  		sfl-181pw
@@ -57,12 +59,14 @@ accounts:
    sameasLocal:		true
    resolveOnce:		false      
    codecs:		0/9/110/111/112/
+   stunServer:		stun.sflphone.org
+   stunEnabled:		false
    credential:
      count:		0
    srtp:
-     enable:		true
+     enable:		false
      keyExchange:	sdes
-     rtpFallback:	true
+     rtpFallback:	false
    zrtp:
      displaySas:	false
      displaySasOnce:	false
@@ -73,7 +77,7 @@ accounts:
      certificate:       /home/msavard/Development/sflphone/sflphone-client-gnome/config.guess
      calist:            /home/msavard/Development/sflphone/sflphone-client-gnome/aclocal.m4
      ciphers:
-     enable:            true
+     enable:            false
      method:           	TLSv1
      timeout:          	0
      password:
@@ -83,28 +87,30 @@ accounts:
      verifyClient:      true
      verifyServer:      true
 
- - id:			Account:1278343345
+ - id:			Account:1278432440
    alias:		sfl-431
    username:		431     
    password:  		alexandre
    hostname:		192.168.50.3
-   enable:		false
+   enable:		true
    type:		SIP
    expire:		3600
-   interface:		lo
+   interface:		default
    port:		5060
    mailbox:		97
-   publishAddr:		192.168.50.182
+   publishAddr:		0.0.0.0
    publishPort:		5060
    sameasLocal:		true
    resolveOnce:		false      
    codecs:		0/9/110/111/112/
+   stunServer:          stun.sflphone.org
+   stunEnabled:		false
    credential:
      count:		0
    srtp:
-     enable:		true
+     enable:		false
      keyExchange:	sdes
-     rtpFallback:	true
+     rtpFallback:	false
    zrtp:
      displaySas:	false
      displaySasOnce:	false

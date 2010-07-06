@@ -90,6 +90,9 @@ const Conf::Key serverKey("server");
 const Conf::Key verifyClientKey("verifyClient");
 const Conf::Key verifyServerKey("verifyServer");
 
+const Conf::Key stunEnabledKey("stunEnabled");
+const Conf::Key stunServerKey("stunServer");
+
 const Conf::Key credKey("credential");
 const Conf::Key credentialCountKey("count");
 
@@ -293,6 +296,7 @@ class SIPAccount : public Account
          * account is set to OTHER.
          */
         inline bool isStunEnabled(void) { return (_transportType == PJSIP_TRANSPORT_START_OTHER) ? true: false; }
+	inline void setStunEnabled(bool enabl) { _stunEnabled = enabl; }
                 
         /*
          * @return pj_str_t "From" uri based on account information.

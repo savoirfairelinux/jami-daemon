@@ -190,6 +190,12 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   // _dtmfType = atoi(val->getValue();
 
   // stun enabled
+  val = (Conf::ScalarNode *)(map->getValue(stunEnabledKey));
+  if(val) { _stunEnabled = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(stunServerKey));
+  if(val) { _stunServer = val->getValue(); val = NULL; }
+  _stunServerName = pj_str ( (char*) _stunServer.data());
+
   credMap = (Conf::MappingNode *)(map->getValue(credKey));
   credentials.unserialize(credMap);
 
@@ -495,7 +501,7 @@ void SIPAccount::initStunConfiguration (void)
     size_t pos;
     std::string stunServer, serverName, serverPort;
 
-    stunServer = Manager::instance().getConfigString (_accountID, STUN_SERVER);
+    stunServer = _stunServer; // Manager::instance().getConfigString (_accountID, STUN_SERVER);
 
     // Init STUN socket
     pos = stunServer.find (':');

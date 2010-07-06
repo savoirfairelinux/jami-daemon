@@ -3410,6 +3410,7 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 	    a.insert(std::pair<std::string, std::string>(LOCAL_INTERFACE, sipaccount->getLocalInterface()));				       
 	    a.insert(std::pair<std::string, std::string>(PUBLISHED_SAMEAS_LOCAL, sipaccount->getPublishedSameasLocal() ? "true" : "false"));
 	    a.insert(std::pair<std::string, std::string>(PUBLISHED_ADDRESS, sipaccount->getPublishedAddress()));
+
 	    std::stringstream localport;
 	    localport << sipaccount->getLocalPort();
 	    a.insert(std::pair<std::string, std::string>(LOCAL_PORT, localport.str()));
@@ -3428,7 +3429,7 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 	    a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS_ONCE, sipaccount->getZrtpDiaplaySasOnce() ? "true" : "false"));
 	    a.insert(std::pair<std::string, std::string>(ZRTP_HELLO_HASH, sipaccount->getZrtpHelloHash() ? "true" : "false"));
 	    a.insert(std::pair<std::string, std::string>(ZRTP_NOT_SUPP_WARNING, sipaccount->getZrtpNotSuppWarning() ? "true" : "false"));
-	    
+
 	    // TLS listener is unique and parameters are modified through IP2IP_PROFILE
 	    std::stringstream tlslistenerport;
 	    tlslistenerport << sipaccount->getTlsListenerPort();
