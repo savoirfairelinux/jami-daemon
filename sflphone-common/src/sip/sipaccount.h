@@ -96,6 +96,8 @@ const Conf::Key stunServerKey("stunServer");
 const Conf::Key credKey("credential");
 const Conf::Key credentialCountKey("count");
 
+const Conf::Key displayNameKey("displayName");
+
 class SIPVoIPLink;
 
 /**

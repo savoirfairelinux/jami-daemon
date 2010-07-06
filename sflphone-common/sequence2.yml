@@ -17,6 +17,7 @@ accounts:
    codecs:		0/9/110/111/112/
    stunServer:		stun.sflphone.org
    stunEnabled:		false
+   displayName:		Alexandre Savard
    credential:
      count:		0
    srtp:
@@ -61,6 +62,7 @@ accounts:
    codecs:		0/9/110/111/112/
    stunServer:		stun.sflphone.org
    stunEnabled:		false
+   displayName:		Alexandre Savard
    credential:
      count:		0
    srtp:
@@ -105,6 +107,7 @@ accounts:
    codecs:		0/9/110/111/112/
    stunServer:          stun.sflphone.org
    stunEnabled:		false
+   displayName:		Alexandre Savard
    credential:
      count:		0
    srtp:

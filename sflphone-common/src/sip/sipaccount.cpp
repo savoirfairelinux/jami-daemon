@@ -199,6 +199,9 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   credMap = (Conf::MappingNode *)(map->getValue(credKey));
   credentials.unserialize(credMap);
 
+  val = (Conf::ScalarNode *)(map->getValue(displayNameKey));
+  if(val) { _displayName = val->getValue(); val = NULL; }
+
   // get srtp submap
   srtpMap = (Conf::MappingNode *)(map->getValue(srtpKey));
   if(!srtpMap)
@@ -457,8 +460,9 @@ void SIPAccount::initTlsConfiguration (void)
     }
 
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    std::string tlsPortStr = Manager::instance().getConfigString(_accountID, TLS_LISTENER_PORT);
-    setTlsListenerPort(atoi(tlsPortStr.c_str()));
+    // std::string tlsPortStr = Manager::instance().getConfigString(_accountID, TLS_LISTENER_PORT);
+    // setTlsListenerPort(atoi(tlsPortStr.c_str()));
+    setTlsListenerPort(atoi(_tlsPortStr.c_str()));
     
     _tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
 
@@ -466,33 +470,33 @@ void SIPAccount::initTlsConfiguration (void)
 
     pjsip_tls_setting_default (_tlsSetting);
 
-    std::string tlsCaListFile = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
-    std::string tlsCertificateFile = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
-    std::string tlsPrivateKeyFile = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
-    std::string tlsPassword = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
-    std::string tlsMethod = Manager::instance().getConfigString (_accountID, TLS_METHOD);
-    std::string tlsCiphers = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
-    std::string tlsServerName = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
-    bool tlsVerifyServer = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
-    bool tlsVerifyClient = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
-    bool tlsRequireClientCertificate = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
-    std::string tlsNegotiationTimeoutSec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_SEC);
-    std::string tlsNegotiationTimeoutMsec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_MSEC);
+    // std::string tlsCaListFile = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
+    // std::string tlsCertificateFile = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
+    // std::string tlsPrivateKeyFile = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
+    // std::string tlsPassword = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
+    // std::string tlsMethod = Manager::instance().getConfigString (_accountID, TLS_METHOD);
+    // std::string tlsCiphers = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
+    // std::string tlsServerName = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
+    // bool tlsVerifyServer = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
+    // bool tlsVerifyClient = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
+    // bool tlsRequireClientCertificate = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
+    // std::string tlsNegotiationTimeoutSec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_SEC);
+    // std::string tlsNegotiationTimeoutMsec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_MSEC);
 
-    pj_cstr (&_tlsSetting->ca_list_file, tlsCaListFile.c_str());
-    pj_cstr (&_tlsSetting->cert_file, tlsCertificateFile.c_str());
-    pj_cstr (&_tlsSetting->privkey_file, tlsPrivateKeyFile.c_str());
-    pj_cstr (&_tlsSetting->password, tlsPassword.c_str());
-    _tlsSetting->method = sslMethodStringToPjEnum (tlsMethod);
-    pj_cstr (&_tlsSetting->ciphers, tlsCiphers.c_str());
-    pj_cstr (&_tlsSetting->server_name, tlsServerName.c_str());
+    pj_cstr (&_tlsSetting->ca_list_file, _tlsCaListFile.c_str());
+    pj_cstr (&_tlsSetting->cert_file, _tlsCertificateFile.c_str());
+    pj_cstr (&_tlsSetting->privkey_file, _tlsPrivateKeyFile.c_str());
+    pj_cstr (&_tlsSetting->password, _tlsPassword.c_str());
+    _tlsSetting->method = sslMethodStringToPjEnum (_tlsMethod);
+    pj_cstr (&_tlsSetting->ciphers, _tlsCiphers.c_str());
+    pj_cstr (&_tlsSetting->server_name, _tlsServerName.c_str());
 
-    _tlsSetting->verify_server = (tlsVerifyServer == true) ? PJ_TRUE: PJ_FALSE;
-    _tlsSetting->verify_client = (tlsVerifyClient == true) ? PJ_TRUE: PJ_FALSE;
-    _tlsSetting->require_client_cert = (tlsRequireClientCertificate == true) ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->verify_server = (_tlsVerifyServer == true) ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->verify_client = (_tlsVerifyClient == true) ? PJ_TRUE: PJ_FALSE;
+    _tlsSetting->require_client_cert = (_tlsRequireClientCertificate == true) ? PJ_TRUE: PJ_FALSE;
 
-    _tlsSetting->timeout.sec = atol (tlsNegotiationTimeoutSec.c_str());
-    _tlsSetting->timeout.msec = atol (tlsNegotiationTimeoutMsec.c_str());
+    _tlsSetting->timeout.sec = atol (_tlsNegotiationTimeoutSec.c_str());
+    _tlsSetting->timeout.msec = atol (_tlsNegotiationTimeoutMsec.c_str());
 
 }
 
@@ -762,7 +766,7 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
         transport = "";
     }
 
-    _displayName = Manager::instance().getConfigString (_accountID, DISPLAY_NAME);
+    // _displayName = Manager::instance().getConfigString (_accountID, DISPLAY_NAME);
 
     _debug ("Display Name: %s", _displayName.c_str());
 
