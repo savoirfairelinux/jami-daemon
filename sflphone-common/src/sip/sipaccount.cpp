@@ -36,6 +36,28 @@
 #include <pwd.h>
 
 
+Credentials::Credentials() : credentialCount(0) {}
+
+Credentials::~Credentials() {}
+
+void Credentials::serialize(Engine *engine)
+{
+  
+}
+
+void Credentials::unserialize(Conf::MappingNode *map)
+{
+
+  Conf::ScalarNode *val = NULL;
+
+  _debug("SipAccount: Unserialize");
+
+  val = (Conf::ScalarNode *)(map->getValue(credentialCountKey));
+  if(val) { credentialCount = atoi(val->getValue().data()); val = NULL; }
+}
+
+
+
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
 	, _routeSet("")
@@ -122,6 +144,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   Conf::MappingNode *srtpMap;
   Conf::MappingNode *tlsMap;
   Conf::MappingNode *zrtpMap;
+  Conf::MappingNode *credMap;
 
   _debug("SipAccount: Unserialize");
 
@@ -167,6 +190,8 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   // _dtmfType = atoi(val->getValue();
 
   // stun enabled
+  credMap = (Conf::MappingNode *)(map->getValue(credKey));
+  credentials.unserialize(credMap);
 
   // get srtp submap
   srtpMap = (Conf::MappingNode *)(map->getValue(srtpKey));
@@ -242,12 +267,12 @@ void SIPAccount::setVoIPLink() {
 int SIPAccount::initCredential (void)
 {
     int credentialCount = 0;
-    credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
+    credentialCount = credentials.getCredentialCount();// Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
     credentialCount += 1;
 
     bool md5HashingEnabled = false;
     int dataType = 0;
-    md5HashingEnabled = Manager::instance().getConfigBool (PREFERENCES, CONFIG_MD5HASH);
+    md5HashingEnabled = Manager::instance().preferences.getMd5Hash(); // Manager::instance().getConfigBool (PREFERENCES, CONFIG_MD5HASH);
     std::string digest;
 
     // Create the credential array

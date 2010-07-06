@@ -43,6 +43,7 @@
 #include "pjsip/sip_types.h"
 #include "config/serializable.h"
 #include <exception>
+#include <map>
 
 enum DtmfType { OVERRTP, SIPINFO};
 
@@ -89,6 +90,9 @@ const Conf::Key serverKey("server");
 const Conf::Key verifyClientKey("verifyClient");
 const Conf::Key verifyServerKey("verifyServer");
 
+const Conf::Key credKey("credential");
+const Conf::Key credentialCountKey("count");
+
 class SIPVoIPLink;
 
 /**
@@ -111,6 +115,32 @@ class SipAccountException : public std::exception
   }
  private:
   std::string errstr;
+
+};
+
+
+class Credentials : public Serializable
+{
+ public:
+
+  typedef std::map<std::string, std::string> CredentialMap;
+
+  Credentials();
+
+  ~Credentials();
+
+  virtual void serialize(Engine *engine);
+
+  virtual void unserialize(Conf::MappingNode *map);
+
+  int getCredentialCount(void) { return credentialCount; }
+  void setCredentialCount(int count) { credentialCount = count; }
+
+ private:
+
+  int credentialCount;
+
+  CredentialMap credentialMap;
 
 };
 
@@ -546,6 +576,7 @@ class SIPAccount : public Account
         pjsip_cred_info *_cred; 
         std::string _realm;                       
         std::string _authenticationUsername;
+	Credentials credentials;
 
         // The TLS settings, if tls is chosen as 
         // a sip transport. 

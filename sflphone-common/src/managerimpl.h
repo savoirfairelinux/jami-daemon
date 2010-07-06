@@ -113,6 +113,7 @@ class ManagerImpl {
     ManagerImpl (void);
     ~ManagerImpl (void);
 
+    Preferences preferences;
 
     short buildConfiguration();
 
@@ -1346,8 +1347,6 @@ private:
     void check_call_configuration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
 
     Conf::YamlParser *parser;
-
-    Preferences preferences;
 
 #ifdef TEST
     bool testCallAccountMap();
