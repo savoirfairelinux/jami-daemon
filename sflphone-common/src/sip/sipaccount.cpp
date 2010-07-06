@@ -126,96 +126,107 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   _debug("SipAccount: Unserialize");
 
   val = (Conf::ScalarNode *)(map->getValue(aliasKey));
-  _alias = val->getValue();
+  if(val) { _alias = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(typeKey));
-  _type = val->getValue();
+  if(val) { _type = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(idKey));
-  _accountID = val->getValue();
+  if(val) { _accountID = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(usernameKey));
-  _username = val->getValue();
+  if(val) { _username = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(passwordKey));
-  _password = val->getValue();
+  if(val) { _password = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(hostnameKey));
-  _hostname = val->getValue();
+  _debug("------------------------------------- hostname from config: %s, %s", _accountID.c_str(), val->getValue().c_str());
+  if(val) { _hostname = val->getValue(); val = NULL; }
+  _debug("------------------------------------- hostname from config: %s, %s", _accountID.c_str(), _hostname.c_str());
   val = (Conf::ScalarNode *)(map->getValue(accountEnableKey));
-  _enabled = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _enabled = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   //  val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
-  
-  val = (Conf::ScalarNode *)(map->getValue(codecsKey));
-  // _codecOrder = val->getValue();
 
+  val = (Conf::ScalarNode *)(map->getValue(codecsKey));
+  if(val) { val = NULL; }
+  // _codecOrder = val->getValue();
+  
   val = (Conf::ScalarNode *)(map->getValue(expireKey));
-  _registrationExpire = val->getValue();
+  if(val) { _registrationExpire = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(interfaceKey));
-  _interface = val->getValue();
+  if(val) { _interface = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(portKey));
-  _localPort = atoi(val->getValue().data());
+  if(val) { _localPort = atoi(val->getValue().data()); val = NULL; }
   // val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
   val = (Conf::ScalarNode *)(map->getValue(publishAddrKey));
-  _publishedIpAddress = val->getValue();
+  if(val) { _publishedIpAddress = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(publishPortKey));
-  _publishedPort = atoi(val->getValue().data());
+  if(val) { _publishedPort = atoi(val->getValue().data()); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(sameasLocalKey));
-  _publishedSameasLocal = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _publishedSameasLocal = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(resolveOnceKey));
-  _resolveOnce = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _resolveOnce = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(dtmfTypeKey));
+  if(val) { val = NULL; }
   // _dtmfType = atoi(val->getValue();
 
   // stun enabled
 
   // get srtp submap
   srtpMap = (Conf::MappingNode *)(map->getValue(srtpKey));
+  if(!srtpMap)
+    throw SipAccountException(" did not found srtp map");
 
   val = (Conf::ScalarNode *)(srtpMap->getValue(srtpEnableKey));
-  _srtpEnabled = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _srtpEnabled = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(srtpMap->getValue(keyExchangeKey));
-  _srtpKeyExchange = val->getValue();
+  if(val) { _srtpKeyExchange = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(srtpMap->getValue(rtpFallbackKey));
-  _srtpFallback = (val->getValue().compare("true") == 0) ? true : false;
-  
+  if(val) { _srtpFallback = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+
   // get zrtp submap
   zrtpMap = (Conf::MappingNode *)(map->getValue(zrtpKey));
+  if(!zrtpMap)
+    throw SipAccountException(" did not found zrtp map");
 
   val = (Conf::ScalarNode *)(zrtpMap->getValue(displaySasKey));
-  _zrtpDisplaySas = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _zrtpDisplaySas = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(zrtpMap->getValue(displaySasOnceKey));
-  _zrtpDisplaySasOnce = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _zrtpDisplaySasOnce = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(zrtpMap->getValue(helloHashEnabledKey));
-  _zrtpHelloHash = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _zrtpHelloHash = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(zrtpMap->getValue(notSuppWarningKey));
-  _zrtpNotSuppWarning = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _zrtpNotSuppWarning = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
 
   // get tls submap
   tlsMap = (Conf::MappingNode *)(map->getValue(tlsKey));
+  if(!tlsMap)
+    throw SipAccountException(" did not found tls map");
 
   val = (Conf::ScalarNode *)(tlsMap->getValue(tlsEnableKey));
-  _tlsEnable = val->getValue();
+  if(val) { _tlsEnable = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(tlsPortKey));
-  _tlsPortStr = val->getValue();
+  if(val) { _tlsPortStr = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(certificateKey));
-  _tlsCertificateFile = val->getValue();
+  if(val) { _tlsCertificateFile = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(calistKey));
-  _tlsCaListFile = val->getValue();
+  if(val) { _tlsCaListFile = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(ciphersKey));
-  _tlsCiphers = val->getValue();
+  if(val) { _tlsCiphers = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(methodKey));
-  _tlsMethod = val->getValue();
+  if(val) { _tlsMethod = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(timeoutKey));
-  _tlsNegotiationTimeoutSec = val->getValue();
-  _tlsNegotiationTimeoutMsec = val->getValue();
+  if(val) _tlsNegotiationTimeoutSec = val->getValue();
+  if(val) { _tlsNegotiationTimeoutMsec = val->getValue(); val=NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(tlsPasswordKey));
-  _tlsPassword = val->getValue();
+  if(val) { _tlsPassword = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(privateKeyKey));
-  _tlsPrivateKeyFile = val->getValue();
+  if(val) { _tlsPrivateKeyFile = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(requireCertifKey));
-  _tlsRequireClientCertificate = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _tlsRequireClientCertificate = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(serverKey));
-  _tlsServerName = val->getValue();
+  if(val) { _tlsServerName = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(verifyClientKey));
-  _tlsVerifyServer = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _tlsVerifyServer = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(tlsMap->getValue(verifyServerKey));
-  _tlsVerifyClient = (val->getValue().compare("true") == 0) ? true : false;
+  if(val) { _tlsVerifyClient = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+
 }
 
 
@@ -337,7 +348,7 @@ int SIPAccount::registerVoIPLink()
     initCredential();
 
     // Init TLS settings if the user wants to use TLS
-    bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
+    bool tlsEnabled = false;//  Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
 
     if (tlsEnabled) {
         _transportType = PJSIP_TRANSPORT_TLS;
@@ -345,7 +356,7 @@ int SIPAccount::registerVoIPLink()
     }
 
     // Init STUN settings for this account if the user selected it
-    bool stunEnabled = Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
+    bool stunEnabled = _stunEnabled; // Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
 
     if (stunEnabled) {
         _transportType = PJSIP_TRANSPORT_START_OTHER;
@@ -679,6 +690,8 @@ std::string SIPAccount::getServerUri (void)
     std::string hostname = _hostname;
 
     // UDP does not require the transport specification
+
+    _debug("---------------------------- _hostname %s", _hostname.c_str());
 
     if (_transportType == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";

@@ -893,6 +893,8 @@ dbus_account_details(gchar * accountID)
   GError *error = NULL;
   GHashTable * details;
 
+  DEBUG("Dbus: Get account detail accountid %s", accountID);
+
   if (!org_sflphone_SFLphone_ConfigurationManager_get_account_details(
       configurationManagerProxy, accountID, &details, &error))
     {

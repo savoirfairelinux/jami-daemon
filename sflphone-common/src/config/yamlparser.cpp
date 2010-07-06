@@ -432,19 +432,23 @@ void YamlParser::mainNativeDataMapping(MappingNode *map) {
 
     // _debug("Iterating: %s", iter->first.c_str());
     if(accounts.compare(iter->first) == 0) {
-      // buildAccounts((SequenceNode *)(iter->second));
       accountSequence = (SequenceNode *)(iter->second);
     }
-    else if(addressbook.compare(iter->first) == 0);
-      // _debug("ok");
-    else if(audio.compare(iter->first) == 0);
-      // _debug("ok");
-    else if(hooks.compare(iter->first) == 0);
-      // _debug("ok");
-    else if(preferences.compare(iter->first) == 0);
-      // _debug("ok");
-    else if(voiplink.compare(iter->first) == 0);
-      // _debug("ok");
+    else if(addressbook.compare(iter->first) == 0) {
+      addressbookSequence = (SequenceNode *)(iter->second);
+    }
+    else if(audio.compare(iter->first) == 0) {
+      audioSequence = (SequenceNode *)(iter->second);
+    }
+    else if(hooks.compare(iter->first) == 0) {
+      hooksSequence = (SequenceNode *)(iter->second);
+    }
+    else if(preferences.compare(iter->first) == 0) {
+      preferenceSequence = (SequenceNode *)(iter->second);
+    }
+    else if(voiplink.compare(iter->first) == 0) {
+      voiplinkSequence = (SequenceNode *)(iter->second);
+    }
     else
       throw YamlParserException("Unknow map key in configuration");
 

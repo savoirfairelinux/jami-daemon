@@ -56,6 +56,7 @@
 
 #include "audio/mainbuffer.h"
 #include "yamlparser.h"
+#include "preferences.h"
 
 class AudioLayer;
 class GuiFramework;
@@ -113,7 +114,7 @@ class ManagerImpl {
     ~ManagerImpl (void);
 
 
-    short buildAccounts();
+    short buildConfiguration();
 
     /**
      * Initialisation of thread (sound) and map.
@@ -1343,6 +1344,10 @@ private:
      * Check if the call is a classic call or a direct IP-to-IP call
      */
     void check_call_configuration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
+
+    Conf::YamlParser *parser;
+
+    Preferences preferences;
 
 #ifdef TEST
     bool testCallAccountMap();

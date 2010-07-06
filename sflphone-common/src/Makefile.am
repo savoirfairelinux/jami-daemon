@@ -10,6 +10,7 @@ sflphoned_SOURCES = \
 		conference.cpp \
 		voiplink.cpp \
 		main.cpp \
+		preferences.cpp \
 		managerimpl.cpp \
 		managerimpl_registration.cpp \
 		observer.cpp \
@@ -47,6 +48,7 @@ noinst_LTLIBRARIES = libsflphone.la
 noinst_HEADERS = \
 		conference.h \
 		voiplink.h \
+		preferences.h \
 		managerimpl.h \
 		manager.h \
 		global.h \

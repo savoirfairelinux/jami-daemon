@@ -50,7 +50,9 @@ ConfigurationManager::ConfigurationManager(DBus::Connection& connection) :
 
 std::map<std::string, std::string> ConfigurationManager::getAccountDetails(
 		const std::string& accountID) {
-	return Manager::instance().getAccountDetails(accountID);
+
+  _debug("ConfigurationManager: get account details %s", accountID.c_str());
+    return Manager::instance().getAccountDetails(accountID);
 }
 
 std::map<std::string, std::string> ConfigurationManager::getTlsSettingsDefault(

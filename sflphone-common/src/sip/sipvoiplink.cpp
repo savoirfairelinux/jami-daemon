@@ -577,6 +577,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     std::string fromUri = account->getFromUri();
     std::string srvUri = account->getServerUri();
 
+    _debug("----------------------------------------------- srvUri %s, %s", account->getAccountID().c_str(), srvUri.c_str());
     std::string address = findLocalAddressFromUri (srvUri, account->getAccountTransport ());
     int port = findLocalPortFromUri (srvUri, account->getAccountTransport ());
 

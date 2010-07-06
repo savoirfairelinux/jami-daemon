@@ -42,6 +42,7 @@
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
 #include "config/serializable.h"
+#include <exception>
 
 enum DtmfType { OVERRTP, SIPINFO};
 
@@ -94,6 +95,25 @@ class SIPVoIPLink;
  * @file sipaccount.h
  * @brief A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
  */
+
+class SipAccountException : public std::exception
+{
+ public:
+  SipAccountException(const std::string& str="") throw() : errstr(str) {}
+
+  virtual ~SipAccountException() throw() {}
+
+  virtual const char *what() const throw() {
+    std::string expt("SipAccountException occured: ");
+    expt.append(errstr);
+
+    return expt.c_str();
+  }
+ private:
+  std::string errstr;
+
+};
+
 
 class SIPAccount : public Account
 {

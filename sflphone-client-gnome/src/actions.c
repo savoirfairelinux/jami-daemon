@@ -203,22 +203,28 @@ void sflphone_fill_account_list (void) {
     gchar** array;
     gchar** accountID;
     unsigned int i;
-	int count;
-	GQueue *codeclist;
+    int count;
+    GQueue *codeclist;
 
-	DEBUG("SFLphone: Fill account list");
-
-	count = current_account_get_message_number ();
+    DEBUG("SFLphone: Fill account list");
+    
+    count = current_account_get_message_number ();
 
     account_list_clear ();
 
     array = (gchar **)dbus_account_list();
     if(array)
     {
+      /*
+        if(!(*accountID))
+	  DEBUG("hhhhhhhhhmmmmmmmmmmmm");
+      */
+
         for (accountID = array; *accountID; accountID++)
         {
             account_t * a = g_new0(account_t,1);
             a->accountID = g_strdup(*accountID);
+	    DEBUG("------------------- Account ID %s", a->accountID);
             a->credential_information = NULL;
 			// TODO Clean codec list QUEUE
             account_list_add(a);

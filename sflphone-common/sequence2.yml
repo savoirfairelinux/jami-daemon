@@ -1,6 +1,6 @@
 accounts:
  - id:			IP2IP
-   alias:
+   alias:               ip2ip
    username:
    password:
    hostname:
@@ -27,6 +27,7 @@ accounts:
      helloHashEnabled:	false
      notSuppWarning:	false
    tls:
+     tlsPort:		5061
      certificate:
      calist:
      ciphers:
@@ -40,27 +41,19 @@ accounts:
      verifyClient:      false
      verifyServer:      false
 
- - id:			1234
+ - id:			Account:1278342101
    alias:   		sfl-181
    username:		181   
    password:  		sfl-181pw
-   hostname:  		sflphone.org
-   enable:		true
-   type:		SIP
-
- - id:			2345
-   alias:		sfl-431
-   username:		431     
-   password:  		alexandre
-   hostname:		192.168.50.3
+   hostname:  		192.168.50.3
    enable:		true
    type:		SIP
    expire:		3600
-   interface:		lo
-   port:		5065
+   interface:		default
+   port:		5060
    mailbox:		97
-   publishAddr:		127.0.0.1
-   publishPort:		5065
+   publishAddr:		192.168.50.182
+   publishPort:		5060
    sameasLocal:		true
    resolveOnce:		false      
    codecs:		0/9/110/111/112/
@@ -71,11 +64,12 @@ accounts:
      keyExchange:	sdes
      rtpFallback:	true
    zrtp:
-     displaySas:	true
+     displaySas:	false
      displaySasOnce:	false
-     helloHashEnabled:	true
-     notSuppWarning:	true
+     helloHashEnabled:	false
+     notSuppWarning:	false
    tls:
+     tlsPort:		5061
      certificate:       /home/msavard/Development/sflphone/sflphone-client-gnome/config.guess
      calist:            /home/msavard/Development/sflphone/sflphone-client-gnome/aclocal.m4
      ciphers:
@@ -88,6 +82,48 @@ accounts:
      server:
      verifyClient:      true
      verifyServer:      true
+
+ - id:			Account:1278343345
+   alias:		sfl-431
+   username:		431     
+   password:  		alexandre
+   hostname:		192.168.50.3
+   enable:		false
+   type:		SIP
+   expire:		3600
+   interface:		lo
+   port:		5060
+   mailbox:		97
+   publishAddr:		192.168.50.182
+   publishPort:		5060
+   sameasLocal:		true
+   resolveOnce:		false      
+   codecs:		0/9/110/111/112/
+   credential:
+     count:		0
+   srtp:
+     enable:		true
+     keyExchange:	sdes
+     rtpFallback:	true
+   zrtp:
+     displaySas:	false
+     displaySasOnce:	false
+     helloHashEnabled:	false
+     notSuppWarning:	false
+   tls:
+     tlsPort:		5061
+     certificate:       /home/msavard/Development/sflphone/sflphone-client-gnome/config.guess
+     calist:            /home/msavard/Development/sflphone/sflphone-client-gnome/aclocal.m4
+     ciphers:
+     enable:            false
+     method:           	TLSv1
+     timeout:          	0
+     password:
+     privateKey:        /home/msavard/Development/sflphone/sflphone-client-gnome/config.log
+     requireCertif:    	true
+     server:
+     verifyClient:      false
+     verifyServer:      false
 
 addressbook:
    photo:		false
@@ -124,27 +160,26 @@ hooks:
    urlSipField:		X-sflphone-url
 
 preferences:
-   order:		1234/2345
-   audioapi:		0
-   dialpaddisplay:	0
-   historyenabled:	1
-   historylimit:	30
-   historymaxCalls:	20
-   notifyall:		true
-   notifymails:		false
+   order:		1234/2345/
+   audioApi:		0
+   dialpadDisplay:	0
+   historyEnabled:	1
+   historyLimit:	30
+   historyMaxCalls:	20
+   notifyAll:		true
+   notifyMails:		false
    zoneToneChoice:	North America
-   registrationexpire:	180
-   ringtonesenable:	true
-   portnum:		5060
-   searchbardisplay:	true
-   starthidden:		0
-   volumedisplay:	0
-   windowheight:	332
-   windowpopup:		0
-   windowposition:	0
-   windowposition:	24
-   windowwidth:		240
-   zeroconfenable:	false
+   registrationExpire:	180
+   ringtoneEnabled:	true
+   portNum:		5060
+   searchBarDisplay:	true
+   startHidden:		0
+   volumeDisplay:	0
+   windowHeight:	332
+   windowPopup:		0
+   windowPosition:	0
+   windowWidth:		240
+   zeroConfenable:	false
    md5Hash:		false
 
 voiplink:

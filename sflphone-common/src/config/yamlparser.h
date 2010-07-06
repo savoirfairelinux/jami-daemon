@@ -80,6 +80,16 @@ class YamlParser {
 
   SequenceNode *getAccountSequence(void) { return accountSequence; };
 
+  SequenceNode *getPreferenceSequence(void) { return preferenceSequence; }
+
+  SequenceNode *getAddressbookSequence(void) { return preferenceSequence; }
+
+  SequenceNode *getAudioSequence(void) { return preferenceSequence; }
+
+  SequenceNode *getHooksSequence(void) { return preferenceSequence; }
+
+  SequenceNode *getVoiplinkSequence(void) { return preferenceSequence; }
+
  private:
 
   /**
@@ -130,6 +140,16 @@ class YamlParser {
   int eventIndex;
 
   SequenceNode *accountSequence;
+
+  SequenceNode *preferenceSequence;
+
+  SequenceNode *addressbookSequence;
+
+  SequenceNode *audioSequence;
+
+  SequenceNode *hooksSequence;
+
+  SequenceNode *voiplinkSequence;
 
 };
 

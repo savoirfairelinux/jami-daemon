@@ -3281,25 +3281,35 @@ std::vector<std::string> ManagerImpl::getAccountList () {
 	std::vector<std::string> account_order;
 	unsigned int i;
 
+	_debug("Manager: Get account list");
+
 	account_order = loadAccountOrder();
 	AccountMap::iterator iter;
 
 	// The IP2IP profile is always available, and first in the list
 	iter = _accountMap.find(IP2IP_PROFILE);
-	if (iter->second != NULL)
-		v.push_back(iter->first.data());
+	if (iter->second != NULL) {
+	  _debug("PUSHING BACK %s", iter->first.c_str());
+	  // v.push_back(iter->first.data());
+	  v.push_back(iter->second->getAccountID());
+	}
+	else {
+	  _error("Manager: could not find IP2IP profile in getAccount list");
+	}
 
 	// If no order has been set, load the default one
 	// ie according to the creation date.
 
 	if (account_order.size() == 0) {
+	        _debug("Manager: account order is empty");
 		iter = _accountMap.begin();
 
 		while (iter != _accountMap.end()) {
 
 			if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
-				//_debug("PUSHING BACK %s\n", iter->first.c_str());
-				v.push_back(iter->first.data());
+			  _debug("PUSHING BACK %s", iter->first.c_str());
+			  // v.push_back(iter->first.data());
+			  v.push_back(iter->second->getAccountID());
 			}
 
 			iter++;
@@ -3309,14 +3319,16 @@ std::vector<std::string> ManagerImpl::getAccountList () {
 	// Otherelse, load the custom one
 	// ie according to the saved order
 	else {
-
+	        _debug("Manager: Load account list according to preferences");
 		for (i = 0; i < account_order.size(); i++) {
 			// This account has not been loaded, so we ignore it
 			if ((iter = _accountMap.find(account_order[i]))
 					!= _accountMap.end()) {
 				// If the account is valid
 				if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
-					v.push_back(iter->first.data());
+				        _debug("PUSHING BACK %s\n", iter->first.c_str());
+				        // v.push_back(iter->first.data());
+					v.push_back(iter->second->getAccountID());
 				}
 			}
 		}
@@ -3329,10 +3341,12 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 		const AccountID& accountID) {
 	std::map<std::string, std::string> a;
 
+	_debug("getAccountDetails %s", accountID.c_str());
+
 	Account * account = _accountMap[accountID];
 
 	if (account == NULL) {
-		_debug ("Cannot getAccountDetails on a non-existing accountID %s. Defaults will be used.", accountID.c_str());
+	   _debug ("Cannot getAccountDetails on a non-existing accountID %s. Defaults will be used.", accountID.c_str());
 	}
 
 	a.insert(std::pair<std::string, std::string>(ACCOUNT_ID, accountID));
@@ -3981,7 +3995,11 @@ std::vector<std::string> ManagerImpl::loadAccountOrder (void) {
 	std::string account_list;
 	std::vector<std::string> account_vect;
 
-	account_list = getConfigString(PREFERENCES, CONFIG_ACCOUNTS_ORDER);
+	Conf::Key accountOrder("order");
+
+	// account_list = getConfigString(PREFERENCES, CONFIG_ACCOUNTS_ORDER);
+	account_list = preferences.getAccountOrder();
+
 	return unserialize(account_list);
 }
 
@@ -3989,8 +4007,7 @@ short ManagerImpl::loadAccountMap () {
 
 	_debug ("Manager: Loading account map");
 
-
-	int nbAccount = buildAccounts();
+	int nbAccount = buildConfiguration();
 
 	/*
 	short nbAccount = 0;
@@ -4072,11 +4089,11 @@ short ManagerImpl::loadAccountMap () {
 	return nbAccount;
 }
 
-short ManagerImpl::buildAccounts() {
+short ManagerImpl::buildConfiguration() {
 
   _debug("Manager: Build Accounts");
 
-  Conf::YamlParser *parser;
+  // Conf::YamlParser *parser;
   Account *tmpAccount = NULL;
   int nbAccount = 0;
 
@@ -4092,8 +4109,11 @@ short ManagerImpl::buildAccounts() {
   
   }
   catch (Conf::YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
+    _error("Manager: %s", e.what());
   }
+
+  // build preferences
+  preferences.unserialize((Conf::MappingNode *)(parser->getAccountSequence()));
 
   Conf::SequenceNode *seq = parser->getAccountSequence();
 
@@ -4164,9 +4184,17 @@ short ManagerImpl::buildAccounts() {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountid);
     }
 
-    tmpAccount->unserialize(map);
+    _debug("ok");
 
     if (tmpAccount != NULL) {
+
+      try {
+	tmpAccount->unserialize(map);
+      }
+      catch(SipAccountException &e) {
+	_error("Manager: %s", e.what());
+      }
+
       _debug ("Manager: Loading account %s ", accountid.c_str());
       _accountMap[accountid] = tmpAccount;
       // tmpAccount->setVoIPLink(SIPVoIPLink::instance (""));
