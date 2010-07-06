@@ -32,13 +32,46 @@
 
 namespace Conf {
 
-YamlEmitter::YamlEmitter() {}
+YamlEmitter::YamlEmitter() 
+{
+  open();
+}
 
-YamlEmitter::~YamlEmitter() {}
+YamlEmitter::~YamlEmitter() 
+{
+  close();
+}
 
-void YamlEmitter::open() {}
+void YamlEmitter::open() 
+{
+  fd = fopen(filename.c_str(), "wb");
 
-void YamlEmitter::close() {}
+  if(!fd)
+    throw YamlEmitterException("Could not open file descriptor");
+
+  if(!yaml_emitter_initialize(&emitter))
+    throw YamlEmitterException("Could not open file descriptor");
+
+  // Use unicode format
+  yaml_emitter_set_unicode(&emitter, 1);
+
+  yaml_emitter_set_output_file(&emitter, fd);
+
+  yaml_document_initialize(&document, NULL, NULL, NULL, 0, 0);
+}
+
+void YamlEmitter::close() 
+{
+  yaml_emitter_delete(&emitter);
+
+  if(!fd)
+    throw YamlEmitterException("File descriptor not valid");
+
+  if(!fclose(fd))
+    throw YamlEmitterException("Error closing file descriptor");
+
+  yaml_document_delete(&document);
+}
 
 void YamlEmitter::read() {}
 

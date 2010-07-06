@@ -3824,7 +3824,9 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
     acc = getAccount(accountID);
     
     if (acc != NULL) {
-        acc->loadConfig();
+      
+        
+        // acc->loadConfig();
 		
 	if (acc->isEnabled()) {
 	  acc->registerVoIPLink();

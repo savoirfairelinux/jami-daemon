@@ -176,39 +176,17 @@ void ConfigurationTest::testYamlParser()
   
 }
 
-
-void ConfigurationTest::testYamlComposition() 
+void ConfigurationTest::testYamlEmitter()
 {
+  Conf::YamlParser *emitter;
 
-  /*
-  Conf::YamlDocument *doc = new Conf::YamlDocument();
+  try{
+    emitter = new Conf::YamlParser("sequenceEmiter.yml");
 
-  Conf::SequenceNode *seq = new Conf::SequenceNode(doc);
-  Conf::MappingNode *map = new Conf::MappingNode();
-  Conf::ScalarNode *sclr = new Conf::ScalarNode();
-
-  CPPUNIT_ASSERT(seq->getType() == Conf::SEQUENCE);
-  CPPUNIT_ASSERT(map->getType() == Conf::MAPPING);
-  CPPUNIT_ASSERT(sclr->getType() == Conf::SCALAR);
-
-  seq->addNode(map);
-  seq->addNode(sclr);
-
-  Conf::Key key("username");
-  Conf::ScalarNode *val = new Conf::ScalarNode("alexandre");
-
-  map->setKeyValue(key, val);
-
-  Conf::YamlNode *node = map->getValue(key);
-
-  CPPUNIT_ASSERT(node->getType() == Conf::SCALAR);
-
-  delete val;
-
-  delete seq;
-  delete map;
-  delete sclr;
-  */
-
+    delete emitter;
+  }
+  catch (Conf::YamlEmitterException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
 
 }

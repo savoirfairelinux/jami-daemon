@@ -31,15 +31,31 @@
 #ifndef __YAMLEMITTER_H__
 #define __YAMLEMITTER_H__
 
+#include <yaml.h>
 #include <exception>
+#include <string>
 
 namespace Conf {
 
-class YamlEmitterException : public std::exception {
+#define EMITTER_BUFFERSIZE 65536
+#define EMITTER_MAXEVENT 1024
 
-    virtual const char *what() const throw() {
-      return "YamlEmitterException occured";
-    }
+class YamlEmitterException : public std::exception 
+{
+ public:
+  YamlEmitterException(const std::string& str="") throw() : errstr(str) {}
+
+  virtual ~YamlEmitterException() throw() {}
+
+  virtual const char *what() const throw() {
+    std::string expt("YamlParserException occured: ");
+    expt.append(errstr);
+    
+    return expt.c_str();
+  }
+ private:
+  std::string errstr;
+
 };
 
 class YamlEmitter {
@@ -60,6 +76,29 @@ class YamlEmitter {
 
 
  private:
+
+  std::string filename;
+
+  FILE *fd;
+
+  /**
+   * The parser structure. 
+   */
+  yaml_emitter_t emitter;
+
+  /**
+   * The event structure array.
+   */ 
+  yaml_event_t events[EMITTER_MAXEVENT];
+
+  /**
+   * 
+   */
+  unsigned char buffer[EMITTER_BUFFERSIZE];
+
+  yaml_document_t document;
+
+  
 
 };
 

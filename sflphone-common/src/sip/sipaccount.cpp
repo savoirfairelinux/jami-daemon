@@ -134,7 +134,7 @@ SIPAccount::~SIPAccount()
 
 void SIPAccount::serialize(Engine *engine) {
 
-
+  
 }
 
 
@@ -159,9 +159,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(map->getValue(passwordKey));
   if(val) { _password = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(hostnameKey));
-  _debug("------------------------------------- hostname from config: %s, %s", _accountID.c_str(), val->getValue().c_str());
   if(val) { _hostname = val->getValue(); val = NULL; }
-  _debug("------------------------------------- hostname from config: %s, %s", _accountID.c_str(), _hostname.c_str());
   val = (Conf::ScalarNode *)(map->getValue(accountEnableKey));
   if(val) { _enabled = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   //  val = (Conf::ScalarNode *)(map->getValue(mailboxKey));

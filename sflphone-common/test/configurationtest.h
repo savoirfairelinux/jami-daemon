@@ -51,6 +51,7 @@
 #include "global.h"
 #include "user_cfg.h"
 #include "config/yamlparser.h"
+#include "config/yamlemitter.h"
 #include "config/yamlnode.h"
 
 class ConfigurationTest: public CppUnit::TestFixture {
@@ -65,7 +66,7 @@ CPPUNIT_TEST_SUITE( ConfigurationTest );
 //	CPPUNIT_TEST( testDefaultValueSignalisation );
 //	CPPUNIT_TEST( testInitAudioDriver );
             CPPUNIT_TEST( testYamlParser );
-	    CPPUNIT_TEST( testYamlComposition );
+	    CPPUNIT_TEST( testYamlEmitter );
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -98,7 +99,9 @@ public:
 
 	void testYamlParser();
 
-	void testYamlComposition();
+	void testYamlEmitter();
+
+	
 };
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConfigurationTest, "ConfigurationTest");
