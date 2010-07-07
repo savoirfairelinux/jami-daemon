@@ -34,7 +34,7 @@
 #include "manager.h"
 #include "user_cfg.h"
 #include <pwd.h>
-
+#include <sstream>
 
 Credentials::Credentials() : credentialCount(0) {}
 
@@ -134,7 +134,109 @@ SIPAccount::~SIPAccount()
 
 void SIPAccount::serialize(Engine *engine) {
 
+
+  Conf::MappingNode accountmap(NULL);
+  Conf::MappingNode credentialmap(NULL);
+  Conf::MappingNode srtpmap(NULL);
+  Conf::MappingNode zrtpmap(NULL);
+  Conf::MappingNode tlsmap(NULL);
+
+  Conf::ScalarNode id(Account::_accountID);
+  Conf::ScalarNode username(Account::_username);
+  Conf::ScalarNode password(Account::_password);
+  Conf::ScalarNode alias(Account::_alias);
+  Conf::ScalarNode hostname(Account::_hostname);
+  Conf::ScalarNode enable(_enabled ? "true" : "false");
+  Conf::ScalarNode type(Account::_type);
+  Conf::ScalarNode expire(_registrationExpire);
+  Conf::ScalarNode interface(_interface);
+  std::stringstream portstr; portstr << _localPort;
+  Conf::ScalarNode port(portstr.str());
+  Conf::ScalarNode mailbox("97");
+  Conf::ScalarNode publishAddr(_publishedIpAddress);
+  std::stringstream publicportstr; publicportstr << _publishedPort;
+  Conf::ScalarNode publishPort(publicportstr.str());
+  Conf::ScalarNode sameasLocal(_publishedSameasLocal ? "true" : "false");
+  Conf::ScalarNode resolveOnce(_resolveOnce ? "true" : "false");      
+  Conf::ScalarNode codecs("");
+  Conf::ScalarNode stunServer(std::string(_stunServerName.ptr, _stunServerName.slen));
+  Conf::ScalarNode stunEnabled(_stunEnabled ? "true" : "false");
+  Conf::ScalarNode displayName(_displayName);
+  Conf::ScalarNode dtmfType(_dtmfType==0 ? "overrtp" : "sipinfo");
+
+  std::stringstream countstr; countstr << _credentialCount;
+  Conf::ScalarNode count(countstr.str());
   
+  Conf::ScalarNode srtpenabled(_srtpEnabled ? "true" : "false");
+  Conf::ScalarNode keyExchange(_srtpKeyExchange);
+  Conf::ScalarNode rtpFallback(_srtpFallback ? "true" : "false");
+
+  Conf::ScalarNode displaySas(_zrtpDisplaySas ? "true" : "false");
+  Conf::ScalarNode displaySasOnce(_zrtpDisplaySasOnce ? "true" : "false");
+  Conf::ScalarNode helloHashEnabled(_zrtpHelloHash ? "true" : "false");
+  Conf::ScalarNode notSuppWarning(_zrtpNotSuppWarning ? "true" : "false");
+
+  Conf::ScalarNode tlsport(_tlsPortStr);
+  Conf::ScalarNode certificate(_tlsCertificateFile);
+  Conf::ScalarNode calist(_tlsCaListFile);
+  Conf::ScalarNode ciphers(_tlsCiphers);
+  Conf::ScalarNode tlsenabled(_tlsEnable);
+  Conf::ScalarNode tlsmethod(_tlsMethod);
+  Conf::ScalarNode timeout(_tlsNegotiationTimeoutSec);
+  Conf::ScalarNode tlspassword(_tlsPassword);
+  Conf::ScalarNode privatekey(_tlsPrivateKeyFile);
+  Conf::ScalarNode requirecertif(_tlsRequireClientCertificate ? "true" : "false");
+  Conf::ScalarNode server(_tlsServerName);
+  Conf::ScalarNode verifyclient(_tlsVerifyServer ? "true" : "false");
+  Conf::ScalarNode verifyserver(_tlsVerifyClient ? "true" : "false");
+
+  accountmap.setKeyValue(aliasKey, &alias);
+  accountmap.setKeyValue(typeKey, &type);
+  accountmap.setKeyValue(idKey, &id);
+  accountmap.setKeyValue(usernameKey, &username);
+  accountmap.setKeyValue(passwordKey, &password);
+  accountmap.setKeyValue(hostnameKey, &hostname);
+  accountmap.setKeyValue(accountEnableKey, &enable);
+  accountmap.setKeyValue(mailboxKey, &mailbox);
+  accountmap.setKeyValue(expireKey, &expire);
+  accountmap.setKeyValue(interfaceKey, &interface);
+  accountmap.setKeyValue(portKey, &port);
+  accountmap.setKeyValue(publishAddrKey, &publishAddr);
+  accountmap.setKeyValue(publishPortKey, &publishPort);
+  accountmap.setKeyValue(sameasLocalKey, &sameasLocal);
+  accountmap.setKeyValue(resolveOnceKey, &resolveOnce);
+  accountmap.setKeyValue(dtmfTypeKey, &dtmfType);
+  accountmap.setKeyValue(displayNameKey, &displayName);
+
+  accountmap.setKeyValue(srtpKey, &srtpmap);
+  srtpmap.setKeyValue(srtpEnableKey, &srtpenabled);
+  srtpmap.setKeyValue(keyExchangeKey, &keyExchange);
+  srtpmap.setKeyValue(rtpFallbackKey, &rtpFallback);
+  
+  accountmap.setKeyValue(zrtpKey, &zrtpmap);
+  zrtpmap.setKeyValue(displaySasKey, &displaySas);
+  zrtpmap.setKeyValue(displaySasOnceKey, &displaySasOnce);
+  zrtpmap.setKeyValue(helloHashEnabledKey, &helloHashEnabled);
+  zrtpmap.setKeyValue(notSuppWarningKey, &notSuppWarning);
+
+  accountmap.setKeyValue(credKey, &credentialmap);
+  credentialmap.setKeyValue(credentialCountKey, &count);
+
+  accountmap.setKeyValue(tlsKey, &tlsmap);
+  tlsmap.setKeyValue(tlsPortKey, &tlsport);
+  tlsmap.setKeyValue(certificateKey, &certificate);
+  tlsmap.setKeyValue(calistKey, &calist);
+  tlsmap.setKeyValue(ciphersKey, &ciphers);
+  tlsmap.setKeyValue(tlsEnableKey, &tlsenabled);
+  tlsmap.setKeyValue(methodKey, &tlsmethod);
+  tlsmap.setKeyValue(timeoutKey, &timeout);
+  tlsmap.setKeyValue(tlsPasswordKey, &tlspassword);
+  tlsmap.setKeyValue(privateKeyKey, &privatekey);
+  tlsmap.setKeyValue(requireCertifKey, &requirecertif);
+  tlsmap.setKeyValue(serverKey, &server);
+  tlsmap.setKeyValue(verifyClientKey, &verifyclient);
+  tlsmap.setKeyValue(verifyServerKey, &verifyserver);
+
 }
 
 

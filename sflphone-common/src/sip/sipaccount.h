@@ -451,8 +451,8 @@ class SIPAccount : public Account
 	bool getZrtpDiaplaySasOnce(void) { return _zrtpDisplaySasOnce; }
 	void setZrtpDiaplaySasOnce(bool sasonce) { _zrtpDisplaySasOnce = sasonce; }
 
-	bool getZrtpNotSuppWarning(void) { return _zrtpDisplaySasOnce; }
-	void setZrtpNotSuppWarning(bool warning) { _zrtpDisplaySasOnce = _zrtpNotSuppWarning; }
+	bool getZrtpNotSuppWarning(void) { return _zrtpNotSuppWarning; }
+	void setZrtpNotSuppWarning(bool warning) { _zrtpNotSuppWarning = warning; }
 
 	bool getZrtpHelloHash(void) { return _zrtpHelloHash; }
 	void setZrtpHelloHash(bool hellohash) { _zrtpHelloHash = hellohash; }
