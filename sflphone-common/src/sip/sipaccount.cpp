@@ -134,6 +134,8 @@ SIPAccount::~SIPAccount()
 
 void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
 
+  _debug("SipAccount: serialize %s", _accountID.c_str());
+
 
   Conf::MappingNode accountmap(NULL);
   Conf::MappingNode credentialmap(NULL);
@@ -152,6 +154,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   Conf::ScalarNode interface(_interface);
   std::stringstream portstr; portstr << _localPort;
   Conf::ScalarNode port(portstr.str());
+
   Conf::ScalarNode mailbox("97");
   Conf::ScalarNode publishAddr(_publishedIpAddress);
   std::stringstream publicportstr; publicportstr << _publishedPort;
@@ -166,7 +169,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
 
   std::stringstream countstr; countstr << _credentialCount;
   Conf::ScalarNode count(countstr.str());
-  
+
   Conf::ScalarNode srtpenabled(_srtpEnabled ? "true" : "false");
   Conf::ScalarNode keyExchange(_srtpKeyExchange);
   Conf::ScalarNode rtpFallback(_srtpFallback ? "true" : "false");
@@ -495,6 +498,9 @@ int SIPAccount::registerVoIPLink()
     if (stunEnabled) {
         _transportType = PJSIP_TRANSPORT_START_OTHER;
         initStunConfiguration ();
+    }
+    else {
+      _stunServerName = pj_str ((char*) _stunServer.data());
     }
 
     // In our definition of the

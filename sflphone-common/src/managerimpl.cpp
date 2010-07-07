@@ -1413,6 +1413,28 @@ bool ManagerImpl::saveConfig (void) {
 	setConfig(AUDIO, VOLUME_SPKR, getSpkrVolume());
 	setConfig(AUDIO, VOLUME_MICRO, getMicVolume());
 
+	AccountMap::iterator iter = _accountMap.begin();
+
+	try{
+	  emitter = new Conf::YamlEmitter("/tmp/sequenceEmiter.txt");
+
+	  // emitter->writeAccount(&accountmap);
+	  // emitter->writeAccount(&accountmap);
+	  emitter->serializeData();
+
+	  while(iter != _accountMap.end()) {
+	    iter->second->serialize(emitter);
+	    iter++;
+	  }
+
+	  preferences.serialize(emitter);
+
+	  delete emitter;
+	}
+	catch (Conf::YamlEmitterException &e) {
+	  _error("ConfigTree: %s", e.what());
+	}
+
 	_setupLoaded = _config.saveConfigTree(_path.data());
 	return _setupLoaded;
 }

@@ -55,6 +55,7 @@
 #include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
 
 #include "audio/mainbuffer.h"
+#include "yamlemitter.h"
 #include "yamlparser.h"
 #include "preferences.h"
 
@@ -1347,6 +1348,7 @@ private:
     void check_call_configuration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
 
     Conf::YamlParser *parser;
+    Conf::YamlEmitter *emitter;
 
 #ifdef TEST
     bool testCallAccountMap();
