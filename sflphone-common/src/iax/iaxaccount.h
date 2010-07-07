@@ -44,7 +44,7 @@ class IAXAccount : public Account
 
         ~IAXAccount();
 
-	virtual void serialize(Engine *engine);
+	virtual void serialize(Conf::YamlEmitter *emitter);
 
 	virtual void unserialize(Conf::MappingNode *map);
 

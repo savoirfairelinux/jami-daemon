@@ -47,7 +47,7 @@ IAXAccount::~IAXAccount()
     _link = NULL;
 }
 
-void IAXAccount::serialize(Engine *engine) 
+void IAXAccount::serialize(Conf::YamlEmitter *emitter) 
 {
   
 }

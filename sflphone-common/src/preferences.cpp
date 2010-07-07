@@ -50,7 +50,7 @@ Preferences::Preferences() :  _accountOrder("")
 Preferences::~Preferences() {}
 
 
-void Preferences::serialize(Engine *engine) 
+void Preferences::serialize(Conf::YamlEmitter *emiter) 
 {
 
   Conf::MappingNode preferencemap(NULL);
@@ -86,6 +86,7 @@ void Preferences::serialize(Engine *engine)
   preferencemap.setKeyValue(zeroConfenableKey, &zeroConfenable);
   preferencemap.setKeyValue(md5HashKey, &md5Hash);
 
+  
 }
 
 void Preferences::unserialize(Conf::MappingNode *map)
@@ -118,4 +119,6 @@ void Preferences::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(map->getValue(md5HashKey));
   if(val) { _md5Hash = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
 
+
+  
 }

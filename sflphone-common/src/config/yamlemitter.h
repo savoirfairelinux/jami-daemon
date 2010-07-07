@@ -77,7 +77,7 @@ class YamlEmitter {
 
   void writeAccount(MappingNode *map);
 
-  void writePreference();
+  void writePreference(MappingNode *map);
 
   void writeAddressbook();
 

@@ -33,6 +33,7 @@
 
 
 #include "yamlparser.h"
+#include "yamlemitter.h"
 #include "yamlnode.h"
 
 class Engine;
@@ -42,7 +43,7 @@ class Serializable {
 
  public:
 
-  virtual void serialize(Engine *engine) = 0;
+  virtual void serialize(Conf::YamlEmitter *emitter) = 0;
 
   virtual void unserialize(Conf::MappingNode *map) = 0;
 

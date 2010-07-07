@@ -120,8 +120,30 @@ void YamlEmitter::writeAccount(MappingNode *map)
 
 }
 
+void YamlEmitter::writePreference(MappingNode *map)
+{
+  std::string preferencestr("preferences");
 
-  void YamlEmitter::addMappingItem(int mappingid, Key key, YamlNode *node) 
+  if(map->getType() == MAPPING)
+    throw YamlEmitterException("Node type is not a mapping while writing preferences");
+
+  int preferenceid = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)preferencestr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
+  int preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE);
+
+  yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping);
+
+  Mapping *internalmap = map->getMapping();
+  Mapping::iterator iter = internalmap->begin();
+
+  while(iter != internalmap->end()) {
+    addMappingItem(preferencemapping, iter->first, iter->second);
+    iter++;
+  }
+
+}
+
+
+void YamlEmitter::addMappingItem(int mappingid, Key key, YamlNode *node) 
 {
 
   if(node->getType() == SCALAR) {
@@ -148,6 +170,8 @@ void YamlEmitter::writeAccount(MappingNode *map)
       iter++;
     }
   }
+  else
+    throw YamlEmitterException("Unknown node type while adding mapping node");
 }
 
 

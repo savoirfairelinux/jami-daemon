@@ -40,7 +40,7 @@ Credentials::Credentials() : credentialCount(0) {}
 
 Credentials::~Credentials() {}
 
-void Credentials::serialize(Engine *engine)
+void Credentials::serialize(Conf::YamlEmitter *emitter)
 {
   
 }
@@ -132,7 +132,7 @@ SIPAccount::~SIPAccount()
     free (_tlsSetting);
 }
 
-void SIPAccount::serialize(Engine *engine) {
+void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
 
 
   Conf::MappingNode accountmap(NULL);

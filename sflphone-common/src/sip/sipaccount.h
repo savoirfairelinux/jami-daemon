@@ -134,7 +134,7 @@ class Credentials : public Serializable
 
   ~Credentials();
 
-  virtual void serialize(Engine *engine);
+  virtual void serialize(Conf::YamlEmitter *emitter);
 
   virtual void unserialize(Conf::MappingNode *map);
 
@@ -170,7 +170,7 @@ class SIPAccount : public Account
          */
         virtual ~SIPAccount();
 
-	virtual void serialize(Engine *engine);
+	virtual void serialize(Conf::YamlEmitter *emitter);
 
 	virtual void unserialize(Conf::MappingNode *map);
 
