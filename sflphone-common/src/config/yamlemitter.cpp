@@ -34,7 +34,7 @@
 
 namespace Conf {
 
-YamlEmitter::YamlEmitter(const char *file) : filename(file) 
+YamlEmitter::YamlEmitter(const char *file) : filename(file), isFirstAccount(true)
 {
   open();
 }
@@ -60,6 +60,9 @@ void YamlEmitter::open()
   yaml_emitter_set_output_file(&emitter, fd);
 
   yaml_document_initialize(&document, NULL, NULL, NULL, 0, 0);
+
+  // Init the main configuration mapping
+  topLevelMapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE);
 }
 
 void YamlEmitter::close() 
@@ -82,70 +85,70 @@ void YamlEmitter::read() {}
 
 void YamlEmitter::write() 
 {
-  serializeData();
-
-  for(int i = 0; i < eventNumber; i++) {
-    if(!yaml_emitter_emit(&emitter, &(events[i])))
-      throw YamlEmitterException("Falied to emit event");
-    
-     yaml_emitter_flush(&emitter);
-  }
 
 }
 
 void YamlEmitter::serializeData()
 {
-
-  unsigned char sclr[20];
-  snprintf((char *)sclr, 20, "%s", "value");
-  yaml_char_t *value = (yaml_char_t *)sclr;
-  
-
-  // yaml_document_add_scalar(&document, NULL, value, -1, YAML_PLAIN_SCALAR_STYLE);
-  // yaml_emitter_dump(&emitter, &document);
-  eventNumber = 0;
-
-  yaml_event_t event;
-
-  yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
-  events[eventNumber++] = event;
-
-  yaml_document_start_event_initialize(&event, NULL, NULL, NULL, 0);
-  events[eventNumber++] = event;
-
-  
-  yaml_document_end_event_initialize(&event, 0);
-  events[eventNumber++] = event;
-
-  // yaml_scalar_event_initialize(event, yaml_char_t  *anchor, yaml_char_t  *tag, yaml_char_t  *value, int length, int plain_implicit, int quoted_implicit, yaml_scalar_style_t  style)
-  yaml_scalar_event_initialize(&event, NULL, NULL, value, 5, 0, 0, YAML_PLAIN_SCALAR_STYLE);
-  events[eventNumber++] = event;
-
-  //  yaml_sequence_start_event_initialize
-
-  //  yaml_sequence_end_event_initialize  
-
-  //  yaml_mapping_start_event_initialize
-
-  //  yaml_mapping_end_event_initialize
-
-  //  yaml_event_delete
-
-  yaml_stream_end_event_initialize(&event);
-  events[eventNumber++] = event;
-
-}
-
-
-void YamlEmitter::writeDocument()
-{
-  unsigned char sclr[20];
-  snprintf((char *)sclr, 20, "%s", "value");
-  yaml_char_t *value = (yaml_char_t *)sclr;
-
-  yaml_document_add_scalar(&document, NULL, value, -1, YAML_PLAIN_SCALAR_STYLE);
   yaml_emitter_dump(&emitter, &document);
+}
+
+
+void YamlEmitter::writeAccount(MappingNode *map)
+{
+
+  std::string accountstr("accounts");
+ 
+  if(isFirstAccount) {
+    // accountSequence need to be static outside this scope since reused each time an account is written
+    accountSequence = yaml_document_add_sequence (&document, NULL, YAML_BLOCK_SEQUENCE_STYLE);
+    int accountid = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)accountstr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
+    yaml_document_append_mapping_pair (&document, topLevelMapping, accountid, accountSequence);
+    isFirstAccount = false;
+  }
+
+  int accountmapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE);
+  yaml_document_append_sequence_item (&document, accountSequence, accountmapping);
+
+  Mapping *internalmap = map->getMapping();
+  Mapping::iterator iter = internalmap->begin();
+
+  while(iter != internalmap->end()) {
+    addMappingItem(accountmapping, iter->first, iter->second);
+    iter++;
+  }
 
 }
+
+
+  void YamlEmitter::addMappingItem(int mappingid, Key key, YamlNode *node) 
+{
+
+  if(node->getType() == SCALAR) {
+
+    ScalarNode *sclr = (ScalarNode *)node;
+
+    int temp1 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
+    int temp2 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)sclr->getValue().c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
+    yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2);
+
+  }
+  else if(node->getType() == MAPPING){
+
+    int temp1 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
+    int temp2 = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE);
+    yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2);
+
+    MappingNode *map = (MappingNode *)node;
+    Mapping *internalmap = map->getMapping();
+    Mapping::iterator iter = internalmap->begin();
+    
+    while(iter != internalmap->end()) {
+      addMappingItem(temp2, iter->first, iter->second);
+      iter++;
+    }
+  }
+}
+
 
 }

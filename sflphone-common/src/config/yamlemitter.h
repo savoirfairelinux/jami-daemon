@@ -34,6 +34,7 @@
 #include <yaml.h>
 #include <exception>
 #include <string>
+#include "yamlnode.h"
 
 namespace Conf {
 
@@ -74,11 +75,23 @@ class YamlEmitter {
 
   void write();
 
-  void writeDocument();
+  void writeAccount(MappingNode *map);
+
+  void writePreference();
+
+  void writeAddressbook();
+
+  void writeAudio();
+
+  void writeHooks();
+
+  void writeVoiplink();
+
+  void serializeData();
 
  private:
 
-  void serializeData();
+  void addMappingItem(int mappingid, Key key, YamlNode *node);
 
   std::string filename;
 
@@ -99,9 +112,28 @@ class YamlEmitter {
    */
   unsigned char buffer[EMITTER_BUFFERSIZE];
 
+
+  /**
+   * Main document for this serialization
+   */
   yaml_document_t document;
 
-  int eventNumber;
+  /**
+   * Reference id to the top levell mapping when creating
+   */
+  int topLevelMapping;
+
+  /**
+   * We need to add the account sequence if this is the first account to be
+   */
+  bool isFirstAccount;
+
+  /**
+   * Reference to the account sequence
+   */
+  int accountSequence;
+
+  friend class ConfigurationTest;
 
 };
 

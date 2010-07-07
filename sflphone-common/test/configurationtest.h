@@ -53,6 +53,8 @@
 #include "config/yamlparser.h"
 #include "config/yamlemitter.h"
 #include "config/yamlnode.h"
+#include "sip/sipaccount.h"
+#include "account.h"
 
 class ConfigurationTest: public CppUnit::TestFixture {
 
