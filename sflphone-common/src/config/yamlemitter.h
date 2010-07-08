@@ -81,7 +81,11 @@ class YamlEmitter {
 
   void serializeVoipPreference(MappingNode *map);
 
-  void writeAddressbook();
+  void serializeAddressbookPreference(MappingNode *map);
+
+  void serializeHooksPreference(MappingNode *map);
+
+  void serializeAudioPreference(MappingNode *map);
 
   void writeAudio();
 

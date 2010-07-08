@@ -118,6 +118,12 @@ class ManagerImpl {
 
     VoipPreference voipPreferences;
 
+    AddressbookPreference addressbookPreference;
+
+    HookPreference hookPreference;
+
+    AudioPreference audioPreference;
+
     short buildConfiguration();
 
     /**

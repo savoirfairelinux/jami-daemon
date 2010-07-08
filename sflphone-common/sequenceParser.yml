@@ -1,3 +1,4 @@
+---
 accounts:
  - id:			IP2IP
    alias:
@@ -135,30 +136,30 @@ accounts:
      verifyServer:      false
 
 addressbook:
-   photo:		false
-   enabled:		true
-   list:		1243608768.30329.0@emilou-desktop/1243456917.15690.23@emilou-desktop/
-   max_results:		25
-   business:		true
-   home:		false
-   mobile:		false
+   photo: true
+   enabled: true
+   list: 1243608768.30329.0@emilou-desktop/1243456917.15690.23@emilou-desktop/
+   maxResults: 25
+   business: true
+   home: false
+   mobile: false
 
 audio:
    alsa:
-     cardin:            0
-     cardout:		0
-     cardout:		0
-     framesize:		20
-     plugin:		default
-     smplrate:		44100
+     cardin: 0
+     cardout: 0
+     cardout: 0
+     framesize: 20
+     plugin: default
+     smplrate: 44100
    pulse:
      devicePlayback:
      deviceRecord:
      deviceRingtone:	
-   recordpath:		/home/msavard/Bureau
-   ringchoice:		/usr/share/sflphone/ringtones/konga.ul
-   volumemic:		100
-   volumespkr:		100
+   recordpath: /home/msavard/Bureau
+   ringchoice: /usr/share/sflphone/ringtones/konga.ul
+   volumemic:  100
+   volumespkr: 100
 
 hooks:
    iax2Enabled:		false
@@ -169,34 +170,33 @@ hooks:
    urlSipField:		X-sflphone-url
 
 preferences:
-   order:		1234/2345/
-   audioApi:		0
-   dialpadDisplay:	0
-   historyEnabled:	1
-   historyLimit:	30
-   historyMaxCalls:	20
-   notifyAll:		true
-   notifyMails:		false
-   zoneToneChoice:	North America
-   registrationExpire:	180
-   ringtoneEnabled:	true
-   portNum:		5060
-   searchBarDisplay:	true
-   startHidden:		0
-   volumeDisplay:	0
-   windowHeight:	332
-   windowPopup:		0
-   windowPosition:	0
-   windowWidth:		240
-   zeroConfenable:	false
-   md5Hash:		false
+   order: Account:1278432440/Account:1278432417/
+   audioApi: 0
+   dialpadDisplay: 0
+   historyEnabled: 1
+   historyLimit: 30
+   historyMaxCalls: 20
+   notifyAll: true
+   notifyMails: false
+   zoneToneChoice: North America
+   registrationExpire: 180
+   ringtoneEnabled: true
+   portNum: 5060
+   searchBarDisplay: true
+   startHidden: 0
+   volumeDisplay: 0
+   windowHeight: 332
+   windowPopup: 0
+   windowPosition: 0
+   windowWidth: 240
+   zeroConfenable: false
+   md5Hash: false
 
-voiplink:
-   playDtmf:		true
-   playTones:		true
-   pulseLength:		250
-   sendDTMFas:		0
-   stunenable:		0
-   stunserver:		stun.sflphone.org
-   symmetric:		true
-   zidFile:		sfl.zid
+voipPreferences:
+   playDtmf: true
+   playTones: true
+   pulseLength: 250
+   sendDtmfAs: 0
+   symmetric: true
+   zidFile: sfl.zid
+...

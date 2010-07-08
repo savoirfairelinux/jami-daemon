@@ -1426,6 +1426,9 @@ bool ManagerImpl::saveConfig (void) {
 
 	  preferences.serialize(emitter);
 	  voipPreferences.serialize(emitter);
+	  addressbookPreference.serialize(emitter);
+	  hookPreference.serialize(emitter);
+	  audioPreference.serialize(emitter);
 
 	  emitter->serializeData();
 
@@ -4140,6 +4143,9 @@ short ManagerImpl::buildConfiguration() {
   // build preferences
   preferences.unserialize((Conf::MappingNode *)(parser->getPreferenceSequence()));
   voipPreferences.unserialize((Conf::MappingNode *)(parser->getVoipPreferenceSequence()));
+  addressbookPreference.unserialize((Conf::MappingNode *)(parser->getAddressbookSequence()));
+  hookPreference.unserialize((Conf::MappingNode *)(parser->getHookSequence()));
+  audioPreference.unserialize((Conf::MappingNode *)(parser->getAudioSequence()));
 
   Conf::SequenceNode *seq = parser->getAccountSequence();
 

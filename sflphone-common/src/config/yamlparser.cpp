@@ -250,7 +250,7 @@ void YamlParser::processDocument()
 void YamlParser::processScalar(YamlNode *topNode)
 {
 
-  // _debug("YamlParser: process scalar");
+  _debug("YamlParser: process scalar");
 
   if(!topNode)
     throw YamlParserException("No container for scalar");
@@ -279,7 +279,7 @@ void YamlParser::processScalar(YamlNode *topNode)
 
 void YamlParser::processSequence(YamlNode *topNode)
 {
-  // _debug("YamlParser: process sequence");
+  _debug("YamlParser: process sequence");
 
   if(!topNode)
     throw YamlParserException("No container for sequence");
@@ -328,7 +328,7 @@ void YamlParser::processSequence(YamlNode *topNode)
 
 void YamlParser::processMapping(YamlNode *topNode)
 {
-  // _debug("YamlParser: process mapping");
+  _debug("YamlParser: process mapping -----------------------------------------");
 
   if(!topNode)
     throw YamlParserException("No container for mapping");
@@ -436,24 +436,28 @@ void YamlParser::mainNativeDataMapping(MappingNode *map) {
 
     _debug("Iterating: %s", iter->first.c_str());
     if(accounts.compare(iter->first) == 0) {
+      _debug("Adding voip account sequence");
       accountSequence = (SequenceNode *)(iter->second);
     }
     else if(addressbook.compare(iter->first) == 0) {
+      _debug("Adding voip addressbook sequence");
       addressbookSequence = (SequenceNode *)(iter->second);
     }
     else if(audio.compare(iter->first) == 0) {
+      _debug("Adding voip audio sequence");
       audioSequence = (SequenceNode *)(iter->second);
     }
     else if(hooks.compare(iter->first) == 0) {
+      _debug("Adding voip hooks sequence");
       hooksSequence = (SequenceNode *)(iter->second);
     }
     else if(preferences.compare(iter->first) == 0) {
+      _debug("Adding voip preference sequence");
       preferenceSequence = (SequenceNode *)(iter->second);
     }
     else if(voiplink.compare(iter->first) == 0) {
-      _debug("Adding voip preference sequence");
+      _debug("Adding voip voip sequence");
       voiplinkSequence = (SequenceNode *)(iter->second);
-      _debug("Added");
     }
     else
       throw YamlParserException("Unknow map key in configuration");

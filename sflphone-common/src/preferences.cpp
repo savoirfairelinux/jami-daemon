@@ -30,6 +30,7 @@
 
 #include "preferences.h"
 #include <sstream>
+#include "global.h"
 
 Preferences::Preferences() :  _accountOrder("")
 			   , _audioApi(0)
@@ -52,6 +53,8 @@ Preferences::~Preferences() {}
 
 void Preferences::serialize(Conf::YamlEmitter *emiter) 
 {
+
+  _debug("Preference: Serialize configuration");
 
   Conf::MappingNode preferencemap(NULL);
   
@@ -92,6 +95,8 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
 void Preferences::unserialize(Conf::MappingNode *map)
 {
 
+  _debug("Preference: Unserialize configuration");
+
   Conf::ScalarNode *val;
 
   val = (Conf::ScalarNode *)(map->getValue(orderKey));
@@ -113,12 +118,302 @@ void Preferences::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(map->getValue(portNumKey));
   if(val) { _portNum = atoi(val->getValue().data()); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(searchBarDisplayKey));
-  if(val) { _searchBarDisplay = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+  if(val && !val->getValue().empty()) { _searchBarDisplay = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(zeroConfenableKey));
-  if(val) { _zeroConfenable = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+  if(val && !val->getValue().empty()) { _zeroConfenable = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(md5HashKey));
-  if(val) { _md5Hash = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+  if(val && !val->getValue().empty()) { _md5Hash = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
 
 
   
+}
+
+
+VoipPreference::VoipPreference() :  _playDtmf(true)
+				 , _playTones(true)
+				 , _pulseLength(250)   
+				 , _sendDtmfAs(0)
+				 , _symmetricRtp(true)
+				 , _zidFile("zidFile")
+{
+
+}
+
+VoipPreference::~VoipPreference() {}
+
+
+void VoipPreference::serialize(Conf::YamlEmitter *emitter) 
+{
+  Conf::MappingNode preferencemap(NULL);
+
+  Conf::ScalarNode playDtmf(_playDtmf ? "true" : "false");
+  Conf::ScalarNode playTones(_playTones ? "true" : "false");
+  std::stringstream pulselengthstr; pulselengthstr << _pulseLength;
+  Conf::ScalarNode pulseLength(pulselengthstr.str());
+  std::stringstream senddtmfstr; senddtmfstr << _sendDtmfAs;
+  Conf::ScalarNode sendDtmfAs(senddtmfstr.str());
+  Conf::ScalarNode symmetricRtp(_symmetricRtp ? "true" : "false");
+  Conf::ScalarNode zidFile(_zidFile.c_str());
+
+  preferencemap.setKeyValue(playDtmfKey, &playDtmf);
+  preferencemap.setKeyValue(playTonesKey, &playTones);
+  preferencemap.setKeyValue(pulseLengthKey, &pulseLength);
+  preferencemap.setKeyValue(sendDtmfAsKey, &sendDtmfAs);
+  preferencemap.setKeyValue(symmetricRtpKey, &symmetricRtp);
+  preferencemap.setKeyValue(zidFileKey, &zidFile);
+
+  emitter->serializeVoipPreference(&preferencemap);
+}
+
+void VoipPreference::unserialize(Conf::MappingNode *map) 
+{
+
+  _debug("VoipPreference: Unserialize configuration");
+
+  Conf::ScalarNode *val = NULL;
+
+  val = (Conf::ScalarNode *)(map->getValue(playDtmfKey));
+  if(val && !val->getValue().empty()) { _playDtmf = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(playTonesKey));
+  if(val && !val->getValue().empty()) { _playTones = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(pulseLengthKey));
+  if(val) { _pulseLength = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(sendDtmfAsKey));
+  if(val) { _sendDtmfAs = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(symmetricRtpKey));
+  if(val && !val->getValue().empty()) { _symmetricRtp = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(zidFileKey));
+  if(val) { _zidFile = val->getValue().c_str(); val = NULL; }
+  
+}
+
+
+
+AddressbookPreference::AddressbookPreference() : _photo(true)
+					       , _enabled(true)
+					       , _list("")
+					       , _maxResults(25)
+					       , _business(true)
+					       , _home(true)
+					       , _mobile(true)
+{
+
+}
+
+AddressbookPreference::~AddressbookPreference() {}
+
+void AddressbookPreference::serialize(Conf::YamlEmitter *emitter)
+{
+  _debug("Addressbook: Serialize configuration");
+  
+  Conf::MappingNode preferencemap(NULL);
+
+  Conf::ScalarNode photo(_photo ? "true" : "false");
+  Conf::ScalarNode enabled(_enabled ? "true" : "false");
+  Conf::ScalarNode list(_list);
+  std::stringstream maxresultstr; maxresultstr << _maxResults;
+  Conf::ScalarNode maxResults(maxresultstr.str());
+  Conf::ScalarNode business(_business ? "true" : "false");
+  Conf::ScalarNode home(_home ? "true" : "false");
+  Conf::ScalarNode mobile(_mobile ? "true" : "false");
+
+  preferencemap.setKeyValue(photoKey, &photo);
+  preferencemap.setKeyValue(enabledKey, &enabled);
+  preferencemap.setKeyValue(listKey, &list);
+  preferencemap.setKeyValue(maxResultsKey, &maxResults);
+  preferencemap.setKeyValue(businessKey, &business);
+  preferencemap.setKeyValue(homeKey, &home);
+  preferencemap.setKeyValue(mobileKey, &mobile);
+
+  emitter->serializeAddressbookPreference(&preferencemap);
+
+}
+
+void AddressbookPreference::unserialize(Conf::MappingNode *map)
+{
+  _debug("Addressbook: Unserialize configuration");
+
+  Conf::ScalarNode *val = NULL;
+
+  val = (Conf::ScalarNode *)(map->getValue(photoKey));
+  if(val && !(val->getValue().empty())) { _photo = (val->getValue() == "true") ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(enabledKey));
+  if(val && !val->getValue().empty()) { _enabled = (val->getValue() == "true") ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(listKey));
+  if(val) { _list = val->getValue(); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(maxResultsKey));
+  if(val) { _maxResults = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(businessKey));
+  if(val && !val->getValue().empty()) { _business = (val->getValue() == "true") ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(homeKey));
+  if(val && !val->getValue().empty()) { _home = (val->getValue() == "true") ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(mobileKey));
+  if(val && !val->getValue().empty()) { _mobile = (val->getValue() == "true") ? true : false; val = NULL; }
+  
+}
+
+
+HookPreference::HookPreference() : _iax2Enabled(false)
+				 , _numberAddPrefix(false)
+				 , _numberEnabled(false)
+				 , _sipEnabled(false)
+				 , _urlCommand("x-www-browser")
+				 , _urlSipField("X-sflphone-url")
+{
+
+}
+
+HookPreference::~HookPreference() {}
+
+void HookPreference::serialize(Conf::YamlEmitter *emitter) 
+{
+  _debug("Hook: Serialize configuration");
+
+  Conf::MappingNode preferencemap(NULL);
+
+  Conf::ScalarNode iax2Enabled(_iax2Enabled ? "true" : "false");
+  Conf::ScalarNode numberAddPrefix(_numberAddPrefix ? "true" : "false");
+  Conf::ScalarNode numberEnabled(_numberEnabled ? "true" : "false");
+  Conf::ScalarNode sipEnabled(_sipEnabled ? "true" : "false");
+  Conf::ScalarNode urlCommand(_urlCommand);
+  Conf::ScalarNode urlSipField(_urlSipField);
+
+  preferencemap.setKeyValue(iax2EnabledKey, &iax2Enabled);
+  preferencemap.setKeyValue(numberAddPrefixKey, &numberAddPrefix);
+  preferencemap.setKeyValue(numberEnabledKey, &numberEnabled);
+  preferencemap.setKeyValue(sipEnabledKey, &sipEnabled);
+  preferencemap.setKeyValue(urlCommandKey, &urlCommand);
+  preferencemap.setKeyValue(urlSipFieldKey, &urlSipField);
+
+  emitter->serializeHooksPreference(&preferencemap);
+}
+
+void HookPreference::unserialize(Conf::MappingNode *map) 
+{
+  Conf::ScalarNode *val = NULL;
+
+  _debug("Hook: Unserialize preference");
+
+  val = (Conf::ScalarNode *)(map->getValue(iax2EnabledKey));
+  if(val) { _iax2Enabled = (val->getValue() == "true") ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(numberAddPrefixKey));
+  if(val) { _numberAddPrefix = (val->getValue() == "true") ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(numberEnabledKey));
+  if(val) { _numberEnabled = (val->getValue() == "true") ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(sipEnabledKey));
+  if(val) { _sipEnabled = (val->getValue() == "true") ? true : false; val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(urlCommandKey));
+  if(val) { _urlCommand = val->getValue(); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(urlSipFieldKey));
+  if(val) { _urlSipField = val->getValue(); val = NULL; }
+  
+
+}
+
+
+
+AudioPreference::AudioPreference() : _cardin(0)
+				   , _cardout(0)
+				   , _cardring(0)
+				   , _framesize(20)
+				   , _plugin("default")
+				   , _smplrate(44100)
+				   , _devicePlayback("")
+				   , _deviceRecord("")
+				   , _deviceRingtone("")
+				   , _recordpath("")
+				   , _ringchoice("/usr/share/sflphone/ringtones/konga.ul")
+				   , _volumemic(100)
+				   , _volumespkr(100)
+{
+
+}
+
+AudioPreference::~AudioPreference() {}
+
+void AudioPreference::serialize(Conf::YamlEmitter *emitter) 
+{
+  Conf::MappingNode preferencemap(NULL);
+  Conf::MappingNode alsapreferencemap(NULL);
+  Conf::MappingNode pulsepreferencemap(NULL);
+
+    // alsa preference
+  std::stringstream instr; instr << _cardin;
+  Conf::ScalarNode cardin(instr.str()); // 0
+  std::stringstream outstr; outstr << _cardout;
+  Conf::ScalarNode cardout(outstr.str()); // 0
+  std::stringstream ringstr; ringstr << _cardring;
+  Conf::ScalarNode cardring(ringstr.str());// 0
+  std::stringstream framestr; framestr << _framesize;
+  Conf::ScalarNode framesize(framestr.str()); // 20
+  Conf::ScalarNode plugin(_plugin); // default
+  std::stringstream ratestr; ratestr << _smplrate;
+  Conf::ScalarNode smplrate(ratestr.str());// 44100
+   
+  //pulseaudio preference
+  Conf::ScalarNode devicePlayback(_devicePlayback);//:
+  Conf::ScalarNode deviceRecord(_deviceRecord); //:
+  Conf::ScalarNode deviceRingtone(_deviceRingtone); //:
+
+  // general preference
+  Conf::ScalarNode recordpath(_recordpath); //: /home/msavard/Bureau
+  Conf::ScalarNode ringchoice(_ringchoice); // : /usr/share/sflphone/ringtones/konga.ul
+  std::stringstream micstr; micstr << _volumemic;
+  Conf::ScalarNode volumemic(micstr.str()); //:  100
+  std::stringstream spkrstr; spkrstr << _volumespkr;
+  Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
+
+  preferencemap.setKeyValue(recordpathKey, &recordpath);
+  preferencemap.setKeyValue(ringchoiceKey, &ringchoice);
+  preferencemap.setKeyValue(volumemicKey, &volumemic);
+  preferencemap.setKeyValue(volumespkrKey, &volumespkr);
+  
+  preferencemap.setKeyValue(alsamapKey, &alsapreferencemap);
+  alsapreferencemap.setKeyValue(cardinKey, &cardin);
+  alsapreferencemap.setKeyValue(cardoutKey, &cardout);
+  alsapreferencemap.setKeyValue(cardringKey, &cardring);
+  alsapreferencemap.setKeyValue(framesizeKey, &framesize);
+  alsapreferencemap.setKeyValue(pluginKey, &plugin);
+  alsapreferencemap.setKeyValue(smplrateKey, &smplrate);
+
+  preferencemap.setKeyValue(pulsemapKey, &pulsepreferencemap);
+  pulsepreferencemap.setKeyValue(devicePlaybackKey, &devicePlayback);
+  pulsepreferencemap.setKeyValue(deviceRecordKey, &deviceRecord);
+  pulsepreferencemap.setKeyValue(deviceRingtoneKey, &deviceRingtone);
+
+  emitter->serializeAudioPreference(&preferencemap);
+  
+}
+
+void AudioPreference::unserialize(Conf::MappingNode *map) 
+{
+  Conf::ScalarNode *val = NULL;
+
+  val = (Conf::ScalarNode *)(map->getValue(cardinKey));
+  if(val) { _cardin = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(cardoutKey));
+  if(val) { _cardout = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(cardringKey));
+  if(val) { _cardring = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(framesizeKey));
+  if(val) { _framesize = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(smplrateKey));
+  if(val) { _smplrate = atoi(val->getValue().data()); val = NULL; }
+
+  val = (Conf::ScalarNode *)(map->getValue(devicePlaybackKey));
+  if(val) { _devicePlayback = val->getValue(); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(deviceRecordKey));
+  if(val) { _deviceRecord = val->getValue(); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(deviceRingtoneKey));
+  if(val) { _deviceRingtone = val->getValue(); val = NULL; }
+
+  val = (Conf::ScalarNode *)(map->getValue(recordpathKey));
+  if(val) { _recordpath = val->getValue(); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(ringchoiceKey));
+  if(val) { _ringchoice = val->getValue(); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(volumemicKey));
+  if(val) { _volumemic = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(volumespkrKey));
+  if(val) { _volumespkr = atoi(val->getValue().data()); val = NULL; }
+
 }

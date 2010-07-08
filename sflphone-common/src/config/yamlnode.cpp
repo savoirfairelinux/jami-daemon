@@ -29,6 +29,7 @@
  */
 
 #include "yamlnode.h"
+#include "src/global.h"
 
 namespace Conf {
 
@@ -65,7 +66,7 @@ void MappingNode::setKeyValue(Key key, YamlNode *value)
 void MappingNode::removeKeyValue(Key key)
 {
 
-  Mapping::iterator it = map.find(key);
+Mapping::iterator it = map.find(key);
   map.erase(it);
 }
 
@@ -73,7 +74,14 @@ void MappingNode::removeKeyValue(Key key)
 YamlNode *MappingNode::getValue(Key key) 
 {
   Mapping::iterator it = map.find(key);
-  return it->second;
+
+  if(it != map.end()) {
+    return it->second;
+  }
+  else {
+    _debug("Could not fine %s", key.c_str());
+    return NULL;
+  }
 }
 
 

@@ -82,11 +82,11 @@ class YamlParser {
 
   SequenceNode *getPreferenceSequence(void) { return preferenceSequence; }
 
-  SequenceNode *getAddressbookSequence(void) { return preferenceSequence; }
+  SequenceNode *getAddressbookSequence(void) { return addressbookSequence; }
 
-  SequenceNode *getAudioSequence(void) { return preferenceSequence; }
+  SequenceNode *getAudioSequence(void) { return audioSequence; }
 
-  SequenceNode *getHooksSequence(void) { return preferenceSequence; }
+  SequenceNode *getHookSequence(void) { return hooksSequence; }
 
   SequenceNode *getVoipPreferenceSequence(void) { return voiplinkSequence; }
 
