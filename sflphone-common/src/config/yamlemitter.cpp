@@ -62,7 +62,8 @@ void YamlEmitter::open()
   yaml_document_initialize(&document, NULL, NULL, NULL, 0, 0);
 
   // Init the main configuration mapping
-  topLevelMapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE);
+  if((topLevelMapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
+    throw YamlEmitterException("Could not create top level mapping");
 }
 
 void YamlEmitter::close() 
@@ -94,21 +95,37 @@ void YamlEmitter::serializeData()
 }
 
 
-void YamlEmitter::writeAccount(MappingNode *map)
+void YamlEmitter::serializeAccount(MappingNode *map)
 {
 
   std::string accountstr("accounts");
  
+  int accountid, accountmapping;
+
+  _debug("YamlEmitter: Serialize account");
+
+  if(map->getType() != MAPPING)
+    throw YamlEmitterException("Node type is not a mapping while writing account");
+
   if(isFirstAccount) {
     // accountSequence need to be static outside this scope since reused each time an account is written
-    accountSequence = yaml_document_add_sequence (&document, NULL, YAML_BLOCK_SEQUENCE_STYLE);
-    int accountid = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)accountstr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
-    yaml_document_append_mapping_pair (&document, topLevelMapping, accountid, accountSequence);
+    if((accountid = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)accountstr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
+      throw YamlEmitterException("Could not add preference scalar to document");
+
+    if((accountSequence = yaml_document_add_sequence (&document, NULL, YAML_BLOCK_SEQUENCE_STYLE)) == 0)
+      throw YamlEmitterException("Could not add sequence to document");
+
+    if(!yaml_document_append_mapping_pair (&document, topLevelMapping, accountid, accountSequence))
+      throw YamlEmitterException("Could not add mapping pair to top level mapping");
+       
     isFirstAccount = false;
   }
 
-  int accountmapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE);
-  yaml_document_append_sequence_item (&document, accountSequence, accountmapping);
+  if((accountmapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
+    throw YamlEmitterException("Could not add account mapping to document");
+
+  if(!yaml_document_append_sequence_item (&document, accountSequence, accountmapping))
+     throw YamlEmitterException("Could not append account mapping to sequence");
 
   Mapping *internalmap = map->getMapping();
   Mapping::iterator iter = internalmap->begin();
@@ -120,17 +137,25 @@ void YamlEmitter::writeAccount(MappingNode *map)
 
 }
 
-void YamlEmitter::writePreference(MappingNode *map)
+void YamlEmitter::serializePreference(MappingNode *map)
 {
   std::string preferencestr("preferences");
 
-  if(map->getType() == MAPPING)
+  int preferenceid, preferencemapping;
+
+  _debug("YamlEmitter: Serialize preference");
+
+  if(map->getType() != MAPPING)
     throw YamlEmitterException("Node type is not a mapping while writing preferences");
 
-  int preferenceid = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)preferencestr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
-  int preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE);
+  if((preferenceid = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)preferencestr.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
+    throw YamlEmitterException("Could not add scalar to document");
 
-  yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping);
+  if((preferencemapping = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
+    throw YamlEmitterException("Could not add mapping to document");
+
+  if(!yaml_document_append_mapping_pair (&document, topLevelMapping, preferenceid, preferencemapping))
+    throw YamlEmitterException("Could not add mapping pair to top leve mapping");
 
   Mapping *internalmap = map->getMapping();
   Mapping::iterator iter = internalmap->begin();
@@ -148,18 +173,32 @@ void YamlEmitter::addMappingItem(int mappingid, Key key, YamlNode *node)
 
   if(node->getType() == SCALAR) {
 
+    int temp1, temp2;
+
     ScalarNode *sclr = (ScalarNode *)node;
 
-    int temp1 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
-    int temp2 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)sclr->getValue().c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
-    yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2);
+    if((temp1 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
+      throw YamlEmitterException("Could not add scalar to document");
+
+    if((temp2 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)sclr->getValue().c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
+      throw YamlEmitterException("Could not add scalar to document");
+
+    if(!yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2))
+      throw YamlEmitterException("Could not append mapping pair to mapping");
 
   }
   else if(node->getType() == MAPPING){
 
-    int temp1 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE);
-    int temp2 = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE);
-    yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2);
+    int temp1, temp2;
+
+    if((temp1 = yaml_document_add_scalar(&document, NULL, (yaml_char_t *)key.c_str(), -1, YAML_PLAIN_SCALAR_STYLE)) == 0)
+      throw YamlEmitterException("Could not add scalar to document");
+
+    if((temp2 = yaml_document_add_mapping (&document, NULL, YAML_BLOCK_MAPPING_STYLE)) == 0)
+      throw YamlEmitterException("Could not add scalar to document");
+
+    if(!yaml_document_append_mapping_pair (&document, mappingid, temp1, temp2))
+      throw YamlEmitterException("Could not add mapping pair to mapping");
 
     MappingNode *map = (MappingNode *)node;
     Mapping *internalmap = map->getMapping();

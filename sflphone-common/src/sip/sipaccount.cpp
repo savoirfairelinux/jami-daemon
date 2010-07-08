@@ -240,6 +240,12 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   tlsmap.setKeyValue(verifyClientKey, &verifyclient);
   tlsmap.setKeyValue(verifyServerKey, &verifyserver);
 
+  try{
+    emitter->serializeAccount(&accountmap);
+  }
+  catch (Conf::YamlEmitterException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
 }
 
 

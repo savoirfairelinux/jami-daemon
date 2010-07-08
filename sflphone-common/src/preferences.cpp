@@ -86,7 +86,7 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
   preferencemap.setKeyValue(zeroConfenableKey, &zeroConfenable);
   preferencemap.setKeyValue(md5HashKey, &md5Hash);
 
-  
+  emiter->serializePreference(&preferencemap);
 }
 
 void Preferences::unserialize(Conf::MappingNode *map)
