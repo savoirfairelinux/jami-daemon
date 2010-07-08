@@ -2888,13 +2888,13 @@ void ManagerImpl::selectAudioDriver (void) {
 	_debug ("Audio layer type: %i" , layer);
 
 	/* Retrieve the global devices info from the user config */
-	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
-	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
+	alsaPlugin = audioPreference.getPlugin(); // getConfigString(AUDIO, ALSA_PLUGIN);
+	numCardIn = audioPreference.getCardin(); //getConfigInt(AUDIO, ALSA_CARD_ID_IN);
+	numCardOut = audioPreference.getCardout(); //getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
+	numCardRing = audioPreference.getCardring(); //getConfigInt(AUDIO, ALSA_CARD_ID_RING);
 	// sampleRate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
 	sampleRate = _mainBuffer.getInternalSamplingRate();
-	frameSize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+	frameSize = audioPreference.getFramesize(); //getConfigInt(AUDIO, ALSA_FRAME_SIZE);
 
 	/* Only for the ALSA layer, we check the sound card information */
 
@@ -2904,19 +2904,19 @@ void ManagerImpl::selectAudioDriver (void) {
 	    if (!alsalayer -> soundCardIndexExist(numCardIn, SFL_PCM_CAPTURE)) {
 	        _debug (" Card with index %i doesn't exist or cannot capture. Switch to 0.", numCardIn);
 		numCardIn = ALSA_DFT_CARD_ID;
-		setConfig(AUDIO, ALSA_CARD_ID_IN, ALSA_DFT_CARD_ID);
+		audioPreference.setCardin(ALSA_DFT_CARD_ID); // setConfig(AUDIO, ALSA_CARD_ID_IN, ALSA_DFT_CARD_ID);
 	    }
 
 	    if (!alsalayer -> soundCardIndexExist(numCardOut, SFL_PCM_PLAYBACK)) {
 	        _debug (" Card with index %i doesn't exist or cannot playback. Switch to 0.", numCardOut);
 		numCardOut = ALSA_DFT_CARD_ID;
-		setConfig(AUDIO, ALSA_CARD_ID_OUT, ALSA_DFT_CARD_ID);
+		audioPreference.setCardout(ALSA_DFT_CARD_ID); // setConfig(AUDIO, ALSA_CARD_ID_OUT, ALSA_DFT_CARD_ID);
 	    }
 
 	    if (!alsalayer->soundCardIndexExist(numCardRing, SFL_PCM_RINGTONE)) {
 	        _debug(" Card with index %i doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
 		numCardRing = ALSA_DFT_CARD_ID;
-		setConfig(AUDIO, ALSA_CARD_ID_RING, ALSA_DFT_CARD_ID);
+		audioPreference.setCardring(ALSA_DFT_CARD_ID);
 	    }
 	}
 
@@ -2946,15 +2946,15 @@ void ManagerImpl::switchAudioManager (void) {
 
 	// samplerate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
 	samplerate = _mainBuffer.getInternalSamplingRate();
-	framesize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+	framesize = audioPreference.getFramesize();// getConfigInt(AUDIO, ALSA_FRAME_SIZE);
 
 	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
 
-	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
+	alsaPlugin = audioPreference.getPlugin();//getConfigString(AUDIO, ALSA_PLUGIN);
 
-	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
+	numCardIn = audioPreference.getCardin();//getConfigInt(AUDIO, ALSA_CARD_ID_IN);
+	numCardOut = audioPreference.getCardout();// getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
+	numCardRing = audioPreference.getCardring(); //getConfigInt(AUDIO, ALSA_CARD_ID_RING);
 
 	_debug ("Manager: Deleting current layer... ");
 
