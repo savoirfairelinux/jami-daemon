@@ -116,6 +116,8 @@ class ManagerImpl {
 
     Preferences preferences;
 
+    VoipPreference voipPreferences;
+
     short buildConfiguration();
 
     /**

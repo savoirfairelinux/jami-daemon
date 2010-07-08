@@ -1417,7 +1417,7 @@ bool ManagerImpl::saveConfig (void) {
 	AccountMap::iterator iter = _accountMap.begin();
 
 	try{
-	  emitter = new Conf::YamlEmitter("/tmp/sequenceEmiter.txt");
+	  emitter = new Conf::YamlEmitter("sequenceEmitter.yml");
 
 	  while(iter != _accountMap.end()) {
 	    iter->second->serialize(emitter);
@@ -1425,6 +1425,7 @@ bool ManagerImpl::saveConfig (void) {
 	  }
 
 	  preferences.serialize(emitter);
+	  voipPreferences.serialize(emitter);
 
 	  emitter->serializeData();
 
@@ -4123,7 +4124,7 @@ short ManagerImpl::buildConfiguration() {
 
   try {
 
-    parser = new Conf::YamlParser("sequence2.yml");
+    parser = new Conf::YamlParser("sequenceParser.yml");
   
     parser->serializeEvents();
 
@@ -4137,7 +4138,8 @@ short ManagerImpl::buildConfiguration() {
   }
 
   // build preferences
-  preferences.unserialize((Conf::MappingNode *)(parser->getAccountSequence()));
+  preferences.unserialize((Conf::MappingNode *)(parser->getPreferenceSequence()));
+  voipPreferences.unserialize((Conf::MappingNode *)(parser->getVoipPreferenceSequence()));
 
   Conf::SequenceNode *seq = parser->getAccountSequence();
 

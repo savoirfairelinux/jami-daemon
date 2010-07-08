@@ -257,6 +257,7 @@ void YamlParser::processScalar(YamlNode *topNode)
 
   char buffer[1000];
   snprintf(buffer, 1000, "%s", events[eventIndex].data.scalar.value);
+  _debug("and the scalar is: %s", buffer);
 
   ScalarNode *sclr = new ScalarNode(buffer, topNode);
 
@@ -358,6 +359,7 @@ void YamlParser::processMapping(YamlNode *topNode)
     char buffer[1000];
     snprintf(buffer, 1000, "%s", events[eventIndex].data.scalar.value);
     map->setTmpKey(Key(buffer));
+    _debug("KEY %s", buffer);
     
     eventIndex++;
 
@@ -394,15 +396,15 @@ void YamlParser::constructNativeData() {
 
     switch((*iter)->getType()){
     case SCALAR:
-      // _debug("construct scalar");
+      _debug("construct scalar");
       throw YamlParserException("No scalar allowed at document level, expect a mapping");
       break;
     case SEQUENCE:
-      // _debug("construct sequence");
+      _debug("construct sequence");
       throw YamlParserException("No sequence allowed at document level, expect a mapping");
       break;
     case MAPPING: {
-      // _debug("construct mapping");
+      _debug("construct mapping");
       MappingNode *map = (MappingNode *)(*iter);
       mainNativeDataMapping(map);
       break;
@@ -428,11 +430,11 @@ void YamlParser::mainNativeDataMapping(MappingNode *map) {
   Key audio("audio");
   Key hooks("hooks");
   Key preferences("preferences");
-  Key voiplink("voiplink");
+  Key voiplink("voipPreferences");
 
   while(iter != map->getMapping()->end()) {
 
-    // _debug("Iterating: %s", iter->first.c_str());
+    _debug("Iterating: %s", iter->first.c_str());
     if(accounts.compare(iter->first) == 0) {
       accountSequence = (SequenceNode *)(iter->second);
     }
@@ -449,13 +451,16 @@ void YamlParser::mainNativeDataMapping(MappingNode *map) {
       preferenceSequence = (SequenceNode *)(iter->second);
     }
     else if(voiplink.compare(iter->first) == 0) {
+      _debug("Adding voip preference sequence");
       voiplinkSequence = (SequenceNode *)(iter->second);
+      _debug("Added");
     }
     else
       throw YamlParserException("Unknow map key in configuration");
 
     iter++;
   }
+  _debug("Done");
 }
 
   /*

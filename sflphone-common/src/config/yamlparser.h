@@ -88,7 +88,7 @@ class YamlParser {
 
   SequenceNode *getHooksSequence(void) { return preferenceSequence; }
 
-  SequenceNode *getVoiplinkSequence(void) { return preferenceSequence; }
+  SequenceNode *getVoipPreferenceSequence(void) { return voiplinkSequence; }
 
  private:
 

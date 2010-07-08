@@ -46,6 +46,16 @@ const Conf::Key searchBarDisplayKey("searchBarDisplay");    // :	true
 const Conf::Key zeroConfenableKey("zeroConfenable");        // :	false
 const Conf::Key md5HashKey("md5Hash");                      // :	false
 
+
+const Conf::Key playDtmfKey("playDtmf"); // true                    true
+const Conf::Key playTonesKey("playTones");  // true
+const Conf::Key pulseLengthKey("pulseLength"); //=250
+const Conf::Key sendDtmfAsKey("sendDtmfAs");// =0
+const Conf::Key symmetricRtpKey("symmetric");// =true
+const Conf::Key zidFileKey("zidFile");// =sfl.zid
+
+
+
 class Preferences : public Serializable {
 
  public:
@@ -111,6 +121,48 @@ class Preferences : public Serializable {
   bool _searchBarDisplay;
   bool _zeroConfenable;
   bool _md5Hash;
+
+};
+
+
+class VoipPreference : public Serializable {
+
+ public:
+
+  VoipPreference();
+
+  ~VoipPreference();
+
+  virtual void serialize(Conf::YamlEmitter *emitter);
+
+  virtual void unserialize(Conf::MappingNode *map);
+
+  bool getPlayDtmf(void) { return _playDtmf; }
+  void setPlayDtmf(bool dtmf) { _playDtmf = dtmf; }
+
+  bool getPlayTones(void) { return _playTones; }
+  void setPlayTones(bool tone) { _playTones = tone; }
+
+  int getPulseLength(void) { return _pulseLength; }
+  void setPulseLength(int length) { _pulseLength = length; }
+
+  int getSendDtmfAs(void) { return _sendDtmfAs; }
+  void setSendDtmfAs(int dtmf) { _sendDtmfAs = dtmf; }
+
+  bool getSymmetricRtp(void) { return _symmetricRtp; }
+  void setSymmetricRtp(bool sym) { _symmetricRtp = sym; }
+
+  std::string getZidFile(void) { return _zidFile; }
+  void setZidFile(std::string file) { _zidFile = file; }
+
+ private:
+
+  bool _playDtmf;
+  bool _playTones;
+  int _pulseLength;
+  int _sendDtmfAs;
+  bool _symmetricRtp;
+  std::string _zidFile;
 
 };
 
