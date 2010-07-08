@@ -49,6 +49,8 @@ G_BEGIN_DECLS
 
 void init_icon_factory (void);
 
+GtkIconSet* lookup_sflphone_factory (const gchar *stock_id);
+
 G_END_DECLS
 
 #endif

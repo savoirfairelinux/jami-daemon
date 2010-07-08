@@ -927,44 +927,6 @@ GtkWidget* alsa_box()
 	return ret;
 }
 
-GtkWidget* noise_box()
-{
-	GtkWidget *ret;
-	GtkWidget *enableEchoCancel;
-	GtkWidget *enableNoiseReduction;
-	gboolean echocancelActive, noisesuppressActive;
-	gchar *state;
-
-	ret = gtk_hbox_new( TRUE , 1);
-	
-	enableEchoCancel = gtk_check_button_new_with_mnemonic( _("_Echo Suppression"));
-	state = dbus_get_echo_cancel_state();
-	echocancelActive = FALSE;
-        if(strcmp(state, "enabled") == 0)
-	  echocancelActive = TRUE;
-	else
-	  echocancelActive = FALSE;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), echocancelActive);
-	g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
-
-	gtk_box_pack_start( GTK_BOX(ret), enableEchoCancel, TRUE , TRUE , 1);
-
-
-	enableNoiseReduction = gtk_check_button_new_with_mnemonic( _("_Noise Reduction"));
-	state = dbus_get_noise_suppress_state();
-	noisesuppressActive = FALSE;
-	if(strcmp(state, "enabled") == 0)
-	  noisesuppressActive = TRUE;
-	else
-	  noisesuppressActive = FALSE;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableNoiseReduction), noisesuppressActive);
-	gtk_box_pack_start( GTK_BOX(ret) , enableNoiseReduction , TRUE , TRUE , 1);
-
-	g_signal_connect(G_OBJECT(enableNoiseReduction), "clicked", active_noise_suppress, NULL);
-
-	return ret;
-}
-
 static void record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
 {
 	DEBUG("record_path_changed");
@@ -982,6 +944,10 @@ GtkWidget* create_audio_configuration()
 	// Sub boxes
 	GtkWidget *box;
 	GtkWidget *frame;
+	GtkWidget *enableEchoCancel;
+	GtkWidget *enableNoiseReduction;
+	gboolean echocancelActive, noisesuppressActive;
+	gchar *state;
 
 	ret = gtk_vbox_new(FALSE, 10);
 	gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -1068,14 +1034,31 @@ GtkWidget* create_audio_configuration()
 	gtk_file_chooser_add_filter( GTK_FILE_CHOOSER( fileChooser ) , filter);
 	gtk_table_attach ( GTK_TABLE( table ), fileChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-	gnome_main_section_new (_("Voice enhancement settings"), &noise_conf);
-	gtk_box_pack_start(GTK_BOX(ret), noise_conf, FALSE, FALSE, 0);
-	gtk_widget_show( noise_conf );
-
 	// Box for the voice enhancement configuration
-	noisebox = noise_box();
-	gtk_container_add( GTK_CONTAINER(noise_conf) , noisebox );
-	
+	gnome_main_section_new_with_table (_("Voice enhancement settings"), &frame, &table, 2, 1);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+
+	enableEchoCancel = gtk_check_button_new_with_mnemonic( _("_Echo Suppression"));
+    state = dbus_get_echo_cancel_state();
+    echocancelActive = FALSE;
+        if(strcmp(state, "enabled") == 0)
+      echocancelActive = TRUE;
+    else
+      echocancelActive = FALSE;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableEchoCancel), echocancelActive);
+    g_signal_connect(G_OBJECT(enableEchoCancel), "clicked", active_echo_cancel, NULL);
+	gtk_table_attach ( GTK_TABLE(table), enableEchoCancel, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    enableNoiseReduction = gtk_check_button_new_with_mnemonic( _("_Noise Reduction"));
+    state = dbus_get_noise_suppress_state();
+    noisesuppressActive = FALSE;
+    if(strcmp(state, "enabled") == 0)
+      noisesuppressActive = TRUE;
+    else
+      noisesuppressActive = FALSE;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enableNoiseReduction), noisesuppressActive);
+    g_signal_connect(G_OBJECT(enableNoiseReduction), "clicked", active_noise_suppress, NULL);
+	gtk_table_attach ( GTK_TABLE(table), enableNoiseReduction, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	gtk_widget_show_all(ret);
 
