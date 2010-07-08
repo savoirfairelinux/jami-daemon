@@ -324,23 +324,23 @@ class AudioPreference : public Serializable {
   void setDevicePlayback(std::string p) { _devicePlayback = p; }
   
   std::string getDeviceRecord(void) { return _deviceRecord; }
-  void getDeviceRecord(std::string r) { _deviceRecord = r; }
+  void setDeviceRecord(std::string r) { _deviceRecord = r; }
 
   std::string getDeviceRingtone(void) { return _deviceRingtone; }
-  void getDeviceRingtone(std::string r) { _deviceRingtone = r; }
+  void setDeviceRingtone(std::string r) { _deviceRingtone = r; }
 
   // general preference
   std::string getRecordpath(void) { return _recordpath; }
-  void getRecordpath(std::string r) { _recordpath = r; }
+  void setRecordpath(std::string r) { _recordpath = r; }
 
   std::string getRingchoice(void) { return _ringchoice; }
-  void getRingchoice(std::string r) { _ringchoice = r; }
+  void setRingchoice(std::string r) { _ringchoice = r; }
 
   int getVolumemic(void) { return _volumemic; }
-  void getVolumemic(int m) { _volumemic = m; }
+  void setVolumemic(int m) { _volumemic = m; }
 
   int getVolumespkr(void) { return _volumespkr; }
-  void getVolumespkr(int s) { _volumespkr = s; }
+  void setVolumespkr(int s) { _volumespkr = s; }
 
  private:
    

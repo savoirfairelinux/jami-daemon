@@ -2388,7 +2388,8 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
 
 	// set config
 	if (res)
-		setConfig(AUDIO, ALSA_PLUGIN, audioPlugin);
+	  audioPreference.setPlugin(audioPlugin);
+	  //setConig(AUDIO, ALSA_PLUGIN, audioPlugin);
 }
 
 /**
@@ -2434,21 +2435,24 @@ void ManagerImpl::setAudioDevice (const int index, int streamType) {
          _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getIndexRing(),
 				  _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				  SFL_PCM_PLAYBACK, alsaplugin);
-	 setConfig(AUDIO, ALSA_CARD_ID_OUT, index);
+	 audioPreference.setCardout(index);
+	 // setConfig(AUDIO, ALSA_CARD_ID_OUT, index);
         break;
     case SFL_PCM_CAPTURE:
         _debug("Manager: Set input device");
         _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getIndexRing(),
 				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				 SFL_PCM_CAPTURE, alsaplugin);
-	setConfig(AUDIO, ALSA_CARD_ID_IN, index);
+	audioPreference.setCardin(index);
+	// setConfig(AUDIO, ALSA_CARD_ID_IN, index);
         break;
     case SFL_PCM_RINGTONE:
         _debug("Manager: Set ringtone device");
         _audiodriver->openDevice(_audiodriver->getIndexOut(), _audiodriver->getIndexOut(), index,
 				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				 SFL_PCM_RINGTONE, alsaplugin);
-	setConfig(AUDIO, ALSA_CARD_ID_RING, index);
+	// setConfig(AUDIO, ALSA_CARD_ID_RING, index);
+	audioPreference.setCardring(index);
         break;
     default:
         _warn("Unknown stream type");
@@ -2503,14 +2507,19 @@ int ManagerImpl::isRingtoneEnabled (void) {
 }
 
 void ManagerImpl::ringtoneEnabled (void) {
+  /*
 	(getConfigString(PREFERENCES, CONFIG_RINGTONE) == RINGTONE_ENABLED) ? setConfig(
 			PREFERENCES, CONFIG_RINGTONE, FALSE_STR)
 			: setConfig(PREFERENCES, CONFIG_RINGTONE, TRUE_STR);
+  */
+
+  preferences.getRingtoneEnabled() ? preferences.setRingtoneEnabled(false) : preferences.setRingtoneEnabled(true);
+  
 }
 
 std::string ManagerImpl::getRingtoneChoice (void) {
 	// we need the absolute path
-	std::string tone_name = getConfigString(AUDIO, RING_CHOICE);
+  std::string tone_name = audioPreference.getRingchoice(); // getConfigString(AUDIO, RING_CHOICE);
 	std::string tone_path;
 
 	if (tone_name.find(DIR_SEPARATOR_CH) == std::string::npos) {
@@ -2529,21 +2538,24 @@ std::string ManagerImpl::getRingtoneChoice (void) {
 
 void ManagerImpl::setRingtoneChoice (const std::string& tone) {
 	// we save the absolute path
-	setConfig(AUDIO, RING_CHOICE, tone);
+	// setConfig(AUDIO, RING_CHOICE, tone);
+        audioPreference.setRingchoice(tone);
 }
 
 std::string ManagerImpl::getRecordPath (void) {
-	return getConfigString(AUDIO, RECORD_PATH);
+        return audioPreference.getRecordpath();// getConfigString(AUDIO, RECORD_PATH);
 }
 
 void ManagerImpl::setRecordPath (const std::string& recPath) {
 	_debug ("ManagerImpl::setRecordPath(%s)! ", recPath.c_str());
-	setConfig(AUDIO, RECORD_PATH, recPath);
+	audioPreference.setRecordpath(recPath);
+	// setConfig(AUDIO, RECORD_PATH, recPath);
 }
 
 bool ManagerImpl::getMd5CredentialHashing (void) {
-	return getConfigBool(PREFERENCES, CONFIG_MD5HASH);
+        return preferences.getMd5Hash(); // getConfigBool(PREFERENCES, CONFIG_MD5HASH);
 }
+
 
 int ManagerImpl::getDialpad (void) {
 	if (getConfigString(PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) {
@@ -2552,6 +2564,7 @@ int ManagerImpl::getDialpad (void) {
 		return 0;
 	}
 }
+
 
 void ManagerImpl::setDialpad (bool display) {
 	std::string set;
@@ -2565,6 +2578,7 @@ void ManagerImpl::setDialpad (bool display) {
 					!= FALSE_STR)))
 		setConfig(PREFERENCES, CONFIG_DIALPAD, set);
 }
+
 
 int ManagerImpl::getVolumeControls (void) {
 	if (getConfigString(PREFERENCES, CONFIG_VOLUME) == TRUE_STR) {
@@ -2586,6 +2600,7 @@ void ManagerImpl::setVolumeControls (bool display) {
 					!= FALSE_STR)))
 		setConfig(PREFERENCES, CONFIG_VOLUME, set);
 }
+
 
 void ManagerImpl::setRecordingCall (const CallID& id) {
   /*
@@ -4353,6 +4368,14 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 
 	std::map<std::string, int32_t> settings;
 
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_ENABLE", addressbookPreference.getEnabled() ? 1 : 0));
+       	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_MAX_RESULTS", addressbookPreference.getMaxResults()));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO", addressbookPreference.getPhoto() ? 1 : 0));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS", addressbookPreference.getBusiness() ? 1 : 0));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_PHONE_HOME", addressbookPreference.getHome() ? 1 : 0));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_PHONE_MOBILE", addressbookPreference.getMobile() ? 1 : 0));
+
+	  /*
 	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_ENABLE",
 			getConfigInt(ADDRESSBOOK, ADDRESSBOOK_ENABLE)));
 	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_MAX_RESULTS",
@@ -4369,13 +4392,22 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 	settings.insert(std::pair<std::string, int32_t>(
 			"ADDRESSBOOK_DISPLAY_PHONE_MOBILE", getConfigInt(ADDRESSBOOK,
 					ADDRESSBOOK_DISPLAY_PHONE_MOBILE)));
-
+	  */
 	return settings;
 }
 
 void ManagerImpl::setAddressbookSettings (
 		const std::map<std::string, int32_t>& settings) {
 
+
+  addressbookPreference.setEnabled((settings.find("ADDRESSBOOK_ENABLE")->second == 1) ? true : false);
+  addressbookPreference.setMaxResults(settings.find("ADDRESSBOOK_MAX_RESULTS")->second);
+  addressbookPreference.setPhoto((settings.find("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")->second == 1) ? true : false);
+  addressbookPreference.setBusiness((settings.find("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")->second == 1) ? true : false);
+  addressbookPreference.setHone((settings.find("ADDRESSBOOK_DISPLAY_PHONE_HOME")->second == 1) ? true : false);
+  addressbookPreference.setMobile((settings.find("ADDRESSBOOK_DISPLAY_PHONE_MOBILE")->second == 1) ? true : false);
+
+/*
 	setConfig(ADDRESSBOOK, ADDRESSBOOK_ENABLE, (*settings.find(
 			"ADDRESSBOOK_ENABLE")).second);
 	setConfig(ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS, (*settings.find(
@@ -4388,6 +4420,7 @@ void ManagerImpl::setAddressbookSettings (
 			"ADDRESSBOOK_DISPLAY_PHONE_HOME")).second);
 	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_MOBILE, (*settings.find(
 			"ADDRESSBOOK_DISPLAY_PHONE_MOBILE")).second);
+*/
 
 	// Write it to the configuration file
 	saveConfig();
@@ -4396,12 +4429,13 @@ void ManagerImpl::setAddressbookSettings (
 void ManagerImpl::setAddressbookList (const std::vector<std::string>& list) {
 
 	std::string s = serialize(list);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_LIST, s);
+	addressbookPreference.setList(s);
+	// setConfig(ADDRESSBOOK, ADDRESSBOOK_LIST, s);
 }
 
 std::vector<std::string> ManagerImpl::getAddressbookList (void) {
 
-	std::string s = getConfigString(ADDRESSBOOK, ADDRESSBOOK_LIST);
+        std::string s = addressbookPreference.getList(); // getConfigString(ADDRESSBOOK, ADDRESSBOOK_LIST);
 	return unserialize(s);
 }
 
