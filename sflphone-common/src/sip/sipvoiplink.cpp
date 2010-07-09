@@ -446,13 +446,17 @@ std::string SIPVoIPLink::get_useragent_name (const AccountID& id)
     useragent << PROGNAME << "/" << SFLPHONED_VERSION;
     return useragent.str();
 	*/
+
+    SIPAccount *account = (SIPAccount *)Manager::instance().getAccount(id);
+
     std::ostringstream  useragent;
 	
-	useragent << Manager::instance ().getConfigString (id, USERAGENT);
-	if (useragent.str() == "sflphone" || useragent.str() == "")
-		useragent << "/" << SFLPHONED_VERSION;
-
-	return useragent.str ();
+    // useragent << Manager::instance ().getConfigString (id, USERAGENT);
+    useragent << account->getUseragent();
+    if (useragent.str() == "sflphone" || useragent.str() == "")
+	useragent << "/" << SFLPHONED_VERSION;
+    
+    return useragent.str ();
 }
 
 void
@@ -1338,7 +1342,8 @@ SIPVoIPLink::dtmfSipInfo(SIPCall *call, char code)
 	pjsip_media_type ctype;
 
 
-	duration = Manager::instance().getConfigInt (SIGNALISATION, PULSE_LENGTH);
+	duration = Manager::instance().voipPreferences.getPulseLength();
+	  // Manager::instance().getConfigInt (SIGNALISATION, PULSE_LENGTH);
 
 	dtmf_body = new char[body_len];
 
@@ -3288,8 +3293,10 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
 	// if RTPFALLBACK, change RTP session
 	AccountID accountID = Manager::instance().getAccountFromCall (call->getCallId());
-	if(Manager::instance().getConfigString (accountID, SRTP_RTP_FALLBACK) == "true")
-	    call->getAudioRtp()->initAudioRtpSession(call);
+	SIPAccount *account = (SIPAccount *)Manager::instance().getAccount(accountID);
+	//if(Manager::instance().getConfigString (accountID, SRTP_RTP_FALLBACK) == "true")
+	if(account->getSrtpFallback())
+	  call->getAudioRtp()->initAudioRtpSession(call);
     }
 
     if(nego_success && call->getAudioRtp()->getAudioRtpType() != sfl::Sdes) {
@@ -3430,7 +3437,8 @@ void regc_cb (struct pjsip_regc_cbparam *param)
 		    out << (expire_value * 2);
 		    std::string s = out.str(); 
 
-		    Manager::instance().setConfig(account->getAccountID(), CONFIG_ACCOUNT_REGISTRATION_EXPIRE, s);
+		    // Manager::instance().setConfig(account->getAccountID(), CONFIG_ACCOUNT_REGISTRATION_EXPIRE, s);
+		    account->setRegistrationExpire(s);
 		    account->registerVoIPLink();
 		}
 		    break;
@@ -3638,18 +3646,22 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /******************************************* URL HOOK *********************************************/
 
-    if (Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_ENABLED) == "1") {
+    // if (Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_ENABLED) == "1") {
+    if (Manager::instance().hookPreference.getSipEnabled()) {
 
         _debug("UserAgent: Set sip url hooks");
 
         std::string header_value;
 
-        header_value = fetch_header_value (rdata->msg_info.msg, Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD));
+        header_value = fetch_header_value (rdata->msg_info.msg, 
+					   Manager::instance().hookPreference.getUrlSipField());
+	// Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD));
 
         if (header_value.size () < header_value.max_size()) {
             if (header_value!="") {
                 urlhook->addAction (header_value,
-                                    Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
+                                    Manager::instance().hookPreference.getUrlCommand());
+				    //Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
             }
         } else
             throw length_error ("UserAgent: Url exceeds std::string max_size");
