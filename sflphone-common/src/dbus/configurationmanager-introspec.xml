@@ -633,6 +633,7 @@
 		   </arg>
 	   </method>
 
+	   <!--
 	   <method name="setNotify" tp:name-for-bindings="setNotify">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -646,7 +647,7 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
+	   -->
 	   <method name="setMailNotify" tp:name-for-bindings="setMailNotify">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -660,7 +661,7 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
+	   <!--
 	   <method name="getDialpad" tp:name-for-bindings="getDialpad">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -724,6 +725,7 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
+	   -->
 
 	   <method name="getHistoryLimit" tp:name-for-bindings="getHistoryLimit">
 		   <tp:docstring>
@@ -742,7 +744,7 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
+	   <!--
 	   <method name="startHidden" tp:name-for-bindings="startHidden">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -756,7 +758,7 @@
 			   </tp:docstring>
 		   </arg>
 	   </method>
-
+	   
 	   <method name="popupMode" tp:name-for-bindings="popupMode">
 		   <tp:docstring>
 		   </tp:docstring>
@@ -770,6 +772,7 @@
 		   <tp:docstring>
 		   </tp:docstring>
 	   </method>
+	   -->
 
 	   <method name="getWindowWidth" tp:name-for-bindings="getWindowWidth">
 		   <tp:docstring>

@@ -662,24 +662,24 @@ class ManagerImpl {
      * @return int 1 if dialpad has to be displayed
      *	       0 otherwise
      */
-    int getDialpad( void );
+    // int getDialpad( void );
 
     /**
      * Set the dialpad visible or not
      */
-    void setDialpad (bool display);
+    // void setDialpad (bool display);
 
     /**
      * Tells if the user wants to display the volume controls or not
      * @return int 1 if the controls have to be displayed
      *	       0 otherwise
      */
-    int getVolumeControls( void );
+    // int getVolumeControls( void );
 
     /**
      * Set the volume controls ( mic and speaker ) visible or not
      */
-    void setVolumeControls (bool display);
+    // void setVolumeControls (bool display);
 
     /**
      * Set recording on / off
@@ -705,9 +705,9 @@ class ManagerImpl {
      */
     int getHistoryLimit (void);
 
-    void setHistoryEnabled (void);
+    // void setHistoryEnabled (void);
 
-	std::string getHistoryEnabled (void);
+    // std::string getHistoryEnabled (void);
 
 
     /**
@@ -728,35 +728,35 @@ class ManagerImpl {
      * @return int	1 if it should popup on incoming calls
      *		0 if it should never popups
      */
-    int popupMode( void );
+    // int popupMode( void );
 
     /**
      * Configure the popup behaviour
      * When SFLphone is in the system tray, you can configure when it popups
      * Never or only on incoming calls
      */
-    void switchPopupMode( void );
+    // void switchPopupMode( void );
 
     /**
      * Determine whether or not the search bar (history) should be displayed
      */
-    int getSearchbar( void );
+    // int getSearchbar( void );
 
     /**
      * Configure the search bar behaviour
      */
-    void setSearchbar( void );
+    // void setSearchbar( void );
 
     /**
      * Set the desktop notification level
      */
-    void setNotify( void );
+    // void setNotify( void );
 
     /**
      * Get the desktop notification level
      * @return int The notification level
      */
-    int32_t getNotify( void );
+    // int32_t getNotify( void );
 
     /**
      * Set the desktop mail notification level

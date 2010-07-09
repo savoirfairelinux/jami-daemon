@@ -642,6 +642,7 @@ void ConfigurationManager::setRecordPath(const std::string& recPath) {
 	Manager::instance().setRecordPath(recPath);
 }
 
+/*
 int32_t ConfigurationManager::getDialpad(void) {
 	return Manager::instance().getDialpad();
 }
@@ -665,6 +666,7 @@ int32_t ConfigurationManager::getVolumeControls(void) {
 void ConfigurationManager::setVolumeControls(const bool& display) {
 	Manager::instance().setVolumeControls(display);
 }
+*/
 
 int32_t ConfigurationManager::getHistoryLimit(void) {
 	return Manager::instance().getHistoryLimit();
@@ -674,6 +676,7 @@ void ConfigurationManager::setHistoryLimit(const int32_t& days) {
 	Manager::instance().setHistoryLimit(days);
 }
 
+/*
 void ConfigurationManager::setHistoryEnabled(void) {
 	Manager::instance().setHistoryEnabled();
 }
@@ -705,6 +708,7 @@ void ConfigurationManager::setNotify(void) {
 int32_t ConfigurationManager::getNotify(void) {
 	return Manager::instance().getNotify();
 }
+*/
 
 void ConfigurationManager::setAudioManager(const int32_t& api) {
 	Manager::instance().setAudioManager(api);

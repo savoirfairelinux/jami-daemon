@@ -1410,9 +1410,8 @@ void ManagerImpl::removeStream (const CallID& call_id) {
 //THREAD=Main
 bool ManagerImpl::saveConfig (void) {
 	_debug ("Saving Configuration to XDG directory %s ... ", _path.c_str());
-	setConfig(AUDIO, VOLUME_SPKR, getSpkrVolume());
-	setConfig(AUDIO, VOLUME_MICRO, getMicVolume());
-
+	audioPreference.setVolumemic(getMicVolume()); // setConfig(AUDIO, VOLUME_SPKR, getSpkrVolume());
+	audioPreference.setVolumespkr(getSpkrVolume()); // setConfig(AUDIO, VOLUME_MICRO, getMicVolume());
 
 	AccountMap::iterator iter = _accountMap.begin();
 
@@ -2557,6 +2556,7 @@ bool ManagerImpl::getMd5CredentialHashing (void) {
 }
 
 
+/*
 int ManagerImpl::getDialpad (void) {
 	if (getConfigString(PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) {
 		return 1;
@@ -2600,7 +2600,7 @@ void ManagerImpl::setVolumeControls (bool display) {
 					!= FALSE_STR)))
 		setConfig(PREFERENCES, CONFIG_VOLUME, set);
 }
-
+*/
 
 void ManagerImpl::setRecordingCall (const CallID& id) {
   /*
@@ -2632,6 +2632,7 @@ bool ManagerImpl::isRecording (const CallID& id) {
 	return rec->isRecording();
 }
 
+/*
 void ManagerImpl::startHidden (void) {
 	(getConfigString(PREFERENCES, CONFIG_START) == START_HIDDEN) ? setConfig(
 			PREFERENCES, CONFIG_START, FALSE_STR) : setConfig(PREFERENCES,
@@ -2647,15 +2648,18 @@ void ManagerImpl::switchPopupMode (void) {
 			PREFERENCES, CONFIG_POPUP, FALSE_STR) : setConfig(PREFERENCES,
 			CONFIG_POPUP, TRUE_STR);
 }
+*/
 
 void ManagerImpl::setHistoryLimit (const int& days) {
-	setConfig(PREFERENCES, CONFIG_HISTORY_LIMIT, days);
+  // setConfig(PREFERENCES, CONFIG_HISTORY_LIMIT, days);
+  preferences.setHistoryLimit(days);
 }
 
 int ManagerImpl::getHistoryLimit (void) {
-	return getConfigInt(PREFERENCES, CONFIG_HISTORY_LIMIT);
+  return preferences.getHistoryLimit(); // getConfigInt(PREFERENCES, CONFIG_HISTORY_LIMIT);
 }
 
+/*
 std::string ManagerImpl::getHistoryEnabled (void) {
 	return getConfigString(PREFERENCES, CONFIG_HISTORY_ENABLED);
 }
@@ -2689,9 +2693,18 @@ void ManagerImpl::setNotify (void) {
 			PREFERENCES, CONFIG_NOTIFY, FALSE_STR) : setConfig(PREFERENCES,
 			CONFIG_NOTIFY, TRUE_STR);
 }
+*/
 
 int32_t ManagerImpl::getMailNotify (void) {
-	return getConfigInt(PREFERENCES, CONFIG_MAIL_NOTIFY);
+  // return getConfigInt(PREFERENCES, CONFIG_MAIL_NOTIFY);
+  return preferences.getNotifyMails();
+}
+
+void ManagerImpl::setMailNotify (void) {
+  //	(getConfigString(PREFERENCES, CONFIG_MAIL_NOTIFY) == NOTIFY_ALL) ? setConfig(
+  //			PREFERENCES, CONFIG_MAIL_NOTIFY, FALSE_STR)
+  //			: setConfig(PREFERENCES, CONFIG_MAIL_NOTIFY, TRUE_STR);
+  preferences.getNotifyMails() ? preferences.setNotifyMails(true) : preferences.setNotifyMails(false);
 }
 
 void ManagerImpl::setAudioManager (const int32_t& api) {
@@ -2711,7 +2724,8 @@ void ManagerImpl::setAudioManager (const int32_t& api) {
 		return;
 	}
 
-	setConfig(PREFERENCES, CONFIG_AUDIO, api);
+	// setConfig(PREFERENCES, CONFIG_AUDIO, api);
+	preferences.setAudioApi(api);
 
 	switchAudioManager();
 	return;
@@ -2719,14 +2733,10 @@ void ManagerImpl::setAudioManager (const int32_t& api) {
 }
 
 int32_t ManagerImpl::getAudioManager (void) {
-	return getConfigInt(PREFERENCES, CONFIG_AUDIO);
+  //return getConfigInt(PREFERENCES, CONFIG_AUDIO);
+  return preferences.getAudioApi();
 }
 
-void ManagerImpl::setMailNotify (void) {
-	(getConfigString(PREFERENCES, CONFIG_MAIL_NOTIFY) == NOTIFY_ALL) ? setConfig(
-			PREFERENCES, CONFIG_MAIL_NOTIFY, FALSE_STR)
-			: setConfig(PREFERENCES, CONFIG_MAIL_NOTIFY, TRUE_STR);
-}
 
 void ManagerImpl::notifyErrClient (const int32_t& errCode) {
 	if (_dbus) {
@@ -2845,10 +2855,13 @@ bool ManagerImpl::initAudioDriver (void) {
 
 	_debugInit ("AudioLayer Creation");
 
-	if (getConfigInt(PREFERENCES, CONFIG_AUDIO) == ALSA) {
+	// if (getConfigInt(PREFERENCES, CONFIG_AUDIO) == ALSA) {
+	if (preferences.getAudioApi() == ALSA) {
 		_audiodriver = new AlsaLayer(this);
 		_audiodriver->setMainBuffer(&_mainBuffer);
-	} else if (getConfigInt(PREFERENCES, CONFIG_AUDIO) == PULSEAUDIO) {
+	}
+	// } else if (getConfigInt(PREFERENCES, CONFIG_AUDIO) == PULSEAUDIO) {
+	else if(preferences.getAudioApi() == PULSEAUDIO) {
 		if (app_is_running("pulseaudio") == 0) {
 			_audiodriver = new PulseLayer(this);
 			_audiodriver->setMainBuffer(&_mainBuffer);
