@@ -35,6 +35,7 @@
 #include <sstream>
 #include "../manager.h"
 #include "sip/sipvoiplink.h"
+#include "sip/sipaccount.h"
 
 const char* ConfigurationManager::SERVER_PATH =
 		"/org/sflphone/SFLphone/ConfigurationManager";
@@ -59,8 +60,9 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettingsDefault(
 		void) {
 
 	std::map<std::string, std::string> tlsSettingsDefault;
+
 	tlsSettingsDefault.insert(std::pair<std::string, std::string>(
-			TLS_LISTENER_PORT, DEFAULT_SIP_TLS_PORT));
+                        TLS_LISTENER_PORT, DEFAULT_SIP_TLS_PORT));
 	tlsSettingsDefault.insert(std::pair<std::string, std::string>(
 			TLS_CA_LIST_FILE, ""));
 	tlsSettingsDefault.insert(std::pair<std::string, std::string>(
@@ -93,34 +95,24 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails(void) {
 
 	std::map<std::string, std::string> ip2ipAccountDetails;
 
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(ACCOUNT_ID,
-			IP2IP_PROFILE));
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(
-			SRTP_KEY_EXCHANGE, Manager::instance().getConfigString(
-					IP2IP_PROFILE, SRTP_KEY_EXCHANGE)));
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(SRTP_ENABLE,
-			Manager::instance().getConfigString(IP2IP_PROFILE, SRTP_ENABLE)));
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(
-			SRTP_RTP_FALLBACK, Manager::instance().getConfigString(
-					IP2IP_PROFILE, SRTP_RTP_FALLBACK)));
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(
-			ZRTP_DISPLAY_SAS, Manager::instance().getConfigString(
-					IP2IP_PROFILE, ZRTP_DISPLAY_SAS)));
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(
-			ZRTP_HELLO_HASH, Manager::instance().getConfigString(IP2IP_PROFILE,
-					ZRTP_HELLO_HASH)));
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(
-			ZRTP_NOT_SUPP_WARNING, Manager::instance().getConfigString(
-					IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING)));
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(
-			ZRTP_DISPLAY_SAS_ONCE, Manager::instance().getConfigString(
-					IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE)));
+	SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(IP2IP_PROFILE);
 
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(
-			LOCAL_INTERFACE, Manager::instance().getConfigString(IP2IP_PROFILE,
-					LOCAL_INTERFACE)));
-	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(LOCAL_PORT,
-			Manager::instance().getConfigString(IP2IP_PROFILE, LOCAL_PORT)));
+	if(!sipaccount) {
+	  _error("ConfigurationManager: could not find account");
+	  return ip2ipAccountDetails;
+	}
+
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(ACCOUNT_ID, IP2IP_PROFILE));
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(SRTP_KEY_EXCHANGE, sipaccount->getSrtpKeyExchange())); 
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(SRTP_ENABLE, sipaccount->getSrtpEnable() ? "true" : "false"));
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(SRTP_RTP_FALLBACK, sipaccount->getSrtpFallback() ? "true" : "false"));
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS, sipaccount->getZrtpDisplaySas() ? "true" : "false"));
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(ZRTP_HELLO_HASH, sipaccount->getZrtpHelloHash() ? "true" : "false"));
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(ZRTP_NOT_SUPP_WARNING, sipaccount->getZrtpNotSuppWarning() ? "true" : "false"));
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS_ONCE, sipaccount->getZrtpDiaplaySasOnce() ? "true" : "false"));
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(LOCAL_INTERFACE, sipaccount->getLocalInterface()));
+	std::stringstream portstr; portstr << sipaccount->getLocalPort();
+	ip2ipAccountDetails.insert(std::pair<std::string, std::string>(LOCAL_PORT, portstr.str()));
 
 	std::map<std::string, std::string> tlsSettings;
 	tlsSettings = getTlsSettings(IP2IP_PROFILE);
@@ -136,66 +128,39 @@ void ConfigurationManager::setIp2IpDetails(const std::map<std::string,
 	std::map<std::string, std::string> map_cpy = details;
 	std::map<std::string, std::string>::iterator it;
 
-	it = map_cpy.find(LOCAL_INTERFACE);
+	SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(IP2IP_PROFILE);
 
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, LOCAL_INTERFACE,
-				it->second);
+	if(!sipaccount) {
+	  _error("ConfigurationManager: could not find account");
 	}
+	  
+
+	it = map_cpy.find(LOCAL_INTERFACE);
+	if (it != details.end()) sipaccount->setLocalInterface(it->second);
 
 	it = map_cpy.find(LOCAL_PORT);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, LOCAL_PORT, it->second);
-	}
+	if (it != details.end()) sipaccount->setLocalPort(atoi(it->second.data()));
 
 	it = map_cpy.find(SRTP_ENABLE);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, SRTP_ENABLE, it->second);
-	}
+	if (it != details.end()) sipaccount->setSrtpEnable((it->second == "true"));
 
 	it = map_cpy.find(SRTP_RTP_FALLBACK);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, SRTP_RTP_FALLBACK,
-				it->second);
-	}
+	if (it != details.end()) sipaccount->setSrtpFallback((it->second == "true"));
 
 	it = map_cpy.find(SRTP_KEY_EXCHANGE);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, SRTP_KEY_EXCHANGE,
-				it->second);
-	}
+	if (it != details.end()) sipaccount->setSrtpKeyExchange(it->second);
 
 	it = map_cpy.find(ZRTP_DISPLAY_SAS);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_DISPLAY_SAS,
-				it->second);
-	}
+	if (it != details.end()) sipaccount->setZrtpDisplaySas((it->second == "true"));
 
 	it = map_cpy.find(ZRTP_NOT_SUPP_WARNING);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_NOT_SUPP_WARNING,
-				it->second);
-	}
+	if (it != details.end()) sipaccount->setZrtpNotSuppWarning((it->second == "true"));
 
 	it = map_cpy.find(ZRTP_HELLO_HASH);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_HELLO_HASH,
-				it->second);
-	}
+	if (it != details.end()) sipaccount->setZrtpHelloHash((it->second == "true"));
 
 	it = map_cpy.find(ZRTP_DISPLAY_SAS_ONCE);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(IP2IP_PROFILE, ZRTP_DISPLAY_SAS_ONCE,
-				it->second);
-	}
+	if (it != details.end()) sipaccount->setZrtpDiaplaySasOnce((it->second == "true"));
 
 	setTlsSettings(IP2IP_PROFILE, details);
 
@@ -214,129 +179,81 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings(
 
 	std::map<std::string, std::string> tlsSettings;
 
-	// SIPAccount *sipaccount 
+	SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(IP2IP_PROFILE); 
 
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_LISTENER_PORT,
-			Manager::instance().getConfigString(section, TLS_LISTENER_PORT)));
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_ENABLE,
-			Manager::instance().getConfigString(section, TLS_ENABLE)));
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_CA_LIST_FILE,
-			Manager::instance().getConfigString(section, TLS_CA_LIST_FILE)));
-	tlsSettings.insert(std::pair<std::string, std::string>(
-			TLS_CERTIFICATE_FILE, Manager::instance().getConfigString(section,
-					TLS_CERTIFICATE_FILE)));
-	tlsSettings.insert(std::pair<std::string, std::string>(
-			TLS_PRIVATE_KEY_FILE, Manager::instance().getConfigString(section,
-					TLS_PRIVATE_KEY_FILE)));
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_PASSWORD,
-			Manager::instance().getConfigString(section, TLS_PASSWORD)));
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_METHOD,
-			Manager::instance().getConfigString(section, TLS_METHOD)));
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_CIPHERS,
-			Manager::instance().getConfigString(section, TLS_CIPHERS)));
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_SERVER_NAME,
-			Manager::instance().getConfigString(section, TLS_SERVER_NAME)));
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_VERIFY_SERVER,
-			Manager::instance().getConfigString(section, TLS_VERIFY_SERVER)));
-	tlsSettings.insert(std::pair<std::string, std::string>(TLS_VERIFY_CLIENT,
-			Manager::instance().getConfigString(section, TLS_VERIFY_CLIENT)));
-	tlsSettings.insert(std::pair<std::string, std::string>(
-			TLS_REQUIRE_CLIENT_CERTIFICATE,
-			Manager::instance().getConfigString(section,
-					TLS_REQUIRE_CLIENT_CERTIFICATE)));
-	tlsSettings.insert(std::pair<std::string, std::string>(
-			TLS_NEGOTIATION_TIMEOUT_SEC, Manager::instance().getConfigString(
-					section, TLS_NEGOTIATION_TIMEOUT_SEC)));
-	tlsSettings.insert(std::pair<std::string, std::string>(
-			TLS_NEGOTIATION_TIMEOUT_MSEC, Manager::instance().getConfigString(
-					section, TLS_NEGOTIATION_TIMEOUT_MSEC)));
+	if(!sipaccount)
+	  return tlsSettings;
+
+	std::stringstream portstr; portstr << sipaccount->getTlsListenerPort();
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_LISTENER_PORT, portstr.str()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_ENABLE, sipaccount->getTlsEnable()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_CA_LIST_FILE, sipaccount->getTlsCaListFile()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_CERTIFICATE_FILE, sipaccount->getTlsCertificateFile()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_PRIVATE_KEY_FILE, sipaccount->getTlsPrivateKeyFile()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_PASSWORD, sipaccount->getTlsPassword()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_METHOD, sipaccount->getTlsMethod()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_CIPHERS, sipaccount->getTlsCiphers()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_SERVER_NAME, sipaccount->getTlsServerName()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_VERIFY_SERVER, sipaccount->getTlsVerifyServer() ? "true" : "false"));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_VERIFY_CLIENT, sipaccount->getTlsVerifyClient() ? "true" : "false"));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_REQUIRE_CLIENT_CERTIFICATE, sipaccount->getTlsRequireClientCertificate() ? "true" : "false"));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_NEGOTIATION_TIMEOUT_SEC, sipaccount->getTlsNegotiationTimeoutSec()));
+	tlsSettings.insert(std::pair<std::string, std::string>(TLS_NEGOTIATION_TIMEOUT_MSEC, sipaccount->getTlsNegotiationTimeoutMsec()));
+
 	return tlsSettings;
 }
 
 void ConfigurationManager::setTlsSettings(const std::string& section,
 		const std::map<std::string, std::string>& details) {
+
 	std::map<std::string, std::string> map_cpy = details;
 	std::map<std::string, std::string>::iterator it;
 
-	it = map_cpy.find(TLS_LISTENER_PORT);
-	if (it != details.end()) {
-		Manager::instance().setConfig(section, TLS_LISTENER_PORT, it->second);
+	SIPAccount * sipaccount = (SIPAccount *)Manager::instance().getAccount(IP2IP_PROFILE);
+
+	if(!sipaccount) {
+	  _debug("ConfigurationManager: Error: No valid account in set TLS settings");
+	  return;
 	}
+
+	it = map_cpy.find(TLS_LISTENER_PORT);
+	if (it != details.end()) sipaccount->setTlsListenerPort(atoi(it->second.data()));
 
 	it = map_cpy.find(TLS_ENABLE);
-
-	if (it != details.end()) {
-		Manager::instance().setConfig(section, TLS_ENABLE, it->second);
-	}
+	if (it != details.end()) sipaccount->setTlsEnable(it->second);
 
 	it = map_cpy.find(TLS_CA_LIST_FILE);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_CA_LIST_FILE, it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsCaListFile(it->second);
 
 	it = map_cpy.find(TLS_CERTIFICATE_FILE);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_CERTIFICATE_FILE, it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsCertificateFile(it->second);
 
 	it = map_cpy.find(TLS_PRIVATE_KEY_FILE);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_PRIVATE_KEY_FILE, it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsPrivateKeyFile(it->second);
 
 	it = map_cpy.find(TLS_PASSWORD);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_PASSWORD, it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsPassword(it->second);
 
 	it = map_cpy.find(TLS_METHOD);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_METHOD, it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsMethod(it->second);
 
 	it = map_cpy.find(TLS_CIPHERS);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_CIPHERS, it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsCiphers(it->second);
 
 	it = map_cpy.find(TLS_SERVER_NAME);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_SERVER_NAME, it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsServerName(it->second);
 
 	it = map_cpy.find(TLS_VERIFY_CLIENT);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_VERIFY_CLIENT, it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsVerifyClient((it->second == "true") ? true : false);
 
 	it = map_cpy.find(TLS_REQUIRE_CLIENT_CERTIFICATE);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_REQUIRE_CLIENT_CERTIFICATE,
-				it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsRequireClientCertificate((it->second == "true") ? true : false);
 
 	it = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_SEC);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_NEGOTIATION_TIMEOUT_SEC,
-				it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsNegotiationTimeoutSec(it->second);
 
 	it = map_cpy.find(TLS_NEGOTIATION_TIMEOUT_MSEC);
-
-	if (it != map_cpy.end()) {
-		Manager::instance().setConfig(section, TLS_NEGOTIATION_TIMEOUT_MSEC,
-				it->second);
-	}
+	if (it != map_cpy.end()) sipaccount->setTlsNegotiationTimeoutMsec(it->second);
 
 	Manager::instance().saveConfig();
 
