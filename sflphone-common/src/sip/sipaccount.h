@@ -174,6 +174,10 @@ class SIPAccount : public Account
 
 	virtual void unserialize(Conf::MappingNode *map);
 
+	virtual void setAccountDetails(const std::map<std::string, std::string>& details);
+
+	virtual std::map<std::string, std::string> getAccountDetails();
+
 	/**
 	 * Set route header to appears in sip messages for this account
 	 */ 

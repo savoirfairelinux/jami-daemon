@@ -39,6 +39,7 @@ Account::Account (const AccountID& accountID, std::string type) :
 	, _enabled (false)
 	, _type (type)
 	, _codecOrder ()
+	, _startupCodecStr("")
 {
 	setRegistrationState (Unregistered);
 }
@@ -72,17 +73,16 @@ void Account::setRegistrationState (RegistrationState state) {
 void Account::loadAudioCodecs (void) {
 
 	// if the user never set the codec list, use the default configuration for this account
-	if (Manager::instance ().getConfigString (_accountID, "ActiveCodecs") == "") {
+       if(_startupCodecStr == "") {
 		_info ("Account: use the default order");
 		Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
 	}
-
 	// else retrieve the one set in the user config file
 	else {
 		std::vector<std::string> active_list = Manager::instance ().retrieveActiveCodecs();
 		// This property is now set per account basis
-		std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");
-		setActiveCodecs (Manager::instance ().unserialize (s));
+		// std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");
+		setActiveCodecs (Manager::instance ().unserialize (_startupCodecStr));
 	}
 }
 

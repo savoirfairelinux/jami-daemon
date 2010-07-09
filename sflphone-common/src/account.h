@@ -144,6 +144,8 @@ const Conf::Key mailboxKey("mailbox");
 
 const Conf::Key codecsKey("codecs");		// 0/9/110/111/112/
 
+#define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
+
 class Account : public Serializable{
 
     public:
@@ -158,6 +160,11 @@ class Account : public Serializable{
 	virtual void serialize(Conf::YamlEmitter *emitter) = 0;
 
 	virtual void unserialize(Conf::MappingNode *map) = 0;
+
+	virtual void setAccountDetails(const std::map<std::string, std::string>& details) = 0;
+
+	virtual std::map<std::string, std::string> getAccountDetails() = 0;
+	
 
         /**
          * Load the settings for this account.
@@ -247,13 +254,13 @@ class Account : public Serializable{
         inline std::string getType( void ) { return _type; }
         inline void setType( std::string type ) { _type = type; }
 	
-		/**
-		 * Accessor to data structures
-		 * @return CodecOrder& The list that reflects the user's choice
-		 */
-		inline CodecOrder& getActiveCodecs() { return _codecOrder; }
-
-		void setActiveCodecs (const std::vector <std::string>& list);
+	/**
+	 * Accessor to data structures
+	 * @return CodecOrder& The list that reflects the user's choice
+	 */
+	inline CodecOrder& getActiveCodecs() { return _codecOrder; }
+	
+	void setActiveCodecs (const std::vector <std::string>& list);
 
     private:
         // copy constructor
@@ -262,7 +269,7 @@ class Account : public Serializable{
         // assignment operator
         Account& operator=(const Account& rh);
 
-		void loadAudioCodecs (void);
+	void loadAudioCodecs (void);
 
     protected:
         /**
@@ -320,10 +327,16 @@ class Account : public Serializable{
          */
         std::pair<int, std::string> _registrationStateDetailed;
 
-		/**
-		 * Vector containing the order of the codecs
-		 */
-		CodecOrder _codecOrder;
+	/**
+	 * Vector containing the order of the codecs
+	 */
+	CodecOrder _codecOrder;
+
+	/**
+	 * List of codec obtained when parsing configuration and used
+	 * to generate codec order list, should not be used elsewhere.
+	 */
+	std::string _startupCodecStr;
 
 };
 

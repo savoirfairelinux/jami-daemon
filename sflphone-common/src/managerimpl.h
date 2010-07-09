@@ -1057,6 +1057,14 @@ class ManagerImpl {
 
     ost::Mutex* getAudioLayerMutex() { return &_audiolayer_mutex; }
     
+    /** 
+     * Helper function that creates an MD5 Hash from the credential
+     * information provided as parameters. The hash is computed as
+     * MD5(username ":" realm ":" password).
+     * 
+     */
+    std::string computeMd5HashFromCredential(const std::string& username, const std::string& password, const std::string& realm);
+
   private:
     /* Transform digest to string.
     * output must be at least PJSIP_MD5STRLEN+1 bytes.
@@ -1066,14 +1074,6 @@ class ManagerImpl {
     * NOTE: THE OUTPUT STRING IS NOT NULL TERMINATED!
     */
     void digest2str(const unsigned char digest[], char *output);
-
-    /** 
-     * Helper function that creates an MD5 Hash from the credential
-     * information provided as parameters. The hash is computed as
-     * MD5(username ":" realm ":" password).
-     * 
-     */
-    std::string computeMd5HashFromCredential(const std::string& username, const std::string& password, const std::string& realm);
 
     /**
      * Check if a process is running with the system command

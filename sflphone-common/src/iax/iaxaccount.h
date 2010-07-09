@@ -48,6 +48,10 @@ class IAXAccount : public Account
 
 	virtual void unserialize(Conf::MappingNode *map);
 
+	void setAccountDetails(const std::map<std::string, std::string>& details);
+
+	std::map<std::string, std::string> getAccountDetails();
+
 	void setVoIPLink ();
 
         /** 
