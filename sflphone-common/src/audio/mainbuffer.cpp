@@ -397,7 +397,7 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, CallID
             return 0;
     } else {
 
-        memset(buffer, 0, nbSmplToCopy*sizeof(SFLDataFormat*));
+        memset(buffer, 0, nbSmplToCopy*sizeof(SFLDataFormat));
 
         int size = 0;
 
