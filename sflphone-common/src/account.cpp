@@ -49,21 +49,13 @@ Account::~Account()
 
 void Account::loadConfig() {
 
-	std::string p;
-
-	p =  Manager::instance().getConfigString (_accountID , CONFIG_ACCOUNT_TYPE);
-#ifdef USE_IAX
-	_enabled = (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_ENABLE) == "true") ? true : false;
-#else
-
-	if (p == "IAX")
-		_enabled = false;
-	else
-		_enabled = (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_ENABLE) == "true") ? true : false;
-
+  // If IAX is not supported, do not register this account	
+#ifndef USE_IAX
+  if (_type == "IAX")
+    _enabled = false;
 #endif
 
-	loadAudioCodecs ();
+  loadAudioCodecs ();
 }
 
 void Account::setRegistrationState (RegistrationState state) {
