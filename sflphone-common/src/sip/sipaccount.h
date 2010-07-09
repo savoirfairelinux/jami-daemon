@@ -262,7 +262,8 @@ class SIPAccount : public Account
          * @param none
          * @return int The number of credentials set for this account.
          */
-        inline int getCredentialCount(void) { return _credentialCount; }
+        inline int getCredentialCount(void) { return credentials.getCredentialCount(); }
+	inline void setCredentialCount(int count) { return credentials.setCredentialCount(count); }
                 
         /**
          * @return pjsip_tls_setting structure, filled from the configuration
