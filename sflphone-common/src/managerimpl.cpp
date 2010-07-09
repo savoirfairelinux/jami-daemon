@@ -3736,6 +3736,8 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	sipaccount->setLocalPort(atoi(localPort.data()));
 	sipaccount->setPublishedPort(atoi(publishedPort.data()));
 	// sipaccount->setStunServerName
+	// sipaccount->setStunServer();
+	// sipaccount->setStunEnable();
 	sipaccount->setResolveOnce((resolveOnce.compare("true")==0) ? true : false);
 	sipaccount->setRegistrationExpire(registrationExpire);
 
@@ -3746,8 +3748,8 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	// setConfig(accountID, PUBLISHED_ADDRESS, publishedAddress);
 	// setConfig(accountID, LOCAL_PORT, localPort);
 	// setConfig(accountID, PUBLISHED_PORT, publishedPort);
-	setConfig(accountID, STUN_ENABLE, stunEnable);
-	setConfig(accountID, STUN_SERVER, stunServer);
+	// setConfig(accountID, STUN_ENABLE, stunEnable);
+	// setConfig(accountID, STUN_SERVER, stunServer);
 	// setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
 	// setConfig(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce);
         // setConfig(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
@@ -3759,7 +3761,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 
 	setConfig(accountID, REALM, realm);
 	// setConfig(accountID, USERAGENT, ua_name);
-	setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
+	// setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
 
 	sipaccount->setUseragent(ua_name);
 
@@ -3849,23 +3851,25 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
 	// setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC,tlsNegotiationTimeoutMsec);
 
 	if (!getMd5CredentialHashing()) {
-	  setConfig(accountID, PASSWORD, password);
+	  // setConfig(accountID, PASSWORD, password);
+	  sipaccount->setPassword(password);
 	} else {
 	  // Make sure not to re-hash the password field if
 	  // it is already saved as a MD5 Hash.
 	  // TODO: This test is weak. Fix this.
-	  if ((password.compare(getConfigString(accountID, PASSWORD)) != 0)) {
+	  // if ((password.compare(getConfig(accountID, PASSWORD)) != 0)) {
+	  if ((password.compare(sipaccount->getPassword()) != 0)) {
 	    _debug ("Password sent and password from config are different. Re-hashing");
 	    std::string hash;
 
 	    if (authenticationName.empty()) {
 	      hash = computeMd5HashFromCredential(username, password, realm);
 	    } else {
-	      hash = computeMd5HashFromCredential(authenticationName,
-						  password, realm);
+	      hash = computeMd5HashFromCredential(authenticationName, password, realm);
 	    }
 	    
-	    setConfig(accountID, PASSWORD, hash);
+	    // setConfig(accountID, PASSWORD, hash);
+	    sipaccount->setPassword(hash);
 	  }
 	}
 
@@ -3876,9 +3880,7 @@ void ManagerImpl::setAccountDetails (const std::string& accountID,
     Account * acc = NULL;
     acc = getAccount(accountID);
     
-    if (acc != NULL) {
-      
-        
+    if (acc != NULL) {        
         // acc->loadConfig();
 		
 	if (acc->isEnabled()) {
@@ -3938,7 +3940,8 @@ std::string ManagerImpl::addAccount (
 		newAccountID += "/";
 		// Prepend the new account
 		account_list.insert(0, newAccountID);
-		setConfig(PREFERENCES, CONFIG_ACCOUNTS_ORDER, account_list);
+		// setConfig(PREFERENCES, CONFIG_ACCOUNTS_ORDER, account_list);
+		preferences.setAccountOrder(account_list);
 	}
 
 	saveConfig();
@@ -3950,11 +3953,17 @@ std::string ManagerImpl::addAccount (
 }
 
 void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
-	int numberOfCredential = getConfigInt(accountID, CONFIG_CREDENTIAL_NUMBER);
+	
+        Account *account = getAccount(accountID);
+  
+        if(account->getType() != "SIP")
+	  return;
 
-	int i;
+	SIPAccount *sipaccount = (SIPAccount *)account; 
 
-	for (i = 0; i < numberOfCredential; i++) {
+        int numberOfCredential = getConfigInt(accountID, CONFIG_CREDENTIAL_NUMBER);
+
+	for (int i = 0; i < numberOfCredential; i++) {
 		std::string credentialIndex;
 		std::stringstream streamOut;
 		streamOut << i;
@@ -3966,7 +3975,8 @@ void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
 	}
 
 	if (accountID.empty() == false) {
-		setConfig(accountID, CONFIG_CREDENTIAL_NUMBER, 0);
+	        // setConfig(accountID, CONFIG_CREDENTIAL_NUMBER, 0);
+	        
 	}
 }
 
@@ -4456,6 +4466,15 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings () {
 
 	std::map<std::string, std::string> settings;
 
+	
+	settings.insert(std::pair<std::string, std::string>("URLHOOK_IAX2_ENABLED", hookPreference.getIax2Enabled() ? "true" : "false"));
+	settings.insert(std::pair<std::string, std::string>("PHONE_NUMBER_HOOK_ADD_PREFIX", hookPreference.getNumberAddPrefix()));
+	settings.insert(std::pair<std::string, std::string>("PHONE_NUMBER_HOOK_ENABLED", hookPreference.getNumberEnabled() ? "true" : "false"));
+	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_ENABLED", hookPreference.getSipEnabled() ? "true" : "false"));
+	settings.insert(std::pair<std::string, std::string>("URLHOOK_COMMAND", hookPreference.getUrlCommand()));
+	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_FIELD", hookPreference.getUrlSipField()));
+
+	/*
 	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_FIELD",
 			getConfigString(HOOKS, URLHOOK_SIP_FIELD)));
 	settings.insert(std::pair<std::string, std::string>("URLHOOK_COMMAND",
@@ -4471,12 +4490,21 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings () {
 			"PHONE_NUMBER_HOOK_ADD_PREFIX", getConfigString(HOOKS,
 					PHONE_NUMBER_HOOK_ADD_PREFIX)));
 
+	*/
+
 	return settings;
 }
 
-void ManagerImpl::setHookSettings (
-		const std::map<std::string, std::string>& settings) {
+void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings) {
 
+        hookPreference.setIax2Enabled((settings.find("URLHOOK_IAX2_ENABLED")->second == "true") ? true : false);
+	hookPreference.setNumberAddPrefix(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);
+	hookPreference.setNumberEnabled((settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true") ? true : false);
+	hookPreference.setSipEnabled((settings.find("URLHOOK_SIP_ENABLED")->second == "true") ? true : false);
+	hookPreference.setUrlCommand(settings.find("URLHOOK_COMMAND")->second);
+	hookPreference.setUrlSipField(settings.find("URLHOOK_SIP_FIELD")->second);
+
+	/*
 	setConfig(HOOKS, URLHOOK_SIP_FIELD,
 			(*settings.find("URLHOOK_SIP_FIELD")).second);
 	setConfig(HOOKS, URLHOOK_COMMAND,
@@ -4489,6 +4517,7 @@ void ManagerImpl::setHookSettings (
 			"PHONE_NUMBER_HOOK_ENABLED")).second);
 	setConfig(HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX, (*settings.find(
 			"PHONE_NUMBER_HOOK_ADD_PREFIX")).second);
+	*/
 
 	// Write it to the configuration file
 	saveConfig();

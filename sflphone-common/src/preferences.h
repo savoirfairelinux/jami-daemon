@@ -261,8 +261,8 @@ class HookPreference : public Serializable {
   bool getIax2Enabled(void) { return _iax2Enabled; }
   void setIax2Enabled( bool i) { _iax2Enabled = i; }
 
-  bool getNumberAddPrefix(void) { return _numberAddPrefix; }
-  void setNumberAddPrefix(bool n) { _numberAddPrefix = n; }
+  std::string getNumberAddPrefix(void) { return _numberAddPrefix; }
+  void setNumberAddPrefix(std::string n) { _numberAddPrefix = n; }
 
   bool getNumberEnabled(void) { return _numberEnabled; }
   void setNumberEnabled(bool n) { _numberEnabled = n; }
@@ -279,7 +279,7 @@ class HookPreference : public Serializable {
  private:
 
   bool _iax2Enabled;// :		false
-  bool _numberAddPrefix;//:	false
+  std::string _numberAddPrefix;//:	false
   bool _numberEnabled; //:	false
   bool _sipEnabled; //:		false
   std::string _urlCommand; //:		x-www-browser

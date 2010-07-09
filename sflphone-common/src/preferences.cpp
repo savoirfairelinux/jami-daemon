@@ -254,7 +254,7 @@ void AddressbookPreference::unserialize(Conf::MappingNode *map)
 
 
 HookPreference::HookPreference() : _iax2Enabled(false)
-				 , _numberAddPrefix(false)
+				 , _numberAddPrefix("")
 				 , _numberEnabled(false)
 				 , _sipEnabled(false)
 				 , _urlCommand("x-www-browser")
@@ -272,7 +272,7 @@ void HookPreference::serialize(Conf::YamlEmitter *emitter)
   Conf::MappingNode preferencemap(NULL);
 
   Conf::ScalarNode iax2Enabled(_iax2Enabled ? "true" : "false");
-  Conf::ScalarNode numberAddPrefix(_numberAddPrefix ? "true" : "false");
+  Conf::ScalarNode numberAddPrefix(_numberAddPrefix);
   Conf::ScalarNode numberEnabled(_numberEnabled ? "true" : "false");
   Conf::ScalarNode sipEnabled(_sipEnabled ? "true" : "false");
   Conf::ScalarNode urlCommand(_urlCommand);
@@ -297,7 +297,7 @@ void HookPreference::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(map->getValue(iax2EnabledKey));
   if(val) { _iax2Enabled = (val->getValue() == "true") ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(numberAddPrefixKey));
-  if(val) { _numberAddPrefix = (val->getValue() == "true") ? true : false; val = NULL; }
+  if(val) { _numberAddPrefix = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(numberEnabledKey));
   if(val) { _numberEnabled = (val->getValue() == "true") ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(sipEnabledKey));
