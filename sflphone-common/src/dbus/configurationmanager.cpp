@@ -292,15 +292,17 @@ std::map<std::string, std::string> ConfigurationManager::getCredential(
 
 int32_t ConfigurationManager::getNumberOfCredential(
 		const std::string& accountID) {
-	return Manager::instance().getConfigInt(accountID, CONFIG_CREDENTIAL_NUMBER);
+
+  SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(accountID);
+  return sipaccount->getCredentialCount();
 }
 
 void ConfigurationManager::setNumberOfCredential(const std::string& accountID,
 		const int32_t& number) {
-	if (accountID != AccountNULL || !accountID.empty()) {
-		Manager::instance().setConfig(accountID, CONFIG_CREDENTIAL_NUMBER,
-				number);
-	}
+  if (accountID != AccountNULL || !accountID.empty()) {
+    SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(accountID);
+    sipaccount->setCredentialCount(number);
+  }
 }
 
 void ConfigurationManager::setCredential(const std::string& accountID,
