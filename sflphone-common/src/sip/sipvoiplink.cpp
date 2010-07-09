@@ -657,8 +657,11 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pj_list_push_back (&hdr_list, (pjsip_hdr*) h);
     // pj_list_push_back (&hdr_list, (pjsip_hdr*) routing);
 
+    if (regc)
+      _debug("No regc ......");
+
     pjsip_regc_add_headers (regc, &hdr_list);
-    
+  
     status = pjsip_regc_register (regc, PJ_TRUE, &tdata);
 
     if (status != PJ_SUCCESS) {

@@ -674,13 +674,15 @@ void SIPAccount::setVoIPLink() {
 
 int SIPAccount::initCredential (void)
 {
+    _debug("SipAccount: Init credential");
+
     int credentialCount = 0;
-    credentialCount = credentials.getCredentialCount();// Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
+    credentialCount = credentials.getCredentialCount();
     credentialCount += 1;
 
     bool md5HashingEnabled = false;
     int dataType = 0;
-    md5HashingEnabled = Manager::instance().preferences.getMd5Hash(); // Manager::instance().getConfigBool (PREFERENCES, CONFIG_MD5HASH);
+    md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
     std::string digest;
 
     // Create the credential array
@@ -758,7 +760,7 @@ int SIPAccount::initCredential (void)
         _debug ("Setting credential %d realm = %s passwd = %s username = %s data_type = %d", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
     }
 
-    _credentialCount = credentialCount;
+    credentials.setCredentialCount(credentialCount);
 
     _cred = cred_info;
 
@@ -872,19 +874,6 @@ void SIPAccount::initTlsConfiguration (void)
 
     pjsip_tls_setting_default (_tlsSetting);
 
-    // std::string tlsCaListFile = Manager::instance().getConfigString (_accountID, TLS_CA_LIST_FILE);
-    // std::string tlsCertificateFile = Manager::instance().getConfigString (_accountID, TLS_CERTIFICATE_FILE);
-    // std::string tlsPrivateKeyFile = Manager::instance().getConfigString (_accountID, TLS_PRIVATE_KEY_FILE);
-    // std::string tlsPassword = Manager::instance().getConfigString (_accountID, TLS_PASSWORD);
-    // std::string tlsMethod = Manager::instance().getConfigString (_accountID, TLS_METHOD);
-    // std::string tlsCiphers = Manager::instance().getConfigString (_accountID, TLS_CIPHERS);
-    // std::string tlsServerName = Manager::instance().getConfigString (_accountID, TLS_SERVER_NAME);
-    // bool tlsVerifyServer = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_SERVER);
-    // bool tlsVerifyClient = Manager::instance().getConfigBool (_accountID, TLS_VERIFY_CLIENT);
-    // bool tlsRequireClientCertificate = Manager::instance().getConfigBool (_accountID, TLS_REQUIRE_CLIENT_CERTIFICATE);
-    // std::string tlsNegotiationTimeoutSec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_SEC);
-    // std::string tlsNegotiationTimeoutMsec = Manager::instance().getConfigString (_accountID, TLS_NEGOTIATION_TIMEOUT_MSEC);
-
     pj_cstr (&_tlsSetting->ca_list_file, _tlsCaListFile.c_str());
     pj_cstr (&_tlsSetting->cert_file, _tlsCertificateFile.c_str());
     pj_cstr (&_tlsSetting->privkey_file, _tlsPrivateKeyFile.c_str());
@@ -927,51 +916,10 @@ void SIPAccount::initStunConfiguration (void)
 
 void SIPAccount::loadConfig()
 {
-    // Load primary credential
-    setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
-    setRouteSet(Manager::instance().getConfigString(_accountID, ROUTESET));
-    setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
-    _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
-    _realm = Manager::instance().getConfigString (_accountID, REALM);
-    _resolveOnce = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_RESOLVE_ONCE) == "1" ? true : false;
-
-    // Load general account settings
-    setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
-
-    if (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE).empty()) {
+    if (_registrationExpire.empty())
         _registrationExpire = DFT_EXPIRE_VALUE;
-    } else {
-        _registrationExpire = Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE);
-    }
 
-    // Load network settings
-    // Local parameters
-
-    // Load local interface
-    setLocalInterface(Manager::instance().getConfigString (_accountID, LOCAL_INTERFACE));
-
-    std::string localPort = Manager::instance().getConfigString (_accountID, LOCAL_PORT);
-    setLocalPort (atoi (localPort.c_str()));
-
-
-    // Published parameters
-    setPublishedSameasLocal (Manager::instance().getConfigString (_accountID, PUBLISHED_SAMEAS_LOCAL) == TRUE_STR ? true : false);
-
-    std::string publishedPort = Manager::instance().getConfigString (_accountID, PUBLISHED_PORT);
-
-    setPublishedPort (atoi (publishedPort.c_str()));
-
-    setPublishedAddress (Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS));
-
-    if(Manager::instance().getConfigString (_accountID, ACCOUNT_DTMF_TYPE) == OVERRTPSTR)
-    	_dtmfType = OVERRTP;
-	else
-		_dtmfType = SIPINFO;
-
-    // Init TLS settings if the user wants to use TLS
-    bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
-
-    if (tlsEnabled) {
+    if (_tlsEnabled) {
         initTlsConfiguration();
         _transportType = PJSIP_TRANSPORT_TLS;
     } else {
