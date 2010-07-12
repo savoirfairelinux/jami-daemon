@@ -94,8 +94,8 @@ accounts:
    alias:		sfl-431
    username:		431     
    password:  		alexandre
-   hostname:		192.168.50.3
-   enable:		true
+   hostname:		mtl.savoirfairelinux.net
+   enable:		false
    type:		SIP
    expire:		3600
    interface:		default
