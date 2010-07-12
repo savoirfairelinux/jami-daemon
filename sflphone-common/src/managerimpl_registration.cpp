@@ -248,13 +248,16 @@ ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
 {
 
     // Update the active field
-    setConfig (accountID, CONFIG_ACCOUNT_ENABLE, (enable == 1) ? TRUE_STR:FALSE_STR);
-
     Account* acc = getAccount (accountID);
+
+    if(enable == 1)
+      acc->setEnabled(true);
+    else
+      acc->setEnabled(false);
+
     acc->loadConfig();
 
     // Test on the freshly updated value
-
     if (acc->isEnabled()) {
         // Verify we aren't already registered, then register
         _debug ("Send register for account %s\n" , accountID.c_str());

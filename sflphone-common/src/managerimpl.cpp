@@ -137,7 +137,7 @@ void ManagerImpl::init () {
 		unsigned int sampleRate = audiolayer->getSampleRate();
 
 		_debugInit ("Manager: Load telephone tone");
-		std::string country = preferences.getZoneToneChoice(); // getConfigString(PREFERENCES, ZONE_TONE);
+		std::string country = preferences.getZoneToneChoice();
 		_telephoneTone = new TelephoneTone(country, sampleRate);
 
 		_debugInit ("Manager: Loading DTMF key");
@@ -145,7 +145,6 @@ void ManagerImpl::init () {
 	}
 
 	// Load the history
-	// _history->load_history(getConfigInt(PREFERENCES, CONFIG_HISTORY_LIMIT));
 	_history->load_history(preferences.getHistoryLimit());
 }
 
@@ -214,11 +213,6 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
 	CallID current_call_id = getCurrentCallId();
 
-	/*
-	if (getConfigString(HOOKS, PHONE_NUMBER_HOOK_ENABLED) == "1")
-		_cleaner->set_phone_number_prefix(getConfigString(HOOKS,
-				PHONE_NUMBER_HOOK_ADD_PREFIX));
-	*/
 	if(hookPreference.getNumberEnabled())
 	  _cleaner->set_phone_number_prefix(hookPreference.getNumberAddPrefix());
 	else
@@ -1413,8 +1407,8 @@ void ManagerImpl::removeStream (const CallID& call_id) {
 //THREAD=Main
 bool ManagerImpl::saveConfig (void) {
 	_debug ("Saving Configuration to XDG directory %s ... ", _path.c_str());
-	audioPreference.setVolumemic(getMicVolume()); // setConfig(AUDIO, VOLUME_SPKR, getSpkrVolume());
-	audioPreference.setVolumespkr(getSpkrVolume()); // setConfig(AUDIO, VOLUME_MICRO, getMicVolume());
+	audioPreference.setVolumemic(getMicVolume()); 
+	audioPreference.setVolumespkr(getSpkrVolume());
 
 	AccountMap::iterator iter = _accountMap.begin();
 
@@ -1471,7 +1465,7 @@ bool ManagerImpl::playDtmf (char code) {
 
 	stopTone();
 
-	bool hasToPlayTone = voipPreferences.getPlayDtmf(); // getConfigBool(SIGNALISATION, PLAY_DTMF);
+	bool hasToPlayTone = voipPreferences.getPlayDtmf();
 
 	if (!hasToPlayTone) {
 		_debug ("Manager: playDtmf: Do not have to play a tone...");
@@ -1479,7 +1473,7 @@ bool ManagerImpl::playDtmf (char code) {
 	}
 
 	// length in milliseconds
-	pulselen = voipPreferences.getPulseLength(); // getConfigInt(SIGNALISATION, PULSE_LENGTH);
+	pulselen = voipPreferences.getPulseLength();
 
 	if (!pulselen) {
 		_debug ("Manager: playDtmf: Pulse length is not set...");
@@ -1822,7 +1816,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId) {
 
 	// _debug ("Manager: Play tone %d", toneId);
 
-	hasToPlayTone = voipPreferences.getPlayTones(); // getConfigBool(SIGNALISATION, PLAY_TONES);
+	hasToPlayTone = voipPreferences.getPlayTones();
 
 	if (!hasToPlayTone)
 		return false;
@@ -1850,7 +1844,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId) {
 void ManagerImpl::stopTone () {
 	bool hasToPlayTone;
 
-	hasToPlayTone = voipPreferences.getPlayTones();// getConfigBool(SIGNALISATION, PLAY_TONES);
+	hasToPlayTone = voipPreferences.getPlayTones();
 
 	if (!hasToPlayTone)
 		return;
@@ -1913,7 +1907,7 @@ void ManagerImpl::ringtone () {
 		//TODO Comment this because it makes the daemon crashes since the main thread
 		//synchronizes the ringtone thread.
 
-		ringchoice = audioPreference.getRingchoice();// getConfigString(AUDIO, RING_CHOICE);
+		ringchoice = audioPreference.getRingchoice();
 		//if there is no / inside the path
 
 		if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
@@ -2438,7 +2432,6 @@ void ManagerImpl::setAudioDevice (const int index, int streamType) {
 				  _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				  SFL_PCM_PLAYBACK, alsaplugin);
 	 audioPreference.setCardout(index);
-	 // setConfig(AUDIO, ALSA_CARD_ID_OUT, index);
         break;
     case SFL_PCM_CAPTURE:
         _debug("Manager: Set input device");
@@ -2446,14 +2439,12 @@ void ManagerImpl::setAudioDevice (const int index, int streamType) {
 				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				 SFL_PCM_CAPTURE, alsaplugin);
 	audioPreference.setCardin(index);
-	// setConfig(AUDIO, ALSA_CARD_ID_IN, index);
         break;
     case SFL_PCM_RINGTONE:
         _debug("Manager: Set ringtone device");
         _audiodriver->openDevice(_audiodriver->getIndexOut(), _audiodriver->getIndexOut(), index,
 				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				 SFL_PCM_RINGTONE, alsaplugin);
-	// setConfig(AUDIO, ALSA_CARD_ID_RING, index);
 	audioPreference.setCardring(index);
         break;
     default:
@@ -2505,16 +2496,10 @@ int ManagerImpl::isIax2Enabled (void) {
 }
 
 int ManagerImpl::isRingtoneEnabled (void) {
-  // return (getConfigString(PREFERENCES, CONFIG_RINGTONE) == "true") ? 1 : 0;
   return preferences.getRingtoneEnabled() ? 1 : 0;
 }
 
 void ManagerImpl::ringtoneEnabled (void) {
-  /*
-	(getConfigString(PREFERENCES, CONFIG_RINGTONE) == RINGTONE_ENABLED) ? setConfig(
-			PREFERENCES, CONFIG_RINGTONE, FALSE_STR)
-			: setConfig(PREFERENCES, CONFIG_RINGTONE, TRUE_STR);
-  */
 
   preferences.getRingtoneEnabled() ? preferences.setRingtoneEnabled(false) : preferences.setRingtoneEnabled(true);
   
@@ -2522,7 +2507,7 @@ void ManagerImpl::ringtoneEnabled (void) {
 
 std::string ManagerImpl::getRingtoneChoice (void) {
 	// we need the absolute path
-  std::string tone_name = audioPreference.getRingchoice(); // getConfigString(AUDIO, RING_CHOICE);
+  std::string tone_name = audioPreference.getRingchoice();
 	std::string tone_path;
 
 	if (tone_name.find(DIR_SEPARATOR_CH) == std::string::npos) {
@@ -2541,78 +2526,26 @@ std::string ManagerImpl::getRingtoneChoice (void) {
 
 void ManagerImpl::setRingtoneChoice (const std::string& tone) {
 	// we save the absolute path
-	// setConfig(AUDIO, RING_CHOICE, tone);
         audioPreference.setRingchoice(tone);
 }
 
 std::string ManagerImpl::getRecordPath (void) {
-        return audioPreference.getRecordpath();// getConfigString(AUDIO, RECORD_PATH);
+        return audioPreference.getRecordpath();
 }
 
 void ManagerImpl::setRecordPath (const std::string& recPath) {
 	_debug ("ManagerImpl::setRecordPath(%s)! ", recPath.c_str());
 	audioPreference.setRecordpath(recPath);
-	// setConfig(AUDIO, RECORD_PATH, recPath);
 }
 
 bool ManagerImpl::getMd5CredentialHashing (void) {
-        return preferences.getMd5Hash(); // getConfigBool(PREFERENCES, CONFIG_MD5HASH);
+        return preferences.getMd5Hash();
 }
 
 
-/*
-int ManagerImpl::getDialpad (void) {
-	if (getConfigString(PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-
-void ManagerImpl::setDialpad (bool display) {
-	std::string set;
-
-	display ? set = TRUE_STR : set = FALSE_STR;
-	// If the value we received is different from the one saved in the config file, save the new value
-	// Else do nothing
-
-	if ((display && (getConfigString(PREFERENCES, CONFIG_DIALPAD) != TRUE_STR))
-			|| (!display && (getConfigString(PREFERENCES, CONFIG_DIALPAD)
-					!= FALSE_STR)))
-		setConfig(PREFERENCES, CONFIG_DIALPAD, set);
-}
-
-
-int ManagerImpl::getVolumeControls (void) {
-	if (getConfigString(PREFERENCES, CONFIG_VOLUME) == TRUE_STR) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-void ManagerImpl::setVolumeControls (bool display) {
-	std::string set;
-
-	display ? set = TRUE_STR : set = FALSE_STR;
-	// If the value we received is different from the one saved in the config file, save the new value
-	// Else do nothing
-
-	if ((display && (getConfigString(PREFERENCES, CONFIG_VOLUME) != TRUE_STR))
-			|| (!display && (getConfigString(PREFERENCES, CONFIG_VOLUME)
-					!= FALSE_STR)))
-		setConfig(PREFERENCES, CONFIG_VOLUME, set);
-}
-*/
 
 void ManagerImpl::setRecordingCall (const CallID& id) {
-  /*
-    _debug ("ManagerImpl::setRecording()! ");
-    AccountID accountid = getAccountFromCall (id);
-    
-    getAccountLink (accountid)->setRecording (id);
-  */
+
 
   AccountID accountid = getAccountFromCall(id);
   Recordable* rec = (Recordable *) getAccountLink(accountid)->getCall(id);
@@ -2623,12 +2556,6 @@ void ManagerImpl::setRecordingCall (const CallID& id) {
 }
 
 bool ManagerImpl::isRecording (const CallID& id) {
-	/*
-	 _debug ("ManagerImpl::isRecording()! ");
-	 AccountID accountid = getAccountFromCall (id);
-
-	 return getAccountLink (accountid)->isRecording (id);
-	 */
 
 	AccountID accountid = getAccountFromCall(id);
 	Recordable* rec = (Recordable*) getAccountLink(accountid)->getCall(id);
@@ -2636,78 +2563,20 @@ bool ManagerImpl::isRecording (const CallID& id) {
 	return rec->isRecording();
 }
 
-/*
-void ManagerImpl::startHidden (void) {
-	(getConfigString(PREFERENCES, CONFIG_START) == START_HIDDEN) ? setConfig(
-			PREFERENCES, CONFIG_START, FALSE_STR) : setConfig(PREFERENCES,
-			CONFIG_START, TRUE_STR);
-}
-
-int ManagerImpl::isStartHidden (void) {
-	return (getConfigBool(PREFERENCES, CONFIG_START) == true) ? 1 : 0;
-}
-
-void ManagerImpl::switchPopupMode (void) {
-	(getConfigString(PREFERENCES, CONFIG_POPUP) == WINDOW_POPUP) ? setConfig(
-			PREFERENCES, CONFIG_POPUP, FALSE_STR) : setConfig(PREFERENCES,
-			CONFIG_POPUP, TRUE_STR);
-}
-*/
 
 void ManagerImpl::setHistoryLimit (const int& days) {
-  // setConfig(PREFERENCES, CONFIG_HISTORY_LIMIT, days);
   preferences.setHistoryLimit(days);
 }
 
 int ManagerImpl::getHistoryLimit (void) {
-  return preferences.getHistoryLimit(); // getConfigInt(PREFERENCES, CONFIG_HISTORY_LIMIT);
+  return preferences.getHistoryLimit();
 }
-
-/*
-std::string ManagerImpl::getHistoryEnabled (void) {
-	return getConfigString(PREFERENCES, CONFIG_HISTORY_ENABLED);
-}
-
-void ManagerImpl::setHistoryEnabled (void) {
-	(getConfigString(PREFERENCES, CONFIG_HISTORY_ENABLED) == TRUE_STR) ? setConfig(
-			PREFERENCES, CONFIG_HISTORY_ENABLED, FALSE_STR)
-			: setConfig(PREFERENCES, CONFIG_HISTORY_ENABLED, TRUE_STR);
-}
-
-int ManagerImpl::getSearchbar (void) {
-	return getConfigInt(PREFERENCES, CONFIG_SEARCHBAR);
-}
-
-void ManagerImpl::setSearchbar (void) {
-	(getConfigInt(PREFERENCES, CONFIG_SEARCHBAR) == 1) ? setConfig(PREFERENCES,
-			CONFIG_SEARCHBAR, FALSE_STR) : setConfig(PREFERENCES,
-			CONFIG_SEARCHBAR, TRUE_STR);
-}
-
-int ManagerImpl::popupMode (void) {
-	return (getConfigBool(PREFERENCES, CONFIG_POPUP) == true) ? 1 : 0;
-}
-
-int32_t ManagerImpl::getNotify (void) {
-	return (getConfigBool(PREFERENCES, CONFIG_NOTIFY) == true) ? 1 : 0;
-}
-
-void ManagerImpl::setNotify (void) {
-	(getConfigString(PREFERENCES, CONFIG_NOTIFY) == NOTIFY_ALL) ? setConfig(
-			PREFERENCES, CONFIG_NOTIFY, FALSE_STR) : setConfig(PREFERENCES,
-			CONFIG_NOTIFY, TRUE_STR);
-}
-*/
 
 int32_t ManagerImpl::getMailNotify (void) {
-  // return getConfigInt(PREFERENCES, CONFIG_MAIL_NOTIFY);
   return preferences.getNotifyMails();
 }
 
 void ManagerImpl::setMailNotify (void) {
-  //	(getConfigString(PREFERENCES, CONFIG_MAIL_NOTIFY) == NOTIFY_ALL) ? setConfig(
-  //			PREFERENCES, CONFIG_MAIL_NOTIFY, FALSE_STR)
-  //			: setConfig(PREFERENCES, CONFIG_MAIL_NOTIFY, TRUE_STR);
   preferences.getNotifyMails() ? preferences.setNotifyMails(true) : preferences.setNotifyMails(false);
 }
 
@@ -2728,7 +2597,6 @@ void ManagerImpl::setAudioManager (const int32_t& api) {
 		return;
 	}
 
-	// setConfig(PREFERENCES, CONFIG_AUDIO, api);
 	preferences.setAudioApi(api);
 
 	switchAudioManager();
@@ -2737,7 +2605,6 @@ void ManagerImpl::setAudioManager (const int32_t& api) {
 }
 
 int32_t ManagerImpl::getAudioManager (void) {
-  //return getConfigInt(PREFERENCES, CONFIG_AUDIO);
   return preferences.getAudioApi();
 }
 
@@ -2772,7 +2639,7 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin (void) {
 	if (alsalayer)
 		return alsalayer -> getAudioPlugin();
 	else
-	  return audioPreference.getPlugin();// getConfigString(AUDIO, ALSA_PLUGIN);
+	  return audioPreference.getPlugin();
 }
 
 
@@ -2859,19 +2726,16 @@ bool ManagerImpl::initAudioDriver (void) {
 
 	_debugInit ("AudioLayer Creation");
 
-	// if (getConfigInt(PREFERENCES, CONFIG_AUDIO) == ALSA) {
 	if (preferences.getAudioApi() == ALSA) {
 		_audiodriver = new AlsaLayer(this);
 		_audiodriver->setMainBuffer(&_mainBuffer);
 	}
-	// } else if (getConfigInt(PREFERENCES, CONFIG_AUDIO) == PULSEAUDIO) {
 	else if(preferences.getAudioApi() == PULSEAUDIO) {
 		if (app_is_running("pulseaudio") == 0) {
 			_audiodriver = new PulseLayer(this);
 			_audiodriver->setMainBuffer(&_mainBuffer);
 		} else {
 			_audiodriver = new AlsaLayer(this);
-			// setConfig(PREFERENCES, CONFIG_AUDIO, ALSA);
 			preferences.setAudioApi(ALSA);
 			_audiodriver->setMainBuffer(&_mainBuffer);
 		}
@@ -2906,13 +2770,13 @@ void ManagerImpl::selectAudioDriver (void) {
 	_debug ("Audio layer type: %i" , layer);
 
 	/* Retrieve the global devices info from the user config */
-	alsaPlugin = audioPreference.getPlugin(); // getConfigString(AUDIO, ALSA_PLUGIN);
-	numCardIn = audioPreference.getCardin(); //getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = audioPreference.getCardout(); //getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = audioPreference.getCardring(); //getConfigInt(AUDIO, ALSA_CARD_ID_RING);
-	// sampleRate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
+	alsaPlugin = audioPreference.getPlugin();
+	numCardIn = audioPreference.getCardin();
+	numCardOut = audioPreference.getCardout();
+	numCardRing = audioPreference.getCardring();
+
 	sampleRate = _mainBuffer.getInternalSamplingRate();
-	frameSize = audioPreference.getFramesize(); //getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+	frameSize = audioPreference.getFramesize(); 
 
 	/* Only for the ALSA layer, we check the sound card information */
 
@@ -2922,13 +2786,13 @@ void ManagerImpl::selectAudioDriver (void) {
 	    if (!alsalayer -> soundCardIndexExist(numCardIn, SFL_PCM_CAPTURE)) {
 	        _debug (" Card with index %i doesn't exist or cannot capture. Switch to 0.", numCardIn);
 		numCardIn = ALSA_DFT_CARD_ID;
-		audioPreference.setCardin(ALSA_DFT_CARD_ID); // setConfig(AUDIO, ALSA_CARD_ID_IN, ALSA_DFT_CARD_ID);
+		audioPreference.setCardin(ALSA_DFT_CARD_ID);
 	    }
 
 	    if (!alsalayer -> soundCardIndexExist(numCardOut, SFL_PCM_PLAYBACK)) {
 	        _debug (" Card with index %i doesn't exist or cannot playback. Switch to 0.", numCardOut);
 		numCardOut = ALSA_DFT_CARD_ID;
-		audioPreference.setCardout(ALSA_DFT_CARD_ID); // setConfig(AUDIO, ALSA_CARD_ID_OUT, ALSA_DFT_CARD_ID);
+		audioPreference.setCardout(ALSA_DFT_CARD_ID);
 	    }
 
 	    if (!alsalayer->soundCardIndexExist(numCardRing, SFL_PCM_RINGTONE)) {
@@ -2962,17 +2826,16 @@ void ManagerImpl::switchAudioManager (void) {
 
 	type = _audiodriver->getLayerType();
 
-	// samplerate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
 	samplerate = _mainBuffer.getInternalSamplingRate();
-	framesize = audioPreference.getFramesize();// getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+	framesize = audioPreference.getFramesize();
 
 	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
 
-	alsaPlugin = audioPreference.getPlugin();//getConfigString(AUDIO, ALSA_PLUGIN);
+	alsaPlugin = audioPreference.getPlugin();
 
-	numCardIn = audioPreference.getCardin();//getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = audioPreference.getCardout();// getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = audioPreference.getCardring(); //getConfigInt(AUDIO, ALSA_CARD_ID_RING);
+	numCardIn = audioPreference.getCardin();
+	numCardOut = audioPreference.getCardout();
+	numCardRing = audioPreference.getCardring();
 
 	_debug ("Manager: Deleting current layer... ");
 
@@ -3041,15 +2904,15 @@ void ManagerImpl::audioSamplingRateChanged (void) {
 	type = _audiodriver->getLayerType();
 
 	samplerate = _mainBuffer.getInternalSamplingRate();
-	framesize = audioPreference.getFramesize(); // getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+	framesize = audioPreference.getFramesize();
 
 	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
 
-	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
+	alsaPlugin = audioPreference.getPlugin();
 
-	numCardIn = audioPreference.getCardin(); // getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = audioPreference.getCardout(); // getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = audioPreference.getCardring(); // getConfigInt(AUDIO, ALSA_CARD_ID_RING);
+	numCardIn = audioPreference.getCardin();
+	numCardOut = audioPreference.getCardout();
+	numCardRing = audioPreference.getCardring();
 
 	_debug ("Manager: Deleting current layer... ");
 
@@ -3097,7 +2960,7 @@ void ManagerImpl::audioSamplingRateChanged (void) {
 		delete _telephoneTone;
 
 		_debugInit ("Manager: Load telephone tone");
-		std::string country = preferences.getZoneToneChoice(); // getConfigString(PREFERENCES, ZONE_TONE);
+		std::string country = preferences.getZoneToneChoice();
 		_telephoneTone = new TelephoneTone(country, sampleRate);
 
 
@@ -3127,8 +2990,6 @@ void ManagerImpl::audioSamplingRateChanged (void) {
  */
 void ManagerImpl::initVolume () {
 	_debugInit ("Initiate Volume");
-	// setSpkrVolume(getConfigInt(AUDIO, VOLUME_SPKR));
-	// setMicVolume(getConfigInt(AUDIO, VOLUME_MICRO));
 	setSpkrVolume(audioPreference.getVolumespkr());
 	setMicVolume(audioPreference.getVolumemic());
 }
@@ -3156,7 +3017,7 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol) {
 
 int ManagerImpl::getLocalIp2IpPort (void) {
 	// The SIP port used for default account (IP to IP) calls=
-  return preferences.getPortNum(); // getConfigInt(IP2IP_PROFILE, LOCAL_PORT);
+  return preferences.getPortNum();
 
 }
 
@@ -3317,7 +3178,7 @@ std::string ManagerImpl::getConfigString (const std::string& section,
 //THREAD=Main
 bool ManagerImpl::setConfig (const std::string& section,
 		const std::string& name, const std::string& value) {
-        // _debug ("ManagerImpl::setConfig %s %s %s", section.c_str(), name.c_str(), value.c_str());
+
 	return _config.setConfigTreeItem(section, name, value);
 }
 
@@ -3332,7 +3193,7 @@ bool ManagerImpl::setConfig (const std::string& section,
 void ManagerImpl::setAccountsOrder (const std::string& order) {
 	_debug ("Setcreate accounts order : %s", order.c_str());
 	// Set the new config
-	// setConfig(PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
+
 	preferences.setAccountOrder(order);
 }
 
@@ -3591,13 +3452,13 @@ std::string ManagerImpl::addAccount (
 	setAccountDetails(accountID.str(), details);
 
 	// Add the newly created account in the account order list
-	account_list = preferences.getAccountOrder();// getConfigString(PREFERENCES, CONFIG_ACCOUNTS_ORDER);
+	account_list = preferences.getAccountOrder();
 
 	if (account_list != "") {
 		newAccountID += "/";
 		// Prepend the new account
 		account_list.insert(0, newAccountID);
-		// setConfig(PREFERENCES, CONFIG_ACCOUNTS_ORDER, account_list);
+
 		preferences.setAccountOrder(account_list);
 	}
 
@@ -3618,7 +3479,7 @@ void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
 
 	SIPAccount *sipaccount = (SIPAccount *)account; 
 
-        int numberOfCredential = sipaccount->getCredentialCount(); // getConfigInt(accountID, CONFIG_CREDENTIAL_NUMBER);
+        int numberOfCredential = sipaccount->getCredentialCount();
 
 	for (int i = 0; i < numberOfCredential; i++) {
 		std::string credentialIndex;
@@ -3632,8 +3493,7 @@ void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
 	}
 
 	if (accountID.empty() == false) {
-	        // setConfig(accountID, CONFIG_CREDENTIAL_NUMBER, 0);
-	        
+	  sipaccount->setCredentialCount(0);
 	}
 }
 
@@ -3720,7 +3580,6 @@ std::vector<std::string> ManagerImpl::loadAccountOrder (void) {
 
 	Conf::Key accountOrder("order");
 
-	// account_list = getConfigString(PREFERENCES, CONFIG_ACCOUNTS_ORDER);
 	account_list = preferences.getAccountOrder();
 
 	return unserialize(account_list);
@@ -4055,24 +3914,6 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_PHONE_HOME", addressbookPreference.getHome() ? 1 : 0));
 	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_PHONE_MOBILE", addressbookPreference.getMobile() ? 1 : 0));
 
-	  /*
-	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_ENABLE",
-			getConfigInt(ADDRESSBOOK, ADDRESSBOOK_ENABLE)));
-	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_MAX_RESULTS",
-			getConfigInt(ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS)));
-	settings.insert(std::pair<std::string, int32_t>(
-			"ADDRESSBOOK_DISPLAY_CONTACT_PHOTO", getConfigInt(ADDRESSBOOK,
-					ADDRESSBOOK_DISPLAY_CONTACT_PHOTO)));
-	settings.insert(std::pair<std::string, int32_t>(
-			"ADDRESSBOOK_DISPLAY_PHONE_BUSINESS", getConfigInt(ADDRESSBOOK,
-					ADDRESSBOOK_DISPLAY_PHONE_BUSINESS)));
-	settings.insert(std::pair<std::string, int32_t>(
-			"ADDRESSBOOK_DISPLAY_PHONE_HOME", getConfigInt(ADDRESSBOOK,
-					ADDRESSBOOK_DISPLAY_PHONE_HOME)));
-	settings.insert(std::pair<std::string, int32_t>(
-			"ADDRESSBOOK_DISPLAY_PHONE_MOBILE", getConfigInt(ADDRESSBOOK,
-					ADDRESSBOOK_DISPLAY_PHONE_MOBILE)));
-	  */
 	return settings;
 }
 
@@ -4087,21 +3928,6 @@ void ManagerImpl::setAddressbookSettings (
   addressbookPreference.setHone((settings.find("ADDRESSBOOK_DISPLAY_PHONE_HOME")->second == 1) ? true : false);
   addressbookPreference.setMobile((settings.find("ADDRESSBOOK_DISPLAY_PHONE_MOBILE")->second == 1) ? true : false);
 
-/*
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_ENABLE, (*settings.find(
-			"ADDRESSBOOK_ENABLE")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS, (*settings.find(
-			"ADDRESSBOOK_MAX_RESULTS")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, (*settings.find(
-			"ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, (*settings.find(
-			"ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_HOME, (*settings.find(
-			"ADDRESSBOOK_DISPLAY_PHONE_HOME")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_MOBILE, (*settings.find(
-			"ADDRESSBOOK_DISPLAY_PHONE_MOBILE")).second);
-*/
-
 	// Write it to the configuration file
 	saveConfig();
 }
@@ -4110,12 +3936,12 @@ void ManagerImpl::setAddressbookList (const std::vector<std::string>& list) {
 
 	std::string s = serialize(list);
 	addressbookPreference.setList(s);
-	// setConfig(ADDRESSBOOK, ADDRESSBOOK_LIST, s);
+
 }
 
 std::vector<std::string> ManagerImpl::getAddressbookList (void) {
 
-        std::string s = addressbookPreference.getList(); // getConfigString(ADDRESSBOOK, ADDRESSBOOK_LIST);
+        std::string s = addressbookPreference.getList();
 	return unserialize(s);
 }
 
@@ -4131,24 +3957,6 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings () {
 	settings.insert(std::pair<std::string, std::string>("URLHOOK_COMMAND", hookPreference.getUrlCommand()));
 	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_FIELD", hookPreference.getUrlSipField()));
 
-	/*
-	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_FIELD",
-			getConfigString(HOOKS, URLHOOK_SIP_FIELD)));
-	settings.insert(std::pair<std::string, std::string>("URLHOOK_COMMAND",
-			getConfigString(HOOKS, URLHOOK_COMMAND)));
-	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_ENABLED",
-			getConfigString(HOOKS, URLHOOK_SIP_ENABLED)));
-	settings.insert(std::pair<std::string, std::string>("URLHOOK_IAX2_ENABLED",
-			getConfigString(HOOKS, URLHOOK_IAX2_ENABLED)));
-	settings.insert(std::pair<std::string, std::string>(
-			"PHONE_NUMBER_HOOK_ENABLED", getConfigString(HOOKS,
-					PHONE_NUMBER_HOOK_ENABLED)));
-	settings.insert(std::pair<std::string, std::string>(
-			"PHONE_NUMBER_HOOK_ADD_PREFIX", getConfigString(HOOKS,
-					PHONE_NUMBER_HOOK_ADD_PREFIX)));
-
-	*/
-
 	return settings;
 }
 
@@ -4160,21 +3968,6 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
 	hookPreference.setSipEnabled((settings.find("URLHOOK_SIP_ENABLED")->second == "true") ? true : false);
 	hookPreference.setUrlCommand(settings.find("URLHOOK_COMMAND")->second);
 	hookPreference.setUrlSipField(settings.find("URLHOOK_SIP_FIELD")->second);
-
-	/*
-	setConfig(HOOKS, URLHOOK_SIP_FIELD,
-			(*settings.find("URLHOOK_SIP_FIELD")).second);
-	setConfig(HOOKS, URLHOOK_COMMAND,
-			(*settings.find("URLHOOK_COMMAND")).second);
-	setConfig(HOOKS, URLHOOK_SIP_ENABLED,
-			(*settings.find("URLHOOK_SIP_ENABLED")).second);
-	setConfig(HOOKS, URLHOOK_IAX2_ENABLED, (*settings.find(
-			"URLHOOK_IAX2_ENABLED")).second);
-	setConfig(HOOKS, PHONE_NUMBER_HOOK_ENABLED, (*settings.find(
-			"PHONE_NUMBER_HOOK_ENABLED")).second);
-	setConfig(HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX, (*settings.find(
-			"PHONE_NUMBER_HOOK_ADD_PREFIX")).second);
-	*/
 
 	// Write it to the configuration file
 	saveConfig();
@@ -4279,8 +4072,7 @@ std::map<std::string, std::string> ManagerImpl::send_history_to_client (void) {
 
 void ManagerImpl::receive_history_from_client (std::map<std::string,
 		std::string> history) {
-  //  _history->set_serialized_history(history, Manager::instance().getConfigInt(
-  //			PREFERENCES, CONFIG_HISTORY_LIMIT));
+
   _history->set_serialized_history(history, preferences.getHistoryLimit());; 
   _history->save_history();
 }
