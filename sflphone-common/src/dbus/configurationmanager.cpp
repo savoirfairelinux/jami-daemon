@@ -270,22 +270,20 @@ std::map<std::string, std::string> ConfigurationManager::getCredential(
 	streamOut << index;
 	credentialIndex = streamOut.str();
 
+	SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(accountID);
+
+
 	std::string section = std::string("Credential") + std::string(":")
 			+ accountID + std::string(":") + credentialIndex;
 
 	std::map<std::string, std::string> credentialInformation;
-	std::string username = Manager::instance().getConfigString(section,
-			USERNAME);
-	std::string password = Manager::instance().getConfigString(section,
-			PASSWORD);
-	std::string realm = Manager::instance().getConfigString(section, REALM);
+	std::string username = sipaccount->getUsername();
+	std::string password = sipaccount->getPassword();
+        std::string realm = sipaccount->getRealm();
 
-	credentialInformation.insert(std::pair<std::string, std::string>(USERNAME,
-			username));
-	credentialInformation.insert(std::pair<std::string, std::string>(PASSWORD,
-			password));
-	credentialInformation.insert(std::pair<std::string, std::string>(REALM,
-			realm));
+	credentialInformation.insert(std::pair<std::string, std::string>(USERNAME, username));
+	credentialInformation.insert(std::pair<std::string, std::string>(PASSWORD, password));
+	credentialInformation.insert(std::pair<std::string, std::string>(REALM, realm));
 
 	return credentialInformation;
 }
@@ -520,17 +518,11 @@ std::vector<std::string> ConfigurationManager::getRecordDeviceList() {
 }
 
 bool ConfigurationManager::isMd5CredentialHashing(void) {
-	bool isEnabled = Manager::instance().getConfigBool(PREFERENCES,
-			CONFIG_MD5HASH);
-	return isEnabled;
+	return Manager::instance().preferences.getMd5Hash();
 }
 
 void ConfigurationManager::setMd5CredentialHashing(const bool& enabled) {
-	if (enabled) {
-		Manager::instance().setConfig(PREFERENCES, CONFIG_MD5HASH, TRUE_STR);
-	} else {
-		Manager::instance().setConfig(PREFERENCES, CONFIG_MD5HASH, FALSE_STR);
-	}
+        Manager::instance().preferences.setMd5Hash(enabled);
 }
 
 int32_t ConfigurationManager::isIax2Enabled(void) {
@@ -720,45 +712,6 @@ std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName(void) {
 	return vector;
 }
 
-int32_t ConfigurationManager::getWindowWidth(void) {
-
-	return Manager::instance().getConfigInt(PREFERENCES, WINDOW_WIDTH);
-}
-
-int32_t ConfigurationManager::getWindowHeight(void) {
-
-	return Manager::instance().getConfigInt(PREFERENCES, WINDOW_HEIGHT);
-}
-
-void ConfigurationManager::setWindowWidth(const int32_t& width) {
-
-	Manager::instance().setConfig(PREFERENCES, WINDOW_WIDTH, width);
-}
-
-void ConfigurationManager::setWindowHeight(const int32_t& height) {
-
-	Manager::instance().setConfig(PREFERENCES, WINDOW_HEIGHT, height);
-}
-
-int32_t ConfigurationManager::getWindowPositionX(void) {
-
-	return Manager::instance().getConfigInt(PREFERENCES, WINDOW_POSITION_X);
-}
-
-int32_t ConfigurationManager::getWindowPositionY(void) {
-
-	return Manager::instance().getConfigInt(PREFERENCES, WINDOW_POSITION_Y);
-}
-
-void ConfigurationManager::setWindowPositionX(const int32_t& posX) {
-
-	Manager::instance().setConfig(PREFERENCES, WINDOW_POSITION_X, posX);
-}
-
-void ConfigurationManager::setWindowPositionY(const int32_t& posY) {
-
-	Manager::instance().setConfig(PREFERENCES, WINDOW_POSITION_Y, posY);
-}
 
 std::map<std::string, int32_t> ConfigurationManager::getShortcuts() {
 
@@ -791,12 +744,3 @@ void ConfigurationManager::setShortcuts(
 	Manager::instance().saveConfig();
 }
 
-void ConfigurationManager::enableStatusIcon (const std::string& value) {
-
-	Manager::instance ().setConfig (PREFERENCES, SHOW_STATUSICON, value);
-}
-
-std::string ConfigurationManager::isStatusIconEnabled (void) {
-
-	return Manager::instance ().getConfigString (PREFERENCES, SHOW_STATUSICON);
-}
