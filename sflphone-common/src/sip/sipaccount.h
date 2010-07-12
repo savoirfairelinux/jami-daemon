@@ -123,12 +123,19 @@ class SipAccountException : public std::exception
 
 };
 
+class CredentialItem
+{
+ public:
+
+  std::string username;
+  std::string password;
+  std::string realm;
+};
+
 
 class Credentials : public Serializable
 {
  public:
-
-  typedef std::map<std::string, std::string> CredentialMap;
 
   Credentials();
 
@@ -141,11 +148,14 @@ class Credentials : public Serializable
   int getCredentialCount(void) { return credentialCount; }
   void setCredentialCount(int count) { credentialCount = count; }
 
+  void setNewCredential(std::string username, std::string password, std::string realm);
+  CredentialItem *getCredential(int index);
+
  private:
 
   int credentialCount;
 
-  CredentialMap credentialMap;
+  CredentialItem credentialArray[10];
 
 };
 
@@ -462,6 +472,9 @@ class SIPAccount : public Account
 	bool getZrtpHelloHash(void) { return _zrtpHelloHash; }
 	void setZrtpHelloHash(bool hellohash) { _zrtpHelloHash = hellohash; }
 	// void setSrtpKeyExchange
+
+	std::string getRealm(void) { return _realm; }
+	void setRealm(std::string r) { _realm = r; }
 
 	std::string getTlsEnable(void) {return _tlsEnable; }
 	void setTlsEnable(std::string enabl) { _tlsEnable = enabl; }

@@ -36,9 +36,21 @@
 #include <pwd.h>
 #include <sstream>
 
+// CredentialItem::CredentialItem() {}
+
+// CredentialItem::~CredentialItem() {}
+
 Credentials::Credentials() : credentialCount(0) {}
 
 Credentials::~Credentials() {}
+
+CredentialItem *Credentials::getCredential(int index) 
+{ 
+  if((index >= 0) && (index < credentialCount))
+    return &(credentialArray[index]);
+  else
+    return NULL; 
+}
 
 void Credentials::serialize(Conf::YamlEmitter *emitter)
 {
@@ -97,7 +109,6 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 	, _tlsEnabled(false)
 	, _stunEnabled(false)
 	  // , _routeSet("")
-	  // , _realm("")
 	, _authenticationUsename("")
 	  // , _tlsListenerPort("5061")
 	, _srtpEnabled(false)
@@ -308,6 +319,8 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   credMap = (Conf::MappingNode *)(map->getValue(credKey));
   credentials.unserialize(credMap);
 
+  _credentialCount = credentials.getCredentialCount();
+
   val = (Conf::ScalarNode *)(map->getValue(displayNameKey));
   if(val) { _displayName = val->getValue(); val = NULL; }
 
@@ -482,10 +495,6 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
     find_in_map(AUTHENTICATION_USERNAME, authenticationName)
     find_in_map(USERAGENT, ua_name)
       
-    // setConfig(accountID, REALM, realm);
-    // setConfig(accountID, USERAGENT, ua_name);
-    // setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
-      
     setUseragent(ua_name);
 
     // srtp settings
@@ -557,8 +566,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
 	} else {
 	  hash = Manager::instance().computeMd5HashFromCredential(authenticationName, password, realm);
 	}
-	    
-	// setConfig(accountID, PASSWORD, hash);
+
 	setPassword(hash);
       }
     }  
@@ -613,9 +621,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
 	    
     a.insert(std::pair<std::string, std::string>(ROUTESET, getRouteSet()));
     a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_RESOLVE_ONCE, isResolveOnce() ? "true" : "false"));
-    // a.insert(std::pair<std::string, std::string>(REALM, account->
+    a.insert(std::pair<std::string, std::string>(REALM, _realm));
     a.insert(std::pair<std::string, std::string>(USERAGENT, getUseragent()));
-    // a.insert(std::pair<std::string, std::string>(AUTHENTICATION_USERNAME, getConfigString(accountID, AUTHENTICATION_USERNAME)));
+    
     a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getRegistrationExpire()));
     a.insert(std::pair<std::string, std::string>(LOCAL_INTERFACE, getLocalInterface()));				       
     a.insert(std::pair<std::string, std::string>(PUBLISHED_SAMEAS_LOCAL, getPublishedSameasLocal() ? "true" : "false"));
@@ -697,8 +705,10 @@ int SIPAccount::initCredential (void)
 
     // Use authentication username if provided
     if (!_authenticationUsername.empty()) {
+      _debug("Use credential authentication name -------------------------------------");
         cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
     } else {
+      _debug("Use credential uername name -------------------------------------");
         cred_info[0].username = pj_str (strdup (_username.c_str()));
     }
 
@@ -727,6 +737,7 @@ int SIPAccount::initCredential (void)
     int i;
 
     for (i = 1; i < credentialCount; i++) {
+        _debug("--------------------------------------- Not supposed to have any credential");
         std::string credentialIndex;
         std::stringstream streamOut;
         streamOut << i - 1;
@@ -783,7 +794,7 @@ int SIPAccount::registerVoIPLink()
     initCredential();
 
     // Init TLS settings if the user wants to use TLS
-    bool tlsEnabled = false;//  Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
+    bool tlsEnabled = false;
 
     if (tlsEnabled) {
         _transportType = PJSIP_TRANSPORT_TLS;
@@ -791,7 +802,7 @@ int SIPAccount::registerVoIPLink()
     }
 
     // Init STUN settings for this account if the user selected it
-    bool stunEnabled = _stunEnabled; // Manager::instance().getConfigBool (_accountID, STUN_ENABLE);
+    bool stunEnabled = _stunEnabled;
 
     if (stunEnabled) {
         _transportType = PJSIP_TRANSPORT_START_OTHER;
@@ -864,7 +875,7 @@ void SIPAccount::initTlsConfiguration (void)
     }
 
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    // std::string tlsPortStr = Manager::instance().getConfigString(_accountID, TLS_LISTENER_PORT);
+    
     // setTlsListenerPort(atoi(tlsPortStr.c_str()));
     setTlsListenerPort(atoi(_tlsPortStr.c_str()));
     
@@ -896,8 +907,7 @@ void SIPAccount::initStunConfiguration (void)
     size_t pos;
     std::string stunServer, serverName, serverPort;
 
-    stunServer = _stunServer; // Manager::instance().getConfigString (_accountID, STUN_SERVER);
-
+    stunServer = _stunServer; 
     // Init STUN socket
     pos = stunServer.find (':');
 
@@ -1115,8 +1125,6 @@ std::string SIPAccount::getContactHeader (const std::string& address, const std:
         scheme = "sip:";
         transport = "";
     }
-
-    // _displayName = Manager::instance().getConfigString (_accountID, DISPLAY_NAME);
 
     _debug ("Display Name: %s", _displayName.c_str());
 

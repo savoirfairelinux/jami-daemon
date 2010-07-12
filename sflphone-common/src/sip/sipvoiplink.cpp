@@ -450,8 +450,7 @@ std::string SIPVoIPLink::get_useragent_name (const AccountID& id)
     SIPAccount *account = (SIPAccount *)Manager::instance().getAccount(id);
 
     std::ostringstream  useragent;
-	
-    // useragent << Manager::instance ().getConfigString (id, USERAGENT);
+
     useragent << account->getUseragent();
     if (useragent.str() == "sflphone" || useragent.str() == "")
 	useragent << "/" << SFLPHONED_VERSION;
@@ -1346,7 +1345,6 @@ SIPVoIPLink::dtmfSipInfo(SIPCall *call, char code)
 
 
 	duration = Manager::instance().voipPreferences.getPulseLength();
-	  // Manager::instance().getConfigInt (SIGNALISATION, PULSE_LENGTH);
 
 	dtmf_body = new char[body_len];
 
@@ -2569,10 +2567,14 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
         return machineName;
     }
 
-	std::string localaddr(localAddress.ptr, localAddress.slen);
-    _debug ("SIP: Local address discovered from attached transport: %s", localaddr.c_str());
+    std::string localaddr(localAddress.ptr, localAddress.slen);
 
-    return std::string (localAddress.ptr, localAddress.slen);
+    if(localaddr == "0.0.0.0")
+      loadSIPLocalIP (&localaddr);
+
+    _debug ("SIP: Local address discovered from attached transport: %s", localaddr.c_str());    
+
+    return localaddr;
 }
 
 
@@ -3297,7 +3299,7 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 	// if RTPFALLBACK, change RTP session
 	AccountID accountID = Manager::instance().getAccountFromCall (call->getCallId());
 	SIPAccount *account = (SIPAccount *)Manager::instance().getAccount(accountID);
-	//if(Manager::instance().getConfigString (accountID, SRTP_RTP_FALLBACK) == "true")
+
 	if(account->getSrtpFallback())
 	  call->getAudioRtp()->initAudioRtpSession(call);
     }
@@ -3440,7 +3442,6 @@ void regc_cb (struct pjsip_regc_cbparam *param)
 		    out << (expire_value * 2);
 		    std::string s = out.str(); 
 
-		    // Manager::instance().setConfig(account->getAccountID(), CONFIG_ACCOUNT_REGISTRATION_EXPIRE, s);
 		    account->setRegistrationExpire(s);
 		    account->registerVoIPLink();
 		}
@@ -3649,7 +3650,6 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
     /******************************************* URL HOOK *********************************************/
 
-    // if (Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_ENABLED) == "1") {
     if (Manager::instance().hookPreference.getSipEnabled()) {
 
         _debug("UserAgent: Set sip url hooks");
@@ -3658,13 +3658,11 @@ mod_on_rx_request (pjsip_rx_data *rdata)
 
         header_value = fetch_header_value (rdata->msg_info.msg, 
 					   Manager::instance().hookPreference.getUrlSipField());
-	// Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD));
 
         if (header_value.size () < header_value.max_size()) {
             if (header_value!="") {
                 urlhook->addAction (header_value,
                                     Manager::instance().hookPreference.getUrlCommand());
-				    //Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
             }
         } else
             throw length_error ("UserAgent: Url exceeds std::string max_size");
