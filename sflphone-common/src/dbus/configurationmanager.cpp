@@ -297,10 +297,12 @@ int32_t ConfigurationManager::getNumberOfCredential(
 
 void ConfigurationManager::setNumberOfCredential(const std::string& accountID,
 		const int32_t& number) {
+  /*
   if (accountID != AccountNULL || !accountID.empty()) {
     SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(accountID);
     sipaccount->setCredentialCount(number);
   }
+  */
 }
 
 void ConfigurationManager::setCredential(const std::string& accountID,
