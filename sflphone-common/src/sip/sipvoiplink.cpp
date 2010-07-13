@@ -643,7 +643,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     pjsip_cred_info *cred = account->getCredInfo();
 
     int credential_count = account->getCredentialCount();
-    _debug ("setting %d credentials in sendRegister", credential_count);
+    _debug ("UserAgent: setting %d credentials in sendRegister", credential_count);
     pjsip_regc_set_credentials (regc, credential_count, cred);
 
     // Add User-Agent Header
@@ -657,7 +657,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // pj_list_push_back (&hdr_list, (pjsip_hdr*) routing);
 
     if (regc)
-      _debug("No regc ......");
+      _debug("UserAgent: Error: No regc ......");
 
     pjsip_regc_add_headers (regc, &hdr_list);
   
@@ -681,7 +681,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
         // managed when acquiring transport 
         pjsip_transport_dec_ref(account->getAccountTransport ());
 
-        _debug("After setting the transport in account registration using transport: %s %s (refcnt=%d)",
+        _debug("UserAgent: After setting the transport in account registration using transport: %s %s (refcnt=%d)",
 	       account->getAccountTransport()->obj_name,
 	       account->getAccountTransport()->info,
 	       (int)pj_atomic_get(account->getAccountTransport()->ref_cnt));

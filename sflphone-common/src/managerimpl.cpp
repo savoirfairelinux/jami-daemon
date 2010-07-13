@@ -3330,6 +3330,9 @@ std::string ManagerImpl::computeMd5HashFromCredential (
 
 void ManagerImpl::setCredential (const std::string& accountID,
 		const int32_t& index, const std::map<std::string, std::string>& details) {
+
+  _debug("Manager: set credential");
+  /*
 	std::map<std::string, std::string>::iterator it;
 	std::map<std::string, std::string> credentialInformation = details;
 
@@ -3390,6 +3393,7 @@ void ManagerImpl::setCredential (const std::string& accountID,
 	}
 
 	Manager::instance().setConfig(section, PASSWORD, password);
+  */
 }
 
 // method to reduce the if/else mess.
@@ -3398,7 +3402,7 @@ void ManagerImpl::setCredential (const std::string& accountID,
 void ManagerImpl::setAccountDetails (const std::string& accountID,
 		const std::map<std::string, std::string>& details) {
 
-  _debug("----------------------- Manager: Set account details %s", accountID.c_str());
+  _debug("Manager: Set account details %s", accountID.c_str());
   
   Account* account;
   if(!(account = getAccount(accountID))) {
@@ -3477,6 +3481,8 @@ std::string ManagerImpl::addAccount (
 
 void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
 	
+        _debug("Manager: delete all credential");
+
         Account *account = getAccount(accountID);
   
         if(account->getType() != "SIP")

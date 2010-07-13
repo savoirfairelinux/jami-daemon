@@ -265,18 +265,17 @@ void ConfigurationManager::setTlsSettings(const std::string& section,
 std::map<std::string, std::string> ConfigurationManager::getCredential(
 		const std::string& accountID, const int32_t& index) {
 
-	std::string credentialIndex;
-	std::stringstream streamOut;
-	streamOut << index;
-	credentialIndex = streamOut.str();
-
-	SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(accountID);
-
-
-	std::string section = std::string("Credential") + std::string(":")
-			+ accountID + std::string(":") + credentialIndex;
+        Account *account = Manager::instance().getAccount(accountID);
 
 	std::map<std::string, std::string> credentialInformation;
+
+	if(account->getType() != "SIP")
+	  return credentialInformation;
+
+	SIPAccount *sipaccount = (SIPAccount *)account;
+ 
+
+	if(index == 0) {
 	std::string username = sipaccount->getUsername();
 	std::string password = sipaccount->getPassword();
         std::string realm = sipaccount->getRealm();
@@ -284,6 +283,18 @@ std::map<std::string, std::string> ConfigurationManager::getCredential(
 	credentialInformation.insert(std::pair<std::string, std::string>(USERNAME, username));
 	credentialInformation.insert(std::pair<std::string, std::string>(PASSWORD, password));
 	credentialInformation.insert(std::pair<std::string, std::string>(REALM, realm));
+	}
+	else {
+
+	  // TODO: implement for extra credentials
+	  std::string username = sipaccount->getUsername();
+	  std::string password = sipaccount->getPassword();
+	  std::string realm = sipaccount->getRealm();
+
+	  credentialInformation.insert(std::pair<std::string, std::string>(USERNAME, username));
+	  credentialInformation.insert(std::pair<std::string, std::string>(PASSWORD, password));
+	  credentialInformation.insert(std::pair<std::string, std::string>(REALM, realm));
+	}
 
 	return credentialInformation;
 }
