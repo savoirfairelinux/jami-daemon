@@ -1076,8 +1076,6 @@ std::string SIPAccount::getServerUri (void)
 
     // UDP does not require the transport specification
 
-    _debug("---------------------------- _hostname %s", _hostname.c_str());
-
     if (_transportType == PJSIP_TRANSPORT_TLS) {
         scheme = "sips:";
         transport = ";transport=" + std::string (pjsip_transport_get_type_name (_transportType));
