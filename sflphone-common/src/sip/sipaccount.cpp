@@ -185,8 +185,8 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   Conf::ScalarNode displayName(_displayName);
   Conf::ScalarNode dtmfType(_dtmfType==0 ? "overrtp" : "sipinfo");
 
-  //   std::stringstream countstr; countstr << _credentialCount;
-  // Conf::ScalarNode count(countstr.str());
+  std::stringstream countstr; countstr << 0;
+  Conf::ScalarNode count(countstr.str());
 
   Conf::ScalarNode srtpenabled(_srtpEnabled ? "true" : "false");
   Conf::ScalarNode keyExchange(_srtpKeyExchange);
@@ -242,7 +242,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   zrtpmap.setKeyValue(notSuppWarningKey, &notSuppWarning);
 
   accountmap.setKeyValue(credKey, &credentialmap);
-  //credentialmap.setKeyValue(credentialCountKey, &count);
+  credentialmap.setKeyValue(credentialCountKey, &count);
 
   accountmap.setKeyValue(tlsKey, &tlsmap);
   tlsmap.setKeyValue(tlsPortKey, &tlsport);

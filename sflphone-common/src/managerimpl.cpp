@@ -3761,14 +3761,12 @@ short ManagerImpl::buildConfiguration() {
 
     _debug("accountid: %s", accountid.c_str());
     if (accountType == "SIP" && accountid != "IP2IP") {
-      _debug("Account is SIP!!!");
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountid);
     }
     else if (accountType == "IAX" && accountid != "IP2IP") {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountid);
     }
 
-    _debug("ok");
 
     if (tmpAccount != NULL) {
 
@@ -3781,7 +3779,7 @@ short ManagerImpl::buildConfiguration() {
 
       _debug ("Manager: Loading account %s ", accountid.c_str());
       _accountMap[accountid] = tmpAccount;
-      // tmpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+
       tmpAccount->setVoIPLink();
       nbAccount++;
     }

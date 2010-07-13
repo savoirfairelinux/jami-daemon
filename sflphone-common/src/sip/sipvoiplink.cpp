@@ -657,7 +657,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // pj_list_push_back (&hdr_list, (pjsip_hdr*) routing);
 
     if (regc)
-      _debug("UserAgent: Error: No regc ......");
+      _error("UserAgent: Error: No regc ......");
 
     pjsip_regc_add_headers (regc, &hdr_list);
   
@@ -3405,7 +3405,11 @@ void regc_cb (struct pjsip_regc_cbparam *param)
         //_debug("Received client registration callback wiht code: %i, %s\n", param->code, descriptionprint.c_str());
         DBusManager::instance().getCallManager()->registrationStateChanged (account->getAccountID(), std::string (description->ptr, description->slen), param->code);
         std::pair<int, std::string> details (param->code, std::string (description->ptr, description->slen));
-        account->setRegistrationStateDetailed (details);
+
+	
+	// there a race condition for this ressource when closing the application
+	if(account)
+	  account->setRegistrationStateDetailed (details);
     }
 
     if (param->status == PJ_SUCCESS) {
