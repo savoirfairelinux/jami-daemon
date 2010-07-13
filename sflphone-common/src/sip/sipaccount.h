@@ -276,7 +276,7 @@ class SIPAccount : public Account
          * @param none
          * @return int The number of credentials set for this account.
          */
-        inline int getCredentialCount(void) { return credentials.getCredentialCount(); }
+        inline int getCredentialCount(void) { return credentials.getCredentialCount() + 1; }
 	inline void setCredentialCount(int count) { return credentials.setCredentialCount(count); }
                 
         /**
@@ -596,7 +596,6 @@ class SIPAccount : public Account
         bool _resolveOnce;
                         
         //Credential information
-        int _credentialCount;        
         pjsip_cred_info *_cred; 
         std::string _realm;                       
         std::string _authenticationUsername;

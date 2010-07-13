@@ -44,6 +44,14 @@ Credentials::Credentials() : credentialCount(0) {}
 
 Credentials::~Credentials() {}
 
+void Credentials::setNewCredential(std::string username, std::string password, std::string realm) 
+{
+  credentialArray[credentialCount].username = username;
+  credentialArray[credentialCount].password = password;
+  credentialArray[credentialCount].realm = realm;
+
+}
+
 CredentialItem *Credentials::getCredential(int index) 
 { 
   if((index >= 0) && (index < credentialCount))
@@ -84,7 +92,6 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
         , _transport (NULL)
         , _resolveOnce (false)
-        , _credentialCount (0)
         , _cred (NULL)
         , _realm (DEFAULT_REALM)
         , _authenticationUsername ("")
@@ -178,8 +185,8 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   Conf::ScalarNode displayName(_displayName);
   Conf::ScalarNode dtmfType(_dtmfType==0 ? "overrtp" : "sipinfo");
 
-  std::stringstream countstr; countstr << _credentialCount;
-  Conf::ScalarNode count(countstr.str());
+  //   std::stringstream countstr; countstr << _credentialCount;
+  // Conf::ScalarNode count(countstr.str());
 
   Conf::ScalarNode srtpenabled(_srtpEnabled ? "true" : "false");
   Conf::ScalarNode keyExchange(_srtpKeyExchange);
@@ -235,7 +242,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   zrtpmap.setKeyValue(notSuppWarningKey, &notSuppWarning);
 
   accountmap.setKeyValue(credKey, &credentialmap);
-  credentialmap.setKeyValue(credentialCountKey, &count);
+  //credentialmap.setKeyValue(credentialCountKey, &count);
 
   accountmap.setKeyValue(tlsKey, &tlsmap);
   tlsmap.setKeyValue(tlsPortKey, &tlsport);
@@ -318,8 +325,6 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
 
   credMap = (Conf::MappingNode *)(map->getValue(credKey));
   credentials.unserialize(credMap);
-
-  _credentialCount = credentials.getCredentialCount();
 
   val = (Conf::ScalarNode *)(map->getValue(displayNameKey));
   if(val) { _displayName = val->getValue(); val = NULL; }
@@ -684,33 +689,26 @@ int SIPAccount::initCredential (void)
 {
     _debug("SipAccount: Init credential");
 
-    int credentialCount = 0;
-    credentialCount = credentials.getCredentialCount();
-    credentialCount += 1;
-
     bool md5HashingEnabled = false;
     int dataType = 0;
     md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
     std::string digest;
 
     // Create the credential array
-    pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (credentialCount));
+    pjsip_cred_info * cred_info = (pjsip_cred_info *) malloc (sizeof (pjsip_cred_info) * (getCredentialCount()));
 
     if (cred_info == NULL) {
         _error ("SipAccount: Error: Failed to set cred_info for account %s", _accountID.c_str());
         return !SUCCESS;
     }
 
-    pj_bzero (cred_info, sizeof (pjsip_cred_info) *credentialCount);
+    pj_bzero (cred_info, sizeof (pjsip_cred_info) * getCredentialCount());
 
     // Use authentication username if provided
-    if (!_authenticationUsername.empty()) {
-      _debug("Use credential authentication name -------------------------------------");
+    if (!_authenticationUsername.empty())
         cred_info[0].username = pj_str (strdup (_authenticationUsername.c_str()));
-    } else {
-      _debug("Use credential uername name -------------------------------------");
+    else
         cred_info[0].username = pj_str (strdup (_username.c_str()));
-    }
 
     // Set password
     cred_info[0].data =  pj_str (strdup (_password.c_str()));
@@ -736,18 +734,12 @@ int SIPAccount::initCredential (void)
 
     int i;
 
-    for (i = 1; i < credentialCount; i++) {
-        _debug("--------------------------------------- Not supposed to have any credential");
-        std::string credentialIndex;
-        std::stringstream streamOut;
-        streamOut << i - 1;
-        credentialIndex = streamOut.str();
+    // Default credential already initialized, use credentials.getCredentialCount()
+    for (i = 0; i < credentials.getCredentialCount(); i++) {
 
-        std::string section = std::string ("Credential") + std::string (":") + _accountID + std::string (":") + credentialIndex;
-
-        std::string username = Manager::instance().getConfigString (section, USERNAME);
-        std::string password = Manager::instance().getConfigString (section, PASSWORD);
-        std::string realm = Manager::instance().getConfigString (section, REALM);
+        std::string username = _username; // Manager::instance().getConfigString (section, USERNAME);
+	std::string password = _password;// Manager::instance().getConfigString (section, PASSWORD);
+	std::string realm = _realm;// Manager::instance().getConfigString (section, REALM);
 
         cred_info[i].username = pj_str (strdup (username.c_str()));
         cred_info[i].data = pj_str (strdup (password.c_str()));
@@ -770,8 +762,6 @@ int SIPAccount::initCredential (void)
 
         _debug ("Setting credential %d realm = %s passwd = %s username = %s data_type = %d", i, realm.c_str(), password.c_str(), username.c_str(), cred_info[i].data_type);
     }
-
-    credentials.setCredentialCount(credentialCount);
 
     _cred = cred_info;
 
