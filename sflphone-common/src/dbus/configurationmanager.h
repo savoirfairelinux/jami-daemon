@@ -109,40 +109,14 @@ public:
     void setRingtoneChoice( const std::string& tone );
     std::string getRecordPath( void );
     void setRecordPath(const std::string& recPath );
-    int32_t getDialpad( void );
-    void setDialpad (const bool& display);
-    int32_t getSearchbar( void );
-    
-    void setSearchbar( void );
+
     
     void setHistoryLimit( const int32_t& days);
     int32_t getHistoryLimit (void);
     
-    void setHistoryEnabled (void);
-	std::string getHistoryEnabled (void);
-
-    int32_t getVolumeControls( void );
-    void setVolumeControls (const bool& display);
-    int32_t isStartHidden( void );
-    void startHidden( void );
-    int32_t popupMode( void );
-    void switchPopupMode( void );
-    int32_t getNotify( void );
-    void setNotify( void );
     int32_t getMailNotify( void );
     void setMailNotify( void );
 
-	int32_t getWindowWidth (void);
-	int32_t getWindowHeight (void);
-	void setWindowWidth (const int32_t& width);
-	void setWindowHeight (const int32_t& height);
-	int32_t getWindowPositionX (void);
-	int32_t getWindowPositionY (void);
-	void setWindowPositionX (const int32_t& posX);
-	void setWindowPositionY (const int32_t& posY);
-
-	void enableStatusIcon (const std::string&);
-	std::string isStatusIconEnabled (void);
 
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);

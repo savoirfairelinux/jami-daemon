@@ -39,6 +39,7 @@ Account::Account (const AccountID& accountID, std::string type) :
 	, _enabled (false)
 	, _type (type)
 	, _codecOrder ()
+	, _startupCodecStr("")
 {
 	setRegistrationState (Unregistered);
 }
@@ -49,21 +50,13 @@ Account::~Account()
 
 void Account::loadConfig() {
 
-	std::string p;
-
-	p =  Manager::instance().getConfigString (_accountID , CONFIG_ACCOUNT_TYPE);
-#ifdef USE_IAX
-	_enabled = (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_ENABLE) == "true") ? true : false;
-#else
-
-	if (p == "IAX")
-		_enabled = false;
-	else
-		_enabled = (Manager::instance().getConfigString (_accountID, CONFIG_ACCOUNT_ENABLE) == "true") ? true : false;
-
+  // If IAX is not supported, do not register this account	
+#ifndef USE_IAX
+  if (_type == "IAX")
+    _enabled = false;
 #endif
 
-	loadAudioCodecs ();
+  loadAudioCodecs ();
 }
 
 void Account::setRegistrationState (RegistrationState state) {
@@ -80,17 +73,16 @@ void Account::setRegistrationState (RegistrationState state) {
 void Account::loadAudioCodecs (void) {
 
 	// if the user never set the codec list, use the default configuration for this account
-	if (Manager::instance ().getConfigString (_accountID, "ActiveCodecs") == "") {
+       if(_startupCodecStr == "") {
 		_info ("Account: use the default order");
 		Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
 	}
-
 	// else retrieve the one set in the user config file
 	else {
 		std::vector<std::string> active_list = Manager::instance ().retrieveActiveCodecs();
 		// This property is now set per account basis
-		std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");
-		setActiveCodecs (Manager::instance ().unserialize (s));
+		// std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");
+		setActiveCodecs (Manager::instance ().unserialize (_startupCodecStr));
 	}
 }
 

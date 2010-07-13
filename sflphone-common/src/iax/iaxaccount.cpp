@@ -47,6 +47,29 @@ IAXAccount::~IAXAccount()
     _link = NULL;
 }
 
+void IAXAccount::serialize(Conf::YamlEmitter *emitter) 
+{
+  
+}
+
+void IAXAccount::unserialize(Conf::MappingNode *map)
+{
+  
+}
+
+void IAXAccount::setAccountDetails(const std::map<std::string, std::string>& details)
+{
+
+}
+
+std::map<std::string, std::string> IAXAccount::getAccountDetails()
+{
+  std::map<std::string, std::string> a;
+
+  return a;
+}
+
+
 void IAXAccount::setVoIPLink()
 {
 

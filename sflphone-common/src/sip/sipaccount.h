@@ -41,11 +41,62 @@
 #include "sipvoiplink.h"
 #include "pjsip/sip_transport_tls.h"
 #include "pjsip/sip_types.h"
+#include "config/serializable.h"
+#include <exception>
+#include <map>
 
 enum DtmfType { OVERRTP, SIPINFO};
 
 #define OVERRTPSTR "overrtp"
 #define SIPINFOSTR "sipinfo"
+
+
+// SIP specific configuration keys
+const Conf::Key expireKey("expire");
+const Conf::Key interfaceKey("interface");
+const Conf::Key portKey("port");
+const Conf::Key publishAddrKey("publishAddr");
+const Conf::Key publishPortKey("publishPort");
+const Conf::Key sameasLocalKey("sameasLocal");
+const Conf::Key resolveOnceKey("resolveOnce");
+const Conf::Key dtmfTypeKey("dtmfType");
+
+// TODO: write an object to store credential which implement serializable
+const Conf::Key srtpKey("srtp");
+const Conf::Key srtpEnableKey("enable");
+const Conf::Key keyExchangeKey("keyExchange");
+const Conf::Key rtpFallbackKey("rtpFallback");
+
+// TODO: wirte an object to store zrtp params wich implement serializable
+const Conf::Key zrtpKey("zrtp");
+const Conf::Key displaySasKey("displaySas");
+const Conf::Key displaySasOnceKey("displaySasOnce");
+const Conf::Key helloHashEnabledKey("helloHashEnabled");
+const Conf::Key notSuppWarningKey("notSuppWarning");
+
+// TODO: write an object to store tls params which implement serializable
+const Conf::Key tlsKey("tls");
+const Conf::Key tlsPortKey("tlsPort");
+const Conf::Key certificateKey("certificate");
+const Conf::Key calistKey("calist");
+const Conf::Key ciphersKey("ciphers");
+const Conf::Key tlsEnableKey("enable");
+const Conf::Key methodKey("method");
+const Conf::Key timeoutKey("timeout");
+const Conf::Key tlsPasswordKey("password");
+const Conf::Key privateKeyKey("privateKey");
+const Conf::Key requireCertifKey("requireCertif");
+const Conf::Key serverKey("server");
+const Conf::Key verifyClientKey("verifyClient");
+const Conf::Key verifyServerKey("verifyServer");
+
+const Conf::Key stunEnabledKey("stunEnabled");
+const Conf::Key stunServerKey("stunServer");
+
+const Conf::Key credKey("credential");
+const Conf::Key credentialCountKey("count");
+
+const Conf::Key displayNameKey("displayName");
 
 class SIPVoIPLink;
 
@@ -53,6 +104,61 @@ class SIPVoIPLink;
  * @file sipaccount.h
  * @brief A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
  */
+
+class SipAccountException : public std::exception
+{
+ public:
+  SipAccountException(const std::string& str="") throw() : errstr(str) {}
+
+  virtual ~SipAccountException() throw() {}
+
+  virtual const char *what() const throw() {
+    std::string expt("SipAccountException occured: ");
+    expt.append(errstr);
+
+    return expt.c_str();
+  }
+ private:
+  std::string errstr;
+
+};
+
+class CredentialItem
+{
+ public:
+
+  std::string username;
+  std::string password;
+  std::string realm;
+};
+
+
+class Credentials : public Serializable
+{
+ public:
+
+  Credentials();
+
+  ~Credentials();
+
+  virtual void serialize(Conf::YamlEmitter *emitter);
+
+  virtual void unserialize(Conf::MappingNode *map);
+
+  int getCredentialCount(void) { return credentialCount; }
+  void setCredentialCount(int count) { credentialCount = count; }
+
+  void setNewCredential(std::string username, std::string password, std::string realm);
+  CredentialItem *getCredential(int index);
+
+ private:
+
+  int credentialCount;
+
+  CredentialItem credentialArray[10];
+
+};
+
 
 class SIPAccount : public Account
 {
@@ -73,6 +179,14 @@ class SIPAccount : public Account
          * Virtual destructor
          */
         virtual ~SIPAccount();
+
+	virtual void serialize(Conf::YamlEmitter *emitter);
+
+	virtual void unserialize(Conf::MappingNode *map);
+
+	virtual void setAccountDetails(const std::map<std::string, std::string>& details);
+
+	virtual std::map<std::string, std::string> getAccountDetails();
 
 	/**
 	 * Set route header to appears in sip messages for this account
@@ -112,6 +226,7 @@ class SIPAccount : public Account
         inline void setAuthenticationUsername(const std::string& username) { _authenticationUsername = username; }
         
         inline bool isResolveOnce(void) { return _resolveOnce; }
+	void setResolveOnce(bool reslv) { _resolveOnce = reslv; }
         
 
 	/**
@@ -161,7 +276,8 @@ class SIPAccount : public Account
          * @param none
          * @return int The number of credentials set for this account.
          */
-        inline int getCredentialCount(void) { return _credentialCount; }
+        inline int getCredentialCount(void) { return credentials.getCredentialCount(); }
+	inline void setCredentialCount(int count) { return credentials.setCredentialCount(count); }
                 
         /**
          * @return pjsip_tls_setting structure, filled from the configuration
@@ -197,7 +313,7 @@ class SIPAccount : public Account
          * account is set to OTHER.
          */
         inline bool isStunEnabled(void) { return (_transportType == PJSIP_TRANSPORT_START_OTHER) ? true: false; }
-         
+	inline void setStunEnabled(bool enabl) { _stunEnabled = enabl; }
                 
         /*
          * @return pj_str_t "From" uri based on account information.
@@ -330,8 +446,77 @@ class SIPAccount : public Account
         std::string getTransportMapKey(void);
 
         DtmfType getDtmfType(void) { return _dtmfType; }
-
         void setDtmfType(DtmfType type) { _dtmfType = type; }
+
+	std::string getDisplayName(void) { return _displayName; }
+	void setDisplayName(std::string name) { _displayName = name ;}
+
+	bool getSrtpEnable(void) { return _srtpEnabled; }
+	void setSrtpEnable(bool enabl) { _srtpEnabled = enabl; }
+
+	std::string getSrtpKeyExchange(void) { return _srtpKeyExchange; }
+	void setSrtpKeyExchange(std::string key) { _srtpKeyExchange = key; }
+
+	bool getSrtpFallback(void) { return _srtpFallback; }
+	void setSrtpFallback(bool fallback) { _srtpFallback = fallback; }
+	
+	bool getZrtpDisplaySas(void) { return _zrtpDisplaySas; }
+	void setZrtpDisplaySas(bool sas) { _zrtpDisplaySas = sas; }
+
+	bool getZrtpDiaplaySasOnce(void) { return _zrtpDisplaySasOnce; }
+	void setZrtpDiaplaySasOnce(bool sasonce) { _zrtpDisplaySasOnce = sasonce; }
+
+	bool getZrtpNotSuppWarning(void) { return _zrtpNotSuppWarning; }
+	void setZrtpNotSuppWarning(bool warning) { _zrtpNotSuppWarning = warning; }
+
+	bool getZrtpHelloHash(void) { return _zrtpHelloHash; }
+	void setZrtpHelloHash(bool hellohash) { _zrtpHelloHash = hellohash; }
+	// void setSrtpKeyExchange
+
+	std::string getRealm(void) { return _realm; }
+	void setRealm(std::string r) { _realm = r; }
+
+	std::string getTlsEnable(void) {return _tlsEnable; }
+	void setTlsEnable(std::string enabl) { _tlsEnable = enabl; }
+
+	std::string getTlsCaListFile(void) { return _tlsCaListFile; }
+	void setTlsCaListFile(std::string calist) { _tlsCaListFile = calist; }
+ 
+	std::string getTlsCertificateFile(void) { return _tlsCertificateFile; }
+	void setTlsCertificateFile(std::string cert) { _tlsCertificateFile = cert; }
+
+	std::string getTlsPrivateKeyFile(void) { return _tlsPrivateKeyFile; }
+	void setTlsPrivateKeyFile(std::string priv) { _tlsPrivateKeyFile = priv; }
+
+	std::string getTlsPassword(void) { return _tlsPassword; }
+	void setTlsPassword(std::string pass) { _tlsPassword = pass; }
+
+	std::string getTlsMethod(void) { return _tlsMethod; }
+	void setTlsMethod(std::string meth) { _tlsMethod = meth; }
+
+	std::string getTlsCiphers(void) { return _tlsCiphers; }
+	void setTlsCiphers(std::string cipher) { _tlsCiphers = cipher; }
+
+	std::string getTlsServerName(void) { return _tlsServerName; }
+	void setTlsServerName(std::string name) { _tlsServerName = name; }
+
+	bool getTlsVerifyServer(void) { return _tlsVerifyServer; }
+	void setTlsVerifyServer(bool verif) { _tlsVerifyServer = verif; }
+
+	bool getTlsVerifyClient(void) { return _tlsVerifyClient; }
+	void setTlsVerifyClient(bool verif) { _tlsVerifyClient = verif; }
+
+	bool getTlsRequireClientCertificate(void) { return _tlsRequireClientCertificate; }
+	void setTlsRequireClientCertificate(bool require) { _tlsRequireClientCertificate = require; }
+
+	std::string getTlsNegotiationTimeoutSec(void) { return _tlsNegotiationTimeoutSec; }
+	void setTlsNegotiationTimeoutSec(std::string timeout) { _tlsNegotiationTimeoutSec = timeout; }
+
+	std::string getTlsNegotiationTimeoutMsec(void) { return _tlsNegotiationTimeoutMsec; }
+	void setTlsNegotiationTimeoutMsec(std::string timeout) { _tlsNegotiationTimeoutMsec = timeout; }
+
+	std::string getUseragent(void) { return _useragent; }
+	void setUseragent(std::string ua) { _useragent = ua; }
 
   private: 
 
@@ -415,6 +600,7 @@ class SIPAccount : public Account
         pjsip_cred_info *_cred; 
         std::string _realm;                       
         std::string _authenticationUsername;
+	Credentials credentials;
 
         // The TLS settings, if tls is chosen as 
         // a sip transport. 
@@ -429,7 +615,50 @@ class SIPAccount : public Account
         DtmfType _dtmfType;
         
         // Display Name that can be used in  SIP URI.        
-        std::string _displayName;        
+        std::string _displayName;
+
+	std::string _tlsEnable;
+	std::string _tlsPortStr;
+	std::string _tlsCaListFile;
+	std::string _tlsCertificateFile;
+	std::string _tlsPrivateKeyFile;
+	std::string _tlsPassword;
+	std::string _tlsMethod;
+	std::string _tlsCiphers;
+	std::string _tlsServerName;
+	bool _tlsVerifyServer;
+	bool _tlsVerifyClient;
+	bool _tlsRequireClientCertificate;
+	std::string _tlsNegotiationTimeoutSec;
+	std::string _tlsNegotiationTimeoutMsec;
+
+	std::string _stunServer;
+
+	bool _tlsEnabled;
+	bool _stunEnabled;
+
+	// std::string _routeset;
+
+	// std::string _realm;
+	std::string _authenticationUsename;
+
+	// std::string _tlsListenerPort;
+	// std::string _routeSet;
+	// std::string _dtmfType;
+
+
+	bool _srtpEnabled;
+	std::string _srtpKeyExchange;
+	bool _srtpFallback;
+
+	bool _zrtpDisplaySas;
+	bool _zrtpDisplaySasOnce;
+	bool _zrtpHelloHash;
+	bool _zrtpNotSuppWarning;
+
+	std::string _useragent;
+
+
 };
 
 #endif

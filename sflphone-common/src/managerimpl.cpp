@@ -72,8 +72,6 @@
 
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
-#define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
-
 ManagerImpl::ManagerImpl (void) :
 	_hasTriedToRegister(false), _config(), _currentCallId2(),
 			_currentCallMutex(), _codecBuilder(NULL), _audiodriver(NULL),
@@ -113,8 +111,12 @@ ManagerImpl::~ManagerImpl (void) {
 
 void ManagerImpl::init () {
 
+  _debug("Manager: Init");
+
 	// Load accounts, init map
 	loadAccountMap();
+
+	_debug("Manager: account map loaded");
 
 	initVolume();
 
@@ -135,7 +137,7 @@ void ManagerImpl::init () {
 		unsigned int sampleRate = audiolayer->getSampleRate();
 
 		_debugInit ("Manager: Load telephone tone");
-		std::string country = getConfigString(PREFERENCES, ZONE_TONE);
+		std::string country = preferences.getZoneToneChoice();
 		_telephoneTone = new TelephoneTone(country, sampleRate);
 
 		_debugInit ("Manager: Loading DTMF key");
@@ -143,7 +145,7 @@ void ManagerImpl::init () {
 	}
 
 	// Load the history
-	_history->load_history(getConfigInt(PREFERENCES, CONFIG_HISTORY_LIMIT));
+	_history->load_history(preferences.getHistoryLimit());
 }
 
 void ManagerImpl::terminate () {
@@ -211,11 +213,10 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
 
 	CallID current_call_id = getCurrentCallId();
 
-	if (getConfigString(HOOKS, PHONE_NUMBER_HOOK_ENABLED) == "1")
-		_cleaner->set_phone_number_prefix(getConfigString(HOOKS,
-				PHONE_NUMBER_HOOK_ADD_PREFIX));
+	if(hookPreference.getNumberEnabled())
+	  _cleaner->set_phone_number_prefix(hookPreference.getNumberAddPrefix());
 	else
-		_cleaner->set_phone_number_prefix("");
+	  _cleaner->set_phone_number_prefix("");
 
 	to_cleaned = _cleaner->clean(to);
 
@@ -1406,8 +1407,32 @@ void ManagerImpl::removeStream (const CallID& call_id) {
 //THREAD=Main
 bool ManagerImpl::saveConfig (void) {
 	_debug ("Saving Configuration to XDG directory %s ... ", _path.c_str());
-	setConfig(AUDIO, VOLUME_SPKR, getSpkrVolume());
-	setConfig(AUDIO, VOLUME_MICRO, getMicVolume());
+	audioPreference.setVolumemic(getMicVolume()); 
+	audioPreference.setVolumespkr(getSpkrVolume());
+
+	AccountMap::iterator iter = _accountMap.begin();
+
+	try{
+	  emitter = new Conf::YamlEmitter("sequenceEmitter.yml");
+
+	  while(iter != _accountMap.end()) {
+	    iter->second->serialize(emitter);
+	    iter++;
+	  }
+
+	  preferences.serialize(emitter);
+	  voipPreferences.serialize(emitter);
+	  addressbookPreference.serialize(emitter);
+	  hookPreference.serialize(emitter);
+	  audioPreference.serialize(emitter);
+
+	  emitter->serializeData();
+
+	  delete emitter;
+	}
+	catch (Conf::YamlEmitterException &e) {
+	  _error("ConfigTree: %s", e.what());
+	}
 
 	_setupLoaded = _config.saveConfigTree(_path.data());
 	return _setupLoaded;
@@ -1440,7 +1465,7 @@ bool ManagerImpl::playDtmf (char code) {
 
 	stopTone();
 
-	bool hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_DTMF);
+	bool hasToPlayTone = voipPreferences.getPlayDtmf();
 
 	if (!hasToPlayTone) {
 		_debug ("Manager: playDtmf: Do not have to play a tone...");
@@ -1448,7 +1473,7 @@ bool ManagerImpl::playDtmf (char code) {
 	}
 
 	// length in milliseconds
-	pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
+	pulselen = voipPreferences.getPulseLength();
 
 	if (!pulselen) {
 		_debug ("Manager: playDtmf: Pulse length is not set...");
@@ -1773,6 +1798,9 @@ void ManagerImpl::startVoiceMessageNotification (const AccountID& accountId,
 }
 
 void ManagerImpl::connectionStatusNotification () {
+  
+        _debug("Manager: connectionStatusNotification");
+
 	if (_dbus != NULL) {
 		_dbus->getConfigurationManager()->accountsChanged();
 	}
@@ -1788,7 +1816,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId) {
 
 	// _debug ("Manager: Play tone %d", toneId);
 
-	hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_TONES);
+	hasToPlayTone = voipPreferences.getPlayTones();
 
 	if (!hasToPlayTone)
 		return false;
@@ -1816,7 +1844,7 @@ bool ManagerImpl::playATone (Tone::TONEID toneId) {
 void ManagerImpl::stopTone () {
 	bool hasToPlayTone;
 
-	hasToPlayTone = getConfigBool(SIGNALISATION, PLAY_TONES);
+	hasToPlayTone = voipPreferences.getPlayTones();
 
 	if (!hasToPlayTone)
 		return;
@@ -1879,7 +1907,7 @@ void ManagerImpl::ringtone () {
 		//TODO Comment this because it makes the daemon crashes since the main thread
 		//synchronizes the ringtone thread.
 
-		ringchoice = getConfigString(AUDIO, RING_CHOICE);
+		ringchoice = audioPreference.getRingchoice();
 		//if there is no / inside the path
 
 		if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
@@ -2356,7 +2384,8 @@ void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin) {
 
 	// set config
 	if (res)
-		setConfig(AUDIO, ALSA_PLUGIN, audioPlugin);
+	  audioPreference.setPlugin(audioPlugin);
+	  //setConig(AUDIO, ALSA_PLUGIN, audioPlugin);
 }
 
 /**
@@ -2402,21 +2431,21 @@ void ManagerImpl::setAudioDevice (const int index, int streamType) {
          _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getIndexRing(),
 				  _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				  SFL_PCM_PLAYBACK, alsaplugin);
-	 setConfig(AUDIO, ALSA_CARD_ID_OUT, index);
+	 audioPreference.setCardout(index);
         break;
     case SFL_PCM_CAPTURE:
         _debug("Manager: Set input device");
         _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getIndexRing(),
 				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				 SFL_PCM_CAPTURE, alsaplugin);
-	setConfig(AUDIO, ALSA_CARD_ID_IN, index);
+	audioPreference.setCardin(index);
         break;
     case SFL_PCM_RINGTONE:
         _debug("Manager: Set ringtone device");
         _audiodriver->openDevice(_audiodriver->getIndexOut(), _audiodriver->getIndexOut(), index,
 				 _audiodriver->getSampleRate(), _audiodriver->getFrameSize(),
 				 SFL_PCM_RINGTONE, alsaplugin);
-	setConfig(AUDIO, ALSA_CARD_ID_RING, index);
+	audioPreference.setCardring(index);
         break;
     default:
         _warn("Unknown stream type");
@@ -2467,18 +2496,18 @@ int ManagerImpl::isIax2Enabled (void) {
 }
 
 int ManagerImpl::isRingtoneEnabled (void) {
-	return (getConfigString(PREFERENCES, CONFIG_RINGTONE) == "true") ? 1 : 0;
+  return preferences.getRingtoneEnabled() ? 1 : 0;
 }
 
 void ManagerImpl::ringtoneEnabled (void) {
-	(getConfigString(PREFERENCES, CONFIG_RINGTONE) == RINGTONE_ENABLED) ? setConfig(
-			PREFERENCES, CONFIG_RINGTONE, FALSE_STR)
-			: setConfig(PREFERENCES, CONFIG_RINGTONE, TRUE_STR);
+
+  preferences.getRingtoneEnabled() ? preferences.setRingtoneEnabled(false) : preferences.setRingtoneEnabled(true);
+  
 }
 
 std::string ManagerImpl::getRingtoneChoice (void) {
 	// we need the absolute path
-	std::string tone_name = getConfigString(AUDIO, RING_CHOICE);
+  std::string tone_name = audioPreference.getRingchoice();
 	std::string tone_path;
 
 	if (tone_name.find(DIR_SEPARATOR_CH) == std::string::npos) {
@@ -2497,63 +2526,23 @@ std::string ManagerImpl::getRingtoneChoice (void) {
 
 void ManagerImpl::setRingtoneChoice (const std::string& tone) {
 	// we save the absolute path
-	setConfig(AUDIO, RING_CHOICE, tone);
+        audioPreference.setRingchoice(tone);
 }
 
 std::string ManagerImpl::getRecordPath (void) {
-	return getConfigString(AUDIO, RECORD_PATH);
+        return audioPreference.getRecordpath();
 }
 
 void ManagerImpl::setRecordPath (const std::string& recPath) {
 	_debug ("ManagerImpl::setRecordPath(%s)! ", recPath.c_str());
-	setConfig(AUDIO, RECORD_PATH, recPath);
+	audioPreference.setRecordpath(recPath);
 }
 
 bool ManagerImpl::getMd5CredentialHashing (void) {
-	return getConfigBool(PREFERENCES, CONFIG_MD5HASH);
+        return preferences.getMd5Hash();
 }
 
-int ManagerImpl::getDialpad (void) {
-	if (getConfigString(PREFERENCES, CONFIG_DIALPAD) == TRUE_STR) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
 
-void ManagerImpl::setDialpad (bool display) {
-	std::string set;
-
-	display ? set = TRUE_STR : set = FALSE_STR;
-	// If the value we received is different from the one saved in the config file, save the new value
-	// Else do nothing
-
-	if ((display && (getConfigString(PREFERENCES, CONFIG_DIALPAD) != TRUE_STR))
-			|| (!display && (getConfigString(PREFERENCES, CONFIG_DIALPAD)
-					!= FALSE_STR)))
-		setConfig(PREFERENCES, CONFIG_DIALPAD, set);
-}
-
-int ManagerImpl::getVolumeControls (void) {
-	if (getConfigString(PREFERENCES, CONFIG_VOLUME) == TRUE_STR) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-void ManagerImpl::setVolumeControls (bool display) {
-	std::string set;
-
-	display ? set = TRUE_STR : set = FALSE_STR;
-	// If the value we received is different from the one saved in the config file, save the new value
-	// Else do nothing
-
-	if ((display && (getConfigString(PREFERENCES, CONFIG_VOLUME) != TRUE_STR))
-			|| (!display && (getConfigString(PREFERENCES, CONFIG_VOLUME)
-					!= FALSE_STR)))
-		setConfig(PREFERENCES, CONFIG_VOLUME, set);
-}
 
 void ManagerImpl::setRecordingCall (const CallID& id) {
 
@@ -2579,66 +2568,21 @@ bool ManagerImpl::isRecording (const CallID& id) {
 	return rec->isRecording();
 }
 
-void ManagerImpl::startHidden (void) {
-	(getConfigString(PREFERENCES, CONFIG_START) == START_HIDDEN) ? setConfig(
-			PREFERENCES, CONFIG_START, FALSE_STR) : setConfig(PREFERENCES,
-			CONFIG_START, TRUE_STR);
-}
-
-int ManagerImpl::isStartHidden (void) {
-	return (getConfigBool(PREFERENCES, CONFIG_START) == true) ? 1 : 0;
-}
-
-void ManagerImpl::switchPopupMode (void) {
-	(getConfigString(PREFERENCES, CONFIG_POPUP) == WINDOW_POPUP) ? setConfig(
-			PREFERENCES, CONFIG_POPUP, FALSE_STR) : setConfig(PREFERENCES,
-			CONFIG_POPUP, TRUE_STR);
-}
 
 void ManagerImpl::setHistoryLimit (const int& days) {
-	setConfig(PREFERENCES, CONFIG_HISTORY_LIMIT, days);
+  preferences.setHistoryLimit(days);
 }
 
 int ManagerImpl::getHistoryLimit (void) {
-	return getConfigInt(PREFERENCES, CONFIG_HISTORY_LIMIT);
-}
-
-std::string ManagerImpl::getHistoryEnabled (void) {
-	return getConfigString(PREFERENCES, CONFIG_HISTORY_ENABLED);
-}
-
-void ManagerImpl::setHistoryEnabled (void) {
-	(getConfigString(PREFERENCES, CONFIG_HISTORY_ENABLED) == TRUE_STR) ? setConfig(
-			PREFERENCES, CONFIG_HISTORY_ENABLED, FALSE_STR)
-			: setConfig(PREFERENCES, CONFIG_HISTORY_ENABLED, TRUE_STR);
-}
-
-int ManagerImpl::getSearchbar (void) {
-	return getConfigInt(PREFERENCES, CONFIG_SEARCHBAR);
-}
-
-void ManagerImpl::setSearchbar (void) {
-	(getConfigInt(PREFERENCES, CONFIG_SEARCHBAR) == 1) ? setConfig(PREFERENCES,
-			CONFIG_SEARCHBAR, FALSE_STR) : setConfig(PREFERENCES,
-			CONFIG_SEARCHBAR, TRUE_STR);
-}
-
-int ManagerImpl::popupMode (void) {
-	return (getConfigBool(PREFERENCES, CONFIG_POPUP) == true) ? 1 : 0;
-}
-
-int32_t ManagerImpl::getNotify (void) {
-	return (getConfigBool(PREFERENCES, CONFIG_NOTIFY) == true) ? 1 : 0;
-}
-
-void ManagerImpl::setNotify (void) {
-	(getConfigString(PREFERENCES, CONFIG_NOTIFY) == NOTIFY_ALL) ? setConfig(
-			PREFERENCES, CONFIG_NOTIFY, FALSE_STR) : setConfig(PREFERENCES,
-			CONFIG_NOTIFY, TRUE_STR);
+  return preferences.getHistoryLimit();
 }
 
 int32_t ManagerImpl::getMailNotify (void) {
-	return getConfigInt(PREFERENCES, CONFIG_MAIL_NOTIFY);
+  return preferences.getNotifyMails();
+}
+
+void ManagerImpl::setMailNotify (void) {
+  preferences.getNotifyMails() ? preferences.setNotifyMails(true) : preferences.setNotifyMails(false);
 }
 
 void ManagerImpl::setAudioManager (const int32_t& api) {
@@ -2658,7 +2602,7 @@ void ManagerImpl::setAudioManager (const int32_t& api) {
 		return;
 	}
 
-	setConfig(PREFERENCES, CONFIG_AUDIO, api);
+	preferences.setAudioApi(api);
 
 	switchAudioManager();
 	return;
@@ -2666,14 +2610,9 @@ void ManagerImpl::setAudioManager (const int32_t& api) {
 }
 
 int32_t ManagerImpl::getAudioManager (void) {
-	return getConfigInt(PREFERENCES, CONFIG_AUDIO);
+  return preferences.getAudioApi();
 }
 
-void ManagerImpl::setMailNotify (void) {
-	(getConfigString(PREFERENCES, CONFIG_MAIL_NOTIFY) == NOTIFY_ALL) ? setConfig(
-			PREFERENCES, CONFIG_MAIL_NOTIFY, FALSE_STR)
-			: setConfig(PREFERENCES, CONFIG_MAIL_NOTIFY, TRUE_STR);
-}
 
 void ManagerImpl::notifyErrClient (const int32_t& errCode) {
 	if (_dbus) {
@@ -2705,7 +2644,7 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin (void) {
 	if (alsalayer)
 		return alsalayer -> getAudioPlugin();
 	else
-		return getConfigString(AUDIO, ALSA_PLUGIN);
+	  return audioPreference.getPlugin();
 }
 
 
@@ -2792,16 +2731,17 @@ bool ManagerImpl::initAudioDriver (void) {
 
 	_debugInit ("AudioLayer Creation");
 
-	if (getConfigInt(PREFERENCES, CONFIG_AUDIO) == ALSA) {
+	if (preferences.getAudioApi() == ALSA) {
 		_audiodriver = new AlsaLayer(this);
 		_audiodriver->setMainBuffer(&_mainBuffer);
-	} else if (getConfigInt(PREFERENCES, CONFIG_AUDIO) == PULSEAUDIO) {
+	}
+	else if(preferences.getAudioApi() == PULSEAUDIO) {
 		if (app_is_running("pulseaudio") == 0) {
 			_audiodriver = new PulseLayer(this);
 			_audiodriver->setMainBuffer(&_mainBuffer);
 		} else {
 			_audiodriver = new AlsaLayer(this);
-			setConfig(PREFERENCES, CONFIG_AUDIO, ALSA);
+			preferences.setAudioApi(ALSA);
 			_audiodriver->setMainBuffer(&_mainBuffer);
 		}
 	} else
@@ -2835,13 +2775,13 @@ void ManagerImpl::selectAudioDriver (void) {
 	_debug ("Audio layer type: %i" , layer);
 
 	/* Retrieve the global devices info from the user config */
-	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
-	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
-	// sampleRate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
+	alsaPlugin = audioPreference.getPlugin();
+	numCardIn = audioPreference.getCardin();
+	numCardOut = audioPreference.getCardout();
+	numCardRing = audioPreference.getCardring();
+
 	sampleRate = _mainBuffer.getInternalSamplingRate();
-	frameSize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+	frameSize = audioPreference.getFramesize(); 
 
 	/* Only for the ALSA layer, we check the sound card information */
 
@@ -2851,19 +2791,19 @@ void ManagerImpl::selectAudioDriver (void) {
 	    if (!alsalayer -> soundCardIndexExist(numCardIn, SFL_PCM_CAPTURE)) {
 	        _debug (" Card with index %i doesn't exist or cannot capture. Switch to 0.", numCardIn);
 		numCardIn = ALSA_DFT_CARD_ID;
-		setConfig(AUDIO, ALSA_CARD_ID_IN, ALSA_DFT_CARD_ID);
+		audioPreference.setCardin(ALSA_DFT_CARD_ID);
 	    }
 
 	    if (!alsalayer -> soundCardIndexExist(numCardOut, SFL_PCM_PLAYBACK)) {
 	        _debug (" Card with index %i doesn't exist or cannot playback. Switch to 0.", numCardOut);
 		numCardOut = ALSA_DFT_CARD_ID;
-		setConfig(AUDIO, ALSA_CARD_ID_OUT, ALSA_DFT_CARD_ID);
+		audioPreference.setCardout(ALSA_DFT_CARD_ID);
 	    }
 
 	    if (!alsalayer->soundCardIndexExist(numCardRing, SFL_PCM_RINGTONE)) {
 	        _debug(" Card with index %i doesn't exist or cannot ringtone. Switch to 0.", numCardRing);
 		numCardRing = ALSA_DFT_CARD_ID;
-		setConfig(AUDIO, ALSA_CARD_ID_RING, ALSA_DFT_CARD_ID);
+		audioPreference.setCardring(ALSA_DFT_CARD_ID);
 	    }
 	}
 
@@ -2891,17 +2831,16 @@ void ManagerImpl::switchAudioManager (void) {
 
 	type = _audiodriver->getLayerType();
 
-	// samplerate = getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
 	samplerate = _mainBuffer.getInternalSamplingRate();
-	framesize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+	framesize = audioPreference.getFramesize();
 
 	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
 
-	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
+	alsaPlugin = audioPreference.getPlugin();
 
-	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
+	numCardIn = audioPreference.getCardin();
+	numCardOut = audioPreference.getCardout();
+	numCardRing = audioPreference.getCardring();
 
 	_debug ("Manager: Deleting current layer... ");
 
@@ -2970,15 +2909,15 @@ void ManagerImpl::audioSamplingRateChanged (void) {
 	type = _audiodriver->getLayerType();
 
 	samplerate = _mainBuffer.getInternalSamplingRate();
-	framesize = getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+	framesize = audioPreference.getFramesize();
 
 	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
 
-	alsaPlugin = getConfigString(AUDIO, ALSA_PLUGIN);
+	alsaPlugin = audioPreference.getPlugin();
 
-	numCardIn = getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = getConfigInt(AUDIO, ALSA_CARD_ID_RING);
+	numCardIn = audioPreference.getCardin();
+	numCardOut = audioPreference.getCardout();
+	numCardRing = audioPreference.getCardring();
 
 	_debug ("Manager: Deleting current layer... ");
 
@@ -3026,7 +2965,7 @@ void ManagerImpl::audioSamplingRateChanged (void) {
 		delete _telephoneTone;
 
 		_debugInit ("Manager: Load telephone tone");
-		std::string country = getConfigString(PREFERENCES, ZONE_TONE);
+		std::string country = preferences.getZoneToneChoice();
 		_telephoneTone = new TelephoneTone(country, sampleRate);
 
 
@@ -3056,8 +2995,8 @@ void ManagerImpl::audioSamplingRateChanged (void) {
  */
 void ManagerImpl::initVolume () {
 	_debugInit ("Initiate Volume");
-	setSpkrVolume(getConfigInt(AUDIO, VOLUME_SPKR));
-	setMicVolume(getConfigInt(AUDIO, VOLUME_MICRO));
+	setSpkrVolume(audioPreference.getVolumespkr());
+	setMicVolume(audioPreference.getVolumemic());
 }
 
 void ManagerImpl::setSpkrVolume (unsigned short spkr_vol) {
@@ -3083,7 +3022,7 @@ void ManagerImpl::setMicVolume (unsigned short mic_vol) {
 
 int ManagerImpl::getLocalIp2IpPort (void) {
 	// The SIP port used for default account (IP to IP) calls=
-	return getConfigInt(IP2IP_PROFILE, LOCAL_PORT);
+  return preferences.getPortNum();
 
 }
 
@@ -3244,7 +3183,7 @@ std::string ManagerImpl::getConfigString (const std::string& section,
 //THREAD=Main
 bool ManagerImpl::setConfig (const std::string& section,
 		const std::string& name, const std::string& value) {
-        // _debug ("ManagerImpl::setConfig %s %s %s", section.c_str(), name.c_str(), value.c_str());
+
 	return _config.setConfigTreeItem(section, name, value);
 }
 
@@ -3259,7 +3198,8 @@ bool ManagerImpl::setConfig (const std::string& section,
 void ManagerImpl::setAccountsOrder (const std::string& order) {
 	_debug ("Setcreate accounts order : %s", order.c_str());
 	// Set the new config
-	setConfig(PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
+
+	preferences.setAccountOrder(order);
 }
 
 std::vector<std::string> ManagerImpl::getAccountList () {
@@ -3268,25 +3208,35 @@ std::vector<std::string> ManagerImpl::getAccountList () {
 	std::vector<std::string> account_order;
 	unsigned int i;
 
+	_debug("Manager: Get account list");
+
 	account_order = loadAccountOrder();
 	AccountMap::iterator iter;
 
 	// The IP2IP profile is always available, and first in the list
 	iter = _accountMap.find(IP2IP_PROFILE);
-	if (iter->second != NULL)
-		v.push_back(iter->first.data());
+	if (iter->second != NULL) {
+	  _debug("PUSHING BACK %s", iter->first.c_str());
+	  // v.push_back(iter->first.data());
+	  v.push_back(iter->second->getAccountID());
+	}
+	else {
+	  _error("Manager: could not find IP2IP profile in getAccount list");
+	}
 
 	// If no order has been set, load the default one
 	// ie according to the creation date.
 
 	if (account_order.size() == 0) {
+	        _debug("Manager: account order is empty");
 		iter = _accountMap.begin();
 
 		while (iter != _accountMap.end()) {
 
 			if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
-				//_debug("PUSHING BACK %s\n", iter->first.c_str());
-				v.push_back(iter->first.data());
+			  _debug("PUSHING BACK %s", iter->first.c_str());
+			  // v.push_back(iter->first.data());
+			  v.push_back(iter->second->getAccountID());
 			}
 
 			iter++;
@@ -3296,14 +3246,16 @@ std::vector<std::string> ManagerImpl::getAccountList () {
 	// Otherelse, load the custom one
 	// ie according to the saved order
 	else {
-
+	        _debug("Manager: Load account list according to preferences");
 		for (i = 0; i < account_order.size(); i++) {
 			// This account has not been loaded, so we ignore it
 			if ((iter = _accountMap.find(account_order[i]))
 					!= _accountMap.end()) {
 				// If the account is valid
 				if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
-					v.push_back(iter->first.data());
+				        _debug("PUSHING BACK %s\n", iter->first.c_str());
+				        // v.push_back(iter->first.data());
+					v.push_back(iter->second->getAccountID());
 				}
 			}
 		}
@@ -3313,151 +3265,20 @@ std::vector<std::string> ManagerImpl::getAccountList () {
 }
 
 std::map<std::string, std::string> ManagerImpl::getAccountDetails (
-		const AccountID& accountID) {
-	std::map<std::string, std::string> a;
+				   const AccountID& accountID) {
 
-	Account * account = _accountMap[accountID];
-
-	if (account == NULL) {
-		_debug ("Cannot getAccountDetails on a non-existing accountID %s. Defaults will be used.", accountID.c_str());
-	}
-
-	a.insert(std::pair<std::string, std::string>(ACCOUNT_ID, accountID));
-
-	// The IP profile does not allow to set an alias
-	(accountID == IP2IP_PROFILE) ? a.insert(
-			std::pair<std::string, std::string>(CONFIG_ACCOUNT_ALIAS,
-					DIRECT_IP_CALL)) : a.insert(std::pair<std::string,
-			std::string>(CONFIG_ACCOUNT_ALIAS, getConfigString(accountID,
-			CONFIG_ACCOUNT_ALIAS)));
-
-	a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_ENABLE,
-			getConfigString(accountID, CONFIG_ACCOUNT_ENABLE)));
-	a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_RESOLVE_ONCE,
-			getConfigString(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE)));
-	a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_TYPE,
-			getConfigString(accountID, CONFIG_ACCOUNT_TYPE)));
-	a.insert(std::pair<std::string, std::string>(HOSTNAME, getConfigString(
-			accountID, HOSTNAME)));
-	a.insert(std::pair<std::string, std::string>(USERNAME, getConfigString(
-			accountID, USERNAME)));
-	a.insert(std::pair<std::string, std::string>(ROUTESET, getConfigString(
-			accountID, ROUTESET)));
-	a.insert(std::pair<std::string, std::string>(PASSWORD, getConfigString(
-			accountID, PASSWORD)));
-	a.insert(std::pair<std::string, std::string>(REALM, getConfigString(
-			accountID, REALM)));
-	a.insert(std::pair<std::string, std::string>(USERAGENT, getConfigString(
-			accountID, USERAGENT)));
-	a.insert(std::pair<std::string, std::string>(AUTHENTICATION_USERNAME,
-			getConfigString(accountID, AUTHENTICATION_USERNAME)));
-	a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_MAILBOX,
-			getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)));
-	a.insert(std::pair<std::string, std::string>(
-			CONFIG_ACCOUNT_REGISTRATION_EXPIRE, getConfigString(accountID,
-					CONFIG_ACCOUNT_REGISTRATION_EXPIRE)));
-	a.insert(std::pair<std::string, std::string>(LOCAL_INTERFACE,
-			getConfigString(accountID, LOCAL_INTERFACE)));
-	a.insert(std::pair<std::string, std::string>(PUBLISHED_SAMEAS_LOCAL,
-			getConfigString(accountID, PUBLISHED_SAMEAS_LOCAL)));
-	a.insert(std::pair<std::string, std::string>(PUBLISHED_ADDRESS,
-			getConfigString(accountID, PUBLISHED_ADDRESS)));
-	a.insert(std::pair<std::string, std::string>(LOCAL_PORT, getConfigString(
-			accountID, LOCAL_PORT)));
-	a.insert(std::pair<std::string, std::string>(PUBLISHED_PORT,
-			getConfigString(accountID, PUBLISHED_PORT)));
-	a.insert(std::pair<std::string, std::string>(DISPLAY_NAME, getConfigString(
-			accountID, DISPLAY_NAME)));
-	a.insert(std::pair<std::string, std::string>(STUN_ENABLE, getConfigString(
-			accountID, STUN_ENABLE)));
-	a.insert(std::pair<std::string, std::string>(STUN_SERVER, getConfigString(
-			accountID, STUN_SERVER)));
-	a.insert(std::pair<std::string, std::string>(ACCOUNT_DTMF_TYPE, getConfigString(
-				accountID, ACCOUNT_DTMF_TYPE)));
-
-	RegistrationState state = Unregistered;
-	std::string registrationStateCode;
-	std::string registrationStateDescription;
-
-	if (account != NULL) {
-		if (accountID == IP2IP_PROFILE) {
-			registrationStateCode = EMPTY_FIELD;
-			registrationStateDescription = "Direct IP call";
-		} else {
-			state = account->getRegistrationState();
-			int code = account->getRegistrationStateDetailed().first;
-			std::stringstream out;
-			out << code;
-			registrationStateCode = out.str();
-			registrationStateDescription
-					= account->getRegistrationStateDetailed().second;
-		}
-	}
-
-	(accountID == IP2IP_PROFILE) ? a.insert(
-			std::pair<std::string, std::string>(REGISTRATION_STATUS, "READY"))
-			: a.insert(std::pair<std::string, std::string>(REGISTRATION_STATUS,
-					mapStateNumberToString(state)));
-
-	a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_CODE,
-			registrationStateCode));
-	a.insert(std::pair<std::string, std::string>(
-			REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
-	a.insert(std::pair<std::string, std::string>(SRTP_KEY_EXCHANGE,
-			getConfigString(accountID, SRTP_KEY_EXCHANGE)));
-	a.insert(std::pair<std::string, std::string>(SRTP_ENABLE, getConfigString(
-			accountID, SRTP_ENABLE)));
-	a.insert(std::pair<std::string, std::string>(SRTP_RTP_FALLBACK,
-			getConfigString(accountID, SRTP_RTP_FALLBACK)));
-	a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS,
-			getConfigString(accountID, ZRTP_DISPLAY_SAS)));
-	a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS_ONCE,
-			getConfigString(accountID, ZRTP_DISPLAY_SAS_ONCE)));
-	a.insert(std::pair<std::string, std::string>(ZRTP_HELLO_HASH,
-			getConfigString(accountID, ZRTP_HELLO_HASH)));
-	a.insert(std::pair<std::string, std::string>(ZRTP_NOT_SUPP_WARNING,
-			getConfigString(accountID, ZRTP_NOT_SUPP_WARNING)));
-
-	// TLS listener is unique and parameters are modified through IP2IP_PROFILE
-	a.insert(std::pair<std::string, std::string>(TLS_LISTENER_PORT,
-			Manager::instance().getConfigString(IP2IP_PROFILE,
-					TLS_LISTENER_PORT)));
-	a.insert(std::pair<std::string, std::string>(TLS_ENABLE,
-			Manager::instance().getConfigString(accountID, TLS_ENABLE)));
-	a.insert(std::pair<std::string, std::string>(TLS_CA_LIST_FILE,
-			Manager::instance().getConfigString(accountID, TLS_CA_LIST_FILE)));
-	a.insert(
-			std::pair<std::string, std::string>(TLS_CERTIFICATE_FILE,
-					Manager::instance().getConfigString(accountID,
-							TLS_CERTIFICATE_FILE)));
-	a.insert(
-			std::pair<std::string, std::string>(TLS_PRIVATE_KEY_FILE,
-					Manager::instance().getConfigString(accountID,
-							TLS_PRIVATE_KEY_FILE)));
-	a.insert(std::pair<std::string, std::string>(TLS_PASSWORD,
-			Manager::instance().getConfigString(accountID, TLS_PASSWORD)));
-	a.insert(std::pair<std::string, std::string>(TLS_METHOD,
-			Manager::instance().getConfigString(accountID, TLS_METHOD)));
-	a.insert(std::pair<std::string, std::string>(TLS_CIPHERS,
-			Manager::instance().getConfigString(accountID, TLS_CIPHERS)));
-	a.insert(std::pair<std::string, std::string>(TLS_SERVER_NAME,
-			Manager::instance().getConfigString(accountID, TLS_SERVER_NAME)));
-	a.insert(std::pair<std::string, std::string>(TLS_VERIFY_SERVER,
-			Manager::instance().getConfigString(accountID, TLS_VERIFY_SERVER)));
-	a.insert(std::pair<std::string, std::string>(TLS_VERIFY_CLIENT,
-			Manager::instance().getConfigString(accountID, TLS_VERIFY_CLIENT)));
-	a.insert(std::pair<std::string, std::string>(
-			TLS_REQUIRE_CLIENT_CERTIFICATE,
-			Manager::instance().getConfigString(accountID,
-					TLS_REQUIRE_CLIENT_CERTIFICATE)));
-	a.insert(std::pair<std::string, std::string>(TLS_NEGOTIATION_TIMEOUT_SEC,
-			Manager::instance().getConfigString(accountID,
-					TLS_NEGOTIATION_TIMEOUT_SEC)));
-	a.insert(std::pair<std::string, std::string>(TLS_NEGOTIATION_TIMEOUT_MSEC,
-			Manager::instance().getConfigString(accountID,
-					TLS_NEGOTIATION_TIMEOUT_MSEC)));
-
-	return a;
+  _debug("------------------------ Manager: get account details %s", accountID.c_str());
+  
+  Account * account;
+  if(!(account = _accountMap[accountID])) {
+    _warn("Manager: Cannot getAccountDetails on a non-existing accountID %s.", accountID.c_str());
+    // return an empty map
+    std::map<std::string, std::string> a;
+	  return a;
+  }	
+  else 
+    return account->getAccountDetails();
+  
 }
 
 /* Transform digest to string.
@@ -3571,227 +3392,32 @@ void ManagerImpl::setCredential (const std::string& accountID,
 	Manager::instance().setConfig(section, PASSWORD, password);
 }
 
-//TODO: tidy this up. Make a macro or inline
 // method to reduce the if/else mess.
 // Even better, switch to XML !
 
 void ManagerImpl::setAccountDetails (const std::string& accountID,
 		const std::map<std::string, std::string>& details) {
 
-    std::map<std::string, std::string> map_cpy;
-    std::map<std::string, std::string>::iterator iter;
+  _debug("----------------------- Manager: Set account details %s", accountID.c_str());
+  
+  Account* account;
+  if(!(account = getAccount(accountID))) {
+    _warn("Manager: Cannot setAccountDetails on a non-existing accountID %s.", accountID.c_str());
+    return;
+  }
 
-    // Work on a copy
-    map_cpy = details;
+  account->setAccountDetails(details);
 
-    // Get the account type
-    std::string accountType;
-    find_in_map(CONFIG_ACCOUNT_TYPE, accountType)
+  saveConfig();
+
+  if (account->isEnabled())
+    account->registerVoIPLink();
+  else
+    account->unregisterVoIPLink();
     
-    std::string alias;
-    std::string type;
-    std::string hostname;
-    std::string username;
-    std::string password;
-    std::string mailbox;
-    std::string accountEnable;
-
-
-    // Account setting common to SIP and IAX
-    find_in_map(CONFIG_ACCOUNT_ALIAS, alias)
-    find_in_map(CONFIG_ACCOUNT_TYPE, type)
-    find_in_map(HOSTNAME, hostname)
-    find_in_map(USERNAME, username)
-    find_in_map(PASSWORD, password)
-    find_in_map(CONFIG_ACCOUNT_MAILBOX, mailbox);
-    find_in_map(CONFIG_ACCOUNT_ENABLE, accountEnable);
-
-    setConfig(accountID, CONFIG_ACCOUNT_ALIAS, alias);
-    setConfig(accountID, CONFIG_ACCOUNT_TYPE, type);
-    setConfig(accountID, HOSTNAME, hostname);
-    setConfig(accountID, USERNAME, username);
-    setConfig(accountID, PASSWORD, password);
-    setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, mailbox);
-    setConfig(accountID, CONFIG_ACCOUNT_ENABLE, accountEnable);
-	       
-    // SIP specific account settings
-    if(accountType == "SIP") {
-
-        std::string ua_name;
-        std::string realm;
-        std::string routeset;
-	std::string authenticationName;
-
-        std::string resolveOnce;
-	std::string registrationExpire;
-
-	std::string displayName;
-	std::string localInterface;
-	std::string publishedSameasLocal;
-	std::string localAddress;
-	std::string publishedAddress;
-	std::string localPort;
-	std::string publishedPort;
-	std::string stunEnable;
-	std::string stunServer;
-	std::string dtmfType;
-	std::string srtpEnable;
-	std::string srtpRtpFallback;
-	std::string zrtpDisplaySas;
-	std::string zrtpDisplaySasOnce;
-	std::string zrtpNotSuppWarning;
-	std::string zrtpHelloHash;
-	std::string srtpKeyExchange;
-
-	std::string tlsListenerPort;
-	std::string tlsEnable;
-	std::string tlsCaListFile;
-	std::string tlsCertificateFile;
-	std::string tlsPrivateKeyFile;
-	std::string tlsPassword;
-	std::string tlsMethod;
-	std::string tlsCiphers;
-	std::string tlsServerName;
-	std::string tlsVerifyServer;
-	std::string tlsVerifyClient;
-	std::string tlsRequireClientCertificate;
-	std::string tlsNegotiationTimeoutSec;
-	std::string tlsNegotiationTimeoutMsec;
-
-	// general sip settings
-	find_in_map(DISPLAY_NAME, displayName)
-	find_in_map(ROUTESET, routeset)
-	find_in_map(LOCAL_INTERFACE, localInterface)
-	find_in_map(PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal)
-	find_in_map(PUBLISHED_ADDRESS, publishedAddress)
-	find_in_map(LOCAL_PORT, localPort)
-	find_in_map(PUBLISHED_PORT, publishedPort)
-	find_in_map(STUN_ENABLE, stunEnable)
-	find_in_map(STUN_SERVER, stunServer)
-	find_in_map(ACCOUNT_DTMF_TYPE, dtmfType)
-	find_in_map(CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce)
-	find_in_map(CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire)
-
-	setConfig(accountID, DISPLAY_NAME, displayName);
-	setConfig(accountID, ROUTESET, routeset);
-	setConfig(accountID, LOCAL_INTERFACE, localInterface);
-	setConfig(accountID, PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal);
-	setConfig(accountID, PUBLISHED_ADDRESS, publishedAddress);
-	setConfig(accountID, LOCAL_PORT, localPort);
-	setConfig(accountID, PUBLISHED_PORT, publishedPort);
-	setConfig(accountID, STUN_ENABLE, stunEnable);
-	setConfig(accountID, STUN_SERVER, stunServer);
-	setConfig(accountID, ACCOUNT_DTMF_TYPE, dtmfType);
-	setConfig(accountID, CONFIG_ACCOUNT_RESOLVE_ONCE, resolveOnce);
-        setConfig(accountID, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
-
-	// sip credential
-	find_in_map(REALM, realm)
-	find_in_map(AUTHENTICATION_USERNAME, authenticationName)
-	find_in_map(USERAGENT, ua_name)
-
-	setConfig(accountID, REALM, realm);
-	setConfig(accountID, USERAGENT, ua_name);
-	setConfig(accountID, AUTHENTICATION_USERNAME, authenticationName);
-
-        // srtp settings
-	find_in_map(SRTP_ENABLE, srtpEnable)
-	find_in_map(SRTP_RTP_FALLBACK, srtpRtpFallback)
-	find_in_map(ZRTP_DISPLAY_SAS, zrtpDisplaySas)
-	find_in_map(ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce)
-	find_in_map(ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning)
-	find_in_map(ZRTP_HELLO_HASH, zrtpHelloHash)
-	find_in_map(SRTP_KEY_EXCHANGE, srtpKeyExchange)
-
-	setConfig(accountID, SRTP_ENABLE, srtpEnable);
-	setConfig(accountID, SRTP_RTP_FALLBACK, srtpRtpFallback);
-	setConfig(accountID, ZRTP_DISPLAY_SAS, zrtpDisplaySas);
-	setConfig(accountID, ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce);
-	setConfig(accountID, ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning);
-	setConfig(accountID, ZRTP_HELLO_HASH, zrtpHelloHash);
-	setConfig(accountID, SRTP_KEY_EXCHANGE, srtpKeyExchange);
-	
-	// TLS settings
-	// The TLS listener is unique and globally defined through IP2IP_PROFILE
-	if(accountID == IP2IP_PROFILE) {
-	    find_in_map(TLS_LISTENER_PORT, tlsListenerPort)
-        }
-	find_in_map(TLS_ENABLE, tlsEnable)
-	find_in_map(TLS_CA_LIST_FILE, tlsCaListFile)
-	find_in_map(TLS_CERTIFICATE_FILE, tlsCertificateFile)
-	find_in_map(TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile)
-	find_in_map(TLS_PASSWORD, tlsPassword)
-	find_in_map(TLS_METHOD, tlsMethod)
-	find_in_map(TLS_CIPHERS, tlsCiphers)
-	find_in_map(TLS_SERVER_NAME, tlsServerName)
-	find_in_map(TLS_VERIFY_SERVER, tlsVerifyServer)
-	find_in_map(TLS_VERIFY_CLIENT, tlsVerifyClient)
-	find_in_map(TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate)
-	find_in_map(TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec)
-	find_in_map(TLS_NEGOTIATION_TIMEOUT_MSEC, tlsNegotiationTimeoutMsec)
-
-
-	// The TLS listener is unique and globally defined through IP2IP_PROFILE
-	if (accountID == IP2IP_PROFILE){
-	    setConfig(accountID, TLS_LISTENER_PORT, tlsListenerPort);
-	}
-	setConfig(accountID, TLS_ENABLE, tlsEnable);
-	setConfig(accountID, TLS_CA_LIST_FILE, tlsCaListFile);
-	setConfig(accountID, TLS_CERTIFICATE_FILE, tlsCertificateFile);
-	setConfig(accountID, TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile);
-	setConfig(accountID, TLS_PASSWORD, tlsPassword);
-	setConfig(accountID, TLS_METHOD, tlsMethod);
-	setConfig(accountID, TLS_CIPHERS, tlsCiphers);
-	setConfig(accountID, TLS_SERVER_NAME, tlsServerName);
-	setConfig(accountID, TLS_VERIFY_SERVER, tlsVerifyServer);
-	setConfig(accountID, TLS_VERIFY_CLIENT, tlsVerifyClient);
-	setConfig(accountID, TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate);
-	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec);
-	setConfig(accountID, TLS_NEGOTIATION_TIMEOUT_MSEC,tlsNegotiationTimeoutMsec);
-
-	if (!getMd5CredentialHashing()) {
-	  setConfig(accountID, PASSWORD, password);
-	} else {
-	  // Make sure not to re-hash the password field if
-	  // it is already saved as a MD5 Hash.
-	  // TODO: This test is weak. Fix this.
-	  if ((password.compare(getConfigString(accountID, PASSWORD)) != 0)) {
-	    _debug ("Password sent and password from config are different. Re-hashing");
-	    std::string hash;
-
-	    if (authenticationName.empty()) {
-	      hash = computeMd5HashFromCredential(username, password, realm);
-	    } else {
-	      hash = computeMd5HashFromCredential(authenticationName,
-						  password, realm);
-	    }
-	    
-	    setConfig(accountID, PASSWORD, hash);
-	  }
-	}
-
-    }
-
-    saveConfig();
-    
-    Account * acc = NULL;
-    acc = getAccount(accountID);
-    
-    if (acc != NULL) {
-        acc->loadConfig();
-		
-	if (acc->isEnabled()) {
-	  acc->registerVoIPLink();
-	} else {
-	  acc->unregisterVoIPLink();
-	}
-    } else {
-      _debug ("ManagerImpl::setAccountDetails: account is NULL");
-    }
-    
-    // Update account details to the client side
-    if (_dbus)
-        _dbus->getConfigurationManager()->accountsChanged();
+  // Update account details to the client side
+  if (_dbus)
+    _dbus->getConfigurationManager()->accountsChanged();
 
 }
 
@@ -3831,13 +3457,14 @@ std::string ManagerImpl::addAccount (
 	setAccountDetails(accountID.str(), details);
 
 	// Add the newly created account in the account order list
-	account_list = getConfigString(PREFERENCES, CONFIG_ACCOUNTS_ORDER);
+	account_list = preferences.getAccountOrder();
 
 	if (account_list != "") {
 		newAccountID += "/";
 		// Prepend the new account
 		account_list.insert(0, newAccountID);
-		setConfig(PREFERENCES, CONFIG_ACCOUNTS_ORDER, account_list);
+
+		preferences.setAccountOrder(account_list);
 	}
 
 	saveConfig();
@@ -3849,11 +3476,17 @@ std::string ManagerImpl::addAccount (
 }
 
 void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
-	int numberOfCredential = getConfigInt(accountID, CONFIG_CREDENTIAL_NUMBER);
+	
+        Account *account = getAccount(accountID);
+  
+        if(account->getType() != "SIP")
+	  return;
 
-	int i;
+	SIPAccount *sipaccount = (SIPAccount *)account; 
 
-	for (i = 0; i < numberOfCredential; i++) {
+        int numberOfCredential = sipaccount->getCredentialCount();
+
+	for (int i = 0; i < numberOfCredential; i++) {
 		std::string credentialIndex;
 		std::stringstream streamOut;
 		streamOut << i;
@@ -3865,7 +3498,7 @@ void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
 	}
 
 	if (accountID.empty() == false) {
-		setConfig(accountID, CONFIG_CREDENTIAL_NUMBER, 0);
+	  sipaccount->setCredentialCount(0);
 	}
 }
 
@@ -3950,14 +3583,20 @@ std::vector<std::string> ManagerImpl::loadAccountOrder (void) {
 	std::string account_list;
 	std::vector<std::string> account_vect;
 
-	account_list = getConfigString(PREFERENCES, CONFIG_ACCOUNTS_ORDER);
+	Conf::Key accountOrder("order");
+
+	account_list = preferences.getAccountOrder();
+
 	return unserialize(account_list);
 }
 
 short ManagerImpl::loadAccountMap () {
 
-	_debug ("Loading account map");
+	_debug ("Manager: Loading account map");
 
+	int nbAccount = buildConfiguration();
+
+	/*
 	short nbAccount = 0;
 	TokenList sections = _config.getSections();
 	std::string accountType;
@@ -4033,8 +3672,141 @@ short ManagerImpl::loadAccountMap () {
 	}
 
 	_debug ("nb account loaded %i \n", nbAccount);
-
+	*/
 	return nbAccount;
+}
+
+short ManagerImpl::buildConfiguration() {
+
+  _debug("Manager: Build Accounts");
+
+  // Conf::YamlParser *parser;
+  Account *tmpAccount = NULL;
+  int nbAccount = 0;
+
+  try {
+
+    parser = new Conf::YamlParser("sequenceParser.yml");
+  
+    parser->serializeEvents();
+
+    parser->composeEvents();
+
+    parser->constructNativeData();
+  
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("Manager: %s", e.what());
+  }
+
+  // build preferences
+  preferences.unserialize((Conf::MappingNode *)(parser->getPreferenceSequence()));
+  voipPreferences.unserialize((Conf::MappingNode *)(parser->getVoipPreferenceSequence()));
+  addressbookPreference.unserialize((Conf::MappingNode *)(parser->getAddressbookSequence()));
+  hookPreference.unserialize((Conf::MappingNode *)(parser->getHookSequence()));
+  audioPreference.unserialize((Conf::MappingNode *)(parser->getAudioSequence()));
+
+  Conf::SequenceNode *seq = parser->getAccountSequence();
+
+  // Each element in sequence is a new account to create
+  Conf::Sequence::iterator iterSeq = seq->getSequence()->begin();
+  Conf::Sequence::iterator iterIP2IP = seq->getSequence()->begin();
+
+  Conf::MappingNode *map;
+
+  Conf::Key accTypeKey("type");
+  Conf::Key accID("id");
+
+  // Build IP2IP first
+  Conf::Key iptoipID("IP2IP");
+
+  while(iterIP2IP != seq->getSequence()->end()) {
+
+    map = (Conf::MappingNode *)(*iterSeq);
+
+    Conf::ScalarNode * val = (Conf::ScalarNode *)(map->getValue(accID));
+    Conf::Value accountid = val->getValue();
+
+    if(accountid == "IP2IP") {
+      
+      _directIpAccount = AccountCreator::createAccount(AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
+
+      _debug ("Manager: Create default \"account\" (used as default UDP transport)");
+      if (_directIpAccount == NULL) {
+	_debug ("Manager: Failed to create default \"account\"");
+      } else {
+
+	_accountMap[IP2IP_PROFILE] = _directIpAccount;
+
+	// Force IP2IP settings to be loaded to be loaded
+	// No registration in the sense of the REGISTER method is performed.
+	_directIpAccount->registerVoIPLink();
+
+	// SIPVoIPlink is used as a singleton, it is the first call to instance here
+	// The SIP library initialization is done in the SIPVoIPLink constructor
+	// We need the IP2IP settings to be loaded at this time as they are used
+	// for default sip transport
+	
+	// _directIpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+	_directIpAccount->setVoIPLink();
+
+	break;
+      }
+    }
+
+    iterIP2IP++;
+  }
+  while(iterSeq != seq->getSequence()->end()) {
+
+    map = (Conf::MappingNode *)(*iterSeq);
+
+    Conf::ScalarNode * val = (Conf::ScalarNode *)(map->getValue(accTypeKey));
+    Conf::Value accountType = val->getValue();
+
+    val = (Conf::ScalarNode *)(map->getValue(accID));
+    Conf::Value accountid = val->getValue();
+
+    _debug("accountid: %s", accountid.c_str());
+    if (accountType == "SIP" && accountid != "IP2IP") {
+      _debug("Account is SIP!!!");
+      tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountid);
+    }
+    else if (accountType == "IAX" && accountid != "IP2IP") {
+      tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountid);
+    }
+
+    _debug("ok");
+
+    if (tmpAccount != NULL) {
+
+      try {
+	tmpAccount->unserialize(map);
+      }
+      catch(SipAccountException &e) {
+	_error("Manager: %s", e.what());
+      }
+
+      _debug ("Manager: Loading account %s ", accountid.c_str());
+      _accountMap[accountid] = tmpAccount;
+      // tmpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+      tmpAccount->setVoIPLink();
+      nbAccount++;
+    }
+    
+    iterSeq++;
+  }
+
+  try {
+    delete parser;
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("AccountCreator: %s", e.what());
+  }
+
+  parser = NULL;
+
+  return nbAccount;
+
 }
 
 void ManagerImpl::unloadAccountMap () {
@@ -4140,22 +3912,12 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 
 	std::map<std::string, int32_t> settings;
 
-	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_ENABLE",
-			getConfigInt(ADDRESSBOOK, ADDRESSBOOK_ENABLE)));
-	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_MAX_RESULTS",
-			getConfigInt(ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS)));
-	settings.insert(std::pair<std::string, int32_t>(
-			"ADDRESSBOOK_DISPLAY_CONTACT_PHOTO", getConfigInt(ADDRESSBOOK,
-					ADDRESSBOOK_DISPLAY_CONTACT_PHOTO)));
-	settings.insert(std::pair<std::string, int32_t>(
-			"ADDRESSBOOK_DISPLAY_PHONE_BUSINESS", getConfigInt(ADDRESSBOOK,
-					ADDRESSBOOK_DISPLAY_PHONE_BUSINESS)));
-	settings.insert(std::pair<std::string, int32_t>(
-			"ADDRESSBOOK_DISPLAY_PHONE_HOME", getConfigInt(ADDRESSBOOK,
-					ADDRESSBOOK_DISPLAY_PHONE_HOME)));
-	settings.insert(std::pair<std::string, int32_t>(
-			"ADDRESSBOOK_DISPLAY_PHONE_MOBILE", getConfigInt(ADDRESSBOOK,
-					ADDRESSBOOK_DISPLAY_PHONE_MOBILE)));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_ENABLE", addressbookPreference.getEnabled() ? 1 : 0));
+       	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_MAX_RESULTS", addressbookPreference.getMaxResults()));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO", addressbookPreference.getPhoto() ? 1 : 0));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS", addressbookPreference.getBusiness() ? 1 : 0));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_PHONE_HOME", addressbookPreference.getHome() ? 1 : 0));
+	settings.insert(std::pair<std::string, int32_t>("ADDRESSBOOK_DISPLAY_PHONE_MOBILE", addressbookPreference.getMobile() ? 1 : 0));
 
 	return settings;
 }
@@ -4163,18 +3925,13 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 void ManagerImpl::setAddressbookSettings (
 		const std::map<std::string, int32_t>& settings) {
 
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_ENABLE, (*settings.find(
-			"ADDRESSBOOK_ENABLE")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS, (*settings.find(
-			"ADDRESSBOOK_MAX_RESULTS")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, (*settings.find(
-			"ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, (*settings.find(
-			"ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_HOME, (*settings.find(
-			"ADDRESSBOOK_DISPLAY_PHONE_HOME")).second);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_MOBILE, (*settings.find(
-			"ADDRESSBOOK_DISPLAY_PHONE_MOBILE")).second);
+
+  addressbookPreference.setEnabled((settings.find("ADDRESSBOOK_ENABLE")->second == 1) ? true : false);
+  addressbookPreference.setMaxResults(settings.find("ADDRESSBOOK_MAX_RESULTS")->second);
+  addressbookPreference.setPhoto((settings.find("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")->second == 1) ? true : false);
+  addressbookPreference.setBusiness((settings.find("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")->second == 1) ? true : false);
+  addressbookPreference.setHone((settings.find("ADDRESSBOOK_DISPLAY_PHONE_HOME")->second == 1) ? true : false);
+  addressbookPreference.setMobile((settings.find("ADDRESSBOOK_DISPLAY_PHONE_MOBILE")->second == 1) ? true : false);
 
 	// Write it to the configuration file
 	saveConfig();
@@ -4183,12 +3940,13 @@ void ManagerImpl::setAddressbookSettings (
 void ManagerImpl::setAddressbookList (const std::vector<std::string>& list) {
 
 	std::string s = serialize(list);
-	setConfig(ADDRESSBOOK, ADDRESSBOOK_LIST, s);
+	addressbookPreference.setList(s);
+
 }
 
 std::vector<std::string> ManagerImpl::getAddressbookList (void) {
 
-	std::string s = getConfigString(ADDRESSBOOK, ADDRESSBOOK_LIST);
+        std::string s = addressbookPreference.getList();
 	return unserialize(s);
 }
 
@@ -4196,39 +3954,25 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings () {
 
 	std::map<std::string, std::string> settings;
 
-	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_FIELD",
-			getConfigString(HOOKS, URLHOOK_SIP_FIELD)));
-	settings.insert(std::pair<std::string, std::string>("URLHOOK_COMMAND",
-			getConfigString(HOOKS, URLHOOK_COMMAND)));
-	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_ENABLED",
-			getConfigString(HOOKS, URLHOOK_SIP_ENABLED)));
-	settings.insert(std::pair<std::string, std::string>("URLHOOK_IAX2_ENABLED",
-			getConfigString(HOOKS, URLHOOK_IAX2_ENABLED)));
-	settings.insert(std::pair<std::string, std::string>(
-			"PHONE_NUMBER_HOOK_ENABLED", getConfigString(HOOKS,
-					PHONE_NUMBER_HOOK_ENABLED)));
-	settings.insert(std::pair<std::string, std::string>(
-			"PHONE_NUMBER_HOOK_ADD_PREFIX", getConfigString(HOOKS,
-					PHONE_NUMBER_HOOK_ADD_PREFIX)));
+	
+	settings.insert(std::pair<std::string, std::string>("URLHOOK_IAX2_ENABLED", hookPreference.getIax2Enabled() ? "true" : "false"));
+	settings.insert(std::pair<std::string, std::string>("PHONE_NUMBER_HOOK_ADD_PREFIX", hookPreference.getNumberAddPrefix()));
+	settings.insert(std::pair<std::string, std::string>("PHONE_NUMBER_HOOK_ENABLED", hookPreference.getNumberEnabled() ? "true" : "false"));
+	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_ENABLED", hookPreference.getSipEnabled() ? "true" : "false"));
+	settings.insert(std::pair<std::string, std::string>("URLHOOK_COMMAND", hookPreference.getUrlCommand()));
+	settings.insert(std::pair<std::string, std::string>("URLHOOK_SIP_FIELD", hookPreference.getUrlSipField()));
 
 	return settings;
 }
 
-void ManagerImpl::setHookSettings (
-		const std::map<std::string, std::string>& settings) {
+void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings) {
 
-	setConfig(HOOKS, URLHOOK_SIP_FIELD,
-			(*settings.find("URLHOOK_SIP_FIELD")).second);
-	setConfig(HOOKS, URLHOOK_COMMAND,
-			(*settings.find("URLHOOK_COMMAND")).second);
-	setConfig(HOOKS, URLHOOK_SIP_ENABLED,
-			(*settings.find("URLHOOK_SIP_ENABLED")).second);
-	setConfig(HOOKS, URLHOOK_IAX2_ENABLED, (*settings.find(
-			"URLHOOK_IAX2_ENABLED")).second);
-	setConfig(HOOKS, PHONE_NUMBER_HOOK_ENABLED, (*settings.find(
-			"PHONE_NUMBER_HOOK_ENABLED")).second);
-	setConfig(HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX, (*settings.find(
-			"PHONE_NUMBER_HOOK_ADD_PREFIX")).second);
+        hookPreference.setIax2Enabled((settings.find("URLHOOK_IAX2_ENABLED")->second == "true") ? true : false);
+	hookPreference.setNumberAddPrefix(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second);
+	hookPreference.setNumberEnabled((settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true") ? true : false);
+	hookPreference.setSipEnabled((settings.find("URLHOOK_SIP_ENABLED")->second == "true") ? true : false);
+	hookPreference.setUrlCommand(settings.find("URLHOOK_COMMAND")->second);
+	hookPreference.setUrlSipField(settings.find("URLHOOK_SIP_FIELD")->second);
 
 	// Write it to the configuration file
 	saveConfig();
@@ -4333,9 +4077,9 @@ std::map<std::string, std::string> ManagerImpl::send_history_to_client (void) {
 
 void ManagerImpl::receive_history_from_client (std::map<std::string,
 		std::string> history) {
-	_history->set_serialized_history(history, Manager::instance().getConfigInt(
-			PREFERENCES, CONFIG_HISTORY_LIMIT));
-	_history->save_history();
+
+  _history->set_serialized_history(history, preferences.getHistoryLimit());; 
+  _history->save_history();
 }
 
 std::vector<std::string> ManagerImpl::getCallList (void) {

@@ -521,9 +521,9 @@ bool PulseLayer::createStreams (pa_context* c)
 
     // _debug("Device list size %d", getDevicelist()->size());
 
-    std::string playbackDevice =  _manager->getConfigString(AUDIO, PULSE_DEVICE_PLAYBACK);
-    std::string recordDevice =  _manager->getConfigString(AUDIO, PULSE_DEVICE_PLAYBACK);
-    std::string ringtoneDevice =  _manager->getConfigString(AUDIO, PULSE_DEVICE_PLAYBACK);
+    std::string playbackDevice =  _manager->audioPreference.getDevicePlayback();
+    std::string recordDevice =  _manager->audioPreference.getDeviceRecord();
+    std::string ringtoneDevice =  _manager->audioPreference.getDeviceRingtone();
 
     _debug("Audio: Device stored in config for playback: %s", playbackDevice.c_str());
     _debug("Audio: Device stored in config for ringtone: %s", recordDevice.c_str());
@@ -617,8 +617,8 @@ void PulseLayer::closeCaptureStream (void)
     if (record) {
 
         std::string deviceName(pa_stream_get_device_name(record->pulseStream()));
-	_debug("record device to be stored in config: %s", deviceName.c_str());
-	_manager->setConfig(AUDIO, PULSE_DEVICE_RECORD, deviceName);
+	_debug("Audio: record device to be stored in config: %s", deviceName.c_str());
+	_manager->audioPreference.setDeviceRecord(deviceName);
         delete record;
         record=NULL;
     }
@@ -629,16 +629,16 @@ void PulseLayer::closePlaybackStream (void)
 {
     if (playback) {
         std::string deviceName(pa_stream_get_device_name(playback->pulseStream()));
-	_debug("playback device to be stored in config: %s", deviceName.c_str());
-	_manager->setConfig(AUDIO, PULSE_DEVICE_PLAYBACK, deviceName);
+	_debug("Audio: playback device to be stored in config: %s", deviceName.c_str());
+	_manager->audioPreference.setDevicePlayback(deviceName);
         delete playback;
         playback=NULL;
     }
 
     if(ringtone) {
         std::string deviceName(pa_stream_get_device_name(ringtone->pulseStream()));
-	_debug("ringtone device to be stored in config: %s", deviceName.c_str());
-	_manager->setConfig(AUDIO, PULSE_DEVICE_RINGTONE, deviceName);
+	_debug("Audio: ringtone device to be stored in config: %s", deviceName.c_str());
+	_manager->audioPreference.setDeviceRingtone(deviceName);
         delete ringtone;
 	ringtone  = NULL;
     }

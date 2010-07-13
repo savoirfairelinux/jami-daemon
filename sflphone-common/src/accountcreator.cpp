@@ -50,13 +50,17 @@ AccountCreator::createAccount (AccountType type, AccountID accountID)
 {
     switch (type) {
 
-        case SIP_ACCOUNT:
-            return new SIPAccount (accountID);
-            break;
+    case SIP_ACCOUNT: {
+      _debug("createaccount accountID %s", accountID.c_str());
+      return new SIPAccount (accountID);
+    }
+      break;
 
-        case SIP_DIRECT_IP_ACCOUNT:
-            return new SIPAccount (IP2IP_PROFILE);
-            break;
+    case SIP_DIRECT_IP_ACCOUNT: {
+      _debug("createaccount accountID IP2IP_PROFILE");
+      return new SIPAccount (IP2IP_PROFILE);
+      break;
+    }
 #ifdef USE_IAX
 
         case IAX_ACCOUNT:

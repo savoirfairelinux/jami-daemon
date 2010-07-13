@@ -50,6 +50,11 @@
 #include "audio/audiolayer.h"
 #include "global.h"
 #include "user_cfg.h"
+#include "config/yamlparser.h"
+#include "config/yamlemitter.h"
+#include "config/yamlnode.h"
+#include "sip/sipaccount.h"
+#include "account.h"
 
 class ConfigurationTest: public CppUnit::TestFixture {
 
@@ -57,11 +62,13 @@ class ConfigurationTest: public CppUnit::TestFixture {
 	 * Use cppunit library macros to add unit test the factory
 	 */
 CPPUNIT_TEST_SUITE( ConfigurationTest );
-		CPPUNIT_TEST( testInitVolume );
-		CPPUNIT_TEST( testDefaultValueAudio );
-		CPPUNIT_TEST( testDefaultValuePreferences );
-		CPPUNIT_TEST( testDefaultValueSignalisation );
-		CPPUNIT_TEST( testInitAudioDriver );
+//      CPPUNIT_TEST( testInitVolume );
+//      CPPUNIT_TEST( testDefaultValueAudio );
+//	CPPUNIT_TEST( testDefaultValuePreferences );
+//	CPPUNIT_TEST( testDefaultValueSignalisation );
+//	CPPUNIT_TEST( testInitAudioDriver );
+//      CPPUNIT_TEST( testYamlParser );
+	    CPPUNIT_TEST( testYamlEmitter );
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -91,6 +98,10 @@ public:
 	void testInitVolume();
 
 	void testInitAudioDriver();
+
+	void testYamlParser();
+
+	void testYamlEmitter();	
 };
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConfigurationTest, "ConfigurationTest");

@@ -1,18 +1,17 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *                                                                              
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -28,48 +27,69 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef IAXACCOUNT_H
-#define IAXACCOUNT_H
 
-#include "account.h"
+#include "yamlnode.h"
+#include "src/global.h"
 
-/**
- * @file: iaxaccount.h
- * @brief An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
- */
-class IAXAccount : public Account
+namespace Conf {
+
+
+void YamlDocument::addNode(YamlNode *node)
 {
-    public:
-        IAXAccount(const AccountID& accountID);
+  Sequence::iterator it = doc.end();
+  doc.insert(it, node);
+}
 
-        ~IAXAccount();
+YamlNode *YamlDocument::popNode()
+{
+  Sequence::iterator it = doc.begin();
+  YamlNode *node = doc.front();
 
-	virtual void serialize(Conf::YamlEmitter *emitter);
+  //removed element's destructor is called
+  doc.pop_front();
 
-	virtual void unserialize(Conf::MappingNode *map);
+  return node;
+}
 
-	void setAccountDetails(const std::map<std::string, std::string>& details);
+void MappingNode::addNode(YamlNode *node) 
+{
+  Mapping::iterator it = map.end();
+  map.insert(it, std::pair<Key, YamlNode *>(tmpKey, node)); 
+}
 
-	std::map<std::string, std::string> getAccountDetails();
+void MappingNode::setKeyValue(Key key, YamlNode *value) 
+{
+  Mapping::iterator it = map.end();
+  map.insert(it, std::pair<Key, YamlNode *>(key, value)); 
+}
 
-	void setVoIPLink ();
+void MappingNode::removeKeyValue(Key key)
+{
 
-        /** 
-         * Actually useless, since config loading is done in init() 
-         */
-        void loadConfig();
+Mapping::iterator it = map.find(key);
+  map.erase(it);
+}
 
-        /**
-         * Register an account
-         */
-        int registerVoIPLink();
 
-        /**
-         * Unregister an account
-         */
-        int unregisterVoIPLink();
+YamlNode *MappingNode::getValue(Key key) 
+{
+  Mapping::iterator it = map.find(key);
 
-    private:
-};
+  if(it != map.end()) {
+    return it->second;
+  }
+  else {
+    _debug("Could not fine %s", key.c_str());
+    return NULL;
+  }
+}
 
-#endif
+
+void SequenceNode::addNode(YamlNode *node)
+{
+  Sequence::iterator it = seq.end();
+  seq.insert(it, node);
+}
+
+}
+

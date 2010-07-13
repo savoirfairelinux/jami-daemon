@@ -1,18 +1,17 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *                                                                              
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -28,48 +27,51 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef IAXACCOUNT_H
-#define IAXACCOUNT_H
 
-#include "account.h"
+#ifndef __YAMLENGINE_H__
+#define __YAMLENGINE_H__
 
-/**
- * @file: iaxaccount.h
- * @brief An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
- */
-class IAXAccount : public Account
-{
-    public:
-        IAXAccount(const AccountID& accountID);
+#include "engine.h"
+#include "yamlnode.h"
+#include "yamlparser.h"
+#include "yamlemitter.h"
+#include <exception>
 
-        ~IAXAccount();
+namespace Conf {
 
-	virtual void serialize(Conf::YamlEmitter *emitter);
+class YamlEngineException : public std::exception {
 
-	virtual void unserialize(Conf::MappingNode *map);
+  virtual const char *what() const throw() {
+    return "YamlEngineException occured";
+  }
+}; 
 
-	void setAccountDetails(const std::map<std::string, std::string>& details);
+class YamlEngine : public Engine {
 
-	std::map<std::string, std::string> getAccountDetails();
+ public:
 
-	void setVoIPLink ();
+  YamlEngine();
 
-        /** 
-         * Actually useless, since config loading is done in init() 
-         */
-        void loadConfig();
+  ~YamlEngine();
 
-        /**
-         * Register an account
-         */
-        int registerVoIPLink();
+  virtual void openConfigFile();
 
-        /**
-         * Unregister an account
-         */
-        int unregisterVoIPLink();
+  virtual void closeConfigFile();
 
-    private:
+  virtual void write();
+
+  virtual void read();
+
+ private:
+
+  YamlParser *parser;
+
+  YamlEmitter *emitter;
+
+  YamlDocument *document;
+
 };
+
+}
 
 #endif

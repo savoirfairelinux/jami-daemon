@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <iostream>
 #include <string.h>
+#include "yamlparser.h"
 
 namespace Conf
 {
@@ -50,6 +51,7 @@ ConfigTree::ConfigTree() :_sections()
 // dtor
 ConfigTree::~ConfigTree()
 {
+
     // erase every new ItemMap (by CreateSection)
     SectionMap::iterator iter = _sections.begin();
 

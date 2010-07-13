@@ -1,18 +1,17 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *                                                                              
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -28,48 +27,59 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef IAXACCOUNT_H
-#define IAXACCOUNT_H
 
-#include "account.h"
+#include "yamlengine.h"
+#include "../global.h"
 
-/**
- * @file: iaxaccount.h
- * @brief An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
- */
-class IAXAccount : public Account
+
+namespace Conf {
+
+YamlEngine::YamlEngine() {}
+
+YamlEngine::~YamlEngine() {}
+
+void YamlEngine::openConfigFile() 
 {
-    public:
-        IAXAccount(const AccountID& accountID);
 
-        ~IAXAccount();
+  Conf::YamlParser *parser;
 
-	virtual void serialize(Conf::YamlEmitter *emitter);
+  try {
+    parser = new Conf::YamlParser("sequence.yml");
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
 
-	virtual void unserialize(Conf::MappingNode *map);
+  try {
+    parser->serializeEvents();
+  }
+  catch(Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
 
-	void setAccountDetails(const std::map<std::string, std::string>& details);
+  try {
+    document = parser->composeEvents();
+  }
+  catch(Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
 
-	std::map<std::string, std::string> getAccountDetails();
+  try {
+    delete parser;
+    parser = NULL;
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+}
 
-	void setVoIPLink ();
+void YamlEngine::closeConfigFile() 
+{
+  
+}
 
-        /** 
-         * Actually useless, since config loading is done in init() 
-         */
-        void loadConfig();
+void YamlEngine::read() {}
 
-        /**
-         * Register an account
-         */
-        int registerVoIPLink();
+void YamlEngine::write() {}
 
-        /**
-         * Unregister an account
-         */
-        int unregisterVoIPLink();
-
-    private:
-};
-
-#endif
+}
