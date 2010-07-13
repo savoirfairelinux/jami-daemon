@@ -217,7 +217,7 @@ static GPtrArray* getNewCredential (GHashTable * properties) {
 				COLUMN_CREDENTIAL_PASSWORD, &password,
 				-1);
 
-		DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
+		DEBUG ("------------------------------------------------- Row %d: %s %s %s", row_count, username, password, realm);
 
 		new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 		g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), realm);
@@ -1494,9 +1494,10 @@ void show_account_window (account_t * a) {
 	if(currentAccount->credential_information != NULL) {
 	  int i;
 	  for(i = 0; i < currentAccount->credential_information->len; i++) {
+	    DEBUG("---------------------------------- Create new credential");
 	    dbus_set_credential(currentAccount, i);
 	  }
-	  dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
+	  // dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
 	}
       }
     }
