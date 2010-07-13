@@ -2556,28 +2556,22 @@ void ManagerImpl::setVolumeControls (bool display) {
 }
 
 void ManagerImpl::setRecordingCall (const CallID& id) {
-  /*
-    _debug ("ManagerImpl::setRecording()! ");
-    AccountID accountid = getAccountFromCall (id);
-    
-    getAccountLink (accountid)->setRecording (id);
-  */
 
-  AccountID accountid = getAccountFromCall(id);
-  Recordable* rec = (Recordable *) getAccountLink(accountid)->getCall(id);
+  Recordable* rec;
+  if(!isConference(id)) {
+    AccountID accountid = getAccountFromCall(id);
+    rec = (Recordable *) getAccountLink(accountid)->getCall(id);
+  }
+  else {
+    ConferenceMap::iterator it = _conferencemap.find(id);
+    rec = (Recordable *)it->second;
+  }
 
   rec->setRecording();
 
-	
 }
 
 bool ManagerImpl::isRecording (const CallID& id) {
-	/*
-	 _debug ("ManagerImpl::isRecording()! ");
-	 AccountID accountid = getAccountFromCall (id);
-
-	 return getAccountLink (accountid)->isRecording (id);
-	 */
 
 	AccountID accountid = getAccountFromCall(id);
 	Recordable* rec = (Recordable*) getAccountLink(accountid)->getCall(id);
