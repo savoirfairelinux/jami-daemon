@@ -3484,19 +3484,6 @@ void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
 
 	SIPAccount *sipaccount = (SIPAccount *)account; 
 
-        int numberOfCredential = sipaccount->getCredentialCount();
-
-	for (int i = 0; i < numberOfCredential; i++) {
-		std::string credentialIndex;
-		std::stringstream streamOut;
-		streamOut << i;
-		credentialIndex = streamOut.str();
-		std::string section = "Credential" + std::string(":") + accountID
-				+ std::string(":") + credentialIndex;
-
-		_config.removeSection(section);
-	}
-
 	if (accountID.empty() == false) {
 	  sipaccount->setCredentialCount(0);
 	}
