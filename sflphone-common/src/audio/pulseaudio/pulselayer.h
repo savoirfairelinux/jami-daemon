@@ -287,6 +287,8 @@ class PulseLayer : public AudioLayer {
 
     // private:
 
+    int byteCounter;
+
 public: 
 
     friend class AudioLayerTest;

@@ -260,6 +260,8 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
     AudioLayer::_echocancelstate = true;
     AudioLayer::_noisesuppressstate = true;
 
+    byteCounter = 0;
+
     /*
     captureFile = new ofstream("captureFile", ofstream::binary);
     captureRsmplFile = new ofstream("captureRsmplFile", ofstream::binary);
@@ -902,8 +904,9 @@ void PulseLayer::writeToSpeaker (void)
 
                 }
 
+		
 		// Copy far-end signal in echo canceller to adapt filter coefficient
-		AudioLayer::_echoCanceller->putData(out, byteToGet);
+		// AudioLayer::_echoCanceller->putData(out, byteToGet);
 
                 pa_xfree (out);
 
@@ -971,11 +974,12 @@ void PulseLayer::readFromMic (void)
 	    // captureFilterFile->write ((const char *)rsmpl_out, nbSample*sizeof(SFLDataFormat));
 
 	    // echo cancellation processing
-	    int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
+	    // int sampleready = _echoCanceller->processAudio(rsmpl_out, echoCancelledMic, nbSample*sizeof(SFLDataFormat));
 
             // getMainBuffer()->putData ( (void*) rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
-	    if(sampleready)
-	      getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+	    // if(sampleready)
+	    // getMainBuffer()->putData ( echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+	    getMainBuffer()->putData ( rsmpl_out, nbSample*sizeof (SFLDataFormat), 100);
 
             pa_xfree (rsmpl_out);
 
@@ -987,10 +991,11 @@ void PulseLayer::readFromMic (void)
             _audiofilter->processAudio((SFLDataFormat *)data, filter_out, r);
 
 	    // echo cancellation processing
-	    int sampleready = _echoCanceller->processAudio((SFLDataFormat *)filter_out, echoCancelledMic, r);
+	    // int sampleready = _echoCanceller->processAudio((SFLDataFormat *)filter_out, echoCancelledMic, r);
 
             // no resampling required
-            getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+            // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+	    getMainBuffer()->putData (filter_out, r, 100);
 
 	    pa_xfree(filter_out);
         }

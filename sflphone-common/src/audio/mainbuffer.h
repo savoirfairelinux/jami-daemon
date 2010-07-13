@@ -114,6 +114,8 @@ class MainBuffer {
 	void flushAllBuffers();
 
 	void flushDefault();
+ 
+	void syncBuffers(CallID call_id);
 
 	void stateInfo();
 

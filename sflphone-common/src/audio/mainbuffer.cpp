@@ -405,7 +405,9 @@ int MainBuffer::getData (void *buffer, int toCopy, unsigned short volume, CallID
 
         while (iter_id != callid_set->end()) {
 
-            size = getDataByID (mixBuffer, toCopy, volume, (CallID) (*iter_id), call_id);
+	    memset(mixBuffer, 0, toCopy);
+
+            size = getDataByID(mixBuffer, toCopy, volume, (CallID) (*iter_id), call_id);
 
             if (size > 0) {
                 for (int k = 0; k < nbSmplToCopy; k++) {
@@ -461,6 +463,8 @@ int MainBuffer::availForGet (CallID call_id)
         int avail_bytes = 99999;
         int nb_bytes;
         CallIDSet::iterator iter_id = callid_set->begin();
+
+	syncBuffers(call_id);
 
         for (iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++) {
             nb_bytes = availForGetByID (*iter_id, call_id);
@@ -522,7 +526,6 @@ int MainBuffer::discard (int toDiscard, CallID call_id)
 
         return toDiscard;
     }
-
 }
 
 
@@ -599,6 +602,45 @@ void MainBuffer::flushAllBuffers()
     }
 }
 
+void MainBuffer:: syncBuffers(CallID call_id)
+{
+  
+    CallIDSet* callid_set = getCallIDSet(call_id);
+
+    if (callid_set == NULL)
+        return;
+
+    if (callid_set->empty()) {
+        _debug ("MainBuffer: CallIDSet with ID: \"%s\" is empty!", call_id.c_str());
+        return;
+    }
+
+    if (callid_set->size() == 1) {
+        // no need to resync, only one session
+        return;
+    }
+
+    int nbBuffers = 0;
+    float mean_nbBytes = 0.0;
+
+    CallIDSet::iterator iter_id = callid_set->begin();
+
+
+    // compute mean nb byte in buffers
+    for (iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++) {
+        nbBuffers++;
+	mean_nbBytes += availForGetByID (*iter_id, call_id);
+    }
+    mean_nbBytes = mean_nbBytes / (float) nbBuffers;
+    
+    // resync buffers in this conference according to the computed mean
+    for (iter_id = callid_set->begin(); iter_id != callid_set->end(); iter_id++) {
+
+      if(availForGetByID (*iter_id, call_id) > (mean_nbBytes + 640))
+	  discardByID (640, *iter_id, call_id);
+    }
+}
+
 
 void MainBuffer::stateInfo()
 {
@@ -664,8 +706,5 @@ void MainBuffer::stateInfo()
 
         iter_buffer++;
     }
-
-
-
 
 }
