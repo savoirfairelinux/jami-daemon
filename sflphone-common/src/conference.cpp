@@ -55,7 +55,7 @@ Conference::Conference()
     _nbParticipant = 0;
     _id = conf.append (s);
 
-
+    Recordable::initRecFileName();
 
 }
 
@@ -182,6 +182,8 @@ bool Conference::setRecording() {
 
     mbuffer->bindHalfDuplexOut(process_id);
 
+    Recordable::recorder.start();
+
   }
   // stop recording
   else {
@@ -199,10 +201,9 @@ bool Conference::setRecording() {
 
       mbuffer->unBindHalfDuplexOut(process_id);
 
+      // Recordable::recorder.start();
+
   }
-
-
-  Recordable::recorder.start();
 
   return recordStatus;
 
