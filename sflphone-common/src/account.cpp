@@ -36,7 +36,7 @@
 Account::Account (const AccountID& accountID, std::string type) :
 	_accountID (accountID)
 	, _link (NULL)
-	, _enabled (false)
+	, _enabled (true)
 	, _type (type)
 	, _codecOrder ()
 	, _startupCodecStr("")
