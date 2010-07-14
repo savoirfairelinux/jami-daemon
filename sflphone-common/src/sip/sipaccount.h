@@ -96,8 +96,6 @@ const Conf::Key stunServerKey("stunServer");
 const Conf::Key credKey("credential");
 const Conf::Key credentialCountKey("count");
 
-const Conf::Key displayNameKey("displayName");
-
 class SIPVoIPLink;
 
 /**
@@ -448,9 +446,6 @@ class SIPAccount : public Account
         DtmfType getDtmfType(void) { return _dtmfType; }
         void setDtmfType(DtmfType type) { _dtmfType = type; }
 
-	std::string getDisplayName(void) { return _displayName; }
-	void setDisplayName(std::string name) { _displayName = name ;}
-
 	bool getSrtpEnable(void) { return _srtpEnabled; }
 	void setSrtpEnable(bool enabl) { _srtpEnabled = enabl; }
 
@@ -514,9 +509,6 @@ class SIPAccount : public Account
 
 	std::string getTlsNegotiationTimeoutMsec(void) { return _tlsNegotiationTimeoutMsec; }
 	void setTlsNegotiationTimeoutMsec(std::string timeout) { _tlsNegotiationTimeoutMsec = timeout; }
-
-	std::string getUseragent(void) { return _useragent; }
-	void setUseragent(std::string ua) { _useragent = ua; }
 
   private: 
 
@@ -612,9 +604,6 @@ class SIPAccount : public Account
         pj_uint16_t _stunPort;
 
         DtmfType _dtmfType;
-        
-        // Display Name that can be used in  SIP URI.        
-        std::string _displayName;
 
 	std::string _tlsEnable;
 	std::string _tlsPortStr;
@@ -654,8 +643,6 @@ class SIPAccount : public Account
 	bool _zrtpDisplaySasOnce;
 	bool _zrtpHelloHash;
 	bool _zrtpNotSuppWarning;
-
-	std::string _useragent;
 
 
 };

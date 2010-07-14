@@ -143,6 +143,7 @@ const Conf::Key accountEnableKey("enable");
 const Conf::Key mailboxKey("mailbox");
 
 const Conf::Key codecsKey("codecs");		// 0/9/110/111/112/
+const Conf::Key displayNameKey("displayName");
 
 #define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
 
@@ -262,6 +263,12 @@ class Account : public Serializable{
 	
 	void setActiveCodecs (const std::vector <std::string>& list);
 
+	inline std::string getDisplayName(void) { return _displayName; }
+	inline void setDisplayName(std::string name) { _displayName = name; }
+
+	std::string getUseragent(void) { return _useragent; }
+	void setUseragent(std::string ua) { _useragent = ua; }
+
     private:
         // copy constructor
         Account(const Account& rh);
@@ -337,6 +344,11 @@ class Account : public Serializable{
 	 * to generate codec order list, should not be used elsewhere.
 	 */
 	std::string _startupCodecStr;
+
+	// Display Name that can be used in  SIP URI.        
+        std::string _displayName;
+
+	std::string _useragent;
 
 };
 

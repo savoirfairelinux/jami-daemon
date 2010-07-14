@@ -40,6 +40,8 @@ Account::Account (const AccountID& accountID, std::string type) :
 	, _type (type)
 	, _codecOrder ()
 	, _startupCodecStr("")
+	, _displayName("")
+	, _useragent("SFLphone")
 {
 	setRegistrationState (Unregistered);
 }

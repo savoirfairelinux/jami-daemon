@@ -97,7 +97,6 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _authenticationUsername ("")
         , _tlsSetting (NULL)
 	, _dtmfType(OVERRTP)
-        , _displayName ("")
         , _tlsEnable("")
 	, _tlsPortStr("")
 	, _tlsCaListFile("")
@@ -125,7 +124,6 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 	, _zrtpDisplaySasOnce(false)
 	, _zrtpHelloHash(false)
 	, _zrtpNotSuppWarning(false)
-	, _useragent("SFLphone")
 {
     
     _debug("Sip account constructor called");
@@ -398,6 +396,8 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
 
   std::map<std::string, std::string> map_cpy;
   std::map<std::string, std::string>::iterator iter;
+
+  _debug("SipAccount: set account details %s", _accountID.c_str());
 
   // Work on a copy
   map_cpy = details;
