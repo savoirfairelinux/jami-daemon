@@ -217,7 +217,7 @@ static GPtrArray* getNewCredential (GHashTable * properties) {
 				COLUMN_CREDENTIAL_PASSWORD, &password,
 				-1);
 
-		DEBUG ("------------------------------------------------- Row %d: %s %s %s", row_count, username, password, realm);
+		DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
 
 		new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 		g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), realm);
@@ -442,9 +442,10 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 {
 	GtkTreeIter iter;
 	gtk_list_store_clear(credentialStore);
-	gtk_list_store_append (credentialStore, &iter);
-
+	
 	/* This is the default, undeletable credential */
+	/*
+	// gtk_list_store_append (credentialStore, &iter);
 	gchar * authentication_name = g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME);
 	gchar * realm = g_hash_table_lookup(account->properties, ACCOUNT_REALM);        
 	if (realm == NULL || (g_strcmp0(realm, "") == 0)) {
@@ -473,6 +474,7 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 		DEBUG("No credential defined");
 		return;
 	}
+	*/
 
 	unsigned int i;
 	for(i = 0; i < account->credential_information->len; i++)
@@ -483,8 +485,7 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 				COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(element, ACCOUNT_REALM), 
 				COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup(element, ACCOUNT_USERNAME), 
 				COLUMN_CREDENTIAL_PASSWORD, g_hash_table_lookup(element, ACCOUNT_PASSWORD), 
-				COLUMN_CREDENTIAL_DATA, element, // Pointer
-				-1);
+				COLUMN_CREDENTIAL_DATA, element, -1);
 	}
 }
 
@@ -1494,7 +1495,7 @@ void show_account_window (account_t * a) {
 	if(currentAccount->credential_information != NULL) {
 	  int i;
 	  for(i = 0; i < currentAccount->credential_information->len; i++) {
-	    DEBUG("---------------------------------- Create new credential");
+	    DEBUG("Create new credential");
 	    dbus_set_credential(currentAccount, i);
 	  }
 	  // dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
