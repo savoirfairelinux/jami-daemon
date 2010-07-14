@@ -62,7 +62,7 @@ void IAXAccount::serialize(Conf::YamlEmitter *emitter)
   Conf::ScalarNode type(Account::_type);
   Conf::ScalarNode mailbox("97");
 
-  Conf::ScalarNode codecs(_startupCodecStr);
+  Conf::ScalarNode codecs(_codecStr);
   Conf::ScalarNode displayName(_displayName);
 
   accountmap.setKeyValue(aliasKey, &alias);
@@ -108,7 +108,7 @@ void IAXAccount::unserialize(Conf::MappingNode *map)
   //  val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
 
   val = (Conf::ScalarNode *)(map->getValue(codecsKey));
-  if(val) { _startupCodecStr = val->getValue(); val = NULL; }
+  if(val) { _codecStr = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(displayNameKey));
   if(val) { _displayName = val->getValue(); val = NULL; }
 

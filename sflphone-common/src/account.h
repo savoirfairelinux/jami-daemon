@@ -260,7 +260,6 @@ class Account : public Serializable{
 	 * @return CodecOrder& The list that reflects the user's choice
 	 */
 	inline CodecOrder& getActiveCodecs() { return _codecOrder; }
-	
 	void setActiveCodecs (const std::vector <std::string>& list);
 
 	inline std::string getDisplayName(void) { return _displayName; }
@@ -341,9 +340,9 @@ class Account : public Serializable{
 
 	/**
 	 * List of codec obtained when parsing configuration and used
-	 * to generate codec order list, should not be used elsewhere.
+	 * to generate codec order list
 	 */
-	std::string _startupCodecStr;
+	std::string _codecStr;
 
 	// Display Name that can be used in  SIP URI.        
         std::string _displayName;

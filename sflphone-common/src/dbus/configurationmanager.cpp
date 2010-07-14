@@ -374,8 +374,7 @@ std::vector<std::string> ConfigurationManager::getCodecList(void) {
 
 	std::vector<std::string> list;
 
-	CodecsMap codecs =
-			Manager::instance().getCodecDescriptorMap().getCodecsMap();
+	CodecsMap codecs = Manager::instance().getCodecDescriptorMap().getCodecsMap();
 	CodecsMap::iterator iter = codecs.begin();
 
 	while (iter != codecs.end()) {

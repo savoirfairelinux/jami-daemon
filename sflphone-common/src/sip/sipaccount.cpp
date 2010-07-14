@@ -180,8 +180,8 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   std::stringstream publicportstr; publicportstr << _publishedPort;
   Conf::ScalarNode publishPort(publicportstr.str());
   Conf::ScalarNode sameasLocal(_publishedSameasLocal ? "true" : "false");
-  Conf::ScalarNode resolveOnce(_resolveOnce ? "true" : "false");      
-  Conf::ScalarNode codecs(_startupCodecStr);
+  Conf::ScalarNode resolveOnce(_resolveOnce ? "true" : "false");
+  Conf::ScalarNode codecs(_codecStr);
   Conf::ScalarNode stunServer(_stunServer);
   Conf::ScalarNode stunEnabled(_stunEnabled ? "true" : "false");
   Conf::ScalarNode displayName(_displayName);
@@ -297,7 +297,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   //  val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
 
   val = (Conf::ScalarNode *)(map->getValue(codecsKey));
-  if(val) { _startupCodecStr = val->getValue(); val = NULL; }
+  if(val) { _codecStr = val->getValue(); val = NULL; }
   
   val = (Conf::ScalarNode *)(map->getValue(expireKey));
   if(val) { _registrationExpire = val->getValue(); val = NULL; }

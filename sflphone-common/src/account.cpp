@@ -39,7 +39,7 @@ Account::Account (const AccountID& accountID, std::string type) :
 	, _enabled (true)
 	, _type (type)
 	, _codecOrder ()
-	, _startupCodecStr("")
+	, _codecStr("")
 	, _displayName("")
 	, _useragent("SFLphone")
 {
@@ -75,7 +75,7 @@ void Account::setRegistrationState (RegistrationState state) {
 void Account::loadAudioCodecs (void) {
 
 	// if the user never set the codec list, use the default configuration for this account
-       if(_startupCodecStr == "") {
+       if(_codecStr == "") {
 		_info ("Account: use the default order");
 		Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
 	}
@@ -84,7 +84,7 @@ void Account::loadAudioCodecs (void) {
 		std::vector<std::string> active_list = Manager::instance ().retrieveActiveCodecs();
 		// This property is now set per account basis
 		// std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");
-		setActiveCodecs (Manager::instance ().unserialize (_startupCodecStr));
+		setActiveCodecs (Manager::instance ().unserialize (_codecStr));
 	}
 }
 
@@ -107,10 +107,6 @@ void Account::setActiveCodecs (const std::vector <std::string> &list) {
 	}
 
 	// setConfig
-	std::string s = Manager::instance ().serialize (list);
-
-	// Set the config per account
-	Manager::instance().setConfig (_accountID, "ActiveCodecs", s);
-
+	_codecStr = Manager::instance ().serialize (list);
 
 }
