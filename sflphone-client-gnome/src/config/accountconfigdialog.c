@@ -443,7 +443,7 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 {
 	GtkTreeIter iter;
 	gtk_list_store_clear(credentialStore);
-	
+
 	/* This is the default, undeletable credential */
 	/*
 	// gtk_list_store_append (credentialStore, &iter);
@@ -471,11 +471,11 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 		g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
 	}
 
-	if(account->credential_information == NULL) {
+	*/
+        if(account->credential_information == NULL) {
 		DEBUG("No credential defined");
 		return;
 	}
-	*/
 
 	unsigned int i;
 	for(i = 0; i < account->credential_information->len; i++)
@@ -816,7 +816,9 @@ GtkWidget* create_credential_widget (account_t **a) {
 
 	gtk_container_add(GTK_CONTAINER(scrolledWindowCredential), treeViewCredential);
 
+	DEBUG("Credential pas ok");
 	fill_treeview_with_credential(credentialStore, *a);
+	DEBUG("Credential ok");
 
 	/* Credential Buttons */    
 	hbox = gtk_hbox_new(FALSE, 10);

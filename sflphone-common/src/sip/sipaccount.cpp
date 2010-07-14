@@ -623,8 +623,6 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
   a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_CODE, registrationStateCode));
   a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
 
-  _debug("OK for default");
-
   // Add sip specific details
   if(getType() == "SIP") {
 	    
@@ -654,8 +652,6 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
     a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS_ONCE, getZrtpDiaplaySasOnce() ? "true" : "false"));
     a.insert(std::pair<std::string, std::string>(ZRTP_HELLO_HASH, getZrtpHelloHash() ? "true" : "false"));
     a.insert(std::pair<std::string, std::string>(ZRTP_NOT_SUPP_WARNING, getZrtpNotSuppWarning() ? "true" : "false"));
-
-    _debug("OK for default again");
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     std::stringstream tlslistenerport;
