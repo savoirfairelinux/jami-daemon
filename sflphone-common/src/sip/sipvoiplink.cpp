@@ -2443,7 +2443,7 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
     }
 
-        // We must specify this here to avoid the IP2IP_PROFILE
+    // We must specify this here to avoid the IP2IP_PROFILE
     // to create a transport with name 0.0.0.0 to appear in the via header
     if(id == IP2IP_PROFILE)
       loadSIPLocalIP (&listeningAddress);
@@ -2454,7 +2454,6 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
     }
     //strcpy (tmpIP, listeningAddress.data());
     /* Init published name */
-    _debug("------------------------------------------------------------ The listening address is: %s", listeningAddress.c_str());
     pj_bzero (&a_name, sizeof (pjsip_host_port));
     pj_cstr (&a_name.host, listeningAddress.c_str());
     a_name.port = listeningPort;

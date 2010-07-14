@@ -2298,8 +2298,8 @@ void ManagerImpl::initAudioCodec (void) {
  */
 std::vector<std::string> ManagerImpl::retrieveActiveCodecs () {
 
-	// This property is now set per account basis
-	std::string s = getConfigString(AUDIO, "ActiveCodecs");
+	// This property is now set per account basis so we should remove it...
+        std::string s = "";
 	_info("Manager: Retrieve active codecs: %s", s.c_str ());
 	return unserialize(s);
 }
@@ -3267,7 +3267,7 @@ std::vector<std::string> ManagerImpl::getAccountList () {
 std::map<std::string, std::string> ManagerImpl::getAccountDetails (
 				   const AccountID& accountID) {
 
-  _debug("------------------------ Manager: get account details %s", accountID.c_str());
+  _debug("Manager: get account details %s", accountID.c_str());
   
   Account * account;
   if(!(account = _accountMap[accountID])) {

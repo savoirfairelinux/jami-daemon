@@ -79,7 +79,7 @@ void Credentials::unserialize(Conf::MappingNode *map)
 
 
 SIPAccount::SIPAccount (const AccountID& accountID)
-        : Account (accountID, "sip")
+        : Account (accountID, "SIP")
 	, _routeSet("")
         , _regc (NULL)
         , _bRegister (false)
@@ -221,6 +221,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   accountmap.setKeyValue(mailboxKey, &mailbox);
   accountmap.setKeyValue(expireKey, &expire);
   accountmap.setKeyValue(interfaceKey, &interface);
+  _debug("-------------- INTERFACE %s", _interface.c_str());
   accountmap.setKeyValue(portKey, &port);
   accountmap.setKeyValue(publishAddrKey, &publishAddr);
   accountmap.setKeyValue(publishPortKey, &publishPort);
@@ -301,6 +302,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   if(val) { _registrationExpire = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(interfaceKey));
   if(val) { _interface = val->getValue(); val = NULL; }
+  _debug("------------ INTERFACE: %s", _interface.c_str());
   val = (Conf::ScalarNode *)(map->getValue(portKey));
   if(val) { _localPort = atoi(val->getValue().data()); val = NULL; }
   // val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
@@ -580,7 +582,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
 
 std::map<std::string, std::string> SIPAccount::getAccountDetails()
 {
-  _debug("--------------------------- SipAccount: get account details  %s", _accountID.c_str());
+  _debug("SipAccount: get account details  %s", _accountID.c_str());
 
   std::map<std::string, std::string> a;
 
@@ -737,9 +739,9 @@ int SIPAccount::initCredential (void)
     // Default credential already initialized, use credentials.getCredentialCount()
     for (i = 0; i < credentials.getCredentialCount(); i++) {
 
-        std::string username = _username; // Manager::instance().getConfigString (section, USERNAME);
-	std::string password = _password;// Manager::instance().getConfigString (section, PASSWORD);
-	std::string realm = _realm;// Manager::instance().getConfigString (section, REALM);
+        std::string username = _username;
+	std::string password = _password;
+	std::string realm = _realm;
 
         cred_info[i].username = pj_str (strdup (username.c_str()));
         cred_info[i].data = pj_str (strdup (password.c_str()));
