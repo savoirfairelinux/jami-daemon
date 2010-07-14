@@ -83,7 +83,7 @@ const Conf::Key pluginKey("plugin"); //: default
 const Conf::Key smplrateKey("smplrate");//: 44100
 const Conf::Key devicePlaybackKey("devicePlayback");//:
 const Conf::Key deviceRecordKey("deviceRecord");// :
-const Conf::Key deviceRingtoneKey("deviceRecord");// :
+const Conf::Key deviceRingtoneKey("deviceRingtone");// :
 const Conf::Key recordpathKey("recordpath");//: /home/msavard/Bureau
 const Conf::Key ringchoiceKey("ringchoice");//: /usr/share/sflphone/ringtones/konga.ul
 const Conf::Key volumemicKey("volumemic");//:  100

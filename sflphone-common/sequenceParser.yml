@@ -103,7 +103,7 @@ audio:
    alsa:
      cardin: 0
      cardout: 0
-     cardout: 0
+     cardring: 0
      framesize: 20
      plugin: default
      smplrate: 44100
