@@ -1418,6 +1418,11 @@ bool ManagerImpl::saveConfig (void) {
 	  emitter = new Conf::YamlEmitter("sequenceEmitter.yml");
 
 	  while(iter != _accountMap.end()) {
+	    _debug("Saving account: %s", iter->first.c_str());
+	    if(iter->first == "") {
+	      iter++;
+	      continue;
+	    }
 	    iter->second->serialize(emitter);
 	    iter++;
 	  }
@@ -3441,7 +3446,7 @@ std::string ManagerImpl::addAccount (
 	// Get the type
 	accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
 
-	_debug ("%s", newAccountID.c_str());
+	_debug ("Manager: Adding account %s", newAccountID.c_str());
 
 	/** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
@@ -3459,7 +3464,7 @@ std::string ManagerImpl::addAccount (
 
 	_accountMap[newAccountID] = newAccount;
 
-	setAccountDetails(accountID.str(), details);
+	newAccount->setAccountDetails(details);
 
 	// Add the newly created account in the account order list
 	account_list = preferences.getAccountOrder();
