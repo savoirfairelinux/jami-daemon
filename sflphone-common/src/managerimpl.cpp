@@ -72,6 +72,8 @@
 
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
+SIPAccount defaultAccount("default");
+
 ManagerImpl::ManagerImpl (void) :
 	_hasTriedToRegister(false), _config(), _currentCallId2(),
 			_currentCallMutex(), _codecBuilder(NULL), _audiodriver(NULL),
@@ -3271,10 +3273,9 @@ std::map<std::string, std::string> ManagerImpl::getAccountDetails (
   
   Account * account;
   if(!(account = _accountMap[accountID])) {
-    _warn("Manager: Cannot getAccountDetails on a non-existing accountID %s.", accountID.c_str());
-    // return an empty map
-    std::map<std::string, std::string> a;
-	  return a;
+    _debug("Manager: Get account details on a non-existing accountID %s. Returning default", accountID.c_str());
+    // return a default map
+    return defaultAccount.getAccountDetails();
   }	
   else 
     return account->getAccountDetails();

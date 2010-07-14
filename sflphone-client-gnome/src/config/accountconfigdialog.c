@@ -271,12 +271,13 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 
 	int row = 0;
 
+	DEBUG("Config: Create basic account tab");
+
 	// Load from SIP/IAX/Unknown ?
 	if(currentAccount)
 	{
 		curAccountID = currentAccount->accountID;
 		curAccountType = g_hash_table_lookup(currentAccount->properties, ACCOUNT_TYPE);
-		DEBUG("Config: Current accountType %s", curAccountType);
 		curAccountEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED);
 		curAlias = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ALIAS);
 		curHostname = g_hash_table_lookup(currentAccount->properties, ACCOUNT_HOSTNAME);

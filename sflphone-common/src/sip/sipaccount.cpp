@@ -84,6 +84,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _regc (NULL)
         , _bRegister (false)
         , _registrationExpire ("")
+	, _interface("default")
         , _publishedSameasLocal (true)
         , _publishedIpAddress ("")
         , _localPort (atoi (DEFAULT_SIP_PORT))
@@ -115,7 +116,6 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 	, _tlsEnabled(false)
 	, _stunEnabled(false)
 	  // , _routeSet("")
-	, _authenticationUsename("")
 	  // , _tlsListenerPort("5061")
 	, _srtpEnabled(false)
 	, _srtpKeyExchange("")
@@ -128,6 +128,10 @@ SIPAccount::SIPAccount (const AccountID& accountID)
     
     _debug("Sip account constructor called");
   
+    _stunServerName.ptr = NULL;
+    _stunServerName.slen = 0;
+    _stunPort = 0;
+
     // IP2IP settings must be loaded before singleton instanciation, cannot call it here... 
 
     // _link = SIPVoIPLink::instance ("");
@@ -178,7 +182,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   Conf::ScalarNode sameasLocal(_publishedSameasLocal ? "true" : "false");
   Conf::ScalarNode resolveOnce(_resolveOnce ? "true" : "false");      
   Conf::ScalarNode codecs(_startupCodecStr);
-  Conf::ScalarNode stunServer(std::string(_stunServerName.ptr, _stunServerName.slen));
+  Conf::ScalarNode stunServer(_stunServer);
   Conf::ScalarNode stunEnabled(_stunEnabled ? "true" : "false");
   Conf::ScalarNode displayName(_displayName);
   Conf::ScalarNode dtmfType(_dtmfType==0 ? "overrtp" : "sipinfo");
@@ -489,9 +493,8 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
     setPublishedAddress(publishedAddress);
     setLocalPort(atoi(localPort.data()));
     setPublishedPort(atoi(publishedPort.data()));
-    // sipaccount->setStunServerName
-    // sipaccount->setStunServer();
-    // sipaccount->setStunEnable();
+    setStunServer(stunServer);
+    setStunEnabled((stunEnable == "true"));
     setResolveOnce((resolveOnce.compare("true")==0) ? true : false);
     setRegistrationExpire(registrationExpire);
 
@@ -580,12 +583,11 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
 
 std::map<std::string, std::string> SIPAccount::getAccountDetails()
 {
-  _debug("SipAccount: get account details  %s", _accountID.c_str());
+  _debug("SipAccount: get account details %s", _accountID.c_str());
 
   std::map<std::string, std::string> a;
 
   a.insert(std::pair<std::string, std::string>(ACCOUNT_ID, _accountID));
-
   // The IP profile does not allow to set an alias
   (_accountID == IP2IP_PROFILE) ? 
     a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_ALIAS, IP2IP_PROFILE)) : 
@@ -621,6 +623,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
   a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_CODE, registrationStateCode));
   a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
 
+  _debug("OK for default");
+
   // Add sip specific details
   if(getType() == "SIP") {
 	    
@@ -639,7 +643,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
     std::stringstream publishedport; publishedport << getPublishedPort();
     a.insert(std::pair<std::string, std::string>(PUBLISHED_PORT, publishedport.str()));
     a.insert(std::pair<std::string, std::string>(STUN_ENABLE, isStunEnabled() ? "true" : "false"));
-    a.insert(std::pair<std::string, std::string>(STUN_SERVER, std::string(getStunServerName().ptr, getStunServerName().slen)));
+    a.insert(std::pair<std::string, std::string>(STUN_SERVER, getStunServer()));
     a.insert(std::pair<std::string, std::string>(ACCOUNT_DTMF_TYPE, (getDtmfType() == 0) ? "0" : "1"));
 
     a.insert(std::pair<std::string, std::string>(SRTP_KEY_EXCHANGE, getSrtpKeyExchange()));
@@ -650,6 +654,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
     a.insert(std::pair<std::string, std::string>(ZRTP_DISPLAY_SAS_ONCE, getZrtpDiaplaySasOnce() ? "true" : "false"));
     a.insert(std::pair<std::string, std::string>(ZRTP_HELLO_HASH, getZrtpHelloHash() ? "true" : "false"));
     a.insert(std::pair<std::string, std::string>(ZRTP_NOT_SUPP_WARNING, getZrtpNotSuppWarning() ? "true" : "false"));
+
+    _debug("OK for default again");
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     std::stringstream tlslistenerport;
@@ -784,17 +790,14 @@ int SIPAccount::registerVoIPLink()
     initCredential();
 
     // Init TLS settings if the user wants to use TLS
-    bool tlsEnabled = false;
-
-    if (tlsEnabled) {
+    if (_tlsEnabled) {
         _transportType = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
 
     // Init STUN settings for this account if the user selected it
-    bool stunEnabled = _stunEnabled;
 
-    if (stunEnabled) {
+    if (_stunEnabled) {
         _transportType = PJSIP_TRANSPORT_START_OTHER;
         initStunConfiguration ();
     }

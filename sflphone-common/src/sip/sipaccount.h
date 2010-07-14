@@ -289,8 +289,10 @@ class SIPAccount : public Account
          * file, that can be used directly by PJSIP to initialize 
          * an alternate UDP transport.
          */
-        inline pj_str_t getStunServerName(void) { return _stunServerName; }
-	inline void setStunServerName (pj_str_t srv) { _stunServerName = srv; }
+        inline std::string getStunServer(void) { return _stunServer; }
+	inline void setStunServer (std::string srv) { _stunServer = srv; }
+
+	inline pj_str_t getStunServerName(void) { return _stunServerName; }
 
 		/**
          * @return pj_uint8_t structure, filled from the configuration
@@ -597,7 +599,7 @@ class SIPAccount : public Account
         // a sip transport. 
         pjsip_tls_setting * _tlsSetting;	                                                  
 
-        // The STUN server name, if applicable
+        // The STUN server name, if applicable for internal use only
         pj_str_t _stunServerName;	                                                  
 
         // The STUN server port, if applicable
@@ -628,8 +630,6 @@ class SIPAccount : public Account
 	// std::string _routeset;
 
 	// std::string _realm;
-	std::string _authenticationUsename;
-
 	// std::string _tlsListenerPort;
 	// std::string _routeSet;
 	// std::string _dtmfType;
