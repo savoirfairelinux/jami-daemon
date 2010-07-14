@@ -2372,7 +2372,7 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
     pjsip_host_port a_name;
     // char tmpIP[32];
     pjsip_transport *transport;
-    std::string listeningAddress = "127.0.0.1";
+    std::string listeningAddress = "0.0.0.0";
     int listeningPort = _regPort;
 
     /* Use my local address as default value */
@@ -2417,6 +2417,7 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
         // Init bound address to ANY
         bound_addr.sin_addr.s_addr = pj_htonl (PJ_INADDR_ANY);
+	loadSIPLocalIP (&listeningAddress);
     }
     else {
 
@@ -2431,15 +2432,21 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
 
     // Create UDP-Server (default port: 5060)
     // Use here either the local information or the published address
-    if (account != NULL && !account->getPublishedSameasLocal ()) {
+    if (account && !account->getPublishedSameasLocal ()) {
 
         // Set the listening address to the published address
         listeningAddress = account->getPublishedAddress ();
+
         // Set the listening port to the published port
         listeningPort = account->getPublishedPort ();
         _debug ("UserAgent: Creating UDP transport published %s:%i", listeningAddress.c_str (), listeningPort);
 
     }
+
+        // We must specify this here to avoid the IP2IP_PROFILE
+    // to create a transport with name 0.0.0.0 to appear in the via header
+    if(id == IP2IP_PROFILE)
+      loadSIPLocalIP (&listeningAddress);
 
     if(listeningAddress == "" || listeningPort == 0) {
     	_error("UserAgent: Error invalid address for new udp transport");
@@ -2447,6 +2454,7 @@ int SIPVoIPLink::createUdpTransport (AccountID id)
     }
     //strcpy (tmpIP, listeningAddress.data());
     /* Init published name */
+    _debug("------------------------------------------------------------ The listening address is: %s", listeningAddress.c_str());
     pj_bzero (&a_name, sizeof (pjsip_host_port));
     pj_cstr (&a_name.host, listeningAddress.c_str());
     a_name.port = listeningPort;
