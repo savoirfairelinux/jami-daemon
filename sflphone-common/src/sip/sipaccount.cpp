@@ -219,7 +219,6 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   accountmap.setKeyValue(mailboxKey, &mailbox);
   accountmap.setKeyValue(expireKey, &expire);
   accountmap.setKeyValue(interfaceKey, &interface);
-  _debug("-------------- INTERFACE %s", _interface.c_str());
   accountmap.setKeyValue(portKey, &port);
   accountmap.setKeyValue(publishAddrKey, &publishAddr);
   accountmap.setKeyValue(publishPortKey, &publishPort);
@@ -300,7 +299,6 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   if(val) { _registrationExpire = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(interfaceKey));
   if(val) { _interface = val->getValue(); val = NULL; }
-  _debug("------------ INTERFACE: %s", _interface.c_str());
   val = (Conf::ScalarNode *)(map->getValue(portKey));
   if(val) { _localPort = atoi(val->getValue().data()); val = NULL; }
   // val = (Conf::ScalarNode *)(map->getValue(mailboxKey));
