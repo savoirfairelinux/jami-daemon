@@ -3485,6 +3485,9 @@ void ManagerImpl::deleteAllCredential (const AccountID& accountID) {
         _debug("Manager: delete all credential");
 
         Account *account = getAccount(accountID);
+
+	if(!account)
+	  return;
   
         if(account->getType() != "SIP")
 	  return;

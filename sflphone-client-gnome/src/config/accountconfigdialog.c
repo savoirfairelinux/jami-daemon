@@ -190,45 +190,51 @@ static GPtrArray* getNewCredential (GHashTable * properties) {
 	gchar *password;
 	GHashTable * new_table;   
 
+	DEBUG("shit");
+
+	if(valid == FALSE) {
+	  DEBUG("Gtk tree model iter is not valid")
+	  return NULL;
+	}
+
 	gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
-			COLUMN_CREDENTIAL_REALM, &realm,
-			COLUMN_CREDENTIAL_USERNAME, &username,
-			COLUMN_CREDENTIAL_PASSWORD, &password,
-			-1);
+			      COLUMN_CREDENTIAL_REALM, &realm,
+			      COLUMN_CREDENTIAL_USERNAME, &username,
+			      COLUMN_CREDENTIAL_PASSWORD, &password,
+			      -1);
+	DEBUG("shit");
 
 	g_hash_table_insert(properties, g_strdup(ACCOUNT_REALM), realm);
 
 	// better use the current_username as it is the account username in the 
 	// g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
 	g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), current_username);
-
+	  
 	// Do not change the password if nothing has been changed by the user
 	if (g_strcasecmp (password, PW_HIDDEN) != 0)
-		g_hash_table_insert(properties, g_strdup(ACCOUNT_PASSWORD), password);
-
-	
+	  g_hash_table_insert(properties, g_strdup(ACCOUNT_PASSWORD), password);
 
 	valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
-
+	
 	while (valid) {        
-		gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
-				COLUMN_CREDENTIAL_REALM, &realm,
-				COLUMN_CREDENTIAL_USERNAME, &username,
-				COLUMN_CREDENTIAL_PASSWORD, &password,
-				-1);
+	  gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
+			      COLUMN_CREDENTIAL_REALM, &realm,
+			      COLUMN_CREDENTIAL_USERNAME, &username,
+			      COLUMN_CREDENTIAL_PASSWORD, &password,
+			      -1);
 
-		DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
+	  DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
 
-		new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-		g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), realm);
-		g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), username);
-		g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), password);
+	  new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+	  g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), realm);
+	  g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), username);
+	  g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), password);
 
-		g_ptr_array_add (credential_array, new_table);
+	  g_ptr_array_add (credential_array, new_table);
+	    
+	  row_count ++;
 
-		row_count ++;
-
-		valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
+	  valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
 	}
 
 	return credential_array;
@@ -1493,6 +1499,7 @@ void show_account_window (account_t * a) {
 	 */
 	dbus_delete_all_credential(currentAccount);
       
+	DEBUG("Config: Get new credentials");
 	GPtrArray * credential = getNewCredential(currentAccount->properties);         
 	currentAccount->credential_information = credential;
 	if(currentAccount->credential_information != NULL) {
