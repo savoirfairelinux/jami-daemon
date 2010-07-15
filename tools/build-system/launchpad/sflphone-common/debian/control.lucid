@@ -2,13 +2,13 @@ Source: sflphone-common
 Maintainer: SavoirFaireLinux Inc <julien.bonjean@savoirfairelinux.com>
 Section: gnome
 Priority: optional
-Build-Depends: debhelper, libgcc1 , autoconf, automake, libpulse-dev, libsamplerate0-dev, libcommoncpp2-dev, libccrtp-dev, libgsm1-dev, libspeex-dev, libtool, libdbus-1-dev, libasound2-dev, libspeexdsp-dev, uuid-dev, libexpat1-dev, libzrtpcpp-dev, libssl-dev, libpcre3-dev
+Build-Depends: debhelper, libgcc1 , autoconf, automake, libpulse-dev, libsamplerate0-dev, libcommoncpp2-dev, libccrtp-dev, libgsm1-dev, libspeex-dev, libtool, libdbus-1-dev, libasound2-dev, libspeexdsp-dev, uuid-dev, libexpat1-dev, libzrtpcpp-dev, libssl-dev, libpcre3-dev, libyaml-dev
 Standards-Version: 3.7.3
 
 Package: sflphone-common
 Priority: optional
 Architecture: any
-Depends: libsamplerate0, libexpat1 , libc6, libccgnu2-1.7-0, libgsm1, libspeex1, libdbus-1-3, libasound2, libpulse0, libccrtp1-1.7-0, libspeexdsp1, libzrtpcpp-1.4-0, libssl0.9.8, libpcre3
+Depends: libsamplerate0, libexpat1 , libc6, libccgnu2-1.7-0, libgsm1, libspeex1, libdbus-1-3, libasound2, libpulse0, libccrtp1-1.7-0, libspeexdsp1, libzrtpcpp-1.4-0, libssl0.9.8, libpcre3, libyaml-0-2
 Replaces: sflphone
 Conflicts: sflphone
 Homepage: http://www.sflphone.org
