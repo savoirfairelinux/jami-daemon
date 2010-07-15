@@ -269,11 +269,11 @@ AC_SUBST(xml_CFLAGS)
 AC_SUBST(xml_LIBS)
 
 AC_CHECK_LIB([yaml], yaml_parser_initialize,
-	       [AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
+	       [AC_CHECK_HEADERS(yaml.h, have_yaml=true, have_yaml=false)],
 	       have_yaml = false)
 
 if ! $have_yaml; then
-AC_MSG_ERROR([You need the eXpat xml parser]
+AC_MSG_ERROR([You need the libyaml yaml parser]
 		[http://expat.sourceforge.net/])
 fi
 
