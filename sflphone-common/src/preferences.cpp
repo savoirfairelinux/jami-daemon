@@ -37,9 +37,9 @@ Preferences::Preferences() :  _accountOrder("")
 			   , _historyLimit(30)
 			   , _historyMaxCalls(20)
 			   , _notifyMails(false)
-			   , _zoneToneChoice("North America")
+			   , _zoneToneChoice("North America") // DFT_ZONE
 			   , _registrationExpire(180)
-			   , _ringtoneEnabled(true)
+			   , _ringtoneEnabled(true) // CONFIG_RINGTONE
 			   , _portNum(5060)
 			   , _searchBarDisplay(true)
 			   , _zeroConfenable(false)
@@ -131,10 +131,10 @@ void Preferences::unserialize(Conf::MappingNode *map)
 
 VoipPreference::VoipPreference() :  _playDtmf(true)
 				 , _playTones(true)
-				 , _pulseLength(250)   
+				 , _pulseLength(250)// DFT_PULSE_LENGTH_STR   
 				 , _sendDtmfAs(0)
 				 , _symmetricRtp(true)
-				 , _zidFile("zidFile")
+                                 , _zidFile("zidFile")// ZRTP_ZID_FILENAME
 {
 
 }
@@ -191,7 +191,7 @@ void VoipPreference::unserialize(Conf::MappingNode *map)
 
 
 
-AddressbookPreference::AddressbookPreference() : _photo(true)
+AddressbookPreference::AddressbookPreference() : _photo(true) 
 					       , _enabled(true)
 					       , _list("")
 					       , _maxResults(25)
@@ -314,19 +314,19 @@ void HookPreference::unserialize(Conf::MappingNode *map)
 
 
 
-AudioPreference::AudioPreference() : _cardin(0)
-				   , _cardout(0)
-				   , _cardring(0)
-				   , _framesize(20)
-				   , _plugin("default")
-				   , _smplrate(44100)
+AudioPreference::AudioPreference() : _cardin(0) // ALSA_DFT_CARD
+				   , _cardout(0) // ALSA_DFT_CARD
+				   , _cardring(0) // ALSA_DFT_CARD
+				   , _framesize(20) // DFT_FRAME_SIZE
+				   , _plugin("default") // PCM_DEFAULT
+				   , _smplrate(44100) // DFT_SAMPLE_RATE
 				   , _devicePlayback("")
 				   , _deviceRecord("")
 				   , _deviceRingtone("")
-				   , _recordpath("")
-				   , _ringchoice("/usr/share/sflphone/ringtones/konga.ul")
-				   , _volumemic(100)
-				   , _volumespkr(100)
+				   , _recordpath("") // DFT_RECORD_PATH
+				   , _ringchoice("/usr/share/sflphone/ringtones/konga.ul") //DFT_RINGTONE
+				   , _volumemic(100) // DFT_VOL_SPKR_STR
+				   , _volumespkr(100) // DFT_VOL_MICRO_STR
 {
 
 }
