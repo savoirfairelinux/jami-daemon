@@ -2038,9 +2038,7 @@ int ManagerImpl::createSettingsPath (void) {
 	}
 
 	// Load user's configuration
-	_path = _path + DIR_SEPARATOR_STR + PROGNAME + "rc";
-
-	_path = "configurationexample.yml";
+	_path = _path + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 
 	return 1;
 }
@@ -2269,6 +2267,7 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
 	file.open (path.data(), std::fstream::in);
 
 	if (!file.is_open()) {
+
 	  _debug("Manager: File %s not opened, create new one", path.c_str());
 	  file.open (path.data(), std::fstream::out);
 	  out = true;
