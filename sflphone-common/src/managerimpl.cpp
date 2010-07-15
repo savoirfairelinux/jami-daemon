@@ -625,7 +625,7 @@ bool ManagerImpl::transferCall (const CallID& call_id, const std::string& to) {
 	AccountID accountid;
 	bool returnValue;
 
-	_info("Manager: Transfer call %s\n", call_id.c_str());
+	_info("Manager: Transfer call %s", call_id.c_str());
 
 	CallID current_call_id = getCurrentCallId();
 
@@ -2915,7 +2915,7 @@ void ManagerImpl::switchAudioManager (void) {
 	samplerate = _mainBuffer.getInternalSamplingRate();
 	framesize = audioPreference.getFramesize();
 
-	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
+	_debug ("Manager: samplerate: %i, framesize %i", samplerate, framesize);
 
 	alsaPlugin = audioPreference.getPlugin();
 
@@ -2992,7 +2992,7 @@ void ManagerImpl::audioSamplingRateChanged (void) {
 	samplerate = _mainBuffer.getInternalSamplingRate();
 	framesize = audioPreference.getFramesize();
 
-	_debug ("Mnager: samplerate: %i, framesize %i\n", samplerate, framesize);
+	_debug ("Mnager: samplerate: %i, framesize %i", samplerate, framesize);
 
 	alsaPlugin = audioPreference.getPlugin();
 
@@ -3297,7 +3297,7 @@ std::vector<std::string> ManagerImpl::getAccountList () {
 	// The IP2IP profile is always available, and first in the list
 	iter = _accountMap.find(IP2IP_PROFILE);
 	if (iter->second != NULL) {
-	  _debug("PUSHING BACK %s", iter->first.c_str());
+	  // _debug("PUSHING BACK %s", iter->first.c_str());
 	  // v.push_back(iter->first.data());
 	  v.push_back(iter->second->getAccountID());
 	}
@@ -3334,7 +3334,7 @@ std::vector<std::string> ManagerImpl::getAccountList () {
 					!= _accountMap.end()) {
 				// If the account is valid
 				if (iter->second != NULL && iter->first != IP2IP_PROFILE) {
-				        _debug("PUSHING BACK %s\n", iter->first.c_str());
+				        //_debug("PUSHING BACK %s", iter->first.c_str());
 				        // v.push_back(iter->first.data());
 					v.push_back(iter->second->getAccountID());
 				}
@@ -3784,7 +3784,6 @@ short ManagerImpl::loadAccountMap() {
     val = (Conf::ScalarNode *)(map->getValue(accID));
     Conf::Value accountid = val->getValue();
 
-    _warn("Debug: %s", accountid.c_str());
     if (accountType == "SIP" && accountid != "IP2IP") {
       _debug("Manager: Create SIP account: %s", accountid.c_str());
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountid);
@@ -3809,9 +3808,6 @@ short ManagerImpl::loadAccountMap() {
 
       tmpAccount->setVoIPLink();
       nbAccount++;
-    }
-    else {
-      _error("Manager: Error: created account was NULL");
     }
     
     iterSeq++;

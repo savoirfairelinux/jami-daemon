@@ -250,14 +250,14 @@ void YamlParser::processDocument()
 void YamlParser::processScalar(YamlNode *topNode)
 {
 
-  _debug("YamlParser: process scalar");
+  // _debug("YamlParser: process scalar");
 
   if(!topNode)
     throw YamlParserException("No container for scalar");
 
   char buffer[1000];
   snprintf(buffer, 1000, "%s", events[eventIndex].data.scalar.value);
-  _debug("and the scalar is: %s", buffer);
+  // _debug("and the scalar is: %s", buffer);
 
   ScalarNode *sclr = new ScalarNode(buffer, topNode);
 
@@ -328,7 +328,7 @@ void YamlParser::processSequence(YamlNode *topNode)
 
 void YamlParser::processMapping(YamlNode *topNode)
 {
-  _debug("YamlParser: process mapping -----------------------------------------");
+  // _debug("YamlParser: process mapping");
 
   if(!topNode)
     throw YamlParserException("No container for mapping");
@@ -359,7 +359,7 @@ void YamlParser::processMapping(YamlNode *topNode)
     char buffer[1000];
     snprintf(buffer, 1000, "%s", events[eventIndex].data.scalar.value);
     map->setTmpKey(Key(buffer));
-    _debug("KEY %s", buffer);
+    // _debug("KEY %s", buffer);
     
     eventIndex++;
 
@@ -396,15 +396,15 @@ void YamlParser::constructNativeData() {
 
     switch((*iter)->getType()){
     case SCALAR:
-      _debug("construct scalar");
+      // _debug("construct scalar");
       throw YamlParserException("No scalar allowed at document level, expect a mapping");
       break;
     case SEQUENCE:
-      _debug("construct sequence");
+      // _debug("construct sequence");
       throw YamlParserException("No sequence allowed at document level, expect a mapping");
       break;
     case MAPPING: {
-      _debug("construct mapping");
+      // _debug("construct mapping");
       MappingNode *map = (MappingNode *)(*iter);
       mainNativeDataMapping(map);
       break;
@@ -436,27 +436,27 @@ void YamlParser::mainNativeDataMapping(MappingNode *map) {
 
     _debug("Iterating: %s", iter->first.c_str());
     if(accounts.compare(iter->first) == 0) {
-      _debug("Adding voip account sequence");
+      _debug("YamlParser: Adding voip account preferences");
       accountSequence = (SequenceNode *)(iter->second);
     }
     else if(addressbook.compare(iter->first) == 0) {
-      _debug("Adding voip addressbook sequence");
+      _debug("YamlParser: Adding voip addressbook preference");
       addressbookSequence = (SequenceNode *)(iter->second);
     }
     else if(audio.compare(iter->first) == 0) {
-      _debug("Adding voip audio sequence");
+      _debug("YamlParser: Adding voip audio preference");
       audioSequence = (SequenceNode *)(iter->second);
     }
     else if(hooks.compare(iter->first) == 0) {
-      _debug("Adding voip hooks sequence");
+      _debug("YamlParser: Adding voip hooks preference");
       hooksSequence = (SequenceNode *)(iter->second);
     }
     else if(preferences.compare(iter->first) == 0) {
-      _debug("Adding voip preference sequence");
+      _debug("YamlParser: Adding voip preference preference");
       preferenceSequence = (SequenceNode *)(iter->second);
     }
     else if(voiplink.compare(iter->first) == 0) {
-      _debug("Adding voip voip sequence");
+      _debug("YamlParser: Adding voip voip preference");
       voiplinkSequence = (SequenceNode *)(iter->second);
     }
     else
@@ -464,7 +464,7 @@ void YamlParser::mainNativeDataMapping(MappingNode *map) {
 
     iter++;
   }
-  _debug("Done");
+  // _debug("Done");
 }
 
 }

@@ -79,7 +79,7 @@ YamlNode *MappingNode::getValue(Key key)
     return it->second;
   }
   else {
-    _debug("Could not fine %s", key.c_str());
+    _debug("MappingNode: Could not find %s", key.c_str());
     return NULL;
   }
 }
