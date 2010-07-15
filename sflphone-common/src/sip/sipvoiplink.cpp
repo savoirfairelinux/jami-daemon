@@ -590,7 +590,7 @@ int SIPVoIPLink::sendRegister (AccountID id)
 
     std::string contactUri = account->getContactHeader (address, portStr);
 
-    _debug ("sendRegister: fromUri: %s serverUri: %s contactUri: %s",
+    _debug ("UserAgent: sendRegister: fromUri: %s serverUri: %s contactUri: %s",
             fromUri.c_str(),
             srvUri.c_str(),
             contactUri.c_str());
@@ -607,31 +607,24 @@ int SIPVoIPLink::sendRegister (AccountID id)
     // Initializes registration
 
     // Set Route for registration passing throught one or several proxies
+    // status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
+
     status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
 
-    /*
-    if(!(account->getDomainName().empty())) {
+    if(!(account->getServiceRoute().empty())) {
 
-        _error("Set route with %s", account->getHostname().c_str());
+        _error("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
 
         pjsip_route_hdr *route_set = pjsip_route_hdr_create(_pool);
         pjsip_route_hdr *routing = pjsip_route_hdr_create(_pool);
         pjsip_sip_uri *url = pjsip_sip_uri_create(_pool, 0);
         routing->name_addr.uri = (pjsip_uri*)url;
-        pj_strdup2(_pool, &url->host, account->getHostname().c_str());
+        pj_strdup2(_pool, &url->host, account->getServiceRoute().c_str());
 
         pj_list_push_back(&route_set, pjsip_hdr_clone(_pool, routing));
 
-	status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
-
         pjsip_regc_set_route_set(regc, route_set);
     }
-    else {
-
-        status = pjsip_regc_init (regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, expire_value);
-    }
-    */
-
 
     if (status != PJ_SUCCESS) {
         _debug ("UserAgent: Unable to initialize account %d in sendRegister", status);
@@ -1480,6 +1473,23 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
     // Create the invite session for this call
     status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
 
+
+    if(!(account->getServiceRoute().empty())) {
+
+        _error("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
+
+        pjsip_route_hdr *route_set = pjsip_route_hdr_create(_pool);
+        pjsip_route_hdr *routing = pjsip_route_hdr_create(_pool);
+        pjsip_sip_uri *url = pjsip_sip_uri_create(_pool, 0);
+        routing->name_addr.uri = (pjsip_uri*)url;
+        pj_strdup2(_pool, &url->host, account->getServiceRoute().c_str());
+
+        pj_list_push_back(&route_set, pjsip_hdr_clone(_pool, routing));
+
+	pjsip_dlg_set_route_set(dialog, route_set);
+    }
+
+
     PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
 
     // Set auth information
@@ -1745,6 +1755,21 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
 	// Create the invite session for this call
 	status = pjsip_inv_create_uac (dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
 	PJ_ASSERT_RETURN (status == PJ_SUCCESS, false);
+
+	if(!(account->getServiceRoute().empty())) {
+
+	  _error("UserAgent: Set Service-Route with %s", account->getServiceRoute().c_str());
+
+	  pjsip_route_hdr *route_set = pjsip_route_hdr_create(_pool);
+	  pjsip_route_hdr *routing = pjsip_route_hdr_create(_pool);
+	  pjsip_sip_uri *url = pjsip_sip_uri_create(_pool, 0);
+	  routing->name_addr.uri = (pjsip_uri*)url;
+	  pj_strdup2(_pool, &url->host, account->getServiceRoute().c_str());
+	  
+	  pj_list_push_back(&route_set, pjsip_hdr_clone(_pool, routing));
+	  
+	  pjsip_dlg_set_route_set(dialog, route_set);
+	}
 	
 	// Set the appropriate transport
 	pjsip_tpselector *tp;
