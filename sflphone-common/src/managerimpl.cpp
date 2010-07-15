@@ -72,6 +72,7 @@
 
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
+// Default account used to get default parametersa if requested by client (to build ne account)
 SIPAccount defaultAccount("default");
 
 ManagerImpl::ManagerImpl (void) :
