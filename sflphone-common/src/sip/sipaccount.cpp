@@ -89,7 +89,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _publishedIpAddress ("")
         , _localPort (atoi (DEFAULT_SIP_PORT))
         , _publishedPort (atoi (DEFAULT_SIP_PORT))
-	, _serviceRoute("")
+	, _serviceRoute("192.168.50.90")
 	, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
         , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
         , _transport (NULL)
@@ -176,6 +176,7 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   Conf::ScalarNode interface(_interface);
   std::stringstream portstr; portstr << _localPort;
   Conf::ScalarNode port(portstr.str());
+  Conf::ScalarNode serviceRoute(_serviceRoute);
 
   Conf::ScalarNode mailbox("97");
   Conf::ScalarNode publishAddr(_publishedIpAddress);
@@ -226,10 +227,13 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   accountmap.setKeyValue(expireKey, &expire);
   accountmap.setKeyValue(interfaceKey, &interface);
   accountmap.setKeyValue(portKey, &port);
+  accountmap.setKeyValue(stunServerKey, &stunServer);
+  accountmap.setKeyValue(stunEnabledKey, &stunEnabled);
   accountmap.setKeyValue(publishAddrKey, &publishAddr);
   accountmap.setKeyValue(publishPortKey, &publishPort);
   accountmap.setKeyValue(sameasLocalKey, &sameasLocal);
   accountmap.setKeyValue(resolveOnceKey, &resolveOnce);
+  accountmap.setKeyValue(serviceRouteKey, &serviceRoute);
   accountmap.setKeyValue(dtmfTypeKey, &dtmfType);
   accountmap.setKeyValue(displayNameKey, &displayName);
   accountmap.setKeyValue(codecsKey, &codecs);
@@ -319,6 +323,8 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(map->getValue(dtmfTypeKey));
   if(val) { val = NULL; }
   // _dtmfType = atoi(val->getValue();
+  val = (Conf::ScalarNode *)(map->getValue(serviceRouteKey));
+  if(val) { _serviceRoute = val->getValue(); }
 
   // stun enabled
   val = (Conf::ScalarNode *)(map->getValue(stunEnabledKey));
@@ -489,7 +495,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
     find_in_map(CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire)
 
     setDisplayName(displayName);
-    setRouteSet(routeset);
+    setServiceRoute(routeset);
     setLocalInterface(localInterface);
     setPublishedSameasLocal((publishedSameasLocal.compare("true") == 0) ? true : false);
     setPublishedAddress(publishedAddress);
@@ -628,7 +634,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
   // Add sip specific details
   if(getType() == "SIP") {
 	    
-    a.insert(std::pair<std::string, std::string>(ROUTESET, getRouteSet()));
+    a.insert(std::pair<std::string, std::string>(ROUTESET, getServiceRoute()));
     a.insert(std::pair<std::string, std::string>(CONFIG_ACCOUNT_RESOLVE_ONCE, isResolveOnce() ? "true" : "false"));
     a.insert(std::pair<std::string, std::string>(REALM, _realm));
     a.insert(std::pair<std::string, std::string>(USERAGENT, getUseragent()));

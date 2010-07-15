@@ -60,6 +60,7 @@ const Conf::Key publishPortKey("publishPort");
 const Conf::Key sameasLocalKey("sameasLocal");
 const Conf::Key resolveOnceKey("resolveOnce");
 const Conf::Key dtmfTypeKey("dtmfType");
+const Conf::Key serviceRouteKey("serviceRoute");
 
 // TODO: write an object to store credential which implement serializable
 const Conf::Key srtpKey("srtp");
