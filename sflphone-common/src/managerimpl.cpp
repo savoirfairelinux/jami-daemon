@@ -113,10 +113,10 @@ ManagerImpl::~ManagerImpl (void) {
 
 void ManagerImpl::init () {
 
-  _debug("Manager: Init");
+        _debug("Manager: Init");
 
 	// Load accounts, init map
-	loadAccountMap();
+	buildConfiguration();
 
 	_debug("Manager: account map loaded");
 
@@ -1408,17 +1408,18 @@ void ManagerImpl::removeStream (const CallID& call_id) {
 
 //THREAD=Main
 bool ManagerImpl::saveConfig (void) {
-	_debug ("Saving Configuration to XDG directory %s ... ", _path.c_str());
+	_debug ("Manager: Saving Configuration to XDG directory %s ... ", _path.c_str());
 	audioPreference.setVolumemic(getMicVolume()); 
 	audioPreference.setVolumespkr(getSpkrVolume());
 
 	AccountMap::iterator iter = _accountMap.begin();
 
 	try{
-	  emitter = new Conf::YamlEmitter("sequenceEmitter.yml");
+	  // emitter = new Conf::YamlEmitter("sequenceEmitter.yml");
+	  emitter = new Conf::YamlEmitter(_path.c_str());
 
 	  while(iter != _accountMap.end()) {
-	    _debug("Saving account: %s", iter->first.c_str());
+	    _debug("Manager: Saving account: %s", iter->first.c_str());
 	    if(iter->first == "") {
 	      iter++;
 	      continue;
@@ -1441,7 +1442,7 @@ bool ManagerImpl::saveConfig (void) {
 	  _error("ConfigTree: %s", e.what());
 	}
 
-	_setupLoaded = _config.saveConfigTree(_path.data());
+	// _setupLoaded = _config.saveConfigTree(_path.data());
 	return _setupLoaded;
 }
 
@@ -2039,6 +2040,8 @@ int ManagerImpl::createSettingsPath (void) {
 	// Load user's configuration
 	_path = _path + DIR_SEPARATOR_STR + PROGNAME + "rc";
 
+	_path = "configurationexample.yml";
+
 	return 1;
 }
 
@@ -2046,12 +2049,14 @@ int ManagerImpl::createSettingsPath (void) {
  * Initialization: Main Thread
  */
 void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
-	_debug ("Manager: InitConfigFile");
+
+	_debug ("Manager: Init config file");
 
 	// Default values, that will be overwritten by the call to
 	// 'populateFromFile' below.
 
 	// Peer to peer settings
+	/*
 	_config.addDefaultValue(std::pair<std::string, std::string>(SRTP_ENABLE,
 			FALSE_STR), IP2IP_PROFILE);
 	_config.addDefaultValue(std::pair<std::string, std::string>(
@@ -2110,6 +2115,7 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
 			DFT_STUN_SERVER), IP2IP_PROFILE);
 	_config.addDefaultValue(std::pair<std::string, std::string>(
 			CONFIG_ACCOUNT_ALIAS, EMPTY_FIELD), IP2IP_PROFILE);
+	*/
 
 	// Init display name to the username under which
 	// this sflphone instance is running.
@@ -2123,6 +2129,7 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
 		diplayName = user_info->pw_name;
 	}
 
+	/*
 	_config.addDefaultValue(std::pair<std::string, std::string>(DISPLAY_NAME,
 			diplayName), IP2IP_PROFILE);
 
@@ -2235,16 +2242,81 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
 			PHONE_NUMBER_HOOK_ENABLED, FALSE_STR), HOOKS);
 	_config.addDefaultValue(std::pair<std::string, std::string>(
 			PHONE_NUMBER_HOOK_ADD_PREFIX, EMPTY_FIELD), HOOKS);
+	*/
 
-	std::string path;
+	std::string path; // = "configurationexample.yml";
 	// Loads config from ~/.sflphone/sflphonedrc or so..
 
 	if (createSettingsPath() == 1 && load_user_value) {
+
 		(alternate == "") ? path = _path : path = alternate;
 		std::cout << path << std::endl;
 		_exist = _config.populateFromFile(path);
 	}
+	_debug("Manager: configuration file path: %s", path.c_str());
+	
 
+	bool fileExist = true; 
+	bool out = false;
+	
+	if (path.empty()) {
+	  _error("Manager: Error: XDG config file path is empty!");
+	  fileExist = false;
+	}
+
+	std::fstream file;
+
+	file.open (path.data(), std::fstream::in);
+
+	if (!file.is_open()) {
+	  _debug("Manager: File %s not opened, create new one", path.c_str());
+	  file.open (path.data(), std::fstream::out);
+	  out = true;
+
+	  if (!file.is_open()) {
+	    _error("Manager: Error: could not create empty configurationfile!");
+            fileExist = false;
+	  }
+
+	  file.close();
+
+	  fileExist = false;
+	}
+	
+	// get length of file:
+	file.seekg (0, std::ios::end);
+	int length = file.tellg();
+	
+	file.seekg (0, std::ios::beg);
+
+	if (length <= 0) {
+	  _debug("Manager: Configuration file length is empty", length);
+	  file.close();
+	  fileExist = false; // should load config
+	}
+
+	if(fileExist) {
+	  try {
+
+	    // parser = new Conf::YamlParser("sequenceParser.yml");
+	    parser = new Conf::YamlParser(_path.c_str());
+  
+	    parser->serializeEvents();
+	  
+	    parser->composeEvents();
+	    
+	    parser->constructNativeData();
+
+	    _setupLoaded = true;
+ 
+	    _debug("Manager: Configuration file parsed successfully");
+	  }
+	  catch (Conf::YamlParserException &e) {
+	    _error("Manager: %s", e.what());
+	  }
+	}
+
+	/*
 	// Globally shared default values (not to be populated from file)
 	_config.addDefaultValue(std::pair<std::string, std::string>(HOSTNAME,
 			EMPTY_FIELD));
@@ -2284,8 +2356,11 @@ void ManagerImpl::initConfigFile (bool load_user_value, std::string alternate) {
 
 	_config.addDefaultValue(std::pair<std::string, std::string>(
 			CONFIG_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPE));
+	*/
 
-	_setupLoaded = (_exist == 2) ? false : true;
+	// _setupLoaded = (fileExist != 1) ? false : true; 
+
+	// _setupLoaded = (_exist == 2) ? false : true;
 }
 
 /**
@@ -3203,7 +3278,7 @@ bool ManagerImpl::setConfig (const std::string& section,
 }
 
 void ManagerImpl::setAccountsOrder (const std::string& order) {
-	_debug ("Setcreate accounts order : %s", order.c_str());
+	_debug ("----------------------------------------- Manager: Set accounts order : %s", order.c_str());
 	// Set the new config
 
 	preferences.setAccountOrder(order);
@@ -3458,7 +3533,7 @@ std::string ManagerImpl::addAccount (
 		newAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT,
 				newAccountID);
 	} else {
-		_debug ("Unknown %s param when calling addAccount(): %s", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+		_error("Unknown %s param when calling addAccount(): %s", CONFIG_ACCOUNT_TYPE, accountType.c_str());
 		return "";
 	}
 
@@ -3476,6 +3551,15 @@ std::string ManagerImpl::addAccount (
 
 		preferences.setAccountOrder(account_list);
 	}
+	else {
+	  newAccountID += "/";
+	  account_list = newAccountID;
+	  preferences.setAccountOrder(account_list);
+	}
+
+	_debug("AccountMap: %s", account_list.c_str());
+
+	newAccount->setVoIPLink();
 
 	saveConfig();
 
@@ -3585,42 +3669,95 @@ std::vector<std::string> ManagerImpl::loadAccountOrder (void) {
 	std::string account_list;
 	std::vector<std::string> account_vect;
 
-	Conf::Key accountOrder("order");
-
 	account_list = preferences.getAccountOrder();
+
+	_debug("Manager: Load sccount order %s", account_list.c_str());
 
 	return unserialize(account_list);
 }
 
-short ManagerImpl::loadAccountMap () {
+short ManagerImpl::buildConfiguration () {
 
-	_debug ("Manager: Loading account map");
+  _debug ("Manager: Loading account map");
 
-	int nbAccount = buildConfiguration();
+  loadIptoipProfile();
+
+  int nbAccount = loadAccountMap();
+
+  return nbAccount;
 }
 
-short ManagerImpl::buildConfiguration() {
+void ManagerImpl::loadIptoipProfile() {
 
-  _debug("Manager: Build Accounts");
+  _debug ("Manager: Create default \"account\" (used as default UDP transport)");
+
+  // build a default IP2IP account with default parameters
+  _directIpAccount = AccountCreator::createAccount(AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
+  _accountMap[IP2IP_PROFILE] = _directIpAccount;
+
+  if (_directIpAccount == NULL) {
+    _error("Manager: Failed to create default \"account\"");
+    return;
+  }
+
+  // If configuration file parsed, load saved preferences
+  if (_setupLoaded) {
+
+    _debug("Manager: Loading IP2IP profile preferences from config");
+
+    Conf::SequenceNode *seq = parser->getAccountSequence();
+
+    Conf::Sequence::iterator iterIP2IP = seq->getSequence()->begin();
+    Conf::Key accID("id");
+
+    // Iterate over every account maps
+    while(iterIP2IP != seq->getSequence()->end()) {
+
+      Conf::MappingNode *map = (Conf::MappingNode *)(*iterIP2IP);
+
+      // Get the account id 
+      Conf::ScalarNode * val = (Conf::ScalarNode *)(map->getValue(accID));
+      Conf::Value accountid = val->getValue();
+      
+      // if ID is IP2IP, unserialize
+      if(accountid == "IP2IP") {
+	
+	try {
+	  _directIpAccount->unserialize(map);
+	}
+	catch(SipAccountException &e) {
+	  _error("Manager: %s", e.what());
+	}
+	break;
+      }
+
+      iterIP2IP++;
+    }
+  }
+
+  // Force IP2IP settings to be loaded to be loaded
+  // No registration in the sense of the REGISTER method is performed.
+  _directIpAccount->registerVoIPLink();
+  
+  // SIPVoIPlink is used as a singleton, it is the first call to instance here
+  // The SIP library initialization is done in the SIPVoIPLink constructor
+  // We need the IP2IP settings to be loaded at this time as they are used
+  // for default sip transport
+  
+  // _directIpAccount->setVoIPLink(SIPVoIPLink::instance (""));
+  _directIpAccount->setVoIPLink();
+
+}
+
+short ManagerImpl::loadAccountMap() {
+
+  _debug("Manager: Load account map");
 
   // Conf::YamlParser *parser;
-  Account *tmpAccount = NULL;
   int nbAccount = 0;
 
-  try {
-
-    parser = new Conf::YamlParser("sequenceParser.yml");
-  
-    parser->serializeEvents();
-
-    parser->composeEvents();
-
-    parser->constructNativeData();
-  
-  }
-  catch (Conf::YamlParserException &e) {
-    _error("Manager: %s", e.what());
-  }
+  if(!_setupLoaded)
+    return 0;
 
   // build preferences
   preferences.unserialize((Conf::MappingNode *)(parser->getPreferenceSequence()));
@@ -3633,85 +3770,49 @@ short ManagerImpl::buildConfiguration() {
 
   // Each element in sequence is a new account to create
   Conf::Sequence::iterator iterSeq = seq->getSequence()->begin();
-  Conf::Sequence::iterator iterIP2IP = seq->getSequence()->begin();
-
-  Conf::MappingNode *map;
-
+  
   Conf::Key accTypeKey("type");
   Conf::Key accID("id");
 
-  // Build IP2IP first
-  Conf::Key iptoipID("IP2IP");
-
-  while(iterIP2IP != seq->getSequence()->end()) {
-
-    map = (Conf::MappingNode *)(*iterSeq);
-
-    Conf::ScalarNode * val = (Conf::ScalarNode *)(map->getValue(accID));
-    Conf::Value accountid = val->getValue();
-
-    if(accountid == "IP2IP") {
-      
-      _directIpAccount = AccountCreator::createAccount(AccountCreator::SIP_DIRECT_IP_ACCOUNT, "");
-
-      _debug ("Manager: Create default \"account\" (used as default UDP transport)");
-      if (_directIpAccount == NULL) {
-	_debug ("Manager: Failed to create default \"account\"");
-      } else {
-
-	_accountMap[IP2IP_PROFILE] = _directIpAccount;
-
-	// Force IP2IP settings to be loaded to be loaded
-	// No registration in the sense of the REGISTER method is performed.
-	_directIpAccount->registerVoIPLink();
-
-	// SIPVoIPlink is used as a singleton, it is the first call to instance here
-	// The SIP library initialization is done in the SIPVoIPLink constructor
-	// We need the IP2IP settings to be loaded at this time as they are used
-	// for default sip transport
-	
-	// _directIpAccount->setVoIPLink(SIPVoIPLink::instance (""));
-	_directIpAccount->setVoIPLink();
-
-	break;
-      }
-    }
-
-    iterIP2IP++;
-  }
   while(iterSeq != seq->getSequence()->end()) {
 
-    map = (Conf::MappingNode *)(*iterSeq);
-
+    Account *tmpAccount = NULL;
+    Conf::MappingNode *map = (Conf::MappingNode *)(*iterSeq);
+    
     Conf::ScalarNode * val = (Conf::ScalarNode *)(map->getValue(accTypeKey));
     Conf::Value accountType = val->getValue();
-
+      
     val = (Conf::ScalarNode *)(map->getValue(accID));
     Conf::Value accountid = val->getValue();
 
-    _debug("accountid: %s", accountid.c_str());
+    _warn("Debug: %s", accountid.c_str());
     if (accountType == "SIP" && accountid != "IP2IP") {
+      _debug("Manager: Create SIP account: %s", accountid.c_str());
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountid);
     }
     else if (accountType == "IAX" && accountid != "IP2IP") {
+      _debug("Manager: Create IAX account: %s", accountid.c_str());
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountid);
     }
 
 
     if (tmpAccount != NULL) {
-
+	
       try {
 	tmpAccount->unserialize(map);
       }
       catch(SipAccountException &e) {
 	_error("Manager: %s", e.what());
       }
-
-      _debug ("Manager: Loading account %s ", accountid.c_str());
+	
       _accountMap[accountid] = tmpAccount;
+      _debug ("Manager: Loading account %s (size %d)", accountid.c_str(), _accountMap.size());
 
       tmpAccount->setVoIPLink();
       nbAccount++;
+    }
+    else {
+      _error("Manager: Error: created account was NULL");
     }
     
     iterSeq++;
@@ -3721,7 +3822,7 @@ short ManagerImpl::buildConfiguration() {
     delete parser;
   }
   catch (Conf::YamlParserException &e) {
-    _error("AccountCreator: %s", e.what());
+    _error("Manager: %s", e.what());
   }
 
   parser = NULL;

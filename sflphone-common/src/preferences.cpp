@@ -144,6 +144,8 @@ VoipPreference::~VoipPreference() {}
 
 void VoipPreference::serialize(Conf::YamlEmitter *emitter) 
 {
+  _debug("VoipPreference: Serialize configuration");
+
   Conf::MappingNode preferencemap(NULL);
 
   Conf::ScalarNode playDtmf(_playDtmf ? "true" : "false");
@@ -333,6 +335,8 @@ AudioPreference::~AudioPreference() {}
 
 void AudioPreference::serialize(Conf::YamlEmitter *emitter) 
 {
+  _debug("AudioPreference: Serialize configuration");
+
   Conf::MappingNode preferencemap(NULL);
   Conf::MappingNode alsapreferencemap(NULL);
   Conf::MappingNode pulsepreferencemap(NULL);
@@ -387,6 +391,8 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
 
 void AudioPreference::unserialize(Conf::MappingNode *map) 
 {
+  _debug("AudioPreference: Unserialize configuration");
+
   Conf::ScalarNode *val = NULL;
 
   val = (Conf::ScalarNode *)(map->getValue(cardinKey));

@@ -1242,12 +1242,13 @@ class ManagerImpl {
     
     Account * _directIpAccount;
 
+    void loadIptoipProfile();
+
     /**
      * Load the account from configuration
      * @return short Number of account
      */
     short loadAccountMap();
-
 
     /**
      * Unload the account (delete them)

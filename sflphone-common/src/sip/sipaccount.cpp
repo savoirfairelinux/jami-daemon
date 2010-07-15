@@ -112,7 +112,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 	, _tlsRequireClientCertificate(false)
 	, _tlsNegotiationTimeoutSec("")
 	, _tlsNegotiationTimeoutMsec("")
-	, _stunServer("")
+	, _stunServer("stun.sflphone.org")
 	, _tlsEnabled(false)
 	, _stunEnabled(false)
 	  // , _routeSet("")
@@ -278,7 +278,7 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
   Conf::MappingNode *zrtpMap;
   Conf::MappingNode *credMap;
 
-  _debug("SipAccount: Unserialize");
+  _debug("SipAccount: Unserialize %s", _accountID.c_str());
 
   val = (Conf::ScalarNode *)(map->getValue(aliasKey));
   if(val) { _alias = val->getValue(); val = NULL; }
