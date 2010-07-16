@@ -574,8 +574,10 @@ namespace sfl {
         // set available byte to maxByteToGet
         int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
 
-        if (bytesAvail == 0)
-            return 0;
+        if (bytesAvail == 0) {
+	  memset(_micDataEncoded, 0, sizeof(SFLDataFormat));
+	  return _audiocodec->getFrameSize();
+	}
 
         // Get bytes from micRingBuffer to data_from_mic
         int nbSample = _manager->getAudioDriver()->getMainBuffer()->getData(_micData , bytesAvail, 100, _ca->getCallId()) / sizeof (SFLDataFormat);
@@ -693,6 +695,7 @@ namespace sfl {
     template <typename D>
     void AudioRtpSession<D>::receiveSpeakerData ()
     {
+
         if (!_audiolayer) {
             _debug ("No audiolayer available for speaker");
             return;
@@ -707,8 +710,9 @@ namespace sfl {
 	int packetTimestamp = static_cast<D*>(this)->getFirstTimestamp();
         adu = static_cast<D*>(this)->getData(packetTimestamp);
 
-	if(!adu)
+	if(!adu) {
 	  return;
+	}
 
 	unsigned char* spkrDataIn = NULL;
 	unsigned int size = 0;
@@ -722,8 +726,6 @@ namespace sfl {
 
 	  spkrDataIn  = (unsigned char*) adu->getData(); // data in char
 	  size = adu->getSize(); // size in char
-
-	  
 
 	  result = jb_put(_jbuffer, spkrDataIn, JB_TYPE_VOICE, _packetLength, _ts+=20, _currentTime);
 
@@ -758,6 +760,7 @@ namespace sfl {
     template <typename D>
     void AudioRtpSession<D>::run ()
     {
+
 	// Timestamp must be initialized randomly
 	_timestamp = static_cast<D*>(this)->getCurrentTimestamp();
 

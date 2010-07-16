@@ -947,7 +947,9 @@ void AlsaLayer::audioCallback(void)
 
     } else {
 
-        if (tone) {
+        normalAvailBytes = getMainBuffer()->availForGet();
+
+        if (tone && (normalAvailBytes <= 0)) {
 
             out = (SFLDataFormat *) malloc (playbackAvailBytes);
             tone->getNext (out, playbackAvailSmpl, spkrVolume);
@@ -957,7 +959,7 @@ void AlsaLayer::audioCallback(void)
             out = 0;
 	   
 	}
-	else if (file_tone && !_RingtoneHandle) {
+	else if (file_tone && !_RingtoneHandle && (normalAvailBytes <= 0)) {
 
 	    out = (SFLDataFormat *) malloc (playbackAvailBytes);
 	    file_tone->getNext (out, playbackAvailSmpl, spkrVolume);
@@ -985,8 +987,6 @@ void AlsaLayer::audioCallback(void)
 
             } 
 
-
-            normalAvailBytes = getMainBuffer()->availForGet();
             toGet = (normalAvailBytes < (int) maxNbBytesToGet) ? normalAvailBytes : maxNbBytesToGet;
 
             out = (SFLDataFormat*) malloc (maxNbBytesToGet);

@@ -798,7 +798,6 @@ void PulseLayer::writeToSpeaker (void)
     SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
     urgentAvailBytes = _urgentRingBuffer.AvailForGet();
 
-
     // available bytes to be written in pulseaudio internal buffer
     int writeableSize = pa_stream_writable_size (playback->pulseStream());
 
@@ -821,12 +820,16 @@ void PulseLayer::writeToSpeaker (void)
 
     } else {
 
+        // Get ringtone
         AudioLoop* tone = _manager->getTelephoneTone();
+
+	// We must test if data have been received from network in case of early media
+	normalAvailBytes = getMainBuffer()->availForGet();
 
         // flush remaining samples in _urgentRingBuffer
         flushUrgent();
 
-        if (tone != 0) {
+        if ((tone != 0) && (normalAvailBytes <= 0)) {
 
             if (playback->getStreamState() == PA_STREAM_READY) {
 
@@ -845,9 +848,7 @@ void PulseLayer::writeToSpeaker (void)
 
             int maxNbBytesToGet = 0;
 
-
             // test if audio resampling is needed
-
             if (_mainBufferSampleRate && ( (int) _audioSampleRate != _mainBufferSampleRate)) {
 
                 // upsamplefactor is used to compute the number of bytes to get in the ring buffer
@@ -861,8 +862,6 @@ void PulseLayer::writeToSpeaker (void)
                 maxNbBytesToGet = writeableSize;
 
             }
-
-            normalAvailBytes = getMainBuffer()->availForGet();
 
             byteToGet = (normalAvailBytes < (int) (maxNbBytesToGet)) ? normalAvailBytes : maxNbBytesToGet;
 
