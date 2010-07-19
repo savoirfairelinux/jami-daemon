@@ -31,6 +31,7 @@
 #include <actions.h>
 #include <calllist.h>
 #include <config.h>
+#include <logger.h>
 #include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <statusicon.h>
@@ -42,44 +43,16 @@
 
 #include "shortcuts.h"
 
-/**
- * Stop logging engine
- */
-static void
-shutdown_logging ()
-{
-  if (log4c_fini ())
-    {
-      ERROR("log4c_fini() failed");
-    }
-}
-
-/**
- * Start loggin engine
- */
-static void
-startup_logging ()
-{
-  log4c_init ();
-  if (log4c_load (DATA_DIR "/log4crc") == -1)
-    g_warning ("Cannot load log4j configuration file : %s", DATA_DIR "/log4crc");
-
-  log4c_sfl_gtk_category = log4c_category_get ("org.sflphone.gtk");
-}
-
 int
 main (int argc, char *argv[])
 {
   // Handle logging
   int i;
 
-  // Startup logging
-  startup_logging ();
-
   // Check arguments if debug mode is activated
   for (i = 0; i < argc; i++)
     if (g_strcmp0 (argv[i], "--debug") == 0)
-      log4c_category_set_priority (log4c_sfl_gtk_category, LOG4C_PRIORITY_DEBUG);
+      set_log_level (LOG_DEBUG);
 
   // Start GTK application
 
@@ -99,8 +72,6 @@ main (int argc, char *argv[])
            "Corresponding Source for a non-source form of such a combination\n" \
            "shall include the source code for the parts of OpenSSL used as well\n" \
            "as that of the covered work.\n\n");
-
-  DEBUG("Logging Started");
 
   srand (time (NULL));
 
@@ -145,9 +116,6 @@ main (int argc, char *argv[])
       /* start the main loop */
       gtk_main ();
     }
-
-  // Cleanly stop logging
-  shutdown_logging ();
 
   shortcuts_destroy_bindings();
 
