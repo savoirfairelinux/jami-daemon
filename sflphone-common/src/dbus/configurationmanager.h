@@ -103,10 +103,10 @@ public:
     bool isMd5CredentialHashing (void);
     void setMd5CredentialHashing (const bool& enabled);
     int32_t isIax2Enabled( void );
-    int32_t isRingtoneEnabled( void );
-    void ringtoneEnabled( void );
-    std::string getRingtoneChoice( void );
-    void setRingtoneChoice( const std::string& tone );
+    int32_t isRingtoneEnabled( const std::string& accountID );
+    void ringtoneEnabled( const std::string& accountID );
+    std::string getRingtoneChoice( const std::string& accountID );
+    void setRingtoneChoice( const std::string& accountID, const std::string& tone );
     std::string getRecordPath( void );
     void setRecordPath(const std::string& recPath );
 

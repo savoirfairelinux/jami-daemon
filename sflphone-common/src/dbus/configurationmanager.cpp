@@ -541,20 +541,20 @@ int32_t ConfigurationManager::isIax2Enabled(void) {
 	return Manager::instance().isIax2Enabled();
 }
 
-void ConfigurationManager::ringtoneEnabled(void) {
-	Manager::instance().ringtoneEnabled();
+void ConfigurationManager::ringtoneEnabled(const std::string& accountID) {
+	Manager::instance().ringtoneEnabled(accountID);
 }
 
-int32_t ConfigurationManager::isRingtoneEnabled(void) {
-	return Manager::instance().isRingtoneEnabled();
+int32_t ConfigurationManager::isRingtoneEnabled(const std::string& accountID) {
+        return Manager::instance().isRingtoneEnabled(accountID);
 }
 
-std::string ConfigurationManager::getRingtoneChoice(void) {
-	return Manager::instance().getRingtoneChoice();
+std::string ConfigurationManager::getRingtoneChoice(const std::string& accountID) {
+       return Manager::instance().getRingtoneChoice(accountID);
 }
 
-void ConfigurationManager::setRingtoneChoice(const std::string& tone) {
-	Manager::instance().setRingtoneChoice(tone);
+void ConfigurationManager::setRingtoneChoice(const std::string& accountID, const std::string& tone) {
+       Manager::instance().setRingtoneChoice(accountID, tone);
 }
 
 std::string ConfigurationManager::getRecordPath(void) {

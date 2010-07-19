@@ -81,7 +81,6 @@
 #define WINDOW_POSITION_Y					"Window.positionY"
 #define SHOW_STATUSICON						"Statusicon.show"
 
-
 #define IP2IP_PROFILE                       "IP2IP"    
 #define SIGNALISATION                       "VoIPLink"	                /** Section Signalisation */
 #define ZRTP_ZIDFILE                        "zidFile"                   /** The filename used for storing ZIDs */

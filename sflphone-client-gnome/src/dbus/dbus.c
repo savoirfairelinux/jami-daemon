@@ -1572,12 +1572,12 @@ dbus_set_noise_suppress_state(gchar* state)
 
 
 gchar*
-dbus_get_ringtone_choice()
+dbus_get_ringtone_choice(const gchar *accountID)
 {
   gchar* tone;
   GError* error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_get_ringtone_choice(
-      configurationManagerProxy, &tone, &error);
+      configurationManagerProxy, accountID, &tone, &error);
   if (error)
     {
       g_error_free(error);
@@ -1586,11 +1586,11 @@ dbus_get_ringtone_choice()
 }
 
 void
-dbus_set_ringtone_choice(const gchar* tone)
+dbus_set_ringtone_choice(const gchar *accountID, const gchar* tone)
 {
   GError* error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_set_ringtone_choice(
-      configurationManagerProxy, tone, &error);
+      configurationManagerProxy, accountID, tone, &error);
   if (error)
     {
       g_error_free(error);
@@ -1598,12 +1598,12 @@ dbus_set_ringtone_choice(const gchar* tone)
 }
 
 int
-dbus_is_ringtone_enabled()
+dbus_is_ringtone_enabled(const gchar *accountID)
 {
   int res;
   GError* error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_is_ringtone_enabled(
-      configurationManagerProxy, &res, &error);
+      configurationManagerProxy, accountID, &res, &error);
   if (error)
     {
       g_error_free(error);
@@ -1612,11 +1612,13 @@ dbus_is_ringtone_enabled()
 }
 
 void
-dbus_ringtone_enabled()
+dbus_ringtone_enabled(const gchar *accountID)
 {
+  DEBUG("DBUS: Ringtone enabled %s", accountID);
+
   GError* error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_ringtone_enabled(
-      configurationManagerProxy, &error);
+		 configurationManagerProxy, accountID, &error);
   if (error)
     {
       g_error_free(error);

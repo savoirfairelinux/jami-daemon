@@ -1914,7 +1914,14 @@ void ManagerImpl::ringtone () {
 
 	_debug("Manager: Ringtone");
 
-	if (isRingtoneEnabled()) {
+	Account *account = getAccount(IP2IP_PROFILE);
+
+	if(!account) {
+	  _warn("Manager: Warning: invalid account in ringtone");
+	  return;
+	}
+
+	if (account->getRingtoneEnabled()) {
 
 		_debug ("Manager: Tone is enabled");
 		//TODO Comment this because it makes the daemon crashes since the main thread
@@ -2350,17 +2357,31 @@ int ManagerImpl::isIax2Enabled (void) {
 #endif
 }
 
-int ManagerImpl::isRingtoneEnabled (void) {
-  return preferences.getRingtoneEnabled() ? 1 : 0;
+int ManagerImpl::isRingtoneEnabled (const AccountID& id) {
+  Account *account = getAccount(id);
+
+  if(!account) {
+    _warn("Manager: Warning: invalid account in ringtone enabled");
+    return 0;
+  }
+
+  return account->getRingtoneEnabled() ? 1 : 0;
 }
 
-void ManagerImpl::ringtoneEnabled (void) {
+void ManagerImpl::ringtoneEnabled (const AccountID& id) {
 
-  preferences.getRingtoneEnabled() ? preferences.setRingtoneEnabled(false) : preferences.setRingtoneEnabled(true);
+  Account *account = getAccount(id);
+
+  if(!account) {
+    _warn("Manager: Warning: invalid account in ringtone enabled");
+    return;
+  }
+
+  account->getRingtoneEnabled() ? account->setRingtoneEnabled(false) : account->setRingtoneEnabled(true);
   
 }
 
-std::string ManagerImpl::getRingtoneChoice (void) {
+std::string ManagerImpl::getRingtoneChoice (const AccountID& id) {
 	
         // retreive specified account id
         Account *account = getAccount(IP2IP_PROFILE);
@@ -2388,7 +2409,7 @@ std::string ManagerImpl::getRingtoneChoice (void) {
 	return tone_path;
 }
 
-void ManagerImpl::setRingtoneChoice (const std::string& tone) {
+void ManagerImpl::setRingtoneChoice (const std::string& tone, const AccountID& id) {
 
         _debug("Manager: Set ringtone path %s to account", tone.c_str());
 

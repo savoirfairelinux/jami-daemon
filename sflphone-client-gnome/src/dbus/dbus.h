@@ -370,25 +370,25 @@ int dbus_is_iax2_enabled( void );
  * @return int	1 if enabled
  *	        0 otherwise
  */
-int dbus_is_ringtone_enabled( void );
+int dbus_is_ringtone_enabled( const gchar *accountID );
 
 /**
  * ConfigurationManager - Set the ringtone option
  * Inverse current value
  */
-void dbus_ringtone_enabled( void );
+void dbus_ringtone_enabled( const gchar *accountID );
 
 /**
  * ConfigurationManager - Get the ringtone
  * @return gchar* The file name selected as a ringtone
  */
-gchar* dbus_get_ringtone_choice( void );
+gchar* dbus_get_ringtone_choice( const gchar *accountID );
 
 /**
  * ConfigurationManager - Set a ringtone
  * @param tone The file name of the ringtone
  */
-void dbus_set_ringtone_choice( const gchar* tone );
+void dbus_set_ringtone_choice( const gchar *accountID, const gchar* tone );
 
 /**
  * ConfigurationManager - Set the dialpad visible or not

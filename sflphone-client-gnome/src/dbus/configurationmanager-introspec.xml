@@ -338,6 +338,7 @@
 		   <tp:docstring>
 		     Return true if ringtone is enabled, false otherwise
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 		   <arg type="i" name="bool" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -348,12 +349,14 @@
 		   <tp:docstring>
 		     Unused
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 	   </method>
 
 	   <method name="getRingtoneChoice" tp:name-for-bindings="getRingtoneChoice">
 		   <tp:docstring>
 		     Get current ringtone .au file selected
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 		   <arg type="s" name="tone" direction="out">
 		     <tp:docstring>
 		     </tp:docstring>
@@ -364,6 +367,7 @@
 		   <tp:docstring>
 		     Set current ringtone .au file from list acquired using <tp:member-ref>getAccountList</tp:member-ref>
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 		   <arg type="s" name="tone" direction="in">
 		     <tp:docstring>
 		       A valid .au file path
