@@ -2390,6 +2390,8 @@ std::string ManagerImpl::getRingtoneChoice (void) {
 
 void ManagerImpl::setRingtoneChoice (const std::string& tone) {
 
+        _debug("Manager: Set ringtone path %s to account", tone.c_str());
+
         // retreive specified account id
         Account *account = getAccount(IP2IP_PROFILE);
 

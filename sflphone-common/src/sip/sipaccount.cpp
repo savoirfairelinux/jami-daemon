@@ -116,8 +116,6 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 	, _stunServer(DFT_STUN_SERVER)
 	, _tlsEnabled(false)
 	, _stunEnabled(false)
-	  // , _routeSet("")
-	  // , _tlsListenerPort("5061")
 	, _srtpEnabled(false)
 	, _srtpKeyExchange("sdes")
 	, _srtpFallback(false)
@@ -185,6 +183,8 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   Conf::ScalarNode sameasLocal(_publishedSameasLocal ? "true" : "false");
   Conf::ScalarNode resolveOnce(_resolveOnce ? "true" : "false");
   Conf::ScalarNode codecs(_codecStr);
+  Conf::ScalarNode ringtonePath(_ringtonePath);
+  Conf::ScalarNode ringtoneEnabled(_ringtoneEnabled ? "true" : "false");
   Conf::ScalarNode stunServer(_stunServer);
   Conf::ScalarNode stunEnabled(_stunEnabled ? "true" : "false");
   Conf::ScalarNode displayName(_displayName);
@@ -237,6 +237,8 @@ void SIPAccount::serialize(Conf::YamlEmitter *emitter) {
   accountmap.setKeyValue(dtmfTypeKey, &dtmfType);
   accountmap.setKeyValue(displayNameKey, &displayName);
   accountmap.setKeyValue(codecsKey, &codecs);
+  accountmap.setKeyValue(ringtonePathKey, &ringtonePath);
+  accountmap.setKeyValue(ringtoneEnabledKey, &ringtoneEnabled);
 
   accountmap.setKeyValue(srtpKey, &srtpmap);
   srtpmap.setKeyValue(srtpEnableKey, &srtpenabled);
@@ -304,6 +306,10 @@ void SIPAccount::unserialize(Conf::MappingNode *map)
 
   val = (Conf::ScalarNode *)(map->getValue(codecsKey));
   if(val) { _codecStr = val->getValue(); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(ringtonePathKey));
+  if(val) { _ringtonePath = val->getValue(); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(ringtoneEnabledKey));
+  if(val) { _ringtoneEnabled = (val->getValue() == "true") ? true : false; val = NULL; }
   
   val = (Conf::ScalarNode *)(map->getValue(expireKey));
   if(val) { _registrationExpire = val->getValue(); val = NULL; }
@@ -419,6 +425,8 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
   std::string password;
   std::string mailbox;
   std::string accountEnable;
+  std::string ringtonePath;
+  std::string ringtoneEnabled;
 
   // Account setting common to SIP and IAX
   find_in_map(CONFIG_ACCOUNT_ALIAS, alias)
@@ -428,13 +436,17 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string>& det
   find_in_map(PASSWORD, password)
   find_in_map(CONFIG_ACCOUNT_MAILBOX, mailbox);
   find_in_map(CONFIG_ACCOUNT_ENABLE, accountEnable);
+  find_in_map(CONFIG_RINGTONE_PATH, ringtonePath);
+  find_in_map(CONFIG_RINGTONE_ENABLED, ringtoneEnabled);
 
   setAlias(alias);
   setType(type);
   setUsername(username);
   setHostname(hostname);
   setPassword(password);
-  setEnabled((accountEnable.compare("true") == 0) ? true : false);
+  setEnabled((accountEnable == "true"));
+  setRingtonePath(ringtonePath);
+  setRingtoneEnabled((ringtoneEnabled == "true"));
 	       
   // SIP specific account settings
   if(getType() == "SIP") {
@@ -607,6 +619,9 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
   a.insert(std::pair<std::string, std::string>(USERNAME, getUsername()));
   a.insert(std::pair<std::string, std::string>(PASSWORD, getPassword()));
 
+  a.insert(std::pair<std::string, std::string>(CONFIG_RINGTONE_PATH, getRingtonePath()));
+  a.insert(std::pair<std::string, std::string>(CONFIG_RINGTONE_ENABLED, getRingtoneEnabled() ? "true" : "false"));
+
   RegistrationState state = Unregistered;
   std::string registrationStateCode;
   std::string registrationStateDescription;
@@ -630,6 +645,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
 	    
   a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_CODE, registrationStateCode));
   a.insert(std::pair<std::string, std::string>(REGISTRATION_STATE_DESCRIPTION, registrationStateDescription));
+
 
   // Add sip specific details
   if(getType() == "SIP") {

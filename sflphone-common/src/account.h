@@ -78,6 +78,8 @@ typedef enum RegistrationState {
 #define CONFIG_ACCOUNT_REGISTRATION_EXPIRE  "Account.expire"
 #define CONFIG_CREDENTIAL_NUMBER            "Credential.count"
 #define ACCOUNT_DTMF_TYPE                   "Account.dtmfType"
+#define CONFIG_RINGTONE_PATH                "Account.ringtonePath"
+#define CONFIG_RINGTONE_ENABLED             "Account.ringtoneEnabled"
 
 #define HOSTNAME                            "hostname"
 #define USERNAME                            "username"
@@ -142,7 +144,9 @@ const Conf::Key hostnameKey("hostname");
 const Conf::Key accountEnableKey("enable");
 const Conf::Key mailboxKey("mailbox");
 
-const Conf::Key codecsKey("codecs");		// 0/9/110/111/112/
+const Conf::Key codecsKey("codecs");   // 0/9/110/111/112/
+const Conf::Key ringtonePathKey("ringtonePath");
+const Conf::Key ringtonePathEnabledKey("ringtoneEnabled");
 const Conf::Key displayNameKey("displayName");
 
 #define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
