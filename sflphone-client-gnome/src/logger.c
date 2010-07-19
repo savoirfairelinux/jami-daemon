@@ -40,9 +40,6 @@ void internal_log(const int level, const char* format, ...)
 	if(level > log_level)
 		return;
 
-	printf("%d\n",level);
-	printf("%d\n",log_level);
-
         va_list ap;
         char *prefix = "<> ";
         char buffer[4000];
