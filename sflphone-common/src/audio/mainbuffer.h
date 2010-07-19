@@ -37,11 +37,9 @@
 #include <cc++/thread.h> // for ost::Mutex
 #include <string>
 
-#include "../global.h"
-#include "../call.h"
+#include "global.h"
+#include "call.h"
 #include "ringbuffer.h"
-
-
 
 typedef std::map<CallID, RingBuffer*> RingBufferMap;
 
@@ -51,7 +49,7 @@ typedef std::map<CallID, CallIDSet*> CallIDMap;
 
 class MainBuffer {
 
-public:
+ public:
 
         MainBuffer();
 
@@ -67,19 +65,39 @@ public:
 
 	bool removeCallIDSet(CallID set_id);
 
+	/**
+	 * Add a new call id to this set
+	 */
 	void addCallIDtoSet(CallID set_id, CallID call_id);
 
 	void removeCallIDfromSet(CallID set_id, CallID call_id);
 
+	/**
+	 * Create a new ringbuffer with default readpointer
+	 */
 	RingBuffer* createRingBuffer(CallID call_id);
 
 	bool removeRingBuffer(CallID call_id);
 
 	void bindCallID(CallID call_id1, CallID call_id2 = default_id);
 
+	/**
+	 * Add a new call_id to unidirectional outgoing stream
+	 * \param call_id New call id to be added for this stream
+	 * \param process_id Process that require this stream
+	 */
+	void bindHalfDuplexOut(CallID process_id, CallID call_id = default_id);
+
+	/**
+	 * Unbind two calls
+	 */
 	void unBindCallID(CallID call_id1, CallID call_id2 = default_id);
 
+	void unBindHalfDuplexOut(CallID process_id, CallID call_id = default_id);
+
 	void unBindAll(CallID call_id);
+
+	void unBindAllHalfDuplexOut(CallID process_id);
 
 	int putData(void *buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 
@@ -96,6 +114,8 @@ public:
 	void flushAllBuffers();
 
 	void flushDefault();
+ 
+	void syncBuffers(CallID call_id);
 
 	void stateInfo();
 
@@ -117,7 +137,7 @@ public:
 
 	SFLDataFormat* mixBuffer;
 
-	ost::Mutex _mutex;
+	// ost::Mutex _mutex;
 
 	int _internalSamplingRate;
 

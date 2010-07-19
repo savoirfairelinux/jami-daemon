@@ -203,22 +203,28 @@ void sflphone_fill_account_list (void) {
     gchar** array;
     gchar** accountID;
     unsigned int i;
-	int count;
-	GQueue *codeclist;
+    int count;
+    GQueue *codeclist;
 
-	DEBUG("SFLphone: Fill account list");
-
-	count = current_account_get_message_number ();
+    DEBUG("SFLphone: Fill account list");
+    
+    count = current_account_get_message_number ();
 
     account_list_clear ();
 
     array = (gchar **)dbus_account_list();
     if(array)
     {
+      /*
+        if(!(*accountID))
+	  DEBUG("hhhhhhhhhmmmmmmmmmmmm");
+      */
+
         for (accountID = array; *accountID; accountID++)
         {
             account_t * a = g_new0(account_t,1);
             a->accountID = g_strdup(*accountID);
+	    DEBUG("------------------- Account ID %s", a->accountID);
             a->credential_information = NULL;
 			// TODO Clean codec list QUEUE
             account_list_add(a);
@@ -521,16 +527,6 @@ sflphone_off_hold ()
         
         dbus_unhold_conference(selectedConf);
     }
-    /*
-    if(dbus_get_is_recording(selectedCall))
-    {
-        DEBUG("Currently recording!");
-    }
-    else
-    {
-        DEBUG("Not recording currently");
-    }
-    */
 }
 
 
@@ -565,7 +561,7 @@ sflphone_current( callable_obj_t * c )
 sflphone_record( callable_obj_t * c )
 {
     if( c->_state != CALL_STATE_HOLD )
-        set_timestamp (&c->_time_start);
+      set_timestamp (&c->_time_start);
     c->_state = CALL_STATE_RECORD;
     calltree_update_call(current_calls, c, NULL);
     update_actions();
@@ -1076,10 +1072,10 @@ sflphone_rec_call()
 	switch(selectedConf->_state)
 	{
             case CONFERENCE_STATE_ACTIVE_ATACHED:
-		selectedCall->_state = CONFERENCE_STATE_RECORD;
+		selectedConf->_state = CONFERENCE_STATE_RECORD;
 		break;
             case CONFERENCE_STATE_RECORD:
-		selectedCall->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
+		selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
 		break;
             default:
 		WARN("Should not happen in sflphone_off_hold ()!");
@@ -1088,9 +1084,6 @@ sflphone_rec_call()
     }
     calltree_update_call(current_calls, selectedCall, NULL);
     update_actions();
-
-    // gchar* codname = sflphone_get_current_codec_name();
-    // DEBUG("sflphone_get_current_codec_name: %s",codname);
 }
 
 void sflphone_fill_codec_list () {
@@ -1112,14 +1105,6 @@ void sflphone_fill_codec_list () {
 		}
 	}
 
-	/*
-	if (codec_list_get_size() == 0) {
-
-		// Error message
-		ERROR ("No audio codecs found");
-        dbus_unregister(getpid());
-        exit(0);
-    }*/
 }
 
 void sflphone_fill_codec_list_per_account (account_t **account) {

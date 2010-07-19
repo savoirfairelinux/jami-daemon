@@ -42,16 +42,29 @@ class Algorithm {
 
  public:
 
+  virtual void reset(void) = 0;
+
   /**
    * Put data to be processed
    */
-  virtual void putData(SFLDataFormat *inputData) = 0;
+  virtual void putData(SFLDataFormat *inputData, int nbBytes) = 0;
+
+  /**
+   *
+   */
+  virtual int getData(SFLDataFormat *outputData) = 0;
 
   /**
    * Class implementing this interface must define this function 
    * for audio processing that require synchronization between spkrdata and
    */
-  virtual void process(SFLDataFormat *inputData, SFLDataFormat *outputData) = 0;
+  virtual void process(SFLDataFormat *inputData, int nbBytes) = 0;
+
+  /**
+   * Class implementing this interface must define this function 
+   * for audio processing that require synchronization between spkrdata and
+   */
+  virtual int process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) = 0;
 
   /**
    * Class implementing this interface must define this function 
@@ -60,7 +73,7 @@ class Algorithm {
    * \param spkrData
    * \param outputData
    */
-  virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) = 0;
+  virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) = 0;
 
 };
 

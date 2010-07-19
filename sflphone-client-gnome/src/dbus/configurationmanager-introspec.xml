@@ -574,6 +574,36 @@
 		   </arg>
 	   </method>
 
+	   <method name="getEchoCancelState" tp:name-for-bindings="getEchoCancelState">
+	           <tp:docstring>
+	           </tp:docstring>
+	           <arg type="s" name="state" direction="out">
+		           <tp:docstring>
+			   </tp:docstring>
+	           </arg>
+	   </method>
+
+	   <method name="setEchoCancelState" tp:name-for-bindings="setEchoCancelState">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="s" name="state" direction="in">
+		   </arg>
+	   </method>
+
+           <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
+	           <tp:docstring>
+		   </tp:docstring>
+		   <arg type="s" name="state" direction="out">
+		           <tp:docstring>
+			   </tp:docstring>
+		   </arg>
+	   </method>
+
+	   <method name="setNoiseSuppressState" tp:name-for-binding="setNoiseSuppressState">
+	           <arg type="s" name="state" direction="in">
+	           </arg>
+	   </method>
+
 	   <!--    General Settings Panel         -->
 
 	   <method name="isMd5CredentialHashing" tp:name-for-bindings="isMd5CredentialHashing">

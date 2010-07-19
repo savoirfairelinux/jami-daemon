@@ -28,56 +28,50 @@
  *  as that of the covered work.
  */
 
-#ifndef _AUDIO_DSP_H
-#define _AUDIO_DSP_H
+#ifndef __YAMLENGINE_H__
+#define __YAMLENGINE_H__
 
-#include <math.h>
-#include <iostream>
-#include <string.h>
-#include <stdlib.h>
-#include <sstream>
+#include "engine.h"
+#include "yamlnode.h"
+#include "yamlparser.h"
+#include "yamlemitter.h"
+#include <exception>
 
-class AudioDSP
-{
+namespace Conf {
 
-public:
- 
-   AudioDSP();
+class YamlEngineException : public std::exception {
 
-   ~AudioDSP();
+  virtual const char *what() const throw() {
+    return "YamlEngineException occured";
+  }
+}; 
 
-    /**
-     * Return rms value
-     */
-    float getRMS(int data);
+class YamlEngine : public Engine {
 
-protected:
+ public:
 
-    /**
-     * Compute Rms value
-     */
-    float computeRMS();
+  YamlEngine();
 
-    /**
-     * Internal buffer pointer
-     */
-    int bufPointer_;
+  ~YamlEngine();
 
-    /**
-     * Internal buffer length
-     */ 
-    int bufferLength_;
- 
-    /**
-     * Internal buffer to compute RMS
-     */
-    float* circBuffer_;
+  virtual void openConfigFile();
 
-    /**
-     * Variable to compute RMS value
-     */ 
-    float rms;
-   
+  virtual void closeConfigFile();
+
+  virtual void write();
+
+  virtual void read();
+
+ private:
+
+  YamlParser *parser;
+
+  YamlEmitter *emitter;
+
+  YamlDocument *document;
+
 };
 
-#endif // _AUDIO_DSP_H
+}
+
+#endif

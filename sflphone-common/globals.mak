@@ -56,6 +56,9 @@ AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/sflphone\" \
 	$(ZEROCONFFLAGS) \
+	$(GSTREAMER_CFLAGS) \
+	$(LIBAVCODEC_CFLAGS) \
+	$(LIBSWSCALE_CFLAGS) \
 	$(IAX_FLAGS) \
 	$(SIP_CFLAGS) \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \

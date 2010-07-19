@@ -34,7 +34,6 @@
 
 #include "audio/audiolayer.h"
 #include "audio/samplerateconverter.h"
-#include "audio/dcblocker.h"
 #include "eventthread.h"
 #include <alsa/asoundlib.h>
 
@@ -154,6 +153,30 @@ class AlsaLayer : public AudioLayer {
     void audioCallback (void);
 
     bool isCaptureActive (void);
+
+    /**
+     * Get the echo canceller state
+     * @return true if echo cancel activated
+     */
+    virtual bool getEchoCancelState(void) { return AudioLayer::_echocancelstate; }
+
+    /**
+     * Set the echo canceller state
+     * @param state true if echocancel active, false elsewhere 
+     */
+    virtual void setEchoCancelState(bool state);
+    
+    /**
+     * Get the noise suppressor state
+     * @return true if noise suppressor activated
+     */
+    virtual bool getNoiseSuppressState(void) { return AudioLayer::_noisesuppressstate; }
+
+    /**
+     * Set the noise suppressor state
+     * @param state true if noise suppressor active, false elsewhere
+     */
+    virtual void setNoiseSuppressState(bool state);
 
   private:
   
@@ -285,9 +308,6 @@ class AlsaLayer : public AudioLayer {
 
     /** Sample rate converter object */
     SamplerateConverter* _converter;
-
-    // Allpass filter to remove DC offset
-    DcBlocker* dcblocker;
 
 };
 

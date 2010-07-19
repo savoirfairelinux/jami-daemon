@@ -40,7 +40,7 @@ namespace sfl {
     {
         public:
         AudioSymmetricRtpSession(ManagerImpl * manager, SIPCall * sipcall) :
-            ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
+      ost::SymmetricRTPSession(ost::InetHostAddress(sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
             AudioRtpSession<AudioSymmetricRtpSession>(manager, sipcall)
         {
             _debug("AudioSymmetricRtpSession initialized\n");

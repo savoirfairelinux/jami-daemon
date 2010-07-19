@@ -168,7 +168,7 @@ sflphone-client-gnome/stamp-h1
 /sflphone-common/libs/libiax2/Makefile
 /sflphone-common/libs/libiax2/iax2-config
 /sflphone-common/libs/libiax2/src/Makefile
-/sflphone-common
+
 ## dbus-c++
 /sflphone-common/libs/dbus-c++/Makefile
 /sflphone-common/libs/dbus-c++/autom4te.cache/requests

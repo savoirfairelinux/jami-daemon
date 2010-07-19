@@ -55,6 +55,9 @@
 #include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
 
 #include "audio/mainbuffer.h"
+#include "yamlemitter.h"
+#include "yamlparser.h"
+#include "preferences.h"
 
 class AudioLayer;
 class GuiFramework;
@@ -93,7 +96,6 @@ typedef std::map<CallID, Conference*> ConferenceMap;
 
 static CallID default_conf = "conf"; 
 
-
 static char * mapStateToChar[] = {
     (char*) "UNREGISTERED",
     (char*) "TRYING",
@@ -111,6 +113,18 @@ class ManagerImpl {
   public:
     ManagerImpl (void);
     ~ManagerImpl (void);
+
+    Preferences preferences;
+
+    VoipPreference voipPreferences;
+
+    AddressbookPreference addressbookPreference;
+
+    HookPreference hookPreference;
+
+    AudioPreference audioPreference;
+
+    short buildConfiguration();
 
     /**
      * Initialisation of thread (sound) and map.
@@ -563,11 +577,19 @@ class ManagerImpl {
      */
     int getAudioDeviceIndex( const std::string name );
 
-    /*
+    /**
      * Get current alsa plugin
      * @return std::string  The Alsa plugin
      */
     std::string getCurrentAudioOutputPlugin( void );
+
+    std::string getEchoCancelState(void);
+
+    void setEchoCancelState(std::string state);
+
+    std::string getNoiseSuppressState(void);
+
+    void setNoiseSuppressState(std::string state);
 
     /**
      * Convert a list of payload in a special format, readable by the server.
@@ -640,24 +662,24 @@ class ManagerImpl {
      * @return int 1 if dialpad has to be displayed
      *	       0 otherwise
      */
-    int getDialpad( void );
+    // int getDialpad( void );
 
     /**
      * Set the dialpad visible or not
      */
-    void setDialpad (bool display);
+    // void setDialpad (bool display);
 
     /**
      * Tells if the user wants to display the volume controls or not
      * @return int 1 if the controls have to be displayed
      *	       0 otherwise
      */
-    int getVolumeControls( void );
+    // int getVolumeControls( void );
 
     /**
      * Set the volume controls ( mic and speaker ) visible or not
      */
-    void setVolumeControls (bool display);
+    // void setVolumeControls (bool display);
 
     /**
      * Set recording on / off
@@ -683,9 +705,9 @@ class ManagerImpl {
      */
     int getHistoryLimit (void);
 
-    void setHistoryEnabled (void);
+    // void setHistoryEnabled (void);
 
-	std::string getHistoryEnabled (void);
+    // std::string getHistoryEnabled (void);
 
 
     /**
@@ -706,35 +728,35 @@ class ManagerImpl {
      * @return int	1 if it should popup on incoming calls
      *		0 if it should never popups
      */
-    int popupMode( void );
+    // int popupMode( void );
 
     /**
      * Configure the popup behaviour
      * When SFLphone is in the system tray, you can configure when it popups
      * Never or only on incoming calls
      */
-    void switchPopupMode( void );
+    // void switchPopupMode( void );
 
     /**
      * Determine whether or not the search bar (history) should be displayed
      */
-    int getSearchbar( void );
+    // int getSearchbar( void );
 
     /**
      * Configure the search bar behaviour
      */
-    void setSearchbar( void );
+    // void setSearchbar( void );
 
     /**
      * Set the desktop notification level
      */
-    void setNotify( void );
+    // void setNotify( void );
 
     /**
      * Get the desktop notification level
      * @return int The notification level
      */
-    int32_t getNotify( void );
+    // int32_t getNotify( void );
 
     /**
      * Set the desktop mail notification level
@@ -787,6 +809,8 @@ class ManagerImpl {
     void setAudioManager( const int32_t& api );
 
     void switchAudioManager( void );
+
+    void audioSamplingRateChanged( void );
 
     /**
      * Get the desktop mail notification level
@@ -1033,6 +1057,14 @@ class ManagerImpl {
 
     ost::Mutex* getAudioLayerMutex() { return &_audiolayer_mutex; }
     
+    /** 
+     * Helper function that creates an MD5 Hash from the credential
+     * information provided as parameters. The hash is computed as
+     * MD5(username ":" realm ":" password).
+     * 
+     */
+    std::string computeMd5HashFromCredential(const std::string& username, const std::string& password, const std::string& realm);
+
   private:
     /* Transform digest to string.
     * output must be at least PJSIP_MD5STRLEN+1 bytes.
@@ -1042,14 +1074,6 @@ class ManagerImpl {
     * NOTE: THE OUTPUT STRING IS NOT NULL TERMINATED!
     */
     void digest2str(const unsigned char digest[], char *output);
-
-    /** 
-     * Helper function that creates an MD5 Hash from the credential
-     * information provided as parameters. The hash is computed as
-     * MD5(username ":" realm ":" password).
-     * 
-     */
-    std::string computeMd5HashFromCredential(const std::string& username, const std::string& password, const std::string& realm);
 
     /**
      * Check if a process is running with the system command
@@ -1218,12 +1242,13 @@ class ManagerImpl {
     
     Account * _directIpAccount;
 
+    void loadIptoipProfile();
+
     /**
      * Load the account from configuration
      * @return short Number of account
      */
     short loadAccountMap();
-
 
     /**
      * Unload the account (delete them)
@@ -1240,8 +1265,14 @@ class ManagerImpl {
      */ 
      MainBuffer _mainBuffer;
 
-    
-   public:
+
+ public:
+
+     /**
+      * Return a pointer to the  instance of the mainbuffer
+      */
+     MainBuffer *getMainBuffer(void) { return &_mainBuffer; }
+
 
     /**
      * Tell if there is a current call processed
@@ -1299,13 +1330,11 @@ class ManagerImpl {
     int isStunEnabled (void);
     void enableStun (void);
 
-    // Map 
+    // Map containing reference between conferences and calls 
     ConferenceCallMap _conferencecall;
 
-    // 
+    // Map containing conference pointers
     ConferenceMap _conferencemap;
-
-
 
 private:
 
@@ -1326,6 +1355,9 @@ private:
      * Check if the call is a classic call or a direct IP-to-IP call
      */
     void check_call_configuration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
+
+    Conf::YamlParser *parser;
+    Conf::YamlEmitter *emitter;
 
 #ifdef TEST
     bool testCallAccountMap();

@@ -37,6 +37,7 @@
 
 #include "config/config.h"
 #include "voiplink.h"
+#include "config/serializable.h"
 
 class VoIPLink;
 
@@ -131,7 +132,22 @@ typedef enum RegistrationState {
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
 
 
-class Account{
+// General configuration keys for accounts
+const Conf::Key aliasKey("alias");
+const Conf::Key typeKey("type");
+const Conf::Key idKey("id");
+const Conf::Key usernameKey("username");
+const Conf::Key passwordKey("password");
+const Conf::Key hostnameKey("hostname");
+const Conf::Key accountEnableKey("enable");
+const Conf::Key mailboxKey("mailbox");
+
+const Conf::Key codecsKey("codecs");		// 0/9/110/111/112/
+const Conf::Key displayNameKey("displayName");
+
+#define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }
+
+class Account : public Serializable{
 
     public:
 
@@ -141,6 +157,15 @@ class Account{
          * Virtual destructor
          */
         virtual ~Account();
+
+	virtual void serialize(Conf::YamlEmitter *emitter) = 0;
+
+	virtual void unserialize(Conf::MappingNode *map) = 0;
+
+	virtual void setAccountDetails(const std::map<std::string, std::string>& details) = 0;
+
+	virtual std::map<std::string, std::string> getAccountDetails() = 0;
+	
 
         /**
          * Load the settings for this account.
@@ -179,6 +204,8 @@ class Account{
          *	     false otherwise
          */
         bool isEnabled() { return _enabled; }
+
+	void setEnabled(bool enabl) { _enabled = enabl; }
 
         /**
          * Get the registration state of the specified link
@@ -228,13 +255,18 @@ class Account{
         inline std::string getType( void ) { return _type; }
         inline void setType( std::string type ) { _type = type; }
 	
-		/**
-		 * Accessor to data structures
-		 * @return CodecOrder& The list that reflects the user's choice
-		 */
-		inline CodecOrder& getActiveCodecs() { return _codecOrder; }
+	/**
+	 * Accessor to data structures
+	 * @return CodecOrder& The list that reflects the user's choice
+	 */
+	inline CodecOrder& getActiveCodecs() { return _codecOrder; }
+	void setActiveCodecs (const std::vector <std::string>& list);
 
-		void setActiveCodecs (const std::vector <std::string>& list);
+	inline std::string getDisplayName(void) { return _displayName; }
+	inline void setDisplayName(std::string name) { _displayName = name; }
+
+	std::string getUseragent(void) { return _useragent; }
+	void setUseragent(std::string ua) { _useragent = ua; }
 
     private:
         // copy constructor
@@ -243,7 +275,7 @@ class Account{
         // assignment operator
         Account& operator=(const Account& rh);
 
-		void loadAudioCodecs (void);
+	void loadAudioCodecs (void);
 
     protected:
         /**
@@ -301,10 +333,21 @@ class Account{
          */
         std::pair<int, std::string> _registrationStateDetailed;
 
-		/**
-		 * Vector containing the order of the codecs
-		 */
-		CodecOrder _codecOrder;
+	/**
+	 * Vector containing the order of the codecs
+	 */
+	CodecOrder _codecOrder;
+
+	/**
+	 * List of codec obtained when parsing configuration and used
+	 * to generate codec order list
+	 */
+	std::string _codecStr;
+
+	// Display Name that can be used in  SIP URI.        
+        std::string _displayName;
+
+	std::string _useragent;
 
 };
 

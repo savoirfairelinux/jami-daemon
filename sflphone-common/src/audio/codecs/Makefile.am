@@ -13,10 +13,6 @@ libcodec_gsm_so_LDFLAGS = --shared -lc -lgsm
 INSTALL_GSM_RULE = install-libcodec_gsm_so
 endif
 
-if ENABLE_SPEEXDSP
-SPEEXDSP=-DHAVE_SPEEXDSP_LIB
-endif
-
 if BUILD_SPEEX
 SPEEX_NB_LIB = libcodec_speex_nb.so
 libcodec_speex_nb_so_SOURCES = speexcodec_nb.cpp

@@ -3,6 +3,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -106,6 +107,9 @@ GtkWidget * overrtp;
 
 GHashTable * directIpCallsProperties = NULL;
 
+gchar *current_username;
+
+
 // Credentials
 enum {
 	COLUMN_CREDENTIAL_REALM,
@@ -186,40 +190,51 @@ static GPtrArray* getNewCredential (GHashTable * properties) {
 	gchar *password;
 	GHashTable * new_table;   
 
+	DEBUG("shit");
+
+	if(valid == FALSE) {
+	  DEBUG("Gtk tree model iter is not valid")
+	  return NULL;
+	}
+
 	gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
-			COLUMN_CREDENTIAL_REALM, &realm,
-			COLUMN_CREDENTIAL_USERNAME, &username,
-			COLUMN_CREDENTIAL_PASSWORD, &password,
-			-1);
+			      COLUMN_CREDENTIAL_REALM, &realm,
+			      COLUMN_CREDENTIAL_USERNAME, &username,
+			      COLUMN_CREDENTIAL_PASSWORD, &password,
+			      -1);
+	DEBUG("shit");
 
 	g_hash_table_insert(properties, g_strdup(ACCOUNT_REALM), realm);
-	g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
 
+	// better use the current_username as it is the account username in the 
+	// g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), username);
+	g_hash_table_insert(properties, g_strdup(ACCOUNT_AUTHENTICATION_USERNAME), current_username);
+	  
 	// Do not change the password if nothing has been changed by the user
 	if (g_strcasecmp (password, PW_HIDDEN) != 0)
-		g_hash_table_insert(properties, g_strdup(ACCOUNT_PASSWORD), password);
+	  g_hash_table_insert(properties, g_strdup(ACCOUNT_PASSWORD), password);
 
 	valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
-
+	
 	while (valid) {        
-		gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
-				COLUMN_CREDENTIAL_REALM, &realm,
-				COLUMN_CREDENTIAL_USERNAME, &username,
-				COLUMN_CREDENTIAL_PASSWORD, &password,
-				-1);
+	  gtk_tree_model_get (GTK_TREE_MODEL(credentialStore), &iter,
+			      COLUMN_CREDENTIAL_REALM, &realm,
+			      COLUMN_CREDENTIAL_USERNAME, &username,
+			      COLUMN_CREDENTIAL_PASSWORD, &password,
+			      -1);
 
-		DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
+	  DEBUG ("Row %d: %s %s %s", row_count, username, password, realm);
 
-		new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-		g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), realm);
-		g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), username);
-		g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), password);
+	  new_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+	  g_hash_table_insert(new_table, g_strdup(ACCOUNT_REALM), realm);
+	  g_hash_table_insert(new_table, g_strdup(ACCOUNT_USERNAME), username);
+	  g_hash_table_insert(new_table, g_strdup(ACCOUNT_PASSWORD), password);
 
-		g_ptr_array_add (credential_array, new_table);
+	  g_ptr_array_add (credential_array, new_table);
+	    
+	  row_count ++;
 
-		row_count ++;
-
-		valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
+	  valid = gtk_tree_model_iter_next (GTK_TREE_MODEL(credentialStore), &iter);
 	}
 
 	return credential_array;
@@ -262,12 +277,13 @@ static GtkWidget* create_basic_tab (account_t **a)  {
 
 	int row = 0;
 
+	DEBUG("Config: Create basic account tab");
+
 	// Load from SIP/IAX/Unknown ?
 	if(currentAccount)
 	{
 		curAccountID = currentAccount->accountID;
 		curAccountType = g_hash_table_lookup(currentAccount->properties, ACCOUNT_TYPE);
-		DEBUG("Config: Current accountType %s", curAccountType);
 		curAccountEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED);
 		curAlias = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ALIAS);
 		curHostname = g_hash_table_lookup(currentAccount->properties, ACCOUNT_HOSTNAME);
@@ -433,9 +449,10 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 {
 	GtkTreeIter iter;
 	gtk_list_store_clear(credentialStore);
-	gtk_list_store_append (credentialStore, &iter);
 
 	/* This is the default, undeletable credential */
+	/*
+	// gtk_list_store_append (credentialStore, &iter);
 	gchar * authentication_name = g_hash_table_lookup(account->properties, ACCOUNT_AUTHENTICATION_USERNAME);
 	gchar * realm = g_hash_table_lookup(account->properties, ACCOUNT_REALM);        
 	if (realm == NULL || (g_strcmp0(realm, "") == 0)) {
@@ -460,7 +477,8 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 		g_signal_handlers_disconnect_by_func (G_OBJECT(entryUsername), G_CALLBACK(update_credential_cb), NULL);
 	}
 
-	if(account->credential_information == NULL) {
+	*/
+        if(account->credential_information == NULL) {
 		DEBUG("No credential defined");
 		return;
 	}
@@ -474,8 +492,7 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 				COLUMN_CREDENTIAL_REALM, g_hash_table_lookup(element, ACCOUNT_REALM), 
 				COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup(element, ACCOUNT_USERNAME), 
 				COLUMN_CREDENTIAL_PASSWORD, g_hash_table_lookup(element, ACCOUNT_PASSWORD), 
-				COLUMN_CREDENTIAL_DATA, element, // Pointer
-				-1);
+				COLUMN_CREDENTIAL_DATA, element, -1);
 	}
 }
 
@@ -805,7 +822,9 @@ GtkWidget* create_credential_widget (account_t **a) {
 
 	gtk_container_add(GTK_CONTAINER(scrolledWindowCredential), treeViewCredential);
 
+	DEBUG("Credential pas ok");
 	fill_treeview_with_credential(credentialStore, *a);
+	DEBUG("Credential ok");
 
 	/* Credential Buttons */    
 	hbox = gtk_hbox_new(FALSE, 10);
@@ -1297,7 +1316,8 @@ void show_account_window (account_t * a) {
 
     // Get current protocol for this account protocol
     gchar *currentProtocol = "SIP";
-    currentProtocol = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    if(protocolComboBox)
+        currentProtocol = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
 
     // Do not need advanced or security one for the IP2IP account
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
@@ -1322,7 +1342,8 @@ void show_account_window (account_t * a) {
     }
 
     // Emit signal to hide advanced and security tabs in case of IAX
-    g_signal_emit_by_name (GTK_WIDGET(protocolComboBox), "changed", NULL);
+    if(protocolComboBox)
+        g_signal_emit_by_name (GTK_WIDGET(protocolComboBox), "changed", NULL);
 
     gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook) ,  0);
 
@@ -1332,17 +1353,22 @@ void show_account_window (account_t * a) {
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     
     // Update protocol in case it changed
-    gchar *proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    gchar *proto = NULL;
+    if(protocolComboBox)
+        proto = (gchar *) gtk_combo_box_get_active_text(GTK_COMBO_BOX(protocolComboBox));
+    else
+      proto = "SIP";
 
     // If cancel button is pressed
     if(response == GTK_RESPONSE_CANCEL) {
       gtk_widget_destroy (GTK_WIDGET(dialog));
       return;
     }
-    
+
+    gchar *key = g_strdup(ACCOUNT_USERNAME);
+
     // If accept button is 
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
-      
 
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(ACCOUNT_ALIAS),
@@ -1362,10 +1388,13 @@ void show_account_window (account_t * a) {
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(ACCOUNT_MAILBOX),
 			   g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));   
+
+      // Variable used to update credentials
+      current_username = (gchar *)g_hash_table_lookup(currentAccount->properties, g_strdup(ACCOUNT_USERNAME));
+
     }
 
-
-    if (strcmp (proto, "SIP") == 0) {
+    if (proto && strcmp (proto, "SIP") == 0) {
       
       if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
@@ -1457,7 +1486,7 @@ void show_account_window (account_t * a) {
 
     }
     
-    if (strcmp(currentProtocol, "SIP") == 0) {
+    if (currentProtocol && strcmp(currentProtocol, "SIP") == 0) {
 
       /* Set new credentials if any */
       DEBUG("Config: Setting credentials"); 
@@ -1470,14 +1499,16 @@ void show_account_window (account_t * a) {
 	 */
 	dbus_delete_all_credential(currentAccount);
       
+	DEBUG("Config: Get new credentials");
 	GPtrArray * credential = getNewCredential(currentAccount->properties);         
 	currentAccount->credential_information = credential;
 	if(currentAccount->credential_information != NULL) {
 	  int i;
 	  for(i = 0; i < currentAccount->credential_information->len; i++) {
+	    DEBUG("Create new credential");
 	    dbus_set_credential(currentAccount, i);
 	  }
-	  dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
+	  // dbus_set_number_of_credential(currentAccount, currentAccount->credential_information->len);
 	}
       }
     }

@@ -92,6 +92,7 @@ update_actions()
   g_object_ref(holdToolbar);
   g_object_ref(offHoldToolbar);
   g_object_ref(contactButton);
+  g_object_ref(historyButton);
   g_object_ref(transferToolbar);
   g_object_ref(voicemailToolbar);
 
@@ -109,6 +110,11 @@ update_actions()
     {
       gtk_container_remove(GTK_CONTAINER (toolbar),
           GTK_WIDGET (transferToolbar));
+    }
+
+  if (is_inserted(GTK_WIDGET(historyButton), GTK_WIDGET (toolbar)))
+    {
+      gtk_container_remove(GTK_CONTAINER (toolbar), GTK_WIDGET (historyButton));
     }
 
   if (is_inserted(GTK_WIDGET(contactButton), GTK_WIDGET (toolbar)))
@@ -129,6 +135,7 @@ update_actions()
   gtk_widget_set_sensitive(GTK_WIDGET (recordWidget), FALSE);
   gtk_action_set_sensitive(GTK_ACTION (copyAction), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(contactButton), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(historyButton), FALSE);
   gtk_widget_set_tooltip_text(GTK_WIDGET (contactButton),
       _("No address book selected"));
 
@@ -143,6 +150,11 @@ update_actions()
     gtk_container_remove(GTK_CONTAINER (toolbar), GTK_WIDGET (pickUpWidget));
   gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (newCallWidget), 0);
 
+
+	if (eel_gconf_get_integer (HISTORY_ENABLED)) {
+		gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (historyButton), -1);
+		gtk_widget_set_sensitive(GTK_WIDGET(historyButton), TRUE);
+	}
   // If addressbook support has been enabled and all addressbooks are loaded, display the icon
   if (addressbook_is_enabled() && addressbook_is_ready())
     {
@@ -205,52 +217,39 @@ update_actions()
       case CALL_STATE_DIALING:
         gtk_action_set_sensitive(GTK_ACTION(pickUpAction), TRUE);
         if (active_calltree == current_calls)
-          gtk_action_set_sensitive(GTK_ACTION(hangUpAction), TRUE);
+	  gtk_action_set_sensitive(GTK_ACTION(hangUpAction), TRUE);
         //gtk_action_set_sensitive( GTK_ACTION(newCallMenu),TRUE);
         g_object_ref(newCallWidget);
-        gtk_container_remove(GTK_CONTAINER (toolbar),
-            GTK_WIDGET (newCallWidget));
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (pickUpWidget),
-            0);
+        gtk_container_remove(GTK_CONTAINER (toolbar), GTK_WIDGET (newCallWidget));
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (pickUpWidget), 0);
         if (active_calltree == current_calls)
-          gtk_toolbar_insert(GTK_TOOLBAR (toolbar),
-              GTK_TOOL_ITEM (hangUpWidget), 1);
+          gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
         break;
       case CALL_STATE_CURRENT:
       case CALL_STATE_RECORD:
         gtk_action_set_sensitive(GTK_ACTION (hangUpAction), TRUE);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-            1);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
         gtk_widget_set_sensitive(GTK_WIDGET (holdMenu), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (holdToolbar), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (transferToolbar), TRUE);
         gtk_action_set_sensitive(GTK_ACTION (recordAction), TRUE);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar),
-            2);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar),
-            GTK_TOOL_ITEM (transferToolbar), 3);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget),
-            4);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (transferToolbar), 3);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 4);
         gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
-        gtk_toggle_tool_button_set_active(
-            GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
+        gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
         gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
-
         break;
       case CALL_STATE_BUSY:
       case CALL_STATE_FAILURE:
         gtk_action_set_sensitive(GTK_ACTION(hangUpAction), TRUE);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-            1);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
         break;
       case CALL_STATE_TRANSFERT:
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-            1);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar),
-            GTK_TOOL_ITEM (transferToolbar), 2);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (transferToolbar), 2);
         gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
-        gtk_toggle_tool_button_set_active(
-            GTK_TOGGLE_TOOL_BUTTON (transferToolbar), TRUE);
+        gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON (transferToolbar), TRUE);
         gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
         gtk_action_set_sensitive(GTK_ACTION (hangUpAction), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (holdMenu), TRUE);
@@ -258,8 +257,7 @@ update_actions()
         gtk_widget_set_sensitive(GTK_WIDGET (transferToolbar), TRUE);
         break;
       default:
-        WARN("Should not happen in update_actions()!")
-        ;
+        WARN("Should not happen in update_actions()!");
         break;
         }
     }
@@ -269,48 +267,46 @@ update_actions()
       // update icon in systray
       show_status_hangup_icon();
 
-      switch (selectedConf->_state)
-        {
+      switch (selectedConf->_state) {
 
       case CONFERENCE_STATE_ACTIVE_ATACHED:
         gtk_action_set_sensitive(GTK_ACTION (hangUpAction), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (holdToolbar), TRUE);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-            1);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar),
-            2);
+	gtk_action_set_sensitive(GTK_ACTION (recordAction), TRUE);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+	gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
         break;
 
       case CONFERENCE_STATE_ACTIVE_DETACHED:
         gtk_action_set_sensitive(GTK_ACTION (hangUpAction), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (holdToolbar), TRUE);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-            1);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar),
-            2);
+	gtk_action_set_sensitive(GTK_ACTION (recordAction), TRUE);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+	gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
         break;
 
       case CONFERENCE_STATE_RECORD:
         gtk_action_set_sensitive(GTK_ACTION (hangUpAction), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (holdToolbar), TRUE);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-            1);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar),
-            2);
+	gtk_action_set_sensitive(GTK_ACTION (recordAction), TRUE);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+	gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
         break;
 
       case CONFERENCE_STATE_HOLD:
         gtk_action_set_sensitive(GTK_ACTION (hangUpAction), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (offHoldToolbar), TRUE);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget),
-            1);
-        gtk_toolbar_insert(GTK_TOOLBAR (toolbar),
-            GTK_TOOL_ITEM (offHoldToolbar), 2);
+	gtk_widget_set_sensitive(GTK_ACTION (recordAction), TRUE);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+        gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
+	gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
         break;
 
       default:
-        WARN("Should not happen in update_action()!")
-        ;
+        WARN("Should not happen in update_action()!");
         break;
 
         }
@@ -353,18 +349,20 @@ volume_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
     return;
   main_window_volume_controls(toggled);
   if (toggled || SHOW_VOLUME)
-    dbus_set_volume_controls(toggled);
+	  eel_gconf_set_integer (SHOW_VOLUME_CONTROLS, toggled);
 }
 
 static void
 dialpad_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
 {
-  gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
-  if (toggled == SHOW_DIALPAD)
-    return;
-  main_window_dialpad(toggled);
-  if (toggled || SHOW_DIALPAD)
-    dbus_set_dialpad(toggled);
+	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
+	gboolean conf_dialpad = eel_gconf_get_boolean (CONF_SHOW_DIALPAD);
+	if (toggled == conf_dialpad)
+		return;
+	main_window_dialpad (toggled);
+	if (toggled || conf_dialpad)
+		eel_gconf_set_boolean (CONF_SHOW_DIALPAD, toggled); //dbus_set_dialpad (toggled);
+
 }
 
 static void
@@ -428,7 +426,7 @@ static void
 call_minimize(void * foo UNUSED)
 {
 
-    if (g_strcasecmp (dbus_is_status_icon_enabled (), "true") == 0) {
+	if (eel_gconf_get_integer (SHOW_STATUSICON)) {
         gtk_widget_hide(GTK_WIDGET( get_main_window() ));
         set_minimized(TRUE);
     }
@@ -1457,43 +1455,31 @@ void
 create_menus(GtkUIManager *ui_manager, GtkWidget **widget)
 {
 
-  GtkWidget * menu_bar;
+	GtkWidget * menu_bar;
 
-  menu_bar = gtk_ui_manager_get_widget(ui_manager, "/MenuBar");
-  pickUpAction = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/CallMenu/PickUp");
-  newCallAction = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/CallMenu/NewCall");
-  hangUpAction = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/CallMenu/HangUp");
-  holdMenu = gtk_ui_manager_get_widget(ui_manager,
-      "/MenuBar/CallMenu/OnHoldMenu");
-  recordAction = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/CallMenu/Record");
-  copyAction = gtk_ui_manager_get_action(ui_manager, "/MenuBar/EditMenu/Copy");
-  pasteAction
-      = gtk_ui_manager_get_action(ui_manager, "/MenuBar/EditMenu/Paste");
-  volumeToggle = gtk_ui_manager_get_action(ui_manager,
-      "/MenuBar/ViewMenu/VolumeControls");
+	menu_bar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
+	pickUpAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/PickUp");
+	newCallAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/NewCall");
+	hangUpAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/HangUp");
+	holdMenu = gtk_ui_manager_get_widget (ui_manager, "/MenuBar/CallMenu/OnHoldMenu");
+	recordAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/Record");
+	copyAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/EditMenu/Copy");
+	pasteAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/EditMenu/Paste");
+	volumeToggle = gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/VolumeControls");
 
-  // Set the toggle buttons
-  gtk_toggle_action_set_active(
-      GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")),
-      (gboolean) SHOW_DIALPAD);
-  gtk_toggle_action_set_active(GTK_TOGGLE_ACTION (volumeToggle),
-      (gboolean) SHOW_VOLUME);
+	// Set the toggle buttons
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean (CONF_SHOW_DIALPAD));
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (volumeToggle), (gboolean) SHOW_VOLUME);
 
-  gtk_action_set_sensitive(GTK_ACTION (volumeToggle), SHOW_ALSA_CONF);
+	gtk_action_set_sensitive (GTK_ACTION (volumeToggle), SHOW_ALSA_CONF);
 
-  // Disable it right now
-  gtk_action_set_sensitive(
-      GTK_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Toolbar")),
-      FALSE);
+	// Disable it right now
+	gtk_action_set_sensitive (GTK_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Toolbar")), FALSE);
 
-  waitingLayer = create_waiting_icon();
-  gtk_menu_shell_append(GTK_MENU_SHELL (menu_bar), waitingLayer);
+	waitingLayer = create_waiting_icon ();
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), waitingLayer);
 
-  *widget = menu_bar;
+	*widget = menu_bar;
 }
 
 void

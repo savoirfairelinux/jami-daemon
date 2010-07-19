@@ -32,7 +32,6 @@
 #include "audiocodec.h"
 #include <cstdio>
 #include <speex/speex.h>
-#include <speex/speex_preprocess.h>
 
 class Speex : public AudioCodec
 {
@@ -45,8 +44,7 @@ class Speex : public AudioCodec
                 _speex_enc_bits(),
                 _speex_dec_state(),
                 _speex_enc_state(),
-                _speex_frame_size(),
-                _preprocess_state() {
+		_speex_frame_size() {
             _clockRate = 16000;
             _frameSize = 320; // 20 ms at 16 kHz
             _channel = 1;
@@ -77,29 +75,6 @@ class Speex : public AudioCodec
 
             speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
 
-#ifdef HAVE_SPEEXDSP_LIB
-
-            int enable = 1;
-            int quality = 10;
-            int complex = 10;
-            int attenuation = -10;
-
-            speex_encoder_ctl (_speex_enc_state, SPEEX_SET_VAD, &enable);
-            speex_encoder_ctl (_speex_enc_state, SPEEX_SET_DTX, &enable);
-            speex_encoder_ctl (_speex_enc_state, SPEEX_SET_VBR_QUALITY, &quality);
-            speex_encoder_ctl (_speex_enc_state, SPEEX_SET_COMPLEXITY, &complex);
-
-            // Init the decoder struct
-            speex_decoder_ctl (_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
-
-            // Init the preprocess struct
-            _preprocess_state = speex_preprocess_state_init (_speex_frame_size,_clockRate);
-            speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
-            speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &attenuation);
-            speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &enable);
-            speex_preprocess_ctl (_preprocess_state, SPEEX_PREPROCESS_SET_AGC, &enable);
-#endif
-
         }
 
         ~Speex() {
@@ -117,8 +92,6 @@ class Speex : public AudioCodec
             speex_encoder_destroy (_speex_enc_state);
             _speex_enc_state = 0;
 
-            speex_preprocess_state_destroy( _preprocess_state);
-            _preprocess_state = NULL;
         }
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
@@ -135,11 +108,6 @@ class Speex : public AudioCodec
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
             speex_bits_reset (&_speex_enc_bits);
 
-#ifdef HAVE_SPEEXDSP_LIB
-
-            speex_preprocess_run (_preprocess_state, src);
-#endif
-
             //printf ("Codec::codecEncode() size %i\n", size);
             speex_encode_int (_speex_enc_state, src, &_speex_enc_bits);
             int nbBytes = speex_bits_write (&_speex_enc_bits, (char*) dst, size);
@@ -154,7 +122,6 @@ class Speex : public AudioCodec
         void *_speex_dec_state;
         void *_speex_enc_state;
         int _speex_frame_size;
-        SpeexPreprocessState *_preprocess_state;
 };
 
 // the class factories

@@ -136,13 +136,11 @@ log4c_category_t* log4c_sfl_gtk_category;
 /** Tells if the main window is reduced to the system tray or not */
 #define MINIMIZED	      TRUE
 /** Behaviour of the main window on incoming calls */
-#define __POPUP_WINDOW  ( dbus_popup_mode() )
-/** Show/Hide the dialpad */
-#define SHOW_DIALPAD	( dbus_get_dialpad() )
+#define __POPUP_WINDOW  (eel_gconf_get_integer (POPUP_ON_CALL))
 /** Show/Hide the alsa configuration panel */
 #define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
 /** Show/Hide the volume controls */
-#define SHOW_VOLUME	(dbus_get_volume_controls() && SHOW_ALSA_CONF)
+#define SHOW_VOLUME	(eel_gconf_get_integer (SHOW_VOLUME_CONTROLS) && SHOW_ALSA_CONF)
 
 /** Audio Managers */
 #define ALSA	      0
@@ -178,5 +176,22 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define WARN(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_WARN, __VA_ARGS__);
 #define ERROR(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_ERROR, __VA_ARGS__);
 #define FATAL(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_FATAL, __VA_ARGS__);
+
+/**
+ * Gconf
+ */
+#define CONF_PREFIX		"/apps/sflphone-client-gnome"
+#define CONF_MAIN_WINDOW_WIDTH		CONF_PREFIX "/state/window_width"
+#define CONF_MAIN_WINDOW_HEIGHT		CONF_PREFIX "/state/window_height"
+#define CONF_MAIN_WINDOW_POSITION_X		CONF_PREFIX "/state/window_position_x"
+#define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
+/** Show/Hide the dialpad */
+#define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"	
+#define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"	
+#define SHOW_STATUSICON				CONF_PREFIX "/state/statusicon"	
+#define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
+#define START_HIDDEN				CONF_PREFIX "/state/start_hidden"
+#define POPUP_ON_CALL				CONF_PREFIX "/state/popup"
+#define HISTORY_ENABLED				CONF_PREFIX "/state/history"
 
 #endif

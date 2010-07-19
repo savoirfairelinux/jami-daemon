@@ -30,7 +30,8 @@
 #ifndef RECORDABLE_H
 #define RECORDABLE_H
 
-#include "../plug-in/audiorecorder/audiorecord.h"
+#include "audiorecord.h"
+#include "audiorecorder.h"
 
 class Recordable {
 
@@ -40,14 +41,30 @@ class Recordable {
 
 	~Recordable();
 
+	/**
+	 * Return recording state (true/false)
+	 */
 	bool isRecording(){ return recAudio.isRecording(); }
 
-	bool setRecording(){ return recAudio.setRecording(); }
+	/**
+	 * This method must be implemented for this interface as calls and conferences 
+	 * have different behavior.
+	 */ 
+	virtual bool setRecording() = 0;
 
+	/**
+	 * Stop recording
+	 */
 	void stopRecording(){ recAudio.stopRecording(); }
 
+	/**
+	 * Init the recording file name according to path specified in configuration
+	 */ 
 	void initRecFileName();
 
+	/**
+	 * Set recording sampling rate.
+	 */
 	void setRecordingSmplRate(int smplRate);
 
 	virtual std::string getRecFileId() = 0;
@@ -61,13 +78,7 @@ class Recordable {
 	 */
          AudioRecord recAudio;
 
-
-    private:
-
-	/** File name for his call : time YY-MM-DD */
-        // std::string _filename;
-
-        
+	 AudioRecorder recorder;
 
 };
 

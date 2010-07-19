@@ -141,6 +141,8 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
     _info("Audio: The state of the stream changed");
     assert (s);
 
+    char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
+
     m = (pa_threaded_mainloop*) user_data;
     assert (m);
 
@@ -156,6 +158,14 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 
         case PA_STREAM_READY:
             _info ("Audio: Stream successfully created, connected to %s", pa_stream_get_device_name (s));
+	    // pa_buffer_attr *buffattr = (pa_buffer_attr *)pa_xmalloc (sizeof(pa_buffer_attr));
+	    _debug("Audio: maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
+	    _debug("Audio: tlength %u", pa_stream_get_buffer_attr(s)->tlength);
+	    _debug("Audio: prebug %u", pa_stream_get_buffer_attr(s)->prebuf);
+	    _debug("Audio: minreq %u", pa_stream_get_buffer_attr(s)->minreq);
+	    _debug("Audio: fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
+	    _debug("Audio: samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
+	    // pa_xfree (buffattr);
             break;
 
         case PA_STREAM_UNCONNECTED:
@@ -203,44 +213,53 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 
     if (_streamType == PLAYBACK_STREAM) {
 
-        attributes->maxlength = (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes (100 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec); // -1;
+        attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
+	attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->minreq = (uint32_t) -1;
 	
 	pa_threaded_mainloop_lock(_mainloop);
+
 	if(deviceName)
 	  pa_stream_connect_playback (s , deviceName->c_str(), attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
 	else
 	  pa_stream_connect_playback (s , NULL, attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
 
+
 	pa_threaded_mainloop_unlock(_mainloop);
 
     } else if (_streamType == CAPTURE_STREAM) {
 
-        attributes->maxlength = (uint32_t) -1;
-        attributes->fragsize = pa_usec_to_bytes (50 * PA_USEC_PER_MSEC, &_sample_spec);
+      attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);// (uint32_t) -1;
+      attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);// pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+	attributes->prebuf = 0;
+        attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec); // pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+	attributes->minreq = (uint32_t) -1;
 
 	pa_threaded_mainloop_lock(_mainloop);
+
 	if(deviceName)
 	  pa_stream_connect_record (s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
 	else 
 	  pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
 
+
         pa_threaded_mainloop_unlock(_mainloop);
         
     } else if (_streamType == RINGTONE_STREAM) {
 
-      attributes->maxlength = (uint32_t) -1;
-      attributes->tlength = pa_usec_to_bytes(100 * PA_USEC_PER_MSEC, &_sample_spec);
+      attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);;
+      attributes->tlength = pa_usec_to_bytes(40 * PA_USEC_PER_MSEC, &_sample_spec);
       attributes->prebuf = 0;
+      attributes->fragsize = pa_usec_to_bytes(20 * PA_USEC_PER_MSEC, &_sample_spec);
       attributes->minreq = (uint32_t) -1;
 
       pa_threaded_mainloop_lock(_mainloop);
       if(deviceName)
 	pa_stream_connect_playback(s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
       else
-	pa_stream_connect_playback(s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+	pa_stream_connect_playback(s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY), NULL, NULL);
 
       pa_threaded_mainloop_unlock(_mainloop);
 

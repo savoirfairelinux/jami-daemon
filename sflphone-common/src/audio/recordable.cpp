@@ -30,7 +30,7 @@
 #include "recordable.h"
 #include "manager.h"
 
-Recordable::Recordable()
+Recordable::Recordable() : recorder(&recAudio, Manager::instance().getMainBuffer())
 {
 
     FILE_TYPE fileType = FILE_WAV;
@@ -61,3 +61,5 @@ void Recordable::setRecordingSmplRate (int smplRate)
     recAudio.setSndSamplingRate (smplRate);
 
 }
+
+

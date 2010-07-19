@@ -72,7 +72,6 @@ main (int argc, char *argv[])
 {
   // Handle logging
   int i;
-  gboolean statusicon = FALSE;
 
   // Startup logging
   startup_logging ();
@@ -117,13 +116,12 @@ main (int argc, char *argv[])
   if (sflphone_init ())
     {
 
-      if (g_strcasecmp (dbus_is_status_icon_enabled (), "true") == 0)
-          statusicon = TRUE;
+      if (eel_gconf_get_integer (SHOW_STATUSICON))
+		  show_status_icon ();
 
-      if (statusicon)                   show_status_icon ();
       create_main_window ();
 
-      if (statusicon && dbus_is_start_hidden ())
+      if (eel_gconf_get_integer (SHOW_STATUSICON) && eel_gconf_get_integer (START_HIDDEN))
         {
           gtk_widget_hide (GTK_WIDGET( get_main_window() ));
           set_minimized (TRUE);

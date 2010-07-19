@@ -54,20 +54,36 @@ public:
    */
   void setAlgorithm(Algorithm *_algo) { _algorithm = _algo; }
 
+
+  /**
+   * Reset parameters for the algorithm
+   */
+  void resetAlgorithm();
+
   /**
    * Put data in internal buffer
    */
-  void putData(SFLDataFormat *inputData);
+  void putData(SFLDataFormat *inputData, int nbBytes);
 
   /**
-   * Process dome audio data
+   * Get data from internal buffer
    */
-  void processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData);
+  int getData(SFLDataFormat *outputData);
+
+  /**
+   * Process some audio data
+   */
+  void processAudio(SFLDataFormat *inputData, int nbBytes);
+
+  /**
+   * Process some audio data
+   */
+  int processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
   /**
    * Process some audio data.
    */
-  void processAudio(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData);
+  void processAudio(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
 
 private:
 

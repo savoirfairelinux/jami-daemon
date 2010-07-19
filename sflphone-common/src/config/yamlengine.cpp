@@ -28,53 +28,58 @@
  *  as that of the covered work.
  */
 
-#include "audiodsp.h"
+#include "yamlengine.h"
+#include "../global.h"
 
-AudioDSP::AudioDSP()
+
+namespace Conf {
+
+YamlEngine::YamlEngine() {}
+
+YamlEngine::~YamlEngine() {}
+
+void YamlEngine::openConfigFile() 
 {
 
-    bufPointer_ = 0;
-    bufferLength_ = 1024;
-    circBuffer_ = new float[bufferLength_];
+  Conf::YamlParser *parser;
 
+  try {
+    parser = new Conf::YamlParser("sequence.yml");
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    parser->serializeEvents();
+  }
+  catch(Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    document = parser->composeEvents();
+  }
+  catch(Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
+
+  try {
+    delete parser;
+    parser = NULL;
+  }
+  catch (Conf::YamlParserException &e) {
+    _error("ConfigTree: %s", e.what());
+  }
 }
 
-
-AudioDSP::~AudioDSP()
+void YamlEngine::closeConfigFile() 
 {
-
-    delete[] circBuffer_;
-
+  
 }
 
+void YamlEngine::read() {}
 
-float AudioDSP::getRMS (int data)
-{
-    // printf("AudioDSP::getRMS() : bufPointer_ %i  ", bufPointer_);
-    printf ("AudioDSP::getRMS() : %i ", data);
-    circBuffer_[bufPointer_++] = (float) data;
-
-    if (bufPointer_ >= bufferLength_)
-        bufPointer_ = 0;
-
-    return computeRMS();
-}
-
-
-float AudioDSP::computeRMS()
-{
-
-    rms = 0.0;
-
-
-    for (int i = 0; i < bufferLength_; i++) {
-        // printf("AudioDSP::computeRMS() : i_ %i  ", i);
-        rms += (float) (circBuffer_[i]*circBuffer_[i]);
-    }
-
-    rms = sqrt (rms / (float) bufferLength_);
-
-    // printf("AudioDSP::computeRMS() : RMS VALUE: %f ", rms);
-    return rms;
+void YamlEngine::write() {}
 
 }

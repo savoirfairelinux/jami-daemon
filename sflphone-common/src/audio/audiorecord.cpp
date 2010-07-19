@@ -120,8 +120,6 @@ void AudioRecord::initFileName (std::string peerNumber)
 void AudioRecord::openFile()
 {
 
-    _info ("AudioRecord: Open file()");
-
     bool result = false;
 
     _debug ("AudioRecord: Open file()");
@@ -408,6 +406,8 @@ void AudioRecord::closeWavFile()
         return;
     }
 
+    _debug("AudioRecord: Close wave file");
+
 
     SINT32 bytes = byteCounter_ * channels_;
 
@@ -471,7 +471,7 @@ void AudioRecord::recMicData (SFLDataFormat* buffer, int nSamples)
 void AudioRecord::recData (SFLDataFormat* buffer, int nSamples)
 {
 
-    if (recordingEnabled_) {
+  if (recordingEnabled_) {
 
         if (fp == 0) {
             _debug ("AudioRecord: Can't record data, a file has not yet been opened!");
@@ -498,6 +498,8 @@ void AudioRecord::recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int
 {
 
     if (recordingEnabled_) {
+
+      _debug("Recording enabled");
 
         if (fp == 0) {
             _debug ("AudioRecord: Can't record data, a file has not yet been opened!");

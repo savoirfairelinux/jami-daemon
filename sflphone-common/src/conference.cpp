@@ -34,6 +34,7 @@
 #include "conference.h"
 #include "manager.h"
 #include "audio/audiolayer.h"
+#include "audio/mainbuffer.h"
 
 int Conference::count = 0;
 
@@ -54,7 +55,7 @@ Conference::Conference()
     _nbParticipant = 0;
     _id = conf.append (s);
 
-
+    Recordable::initRecFileName();
 
 }
 
@@ -157,3 +158,53 @@ ParticipantSet Conference::getParticipantList()
     return _participants;
 }
 
+
+
+bool Conference::setRecording() {
+
+  bool recordStatus = Recordable::recAudio.isRecording();
+
+  Recordable::recAudio.setRecording();
+
+  // start recording
+  if(!recordStatus){
+
+    MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+
+    ParticipantSet::iterator iter = _participants.begin();
+
+    CallID process_id = Recordable::recorder.getRecorderID();
+
+    while(iter != _participants.end()) {
+      mbuffer->bindHalfDuplexOut(process_id, *iter);
+      iter++;
+    }
+
+    mbuffer->bindHalfDuplexOut(process_id);
+
+    Recordable::recorder.start();
+
+  }
+  // stop recording
+  else {
+
+      MainBuffer *mbuffer = Manager::instance().getMainBuffer();      
+
+      ParticipantSet::iterator iter = _participants.begin();
+
+      CallID process_id = Recordable::recorder.getRecorderID();
+
+      while(iter != _participants.end()) {
+	mbuffer->unBindHalfDuplexOut(process_id, *iter);
+	iter++;
+      }
+
+      mbuffer->unBindHalfDuplexOut(process_id);
+
+      // Recordable::recorder.start();
+
+  }
+
+  return recordStatus;
+
+}

@@ -28,40 +28,57 @@
  *  as that of the covered work.
  */
 
-
-
 #include "dcblocker.h"
 
-DcBlocker::DcBlocker()
+DcBlocker::DcBlocker() : _y(0), _x(0), _xm1(0), _ym1(0) {}
+
+DcBlocker::~DcBlocker() {}
+
+void DcBlocker::reset()
 {
-
-    y = 0;
-    x = 0;
-    xm1 = 0;
-    ym1 = 0;
-
+  _y = 0;
+  _x = 0;
+  _xm1 = 0;
+  _ym1 = 0;
 }
 
-DcBlocker::~DcBlocker()
-{
+void DcBlocker::putData(SFLDataFormat *inputData, int nbBytes) {}
 
+int DcBlocker::getData(SFLDataFormat *outputData) { return 0; }
 
-}
-
-void DcBlocker::filter_signal (SFLDataFormat* audio_data, int length)
+void DcBlocker::process (SFLDataFormat *data, int nbBytes)
 {
     // y(n) = x(n) - x(n-1) + R y(n-1) , R = 0.9999
 
-    for (int i = 0; i < length; i++) {
+    int nbSamples = nbBytes / sizeof(SFLDataFormat); 
+    for (int i = 0; i < nbSamples; i++) {
+        _x = data[i];
 
-        x = audio_data[i];
+        _y = (SFLDataFormat) ( (float) _x - (float) _xm1 + 0.995 * (float) _ym1);
+        _xm1 = _x;
+        _ym1 = _y;
 
-        y = (SFLDataFormat) ( (float) x - (float) xm1 + 0.9999 * (float) ym1);
-        xm1 = x;
-        ym1 = y;
-
-        audio_data[i] = y;
+        data[i] = _y;
 
     }
+}
+
+int DcBlocker::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) { 
+
+  int nbSamples = nbBytes / sizeof(SFLDataFormat); 
+    for (int i = 0; i < nbSamples; i++) {
+
+        _x = inputData[i];
+
+        _y = (SFLDataFormat) ( (float) _x - (float) _xm1 + 0.9999 * (float) _ym1);
+        _xm1 = _x;
+        _ym1 = _y;
+
+        outputData[i] = _y;
+    }
+
+  return 0;
 
 }
+
+void DcBlocker::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {}

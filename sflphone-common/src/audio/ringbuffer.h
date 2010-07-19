@@ -39,7 +39,7 @@ class RingBuffer {
      * Constructor
      * @param size  Size of the buffer to create
      */
-    RingBuffer(int size, CallID call_id);
+    RingBuffer(int size, CallID call_id = default_id);
 
     /**
      * Destructor
@@ -49,24 +49,45 @@ class RingBuffer {
     CallID getBufferId(){ return buffer_id; }
 
     /**
-     * Reset the counters to 0
+     * Reset the counters to 0 for this read pointer
      */
     void flush (CallID call_id = default_id);
 
     void flushAll();
 
+    /**
+     * Get read pointer coresponding to this call
+     */ 
     int getReadPointer(CallID call_id = default_id);
 
+    /**
+     * Get the whole readpointer list for this ringbuffer
+     */
     ReadPointer* getReadPointerList() { return &_readpointer; }
 
+    /**
+     * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
+     */
     int getSmallestReadPointer();
 
+    /**
+     * Move readpointer forward by pointer_value
+     */
     void storeReadPointer(int pointer_value, CallID call_id = default_id);
 
+    /**
+     * Add a new readpointer for this ringbuffer
+     */
     void createReadPointer(CallID call_id = default_id);
 
+    /**
+     * Remove a readpointer for this ringbuffer
+     */
     void removeReadPointer(CallID call_id = default_id);
 
+    /**
+     * Test if readpointer coresponding to this call is still active
+     */
     bool hasThisReadPointer(CallID call_id);
 
     int getNbReadPointer();
