@@ -1216,18 +1216,10 @@ void ringtone_enabled(GtkWidget *widget UNUSED, gpointer fileChooser, const gcha
 
   if(isEnabled) {
     gtk_widget_set_sensitive(GTK_WIDGET(fileChooser), FALSE);
-    // dbus_ringtone_enabled(accountID);
   }
   else {
     gtk_widget_set_sensitive(GTK_WIDGET(fileChooser), TRUE);
-    // dbus_ringtone_enabled(accountID);
   }
-}
-
-void ringtone_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED, const gchar *accountID)
-{
-  // gchar* tone = gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( chooser ));
-  // dbus_set_ringtone_choice( tone, accountID);
 }
 
 
@@ -1296,7 +1288,6 @@ GtkWidget* create_codecs_configuration (account_t **a) {
 	p = g_hash_table_lookup(currentAccount->properties, g_strdup(CONFIG_RINGTONE_PATH));
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , p);
 	gtk_widget_set_sensitive(GTK_WIDGET(fileChooser), ringtoneEnabled);
-	g_signal_connect( G_OBJECT( fileChooser ) , "selection_changed" , G_CALLBACK( ringtone_changed ) , NULL );
 
 	GtkFileFilter *filter = gtk_file_filter_new();
 	gtk_file_filter_set_name( filter , _("Audio Files") );
@@ -1530,6 +1521,16 @@ void show_account_window (account_t * a) {
 	g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
 			     g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
       }
+
+      gboolean toneEnabled = gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(enableTone));
+      g_hash_table_replace(currentAccount->properties,
+			   g_strdup(CONFIG_RINGTONE_ENABLED),
+			   g_strdup(toneEnabled ? "true" : "false"));
+
+
+      g_hash_table_replace(currentAccount->properties,
+			   g_strdup(CONFIG_RINGTONE_PATH),
+			   g_strdup((gchar *)gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( fileChooser ))));
       
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(LOCAL_INTERFACE),

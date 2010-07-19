@@ -926,7 +926,7 @@ class ManagerImpl {
     /**
      * Handle played music when an incoming call occurs
      */
-    void ringtone ();
+    void ringtone (const AccountID& accountID);
 
     /**
      * Handle played music when a congestion occurs

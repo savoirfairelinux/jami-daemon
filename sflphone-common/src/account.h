@@ -146,7 +146,7 @@ const Conf::Key mailboxKey("mailbox");
 
 const Conf::Key codecsKey("codecs");   // 0/9/110/111/112/
 const Conf::Key ringtonePathKey("ringtonePath");
-const Conf::Key ringtonePathEnabledKey("ringtoneEnabled");
+const Conf::Key ringtoneEnabledKey("ringtoneEnabled");
 const Conf::Key displayNameKey("displayName");
 
 #define find_in_map(X, Y)  if((iter = map_cpy.find(X)) != map_cpy.end()) { Y = iter->second; }

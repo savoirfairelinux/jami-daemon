@@ -1613,7 +1613,7 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId) {
 		_debug ("Manager: Has no current call");
 
 		call->setConnectionState(Call::Ringing);
-		ringtone();
+		ringtone(accountId);
 
 	}
 	else {
@@ -1905,7 +1905,7 @@ void ManagerImpl::ringback () {
 /**
  * Multi Thread
  */
-void ManagerImpl::ringtone () {
+void ManagerImpl::ringtone (const AccountID& accountID) {
 	std::string ringchoice;
 	AudioLayer *audiolayer;
 	AudioCodec *codecForTone;
@@ -1914,7 +1914,7 @@ void ManagerImpl::ringtone () {
 
 	_debug("Manager: Ringtone");
 
-	Account *account = getAccount(IP2IP_PROFILE);
+	Account *account = getAccount(accountID);
 
 	if(!account) {
 	  _warn("Manager: Warning: invalid account in ringtone");
@@ -1927,7 +1927,7 @@ void ManagerImpl::ringtone () {
 		//TODO Comment this because it makes the daemon crashes since the main thread
 		//synchronizes the ringtone thread.
 
-		ringchoice = audioPreference.getRingchoice();
+		ringchoice = account->getRingtonePath();
 		//if there is no / inside the path
 
 		if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
@@ -2384,7 +2384,7 @@ void ManagerImpl::ringtoneEnabled (const AccountID& id) {
 std::string ManagerImpl::getRingtoneChoice (const AccountID& id) {
 	
         // retreive specified account id
-        Account *account = getAccount(IP2IP_PROFILE);
+        Account *account = getAccount(id);
 
 	if(!account) {
 	  _warn("Manager: Warning: Not a valid account ID for ringone choice");
@@ -2414,7 +2414,7 @@ void ManagerImpl::setRingtoneChoice (const std::string& tone, const AccountID& i
         _debug("Manager: Set ringtone path %s to account", tone.c_str());
 
         // retreive specified account id
-        Account *account = getAccount(IP2IP_PROFILE);
+        Account *account = getAccount(id);
 
 	if(!account) {
 	  _warn("Manager: Warning: Not a valid account ID for ringtone choice");
