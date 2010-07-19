@@ -40,6 +40,8 @@ Account::Account (const AccountID& accountID, std::string type) :
 	, _type (type)
 	, _codecOrder ()
 	, _codecStr("")
+	, _ringtonePath("/usr/share/sflphone/ringtones/konga.ul")
+	, _ringtoneEnabled(true)
 	, _displayName("")
 	, _useragent("SFLphone")
 {

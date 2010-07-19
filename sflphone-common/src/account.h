@@ -259,8 +259,14 @@ class Account : public Serializable{
 	 * Accessor to data structures
 	 * @return CodecOrder& The list that reflects the user's choice
 	 */
-	inline CodecOrder& getActiveCodecs() { return _codecOrder; }
+	inline CodecOrder& getActiveCodecs(void) { return _codecOrder; }
 	void setActiveCodecs (const std::vector <std::string>& list);
+
+	inline std::string getRingtonePath(void) { return _ringtonePath; }
+	inline void setRingtonePath(std::string path) { _ringtonePath = path; }
+
+	inline bool getRingtoneEnabled(void) { return _ringtoneEnabled; }
+	inline void setRingtoneEnabled(bool enabl) { _ringtoneEnabled = enabl; }
 
 	inline std::string getDisplayName(void) { return _displayName; }
 	inline void setDisplayName(std::string name) { _displayName = name; }
@@ -344,9 +350,24 @@ class Account : public Serializable{
 	 */
 	std::string _codecStr;
 
-	// Display Name that can be used in  SIP URI.        
+	/**
+	 * Ringtone .au file used for this account
+	 */
+	std::string _ringtonePath;
+
+	/**
+	 * Play ringtone when receiving a call
+	 */ 
+	bool _ringtoneEnabled;
+
+	/**
+	 * Display name when calling 
+	 */
         std::string _displayName;
 
+	/**
+	 * Useragent used for registration
+	 */
 	std::string _useragent;
 
 };

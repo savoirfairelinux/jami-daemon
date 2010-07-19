@@ -31,13 +31,14 @@
 #include "preferences.h"
 #include <sstream>
 #include "global.h"
+#include "user_cfg.h"
 
 Preferences::Preferences() :  _accountOrder("")
 			   , _audioApi(0)
 			   , _historyLimit(30)
 			   , _historyMaxCalls(20)
 			   , _notifyMails(false)
-			   , _zoneToneChoice("North America") // DFT_ZONE
+			   , _zoneToneChoice(DFT_ZONE) // DFT_ZONE
 			   , _registrationExpire(180)
 			   , _ringtoneEnabled(true) // CONFIG_RINGTONE
 			   , _portNum(5060)
@@ -131,10 +132,10 @@ void Preferences::unserialize(Conf::MappingNode *map)
 
 VoipPreference::VoipPreference() :  _playDtmf(true)
 				 , _playTones(true)
-				 , _pulseLength(250)// DFT_PULSE_LENGTH_STR   
+				 , _pulseLength(atoi(DFT_PULSE_LENGTH_STR))// DFT_PULSE_LENGTH_STR   
 				 , _sendDtmfAs(0)
 				 , _symmetricRtp(true)
-                                 , _zidFile("zidFile")// ZRTP_ZID_FILENAME
+                                 , _zidFile(ZRTP_ZIDFILE)// ZRTP_ZID_FILENAME
 {
 
 }
@@ -314,10 +315,10 @@ void HookPreference::unserialize(Conf::MappingNode *map)
 
 
 
-AudioPreference::AudioPreference() : _cardin(0) // ALSA_DFT_CARD
-				   , _cardout(0) // ALSA_DFT_CARD
-				   , _cardring(0) // ALSA_DFT_CARD
-				   , _framesize(20) // DFT_FRAME_SIZE
+AudioPreference::AudioPreference() : _cardin(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+				   , _cardout(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+				   , _cardring(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+				   , _framesize(atoi(DFT_FRAME_SIZE)) // DFT_FRAME_SIZE
 				   , _plugin("default") // PCM_DEFAULT
 				   , _smplrate(44100) // DFT_SAMPLE_RATE
 				   , _devicePlayback("")
@@ -325,8 +326,8 @@ AudioPreference::AudioPreference() : _cardin(0) // ALSA_DFT_CARD
 				   , _deviceRingtone("")
 				   , _recordpath("") // DFT_RECORD_PATH
 				   , _ringchoice("/usr/share/sflphone/ringtones/konga.ul") //DFT_RINGTONE
-				   , _volumemic(100) // DFT_VOL_SPKR_STR
-				   , _volumespkr(100) // DFT_VOL_MICRO_STR
+				   , _volumemic(atoi(DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
+				   , _volumespkr(atoi(DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
 {
 
 }

@@ -72,7 +72,7 @@ const Conf::Key sipEnabledKey("sipEnabled"); //:		false
 const Conf::Key urlCommandKey("urlCommand"); //:		x-www-browser
 const Conf::Key urlSipFieldKey("urlSipField"); //:		X-sflphone-url
 
-
+// audio preferences
 const Conf::Key alsamapKey("alsa");
 const Conf::Key pulsemapKey("pulse");
 const Conf::Key cardinKey("cardin");// : 0

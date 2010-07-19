@@ -2361,8 +2361,17 @@ void ManagerImpl::ringtoneEnabled (void) {
 }
 
 std::string ManagerImpl::getRingtoneChoice (void) {
-	// we need the absolute path
-  std::string tone_name = audioPreference.getRingchoice();
+	
+        // retreive specified account id
+        Account *account = getAccount(IP2IP_PROFILE);
+
+	if(!account) {
+	  _warn("Manager: Warning: Not a valid account ID for ringone choice");
+	  return std::string("");
+	}
+
+        // we need the absolute path
+        std::string tone_name = account->getRingtonePath();
 	std::string tone_path;
 
 	if (tone_name.find(DIR_SEPARATOR_CH) == std::string::npos) {
@@ -2374,14 +2383,23 @@ std::string ManagerImpl::getRingtoneChoice (void) {
 		tone_path = tone_name;
 	}
 
-	_debug ("%s", tone_path.c_str());
+	_debug ("Manager: get ringtone path %s", tone_path.c_str());
 
 	return tone_path;
 }
 
 void ManagerImpl::setRingtoneChoice (const std::string& tone) {
+
+        // retreive specified account id
+        Account *account = getAccount(IP2IP_PROFILE);
+
+	if(!account) {
+	  _warn("Manager: Warning: Not a valid account ID for ringtone choice");
+	  return;
+	}
+
 	// we save the absolute path
-        audioPreference.setRingchoice(tone);
+        account->setRingtonePath(tone);
 }
 
 std::string ManagerImpl::getRecordPath (void) {
@@ -2389,7 +2407,7 @@ std::string ManagerImpl::getRecordPath (void) {
 }
 
 void ManagerImpl::setRecordPath (const std::string& recPath) {
-	_debug ("ManagerImpl::setRecordPath(%s)! ", recPath.c_str());
+	_debug ("Manager: Set record path %s", recPath.c_str());
 	audioPreference.setRecordpath(recPath);
 }
 
@@ -3952,3 +3970,4 @@ std::vector<std::string> ManagerImpl::getParticipantList (
 	return v;
 }
 
+ 
