@@ -75,6 +75,16 @@ enum {
 };
 
 
+void *threaded_clock_incrementer(void *call) {
+
+  int count = 0;
+
+  while(1) {
+    printf("Clock: %d\n", count++);
+    sleep(1);
+  }
+}
+
 /**
  * Show popup menu
  */
