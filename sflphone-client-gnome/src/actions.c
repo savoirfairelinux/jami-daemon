@@ -185,6 +185,7 @@ sflphone_hung_up( callable_obj_t * c)
     calltree_remove_call(current_calls, c, NULL);
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors(c);
+    free_callable_obj_t(c);
     update_actions();
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );

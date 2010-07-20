@@ -154,6 +154,8 @@ typedef struct  {
     // thread id to increment clock
     pthread_t tid;
 
+  int clockStarted;
+
 } callable_obj_t;
 
 void create_new_call (callable_type_t, call_state_t, gchar*, gchar*, gchar*, gchar*, callable_obj_t **);

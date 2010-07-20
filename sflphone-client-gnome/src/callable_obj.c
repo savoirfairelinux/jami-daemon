@@ -129,6 +129,19 @@ void call_remove_all_errors(callable_obj_t * call)
     g_ptr_array_foreach (call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
 }
 
+void *threaded_clock_incrementer(void *pc) {
+
+  int count = 0;
+
+  callable_obj_t *call = (callable_obj_t *)pc;
+
+  while(call->clockStarted) {
+    DEBUG("Clock started: %d", call->clockStarted); 
+    DEBUG("Clock: %d\n", count++);
+    sleep(1);
+  }
+}
+
 void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
 {
 
@@ -161,6 +174,10 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     // Set the IDs
     obj->_callID = g_strdup (call_id);
     obj->_confID = NULL;
+
+    obj->clockStarted = 1;
+
+    pthread_create(&(obj->tid), NULL, threaded_clock_incrementer, obj);
 
     *new_call = obj;
 }
@@ -255,6 +272,10 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
 void free_callable_obj_t (callable_obj_t *c)
 {
+    c->clockStarted = 0;
+
+    pthread_join(c->tid, NULL);
+  
     g_free (c->_callID);
     g_free (c->_accountID);
     g_free (c->_peer_name);
