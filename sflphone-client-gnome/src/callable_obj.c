@@ -131,13 +131,43 @@ void call_remove_all_errors(callable_obj_t * call)
 
 void *threaded_clock_incrementer(void *pc) {
 
-  int count = 0;
-
   callable_obj_t *call = (callable_obj_t *)pc;
 
   while(call->clockStarted) {
-    DEBUG("Clock started: %d", call->clockStarted); 
-    DEBUG("Clock: %d\n", count++);
+
+    gchar *res;
+    int duration;
+    time_t start, current;
+
+    set_timestamp(&(call->_time_current));
+
+    start = call->_time_start;
+    current = call->_time_current;
+
+    if (current == start)
+      DEBUG("<small>Duration:</small> 0:00");
+      // return g_markup_printf_escaped("<small>Duration:</small> 0:00");
+
+    duration = (int) difftime(current, start);
+
+    if( duration / 60 == 0 )
+    {
+        if( duration < 10 )
+            res = g_markup_printf_escaped("00:0%i", duration);
+        else
+            res = g_markup_printf_escaped("00:%i", duration);
+    }
+    else
+    {
+        if( duration%60 < 10 )
+            res = g_markup_printf_escaped("%i:0%i" , duration/60 , duration%60);
+        else
+            res = g_markup_printf_escaped("%i:%i" , duration/60 , duration%60);
+    }
+    // return g_markup_printf_escaped("<small>Duration:</small> %s", res);
+
+    DEBUG("%s", res);
+
     sleep(1);
   }
 }
@@ -165,6 +195,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
     obj->_trsft_to = "";
     set_timestamp (&(obj->_time_start));
+    set_timestamp (&(obj->_time_current));
     set_timestamp (&(obj->_time_stop));
 
     if (g_strcasecmp (callID, "") == 0)
