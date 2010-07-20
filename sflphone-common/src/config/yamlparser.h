@@ -90,6 +90,8 @@ class YamlParser {
 
   SequenceNode *getVoipPreferenceSequence(void) { return voiplinkSequence; }
 
+  SequenceNode *getShortcutSequence(void) { return shortcutSequence; }
+
  private:
 
   /**
@@ -150,6 +152,8 @@ class YamlParser {
   SequenceNode *hooksSequence;
 
   SequenceNode *voiplinkSequence;
+
+  SequenceNode *shortcutSequence;
 
 };
 

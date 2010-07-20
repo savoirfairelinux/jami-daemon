@@ -146,19 +146,19 @@ default_callback ()
 static void*
 get_action_callback (const gchar* action)
 {
-  if (strcmp (action, "pick_up") == 0)
+  if (strcmp (action, SHORTCUT_PICKUP) == 0)
     return pick_up_callback;
 
-  if (strcmp (action, "hang_up") == 0)
+  if (strcmp (action, SHORTCUT_HANGUP) == 0)
     return hang_up_callback;
 
-  if (strcmp (action, "popup_window") == 0)
+  if (strcmp (action, SHORTCUT_POPUP) == 0)
     return popup_window_callback;
 
-  if (strcmp (action, "toggle_pick_up_hang_up") == 0)
+  if (strcmp (action, SHORTCUT_TOGGLEPICKUPHANGUP) == 0)
     return toggle_pick_up_hang_up_callback;
 
-  if (strcmp (action, "toggle_hold") == 0)
+  if (strcmp (action, SHORTCUT_TOGGLEHOLD) == 0)
     return toggle_hold_callback;
 
   return default_callback;

@@ -111,4 +111,7 @@ calltree_display (calltab_t *tab);
 void
 row_activated(GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
 
+void
+calltree_update_clock(callable_obj_t *c);
+
 #endif

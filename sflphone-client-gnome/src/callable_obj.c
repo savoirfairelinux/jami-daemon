@@ -168,6 +168,10 @@ void *threaded_clock_incrementer(void *pc) {
 
     DEBUG("%s", res);
 
+    calltree_update_clock(call);
+
+    g_free(res);
+
     sleep(1);
   }
 }
