@@ -130,8 +130,8 @@ popup_window_callback ()
 {
   gtk_widget_hide (GTK_WIDGET(get_main_window()));
   gtk_widget_show (GTK_WIDGET(get_main_window()));
-  gtk_window_move (GTK_WINDOW (get_main_window ()),
-      dbus_get_window_position_x (), dbus_get_window_position_y ());
+  //gtk_window_move (GTK_WINDOW (get_main_window ()),
+  //    dbus_get_window_position_x (), dbus_get_window_position_y ());
 }
 
 static void

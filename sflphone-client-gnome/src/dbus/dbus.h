@@ -391,30 +391,6 @@ gchar* dbus_get_ringtone_choice( const gchar *accountID );
 void dbus_set_ringtone_choice( const gchar *accountID, const gchar* tone );
 
 /**
- * ConfigurationManager - Set the dialpad visible or not
- */
-void dbus_set_dialpad (gboolean display);
-
-/**
- * ConfigurationManager - Tells if the user wants to display the dialpad or not
- * @return int 1 if dialpad has to be displayed
- *	       0 otherwise
- */
-int dbus_get_dialpad( void );
-
-/**
- * ConfigurationManager - Set the searchbar visible or not
- */
-void dbus_set_searchbar(  );
-
-/**
- * ConfigurationManager - Tells if the user wants to display the search bar or not
- * @return int 1 if the search bar has to be displayed
- *	       0 otherwise
- */
-int dbus_get_searchbar( void );
-
-/**
  * ConfigurationManager - Gives the maximum number of days the user wants to have in the history
  * @return double The maximum number of days
  */
@@ -571,15 +547,6 @@ void dbus_set_confirm_go_clear (const callable_obj_t * c);
 gchar** dbus_get_supported_tls_method();
 
 gchar** dbus_get_participant_list (const char * confID);
-
-guint dbus_get_window_width (void);
-guint dbus_get_window_height (void);
-void dbus_set_window_height (const guint height);
-void dbus_set_window_width (const guint width);
-guint dbus_get_window_position_x (void);
-guint dbus_get_window_position_y (void);
-void dbus_set_window_position_x (const guint posx);
-void dbus_set_window_position_y (const guint posy);
 
 GHashTable* dbus_get_shortcuts(void);
 void dbus_set_shortcuts(GHashTable * shortcuts);
