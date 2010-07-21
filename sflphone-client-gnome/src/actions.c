@@ -189,6 +189,8 @@ sflphone_ringing(callable_obj_t * c )
     void
 sflphone_hung_up( callable_obj_t * c)
 {
+    DEBUG("Actions: SFLphone hungup");
+
     calllist_remove( current_calls, c->_callID);
     calltree_remove_call(current_calls, c, NULL);
     c->_state = CALL_STATE_DIALING;
@@ -228,7 +230,7 @@ void sflphone_fill_account_list (void) {
         if(!(*accountID))
 	  DEBUG("hhhhhhhhhmmmmmmmmmmmm");
       */
-
+      
         for (accountID = array; *accountID; accountID++)
         {
             account_t * a = g_new0(account_t,1);
@@ -321,10 +323,10 @@ void sflphone_fill_account_list (void) {
         a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
     }
 
-	// Set the current account message number
-	current_account_set_message_number (count);
-
-	sflphone_fill_codec_list ();
+    // Set the current account message number
+    current_account_set_message_number (count);
+    
+    sflphone_fill_codec_list ();
 }
 
 gboolean sflphone_init() {

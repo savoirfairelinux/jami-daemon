@@ -135,6 +135,8 @@ void *threaded_clock_incrementer(void *pc) {
 
   while(call->clockStarted) {
 
+    DEBUG("CLOCK STARTED: %d", call->clockStarted);
+
     gchar *res;
     int duration;
     time_t start, current;
@@ -169,8 +171,6 @@ void *threaded_clock_incrementer(void *pc) {
     DEBUG("%s", res);
 
     calltree_update_clock(call);
-
-    g_free(res);
 
     sleep(1);
   }
