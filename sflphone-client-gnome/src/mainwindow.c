@@ -412,17 +412,29 @@ main_window_volume_controls (gboolean state)
 }
 
 	void
-statusbar_push_message (const gchar * message, guint id)
+statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_message, guint id)
 {
-  // DEBUG("Message: %s", message);
+  // The actual message to be push in the statusbar
+  gchar *message_to_display;
 
-  // if(id == __MSG_ACCOUNT_DEFAULT)
+  
   pthread_mutex_lock(&statusbar_message_mutex);
 
   g_free(status_current_message);
-  status_current_message = g_strdup(message);
+  // store the left hand message so that it can be reused in case of clock update
+  status_current_message = g_strdup(left_hand_message);
 
-  gtk_statusbar_push (GTK_STATUSBAR(statusBar), id, message);
+  // Format message according to right hand member
+  if(right_hand_message)
+    message_to_display = g_strdup_printf("%s           %s"
+					 , left_hand_message, right_hand_message);
+  else
+    message_to_display = g_strdup(left_hand_message);
+
+  // Push into the statusbar
+  gtk_statusbar_push (GTK_STATUSBAR(statusBar), id, message_to_display);
+
+  g_free(message_to_display);
   
   pthread_mutex_unlock(&statusbar_message_mutex);
 }
@@ -442,13 +454,11 @@ statusbar_update_clock(gchar *msg)
   message = g_strdup(status_current_message);
   pthread_mutex_unlock(&statusbar_message_mutex);
 
-  DEBUG("------------------------------ MESSAGE %s", message);
-
   if(message) {
-      DEBUG("STATUS CURRENT MESSAGE %s", status_current_message);
+    // DEBUG("STATUS CURRENT MESSAGE %s", status_current_message);
 
       statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-      statusbar_push_message(message, __MSG_ACCOUNT_DEFAULT);
+      statusbar_push_message(message, msg, __MSG_ACCOUNT_DEFAULT);
   }
 
   g_free(message);

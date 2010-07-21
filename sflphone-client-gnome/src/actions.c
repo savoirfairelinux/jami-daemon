@@ -137,7 +137,7 @@ status_bar_display_account ()
 	status_tray_icon_online(FALSE);
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
-    statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+    statusbar_push_message( msg, NULL,  __MSG_ACCOUNT_DEFAULT);
     g_free(msg);
 
     DEBUG("status_bar_display_account_end");
@@ -607,7 +607,7 @@ sflphone_unset_transfert()
     void
 sflphone_display_transfer_status(const gchar* message)
 {
-    statusbar_push_message( message , __MSG_ACCOUNT_DEFAULT);
+  statusbar_push_message( message , NULL, __MSG_ACCOUNT_DEFAULT);
 }
 
     void
@@ -626,7 +626,7 @@ sflphone_incoming_call (callable_obj_t * c)
     if(_is_direct_call(c)) {
 		msg = g_markup_printf_escaped (_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message( msg , NULL, __MSG_ACCOUNT_DEFAULT);
         g_free(msg);
 	}
 }
@@ -956,7 +956,7 @@ sflphone_place_call ( callable_obj_t * c )
     if(_is_direct_call(c)) {
 		msg = g_markup_printf_escaped (_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message( msg , NULL, __MSG_ACCOUNT_DEFAULT);
         g_free(msg);
         if(_place_direct_call(c) < 0) {
             DEBUG("An error occured while placing direct call in %s at %d", __FILE__, __LINE__);

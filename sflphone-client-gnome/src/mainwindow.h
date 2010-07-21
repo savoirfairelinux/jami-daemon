@@ -94,10 +94,11 @@ void main_window_info_message(gchar * markup);
 
 /**
  * Push a message on the statusbar stack
- * @param message The message to display
+ * @param left_hand_message The message to display on the left side
+ * @param right_hand_message The message to display on the right side 
  * @param id  The identifier of the message
  */
-void statusbar_push_message( const gchar* message , guint id );
+void statusbar_push_message( const gchar *left_hand_message, const gchar *right_hand_message, guint id );
 
 /**
  * Pop a message from the statusbar stack
