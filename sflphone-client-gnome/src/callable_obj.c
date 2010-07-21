@@ -135,8 +135,6 @@ void *threaded_clock_incrementer(void *pc) {
 
   while(call->clockStarted) {
 
-    DEBUG("CLOCK STARTED: %d", call->clockStarted);
-
     gchar *res;
     int duration;
     time_t start, current;
@@ -147,32 +145,29 @@ void *threaded_clock_incrementer(void *pc) {
     current = call->_time_current;
 
     if (current == start) {
-      // DEBUG("<small>Duration:</small> 0:00");
-      call->_timestr = g_strdup_printf("00:00"); // g_markup_printf_escaped("00:00");
+      g_snprintf(call->_timestr, 20, "00:00");
     }
 
     duration = (int) difftime(current, start);
 
     if( duration / 60 == 0 )
     {
-        if( duration < 10 )
-	  call->_timestr = g_strdup_printf("00:0%d", duration); // g_markup_printf_escaped("00:0%d", duration);
-        else
-	  call->_timestr = g_strdup_printf("00:%d", duration); // g_markup_printf_escaped("00:%d", duration);
+      if( duration < 10 ) {
+	g_snprintf(call->_timestr, 20, "00:0%d", duration);
+      }
+      else {
+	g_snprintf(call->_timestr, 20, "00:%d", duration);
+      }
     }
     else
     {
-        if( duration%60 < 10 )
-	  call->_timestr = g_strdup_printf("0%d:0%d", duration/60, duration%60); // g_markup_printf_escaped("0%d:0%d" , duration/60 , duration%60);
-        else
-	  call->_timestr = g_strdup_printf("%d:%d", duration/60, duration%60); // g_markup_printf_escaped("%d:%d" , duration/60 , duration%60);
+      if( duration%60 < 10 ) {
+	g_snprintf(call->_timestr, 20, "0%d:0%d", duration/60, duration%60);
+      }
+      else {
+	g_snprintf(call->_timestr, 20, "%d:%d", duration/60, duration%60);
+      }
     }
-    // return g_markup_printf_escaped("<small>Duration:</small> %s", res);
-
-    // call->_timestr = res;
-
-    // DEBUG("PRINT THE CLOCK")
-      // DEBUG("CLOCK %s", call->_timestr);
 
     calltree_update_clock();
 
@@ -205,7 +200,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     set_timestamp (&(obj->_time_start));
     set_timestamp (&(obj->_time_current));
     set_timestamp (&(obj->_time_stop));
-    obj->_timestr = NULL;
+    g_snprintf(obj->_timestr, 20, "00:00");
 
     if (g_strcasecmp (callID, "") == 0)
         call_id = generate_call_id ();
