@@ -1406,12 +1406,14 @@ void calltree_display (calltab_t *tab) {
 }
 
 
-void
-calltree_update_clock(callable_obj_t *c) {
+void calltree_update_clock() {
   DEBUG("UPDATE CLOCK");
 
   // TODO this make the whole thing crash...
   // calltree_update_call(current_calls, c, NULL);
+
+  if(selected_call)
+    statusbar_update_clock(selected_call->_timestr);
 }
 
 

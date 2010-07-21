@@ -105,6 +105,13 @@ void statusbar_push_message( const gchar* message , guint id );
  */
 void statusbar_pop_message( guint id );
 
+/**
+ * Update selected call's clock in statusbar
+ * @param id  The identifier of the message
+ */
+void statusbar_update_clock( gchar *time);
+
+
 //static gboolean
 //on_key_released (GtkWidget *widget, GdkEventKey *event,
 //                 gpointer user_data);

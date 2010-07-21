@@ -155,22 +155,24 @@ void *threaded_clock_incrementer(void *pc) {
     if( duration / 60 == 0 )
     {
         if( duration < 10 )
-            res = g_markup_printf_escaped("00:0%i", duration);
+            call->_timestr = g_markup_printf_escaped("00:0%i", duration);
         else
-            res = g_markup_printf_escaped("00:%i", duration);
+	    call->_timestr = g_markup_printf_escaped("00:%i", duration);
     }
     else
     {
         if( duration%60 < 10 )
-            res = g_markup_printf_escaped("%i:0%i" , duration/60 , duration%60);
+	    call->_timestr = g_markup_printf_escaped("%i:0%i" , duration/60 , duration%60);
         else
-            res = g_markup_printf_escaped("%i:%i" , duration/60 , duration%60);
+            call->_timestr = g_markup_printf_escaped("%i:%i" , duration/60 , duration%60);
     }
     // return g_markup_printf_escaped("<small>Duration:</small> %s", res);
 
-    DEBUG("%s", res);
+    // call->_timestr = res;
 
-    calltree_update_clock(call);
+    DEBUG("%s", call->_timestr);
+
+    calltree_update_clock();
 
     sleep(1);
   }
