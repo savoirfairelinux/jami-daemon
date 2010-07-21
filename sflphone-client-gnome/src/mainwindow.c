@@ -454,7 +454,6 @@ statusbar_update_clock(gchar *msg)
   pthread_mutex_unlock(&statusbar_message_mutex);
 
   if(message) {
-      DEBUG("CLOCK %s", msg);
 
       statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
       statusbar_push_message(message, msg, __MSG_ACCOUNT_DEFAULT);

@@ -1414,15 +1414,9 @@ void calltree_update_clock() {
   if(!(selected_call->_timestr))
     return;
 
-  // DEBUG("UPDATE CLOCK %s", selected_call->_timestr);
-
   // TODO this make the whole thing crash...
   // calltree_update_call(current_calls, c, NULL);
   statusbar_update_clock(selected_call->_timestr);
-
-  // set the time string to NULL once displayed
-  // g_free(selected_call->_timestr);
-  // selected_call->_timestr = NULL;
 }
 
 
