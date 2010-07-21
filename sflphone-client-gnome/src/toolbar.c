@@ -47,7 +47,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
     account_id = g_strdup (current->accountID);
 
     create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _("Voicemail"), to, &mailbox_call);
-    DEBUG("TO : %s" , mailbox_call->_peer_number);
+    DEBUG("Call: TO : %s" , mailbox_call->_peer_number);
     calllist_add( current_calls , mailbox_call );
     calltree_add_call( current_calls, mailbox_call, NULL);
     update_actions();
@@ -61,7 +61,6 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
     static void
 call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
-    DEBUG("------ call_button -----");
     callable_obj_t * selectedCall;
     callable_obj_t* new_call;
 

@@ -735,6 +735,8 @@ std::map<std::string, std::string> ConfigurationManager::getShortcuts() {
 		shortcutsMap.insert(std::pair<std::string, std::string>(key, shortcut));
 	}
 
+	return Manager::instance().shortcutPreferences.getShortcuts();
+
 	return shortcutsMap;
 }
 

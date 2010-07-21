@@ -38,6 +38,9 @@ GQueue * accountQueue;
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 gint is_accountID_struct ( gconstpointer a, gconstpointer b) {
 
+	if(!a || !b)
+	  return 1;
+
 	account_t * c = (account_t*)a;
 	if(strcmp(c->accountID, (gchar*) b) == 0)
 	{
@@ -150,7 +153,7 @@ account_list_get_current( )
 	// So we get the first one
 	current = account_list_get_by_state (ACCOUNT_STATE_REGISTERED);
 	if (!current)
-		return NULL;
+	  return NULL;
 
 	return current;
 }
@@ -248,12 +251,14 @@ account_list_get_registered_accounts( void )
 {
 	guint res = 0;
 	unsigned int i;
+	
 	for(i=0;i<account_list_get_size();i++)
 	{
+
 		if( account_list_get_nth( i ) -> state == ( ACCOUNT_STATE_REGISTERED ))
 			res ++;
 	}
-	DEBUG(" %d registered accounts" , res );
+	DEBUG("Account: %d registered accounts" , res );
 	return res;
 }
 

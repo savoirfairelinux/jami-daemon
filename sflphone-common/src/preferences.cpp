@@ -97,6 +97,9 @@ void Preferences::unserialize(Conf::MappingNode *map)
 
   Conf::ScalarNode *val;
 
+  if(!map)
+      return;
+
   val = (Conf::ScalarNode *)(map->getValue(orderKey));
   if(val) { _accountOrder = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(audioApiKey));
@@ -170,6 +173,9 @@ void VoipPreference::unserialize(Conf::MappingNode *map)
 
   Conf::ScalarNode *val = NULL;
 
+  if(!map)
+      return;
+
   val = (Conf::ScalarNode *)(map->getValue(playDtmfKey));
   if(val && !val->getValue().empty()) { _playDtmf = (val->getValue().compare("true") == 0) ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(playTonesKey));
@@ -233,6 +239,9 @@ void AddressbookPreference::unserialize(Conf::MappingNode *map)
 
   Conf::ScalarNode *val = NULL;
 
+  if(!map)
+      return;
+
   val = (Conf::ScalarNode *)(map->getValue(photoKey));
   if(val && !(val->getValue().empty())) { _photo = (val->getValue() == "true") ? true : false; val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(enabledKey));
@@ -291,6 +300,9 @@ void HookPreference::unserialize(Conf::MappingNode *map)
   Conf::ScalarNode *val = NULL;
 
   _debug("Hook: Unserialize preference");
+
+  if(!map)
+      return;
 
   val = (Conf::ScalarNode *)(map->getValue(iax2EnabledKey));
   if(val) { _iax2Enabled = (val->getValue() == "true") ? true : false; val = NULL; }
@@ -386,6 +398,9 @@ void AudioPreference::unserialize(Conf::MappingNode *map)
 {
   _debug("AudioPreference: Unserialize configuration");
 
+  if(!map)
+      return;
+
   Conf::ScalarNode *val = NULL;
 
   val = (Conf::ScalarNode *)(map->getValue(cardinKey));
@@ -413,4 +428,123 @@ void AudioPreference::unserialize(Conf::MappingNode *map)
   val = (Conf::ScalarNode *)(map->getValue(volumespkrKey));
   if(val) { _volumespkr = atoi(val->getValue().data()); val = NULL; }
 
+}
+
+
+
+ShortcutPreferences::ShortcutPreferences() : _hangup("") 
+					   , _pickup("")
+					   , _popup("")
+					   , _toggleHold("")
+					   , _togglePickupHangup("")
+{
+
+}
+
+ShortcutPreferences::~ShortcutPreferences() {}
+
+
+std::map<std::string, int> ShortcutPreferences::getShortcuts() 
+{
+
+  std::map<std::string, int> shortcutsMap;
+  int shortcut;
+
+  shortcutsMap.insert(std::pair<std::string, int>(hangupShortKey, atoi(_hangup.data())));
+  shortcutsMap.insert(std::pair<std::string, int>(pickupShortKey, atoi(_pickup.data())));
+  shortcutsMap.insert(std::pair<std::string, int>(popupShortKey, atoi(_popup.data())));
+  shortcutsMap.insert(std::pair<std::string, int>(toggleHoldShortKey, atoi(_toggleHold.data())));
+  shortcutsMap.insert(std::pair<std::string, int>(togglePickupHangupShortKey, atoi(_togglePickupHangup.data())));
+
+  return shortcutsMap;
+}
+
+
+void ShortcutPreferences::setShortcuts(std::map<std::string, int> shortcut)
+{
+  std::map<std::string, int> map_cpy = shortcut;
+  std::map<std::string, int>::iterator it;
+
+  it = map_cpy.find(hangupShortKey);
+  if (it != map_cpy.end()) {
+    std::stringstream hangupstr; hangupstr << it->second;
+    _hangup = hangupstr.str();
+  }
+
+  it = map_cpy.find(pickupShortKey);
+  if (it != map_cpy.end()) {
+    std::stringstream pickupstr; pickupstr << it->second; 
+    _pickup = pickupstr.str();
+  }
+
+  it = map_cpy.find(popupShortKey);
+  if (it != map_cpy.end()) {
+    std::stringstream popupstr; popupstr << it->second;
+    _popup = popupstr.str();
+  }
+
+  it = map_cpy.find(toggleHoldShortKey);
+  if(it != map_cpy.end()) {
+    std::stringstream holdstr; holdstr << it->second;
+    _toggleHold = holdstr.str();
+  }
+
+  it = map_cpy.find(togglePickupHangupShortKey);
+  if(it != map_cpy.end()) {
+    std::stringstream togglestr; togglestr << it->second;
+    _togglePickupHangup = togglestr.str();
+  }
+  /*
+  for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
+    std::string key = shortcutsKeys.at(i);
+    it = map_cpy.find(key);
+    if (it != shortcutsMap.end()) {
+      Manager::instance().setConfig("Shortcuts", key, it->second);
+    }
+  }
+  */
+}
+
+
+void ShortcutPreferences::serialize(Conf::YamlEmitter *emitter)
+{
+
+    _debug("ShortcutPreference: Serialize configuration");
+
+  Conf::MappingNode preferencemap(NULL);
+
+  Conf::ScalarNode hangup(_hangup);
+  Conf::ScalarNode pickup(_pickup);
+  Conf::ScalarNode popup(_popup);
+  Conf::ScalarNode toggleHold(_toggleHold);
+  Conf::ScalarNode togglePickupHangup(_togglePickupHangup);
+  
+  preferencemap.setKeyValue(hangupShortKey, &hangup);
+  preferencemap.setKeyValue(pickupShortKey, &pickup);
+  preferencemap.setKeyValue(popupShortKey, &popup);
+  preferencemap.setKeyValue(toggleHoldShortKey, &toggleHold);
+  preferencemap.setKeyValue(togglePickupHangupShortKey, &togglePickupHangup);
+  
+  emitter->serializeShortcutPreference(&preferencemap);
+}
+
+void ShortcutPreferences::unserialize(Conf::MappingNode *map)
+{
+  _debug("ShortcutPreference: Unserialize configuration");
+
+  if(!map)
+    return;
+
+  Conf::ScalarNode *val = NULL;
+
+  val = (Conf::ScalarNode *)(map->getValue(hangupShortKey));
+  if(val) { _hangup = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(pickupShortKey));
+  if(val) { _pickup = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(popupShortKey));
+  if(val) { _popup = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(toggleHoldShortKey));
+  if(val) { _toggleHold = atoi(val->getValue().data()); val = NULL; }
+  val = (Conf::ScalarNode *)(map->getValue(togglePickupHangupShortKey));
+  if(val) { _togglePickupHangup = atoi(val->getValue().data()); val = NULL; }
 }

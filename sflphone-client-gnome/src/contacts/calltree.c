@@ -74,7 +74,6 @@ enum {
 	COLUMN_ACCOUNT_PTR,
 };
 
-
 /**
  * Show popup menu
  */
@@ -319,7 +318,7 @@ row_single_click(GtkTreeView *tree_view UNUSED, void * data UNUSED)
     }
 }
 
-	static gboolean
+static gboolean
 button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUSED)
 {
     if (event->button == 3 && event->type == GDK_BUTTON_PRESS){
@@ -685,7 +684,7 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 	DEBUG("Calltre remove call ended");
 }
 
-	void
+void
 calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 {
     GdkPixbuf *pixbuf=NULL;
@@ -1407,6 +1406,13 @@ void calltree_display (calltab_t *tab) {
 }
 
 
+void
+calltree_update_clock(callable_obj_t *c) {
+  DEBUG("UPDATE CLOCK");
+
+  // TODO this make the whole thing crash...
+  // calltree_update_call(current_calls, c, NULL);
+}
 
 
 static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)

@@ -87,6 +87,13 @@ const Conf::Key recordpathKey("recordpath");//: /home/msavard/Bureau
 const Conf::Key volumemicKey("volumemic");//:  100
 const Conf::Key volumespkrKey("volumespkr");//: 100
 
+// shortcut preferences
+const Conf::Key hangupShortKey("hangUp");
+const Conf::Key pickupShortKey("pickUp");
+const Conf::Key popupShortKey("popupWindow");
+const Conf::Key toggleHoldShortKey("toggleHold");
+const Conf::Key togglePickupHangupShortKey("togglePickupHangup");
+
 
 class Preferences : public Serializable {
 
@@ -353,6 +360,47 @@ class AudioPreference : public Serializable {
   int _volumemic; //:  100
   int _volumespkr; //: 100
   
+};
+
+
+class ShortcutPreferences : public Serializable {
+
+ public:
+
+  ShortcutPreferences();
+
+  ~ShortcutPreferences();
+
+  virtual void serialize(Conf::YamlEmitter *emitter);
+
+  virtual void unserialize(Conf::MappingNode *map);
+
+  std::map<std::string, int> getShortcuts(void);
+  void setShortcuts(std::map<std::string, int> shortcut);
+
+  std::string getHangup(void) { return _hangup; }
+  void setHangup(std::string hangup) { _hangup = hangup; }
+
+  std::string getPickup(void) { return _pickup; }
+  void setPickup(std::string pickup) { _pickup = pickup; }
+
+  std::string getPopup(void) { return _popup; }
+  void setPopup(std::string popup) { _popup = popup; }
+
+  std::string getToggleHold(void) { return _toggleHold; }
+  void setToggleHold(std::string hold) { _toggleHold = hold; }
+
+  std::string getTogglePickupHangup(void) { return _togglePickupHangup; }
+  void setTogglePickupHangup(std::string toggle) { _togglePickupHangup = toggle; }
+
+ private:
+
+  std::string _hangup;
+  std::string _pickup;
+  std::string _popup;
+  std::string _toggleHold;
+  std::string _togglePickupHangup;
+
 };
 
 #endif

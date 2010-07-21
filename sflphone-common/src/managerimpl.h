@@ -114,16 +114,40 @@ class ManagerImpl {
     ManagerImpl (void);
     ~ManagerImpl (void);
 
+
+    /**
+     * General preferences configuration
+     */ 
     Preferences preferences;
 
+    /**
+     * Voip related preferences
+     */
     VoipPreference voipPreferences;
 
+    /**
+     * Addressbook related preferences
+     */ 
     AddressbookPreference addressbookPreference;
 
+    /**
+     * Hook preferences
+     */
     HookPreference hookPreference;
 
+    /**
+     * Audio preferences
+     */
     AudioPreference audioPreference;
 
+    /**
+     * Shortcut preferences
+     */ 
+    ShortcutPreferences shortcutPreferences;
+
+    /**
+     * Method to build preferences from configuration
+     */
     short buildConfiguration();
 
     /**

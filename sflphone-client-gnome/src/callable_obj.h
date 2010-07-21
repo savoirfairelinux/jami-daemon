@@ -35,6 +35,7 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 #include <time.h>
+#include <pthread.h>
 
 /**
  * @enum history_state
@@ -109,6 +110,7 @@ typedef struct  {
     gchar* _confID;                 // The conference ID (NULL if don't participate to a conference)
     gchar* _accountID;              // The account the call is made with
     time_t _time_start;             // The timestamp the call was initiating
+    time_t _time_current;           // Clock increment to display call's elapsed time
     time_t _time_stop;              // The timestamp the call was over
     history_state_t _history_state; // The history state if necessary
     srtp_state_t _srtp_state;       // The state of security on the call 
@@ -148,6 +150,11 @@ typedef struct  {
 
     /* The audio codec used for this call, if applicable */
     gchar *_audio_codec;
+
+    // thread id to increment clock
+    pthread_t tid;
+
+  int clockStarted;
 
 } callable_obj_t;
 

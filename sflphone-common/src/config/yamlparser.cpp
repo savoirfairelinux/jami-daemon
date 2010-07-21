@@ -38,6 +38,13 @@
 namespace Conf {
 
 YamlParser::YamlParser(const char *file) : filename(file)
+					 , accountSequence(NULL)
+					 , preferenceSequence(NULL)
+					 , addressbookSequence(NULL)
+					 , audioSequence(NULL)
+					 , hooksSequence(NULL)
+					 , voiplinkSequence(NULL)
+					 , shortcutSequence(NULL)
 {
   memset(buffer, 0, PARSER_BUFFERSIZE);
 
@@ -431,6 +438,7 @@ void YamlParser::mainNativeDataMapping(MappingNode *map) {
   Key hooks("hooks");
   Key preferences("preferences");
   Key voiplink("voipPreferences");
+  Key shortcuts("shortcuts");
 
   while(iter != map->getMapping()->end()) {
 
@@ -440,24 +448,28 @@ void YamlParser::mainNativeDataMapping(MappingNode *map) {
       accountSequence = (SequenceNode *)(iter->second);
     }
     else if(addressbook.compare(iter->first) == 0) {
-      _debug("YamlParser: Adding voip addressbook preference");
+      _debug("YamlParser: Adding addressbook preference");
       addressbookSequence = (SequenceNode *)(iter->second);
     }
     else if(audio.compare(iter->first) == 0) {
-      _debug("YamlParser: Adding voip audio preference");
+      _debug("YamlParser: Adding audio preference");
       audioSequence = (SequenceNode *)(iter->second);
     }
     else if(hooks.compare(iter->first) == 0) {
-      _debug("YamlParser: Adding voip hooks preference");
+      _debug("YamlParser: Adding hooks preference");
       hooksSequence = (SequenceNode *)(iter->second);
     }
     else if(preferences.compare(iter->first) == 0) {
-      _debug("YamlParser: Adding voip preference preference");
+      _debug("YamlParser: Adding preference preference");
       preferenceSequence = (SequenceNode *)(iter->second);
     }
     else if(voiplink.compare(iter->first) == 0) {
-      _debug("YamlParser: Adding voip voip preference");
+      _debug("YamlParser: Adding voip preference");
       voiplinkSequence = (SequenceNode *)(iter->second);
+    }
+    else if(shortcuts.compare(iter->first) == 0) {
+      _debug("YamlParser: Adding shortcut preference");
+      shortcutSequence = (SequenceNode *)(iter->second);
     }
     else
       throw YamlParserException("Unknow map key in configuration");

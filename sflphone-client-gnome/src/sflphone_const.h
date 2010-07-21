@@ -120,6 +120,12 @@
 #define REGISTRATION_STATE_CODE             "Registration.code" 
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
 
+#define SHORTCUT_PICKUP                     "pickUp"
+#define SHORTCUT_HANGUP                     "hangUp"
+#define SHORTCUT_POPUP                      "popupWindow"
+#define SHORTCUT_TOGGLEPICKUPHANGUP         "togglePickupHangup"
+#define SHORTCUT_TOGGLEHOLD                 "toggleHold"
+
 /** Error while opening capture device */
 #define ALSA_CAPTURE_DEVICE	      0x0001
 /** Error while opening playback device */

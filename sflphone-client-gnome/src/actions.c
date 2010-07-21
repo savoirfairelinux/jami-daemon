@@ -60,24 +60,28 @@ sflphone_notify_voice_mail (const gchar* accountID , guint count)
 {
     gchar *id;
     gchar *current_id;
-	account_t *current;
+    account_t *current;
 
     // We want to notify only the current account; ie the first in the list
     id = g_strdup (accountID);
     current_id = account_list_get_current_id ();
 
+    DEBUG("sflphone_notify_voice_mail begin");
+
     if (g_strcasecmp (id, current_id) != 0 || account_list_get_size() == 0)
         return;
 
-	// Set the number of voice messages for the current account
-	current_account_set_message_number (count);
-	current = account_list_get_current ();
+    // Set the number of voice messages for the current account
+    current_account_set_message_number (count);
+    current = account_list_get_current ();
 
-	// Update the voicemail tool button
-	update_voicemail_status ();
+    // Update the voicemail tool button
+    update_voicemail_status ();
 
-	if (current)
-		notify_voice_mails (count, current);
+    if (current)
+      notify_voice_mails (count, current);
+
+    DEBUG("sflphone_notify_voice_mail end");
 }
 
 /*
@@ -118,6 +122,8 @@ status_bar_display_account ()
 
     statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
 
+    DEBUG("status_bar_display_account begin");
+
     acc = account_list_get_current ();
     if(acc){
 	status_tray_icon_online(TRUE);
@@ -133,6 +139,8 @@ status_bar_display_account ()
     }
     statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
     g_free(msg);
+
+    DEBUG("status_bar_display_account_end");
 }
 
 
@@ -189,6 +197,7 @@ sflphone_hung_up( callable_obj_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
 #endif
+    free_callable_obj_t(c);
 }
 
 static hashtable_free(gpointer key, gpointer value, gpointer user_data)
@@ -895,11 +904,15 @@ static int _place_registered_call(callable_obj_t * c) {
         return -1;
     }
     
+    DEBUG("place_registered_call begin");
+
     if(g_strcasecmp(c->_accountID, "") != 0) {
         current = account_list_get_by_id(c->_accountID);
     } else {
         current = account_list_get_current();
     }
+
+    DEBUG("place_registered_call end");
 
     if(current == NULL) { 
         DEBUG("Unexpected condition: account_t is NULL in %s at %d for accountID %s", __FILE__, __LINE__, c->_accountID);

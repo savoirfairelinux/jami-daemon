@@ -1438,6 +1438,7 @@ bool ManagerImpl::saveConfig (void) {
 	  addressbookPreference.serialize(emitter);
 	  hookPreference.serialize(emitter);
 	  audioPreference.serialize(emitter);
+	  shortcutPreferences.serialize(emitter);
 
 	  emitter->serializeData();
 
@@ -3579,6 +3580,7 @@ short ManagerImpl::loadAccountMap() {
   addressbookPreference.unserialize((Conf::MappingNode *)(parser->getAddressbookSequence()));
   hookPreference.unserialize((Conf::MappingNode *)(parser->getHookSequence()));
   audioPreference.unserialize((Conf::MappingNode *)(parser->getAudioSequence()));
+  shortcutPreferences.unserialize((Conf::MappingNode *)(parser->getShortcutSequence()));
 
   Conf::SequenceNode *seq = parser->getAccountSequence();
 
