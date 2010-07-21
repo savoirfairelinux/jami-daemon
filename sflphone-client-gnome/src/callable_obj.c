@@ -139,6 +139,8 @@ void *threaded_clock_incrementer(void *pc) {
     int duration;
     time_t start, current;
 
+    gdk_threads_enter ();
+
     set_timestamp(&(call->_time_current));
 
     start = call->_time_start;
@@ -170,6 +172,8 @@ void *threaded_clock_incrementer(void *pc) {
     }
 
     calltree_update_clock();
+
+    gdk_threads_leave ();
 
     sleep(1);
   }
