@@ -38,6 +38,7 @@
 #include <accountconfigdialog.h>
 #include <zrtpadvanceddialog.h>
 #include <tlsadvanceddialog.h>
+#include <audioconf.h>
 
 // From version 2.16, gtk provides the functionalities libsexy used to provide
 #if GTK_CHECK_VERSION(2,16,0)
@@ -97,6 +98,8 @@ GtkWidget * publishedAddressLabel;
 GtkWidget * publishedPortLabel;
 GtkWidget * stunServerLabel;
 GtkWidget * stunServerEntry;
+GtkWidget * enableTone;
+GtkWidget * fileChooser;
 
 GtkWidget * displayNameEntry;
 
@@ -1207,6 +1210,19 @@ GtkWidget* create_advanced_tab (account_t **a) {
 	return ret;
 }
 
+void ringtone_enabled(GtkWidget *widget UNUSED, gpointer fileChooser, const gchar *accountID)
+{
+  gboolean isEnabled = gtk_widget_get_sensitive(GTK_WIDGET(fileChooser));
+
+  if(isEnabled) {
+    gtk_widget_set_sensitive(GTK_WIDGET(fileChooser), FALSE);
+  }
+  else {
+    gtk_widget_set_sensitive(GTK_WIDGET(fileChooser), TRUE);
+  }
+}
+
+
 GtkWidget* create_codecs_configuration (account_t **a) {
 
         // Main widget
@@ -1252,6 +1268,36 @@ GtkWidget* create_codecs_configuration (account_t **a) {
 	  g_signal_connect(G_OBJECT(sipinfo), "clicked", G_CALLBACK(select_dtmf_type), NULL);
 	  gtk_table_attach ( GTK_TABLE( table ), sipinfo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	}
+
+	// Box for the ringtones
+	gnome_main_section_new_with_table (_("Ringtones"), &frame, &table, 1, 2);
+	gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0); 
+
+	fileChooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
+
+	p = g_hash_table_lookup(currentAccount->properties, g_strdup(CONFIG_RINGTONE_ENABLED));
+	gboolean ringtoneEnabled = (g_strcmp0(p, "true") == 0) ? TRUE : FALSE;
+
+	enableTone = gtk_check_button_new_with_mnemonic( _("_Enable ringtones"));
+	gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), ringtoneEnabled);
+	g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ), fileChooser);
+	gtk_table_attach ( GTK_TABLE( table ), enableTone, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+	// file chooser button
+	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());
+	p = g_hash_table_lookup(currentAccount->properties, g_strdup(CONFIG_RINGTONE_PATH));
+	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , p);
+	gtk_widget_set_sensitive(GTK_WIDGET(fileChooser), ringtoneEnabled);
+
+	GtkFileFilter *filter = gtk_file_filter_new();
+	gtk_file_filter_set_name( filter , _("Audio Files") );
+	gtk_file_filter_add_pattern(filter , "*.wav" );
+	gtk_file_filter_add_pattern(filter , "*.ul" );
+	gtk_file_filter_add_pattern(filter , "*.au" );
+	gtk_file_chooser_add_filter( GTK_FILE_CHOOSER( fileChooser ) , filter);
+	gtk_table_attach ( GTK_TABLE( table ), fileChooser, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+       
 
         gtk_widget_show_all(ret);
 
@@ -1475,6 +1521,16 @@ void show_account_window (account_t * a) {
 	g_hash_table_replace(currentAccount->properties, g_strdup(TLS_ENABLE), 
 			     g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(useSipTlsCheckBox)) ? "true":"false"));
       }
+
+      gboolean toneEnabled = gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(enableTone));
+      g_hash_table_replace(currentAccount->properties,
+			   g_strdup(CONFIG_RINGTONE_ENABLED),
+			   g_strdup(toneEnabled ? "true" : "false"));
+
+
+      g_hash_table_replace(currentAccount->properties,
+			   g_strdup(CONFIG_RINGTONE_PATH),
+			   g_strdup((gchar *)gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( fileChooser ))));
       
       g_hash_table_replace(currentAccount->properties,
 			   g_strdup(LOCAL_INTERFACE),

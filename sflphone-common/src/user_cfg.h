@@ -81,10 +81,9 @@
 #define WINDOW_POSITION_Y					"Window.positionY"
 #define SHOW_STATUSICON						"Statusicon.show"
 
-
 #define IP2IP_PROFILE                       "IP2IP"    
 #define SIGNALISATION                       "VoIPLink"	                /** Section Signalisation */
-#define ZRTP_ZIDFILE                        "ZRTP.zidFile"              /** The filename used for storing ZIDs */
+#define ZRTP_ZIDFILE                        "zidFile"                   /** The filename used for storing ZIDs */
 #define PLAY_DTMF		            "DTMF.playDtmf"	            /** Whether or not should play dtmf */
 #define PLAY_TONES		            "DTMF.playTones"            /** Whether or not should play tones */
 #define PULSE_LENGTH                        "DTMF.pulseLength"          /** Length of the DTMF in millisecond */

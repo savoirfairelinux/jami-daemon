@@ -1572,12 +1572,12 @@ dbus_set_noise_suppress_state(gchar* state)
 
 
 gchar*
-dbus_get_ringtone_choice()
+dbus_get_ringtone_choice(const gchar *accountID)
 {
   gchar* tone;
   GError* error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_get_ringtone_choice(
-      configurationManagerProxy, &tone, &error);
+      configurationManagerProxy, accountID, &tone, &error);
   if (error)
     {
       g_error_free(error);
@@ -1586,11 +1586,11 @@ dbus_get_ringtone_choice()
 }
 
 void
-dbus_set_ringtone_choice(const gchar* tone)
+dbus_set_ringtone_choice(const gchar *accountID, const gchar* tone)
 {
   GError* error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_set_ringtone_choice(
-      configurationManagerProxy, tone, &error);
+      configurationManagerProxy, accountID, tone, &error);
   if (error)
     {
       g_error_free(error);
@@ -1598,12 +1598,12 @@ dbus_set_ringtone_choice(const gchar* tone)
 }
 
 int
-dbus_is_ringtone_enabled()
+dbus_is_ringtone_enabled(const gchar *accountID)
 {
   int res;
   GError* error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_is_ringtone_enabled(
-      configurationManagerProxy, &res, &error);
+      configurationManagerProxy, accountID, &res, &error);
   if (error)
     {
       g_error_free(error);
@@ -1612,11 +1612,13 @@ dbus_is_ringtone_enabled()
 }
 
 void
-dbus_ringtone_enabled()
+dbus_ringtone_enabled(const gchar *accountID)
 {
+  DEBUG("DBUS: Ringtone enabled %s", accountID);
+
   GError* error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_ringtone_enabled(
-      configurationManagerProxy, &error);
+		 configurationManagerProxy, accountID, &error);
   if (error)
     {
       g_error_free(error);
@@ -1661,71 +1663,6 @@ dbus_is_iax2_enabled()
       g_error_free(error);
     }
   return res;
-}
-
-int
-dbus_get_dialpad()
-{
-  int state;
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_get_dialpad(
-      configurationManagerProxy, &state, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-  return state;
-}
-
-void
-dbus_set_dialpad(gboolean display)
-{
-
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_set_dialpad(
-      configurationManagerProxy, display, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
-}
-
-int
-dbus_get_searchbar()
-{
-  int state;
-  GError* error = NULL;
-  if (!org_sflphone_SFLphone_ConfigurationManager_get_searchbar(
-      configurationManagerProxy, &state, &error))
-    {
-      if (error->domain == DBUS_GERROR && error->code
-          == DBUS_GERROR_REMOTE_EXCEPTION)
-        {
-          ERROR ("Caught remote method (get_searchbar) exception  %s: %s", dbus_g_error_get_name(error), error->message);
-        }
-      else
-        {
-          ERROR("Error while calling get_searchbar: %s", error->message);
-        }
-      g_error_free(error);
-      return -1;
-    }
-  else
-    {
-      return state;
-    }
-}
-
-void
-dbus_set_searchbar()
-{
-  GError* error = NULL;
-  org_sflphone_SFLphone_ConfigurationManager_set_searchbar(
-      configurationManagerProxy, &error);
-  if (error)
-    {
-      g_error_free(error);
-    }
 }
 
 void
@@ -2352,150 +2289,6 @@ dbus_get_all_ip_interface_by_name(void)
     {
       DEBUG ("DBus called get_all_ip_interface() on ConfigurationManager");
       return array;
-    }
-}
-
-guint
-dbus_get_window_width(void)
-{
-
-  GError *error = NULL;
-  guint value;
-
-  org_sflphone_SFLphone_ConfigurationManager_get_window_width(
-      configurationManagerProxy, &value, &error);
-
-  if (error != NULL)
-    {
-      ERROR ("Failed to call get_window_width() on ConfigurationManager: %s",
-          error->message);
-      g_error_free(error);
-    }
-  return value;
-}
-
-guint
-dbus_get_window_height(void)
-{
-
-  GError *error = NULL;
-  guint value;
-
-  org_sflphone_SFLphone_ConfigurationManager_get_window_height(
-      configurationManagerProxy, &value, &error);
-
-  if (error != NULL)
-    {
-      ERROR ("Failed to call get_window_height() on ConfigurationManager: %s",
-          error->message);
-      g_error_free(error);
-    }
-  return value;
-}
-
-void
-dbus_set_window_width(const guint width)
-{
-
-  GError *error = NULL;
-
-  org_sflphone_SFLphone_ConfigurationManager_set_window_width(
-      configurationManagerProxy, width, &error);
-
-  if (error != NULL)
-    {
-      ERROR ("Failed to call set_window_width() on ConfigurationManager: %s",
-          error->message);
-      g_error_free(error);
-    }
-}
-
-void
-dbus_set_window_height(const guint height)
-{
-
-  GError *error = NULL;
-
-  org_sflphone_SFLphone_ConfigurationManager_set_window_height(
-      configurationManagerProxy, height, &error);
-
-  if (error != NULL)
-    {
-      ERROR ("Failed to call set_window_height() on ConfigurationManager: %s",
-          error->message);
-      g_error_free(error);
-    }
-}
-
-guint
-dbus_get_window_position_x(void)
-{
-
-  GError *error = NULL;
-  guint value;
-
-  org_sflphone_SFLphone_ConfigurationManager_get_window_position_x(
-      configurationManagerProxy, &value, &error);
-
-  if (error != NULL)
-    {
-      ERROR ("Failed to call get_window_position_x() on ConfigurationManager: %s",
-          error->message);
-      g_error_free(error);
-    }
-  return value;
-}
-
-guint
-dbus_get_window_position_y(void)
-{
-
-  GError *error = NULL;
-  guint value;
-
-  org_sflphone_SFLphone_ConfigurationManager_get_window_position_y(
-      configurationManagerProxy, &value, &error);
-
-  if (error != NULL)
-    {
-      ERROR ("Failed to call get_window_position_y() on ConfigurationManager: %s",
-          error->message);
-      g_error_free(error);
-    }
-  return value;
-}
-
-void
-dbus_set_window_position_x(const guint posx)
-{
-
-  GError *error = NULL;
-
-  org_sflphone_SFLphone_ConfigurationManager_set_window_position_x(
-      configurationManagerProxy, posx, &error);
-
-  if (error != NULL)
-    {
-      ERROR ("Failed to call set_window_position_x() on ConfigurationManager: %s",
-          error->message);
-      g_error_free(error);
-    }
-}
-
-void
-dbus_set_window_position_y(const guint posy)
-{
-
-  GError *error = NULL;
-
-  org_sflphone_SFLphone_ConfigurationManager_set_window_position_y(
-      configurationManagerProxy, posy, &error);
-
-  if (error != NULL)
-    {
-      ERROR ("Failed to call set_window_position_y() on ConfigurationManager: %s",
-          error->message);
-      g_error_free(error);
     }
 }
 

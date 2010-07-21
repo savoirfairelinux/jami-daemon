@@ -41,7 +41,6 @@ const Conf::Key historyMaxCallsKey("historyMaxCalls");      // :	20
 const Conf::Key notifyMailsKey("notifyMails");              // :	false
 const Conf::Key zoneToneChoiceKey("zoneToneChoice");        // :	North America
 const Conf::Key registrationExpireKey("registrationExpire");// :	180
-const Conf::Key ringtoneEnabledKey("ringtoneEnabled");      // :	true
 const Conf::Key portNumKey("portNum");                      // :	5060
 const Conf::Key searchBarDisplayKey("searchBarDisplay");    // :	true
 const Conf::Key zeroConfenableKey("zeroConfenable");        // :	false
@@ -72,7 +71,7 @@ const Conf::Key sipEnabledKey("sipEnabled"); //:		false
 const Conf::Key urlCommandKey("urlCommand"); //:		x-www-browser
 const Conf::Key urlSipFieldKey("urlSipField"); //:		X-sflphone-url
 
-
+// audio preferences
 const Conf::Key alsamapKey("alsa");
 const Conf::Key pulsemapKey("pulse");
 const Conf::Key cardinKey("cardin");// : 0
@@ -85,7 +84,6 @@ const Conf::Key devicePlaybackKey("devicePlayback");//:
 const Conf::Key deviceRecordKey("deviceRecord");// :
 const Conf::Key deviceRingtoneKey("deviceRingtone");// :
 const Conf::Key recordpathKey("recordpath");//: /home/msavard/Bureau
-const Conf::Key ringchoiceKey("ringchoice");//: /usr/share/sflphone/ringtones/konga.ul
 const Conf::Key volumemicKey("volumemic");//:  100
 const Conf::Key volumespkrKey("volumespkr");//: 100
 
@@ -124,9 +122,6 @@ class Preferences : public Serializable {
   int getRegistrationExpire(void) { return _registrationExpire; }
   void setRegistrationExpire(int exp) { _registrationExpire = exp; }
 
-  bool getRingtoneEnabled(void) { return _ringtoneEnabled; }
-  void setRingtoneEnabled(bool ring) { _ringtoneEnabled = ring; }
-
   int getPortNum(void) { return _portNum; }
   void setPortNum(int port) { _portNum = port; }
 
@@ -150,7 +145,6 @@ class Preferences : public Serializable {
   bool _notifyMails;
   std::string _zoneToneChoice;
   int _registrationExpire;
-  bool _ringtoneEnabled;
   int _portNum;
   bool _searchBarDisplay;
   bool _zeroConfenable;
@@ -333,9 +327,6 @@ class AudioPreference : public Serializable {
   std::string getRecordpath(void) { return _recordpath; }
   void setRecordpath(std::string r) { _recordpath = r; }
 
-  std::string getRingchoice(void) { return _ringchoice; }
-  void setRingchoice(std::string r) { _ringchoice = r; }
-
   int getVolumemic(void) { return _volumemic; }
   void setVolumemic(int m) { _volumemic = m; }
 
@@ -359,7 +350,6 @@ class AudioPreference : public Serializable {
 
   // general preference
   std::string _recordpath; //: /home/msavard/Bureau
-  std::string _ringchoice; // : /usr/share/sflphone/ringtones/konga.ul
   int _volumemic; //:  100
   int _volumespkr; //: 100
   

@@ -613,25 +613,25 @@ class ManagerImpl {
      * @return int	1 if enabled
      *	        0 otherwise
      */
-    int isRingtoneEnabled( void );
+    int isRingtoneEnabled( const AccountID& id );
 
     /**
      * Set the ringtone option
      * Inverse current value
      */
-    void ringtoneEnabled( void );
+    void ringtoneEnabled( const AccountID& id );
 
     /**
      * Get the ringtone
      * @return gchar* The file name selected as a ringtone
      */
-    std::string getRingtoneChoice( void );
+    std::string getRingtoneChoice( const AccountID& id);
 
     /**
      * Set a ringtone
      * @param tone The file name of the ringtone
      */
-    void setRingtoneChoice( const std::string& );
+    void setRingtoneChoice( const std::string&, const AccountID& id);
 
     /**
      * Get the recording path from configuration tree
@@ -926,7 +926,7 @@ class ManagerImpl {
     /**
      * Handle played music when an incoming call occurs
      */
-    void ringtone ();
+    void ringtone (const AccountID& accountID);
 
     /**
      * Handle played music when a congestion occurs

@@ -413,14 +413,18 @@ IAXVoIPLink::sendRegister (AccountID id)
     IAXAccount *account;
     bool result;
 
+    _debug("IAX: Sending registration");
+
     result = false;
     account = dynamic_cast<IAXAccount *> (getAccountPtr());
 
     if (account->getHostname().empty()) {
+        _error("IAX: Error: Account hostname is empty");
         return false;
     }
 
     if (account->getUsername().empty()) {
+        _error("IAX: Error: Account username is empty");
         return false;
     }
 
@@ -435,11 +439,11 @@ IAXVoIPLink::sendRegister (AccountID id)
     _regSession = iax_session_new();
 
     if (!_regSession) {
-        _debug ("Error when generating new session for register");
+        _debug ("IAX: Error when generating new session for register");
     } else {
-        _debug ("IAX Sending registration to %s with user %s", account->getHostname().c_str() , account->getUsername().c_str());
+        _debug ("IAX: Sending registration to %s with user %s", account->getHostname().c_str() , account->getUsername().c_str());
         int val = iax_register (_regSession, account->getHostname().data(), account->getUsername().data(), account->getPassword().data(), 120);
-        _debug ("Return value: %d", val);
+        _debug ("IAX: Return value: %d", val);
         // set the time-out to 15 seconds, after that, resend a registration request.
         // until we unregister.
         _nextRefreshStamp = time (NULL) + 10;

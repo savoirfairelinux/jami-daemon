@@ -46,8 +46,8 @@ popup_main_window(void)
   if (__POPUP_WINDOW)
     {
       gtk_widget_show(get_main_window());
-      gtk_window_move(GTK_WINDOW (get_main_window ()),
-          dbus_get_window_position_x(), dbus_get_window_position_y());
+      //gtk_window_move(GTK_WINDOW (get_main_window ()),
+      //    dbus_get_window_position_x(), dbus_get_window_position_y());
       set_minimized(FALSE);
     }
 }

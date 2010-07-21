@@ -31,15 +31,15 @@
 #include "preferences.h"
 #include <sstream>
 #include "global.h"
+#include "user_cfg.h"
 
 Preferences::Preferences() :  _accountOrder("")
 			   , _audioApi(0)
 			   , _historyLimit(30)
 			   , _historyMaxCalls(20)
 			   , _notifyMails(false)
-			   , _zoneToneChoice("North America") // DFT_ZONE
+			   , _zoneToneChoice(DFT_ZONE) // DFT_ZONE
 			   , _registrationExpire(180)
-			   , _ringtoneEnabled(true) // CONFIG_RINGTONE
 			   , _portNum(5060)
 			   , _searchBarDisplay(true)
 			   , _zeroConfenable(false)
@@ -69,7 +69,6 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
   Conf::ScalarNode zoneToneChoice(_zoneToneChoice);
   std::stringstream expirestr; expirestr << _registrationExpire;
   Conf::ScalarNode registrationExpire(expirestr.str());
-  Conf::ScalarNode ringtoneEnabled(_ringtoneEnabled ? "true" : "false");
   std::stringstream portstr; portstr << _portNum;
   Conf::ScalarNode portNum(portstr.str());
   Conf::ScalarNode searchBarDisplay(_searchBarDisplay ? "true" : "false");
@@ -83,7 +82,6 @@ void Preferences::serialize(Conf::YamlEmitter *emiter)
   preferencemap.setKeyValue(notifyMailsKey, &notifyMails);
   preferencemap.setKeyValue(zoneToneChoiceKey, &zoneToneChoice);
   preferencemap.setKeyValue(registrationExpireKey, &registrationExpire);
-  preferencemap.setKeyValue(ringtoneEnabledKey, &ringtoneEnabled);
   preferencemap.setKeyValue(portNumKey, &portNum);
   preferencemap.setKeyValue(searchBarDisplayKey, &searchBarDisplay);
   preferencemap.setKeyValue(zeroConfenableKey, &zeroConfenable);
@@ -113,8 +111,6 @@ void Preferences::unserialize(Conf::MappingNode *map)
   if(val) { _zoneToneChoice = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(registrationExpireKey));
   if(val) { _registrationExpire = atoi(val->getValue().data()); val = NULL; }
-  val = (Conf::ScalarNode *)(map->getValue(ringtoneEnabledKey));
-  if(val) { _registrationExpire = atoi(val->getValue().data()); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(portNumKey));
   if(val) { _portNum = atoi(val->getValue().data()); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(searchBarDisplayKey));
@@ -131,10 +127,10 @@ void Preferences::unserialize(Conf::MappingNode *map)
 
 VoipPreference::VoipPreference() :  _playDtmf(true)
 				 , _playTones(true)
-				 , _pulseLength(250)// DFT_PULSE_LENGTH_STR   
+				 , _pulseLength(atoi(DFT_PULSE_LENGTH_STR))// DFT_PULSE_LENGTH_STR   
 				 , _sendDtmfAs(0)
 				 , _symmetricRtp(true)
-                                 , _zidFile("zidFile")// ZRTP_ZID_FILENAME
+                                 , _zidFile(ZRTP_ZIDFILE)// ZRTP_ZID_FILENAME
 {
 
 }
@@ -314,19 +310,18 @@ void HookPreference::unserialize(Conf::MappingNode *map)
 
 
 
-AudioPreference::AudioPreference() : _cardin(0) // ALSA_DFT_CARD
-				   , _cardout(0) // ALSA_DFT_CARD
-				   , _cardring(0) // ALSA_DFT_CARD
-				   , _framesize(20) // DFT_FRAME_SIZE
+AudioPreference::AudioPreference() : _cardin(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+				   , _cardout(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+				   , _cardring(atoi(ALSA_DFT_CARD)) // ALSA_DFT_CARD
+				   , _framesize(atoi(DFT_FRAME_SIZE)) // DFT_FRAME_SIZE
 				   , _plugin("default") // PCM_DEFAULT
 				   , _smplrate(44100) // DFT_SAMPLE_RATE
 				   , _devicePlayback("")
 				   , _deviceRecord("")
 				   , _deviceRingtone("")
 				   , _recordpath("") // DFT_RECORD_PATH
-				   , _ringchoice("/usr/share/sflphone/ringtones/konga.ul") //DFT_RINGTONE
-				   , _volumemic(100) // DFT_VOL_SPKR_STR
-				   , _volumespkr(100) // DFT_VOL_MICRO_STR
+				   , _volumemic(atoi(DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
+				   , _volumespkr(atoi(DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
 {
 
 }
@@ -361,14 +356,12 @@ void AudioPreference::serialize(Conf::YamlEmitter *emitter)
 
   // general preference
   Conf::ScalarNode recordpath(_recordpath); //: /home/msavard/Bureau
-  Conf::ScalarNode ringchoice(_ringchoice); // : /usr/share/sflphone/ringtones/konga.ul
   std::stringstream micstr; micstr << _volumemic;
   Conf::ScalarNode volumemic(micstr.str()); //:  100
   std::stringstream spkrstr; spkrstr << _volumespkr;
   Conf::ScalarNode volumespkr(spkrstr.str()); //: 100
 
   preferencemap.setKeyValue(recordpathKey, &recordpath);
-  preferencemap.setKeyValue(ringchoiceKey, &ringchoice);
   preferencemap.setKeyValue(volumemicKey, &volumemic);
   preferencemap.setKeyValue(volumespkrKey, &volumespkr);
   
@@ -415,8 +408,6 @@ void AudioPreference::unserialize(Conf::MappingNode *map)
 
   val = (Conf::ScalarNode *)(map->getValue(recordpathKey));
   if(val) { _recordpath = val->getValue(); val = NULL; }
-  val = (Conf::ScalarNode *)(map->getValue(ringchoiceKey));
-  if(val) { _ringchoice = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(volumemicKey));
   if(val) { _volumemic = atoi(val->getValue().data()); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(volumespkrKey));

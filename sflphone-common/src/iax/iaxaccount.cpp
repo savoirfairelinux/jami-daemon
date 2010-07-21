@@ -202,9 +202,9 @@ int IAXAccount::registerVoIPLink()
     _link->init();
 
     // Stuff needed for IAX registration
-    setHostname (Manager::instance().getConfigString (_accountID, HOSTNAME));
-    setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
-    setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
+    setHostname (_hostname);
+    setUsername (_username);
+    setPassword (_password);
 
     _link->sendRegister (_accountID);
 

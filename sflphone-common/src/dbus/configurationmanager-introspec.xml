@@ -331,6 +331,7 @@
 	   <method name="isRingtoneEnabled" tp:name-for-bindings="isRingtoneEnabled">
 		   <tp:docstring>
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in" />
 		   <arg type="i" name="bool" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -340,11 +341,13 @@
 	   <method name="ringtoneEnabled" tp:name-for-bindings="ringtoneEnabled">
 		   <tp:docstring>
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 	   </method>
 
 	   <method name="getRingtoneChoice" tp:name-for-bindings="getRingtoneChoice">
 		   <tp:docstring>
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 		   <arg type="s" name="tone" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
@@ -354,6 +357,7 @@
 	   <method name="setRingtoneChoice" tp:name-for-bindings="setRingtoneChoice">
 		   <tp:docstring>
 		   </tp:docstring>
+		   <arg type="s" name="accountID" direction="in"/>
 		   <arg type="s" name="tone" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>

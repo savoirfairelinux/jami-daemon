@@ -91,6 +91,9 @@
 #define ZRTP                               "1"
 #define SDES                               "2"
 
+#define CONFIG_RINGTONE_PATH                "Account.ringtonePath"
+#define CONFIG_RINGTONE_ENABLED             "Account.ringtoneEnabled"
+
 #define TLS_LISTENER_PORT                   "TLS.listenerPort"
 #define TLS_ENABLE                          "TLS.enable"
 #define TLS_PORT                            "TLS.port"
