@@ -416,7 +416,6 @@ statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_
 {
   // The actual message to be push in the statusbar
   gchar *message_to_display;
-
   
   pthread_mutex_lock(&statusbar_message_mutex);
 
@@ -426,8 +425,8 @@ statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_
 
   // Format message according to right hand member
   if(right_hand_message)
-    message_to_display = g_strdup_printf("%s           %s"
-					 , left_hand_message, right_hand_message);
+    message_to_display = g_strdup_printf("%s           %s", 
+					 left_hand_message, right_hand_message);
   else
     message_to_display = g_strdup(left_hand_message);
 
@@ -448,20 +447,22 @@ statusbar_pop_message (guint id)
 void
 statusbar_update_clock(gchar *msg)
 { 
-  gchar *message;
+  gchar *message = NULL;
 
   pthread_mutex_lock(&statusbar_message_mutex);
   message = g_strdup(status_current_message);
   pthread_mutex_unlock(&statusbar_message_mutex);
 
   if(message) {
-    // DEBUG("STATUS CURRENT MESSAGE %s", status_current_message);
+      DEBUG("CLOCK %s", msg);
 
       statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
       statusbar_push_message(message, msg, __MSG_ACCOUNT_DEFAULT);
   }
 
   g_free(message);
+  message = NULL;
+  
 }
 
 static void
