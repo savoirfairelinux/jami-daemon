@@ -132,6 +132,8 @@ books_get_book_data_by_uid(gchar *uid)
   GSList *book_list_iterator;
   book_data_t *book_data;
 
+  DEBUG("Addressbook: Get book data by uid: %s", uid);
+
   // Iterate throw the list
   for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
       = book_list_iterator->next)
@@ -286,11 +288,11 @@ pixbuf_from_contact(EContact *contact)
 static void
 eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
 {
+    DEBUG("Addressbook: Open book callback");
     Open_Handler_And_Data *had = (Open_Handler_And_Data *) closure;
 
     remaining_books_to_open--;
-
-    DEBUG("eds_async_open_callback remaining book to open: %i", remaining_books_to_open);
+    DEBUG("Addressbook: Remaining book to open: %i", remaining_books_to_open);
 
     if (status == E_BOOK_ERROR_OK) {
 
@@ -298,57 +300,16 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
 	book_data->active = FALSE;
 	book_data->name = g_strdup(e_source_peek_name(e_book_get_source(book)));
 	book_data->uid = g_strdup(e_source_peek_uid(e_book_get_source(book)));
+	DEBUG("Addressbook: Name: %s", book_data->name);
+	DEBUG("Addressbook: Uid: %s", book_data->uid);
 	book_data->ebook = book;
 	books_data = g_slist_prepend(books_data, book_data);
 	had->handler();
     }
     else {
-
-        WARN("Got error %d when opening book", status);
-    }
-}
-
-/**
- * Initialize address book
- */
-void
-init(OpenAsyncHandler callback)
-{
-  GSList *list, *l;
-  ESourceList *source_list = NULL;
-  remaining_books_to_open = 0;
-  books_data = NULL;
-
-  source_list = e_source_list_new_for_gconf_default("/apps/evolution/addressbook/sources");
-  
-  if (source_list == NULL)
-    {
-      DEBUG("Error could not initialize source list for addressbook");
-      return;
-    }
-
-  list = e_source_list_peek_groups(source_list);
-
-  Open_Handler_And_Data *had = g_new (Open_Handler_And_Data, 1);
-  had->handler = callback;
-
-  for (l = list; l != NULL; l = l->next)
-    {
-
-      ESourceGroup *group = l->data;
-      GSList *sources = NULL, *m;
-      sources = e_source_group_peek_sources(group);
-      for (m = sources; m != NULL; m = m->next)
-        {
-          ESource *source = m->data;
-          EBook *book = e_book_new(source, NULL);
-          if (book != NULL)
-            {
-              // Keep count of remaining books to open
-
-	      DEBUG("init addressbook %i", remaining_books_to_open);
-              remaining_books_to_open++;
-	      
+        WARN("Addressbook: Got error when opening book");
+	gchar *state_string;
+		      
               // Asynchronous open
               e_book_async_open(book, FALSE, eds_async_open_callback, had);
             }

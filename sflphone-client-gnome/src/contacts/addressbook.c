@@ -104,13 +104,14 @@ addressbook_config_books()
   book_data_t *book_data;
   gchar **list;
 
+
   // Retrieve list of books
   list = (gchar **) dbus_get_addressbook_list();
 
   if (list) {
 
       for (config_book_uid = list; *config_book_uid; config_book_uid++) {
-
+	
           // Get corresponding book data
           book_data = books_get_book_data_by_uid(*config_book_uid);
 
@@ -144,6 +145,8 @@ addressbook_get_books_data()
 void
 addressbook_init()
 {
+  DEBUG("Addressbook: Init");
+  
   // Call books initialization
   init(&addressbook_config_books);
 }
