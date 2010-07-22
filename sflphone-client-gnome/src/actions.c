@@ -719,7 +719,7 @@ sflphone_new_call()
     callable_obj_t * current_selected_call;
     gchar *peer_name, *peer_number;
 
-    DEBUG("sflphone_new_call");
+    DEBUG("Actions: Sflphone new call");
 
     current_selected_call = calltab_get_selected_call(current_calls);
 
@@ -882,7 +882,7 @@ static int _place_registered_call(callable_obj_t * c) {
     account_t * current = NULL;
   
     if(c == NULL) {
-        DEBUG("callable_obj_t is NULL in _place_registered_call");
+        DEBUG("Actions: Callable_obj_t is NULL in _place_registered_call");
         return -1;
     }
     
@@ -901,29 +901,31 @@ static int _place_registered_call(callable_obj_t * c) {
     } 
     
     if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL ) {
+        DEBUG("Actions: No registered account, cannot make a call");
         notify_no_registered_accounts();
         sflphone_fail(c);
         return -1;
     }
     
-    DEBUG("place_registered_call begin");
-
+    DEBUG("Actions: Get account for this call");
     if(g_strcasecmp(c->_accountID, "") != 0) {
+        DEBUG("Actions: Account %s already set for this call", c->_accountID);
         current = account_list_get_by_id(c->_accountID);
     } else {
+        DEBUG("Actions: No account set for this call, use first of the list");
         current = account_list_get_current();
     }
 
-    DEBUG("place_registered_call end");
-
     if(current == NULL) { 
-        DEBUG("Unexpected condition: account_t is NULL in %s at %d for accountID %s", __FILE__, __LINE__, c->_accountID);
+        DEBUG("Actions: Unexpected condition: account_t is NULL in %s at %d for accountID %s", __FILE__, __LINE__, c->_accountID);
         return -1;
     }   
                         
     if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0) {
         /* The call is made with the current account */
-        c->_accountID = current->accountID;
+        // free memory for previous account id and get a new one
+        g_free(c->_accountID);
+        c->_accountID = g_strdup(current->accountID);
         dbus_place_call(c);
     } else {
        /* Place the call with the first registered account
@@ -931,7 +933,8 @@ static int _place_registered_call(callable_obj_t * c) {
         * If we are here, we can be sure that there is at least one. 
         */
         current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-        c->_accountID = current->accountID;
+	g_free(c->_accountID);
+        c->_accountID = g_strdup(current->accountID);
         dbus_place_call(c);
         notify_current_account( current );
     }        
@@ -946,15 +949,15 @@ sflphone_place_call ( callable_obj_t * c )
 {
 	gchar *msg = "";
 
-    DEBUG("Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
+    DEBUG("Actions: Placing call with %s @ %s and accountid %s", c->_peer_name, c->_peer_number, c->_accountID);
     
     if(c == NULL) {
-        DEBUG("Unexpected condition: callable_obj_t is null in %s at %d", __FILE__, __LINE__);
+        DEBUG("Actions: Unexpected condition: callable_obj_t is null in %s at %d", __FILE__, __LINE__);
         return;
     }
 
     if(_is_direct_call(c)) {
-		msg = g_markup_printf_escaped (_("Direct SIP call"));
+        msg = g_markup_printf_escaped (_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
         statusbar_push_message( msg , NULL, __MSG_ACCOUNT_DEFAULT);
         g_free(msg);

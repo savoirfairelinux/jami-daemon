@@ -272,10 +272,10 @@ AC_CHECK_LIB([yaml], yaml_parser_initialize,
 	       [AC_CHECK_HEADERS(yaml.h, have_yaml=true, have_yaml=false)],
 	       have_yaml = false)
 
-if ! $have_yaml; then
+	if test "$have_yaml" = "false"; then
 AC_MSG_ERROR([You need the libyaml yaml parser]
 		[http://expat.sourceforge.net/])
-fi
+	fi
 
 yaml_CFLAGS=
 yaml_LIBS=-lyaml

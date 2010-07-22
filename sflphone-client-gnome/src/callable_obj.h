@@ -112,7 +112,7 @@ typedef struct  {
     time_t _time_start;             // The timestamp the call was initiating
     time_t _time_current;           // Clock increment to display call's elapsed time
     time_t _time_stop;              // The timestamp the call was over
-    gchar _timestr[20];                // The timestamp as a string format for  
+    gchar _timestr[20];             // The timestamp as a string format for disply in statusbar  
     history_state_t _history_state; // The history state if necessary
     srtp_state_t _srtp_state;       // The state of security on the call 
     gchar* _srtp_cipher;            // Cipher used for the srtp session

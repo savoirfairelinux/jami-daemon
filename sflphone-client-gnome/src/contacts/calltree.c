@@ -1408,11 +1408,15 @@ void calltree_display (calltab_t *tab) {
 
 void calltree_update_clock() {
 
-  if(!selected_call)
+  if(!selected_call) {
+    statusbar_update_clock(NULL);
     return;
+  }
 
-  if(!(selected_call->_timestr))
+  if(!(selected_call->_timestr)) {
+    statusbar_update_clock(NULL);
     return;
+  }
 
   // TODO this make the whole thing crash...
   // calltree_update_call(current_calls, c, NULL);

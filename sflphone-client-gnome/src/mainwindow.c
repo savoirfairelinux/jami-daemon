@@ -206,7 +206,7 @@ create_main_window ()
 	g_signal_connect (G_OBJECT (window), "key-release-event",
 			G_CALLBACK (on_key_released), NULL);
 
-    g_signal_connect_after (G_OBJECT (window), "focus-in-event",
+        g_signal_connect_after (G_OBJECT (window), "focus-in-event",
 			G_CALLBACK (focus_on_mainwindow_in), NULL);
 
 	g_signal_connect_after (G_OBJECT (window), "focus-out-event",
@@ -449,14 +449,19 @@ statusbar_update_clock(gchar *msg)
 { 
   gchar *message = NULL;
 
+  if(!msg) {
+    statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
+    statusbar_push_message(message, NULL, __MSG_ACCOUNT_DEFAULT);
+  }
+    
+
   pthread_mutex_lock(&statusbar_message_mutex);
   message = g_strdup(status_current_message);
   pthread_mutex_unlock(&statusbar_message_mutex);
 
   if(message) {
-
-      statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-      statusbar_push_message(message, msg, __MSG_ACCOUNT_DEFAULT);
+    statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
+    statusbar_push_message(message, msg, __MSG_ACCOUNT_DEFAULT);
   }
 
   g_free(message);

@@ -133,14 +133,16 @@ void *threaded_clock_incrementer(void *pc) {
 
   callable_obj_t *call = (callable_obj_t *)pc;
 
+ 
   while(call->clockStarted) {
+
 
     gchar *res;
     int duration;
     time_t start, current;
 
     gdk_threads_enter ();
-
+    
     set_timestamp(&(call->_time_current));
 
     start = call->_time_start;
@@ -148,6 +150,7 @@ void *threaded_clock_incrementer(void *pc) {
 
     if (current == start) {
       g_snprintf(call->_timestr, 20, "00:00");
+      
     }
 
     duration = (int) difftime(current, start);
@@ -174,9 +177,12 @@ void *threaded_clock_incrementer(void *pc) {
     calltree_update_clock();
 
     gdk_threads_leave ();
+ 
 
-    sleep(1);
+    usleep(10000);
+    
   }
+
 }
 
 void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
@@ -184,6 +190,10 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
     callable_obj_t *obj;
     gchar *call_id;
+
+    DEBUG("CallableObj: Create new call");
+
+    DEBUG("Account: %s", accountID);
 
     // Allocate memory
     obj = g_new0 (callable_obj_t, 1);
@@ -204,7 +214,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     set_timestamp (&(obj->_time_start));
     set_timestamp (&(obj->_time_current));
     set_timestamp (&(obj->_time_stop));
-    g_snprintf(obj->_timestr, 20, "00:00");
+    // g_snprintf(obj->_timestr, 20, "00:00");
 
     if (g_strcasecmp (callID, "") == 0)
         call_id = generate_call_id ();
@@ -311,16 +321,24 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
 void free_callable_obj_t (callable_obj_t *c)
 {
+    DEBUG("CallableObj: Free callable object");
+
+
+    if(!c)
+      ERROR("CallableObj: Callable object is NULL");
+
     c->clockStarted = 0;
 
-    pthread_join(c->tid, NULL);
-  
     g_free (c->_callID);
     g_free (c->_accountID);
     g_free (c->_peer_name);
     g_free (c->_peer_number);
     g_free (c->_peer_info);
     g_free (c);
+
+    DEBUG("If you don't see it that is because there is a problem");
+
+    // calltree_update_clock();
 }
 
 void attach_thumbnail (callable_obj_t *call, GdkPixbuf *pixbuf) {
