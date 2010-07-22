@@ -309,7 +309,128 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
     else {
         WARN("Addressbook: Got error when opening book");
 	gchar *state_string;
-		      
+	switch ( status ){
+	case E_BOOK_ERROR_INVALID_ARG :
+	  state_string = g_strdup("E_BOOK_ERROR_INVALID_ARG");
+	  break;
+	case E_BOOK_ERROR_BUSY :
+	  state_string = g_strdup("E_BOOK_ERROR_BUSY");
+	  break;
+	case E_BOOK_ERROR_REPOSITORY_OFFLINE :
+	  state_string = g_strdup("E_BOOK_ERROR_REPOSITORY_OFFLINE");
+	  break;
+	case E_BOOK_ERROR_NO_SUCH_BOOK :
+	  state_string = g_strdup("E_BOOK_ERROR_NO_SUCH_BOOK");
+	  break;
+	case E_BOOK_ERROR_NO_SELF_CONTACT :
+	  state_string = g_strdup("E_BOOK_ERROR_NO_SELF_CONTACT");
+	  break;
+	case E_BOOK_ERROR_SOURCE_NOT_LOADED:
+	  state_string = g_strdup("E_BOOK_ERROR_SOURCE_NOT_LOADED");
+	  break;
+	case E_BOOK_ERROR_SOURCE_ALREADY_LOADED :
+	  state_string = g_strdup("E_BOOK_ERROR_SOURCE_ALREADY_LOADED");
+	  break;
+	case E_BOOK_ERROR_PERMISSION_DENIED :
+	  state_string = g_strdup("E_BOOK_ERROR_PERMISSION_DENIED");
+	  break;
+	case E_BOOK_ERROR_CONTACT_NOT_FOUND :
+	  state_string = g_strdup("E_BOOK_ERROR_CONTACT_NOT_FOUND");
+	  break;
+	case E_BOOK_ERROR_CONTACT_ID_ALREADY_EXISTS :
+	  state_string = g_strdup("E_BOOK_ERROR_CONTACT_ID_ALREADY_EXISTS");
+	  break;
+	case E_BOOK_ERROR_PROTOCOL_NOT_SUPPORTED :
+	  state_string = g_strdup("E_BOOK_ERROR_PROTOCOL_NOT_SUPPORTED");
+	  break;
+	case E_BOOK_ERROR_CANCELLED :
+	  state_string = g_strdup("E_BOOK_ERROR_CANCELLED");
+	  break;
+	case E_BOOK_ERROR_COULD_NOT_CANCEL :
+	  state_string = g_strdup("E_BOOK_ERROR_COULD_NOT_CANCEL");
+	  break;
+	case E_BOOK_ERROR_AUTHENTICATION_FAILED :
+	  state_string = g_strdup("E_BOOK_ERROR_AUTHENTICATION_FAILED");
+	  break;
+	case E_BOOK_ERROR_AUTHENTICATION_REQUIRED :
+	  state_string = g_strdup("E_BOOK_ERROR_AUTHENTICATION_REQUIRED");
+	  break;
+	case E_BOOK_ERROR_TLS_NOT_AVAILABLE :
+	  state_string = g_strdup("E_BOOK_ERROR_TLS_NOT_AVAILABLE");
+	  break;
+	case E_BOOK_ERROR_CORBA_EXCEPTION :
+	  state_string = g_strdup("E_BOOK_ERROR_CORBA_EXCEPTION");
+	  break;
+	case E_BOOK_ERROR_NO_SUCH_SOURCE :
+	  state_string = g_strdup("E_BOOK_ERROR_NO_SUCH_SOURCE");
+	  break;
+	case E_BOOK_ERROR_OFFLINE_UNAVAILABLE :
+	  state_string = g_strdup("E_BOOK_ERROR_OFFLINE_UNAVAILABLE");
+	  break;
+	case E_BOOK_ERROR_OTHER_ERROR :
+	  state_string = g_strdup("E_BOOK_ERROR_OTHER_ERROR");
+	  break;
+	case E_BOOK_ERROR_INVALID_SERVER_VERSION :
+	  state_string = g_strdup("E_BOOK_ERROR_INVALID_SERVER_VERSION");
+	  break;
+	default:
+	  break;
+
+	}
+
+	ERROR("%s", state_string);
+
+	g_free(state_string);
+    }
+}
+
+/**
+ * Initialize address book
+ */
+void
+init(OpenAsyncHandler callback)
+{
+  GSList *list, *l;
+  ESourceList *source_list = NULL;
+  remaining_books_to_open = 0;
+  books_data = NULL;
+
+  source_list = e_source_list_new_for_gconf_default("/apps/evolution/addressbook/sources");
+  
+  if (source_list == NULL)
+    {
+      ERROR("Addressbook: Error could not initialize source list for addressbook");
+      return;
+    }
+
+  list = e_source_list_peek_groups(source_list);
+
+  if (!list) {
+    WARN("Addressbook: Address Book source groups are missing! Check your GConf setup.");
+    return;
+  }
+
+  Open_Handler_And_Data *had = g_new (Open_Handler_And_Data, 1);
+  had->handler = callback;
+
+  for (l = list; l != NULL; l = l->next)
+    {
+
+      ESourceGroup *group = l->data;
+      GSList *sources = NULL, *m;
+      sources = e_source_group_peek_sources(group);
+      for (m = sources; m != NULL; m = m->next)
+        {
+	  DEBUG("Addressbook: Group name %s", e_source_group_peek_name(group));
+	  DEBUG("Addressbook: Group uid %s", e_source_group_peek_uid(group));
+
+          ESource *source = m->data;
+          EBook *book = e_book_new(source, NULL);
+          if (book != NULL)
+            {
+              // Keep count of remaining books to open
+              remaining_books_to_open++;
+	      
               // Asynchronous open
               e_book_async_open(book, FALSE, eds_async_open_callback, had);
             }
