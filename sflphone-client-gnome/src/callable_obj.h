@@ -120,6 +120,7 @@ typedef struct  {
     gboolean _zrtp_confirmed;       // Override real state. Used for hold/unhold 
                                     // since rtp session is killed each time and 
                                     // libzrtpcpp does not remember state (yet?)
+
     /**
      * The information about the person we are talking
      */
@@ -153,7 +154,8 @@ typedef struct  {
     gchar *_audio_codec;
 
     // thread id to increment clock
-    pthread_t tid;
+    // pthread_t tid;
+    GThread *tid;
 
     int clockStarted;
 

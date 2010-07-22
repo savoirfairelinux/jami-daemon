@@ -188,6 +188,7 @@ void *threaded_clock_incrementer(void *pc) {
 void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
 {
 
+    GError *err1 = NULL ;
     callable_obj_t *obj;
     gchar *call_id;
 
@@ -226,7 +227,13 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
     obj->clockStarted = 1;
 
-    pthread_create(&(obj->tid), NULL, threaded_clock_incrementer, obj);
+    // pthread_create(&(obj->tid), NULL, threaded_clock_incrementer, obj);
+    
+    if( (obj->tid = g_thread_create((GThreadFunc)threaded_clock_incrementer, (void *)obj, TRUE, &err1)) == NULL)
+    {
+      // printf("Thread create failed: %s!!\n", err1->message );
+      g_error_free ( err1 ) ;
+    }
 
     *new_call = obj;
 }
@@ -323,12 +330,13 @@ void free_callable_obj_t (callable_obj_t *c)
 {
     DEBUG("CallableObj: Free callable object");
 
-
     if(!c)
       ERROR("CallableObj: Callable object is NULL");
 
     c->clockStarted = 0;
 
+    g_thread_join(c->tid);
+    
     g_free (c->_callID);
     g_free (c->_accountID);
     g_free (c->_peer_name);
@@ -338,7 +346,7 @@ void free_callable_obj_t (callable_obj_t *c)
 
     DEBUG("If you don't see it that is because there is a problem");
 
-    // calltree_update_clock();
+    calltree_update_clock();
 }
 
 void attach_thumbnail (callable_obj_t *call, GdkPixbuf *pixbuf) {
