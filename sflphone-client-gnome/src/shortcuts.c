@@ -402,6 +402,7 @@ shortcuts_initialize_bindings ()
       action = shortcutsKeysElement->data;
       maskAndKey = g_strdup (g_hash_table_lookup (shortcutsMap, action));
 
+      DEBUG("-------------------- maskAndKey %s", maskAndKey);
       token1 = strtok (maskAndKey, "x");
       token2 = strtok (NULL, "x");
 
@@ -409,22 +410,12 @@ shortcuts_initialize_bindings ()
       key = 0;
 
       // Value not setted
-      if (token1 == NULL)
-        {
-          // Nothing to do
-        }
-      // Backward compatibility (no mask defined)
-      if (token1 != NULL && token2 == NULL)
-        {
-          key = atoi (token1);
-          mask = 0;
-        }
-      // Regular case
-      else
-        {
-          mask = atoi (token1);
-          key = atoi (token2);
-        }
+      if (token1 && token2){
+	DEBUG("token1 %s, token2 %s", token1, token2);
+	  
+	mask = atoi (token1);
+	key = atoi (token2);
+      }
 
       if (key != 0)
         initialize_binding (action, key, mask);
