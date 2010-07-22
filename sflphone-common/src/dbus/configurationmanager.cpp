@@ -727,17 +727,7 @@ std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName(void) {
 
 std::map<std::string, std::string> ConfigurationManager::getShortcuts() {
 
-	std::map<std::string, std::string> shortcutsMap;
-
-	for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
-		std::string key = shortcutsKeys.at(i);
-		std::string shortcut = Manager::instance().getConfigString("Shortcuts", key);
-		shortcutsMap.insert(std::pair<std::string, std::string>(key, shortcut));
-	}
-
 	return Manager::instance().shortcutPreferences.getShortcuts();
-
-	return shortcutsMap;
 }
 
 void ConfigurationManager::setShortcuts(
