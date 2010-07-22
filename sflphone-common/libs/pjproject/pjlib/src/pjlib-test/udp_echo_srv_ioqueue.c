@@ -162,6 +162,8 @@ static int worker_thread(void *arg)
         rc = pj_ioqueue_poll(ioqueue, &timeout);
     }
     PJ_UNREACHED(return 0;)
+
+    return 0;
 }
 
 int udp_echo_srv_ioqueue(void)

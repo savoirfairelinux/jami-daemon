@@ -890,20 +890,20 @@
 	   </method>
 
 	   <method name="getShortcuts" tp:name-for-bindings="getShortcuts">
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="a{si}" name="shortcutsMap" direction="out">
+		   <arg type="a{ss}" name="shortcutsMap" direction="out">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>
 	   </method>
 
 	   <method name="setShortcuts" tp:name-for-bindings="setShortcuts">
-                   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringInt"/>
+                   <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="a{si}" name="shortcutsMap" direction="in">
+		   <arg type="a{ss}" name="shortcutsMap" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>
 		   </arg>

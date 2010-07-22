@@ -444,17 +444,16 @@ ShortcutPreferences::ShortcutPreferences() : _hangup("")
 ShortcutPreferences::~ShortcutPreferences() {}
 
 
-std::map<std::string, int> ShortcutPreferences::getShortcuts() 
+std::map<std::string, std::string> ShortcutPreferences::getShortcuts() 
 {
 
-  std::map<std::string, int> shortcutsMap;
-  int shortcut;
+  std::map<std::string, std::string> shortcutsMap;
 
-  shortcutsMap.insert(std::pair<std::string, int>(hangupShortKey, atoi(_hangup.data())));
-  shortcutsMap.insert(std::pair<std::string, int>(pickupShortKey, atoi(_pickup.data())));
-  shortcutsMap.insert(std::pair<std::string, int>(popupShortKey, atoi(_popup.data())));
-  shortcutsMap.insert(std::pair<std::string, int>(toggleHoldShortKey, atoi(_toggleHold.data())));
-  shortcutsMap.insert(std::pair<std::string, int>(togglePickupHangupShortKey, atoi(_togglePickupHangup.data())));
+  shortcutsMap.insert(std::pair<std::string, std::string>(hangupShortKey, _hangup.data()));
+  shortcutsMap.insert(std::pair<std::string, std::string>(pickupShortKey, _pickup.data()));
+  shortcutsMap.insert(std::pair<std::string, std::string>(popupShortKey, _popup.data()));
+  shortcutsMap.insert(std::pair<std::string, std::string>(toggleHoldShortKey, _toggleHold.data()));
+  shortcutsMap.insert(std::pair<std::string, std::string>(togglePickupHangupShortKey, _togglePickupHangup.data()));
 
   return shortcutsMap;
 }

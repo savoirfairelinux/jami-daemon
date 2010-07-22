@@ -196,7 +196,7 @@ static GPtrArray* getNewCredential (GHashTable * properties) {
 	DEBUG("shit");
 
 	if(valid == FALSE) {
-	  DEBUG("Gtk tree model iter is not valid")
+	  DEBUG("Gtk tree model iter is not valid");
 	  return NULL;
 	}
 
@@ -1185,7 +1185,7 @@ GtkWidget* create_published_address (account_t **a) {
 GtkWidget* create_advanced_tab (account_t **a) {
 
 	// Build the advanced tab, to appear on the account configuration panel
-        DEBUG("Config: Build advanced tab")
+        DEBUG("Config: Build advanced tab");
 
 	GtkWidget *ret, *frame;
 

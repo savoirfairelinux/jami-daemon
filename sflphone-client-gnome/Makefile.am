@@ -6,16 +6,13 @@ GCONFTOOL=gconftool-2
 
 GNOME_DOC=gnome-doc-utils.make
 
-log4crc_DATA = log4crc
-log4crcdir = $(datadir)/sflphone
-
 uidir=$(datadir)/sflphone/ui
 ui_DATA=src/ui.xml
 
 schemadir   = @GCONF_SCHEMA_FILE_DIR@
 schema_DATA = sflphone-client-gnome.schemas
 
-EXTRA_DIST   = $(log4crc_DATA) sflphone.desktop.in $(GNOME_DOC) m4 $(UI_DATA) $(schema_DATA)
+EXTRA_DIST   = sflphone.desktop.in $(GNOME_DOC) m4 $(UI_DATA) $(schema_DATA)
 appsdir = $(datadir)/applications
 apps_in_files = sflphone.desktop.in
 apps_DATA = $(apps_in_files:.desktop.in=.desktop)

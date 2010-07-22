@@ -413,7 +413,7 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gch
 
     case DISPLAY_TYPE_CALL_TRANSFER: 
 
-        DEBUG("CallTree: Display a call transfer")
+        DEBUG("CallTree: Display a call transfer");
 
         if(g_strcmp0("",c->_peer_name) == 0){
 	    description = g_markup_printf_escaped("<b>%s</b><i>%s</i>\n<i>Transfert to:%s</i> ",
@@ -901,7 +901,7 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 		}
 	} 
 
-	DEBUG("Added call key exchange is %s", key_exchange)
+	DEBUG("Added call key exchange is %s", key_exchange);
 
 	if( tab == current_calls )
 	{

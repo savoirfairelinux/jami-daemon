@@ -375,7 +375,7 @@ class ShortcutPreferences : public Serializable {
 
   virtual void unserialize(Conf::MappingNode *map);
 
-  std::map<std::string, int> getShortcuts(void);
+  std::map<std::string, std::string> getShortcuts(void);
   void setShortcuts(std::map<std::string, int> shortcut);
 
   std::string getHangup(void) { return _hangup; }

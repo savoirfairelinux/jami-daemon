@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-10-20
-# Last Modified: 2009-12-15 18:16:50 -0500
+# Last Modified: 2010-04-22 16:42:57 -0400
 #####################################################
 
 #set -x
@@ -16,10 +16,12 @@
 
 IS_RELEASE=
 VERSION_INDEX="1"
+IS_KDE_CLIENT=
 DO_PUSH=1
 DO_LOGGING=1
 DO_UPLOAD=1
 SNAPSHOT_TAG=`date +%Y%m%d`
+TAG_NAME_PREFIX=
 
 LAUNCHPAD_PACKAGES=( "sflphone-client-gnome" "sflphone-common" )
 
@@ -37,6 +39,7 @@ do
                 echo "Options :"
                 echo " --skip-push"
                 echo " --skip-upload"
+		echo " --kde-client"
                 echo " --no-logging"
                 echo " --release"
                 echo " --version-index=[1,2,...]"
@@ -46,6 +49,8 @@ do
                 unset DO_PUSH;;
         --skip-upload)
                 unset DO_UPLOAD;;
+        --kde-client)
+                IS_KDE_CLIENT=1;;
         --no-logging)
                 unset DO_LOGGING;;
         --release)
@@ -89,6 +94,10 @@ else
 	echo "Snapshot mode"
 fi
 
+if [ ${IS_KDE_CLIENT} ]; then
+	TAG_NAME_PREFIX="kde."
+fi
+
 #########################
 # COMMON PART
 #########################
@@ -104,15 +113,26 @@ fi
 
 echo "Retrieve build info"
 # retrieve info we may need
-CURRENT_RELEASE_TAG_NAME=`git tag -l "[0-9]\.[0-9]\.[0-9]\.*" | tail -n 1`
-PREVIOUS_RELEASE_TAG_NAME=`git tag -l "[0-9]\.[0-9]\.[0-9]\.*" | tail -n 2 | sed -n '1p;1q'`
+if [ ${IS_KDE_CLIENT} ]; then
+	TAG_NAME_PREFIX="kde."
+	LAUNCHPAD_PACKAGES=( "sflphone-client-kde" )
+fi
+CURRENT_RELEASE_TAG_NAME=`git tag -l "${TAG_NAME_PREFIX}[0-9]\.[0-9]\.[0-9]\.*" | tail -n 1`
+PREVIOUS_RELEASE_TAG_NAME=`git tag -l "${TAG_NAME_PREFIX}[0-9]\.[0-9]\.[0-9]\.*" | tail -n 2 | sed -n '1p;1q'`
 CURRENT_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${CURRENT_RELEASE_TAG_NAME} | tail -n 1`
 PREVIOUS_RELEASE_COMMIT_HASH=`git show --pretty=format:"%H" -s ${PREVIOUS_RELEASE_TAG_NAME} | tail -n 1`
 CURRENT_COMMIT=`git show --pretty=format:"%H"  -s | tail -n 1`
 CURRENT_RELEASE_TYPE=${CURRENT_RELEASE_TAG_NAME##*.}
 PREVIOUS_RELEASE_TYPE=${PREVIOUS_RELEASE_TAG_NAME##*.}
-CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_TAG_NAME%*.*}
-PREVIOUS_VERSION=${PREVIOUS_RELEASE_TAG_NAME%*.*}
+if [ ${IS_KDE_CLIENT} ]; then
+	CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_TAG_NAME%.*}
+	CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_VERSION#*.}
+	PREVIOUS_VERSION=${PREVIOUS_RELEASE_TAG_NAME%.*}
+	PREVIOUS_VERSION=${PREVIOUS_VERSION#*.}
+else
+	CURRENT_RELEASE_VERSION=${CURRENT_RELEASE_TAG_NAME%.*}
+	PREVIOUS_VERSION=${PREVIOUS_RELEASE_TAG_NAME%.*}
+fi
 
 cd ${LAUNCHPAD_DIR}
 
