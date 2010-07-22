@@ -139,38 +139,41 @@ void *threaded_clock_incrementer(void *pc) {
     int duration;
     time_t start, current;
 
+    gdk_threads_enter ();
+
     set_timestamp(&(call->_time_current));
 
     start = call->_time_start;
     current = call->_time_current;
 
-    if (current == start)
-      DEBUG("<small>Duration:</small> 0:00");
-      // return g_markup_printf_escaped("<small>Duration:</small> 0:00");
+    if (current == start) {
+      g_snprintf(call->_timestr, 20, "00:00");
+    }
 
     duration = (int) difftime(current, start);
 
     if( duration / 60 == 0 )
     {
-        if( duration < 10 )
-            res = g_markup_printf_escaped("00:0%i", duration);
-        else
-            res = g_markup_printf_escaped("00:%i", duration);
+      if( duration < 10 ) {
+	g_snprintf(call->_timestr, 20, "00:0%d", duration);
+      }
+      else {
+	g_snprintf(call->_timestr, 20, "00:%d", duration);
+      }
     }
     else
     {
-        if( duration%60 < 10 )
-            res = g_markup_printf_escaped("%i:0%i" , duration/60 , duration%60);
-        else
-            res = g_markup_printf_escaped("%i:%i" , duration/60 , duration%60);
+      if( duration%60 < 10 ) {
+	g_snprintf(call->_timestr, 20, "0%d:0%d", duration/60, duration%60);
+      }
+      else {
+	g_snprintf(call->_timestr, 20, "%d:%d", duration/60, duration%60);
+      }
     }
-    // return g_markup_printf_escaped("<small>Duration:</small> %s", res);
 
-    DEBUG("%s", res);
+    calltree_update_clock();
 
-    calltree_update_clock(call);
-
-    g_free(res);
+    gdk_threads_leave ();
 
     sleep(1);
   }
@@ -201,6 +204,7 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     set_timestamp (&(obj->_time_start));
     set_timestamp (&(obj->_time_current));
     set_timestamp (&(obj->_time_stop));
+    g_snprintf(obj->_timestr, 20, "00:00");
 
     if (g_strcasecmp (callID, "") == 0)
         call_id = generate_call_id ();

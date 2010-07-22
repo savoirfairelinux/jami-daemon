@@ -41,6 +41,7 @@
 #include <shortcuts-config.h>
 #include <audioconf.h>
 #include <hooks-config.h>
+#include <audioconf.h>
 
 /**
  * Local variables

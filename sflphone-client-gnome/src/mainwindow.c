@@ -59,6 +59,9 @@ GtkWidget * statusBar = NULL;
 GtkWidget * filterEntry = NULL;
 PidginScrollBook *embedded_error_notebook;
 
+gchar *status_current_message = NULL;
+pthread_mutex_t statusbar_message_mutex;
+
 /**
  * Handle main window resizing
  */
@@ -91,6 +94,8 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 	else {
 		sflphone_quit ();
 	}
+
+	pthread_mutex_destroy(&statusbar_message_mutex);
 	return TRUE;
 }
 
@@ -292,6 +297,8 @@ create_main_window ()
 	/* don't show waiting layer */
 	gtk_widget_hide (waitingLayer);
 
+	pthread_mutex_init(&statusbar_message_mutex, NULL);
+
 	// Configuration wizard
 	if (account_list_get_size () == 1)
 	{
@@ -405,22 +412,63 @@ main_window_volume_controls (gboolean state)
 }
 
 	void
-statusbar_push_message (const gchar * message, guint id)
+statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_message, guint id)
 {
-	gtk_statusbar_push (GTK_STATUSBAR(statusBar), id, message);
+  // The actual message to be push in the statusbar
+  gchar *message_to_display;
+  
+  pthread_mutex_lock(&statusbar_message_mutex);
+
+  g_free(status_current_message);
+  // store the left hand message so that it can be reused in case of clock update
+  status_current_message = g_strdup(left_hand_message);
+
+  // Format message according to right hand member
+  if(right_hand_message)
+    message_to_display = g_strdup_printf("%s           %s", 
+					 left_hand_message, right_hand_message);
+  else
+    message_to_display = g_strdup(left_hand_message);
+
+  // Push into the statusbar
+  gtk_statusbar_push (GTK_STATUSBAR(statusBar), id, message_to_display);
+
+  g_free(message_to_display);
+  
+  pthread_mutex_unlock(&statusbar_message_mutex);
 }
 
 	void
 statusbar_pop_message (guint id)
 {
-	gtk_statusbar_pop (GTK_STATUSBAR(statusBar), id);
+    gtk_statusbar_pop (GTK_STATUSBAR(statusBar), id);
 }
 
-	static void
+void
+statusbar_update_clock(gchar *msg)
+{ 
+  gchar *message = NULL;
+
+  pthread_mutex_lock(&statusbar_message_mutex);
+  message = g_strdup(status_current_message);
+  pthread_mutex_unlock(&statusbar_message_mutex);
+
+  if(message) {
+
+      statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
+      statusbar_push_message(message, msg, __MSG_ACCOUNT_DEFAULT);
+  }
+
+  g_free(message);
+  message = NULL;
+  
+}
+
+static void
 add_error_dialog (GtkWidget *dialog, callable_obj_t * call)
 {
-	gtk_container_add (GTK_CONTAINER(embedded_error_notebook), dialog);
-	call_add_error (call, dialog);
+    gtk_container_add (GTK_CONTAINER(embedded_error_notebook), dialog);
+    call_add_error (call, dialog);
 }
 
 	static void

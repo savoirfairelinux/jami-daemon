@@ -145,9 +145,9 @@ call_state_cb(DBusGProxy *proxy UNUSED, const gchar* callID, const gchar* state,
               calltree_update_call(history, c, NULL);
             }
           stop_notification();
-          sflphone_hung_up(c);
-          calltree_update_call(history, c, NULL );
+          calltree_update_call(history, c, NULL);
           status_bar_display_account();
+	  sflphone_hung_up(c);
         }
       else if (strcmp(state, "UNHOLD_CURRENT") == 0)
         {

@@ -137,7 +137,7 @@ status_bar_display_account ()
 	status_tray_icon_online(FALSE);
         msg = g_markup_printf_escaped(_("No registered accounts"));
     }
-    statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+    statusbar_push_message( msg, NULL,  __MSG_ACCOUNT_DEFAULT);
     g_free(msg);
 
     DEBUG("status_bar_display_account_end");
@@ -189,6 +189,8 @@ sflphone_ringing(callable_obj_t * c )
     void
 sflphone_hung_up( callable_obj_t * c)
 {
+    DEBUG("Actions: SFLphone hungup");
+
     calllist_remove( current_calls, c->_callID);
     calltree_remove_call(current_calls, c, NULL);
     c->_state = CALL_STATE_DIALING;
@@ -228,7 +230,7 @@ void sflphone_fill_account_list (void) {
         if(!(*accountID))
 	  DEBUG("hhhhhhhhhmmmmmmmmmmmm");
       */
-
+      
         for (accountID = array; *accountID; accountID++)
         {
             account_t * a = g_new0(account_t,1);
@@ -321,10 +323,10 @@ void sflphone_fill_account_list (void) {
         a->protocol_state_description = g_hash_table_lookup(details, REGISTRATION_STATE_DESCRIPTION);
     }
 
-	// Set the current account message number
-	current_account_set_message_number (count);
-
-	sflphone_fill_codec_list ();
+    // Set the current account message number
+    current_account_set_message_number (count);
+    
+    sflphone_fill_codec_list ();
 }
 
 gboolean sflphone_init() {
@@ -605,7 +607,7 @@ sflphone_unset_transfert()
     void
 sflphone_display_transfer_status(const gchar* message)
 {
-    statusbar_push_message( message , __MSG_ACCOUNT_DEFAULT);
+  statusbar_push_message( message , NULL, __MSG_ACCOUNT_DEFAULT);
 }
 
     void
@@ -624,7 +626,7 @@ sflphone_incoming_call (callable_obj_t * c)
     if(_is_direct_call(c)) {
 		msg = g_markup_printf_escaped (_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message( msg , NULL, __MSG_ACCOUNT_DEFAULT);
         g_free(msg);
 	}
 }
@@ -954,7 +956,7 @@ sflphone_place_call ( callable_obj_t * c )
     if(_is_direct_call(c)) {
 		msg = g_markup_printf_escaped (_("Direct SIP call"));
         statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
-        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+        statusbar_push_message( msg , NULL, __MSG_ACCOUNT_DEFAULT);
         g_free(msg);
         if(_place_direct_call(c) < 0) {
             DEBUG("An error occured while placing direct call in %s at %d", __FILE__, __LINE__);
