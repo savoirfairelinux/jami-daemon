@@ -56,30 +56,30 @@ addressbook_config_load_parameters(AddressBook_Config **settings)
     // Fetch the settings from D-Bus
     _params = (GHashTable*) dbus_get_addressbook_settings();
 
-    if (_params == NULL)
-    {
-        _settings->enable = 1;
-        _settings->max_results = 30;
-        _settings->display_contact_photo = 0;
-        _settings->search_phone_business = 1;
-        _settings->search_phone_home = 1;
-        _settings->search_phone_mobile = 1;
+    if (_params == NULL) {
+      
+      DEBUG("Addressbook: No parameters received, use default");
+
+      _settings->enable = 1;
+      _settings->max_results = 30;
+      _settings->display_contact_photo = 0;
+      _settings->search_phone_business = 1;
+      _settings->search_phone_home = 1;
+      _settings->search_phone_mobile = 1; 
+      
     }
-    else
-    {
-        _settings->enable = (gint64) (g_hash_table_lookup (_params, 
-                    ADDRESSBOOK_ENABLE));
-        _settings->max_results = (gint64) (g_hash_table_lookup(_params,
-                    ADDRESSBOOK_MAX_RESULTS));
-        _settings->display_contact_photo = (gint64) (g_hash_table_lookup(_params,
-                    ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
-        _settings->search_phone_business = (gint64) (g_hash_table_lookup(_params,
-                    ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
-        _settings->search_phone_home = (gint64) (g_hash_table_lookup(_params,
-                    ADDRESSBOOK_DISPLAY_PHONE_HOME));
-        _settings->search_phone_mobile = (gint64) (g_hash_table_lookup(_params,
-                    ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
+    else {
+      _settings->enable = (size_t) (g_hash_table_lookup (_params, ADDRESSBOOK_ENABLE));
+      _settings->max_results = (size_t) (g_hash_table_lookup(_params, ADDRESSBOOK_MAX_RESULTS));
+      _settings->display_contact_photo = (size_t) (g_hash_table_lookup(_params, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
+      _settings->search_phone_business = (size_t) (g_hash_table_lookup(_params, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
+      _settings->search_phone_home = (size_t) (g_hash_table_lookup(_params, ADDRESSBOOK_DISPLAY_PHONE_HOME));
+      _settings->search_phone_mobile = (size_t) (g_hash_table_lookup(_params, ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
     }
+
+    DEBUG("Addressbook: Settings: enabled %d, max_result %d, photo %d, business %d, home %d, mobile %d",
+	    _settings->enable, _settings->max_results, _settings->display_contact_photo, 
+	    _settings->search_phone_business, _settings->search_phone_home, _settings->search_phone_mobile);
 
     *settings = _settings;
 }
@@ -92,17 +92,17 @@ addressbook_config_save_parameters(void)
 
     params = g_hash_table_new(NULL, g_str_equal);
     g_hash_table_replace(params, (gpointer) ADDRESSBOOK_ENABLE,
-            (gpointer) addressbook_config->enable);
+			 (gpointer)(size_t) addressbook_config->enable);
     g_hash_table_replace(params, (gpointer) ADDRESSBOOK_MAX_RESULTS,
-            (gpointer) addressbook_config->max_results);
+			 (gpointer)(size_t) addressbook_config->max_results);
     g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_CONTACT_PHOTO,
-            (gpointer) addressbook_config->display_contact_photo);
+			 (gpointer)(size_t) addressbook_config->display_contact_photo);
     g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_BUSINESS,
-            (gpointer) addressbook_config->search_phone_business);
+			 (gpointer)(size_t) addressbook_config->search_phone_business);
     g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_HOME,
-            (gpointer) addressbook_config->search_phone_home);
+			 (gpointer)(size_t) addressbook_config->search_phone_home);
     g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_MOBILE,
-            (gpointer) addressbook_config->search_phone_mobile);
+			 (gpointer)(size_t) addressbook_config->search_phone_mobile);
 
     dbus_set_addressbook_settings(params);
 

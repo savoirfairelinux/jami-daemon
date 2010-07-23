@@ -43,6 +43,7 @@
 #include <libebook/e-book.h>
 #include <sflphone_const.h>
 
+
 #define EMPTY_ENTRY     "empty"
 
 G_BEGIN_DECLS
@@ -109,6 +110,9 @@ init(OpenAsyncHandler);
 void
 search_async(const char *query, int max_results, SearchAsyncHandler handler,
     gpointer user_data);
+
+void
+search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
 
 /**
  * Retrieve the specified information from the contact
