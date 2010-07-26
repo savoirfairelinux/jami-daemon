@@ -40,40 +40,29 @@ using std::endl;
 void ConfigurationTest::testDefaultValueAudio() {
 	_debug ("-------------------- ConfigurationTest::testDefaultValueAudio() --------------------\n");
 
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (AUDIO, ALSA_CARD_ID_IN) == ALSA_DFT_CARD);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (AUDIO, ALSA_CARD_ID_OUT) == ALSA_DFT_CARD);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (AUDIO, AUDIO_SAMPLE_RATE) == DFT_SAMPLE_RATE);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (AUDIO, ALSA_FRAME_SIZE) == DFT_FRAME_SIZE);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (AUDIO, ALSA_PLUGIN) == PCM_DEFAULT);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (AUDIO, VOLUME_SPKR) == DFT_VOL_SPKR_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (AUDIO, VOLUME_MICRO) == DFT_VOL_MICRO_STR);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardin() == ALSA_DFT_CARD);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardout() == ALSA_DFT_CARD);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getSmplrate() == DFT_SAMPLE_RATE);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getFramesize() == DFT_FRAME_SIZE);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getPlugin() == PCM_DEFAULT);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumespkr() == 100);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == 100);
 }
 
 void ConfigurationTest::testDefaultValuePreferences() {
 	_debug ("-------------------- ConfigurationTest::testDefaultValuePreferences --------------------\n");
 
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, ZONE_TONE) == DFT_ZONE);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_DIALPAD) == NO_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_RINGTONE) == YES_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_SEARCHBAR) == YES_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_START) == NO_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_POPUP) == NO_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_NOTIFY) == YES_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_MAIL_NOTIFY) == NO_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_VOLUME) == NO_STR);
-	//CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, REGISTRATION_EXPIRE) == DFT_EXPIRE_VALUE);
-	//CPPUNIT_ASSERT (Manager::instance().getConfigString (PREFERENCES, CONFIG_AUDIO) == DFT_AUDIO_MANAGER);
-
+	CPPUNIT_ASSERT (Manager::instance().preferences.getZoneToneChoice() == DFT_ZONE); 
 }
 
 void ConfigurationTest::testDefaultValueSignalisation() {
 	_debug ("-------------------- ConfigurationTest::testDefaultValueSignalisation --------------------\n");
 
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (SIGNALISATION , SYMMETRIC) == YES_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (SIGNALISATION , PLAY_DTMF) == YES_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (SIGNALISATION , PLAY_TONES) == YES_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (SIGNALISATION , PULSE_LENGTH) == DFT_PULSE_LENGTH_STR);
-	CPPUNIT_ASSERT (Manager::instance().getConfigString (SIGNALISATION , SEND_DTMF_AS) == SIP_INFO_STR);
+	CPPUNIT_ASSERT (Manager::instance().voipPreferences.getSymmetricRtp() == true);
+	CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPlayDtmf() == true);
+	CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPlayTones() == true);
+	CPPUNIT_ASSERT (Manager::instance().voipPreferences.getPulseLength() == 250);
+	CPPUNIT_ASSERT (Manager::instance().voipPreferences.getSendDtmfAs() == 0);
 }
 
 void ConfigurationTest::testLoadSIPAccount() {
@@ -125,9 +114,9 @@ void ConfigurationTest::testInitVolume() {
 	_debug ("-------------------- ConfigurationTest::testInitVolume --------------------\n");
 
 	Manager::instance().initVolume();
-
-	CPPUNIT_ASSERT (Manager::instance().getConfigInt (AUDIO, VOLUME_SPKR) == Manager::instance().getSpkrVolume());
-	CPPUNIT_ASSERT (Manager::instance().getConfigInt (AUDIO, VOLUME_MICRO) == Manager::instance().getMicVolume());
+ 
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumespkr() == Manager::instance().getSpkrVolume());
+        CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == Manager::instance().getMicVolume());
 }
 
 void ConfigurationTest::testInitAudioDriver() {
@@ -142,10 +131,9 @@ void ConfigurationTest::testInitAudioDriver() {
 		CPPUNIT_FAIL ("Error while loading audio layer");
 
 	// Check if it has been created with the right type
-	if (Manager::instance().getConfigInt(PREFERENCES, CONFIG_AUDIO) == ALSA)
+	if (Manager::instance().preferences.getAudioApi() == ALSA)
 		CPPUNIT_ASSERT_EQUAL (Manager::instance().getAudioDriver()->getLayerType(), ALSA);
-	else if (Manager::instance().getConfigInt(PREFERENCES, CONFIG_AUDIO)
-			== PULSEAUDIO)
+	else if (Manager::instance().preferences.getAudioApi() == PULSEAUDIO)
 		CPPUNIT_ASSERT_EQUAL (Manager::instance().getAudioDriver()->getLayerType(), PULSEAUDIO);
 	else
 		CPPUNIT_FAIL ("Wrong audio layer type");

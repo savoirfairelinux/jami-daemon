@@ -193,8 +193,6 @@ static GPtrArray* getNewCredential (GHashTable * properties) {
 	gchar *password;
 	GHashTable * new_table;   
 
-	DEBUG("shit");
-
 	if(valid == FALSE) {
 	  DEBUG("Gtk tree model iter is not valid");
 	  return NULL;
@@ -205,7 +203,6 @@ static GPtrArray* getNewCredential (GHashTable * properties) {
 			      COLUMN_CREDENTIAL_USERNAME, &username,
 			      COLUMN_CREDENTIAL_PASSWORD, &password,
 			      -1);
-	DEBUG("shit");
 
 	g_hash_table_insert(properties, g_strdup(ACCOUNT_REALM), realm);
 
