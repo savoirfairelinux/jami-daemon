@@ -155,6 +155,8 @@ private:
   // Assignment Operator
   WavFile& operator=( const AudioFile& rh);
 
+  bool isFileExist(const std::string& filename);
+
   /** The absolute path to the sound file */
   std::string _filename;
   

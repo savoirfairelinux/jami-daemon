@@ -191,7 +191,23 @@ WavFile::~WavFile()
 }
 
 
-bool WavFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate) {
+bool WavFile::isFileExist(const std::string& filename)
+{
+
+  std::fstream fs(filename.c_str(), std::ios_base::in);
+  if(!fs) {
+      _debug("WavFile: File \"%s\" doesn't exist", filename.c_str());
+      return false;
+  }
+
+  return true;
+
+}
+
+bool WavFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate) 
+{
+    if(!isFileExist(filename))
+      return false;
   
     std::fstream file;
 
@@ -274,6 +290,7 @@ bool WavFile::loadFile (const std::string& filename, AudioCodec* codec , unsigne
       else if (dt == 32)
 	_dataType = 3; // SINT32;
     }
+
     /*
     else if ( formatTag == 3 ) 
     {
