@@ -309,8 +309,8 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
 	books_data = g_slist_prepend(books_data, book_data);
 	had->handler();
 
-	if(remaining_books_to_open == 0) {
-
+	// if(remaining_books_to_open == 0) {
+	if(!e_book_is_opened(book_data->ebook)) {
 	  // We must open the addressbook
 	  e_book_open (book_data->ebook, FALSE, NULL);
 	}
@@ -446,7 +446,7 @@ init(OpenAsyncHandler callback)
 	// g_signal_connect (book, "contacts_added", (GCallback) view_contacts_added_cb, had);
 
 	// Asynchronous open
-	e_book_async_open(book, FALSE, eds_async_open_callback, had);
+	e_book_async_open(book, TRUE, eds_async_open_callback, had);
       }
       else
 	ERROR("Addressbook: Error: Could not create empty book");
