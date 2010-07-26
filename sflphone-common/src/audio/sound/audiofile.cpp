@@ -175,3 +175,139 @@ AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned i
     return true;
 }
 
+
+
+WavFile::WavFile()
+        : AudioLoop(),
+        _filename(),
+        _codec (NULL),
+        _start (false)
+
+{
+}
+
+WavFile::~WavFile()
+{
+}
+
+
+bool WavFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate) {
+  
+    std::fstream file;
+
+    printf("WavFile: Open %s", filename.c_str());
+
+    file.open(filename.c_str(), std::ios::in | std::ios::binary);
+
+    char riff[4] = {};
+
+    file.read(riff, 4);
+
+    if ( strncmp("RIFF", riff, 4) != 0 ) {
+        _error("WavFile: File is not of RIFF format");
+        return false;
+    }
+
+    // Find the "fmt " chunk
+    char fmt[4] = {}; 
+
+    while ( strncmp("fmt ", fmt, 4) != 0 ) {
+      file.read(fmt, 4);
+      _debug("WavFile: Searching... %s", fmt);
+    }
+
+    SINT32 chunkSize;         // fmt chunk size
+    unsigned short formatTag; // data compression tag
+
+    file.read((char*)&chunkSize, 4); // Read fmt chunk size.
+    file.read((char*)&formatTag, 2);
+
+    _debug("Chunk size: %d\n", chunkSize);
+    _debug("Format tag: %d\n", formatTag);
+
+
+    if (formatTag != 1 ) { // PCM = 1, FLOAT = 3 {
+        _error("WaveFile: File contains an unsupported data format type");
+        return false;
+    }
+
+    // Get number of channels from the header.
+    SINT16 chan;
+    file.read((char*)&chan, 2);
+
+    _channels = chan;
+
+    _debug("WavFile: channel %d", _channels);
+
+
+    // Get file sample rate from the header.
+    SINT32 srate;
+    file.read((char*)&srate, 4);
+
+    _fileRate = (double)srate;
+
+    printf("WavFile: srate %d", srate);
+    
+    SINT32 avgb;
+    file.read((char*)&avgb, 4);
+
+    _debug("WavFile: Average byte %i\n", avgb);
+
+    SINT16 blockal;
+    file.read((char*)&blockal, 2);
+
+    _debug("WaveFile: block alignment %d", blockal);
+
+    // Determine the data type
+    _dataType = 0;
+
+    SINT16 dt;
+    file.read((char*)&dt, 2);
+
+    _debug("WaveFile: dt %d", dt);
+
+    if ( formatTag == 1 ) {
+      if (dt == 8)
+	_dataType = 1; // SINT8;
+      else if (dt == 16)
+	_dataType = 2; // SINT16;
+      else if (dt == 32)
+	_dataType = 3; // SINT32;
+    }
+    /*
+    else if ( formatTag == 3 ) 
+    {
+      if (temp == 32)
+        dataType_ = FLOAT32;
+      else if (temp == 64)
+        dataType_ = FLOAT64;
+    }
+    */
+    else {
+      _debug("WavFile: File's bits per sample is not supported");
+      return false;
+    }
+
+    // Find the "data" chunk 
+    char data[4] = {};
+
+    while ( strncmp("data", data, 4) ) {
+        file.read(data, 4);
+	_debug("WavFile: Searching data");
+    }
+
+    // Get length of data from the header.
+    SINT32 bytes;
+    file.read((char*)&bytes, 4);
+
+    _debug("WavFile: Data size in byte %ld", bytes);
+
+    _fileSize = 8 * bytes / dt / _channels;  // sample frames
+
+    _debug("WavFile: Data size in frames %ld", _fileSize);
+
+    _debug("WavFile: File successfully opened");
+
+    return true;
+
+}
