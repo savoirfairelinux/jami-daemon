@@ -227,12 +227,12 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
     obj->clockStarted = 1;
 
-    // pthread_create(&(obj->tid), NULL, threaded_clock_incrementer, obj);
-    
-    if( (obj->tid = g_thread_create((GThreadFunc)threaded_clock_incrementer, (void *)obj, TRUE, &err1)) == NULL)
-    {
-      // printf("Thread create failed: %s!!\n", err1->message );
-      g_error_free ( err1 ) ;
+    if(obj->_type == CALL) {
+      // pthread_create(&(obj->tid), NULL, threaded_clock_incrementer, obj);
+      if( (obj->tid = g_thread_create((GThreadFunc)threaded_clock_incrementer, (void *)obj, TRUE, &err1)) == NULL) {
+	  DEBUG("Thread creation failed!");
+	  g_error_free ( err1 ) ;
+      }
     }
 
     *new_call = obj;
@@ -333,9 +333,13 @@ void free_callable_obj_t (callable_obj_t *c)
     if(!c)
       ERROR("CallableObj: Callable object is NULL");
 
-    c->clockStarted = 0;
+    if(c->_type == CALL) {
+      c->clockStarted = 0;
 
-    g_thread_join(c->tid);
+      DEBUG("block here");
+      g_thread_join(c->tid);
+      DEBUG("SINCE WE DON'T SEE IT");
+    }
     
     g_free (c->_callID);
     g_free (c->_accountID);

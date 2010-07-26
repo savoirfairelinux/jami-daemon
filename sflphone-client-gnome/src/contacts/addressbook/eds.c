@@ -309,8 +309,11 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
 	books_data = g_slist_prepend(books_data, book_data);
 	had->handler();
 
-	// We must open the addressbook
-	e_book_open (book_data->ebook, FALSE, NULL);
+	if(remaining_books_to_open == 0) {
+
+	  // We must open the addressbook
+	  e_book_open (book_data->ebook, FALSE, NULL);
+	}
 
     }
     else {
@@ -458,8 +461,8 @@ init(OpenAsyncHandler callback)
  * Final callback after all books have been processed.
  */
 static void
-view_finish(EBookView *book_view, Search_Handler_And_Data *had)
-{
+view_finish(EBookView *book_view, Search_Handler_And_Data *had) {
+
   GList *i;
   SearchAsyncHandler had_handler = had->handler;
   GList *had_hits = had->hits;
@@ -467,29 +470,29 @@ view_finish(EBookView *book_view, Search_Handler_And_Data *had)
   int search_id = had->search_id;
   g_free(had);
 
+  DEBUG("Addressbook: View finish");
+
   if (book_view != NULL)
     g_object_unref(book_view);
 
-  if (search_id == current_search_id)
-    {
-      // Reinitialize search id to prevent overflow
-      if (current_search_id > 5000)
-        current_search_id = 0;
+  if (search_id == current_search_id) {
 
-      // Call display callback
-      had_handler(had_hits, had_user_data);
+    // Reinitialize search id to prevent overflow
+    if (current_search_id > 5000)
+      current_search_id = 0;
+    
+    // Call display callback
+    had_handler(had_hits, had_user_data);
+  }
+  else {
+    // Some hits could have been processed but will not be used
+    for (i = had_hits; i != NULL; i = i->next) {
+      Hit *entry;
+      entry = i->data;
+      free_hit(entry);
     }
-  else
-    {
-      // Some hits could have been processed but will not be used
-      for (i = had_hits; i != NULL; i = i->next)
-        {
-          Hit *entry;
-          entry = i->data;
-          free_hit(entry);
-        }
-      g_list_free(had_hits);
-    }
+    g_list_free(had_hits);
+  }
 }
 
 /**
@@ -598,15 +601,19 @@ gpointer user_data)
 }
 
 /**
- * Callback called after a contact have been found in EDS.
+ * Callback called after a contact have been found in EDS by search_async_by_contacts.
  */
 static void
-eds_query_result_cb(EBook *book, EBookStatus status, EContact *contact, gpointer user_data) {
+eds_query_result_cb(EBook *book, EBookStatus status, GList *contacts, gpointer user_data) {
 
   DEBUG("Addressbook: Search Result callback callled");
 
-  if(!contact)
+  if(!contacts) {
     DEBUG("Addressbook: Error: Contact is NULL");
+    return;
+  }
+
+  GList *l;
 
   if (status == E_BOOK_ERROR_OK) {
 
@@ -615,29 +622,42 @@ eds_query_result_cb(EBook *book, EBookStatus status, EContact *contact, gpointer
 
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
 
-    Hit *hit = g_new(Hit, 1);
+    l = contacts;
+    while(l) {
 
-    // Get the photo contact
-    photo = pixbuf_from_contact(E_CONTACT(contact));
+      Hit *hit = g_new(Hit, 1);
 
-    // Get business phone information
-    fetch_information_from_contact(E_CONTACT(contact), E_CONTACT_PHONE_BUSINESS, &number);
-    hit->phone_business = g_strdup(number);
+      // Get the photo contact
+      hit->photo = pixbuf_from_contact(E_CONTACT(l->data));
+
+      // Get business phone information
+      fetch_information_from_contact(E_CONTACT(l->data), E_CONTACT_PHONE_BUSINESS, &number);
+      hit->phone_business = g_strdup(number);
     
-    // Get home phone information
-    fetch_information_from_contact(E_CONTACT(contact), E_CONTACT_PHONE_HOME, &number);
-    hit->phone_home = g_strdup(number);
+      // Get home phone information
+      fetch_information_from_contact(E_CONTACT(l->data), E_CONTACT_PHONE_HOME, &number);
+      hit->phone_home = g_strdup(number);
 
-    // Get mobile phone information
-    fetch_information_from_contact(E_CONTACT(contact), E_CONTACT_PHONE_MOBILE, &number);
-    hit->phone_mobile = g_strdup(number);
+      // Get mobile phone information
+      fetch_information_from_contact(E_CONTACT(l->data), E_CONTACT_PHONE_MOBILE, &number);
+      hit->phone_mobile = g_strdup(number);
 
-    hit->name = g_strdup((char *) e_contact_get_const(E_CONTACT(contact), E_CONTACT_NAME_OR_ORG));
-    if (!hit->name)
-      hit->name = "";
+      hit->name = g_strdup((char *) e_contact_get_const(E_CONTACT(l->data), E_CONTACT_NAME_OR_ORG));
+      if (!hit->name)
+	hit->name = "";
 
-    had->hits = g_list_append(had->hits, hit);
+      DEBUG("Addressbook: Contact Found");
+      DEBUG("Addressbook: Full Name %s", hit->name);
+      DEBUG("Addressbook: Phone Home %s", hit->phone_home);
+      DEBUG("Addressbook: Phone Business %s", hit->phone_business);
+      DEBUG("Addressbook: Phone Mobile %s", hit->phone_mobile);
 
+      had->hits = g_list_append(had->hits, hit);
+      had->max_results_remaining--;
+
+      l = g_list_next(l);
+    }
+    view_finish(NULL, had);
   }
 
 }
@@ -724,6 +744,79 @@ search_async(const char *query, int max_results, SearchAsyncHandler handler,
   else
     DEBUG("Addressbook: Search Count %d", search_count);
 }
+
+void
+search_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data) {
+
+  EBookQuery *equery;
+  EBookQuery *queries[4];
+  GList *l, *list, *iter;
+  GError *error;
+
+  current_search_id++;
+
+  DEBUG("Addressbook: Search %d by contact %s, max results %d", current_search_id, query, max_results);
+
+  if(strlen(query) < 1 || g_slist_length(books_data) == 0) {
+    DEBUG("Addressbook: Query is empty or no addresssbook opened");
+    handler(NULL, user_data);
+    return;
+  }
+
+  Search_Handler_And_Data *had = g_new(Search_Handler_And_Data, 1);
+
+  had->search_id = current_search_id;
+  had->handler = handler;
+  had->user_data = user_data;
+  had->hits = NULL;
+  had->max_results_remaining = max_results;
+  had->book_views_remaining = 0;
+
+  // create the query
+  int cpt;
+  queries[cpt++] = e_book_query_field_test(E_CONTACT_FULL_NAME, E_BOOK_QUERY_CONTAINS, query);
+  queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_HOME, E_BOOK_QUERY_CONTAINS, query);
+  queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_BUSINESS, E_BOOK_QUERY_CONTAINS, query);
+  queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_MOBILE, E_BOOK_QUERY_CONTAINS, query);
+
+  equery = e_book_query_or(cpt, queries, TRUE);
+
+  // Iterate through all opened books
+  for(iter = books_data; iter != NULL; iter=iter->next){
+    book_data_t *book_data = (book_data_t *)iter->data;
+
+    if(book_data->active) {
+      if(e_book_get_contacts(book_data->ebook, equery, &list, NULL)) {
+	DEBUG("Addressbook: Queries sent successfully");
+	l = list;
+	while(l) {
+
+	  DEBUG("Addressbook: Contact found");
+	  Hit *hit = g_new(Hit, 1);
+	  hit->name = g_strdup((const gchar*)e_contact_get_const(E_CONTACT(l->data), E_CONTACT_FULL_NAME));
+	  hit->phone_home = g_strdup((const gchar*)e_contact_get_const(E_CONTACT(l->data), E_CONTACT_PHONE_HOME));
+	  hit->phone_business = g_strdup((const gchar*)e_contact_get_const(E_CONTACT(l->data), E_CONTACT_PHONE_BUSINESS));
+	  hit->phone_mobile = g_strdup((const gchar*)e_contact_get_const(E_CONTACT(l->data), E_CONTACT_PHONE_MOBILE));
+	  hit->photo = pixbuf_from_contact(E_CONTACT(l->data));
+
+	  DEBUG("Addressbook: Contact Found");
+	  DEBUG("Addressbook: Full Name %s", hit->name);
+	  DEBUG("Addressbook: Phone Home %s", hit->phone_home);
+	  DEBUG("Addressbook: Phone Business %s", hit->phone_business);
+	  DEBUG("Addressbook: Phone Mobile %s", hit->phone_mobile);
+
+	  had->hits = g_list_append(had->hits, hit);
+	  had->max_results_remaining--;
+
+	  l = g_list_next(l);
+	}
+      }
+    }
+  }
+  view_finish(NULL, had);
+  // handler
+}
+
 
 void
 search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data) {

@@ -53,6 +53,8 @@ addressbook_search(GtkEntry* entry)
 
     addressbook_config_load_parameters(&addressbook_config);
 
+    // search_by_contacts(gtk_entry_get_text(GTK_ENTRY(entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
+
     search_async_by_contacts(gtk_entry_get_text(GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
 
    /*
@@ -178,7 +180,7 @@ handler_async_search(GList *hits, gpointer user_data)
   AddressBook_Config *addressbook_config;
   callable_obj_t *j;
 
-  DEBUG("Addressbook, callback async search");
+  DEBUG("Addressbook: callback async search");
 
   // freeing calls
   while ((j = (callable_obj_t *) g_queue_pop_tail(contacts->callQueue)) != NULL) {
@@ -194,6 +196,8 @@ handler_async_search(GList *hits, gpointer user_data)
 
   for (i = hits; i != NULL; i = i->next)
     {
+      DEBUG("while");
+      
       Hit *entry;
       entry = i->data;
       if (entry)
