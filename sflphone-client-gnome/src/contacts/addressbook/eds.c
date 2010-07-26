@@ -428,17 +428,25 @@ init(OpenAsyncHandler callback)
 
     ESourceGroup *group = l->data;
     GSList *sources = NULL, *m;
+
+    DEBUG("Addressbook: Source group name %s", e_source_group_peek_name(group));
+    DEBUG("Addressbook: Source group uid %s", e_source_group_peek_uid(group));
+
     sources = e_source_group_peek_sources(group);
     for (m = sources; m != NULL; m = m->next) {
 
-      DEBUG("Addressbook: Group name %s", e_source_group_peek_name(group));
-      DEBUG("Addressbook: Group uid %s", e_source_group_peek_uid(group));
-
       ESource *source = m->data;
+      const gchar *property;
+
+      DEBUG("Addressbook: Source name %s", e_source_peek_name(source));
+      DEBUG("Addressbook: Source uid %s", e_source_peek_uid(source));
+      // DEBUG("Addressbook: Source properties %s", e_source_get_property(source, property));
+
       EBook *book = e_book_new(source, NULL);
       if (book) {
 	DEBUG("Addressbook: Created empty book successfully");
 
+	// e_book_get_uri(book);
 	// Keep count of remaining books to open
 	remaining_books_to_open++;
 	
