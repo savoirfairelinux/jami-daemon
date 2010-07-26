@@ -40,10 +40,10 @@ using std::endl;
 void ConfigurationTest::testDefaultValueAudio() {
 	_debug ("-------------------- ConfigurationTest::testDefaultValueAudio() --------------------\n");
 
-	CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardin() == ALSA_DFT_CARD);
-	CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardout() == ALSA_DFT_CARD);
-	CPPUNIT_ASSERT (Manager::instance().audioPreference.getSmplrate() == DFT_SAMPLE_RATE);
-	CPPUNIT_ASSERT (Manager::instance().audioPreference.getFramesize() == DFT_FRAME_SIZE);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardin() == 0); // ALSA_DFT_CARD);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardout() == 0); // ALSA_DFT_CARD);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getSmplrate() == 44100); // DFT_SAMPLE_RATE);
+	CPPUNIT_ASSERT (Manager::instance().audioPreference.getFramesize() == 20); // DFT_FRAME_SIZE);
 	CPPUNIT_ASSERT (Manager::instance().audioPreference.getPlugin() == PCM_DEFAULT);
 	CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumespkr() == 100);
 	CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == 100);
@@ -271,8 +271,8 @@ void ConfigurationTest::testYamlEmitter()
   try{
     emitter = new Conf::YamlEmitter("/tmp/sequenceEmiter.txt");
 
-    emitter->writeAccount(&accountmap);
-    emitter->writeAccount(&accountmap);
+    emitter->serializeAccount(&accountmap);
+    emitter->serializeAccount(&accountmap);
     emitter->serializeData();
 
     delete emitter;

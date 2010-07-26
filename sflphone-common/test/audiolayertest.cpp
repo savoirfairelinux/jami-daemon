@@ -41,10 +41,10 @@ using std::endl;
 void AudioLayerTest::testAudioLayerConfig() {
 	_debug ("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
 
-	int sampling_rate = Manager::instance().audioPreference.getSmplrate();
-	int frame_size = Manager::instance().audioPreference.getFramesize();
+	// int sampling_rate = Manager::instance().audioPreference.getSmplrate();
+	// int frame_size = Manager::instance().audioPreference.getFramesize();
 
-	int layer = Manager::instance().getAudioDriver()->getLayerType();
+	// int layer = Manager::instance().getAudioDriver()->getLayerType();
 
 	// if (layer != ALSA)
 	// 	Manager::instance().switchAudioManager();
