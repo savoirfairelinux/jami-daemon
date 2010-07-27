@@ -172,8 +172,7 @@ void *threaded_clock_incrementer(void *pc) {
       }
     }
 
-    DEBUG("CALL STATE %d", call->_state);
-
+    // Update clock only if call is active (current, hold, recording transfer)
     if( (call->_state != CALL_STATE_INVALID) &&
 	(call->_state != CALL_STATE_INCOMING) &&
 	(call->_state != CALL_STATE_RINGING) &&
@@ -343,9 +342,7 @@ void free_callable_obj_t (callable_obj_t *c)
     if(c->_type == CALL) {
       c->clockStarted = 0;
 
-      DEBUG("block here");
       g_thread_join(c->tid);
-      DEBUG("SINCE WE DON'T SEE IT");
     }
     
     g_free (c->_callID);
