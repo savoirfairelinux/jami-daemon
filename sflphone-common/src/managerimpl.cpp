@@ -3376,6 +3376,8 @@ std::string ManagerImpl::addAccount (
 
 	newAccount->setVoIPLink();
 
+	newAccount->registerVoIPLink();
+
 	saveConfig();
 
 	if (_dbus)
