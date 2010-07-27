@@ -444,54 +444,49 @@ ShortcutPreferences::ShortcutPreferences() : _hangup("")
 ShortcutPreferences::~ShortcutPreferences() {}
 
 
-std::map<std::string, std::string> ShortcutPreferences::getShortcuts() 
+std::map<std::string, std::string> ShortcutPreferences::getShortcuts()
 {
 
   std::map<std::string, std::string> shortcutsMap;
 
-  shortcutsMap.insert(std::pair<std::string, std::string>(hangupShortKey, _hangup.data()));
-  shortcutsMap.insert(std::pair<std::string, std::string>(pickupShortKey, _pickup.data()));
-  shortcutsMap.insert(std::pair<std::string, std::string>(popupShortKey, _popup.data()));
-  shortcutsMap.insert(std::pair<std::string, std::string>(toggleHoldShortKey, _toggleHold.data()));
-  shortcutsMap.insert(std::pair<std::string, std::string>(togglePickupHangupShortKey, _togglePickupHangup.data()));
+  shortcutsMap.insert(std::pair<std::string, std::string>(hangupShortKey, _hangup));
+  shortcutsMap.insert(std::pair<std::string, std::string>(pickupShortKey, _pickup));
+  shortcutsMap.insert(std::pair<std::string, std::string>(popupShortKey, _popup));
+  shortcutsMap.insert(std::pair<std::string, std::string>(toggleHoldShortKey, _toggleHold));
+  shortcutsMap.insert(std::pair<std::string, std::string>(togglePickupHangupShortKey, _togglePickupHangup));
 
   return shortcutsMap;
 }
 
 
-void ShortcutPreferences::setShortcuts(std::map<std::string, int> shortcut)
+void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map_cpy)
 {
-  std::map<std::string, int> map_cpy = shortcut;
-  std::map<std::string, int>::iterator it;
+  // std::map<std::string, int> map_cpy = shortcut;
+  std::map<std::string, std::string>::iterator it;
 
   it = map_cpy.find(hangupShortKey);
   if (it != map_cpy.end()) {
-    std::stringstream hangupstr; hangupstr << it->second;
-    _hangup = hangupstr.str();
+    _hangup = it->second;
   }
 
   it = map_cpy.find(pickupShortKey);
   if (it != map_cpy.end()) {
-    std::stringstream pickupstr; pickupstr << it->second; 
-    _pickup = pickupstr.str();
+    _pickup = it->second;
   }
 
   it = map_cpy.find(popupShortKey);
   if (it != map_cpy.end()) {
-    std::stringstream popupstr; popupstr << it->second;
-    _popup = popupstr.str();
+    _popup = it->second;
   }
 
   it = map_cpy.find(toggleHoldShortKey);
   if(it != map_cpy.end()) {
-    std::stringstream holdstr; holdstr << it->second;
-    _toggleHold = holdstr.str();
+    _toggleHold = it->second;
   }
 
   it = map_cpy.find(togglePickupHangupShortKey);
   if(it != map_cpy.end()) {
-    std::stringstream togglestr; togglestr << it->second;
-    _togglePickupHangup = togglestr.str();
+    _togglePickupHangup = it->second;
   }
   /*
   for (int i = 0; i < (int)shortcutsKeys.size(); i++) {
@@ -537,13 +532,13 @@ void ShortcutPreferences::unserialize(Conf::MappingNode *map)
   Conf::ScalarNode *val = NULL;
 
   val = (Conf::ScalarNode *)(map->getValue(hangupShortKey));
-  if(val) { _hangup = atoi(val->getValue().data()); val = NULL; }
+  if(val) { _hangup = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(pickupShortKey));
-  if(val) { _pickup = atoi(val->getValue().data()); val = NULL; }
+  if(val) { _pickup = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(popupShortKey));
-  if(val) { _popup = atoi(val->getValue().data()); val = NULL; }
+  if(val) { _popup = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(toggleHoldShortKey));
-  if(val) { _toggleHold = atoi(val->getValue().data()); val = NULL; }
+  if(val) { _toggleHold = val->getValue(); val = NULL; }
   val = (Conf::ScalarNode *)(map->getValue(togglePickupHangupShortKey));
-  if(val) { _togglePickupHangup = atoi(val->getValue().data()); val = NULL; }
+  if(val) { _togglePickupHangup = val->getValue(); val = NULL; }
 }

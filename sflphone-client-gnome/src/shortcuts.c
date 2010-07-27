@@ -387,6 +387,8 @@ shortcuts_initialize_bindings ()
   gchar* action, *maskAndKey, *token1, *token2 = NULL;
   guint mask, key = 0;
 
+  DEBUG("Shortcuts: Initialize bindings");
+
   // get shortcuts stored in config through dbus
   shortcutsMap = dbus_get_shortcuts ();
 
@@ -402,7 +404,6 @@ shortcuts_initialize_bindings ()
       action = shortcutsKeysElement->data;
       maskAndKey = g_strdup (g_hash_table_lookup (shortcutsMap, action));
 
-      DEBUG("-------------------- maskAndKey %s", maskAndKey);
       token1 = strtok (maskAndKey, "x");
       token2 = strtok (NULL, "x");
 
@@ -411,7 +412,7 @@ shortcuts_initialize_bindings ()
 
       // Value not setted
       if (token1 && token2){
-	DEBUG("token1 %s, token2 %s", token1, token2);
+	DEBUG("Ahortcuts: token1 %s, token2 %s", token1, token2);
 	  
 	mask = atoi (token1);
 	key = atoi (token2);
@@ -465,17 +466,15 @@ filter_keys (const GdkXEvent *xevent, const GdkEvent *event, gpointer data)
   int i = 0;
 
   xev = (XEvent *) xevent;
-  if (xev->type != KeyPress)
-    {
-      return GDK_FILTER_CONTINUE;
-    }
+  if (xev->type != KeyPress) {
+    return GDK_FILTER_CONTINUE;
+  }
 
   key = (XKeyEvent *) xevent;
   keystate = key->state & ~(Mod2Mask | Mod5Mask | LockMask);
 
   // try to find corresponding action
-  while (accelerators_list[i].action != NULL)
-    {
+  while (accelerators_list[i].action != NULL) {
       if (accelerators_list[i].key == key->keycode && accelerators_list[i].mask
           == keystate)
         {

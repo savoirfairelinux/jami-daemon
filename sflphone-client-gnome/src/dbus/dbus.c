@@ -2297,6 +2297,7 @@ dbus_get_shortcuts(void)
 {
   GError *error = NULL;
   GHashTable * shortcuts;
+
   if (!org_sflphone_SFLphone_ConfigurationManager_get_shortcuts(
       configurationManagerProxy, &shortcuts, &error))
     {

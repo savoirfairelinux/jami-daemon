@@ -733,6 +733,8 @@ std::map<std::string, std::string> ConfigurationManager::getShortcuts() {
 void ConfigurationManager::setShortcuts(
 		const std::map<std::string, std::string>& shortcutsMap) {
 
+        std::map<std::string, std::string> map_cpy = shortcutsMap;
+  /*
 	std::map<std::string, std::string> map_cpy = shortcutsMap;
 	std::map<std::string, std::string>::iterator it;
 
@@ -740,9 +742,12 @@ void ConfigurationManager::setShortcuts(
 		std::string key = shortcutsKeys.at(i);
 		it = map_cpy.find(key);
 		if (it != shortcutsMap.end()) {
+		         
 			Manager::instance().setConfig("Shortcuts", key, it->second);
 		}
 	}
+  */
+        Manager::instance().shortcutPreferences.setShortcuts(map_cpy);
 
 	Manager::instance().saveConfig();
 }
