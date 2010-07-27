@@ -681,6 +681,8 @@ calltree_remove_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 		calltab_select_call(tab, NULL);
 	update_actions();
 
+	calltree_update_clock();
+
 	DEBUG("Calltre remove call ended");
 }
 
@@ -1408,19 +1410,34 @@ void calltree_display (calltab_t *tab) {
 
 void calltree_update_clock() {
 
-  if(!selected_call) {
-    statusbar_update_clock(NULL);
+  callable_obj_t *c = calltab_get_selected_call(current_calls);
+
+  // if(!selected_call) {
+  if(!c) {
+    statusbar_update_clock("");
     return;
   }
 
-  if(!(selected_call->_timestr)) {
-    statusbar_update_clock(NULL);
+  // if(!(selected_call->_timestr)) {
+  if(!(c->_timestr)) {
+    statusbar_update_clock("");
     return;
   }
 
-  // TODO this make the whole thing crash...
-  // calltree_update_call(current_calls, c, NULL);
-  statusbar_update_clock(selected_call->_timestr);
+  if( (c->_state != CALL_STATE_INVALID) &&
+      (c->_state != CALL_STATE_INCOMING) &&
+      (c->_state != CALL_STATE_RINGING) &&
+      (c->_state != CALL_STATE_DIALING) &&
+      (c->_state != CALL_STATE_FAILURE) &&
+      (c->_state != CALL_STATE_BUSY) ) { 
+
+    // TODO this make the whole thing crash...
+    // calltree_update_call(current_calls, c, NULL);
+    statusbar_update_clock(c->_timestr);
+  }
+  else {
+    statusbar_update_clock("");
+  }
 }
 
 

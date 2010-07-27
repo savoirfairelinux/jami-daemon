@@ -155,8 +155,7 @@ void *threaded_clock_incrementer(void *pc) {
 
     duration = (int) difftime(current, start);
 
-    if( duration / 60 == 0 )
-    {
+    if( duration / 60 == 0 ) {
       if( duration < 10 ) {
 	g_snprintf(call->_timestr, 20, "00:0%d", duration);
       }
@@ -164,8 +163,7 @@ void *threaded_clock_incrementer(void *pc) {
 	g_snprintf(call->_timestr, 20, "00:%d", duration);
       }
     }
-    else
-    {
+    else {
       if( duration%60 < 10 ) {
 	g_snprintf(call->_timestr, 20, "0%d:0%d", duration/60, duration%60);
       }
@@ -174,7 +172,16 @@ void *threaded_clock_incrementer(void *pc) {
       }
     }
 
-    calltree_update_clock();
+    DEBUG("CALL STATE %d", call->_state);
+
+    if( (call->_state != CALL_STATE_INVALID) &&
+	(call->_state != CALL_STATE_INCOMING) &&
+	(call->_state != CALL_STATE_RINGING) &&
+	(call->_state != CALL_STATE_DIALING) &&
+	(call->_state != CALL_STATE_FAILURE) &&
+	(call->_state != CALL_STATE_BUSY) ) { 
+      calltree_update_clock();
+    }
 
     gdk_threads_leave ();
  

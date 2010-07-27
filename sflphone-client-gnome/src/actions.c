@@ -189,7 +189,7 @@ sflphone_ringing(callable_obj_t * c )
     void
 sflphone_hung_up( callable_obj_t * c)
 {
-    DEBUG("Actions: SFLphone hungup");
+    DEBUG("SFLphone: Hung up");
 
     calllist_remove( current_calls, c->_callID);
     calltree_remove_call(current_calls, c, NULL);
@@ -200,6 +200,8 @@ sflphone_hung_up( callable_obj_t * c)
     status_tray_icon_blink( FALSE );
 #endif
     free_callable_obj_t(c);
+
+    calltree_update_clock();
 }
 
 static hashtable_free(gpointer key, gpointer value, gpointer user_data)
@@ -380,6 +382,8 @@ sflphone_hang_up()
     callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
     conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
 
+    DEBUG("SFLphone: Hang up");
+
     if(selectedCall)
     {
         switch(selectedCall->_state)
@@ -428,6 +432,8 @@ sflphone_hang_up()
     }
 
     calltree_update_call(history, selectedCall, NULL);
+
+    calltree_update_clock();
 }
 
 
