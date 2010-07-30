@@ -31,7 +31,11 @@
 #ifndef __SFL_CALLMANAGER_H__
 #define __SFL_CALLMANAGER_H__
 
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "callmanager-glue.h"
+#pragma GCC diagnostic error "-Wignored-qualifiers"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 #include <dbus-c++/dbus.h>
 #include <exception>

@@ -34,7 +34,12 @@
 #ifndef CONFIGURATIONMANAGER_H
 #define CONFIGURATIONMANAGER_H
 
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "configurationmanager-glue.h"
+#pragma GCC diagnostic error "-Wignored-qualifiers"
+#pragma GCC diagnostic error "-Wunused-parameter"
+
 #include <dbus-c++/dbus.h>
 
 
@@ -67,7 +72,6 @@ public:
     std::map< std::string, std::string > getCredential (const std::string& accountID, const int32_t& index);
     int32_t getNumberOfCredential (const std::string& accountID);
     void setCredential (const std::string& accountID, const int32_t& index, const std::map< std::string, std::string >& details);
-    void setNumberOfCredential (const std::string& accountID, const int32_t& number);
 
     std::vector< std::string > getCodecList(void);
     std::vector< std::string > getSupportedTlsMethod(void);
@@ -131,8 +135,8 @@ public:
     std::map <std::string, std::string> getHistory (void);
     void setHistory (const std::map <std::string, std::string>& entries);
 
-    std::map<std::string, std::string> getTlsSettings(const std::string& accountID);
-    void setTlsSettings(const std::string& accountID, const std::map< std::string, std::string >& details);
+    std::map<std::string, std::string> getTlsSettings(void);
+    void setTlsSettings(const std::map< std::string, std::string >& details);
 
     std::string getAddrFromInterfaceName(const std::string& interface);
     

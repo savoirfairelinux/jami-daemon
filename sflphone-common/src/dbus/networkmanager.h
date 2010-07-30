@@ -31,7 +31,11 @@
 #ifndef NETWORKMANAGER_H
 #define NETWORKMANAGER_H
 
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "networkmanager_proxy.h"
+#pragma GCC diagnostic error "-Wignored-qualifiers"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 using namespace std;
 

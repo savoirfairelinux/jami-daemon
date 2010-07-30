@@ -252,7 +252,7 @@ void AudioSrtpSession::initializeLocalCryptoContext(void)
 
 }
 
-
+#pragma GCC diagnostic ignored "-Wunused-value"
 char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
 {
     BIO *b64, *bmem;
@@ -284,6 +284,7 @@ char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
 
     return buffer;    
 }
+#pragma GCC diagnostic error "-Wunused-value"
 
 char* AudioSrtpSession::decodeBase64(unsigned char *input, int length, int *length_out)
 {
