@@ -33,8 +33,7 @@
 #include <celt/celt.h>
 
 
-class Celt : public AudioCodec
-{
+class Celt : public AudioCodec {
 
     public:
         Celt (int payload=0)	: AudioCodec (payload, "celt") {
@@ -58,32 +57,32 @@ class Celt : public AudioCodec
 
             _mode = celt_mode_create (_clockRate, _frameSize, &error);
 
-            if(error != CELT_OK) {
-            	switch(error) {
-            	case CELT_BAD_ARG:
-            		printf("Celt: Error: An (or more) invalid argument (e.g. out of range)\n");
-            		break;
-            	case CELT_INVALID_MODE:
-            		printf("Celt: Error: The mode struct passed is invalid\n");
-            		break;
-            	case CELT_INTERNAL_ERROR:
-            		printf("Celt: Error: An internal error was detected\n");
-            		break;
-            	case CELT_CORRUPTED_DATA:
-            		printf("Celt: Error: The data passed (e.g. compressed data to decoder) is corrupted\n");
-            		break;
-            	case CELT_UNIMPLEMENTED:
-            		printf("Celt: Error: Invalid/unsupported request numbe\n");
-            		break;
-            	case CELT_INVALID_STATE:
-            		printf("Celt: Error: An encoder or decoder structure is invalid or already freed\n");
-            		break;
-            	case CELT_ALLOC_FAIL:
-					printf("Celt: Error: Memory allocation has failed\n");
-					break;
-            	default:
-					printf("Celt: Error");
-            	}
+            if (error != CELT_OK) {
+                switch (error) {
+                    case CELT_BAD_ARG:
+                        printf ("Celt: Error: An (or more) invalid argument (e.g. out of range)\n");
+                        break;
+                    case CELT_INVALID_MODE:
+                        printf ("Celt: Error: The mode struct passed is invalid\n");
+                        break;
+                    case CELT_INTERNAL_ERROR:
+                        printf ("Celt: Error: An internal error was detected\n");
+                        break;
+                    case CELT_CORRUPTED_DATA:
+                        printf ("Celt: Error: The data passed (e.g. compressed data to decoder) is corrupted\n");
+                        break;
+                    case CELT_UNIMPLEMENTED:
+                        printf ("Celt: Error: Invalid/unsupported request numbe\n");
+                        break;
+                    case CELT_INVALID_STATE:
+                        printf ("Celt: Error: An encoder or decoder structure is invalid or already freed\n");
+                        break;
+                    case CELT_ALLOC_FAIL:
+                        printf ("Celt: Error: Memory allocation has failed\n");
+                        break;
+                    default:
+                        printf ("Celt: Error");
+                }
 
             }
 
@@ -105,10 +104,10 @@ class Celt : public AudioCodec
             _dec = celt_decoder_create (_mode, _channel, &error);
 
             celt_encoder_ctl (_enc, CELT_SET_COMPLEXITY (2));
-            celt_decoder_ctl(_dec, CELT_SET_COMPLEXITY (2));
+            celt_decoder_ctl (_dec, CELT_SET_COMPLEXITY (2));
 
-            celt_encoder_ctl (_enc, CELT_SET_PREDICTION(2));
-            celt_decoder_ctl(_dec, CELT_SET_PREDICTION(2));
+            celt_encoder_ctl (_enc, CELT_SET_PREDICTION (2));
+            celt_decoder_ctl (_dec, CELT_SET_PREDICTION (2));
 
         }
 
@@ -121,7 +120,7 @@ class Celt : public AudioCodec
             celt_encoder_destroy (_enc);
             celt_decoder_destroy (_dec);
 
-            celt_mode_destroy(_mode);
+            celt_mode_destroy (_mode);
         }
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
@@ -150,12 +149,10 @@ class Celt : public AudioCodec
 };
 
 // the class factories
-extern "C" AudioCodec* create()
-{
+extern "C" AudioCodec* create() {
     return new Celt (115);
 }
 
-extern "C" void destroy (AudioCodec* a)
-{
+extern "C" void destroy (AudioCodec* a) {
     delete a;
 }

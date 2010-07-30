@@ -31,8 +31,7 @@
 
 
 #include "audiocodec.h"
-extern "C"
-{
+extern "C" {
 #include <gsm/gsm.h>
 }
 
@@ -40,8 +39,7 @@ extern "C"
  * GSM audio codec C++ class (over gsm/gsm.h)
  */
 
-class Gsm : public AudioCodec
-{
+class Gsm : public AudioCodec {
 
     public:
         // _payload should be 3
@@ -91,12 +89,10 @@ class Gsm : public AudioCodec
         gsm _encode_gsmhandle;
 };
 
-extern "C" AudioCodec* create()
-{
+extern "C" AudioCodec* create() {
     return new Gsm (3);
 }
 
-extern "C" void destroy (AudioCodec* a)
-{
+extern "C" void destroy (AudioCodec* a) {
     delete a;
 }

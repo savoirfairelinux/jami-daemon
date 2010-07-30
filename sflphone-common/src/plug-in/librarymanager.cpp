@@ -32,18 +32,15 @@
 #include "librarymanager.h"
 
 LibraryManager::LibraryManager (const std::string &filename)
-        : _filename (filename), _handlePtr (NULL)
-{
+        : _filename (filename), _handlePtr (NULL) {
     _handlePtr = loadLibrary (filename);
 }
 
-LibraryManager::~LibraryManager (void)
-{
+LibraryManager::~LibraryManager (void) {
     unloadLibrary ();
 }
 
-LibraryManager::LibraryHandle LibraryManager::loadLibrary (const std::string &filename)
-{
+LibraryManager::LibraryHandle LibraryManager::loadLibrary (const std::string &filename) {
     LibraryHandle pluginHandlePtr = NULL;
     const char *error;
 
@@ -63,8 +60,7 @@ LibraryManager::LibraryHandle LibraryManager::loadLibrary (const std::string &fi
     return pluginHandlePtr;
 }
 
-int LibraryManager::unloadLibrary ()
-{
+int LibraryManager::unloadLibrary () {
     if (_handlePtr == NULL)
         return 1;
 
@@ -80,8 +76,7 @@ int LibraryManager::unloadLibrary ()
     return 0;
 }
 
-int LibraryManager::resolveSymbol (const std::string &symbol, SymbolHandle *symbolPtr)
-{
+int LibraryManager::resolveSymbol (const std::string &symbol, SymbolHandle *symbolPtr) {
     SymbolHandle sy = 0;
 
     if (_handlePtr) {
@@ -112,7 +107,6 @@ LibraryManagerException::LibraryManagerException (const std::string &libraryName
         _details = "Error when resolving symbol " + details + " in " + libraryName;
 }
 
-const char* LibraryManagerException::what () const throw()
-{
+const char* LibraryManagerException::what () const throw() {
     return _details.c_str();
 }

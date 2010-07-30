@@ -33,8 +33,7 @@
 #include <cstdio>
 #include <speex/speex.h>
 
-class Speex : public AudioCodec
-{
+class Speex : public AudioCodec {
 
     public:
         Speex (int payload=0)
@@ -44,7 +43,7 @@ class Speex : public AudioCodec
                 _speex_enc_bits(),
                 _speex_dec_state(),
                 _speex_enc_state(),
-		_speex_frame_size() {
+                _speex_frame_size() {
             _clockRate = 16000;
             _frameSize = 320; // 20 ms at 16 kHz
             _channel = 1;
@@ -125,13 +124,11 @@ class Speex : public AudioCodec
 };
 
 // the class factories
-extern "C" AudioCodec* create()
-{
+extern "C" AudioCodec* create() {
     return new Speex (111);
 }
 
-extern "C" void destroy (AudioCodec* a)
-{
+extern "C" void destroy (AudioCodec* a) {
     delete a;
 }
 

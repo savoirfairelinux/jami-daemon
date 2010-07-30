@@ -45,48 +45,41 @@ Call::Call (const CallID& id, Call::CallType type)
         , _callState (Call::Inactive)
         , _callConfig (Call::Classic)
         , _peerName()
-        , _peerNumber()
-{
+        , _peerNumber() {
 
 }
 
 
-Call::~Call()
-{
+Call::~Call() {
 }
 
 void
-Call::setConnectionState (ConnectionState state)
-{
+Call::setConnectionState (ConnectionState state) {
     ost::MutexLock m (_callMutex);
     _connectionState = state;
 }
 
 Call::ConnectionState
-Call::getConnectionState()
-{
+Call::getConnectionState() {
     ost::MutexLock m (_callMutex);
     return _connectionState;
 }
 
 
 void
-Call::setState (CallState state)
-{
+Call::setState (CallState state) {
     ost::MutexLock m (_callMutex);
     _callState = state;
 }
 
 Call::CallState
-Call::getState()
-{
+Call::getState() {
     ost::MutexLock m (_callMutex);
     return _callState;
 }
 
 std::string
-Call::getStateStr ()
-{
+Call::getStateStr () {
     CallState state = getState();
     ConnectionState connection = getConnectionState ();
     CallType type = _type;
@@ -158,65 +151,60 @@ Call::getStateStr ()
 
 
 const std::string&
-Call::getLocalIp()
-{
+Call::getLocalIp() {
     ost::MutexLock m (_callMutex);
     return _localIPAddress;
 }
 
 unsigned int
-Call::getLocalAudioPort()
-{
+Call::getLocalAudioPort() {
     ost::MutexLock m (_callMutex);
     return _localAudioPort;
 }
 
 void
-Call::setAudioStart (bool start)
-{
+Call::setAudioStart (bool start) {
     ost::MutexLock m (_callMutex);
     _audioStarted = start;
 }
 
 bool
-Call::isAudioStarted()
-{
+Call::isAudioStarted() {
     ost::MutexLock m (_callMutex);
     return _audioStarted;
 }
 
 
 bool
-Call::setRecording()
-{
+Call::setRecording() {
     bool recordStatus = Recordable::recAudio.isRecording();
 
     Recordable::recAudio.setRecording();
 
     // Start recording
-    if(!recordStatus) {
+    if (!recordStatus) {
 
-      MainBuffer *mbuffer = Manager::instance().getMainBuffer();
-      CallID process_id = Recordable::recorder.getRecorderID();
+        MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+        CallID process_id = Recordable::recorder.getRecorderID();
 
-      mbuffer->bindHalfDuplexOut(process_id, _id);
-      mbuffer->bindHalfDuplexOut(process_id);
+        mbuffer->bindHalfDuplexOut (process_id, _id);
+        mbuffer->bindHalfDuplexOut (process_id);
 
     }
     // Stop recording
     else {
 
-      MainBuffer *mbuffer = Manager::instance().getMainBuffer();      
-      CallID process_id = Recordable::recorder.getRecorderID();
+        MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+        CallID process_id = Recordable::recorder.getRecorderID();
 
-      mbuffer->unBindHalfDuplexOut(process_id, _id);
-      mbuffer->unBindHalfDuplexOut(process_id);
+        mbuffer->unBindHalfDuplexOut (process_id, _id);
+        mbuffer->unBindHalfDuplexOut (process_id);
 
     }
 
     Manager::instance().getMainBuffer()->stateInfo();
 
     Recordable::recorder.start();
-  
+
     return recordStatus;
 }

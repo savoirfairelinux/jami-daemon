@@ -40,16 +40,13 @@
 
 #include <assert.h>
 
-namespace sfl
-{
+namespace sfl {
 
-AudioRtpFactory::AudioRtpFactory() : _rtpSession (NULL)
-{
+AudioRtpFactory::AudioRtpFactory() : _rtpSession (NULL) {
 
 }
 
-AudioRtpFactory::AudioRtpFactory (SIPCall *ca) : _rtpSession (NULL)
-{
+AudioRtpFactory::AudioRtpFactory (SIPCall *ca) : _rtpSession (NULL) {
     assert (ca);
 
     try {
@@ -59,13 +56,11 @@ AudioRtpFactory::AudioRtpFactory (SIPCall *ca) : _rtpSession (NULL)
     }
 }
 
-AudioRtpFactory::~AudioRtpFactory()
-{
+AudioRtpFactory::~AudioRtpFactory() {
     stop();
 }
 
-void AudioRtpFactory::initAudioRtpConfig(SIPCall *ca)
-{
+void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca) {
     assert (ca);
 
     if (_rtpSession != NULL) {
@@ -90,11 +85,11 @@ void AudioRtpFactory::initAudioRtpConfig(SIPCall *ca)
     }
 }
 
-void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
-{
+void AudioRtpFactory::initAudioRtpSession (SIPCall * ca) {
     ost::MutexLock m (_audioRtpThreadMutex);
 
     _debug ("Srtp enable: %d ", _srtpEnabled);
+
     if (_srtpEnabled) {
         std::string zidFilename (Manager::instance().getConfigString (SIGNALISATION, ZRTP_ZIDFILE));
 
@@ -115,14 +110,14 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 
             case Sdes:
 
-	        _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
+                _rtpSession = new AudioSrtpSession (&Manager::instance(), ca);
                 _rtpSessionType = Sdes;
 
-		ca->getLocalSDP()->set_srtp_crypto(static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
-		break;
+                ca->getLocalSDP()->set_srtp_crypto (static_cast<AudioSrtpSession *> (_rtpSession)->getLocalCryptoInfo());
+                break;
 
             default:
-	        _debug("Unsupported Rtp Session Exception Type!");
+                _debug ("Unsupported Rtp Session Exception Type!");
                 throw UnsupportedRtpSessionType();
         }
     } else {
@@ -132,8 +127,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
     }
 }
 
-void AudioRtpFactory::start (AudioCodec* audiocodec)
-{
+void AudioRtpFactory::start (AudioCodec* audiocodec) {
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to start audio thread");
     }
@@ -141,15 +135,17 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
     switch (_rtpSessionType) {
 
         case Sdes:
-	    if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread(audiocodec) != 0) {
+
+            if (static_cast<AudioSrtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
                 throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioSRtpSession thread");
             }
-	    break;
+
+            break;
 
         case Symmetric:
             _debug ("Starting symmetric rtp thread");
 
-            if (static_cast<AudioSymmetricRtpSession *> (_rtpSession)->startRtpThread(audiocodec) != 0) {
+            if (static_cast<AudioSymmetricRtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
                 throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioSymmetricRtpSession thread");
             }
 
@@ -157,17 +153,17 @@ void AudioRtpFactory::start (AudioCodec* audiocodec)
 
         case Zrtp:
 
-            if (static_cast<AudioZrtpSession *> (_rtpSession)->startRtpThread(audiocodec) != 0) {
+            if (static_cast<AudioZrtpSession *> (_rtpSession)->startRtpThread (audiocodec) != 0) {
                 throw AudioRtpFactoryException ("RTP: Error: Failed to start AudioZrtpSession thread");
             }
+
             break;
     }
 }
 
-void AudioRtpFactory::stop (void)
-{
+void AudioRtpFactory::stop (void) {
     ost::MutexLock mutex (_audioRtpThreadMutex);
-    _info("RTP: Stopping audio rtp session");
+    _info ("RTP: Stopping audio rtp session");
 
     if (_rtpSession == NULL) {
         _debugException ("RTP: Error: _rtpSession is null when trying to stop. Returning.");
@@ -178,8 +174,8 @@ void AudioRtpFactory::stop (void)
         switch (_rtpSessionType) {
 
             case Sdes:
-            	delete static_cast<AudioSrtpSession *> (_rtpSession);
-            	break;
+                delete static_cast<AudioSrtpSession *> (_rtpSession);
+                break;
 
             case Symmetric:
                 delete static_cast<AudioSymmetricRtpSession *> (_rtpSession);
@@ -193,13 +189,13 @@ void AudioRtpFactory::stop (void)
         _rtpSession = NULL;
     } catch (...) {
         _debugException ("RTP: Error: Exception caught when stopping the audio rtp session");
-        throw AudioRtpFactoryException("RTP: Error: caught exception in AudioRtpFactory::stop");
+        throw AudioRtpFactoryException ("RTP: Error: caught exception in AudioRtpFactory::stop");
     }
 }
 
-void AudioRtpFactory::updateDestinationIpAddress (void)
-{
+void AudioRtpFactory::updateDestinationIpAddress (void) {
     _info ("RTP: Updating IP address");
+
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to update IP address");
     }
@@ -207,62 +203,58 @@ void AudioRtpFactory::updateDestinationIpAddress (void)
     switch (_rtpSessionType) {
 
         case Sdes:
-	    static_cast<AudioSrtpSession *> (_rtpSession)->updateDestinationIpAddress();
-	    break;
+            static_cast<AudioSrtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            break;
 
         case Symmetric:
             static_cast<AudioSymmetricRtpSession *> (_rtpSession)->updateDestinationIpAddress();
             break;
 
         case Zrtp:
-	    static_cast<AudioZrtpSession *> (_rtpSession)->updateDestinationIpAddress();
+            static_cast<AudioZrtpSession *> (_rtpSession)->updateDestinationIpAddress();
             break;
     }
 }
 
-sfl::AudioSymmetricRtpSession * AudioRtpFactory::getAudioSymetricRtpSession()
-{
-	if ( (_rtpSessionType == Symmetric) && (_rtpSessionType != NULL)) {
-	        return static_cast<AudioSymmetricRtpSession *> (_rtpSession);
-	    } else {
-	        throw AudioRtpFactoryException("RTP: Error: _rtpSession is NULL in getAudioSymetricRtpSession");
-	    }
+sfl::AudioSymmetricRtpSession * AudioRtpFactory::getAudioSymetricRtpSession() {
+    if ( (_rtpSessionType == Symmetric) && (_rtpSessionType != NULL)) {
+        return static_cast<AudioSymmetricRtpSession *> (_rtpSession);
+    } else {
+        throw AudioRtpFactoryException ("RTP: Error: _rtpSession is NULL in getAudioSymetricRtpSession");
+    }
 }
 
-sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
-{
+sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession() {
     if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {
         return static_cast<AudioZrtpSession *> (_rtpSession);
     } else {
-        throw AudioRtpFactoryException("RTP: Error: _rtpSession is NULL in getAudioZrtpSession");
+        throw AudioRtpFactoryException ("RTP: Error: _rtpSession is NULL in getAudioZrtpSession");
     }
 }
 
-void AudioRtpFactory::setRemoteCryptoInfo(sfl::SdesNegotiator& nego)
-{
-    if ( _rtpSession && _rtpSessionType && (_rtpSessionType == Sdes)) {
-        static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo(nego);
-    }
-    else {
-        throw AudioRtpFactoryException("RTP: Error: _rtpSession is NULL in setRemoteCryptoInfo");
+void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego) {
+    if (_rtpSession && _rtpSessionType && (_rtpSessionType == Sdes)) {
+        static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo (nego);
+    } else {
+        throw AudioRtpFactoryException ("RTP: Error: _rtpSession is NULL in setRemoteCryptoInfo");
     }
 }
 
-void AudioRtpFactory::sendDtmfDigit(int digit) {
-	switch(_rtpSessionType) {
+void AudioRtpFactory::sendDtmfDigit (int digit) {
+    switch (_rtpSessionType) {
 
-	case Sdes:
-		static_cast<AudioSrtpSession *> (_rtpSession)->putDtmfEvent(digit);
-		break;
+        case Sdes:
+            static_cast<AudioSrtpSession *> (_rtpSession)->putDtmfEvent (digit);
+            break;
 
-	case Symmetric:
-		static_cast<AudioSymmetricRtpSession *> (_rtpSession)->putDtmfEvent(digit);
-		break;
+        case Symmetric:
+            static_cast<AudioSymmetricRtpSession *> (_rtpSession)->putDtmfEvent (digit);
+            break;
 
-	case Zrtp:
-		static_cast<AudioZrtpSession *> (_rtpSession)->putDtmfEvent(digit);
-		break;
-	}
+        case Zrtp:
+            static_cast<AudioZrtpSession *> (_rtpSession)->putDtmfEvent (digit);
+            break;
+    }
 }
 }
 

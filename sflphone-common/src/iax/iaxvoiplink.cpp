@@ -52,8 +52,7 @@
 	return false; }
 
 IAXVoIPLink::IAXVoIPLink (const AccountID& accountID)
-        : VoIPLink (accountID)
-{
+        : VoIPLink (accountID) {
     // _debug("IAXVoIPLink::IAXVoIPLink : creating eventhread  ");
     _evThread = new EventThread (this);
     _regSession = NULL;
@@ -80,8 +79,7 @@ IAXVoIPLink::IAXVoIPLink (const AccountID& accountID)
 }
 
 
-IAXVoIPLink::~IAXVoIPLink()
-{
+IAXVoIPLink::~IAXVoIPLink() {
     delete _evThread;
     _evThread = NULL;
     _regSession = NULL; // shall not delete it
@@ -105,8 +103,7 @@ IAXVoIPLink::~IAXVoIPLink()
 }
 
 bool
-IAXVoIPLink::init()
-{
+IAXVoIPLink::init() {
     // If it was done, don't do it again, until we call terminate()
     if (initDone())
         return false;
@@ -161,8 +158,7 @@ IAXVoIPLink::init()
 }
 
 void
-IAXVoIPLink::terminate()
-{
+IAXVoIPLink::terminate() {
     // If it was done, don't do it again, until we call init()
     if (!initDone())
         return;
@@ -176,8 +172,7 @@ IAXVoIPLink::terminate()
 }
 
 void
-IAXVoIPLink::terminateIAXCall()
-{
+IAXVoIPLink::terminateIAXCall() {
     std::string reason = "Dumped Call";
     ost::MutexLock m (_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
@@ -201,8 +196,7 @@ IAXVoIPLink::terminateIAXCall()
     _callMap.clear();
 }
 
-void IAXVoIPLink::terminateOneCall (const CallID& id)
-{
+void IAXVoIPLink::terminateOneCall (const CallID& id) {
     IAXCall* call = getIAXCall (id);
 
     if (call) {
@@ -215,8 +209,7 @@ void IAXVoIPLink::terminateOneCall (const CallID& id)
 
 
 void
-IAXVoIPLink::getEvent()
-{
+IAXVoIPLink::getEvent() {
     IAXCall* call = NULL;
 
     // lock iax_ stuff..
@@ -291,8 +284,7 @@ IAXVoIPLink::getEvent()
 }
 
 void
-IAXVoIPLink::sendAudioFromMic (void)
-{
+IAXVoIPLink::sendAudioFromMic (void) {
 
     int maxBytesToGet, availBytesFromMic, bytesAvail, compSize;
     AudioCodec *ac;
@@ -395,8 +387,7 @@ IAXVoIPLink::sendAudioFromMic (void)
 
 
 IAXCall*
-IAXVoIPLink::getIAXCall (const CallID& id)
-{
+IAXVoIPLink::getIAXCall (const CallID& id) {
     Call* call = getCall (id);
 
     if (call) {
@@ -408,23 +399,22 @@ IAXVoIPLink::getIAXCall (const CallID& id)
 
 
 int
-IAXVoIPLink::sendRegister (AccountID id)
-{
+IAXVoIPLink::sendRegister (AccountID id) {
     IAXAccount *account;
     bool result;
 
-    _debug("IAX: Sending registration");
+    _debug ("IAX: Sending registration");
 
     result = false;
     account = dynamic_cast<IAXAccount *> (getAccountPtr());
 
     if (account->getHostname().empty()) {
-        _error("IAX: Error: Account hostname is empty");
+        _error ("IAX: Error: Account hostname is empty");
         return false;
     }
 
     if (account->getUsername().empty()) {
-        _error("IAX: Error: Account username is empty");
+        _error ("IAX: Error: Account username is empty");
         return false;
     }
 
@@ -459,8 +449,7 @@ IAXVoIPLink::sendRegister (AccountID id)
 }
 
 int
-IAXVoIPLink::sendUnregister (AccountID id)
-{
+IAXVoIPLink::sendUnregister (AccountID id) {
     IAXAccount *account;
 
     account = dynamic_cast<IAXAccount*> (getAccountPtr());
@@ -488,8 +477,7 @@ IAXVoIPLink::sendUnregister (AccountID id)
 }
 
 Call*
-IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
-{
+IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) {
     IAXCall* call = new IAXCall (id, Call::Outgoing);
     call->setCodecMap (Manager::instance().getCodecDescriptorMap());
 
@@ -512,8 +500,7 @@ IAXVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
 
 
 bool
-IAXVoIPLink::answer (const CallID& id)
-{
+IAXVoIPLink::answer (const CallID& id) {
     IAXCall* call = getIAXCall (id);
     call->setCodecMap (Manager::instance().getCodecDescriptorMap());
 
@@ -535,8 +522,7 @@ IAXVoIPLink::answer (const CallID& id)
 }
 
 bool
-IAXVoIPLink::hangup (const CallID& id)
-{
+IAXVoIPLink::hangup (const CallID& id) {
     _debug ("IAXVoIPLink::hangup() : function called once hangup ");
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
@@ -563,8 +549,7 @@ IAXVoIPLink::hangup (const CallID& id)
 
 
 bool
-IAXVoIPLink::peerHungup (const CallID& id)
-{
+IAXVoIPLink::peerHungup (const CallID& id) {
     _debug ("IAXVoIPLink::peerHangup() : function called once hangup ");
     IAXCall* call = getIAXCall (id);
     std::string reason = "Dumped Call";
@@ -591,8 +576,7 @@ IAXVoIPLink::peerHungup (const CallID& id)
 
 
 bool
-IAXVoIPLink::onhold (const CallID& id)
-{
+IAXVoIPLink::onhold (const CallID& id) {
     IAXCall* call = getIAXCall (id);
 
     CHK_VALID_CALL;
@@ -610,8 +594,7 @@ IAXVoIPLink::onhold (const CallID& id)
 }
 
 bool
-IAXVoIPLink::offhold (const CallID& id)
-{
+IAXVoIPLink::offhold (const CallID& id) {
     IAXCall* call = getIAXCall (id);
 
     CHK_VALID_CALL;
@@ -628,8 +611,7 @@ IAXVoIPLink::offhold (const CallID& id)
 }
 
 bool
-IAXVoIPLink::transfer (const CallID& id, const std::string& to)
-{
+IAXVoIPLink::transfer (const CallID& id, const std::string& to) {
     IAXCall* call = getIAXCall (id);
 
     CHK_VALID_CALL;
@@ -648,8 +630,7 @@ IAXVoIPLink::transfer (const CallID& id, const std::string& to)
 }
 
 bool
-IAXVoIPLink::refuse (const CallID& id)
-{
+IAXVoIPLink::refuse (const CallID& id) {
     IAXCall* call = getIAXCall (id);
     std::string reason = "Call rejected manually.";
 
@@ -668,8 +649,7 @@ IAXVoIPLink::refuse (const CallID& id)
 
 
 bool
-IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
-{
+IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code) {
     IAXCall* call = getIAXCall (id);
 
     CHK_VALID_CALL;
@@ -683,8 +663,7 @@ IAXVoIPLink::carryingDTMFdigits (const CallID& id, char code)
 
 
 std::string
-IAXVoIPLink::getCurrentCodecName()
-{
+IAXVoIPLink::getCurrentCodecName() {
     IAXCall *call = NULL;
     AudioCodec *ac = NULL;
     std::string name = "";
@@ -702,8 +681,7 @@ IAXVoIPLink::getCurrentCodecName()
 
 
 bool
-IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
-{
+IAXVoIPLink::iaxOutgoingInvite (IAXCall* call) {
 
     struct iax_session *newsession;
     ost::MutexLock m (_mutexIAX);
@@ -738,8 +716,7 @@ IAXVoIPLink::iaxOutgoingInvite (IAXCall* call)
 
 
 IAXCall*
-IAXVoIPLink::iaxFindCallBySession (struct iax_session* session)
-{
+IAXVoIPLink::iaxFindCallBySession (struct iax_session* session) {
     // access to callMap shoud use that
     // the code below is like findSIPCallWithCid()
     ost::MutexLock m (_callMapMutex);
@@ -760,8 +737,7 @@ IAXVoIPLink::iaxFindCallBySession (struct iax_session* session)
 }
 
 void
-IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
-{
+IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call) {
     // call should not be 0
     // note activity?
     //
@@ -909,8 +885,7 @@ IAXVoIPLink::iaxHandleCallEvent (iax_event* event, IAXCall* call)
 
 /* Handle audio event, VOICE packet received */
 void
-IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
-{
+IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call) {
 
     unsigned char *data;
     unsigned int size, max, nbInt16;
@@ -1002,8 +977,7 @@ IAXVoIPLink::iaxHandleVoiceEvent (iax_event* event, IAXCall* call)
  * Handle the registration process
  */
 void
-IAXVoIPLink::iaxHandleRegReply (iax_event* event)
-{
+IAXVoIPLink::iaxHandleRegReply (iax_event* event) {
 
     std::string account_id;
     IAXAccount *account;
@@ -1044,8 +1018,7 @@ IAXVoIPLink::iaxHandleRegReply (iax_event* event)
     }
 }
 
-int IAXVoIPLink::processIAXMsgCount (int msgcount)
-{
+int IAXVoIPLink::processIAXMsgCount (int msgcount) {
 
     // IAX sends the message count under a specific format:
     //                       1
@@ -1067,8 +1040,7 @@ int IAXVoIPLink::processIAXMsgCount (int msgcount)
 
 
 void
-IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
-{
+IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event) {
     IAXCall* call = NULL;
     CallID   id;
     std::string reason = "Error ringing user.";
@@ -1175,8 +1147,7 @@ IAXVoIPLink::iaxHandlePrecallEvent (iax_event* event)
 
 }
 
-void IAXVoIPLink::updateAudiolayer (void)
-{
+void IAXVoIPLink::updateAudiolayer (void) {
     _mutexIAX.enterMutex();
     audiolayer = NULL;
     audiolayer = Manager::instance().getAudioDriver();

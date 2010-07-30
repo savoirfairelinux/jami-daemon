@@ -40,17 +40,14 @@
 #include <string.h>
 #include "yamlparser.h"
 
-namespace Conf
-{
+namespace Conf {
 
 // ctor
-ConfigTree::ConfigTree() :_sections()
-{
+ConfigTree::ConfigTree() :_sections() {
 }
 
 // dtor
-ConfigTree::~ConfigTree()
-{
+ConfigTree::~ConfigTree() {
 
     // erase every new ItemMap (by CreateSection)
     SectionMap::iterator iter = _sections.begin();
@@ -62,8 +59,7 @@ ConfigTree::~ConfigTree()
     }
 }
 
-void ConfigTree::addDefaultValue (const std::pair<std::string, std::string>& token, std::string section)
-{
+void ConfigTree::addDefaultValue (const std::pair<std::string, std::string>& token, std::string section) {
     _defaultValueMap.insert (token);
 
     if (section.empty() == false) {
@@ -71,8 +67,7 @@ void ConfigTree::addDefaultValue (const std::pair<std::string, std::string>& tok
     }
 }
 
-std::string ConfigTree::getDefaultValue (const std::string& key)
-{
+std::string ConfigTree::getDefaultValue (const std::string& key) {
     std::map<std::string, std::string>::iterator it;
     it = _defaultValueMap.find (key);
 
@@ -87,8 +82,7 @@ std::string ConfigTree::getDefaultValue (const std::string& key)
  * Create the section only if it doesn't exists
  */
 void
-ConfigTree::createSection (const std::string& section)
-{
+ConfigTree::createSection (const std::string& section) {
     // if we doesn't find the item, create it
     if (_sections.find (section) == _sections.end()) {
         _sections[section] = new ItemMap;
@@ -99,8 +93,7 @@ ConfigTree::createSection (const std::string& section)
  * Remove the section only if it exists
  */
 void
-ConfigTree::removeSection (const std::string& section)
-{
+ConfigTree::removeSection (const std::string& section) {
     // if we doesn't find the item, create it
     SectionMap::iterator iter = _sections.find (section);
 
@@ -111,8 +104,7 @@ ConfigTree::removeSection (const std::string& section)
 
 /** Retrieve the sections as an array */
 TokenList
-ConfigTree::getSections()
-{
+ConfigTree::getSections() {
     TokenList sections;
 
     SectionMap::iterator iter = _sections.begin();
@@ -131,8 +123,7 @@ ConfigTree::getSections()
  * If the section doesn't exists, create it
  */
 void
-ConfigTree::addConfigTreeItem (const std::string& section, const ConfigTreeItem item)
-{
+ConfigTree::addConfigTreeItem (const std::string& section, const ConfigTreeItem item) {
     // if we doesn't find the item, create it
     SectionMap::iterator iter = _sections.find (section);
 
@@ -152,8 +143,7 @@ ConfigTree::addConfigTreeItem (const std::string& section, const ConfigTreeItem 
 }
 
 std::string
-ConfigTree::getConfigTreeItemValue (const std::string& section, const std::string& itemName)
-{
+ConfigTree::getConfigTreeItemValue (const std::string& section, const std::string& itemName) {
     ConfigTreeItem* item = getConfigTreeItem (section, itemName);
 
     if (item != NULL) {
@@ -165,8 +155,7 @@ ConfigTree::getConfigTreeItemValue (const std::string& section, const std::strin
 
 // throw a ConfigTreeItemException if not found
 int
-ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::string& itemName)
-{
+ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::string& itemName) {
     std::string configItem = getConfigTreeItemValue (section, itemName);
     int retval = atoi (configItem.data());
 
@@ -174,8 +163,7 @@ ConfigTree::getConfigTreeItemIntValue (const std::string& section, const std::st
 }
 
 bool
-ConfigTree::getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName)
-{
+ConfigTree::getConfigTreeItemBoolValue (const std::string& section, const std::string& itemName) {
     std::string configItem = getConfigTreeItemValue (section, itemName);
 
     if (configItem == "true") {
@@ -186,8 +174,7 @@ ConfigTree::getConfigTreeItemBoolValue (const std::string& section, const std::s
 }
 
 bool
-ConfigTree::getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg)
-{
+ConfigTree::getConfigTreeItemToken (const std::string& section, const std::string& itemName, TokenList& arg) {
     ConfigTreeItem *item = getConfigTreeItem (section, itemName);
 
     if (item) {
@@ -207,19 +194,18 @@ ConfigTree::getConfigTreeItemToken (const std::string& section, const std::strin
  * Return a ConfigTreeItem or NULL if not found
  */
 ConfigTreeItem*
-ConfigTree::getConfigTreeItem (const std::string& section, const std::string& itemName)
-{
+ConfigTree::getConfigTreeItem (const std::string& section, const std::string& itemName) {
     SectionMap::iterator iter = _sections.find (section);
 
     if (iter == _sections.end()) {
-      // _error("ConfigTree: Error: Did not found section %s in config tree", section.c_str());
+        // _error("ConfigTree: Error: Did not found section %s in config tree", section.c_str());
         return NULL;
     }
 
     ItemMap::iterator iterItem = iter->second->find (itemName);
 
     if (iterItem == iter->second->end()) {
-      // _error("ConfigTree: Error: Did not found item %s in config tree", itemName.c_str());
+        // _error("ConfigTree: Error: Did not found item %s in config tree", itemName.c_str());
         return NULL;
     }
 
@@ -235,8 +221,7 @@ ConfigTree::getConfigTreeItem (const std::string& section, const std::string& it
 bool
 ConfigTree::setConfigTreeItem (const std::string& section,
                                const std::string& itemName,
-                               const std::string& value)
-{
+                               const std::string& value) {
 
     SectionMap::iterator iter = _sections.find (section);
 
@@ -271,8 +256,7 @@ ConfigTree::setConfigTreeItem (const std::string& section,
 // return false if empty, no config, or enable to open
 // return true if everything is ok
 bool
-ConfigTree::saveConfigTree (const std::string& fileName)
-{
+ConfigTree::saveConfigTree (const std::string& fileName) {
     if (fileName.empty() && _sections.begin() == _sections.end()) {
         return false;
     }
@@ -282,7 +266,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.open (fileName.data(), std::fstream::out);
 
     if (!file.is_open()) {
-        _error("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
+        _error ("ConfigTree: Error: Could not open %s configuration file", fileName.c_str());
         return false;
     }
 
@@ -306,7 +290,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
     file.close();
 
     if (chmod (fileName.c_str(), S_IRUSR | S_IWUSR)) {
-        _error("ConfigTree: Error: Failed to set permission on configuration: %s",strerror (errno));
+        _error ("ConfigTree: Error: Failed to set permission on configuration: %s",strerror (errno));
     }
 
     return true;
@@ -317,8 +301,7 @@ ConfigTree::saveConfigTree (const std::string& fileName)
 // 1 = OK
 // 2 = unable to open
 int
-ConfigTree::populateFromFile (const std::string& fileName)
-{
+ConfigTree::populateFromFile (const std::string& fileName) {
     bool out = false;
 
     if (fileName.empty()) {
@@ -380,15 +363,16 @@ ConfigTree::populateFromFile (const std::string& fileName)
                 if (key.length() > 0 && val.length() > 0) {
                     setConfigTreeItem (section, key, val);
                 }
-		/*
-		if (key.length() > 0) {
 
-		    if(val.length() > 0) 
-		        setConfigTreeItem (section, key, val);
-		    else
-		        setConfigTreeItem (section, key, "");
-                }
-		*/
+                /*
+                if (key.length() > 0) {
+
+                    if(val.length() > 0)
+                        setConfigTreeItem (section, key, val);
+                    else
+                        setConfigTreeItem (section, key, "");
+                        }
+                */
             }
         }
     }
@@ -403,8 +387,7 @@ ConfigTree::populateFromFile (const std::string& fileName)
 }
 
 TokenList
-ConfigTreeIterator::begin()
-{
+ConfigTreeIterator::begin() {
     TokenList tk;
     _iter = _tree->_sections.begin();
 
@@ -424,8 +407,7 @@ ConfigTreeIterator::begin()
 }
 
 TokenList
-ConfigTreeIterator::next()
-{
+ConfigTreeIterator::next() {
     TokenList tk;
     // we return tk empty if we are at the end of the list...
 

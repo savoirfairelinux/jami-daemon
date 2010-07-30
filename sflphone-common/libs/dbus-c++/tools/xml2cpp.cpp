@@ -42,8 +42,7 @@ using namespace DBus;
 
 //typedef map<string,string> TypeCache;
 
-void usage (const char *argv0)
-{
+void usage (const char *argv0) {
     cerr << endl << "Usage: " << argv0 << " <xmlfile> [ --proxy=<outfile.h> ] [ --adaptor=<outfile.h> ]"
          << endl << endl;
     exit (-1);
@@ -62,8 +61,7 @@ bool is_atomic_type(const string &type)
 	return type.length() == 1 && char_to_atomic_type(type[0]) != DBUS_TYPE_INVALID;
 }*/
 
-int main (int argc, char ** argv)
-{
+int main (int argc, char ** argv) {
     if (argc < 2) {
         usage (argv[0]);
     }
@@ -82,11 +80,10 @@ int main (int argc, char ** argv)
         if (!strncmp (argv[a], "--proxy=", 8)) {
             proxy_mode = true;
             proxy = argv[a] +8;
-        } else
-            if (!strncmp (argv[a], "--adaptor=", 10)) {
-                adaptor_mode = true;
-                adaptor = argv[a] +10;
-            }
+        } else if (!strncmp (argv[a], "--adaptor=", 10)) {
+            adaptor_mode = true;
+            adaptor = argv[a] +10;
+        }
     }
 
     if (!proxy_mode && !adaptor_mode) usage (argv[0]);

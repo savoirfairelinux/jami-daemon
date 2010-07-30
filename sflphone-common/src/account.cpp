@@ -34,81 +34,81 @@
 #include "manager.h"
 
 Account::Account (const AccountID& accountID, std::string type) :
-	_accountID (accountID)
-	, _link (NULL)
-	, _enabled (true)
-	, _type (type)
-	, _codecOrder ()
-	, _codecStr("")
-	, _ringtonePath("/usr/share/sflphone/ringtones/konga.ul")
-	, _ringtoneEnabled(true)
-	, _displayName("")
-	, _useragent("SFLphone")
-{
-	setRegistrationState (Unregistered);
+        _accountID (accountID)
+        , _link (NULL)
+        , _enabled (true)
+        , _type (type)
+        , _codecOrder ()
+        , _codecStr ("")
+        , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
+        , _ringtoneEnabled (true)
+        , _displayName ("")
+        , _useragent ("SFLphone") {
+    setRegistrationState (Unregistered);
 }
 
-Account::~Account()
-{
+Account::~Account() {
 }
 
 void Account::loadConfig() {
 
-  // If IAX is not supported, do not register this account	
+    // If IAX is not supported, do not register this account
 #ifndef USE_IAX
-  if (_type == "IAX")
-    _enabled = false;
+
+    if (_type == "IAX")
+        _enabled = false;
+
 #endif
 
-  loadAudioCodecs ();
+    loadAudioCodecs ();
 }
 
 void Account::setRegistrationState (RegistrationState state) {
 
-	if (state != _registrationState) {
-		_debug ("Account: set registration state");
-		_registrationState = state;
+    if (state != _registrationState) {
+        _debug ("Account: set registration state");
+        _registrationState = state;
 
-		// Notify the client
-		Manager::instance().connectionStatusNotification();
-	}
+        // Notify the client
+        Manager::instance().connectionStatusNotification();
+    }
 }
 
 void Account::loadAudioCodecs (void) {
 
-	// if the user never set the codec list, use the default configuration for this account
-       if(_codecStr == "") {
-		_info ("Account: use the default order");
-		Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
-	}
-	// else retrieve the one set in the user config file
-	else {
-		std::vector<std::string> active_list = Manager::instance ().retrieveActiveCodecs();
-		// This property is now set per account basis
-		// std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");
-		setActiveCodecs (Manager::instance ().unserialize (_codecStr));
-	}
+    // if the user never set the codec list, use the default configuration for this account
+    if (_codecStr == "") {
+        _info ("Account: use the default order");
+        Manager::instance ().getCodecDescriptorMap ().setDefaultOrder();
+    }
+    // else retrieve the one set in the user config file
+    else {
+        std::vector<std::string> active_list = Manager::instance ().retrieveActiveCodecs();
+        // This property is now set per account basis
+        // std::string s = Manager::instance ().getConfigString (_accountID, "ActiveCodecs");
+        setActiveCodecs (Manager::instance ().unserialize (_codecStr));
+    }
 }
 
 void Account::setActiveCodecs (const std::vector <std::string> &list) {
 
-	_codecOrder.clear();
-	// list contains the ordered payload of active codecs picked by the user for this account
-	// we used the CodecOrder vector to save the order.
-	int i=0;
-	int payload;
-	size_t size = list.size();
+    _codecOrder.clear();
+    // list contains the ordered payload of active codecs picked by the user for this account
+    // we used the CodecOrder vector to save the order.
+    int i=0;
+    int payload;
+    size_t size = list.size();
 
-	while ( (unsigned int) i < size) {
-		payload = std::atoi (list[i].data());
-		_info ("Account: Adding codec with RTP payload=%i", payload);
-		//if (Manager::instance ().getCodecDescriptorMap ().isCodecLoaded (payload)) {
-		_codecOrder.push_back ( (AudioCodecType) payload);
-		//}
-		i++;
-	}
+    while ( (unsigned int) i < size) {
+        payload = std::atoi (list[i].data());
+        _info ("Account: Adding codec with RTP payload=%i", payload);
+        //if (Manager::instance ().getCodecDescriptorMap ().isCodecLoaded (payload)) {
+        _codecOrder.push_back ( (AudioCodecType) payload);
+        //}
+        i++;
+    }
 
-	// setConfig
-	_codecStr = Manager::instance ().serialize (list);
+    // setConfig
+    _codecStr = Manager::instance ().serialize (list);
 
 }

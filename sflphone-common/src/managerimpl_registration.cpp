@@ -52,8 +52,7 @@
 #include <cstdlib>
 
 int
-ManagerImpl::registerAccounts()
-{
+ManagerImpl::registerAccounts() {
     int status;
     bool flag = true;
     AccountMap::iterator iter;
@@ -68,8 +67,8 @@ ManagerImpl::registerAccounts()
 
             if (iter->second->isEnabled()) {
 
-		_debug("Register account %s", iter->first.c_str());
-		
+                _debug ("Register account %s", iter->first.c_str());
+
                 status = iter->second->registerVoIPLink();
 
                 if (status != SUCCESS) {
@@ -92,8 +91,7 @@ ManagerImpl::registerAccounts()
 
 //THREAD=Main
 int
-ManagerImpl::initRegisterAccounts()
-{
+ManagerImpl::initRegisterAccounts() {
     int status;
     bool flag = true;
     AccountMap::iterator iter;
@@ -129,8 +127,7 @@ ManagerImpl::initRegisterAccounts()
     return SUCCESS;
 }
 
-void ManagerImpl::restartPJSIP (void)
-{
+void ManagerImpl::restartPJSIP (void) {
     _debug ("ManagerImpl::restartPJSIP\n");
     VoIPLink *link = getSIPAccountLink();
     SIPVoIPLink *siplink = NULL;
@@ -158,8 +155,7 @@ void ManagerImpl::restartPJSIP (void)
     this->registerCurSIPAccounts ();
 }
 
-VoIPLink* ManagerImpl::getAccountLink (const AccountID& accountID)
-{
+VoIPLink* ManagerImpl::getAccountLink (const AccountID& accountID) {
     if (accountID!=AccountNULL) {
         Account* acc = getAccount (accountID);
 
@@ -172,8 +168,7 @@ VoIPLink* ManagerImpl::getAccountLink (const AccountID& accountID)
         return SIPVoIPLink::instance ("");
 }
 
-VoIPLink* ManagerImpl::getSIPAccountLink()
-{
+VoIPLink* ManagerImpl::getSIPAccountLink() {
     /* We are looking for the first SIP account we met because all the SIP accounts have the same voiplink */
     Account *account;
     AccountMap::iterator iter = _accountMap.begin();
@@ -192,8 +187,7 @@ VoIPLink* ManagerImpl::getSIPAccountLink()
     return NULL;
 }
 
-pjsip_regc *getSipRegcFromID (const AccountID& id UNUSED)
-{
+pjsip_regc *getSipRegcFromID (const AccountID& id UNUSED) {
     /*SIPAccount *tmp = dynamic_cast<SIPAccount *>getAccount(id);
     if(tmp != NULL)
       return tmp->getSipRegc();
@@ -201,8 +195,7 @@ pjsip_regc *getSipRegcFromID (const AccountID& id UNUSED)
     return NULL;
 }
 
-void ManagerImpl::unregisterCurSIPAccounts()
-{
+void ManagerImpl::unregisterCurSIPAccounts() {
     Account *current;
 
     AccountMap::iterator iter = _accountMap.begin();
@@ -220,8 +213,7 @@ void ManagerImpl::unregisterCurSIPAccounts()
     }
 }
 
-void ManagerImpl::registerCurSIPAccounts (void)
-{
+void ManagerImpl::registerCurSIPAccounts (void) {
 
     Account *current;
 
@@ -244,16 +236,15 @@ void ManagerImpl::registerCurSIPAccounts (void)
 }
 
 void
-ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
-{
+ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable) {
 
     // Update the active field
     Account* acc = getAccount (accountID);
 
-    if(enable == 1)
-      acc->setEnabled(true);
+    if (enable == 1)
+        acc->setEnabled (true);
     else
-      acc->setEnabled(false);
+        acc->setEnabled (false);
 
     acc->loadConfig();
 
