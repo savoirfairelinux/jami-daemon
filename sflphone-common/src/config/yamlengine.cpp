@@ -32,50 +32,47 @@
 #include "../global.h"
 
 
-namespace Conf {
+namespace Conf
+{
 
 YamlEngine::YamlEngine() {}
 
 YamlEngine::~YamlEngine() {}
 
-void YamlEngine::openConfigFile() 
+void YamlEngine::openConfigFile()
 {
 
-  Conf::YamlParser *parser = NULL;
+    Conf::YamlParser *parser = NULL;
 
-  try {
-    parser = new Conf::YamlParser("sequence.yml");
-  }
-  catch (Conf::YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
+    try {
+        parser = new Conf::YamlParser ("sequence.yml");
+    } catch (Conf::YamlParserException &e) {
+        _error ("ConfigTree: %s", e.what());
+    }
 
-  try {
-    parser->serializeEvents();
-  }
-  catch(Conf::YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
+    try {
+        parser->serializeEvents();
+    } catch (Conf::YamlParserException &e) {
+        _error ("ConfigTree: %s", e.what());
+    }
 
-  try {
-    document = parser->composeEvents();
-  }
-  catch(Conf::YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
+    try {
+        document = parser->composeEvents();
+    } catch (Conf::YamlParserException &e) {
+        _error ("ConfigTree: %s", e.what());
+    }
 
-  try {
-    delete parser;
-    parser = NULL;
-  }
-  catch (Conf::YamlParserException &e) {
-    _error("ConfigTree: %s", e.what());
-  }
+    try {
+        delete parser;
+        parser = NULL;
+    } catch (Conf::YamlParserException &e) {
+        _error ("ConfigTree: %s", e.what());
+    }
 }
 
-void YamlEngine::closeConfigFile() 
+void YamlEngine::closeConfigFile()
 {
-  
+
 }
 
 void YamlEngine::read() {}

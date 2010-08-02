@@ -31,64 +31,64 @@
 #include "yamlnode.h"
 #include "src/global.h"
 
-namespace Conf {
-
-
-void YamlDocument::addNode(YamlNode *node)
+namespace Conf
 {
-  Sequence::iterator it = doc.end();
-  doc.insert(it, node);
+
+
+void YamlDocument::addNode (YamlNode *node)
+{
+    Sequence::iterator it = doc.end();
+    doc.insert (it, node);
 }
 
 YamlNode *YamlDocument::popNode()
 {
-  Sequence::iterator it = doc.begin();
-  YamlNode *node = doc.front();
+    Sequence::iterator it = doc.begin();
+    YamlNode *node = doc.front();
 
-  //removed element's destructor is called
-  doc.pop_front();
+    //removed element's destructor is called
+    doc.pop_front();
 
-  return node;
+    return node;
 }
 
-void MappingNode::addNode(YamlNode *node) 
+void MappingNode::addNode (YamlNode *node)
 {
-  Mapping::iterator it = map.end();
-  map.insert(it, std::pair<Key, YamlNode *>(tmpKey, node)); 
+    Mapping::iterator it = map.end();
+    map.insert (it, std::pair<Key, YamlNode *> (tmpKey, node));
 }
 
-void MappingNode::setKeyValue(Key key, YamlNode *value) 
+void MappingNode::setKeyValue (Key key, YamlNode *value)
 {
-  Mapping::iterator it = map.end();
-  map.insert(it, std::pair<Key, YamlNode *>(key, value)); 
+    Mapping::iterator it = map.end();
+    map.insert (it, std::pair<Key, YamlNode *> (key, value));
 }
 
-void MappingNode::removeKeyValue(Key key)
+void MappingNode::removeKeyValue (Key key)
 {
 
-Mapping::iterator it = map.find(key);
-  map.erase(it);
-}
-
-
-YamlNode *MappingNode::getValue(Key key) 
-{
-  Mapping::iterator it = map.find(key);
-
-  if(it != map.end()) {
-    return it->second;
-  }
-  else {
-    _debug("MappingNode: Could not find %s", key.c_str());
-    return NULL;
-  }
+    Mapping::iterator it = map.find (key);
+    map.erase (it);
 }
 
 
-void SequenceNode::addNode(YamlNode *node)
+YamlNode *MappingNode::getValue (Key key)
 {
-  Sequence::iterator it = seq.end();
-  seq.insert(it, node);
+    Mapping::iterator it = map.find (key);
+
+    if (it != map.end()) {
+        return it->second;
+    } else {
+        _debug ("MappingNode: Could not find %s", key.c_str());
+        return NULL;
+    }
+}
+
+
+void SequenceNode::addNode (YamlNode *node)
+{
+    Sequence::iterator it = seq.end();
+    seq.insert (it, node);
 }
 
 }

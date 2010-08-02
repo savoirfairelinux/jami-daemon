@@ -37,73 +37,74 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TextTestRunner.h>
 
-int main(int argc, char* argv[]) {
+int main (int argc, char* argv[])
+{
 
-	printf("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
-	Logger::setConsoleLog(true);
-	Logger::setDebugMode(true);
-	
-	int argvIndex = 1;
+    printf ("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
+    Logger::setConsoleLog (true);
+    Logger::setDebugMode (true);
 
-	if (argc > 1) {
-		if (strcmp("--help", argv[1]) == 0) {
-			argvIndex++;
+    int argvIndex = 1;
 
-			CPPUNIT_NS::Test* suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry("All Tests").makeTest();
-			
-			int testSuiteCount = suite->getChildTestCount();
-			printf("Usage: test [OPTIONS] [TEST_SUITE]\n");
-			printf("\nOptions:\n");
-			printf(" --debug - Debug mode\n");
-			printf(" --help - Print help\n");
-			printf("\nAvailable test suites:\n");
-			for (int i = 0; i < testSuiteCount; i++) {
-				printf(" - %s\n", suite->getChildTestAt(i)->getName().c_str());
-			}
-			exit(0);
-		}
-		else if (strcmp("--debug", argv[1]) == 0) {
-			argvIndex++;
+    if (argc > 1) {
+        if (strcmp ("--help", argv[1]) == 0) {
+            argvIndex++;
 
-			Logger::setDebugMode(true);
-			_info("Debug mode activated");
-		}
-	}
+            CPPUNIT_NS::Test* suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry ("All Tests").makeTest();
 
-	// Default test suite : all tests
-	std::string testSuiteName = "All Tests";
-	if(argvIndex < argc)
-	{
-		testSuiteName = argv[argvIndex];
-		argvIndex++;
-	}
+            int testSuiteCount = suite->getChildTestCount();
+            printf ("Usage: test [OPTIONS] [TEST_SUITE]\n");
+            printf ("\nOptions:\n");
+            printf (" --debug - Debug mode\n");
+            printf (" --help - Print help\n");
+            printf ("\nAvailable test suites:\n");
 
-	printf("\n\n=== SFLphone initialization ===\n\n");
-	Manager::instance().initConfigFile(true, CONFIG_SAMPLE);
-	Manager::instance().init();
+            for (int i = 0; i < testSuiteCount; i++) {
+                printf (" - %s\n", suite->getChildTestAt (i)->getName().c_str());
+            }
 
-	// Get the top level suite from the registry
-	printf("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());
-	CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry(testSuiteName).makeTest();
+            exit (0);
+        } else if (strcmp ("--debug", argv[1]) == 0) {
+            argvIndex++;
 
-	if(suite->getChildTestCount() == 0)
-	{
-		_error("Invalid test suite name: %s", testSuiteName.c_str());
-		exit(-1);
-	}
-	
-	// Adds the test to the list of test to run
-	CppUnit::TextTestRunner runner;
-	runner.addTest(suite);
+            Logger::setDebugMode (true);
+            _info ("Debug mode activated");
+        }
+    }
 
-	// Change the default outputter to a compiler error format outputter
-	runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
-	
-	// Run the tests.
-	bool wasSucessful = runner.run();
+    // Default test suite : all tests
+    std::string testSuiteName = "All Tests";
 
-	Manager::instance().terminate();
+    if (argvIndex < argc) {
+        testSuiteName = argv[argvIndex];
+        argvIndex++;
+    }
 
-	// Return error code 1 if the one of test failed.
-	return wasSucessful ? 0 : 1;
+    printf ("\n\n=== SFLphone initialization ===\n\n");
+    Manager::instance().initConfigFile (true, CONFIG_SAMPLE);
+    Manager::instance().init();
+
+    // Get the top level suite from the registry
+    printf ("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());
+    CPPUNIT_NS::Test *suite = CPPUNIT_NS::TestFactoryRegistry::getRegistry (testSuiteName).makeTest();
+
+    if (suite->getChildTestCount() == 0) {
+        _error ("Invalid test suite name: %s", testSuiteName.c_str());
+        exit (-1);
+    }
+
+    // Adds the test to the list of test to run
+    CppUnit::TextTestRunner runner;
+    runner.addTest (suite);
+
+    // Change the default outputter to a compiler error format outputter
+    runner.setOutputter (new CppUnit::CompilerOutputter (&runner.result(), std::cerr));
+
+    // Run the tests.
+    bool wasSucessful = runner.run();
+
+    Manager::instance().terminate();
+
+    // Return error code 1 if the one of test failed.
+    return wasSucessful ? 0 : 1;
 }

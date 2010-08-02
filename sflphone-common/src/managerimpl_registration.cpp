@@ -68,8 +68,8 @@ ManagerImpl::registerAccounts()
 
             if (iter->second->isEnabled()) {
 
-		_debug("Register account %s", iter->first.c_str());
-		
+                _debug ("Register account %s", iter->first.c_str());
+
                 status = iter->second->registerVoIPLink();
 
                 if (status != SUCCESS) {
@@ -250,10 +250,10 @@ ManagerImpl::sendRegister (const std::string& accountID , const int32_t& enable)
     // Update the active field
     Account* acc = getAccount (accountID);
 
-    if(enable == 1)
-      acc->setEnabled(true);
+    if (enable == 1)
+        acc->setEnabled (true);
     else
-      acc->setEnabled(false);
+        acc->setEnabled (false);
 
     acc->loadConfig();
 

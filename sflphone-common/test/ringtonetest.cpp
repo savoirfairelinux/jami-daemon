@@ -30,18 +30,19 @@
 
 #include "ringtonetest.h"
 
-void RingtoneTest::testLoadWavefile() 
+void RingtoneTest::testLoadWavefile()
 {
-  WavFile *wav = new WavFile();
+    WavFile *wav = new WavFile();
 
-  // Test initial values
-  CPPUNIT_ASSERT(wav->isStarted() == false);
-  CPPUNIT_ASSERT(wav->getSize() == 0);
+    // Test initial values
+    CPPUNIT_ASSERT (wav->isStarted() == false);
+    CPPUNIT_ASSERT (wav->getSize() == 0);
 
-  // Test protection against wrong file name
-  CPPUNIT_ASSERT(wav->loadFile(std::string("wrongfilename.wav"), NULL, 44100) == false);
+    // Test protection against wrong file name
+    CPPUNIT_ASSERT (wav->loadFile (std::string ("wrongfilename.wav"), NULL, 44100) == false);
 
-  
 
-  delete wav; wav = NULL;
+
+    delete wav;
+    wav = NULL;
 }

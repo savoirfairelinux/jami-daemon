@@ -44,7 +44,7 @@ class Speex : public AudioCodec
                 _speex_enc_bits(),
                 _speex_dec_state(),
                 _speex_enc_state(),
-		_speex_frame_size() {
+                _speex_frame_size() {
             _clockRate = 16000;
             _frameSize = 320; // 20 ms at 16 kHz
             _channel = 1;

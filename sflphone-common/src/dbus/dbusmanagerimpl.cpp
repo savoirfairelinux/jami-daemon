@@ -53,7 +53,7 @@ DBusManagerImpl::exec()
     _instanceManager = new Instance (sessionConnection);
 
 #ifdef USE_NETWORKMANAGER
-    _networkManager = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
+    _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
 #endif
 
     // Register accounts

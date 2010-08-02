@@ -55,7 +55,7 @@ ZrtpSessionCallback::ZrtpSessionCallback (SIPCall *sipcall) :
         return;
     }
 
-    _info("Zrtp: Initialize callbacks");
+    _info ("Zrtp: Initialize callbacks");
 
     /**
      * Information Map

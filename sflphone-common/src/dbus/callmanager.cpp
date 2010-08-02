@@ -58,12 +58,12 @@ CallManager::placeCall (const std::string& accountID,
 
 void
 CallManager::placeCallFirstAccount (const std::string& callID,
-				    const std::string& to)
+                                    const std::string& to)
 {
 
     if (to == "") {
-        _warn("CallManager: Warning: No number entered, call stopped");
-	return;
+        _warn ("CallManager: Warning: No number entered, call stopped");
+        return;
     }
 
     std::vector< std::string > accountOrder = Manager::instance().loadAccountOrder();
@@ -71,47 +71,50 @@ CallManager::placeCallFirstAccount (const std::string& callID,
 
     Account *account;
 
-    _debug("AccountOrder size: %d", accountOrder.size());
+    _debug ("AccountOrder size: %d", accountOrder.size());
 
-    if(accountOrder.size() > 0) {
+    if (accountOrder.size() > 0) {
 
-      iter = accountOrder.begin();
+        iter = accountOrder.begin();
 
-      while(iter != accountOrder.end()) {
-        account = Manager::instance().getAccount(*iter);
-	if((*iter != IP2IP_PROFILE) && account->isEnabled()) {
-	    Manager::instance().outgoingCall (*iter, callID, to);
-	    return;
-	}
+        while (iter != accountOrder.end()) {
+            account = Manager::instance().getAccount (*iter);
 
-	iter++;
-      }
+            if ( (*iter != IP2IP_PROFILE) && account->isEnabled()) {
+                Manager::instance().outgoingCall (*iter, callID, to);
+                return;
+            }
+
+            iter++;
+        }
+    } else {
+        _error ("AccountOrder is empty");
+        // If accountOrder is empty fallback on accountList (which has no preference order)
+        std::vector< std::string > accountList = Manager::instance().getAccountList();
+        iter = accountList.begin();
+
+
+        _error ("AccountList size: %d", accountList.size());
+
+        if (accountList.size() > 0) {
+            while (iter != accountList.end()) {
+                _error ("iter");
+                account = Manager::instance().getAccount (*iter);
+
+                if ( (*iter != IP2IP_PROFILE) && account->isEnabled()) {
+                    _error ("makecall");
+                    Manager::instance().outgoingCall (*iter, callID, to);
+                    return;
+                }
+
+                iter++;
+            }
+
+        }
     }
-    else {
-      _error("AccountOrder is empty");
-      // If accountOrder is empty fallback on accountList (which has no preference order)
-      std::vector< std::string > accountList = Manager::instance().getAccountList();
-      iter = accountList.begin();
-      
 
-      _error("AccountList size: %d", accountList.size());
-      if(accountList.size() > 0) {
-	while(iter != accountList.end()) {
-	  _error("iter");
-	  account = Manager::instance().getAccount(*iter);
-	  if((*iter != IP2IP_PROFILE) && account->isEnabled()) {
-	    _error("makecall");
-	    Manager::instance().outgoingCall(*iter, callID, to);
-	    return;
-	  }
-	  iter++;
-	}
-	
-      }
-    }
-    
-    _warn("CallManager: Warning: No enabled account found, call stopped");
-    
+    _warn ("CallManager: Warning: No enabled account found, call stopped");
+
 }
 
 void
@@ -261,7 +264,7 @@ CallManager::getConferenceList (void)
 std::vector< std::string >
 CallManager::getParticipantList (const std::string& confID)
 {
-    _debug("CallManager: Get Participant list for conference %s", confID.c_str());
+    _debug ("CallManager: Get Participant list for conference %s", confID.c_str());
     return Manager::instance().getParticipantList (confID);
 }
 

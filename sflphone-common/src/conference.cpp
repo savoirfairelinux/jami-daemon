@@ -160,51 +160,52 @@ ParticipantSet Conference::getParticipantList()
 
 
 
-bool Conference::setRecording() {
+bool Conference::setRecording()
+{
 
-  bool recordStatus = Recordable::recAudio.isRecording();
+    bool recordStatus = Recordable::recAudio.isRecording();
 
-  Recordable::recAudio.setRecording();
+    Recordable::recAudio.setRecording();
 
-  // start recording
-  if(!recordStatus){
+    // start recording
+    if (!recordStatus) {
 
-    MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+        MainBuffer *mbuffer = Manager::instance().getMainBuffer();
 
-    ParticipantSet::iterator iter = _participants.begin();
+        ParticipantSet::iterator iter = _participants.begin();
 
-    CallID process_id = Recordable::recorder.getRecorderID();
+        CallID process_id = Recordable::recorder.getRecorderID();
 
-    while(iter != _participants.end()) {
-      mbuffer->bindHalfDuplexOut(process_id, *iter);
-      iter++;
+        while (iter != _participants.end()) {
+            mbuffer->bindHalfDuplexOut (process_id, *iter);
+            iter++;
+        }
+
+        mbuffer->bindHalfDuplexOut (process_id);
+
+        Recordable::recorder.start();
+
+    }
+    // stop recording
+    else {
+
+        MainBuffer *mbuffer = Manager::instance().getMainBuffer();
+
+        ParticipantSet::iterator iter = _participants.begin();
+
+        CallID process_id = Recordable::recorder.getRecorderID();
+
+        while (iter != _participants.end()) {
+            mbuffer->unBindHalfDuplexOut (process_id, *iter);
+            iter++;
+        }
+
+        mbuffer->unBindHalfDuplexOut (process_id);
+
+        // Recordable::recorder.start();
+
     }
 
-    mbuffer->bindHalfDuplexOut(process_id);
-
-    Recordable::recorder.start();
-
-  }
-  // stop recording
-  else {
-
-      MainBuffer *mbuffer = Manager::instance().getMainBuffer();      
-
-      ParticipantSet::iterator iter = _participants.begin();
-
-      CallID process_id = Recordable::recorder.getRecorderID();
-
-      while(iter != _participants.end()) {
-	mbuffer->unBindHalfDuplexOut(process_id, *iter);
-	iter++;
-      }
-
-      mbuffer->unBindHalfDuplexOut(process_id);
-
-      // Recordable::recorder.start();
-
-  }
-
-  return recordStatus;
+    return recordStatus;
 
 }

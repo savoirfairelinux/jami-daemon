@@ -413,18 +413,18 @@ IAXVoIPLink::sendRegister (AccountID id UNUSED)
     IAXAccount *account;
     bool result;
 
-    _debug("IAX: Sending registration");
+    _debug ("IAX: Sending registration");
 
     result = false;
     account = dynamic_cast<IAXAccount *> (getAccountPtr());
 
     if (account->getHostname().empty()) {
-        _error("IAX: Error: Account hostname is empty");
+        _error ("IAX: Error: Account hostname is empty");
         return false;
     }
 
     if (account->getUsername().empty()) {
-        _error("IAX: Error: Account username is empty");
+        _error ("IAX: Error: Account username is empty");
         return false;
     }
 

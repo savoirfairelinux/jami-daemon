@@ -43,14 +43,15 @@ HistoryManager::HistoryManager ()
 
 HistoryManager::~HistoryManager ()
 {
-	 HistoryItemMap::iterator iter = _history_items.begin();
+    HistoryItemMap::iterator iter = _history_items.begin();
 
-	 HistoryItem * item;
-	 while(iter != _history_items.end()){
-		 item = iter->second;
-		 delete item;
-		 iter++;
-	 }
+    HistoryItem * item;
+
+    while (iter != _history_items.end()) {
+        item = iter->second;
+        delete item;
+        iter++;
+    }
 
     // Clear the history map
     _history_items.clear ();
