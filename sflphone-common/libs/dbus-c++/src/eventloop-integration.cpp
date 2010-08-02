@@ -35,21 +35,18 @@
 using namespace DBus;
 
 BusTimeout::BusTimeout (Timeout::Internal *ti, BusDispatcher *bd)
-        : Timeout (ti), DefaultTimeout (Timeout::interval(), true, bd)
-{
+        : Timeout (ti), DefaultTimeout (Timeout::interval(), true, bd) {
     DefaultTimeout::enabled (Timeout::enabled());
 }
 
-void BusTimeout::toggle()
-{
+void BusTimeout::toggle() {
     debug_log ("timeout %p toggled (%s)", this, Timeout::enabled() ? "on":"off");
 
     DefaultTimeout::enabled (Timeout::enabled());
 }
 
 BusWatch::BusWatch (Watch::Internal *wi, BusDispatcher *bd)
-        : Watch (wi), DefaultWatch (Watch::descriptor(), 0, bd)
-{
+        : Watch (wi), DefaultWatch (Watch::descriptor(), 0, bd) {
     int flags = POLLHUP | POLLERR;
 
     if (Watch::flags() & DBUS_WATCH_READABLE)
@@ -63,15 +60,13 @@ BusWatch::BusWatch (Watch::Internal *wi, BusDispatcher *bd)
     DefaultWatch::enabled (Watch::enabled());
 }
 
-void BusWatch::toggle()
-{
+void BusWatch::toggle() {
     debug_log ("watch %p toggled (%s)", this, Watch::enabled() ? "on":"off");
 
     DefaultWatch::enabled (Watch::enabled());
 }
 
-void BusDispatcher::enter()
-{
+void BusDispatcher::enter() {
     debug_log ("entering dispatcher %p", this);
 
     _running = true;
@@ -83,20 +78,17 @@ void BusDispatcher::enter()
     debug_log ("leaving dispatcher %p", this);
 }
 
-void BusDispatcher::leave()
-{
+void BusDispatcher::leave() {
     _running = false;
     terminate();
 }
 
-void BusDispatcher::do_iteration()
-{
+void BusDispatcher::do_iteration() {
     dispatch_pending();
     dispatch();
 }
 
-Timeout *BusDispatcher::add_timeout (Timeout::Internal *ti)
-{
+Timeout *BusDispatcher::add_timeout (Timeout::Internal *ti) {
     BusTimeout *bt = new BusTimeout (ti, this);
 
     bt->expired = new Callback<BusDispatcher, void, DefaultTimeout &> (this, &BusDispatcher::timeout_expired);
@@ -108,15 +100,13 @@ Timeout *BusDispatcher::add_timeout (Timeout::Internal *ti)
     return bt;
 }
 
-void BusDispatcher::rem_timeout (Timeout *t)
-{
+void BusDispatcher::rem_timeout (Timeout *t) {
     debug_log ("removed timeout %p", t);
 
     delete t;
 }
 
-Watch *BusDispatcher::add_watch (Watch::Internal *wi)
-{
+Watch *BusDispatcher::add_watch (Watch::Internal *wi) {
     BusWatch *bw = new BusWatch (wi, this);
 
     bw->ready = new Callback<BusDispatcher, void, DefaultWatch &> (this, &BusDispatcher::watch_ready);
@@ -128,15 +118,13 @@ Watch *BusDispatcher::add_watch (Watch::Internal *wi)
     return bw;
 }
 
-void BusDispatcher::rem_watch (Watch *w)
-{
+void BusDispatcher::rem_watch (Watch *w) {
     debug_log ("removed watch %p", w);
 
     delete w;
 }
 
-void BusDispatcher::timeout_expired (DefaultTimeout &et)
-{
+void BusDispatcher::timeout_expired (DefaultTimeout &et) {
     debug_log ("timeout %p expired", &et);
 
     BusTimeout *timeout = reinterpret_cast<BusTimeout *> (et.data());
@@ -144,8 +132,7 @@ void BusDispatcher::timeout_expired (DefaultTimeout &et)
     timeout->handle();
 }
 
-void BusDispatcher::watch_ready (DefaultWatch &ew)
-{
+void BusDispatcher::watch_ready (DefaultWatch &ew) {
     BusWatch *watch = reinterpret_cast<BusWatch *> (ew.data());
 
     debug_log ("watch %p ready, flags=%d state=%d",

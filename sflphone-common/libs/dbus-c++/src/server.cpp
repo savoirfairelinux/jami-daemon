@@ -36,16 +36,13 @@
 using namespace DBus;
 
 Server::Private::Private (DBusServer *s)
-        : server (s)
-{
+        : server (s) {
 }
 
-Server::Private::~Private()
-{
+Server::Private::~Private() {
 }
 
-void Server::Private::on_new_conn_cb (DBusServer *server, DBusConnection *conn, void *data)
-{
+void Server::Private::on_new_conn_cb (DBusServer *server, DBusConnection *conn, void *data) {
     Server *s = static_cast<Server *> (data);
 
     Connection nc (new Connection::Private (conn, s->_pvt.get()));
@@ -57,8 +54,7 @@ void Server::Private::on_new_conn_cb (DBusServer *server, DBusConnection *conn, 
     debug_log ("incoming connection 0x%08x", conn);
 }
 
-Server::Server (const char *address)
-{
+Server::Server (const char *address) {
     InternalError e;
     DBusServer *server = dbus_server_listen (address, e);
 
@@ -80,13 +76,11 @@ Server::Server(const Server &s)
 	dbus_server_ref(_pvt->server);
 }
 */
-Server::~Server()
-{
+Server::~Server() {
     dbus_server_unref (_pvt->server);
 }
 
-Dispatcher *Server::setup (Dispatcher *dispatcher)
-{
+Dispatcher *Server::setup (Dispatcher *dispatcher) {
     debug_log ("registering stubs for server %p", _pvt->server);
 
     Dispatcher *prev = _pvt->dispatcher;
@@ -114,18 +108,15 @@ Dispatcher *Server::setup (Dispatcher *dispatcher)
     return prev;
 }
 
-bool Server::operator == (const Server &s) const
-{
+bool Server::operator == (const Server &s) const {
     return _pvt->server == s._pvt->server;
 }
 
-bool Server::listening() const
-{
+bool Server::listening() const {
     return dbus_server_get_is_connected (_pvt->server);
 }
 
-void Server::disconnect()
-{
+void Server::disconnect() {
     dbus_server_disconnect (_pvt->server);
 }
 
