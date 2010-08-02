@@ -3349,7 +3349,7 @@ std::string ManagerImpl::computeMd5HashFromCredential (
 }
 
 void ManagerImpl::setCredential (const std::string& accountID UNUSED,
-                                 const int32_t& index UNUSED, const std::map<std::string UNUSED, std::string>& details UNUSED)
+                                 const int32_t& index UNUSED, const std::map<std::string, std::string>& details UNUSED)
 {
 
     _debug ("Manager: set credential");
