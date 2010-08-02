@@ -36,7 +36,8 @@ UrlHook::UrlHook () { }
 
 UrlHook::~UrlHook () { }
 
-int UrlHook::addAction (std::string field_value, std::string command) {
+int UrlHook::addAction (std::string field_value, std::string command)
+{
 
     std::string command_bg;
     std::string temp;

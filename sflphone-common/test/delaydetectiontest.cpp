@@ -39,7 +39,8 @@ void DelayDetectionTest::setUp() {}
 
 void DelayDetectionTest::tearDown() {}
 
-void DelayDetectionTest::testCrossCorrelation() {
+void DelayDetectionTest::testCrossCorrelation()
+{
     float signal[10] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,  7.0, 8.0, 9.0};
     float ref[3] = {0.0, 1.0, 2.0};
 
@@ -63,7 +64,8 @@ void DelayDetectionTest::testCrossCorrelation() {
     }
 }
 
-void DelayDetectionTest::testCrossCorrelationDelay() {
+void DelayDetectionTest::testCrossCorrelationDelay()
+{
     float signal[10] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0, 0.0, 0.0};
     float ref[3] = {0.0, 1.0, 0.0};
 
@@ -75,7 +77,8 @@ void DelayDetectionTest::testCrossCorrelationDelay() {
 
 }
 
-void DelayDetectionTest::testFirFilter() {
+void DelayDetectionTest::testFirFilter()
+{
     float decimationCoefs[] = {-0.09870257, 0.07473655, 0.05616626, 0.04448337, 0.03630817, 0.02944626,
                                0.02244098, 0.01463477, 0.00610982, -0.00266367, -0.01120109, -0.01873722,
                                -0.02373243, -0.02602213, -0.02437806, -0.01869834, -0.00875287, 0.00500204,
@@ -142,7 +145,8 @@ void DelayDetectionTest::testFirFilter() {
 
 }
 
-void DelayDetectionTest::testIntToFloatConversion() {
+void DelayDetectionTest::testIntToFloatConversion()
+{
 
     SFLDataFormat data[32768*2];
     float converted[32768*2];
@@ -163,7 +167,8 @@ void DelayDetectionTest::testIntToFloatConversion() {
     }
 }
 
-void DelayDetectionTest::testDownSamplingData() {
+void DelayDetectionTest::testDownSamplingData()
+{
 
     SFLDataFormat data[32768*2];
     float converted[32768*2];
@@ -190,7 +195,8 @@ void DelayDetectionTest::testDownSamplingData() {
 }
 
 
-void DelayDetectionTest::testDelayDetection() {
+void DelayDetectionTest::testDelayDetection()
+{
 
     int delay = 100;
 

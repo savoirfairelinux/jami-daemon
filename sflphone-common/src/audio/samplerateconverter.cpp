@@ -39,7 +39,8 @@ SamplerateConverter::SamplerateConverter (void)
         , _floatBufferDownSpkr (NULL)
         , _floatBufferUpSpkr (NULL)
         , _src_state_spkr (NULL)
-        , _src_err (0) {
+        , _src_err (0)
+{
     init();
 }
 
@@ -52,11 +53,13 @@ SamplerateConverter::SamplerateConverter (int freq , int fs)
         , _floatBufferDownSpkr (NULL)
         , _floatBufferUpSpkr (NULL)
         , _src_state_spkr (NULL)
-        , _src_err (0) {
+        , _src_err (0)
+{
     init();
 }
 
-SamplerateConverter::~SamplerateConverter (void) {
+SamplerateConverter::~SamplerateConverter (void)
+{
 
     delete [] _floatBufferUpMic;
     _floatBufferUpMic = NULL;
@@ -73,7 +76,8 @@ SamplerateConverter::~SamplerateConverter (void) {
     _src_state_spkr = src_delete (_src_state_spkr);
 }
 
-void SamplerateConverter::init (void) {
+void SamplerateConverter::init (void)
+{
 
     // libSamplerateConverter-related
     // Set the converter type for the upsampling and the downsampling
@@ -92,7 +96,8 @@ void SamplerateConverter::init (void) {
 }
 
 void
-SamplerateConverter::Short2FloatArray (const short *in, float *out, int len) {
+SamplerateConverter::Short2FloatArray (const short *in, float *out, int len)
+{
     // factor is 1/(2^15), used to rescale the short int range to the
     // [-1.0 - 1.0] float range.
 #define S2F_FACTOR .000030517578125f;
@@ -105,7 +110,8 @@ SamplerateConverter::Short2FloatArray (const short *in, float *out, int len) {
 
 
 //TODO Add ifdef for int16 or float32 type
-int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut, int samplerate1 , int samplerate2 , int nbSamples) {
+int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut, int samplerate1 , int samplerate2 , int nbSamples)
+{
 
     double upsampleFactor = (double) samplerate2 / samplerate1 ;
 
@@ -135,7 +141,8 @@ int SamplerateConverter::upsampleData (SFLDataFormat* dataIn , SFLDataFormat* da
 }
 
 //TODO Add ifdef for int16 or float32 type
-int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples) {
+int SamplerateConverter::downsampleData (SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples)
+{
 
     double downsampleFactor = (double) samplerate1 / samplerate2;
 

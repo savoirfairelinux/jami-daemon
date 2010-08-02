@@ -65,7 +65,8 @@ CommandOptionNoArg	help (
 );
 
 int
-main (int argc, char **argv) {
+main (int argc, char **argv)
+{
     int exit_code = 0;
 
     Logger::setConsoleLog (false);

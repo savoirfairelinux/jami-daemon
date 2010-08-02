@@ -42,16 +42,19 @@
 #define TABLE_LENGTH 4096
 double TWOPI = 2 * M_PI;
 
-Tone::Tone (const std::string& definition, unsigned int sampleRate) : AudioLoop(), _sampleRate (sampleRate), _xhigher (0.0), _xlower (0.0) {
+Tone::Tone (const std::string& definition, unsigned int sampleRate) : AudioLoop(), _sampleRate (sampleRate), _xhigher (0.0), _xlower (0.0)
+{
     fillWavetable();
     genBuffer (definition); // allocate memory with definition parameter
 }
 
-Tone::~Tone() {
+Tone::~Tone()
+{
 }
 
 void
-Tone::genBuffer (const std::string& definition) {
+Tone::genBuffer (const std::string& definition)
+{
     if (definition.empty()) {
         return;
     }
@@ -138,7 +141,8 @@ Tone::genBuffer (const std::string& definition) {
 }
 
 void
-Tone::fillWavetable() {
+Tone::fillWavetable()
+{
     double tableSize = (double) TABLE_LENGTH;
 
     for (int i = 0; i < TABLE_LENGTH; i++) {
@@ -147,7 +151,8 @@ Tone::fillWavetable() {
 }
 
 double
-Tone::interpolate (double x) {
+Tone::interpolate (double x)
+{
     int xi_0, xi_1;
     double yi_0, yi_1, A, B;
 
@@ -164,7 +169,8 @@ Tone::interpolate (double x) {
 }
 
 void
-Tone::genSin (SFLDataFormat* buffer, int frequency1, int frequency2, int nb) {
+Tone::genSin (SFLDataFormat* buffer, int frequency1, int frequency2, int nb)
+{
     _xhigher = 0.0;
     _xlower = 0.0;
 

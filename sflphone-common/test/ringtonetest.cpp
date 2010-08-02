@@ -30,7 +30,8 @@
 
 #include "ringtonetest.h"
 
-void RingtoneTest::testLoadWavefile() {
+void RingtoneTest::testLoadWavefile()
+{
     WavFile *wav = new WavFile();
 
     // Test initial values

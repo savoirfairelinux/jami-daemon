@@ -34,7 +34,8 @@ DcBlocker::DcBlocker() : _y (0), _x (0), _xm1 (0), _ym1 (0) {}
 
 DcBlocker::~DcBlocker() {}
 
-void DcBlocker::reset() {
+void DcBlocker::reset()
+{
     _y = 0;
     _x = 0;
     _xm1 = 0;
@@ -43,11 +44,13 @@ void DcBlocker::reset() {
 
 void DcBlocker::putData (SFLDataFormat *inputData, int nbBytes) {}
 
-int DcBlocker::getData (SFLDataFormat *outputData) {
+int DcBlocker::getData (SFLDataFormat *outputData)
+{
     return 0;
 }
 
-void DcBlocker::process (SFLDataFormat *data, int nbBytes) {
+void DcBlocker::process (SFLDataFormat *data, int nbBytes)
+{
     // y(n) = x(n) - x(n-1) + R y(n-1) , R = 0.9999
 
     int nbSamples = nbBytes / sizeof (SFLDataFormat);
@@ -64,7 +67,8 @@ void DcBlocker::process (SFLDataFormat *data, int nbBytes) {
     }
 }
 
-int DcBlocker::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) {
+int DcBlocker::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
+{
 
     int nbSamples = nbBytes / sizeof (SFLDataFormat);
 

@@ -27,7 +27,8 @@
 #define FILTER_LENGTH 800
 
 
-SpeexEchoCancel::SpeexEchoCancel() {
+SpeexEchoCancel::SpeexEchoCancel()
+{
     _debug ("EchoCancel: Instantiate echo canceller");
 
     int samplingRate = 8000;
@@ -51,7 +52,8 @@ SpeexEchoCancel::SpeexEchoCancel() {
     _spkrStoped = true;
 }
 
-SpeexEchoCancel::~SpeexEchoCancel() {
+SpeexEchoCancel::~SpeexEchoCancel()
+{
     _debug ("EchoCancel: Delete echo canceller");
 
     speex_echo_state_destroy (_echoState);
@@ -75,11 +77,13 @@ SpeexEchoCancel::~SpeexEchoCancel() {
     delete echoFile;
 }
 
-void SpeexEchoCancel::reset() {
+void SpeexEchoCancel::reset()
+{
 
 }
 
-void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes) {
+void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
+{
     // std::cout << "putData nbBytes: " << nbBytes << std::endl;
 
     if (_spkrStoped) {
@@ -98,7 +102,8 @@ void SpeexEchoCancel::putData (SFLDataFormat *inputData, int nbBytes) {
 
 void SpeexEchoCancel::process (SFLDataFormat *data, int nbBytes) {}
 
-int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) {
+int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
+{
 
     if (_spkrStoped) {
         return 0;
@@ -153,7 +158,8 @@ int SpeexEchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputDat
     return nbFrame * FRAME_SIZE;
 }
 
-void SpeexEchoCancel::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {
+void SpeexEchoCancel::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes)
+{
 
 
     // speex_echo_cancellation(_echoState, micData, spkrData, outputData);

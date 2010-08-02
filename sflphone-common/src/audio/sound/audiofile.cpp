@@ -47,12 +47,14 @@ AudioFile::AudioFile()
 {
 }
 
-AudioFile::~AudioFile() {
+AudioFile::~AudioFile()
+{
 }
 
 // load file in mono format
 bool
-AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate=8000) {
+AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate=8000)
+{
     _codec = codec;
 
     // if the filename was already load, with the same samplerate
@@ -184,11 +186,13 @@ WavFile::WavFile()
 {
 }
 
-WavFile::~WavFile() {
+WavFile::~WavFile()
+{
 }
 
 
-bool WavFile::isFileExist (const std::string& filename) {
+bool WavFile::isFileExist (const std::string& filename)
+{
 
     std::fstream fs (filename.c_str(), std::ios_base::in);
 
@@ -201,7 +205,8 @@ bool WavFile::isFileExist (const std::string& filename) {
 
 }
 
-bool WavFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate) {
+bool WavFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate)
+{
     if (!isFileExist (filename))
         return false;
 

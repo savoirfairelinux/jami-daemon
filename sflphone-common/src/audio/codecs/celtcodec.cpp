@@ -33,7 +33,8 @@
 #include <celt/celt.h>
 
 
-class Celt : public AudioCodec {
+class Celt : public AudioCodec
+{
 
     public:
         Celt (int payload=0)	: AudioCodec (payload, "celt") {
@@ -149,10 +150,12 @@ class Celt : public AudioCodec {
 };
 
 // the class factories
-extern "C" AudioCodec* create() {
+extern "C" AudioCodec* create()
+{
     return new Celt (115);
 }
 
-extern "C" void destroy (AudioCodec* a) {
+extern "C" void destroy (AudioCodec* a)
+{
     delete a;
 }

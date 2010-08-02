@@ -43,14 +43,17 @@ Account::Account (const AccountID& accountID, std::string type) :
         , _ringtonePath ("/usr/share/sflphone/ringtones/konga.ul")
         , _ringtoneEnabled (true)
         , _displayName ("")
-        , _useragent ("SFLphone") {
+        , _useragent ("SFLphone")
+{
     setRegistrationState (Unregistered);
 }
 
-Account::~Account() {
+Account::~Account()
+{
 }
 
-void Account::loadConfig() {
+void Account::loadConfig()
+{
 
     // If IAX is not supported, do not register this account
 #ifndef USE_IAX
@@ -63,7 +66,8 @@ void Account::loadConfig() {
     loadAudioCodecs ();
 }
 
-void Account::setRegistrationState (RegistrationState state) {
+void Account::setRegistrationState (RegistrationState state)
+{
 
     if (state != _registrationState) {
         _debug ("Account: set registration state");
@@ -74,7 +78,8 @@ void Account::setRegistrationState (RegistrationState state) {
     }
 }
 
-void Account::loadAudioCodecs (void) {
+void Account::loadAudioCodecs (void)
+{
 
     // if the user never set the codec list, use the default configuration for this account
     if (_codecStr == "") {
@@ -90,7 +95,8 @@ void Account::loadAudioCodecs (void) {
     }
 }
 
-void Account::setActiveCodecs (const std::vector <std::string> &list) {
+void Account::setActiveCodecs (const std::vector <std::string> &list)
+{
 
     _codecOrder.clear();
     // list contains the ordered payload of active codecs picked by the user for this account

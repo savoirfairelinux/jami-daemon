@@ -49,7 +49,8 @@ struct wavhdr {
 };
 
 
-AudioRecord::AudioRecord() {
+AudioRecord::AudioRecord()
+{
 
     sndSmplRate_ = 8000;
     channels_ = 1;
@@ -65,18 +66,21 @@ AudioRecord::AudioRecord() {
     spkBuffer_ = new SFLDataFormat[nbSamplesMax_];
 }
 
-AudioRecord::~AudioRecord() {
+AudioRecord::~AudioRecord()
+{
     delete [] mixBuffer_;
     delete [] micBuffer_;
     delete [] spkBuffer_;
 }
 
 
-void AudioRecord::setSndSamplingRate (int smplRate) {
+void AudioRecord::setSndSamplingRate (int smplRate)
+{
     sndSmplRate_ = smplRate;
 }
 
-void AudioRecord::setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path) {
+void AudioRecord::setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path)
+{
 
 
     fileType_ = type;
@@ -90,7 +94,8 @@ void AudioRecord::setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int s
 
 
 
-void AudioRecord::initFileName (std::string peerNumber) {
+void AudioRecord::initFileName (std::string peerNumber)
+{
 
     std::string fName;
 
@@ -112,7 +117,8 @@ void AudioRecord::initFileName (std::string peerNumber) {
     savePath_.append (fName);
 }
 
-void AudioRecord::openFile() {
+void AudioRecord::openFile()
+{
 
     bool result = false;
 
@@ -139,7 +145,8 @@ void AudioRecord::openFile() {
 }
 
 
-void AudioRecord::closeFile() {
+void AudioRecord::closeFile()
+{
 
     if (fp == 0) return;
 
@@ -153,7 +160,8 @@ void AudioRecord::closeFile() {
 }
 
 
-bool AudioRecord::isOpenFile() {
+bool AudioRecord::isOpenFile()
+{
 
     if (fp) {
         return true;
@@ -163,7 +171,8 @@ bool AudioRecord::isOpenFile() {
 }
 
 
-bool AudioRecord::isFileExist() {
+bool AudioRecord::isFileExist()
+{
     _info ("AudioRecord: Try to open name : %s ", fileName_);
 
     if (fopen (fileName_,"rb") ==0) {
@@ -173,7 +182,8 @@ bool AudioRecord::isFileExist() {
     return false;
 }
 
-bool AudioRecord::isRecording() {
+bool AudioRecord::isRecording()
+{
 
     if (recordingEnabled_)
         return true;
@@ -182,7 +192,8 @@ bool AudioRecord::isRecording() {
 }
 
 
-bool AudioRecord::setRecording() {
+bool AudioRecord::setRecording()
+{
 
     if (isOpenFile()) {
         if (!recordingEnabled_) {
@@ -203,7 +214,8 @@ bool AudioRecord::setRecording() {
 
 }
 
-void AudioRecord::stopRecording() {
+void AudioRecord::stopRecording()
+{
     _info ("AudioRecording: Stop recording");
 
     if (recordingEnabled_)
@@ -211,7 +223,8 @@ void AudioRecord::stopRecording() {
 }
 
 
-void AudioRecord::createFilename() {
+void AudioRecord::createFilename()
+{
 
     time_t rawtime;
 
@@ -263,7 +276,8 @@ void AudioRecord::createFilename() {
     _info ("AudioRecord: create filename for this call %s ", fileName_);
 }
 
-bool AudioRecord::setRawFile() {
+bool AudioRecord::setRawFile()
+{
 
     fp = fopen (savePath_.c_str(), "wb");
 
@@ -283,7 +297,8 @@ bool AudioRecord::setRawFile() {
 }
 
 
-bool AudioRecord::setWavFile() {
+bool AudioRecord::setWavFile()
+{
 
     fp = fopen (savePath_.c_str(), "wb");
 
@@ -326,7 +341,8 @@ bool AudioRecord::setWavFile() {
 }
 
 
-bool AudioRecord::openExistingRawFile() {
+bool AudioRecord::openExistingRawFile()
+{
     fp = fopen (fileName_, "ab+");
 
     if (!fp) {
@@ -338,7 +354,8 @@ bool AudioRecord::openExistingRawFile() {
 }
 
 
-bool AudioRecord::openExistingWavFile() {
+bool AudioRecord::openExistingWavFile()
+{
     _info ("AudioRecord: Open existing wave file");
 
     fp = fopen (fileName_, "rb+");
@@ -380,7 +397,8 @@ bool AudioRecord::openExistingWavFile() {
 }
 
 
-void AudioRecord::closeWavFile() {
+void AudioRecord::closeWavFile()
+{
     if (fp == 0) {
         _debug ("AudioRecord: Can't closeWavFile, a file has not yet been opened!");
         return;
@@ -421,7 +439,8 @@ void AudioRecord::closeWavFile() {
 
 }
 
-void AudioRecord::recSpkrData (SFLDataFormat* buffer, int nSamples) {
+void AudioRecord::recSpkrData (SFLDataFormat* buffer, int nSamples)
+{
 
     if (recordingEnabled_) {
 
@@ -435,7 +454,8 @@ void AudioRecord::recSpkrData (SFLDataFormat* buffer, int nSamples) {
 }
 
 
-void AudioRecord::recMicData (SFLDataFormat* buffer, int nSamples) {
+void AudioRecord::recMicData (SFLDataFormat* buffer, int nSamples)
+{
 
     if (recordingEnabled_) {
 
@@ -450,7 +470,8 @@ void AudioRecord::recMicData (SFLDataFormat* buffer, int nSamples) {
 }
 
 
-void AudioRecord::recData (SFLDataFormat* buffer, int nSamples) {
+void AudioRecord::recData (SFLDataFormat* buffer, int nSamples)
+{
 
     if (recordingEnabled_) {
 
@@ -475,7 +496,8 @@ void AudioRecord::recData (SFLDataFormat* buffer, int nSamples) {
 }
 
 
-void AudioRecord::recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2) {
+void AudioRecord::recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2)
+{
 
     if (recordingEnabled_) {
 

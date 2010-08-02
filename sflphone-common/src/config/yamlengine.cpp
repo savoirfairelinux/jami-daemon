@@ -32,13 +32,15 @@
 #include "../global.h"
 
 
-namespace Conf {
+namespace Conf
+{
 
 YamlEngine::YamlEngine() {}
 
 YamlEngine::~YamlEngine() {}
 
-void YamlEngine::openConfigFile() {
+void YamlEngine::openConfigFile()
+{
 
     Conf::YamlParser *parser;
 
@@ -68,7 +70,8 @@ void YamlEngine::openConfigFile() {
     }
 }
 
-void YamlEngine::closeConfigFile() {
+void YamlEngine::closeConfigFile()
+{
 
 }
 

@@ -32,7 +32,8 @@
 #include "../common.h"
 #include "audiocodec.h"
 
-class Alaw : public AudioCodec {
+class Alaw : public AudioCodec
+{
 
     public:
         // 8 PCMA A 8000 1 [RFC3551]
@@ -133,11 +134,13 @@ class Alaw : public AudioCodec {
 };
 
 // the class factories
-extern "C" AudioCodec* create() {
+extern "C" AudioCodec* create()
+{
     return new Alaw (8);
 }
 
-extern "C" void destroy (AudioCodec* a) {
+extern "C" void destroy (AudioCodec* a)
+{
     delete a;
 }
 

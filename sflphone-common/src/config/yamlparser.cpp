@@ -35,7 +35,8 @@
 #include "yamlnode.h"
 #include <stdio.h>
 
-namespace Conf {
+namespace Conf
+{
 
 YamlParser::YamlParser (const char *file) : filename (file)
         , accountSequence (NULL)
@@ -44,17 +45,20 @@ YamlParser::YamlParser (const char *file) : filename (file)
         , audioSequence (NULL)
         , hooksSequence (NULL)
         , voiplinkSequence (NULL)
-        , shortcutSequence (NULL) {
+        , shortcutSequence (NULL)
+{
     memset (buffer, 0, PARSER_BUFFERSIZE);
 
     open();
 }
 
-YamlParser::~YamlParser() {
+YamlParser::~YamlParser()
+{
     close();
 }
 
-void YamlParser::open() {
+void YamlParser::open()
+{
 
     fd = fopen (filename.c_str(), "rb");
 
@@ -67,7 +71,8 @@ void YamlParser::open() {
     yaml_parser_set_input_file (&parser, fd);
 }
 
-void YamlParser::close() {
+void YamlParser::close()
+{
 
     yaml_parser_delete (&parser);
 
@@ -81,7 +86,8 @@ void YamlParser::close() {
 
 }
 
-void YamlParser::serializeEvents() {
+void YamlParser::serializeEvents()
+{
     bool done = false;
     yaml_event_t event;
 
@@ -102,7 +108,8 @@ void YamlParser::serializeEvents() {
 }
 
 
-int YamlParser::copyEvent (yaml_event_t *event_to, yaml_event_t *event_from) {
+int YamlParser::copyEvent (yaml_event_t *event_to, yaml_event_t *event_from)
+{
 
     switch (event_from->type) {
         case YAML_STREAM_START_EVENT: {
@@ -180,7 +187,8 @@ int YamlParser::copyEvent (yaml_event_t *event_to, yaml_event_t *event_from) {
 }
 
 
-YamlDocument *YamlParser::composeEvents() {
+YamlDocument *YamlParser::composeEvents()
+{
 
     // _debug("YamlParser: Compose Events");
 
@@ -197,7 +205,8 @@ YamlDocument *YamlParser::composeEvents() {
     return doc;
 }
 
-void YamlParser::processStream () {
+void YamlParser::processStream ()
+{
 
     // _debug("YamlParser: process stream");
 
@@ -214,7 +223,8 @@ void YamlParser::processStream () {
 }
 
 
-void YamlParser::processDocument() {
+void YamlParser::processDocument()
+{
     // _debug("YamlParser: process document");
 
     doc = new YamlDocument();
@@ -247,7 +257,8 @@ void YamlParser::processDocument() {
 }
 
 
-void YamlParser::processScalar (YamlNode *topNode) {
+void YamlParser::processScalar (YamlNode *topNode)
+{
 
     // _debug("YamlParser: process scalar");
 
@@ -276,7 +287,8 @@ void YamlParser::processScalar (YamlNode *topNode) {
 }
 
 
-void YamlParser::processSequence (YamlNode *topNode) {
+void YamlParser::processSequence (YamlNode *topNode)
+{
     _debug ("YamlParser: process sequence");
 
     if (!topNode)
@@ -324,7 +336,8 @@ void YamlParser::processSequence (YamlNode *topNode) {
 }
 
 
-void YamlParser::processMapping (YamlNode *topNode) {
+void YamlParser::processMapping (YamlNode *topNode)
+{
     // _debug("YamlParser: process mapping");
 
     if (!topNode)
@@ -381,7 +394,8 @@ void YamlParser::processMapping (YamlNode *topNode) {
         throw YamlParserException ("Did not found end of mapping");
 }
 
-void YamlParser::constructNativeData() {
+void YamlParser::constructNativeData()
+{
 
     Sequence *seq;
 
@@ -418,7 +432,8 @@ void YamlParser::constructNativeData() {
 }
 
 
-void YamlParser::mainNativeDataMapping (MappingNode *map) {
+void YamlParser::mainNativeDataMapping (MappingNode *map)
+{
 
 
     Mapping::iterator iter = map->getMapping()->begin();

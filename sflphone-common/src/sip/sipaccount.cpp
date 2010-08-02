@@ -44,25 +44,29 @@ Credentials::Credentials() : credentialCount (0) {}
 
 Credentials::~Credentials() {}
 
-void Credentials::setNewCredential (std::string username, std::string password, std::string realm) {
+void Credentials::setNewCredential (std::string username, std::string password, std::string realm)
+{
     credentialArray[credentialCount].username = username;
     credentialArray[credentialCount].password = password;
     credentialArray[credentialCount].realm = realm;
 
 }
 
-CredentialItem *Credentials::getCredential (int index) {
+CredentialItem *Credentials::getCredential (int index)
+{
     if ( (index >= 0) && (index < credentialCount))
         return & (credentialArray[index]);
     else
         return NULL;
 }
 
-void Credentials::serialize (Conf::YamlEmitter *emitter) {
+void Credentials::serialize (Conf::YamlEmitter *emitter)
+{
 
 }
 
-void Credentials::unserialize (Conf::MappingNode *map) {
+void Credentials::unserialize (Conf::MappingNode *map)
+{
 
     Conf::ScalarNode *val = NULL;
 
@@ -122,7 +126,8 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _zrtpDisplaySas (true)
         , _zrtpDisplaySasOnce (false)
         , _zrtpHelloHash (true)
-        , _zrtpNotSuppWarning (true) {
+        , _zrtpNotSuppWarning (true)
+{
 
     _debug ("Sip account constructor called");
 
@@ -139,7 +144,8 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 
 }
 
-SIPAccount::~SIPAccount() {
+SIPAccount::~SIPAccount()
+{
     /* One SIP account less connected to the sip voiplink */
     if (_accountID != "default")
         dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
@@ -150,7 +156,8 @@ SIPAccount::~SIPAccount() {
     free (_tlsSetting);
 }
 
-void SIPAccount::serialize (Conf::YamlEmitter *emitter) {
+void SIPAccount::serialize (Conf::YamlEmitter *emitter)
+{
 
     _debug ("SipAccount: serialize %s", _accountID.c_str());
 
@@ -278,7 +285,8 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter) {
 }
 
 
-void SIPAccount::unserialize (Conf::MappingNode *map) {
+void SIPAccount::unserialize (Conf::MappingNode *map)
+{
     Conf::ScalarNode *val;
     Conf::MappingNode *srtpMap;
     Conf::MappingNode *tlsMap;
@@ -612,7 +620,8 @@ void SIPAccount::unserialize (Conf::MappingNode *map) {
 }
 
 
-void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& details) {
+void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& details)
+{
 
     std::map<std::string, std::string> map_cpy;
     std::map<std::string, std::string>::iterator iter;
@@ -807,7 +816,8 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
     }
 }
 
-std::map<std::string, std::string> SIPAccount::getAccountDetails() {
+std::map<std::string, std::string> SIPAccount::getAccountDetails()
+{
     _debug ("SipAccount: get account details %s", _accountID.c_str());
 
     std::map<std::string, std::string> a;
@@ -911,7 +921,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() {
 
 
 // void SIPAccount::setVoIPLink(VoIPLink *link) {
-void SIPAccount::setVoIPLink() {
+void SIPAccount::setVoIPLink()
+{
 
     _link = SIPVoIPLink::instance ("");
     dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
@@ -919,7 +930,8 @@ void SIPAccount::setVoIPLink() {
 }
 
 
-int SIPAccount::initCredential (void) {
+int SIPAccount::initCredential (void)
+{
     _debug ("SipAccount: Init credential");
 
     bool md5HashingEnabled = false;
@@ -1002,7 +1014,8 @@ int SIPAccount::initCredential (void) {
 }
 
 
-int SIPAccount::registerVoIPLink() {
+int SIPAccount::registerVoIPLink()
+{
     _debug ("Account: Register account %s", getAccountID().c_str());
 
     // Init general settings
@@ -1041,7 +1054,8 @@ int SIPAccount::registerVoIPLink() {
     return SUCCESS;
 }
 
-int SIPAccount::unregisterVoIPLink() {
+int SIPAccount::unregisterVoIPLink()
+{
     _debug ("Unregister account %s" , getAccountID().c_str());
 
     if (_accountID == IP2IP_PROFILE) {
@@ -1056,7 +1070,8 @@ int SIPAccount::unregisterVoIPLink() {
 
 }
 
-pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method) {
+pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
+{
     if (method == "Default") {
         return PJSIP_SSL_UNSPECIFIED_METHOD;
     }
@@ -1080,7 +1095,8 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
-void SIPAccount::initTlsConfiguration (void) {
+void SIPAccount::initTlsConfiguration (void)
+{
     /*
      * Initialize structure to zero
      */
@@ -1117,7 +1133,8 @@ void SIPAccount::initTlsConfiguration (void) {
 
 }
 
-void SIPAccount::initStunConfiguration (void) {
+void SIPAccount::initStunConfiguration (void)
+{
     size_t pos;
     std::string stunServer, serverName, serverPort;
 
@@ -1138,7 +1155,8 @@ void SIPAccount::initStunConfiguration (void) {
     }
 }
 
-void SIPAccount::loadConfig() {
+void SIPAccount::loadConfig()
+{
     if (_registrationExpire.empty())
         _registrationExpire = DFT_EXPIRE_VALUE;
 
@@ -1153,11 +1171,13 @@ void SIPAccount::loadConfig() {
     Account::loadConfig();
 }
 
-bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname) {
+bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname)
+{
     return (userMatch (username) && hostnameMatch (hostname));
 }
 
-bool SIPAccount::userMatch (const std::string& username) {
+bool SIPAccount::userMatch (const std::string& username)
+{
     if (username.empty()) {
         return false;
     }
@@ -1165,17 +1185,20 @@ bool SIPAccount::userMatch (const std::string& username) {
     return (username == getUsername());
 }
 
-bool SIPAccount::hostnameMatch (const std::string& hostname) {
+bool SIPAccount::hostnameMatch (const std::string& hostname)
+{
     return (hostname == getHostname());
 }
 
-std::string SIPAccount::getMachineName (void) {
+std::string SIPAccount::getMachineName (void)
+{
     std::string hostname;
     hostname = std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
     return hostname;
 }
 
-std::string SIPAccount::getLoginName (void) {
+std::string SIPAccount::getLoginName (void)
+{
     std::string username;
 
     uid_t uid = getuid();
@@ -1190,7 +1213,8 @@ std::string SIPAccount::getLoginName (void) {
     return username;
 }
 
-std::string SIPAccount::getTransportMapKey (void) {
+std::string SIPAccount::getTransportMapKey (void)
+{
 
     std::stringstream out;
     out << getLocalPort();
@@ -1200,7 +1224,8 @@ std::string SIPAccount::getTransportMapKey (void) {
 }
 
 
-std::string SIPAccount::getFromUri (void) {
+std::string SIPAccount::getFromUri (void)
+{
     char uri[PJSIP_MAX_URL_SIZE];
 
     std::string scheme;
@@ -1241,7 +1266,8 @@ std::string SIPAccount::getFromUri (void) {
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getToUri (const std::string& username) {
+std::string SIPAccount::getToUri (const std::string& username)
+{
     char uri[PJSIP_MAX_URL_SIZE];
 
     std::string scheme;
@@ -1281,7 +1307,8 @@ std::string SIPAccount::getToUri (const std::string& username) {
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getServerUri (void) {
+std::string SIPAccount::getServerUri (void)
+{
     char uri[PJSIP_MAX_URL_SIZE];
 
     std::string scheme;
@@ -1307,7 +1334,8 @@ std::string SIPAccount::getServerUri (void) {
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getContactHeader (const std::string& address, const std::string& port) {
+std::string SIPAccount::getContactHeader (const std::string& address, const std::string& port)
+{
     char contact[PJSIP_MAX_URL_SIZE];
     const char * beginquote, * endquote;
 

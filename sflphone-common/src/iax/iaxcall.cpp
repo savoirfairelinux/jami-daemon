@@ -33,15 +33,18 @@
 #include "manager.h"
 #include "global.h" // for _debug
 
-IAXCall::IAXCall (const CallID& id, Call::CallType type) : Call (id, type), _session (NULL) {
+IAXCall::IAXCall (const CallID& id, Call::CallType type) : Call (id, type), _session (NULL)
+{
 }
 
-IAXCall::~IAXCall() {
+IAXCall::~IAXCall()
+{
     _session = NULL; // just to be sure to don't have unknown pointer, do not delete it!
 }
 
 void
-IAXCall::setFormat (int format) {
+IAXCall::setFormat (int format)
+{
     _format = format;
 
     _info ("IAX set supported format: ");
@@ -82,7 +85,8 @@ IAXCall::setFormat (int format) {
 
 
 int
-IAXCall::getSupportedFormat (std::string accountID) {
+IAXCall::getSupportedFormat (std::string accountID)
+{
     CodecOrder map;
     int format = 0;
     unsigned int iter;
@@ -135,7 +139,8 @@ IAXCall::getSupportedFormat (std::string accountID) {
 
 }
 
-int IAXCall::getFirstMatchingFormat (int needles, std::string accountID) {
+int IAXCall::getFirstMatchingFormat (int needles, std::string accountID)
+{
 
     Account *account;
     CodecOrder map;
@@ -193,11 +198,13 @@ int IAXCall::getFirstMatchingFormat (int needles, std::string accountID) {
     return 0;
 }
 
-CodecDescriptor& IAXCall::getCodecMap() {
+CodecDescriptor& IAXCall::getCodecMap()
+{
     return _codecMap;
 }
 
-AudioCodecType IAXCall::getAudioCodec() {
+AudioCodecType IAXCall::getAudioCodec()
+{
     return _audioCodec;
 }
 

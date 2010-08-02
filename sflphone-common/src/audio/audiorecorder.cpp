@@ -33,7 +33,8 @@
 
 int AudioRecorder::count = 0;
 
-AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread() {
+AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
+{
     setCancel (cancelDeferred);
 
     ++count;
@@ -56,7 +57,8 @@ AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread() {
 /**
  * Reimplementation of run()
  */
-void AudioRecorder::run (void) {
+void AudioRecorder::run (void)
+{
     SFLDataFormat buffer[10000];
 
     while (true) {

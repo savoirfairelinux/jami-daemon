@@ -39,7 +39,8 @@
 const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLphone";
 
 int
-DBusManagerImpl::exec() {
+DBusManagerImpl::exec()
+{
 
     DBus::default_dispatcher = &_dispatcher;
 
@@ -65,7 +66,8 @@ DBusManagerImpl::exec() {
 }
 
 void
-DBusManagerImpl::exit() {
+DBusManagerImpl::exit()
+{
 
     _dispatcher.leave();
 

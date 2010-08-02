@@ -39,12 +39,14 @@
 using std::cout;
 using std::endl;
 
-void HistoryTest::setUp() {
+void HistoryTest::setUp()
+{
     // Instanciate the cleaner singleton
     history = new HistoryManager();
 }
 
-void HistoryTest::test_create_history_path() {
+void HistoryTest::test_create_history_path()
+{
     _debug ("-------------------- HistoryTest::test_create_history_path --------------------\n");
 
     int result;
@@ -61,7 +63,8 @@ void HistoryTest::test_create_history_path() {
     CPPUNIT_ASSERT (history->_history_path == path);
 }
 
-void HistoryTest::test_load_history_from_file() {
+void HistoryTest::test_load_history_from_file()
+{
     _debug ("-------------------- HistoryTest::test_load_history_from_file --------------------\n");
 
     bool res;
@@ -74,7 +77,8 @@ void HistoryTest::test_load_history_from_file() {
     CPPUNIT_ASSERT (res == true);
 }
 
-void HistoryTest::test_load_history_items_map() {
+void HistoryTest::test_load_history_items_map()
+{
     _debug ("-------------------- HistoryTest::test_load_history_items_map --------------------\n");
 
     std::string path;
@@ -89,7 +93,8 @@ void HistoryTest::test_load_history_items_map() {
     CPPUNIT_ASSERT (history->get_history_size () == HISTORY_SAMPLE_SIZE);
 }
 
-void HistoryTest::test_save_history_items_map() {
+void HistoryTest::test_save_history_items_map()
+{
     _debug ("-------------------- HistoryTest::test_save_history_items_map --------------------\n");
 
     std::string path;
@@ -104,7 +109,8 @@ void HistoryTest::test_save_history_items_map() {
     CPPUNIT_ASSERT (nb_items_loaded == nb_items_saved);
 }
 
-void HistoryTest::test_save_history_to_file() {
+void HistoryTest::test_save_history_to_file()
+{
     _debug ("-------------------- HistoryTest::test_save_history_to_file --------------------\n");
 
     std::string path;
@@ -119,7 +125,8 @@ void HistoryTest::test_save_history_to_file() {
     CPPUNIT_ASSERT (history->save_history_to_file (&history_list2));
 }
 
-void HistoryTest::test_get_history_serialized() {
+void HistoryTest::test_get_history_serialized()
+{
     _debug ("-------------------- HistoryTest::test_get_history_serialized --------------------\n");
 
     std::map<std::string, std::string> res;
@@ -146,7 +153,8 @@ void HistoryTest::test_get_history_serialized() {
     CPPUNIT_ASSERT (Validator::isEqual (tmp, res ["775354456"]));
 }
 
-void HistoryTest::test_set_serialized_history() {
+void HistoryTest::test_set_serialized_history()
+{
     _debug ("-------------------- HistoryTest::test_set_serialized_history --------------------\n");
 
     // We build a map to have an efficient test
@@ -182,7 +190,8 @@ void HistoryTest::test_set_serialized_history() {
     CPPUNIT_ASSERT (history->save_history_to_file (&history_list));
 }
 
-void HistoryTest::test_set_serialized_history_with_limit() {
+void HistoryTest::test_set_serialized_history_with_limit()
+{
     _debug ("-------------------- HistoryTest::test_set_serialized_history_with_limit --------------------\n");
 
     // We build a map to have an efficient test
@@ -219,7 +228,8 @@ void HistoryTest::test_set_serialized_history_with_limit() {
     CPPUNIT_ASSERT (history->get_history_size () == 0);
 }
 
-void HistoryTest::tearDown() {
+void HistoryTest::tearDown()
+{
     // Delete the history object
     delete history;
     history = 0;

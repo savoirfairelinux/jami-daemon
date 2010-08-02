@@ -43,14 +43,16 @@ Preferences::Preferences() :  _accountOrder ("")
         , _portNum (5060)
         , _searchBarDisplay (true)
         , _zeroConfenable (false)
-        , _md5Hash (false) {
+        , _md5Hash (false)
+{
 
 }
 
 Preferences::~Preferences() {}
 
 
-void Preferences::serialize (Conf::YamlEmitter *emiter) {
+void Preferences::serialize (Conf::YamlEmitter *emiter)
+{
 
     _debug ("Preference: Serialize configuration");
 
@@ -93,7 +95,8 @@ void Preferences::serialize (Conf::YamlEmitter *emiter) {
     emiter->serializePreference (&preferencemap);
 }
 
-void Preferences::unserialize (Conf::MappingNode *map) {
+void Preferences::unserialize (Conf::MappingNode *map)
+{
 
     _debug ("Preference: Unserialize configuration");
 
@@ -189,14 +192,16 @@ VoipPreference::VoipPreference() :  _playDtmf (true)
         , _pulseLength (atoi (DFT_PULSE_LENGTH_STR)) // DFT_PULSE_LENGTH_STR
         , _sendDtmfAs (0)
         , _symmetricRtp (true)
-        , _zidFile (ZRTP_ZIDFILE) { // ZRTP_ZID_FILENAME
+        , _zidFile (ZRTP_ZIDFILE)   // ZRTP_ZID_FILENAME
+{
 
 }
 
 VoipPreference::~VoipPreference() {}
 
 
-void VoipPreference::serialize (Conf::YamlEmitter *emitter) {
+void VoipPreference::serialize (Conf::YamlEmitter *emitter)
+{
     _debug ("VoipPreference: Serialize configuration");
 
     Conf::MappingNode preferencemap (NULL);
@@ -222,7 +227,8 @@ void VoipPreference::serialize (Conf::YamlEmitter *emitter) {
     emitter->serializeVoipPreference (&preferencemap);
 }
 
-void VoipPreference::unserialize (Conf::MappingNode *map) {
+void VoipPreference::unserialize (Conf::MappingNode *map)
+{
 
     _debug ("VoipPreference: Unserialize configuration");
 
@@ -283,13 +289,15 @@ AddressbookPreference::AddressbookPreference() : _photo (true)
         , _maxResults (25)
         , _business (true)
         , _home (true)
-        , _mobile (true) {
+        , _mobile (true)
+{
 
 }
 
 AddressbookPreference::~AddressbookPreference() {}
 
-void AddressbookPreference::serialize (Conf::YamlEmitter *emitter) {
+void AddressbookPreference::serialize (Conf::YamlEmitter *emitter)
+{
     _debug ("Addressbook: Serialize configuration");
 
     Conf::MappingNode preferencemap (NULL);
@@ -316,7 +324,8 @@ void AddressbookPreference::serialize (Conf::YamlEmitter *emitter) {
 
 }
 
-void AddressbookPreference::unserialize (Conf::MappingNode *map) {
+void AddressbookPreference::unserialize (Conf::MappingNode *map)
+{
     _debug ("Addressbook: Unserialize configuration");
 
     Conf::ScalarNode *val = NULL;
@@ -381,13 +390,15 @@ HookPreference::HookPreference() : _iax2Enabled (false)
         , _numberEnabled (false)
         , _sipEnabled (false)
         , _urlCommand ("x-www-browser")
-        , _urlSipField ("X-sflphone-url") {
+        , _urlSipField ("X-sflphone-url")
+{
 
 }
 
 HookPreference::~HookPreference() {}
 
-void HookPreference::serialize (Conf::YamlEmitter *emitter) {
+void HookPreference::serialize (Conf::YamlEmitter *emitter)
+{
     _debug ("Hook: Serialize configuration");
 
     Conf::MappingNode preferencemap (NULL);
@@ -409,7 +420,8 @@ void HookPreference::serialize (Conf::YamlEmitter *emitter) {
     emitter->serializeHooksPreference (&preferencemap);
 }
 
-void HookPreference::unserialize (Conf::MappingNode *map) {
+void HookPreference::unserialize (Conf::MappingNode *map)
+{
     Conf::ScalarNode *val = NULL;
 
     _debug ("Hook: Unserialize preference");
@@ -475,13 +487,15 @@ AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_
         , _deviceRingtone ("")
         , _recordpath ("") // DFT_RECORD_PATH
         , _volumemic (atoi (DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
-        , _volumespkr (atoi (DFT_VOL_MICRO_STR)) { // DFT_VOL_MICRO_STR
+        , _volumespkr (atoi (DFT_VOL_MICRO_STR))   // DFT_VOL_MICRO_STR
+{
 
 }
 
 AudioPreference::~AudioPreference() {}
 
-void AudioPreference::serialize (Conf::YamlEmitter *emitter) {
+void AudioPreference::serialize (Conf::YamlEmitter *emitter)
+{
     _debug ("AudioPreference: Serialize configuration");
 
     Conf::MappingNode preferencemap (NULL);
@@ -541,7 +555,8 @@ void AudioPreference::serialize (Conf::YamlEmitter *emitter) {
 
 }
 
-void AudioPreference::unserialize (Conf::MappingNode *map) {
+void AudioPreference::unserialize (Conf::MappingNode *map)
+{
     _debug ("AudioPreference: Unserialize configuration");
 
     if (!map)
@@ -634,14 +649,16 @@ ShortcutPreferences::ShortcutPreferences() : _hangup ("")
         , _pickup ("")
         , _popup ("")
         , _toggleHold ("")
-        , _togglePickupHangup ("") {
+        , _togglePickupHangup ("")
+{
 
 }
 
 ShortcutPreferences::~ShortcutPreferences() {}
 
 
-std::map<std::string, std::string> ShortcutPreferences::getShortcuts() {
+std::map<std::string, std::string> ShortcutPreferences::getShortcuts()
+{
 
     std::map<std::string, std::string> shortcutsMap;
 
@@ -655,7 +672,8 @@ std::map<std::string, std::string> ShortcutPreferences::getShortcuts() {
 }
 
 
-void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map_cpy) {
+void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map_cpy)
+{
     // std::map<std::string, int> map_cpy = shortcut;
     std::map<std::string, std::string>::iterator it;
 
@@ -701,7 +719,8 @@ void ShortcutPreferences::setShortcuts (std::map<std::string, std::string> map_c
 }
 
 
-void ShortcutPreferences::serialize (Conf::YamlEmitter *emitter) {
+void ShortcutPreferences::serialize (Conf::YamlEmitter *emitter)
+{
 
     _debug ("ShortcutPreference: Serialize configuration");
 
@@ -722,7 +741,8 @@ void ShortcutPreferences::serialize (Conf::YamlEmitter *emitter) {
     emitter->serializeShortcutPreference (&preferencemap);
 }
 
-void ShortcutPreferences::unserialize (Conf::MappingNode *map) {
+void ShortcutPreferences::unserialize (Conf::MappingNode *map)
+{
     _debug ("ShortcutPreference: Unserialize configuration");
 
     if (!map)

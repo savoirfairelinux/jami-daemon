@@ -37,7 +37,8 @@
 using std::cout;
 using std::endl;
 
-void ConfigurationTest::testDefaultValueAudio() {
+void ConfigurationTest::testDefaultValueAudio()
+{
     _debug ("-------------------- ConfigurationTest::testDefaultValueAudio() --------------------\n");
 
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getCardin() == 0); // ALSA_DFT_CARD);
@@ -49,13 +50,15 @@ void ConfigurationTest::testDefaultValueAudio() {
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == 100);
 }
 
-void ConfigurationTest::testDefaultValuePreferences() {
+void ConfigurationTest::testDefaultValuePreferences()
+{
     _debug ("-------------------- ConfigurationTest::testDefaultValuePreferences --------------------\n");
 
     CPPUNIT_ASSERT (Manager::instance().preferences.getZoneToneChoice() == DFT_ZONE);
 }
 
-void ConfigurationTest::testDefaultValueSignalisation() {
+void ConfigurationTest::testDefaultValueSignalisation()
+{
     _debug ("-------------------- ConfigurationTest::testDefaultValueSignalisation --------------------\n");
 
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getSymmetricRtp() == true);
@@ -65,7 +68,8 @@ void ConfigurationTest::testDefaultValueSignalisation() {
     CPPUNIT_ASSERT (Manager::instance().voipPreferences.getSendDtmfAs() == 0);
 }
 
-void ConfigurationTest::testLoadSIPAccount() {
+void ConfigurationTest::testLoadSIPAccount()
+{
     _debug ("-------------------- ConfigurationTest::testLoadSIPAccount --------------------\n");
 
     AccountMap accounts;
@@ -90,7 +94,8 @@ void ConfigurationTest::testLoadSIPAccount() {
     }
 }
 
-void ConfigurationTest::testUnloadSIPAccount() {
+void ConfigurationTest::testUnloadSIPAccount()
+{
     _debug ("-------------------- ConfigurationTest::testUnloadSIPAccount --------------------\n");
 
     AccountMap accounts;
@@ -110,7 +115,8 @@ void ConfigurationTest::testUnloadSIPAccount() {
     }
 }
 
-void ConfigurationTest::testInitVolume() {
+void ConfigurationTest::testInitVolume()
+{
     _debug ("-------------------- ConfigurationTest::testInitVolume --------------------\n");
 
     Manager::instance().initVolume();
@@ -119,7 +125,8 @@ void ConfigurationTest::testInitVolume() {
     CPPUNIT_ASSERT (Manager::instance().audioPreference.getVolumemic() == Manager::instance().getMicVolume());
 }
 
-void ConfigurationTest::testInitAudioDriver() {
+void ConfigurationTest::testInitAudioDriver()
+{
     _debug ("-------------------- ConfigurationTest::testInitAudioDriver --------------------\n");
 
     // Load the audio driver
@@ -140,7 +147,8 @@ void ConfigurationTest::testInitAudioDriver() {
 }
 
 
-void ConfigurationTest::testYamlParser() {
+void ConfigurationTest::testYamlParser()
+{
 
     Conf::YamlParser *parser;
 
@@ -163,7 +171,8 @@ void ConfigurationTest::testYamlParser() {
 
 }
 
-void ConfigurationTest::testYamlEmitter() {
+void ConfigurationTest::testYamlEmitter()
+{
     Conf::YamlEmitter *emitter;
 
     Conf::MappingNode accountmap (NULL);

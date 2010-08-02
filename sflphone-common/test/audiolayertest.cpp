@@ -38,7 +38,8 @@
 using std::cout;
 using std::endl;
 
-void AudioLayerTest::testAudioLayerConfig() {
+void AudioLayerTest::testAudioLayerConfig()
+{
     _debug ("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
 
     // int sampling_rate = Manager::instance().audioPreference.getSmplrate();
@@ -55,7 +56,8 @@ void AudioLayerTest::testAudioLayerConfig() {
     //CPPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getFrameSize() == frame_size);
 }
 
-void AudioLayerTest::testAudioLayerSwitch() {
+void AudioLayerTest::testAudioLayerSwitch()
+{
     _debug ("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
 
     int previous_layer = Manager::instance().getAudioDriver()->getLayerType();
@@ -76,7 +78,8 @@ void AudioLayerTest::testAudioLayerSwitch() {
     }
 }
 
-void AudioLayerTest::testPulseConnect() {
+void AudioLayerTest::testPulseConnect()
+{
     _debug ("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
 
     if (Manager::instance().getAudioDriver()->getLayerType() == ALSA)

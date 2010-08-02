@@ -35,17 +35,20 @@
 #include "manager.h"
 
 IAXAccount::IAXAccount (const AccountID& accountID)
-        : Account (accountID, "iax2") {
+        : Account (accountID, "iax2")
+{
     _link = new IAXVoIPLink (accountID);
 }
 
 
-IAXAccount::~IAXAccount() {
+IAXAccount::~IAXAccount()
+{
     delete _link;
     _link = NULL;
 }
 
-void IAXAccount::serialize (Conf::YamlEmitter *emitter) {
+void IAXAccount::serialize (Conf::YamlEmitter *emitter)
+{
     _debug ("IaxAccount: serialize %s", _accountID.c_str());
 
     Conf::MappingNode accountmap (NULL);
@@ -81,7 +84,8 @@ void IAXAccount::serialize (Conf::YamlEmitter *emitter) {
     }
 }
 
-void IAXAccount::unserialize (Conf::MappingNode *map) {
+void IAXAccount::unserialize (Conf::MappingNode *map)
+{
     Conf::ScalarNode *val;
 
     _debug ("IaxAccount: Unserialize");
@@ -153,7 +157,8 @@ void IAXAccount::unserialize (Conf::MappingNode *map) {
 
 }
 
-void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& details) {
+void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& details)
+{
     std::map<std::string, std::string> map_cpy;
     std::map<std::string, std::string>::iterator iter;
 
@@ -197,7 +202,8 @@ void IAXAccount::setAccountDetails (const std::map<std::string, std::string>& de
 
 }
 
-std::map<std::string, std::string> IAXAccount::getAccountDetails() {
+std::map<std::string, std::string> IAXAccount::getAccountDetails()
+{
     std::map<std::string, std::string> a;
 
     _debug ("IaxAccount: get account details  %s", _accountID.c_str());
@@ -230,11 +236,13 @@ std::map<std::string, std::string> IAXAccount::getAccountDetails() {
 }
 
 
-void IAXAccount::setVoIPLink() {
+void IAXAccount::setVoIPLink()
+{
 
 }
 
-int IAXAccount::registerVoIPLink() {
+int IAXAccount::registerVoIPLink()
+{
     _link->init();
 
     // Stuff needed for IAX registration
@@ -248,7 +256,8 @@ int IAXAccount::registerVoIPLink() {
 }
 
 int
-IAXAccount::unregisterVoIPLink() {
+IAXAccount::unregisterVoIPLink()
+{
     _link->sendUnregister (_accountID);
     _link->terminate();
 
@@ -256,7 +265,8 @@ IAXAccount::unregisterVoIPLink() {
 }
 
 void
-IAXAccount::loadConfig() {
+IAXAccount::loadConfig()
+{
     // Account generic
     Account::loadConfig();
 }

@@ -36,7 +36,8 @@
 int framesPerBuffer = 2048;
 
 
-static  void playback_callback (pa_stream* s, size_t bytes, void* userdata) {
+static  void playback_callback (pa_stream* s, size_t bytes, void* userdata)
+{
 
     assert (s && bytes);
     assert (bytes > 0);
@@ -44,7 +45,8 @@ static  void playback_callback (pa_stream* s, size_t bytes, void* userdata) {
 
 }
 
-static void capture_callback (pa_stream* s, size_t bytes, void* userdata) {
+static void capture_callback (pa_stream* s, size_t bytes, void* userdata)
+{
 
     assert (s && bytes);
     assert (bytes > 0);
@@ -52,7 +54,8 @@ static void capture_callback (pa_stream* s, size_t bytes, void* userdata) {
 
 }
 
-static void ringtone_callback (pa_stream* s, size_t bytes, void* userdata) {
+static void ringtone_callback (pa_stream* s, size_t bytes, void* userdata)
+{
 
     assert (s && bytes);
     assert (bytes > 0);
@@ -61,7 +64,8 @@ static void ringtone_callback (pa_stream* s, size_t bytes, void* userdata) {
 }
 
 
-static void stream_moved_callback (pa_stream *s, void *userdata) {
+static void stream_moved_callback (pa_stream *s, void *userdata)
+{
 
     int streamIndex = pa_stream_get_index (s);
     int deviceIndex = pa_stream_get_device_index (s);
@@ -70,12 +74,14 @@ static void stream_moved_callback (pa_stream *s, void *userdata) {
 
 }
 
-static void pa_success_callback (pa_context *c, int success, void *userdata) {
+static void pa_success_callback (pa_context *c, int success, void *userdata)
+{
 
     _debug ("Audio: Success callback");
 }
 
-static void latency_update_callback (pa_stream *p, void *userdata) {
+static void latency_update_callback (pa_stream *p, void *userdata)
+{
 
     pa_usec_t r_usec;
 
@@ -90,7 +96,8 @@ static void latency_update_callback (pa_stream *p, void *userdata) {
 
 }
 
-static void sink_input_info_callback (pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
+static void sink_input_info_callback (pa_context *c, const pa_sink_info *i, int eol, void *userdata)
+{
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
     if (!eol) {
@@ -127,7 +134,8 @@ static void sink_input_info_callback (pa_context *c, const pa_sink_info *i, int 
 
 }
 
-static void source_input_info_callback (pa_context *c, const pa_source_info *i, int eol, void *userdata) {
+static void source_input_info_callback (pa_context *c, const pa_source_info *i, int eol, void *userdata)
+{
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
     if (!eol) {
@@ -164,7 +172,8 @@ static void source_input_info_callback (pa_context *c, const pa_source_info *i, 
 }
 
 
-static void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, uint32_t idx, void* userdata) {
+static void context_changed_callback (pa_context* c, pa_subscription_event_type_t t, uint32_t idx, void* userdata)
+{
 
     switch (t) {
 
@@ -230,13 +239,15 @@ static void stream_suspended_callback (pa_stream *s UNUSED, void *userdata UNUSE
 */
 
 
-static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED) {
+static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
+{
     // _debug ("Audio: Buffer Underflow");
     // pa_stream_trigger (s, NULL, NULL);
 }
 
 
-static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED) {
+static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
+{
     // _debug ("Audio: Buffer OverFlow");
 
 }
@@ -248,7 +259,8 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
         , m (NULL)
         , playback (NULL)
         , record (NULL)
-        , ringtone (NULL) {
+        , ringtone (NULL)
+{
     _urgentRingBuffer.createReadPointer();
 
     is_started = false;
@@ -267,7 +279,8 @@ PulseLayer::PulseLayer (ManagerImpl* manager)
 }
 
 // Destructor
-PulseLayer::~PulseLayer (void) {
+PulseLayer::~PulseLayer (void)
+{
     closeLayer ();
 
     if (_converter) {
@@ -299,7 +312,8 @@ PulseLayer::~PulseLayer (void) {
 }
 
 void
-PulseLayer::openLayer (void) {
+PulseLayer::openLayer (void)
+{
     if (!is_started) {
 
         _info ("Audio: Open Pulseaudio layer");
@@ -313,7 +327,8 @@ PulseLayer::openLayer (void) {
 }
 
 bool
-PulseLayer::closeLayer (void) {
+PulseLayer::closeLayer (void)
+{
     _info ("Audio: Close Pulseaudio layer");
 
     disconnectAudioStream();
@@ -338,7 +353,8 @@ PulseLayer::closeLayer (void) {
 }
 
 void
-PulseLayer::connectPulseAudioServer (void) {
+PulseLayer::connectPulseAudioServer (void)
+{
     _info ("Audio: Connect to Pulseaudio server");
 
     setenv ("PULSE_PROP_media.role", "phone", 1);
@@ -394,7 +410,8 @@ PulseLayer::connectPulseAudioServer (void) {
 
 }
 
-void PulseLayer::context_state_callback (pa_context* c, void* user_data) {
+void PulseLayer::context_state_callback (pa_context* c, void* user_data)
+{
     _info ("Audio: The state of the context changed");
     PulseLayer* pulse = (PulseLayer*) user_data;
     assert (c && pulse->m);
@@ -432,7 +449,8 @@ void PulseLayer::context_state_callback (pa_context* c, void* user_data) {
     }
 }
 
-bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED) {
+bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexRing UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED)
+{
     _audioSampleRate = sampleRate;
     _frameSize = frameSize;
 
@@ -452,7 +470,8 @@ bool PulseLayer::openDevice (int indexIn UNUSED, int indexOut UNUSED, int indexR
 }
 
 
-void PulseLayer::updateSinkList (void) {
+void PulseLayer::updateSinkList (void)
+{
 
     _debug ("Audio: Update sink list");
 
@@ -461,7 +480,8 @@ void PulseLayer::updateSinkList (void) {
     pa_context_get_sink_info_list (context, sink_input_info_callback,  this);
 }
 
-void PulseLayer::updateSourceList (void) {
+void PulseLayer::updateSourceList (void)
+{
     _debug ("Audio: Update source list");
 
     getSourceList()->clear();
@@ -470,7 +490,8 @@ void PulseLayer::updateSourceList (void) {
 
 }
 
-bool PulseLayer::inSinkList (std::string deviceName) {
+bool PulseLayer::inSinkList (std::string deviceName)
+{
     //   _debug("Audio: in device list %s", deviceName.c_str());
 
     DeviceList::iterator iter = _sinkList.begin();
@@ -490,7 +511,8 @@ bool PulseLayer::inSinkList (std::string deviceName) {
 }
 
 
-bool PulseLayer::inSourceList (std::string deviceName) {
+bool PulseLayer::inSourceList (std::string deviceName)
+{
 
     DeviceList::iterator iter = _sourceList.begin();
 
@@ -507,7 +529,8 @@ bool PulseLayer::inSourceList (std::string deviceName) {
 }
 
 
-bool PulseLayer::createStreams (pa_context* c) {
+bool PulseLayer::createStreams (pa_context* c)
+{
     _info ("Audio: Create streams");
 
     // _debug("Device list size %d", getDevicelist()->size());
@@ -592,7 +615,8 @@ bool PulseLayer::createStreams (pa_context* c) {
 }
 
 
-bool PulseLayer::disconnectAudioStream (void) {
+bool PulseLayer::disconnectAudioStream (void)
+{
     _info ("Audio: Disconnect audio stream");
 
     closePlaybackStream();
@@ -605,7 +629,8 @@ bool PulseLayer::disconnectAudioStream (void) {
 }
 
 
-void PulseLayer::closeCaptureStream (void) {
+void PulseLayer::closeCaptureStream (void)
+{
     if (record) {
 
         std::string deviceName (pa_stream_get_device_name (record->pulseStream()));
@@ -617,7 +642,8 @@ void PulseLayer::closeCaptureStream (void) {
 }
 
 
-void PulseLayer::closePlaybackStream (void) {
+void PulseLayer::closePlaybackStream (void)
+{
     if (playback) {
         std::string deviceName (pa_stream_get_device_name (playback->pulseStream()));
         _debug ("Audio: playback device to be stored in config: %s", deviceName.c_str());
@@ -636,7 +662,8 @@ void PulseLayer::closePlaybackStream (void) {
 }
 
 
-int PulseLayer::canGetMic() {
+int PulseLayer::canGetMic()
+{
     if (record)
         return 0;
     else
@@ -644,7 +671,8 @@ int PulseLayer::canGetMic() {
 }
 
 
-int PulseLayer::getMic (void *buffer, int toCopy) {
+int PulseLayer::getMic (void *buffer, int toCopy)
+{
     if (record) {
         return 0;
     } else
@@ -652,7 +680,8 @@ int PulseLayer::getMic (void *buffer, int toCopy) {
 }
 
 
-void PulseLayer::startStream (void) {
+void PulseLayer::startStream (void)
+{
     if (_audiofilter)
         _audiofilter->resetAlgorithm();
 
@@ -674,7 +703,8 @@ void PulseLayer::startStream (void) {
 
 
 void
-PulseLayer::stopStream (void) {
+PulseLayer::stopStream (void)
+{
 
     _info ("Audio: Stop audio stream");
 
@@ -693,7 +723,8 @@ PulseLayer::stopStream (void) {
 
 
 
-void PulseLayer::processPlaybackData (void) {
+void PulseLayer::processPlaybackData (void)
+{
     // Handle the data for the speakers
     if (playback && (playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
 
@@ -707,7 +738,8 @@ void PulseLayer::processPlaybackData (void) {
 }
 
 
-void PulseLayer::processCaptureData (void) {
+void PulseLayer::processCaptureData (void)
+{
 
     // Handle the mic
     // We check if the stream is ready
@@ -716,7 +748,8 @@ void PulseLayer::processCaptureData (void) {
 
 }
 
-void PulseLayer::processRingtoneData (void) {
+void PulseLayer::processRingtoneData (void)
+{
     // handle ringtone playback
     if (ringtone && (ringtone)->pulseStream() && (pa_stream_get_state (ringtone->pulseStream()) == PA_STREAM_READY)) {
 
@@ -729,7 +762,8 @@ void PulseLayer::processRingtoneData (void) {
 }
 
 
-void PulseLayer::processData (void) {
+void PulseLayer::processData (void)
+{
 
     // Handle the data for the speakers
     if (playback && (playback->pulseStream()) && (pa_stream_get_state (playback->pulseStream()) == PA_STREAM_READY)) {
@@ -748,7 +782,8 @@ void PulseLayer::processData (void) {
 
 }
 
-void PulseLayer::setEchoCancelState (bool state) {
+void PulseLayer::setEchoCancelState (bool state)
+{
     // if a stream already running
     if (AudioLayer::_echoCancel)
         _echoCancel->setEchoCancelState (state);
@@ -756,7 +791,8 @@ void PulseLayer::setEchoCancelState (bool state) {
     AudioLayer::_echocancelstate = state;
 }
 
-void PulseLayer::setNoiseSuppressState (bool state) {
+void PulseLayer::setNoiseSuppressState (bool state)
+{
     // if a stream already opened
     if (AudioLayer::_echoCancel)
         _echoCancel->setNoiseSuppressState (state);
@@ -766,7 +802,8 @@ void PulseLayer::setNoiseSuppressState (bool state) {
 }
 
 
-void PulseLayer::writeToSpeaker (void) {
+void PulseLayer::writeToSpeaker (void)
+{
     /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
     int urgentAvailBytes;
     /** Bytes available in the regular ringbuffer ( reserved for voice ) */
@@ -913,7 +950,8 @@ void PulseLayer::writeToSpeaker (void) {
 
 }
 
-void PulseLayer::readFromMic (void) {
+void PulseLayer::readFromMic (void)
+{
     const char* data = NULL;
     size_t r;
 
@@ -989,7 +1027,8 @@ void PulseLayer::readFromMic (void) {
 }
 
 
-void PulseLayer::ringtoneToSpeaker (void) {
+void PulseLayer::ringtoneToSpeaker (void)
+{
     int availBytes;
 
     AudioLoop* file_tone = _manager->getTelephoneFile();
@@ -1023,14 +1062,16 @@ void PulseLayer::ringtoneToSpeaker (void) {
 
 }
 
-static void retrieve_server_info (pa_context *c UNUSED, const pa_server_info *i, void *userdata UNUSED) {
+static void retrieve_server_info (pa_context *c UNUSED, const pa_server_info *i, void *userdata UNUSED)
+{
     _debug ("Server Info: Process owner : %s" , i->user_name);
     _debug ("\t\tServer name : %s - Server version = %s" , i->server_name, i->server_version);
     _debug ("\t\tDefault sink name : %s" , i->default_sink_name);
     _debug ("\t\tDefault source name : %s" , i->default_source_name);
 }
 
-static void reduce_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata) {
+static void reduce_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
+{
     PulseLayer* pulse = (PulseLayer*) userdata;
 
     if (!eol) {
@@ -1043,7 +1084,8 @@ static void reduce_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info 
     }
 }
 
-static void restore_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata) {
+static void restore_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
+{
     PulseLayer* pulse = (PulseLayer*) userdata;
 
     if (!eol) {
@@ -1057,7 +1099,8 @@ static void restore_sink_list_cb (pa_context *c UNUSED, const pa_sink_input_info
     }
 }
 
-static void set_playback_volume_cb (pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata) {
+static void set_playback_volume_cb (pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
+{
     PulseLayer* pulse;
     int volume;
 
@@ -1070,7 +1113,8 @@ static void set_playback_volume_cb (pa_context *c UNUSED, const pa_sink_input_in
     }
 }
 
-static void set_capture_volume_cb (pa_context *c UNUSED, const pa_source_output_info *i, int eol, void *userdata) {
+static void set_capture_volume_cb (pa_context *c UNUSED, const pa_source_output_info *i, int eol, void *userdata)
+{
     PulseLayer* pulse;
     int volume;
 
@@ -1084,22 +1128,26 @@ static void set_capture_volume_cb (pa_context *c UNUSED, const pa_source_output_
 }
 
 void
-PulseLayer::reducePulseAppsVolume (void) {
+PulseLayer::reducePulseAppsVolume (void)
+{
     pa_context_get_sink_input_info_list (context , reduce_sink_list_cb , this);
 }
 
 void
-PulseLayer::restorePulseAppsVolume (void) {
+PulseLayer::restorePulseAppsVolume (void)
+{
     pa_context_get_sink_input_info_list (context , restore_sink_list_cb , this);
 }
 
 void
-PulseLayer::serverinfo (void) {
+PulseLayer::serverinfo (void)
+{
     pa_context_get_server_info (context , retrieve_server_info , NULL);
 }
 
 
-void PulseLayer::setSinkVolume (int index, int channels, int volume) {
+void PulseLayer::setSinkVolume (int index, int channels, int volume)
+{
 
     pa_cvolume cvolume;
     pa_volume_t vol = PA_VOLUME_NORM * ( (double) volume / 100) ;
@@ -1110,7 +1158,8 @@ void PulseLayer::setSinkVolume (int index, int channels, int volume) {
 
 }
 
-void PulseLayer::setSourceVolume (int index, int channels, int volume) {
+void PulseLayer::setSourceVolume (int index, int channels, int volume)
+{
 
     pa_cvolume cvolume;
     pa_volume_t vol = PA_VOLUME_NORM * ( (double) volume / 100) ;
@@ -1122,12 +1171,14 @@ void PulseLayer::setSourceVolume (int index, int channels, int volume) {
 }
 
 
-void PulseLayer::setPlaybackVolume (int volume) {
+void PulseLayer::setPlaybackVolume (int volume)
+{
     setSpkrVolume (volume);
     pa_context_get_sink_input_info_list (context , set_playback_volume_cb , this);
 }
 
-void PulseLayer::setCaptureVolume (int volume) {
+void PulseLayer::setCaptureVolume (int volume)
+{
     setMicVolume (volume);
     pa_context_get_source_output_info_list (context , set_capture_volume_cb , this);
 }

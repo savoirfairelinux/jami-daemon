@@ -31,15 +31,18 @@
 #include "yamlnode.h"
 #include "src/global.h"
 
-namespace Conf {
+namespace Conf
+{
 
 
-void YamlDocument::addNode (YamlNode *node) {
+void YamlDocument::addNode (YamlNode *node)
+{
     Sequence::iterator it = doc.end();
     doc.insert (it, node);
 }
 
-YamlNode *YamlDocument::popNode() {
+YamlNode *YamlDocument::popNode()
+{
     Sequence::iterator it = doc.begin();
     YamlNode *node = doc.front();
 
@@ -49,24 +52,28 @@ YamlNode *YamlDocument::popNode() {
     return node;
 }
 
-void MappingNode::addNode (YamlNode *node) {
+void MappingNode::addNode (YamlNode *node)
+{
     Mapping::iterator it = map.end();
     map.insert (it, std::pair<Key, YamlNode *> (tmpKey, node));
 }
 
-void MappingNode::setKeyValue (Key key, YamlNode *value) {
+void MappingNode::setKeyValue (Key key, YamlNode *value)
+{
     Mapping::iterator it = map.end();
     map.insert (it, std::pair<Key, YamlNode *> (key, value));
 }
 
-void MappingNode::removeKeyValue (Key key) {
+void MappingNode::removeKeyValue (Key key)
+{
 
     Mapping::iterator it = map.find (key);
     map.erase (it);
 }
 
 
-YamlNode *MappingNode::getValue (Key key) {
+YamlNode *MappingNode::getValue (Key key)
+{
     Mapping::iterator it = map.find (key);
 
     if (it != map.end()) {
@@ -78,7 +85,8 @@ YamlNode *MappingNode::getValue (Key key) {
 }
 
 
-void SequenceNode::addNode (YamlNode *node) {
+void SequenceNode::addNode (YamlNode *node)
+{
     Sequence::iterator it = seq.end();
     seq.insert (it, node);
 }

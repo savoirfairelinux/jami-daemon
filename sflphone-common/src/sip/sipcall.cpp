@@ -42,13 +42,15 @@ SIPCall::SIPCall (const CallID& id, Call::CallType type, pj_pool_t *pool) : Call
         , _audiortp (new sfl::AudioRtpFactory())
         , _xferSub (NULL)
         , _invSession (NULL)
-        , _local_sdp (0) {
+        , _local_sdp (0)
+{
     _debug ("SIPCall: Create new call %s", id.c_str());
 
     _local_sdp = new Sdp (pool);
 }
 
-SIPCall::~SIPCall() {
+SIPCall::~SIPCall()
+{
     _debug ("SIPCall: Delete call");
 
     delete _audiortp;

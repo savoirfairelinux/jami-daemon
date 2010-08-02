@@ -32,17 +32,21 @@
 #include <stdio.h>
 #include "../global.h"
 
-namespace Conf {
+namespace Conf
+{
 
-YamlEmitter::YamlEmitter (const char *file) : filename (file), isFirstAccount (true) {
+YamlEmitter::YamlEmitter (const char *file) : filename (file), isFirstAccount (true)
+{
     open();
 }
 
-YamlEmitter::~YamlEmitter() {
+YamlEmitter::~YamlEmitter()
+{
     close();
 }
 
-void YamlEmitter::open() {
+void YamlEmitter::open()
+{
     fd = fopen (filename.c_str(), "wb");
 
     if (!fd)
@@ -63,7 +67,8 @@ void YamlEmitter::open() {
         throw YamlEmitterException ("Could not create top level mapping");
 }
 
-void YamlEmitter::close() {
+void YamlEmitter::close()
+{
     // yaml_emitter_delete(&emitter);
 
     if (!fd)
@@ -80,16 +85,19 @@ void YamlEmitter::close() {
 
 void YamlEmitter::read() {}
 
-void YamlEmitter::write() {
+void YamlEmitter::write()
+{
 
 }
 
-void YamlEmitter::serializeData() {
+void YamlEmitter::serializeData()
+{
     yaml_emitter_dump (&emitter, &document);
 }
 
 
-void YamlEmitter::serializeAccount (MappingNode *map) {
+void YamlEmitter::serializeAccount (MappingNode *map)
+{
 
     std::string accountstr ("accounts");
 
@@ -130,7 +138,8 @@ void YamlEmitter::serializeAccount (MappingNode *map) {
 
 }
 
-void YamlEmitter::serializePreference (MappingNode *map) {
+void YamlEmitter::serializePreference (MappingNode *map)
+{
     std::string preferencestr ("preferences");
 
     int preferenceid, preferencemapping;
@@ -159,7 +168,8 @@ void YamlEmitter::serializePreference (MappingNode *map) {
 
 }
 
-void YamlEmitter::serializeVoipPreference (MappingNode *map) {
+void YamlEmitter::serializeVoipPreference (MappingNode *map)
+{
     std::string preferencestr ("voipPreferences");
 
     int preferenceid, preferencemapping;
@@ -188,7 +198,8 @@ void YamlEmitter::serializeVoipPreference (MappingNode *map) {
 
 }
 
-void YamlEmitter::serializeAddressbookPreference (MappingNode *map) {
+void YamlEmitter::serializeAddressbookPreference (MappingNode *map)
+{
     std::string preferencestr ("addressbook");
 
     int preferenceid, preferencemapping;
@@ -217,7 +228,8 @@ void YamlEmitter::serializeAddressbookPreference (MappingNode *map) {
 
 }
 
-void YamlEmitter::serializeHooksPreference (MappingNode *map) {
+void YamlEmitter::serializeHooksPreference (MappingNode *map)
+{
     std::string preferencestr ("hooks");
 
     int preferenceid, preferencemapping;
@@ -247,7 +259,8 @@ void YamlEmitter::serializeHooksPreference (MappingNode *map) {
 }
 
 
-void YamlEmitter::serializeAudioPreference (MappingNode *map) {
+void YamlEmitter::serializeAudioPreference (MappingNode *map)
+{
     std::string preferencestr ("audio");
 
     int preferenceid, preferencemapping;
@@ -277,7 +290,8 @@ void YamlEmitter::serializeAudioPreference (MappingNode *map) {
 }
 
 
-void YamlEmitter::serializeShortcutPreference (MappingNode *map) {
+void YamlEmitter::serializeShortcutPreference (MappingNode *map)
+{
     std::string preferencestr ("shortcuts");
 
     int preferenceid, preferencemapping;
@@ -307,7 +321,8 @@ void YamlEmitter::serializeShortcutPreference (MappingNode *map) {
 }
 
 
-void YamlEmitter::addMappingItem (int mappingid, Key key, YamlNode *node) {
+void YamlEmitter::addMappingItem (int mappingid, Key key, YamlNode *node)
+{
 
     if (node->getType() == SCALAR) {
 

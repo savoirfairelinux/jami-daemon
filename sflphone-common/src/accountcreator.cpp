@@ -36,15 +36,18 @@
 #include "iax/iaxaccount.h"
 #endif
 
-AccountCreator::AccountCreator() {
+AccountCreator::AccountCreator()
+{
 }
 
 
-AccountCreator::~AccountCreator() {
+AccountCreator::~AccountCreator()
+{
 }
 
 Account*
-AccountCreator::createAccount (AccountType type, AccountID accountID) {
+AccountCreator::createAccount (AccountType type, AccountID accountID)
+{
     switch (type) {
 
         case SIP_ACCOUNT: {

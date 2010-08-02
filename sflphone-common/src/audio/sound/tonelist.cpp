@@ -34,15 +34,18 @@
 
 ToneList::ToneList() : _nbTone (TONE_NBTONE) ,
         _nbCountry (TONE_NBCOUNTRY),
-        _defaultCountryId (ZID_NORTH_AMERICA) {
+        _defaultCountryId (ZID_NORTH_AMERICA)
+{
     initToneDefinition();
 }
 
-ToneList::~ToneList() {
+ToneList::~ToneList()
+{
 }
 
 void
-ToneList::initToneDefinition() {
+ToneList::initToneDefinition()
+{
     _toneZone[ZID_NORTH_AMERICA][Tone::TONE_DIALTONE] = "350+440";
     _toneZone[ZID_NORTH_AMERICA][Tone::TONE_BUSY] = "480+620/500,0/500";
     _toneZone[ZID_NORTH_AMERICA][Tone::TONE_RINGTONE] = "440+480/2000,0/4000";
@@ -84,7 +87,8 @@ ToneList::initToneDefinition() {
 }
 
 std::string
-ToneList::getDefinition (COUNTRYID countryId, Tone::TONEID toneId) {
+ToneList::getDefinition (COUNTRYID countryId, Tone::TONEID toneId)
+{
     if (toneId == Tone::TONE_NULL) {
         return "";
     }
@@ -93,7 +97,8 @@ ToneList::getDefinition (COUNTRYID countryId, Tone::TONEID toneId) {
 }
 
 ToneList::COUNTRYID
-ToneList::getCountryId (const std::string& countryName) {
+ToneList::getCountryId (const std::string& countryName)
+{
     if (countryName.compare ("North America") == 0) {
         return ZID_NORTH_AMERICA;
     } else if (countryName.compare ("France") == 0) {
@@ -115,7 +120,8 @@ ToneList::getCountryId (const std::string& countryName) {
 
 TelephoneTone::TelephoneTone (const std::string& countryName, unsigned int sampleRate) :
         _currentTone (Tone::TONE_NULL),
-        _toneList() {
+        _toneList()
+{
     ToneList::COUNTRYID countryId = _toneList.getCountryId (countryName);
     _tone[Tone::TONE_DIALTONE] = new Tone (_toneList.getDefinition (countryId, Tone::TONE_DIALTONE), sampleRate);
     _tone[Tone::TONE_BUSY] = new Tone (_toneList.getDefinition (countryId, Tone::TONE_BUSY), sampleRate);
@@ -124,7 +130,8 @@ TelephoneTone::TelephoneTone (const std::string& countryName, unsigned int sampl
 
 }
 
-TelephoneTone::~TelephoneTone() {
+TelephoneTone::~TelephoneTone()
+{
     for (int i=0; i<_toneList.getNbTone(); i++) {
         delete _tone[i];
         _tone[i] = 0;
@@ -132,7 +139,8 @@ TelephoneTone::~TelephoneTone() {
 }
 
 void
-TelephoneTone::setCurrentTone (Tone::TONEID toneId) {
+TelephoneTone::setCurrentTone (Tone::TONEID toneId)
+{
     if (toneId != Tone::TONE_NULL && _currentTone != toneId) {
         _tone[toneId]->reset();
     }
@@ -141,7 +149,8 @@ TelephoneTone::setCurrentTone (Tone::TONEID toneId) {
 }
 
 Tone*
-TelephoneTone::getCurrentTone() {
+TelephoneTone::getCurrentTone()
+{
     if (_currentTone == Tone::TONE_NULL) {
         return 0;
     }
@@ -150,7 +159,8 @@ TelephoneTone::getCurrentTone() {
 }
 
 bool
-TelephoneTone::shouldPlay() {
+TelephoneTone::shouldPlay()
+{
     return ( (_currentTone != Tone::TONE_NULL) ? true : false);
 }
 

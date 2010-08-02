@@ -47,7 +47,8 @@ int RingBuffer::count_rb = 0;
 RingBuffer::RingBuffer (int size, CallID call_id) : mEnd (0)
         , mBufferSize (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE)
         , mBuffer (NULL)
-        , buffer_id (call_id) {
+        , buffer_id (call_id)
+{
     mBuffer = new unsigned char[mBufferSize];
     assert (mBuffer != NULL);
 
@@ -55,20 +56,23 @@ RingBuffer::RingBuffer (int size, CallID call_id) : mEnd (0)
 }
 
 // Free memory on object deletion
-RingBuffer::~RingBuffer() {
+RingBuffer::~RingBuffer()
+{
     delete[] mBuffer;
     mBuffer = NULL;
 }
 
 void
-RingBuffer::flush (CallID call_id) {
+RingBuffer::flush (CallID call_id)
+{
 
     storeReadPointer (mEnd, call_id);
 }
 
 
 void
-RingBuffer::flushAll () {
+RingBuffer::flushAll ()
+{
 
 
     ReadPointer::iterator iter_pointer = _readpointer.begin();
@@ -82,7 +86,8 @@ RingBuffer::flushAll () {
 }
 
 int
-RingBuffer::putLen() {
+RingBuffer::putLen()
+{
     int mStart;
 
     if (_readpointer.size() >= 1) {
@@ -97,7 +102,8 @@ RingBuffer::putLen() {
 }
 
 int
-RingBuffer::getLen (CallID call_id) {
+RingBuffer::getLen (CallID call_id)
+{
 
     int mStart = getReadPointer (call_id);
 
@@ -110,14 +116,16 @@ RingBuffer::getLen (CallID call_id) {
 }
 
 void
-RingBuffer::debug() {
+RingBuffer::debug()
+{
     int mStart = getSmallestReadPointer();
 
     _debug ("Start=%d; End=%d; BufferSize=%d", mStart, mEnd, mBufferSize);
 }
 
 int
-RingBuffer::getReadPointer (CallID call_id) {
+RingBuffer::getReadPointer (CallID call_id)
+{
 
     if (getNbReadPointer() == 0)
         return 0;
@@ -133,7 +141,8 @@ RingBuffer::getReadPointer (CallID call_id) {
 }
 
 int
-RingBuffer::getSmallestReadPointer() {
+RingBuffer::getSmallestReadPointer()
+{
     if (getNbReadPointer() == 0)
         return 0;
 
@@ -152,7 +161,8 @@ RingBuffer::getSmallestReadPointer() {
 }
 
 void
-RingBuffer::storeReadPointer (int pointer_value, CallID call_id) {
+RingBuffer::storeReadPointer (int pointer_value, CallID call_id)
+{
 
     ReadPointer::iterator iter = _readpointer.find (call_id);
 
@@ -166,7 +176,8 @@ RingBuffer::storeReadPointer (int pointer_value, CallID call_id) {
 
 
 void
-RingBuffer::createReadPointer (CallID call_id) {
+RingBuffer::createReadPointer (CallID call_id)
+{
 
     _readpointer.insert (pair<CallID, int> (call_id, mEnd));
 
@@ -174,7 +185,8 @@ RingBuffer::createReadPointer (CallID call_id) {
 
 
 void
-RingBuffer::removeReadPointer (CallID call_id) {
+RingBuffer::removeReadPointer (CallID call_id)
+{
 
 
     _readpointer.erase (call_id);
@@ -184,7 +196,8 @@ RingBuffer::removeReadPointer (CallID call_id) {
 
 
 bool
-RingBuffer::hasThisReadPointer (CallID call_id) {
+RingBuffer::hasThisReadPointer (CallID call_id)
+{
     ReadPointer::iterator iter = _readpointer.find (call_id);
 
     if (iter == _readpointer.end()) {
@@ -196,7 +209,8 @@ RingBuffer::hasThisReadPointer (CallID call_id) {
 
 
 int
-RingBuffer::getNbReadPointer() {
+RingBuffer::getNbReadPointer()
+{
     return _readpointer.size();
 }
 
@@ -204,7 +218,8 @@ RingBuffer::getNbReadPointer() {
 // For the writer only:
 //
 int
-RingBuffer::AvailForPut() {
+RingBuffer::AvailForPut()
+{
     // Always keep 4 bytes safe (?)
 
     return mBufferSize - putLen();
@@ -213,7 +228,8 @@ RingBuffer::AvailForPut() {
 // This one puts some data inside the ring buffer.
 // Change the volume if it's not 100
 int
-RingBuffer::Put (void* buffer, int toCopy, unsigned short volume) {
+RingBuffer::Put (void* buffer, int toCopy, unsigned short volume)
+{
     samplePtr src;
     int block;
     int copied;
@@ -275,7 +291,8 @@ RingBuffer::Put (void* buffer, int toCopy, unsigned short volume) {
 //
 
 int
-RingBuffer::AvailForGet (CallID call_id) {
+RingBuffer::AvailForGet (CallID call_id)
+{
     // Used space
 
     return getLen (call_id);
@@ -283,7 +300,8 @@ RingBuffer::AvailForGet (CallID call_id) {
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
 int
-RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id) {
+RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id)
+{
 
     if (getNbReadPointer() == 0)
         return 0;
@@ -345,7 +363,8 @@ RingBuffer::Get (void *buffer, int toCopy, unsigned short volume, CallID call_id
 
 // Used to discard some bytes.
 int
-RingBuffer::Discard (int toDiscard, CallID call_id) {
+RingBuffer::Discard (int toDiscard, CallID call_id)
+{
 
     int len = getLen (call_id);
 

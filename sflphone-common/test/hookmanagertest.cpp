@@ -39,12 +39,14 @@ using std::cout;
 using std::endl;
 
 
-void HookManagerTest::setUp() {
+void HookManagerTest::setUp()
+{
     // Instanciate the hook manager singleton
     urlhook = new UrlHook ();
 }
 
-void HookManagerTest::testAddAction () {
+void HookManagerTest::testAddAction ()
+{
     _debug ("-------------------- HookManagerTest::testAddAction --------------------\n");
 
     int status;
@@ -53,14 +55,16 @@ void HookManagerTest::testAddAction () {
     CPPUNIT_ASSERT (status == 0);
 }
 
-void HookManagerTest::testLargeUrl () {
+void HookManagerTest::testLargeUrl ()
+{
     _debug ("-------------------- HookManagerTest::testLargeUrl --------------------\n");
 
     std::string url;
     std::cout << url.max_size() << std::endl;
 }
 
-void HookManagerTest::tearDown() {
+void HookManagerTest::tearDown()
+{
     // Delete the hook manager object
     delete urlhook;
     urlhook=0;
