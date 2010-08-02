@@ -123,7 +123,7 @@ static int longcmp(const void *a, const void *b)
  	\note maybe later we can make the history buckets variable size, or something? */
 /* drop parameter determines whether we will drop outliers to minimize
  * delay */
-static int history_put(jitterbuf *jb, long ts, long now, long ms) 
+static int history_put(jitterbuf *jb, long ts, long now) 
 {
 	long delay = now - (ts - jb->info.resync_offset);
 	long threshold = 2 * jb->info.jitter + jb->info.conf.resync_threshold;
@@ -527,7 +527,7 @@ jb_return_code jb_put(jitterbuf *jb, void *data, const enum jb_frame_type type, 
 	if (type == JB_TYPE_VOICE) {
 		/* presently, I'm only adding VOICE frames to history and drift calculations; mostly because with the
 		 * IAX integrations, I'm sending retransmitted control frames with their awkward timestamps through */
-		if (history_put(jb,ts,now,ms)) {
+		if (history_put(jb,ts,now)) {
 			jb->info.frames_dropped++;
 			return JB_DROP;
 		}

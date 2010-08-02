@@ -36,10 +36,6 @@
 #include <pwd.h>
 #include <sstream>
 
-// CredentialItem::CredentialItem() {}
-
-// CredentialItem::~CredentialItem() {}
-
 Credentials::Credentials() : credentialCount(0) {}
 
 Credentials::~Credentials() {}
@@ -60,7 +56,7 @@ CredentialItem *Credentials::getCredential(int index)
     return NULL; 
 }
 
-void Credentials::serialize(Conf::YamlEmitter *emitter)
+void Credentials::serialize(Conf::YamlEmitter *emitter UNUSED)
 {
   
 }

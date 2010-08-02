@@ -241,7 +241,7 @@ int EchoCancel::getData(SFLDataFormat *outputData)
    return copied;
 }
 
-void EchoCancel::process(SFLDataFormat *data, int nbBytes) {}
+void EchoCancel::process(SFLDataFormat *data UNUSED, int nbBytes UNUSED) {}
 
 
 int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
@@ -330,7 +330,7 @@ int EchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int
   return nbFrame * _smplPerFrame;
 }
 
-void EchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes){
+void EchoCancel::process(SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED){
 
 }
 

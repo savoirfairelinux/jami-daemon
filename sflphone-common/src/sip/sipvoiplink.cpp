@@ -1594,7 +1594,7 @@ SIPVoIPLink::SIPCallReleased (SIPCall *call)
 
 
 void
-SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata)
+SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata UNUSED)
 {
 
     _info ("UserAgent: SIP call answered");
@@ -3021,27 +3021,9 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body)
         Manager::instance().startVoiceMessageNotification (account, voicemail);
 }
 
-void SIPVoIPLink::handle_reinvite (SIPCall *call)
+void SIPVoIPLink::handle_reinvite (SIPCall *call UNUSED)
 {
-
     _debug ("UserAgent: Handle reinvite");
-    /*
-    // Close the previous RTP session
-    call->getAudioRtp()->stop ();
-    call->setAudioStart (false);
-    
-    _debug ("Create new rtp session from handle_reinvite : %s:%i", call->getLocalIp().c_str(), call->getLocalAudioPort());
-    _debug ("UserAgent: handle_reinvite");
- 
-    try {
-        call->getAudioRtp()->initAudioRtpSession (call);
-    } catch (...) {
-        _debug ("! SIP Failure: Unable to create RTP Session (%s:%d)", __FILE__, __LINE__);
-    }
-  
-    
-    _debug("Handle reINVITE");
-    */
 }
 
 // This callback is called when the invite session state has changed
@@ -3059,8 +3041,6 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
         _error ("UserAgent: Error: Call is NULL in call state changed callback");
         return;
     } else {
-        // _debug("    call_on_state_changed: call id %s", call->getCallId().c_str());
-        // _debug("    call_on_state_changed: call state %s", invitationStateMap[call->getInvSession()->state]);
     }
 
     //Retrieve the body message
@@ -3364,11 +3344,11 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
 
 }
 
-void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
+void call_on_forked (pjsip_inv_session *inv UNUSED, pjsip_event *e UNUSED)
 {
 }
 
-void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
+void call_on_tsx_changed (pjsip_inv_session *inv UNUSED, pjsip_transaction *tsx, pjsip_event *e)
 {
 	assert(tsx);
 
@@ -4263,7 +4243,7 @@ void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event)
     }
 }
 
-void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
+void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer UNUSED)
 {
 	_info("UserAgent: Received SDP offer");
 
@@ -4540,7 +4520,7 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName(void)
 }
 
 
-pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status)
+pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock UNUSED, pj_stun_sock_op op UNUSED, pj_status_t status)
 {
     if (status == PJ_SUCCESS)
         return PJ_TRUE;
@@ -4548,7 +4528,7 @@ pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_s
         return PJ_FALSE;
 }
 
-pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len)
+pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock UNUSED, void *pkt UNUSED, unsigned pkt_len UNUSED, const pj_sockaddr_t *src_addr UNUSED, unsigned addr_len UNUSED)
 {
     return PJ_TRUE;
 }

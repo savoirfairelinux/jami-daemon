@@ -266,6 +266,17 @@ class EchoCancel : public Algorithm {
     int _spkrHistoryLength;
 
     /**
+     * Factor for power estimation
+     */
+    float _alpha;
+
+    /**
+     * Termporary spkr level memories
+     */
+    SFLDataFormat _spkrLevelMem;
+    SFLDataFormat _micLevelMem;
+
+    /**
      * Current playback level
      */ 
     int _spkrLevel;
@@ -286,13 +297,6 @@ class EchoCancel : public Algorithm {
     int _micHistCnt;
 
     /**
-     * Average speaker/microphone level history. Each value corespond to
-     * the averaged amplitude value over a segment (SEGMENT_LENGTH long)
-     */
-    int _avgSpkrLevelHist[BUFF_SIZE];
-    int _avgMicLevelHist[BUFF_SIZE];
-
-    /**
      * Current linear gain factor to be applied on microphone 
      */
     float _amplFactor;
@@ -301,11 +305,6 @@ class EchoCancel : public Algorithm {
      * Stored linea gain factor for lowpass filtering
      */
     float _lastAmplFactor;
-
-    /**
-     * Linear gain factor buffer to adjust to system's latency 
-     */
-    float _delayLineAmplify[MAX_DELAY_LINE_AMPL];
 
     /**
      * read/write for mic gain delay 
@@ -328,17 +327,6 @@ class EchoCancel : public Algorithm {
      */
     int _adaptCnt;
 
-    /**
-     * Factor for power estimation
-     */
-    float _alpha;
-
-    /**
-     * Termporary spkr level memories
-     */
-    SFLDataFormat _spkrLevelMem;
-    SFLDataFormat _micLevelMem;
-
     int _spkrAdaptCnt;
 
     int _micAdaptCnt;
@@ -347,15 +335,37 @@ class EchoCancel : public Algorithm {
 
     int _micAdaptSize;
 
+    int _correlationSize;
+
+    int _processedByte;
+
+    /**
+     * true if noise suppressor is active, false elsewhere
+     */
+    bool _echoActive;
+
+    /**
+     * true if noise suppressor is active, false elsewhere
+     */
+    bool _noiseActive;
+
+    /**
+     * Average speaker/microphone level history. Each value corespond to
+     * the averaged amplitude value over a segment (SEGMENT_LENGTH long)
+     */
+    int _avgSpkrLevelHist[BUFF_SIZE];
+    int _avgMicLevelHist[BUFF_SIZE];
+   
+    /**
+     * Linear gain factor buffer to adjust to system's latency 
+     */
+    float _delayLineAmplify[MAX_DELAY_LINE_AMPL];
+
     int _spkrAdaptArray[BUFF_SIZE];
 
     int _micAdaptArray[BUFF_SIZE];
 
-    int _correlationSize;
-
     int _correlationArray[BUFF_SIZE];
-
-    int _processedByte;
 
     ofstream *micFile;
     ofstream *spkrFile;
@@ -370,16 +380,6 @@ class EchoCancel : public Algorithm {
      */
     SpeexPreprocessState *_noiseState;
     // #endif
-
-    /**
-     * true if noise suppressor is active, false elsewhere
-     */
-    bool _echoActive;
-
-    /**
-     * true if noise suppressor is active, false elsewhere
-     */
-    bool _noiseActive;
 
     DelayDetection _delayDetector;
 

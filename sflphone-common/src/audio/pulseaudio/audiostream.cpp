@@ -68,7 +68,7 @@ AudioStream::connectStream(std::string* deviceName)
     return true;
 }
 
-static void success_cb (pa_stream *s, int success, void *userdata)
+static void success_cb (pa_stream *s, int success UNUSED, void *userdata)
 {
 
     assert (s);
@@ -77,7 +77,6 @@ static void success_cb (pa_stream *s, int success, void *userdata)
 
     pa_threaded_mainloop_signal (mainloop, 0);
 }
-
 
 bool
 AudioStream::drainStream (void)

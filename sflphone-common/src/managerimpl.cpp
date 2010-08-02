@@ -3224,72 +3224,10 @@ std::string ManagerImpl::computeMd5HashFromCredential (
 	return hashedDigest;
 }
 
-void ManagerImpl::setCredential (const std::string& accountID,
-		const int32_t& index, const std::map<std::string, std::string>& details) {
+void ManagerImpl::setCredential (const std::string& accountID UNUSED,
+		const int32_t& index UNUSED, const std::map<std::string UNUSED, std::string>& details UNUSED) {
 
   _debug("Manager: set credential");
-  /*
-	std::map<std::string, std::string>::iterator it;
-	std::map<std::string, std::string> credentialInformation = details;
-
-	std::string credentialIndex;
-	std::stringstream streamOut;
-	streamOut << index;
-	credentialIndex = streamOut.str();
-
-	std::string section = "Credential" + std::string(":") + accountID
-			+ std::string(":") + credentialIndex;
-
-	_debug ("Setting credential in section %s", section.c_str());
-
-	it = credentialInformation.find(USERNAME);
-	std::string username;
-
-	if (it == credentialInformation.end()) {
-		username = EMPTY_FIELD;
-	} else {
-		username = it->second;
-	}
-
-	Manager::instance().setConfig(section, USERNAME, username);
-
-	it = credentialInformation.find(REALM);
-	std::string realm;
-
-	if (it == credentialInformation.end()) {
-		realm = EMPTY_FIELD;
-	} else {
-		realm = it->second;
-	}
-
-	Manager::instance().setConfig(section, REALM, realm);
-
-	it = credentialInformation.find(PASSWORD);
-	std::string password;
-
-	if (it == credentialInformation.end()) {
-		password = EMPTY_FIELD;
-	} else {
-		password = it->second;
-	}
-
-	if (getMd5CredentialHashing()) {
-		// TODO: Fix this.
-		// This is an extremly weak test in order to check
-		// if the password is a hashed value. This is done
-		// because deleteCredential() is called before this
-		// method. Therefore, we cannot check if the value
-		// is different from the one previously stored in
-		// the configuration file. This is to avoid to
-		// re-hash a hashed password.
-
-		if (password.length() != 32) {
-			password = computeMd5HashFromCredential(username, password, realm);
-		}
-	}
-
-	Manager::instance().setConfig(section, PASSWORD, password);
-  */
 }
 
 // method to reduce the if/else mess.

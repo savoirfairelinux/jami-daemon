@@ -100,7 +100,7 @@ void SpeexEchoCancel::putData(SFLDataFormat *inputData, int nbBytes)
   // speex_echo_playback(_echoState, inputData);
 }
 
-void SpeexEchoCancel::process(SFLDataFormat *data, int nbBytes) {}
+void SpeexEchoCancel::process(SFLDataFormat *data UNUSED, int nbBytes UNUSED) {}
 
 int SpeexEchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
 {
@@ -158,9 +158,6 @@ int SpeexEchoCancel::process(SFLDataFormat *inputData, SFLDataFormat *outputData
   return nbFrame * FRAME_SIZE;
 }
 
-void SpeexEchoCancel::process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes){
-
-  
-  // speex_echo_cancellation(_echoState, micData, spkrData, outputData);
+void SpeexEchoCancel::process(SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED){
 
 }

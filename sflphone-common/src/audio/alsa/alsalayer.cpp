@@ -902,7 +902,7 @@ AlsaLayer::soundCardGetIndex (std::string description)
 void AlsaLayer::audioCallback(void)
 {
 
-    int toGet, urgentAvailBytes, normalAvailBytes, maxBytes;
+    int toGet, urgentAvailBytes, normalAvailBytes;
     unsigned short spkrVolume, micVolume;
     AudioLoop *tone;
     AudioLoop *file_tone;

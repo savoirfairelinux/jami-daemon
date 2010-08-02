@@ -494,7 +494,7 @@ void AudioRecord::recData (SFLDataFormat* buffer, int nSamples)
 }
 
 
-void AudioRecord::recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2)
+void AudioRecord::recData (SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2 UNUSED)
 {
 
     if (recordingEnabled_) {

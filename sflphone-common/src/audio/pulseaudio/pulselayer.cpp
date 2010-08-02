@@ -60,22 +60,12 @@ static void ringtone_callback (pa_stream* s, size_t bytes, void* userdata) {
 
 }
 
-
-static void stream_moved_callback(pa_stream *s, void *userdata) {
-
-  int streamIndex = pa_stream_get_index(s);
-  int deviceIndex = pa_stream_get_device_index(s);
+static void stream_moved_callback(pa_stream *s, void *userdata UNUSED) {
 
   _debug("stream_moved_callback: stream %d to %d", pa_stream_get_index(s), pa_stream_get_device_index(s));
-
 }
 
-static void pa_success_callback(pa_context *c, int success, void *userdata) {
-
-  _debug("Audio: Success callback");
-}
-
-static void latency_update_callback(pa_stream *p, void *userdata) {
+static void latency_update_callback(pa_stream *p, void *userdata UNUSED) {
 
     pa_usec_t r_usec;
 
@@ -90,7 +80,7 @@ static void latency_update_callback(pa_stream *p, void *userdata) {
   
 }
 
-static void sink_input_info_callback(pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
+static void sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata) {
   char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
   if(!eol) {
@@ -124,10 +114,9 @@ static void sink_input_info_callback(pa_context *c, const pa_sink_info *i, int e
     ((PulseLayer *)userdata)->getSinkList()->push_back(deviceName);
 
   }
-
 }
 
-static void source_input_info_callback(pa_context *c, const pa_source_info *i, int eol, void *userdata) {
+static void source_input_info_callback(pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata) {
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
 
     if(!eol) {
@@ -163,8 +152,7 @@ static void source_input_info_callback(pa_context *c, const pa_source_info *i, i
   }
 }
 
-
-static void context_changed_callback(pa_context* c, pa_subscription_event_type_t t, uint32_t idx, void* userdata)
+static void context_changed_callback(pa_context* c, pa_subscription_event_type_t t, uint32_t idx UNUSED, void* userdata UNUSED)
 {
 
   switch(t) {
@@ -220,28 +208,15 @@ static void context_changed_callback(pa_context* c, pa_subscription_event_type_t
     _debug("Audio: Unknown event type");
     
   }
-  
 }
 
-/*
-static void stream_suspended_callback (pa_stream *s UNUSED, void *userdata UNUSED)
+static void playback_underflow_callback (pa_stream* s UNUSED,  void* userdata UNUSED)
 {
-    _debug("Audio: Stream Suspended");
-}
-*/
-
-
-static void playback_underflow_callback (pa_stream* s,  void* userdata UNUSED)
-{
-    // _debug ("Audio: Buffer Underflow");
-    // pa_stream_trigger (s, NULL, NULL);
 }
 
 
 static void playback_overflow_callback (pa_stream* s UNUSED, void* userdata UNUSED)
 {
-    // _debug ("Audio: Buffer OverFlow");
-
 }
 
 
@@ -654,15 +629,6 @@ int PulseLayer::canGetMic()
 }
 
 
-int PulseLayer::getMic (void *buffer, int toCopy)
-{
-    if (record) {
-        return 0;
-    } else
-        return 0;
-}
-
-
 void PulseLayer::startStream (void)
 {
     if(_audiofilter)
@@ -1012,8 +978,6 @@ void PulseLayer::readFromMic (void)
 
 void PulseLayer::ringtoneToSpeaker(void)
 {
-  int availBytes;
-
   AudioLoop* file_tone = _manager->getTelephoneFile();
 
   SFLDataFormat* out;

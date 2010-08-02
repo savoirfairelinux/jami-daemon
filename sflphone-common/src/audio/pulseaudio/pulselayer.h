@@ -100,14 +100,6 @@ class PulseLayer : public AudioLayer {
      */
     int canGetMic();
     
-    /**
-     * Get data from the capture device
-     * @param buffer The buffer for data
-     * @param toCopy The number of bytes to get
-     * @return int The number of bytes acquired ( 0 if an error occured)
-     */
-    int getMic(void *, int);
-    
     static void overflow ( pa_stream* s, void* userdata );
     static void underflow ( pa_stream* s, void* userdata );
     static void stream_state_callback( pa_stream* s, void* user_data );	
