@@ -24,13 +24,6 @@ doc:
 	@echo "D-Bus API HTML documentation has been generated in doc/dbus-api/doc/spec"
 	@echo ""
 
-indent:
-	@echo "Indenting code:"
-	if [ -f $(ASTYLERC) ] ; then \
-		$(indent) --options=$(ASTYLERC) --recursive *.cpp *.h; \
-	fi
-
-
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = libs src ringtones man $(TESTS_DIR)
 EXTRA_DIST = m4/*.m4 tools/*.sh platform/* images/* README.gentoo

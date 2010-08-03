@@ -102,9 +102,4 @@ libsflphone_la_CFLAGS = \
 
 libsflphone_la_SOURCES =
 
-indent:
-	@echo "Indenting code:"
-	if [ -f $(ASTYLERC) ] ; then \
-		$(indent) --options=$(ASTYLERC) --recursive *.cpp *.h; \
-	fi
-
+all: indent
