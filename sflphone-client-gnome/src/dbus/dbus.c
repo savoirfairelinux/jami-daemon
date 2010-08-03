@@ -96,11 +96,9 @@ zrtp_negotiation_failed_cb(DBusGProxy *proxy UNUSED, const gchar* callID,
 }
 
 static void
-curent_selected_codec(DBusGProxy *proxy UNUSED, const gchar* callID,
-    const gchar* codecName, void * foo  UNUSED )
+curent_selected_codec(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
+    const gchar* codecName UNUSED, void * foo  UNUSED )
 {
-  // DEBUG ("%s codec decided for call %s",codecName,callID);
-  // sflphone_display_selected_codec (codecName);
 }
 
 static void
@@ -229,7 +227,6 @@ conference_changed_cb(DBusGProxy *proxy UNUSED, const gchar* confID,
   // sflphone_display_transfer_status("Transfer successfull");
   conference_obj_t* changed_conf = conferencelist_get(confID);
   gchar** participants;
-  gchar** part;
 
   DEBUG("conference new state %s\n", state);
 
@@ -1730,6 +1727,7 @@ dbus_detach_participant(const gchar* callID)
 
 }
 
+void
 dbus_join_conference(const gchar* sel_confID, const gchar* drag_confID)
 {
 

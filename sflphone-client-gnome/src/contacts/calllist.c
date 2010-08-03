@@ -31,6 +31,7 @@
 #include <calllist.h>
 #include <calltree.h>
 #include <contacts/searchbar.h>
+#include <eel-gconf-extensions.h>
 
 // TODO : sflphoneGTK : try to do this more generic
 void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo){

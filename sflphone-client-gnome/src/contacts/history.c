@@ -39,7 +39,7 @@ GtkWidget * history_searchbar_widget;
 static GtkTreeModel* history_create_filter (GtkTreeModel*);
 static gboolean history_is_visible (GtkTreeModel*, GtkTreeIter*, gpointer);
 
-void history_search (SearchType search_type)
+void history_search (SearchType search_type UNUSED)
 {
     if(history_filter != NULL) {
         gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (history_filter));
@@ -109,7 +109,7 @@ static gboolean history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpoi
             else
             {
                 // We need a match on the history_state_t and the current search type
-                return (history_entry->_history_state + 1) == (int)get_current_history_search_type () &&  
+                return (history_entry->_history_state + 1) == (guint)get_current_history_search_type () &&  
                     g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
             }
         }

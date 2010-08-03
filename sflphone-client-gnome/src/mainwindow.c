@@ -42,6 +42,7 @@
 #include <assistant.h>
 #include <widget/gtkscrollbook.h>
 #include <widget/minidialog.h>
+#include "uimanager.h"
 
 #include <gtk/gtk.h>
 #include <eel-gconf-extensions.h>
@@ -65,7 +66,7 @@ pthread_mutex_t statusbar_message_mutex;
 /**
  * Handle main window resizing
  */
-static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event) {
+static gboolean window_configure_cb (GtkWidget *win UNUSED, GdkEventConfigure *event) {
 
 	int pos_x, pos_y;
 
@@ -173,7 +174,6 @@ focus_on_mainwindow_in ()
 create_main_window ()
 {
 	GtkWidget *widget;
-	gchar *path;
 	GError *error = NULL;
 	gboolean ret;
 	const char *window_title = "SFLphone VoIP Client";

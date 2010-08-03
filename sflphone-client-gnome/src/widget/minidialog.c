@@ -26,7 +26,7 @@
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtk.h>
-
+#include "sflphone_const.h"
 #include "minidialog.h"
 
 #define HIG_BOX_SPACE 6
@@ -167,7 +167,7 @@ mini_dialog_button_clicked_cb(GtkButton *button,
 }
 
 static void
-mini_dialog_button_destroy_cb(GtkButton *button,
+mini_dialog_button_destroy_cb(GtkButton *button UNUSED,
                               gpointer user_data)
 {
 	struct _mini_dialog_button_clicked_cb_data *data = user_data;
@@ -360,20 +360,6 @@ pidgin_mini_dialog_class_init(PidginMiniDialogClass *klass)
 
 #define BLIST_WIDTH_PREF \
 	(PIDGIN_PREFS_ROOT "/blist/width")
-
-static void
-blist_width_changed_cb(const char *name,
-                       gconstpointer val,
-                       gpointer data)
-{
-	PidginMiniDialog *self = PIDGIN_MINI_DIALOG(data);
-	PidginMiniDialogPrivate *priv = PIDGIN_MINI_DIALOG_GET_PRIVATE(self);
-	guint blist_width = GPOINTER_TO_INT(val);
-	guint label_width = LABEL_WIDTH;
-
-	gtk_widget_set_size_request(GTK_WIDGET(priv->title), label_width, -1);
-	gtk_widget_set_size_request(GTK_WIDGET(priv->desc), label_width, -1);
-}
 
 static void
 pidgin_mini_dialog_init(PidginMiniDialog *self)

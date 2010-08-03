@@ -32,6 +32,8 @@
 #include <codeclist.h>
 #include <sflphone_const.h>
 #include <time.h>
+#include "contacts/calltree.h"
+#include  <unistd.h> 
 
 
 #define UNIX_DAY			86400
@@ -129,15 +131,13 @@ void call_remove_all_errors(callable_obj_t * call)
     g_ptr_array_foreach (call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
 }
 
-void *threaded_clock_incrementer(void *pc) {
+void threaded_clock_incrementer(void *pc) {
 
   callable_obj_t *call = (callable_obj_t *)pc;
 
  
   while(call->clockStarted) {
 
-
-    gchar *res;
     int duration;
     time_t start, current;
 

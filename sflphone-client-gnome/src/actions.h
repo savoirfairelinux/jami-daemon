@@ -301,4 +301,19 @@ void sflphone_call_state_changed(callable_obj_t * c, const gchar * description, 
  * Resolve an interface address given its name
  */
 void sflphone_get_interface_addr_from_name(char *iface_name, char **iface_addr, int size);
+
+void sflphone_add_main_participant(const conference_obj_t * c);
+
+void
+sflphone_conference_off_hold(const conference_obj_t * c);
+
+void
+sflphone_srtp_sdes_off(callable_obj_t * c);
+
+void sflphone_fill_conference_list(void);
+
+void sflphone_conference_on_hold(const conference_obj_t * c);
+
+void sflphone_conference_hang_up();
+
 #endif

@@ -28,7 +28,8 @@
  *  as that of the covered work.
  */
 
-#include <sflnotify.h>
+#include "sflnotify.h"
+#include <eel-gconf-extensions.h>
 
 GnomeNotification *_gnome_notification;
 

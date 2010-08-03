@@ -43,6 +43,7 @@
 #include <audioconf.h>
 #include <hooks-config.h>
 #include <audioconf.h>
+#include <uimanager.h>
 
 /**
  * Local variables
@@ -82,14 +83,6 @@ typedef struct {
 
 static int history_limit;
 static gboolean history_enabled = TRUE;
-
-	static void
-set_md5_hash_cb (GtkWidget *widget UNUSED, gpointer data UNUSED)
-{
-
-	gboolean enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
-	dbus_set_md5_credential_hashing (enabled);
-}
 
 	static void
 start_hidden (void)
@@ -390,7 +383,7 @@ show_preferences_dialog ()
 	// By default, general settings
 	gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook), 0);
 	// Highlight the corresponding icon
-	gtk_icon_view_select_path (iconview, gtk_tree_path_new_first ());
+	gtk_icon_view_select_path (GTK_ICON_VIEW(iconview), gtk_tree_path_new_first ());
 
 	result = gtk_dialog_run (dialog);
 
@@ -417,7 +410,6 @@ GtkTreeModel* createModel() {
 	GtkTreeIter iter;
 	GtkListStore *store;
 	GError *error = NULL;
-	GtkIconSet *icon = NULL;
 	gint i;
 
 	store = gtk_list_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);

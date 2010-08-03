@@ -204,12 +204,6 @@ sflphone_hung_up( callable_obj_t * c)
     calltree_update_clock();
 }
 
-static hashtable_free(gpointer key, gpointer value, gpointer user_data)
-{
-    g_free(key);
-    g_free(value);
-}
-
 /** Internal to actions: Fill account list */
 void sflphone_fill_account_list (void) {
 
@@ -217,7 +211,6 @@ void sflphone_fill_account_list (void) {
     gchar** accountID;
     unsigned int i;
     int count;
-    GQueue *codeclist;
 
     DEBUG("SFLphone: Fill account list");
     
@@ -1115,7 +1108,6 @@ void sflphone_fill_codec_list () {
 	guint account_list_size;
 	guint i;
 	account_t *current = NULL;
-	gchar** codecs = NULL;
 
 	DEBUG("SFLphone: Fill codec list");
 
@@ -1134,9 +1126,7 @@ void sflphone_fill_codec_list () {
 void sflphone_fill_codec_list_per_account (account_t **account) {
 
     gchar **order;
-    gchar** details;
     gchar** pl;
-    gchar *accountID;
     GQueue *codeclist;
     gboolean active = FALSE;
 
@@ -1261,10 +1251,11 @@ void sflphone_fill_history (void)
 {
     GHashTable *entries;
     GHashTableIter iter;
-    gpointer key, key_to_min, value;
+    gpointer key, value;
+    gpointer key_to_min = NULL;
     callable_obj_t *history_entry;
-
-    int timestamp, min_timestamp;
+    int timestamp = 0;
+    int min_timestamp = 0;
 
     gboolean is_first;
 

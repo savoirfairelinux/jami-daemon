@@ -34,6 +34,7 @@
 #include <mainwindow.h>
 #include <accountlist.h>
 #include <statusicon.h>
+#include <eel-gconf-extensions.h>
 
 #if GTK_CHECK_VERSION(2,10,0)
 GtkStatusIcon *status;

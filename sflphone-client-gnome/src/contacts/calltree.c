@@ -33,10 +33,13 @@
 #include <calltree.h>
 #include <stdlib.h>
 #include <glib/gprintf.h>
+#include <eel-gconf-extensions.h>
 #include <calllist.h>
 #include <conferencelist.h>
 #include <mainwindow.h>
 #include <history.h>
+#include "uimanager.h"
+#include "actions.h"
 
 GtkWidget *sw;
 GtkCellRenderer *rend;
@@ -235,8 +238,6 @@ row_activated(GtkTreeView       *tree_view UNUSED,
 	    if(selectedConf) {
 
 	        switch(selectedConf->_state) {
-		case CONFERENCE_STATE_ACTIVE_ATACHED:
-		    // sflphone_add_main_participant(selectedConf);
 		    break;
 		case CONFERENCE_STATE_ACTIVE_DETACHED:
 		    sflphone_add_main_participant(selectedConf);
@@ -244,6 +245,10 @@ row_activated(GtkTreeView       *tree_view UNUSED,
 		case CONFERENCE_STATE_HOLD:
 		    sflphone_conference_off_hold(selectedConf);
 		    break;
+		case CONFERENCE_STATE_ACTIVE_ATACHED:
+		case CONFERENCE_STATE_RECORD:
+		default:
+		   break;
 		}
 	    }
 	}
@@ -339,11 +344,10 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
 }
 
 
-gchar* 
-calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gchar *audio_codec, gchar** display_info)
+void calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gchar *audio_codec, gchar** display_info)
 {
 
-    gchar * description;
+    gchar * description = NULL;
     gchar * tmp_info;
 
     gchar * peer_number = c->_peer_number;
@@ -490,7 +494,6 @@ calltree_display_call_info(callable_obj_t * c, CallDisplayType display_type, gch
 
     }
 
-    // return description;
     tmp_info = g_strdup(description);
     *display_info = tmp_info;
 }
@@ -508,15 +511,11 @@ calltree_reset (calltab_t* tab)
 
 void
 focus_on_calltree_out(){
-	//DEBUG("set_focus_on_calltree_out");
-	// gtk_widget_grab_focus(GTK_WIDGET(sw));
 	focus_is_on_calltree = FALSE;
 }
 
 void
 focus_on_calltree_in(){
-	//DEBUG("set_focus_on_calltree_in");
-	// gtk_widget_grab_focus(GTK_WIDGET(sw));
 	focus_is_on_calltree = TRUE;
 }
 
@@ -564,9 +563,6 @@ calltree_create (calltab_t* tab, gboolean searchbar_type)
 	g_signal_connect (G_OBJECT (tab->view), "button-press-event",
 			G_CALLBACK (button_pressed),
 			NULL);
-
-	// g_signal_connect (G_OBJECT (sw), "key-release-event",
-	//                   G_CALLBACK (on_key_released), NULL);
 
 	g_signal_connect_after (G_OBJECT (tab->view), "focus-in-event",
 			G_CALLBACK (focus_on_calltree_in), NULL);
@@ -698,7 +694,6 @@ calltree_update_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
     gchar* srtp_enabled = "";
     gboolean display_sas = TRUE;
-    gboolean sdes_success = TRUE;
     account_t* account_details=NULL;
     gchar *audio_codec = "";
 
@@ -888,8 +883,6 @@ void calltree_add_call (calltab_t* tab, callable_obj_t * c, GtkTreeIter *parent)
 
 	// New call in the list
 	gchar * description;
-	gchar * date="";
-	gchar *duration="";
 
 	calltree_display_call_info(c, DISPLAY_TYPE_CALL, NULL, &description);
 
@@ -1269,12 +1262,9 @@ void calltree_add_conference (calltab_t* tab, conference_obj_t* conf)
 }
 
 
-void calltree_update_conference (calltab_t* tab, const gchar* confID)
+void calltree_update_conference (calltab_t* tab UNUSED, const gchar* confID UNUSED)
 {
-
 	DEBUG("calltree_update_conference");
-
-
 }
 
 
@@ -1432,7 +1422,6 @@ void calltree_update_clock() {
       (c->_state != CALL_STATE_BUSY) ) { 
 
     // TODO this make the whole thing crash...
-    // calltree_update_call(current_calls, c, NULL);
     statusbar_update_clock(c->_timestr);
   }
   else {
@@ -1441,14 +1430,11 @@ void calltree_update_clock() {
 }
 
 
-static void drag_begin_cb(GtkWidget *widget, GdkDragContext *dc, gpointer data)
+static void drag_begin_cb(GtkWidget *widget UNUSED, GdkDragContext *dc UNUSED, gpointer data UNUSED)
 {
-
-    GtkTargetList* target_list;
-
 }
 
-static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer data)
+static void drag_end_cb(GtkWidget * widget UNUSED, GdkDragContext * context UNUSED, gpointer data UNUSED)
 {
     DEBUG("CallTree: Drag end callback");
     DEBUG("CallTree: selected_path %s, selected_call_id %s, selected_path_depth %d", 
@@ -1462,13 +1448,10 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
     GtkTreePath *spath = gtk_tree_path_new_from_string(selected_path);
     
     GtkTreeIter iter;
-    GtkTreeIter iter_parent;
-    GtkTreeIter iter_children;
     GtkTreeIter parent_conference; // conference for which this call is attached
 
     GValue val;
     
-    callable_obj_t* call;
     conference_obj_t* conf;
 
 
@@ -1727,21 +1710,16 @@ static void drag_end_cb(GtkWidget * widget, GdkDragContext * context, gpointer d
 }
 
 
-void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint info, guint t, gpointer data)
+void drag_data_received_cb(GtkWidget *widget, GdkDragContext *context UNUSED, gint x UNUSED, gint y UNUSED, GtkSelectionData *selection_data UNUSED, guint info UNUSED, guint t UNUSED, gpointer data UNUSED)
 {
-
-    // DEBUG("drag_data_received_cb\n");
     GtkTreeView *tree_view = GTK_TREE_VIEW(widget);
     GtkTreePath *drop_path;
     GtkTreeViewDropPosition position;
     GValue val;
 
-    GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
     GtkTreeModel* tree_model = gtk_tree_view_get_model(tree_view);
 
     GtkTreeIter iter;
-    gchar value;
-
 
     val.g_type = 0;
     gtk_tree_view_get_drag_dest_row(tree_view, &drop_path, &position);

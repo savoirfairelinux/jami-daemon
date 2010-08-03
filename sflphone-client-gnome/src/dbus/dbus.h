@@ -26,7 +26,7 @@
  *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
  *  grants you additional permission to convey the resulting work.
  *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
+*  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
 
@@ -550,5 +550,28 @@ gchar** dbus_get_participant_list (const char * confID);
 
 GHashTable* dbus_get_shortcuts(void);
 void dbus_set_shortcuts(GHashTable * shortcuts);
+
+void dbus_set_audio_ringtone_device(const int index);
+
+void
+dbus_hang_up_conference(const conference_obj_t * c);
+
+void
+dbus_hold_conference(const conference_obj_t * c);
+
+void
+dbus_unhold_conference(const conference_obj_t * c);
+
+void
+dbus_detach_participant(const gchar* callID);
+
+void
+dbus_join_participant(const gchar* sel_callID, const gchar* drag_callID);
+
+void
+dbus_join_conference(const gchar* sel_confID, const gchar* drag_confID);
+
+void
+dbus_add_main_participant(const gchar* confID);
 
 #endif

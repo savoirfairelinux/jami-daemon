@@ -37,6 +37,7 @@
 #include <statusicon.h>
 #include <libgnome/libgnome.h>
 #include <libgnomeui/libgnomeui.h>
+#include <eel-gconf-extensions.h>
 
 #include <gtk/gtk.h>
 #include <stdlib.h>

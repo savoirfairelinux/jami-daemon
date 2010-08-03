@@ -59,7 +59,7 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
 
 #if GTK_CHECK_VERSION(2,16,0)
 
-static void search_all (GtkWidget *item, GtkEntry  *entry)
+static void search_all (GtkWidget *item UNUSED, GtkEntry  *entry)
 {
     HistorySearchType = SEARCH_ALL;
 
@@ -72,7 +72,7 @@ static void search_all (GtkWidget *item, GtkEntry  *entry)
     history_search (HistorySearchType);
 } 
 
-static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
+static void search_by_missed (GtkWidget *item UNUSED, GtkEntry  *entry)
 {
     HistorySearchType = SEARCH_MISSED;
 
@@ -84,7 +84,7 @@ static void search_by_missed (GtkWidget *item, GtkEntry  *entry)
     history_search (HistorySearchType);
 } 
 
-static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
+static void search_by_incoming (GtkWidget *item UNUSED, GtkEntry *entry)
 {
     HistorySearchType = SEARCH_INCOMING;
 
@@ -96,7 +96,7 @@ static void search_by_incoming (GtkWidget *item, GtkEntry *entry)
     history_search (HistorySearchType);
 } 
 
-static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
+static void search_by_outgoing (GtkWidget *item UNUSED, GtkEntry  *entry)
 {
     HistorySearchType = SEARCH_OUTGOING;
 
@@ -108,7 +108,7 @@ static void search_by_outgoing (GtkWidget *item, GtkEntry  *entry)
     history_search (HistorySearchType);
 } 
 
-static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event, gpointer data)
+static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event, gpointer data UNUSED)
 {
     if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree == history)
         gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 
@@ -117,7 +117,7 @@ static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event
         gtk_entry_set_text (entry, "");
 }
 
-static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec)
+static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec UNUSED)
 {
     gboolean has_text;
 

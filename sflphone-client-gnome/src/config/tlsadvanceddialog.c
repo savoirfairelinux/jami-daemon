@@ -80,20 +80,20 @@ void show_advanced_tls_options(GHashTable * properties)
     gtk_label_set_markup(GTK_LABEL(label), description);
     gtk_table_attach(GTK_TABLE(table), label, 0, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
             
-    gchar * account_id;
-    gchar * tls_listener_port;
-    gchar * tls_ca_list_file;
-    gchar * tls_certificate_file;
-    gchar * tls_private_key_file;
-    gchar * tls_password;    
-    gchar * tls_method;
-    gchar * tls_ciphers;
-    gchar * tls_server_name;
-    gchar * verify_server; 
-    gchar * verify_client;     
-    gchar * require_client_certificate;    	    
-    gchar * negotiation_timeout_sec;
-    gchar * negotiation_timeout_msec;	  
+    gchar * account_id = NULL;
+    gchar * tls_listener_port = NULL;
+    gchar * tls_ca_list_file = NULL;
+    gchar * tls_certificate_file = NULL;
+    gchar * tls_private_key_file = NULL;
+    gchar * tls_password = NULL;
+    gchar * tls_method = NULL;
+    gchar * tls_ciphers = NULL;
+    gchar * tls_server_name = NULL;
+    gchar * verify_server = NULL;
+    gchar * verify_client = NULL;
+    gchar * require_client_certificate = NULL;
+    gchar * negotiation_timeout_sec = NULL;
+    gchar * negotiation_timeout_msec = NULL;
 
     if (properties != NULL) {
 

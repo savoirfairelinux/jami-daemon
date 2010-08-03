@@ -29,6 +29,7 @@
  */
 
 #include "utils.h"
+#include <sflphone_const.h>
 
 void gnome_main_section_new_with_table (gchar *title, GtkWidget **frame, GtkWidget **table, gint nb_col, gint nb_row)
 {
@@ -63,7 +64,7 @@ void gnome_main_section_new_with_table (gchar *title, GtkWidget **frame, GtkWidg
     *frame = _frame;
 }
 
-void gnome_main_section_new_with_vbox (gchar *title, GtkWidget **frame, GtkWidget **vbox, gint nb_row)
+void gnome_main_section_new_with_vbox (gchar *title, GtkWidget **frame, GtkWidget **vbox, gint nb_row UNUSED)
 {
   GtkWidget *_frame, *_vbox, *label, *align;
     PangoAttrList *attrs = NULL;

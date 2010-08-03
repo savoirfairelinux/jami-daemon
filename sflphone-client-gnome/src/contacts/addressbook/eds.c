@@ -318,7 +318,7 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
     }
     else {
         WARN("Addressbook: Got error when opening book");
-	gchar *state_string;
+	gchar *state_string = NULL;
 	switch ( status ){
 	case E_BOOK_ERROR_INVALID_ARG :
 	  state_string = g_strdup("E_BOOK_ERROR_INVALID_ARG");
@@ -436,7 +436,6 @@ init(OpenAsyncHandler callback)
     for (m = sources; m != NULL; m = m->next) {
 
       ESource *source = m->data;
-      const gchar *property;
 
       DEBUG("Addressbook: Source name %s", e_source_peek_name(source));
       DEBUG("Addressbook: Source uid %s", e_source_peek_uid(source));
@@ -612,7 +611,7 @@ gpointer user_data)
  * Callback called after a contact have been found in EDS by search_async_by_contacts.
  */
 static void
-eds_query_result_cb(EBook *book, EBookStatus status, GList *contacts, gpointer user_data) {
+eds_query_result_cb(EBook *book UNUSED, EBookStatus status, GList *contacts, gpointer user_data) {
 
   DEBUG("Addressbook: Search Result callback callled");
 
@@ -625,7 +624,6 @@ eds_query_result_cb(EBook *book, EBookStatus status, GList *contacts, gpointer u
 
   if (status == E_BOOK_ERROR_OK) {
 
-    GdkPixbuf *photo;
     gchar *number;
 
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
@@ -759,7 +757,6 @@ search_by_contacts(const char *query, int max_results, SearchAsyncHandler handle
   EBookQuery *equery;
   EBookQuery *queries[4];
   GList *l, *list, *iter;
-  GError *error;
 
   current_search_id++;
 
@@ -781,7 +778,7 @@ search_by_contacts(const char *query, int max_results, SearchAsyncHandler handle
   had->book_views_remaining = 0;
 
   // create the query
-  int cpt;
+  int cpt = 0;
   queries[cpt++] = e_book_query_field_test(E_CONTACT_FULL_NAME, E_BOOK_QUERY_CONTAINS, query);
   queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_HOME, E_BOOK_QUERY_CONTAINS, query);
   queries[cpt++] = e_book_query_field_test(E_CONTACT_PHONE_BUSINESS, E_BOOK_QUERY_CONTAINS, query);
@@ -790,7 +787,7 @@ search_by_contacts(const char *query, int max_results, SearchAsyncHandler handle
   equery = e_book_query_or(cpt, queries, TRUE);
 
   // Iterate through all opened books
-  for(iter = books_data; iter != NULL; iter=iter->next){
+  for(iter = (GList *)books_data; iter != NULL; iter=iter->next){
     book_data_t *book_data = (book_data_t *)iter->data;
 
     if(book_data->active) {
@@ -830,8 +827,7 @@ void
 search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data) {
   EBookQuery *equery;
   EBookQuery *queries[4];
-  GList *l, *list, *iter;
-  GError *error;
+  GList *iter;
 
   current_search_id++;
 
@@ -867,7 +863,7 @@ search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler 
   equery = e_book_query_or(cpt, queries, TRUE);
   
   // Iterate through all opened books
-  for(iter = books_data; iter != NULL; iter = iter->next) {
+  for(iter = (GList *)books_data; iter != NULL; iter = iter->next) {
     book_data_t *book_data = (book_data_t *)iter->data;
 
     if(book_data->active) {

@@ -37,11 +37,16 @@
 #include <string.h>
 #include <glib/gprintf.h>
 #include <libgnome/gnome-help.h>
-#include <uimanager.h>
-#include <statusicon.h>
+#include <eel-gconf-extensions.h>
+#include "uimanager.h"
+#include "statusicon.h"
+#include "contacts/addressbook.h"
+#include "accountlist.h"
+#include "config/accountlistconfigdialog.h"
+
+void show_edit_number(callable_obj_t *call);
 
 static GtkWidget *toolbar;
-static GtkWidget *toolbarWindows;
 
 guint transfertButtonConnId; //The button toggled signal connection ID
 guint recordButtonConnId; //The button toggled signal connection ID
@@ -299,7 +304,7 @@ update_actions()
       case CONFERENCE_STATE_HOLD:
         gtk_action_set_sensitive(GTK_ACTION (hangUpAction), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET (offHoldToolbar), TRUE);
-	gtk_widget_set_sensitive(GTK_ACTION (recordAction), TRUE);
+	gtk_action_set_sensitive(GTK_ACTION (recordAction), TRUE);
         gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
         gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (offHoldToolbar), 2);
 	gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 3);
@@ -342,7 +347,7 @@ update_voicemail_status(void)
 }
 
 static void
-volume_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
+volume_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data UNUSED)
 {
   gboolean toggled = gtk_toggle_action_get_active(togglemenuitem);
   if (toggled == SHOW_VOLUME)
@@ -353,7 +358,7 @@ volume_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
 }
 
 static void
-dialpad_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
+dialpad_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data UNUSED)
 {
 	gboolean toggled = gtk_toggle_action_get_active (togglemenuitem);
 	gboolean conf_dialpad = eel_gconf_get_boolean (CONF_SHOW_DIALPAD);
@@ -366,7 +371,7 @@ dialpad_bar_cb(GtkToggleAction *togglemenuitem, gpointer user_data)
 }
 
 static void
-help_contents_cb(GtkAction *action)
+help_contents_cb(GtkAction *action UNUSED)
 {
   GError *error = NULL;
 
@@ -696,7 +701,6 @@ edit_paste(void * foo UNUSED)
         { // Create a new call to hold the new text
           selectedCall = sflphone_new_call();
 
-          gchar * before = selectedCall->_peer_number;
           selectedCall->_peer_number = g_strconcat(selectedCall->_peer_number,
               no, NULL);
           DEBUG("TO: %s", selectedCall->_peer_number);
@@ -773,7 +777,7 @@ call_mailbox_cb(void)
 {
   account_t* current;
   callable_obj_t *mailbox_call;
-  gchar *to, *from, *account_id;
+  gchar *to, *account_id;
 
   current = account_list_get_current();
   if (current == NULL) // Should not happens
@@ -793,7 +797,7 @@ call_mailbox_cb(void)
 }
 
 static void
-toggle_history_cb(GtkToggleAction *action, gpointer user_data)
+toggle_history_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 {
   gboolean toggle;
   toggle = gtk_toggle_action_get_active(action);
@@ -801,7 +805,7 @@ toggle_history_cb(GtkToggleAction *action, gpointer user_data)
 }
 
 static void
-toggle_addressbook_cb(GtkToggleAction *action, gpointer user_data)
+toggle_addressbook_cb(GtkToggleAction *action, gpointer user_data UNUSED)
 {
   gboolean toggle;
   toggle = gtk_toggle_action_get_active(action);
@@ -812,70 +816,44 @@ static const GtkActionEntry menu_entries[] =
   {
 
   // Call Menu
-        { "Call", NULL, N_("Call") },
-        { "NewCall", GTK_STOCK_DIAL, N_("_New call"), "<control>N",
-            N_("Place a new call"), G_CALLBACK (call_new_call) },
-        { "PickUp", GTK_STOCK_PICKUP, N_("_Pick up"), NULL,
-            N_("Answer the call"), G_CALLBACK (call_pick_up) },
-        { "HangUp", GTK_STOCK_HANGUP, N_("_Hang up"), "<control>S",
-            N_("Finish the call"), G_CALLBACK (call_hang_up) },
-        { "OnHold", GTK_STOCK_ONHOLD, N_("O_n hold"), "<control>P",
-            N_("Place the call on hold"), G_CALLBACK (call_hold) },
-        { "OffHold", GTK_STOCK_OFFHOLD, N_("O_ff hold"), "<control>P",
-            N_("Place the call off hold"), G_CALLBACK (call_hold) },
-        { "AccountAssistant", NULL, N_("Configuration _Assistant"), NULL,
-            N_("Run the configuration assistant"),
-            G_CALLBACK (call_configuration_assistant) },
-        { "Voicemail", "mail-read", N_("Voicemail"), NULL,
-            N_("Call your voicemail"), G_CALLBACK (call_mailbox_cb) },
-        { "Close", GTK_STOCK_CLOSE, N_("_Close"), "<control>W",
-            N_("Minimize to system tray"), G_CALLBACK (call_minimize) },
-        { "Quit", GTK_STOCK_CLOSE, N_("_Quit"), "<control>Q",
-            N_("Quit the program"), G_CALLBACK (call_quit) },
+        { "Call", NULL, N_("Call"), NULL, NULL, NULL },
+        { "NewCall", GTK_STOCK_DIAL, N_("_New call"), "<control>N", N_("Place a new call"), G_CALLBACK (call_new_call) },
+        { "PickUp", GTK_STOCK_PICKUP, N_("_Pick up"), NULL, N_("Answer the call"), G_CALLBACK (call_pick_up) },
+        { "HangUp", GTK_STOCK_HANGUP, N_("_Hang up"), "<control>S", N_("Finish the call"), G_CALLBACK (call_hang_up) },
+        { "OnHold", GTK_STOCK_ONHOLD, N_("O_n hold"), "<control>P", N_("Place the call on hold"), G_CALLBACK (call_hold) },
+        { "OffHold", GTK_STOCK_OFFHOLD, N_("O_ff hold"), "<control>P", N_("Place the call off hold"), G_CALLBACK (call_hold) },
+        { "AccountAssistant", NULL, N_("Configuration _Assistant"), NULL, N_("Run the configuration assistant"), G_CALLBACK (call_configuration_assistant) },	    
+        { "Voicemail", "mail-read", N_("Voicemail"), NULL, N_("Call your voicemail"), G_CALLBACK (call_mailbox_cb) },
+        { "Close", GTK_STOCK_CLOSE, N_("_Close"), "<control>W", N_("Minimize to system tray"), G_CALLBACK (call_minimize) },
+        { "Quit", GTK_STOCK_CLOSE, N_("_Quit"), "<control>Q", N_("Quit the program"), G_CALLBACK (call_quit) },
 
       // Edit Menu
-        { "Edit", NULL, N_("_Edit") },
-        { "Copy", GTK_STOCK_COPY, N_("_Copy"), "<control>C",
-            N_("Copy the selection"), G_CALLBACK (edit_copy) },
-        { "Paste", GTK_STOCK_PASTE, N_("_Paste"), "<control>V",
-            N_("Paste the clipboard"), G_CALLBACK (edit_paste) },
-        { "ClearHistory", GTK_STOCK_CLEAR, N_("Clear _history"), NULL,
-            N_("Clear the call history"), G_CALLBACK (clear_history) },
-        { "Accounts", NULL, N_("_Accounts"), NULL, N_("Edit your accounts"),
-            G_CALLBACK (edit_accounts) },
-        { "Preferences", GTK_STOCK_PREFERENCES, N_("_Preferences"), NULL,
-            N_("Change your preferences"), G_CALLBACK (edit_preferences) },
+        { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },
+	{ "Copy", GTK_STOCK_COPY, N_("_Copy"), "<control>C", N_("Copy the selection"), G_CALLBACK (edit_copy) },
+        { "Paste", GTK_STOCK_PASTE, N_("_Paste"), "<control>V", N_("Paste the clipboard"), G_CALLBACK (edit_paste) },
+        { "ClearHistory", GTK_STOCK_CLEAR, N_("Clear _history"), NULL, N_("Clear the call history"), G_CALLBACK (clear_history) },
+        { "Accounts", NULL, N_("_Accounts"), NULL, N_("Edit your accounts"), G_CALLBACK (edit_accounts) },
+	{ "Preferences", GTK_STOCK_PREFERENCES, N_("_Preferences"), NULL, N_("Change your preferences"), G_CALLBACK (edit_preferences) },
 
       // View Menu
-        { "View", NULL, N_("_View") },
+        { "View", NULL, N_("_View"), NULL, NULL, NULL },
 
       // Help menu
-        { "Help", NULL, N_("_Help") },
-        { "HelpContents", GTK_STOCK_HELP, N_("Contents"), "F1",
-            N_("Open the manual"), G_CALLBACK (help_contents_cb) },
-        { "About", GTK_STOCK_ABOUT, NULL, NULL, N_("About this application"),
-            G_CALLBACK (help_about) }
-
+        { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
+	{ "HelpContents", GTK_STOCK_HELP, N_("Contents"), "F1", N_("Open the manual"), G_CALLBACK (help_contents_cb) },
+        { "About", GTK_STOCK_ABOUT, NULL, NULL, N_("About this application"), G_CALLBACK (help_about) }
   };
 
 static const GtkToggleActionEntry toggle_menu_entries[] =
   {
 
-    { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T",
-        N_("Transfer the call"), NULL }, //G_CALLBACK (call_transfer_cb) },
-        { "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R",
-            N_("Record the current conversation"), NULL }, // G_CALLBACK (call_record) },
-        { "Toolbar", NULL, N_("_Show toolbar"), "<control>T",
-            N_("Show the toolbar"), NULL },
-        { "Dialpad", NULL, N_("_Dialpad"), "<control>D",
-            N_("Show the dialpad"), G_CALLBACK (dialpad_bar_cb) },
-        { "VolumeControls", NULL, N_("_Volume controls"), "<control>V",
-            N_("Show the volume controls"), G_CALLBACK (volume_bar_cb) },
-        { "History", "appointment-soon", N_("_History"), NULL,
-            N_("Calls history"), G_CALLBACK (toggle_history_cb), FALSE },
-        { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL,
-            N_("Address book"), G_CALLBACK (toggle_addressbook_cb), FALSE }
-
+    { "Transfer", GTK_STOCK_TRANSFER, N_("_Transfer"), "<control>T", N_("Transfer the call"), NULL, TRUE },
+    { "Record", GTK_STOCK_MEDIA_RECORD, N_("_Record"), "<control>R", N_("Record the current conversation"), NULL, TRUE },
+    { "Toolbar", NULL, N_("_Show toolbar"), "<control>T", N_("Show the toolbar"), NULL, TRUE },
+    { "Dialpad", NULL, N_("_Dialpad"), "<control>D", N_("Show the dialpad"), G_CALLBACK (dialpad_bar_cb), TRUE },
+    { "VolumeControls", NULL, N_("_Volume controls"), "<control>V", N_("Show the volume controls"), G_CALLBACK (volume_bar_cb), TRUE },
+    { "History", "appointment-soon", N_("_History"), NULL, N_("Calls history"), G_CALLBACK (toggle_history_cb), FALSE },
+    { "Addressbook", GTK_STOCK_ADDRESSBOOK, N_("_Address book"), NULL, N_("Address book"), G_CALLBACK (toggle_addressbook_cb), FALSE }
   };
 
 gboolean
@@ -1000,7 +978,7 @@ show_popup_menu(GtkWidget *my_widget, GdkEventButton *event)
   // conference type boolean
   gboolean hangup_conf = FALSE, hold_conf = FALSE;
 
-  callable_obj_t * selectedCall;
+  callable_obj_t * selectedCall = NULL;
   conference_obj_t * selectedConf;
 
   if (calltab_get_selected_type(current_calls) == A_CALL)

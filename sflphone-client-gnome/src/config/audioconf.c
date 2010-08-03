@@ -31,6 +31,8 @@
 #include <audioconf.h>
 #include <utils.h>
 #include <string.h>
+#include <eel-gconf-extensions.h>
+#include "dbus/dbus.h"
 
 GtkListStore *pluginlist;
 GtkListStore *outputlist;
@@ -440,29 +442,6 @@ select_audio_input_device(GtkComboBox* comboBox, gpointer data UNUSED)
 }
 
 /**
- * Set the audio ringtone device on the server with its index
- */
-static void
-select_audio_ringtone_device(GtkComboBox *comboBox, gpointer data UNUSED)
-{
-    GtkTreeModel *model;
-    GtkTreeIter iter;
-    int comboBoxIndex;
-    int deviceIndex;
-
-    comboBoxIndex = gtk_combo_box_get_active(comboBox);
-
-    if(comboBoxIndex >= 0) {
-        model = gtk_combo_box_get_model(comboBox);
-	gtk_combo_box_get_active_iter(comboBox, &iter);
-
-	gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-
-	dbus_set_audio_ringtone_device(deviceIndex);
-    }
-}
-
-/**
  * Toggle move buttons on if a codec is selected, off elsewise
  */
 	static void
@@ -557,7 +536,6 @@ static void codec_move (gboolean moveUp, gpointer data) {
 
 	GtkTreeIter iter;
 	GtkTreeIter *iter2;
-	GtkTreeView *treeView;
 	GtkTreeModel *model;
 	GtkTreeSelection *selection;
 	GtkTreePath *treePath;
@@ -894,7 +872,6 @@ GtkWidget* create_audio_configuration()
 	// Main widget
 	GtkWidget *ret;
 	// Sub boxes
-	GtkWidget *box;
 	GtkWidget *frame;
 	GtkWidget *enableEchoCancel;
 	GtkWidget *enableNoiseReduction;
