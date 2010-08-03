@@ -36,7 +36,7 @@
 GtkWidget*
 create_shortcuts_settings ()
 {
-  GtkWidget *vbox, *result_frame, *window, *treeview, *scrolled_window, *label;
+  GtkWidget *vbox, *result_frame, *treeview, *label;
 
   GtkTreeIter iter;
   guint i = 0;
@@ -104,8 +104,8 @@ setup_tree_view (GtkWidget *treeview)
 }
 
 static void
-accel_edited (GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
-    GdkModifierType mask, guint hardware_keycode, GtkTreeView *treeview)
+accel_edited (GtkCellRendererAccel *renderer UNUSED, gchar *path, guint accel_key,
+    GdkModifierType mask, guint hardware_keycode UNUSED, GtkTreeView *treeview)
 {
   DEBUG("Accel edited");
 
@@ -114,7 +114,7 @@ accel_edited (GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
 
   Accelerator* list = shortcuts_get_list ();
   model = gtk_tree_view_get_model (treeview);
-  gint code = XKeysymToKeycode (GDK_DISPLAY(), accel_key);
+  guint code = XKeysymToKeycode (GDK_DISPLAY(), accel_key);
 
   // Disable existing binding if key already used
   int i = 0;
@@ -141,7 +141,7 @@ accel_edited (GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
 }
 
 static void
-accel_cleared (GtkCellRendererAccel *renderer, gchar *path,
+accel_cleared (GtkCellRendererAccel *renderer UNUSED, gchar *path,
     GtkTreeView *treeview)
 {
   DEBUG("Accel cleared");

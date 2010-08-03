@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <eel-gconf-extensions.h>
 
 #include <accountconfigdialog.h>
 #include <addressbook-config.h>
@@ -98,7 +99,7 @@ start_hidden (void)
 }
 
 	static void
-set_popup_mode (GtkWidget *widget, gpointer *userdata)
+set_popup_mode (GtkWidget *widget, gpointer *userdata UNUSED)
 {
 	gboolean currentstate = eel_gconf_get_integer (POPUP_ON_CALL);
 	if (currentstate || gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
@@ -114,7 +115,7 @@ set_notif_level ()
 }
 
 	static void
-history_limit_cb (GtkSpinButton *button, void *ptr)
+history_limit_cb (GtkSpinButton *button UNUSED, void *ptr)
 {
 	history_limit = gtk_spin_button_get_value_as_int ((GtkSpinButton *) (ptr));
 }
@@ -135,7 +136,7 @@ clean_history (void)
 	calllist_clean_history ();
 }
 
-void showstatusicon_cb (GtkWidget *widget, gpointer data) {
+void showstatusicon_cb (GtkWidget *widget, gpointer data UNUSED) {
 
 	gboolean currentstatus = FALSE;
 
@@ -158,7 +159,7 @@ void showstatusicon_cb (GtkWidget *widget, gpointer data) {
 create_general_settings ()
 {
 
-	GtkWidget *ret, *notifAll, *trayItem, *frame, *checkBoxWidget, *label, *table, *showstatusicon;
+	GtkWidget *ret, *notifAll, *frame, *checkBoxWidget, *label, *table, *showstatusicon;
 	gboolean statusicon;
 
 	// Load history configuration
@@ -280,7 +281,8 @@ history_load_configuration ()
 }
 
 
-gboolean selection_changed_cb (GtkIconView *view, gpointer user_data) {
+	void
+selection_changed_cb (GtkIconView *view, gpointer user_data UNUSED) {
 
 	GtkTreeModel *model;
 	GtkTreeIter iter;

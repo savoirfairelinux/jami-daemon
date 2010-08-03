@@ -301,7 +301,7 @@ addressbook_config_fill_book_list()
 create_addressbook_settings()
 {
 
-    GtkWidget *ret, *result_frame, *table, *value, *label, *item;
+    GtkWidget *ret, *result_frame, *table, *value, *item;
 
     GtkListStore *store;
     GtkCellRenderer *renderer;
