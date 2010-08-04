@@ -81,7 +81,7 @@
 #define WINDOW_POSITION_Y					"Window.positionY"
 #define SHOW_STATUSICON						"Statusicon.show"
 
-#define IP2IP_PROFILE                       "IP2IP"    
+#define IP2IP_PROFILE                       "IP2IP"
 #define SIGNALISATION                       "VoIPLink"	                /** Section Signalisation */
 #define ZRTP_ZIDFILE                        "zidFile"                   /** The filename used for storing ZIDs */
 #define PLAY_DTMF		            "DTMF.playDtmf"	            /** Whether or not should play dtmf */
@@ -104,11 +104,11 @@
 #define URLHOOK_COMMAND                     "Hooks.url_command"
 #define URLHOOK_SIP_ENABLED                 "Hooks.sip_enabled"
 #define URLHOOK_IAX2_ENABLED                "Hooks.iax2_enabled"
-#define PHONE_NUMBER_HOOK_ENABLED           "Hooks.phone_number_enabled"    
+#define PHONE_NUMBER_HOOK_ENABLED           "Hooks.phone_number_enabled"
 #define PHONE_NUMBER_HOOK_ADD_PREFIX        "Hooks.phone_number_add_prefix"
 
 #define EMPTY_FIELD		            ""		      /** Default value for empty field */
-#define DEFAULT_ACCOUNT_TYPE                "SIP"		
+#define DEFAULT_ACCOUNT_TYPE                "SIP"
 #define DFT_STUN_SERVER 	            "stun.sflphone.org"	 /** Default STUN server address */
 #define	TRUE_STR			    "true"		 /** Default YES value */
 #define	FALSE_STR			    "false"		 /** Default NO value */

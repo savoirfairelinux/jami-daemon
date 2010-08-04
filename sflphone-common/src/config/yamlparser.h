@@ -37,123 +37,139 @@
 #include <exception>
 #include <string>
 
-namespace Conf {
+namespace Conf
+{
 
 #define PARSER_BUFFERSIZE 65536
 #define PARSER_MAXEVENT 1024
 
 class YamlParserException : public std::exception
 {
- public:
-  YamlParserException(const std::string& str="") throw() : errstr(str) {}
-  
-  virtual ~YamlParserException() throw() {}
+    public:
+        YamlParserException (const std::string& str="") throw() : errstr (str) {}
 
-  virtual const char *what() const throw() {
-    std::string expt("YamlParserException occured: ");
-    expt.append(errstr);
+        virtual ~YamlParserException() throw() {}
 
-    return expt.c_str();
-  }
- private:
-  std::string errstr;
+        virtual const char *what() const throw() {
+            std::string expt ("YamlParserException occured: ");
+            expt.append (errstr);
+
+            return expt.c_str();
+        }
+    private:
+        std::string errstr;
 };
 
 
-class YamlParser {
+class YamlParser
+{
 
- public:
+    public:
 
-  YamlParser(const char *file);
+        YamlParser (const char *file);
 
-  ~YamlParser();
+        ~YamlParser();
 
-  void open();
+        void open();
 
-  void close();
+        void close();
 
-  void serializeEvents();
+        void serializeEvents();
 
-  YamlDocument *composeEvents();
+        YamlDocument *composeEvents();
 
-  void constructNativeData();
+        void constructNativeData();
 
-  SequenceNode *getAccountSequence(void) { return accountSequence; };
+        SequenceNode *getAccountSequence (void) {
+            return accountSequence;
+        };
 
-  SequenceNode *getPreferenceSequence(void) { return preferenceSequence; }
+        SequenceNode *getPreferenceSequence (void) {
+            return preferenceSequence;
+        }
 
-  SequenceNode *getAddressbookSequence(void) { return addressbookSequence; }
+        SequenceNode *getAddressbookSequence (void) {
+            return addressbookSequence;
+        }
 
-  SequenceNode *getAudioSequence(void) { return audioSequence; }
+        SequenceNode *getAudioSequence (void) {
+            return audioSequence;
+        }
 
-  SequenceNode *getHookSequence(void) { return hooksSequence; }
+        SequenceNode *getHookSequence (void) {
+            return hooksSequence;
+        }
 
-  SequenceNode *getVoipPreferenceSequence(void) { return voiplinkSequence; }
+        SequenceNode *getVoipPreferenceSequence (void) {
+            return voiplinkSequence;
+        }
 
-  SequenceNode *getShortcutSequence(void) { return shortcutSequence; }
+        SequenceNode *getShortcutSequence (void) {
+            return shortcutSequence;
+        }
 
- private:
+    private:
 
-  /**
-   * Copy yaml parser event in event_to according to their type.
-   */
-  int copyEvent(yaml_event_t *event_to, yaml_event_t *event_from);
+        /**
+         * Copy yaml parser event in event_to according to their type.
+         */
+        int copyEvent (yaml_event_t *event_to, yaml_event_t *event_from);
 
-  void processStream(void);
+        void processStream (void);
 
-  void processDocument(void);
+        void processDocument (void);
 
-  void processScalar(YamlNode *topNode);
+        void processScalar (YamlNode *topNode);
 
-  void processSequence(YamlNode *topNode);
+        void processSequence (YamlNode *topNode);
 
-  void processMapping(YamlNode *topNode);
+        void processMapping (YamlNode *topNode);
 
-  void mainNativeDataMapping(MappingNode *map);
+        void mainNativeDataMapping (MappingNode *map);
 
-  //   void buildAccounts(SequenceNode *map);
+        //   void buildAccounts(SequenceNode *map);
 
-  std::string filename;
+        std::string filename;
 
-  FILE *fd;
+        FILE *fd;
 
-  /**
-   * The parser structure. 
-   */
-  yaml_parser_t parser;
+        /**
+         * The parser structure.
+         */
+        yaml_parser_t parser;
 
-  /**
-   * The event structure array.
-   */ 
-  yaml_event_t events[PARSER_MAXEVENT];
+        /**
+         * The event structure array.
+         */
+        yaml_event_t events[PARSER_MAXEVENT];
 
-  /**
-   * 
-   */
-  unsigned char buffer[PARSER_BUFFERSIZE];
+        /**
+         *
+         */
+        unsigned char buffer[PARSER_BUFFERSIZE];
 
-  /**
-   * Number of event actually parsed
-   */
-  int eventNumber;
+        /**
+         * Number of event actually parsed
+         */
+        int eventNumber;
 
-  YamlDocument *doc;
+        YamlDocument *doc;
 
-  int eventIndex;
+        int eventIndex;
 
-  SequenceNode *accountSequence;
+        SequenceNode *accountSequence;
 
-  SequenceNode *preferenceSequence;
+        SequenceNode *preferenceSequence;
 
-  SequenceNode *addressbookSequence;
+        SequenceNode *addressbookSequence;
 
-  SequenceNode *audioSequence;
+        SequenceNode *audioSequence;
 
-  SequenceNode *hooksSequence;
+        SequenceNode *hooksSequence;
 
-  SequenceNode *voiplinkSequence;
+        SequenceNode *voiplinkSequence;
 
-  SequenceNode *shortcutSequence;
+        SequenceNode *shortcutSequence;
 
 };
 

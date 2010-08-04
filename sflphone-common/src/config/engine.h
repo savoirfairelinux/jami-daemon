@@ -33,17 +33,18 @@
 
 #include <yaml.h>
 
-class Engine {
+class Engine
+{
 
- public:
+    public:
 
-  virtual void open() = 0;
+        virtual void open() = 0;
 
-  virtual void close() = 0;
+        virtual void close() = 0;
 
-  virtual void write() = 0;
+        virtual void write() = 0;
 
-  virtual void read() = 0;
+        virtual void read() = 0;
 
 };
 

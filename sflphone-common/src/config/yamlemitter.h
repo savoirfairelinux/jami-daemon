@@ -36,112 +36,114 @@
 #include <string>
 #include "yamlnode.h"
 
-namespace Conf {
+namespace Conf
+{
 
 #define EMITTER_BUFFERSIZE 65536
 #define EMITTER_MAXEVENT 1024
 
-class YamlEmitterException : public std::exception 
+class YamlEmitterException : public std::exception
 {
- public:
-  YamlEmitterException(const std::string& str="") throw() : errstr(str) {}
+    public:
+        YamlEmitterException (const std::string& str="") throw() : errstr (str) {}
 
-  virtual ~YamlEmitterException() throw() {}
+        virtual ~YamlEmitterException() throw() {}
 
-  virtual const char *what() const throw() {
-    std::string expt("YamlParserException occured: ");
-    expt.append(errstr);
-    
-    return expt.c_str();
-  }
- private:
-  std::string errstr;
+        virtual const char *what() const throw() {
+            std::string expt ("YamlParserException occured: ");
+            expt.append (errstr);
+
+            return expt.c_str();
+        }
+    private:
+        std::string errstr;
 
 };
 
-class YamlEmitter {
+class YamlEmitter
+{
 
- public:
+    public:
 
-  YamlEmitter(const char *file);
+        YamlEmitter (const char *file);
 
-  ~YamlEmitter();
+        ~YamlEmitter();
 
-  void open();
+        void open();
 
-  void close();
+        void close();
 
-  void read();
+        void read();
 
-  void write();
+        void write();
 
-  void serializeAccount(MappingNode *map);
+        void serializeAccount (MappingNode *map);
 
-  void serializePreference(MappingNode *map);
+        void serializePreference (MappingNode *map);
 
-  void serializeVoipPreference(MappingNode *map);
+        void serializeVoipPreference (MappingNode *map);
 
-  void serializeAddressbookPreference(MappingNode *map);
+        void serializeAddressbookPreference (MappingNode *map);
 
-  void serializeHooksPreference(MappingNode *map);
+        void serializeHooksPreference (MappingNode *map);
 
-  void serializeAudioPreference(MappingNode *map);
+        void serializeAudioPreference (MappingNode *map);
 
-  void serializeShortcutPreference(MappingNode *map);
+        void serializeShortcutPreference (MappingNode *map);
 
-  void writeAudio();
+        void writeAudio();
 
-  void writeHooks();
+        void writeHooks();
 
-  void writeVoiplink();
+        void writeVoiplink();
 
-  void serializeData();
+        void serializeData();
 
- private:
+    private:
 
-  void addMappingItem(int mappingid, Key key, YamlNode *node);
+        void addMappingItem (int mappingid, Key key, YamlNode *node);
 
-  std::string filename;
+        std::string filename;
 
-  FILE *fd;
+        FILE *fd;
 
-  /**
-   * The parser structure. 
-   */
-  yaml_emitter_t emitter;
+        /**
+         * The parser structure.
+         */
+        yaml_emitter_t emitter;
 
-  /**
-   * The event structure array.
-   */ 
-  yaml_event_t events[EMITTER_MAXEVENT];
+        /**
+         * The event structure array.
+         */
+        yaml_event_t events[EMITTER_MAXEVENT];
 
-  /**
-   * 
-   */
-  unsigned char buffer[EMITTER_BUFFERSIZE];
+        /**
+         *
+         */
+        unsigned char buffer[EMITTER_BUFFERSIZE];
 
 
-  /**
-   * Main document for this serialization
-   */
-  yaml_document_t document;
+        /**
+         * Main document for this serialization
+         */
+        yaml_document_t document;
 
-  /**
-   * Reference id to the top levell mapping when creating
-   */
-  int topLevelMapping;
+        /**
+         * Reference id to the top levell mapping when creating
+         */
+        int topLevelMapping;
 
-  /**
-   * We need to add the account sequence if this is the first account to be
-   */
-  bool isFirstAccount;
+        /**
+         * We need to add the account sequence if this is the first account to be
+         */
+        bool isFirstAccount;
 
-  /**
-   * Reference to the account sequence
-   */
-  int accountSequence;
+        /**
+         * Reference to the account sequence
+         */
+        int accountSequence;
 
-  friend class ConfigurationTest;
+        friend class ConfigurationTest;
 
 };
 

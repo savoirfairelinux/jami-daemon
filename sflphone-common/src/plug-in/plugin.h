@@ -32,25 +32,28 @@
 #ifndef PLUGIN_H
 #define PLUGIN_H
 
-#include "global.h" 
+#include "global.h"
 
-#include "pluginmanager.h" 
+#include "pluginmanager.h"
 
 /*
  * @file plugin.h
- * @brief Define a plugin object 
+ * @brief Define a plugin object
  */
 
-class Plugin {
+class Plugin
+{
 
     public:
-        Plugin( const std::string &name ){
+        Plugin (const std::string &name) {
             _name = name;
         }
 
         virtual ~Plugin()  {}
 
-        inline std::string getPluginName (void) { return _name; }
+        inline std::string getPluginName (void) {
+            return _name;
+        }
 
         /**
          * Return the minimal core version required so that the plugin could work
@@ -59,7 +62,7 @@ class Plugin {
         virtual int initFunc (PluginInfo **info) = 0;
 
     private:
-        Plugin &operator =(const Plugin &plugin);
+        Plugin &operator = (const Plugin &plugin);
 
         std::string _name;
 };

@@ -39,9 +39,9 @@
 #include "librarymanager.h"
 #include "global.h"
 
-#include <map> 
-#include <string> 
-#include <vector> 
+#include <map>
+#include <string>
+#include <vector>
 
 class Plugin;
 
@@ -55,7 +55,8 @@ typedef struct PluginInfo {
 
 #include "plugin.h"
 
-class PluginManager {
+class PluginManager
+{
     public:
         /**
          * Destructor
@@ -86,20 +87,20 @@ class PluginManager {
         bool isPluginLoaded (const std::string &name);
 
         int registerPlugin (Plugin *plugin, LibraryManager *library);
-        
+
         int unregisterPlugin (PluginInfo *plugin);
 
-        int deletePlugin (PluginInfo *plugin); 
+        int deletePlugin (PluginInfo *plugin);
 
         /**
-         * Load a unix dynamic/shared library 
+         * Load a unix dynamic/shared library
          * @param filename  The path to the dynamic/shared library
          * @return LibraryManager*    A pointer on the library
          */
         LibraryManager* loadDynamicLibrary (const std::string &filename);
 
         /**
-         * Unload a unix dynamic/shared library 
+         * Unload a unix dynamic/shared library
          * @param LibraryManager*  The pointer on the loaded library
          */
         int unloadDynamicLibrary (LibraryManager* libraryPtr);

@@ -10,7 +10,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -36,26 +36,26 @@
 class ManagerImpl;
 class SIPCall;
 
-namespace sfl {
+namespace sfl
+{
 
-    class ZrtpZidException: public std::exception
-    {
-        virtual const char* what() const throw()
-        {
-        return "ZRTP ZID initialization failed.";
+class ZrtpZidException: public std::exception
+{
+        virtual const char* what() const throw() {
+            return "ZRTP ZID initialization failed.";
         }
-    };
+};
 
-    class AudioZrtpSession : public ost::SymmetricZRTPSession, public AudioRtpSession<AudioZrtpSession> 
-    {
-        public:
-			AudioZrtpSession(ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename);
+class AudioZrtpSession : public ost::SymmetricZRTPSession, public AudioRtpSession<AudioZrtpSession>
+{
+    public:
+        AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename);
 
-        private:
-            void initializeZid(void);
-            std::string _zidFilename;
-    };
-   
+    private:
+        void initializeZid (void);
+        std::string _zidFilename;
+};
+
 }
 
 #endif // __AUDIO_ZRTP_SESSION_H__
