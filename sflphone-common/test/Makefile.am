@@ -26,9 +26,7 @@ test_SOURCES = \
 	rtptest.h \
 	rtptest.cpp \
 	sdesnegotiatortest.h \
-	sdesnegotiatortest.cpp \
-	ringtonetest.h \
-	ringtonetest.cpp
+	sdesnegotiatortest.cpp
 
 LLIBS=$(CPPUNIT_LIBS) \
 	../src/sflphoned-logger.o \
