@@ -34,8 +34,8 @@
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "networkmanager_proxy.h"
-#pragma GCC diagnostic error "-Wignored-qualifiers"
-#pragma GCC diagnostic error "-Wunused-parameter"
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
 
 using namespace std;
 
