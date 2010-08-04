@@ -123,6 +123,21 @@ enum {
 };
 
 /*
+ * The same window is used with different configurations
+ * so we need to reset some data to prevent side-effects
+ */
+static void reset()
+{
+    entryAlias = NULL;
+    protocolComboBox = NULL;
+    entryHostname = NULL;
+    entryUsername = NULL;
+    entryPassword = NULL;
+    entryUseragent = NULL;
+    entryMailbox = NULL;
+}
+
+/*
  * Display / Hide the password
  */
 static void show_password_cb (GtkWidget *widget UNUSED, gpointer data)
@@ -290,6 +305,7 @@ static GtkWidget* create_basic_tab (account_t **a)
         curUsername = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERNAME);
         // curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
         curMailbox = g_hash_table_lookup (currentAccount->properties, ACCOUNT_MAILBOX);
+        curMailbox = curMailbox != NULL ? curMailbox : "";
         curUseragent = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERAGENT);
     }
 
@@ -1267,6 +1283,10 @@ void show_account_window (account_t * a)
     GtkWidget *tab, *codecs_tab, *ip_tab;
     gint response;
     account_t *currentAccount;
+
+
+    // Firstly we reset
+    reset();
 
     // In case the published address is same than local,
     // we must resolve published address from interface name

@@ -436,11 +436,14 @@ gchar* serialize_history_entry (callable_obj_t *entry)
     // and the timestamps
     timestamp = convert_timestamp_to_gchar (entry->_time_stop);
 
+    gchar* peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
+    gchar* account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
+
     result = g_strconcat (history_state, separator,
                           entry->_peer_number, separator,
-                          g_strcasecmp (entry->_peer_name,"") ==0 ? "empty": entry->_peer_name, separator,
+                          peer_name, separator,
                           timestamp, separator,
-                          g_strcasecmp (entry->_accountID,"") ==0 ? "empty": entry->_accountID,
+                          account_id,
                           NULL);
 
     return result;

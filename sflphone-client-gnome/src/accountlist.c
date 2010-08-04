@@ -360,7 +360,9 @@ gboolean current_account_has_mailbox (void)
     current = account_list_get_current ();
 
     if (current) {
-        if (g_strcasecmp (g_hash_table_lookup (current->properties, ACCOUNT_MAILBOX), "") != 0)
+        gchar * account_mailbox = g_hash_table_lookup (current->properties, ACCOUNT_MAILBOX);
+
+        if (account_mailbox != NULL && g_strcasecmp (account_mailbox, "") != 0)
             return TRUE;
     }
 
