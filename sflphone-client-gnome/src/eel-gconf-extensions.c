@@ -587,7 +587,7 @@ gpdf_notification_add (const char *key,
                                         callback_data);
         if (notifiers != NULL) {
                 *notifiers = g_list_append(*notifiers,
-                                           (gpointer)id);
+                                           GINT_TO_POINTER(id));
         }
 }
 
