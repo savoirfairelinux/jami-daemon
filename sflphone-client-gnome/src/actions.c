@@ -201,8 +201,6 @@ sflphone_hung_up (callable_obj_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink (FALSE);
 #endif
-    free_callable_obj_t (c);
-
     calltree_update_clock();
 }
 
