@@ -39,9 +39,8 @@
 
 G_BEGIN_DECLS
 
-enum
-{
-  ACTION = 0, MASK, VALUE, COLUMNS
+enum {
+    ACTION = 0, MASK, VALUE, COLUMNS
 };
 
 GtkWidget*

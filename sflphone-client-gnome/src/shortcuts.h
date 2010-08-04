@@ -31,13 +31,12 @@
 #ifndef SHORTCUTS_H_
 #define SHORTCUTS_H_
 
-typedef struct
-{
-  gchar *action;
-  guint key;
-  GdkModifierType mask;
-  void
-  (*callback) (void);
+typedef struct {
+    gchar *action;
+    guint key;
+    GdkModifierType mask;
+    void
+    (*callback) (void);
 } Accelerator;
 
 void

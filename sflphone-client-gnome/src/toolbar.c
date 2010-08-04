@@ -32,63 +32,59 @@
 #include <contacts/addressbook.h>
 
 
-    static void
-call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
+static void
+call_mailbox (GtkWidget* widget UNUSED, gpointer data UNUSED)
 {
     account_t* current;
     callable_obj_t *mailbox_call;
     gchar *to, *from, *account_id;
 
     current = account_list_get_current ();
-    if( current == NULL ) // Should not happens
+
+    if (current == NULL)  // Should not happens
         return;
 
-    to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
+    to = g_strdup (g_hash_table_lookup (current->properties, ACCOUNT_MAILBOX));
     account_id = g_strdup (current->accountID);
 
-    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _("Voicemail"), to, &mailbox_call);
-    DEBUG("Call: TO : %s" , mailbox_call->_peer_number);
-    calllist_add( current_calls , mailbox_call );
-    calltree_add_call( current_calls, mailbox_call, NULL);
+    create_new_call (CALL, CALL_STATE_DIALING, "", account_id, _ ("Voicemail"), to, &mailbox_call);
+    DEBUG ("Call: TO : %s" , mailbox_call->_peer_number);
+    calllist_add (current_calls , mailbox_call);
+    calltree_add_call (current_calls, mailbox_call, NULL);
     update_actions();
-    sflphone_place_call( mailbox_call );
-    calltree_display(current_calls);
+    sflphone_place_call (mailbox_call);
+    calltree_display (current_calls);
 }
 
 /**
  * Make a call
  */
-    static void
-call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
+static void
+call_button (GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
     callable_obj_t * selectedCall;
     callable_obj_t* new_call;
 
-    selectedCall = calltab_get_selected_call(active_calltree);
+    selectedCall = calltab_get_selected_call (active_calltree);
 
-    if(calllist_get_size(current_calls)>0)
+    if (calllist_get_size (current_calls) >0)
         sflphone_pick_up();
 
-    else if(calllist_get_size(active_calltree) > 0){
-        if( selectedCall)
-        {
+    else if (calllist_get_size (active_calltree) > 0) {
+        if (selectedCall) {
             create_new_call (CALL, CALL_STATE_DIALING, "", "", "", selectedCall->_peer_number, &new_call);
 
-            calllist_add(current_calls, new_call);
-            calltree_add_call(current_calls, new_call, NULL);
-            sflphone_place_call(new_call);
+            calllist_add (current_calls, new_call);
+            calltree_add_call (current_calls, new_call, NULL);
+            sflphone_place_call (new_call);
+            calltree_display (current_calls);
+        } else {
+            sflphone_new_call();
             calltree_display (current_calls);
         }
-        else
-        {
-            sflphone_new_call();
-            calltree_display(current_calls);
-        }
-    }
-    else
-    {
+    } else {
         sflphone_new_call();
-        calltree_display(current_calls);
+        calltree_display (current_calls);
     }
 }
 
