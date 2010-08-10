@@ -30,8 +30,7 @@
 
 #include <logger.h>
 #include <manager.h>
-
-#define CONFIG_SAMPLE   "sflphonedrc-sample"
+#include <constants.h>
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>

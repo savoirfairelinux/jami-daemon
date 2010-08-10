@@ -1,17 +1,17 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -85,7 +85,7 @@ void select_active_output_audio_plugin();
  * because the default plugin always use default audio device
  * @param plugin The description of the selected plugin
  */
-void update_combo_box( gchar* plugin );
+void update_combo_box (gchar* plugin);
 
 /**
  * Build the widget to display codec list
@@ -97,7 +97,7 @@ GtkWidget * create_codec_table();
  * Create the main account window in a new window
  * @return GtkWidget* The widget created
  */
-GtkWidget * create_accounts_tab(GtkDialog * dialog);
+GtkWidget * create_accounts_tab (GtkDialog * dialog);
 
 /**
  * Create the audio configuration tab and add it to the main configuration window
@@ -123,4 +123,4 @@ void history_load_configuration (void);
 
 GtkTreeModel* createModel();
 
-#endif 
+#endif

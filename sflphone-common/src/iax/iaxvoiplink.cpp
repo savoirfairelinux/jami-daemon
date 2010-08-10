@@ -408,7 +408,7 @@ IAXVoIPLink::getIAXCall (const CallID& id)
 
 
 int
-IAXVoIPLink::sendRegister (AccountID id)
+IAXVoIPLink::sendRegister (AccountID id UNUSED)
 {
     IAXAccount *account;
     bool result;
@@ -459,7 +459,7 @@ IAXVoIPLink::sendRegister (AccountID id)
 }
 
 int
-IAXVoIPLink::sendUnregister (AccountID id)
+IAXVoIPLink::sendUnregister (AccountID id UNUSED)
 {
     IAXAccount *account;
 

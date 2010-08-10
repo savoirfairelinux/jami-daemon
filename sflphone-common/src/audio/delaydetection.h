@@ -41,151 +41,153 @@
 #define MAX_DELAY 150
 
 // Size of internal buffers in samples
-#define  DELAY_BUFF_SIZE MAX_DELAY*8000/1000 
+#define  DELAY_BUFF_SIZE MAX_DELAY*8000/1000
 
 #define MAXFILTERSIZE 100
 
 
 
-class FirFilter {
+class FirFilter
+{
 
- public:
+    public:
 
-  /**
-   * Constructor for this class
-   */
-  FirFilter(std::vector<double> ir);
+        /**
+         * Constructor for this class
+         */
+        FirFilter (std::vector<double> ir);
 
-  /**
-   * SDestructor for this class
-   */
-  ~FirFilter();
-  
-  /**
-   * Perform filtering on one sample
-   */
-  float getOutputSample(float inputSample);
+        /**
+         * SDestructor for this class
+         */
+        ~FirFilter();
 
-  void reset(void);
+        /**
+         * Perform filtering on one sample
+         */
+        float getOutputSample (float inputSample);
+
+        void reset (void);
 
 
- private:
+    private:
 
-  /**
-   * Length of the filter
-   */
-  int _length;
+        /**
+         * Length of the filter
+         */
+        int _length;
 
-  /**
-   * Coefficient of the filter
-   */
-  std::vector<double> _impulseResponse;
+        /**
+         * Coefficient of the filter
+         */
+        std::vector<double> _impulseResponse;
 
-  /**
-   * Circular buffer
-   */
-  double _taps[MAXFILTERSIZE];
+        /**
+         * Circular buffer
+         */
+        double _taps[MAXFILTERSIZE];
 
-  /**
-   * Counter
-   */
-  int _count;
-  
+        /**
+         * Counter
+         */
+        int _count;
+
 };
 
 
-class DelayDetection : public Algorithm {
+class DelayDetection : public Algorithm
+{
 
- public:
+    public:
 
-    DelayDetection();
+        DelayDetection();
 
-    ~DelayDetection();
+        ~DelayDetection();
 
-    virtual void reset(void);
+        virtual void reset (void);
 
-    virtual void putData(SFLDataFormat *inputData, int nbBytes);
+        virtual void putData (SFLDataFormat *inputData, int nbBytes);
 
-    virtual int getData(SFLDataFormat *getData);
+        virtual int getData (SFLDataFormat *getData);
 
-    virtual void process(SFLDataFormat *inputData, int nbBytes);
+        virtual void process (SFLDataFormat *inputData, int nbBytes);
 
-    virtual int process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-    virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
 
- private:
+    private:
 
-    enum State {
-      WaitForSpeaker,
-      WaitForMic,
-      ComputeCorrelation
-    };
+        enum State {
+            WaitForSpeaker,
+            WaitForMic,
+            ComputeCorrelation
+        };
 
 
-    /**
-     * Perform a normalized crosscorrelation between template and segment
-     */
-    void crossCorrelate(float *ref, float *seg, float *res, int refSize, int segSize);
+        /**
+         * Perform a normalized crosscorrelation between template and segment
+         */
+        void crossCorrelate (float *ref, float *seg, float *res, int refSize, int segSize);
 
-    /**
-     * Perform a correlation on specified signals (mac)
-     */
-    double correlate(float *sig1, float *sig2, short size);
+        /**
+         * Perform a correlation on specified signals (mac)
+         */
+        double correlate (float *sig1, float *sig2, short size);
 
-    void convertInt16ToFloat32(SFLDataFormat *input, float *ouput, int nbSamples);
+        void convertInt16ToFloat32 (SFLDataFormat *input, float *ouput, int nbSamples);
 
-    void downsampleData(float *input, float *output, int nbSamples, int factor);
+        void downsampleData (float *input, float *output, int nbSamples, int factor);
 
-    void bandpassFilter(float *input, int nbSamples);
+        void bandpassFilter (float *input, int nbSamples);
 
-    int getMaxIndex(float *data, int size);
+        int getMaxIndex (float *data, int size);
 
-    State _internalState;
+        State _internalState;
 
-    FirFilter _decimationFilter;
+        FirFilter _decimationFilter;
 
-    FirFilter _bandpassFilter;
+        FirFilter _bandpassFilter;
 
-    /**
-     * Segment size in samples for correlation
-     */
-    short _segmentSize;
+        /**
+         * Segment size in samples for correlation
+         */
+        short _segmentSize;
 
-    int _downsamplingFactor;
+        int _downsamplingFactor;
 
-    /**
-     * Resulting correlation size (s + w -1)
-     */
-    short _correlationSize;
+        /**
+         * Resulting correlation size (s + w -1)
+         */
+        short _correlationSize;
 
-    float _spkrReference[WINDOW_SIZE*2];
+        float _spkrReference[WINDOW_SIZE*2];
 
-    float _capturedData[DELAY_BUFF_SIZE*2];
+        float _capturedData[DELAY_BUFF_SIZE*2];
 
-    float _spkrReferenceDown[WINDOW_SIZE*2];
+        float _spkrReferenceDown[WINDOW_SIZE*2];
 
-    float _captureDataDown[DELAY_BUFF_SIZE*2];
+        float _captureDataDown[DELAY_BUFF_SIZE*2];
 
-    float _spkrReferenceFilter[WINDOW_SIZE*2];
+        float _spkrReferenceFilter[WINDOW_SIZE*2];
 
-    float _captureDataFilter[DELAY_BUFF_SIZE*2];
+        float _captureDataFilter[DELAY_BUFF_SIZE*2];
 
-    float _correlationResult[DELAY_BUFF_SIZE*2];
+        float _correlationResult[DELAY_BUFF_SIZE*2];
 
-    int _remainingIndex;
+        int _remainingIndex;
 
-    int _spkrDownSize;
+        int _spkrDownSize;
 
-    int _micDownSize;
+        int _micDownSize;
 
-    int _nbMicSampleStored;
+        int _nbMicSampleStored;
 
-    int _nbSpkrSampleStored;
+        int _nbSpkrSampleStored;
 
- public:
+    public:
 
-    friend class DelayDetectionTest;
+        friend class DelayDetectionTest;
 };
 
 #endif

@@ -57,24 +57,22 @@ int current_search_id;
 /**
  * Represent a contact entry
  */
-typedef struct _Hit
-{
-  gchar *name;
-  GdkPixbuf *photo;
-  gchar *phone_business;
-  gchar *phone_home;
-  gchar *phone_mobile;
+typedef struct _Hit {
+    gchar *name;
+    GdkPixbuf *photo;
+    gchar *phone_business;
+    gchar *phone_home;
+    gchar *phone_mobile;
 } Hit;
 
 /**
  * Book structure for "outside world"
  */
-typedef struct
-{
-  gchar *uid;
-  gchar *name;
-  gboolean active;
-  EBook *ebook;
+typedef struct {
+    gchar *uid;
+    gchar *name;
+    gboolean active;
+    EBook *ebook;
 } book_data_t;
 
 GSList *books_data;
@@ -83,58 +81,58 @@ GSList *books_data;
  * Free a contact entry
  */
 void
-free_hit(Hit *h);
+free_hit (Hit *h);
 
 /**
  * Template callback function for the asynchronous search
  */
 typedef void
-(* SearchAsyncHandler)(GList *hits, gpointer user_data);
+(* SearchAsyncHandler) (GList *hits, gpointer user_data);
 
 /**
  * Template callback function for the asynchronous open
  */
 typedef void
-(* OpenAsyncHandler)();
+(* OpenAsyncHandler) ();
 
 /**
  * Initialize the address book.
  * Connection to evolution data server
  */
 void
-init(OpenAsyncHandler);
+init (OpenAsyncHandler);
 
 /**
  * Asynchronous search function (without the get_contacts method)
  */
 void
-search_async(const char *query, int max_results, SearchAsyncHandler handler,
-    gpointer user_data);
+search_async (const char *query, int max_results, SearchAsyncHandler handler,
+              gpointer user_data);
 
 /**
  * Synchronous query to EDS using get_contacts method. Block the application until a result is received.
  */
 void
-search_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
+search_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
 
 /**
  * Asynchronous query to EDS using get contact method.
  */
 void
-search_async_by_contacts(const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
+search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
 
 /**
  * Retrieve the specified information from the contact
  */
 void
-fetch_information_from_contact(EContact *contact, EContactField field,
-    gchar **info);
+fetch_information_from_contact (EContact *contact, EContactField field,
+                                gchar **info);
 
 GSList*
-get_books(void);
+get_books (void);
 
 book_data_t *
-books_get_book_data_by_uid(gchar *uid);
+books_get_book_data_by_uid (gchar *uid);
 
 /**
  * Public way to know if we can perform a search

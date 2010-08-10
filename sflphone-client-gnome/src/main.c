@@ -37,6 +37,7 @@
 #include <statusicon.h>
 #include <libgnome/libgnome.h>
 #include <libgnomeui/libgnomeui.h>
+#include <eel-gconf-extensions.h>
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -46,86 +47,84 @@
 int
 main (int argc, char *argv[])
 {
-  // Handle logging
-  int i;
+    // Handle logging
+    int i;
 
-  // Check arguments if debug mode is activated
-  for (i = 0; i < argc; i++)
-    if (g_strcmp0 (argv[i], "--debug") == 0)
-      set_log_level (LOG_DEBUG);
+    // Check arguments if debug mode is activated
+    for (i = 0; i < argc; i++)
+        if (g_strcmp0 (argv[i], "--debug") == 0)
+            set_log_level (LOG_DEBUG);
 
-  // GtkWidget *window;                                                                                        
-  g_thread_init (NULL);
-  gdk_threads_init ();
-  gdk_threads_enter ();
+    // GtkWidget *window;
+    g_thread_init (NULL);
+    gdk_threads_init ();
+    gdk_threads_enter ();
 
-  // Start GTK application
-  gtk_init (&argc, &argv);
+    // Start GTK application
+    gtk_init (&argc, &argv);
 
-  g_print ("%s %s\n", PACKAGE, VERSION);
-  g_print ("\nCopyright (c) 2005 2006 2007 2008 2009 2010 Savoir-faire Linux Inc.\n\n");
-  g_print ("This is free software.  You may redistribute copies of it under the terms of\n" \
-           "the GNU General Public License Version 3 <http://www.gnu.org/licenses/gpl.html>.\n" \
-           "There is NO WARRANTY, to the extent permitted by law.\n\n" \
-           "Additional permission under GNU GPL version 3 section 7:\n\n" \
-           "If you modify this program, or any covered work, by linking or\n" \
-           "combining it with the OpenSSL project's OpenSSL library (or a\n" \
-           "modified version of that library), containing parts covered by the\n" \
-           "terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.\n" \
-           "grants you additional permission to convey the resulting work.\n" \
-           "Corresponding Source for a non-source form of such a combination\n" \
-           "shall include the source code for the parts of OpenSSL used as well\n" \
-           "as that of the covered work.\n\n");
+    g_print ("%s %s\n", PACKAGE, VERSION);
+    g_print ("\nCopyright (c) 2005 2006 2007 2008 2009 2010 Savoir-faire Linux Inc.\n\n");
+    g_print ("This is free software.  You may redistribute copies of it under the terms of\n" \
+             "the GNU General Public License Version 3 <http://www.gnu.org/licenses/gpl.html>.\n" \
+             "There is NO WARRANTY, to the extent permitted by law.\n\n" \
+             "Additional permission under GNU GPL version 3 section 7:\n\n" \
+             "If you modify this program, or any covered work, by linking or\n" \
+             "combining it with the OpenSSL project's OpenSSL library (or a\n" \
+             "modified version of that library), containing parts covered by the\n" \
+             "terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.\n" \
+             "grants you additional permission to convey the resulting work.\n" \
+             "Corresponding Source for a non-source form of such a combination\n" \
+             "shall include the source code for the parts of OpenSSL used as well\n" \
+             "as that of the covered work.\n\n");
 
-  srand (time (NULL));
+    srand (time (NULL));
 
-  // Internationalization
-  bindtextdomain ("sflphone-client-gnome", LOCALEDIR);
-  textdomain ("sflphone-client-gnome");
+    // Internationalization
+    bindtextdomain ("sflphone-client-gnome", LOCALEDIR);
+    textdomain ("sflphone-client-gnome");
 
-  // Initialises the GNOME libraries
-  gnome_program_init ("sflphone", VERSION, LIBGNOMEUI_MODULE, argc, argv,
-      GNOME_PROGRAM_STANDARD_PROPERTIES,
-						NULL) ;
+    // Initialises the GNOME libraries
+    gnome_program_init ("sflphone", VERSION, LIBGNOMEUI_MODULE, argc, argv,
+                        GNOME_PROGRAM_STANDARD_PROPERTIES,
+                        NULL) ;
 
-  if (sflphone_init ())
-    {
+    if (sflphone_init ()) {
 
-      if (eel_gconf_get_integer (SHOW_STATUSICON))
-		  show_status_icon ();
+        if (eel_gconf_get_integer (SHOW_STATUSICON))
+            show_status_icon ();
 
-      create_main_window ();
+        create_main_window ();
 
-      if (eel_gconf_get_integer (SHOW_STATUSICON) && eel_gconf_get_integer (START_HIDDEN))
-        {
-          gtk_widget_hide (GTK_WIDGET( get_main_window() ));
-          set_minimized (TRUE);
+        if (eel_gconf_get_integer (SHOW_STATUSICON) && eel_gconf_get_integer (START_HIDDEN)) {
+            gtk_widget_hide (GTK_WIDGET (get_main_window()));
+            set_minimized (TRUE);
         }
 
 
-      status_bar_display_account ();
+        status_bar_display_account ();
 
-      // Load the history
-      sflphone_fill_history ();
+        // Load the history
+        sflphone_fill_history ();
 
-      // Get the active calls and conferences at startup
-      sflphone_fill_call_list ();
-      sflphone_fill_conference_list ();
+        // Get the active calls and conferences at startup
+        sflphone_fill_call_list ();
+        sflphone_fill_conference_list ();
 
-      // Update the GUI
-      update_actions ();
+        // Update the GUI
+        update_actions ();
 
-      shortcuts_initialize_bindings();
+        shortcuts_initialize_bindings();
 
-      /* start the main loop */
-      gtk_main ();
+        /* start the main loop */
+        gtk_main ();
     }
 
-  gdk_threads_leave ();
+    gdk_threads_leave ();
 
-  shortcuts_destroy_bindings();
+    shortcuts_destroy_bindings();
 
-  return 0;
+    return 0;
 }
 
 /** @mainpage SFLphone GTK+ Client Documentation

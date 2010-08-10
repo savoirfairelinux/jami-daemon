@@ -69,7 +69,7 @@ SearchType get_current_history_search_type (void);
 /**
  * Initialize a specific search bar
  */
-void searchbar_init(calltab_t *);
+void searchbar_init (calltab_t *);
 
 /**
  * Activate a waiting layer during search

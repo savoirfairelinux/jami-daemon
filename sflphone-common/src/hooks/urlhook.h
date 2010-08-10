@@ -36,7 +36,8 @@
 
 #define RUN_COMMAND(command)   system(command);
 
-class UrlHook {
+class UrlHook
+{
 
     public:
         /**

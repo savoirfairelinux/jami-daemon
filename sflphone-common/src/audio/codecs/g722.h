@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *                                                                              
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -48,8 +48,7 @@ codec is considerably faster, and still fully compatible with wideband terminals
 
 #include <stdint.h>
 
-enum
-{
+enum {
     G722_SAMPLE_RATE_8000 = 0x0001,
     G722_PACKED = 0x0002
 };
@@ -61,8 +60,7 @@ enum
 #define INT16_MIN       (-32768)
 #endif
 
-typedef struct
-{
+typedef struct {
     /*! TRUE if the operating in the special ITU test mode, with the band split filters
              disabled. */
     int itu_test_mode;
@@ -76,8 +74,7 @@ typedef struct
     /*! Signal history for the QMF */
     int x[24];
 
-    struct
-    {
+    struct {
         int s;
         int sp;
         int sz;
@@ -99,8 +96,7 @@ typedef struct
     int out_bits;
 } g722_encode_state_t;
 
-typedef struct
-{
+typedef struct {
     /*! TRUE if the operating in the special ITU test mode, with the band split filters
              disabled. */
     int itu_test_mode;
@@ -114,8 +110,7 @@ typedef struct
     /*! Signal history for the QMF */
     int x[24];
 
-    struct
-    {
+    struct {
         int s;
         int sp;
         int sz;
@@ -130,7 +125,7 @@ typedef struct
         int nb;
         int det;
     } band[2];
-    
+
     unsigned int in_buffer;
     int in_bits;
     unsigned int out_buffer;
@@ -141,13 +136,13 @@ typedef struct
 extern "C" {
 #endif
 
-void g722_encode_init (void);
-int g722_encode_release();
-int g722_encode(uint8_t g722_data[], const int16_t amp[], int len);
+    void g722_encode_init (void);
+    int g722_encode_release();
+    int g722_encode (uint8_t g722_data[], const int16_t amp[], int len);
 
-void g722_decode_init (void);
-int g722_decode_release();
-int g722_decode(int16_t amp[], const uint8_t g722_data[], int len);
+    void g722_decode_init (void);
+    int g722_decode_release();
+    int g722_decode (int16_t amp[], const uint8_t g722_data[], int len);
 
 #ifdef __cplusplus
 }

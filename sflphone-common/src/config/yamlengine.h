@@ -37,38 +37,41 @@
 #include "yamlemitter.h"
 #include <exception>
 
-namespace Conf {
+namespace Conf
+{
 
-class YamlEngineException : public std::exception {
+class YamlEngineException : public std::exception
+{
 
-  virtual const char *what() const throw() {
-    return "YamlEngineException occured";
-  }
-}; 
+        virtual const char *what() const throw() {
+            return "YamlEngineException occured";
+        }
+};
 
-class YamlEngine : public Engine {
+class YamlEngine : public Engine
+{
 
- public:
+    public:
 
-  YamlEngine();
+        YamlEngine();
 
-  ~YamlEngine();
+        ~YamlEngine();
 
-  virtual void openConfigFile();
+        virtual void openConfigFile();
 
-  virtual void closeConfigFile();
+        virtual void closeConfigFile();
 
-  virtual void write();
+        virtual void write();
 
-  virtual void read();
+        virtual void read();
 
- private:
+    private:
 
-  YamlParser *parser;
+        YamlParser *parser;
 
-  YamlEmitter *emitter;
+        YamlEmitter *emitter;
 
-  YamlDocument *document;
+        YamlDocument *document;
 
 };
 

@@ -54,7 +54,7 @@ void
 calltab_select_conf (conference_obj_t *);
 
 gint
-calltab_get_selected_type(calltab_t* tab);
+calltab_get_selected_type (calltab_t* tab);
 
 /** Return the selected call.
   * @return The number of the caller */

@@ -34,6 +34,7 @@
 #include <libintl.h>
 #include "logger.h"
 #include "dbus.h"
+#include <glib/gi18n.h>
 
 /* @file sflphone_const.h
  * @brief Contains the global variables for the client code
@@ -49,9 +50,9 @@
 #define CONTACTS            "contacts"
 
 /** Locale */
-#define _(STRING)             gettext( STRING )
-#define N_(STRING)			  (STRING)
-#define c_(COMMENT,STRING)    gettext(STRING) 
+//#define _(STRING)             gettext( STRING )
+//#define N_(STRING)			  (STRING)
+#define c_(COMMENT,STRING)    gettext(STRING)
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
 #define IP2IP	"IP2IP"
@@ -106,7 +107,7 @@
 #define TLS_SERVER_NAME                     "TLS.serverName"
 #define TLS_VERIFY_SERVER                   "TLS.verifyServer"
 #define TLS_VERIFY_CLIENT                   "TLS.verifyClient"
-#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"  
+#define TLS_REQUIRE_CLIENT_CERTIFICATE      "TLS.requireClientCertificate"
 #define TLS_NEGOTIATION_TIMEOUT_SEC         "TLS.negotiationTimeoutSec"
 #define TLS_NEGOTIATION_TIMEOUT_MSEC        "TLS.negotiationTimemoutMsec"
 
@@ -117,7 +118,7 @@
 #define PUBLISHED_ADDRESS                   "Account.publishedAddress"
 
 #define REGISTRATION_STATUS                 "Status"
-#define REGISTRATION_STATE_CODE             "Registration.code" 
+#define REGISTRATION_STATE_CODE             "Registration.code"
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
 
 #define SHORTCUT_PICKUP                     "pickUp"
@@ -150,7 +151,7 @@
 #define ALSA	      0
 #define PULSEAUDIO    1
 
- /** DTMF type */
+/** DTMF type */
 #define OVERRTP "overrtp"
 #define SIPINFO "sipinfo"
 
@@ -182,9 +183,9 @@
 #define CONF_MAIN_WINDOW_POSITION_X		CONF_PREFIX "/state/window_position_x"
 #define CONF_MAIN_WINDOW_POSITION_Y		CONF_PREFIX "/state/window_position_y"
 /** Show/Hide the dialpad */
-#define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"	
-#define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"	
-#define SHOW_STATUSICON				CONF_PREFIX "/state/statusicon"	
+#define CONF_SHOW_DIALPAD			CONF_PREFIX "/state/dialpad"
+#define SHOW_VOLUME_CONTROLS		CONF_PREFIX "/state/volume_controls"
+#define SHOW_STATUSICON				CONF_PREFIX "/state/statusicon"
 #define NOTIFY_ALL					CONF_PREFIX "/state/notify_all"
 #define START_HIDDEN				CONF_PREFIX "/state/start_hidden"
 #define POPUP_ON_CALL				CONF_PREFIX "/state/popup"

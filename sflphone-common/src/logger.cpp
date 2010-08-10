@@ -82,11 +82,11 @@ void log (const int level, const char* format, ...)
     message = buffer;
     message = prefix + message;
 
-    syslog (level, message.c_str());
+    syslog (level, "%s", message.c_str());
 
     if (consoleLog) {
         message = color_prefix + message + END_COLOR + "\n";
-        fprintf (stderr, message.c_str());
+        fprintf (stderr, "%s", message.c_str());
     }
 }
 

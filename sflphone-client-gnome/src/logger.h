@@ -1,17 +1,17 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com> 
- *                                                                              
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -27,12 +27,12 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
- 
+
 #ifndef __LOGGER_H
 #define __LOGGER_H
 
-void internal_log(const int level, const char* format, ...);
-void set_log_level(const int level);
+void internal_log (const int level, const char* format, ...);
+void set_log_level (const int level);
 
 #define LOG_ERR 1
 #define LOG_WARN 2

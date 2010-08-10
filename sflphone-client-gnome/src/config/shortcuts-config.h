@@ -39,24 +39,12 @@
 
 G_BEGIN_DECLS
 
-enum
-{
-  ACTION = 0, MASK, VALUE, COLUMNS
+enum {
+    ACTION = 0, MASK, VALUE, COLUMNS
 };
 
 GtkWidget*
 create_shortcuts_settings ();
-
-static void
-setup_tree_view (GtkWidget *treeview);
-
-static void
-accel_edited (GtkCellRendererAccel *renderer, gchar *path, guint accel_key,
-    GdkModifierType mask, guint hardware_keycode, GtkTreeView *treeview);
-
-static void
-accel_cleared (GtkCellRendererAccel *renderer, gchar *path,
-    GtkTreeView *treeview);
 
 G_END_DECLS
 

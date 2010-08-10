@@ -101,19 +101,6 @@
 			</arg>
 		</method>
 
-		<method name="setNumberOfCredential" tp:name-for-bindings="setNumberOfCredential">
-			<tp:docstring>
-			</tp:docstring>
-			<arg type="s" name="accountID" direction="in">
-				<tp:docstring>
-				</tp:docstring>
-			</arg>
-			<arg type="i" name="number" direction="in">
-				<tp:docstring>
-				</tp:docstring>
-			</arg>
-		</method>
-
 		<method name="deleteAllCredential" tp:name-for-bindings="deleteAllCredential">
 			<tp:docstring>
 			</tp:docstring>
@@ -776,10 +763,6 @@
 	   <method name="getTlsSettings" tp:name-for-bindings="getTlsSettings">
 		   <tp:docstring>
 		   </tp:docstring>
-		   <arg type="s" name="accountID" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
 		   <arg type="a{ss}" name="details" direction="out">
 			   <tp:docstring>
@@ -791,10 +774,6 @@
 		   <tp:docstring>
 		   </tp:docstring>
 		   <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="MapStringString"/>
-		   <arg type="s" name="accountID" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
 		   <arg type="a{ss}" name="details" direction="in">
 			   <tp:docstring>
 			   </tp:docstring>

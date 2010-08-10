@@ -35,7 +35,7 @@
 #define NO_STR "0"
 #define HISTORY_SAMPLE  "history-sample"
 #define HISTORY_SAMPLE_SIZE     3
-#define CONFIG_SAMPLE   "sflphonedrc-sample"
+#define CONFIG_SAMPLE   "sflphoned-sample.yml"
 #define HUGE_HISTORY_LIMIT      20000
 
 #endif /* CONSTANTS_H_ */

@@ -192,7 +192,7 @@ VoipPreference::VoipPreference() :  _playDtmf (true)
         , _pulseLength (atoi (DFT_PULSE_LENGTH_STR)) // DFT_PULSE_LENGTH_STR
         , _sendDtmfAs (0)
         , _symmetricRtp (true)
-        , _zidFile (ZRTP_ZIDFILE)   // ZRTP_ZID_FILENAME
+        , _zidFile (ZRTP_ZIDFILE) // ZRTP_ZID_FILENAME
 {
 
 }
@@ -487,7 +487,7 @@ AudioPreference::AudioPreference() : _cardin (atoi (ALSA_DFT_CARD)) // ALSA_DFT_
         , _deviceRingtone ("")
         , _recordpath ("") // DFT_RECORD_PATH
         , _volumemic (atoi (DFT_VOL_SPKR_STR)) // DFT_VOL_SPKR_STR
-        , _volumespkr (atoi (DFT_VOL_MICRO_STR))   // DFT_VOL_MICRO_STR
+        , _volumespkr (atoi (DFT_VOL_MICRO_STR)) // DFT_VOL_MICRO_STR
 {
 
 }

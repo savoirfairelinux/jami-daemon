@@ -33,144 +33,149 @@ typedef map<CallID, int> ReadPointer;
 
 static CallID default_id = "audiolayer_id";
 
-class RingBuffer {
-  public:
-    /**
-     * Constructor
-     * @param size  Size of the buffer to create
-     */
-    RingBuffer(int size, CallID call_id = default_id);
+class RingBuffer
+{
+    public:
+        /**
+         * Constructor
+         * @param size  Size of the buffer to create
+         */
+        RingBuffer (int size, CallID call_id = default_id);
 
-    /**
-     * Destructor
-     */
-    ~RingBuffer();
+        /**
+         * Destructor
+         */
+        ~RingBuffer();
 
-    CallID getBufferId(){ return buffer_id; }
+        CallID getBufferId() {
+            return buffer_id;
+        }
 
-    /**
-     * Reset the counters to 0 for this read pointer
-     */
-    void flush (CallID call_id = default_id);
+        /**
+         * Reset the counters to 0 for this read pointer
+         */
+        void flush (CallID call_id = default_id);
 
-    void flushAll();
+        void flushAll();
 
-    /**
-     * Get read pointer coresponding to this call
-     */ 
-    int getReadPointer(CallID call_id = default_id);
+        /**
+         * Get read pointer coresponding to this call
+         */
+        int getReadPointer (CallID call_id = default_id);
 
-    /**
-     * Get the whole readpointer list for this ringbuffer
-     */
-    ReadPointer* getReadPointerList() { return &_readpointer; }
+        /**
+         * Get the whole readpointer list for this ringbuffer
+         */
+        ReadPointer* getReadPointerList() {
+            return &_readpointer;
+        }
 
-    /**
-     * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
-     */
-    int getSmallestReadPointer();
+        /**
+         * Return the smalest readpointer. Usefull to evaluate if ringbuffer is full
+         */
+        int getSmallestReadPointer();
 
-    /**
-     * Move readpointer forward by pointer_value
-     */
-    void storeReadPointer(int pointer_value, CallID call_id = default_id);
+        /**
+         * Move readpointer forward by pointer_value
+         */
+        void storeReadPointer (int pointer_value, CallID call_id = default_id);
 
-    /**
-     * Add a new readpointer for this ringbuffer
-     */
-    void createReadPointer(CallID call_id = default_id);
+        /**
+         * Add a new readpointer for this ringbuffer
+         */
+        void createReadPointer (CallID call_id = default_id);
 
-    /**
-     * Remove a readpointer for this ringbuffer
-     */
-    void removeReadPointer(CallID call_id = default_id);
+        /**
+         * Remove a readpointer for this ringbuffer
+         */
+        void removeReadPointer (CallID call_id = default_id);
 
-    /**
-     * Test if readpointer coresponding to this call is still active
-     */
-    bool hasThisReadPointer(CallID call_id);
+        /**
+         * Test if readpointer coresponding to this call is still active
+         */
+        bool hasThisReadPointer (CallID call_id);
 
-    int getNbReadPointer();
+        int getNbReadPointer();
 
-    /**
-     * To get how much space is available in the buffer to write in
-     * @return int The available size
-     */
-    int AvailForPut (void);
+        /**
+         * To get how much space is available in the buffer to write in
+         * @return int The available size
+         */
+        int AvailForPut (void);
 
-    /**
-     * Write data in the ring buffer
-     * @param buffer Data to copied
-     * @param toCopy Number of bytes to copy
-     * @param volume The volume
-     * @return int Number of bytes copied
-     */
-    int Put (void* buffer, int toCopy, unsigned short volume = 100);
+        /**
+         * Write data in the ring buffer
+         * @param buffer Data to copied
+         * @param toCopy Number of bytes to copy
+         * @param volume The volume
+         * @return int Number of bytes copied
+         */
+        int Put (void* buffer, int toCopy, unsigned short volume = 100);
 
-    /**
-     * To get how much space is available in the buffer to read in
-     * @return int The available size
-     */
-    int AvailForGet (CallID call_id = default_id);
+        /**
+         * To get how much space is available in the buffer to read in
+         * @return int The available size
+         */
+        int AvailForGet (CallID call_id = default_id);
 
-    /**
-     * Get data in the ring buffer
-     * @param buffer Data to copied
-     * @param toCopy Number of bytes to copy
-     * @param volume The volume
-     * @return int Number of bytes copied
-     */
-    int Get (void* buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
+        /**
+         * Get data in the ring buffer
+         * @param buffer Data to copied
+         * @param toCopy Number of bytes to copy
+         * @param volume The volume
+         * @return int Number of bytes copied
+         */
+        int Get (void* buffer, int toCopy, unsigned short volume = 100, CallID call_id = default_id);
 
-    /**
-     * Discard data from the buffer
-     * @param toDiscard Number of bytes to discard
-     * @return int Number of bytes discarded 
-     */
-    int Discard(int toDiscard, CallID call_id = default_id);
+        /**
+         * Discard data from the buffer
+         * @param toDiscard Number of bytes to discard
+         * @return int Number of bytes discarded
+         */
+        int Discard (int toDiscard, CallID call_id = default_id);
 
-    /**
-     * Total length of the ring buffer
-     * @return int  
-     */
-    int putLen();
+        /**
+         * Total length of the ring buffer
+         * @return int
+         */
+        int putLen();
 
-    int getLen(CallID call_id = default_id);
-    
-    /**
-     * Debug function print mEnd, mStart, mBufferSize
-     */
-    void debug();
+        int getLen (CallID call_id = default_id);
 
-  private:
-    // Copy Constructor
-    RingBuffer(const RingBuffer& rh);
+        /**
+         * Debug function print mEnd, mStart, mBufferSize
+         */
+        void debug();
 
-    // Assignment operator
-    RingBuffer& operator=(const RingBuffer& rh);
+    private:
+        // Copy Constructor
+        RingBuffer (const RingBuffer& rh);
 
-    /** Pointer on the first data */
-    // int           mStart;
-    /** Pointer on the last data */
-    int           mEnd;
-    /** Buffer size */
-    int           mBufferSize;
-    /** Data */
-    samplePtr     mBuffer;
+        // Assignment operator
+        RingBuffer& operator= (const RingBuffer& rh);
 
-    ReadPointer   _readpointer;
+        /** Pointer on the first data */
+        // int           mStart;
+        /** Pointer on the last data */
+        int           mEnd;
+        /** Buffer size */
+        int           mBufferSize;
+        /** Data */
+        samplePtr     mBuffer;
 
-    CallID buffer_id;
+        ReadPointer   _readpointer;
 
-  public:
+        CallID buffer_id;
 
-    friend class MainBufferTest;
+    public:
 
-    std::fstream *buffer_input_rec;
-    std::fstream *buffer_output_rec;
+        friend class MainBufferTest;
 
-    static int count_rb;
-    
+        std::fstream *buffer_input_rec;
+        std::fstream *buffer_output_rec;
+
+        static int count_rb;
+
 };
 
 

@@ -49,13 +49,14 @@ typedef std::map<CallID, Call*> CallMap;
  * @file voiplink.h
  * @brief Listener and manager interface for each VoIP protocol
  */
-class VoIPLink {
+class VoIPLink
+{
     public:
         /**
          * Constructor
          * @param accountID The account identifier
          */
-        VoIPLink(const AccountID& accountID);
+        VoIPLink (const AccountID& accountID);
 
         /**
          * Virtual destructor
@@ -69,9 +70,9 @@ class VoIPLink {
          */
         virtual void getEvent (void) = 0;
 
-        /** 
+        /**
          * Virtual method
-         * Try to initiate the communication layer and set config 
+         * Try to initiate the communication layer and set config
          * @return bool True if OK
          */
         virtual bool init (void) = 0;
@@ -88,7 +89,7 @@ class VoIPLink {
          * @return bool True on success
          *		  false otherwise
          */
-        virtual int sendRegister ( AccountID id ) = 0;
+        virtual int sendRegister (AccountID id) = 0;
 
         /**
          * Virtual method
@@ -96,7 +97,7 @@ class VoIPLink {
          * @return bool True on success
          *		  false otherwise
          */
-        virtual int sendUnregister ( AccountID id ) = 0;
+        virtual int sendUnregister (AccountID id) = 0;
 
         /**
          * Place a new call
@@ -104,49 +105,49 @@ class VoIPLink {
          * @param toUrl  The address of the recipient of the call
          * @return Call* The current call
          */
-        virtual Call* newOutgoingCall(const CallID& id, const std::string& toUrl) = 0;
+        virtual Call* newOutgoingCall (const CallID& id, const std::string& toUrl) = 0;
 
         /**
          * Answer the call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool answer(const CallID& id) = 0;
+        virtual bool answer (const CallID& id) = 0;
 
         /**
          * Hang up a call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool hangup(const CallID& id) = 0;
+        virtual bool hangup (const CallID& id) = 0;
 
-         /**
-         * Peer Hung up a call
-         * @param id The call identifier
-         * @return bool True on success
-         */
-        virtual bool peerHungup(const CallID& id) = 0;
+        /**
+        * Peer Hung up a call
+        * @param id The call identifier
+        * @return bool True on success
+        */
+        virtual bool peerHungup (const CallID& id) = 0;
 
         /**
          * Cancel the call dialing
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool cancel(const CallID& id) = 0;
+        virtual bool cancel (const CallID& id) = 0;
 
         /**
          * Put a call on hold
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool onhold(const CallID& id) = 0;
+        virtual bool onhold (const CallID& id) = 0;
 
         /**
          * Resume a call from hold state
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool offhold(const CallID& id) = 0;
+        virtual bool offhold (const CallID& id) = 0;
 
         /**
          * Transfer a call to specified URI
@@ -154,14 +155,14 @@ class VoIPLink {
          * @param to The recipient of the call
          * @return bool True on success
          */
-        virtual bool transfer(const CallID& id, const std::string& to) = 0;
+        virtual bool transfer (const CallID& id, const std::string& to) = 0;
 
         /**
          * Refuse incoming call
          * @param id The call identifier
          * @return bool True on success
          */
-        virtual bool refuse(const CallID& id) = 0;
+        virtual bool refuse (const CallID& id) = 0;
 
         /**
          * Send DTMF
@@ -169,40 +170,44 @@ class VoIPLink {
          * @param code  The char code
          * @return bool True on success
          */
-        virtual bool carryingDTMFdigits(const CallID& id, char code) = 0;
-
-    	/**
-     	* Set Recording
-     	* @param id The call identifier
-     	*/
-    	// virtual void setRecording(const CallID& id) = 0;
+        virtual bool carryingDTMFdigits (const CallID& id, char code) = 0;
 
         /**
-     	* Return recording state
-     	* @param id The call identifier
-     	*/
-    	// virtual bool isRecording(const CallID& id) = 0;
+         * Set Recording
+         * @param id The call identifier
+         */
+        // virtual void setRecording(const CallID& id) = 0;
 
         /**
-         * Return the codec protocol used for this call 
+         * Return recording state
+         * @param id The call identifier
+         */
+        // virtual bool isRecording(const CallID& id) = 0;
+
+        /**
+         * Return the codec protocol used for this call
          * @param id The call identifier
          */
         virtual std::string getCurrentCodecName() = 0;
 
-        bool initDone (void) { return _initDone; }
-        void initDone (bool state) { _initDone = state; }
+        bool initDone (void) {
+            return _initDone;
+        }
+        void initDone (bool state) {
+            _initDone = state;
+        }
 
         /** Add a call to the call map (protected by mutex)
          * @param call A call pointer with a unique pointer
          * @return bool True if the call was unique and added
          */
-        bool addCall(Call* call);
+        bool addCall (Call* call);
 
         /** Remove a call from the call map (protected by mutex)
          * @param id A Call ID
          * @return bool True if the call was correctly removed
          */
-        bool removeCall(const CallID& id);
+        bool removeCall (const CallID& id);
 
         /**
          * Remove all the call from the map
@@ -213,21 +218,25 @@ class VoIPLink {
         /**
          * @return AccountID  parent Account's ID
          */
-        inline AccountID& getAccountID(void) { return _accountID; }
+        inline AccountID& getAccountID (void) {
+            return _accountID;
+        }
 
-        Account* getAccountPtr(void);
+        Account* getAccountPtr (void);
 
         /**
          * @param accountID The account identifier
          */
-        inline void setAccountID( const AccountID& accountID) { _accountID = accountID; }
+        inline void setAccountID (const AccountID& accountID) {
+            _accountID = accountID;
+        }
 
-        /** 
+        /**
          * Get the call pointer from the call map (protected by mutex)
          * @param id A Call ID
          * @return Call*  Call pointer or 0
          */
-        Call* getCall(const CallID& id);
+        Call* getCall (const CallID& id);
 
     private:
         /**

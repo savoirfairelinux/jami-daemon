@@ -42,7 +42,7 @@ YamlEngine::~YamlEngine() {}
 void YamlEngine::openConfigFile()
 {
 
-    Conf::YamlParser *parser;
+    Conf::YamlParser *parser = NULL;
 
     try {
         parser = new Conf::YamlParser ("sequence.yml");

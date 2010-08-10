@@ -120,7 +120,7 @@ std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails (void)
     ip2ipAccountDetails.insert (std::pair<std::string, std::string> (LOCAL_PORT, portstr.str()));
 
     std::map<std::string, std::string> tlsSettings;
-    tlsSettings = getTlsSettings (IP2IP_PROFILE);
+    tlsSettings = getTlsSettings();
     std::copy (tlsSettings.begin(), tlsSettings.end(), std::inserter (
                    ip2ipAccountDetails, ip2ipAccountDetails.end()));
 
@@ -177,7 +177,7 @@ void ConfigurationManager::setIp2IpDetails (const std::map<std::string,
 
     if (it != details.end()) sipaccount->setZrtpDiaplaySasOnce ( (it->second == "true"));
 
-    setTlsSettings (IP2IP_PROFILE, details);
+    setTlsSettings (details);
 
     Manager::instance().saveConfig();
 
@@ -189,8 +189,7 @@ void ConfigurationManager::setIp2IpDetails (const std::map<std::string,
 
 }
 
-std::map<std::string, std::string> ConfigurationManager::getTlsSettings (
-    const std::string& section)
+std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
 {
 
     std::map<std::string, std::string> tlsSettings;
@@ -220,8 +219,7 @@ std::map<std::string, std::string> ConfigurationManager::getTlsSettings (
     return tlsSettings;
 }
 
-void ConfigurationManager::setTlsSettings (const std::string& section,
-        const std::map<std::string, std::string>& details)
+void ConfigurationManager::setTlsSettings (const std::map<std::string, std::string>& details)
 {
 
     std::map<std::string, std::string> map_cpy = details;
@@ -336,17 +334,6 @@ int32_t ConfigurationManager::getNumberOfCredential (
 
     SIPAccount *sipaccount = (SIPAccount *) Manager::instance().getAccount (accountID);
     return sipaccount->getCredentialCount();
-}
-
-void ConfigurationManager::setNumberOfCredential (const std::string& accountID,
-        const int32_t& number)
-{
-    /*
-    if (accountID != AccountNULL || !accountID.empty()) {
-      SIPAccount *sipaccount = (SIPAccount *)Manager::instance().getAccount(accountID);
-      sipaccount->setCredentialCount(number);
-    }
-    */
 }
 
 void ConfigurationManager::setCredential (const std::string& accountID,
