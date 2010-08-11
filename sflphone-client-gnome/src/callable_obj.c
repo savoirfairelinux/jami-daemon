@@ -136,6 +136,8 @@ void threaded_clock_incrementer (void *pc)
 
     while (call->clockStarted) {
 
+        DEBUG ("CALL CLOCK");
+
         int duration;
         time_t start, current;
 
@@ -184,6 +186,27 @@ void threaded_clock_incrementer (void *pc)
 
     }
 
+    DEBUG ("CallableObj: Stopping Thread");
+
+    g_thread_exit (NULL);
+
+}
+
+void stop_call_clock (callable_obj_t *c)
+{
+
+    DEBUG ("CallableObj: Stop call clock");
+
+    if (!c) {
+        ERROR ("CallableObj: Callable object is NULL");
+        return;
+    }
+
+    if (c->_type == CALL && c->clockStarted) {
+        c->clockStarted = 0;
+        /// no need to join here, only need to call g_thread_exit at the end of the threaded function
+        // g_thread_join (c->tid);
+    }
 }
 
 void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
@@ -332,14 +355,7 @@ void free_callable_obj_t (callable_obj_t *c)
 {
     DEBUG ("CallableObj: Free callable object");
 
-    if (!c)
-        ERROR ("CallableObj: Callable object is NULL");
-
-    if (c->_type == CALL) {
-        c->clockStarted = 0;
-
-        g_thread_join (c->tid);
-    }
+    stop_call_clock (c);
 
     g_free (c->_callID);
     g_free (c->_accountID);

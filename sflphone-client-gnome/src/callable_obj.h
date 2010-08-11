@@ -200,6 +200,9 @@ attach_thumbnail (callable_obj_t *, GdkPixbuf *);
 void
 free_callable_obj_t (callable_obj_t *c);
 
+void
+stop_call_clock (callable_obj_t *c);
+
 /**
  * @return gchar* A random ID
  */
