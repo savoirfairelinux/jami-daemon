@@ -608,14 +608,14 @@ static void
 eds_query_result_cb (EBook *book UNUSED, EBookStatus status, GList *contacts, gpointer user_data)
 {
 
-    DEBUG ("Addressbook: Search Result callback callled");
+    DEBUG ("Addressbook: Search Result callback called");
 
     if (!contacts) {
         DEBUG ("Addressbook: Error: Contact is NULL");
         return;
     }
 
-    GList *l;
+    GList *l = NULL;
 
     if (status == E_BOOK_ERROR_OK) {
 
@@ -623,42 +623,56 @@ eds_query_result_cb (EBook *book UNUSED, EBookStatus status, GList *contacts, gp
 
         Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
 
+        // make sure we have a new list of hits
+        had->hits = NULL;
+
         l = contacts;
 
         while (l) {
 
             Hit *hit = g_new (Hit, 1);
 
-            // Get the photo contact
-            hit->photo = pixbuf_from_contact (E_CONTACT (l->data));
+            if (hit) {
 
-            // Get business phone information
-            fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_BUSINESS, &number);
-            hit->phone_business = g_strdup (number);
+                // Get the photo contact
+                hit->photo = pixbuf_from_contact (E_CONTACT (l->data));
 
-            // Get home phone information
-            fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_HOME, &number);
-            hit->phone_home = g_strdup (number);
+                // Get business phone information
+                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_BUSINESS, &number);
+                hit->phone_business = g_strdup (number);
 
-            // Get mobile phone information
-            fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_MOBILE, &number);
-            hit->phone_mobile = g_strdup (number);
+                // Get home phone information
+                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_HOME, &number);
+                hit->phone_home = g_strdup (number);
 
-            hit->name = g_strdup ( (char *) e_contact_get_const (E_CONTACT (l->data), E_CONTACT_NAME_OR_ORG));
+                // Get mobile phone information
+                fetch_information_from_contact (E_CONTACT (l->data), E_CONTACT_PHONE_MOBILE, &number);
+                hit->phone_mobile = g_strdup (number);
 
-            if (!hit->name)
-                hit->name = "";
+                hit->name = g_strdup ( (char *) e_contact_get_const (E_CONTACT (l->data), E_CONTACT_NAME_OR_ORG));
 
-            DEBUG ("Addressbook: Contact Found");
-            DEBUG ("Addressbook: Full Name %s", hit->name);
-            DEBUG ("Addressbook: Phone Home %s", hit->phone_home);
-            DEBUG ("Addressbook: Phone Business %s", hit->phone_business);
-            DEBUG ("Addressbook: Phone Mobile %s", hit->phone_mobile);
+                if (!hit->name)
+                    hit->name = "";
 
-            had->hits = g_list_append (had->hits, hit);
-            had->max_results_remaining--;
+                DEBUG ("Addressbook: Contact Found");
+                DEBUG ("Addressbook:     Full Name %s", hit->name);
+                DEBUG ("Addressbook:     Phone Home %s", hit->phone_home);
+                DEBUG ("Addressbook:     Phone Business %s", hit->phone_business);
+                DEBUG ("Addressbook:     Phone Mobile %s", hit->phone_mobile);
+
+                if (hit)
+                    had->hits = g_list_append (had->hits, hit);
+
+
+                DEBUG ("Addressbook: max_result_remaining %d", had->max_results_remaining);
+                had->max_results_remaining--;
+
+                if (had->max_results_remaining <= 0)
+                    break;
+            }
 
             l = g_list_next (l);
+
         }
 
         view_finish (NULL, had);
@@ -728,7 +742,7 @@ search_async (const char *query, int max_results, SearchAsyncHandler handler,
                 e_book_view_start (book_view);
                 search_count++;
             } else {
-                ERROR ("Addressbook: Book's view does'not exit, could not perform search");
+                ERROR ("Addressbook: Book's view does'nt exit, could not perform search");
             }
         } else {
             ERROR ("Addressbook: Book data not activated");
