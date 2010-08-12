@@ -81,4 +81,6 @@ void activateWaitingLayer();
  */
 void deactivateWaitingLayer();
 
+GtkWidget *addressbook_menu_new (void);
+
 #endif

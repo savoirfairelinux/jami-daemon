@@ -733,3 +733,19 @@ fetch_information_from_contact (EContact *contact, EContactField field, gchar **
     *info = g_strdup (to_fetch);
 }
 
+void
+set_current_addressbook (const gchar *name)
+{
+
+    GSList *book_list_iterator;
+    book_data_t *book_data;
+
+    // Iterate throw the list
+    for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
+            = book_list_iterator->next) {
+        book_data = (book_data_t *) book_list_iterator->data;
+
+        if (strcmp (book_data->name, name) == 0)
+            current_uri = book_data->uri;
+    }
+}

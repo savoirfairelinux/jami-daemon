@@ -85,7 +85,7 @@ void
 update_actions()
 {
 
-    DEBUG ("Update action");
+    DEBUG ("UIManager: Update action");
 
     gtk_action_set_sensitive (GTK_ACTION (newCallAction), TRUE);
     gtk_action_set_sensitive (GTK_ACTION (pickUpAction), FALSE);
@@ -510,7 +510,7 @@ conference_hold (void* foo UNUSED)
 static void
 call_pick_up (void * foo UNUSED)
 {
-    DEBUG ("------ call_button -----");
+    DEBUG ("UIManager: Call_button");
     callable_obj_t * selectedCall;
     callable_obj_t* new_call;
 
@@ -577,7 +577,7 @@ remove_from_history (void * foo UNUSED)
     callable_obj_t* c = calltab_get_selected_call (history);
 
     if (c) {
-        DEBUG ("Remove the call from the history");
+        DEBUG ("UIManager: Remove the call from the history");
         calllist_remove_from_history (c);
     }
 }
@@ -637,7 +637,7 @@ edit_copy (void * foo UNUSED)
                 break;
         }
 
-        DEBUG ("Clipboard number: %s\n", no);
+        DEBUG ("UIManager: Clipboard number: %s\n", no);
         gtk_clipboard_set_text (clip, no, strlen (no));
     }
 
@@ -716,7 +716,7 @@ edit_paste (void * foo UNUSED)
         selectedCall->_peer_number = g_strconcat (selectedCall->_peer_number, no,
                                      NULL);
         g_free (before);
-        DEBUG ("TO: %s", selectedCall->_peer_number);
+        DEBUG ("UIManager: TO: %s", selectedCall->_peer_number);
 
         g_free (selectedCall->_peer_info);
         selectedCall->_peer_info = g_strconcat ("\"\" <",
@@ -952,7 +952,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     conference_obj_t * selectedConf;
 
     if (calltab_get_selected_type (current_calls) == A_CALL) {
-        DEBUG ("MENUS: SELECTED A CALL");
+        DEBUG ("UIManager: Menus: Selected a call");
         selectedCall = calltab_get_selected_call (current_calls);
 
         if (selectedCall) {
@@ -990,13 +990,13 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
                     hangup = TRUE;
                     break;
                 default:
-                    WARN ("Should not happen in show_popup_menu for calls!")
+                    WARN ("UIManager: Should not happen in show_popup_menu for calls!")
                     ;
                     break;
             }
         }
     } else {
-        DEBUG ("MENUS: SELECTED A CONF");
+        DEBUG ("UIManager: Menus: selected a conf");
         selectedConf = calltab_get_selected_conf();
 
         if (selectedConf) {
@@ -1012,7 +1012,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
                     hold_conf = TRUE;
                     break;
                 default:
-                    WARN ("Should not happen in show_popup_menu for conferences!")
+                    WARN ("UIManager: Should not happen in show_popup_menu for conferences!")
                     ;
                     break;
             }
@@ -1030,7 +1030,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     //g_signal_connect (menu, "deactivate",
     //       G_CALLBACK (gtk_widget_destroy), NULL);
     if (calltab_get_selected_type (current_calls) == A_CALL) {
-        DEBUG ("BUILD CALL MENU");
+        DEBUG ("UIManager: Build call menu");
 
         if (copy) {
             menu_items = gtk_image_menu_item_new_from_stock (GTK_STOCK_COPY,
@@ -1103,7 +1103,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
         }
 
     } else {
-        DEBUG ("BUILD CONFERENCE MENU");
+        DEBUG ("UIManager: Build call menus");
 
         if (hangup_conf) {
             menu_items = gtk_image_menu_item_new_with_mnemonic (_ ("_Hang up"));
@@ -1147,6 +1147,8 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 void
 show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event)
 {
+
+    DEBUG ("UIManager: Show popup menu history");
 
     gboolean pickup = FALSE;
     gboolean remove = FALSE;
@@ -1216,6 +1218,75 @@ show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event)
     gtk_menu_attach_to_widget (GTK_MENU (menu), my_widget, NULL);
     gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, button, event_time);
 }
+
+/*
+void
+show_popup_menu_addressbook (GtkWidget *my_widget, GdkEventButton *event)
+{
+
+    if (selectedCall) {
+        remove = TRUE;
+        pickup = TRUE;
+        edit = TRUE;
+        accounts = TRUE;
+    }
+
+    GtkWidget *menu;
+    GtkWidget *image;
+    int button, event_time;
+    GtkWidget * menu_items;
+
+    menu = gtk_menu_new();
+    //g_signal_connect (menu, "deactivate",
+    //       G_CALLBACK (gtk_widget_destroy), NULL);
+
+    if (pickup) {
+
+        menu_items = gtk_image_menu_item_new_with_mnemonic (_ ("_Call back"));
+        image = gtk_image_new_from_file (ICONS_DIR "/icon_accept.svg");
+        gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menu_items), image);
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+        g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (call_back), NULL);
+        gtk_widget_show (menu_items);
+    }
+
+    menu_items = gtk_separator_menu_item_new();
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    gtk_widget_show (menu_items);
+
+    if (edit) {
+        menu_items = gtk_image_menu_item_new_from_stock (GTK_STOCK_EDIT,
+                     get_accel_group());
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+        g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (edit_number_cb), selectedCall);
+        gtk_widget_show (menu_items);
+    }
+
+    if (remove) {
+        menu_items = gtk_image_menu_item_new_from_stock (GTK_STOCK_DELETE,
+                     get_accel_group());
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+        g_signal_connect (G_OBJECT (menu_items), "activate", G_CALLBACK (remove_from_history), NULL);
+        gtk_widget_show (menu_items);
+    }
+
+    if (accounts) {
+        add_registered_accounts_to_menu (menu);
+    }
+
+    if (event) {
+        button = event->button;
+        event_time = event->time;
+    } else {
+        button = 0;
+        event_time = gtk_get_current_event_time();
+    }
+
+    gtk_menu_attach_to_widget (GTK_MENU (menu), my_widget, NULL);
+    gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, button, event_time);
+}
+*/
+
 void
 show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event)
 {

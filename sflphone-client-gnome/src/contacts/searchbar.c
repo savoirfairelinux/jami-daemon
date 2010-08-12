@@ -33,6 +33,7 @@
 
 #include <searchbar.h>
 #include <calltree.h>
+#include <contacts/addressbook/eds.h>
 
 GtkWidget * searchbox;
 
@@ -57,6 +58,13 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
 }
 
 #if GTK_CHECK_VERSION(2,16,0)
+
+static void select_addressbook (GtkWidget *item, GtkEntry  *entry)
+{
+    DEBUG ("Searchbar: Selected item label %s", gtk_menu_item_get_label (item));
+
+    set_current_addressbook (gtk_menu_item_get_label (item));
+}
 
 static void search_all (GtkWidget *item UNUSED, GtkEntry  *entry)
 {
@@ -109,10 +117,16 @@ static void search_by_outgoing (GtkWidget *item UNUSED, GtkEntry  *entry)
 
 static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event, gpointer data UNUSED)
 {
+    DEBUG ("Searchbar: Icon pressed");
+
     if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree == history)
         gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
                         event->button, event->time);
-    else
+    else if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree == contacts) {
+        GtkWidget *addrbook_menu = addressbook_menu_new();
+        gtk_menu_popup (GTK_MENU (addrbook_menu), NULL, NULL, NULL, NULL,
+                        event->button, event->time);
+    } else
         gtk_entry_set_text (entry, "");
 }
 
@@ -125,6 +139,33 @@ static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec UNUSED)
 }
 
 #endif
+
+GtkWidget *addressbook_menu_new (void)
+{
+
+    GtkWidget *menu, *item;
+
+    GSList *book_list_iterator;
+    book_data_t *book_data;
+    GSList *books_data = addressbook_get_books_data();
+
+    // Create the menu
+    menu = gtk_menu_new ();
+    gtk_menu_attach_to_widget (GTK_MENU (menu), contacts->searchbar, NULL);
+
+    // Populate menu
+    for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
+            = book_list_iterator->next) {
+        book_data = (book_data_t *) book_list_iterator->data;
+        item = gtk_menu_item_new_with_label (book_data->name);
+        g_signal_connect (item, "activate", G_CALLBACK (select_addressbook), searchbox);
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    }
+
+    gtk_widget_show_all (menu);
+
+    return menu;
+}
 
 void
 focus_on_searchbar_out()

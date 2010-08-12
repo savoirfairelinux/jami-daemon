@@ -110,19 +110,6 @@ void
 fill_books_data (void);
 
 /**
- * Asynchronous search function (without the get_contacts method)
- */
-void
-search_async (const char *query, int max_results, SearchAsyncHandler handler,
-              gpointer user_data);
-
-/**
- * Synchronous query to EDS using get_contacts method. Block the application until a result is received.
- */
-void
-search_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data);
-
-/**
  * Asynchronous query to EDS using get contact method.
  */
 void
@@ -158,6 +145,12 @@ books_active();
  */
 GSList *
 addressbook_get_books_data();
+
+/**
+ * Set the current address book
+ */
+void
+set_current_addressbook (const gchar *name);
 
 G_END_DECLS
 

@@ -136,8 +136,6 @@ void threaded_clock_incrementer (void *pc)
 
     while (call->clockStarted) {
 
-        DEBUG ("CALL CLOCK");
-
         int duration;
         time_t start, current;
 
