@@ -491,7 +491,7 @@ eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
  * Initialize address book
  */
 void
-init (OpenAsyncHandler callback)
+init (OpenAsyncHandler callback UNUSED)
 {
     GError *err = NULL;
 
@@ -526,7 +526,6 @@ fill_books_data ()
     ESourceList *source_list = NULL;
     remaining_books_to_open = 0;
     books_data = NULL;
-    GError *err;
 
     source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
 
@@ -678,9 +677,6 @@ view_completed_cb (EBookView *book_view, EBookViewStatus status UNUSED,
 void
 search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data)
 {
-    EBookQuery *equery;
-    EBookQuery *queries[4];
-    GList *iter;
     GError *err = NULL;
 
     current_search_id++;
