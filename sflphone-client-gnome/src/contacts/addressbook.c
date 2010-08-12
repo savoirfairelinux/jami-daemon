@@ -56,6 +56,7 @@ addressbook_search (GtkEntry* entry)
     // search_by_contacts(gtk_entry_get_text(GTK_ENTRY(entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
 
     search_async_by_contacts (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
+    // addressbook_config_books
 
     /*
      if (strlen(query) >= 3) {
@@ -164,6 +165,8 @@ void
 addressbook_init()
 {
     DEBUG ("Addressbook: Initialize addressbook");
+
+    fill_books_data();
 
     // Call books initialization
     init (&addressbook_config_books);

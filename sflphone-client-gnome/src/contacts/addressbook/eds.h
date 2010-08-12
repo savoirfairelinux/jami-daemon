@@ -71,6 +71,7 @@ typedef struct _Hit {
 typedef struct {
     gchar *uid;
     gchar *name;
+    gchar *uri;
     gboolean active;
     EBook *ebook;
 } book_data_t;
@@ -101,6 +102,12 @@ typedef void
  */
 void
 init (OpenAsyncHandler);
+
+/**
+ * Fill list of addressbooks
+ */
+void
+fill_books_data (void);
 
 /**
  * Asynchronous search function (without the get_contacts method)
