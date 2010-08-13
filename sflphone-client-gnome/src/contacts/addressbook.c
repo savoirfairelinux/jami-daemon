@@ -53,27 +53,8 @@ addressbook_search (GtkEntry* entry)
 
     addressbook_config_load_parameters (&addressbook_config);
 
-    // search_by_contacts(gtk_entry_get_text(GTK_ENTRY(entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
 
     search_async_by_contacts (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
-    // addressbook_config_books
-
-    /*
-     if (strlen(query) >= 3) {
-
-         AddressBook_Config *addressbook_config;
-
-     // Activate waiting layer
-     activateWaitingLayer();
-
-     // Load the address book parameters
-     addressbook_config_load_parameters(&addressbook_config);
-
-     // Start the asynchronous search as soon as we have an entry
-     search_async(gtk_entry_get_text(GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
-
-     }
-     */
 
 }
 

@@ -46,12 +46,21 @@ GdkPixbuf *incoming_pixbuf = NULL;
 GdkPixbuf *outgoing_pixbuf = NULL;
 GdkPixbuf *missed_pixbuf = NULL;
 
+
+void searchbar_addressbook_activated (GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
+{
+    DEBUG ("Searchbar: Entry activated");
+
+    addressbook_search (entry);
+}
+
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
-    DEBUG ("searchbar_entry_changed");
+    DEBUG ("Searchbar: Entry changed");
 
     if (active_calltree == contacts) {
-        addressbook_search (entry);
+        // Search made only when text entry is activated
+        // addressbook_search (entry);
     } else if (active_calltree == history) {
         history_search (HistorySearchType);
     }
@@ -304,12 +313,16 @@ GtkWidget* contacts_searchbar_new ()
     sexy_icon_entry_add_clear_button (SEXY_ICON_ENTRY (searchbox));
 #endif
 
+    gtk_entry_set_activates_default (GTK_ENTRY (searchbox), TRUE);
+    g_signal_connect_after (GTK_ENTRY (searchbox), "activate", G_CALLBACK (searchbar_addressbook_activated), NULL);
+
     g_signal_connect_after (GTK_ENTRY (searchbox), "changed", G_CALLBACK (searchbar_entry_changed), NULL);
 
     g_signal_connect_after (G_OBJECT (searchbox), "focus-in-event",
                             G_CALLBACK (focus_on_searchbar_in), NULL);
     g_signal_connect_after (G_OBJECT (searchbox), "focus-out-event",
                             G_CALLBACK (focus_on_searchbar_out), NULL);
+
 
     gtk_box_pack_start (GTK_BOX (ret), searchbox, TRUE, TRUE, 0);
 
