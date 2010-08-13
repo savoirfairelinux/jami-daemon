@@ -113,9 +113,7 @@ addressbook_config_books()
             book_data = books_get_book_data_by_uid (*config_book_uid);
 
             // If book_data exists
-            if (book_data)
-                book_data->active = TRUE;
-            else
+            if (!book_data)
                 ERROR ("Addressbook: Error: Could not open book");
         }
 

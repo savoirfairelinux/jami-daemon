@@ -68,6 +68,7 @@ int remaining_books_to_open;
  */
 static gchar *current_uri = NULL;
 static gchar *current_uid = NULL;
+static gchar *current_name = NULL;
 
 /**
  * Freeing a hit instance
@@ -450,9 +451,16 @@ init (OpenAsyncHandler callback UNUSED)
         current_uid = NULL;
     }
 
+    if (current_name) {
+        g_free (current_name);
+        current_name = NULL;
+    }
+
     gchar *absuri, *reluri;
     absuri = g_strdup (e_source_peek_absolute_uri (default_source));
     reluri = g_strdup (e_source_peek_relative_uri (default_source));
+
+    current_name = g_strdup (e_source_peek_name (default_source));
 
     current_uid = g_strdup (e_source_peek_uid (default_source));
 
@@ -499,7 +507,6 @@ fill_books_data ()
         ESourceGroup *group = l->data;
         GSList *sources = NULL, *m;
         gchar *absuri;
-        GError *err;
 
         absuri = g_strdup (e_source_group_peek_base_uri (group));
 
@@ -518,8 +525,6 @@ fill_books_data ()
                 book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
             else
                 book_data->uri = g_strjoin ("/", absuri, e_source_peek_relative_uri (source), NULL);
-
-            book_data->ebook = e_book_new (source, &err);
 
             books_data = g_slist_prepend (books_data, book_data);
 
@@ -604,6 +609,17 @@ set_current_addressbook (const gchar *name)
         if (strcmp (book_data->name, name) == 0) {
             current_uri = book_data->uri;
             current_uid = book_data->uid;
+            current_name = book_data->name;
         }
     }
+}
+
+
+const gchar *
+get_current_addressbook (void)
+{
+    if (current_name)
+        return current_name;
+    else
+        return "Default";
 }

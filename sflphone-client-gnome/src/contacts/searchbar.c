@@ -36,6 +36,7 @@
 #include <contacts/addressbook/eds.h>
 
 GtkWidget * searchbox;
+GtkWidget * addressbookentry;
 
 static GtkWidget *menu = NULL;
 
@@ -73,6 +74,16 @@ static void select_addressbook (GtkWidget *item, GtkEntry  *entry)
     DEBUG ("Searchbar: Selected item label %s", gtk_menu_item_get_label (item));
 
     set_current_addressbook (gtk_menu_item_get_label (item));
+
+    gchar *name = get_current_addressbook();
+    gchar *searching = g_strjoin ("", "Search contacts in\n", name, NULL);
+
+    gtk_entry_set_icon_tooltip_text (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY,
+                                     searching);
+
+    addressbook_search (GTK_ENTRY (addressbookentry));
+
+    g_free (searching);
 }
 
 static void search_all (GtkWidget *item UNUSED, GtkEntry  *entry)
@@ -288,43 +299,47 @@ GtkWidget* contacts_searchbar_new ()
 
     GdkPixbuf *pixbuf;
 
-    searchbox = gtk_entry_new();
-    gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
+    gchar *current_addressbook = get_current_addressbook();
+    gchar *tooltip_text = g_strjoin ("", "Search contacts in\n", current_addressbook, NULL);
+
+    addressbookentry = gtk_entry_new();
+    gtk_entry_set_icon_from_stock (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
     pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL);
-    gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY, pixbuf);
-    gtk_entry_set_icon_tooltip_text (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY,
-                                     "Search contacts\n"
-                                     "GNOME evolution backend");
+    gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY, pixbuf);
+    gtk_entry_set_icon_tooltip_text (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY,
+                                     tooltip_text);
 
 
     // Set the clean insensitive
-    text_changed_cb (GTK_ENTRY (searchbox), NULL);
+    text_changed_cb (GTK_ENTRY (addressbookentry), NULL);
 
-    g_signal_connect (searchbox, "notify::text", G_CALLBACK (text_changed_cb), NULL);
-    g_signal_connect (searchbox, "icon-press", G_CALLBACK (icon_press_cb), NULL);
+    g_signal_connect (addressbookentry, "notify::text", G_CALLBACK (text_changed_cb), NULL);
+    g_signal_connect (addressbookentry, "icon-press", G_CALLBACK (icon_press_cb), NULL);
 
 #else
 
     GtkWidget *image;
 
-    searchbox = sexy_icon_entry_new();
+    addressbookentry = sexy_icon_entry_new();
     image = gtk_image_new_from_stock (GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (searchbox), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
-    sexy_icon_entry_add_clear_button (SEXY_ICON_ENTRY (searchbox));
+    sexy_icon_entry_set_icon (SEXY_ICON_ENTRY (addressbookentry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE (image));
+    sexy_icon_entry_add_clear_button (SEXY_ICON_ENTRY (addressbookentry));
 #endif
 
-    gtk_entry_set_activates_default (GTK_ENTRY (searchbox), TRUE);
-    g_signal_connect_after (GTK_ENTRY (searchbox), "activate", G_CALLBACK (searchbar_addressbook_activated), NULL);
+    gtk_entry_set_activates_default (GTK_ENTRY (addressbookentry), TRUE);
+    g_signal_connect_after (GTK_ENTRY (addressbookentry), "activate", G_CALLBACK (searchbar_addressbook_activated), NULL);
 
-    g_signal_connect_after (GTK_ENTRY (searchbox), "changed", G_CALLBACK (searchbar_entry_changed), NULL);
+    g_signal_connect_after (GTK_ENTRY (addressbookentry), "changed", G_CALLBACK (searchbar_entry_changed), NULL);
 
-    g_signal_connect_after (G_OBJECT (searchbox), "focus-in-event",
+    g_signal_connect_after (G_OBJECT (addressbookentry), "focus-in-event",
                             G_CALLBACK (focus_on_searchbar_in), NULL);
-    g_signal_connect_after (G_OBJECT (searchbox), "focus-out-event",
+    g_signal_connect_after (G_OBJECT (addressbookentry), "focus-out-event",
                             G_CALLBACK (focus_on_searchbar_out), NULL);
 
 
-    gtk_box_pack_start (GTK_BOX (ret), searchbox, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (ret), addressbookentry, TRUE, TRUE, 0);
+
+    g_free (tooltip_text);
 
     return ret;
 }

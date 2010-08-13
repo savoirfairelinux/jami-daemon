@@ -70,10 +70,9 @@ typedef struct _Hit {
  */
 typedef struct {
     gchar *uid;
-    gchar *name;
     gchar *uri;
+    gchar *name;
     gboolean active;
-    EBook *ebook;
 } book_data_t;
 
 GSList *books_data;
@@ -151,6 +150,12 @@ addressbook_get_books_data();
  */
 void
 set_current_addressbook (const gchar *name);
+
+/**
+ * Return current addressbook name
+ */
+const gchar *
+get_current_addressbook (void);
 
 G_END_DECLS
 
