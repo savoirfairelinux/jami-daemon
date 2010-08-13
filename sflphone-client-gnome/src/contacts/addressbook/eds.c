@@ -74,16 +74,10 @@ static int pixbuf_size = 32;
 int remaining_books_to_open;
 
 /**
- * Fields on which search will be performed
- */
-static EContactField search_fields[] = { E_CONTACT_FULL_NAME, E_CONTACT_PHONE_BUSINESS, E_CONTACT_NICKNAME, 0 };
-
-static int n_search_fields = G_N_ELEMENTS (search_fields) - 1;
-
-/**
- * Current selected addressbook's uri, initialized with default uri
+ * Current selected addressbook's uri and uid, initialized with default
  */
 static gchar *current_uri = NULL;
+static gchar *current_uid = NULL;
 
 /**
  * Freeing a hit instance
@@ -155,38 +149,6 @@ books_get_book_data_by_uid (gchar *uid)
     return NULL;
 }
 
-/**
- * Split a string of tokens separated by whitespace into an array of tokens.
- */
-static GArray *
-split_query_string (const gchar *str)
-{
-    GArray *parts = g_array_sized_new (FALSE, FALSE, sizeof (char *), 2);
-    PangoLogAttr *attrs;
-    guint str_len = strlen (str), word_start = 0, i;
-
-    attrs = g_new0 (PangoLogAttr, str_len + 1);
-    /* TODO: do we need to specify a particular language or is NULL ok? */
-    pango_get_log_attrs (str, -1, -1, NULL, attrs, str_len + 1);
-
-    for (i = 0; i < str_len + 1; i++) {
-        char *start_word, *end_word, *word;
-
-        if (attrs[i].is_word_end) {
-            start_word = g_utf8_offset_to_pointer (str, word_start);
-            end_word = g_utf8_offset_to_pointer (str, i);
-            word = g_strndup (start_word, end_word - start_word);
-            g_array_append_val (parts, word);
-        }
-
-        if (attrs[i].is_word_start) {
-            word_start = i;
-        }
-    }
-
-    g_free (attrs);
-    return parts;
-}
 
 /**
  * Create a query which looks for the specified string in a contact's full name, email addresses and
@@ -510,9 +472,26 @@ init (OpenAsyncHandler callback UNUSED)
         current_uri = NULL;
     }
 
-    current_uri = g_strjoin ("/", e_source_peek_absolute_uri (default_source), e_source_peek_relative_uri (default_source), NULL);
+    if (current_uid) {
+        g_free (current_uid);
+        current_uid = NULL;
+    }
+
+    gchar *absuri, *reluri;
+    absuri = g_strdup (e_source_peek_absolute_uri (default_source));
+    reluri = g_strdup (e_source_peek_relative_uri (default_source));
+
+    current_uid = g_strdup (e_source_peek_uid (default_source));
+
+    if (strcmp (absuri+strlen (absuri)-1, "/") == 0)
+        current_uri = g_strjoin ("", absuri, reluri, NULL);
+    else
+        current_uri = g_strjoin ("/", absuri, reluri, NULL);
 
     DEBUG ("Addressbook: Default source uri: %s", current_uri);
+
+    g_free (absuri);
+    g_free (reluri);
 }
 
 
@@ -547,6 +526,7 @@ fill_books_data ()
         ESourceGroup *group = l->data;
         GSList *sources = NULL, *m;
         gchar *absuri;
+        GError *err;
 
         absuri = g_strdup (e_source_group_peek_base_uri (group));
 
@@ -560,7 +540,13 @@ fill_books_data ()
             book_data->active = TRUE;
             book_data->name = g_strdup (e_source_peek_name (source));
             book_data->uid = g_strdup (e_source_peek_uid (source));
-            book_data->uri = g_strjoin ("/", absuri, e_source_peek_relative_uri (source), NULL);
+
+            if (strcmp (absuri+strlen (absuri)-1, "/") == 0)
+                book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
+            else
+                book_data->uri = g_strjoin ("/", absuri, e_source_peek_relative_uri (source), NULL);
+
+            book_data->ebook = e_book_new (source, &err);
 
             books_data = g_slist_prepend (books_data, book_data);
 
@@ -572,112 +558,12 @@ fill_books_data ()
     g_object_unref (source_list);
 }
 
-/**
- * Callback called after each ebook search completed.
- * Used to store book search results.
- */
-static void
-view_contacts_added_cb (EBookView *book_view, GList *contacts,
-                        gpointer user_data)
-{
-    GdkPixbuf *photo;
-
-    Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
-
-    DEBUG ("Addressbook: Vew contact added callback");
-
-    // If it's not the last search launched, stop it
-    if (had->search_id != current_search_id) {
-        e_book_view_stop (book_view);
-        return;
-    }
-
-    // If we reached max results
-    if (had->max_results_remaining <= 0) {
-        e_book_view_stop (book_view);
-        had->book_views_remaining--;
-
-        // All books have been computed
-        if (had->book_views_remaining == 0) {
-            view_finish_callback (book_view, had);
-            return;
-        }
-    }
-
-    // For each contact
-    for (; contacts != NULL; contacts = g_list_next (contacts)) {
-        EContact *contact;
-        Hit *hit;
-        gchar *number;
-
-        contact = E_CONTACT (contacts->data);
-        hit = g_new (Hit, 1);
-
-        // Get the photo contact
-        photo = pixbuf_from_contact (contact);
-        hit->photo = photo;
-
-        // Get business phone information
-        fetch_information_from_contact (contact, E_CONTACT_PHONE_BUSINESS, &number);
-        hit->phone_business = g_strdup (number);
-
-        // Get home phone information
-        fetch_information_from_contact (contact, E_CONTACT_PHONE_HOME, &number);
-        hit->phone_home = g_strdup (number);
-
-        // Get mobile phone information
-        fetch_information_from_contact (contact, E_CONTACT_PHONE_MOBILE, &number);
-        hit->phone_mobile = g_strdup (number);
-
-        hit->name = g_strdup ( (char*) e_contact_get_const (contact,
-                               E_CONTACT_NAME_OR_ORG));
-
-        if (!hit->name)
-            hit->name = "";
-
-        // Append list of contacts
-        had->hits = g_list_append (had->hits, hit);
-        had->max_results_remaining--;
-
-        // If we reached max results
-        if (had->max_results_remaining <= 0) {
-            e_book_view_stop (book_view);
-            had->book_views_remaining--;
-
-            if (had->book_views_remaining == 0) {
-                view_finish_callback (book_view, had);
-            }
-
-            break;
-        }
-    }
-}
-
-
-/**
- * Callback called after each ebook search completed.
- * Used to call final callback when all books have been read.
- */
-static void
-view_completed_cb (EBookView *book_view, EBookViewStatus status UNUSED,
-                   gpointer user_data)
-{
-    DEBUG ("Addressbook: View completed callback");
-
-    Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
-    had->book_views_remaining--;
-
-    // All books have been prcessed
-    if (had->book_views_remaining == 0) {
-        // Call finish function
-        view_finish_callback (book_view, had);
-    }
-}
-
 void
 search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data)
 {
     GError *err = NULL;
+    // ESourceList *source_list = NULL;
+    // ESource *source = NULL;
 
     current_search_id++;
 
@@ -703,7 +589,14 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     if (!current_uri)
         ERROR ("Addressbook: Error: Current addressbook uri not specified uri");
 
+
+    // source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
+    // source = e_source_list_peek_source_by_uid (source_list, current_uid);
+
+    DEBUG ("Addressbook: Opening addressbook: %s", current_uri);
     EBook *book = e_book_new_from_uri (current_uri, &err);
+    // EBook *book = e_book_new_from_uri ("ldap://officesrv-01:389/ou=Contacts,dc=savoirfairelinux,dc=net??sub?(objectClass=*)", &err);
+    // EBook *book = e_book_new (source, &err);
 
     if (err)
         ERROR ("Addressbook: Error: Could not open new book: %s", err->message);
@@ -714,6 +607,7 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
         // Asynchronous open
         e_book_async_open (book, TRUE, eds_async_open_callback, had);
     }
+
 }
 
 /**
@@ -745,7 +639,9 @@ set_current_addressbook (const gchar *name)
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
 
-        if (strcmp (book_data->name, name) == 0)
+        if (strcmp (book_data->name, name) == 0) {
             current_uri = book_data->uri;
+            current_uid = book_data->uid;
+        }
     }
 }
