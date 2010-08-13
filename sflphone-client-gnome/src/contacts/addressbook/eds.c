@@ -246,6 +246,9 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
 
     DEBUG ("Addressbook: Search Result callback called");
 
+    if (status != E_BOOK_ERROR_OK)
+        ERROR ("Addressbook: Error: Status not OK on search callback");
+
     Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
 
     if (!contacts) {
@@ -430,7 +433,6 @@ void
 init (OpenAsyncHandler callback UNUSED)
 {
     GError *err = NULL;
-    ESourceGroup *group;
     gchar *absuri, *reluri;
 
     EBook *default_addressbook = e_book_new_default_addressbook (&err);
