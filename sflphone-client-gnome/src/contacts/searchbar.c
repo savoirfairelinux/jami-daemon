@@ -76,7 +76,7 @@ static void select_addressbook (GtkWidget *item, GtkEntry  *entry)
     set_current_addressbook (gtk_menu_item_get_label (item));
 
     gchar *name = get_current_addressbook();
-    gchar *searching = g_strjoin ("", "Search contacts in\n", name, NULL);
+    gchar *searching = g_strjoin ("", "Click to select addressbook\n Searching in ", name, NULL);
 
     gtk_entry_set_icon_tooltip_text (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY,
                                      searching);
@@ -300,7 +300,7 @@ GtkWidget* contacts_searchbar_new ()
     GdkPixbuf *pixbuf;
 
     gchar *current_addressbook = get_current_addressbook();
-    gchar *tooltip_text = g_strjoin ("", "Search contacts in\n", current_addressbook, NULL);
+    gchar *tooltip_text = g_strjoin ("", "Click to select addressbook\n Searching in ", current_addressbook, NULL);
 
     addressbookentry = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);

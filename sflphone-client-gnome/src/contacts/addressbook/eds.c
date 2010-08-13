@@ -341,7 +341,7 @@ eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
         }
 
         if (e_book_async_get_contacts (book, had->equery, eds_query_result_cb, had))
-            DEBUG ("Addressbook: Queries sent successfully");
+            ERROR ("Addressbook: Error: While querying addressbook");
 
     } else {
         WARN ("Addressbook: Got error when opening book");
@@ -588,7 +588,9 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
 
         // Asynchronous open
         e_book_async_open (book, TRUE, eds_async_open_callback, had);
-    }
+    } else
+        ERROR ("Addressbook: Error: No book available");
+
 
 }
 
