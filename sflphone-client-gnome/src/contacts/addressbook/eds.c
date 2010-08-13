@@ -47,11 +47,9 @@
  */
 typedef struct _Search_Handler_And_Data {
     SearchAsyncHandler search_handler;
-    OpenAsyncHandler open_handler;
     gpointer user_data;
     GList *hits;
     int max_results_remaining;
-    int book_views_remaining;
     EBookQuery *equery;
 } Search_Handler_And_Data;
 
@@ -247,8 +245,11 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
 
     DEBUG ("Addressbook: Search Result callback called");
 
+    Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
+
     if (!contacts) {
-        DEBUG ("Addressbook: Error: Contact is NULL");
+        DEBUG ("Addressbook: No contact found");
+        had->search_handler (NULL, user_data);
         return;
     }
 
@@ -257,8 +258,6 @@ eds_query_result_cb (EBook *book, EBookStatus status, GList *contacts, gpointer 
     if (status == E_BOOK_ERROR_OK) {
 
         gchar *number;
-
-        Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
 
         // make sure we have a new list of hits
         had->hits = NULL;
@@ -552,7 +551,6 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     had->user_data = user_data;
     had->hits = NULL;
     had->max_results_remaining = max_results;
-    had->book_views_remaining = 0;
     had->equery = create_query (query);
 
     if (!current_uri)
