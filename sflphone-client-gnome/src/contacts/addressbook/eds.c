@@ -46,7 +46,6 @@
  * Structure used to store search callback and data
  */
 typedef struct _Search_Handler_And_Data {
-    int search_id;
     SearchAsyncHandler search_handler;
     OpenAsyncHandler open_handler;
     gpointer user_data;
@@ -55,13 +54,6 @@ typedef struct _Search_Handler_And_Data {
     int book_views_remaining;
     EBookQuery *equery;
 } Search_Handler_And_Data;
-
-/**
- * Structure used to store open callback and data
- */
-typedef struct _Open_Handler_And_Data {
-    OpenAsyncHandler handler;
-} Open_Handler_And_Data;
 
 /**
  * Size of image that will be displayed in contact list
@@ -230,12 +222,10 @@ pixbuf_from_contact (EContact *contact)
 static void
 view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
 {
-
-    GList *i;
     SearchAsyncHandler had_handler = had->search_handler;
     GList *had_hits = had->hits;
     gpointer had_user_data = had->user_data;
-    int search_id = had->search_id;
+
     g_free (had);
 
     DEBUG ("Addressbook: View finish");
@@ -243,24 +233,8 @@ view_finish_callback (EBookView *book_view, Search_Handler_And_Data *had)
     if (book_view != NULL)
         g_object_unref (book_view);
 
-    if (search_id == current_search_id) {
-
-        // Reinitialize search id to prevent overflow
-        if (current_search_id > 5000)
-            current_search_id = 0;
-
-        // Call display callback
-        had_handler (had_hits, had_user_data);
-    } else {
-        // Some hits could have been processed but will not be used
-        for (i = had_hits; i != NULL; i = i->next) {
-            Hit *entry;
-            entry = i->data;
-            free_hit (entry);
-        }
-
-        g_list_free (had_hits);
-    }
+    // Call display callback
+    had_handler (had_hits, had_user_data);
 }
 
 
@@ -562,12 +536,8 @@ void
 search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data)
 {
     GError *err = NULL;
-    // ESourceList *source_list = NULL;
-    // ESource *source = NULL;
 
-    current_search_id++;
-
-    DEBUG ("Addressbook: New search by contacts %d: %s, max_results %d", current_search_id, query, max_results);
+    DEBUG ("Addressbook: New search by contacts: %s, max_results %d", query, max_results);
 
     if (strlen (query) < 1) {
         DEBUG ("Addressbook: Query is empty");
@@ -578,7 +548,6 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     Search_Handler_And_Data *had = g_new (Search_Handler_And_Data, 1);
 
     // initialize search data
-    had->search_id = current_search_id;
     had->search_handler = handler;
     had->user_data = user_data;
     had->hits = NULL;
@@ -590,13 +559,8 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
         ERROR ("Addressbook: Error: Current addressbook uri not specified uri");
 
 
-    // source_list = e_source_list_new_for_gconf_default ("/apps/evolution/addressbook/sources");
-    // source = e_source_list_peek_source_by_uid (source_list, current_uid);
-
     DEBUG ("Addressbook: Opening addressbook: %s", current_uri);
     EBook *book = e_book_new_from_uri (current_uri, &err);
-    // EBook *book = e_book_new_from_uri ("ldap://officesrv-01:389/ou=Contacts,dc=savoirfairelinux,dc=net??sub?(objectClass=*)", &err);
-    // EBook *book = e_book_new (source, &err);
 
     if (err)
         ERROR ("Addressbook: Error: Could not open new book: %s", err->message);

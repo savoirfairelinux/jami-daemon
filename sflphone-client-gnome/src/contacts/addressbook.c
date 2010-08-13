@@ -180,7 +180,6 @@ handler_async_search (GList *hits, gpointer user_data)
     calllist_reset (contacts);
 
     for (i = hits; i != NULL; i = i->next) {
-        DEBUG ("while");
 
         Hit *entry;
         entry = i->data;
