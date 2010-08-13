@@ -68,7 +68,7 @@ int remaining_books_to_open;
  */
 static gchar *current_uri = NULL;
 static gchar *current_uid = NULL;
-static gchar *current_name = NULL;
+static gchar *current_name = "Default";
 
 /**
  * Freeing a hit instance
@@ -430,6 +430,8 @@ void
 init (OpenAsyncHandler callback UNUSED)
 {
     GError *err = NULL;
+    ESourceGroup *group;
+    gchar *absuri, *reluri;
 
     EBook *default_addressbook = e_book_new_default_addressbook (&err);
 
@@ -451,16 +453,22 @@ init (OpenAsyncHandler callback UNUSED)
         current_uid = NULL;
     }
 
-    if (current_name) {
+    if (strcmp (current_name, "Default") != 0) {
         g_free (current_name);
         current_name = NULL;
     }
 
-    gchar *absuri, *reluri;
+    // TODO: This should work but return a NULL pointer ...
+    // if (! (group = e_source_peek_group (default_source)));
+
+    // ERROR ("Addressbook: Error: No group found for default addressbook");
+
     absuri = g_strdup (e_source_peek_absolute_uri (default_source));
+    // absuri = g_strdup (e_source_group_peek_base_uri (group));
     reluri = g_strdup (e_source_peek_relative_uri (default_source));
 
-    current_name = g_strdup (e_source_peek_name (default_source));
+    // Do not overwrite current_name for default
+    // current_name = g_strdup (e_source_peek_name (default_source));
 
     current_uid = g_strdup (e_source_peek_uid (default_source));
 
@@ -468,8 +476,6 @@ init (OpenAsyncHandler callback UNUSED)
         current_uri = g_strjoin ("", absuri, reluri, NULL);
     else
         current_uri = g_strjoin ("/", absuri, reluri, NULL);
-
-    DEBUG ("Addressbook: Default source uri: %s", current_uri);
 
     g_free (absuri);
     g_free (reluri);
@@ -540,6 +546,7 @@ void
 search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler handler, gpointer user_data)
 {
     GError *err = NULL;
+    EBook *book;
 
     DEBUG ("Addressbook: New search by contacts: %s, max_results %d", query, max_results);
 
@@ -563,7 +570,15 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
 
 
     DEBUG ("Addressbook: Opening addressbook: %s", current_uri);
-    EBook *book = e_book_new_from_uri (current_uri, &err);
+    DEBUG ("Addressbook: Opening addressbook: %s", current_name);
+
+    // TODO: This hack is necessary as we cannot access group's base_uri of the default book
+    // see init()
+
+    if (strcmp (current_name, "Default") == 0)
+        book = e_book_new_default_addressbook (&err);
+    else
+        book = e_book_new_from_uri (current_uri, &err);
 
     if (err)
         ERROR ("Addressbook: Error: Could not open new book: %s", err->message);
@@ -618,8 +633,5 @@ set_current_addressbook (const gchar *name)
 const gchar *
 get_current_addressbook (void)
 {
-    if (current_name)
-        return current_name;
-    else
-        return "Default";
+    return current_name;
 }
