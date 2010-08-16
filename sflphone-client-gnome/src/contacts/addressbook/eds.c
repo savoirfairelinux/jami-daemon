@@ -469,6 +469,16 @@ init (OpenAsyncHandler callback UNUSED)
     // absuri = g_strdup (e_source_group_peek_base_uri (group));
     reluri = g_strdup (e_source_peek_relative_uri (default_source));
 
+    if (!absuri) {
+      absuri = g_malloc (1);
+      *absuri = 0;
+    }
+
+    if (!reluri) {
+      reluri = g_malloc (1);
+      *reluri = 0;
+    }
+
     // Do not overwrite current_name for default
     // current_name = g_strdup (e_source_peek_name (default_source));
 
