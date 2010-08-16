@@ -1,4 +1,6 @@
-function add_message(message)
+function add_message (message)
 {
-	alert("Message: " + message);
+	var msgBody = document.getElementById ('messages');
+	msgBody.innerHTML = '<div class="message">' + message + '</div>' + msgBody.innerHTML;
 }
+

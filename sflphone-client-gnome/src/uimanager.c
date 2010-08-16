@@ -506,7 +506,7 @@ call_hold(void* foo UNUSED)
 }
 
 static void
-call_im(void* foo UNUSED)
+call_im (void* foo UNUSED)
 {
   callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
 

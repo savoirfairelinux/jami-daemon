@@ -32,13 +32,19 @@
 
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
+static IMWidget *_this;
+
 void
-im_widget_add_message(GtkWidget *widget, const gchar *message)
+im_widget_add_message (GtkWidget *widget, const gchar *message)
 {
 	IMWidget *im = IM_WIDGET(widget);
+	
+	/* Prepare and execute the Javascript code */
 	gchar *script = g_strdup_printf("add_message('%s');", message);
+	webkit_web_view_execute_script (WEBKIT_WEB_VIEW (_this->web_view), script);
+	// webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
 
-	webkit_web_view_execute_script(WEBKIT_WEB_VIEW(im->web_view), script);
+	/* Cleanup */
 	g_free(script);
 }
 
@@ -64,6 +70,25 @@ web_view_nav_requested_cb(
 }
 
 static void
+on_SendMessage_click (void) {
+	
+	/* Get the text in the buffer */
+	GtkTextIter start, end;
+	GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (_this->textarea));
+	gtk_text_buffer_get_bounds (GTK_TEXT_BUFFER (buffer), &start, &end);
+	gchar *message = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+
+	if (g_strcasecmp (message, "") != 0 )
+	{
+		im_widget_add_message (GTK_WIDGET (_this), message);
+
+		/* Empty the buffer */
+		gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);	
+	}
+}
+
+
+static void
 im_widget_class_init(IMWidgetClass *klass)
 {
 }
@@ -71,35 +96,41 @@ im_widget_class_init(IMWidgetClass *klass)
 static void
 im_widget_init(IMWidget *im)
 {
-	im->textarea = gtk_text_view_new();
-	gtk_text_view_set_editable(GTK_TEXT_VIEW(im->textarea), TRUE);
-	GtkWidget *textscrollwin = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(textscrollwin),
-		GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_container_add(GTK_CONTAINER(textscrollwin), im->textarea);
 
+	im->textarea = gtk_text_view_new ();
 	im->web_view = webkit_web_view_new();
-	GtkWidget *webscrollwin = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(webscrollwin),
-		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	gtk_container_add(GTK_CONTAINER(webscrollwin), im->web_view);
+	GtkWidget *textscrollwin = gtk_scrolled_window_new(NULL, NULL);
+	GtkWidget *webscrollwin = gtk_scrolled_window_new (NULL, NULL);
 
-	g_signal_connect(im->web_view, "navigation-policy-decision-requested",
-		G_CALLBACK (web_view_nav_requested_cb), NULL);
-
+	/* A bar with the entry text and the button to send the message */
+	GtkWidget *hbox = gtk_hbox_new (FALSE, 10);
+	GtkWidget *button_SendMessage = gtk_button_new_with_label("Send");
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(im->textarea), TRUE);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(textscrollwin), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(webscrollwin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_container_add (GTK_CONTAINER (textscrollwin), im->textarea);
+	gtk_container_add (GTK_CONTAINER (webscrollwin), im->web_view);
+	gtk_container_add (GTK_CONTAINER (hbox), textscrollwin);
+	gtk_container_add (GTK_CONTAINER (hbox), button_SendMessage);
 	gtk_box_pack_start(GTK_BOX(im), webscrollwin, TRUE, TRUE, 5);
-	gtk_box_pack_end(GTK_BOX(im), textscrollwin, TRUE, TRUE, 5);
+	gtk_box_pack_end(GTK_BOX(im), hbox, FALSE, FALSE, 1);
+	// gtk_box_pack_end(GTK_BOX(im), textscrollwin, TRUE, TRUE, 5);
+	g_signal_connect (im->web_view, "navigation-policy-decision-requested", G_CALLBACK (web_view_nav_requested_cb), NULL);
+	g_signal_connect(button_SendMessage, "clicked", G_CALLBACK(on_SendMessage_click), NULL);
+	g_signal_connect (G_OBJECT (webscrollwin), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
 	im->web_frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(im->web_view));
 	im->js_context = webkit_web_frame_get_global_context(im->web_frame);
 	im->js_global = JSContextGetGlobalObject(im->js_context);
-	webkit_web_view_open(WEBKIT_WEB_VIEW(im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
+	webkit_web_view_load_uri (WEBKIT_WEB_VIEW(im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
+
+	_this = im;
 }
 
 GtkWidget *
 im_widget_new()
 {
-	return GTK_WIDGET(g_object_new(IM_WIDGET_TYPE, NULL));
+	return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
 }
 
 GType

@@ -61,13 +61,14 @@ static gboolean
 on_delete(GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
 	gtk_widget_hide(GTK_WIDGET(im_window_get()));
+	// gtk_widget_destroy (GTK_WIDGET(im_window_get()));
 	return TRUE;
 }
 
 static void
 im_window_init()
 {
-	const char *window_title = "SFLphone VoIP Client";
+	const char *window_title = "SFLphone VoIP Client - Instant Messaging Module";
 	gchar *path;
 	GError *error = NULL;
 	gboolean ret;
