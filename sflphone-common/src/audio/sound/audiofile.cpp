@@ -38,22 +38,21 @@
 #include <samplerate.h>
 #include <cstring>
 
-AudioFile::AudioFile()
-        : AudioLoop(),
-        _filename(),
-        _codec (NULL),
-        _start (false)
 
+
+RawFile::RawFile() : _filename()
+        , _codec (NULL)
 {
+    AudioFile::_start = false;
 }
 
-AudioFile::~AudioFile()
+RawFile::~RawFile()
 {
 }
 
 // load file in mono format
 bool
-AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate=8000)
+RawFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate=8000)
 {
     _codec = codec;
 
@@ -178,16 +177,15 @@ AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned i
 
 
 
-WaveFile::WaveFile (std::string fname) : _byte_counter (0)
+WaveFile::WaveFile () : _byte_counter (0)
         , _nb_channels (1)
         , _file_size (0)
         , _data_offset (0)
         , _channels (0)
         , _data_type (0)
         , _file_rate (0)
-        , _fileName (fname)
 {
-
+    AudioFile::_start = false;
 }
 
 
@@ -198,11 +196,10 @@ WaveFile::~WaveFile()
 
 
 
-bool WaveFile::openFile()
+bool WaveFile::openFile (const std::string& fileName)
 {
-    if (isFileExist()) {
-        _debug ("WaveFile: File \"%s\" exist! Open it.", _fileName.c_str());
-        openExistingWaveFile();
+    if (isFileExist (fileName)) {
+        openExistingWaveFile (fileName);
     }
 
     return true;
@@ -220,16 +217,16 @@ bool WaveFile::closeFile()
 }
 
 
-bool WaveFile::isFileExist()
+bool WaveFile::isFileExist (const std::string& fileName)
 {
-    std::fstream fs (_fileName.c_str(), std::ios_base::in);
+    std::fstream fs (fileName.c_str(), std::ios_base::in);
 
     if (!fs) {
-        _debug ("WaveFile: file \"%s\" doesn't exist", _fileName.c_str());
+        _debug ("WaveFile: file \"%s\" doesn't exist", fileName.c_str());
         return false;
     }
 
-    _debug ("WaveFile: file \"%s\" exists", _fileName.c_str());
+    _debug ("WaveFile: File \"%s\" exists", fileName.c_str());
     return true;
 }
 
@@ -247,12 +244,12 @@ bool WaveFile::isFileOpened()
 }
 
 
-bool WaveFile::openExistingWaveFile()
+bool WaveFile::openExistingWaveFile (const std::string& fileName)
 {
 
-    _debug ("WaveFile: Opening %s", _fileName.c_str());
+    _debug ("WaveFile: Opening %s", fileName.c_str());
 
-    _file_stream.open (_fileName.c_str(), std::ios::in | std::ios::binary);
+    _file_stream.open (fileName.c_str(), std::ios::in | std::ios::binary);
 
     char riff[4] = {};
 
@@ -380,4 +377,13 @@ bool WaveFile::openExistingWaveFile()
 
     return true;
 
+}
+
+
+bool WaveFile::loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate)
+{
+
+    openFile (filename);
+
+    return true;
 }

@@ -40,33 +40,22 @@
 #include "audio/codecs/audiocodec.h"
 #include "audio/codecs/codecDescriptor.h"
 
-/**
- * @file audiofile.h
- * @brief A class to manage sound files
- */
 
+/**
+ * @brief Abstract interface for file readers
+ */
 class AudioFile : public AudioLoop
 {
     public:
-        /**
-         * Constructor
-         */
-        AudioFile();
 
         /**
-         * Destructor
-         */
-        ~AudioFile();
-
-
-        /**
-         * Load a sound file in memory
-         * @param filename  The absolute path to the file
-         * @param codec     The codec to decode and encode it
-         * @param sampleRate	The sample rate to read it
-         * @return bool   True on success
-         */
-        bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate);
+        * Load a sound file in memory
+        * @param filename  The absolute path to the file
+        * @param codec     The codec to decode and encode it
+        * @param sampleRate	The sample rate to read it
+        * @return bool   True on success
+        */
+        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate) = 0;
 
         /**
          * Start the sound file
@@ -78,7 +67,7 @@ class AudioFile : public AudioLoop
         /**
          * Stop the sound file
          */
-        void stop()  {
+        void stop() {
             _start = false;
         }
 
@@ -91,50 +80,88 @@ class AudioFile : public AudioLoop
             return _start;
         }
 
+    protected:
+
+        /** start or not */
+        bool _start;
+};
+
+
+
+/**
+ * @file audiofile.h
+ * @brief A class to manage sound files
+ */
+
+class RawFile : public AudioFile
+{
+    public:
+        /**
+         * Constructor
+         */
+        RawFile();
+
+        /**
+         * Destructor
+         */
+        ~RawFile();
+
+
+        /**
+         * Load a sound file in memory
+         * @param filename  The absolute path to the file
+         * @param codec     The codec to decode and encode it
+         * @param sampleRate	The sample rate to read it
+         * @return bool   True on success
+         */
+        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate);
+
     private:
         // Copy Constructor
-        AudioFile (const AudioFile& rh);
+        RawFile (const RawFile& rh);
 
         // Assignment Operator
-        AudioFile& operator= (const AudioFile& rh);
+        RawFile& operator= (const RawFile& rh);
 
         /** The absolute path to the sound file */
         std::string _filename;
 
         /** Your preferred codec */
         AudioCodec* _codec;
-
-        /** Start or not */
-        bool _start;
 };
 
 
-class WaveFile : public AudioLoop
+class WaveFile : public AudioFile
 {
 
     public:
 
-        WaveFile (std::string fname);
+        WaveFile ();
 
         ~WaveFile();
 
-        bool openFile();
+        bool openFile (const std::string& fileName);
 
         bool closeFile();
 
-        bool isFileExist();
+        bool isFileExist (const std::string& fileName);
 
         bool isFileOpened();
 
-        void processAudioData();
-
-        bool readSoundSamples (SINT16* pcm_buffer, int length);
+        /**
+             * Load a sound file in memory
+             * @param filename  The absolute path to the file
+             * @param codec     The codec to decode and encode it
+             * @param sampleRate	The sample rate to read it
+             * @return bool   True on success
+             */
+        virtual bool loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate);
 
     private:
 
         bool setWaveFile();
 
-        bool openExistingWaveFile();
+        bool openExistingWaveFile (const std::string& fileName);
 
         SOUND_FORMAT _snd_format;
 
