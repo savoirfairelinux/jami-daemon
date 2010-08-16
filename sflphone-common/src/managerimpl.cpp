@@ -107,6 +107,11 @@ ManagerImpl::ManagerImpl (void) :
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void)
 {
+    if (_audiofile) {
+        delete _audiofile;
+        _audiofile = NULL;
+    }
+
     // terminate();
     delete _cleaner;
     _cleaner = NULL;
@@ -2011,10 +2016,20 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         samplerate = audiolayer->getSampleRate();
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
-
-        _audiofile = static_cast<AudioFile *> (new RawFile());
-
         _toneMutex.enterMutex();
+
+        if (_audiofile) {
+            delete _audiofile;
+            _audiofile = NULL;
+        }
+
+        std::string wave (".wav");
+        size_t found = ringchoice.find (wave);
+
+        if (found != std::string::npos)
+            _audiofile = static_cast<AudioFile *> (new WaveFile());
+        else
+            _audiofile = static_cast<AudioFile *> (new RawFile());
 
         loadFile = false;
 
