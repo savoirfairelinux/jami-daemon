@@ -50,7 +50,7 @@
 #include "numbercleaner.h"
 
 #include "audio/sound/tonelist.h"  // for Tone::TONEID declaration
-#include "audio/sound/audiofile.h" // AudioFile class contained by value here 
+#include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h" // DTMF class contained by value here
 #include "audio/codecs/codecDescriptor.h" // CodecDescriptor class contained by value here
 
@@ -1188,7 +1188,7 @@ class ManagerImpl
         /////////////////////
         ost::Mutex _toneMutex;
         TelephoneTone* _telephoneTone;
-        AudioFile _audiofile;
+        AudioFile *_audiofile;
 
         // To handle volume control
         short _spkr_volume;

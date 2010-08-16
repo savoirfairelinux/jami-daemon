@@ -79,7 +79,7 @@ ManagerImpl::ManagerImpl (void) :
         _hasTriedToRegister (false), _config(), _currentCallId2(),
         _currentCallMutex(), _codecBuilder (NULL), _audiodriver (NULL),
         _dtmfKey (NULL), _codecDescriptorMap(), _toneMutex(),
-        _telephoneTone (NULL), _audiofile(), _spkr_volume (0),
+        _telephoneTone (NULL), _audiofile(NULL), _spkr_volume (0),
         _mic_volume (0), _mutex(), _dbus (NULL), _waitingCall(),
         _waitingCallMutex(), _nbIncomingWaitingCall (0), _path (""),
         _exist (0), _setupLoaded (false), _callAccountMap(),
@@ -1925,7 +1925,9 @@ void ManagerImpl::stopTone ()
         _telephoneTone->setCurrentTone (Tone::TONE_NULL);
     }
 
-    _audiofile.stop();
+    if(_audiofile)
+        _audiofile.stop();
+
     _toneMutex.leaveMutex();
 }
 
@@ -2006,14 +2008,17 @@ void ManagerImpl::ringtone (const AccountID& accountID)
         }
 
         layer = audiolayer->getLayerType();
-
         samplerate = audiolayer->getSampleRate();
-
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
+
+	
+	_audiofile = new RawFile();
 
         _toneMutex.enterMutex();
 
-        loadFile = _audiofile.loadFile (ringchoice, codecForTone, samplerate);
+	loadFile = false;
+	if(_audiofile)
+	    loadFile = _audiofile->loadFile (ringchoice, codecForTone, samplerate);
 
         _toneMutex.leaveMutex();
 
@@ -2053,10 +2058,13 @@ ManagerImpl::getTelephoneFile ()
     // _debug("ManagerImpl::getTelephoneFile()");
     ost::MutexLock m (_toneMutex);
 
-    if (_audiofile.isStarted()) {
-        return &_audiofile;
+    if (!_audiofile)
+      return NULL;
+
+    if (_audiofile->isStarted()) {
+        return _audiofile;
     } else {
-        return 0;
+        return NULL;
     }
 }
 
