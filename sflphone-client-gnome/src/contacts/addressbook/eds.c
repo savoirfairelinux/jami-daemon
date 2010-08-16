@@ -470,13 +470,13 @@ init (OpenAsyncHandler callback UNUSED)
     reluri = g_strdup (e_source_peek_relative_uri (default_source));
 
     if (!absuri) {
-      absuri = g_malloc (1);
-      *absuri = 0;
+        absuri = g_malloc (1);
+        *absuri = 0;
     }
 
     if (!reluri) {
-      reluri = g_malloc (1);
-      *reluri = 0;
+        reluri = g_malloc (1);
+        *reluri = 0;
     }
 
     // Do not overwrite current_name for default

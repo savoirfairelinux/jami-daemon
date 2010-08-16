@@ -174,3 +174,207 @@ AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned i
 
     return true;
 }
+
+
+
+
+WaveFile::WaveFile (std::string fname) : _byte_counter (0)
+        , _nb_channels (1)
+        , _file_size (0)
+        , _data_offset (0)
+        , _channels (0)
+        , _data_type (0)
+        , _file_rate (0)
+        , _fileName (fname)
+{
+
+}
+
+
+WaveFile::~WaveFile()
+{
+    _debug ("WaveFile: Destructor Called!");
+}
+
+
+
+bool WaveFile::openFile()
+{
+    if (isFileExist()) {
+        _debug ("WaveFile: File \"%s\" exist! Open it.", _fileName.c_str());
+        openExistingWaveFile();
+    }
+
+    return true;
+}
+
+
+
+bool WaveFile::closeFile()
+{
+
+    _file_stream.close();
+
+    return true;
+
+}
+
+
+bool WaveFile::isFileExist()
+{
+    std::fstream fs (_fileName.c_str(), std::ios_base::in);
+
+    if (!fs) {
+        _debug ("WaveFile: file \"%s\" doesn't exist", _fileName.c_str());
+        return false;
+    }
+
+    _debug ("WaveFile: file \"%s\" exists", _fileName.c_str());
+    return true;
+}
+
+
+bool WaveFile::isFileOpened()
+{
+
+    if (_file_stream.is_open()) {
+        _debug ("WaveFile: file is openened");
+        return true;
+    } else {
+        _debug ("WaveFile: file is not openend");
+        return false;
+    }
+}
+
+
+bool WaveFile::openExistingWaveFile()
+{
+
+    _debug ("WaveFile: Opening %s", _fileName.c_str());
+
+    _file_stream.open (_fileName.c_str(), std::ios::in | std::ios::binary);
+
+    char riff[4] = {};
+
+    _file_stream.read (riff, 4);
+
+    if (strncmp ("RIFF", riff, 4) != 0) {
+        _debug ("WaveFile: File is not of RIFF format");
+        return false;
+    }
+
+    // Find the "fmt " chunk
+    char fmt[4] = {};
+
+    while (strncmp ("fmt ", fmt, 4) != 0) {
+        _file_stream.read (fmt, 4);
+        _debug ("Searching... %s", fmt);
+    }
+
+    SINT32 chunk_size;         // fmt chunk size
+    unsigned short format_tag; // data compression tag
+
+    _file_stream.read ( (char*) &chunk_size, 4); // Read fmt chunk size.
+    _file_stream.read ( (char*) &format_tag, 2);
+
+    _debug ("Chunk size: %d", chunk_size);
+    _debug ("Format tag: %d", format_tag);
+
+
+    if (format_tag != 1) { // PCM = 1, FLOAT = 3
+        _debug ("WaveFile: File contains an unsupported data format type");
+        return false;
+    }
+
+
+
+    // Get number of channels from the header.
+    SINT16 chan;
+    _file_stream.read ( (char*) &chan, 2);
+
+    _channels = chan;
+
+    _debug ("WaveFile: Channel %d", _channels);
+
+
+    // Get file sample rate from the header.
+    SINT32 srate;
+    _file_stream.read ( (char*) &srate, 4);
+
+    _file_rate = (double) srate;
+
+    _debug ("WaveFile: Sampling rate %d", srate);
+
+    SINT32 avgb;
+    _file_stream.read ( (char*) &avgb, 4);
+
+    _debug ("WaveFile: Average byte %d", avgb);
+
+    SINT16 blockal;
+    _file_stream.read ( (char*) &blockal, 2);
+
+    _debug ("WaveFile: Block alignment %d", blockal);
+
+
+    // Determine the data type
+    _data_type = 0;
+
+    SINT16 dt;
+    _file_stream.read ( (char*) &dt, 2);
+
+    _debug ("WaveFile: dt %d", dt);
+
+
+    if (format_tag == 1) {
+        if (dt == 8)
+            _data_type = 1; // STK_SINT8;
+        else if (dt == 16)
+            _data_type = 2; // STK_SINT16;
+        else if (dt == 32)
+            _data_type = 3; // STK_SINT32;
+    }
+    /*
+      else if ( format_tag == 3 )
+      {
+        if (temp == 32)
+          dataType_ = STK_FLOAT32;
+        else if (temp == 64)
+          dataType_ = STK_FLOAT64;
+      }
+    */
+    else {
+        _debug ("WaveFile: File's bits per sample with is not supported");
+        return false;
+    }
+
+
+    // Find the "data" chunk
+    char data[4] = {};
+
+    while (strncmp ("data", data, 4)) {
+        _file_stream.read (data, 4);
+        _debug ("Searching... %s ", data);
+    }
+
+
+    // Get length of data from the header.
+    SINT32 bytes;
+    _file_stream.read ( (char*) &bytes, 4);
+
+    _debug ("WaveFile: data size in byte %d", bytes);
+
+    _file_size = 8 * bytes / dt / _channels;  // sample frames
+
+    _debug ("WaveFile: data size in frame %ld", _file_size);
+
+    // Fill audioloop info,
+    _file_stream.read ( (char *) _buffer, _file_size);
+    _size = _file_size;
+    _sampleRate = (int) srate;
+
+
+    _debug ("WaveFile: file successfully opened");
+
+    return true;
+
+}

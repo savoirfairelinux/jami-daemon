@@ -34,6 +34,8 @@
 #ifndef __AUDIOFILE_H__
 #define __AUDIOFILE_H__
 
+#include <fstream>
+
 #include "audio/audioloop.h"
 #include "audio/codecs/audiocodec.h"
 #include "audio/codecs/codecDescriptor.h"
@@ -104,6 +106,56 @@ class AudioFile : public AudioLoop
 
         /** Start or not */
         bool _start;
+};
+
+
+class WaveFile : public AudioLoop
+{
+
+    public:
+
+        WaveFile (std::string fname);
+
+        ~WaveFile();
+
+        bool openFile();
+
+        bool closeFile();
+
+        bool isFileExist();
+
+        bool isFileOpened();
+
+        void processAudioData();
+
+        bool readSoundSamples (SINT16* pcm_buffer, int length);
+
+    private:
+
+        bool setWaveFile();
+
+        bool openExistingWaveFile();
+
+        SOUND_FORMAT _snd_format;
+
+        long _byte_counter;
+
+        int _nb_channels;
+
+        unsigned long _file_size;
+
+        unsigned long _data_offset;
+
+        SINT16 _channels;
+
+        SOUND_FORMAT _data_type;
+
+        double _file_rate;
+
+        std::fstream _file_stream;
+
+        std::string _fileName;
+
 };
 
 #endif
