@@ -367,11 +367,14 @@ bool WaveFile::openExistingWaveFile()
 
     _debug ("WaveFile: data size in frame %ld", _file_size);
 
-    // Fill audioloop info,
-    _file_stream.read ( (char *) _buffer, _file_size);
+
+    // Init audio loop buffer info
+    _buffer = new SFLDataFormat[_file_size];
     _size = _file_size;
     _sampleRate = (int) srate;
 
+    // Copy audio into audioloop
+    _file_stream.read ( (char *) _buffer, _file_size);
 
     _debug ("WaveFile: file successfully opened");
 
