@@ -80,21 +80,26 @@ static void cbox_changed_cb (GtkWidget *widget, gpointer user_data)
     addressbook_search (GTK_ENTRY (addressbookentry));
 }
 
-static void select_addressbook (GtkWidget *item, GtkEntry  *entry)
+static void select_search_type (GtkWidget *item, GtkEntry  *entry)
 {
-    DEBUG ("Searchbar: Selected item label %s", gtk_menu_item_get_label (item));
+    DEBUG ("Searchbar: %s", gtk_menu_item_get_label (item));
 
-    set_current_addressbook (gtk_menu_item_get_label (item));
 
-    gchar *name = get_current_addressbook();
-    gchar *searching = g_strjoin ("", "Click to select addressbook\n Searching in ", name, NULL);
 
     gtk_entry_set_icon_tooltip_text (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY,
-                                     searching);
+                                     gtk_menu_item_get_label (item));
+
+
+    if (strcmp ("Search is", gtk_menu_item_get_label (item)) == 0)
+        set_current_addressbook_test (E_BOOK_QUERY_IS);
+    else if (strcmp ("Search begins with", gtk_menu_item_get_label (item)) == 0)
+        set_current_addressbook_test (E_BOOK_QUERY_BEGINS_WITH);
+    else if (strcmp ("Search contains", gtk_menu_item_get_label (item)) == 0)
+        set_current_addressbook_test (E_BOOK_QUERY_CONTAINS);
 
     addressbook_search (GTK_ENTRY (addressbookentry));
 
-    g_free (searching);
+
 }
 
 static void search_all (GtkWidget *item UNUSED, GtkEntry  *entry)
@@ -154,9 +159,9 @@ static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event
         gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
                         event->button, event->time);
     else if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree == contacts) {
-        //GtkWidget *addrbook_menu = addressbook_menu_new();
-        //gtk_menu_popup (GTK_MENU (addrbook_menu), NULL, NULL, NULL, NULL,
-        //                event->button, event->time);
+        GtkWidget *addrbook_menu = addressbook_menu_new();
+        gtk_menu_popup (GTK_MENU (addrbook_menu), NULL, NULL, NULL, NULL,
+                        event->button, event->time);
     } else
         gtk_entry_set_text (entry, "");
 }
@@ -176,22 +181,22 @@ GtkWidget *addressbook_menu_new (void)
 
     GtkWidget *menu, *item;
 
-    GSList *book_list_iterator;
-    book_data_t *book_data;
-    GSList *books_data = addressbook_get_books_data();
-
     // Create the menu
     menu = gtk_menu_new ();
     gtk_menu_attach_to_widget (GTK_MENU (menu), contacts->searchbar, NULL);
 
     // Populate menu
-    for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
-            = book_list_iterator->next) {
-        book_data = (book_data_t *) book_list_iterator->data;
-        item = gtk_menu_item_new_with_label (book_data->name);
-        g_signal_connect (item, "activate", G_CALLBACK (select_addressbook), searchbox);
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    }
+    item = gtk_menu_item_new_with_label ("Search is");
+    g_signal_connect (item, "activate", G_CALLBACK (select_search_type), searchbox);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+
+    item = gtk_menu_item_new_with_label ("Search begins with");
+    g_signal_connect (item, "activate", G_CALLBACK (select_search_type), searchbox);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+
+    item = gtk_menu_item_new_with_label ("Search contains");
+    g_signal_connect (item, "activate", G_CALLBACK (select_search_type), searchbox);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
     gtk_widget_show_all (menu);
 
@@ -336,7 +341,7 @@ GtkWidget* contacts_searchbar_new ()
     GdkPixbuf *pixbuf;
 
     gchar *current_addressbook = get_current_addressbook();
-    gchar *tooltip_text = g_strjoin ("", "Click to select addressbook\n Searching in ", current_addressbook, NULL);
+    gchar *tooltip_text = g_strdup ("Search is");
 
     addressbookentry = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);

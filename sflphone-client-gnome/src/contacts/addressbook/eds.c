@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004, 2005, 2006, 2009, 2008, 2009, 2010 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  File originally copied from evolution module of deskbar-applet 2.24.1
  *   Authors :
@@ -69,6 +70,8 @@ int remaining_books_to_open;
 static gchar *current_uri = NULL;
 static gchar *current_uid = NULL;
 static gchar *current_name = "Default";
+
+static EBookQueryTest current_test = E_BOOK_QUERY_BEGINS_WITH;
 
 /**
  * Freeing a hit instance
@@ -146,7 +149,7 @@ books_get_book_data_by_uid (gchar *uid)
  * nick name.
  */
 static EBookQuery*
-create_query (const char* s)
+create_query (const char* s, EBookQueryTest test)
 {
 
     EBookQuery *equery;
@@ -156,10 +159,10 @@ create_query (const char* s)
     int cpt = 0;
 
     // We could also use E_BOOK_QUERY_IS or E_BOOK_QUERY_BEGINS_WITH instead of E_BOOK_QUERY_CONTAINS
-    queries[cpt++] = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_BEGINS_WITH, s);
-    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_HOME, E_BOOK_QUERY_BEGINS_WITH, s);
-    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_BUSINESS, E_BOOK_QUERY_BEGINS_WITH, s);
-    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_MOBILE, E_BOOK_QUERY_BEGINS_WITH, s);
+    queries[cpt++] = e_book_query_field_test (E_CONTACT_FULL_NAME, test, s);
+    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_HOME, test, s);
+    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_BUSINESS, test, s);
+    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_MOBILE, test, s);
 
     equery = e_book_query_or (cpt, queries, TRUE);
 
@@ -585,7 +588,7 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     had->user_data = user_data;
     had->hits = NULL;
     had->max_results_remaining = max_results;
-    had->equery = create_query (query);
+    had->equery = create_query (query, current_test);
 
     if (!current_uri)
         ERROR ("Addressbook: Error: Current addressbook uri not specified uri");
@@ -658,4 +661,17 @@ const gchar *
 get_current_addressbook (void)
 {
     return current_name;
+}
+
+
+void
+set_current_addressbook_test (EBookQueryTest test)
+{
+    current_test = test;
+}
+
+EBookQueryTest
+get_current_addressbook_test (void)
+{
+    return current_test;
 }

@@ -158,6 +158,13 @@ set_current_addressbook (const gchar *name);
 const gchar *
 get_current_addressbook (void);
 
+void
+set_current_addressbook_test (EBookQueryTest test);
+
+EBookQueryTest
+get_current_addressbook_test (void);
+
+
 G_END_DECLS
 
 #endif /* __EDS_H__ */
