@@ -140,7 +140,7 @@ class WaveFile : public AudioFile
 
         ~WaveFile();
 
-        bool openFile (const std::string& fileName);
+        bool openFile (const std::string& fileName, int audioSamplingRate);
 
         bool closeFile();
 
@@ -161,7 +161,7 @@ class WaveFile : public AudioFile
 
         bool setWaveFile();
 
-        bool openExistingWaveFile (const std::string& fileName);
+        bool openExistingWaveFile (const std::string& fileName, int audioSamplingRate);
 
         SOUND_FORMAT _snd_format;
 

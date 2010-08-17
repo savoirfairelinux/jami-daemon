@@ -33,6 +33,7 @@
  */
 #include "audiofile.h"
 #include "audio/codecs/codecDescriptor.h"
+#include "audio/samplerateconverter.h"
 #include <fstream>
 #include <math.h>
 #include <samplerate.h>
@@ -196,10 +197,10 @@ WaveFile::~WaveFile()
 
 
 
-bool WaveFile::openFile (const std::string& fileName)
+bool WaveFile::openFile (const std::string& fileName, int audioSamplingRate)
 {
     if (isFileExist (fileName)) {
-        openExistingWaveFile (fileName);
+        openExistingWaveFile (fileName, audioSamplingRate);
     }
 
     return true;
@@ -244,8 +245,10 @@ bool WaveFile::isFileOpened()
 }
 
 
-bool WaveFile::openExistingWaveFile (const std::string& fileName)
+bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSamplingRate)
 {
+
+    SamplerateConverter _converter;
 
     _debug ("WaveFile: Opening %s", fileName.c_str());
 
@@ -365,6 +368,12 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName)
     _debug ("WaveFile: data size in frame %ld", _file_size);
 
 
+    SFLDataFormat *tempBuffer = new SFLDataFormat[_file_size];
+    SFLDataFormat *tempBufferRsmpl = new SFLDataFormat[_file_size];
+
+    // int nbSample = _converter.upsampleData ( tempBuffer, tempBufferRsmpl, audioSamplingRate, srate, nb_sample_down);
+
+
     // Init audio loop buffer info
     _buffer = new SFLDataFormat[_file_size];
     _size = _file_size;
@@ -375,6 +384,9 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName)
 
     _debug ("WaveFile: file successfully opened");
 
+    delete[] tempBuffer;
+    delete[] tempBufferRsmpl;
+
     return true;
 
 }
@@ -383,7 +395,7 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName)
 bool WaveFile::loadFile (const std::string& filename, AudioCodec *codec , unsigned int sampleRate)
 {
 
-    openFile (filename);
+    openFile (filename, sampleRate);
 
     return true;
 }
