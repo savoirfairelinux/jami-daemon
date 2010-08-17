@@ -97,7 +97,7 @@ static void select_search_type (GtkWidget *item, GtkEntry  *entry)
     else if (strcmp ("Search contains", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0)
         set_current_addressbook_test (E_BOOK_QUERY_CONTAINS);
 
-    addressbook_search (GTK_ENTRY (entry));
+    addressbook_search (GTK_ENTRY (addressbookentry));
 
 
 }
@@ -309,12 +309,20 @@ GtkWidget* contacts_searchbar_new ()
 
     GtkWidget *ret;
     GtkWidget *cbox;
-    int count;
+    GtkWidget *align;
+    int count, cbox_height, cbox_width;
 
     ret = gtk_hbox_new (FALSE, 0);
 
     // Create combo box to select current addressbook
     cbox = gtk_combo_box_new_text();
+
+    align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+    gtk_alignment_set_padding (align, 0, 2, 6, 6);
+    gtk_container_add (GTK_CONTAINER (align), cbox);
+
+    gtk_widget_get_size_request (GTK_WIDGET (cbox), &cbox_width, &cbox_height);
+    gtk_widget_set_size_request (GTK_WIDGET (cbox), cbox_width, 26);
 
     GSList *book_list_iterator;
     book_data_t *book_data;
@@ -338,14 +346,14 @@ GtkWidget* contacts_searchbar_new ()
 
 #if GTK_CHECK_VERSION(2,16,0)
 
-    GdkPixbuf *pixbuf;
+    // GdkPixbuf *pixbuf;
 
     gchar *tooltip_text = g_strdup ("Search is");
 
     addressbookentry = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
-    pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL);
-    gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY, pixbuf);
+    // pixbuf = gdk_pixbuf_new_from_file (ICONS_DIR "/stock_person.svg", NULL);
+    gtk_entry_set_icon_from_stock (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
     gtk_entry_set_icon_tooltip_text (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY,
                                      tooltip_text);
 
@@ -377,7 +385,7 @@ GtkWidget* contacts_searchbar_new ()
                             G_CALLBACK (focus_on_searchbar_out), NULL);
 
 
-    gtk_box_pack_start (GTK_BOX (ret), cbox, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (ret), align, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (ret), addressbookentry, TRUE, TRUE, 0);
 
     g_free (tooltip_text);
