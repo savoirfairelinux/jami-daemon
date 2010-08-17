@@ -43,14 +43,12 @@ HistoryItem::HistoryItem (std::string timestamp_start, CallType call_type, std::
         _call_type (call_type),
         _name (name),
         _number (number),
-        _account_id (account_id)
-{
+        _account_id (account_id) {
 }
 
 
 HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
-        : _timestamp_start (timestamp)
-{
+        : _timestamp_start (timestamp) {
     size_t pos;
     std::string tmp, id, name, number, stop, account;
     int indice=0;
@@ -98,13 +96,11 @@ HistoryItem::HistoryItem (std::string timestamp, std::string serialized_form)
     (serialized_form == EMPTY_STRING) ? _account_id = "" : _account_id=serialized_form ;
 }
 
-HistoryItem::~HistoryItem ()
-{
+HistoryItem::~HistoryItem () {
     // TODO
 }
 
-bool HistoryItem::save (Conf::ConfigTree **history)
-{
+bool HistoryItem::save (Conf::ConfigTree **history) {
 
     std::string section, timestamp;
     std::stringstream call_type;
@@ -123,8 +119,7 @@ bool HistoryItem::save (Conf::ConfigTree **history)
     return res;
 }
 
-std::string HistoryItem::serialize (void)
-{
+std::string HistoryItem::serialize (void) {
     std::stringstream res;
     std::string separator = ITEM_SEPARATOR;
     std::string name, accountID;
@@ -142,7 +137,6 @@ std::string HistoryItem::serialize (void)
 }
 
 
-bool HistoryItem::non_valid_account (std::string id)
-{
+bool HistoryItem::non_valid_account (std::string id) {
     return !Manager::instance().accountExists (id);
 }

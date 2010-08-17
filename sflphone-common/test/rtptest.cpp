@@ -48,74 +48,74 @@
 
 void RtpTest::setUp() {
 
-	pjsipInit();
+    pjsipInit();
 
-	CallID cid = "123456";
+    CallID cid = "123456";
 
-	sipcall = new SIPCall(cid, Call::Incoming, _pool);
+    sipcall = new SIPCall (cid, Call::Incoming, _pool);
 
-	sipcall->setLocalIp("127.0.0.1");
-	sipcall->setLocalAudioPort(RANDOM_LOCAL_PORT);
-	sipcall->setLocalExternAudioPort(RANDOM_LOCAL_PORT);
+    sipcall->setLocalIp ("127.0.0.1");
+    sipcall->setLocalAudioPort (RANDOM_LOCAL_PORT);
+    sipcall->setLocalExternAudioPort (RANDOM_LOCAL_PORT);
 }
 
 bool RtpTest::pjsipInit() {
-	// Create memory cache for pool
-	pj_caching_pool_init(&_cp, &pj_pool_factory_default_policy, 0);
+    // Create memory cache for pool
+    pj_caching_pool_init (&_cp, &pj_pool_factory_default_policy, 0);
 
-	// Create memory pool for application.
-	_pool = pj_pool_create(&_cp.factory, "rtpTest", 4000, 4000, NULL);
+    // Create memory pool for application.
+    _pool = pj_pool_create (&_cp.factory, "rtpTest", 4000, 4000, NULL);
 
-	if (!_pool) {
-		_debug ("----- RtpTest: Could not initialize pjsip memory pool ------");
-		return PJ_ENOMEM;
-	}
+    if (!_pool) {
+        _debug ("----- RtpTest: Could not initialize pjsip memory pool ------");
+        return PJ_ENOMEM;
+    }
 
-	return true;
+    return true;
 }
 
 void RtpTest::testRtpInitClose() {
-	_debug ("-------------------- RtpTest::testRtpInitClose --------------------\n");
+    _debug ("-------------------- RtpTest::testRtpInitClose --------------------\n");
 
-	audiortp = new AudioRtpFactory();
+    audiortp = new AudioRtpFactory();
 
-	try {
-		_debug ("-------- Open Rtp Session ----------");
-		audiortp->initAudioRtpConfig(sipcall);
-		audiortp->initAudioRtpSession(sipcall);
-		//AudioCodecType codecType = PAYLOAD_CODEC_ULAW;
-		//AudioCodec* audioCodec = Manager::instance().getCodecDescriptorMap().instantiateCodec(codecType);
-		//audiortp->start(audioCodec);
+    try {
+        _debug ("-------- Open Rtp Session ----------");
+        audiortp->initAudioRtpConfig (sipcall);
+        audiortp->initAudioRtpSession (sipcall);
+        //AudioCodecType codecType = PAYLOAD_CODEC_ULAW;
+        //AudioCodec* audioCodec = Manager::instance().getCodecDescriptorMap().instantiateCodec(codecType);
+        //audiortp->start(audioCodec);
 
-	} catch (...) {
-		_debug ("!!! Exception occured while Oppenning Rtp !!!");
-		CPPUNIT_ASSERT(false);
+    } catch (...) {
+        _debug ("!!! Exception occured while Oppenning Rtp !!!");
+        CPPUNIT_ASSERT (false);
 
-	}
+    }
 
-	CPPUNIT_ASSERT (audiortp != NULL);
+    CPPUNIT_ASSERT (audiortp != NULL);
 
-	sleep(1);
+    sleep (1);
 
-	_debug ("------ RtpTest::testRtpClose() ------");
+    _debug ("------ RtpTest::testRtpClose() ------");
 
-	try {
-		_debug ("------ Close Rtp Session -------");
-		audiortp->stop();
+    try {
+        _debug ("------ Close Rtp Session -------");
+        audiortp->stop();
 
-	} catch (...) {
+    } catch (...) {
 
-		_debug ("!!! Exception occured while closing Rtp !!!");
-		CPPUNIT_ASSERT(false);
+        _debug ("!!! Exception occured while closing Rtp !!!");
+        CPPUNIT_ASSERT (false);
 
-	}
+    }
 
-	delete audiortp;
+    delete audiortp;
 
-	audiortp = NULL;
+    audiortp = NULL;
 }
 
 void RtpTest::tearDown() {
-	delete sipcall;
-	sipcall = NULL;
+    delete sipcall;
+    sipcall = NULL;
 }

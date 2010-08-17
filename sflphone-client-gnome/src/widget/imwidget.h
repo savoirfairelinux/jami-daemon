@@ -52,6 +52,7 @@ struct _IMWidget {
 	/* Private */
 	GtkWidget *textarea;
 	GtkWidget *web_view;
+	gchar *callID;					/* The callID attached to this conversation */
 	WebKitWebFrame *web_frame;      // Our web frame
 	JSGlobalContextRef js_context;  // The frame's global JS context
 	JSObjectRef js_global;          // The frame's global context JS object

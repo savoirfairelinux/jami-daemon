@@ -45,18 +45,17 @@
 #include <cerrno>
 
 
-namespace sfl
-{
+namespace sfl {
 
 AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
         ost::SymmetricRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
         AudioRtpSession<AudioSrtpSession> (manager, sipcall),
-        _localCryptoSuite(0),
-        _remoteCryptoSuite(0),
-        _localMasterKeyLength(0),
-        _localMasterSaltLength(0),
-        _remoteMasterKeyLength(0),
-        _remoteMasterSaltLength(0)
+        _localCryptoSuite (0),
+        _remoteCryptoSuite (0),
+        _localMasterKeyLength (0),
+        _localMasterSaltLength (0),
+        _remoteMasterKeyLength (0),
+        _remoteMasterSaltLength (0)
 
 {
 
@@ -66,19 +65,19 @@ AudioSrtpSession::AudioSrtpSession (ManagerImpl * manager, SIPCall * sipcall) :
     initializeLocalCryptoContext();
 
     // Set local crypto context in ccrtp
-    _localCryptoCtx->deriveSrtpKeys(0);
+    _localCryptoCtx->deriveSrtpKeys (0);
 
-    setOutQueueCryptoContext(_localCryptoCtx);
+    setOutQueueCryptoContext (_localCryptoCtx);
 }
 
- 
+
 std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo() {
 
-    _debug("Get Cryptographic info from this rtp session");
+    _debug ("Get Cryptographic info from this rtp session");
 
     std::vector<std::string> crypto_vector;
 
-    // @TODO we should return a vector containing supported 
+    // @TODO we should return a vector containing supported
     // cryptographic context tagged 1, 2, 3...
     std::string tag = "1";
 
@@ -92,33 +91,32 @@ std::vector<std::string> AudioSrtpSession::getLocalCryptoInfo() {
     // srtp_keys.append("|2^20|1:32");
 
     // generate crypto attribute
-    std::string crypto_attr = tag.append(" ");
-    crypto_attr += crypto_suite.append(" ");
+    std::string crypto_attr = tag.append (" ");
+    crypto_attr += crypto_suite.append (" ");
     crypto_attr += srtp_keys;
 
-    _debug("%s", crypto_attr.c_str());
+    _debug ("%s", crypto_attr.c_str());
 
-    crypto_vector.push_back(crypto_attr);
+    crypto_vector.push_back (crypto_attr);
 
     return crypto_vector;
 }
 
 
-void AudioSrtpSession::setRemoteCryptoInfo(sfl::SdesNegotiator& nego) {
+void AudioSrtpSession::setRemoteCryptoInfo (sfl::SdesNegotiator& nego) {
 
-    _debug("Set remote Cryptographic info for Srtp");
+    _debug ("Set remote Cryptographic info for Srtp");
 
     // decode keys
-    unBase64ConcatenatedKeys(nego.getKeyInfo());
+    unBase64ConcatenatedKeys (nego.getKeyInfo());
 
     // init crypto content int Srtp session
     initializeRemoteCryptoContext();
-    setInQueueCryptoContext(_remoteCryptoCtx);
+    setInQueueCryptoContext (_remoteCryptoCtx);
 }
 
 
-void AudioSrtpSession::initializeLocalMasterKey(void)
-{
+void AudioSrtpSession::initializeLocalMasterKey (void) {
 
     // @TODO key may have different length depending on cipher suite
     _localMasterKeyLength = sfl::CryptoSuites[_localCryptoSuite].masterKeyLength / 8;
@@ -128,10 +126,11 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
 
     // Generate ryptographically strong pseudo-random bytes
     int err;
-    if((err = RAND_bytes(random_key, _localMasterKeyLength)) != 1)
-        _debug("Error occured while generating cryptographically strong pseudo-random key");
 
-    memcpy(_localMasterKey, random_key, _localMasterKeyLength);
+    if ( (err = RAND_bytes (random_key, _localMasterKeyLength)) != 1)
+        _debug ("Error occured while generating cryptographically strong pseudo-random key");
+
+    memcpy (_localMasterKey, random_key, _localMasterKeyLength);
 
     /*
     printf("Local Master: ");
@@ -144,29 +143,28 @@ void AudioSrtpSession::initializeLocalMasterKey(void)
 }
 
 
-void AudioSrtpSession::initializeLocalMasterSalt(void)
-{
+void AudioSrtpSession::initializeLocalMasterSalt (void) {
 
-    // @TODO key may have different length depending on cipher suite 
-  _localMasterSaltLength = sfl::CryptoSuites[_localCryptoSuite].masterSaltLength / 8;
+    // @TODO key may have different length depending on cipher suite
+    _localMasterSaltLength = sfl::CryptoSuites[_localCryptoSuite].masterSaltLength / 8;
 
     // Allocate memory for key
     unsigned char *random_key = new unsigned char[_localMasterSaltLength];
 
     // Generate ryptographically strong pseudo-random bytes
     int err;
-    if((err = RAND_bytes(random_key, _localMasterSaltLength)) != 1)
-        _debug("Error occured while generating cryptographically strong pseudo-random key");
 
-    memcpy(_localMasterSalt, random_key, _localMasterSaltLength);
+    if ( (err = RAND_bytes (random_key, _localMasterSaltLength)) != 1)
+        _debug ("Error occured while generating cryptographically strong pseudo-random key");
+
+    memcpy (_localMasterSalt, random_key, _localMasterSaltLength);
 
     return;
 
 }
 
 
-std::string AudioSrtpSession::getBase64ConcatenatedKeys()
-{
+std::string AudioSrtpSession::getBase64ConcatenatedKeys() {
 
     // compute concatenated master and salt length
     int concatLength = _localMasterKeyLength + _localMasterSaltLength;
@@ -174,23 +172,22 @@ std::string AudioSrtpSession::getBase64ConcatenatedKeys()
     uint8 concatKeys[concatLength];
 
     // concatenate keys
-    memcpy((void*)concatKeys, (void*)_localMasterKey, _localMasterKeyLength);
-    memcpy((void*)(concatKeys + _localMasterKeyLength), (void*)_localMasterSalt, _localMasterSaltLength);
+    memcpy ( (void*) concatKeys, (void*) _localMasterKey, _localMasterKeyLength);
+    memcpy ( (void*) (concatKeys + _localMasterKeyLength), (void*) _localMasterSalt, _localMasterSaltLength);
 
     // encode concatenated keys in base64
-    char *output = encodeBase64((unsigned char*)concatKeys, concatLength);
+    char *output = encodeBase64 ( (unsigned char*) concatKeys, concatLength);
 
     // init string containing encoded data
-    std::string keys(output);
+    std::string keys (output);
 
-    free(output);
+    free (output);
 
     return keys;
 }
 
 
-void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
-{
+void AudioSrtpSession::unBase64ConcatenatedKeys (std::string base64keys) {
 
     _remoteMasterKeyLength = sfl::CryptoSuites[1].masterKeyLength / 8;
     _remoteMasterSaltLength = sfl::CryptoSuites[1].masterSaltLength / 8;
@@ -199,112 +196,108 @@ void AudioSrtpSession::unBase64ConcatenatedKeys(std::string base64keys)
     int length;
 
     // pointer to binary data
-    char *dataptr = (char*)base64keys.data();
+    char *dataptr = (char*) base64keys.data();
 
     // decode concatenated binary keys
-    char *output = decodeBase64((unsigned char*)dataptr, strlen(dataptr), &length);
+    char *output = decodeBase64 ( (unsigned char*) dataptr, strlen (dataptr), &length);
 
     // copy master and slt respectively
-    memcpy((void*)_remoteMasterKey, (void*)output, _remoteMasterKeyLength);
-    memcpy((void*)_remoteMasterSalt, (void*)(output + _remoteMasterKeyLength), _remoteMasterSaltLength);
+    memcpy ( (void*) _remoteMasterKey, (void*) output, _remoteMasterKeyLength);
+    memcpy ( (void*) _remoteMasterSalt, (void*) (output + _remoteMasterKeyLength), _remoteMasterSaltLength);
 
-    free(output);
+    free (output);
 }
 
 
-void AudioSrtpSession::initializeRemoteCryptoContext(void)
-{
+void AudioSrtpSession::initializeRemoteCryptoContext (void) {
     CryptoSuiteDefinition crypto = sfl::CryptoSuites[_localCryptoSuite];
 
-    _remoteCryptoCtx = new ost::CryptoContext(0x0,
-					     0,                               // roc,
-					     0L,                              // keydr,
-					     SrtpEncryptionAESCM,             // encryption algo
-					     SrtpAuthenticationSha1Hmac,      // authtication algo
-					     _remoteMasterKey,            
-					     _remoteMasterKeyLength,      
-					     _remoteMasterSalt,           
-					     _remoteMasterSaltLength,       
-					     crypto.encryptionKeyLength / 8, 
-					     crypto.srtpAuthKeyLength / 8,
-					     112 / 8,                         // session salt len
-					     crypto.srtpAuthTagLength / 8);
-    
+    _remoteCryptoCtx = new ost::CryptoContext (0x0,
+            0,                               // roc,
+            0L,                              // keydr,
+            SrtpEncryptionAESCM,             // encryption algo
+            SrtpAuthenticationSha1Hmac,      // authtication algo
+            _remoteMasterKey,
+            _remoteMasterKeyLength,
+            _remoteMasterSalt,
+            _remoteMasterSaltLength,
+            crypto.encryptionKeyLength / 8,
+            crypto.srtpAuthKeyLength / 8,
+            112 / 8,                         // session salt len
+            crypto.srtpAuthTagLength / 8);
+
 }
 
-void AudioSrtpSession::initializeLocalCryptoContext(void)
-{
+void AudioSrtpSession::initializeLocalCryptoContext (void) {
     CryptoSuiteDefinition crypto = sfl::CryptoSuites[_localCryptoSuite];
 
-    _localCryptoCtx = new ost::CryptoContext(OutgoingDataQueue::getLocalSSRC(),
-					      0,                               // roc,
-					      0L,                              // keydr,
-					      SrtpEncryptionAESCM,             // encryption algo
-					      SrtpAuthenticationSha1Hmac,      // authtication algo
-					      _localMasterKey,             
-					      _localMasterKeyLength,       
-					      _localMasterSalt,            
-					      _localMasterSaltLength,      
-					      crypto.encryptionKeyLength / 8,
-					      crypto.srtpAuthKeyLength / 8,
-					      112 / 8,                         // session salt len
-					      crypto.srtpAuthTagLength / 8);
+    _localCryptoCtx = new ost::CryptoContext (OutgoingDataQueue::getLocalSSRC(),
+            0,                               // roc,
+            0L,                              // keydr,
+            SrtpEncryptionAESCM,             // encryption algo
+            SrtpAuthenticationSha1Hmac,      // authtication algo
+            _localMasterKey,
+            _localMasterKeyLength,
+            _localMasterSalt,
+            _localMasterSaltLength,
+            crypto.encryptionKeyLength / 8,
+            crypto.srtpAuthKeyLength / 8,
+            112 / 8,                         // session salt len
+            crypto.srtpAuthTagLength / 8);
 
 }
 
 
-char* AudioSrtpSession::encodeBase64(unsigned char *input, int length)
-{
+char* AudioSrtpSession::encodeBase64 (unsigned char *input, int length) {
     BIO *b64, *bmem;
     BUF_MEM *bptr ;
 
-    char *buffer = (char *)malloc(2*length);
-    memset(buffer, 0, 2*length);
+    char *buffer = (char *) malloc (2*length);
+    memset (buffer, 0, 2*length);
 
     // init decoder
-    b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    b64 = BIO_new (BIO_f_base64());
+    BIO_set_flags (b64, BIO_FLAGS_BASE64_NO_NL);
 
     // init internal buffer
-    bmem = BIO_new(BIO_s_mem());
+    bmem = BIO_new (BIO_s_mem());
 
     // create decoder chain
-    b64 = BIO_push(b64, bmem);
+    b64 = BIO_push (b64, bmem);
 
-    BIO_write(b64, input, length);
-    BIO_flush(b64);
+    BIO_write (b64, input, length);
+    BIO_flush (b64);
 
     // get pointer to data
-    BIO_get_mem_ptr(b64, &bptr);
+    BIO_get_mem_ptr (b64, &bptr);
 
     // copy result in output buffer (-1 since we do not want the EOF character)
-    strncpy(buffer, (char*)(bptr->data), bptr->length);
+    strncpy (buffer, (char*) (bptr->data), bptr->length);
 
-    BIO_free_all(bmem);
+    BIO_free_all (bmem);
 
-    return buffer;    
+    return buffer;
 }
 
-char* AudioSrtpSession::decodeBase64(unsigned char *input, int length, int *length_out)
-{
+char* AudioSrtpSession::decodeBase64 (unsigned char *input, int length, int *length_out) {
     BIO *b64, *bmem;
 
-    char *buffer = (char *)malloc(length);
-    memset(buffer, 0, length);
+    char *buffer = (char *) malloc (length);
+    memset (buffer, 0, length);
 
     // init decoder and read-only BIO buffer
-    b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    b64 = BIO_new (BIO_f_base64());
+    BIO_set_flags (b64, BIO_FLAGS_BASE64_NO_NL);
 
     // init internal buffer
-    bmem = BIO_new_mem_buf(input, length);
+    bmem = BIO_new_mem_buf (input, length);
 
     // create encoder chain
-    bmem = BIO_push(b64, bmem);
+    bmem = BIO_push (b64, bmem);
 
-    *length_out = BIO_read(bmem, buffer, length);
+    *length_out = BIO_read (bmem, buffer, length);
 
-    BIO_free_all(bmem);
+    BIO_free_all (bmem);
 
     return buffer;
 

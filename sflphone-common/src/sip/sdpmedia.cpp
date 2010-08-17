@@ -55,8 +55,7 @@ sdpMedia::sdpMedia (int type)
 
 sdpMedia::sdpMedia (std::string type, int port, std::string dir)
         : _media_type ( (mediaType)-1), _codec_list (0), _port (port),
-        _stream_type ( (streamDirection)-1)
-{
+        _stream_type ( (streamDirection)-1) {
     unsigned int i;
     const char* tmp;
 
@@ -83,14 +82,12 @@ sdpMedia::sdpMedia (std::string type, int port, std::string dir)
 }
 
 
-sdpMedia::~sdpMedia()
-{
-	clear_codec_list();
+sdpMedia::~sdpMedia() {
+    clear_codec_list();
 }
 
 
-std::string sdpMedia::get_media_type_str (void)
-{
+std::string sdpMedia::get_media_type_str (void) {
     std::string value;
 
     // Test the range to be sure we know the media
@@ -104,13 +101,11 @@ std::string sdpMedia::get_media_type_str (void)
 }
 
 
-void sdpMedia::add_codec (AudioCodec* codec)
-{
+void sdpMedia::add_codec (AudioCodec* codec) {
     _codec_list.push_back (codec);
 }
 
-void sdpMedia::remove_codec (std::string codecName)
-{
+void sdpMedia::remove_codec (std::string codecName) {
     // Look for the codec by its encoding name
     int i;
     int size;
@@ -133,15 +128,13 @@ void sdpMedia::remove_codec (std::string codecName)
 }
 
 
-void sdpMedia::clear_codec_list (void)
-{
+void sdpMedia::clear_codec_list (void) {
     // Erase every codecs from the list
     _codec_list.clear();
 }
 
 
-std::string sdpMedia::get_stream_direction_str (void)
-{
+std::string sdpMedia::get_stream_direction_str (void) {
     std::string value;
 
     // Test the range of the value
@@ -155,8 +148,7 @@ std::string sdpMedia::get_stream_direction_str (void)
 }
 
 
-std::string sdpMedia::to_string (void)
-{
+std::string sdpMedia::to_string (void) {
     std::ostringstream display;
     int size, i;
 

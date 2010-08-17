@@ -36,19 +36,16 @@
 
 #include "codecDescriptor.h"
 
-CodecDescriptor::CodecDescriptor() : _CodecsMap(), _defaultCodecOrder(), _Cache(), _nbCodecs(), _CodecInMemory()
-{
+CodecDescriptor::CodecDescriptor() : _CodecsMap(), _defaultCodecOrder(), _Cache(), _nbCodecs(), _CodecInMemory() {
 }
 
-CodecDescriptor::~CodecDescriptor()
-{
+CodecDescriptor::~CodecDescriptor() {
 
 }
 
 void
-CodecDescriptor::deleteHandlePointer (void)
-{
-	_debug("CodecDesccriptor: Delete codec handle pointers");
+CodecDescriptor::deleteHandlePointer (void) {
+    _debug ("CodecDesccriptor: Delete codec handle pointers");
 
     for (int i = 0 ; (unsigned int) i < _CodecInMemory.size() ; i++) {
         unloadCodec (_CodecInMemory[i]);
@@ -58,8 +55,7 @@ CodecDescriptor::deleteHandlePointer (void)
 }
 
 void
-CodecDescriptor::init()
-{
+CodecDescriptor::init() {
     std::vector<AudioCodec*> CodecDynamicList = scanCodecDirectory();
     _nbCodecs = CodecDynamicList.size();
 
@@ -88,8 +84,7 @@ void CodecDescriptor::setDefaultOrder() {
 }
 
 std::string
-CodecDescriptor::getCodecName (AudioCodecType payload)
-{
+CodecDescriptor::getCodecName (AudioCodecType payload) {
     std::string resNull = "";
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
@@ -101,8 +96,7 @@ CodecDescriptor::getCodecName (AudioCodecType payload)
 }
 
 AudioCodec*
-CodecDescriptor::getCodec (AudioCodecType payload)
-{
+CodecDescriptor::getCodec (AudioCodecType payload) {
     CodecsMap::iterator iter = _CodecsMap.find (payload);
 
     if (iter!=_CodecsMap.end()) {
@@ -262,6 +256,7 @@ AudioCodec* CodecDescriptor::instantiateCodec (AudioCodecType payload) {
 
             return a;
         }
+
         iter++;
     }
 
@@ -302,6 +297,7 @@ bool CodecDescriptor::seemsValid (std::string lib) {
 #ifdef HAVE_SPEEX_CODEC
     // Nothing special
 #else
+
     if (lib.substr (begin.length() , lib.length() - begin.length() - end.length()) == SPEEX_STRING_DESCRIPTION)
         return false;
 
@@ -310,6 +306,7 @@ bool CodecDescriptor::seemsValid (std::string lib) {
 #ifdef HAVE_GSM_CODEC
     // Nothing special
 #else
+
     if (lib.substr (begin.length() , lib.length() - begin.length() - end.length()) == GSM_STRING_DESCRIPTION)
         return false;
 
@@ -318,6 +315,7 @@ bool CodecDescriptor::seemsValid (std::string lib) {
 #ifdef BUILD_ILBC
     // Nothing special
 #else
+
     if (lib.substr (begin.length() , lib.length() - begin.length() - end.length()) == ILBC_STRING_DESCRIPTION)
         return false;
 
@@ -333,8 +331,7 @@ bool CodecDescriptor::seemsValid (std::string lib) {
 }
 
 bool
-CodecDescriptor::alreadyInCache (std::string lib)
-{
+CodecDescriptor::alreadyInCache (std::string lib) {
     int i;
 
     for (i = 0 ; (unsigned int) i < _Cache.size() ; i++) {
@@ -362,30 +359,30 @@ bool CodecDescriptor::isCodecLoaded (int payload) {
 
 std::vector <std::string> CodecDescriptor::getCodecSpecifications (const int32_t& payload) {
 
-	_debug ("CodecDescriptor: Gathering codec specifications for payload %i", payload);
+    _debug ("CodecDescriptor: Gathering codec specifications for payload %i", payload);
 
-	std::vector<std::string> v;
+    std::vector<std::string> v;
     std::stringstream ss;
 
-	// Add the name of the codec
+    // Add the name of the codec
     v.push_back (getCodecName ( (AudioCodecType) payload));
 
-	// Add the sample rate
+    // Add the sample rate
     ss << getSampleRate ( (AudioCodecType) payload);
     v.push_back ( (ss.str()).data());
     ss.str ("");
 
-	// Add the bit rate
+    // Add the bit rate
     ss << getBitRate ( (AudioCodecType) payload);
     v.push_back ( (ss.str()).data());
     ss.str ("");
 
-	// Add the bandwidth information
+    // Add the bandwidth information
     ss << getBandwidthPerCall ( (AudioCodecType) payload);
     v.push_back ( (ss.str()).data());
     ss.str ("");
 
-	return v;
+    return v;
 
 }
 

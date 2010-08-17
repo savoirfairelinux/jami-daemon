@@ -35,25 +35,21 @@
 #include "manager.h"
 
 IAXAccount::IAXAccount (const AccountID& accountID)
-        : Account (accountID, "iax2")
-{
+        : Account (accountID, "iax2") {
     _link = new IAXVoIPLink (accountID);
 }
 
 
-IAXAccount::~IAXAccount()
-{
+IAXAccount::~IAXAccount() {
     delete _link;
     _link = NULL;
 }
 
-void IAXAccount::setVoIPLink()
-{
+void IAXAccount::setVoIPLink() {
 
 }
 
-int IAXAccount::registerVoIPLink()
-{
+int IAXAccount::registerVoIPLink() {
     _link->init();
 
     // Stuff needed for IAX registration
@@ -67,8 +63,7 @@ int IAXAccount::registerVoIPLink()
 }
 
 int
-IAXAccount::unregisterVoIPLink()
-{
+IAXAccount::unregisterVoIPLink() {
     _link->sendUnregister (_accountID);
     _link->terminate();
 
@@ -76,8 +71,7 @@ IAXAccount::unregisterVoIPLink()
 }
 
 void
-IAXAccount::loadConfig()
-{
+IAXAccount::loadConfig() {
     // Account generic
     Account::loadConfig();
 }

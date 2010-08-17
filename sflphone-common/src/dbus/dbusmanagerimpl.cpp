@@ -39,8 +39,7 @@
 const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLphone";
 
 int
-DBusManagerImpl::exec()
-{
+DBusManagerImpl::exec() {
 
     DBus::default_dispatcher = &_dispatcher;
 
@@ -53,7 +52,7 @@ DBusManagerImpl::exec()
     _instanceManager = new Instance (sessionConnection);
 
 #ifdef USE_NETWORKMANAGER
-    _networkManager = new NetworkManager(systemConnection, "/org/freedesktop/NetworkManager", "");
+    _networkManager = new NetworkManager (systemConnection, "/org/freedesktop/NetworkManager", "");
 #endif
 
     // Register accounts
@@ -66,8 +65,7 @@ DBusManagerImpl::exec()
 }
 
 void
-DBusManagerImpl::exit()
-{
+DBusManagerImpl::exit() {
 
     _dispatcher.leave();
 

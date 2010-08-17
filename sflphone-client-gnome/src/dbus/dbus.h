@@ -584,4 +584,7 @@ void dbus_set_window_position_y (const guint posy);
 GHashTable* dbus_get_shortcuts(void);
 void dbus_set_shortcuts(GHashTable * shortcuts);
 
+/* Instant messaging */
+void dbus_send_text_message (const gchar* callID, const gchar *message);
+
 #endif

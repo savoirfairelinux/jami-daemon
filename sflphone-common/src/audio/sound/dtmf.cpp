@@ -35,23 +35,19 @@
 #include "dtmf.h"
 
 DTMF::DTMF (unsigned int sampleRate)
-        : currentTone (0), newTone (0), dtmfgenerator (sampleRate)
-{
+        : currentTone (0), newTone (0), dtmfgenerator (sampleRate) {
 }
 
-DTMF::~DTMF (void)
-{
+DTMF::~DTMF (void) {
 }
 
 void
-DTMF::startTone (char code)
-{
+DTMF::startTone (char code) {
     newTone = code;
 }
 
 bool
-DTMF::generateDTMF (SFLDataFormat* buffer, size_t n)
-{
+DTMF::generateDTMF (SFLDataFormat* buffer, size_t n) {
     if (!buffer) return false;
 
     try {

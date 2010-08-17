@@ -33,13 +33,12 @@
 
 int AudioRecorder::count = 0;
 
-AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
-{
+AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread() {
     setCancel (cancelDeferred);
 
     ++count;
 
-    std::string id("processid_");
+    std::string id ("processid_");
 
     // convert count into string
     std::string s;
@@ -47,37 +46,36 @@ AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
     out << count;
     s = out.str();
 
-    recorderId = id.append(s);
+    recorderId = id.append (s);
 
     arecord = arec;
-    mbuffer = mb;    
+    mbuffer = mb;
 }
 
 
 /**
  * Reimplementation of run()
  */
-void AudioRecorder::run (void)
-{
+void AudioRecorder::run (void) {
     SFLDataFormat buffer[10000];
 
-    while(true) {
+    while (true) {
 
-      if(!mbuffer)
-	_warn("AudioRecorder: Error: No instance of ringbuffer");
+        if (!mbuffer)
+            _warn ("AudioRecorder: Error: No instance of ringbuffer");
 
-      int availBytes = mbuffer->availForGet(recorderId);
+        int availBytes = mbuffer->availForGet (recorderId);
 
-      if(availBytes > 0) {
+        if (availBytes > 0) {
 
-	  int got = mbuffer->getData(buffer, availBytes, 100, recorderId);
+            int got = mbuffer->getData (buffer, availBytes, 100, recorderId);
 
-	  int availBytesAfter = mbuffer->availForGet(recorderId);
+            int availBytesAfter = mbuffer->availForGet (recorderId);
 
-	  arecord->recData(buffer, availBytes/sizeof(SFLDataFormat));
-      }
+            arecord->recData (buffer, availBytes/sizeof (SFLDataFormat));
+        }
 
-      sleep(20);
+        sleep (20);
 
     }
 

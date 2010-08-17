@@ -72,7 +72,7 @@ web_view_nav_requested_cb(
 static void
 on_SendMessage_click (void) {
 	
-	/* Get the text in the buffer */
+	/* Get all the text in the buffer */
 	GtkTextIter start, end;
 	GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (_this->textarea));
 	gtk_text_buffer_get_bounds (GTK_TEXT_BUFFER (buffer), &start, &end);
@@ -80,7 +80,11 @@ on_SendMessage_click (void) {
 
 	if (g_strcasecmp (message, "") != 0 )
 	{
+		/* Display our own message in the chat window */
 		im_widget_add_message (GTK_WIDGET (_this), message);
+
+		/* Send the message to the peer */
+		dbus_send_text_message (_this->callID, message);
 
 		/* Empty the buffer */
 		gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);	
@@ -94,12 +98,12 @@ im_widget_class_init(IMWidgetClass *klass)
 }
 
 static void
-im_widget_init(IMWidget *im)
+im_widget_init (IMWidget *im)
 {
 
 	im->textarea = gtk_text_view_new ();
 	im->web_view = webkit_web_view_new();
-	GtkWidget *textscrollwin = gtk_scrolled_window_new(NULL, NULL);
+	GtkWidget *textscrollwin = gtk_scrolled_window_new (NULL, NULL);
 	GtkWidget *webscrollwin = gtk_scrolled_window_new (NULL, NULL);
 
 	/* A bar with the entry text and the button to send the message */

@@ -43,8 +43,7 @@
 #define FALSE 0
 
 
-class G722 : public AudioCodec
-{
+class G722 : public AudioCodec {
 
     public:
 
@@ -799,13 +798,11 @@ class G722 : public AudioCodec
 };
 
 // the class factories
-extern "C" AudioCodec* create()
-{
+extern "C" AudioCodec* create() {
     return new G722 (9);
 }
 
-extern "C" void destroy (AudioCodec* a)
-{
+extern "C" void destroy (AudioCodec* a) {
     delete a;
 }
 

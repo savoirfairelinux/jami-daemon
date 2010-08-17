@@ -39,107 +39,107 @@ using std::cout;
 using std::endl;
 
 void AudioLayerTest::testAudioLayerConfig() {
-	_debug ("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
+    _debug ("-------------------- AudioLayerTest::testAudioLayerConfig --------------------\n");
 
-	int sampling_rate = Manager::instance().getConfigInt(AUDIO,
-			AUDIO_SAMPLE_RATE);
-	int frame_size = Manager::instance().getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+    int sampling_rate = Manager::instance().getConfigInt (AUDIO,
+                        AUDIO_SAMPLE_RATE);
+    int frame_size = Manager::instance().getConfigInt (AUDIO, ALSA_FRAME_SIZE);
 
-	int layer = Manager::instance().getAudioDriver()->getLayerType();
+    int layer = Manager::instance().getAudioDriver()->getLayerType();
 
-	// if (layer != ALSA)
-	// 	Manager::instance().switchAudioManager();
+    // if (layer != ALSA)
+    // 	Manager::instance().switchAudioManager();
 
-	// TODO: Fix tests
-	//CPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);
+    // TODO: Fix tests
+    //CPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getSampleRate() == sampling_rate);
 
-	//CPPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getFrameSize() == frame_size);
+    //CPPPUNIT_ASSERT ( (int) Manager::instance().getAudioDriver()->getFrameSize() == frame_size);
 }
 
 void AudioLayerTest::testAudioLayerSwitch() {
-	_debug ("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
+    _debug ("-------------------- AudioLayerTest::testAudioLayerSwitch --------------------\n");
 
-	int previous_layer = Manager::instance().getAudioDriver()->getLayerType();
+    int previous_layer = Manager::instance().getAudioDriver()->getLayerType();
 
-	for (int i = 0; i < 2; i++) {
-		_debug ("iter - %i",i);
-		Manager::instance().switchAudioManager();
+    for (int i = 0; i < 2; i++) {
+        _debug ("iter - %i",i);
+        Manager::instance().switchAudioManager();
 
-		if (previous_layer == ALSA) {
-			CPPUNIT_ASSERT (Manager::instance().getAudioDriver()->getLayerType() == PULSEAUDIO);
-		} else {
-			CPPUNIT_ASSERT (Manager::instance().getAudioDriver()->getLayerType() == ALSA);
-		}
+        if (previous_layer == ALSA) {
+            CPPUNIT_ASSERT (Manager::instance().getAudioDriver()->getLayerType() == PULSEAUDIO);
+        } else {
+            CPPUNIT_ASSERT (Manager::instance().getAudioDriver()->getLayerType() == ALSA);
+        }
 
-		previous_layer = Manager::instance().getAudioDriver()->getLayerType();
+        previous_layer = Manager::instance().getAudioDriver()->getLayerType();
 
-		usleep(100000);
-	}
+        usleep (100000);
+    }
 }
 
 void AudioLayerTest::testPulseConnect() {
-	_debug ("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
+    _debug ("-------------------- AudioLayerTest::testPulseConnect --------------------\n");
 
-	if (Manager::instance().getAudioDriver()->getLayerType() == ALSA)
-		return;
+    if (Manager::instance().getAudioDriver()->getLayerType() == ALSA)
+        return;
 
-	ManagerImpl* manager;
-	manager = &Manager::instance();
+    ManagerImpl* manager;
+    manager = &Manager::instance();
 
-	_pulselayer = (PulseLayer*) Manager::instance().getAudioDriver();
+    _pulselayer = (PulseLayer*) Manager::instance().getAudioDriver();
 
-	CPPUNIT_ASSERT (_pulselayer->getLayerType() == PULSEAUDIO);
+    CPPUNIT_ASSERT (_pulselayer->getLayerType() == PULSEAUDIO);
 
-	std::string alsaPlugin;
-	int numCardIn, numCardOut, numCardRing, sampleRate, frameSize;
+    std::string alsaPlugin;
+    int numCardIn, numCardOut, numCardRing, sampleRate, frameSize;
 
-	alsaPlugin = manager->getConfigString(AUDIO, ALSA_PLUGIN);
-	numCardIn = manager->getConfigInt(AUDIO, ALSA_CARD_ID_IN);
-	numCardOut = manager->getConfigInt(AUDIO, ALSA_CARD_ID_OUT);
-	numCardRing = manager->getConfigInt(AUDIO, ALSA_CARD_ID_RING);
-	sampleRate = manager->getConfigInt(AUDIO, AUDIO_SAMPLE_RATE);
-	frameSize = manager->getConfigInt(AUDIO, ALSA_FRAME_SIZE);
+    alsaPlugin = manager->getConfigString (AUDIO, ALSA_PLUGIN);
+    numCardIn = manager->getConfigInt (AUDIO, ALSA_CARD_ID_IN);
+    numCardOut = manager->getConfigInt (AUDIO, ALSA_CARD_ID_OUT);
+    numCardRing = manager->getConfigInt (AUDIO, ALSA_CARD_ID_RING);
+    sampleRate = manager->getConfigInt (AUDIO, AUDIO_SAMPLE_RATE);
+    frameSize = manager->getConfigInt (AUDIO, ALSA_FRAME_SIZE);
 
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
-	CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
+    CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
 
-	_pulselayer->setErrorMessage(-1);
+    _pulselayer->setErrorMessage (-1);
 
-	try {
-	  CPPUNIT_ASSERT (_pulselayer->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin) == true);
-	} catch (...) {
-		_debug ("Exception occured wile opening device! ");
-	}
+    try {
+        CPPUNIT_ASSERT (_pulselayer->openDevice (numCardIn, numCardOut, numCardRing, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin) == true);
+    } catch (...) {
+        _debug ("Exception occured wile opening device! ");
+    }
 
-	usleep(100000);
+    usleep (100000);
 
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
-	CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream() == NULL);
+    CPPUNIT_ASSERT (_pulselayer->getRecordStream() == NULL);
 
-	_debug ("-------------------------- \n");
-	_pulselayer->startStream();
+    _debug ("-------------------------- \n");
+    _pulselayer->startStream();
 
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->pulseStream() != NULL);
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->pulseStream() != NULL);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->pulseStream() != NULL);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->pulseStream() != NULL);
 
-	// Must return No error "PA_OK" == 1
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->getStreamState() == 1);
-	CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 1);
+    // Must return No error "PA_OK" == 1
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->getStreamState() == 1);
+    CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 1);
 
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->disconnectStream() == true);
-	CPPUNIT_ASSERT (_pulselayer->getRecordStream()->disconnectStream() == true);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->disconnectStream() == true);
+    CPPUNIT_ASSERT (_pulselayer->getRecordStream()->disconnectStream() == true);
 
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->connectStream(NULL) == true);
-	CPPUNIT_ASSERT (_pulselayer->getRecordStream()->connectStream(NULL) == true);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->connectStream (NULL) == true);
+    CPPUNIT_ASSERT (_pulselayer->getRecordStream()->connectStream (NULL) == true);
 
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->getStreamState() == 1);
-	CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 1);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->getStreamState() == 1);
+    CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 1);
 
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->connectStream(NULL) == true);
-	CPPUNIT_ASSERT (_pulselayer->getRecordStream()->connectStream(NULL) == true);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->connectStream (NULL) == true);
+    CPPUNIT_ASSERT (_pulselayer->getRecordStream()->connectStream (NULL) == true);
 
-	CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->getStreamState() == 1);
-	CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 1);
+    CPPUNIT_ASSERT (_pulselayer->getPlaybackStream()->getStreamState() == 1);
+    CPPUNIT_ASSERT (_pulselayer->getRecordStream()->getStreamState() == 1);
 
-	CPPUNIT_ASSERT (_pulselayer->disconnectAudioStream() == true);
+    CPPUNIT_ASSERT (_pulselayer->disconnectAudioStream() == true);
 }

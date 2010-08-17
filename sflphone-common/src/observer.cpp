@@ -31,20 +31,17 @@
 #include "observer.h"
 #include <algorithm>
 
-namespace Pattern
-{
+namespace Pattern {
 
 void
-Subject::attach (Observer& observer)
-{
+Subject::attach (Observer& observer) {
     if (std::find (_observers.begin(), _observers.end(), &observer) == _observers.end()) {
         _observers.push_back (&observer);
     }
 }
 
 void
-Subject::detach (Observer& observer)
-{
+Subject::detach (Observer& observer) {
     std::list<Observer*>::iterator iter = std::find (_observers.begin(), _observers.end(), &observer);
 
     if (iter != _observers.end()) {
@@ -53,8 +50,7 @@ Subject::detach (Observer& observer)
 }
 
 void
-Subject::notify()
-{
+Subject::notify() {
     std::list<Observer*>::iterator iter = _observers.begin();
 
     while (iter != _observers.end()) {

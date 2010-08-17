@@ -43,8 +43,7 @@ AudioStream::AudioStream (PulseLayerType * driver, int smplrate)
         _volume(),
         _flag (PA_STREAM_AUTO_TIMING_UPDATE),
         _sample_spec(),
-        _mainloop (driver->mainloop)
-{
+        _mainloop (driver->mainloop) {
     _sample_spec.format = PA_SAMPLE_S16LE; // PA_SAMPLE_FLOAT32LE;
     _sample_spec.rate = smplrate;
     _sample_spec.channels = 1;
@@ -52,24 +51,21 @@ AudioStream::AudioStream (PulseLayerType * driver, int smplrate)
     pa_cvolume_set (&_volume , 1 , PA_VOLUME_NORM) ;  // * vol / 100 ;
 }
 
-AudioStream::~AudioStream()
-{
+AudioStream::~AudioStream() {
     disconnectStream();
 }
 
 bool
-AudioStream::connectStream(std::string* deviceName)
-{
+AudioStream::connectStream (std::string* deviceName) {
     ost::MutexLock guard (_mutex);
 
     if (!_audiostream)
-      _audiostream = createStream (_context, deviceName);
+        _audiostream = createStream (_context, deviceName);
 
     return true;
 }
 
-static void success_cb (pa_stream *s, int success, void *userdata)
-{
+static void success_cb (pa_stream *s, int success, void *userdata) {
 
     assert (s);
 
@@ -80,10 +76,9 @@ static void success_cb (pa_stream *s, int success, void *userdata)
 
 
 bool
-AudioStream::drainStream (void)
-{
+AudioStream::drainStream (void) {
     if (_audiostream) {
-        _info("Audio: Draining stream");
+        _info ("Audio: Draining stream");
         pa_operation * operation;
 
         pa_threaded_mainloop_lock (_mainloop);
@@ -91,7 +86,7 @@ AudioStream::drainStream (void)
         if ( (operation = pa_stream_drain (_audiostream, success_cb, _mainloop))) {
             while (pa_operation_get_state (operation) != PA_OPERATION_DONE) {
                 if (!_context || pa_context_get_state (_context) != PA_CONTEXT_READY || !_audiostream || pa_stream_get_state (_audiostream) != PA_STREAM_READY) {
-                    _warn("Audio: Connection died: %s", _context ? pa_strerror (pa_context_errno (_context)) : "NULL");
+                    _warn ("Audio: Connection died: %s", _context ? pa_strerror (pa_context_errno (_context)) : "NULL");
                     pa_operation_unref (operation);
                     break;
                 } else {
@@ -107,9 +102,8 @@ AudioStream::drainStream (void)
 }
 
 bool
-AudioStream::disconnectStream (void)
-{
-    _info("Audio: Destroy audio streams");
+AudioStream::disconnectStream (void) {
+    _info ("Audio: Destroy audio streams");
 
     pa_threaded_mainloop_lock (_mainloop);
 
@@ -134,11 +128,10 @@ AudioStream::disconnectStream (void)
 
 
 void
-AudioStream::stream_state_callback (pa_stream* s, void* user_data)
-{
+AudioStream::stream_state_callback (pa_stream* s, void* user_data) {
     pa_threaded_mainloop *m;
 
-    _info("Audio: The state of the stream changed");
+    _info ("Audio: The state of the stream changed");
     assert (s);
 
     char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
@@ -149,7 +142,7 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
     switch (pa_stream_get_state (s)) {
 
         case PA_STREAM_CREATING:
-            _info("Audio: Stream is creating...");
+            _info ("Audio: Stream is creating...");
             break;
 
         case PA_STREAM_TERMINATED:
@@ -158,14 +151,14 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
 
         case PA_STREAM_READY:
             _info ("Audio: Stream successfully created, connected to %s", pa_stream_get_device_name (s));
-	    // pa_buffer_attr *buffattr = (pa_buffer_attr *)pa_xmalloc (sizeof(pa_buffer_attr));
-	    _debug("Audio: maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
-	    _debug("Audio: tlength %u", pa_stream_get_buffer_attr(s)->tlength);
-	    _debug("Audio: prebug %u", pa_stream_get_buffer_attr(s)->prebuf);
-	    _debug("Audio: minreq %u", pa_stream_get_buffer_attr(s)->minreq);
-	    _debug("Audio: fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
-	    _debug("Audio: samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
-	    // pa_xfree (buffattr);
+            // pa_buffer_attr *buffattr = (pa_buffer_attr *)pa_xmalloc (sizeof(pa_buffer_attr));
+            _debug ("Audio: maxlength %u", pa_stream_get_buffer_attr (s)->maxlength);
+            _debug ("Audio: tlength %u", pa_stream_get_buffer_attr (s)->tlength);
+            _debug ("Audio: prebug %u", pa_stream_get_buffer_attr (s)->prebuf);
+            _debug ("Audio: minreq %u", pa_stream_get_buffer_attr (s)->minreq);
+            _debug ("Audio: fragsize %u", pa_stream_get_buffer_attr (s)->fragsize);
+            _debug ("Audio: samplespec %s", pa_sample_spec_snprint (str, sizeof (str), pa_stream_get_sample_spec (s)));
+            // pa_xfree (buffattr);
             break;
 
         case PA_STREAM_UNCONNECTED:
@@ -175,15 +168,14 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data)
         case PA_STREAM_FAILED:
 
         default:
-            _warn("Audio: Error - Sink/Source doesn't exists: %s" , pa_strerror (pa_context_errno (pa_stream_get_context (s))));
+            _warn ("Audio: Error - Sink/Source doesn't exists: %s" , pa_strerror (pa_context_errno (pa_stream_get_context (s))));
             exit (0);
             break;
     }
 }
 
 pa_stream_state_t
-AudioStream::getStreamState (void)
-{
+AudioStream::getStreamState (void) {
 
     ost::MutexLock guard (_mutex);
     return pa_stream_get_state (_audiostream);
@@ -192,8 +184,7 @@ AudioStream::getStreamState (void)
 
 
 pa_stream*
-AudioStream::createStream (pa_context* c, std::string *deviceName)
-{
+AudioStream::createStream (pa_context* c, std::string *deviceName) {
     ost::MutexLock guard (_mutex);
 
     pa_stream* s;
@@ -201,7 +192,7 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
     assert (pa_sample_spec_valid (&_sample_spec));
     assert (pa_channel_map_valid (&channel_map));
 
-    _info("Audio: Create pulseaudio stream");
+    _info ("Audio: Create pulseaudio stream");
 
     pa_buffer_attr* attributes = (pa_buffer_attr*) malloc (sizeof (pa_buffer_attr));
 
@@ -216,52 +207,53 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
         attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec); // -1;
         attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
-	attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->minreq = (uint32_t) -1;
-	
-	pa_threaded_mainloop_lock(_mainloop);
 
-	if(deviceName)
-	  pa_stream_connect_playback (s , deviceName->c_str(), attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
-	else
-	  pa_stream_connect_playback (s , NULL, attributes, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+        pa_threaded_mainloop_lock (_mainloop);
+
+        if (deviceName)
+            pa_stream_connect_playback (s , deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+        else
+            pa_stream_connect_playback (s , NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
 
 
-	pa_threaded_mainloop_unlock(_mainloop);
+        pa_threaded_mainloop_unlock (_mainloop);
 
     } else if (_streamType == CAPTURE_STREAM) {
 
-      attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);// (uint32_t) -1;
-      attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);// pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
-	attributes->prebuf = 0;
+        attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);// (uint32_t) -1;
+        attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);// pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->prebuf = 0;
         attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec); // pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
-	attributes->minreq = (uint32_t) -1;
+        attributes->minreq = (uint32_t) -1;
 
-	pa_threaded_mainloop_lock(_mainloop);
+        pa_threaded_mainloop_lock (_mainloop);
 
-	if(deviceName)
-	  pa_stream_connect_record (s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
-	else 
-	  pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+        if (deviceName)
+            pa_stream_connect_record (s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
+        else
+            pa_stream_connect_record (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE));
 
 
-        pa_threaded_mainloop_unlock(_mainloop);
-        
+        pa_threaded_mainloop_unlock (_mainloop);
+
     } else if (_streamType == RINGTONE_STREAM) {
 
-      attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);;
-      attributes->tlength = pa_usec_to_bytes(40 * PA_USEC_PER_MSEC, &_sample_spec);
-      attributes->prebuf = 0;
-      attributes->fragsize = pa_usec_to_bytes(20 * PA_USEC_PER_MSEC, &_sample_spec);
-      attributes->minreq = (uint32_t) -1;
+        attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);;
+        attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->prebuf = 0;
+        attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->minreq = (uint32_t) -1;
 
-      pa_threaded_mainloop_lock(_mainloop);
-      if(deviceName)
-	pa_stream_connect_playback(s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
-      else
-	pa_stream_connect_playback(s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY), NULL, NULL);
+        pa_threaded_mainloop_lock (_mainloop);
 
-      pa_threaded_mainloop_unlock(_mainloop);
+        if (deviceName)
+            pa_stream_connect_playback (s, deviceName->c_str(), attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY|PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
+        else
+            pa_stream_connect_playback (s, NULL, attributes, (pa_stream_flags_t) (PA_STREAM_ADJUST_LATENCY), NULL, NULL);
+
+        pa_threaded_mainloop_unlock (_mainloop);
 
     } else if (_streamType == UPLOAD_STREAM) {
         pa_stream_connect_upload (s , 1024);

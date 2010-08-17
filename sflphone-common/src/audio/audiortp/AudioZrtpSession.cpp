@@ -39,20 +39,17 @@
 #include <cstring>
 #include <cerrno>
 
-namespace sfl
-{
+namespace sfl {
 
 AudioZrtpSession::AudioZrtpSession (ManagerImpl * manager, SIPCall * sipcall, const std::string& zidFilename) :
         ost::SymmetricZRTPSession (ost::InetHostAddress (sipcall->getLocalIp().c_str()), sipcall->getLocalAudioPort()),
         AudioRtpSession<AudioZrtpSession> (manager, sipcall),
-        _zidFilename (zidFilename)
-{
+        _zidFilename (zidFilename) {
     _debug ("AudioZrtpSession initialized");
     initializeZid();
 }
 
-void AudioZrtpSession::initializeZid (void)
-{
+void AudioZrtpSession::initializeZid (void) {
 
     if (_zidFilename.empty()) {
         throw ZrtpZidException();

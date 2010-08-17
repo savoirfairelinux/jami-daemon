@@ -36,19 +36,16 @@
 #include <math.h>
 #include <strings.h>
 
-AudioLoop::AudioLoop() :_buffer (0),  _size (0), _pos (0), _sampleRate (0)
-{
+AudioLoop::AudioLoop() :_buffer (0),  _size (0), _pos (0), _sampleRate (0) {
 }
 
-AudioLoop::~AudioLoop()
-{
+AudioLoop::~AudioLoop() {
     delete [] _buffer;
     _buffer = 0;
 }
 
 int
-AudioLoop::getNext (SFLDataFormat* output, int nb, short volume)
-{
+AudioLoop::getNext (SFLDataFormat* output, int nb, short volume) {
     int copied = 0;
     int block;
     int pos = _pos;
@@ -64,7 +61,7 @@ AudioLoop::getNext (SFLDataFormat* output, int nb, short volume)
         bcopy (_buffer+pos, output, block*sizeof (SFLDataFormat)); // short>char conversion
 
         if (volume!=100) {
-            for (int i=0;i<block;i++) {
+            for (int i=0; i<block; i++) {
                 *output = (*output * volume) /100;
                 output++;
             }

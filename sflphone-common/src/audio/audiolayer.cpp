@@ -30,8 +30,7 @@
 
 #include "audiolayer.h"
 
-void AudioLayer::flushMain (void)
-{
+void AudioLayer::flushMain (void) {
     ost::MutexLock guard (_mutex);
 
     // should pass call id
@@ -42,15 +41,13 @@ void AudioLayer::flushMain (void)
 }
 
 
-void AudioLayer::flushUrgent (void)
-{
+void AudioLayer::flushUrgent (void) {
     ost::MutexLock guard (_mutex);
     _urgentRingBuffer.flushAll();
 }
 
 
-int AudioLayer::putUrgent (void* buffer, int toCopy)
-{
+int AudioLayer::putUrgent (void* buffer, int toCopy) {
     int a;
 
     ost::MutexLock guard (_mutex);
@@ -65,8 +62,7 @@ int AudioLayer::putUrgent (void* buffer, int toCopy)
     return 0;
 }
 
-int AudioLayer::putMain (void *buffer, int toCopy, CallID call_id)
-{
+int AudioLayer::putMain (void *buffer, int toCopy, CallID call_id) {
     int a;
 
     ost::MutexLock guard (_mutex);

@@ -36,29 +36,27 @@
 
 HistoryManager::HistoryManager ()
         :	_history_loaded (false),
-        _history_path ("")
-{
+        _history_path ("") {
 
 }
 
-HistoryManager::~HistoryManager ()
-{
-	 HistoryItemMap::iterator iter = _history_items.begin();
+HistoryManager::~HistoryManager () {
+    HistoryItemMap::iterator iter = _history_items.begin();
 
-	 HistoryItem * item;
-	 while(iter != _history_items.end()){
-		 item = iter->second;
-		 delete item;
-		 iter++;
-	 }
+    HistoryItem * item;
+
+    while (iter != _history_items.end()) {
+        item = iter->second;
+        delete item;
+        iter++;
+    }
 
     // Clear the history map
     _history_items.clear ();
 
 }
 
-int HistoryManager::load_history (int limit, std::string path)
-{
+int HistoryManager::load_history (int limit, std::string path) {
     Conf::ConfigTree history_list;
 
     create_history_path (path);
@@ -66,16 +64,14 @@ int HistoryManager::load_history (int limit, std::string path)
     return load_history_items_map (&history_list, limit);
 }
 
-bool HistoryManager::save_history (void)
-{
+bool HistoryManager::save_history (void) {
     Conf::ConfigTree history_list;
 
     save_history_items_map (&history_list);
     return save_history_to_file (&history_list);
 }
 
-bool HistoryManager::load_history_from_file (Conf::ConfigTree *history_list)
-{
+bool HistoryManager::load_history_from_file (Conf::ConfigTree *history_list) {
     bool exist;
 
     exist = history_list->populateFromFile (_history_path);
@@ -84,8 +80,7 @@ bool HistoryManager::load_history_from_file (Conf::ConfigTree *history_list)
     return exist;
 }
 
-int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int limit)
-{
+int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int limit) {
 
     short nb_items = 0;
     Conf::TokenList sections;
@@ -128,15 +123,13 @@ int HistoryManager::load_history_items_map (Conf::ConfigTree *history_list, int 
 }
 
 
-bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list)
-{
+bool HistoryManager::save_history_to_file (Conf::ConfigTree *history_list) {
     _debug ("Saving history in XDG directory: %s", _history_path.data());
     return  history_list->saveConfigTree (_history_path.data());
 }
 
 
-int HistoryManager::save_history_items_map (Conf::ConfigTree *history_list)
-{
+int HistoryManager::save_history_items_map (Conf::ConfigTree *history_list) {
     HistoryItemMap::iterator iter;
     HistoryItem *item;
     int items_saved = 0;
@@ -159,14 +152,12 @@ int HistoryManager::save_history_items_map (Conf::ConfigTree *history_list)
     return items_saved;
 }
 
-void HistoryManager::add_new_history_entry (HistoryItem *new_item)
-{
+void HistoryManager::add_new_history_entry (HistoryItem *new_item) {
     // Add it in the map
     _history_items [new_item->get_timestamp () ] = new_item;
 }
 
-int HistoryManager::create_history_path (std::string path)
-{
+int HistoryManager::create_history_path (std::string path) {
 
     std::string userdata, xdg_env, xdg_data;
 
@@ -202,8 +193,7 @@ int HistoryManager::create_history_path (std::string path)
 
 // throw an Conf::ConfigTreeItemException if not found
 int
-HistoryManager::getConfigInt (const std::string& section, const std::string& name, Conf::ConfigTree *history_list)
-{
+HistoryManager::getConfigInt (const std::string& section, const std::string& name, Conf::ConfigTree *history_list) {
     try {
         return history_list->getConfigTreeItemIntValue (section, name);
     } catch (Conf::ConfigTreeItemException& e) {
@@ -214,8 +204,7 @@ HistoryManager::getConfigInt (const std::string& section, const std::string& nam
 }
 
 std::string
-HistoryManager::getConfigString (const std::string& section, const std::string& name, Conf::ConfigTree *history_list)
-{
+HistoryManager::getConfigString (const std::string& section, const std::string& name, Conf::ConfigTree *history_list) {
     try {
         return history_list->getConfigTreeItemValue (section, name);
     } catch (Conf::ConfigTreeItemException& e) {
@@ -225,8 +214,7 @@ HistoryManager::getConfigString (const std::string& section, const std::string& 
     return "";
 }
 
-std::map <std::string, std::string> HistoryManager::get_history_serialized (void)
-{
+std::map <std::string, std::string> HistoryManager::get_history_serialized (void) {
     std::map <std::string, std::string> serialized;
     HistoryItemMap::iterator iter;
     HistoryItem *current;
@@ -250,8 +238,7 @@ std::map <std::string, std::string> HistoryManager::get_history_serialized (void
 }
 
 
-int HistoryManager::set_serialized_history (std::map <std::string, std::string> history, int limit)
-{
+int HistoryManager::set_serialized_history (std::map <std::string, std::string> history, int limit) {
     std::map <std::string, std::string>::iterator iter;
     HistoryItem *new_item;
     int items_added = 0;

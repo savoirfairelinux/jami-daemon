@@ -34,8 +34,7 @@
 
 /********************************** Voiplink thread *************************************/
 EventThread::EventThread (VoIPLink *link)
-        : Thread(), _linkthread (link)
-{
+        : Thread(), _linkthread (link) {
     setCancel (cancelDeferred);
 }
 
@@ -43,8 +42,7 @@ EventThread::EventThread (VoIPLink *link)
 /**
  * Reimplementation of run()
  */
-void EventThread::run (void)
-{
+void EventThread::run (void) {
     while (!testCancel()) {
         _linkthread->getEvent();
     }
@@ -53,16 +51,14 @@ void EventThread::run (void)
 /********************************************************************************************/
 
 AudioThread::AudioThread (AlsaLayer *alsa)
-        : Thread(), _alsa (alsa)
-{
+        : Thread(), _alsa (alsa) {
     setCancel (cancelDeferred);
 }
 
 /**
  * Reimplementation of run()
  */
-void AudioThread::run (void)
-{
+void AudioThread::run (void) {
     while (!testCancel()) {
         _alsa->audioCallback();
         Thread::sleep (20);

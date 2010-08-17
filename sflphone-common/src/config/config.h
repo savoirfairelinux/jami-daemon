@@ -41,16 +41,14 @@
  * @brief Configuration namespace for ConfigTree object (like .ini files)
  */
 
-namespace Conf
-{
+namespace Conf {
 
 class ConfigTreeItem;
 typedef std::map<std::string, ConfigTreeItem> ItemMap;
 typedef std::map<std::string, ItemMap*> SectionMap;
 typedef std::list<std::string> TokenList;
 
-class ConfigTreeItemException
-{
+class ConfigTreeItemException {
 
     public:
         /**
@@ -66,8 +64,7 @@ class ConfigTreeItemException
 
 class ConfigTree;
 
-class ConfigTreeIterator
-{
+class ConfigTreeIterator {
 
     public:
         /**
@@ -104,8 +101,7 @@ class ConfigTreeIterator
         ItemMap::iterator _iterItem;
 };
 
-class ConfigTree
-{
+class ConfigTree {
 
     public:
         ConfigTree();
@@ -193,8 +189,7 @@ class ConfigTree
         }
 };
 
-class ConfigTreeItem
-{
+class ConfigTreeItem {
 
     public:
         ConfigTreeItem() : _name (""), _value (""), _defaultValue (""), _type ("string") {}

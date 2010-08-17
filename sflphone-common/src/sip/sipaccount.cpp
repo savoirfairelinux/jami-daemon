@@ -37,7 +37,7 @@
 
 SIPAccount::SIPAccount (const AccountID& accountID)
         : Account (accountID, "sip")
-	, _routeSet("")
+        , _routeSet ("")
         , _regc (NULL)
         , _bRegister (false)
         , _registrationExpire ("")
@@ -45,7 +45,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _publishedIpAddress ("")
         , _localPort (atoi (DEFAULT_SIP_PORT))
         , _publishedPort (atoi (DEFAULT_SIP_PORT))
-	, _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
+        , _tlsListenerPort (atoi (DEFAULT_SIP_TLS_PORT))
         , _transportType (PJSIP_TRANSPORT_UNSPECIFIED)
         , _transport (NULL)
         , _resolveOnce (false)
@@ -54,11 +54,10 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _realm (DEFAULT_REALM)
         , _authenticationUsername ("")
         , _tlsSetting (NULL)
-	, _dtmfType(OVERRTP)
-        , _displayName ("")
-{
-    
-    // IP2IP settings must be loaded before singleton instanciation, cannot call it here... 
+        , _dtmfType (OVERRTP)
+        , _displayName ("") {
+
+    // IP2IP settings must be loaded before singleton instanciation, cannot call it here...
 
     // _link = SIPVoIPLink::instance ("");
 
@@ -67,8 +66,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
 
 }
 
-SIPAccount::~SIPAccount()
-{
+SIPAccount::~SIPAccount() {
     /* One SIP account less connected to the sip voiplink */
     dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
 
@@ -88,8 +86,7 @@ void SIPAccount::setVoIPLink() {
 }
 
 
-int SIPAccount::initCredential (void)
-{
+int SIPAccount::initCredential (void) {
     int credentialCount = 0;
     credentialCount = Manager::instance().getConfigInt (_accountID, CONFIG_CREDENTIAL_NUMBER);
     credentialCount += 1;
@@ -134,7 +131,7 @@ int SIPAccount::initCredential (void)
 
     // Set the datatype
     cred_info[0].data_type = dataType;
-    
+
     // Set the secheme
     cred_info[0].scheme = pj_str ( (char*) "digest");
 
@@ -182,8 +179,7 @@ int SIPAccount::initCredential (void)
 }
 
 
-int SIPAccount::registerVoIPLink()
-{
+int SIPAccount::registerVoIPLink() {
     _debug ("Register account %s", getAccountID().c_str());
 
     // Init general settings
@@ -223,8 +219,7 @@ int SIPAccount::registerVoIPLink()
     return SUCCESS;
 }
 
-int SIPAccount::unregisterVoIPLink()
-{
+int SIPAccount::unregisterVoIPLink() {
     _debug ("Unregister account %s" , getAccountID().c_str());
 
     if (_accountID == IP2IP_PROFILE) {
@@ -239,8 +234,7 @@ int SIPAccount::unregisterVoIPLink()
 
 }
 
-pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
-{
+pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method) {
     if (method == "Default") {
         return PJSIP_SSL_UNSPECIFIED_METHOD;
     }
@@ -264,8 +258,7 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
     return PJSIP_SSL_UNSPECIFIED_METHOD;
 }
 
-void SIPAccount::initTlsConfiguration (void)
-{
+void SIPAccount::initTlsConfiguration (void) {
     /*
      * Initialize structure to zero
      */
@@ -275,9 +268,9 @@ void SIPAccount::initTlsConfiguration (void)
     }
 
     // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    std::string tlsPortStr = Manager::instance().getConfigString(_accountID, TLS_LISTENER_PORT);
-    setTlsListenerPort(atoi(tlsPortStr.c_str()));
-    
+    std::string tlsPortStr = Manager::instance().getConfigString (_accountID, TLS_LISTENER_PORT);
+    setTlsListenerPort (atoi (tlsPortStr.c_str()));
+
     _tlsSetting = (pjsip_tls_setting *) malloc (sizeof (pjsip_tls_setting));
 
     assert (_tlsSetting);
@@ -314,8 +307,7 @@ void SIPAccount::initTlsConfiguration (void)
 
 }
 
-void SIPAccount::initStunConfiguration (void)
-{
+void SIPAccount::initStunConfiguration (void) {
     size_t pos;
     std::string stunServer, serverName, serverPort;
 
@@ -337,11 +329,10 @@ void SIPAccount::initStunConfiguration (void)
     }
 }
 
-void SIPAccount::loadConfig()
-{
+void SIPAccount::loadConfig() {
     // Load primary credential
     setUsername (Manager::instance().getConfigString (_accountID, USERNAME));
-    setRouteSet(Manager::instance().getConfigString(_accountID, ROUTESET));
+    setRouteSet (Manager::instance().getConfigString (_accountID, ROUTESET));
     setPassword (Manager::instance().getConfigString (_accountID, PASSWORD));
     _authenticationUsername = Manager::instance().getConfigString (_accountID, AUTHENTICATION_USERNAME);
     _realm = Manager::instance().getConfigString (_accountID, REALM);
@@ -360,7 +351,7 @@ void SIPAccount::loadConfig()
     // Local parameters
 
     // Load local interface
-    setLocalInterface(Manager::instance().getConfigString (_accountID, LOCAL_INTERFACE));
+    setLocalInterface (Manager::instance().getConfigString (_accountID, LOCAL_INTERFACE));
 
     std::string localPort = Manager::instance().getConfigString (_accountID, LOCAL_PORT);
     setLocalPort (atoi (localPort.c_str()));
@@ -375,10 +366,10 @@ void SIPAccount::loadConfig()
 
     setPublishedAddress (Manager::instance().getConfigString (_accountID, PUBLISHED_ADDRESS));
 
-    if(Manager::instance().getConfigString (_accountID, ACCOUNT_DTMF_TYPE) == OVERRTPSTR)
-    	_dtmfType = OVERRTP;
-	else
-		_dtmfType = SIPINFO;
+    if (Manager::instance().getConfigString (_accountID, ACCOUNT_DTMF_TYPE) == OVERRTPSTR)
+        _dtmfType = OVERRTP;
+    else
+        _dtmfType = SIPINFO;
 
     // Init TLS settings if the user wants to use TLS
     bool tlsEnabled = Manager::instance().getConfigBool (_accountID, TLS_ENABLE);
@@ -394,13 +385,11 @@ void SIPAccount::loadConfig()
     Account::loadConfig();
 }
 
-bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname)
-{
+bool SIPAccount::fullMatch (const std::string& username, const std::string& hostname) {
     return (userMatch (username) && hostnameMatch (hostname));
 }
 
-bool SIPAccount::userMatch (const std::string& username)
-{
+bool SIPAccount::userMatch (const std::string& username) {
     if (username.empty()) {
         return false;
     }
@@ -408,20 +397,17 @@ bool SIPAccount::userMatch (const std::string& username)
     return (username == getUsername());
 }
 
-bool SIPAccount::hostnameMatch (const std::string& hostname)
-{
+bool SIPAccount::hostnameMatch (const std::string& hostname) {
     return (hostname == getHostname());
 }
 
-std::string SIPAccount::getMachineName (void)
-{
+std::string SIPAccount::getMachineName (void) {
     std::string hostname;
     hostname = std::string (pj_gethostname()->ptr, pj_gethostname()->slen);
     return hostname;
 }
 
-std::string SIPAccount::getLoginName (void)
-{
+std::string SIPAccount::getLoginName (void) {
     std::string username;
 
     uid_t uid = getuid();
@@ -436,9 +422,8 @@ std::string SIPAccount::getLoginName (void)
     return username;
 }
 
-std::string SIPAccount::getTransportMapKey(void)
-{
-    
+std::string SIPAccount::getTransportMapKey (void) {
+
     std::stringstream out;
     out << getLocalPort();
     std::string localPort = out.str();
@@ -447,8 +432,7 @@ std::string SIPAccount::getTransportMapKey(void)
 }
 
 
-std::string SIPAccount::getFromUri (void)
-{
+std::string SIPAccount::getFromUri (void) {
     char uri[PJSIP_MAX_URL_SIZE];
 
     std::string scheme;
@@ -474,7 +458,7 @@ std::string SIPAccount::getFromUri (void)
 
     // Get machine hostname if not provided
     if (_hostname.empty()) {
-      hostname = getMachineName();
+        hostname = getMachineName();
     }
 
 
@@ -489,8 +473,7 @@ std::string SIPAccount::getFromUri (void)
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getToUri (const std::string& username)
-{
+std::string SIPAccount::getToUri (const std::string& username) {
     char uri[PJSIP_MAX_URL_SIZE];
 
     std::string scheme;
@@ -515,7 +498,7 @@ std::string SIPAccount::getToUri (const std::string& username)
     // Check if hostname is already specified
     if (username.find ("@") == std::string::npos) {
         // hostname not specified
-	hostname = _hostname;
+        hostname = _hostname;
     }
 
     int len = pj_ansi_snprintf (uri, PJSIP_MAX_URL_SIZE,
@@ -530,8 +513,7 @@ std::string SIPAccount::getToUri (const std::string& username)
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getServerUri (void)
-{
+std::string SIPAccount::getServerUri (void) {
     char uri[PJSIP_MAX_URL_SIZE];
 
     std::string scheme;
@@ -557,8 +539,7 @@ std::string SIPAccount::getServerUri (void)
     return std::string (uri, len);
 }
 
-std::string SIPAccount::getContactHeader (const std::string& address, const std::string& port)
-{
+std::string SIPAccount::getContactHeader (const std::string& address, const std::string& port) {
     char contact[PJSIP_MAX_URL_SIZE];
     const char * beginquote, * endquote;
 
