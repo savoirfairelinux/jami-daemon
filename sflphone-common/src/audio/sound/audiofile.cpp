@@ -248,7 +248,7 @@ bool WaveFile::isFileOpened()
 bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSamplingRate)
 {
 
-    SamplerateConverter _converter;
+    SamplerateConverter _converter (88200, 1000);
 
     _debug ("WaveFile: Opening %s", fileName.c_str());
 
@@ -268,7 +268,7 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
     while (strncmp ("fmt ", fmt, 4) != 0) {
         _file_stream.read (fmt, 4);
-        _debug ("Searching... %s", fmt);
+        _debug ("Searching... \"fmt \"");
     }
 
     SINT32 chunk_size;         // fmt chunk size
@@ -277,8 +277,8 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
     _file_stream.read ( (char*) &chunk_size, 4); // Read fmt chunk size.
     _file_stream.read ( (char*) &format_tag, 2);
 
-    _debug ("Chunk size: %d", chunk_size);
-    _debug ("Format tag: %d", format_tag);
+    _debug ("WaveFile: Chunk size: %d", chunk_size);
+    _debug ("WaveFile: Format tag: %d", format_tag);
 
 
     if (format_tag != 1) { // PCM = 1, FLOAT = 3
@@ -353,7 +353,7 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
     while (strncmp ("data", data, 4)) {
         _file_stream.read (data, 4);
-        _debug ("Searching... %s ", data);
+        _debug ("Searching... data");
     }
 
 
@@ -369,23 +369,54 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
 
     SFLDataFormat *tempBuffer = new SFLDataFormat[_file_size];
-    SFLDataFormat *tempBufferRsmpl = new SFLDataFormat[_file_size];
+    SFLDataFormat *tempBufferRsmpl = NULL;
 
-    // int nbSample = _converter.upsampleData ( tempBuffer, tempBufferRsmpl, audioSamplingRate, srate, nb_sample_down);
+    // Should not be longer than 2 secs
+    if (_file_size > 88200)
+        _file_size = 88200;
 
+    _file_stream.read ( (char *) tempBuffer, _file_size);
+
+    int nbSample = _file_size;
+
+    // _debug ("--------------------- srate %d", srate);
+    // _debug ("--------------------- audioSamplingRate %d", audioSamplingRate);
+    // _debug ("--------------------- _file_size %d", _file_size);
+
+    if (srate < audioSamplingRate) {
+        int nb_sample_down =  _file_size; //(_file_size * srate) / audioSamplingRate;
+        // _debug ("--------------------- nb_sample_down %d", nb_sample_down);
+
+        tempBufferRsmpl = new SFLDataFormat[_file_size];
+        nbSample = _converter.upsampleData (tempBuffer, tempBufferRsmpl, srate, audioSamplingRate, nb_sample_down);
+        // _debug ("--------------------- nbSample %d", nbSample);
+    } else if (srate > audioSamplingRate) {
+        int nb_sample_up = _file_size; // (_file_size * srate) / audioSamplingRate;
+        // _debug ("--------------------- nb_sample_up %d", nb_sample_up);
+
+        tempBufferRsmpl = new SFLDataFormat[_file_size];
+        nbSample = _converter.downsampleData (tempBuffer, tempBufferRsmpl, audioSamplingRate, srate, nb_sample_up);
+        // _debug ("--------------------- nbSample %d", nbSample);
+    }
 
     // Init audio loop buffer info
-    _buffer = new SFLDataFormat[_file_size];
-    _size = _file_size;
-    _sampleRate = (int) srate;
+    _buffer = new SFLDataFormat[nbSample];
+    _size = nbSample;
+    _sampleRate = (int) audioSamplingRate;
 
     // Copy audio into audioloop
-    _file_stream.read ( (char *) _buffer, _file_size);
+    if (srate != audioSamplingRate)
+        memcpy ( (void *) _buffer, (void *) tempBufferRsmpl, nbSample);
+    else
+        memcpy ( (void *) _buffer, (void *) tempBuffer, nbSample);
+
 
     _debug ("WaveFile: file successfully opened");
 
     delete[] tempBuffer;
-    delete[] tempBufferRsmpl;
+
+    if (tempBufferRsmpl)
+        delete[] tempBufferRsmpl;
 
     return true;
 
