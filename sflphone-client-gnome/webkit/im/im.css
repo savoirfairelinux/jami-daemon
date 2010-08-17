@@ -6,10 +6,12 @@
 	-webkit-box-shadow: 2px 2px 5px #000;
 	margin: 20px;
 overflow: auto;
+font-size: 0.95em;
 }
 
 * {
 	font-size: 1em;
+font-family: "Georgia","Verdana","Arial","Helvetica",sans-serif;
 }
 
 .page {
@@ -18,4 +20,9 @@ overflow: auto;
 
 body {
 	background: #fbfdfe url(sflphone.png) no-repeat top right;
+}
+
+.peername {
+	color: #3578B1;
+	font-weight: bold;
 }
