@@ -32,6 +32,7 @@
 #define __IM_WIDGET_H__
 
 #include <gtk/gtk.h>
+#include <callable_obj.h>
 #include <webkit/webkit.h>
 
 G_BEGIN_DECLS
@@ -52,7 +53,7 @@ struct _IMWidget {
 	/* Private */
 	GtkWidget *textarea;
 	GtkWidget *web_view;
-	gchar *callID;					/* The callID attached to this conversation */
+	callable_obj_t *call;			/* The call attached to this conversation */
 	WebKitWebFrame *web_frame;      // Our web frame
 	JSGlobalContextRef js_context;  // The frame's global JS context
 	JSObjectRef js_global;          // The frame's global context JS object
@@ -64,7 +65,7 @@ struct _IMWidgetClass {
 
 GType im_widget_get_type(void) G_GNUC_CONST;
 GtkWidget *im_widget_new(void);
-void im_widget_add_message(GtkWidget *im, const gchar *message);
+void im_widget_add_message (callable_obj_t *c, const gchar *message);
 
 G_END_DECLS
 

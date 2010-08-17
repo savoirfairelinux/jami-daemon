@@ -1,8 +1,21 @@
 .message {
 	-webkit-border-radius: 5px;
-	background: #f2f2f2;
+	background: rgba(242, 242, 242, 0.75);
 	color: #777;
 	padding: 1em;
 	-webkit-box-shadow: 2px 2px 5px #000;
 	margin: 20px;
+overflow: auto;
+}
+
+* {
+	font-size: 1em;
+}
+
+.page {
+
+}
+
+body {
+	background: #fbfdfe url(sflphone.png) no-repeat top right;
 }

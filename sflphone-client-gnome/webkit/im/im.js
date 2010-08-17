@@ -15,9 +15,9 @@ function linkify(text){
 }
 
 
-function add_message (message)
+function add_message (message, peer_name, peer_number, peer_info)
 {
 	var msgBody = document.getElementById ('messages');
-	msgBody.innerHTML = '<div class="message">' + linkify (message) + '</div>' + msgBody.innerHTML;
+	msgBody.innerHTML = msgBody.innerHTML + '<div class="message"><div class="peername">' + peer_name + '</div><div class="peernumber">' +  peer_number  + '</div>' + linkify (message) + '</div>' ;
 }
 

@@ -119,7 +119,7 @@ im_window_get()
 }
 
 void
-im_window_add(GtkWidget *widget)
+im_window_add (GtkWidget *widget)
 {
 	if (im_window_get()) {
 		gtk_box_pack_start (GTK_BOX (im_vbox), widget, TRUE /*expand*/,

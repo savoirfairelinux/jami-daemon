@@ -509,22 +509,15 @@ call_hold(void* foo UNUSED)
 call_im (void* foo UNUSED)
 {
 	callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-
 	static IMWidget *im = NULL;
-	/*if (!im) {
-	  im = im_widget_new();
-	  im_window_add(im);
-	  } else {
-	  im_widget_add_message(im, "hello from call_im");
-	  }*/
-
+	
 	if (selectedCall)
 	{
 		if (selectedCall->_im_widget == NULL) {
 			printf("Call IM with call %s\n", selectedCall->_callID);
 			im = im_widget_new();
 			im_window_add (im);
-			im->callID = selectedCall->_callID;
+			im->call = selectedCall;
 			selectedCall->_im_widget = im;
 		}
 	}

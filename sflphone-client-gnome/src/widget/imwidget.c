@@ -29,33 +29,40 @@
 
 #include "imwidget.h"
 #include <JavaScriptCore/JavaScript.h>
+#include <gdk/gdkkeysyms.h>
 
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
 static IMWidget *_this;
 
-void
-im_widget_add_message (GtkWidget *widget, const gchar *message)
+	void
+im_widget_add_message (callable_obj_t *call, const gchar *message)
 {
-	IMWidget *im = IM_WIDGET(widget);
-	
-	/* Prepare and execute the Javascript code */
-	gchar *script = g_strdup_printf("add_message('%s');", message);
-	webkit_web_view_execute_script (WEBKIT_WEB_VIEW (_this->web_view), script);
-	// webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
+	/* use the widget for this specific call, if exists */
+	IMWidget *im = IM_WIDGET (call->_im_widget); // IM_WIDGET(widget);
 
-	/* Cleanup */
-	g_free(script);
+	if (im) {
+
+		/* Create the main instant messaging window */
+		// im_window_add (im);
+
+		/* Prepare and execute the Javascript code */
+		gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
+		webkit_web_view_execute_script (WEBKIT_WEB_VIEW(_this->web_view), script);
+
+		/* Cleanup */
+		g_free(script);
+	}
 }
 
 static gboolean
 web_view_nav_requested_cb(
-	WebKitWebView             *web_view,
-	WebKitWebFrame            *frame,
-	WebKitNetworkRequest      *request,
-	WebKitWebNavigationAction *navigation_action,
-	WebKitWebPolicyDecision   *policy_decision,
-	gpointer                   user_data)
+		WebKitWebView             *web_view,
+		WebKitWebFrame            *frame,
+		WebKitNetworkRequest      *request,
+		WebKitWebNavigationAction *navigation_action,
+		WebKitWebPolicyDecision   *policy_decision,
+		gpointer                   user_data)
 {
 	const gchar *uri = webkit_network_request_get_uri(request);
 
@@ -69,35 +76,50 @@ web_view_nav_requested_cb(
 	return TRUE;
 }
 
-static void
-on_SendMessage_click (void) {
-	
-	/* Get all the text in the buffer */
+	static gboolean 
+on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+
 	GtkTextIter start, end;
+	/* Get all the text in the buffer */
 	GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (_this->textarea));
-	gtk_text_buffer_get_bounds (GTK_TEXT_BUFFER (buffer), &start, &end);
-	gchar *message = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+	
+	if (event->type == GDK_KEY_PRESS){
 
-	if (g_strcasecmp (message, "") != 0 )
-	{
-		/* Display our own message in the chat window */
-		im_widget_add_message (GTK_WIDGET (_this), message);
+		switch (event->keyval)
+		{
+			case GDK_Return:
 
-		/* Send the message to the peer */
-		dbus_send_text_message (_this->callID, message);
+				if (gtk_text_buffer_get_char_count (buffer) != 0 )
+				{
+					gtk_text_buffer_get_bounds (GTK_TEXT_BUFFER (buffer), &start, &end);
+					gchar *message = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
 
-		/* Empty the buffer */
-		gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);	
+					/* Display our own message in the chat window */
+					im_widget_add_message (_this->call, message);
+
+					/* Send the message to the peer */
+					dbus_send_text_message (_this->call->_callID, message);
+
+					/* Empty the buffer */
+					gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);	
+
+				}
+				return TRUE;
+		}
 	}
+
+	return FALSE;
 }
 
 
-static void
+
+	static void
 im_widget_class_init(IMWidgetClass *klass)
 {
 }
 
-static void
+	static void
 im_widget_init (IMWidget *im)
 {
 
@@ -108,19 +130,19 @@ im_widget_init (IMWidget *im)
 
 	/* A bar with the entry text and the button to send the message */
 	GtkWidget *hbox = gtk_hbox_new (FALSE, 10);
-	GtkWidget *button_SendMessage = gtk_button_new_with_label("Send");
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(im->textarea), TRUE);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(textscrollwin), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(textscrollwin), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(webscrollwin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_widget_set_size_request(GTK_WIDGET (textscrollwin), -1, 20);
+	gtk_widget_set_size_request(GTK_WIDGET (im->textarea), -1, 20);
+
 	gtk_container_add (GTK_CONTAINER (textscrollwin), im->textarea);
 	gtk_container_add (GTK_CONTAINER (webscrollwin), im->web_view);
 	gtk_container_add (GTK_CONTAINER (hbox), textscrollwin);
-	gtk_container_add (GTK_CONTAINER (hbox), button_SendMessage);
-	gtk_box_pack_start(GTK_BOX(im), webscrollwin, TRUE, TRUE, 5);
-	gtk_box_pack_end(GTK_BOX(im), hbox, FALSE, FALSE, 1);
-	// gtk_box_pack_end(GTK_BOX(im), textscrollwin, TRUE, TRUE, 5);
+	gtk_box_pack_start (GTK_BOX(im), webscrollwin, TRUE, TRUE, 5);
+	gtk_box_pack_end (GTK_BOX(im), hbox, FALSE, FALSE, 2);
 	g_signal_connect (im->web_view, "navigation-policy-decision-requested", G_CALLBACK (web_view_nav_requested_cb), NULL);
-	g_signal_connect(button_SendMessage, "clicked", G_CALLBACK(on_SendMessage_click), NULL);
+	g_signal_connect(im->textarea, "key-press-event", G_CALLBACK (on_Textview_changed), NULL);
 	g_signal_connect (G_OBJECT (webscrollwin), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
 	im->web_frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(im->web_view));
@@ -131,13 +153,13 @@ im_widget_init (IMWidget *im)
 	_this = im;
 }
 
-GtkWidget *
+	GtkWidget *
 im_widget_new()
 {
 	return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
 }
 
-GType
+	GType
 im_widget_get_type(void)
 {
 	static GType im_widget_type = 0;
@@ -157,10 +179,10 @@ im_widget_get_type(void)
 		};
 
 		im_widget_type = g_type_register_static(
-			GTK_TYPE_VBOX,
-			"IMWidget",
-			&im_widget_info,
-			0);
+				GTK_TYPE_VBOX,
+				"IMWidget",
+				&im_widget_info,
+				0);
 	}
 
 	return im_widget_type;
