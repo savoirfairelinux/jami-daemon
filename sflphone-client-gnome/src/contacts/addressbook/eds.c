@@ -539,6 +539,16 @@ fill_books_data ()
             book_data->name = g_strdup (e_source_peek_name (source));
             book_data->uid = g_strdup (e_source_peek_uid (source));
 
+            gchar *prop = e_source_get_property (source, "default");
+
+            if (prop)
+                if (strcmp (prop, "true") == 0)
+                    book_data->isdefault = TRUE;
+                else
+                    book_data->isdefault = FALSE;
+            else
+                book_data->isdefault = FALSE;
+
             if (strcmp (absuri+strlen (absuri)-1, "/") == 0)
                 book_data->uri = g_strjoin ("", absuri, e_source_peek_relative_uri (source), NULL);
             else

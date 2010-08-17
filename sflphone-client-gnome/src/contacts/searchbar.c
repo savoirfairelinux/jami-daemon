@@ -69,6 +69,17 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
 
 #if GTK_CHECK_VERSION(2,16,0)
 
+static void cbox_changed_cb (GtkWidget *widget, gpointer user_data)
+{
+    gchar *name;
+
+    name = gtk_combo_box_get_active_text (GTK_COMBO_BOX (widget));
+
+    set_current_addressbook (name);
+
+    addressbook_search (GTK_ENTRY (addressbookentry));
+}
+
 static void select_addressbook (GtkWidget *item, GtkEntry  *entry)
 {
     DEBUG ("Searchbar: Selected item label %s", gtk_menu_item_get_label (item));
@@ -143,9 +154,9 @@ static void icon_press_cb (GtkEntry *entry, gint position, GdkEventButton *event
         gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
                         event->button, event->time);
     else if (position == GTK_ENTRY_ICON_PRIMARY && active_calltree == contacts) {
-        GtkWidget *addrbook_menu = addressbook_menu_new();
-        gtk_menu_popup (GTK_MENU (addrbook_menu), NULL, NULL, NULL, NULL,
-                        event->button, event->time);
+        //GtkWidget *addrbook_menu = addressbook_menu_new();
+        //gtk_menu_popup (GTK_MENU (addrbook_menu), NULL, NULL, NULL, NULL,
+        //                event->button, event->time);
     } else
         gtk_entry_set_text (entry, "");
 }
@@ -292,8 +303,33 @@ GtkWidget* contacts_searchbar_new ()
 {
 
     GtkWidget *ret;
+    GtkWidget *cbox;
+    int count;
 
     ret = gtk_hbox_new (FALSE, 0);
+
+    // Create combo box to select current addressbook
+    cbox = gtk_combo_box_new_text();
+
+    GSList *book_list_iterator;
+    book_data_t *book_data;
+    GSList *books_data = addressbook_get_books_data();
+
+    // Populate menu
+    count = 0;
+
+    for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
+            = book_list_iterator->next) {
+        book_data = (book_data_t *) book_list_iterator->data;
+        gtk_combo_box_append_text (cbox, book_data->name);
+
+        if (book_data->isdefault)
+            gtk_combo_box_set_active (cbox, count);
+
+        count++;
+    }
+
+    g_signal_connect (cbox, "changed", G_CALLBACK (cbox_changed_cb), NULL);
 
 #if GTK_CHECK_VERSION(2,16,0)
 
@@ -337,6 +373,7 @@ GtkWidget* contacts_searchbar_new ()
                             G_CALLBACK (focus_on_searchbar_out), NULL);
 
 
+    gtk_box_pack_start (GTK_BOX (ret), cbox, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (ret), addressbookentry, TRUE, TRUE, 0);
 
     g_free (tooltip_text);

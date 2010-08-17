@@ -132,7 +132,8 @@ addressbook_get_books_data()
 {
     DEBUG ("Addressboook: Get books data");
 
-    addressbook_config_books();
+    // addressbook_config_books();
+    fill_books_data();
     return books_data;
 }
 

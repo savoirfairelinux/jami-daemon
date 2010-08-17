@@ -73,6 +73,7 @@ typedef struct {
     gchar *uri;
     gchar *name;
     gboolean active;
+    gboolean isdefault;
 } book_data_t;
 
 GSList *books_data;
