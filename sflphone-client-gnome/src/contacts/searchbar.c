@@ -55,7 +55,7 @@ void searchbar_addressbook_activated (GtkEntry *entry, gchar *arg1 UNUSED, gpoin
     addressbook_search (entry);
 }
 
-void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED)
+void searchbar_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
     DEBUG ("Searchbar: Entry changed");
 
@@ -69,7 +69,7 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
 
 #if GTK_CHECK_VERSION(2,16,0)
 
-static void cbox_changed_cb (GtkWidget *widget, gpointer user_data)
+static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
 {
     gchar *name;
 
@@ -82,22 +82,22 @@ static void cbox_changed_cb (GtkWidget *widget, gpointer user_data)
 
 static void select_search_type (GtkWidget *item, GtkEntry  *entry)
 {
-    DEBUG ("Searchbar: %s", gtk_menu_item_get_label (item));
+    DEBUG ("Searchbar: %s", gtk_menu_item_get_label (GTK_MENU_ITEM (item)));
 
 
 
     gtk_entry_set_icon_tooltip_text (GTK_ENTRY (addressbookentry), GTK_ENTRY_ICON_PRIMARY,
-                                     gtk_menu_item_get_label (item));
+                                     gtk_menu_item_get_label (GTK_MENU_ITEM (item)));
 
 
-    if (strcmp ("Search is", gtk_menu_item_get_label (item)) == 0)
+    if (strcmp ("Search is", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0)
         set_current_addressbook_test (E_BOOK_QUERY_IS);
-    else if (strcmp ("Search begins with", gtk_menu_item_get_label (item)) == 0)
+    else if (strcmp ("Search begins with", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0)
         set_current_addressbook_test (E_BOOK_QUERY_BEGINS_WITH);
-    else if (strcmp ("Search contains", gtk_menu_item_get_label (item)) == 0)
+    else if (strcmp ("Search contains", gtk_menu_item_get_label (GTK_MENU_ITEM (item))) == 0)
         set_current_addressbook_test (E_BOOK_QUERY_CONTAINS);
 
-    addressbook_search (GTK_ENTRY (addressbookentry));
+    addressbook_search (GTK_ENTRY (entry));
 
 
 }
@@ -326,10 +326,10 @@ GtkWidget* contacts_searchbar_new ()
     for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
-        gtk_combo_box_append_text (cbox, book_data->name);
+        gtk_combo_box_append_text (GTK_COMBO_BOX (cbox), book_data->name);
 
         if (book_data->isdefault)
-            gtk_combo_box_set_active (cbox, count);
+            gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), count);
 
         count++;
     }
@@ -340,7 +340,6 @@ GtkWidget* contacts_searchbar_new ()
 
     GdkPixbuf *pixbuf;
 
-    gchar *current_addressbook = get_current_addressbook();
     gchar *tooltip_text = g_strdup ("Search is");
 
     addressbookentry = gtk_entry_new();
