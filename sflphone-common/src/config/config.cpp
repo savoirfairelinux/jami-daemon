@@ -273,6 +273,8 @@ ConfigTree::setConfigTreeItem (const std::string& section,
 bool
 ConfigTree::saveConfigTree (const std::string& fileName)
 {
+    _debug ("ConfigTree: Save %s", fileName.c_str());
+
     if (fileName.empty() && _sections.begin() == _sections.end()) {
         return false;
     }
@@ -320,6 +322,8 @@ int
 ConfigTree::populateFromFile (const std::string& fileName)
 {
     bool out = false;
+
+    _debug ("ConfigTree: Populate from file %s", fileName.c_str());
 
     if (fileName.empty()) {
         return 0;
@@ -378,6 +382,7 @@ ConfigTree::populateFromFile (const std::string& fileName)
                 val = line.substr (pos + 1, line.length() - pos);
 
                 if (key.length() > 0 && val.length() > 0) {
+                    _debug ("setconfigtreeitem %s, %s", section.c_str(), val.c_str());
                     setConfigTreeItem (section, key, val);
                 }
 

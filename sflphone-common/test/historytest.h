@@ -54,13 +54,13 @@ class HistoryTest : public CppUnit::TestCase {
      */
     CPPUNIT_TEST_SUITE (HistoryTest);
         CPPUNIT_TEST (test_create_history_path);
-        CPPUNIT_TEST (test_save_history_to_file);
         CPPUNIT_TEST (test_save_history_items_map);
         CPPUNIT_TEST (test_load_history_from_file);
         CPPUNIT_TEST (test_load_history_items_map);
         CPPUNIT_TEST (test_get_history_serialized);
         CPPUNIT_TEST (test_set_serialized_history);
         CPPUNIT_TEST (test_set_serialized_history_with_limit);
+	CPPUNIT_TEST (test_save_history_to_file);
     CPPUNIT_TEST_SUITE_END ();
 
     public:

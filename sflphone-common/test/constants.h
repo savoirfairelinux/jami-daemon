@@ -33,9 +33,9 @@
 
 #define YES_STR "1"
 #define NO_STR "0"
-#define HISTORY_SAMPLE  "history-sample"
+#define HISTORY_SAMPLE  "history-sample.tpl"
 #define HISTORY_SAMPLE_SIZE     3
 #define CONFIG_SAMPLE   "sflphoned-sample.yml"
-#define HUGE_HISTORY_LIMIT      20000
+#define HUGE_HISTORY_LIMIT      999999999
 
 #endif /* CONSTANTS_H_ */

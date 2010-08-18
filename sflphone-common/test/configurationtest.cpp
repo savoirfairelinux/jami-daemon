@@ -154,12 +154,9 @@ void ConfigurationTest::testYamlParser()
 
     try {
 
-        parser = new Conf::YamlParser ("sequence2.yml");
-
+        parser = new Conf::YamlParser ("ymlParser.yml");
         parser->serializeEvents();
-
         parser->composeEvents();
-
         parser->constructNativeData();
 
         delete parser;
@@ -276,7 +273,7 @@ void ConfigurationTest::testYamlEmitter()
     tlsmap.setKeyValue (verifyServerKey, &verifyserver);
 
     try {
-        emitter = new Conf::YamlEmitter ("/tmp/sequenceEmiter.txt");
+        emitter = new Conf::YamlEmitter ("/tmp/ymlEmiter.txt");
 
         emitter->serializeAccount (&accountmap);
         emitter->serializeAccount (&accountmap);
