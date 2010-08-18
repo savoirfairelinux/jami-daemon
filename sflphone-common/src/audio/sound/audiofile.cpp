@@ -374,6 +374,10 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
         _file_size = 60*srate;
 
     SFLDataFormat *tempBuffer = new SFLDataFormat[_file_size];
+
+    if (!tempBuffer)
+        return false;
+
     SFLDataFormat *tempBufferRsmpl = NULL;
 
     _file_stream.read ( (char *) tempBuffer, _file_size*sizeof (SFLDataFormat));
@@ -394,6 +398,10 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
         int remainingSamples = _file_size;
 
         tempBufferRsmpl = new SFLDataFormat[nbSample];
+
+        if (!tempBufferRsmpl)
+            return false;
+
         SFLDataFormat *in = tempBuffer;
         SFLDataFormat *out = tempBufferRsmpl;
 
@@ -416,6 +424,10 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
     // Init audio loop buffer info
     _buffer = new SFLDataFormat[nbSample];
+
+    if (!_buffer)
+        return false;
+
     _size = nbSample;
     _sampleRate = (int) audioSamplingRate;
 
