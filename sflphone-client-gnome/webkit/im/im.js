@@ -17,7 +17,18 @@ function linkify(text){
 
 function add_message (message, peer_name, peer_number, peer_info)
 {
+	var display_name = 'Unknown';
+	if (peer_name != '') {
+		display_name = peer_name;
+	}
+	
 	var msgBody = document.getElementById ('messages');
-	msgBody.innerHTML = msgBody.innerHTML + '<div class="message"><div class="peername">' + peer_name + '</div><div class="peernumber">' +  peer_number  + '</div>' + linkify (message) + '</div>' ;
+	msgBody.innerHTML = msgBody.innerHTML + '<div class="message">' +  '<span class="peername">' + display_name + ': </span>' + '<span class="text">' + linkify (message) + '</span></div>' ;
 }
 
+function add_call_info_header (peer_name, peer_number, peer_info)
+{
+	var infoBody = document.getElementById ('call-info');
+	infoBody.innerHTML = '<h2>Calling ' + peer_number + '</h2><p>' + peer_info + '</p></h4>';
+
+}

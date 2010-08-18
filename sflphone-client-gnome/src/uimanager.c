@@ -519,6 +519,9 @@ call_im (void* foo UNUSED)
 			im_window_add (im);
 			im->call = selectedCall;
 			selectedCall->_im_widget = im;
+
+			/* Update the informations about the call in the chat window */
+			im_widget_add_call_header (selectedCall);
 		}
 	}
 }

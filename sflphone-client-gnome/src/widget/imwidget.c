@@ -43,9 +43,6 @@ im_widget_add_message (callable_obj_t *call, const gchar *message)
 
 	if (im) {
 
-		/* Create the main instant messaging window */
-		// im_window_add (im);
-
 		/* Prepare and execute the Javascript code */
 		gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
 		webkit_web_view_execute_script (WEBKIT_WEB_VIEW(_this->web_view), script);
@@ -53,6 +50,32 @@ im_widget_add_message (callable_obj_t *call, const gchar *message)
 		/* Cleanup */
 		g_free(script);
 	}
+
+	else {
+
+		im = im_widget_new ();
+		im_window_add (im);
+		im->call = call;
+		call->_im_widget = im;
+		
+		/* Prepare and execute the Javascript code */
+		gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
+		webkit_web_view_execute_script (WEBKIT_WEB_VIEW(_this->web_view), script);
+
+		/* Cleanup */
+		g_free(script);
+
+	}
+}
+
+void
+im_widget_add_call_header (callable_obj_t *call) {
+
+	gchar *script = g_strdup_printf("add_call_info_header('%s', '%s', '%s');", call->_peer_name, call->_peer_number, call->_peer_info);
+	webkit_web_view_execute_script (WEBKIT_WEB_VIEW(_this->web_view), script);
+
+	/* Cleanup */
+	g_free(script);
 }
 
 static gboolean
@@ -149,6 +172,8 @@ im_widget_init (IMWidget *im)
 	im->js_context = webkit_web_frame_get_global_context(im->web_frame);
 	im->js_global = JSContextGetGlobalObject(im->js_context);
 	webkit_web_view_load_uri (WEBKIT_WEB_VIEW(im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
+
+	
 
 	_this = im;
 }

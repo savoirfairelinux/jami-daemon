@@ -19,7 +19,7 @@ font-family: "Georgia","Verdana","Arial","Helvetica",sans-serif;
 }
 
 body {
-	background: #fbfdfe url(sflphone.png) no-repeat top right;
+	background: #fbfdfe url(sflphone.png) no-repeat fixed bottom right;
 }
 
 .peername {
