@@ -41,7 +41,7 @@
 #include <string.h>
 #include <pango/pango.h>
 #include "eds.h"
-
+#include <addressbook-config.h>
 
 /**
  * Structure used to store search callback and data
@@ -149,7 +149,7 @@ books_get_book_data_by_uid (gchar *uid)
  * nick name.
  */
 static EBookQuery*
-create_query (const char* s, EBookQueryTest test)
+create_query (const char* s, EBookQueryTest test, AddressBook_Config *conf)
 {
 
     EBookQuery *equery;
@@ -160,9 +160,15 @@ create_query (const char* s, EBookQueryTest test)
 
     // We could also use E_BOOK_QUERY_IS or E_BOOK_QUERY_BEGINS_WITH instead of E_BOOK_QUERY_CONTAINS
     queries[cpt++] = e_book_query_field_test (E_CONTACT_FULL_NAME, test, s);
-    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_HOME, test, s);
-    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_BUSINESS, test, s);
-    queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_MOBILE, test, s);
+
+    if (conf->search_phone_home)
+        queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_HOME, test, s);
+
+    if (conf->search_phone_business)
+        queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_BUSINESS, test, s);
+
+    if (conf->search_phone_mobile)
+        queries[cpt++] = e_book_query_field_test (E_CONTACT_PHONE_MOBILE, test, s);
 
     equery = e_book_query_or (cpt, queries, TRUE);
 
@@ -433,7 +439,7 @@ eds_async_open_callback (EBook *book, EBookStatus status, gpointer closure)
  * Initialize address book
  */
 void
-init (OpenAsyncHandler callback UNUSED)
+init ()
 {
     GError *err = NULL;
     gchar *absuri, *reluri;
@@ -538,7 +544,7 @@ fill_books_data ()
             ESource *source = m->data;
 
             book_data_t *book_data = g_new (book_data_t, 1);
-            book_data->active = TRUE;
+            book_data->active = FALSE;
             book_data->name = g_strdup (e_source_peek_name (source));
             book_data->uid = g_strdup (e_source_peek_uid (source));
 
@@ -588,7 +594,7 @@ search_async_by_contacts (const char *query, int max_results, SearchAsyncHandler
     had->user_data = user_data;
     had->hits = NULL;
     had->max_results_remaining = max_results;
-    had->equery = create_query (query, current_test);
+    had->equery = create_query (query, current_test, (AddressBook_Config *) (user_data));
 
     if (!current_uri)
         ERROR ("Addressbook: Error: Current addressbook uri not specified uri");

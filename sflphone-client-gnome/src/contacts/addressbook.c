@@ -91,8 +91,7 @@ addressbook_is_active()
 }
 
 /**
- * Asynchronous open callback.
- * Used to handle activation of books.
+ * Get active addressbook from config.
  */
 static void
 addressbook_config_books()
@@ -115,13 +114,15 @@ addressbook_config_books()
             // If book_data exists
             if (!book_data)
                 ERROR ("Addressbook: Error: Could not open book");
+
+            book_data->active = TRUE;
         }
 
         g_strfreev (list);
     }
 
     // Update buttons
-    update_actions ();
+    // update_actions ();
 }
 
 /**
@@ -132,8 +133,9 @@ addressbook_get_books_data()
 {
     DEBUG ("Addressboook: Get books data");
 
-    // addressbook_config_books();
     fill_books_data();
+    addressbook_config_books();
+
     return books_data;
 }
 
@@ -147,9 +149,10 @@ addressbook_init()
     DEBUG ("Addressbook: Initialize addressbook");
 
     fill_books_data();
+    addressbook_config_books();
 
     // Call books initialization
-    init (&addressbook_config_books);
+    init ();
 }
 
 /**

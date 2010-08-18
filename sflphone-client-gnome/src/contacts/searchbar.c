@@ -330,17 +330,26 @@ GtkWidget* contacts_searchbar_new ()
 
     // Populate menu
     count = 0;
+    gboolean activeIsSet = FALSE;
 
     for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
             = book_list_iterator->next) {
         book_data = (book_data_t *) book_list_iterator->data;
-        gtk_combo_box_append_text (GTK_COMBO_BOX (cbox), book_data->name);
 
-        if (book_data->isdefault)
-            gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), count);
+        if (book_data->active) {
+            gtk_combo_box_append_text (GTK_COMBO_BOX (cbox), book_data->name);
 
-        count++;
+            if (book_data->isdefault) {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), count);
+                activeIsSet = TRUE;
+            }
+
+            count++;
+        }
     }
+
+    if (!activeIsSet)
+        gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), 0);
 
     g_signal_connect (cbox, "changed", G_CALLBACK (cbox_changed_cb), NULL);
 

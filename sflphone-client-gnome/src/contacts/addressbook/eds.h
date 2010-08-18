@@ -101,7 +101,7 @@ typedef void
  * Connection to evolution data server
  */
 void
-init (OpenAsyncHandler);
+init ();
 
 /**
  * Fill list of addressbooks
