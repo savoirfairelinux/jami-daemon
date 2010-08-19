@@ -248,10 +248,6 @@ bool WaveFile::isFileOpened()
 bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSamplingRate)
 {
 
-    // Sample rate converter initialized with 88200 sample long
-    int converterSamples  = 88200;
-    SamplerateConverter _converter (converterSamples, 2000);
-
     _debug ("WaveFile: Opening %s", fileName.c_str());
 
     _file_stream.open (fileName.c_str(), std::ios::in | std::ios::binary);
@@ -359,6 +355,12 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
     }
 
 
+    // Sample rate converter initialized with 88200 sample long
+    int converterSamples  = (srate > audioSamplingRate) ? srate : audioSamplingRate;
+    SamplerateConverter _converter (converterSamples, 2000);
+
+    int nbSampleMax = 512;
+
     // Get length of data from the header.
     SINT32 bytes;
     _file_stream.read ( (char*) &bytes, 4);
@@ -408,7 +410,7 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
         while (remainingSamples > 0) {
 
-            int toProcess = remainingSamples > converterSamples ? converterSamples : remainingSamples;
+            int toProcess = remainingSamples > nbSampleMax ? nbSampleMax : remainingSamples;
             int nbSamplesConverted = 0;
 
             if (srate < audioSamplingRate) {

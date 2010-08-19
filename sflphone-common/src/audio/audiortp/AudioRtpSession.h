@@ -771,7 +771,6 @@ void AudioRtpSession<D>::run ()
     // Timestamp must be initialized randomly
     _timestamp = static_cast<D*> (this)->getCurrentTimestamp();
 
-    int sessionWaiting;
     int threadSleep = 0;
 
     if (_codecSampleRate != 0) {
@@ -812,8 +811,6 @@ void AudioRtpSession<D>::run ()
         // converterSamplingRate = _audiolayer->getMainBuffer()->getInternalSamplingRate();
         _converterSamplingRate = _manager->getAudioDriver()->getMainBuffer()->getInternalSamplingRate();
 
-        sessionWaiting = static_cast<D*> (this)->isWaiting();
-
         // Send session
         if (_eventQueue.size() > 0) {
             sendDtmfEvent (_eventQueue.front());
@@ -823,18 +820,6 @@ void AudioRtpSession<D>::run ()
 
         // Recv session
         receiveSpeakerData ();
-
-        /*
-
-            // Let's wait for the next transmit cycle
-            if (sessionWaiting == 1) {
-                // Record mic and speaker during conversation
-                _ca->recAudio.recData (_spkrDataDecoded, _micData, _nSamplesSpkr, _nSamplesMic);
-            } else {
-                // Record mic only while leaving a message
-                _ca->recAudio.recData (_micData,_nSamplesMic);
-            }
-        */
 
         _manager->getAudioLayerMutex()->leave();
 
