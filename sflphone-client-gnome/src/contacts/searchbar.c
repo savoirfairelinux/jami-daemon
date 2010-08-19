@@ -38,6 +38,11 @@
 GtkWidget * searchbox;
 GtkWidget * addressbookentry;
 
+GtkWidget * cbox;
+GtkListStore * liststore;
+
+gint cboxSignalId;
+
 static GtkWidget *menu = NULL;
 
 /**
@@ -46,6 +51,7 @@ static GtkWidget *menu = NULL;
 GdkPixbuf *incoming_pixbuf = NULL;
 GdkPixbuf *outgoing_pixbuf = NULL;
 GdkPixbuf *missed_pixbuf = NULL;
+
 
 
 void searchbar_addressbook_activated (GtkEntry *entry, gchar *arg1 UNUSED, gpointer data UNUSED)
@@ -67,8 +73,6 @@ void searchbar_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpoint
     }
 }
 
-#if GTK_CHECK_VERSION(2,16,0)
-
 static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
 {
     gchar *name;
@@ -80,7 +84,56 @@ static void cbox_changed_cb (GtkWidget *widget, gpointer user_data UNUSED)
     addressbook_search (GTK_ENTRY (addressbookentry));
 }
 
-static void select_search_type (GtkWidget *item, GtkEntry  *entry)
+void update_searchbar_addressbook_list()
+{
+    gint count;
+    GtkTreeIter iter, activeIter;
+    gchar *activeText;
+    GSList *book_list_iterator;
+    book_data_t *book_data;
+    GSList *books_data = addressbook_get_books_data();
+
+    // we must disconnect signal from teh cbox while updating its content
+    gtk_signal_disconnect (cbox, cboxSignalId);
+
+    // store the current active text
+    activeText = g_strdup (gtk_combo_box_get_active_text (GTK_COMBO_BOX (cbox)));
+
+    gtk_list_store_clear (liststore);
+
+    // Populate menu
+    count = 0;
+    gboolean activeIsSet = FALSE;
+
+    for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
+            = book_list_iterator->next) {
+        book_data = (book_data_t *) book_list_iterator->data;
+
+        if (book_data->active) {
+
+            gtk_list_store_append (liststore, &iter);
+            gtk_list_store_set (liststore, &iter, 0, book_data->name, -1);
+
+            if (strcmp (book_data->name, activeText) == 0) {
+                activeIter = iter;
+                activeIsSet = TRUE;
+            }
+
+            count++;
+        }
+    }
+
+    if (activeIsSet)
+        gtk_combo_box_set_active_iter (GTK_COMBO_BOX (cbox), &activeIter);
+    else
+        gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), 0);
+
+    g_free (activeText);
+    cboxSignalId = gtk_signal_connect (GTK_OBJECT (cbox), "changed", G_CALLBACK (cbox_changed_cb), NULL);
+}
+
+
+static void select_search_type (GtkWidget *item, GtkEntry  *entry UNUSED)
 {
     DEBUG ("Searchbar: %s", gtk_menu_item_get_label (GTK_MENU_ITEM (item)));
 
@@ -174,7 +227,7 @@ static void text_changed_cb (GtkEntry *entry, GParamSpec *pspec UNUSED)
     gtk_entry_set_icon_sensitive (entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 }
 
-#endif
+
 
 GtkWidget *addressbook_menu_new (void)
 {
@@ -308,21 +361,16 @@ GtkWidget* contacts_searchbar_new ()
 {
 
     GtkWidget *ret;
-    GtkWidget *cbox;
     GtkWidget *align;
     int count, cbox_height, cbox_width;
+    GtkTreeIter iter, activeIter;
+    GtkCellRenderer *cell;
 
     ret = gtk_hbox_new (FALSE, 0);
 
+    liststore = gtk_list_store_new (1,G_TYPE_STRING);
+
     // Create combo box to select current addressbook
-    cbox = gtk_combo_box_new_text();
-
-    align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-    gtk_alignment_set_padding (align, 0, 2, 6, 6);
-    gtk_container_add (GTK_CONTAINER (align), cbox);
-
-    gtk_widget_get_size_request (GTK_WIDGET (cbox), &cbox_width, &cbox_height);
-    gtk_widget_set_size_request (GTK_WIDGET (cbox), cbox_width, 26);
 
     GSList *book_list_iterator;
     book_data_t *book_data;
@@ -337,10 +385,12 @@ GtkWidget* contacts_searchbar_new ()
         book_data = (book_data_t *) book_list_iterator->data;
 
         if (book_data->active) {
-            gtk_combo_box_append_text (GTK_COMBO_BOX (cbox), book_data->name);
+
+            gtk_list_store_append (liststore, &iter);
+            gtk_list_store_set (liststore, &iter, 0, book_data->name, -1);
 
             if (book_data->isdefault) {
-                gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), count);
+                activeIter = iter;
                 activeIsSet = TRUE;
             }
 
@@ -348,10 +398,25 @@ GtkWidget* contacts_searchbar_new ()
         }
     }
 
-    if (!activeIsSet)
+    cbox = gtk_combo_box_new_with_model ( (GtkTreeModel *) liststore);
+
+    if (activeIsSet)
+        gtk_combo_box_set_active_iter (GTK_COMBO_BOX (cbox), &activeIter);
+    else
         gtk_combo_box_set_active (GTK_COMBO_BOX (cbox), 0);
 
-    g_signal_connect (cbox, "changed", G_CALLBACK (cbox_changed_cb), NULL);
+    align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+    gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 2, 6, 6);
+    gtk_container_add (GTK_CONTAINER (align), cbox);
+
+    gtk_widget_get_size_request (GTK_WIDGET (cbox), &cbox_width, &cbox_height);
+    gtk_widget_set_size_request (GTK_WIDGET (cbox), cbox_width, 26);
+
+    cboxSignalId = gtk_signal_connect (GTK_OBJECT (cbox), "changed", G_CALLBACK (cbox_changed_cb), NULL);
+
+    cell = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (cbox), cell, TRUE);
+    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (cbox), cell, "text", 0, NULL);
 
 #if GTK_CHECK_VERSION(2,16,0)
 
@@ -416,3 +481,4 @@ SearchType get_current_history_search_type (void)
 {
     return HistorySearchType;
 }
+

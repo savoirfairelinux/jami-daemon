@@ -910,7 +910,6 @@ GtkWidget* create_audio_configuration()
 
     if (SHOW_ALSA_CONF) {
         // Box for the ALSA configuration
-        printf ("ALSA Created \n");
         alsabox = alsa_box();
         gtk_container_add (GTK_CONTAINER (alsa_conf) , alsabox);
         gtk_widget_hide (alsa_conf);

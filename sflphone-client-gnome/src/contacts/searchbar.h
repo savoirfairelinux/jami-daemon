@@ -81,6 +81,11 @@ void activateWaitingLayer();
  */
 void deactivateWaitingLayer();
 
+/**
+ * Reload combo box to update list of active addressbook
+ */
+void update_searchbar_addressbook_list (void);
+
 GtkWidget *addressbook_menu_new (void);
 
 #endif

@@ -222,17 +222,11 @@ void sflphone_fill_account_list (void)
     array = (gchar **) dbus_account_list();
 
     if (array) {
-        /*
-          if(!(*accountID))
-        DEBUG("hhhhhhhhhmmmmmmmmmmmm");
-        */
 
         for (accountID = array; *accountID; accountID++) {
             account_t * a = g_new0 (account_t,1);
             a->accountID = g_strdup (*accountID);
-            DEBUG ("------------------- Account ID %s", a->accountID);
             a->credential_information = NULL;
-            // TODO Clean codec list QUEUE
             account_list_add (a);
         }
 

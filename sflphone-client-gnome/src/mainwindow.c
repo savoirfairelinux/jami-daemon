@@ -141,7 +141,9 @@ on_key_released (GtkWidget *widget, GdkEventKey *event, gpointer user_data UNUSE
                 event->keyval == 34 || // "
                 event->keyval == 65289 || // tab
                 event->keyval == 65361 || // left arrow
+                event->keyval == 65362 || // up arrow
                 event->keyval == 65363 || // right arrow
+                event->keyval == 65364 || // down arrow
                 event->keyval >= 65470 || // F-keys
                 event->keyval == 32 // space
            )

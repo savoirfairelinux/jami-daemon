@@ -218,5 +218,8 @@ handler_async_search (GList *hits, gpointer user_data)
 
     // Deactivate waiting image
     deactivateWaitingLayer();
+
+
+    gtk_widget_grab_focus (GTK_WIDGET (contacts->view));
 }
 

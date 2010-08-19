@@ -29,6 +29,7 @@
  */
 
 #include "addressbook-config.h"
+#include "searchbar.h"
 #include <contacts/addressbook/eds.h>
 #include <string.h>
 #include <stdlib.h>
@@ -103,6 +104,8 @@ addressbook_config_save_parameters (void)
                           (gpointer) (size_t) addressbook_config->search_phone_mobile);
 
     dbus_set_addressbook_settings (params);
+
+    update_searchbar_addressbook_list();
 
     // Decrement the reference count
     g_hash_table_unref (params);

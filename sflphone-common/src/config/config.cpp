@@ -382,7 +382,6 @@ ConfigTree::populateFromFile (const std::string& fileName)
                 val = line.substr (pos + 1, line.length() - pos);
 
                 if (key.length() > 0 && val.length() > 0) {
-                    _debug ("setconfigtreeitem %s, %s", section.c_str(), val.c_str());
                     setConfigTreeItem (section, key, val);
                 }
 
