@@ -250,7 +250,7 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
     // Sample rate converter initialized with 88200 sample long
     int converterSamples  = 88200;
-    SamplerateConverter _converter (converterSamples, 1000);
+    SamplerateConverter _converter (converterSamples, 2000);
 
     _debug ("WaveFile: Opening %s", fileName.c_str());
 
@@ -387,9 +387,10 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
 
     if (srate != audioSamplingRate) {
         nbSample = (int) ( (float) _file_size * ( (float) audioSamplingRate / (float) srate));
-        nbSample++;
     } else
         nbSample = _file_size;
+
+    int totalprocessed = 0;
 
     // require resampling
     if (srate != audioSamplingRate) {
@@ -416,9 +417,12 @@ bool WaveFile::openExistingWaveFile (const std::string& fileName, int audioSampl
                 nbSamplesConverted = _converter.downsampleData (in, out, audioSamplingRate, srate, toProcess);
             }
 
+            // nbSamplesConverted = nbSamplesConverted*2;
+
             in += toProcess;
             out += nbSamplesConverted;
             remainingSamples -= toProcess;
+            totalprocessed += nbSamplesConverted;
         }
     }
 
