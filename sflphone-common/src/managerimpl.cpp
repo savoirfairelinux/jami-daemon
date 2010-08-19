@@ -2554,7 +2554,7 @@ bool ManagerImpl::getMd5CredentialHashing (void)
 void ManagerImpl::setRecordingCall (const CallID& id)
 {
 
-    Recordable* rec;
+    Recordable* rec = NULL;
 
     if (!isConference (id)) {
         AccountID accountid = getAccountFromCall (id);
@@ -2564,7 +2564,8 @@ void ManagerImpl::setRecordingCall (const CallID& id)
         rec = (Recordable *) it->second;
     }
 
-    rec->setRecording();
+    if (rec)
+        rec->setRecording();
 
 }
 
@@ -2669,19 +2670,9 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin (void)
 std::string ManagerImpl::getEchoCancelState (void)
 {
 
-    // echo canceller is disabled by default
-    bool isEnabled = false;
+    std::string state;
 
-    if (_audiodriver) {
-        isEnabled = _audiodriver->getEchoCancelState();
-    }
-
-    std::string state ("");
-
-    if (isEnabled)
-        state = "enabled";
-    else
-        state = "disabled";
+    state = audioPreference.getEchoCancel() ? "enabled" : "disabled";
 
     return state;
 }
@@ -2690,12 +2681,9 @@ void ManagerImpl::setEchoCancelState (std::string state)
 {
     _debug ("Manager: Set echo suppress state: %s", state.c_str());
 
-    bool isEnabled = false;
+    bool isEnabled = state == "enabled" ? true : false;
 
-    if (state.compare ("enabled") == 0)
-        isEnabled = true;
-    else
-        isEnabled = false;
+    audioPreference.setEchoCancel (isEnabled);
 
     if (_audiodriver) {
         _audiodriver->setEchoCancelState (isEnabled);
@@ -2707,18 +2695,9 @@ std::string ManagerImpl::getNoiseSuppressState (void)
 {
 
     // noise suppress disabled by default
-    bool isEnabled = false;
+    std::string state;
 
-    if (_audiodriver) {
-        isEnabled = _audiodriver->getNoiseSuppressState();
-    }
-
-    std::string state ("");
-
-    if (isEnabled)
-        state = "enabled";
-    else
-        state = "disabled";
+    state = audioPreference.getNoiseReduce() ? "enabled" : "disabled";
 
     return state;
 }
@@ -2727,12 +2706,9 @@ void ManagerImpl::setNoiseSuppressState (std::string state)
 {
     _debug ("Manager: Set noise suppress state: %s", state.c_str());
 
-    bool isEnabled = false;
+    bool isEnabled = state == "enabled" ? true : false;
 
-    if (state.compare ("enabled") == 0)
-        isEnabled = true;
-    else
-        isEnabled = false;
+    audioPreference.setNoiseReduce (isEnabled);
 
     if (_audiodriver) {
         _audiodriver->setNoiseSuppressState (isEnabled);

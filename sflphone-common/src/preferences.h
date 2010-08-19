@@ -86,6 +86,9 @@ const Conf::Key deviceRingtoneKey ("deviceRingtone");// :
 const Conf::Key recordpathKey ("recordpath");//: /home/msavard/Bureau
 const Conf::Key volumemicKey ("volumemic");//:  100
 const Conf::Key volumespkrKey ("volumespkr");//: 100
+const Conf::Key noiseReduceKey ("noiseReduce");
+const Conf::Key echocancelKey ("echocancel");
+
 
 // shortcut preferences
 const Conf::Key hangupShortKey ("hangUp");
@@ -513,6 +516,22 @@ class AudioPreference : public Serializable
             _volumespkr = s;
         }
 
+        bool getNoiseReduce (void) {
+            return _noisereduce;
+        }
+
+        void setNoiseReduce (bool noise) {
+            _noisereduce = noise;
+        }
+
+        bool getEchoCancel (void) {
+            return _echocancel;
+        }
+
+        void setEchoCancel (bool echo) {
+            _echocancel = echo;
+        }
+
     private:
 
         // alsa preference
@@ -533,6 +552,8 @@ class AudioPreference : public Serializable
         int _volumemic; //:  100
         int _volumespkr; //: 100
 
+        bool _noisereduce;
+        bool _echocancel;
 };
 
 
