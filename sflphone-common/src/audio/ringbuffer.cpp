@@ -179,8 +179,8 @@ RingBuffer::storeReadPointer (int pointer_value, CallID call_id)
 void
 RingBuffer::createReadPointer (CallID call_id)
 {
-
-    _readpointer.insert (pair<CallID, int> (call_id, mEnd));
+    if (!hasThisReadPointer (call_id))
+        _readpointer.insert (pair<CallID, int> (call_id, mEnd));
 
 }
 
@@ -188,11 +188,10 @@ RingBuffer::createReadPointer (CallID call_id)
 void
 RingBuffer::removeReadPointer (CallID call_id)
 {
+    ReadPointer::iterator iter = _readpointer.find (call_id);
 
-
-    _readpointer.erase (call_id);
-
-
+    if (iter != _readpointer.end())
+        _readpointer.erase (iter);
 }
 
 

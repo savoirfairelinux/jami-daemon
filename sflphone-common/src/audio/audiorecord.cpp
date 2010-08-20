@@ -49,21 +49,24 @@ struct wavhdr {
 };
 
 
-AudioRecord::AudioRecord()
+AudioRecord::AudioRecord() : fp (NULL)
+        , channels_ (1)
+        , byteCounter_ (0)
+        , sndSmplRate_ (8000)
+        , nbSamplesMic_ (0)
+        , nbSamplesSpk_ (0)
+        , nbSamplesMax_ (3000)
+        , recordingEnabled_ (false)
+        , mixBuffer_ (NULL)
+        , micBuffer_ (NULL)
+        , spkBuffer_ (NULL)
 {
-
-    sndSmplRate_ = 8000;
-    channels_ = 1;
-    byteCounter_ = 0;
-    recordingEnabled_ = false;
-    fp = 0;
-    nbSamplesMax_ = 3000;
-
-    createFilename();
 
     mixBuffer_ = new SFLDataFormat[nbSamplesMax_];
     micBuffer_ = new SFLDataFormat[nbSamplesMax_];
     spkBuffer_ = new SFLDataFormat[nbSamplesMax_];
+
+    createFilename();
 }
 
 AudioRecord::~AudioRecord()
@@ -81,7 +84,6 @@ void AudioRecord::setSndSamplingRate (int smplRate)
 
 void AudioRecord::setRecordingOption (FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path)
 {
-
 
     fileType_ = type;
     sndFormat_ = format;

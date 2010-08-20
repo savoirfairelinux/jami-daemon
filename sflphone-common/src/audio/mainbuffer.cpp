@@ -149,6 +149,8 @@ RingBuffer* MainBuffer::getRingBuffer (CallID call_id)
 RingBuffer* MainBuffer::createRingBuffer (CallID call_id)
 {
 
+    _debug ("BufferManager: Create ring buffer %s", call_id.c_str());
+
     RingBuffer* newRingBuffer = new RingBuffer (SIZEBUF, call_id);
 
     _ringBufferMap.insert (pair<CallID, RingBuffer*> (call_id, newRingBuffer));
@@ -183,6 +185,8 @@ void MainBuffer::bindCallID (CallID call_id1, CallID call_id2)
 {
 
     ost::MutexLock guard (_mutex);
+
+    _debug ("BufferManager: Bind  calls %s, %s", call_id1.c_str(), call_id2.c_str());
 
     RingBuffer* ring_buffer;
     CallIDSet* callid_set;
@@ -233,12 +237,12 @@ void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
 
     ost::MutexLock guard (_mutex);
 
+    _debug ("BufferManager: Unbind calls %s, %s", call_id1.c_str(), call_id2.c_str());
+
     removeCallIDfromSet (call_id1, call_id2);
     removeCallIDfromSet (call_id2, call_id1);
 
-    RingBuffer* ringbuffer;
-
-    ringbuffer = getRingBuffer (call_id2);
+    RingBuffer* ringbuffer = getRingBuffer (call_id2);
 
     if (ringbuffer) {
 
@@ -254,6 +258,7 @@ void MainBuffer::unBindCallID (CallID call_id1, CallID call_id2)
     ringbuffer = getRingBuffer (call_id1);
 
     if (ringbuffer) {
+
         ringbuffer->removeReadPointer (call_id2);
 
         if (ringbuffer->getNbReadPointer() == 0) {
