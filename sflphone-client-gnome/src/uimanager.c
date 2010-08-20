@@ -170,9 +170,9 @@ update_actions()
         }
     }
 
-    // g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
-    // gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
-    // g_signal_handler_unblock ( GTK_OBJECT (recordWidget), recordButtonConnId);
+    g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
+    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
+    g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
 
     callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
