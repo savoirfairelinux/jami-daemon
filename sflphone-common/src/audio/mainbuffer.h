@@ -62,26 +62,10 @@ class MainBuffer
             return _internalSamplingRate;
         }
 
-        CallIDSet* getCallIDSet (CallID call_id);
-
-        bool createCallIDSet (CallID set_id);
-
-        bool removeCallIDSet (CallID set_id);
-
         /**
-         * Add a new call id to this set
+         * Bind together two audio streams so taht a client will be able
+         * to put and get data specifying its callid only.
          */
-        void addCallIDtoSet (CallID set_id, CallID call_id);
-
-        void removeCallIDfromSet (CallID set_id, CallID call_id);
-
-        /**
-         * Create a new ringbuffer with default readpointer
-         */
-        RingBuffer* createRingBuffer (CallID call_id);
-
-        bool removeRingBuffer (CallID call_id);
-
         void bindCallID (CallID call_id1, CallID call_id2 = default_id);
 
         /**
@@ -96,6 +80,9 @@ class MainBuffer
          */
         void unBindCallID (CallID call_id1, CallID call_id2 = default_id);
 
+        /**
+         * Unbind a unidirectional stream
+         */
         void unBindHalfDuplexOut (CallID process_id, CallID call_id = default_id);
 
         void unBindAll (CallID call_id);
@@ -124,6 +111,26 @@ class MainBuffer
 
     private:
 
+        CallIDSet* getCallIDSet (CallID call_id);
+
+        bool createCallIDSet (CallID set_id);
+
+        bool removeCallIDSet (CallID set_id);
+
+        /**
+         * Add a new call id to this set
+         */
+        void addCallIDtoSet (CallID set_id, CallID call_id);
+
+        void removeCallIDfromSet (CallID set_id, CallID call_id);
+
+        /**
+         * Create a new ringbuffer with default readpointer
+         */
+        RingBuffer* createRingBuffer (CallID call_id);
+
+        bool removeRingBuffer (CallID call_id);
+
         RingBuffer* getRingBuffer (CallID call_id);
 
         int getDataByID (void *buffer, int toCopy, unsigned short volume, CallID call_id, CallID reader_id);
@@ -140,7 +147,7 @@ class MainBuffer
 
         SFLDataFormat* mixBuffer;
 
-        // ost::Mutex _mutex;
+        ost::Mutex _mutex;
 
         int _internalSamplingRate;
 

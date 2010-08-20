@@ -39,6 +39,7 @@
 #include "ringbuffer.h"
 #include "global.h"
 
+// corespond to 106 ms (about 5 rtp packets)
 #define MIN_BUFFER_SIZE	1280
 
 int RingBuffer::count_rb = 0;
