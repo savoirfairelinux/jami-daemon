@@ -49,11 +49,16 @@ GtkWidget *im_window_get();
 /**
  * Add IM widget to the IM window
  */
-void im_window_add(GtkWidget *widget);
+void im_window_add(GtkWidget *widget, gchar *label);
 
 /**
  * Remove IM widget from the IM window
  */
 void im_window_remove(GtkWidget *widget);
+
+void im_window_show ();
+
+void im_window_add_tab (GtkWidget *widget, gchar *label);
+
 
 #endif

@@ -127,7 +127,13 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
 
 	// Get the call information. Does this call exist?
 	callable_obj_t * c = calllist_get (current_calls, callID);
+
+	/* Make the instant messaging main window pops */
+	im_widget_display (&c);
+
+	/* Display le message */
 	im_widget_add_message (c, msg);
+
 	if (c) {
 		notify_incoming_message (callID, msg);
 	} else {

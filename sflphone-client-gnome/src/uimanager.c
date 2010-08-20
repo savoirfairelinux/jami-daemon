@@ -509,20 +509,12 @@ call_hold(void* foo UNUSED)
 call_im (void* foo UNUSED)
 {
 	callable_obj_t * selectedCall = calltab_get_selected_call(current_calls);
-	static IMWidget *im = NULL;
 	
-	if (selectedCall)
-	{
-		if (selectedCall->_im_widget == NULL) {
-			printf("Call IM with call %s\n", selectedCall->_callID);
-			im = im_widget_new();
-			im_window_add (im);
-			im->call = selectedCall;
-			selectedCall->_im_widget = im;
-
-			/* Update the informations about the call in the chat window */
-			im_widget_add_call_header (selectedCall);
-		}
+	if (selectedCall) {
+		im_widget_display (&selectedCall);
+	}
+	else {
+		warn ("Sorry. Instant messaging is not allowed outside a call\n");
 	}
 }
 

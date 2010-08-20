@@ -7,6 +7,7 @@
 	margin: 20px;
 overflow: auto;
 font-size: 0.95em;
+clear: both;
 }
 
 * {
@@ -22,7 +23,16 @@ body {
 	background: #fbfdfe url(sflphone.png) no-repeat fixed bottom right;
 }
 
-.peername {
+.author {
 	color: #3578B1;
 	font-weight: bold;
+}
+
+#call-info {
+	margin: 40px;
+height: 96px;
+	background: url(chat_info.png) no-repeat center left;
+	padding: 20px 20px 20px 100px;
+	border: 2px solid #dedede;
+	-webkit-border-radius: 25px;
 }

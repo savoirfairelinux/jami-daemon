@@ -224,4 +224,6 @@ time_t convert_gchar_to_timestamp (gchar*);
 
 gchar* call_get_audio_codec (callable_obj_t *obj);
 
+gchar* get_peer_information (callable_obj_t *c);
+
 #endif

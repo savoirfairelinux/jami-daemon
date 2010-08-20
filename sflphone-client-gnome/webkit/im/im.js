@@ -23,12 +23,16 @@ function add_message (message, peer_name, peer_number, peer_info)
 	}
 	
 	var msgBody = document.getElementById ('messages');
-	msgBody.innerHTML = msgBody.innerHTML + '<div class="message">' +  '<span class="peername">' + display_name + ': </span>' + '<span class="text">' + linkify (message) + '</span></div>' ;
+	msgBody.innerHTML = msgBody.innerHTML + '<div class="message">' +  '<span class="author">' + display_name + ': </span>' + '<p class="text">' + linkify (message) + '</p></div>' ;
 }
 
 function add_call_info_header (peer_name, peer_number, peer_info)
 {
-	var infoBody = document.getElementById ('call-info');
-	infoBody.innerHTML = '<h2>Calling ' + peer_number + '</h2><p>' + peer_info + '</p></h4>';
+	var peerNumber = document.getElementById ('peer-number');
+	var peerName = document.getElementById ('peer-name');
+	var peerInfo = document.getElementById ('peer-info');
+	peerNumber.innerHTML = peer_number;
+	peerName.innerHTML = peer_name;
+	peerInfo.innerHTML = peer_info;
 
 }

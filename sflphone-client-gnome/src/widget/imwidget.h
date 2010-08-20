@@ -63,6 +63,13 @@ struct _IMWidgetClass {
 	GtkContainerClass parent_class;
 };
 
+
+/*
+ * Display the instant messaging interface for this call. 
+ * If it has not been created yet, create it and attached it to the imWindow
+ */
+void im_widget_display (callable_obj_t**);
+
 GType im_widget_get_type(void) G_GNUC_CONST;
 GtkWidget *im_widget_new(void);
 void im_widget_add_message (callable_obj_t *c, const gchar *message);

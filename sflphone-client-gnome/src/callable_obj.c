@@ -423,3 +423,14 @@ time_t convert_gchar_to_timestamp (gchar *timestamp)
 {
     return (time_t) atoi (timestamp);
 }
+
+	gchar* 
+get_peer_information (callable_obj_t *c) {
+	
+	gchar *res;
+
+	if (g_strcasecmp (c->_peer_name,"") == 0) 
+		return g_strdup (c->_peer_number);
+	else
+		return g_strdup (c->_peer_name);  
+}

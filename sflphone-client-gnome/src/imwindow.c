@@ -39,7 +39,7 @@
 
 /** Local variables */
 GtkWidget *im_window = NULL;
-GtkWidget *im_vbox = NULL;
+GtkWidget *im_notebook = NULL;
 
 static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event) {
 	int pos_x, pos_y;
@@ -57,15 +57,15 @@ static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event) {
 /**
  * Minimize the main window.
  */
-static gboolean
+	static gboolean
 on_delete(GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
-	gtk_widget_hide(GTK_WIDGET(im_window_get()));
-	// gtk_widget_destroy (GTK_WIDGET(im_window_get()));
+	/* Only hide the main window that contains all the instant messaging instances */
+	gtk_widget_hide (GTK_WIDGET(im_window_get()));
 	return TRUE;
 }
 
-static void
+	static void
 im_window_init()
 {
 	const char *window_title = "SFLphone VoIP Client - Instant Messaging Module";
@@ -94,14 +94,18 @@ im_window_init()
 	gtk_widget_set_name(im_window, "imwindow");
 
 	g_signal_connect (G_OBJECT (im_window), "delete-event",
-		G_CALLBACK (on_delete), NULL);
+			G_CALLBACK (on_delete), NULL);
 
 	g_signal_connect_object (G_OBJECT (im_window), "configure-event",
-		G_CALLBACK (window_configure_cb), NULL, 0);
+			G_CALLBACK (window_configure_cb), NULL, 0);
 
-	im_vbox = gtk_vbox_new (FALSE /*homogeneous*/, 0 /*spacing*/);
+	GtkWidget *im_vbox = gtk_vbox_new (FALSE /*homogeneous*/, 0 /*spacing*/);
+	im_notebook = gtk_notebook_new ();
+
 
 	gtk_container_add (GTK_CONTAINER (im_window), im_vbox);
+	gtk_box_pack_start (GTK_BOX (im_vbox), im_notebook, TRUE, TRUE, 0);
+	gtk_widget_show (im_notebook);
 
 	/* make sure that everything is visible */
 	gtk_widget_show_all (im_window);
@@ -110,7 +114,7 @@ im_window_init()
 	gtk_window_move (GTK_WINDOW (im_window), position_x, position_y);
 }
 
-GtkWidget *
+	GtkWidget *
 im_window_get()
 {
 	if (im_window == NULL)
@@ -119,16 +123,62 @@ im_window_get()
 }
 
 void
-im_window_add (GtkWidget *widget)
-{
-	if (im_window_get()) {
-		gtk_box_pack_start (GTK_BOX (im_vbox), widget, TRUE /*expand*/,
-			TRUE /*fill*/, 0 /*padding*/);
-		gtk_widget_show_all (im_window);
-	}
+im_window_show (){
+	gtk_widget_show (im_window_get ());
 }
 
-void
+	void
+im_window_add (GtkWidget *widget, gchar *label)
+{
+	if (im_window_get()) {
+		/* Add the new tab to the notebook */
+		im_window_add_tab (widget, label);
+
+		/* Switch to the newly opened tab */
+		guint index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
+		gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), 2);
+		g_print ("index %i - current %i\n", index, gtk_notebook_get_current_page (GTK_NOTEBOOK (im_notebook)));
+
+		/* Show it all */
+		gtk_widget_show_all (im_window);
+	}
+	else
+		error ("Could not create the main instant messaging window");
+}
+
+	static void
+close_tab_cb (GtkButton *button, gpointer userdata)
+{
+	
+	/* We want here to close the current tab */
+	guint index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), GTK_WIDGET (userdata));
+	g_print ("removing index %i\n", index);
+	gtk_notebook_remove_page (GTK_NOTEBOOK (im_notebook), index);
+
+}
+
+	void
+im_window_add_tab (GtkWidget *widget, gchar *label)
+{	
+	/* A container to include the tab label and the close button */
+	GtkWidget *tab_Container = gtk_hbox_new (FALSE, 3);
+	GtkWidget *tab_Label = gtk_label_new (label);
+	GtkWidget *tab_CloseButton = gtk_button_new ();
+
+	gtk_button_set_relief (GTK_BUTTON(tab_CloseButton), GTK_RELIEF_NONE);
+	gtk_box_pack_start (GTK_BOX (tab_Container), tab_Label, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (tab_Container), tab_CloseButton, FALSE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER (tab_CloseButton), gtk_image_new_from_stock (GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+	g_signal_connect (tab_CloseButton, "clicked", G_CALLBACK (close_tab_cb), widget);
+
+	gtk_widget_show_all (tab_Container);
+	gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
+
+}
+
+
+
+	void
 im_window_remove(GtkWidget *widget)
 {
 	// TODO(jonas) remove widget from the window

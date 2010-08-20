@@ -33,46 +33,57 @@
 
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
-static IMWidget *_this;
-
 	void
 im_widget_add_message (callable_obj_t *call, const gchar *message)
 {
 	/* use the widget for this specific call, if exists */
-	IMWidget *im = IM_WIDGET (call->_im_widget); // IM_WIDGET(widget);
-
-	if (im) {
-
-		/* Prepare and execute the Javascript code */
-		gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
-		webkit_web_view_execute_script (WEBKIT_WEB_VIEW(_this->web_view), script);
-
-		/* Cleanup */
-		g_free(script);
+	if (!call){
+		error ("The call passed as a parameter does not seem to be valid");
 	}
-
 	else {
 
-		im = im_widget_new ();
-		im_window_add (im);
-		im->call = call;
-		call->_im_widget = im;
-		
-		/* Prepare and execute the Javascript code */
-		gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
-		webkit_web_view_execute_script (WEBKIT_WEB_VIEW(_this->web_view), script);
+		IMWidget *im = IM_WIDGET (call->_im_widget);
 
-		/* Cleanup */
-		g_free(script);
+		if (im) {
 
+			/* Update the informations about the call in the chat window */
+			im_widget_add_call_header (call);
+
+			/* Prepare and execute the Javascript code */
+			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
+			webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
+
+			/* Cleanup */
+			g_free(script);
+
+		}
+
+		else {
+
+			/* If the chat window is not opened when we receive an incoming message, create the im widget first, 
+			   then call the javascript to display the message */
+
+			im = im_widget_new ();
+			im_window_add (im);
+			im->call = call;
+			call->_im_widget = im;
+
+			/* Prepare and execute the Javascript code */
+			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
+			webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
+
+			/* Cleanup */
+			g_free(script);
+		}
 	}
 }
 
 void
 im_widget_add_call_header (callable_obj_t *call) {
 
+	IMWidget *im = IM_WIDGET (call->_im_widget);
 	gchar *script = g_strdup_printf("add_call_info_header('%s', '%s', '%s');", call->_peer_name, call->_peer_number, call->_peer_info);
-	webkit_web_view_execute_script (WEBKIT_WEB_VIEW(_this->web_view), script);
+	webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
 
 	/* Cleanup */
 	g_free(script);
@@ -105,8 +116,9 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	GtkTextIter start, end;
 	/* Get all the text in the buffer */
-	GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (_this->textarea));
-	
+	IMWidget *im =  user_data;
+	GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (im->textarea));
+
 	if (event->type == GDK_KEY_PRESS){
 
 		switch (event->keyval)
@@ -119,10 +131,10 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 					gchar *message = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
 
 					/* Display our own message in the chat window */
-					im_widget_add_message (_this->call, message);
+					im_widget_add_message (im->call, message);
 
 					/* Send the message to the peer */
-					dbus_send_text_message (_this->call->_callID, message);
+					dbus_send_text_message (im->call->_callID, message);
 
 					/* Empty the buffer */
 					gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);	
@@ -165,17 +177,13 @@ im_widget_init (IMWidget *im)
 	gtk_box_pack_start (GTK_BOX(im), webscrollwin, TRUE, TRUE, 5);
 	gtk_box_pack_end (GTK_BOX(im), hbox, FALSE, FALSE, 2);
 	g_signal_connect (im->web_view, "navigation-policy-decision-requested", G_CALLBACK (web_view_nav_requested_cb), NULL);
-	g_signal_connect(im->textarea, "key-press-event", G_CALLBACK (on_Textview_changed), NULL);
+	g_signal_connect(im->textarea, "key-press-event", G_CALLBACK (on_Textview_changed), im);
 	g_signal_connect (G_OBJECT (webscrollwin), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
 	im->web_frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(im->web_view));
 	im->js_context = webkit_web_frame_get_global_context(im->web_frame);
 	im->js_global = JSContextGetGlobalObject(im->js_context);
 	webkit_web_view_load_uri (WEBKIT_WEB_VIEW(im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
-
-	
-
-	_this = im;
 }
 
 	GtkWidget *
@@ -211,4 +219,34 @@ im_widget_get_type(void)
 	}
 
 	return im_widget_type;
+}
+
+	void 
+im_widget_display (callable_obj_t **call) 
+{
+
+	/* Work with a copy of the object */
+	callable_obj_t *tmp = *call;
+
+	/* Use the widget for this specific call, if exists */
+	IMWidget *im = IM_WIDGET (tmp->_im_widget);
+
+	if (!im) {
+		g_print ("creating the im widget for this call\n");
+		/* Create the im object */
+		im = im_widget_new ();
+		tmp->_im_widget = im;
+		/* Update the call */
+		*call = tmp;	
+		im->call = *call;
+
+		/* Add it to the main instant messaging window */
+		gchar *label = get_peer_information (tmp);
+		im_window_add (im, label);
+	}
+	else {
+		g_print ("im widget exists for this call\n");
+		im_window_show ();
+	}
+
 }
