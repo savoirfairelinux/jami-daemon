@@ -1024,7 +1024,7 @@ void AlsaLayer::audioCallback (void)
                 }
 
                 // Copy far-end signal in echo canceller to adapt filter coefficient
-                AudioLayer::_echoCanceller->putData (out, toGet);
+                // AudioLayer::_echoCanceller->putData (out, toGet);
 
             } else {
 
@@ -1122,10 +1122,10 @@ void AlsaLayer::audioCallback (void)
                     _audiofilter->processAudio (rsmpl_out, nbSample*sizeof (SFLDataFormat));
 
                     // echo cancellation processing
-                    int sampleready = AudioLayer::_echoCanceller->processAudio (rsmpl_out, echoCancelledMic, nbSample*sizeof (SFLDataFormat));
+                    // int sampleready = AudioLayer::_echoCanceller->processAudio (rsmpl_out, echoCancelledMic, nbSample*sizeof (SFLDataFormat));
 
-                    // getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
-                    getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+                    getMainBuffer()->putData (rsmpl_out, nbSample * sizeof (SFLDataFormat), 100);
+                    // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
 
                     free (rsmpl_out);
                     rsmpl_out = 0;
@@ -1137,8 +1137,9 @@ void AlsaLayer::audioCallback (void)
 
                     if (filter_out) {
                         _audiofilter->processAudio (in, filter_out, toPut);
-                        int sampleready = AudioLayer::_echoCanceller->processAudio (filter_out, echoCancelledMic, toPut);
-                        getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+                        // int sampleready = AudioLayer::_echoCanceller->processAudio (filter_out, echoCancelledMic, toPut);
+                        // getMainBuffer()->putData (echoCancelledMic, sampleready*sizeof (SFLDataFormat), 100);
+                        getMainBuffer()->putData (filter_out, toPut, 100);
                         free (filter_out);
                     }
 
