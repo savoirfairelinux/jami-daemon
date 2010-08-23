@@ -113,7 +113,7 @@ pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, cons
     // Archive the message
     this->saveMessage (text, "Me", id);
 
-	printf ("SIPVoIPLink::sendTextMessage %s %s\n", id.c_str(), text.c_str());
+    printf ("SIPVoIPLink::sendTextMessage %s %s\n", id.c_str(), text.c_str());
 
     return PJ_SUCCESS;
 }

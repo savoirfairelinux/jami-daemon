@@ -1616,7 +1616,7 @@ bool ManagerImpl::incomingCall (Call* call, const AccountID& accountId) {
 
 //THREAD=VoIP
 void ManagerImpl::incomingMessage (const CallID& callID,
-									const std::string& from,
+                                   const std::string& from,
                                    const std::string& message) {
     if (_dbus) {
         _dbus->getCallManager()->incomingMessage (callID, from, message);

@@ -413,18 +413,18 @@ CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo) {
 
 }
 
-void 
+void
 CallManager::sendTextMessage (const std::string& callID, const std::string& message) {
 
-	_debug ("");
+    _debug ("");
 
-	SIPVoIPLink * link = NULL;
+    SIPVoIPLink * link = NULL;
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
 
-	if (link == NULL) {
-		_debug ("Failed to get sip link");
-		throw CallManagerException();
-	}
+    if (link == NULL) {
+        _debug ("Failed to get sip link");
+        throw CallManagerException();
+    }
 
-	link->sendTextMessage (callID, message);
+    link->sendTextMessage (callID, message);
 }

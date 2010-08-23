@@ -1043,24 +1043,24 @@ SIPVoIPLink::onhold (const CallID& id) {
     return true;
 }
 
-bool 
+bool
 SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& message) {
 
-	SIPCall *call = getSIPCall (callID);
-	pj_status_t status = !PJ_SUCCESS;
+    SIPCall *call = getSIPCall (callID);
+    pj_status_t status = !PJ_SUCCESS;
 
 
-	if (call) {
-		/* Send IM message */
-		status = imModule->send (call->getInvSession (), (CallID&)callID, message);
-	}
-	else {
-		/* Notify the client of an error */	
+    if (call) {
+        /* Send IM message */
+        status = imModule->send (call->getInvSession (), (CallID&) callID, message);
+    } else {
+        /* Notify the client of an error */
         /*Manager::instance ().incomingMessage (	"",
-												"sflphoned",
-												"Unable to send a message outside a call.");*/
-	}
-	return status;
+        										"sflphoned",
+        										"Unable to send a message outside a call.");*/
+    }
+
+    return status;
 }
 
 int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction) {
@@ -3372,9 +3372,9 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.
             // And notify the clients
-            Manager::instance ().incomingMessage (	call->getCallId (),
-													call->getPeerNumber (),
-													imModule->receive (message, call->getPeerNumber (), call->getCallId ()));
+            Manager::instance ().incomingMessage (call->getCallId (),
+                                                  call->getPeerNumber (),
+                                                  imModule->receive (message, call->getPeerNumber (), call->getCallId ()));
         }
 
 
