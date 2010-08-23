@@ -15,15 +15,16 @@ function linkify(text){
 }
 
 
-function add_message (message, peer_name, peer_number, peer_info)
+function add_message (message, peer_name, peer_number, class_additionnal)
 {
 	var display_name = 'Unknown';
 	if (peer_name != '') {
 		display_name = peer_name;
 	}
-	
+
 	var msgBody = document.getElementById ('messages');
-	msgBody.innerHTML = msgBody.innerHTML + '<div class="message">' +  '<span class="author">' + display_name + ': </span>' + '<p class="text">' + linkify (message) + '</p></div>' ;
+	msgBody.innerHTML = msgBody.innerHTML + '<div class="message ' + class_additionnal + '">' +  '<span class="author">' + display_name + ': </span>' + '<p class="text">' + linkify (message) + '</p></div>' ;
+	document.getElementById("bottom").scrollIntoView(true);
 }
 
 function add_call_info_header (peer_name, peer_number, peer_info)
