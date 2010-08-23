@@ -1,12 +1,11 @@
 .message {
 	-webkit-border-radius: 5px;
 	background: rgba(242, 242, 242, 0.75);
-	color: #777;
+	color: #444;
 	padding: 1em;
 	-webkit-box-shadow: 2px 2px 5px #000;
 	margin: 20px;
 overflow: auto;
-font-size: 0.95em;
 clear: both;
 }
 
@@ -20,7 +19,11 @@ font-family: "Georgia","Verdana","Arial","Helvetica",sans-serif;
 }
 
 body {
-	background: #fbfdfe url(sflphone.png) no-repeat fixed bottom right;
+	background:  #fbfdfe;
+}
+
+#logo {
+	float: right;
 }
 
 .author {
@@ -28,9 +31,14 @@ body {
 	font-weight: bold;
 }
 
-#call-info {
-	font-size: 1.1em;
+#header {
+
 	margin: 40px;
+}
+
+#call-info {
+	float: left;
+	font-size: 1.1em;
 height: 96px;
 	background: url(chat_info.png) no-repeat center left;
 	padding: 20px 20px 20px 100px;
@@ -47,3 +55,12 @@ height: 96px;
 	display: none;
 }
 
+.message-time {
+	color: #777;
+	float: right;
+}
+
+#messages {
+	clear: both;
+	padding-top: 20px;
+}

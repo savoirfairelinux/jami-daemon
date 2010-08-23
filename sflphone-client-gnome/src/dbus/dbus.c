@@ -127,17 +127,20 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const 
 	// Get the call information. Does this call exist?
 	callable_obj_t * c = calllist_get (current_calls, callID);
 
-	/* Make the instant messaging main window pops */
-	im_widget_display (&c);
-
-	/* Display le message */
-	im_widget_add_message (c, from, msg, 0);
-
+	/* First check if the call is valid */
 	if (c) {
-		notify_incoming_message (callID, msg);
+
+		/* Make the instant messaging main window pops */
+		im_widget_display (&c);
+
+		/* Display the message */
+		im_widget_add_message (c, get_peer_information (c), msg, 0);
+	
 	} else {
 		ERROR ("Message received, but no recipient found");
 	}
+	/*if (c) {
+		notify_incoming_message (callID, msg);*/
 }
 
 	static void

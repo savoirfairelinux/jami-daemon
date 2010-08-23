@@ -80,6 +80,9 @@ void im_widget_add_message (callable_obj_t *c, const gchar *from, const gchar *m
 
 void im_widget_send_message (callable_obj_t *call, const gchar *message);
 
+gchar* im_widget_add_message_time ();
+
+
 
 G_END_DECLS
 

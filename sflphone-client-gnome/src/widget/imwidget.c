@@ -48,12 +48,15 @@ im_widget_add_message (callable_obj_t *call, const gchar *from, const gchar *mes
 
 			/* Update the informations about the call in the chat window */
 			im_widget_add_call_header (call);
-			
+
+			/* Compute the date the message was sent */
+			gchar *msgtime = im_widget_add_message_time ();
+
 			/* Check for the message level */
 			gchar *css_class = (level == MESSAGE_LEVEL_ERROR ) ? "error" : "";
 
 			/* Prepare and execute the Javascript code */
-			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, from, call->_peer_number, css_class);
+			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, from, css_class, msgtime);
 			webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
 
 			/* Cleanup */
@@ -61,35 +64,20 @@ im_widget_add_message (callable_obj_t *call, const gchar *from, const gchar *mes
 
 		}
 
-		else {
-
-			/* If the chat window is not opened when we receive an incoming message, create the im widget first, 
-			   then call the javascript to display the message */
-
-			im = im_widget_new ();
-			im_window_add (im);
-			im->call = call;
-			call->_im_widget = im;
-
-			/* Prepare and execute the Javascript code */
-			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
-			webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
-
-			/* Cleanup */
-			g_free(script);
-		}
 	}
 }
 
 void
 im_widget_add_call_header (callable_obj_t *call) {
 
-	IMWidget *im = IM_WIDGET (call->_im_widget);
-	gchar *script = g_strdup_printf("add_call_info_header('%s', '%s', '%s');", call->_peer_name, call->_peer_number, call->_peer_info);
-	webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
+	if (call) {
+		IMWidget *im = IM_WIDGET (call->_im_widget);
+		gchar *script = g_strdup_printf("add_call_info_header('%s', '%s');", call->_peer_name, call->_peer_number);
+		webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
 
-	/* Cleanup */
-	g_free(script);
+		/* Cleanup */
+		g_free(script);
+	}
 }
 
 static gboolean
@@ -105,10 +93,13 @@ web_view_nav_requested_cb(
 
 	/* Always allow files we are serving ourselves. */
 	if (!strncmp(uri, WEBKIT_DIR, sizeof(WEBKIT_DIR) - 1)) {
-		webkit_web_policy_decision_use(policy_decision);
+		webkit_web_policy_decision_use (policy_decision);
 	} else {
-		printf("FIXME(jonas) open URL in browser: %s\n", uri);
-		webkit_web_policy_decision_ignore(policy_decision);
+		/* Running a system command to open the URL in the user's default browser */
+		gchar *cmd = g_strdup_printf("x-www-browser %s", uri); 
+		system (cmd);
+		webkit_web_policy_decision_ignore (policy_decision);
+		g_free (cmd);
 	}
 	return TRUE;
 }
@@ -150,10 +141,30 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	return FALSE;
 }
 
+	gchar* 
+im_widget_add_message_time () 
+{
+
+	time_t now;
+	unsigned char str[100];
+
+	/* Compute the current time */
+	(void) time (&now);
+	struct tm* ptr;
+	ptr = localtime (&now);
+
+	/* Get the time of the message. Format: HH:MM::SS */
+	strftime ((char *)str, 100, "%R", (const struct tm *)ptr);
+	gchar *res = g_strdup (str);
+
+	/* Return the new value */
+	return res;
+}
+
 	void 
 im_widget_send_message (callable_obj_t *call, const gchar *message)
 {
-	
+
 	/* First check if the call is in CURRENT state, otherwise it could not be sent */
 	if (call->_type == CALL && call->_state == CALL_STATE_CURRENT)		
 	{
@@ -176,7 +187,10 @@ im_widget_class_init(IMWidgetClass *klass)
 im_widget_init (IMWidget *im)
 {
 
+	/* A text view to enable users to enter text */
 	im->textarea = gtk_text_view_new ();
+
+	/* The webkit widget to display the message */
 	im->web_view = webkit_web_view_new();
 	GtkWidget *textscrollwin = gtk_scrolled_window_new (NULL, NULL);
 	GtkWidget *webscrollwin = gtk_scrolled_window_new (NULL, NULL);
@@ -198,10 +212,11 @@ im_widget_init (IMWidget *im)
 	g_signal_connect(im->textarea, "key-press-event", G_CALLBACK (on_Textview_changed), im);
 	g_signal_connect (G_OBJECT (webscrollwin), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
-	im->web_frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(im->web_view));
-	im->js_context = webkit_web_frame_get_global_context(im->web_frame);
-	im->js_global = JSContextGetGlobalObject(im->js_context);
+	im->web_frame = webkit_web_view_get_main_frame (WEBKIT_WEB_VIEW(im->web_view));
+	im->js_context = webkit_web_frame_get_global_context (im->web_frame);
+	im->js_global = JSContextGetGlobalObject (im->js_context);
 	webkit_web_view_load_uri (WEBKIT_WEB_VIEW(im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
+
 }
 
 	GtkWidget *

@@ -66,6 +66,13 @@ on_delete(GtkWidget * widget UNUSED, gpointer data UNUSED)
 }
 
 	static void
+on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer userdata)
+{
+	guint index = gtk_notebook_get_current_page (GTK_NOTEBOOK (notebook));
+	g_print ("switch to %i-  current = %i\n", page_num, index);
+}
+
+	static void
 im_window_init()
 {
 	const char *window_title = "SFLphone VoIP Client - Instant Messaging Module";
@@ -93,19 +100,16 @@ im_window_init()
 
 	gtk_widget_set_name(im_window, "imwindow");
 
-	g_signal_connect (G_OBJECT (im_window), "delete-event",
-			G_CALLBACK (on_delete), NULL);
-
-	g_signal_connect_object (G_OBJECT (im_window), "configure-event",
-			G_CALLBACK (window_configure_cb), NULL, 0);
-
 	GtkWidget *im_vbox = gtk_vbox_new (FALSE /*homogeneous*/, 0 /*spacing*/);
 	im_notebook = gtk_notebook_new ();
-
 
 	gtk_container_add (GTK_CONTAINER (im_window), im_vbox);
 	gtk_box_pack_start (GTK_BOX (im_vbox), im_notebook, TRUE, TRUE, 0);
 	gtk_widget_show (im_notebook);
+
+	g_signal_connect (G_OBJECT (im_window), "delete-event", G_CALLBACK (on_delete), NULL);
+	g_signal_connect_object (G_OBJECT (im_window), "configure-event", G_CALLBACK (window_configure_cb), NULL, 0);
+	g_signal_connect (G_OBJECT (im_notebook), "switch-page", G_CALLBACK (on_switch_page), NULL);
 
 	/* make sure that everything is visible */
 	gtk_widget_show_all (im_window);
@@ -122,8 +126,9 @@ im_window_get()
 	return im_window;
 }
 
-void
-im_window_show (){
+	void
+im_window_show ()
+{
 	gtk_widget_show (im_window_get ());
 }
 
@@ -133,11 +138,6 @@ im_window_add (GtkWidget *widget, gchar *label)
 	if (im_window_get()) {
 		/* Add the new tab to the notebook */
 		im_window_add_tab (widget, label);
-
-		/* Switch to the newly opened tab */
-		guint index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
-		gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), 2);
-		g_print ("index %i - current %i\n", index, gtk_notebook_get_current_page (GTK_NOTEBOOK (im_notebook)));
 
 		/* Show it all */
 		gtk_widget_show_all (im_window);
@@ -149,7 +149,7 @@ im_window_add (GtkWidget *widget, gchar *label)
 	static void
 close_tab_cb (GtkButton *button, gpointer userdata)
 {
-	
+
 	/* We want here to close the current tab */
 	guint index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), GTK_WIDGET (userdata));
 	g_print ("removing index %i\n", index);
@@ -172,11 +172,15 @@ im_window_add_tab (GtkWidget *widget, gchar *label)
 	g_signal_connect (tab_CloseButton, "clicked", G_CALLBACK (close_tab_cb), widget);
 
 	gtk_widget_show_all (tab_Container);
+
+	/* Add the page to the notebook */
 	gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
 
+	/* Switch to the newly opened tab */
+	guint tabIndex = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
+	gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), tabIndex);
+
 }
-
-
 
 	void
 im_window_remove(GtkWidget *widget)
