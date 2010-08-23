@@ -11,7 +11,7 @@ clear: both;
 }
 
 * {
-	font-size: 1em;
+	font-size: 12px;
 font-family: "Georgia","Verdana","Arial","Helvetica",sans-serif;
 }
 
@@ -29,6 +29,7 @@ body {
 }
 
 #call-info {
+	font-size: 1.1em;
 	margin: 40px;
 height: 96px;
 	background: url(chat_info.png) no-repeat center left;
@@ -36,3 +37,13 @@ height: 96px;
 	border: 2px solid #dedede;
 	-webkit-border-radius: 25px;
 }
+
+.error .text {
+	color: #de7575;
+	font-size: 1.3em;
+}
+
+.error .author {
+	display: none;
+}
+

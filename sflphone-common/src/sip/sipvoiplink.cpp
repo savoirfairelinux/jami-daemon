@@ -1051,8 +1051,14 @@ SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& mess
 
 
 	if (call) {
-		/* Test IM message */
+		/* Send IM message */
 		status = imModule->send (call->getInvSession (), (CallID&)callID, message);
+	}
+	else {
+		/* Notify the client of an error */	
+        /*Manager::instance ().incomingMessage (	"",
+												"sflphoned",
+												"Unable to send a message outside a call.");*/
 	}
 	return status;
 }

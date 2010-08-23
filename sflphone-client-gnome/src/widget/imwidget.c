@@ -34,7 +34,7 @@
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
 	void
-im_widget_add_message (callable_obj_t *call, const gchar *from, const gchar *message)
+im_widget_add_message (callable_obj_t *call, const gchar *from, const gchar *message, gint level)
 {
 	/* use the widget for this specific call, if exists */
 	if (!call){
@@ -48,9 +48,12 @@ im_widget_add_message (callable_obj_t *call, const gchar *from, const gchar *mes
 
 			/* Update the informations about the call in the chat window */
 			im_widget_add_call_header (call);
+			
+			/* Check for the message level */
+			gchar *css_class = (level == MESSAGE_LEVEL_ERROR ) ? "error" : "";
 
 			/* Prepare and execute the Javascript code */
-			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, from, call->_peer_number, call->_peer_info);
+			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, from, call->_peer_number, css_class);
 			webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
 
 			/* Cleanup */
@@ -131,10 +134,10 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 					gchar *message = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
 
 					/* Display our own message in the chat window */
-					im_widget_add_message (im->call, "Me", message);
+					im_widget_add_message (im->call, "Me", message, MESSAGE_LEVEL_NORMAL);
 
 					/* Send the message to the peer */
-					dbus_send_text_message (im->call->_callID, message);
+					im_widget_send_message (im->call, message);
 
 					/* Empty the buffer */
 					gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);	
@@ -147,6 +150,21 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	return FALSE;
 }
 
+	void 
+im_widget_send_message (callable_obj_t *call, const gchar *message)
+{
+	
+	/* First check if the call is in CURRENT state, otherwise it could not be sent */
+	if (call->_type == CALL && call->_state == CALL_STATE_CURRENT)		
+	{
+		/* Ship the message through D-Bus */
+		dbus_send_text_message (call->_callID, message);
+	}
+	else {
+		/* Display an error message */
+		im_widget_add_message (call, "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);	
+	}
+}
 
 
 	static void
@@ -229,24 +247,26 @@ im_widget_display (callable_obj_t **call)
 	callable_obj_t *tmp = *call;
 
 	/* Use the widget for this specific call, if exists */
-	IMWidget *im = IM_WIDGET (tmp->_im_widget);
+	if (tmp) {
+		IMWidget *im = IM_WIDGET (tmp->_im_widget);
 
-	if (!im) {
-		g_print ("creating the im widget for this call\n");
-		/* Create the im object */
-		im = im_widget_new ();
-		tmp->_im_widget = im;
-		/* Update the call */
-		*call = tmp;	
-		im->call = *call;
+		if (!im) {
+			g_print ("creating the im widget for this call\n");
+			/* Create the im object */
+			im = im_widget_new ();
+			tmp->_im_widget = im;
+			/* Update the call */
+			*call = tmp;	
+			im->call = *call;
 
-		/* Add it to the main instant messaging window */
-		gchar *label = get_peer_information (tmp);
-		im_window_add (im, label);
-	}
-	else {
-		g_print ("im widget exists for this call\n");
-		im_window_show ();
+			/* Add it to the main instant messaging window */
+			gchar *label = get_peer_information (tmp);
+			im_window_add (im, label);
+		}
+		else {
+			g_print ("im widget exists for this call\n");
+			im_window_show ();
+		}
 	}
 
 }

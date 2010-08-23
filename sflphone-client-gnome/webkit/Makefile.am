@@ -9,4 +9,5 @@ im_DATA =	im/im.js \
 			im/im.html \
 			im/im.css \
 			im/sflphone.png \
-			im/chat_info.png
+			im/chat_info.png \
+			im/error.png

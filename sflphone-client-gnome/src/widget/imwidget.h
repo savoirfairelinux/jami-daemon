@@ -44,6 +44,10 @@ G_BEGIN_DECLS
 #define IS_IM_WIDGET_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE((vtable), IM_WIDGET_TYPE))
 #define IM_WIDGET_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS((inst), IM_WIDGET_TYPE, IMWidgetClass))
 
+#define MESSAGE_LEVEL_NORMAL		0
+#define MESSAGE_LEVEL_WARNING		1
+#define MESSAGE_LEVEL_ERROR			2			
+
 typedef struct _IMWidget      IMWidget;
 typedef struct _IMWidgetClass IMWidgetClass;
 
@@ -72,7 +76,10 @@ void im_widget_display (callable_obj_t**);
 
 GType im_widget_get_type(void) G_GNUC_CONST;
 GtkWidget *im_widget_new(void);
-void im_widget_add_message (callable_obj_t *c, const gchar *from, const gchar *message);
+void im_widget_add_message (callable_obj_t *c, const gchar *from, const gchar *message, gint level);
+
+void im_widget_send_message (callable_obj_t *call, const gchar *message);
+
 
 G_END_DECLS
 

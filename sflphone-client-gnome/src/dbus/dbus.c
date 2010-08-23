@@ -131,7 +131,7 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const 
 	im_widget_display (&c);
 
 	/* Display le message */
-	im_widget_add_message (c, from, msg);
+	im_widget_add_message (c, from, msg, 0);
 
 	if (c) {
 		notify_incoming_message (callID, msg);
