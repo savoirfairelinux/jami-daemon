@@ -398,7 +398,7 @@ class ManagerImpl {
      * @param accountId	The account identifier
      * @param message The content of the message
      */
-    void incomingMessage(const CallID& callId, const std::string& message);
+    void incomingMessage(const CallID& callId, const std::string& from, const std::string& message);
 
     /**
      * Notify the client he has voice mails

@@ -415,6 +415,7 @@
 				Notify clients that a new text message has been received. 
 			</tp:docstring>
 			<arg type="s" name="callID" />
+			<arg type="s" name="from" />
 			<arg type="s" name="message" />
 		</signal>
 

@@ -3366,8 +3366,9 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
             // Pass through the instant messaging module if needed
             // Right now, it does do anything.
             // And notify the clients
-            Manager::instance ().incomingMessage (call->getCallId (),
-                                                  imModule->receive (message, call->getPeerNumber (), call->getCallId ()));
+            Manager::instance ().incomingMessage (	call->getCallId (),
+													call->getPeerNumber (),
+													imModule->receive (message, call->getPeerNumber (), call->getCallId ()));
         }
 
 

@@ -72,7 +72,7 @@ void im_widget_display (callable_obj_t**);
 
 GType im_widget_get_type(void) G_GNUC_CONST;
 GtkWidget *im_widget_new(void);
-void im_widget_add_message (callable_obj_t *c, const gchar *message);
+void im_widget_add_message (callable_obj_t *c, const gchar *from, const gchar *message);
 
 G_END_DECLS
 

@@ -34,7 +34,7 @@
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
 	void
-im_widget_add_message (callable_obj_t *call, const gchar *message)
+im_widget_add_message (callable_obj_t *call, const gchar *from, const gchar *message)
 {
 	/* use the widget for this specific call, if exists */
 	if (!call){
@@ -50,7 +50,7 @@ im_widget_add_message (callable_obj_t *call, const gchar *message)
 			im_widget_add_call_header (call);
 
 			/* Prepare and execute the Javascript code */
-			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, call->_peer_name, call->_peer_number, call->_peer_info);
+			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, from, call->_peer_number, call->_peer_info);
 			webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
 
 			/* Cleanup */
@@ -131,7 +131,7 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 					gchar *message = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
 
 					/* Display our own message in the chat window */
-					im_widget_add_message (im->call, message);
+					im_widget_add_message (im->call, "Me", message);
 
 					/* Send the message to the peer */
 					dbus_send_text_message (im->call->_callID, message);

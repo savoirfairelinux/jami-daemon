@@ -120,8 +120,7 @@ voice_mail_cb(DBusGProxy *proxy UNUSED, const gchar* accountID, const guint nb,
 }
 
 	static void
-incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
-		const gchar* msg, void * foo  UNUSED )
+incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const gchar *from, const gchar* msg, void * foo  UNUSED )
 {
 	DEBUG ("Message %s!",msg);
 
@@ -132,7 +131,7 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED,
 	im_widget_display (&c);
 
 	/* Display le message */
-	im_widget_add_message (c, msg);
+	im_widget_add_message (c, from, msg);
 
 	if (c) {
 		notify_incoming_message (callID, msg);
@@ -573,7 +572,7 @@ dbus_connect()
 			G_CALLBACK(voice_mail_cb), NULL, NULL);
 
 	dbus_g_proxy_add_signal(callManagerProxy, "incomingMessage", G_TYPE_STRING,
-			G_TYPE_STRING, G_TYPE_INVALID);
+			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
 	dbus_g_proxy_connect_signal(callManagerProxy, "incomingMessage",
 			G_CALLBACK(incoming_message_cb), NULL, NULL);
 
