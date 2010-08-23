@@ -38,14 +38,17 @@ Account::Account (const AccountID& accountID, std::string type) :
         , _link (NULL)
         , _enabled (false)
         , _type (type)
-        , _codecOrder () {
+        , _codecOrder ()
+{
     setRegistrationState (Unregistered);
 }
 
-Account::~Account() {
+Account::~Account()
+{
 }
 
-void Account::loadConfig() {
+void Account::loadConfig()
+{
 
     std::string p;
 
@@ -64,7 +67,8 @@ void Account::loadConfig() {
     loadAudioCodecs ();
 }
 
-void Account::setRegistrationState (RegistrationState state) {
+void Account::setRegistrationState (RegistrationState state)
+{
 
     if (state != _registrationState) {
         _debug ("Account: set registration state");
@@ -75,7 +79,8 @@ void Account::setRegistrationState (RegistrationState state) {
     }
 }
 
-void Account::loadAudioCodecs (void) {
+void Account::loadAudioCodecs (void)
+{
 
     // if the user never set the codec list, use the default configuration for this account
     if (Manager::instance ().getConfigString (_accountID, "ActiveCodecs") == "") {
@@ -92,7 +97,8 @@ void Account::loadAudioCodecs (void) {
     }
 }
 
-void Account::setActiveCodecs (const std::vector <std::string> &list) {
+void Account::setActiveCodecs (const std::vector <std::string> &list)
+{
 
     _codecOrder.clear();
     // list contains the ordered payload of active codecs picked by the user for this account

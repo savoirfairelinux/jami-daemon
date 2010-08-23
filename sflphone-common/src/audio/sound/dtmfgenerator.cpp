@@ -62,14 +62,17 @@ const DTMFGenerator::DTMFTone DTMFGenerator::tones[NUM_TONES] = {
 };
 
 
-DTMFException::DTMFException (const char* _reason) throw() : reason (_reason) {
+DTMFException::DTMFException (const char* _reason) throw() : reason (_reason)
+{
 }
 
 
-DTMFException::~DTMFException() throw() {
+DTMFException::~DTMFException() throw()
+{
 }
 
-const char* DTMFException::what() const throw() {
+const char* DTMFException::what() const throw()
+{
     return reason;
 }
 
@@ -78,7 +81,8 @@ const char* DTMFException::what() const throw() {
 /*
  * Initialize the generator
  */
-DTMFGenerator::DTMFGenerator (unsigned int sampleRate) : state(), _sampleRate (sampleRate), tone ("", sampleRate) {
+DTMFGenerator::DTMFGenerator (unsigned int sampleRate) : state(), _sampleRate (sampleRate), tone ("", sampleRate)
+{
     state.offset = 0;
     state.sample = 0;
 
@@ -88,7 +92,8 @@ DTMFGenerator::DTMFGenerator (unsigned int sampleRate) : state(), _sampleRate (s
 }
 
 
-DTMFGenerator::~DTMFGenerator() {
+DTMFGenerator::~DTMFGenerator()
+{
     for (int i = 0; i < NUM_TONES; i++) {
         delete[] samples[i];
         samples[i] = NULL;
@@ -98,7 +103,8 @@ DTMFGenerator::~DTMFGenerator() {
 /*
  * Get n samples of the signal of code code
  */
-void DTMFGenerator::getSamples (SFLDataFormat* buffer, size_t n, unsigned char code) throw (DTMFException) {
+void DTMFGenerator::getSamples (SFLDataFormat* buffer, size_t n, unsigned char code) throw (DTMFException)
+{
     size_t i;
 
     if (!buffer) {
@@ -197,7 +203,8 @@ void DTMFGenerator::getSamples (SFLDataFormat* buffer, size_t n, unsigned char c
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples (SFLDataFormat* buffer, size_t n) throw (DTMFException) {
+void DTMFGenerator::getNextSamples (SFLDataFormat* buffer, size_t n) throw (DTMFException)
+{
     size_t i;
 
     if (!buffer) {
@@ -219,7 +226,8 @@ void DTMFGenerator::getNextSamples (SFLDataFormat* buffer, size_t n) throw (DTMF
 /*
  * Generate a tone sample
  */
-SFLDataFormat* DTMFGenerator::generateSample (unsigned char code) throw (DTMFException) {
+SFLDataFormat* DTMFGenerator::generateSample (unsigned char code) throw (DTMFException)
+{
     SFLDataFormat* ptr;
 
     try {

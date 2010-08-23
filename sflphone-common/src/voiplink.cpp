@@ -35,14 +35,17 @@
 #include "voiplink.h"
 #include "manager.h"
 
-VoIPLink::VoIPLink (const AccountID& accountID) : _accountID (accountID), _localPort (0),  _initDone (false) {
+VoIPLink::VoIPLink (const AccountID& accountID) : _accountID (accountID), _localPort (0),  _initDone (false)
+{
 }
 
-VoIPLink::~VoIPLink (void) {
+VoIPLink::~VoIPLink (void)
+{
     clearCallMap();
 }
 
-bool VoIPLink::addCall (Call* call) {
+bool VoIPLink::addCall (Call* call)
+{
     if (call) {
         if (getCall (call->getCallId()) == NULL) {
             ost::MutexLock m (_callMapMutex);
@@ -53,7 +56,8 @@ bool VoIPLink::addCall (Call* call) {
     return false;
 }
 
-bool VoIPLink::removeCall (const CallID& id) {
+bool VoIPLink::removeCall (const CallID& id)
+{
     ost::MutexLock m (_callMapMutex);
 
     if (_callMap.erase (id)) {
@@ -63,7 +67,8 @@ bool VoIPLink::removeCall (const CallID& id) {
     return false;
 }
 
-Call* VoIPLink::getCall (const CallID& id) {
+Call* VoIPLink::getCall (const CallID& id)
+{
     ost::MutexLock m (_callMapMutex);
     CallMap::iterator iter = _callMap.find (id);
 
@@ -74,7 +79,8 @@ Call* VoIPLink::getCall (const CallID& id) {
     return NULL;
 }
 
-bool VoIPLink::clearCallMap() {
+bool VoIPLink::clearCallMap()
+{
     ost::MutexLock m (_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
 
@@ -90,7 +96,8 @@ bool VoIPLink::clearCallMap() {
     return true;
 }
 
-Account* VoIPLink::getAccountPtr (void) {
+Account* VoIPLink::getAccountPtr (void)
+{
     AccountID id;
 
     id = getAccountID();

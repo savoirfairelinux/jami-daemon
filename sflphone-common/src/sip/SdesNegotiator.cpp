@@ -43,11 +43,13 @@ using namespace sfl;
 SdesNegotiator::SdesNegotiator (const std::vector<CryptoSuiteDefinition>& localCapabilites,
                                 const std::vector<std::string>& remoteAttribute) :
         _remoteAttribute (remoteAttribute),
-        _localCapabilities (localCapabilites) {
+        _localCapabilities (localCapabilites)
+{
 
 }
 
-std::vector<CryptoAttribute *> SdesNegotiator::parse (void) {
+std::vector<CryptoAttribute *> SdesNegotiator::parse (void)
+{
     // The patterns below try to follow
     // the ABNF grammar rules described in
     // RFC4568 section 9.2 with the general
@@ -206,7 +208,8 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse (void) {
     return cryptoAttributeVector;
 }
 
-bool SdesNegotiator::negotiate (void) {
+bool SdesNegotiator::negotiate (void)
+{
 
     std::vector<CryptoAttribute *> cryptoAttributeVector = parse();
     std::vector<CryptoAttribute *>::iterator iter_offer = cryptoAttributeVector.begin();

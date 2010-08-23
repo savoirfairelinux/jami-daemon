@@ -31,7 +31,8 @@
 #include <sstream>
 #include <cstdio>
 
-namespace sfl {
+namespace sfl
+{
 
 Pattern::Pattern (const std::string& pattern, const std::string& options) :
         _pattern (pattern),
@@ -39,7 +40,8 @@ Pattern::Pattern (const std::string& pattern, const std::string& options) :
         _ovector (NULL),
         _ovectorSize (0),
         _count (0),
-        _options (0) {
+        _options (0)
+{
 
     // printf("Pattern constructor called for %s!\n", pattern.c_str());
     // Set offsets
@@ -73,7 +75,8 @@ Pattern::Pattern (const std::string& pattern, const std::string& options) :
     compile();
 }
 
-Pattern::~Pattern() {
+Pattern::~Pattern()
+{
     if (_re != NULL) {
         pcre_free (_re);
     }
@@ -81,7 +84,8 @@ Pattern::~Pattern() {
     delete[] _ovector;
 }
 
-void Pattern::compile (void) {
+void Pattern::compile (void)
+{
     // Compile the pattern
     int offset;
     const char * error;
@@ -112,13 +116,15 @@ void Pattern::compile (void) {
     _ovectorSize = (captureCount + 1) * 3;
 }
 
-unsigned int Pattern::getCaptureGroupCount (void) {
+unsigned int Pattern::getCaptureGroupCount (void)
+{
     int captureCount;
     pcre_fullinfo (_re, NULL, PCRE_INFO_CAPTURECOUNT, &captureCount);
     return captureCount;
 }
 
-std::vector<std::string> Pattern::groups (void) {
+std::vector<std::string> Pattern::groups (void)
+{
     const char ** stringList;
 
     pcre_get_substring_list (_subject.c_str(),
@@ -140,7 +146,8 @@ std::vector<std::string> Pattern::groups (void) {
     return matchedSubstrings;
 }
 
-std::string Pattern::group (int groupNumber) {
+std::string Pattern::group (int groupNumber)
+{
     const char * stringPtr;
 
     int rc = pcre_get_substring (
@@ -171,7 +178,8 @@ std::string Pattern::group (int groupNumber) {
     return matchedStr;
 }
 
-std::string Pattern::group (const std::string& groupName) {
+std::string Pattern::group (const std::string& groupName)
+{
     const char * stringPtr = NULL;
 
     int rc = pcre_get_named_substring (
@@ -212,12 +220,14 @@ std::string Pattern::group (const std::string& groupName) {
 
 }
 
-void Pattern::start (const std::string& groupName) const {
+void Pattern::start (const std::string& groupName) const
+{
     int index = pcre_get_stringnumber (_re, groupName.c_str());
     start (index);
 }
 
-size_t Pattern::start (unsigned int groupNumber) const {
+size_t Pattern::start (unsigned int groupNumber) const
+{
     if (groupNumber <= (unsigned int) _count) {
         return _ovector[ (groupNumber + 1) * 2];
     } else {
@@ -225,16 +235,19 @@ size_t Pattern::start (unsigned int groupNumber) const {
     }
 }
 
-size_t Pattern::start (void) const {
+size_t Pattern::start (void) const
+{
     return _ovector[0] + _offset[0];
 }
 
-void Pattern::end (const std::string& groupName) const {
+void Pattern::end (const std::string& groupName) const
+{
     int index = pcre_get_stringnumber (_re, groupName.c_str());
     end (index);
 }
 
-size_t Pattern::end (unsigned int groupNumber) const {
+size_t Pattern::end (unsigned int groupNumber) const
+{
     if (groupNumber <= (unsigned int) _count) {
         return _ovector[ ( (groupNumber + 1) * 2) + 1 ] - 1;
     } else {
@@ -242,15 +255,18 @@ size_t Pattern::end (unsigned int groupNumber) const {
     }
 }
 
-size_t Pattern::end (void) const {
+size_t Pattern::end (void) const
+{
     return (_ovector[1] - 1) + _offset[0];
 }
 
-bool Pattern::matches (void) throw (match_error) {
+bool Pattern::matches (void) throw (match_error)
+{
     return matches (_subject);
 }
 
-bool Pattern::matches (const std::string& subject) throw (match_error) {
+bool Pattern::matches (const std::string& subject) throw (match_error)
+{
 
     // Try to find a match for this pattern
     int rc = pcre_exec (
@@ -292,7 +308,8 @@ bool Pattern::matches (const std::string& subject) throw (match_error) {
     return true;
 }
 
-std::vector<std::string> Pattern::split (void) {
+std::vector<std::string> Pattern::split (void)
+{
     size_t tokenEnd = -1;
     size_t tokenStart = 0;
 

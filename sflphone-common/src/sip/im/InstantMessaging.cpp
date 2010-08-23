@@ -1,6 +1,7 @@
 #include "InstantMessaging.h"
 
-namespace sfl {
+namespace sfl
+{
 
 InstantMessaging::InstantMessaging()
         : imFiles () {}
@@ -8,11 +9,13 @@ InstantMessaging::InstantMessaging()
 
 InstantMessaging::~InstantMessaging() {}
 
-bool InstantMessaging::init () {
+bool InstantMessaging::init ()
+{
     return true;
 }
 
-int InstantMessaging::openArchive (CallID& id) {
+int InstantMessaging::openArchive (CallID& id)
+{
 
     // Create a new file stream
     std::ofstream File (id.c_str (), std::ios::out | std::ios::app);
@@ -22,14 +25,16 @@ int InstantMessaging::openArchive (CallID& id) {
     return (int) imFiles.size ();
 }
 
-int InstantMessaging::closeArchive (CallID& id) {
+int InstantMessaging::closeArchive (CallID& id)
+{
 
     // Erase it from the map
     imFiles.erase (id);
     return (int) imFiles.size ();
 }
 
-bool InstantMessaging::saveMessage (const std::string& message, const std::string& author, CallID& id, int mode) {
+bool InstantMessaging::saveMessage (const std::string& message, const std::string& author, CallID& id, int mode)
+{
 
     // We need here to write the text message in the right file.
     // We will use the Call ID
@@ -49,7 +54,8 @@ bool InstantMessaging::saveMessage (const std::string& message, const std::strin
     return true;
 }
 
-std::string InstantMessaging::receive (const std::string& message, const std::string& author, CallID& id) {
+std::string InstantMessaging::receive (const std::string& message, const std::string& author, CallID& id)
+{
 
     // We just receive a TEXT message. Before sent it to the recipient, we must assure that the message is complete.
     // We should use a queue to push these messages in
@@ -67,14 +73,16 @@ std::string InstantMessaging::receive (const std::string& message, const std::st
 
 }
 
-pj_status_t InstantMessaging::notify (CallID& id) {
+pj_status_t InstantMessaging::notify (CallID& id)
+{
 
     // Notify the clients through a D-Bus signal
     return PJ_SUCCESS;
 
 }
 
-pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, const std::string& text) {
+pj_status_t InstantMessaging::send (pjsip_inv_session *session, CallID& id, const std::string& text)
+{
 
 
     pjsip_method msg_method;

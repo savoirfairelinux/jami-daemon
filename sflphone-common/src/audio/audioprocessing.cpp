@@ -38,29 +38,34 @@ AudioProcessing::AudioProcessing (Algorithm *_algo) : _algorithm (_algo) {}
 
 AudioProcessing::~AudioProcessing (void) {}
 
-void AudioProcessing::resetAlgorithm (void) {
+void AudioProcessing::resetAlgorithm (void)
+{
     if (_algorithm)
         _algorithm->reset();
 }
 
-int AudioProcessing::getData (SFLDataFormat *outputData) {
+int AudioProcessing::getData (SFLDataFormat *outputData)
+{
     if (_algorithm)
         return _algorithm->getData (outputData);
     else
         return 0;
 }
 
-void AudioProcessing::putData (SFLDataFormat *inputData, int nbBytes) {
+void AudioProcessing::putData (SFLDataFormat *inputData, int nbBytes)
+{
     if (_algorithm)
         _algorithm->putData (inputData, nbBytes);
 }
 
-void AudioProcessing::processAudio (SFLDataFormat *inputData, int nbBytes) {
+void AudioProcessing::processAudio (SFLDataFormat *inputData, int nbBytes)
+{
     if (_algorithm)
         _algorithm->process (inputData, nbBytes);
 }
 
-int AudioProcessing::processAudio (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) {
+int AudioProcessing::processAudio (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
+{
     if (_algorithm)
         return _algorithm->process (inputData, outputData, nbBytes);
     else
@@ -68,7 +73,8 @@ int AudioProcessing::processAudio (SFLDataFormat *inputData, SFLDataFormat *outp
 }
 
 
-void AudioProcessing::processAudio (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {
+void AudioProcessing::processAudio (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes)
+{
     if (_algorithm)
         _algorithm->process (micData, spkrData, outputData, nbBytes);
 }

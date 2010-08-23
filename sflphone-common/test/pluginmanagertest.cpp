@@ -42,20 +42,23 @@ using std::endl;
 #define PLUGIN_TEST_NAME  "/usr/lib/sflphone/plugins/libplugintest.so"
 
 
-void PluginManagerTest::setUp() {
+void PluginManagerTest::setUp()
+{
     // Instanciate the plugin manager singleton
     _pm = PluginManager::instance();
     library = 0;
     plugin = 0;
 }
 
-void PluginManagerTest::testLoadDynamicLibrary() {
+void PluginManagerTest::testLoadDynamicLibrary()
+{
     _debug ("-------------------- PluginManagerTest::testLoadDynamicLibrary --------------------\n");
 
     CPPUNIT_ASSERT (_pm->loadDynamicLibrary (PLUGIN_TEST_NAME) != NULL);
 }
 
-void PluginManagerTest::testUnloadDynamicLibrary() {
+void PluginManagerTest::testUnloadDynamicLibrary()
+{
     _debug ("-------------------- PluginManagerTest::testUnloadDynamicLibrary --------------------\n");
 
     library = _pm->loadDynamicLibrary (PLUGIN_TEST_NAME);
@@ -63,7 +66,8 @@ void PluginManagerTest::testUnloadDynamicLibrary() {
     CPPUNIT_ASSERT (_pm->unloadDynamicLibrary (library) == 0);
 }
 
-void PluginManagerTest::testInstanciatePlugin() {
+void PluginManagerTest::testInstanciatePlugin()
+{
     _debug ("-------------------- PluginManagerTest::testInstanciatePlugin --------------------\n");
 
     library = _pm->loadDynamicLibrary (PLUGIN_TEST_NAME);
@@ -72,7 +76,8 @@ void PluginManagerTest::testInstanciatePlugin() {
     CPPUNIT_ASSERT (plugin!=NULL);
 }
 
-void PluginManagerTest::testInitPlugin() {
+void PluginManagerTest::testInitPlugin()
+{
     _debug ("-------------------- PluginManagerTest::testInitPlugin --------------------\n");
 
     library = _pm->loadDynamicLibrary (PLUGIN_TEST_NAME);
@@ -82,7 +87,8 @@ void PluginManagerTest::testInitPlugin() {
     CPPUNIT_ASSERT (plugin->getPluginName() == PLUGIN_TEST_DESC);
 }
 
-void PluginManagerTest::testRegisterPlugin() {
+void PluginManagerTest::testRegisterPlugin()
+{
     _debug ("-------------------- PluginManagerTest::testRegisterPlugin --------------------\n");
 
     library = _pm->loadDynamicLibrary (PLUGIN_TEST_NAME);
@@ -93,14 +99,16 @@ void PluginManagerTest::testRegisterPlugin() {
     CPPUNIT_ASSERT (_pm->isPluginLoaded (PLUGIN_TEST_DESC) == true);
 }
 
-void PluginManagerTest::testLoadPlugins () {
+void PluginManagerTest::testLoadPlugins ()
+{
     _debug ("-------------------- PluginManagerTest::testLoadPlugins --------------------\n");
 
     CPPUNIT_ASSERT (_pm->loadPlugins (PLUGIN_TEST_DIR) == 0);
     CPPUNIT_ASSERT (_pm->isPluginLoaded (PLUGIN_TEST_DESC) == true);
 }
 
-void PluginManagerTest::testUnloadPlugins () {
+void PluginManagerTest::testUnloadPlugins ()
+{
     _debug ("-------------------- PluginManagerTest::testUnloadPlugins --------------------\n");
 
     CPPUNIT_ASSERT (_pm->loadPlugins (PLUGIN_TEST_DIR) == 0);
@@ -109,7 +117,8 @@ void PluginManagerTest::testUnloadPlugins () {
     CPPUNIT_ASSERT (_pm->isPluginLoaded (PLUGIN_TEST_DESC) == false);
 }
 
-void PluginManagerTest::tearDown() {
+void PluginManagerTest::tearDown()
+{
     // Delete the plugin manager object
     delete _pm;
     _pm=0;

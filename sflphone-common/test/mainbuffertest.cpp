@@ -49,18 +49,21 @@ using std::cout;
 using std::endl;
 
 
-void MainBufferTest::setUp() {
+void MainBufferTest::setUp()
+{
 
 
 }
 
 
-void MainBufferTest::tearDown() {
+void MainBufferTest::tearDown()
+{
 
 }
 
 
-void MainBufferTest::testRingBufferCreation() {
+void MainBufferTest::testRingBufferCreation()
+{
     _debug ("-------------------- MainBufferTest::testRingBufferCreation --------------------\n");
 
     CallID test_id = "1234";
@@ -106,7 +109,8 @@ void MainBufferTest::testRingBufferCreation() {
 }
 
 
-void MainBufferTest::testRingBufferReadPointer() {
+void MainBufferTest::testRingBufferReadPointer()
+{
     _debug ("-------------------- MainBufferTest::testRingBufferReadPointer --------------------\n");
 
     CallID call_id = "call id";
@@ -152,7 +156,8 @@ void MainBufferTest::testRingBufferReadPointer() {
 }
 
 
-void MainBufferTest::testCallIDSet() {
+void MainBufferTest::testCallIDSet()
+{
     _debug ("-------------------- MainBufferTest::testCallIDSet --------------------\n");
 
     CallID test_id = "set id";
@@ -234,7 +239,8 @@ void MainBufferTest::testCallIDSet() {
 }
 
 
-void MainBufferTest::testRingBufferInt() {
+void MainBufferTest::testRingBufferInt()
+{
     _debug ("-------------------- MainBufferTest::testRingBufferInt --------------------\n");
 
     // CallID test_id = "test_int";
@@ -349,7 +355,8 @@ void MainBufferTest::testRingBufferInt() {
 }
 
 
-void MainBufferTest::testRingBufferNonDefaultID() {
+void MainBufferTest::testRingBufferNonDefaultID()
+{
     _debug ("-------------------- MainBufferTest::testRingBufferNonDefaultID --------------------\n");
 
     CallID test_id = "test_int";
@@ -435,7 +442,8 @@ void MainBufferTest::testRingBufferNonDefaultID() {
 }
 
 
-void MainBufferTest::testRingBufferFloat() {
+void MainBufferTest::testRingBufferFloat()
+{
     _debug ("-------------------- MainBufferTest::testRingBufferFloat --------------------\n");
 
     float testfloat1 = 12.5;
@@ -468,7 +476,8 @@ void MainBufferTest::testRingBufferFloat() {
 }
 
 
-void MainBufferTest::testTwoPointer() {
+void MainBufferTest::testTwoPointer()
+{
     _debug ("-------------------- MainBufferTest::testTwoPointer --------------------\n");
 
     RingBuffer* input_buffer = _mainbuffer.createRingBuffer (default_id);
@@ -484,7 +493,8 @@ void MainBufferTest::testTwoPointer() {
 
 }
 
-void MainBufferTest::testBindUnbindBuffer() {
+void MainBufferTest::testBindUnbindBuffer()
+{
     _debug ("-------------------- MainBufferTest::testBindUnbindBuffer --------------------\n");
 
     CallID test_id1 = "bind unbind 1";
@@ -882,7 +892,8 @@ void MainBufferTest::testBindUnbindBuffer() {
 
 }
 
-void MainBufferTest::testGetPutDataByID() {
+void MainBufferTest::testGetPutDataByID()
+{
     _debug ("-------------------- MainBufferTest::testGetPutDataByID --------------------\n");
 
     CallID test_id = "getData putData";
@@ -936,7 +947,8 @@ void MainBufferTest::testGetPutDataByID() {
 
 
 
-void MainBufferTest::testGetPutData() {
+void MainBufferTest::testGetPutData()
+{
     _debug ("-------------------- MainBufferTest::testGetPutData --------------------\n");
 
     CallID test_id = "incoming rtp session";
@@ -983,7 +995,8 @@ void MainBufferTest::testGetPutData() {
 }
 
 
-void MainBufferTest::testDiscardFlush() {
+void MainBufferTest::testDiscardFlush()
+{
     _debug ("-------------------- MainBufferTest::testDiscardFlush --------------------\n");
 
     CallID test_id = "flush discard";
@@ -1024,7 +1037,8 @@ void MainBufferTest::testDiscardFlush() {
 }
 
 
-void MainBufferTest::testReadPointerInit() {
+void MainBufferTest::testReadPointerInit()
+{
     _debug ("-------------------- MainBufferTest::testReadPointerInit --------------------\n");
 
     CallID test_id = "test read pointer init";
@@ -1051,7 +1065,8 @@ void MainBufferTest::testReadPointerInit() {
 }
 
 
-void MainBufferTest::testRingBufferSeveralPointers() {
+void MainBufferTest::testRingBufferSeveralPointers()
+{
     _debug ("-------------------- MainBufferTest::testRingBufferSeveralPointers --------------------\n");
 
     CallID test_id = "test multiple read pointer";
@@ -1163,7 +1178,8 @@ void MainBufferTest::testRingBufferSeveralPointers() {
 
 
 
-void MainBufferTest::testConference() {
+void MainBufferTest::testConference()
+{
     _debug ("-------------------- MainBufferTest::testConference --------------------\n");
 
     CallID test_id1 = "participant A";

@@ -35,7 +35,8 @@
 #include "logger.h"
 #include "validator.h"
 
-void AccountTest::TestAddRemove (void) {
+void AccountTest::TestAddRemove (void)
+{
     _debug ("-------------------- AccountTest::TestAddRemove --------------------\n");
 
     std::map<std::string, std::string> details;

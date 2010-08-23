@@ -30,7 +30,8 @@
 #include "recordable.h"
 #include "manager.h"
 
-Recordable::Recordable() : recorder (&recAudio, Manager::instance().getMainBuffer()) {
+Recordable::Recordable() : recorder (&recAudio, Manager::instance().getMainBuffer())
+{
 
     FILE_TYPE fileType = FILE_WAV;
     SOUND_FORMAT soundFormat = INT16;
@@ -39,20 +40,23 @@ Recordable::Recordable() : recorder (&recAudio, Manager::instance().getMainBuffe
 }
 
 
-Recordable::~Recordable() {
+Recordable::~Recordable()
+{
     if (recAudio.isOpenFile()) {
         recAudio.closeFile();
     }
 }
 
 
-void Recordable::initRecFileName() {
+void Recordable::initRecFileName()
+{
 
     recAudio.initFileName (getRecFileId());
 }
 
 
-void Recordable::setRecordingSmplRate (int smplRate) {
+void Recordable::setRecordingSmplRate (int smplRate)
+{
 
     recAudio.setSndSamplingRate (smplRate);
 

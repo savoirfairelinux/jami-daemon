@@ -56,16 +56,19 @@ Sdp::Sdp (pj_pool_t *pool)
         , _local_offer (NULL)
         , _negociated_offer (NULL)
         , _pool (NULL)
-        , _local_extern_audio_port (0) {
+        , _local_extern_audio_port (0)
+{
     _pool = pool;
 }
 
-Sdp::~Sdp() {
+Sdp::~Sdp()
+{
     // clean_session_media();
     // clean_local_media_capabilities();
 }
 
-void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med) {
+void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
+{
 
     pjmedia_sdp_media* med;
     pjmedia_sdp_rtpmap rtpmap;
@@ -148,7 +151,8 @@ void Sdp::set_media_descriptor_line (sdpMedia *media, pjmedia_sdp_media** p_med)
     *p_med = med;
 }
 
-int Sdp::create_local_offer (CodecOrder selectedCodecs) {
+int Sdp::create_local_offer (CodecOrder selectedCodecs)
+{
 
     pj_status_t status;
 
@@ -186,7 +190,8 @@ int Sdp::create_local_offer (CodecOrder selectedCodecs) {
     return PJ_SUCCESS;
 }
 
-int Sdp::create_initial_offer (CodecOrder selectedCodecs) {
+int Sdp::create_initial_offer (CodecOrder selectedCodecs)
+{
 
     pj_status_t status;
     pjmedia_sdp_neg_state state;
@@ -215,7 +220,8 @@ int Sdp::create_initial_offer (CodecOrder selectedCodecs) {
     return PJ_SUCCESS;
 }
 
-int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder selectedCodecs) {
+int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder selectedCodecs)
+{
 
     // Create the SDP negociator instance by calling
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
@@ -248,7 +254,8 @@ int Sdp::receiving_initial_offer (pjmedia_sdp_session* remote, CodecOrder select
     return PJ_SUCCESS;
 }
 
-pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata) {
+pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
+{
 
     static const pj_str_t str_application = { (char*) "application", 11 };
     static const pj_str_t str_sdp = { (char*) "sdp", 3 };
@@ -311,12 +318,14 @@ pj_status_t Sdp::check_sdp_answer (pjsip_inv_session *inv, pjsip_rx_data *rdata)
     return status;
 }
 
-void Sdp::sdp_add_protocol (void) {
+void Sdp::sdp_add_protocol (void)
+{
 
     this->_local_offer->origin.version = 0;
 }
 
-void Sdp::sdp_add_origin (void) {
+void Sdp::sdp_add_origin (void)
+{
 
     pj_time_val tv;
     pj_gettimeofday (&tv);
@@ -332,13 +341,15 @@ void Sdp::sdp_add_origin (void) {
     this->_local_offer->origin.addr = pj_str ( (char*) _ip_addr.c_str());
 }
 
-void Sdp::sdp_add_session_name (void) {
+void Sdp::sdp_add_session_name (void)
+{
 
     this->_local_offer->name = STR_SDP_NAME;
 }
 
 
-void Sdp::sdp_add_connection_info (void) {
+void Sdp::sdp_add_connection_info (void)
+{
 
     this->_local_offer->conn->net_type = _local_offer->origin.net_type;
     this->_local_offer->conn->addr_type = _local_offer->origin.addr_type;
@@ -346,7 +357,8 @@ void Sdp::sdp_add_connection_info (void) {
 }
 
 
-void Sdp::sdp_add_timing (void) {
+void Sdp::sdp_add_timing (void)
+{
 
     // RFC 3264: An offer/answer model session description protocol
     // As the session is created and destroyed through an external signaling mean (SIP), the line
@@ -355,7 +367,8 @@ void Sdp::sdp_add_timing (void) {
     this->_local_offer->time.start = this->_local_offer->time.stop = 0;
 }
 
-void Sdp::sdp_add_attributes() {
+void Sdp::sdp_add_attributes()
+{
 
     pjmedia_sdp_attr *a;
     this->_local_offer->attr_count = 1;
@@ -365,7 +378,8 @@ void Sdp::sdp_add_attributes() {
 }
 
 
-void Sdp::sdp_add_media_description() {
+void Sdp::sdp_add_media_description()
+{
     pjmedia_sdp_media* med;
     int nb_media, i;
 
@@ -379,7 +393,8 @@ void Sdp::sdp_add_media_description() {
     }
 }
 
-void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto) {
+void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto)
+{
 
     // temporary buffer used to store crypto attribute
     char tempbuf[256];
@@ -421,7 +436,8 @@ void Sdp::sdp_add_sdes_attribute (std::vector<std::string>& crypto) {
 }
 
 
-void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash) {
+void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash)
+{
     pjmedia_sdp_attr *attribute;
     char tempbuf[256];
     int len;
@@ -447,7 +463,8 @@ void Sdp::sdp_add_zrtp_attribute (pjmedia_sdp_media* media, std::string hash) {
     }
 }
 
-std::string Sdp::media_to_string (void) {
+std::string Sdp::media_to_string (void)
+{
     int size, i;
     std::ostringstream res;
 
@@ -462,7 +479,8 @@ std::string Sdp::media_to_string (void) {
     return res.str();
 }
 
-void Sdp::clean_session_media() {
+void Sdp::clean_session_media()
+{
     _info ("SDP: Clean session media");
 
     if (_session_media.size() > 0) {
@@ -481,7 +499,8 @@ void Sdp::clean_session_media() {
 }
 
 
-void Sdp::clean_local_media_capabilities() {
+void Sdp::clean_local_media_capabilities()
+{
     _info ("SDP: Clean local media capabilities");
 
     if (_local_media_cap.size() > 0) {
@@ -499,7 +518,8 @@ void Sdp::clean_local_media_capabilities() {
     }
 }
 
-void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp) {
+void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp)
+{
 
     int nb_media, nb_codecs;
     int i,j, port;
@@ -548,7 +568,8 @@ void Sdp::set_negotiated_sdp (const pjmedia_sdp_session *sdp) {
     }
 }
 
-AudioCodec* Sdp::get_session_media (void) {
+AudioCodec* Sdp::get_session_media (void)
+{
 
     int nb_media;
     int nb_codec;
@@ -572,7 +593,8 @@ AudioCodec* Sdp::get_session_media (void) {
 }
 
 
-pj_status_t Sdp::start_negociation() {
+pj_status_t Sdp::start_negociation()
+{
     pj_status_t status;
 
     if (_negociator) {
@@ -584,7 +606,8 @@ pj_status_t Sdp::start_negociation() {
     return status;
 }
 
-void Sdp::toString (void) {
+void Sdp::toString (void)
+{
 
     std::ostringstream sdp;
     int count, i;
@@ -620,7 +643,8 @@ void Sdp::toString (void) {
     _debug ("LOCAL SDP: \n%s", sdp.str().c_str());
 }
 
-void Sdp::set_local_media_capabilities (CodecOrder selectedCodecs) {
+void Sdp::set_local_media_capabilities (CodecOrder selectedCodecs)
+{
 
     unsigned int i;
     sdpMedia *audio;
@@ -652,7 +676,8 @@ void Sdp::set_local_media_capabilities (CodecOrder selectedCodecs) {
     _local_media_cap.push_back (audio);
 }
 
-void Sdp::attribute_port_to_all_media (int port) {
+void Sdp::attribute_port_to_all_media (int port)
+{
 
     std::vector<sdpMedia*> medias;
     int i, size;
@@ -667,20 +692,23 @@ void Sdp::attribute_port_to_all_media (int port) {
     }
 }
 
-std::string Sdp::convert_int_to_string (int value) {
+std::string Sdp::convert_int_to_string (int value)
+{
     std::ostringstream result;
     result << value;
     return result.str();
 }
 
-void Sdp::set_remote_ip_from_sdp (const pjmedia_sdp_session *r_sdp) {
+void Sdp::set_remote_ip_from_sdp (const pjmedia_sdp_session *r_sdp)
+{
 
     std::string remote_ip (r_sdp->conn->addr.ptr, r_sdp->conn->addr.slen);
     _info ("SDP: Remote IP from fetching SDP: %s",  remote_ip.c_str());
     this->set_remote_ip (remote_ip);
 }
 
-void Sdp::set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media) {
+void Sdp::set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media)
+{
 
     int remote_port;
 
@@ -689,7 +717,8 @@ void Sdp::set_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media) {
     this->set_remote_audio_port (remote_port);
 }
 
-void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *remote_sdp) {
+void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *remote_sdp)
+{
 
     _info ("SDP: Fetching media from sdp");
 
@@ -711,7 +740,8 @@ void Sdp::set_media_transport_info_from_remote_sdp (const pjmedia_sdp_session *r
 
 }
 
-void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media) {
+void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media)
+{
     int count, i;
 
     if (!remote_sdp)
@@ -728,7 +758,8 @@ void Sdp::get_remote_sdp_media_from_offer (const pjmedia_sdp_session* remote_sdp
     }
 }
 
-void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer) {
+void Sdp::get_remote_sdp_crypto_from_offer (const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
+{
 
     int i, j;
     int attr_count, media_count;

@@ -36,7 +36,8 @@
 PluginManager* PluginManager::_instance = 0;
 
 PluginManager*
-PluginManager::instance() {
+PluginManager::instance()
+{
     if (!_instance) {
         return new PluginManager();
     }
@@ -45,16 +46,19 @@ PluginManager::instance() {
 }
 
 PluginManager::PluginManager()
-        :_loadedPlugins() {
+        :_loadedPlugins()
+{
     _instance = this;
 }
 
-PluginManager::~PluginManager() {
+PluginManager::~PluginManager()
+{
     _instance = 0;
 }
 
 int
-PluginManager::loadPlugins (const std::string &path) {
+PluginManager::loadPlugins (const std::string &path)
+{
     std::string pluginDir, current;
     DIR *dir;
     dirent *dirStruct;
@@ -107,7 +111,8 @@ PluginManager::loadPlugins (const std::string &path) {
 }
 
 int
-PluginManager::unloadPlugins (void) {
+PluginManager::unloadPlugins (void)
+{
     PluginInfo *info;
 
     if (_loadedPlugins.empty())    return 0;
@@ -139,7 +144,8 @@ PluginManager::unloadPlugins (void) {
 }
 
 bool
-PluginManager::isPluginLoaded (const std::string &name) {
+PluginManager::isPluginLoaded (const std::string &name)
+{
     if (_loadedPlugins.empty())    return false;
 
     /* Use an iterator on the loaded plugins map */
@@ -157,20 +163,23 @@ PluginManager::isPluginLoaded (const std::string &name) {
 
 
 LibraryManager*
-PluginManager::loadDynamicLibrary (const std::string& filename) {
+PluginManager::loadDynamicLibrary (const std::string& filename)
+{
     /* Load the library through the library manager */
     return new LibraryManager (filename);
 }
 
 int
-PluginManager::unloadDynamicLibrary (LibraryManager *libraryPtr) {
+PluginManager::unloadDynamicLibrary (LibraryManager *libraryPtr)
+{
     _debug ("Unloading dynamic library ...");
     /* Close it */
     return libraryPtr->unloadLibrary ();
 }
 
 int
-PluginManager::instanciatePlugin (LibraryManager *libraryPtr, Plugin **plugin) {
+PluginManager::instanciatePlugin (LibraryManager *libraryPtr, Plugin **plugin)
+{
     createFunc *createPlugin;
     LibraryManager::SymbolHandle symbol;
 
@@ -185,7 +194,8 @@ PluginManager::instanciatePlugin (LibraryManager *libraryPtr, Plugin **plugin) {
 }
 
 int
-PluginManager::deletePlugin (PluginInfo *plugin) {
+PluginManager::deletePlugin (PluginInfo *plugin)
+{
     destroyFunc *destroyPlugin;
     LibraryManager::SymbolHandle symbol;
 
@@ -201,7 +211,8 @@ PluginManager::deletePlugin (PluginInfo *plugin) {
 }
 
 int
-PluginManager::registerPlugin (Plugin *plugin, LibraryManager *library) {
+PluginManager::registerPlugin (Plugin *plugin, LibraryManager *library)
+{
     std::string key;
     PluginInfo *p_info;
 
@@ -225,7 +236,8 @@ PluginManager::registerPlugin (Plugin *plugin, LibraryManager *library) {
 }
 
 int
-PluginManager::unregisterPlugin (PluginInfo *plugin) {
+PluginManager::unregisterPlugin (PluginInfo *plugin)
+{
     pluginMap::iterator iter;
     std::string key;
 

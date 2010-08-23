@@ -34,7 +34,8 @@
 #include <speex/speex.h>
 #include <speex/speex_preprocess.h>
 
-class Speex : public AudioCodec {
+class Speex : public AudioCodec
+{
 
     public:
         Speex (int payload=0)
@@ -122,11 +123,13 @@ class Speex : public AudioCodec {
 };
 
 // the class factories
-extern "C" AudioCodec* create() {
+extern "C" AudioCodec* create()
+{
     return new Speex (110);
 }
 
-extern "C" void destroy (AudioCodec* a) {
+extern "C" void destroy (AudioCodec* a)
+{
     delete a;
 }
 

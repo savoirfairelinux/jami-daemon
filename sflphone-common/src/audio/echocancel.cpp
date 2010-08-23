@@ -60,7 +60,8 @@ EchoCancel::EchoCancel (int smplRate, int frameLength) : _samplingRate (smplRate
         _correlationSize (0),
         _processedByte (0),
         _echoActive (true),
-        _noiseActive (true) {
+        _noiseActive (true)
+{
     _debug ("EchoCancel: Instantiate echo canceller");
 
 
@@ -123,7 +124,8 @@ EchoCancel::EchoCancel (int smplRate, int frameLength) : _samplingRate (smplRate
 }
 
 
-EchoCancel::~EchoCancel() {
+EchoCancel::~EchoCancel()
+{
     _debug ("EchoCancel: Delete echo canceller");
 
     delete _micData;
@@ -149,7 +151,8 @@ EchoCancel::~EchoCancel() {
 }
 
 
-void EchoCancel::reset() {
+void EchoCancel::reset()
+{
     _debug ("EchoCancel: Reset internal state, Sampling rate %d, Frame size %d", _samplingRate, _smplPerFrame);
 
     memset (_avgSpkrLevelHist, 0, BUFF_SIZE*sizeof (int));
@@ -208,7 +211,8 @@ void EchoCancel::reset() {
     _processedByte = 0;
 }
 
-void EchoCancel::putData (SFLDataFormat *inputData, int nbBytes) {
+void EchoCancel::putData (SFLDataFormat *inputData, int nbBytes)
+{
 
     _delayDetector.putData (inputData, nbBytes);
 
@@ -224,7 +228,8 @@ void EchoCancel::putData (SFLDataFormat *inputData, int nbBytes) {
 }
 
 
-int EchoCancel::getData (SFLDataFormat *outputData) {
+int EchoCancel::getData (SFLDataFormat *outputData)
+{
 
     int copied = 0;
 
@@ -239,7 +244,8 @@ int EchoCancel::getData (SFLDataFormat *outputData) {
 void EchoCancel::process (SFLDataFormat *data, int nbBytes) {}
 
 
-int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes) {
+int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes)
+{
 
     _delayDetector.process (inputData, nbBytes);
 
@@ -324,11 +330,13 @@ int EchoCancel::process (SFLDataFormat *inputData, SFLDataFormat *outputData, in
     return nbFrame * _smplPerFrame;
 }
 
-void EchoCancel::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {
+void EchoCancel::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes)
+{
 
 }
 
-void EchoCancel::setSamplingRate (int smplRate) {
+void EchoCancel::setSamplingRate (int smplRate)
+{
 
     if (smplRate != _samplingRate) {
         _samplingRate = smplRate;
@@ -338,7 +346,8 @@ void EchoCancel::setSamplingRate (int smplRate) {
 }
 
 
-void EchoCancel::performEchoCancel (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData) {
+void EchoCancel::performEchoCancel (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData)
+{
 
     for (int k = 0; k < _nbSegmentPerFrame; k++) {
 
@@ -370,7 +379,8 @@ void EchoCancel::performEchoCancel (SFLDataFormat *micData, SFLDataFormat *spkrD
 
 }
 
-void EchoCancel::performEchoCancelNoSpkr (SFLDataFormat *micData, SFLDataFormat *outputData) {
+void EchoCancel::performEchoCancelNoSpkr (SFLDataFormat *micData, SFLDataFormat *outputData)
+{
 
     for (int k = 0; k < _nbSegmentPerFrame; k++) {
 
@@ -394,7 +404,8 @@ void EchoCancel::performEchoCancelNoSpkr (SFLDataFormat *micData, SFLDataFormat 
 
 }
 
-void EchoCancel::updateMicLevel (SFLDataFormat *micData) {
+void EchoCancel::updateMicLevel (SFLDataFormat *micData)
+{
 
     int micLvl = computeAmplitudeLevel (micData, _smplPerSeg);
 
@@ -411,7 +422,8 @@ void EchoCancel::updateMicLevel (SFLDataFormat *micData) {
 }
 
 
-void EchoCancel::updateSpkrLevel (SFLDataFormat *spkrData) {
+void EchoCancel::updateSpkrLevel (SFLDataFormat *spkrData)
+{
 
     int spkrLvl = computeAmplitudeLevel (spkrData, _smplPerSeg);
 
@@ -428,7 +440,8 @@ void EchoCancel::updateSpkrLevel (SFLDataFormat *spkrData) {
 }
 
 
-void EchoCancel::updateEchoCancel (SFLDataFormat *micData, SFLDataFormat *spkrData) {
+void EchoCancel::updateEchoCancel (SFLDataFormat *micData, SFLDataFormat *spkrData)
+{
 
     // Add 1 to make sure we are not dividing by 0
     updateMicLevel (micData);
@@ -473,7 +486,8 @@ void EchoCancel::updateEchoCancel (SFLDataFormat *micData, SFLDataFormat *spkrDa
 
 
 
-int EchoCancel::computeAmplitudeLevel (SFLDataFormat *data, int size) {
+int EchoCancel::computeAmplitudeLevel (SFLDataFormat *data, int size)
+{
 
     int level = 0;
 
@@ -490,7 +504,8 @@ int EchoCancel::computeAmplitudeLevel (SFLDataFormat *data, int size) {
 
 }
 
-SFLDataFormat EchoCancel::estimatePower (SFLDataFormat *data, SFLDataFormat *ampl, int size, SFLDataFormat mem) {
+SFLDataFormat EchoCancel::estimatePower (SFLDataFormat *data, SFLDataFormat *ampl, int size, SFLDataFormat mem)
+{
 
     float memFactor = 1.0 - _alpha;
 
@@ -504,7 +519,8 @@ SFLDataFormat EchoCancel::estimatePower (SFLDataFormat *data, SFLDataFormat *amp
 }
 
 
-int EchoCancel::getMaxAmplitude (int *data, int size) {
+int EchoCancel::getMaxAmplitude (int *data, int size)
+{
 
     SFLDataFormat level = 0.0;
 
@@ -517,7 +533,8 @@ int EchoCancel::getMaxAmplitude (int *data, int size) {
 }
 
 
-void EchoCancel::amplifySignal (SFLDataFormat *micData, SFLDataFormat *outputData, float amplify) {
+void EchoCancel::amplifySignal (SFLDataFormat *micData, SFLDataFormat *outputData, float amplify)
+{
 
     // for(int i = 0; i < _smplPerSeg; i++)
     //  outputData[i] = micData[i];
@@ -550,7 +567,8 @@ void EchoCancel::amplifySignal (SFLDataFormat *micData, SFLDataFormat *outputDat
 
 
 
-void EchoCancel::increaseFactor (float factor) {
+void EchoCancel::increaseFactor (float factor)
+{
 
     // Get 200 ms to get back to full amplitude
     _amplFactor += factor;
@@ -561,7 +579,8 @@ void EchoCancel::increaseFactor (float factor) {
 }
 
 
-void EchoCancel::decreaseFactor() {
+void EchoCancel::decreaseFactor()
+{
 
     // Takes about 50 ms to react
     _amplFactor -= 0.2;
@@ -571,7 +590,8 @@ void EchoCancel::decreaseFactor() {
 }
 
 
-int EchoCancel::performCorrelation (int *data1, int *data2, int size) {
+int EchoCancel::performCorrelation (int *data1, int *data2, int size)
+{
 
     int correlation = 0;
 
@@ -584,7 +604,8 @@ int EchoCancel::performCorrelation (int *data1, int *data2, int size) {
 }
 
 
-int EchoCancel::getMaximumIndex (int *data, int size) {
+int EchoCancel::getMaximumIndex (int *data, int size)
+{
 
     int index = size;
     int max = data[size-1];

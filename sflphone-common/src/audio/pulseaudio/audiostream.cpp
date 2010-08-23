@@ -43,7 +43,8 @@ AudioStream::AudioStream (PulseLayerType * driver, int smplrate)
         _volume(),
         _flag (PA_STREAM_AUTO_TIMING_UPDATE),
         _sample_spec(),
-        _mainloop (driver->mainloop) {
+        _mainloop (driver->mainloop)
+{
     _sample_spec.format = PA_SAMPLE_S16LE; // PA_SAMPLE_FLOAT32LE;
     _sample_spec.rate = smplrate;
     _sample_spec.channels = 1;
@@ -51,12 +52,14 @@ AudioStream::AudioStream (PulseLayerType * driver, int smplrate)
     pa_cvolume_set (&_volume , 1 , PA_VOLUME_NORM) ;  // * vol / 100 ;
 }
 
-AudioStream::~AudioStream() {
+AudioStream::~AudioStream()
+{
     disconnectStream();
 }
 
 bool
-AudioStream::connectStream (std::string* deviceName) {
+AudioStream::connectStream (std::string* deviceName)
+{
     ost::MutexLock guard (_mutex);
 
     if (!_audiostream)
@@ -65,7 +68,8 @@ AudioStream::connectStream (std::string* deviceName) {
     return true;
 }
 
-static void success_cb (pa_stream *s, int success, void *userdata) {
+static void success_cb (pa_stream *s, int success, void *userdata)
+{
 
     assert (s);
 
@@ -76,7 +80,8 @@ static void success_cb (pa_stream *s, int success, void *userdata) {
 
 
 bool
-AudioStream::drainStream (void) {
+AudioStream::drainStream (void)
+{
     if (_audiostream) {
         _info ("Audio: Draining stream");
         pa_operation * operation;
@@ -102,7 +107,8 @@ AudioStream::drainStream (void) {
 }
 
 bool
-AudioStream::disconnectStream (void) {
+AudioStream::disconnectStream (void)
+{
     _info ("Audio: Destroy audio streams");
 
     pa_threaded_mainloop_lock (_mainloop);
@@ -128,7 +134,8 @@ AudioStream::disconnectStream (void) {
 
 
 void
-AudioStream::stream_state_callback (pa_stream* s, void* user_data) {
+AudioStream::stream_state_callback (pa_stream* s, void* user_data)
+{
     pa_threaded_mainloop *m;
 
     _info ("Audio: The state of the stream changed");
@@ -175,7 +182,8 @@ AudioStream::stream_state_callback (pa_stream* s, void* user_data) {
 }
 
 pa_stream_state_t
-AudioStream::getStreamState (void) {
+AudioStream::getStreamState (void)
+{
 
     ost::MutexLock guard (_mutex);
     return pa_stream_get_state (_audiostream);
@@ -184,7 +192,8 @@ AudioStream::getStreamState (void) {
 
 
 pa_stream*
-AudioStream::createStream (pa_context* c, std::string *deviceName) {
+AudioStream::createStream (pa_context* c, std::string *deviceName)
+{
     ost::MutexLock guard (_mutex);
 
     pa_stream* s;

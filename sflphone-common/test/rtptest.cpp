@@ -46,7 +46,8 @@
 
 #include <unistd.h>
 
-void RtpTest::setUp() {
+void RtpTest::setUp()
+{
 
     pjsipInit();
 
@@ -59,7 +60,8 @@ void RtpTest::setUp() {
     sipcall->setLocalExternAudioPort (RANDOM_LOCAL_PORT);
 }
 
-bool RtpTest::pjsipInit() {
+bool RtpTest::pjsipInit()
+{
     // Create memory cache for pool
     pj_caching_pool_init (&_cp, &pj_pool_factory_default_policy, 0);
 
@@ -74,7 +76,8 @@ bool RtpTest::pjsipInit() {
     return true;
 }
 
-void RtpTest::testRtpInitClose() {
+void RtpTest::testRtpInitClose()
+{
     _debug ("-------------------- RtpTest::testRtpInitClose --------------------\n");
 
     audiortp = new AudioRtpFactory();
@@ -115,7 +118,8 @@ void RtpTest::testRtpInitClose() {
     audiortp = NULL;
 }
 
-void RtpTest::tearDown() {
+void RtpTest::tearDown()
+{
     delete sipcall;
     sipcall = NULL;
 }

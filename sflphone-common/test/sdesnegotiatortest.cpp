@@ -49,7 +49,8 @@ using std::cout;
 using std::endl;
 
 
-void SdesNegotiatorTest::testTagPattern() {
+void SdesNegotiatorTest::testTagPattern()
+{
     _debug ("-------------------- SdesNegotiatorTest::testTagPattern --------------------\n");
 
     std::string subject = "a=crypto:4";
@@ -65,7 +66,8 @@ void SdesNegotiatorTest::testTagPattern() {
 }
 
 
-void SdesNegotiatorTest::testCryptoSuitePattern() {
+void SdesNegotiatorTest::testCryptoSuitePattern()
+{
     _debug ("-------------------- SdesNegotiatorTest::testCryptoSuitePattern --------------------\n");
 
     std::string subject = "AES_CM_128_HMAC_SHA1_80";
@@ -84,7 +86,8 @@ void SdesNegotiatorTest::testCryptoSuitePattern() {
 }
 
 
-void SdesNegotiatorTest::testKeyParamsPattern() {
+void SdesNegotiatorTest::testKeyParamsPattern()
+{
     _debug ("-------------------- SdesNegotiatorTest::testKeyParamsPattern --------------------\n");
 
     std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32";
@@ -110,7 +113,8 @@ void SdesNegotiatorTest::testKeyParamsPattern() {
 }
 
 
-void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI() {
+void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
+{
     _debug ("-------------------- SdesNegotiatorTest::testKeyParamsPatternWithoutMKI --------------------\n");
 
     std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj";
@@ -136,7 +140,8 @@ void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI() {
  * Make sure that all the fields can be extracted
  * properly from the syntax.
  */
-void SdesNegotiatorTest::testNegotiation() {
+void SdesNegotiatorTest::testNegotiation()
+{
     _debug ("-------------------- SdesNegotiatorTest::testNegotiation --------------------\n");
 
     // Add a new SDES crypto line to be processed.
@@ -169,7 +174,8 @@ void SdesNegotiatorTest::testNegotiation() {
 /**
  * Make sure that unproperly formatted crypto lines are rejected.
  */
-void SdesNegotiatorTest::testComponent() {
+void SdesNegotiatorTest::testComponent()
+{
     _debug ("-------------------- SdesNegotiatorTest::testComponent --------------------\n");
 
     // Register the local capabilities.
@@ -195,7 +201,8 @@ void SdesNegotiatorTest::testComponent() {
 /**
  * Make sure that most simple case does not fail.
  */
-void SdesNegotiatorTest::testMostSimpleCase() {
+void SdesNegotiatorTest::testMostSimpleCase()
+{
     _debug ("-------------------- SdesNegotiatorTest::testMostSimpleCase --------------------\n");
 
     // Register the local capabilities.

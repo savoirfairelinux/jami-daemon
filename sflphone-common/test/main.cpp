@@ -37,7 +37,8 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TextTestRunner.h>
 
-int main (int argc, char* argv[]) {
+int main (int argc, char* argv[])
+{
 
     printf ("\nSFLphone Daemon Test Suite, by Savoir-Faire Linux 2004-2010\n\n");
     Logger::setConsoleLog (true);

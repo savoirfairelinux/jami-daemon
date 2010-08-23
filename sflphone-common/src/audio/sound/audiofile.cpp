@@ -47,12 +47,14 @@ AudioFile::AudioFile()
 {
 }
 
-AudioFile::~AudioFile() {
+AudioFile::~AudioFile()
+{
 }
 
 // load file in mono format
 bool
-AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate=8000) {
+AudioFile::loadFile (const std::string& filename, AudioCodec* codec , unsigned int sampleRate=8000)
+{
     _codec = codec;
 
     // if the filename was already load, with the same samplerate

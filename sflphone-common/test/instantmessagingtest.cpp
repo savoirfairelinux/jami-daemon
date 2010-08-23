@@ -37,12 +37,14 @@
 using std::cout;
 using std::endl;
 
-void InstantMessagingTest::setUp() {
+void InstantMessagingTest::setUp()
+{
     _im = new sfl::InstantMessaging ();
     _im->init ();
 }
 
-void InstantMessagingTest::testSaveSingleMessage () {
+void InstantMessagingTest::testSaveSingleMessage ()
+{
     _debug ("-------------------- InstantMessagingTest::testSaveSingleMessage --------------------\n");
 
     std::string input, tmp;
@@ -64,7 +66,8 @@ void InstantMessagingTest::testSaveSingleMessage () {
     CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message");
 }
 
-void InstantMessagingTest::testSaveMultipleMessage () {
+void InstantMessagingTest::testSaveMultipleMessage ()
+{
     _debug ("-------------------- InstantMessagingTest::testSaveMultipleMessage --------------------\n");
 
     std::string input, tmp;
@@ -88,7 +91,8 @@ void InstantMessagingTest::testSaveMultipleMessage () {
     CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message[Alex] Cool");
 }
 
-void InstantMessagingTest::tearDown() {
+void InstantMessagingTest::tearDown()
+{
     delete _im;
     _im = 0;
 }

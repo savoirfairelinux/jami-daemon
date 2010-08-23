@@ -271,7 +271,8 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
         : VoIPLink (accountID)
         , _nbTryListenAddr (2)   // number of times to try to start SIP listener
         , _regPort (atoi (DEFAULT_SIP_PORT))
-        , _clients (0) {
+        , _clients (0)
+{
     // to get random number for RANDOM_PORT
     srand (time (NULL));
 
@@ -284,14 +285,16 @@ SIPVoIPLink::SIPVoIPLink (const AccountID& accountID)
     init();
 }
 
-SIPVoIPLink::~SIPVoIPLink() {
+SIPVoIPLink::~SIPVoIPLink()
+{
     _debug ("UserAgent: SIPVoIPLink destructor called");
 
     terminate();
 
 }
 
-SIPVoIPLink* SIPVoIPLink::instance (const AccountID& id) {
+SIPVoIPLink* SIPVoIPLink::instance (const AccountID& id)
+{
 
     if (!_instance) {
         _debug ("UserAgent: Create new SIPVoIPLink instance");
@@ -301,7 +304,8 @@ SIPVoIPLink* SIPVoIPLink::instance (const AccountID& id) {
     return _instance;
 }
 
-void SIPVoIPLink::decrementClients (void) {
+void SIPVoIPLink::decrementClients (void)
+{
     _clients--;
 
     if (_clients == 0) {
@@ -312,7 +316,8 @@ void SIPVoIPLink::decrementClients (void) {
     }
 }
 
-bool SIPVoIPLink::init() {
+bool SIPVoIPLink::init()
+{
     if (initDone())
         return false;
 
@@ -332,7 +337,8 @@ bool SIPVoIPLink::init() {
 }
 
 void
-SIPVoIPLink::terminate() {
+SIPVoIPLink::terminate()
+{
     _debug ("UserAgent: Terminating SIPVoIPLink");
 
     if (_evThread) {
@@ -353,7 +359,8 @@ SIPVoIPLink::terminate() {
 }
 
 void
-SIPVoIPLink::terminateSIPCall() {
+SIPVoIPLink::terminateSIPCall()
+{
     ost::MutexLock m (_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
     SIPCall *call;
@@ -374,7 +381,8 @@ SIPVoIPLink::terminateSIPCall() {
 }
 
 void
-SIPVoIPLink::terminateOneCall (const CallID& id) {
+SIPVoIPLink::terminateOneCall (const CallID& id)
+{
     _debug ("UserAgent: Terminate call %s", id.c_str());
 
     SIPCall *call = getSIPCall (id);
@@ -386,7 +394,8 @@ SIPVoIPLink::terminateOneCall (const CallID& id) {
     }
 }
 
-void get_remote_sdp_from_offer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sdp) {
+void get_remote_sdp_from_offer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sdp)
+{
 
     pjmedia_sdp_session *sdp;
     pjsip_msg *msg;
@@ -409,7 +418,8 @@ void get_remote_sdp_from_offer (pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
 }
 
 
-std::string SIPVoIPLink::getInterfaceAddrFromName (std::string ifaceName) {
+std::string SIPVoIPLink::getInterfaceAddrFromName (std::string ifaceName)
+{
 
     struct ifreq ifr;
     int fd;
@@ -440,7 +450,8 @@ std::string SIPVoIPLink::getInterfaceAddrFromName (std::string ifaceName) {
 }
 
 
-std::string SIPVoIPLink::get_useragent_name (const AccountID& id) {
+std::string SIPVoIPLink::get_useragent_name (const AccountID& id)
+{
     /*
     useragent << PROGNAME << "/" << SFLPHONED_VERSION;
     return useragent.str();
@@ -456,7 +467,8 @@ std::string SIPVoIPLink::get_useragent_name (const AccountID& id) {
 }
 
 void
-SIPVoIPLink::getEvent() {
+SIPVoIPLink::getEvent()
+{
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered())
         pj_thread_register (NULL, desc, &thread);
@@ -468,7 +480,8 @@ SIPVoIPLink::getEvent() {
 
 }
 
-int SIPVoIPLink::sendRegister (AccountID id) {
+int SIPVoIPLink::sendRegister (AccountID id)
+{
 
     int expire_value;
 
@@ -717,7 +730,8 @@ int SIPVoIPLink::sendRegister (AccountID id) {
 }
 
 int
-SIPVoIPLink::sendUnregister (AccountID id) {
+SIPVoIPLink::sendUnregister (AccountID id)
+{
 
     pj_status_t status = 0;
     pjsip_tx_data *tdata = NULL;
@@ -769,7 +783,8 @@ SIPVoIPLink::sendUnregister (AccountID id) {
 }
 
 Call*
-SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) {
+SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl)
+{
     SIPAccount * account = NULL;
     pj_status_t status;
     std::string localAddr, addrSdp;
@@ -845,7 +860,8 @@ SIPVoIPLink::newOutgoingCall (const CallID& id, const std::string& toUrl) {
 }
 
 bool
-SIPVoIPLink::answer (const CallID& id) {
+SIPVoIPLink::answer (const CallID& id)
+{
     pj_status_t status;
     pjsip_tx_data *tdata;
     pjsip_inv_session *inv_session;
@@ -902,7 +918,8 @@ SIPVoIPLink::answer (const CallID& id) {
 }
 
 bool
-SIPVoIPLink::hangup (const CallID& id) {
+SIPVoIPLink::hangup (const CallID& id)
+{
     pj_status_t status;
     pjsip_tx_data *tdata = NULL;
     SIPCall* call;
@@ -949,7 +966,8 @@ SIPVoIPLink::hangup (const CallID& id) {
 }
 
 bool
-SIPVoIPLink::peerHungup (const CallID& id) {
+SIPVoIPLink::peerHungup (const CallID& id)
+{
     pj_status_t status;
     pjsip_tx_data *tdata = NULL;
     SIPCall* call;
@@ -995,7 +1013,8 @@ SIPVoIPLink::peerHungup (const CallID& id) {
 }
 
 bool
-SIPVoIPLink::cancel (const CallID& id) {
+SIPVoIPLink::cancel (const CallID& id)
+{
     _info ("UserAgent: Cancel call %s", id.c_str());
 
     SIPCall* call = getSIPCall (id);
@@ -1012,7 +1031,8 @@ SIPVoIPLink::cancel (const CallID& id) {
 }
 
 bool
-SIPVoIPLink::onhold (const CallID& id) {
+SIPVoIPLink::onhold (const CallID& id)
+{
 
     pj_status_t status;
     SIPCall* call;
@@ -1044,7 +1064,8 @@ SIPVoIPLink::onhold (const CallID& id) {
 }
 
 bool
-SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& message) {
+SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& message)
+{
 
     SIPCall *call = getSIPCall (callID);
     pj_status_t status = !PJ_SUCCESS;
@@ -1063,7 +1084,8 @@ SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& mess
     return status;
 }
 
-int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction) {
+int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction)
+{
 
     pj_status_t status;
     pjsip_tx_data *tdata;
@@ -1110,7 +1132,8 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction) {
 
 
 bool
-SIPVoIPLink::offhold (const CallID& id) {
+SIPVoIPLink::offhold (const CallID& id)
+{
     SIPCall *call;
     pj_status_t status;
 
@@ -1140,7 +1163,8 @@ SIPVoIPLink::offhold (const CallID& id) {
 }
 
 bool
-SIPVoIPLink::transfer (const CallID& id, const std::string& to) {
+SIPVoIPLink::transfer (const CallID& id, const std::string& to)
+{
 
     SIPCall *call;
     std::string tmp_to;
@@ -1223,7 +1247,8 @@ SIPVoIPLink::transfer (const CallID& id, const std::string& to) {
     return true;
 }
 
-bool SIPVoIPLink::transferStep2 (SIPCall* call) {
+bool SIPVoIPLink::transferStep2 (SIPCall* call)
+{
 
     // TODO is this the best way to proceed?
     Manager::instance().peerHungupCall (call->getCallId());
@@ -1234,7 +1259,8 @@ bool SIPVoIPLink::transferStep2 (SIPCall* call) {
 }
 
 bool
-SIPVoIPLink::refuse (const CallID& id) {
+SIPVoIPLink::refuse (const CallID& id)
+{
     SIPCall *call;
     pj_status_t status;
     pjsip_tx_data *tdata;
@@ -1278,7 +1304,8 @@ SIPVoIPLink::refuse (const CallID& id) {
 
 
 std::string
-SIPVoIPLink::getCurrentCodecName() {
+SIPVoIPLink::getCurrentCodecName()
+{
 
     SIPCall *call;
     AudioCodec *ac = NULL;
@@ -1296,7 +1323,8 @@ SIPVoIPLink::getCurrentCodecName() {
 }
 
 bool
-SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code) {
+SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code)
+{
     SIPCall *call = getSIPCall (id);
 
     if (!call) {
@@ -1328,7 +1356,8 @@ SIPVoIPLink::carryingDTMFdigits (const CallID& id, char code) {
 
 
 bool
-SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code) {
+SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code)
+{
 
     int duration;
     const int body_len = 1000;
@@ -1385,7 +1414,8 @@ SIPVoIPLink::dtmfSipInfo (SIPCall *call, char code) {
 }
 
 bool
-SIPVoIPLink::dtmfOverRtp (SIPCall* call, char code) {
+SIPVoIPLink::dtmfOverRtp (SIPCall* call, char code)
+{
     call->getAudioRtp()->sendDtmfDigit (atoi (&code));
 
     return true;
@@ -1394,7 +1424,8 @@ SIPVoIPLink::dtmfOverRtp (SIPCall* call, char code) {
 
 
 bool
-SIPVoIPLink::SIPOutgoingInvite (SIPCall* call) {
+SIPVoIPLink::SIPOutgoingInvite (SIPCall* call)
+{
     // If no SIP proxy setting for direct call with only IP address
     if (!SIPStartCall (call, "")) {
         _debug ("! SIP Failure: call not started");
@@ -1405,7 +1436,8 @@ SIPVoIPLink::SIPOutgoingInvite (SIPCall* call) {
 }
 
 bool
-SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED) {
+SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED)
+{
     pj_status_t status;
     pjsip_inv_session *inv;
     pjsip_dialog *dialog;
@@ -1522,7 +1554,8 @@ SIPVoIPLink::SIPStartCall (SIPCall* call, const std::string& subject UNUSED) {
 }
 
 void
-SIPVoIPLink::SIPCallServerFailure (SIPCall *call) {
+SIPVoIPLink::SIPCallServerFailure (SIPCall *call)
+{
     if (call != 0) {
         _error ("UserAgent: Error: Server error!");
         CallID id = call->getCallId();
@@ -1536,7 +1569,8 @@ SIPVoIPLink::SIPCallServerFailure (SIPCall *call) {
 }
 
 void
-SIPVoIPLink::SIPCallClosed (SIPCall *call) {
+SIPVoIPLink::SIPCallClosed (SIPCall *call)
+{
     _info ("UserAgent: Closing call");
 
     if (!call) {
@@ -1559,7 +1593,8 @@ SIPVoIPLink::SIPCallClosed (SIPCall *call) {
 }
 
 void
-SIPVoIPLink::SIPCallReleased (SIPCall *call) {
+SIPVoIPLink::SIPCallReleased (SIPCall *call)
+{
     if (!call) {
         return;
     }
@@ -1578,7 +1613,8 @@ SIPVoIPLink::SIPCallReleased (SIPCall *call) {
 
 
 void
-SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata) {
+SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata)
+{
 
     _info ("UserAgent: SIP call answered");
 
@@ -1599,7 +1635,8 @@ SIPVoIPLink::SIPCallAnswered (SIPCall *call, pjsip_rx_data *rdata) {
 
 
 SIPCall*
-SIPVoIPLink::getSIPCall (const CallID& id) {
+SIPVoIPLink::getSIPCall (const CallID& id)
+{
     Call* call = getCall (id);
 
     if (call) {
@@ -1609,7 +1646,8 @@ SIPVoIPLink::getSIPCall (const CallID& id) {
     return NULL;
 }
 
-bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to) {
+bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to)
+{
     SIPCall *call;
     pj_status_t status;
     pjsip_dialog *dialog;
@@ -1791,7 +1829,8 @@ bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to) {
 ///////////////////////////////////////////////////////////////////////////////
 
 
-bool get_dns_server_addresses (std::vector<std::string> *servers) {
+bool get_dns_server_addresses (std::vector<std::string> *servers)
+{
 
     int server_count, i;
     std::vector<std::string> nameservers;
@@ -1818,7 +1857,8 @@ bool get_dns_server_addresses (std::vector<std::string> *servers) {
     return true;
 }
 
-pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_resolver **p_resv) {
+pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_resolver **p_resv)
+{
 
     pj_status_t status;
     pj_dns_resolver *resv;
@@ -1875,7 +1915,8 @@ pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_
 
 }
 
-bool SIPVoIPLink::pjsip_init() {
+bool SIPVoIPLink::pjsip_init()
+{
     pj_status_t status;
     pjsip_inv_callback inv_cb;
     pj_str_t accepted;
@@ -2024,7 +2065,8 @@ bool SIPVoIPLink::pjsip_init() {
     return PJ_SUCCESS;
 }
 
-pj_status_t SIPVoIPLink::stunServerResolve (AccountID id) {
+pj_status_t SIPVoIPLink::stunServerResolve (AccountID id)
+{
     pj_str_t stunServer;
     pj_uint16_t stunPort;
     pj_stun_sock_cb stun_sock_cb;
@@ -2082,7 +2124,8 @@ pj_status_t SIPVoIPLink::stunServerResolve (AccountID id) {
 
 
 
-bool SIPVoIPLink::acquireTransport (const AccountID& accountID) {
+bool SIPVoIPLink::acquireTransport (const AccountID& accountID)
+{
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (accountID));
 
@@ -2152,7 +2195,8 @@ bool SIPVoIPLink::acquireTransport (const AccountID& accountID) {
 }
 
 
-bool SIPVoIPLink::createDefaultSipUdpTransport() {
+bool SIPVoIPLink::createDefaultSipUdpTransport()
+{
 
     int errPjsip = 0;
 
@@ -2197,7 +2241,8 @@ bool SIPVoIPLink::createDefaultSipUdpTransport() {
 }
 
 
-void SIPVoIPLink::createDefaultSipTlsListener() {
+void SIPVoIPLink::createDefaultSipTlsListener()
+{
 
     SIPAccount * account = NULL;
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (IP2IP_PROFILE));
@@ -2208,7 +2253,8 @@ void SIPVoIPLink::createDefaultSipTlsListener() {
 }
 
 
-void SIPVoIPLink::createTlsListener (const AccountID& accountID) {
+void SIPVoIPLink::createTlsListener (const AccountID& accountID)
+{
 
     pjsip_tpfactory *tls;
     pj_sockaddr_in local_addr;
@@ -2271,7 +2317,8 @@ void SIPVoIPLink::createTlsListener (const AccountID& accountID) {
 }
 
 
-bool SIPVoIPLink::createSipTransport (AccountID id) {
+bool SIPVoIPLink::createSipTransport (AccountID id)
+{
 
     SIPAccount* account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount (id));
 
@@ -2331,7 +2378,8 @@ bool SIPVoIPLink::createSipTransport (AccountID id) {
 
 
 
-bool SIPVoIPLink::addTransportToMap (std::string key, pjsip_transport* transport) {
+bool SIPVoIPLink::addTransportToMap (std::string key, pjsip_transport* transport)
+{
 
     SipTransportMap::iterator iter_transport;
     iter_transport = _transportMap.find (key);
@@ -2349,7 +2397,8 @@ bool SIPVoIPLink::addTransportToMap (std::string key, pjsip_transport* transport
 }
 
 
-int SIPVoIPLink::createUdpTransport (AccountID id) {
+int SIPVoIPLink::createUdpTransport (AccountID id)
+{
 
     pj_status_t status;
     pj_sockaddr_in bound_addr;
@@ -2467,7 +2516,8 @@ int SIPVoIPLink::createUdpTransport (AccountID id) {
     return PJ_SUCCESS;
 }
 
-std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_transport *transport) {
+std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_transport *transport)
+{
     pj_str_t localAddress;
     pjsip_transport_type_e transportType;
     pjsip_tpselector *tp_sel;
@@ -2555,7 +2605,8 @@ std::string SIPVoIPLink::findLocalAddressFromUri (const std::string& uri, pjsip_
 
 
 
-pj_status_t SIPVoIPLink::init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel) {
+pj_status_t SIPVoIPLink::init_transport_selector (pjsip_transport *transport, pjsip_tpselector **tp_sel)
+{
     pjsip_tpselector *tp;
 
     if (transport != NULL) {
@@ -2571,7 +2622,8 @@ pj_status_t SIPVoIPLink::init_transport_selector (pjsip_transport *transport, pj
     return !PJ_SUCCESS;
 }
 
-int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *transport) {
+int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *transport)
+{
     pj_str_t localAddress;
     pjsip_transport_type_e transportType;
     int port;
@@ -2650,7 +2702,8 @@ int SIPVoIPLink::findLocalPortFromUri (const std::string& uri, pjsip_transport *
 }
 
 
-pj_status_t SIPVoIPLink::createTlsTransport (const AccountID& accountID, std::string remoteAddr) {
+pj_status_t SIPVoIPLink::createTlsTransport (const AccountID& accountID, std::string remoteAddr)
+{
     pj_status_t success;
 
     _debug ("Create TLS transport for account %s\n", accountID.c_str());
@@ -2687,7 +2740,8 @@ pj_status_t SIPVoIPLink::createTlsTransport (const AccountID& accountID, std::st
     return success;
 }
 
-pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id) {
+pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id)
+{
     pj_sockaddr_in boundAddr;
     pjsip_host_port a_name;
     pj_status_t status;
@@ -2799,7 +2853,8 @@ pj_status_t SIPVoIPLink::createAlternateUdpTransport (AccountID id) {
 }
 
 
-void SIPVoIPLink::shutdownSipTransport (const AccountID& accountID) {
+void SIPVoIPLink::shutdownSipTransport (const AccountID& accountID)
+{
 
     _debug ("UserAgent: Shutdown Sip Transport");
 
@@ -2827,7 +2882,8 @@ void SIPVoIPLink::shutdownSipTransport (const AccountID& accountID) {
 
 
 
-bool SIPVoIPLink::loadSIPLocalIP (std::string *addr) {
+bool SIPVoIPLink::loadSIPLocalIP (std::string *addr)
+{
 
     bool returnValue = true;
     std::string localAddress = "127.0.0.1";
@@ -2847,7 +2903,8 @@ bool SIPVoIPLink::loadSIPLocalIP (std::string *addr) {
     return returnValue;
 }
 
-void SIPVoIPLink::busy_sleep (unsigned msec) {
+void SIPVoIPLink::busy_sleep (unsigned msec)
+{
 
 #if defined(PJ_SYMBIAN) && PJ_SYMBIAN != 0
     /* Ideally we shouldn't call pj_thread_sleep() and rather
@@ -2874,7 +2931,8 @@ void SIPVoIPLink::busy_sleep (unsigned msec) {
 #endif
 }
 
-bool SIPVoIPLink::pjsip_shutdown (void) {
+bool SIPVoIPLink::pjsip_shutdown (void)
+{
     if (_endpt) {
         _debug ("UserAgent: Shutting down...");
         busy_sleep (1000);
@@ -2908,11 +2966,13 @@ bool SIPVoIPLink::pjsip_shutdown (void) {
     return true;
 }
 
-int getModId() {
+int getModId()
+{
     return _mod_ua.id;
 }
 
-static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr) {
+static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
+{
 
     struct result * result = (struct result*) token;
 
@@ -2923,7 +2983,8 @@ static void dns_cb (pj_status_t status, void *token, const struct pjsip_server_a
     }
 }
 
-void set_voicemail_info (AccountID account, pjsip_msg_body *body) {
+void set_voicemail_info (AccountID account, pjsip_msg_body *body)
+{
 
     int voicemail = 0, pos_begin, pos_end;
     std::string voice_str = "Voice-Message: ";
@@ -2958,7 +3019,8 @@ void set_voicemail_info (AccountID account, pjsip_msg_body *body) {
         Manager::instance().startVoiceMessageNotification (account, voicemail);
 }
 
-void SIPVoIPLink::handle_reinvite (SIPCall *call) {
+void SIPVoIPLink::handle_reinvite (SIPCall *call)
+{
 
     _debug ("UserAgent: Handle reinvite");
     /*
@@ -2981,7 +3043,8 @@ void SIPVoIPLink::handle_reinvite (SIPCall *call) {
 }
 
 // This callback is called when the invite session state has changed
-void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e) {
+void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e)
+{
     _debug ("UserAgent: Call state changed to %s", invitationStateMap[inv->state]);
 
     pjsip_rx_data *rdata;
@@ -3158,7 +3221,8 @@ void call_on_state_changed (pjsip_inv_session *inv, pjsip_event *e) {
 }
 
 // This callback is called after SDP offer/answer session has completed.
-void call_on_media_update (pjsip_inv_session *inv, pj_status_t status) {
+void call_on_media_update (pjsip_inv_session *inv, pj_status_t status)
+{
     _debug ("UserAgent: Call media update");
 
     const pjmedia_sdp_session *local_sdp;
@@ -3301,10 +3365,12 @@ void call_on_media_update (pjsip_inv_session *inv, pj_status_t status) {
 
 }
 
-void call_on_forked (pjsip_inv_session *inv, pjsip_event *e) {
+void call_on_forked (pjsip_inv_session *inv, pjsip_event *e)
+{
 }
 
-void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e) {
+void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e)
+{
     assert (tsx);
 
     _debug ("UserAgent: Transaction changed to state %s", transactionStateMap[tsx->state]);
@@ -3381,7 +3447,8 @@ void call_on_tsx_changed (pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_
     }
 }
 
-void regc_cb (struct pjsip_regc_cbparam *param) {
+void regc_cb (struct pjsip_regc_cbparam *param)
+{
     SIPAccount * account = NULL;
     account = static_cast<SIPAccount *> (param->token);
 
@@ -3480,7 +3547,8 @@ void regc_cb (struct pjsip_regc_cbparam *param) {
 
 // Optional function to be called to process incoming request message.
 pj_bool_t
-mod_on_rx_request (pjsip_rx_data *rdata) {
+mod_on_rx_request (pjsip_rx_data *rdata)
+{
     pj_status_t status;
     pj_str_t reason;
     unsigned options = 0;
@@ -3809,7 +3877,8 @@ mod_on_rx_request (pjsip_rx_data *rdata) {
 
 }
 
-pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata) {
+pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata)
+{
     _info ("UserAgent: Transaction response using transport: %s %s (refcnt=%d)",
            rdata->tp_info.transport->obj_name,
            rdata->tp_info.transport->info,
@@ -3838,7 +3907,8 @@ pj_bool_t mod_on_rx_response (pjsip_rx_data *rdata) {
     return PJ_SUCCESS;
 }
 
-static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata) {
+static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata)
+{
 
     pjsip_tx_data *tdata;
 
@@ -3848,7 +3918,8 @@ static void sendAck (pjsip_dialog *dlg, pjsip_rx_data *rdata) {
     pjsip_dlg_send_request (dlg, tdata,-1, NULL);
 }
 
-void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata) {
+void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata)
+{
 
     pj_status_t status;
     pjsip_tx_data *tdata;
@@ -4069,7 +4140,8 @@ void onCallTransfered (pjsip_inv_session *inv, pjsip_rx_data *rdata) {
 
 
 
-void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event) {
+void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event)
+{
 
 
     PJ_UNUSED_ARG (event);
@@ -4205,7 +4277,8 @@ void xfer_func_cb (pjsip_evsub *sub, pjsip_event *event) {
 }
 
 
-void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event) {
+void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event)
+{
 
 
     PJ_UNUSED_ARG (event);
@@ -4231,7 +4304,8 @@ void xfer_svr_cb (pjsip_evsub *sub, pjsip_event *event) {
     }
 }
 
-void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer) {
+void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
+{
     _info ("UserAgent: Received SDP offer");
 
 
@@ -4263,7 +4337,8 @@ void on_rx_offer (pjsip_inv_session *inv, const pjmedia_sdp_session *offer) {
 
 }
 
-void on_create_offer (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer) {
+void on_create_offer (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
+{
     _info ("UserAgent: Create new SDP offer");
 
     /* Retrieve the call information */
@@ -4306,7 +4381,8 @@ void on_create_offer (pjsip_inv_session *inv, pjmedia_sdp_session **p_offer) {
 }
 
 
-void handle_incoming_options (pjsip_rx_data *rdata) {
+void handle_incoming_options (pjsip_rx_data *rdata)
+{
 
 
     pjsip_tx_data *tdata;
@@ -4362,7 +4438,8 @@ void handle_incoming_options (pjsip_rx_data *rdata) {
 /*****************************************************************************************************************/
 
 
-bool setCallAudioLocal (SIPCall* call, std::string localIP) {
+bool setCallAudioLocal (SIPCall* call, std::string localIP)
+{
     SIPAccount *account = NULL;
 
     if (call) {
@@ -4396,7 +4473,8 @@ bool setCallAudioLocal (SIPCall* call, std::string localIP) {
     return false;
 }
 
-std::string fetch_header_value (pjsip_msg *msg, std::string field) {
+std::string fetch_header_value (pjsip_msg *msg, std::string field)
+{
 
 
     pj_str_t name;
@@ -4426,7 +4504,8 @@ std::string fetch_header_value (pjsip_msg *msg, std::string field) {
     return url;
 }
 
-std::vector<std::string> SIPVoIPLink::getAllIpInterface (void) {
+std::vector<std::string> SIPVoIPLink::getAllIpInterface (void)
+{
     pj_sockaddr addrList[16];
     unsigned int addrCnt = PJ_ARRAY_SIZE (addrList);
 
@@ -4454,7 +4533,8 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterface (void) {
 }
 
 
-int get_iface_list (struct ifconf *ifconf) {
+int get_iface_list (struct ifconf *ifconf)
+{
     int sock, rval;
 
     if ( (sock = socket (AF_INET,SOCK_STREAM,0)) < 0)
@@ -4470,7 +4550,8 @@ int get_iface_list (struct ifconf *ifconf) {
 }
 
 
-std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void) {
+std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void)
+{
     std::vector<std::string> ifaceList;
 
     static struct ifreq ifreqs[20];
@@ -4501,19 +4582,22 @@ std::vector<std::string> SIPVoIPLink::getAllIpInterfaceByName (void) {
 }
 
 
-pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status) {
+pj_bool_t stun_sock_on_status (pj_stun_sock *stun_sock, pj_stun_sock_op op, pj_status_t status)
+{
     if (status == PJ_SUCCESS)
         return PJ_TRUE;
     else
         return PJ_FALSE;
 }
 
-pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len) {
+pj_bool_t stun_sock_on_rx_data (pj_stun_sock *stun_sock, void *pkt, unsigned pkt_len, const pj_sockaddr_t *src_addr, unsigned addr_len)
+{
     return PJ_TRUE;
 }
 
 
-std::string getLocalAddressAssociatedToAccount (AccountID id) {
+std::string getLocalAddressAssociatedToAccount (AccountID id)
+{
     SIPAccount *account = NULL;
     pj_sockaddr_in local_addr_ipv4;
     pjsip_transport *tspt;

@@ -35,12 +35,14 @@
 
 using namespace std;
 
-namespace Logger {
+namespace Logger
+{
 
 bool consoleLog = false;
 bool debugMode = false;
 
-void log (const int level, const char* format, ...) {
+void log (const int level, const char* format, ...)
+{
     if (!debugMode && level == LOG_DEBUG)
         return;
 
@@ -88,11 +90,13 @@ void log (const int level, const char* format, ...) {
     }
 }
 
-void setConsoleLog (bool c) {
+void setConsoleLog (bool c)
+{
     Logger::consoleLog = c;
 }
 
-void setDebugMode (bool d) {
+void setDebugMode (bool d)
+{
     Logger::debugMode = d;
 }
 

@@ -40,15 +40,18 @@ using namespace std;
 
 const string NetworkManager::statesString[5] = {"unknown", "asleep", "connecting", "connected", "disconnected"};
 
-string NetworkManager::stateAsString (const uint32_t& state) {
+string NetworkManager::stateAsString (const uint32_t& state)
+{
     return statesString[state];
 }
 
-void NetworkManager::StateChanged (const uint32_t& state) {
+void NetworkManager::StateChanged (const uint32_t& state)
+{
     _warn ("Network state changed: %s", stateAsString (state).c_str());
 }
 
-void NetworkManager::PropertiesChanged (const std::map< std::string, ::DBus::Variant >& argin0) {
+void NetworkManager::PropertiesChanged (const std::map< std::string, ::DBus::Variant >& argin0)
+{
     const map< string, ::DBus::Variant >::const_iterator iter = argin0.begin();
 
     string message = iter->first;
@@ -81,7 +84,8 @@ void NetworkManager::PropertiesChanged (const std::map< std::string, ::DBus::Var
     Manager::instance().registerAccounts();
 }
 
-NetworkManager::NetworkManager (DBus::Connection& connection, const DBus::Path& path, const char* destination) : DBus::ObjectProxy (connection, path, destination) {
+NetworkManager::NetworkManager (DBus::Connection& connection, const DBus::Path& path, const char* destination) : DBus::ObjectProxy (connection, path, destination)
+{
 }
 
 #endif

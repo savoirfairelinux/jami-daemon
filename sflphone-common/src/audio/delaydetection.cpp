@@ -63,13 +63,15 @@ std::vector<double> irb (bandpassCoefs, bandpassCoefs + sizeof (bandpassCoefs) /
 
 FirFilter::FirFilter (std::vector<double> ir) : _length (ir.size()),
         _impulseResponse (ir),
-        _count (0) {
+        _count (0)
+{
     memset (_taps, 0, sizeof (double) *MAXFILTERSIZE);
 }
 
 FirFilter::~FirFilter() {}
 
-float FirFilter::getOutputSample (float inputSample) {
+float FirFilter::getOutputSample (float inputSample)
+{
     _taps[_count] = inputSample;
     double result = 0.0;
     int index = _count;
@@ -89,14 +91,16 @@ float FirFilter::getOutputSample (float inputSample) {
     return result;
 }
 
-void FirFilter::reset (void) {
+void FirFilter::reset (void)
+{
     for (int i = 0; i < _length; i++) {
         _impulseResponse[i] = 0.0;
     }
 }
 
 
-DelayDetection::DelayDetection() : _internalState (WaitForSpeaker), _decimationFilter (ird), _bandpassFilter (irb), _segmentSize (DELAY_BUFF_SIZE), _downsamplingFactor (8) {
+DelayDetection::DelayDetection() : _internalState (WaitForSpeaker), _decimationFilter (ird), _bandpassFilter (irb), _segmentSize (DELAY_BUFF_SIZE), _downsamplingFactor (8)
+{
     _micDownSize = WINDOW_SIZE / _downsamplingFactor;
     _spkrDownSize = DELAY_BUFF_SIZE / _downsamplingFactor;
 
@@ -112,7 +116,8 @@ DelayDetection::DelayDetection() : _internalState (WaitForSpeaker), _decimationF
 
 DelayDetection::~DelayDetection() {}
 
-void DelayDetection::reset() {
+void DelayDetection::reset()
+{
     _nbMicSampleStored = 0;
     _nbSpkrSampleStored = 0;
 
@@ -130,7 +135,8 @@ void DelayDetection::reset() {
     _internalState = WaitForSpeaker;
 }
 
-void DelayDetection::putData (SFLDataFormat *inputData, int nbBytes) {
+void DelayDetection::putData (SFLDataFormat *inputData, int nbBytes)
+{
 
     // Machine may already got a spkr and is waiting for mic or computing correlation
     if (_nbSpkrSampleStored == WINDOW_SIZE)
@@ -163,11 +169,13 @@ void DelayDetection::putData (SFLDataFormat *inputData, int nbBytes) {
 
 }
 
-int DelayDetection::getData (SFLDataFormat *outputData) {
+int DelayDetection::getData (SFLDataFormat *outputData)
+{
     return 0;
 }
 
-void DelayDetection::process (SFLDataFormat *inputData, int nbBytes) {
+void DelayDetection::process (SFLDataFormat *inputData, int nbBytes)
+{
 
     if (_internalState != WaitForMic)
         return;
@@ -228,13 +236,15 @@ void DelayDetection::process (SFLDataFormat *inputData, int nbBytes) {
     // reset();
 }
 
-int DelayDetection::process (SFLDataFormat *intputData, SFLDataFormat *outputData, int nbBytes) {
+int DelayDetection::process (SFLDataFormat *intputData, SFLDataFormat *outputData, int nbBytes)
+{
     return 0;
 }
 
 void DelayDetection::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {}
 
-void DelayDetection::crossCorrelate (float *ref, float *seg, float *res, int refSize, int segSize) {
+void DelayDetection::crossCorrelate (float *ref, float *seg, float *res, int refSize, int segSize)
+{
 
     _debug ("CrossCorrelate");
 
@@ -294,7 +304,8 @@ void DelayDetection::crossCorrelate (float *ref, float *seg, float *res, int ref
     }
 }
 
-double DelayDetection::correlate (float *sig1, float *sig2, short size) {
+double DelayDetection::correlate (float *sig1, float *sig2, short size)
+{
 
     short s = size;
 
@@ -307,7 +318,8 @@ double DelayDetection::correlate (float *sig1, float *sig2, short size) {
 }
 
 
-void DelayDetection::convertInt16ToFloat32 (SFLDataFormat *input, float *output, int nbSamples) {
+void DelayDetection::convertInt16ToFloat32 (SFLDataFormat *input, float *output, int nbSamples)
+{
 
     // factor is 1/(2^15), used to rescale the short int range to the
     // [-1.0 - 1.0] float range.
@@ -321,7 +333,8 @@ void DelayDetection::convertInt16ToFloat32 (SFLDataFormat *input, float *output,
 }
 
 
-void DelayDetection::downsampleData (float *input, float *output, int nbSamples, int factor) {
+void DelayDetection::downsampleData (float *input, float *output, int nbSamples, int factor)
+{
 
     /*
     float tmp[nbSamples];
@@ -369,7 +382,8 @@ void DelayDetection::downsampleData (float *input, float *output, int nbSamples,
 }
 
 
-void DelayDetection::bandpassFilter (float *input, int nbSamples) {
+void DelayDetection::bandpassFilter (float *input, int nbSamples)
+{
 
     for (int i = 0; i < nbSamples; i++) {
         input[i] = _bandpassFilter.getOutputSample (input[i]);
@@ -377,7 +391,8 @@ void DelayDetection::bandpassFilter (float *input, int nbSamples) {
 }
 
 
-int DelayDetection::getMaxIndex (float *data, int size) {
+int DelayDetection::getMaxIndex (float *data, int size)
+{
 
     float max = 0.0;
     int k;

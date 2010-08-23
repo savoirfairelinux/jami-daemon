@@ -40,13 +40,16 @@
 
 #include <assert.h>
 
-namespace sfl {
+namespace sfl
+{
 
-AudioRtpFactory::AudioRtpFactory() : _rtpSession (NULL) {
+AudioRtpFactory::AudioRtpFactory() : _rtpSession (NULL)
+{
 
 }
 
-AudioRtpFactory::AudioRtpFactory (SIPCall *ca) : _rtpSession (NULL) {
+AudioRtpFactory::AudioRtpFactory (SIPCall *ca) : _rtpSession (NULL)
+{
     assert (ca);
 
     try {
@@ -56,11 +59,13 @@ AudioRtpFactory::AudioRtpFactory (SIPCall *ca) : _rtpSession (NULL) {
     }
 }
 
-AudioRtpFactory::~AudioRtpFactory() {
+AudioRtpFactory::~AudioRtpFactory()
+{
     stop();
 }
 
-void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca) {
+void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca)
+{
     assert (ca);
 
     if (_rtpSession != NULL) {
@@ -85,7 +90,8 @@ void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca) {
     }
 }
 
-void AudioRtpFactory::initAudioRtpSession (SIPCall * ca) {
+void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
+{
     ost::MutexLock m (_audioRtpThreadMutex);
 
     _debug ("Srtp enable: %d ", _srtpEnabled);
@@ -127,7 +133,8 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca) {
     }
 }
 
-void AudioRtpFactory::start (AudioCodec* audiocodec) {
+void AudioRtpFactory::start (AudioCodec* audiocodec)
+{
     if (_rtpSession == NULL) {
         throw AudioRtpFactoryException ("RTP: Error: _rtpSession was null when trying to start audio thread");
     }
@@ -161,7 +168,8 @@ void AudioRtpFactory::start (AudioCodec* audiocodec) {
     }
 }
 
-void AudioRtpFactory::stop (void) {
+void AudioRtpFactory::stop (void)
+{
     ost::MutexLock mutex (_audioRtpThreadMutex);
     _info ("RTP: Stopping audio rtp session");
 
@@ -193,7 +201,8 @@ void AudioRtpFactory::stop (void) {
     }
 }
 
-void AudioRtpFactory::updateDestinationIpAddress (void) {
+void AudioRtpFactory::updateDestinationIpAddress (void)
+{
     _info ("RTP: Updating IP address");
 
     if (_rtpSession == NULL) {
@@ -216,7 +225,8 @@ void AudioRtpFactory::updateDestinationIpAddress (void) {
     }
 }
 
-sfl::AudioSymmetricRtpSession * AudioRtpFactory::getAudioSymetricRtpSession() {
+sfl::AudioSymmetricRtpSession * AudioRtpFactory::getAudioSymetricRtpSession()
+{
     if ( (_rtpSessionType == Symmetric) && (_rtpSessionType != NULL)) {
         return static_cast<AudioSymmetricRtpSession *> (_rtpSession);
     } else {
@@ -224,7 +234,8 @@ sfl::AudioSymmetricRtpSession * AudioRtpFactory::getAudioSymetricRtpSession() {
     }
 }
 
-sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession() {
+sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession()
+{
     if ( (_rtpSessionType == Zrtp) && (_rtpSessionType != NULL)) {
         return static_cast<AudioZrtpSession *> (_rtpSession);
     } else {
@@ -232,7 +243,8 @@ sfl::AudioZrtpSession * AudioRtpFactory::getAudioZrtpSession() {
     }
 }
 
-void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego) {
+void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego)
+{
     if (_rtpSession && _rtpSessionType && (_rtpSessionType == Sdes)) {
         static_cast<AudioSrtpSession *> (_rtpSession)->setRemoteCryptoInfo (nego);
     } else {
@@ -240,7 +252,8 @@ void AudioRtpFactory::setRemoteCryptoInfo (sfl::SdesNegotiator& nego) {
     }
 }
 
-void AudioRtpFactory::sendDtmfDigit (int digit) {
+void AudioRtpFactory::sendDtmfDigit (int digit)
+{
     switch (_rtpSessionType) {
 
         case Sdes:

@@ -51,21 +51,25 @@
 
 static jb_output_function_t warnf, errf, dbgf;
 
-void jb_setoutput (jb_output_function_t err, jb_output_function_t warn, jb_output_function_t dbg) {
+void jb_setoutput (jb_output_function_t err, jb_output_function_t warn, jb_output_function_t dbg)
+{
     errf = err;
     warnf = warn;
     dbgf = dbg;
 }
 
-static void increment_losspct (jitterbuf *jb) {
+static void increment_losspct (jitterbuf *jb)
+{
     jb->info.losspct = (100000 + 499 * jb->info.losspct) /500;
 }
 
-static void decrement_losspct (jitterbuf *jb) {
+static void decrement_losspct (jitterbuf *jb)
+{
     jb->info.losspct = (499 * jb->info.losspct) /500;
 }
 
-void jb_reset (jitterbuf *jb) {
+void jb_reset (jitterbuf *jb)
+{
     /* only save settings */
     jb_conf s = jb->info.conf;
     memset (jb, 0, sizeof (*jb));
@@ -76,7 +80,8 @@ void jb_reset (jitterbuf *jb) {
     jb->info.silence_begin_ts = -1;
 }
 
-jitterbuf * jb_new() {
+jitterbuf * jb_new()
+{
     jitterbuf *jb;
 
     if (! (jb = (jitterbuf *) malloc (sizeof (*jb))))
@@ -88,7 +93,8 @@ jitterbuf * jb_new() {
     return jb;
 }
 
-void jb_destroy (jitterbuf *jb) {
+void jb_destroy (jitterbuf *jb)
+{
     jb_frame *frame;
     jb_dbg2 ("jb_destroy(%x)\n", jb);
 
@@ -108,7 +114,8 @@ void jb_destroy (jitterbuf *jb) {
 
 
 #if 0
-static int longcmp (const void *a, const void *b) {
+static int longcmp (const void *a, const void *b)
+{
     return * (long *) a - * (long *) b;
 }
 #endif
@@ -117,7 +124,8 @@ static int longcmp (const void *a, const void *b) {
  	\note maybe later we can make the history buckets variable size, or something? */
 /* drop parameter determines whether we will drop outliers to minimize
  * delay */
-static int history_put (jitterbuf *jb, long ts, long now, long ms) {
+static int history_put (jitterbuf *jb, long ts, long now, long ms)
+{
     long delay = now - (ts - jb->info.resync_offset);
     long threshold = 2 * jb->info.jitter + jb->info.conf.resync_threshold;
     long kicked;
@@ -192,7 +200,8 @@ invalidate:
     return 0;
 }
 
-static void history_calc_maxbuf (jitterbuf *jb) {
+static void history_calc_maxbuf (jitterbuf *jb)
+{
     int i,j;
 
     if (jb->hist_ptr == 0)
@@ -272,7 +281,8 @@ static void history_calc_maxbuf (jitterbuf *jb) {
     jb->hist_maxbuf_valid = 1;
 }
 
-static void history_get (jitterbuf *jb) {
+static void history_get (jitterbuf *jb)
+{
     long max, min, jitter;
     int idx;
     int count;
@@ -311,7 +321,8 @@ static void history_get (jitterbuf *jb) {
 }
 
 /* returns 1 if frame was inserted into head of queue, 0 otherwise */
-static int queue_put (jitterbuf *jb, void *data, const enum jb_frame_type type, long ms, long ts) {
+static int queue_put (jitterbuf *jb, void *data, const enum jb_frame_type type, long ms, long ts)
+{
     jb_frame *frame;
     jb_frame *p;
     int head = 0;
@@ -372,21 +383,24 @@ static int queue_put (jitterbuf *jb, void *data, const enum jb_frame_type type, 
     return head;
 }
 
-static long queue_next (jitterbuf *jb) {
+static long queue_next (jitterbuf *jb)
+{
     if (jb->frames)
         return jb->frames->ts;
     else
         return -1;
 }
 
-static long queue_last (jitterbuf *jb) {
+static long queue_last (jitterbuf *jb)
+{
     if (jb->frames)
         return jb->frames->prev->ts;
     else
         return -1;
 }
 
-static jb_frame *_queue_get (jitterbuf *jb, long ts, int all) {
+static jb_frame *_queue_get (jitterbuf *jb, long ts, int all)
+{
     jb_frame *frame;
     frame = jb->frames;
 
@@ -420,16 +434,19 @@ static jb_frame *_queue_get (jitterbuf *jb, long ts, int all) {
     return NULL;
 }
 
-static jb_frame *queue_get (jitterbuf *jb, long ts) {
+static jb_frame *queue_get (jitterbuf *jb, long ts)
+{
     return _queue_get (jb,ts,0);
 }
 
-static jb_frame *queue_getall (jitterbuf *jb) {
+static jb_frame *queue_getall (jitterbuf *jb)
+{
     return _queue_get (jb,0,1);
 }
 
 /* some diagnostics */
-void jb_dbginfo (jitterbuf *jb) {
+void jb_dbginfo (jitterbuf *jb)
+{
 
     _debug ("\njb info: fin=%ld fout=%ld flate=%ld flost=%ld fdrop=%ld fcur=%ld\n",
             jb->info.frames_in, jb->info.frames_out, jb->info.frames_late, jb->info.frames_lost, jb->info.frames_dropped, jb->info.frames_cur);
@@ -453,7 +470,8 @@ void jb_dbginfo (jitterbuf *jb) {
 
 
 #ifdef DEEP_DEBUG
-static void jb_chkqueue (jitterbuf *jb) {
+static void jb_chkqueue (jitterbuf *jb)
+{
     int i=0;
     jb_frame *p = jb->frames;
 
@@ -471,7 +489,8 @@ static void jb_chkqueue (jitterbuf *jb) {
     } while (p->next != jb->frames);
 }
 
-static void jb_dbgqueue (jitterbuf *jb) {
+static void jb_dbgqueue (jitterbuf *jb)
+{
     int i=0;
     jb_frame *p = jb->frames;
 
@@ -491,7 +510,8 @@ static void jb_dbgqueue (jitterbuf *jb) {
 }
 #endif
 
-jb_return_code jb_put (jitterbuf *jb, void *data, const enum jb_frame_type type, long ms, long ts, long now) {
+jb_return_code jb_put (jitterbuf *jb, void *data, const enum jb_frame_type type, long ms, long ts, long now)
+{
     long numts;
 
     _debug ("jb_put(%p,%p,%ld,%ld,%ld)\n", jb, data, ms, ts, now);
@@ -536,7 +556,8 @@ jb_return_code jb_put (jitterbuf *jb, void *data, const enum jb_frame_type type,
 }
 
 
-static enum jb_return_code _jb_get (jitterbuf *jb, jb_frame *frameout, long now, long interpl) {
+static enum jb_return_code _jb_get (jitterbuf *jb, jb_frame *frameout, long now, long interpl)
+{
     jb_frame *frame;
     long diff;
     static int dbg_cnt = 0;
@@ -797,7 +818,8 @@ static enum jb_return_code _jb_get (jitterbuf *jb, jb_frame *frameout, long now,
     }
 }
 
-long jb_next (jitterbuf *jb) {
+long jb_next (jitterbuf *jb)
+{
     if (jb->info.silence_begin_ts) {
         if (jb->frames) {
             long next = queue_next (jb);
@@ -815,7 +837,8 @@ long jb_next (jitterbuf *jb) {
     }
 }
 
-enum jb_return_code jb_get (jitterbuf *jb, jb_frame *frameout, long now, long interpl) {
+enum jb_return_code jb_get (jitterbuf *jb, jb_frame *frameout, long now, long interpl)
+{
     _debug ("\n***** JB_GET *****\n\n");
 
     enum jb_return_code ret = _jb_get (jb, frameout, now, interpl);
@@ -835,7 +858,8 @@ enum jb_return_code jb_get (jitterbuf *jb, jb_frame *frameout, long now, long in
     return ret;
 }
 
-enum jb_return_code jb_getall (jitterbuf *jb, jb_frame *frameout) {
+enum jb_return_code jb_getall (jitterbuf *jb, jb_frame *frameout)
+{
     jb_frame *frame;
     frame = queue_getall (jb);
 
@@ -848,7 +872,8 @@ enum jb_return_code jb_getall (jitterbuf *jb, jb_frame *frameout) {
 }
 
 
-enum jb_return_code jb_getinfo (jitterbuf *jb, jb_info *stats) {
+enum jb_return_code jb_getinfo (jitterbuf *jb, jb_info *stats)
+{
 
     history_get (jb);
 
@@ -857,7 +882,8 @@ enum jb_return_code jb_getinfo (jitterbuf *jb, jb_info *stats) {
     return JB_OK;
 }
 
-enum jb_return_code jb_setconf (jitterbuf *jb, jb_conf *conf) {
+enum jb_return_code jb_setconf (jitterbuf *jb, jb_conf *conf)
+{
     /* take selected settings from the struct */
 
     jb->info.conf.max_jitterbuf = conf->max_jitterbuf;

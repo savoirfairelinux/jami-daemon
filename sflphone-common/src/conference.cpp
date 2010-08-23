@@ -38,7 +38,8 @@
 
 int Conference::count = 0;
 
-Conference::Conference() {
+Conference::Conference()
+{
     _nbParticipant = 0;
 
     ++count;
@@ -59,24 +60,28 @@ Conference::Conference() {
 }
 
 
-Conference::~Conference() {
+Conference::~Conference()
+{
 
 
 
 }
 
 
-int Conference::getState() {
+int Conference::getState()
+{
     return _confState;
 }
 
 
-void Conference::setState (ConferenceState state) {
+void Conference::setState (ConferenceState state)
+{
     _confState = state;
 }
 
 
-void Conference::add (CallID participant_id) {
+void Conference::add (CallID participant_id)
+{
 
     _debug ("Conference:: add participant %s", participant_id.c_str());
 
@@ -86,7 +91,8 @@ void Conference::add (CallID participant_id) {
 }
 
 
-void Conference::remove (CallID participant_id) {
+void Conference::remove (CallID participant_id)
+{
 
 
     _debug ("Conference::remove participant %s", participant_id.c_str());
@@ -97,7 +103,8 @@ void Conference::remove (CallID participant_id) {
 
 }
 
-void Conference::bindParticipant (CallID participant_id) {
+void Conference::bindParticipant (CallID participant_id)
+{
 
     if (_nbParticipant >= 1) {
         ParticipantSet::iterator iter = _participants.begin();
@@ -119,7 +126,8 @@ void Conference::bindParticipant (CallID participant_id) {
 }
 
 
-std::string Conference::getStateStr() {
+std::string Conference::getStateStr()
+{
 
     std::string state_str;
 
@@ -145,13 +153,15 @@ std::string Conference::getStateStr() {
 }
 
 
-ParticipantSet Conference::getParticipantList() {
+ParticipantSet Conference::getParticipantList()
+{
     return _participants;
 }
 
 
 
-bool Conference::setRecording() {
+bool Conference::setRecording()
+{
 
     bool recordStatus = Recordable::recAudio.isRecording();
 

@@ -65,7 +65,8 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
 }
 
 // Destructor
-AlsaLayer::~AlsaLayer (void) {
+AlsaLayer::~AlsaLayer (void)
+{
     _debug ("Audio: Destroy of ALSA layer");
     closeLayer();
 
@@ -76,7 +77,8 @@ AlsaLayer::~AlsaLayer (void) {
 }
 
 bool
-AlsaLayer::closeLayer() {
+AlsaLayer::closeLayer()
+{
     _debugAlsa ("Audio: Close ALSA streams");
 
     try {
@@ -103,7 +105,8 @@ AlsaLayer::closeLayer() {
 }
 
 bool
-AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin) {
+AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate, int frameSize, int stream , std::string plugin)
+{
     /* Close the devices before open it */
     if (stream == SFL_PCM_BOTH && is_capture_open() == true && is_playback_open() == true) {
         closeCaptureStream();
@@ -146,7 +149,8 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int indexRing, int sampleRate,
 }
 
 void
-AlsaLayer::startStream (void) {
+AlsaLayer::startStream (void)
+{
     _debug ("Audio: Start stream");
 
     if (_audiofilter)
@@ -209,7 +213,8 @@ AlsaLayer::startStream (void) {
 }
 
 void
-AlsaLayer::stopStream (void) {
+AlsaLayer::stopStream (void)
+{
     _debug ("Audio: Stop stream");
 
     try {
@@ -238,7 +243,8 @@ AlsaLayer::stopStream (void) {
 }
 
 
-bool AlsaLayer::isCaptureActive (void) {
+bool AlsaLayer::isCaptureActive (void)
+{
     ost::MutexLock guard (_mutex);
 
     if (_CaptureHandle)
@@ -248,7 +254,8 @@ bool AlsaLayer::isCaptureActive (void) {
 }
 
 
-void AlsaLayer::setEchoCancelState (bool state) {
+void AlsaLayer::setEchoCancelState (bool state)
+{
     // if a stream already running
     if (AudioLayer::_echoCancel)
         _echoCancel->setEchoCancelState (state);
@@ -256,7 +263,8 @@ void AlsaLayer::setEchoCancelState (bool state) {
     AudioLayer::_echocancelstate = state;
 }
 
-void AlsaLayer::setNoiseSuppressState (bool state) {
+void AlsaLayer::setNoiseSuppressState (bool state)
+{
     // if a stream already opened
     if (AudioLayer::_echoCancel)
         _echoCancel->setNoiseSuppressState (state);
@@ -270,7 +278,8 @@ void AlsaLayer::setNoiseSuppressState (bool state) {
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-void AlsaLayer::stopCaptureStream (void) {
+void AlsaLayer::stopCaptureStream (void)
+{
     int err;
 
     if (_CaptureHandle) {
@@ -284,7 +293,8 @@ void AlsaLayer::stopCaptureStream (void) {
     }
 }
 
-void AlsaLayer::closeCaptureStream (void) {
+void AlsaLayer::closeCaptureStream (void)
+{
     int err;
 
     if (is_capture_prepared() == true && is_capture_running() == true)
@@ -300,7 +310,8 @@ void AlsaLayer::closeCaptureStream (void) {
     }
 }
 
-void AlsaLayer::startCaptureStream (void) {
+void AlsaLayer::startCaptureStream (void)
+{
     int err;
 
     if (_CaptureHandle && !is_capture_running()) {
@@ -313,7 +324,8 @@ void AlsaLayer::startCaptureStream (void) {
     }
 }
 
-void AlsaLayer::prepareCaptureStream (void) {
+void AlsaLayer::prepareCaptureStream (void)
+{
     int err;
 
     if (is_capture_open() && !is_capture_prepared()) {
@@ -326,7 +338,8 @@ void AlsaLayer::prepareCaptureStream (void) {
     }
 }
 
-void AlsaLayer::stopPlaybackStream (void) {
+void AlsaLayer::stopPlaybackStream (void)
+{
     int err;
 
     if (_RingtoneHandle && is_playback_running()) {
@@ -348,7 +361,8 @@ void AlsaLayer::stopPlaybackStream (void) {
 }
 
 
-void AlsaLayer::closePlaybackStream (void) {
+void AlsaLayer::closePlaybackStream (void)
+{
     int err;
 
     if (is_playback_prepared() == true && is_playback_running() == true)
@@ -373,7 +387,8 @@ void AlsaLayer::closePlaybackStream (void) {
 
 }
 
-void AlsaLayer::startPlaybackStream (void) {
+void AlsaLayer::startPlaybackStream (void)
+{
     int err;
 
     if (_PlaybackHandle && !is_playback_running()) {
@@ -386,7 +401,8 @@ void AlsaLayer::startPlaybackStream (void) {
     }
 }
 
-void AlsaLayer::preparePlaybackStream (void) {
+void AlsaLayer::preparePlaybackStream (void)
+{
     int err;
 
     if (is_playback_open() && !is_playback_prepared()) {
@@ -428,7 +444,8 @@ void AlsaLayer::recoverPlaybackStream(int error)
 */
 
 
-bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate) {
+bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate)
+{
 
     snd_pcm_hw_params_t *hwparams = NULL;
     snd_pcm_sw_params_t *swparams = NULL;
@@ -553,7 +570,8 @@ bool AlsaLayer::alsa_set_params (snd_pcm_t *pcm_handle, int type, int rate) {
 
 
 bool
-AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r, int flag) {
+AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r, int flag)
+{
 
     int err;
 
@@ -623,7 +641,8 @@ AlsaLayer::open_device (std::string pcm_p, std::string pcm_c, std::string pcm_r,
 
 //TODO	first frame causes broken pipe (underrun) because not enough data are send --> make the handle wait to be ready
 int
-AlsaLayer::write (void* buffer, int length, snd_pcm_t * handle) {
+AlsaLayer::write (void* buffer, int length, snd_pcm_t * handle)
+{
     if (_trigger_request == true) {
         _trigger_request = false;
         startPlaybackStream ();
@@ -664,7 +683,8 @@ AlsaLayer::write (void* buffer, int length, snd_pcm_t * handle) {
 }
 
 int
-AlsaLayer::read (void* buffer, int toCopy) {
+AlsaLayer::read (void* buffer, int toCopy)
+{
     //ost::MutexLock lock( _mutex );
 
     int samples;
@@ -709,7 +729,8 @@ AlsaLayer::read (void* buffer, int toCopy) {
 }
 
 void
-AlsaLayer::handle_xrun_capture (void) {
+AlsaLayer::handle_xrun_capture (void)
+{
     _debugAlsa ("Audio: Handle xrun capture");
 
     snd_pcm_status_t* status;
@@ -728,7 +749,8 @@ AlsaLayer::handle_xrun_capture (void) {
 }
 
 void
-AlsaLayer::handle_xrun_playback (snd_pcm_t *handle) {
+AlsaLayer::handle_xrun_playback (snd_pcm_t *handle)
+{
     _debugAlsa ("Audio: Handle xrun playback");
 
     int state;
@@ -752,7 +774,8 @@ AlsaLayer::handle_xrun_playback (snd_pcm_t *handle) {
 }
 
 std::string
-AlsaLayer::buildDeviceTopo (std::string plugin, int card, int subdevice) {
+AlsaLayer::buildDeviceTopo (std::string plugin, int card, int subdevice)
+{
     std::stringstream ss,ss1;
     std::string pcm = plugin;
 
@@ -777,7 +800,8 @@ AlsaLayer::buildDeviceTopo (std::string plugin, int card, int subdevice) {
 }
 
 std::vector<std::string>
-AlsaLayer::getSoundCardsInfo (int stream) {
+AlsaLayer::getSoundCardsInfo (int stream)
+{
     std::vector<std::string> cards_id;
     HwIDPair p;
 
@@ -837,7 +861,8 @@ AlsaLayer::getSoundCardsInfo (int stream) {
 
 
 bool
-AlsaLayer::soundCardIndexExist (int card , int stream) {
+AlsaLayer::soundCardIndexExist (int card , int stream)
+{
     snd_ctl_t* handle;
     snd_pcm_info_t *pcminfo;
     snd_pcm_info_alloca (&pcminfo);
@@ -857,7 +882,8 @@ AlsaLayer::soundCardIndexExist (int card , int stream) {
 }
 
 int
-AlsaLayer::soundCardGetIndex (std::string description) {
+AlsaLayer::soundCardGetIndex (std::string description)
+{
     unsigned int i;
 
     for (i = 0 ; i < IDSoundCards.size() ; i++) {
@@ -871,7 +897,8 @@ AlsaLayer::soundCardGetIndex (std::string description) {
     return 0;
 }
 
-void AlsaLayer::audioCallback (void) {
+void AlsaLayer::audioCallback (void)
+{
 
     int toGet, urgentAvailBytes, normalAvailBytes, maxBytes;
     unsigned short spkrVolume, micVolume;
@@ -1117,7 +1144,8 @@ void AlsaLayer::audioCallback (void) {
     }
 }
 
-void* AlsaLayer::adjustVolume (void* buffer , int len, int stream) {
+void* AlsaLayer::adjustVolume (void* buffer , int len, int stream)
+{
     int vol, i, size;
     SFLDataFormat *src = NULL;
 

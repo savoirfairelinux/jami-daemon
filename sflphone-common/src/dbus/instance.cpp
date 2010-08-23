@@ -34,20 +34,23 @@
 const char* Instance::SERVER_PATH = "/org/sflphone/SFLphone/Instance";
 
 Instance::Instance (DBus::Connection& connection)
-        : DBus::ObjectAdaptor (connection, SERVER_PATH) {
+        : DBus::ObjectAdaptor (connection, SERVER_PATH)
+{
     count = 0;
 }
 
 void
 Instance::Register (const int32_t& pid UNUSED,
-                    const std::string& name UNUSED) {
+                    const std::string& name UNUSED)
+{
     _debug ("Instance::register received");
     count++;
 }
 
 
 void
-Instance::Unregister (const int32_t& pid UNUSED) {
+Instance::Unregister (const int32_t& pid UNUSED)
+{
     _debug ("Instance::unregister received");
     count --;
 
@@ -62,7 +65,8 @@ Instance::Unregister (const int32_t& pid UNUSED) {
 }
 
 int32_t
-Instance::getRegistrationCount (void) {
+Instance::getRegistrationCount (void)
+{
 
     return count;
 
