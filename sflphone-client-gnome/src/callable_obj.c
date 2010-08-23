@@ -177,10 +177,11 @@ void threaded_clock_incrementer (void *pc)
             calltree_update_clock();
         }
 
+        // gdk_flush();
         gdk_threads_leave ();
 
 
-        usleep (10000);
+        usleep (1000000);
 
     }
 

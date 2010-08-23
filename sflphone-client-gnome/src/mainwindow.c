@@ -61,7 +61,8 @@ GtkWidget * filterEntry = NULL;
 PidginScrollBook *embedded_error_notebook;
 
 gchar *status_current_message = NULL;
-pthread_mutex_t statusbar_message_mutex;
+// pthread_mutex_t statusbar_message_mutex;
+GMutex *gmutex;
 
 /**
  * Handle main window resizing
@@ -96,7 +97,8 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
         sflphone_quit ();
     }
 
-    pthread_mutex_destroy (&statusbar_message_mutex);
+    // pthread_mutex_destroy (&statusbar_message_mutex);
+    g_mutex_free (gmutex);
     return TRUE;
 }
 
@@ -294,7 +296,8 @@ create_main_window ()
     /* don't show waiting layer */
     gtk_widget_hide (waitingLayer);
 
-    pthread_mutex_init (&statusbar_message_mutex, NULL);
+    // pthread_mutex_init (&statusbar_message_mutex, NULL);
+    gmutex = g_mutex_new();
 
     // Configuration wizard
     if (account_list_get_size () == 1) {
@@ -407,7 +410,8 @@ statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_
     // The actual message to be push in the statusbar
     gchar *message_to_display;
 
-    pthread_mutex_lock (&statusbar_message_mutex);
+    g_mutex_lock (gmutex);
+    // pthread_mutex_lock (&statusbar_message_mutex);
 
     g_free (status_current_message);
     // store the left hand message so that it can be reused in case of clock update
@@ -425,7 +429,8 @@ statusbar_push_message (const gchar *left_hand_message, const gchar *right_hand_
 
     g_free (message_to_display);
 
-    pthread_mutex_unlock (&statusbar_message_mutex);
+    // pthread_mutex_unlock (&statusbar_message_mutex);
+    g_mutex_unlock (gmutex);
 }
 
 void
@@ -445,9 +450,11 @@ statusbar_update_clock (gchar *msg)
     }
 
 
-    pthread_mutex_lock (&statusbar_message_mutex);
+    // pthread_mutex_lock (&statusbar_message_mutex);
+    g_mutex_lock (gmutex);
     message = g_strdup (status_current_message);
-    pthread_mutex_unlock (&statusbar_message_mutex);
+    // pthread_mutex_unlock (&statusbar_message_mutex);
+    g_mutex_unlock (gmutex);
 
     if (message) {
         statusbar_pop_message (__MSG_ACCOUNT_DEFAULT);
