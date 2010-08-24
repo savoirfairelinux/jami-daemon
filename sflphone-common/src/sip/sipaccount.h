@@ -806,17 +806,7 @@ class SIPAccount : public Account
         std::string _tlsNegotiationTimeoutMsec;
 
         std::string _stunServer;
-
-        bool _tlsEnabled;
         bool _stunEnabled;
-
-        // std::string _routeset;
-
-        // std::string _realm;
-        // std::string _tlsListenerPort;
-        // std::string _routeSet;
-        // std::string _dtmfType;
-
 
         bool _srtpEnabled;
         std::string _srtpKeyExchange;

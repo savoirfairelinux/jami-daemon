@@ -99,7 +99,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _authenticationUsername ("")
         , _tlsSetting (NULL)
         , _dtmfType (OVERRTP)
-        , _tlsEnable ("")
+        , _tlsEnable ("false")
         , _tlsPortStr (DEFAULT_SIP_TLS_PORT)
         , _tlsCaListFile ("")
         , _tlsCertificateFile ("")
@@ -114,7 +114,6 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _tlsNegotiationTimeoutSec ("2")
         , _tlsNegotiationTimeoutMsec ("0")
         , _stunServer (DFT_STUN_SERVER)
-        , _tlsEnabled (false)
         , _stunEnabled (false)
         , _srtpEnabled (false)
         , _srtpKeyExchange ("sdes")
@@ -1025,7 +1024,8 @@ int SIPAccount::registerVoIPLink()
     initCredential();
 
     // Init TLS settings if the user wants to use TLS
-    if (_tlsEnabled) {
+    if (_tlsEnable == "true") {
+        _debug ("Account: TLS is ennabled for accounr %s", getAccountID().c_str());
         _transportType = PJSIP_TRANSPORT_TLS;
         initTlsConfiguration();
     }
@@ -1093,6 +1093,8 @@ pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum (const std::string& method)
 
 void SIPAccount::initTlsConfiguration (void)
 {
+    _debug ("SipAccount: Init TLS configuration");
+
     /*
      * Initialize structure to zero
      */
@@ -1156,7 +1158,7 @@ void SIPAccount::loadConfig()
     if (_registrationExpire.empty())
         _registrationExpire = DFT_EXPIRE_VALUE;
 
-    if (_tlsEnabled) {
+    if (_tlsEnable == "true") {
         initTlsConfiguration();
         _transportType = PJSIP_TRANSPORT_TLS;
     } else {
