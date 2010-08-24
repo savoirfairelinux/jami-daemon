@@ -231,6 +231,11 @@ bool ManagerImpl::outgoingCall (const std::string& account_id,
     Call::CallConfiguration callConfig;
     SIPVoIPLink *siplink;
 
+    if (call_id.empty()) {
+        _debug ("Manager: New outgoing call abbort, missing callid");
+        return false;
+    }
+
     _debug ("Manager: New outgoing call %s to %s", call_id.c_str(), to.c_str());
 
     CallID current_call_id = getCurrentCallId();
@@ -2577,7 +2582,12 @@ bool ManagerImpl::isRecording (const CallID& id)
     AccountID accountid = getAccountFromCall (id);
     Recordable* rec = (Recordable*) getAccountLink (accountid)->getCall (id);
 
-    return rec->isRecording();
+    bool ret = false;
+
+    if (rec)
+        ret = rec->isRecording();
+
+    return ret;
 }
 
 
