@@ -2557,9 +2557,11 @@ void ManagerImpl::setRecordingCall (const CallID& id)
     Recordable* rec = NULL;
 
     if (!isConference (id)) {
+        _debug ("Manager: Set recording for call %s", id.c_str());
         AccountID accountid = getAccountFromCall (id);
         rec = (Recordable *) getAccountLink (accountid)->getCall (id);
     } else {
+        _debug ("Manager: Ser recording for conference %s", id.c_str());
         ConferenceMap::iterator it = _conferencemap.find (id);
         rec = (Recordable *) it->second;
     }

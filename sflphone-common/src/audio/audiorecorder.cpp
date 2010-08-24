@@ -59,7 +59,9 @@ AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
  */
 void AudioRecorder::run (void)
 {
-    SFLDataFormat buffer[10000];
+
+    int bufferLength = 10000;
+    SFLDataFormat buffer[bufferLength];
 
     while (true) {
 
@@ -67,6 +69,10 @@ void AudioRecorder::run (void)
             _warn ("AudioRecorder: Error: No instance of ringbuffer");
 
         int availBytes = mbuffer->availForGet (recorderId);
+
+        int toGet = (availBytes < bufferLength) ? availBytes : bufferLength;
+
+        mbuffer->getData (buffer, toGet, 100, recorderId);
 
         if (availBytes > 0) {
 

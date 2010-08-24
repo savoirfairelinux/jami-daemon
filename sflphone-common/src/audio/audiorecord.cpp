@@ -301,6 +301,7 @@ bool AudioRecord::setRawFile()
 
 bool AudioRecord::setWavFile()
 {
+    _debug ("AudioRecord: Create wave file %s", savePath_.c_str());
 
     fp = fopen (savePath_.c_str(), "wb");
 

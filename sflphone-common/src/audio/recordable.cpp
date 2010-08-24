@@ -36,7 +36,7 @@ Recordable::Recordable() : recorder (&recAudio, Manager::instance().getMainBuffe
     FILE_TYPE fileType = FILE_WAV;
     SOUND_FORMAT soundFormat = INT16;
 
-    recAudio.setRecordingOption (fileType, soundFormat, 8000, Manager::instance().getConfigString (AUDIO, RECORD_PATH));
+    recAudio.setRecordingOption (fileType, soundFormat, 8000, Manager::instance().audioPreference.getRecordpath());
 }
 
 
