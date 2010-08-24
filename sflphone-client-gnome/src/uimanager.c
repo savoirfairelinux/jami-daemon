@@ -170,9 +170,9 @@ update_actions()
         }
     }
 
-    g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
-    gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
-    g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
+    // g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
+    // gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
+    // g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
 
     callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
     conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
@@ -229,7 +229,7 @@ update_actions()
 
                 break;
             case CALL_STATE_CURRENT:
-            case CALL_STATE_RECORD:
+                DEBUG ("UIManager: Call State Current");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), TRUE);
@@ -242,6 +242,28 @@ update_actions()
                 gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
                 gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
                 gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
+                g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
+                gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
+                g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
+                break;
+
+            case CALL_STATE_RECORD:
+                DEBUG ("UIManager: Call State Record");
+                gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (hangUpWidget), 1);
+                gtk_widget_set_sensitive (GTK_WIDGET (holdMenu), TRUE);
+                gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
+                gtk_widget_set_sensitive (GTK_WIDGET (transferToolbar), TRUE);
+                gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar), 2);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (transferToolbar), 3);
+                gtk_toolbar_insert (GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget), 4);
+                gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
+                gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
+                gtk_signal_handler_unblock (transferToolbar, transfertButtonConnId);
+                g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
+                gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), TRUE);
+                g_signal_handler_unblock (GTK_OBJECT (recordWidget), recordButtonConnId);
                 break;
             case CALL_STATE_BUSY:
             case CALL_STATE_FAILURE:
@@ -289,6 +311,7 @@ update_actions()
                 break;
 
             case CONFERENCE_STATE_RECORD:
+                DEBUG ("UIManager: Conference state record");
                 gtk_action_set_sensitive (GTK_ACTION (hangUpAction), TRUE);
                 gtk_widget_set_sensitive (GTK_WIDGET (holdToolbar), TRUE);
                 gtk_action_set_sensitive (GTK_ACTION (recordAction), TRUE);
@@ -419,6 +442,8 @@ help_about (void * foo UNUSED)
 static void
 call_new_call (void * foo UNUSED)
 {
+    DEBUG ("UIManager: New call button pressed");
+
     sflphone_new_call();
 }
 
@@ -455,6 +480,8 @@ call_hold (void* foo UNUSED)
     callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
     conference_obj_t * selectedConf = calltab_get_selected_conf();
 
+    DEBUG ("UIManager: Hold button pressed (call)");
+
     if (selectedCall) {
         if (selectedCall->_state == CALL_STATE_HOLD) {
             sflphone_off_hold();
@@ -489,6 +516,8 @@ conference_hold (void* foo UNUSED)
 {
     conference_obj_t * selectedConf = calltab_get_selected_conf();
 
+    DEBUG ("UIManager: Hold button pressed (conference)");
+
     switch (selectedConf->_state) {
         case CONFERENCE_STATE_HOLD: {
             selectedConf->_state = CONFERENCE_STATE_ACTIVE_ATACHED;
@@ -510,7 +539,7 @@ conference_hold (void* foo UNUSED)
 static void
 call_pick_up (void * foo UNUSED)
 {
-    DEBUG ("UIManager: Call_button");
+    DEBUG ("UIManager: Call button pressed");
     callable_obj_t * selectedCall;
     callable_obj_t* new_call;
 
@@ -541,6 +570,8 @@ call_pick_up (void * foo UNUSED)
 static void
 call_hang_up (void)
 {
+
+    DEBUG ("UIManager: Hang up button pressed (call)");
     /*
      * [#3020]	Restore the record toggle button
      *			We set it to FALSE, as when we hang up a call, the recording is stopped.
@@ -554,12 +585,16 @@ call_hang_up (void)
 static void
 conference_hang_up (void)
 {
+    DEBUG ("UIManager: Hang up button pressed (conference)");
+
     sflphone_conference_hang_up();
 }
 
 static void
 call_record (void)
 {
+    DEBUG ("UIManager: Record button pressed");
+
     sflphone_rec_call();
 }
 
@@ -1457,7 +1492,6 @@ create_menus (GtkUIManager *ui_manager, GtkWidget **widget)
     // Set the toggle buttons
     gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Dialpad")), eel_gconf_get_boolean (CONF_SHOW_DIALPAD));
     gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (volumeToggle), (gboolean) SHOW_VOLUME);
-
     gtk_action_set_sensitive (GTK_ACTION (volumeToggle), SHOW_ALSA_CONF);
 
     // Disable it right now

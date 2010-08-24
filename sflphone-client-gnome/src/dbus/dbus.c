@@ -1676,7 +1676,7 @@ dbus_join_conference (const gchar* sel_confID, const gchar* drag_confID)
 void
 dbus_set_record (const gchar* id)
 {
-    DEBUG ("dbus_set_record %s", id);
+    DEBUG ("Dbus: dbus_set_record %s", id);
 
     GError* error = NULL;
     org_sflphone_SFLphone_CallManager_set_recording (callManagerProxy, id, &error);
@@ -1689,7 +1689,7 @@ dbus_set_record (const gchar* id)
 gboolean
 dbus_get_is_recording (const callable_obj_t * c)
 {
-    DEBUG ("dbus_get_is_recording %s", c->_callID);
+    DEBUG ("Dbus: dbus_get_is_recording %s", c->_callID);
     GError* error = NULL;
     gboolean isRecording;
     org_sflphone_SFLphone_CallManager_get_is_recording (callManagerProxy,

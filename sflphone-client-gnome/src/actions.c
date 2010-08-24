@@ -1047,6 +1047,7 @@ sflphone_rec_call()
     conference_obj_t * selectedConf = calltab_get_selected_conf (current_calls);
 
     if (selectedCall) {
+        DEBUG ("SFLphone: Set record for selected call");
         dbus_set_record (selectedCall->_callID);
 
         switch (selectedCall->_state) {
@@ -1061,6 +1062,7 @@ sflphone_rec_call()
                 break;
         }
     } else if (selectedConf) {
+        DEBUG ("SFLphone: Set record for selected conf");
         dbus_set_record (selectedConf->_confID);
 
         switch (selectedConf->_state) {
