@@ -88,9 +88,9 @@
 #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
 #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
 #define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
-#define KEY_EXCHANGE_NONE                  "0"
-#define ZRTP                               "1"
-#define SDES                               "2"
+#define KEY_EXCHANGE_NONE                  "none"
+#define ZRTP                               "zrtp"
+#define SDES                               "sdes"
 
 #define CONFIG_RINGTONE_PATH                "Account.ringtonePath"
 #define CONFIG_RINGTONE_ENABLED             "Account.ringtoneEnabled"
