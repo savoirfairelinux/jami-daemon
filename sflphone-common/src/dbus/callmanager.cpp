@@ -333,18 +333,23 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
     SIPVoIPLink * link = NULL;
     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink (AccountNULL));
 
-    if (link == NULL) {
-        _debug ("Failed to get sip link");
+    if (!link) {
+        _debug ("CallManager: Failed to get sip link");
         throw CallManagerException();
     }
 
     SIPCall *call = link->getSIPCall (callID);
 
+    if (!call) {
+        _debug ("CallManager: Call id %d is not valid", callID.c_str());
+        throw CallManagerException();
+    }
+
     sfl::AudioRtpFactory * audioRtp = NULL;
     audioRtp = call->getAudioRtp();
 
-    if (audioRtp == NULL) {
-        _debug ("Failed to get AudioRtpFactory");
+    if (!audioRtp) {
+        _debug ("CallManager: Failed to get AudioRtpFactory");
         throw CallManagerException();
     }
 
@@ -352,8 +357,8 @@ sfl::AudioZrtpSession * CallManager::getAudioZrtpSession (const std::string& cal
 
     zSession = audioRtp->getAudioZrtpSession();
 
-    if (zSession == NULL) {
-        _debug ("Failed to get AudioZrtpSession");
+    if (!zSession) {
+        _debug ("CallManager: Failed to get AudioZrtpSession");
         throw CallManagerException();
     }
 
@@ -369,7 +374,8 @@ CallManager::setSASVerified (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->SASVerified();
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
@@ -383,7 +389,8 @@ CallManager::resetSASVerified (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->resetSASVerified();
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
@@ -398,7 +405,8 @@ CallManager::setConfirmGoClear (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->goClearOk();
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
@@ -413,7 +421,8 @@ CallManager::requestGoClear (const std::string& callID)
         zSession = getAudioZrtpSession (callID);
         zSession->requestGoClear();
     } catch (...) {
-        throw;
+        return;
+        /// throw;
     }
 
 }
@@ -429,7 +438,8 @@ CallManager::acceptEnrollment (const std::string& callID, const bool& accepted)
         zSession = getAudioZrtpSession (callID);
         zSession->acceptEnrollment (accepted);
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
@@ -445,7 +455,8 @@ CallManager::setPBXEnrollment (const std::string& callID, const bool& yesNo)
         zSession = getAudioZrtpSession (callID);
         zSession->setPBXEnrollment (yesNo);
     } catch (...) {
-        throw;
+        return;
+        // throw;
     }
 
 }
