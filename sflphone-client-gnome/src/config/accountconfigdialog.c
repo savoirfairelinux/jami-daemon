@@ -1470,31 +1470,32 @@ void show_account_window (account_t * a)
                                       published_address);
             }
 
-            if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (overrtp))) {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (OVERRTP));
-            } else {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (SIPINFO));
-            }
-
-            gchar* keyExchange = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (keyExchangeCombo));
-
-            if (g_strcasecmp (keyExchange, "ZRTP") == 0) {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("true"));
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_KEY_EXCHANGE), g_strdup (ZRTP));
-            }
-
-            else if (g_strcasecmp (keyExchange, "SDES") == 0) {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("true"));
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_KEY_EXCHANGE), g_strdup (SDES));
-            }
-
-            else {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("false"));
-            }
-
-            g_hash_table_replace (currentAccount->properties, g_strdup (TLS_ENABLE),
-                                  g_strdup (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (useSipTlsCheckBox)) ? "true":"false"));
         }
+
+        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (overrtp))) {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (OVERRTP));
+        } else {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (SIPINFO));
+        }
+
+        gchar* keyExchange = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (keyExchangeCombo));
+
+        if (g_strcasecmp (keyExchange, "ZRTP") == 0) {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("true"));
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_KEY_EXCHANGE), g_strdup (ZRTP));
+        }
+
+        else if (g_strcasecmp (keyExchange, "SDES") == 0) {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("true"));
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_KEY_EXCHANGE), g_strdup (SDES));
+        }
+
+        else {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("false"));
+        }
+
+        g_hash_table_replace (currentAccount->properties, g_strdup (TLS_ENABLE),
+                              g_strdup (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (useSipTlsCheckBox)) ? "true":"false"));
 
         gboolean toneEnabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (enableTone));
         g_hash_table_replace (currentAccount->properties,

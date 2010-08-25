@@ -114,7 +114,7 @@ void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
     _debug ("AudioRtpFactory: Srtp enable: %d ", _srtpEnabled);
 
     if (_srtpEnabled) {
-        std::string zidFilename (Manager::instance().getConfigString (SIGNALISATION, ZRTP_ZIDFILE));
+        std::string zidFilename (Manager::instance().voipPreferences.getZidFile());
 
         switch (_keyExchangeProtocol) {
 
