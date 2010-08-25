@@ -36,6 +36,7 @@
 #include "manager.h"
 #include "account.h"
 #include "sip/sipcall.h"
+#include "sip/sipaccount.h"
 #include "sip/SdesNegotiator.h"
 
 #include <assert.h>
@@ -76,25 +77,41 @@ void AudioRtpFactory::initAudioRtpConfig (SIPCall *ca)
 
     AccountID accountId = Manager::instance().getAccountFromCall (ca->getCallId());
 
-    // Check if it is an IP-to-IP call
-    if (accountId == AccountNULL) {
-        _srtpEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, SRTP_ENABLE);
-        _keyExchangeProtocol = Manager::instance().getConfigInt (IP2IP_PROFILE, SRTP_KEY_EXCHANGE);
-        _debug ("Ip-to-ip profile selected with key exchange protocol number %d", _keyExchangeProtocol);
-        _helloHashEnabled = Manager::instance().getConfigBool (IP2IP_PROFILE, ZRTP_HELLO_HASH);
-    } else {
-        _srtpEnabled = Manager::instance().getConfigBool (accountId, SRTP_ENABLE);
-        _keyExchangeProtocol = Manager::instance().getConfigInt (accountId, SRTP_KEY_EXCHANGE);
+    _debug ("AudioRtpFactory: Init rtp session for account %s", accountId.c_str());
+
+    // Manager::instance().getAccountLink (accountId);
+    Account *account = Manager::instance().getAccount (accountId);
+
+    if (!account)
+        _error ("AudioRtpFactory: Error no account found");
+
+    if (account->getType() == "SIP") {
+        SIPAccount *sipaccount = static_cast<SIPAccount *> (account);
+        _srtpEnabled = sipaccount->getSrtpEnable();
+        std::string tempkey = sipaccount->getSrtpKeyExchange();
+
+        if (tempkey == "sdes")
+            _keyExchangeProtocol = Sdes;
+        else if (tempkey == "zrtp")
+            _keyExchangeProtocol = Zrtp;
+        else
+            _keyExchangeProtocol = Symmetric;
+
         _debug ("Registered account %s profile selected with key exchange protocol number %d", accountId.c_str(), _keyExchangeProtocol);
-        _helloHashEnabled = Manager::instance().getConfigBool (accountId, ZRTP_HELLO_HASH);
+        _helloHashEnabled = sipaccount->getZrtpHelloHash();
+    } else {
+        _srtpEnabled = false;
+        _keyExchangeProtocol = Symmetric;
+        _helloHashEnabled = false;
     }
+
 }
 
 void AudioRtpFactory::initAudioRtpSession (SIPCall * ca)
 {
     ost::MutexLock m (_audioRtpThreadMutex);
 
-    _debug ("Srtp enable: %d ", _srtpEnabled);
+    _debug ("AudioRtpFactory: Srtp enable: %d ", _srtpEnabled);
 
     if (_srtpEnabled) {
         std::string zidFilename (Manager::instance().getConfigString (SIGNALISATION, ZRTP_ZIDFILE));
