@@ -456,16 +456,7 @@
 		   </arg>
 	   </method>
 
-	   <method name="setInputAudioPlugin" tp:name-for-bindings="setInputAudioPlugin">
-		   <tp:docstring>
-		   </tp:docstring>
-		   <arg type="s" name="audioPlugin" direction="in">
-			   <tp:docstring>
-			   </tp:docstring>
-		   </arg>
-	   </method>
-
-	   <method name="setOutputAudioPlugin" tp:name-for-bindings="setOutputAudioPlugin">
+	   <method name="setAudioPlugin" tp:name-for-bindings="setAudioPlugin">
 		   <tp:docstring>
 		   </tp:docstring>
 		   <arg type="s" name="audioPlugin" direction="in">

@@ -354,7 +354,7 @@ select_output_audio_plugin (GtkComboBox* widget, gpointer data UNUSED)
         model = gtk_combo_box_get_model (widget);
         gtk_combo_box_get_active_iter (widget, &iter);
         gtk_tree_model_get (model, &iter, 0, &pluginName, -1);
-        dbus_set_output_audio_plugin (pluginName);
+        dbus_set_audio_plugin (pluginName);
         //update_combo_box( pluginName);
     }
 }
@@ -438,6 +438,31 @@ select_audio_input_device (GtkComboBox* comboBox, gpointer data UNUSED)
         dbus_set_audio_input_device (deviceIndex);
     }
 }
+
+
+/**
++ * Set the audio ringtone device on the server with its index
++ */
+static void
+select_audio_ringtone_device (GtkComboBox *comboBox, gpointer data UNUSED)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    int comboBoxIndex;
+    int deviceIndex;
+
+    comboBoxIndex = gtk_combo_box_get_active (comboBox);
+
+    if (comboBoxIndex >= 0) {
+        model = gtk_combo_box_get_model (comboBox);
+        gtk_combo_box_get_active_iter (comboBox, &iter);
+
+        gtk_tree_model_get (model, &iter, 1, &deviceIndex, -1);
+
+        dbus_set_audio_ringtone_device (deviceIndex);
+    }
+}
+
 
 /**
  * Toggle move buttons on if a codec is selected, off elsewise
@@ -843,6 +868,27 @@ GtkWidget* alsa_box()
     select_active_input_audio_device();
     gtk_label_set_mnemonic_widget (GTK_LABEL (item), input);
     g_signal_connect (G_OBJECT (input), "changed", G_CALLBACK (select_audio_input_device), input);
+
+    DEBUG ("Audio: Configuration rintgtone");
+    item = gtk_label_new (_ ("Ringtone"));
+    gtk_misc_set_alignment (GTK_MISC (item), 0, 0.5);
+    gtk_table_attach (GTK_TABLE (table), item, 1, 2, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_widget_show (item);
+    // set choices of ringtone devices
+    ringtonelist = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
+    preferences_dialog_fill_ringtone_audio_device_list();
+    ringtone = gtk_combo_box_new_with_model (GTK_TREE_MODEL (ringtonelist));
+    select_active_ringtone_audio_device();
+    gtk_label_set_mnemonic_widget (GTK_LABEL (item), output);
+    g_signal_connect (G_OBJECT (ringtone), "changed", G_CALLBACK (select_audio_ringtone_device), output);
+
+    // Set rendering
+    renderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (ringtone), renderer, TRUE);
+    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (ringtone), renderer, "text", 0, NULL);
+    gtk_table_attach (GTK_TABLE (table), ringtone, 2, 3, 4, 5, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_widget_show (ringtone);
+
 
     // Set rendering
     renderer = gtk_cell_renderer_text_new();

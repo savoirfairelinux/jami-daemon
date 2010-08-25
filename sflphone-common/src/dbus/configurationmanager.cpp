@@ -501,14 +501,11 @@ std::vector<std::string> ConfigurationManager::getAudioPluginList()
 }
 
 
-void ConfigurationManager::setInputAudioPlugin (const std::string& audioPlugin)
+void ConfigurationManager::setAudioPlugin (const std::string& audioPlugin)
 {
-    return Manager::instance().setInputAudioPlugin (audioPlugin);
-}
+    _debug ("ConfigurationManager: Set audio plugin %s", audioPlugin.c_str());
 
-void ConfigurationManager::setOutputAudioPlugin (const std::string& audioPlugin)
-{
-    return Manager::instance().setOutputAudioPlugin (audioPlugin);
+    return Manager::instance().setAudioPlugin (audioPlugin);
 }
 
 std::vector<std::string> ConfigurationManager::getAudioOutputDeviceList()
@@ -548,6 +545,8 @@ int32_t ConfigurationManager::getAudioDeviceIndex (const std::string& name)
 
 std::string ConfigurationManager::getCurrentAudioOutputPlugin (void)
 {
+    _debug ("ConfigurationManager: Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
+
     return Manager::instance().getCurrentAudioOutputPlugin();
 }
 

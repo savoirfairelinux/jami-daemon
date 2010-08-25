@@ -515,8 +515,8 @@ bool PulseLayer::createStreams (pa_context* c)
     std::string ringtoneDevice =  _manager->audioPreference.getDeviceRingtone();
 
     _debug ("Audio: Device stored in config for playback: %s", playbackDevice.c_str());
-    _debug ("Audio: Device stored in config for ringtone: %s", recordDevice.c_str());
-    _debug ("Audio: Device stored in config for record: %s", ringtoneDevice.c_str());
+    _debug ("Audio: Device stored in config for record: %s", recordDevice.c_str());
+    _debug ("Audio: Device stored in config for ringtone: %s", ringtoneDevice.c_str());
 
     PulseLayerType * playbackParam = new PulseLayerType();
     playbackParam->context = c;

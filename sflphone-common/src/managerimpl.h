@@ -568,13 +568,14 @@ class ManagerImpl
          * Set input audio plugin
          * @param audioPlugin The audio plugin
          */
-        void setInputAudioPlugin (const std::string& audioPlugin);
+        void setAudioPlugin (const std::string& audioPlugin);
 
         /**
-         * Set output audio plugin
-         * @param audioPlugin The audio plugin
-         */
-        void setOutputAudioPlugin (const std::string& audioPlugin);
+             * Set audio device
+             * @param index The index of the soundcard
+             * @param the type of stream, either SFL_PCM_PLAYBACK, SFL_PCM_CAPTURE, SFL_PCM_RINGTONE
+             */
+        void setAudioDevice (const int index, const int streamType);
 
         /**
          * Get list of supported audio output device
@@ -583,20 +584,13 @@ class ManagerImpl
         std::vector<std::string> getAudioOutputDeviceList (void);
 
         /**
-         * Set audio device
-         * @param index The index of the soundcard
-         * @param the type of stream, either SFL_PCM_PLAYBACK, SFL_PCM_CAPTURE, SFL_PCM_RINGTONE
-         */
-        void setAudioDevice (const int index, const int streamType);
-
-        /**
          * Get list of supported audio input device
          * @return std::vector<std::string> A list of the audio devices supporting capture
          */
         std::vector<std::string> getAudioInputDeviceList (void);
 
         /**
-         * Get string array representing integer indexes of output and input device
+         * Get string array representing integer indexes of output, input, and ringtone device
          * @return std::vector<std::string> A list of the current audio devices
          */
         std::vector<std::string> getCurrentAudioDevicesIndex();

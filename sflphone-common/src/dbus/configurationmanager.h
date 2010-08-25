@@ -80,8 +80,7 @@ class ConfigurationManager
         void setActiveCodecList (const std::vector< std::string >& list, const std::string& accountID);
 
         std::vector< std::string > getAudioPluginList();
-        void setInputAudioPlugin (const std::string& audioPlugin);
-        void setOutputAudioPlugin (const std::string& audioPlugin);
+        void setAudioPlugin (const std::string& audioPlugin);
         std::vector< std::string > getAudioOutputDeviceList();
         void setAudioOutputDevice (const int32_t& index);
         void setAudioInputDevice (const int32_t& index);

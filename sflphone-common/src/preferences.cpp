@@ -569,63 +569,11 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     if (!map)
         return;
 
+    Conf::MappingNode *alsamap = NULL;
+    Conf::MappingNode *pulsemap = NULL;
+
     Conf::ScalarNode *val = NULL;
 
-    val = (Conf::ScalarNode *) (map->getValue (cardinKey));
-
-    if (val) {
-        _cardin = atoi (val->getValue().data());
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (cardoutKey));
-
-    if (val) {
-        _cardout = atoi (val->getValue().data());
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (cardringKey));
-
-    if (val) {
-        _cardring = atoi (val->getValue().data());
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (framesizeKey));
-
-    if (val) {
-        _framesize = atoi (val->getValue().data());
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (smplrateKey));
-
-    if (val) {
-        _smplrate = atoi (val->getValue().data());
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (devicePlaybackKey));
-
-    if (val) {
-        _devicePlayback = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (deviceRecordKey));
-
-    if (val) {
-        _deviceRecord = val->getValue();
-        val = NULL;
-    }
-
-    val = (Conf::ScalarNode *) (map->getValue (deviceRingtoneKey));
-
-    if (val) {
-        _deviceRingtone = val->getValue();
-        val = NULL;
-    }
 
     val = (Conf::ScalarNode *) (map->getValue (recordpathKey));
 
@@ -660,6 +608,84 @@ void AudioPreference::unserialize (Conf::MappingNode *map)
     if (val) {
         _echocancel = (val->getValue() == "true");
         val = NULL;
+    }
+
+    alsamap = (Conf::MappingNode *) (map->getValue ("alsa"));
+
+    // did found alsa
+    if (alsamap) {
+
+        val = (Conf::ScalarNode *) (alsamap->getValue (cardinKey));
+
+        if (val) {
+            _cardin = atoi (val->getValue().data());
+            val = NULL;
+        }
+
+        val = (Conf::ScalarNode *) (alsamap->getValue (cardoutKey));
+
+        if (val) {
+            _cardout = atoi (val->getValue().data());
+            val = NULL;
+        }
+
+        val = (Conf::ScalarNode *) (alsamap->getValue (cardringKey));
+
+        if (val) {
+            _cardring = atoi (val->getValue().data());
+            val = NULL;
+        }
+
+        val = (Conf::ScalarNode *) (alsamap->getValue (framesizeKey));
+
+        if (val) {
+            _framesize = atoi (val->getValue().data());
+            val = NULL;
+        }
+
+        val = (Conf::ScalarNode *) (alsamap->getValue (smplrateKey));
+
+        if (val) {
+            _smplrate = atoi (val->getValue().data());
+            val = NULL;
+        }
+
+        val = (Conf::ScalarNode *) (alsamap->getValue (pluginKey));
+
+        if (val) {
+            _plugin = val->getValue();
+            val = NULL;
+        }
+
+    }
+
+
+    pulsemap = (Conf::MappingNode *) (map->getValue ("pulse"));
+
+
+    if (pulsemap) {
+
+        val = (Conf::ScalarNode *) (pulsemap->getValue (devicePlaybackKey));
+
+        if (val) {
+            _devicePlayback = val->getValue();
+            val = NULL;
+        }
+
+        val = (Conf::ScalarNode *) (pulsemap->getValue (deviceRecordKey));
+
+        if (val) {
+            _deviceRecord = val->getValue();
+            val = NULL;
+        }
+
+        val = (Conf::ScalarNode *) (pulsemap->getValue (deviceRingtoneKey));
+
+        if (val) {
+            _deviceRingtone = val->getValue();
+            val = NULL;
+        }
+
     }
 
 }

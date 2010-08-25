@@ -2312,63 +2312,23 @@ std::string ManagerImpl::getCurrentCodecName (const CallID& id)
 /**
  * Set input audio plugin
  */
-void ManagerImpl::setInputAudioPlugin (const std::string& audioPlugin)
+void ManagerImpl::setAudioPlugin (const std::string& audioPlugin)
 {
     int layer = _audiodriver -> getLayerType();
+
+    audioPreference.setPlugin (audioPlugin);
 
     if (CHECK_INTERFACE (layer , ALSA)) {
         _debug ("Set input audio plugin");
         _audiodriver -> setErrorMessage (-1);
         _audiodriver -> openDevice (_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
                                     _audiodriver->getIndexRing(), _audiodriver -> getSampleRate(),
-                                    _audiodriver -> getFrameSize(), SFL_PCM_CAPTURE, audioPlugin);
+                                    _audiodriver -> getFrameSize(), SFL_PCM_BOTH, audioPlugin);
 
         if (_audiodriver -> getErrorMessage() != -1)
             notifyErrClient (_audiodriver -> getErrorMessage());
-    } else {
     }
 
-}
-
-/**
- * Set output audio plugin
- */
-void ManagerImpl::setOutputAudioPlugin (const std::string& audioPlugin)
-{
-
-    int res;
-
-    _debug ("Manager: Set output audio plugin");
-    _audiodriver -> setErrorMessage (-1);
-    res = _audiodriver -> openDevice (_audiodriver->getIndexIn(), _audiodriver->getIndexOut(),
-                                      _audiodriver->getIndexRing(), _audiodriver -> getSampleRate(),
-                                      _audiodriver -> getFrameSize(), SFL_PCM_BOTH, audioPlugin);
-
-    if (_audiodriver -> getErrorMessage() != -1)
-        notifyErrClient (_audiodriver -> getErrorMessage());
-
-    // set config
-    if (res)
-        audioPreference.setPlugin (audioPlugin);
-
-    //setConig(AUDIO, ALSA_PLUGIN, audioPlugin);
-}
-
-/**
- * Get list of supported audio output device
- */
-std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void)
-{
-    _debug ("Manager: Get audio output device list");
-    AlsaLayer *layer;
-    std::vector<std::string> devices;
-
-    layer = dynamic_cast<AlsaLayer*> (getAudioDriver());
-
-    if (layer)
-        devices = layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
-
-    return devices;
 }
 
 /**
@@ -2423,6 +2383,24 @@ void ManagerImpl::setAudioDevice (const int index, int streamType)
         notifyErrClient (_audiodriver -> getErrorMessage());
 
 }
+
+/**
+ * Get list of supported audio output device
+ */
+std::vector<std::string> ManagerImpl::getAudioOutputDeviceList (void)
+{
+    _debug ("Manager: Get audio output device list");
+    AlsaLayer *layer;
+    std::vector<std::string> devices;
+
+    layer = dynamic_cast<AlsaLayer*> (getAudioDriver());
+
+    if (layer)
+        devices = layer -> getSoundCardsInfo (SFL_PCM_PLAYBACK);
+
+    return devices;
+}
+
 
 /**
  * Get list of supported audio input device
@@ -2615,9 +2593,8 @@ void ManagerImpl::setAudioManager (const int32_t& api)
 {
 
     int type;
-    std::string alsaPlugin;
 
-    _debug ("Setting audio manager ");
+    _debug ("Manager: Setting audio manager ");
 
     if (!_audiodriver)
         return;
@@ -2625,7 +2602,7 @@ void ManagerImpl::setAudioManager (const int32_t& api)
     type = _audiodriver->getLayerType();
 
     if (type == api) {
-        _debug ("Audio manager chosen already in use. No changes made. ");
+        _debug ("Manager: Audio manager chosen already in use. No changes made. ");
         return;
     }
 
@@ -2645,7 +2622,7 @@ int32_t ManagerImpl::getAudioManager (void)
 void ManagerImpl::notifyErrClient (const int32_t& errCode)
 {
     if (_dbus) {
-        _debug ("NOTIFY ERR NUMBER %i" , errCode);
+        _debug ("Manager: NOTIFY ERR NUMBER %i" , errCode);
         _dbus -> getConfigurationManager() -> errorAlert (errCode);
     }
 }
@@ -2654,7 +2631,7 @@ int ManagerImpl::getAudioDeviceIndex (const std::string name)
 {
     AlsaLayer *alsalayer;
 
-    _debug ("Get audio device index");
+    _debug ("Manager: Get audio device index");
 
     alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
@@ -2668,14 +2645,14 @@ std::string ManagerImpl::getCurrentAudioOutputPlugin (void)
 {
     AlsaLayer *alsalayer;
 
-    _debug ("Get alsa plugin");
+    _debug ("Manager: Get alsa plugin");
 
     alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
 
-    if (alsalayer)
-        return alsalayer -> getAudioPlugin();
-    else
-        return audioPreference.getPlugin();
+    // if (alsalayer)
+    //    return alsalayer -> getAudioPlugin();
+    // else
+    return audioPreference.getPlugin();
 }
 
 

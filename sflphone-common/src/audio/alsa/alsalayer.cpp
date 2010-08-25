@@ -41,8 +41,8 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
         , _PlaybackHandle (NULL)
         , _RingtoneHandle (NULL)
         , _CaptureHandle (NULL)
-        , _periodSize()
-        , _audioPlugin()
+        , _periodSize (160)
+        , _audioPlugin ("default")
         , IDSoundCards()
         , _is_prepared_playback (false)
         , _is_prepared_capture (false)
@@ -59,6 +59,8 @@ AlsaLayer::AlsaLayer (ManagerImpl* manager)
     // _audioThread = new AudioThread (this);
     // _audioThread = NULL;
     _urgentRingBuffer.createReadPointer();
+
+    _audioPlugin = AudioLayer::_manager->audioPreference.getPlugin();
 
     AudioLayer::_echocancelstate = true;
     AudioLayer::_noisesuppressstate = true;

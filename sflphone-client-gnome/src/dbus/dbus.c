@@ -1255,27 +1255,14 @@ dbus_get_audio_plugin_list()
 }
 
 void
-dbus_set_input_audio_plugin (gchar* audioPlugin)
+dbus_set_audio_plugin (gchar* audioPlugin)
 {
     GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_input_audio_plugin (
+    org_sflphone_SFLphone_ConfigurationManager_set_audio_plugin (
         configurationManagerProxy, audioPlugin, &error);
 
     if (error) {
-        ERROR ("Failed to call set_input_audio_plugin() on ConfigurationManager: %s", error->message);
-        g_error_free (error);
-    }
-}
-
-void
-dbus_set_output_audio_plugin (gchar* audioPlugin)
-{
-    GError* error = NULL;
-    org_sflphone_SFLphone_ConfigurationManager_set_output_audio_plugin (
-        configurationManagerProxy, audioPlugin, &error);
-
-    if (error) {
-        ERROR ("Failed to call set_output_audio_plugin() on ConfigurationManager: %s", error->message);
+        ERROR ("Failed to call set_audio_plugin() on ConfigurationManager: %s", error->message);
         g_error_free (error);
     }
 }
