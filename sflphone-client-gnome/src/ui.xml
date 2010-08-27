@@ -51,6 +51,7 @@
     <toolitem name="OnHoldToolbar" action="OnHold"/>
     <toolitem name="OffHoldToolbar" action="OffHold"/>
     <toolitem name="TransferToolbar" action="Transfer"/>
+    <toolitem name="InstantMessagingToolbar" action="InstantMessaging"/>
     <toolitem name="RecordToolbar" action="Record"/>
     <separator/>
     <toolitem name="VoicemailToolbar" action="Voicemail"/>

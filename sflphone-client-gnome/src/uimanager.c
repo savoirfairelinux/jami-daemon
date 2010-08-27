@@ -63,6 +63,8 @@ GtkAction * recordAction;
 GtkWidget * recordWidget;
 GtkAction * voicemailAction;
 GtkWidget * voicemailToolbar;
+GtkWidget * imToolbar;
+GtkAction * imAction;
 
 GtkWidget * editable_num;
 GtkDialog * edit_dialog;
@@ -87,6 +89,7 @@ update_actions()
 	gtk_action_set_sensitive(GTK_ACTION (newCallAction), TRUE);
 	gtk_action_set_sensitive(GTK_ACTION (pickUpAction), FALSE);
 	gtk_action_set_sensitive(GTK_ACTION (hangUpAction), FALSE);
+	gtk_action_set_sensitive(GTK_ACTION (imAction), FALSE);
 
 	g_object_ref(hangUpWidget);
 	g_object_ref(recordWidget);
@@ -96,6 +99,7 @@ update_actions()
 	g_object_ref(historyButton);
 	g_object_ref(transferToolbar);
 	g_object_ref(voicemailToolbar);
+	g_object_ref(imToolbar);
 
 	if (is_inserted(GTK_WIDGET(hangUpWidget), GTK_WIDGET (toolbar)))
 	{
@@ -127,6 +131,12 @@ update_actions()
 	{
 		gtk_container_remove(GTK_CONTAINER (toolbar),
 				GTK_WIDGET (voicemailToolbar));
+	}
+
+	if (is_inserted(GTK_WIDGET (imToolbar), GTK_WIDGET (toolbar)))
+	{
+		gtk_container_remove(GTK_CONTAINER (toolbar),
+				GTK_WIDGET (imToolbar));
 	}
 
 	gtk_widget_set_sensitive(GTK_WIDGET (holdMenu), FALSE);
@@ -169,10 +179,6 @@ update_actions()
 					_("Address book"));
 		}
 	}
-
-	// g_signal_handler_block (GTK_OBJECT (recordWidget), recordButtonConnId);
-	// gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (recordWidget), FALSE);
-	// g_signal_handler_unblock ( GTK_OBJECT (recordWidget), recordButtonConnId);
 
 	callable_obj_t * selectedCall = calltab_get_selected_call(active_calltree);
 	conference_obj_t * selectedConf = calltab_get_selected_conf(active_calltree);
@@ -238,12 +244,15 @@ update_actions()
 				gtk_widget_set_sensitive(GTK_WIDGET (holdToolbar), TRUE);
 				gtk_widget_set_sensitive(GTK_WIDGET (transferToolbar), TRUE);
 				gtk_action_set_sensitive(GTK_ACTION (recordAction), TRUE);
+				gtk_action_set_sensitive(GTK_ACTION (imAction), TRUE);
 				gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (holdToolbar),
 						2);
 				gtk_toolbar_insert(GTK_TOOLBAR (toolbar),
 						GTK_TOOL_ITEM (transferToolbar), 3);
 				gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (recordWidget),
 						4);
+				gtk_toolbar_insert(GTK_TOOLBAR (toolbar), GTK_TOOL_ITEM (imToolbar),
+						5);
 				gtk_signal_handler_block (GTK_OBJECT (transferToolbar), transfertButtonConnId);
 				gtk_toggle_tool_button_set_active(
 						GTK_TOGGLE_TOOL_BUTTON (transferToolbar), FALSE);
@@ -1513,6 +1522,7 @@ create_menus(GtkUIManager *ui_manager, GtkWidget **widget)
 	hangUpAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/HangUp");
 	holdMenu = gtk_ui_manager_get_widget (ui_manager, "/MenuBar/CallMenu/OnHoldMenu");
 	recordAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/Record");
+	imAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/CallMenu/InstantMessaging");
 	copyAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/EditMenu/Copy");
 	pasteAction = gtk_ui_manager_get_action (ui_manager, "/MenuBar/EditMenu/Paste");
 	volumeToggle = gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/VolumeControls");
@@ -1526,6 +1536,7 @@ create_menus(GtkUIManager *ui_manager, GtkWidget **widget)
 	// Disable it right now
 	gtk_action_set_sensitive (GTK_ACTION (gtk_ui_manager_get_action (ui_manager, "/MenuBar/ViewMenu/Toolbar")), FALSE);
 
+	/* Add the loading icon at the right of the toolbar. It is used for addressbook searches. */
 	waitingLayer = create_waiting_icon ();
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), waitingLayer);
 
@@ -1555,6 +1566,8 @@ create_toolbar_actions(GtkUIManager *ui_manager, GtkWidget **widget)
 			"/ToolbarActions/HangUpToolbar");
 	recordWidget = gtk_ui_manager_get_widget(ui_manager,
 			"/ToolbarActions/RecordToolbar");
+	imToolbar = gtk_ui_manager_get_widget(ui_manager,
+			"/ToolbarActions/InstantMessagingToolbar");
 	historyButton = gtk_ui_manager_get_widget(ui_manager,
 			"/ToolbarActions/HistoryToolbar");
 	contactButton = gtk_ui_manager_get_widget(ui_manager,
