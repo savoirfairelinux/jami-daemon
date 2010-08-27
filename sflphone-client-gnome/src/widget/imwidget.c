@@ -194,6 +194,7 @@ im_widget_init (IMWidget *im)
 	im->web_view = webkit_web_view_new();
 	GtkWidget *textscrollwin = gtk_scrolled_window_new (NULL, NULL);
 	GtkWidget *webscrollwin = gtk_scrolled_window_new (NULL, NULL);
+	im->info_bar = gtk_info_bar_new ();
 
 	/* A bar with the entry text and the button to send the message */
 	GtkWidget *hbox = gtk_hbox_new (FALSE, 10);
@@ -206,6 +207,7 @@ im_widget_init (IMWidget *im)
 	gtk_container_add (GTK_CONTAINER (textscrollwin), im->textarea);
 	gtk_container_add (GTK_CONTAINER (webscrollwin), im->web_view);
 	gtk_container_add (GTK_CONTAINER (hbox), textscrollwin);
+	gtk_box_pack_start (GTK_BOX(im), im->info_bar, FALSE, FALSE, 2);
 	gtk_box_pack_start (GTK_BOX(im), webscrollwin, TRUE, TRUE, 5);
 	gtk_box_pack_end (GTK_BOX(im), hbox, FALSE, FALSE, 2);
 	g_signal_connect (im->web_view, "navigation-policy-decision-requested", G_CALLBACK (web_view_nav_requested_cb), NULL);
@@ -216,7 +218,6 @@ im_widget_init (IMWidget *im)
 	im->js_context = webkit_web_frame_get_global_context (im->web_frame);
 	im->js_global = JSContextGetGlobalObject (im->js_context);
 	webkit_web_view_load_uri (WEBKIT_WEB_VIEW(im->web_view), "file://" DATA_DIR "/webkit/im/im.html");
-
 }
 
 	GtkWidget *
@@ -276,6 +277,7 @@ im_widget_display (callable_obj_t **call)
 
 			/* Add it to the main instant messaging window */
 			gchar *label = get_peer_information (tmp);
+			im_widget_infobar (im, label);
 			im_window_add (im, label);
 		}
 		else {
@@ -283,5 +285,29 @@ im_widget_display (callable_obj_t **call)
 			im_window_show ();
 		}
 	}
+
+}
+
+	void
+im_widget_infobar (IMWidget *im, gchar *label) {
+
+	GtkWidget *infobar = im->info_bar;
+	GtkWidget *content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (infobar));
+	callable_obj_t *call = im->call;
+	gchar *msg1 = g_strdup_printf ("Calling %s", label);
+	GtkWidget *call_label = gtk_label_new (msg1);
+	gchar *msg2 = g_strdup_printf ("Call state: %i", call->_state);
+	GtkWidget *state_label = gtk_label_new (msg2);
+    
+	gtk_container_add (GTK_CONTAINER (content_area), call_label);
+	gtk_container_add (GTK_CONTAINER (content_area), state_label);
+
+    /* show an info message */
+    gtk_info_bar_set_message_type (GTK_INFO_BAR (infobar),
+                               GTK_MESSAGE_INFO);
+    gtk_widget_show (infobar);
+
+	free (msg1);
+	free (msg2);
 
 }

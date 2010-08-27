@@ -57,6 +57,7 @@ struct _IMWidget {
 	/* Private */
 	GtkWidget *textarea;
 	GtkWidget *web_view;
+	GtkWidget *info_bar;
 	callable_obj_t *call;			/* The call attached to this conversation */
 	WebKitWebFrame *web_frame;      // Our web frame
 	JSGlobalContextRef js_context;  // The frame's global JS context
@@ -82,6 +83,7 @@ void im_widget_send_message (callable_obj_t *call, const gchar *message);
 
 gchar* im_widget_add_message_time ();
 
+void im_widget_infobar (IMWidget *im, gchar *label);
 
 
 G_END_DECLS
