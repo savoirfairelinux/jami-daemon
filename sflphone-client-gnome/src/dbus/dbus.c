@@ -134,7 +134,7 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const 
 		im_widget_display (&c);
 
 		/* Display the message */
-		im_widget_add_message (c, get_peer_information (c), msg, 0);
+		im_widget_add_message (c->_im_widget, get_peer_information (c), msg, 0);
 	
 	} else {
 		ERROR ("Message received, but no recipient found");

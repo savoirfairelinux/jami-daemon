@@ -42,7 +42,7 @@
   * @brief The IM window of the client.
   */
 
-/**
+/*! @function
  * Display the IM window
  * @return GtkWidget* The IM window
  */
@@ -53,17 +53,22 @@ GtkWidget *im_window_get();
  */
 void im_window_add(GtkWidget *widget);
 
-/**
- * Remove IM widget from the IM window
+/*! @function
+ @abstract	Remove IM widget from the IM window
  */
 void im_window_remove_tab (GtkWidget *widget);
 
 void im_window_show ();
 
 /*! @function
+@abstract	Add a new tab in the notebook. Each tab is an IM Widget
 @param		The IM widget
 */
 void im_window_add_tab (GtkWidget *widget);
 
+/*! @function
+@abstract	Decide whether or not the notebook should display its tab. Display the tabs only if more than one tab is opened.
+*/
+void im_window_hide_show_tabs ();
 
 #endif

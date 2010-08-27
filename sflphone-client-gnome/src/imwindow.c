@@ -189,6 +189,20 @@ im_window_add_tab (GtkWidget *widget)
 	/* TODO Switch to the newly opened tab. Still not working */
 	guint tabIndex = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
 	gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), tabIndex);
+
+	/* Decide whether or not displaying the tabs of the notebook */
+	im_window_hide_show_tabs ();
+}
+
+	void
+im_window_hide_show_tabs ()
+{
+	/* If only one tab is open, do not display the tab, only the content */
+	if (gtk_notebook_get_n_pages (GTK_NOTEBOOK (im_notebook)) == 1) {
+		gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), FALSE);
+	}
+	else
+		gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), TRUE);
 }
 
 	void
@@ -203,5 +217,9 @@ im_window_remove_tab (GtkWidget *widget)
 	/* Need to do some memory clean up, so that we could re-open an Im widget for this call later. */
 	IMWidget *im = IM_WIDGET(widget);
 	callable_obj_t *call = calllist_get (current_calls, im->call_id);
-	call->_im_widget = NULL;
+	if (call)
+		call->_im_widget = NULL;
+
+	/* Decide whether or not displaying the tabs of the notebook */
+	im_window_hide_show_tabs ();
 }

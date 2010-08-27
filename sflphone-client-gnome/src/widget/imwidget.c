@@ -40,21 +40,20 @@ im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gi
 {
 	if (im) {
 
-			/* Compute the date the message was sent */
-			gchar *msgtime = im_widget_add_message_time ();
+		/* Compute the date the message was sent */
+		gchar *msgtime = im_widget_add_message_time ();
 
-			/* Check for the message level */
-			gchar *css_class = (level == MESSAGE_LEVEL_ERROR ) ? "error" : "";
+		/* Check for the message level */
+		gchar *css_class = (level == MESSAGE_LEVEL_ERROR ) ? "error" : "";
 
-			/* Prepare and execute the Javascript code */
-			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, from, css_class, msgtime);
-			printf("%s\n", script);
-			webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
+		/* Prepare and execute the Javascript code */
+		gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, from, css_class, msgtime);
+		webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
 
-			/* Cleanup */
-			g_free(script);
+		/* Cleanup */
+		g_free(script);
 
-		}
+	}
 }
 
 static gboolean
@@ -89,16 +88,28 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	/* Get all the text in the buffer */
 	IMWidget *im =  user_data;
 	callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+
+	/* If the call has been hungup, it is not anymore in the current_calls calltab */
+	if (!im_widget_call) 
+	{
+		/* So try the history tab */
+		im_widget_call = calllist_get (history, im->call_id);
+	}
+
+	/* Fetch the text entered in the GtkTextView */	
 	GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (im->textarea));
 
+	/* Catch the keyboard events */
 	if (event->type == GDK_KEY_PRESS){
 
 		switch (event->keyval)
 		{
 			case GDK_Return:
 
+				/* We want to send the message on pressing ENTER */
 				if (gtk_text_buffer_get_char_count (buffer) != 0 )
 				{
+					/* Fetch the string text */
 					gtk_text_buffer_get_bounds (GTK_TEXT_BUFFER (buffer), &start, &end);
 					gchar *message = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
 
@@ -144,14 +155,16 @@ im_widget_send_message (callable_obj_t *call, const gchar *message)
 {
 
 	/* First check if the call is in CURRENT state, otherwise it could not be sent */
-	if (call->_type == CALL && (call->_state == CALL_STATE_CURRENT || call->_state == CALL_STATE_HOLD))		
-	{
-		/* Ship the message through D-Bus */
-		dbus_send_text_message (call->_callID, message);
-	}
-	else {
-		/* Display an error message */
-		im_widget_add_message (IM_WIDGET (call->_im_widget), "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);	
+	if (call) {
+		if (call->_type == CALL && (call->_state == CALL_STATE_CURRENT || call->_state == CALL_STATE_HOLD))		
+		{
+			/* Ship the message through D-Bus */
+			dbus_send_text_message (call->_callID, message);
+		}
+		else {
+			/* Display an error message */
+			im_widget_add_message (IM_WIDGET (call->_im_widget), "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);	
+		}
 	}
 }
 
@@ -190,7 +203,6 @@ im_widget_init (IMWidget *im)
 	gtk_box_pack_end (GTK_BOX(im), hbox, FALSE, FALSE, 2);
 	g_signal_connect (im->web_view, "navigation-policy-decision-requested", G_CALLBACK (web_view_nav_requested_cb), NULL);
 	g_signal_connect(im->textarea, "key-press-event", G_CALLBACK (on_Textview_changed), im);
-	// g_signal_connect (G_OBJECT (webscrollwin), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
 	im->web_frame = webkit_web_view_get_main_frame (WEBKIT_WEB_VIEW(im->web_view));
 	im->js_context = webkit_web_frame_get_global_context (im->web_frame);
@@ -252,7 +264,7 @@ im_widget_display (callable_obj_t **call)
 			/* Keep a reference on this object in the call struct */
 			tmp->_im_widget = im;
 			*call = tmp;	
-			
+
 			/* Update the widget with some useful call information: ie the call ID */
 			im->call_id = tmp->_callID;
 
@@ -281,28 +293,28 @@ im_widget_infobar (IMWidget *im)
 	callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
 
 	/* Create the label widgets with the call information saved in the IM Widget struct */
-	gchar *msg1 = g_strdup_printf ("Calling %s", get_peer_information (im_widget_call));
+	gchar *msg1 = g_strdup_printf ("Calling %s  %s", im_widget_call->_peer_number, im_widget_call->_peer_name);
 	GtkWidget *call_label = gtk_label_new (msg1);
 	im->info_state = call_state_image_widget (im_widget_call->_state);
 	/* Add a nice icon from our own icon factory */
 	GtkWidget *logoUser = gtk_image_new_from_stock (GTK_STOCK_USER, GTK_ICON_SIZE_LARGE_TOOLBAR);
-    
+
 	/* Pack it all */
 	gtk_container_add (GTK_CONTAINER (content_area), logoUser);
 	gtk_container_add (GTK_CONTAINER (content_area), call_label);
 	gtk_container_add (GTK_CONTAINER (content_area), im->info_state);
 
-    /* Message level by default: INFO */
-    gtk_info_bar_set_message_type (GTK_INFO_BAR (infobar), GTK_MESSAGE_INFO);
+	/* Message level by default: INFO */
+	gtk_info_bar_set_message_type (GTK_INFO_BAR (infobar), GTK_MESSAGE_INFO);
 
 	/* Show the info bar */
-    gtk_widget_show (infobar);
+	gtk_widget_show (infobar);
 
 	/* Clean up */
 	free (msg1);
 }
 
-	GtkWidget*
+GtkWidget*
 call_state_image_widget (call_state_t state) {
 
 	GtkWidget *image;
@@ -326,13 +338,13 @@ im_widget_update_state (IMWidget *im, gboolean active)
 	if (active) {
 		gtk_widget_set_sensitive (im->info_state, TRUE); 
 		gtk_info_bar_set_message_type (GTK_INFO_BAR (im->info_bar),
-                               GTK_MESSAGE_INFO);
+				GTK_MESSAGE_INFO);
 	}
 	/* if active = false, the call is over, we can't send text messages anymore */
 	else {
- 		gtk_widget_set_sensitive (im->info_state, FALSE);
+		gtk_widget_set_sensitive (im->info_state, FALSE);
 		gtk_info_bar_set_message_type (GTK_INFO_BAR (im->info_bar),
-                               GTK_MESSAGE_WARNING);
+				GTK_MESSAGE_WARNING);
 		gtk_widget_set_tooltip_text (im->info_state, "Call has terminated");
 	}
 }
