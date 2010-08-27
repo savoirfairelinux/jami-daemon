@@ -186,6 +186,10 @@ sflphone_hung_up( callable_obj_t * c)
     c->_state = CALL_STATE_DIALING;
     call_remove_all_errors(c);
     update_actions();
+
+	/* Update the IM interface */
+	im_widget_update_state (c->_im_widget, FALSE);	
+
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
 #endif

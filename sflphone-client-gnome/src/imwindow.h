@@ -33,6 +33,8 @@
 #include <gtk/gtk.h>
 #include <gtk/gtk.h>
 
+#include <widget/imwidget.h>
+
 #define IM_WINDOW_WIDTH 280
 #define IM_WINDOW_HEIGHT 320
 
@@ -46,19 +48,22 @@
  */
 GtkWidget *im_window_get();
 
-/**
- * Add IM widget to the IM window
+/*!	@function
+@abstract	Add IM widget to the IM window
  */
-void im_window_add(GtkWidget *widget, gchar *label);
+void im_window_add(GtkWidget *widget);
 
 /**
  * Remove IM widget from the IM window
  */
-void im_window_remove(GtkWidget *widget);
+void im_window_remove_tab (GtkWidget *widget);
 
 void im_window_show ();
 
-void im_window_add_tab (GtkWidget *widget, gchar *label);
+/*! @function
+@param		The IM widget
+*/
+void im_window_add_tab (GtkWidget *widget);
 
 
 #endif

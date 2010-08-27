@@ -29,26 +29,16 @@
 
 #include "imwidget.h"
 #include <icons/icon_factory.h>
+#include <contacts/calltab.h>
 #include <JavaScriptCore/JavaScript.h>
 #include <gdk/gdkkeysyms.h>
 
 #define WEBKIT_DIR "file://" DATA_DIR "/webkit/"
 
 	void
-im_widget_add_message (callable_obj_t *call, const gchar *from, const gchar *message, gint level)
+im_widget_add_message (IMWidget *im, const gchar *from, const gchar *message, gint level)
 {
-	/* use the widget for this specific call, if exists */
-	if (!call){
-		error ("The call passed as a parameter does not seem to be valid");
-	}
-	else {
-
-		IMWidget *im = IM_WIDGET (call->_im_widget);
-
-		if (im) {
-
-			/* Update the informations about the call in the chat window */
-			im_widget_add_call_header (call);
+	if (im) {
 
 			/* Compute the date the message was sent */
 			gchar *msgtime = im_widget_add_message_time ();
@@ -58,27 +48,13 @@ im_widget_add_message (callable_obj_t *call, const gchar *from, const gchar *mes
 
 			/* Prepare and execute the Javascript code */
 			gchar *script = g_strdup_printf("add_message('%s', '%s', '%s', '%s');", message, from, css_class, msgtime);
+			printf("%s\n", script);
 			webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
 
 			/* Cleanup */
 			g_free(script);
 
 		}
-
-	}
-}
-
-void
-im_widget_add_call_header (callable_obj_t *call) {
-
-	if (call) {
-		IMWidget *im = IM_WIDGET (call->_im_widget);
-		gchar *script = g_strdup_printf("add_call_info_header('%s', '%s');", call->_peer_name, call->_peer_number);
-		webkit_web_view_execute_script (WEBKIT_WEB_VIEW(im->web_view), script);
-
-		/* Cleanup */
-		g_free(script);
-	}
 }
 
 static gboolean
@@ -112,6 +88,7 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	GtkTextIter start, end;
 	/* Get all the text in the buffer */
 	IMWidget *im =  user_data;
+	callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
 	GtkTextBuffer *buffer =  gtk_text_view_get_buffer (GTK_TEXT_VIEW (im->textarea));
 
 	if (event->type == GDK_KEY_PRESS){
@@ -126,10 +103,10 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 					gchar *message = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
 
 					/* Display our own message in the chat window */
-					im_widget_add_message (im->call, "Me", message, MESSAGE_LEVEL_NORMAL);
+					im_widget_add_message (im, "Me", message, MESSAGE_LEVEL_NORMAL);
 
 					/* Send the message to the peer */
-					im_widget_send_message (im->call, message);
+					im_widget_send_message (im_widget_call, message);
 
 					/* Empty the buffer */
 					gtk_text_buffer_delete (GTK_TEXT_BUFFER (buffer), &start, &end);	
@@ -167,14 +144,14 @@ im_widget_send_message (callable_obj_t *call, const gchar *message)
 {
 
 	/* First check if the call is in CURRENT state, otherwise it could not be sent */
-	if (call->_type == CALL && call->_state == CALL_STATE_CURRENT)		
+	if (call->_type == CALL && (call->_state == CALL_STATE_CURRENT || call->_state == CALL_STATE_HOLD))		
 	{
 		/* Ship the message through D-Bus */
 		dbus_send_text_message (call->_callID, message);
 	}
 	else {
 		/* Display an error message */
-		im_widget_add_message (call, "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);	
+		im_widget_add_message (IM_WIDGET (call->_im_widget), "sflphoned", "Oups, something went wrong! Unable to send text messages outside a call.", MESSAGE_LEVEL_ERROR);	
 	}
 }
 
@@ -213,7 +190,7 @@ im_widget_init (IMWidget *im)
 	gtk_box_pack_end (GTK_BOX(im), hbox, FALSE, FALSE, 2);
 	g_signal_connect (im->web_view, "navigation-policy-decision-requested", G_CALLBACK (web_view_nav_requested_cb), NULL);
 	g_signal_connect(im->textarea, "key-press-event", G_CALLBACK (on_Textview_changed), im);
-	g_signal_connect (G_OBJECT (webscrollwin), "destroy", G_CALLBACK (gtk_main_quit), NULL);
+	// g_signal_connect (G_OBJECT (webscrollwin), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
 	im->web_frame = webkit_web_view_get_main_frame (WEBKIT_WEB_VIEW(im->web_view));
 	im->js_context = webkit_web_frame_get_global_context (im->web_frame);
@@ -268,49 +245,61 @@ im_widget_display (callable_obj_t **call)
 		IMWidget *im = IM_WIDGET (tmp->_im_widget);
 
 		if (!im) {
-			g_print ("creating the im widget for this call\n");
+			DEBUG ("creating the im widget for this call\n");
 			/* Create the im object */
-			im = im_widget_new ();
+			im = IM_WIDGET (im_widget_new ());
+
+			/* Keep a reference on this object in the call struct */
 			tmp->_im_widget = im;
-			/* Update the call */
 			*call = tmp;	
-			im->call = *call;
+			
+			/* Update the widget with some useful call information: ie the call ID */
+			im->call_id = tmp->_callID;
+
+			/* Create the GtkInfoBar, used to display call information, and status of the IM widget */
+			im_widget_infobar (im);
 
 			/* Add it to the main instant messaging window */
-			gchar *label = get_peer_information (tmp);
-			im_widget_infobar (im, label);
-			im_window_add (im, label);
+			im_window_add (im);
 		}
 		else {
-			g_print ("im widget exists for this call\n");
+			DEBUG ("im widget exists for this call\n");
 			im_window_show ();
 		}
 	}
-
 }
 
 	void
-im_widget_infobar (IMWidget *im, gchar *label) {
+im_widget_infobar (IMWidget *im) 
+{
 
+	/* Fetch the GTKInfoBar of this very IM Widget */
 	GtkWidget *infobar = im->info_bar;
 	GtkWidget *content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (infobar));
-	callable_obj_t *call = im->call;
-	gchar *msg1 = g_strdup_printf ("Calling %s", label);
+
+	/* Fetch call information */
+	callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+
+	/* Create the label widgets with the call information saved in the IM Widget struct */
+	gchar *msg1 = g_strdup_printf ("Calling %s", get_peer_information (im_widget_call));
 	GtkWidget *call_label = gtk_label_new (msg1);
-	im->info_state = call_state_image_widget (call->_state);
+	im->info_state = call_state_image_widget (im_widget_call->_state);
+	/* Add a nice icon from our own icon factory */
 	GtkWidget *logoUser = gtk_image_new_from_stock (GTK_STOCK_USER, GTK_ICON_SIZE_LARGE_TOOLBAR);
     
+	/* Pack it all */
 	gtk_container_add (GTK_CONTAINER (content_area), logoUser);
 	gtk_container_add (GTK_CONTAINER (content_area), call_label);
 	gtk_container_add (GTK_CONTAINER (content_area), im->info_state);
 
-    /* show an info message */
-    gtk_info_bar_set_message_type (GTK_INFO_BAR (infobar),
-                               GTK_MESSAGE_INFO);
+    /* Message level by default: INFO */
+    gtk_info_bar_set_message_type (GTK_INFO_BAR (infobar), GTK_MESSAGE_INFO);
+
+	/* Show the info bar */
     gtk_widget_show (infobar);
 
+	/* Clean up */
 	free (msg1);
-
 }
 
 	GtkWidget*
@@ -333,20 +322,18 @@ call_state_image_widget (call_state_t state) {
 	void
 im_widget_update_state (IMWidget *im, gboolean active) 
 {
-	g_print ("asd;vmsn;bvs\n");
-
-	GtkWidget *content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (im->info_bar));
-	gtk_widget_set_sensitive (im->info_state, FALSE);
-	gtk_widget_set_tooltip_text (im->info_state, "Call has terminated");
+	/* if active = true, it means that we are the call is in current state, so sflphone can send text messages */
 	if (active) {
 		gtk_widget_set_sensitive (im->info_state, TRUE); 
 		gtk_info_bar_set_message_type (GTK_INFO_BAR (im->info_bar),
                                GTK_MESSAGE_INFO);
 	}
+	/* if active = false, the call is over, we can't send text messages anymore */
 	else {
  		gtk_widget_set_sensitive (im->info_state, FALSE);
 		gtk_info_bar_set_message_type (GTK_INFO_BAR (im->info_bar),
                                GTK_MESSAGE_WARNING);
+		gtk_widget_set_tooltip_text (im->info_state, "Call has terminated");
 	}
 }
 

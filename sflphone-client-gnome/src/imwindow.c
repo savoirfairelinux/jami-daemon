@@ -36,6 +36,7 @@
 #include <sflphone_const.h>
 
 #include <imwindow.h>
+#include <contacts/calltab.h>
 
 /** Local variables */
 GtkWidget *im_window = NULL;
@@ -133,11 +134,11 @@ im_window_show ()
 }
 
 	void
-im_window_add (GtkWidget *widget, gchar *label)
+im_window_add (GtkWidget *widget)
 {
 	if (im_window_get()) {
 		/* Add the new tab to the notebook */
-		im_window_add_tab (widget, label);
+		im_window_add_tab (widget);
 
 		/* Show it all */
 		gtk_widget_show_all (im_window);
@@ -149,41 +150,58 @@ im_window_add (GtkWidget *widget, gchar *label)
 	static void
 close_tab_cb (GtkButton *button, gpointer userdata)
 {
-
 	/* We want here to close the current tab */
-	guint index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), GTK_WIDGET (userdata));
-	g_print ("removing index %i\n", index);
-	gtk_notebook_remove_page (GTK_NOTEBOOK (im_notebook), index);
+	im_window_remove_tab (GTK_WIDGET (userdata));
 
+	/* If no tabs are opened anymore, close the IM window */
+	// gtk_widget_destroy (im_window);
 }
 
 	void
-im_window_add_tab (GtkWidget *widget, gchar *label)
+im_window_add_tab (GtkWidget *widget)
 {	
+	/* Cast the paramater */
+	IMWidget *im = IM_WIDGET(widget);
+
+	/* Fetch the call */
+	callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+
 	/* A container to include the tab label and the close button */
 	GtkWidget *tab_Container = gtk_hbox_new (FALSE, 3);
-	GtkWidget *tab_Label = gtk_label_new (label);
+	GtkWidget *tab_Label = gtk_label_new (get_peer_information (im_widget_call));
 	GtkWidget *tab_CloseButton = gtk_button_new ();
 
+	/* Pack it all */
 	gtk_button_set_relief (GTK_BUTTON(tab_CloseButton), GTK_RELIEF_NONE);
 	gtk_box_pack_start (GTK_BOX (tab_Container), tab_Label, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (tab_Container), tab_CloseButton, FALSE, FALSE, 0);
 	gtk_container_add(GTK_CONTAINER (tab_CloseButton), gtk_image_new_from_stock (GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+	
+	/* Connect a signal to the close button on each tab, to be able to close the tabs individually */
 	g_signal_connect (tab_CloseButton, "clicked", G_CALLBACK (close_tab_cb), widget);
 
+	/* Show it */
 	gtk_widget_show_all (tab_Container);
 
 	/* Add the page to the notebook */
 	gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
 
-	/* Switch to the newly opened tab */
+	/* TODO Switch to the newly opened tab. Still not working */
 	guint tabIndex = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
 	gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), tabIndex);
-
 }
 
 	void
-im_window_remove(GtkWidget *widget)
+im_window_remove_tab (GtkWidget *widget)
 {
-	// TODO(jonas) remove widget from the window
+	// Remove the widget from the window
+	
+	/* We want here to close the current tab */
+    guint index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), GTK_WIDGET (widget));
+    gtk_notebook_remove_page (GTK_NOTEBOOK (im_notebook), index);
+
+	/* Need to do some memory clean up, so that we could re-open an Im widget for this call later. */
+	IMWidget *im = IM_WIDGET(widget);
+	callable_obj_t *call = calllist_get (current_calls, im->call_id);
+	call->_im_widget = NULL;
 }

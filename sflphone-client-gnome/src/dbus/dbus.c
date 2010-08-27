@@ -139,8 +139,6 @@ incoming_message_cb(DBusGProxy *proxy UNUSED, const gchar* callID UNUSED, const 
 	} else {
 		ERROR ("Message received, but no recipient found");
 	}
-	/*if (c) {
-		notify_incoming_message (callID, msg);*/
 }
 
 	static void
