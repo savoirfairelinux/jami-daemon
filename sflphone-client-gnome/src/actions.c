@@ -384,6 +384,7 @@ sflphone_hang_up()
                 call_remove_all_errors(selectedCall);
                 selectedCall->_state = CALL_STATE_DIALING;
                 set_timestamp (&selectedCall->_time_stop);
+				im_widget_update_state (selectedCall->_im_widget, FALSE);
                 break;
             case CALL_STATE_FAILURE:
                 dbus_hang_up (selectedCall);

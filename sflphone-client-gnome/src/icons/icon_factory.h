@@ -47,6 +47,9 @@ G_BEGIN_DECLS
 #define GTK_STOCK_CALL_CURRENT			"gnome-stock-call-current"
 #define GTK_STOCK_ADDRESSBOOK			"gnome-stock-addressbook"
 #define GTK_STOCK_CALLS					"gnome-stock-calls"
+#define GTK_STOCK_SFLPHONE				"gnome-stock-sflphone"
+#define GTK_STOCK_FAIL					"gnome-stock-fail"
+#define GTK_STOCK_USER					"gnome-stock-user"
 
 void init_icon_factory (void);
 

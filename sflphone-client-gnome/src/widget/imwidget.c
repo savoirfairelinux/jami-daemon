@@ -28,6 +28,7 @@
  */
 
 #include "imwidget.h"
+#include <icons/icon_factory.h>
 #include <JavaScriptCore/JavaScript.h>
 #include <gdk/gdkkeysyms.h>
 
@@ -296,11 +297,12 @@ im_widget_infobar (IMWidget *im, gchar *label) {
 	callable_obj_t *call = im->call;
 	gchar *msg1 = g_strdup_printf ("Calling %s", label);
 	GtkWidget *call_label = gtk_label_new (msg1);
-	gchar *msg2 = g_strdup_printf ("Call state: %i", call->_state);
-	GtkWidget *state_label = gtk_label_new (msg2);
+	im->info_state = call_state_image_widget (call->_state);
+	GtkWidget *logoUser = gtk_image_new_from_stock (GTK_STOCK_USER, GTK_ICON_SIZE_LARGE_TOOLBAR);
     
+	gtk_container_add (GTK_CONTAINER (content_area), logoUser);
 	gtk_container_add (GTK_CONTAINER (content_area), call_label);
-	gtk_container_add (GTK_CONTAINER (content_area), state_label);
+	gtk_container_add (GTK_CONTAINER (content_area), im->info_state);
 
     /* show an info message */
     gtk_info_bar_set_message_type (GTK_INFO_BAR (infobar),
@@ -308,6 +310,45 @@ im_widget_infobar (IMWidget *im, gchar *label) {
     gtk_widget_show (infobar);
 
 	free (msg1);
-	free (msg2);
 
 }
+
+	GtkWidget*
+call_state_image_widget (call_state_t state) {
+
+	GtkWidget *image;
+
+	switch (state) {
+		case CALL_STATE_CURRENT:
+			image = gtk_image_new_from_stock (GTK_STOCK_IM, GTK_ICON_SIZE_LARGE_TOOLBAR);
+			break;
+		default:
+			image = gtk_image_new_from_stock (GTK_STOCK_FAIL, GTK_ICON_SIZE_LARGE_TOOLBAR);
+			break;
+
+	}
+	return image;
+}
+
+	void
+im_widget_update_state (IMWidget *im, gboolean active) 
+{
+	g_print ("asd;vmsn;bvs\n");
+
+	GtkWidget *content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (im->info_bar));
+	gtk_widget_set_sensitive (im->info_state, FALSE);
+	gtk_widget_set_tooltip_text (im->info_state, "Call has terminated");
+	if (active) {
+		gtk_widget_set_sensitive (im->info_state, TRUE); 
+		gtk_info_bar_set_message_type (GTK_INFO_BAR (im->info_bar),
+                               GTK_MESSAGE_INFO);
+	}
+	else {
+ 		gtk_widget_set_sensitive (im->info_state, FALSE);
+		gtk_info_bar_set_message_type (GTK_INFO_BAR (im->info_bar),
+                               GTK_MESSAGE_WARNING);
+	}
+}
+
+
+

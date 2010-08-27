@@ -75,7 +75,7 @@ on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gp
 	static void
 im_window_init()
 {
-	const char *window_title = "SFLphone VoIP Client - Instant Messaging Module";
+	const char *window_title = "SFLphone IM Client";
 	gchar *path;
 	GError *error = NULL;
 	gboolean ret;
