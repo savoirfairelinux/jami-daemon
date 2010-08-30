@@ -327,11 +327,31 @@ AudioRtpSession<D>::~AudioRtpSession()
 
     _manager->getAudioDriver()->getMainBuffer()->unBindAll (_ca->getCallId());
 
-    delete [] _micData;
-    delete [] _micDataConverted;
-    delete [] _micDataEncoded;
-    delete [] _spkrDataDecoded;
-    delete [] _spkrDataConverted;
+    if (_micData) {
+        delete [] _micData;
+        _micData = NULL;
+    }
+
+    if (_micDataConverted) {
+        delete [] _micDataConverted;
+        _micDataConverted = NULL;
+    }
+
+    if (_micDataEncoded) {
+        delete [] _micDataEncoded;
+        _micDataEncoded = NULL;
+    }
+
+    if (_spkrDataDecoded) {
+        delete [] _spkrDataDecoded;
+        _spkrDataDecoded = NULL;
+    }
+
+    if (_spkrDataConverted) {
+        delete [] _spkrDataConverted;
+        _spkrDataConverted = NULL;
+    }
+
     delete _time;
     delete _converter;
 
@@ -369,6 +389,13 @@ void AudioRtpSession<D>::initBuffers()
     _micDataEncoded = new unsigned char[nbSamplesMax];
     _spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     _spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
+
+
+    memset (_micData, 0, nbSamplesMax);
+    memset (_micDataConverted, 0, nbSamplesMax);
+    memset (_micDataEncoded, 0, nbSamplesMax);
+    memset (_spkrDataConverted, 0, nbSamplesMax);
+    memset (_spkrDataDecoded, 0, nbSamplesMax);
 
     _manager->addStream (_ca->getCallId());
 }
