@@ -34,65 +34,104 @@
 
 #include "instantmessagingtest.h"
 
+#define MAXIMUM_SIZE	10
+#define DELIMITER_CHAR	"\n\n"
+
 using std::cout;
 using std::endl;
 
 void InstantMessagingTest::setUp()
 {
-    _im = new sfl::InstantMessaging ();
-    _im->init ();
+	_im = new sfl::InstantMessaging ();
+	_im->init ();
 }
 
 void InstantMessagingTest::testSaveSingleMessage ()
 {
-    _debug ("-------------------- InstantMessagingTest::testSaveSingleMessage --------------------\n");
+	_debug ("-------------------- InstantMessagingTest::testSaveSingleMessage --------------------\n");
 
-    std::string input, tmp;
-    std::string callID = "testfile1.txt";
+	std::string input, tmp;
+	std::string callID = "testfile1.txt";
 
-    // Open a file stream and try to write in it
-    CPPUNIT_ASSERT (_im->saveMessage ("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
+	// Open a file stream and try to write in it
+	CPPUNIT_ASSERT (_im->saveMessage ("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
 
-    // Read it to check it has been successfully written
-    std::ifstream testfile (callID.c_str (), std::ios::in);
-    CPPUNIT_ASSERT (testfile.is_open () == true);
+	// Read it to check it has been successfully written
+	std::ifstream testfile (callID.c_str (), std::ios::in);
+	CPPUNIT_ASSERT (testfile.is_open () == true);
 
-    while (!testfile.eof ()) {
-        std::getline (testfile, tmp);
-        input.append (tmp);
-    }
+	while (!testfile.eof ()) {
+		std::getline (testfile, tmp);
+		input.append (tmp);
+	}
 
-    testfile.close ();
-    CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message");
+	testfile.close ();
+	CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message");
 }
 
 void InstantMessagingTest::testSaveMultipleMessage ()
 {
-    _debug ("-------------------- InstantMessagingTest::testSaveMultipleMessage --------------------\n");
+	_debug ("-------------------- InstantMessagingTest::testSaveMultipleMessage --------------------\n");
 
-    std::string input, tmp;
-    std::string callID = "testfile2.txt";
+	std::string input, tmp;
+	std::string callID = "testfile2.txt";
 
-    // Open a file stream and try to write in it
-    CPPUNIT_ASSERT (_im->saveMessage ("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
-    CPPUNIT_ASSERT (_im->saveMessage ("Cool", "Alex", callID, std::ios::out || std::ios::app)  == true);
+	// Open a file stream and try to write in it
+	CPPUNIT_ASSERT (_im->saveMessage ("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
+	CPPUNIT_ASSERT (_im->saveMessage ("Cool", "Alex", callID, std::ios::out || std::ios::app)  == true);
 
-    // Read it to check it has been successfully written
-    std::ifstream testfile (callID.c_str (), std::ios::in);
-    CPPUNIT_ASSERT (testfile.is_open () == true);
+	// Read it to check it has been successfully written
+	std::ifstream testfile (callID.c_str (), std::ios::in);
+	CPPUNIT_ASSERT (testfile.is_open () == true);
 
-    while (!testfile.eof ()) {
-        std::getline (testfile, tmp);
-        input.append (tmp);
-    }
+	while (!testfile.eof ()) {
+		std::getline (testfile, tmp);
+		input.append (tmp);
+	}
 
-    testfile.close ();
-    printf ("%s\n", input.c_str());
-    CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message[Alex] Cool");
+	testfile.close ();
+	printf ("%s\n", input.c_str());
+	CPPUNIT_ASSERT (input == "[Manu] Bonjour, c'est un test d'archivage de message[Alex] Cool");
+}
+
+void InstantMessagingTest::testSplitMessage ()
+{
+
+	/* A message that does not need to be split */
+	std::string short_message = "Salut";
+	std::vector<std::string> messages = _im->split_message (short_message);
+	CPPUNIT_ASSERT (messages.size() == short_message.length()/MAXIMUM_SIZE + 1);
+	CPPUNIT_ASSERT (messages[0] == short_message);
+
+	/* A message that needs to be split into two messages */ 
+	std::string long_message = "A message too long";
+	messages = _im->split_message (long_message);
+	int size = messages.size ();
+	int i = 0;
+	CPPUNIT_ASSERT (size == (int)long_message.length()/MAXIMUM_SIZE + 1);
+	/* If only one element, do not enter the loop */
+	for (i = 0; i < size - 1; i++) {
+		CPPUNIT_ASSERT (messages[i] == long_message.substr ((MAXIMUM_SIZE * i), MAXIMUM_SIZE)+ DELIMITER_CHAR);
+	}
+
+	/* Works for the last element, or for the only element */
+	CPPUNIT_ASSERT (messages[size- 1] == long_message.substr (MAXIMUM_SIZE * (size-1)));
+
+	/* A message that needs to be split into four messages */ 
+	std::string very_long_message = "A message that needs to be split into many messages";
+	messages = _im->split_message (very_long_message);
+	size = messages.size ();
+	/* If only one element, do not enter the loop */
+	for (i = 0; i < size - 1; i++) {
+		CPPUNIT_ASSERT (messages[i] ==very_long_message.substr ((MAXIMUM_SIZE * i), MAXIMUM_SIZE)+ DELIMITER_CHAR);
+	}
+
+	/* Works for the last element, or for the only element */
+	CPPUNIT_ASSERT (messages[size- 1] == very_long_message.substr (MAXIMUM_SIZE * (size-1)));
 }
 
 void InstantMessagingTest::tearDown()
 {
-    delete _im;
-    _im = 0;
+	delete _im;
+	_im = 0;
 }

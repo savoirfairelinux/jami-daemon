@@ -55,6 +55,7 @@ class InstantMessagingTest : public CppUnit::TestCase {
     CPPUNIT_TEST_SUITE( InstantMessagingTest );
         CPPUNIT_TEST (testSaveSingleMessage);
         CPPUNIT_TEST (testSaveMultipleMessage);
+        CPPUNIT_TEST (testSplitMessage);
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -75,6 +76,8 @@ class InstantMessagingTest : public CppUnit::TestCase {
         void testSaveSingleMessage ();
 		
         void testSaveMultipleMessage ();
+
+        void testSplitMessage ();
         
     private:
 		sfl::InstantMessaging *_im;

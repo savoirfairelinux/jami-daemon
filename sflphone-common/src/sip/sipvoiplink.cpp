@@ -1073,7 +1073,7 @@ SIPVoIPLink::sendTextMessage (const std::string& callID, const std::string& mess
 
     if (call) {
         /* Send IM message */
-        status = imModule->send (call->getInvSession (), (CallID&) callID, message);
+        status = imModule->send_message (call->getInvSession (), (CallID&) callID, message);
     } else {
         /* Notify the client of an error */
         /*Manager::instance ().incomingMessage (	"",

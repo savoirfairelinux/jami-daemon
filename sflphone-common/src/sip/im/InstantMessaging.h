@@ -16,6 +16,8 @@
 #define STR_TEXT        pj_str((char*)"text")
 #define STR_PLAIN       pj_str((char*)"plain")
 #define METHOD_NAME     pj_str((char*)"MESSAGE")
+#define MAXIMUM_MESSAGE_LENGTH		10			/* ~1300/8 */
+#define DELIMITER_CHAR				"\n\n"		
 
 #define MODE_APPEND			std::ios::out || std::ios::app
 #define MODE_TEST			std::ios::out
@@ -85,12 +87,18 @@ namespace sfl  {
 			 */
 			pj_status_t send (pjsip_inv_session*, CallID& id, const std::string&);
 
+			pj_status_t send_message (pjsip_inv_session*, CallID& id, const std::string&);
+
+			std::vector<std::string> split_message (const std::string&);
+			
+
 			/**
  			 * Notify the clients, through D-Bus, that a new message has arrived
 			 *
    			 * @param id	The callID to notify (TODO: accountID?)
 			 */
 			pj_status_t notify (CallID& id);
+
 
 			/*
 			 * Add a pair file stream / call ID to the private std::map
