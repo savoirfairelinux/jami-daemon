@@ -104,10 +104,10 @@ int main (int argc, char* argv[])
     // Adds the test to the list of test to run
     CppUnit::TextTestRunner runner;
     runner.addTest (suite);
+	/* Specify XML output */
+	std::ofstream outfile("cppunitresults.xml");
 
 	if (xmlOutput) {
-		/* Specify XML output */
-		std::ofstream outfile("cppunitresults.xml");
 		CppUnit::XmlOutputter* outputter = new CppUnit::XmlOutputter(&runner.result(), outfile);
 		runner.setOutputter(outputter);
 	} else {
