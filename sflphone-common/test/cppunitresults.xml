@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding='ISO-8859-1' standalone='yes' ?>
+<TestRun>
+  <FailedTests>
+    <FailedTest id="9">
+      <Name>HistoryTest::test_get_history_serialized</Name>
+      <FailureType>Assertion</FailureType>
+      <Location>
+        <File>historytest.cpp</File>
+        <Line>149</Line>
+      </Location>
+      <Message>assertion failed
+- Expression: Validator::isEqual (tmp, res [&quot;747638685&quot;])
+</Message>
+    </FailedTest>
+    <FailedTest id="10">
+      <Name>HistoryTest::test_set_serialized_history</Name>
+      <FailureType>Assertion</FailureType>
+      <Location>
+        <File>historytest.cpp</File>
+        <Line>183</Line>
+      </Location>
+      <Message>assertion failed
+- Expression: Validator::isEqual (tmp, map_test [&quot;747638685&quot;])
+</Message>
+    </FailedTest>
+  </FailedTests>
+  <SuccessfulTests>
+    <Test id="1">
+      <Name>AccountTest::TestAddRemove</Name>
+    </Test>
+    <Test id="2">
+      <Name>AudioLayerTest::testAudioLayerConfig</Name>
+    </Test>
+    <Test id="3">
+      <Name>AudioLayerTest::testPulseConnect</Name>
+    </Test>
+    <Test id="4">
+      <Name>ConfigurationTest::testYamlEmitter</Name>
+    </Test>
+    <Test id="5">
+      <Name>HistoryTest::test_create_history_path</Name>
+    </Test>
+    <Test id="6">
+      <Name>HistoryTest::test_save_history_items_map</Name>
+    </Test>
+    <Test id="7">
+      <Name>HistoryTest::test_load_history_from_file</Name>
+    </Test>
+    <Test id="8">
+      <Name>HistoryTest::test_load_history_items_map</Name>
+    </Test>
+    <Test id="11">
+      <Name>HistoryTest::test_set_serialized_history_with_limit</Name>
+    </Test>
+    <Test id="12">
+      <Name>HistoryTest::test_save_history_to_file</Name>
+    </Test>
+    <Test id="13">
+      <Name>HookManagerTest::testAddAction</Name>
+    </Test>
+    <Test id="14">
+      <Name>HookManagerTest::testLargeUrl</Name>
+    </Test>
+    <Test id="15">
+      <Name>NumberCleanerTest::test_format_1</Name>
+    </Test>
+    <Test id="16">
+      <Name>NumberCleanerTest::test_format_2</Name>
+    </Test>
+    <Test id="17">
+      <Name>NumberCleanerTest::test_format_3</Name>
+    </Test>
+    <Test id="18">
+      <Name>NumberCleanerTest::test_format_4</Name>
+    </Test>
+    <Test id="19">
+      <Name>NumberCleanerTest::test_format_5</Name>
+    </Test>
+    <Test id="20">
+      <Name>NumberCleanerTest::test_format_6</Name>
+    </Test>
+    <Test id="21">
+      <Name>NumberCleanerTest::test_format_10</Name>
+    </Test>
+    <Test id="22">
+      <Name>PluginManagerTest::testLoadDynamicLibrary</Name>
+    </Test>
+    <Test id="23">
+      <Name>PluginManagerTest::testUnloadDynamicLibrary</Name>
+    </Test>
+    <Test id="24">
+      <Name>PluginManagerTest::testInstanciatePlugin</Name>
+    </Test>
+    <Test id="25">
+      <Name>PluginManagerTest::testInitPlugin</Name>
+    </Test>
+    <Test id="26">
+      <Name>PluginManagerTest::testRegisterPlugin</Name>
+    </Test>
+    <Test id="27">
+      <Name>PluginManagerTest::testLoadPlugins</Name>
+    </Test>
+    <Test id="28">
+      <Name>PluginManagerTest::testUnloadPlugins</Name>
+    </Test>
+    <Test id="29">
+      <Name>RtpTest::testRtpInitClose</Name>
+    </Test>
+    <Test id="30">
+      <Name>SdesNegotiatorTest::testTagPattern</Name>
+    </Test>
+    <Test id="31">
+      <Name>SdesNegotiatorTest::testCryptoSuitePattern</Name>
+    </Test>
+    <Test id="32">
+      <Name>SdesNegotiatorTest::testKeyParamsPattern</Name>
+    </Test>
+    <Test id="33">
+      <Name>SdesNegotiatorTest::testKeyParamsPatternWithoutMKI</Name>
+    </Test>
+    <Test id="34">
+      <Name>SdesNegotiatorTest::testNegotiation</Name>
+    </Test>
+    <Test id="35">
+      <Name>SdesNegotiatorTest::testMostSimpleCase</Name>
+    </Test>
+  </SuccessfulTests>
+  <Statistics>
+    <Tests>35</Tests>
+    <FailuresTotal>2</FailuresTotal>
+    <Errors>0</Errors>
+    <Failures>2</Failures>
+  </Statistics>
+</TestRun>
