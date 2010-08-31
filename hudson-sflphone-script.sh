@@ -24,3 +24,10 @@ pushd sflphone-client-gnome
 make
 popd
 
+# Run the unit tests for the daemon
+pushd sflphone-common/test
+make check
+./test
+popd
+
+
