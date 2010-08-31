@@ -54,7 +54,7 @@ GtkWidget *waitingLayer;
 /**
  * Build the main window
  */
-void create_main_window ( );
+void create_main_window ();
 
 /**
  * Display a dialog window
@@ -67,43 +67,43 @@ gboolean main_window_ask_quit() ;
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_dialpad( gboolean state );
+void main_window_dialpad (gboolean state);
 
 /**
   * Shows/Hides the dialpad on the mainwindow
   */
-void main_window_volume_controls( gboolean state );
+void main_window_volume_controls (gboolean state);
 
 /**
  * Display an error message
  * @param markup  The error message
  */
-void main_window_error_message(gchar * markup);
+void main_window_error_message (gchar * markup);
 
 /**
  * Display a warning message
  * @param markup  The warning message
  */
-void main_window_warning_message(gchar * markup);
+void main_window_warning_message (gchar * markup);
 
 /**
  * Display an info message
  * @param markup  The info message
  */
-void main_window_info_message(gchar * markup);
+void main_window_info_message (gchar * markup);
 
 /**
  * Push a message on the statusbar stack
  * @param message The message to display
  * @param id  The identifier of the message
  */
-void statusbar_push_message( const gchar* message , guint id );
+void statusbar_push_message (const gchar* message , guint id);
 
 /**
  * Pop a message from the statusbar stack
  * @param id  The identifier of the message
  */
-void statusbar_pop_message( guint id );
+void statusbar_pop_message (guint id);
 
 //static gboolean
 //on_key_released (GtkWidget *widget, GdkEventKey *event,
@@ -114,10 +114,10 @@ gboolean focus_is_on_calltree;
 
 gboolean focus_is_on_searchbar;
 
-void main_window_zrtp_not_supported(callable_obj_t * c);
+void main_window_zrtp_not_supported (callable_obj_t * c);
 
-void main_window_zrtp_negotiation_failed(const gchar* callID, const gchar* reason, const gchar* severity);
+void main_window_zrtp_negotiation_failed (const gchar* callID, const gchar* reason, const gchar* severity);
 
-void main_window_confirm_go_clear(callable_obj_t * c);
+void main_window_confirm_go_clear (callable_obj_t * c);
 
 #endif

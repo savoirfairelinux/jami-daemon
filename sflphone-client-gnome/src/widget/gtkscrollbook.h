@@ -41,39 +41,37 @@ G_BEGIN_DECLS
 typedef struct _PidginScrollBook      PidginScrollBook;
 typedef struct _PidginScrollBookClass PidginScrollBookClass;
 
-struct _PidginScrollBook
-{
-	GtkVBox parent_instance;
+struct _PidginScrollBook {
+    GtkVBox parent_instance;
 
-	GtkWidget *notebook;
-	GtkWidget *hbox;
-	GtkWidget *label;
-	GtkWidget *left_arrow;
-	GtkWidget *right_arrow;
-	GList *children;
-	
-	/* Padding for future expansion */
-	void (*_gtk_reserved1) (void);
-	void (*_gtk_reserved2) (void);
-	void (*_gtk_reserved3) (void);
+    GtkWidget *notebook;
+    GtkWidget *hbox;
+    GtkWidget *label;
+    GtkWidget *left_arrow;
+    GtkWidget *right_arrow;
+    GList *children;
+
+    /* Padding for future expansion */
+    void (*_gtk_reserved1) (void);
+    void (*_gtk_reserved2) (void);
+    void (*_gtk_reserved3) (void);
 
 };
 
 
-struct _PidginScrollBookClass
-{
-	GtkContainerClass parent_class;
+struct _PidginScrollBookClass {
+    GtkContainerClass parent_class;
 
-	/* Padding for future expansion */
-	void (*_gtk_reserved0) (void);
-	void (*_gtk_reserved1) (void);
-	void (*_gtk_reserved2) (void);
-	void (*_gtk_reserved3) (void);
+    /* Padding for future expansion */
+    void (*_gtk_reserved0) (void);
+    void (*_gtk_reserved1) (void);
+    void (*_gtk_reserved2) (void);
+    void (*_gtk_reserved3) (void);
 };
 
 
-GType         pidgin_scroll_book_get_type         (void) G_GNUC_CONST;
-GtkWidget    *pidgin_scroll_book_new              (void);
+GType         pidgin_scroll_book_get_type (void) G_GNUC_CONST;
+GtkWidget    *pidgin_scroll_book_new (void);
 
 G_END_DECLS
 

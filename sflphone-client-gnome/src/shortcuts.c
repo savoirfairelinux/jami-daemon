@@ -56,88 +56,80 @@ static GHashTable* shortcutsMap;
 static void
 toggle_pick_up_hang_up_callback ()
 {
-  callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
-  conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
+    callable_obj_t * selectedCall = calltab_get_selected_call (active_calltree);
+    conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
-  g_print("toggle_pick_up_hang_up_callback\n");
+    g_print ("toggle_pick_up_hang_up_callback\n");
 
-  if (selectedCall)
-    {
-      switch (selectedCall->_state)
-        {
-      case CALL_STATE_INCOMING:
-      case CALL_STATE_TRANSFERT:
-        sflphone_pick_up ();
-        break;
-      case CALL_STATE_DIALING:
-      case CALL_STATE_HOLD:
-      case CALL_STATE_CURRENT:
-      case CALL_STATE_RECORD:
-      case CALL_STATE_RINGING:
-        sflphone_hang_up ();
-        break;
+    if (selectedCall) {
+        switch (selectedCall->_state) {
+            case CALL_STATE_INCOMING:
+            case CALL_STATE_TRANSFERT:
+                sflphone_pick_up ();
+                break;
+            case CALL_STATE_DIALING:
+            case CALL_STATE_HOLD:
+            case CALL_STATE_CURRENT:
+            case CALL_STATE_RECORD:
+            case CALL_STATE_RINGING:
+                sflphone_hang_up ();
+                break;
         }
-    }
-  else if (selectedConf)
-    {
-      dbus_hang_up_conference (selectedConf);
-    }
-  else
-    sflphone_pick_up ();
+    } else if (selectedConf) {
+        dbus_hang_up_conference (selectedConf);
+    } else
+        sflphone_pick_up ();
 }
 
 static void
 pick_up_callback ()
 {
-  sflphone_pick_up ();
+    sflphone_pick_up ();
 }
 
 static void
 hang_up_callback ()
 {
-  sflphone_hang_up ();
+    sflphone_hang_up ();
 }
 
 static void
 toggle_hold_callback ()
 {
-  callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
-  conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
+    callable_obj_t * selectedCall = calltab_get_selected_call (current_calls);
+    conference_obj_t * selectedConf = calltab_get_selected_conf (active_calltree);
 
-  if (selectedCall)
-    {
-      switch (selectedCall->_state)
-        {
-      case CALL_STATE_CURRENT:
-      case CALL_STATE_RECORD:
-        g_print("on hold\n");
-        sflphone_on_hold();
-        break;
-      case CALL_STATE_HOLD:
-        g_print("off hold\n");
-        sflphone_off_hold();
-        break;
+    if (selectedCall) {
+        switch (selectedCall->_state) {
+            case CALL_STATE_CURRENT:
+            case CALL_STATE_RECORD:
+                g_print ("on hold\n");
+                sflphone_on_hold();
+                break;
+            case CALL_STATE_HOLD:
+                g_print ("off hold\n");
+                sflphone_off_hold();
+                break;
         }
-    }
-  else if (selectedConf)
-    dbus_hold_conference (selectedConf);
-  else
-    ERROR("Should not happen");
+    } else if (selectedConf)
+        dbus_hold_conference (selectedConf);
+    else
+        ERROR ("Should not happen");
 }
 
 static void
 popup_window_callback ()
 {
-  gtk_widget_hide (GTK_WIDGET(get_main_window()));
-  gtk_widget_show (GTK_WIDGET(get_main_window()));
-  gtk_window_move (GTK_WINDOW (get_main_window ()),
-      dbus_get_window_position_x (), dbus_get_window_position_y ());
+    gtk_widget_hide (GTK_WIDGET (get_main_window()));
+    gtk_widget_show (GTK_WIDGET (get_main_window()));
+    gtk_window_move (GTK_WINDOW (get_main_window ()),
+                     dbus_get_window_position_x (), dbus_get_window_position_y ());
 }
 
 static void
 default_callback ()
 {
-  ERROR("Missing shortcut callback");
+    ERROR ("Missing shortcut callback");
 }
 
 /*
@@ -146,22 +138,22 @@ default_callback ()
 static void*
 get_action_callback (const gchar* action)
 {
-  if (strcmp (action, "pick_up") == 0)
-    return pick_up_callback;
+    if (strcmp (action, "pick_up") == 0)
+        return pick_up_callback;
 
-  if (strcmp (action, "hang_up") == 0)
-    return hang_up_callback;
+    if (strcmp (action, "hang_up") == 0)
+        return hang_up_callback;
 
-  if (strcmp (action, "popup_window") == 0)
-    return popup_window_callback;
+    if (strcmp (action, "popup_window") == 0)
+        return popup_window_callback;
 
-  if (strcmp (action, "toggle_pick_up_hang_up") == 0)
-    return toggle_pick_up_hang_up_callback;
+    if (strcmp (action, "toggle_pick_up_hang_up") == 0)
+        return toggle_pick_up_hang_up_callback;
 
-  if (strcmp (action, "toggle_hold") == 0)
-    return toggle_hold_callback;
+    if (strcmp (action, "toggle_hold") == 0)
+        return toggle_hold_callback;
 
-  return default_callback;
+    return default_callback;
 }
 
 /*
@@ -174,32 +166,29 @@ get_action_callback (const gchar* action)
 static void
 remove_bindings ()
 {
-  GdkDisplay *display;
-  GdkScreen *screen;
-  GdkWindow *root;
+    GdkDisplay *display;
+    GdkScreen *screen;
+    GdkWindow *root;
 
-  display = gdk_display_get_default ();
+    display = gdk_display_get_default ();
 
-  int i = 0;
-  int j = 0;
-  while (accelerators_list[i].action != NULL)
-    {
-      if (accelerators_list[i].value != 0)
-        {
-          for (j = 0; j < gdk_display_get_n_screens (display); j++)
-            {
-              screen = gdk_display_get_screen (display, j);
+    int i = 0;
+    int j = 0;
 
-              if (screen != NULL)
-                {
-                  root = gdk_screen_get_root_window (screen);
-                  ungrab_key (accelerators_list[i].value, root);
-                  gdk_window_remove_filter (root, filter_keys, NULL);
+    while (accelerators_list[i].action != NULL) {
+        if (accelerators_list[i].value != 0) {
+            for (j = 0; j < gdk_display_get_n_screens (display); j++) {
+                screen = gdk_display_get_screen (display, j);
+
+                if (screen != NULL) {
+                    root = gdk_screen_get_root_window (screen);
+                    ungrab_key (accelerators_list[i].value, root);
+                    gdk_window_remove_filter (root, filter_keys, NULL);
                 }
             }
         }
 
-      i++;
+        i++;
     }
 }
 
@@ -209,33 +198,30 @@ remove_bindings ()
 static void
 create_bindings ()
 {
-  GdkDisplay *display;
-  GdkScreen *screen;
-  GdkWindow *root;
+    GdkDisplay *display;
+    GdkScreen *screen;
+    GdkWindow *root;
 
-  display = gdk_display_get_default ();
+    display = gdk_display_get_default ();
 
-  int i = 0;
-  int j = 0;
-  while (accelerators_list[i].action != NULL)
-    {
-      if (accelerators_list[i].value != 0)
-        {
-          // updated GDK bindings
-          for (j = 0; j < gdk_display_get_n_screens (display); j++)
-            {
-              screen = gdk_display_get_screen (display, j);
+    int i = 0;
+    int j = 0;
 
-              if (screen != NULL)
-                {
-                  root = gdk_screen_get_root_window (screen);
-                  grab_key (accelerators_list[i].value, root);
-                  gdk_window_add_filter (root, filter_keys, NULL);
+    while (accelerators_list[i].action != NULL) {
+        if (accelerators_list[i].value != 0) {
+            // updated GDK bindings
+            for (j = 0; j < gdk_display_get_n_screens (display); j++) {
+                screen = gdk_display_get_screen (display, j);
+
+                if (screen != NULL) {
+                    root = gdk_screen_get_root_window (screen);
+                    grab_key (accelerators_list[i].value, root);
+                    gdk_window_add_filter (root, filter_keys, NULL);
                 }
             }
         }
 
-      i++;
+        i++;
     }
 }
 
@@ -245,28 +231,27 @@ create_bindings ()
 static void
 initialize_binding (const gchar* action, const guint code)
 {
-  //initialize_shortcuts_keys();
-  int index = 0;
-  while (accelerators_list[index].action != NULL)
-    {
-      if (strcmp (action, accelerators_list[index].action) == 0)
-        {
-          break;
+    //initialize_shortcuts_keys();
+    int index = 0;
+
+    while (accelerators_list[index].action != NULL) {
+        if (strcmp (action, accelerators_list[index].action) == 0) {
+            break;
         }
-      index++;
+
+        index++;
     }
 
-  if (accelerators_list[index].action == NULL)
-    {
-      ERROR("Should not happen: cannot find corresponding action");
-      return;
+    if (accelerators_list[index].action == NULL) {
+        ERROR ("Should not happen: cannot find corresponding action");
+        return;
     }
 
-  // update config value
-  accelerators_list[index].value = code;
+    // update config value
+    accelerators_list[index].value = code;
 
-  // update bindings
-  create_bindings ();
+    // update bindings
+    create_bindings ();
 }
 
 /*
@@ -275,60 +260,60 @@ initialize_binding (const gchar* action, const guint code)
 static void
 initialize_accelerators_list ()
 {
-  GList* shortcutsKeys = g_hash_table_get_keys (shortcutsMap);
+    GList* shortcutsKeys = g_hash_table_get_keys (shortcutsMap);
 
-  accelerators_list = (Accelerator*) malloc (
-      (g_list_length (shortcutsKeys) + 1) * sizeof(Accelerator));
+    accelerators_list = (Accelerator*) malloc (
+                            (g_list_length (shortcutsKeys) + 1) * sizeof (Accelerator));
 
-  GList* shortcutsKeysElement;
-  int index = 0;
-  for (shortcutsKeysElement = shortcutsKeys; shortcutsKeysElement; shortcutsKeysElement
-      = shortcutsKeysElement->next)
-    {
-      gchar* action = shortcutsKeysElement->data;
+    GList* shortcutsKeysElement;
+    int index = 0;
 
-      accelerators_list[index].action = g_strdup (action);
-      accelerators_list[index].callback = get_action_callback (action);
-      accelerators_list[index].mask = 0;
-      accelerators_list[index].value = 0;
+    for (shortcutsKeysElement = shortcutsKeys; shortcutsKeysElement; shortcutsKeysElement
+            = shortcutsKeysElement->next) {
+        gchar* action = shortcutsKeysElement->data;
 
-      index++;
+        accelerators_list[index].action = g_strdup (action);
+        accelerators_list[index].callback = get_action_callback (action);
+        accelerators_list[index].mask = 0;
+        accelerators_list[index].value = 0;
+
+        index++;
     }
 
-  // last element must be null
-  accelerators_list[index].action = 0;
-  accelerators_list[index].callback = 0;
-  accelerators_list[index].mask = 0;
-  accelerators_list[index].value = 0;
+    // last element must be null
+    accelerators_list[index].action = 0;
+    accelerators_list[index].callback = 0;
+    accelerators_list[index].mask = 0;
+    accelerators_list[index].value = 0;
 }
 
 static void
 update_bindings_data (const guint index, const guint code)
 {
-  // we need to be sure this code is not already affected
-  // to another action
-  int i = 0;
-  while (accelerators_list[i].action != NULL)
-    {
-      if (accelerators_list[i].value == code)
-        {
-          // disable old binding
-          accelerators_list[i].value = 0;
+    // we need to be sure this code is not already affected
+    // to another action
+    int i = 0;
 
-          // update config table
-          g_hash_table_replace (shortcutsMap, g_strdup (
-              accelerators_list[i].action), GINT_TO_POINTER (0));
+    while (accelerators_list[i].action != NULL) {
+        if (accelerators_list[i].value == code) {
+            // disable old binding
+            accelerators_list[i].value = 0;
+
+            // update config table
+            g_hash_table_replace (shortcutsMap, g_strdup (
+                                      accelerators_list[i].action), GINT_TO_POINTER (0));
         }
-      i++;
+
+        i++;
     }
 
-  // store new value
-  accelerators_list[index].value = code;
+    // store new value
+    accelerators_list[index].value = code;
 
-  // update value in hashtable (used for dbus calls)
-  g_hash_table_replace (shortcutsMap,
-      g_strdup (accelerators_list[index].action), GINT_TO_POINTER (
-          accelerators_list[index].value));
+    // update value in hashtable (used for dbus calls)
+    g_hash_table_replace (shortcutsMap,
+                          g_strdup (accelerators_list[index].action), GINT_TO_POINTER (
+                              accelerators_list[index].value));
 }
 
 /*
@@ -341,17 +326,17 @@ update_bindings_data (const guint index, const guint code)
 void
 shortcuts_update_bindings (const guint index, const guint code)
 {
-  // first remove all existing bindings
-  remove_bindings ();
+    // first remove all existing bindings
+    remove_bindings ();
 
-  // update data
-  update_bindings_data (index, code);
+    // update data
+    update_bindings_data (index, code);
 
-  // recreate all bindings
-  create_bindings ();
+    // recreate all bindings
+    create_bindings ();
 
-  // update configuration
-  dbus_set_shortcuts (shortcutsMap);
+    // update configuration
+    dbus_set_shortcuts (shortcutsMap);
 }
 
 /*
@@ -360,22 +345,23 @@ shortcuts_update_bindings (const guint index, const guint code)
 void
 shortcuts_initialize_bindings ()
 {
-  // get shortcuts stored in config through dbus
-  shortcutsMap = dbus_get_shortcuts ();
+    // get shortcuts stored in config through dbus
+    shortcutsMap = dbus_get_shortcuts ();
 
-  // initialize list of keys
-  initialize_accelerators_list ();
+    // initialize list of keys
+    initialize_accelerators_list ();
 
-  // iterate through keys to initialize bindings
-  GList* shortcutsKeys = g_hash_table_get_keys (shortcutsMap);
-  GList* shortcutsKeysElement;
-  for (shortcutsKeysElement = shortcutsKeys; shortcutsKeysElement; shortcutsKeysElement
-      = shortcutsKeysElement->next)
-    {
-      gchar* key = shortcutsKeysElement->data;
-      int shortcut = (size_t) g_hash_table_lookup (shortcutsMap, key);
-      if (shortcut != 0)
-        initialize_binding (key, shortcut);
+    // iterate through keys to initialize bindings
+    GList* shortcutsKeys = g_hash_table_get_keys (shortcutsMap);
+    GList* shortcutsKeysElement;
+
+    for (shortcutsKeysElement = shortcutsKeys; shortcutsKeysElement; shortcutsKeysElement
+            = shortcutsKeysElement->next) {
+        gchar* key = shortcutsKeysElement->data;
+        int shortcut = (size_t) g_hash_table_lookup (shortcutsMap, key);
+
+        if (shortcut != 0)
+            initialize_binding (key, shortcut);
     }
 }
 
@@ -385,23 +371,24 @@ shortcuts_initialize_bindings ()
 void
 shortcuts_destroy_bindings ()
 {
-  // remove bindings
-  remove_bindings ();
+    // remove bindings
+    remove_bindings ();
 
-  // free pointers
-  int index = 0;
-  while (accelerators_list[index].action != NULL)
-    {
-      g_free (accelerators_list[index].action);
-      index++;
+    // free pointers
+    int index = 0;
+
+    while (accelerators_list[index].action != NULL) {
+        g_free (accelerators_list[index].action);
+        index++;
     }
-  free (accelerators_list);
+
+    free (accelerators_list);
 }
 
 Accelerator*
 shortcuts_get_list ()
 {
-  return accelerators_list;
+    return accelerators_list;
 }
 
 /*
@@ -414,36 +401,36 @@ shortcuts_get_list ()
 static GdkFilterReturn
 filter_keys (GdkXEvent *xevent, GdkEvent *event, gpointer data)
 {
-  XEvent *xev;
-  XKeyEvent *key;
+    XEvent *xev;
+    XKeyEvent *key;
 
-  xev = (XEvent *) xevent;
-  if (xev->type != KeyPress)
-    {
-      return GDK_FILTER_CONTINUE;
+    xev = (XEvent *) xevent;
+
+    if (xev->type != KeyPress) {
+        return GDK_FILTER_CONTINUE;
     }
 
-  key = (XKeyEvent *) xevent;
+    key = (XKeyEvent *) xevent;
 
-  // try to find corresponding action
-  int i = 0;
-  while (accelerators_list[i].action != NULL)
-    {
-      if (accelerators_list[i].value == key->keycode)
-        {
-          DEBUG("catched key for action: %s (%d)", accelerators_list[i].action,
-              accelerators_list[i].value);
+    // try to find corresponding action
+    int i = 0;
 
-          // call associated callback function
-          accelerators_list[i].callback ();
+    while (accelerators_list[i].action != NULL) {
+        if (accelerators_list[i].value == key->keycode) {
+            DEBUG ("catched key for action: %s (%d)", accelerators_list[i].action,
+                   accelerators_list[i].value);
 
-          return GDK_FILTER_REMOVE;
+            // call associated callback function
+            accelerators_list[i].callback ();
+
+            return GDK_FILTER_REMOVE;
         }
-      i++;
+
+        i++;
     }
 
-  DEBUG("Should not be reached :(\n");
-  return GDK_FILTER_CONTINUE;
+    DEBUG ("Should not be reached :(\n");
+    return GDK_FILTER_CONTINUE;
 }
 
 /*
@@ -452,25 +439,25 @@ filter_keys (GdkXEvent *xevent, GdkEvent *event, gpointer data)
 static void
 ungrab_key (int key_code, GdkWindow *root)
 {
-  gdk_error_trap_push ();
+    gdk_error_trap_push ();
 
-  XUngrabKey (GDK_DISPLAY(), key_code, 0, GDK_WINDOW_XID(root));
-  XUngrabKey (GDK_DISPLAY(), key_code, Mod2Mask, GDK_WINDOW_XID(root));
-  XUngrabKey (GDK_DISPLAY(), key_code, Mod5Mask, GDK_WINDOW_XID(root));
-  XUngrabKey (GDK_DISPLAY(), key_code, LockMask, GDK_WINDOW_XID(root));
-  XUngrabKey (GDK_DISPLAY(), key_code, Mod2Mask | Mod5Mask,
-      GDK_WINDOW_XID(root));
-  XUngrabKey (GDK_DISPLAY(), key_code, Mod2Mask | LockMask,
-      GDK_WINDOW_XID(root));
-  XUngrabKey (GDK_DISPLAY(), key_code, Mod5Mask | LockMask,
-      GDK_WINDOW_XID(root));
-  XUngrabKey (GDK_DISPLAY(), key_code, Mod2Mask | Mod5Mask | LockMask,
-      GDK_WINDOW_XID(root));
+    XUngrabKey (GDK_DISPLAY(), key_code, 0, GDK_WINDOW_XID (root));
+    XUngrabKey (GDK_DISPLAY(), key_code, Mod2Mask, GDK_WINDOW_XID (root));
+    XUngrabKey (GDK_DISPLAY(), key_code, Mod5Mask, GDK_WINDOW_XID (root));
+    XUngrabKey (GDK_DISPLAY(), key_code, LockMask, GDK_WINDOW_XID (root));
+    XUngrabKey (GDK_DISPLAY(), key_code, Mod2Mask | Mod5Mask,
+                GDK_WINDOW_XID (root));
+    XUngrabKey (GDK_DISPLAY(), key_code, Mod2Mask | LockMask,
+                GDK_WINDOW_XID (root));
+    XUngrabKey (GDK_DISPLAY(), key_code, Mod5Mask | LockMask,
+                GDK_WINDOW_XID (root));
+    XUngrabKey (GDK_DISPLAY(), key_code, Mod2Mask | Mod5Mask | LockMask,
+                GDK_WINDOW_XID (root));
 
-  gdk_flush ();
-  if (gdk_error_trap_pop ())
-    {
-      ERROR("Error ungrabbing key");
+    gdk_flush ();
+
+    if (gdk_error_trap_pop ()) {
+        ERROR ("Error ungrabbing key");
     }
 }
 
@@ -481,28 +468,28 @@ static void
 grab_key (int key_code, GdkWindow *root)
 {
 
-  gdk_error_trap_push ();
+    gdk_error_trap_push ();
 
-  XGrabKey (GDK_DISPLAY(), key_code, 0, GDK_WINDOW_XID(root), True,
-      GrabModeAsync, GrabModeAsync);
-  XGrabKey (GDK_DISPLAY(), key_code, Mod2Mask, GDK_WINDOW_XID(root), True,
-      GrabModeAsync, GrabModeAsync);
-  XGrabKey (GDK_DISPLAY(), key_code, Mod5Mask, GDK_WINDOW_XID(root), True,
-      GrabModeAsync, GrabModeAsync);
-  XGrabKey (GDK_DISPLAY(), key_code, LockMask, GDK_WINDOW_XID(root), True,
-      GrabModeAsync, GrabModeAsync);
-  XGrabKey (GDK_DISPLAY(), key_code, Mod2Mask | Mod5Mask, GDK_WINDOW_XID(root),
-      True, GrabModeAsync, GrabModeAsync);
-  XGrabKey (GDK_DISPLAY(), key_code, Mod2Mask | LockMask, GDK_WINDOW_XID(root),
-      True, GrabModeAsync, GrabModeAsync);
-  XGrabKey (GDK_DISPLAY(), key_code, Mod5Mask | LockMask, GDK_WINDOW_XID(root),
-      True, GrabModeAsync, GrabModeAsync);
-  XGrabKey (GDK_DISPLAY(), key_code, Mod2Mask | Mod5Mask | LockMask,
-      GDK_WINDOW_XID(root), True, GrabModeAsync, GrabModeAsync);
+    XGrabKey (GDK_DISPLAY(), key_code, 0, GDK_WINDOW_XID (root), True,
+              GrabModeAsync, GrabModeAsync);
+    XGrabKey (GDK_DISPLAY(), key_code, Mod2Mask, GDK_WINDOW_XID (root), True,
+              GrabModeAsync, GrabModeAsync);
+    XGrabKey (GDK_DISPLAY(), key_code, Mod5Mask, GDK_WINDOW_XID (root), True,
+              GrabModeAsync, GrabModeAsync);
+    XGrabKey (GDK_DISPLAY(), key_code, LockMask, GDK_WINDOW_XID (root), True,
+              GrabModeAsync, GrabModeAsync);
+    XGrabKey (GDK_DISPLAY(), key_code, Mod2Mask | Mod5Mask, GDK_WINDOW_XID (root),
+              True, GrabModeAsync, GrabModeAsync);
+    XGrabKey (GDK_DISPLAY(), key_code, Mod2Mask | LockMask, GDK_WINDOW_XID (root),
+              True, GrabModeAsync, GrabModeAsync);
+    XGrabKey (GDK_DISPLAY(), key_code, Mod5Mask | LockMask, GDK_WINDOW_XID (root),
+              True, GrabModeAsync, GrabModeAsync);
+    XGrabKey (GDK_DISPLAY(), key_code, Mod2Mask | Mod5Mask | LockMask,
+              GDK_WINDOW_XID (root), True, GrabModeAsync, GrabModeAsync);
 
-  gdk_flush ();
-  if (gdk_error_trap_pop ())
-    {
-      ERROR("Error grabbing key");
+    gdk_flush ();
+
+    if (gdk_error_trap_pop ()) {
+        ERROR ("Error grabbing key");
     }
 }

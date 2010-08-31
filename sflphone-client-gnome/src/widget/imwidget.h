@@ -46,27 +46,27 @@ G_BEGIN_DECLS
 
 #define MESSAGE_LEVEL_NORMAL		0
 #define MESSAGE_LEVEL_WARNING		1
-#define MESSAGE_LEVEL_ERROR			2			
+#define MESSAGE_LEVEL_ERROR			2
 
 typedef struct _IMWidget      IMWidget;
 typedef struct _IMWidgetClass IMWidgetClass;
 
 struct _IMWidget {
-	GtkVBox parent_instance;
+    GtkVBox parent_instance;
 
-	/* Private */
-	GtkWidget *textarea;
-	GtkWidget *web_view;
-	GtkWidget *info_bar;
-	GtkWidget *info_state;
-	gchar *call_id;
-	WebKitWebFrame *web_frame;      // Our web frame
-	JSGlobalContextRef js_context;  // The frame's global JS context
-	JSObjectRef js_global;          // The frame's global context JS object
+    /* Private */
+    GtkWidget *textarea;
+    GtkWidget *web_view;
+    GtkWidget *info_bar;
+    GtkWidget *info_state;
+    gchar *call_id;
+    WebKitWebFrame *web_frame;      // Our web frame
+    JSGlobalContextRef js_context;  // The frame's global JS context
+    JSObjectRef js_global;          // The frame's global context JS object
 };
 
 struct _IMWidgetClass {
-	GtkContainerClass parent_class;
+    GtkContainerClass parent_class;
 };
 
 
@@ -76,11 +76,11 @@ struct _IMWidgetClass {
  */
 void im_widget_display (callable_obj_t**);
 
-GType im_widget_get_type(void) G_GNUC_CONST;
-GtkWidget *im_widget_new(void);
+GType im_widget_get_type (void) G_GNUC_CONST;
+GtkWidget *im_widget_new (void);
 
 /*! @function
-@abstract	Add a new message in the webkit view 
+@abstract	Add a new message in the webkit view
 @param		The IMWidget
 @param		The sender of the message
 @param		The message to be send
@@ -94,7 +94,7 @@ gchar* im_widget_add_message_time ();
 
 /*! @function
 @abstract 	Build the GtkInfoBar used to display call information and IM Widget status
-@param		The IM Widget 
+@param		The IM Widget
 */
 void im_widget_infobar (IMWidget *im);
 

@@ -63,6 +63,6 @@ void history_reinit (calltab_t* history);
  * Set history search bar widget (needed for is_visible)
  */
 void
-history_set_searchbar_widget(GtkWidget *);
+history_set_searchbar_widget (GtkWidget *);
 
 #endif

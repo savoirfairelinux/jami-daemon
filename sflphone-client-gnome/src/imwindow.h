@@ -51,7 +51,7 @@ GtkWidget *im_window_get();
 /*!	@function
 @abstract	Add IM widget to the IM window
  */
-void im_window_add(GtkWidget *widget);
+void im_window_add (GtkWidget *widget);
 
 /*! @function
  @abstract	Remove IM widget from the IM window
