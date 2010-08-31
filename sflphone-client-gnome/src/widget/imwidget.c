@@ -105,6 +105,7 @@ on_Textview_changed (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 		switch (event->keyval)
 		{
 			case GDK_Return:
+			case GDK_KP_Enter:
 
 				/* We want to send the message on pressing ENTER */
 				if (gtk_text_buffer_get_char_count (buffer) != 0 )
@@ -194,6 +195,8 @@ im_widget_init (IMWidget *im)
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(webscrollwin), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_widget_set_size_request(GTK_WIDGET (textscrollwin), -1, 20);
 	gtk_widget_set_size_request(GTK_WIDGET (im->textarea), -1, 20);
+	gtk_text_view_set_wrap_mode(GTK_WIDGET (im->textarea), GTK_WRAP_WORD);
+	// gtk_container_set_resize_mode(GTK_CONTAINER(im->textarea), GTK_RESIZE_PARENT);
 
 	gtk_container_add (GTK_CONTAINER (textscrollwin), im->textarea);
 	gtk_container_add (GTK_CONTAINER (webscrollwin), im->web_view);
