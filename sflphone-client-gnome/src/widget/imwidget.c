@@ -343,10 +343,12 @@ im_widget_update_state (IMWidget *im, gboolean active)
     }
     /* if active = false, the call is over, we can't send text messages anymore */
     else {
-        gtk_widget_set_sensitive (im->info_state, FALSE);
-        gtk_info_bar_set_message_type (GTK_INFO_BAR (im->info_bar),
-                                       GTK_MESSAGE_WARNING);
-        gtk_widget_set_tooltip_text (im->info_state, "Call has terminated");
+        if (im) {
+            gtk_widget_set_sensitive (im->info_state, FALSE);
+            gtk_info_bar_set_message_type (GTK_INFO_BAR (im->info_bar),
+                                           GTK_MESSAGE_WARNING);
+            gtk_widget_set_tooltip_text (im->info_state, "Call has terminated");
+        }
     }
 }
 
