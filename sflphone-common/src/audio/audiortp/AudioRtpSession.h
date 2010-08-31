@@ -391,11 +391,11 @@ void AudioRtpSession<D>::initBuffers()
     _spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 
 
-    memset (_micData, 0, nbSamplesMax);
-    memset (_micDataConverted, 0, nbSamplesMax);
+    memset (_micData, 0, nbSamplesMax*sizeof (SFLDataFormat));
+    memset (_micDataConverted, 0, nbSamplesMax*sizeof (SFLDataFormat));
     memset (_micDataEncoded, 0, nbSamplesMax);
-    memset (_spkrDataConverted, 0, nbSamplesMax);
-    memset (_spkrDataDecoded, 0, nbSamplesMax);
+    memset (_spkrDataConverted, 0, nbSamplesMax*sizeof (SFLDataFormat));
+    memset (_spkrDataDecoded, 0, nbSamplesMax*sizeof (SFLDataFormat));
 
     _manager->addStream (_ca->getCallId());
 }
