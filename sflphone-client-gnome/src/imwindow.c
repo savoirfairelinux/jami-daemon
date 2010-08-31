@@ -42,184 +42,189 @@
 GtkWidget *im_window = NULL;
 GtkWidget *im_notebook = NULL;
 
-static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event) {
-	int pos_x, pos_y;
+static gboolean window_configure_cb (GtkWidget *win, GdkEventConfigure *event)
+{
+    int pos_x, pos_y;
 
-	eel_gconf_set_integer (CONF_IM_WINDOW_WIDTH, event->width);
-	eel_gconf_set_integer (CONF_IM_WINDOW_HEIGHT, event->height);
+    eel_gconf_set_integer (CONF_IM_WINDOW_WIDTH, event->width);
+    eel_gconf_set_integer (CONF_IM_WINDOW_HEIGHT, event->height);
 
-	gtk_window_get_position (GTK_WINDOW (im_window_get()), &pos_x, &pos_y);
-	eel_gconf_set_integer (CONF_IM_WINDOW_POSITION_X, pos_x);
-	eel_gconf_set_integer (CONF_IM_WINDOW_POSITION_Y, pos_y);
+    gtk_window_get_position (GTK_WINDOW (im_window_get()), &pos_x, &pos_y);
+    eel_gconf_set_integer (CONF_IM_WINDOW_POSITION_X, pos_x);
+    eel_gconf_set_integer (CONF_IM_WINDOW_POSITION_Y, pos_y);
 
-	return FALSE;
+    return FALSE;
 }
 
 /**
  * Minimize the main window.
  */
-	static gboolean
-on_delete(GtkWidget * widget UNUSED, gpointer data UNUSED)
+static gboolean
+on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
-	/* Only hide the main window that contains all the instant messaging instances */
-	gtk_widget_hide (GTK_WIDGET(im_window_get()));
-	return TRUE;
+    /* Only hide the main window that contains all the instant messaging instances */
+    gtk_widget_hide (GTK_WIDGET (im_window_get()));
+    return TRUE;
 }
 
-	static void
+static void
 on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer userdata)
 {
-	guint index = gtk_notebook_get_current_page (GTK_NOTEBOOK (notebook));
-	g_print ("switch to %i-  current = %i\n", page_num, index);
+    guint index = gtk_notebook_get_current_page (GTK_NOTEBOOK (notebook));
+    g_print ("switch to %i-  current = %i\n", page_num, index);
 }
 
-	static void
+static void
 im_window_init()
 {
-	const char *window_title = "SFLphone IM Client";
-	gchar *path;
-	GError *error = NULL;
-	gboolean ret;
-	int width, height, position_x, position_y;
+    const char *window_title = "SFLphone IM Client";
+    gchar *path;
+    GError *error = NULL;
+    gboolean ret;
+    int width, height, position_x, position_y;
 
-	// Get configuration stored in gconf
-	width = eel_gconf_get_integer(CONF_IM_WINDOW_WIDTH);
-	if (width <= 0)
-		width = 400;
-	height = eel_gconf_get_integer(CONF_IM_WINDOW_HEIGHT);
-	if (height <= 0)
-		height = 500;
-	position_x = eel_gconf_get_integer(CONF_IM_WINDOW_POSITION_X);
-	position_y = eel_gconf_get_integer(CONF_IM_WINDOW_POSITION_Y);
+    // Get configuration stored in gconf
+    width = eel_gconf_get_integer (CONF_IM_WINDOW_WIDTH);
 
-	im_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_container_set_border_width(GTK_CONTAINER(im_window), 0);
-	gtk_window_set_title(GTK_WINDOW(im_window), window_title);
-	gtk_window_set_default_size(GTK_WINDOW (im_window), width, height);
-	gtk_window_set_default_icon_from_file(LOGO, NULL);
-	gtk_window_set_position(GTK_WINDOW(im_window), GTK_WIN_POS_MOUSE);
+    if (width <= 0)
+        width = 400;
 
-	gtk_widget_set_name(im_window, "imwindow");
+    height = eel_gconf_get_integer (CONF_IM_WINDOW_HEIGHT);
 
-	GtkWidget *im_vbox = gtk_vbox_new (FALSE /*homogeneous*/, 0 /*spacing*/);
-	im_notebook = gtk_notebook_new ();
+    if (height <= 0)
+        height = 500;
 
-	gtk_container_add (GTK_CONTAINER (im_window), im_vbox);
-	gtk_box_pack_start (GTK_BOX (im_vbox), im_notebook, TRUE, TRUE, 0);
-	gtk_widget_show (im_notebook);
+    position_x = eel_gconf_get_integer (CONF_IM_WINDOW_POSITION_X);
+    position_y = eel_gconf_get_integer (CONF_IM_WINDOW_POSITION_Y);
 
-	g_signal_connect (G_OBJECT (im_window), "delete-event", G_CALLBACK (on_delete), NULL);
-	g_signal_connect_object (G_OBJECT (im_window), "configure-event", G_CALLBACK (window_configure_cb), NULL, 0);
-	g_signal_connect (G_OBJECT (im_notebook), "switch-page", G_CALLBACK (on_switch_page), NULL);
+    im_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_container_set_border_width (GTK_CONTAINER (im_window), 0);
+    gtk_window_set_title (GTK_WINDOW (im_window), window_title);
+    gtk_window_set_default_size (GTK_WINDOW (im_window), width, height);
+    gtk_window_set_default_icon_from_file (LOGO, NULL);
+    gtk_window_set_position (GTK_WINDOW (im_window), GTK_WIN_POS_MOUSE);
+    // gtk_window_set_resizable (GTK_WINDOW(im_window), FALSE);
+    gtk_widget_set_name (im_window, "imwindow");
 
-	/* make sure that everything is visible */
-	gtk_widget_show_all (im_window);
+    GtkWidget *im_vbox = gtk_vbox_new (FALSE /*homogeneous*/, 0 /*spacing*/);
+    im_notebook = gtk_notebook_new ();
 
-	// Restore position according to the configuration stored in gconf
-	gtk_window_move (GTK_WINDOW (im_window), position_x, position_y);
+    gtk_container_add (GTK_CONTAINER (im_window), im_vbox);
+    gtk_box_pack_start (GTK_BOX (im_vbox), im_notebook, TRUE, TRUE, 0);
+    gtk_widget_show (im_notebook);
+
+    g_signal_connect (G_OBJECT (im_window), "delete-event", G_CALLBACK (on_delete), NULL);
+    g_signal_connect_object (G_OBJECT (im_window), "configure-event", G_CALLBACK (window_configure_cb), NULL, 0);
+    g_signal_connect (G_OBJECT (im_notebook), "switch-page", G_CALLBACK (on_switch_page), NULL);
+
+    /* make sure that everything is visible */
+    gtk_widget_show_all (im_window);
+
+    // Restore position according to the configuration stored in gconf
+    gtk_window_move (GTK_WINDOW (im_window), position_x, position_y);
 }
 
-	GtkWidget *
+GtkWidget *
 im_window_get()
 {
-	if (im_window == NULL)
-		im_window_init();
-	return im_window;
+    if (im_window == NULL)
+        im_window_init();
+
+    return im_window;
 }
 
-	void
+void
 im_window_show ()
 {
-	gtk_widget_show (im_window_get ());
+    gtk_widget_show (im_window_get ());
 }
 
-	void
+void
 im_window_add (GtkWidget *widget)
 {
-	if (im_window_get()) {
-		/* Add the new tab to the notebook */
-		im_window_add_tab (widget);
+    if (im_window_get()) {
+        /* Add the new tab to the notebook */
+        im_window_add_tab (widget);
 
-		/* Show it all */
-		gtk_widget_show_all (im_window);
-	}
-	else
-		error ("Could not create the main instant messaging window");
+        /* Show it all */
+        gtk_widget_show_all (im_window);
+    } else
+        error ("Could not create the main instant messaging window");
 }
 
-	static void
+static void
 close_tab_cb (GtkButton *button, gpointer userdata)
 {
-	/* We want here to close the current tab */
-	im_window_remove_tab (GTK_WIDGET (userdata));
+    /* We want here to close the current tab */
+    im_window_remove_tab (GTK_WIDGET (userdata));
 
-	/* If no tabs are opened anymore, close the IM window */
-	// gtk_widget_destroy (im_window);
+    /* If no tabs are opened anymore, close the IM window */
+    // gtk_widget_destroy (im_window);
 }
 
-	void
+void
 im_window_add_tab (GtkWidget *widget)
-{	
-	/* Cast the paramater */
-	IMWidget *im = IM_WIDGET(widget);
+{
+    /* Cast the paramater */
+    IMWidget *im = IM_WIDGET (widget);
 
-	/* Fetch the call */
-	callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
+    /* Fetch the call */
+    callable_obj_t *im_widget_call = calllist_get (current_calls, im->call_id);
 
-	/* A container to include the tab label and the close button */
-	GtkWidget *tab_Container = gtk_hbox_new (FALSE, 3);
-	GtkWidget *tab_Label = gtk_label_new (get_peer_information (im_widget_call));
-	GtkWidget *tab_CloseButton = gtk_button_new ();
+    /* A container to include the tab label and the close button */
+    GtkWidget *tab_Container = gtk_hbox_new (FALSE, 3);
+    GtkWidget *tab_Label = gtk_label_new (get_peer_information (im_widget_call));
+    GtkWidget *tab_CloseButton = gtk_button_new ();
 
-	/* Pack it all */
-	gtk_button_set_relief (GTK_BUTTON(tab_CloseButton), GTK_RELIEF_NONE);
-	gtk_box_pack_start (GTK_BOX (tab_Container), tab_Label, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (tab_Container), tab_CloseButton, FALSE, FALSE, 0);
-	gtk_container_add(GTK_CONTAINER (tab_CloseButton), gtk_image_new_from_stock (GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
-	
-	/* Connect a signal to the close button on each tab, to be able to close the tabs individually */
-	g_signal_connect (tab_CloseButton, "clicked", G_CALLBACK (close_tab_cb), widget);
+    /* Pack it all */
+    gtk_button_set_relief (GTK_BUTTON (tab_CloseButton), GTK_RELIEF_NONE);
+    gtk_box_pack_start (GTK_BOX (tab_Container), tab_Label, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (tab_Container), tab_CloseButton, FALSE, FALSE, 0);
+    gtk_container_add (GTK_CONTAINER (tab_CloseButton), gtk_image_new_from_stock (GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
 
-	/* Show it */
-	gtk_widget_show_all (tab_Container);
+    /* Connect a signal to the close button on each tab, to be able to close the tabs individually */
+    g_signal_connect (tab_CloseButton, "clicked", G_CALLBACK (close_tab_cb), widget);
 
-	/* Add the page to the notebook */
-	gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
+    /* Show it */
+    gtk_widget_show_all (tab_Container);
 
-	/* TODO Switch to the newly opened tab. Still not working */
-	guint tabIndex = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
-	gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), tabIndex);
+    /* Add the page to the notebook */
+    gtk_notebook_append_page (GTK_NOTEBOOK (im_notebook), widget, tab_Container);
 
-	/* Decide whether or not displaying the tabs of the notebook */
-	im_window_hide_show_tabs ();
+    /* TODO Switch to the newly opened tab. Still not working */
+    guint tabIndex = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), widget);
+    gtk_notebook_set_current_page (GTK_NOTEBOOK (im_notebook), tabIndex);
+
+    /* Decide whether or not displaying the tabs of the notebook */
+    im_window_hide_show_tabs ();
 }
 
-	void
+void
 im_window_hide_show_tabs ()
 {
-	/* If only one tab is open, do not display the tab, only the content */
-	if (gtk_notebook_get_n_pages (GTK_NOTEBOOK (im_notebook)) == 1) {
-		gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), FALSE);
-	}
-	else
-		gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), TRUE);
+    /* If only one tab is open, do not display the tab, only the content */
+    if (gtk_notebook_get_n_pages (GTK_NOTEBOOK (im_notebook)) == 1) {
+        gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), FALSE);
+    } else
+        gtk_notebook_set_show_tabs (GTK_NOTEBOOK (im_notebook), TRUE);
 }
 
-	void
+void
 im_window_remove_tab (GtkWidget *widget)
 {
-	// Remove the widget from the window
-	
-	/* We want here to close the current tab */
+    // Remove the widget from the window
+
+    /* We want here to close the current tab */
     guint index = gtk_notebook_page_num (GTK_NOTEBOOK (im_notebook), GTK_WIDGET (widget));
     gtk_notebook_remove_page (GTK_NOTEBOOK (im_notebook), index);
 
-	/* Need to do some memory clean up, so that we could re-open an Im widget for this call later. */
-	IMWidget *im = IM_WIDGET(widget);
-	callable_obj_t *call = calllist_get (current_calls, im->call_id);
-	if (call)
-		call->_im_widget = NULL;
+    /* Need to do some memory clean up, so that we could re-open an Im widget for this call later. */
+    IMWidget *im = IM_WIDGET (widget);
+    callable_obj_t *call = calllist_get (current_calls, im->call_id);
 
-	/* Decide whether or not displaying the tabs of the notebook */
-	im_window_hide_show_tabs ();
+    if (call)
+        call->_im_widget = NULL;
+
+    /* Decide whether or not displaying the tabs of the notebook */
+    im_window_hide_show_tabs ();
 }

@@ -82,11 +82,10 @@ int main (int argc, char ** argv)
         if (!strncmp (argv[a], "--proxy=", 8)) {
             proxy_mode = true;
             proxy = argv[a] +8;
-        } else
-            if (!strncmp (argv[a], "--adaptor=", 10)) {
-                adaptor_mode = true;
-                adaptor = argv[a] +10;
-            }
+        } else if (!strncmp (argv[a], "--adaptor=", 10)) {
+            adaptor_mode = true;
+            adaptor = argv[a] +10;
+        }
     }
 
     if (!proxy_mode && !adaptor_mode) usage (argv[0]);

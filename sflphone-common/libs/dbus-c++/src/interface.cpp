@@ -33,11 +33,9 @@
 using namespace DBus;
 
 Interface::Interface (const std::string &name)
-        : _name (name)
-{}
+        : _name (name) {}
 
-Interface::~Interface()
-{}
+Interface::~Interface() {}
 
 InterfaceAdaptor *AdaptorBase::find_interface (const std::string &name)
 {

@@ -31,13 +31,13 @@
 #include <conferencelist.h>
 
 
-gchar* 
+gchar*
 generate_conf_id (void)
 {
     gchar *conf_id;
 
-    conf_id = g_new0(gchar, 30);
-    g_sprintf(conf_id, "%d", rand());
+    conf_id = g_new0 (gchar, 30);
+    g_sprintf (conf_id, "%d", rand());
     return conf_id;
 }
 
@@ -65,12 +65,12 @@ conferencelist_reset()
 
 
 void
-conferencelist_add(const conference_obj_t* conf)
+conferencelist_add (const conference_obj_t* conf)
 {
-    gchar* c = (gchar*)conferencelist_get(conf->_confID);
-    if(!c)
-    {
-        g_queue_push_tail (conferenceQueue, (gpointer)conf);
+    gchar* c = (gchar*) conferencelist_get (conf->_confID);
+
+    if (!c) {
+        g_queue_push_tail (conferenceQueue, (gpointer) conf);
     }
 }
 
@@ -78,40 +78,36 @@ conferencelist_add(const conference_obj_t* conf)
 void
 conferencelist_remove (const gchar* conf)
 {
-    gchar* c = (gchar*)conferencelist_get(conf);
-    if (c)
-    {
-        g_queue_remove(conferenceQueue, c);
+    gchar* c = (gchar*) conferencelist_get (conf);
+
+    if (c) {
+        g_queue_remove (conferenceQueue, c);
     }
 }
 
-conference_obj_t* 
+conference_obj_t*
 conferencelist_get (const gchar* conf_id)
 {
 
-    GList* c = g_queue_find_custom(conferenceQueue, conf_id, is_confID_confstruct);
-    if (c)
-    {
-	return (conference_obj_t*)c->data;
-    }
-    else
-    {
-	return NULL;
+    GList* c = g_queue_find_custom (conferenceQueue, conf_id, is_confID_confstruct);
+
+    if (c) {
+        return (conference_obj_t*) c->data;
+    } else {
+        return NULL;
     }
 }
 
 
-conference_obj_t* 
-conferencelist_get_nth ( guint n )
+conference_obj_t*
+conferencelist_get_nth (guint n)
 {
-    GList* c = g_queue_peek_nth(conferenceQueue, n);
-    if (c)
-    {
-	return (conference_obj_t*)c->data;
-    }
-    else
-    {
-	return NULL;
+    GList* c = g_queue_peek_nth (conferenceQueue, n);
+
+    if (c) {
+        return (conference_obj_t*) c->data;
+    } else {
+        return NULL;
     }
 }
 

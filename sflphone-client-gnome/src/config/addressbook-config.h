@@ -46,10 +46,9 @@ G_BEGIN_DECLS
 #define ADDRESSBOOK_DISPLAY_PHONE_HOME       "ADDRESSBOOK_DISPLAY_PHONE_HOME"
 #define ADDRESSBOOK_DISPLAY_PHONE_MOBILE     "ADDRESSBOOK_DISPLAY_PHONE_MOBILE"
 
-typedef struct _AddressBook_Config
-{
-	// gint64: a signed integer guaranteed to be 64 bits on all platforms
-	// To print or scan values of this type, use G_GINT64_MODIFIER and/or G_GINT64_FORMAT
+typedef struct _AddressBook_Config {
+    // gint64: a signed integer guaranteed to be 64 bits on all platforms
+    // To print or scan values of this type, use G_GINT64_MODIFIER and/or G_GINT64_FORMAT
     gint64 enable;
     gint64 max_results;
     gint64 display_contact_photo;
@@ -62,7 +61,7 @@ typedef struct _AddressBook_Config
  * Save the parameters through D-BUS
  */
 void
-addressbook_config_save_parameters(void);
+addressbook_config_save_parameters (void);
 
 /**
  * Initialize the address book structure, and retrieve the saved parameters through D-Bus
@@ -70,10 +69,10 @@ addressbook_config_save_parameters(void);
  * @param settings  The addressbook structure
  */
 void
-addressbook_config_load_parameters(AddressBook_Config **settings);
+addressbook_config_load_parameters (AddressBook_Config **settings);
 
 gboolean
-addressbook_display(AddressBook_Config *settings, const gchar *field);
+addressbook_display (AddressBook_Config *settings, const gchar *field);
 
 GtkWidget*
 create_addressbook_settings();

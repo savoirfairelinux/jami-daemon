@@ -40,17 +40,17 @@
   */
 
 typedef struct {
-	GtkTreeStore* store;
-	GtkWidget* view;
-	GtkWidget* tree;
-        GtkWidget* searchbar;
+    GtkTreeStore* store;
+    GtkWidget* view;
+    GtkWidget* tree;
+    GtkWidget* searchbar;
 
-        // Calllist vars
-	GQueue* callQueue;
-        gint selectedType;
-	callable_obj_t* selectedCall;
-        conference_obj_t* selectedConf;
-        gchar *_name;
+    // Calllist vars
+    GQueue* callQueue;
+    gint selectedType;
+    callable_obj_t* selectedCall;
+    conference_obj_t* selectedConf;
+    gchar *_name;
 } calltab_t;
 
 void
@@ -64,7 +64,7 @@ calllist_init (calltab_t* tab);
 
 /** This function empty and free the call list. */
 void
-calllist_clean(calltab_t* tab);
+calllist_clean (calltab_t* tab);
 
 /** This function empty, free the call list and allocate a new one. */
 void
@@ -72,11 +72,11 @@ calllist_reset (calltab_t* tab);
 
 /** Get the maximun number of calls in the history calltab */
 gdouble
-call_history_get_max_calls( void );
+call_history_get_max_calls (void);
 
 /** Set the maximun number of calls in the history calltab */
 void
-call_history_set_max_calls( const gdouble number );
+call_history_set_max_calls (const gdouble number);
 
 /** This function append a call to list.
   * @param c The call you want to add
@@ -106,13 +106,13 @@ calllist_get_size (calltab_t* tab);
   * @param n The position of the call you want
   * @return A call or NULL */
 callable_obj_t *
-calllist_get_nth (calltab_t* tab, guint n );
+calllist_get_nth (calltab_t* tab, guint n);
 
 /** Return the call corresponding to the callID
   * @param n The callID of the call you want
   * @return A call or NULL */
 callable_obj_t *
-calllist_get (calltab_t* tab, const gchar * callID );
+calllist_get (calltab_t* tab, const gchar * callID);
 
 /**
  * Clean the history. Delete all calls
@@ -125,7 +125,7 @@ calllist_clean_history();
  * @param c The call to remove
  */
 void
-calllist_remove_from_history( callable_obj_t* c);
+calllist_remove_from_history (callable_obj_t* c);
 
 /**
  * Initialize a non-empty call list

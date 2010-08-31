@@ -47,21 +47,21 @@ typedef struct _WebWidget      WebWidget;
 typedef struct _WebWidgetClass WebWidgetClass;
 
 struct _WebWidget {
-	WebKitWebView parent_instance;
+    WebKitWebView parent_instance;
 
-	/* Private */
-	WebKitWebFrame *web_frame;      // Our web frame
-	JSGlobalContextRef js_context;  // The frame's global JS context
-	JSObjectRef js_global;          // The frame's global context JS object
+    /* Private */
+    WebKitWebFrame *web_frame;      // Our web frame
+    JSGlobalContextRef js_context;  // The frame's global JS context
+    JSObjectRef js_global;          // The frame's global context JS object
 };
 
 struct _WebWidgetClass {
-	WebKitWebViewClass parent_class;
+    WebKitWebViewClass parent_class;
 };
 
 
-GType         im_widget_get_type         (void) G_GNUC_CONST;
-GtkWidget    *im_widget_new              (void);
+GType         im_widget_get_type (void) G_GNUC_CONST;
+GtkWidget    *im_widget_new (void);
 
 G_END_DECLS
 

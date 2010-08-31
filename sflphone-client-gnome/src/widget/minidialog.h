@@ -77,23 +77,23 @@ G_BEGIN_DECLS
  * </dl>
  */
 typedef struct {
-	GtkVBox parent;
+    GtkVBox parent;
 
-	/** A GtkVBox into which extra widgets for the dialog should be packed.
-	 */
-	GtkBox *contents;
+    /** A GtkVBox into which extra widgets for the dialog should be packed.
+     */
+    GtkBox *contents;
 
-	gpointer priv;
+    gpointer priv;
 } PidginMiniDialog;
 
 /** The class of #PidginMiniDialog objects. */
 typedef struct {
-	GtkBoxClass parent_class;
+    GtkBoxClass parent_class;
 
-	void (*_purple_reserved1) (void);
-	void (*_purple_reserved2) (void);
-	void (*_purple_reserved3) (void);
-	void (*_purple_reserved4) (void);
+    void (*_purple_reserved1) (void);
+    void (*_purple_reserved2) (void);
+    void (*_purple_reserved3) (void);
+    void (*_purple_reserved4) (void);
 } PidginMiniDialogClass;
 
 /** The type of a callback triggered by a button in a mini-dialog being pressed.
@@ -103,8 +103,8 @@ typedef struct {
  *                    pidgin_mini_dialog_add_button() when the button was
  *                    created.
  */
-typedef void (*PidginMiniDialogCallback)(PidginMiniDialog *mini_dialog,
-	GtkButton *button, gpointer user_data);
+typedef void (*PidginMiniDialogCallback) (PidginMiniDialog *mini_dialog,
+        GtkButton *button, gpointer user_data);
 
 /** Get the GType of #PidginMiniDialog. */
 GType pidgin_mini_dialog_get_type (void);
@@ -113,30 +113,30 @@ GType pidgin_mini_dialog_get_type (void);
  *  with @c g_object_new() then setting each property yourself.
  *  @return a new #PidginMiniDialog.
  */
-PidginMiniDialog *pidgin_mini_dialog_new(const gchar *title,
-	const gchar *description, const gchar *icon_name);
+PidginMiniDialog *pidgin_mini_dialog_new (const gchar *title,
+        const gchar *description, const gchar *icon_name);
 
 /** Shortcut for setting a mini-dialog's title via GObject properties.
  *  @param mini_dialog a mini-dialog
  *  @param title       the new title for @a mini_dialog
  */
-void pidgin_mini_dialog_set_title(PidginMiniDialog *mini_dialog,
-	const char *title);
+void pidgin_mini_dialog_set_title (PidginMiniDialog *mini_dialog,
+                                   const char *title);
 
 /** Shortcut for setting a mini-dialog's description via GObject properties.
  *  @param mini_dialog a mini-dialog
  *  @param description the new description for @a mini_dialog, or @c NULL to
  *                     hide the description widget.
  */
-void pidgin_mini_dialog_set_description(PidginMiniDialog *mini_dialog,
-	const char *description);
+void pidgin_mini_dialog_set_description (PidginMiniDialog *mini_dialog,
+        const char *description);
 
 /** Shortcut for setting a mini-dialog's icon via GObject properties.
  *  @param mini_dialog a mini-dialog
  *  @param icon_name   the Gtk stock ID of an icon, or @c NULL for no icon.
  */
-void pidgin_mini_dialog_set_icon_name(PidginMiniDialog *mini_dialog,
-	const char *icon_name);
+void pidgin_mini_dialog_set_icon_name (PidginMiniDialog *mini_dialog,
+                                       const char *icon_name);
 
 /** Adds a new button to a mini-dialog, and attaches the supplied callback to
  *  its <tt>clicked</tt> signal.  After a button is clicked, the dialog is
@@ -147,15 +147,15 @@ void pidgin_mini_dialog_set_icon_name(PidginMiniDialog *mini_dialog,
  *  @param user_data   arbitrary data to pass to @a clicked_cb when it is
  *                     called.
  */
-void pidgin_mini_dialog_add_button(PidginMiniDialog *mini_dialog,
-	const char *text, PidginMiniDialogCallback clicked_cb,
-	gpointer user_data);
+void pidgin_mini_dialog_add_button (PidginMiniDialog *mini_dialog,
+                                    const char *text, PidginMiniDialogCallback clicked_cb,
+                                    gpointer user_data);
 
 /** Gets the number of widgets packed into PidginMiniDialog.contents.
  *  @param mini_dialog a mini-dialog
  *  @return the number of widgets in @a mini_dialog->contents.
  */
-guint pidgin_mini_dialog_get_num_children(PidginMiniDialog *mini_dialog);
+guint pidgin_mini_dialog_get_num_children (PidginMiniDialog *mini_dialog);
 
 G_END_DECLS
 

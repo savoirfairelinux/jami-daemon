@@ -40,33 +40,30 @@
  * @enum history_state
  * This enum have all the state a call can take in the history
  */
-typedef enum
-{
-  MISSED,
-  INCOMING,
-  OUTGOING
+typedef enum {
+    MISSED,
+    INCOMING,
+    OUTGOING
 } history_state_t;
 
 /**
  * @enum contact_type
  * This enum have all types of contacts: HOME phone, cell phone, etc...
  */
-typedef enum
-{
-  CONTACT_PHONE_HOME,
-  CONTACT_PHONE_BUSINESS,
-  CONTACT_PHONE_MOBILE
+typedef enum {
+    CONTACT_PHONE_HOME,
+    CONTACT_PHONE_BUSINESS,
+    CONTACT_PHONE_MOBILE
 } contact_type_t;
 
 /**
  * @enum callable_obj_type
  * This enum have all types of items
  */
-typedef enum
-{
-  CALL,
-  HISTORY_ENTRY,
-  CONTACT
+typedef enum {
+    CALL,
+    HISTORY_ENTRY,
+    CONTACT
 } callable_type_t;
 
 
@@ -74,16 +71,16 @@ typedef enum
   * This enum have all the states a call can take.
   */
 typedef enum {
-   CALL_STATE_INVALID = 0,
-   CALL_STATE_INCOMING,
-   CALL_STATE_RINGING,
-   CALL_STATE_CURRENT,
-   CALL_STATE_DIALING,
-   CALL_STATE_HOLD,
-   CALL_STATE_FAILURE,
-   CALL_STATE_BUSY,
-   CALL_STATE_TRANSFERT,
-   CALL_STATE_RECORD,
+    CALL_STATE_INVALID = 0,
+    CALL_STATE_INCOMING,
+    CALL_STATE_RINGING,
+    CALL_STATE_CURRENT,
+    CALL_STATE_DIALING,
+    CALL_STATE_HOLD,
+    CALL_STATE_FAILURE,
+    CALL_STATE_BUSY,
+    CALL_STATE_TRANSFERT,
+    CALL_STATE_RECORD,
 } call_state_t;
 
 typedef enum {
@@ -104,19 +101,19 @@ typedef struct  {
     callable_type_t _type;          // CALL - HISTORY ENTRY - CONTACT
     call_state_t _state;            // The state of the call
     int _state_code;                // The numeric state code as defined in SIP or IAX
-    gchar* _state_code_description; // A textual description of _state_code   
+    gchar* _state_code_description; // A textual description of _state_code
     gchar* _callID;                 // The call ID
     gchar* _confID;                 // The conference ID (NULL if don't participate to a conference)
     gchar* _accountID;              // The account the call is made with
     time_t _time_start;             // The timestamp the call was initiating
     time_t _time_stop;              // The timestamp the call was over
     history_state_t _history_state; // The history state if necessary
-    srtp_state_t _srtp_state;       // The state of security on the call 
+    srtp_state_t _srtp_state;       // The state of security on the call
     gchar* _srtp_cipher;            // Cipher used for the srtp session
     gchar* _sas;                    // The Short Authentication String that should be displayed
-    gboolean _zrtp_confirmed;       // Override real state. Used for hold/unhold 
-                                    // since rtp session is killed each time and 
-                                    // libzrtpcpp does not remember state (yet?)
+    gboolean _zrtp_confirmed;       // Override real state. Used for hold/unhold
+    // since rtp session is killed each time and
+    // libzrtpcpp does not remember state (yet?)
     /**
      * The information about the person we are talking
      */
@@ -137,8 +134,8 @@ typedef struct  {
      * The thumbnail, if callable_obj_type=CONTACT
      */
     GdkPixbuf *_contact_thumbnail;
-    
-    /** 
+
+    /**
      * Maintains a list of error dialogs
      * associated with that call so that
      * they could be destroyed at the right
@@ -160,26 +157,26 @@ void create_new_call_from_details (const gchar *, GHashTable *, callable_obj_t *
 
 void create_history_entry_from_serialized_form (gchar *, gchar *, callable_obj_t **);
 
-void call_add_error(callable_obj_t * call, gpointer dialog);
+void call_add_error (callable_obj_t * call, gpointer dialog);
 
-void call_remove_error(callable_obj_t * call, gpointer dialog);
+void call_remove_error (callable_obj_t * call, gpointer dialog);
 
-void call_remove_all_errors(callable_obj_t * call);
+void call_remove_all_errors (callable_obj_t * call);
 
-/* 
- * GCompareFunc to compare a callID (gchar* and a callable_obj_t) 
+/*
+ * GCompareFunc to compare a callID (gchar* and a callable_obj_t)
  */
-gint is_callID_callstruct ( gconstpointer, gconstpointer);
+gint is_callID_callstruct (gconstpointer, gconstpointer);
 
-/* 
- * GCompareFunc to get current call (gchar* and a callable_obj_t) 
+/*
+ * GCompareFunc to get current call (gchar* and a callable_obj_t)
  */
-gint get_state_callstruct ( gconstpointer, gconstpointer);
+gint get_state_callstruct (gconstpointer, gconstpointer);
 
-/** 
+/**
   * This function parse the callable_obj_t.from field to return the name
   * @param c The call
-  * @return The full name of the caller or an empty string 
+  * @return The full name of the caller or an empty string
   */
 gchar* call_get_peer_name (const gchar*);
 

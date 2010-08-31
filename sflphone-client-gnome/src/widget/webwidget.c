@@ -31,36 +31,36 @@
 #include <JavaScriptCore/JavaScript.h>
 
 
-static void im_widget_init(IMWidget *im);
-static void im_widget_class_init(IMWidgetClass *klass);
+static void im_widget_init (IMWidget *im);
+static void im_widget_class_init (IMWidgetClass *klass);
 
 GType
 im_widget_get_type (void)
 {
-	static GType im_widget_type = 0;
+    static GType im_widget_type = 0;
 
-	if (!im_widget_type) {
-		static const GTypeInfo im_widget_info = {
-			sizeof (IMWidgetClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			(GClassInitFunc) im_widget_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (IMWidget),
-			0,
-			(GInstanceInitFunc) im_widget_init,
-			NULL  /* value_table */
-		};
+    if (!im_widget_type) {
+        static const GTypeInfo im_widget_info = {
+            sizeof (IMWidgetClass),
+            NULL, /* base_init */
+            NULL, /* base_finalize */
+            (GClassInitFunc) im_widget_class_init,
+            NULL, /* class_finalize */
+            NULL, /* class_data */
+            sizeof (IMWidget),
+            0,
+            (GInstanceInitFunc) im_widget_init,
+            NULL  /* value_table */
+        };
 
-		im_widget_type = g_type_register_static(
-			WEBKIT_TYPE_WEB_VIEW,
-			"IMWidget",
-			&im_widget_info,
-			0);
-	}
+        im_widget_type = g_type_register_static (
+                             WEBKIT_TYPE_WEB_VIEW,
+                             "IMWidget",
+                             &im_widget_info,
+                             0);
+    }
 
-	return im_widget_type;
+    return im_widget_type;
 }
 
 static void
@@ -71,17 +71,17 @@ im_widget_class_init (IMWidgetClass *klass)
 static void
 im_widget_init (IMWidget *im)
 {
-	/* Load our initial webpage on startup */
-	webkit_web_view_open(WEBKIT_WEB_VIEW(im), "file://" DATA_DIR "/webkit/im.html");
+    /* Load our initial webpage on startup */
+    webkit_web_view_open (WEBKIT_WEB_VIEW (im), "file://" DATA_DIR "/webkit/im.html");
 
-	/* Instantiate our local webkit related variables */
-	im->web_frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(im));
-	im->js_context = webkit_web_frame_get_global_context(im->web_frame);
-	im->js_global = JSContextGetGlobalObject(im->js_context);
+    /* Instantiate our local webkit related variables */
+    im->web_frame = webkit_web_view_get_main_frame (WEBKIT_WEB_VIEW (im));
+    im->js_context = webkit_web_frame_get_global_context (im->web_frame);
+    im->js_global = JSContextGetGlobalObject (im->js_context);
 }
 
 GtkWidget *
 im_widget_new()
 {
-	return GTK_WIDGET(g_object_new(IM_WIDGET_TYPE, NULL));
+    return GTK_WIDGET (g_object_new (IM_WIDGET_TYPE, NULL));
 }

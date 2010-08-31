@@ -18,12 +18,14 @@ bool
 utilspp::PrivateMembers::LifetimeTracker::compare (
     const LifetimeTracker *l,
     const LifetimeTracker *r
-) {
+)
+{
     return l->mLongevity < r->mLongevity;
 }
 
 void
-utilspp::PrivateMembers::atExitFunc() {
+utilspp::PrivateMembers::atExitFunc()
+{
     assert ( (mTrackerArray != NULL) &&
              (mNbElements > 0));
 

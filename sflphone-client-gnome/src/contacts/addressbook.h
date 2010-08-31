@@ -63,7 +63,7 @@ addressbook_is_active();
  * Perform a search in addressbook
  */
 void
-addressbook_search(GtkEntry*);
+addressbook_search (GtkEntry*);
 
 /**
  * Initialize addressbook

@@ -36,28 +36,28 @@
 
 calltab_t* calltab_init (gboolean searchbar_type, gchar *name)
 {
-	calltab_t* ret;
+    calltab_t* ret;
 
-	ret = malloc(sizeof(calltab_t));
+    ret = malloc (sizeof (calltab_t));
 
-	ret->store = NULL;
-	ret->view = NULL;
-	ret->tree = NULL;
-        ret->searchbar = NULL;
-	ret->callQueue = NULL;
-	ret->selectedCall = NULL;
-	ret->selectedConf = NULL;
-        ret->_name = g_strdup (name);
+    ret->store = NULL;
+    ret->view = NULL;
+    ret->tree = NULL;
+    ret->searchbar = NULL;
+    ret->callQueue = NULL;
+    ret->selectedCall = NULL;
+    ret->selectedConf = NULL;
+    ret->_name = g_strdup (name);
 
-	calltree_create (ret, searchbar_type);
-	calllist_init(ret);
+    calltree_create (ret, searchbar_type);
+    calllist_init (ret);
 
 
-	return ret;
+    return ret;
 }
 
 void
-calltab_select_call (calltab_t* tab, callable_obj_t * c )
+calltab_select_call (calltab_t* tab, callable_obj_t * c)
 {
     tab->selectedType = A_CALL;
     tab->selectedCall = c;
@@ -66,7 +66,7 @@ calltab_select_call (calltab_t* tab, callable_obj_t * c )
 
 
 void
-calltab_select_conf (conference_obj_t * c )
+calltab_select_conf (conference_obj_t * c)
 {
     current_calls->selectedType = A_CONFERENCE;
     current_calls->selectedConf = c;
@@ -74,7 +74,7 @@ calltab_select_conf (conference_obj_t * c )
 }
 
 gint
-calltab_get_selected_type(calltab_t* tab)
+calltab_get_selected_type (calltab_t* tab)
 {
     return tab->selectedType;
 }
@@ -82,7 +82,7 @@ calltab_get_selected_type(calltab_t* tab)
 callable_obj_t *
 calltab_get_selected_call (calltab_t* tab)
 {
-  return tab->selectedCall;
+    return tab->selectedCall;
 }
 
 conference_obj_t*

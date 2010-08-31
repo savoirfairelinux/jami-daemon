@@ -29,10 +29,10 @@
  */
 
 typedef struct {
-  char success;
-  char reason[200];
-  char user[200];
-  char passwd[200];
+    char success;
+    char reason[200];
+    char user[200];
+    char passwd[200];
 } rest_account;
 
-rest_account get_rest_account(char *host, char *email);
+rest_account get_rest_account (char *host, char *email);
