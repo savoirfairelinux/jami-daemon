@@ -17,17 +17,17 @@ popd
 make
 popd
 
+# Run the unit tests for the daemon
+pushd sflphone-common/test
+make check
+./test --xml
+popd
+
 # Compile the client
 pushd sflphone-client-gnome
 ./autogen.sh
 ./configure --prefix=/usr
 make
-popd
-
-# Run the unit tests for the daemon
-pushd sflphone-common/test
-make check
-./test --xml
 popd
 
 
