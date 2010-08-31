@@ -140,9 +140,9 @@ pj_status_t InstantMessaging::send_message (pjsip_inv_session *session, CallID& 
         int size = multiple_messages.size();
         int i = 0;
 
-        for (i=0; i<size; i++) {
-            send (session, id, multiple_messages[i]);
-        }
+	// Maximum is above 1500 character
+	// TODO: Send every messages 
+        send (session, id, multiple_messages[i]);
     }
 
     return PJ_SUCCESS;
