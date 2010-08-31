@@ -98,7 +98,7 @@ SIPAccount::SIPAccount (const AccountID& accountID)
         , _realm (DEFAULT_REALM)
         , _authenticationUsername ("")
         , _tlsSetting (NULL)
-        , _dtmfType (OVERRTP)
+        , _dtmfType (SIPINFO)
         , _tlsEnable ("false")
         , _tlsPortStr (DEFAULT_SIP_TLS_PORT)
         , _tlsCaListFile ("")
@@ -190,7 +190,7 @@ void SIPAccount::serialize (Conf::YamlEmitter *emitter)
     Conf::ScalarNode stunServer (_stunServer);
     Conf::ScalarNode stunEnabled (_stunEnabled ? "true" : "false");
     Conf::ScalarNode displayName (_displayName);
-    Conf::ScalarNode dtmfType (_dtmfType==0 ? "overrtp" : "sipinfo");
+    Conf::ScalarNode dtmfType (_dtmfType==OVERRTP ? "overrtp" : "sipinfo");
 
     std::stringstream countstr;
     countstr << 0;
@@ -415,6 +415,7 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
     val = (Conf::ScalarNode *) (map->getValue (dtmfTypeKey));
 
     if (val) {
+        _dtmfType = (val->getValue() == "overrtp") ? OVERRTP : SIPINFO;
         val = NULL;
     }
 
@@ -423,6 +424,7 @@ void SIPAccount::unserialize (Conf::MappingNode *map)
 
     if (val) {
         _serviceRoute = val->getValue();
+        val = NULL;
     }
 
     // stun enabled
@@ -723,6 +725,8 @@ void SIPAccount::setAccountDetails (const std::map<std::string, std::string>& de
         setPublishedPort (atoi (publishedPort.data()));
         setStunServer (stunServer);
         setStunEnabled ( (stunEnable == "true"));
+        setDtmfType ( (dtmfType == "overrtp") ? OVERRTP : SIPINFO);
+
         setResolveOnce ( (resolveOnce.compare ("true") ==0) ? true : false);
         setRegistrationExpire (registrationExpire);
 
@@ -879,7 +883,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails()
         a.insert (std::pair<std::string, std::string> (PUBLISHED_PORT, publishedport.str()));
         a.insert (std::pair<std::string, std::string> (STUN_ENABLE, isStunEnabled() ? "true" : "false"));
         a.insert (std::pair<std::string, std::string> (STUN_SERVER, getStunServer()));
-        a.insert (std::pair<std::string, std::string> (ACCOUNT_DTMF_TYPE, (getDtmfType() == 0) ? "0" : "1"));
+        a.insert (std::pair<std::string, std::string> (ACCOUNT_DTMF_TYPE, (getDtmfType() == OVERRTP) ? "overrtp" : "sipinfo"));
 
         a.insert (std::pair<std::string, std::string> (SRTP_KEY_EXCHANGE, getSrtpKeyExchange()));
         a.insert (std::pair<std::string, std::string> (SRTP_ENABLE, getSrtpEnable() ? "true" : "false"));

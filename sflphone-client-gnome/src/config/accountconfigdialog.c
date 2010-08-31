@@ -1473,8 +1473,10 @@ void show_account_window (account_t * a)
         }
 
         if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (overrtp))) {
+            DEBUG ("Config: Set dtmf over rtp");
             g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (OVERRTP));
         } else {
+            DEBUG ("Config: Set dtmf over sip");
             g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (SIPINFO));
         }
 
