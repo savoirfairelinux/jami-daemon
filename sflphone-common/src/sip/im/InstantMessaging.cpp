@@ -4,7 +4,8 @@ namespace sfl
 {
 
 InstantMessaging::InstantMessaging()
-        : imFiles () {}
+        : imFiles ()
+	, messageMaxSize(MAXIMUM_MESSAGE_LENGTH) {}
 
 
 InstantMessaging::~InstantMessaging() {}
@@ -40,7 +41,7 @@ bool InstantMessaging::saveMessage (const std::string& message, const std::strin
     // We will use the Call ID
 
     std::ofstream File;
-    std::string filename = "sip:";
+    std::string filename = "im:";
 
     filename.append (id);
     File.open (filename.c_str (), (std::_Ios_Openmode) mode);
@@ -127,7 +128,7 @@ pj_status_t InstantMessaging::send_message (pjsip_inv_session *session, CallID& 
 {
 
     /* Check the length of the message */
-    if (message.length() < MAXIMUM_MESSAGE_LENGTH) {
+    if (message.length() < getMessageMaximumSize()) {
         /* No problem here */
         send (session, id, message);
     }
@@ -155,17 +156,17 @@ std::vector<std::string> InstantMessaging::split_message (const std::string& tex
     std::string text_to_split = text;
 
     /* Iterate over the message length */
-    while (text_to_split.length() > MAXIMUM_MESSAGE_LENGTH) {
+    while (text_to_split.length() > getMessageMaximumSize()) {
         /* The remaining string is still too long */
 
         /* Compute the substring */
-        std::string split_message = text_to_split.substr (0, (size_t) MAXIMUM_MESSAGE_LENGTH);
+        std::string split_message = text_to_split.substr (0, (size_t) getMessageMaximumSize());
         /* Append our split character \n\n */
         split_message.append (DELIMITER_CHAR);
         /* Append in the vector */
         messages.push_back (split_message);
         /* Use the remaining string to not loop forever */
-        text_to_split = text_to_split.substr ( (size_t) MAXIMUM_MESSAGE_LENGTH);
+        text_to_split = text_to_split.substr ( (size_t) getMessageMaximumSize());
     }
 
     /* Push the last message */

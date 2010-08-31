@@ -52,12 +52,14 @@ void InstantMessagingTest::testSaveSingleMessage ()
 
     std::string input, tmp;
     std::string callID = "testfile1.txt";
+    std::string filename = "im:";
 
     // Open a file stream and try to write in it
     CPPUNIT_ASSERT (_im->saveMessage ("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
 
+    filename.append(callID);
     // Read it to check it has been successfully written
-    std::ifstream testfile (callID.c_str (), std::ios::in);
+    std::ifstream testfile (filename.c_str (), std::ios::in);
     CPPUNIT_ASSERT (testfile.is_open () == true);
 
     while (!testfile.eof ()) {
@@ -75,13 +77,15 @@ void InstantMessagingTest::testSaveMultipleMessage ()
 
     std::string input, tmp;
     std::string callID = "testfile2.txt";
+    std::string filename = "im:";
 
     // Open a file stream and try to write in it
     CPPUNIT_ASSERT (_im->saveMessage ("Bonjour, c'est un test d'archivage de message", "Manu", callID, std::ios::out)  == true);
     CPPUNIT_ASSERT (_im->saveMessage ("Cool", "Alex", callID, std::ios::out || std::ios::app)  == true);
 
+    filename.append(callID);
     // Read it to check it has been successfully written
-    std::ifstream testfile (callID.c_str (), std::ios::in);
+    std::ifstream testfile (filename.c_str (), std::ios::in);
     CPPUNIT_ASSERT (testfile.is_open () == true);
 
     while (!testfile.eof ()) {
@@ -97,10 +101,13 @@ void InstantMessagingTest::testSaveMultipleMessage ()
 void InstantMessagingTest::testSplitMessage ()
 {
 
+    _im->setMessageMaximumSize(10);
+    unsigned int maxSize = _im->getMessageMaximumSize();
+
     /* A message that does not need to be split */
     std::string short_message = "Salut";
     std::vector<std::string> messages = _im->split_message (short_message);
-    CPPUNIT_ASSERT (messages.size() == short_message.length() /MAXIMUM_SIZE + 1);
+    CPPUNIT_ASSERT (messages.size() == short_message.length() / maxSize + 1);
     CPPUNIT_ASSERT (messages[0] == short_message);
 
     /* A message that needs to be split into two messages */
@@ -108,15 +115,15 @@ void InstantMessagingTest::testSplitMessage ()
     messages = _im->split_message (long_message);
     int size = messages.size ();
     int i = 0;
-    CPPUNIT_ASSERT (size == (int) long_message.length() /MAXIMUM_SIZE + 1);
+    CPPUNIT_ASSERT (size == (int) (long_message.length() / maxSize + 1));
 
     /* If only one element, do not enter the loop */
     for (i = 0; i < size - 1; i++) {
-        CPPUNIT_ASSERT (messages[i] == long_message.substr ( (MAXIMUM_SIZE * i), MAXIMUM_SIZE) + DELIMITER_CHAR);
-    }
+        CPPUNIT_ASSERT (messages[i] == long_message.substr ( (maxSize * i), maxSize) + DELIMITER_CHAR);
+    } 
 
     /* Works for the last element, or for the only element */
-    CPPUNIT_ASSERT (messages[size- 1] == long_message.substr (MAXIMUM_SIZE * (size-1)));
+    CPPUNIT_ASSERT (messages[size- 1] == long_message.substr (maxSize * (size-1)));
 
     /* A message that needs to be split into four messages */
     std::string very_long_message = "A message that needs to be split into many messages";
@@ -125,11 +132,11 @@ void InstantMessagingTest::testSplitMessage ()
 
     /* If only one element, do not enter the loop */
     for (i = 0; i < size - 1; i++) {
-        CPPUNIT_ASSERT (messages[i] ==very_long_message.substr ( (MAXIMUM_SIZE * i), MAXIMUM_SIZE) + DELIMITER_CHAR);
+        CPPUNIT_ASSERT (messages[i] ==very_long_message.substr ( (maxSize * i), maxSize) + DELIMITER_CHAR);
     }
 
     /* Works for the last element, or for the only element */
-    CPPUNIT_ASSERT (messages[size- 1] == very_long_message.substr (MAXIMUM_SIZE * (size-1)));
+    CPPUNIT_ASSERT (messages[size- 1] == very_long_message.substr (maxSize * (size-1)));
 }
 
 void InstantMessagingTest::tearDown()

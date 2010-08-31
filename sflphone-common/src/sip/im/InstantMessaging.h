@@ -37,6 +37,17 @@ namespace sfl  {
 			 */
 			~InstantMessaging();
 
+			/**
+	 		 * Set maximum size fo this module.
+			 */
+			void setMessageMaximumSize(unsigned int max) { messageMaxSize = max; }
+
+			/**
+			 * Return the maximum number if character for a single SIP MESSAGE.
+			 * Longer messages should be splitted in several smaller messages using split_message
+			 */ 
+			unsigned int getMessageMaximumSize(void) { return messageMaxSize; }
+
 			/*
 			 * Register and initialize instant messaging support
 			 */
@@ -126,6 +137,11 @@ namespace sfl  {
 
 			InstantMessaging(const InstantMessaging&); //No Copy Constructor
 			InstantMessaging& operator=(const InstantMessaging&); //No Assignment Operator
+
+			/**
+			 * Store the maximum number of character for a SIP MESSAGE
+			 */
+			unsigned int messageMaxSize;
 	};
 }
 #endif // _INSTANT_MESSAGING_H
