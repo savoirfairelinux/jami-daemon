@@ -39,12 +39,10 @@ using namespace DBus;
 */
 
 Error::Error()
-        : _int (new InternalError)
-{}
+        : _int (new InternalError) {}
 
 Error::Error (InternalError &i)
-        : _int (new InternalError (i))
-{}
+        : _int (new InternalError (i)) {}
 
 Error::Error (const char *name, const char *message)
         : _int (new InternalError)

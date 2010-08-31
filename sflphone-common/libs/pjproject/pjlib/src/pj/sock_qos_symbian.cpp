@@ -1,5 +1,5 @@
 /* $Id: sock_qos_symbian.cpp 2998 2009-11-09 08:51:34Z bennylp $ */
-/* 
+/*
  * Copyright (C) 2009 Teluu Inc. (http://www.teluu.com)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -30,77 +30,81 @@
 #include <pj/sock_qos.h>
 #include "os_symbian.h"
 
-PJ_DEF(pj_status_t) pj_sock_set_qos_params(pj_sock_t sock,
-					   pj_qos_params *param)
+PJ_DEF (pj_status_t) pj_sock_set_qos_params (pj_sock_t sock,
+        pj_qos_params *param)
 {
-    PJ_ASSERT_RETURN(sock!=0 && sock!=PJ_INVALID_SOCKET, PJ_EINVAL);
-    
-    CPjSocket *pjsock = (CPjSocket*)sock;
+    PJ_ASSERT_RETURN (sock!=0 && sock!=PJ_INVALID_SOCKET, PJ_EINVAL);
+
+    CPjSocket *pjsock = (CPjSocket*) sock;
     RSocket & rsock = pjsock->Socket();
     pj_status_t last_err = PJ_ENOTSUP;
-    
+
     /* SO_PRIORITY and WMM are not supported */
-    param->flags &= ~(PJ_QOS_PARAM_HAS_SO_PRIO | PJ_QOS_PARAM_HAS_WMM);
-    
+    param->flags &= ~ (PJ_QOS_PARAM_HAS_SO_PRIO | PJ_QOS_PARAM_HAS_WMM);
+
     if (param->flags & PJ_QOS_PARAM_HAS_DSCP) {
-	TInt err;
-	
-	err = rsock.SetOpt(KSoIpTOS, KProtocolInetIp,
-		           (param->dscp_val << 2));
-	if (err != KErrNone) {
-	    last_err = PJ_RETURN_OS_ERROR(err);
-	    param->flags &= ~(PJ_QOS_PARAM_HAS_DSCP);
-	}
+        TInt err;
+
+        err = rsock.SetOpt (KSoIpTOS, KProtocolInetIp,
+                            (param->dscp_val << 2));
+
+        if (err != KErrNone) {
+            last_err = PJ_RETURN_OS_ERROR (err);
+            param->flags &= ~ (PJ_QOS_PARAM_HAS_DSCP);
+        }
     }
-    
+
     return param->flags ? PJ_SUCCESS : last_err;
 }
 
-PJ_DEF(pj_status_t) pj_sock_set_qos_type(pj_sock_t sock,
-					 pj_qos_type type)
+PJ_DEF (pj_status_t) pj_sock_set_qos_type (pj_sock_t sock,
+        pj_qos_type type)
 {
     pj_qos_params param;
     pj_status_t status;
-    
-    status = pj_qos_get_params(type, &param);
+
+    status = pj_qos_get_params (type, &param);
+
     if (status != PJ_SUCCESS)
-	return status;
-    
-    return pj_sock_set_qos_params(sock, &param);
+        return status;
+
+    return pj_sock_set_qos_params (sock, &param);
 }
 
 
-PJ_DEF(pj_status_t) pj_sock_get_qos_params(pj_sock_t sock,
-					   pj_qos_params *p_param)
+PJ_DEF (pj_status_t) pj_sock_get_qos_params (pj_sock_t sock,
+        pj_qos_params *p_param)
 {
-    PJ_ASSERT_RETURN(sock!=0 && sock!=PJ_INVALID_SOCKET, PJ_EINVAL);
-    
-    CPjSocket *pjsock = (CPjSocket*)sock;
+    PJ_ASSERT_RETURN (sock!=0 && sock!=PJ_INVALID_SOCKET, PJ_EINVAL);
+
+    CPjSocket *pjsock = (CPjSocket*) sock;
     RSocket & rsock = pjsock->Socket();
     TInt err, dscp;
-    
-    pj_bzero(p_param, sizeof(*p_param));
 
-    err = rsock.GetOpt(KSoIpTOS, KProtocolInetIp, dscp);
+    pj_bzero (p_param, sizeof (*p_param));
+
+    err = rsock.GetOpt (KSoIpTOS, KProtocolInetIp, dscp);
+
     if (err == KErrNone) {
-	p_param->flags |= PJ_QOS_PARAM_HAS_DSCP;
-	p_param->dscp_val = (dscp >> 2);
-	return PJ_SUCCESS;
+        p_param->flags |= PJ_QOS_PARAM_HAS_DSCP;
+        p_param->dscp_val = (dscp >> 2);
+        return PJ_SUCCESS;
     } else {
-	return PJ_RETURN_OS_ERROR(err);
+        return PJ_RETURN_OS_ERROR (err);
     }
 }
 
-PJ_DEF(pj_status_t) pj_sock_get_qos_type(pj_sock_t sock,
-					 pj_qos_type *p_type)
+PJ_DEF (pj_status_t) pj_sock_get_qos_type (pj_sock_t sock,
+        pj_qos_type *p_type)
 {
     pj_qos_params param;
     pj_status_t status;
-    
-    status = pj_sock_get_qos_params(sock, &param);
+
+    status = pj_sock_get_qos_params (sock, &param);
+
     if (status != PJ_SUCCESS)
-	return status;
-    
-    return pj_qos_get_type(&param, p_type);
+        return status;
+
+    return pj_qos_get_type (&param, p_type);
 }
 

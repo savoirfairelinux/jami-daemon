@@ -16,7 +16,7 @@
 #define STR_TEXT        pj_str((char*)"text")
 #define STR_PLAIN       pj_str((char*)"plain")
 #define METHOD_NAME     pj_str((char*)"MESSAGE")
-#define MAXIMUM_MESSAGE_LENGTH		10			/* ~1300/8 */
+#define MAXIMUM_MESSAGE_LENGTH		1560			/* PJSIP's sip message limit */
 #define DELIMITER_CHAR				"\n\n"		
 
 #define MODE_APPEND			std::ios::out || std::ios::app
@@ -43,8 +43,7 @@ namespace sfl  {
 			bool init ();
 
 			/*
-			 * Open an existing file if possible or create a new one.
-			 *
+			 * Open an existing file if possible or create a new one.			 *
 			 * @param id	The current call
 			 * @return int	The number of currently open file stream  
 			 */

@@ -71,7 +71,7 @@
     (IUnknown functions)
     0   virtual HRESULT STDMETHODCALLTYPE (*QueryInterface)(REFIID riid, void **ppv) = 0;
     4   virtual ULONG STDMETHODCALLTYPE (*AddRef)() = 0;
-    8   virtual ULONG STDMETHODCALLTYPE (*Release)() = 0;      
+    8   virtual ULONG STDMETHODCALLTYPE (*Release)() = 0;
 
     (IASIO functions)
     12	virtual ASIOBool (*init)(void *sysHandle) = 0;
@@ -128,7 +128,7 @@
     with MSVC, and requires that you ship the OpenASIO DLL with your
     application.
 
-    
+
     ACKNOWLEDGEMENTS
 
     Ross Bencina: worked out the thiscall details above, wrote the original
@@ -186,7 +186,7 @@ extern IASIO* theAsioDriver;
 
 // The following macros define the inline assembler for BORLAND first then gcc
 
-#if defined(__BCPLUSPLUS__) || defined(__BORLANDC__)          
+#if defined(__BCPLUSPLUS__) || defined(__BORLANDC__)
 
 
 #define CALL_THISCALL_0( resultName, thisPtr, funcOffset )\
@@ -277,7 +277,7 @@ extern IASIO* theAsioDriver;
                           :"=a"(resultName) /* Output Operands */           \
                           :"c"(thisPtr)     /* Input Operands */            \
                          );                                                 \
-
+ 
 
 #define CALL_VOID_THISCALL_1( thisPtr, funcOffset, param1 )                 \
     __asm__ __volatile__ ("pushl %0\n\t"                                    \
@@ -287,7 +287,7 @@ extern IASIO* theAsioDriver;
                           :"r"(param1),     /* Input Operands */            \
                            "c"(thisPtr)                                     \
                          );                                                 \
-
+ 
 
 #define CALL_THISCALL_1( resultName, thisPtr, funcOffset, param1 )          \
     __asm__ __volatile__ ("pushl %1\n\t"                                    \
@@ -297,7 +297,7 @@ extern IASIO* theAsioDriver;
                           :"r"(param1),     /* Input Operands */            \
                            "c"(thisPtr)                                     \
                           );                                                \
-
+ 
 
 #define CALL_THISCALL_1_DOUBLE( resultName, thisPtr, funcOffset, param1 )   \
     __asm__ __volatile__ ("pushl 4(%1)\n\t"                                 \
@@ -310,7 +310,7 @@ extern IASIO* theAsioDriver;
                            /* when using GCC 3.3.3, and maybe later versions*/\
                            "c"(thisPtr)                                     \
                           );                                                \
-
+ 
 
 #define CALL_THISCALL_2( resultName, thisPtr, funcOffset, param1, param2 )  \
     __asm__ __volatile__ ("pushl %1\n\t"                                    \
@@ -322,7 +322,7 @@ extern IASIO* theAsioDriver;
                            "r"(param1),                                     \
                            "c"(thisPtr)                                     \
                           );                                                \
-
+ 
 
 #define CALL_THISCALL_4( resultName, thisPtr, funcOffset, param1, param2, param3, param4 )\
     __asm__ __volatile__ ("pushl %1\n\t"                                    \
@@ -338,7 +338,7 @@ extern IASIO* theAsioDriver;
                            "r"(param1),                                     \
                            "c"(thisPtr)                                     \
                           );                                                \
-
+ 
 #endif
 
 
@@ -354,8 +354,8 @@ IASIOThiscallResolver::IASIOThiscallResolver()
 }
 
 // Constructor called from ASIOInit() below
-IASIOThiscallResolver::IASIOThiscallResolver(IASIO* that)
-: that_( that )
+IASIOThiscallResolver::IASIOThiscallResolver (IASIO* that)
+        : that_ (that)
 {
 }
 
@@ -363,11 +363,11 @@ IASIOThiscallResolver::IASIOThiscallResolver(IASIO* that)
 // really a COM object, just a wrapper which will work with the ASIO SDK.
 // If you wanted to use ASIO without the SDK you might want to implement COM
 // aggregation in these methods.
-HRESULT STDMETHODCALLTYPE IASIOThiscallResolver::QueryInterface(REFIID riid, void **ppv)
+HRESULT STDMETHODCALLTYPE IASIOThiscallResolver::QueryInterface (REFIID riid, void **ppv)
 {
-    (void)riid;     // suppress unused variable warning
+    (void) riid;    // suppress unused variable warning
 
-    assert( false ); // this function should never be called by the ASIO SDK.
+    assert (false);  // this function should never be called by the ASIO SDK.
 
     *ppv = NULL;
     return E_NOINTERFACE;
@@ -375,176 +375,176 @@ HRESULT STDMETHODCALLTYPE IASIOThiscallResolver::QueryInterface(REFIID riid, voi
 
 ULONG STDMETHODCALLTYPE IASIOThiscallResolver::AddRef()
 {
-    assert( false ); // this function should never be called by the ASIO SDK.
+    assert (false);  // this function should never be called by the ASIO SDK.
 
     return 1;
 }
 
 ULONG STDMETHODCALLTYPE IASIOThiscallResolver::Release()
 {
-    assert( false ); // this function should never be called by the ASIO SDK.
-    
+    assert (false);  // this function should never be called by the ASIO SDK.
+
     return 1;
 }
 
 
 // Implement the IASIO interface methods by performing the vptr manipulation
 // described above then delegating to the real implementation.
-ASIOBool IASIOThiscallResolver::init(void *sysHandle)
+ASIOBool IASIOThiscallResolver::init (void *sysHandle)
 {
     ASIOBool result;
-    CALL_THISCALL_1( result, that_, 12, sysHandle );
+    CALL_THISCALL_1 (result, that_, 12, sysHandle);
     return result;
 }
 
-void IASIOThiscallResolver::getDriverName(char *name)
+void IASIOThiscallResolver::getDriverName (char *name)
 {
-    CALL_VOID_THISCALL_1( that_, 16, name );
+    CALL_VOID_THISCALL_1 (that_, 16, name);
 }
 
 long IASIOThiscallResolver::getDriverVersion()
 {
     ASIOBool result;
-    CALL_THISCALL_0( result, that_, 20 );
+    CALL_THISCALL_0 (result, that_, 20);
     return result;
 }
 
-void IASIOThiscallResolver::getErrorMessage(char *string)
+void IASIOThiscallResolver::getErrorMessage (char *string)
 {
-     CALL_VOID_THISCALL_1( that_, 24, string );
+    CALL_VOID_THISCALL_1 (that_, 24, string);
 }
 
 ASIOError IASIOThiscallResolver::start()
 {
     ASIOBool result;
-    CALL_THISCALL_0( result, that_, 28 );
+    CALL_THISCALL_0 (result, that_, 28);
     return result;
 }
 
 ASIOError IASIOThiscallResolver::stop()
 {
     ASIOBool result;
-    CALL_THISCALL_0( result, that_, 32 );
+    CALL_THISCALL_0 (result, that_, 32);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::getChannels(long *numInputChannels, long *numOutputChannels)
+ASIOError IASIOThiscallResolver::getChannels (long *numInputChannels, long *numOutputChannels)
 {
     ASIOBool result;
-    CALL_THISCALL_2( result, that_, 36, numInputChannels, numOutputChannels );
+    CALL_THISCALL_2 (result, that_, 36, numInputChannels, numOutputChannels);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::getLatencies(long *inputLatency, long *outputLatency)
+ASIOError IASIOThiscallResolver::getLatencies (long *inputLatency, long *outputLatency)
 {
     ASIOBool result;
-    CALL_THISCALL_2( result, that_, 40, inputLatency, outputLatency );
+    CALL_THISCALL_2 (result, that_, 40, inputLatency, outputLatency);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::getBufferSize(long *minSize, long *maxSize,
+ASIOError IASIOThiscallResolver::getBufferSize (long *minSize, long *maxSize,
         long *preferredSize, long *granularity)
 {
     ASIOBool result;
-    CALL_THISCALL_4( result, that_, 44, minSize, maxSize, preferredSize, granularity );
+    CALL_THISCALL_4 (result, that_, 44, minSize, maxSize, preferredSize, granularity);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::canSampleRate(ASIOSampleRate sampleRate)
+ASIOError IASIOThiscallResolver::canSampleRate (ASIOSampleRate sampleRate)
 {
     ASIOBool result;
-    CALL_THISCALL_1_DOUBLE( result, that_, 48, sampleRate );
+    CALL_THISCALL_1_DOUBLE (result, that_, 48, sampleRate);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::getSampleRate(ASIOSampleRate *sampleRate)
+ASIOError IASIOThiscallResolver::getSampleRate (ASIOSampleRate *sampleRate)
 {
     ASIOBool result;
-    CALL_THISCALL_1( result, that_, 52, sampleRate );
+    CALL_THISCALL_1 (result, that_, 52, sampleRate);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::setSampleRate(ASIOSampleRate sampleRate)
-{    
-    ASIOBool result;
-    CALL_THISCALL_1_DOUBLE( result, that_, 56, sampleRate );
-    return result;
-}
-
-ASIOError IASIOThiscallResolver::getClockSources(ASIOClockSource *clocks, long *numSources)
+ASIOError IASIOThiscallResolver::setSampleRate (ASIOSampleRate sampleRate)
 {
     ASIOBool result;
-    CALL_THISCALL_2( result, that_, 60, clocks, numSources );
+    CALL_THISCALL_1_DOUBLE (result, that_, 56, sampleRate);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::setClockSource(long reference)
+ASIOError IASIOThiscallResolver::getClockSources (ASIOClockSource *clocks, long *numSources)
 {
     ASIOBool result;
-    CALL_THISCALL_1( result, that_, 64, reference );
+    CALL_THISCALL_2 (result, that_, 60, clocks, numSources);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::getSamplePosition(ASIOSamples *sPos, ASIOTimeStamp *tStamp)
+ASIOError IASIOThiscallResolver::setClockSource (long reference)
 {
     ASIOBool result;
-    CALL_THISCALL_2( result, that_, 68, sPos, tStamp );
+    CALL_THISCALL_1 (result, that_, 64, reference);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::getChannelInfo(ASIOChannelInfo *info)
+ASIOError IASIOThiscallResolver::getSamplePosition (ASIOSamples *sPos, ASIOTimeStamp *tStamp)
 {
     ASIOBool result;
-    CALL_THISCALL_1( result, that_, 72, info );
+    CALL_THISCALL_2 (result, that_, 68, sPos, tStamp);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::createBuffers(ASIOBufferInfo *bufferInfos,
+ASIOError IASIOThiscallResolver::getChannelInfo (ASIOChannelInfo *info)
+{
+    ASIOBool result;
+    CALL_THISCALL_1 (result, that_, 72, info);
+    return result;
+}
+
+ASIOError IASIOThiscallResolver::createBuffers (ASIOBufferInfo *bufferInfos,
         long numChannels, long bufferSize, ASIOCallbacks *callbacks)
 {
     ASIOBool result;
-    CALL_THISCALL_4( result, that_, 76, bufferInfos, numChannels, bufferSize, callbacks );
+    CALL_THISCALL_4 (result, that_, 76, bufferInfos, numChannels, bufferSize, callbacks);
     return result;
 }
 
 ASIOError IASIOThiscallResolver::disposeBuffers()
 {
     ASIOBool result;
-    CALL_THISCALL_0( result, that_, 80 );
+    CALL_THISCALL_0 (result, that_, 80);
     return result;
 }
 
 ASIOError IASIOThiscallResolver::controlPanel()
 {
     ASIOBool result;
-    CALL_THISCALL_0( result, that_, 84 );
+    CALL_THISCALL_0 (result, that_, 84);
     return result;
 }
 
-ASIOError IASIOThiscallResolver::future(long selector,void *opt)
+ASIOError IASIOThiscallResolver::future (long selector,void *opt)
 {
     ASIOBool result;
-    CALL_THISCALL_2( result, that_, 88, selector, opt );
+    CALL_THISCALL_2 (result, that_, 88, selector, opt);
     return result;
 }
 
 ASIOError IASIOThiscallResolver::outputReady()
 {
     ASIOBool result;
-    CALL_THISCALL_0( result, that_, 92 );
+    CALL_THISCALL_0 (result, that_, 92);
     return result;
 }
 
 
 // Implement our substitute ASIOInit() method
-ASIOError IASIOThiscallResolver::ASIOInit(ASIODriverInfo *info)
+ASIOError IASIOThiscallResolver::ASIOInit (ASIODriverInfo *info)
 {
     // To ensure that our instance's vptr is correctly constructed, even if
     // ASIOInit is called prior to main(), we explicitly call its constructor
     // (potentially over the top of an existing instance). Note that this is
     // pretty ugly, and is only safe because IASIOThiscallResolver has no
     // destructor and contains no objects with destructors.
-    new((void*)&instance) IASIOThiscallResolver( theAsioDriver );
+    new ( (void*) &instance) IASIOThiscallResolver (theAsioDriver);
 
     // Interpose between ASIO client code and the real driver.
     theAsioDriver = &instance;
@@ -553,7 +553,7 @@ ASIOError IASIOThiscallResolver::ASIOInit(ASIODriverInfo *info)
     // real driver because theAsioDriver is reset to zero in ASIOExit().
 
     // Delegate to the real ASIOInit
-	return ::ASIOInit(info);
+    return ::ASIOInit (info);
 }
 
 

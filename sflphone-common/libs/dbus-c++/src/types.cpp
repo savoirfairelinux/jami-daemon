@@ -37,7 +37,7 @@
 using namespace DBus;
 
 Variant::Variant()
-        : _msg (CallMessage()) // dummy message used as temporary storage for variant data
+        : _msg (CallMessage())   // dummy message used as temporary storage for variant data
 {
 }
 

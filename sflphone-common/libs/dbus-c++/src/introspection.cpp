@@ -169,8 +169,7 @@ IntrospectedInterface *const IntrospectableAdaptor::introspect() const
 }
 
 IntrospectableProxy::IntrospectableProxy()
-        : InterfaceProxy (introspectable_name)
-{}
+        : InterfaceProxy (introspectable_name) {}
 
 std::string IntrospectableProxy::Introspect()
 {

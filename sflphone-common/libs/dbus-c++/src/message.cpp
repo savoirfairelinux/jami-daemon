@@ -538,11 +538,13 @@ bool SignalMessage::operator == (const SignalMessage &m) const
     return dbus_message_is_signal (_pvt->msg, m.interface(), m.member());
 }
 
-const char *SignalMessage::interface() const {
-        return dbus_message_get_interface (_pvt->msg);
-    }
+const char *SignalMessage::interface() const
+{
+    return dbus_message_get_interface (_pvt->msg);
+}
 
-bool SignalMessage::interface (const char *i) {
+bool SignalMessage::interface (const char *i)
+{
     return dbus_message_set_interface (_pvt->msg, i);
 }
 
@@ -591,11 +593,13 @@ bool CallMessage::operator == (const CallMessage &m) const
     return dbus_message_is_method_call (_pvt->msg, m.interface(), m.member());
 }
 
-const char *CallMessage::interface() const {
-        return dbus_message_get_interface (_pvt->msg);
-    }
+const char *CallMessage::interface() const
+{
+    return dbus_message_get_interface (_pvt->msg);
+}
 
-bool CallMessage::interface (const char *i) {
+bool CallMessage::interface (const char *i)
+{
     return dbus_message_set_interface (_pvt->msg, i);
 }
 

@@ -87,12 +87,12 @@ static void latency_update_callback (pa_stream *p, void *userdata)
 
     pa_stream_get_latency (p, &r_usec, NULL);
 
-    _debug ("Audio: Stream letency update %0.0f ms for device %s", (float) r_usec/1000, pa_stream_get_device_name (p));
-    _debug ("Audio: maxlength %u", pa_stream_get_buffer_attr (p)->maxlength);
-    _debug ("Audio: tlength %u", pa_stream_get_buffer_attr (p)->tlength);
-    _debug ("Audio: prebuf %u", pa_stream_get_buffer_attr (p)->prebuf);
-    _debug ("Audio: minreq %u", pa_stream_get_buffer_attr (p)->minreq);
-    _debug ("Audio: fragsize %u", pa_stream_get_buffer_attr (p)->fragsize);
+    // _debug ("Audio: Stream letency update %0.0f ms for device %s", (float) r_usec/1000, pa_stream_get_device_name (p));
+    // _debug ("Audio: maxlength %u", pa_stream_get_buffer_attr (p)->maxlength);
+    // _debug ("Audio: tlength %u", pa_stream_get_buffer_attr (p)->tlength);
+    // _debug ("Audio: prebuf %u", pa_stream_get_buffer_attr (p)->prebuf);
+    // _debug ("Audio: minreq %u", pa_stream_get_buffer_attr (p)->minreq);
+    // _debug ("Audio: fragsize %u", pa_stream_get_buffer_attr (p)->fragsize);
 
 }
 
