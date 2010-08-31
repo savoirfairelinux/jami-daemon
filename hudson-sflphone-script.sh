@@ -27,7 +27,7 @@ popd
 # Run the unit tests for the daemon
 pushd sflphone-common/test
 make check
-./test
+./test --xml
 popd
 
 

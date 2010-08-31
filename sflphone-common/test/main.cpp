@@ -45,6 +45,7 @@ int main (int argc, char* argv[])
     Logger::setDebugMode (true);
 
     int argvIndex = 1;
+	bool xmlOutput = false;
 
     if (argc > 1) {
         if (strcmp ("--help", argv[1]) == 0) {
@@ -55,6 +56,7 @@ int main (int argc, char* argv[])
             int testSuiteCount = suite->getChildTestCount();
             printf ("Usage: test [OPTIONS] [TEST_SUITE]\n");
             printf ("\nOptions:\n");
+            printf (" --xml - Output results in an XML file, instead of standard output.\n");
             printf (" --debug - Debug mode\n");
             printf (" --help - Print help\n");
             printf ("\nAvailable test suites:\n");
@@ -69,7 +71,13 @@ int main (int argc, char* argv[])
 
             Logger::setDebugMode (true);
             _info ("Debug mode activated");
-        }
+
+        } else if (strcmp("--xml", argv[1]) == 0) {
+            argvIndex++;
+
+			xmlOutput = true;
+            _info ("Using XML output");
+		}
     }
 
     // Default test suite : all tests
@@ -97,13 +105,15 @@ int main (int argc, char* argv[])
     CppUnit::TextTestRunner runner;
     runner.addTest (suite);
 
-    // Change the default outputter to a compiler error format outputter
-    // runner.setOutputter (new CppUnit::CompilerOutputter (&runner.result(), std::cerr));
-
-	/* Specify XML output */
-	std::ofstream outfile("cppunitresults.xml");
-	CppUnit::XmlOutputter* outputter = new CppUnit::XmlOutputter(&runner.result(), outfile);
-	runner.setOutputter(outputter);
+	if (xmlOutput) {
+		/* Specify XML output */
+		std::ofstream outfile("cppunitresults.xml");
+		CppUnit::XmlOutputter* outputter = new CppUnit::XmlOutputter(&runner.result(), outfile);
+		runner.setOutputter(outputter);
+	} else {
+		// Change the default outputter to a compiler error format outputter
+		runner.setOutputter (new CppUnit::CompilerOutputter (&runner.result(), std::cerr));
+	}
 
     // Run the tests.
     bool wasSucessful = runner.run();
