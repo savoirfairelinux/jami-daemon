@@ -99,22 +99,6 @@ class InstantMessaging
          */
         pj_status_t notify (CallID& id);
 
-
-        /*
-         * Add a pair file stream / call ID to the private std::map
-         */
-        inline int addFileStream (std::string key, std::ofstream &value)	{
-            return (int) imFiles.size ();
-        }
-
-        /*
-         * Remove a pair file stream / call ID from the private std::map
-         */
-        inline int removeFileStream (std::string key)	{
-            imFiles.erase (key);
-            return (int) imFiles.size ();
-        }
-
     private:
 
         /**
