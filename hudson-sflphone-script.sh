@@ -17,6 +17,7 @@ make && make dep
 popd
 ./configure --prefix=/usr
 make
+make doc
 popd
 
 # Run the unit tests for the daemon
