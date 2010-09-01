@@ -4,10 +4,12 @@
 #
 # Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 
+set -x
+ 
 # Compile the daemon
 pushd sflphone-common
 ./autogen.sh
-# Compile pjproject first
+ Compile pjproject first
 pushd libs/pjproject
 ./autogen.sh
 ./configure
@@ -20,7 +22,8 @@ popd
 # Run the unit tests for the daemon
 pushd sflphone-common/test
 make check
-./test --xml
+# if at least one test failed, exit
+./test || exit 1
 popd
 
 # Compile the client
@@ -30,4 +33,5 @@ pushd sflphone-client-gnome
 make
 popd
 
-
+# SUCCESS
+exit 0
