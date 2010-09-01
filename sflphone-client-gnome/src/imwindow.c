@@ -103,7 +103,7 @@ im_window_init()
     gtk_window_set_default_size (GTK_WINDOW (im_window), width, height);
     gtk_window_set_default_icon_from_file (LOGO, NULL);
     gtk_window_set_position (GTK_WINDOW (im_window), GTK_WIN_POS_MOUSE);
-    // gtk_window_set_resizable (GTK_WINDOW(im_window), FALSE);
+
     gtk_widget_set_name (im_window, "imwindow");
 
     GtkWidget *im_vbox = gtk_vbox_new (FALSE /*homogeneous*/, 0 /*spacing*/);

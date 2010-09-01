@@ -36,49 +36,50 @@
 
 #include <vector>
 
-class DcBlocker : public Algorithm {
+class DcBlocker : public Algorithm
+{
 
-public:
+    public:
 
-    DcBlocker();
+        DcBlocker();
 
-    ~DcBlocker();
+        ~DcBlocker();
 
-    virtual void reset(void);
+        virtual void reset (void);
 
-    /**
-     * Unused
-     */
-    virtual void putData(SFLDataFormat *inputData, int nbBytes);
+        /**
+         * Unused
+         */
+        virtual void putData (SFLDataFormat *inputData, int nbBytes);
 
-    /**
-     * Unused
-     */
-    virtual int getData(SFLDataFormat *outputData);
+        /**
+         * Unused
+         */
+        virtual int getData (SFLDataFormat *outputData);
 
-    /**
-     * Perform dc blocking given the input data
-     */
-    virtual void process(SFLDataFormat *data, int nbBytes);
+        /**
+         * Perform dc blocking given the input data
+         */
+        virtual void process (SFLDataFormat *data, int nbBytes);
 
-    /**
-     * Perform echo cancellation using internal buffers
-     * \param inputData containing mixed echo and voice data
-     * \param outputData containing 
-     */
-    virtual int process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        /**
+         * Perform echo cancellation using internal buffers
+         * \param inputData containing mixed echo and voice data
+         * \param outputData containing
+         */
+        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-    /**
-     * Perform echo cancellation, application must provide its own buffer
-     * \param micData containing mixed echo and voice data
-     * \param spkrData containing far-end voice data to be sent to speakers
-     * \param outputData containing the processed data
-     */
-    virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+        /**
+         * Perform echo cancellation, application must provide its own buffer
+         * \param micData containing mixed echo and voice data
+         * \param spkrData containing far-end voice data to be sent to speakers
+         * \param outputData containing the processed data
+         */
+        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
 
-private:
+    private:
 
-    SFLDataFormat _y, _x, _xm1, _ym1;
+        SFLDataFormat _y, _x, _xm1, _ym1;
 };
 
 #endif

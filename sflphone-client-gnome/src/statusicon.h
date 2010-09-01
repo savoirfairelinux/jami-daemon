@@ -107,6 +107,8 @@ GtkStatusIcon* get_status_icon (void);
  */
 void statusicon_set_tooltip (void);
 
+void status_tray_icon_online (gboolean online);
+
 #endif // GTK_CHECK_VERSION
 
 #endif

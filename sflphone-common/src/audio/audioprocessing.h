@@ -35,59 +35,62 @@
 #include "algorithm.h"
 
 /**
- * Process audio buffers using specified at instantiation which may be 
+ * Process audio buffers using specified at instantiation which may be
  * changed dynamically at runtime.
  */
-class AudioProcessing {
+class AudioProcessing
+{
 
-public:
+    public:
 
-  /**
-   * The constructor for this class
-   */
-  AudioProcessing(Algorithm *_algo);
+        /**
+         * The constructor for this class
+         */
+        AudioProcessing (Algorithm *_algo);
 
-  ~AudioProcessing(void);
+        ~AudioProcessing (void);
 
-  /**
-   * Set a new algorithm to process audio. Algorithm must be a subclass of abstract class Algorithm
-   */
-  void setAlgorithm(Algorithm *_algo) { _algorithm = _algo; }
+        /**
+         * Set a new algorithm to process audio. Algorithm must be a subclass of abstract class Algorithm
+         */
+        void setAlgorithm (Algorithm *_algo) {
+            _algorithm = _algo;
+        }
 
 
-  /**
-   * Reset parameters for the algorithm
-   */
-  void resetAlgorithm();
+        /**
+         * Reset parameters for the algorithm
+         */
+        void resetAlgorithm();
 
-  /**
-   * Put data in internal buffer
-   */
-  void putData(SFLDataFormat *inputData, int nbBytes);
+        /**
+         * Put data in internal buffer
+         */
+        void putData (SFLDataFormat *inputData, int nbBytes);
 
-  /**
-   * Get data from internal buffer
-   */
-  int getData(SFLDataFormat *outputData);
+        /**
+         * Get data from internal buffer
+         */
+        int getData (SFLDataFormat *outputData);
 
-  /**
-   * Process some audio data
-   */
-  void processAudio(SFLDataFormat *inputData, int nbBytes);
+        /**
+         * Process some audio data
+         */
+        void processAudio (SFLDataFormat *inputData, int nbBytes);
 
-  /**
-   * Process some audio data
-   */
-  int processAudio(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        /**
+         * Process some audio data
+         */
+        int processAudio (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-  /**
-   * Process some audio data.
-   */
-  void processAudio(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+        /**
+         * Process some audio data.
+         */
+        void processAudio (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
 
-private:
+    private:
 
-  Algorithm *_algorithm;
+        Algorithm *_algorithm;
 
 };
 

@@ -189,6 +189,8 @@ Call::isAudioStarted()
 bool
 Call::setRecording()
 {
+    _debug ("Call: Set recording");
+
     bool recordStatus = Recordable::recAudio.isRecording();
 
     Recordable::recAudio.setRecording();
@@ -196,15 +198,20 @@ Call::setRecording()
     // Start recording
     if (!recordStatus) {
 
+        _debug ("Call: Call not recording yet, set ringbuffers");
+
         MainBuffer *mbuffer = Manager::instance().getMainBuffer();
         CallID process_id = Recordable::recorder.getRecorderID();
 
         mbuffer->bindHalfDuplexOut (process_id, _id);
         mbuffer->bindHalfDuplexOut (process_id);
 
+        Recordable::recorder.start();
     }
     // Stop recording
     else {
+
+        _debug ("Call: Stop recording");
 
         MainBuffer *mbuffer = Manager::instance().getMainBuffer();
         CallID process_id = Recordable::recorder.getRecorderID();
@@ -215,8 +222,6 @@ Call::setRecording()
     }
 
     Manager::instance().getMainBuffer()->stateInfo();
-
-    Recordable::recorder.start();
 
     return recordStatus;
 }

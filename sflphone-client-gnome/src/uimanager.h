@@ -44,9 +44,19 @@ GtkAction *volumeToggle;
 
 gboolean uimanager_new (GtkUIManager**);
 
-static void show_edit_number ();
-
 void update_voicemail_status (void);
+
+void update_actions (void);
+
+void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event);
+
+void show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event);
+
+void show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event);
+
+void create_menus (GtkUIManager *ui_manager, GtkWidget **widget);
+
+void create_toolbar_actions (GtkUIManager *ui_manager, GtkWidget **widget);
 
 G_END_DECLS
 

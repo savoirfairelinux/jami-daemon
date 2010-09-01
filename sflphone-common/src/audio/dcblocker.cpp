@@ -42,9 +42,9 @@ void DcBlocker::reset()
     _ym1 = 0;
 }
 
-void DcBlocker::putData (SFLDataFormat *inputData, int nbBytes) {}
+void DcBlocker::putData (SFLDataFormat *inputData UNUSED, int nbBytes UNUSED) {}
 
-int DcBlocker::getData (SFLDataFormat *outputData)
+int DcBlocker::getData (SFLDataFormat *outputData UNUSED)
 {
     return 0;
 }
@@ -87,4 +87,4 @@ int DcBlocker::process (SFLDataFormat *inputData, SFLDataFormat *outputData, int
 
 }
 
-void DcBlocker::process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes) {}
+void DcBlocker::process (SFLDataFormat *micData UNUSED, SFLDataFormat *spkrData UNUSED, SFLDataFormat *outputData UNUSED, int nbBytes UNUSED) {}

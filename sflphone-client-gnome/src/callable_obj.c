@@ -32,10 +32,13 @@
 #include <codeclist.h>
 #include <sflphone_const.h>
 #include <time.h>
+#include "contacts/calltree.h"
+#include  <unistd.h>
+
 
 #define UNIX_DAY			86400
 #define UNIX_WEEK			86400 * 6
-#define UNIX_TWO_DAYS		86400 * 2
+#define UNIX_TWO_DAYS		        86400 * 2
 
 gint is_callID_callstruct (gconstpointer a, gconstpointer b)
 {
@@ -125,11 +128,96 @@ void call_remove_all_errors (callable_obj_t * call)
     g_ptr_array_foreach (call->_error_dialogs, (GFunc) gtk_widget_destroy, NULL);
 }
 
+void threaded_clock_incrementer (void *pc)
+{
+
+    callable_obj_t *call = (callable_obj_t *) pc;
+
+
+    while (call->clockStarted) {
+
+        int duration;
+        time_t start, current;
+
+        gdk_threads_enter ();
+
+        set_timestamp (& (call->_time_current));
+
+        start = call->_time_start;
+        current = call->_time_current;
+
+        if (current == start) {
+            g_snprintf (call->_timestr, 20, "00:00");
+
+        }
+
+        duration = (int) difftime (current, start);
+
+        if (duration / 60 == 0) {
+            if (duration < 10) {
+                g_snprintf (call->_timestr, 20, "00:0%d", duration);
+            } else {
+                g_snprintf (call->_timestr, 20, "00:%d", duration);
+            }
+        } else {
+            if (duration%60 < 10) {
+                g_snprintf (call->_timestr, 20, "0%d:0%d", duration/60, duration%60);
+            } else {
+                g_snprintf (call->_timestr, 20, "%d:%d", duration/60, duration%60);
+            }
+        }
+
+        // Update clock only if call is active (current, hold, recording transfer)
+        if ( (call->_state != CALL_STATE_INVALID) &&
+                (call->_state != CALL_STATE_INCOMING) &&
+                (call->_state != CALL_STATE_RINGING) &&
+                (call->_state != CALL_STATE_DIALING) &&
+                (call->_state != CALL_STATE_FAILURE) &&
+                (call->_state != CALL_STATE_BUSY)) {
+            calltree_update_clock();
+        }
+
+        // gdk_flush();
+        gdk_threads_leave ();
+
+
+        usleep (1000000);
+
+    }
+
+    DEBUG ("CallableObj: Stopping Thread");
+
+    g_thread_exit (NULL);
+
+}
+
+void stop_call_clock (callable_obj_t *c)
+{
+
+    DEBUG ("CallableObj: Stop call clock");
+
+    if (!c) {
+        ERROR ("CallableObj: Callable object is NULL");
+        return;
+    }
+
+    if (c->_type == CALL && c->clockStarted) {
+        c->clockStarted = 0;
+        /// no need to join here, only need to call g_thread_exit at the end of the threaded function
+        // g_thread_join (c->tid);
+    }
+}
+
 void create_new_call (callable_type_t type, call_state_t state, gchar* callID , gchar* accountID, gchar* peer_name, gchar* peer_number, callable_obj_t ** new_call)
 {
 
+    GError *err1 = NULL ;
     callable_obj_t *obj;
     gchar *call_id;
+
+    DEBUG ("CallableObj: Create new call");
+
+    DEBUG ("Account: %s", accountID);
 
     // Allocate memory
     obj = g_new0 (callable_obj_t, 1);
@@ -148,7 +236,9 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
 
     obj->_trsft_to = "";
     set_timestamp (& (obj->_time_start));
+    set_timestamp (& (obj->_time_current));
     set_timestamp (& (obj->_time_stop));
+    // g_snprintf(obj->_timestr, 20, "00:00");
 
     if (g_strcasecmp (callID, "") == 0)
         call_id = generate_call_id ();
@@ -158,6 +248,16 @@ void create_new_call (callable_type_t type, call_state_t state, gchar* callID , 
     // Set the IDs
     obj->_callID = g_strdup (call_id);
     obj->_confID = NULL;
+
+    obj->clockStarted = 1;
+
+    if (obj->_type == CALL) {
+        // pthread_create(&(obj->tid), NULL, threaded_clock_incrementer, obj);
+        if ( (obj->tid = g_thread_create ( (GThreadFunc) threaded_clock_incrementer, (void *) obj, TRUE, &err1)) == NULL) {
+            DEBUG ("Thread creation failed!");
+            g_error_free (err1) ;
+        }
+    }
 
     *new_call = obj;
 }
@@ -252,12 +352,20 @@ void create_history_entry_from_serialized_form (gchar *timestamp, gchar *details
 
 void free_callable_obj_t (callable_obj_t *c)
 {
+    DEBUG ("CallableObj: Free callable object");
+
+    stop_call_clock (c);
+
     g_free (c->_callID);
     g_free (c->_accountID);
     g_free (c->_peer_name);
     g_free (c->_peer_number);
     g_free (c->_peer_info);
     g_free (c);
+
+    DEBUG ("If you don't see it that is because there is a problem");
+
+    calltree_update_clock();
 }
 
 void attach_thumbnail (callable_obj_t *call, GdkPixbuf *pixbuf)
@@ -343,11 +451,14 @@ gchar* serialize_history_entry (callable_obj_t *entry)
     // and the timestamps
     timestamp = convert_timestamp_to_gchar (entry->_time_stop);
 
+    gchar* peer_name = (entry->_peer_name == NULL || g_strcasecmp (entry->_peer_name,"") == 0) ? "empty": entry->_peer_name;
+    gchar* account_id = (entry->_accountID == NULL || g_strcasecmp (entry->_accountID,"") == 0) ? "empty": entry->_accountID;
+
     result = g_strconcat (history_state, separator,
                           entry->_peer_number, separator,
-                          g_strcasecmp (entry->_peer_name,"") ==0 ? "empty": entry->_peer_name, separator,
+                          peer_name, separator,
                           timestamp, separator,
-                          g_strcasecmp (entry->_accountID,"") ==0 ? "empty": entry->_accountID,
+                          account_id,
                           NULL);
 
     return result;

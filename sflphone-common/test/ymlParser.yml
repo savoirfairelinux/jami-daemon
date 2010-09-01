@@ -1,0 +1,117 @@
+accounts:
+ - id:			1234
+   alias:   		sfl-181
+   username:		181   
+   password:  		sfl-181pw
+   hostname:  		sflphone.org
+   enable:		true
+   type:		sip
+
+ - id:			2345
+   alias:		sfl-431
+   username:		431     
+   password:  		alexandre
+   hostname:		192.168.50.3
+   enable:		true
+   type:		sip
+   expire:		3600
+   interface:		lo
+   port:		5065
+   mailbox:		97
+   publishaddr:		127.0.0.1
+   publishport:		5065
+   sameaslocal:		true
+   resolveonce:		false      
+   codecs:		0/9/110/111/112/
+   credential:
+     count:		0
+   srtp:
+     enable:		true
+     keyexchange:	sdes
+     rtpfallback:	true
+   zrtp:
+     displaySas:	true
+     displaySasOnce:	false
+     helloHashEnabled:	true
+     notSuppWarning:	true
+   tls:
+     certificate:       /home/msavard/Development/sflphone/sflphone-client-gnome/config.guess
+     calist:            /home/msavard/Development/sflphone/sflphone-client-gnome/aclocal.m4
+     ciphers:
+     enable:            true
+     method:           	TLSv1
+     timeout:          	0
+     password:
+     privatekey:        /home/msavard/Development/sflphone/sflphone-client-gnome/config.log
+     requirecertif:    	true
+     server:
+     verifyclient:      true
+     verifyserver:      true
+
+addressbook:
+   photo:		false
+   enabled:		true
+   list:		1243608768.30329.0@emilou-desktop/1243456917.15690.23@emilou-desktop/
+   max_results:		25
+   business:		true
+   home:		false
+   mobile:		false
+
+audio:
+   alsa:
+     cardin:            0
+     cardout:		0
+     cardout:		0
+     framesize:		20
+     plugin:		default
+     smplrate:		44100
+   pulse:
+     devicePlayback:
+     deviceRecord:
+     deviceRingtone:	
+   recordpath:		/home/msavard/Bureau
+   ringchoice:		/usr/share/sflphone/ringtones/konga.ul
+   volumemic:		100
+   volumespkr:		100
+
+hooks:
+   iax2Enabled:		false
+   numberAddPrefix:	false
+   numberEnabled:	false
+   sipEnabled:		false
+   urlCommand:		x-www-browser
+   urlSipField:		X-sflphone-url
+
+preferences:
+   order:		1234/2345
+   audioapi:		0
+   dialpaddisplay:	0
+   historyenabled:	1
+   historylimit:	30
+   historymaxCalls:	20
+   notifyall:		true
+   notifymails:		false
+   zoneToneChoice:	North America
+   registrationexpire:	180
+   ringtonesenable:	true
+   portnum:		5060
+   searchbardisplay:	true
+   starthidden:		0
+   volumedisplay:	0
+   windowheight:	332
+   windowpopup:		0
+   windowposition:	0
+   windowposition:	24
+   windowwidth:		240
+   zeroconfenable:	false
+   md5Hash:		false
+
+voiplink:
+   playDtmf:		true
+   playTones:		true
+   pulseLength:		250
+   sendDTMFas:		0
+   stunenable:		0
+   stunserver:		stun.sflphone.org
+   symmetric:		true
+   zidFile:		sfl.zid

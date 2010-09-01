@@ -205,7 +205,7 @@ gchar * account_list_get_ordered_list (void);
 
 guint account_list_get_position (account_t *account);
 
-gboolean account_list_current_account_has_mailbox (void);
+gboolean current_account_has_mailbox (void);
 
 guint current_account_get_message_number (void);
 

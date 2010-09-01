@@ -63,9 +63,9 @@ typedef struct  {
 
 } conference_obj_t;
 
-conference_obj_t* create_new_conference (conference_state_t, const gchar*, conference_obj_t **);
+void create_new_conference (conference_state_t, const gchar*, conference_obj_t **);
 
-conference_obj_t* create_new_conference_from_details (const gchar *, GHashTable *, conference_obj_t **);
+void create_new_conference_from_details (const gchar *, GHashTable *, conference_obj_t **);
 
 void free_conference_obj_t (conference_obj_t *c);
 
@@ -80,6 +80,6 @@ void conference_remove_participant (const gchar*, conference_obj_t *);
 
 GSList* conference_next_participant (GSList* participant);
 
-GSList* conference_participant_list_update (gchar**, conference_obj_t*);
+void conference_participant_list_update (gchar**, conference_obj_t*);
 
 #endif

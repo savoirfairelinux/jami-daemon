@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "dbus.h"
 
@@ -113,18 +114,8 @@ void account_create_codec_list (account_t **acc)
         g_queue_free (_codecs);
 
     _codecs = g_queue_new ();
-    // _codecs = g_queue_copy (codecsCapabilities);
 
     (*acc)->codecs = _codecs;
-    // order = (gchar**) dbus_get_active_codec_list (acc->accountID);
-}
-
-void account_set_codec_list (account_t **acc)
-{
-
-    // Reset the codec list
-    // account_create_codec_list (a);
-
 }
 
 void codec_create_new (gint payload, gboolean active, codec_t **c)
@@ -326,7 +317,7 @@ void codec_list_update_to_daemon (account_t *acc)
 
     // Get all codecs in queue
     int c = 0;
-    unsigned int i = 0;
+    int i = 0;
 
     for (i = 0; i < length; i++) {
         codec_t* currentCodec = codec_list_get_nth (i, acc->codecs);

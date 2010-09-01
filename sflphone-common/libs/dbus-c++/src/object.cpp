@@ -40,12 +40,10 @@
 using namespace DBus;
 
 Object::Object (Connection &conn, const Path &path, const char *service)
-        : _conn (conn), _path (path), _service (service ? service : "")
-{
+        : _conn (conn), _path (path), _service (service ? service : "") {
 }
 
-Object::~Object()
-{
+Object::~Object() {
 }
 
 struct ObjectAdaptor::Private {
@@ -59,13 +57,11 @@ static DBusObjectPathVTable _vtable = {
     NULL, NULL, NULL, NULL
 };
 
-void ObjectAdaptor::Private::unregister_function_stub (DBusConnection *conn, void *data)
-{
+void ObjectAdaptor::Private::unregister_function_stub (DBusConnection *conn, void *data) {
     //TODO: what do we have to do here ?
 }
 
-DBusHandlerResult ObjectAdaptor::Private::message_function_stub (DBusConnection *, DBusMessage *dmsg, void *data)
-{
+DBusHandlerResult ObjectAdaptor::Private::message_function_stub (DBusConnection *, DBusMessage *dmsg, void *data) {
     ObjectAdaptor *o = static_cast<ObjectAdaptor *> (data);
 
     if (o) {
@@ -89,8 +85,7 @@ DBusHandlerResult ObjectAdaptor::Private::message_function_stub (DBusConnection 
 typedef std::map<Path, ObjectAdaptor *> ObjectAdaptorTable;
 static ObjectAdaptorTable _adaptor_table;
 
-ObjectAdaptor *ObjectAdaptor::from_path (const Path &path)
-{
+ObjectAdaptor *ObjectAdaptor::from_path (const Path &path) {
     ObjectAdaptorTable::iterator ati = _adaptor_table.find (path);
 
     if (ati != _adaptor_table.end())
@@ -99,8 +94,7 @@ ObjectAdaptor *ObjectAdaptor::from_path (const Path &path)
     return NULL;
 }
 
-ObjectAdaptorPList ObjectAdaptor::from_path_prefix (const std::string &prefix)
-{
+ObjectAdaptorPList ObjectAdaptor::from_path_prefix (const std::string &prefix) {
     ObjectAdaptorPList ali;
 
     ObjectAdaptorTable::iterator ati = _adaptor_table.begin();
@@ -117,8 +111,7 @@ ObjectAdaptorPList ObjectAdaptor::from_path_prefix (const std::string &prefix)
     return ali;
 }
 
-ObjectPathList ObjectAdaptor::child_nodes_from_prefix (const std::string &prefix)
-{
+ObjectPathList ObjectAdaptor::child_nodes_from_prefix (const std::string &prefix) {
     ObjectPathList ali;
 
     ObjectAdaptorTable::iterator ati = _adaptor_table.begin();
@@ -143,18 +136,15 @@ ObjectPathList ObjectAdaptor::child_nodes_from_prefix (const std::string &prefix
 }
 
 ObjectAdaptor::ObjectAdaptor (Connection &conn, const Path &path)
-        : Object (conn, path, conn.unique_name())
-{
+        : Object (conn, path, conn.unique_name()) {
     register_obj();
 }
 
-ObjectAdaptor::~ObjectAdaptor()
-{
+ObjectAdaptor::~ObjectAdaptor() {
     unregister_obj();
 }
 
-void ObjectAdaptor::register_obj()
-{
+void ObjectAdaptor::register_obj() {
     debug_log ("registering local object %s", path().c_str());
 
     if (!dbus_connection_register_object_path (conn()._pvt->conn, path().c_str(), &_vtable, this)) {
@@ -164,8 +154,7 @@ void ObjectAdaptor::register_obj()
     _adaptor_table[path() ] = this;
 }
 
-void ObjectAdaptor::unregister_obj()
-{
+void ObjectAdaptor::unregister_obj() {
     _adaptor_table.erase (path());
 
     debug_log ("unregistering local object %s", path().c_str());
@@ -173,8 +162,7 @@ void ObjectAdaptor::unregister_obj()
     dbus_connection_unregister_object_path (conn()._pvt->conn, path().c_str());
 }
 
-void ObjectAdaptor::_emit_signal (SignalMessage &sig)
-{
+void ObjectAdaptor::_emit_signal (SignalMessage &sig) {
     sig.path (path().c_str());
 
     conn().send (sig);
@@ -184,8 +172,7 @@ struct ReturnLaterError {
     const Tag *tag;
 };
 
-bool ObjectAdaptor::handle_message (const Message &msg)
-{
+bool ObjectAdaptor::handle_message (const Message &msg) {
     switch (msg.type()) {
 
         case DBUS_MESSAGE_TYPE_METHOD_CALL: {
@@ -221,14 +208,12 @@ bool ObjectAdaptor::handle_message (const Message &msg)
     }
 }
 
-void ObjectAdaptor::return_later (const Tag *tag)
-{
+void ObjectAdaptor::return_later (const Tag *tag) {
     ReturnLaterError rle = { tag };
     throw rle;
 }
 
-void ObjectAdaptor::return_now (Continuation *ret)
-{
+void ObjectAdaptor::return_now (Continuation *ret) {
     ret->_conn.send (ret->_return);
 
     ContinuationMap::iterator di = _continuations.find (ret->_tag);
@@ -238,8 +223,7 @@ void ObjectAdaptor::return_now (Continuation *ret)
     _continuations.erase (di);
 }
 
-void ObjectAdaptor::return_error (Continuation *ret, const Error error)
-{
+void ObjectAdaptor::return_error (Continuation *ret, const Error error) {
     ret->_conn.send (ErrorMessage (ret->_call, error.name(), error.message()));
 
     ContinuationMap::iterator di = _continuations.find (ret->_tag);
@@ -249,16 +233,14 @@ void ObjectAdaptor::return_error (Continuation *ret, const Error error)
     _continuations.erase (di);
 }
 
-ObjectAdaptor::Continuation *ObjectAdaptor::find_continuation (const Tag *tag)
-{
+ObjectAdaptor::Continuation *ObjectAdaptor::find_continuation (const Tag *tag) {
     ContinuationMap::iterator di = _continuations.find (tag);
 
     return di != _continuations.end() ? di->second : NULL;
 }
 
 ObjectAdaptor::Continuation::Continuation (Connection &conn, const CallMessage &call, const Tag *tag)
-        : _conn (conn), _call (call), _return (_call), _tag (tag)
-{
+        : _conn (conn), _call (call), _return (_call), _tag (tag) {
     _writer = _return.writer(); //todo: verify
 }
 
@@ -266,18 +248,15 @@ ObjectAdaptor::Continuation::Continuation (Connection &conn, const CallMessage &
 */
 
 ObjectProxy::ObjectProxy (Connection &conn, const Path &path, const char *service)
-        : Object (conn, path, service)
-{
+        : Object (conn, path, service) {
     register_obj();
 }
 
-ObjectProxy::~ObjectProxy()
-{
+ObjectProxy::~ObjectProxy() {
     unregister_obj();
 }
 
-void ObjectProxy::register_obj()
-{
+void ObjectProxy::register_obj() {
     debug_log ("registering remote object %s", path().c_str());
 
     _filtered = new Callback<ObjectProxy, bool, const Message &> (this, &ObjectProxy::handle_message);
@@ -293,8 +272,7 @@ void ObjectProxy::register_obj()
     }
 }
 
-void ObjectProxy::unregister_obj()
-{
+void ObjectProxy::unregister_obj() {
     debug_log ("unregistering remote object %s", path().c_str());
 
     InterfaceProxyTable::const_iterator ii = _interfaces.begin();
@@ -308,8 +286,7 @@ void ObjectProxy::unregister_obj()
     conn().remove_filter (_filtered);
 }
 
-Message ObjectProxy::_invoke_method (CallMessage &call)
-{
+Message ObjectProxy::_invoke_method (CallMessage &call) {
     if (call.path() == NULL)
         call.path (path().c_str());
 
@@ -319,8 +296,7 @@ Message ObjectProxy::_invoke_method (CallMessage &call)
     return conn().send_blocking (call);
 }
 
-bool ObjectProxy::_invoke_method_noreply (CallMessage &call)
-{
+bool ObjectProxy::_invoke_method_noreply (CallMessage &call) {
     if (call.path() == NULL)
         call.path (path().c_str());
 
@@ -330,8 +306,7 @@ bool ObjectProxy::_invoke_method_noreply (CallMessage &call)
     return conn().send (call);
 }
 
-bool ObjectProxy::handle_message (const Message &msg)
-{
+bool ObjectProxy::handle_message (const Message &msg) {
     switch (msg.type()) {
 
         case DBUS_MESSAGE_TYPE_SIGNAL: {

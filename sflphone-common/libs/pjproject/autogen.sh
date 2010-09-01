@@ -18,6 +18,14 @@ elif [ -e /usr/lib/rpm/config.guess ]; then
 	rm -f config.sub config.guess
 	ln -s /usr/lib/rpm/config.sub .
 	ln -s /usr/lib/rpm/config.guess .
+elif [ -e /usr/share/automake-*/config.guess ]; then
+	rm -f config.sub config.guess
+	ln -s /usr/share/automake-*/config.sub .
+	ln -s /usr/share/automake-*/config.guess .
+elif [ -e /usr/share/libtool/config/config.guess ]; then
+	rm -f config.sub config.guess
+	ln -s /usr/share/libtool/config/config.sub .
+	ln -s /usr/share/libtool/config/config.guess .
 else
 	aclocal --force
 	automake --add-missing --force-missing --copy	

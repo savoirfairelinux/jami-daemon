@@ -1,10 +1,13 @@
 # Global variables
+
+#CXXFLAGS=-Wall -Werror -Wextra
+
 src=$(top_srcdir)
 sfllibdir=$(DESTDIR)$(libdir)/sflphone
 sflcodecdir=$(sfllibdir)/codecs
 sflplugindir=$(sfllibdir)/plugins
 
-ASTYLERC="../astylerc"
+ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
 
 # for pjsip
@@ -66,3 +69,10 @@ AM_CPPFLAGS = \
 	-DENABLE_TRACE \
          $(SPEEXCODEC) \
          $(GSMCODEC)
+
+
+indent:
+	@echo "Indenting code:"
+	if [ -f $(ASTYLERC) ] ; then \
+		find $(top_srcdir)/src/ -regex ".*\.\(h\|cpp\)" -exec $(indent) --options=$(ASTYLERC) {} \; ; \
+	fi

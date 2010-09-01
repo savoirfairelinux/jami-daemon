@@ -38,6 +38,7 @@
 #include <accountconfigdialog.h>
 #include <zrtpadvanceddialog.h>
 #include <tlsadvanceddialog.h>
+#include <audioconf.h>
 
 // From version 2.16, gtk provides the functionalities libsexy used to provide
 #if GTK_CHECK_VERSION(2,16,0)
@@ -97,6 +98,8 @@ GtkWidget * publishedAddressLabel;
 GtkWidget * publishedPortLabel;
 GtkWidget * stunServerLabel;
 GtkWidget * stunServerEntry;
+GtkWidget * enableTone;
+GtkWidget * fileChooser;
 
 GtkWidget * displayNameEntry;
 
@@ -120,9 +123,24 @@ enum {
 };
 
 /*
+ * The same window is used with different configurations
+ * so we need to reset some data to prevent side-effects
+ */
+static void reset()
+{
+    entryAlias = NULL;
+    protocolComboBox = NULL;
+    entryHostname = NULL;
+    entryUsername = NULL;
+    entryPassword = NULL;
+    entryUseragent = NULL;
+    entryMailbox = NULL;
+}
+
+/*
  * Display / Hide the password
  */
-static void show_password_cb (GtkWidget *widget, gpointer data)
+static void show_password_cb (GtkWidget *widget UNUSED, gpointer data)
 {
     gtk_entry_set_visibility (GTK_ENTRY (data), !gtk_entry_get_visibility (GTK_ENTRY (data)));
 }
@@ -190,6 +208,11 @@ static GPtrArray* getNewCredential (GHashTable * properties)
     gchar *password;
     GHashTable * new_table;
 
+    if (valid == FALSE) {
+        DEBUG ("Gtk tree model iter is not valid");
+        return NULL;
+    }
+
     gtk_tree_model_get (GTK_TREE_MODEL (credentialStore), &iter,
                         COLUMN_CREDENTIAL_REALM, &realm,
                         COLUMN_CREDENTIAL_USERNAME, &username,
@@ -205,7 +228,6 @@ static GPtrArray* getNewCredential (GHashTable * properties)
     // Do not change the password if nothing has been changed by the user
     if (g_strcasecmp (password, PW_HIDDEN) != 0)
         g_hash_table_insert (properties, g_strdup (ACCOUNT_PASSWORD), password);
-
 
 
     valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (credentialStore), &iter);
@@ -261,7 +283,6 @@ static GtkWidget* create_basic_tab (account_t **a)
     gchar *curAccountType = "SIP";
     gchar *curAlias = "";
     gchar *curUsername = "";
-    gchar *curRouteSet = "";
     gchar *curHostname = "";
     gchar *curPassword = "";
     /* TODO: add curProxy, and add boxes for Proxy support */
@@ -272,11 +293,12 @@ static GtkWidget* create_basic_tab (account_t **a)
 
     int row = 0;
 
+    DEBUG ("Config: Create basic account tab");
+
     // Load from SIP/IAX/Unknown ?
     if (currentAccount) {
         curAccountID = currentAccount->accountID;
         curAccountType = g_hash_table_lookup (currentAccount->properties, ACCOUNT_TYPE);
-        DEBUG ("Config: Current accountType %s", curAccountType);
         curAccountEnabled = g_hash_table_lookup (currentAccount->properties, ACCOUNT_ENABLED);
         curAlias = g_hash_table_lookup (currentAccount->properties, ACCOUNT_ALIAS);
         curHostname = g_hash_table_lookup (currentAccount->properties, ACCOUNT_HOSTNAME);
@@ -284,6 +306,7 @@ static GtkWidget* create_basic_tab (account_t **a)
         curUsername = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERNAME);
         // curRouteSet = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ROUTE);
         curMailbox = g_hash_table_lookup (currentAccount->properties, ACCOUNT_MAILBOX);
+        curMailbox = curMailbox != NULL ? curMailbox : "";
         curUseragent = g_hash_table_lookup (currentAccount->properties, ACCOUNT_USERAGENT);
     }
 
@@ -368,29 +391,12 @@ static GtkWidget* create_basic_tab (account_t **a)
         g_object_set_data (G_OBJECT (entryUsername), "column", GINT_TO_POINTER (COLUMN_CREDENTIAL_USERNAME));
     }
 
-    // Route set can be update only for SIP account
-    // TODO: uncomment this code and implement route
-    /*
-    if(strcmp(curAccountType, "SIP") == 0) {
-      row++;
-      label = gtk_label_new_with_mnemonic(_("_Route (optional)"));
-      gtk_table_attach(GTK_TABLE( table ), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-      gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-      entryRouteSet = gtk_entry_new();
-      gtk_label_set_mnemonic_widget(GTK_LABEL(label), entryRouteSet);
-      gtk_entry_set_text(GTK_ENTRY(entryRouteSet), curRouteSet);
-      gtk_table_attach (GTK_TABLE(table), entryRouteSet, 1, 2, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    }
-    */
-
     row++;
     label = gtk_label_new_with_mnemonic (_ ("_Password"));
     gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 #if GTK_CHECK_VERSION(2,16,0)
     entryPassword = gtk_entry_new();
-    GtkSettings *settings = gtk_settings_get_default ();
-    //g_object_set (G_OBJECT (settings), "gtk-entry-password-hint-timeout", 600, NULL);
     gtk_entry_set_icon_from_stock (GTK_ENTRY (entryPassword), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
 #else
     entryPassword = sexy_icon_entry_new();
@@ -441,33 +447,6 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
 {
     GtkTreeIter iter;
     gtk_list_store_clear (credentialStore);
-    gtk_list_store_append (credentialStore, &iter);
-
-    /* This is the default, undeletable credential */
-    gchar * authentication_name = g_hash_table_lookup (account->properties, ACCOUNT_AUTHENTICATION_USERNAME);
-    gchar * realm = g_hash_table_lookup (account->properties, ACCOUNT_REALM);
-
-    if (realm == NULL || (g_strcmp0 (realm, "") == 0)) {
-        realm = g_strdup ("*");
-    }
-
-    if ( (authentication_name == NULL) || (g_strcmp0 (authentication_name, "") == 0)) {
-        gtk_list_store_set (credentialStore, &iter,
-                            COLUMN_CREDENTIAL_REALM, realm,
-                            COLUMN_CREDENTIAL_USERNAME, gtk_entry_get_text (GTK_ENTRY (entryUsername)),
-                            COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text (GTK_ENTRY (entryPassword)),
-                            COLUMN_CREDENTIAL_DATA, account,
-                            -1);
-    } else {
-        gtk_list_store_set (credentialStore, &iter,
-                            COLUMN_CREDENTIAL_REALM, g_hash_table_lookup (account->properties, ACCOUNT_REALM),
-                            COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup (account->properties, ACCOUNT_AUTHENTICATION_USERNAME),
-                            // COLUMN_CREDENTIAL_PASSWORD, gtk_entry_get_text(GTK_ENTRY(entryPassword)),
-                            COLUMN_CREDENTIAL_PASSWORD, PW_HIDDEN,
-                            COLUMN_CREDENTIAL_DATA, account,
-                            -1);
-        g_signal_handlers_disconnect_by_func (G_OBJECT (entryUsername), G_CALLBACK (update_credential_cb), NULL);
-    }
 
     if (account->credential_information == NULL) {
         DEBUG ("No credential defined");
@@ -483,12 +462,11 @@ static void fill_treeview_with_credential (GtkListStore * credentialStore, accou
                             COLUMN_CREDENTIAL_REALM, g_hash_table_lookup (element, ACCOUNT_REALM),
                             COLUMN_CREDENTIAL_USERNAME, g_hash_table_lookup (element, ACCOUNT_USERNAME),
                             COLUMN_CREDENTIAL_PASSWORD, g_hash_table_lookup (element, ACCOUNT_PASSWORD),
-                            COLUMN_CREDENTIAL_DATA, element, // Pointer
-                            -1);
+                            COLUMN_CREDENTIAL_DATA, element, -1);
     }
 }
 
-static select_credential_cb (GtkTreeSelection *selection, GtkTreeModel *model)
+static void select_credential_cb (GtkTreeSelection *selection, GtkTreeModel *model)
 {
     GtkTreeIter iter;
     GtkTreePath *path;
@@ -504,7 +482,7 @@ static select_credential_cb (GtkTreeSelection *selection, GtkTreeModel *model)
     }
 }
 
-static void add_credential_cb (GtkWidget *button, gpointer data)
+static void add_credential_cb (GtkWidget *button UNUSED, gpointer data)
 {
     GtkTreeIter iter;
     GtkTreeModel *model = (GtkTreeModel *) data;
@@ -517,7 +495,7 @@ static void add_credential_cb (GtkWidget *button, gpointer data)
                         -1);
 }
 
-static void delete_credential_cb (GtkWidget *button, gpointer data)
+static void delete_credential_cb (GtkWidget *button UNUSED, gpointer data)
 {
     GtkTreeIter iter;
     GtkTreeView *treeview = (GtkTreeView *) data;
@@ -560,7 +538,7 @@ static void cell_edited_cb (GtkCellRendererText *renderer, gchar *path_desc, gch
 
 }
 
-static void editing_started_cb (GtkCellRenderer *cell, GtkCellEditable * editable, const gchar * path, gpointer data)
+static void editing_started_cb (GtkCellRenderer *cell UNUSED, GtkCellEditable * editable, const gchar * path, gpointer data UNUSED)
 {
 
     DEBUG ("Editing started");
@@ -591,7 +569,7 @@ static void show_advanced_tls_options_cb (GtkWidget *widget UNUSED, gpointer dat
     show_advanced_tls_options ( (GHashTable *) data);
 }
 
-static void key_exchange_changed_cb (GtkWidget *widget, gpointer data)
+static void key_exchange_changed_cb (GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
 
     DEBUG ("Key exchange changed %s", gtk_combo_box_get_active_text (GTK_COMBO_BOX (keyExchangeCombo)));
@@ -654,7 +632,7 @@ static void use_sip_tls_cb (GtkWidget *widget, gpointer data)
     }
 }
 
-static local_interface_changed_cb (GtkWidget * widget, gpointer data UNUSED)
+static void local_interface_changed_cb (GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
 
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (sameAsLocalRadioButton))) {
@@ -664,22 +642,18 @@ static local_interface_changed_cb (GtkWidget * widget, gpointer data UNUSED)
         local_iface_addr = g_malloc (36);
 
         local_iface_name = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (localAddressCombo));
-        // sflphone_get_interface_addr_from_name((char *)local_interface);
         sflphone_get_interface_addr_from_name (local_iface_name, &local_iface_addr, 36);
 
         gtk_entry_set_text (GTK_ENTRY (localAddressEntry), local_iface_addr);
         gtk_entry_set_text (GTK_ENTRY (publishedAddressEntry), local_iface_addr);
 
-        // gchar * local_port = (gchar *) gtk_entry_get_text(GTK_ENTRY(localPortSpinBox));
-        // gtk_spin_button_set_value(GTK_SPIN_BUTTON(publishedPortSpinBox), g_ascii_strtod(local_port, NULL));
         g_free (local_iface_addr);
     }
 
 }
 
-static set_published_addr_manually_cb (GtkWidget * widget, gpointer data UNUSED)
+static void set_published_addr_manually_cb (GtkWidget * widget, gpointer data UNUSED)
 {
-
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
         DEBUG ("Config: Showing manual publishing options");
         gtk_widget_show (publishedPortLabel);
@@ -695,11 +669,8 @@ static set_published_addr_manually_cb (GtkWidget * widget, gpointer data UNUSED)
     }
 }
 
-static use_stun_cb (GtkWidget *widget, gpointer data UNUSED)
+static void use_stun_cb (GtkWidget *widget, gpointer data UNUSED)
 {
-    gchar *local_interface;
-    gchar *local_address;
-
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
 
         DEBUG ("Config: Showing stun options, hiding Local/Published info");
@@ -732,7 +703,7 @@ static use_stun_cb (GtkWidget *widget, gpointer data UNUSED)
 }
 
 
-static same_as_local_cb (GtkWidget * widget, gpointer data UNUSED)
+static void same_as_local_cb (GtkWidget * widget, gpointer data UNUSED)
 {
 
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
@@ -816,7 +787,9 @@ GtkWidget* create_credential_widget (account_t **a)
 
     gtk_container_add (GTK_CONTAINER (scrolledWindowCredential), treeViewCredential);
 
+    DEBUG ("Credential pas ok");
     fill_treeview_with_credential (credentialStore, *a);
+    DEBUG ("Credential ok");
 
     /* Credential Buttons */
     hbox = gtk_hbox_new (FALSE, 10);
@@ -928,8 +901,6 @@ GtkWidget * create_security_tab (account_t **a)
 {
     GtkWidget * frame;
     GtkWidget * ret;
-    GtkWidget * hbox;
-
 
     ret = gtk_vbox_new (FALSE, 10);
     gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
@@ -985,7 +956,8 @@ GtkWidget* create_network (account_t **a)
 {
 
     GtkWidget *table, *frame, *label;
-    gchar *local_interface, *local_port;
+    gchar *local_interface = NULL;
+    gchar *local_port = NULL;
 
     if (*a) {
         local_interface = g_hash_table_lookup ( (*a)->properties, LOCAL_INTERFACE);
@@ -1087,8 +1059,13 @@ GtkWidget* create_network (account_t **a)
 GtkWidget* create_published_address (account_t **a)
 {
 
-    GtkWidget *table, *frame, *label;
-    gchar *use_tls, *published_address, *published_port, *local_address, *stun_enable, *stun_server, *published_sameas_local;
+    GtkWidget *table, *frame;
+    gchar *use_tls =NULL;
+    gchar *published_address = NULL;
+    gchar *published_port = NULL;
+    gchar *stun_enable = NULL;
+    gchar *stun_server = NULL;
+    gchar *published_sameas_local = NULL;
 
     // Get the user configuration
     if (*a) {
@@ -1178,7 +1155,7 @@ GtkWidget* create_advanced_tab (account_t **a)
 {
 
     // Build the advanced tab, to appear on the account configuration panel
-    DEBUG ("Config: Build advanced tab")
+    DEBUG ("Config: Build advanced tab");
 
     GtkWidget *ret, *frame;
 
@@ -1202,6 +1179,18 @@ GtkWidget* create_advanced_tab (account_t **a)
 
     return ret;
 }
+
+void ringtone_enabled (GtkWidget *widget UNUSED, gpointer fileChooser, const gchar *accountID UNUSED)
+{
+    gboolean isEnabled = gtk_widget_get_sensitive (GTK_WIDGET (fileChooser));
+
+    if (isEnabled) {
+        gtk_widget_set_sensitive (GTK_WIDGET (fileChooser), FALSE);
+    } else {
+        gtk_widget_set_sensitive (GTK_WIDGET (fileChooser), TRUE);
+    }
+}
+
 
 GtkWidget* create_codecs_configuration (account_t **a)
 {
@@ -1252,6 +1241,36 @@ GtkWidget* create_codecs_configuration (account_t **a)
         gtk_table_attach (GTK_TABLE (table), sipinfo, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     }
 
+    // Box for the ringtones
+    gnome_main_section_new_with_table (_ ("Ringtones"), &frame, &table, 1, 2);
+    gtk_box_pack_start (GTK_BOX (ret), frame, FALSE, FALSE, 0);
+
+    fileChooser = gtk_file_chooser_button_new (_ ("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
+
+    p = g_hash_table_lookup (currentAccount->properties, g_strdup (CONFIG_RINGTONE_ENABLED));
+    gboolean ringtoneEnabled = (g_strcmp0 (p, "true") == 0) ? TRUE : FALSE;
+
+    enableTone = gtk_check_button_new_with_mnemonic (_ ("_Enable ringtones"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enableTone), ringtoneEnabled);
+    g_signal_connect (G_OBJECT (enableTone) , "clicked" , G_CALLBACK (ringtone_enabled), fileChooser);
+    gtk_table_attach (GTK_TABLE (table), enableTone, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+    // file chooser button
+    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (fileChooser) , g_get_home_dir());
+    p = g_hash_table_lookup (currentAccount->properties, g_strdup (CONFIG_RINGTONE_PATH));
+    gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (fileChooser) , p);
+    gtk_widget_set_sensitive (GTK_WIDGET (fileChooser), ringtoneEnabled);
+
+    GtkFileFilter *filter = gtk_file_filter_new();
+    gtk_file_filter_set_name (filter , _ ("Audio Files"));
+    gtk_file_filter_add_pattern (filter , "*.wav");
+    gtk_file_filter_add_pattern (filter , "*.ul");
+    gtk_file_filter_add_pattern (filter , "*.au");
+    gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (fileChooser) , filter);
+    gtk_table_attach (GTK_TABLE (table), fileChooser, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+
+
     gtk_widget_show_all (ret);
 
     return ret;
@@ -1265,6 +1284,10 @@ void show_account_window (account_t * a)
     GtkWidget *tab, *codecs_tab, *ip_tab;
     gint response;
     account_t *currentAccount;
+
+
+    // Firstly we reset
+    reset();
 
     // In case the published address is same than local,
     // we must resolve published address from interface name
@@ -1367,8 +1390,6 @@ void show_account_window (account_t * a)
         return;
     }
 
-    gchar *key = g_strdup (ACCOUNT_USERNAME);
-
     // If accept button is
     if (g_strcasecmp (currentAccount->accountID, IP2IP) != 0) {
 
@@ -1450,31 +1471,42 @@ void show_account_window (account_t * a)
                                       published_address);
             }
 
-            if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (overrtp))) {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (OVERRTP));
-            } else {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (SIPINFO));
-            }
-
-            gchar* keyExchange = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (keyExchangeCombo));
-
-            if (g_strcasecmp (keyExchange, "ZRTP") == 0) {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("true"));
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_KEY_EXCHANGE), g_strdup (ZRTP));
-            }
-
-            else if (g_strcasecmp (keyExchange, "SDES") == 0) {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("true"));
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_KEY_EXCHANGE), g_strdup (SDES));
-            }
-
-            else {
-                g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("false"));
-            }
-
-            g_hash_table_replace (currentAccount->properties, g_strdup (TLS_ENABLE),
-                                  g_strdup (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (useSipTlsCheckBox)) ? "true":"false"));
         }
+
+        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (overrtp))) {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (OVERRTP));
+        } else {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_DTMF_TYPE), g_strdup (SIPINFO));
+        }
+
+        gchar* keyExchange = (gchar *) gtk_combo_box_get_active_text (GTK_COMBO_BOX (keyExchangeCombo));
+
+        if (g_strcasecmp (keyExchange, "ZRTP") == 0) {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("true"));
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_KEY_EXCHANGE), g_strdup (ZRTP));
+        }
+
+        else if (g_strcasecmp (keyExchange, "SDES") == 0) {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("true"));
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_KEY_EXCHANGE), g_strdup (SDES));
+        }
+
+        else {
+            g_hash_table_replace (currentAccount->properties, g_strdup (ACCOUNT_SRTP_ENABLED), g_strdup ("false"));
+        }
+
+        g_hash_table_replace (currentAccount->properties, g_strdup (TLS_ENABLE),
+                              g_strdup (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (useSipTlsCheckBox)) ? "true":"false"));
+
+        gboolean toneEnabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (enableTone));
+        g_hash_table_replace (currentAccount->properties,
+                              g_strdup (CONFIG_RINGTONE_ENABLED),
+                              g_strdup (toneEnabled ? "true" : "false"));
+
+
+        g_hash_table_replace (currentAccount->properties,
+                              g_strdup (CONFIG_RINGTONE_PATH),
+                              g_strdup ( (gchar *) gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (fileChooser))));
 
         g_hash_table_replace (currentAccount->properties,
                               g_strdup (LOCAL_INTERFACE),
@@ -1500,17 +1532,17 @@ void show_account_window (account_t * a)
              */
             dbus_delete_all_credential (currentAccount);
 
+            DEBUG ("Config: Get new credentials");
             GPtrArray * credential = getNewCredential (currentAccount->properties);
             currentAccount->credential_information = credential;
 
             if (currentAccount->credential_information != NULL) {
-                int i;
+                guint i;
 
                 for (i = 0; i < currentAccount->credential_information->len; i++) {
+                    DEBUG ("Create new credential");
                     dbus_set_credential (currentAccount, i);
                 }
-
-                dbus_set_number_of_credential (currentAccount, currentAccount->credential_information->len);
             }
         }
     }

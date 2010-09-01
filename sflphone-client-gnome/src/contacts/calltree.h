@@ -111,4 +111,10 @@ calltree_display (calltab_t *tab);
 void
 row_activated (GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
 
+/**
+ * Update elapced time based on selected calltree's call
+ */
+void
+calltree_update_clock();
+
 #endif

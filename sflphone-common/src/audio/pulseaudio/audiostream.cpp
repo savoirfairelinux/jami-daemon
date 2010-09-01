@@ -68,7 +68,7 @@ AudioStream::connectStream (std::string* deviceName)
     return true;
 }
 
-static void success_cb (pa_stream *s, int success, void *userdata)
+static void success_cb (pa_stream *s, int success UNUSED, void *userdata)
 {
 
     assert (s);
@@ -77,7 +77,6 @@ static void success_cb (pa_stream *s, int success, void *userdata)
 
     pa_threaded_mainloop_signal (mainloop, 0);
 }
-
 
 bool
 AudioStream::drainStream (void)
@@ -213,10 +212,10 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 
     if (_streamType == PLAYBACK_STREAM) {
 
-        attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec); // -1;
-        attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->maxlength = pa_usec_to_bytes (160 * PA_USEC_PER_MSEC, &_sample_spec); // -1;
+        attributes->tlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
-        attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->fragsize = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->minreq = (uint32_t) -1;
 
         pa_threaded_mainloop_lock (_mainloop);
@@ -231,10 +230,10 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 
     } else if (_streamType == CAPTURE_STREAM) {
 
-        attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);// (uint32_t) -1;
-        attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);// pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->maxlength = pa_usec_to_bytes (160 * PA_USEC_PER_MSEC, &_sample_spec);// (uint32_t) -1;
+        attributes->tlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);// pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
-        attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec); // pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->fragsize = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec); // pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->minreq = (uint32_t) -1;
 
         pa_threaded_mainloop_lock (_mainloop);
@@ -249,10 +248,10 @@ AudioStream::createStream (pa_context* c, std::string *deviceName)
 
     } else if (_streamType == RINGTONE_STREAM) {
 
-        attributes->maxlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);;
-        attributes->tlength = pa_usec_to_bytes (40 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->maxlength = pa_usec_to_bytes (160 * PA_USEC_PER_MSEC, &_sample_spec);;
+        attributes->tlength = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->prebuf = 0;
-        attributes->fragsize = pa_usec_to_bytes (20 * PA_USEC_PER_MSEC, &_sample_spec);
+        attributes->fragsize = pa_usec_to_bytes (80 * PA_USEC_PER_MSEC, &_sample_spec);
         attributes->minreq = (uint32_t) -1;
 
         pa_threaded_mainloop_lock (_mainloop);

@@ -32,8 +32,9 @@
 #define __SFLPHONE_CONST_H
 
 #include <libintl.h>
+#include "logger.h"
 #include "dbus.h"
-#include "log4c.h"
+#include <glib/gi18n.h>
 
 /* @file sflphone_const.h
  * @brief Contains the global variables for the client code
@@ -49,8 +50,8 @@
 #define CONTACTS            "contacts"
 
 /** Locale */
-#define _(STRING)             gettext( STRING )
-#define N_(STRING)			  (STRING)
+//#define _(STRING)             gettext( STRING )
+//#define N_(STRING)			  (STRING)
 #define c_(COMMENT,STRING)    gettext(STRING)
 #define n_(SING,PLUR,COUNT)   ngettext(SING,PLUR,COUNT)
 
@@ -87,9 +88,12 @@
 #define ACCOUNT_ZRTP_NOT_SUPP_WARNING      "ZRTP.notSuppWarning"
 #define ACCOUNT_ZRTP_HELLO_HASH            "ZRTP.helloHashEnable"
 #define ACCOUNT_DISPLAY_SAS_ONCE           "ZRTP.displaySasOnce"
-#define KEY_EXCHANGE_NONE                  "0"
-#define ZRTP                               "1"
-#define SDES                               "2"
+#define KEY_EXCHANGE_NONE                  "none"
+#define ZRTP                               "zrtp"
+#define SDES                               "sdes"
+
+#define CONFIG_RINGTONE_PATH                "Account.ringtonePath"
+#define CONFIG_RINGTONE_ENABLED             "Account.ringtoneEnabled"
 
 #define TLS_LISTENER_PORT                   "TLS.listenerPort"
 #define TLS_ENABLE                          "TLS.enable"
@@ -117,10 +121,11 @@
 #define REGISTRATION_STATE_CODE             "Registration.code"
 #define REGISTRATION_STATE_DESCRIPTION      "Registration.description"
 
-/**
- * Global logger
- */
-log4c_category_t* log4c_sfl_gtk_category;
+#define SHORTCUT_PICKUP                     "pickUp"
+#define SHORTCUT_HANGUP                     "hangUp"
+#define SHORTCUT_POPUP                      "popupWindow"
+#define SHORTCUT_TOGGLEPICKUPHANGUP         "togglePickupHangup"
+#define SHORTCUT_TOGGLEHOLD                 "toggleHold"
 
 /** Error while opening capture device */
 #define ALSA_CAPTURE_DEVICE	      0x0001
@@ -168,14 +173,6 @@ log4c_category_t* log4c_sfl_gtk_category;
 #define __TIMEOUT_MODE      "default"
 /** Desktop notifications - Time before to close the notification*/
 #define __TIMEOUT_TIME      18000       // 30 secondes
-
-/**
- * Macros for logging
- */
-#define DEBUG(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_DEBUG, __VA_ARGS__);
-#define WARN(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_WARN, __VA_ARGS__);
-#define ERROR(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_ERROR, __VA_ARGS__);
-#define FATAL(...) log4c_category_log(log4c_sfl_gtk_category, LOG4C_PRIORITY_FATAL, __VA_ARGS__);
 
 /**
  * Gconf

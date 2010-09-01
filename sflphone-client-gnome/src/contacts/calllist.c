@@ -31,6 +31,7 @@
 #include <calllist.h>
 #include <calltree.h>
 #include <contacts/searchbar.h>
+#include <eel-gconf-extensions.h>
 
 // TODO : sflphoneGTK : try to do this more generic
 void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo)
@@ -113,13 +114,13 @@ calllist_clean_history (void)
 {
     unsigned int i;
     guint size = calllist_get_size (history);
-    DEBUG ("history list size = %i", calllist_get_size (history));
+    DEBUG ("CallList: history list size = %i", calllist_get_size (history));
 
     for (i = 0 ; i < size ; i++) {
-        DEBUG ("Delete calls");
+        DEBUG ("CallList: Delete calls");
         callable_obj_t* c = calllist_get_nth (history , i);
         // Delete the call from the call tree
-        DEBUG ("Delete calls");
+        DEBUG ("CallList: Delete calls");
         calltree_remove_call (history, c, NULL);
     }
 
@@ -132,7 +133,7 @@ calllist_remove_from_history (callable_obj_t* c)
 {
     calllist_remove (history, c->_callID);
     calltree_remove_call (history, c, NULL);
-    DEBUG ("Size of history = %i" , calllist_get_size (history));
+    DEBUG ("CallList: Size of history = %i" , calllist_get_size (history));
 }
 
 void

@@ -25,7 +25,7 @@
  */
 
 #include "gtkscrollbook.h"
-
+#include "sflphone_const.h"
 
 static void pidgin_scroll_book_init (PidginScrollBook *scroll_book);
 static void pidgin_scroll_book_class_init (PidginScrollBookClass *klass);
@@ -148,7 +148,7 @@ scroll_close_cb (PidginScrollBook *scroll_book)
 }
 
 static void
-switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, PidginScrollBook *scroll_book)
+switch_page_cb (GtkNotebook *notebook UNUSED, GtkNotebookPage *page UNUSED, guint page_num, PidginScrollBook *scroll_book)
 {
     int count;
 #if GTK_CHECK_VERSION(2,2,0)
@@ -236,7 +236,7 @@ pidgin_scroll_book_class_init (PidginScrollBookClass *klass)
 }
 
 static gboolean
-close_button_left_cb (GtkWidget *widget, GdkEventCrossing *event, GtkLabel *label)
+close_button_left_cb (GtkWidget *widget UNUSED, GdkEventCrossing *event, GtkLabel *label)
 {
     static GdkCursor *ptr = NULL;
 
@@ -250,7 +250,7 @@ close_button_left_cb (GtkWidget *widget, GdkEventCrossing *event, GtkLabel *labe
 }
 
 static gboolean
-close_button_entered_cb (GtkWidget *widget, GdkEventCrossing *event, GtkLabel *label)
+close_button_entered_cb (GtkWidget *widget UNUSED, GdkEventCrossing *event, GtkLabel *label)
 {
     static GdkCursor *hand = NULL;
 

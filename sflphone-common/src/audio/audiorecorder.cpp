@@ -59,7 +59,9 @@ AudioRecorder::AudioRecorder (AudioRecord  *arec, MainBuffer *mb) : Thread()
  */
 void AudioRecorder::run (void)
 {
-    SFLDataFormat buffer[10000];
+
+    int bufferLength = 10000;
+    SFLDataFormat buffer[bufferLength];
 
     while (true) {
 
@@ -68,11 +70,11 @@ void AudioRecorder::run (void)
 
         int availBytes = mbuffer->availForGet (recorderId);
 
+        int toGet = (availBytes < bufferLength) ? availBytes : bufferLength;
+
+        mbuffer->getData (buffer, toGet, 100, recorderId);
+
         if (availBytes > 0) {
-
-            int got = mbuffer->getData (buffer, availBytes, 100, recorderId);
-
-            int availBytesAfter = mbuffer->availForGet (recorderId);
 
             arecord->recData (buffer, availBytes/sizeof (SFLDataFormat));
         }

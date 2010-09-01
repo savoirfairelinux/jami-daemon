@@ -42,22 +42,19 @@ const char *dbus_includes = "\n\
 #include <cassert>\n\
 ";
 
-                            void underscorize (string &str)
-                            {
+                            void underscorize (string &str) {
                             for (unsigned int i = 0; i < str.length(); ++i) {
                             if (!isalpha (str[i]) && !isdigit (str[i])) str[i] = '_';
                             }
                             }
 
-                            string stub_name (string name)
-                            {
+                            string stub_name (string name) {
                             underscorize (name);
 
                             return "_" + name + "_stub";
                             }
 
-                            const char *atomic_type_to_string (char t)
-                            {
+                            const char *atomic_type_to_string (char t) {
 
                             static struct {
                             char type;
@@ -88,8 +85,7 @@ const char *dbus_includes = "\n\
                             return atos[i].name;
                             }
 
-                            void _parse_signature (const string &signature, string &type, unsigned int &i)
-                            {
+                            void _parse_signature (const string &signature, string &type, unsigned int &i) {
                             for (; i < signature.length(); ++i) {
                             switch (signature[i]) {
 
@@ -164,8 +160,7 @@ const char *dbus_includes = "\n\
                             }
                             }
 
-                            string signature_to_type (const string &signature)
-                            {
+                            string signature_to_type (const string &signature) {
                             string type;
                             unsigned int i = 0;
                             _parse_signature (signature, type, i);

@@ -26,60 +26,61 @@
 
 #include "ringbuffer.h"
 
-class SpeexEchoCancel : public Algorithm {
+class SpeexEchoCancel : public Algorithm
+{
 
- public:
+    public:
 
-    SpeexEchoCancel();
+        SpeexEchoCancel();
 
-    ~SpeexEchoCancel();
+        ~SpeexEchoCancel();
 
-    virtual void reset(void);
+        virtual void reset (void);
 
-    /**
-     * Add speaker data into internal buffer
-     * \param inputData containing far-end voice data to be sent to speakers 
-     */
-    virtual void putData(SFLDataFormat *inputData, int nbBytes);
+        /**
+         * Add speaker data into internal buffer
+         * \param inputData containing far-end voice data to be sent to speakers
+         */
+        virtual void putData (SFLDataFormat *inputData, int nbBytes);
 
-    /**
-     * Unused
-     */
-    virtual void process(SFLDataFormat *data, int nbBytes);
+        /**
+         * Unused
+         */
+        virtual void process (SFLDataFormat *data, int nbBytes);
 
-    /**
-     * Perform echo cancellation using internal buffers
-     * \param inputData containing mixed echo and voice data
-     * \param outputData containing 
-     */
-    virtual int process(SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
+        /**
+         * Perform echo cancellation using internal buffers
+         * \param inputData containing mixed echo and voice data
+         * \param outputData containing
+         */
+        virtual int process (SFLDataFormat *inputData, SFLDataFormat *outputData, int nbBytes);
 
-    /**
-     * Perform echo cancellation, application must provide its own buffer
-     * \param micData containing mixed echo and voice data
-     * \param spkrData containing far-end voice data to be sent to speakers
-     * \param outputData containing the processed data
-     */
-    virtual void process(SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
+        /**
+         * Perform echo cancellation, application must provide its own buffer
+         * \param micData containing mixed echo and voice data
+         * \param spkrData containing far-end voice data to be sent to speakers
+         * \param outputData containing the processed data
+         */
+        virtual void process (SFLDataFormat *micData, SFLDataFormat *spkrData, SFLDataFormat *outputData, int nbBytes);
 
- private:
+    private:
 
-    SpeexEchoState *_echoState;
+        SpeexEchoState *_echoState;
 
-    SpeexPreprocessState *_preState;
+        SpeexPreprocessState *_preState;
 
-    RingBuffer *_micData; 
-    RingBuffer *_spkrData; 
+        RingBuffer *_micData;
+        RingBuffer *_spkrData;
 
-    bool _spkrStoped;
+        bool _spkrStoped;
 
-    SFLDataFormat _tmpSpkr[5000];
-    SFLDataFormat _tmpMic[5000];
-    SFLDataFormat _tmpOut[5000];
+        SFLDataFormat _tmpSpkr[5000];
+        SFLDataFormat _tmpMic[5000];
+        SFLDataFormat _tmpOut[5000];
 
-    ofstream *micFile;
-    ofstream *spkrFile;
-    ofstream *echoFile;
+        ofstream *micFile;
+        ofstream *spkrFile;
+        ofstream *echoFile;
 };
 
 #endif

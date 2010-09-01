@@ -5,7 +5,7 @@ namespace sfl
 
 InstantMessaging::InstantMessaging()
         : imFiles ()
-	, messageMaxSize(MAXIMUM_MESSAGE_LENGTH) {}
+        , messageMaxSize (MAXIMUM_MESSAGE_LENGTH) {}
 
 
 InstantMessaging::~InstantMessaging() {}
@@ -140,8 +140,8 @@ pj_status_t InstantMessaging::send_message (pjsip_inv_session *session, CallID& 
         int size = multiple_messages.size();
         int i = 0;
 
-	// Maximum is above 1500 character
-	// TODO: Send every messages 
+        // Maximum is above 1500 character
+        // TODO: Send every messages
         send (session, id, multiple_messages[i]);
     }
 
